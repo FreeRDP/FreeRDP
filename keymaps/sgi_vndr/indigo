@@ -1,0 +1,116 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "pc101"
+{
+	VK_OEM_3	<62>
+	VK_KEY_1	<15>
+	VK_KEY_2	<21>
+	VK_KEY_3	<22>
+	VK_KEY_4	<29>
+	VK_KEY_5	<30>
+	VK_KEY_6	<37>
+	VK_KEY_7	<38>
+	VK_KEY_8	<45>
+	VK_KEY_9	<46>
+	VK_KEY_0	<53>
+	VK_OEM_MINUS	<54>
+	VK_OEM_PLUS	<61>
+	VK_BACK		<68>
+	VK_TAB		<16>
+	VK_KEY_Q	<17>
+	VK_KEY_W	<23>
+	VK_KEY_E	<24>
+	VK_KEY_R	<31>
+	VK_KEY_T	<32>
+	VK_KEY_Y	<39>
+	VK_KEY_U	<40>
+	VK_KEY_I	<47>
+	VK_KEY_O	<48>
+	VK_KEY_P	<55>
+	VK_OEM_4	<56>
+	VK_OEM_6	<63>
+	VK_RETURN	<58>
+	VK_CAPITAL	<11>
+	VK_KEY_A	<18>
+	VK_KEY_S	<19>
+	VK_KEY_D	<25>
+	VK_KEY_F	<26>
+	VK_KEY_G	<33>
+	VK_KEY_H	<34>
+	VK_KEY_J	<41>
+	VK_KEY_K	<42>
+	VK_KEY_L	<49>
+	VK_OEM_1	<50>
+	VK_OEM_7	<57>
+	VK_LSHIFT	<13>
+	VK_KEY_Z	<27>
+	VK_KEY_X	<28>
+	VK_KEY_C	<35>
+	VK_KEY_V	<36>
+	VK_KEY_B	<43>
+	VK_KEY_N	<44>
+	VK_KEY_M	<51>
+	VK_OEM_COMMA	<52>
+	VK_OEM_PERIOD	<59>
+	VK_OEM_2	<60>
+	VK_RSHIFT	<12>
+	VK_OEM_5	<64>
+	VK_LMENU	<91>
+	VK_LCONTROL	<10>
+	VK_SPACE	<90>
+	VK_RCONTROL	<93>
+	VK_RMENU	<92>
+	VK_ESCAPE	<14>
+	VK_F1		<94>
+	VK_F2		<95>
+	VK_F3		<96>
+	VK_F4		<97>
+	VK_F5		<98>
+	VK_F6		<99>
+	VK_F7		<100>
+	VK_F8		<101>
+	VK_F9		<102>
+	VK_F10		<103>
+	VK_F11		<104>
+	VK_F12		<105>
+	VK_SNAPSHOT	<106>
+	VK_SCROLL	<107>
+	VK_PAUSE	<108>
+	VK_INSERT	<109>
+	VK_HOME		<110>
+	VK_PRIOR	<111>
+	VK_DELETE	<69>
+	VK_END		<112>
+	VK_NEXT		<113>
+	VK_UP		<88>
+	VK_LEFT		<80>
+	VK_DOWN		<81>
+	VK_RIGHT	<87>
+	VK_NUMLOCK	<114>
+	VK_DIVIDE	<115>
+	VK_MULTIPLY	<116>
+	VK_SUBTRACT	<83>
+	VK_NUMPAD7	<74>
+	VK_NUMPAD8	<75>
+	VK_NUMPAD9	<82>
+	VK_ADD		<117>
+	VK_NUMPAD4	<70>
+	VK_NUMPAD5	<76>
+	VK_NUMPAD6	<77>
+	VK_NUMPAD1	<65>
+	VK_NUMPAD2	<71>
+	VK_NUMPAD3	<72>
+	VK_RETURN	<89>
+	VK_NUMPAD0	<66>
+	VK_DECIMAL	<73>
+};
+
+keyboard "pc102"
+: extends "sgi_vndr/indigo(pc101)"
+{
+	VK_OEM_102	<118>
+};
+

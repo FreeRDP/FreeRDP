@@ -1,0 +1,197 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "lk_common"
+{
+	VK_F1		<86>
+	VK_F2		<87>
+	VK_F3		<88>
+	VK_F4		<89>
+	VK_F5		<90>
+	VK_F6		<100>
+	VK_F7		<101>
+	VK_F8		<102>
+	VK_F9		<103>
+	VK_F10		<104>
+	VK_F11		<113>
+	VK_F12		<114>
+	VK_UP		<170>
+	VK_LEFT		<167>
+	VK_DOWN		<169>
+	VK_RIGHT	<168>
+	VK_NUMPAD7	<157>
+	VK_NUMPAD8	<158>
+	VK_NUMPAD9	<159>
+	VK_NUMPAD4	<153>
+	VK_NUMPAD5	<154>
+	VK_NUMPAD6	<155>
+	VK_NUMPAD1	<150>
+	VK_NUMPAD2	<151>
+	VK_NUMPAD3	<152>
+	VK_RETURN	<149>
+	VK_NUMPAD0	<146>
+	VK_DECIMAL	<148>
+	VK_TILDE	<191>
+	VK_KEY_1	<192>
+	VK_KEY_2	<197>
+	VK_KEY_3	<203>
+	VK_KEY_4	<208>
+	VK_KEY_5	<214>
+	VK_KEY_6	<219>
+	VK_KEY_7	<224>
+	VK_KEY_8	<229>
+	VK_KEY_9	<234>
+	VK_KEY_0	<239>
+	VK_OEM_MINUS	<249>
+	VK_OEM_PLUS	<245>
+	VK_BACK		<188>
+	VK_TAB		<190>
+	VK_KEY_Q	<193>
+	VK_KEY_W	<198>
+	VK_KEY_E	<204>
+	VK_KEY_R	<209>
+	VK_KEY_T	<215>
+	VK_KEY_Y	<220>
+	VK_KEY_U	<225>
+	VK_KEY_I	<230>
+	VK_KEY_O	<235>
+	VK_KEY_P	<240>
+	VK_OEM_4	<250>
+	VK_OEM_6	<246>
+	VK_RETURN	<189>
+	VK_LCONTROL	<175>
+	VK_CAPITAL	<176>
+	VK_KEY_A	<194>
+	VK_KEY_S	<199>
+	VK_KEY_D	<205>
+	VK_KEY_F	<210>
+	VK_KEY_G	<216>
+	VK_KEY_H	<221>
+	VK_KEY_J	<226>
+	VK_KEY_K	<231>
+	VK_KEY_L	<236>
+	VK_OEM_1	<242>
+	VK_OEM_7	<251>
+	VK_LSHIFT	<174>
+	VK_KEY_Z	<195>
+	VK_KEY_X	<200>
+	VK_KEY_C	<206>
+	VK_KEY_V	<211>
+	VK_KEY_B	<217>
+	VK_KEY_N	<222>
+	VK_KEY_M	<227>
+	VK_OEM_COMMA	<232>
+	VK_OEM_PERIOD	<237>
+	VK_OEM_2	<243>
+	VK_RSHIFT	<171>
+	VK_SPACE	<212>
+};
+
+keyboard "lkx01"
+: extends "digital_vndr/lk(lk_common)"
+{
+	VK_LSHIFT	<201>
+	VK_F13		<115>
+	VK_F14		<116>
+	VK_F17		<128>
+	VK_F18		<129>
+	VK_F19		<130>
+	VK_F20		<131>
+	VK_HELP		<124>
+	VK_INSERT	<139>
+	VK_DELETE	<140>
+	VK_SELECT	<141>
+	VK_PRIOR	<142>
+	VK_NEXT		<143>
+	VK_NUMLOCK	<161>
+	VK_DIVIDE	<162>
+	VK_MULTIPLY	<163>
+	VK_SUBTRACT	<164>
+	VK_SUBTRACT	<160>
+	VK_ADD		<156>
+	VK_OEM_5	<247>
+};
+
+keyboard "lk201"
+: extends "digital_vndr/lk(lkx01)"
+{
+};
+
+keyboard "lk421"
+: extends "digital_vndr/lk(lkx01)"
+{
+	VK_LMENU	<172>
+	VK_RMENU	<178>
+};
+
+keyboard "lk401"
+: extends "digital_vndr/lk(lk421)"
+{
+};
+
+keyboard "lk44x"
+: extends "digital_vndr/lk(lk_common)"
+{
+	VK_ESCAPE	<85>
+	VK_SNAPSHOT	<115>
+	VK_SCROLL	<116>
+	VK_PAUSE	<124>
+	VK_INSERT	<138>
+	VK_HOME		<139>
+	VK_PRIOR	<140>
+	VK_DELETE	<141>
+	VK_END		<142>
+	VK_NEXT		<143>
+	VK_NUMLOCK	<161>
+	VK_DIVIDE	<162>
+	VK_MULTIPLY	<163>
+	VK_SUBTRACT	<164>
+	VK_ADD		<156>
+	VK_LMENU	<172>
+	VK_RMENU	<178>
+	VK_RCONTROL	<173>
+};
+
+keyboard "lk443"
+: extends "digital_vndr/lk(lk44x)"
+{
+	VK_OEM_5	<247>
+};
+
+keyboard "lk444"
+: extends "digital_vndr/lk(lk44x)"
+{
+	VK_OEM_5	<201>
+	VK_OEM_5	<247>
+};
+
+keyboard "lk421aj"
+: extends "digital_vndr/lk(lk421)"
+{
+	VK_ABNT_C1	<252>
+};
+
+keyboard "lk421jj"
+: extends "digital_vndr/lk(lk421aj)"
+{
+	VK_NONCONVERT	<94>
+	VK_KANJI	<95>
+	VK_KANA		<97>
+};
+
+keyboard "lk401bj"
+: extends "digital_vndr/lk(lk401)"
+{
+	VK_NONCONVERT	<94>
+	VK_KANJI	<95>
+	VK_KANA		<97>
+};
+
+keyboard "lk401jj"
+: extends "digital_vndr/lk(lk401bj)"
+{
+	VK_ABNT_C1	<252>
+};
+

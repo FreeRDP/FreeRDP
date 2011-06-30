@@ -1,0 +1,148 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "universal"
+{
+	VK_OEM_5	<91>
+	VK_OEM_5	<100>
+	VK_OEM_5	<101>
+};
+
+keyboard "pc101"
+{
+	VK_OEM_3	<22>
+	VK_KEY_1	<30>
+	VK_KEY_2	<38>
+	VK_KEY_3	<46>
+	VK_KEY_4	<45>
+	VK_KEY_5	<54>
+	VK_KEY_6	<62>
+	VK_KEY_7	<69>
+	VK_KEY_8	<70>
+	VK_KEY_9	<78>
+	VK_KEY_0	<77>
+	VK_OEM_MINUS	<86>
+	VK_OEM_PLUS	<93>
+	VK_BACK		<110>
+	VK_TAB		<21>
+	VK_KEY_Q	<29>
+	VK_KEY_W	<37>
+	VK_KEY_E	<44>
+	VK_KEY_R	<53>
+	VK_KEY_T	<52>
+	VK_KEY_Y	<61>
+	VK_KEY_U	<68>
+	VK_KEY_I	<75>
+	VK_KEY_O	<76>
+	VK_KEY_P	<85>
+	VK_OEM_4	<92>
+	VK_OEM_6	<99>
+	VK_RETURN	<98>
+	VK_CAPITAL	<28>
+	VK_KEY_A	<36>
+	VK_KEY_S	<35>
+	VK_KEY_D	<43>
+	VK_KEY_F	<51>
+	VK_KEY_G	<60>
+	VK_KEY_H	<59>
+	VK_KEY_J	<67>
+	VK_KEY_K	<74>
+	VK_KEY_L	<83>
+	VK_OEM_1	<84>
+	VK_OEM_7	<90>
+	VK_LSHIFT	<26>
+	VK_KEY_Z	<34>
+	VK_KEY_X	<42>
+	VK_KEY_C	<41>
+	VK_KEY_V	<50>
+	VK_KEY_B	<58>
+	VK_KEY_N	<57>
+	VK_KEY_M	<66>
+	VK_OEM_COMMA	<73>
+	VK_OEM_PERIOD	<81>
+	VK_OEM_2	<82>
+	VK_RSHIFT	<97>
+	VK_OEM_5	<100>
+	VK_LMENU	<33>
+	VK_LCONTROL	<25>
+	VK_SPACE	<49>
+	VK_RCONTROL	<96>
+	VK_RMENU	<65>
+	VK_ESCAPE	<16>
+	VK_F1		<15>
+	VK_F2		<23>
+	VK_F3		<31>
+	VK_F4		<39>
+	VK_F5		<47>
+	VK_F6		<55>
+	VK_F7		<63>
+	VK_F8		<71>
+	VK_F9		<79>
+	VK_F10		<87>
+	VK_F11		<94>
+	VK_F12		<102>
+	VK_SNAPSHOT	<95>
+	VK_SCROLL	<103>
+	VK_PAUSE	<106>
+	VK_INSERT	<111>
+	VK_HOME		<118>
+	VK_PRIOR	<119>
+	VK_DELETE	<108>
+	VK_END		<109>
+	VK_NEXT		<117>
+	VK_UP		<107>
+	VK_LEFT		<105>
+	VK_DOWN		<104>
+	VK_RIGHT	<114>
+	VK_NUMLOCK	<126>
+	VK_DIVIDE	<127>
+	VK_MULTIPLY	<134>
+	VK_SUBTRACT	<140>
+	VK_NUMPAD7	<116>
+	VK_NUMPAD8	<125>
+	VK_NUMPAD9	<133>
+	VK_ADD		<132>
+	VK_NUMPAD4	<115>
+	VK_NUMPAD5	<123>
+	VK_NUMPAD6	<124>
+	VK_NUMPAD1	<113>
+	VK_NUMPAD2	<122>
+	VK_NUMPAD3	<130>
+	VK_RETURN	<129>
+	VK_NUMPAD0	<120>
+	VK_DECIMAL	<121>
+};
+
+keyboard "pc102"
+{
+	VK_OEM_102	<27>
+};
+
+keyboard "pc104"
+: extends "sgi_vndr/indy(pc101)"
+{
+	VK_LWIN		<147>
+	VK_RWIN		<148>
+	VK_APPS		<149>
+};
+
+keyboard "pc105"
+{
+};
+
+keyboard "jp106"
+{
+	VK_ABNT_C1	<89>
+	VK_OEM_5	<91>
+};
+
+keyboard "overlayKeypad"
+{
+};
+
+keyboard "shiftLock"
+{
+};
+

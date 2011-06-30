@@ -1,0 +1,152 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "xfree86"
+: extends "xfree86(basic)"
+{
+	VK_OEM_5	<51>
+	VK_OEM_102	<94>
+};
+
+keyboard "basic"
+{
+	VK_OEM_3	<49>
+	VK_KEY_1	<10>
+	VK_KEY_2	<11>
+	VK_KEY_3	<12>
+	VK_KEY_4	<13>
+	VK_KEY_5	<14>
+	VK_KEY_6	<15>
+	VK_KEY_7	<16>
+	VK_KEY_8	<17>
+	VK_KEY_9	<18>
+	VK_KEY_0	<19>
+	VK_OEM_MINUS	<20>
+	VK_OEM_PLUS	<21>
+	VK_BACK		<22>
+	VK_TAB		<23>
+	VK_KEY_Q	<24>
+	VK_KEY_W	<25>
+	VK_KEY_E	<26>
+	VK_KEY_R	<27>
+	VK_KEY_T	<28>
+	VK_KEY_Y	<29>
+	VK_KEY_U	<30>
+	VK_KEY_I	<31>
+	VK_KEY_O	<32>
+	VK_KEY_P	<33>
+	VK_OEM_4	<34>
+	VK_OEM_6	<35>
+	VK_RETURN	<36>
+	VK_CAPITAL	<66>
+	VK_KEY_A	<38>
+	VK_KEY_S	<39>
+	VK_KEY_D	<40>
+	VK_KEY_F	<41>
+	VK_KEY_G	<42>
+	VK_KEY_H	<43>
+	VK_KEY_J	<44>
+	VK_KEY_K	<45>
+	VK_KEY_L	<46>
+	VK_OEM_1	<47>
+	VK_OEM_7	<48>
+	VK_LSHIFT	<50>
+	VK_KEY_Z	<52>
+	VK_KEY_X	<53>
+	VK_KEY_C	<54>
+	VK_KEY_V	<55>
+	VK_KEY_B	<56>
+	VK_KEY_N	<57>
+	VK_KEY_M	<58>
+	VK_OEM_COMMA	<59>
+	VK_OEM_PERIOD	<60>
+	VK_OEM_2	<61>
+	VK_RSHIFT	<62>
+	VK_LMENU	<64>
+	VK_LCONTROL	<37>
+	VK_SPACE	<65>
+	VK_RCONTROL	<109>
+	VK_RMENU	<113>
+	VK_LWIN		<115>
+	VK_RWIN		<116>
+	VK_APPS		<117>
+	VK_ESCAPE	<9>
+	VK_F1		<67>
+	VK_F2		<68>
+	VK_F3		<69>
+	VK_F4		<70>
+	VK_F5		<71>
+	VK_F6		<72>
+	VK_F7		<73>
+	VK_F8		<74>
+	VK_F9		<75>
+	VK_F10		<76>
+	VK_F11		<95>
+	VK_F12		<96>
+	VK_SNAPSHOT	<111>
+	VK_SCROLL	<78>
+	VK_PAUSE	<110>
+	VK_INSERT	<106>
+	VK_HOME		<97>
+	VK_PRIOR	<99>
+	VK_DELETE	<107>
+	VK_END		<103>
+	VK_NEXT		<105>
+	VK_UP		<98>
+	VK_LEFT		<100>
+	VK_DOWN		<104>
+	VK_RIGHT	<102>
+	VK_NUMLOCK	<77>
+	VK_DIVIDE	<112>
+	VK_MULTIPLY	<63>
+	VK_SUBTRACT	<82>
+	VK_NUMPAD7	<79>
+	VK_NUMPAD8	<80>
+	VK_NUMPAD9	<81>
+	VK_ADD		<86>
+	VK_NUMPAD4	<83>
+	VK_NUMPAD5	<84>
+	VK_NUMPAD6	<85>
+	VK_NUMPAD1	<87>
+	VK_NUMPAD2	<88>
+	VK_NUMPAD3	<89>
+	VK_RETURN	<108>
+	VK_NUMPAD0	<90>
+	VK_DECIMAL	<91>
+	VK_F13		<118>
+	VK_F14		<119>
+	VK_F15		<120>
+	VK_F16		<121>
+	VK_F17		<122>
+	VK_ABNT_C1	<211>
+};
+
+keyboard "102"
+: extends "xfree86(xfree86)"
+{
+	VK_RMENU	<122>
+	VK_RCONTROL	<123>
+	VK_SNAPSHOT	<121>
+	VK_PAUSE	<118>
+	VK_INSERT	<131>
+	VK_HOME		<135>
+	VK_PRIOR	<119>
+	VK_DELETE	<129>
+	VK_END		<130>
+	VK_NEXT		<134>
+	VK_UP		<128>
+	VK_LEFT		<132>
+	VK_DOWN		<120>
+	VK_RIGHT	<133>
+	VK_DIVIDE	<125>
+	VK_RETURN	<124>
+};
+
+keyboard "thinkpadz60"
+: extends "xfree86(xfree86)"
+{
+	VK_APPS		<227>
+};
+

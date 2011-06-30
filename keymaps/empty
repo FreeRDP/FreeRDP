@@ -1,0 +1,13 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "empty"
+{
+};
+
+keyboard "empty"
+{
+};
+

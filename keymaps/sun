@@ -1,0 +1,618 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "type4"
+{
+	VK_ESCAPE	<36>
+	VK_KEY_1	<37>
+	VK_KEY_2	<38>
+	VK_KEY_3	<39>
+	VK_KEY_4	<40>
+	VK_KEY_5	<41>
+	VK_KEY_6	<42>
+	VK_KEY_7	<43>
+	VK_KEY_8	<44>
+	VK_KEY_9	<45>
+	VK_KEY_0	<46>
+	VK_OEM_MINUS	<47>
+	VK_OEM_PLUS	<48>
+	VK_OEM_3	<49>
+	VK_BACK		<50>
+	VK_TAB		<60>
+	VK_KEY_Q	<61>
+	VK_KEY_W	<62>
+	VK_KEY_E	<63>
+	VK_KEY_R	<64>
+	VK_KEY_T	<65>
+	VK_KEY_Y	<66>
+	VK_KEY_U	<67>
+	VK_KEY_I	<68>
+	VK_KEY_O	<69>
+	VK_KEY_P	<70>
+	VK_OEM_4	<71>
+	VK_OEM_6	<72>
+	VK_DELETE	<73>
+	VK_LCONTROL	<83>
+	VK_KEY_A	<84>
+	VK_KEY_S	<85>
+	VK_KEY_D	<86>
+	VK_KEY_F	<87>
+	VK_KEY_G	<88>
+	VK_KEY_H	<89>
+	VK_KEY_J	<90>
+	VK_KEY_K	<91>
+	VK_KEY_L	<92>
+	VK_OEM_1	<93>
+	VK_OEM_7	<94>
+	VK_OEM_5	<95>
+	VK_RETURN	<96>
+	VK_LSHIFT	<106>
+	VK_KEY_Z	<107>
+	VK_KEY_X	<108>
+	VK_KEY_C	<109>
+	VK_KEY_V	<110>
+	VK_KEY_B	<111>
+	VK_KEY_N	<112>
+	VK_KEY_M	<113>
+	VK_OEM_COMMA	<114>
+	VK_OEM_PERIOD	<115>
+	VK_OEM_2	<116>
+	VK_RSHIFT	<117>
+	VK_HELP		<125>
+	VK_CAPITAL	<126>
+	VK_LMENU	<26>
+	VK_SPACE	<128>
+	VK_APPS		<74>
+	VK_F1		<12>
+	VK_F2		<13>
+	VK_F3		<15>
+	VK_F4		<17>
+	VK_F5		<19>
+	VK_F6		<21>
+	VK_F7		<23>
+	VK_F8		<24>
+	VK_F9		<25>
+	VK_F10		<14>
+	VK_F11		<16>
+	VK_F12		<18>
+	VK_SNAPSHOT	<29>
+	VK_SCROLL	<30>
+	VK_PAUSE	<28>
+	VK_NUMLOCK	<105>
+	VK_DIVIDE	<53>
+	VK_MULTIPLY	<54>
+	VK_SUBTRACT	<78>
+	VK_NUMPAD7	<75>
+	VK_NUMPAD8	<76>
+	VK_NUMPAD9	<77>
+	VK_ADD		<132>
+	VK_NUMPAD4	<98>
+	VK_NUMPAD5	<99>
+	VK_NUMPAD6	<100>
+	VK_NUMPAD1	<119>
+	VK_NUMPAD2	<120>
+	VK_NUMPAD3	<121>
+	VK_RETURN	<97>
+	VK_NUMPAD0	<101>
+	VK_DECIMAL	<57>
+};
+
+keyboard "type5"
+{
+	VK_ESCAPE	<36>
+	VK_KEY_1	<37>
+	VK_KEY_2	<38>
+	VK_KEY_3	<39>
+	VK_KEY_4	<40>
+	VK_KEY_5	<41>
+	VK_KEY_6	<42>
+	VK_KEY_7	<43>
+	VK_KEY_8	<44>
+	VK_KEY_9	<45>
+	VK_KEY_0	<46>
+	VK_OEM_MINUS	<47>
+	VK_OEM_PLUS	<48>
+	VK_OEM_3	<49>
+	VK_BACK		<50>
+	VK_TAB		<60>
+	VK_KEY_Q	<61>
+	VK_KEY_W	<62>
+	VK_KEY_E	<63>
+	VK_KEY_R	<64>
+	VK_KEY_T	<65>
+	VK_KEY_Y	<66>
+	VK_KEY_U	<67>
+	VK_KEY_I	<68>
+	VK_KEY_O	<69>
+	VK_KEY_P	<70>
+	VK_OEM_4	<71>
+	VK_OEM_6	<72>
+	VK_DELETE	<73>
+	VK_APPS		<74>
+	VK_LCONTROL	<83>
+	VK_KEY_A	<84>
+	VK_KEY_S	<85>
+	VK_KEY_D	<86>
+	VK_KEY_F	<87>
+	VK_KEY_G	<88>
+	VK_KEY_H	<89>
+	VK_KEY_J	<90>
+	VK_KEY_K	<91>
+	VK_KEY_L	<92>
+	VK_OEM_1	<93>
+	VK_OEM_7	<94>
+	VK_OEM_5	<95>
+	VK_RETURN	<96>
+	VK_LSHIFT	<106>
+	VK_KEY_Z	<107>
+	VK_KEY_X	<108>
+	VK_KEY_C	<109>
+	VK_KEY_V	<110>
+	VK_KEY_B	<111>
+	VK_KEY_N	<112>
+	VK_KEY_M	<113>
+	VK_OEM_COMMA	<114>
+	VK_OEM_PERIOD	<115>
+	VK_OEM_2	<116>
+	VK_RSHIFT	<117>
+	VK_LMENU	<26>
+	VK_CAPITAL	<126>
+	VK_SPACE	<128>
+	VK_F1		<12>
+	VK_F2		<13>
+	VK_F3		<15>
+	VK_F4		<17>
+	VK_F5		<19>
+	VK_F6		<21>
+	VK_F7		<23>
+	VK_F8		<24>
+	VK_F9		<25>
+	VK_F10		<14>
+	VK_F11		<16>
+	VK_F12		<18>
+	VK_SNAPSHOT	<29>
+	VK_SCROLL	<30>
+	VK_PAUSE	<28>
+	VK_NUMLOCK	<105>
+	VK_DIVIDE	<53>
+	VK_MULTIPLY	<54>
+	VK_SUBTRACT	<78>
+	VK_NUMPAD7	<75>
+	VK_NUMPAD8	<76>
+	VK_NUMPAD9	<77>
+	VK_ADD		<132>
+	VK_NUMPAD4	<98>
+	VK_NUMPAD5	<99>
+	VK_NUMPAD6	<100>
+	VK_NUMPAD1	<119>
+	VK_NUMPAD2	<120>
+	VK_NUMPAD3	<121>
+	VK_RETURN	<97>
+	VK_NUMPAD0	<101>
+	VK_DECIMAL	<57>
+	VK_UP		<27>
+	VK_LEFT		<31>
+	VK_DOWN		<34>
+	VK_RIGHT	<35>
+	VK_INSERT	<51>
+	VK_HOME		<59>
+	VK_END		<81>
+	VK_PRIOR	<103>
+	VK_NEXT		<130>
+	VK_HELP		<125>
+};
+
+keyboard "type4tuv"
+: extends "sun(type4)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type4_ca"
+: extends "sun(type4)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type4_jp"
+: extends "sun(type4)"
+{
+	VK_KANJI	<123>
+};
+
+keyboard "type4_euro"
+: extends "sun(type4)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type5tuv"
+: extends "sun(type5)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type5_jp"
+: extends "sun(type5)"
+{
+	VK_KANJI	<123>
+};
+
+keyboard "type5_euro"
+: extends "sun(type5)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type5hobo"
+{
+	VK_ESCAPE	<36>
+	VK_KEY_1	<37>
+	VK_KEY_2	<38>
+	VK_KEY_3	<39>
+	VK_KEY_4	<40>
+	VK_KEY_5	<41>
+	VK_KEY_6	<42>
+	VK_KEY_7	<43>
+	VK_KEY_8	<44>
+	VK_KEY_9	<45>
+	VK_KEY_0	<46>
+	VK_OEM_MINUS	<47>
+	VK_OEM_PLUS	<48>
+	VK_OEM_3	<49>
+	VK_BACK		<50>
+	VK_TAB		<60>
+	VK_KEY_Q	<61>
+	VK_KEY_W	<62>
+	VK_KEY_E	<63>
+	VK_KEY_R	<64>
+	VK_KEY_T	<65>
+	VK_KEY_Y	<66>
+	VK_KEY_U	<67>
+	VK_KEY_I	<68>
+	VK_KEY_O	<69>
+	VK_KEY_P	<70>
+	VK_OEM_4	<71>
+	VK_OEM_6	<72>
+	VK_DELETE	<73>
+	VK_APPS		<74>
+	VK_LCONTROL	<83>
+	VK_KEY_A	<84>
+	VK_KEY_S	<85>
+	VK_KEY_D	<86>
+	VK_KEY_F	<87>
+	VK_KEY_G	<88>
+	VK_KEY_H	<89>
+	VK_KEY_J	<90>
+	VK_KEY_K	<91>
+	VK_KEY_L	<92>
+	VK_OEM_1	<93>
+	VK_OEM_7	<94>
+	VK_OEM_5	<95>
+	VK_RETURN	<96>
+	VK_LSHIFT	<106>
+	VK_KEY_Z	<107>
+	VK_KEY_X	<108>
+	VK_KEY_C	<109>
+	VK_KEY_V	<110>
+	VK_KEY_B	<111>
+	VK_KEY_N	<112>
+	VK_KEY_M	<113>
+	VK_OEM_COMMA	<114>
+	VK_OEM_PERIOD	<115>
+	VK_OEM_2	<116>
+	VK_RSHIFT	<117>
+	VK_LMENU	<26>
+	VK_CAPITAL	<126>
+	VK_SPACE	<128>
+	VK_F1		<12>
+	VK_F2		<13>
+	VK_F3		<15>
+	VK_F4		<17>
+	VK_F5		<19>
+	VK_F6		<21>
+	VK_F7		<23>
+	VK_F8		<24>
+	VK_F9		<25>
+	VK_F10		<14>
+	VK_F11		<16>
+	VK_F12		<18>
+	VK_SNAPSHOT	<29>
+	VK_SCROLL	<30>
+	VK_PAUSE	<28>
+	VK_NUMLOCK	<105>
+	VK_DIVIDE	<53>
+	VK_MULTIPLY	<54>
+	VK_SUBTRACT	<78>
+	VK_NUMPAD7	<75>
+	VK_NUMPAD8	<76>
+	VK_NUMPAD9	<77>
+	VK_ADD		<132>
+	VK_NUMPAD4	<98>
+	VK_NUMPAD5	<99>
+	VK_NUMPAD6	<100>
+	VK_NUMPAD1	<119>
+	VK_NUMPAD2	<120>
+	VK_NUMPAD3	<121>
+	VK_RETURN	<97>
+	VK_NUMPAD0	<101>
+	VK_DECIMAL	<57>
+	VK_UP		<27>
+	VK_LEFT		<31>
+	VK_DOWN		<34>
+	VK_RIGHT	<35>
+	VK_INSERT	<51>
+	VK_HOME		<59>
+	VK_END		<81>
+	VK_PRIOR	<103>
+	VK_NEXT		<130>
+	VK_HELP		<125>
+};
+
+keyboard "type5tuvhobo"
+: extends "sun(type5hobo)"
+{
+	VK_OEM_102	<131>
+};
+
+keyboard "type5_jphobo"
+: extends "sun(type5hobo)"
+{
+	VK_KANJI	<123>
+};
+
+keyboard "type6"
+: extends "sun(type5)"
+{
+};
+
+keyboard "type6tuv"
+: extends "sun(type5tuv)"
+{
+};
+
+keyboard "type6unix"
+: extends "sun(type5)"
+{
+};
+
+keyboard "type6_jp"
+: extends "sun(type5_jp)"
+{
+};
+
+keyboard "type6_euro"
+: extends "sun(type5_euro)"
+{
+};
+
+keyboard "type6_usb"
+: extends "xfree86"
+{
+	VK_HELP		<245>
+};
+
+keyboard "type6tuv_usb"
+: extends "sun(type6_usb)"
+{
+	VK_OEM_102	<94>
+	VK_OEM_5	<51>
+};
+
+keyboard "type6_jp_usb"
+: extends "sun(type6_usb)"
+{
+};
+
+keyboard "type5_se"
+{
+	VK_HELP		<125>
+	VK_ESCAPE	<36>
+	VK_F1		<12>
+	VK_F2		<13>
+	VK_F3		<15>
+	VK_F4		<17>
+	VK_F5		<19>
+	VK_F6		<21>
+	VK_F7		<23>
+	VK_F8		<24>
+	VK_F9		<25>
+	VK_F10		<14>
+	VK_F11		<16>
+	VK_F12		<18>
+	VK_SNAPSHOT	<29>
+	VK_SCROLL	<30>
+	VK_PAUSE	<28>
+	VK_TILDE	<49>
+	VK_KEY_1	<37>
+	VK_KEY_2	<38>
+	VK_KEY_3	<39>
+	VK_KEY_4	<40>
+	VK_KEY_5	<41>
+	VK_KEY_6	<42>
+	VK_KEY_7	<43>
+	VK_KEY_8	<44>
+	VK_KEY_9	<45>
+	VK_KEY_0	<46>
+	VK_OEM_MINUS	<47>
+	VK_OEM_PLUS	<48>
+	VK_BACK		<50>
+	VK_INSERT	<51>
+	VK_HOME		<59>
+	VK_PRIOR	<103>
+	VK_NUMLOCK	<105>
+	VK_DIVIDE	<53>
+	VK_MULTIPLY	<54>
+	VK_SUBTRACT	<78>
+	VK_KEY_Q	<61>
+	VK_KEY_W	<62>
+	VK_KEY_E	<63>
+	VK_KEY_R	<64>
+	VK_KEY_T	<65>
+	VK_KEY_Y	<66>
+	VK_KEY_U	<67>
+	VK_KEY_I	<68>
+	VK_KEY_O	<69>
+	VK_KEY_P	<70>
+	VK_OEM_4	<71>
+	VK_OEM_6	<72>
+	VK_DELETE	<73>
+	VK_END		<81>
+	VK_NEXT		<130>
+	VK_NUMPAD7	<75>
+	VK_NUMPAD8	<76>
+	VK_NUMPAD9	<77>
+	VK_ADD		<132>
+	VK_KEY_A	<84>
+	VK_KEY_S	<85>
+	VK_KEY_D	<86>
+	VK_KEY_F	<87>
+	VK_KEY_G	<88>
+	VK_KEY_H	<89>
+	VK_KEY_J	<90>
+	VK_KEY_K	<91>
+	VK_KEY_L	<92>
+	VK_OEM_1	<93>
+	VK_OEM_7	<94>
+	VK_OEM_5	<95>
+	VK_RETURN	<96>
+	VK_NUMPAD4	<98>
+	VK_NUMPAD5	<99>
+	VK_NUMPAD6	<100>
+	VK_LSHIFT	<106>
+	VK_LSHIFT	<131>
+	VK_KEY_Z	<107>
+	VK_KEY_X	<108>
+	VK_KEY_C	<109>
+	VK_KEY_V	<110>
+	VK_KEY_B	<111>
+	VK_KEY_N	<112>
+	VK_KEY_M	<113>
+	VK_OEM_COMMA	<114>
+	VK_OEM_PERIOD	<115>
+	VK_OEM_2	<116>
+	VK_RSHIFT	<117>
+	VK_UP		<27>
+	VK_NUMPAD1	<119>
+	VK_NUMPAD2	<120>
+	VK_NUMPAD3	<121>
+	VK_RETURN	<97>
+	VK_LCONTROL	<83>
+	VK_LMENU	<26>
+	VK_SPACE	<128>
+	VK_APPS		<74>
+	VK_LEFT		<31>
+	VK_DOWN		<34>
+	VK_RIGHT	<35>
+	VK_NUMPAD0	<101>
+	VK_DECIMAL	<57>
+};
+
+keyboard "type5c_se"
+: extends "sun(type5_se)"
+{
+};
+
+keyboard "type4__se"
+{
+	VK_F1		<12>
+	VK_F2		<13>
+	VK_F3		<15>
+	VK_F4		<17>
+	VK_F5		<19>
+	VK_F6		<21>
+	VK_F7		<23>
+	VK_F8		<24>
+	VK_F9		<25>
+	VK_F10		<14>
+	VK_F11		<16>
+	VK_F12		<18>
+	VK_DELETE	<73>
+	VK_PAUSE	<28>
+	VK_SNAPSHOT	<29>
+	VK_SCROLL	<30>
+	VK_NUMLOCK	<105>
+	VK_TILDE	<36>
+	VK_KEY_1	<37>
+	VK_KEY_2	<38>
+	VK_KEY_3	<39>
+	VK_KEY_4	<40>
+	VK_KEY_5	<41>
+	VK_KEY_6	<42>
+	VK_KEY_7	<43>
+	VK_KEY_8	<44>
+	VK_KEY_9	<45>
+	VK_KEY_0	<46>
+	VK_OEM_MINUS	<47>
+	VK_OEM_PLUS	<48>
+	VK_BACK		<50>
+	VK_DIVIDE	<53>
+	VK_MULTIPLY	<54>
+	VK_SUBTRACT	<78>
+	VK_KEY_Q	<61>
+	VK_KEY_W	<62>
+	VK_KEY_E	<63>
+	VK_KEY_R	<64>
+	VK_KEY_T	<65>
+	VK_KEY_Y	<66>
+	VK_KEY_U	<67>
+	VK_KEY_I	<68>
+	VK_KEY_O	<69>
+	VK_KEY_P	<70>
+	VK_OEM_4	<71>
+	VK_OEM_6	<72>
+	VK_NUMPAD7	<75>
+	VK_NUMPAD8	<76>
+	VK_NUMPAD9	<77>
+	VK_ADD		<132>
+	VK_KEY_A	<84>
+	VK_KEY_S	<85>
+	VK_KEY_D	<86>
+	VK_KEY_F	<87>
+	VK_KEY_G	<88>
+	VK_KEY_H	<89>
+	VK_KEY_J	<90>
+	VK_KEY_K	<91>
+	VK_KEY_L	<92>
+	VK_OEM_1	<93>
+	VK_OEM_7	<94>
+	VK_OEM_5	<49>
+	VK_RETURN	<96>
+	VK_NUMPAD4	<98>
+	VK_NUMPAD5	<99>
+	VK_NUMPAD6	<100>
+	VK_LSHIFT	<106>
+	VK_LSHIFT	<131>
+	VK_KEY_Z	<107>
+	VK_KEY_X	<108>
+	VK_KEY_C	<109>
+	VK_KEY_V	<110>
+	VK_KEY_B	<111>
+	VK_KEY_N	<112>
+	VK_KEY_M	<113>
+	VK_OEM_COMMA	<114>
+	VK_OEM_PERIOD	<115>
+	VK_OEM_2	<116>
+	VK_RSHIFT	<117>
+	VK_NUMPAD1	<119>
+	VK_NUMPAD2	<120>
+	VK_NUMPAD3	<121>
+	VK_RETURN	<97>
+	VK_HELP		<125>
+	VK_LMENU	<26>
+	VK_SPACE	<128>
+	VK_APPS		<74>
+	VK_NUMPAD0	<101>
+	VK_DECIMAL	<57>
+};
+
+keyboard "type4_se"
+{
+};
+
+keyboard "type4_se_swapctl"
+{
+};
+

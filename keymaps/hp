@@ -1,0 +1,105 @@
+# This file was generated with xkb.pl (Wed Aug 11 09:09:10 2010)
+# and is based on the X Keyboard Configuration Database version 1.9
+# Please use xkb.pl to re-export newer versions of XKB
+
+
+keyboard "hil"
+{
+	VK_OEM_3	<71>
+	VK_KEY_1	<70>
+	VK_KEY_2	<69>
+	VK_KEY_3	<68>
+	VK_KEY_4	<67>
+	VK_KEY_5	<66>
+	VK_KEY_6	<65>
+	VK_KEY_7	<64>
+	VK_KEY_8	<96>
+	VK_KEY_9	<97>
+	VK_KEY_0	<98>
+	VK_OEM_MINUS	<99>
+	VK_OEM_PLUS	<100>
+	VK_BACK		<101>
+	VK_TAB		<63>
+	VK_KEY_Q	<62>
+	VK_KEY_W	<61>
+	VK_KEY_E	<60>
+	VK_KEY_R	<59>
+	VK_KEY_T	<58>
+	VK_KEY_Y	<57>
+	VK_KEY_U	<56>
+	VK_KEY_I	<104>
+	VK_KEY_O	<105>
+	VK_KEY_P	<106>
+	VK_OEM_4	<107>
+	VK_OEM_6	<108>
+	VK_OEM_5	<109>
+	VK_CAPITAL	<55>
+	VK_KEY_A	<53>
+	VK_KEY_S	<52>
+	VK_KEY_D	<51>
+	VK_KEY_F	<50>
+	VK_KEY_G	<49>
+	VK_KEY_H	<48>
+	VK_KEY_J	<112>
+	VK_KEY_K	<113>
+	VK_KEY_L	<114>
+	VK_OEM_1	<115>
+	VK_OEM_7	<116>
+	VK_RETURN	<117>
+	VK_LSHIFT	<13>
+	VK_KEY_Z	<36>
+	VK_KEY_X	<35>
+	VK_KEY_C	<34>
+	VK_KEY_V	<33>
+	VK_KEY_B	<32>
+	VK_KEY_N	<128>
+	VK_KEY_M	<120>
+	VK_OEM_COMMA	<121>
+	VK_OEM_PERIOD	<122>
+	VK_OEM_2	<123>
+	VK_RSHIFT	<12>
+	VK_LCONTROL	<14>
+	VK_LMENU	<11>
+	VK_SPACE	<129>
+	VK_RMENU	<10>
+	VK_SNAPSHOT	<87>
+	VK_ESCAPE	<39>
+	VK_F1		<84>
+	VK_F2		<83>
+	VK_F3		<82>
+	VK_F4		<81>
+	VK_APPS		<80>
+	VK_F5		<89>
+	VK_F6		<90>
+	VK_F7		<91>
+	VK_F8		<92>
+	VK_F9		<45>
+	VK_F10		<41>
+	VK_F11		<43>
+	VK_F12		<47>
+	VK_HOME		<118>
+	VK_PRIOR	<119>
+	VK_NEXT		<127>
+	VK_SELECT	<125>
+	VK_UP		<134>
+	VK_LEFT		<132>
+	VK_DOWN		<133>
+	VK_RIGHT	<135>
+	VK_DIVIDE	<25>
+	VK_MULTIPLY	<29>
+	VK_ADD		<27>
+	VK_SUBTRACT	<31>
+	VK_NUMPAD7	<21>
+	VK_NUMPAD8	<17>
+	VK_NUMPAD9	<19>
+	VK_RETURN	<23>
+	VK_NUMPAD4	<16>
+	VK_NUMPAD5	<18>
+	VK_NUMPAD6	<20>
+	VK_NUMPAD1	<24>
+	VK_NUMPAD2	<26>
+	VK_NUMPAD3	<28>
+	VK_NUMPAD0	<30>
+	VK_DECIMAL	<44>
+};
+
