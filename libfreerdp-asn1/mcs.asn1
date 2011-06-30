@@ -1,0 +1,753 @@
+
+MCS-PROTOCOL-3 DEFINITIONS AUTOMATIC TAGS::=
+
+BEGIN
+
+-- Part 1: Fundamental MCS types
+
+H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+						-- First four octets shall be country
+						-- code and Manufacturer code, assigned
+						-- as specified in Annex A/H.221 for
+						-- NS-cap and NS-comm
+
+Key ::= CHOICE					-- Identifier of a standard or non-standard object
+{
+	object			OBJECT IDENTIFIER,
+	h221NonStandard		H221NonStandardIdentifier
+}
+
+NonStandardParameter ::= SEQUENCE
+{
+	key	Key,
+	data	OCTET STRING
+}
+
+ChannelId ::= INTEGER (0..65535)		-- range is 16 bits
+
+StaticChannelId ::= ChannelId (1..1000)		-- those known permanently
+
+DynamicChannelId ::= ChannelId (1001..65535)	-- those created and deleted
+
+UserId ::= DynamicChannelId			-- created by Attach-User
+						-- deleted by Detach-User
+
+PrivateChannelId ::= DynamicChannelId		-- created by Channel-Convene
+						-- deleted by Channel-Disband
+
+AssignedChannelId ::= DynamicChannelId		-- created by Channel-Join zero
+						-- deleted by last Channel-Leave
+
+TokenId ::= INTEGER (1..65535)			-- all are known permanently
+
+TokenStatus ::= CHOICE
+{
+	notInUse			NULL,
+	selfGrabbed			NULL,
+	otherGrabbed			NULL,
+	selfInhibited			NULL,
+	otherInhibited			NULL,
+	selfRecipient			NULL,
+	selfGiving			NULL,
+	otherGiving			NULL,
+	...
+}
+
+DataPriority ::= CHOICE
+{
+	top				NULL,
+	high				NULL,
+	medium				NULL,
+	low				NULL,
+	...
+}
+
+Segmentation ::= BIT STRING
+{
+	begin				(0),
+	end				(1)
+} (SIZE (2))
+
+-- Part 2: Extended parameter
+
+ExtendedParameters ::= SEQUENCE
+{
+	unreliableDataSupported		BOOLEAN,
+	domainReferenceID		INTEGER (0 .. 65535),
+	nonStandard			SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ExtendedParameterPropose ::= SEQUENCE
+{
+	targetExtendedParameters	ExtendedParameters,
+	minimumExtendedParameters	ExtendedParameters,
+	maximumExtendedParameters	ExtendedParameters,
+	nonStandard			SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ExtendedParameterAccept ::= SEQUENCE
+{
+	extendedParameters		ExtendedParameters,
+	nonStandard			SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 3: Merge domain
+
+PlumbDomainIndication ::= SEQUENCE
+{
+	heightLimit		INTEGER (0..MAX),
+				-- a restriction on the MCSPDU receiver
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ErectDomainRequest ::= SEQUENCE
+{
+	subHeight		INTEGER (0..MAX),
+				-- height in domain of the MCSPDU transmitter
+	subInterval		INTEGER (0..MAX),
+				-- its throughput enforcement interval in milliseconds
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelAttributes ::= CHOICE
+{
+	static		SEQUENCE
+	{
+		channelId	StaticChannelId,
+				-- joined is implicitely TRUE
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	userId		SEQUENCE
+	{
+		joined		BOOLEAN,
+				-- TRUE if user is joined to its user id
+		userId		UserId,
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	private		SEQUENCE
+	{
+		joined		BOOLEAN,
+				-- TRUE if channel id is joined below
+		channelId	PrivateChannelId,
+		manager		UserId,
+		admitted	SET OF UserId,
+				-- may span multiple MergeChannelsRequest
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	assigned	SEQUENCE
+	{
+		channelId	AssignedChannelId,
+				-- joined is implicitely TRUE
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	...
+}
+
+MergeChannelsRequest ::= SEQUENCE
+{
+	mergeChannels		SET OF ChannelAttributes,
+	purgeChannelIds		SET OF ChannelId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+MergeChannelsConfirm ::= SEQUENCE
+{
+	mergeChannels		SET OF ChannelAttributes,
+	purgeChannelIds		SET OF ChannelId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+PurgeChannelsIndication ::= SEQUENCE
+{
+	detachUserIds		SET OF UserId,
+				-- purge user id channels
+	purgeChannelIds		SET OF ChannelId,
+				-- purge other channels
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenAttributes ::= CHOICE
+{
+	grabbed		SEQUENCE
+	{
+		tokenId		TokenId,
+		grabber		UserId,
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	inhibited	SEQUENCE
+	{
+		tokenId		TokenId,
+		inhibitors	SET OF UserId,
+				-- may span multiple MergeTokensRequest
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	giving		SEQUENCE
+	{
+		tokenId		TokenId,
+		grabber		UserId,
+		recipient	UserId,
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	ungivable	SEQUENCE
+	{
+		tokenId		TokenId,
+		grabber		UserId,
+				-- recipient has since detached
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	},
+	given		SEQUENCE
+	{
+		tokenId		TokenId,
+		recipient	UserId,
+				-- grabber released or detached
+		nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+		...
+	}
+}
+
+MergeTokensRequest ::= SEQUENCE
+{
+	mergeTokens	SET OF TokenAttributes,
+	purgeTokenIds	SET OF TokenId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+MergeTokensConfirm ::= SEQUENCE
+{
+	mergeTokens	SET OF TokenAttributes,
+	purgeTokenIds	SET OF TokenId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+PurgeTokensIndication ::= SEQUENCE
+{
+	purgeTokenIds	SET OF TokenId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 4: Disconnect provider
+
+DisconnectProviderUltimatum ::= SEQUENCE
+{
+	reason	Reason,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+RejectMCSPDUUltimatum ::= SEQUENCE
+{
+	diagnostic	Diagnostic,
+	initialOctets	OCTET STRING,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 5: Attach/Detach user
+
+AttachUserRequest ::= SEQUENCE
+{
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+AttachUserConfirm ::= SEQUENCE
+{
+	result		Result,
+	initiator	UserId OPTIONAL,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+DetachUserRequest ::= SEQUENCE
+{
+	reason	Reason,
+	userIds	SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+DetachUserIndication ::= SEQUENCE
+{
+	reason	Reason,
+	userIds	SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 6: Channel management
+
+ChannelJoinRequest ::= SEQUENCE
+{
+	initiator	UserId,
+	channelId	ChannelId,	-- may be zero
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelJoinConfirm ::= SEQUENCE
+{
+	result		Result,
+	initiator	UserId,
+	requested	ChannelId,	-- may be zero
+	channelId	ChannelId OPTIONAL,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelLeaveRequest ::= SEQUENCE
+{
+	channelIds	SET OF ChannelId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelConveneRequest ::= SEQUENCE
+{
+	initiator	UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelConveneConfirm ::= SEQUENCE
+{
+	result		Result,
+	initiator	UserId,
+	channelId	PrivateChannelId OPTIONAL,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelDisbandRequest ::= SEQUENCE
+{
+	initiator	UserId,
+	channelId	PrivateChannelId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelDisbandIndication ::= SEQUENCE
+{
+	channelId	PrivateChannelId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+ChannelAdmitRequest ::= SEQUENCE
+{
+	initiator	UserId,
+	channelId	PrivateChannelId,
+	userIds		SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelAdmitIndication ::= SEQUENCE
+{
+	initiator	UserId,
+	channelId	PrivateChannelId,
+	userIds		SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelExpelRequest ::= SEQUENCE
+{
+	initiator	UserId,
+	channelId	PrivateChannelId,
+	userIds		SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+ChannelExpelIndication ::= SEQUENCE
+{
+	channelId	PrivateChannelId,
+	userIds		SET OF UserId,
+	nonStandard	SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 7: Data transfer
+
+SendDataRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	channelId		ChannelId,
+	reliability		BOOLEAN,
+	domainReferenceID	INTEGER (0 .. 65535) OPTIONAL,
+	dataPriority		DataPriority,
+	segmentation		Segmentation,
+	userData		OCTET STRING,
+	totalDataSize		INTEGER	OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+SendDataIndication ::= SEQUENCE
+{
+	initiator		UserId,
+	channelId		ChannelId,
+	reliability		BOOLEAN,
+	domainReferenceID	INTEGER (0 .. 65535) OPTIONAL,
+	dataPriority		DataPriority,
+	segmentation		Segmentation,
+	userData		OCTET STRING,
+	totalDataSize		INTEGER	OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+UniformSendDataRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	channelId		ChannelId,
+	reliability		BOOLEAN,
+	domainReferenceID	INTEGER (0 .. 65535) OPTIONAL,
+	dataPriority		DataPriority,
+	segmentation		Segmentation,
+	userData		OCTET STRING,
+	totalDataSize		INTEGER	OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+UniformSendDataIndication ::= SEQUENCE
+{
+	initiator		UserId,
+	channelId		ChannelId,
+	reliability		BOOLEAN,
+	domainReferenceID	INTEGER (0 .. 65535) OPTIONAL,
+	dataPriority		DataPriority,
+	segmentation		Segmentation,
+	userData		OCTET STRING,
+	totalDataSize		INTEGER	OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 8: Token management
+
+TokenGrabRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenGrabConfirm ::= SEQUENCE
+{
+	result			Result,
+	initiator		UserId,
+	tokenId			TokenId,
+	tokenStatus		TokenStatus,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenInhibitRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenInhibitConfirm ::= SEQUENCE
+{
+	result			Result,
+	initiator		UserId,
+	tokenId			TokenId,
+	tokenStatus		TokenStatus,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenGiveRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	recipient		UserId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenGiveIndication ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	recipient		UserId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenGiveResponse ::= SEQUENCE
+{
+	result			Result,
+	recipient		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenGiveConfirm ::= SEQUENCE
+{
+	result			Result,
+	initiator		UserId,
+	tokenId			TokenId,
+	tokenStatus		TokenStatus,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenPleaseRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenPleaseIndication ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenReleaseRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenReleaseConfirm ::= SEQUENCE
+{
+	result			Result,
+	initiator		UserId,
+	tokenId			TokenId,
+	tokenStatus		TokenStatus,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenTestRequest ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+TokenTestConfirm ::= SEQUENCE
+{
+	initiator		UserId,
+	tokenId			TokenId,
+	tokenStatus		TokenStatus,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 9: Capabilities notification
+
+CapabilityID ::= CHOICE
+{
+	standardID		INTEGER (0 .. 65535),
+	nonstandardID		Key
+}
+
+CapabilityClass ::= CHOICE
+{
+	null		NULL,
+	unsignedMin	INTEGER (0 .. MAX),
+	unsignedMax	INTEGER (0 .. MAX)
+}
+
+ParticipationIndicator ::= CHOICE
+{
+	global		NULL,
+	partial		INTEGER (1 .. 2)
+}
+
+RequestCapability ::= SEQUENCE
+{
+	capabilityID		CapabilityID,
+	capabilityClass		CapabilityClass,
+	participationIndicator	ParticipationIndicator,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+SeqOfRequestCapabilities ::= SEQUENCE OF RequestCapability
+
+IndicationCapability ::= SEQUENCE
+{
+	capabilityID			CapabilityID,
+	capabilityClass			CapabilityClass,
+	summitProviderSupported		BOOLEAN,
+	intermediateNodeSupported	BOOLEAN,
+	nonStandard			SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+SeqOfIndicationCapabilities ::= SEQUENCE OF IndicationCapability
+
+CapabilitiesNotificationRequest ::= SEQUENCE
+{
+	v2NodePresent		BOOLEAN,
+	addList			SeqOfRequestCapabilities OPTIONAL,
+	removeList		SeqOfRequestCapabilities OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+CapabilitiesNotificationIndication ::= SEQUENCE
+{
+	v2NodePresent		BOOLEAN,
+	addList			SeqOfIndicationCapabilities OPTIONAL,
+	removeList		SeqOfIndicationCapabilities OPTIONAL,
+	nonStandard		SEQUENCE OF NonStandardParameter OPTIONAL,
+	...
+}
+
+-- Part 10: Status codes
+
+Reason ::= CHOICE
+{
+	rn-domain-disconnected	NULL,
+	rn-provider-initiated	NULL,
+	rn-token-purged		NULL,
+	rn-user-requested	NULL,
+	rn-channel-purged	NULL,
+	...
+}
+
+Result ::= CHOICE
+{
+	rt-successful			NULL,
+	rt-domain-merging		NULL,
+	rt-domain-not-hierarchical	NULL,
+	rt-no-such-channel		NULL,
+	rt-no-such-domain		NULL,
+	rt-no-such-user			NULL,
+	rt-not-admitted			NULL,
+	rt-other-user-id		NULL,
+	rt-parameters-unacceptable	NULL,
+	rt-token-not-available		NULL,
+	rt-token-not-possessed		NULL,
+	rt-too-many-channels		NULL,
+	rt-too-many-tokens		NULL,
+	rt-too-many-users		NULL,
+	rt-unspecified-failure		NULL,
+	rt-user-rejected		NULL,
+	...
+}
+
+Diagnostic ::= CHOICE
+{
+	dc-inconsistent-merge		NULL,
+	dc-forbidden-PDU-downward	NULL,
+	dc-forbidden-PDU-upward		NULL,
+	dc-invalid-BER-encoding		NULL,
+	dc-invalid-PER-encoding		NULL,
+	dc-misrouted-user		NULL,
+	dc-unrequested-confirm		NULL,
+	dc-wrong-transport-priority	NULL,
+	dc-channel-id-conflict		NULL,
+	dc-token-id-conflict		NULL,
+	dc-not-user-id-channel		NULL,
+	dc-too-many-channels		NULL,
+	dc-too-many-tokens		NULL,
+	dc-too-many-users		NULL,
+	...
+}
+
+-- Part 11: MCSPDU repertoire
+
+NonStandardPDU ::= SEQUENCE
+{
+	data				NonStandardParameter,
+	...
+}
+
+ExtendedParameterMCSPDU ::= CHOICE
+{
+	extendedParameterPropose	ExtendedParameterPropose,
+	extendedParameterAccept 	ExtendedParameterAccept,
+	nonStandard			NonStandardPDU,
+	...
+}
+
+DomainMCSPDU ::= CHOICE
+{
+	plumbDomainIndication		PlumbDomainIndication,
+	erectDomainRequest		ErectDomainRequest,
+	mergeChannelsRequest		MergeChannelsRequest,
+	mergeChannelsConfirm		MergeChannelsConfirm,
+	purgeChannelsIndication		PurgeChannelsIndication,
+	mergeTokensRequest		MergeTokensRequest,
+	mergeTokensConfirm		MergeTokensConfirm,
+	purgeTokensIndication		PurgeTokensIndication,
+	disconnectProviderUltimatum	DisconnectProviderUltimatum,
+	rejectMCSPDUUltimatum		RejectMCSPDUUltimatum,
+	attachUserRequest		AttachUserRequest,
+	attachUserConfirm		AttachUserConfirm,
+	detachUserRequest		DetachUserRequest,
+	detachUserIndication		DetachUserIndication,
+	channelJoinRequest		ChannelJoinRequest,
+	channelJoinConfirm		ChannelJoinConfirm,
+	channelLeaveRequest		ChannelLeaveRequest,
+	channelConveneRequest		ChannelConveneRequest,
+	channelConveneConfirm		ChannelConveneConfirm,
+	channelDisbandRequest		ChannelDisbandRequest,
+	channelDisbandIndication	ChannelDisbandIndication,
+	channelAdmitRequest		ChannelAdmitRequest,
+	channelAdmitIndication		ChannelAdmitIndication,
+	channelExpelRequest		ChannelExpelRequest,
+	channelExpelIndication		ChannelExpelIndication,
+	sendDataRequest			SendDataRequest,
+	sendDataIndication		SendDataIndication,
+	uniformSendDataRequest		UniformSendDataRequest,
+	uniformSendDataIndication	UniformSendDataIndication,
+	tokenGrabRequest		TokenGrabRequest,
+	tokenGrabConfirm		TokenGrabConfirm,
+	tokenInhibitRequest		TokenInhibitRequest,
+	tokenInhibitConfirm		TokenInhibitConfirm,
+	tokenGiveRequest		TokenGiveRequest,
+	tokenGiveIndication		TokenGiveIndication,
+	tokenGiveResponse		TokenGiveResponse,
+	tokenGiveConfirm		TokenGiveConfirm,
+	tokenPleaseRequest		TokenPleaseRequest,
+	tokenPleaseIndication		TokenPleaseIndication,
+	tokenReleaseRequest		TokenReleaseRequest,
+	tokenReleaseConfirm		TokenReleaseConfirm,
+	tokenTestRequest		TokenTestRequest,
+	tokenTestConfirm		TokenTestConfirm,
+	nonStandard			NonStandardPDU,
+	...
+}
+
+END
+
+
