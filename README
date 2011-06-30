@@ -1,0 +1,29 @@
+FreeRDP: A Remote Desktop Protocol Client
+=========================================
+
+FreeRDP is a client-side implementation of the Remote Desktop Protocol (RDP) following the Microsoft Open Specifiations.
+
+Resources
+---------
+
+Website: http://www.freerdp.com/
+Wiki: http://www.freerdp.com/wiki/
+Sources: http://www.freerdp.com/git/
+API doc: http://www.freerdp.com/api/
+
+IRC channel: #freerdp @ irc.freenode.net
+Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
+
+Microsoft Open Specifications
+-----------------------------
+
+Information regarding the Microsoft Open Specifications can be found at:
+http://www.microsoft.com/openspecifications/
+
+Compilation
+-----------
+
+Instructions on how to get started compiling FreeRDP can be found on the wiki:
+http://www.freerdp.com/wiki/doku.php?id=compilation
+
+
