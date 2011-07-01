@@ -17,15 +17,7 @@
  * limitations under the License.
  */
 
-#include "frdp.h"
-#include "rdp.h"
-#include "tls.h"
-#include "asn1.h"
-#include "security.h"
 #include "stream.h"
-#include "tcp.h"
-#include "mcs.h"
-#include "iso.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif

@@ -28,3 +28,4 @@ add_subdirectory(libfreerdp-utils)
 add_subdirectory(libfreerdp-kbd)
 add_subdirectory(libfreerdp-gdi)
 
+#add_subdirectory(libfreerdp-core)

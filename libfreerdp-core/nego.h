@@ -20,7 +20,6 @@
 #ifndef __NEGO_H
 #define __NEGO_H
 
-#include "frdp.h"
 #include "stream.h"
 #include "network.h"
 
