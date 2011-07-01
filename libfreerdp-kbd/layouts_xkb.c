@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "libkbd.h"
 #include "keyboard.h"
 #include "x_layout_id_table.h"
@@ -58,10 +57,10 @@ comma_substring(char *s, int n)
 }
 
 unsigned int
-detect_keyboard_layout_from_xkb(void *dpy)
+detect_keyboaFRDP_layout_from_xkb(void *dpy)
 {
 	char *layout, *variant;
-	unsigned int keyboard_layout = 0, group = 0;
+	unsigned int keyboaFRDP_layout = 0, group = 0;
 	XkbRF_VarDefsRec rules_names;
 	XKeyboardState coreKbdState;
 	XkbStateRec state;
@@ -83,7 +82,7 @@ detect_keyboard_layout_from_xkb(void *dpy)
 		DEBUG_KBD("layout: %s", layout);
 		DEBUG_KBD("variant: %s", variant);
 
-		keyboard_layout = find_keyboard_layout_in_xorg_rules(layout, variant);
+		keyboaFRDP_layout = find_keyboaFRDP_layout_in_xorg_rules(layout, variant);
 
 		free(rules_names.model);
 		free(rules_names.layout);
@@ -91,7 +90,7 @@ detect_keyboard_layout_from_xkb(void *dpy)
 		free(rules_names.options);
 	}
 
-	return keyboard_layout;
+	return keyboaFRDP_layout;
 }
 
 int
@@ -359,7 +358,7 @@ load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 }
 
 void
-load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
+load_keyboaFRDP_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
 {
 	char* kbd;
 	char* xkbfileEnd;

@@ -23,11 +23,11 @@
 #define __LAYOUTS_X_H
 
 unsigned int
-find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
+find_keyboaFRDP_layout_in_xorg_rules(char* layout, char* variant);
 
 #if defined(sun)
 unsigned int
-detect_keyboard_type_and_layout_sunos(char* xkbfile, int length);
+detect_keyboaFRDP_type_and_layout_sunos(char* xkbfile, int length);
 #endif
 
 #endif

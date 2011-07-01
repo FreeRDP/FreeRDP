@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Base Types
+ * GDI RemoteFX Decoder
  *
- * Copyright 2009-2011 Jay Sorg
+ * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __TYPES_BASE_H
-#define __TYPES_BASE_H
+#ifndef __DECODE_H
+#define __DECODE_H
 
-typedef unsigned char uint8;
-typedef signed char sint8;
-typedef unsigned short uint16;
-typedef signed short sint16;
-typedef unsigned int uint32;
-typedef signed int sint32;
-#ifdef _WIN32
-typedef unsigned __int64 uint64;
-typedef signed __int64 sint64;
-#else
-typedef unsigned long long uint64;
-typedef signed long long sint64;
-#endif
+#include <freerdp/freerdp.h>
 
-#ifndef True
-#define True  (1)
-#endif
+#include "gdi.h"
 
-#ifndef False
-#define False (0)
-#endif
+void gdi_decode_frame(GDI *gdi, int x, int y, uint8 * data, uint32 length);
+void gdi_decode_data(GDI *gdi, uint8 * data, int data_size);
 
-typedef int FRDP_BOOL;
-
-#endif
+#endif /* __DECODE_H */

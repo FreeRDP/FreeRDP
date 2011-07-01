@@ -192,7 +192,7 @@ static int BitBlt_SRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 			if (srcp != 0 && dstp != 0)
 			{
-				gdi_copy_memb(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
+				gdi_copy_mem_backwards(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
 			}
 		}
 	}

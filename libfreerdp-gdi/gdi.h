@@ -17,15 +17,10 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifndef __GDI_H
 #define __GDI_H
 
 #include "color.h"
-#include <freerdp/rfx.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
 
@@ -252,7 +247,7 @@ typedef struct _GDI GDI;
 
 uint32 gdi_rop3_code(uint8 code);
 void gdi_copy_mem(uint8 *d, uint8 *s, int n);
-void gdi_copy_memb(uint8 *d, uint8 *s, int n);
+void gdi_copy_mem_backwards(uint8 *d, uint8 *s, int n);
 uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);

@@ -22,11 +22,11 @@
 
 #include "types/base.h"
 
-#define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
-#define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
-#define RDP_KEYBOARD_LAYOUT_TYPE_IME        4
+#define RDP_KEYBOAFRDP_LAYOUT_TYPE_STANDARD   1
+#define RDP_KEYBOAFRDP_LAYOUT_TYPE_VARIANT    2
+#define RDP_KEYBOAFRDP_LAYOUT_TYPE_IME        4
 
-typedef struct rdp_keyboard_layout
+typedef struct rdp_keyboaFRDP_layout
 {
 	uint32 code;
 	char name[50];
@@ -35,10 +35,10 @@ typedef struct rdp_keyboard_layout
 rdpKeyboardLayout *
 freerdp_kbd_get_layouts(int types);
 unsigned int
-freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id);
+freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id);
 uint8
-freerdp_kbd_get_scancode_by_keycode(uint8 keycode, fbool * extended);
+freerdp_kbd_get_scancode_by_keycode(uint8 keycode, FRDP_BOOL * extended);
 uint8
-freerdp_kbd_get_scancode_by_virtualkey(int vkcode, fbool * extended);
+freerdp_kbd_get_scancode_by_virtualkey(int vkcode, FRDP_BOOL * extended);
 
 #endif /* __FREERDP_KBD_H */

@@ -20,8 +20,6 @@
 #ifndef __LAYOUTS_XKB_H
 #define __LAYOUTS_XKB_H
 
-#include "config.h"
-
 typedef unsigned char KeycodeToVkcode[256];
 
 typedef struct
@@ -39,7 +37,7 @@ int
 init_xkb(void *dpy);
 
 unsigned int
-detect_keyboard_layout_from_xkb(void *dpy);
+detect_keyboaFRDP_layout_from_xkb(void *dpy);
 
 int
 init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode);
@@ -47,7 +45,7 @@ init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode);
 #else
 
 void
-load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile);
+load_keyboaFRDP_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile);
 
 #endif
 

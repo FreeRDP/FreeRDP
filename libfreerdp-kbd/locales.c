@@ -422,7 +422,7 @@ static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
 };
 
 unsigned int
-detect_keyboard_layout_from_locale()
+detect_keyboaFRDP_layout_from_locale()
 {
 	int i;
 	int j;

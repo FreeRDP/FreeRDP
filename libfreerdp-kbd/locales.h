@@ -321,6 +321,6 @@ Time zones, taken from Windows Server 2008
 */
 
 unsigned int
-detect_keyboard_layout_from_locale();
+detect_keyboaFRDP_layout_from_locale();
 
 #endif /* __LOCALES_H */

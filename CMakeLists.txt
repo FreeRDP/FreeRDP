@@ -25,4 +25,5 @@ add_subdirectory(include)
 add_subdirectory(libfreerdp-asn1)
 add_subdirectory(libfreerdp-utils)
 add_subdirectory(libfreerdp-kbd)
+add_subdirectory(libfreerdp-gdi)
 

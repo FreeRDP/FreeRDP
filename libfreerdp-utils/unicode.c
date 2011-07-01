@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-#include "config.h"
 #include <errno.h>
 #include <freerdp/utils/memory.h>
 

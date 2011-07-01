@@ -178,7 +178,7 @@
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
 rdpKeyboardLayout *
-get_keyboard_layouts(int types);
+get_keyboaFRDP_layouts(int types);
 
 char *
 get_layout_name(unsigned int keyboardLayoutID);
