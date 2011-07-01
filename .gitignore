@@ -13,3 +13,4 @@ Makefile
 # Binaries
 *.so
 *.so.*
+cunit/test_freerdp

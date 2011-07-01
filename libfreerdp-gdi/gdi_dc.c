@@ -146,7 +146,10 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
 
 		if(hBrush->style == GDI_BS_PATTERN)
-			gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
+		{
+			if (hBrush->pattern != NULL)
+				gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
+		}
 
 		free(hBrush);
 	}

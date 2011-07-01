@@ -1356,7 +1356,6 @@ void test_gdi_CreatePatternBrush(void)
 	CU_ASSERT(hBrush->style == GDI_BS_PATTERN);
 	CU_ASSERT(hBrush->pattern == hBitmap);
 
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
 }
 

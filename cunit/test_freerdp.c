@@ -21,8 +21,6 @@
 
 #include "test_color.h"
 #include "test_libgdi.h"
-#include "test_librfx.h"
-#include "test_ntlmssp.h"
 #include "test_freerdp.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
@@ -63,8 +61,6 @@ int main(int argc, char* argv[])
 	{
 		add_color_suite();
 		add_libgdi_suite();
-		add_librfx_suite();
-		add_ntlmssp_suite();
 	}
 	else
 	{
@@ -77,14 +73,6 @@ int main(int argc, char* argv[])
 			else if (strcmp("libgdi", argv[*pindex]) == 0)
 			{
 				add_libgdi_suite();
-			}
-			else if (strcmp("librfx", argv[*pindex]) == 0)
-			{
-				add_librfx_suite();
-			}
-			else if (strcmp("ntlmssp", argv[*pindex]) == 0)
-			{
-				add_ntlmssp_suite();
 			}
 
 			*pindex = *pindex + 1;
