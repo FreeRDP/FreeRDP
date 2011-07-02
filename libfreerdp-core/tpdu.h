@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Transport Packets (TPKTs)
+ * X.224 Transport Protocol Data Units (TPDUs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,14 +17,29 @@
  * limitations under the License.
  */
 
-#ifndef __TPKT_H
-#define __TPKT_H
+#ifndef __TPDU_H
+#define __TPDU_H
 
 #include <freerdp/utils/stream.h>
 
-uint16
-tpkt_read_header(STREAM* s);
-void
-tpkt_write_header(STREAM* s, int length);
+enum X224_TPDU_TYPE
+{
+	X224_TPDU_CONNECTION_REQUEST = 0xE0,
+	X224_TPDU_CONNECTION_CONFIRM = 0xD0,
+	X224_TPDU_DISCONNECT_REQUEST = 0x80,
+	X224_TPDU_DATA = 0xF0,
+	X224_TPDU_ERROR = 0x70
+};
 
-#endif /* __TPKT_H */
+uint8
+tpdu_read_header(STREAM* s, uint16 length);
+void
+tpdu_write_header(STREAM* s, uint16 length, uint8 code);
+void
+tpdu_write_connection_request(STREAM* s, uint16 length);
+void
+tpdu_write_disconnect_request(STREAM* s, uint16 length);
+void
+tpdu_write_data(STREAM* s, uint16 length);
+
+#endif /* __TPDU_H */

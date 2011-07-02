@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * TPKT Headers
+ * Transport Packets (TPKTs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,10 +17,12 @@
  * limitations under the License.
  */
 
+#include "tpdu.h"
+
 #include "tpkt.h"
 
 /**
- * TPKT headers are defined in:
+ * TPKTs are defined in:
  *
  * http://tools.ietf.org/html/rfc1006/
  * RFC 1006 - ISO Transport Service on top of the TCP
@@ -43,13 +45,15 @@
  * |    Length (LSB)    |   4
  * |____________________|
  * |                    |
- * |        TPDU        |   5 - ?
+ * |     X.224 TPDU     |   5 - ?
  *          ....
+ *
+ * A TPKT header is of fixed length 4, and the following X.224 TPDU is at least three bytes long.
+ * Therefore, the minimum TPKT length is 7, and the maximum TPKT length is 65535. Because the TPKT
+ * length includes the TPKT header (4 bytes), the maximum X.224 TPDU length is 65531.
  */
 
-#include <freerdp/utils/stream.h>
-
-int
+uint16
 tpkt_read_header(STREAM* s)
 {
 	uint8 version;
@@ -65,7 +69,7 @@ tpkt_read_header(STREAM* s)
 	else
 	{
 		/* not a TPKT header */
-		length = -1;
+		length = 0;
 	}
 
 	return length;
