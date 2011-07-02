@@ -24,6 +24,8 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
+include(AutoVersioning)
+
 # Soname versioning - 0.0.0 since it is not being managed yet
 set(FREERDP_VERSION_MAJOR "0")
 set(FREERDP_VERSION_MINOR "0")
