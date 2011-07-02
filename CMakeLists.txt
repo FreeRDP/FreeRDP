@@ -39,8 +39,13 @@ endif()
 # Path to put keymaps
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
 
+# Build CUnit
+find_package(CUnit)
+if(CUNIT_FOUND)
+   add_subdirectory(cunit)
+endif()
+
 # Libraries
-add_subdirectory(cunit)
 add_subdirectory(include)
 add_subdirectory(libfreerdp-asn1)
 add_subdirectory(libfreerdp-utils)

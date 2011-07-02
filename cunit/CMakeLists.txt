@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_directories(${CUNIT_INCLUDE_DIRS})
+
 include_directories(.)
 include_directories(../include)
 include_directories(../libfreerdp-gdi)
@@ -31,7 +33,7 @@ add_executable(test_freerdp
 	test_freerdp.c
 	test_freerdp.h)
 
-target_link_libraries(test_freerdp cunit)
+target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-asn1)
