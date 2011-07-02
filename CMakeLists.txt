@@ -24,6 +24,8 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
+include(AutoVersioning)
+
 # Soname versioning - 0.0.0 since it is not being managed yet
 set(FREERDP_VERSION_MAJOR "0")
 set(FREERDP_VERSION_MINOR "0")
@@ -39,8 +41,13 @@ endif()
 # Path to put keymaps
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
 
+# Build CUnit
+find_package(CUnit)
+if(CUNIT_FOUND)
+   add_subdirectory(cunit)
+endif()
+
 # Libraries
-add_subdirectory(cunit)
 add_subdirectory(include)
 add_subdirectory(libfreerdp-asn1)
 add_subdirectory(libfreerdp-utils)
