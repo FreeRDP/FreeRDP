@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Network Tests
+ * Stream Unit Tests
  *
  * Copyright 2011 Vic Lee
  *
@@ -19,9 +19,8 @@
 
 #include "test_freerdp.h"
 
-int init_network_suite(void);
-int clean_network_suite(void);
-int add_network_suite(void);
+int init_stream_suite(void);
+int clean_stream_suite(void);
+int add_stream_suite(void);
 
-void test_network_stream(void);
-
+void test_stream(void);

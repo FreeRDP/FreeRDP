@@ -52,7 +52,7 @@ stream_free(STREAM * stream)
 }
 
 void
-stream_increase_capacity(STREAM * stream)
+stream_extend(STREAM * stream)
 {
 	int pos;
 

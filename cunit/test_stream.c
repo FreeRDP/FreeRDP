@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Network Tests
+ * Stream Unit Tests
  *
  * Copyright 2011 Vic Lee
  *
@@ -24,26 +24,28 @@
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/stream.h>
 
-#include "test_network.h"
+#include "test_stream.h"
 
-int init_network_suite(void)
+int init_stream_suite(void)
 {
 	return 0;
 }
 
-int clean_network_suite(void)
+int clean_stream_suite(void)
 {
 	return 0;
 }
 
-int add_network_suite(void)
+int add_stream_suite(void)
 {
-	add_test_suite(network);
+	add_test_suite(stream);
 
-	add_test_function(network_stream);
+	add_test_function(stream);
+
+	return 0;
 }
 
-void test_network_stream(void)
+void test_stream(void)
 {
 	STREAM * stream;
 	int pos;
@@ -60,7 +62,7 @@ void test_network_stream(void)
 	stream_write_uint32(stream, 0x03040506);
 	stream_write_uint64(stream, 0x0708091011121314LL);
 
-	/*freerdp_hexdump(stream->buffer, 15);*/
+	/* freerdp_hexdump(stream->buffer, 15); */
 
 	stream_set_pos(stream, pos);
 	stream_seek(stream, 3);

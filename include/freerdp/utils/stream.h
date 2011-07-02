@@ -37,10 +37,10 @@ void
 stream_free(STREAM * stream);
 
 void
-stream_increase_capacity(STREAM * stream);
+stream_extend(STREAM * stream);
 #define stream_check_capacity(_s,_n) \
 	while (_s->ptr - _s->buffer + (_n) > _s->capacity) \
-		stream_increase_capacity(_s)
+		stream_extend(_s)
 
 #define stream_get_pos(_s) (_s->ptr - _s->buffer)
 #define stream_set_pos(_s,_m) _s->ptr = _s->buffer + (_m)
