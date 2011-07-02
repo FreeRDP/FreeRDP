@@ -23,13 +23,13 @@
 
 #include <freerdp/types/base.h>
 
-typedef struct _STREAM STREAM;
 struct _STREAM
 {
-	uint8 * buffer;
 	uint8 * ptr;
+	uint8 * buffer;
 	int capacity;
 };
+typedef struct _STREAM STREAM;
 
 STREAM *
 stream_new(int capacity);
@@ -87,6 +87,28 @@ stream_extend(STREAM * stream);
 	*_s->ptr++ = ((_v) >> 40) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 48) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 56) & 0xFF; } while (0)
+
+#define stream_peek_uint8(_s, _v) do { _v = *_s->ptr; } while (0)
+#define stream_peek_uint16(_s, _v) do { _v = \
+	(uint16)(*_s->ptr) + \
+	(((uint16)(*(_s->ptr + 1))) << 8); \
+	} while (0)
+#define stream_peek_uint32(_s, _v) do { _v = \
+	(uint32)(*_s->ptr) + \
+	(((uint32)(*(_s->ptr + 1))) << 8) + \
+	(((uint32)(*(_s->ptr + 2))) << 16) + \
+	(((uint32)(*(_s->ptr + 3))) << 24); \
+	} while (0)
+#define stream_peek_uint64(_s, _v) do { _v = \
+	(uint64)(*_s->ptr) + \
+	(((uint64)(*(_s->ptr + 1))) << 8) + \
+	(((uint64)(*(_s->ptr + 2))) << 16) + \
+	(((uint64)(*(_s->ptr + 3))) << 24) + \
+	(((uint64)(*(_s->ptr + 4))) << 32) + \
+	(((uint64)(*(_s->ptr + 5))) << 40) + \
+	(((uint64)(*(_s->ptr + 6))) << 48) + \
+	(((uint64)(*(_s->ptr + 7))) << 56); \
+	} while (0)
 
 #endif /* __STREAM_UTILS_H */
 
