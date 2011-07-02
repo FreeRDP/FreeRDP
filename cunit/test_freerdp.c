@@ -21,6 +21,7 @@
 
 #include "test_color.h"
 #include "test_libgdi.h"
+#include "test_network.h"
 #include "test_freerdp.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
@@ -61,6 +62,7 @@ int main(int argc, char* argv[])
 	{
 		add_color_suite();
 		add_libgdi_suite();
+		add_network_suite();
 	}
 	else
 	{
@@ -73,6 +75,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("libgdi", argv[*pindex]) == 0)
 			{
 				add_libgdi_suite();
+			}
+			else if (strcmp("network", argv[*pindex]) == 0)
+			{
+				add_network_suite();
 			}
 
 			*pindex = *pindex + 1;

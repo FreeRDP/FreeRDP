@@ -9,6 +9,8 @@ add_executable(test_freerdp
 	test_color.h
 	test_libgdi.c
 	test_libgdi.h
+	test_network.c
+	test_network.h
 	test_freerdp.c
 	test_freerdp.h)
 
