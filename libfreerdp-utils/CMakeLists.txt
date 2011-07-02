@@ -8,6 +8,7 @@ set(FREERDP_UTILS_SRCS
 	hexdump.c
 	memory.c
 	semaphore.c
+	stream.c
 	unicode.c)
 
 add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
