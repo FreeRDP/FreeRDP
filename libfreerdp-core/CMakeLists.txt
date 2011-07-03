@@ -32,6 +32,8 @@ set(LIBFREERDP_CORE_SRCS
 #	ntlmssp.h
 	tcp.c
 	tcp.h
+	tls.c
+	tls.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
@@ -41,5 +43,7 @@ set(LIBFREERDP_CORE_SRCS
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
+
+target_link_libraries(freerdp-core ssl)
 
 install(TARGETS freerdp-core DESTINATION lib)

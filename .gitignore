@@ -14,3 +14,4 @@ Makefile
 *.so
 *.so.*
 cunit/test_freerdp
+freerdp-ui/test/freerdp-test
