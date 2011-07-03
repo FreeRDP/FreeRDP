@@ -64,7 +64,7 @@ tpkt_read_header(STREAM* s)
 	if (version == 3)
 	{
 		stream_seek(s, 2);
-		stream_read_uint16(s, length);
+		stream_read_uint16_be(s, length);
 	}
 	else
 	{
@@ -80,5 +80,5 @@ tpkt_write_header(STREAM* s, int length)
 {
 	stream_write_uint8(s, 3); /* version */
 	stream_write_uint8(s, 8); /* reserved */
-	stream_write_uint16(s, length); /* length */
+	stream_write_uint16_be(s, length); /* length */
 }

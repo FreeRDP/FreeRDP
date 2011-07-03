@@ -21,6 +21,7 @@ include_directories(${CUNIT_INCLUDE_DIRS})
 
 include_directories(.)
 include_directories(../include)
+include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)
 
 add_executable(test_freerdp
@@ -30,11 +31,14 @@ add_executable(test_freerdp
 	test_libgdi.h
 	test_stream.c
 	test_stream.h
+	test_transport.c
+	test_transport.h
 	test_freerdp.c
 	test_freerdp.h)
 
 target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 
+target_link_libraries(test_freerdp freerdp-core)
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-asn1)
 target_link_libraries(test_freerdp freerdp-utils)
