@@ -250,36 +250,44 @@ transport_check_fds(rdpTransport * transport)
 	if (r <= 0)
 		return r;
 
-	pos = stream_get_pos(transport->recv_buffer);
-	/* Ensure the TPKT header is available. */
-	if (pos <= 4)
-		return 0;
-
-	stream_set_pos(transport->recv_buffer, 0);
-	len = tpkt_read_header(transport->recv_buffer);
-	if (len == 0)
+	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
 	{
-		printf("transport_check_fds: protocol error, not a TPKT header.\n");
-		return -1;
+		/* Ensure the TPKT header is available. */
+		if (pos <= 4)
+			return 0;
+
+		stream_set_pos(transport->recv_buffer, 0);
+		len = tpkt_read_header(transport->recv_buffer);
+		if (len == 0)
+		{
+			printf("transport_check_fds: protocol error, not a TPKT header.\n");
+			return -1;
+		}
+		if (pos < len)
+		{
+			stream_set_pos(transport->recv_buffer, pos);
+			return 0; /* Packet is not yet completely received. */
+		}
+
+		/* A complete packet has been received. In case there are trailing data
+		 * for the next packet, we copy it to the new receive buffer.
+		 */
+		received = transport->recv_buffer;
+		transport->recv_buffer = stream_new(BUFFER_SIZE);
+		if (pos > len)
+		{
+			stream_set_pos(received, len);
+			stream_check_capacity(transport->recv_buffer, pos - len);
+			stream_copy(transport->recv_buffer, received, pos - len);
+		}
+
+		stream_set_pos(received, 0);
+		r = transport->recv_callback(received, transport->recv_callback_data);
+		stream_free(received);
+
+		if (r != 0)
+			return r;
 	}
-	if (pos < len)
-		return 0; /* Packet is not yet completely received. */
 
-	/* A complete packet has been received. In case there are trailing data
-	 * for the next packet, we copy it to the new receive buffer.
-	 */
-	received = transport->recv_buffer;
-	transport->recv_buffer = stream_new(BUFFER_SIZE);
-	if (pos > len)
-	{
-		stream_set_pos(received, len);
-		stream_check_capacity(transport->recv_buffer, pos - len);
-		stream_copy(transport->recv_buffer, received, pos - len);
-	}
-
-	stream_set_pos(received, 0);
-	r = transport->recv_callback(received, transport->recv_callback_data);
-	stream_free(received);
-
-	return r;
+	return 0;
 }
