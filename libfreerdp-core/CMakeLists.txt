@@ -30,6 +30,8 @@ set(LIBFREERDP_CORE_SRCS
 #	credssp.h
 #	ntlmssp.c
 #	ntlmssp.h
+	tcp.c
+	tcp.h
 	tpdu.c
 	tpdu.h
 	tpkt.c

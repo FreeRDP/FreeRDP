@@ -47,22 +47,20 @@ int nego_connect(rdpNego *nego)
 			nego->state = NEGO_STATE_FAIL;
 	}
 
-	DEBUG_NEGO("Negotiating protocol security");
-
 	while (nego->state != NEGO_STATE_FINAL)
 	{
-		nego_send(nego);
-
 		DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
+
+		nego_send(nego);
 
 		if (nego->state == NEGO_STATE_FAIL)
 		{
 			nego->state = NEGO_STATE_FINAL;
 			return 0;
 		}
-
-		nego->state = NEGO_STATE_FINAL;
 	}
+
+	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	return 1;
 }
@@ -214,6 +212,10 @@ int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
 				nego_process_negotiation_failure(nego, s);
 				break;
 		}
+	}
+	else
+	{
+		nego->state = NEGO_STATE_FINAL;
 	}
 
 	return 0;

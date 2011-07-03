@@ -20,16 +20,29 @@
 #ifndef __TRANSPORT_H
 #define __TRANSPORT_H
 
+#include "tcp.h"
+
 #include <time.h>
 #include <freerdp/types/base.h>
 #include <freerdp/utils/stream.h>
+
+enum _TRANSPORT_STATE
+{
+	TRANSPORT_STATE_INITIAL,
+	TRANSPORT_STATE_NEGO,
+	TRANSPORT_STATE_TLS,
+	TRANSPORT_STATE_NLA,
+	TRANSPORT_STATE_FINAL
+};
+typedef enum _TRANSPORT_STATE TRANSPORT_STATE;
 
 typedef struct rdp_transport rdpTransport;
 typedef int (* PacketReceivedCallback) (rdpTransport * transport, STREAM * stream, void* extra);
 
 struct rdp_transport
 {
-	int sockfd;
+	TRANSPORT_STATE state;
+	struct rdp_tcp * tcp;
 	struct crypto_tls * tls;
 	struct timespec ts;
 	STREAM * recv_buffer;

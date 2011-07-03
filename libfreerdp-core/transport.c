@@ -34,122 +34,16 @@
 
 #define BUFFER_SIZE 16384
 
-rdpTransport *
-transport_new(void)
-{
-	rdpTransport * transport;
-
-	transport = (rdpTransport *) xmalloc(sizeof(rdpTransport));
-	memset(transport, 0, sizeof(rdpTransport));
-
-	transport->sockfd = -1;
-
-	/* a small 0.1ms delay when transport is blocking. */
-	transport->ts.tv_sec = 0;
-	transport->ts.tv_nsec = 100000;
-
-	/* receive buffer for non-blocking read. */
-	transport->recv_buffer = stream_new(BUFFER_SIZE);
-
-	return transport;
-}
-
-void
-transport_free(rdpTransport * transport)
-{
-	stream_free(transport->recv_buffer);
-	xfree(transport);
-}
-
-static FRDP_BOOL
-transport_connect_sockfd(rdpTransport * transport, const char * server, int port)
-{
-	int status;
-	int sockfd = -1;
-	char servname[10];
-	struct addrinfo hints = { 0 };
-	struct addrinfo * res, * ai;
-
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	snprintf(servname, sizeof(servname), "%d", port);
-	status = getaddrinfo(server, servname, &hints, &res);
-
-	if (status != 0)
-	{
-		printf("transport_connect: getaddrinfo (%s)\n", gai_strerror(status));
-		return False;
-	}
-
-	for (ai = res; ai; ai = ai->ai_next)
-	{
-		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-
-		if (sockfd < 0)
-			continue;
-
-		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
-		{
-			printf("connected to %s:%s\n", server, servname);
-			break;
-		}
-
-		sockfd = -1;
-	}
-	freeaddrinfo(res);
-
-	if (sockfd == -1)
-	{
-		printf("unable to connect to %s:%s\n", server, servname);
-		return False;
-	}
-
-	transport->sockfd = sockfd;
-
-	return True;
-}
-
-static FRDP_BOOL
-transport_configure_sockfd(rdpTransport * transport)
-{
-	int flags;
-
-	flags = fcntl(transport->sockfd, F_GETFL);
-
-	if (flags == -1)
-	{
-		printf("transport_configure_sockfd: fcntl failed.\n");
-		return False;
-	}
-
-	fcntl(transport->sockfd, F_SETFL, flags | O_NONBLOCK);
-
-	return True;
-}
-
 FRDP_BOOL
 transport_connect(rdpTransport * transport, const char * server, int port)
 {
-	if (transport_connect_sockfd(transport, server, port) != True)
-		return False;
-
-	if (transport_configure_sockfd(transport) != True)
-		return False;
-
-	return True;
+	return transport->tcp->connect(transport->tcp, server, port);
 }
 
-int
+FRDP_BOOL
 transport_disconnect(rdpTransport * transport)
 {
-	if (transport->sockfd != -1)
-	{
-		close(transport->sockfd);
-		transport->sockfd = -1;
-	}
-
-	return True;
+	return transport->tcp->disconnect(transport->tcp);
 }
 
 int
@@ -183,7 +77,7 @@ transport_send_tcp(rdpTransport * transport, STREAM * stream)
 
 	while (head < tail)
 	{
-		bytes = send(transport->sockfd, head, tail - head, MSG_NOSIGNAL);
+		bytes = send(transport->tcp->sockfd, head, tail - head, MSG_NOSIGNAL);
 
 		if (bytes < 0)
 		{
@@ -226,7 +120,7 @@ transport_recv_tcp(rdpTransport * transport)
 
 	stream_check_capacity(transport->recv_buffer, BUFFER_SIZE);
 
-	bytes = recv(transport->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
+	bytes = recv(transport->tcp->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
 
 	if (bytes == -1)
 	{
@@ -295,4 +189,43 @@ transport_check_fds(rdpTransport * transport)
 	stream_free(received);
 
 	return bytes;
+}
+
+void
+transport_init(rdpTransport * transport)
+{
+	transport->state = TRANSPORT_STATE_NEGO;
+}
+
+rdpTransport *
+transport_new(void)
+{
+	rdpTransport * transport;
+
+	transport = (rdpTransport *) xzalloc(sizeof(rdpTransport));
+
+	if (transport != NULL)
+	{
+		transport->tcp = tcp_new();
+
+		/* a small 0.1ms delay when transport is blocking. */
+		transport->ts.tv_sec = 0;
+		transport->ts.tv_nsec = 100000;
+
+		/* receive buffer for non-blocking read. */
+		transport->recv_buffer = stream_new(BUFFER_SIZE);
+	}
+
+	return transport;
+}
+
+void
+transport_free(rdpTransport * transport)
+{
+	if (transport != NULL)
+	{
+		stream_free(transport->recv_buffer);
+		tcp_free(transport->tcp);
+		xfree(transport);
+	}
 }
