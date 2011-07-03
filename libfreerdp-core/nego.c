@@ -17,8 +17,13 @@
  * limitations under the License.
  */
 
-#include "stream.h"
+#include <stdio.h>
+#include <string.h>
+
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
+
+#include "tpkt.h"
 
 #include "nego.h"
 
@@ -28,7 +33,7 @@
  * @return
  */
 
-int nego_connect(NEGO *nego)
+int nego_connect(rdpNego *nego)
 {
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
@@ -42,15 +47,21 @@ int nego_connect(NEGO *nego)
 			nego->state = NEGO_STATE_FAIL;
 	}
 
+	DEBUG_NEGO("Negotiating protocol security");
+
 	while (nego->state != NEGO_STATE_FINAL)
 	{
 		nego_send(nego);
+
+		DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
 
 		if (nego->state == NEGO_STATE_FAIL)
 		{
 			nego->state = NEGO_STATE_FINAL;
 			return 0;
 		}
+
+		nego->state = NEGO_STATE_FINAL;
 	}
 
 	return 1;
@@ -62,11 +73,11 @@ int nego_connect(NEGO *nego)
  * @return
  */
 
-int nego_tcp_connect(NEGO *nego)
+int nego_tcp_connect(rdpNego *nego)
 {
 	if (nego->tcp_connected == 0)
 	{
-		if (tcp_connect(nego->net->tcp, nego->hostname, nego->port) == False)
+		if (transport_connect(nego->transport, nego->hostname, nego->port) == False)
 		{
 			nego->tcp_connected = 0;
 			return 0;
@@ -87,10 +98,10 @@ int nego_tcp_connect(NEGO *nego)
  * @return
  */
 
-int nego_tcp_disconnect(NEGO *nego)
+int nego_tcp_disconnect(rdpNego *nego)
 {
 	if (nego->tcp_connected)
-		tcp_disconnect(nego->net->tcp);
+		transport_disconnect(nego->transport);
 
 	nego->tcp_connected = 0;
 	return 1;
@@ -101,14 +112,17 @@ int nego_tcp_disconnect(NEGO *nego)
  * @param nego
  */
 
-void nego_attempt_nla(NEGO *nego)
+void nego_attempt_nla(rdpNego *nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
 
+	DEBUG_NEGO("Attempting NLA security");
+
 	nego_tcp_connect(nego);
-	x224_send_connection_request(nego->net->iso);
-	tpkt_recv(nego->net->iso, &code, NULL);
+	nego_send_negotiation_request(nego);
+
+	transport_check_fds(nego->transport);
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -128,14 +142,17 @@ void nego_attempt_nla(NEGO *nego)
  * @param nego
  */
 
-void nego_attempt_tls(NEGO *nego)
+void nego_attempt_tls(rdpNego *nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_TLS;
 
+	DEBUG_NEGO("Attempting TLS security");
+
 	nego_tcp_connect(nego);
-	x224_send_connection_request(nego->net->iso);
-	tpkt_recv(nego->net->iso, &code, NULL);
+	nego_send_negotiation_request(nego);
+
+	transport_check_fds(nego->transport);
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -153,18 +170,17 @@ void nego_attempt_tls(NEGO *nego)
  * @param nego
  */
 
-void nego_attempt_rdp(NEGO *nego)
+void nego_attempt_rdp(rdpNego *nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_RDP;
 
-	nego_tcp_connect(nego);
-	x224_send_connection_request(nego->net->iso);
+	DEBUG_NEGO("Attempting RDP security");
 
-	if (tpkt_recv(nego->net->iso, &code, NULL) == NULL)
-		nego->state = NEGO_STATE_FAIL;
-	else
-		nego->state = NEGO_STATE_FINAL;
+	nego_tcp_connect(nego);
+	nego_send_negotiation_request(nego);
+
+	transport_check_fds(nego->transport);
 }
 
 /**
@@ -173,10 +189,10 @@ void nego_attempt_rdp(NEGO *nego)
  * @param s
  */
 
-void nego_recv(NEGO *nego, STREAM s)
+void nego_recv(rdpNego *nego, STREAM* s)
 {
 	uint8 type;
-	in_uint8(s, type); /* Type */
+	stream_read_uint8(s, type); /* Type */
 
 	switch (type)
 	{
@@ -194,7 +210,7 @@ void nego_recv(NEGO *nego, STREAM s)
  * @param nego
  */
 
-void nego_send(NEGO *nego)
+void nego_send(rdpNego *nego)
 {
 	if (nego->state == NEGO_STATE_NLA)
 		nego_attempt_nla(nego);
@@ -204,21 +220,58 @@ void nego_send(NEGO *nego)
 		nego_attempt_rdp(nego);
 }
 
+void nego_send_negotiation_request(rdpNego *nego)
+{
+	STREAM* s;
+	int length;
+	uint8 *bm, *em;
+
+	s = stream_new(64);
+	length = TPKT_HEADER_LENGTH + TPDU_CONNECTION_REQUEST_LENGTH;
+	stream_get_mark(s, bm);
+	stream_seek(s, length);
+
+	if (nego->cookie)
+	{
+		int cookie_length = strlen(nego->cookie);
+		stream_write_buffer(s, "Cookie: mstshash=", 17);
+		stream_write_buffer(s, nego->cookie, cookie_length);
+		stream_write_uint8(s, 0x0D); /* CR */
+		stream_write_uint8(s, 0x0A); /* LF */
+		length += cookie_length + 19;
+		stream_get_mark(s, em);
+	}
+	else if (nego->routing_token)
+	{
+		int routing_token_length = strlen(nego->routing_token);
+		stream_write_buffer(s, nego->routing_token, routing_token_length);
+		length += routing_token_length;
+		stream_get_mark(s, em);
+	}
+
+	stream_set_mark(s, bm);
+	tpkt_write_header(s, length);
+	tpdu_write_connection_request(s, length - 5);
+	stream_set_mark(s, em);
+
+	transport_send(nego->transport, s);
+}
+
 /**
  * Process Negotiation Response from Connection Confirm message.
  * @param nego
  * @param s
  */
 
-void nego_process_negotiation_response(NEGO *nego, STREAM s)
+void nego_process_negotiation_response(rdpNego *nego, STREAM* s)
 {
 	uint8 flags;
 	uint16 length;
 	uint32 selectedProtocol;
 
-	in_uint8(s, flags);
-	in_uint16_le(s, length);
-	in_uint32_le(s, selectedProtocol);
+	stream_read_uint8(s, flags);
+	stream_read_uint16(s, length);
+	stream_read_uint32(s, selectedProtocol);
 
 	if (selectedProtocol == PROTOCOL_NLA)
 		nego->selected_protocol = PROTOCOL_NLA;
@@ -236,57 +289,37 @@ void nego_process_negotiation_response(NEGO *nego, STREAM s)
  * @param s
  */
 
-void nego_process_negotiation_failure(NEGO *nego, STREAM s)
+void nego_process_negotiation_failure(rdpNego *nego, STREAM* s)
 {
 	uint8 flags;
 	uint16 length;
 	uint32 failureCode;
 
-	in_uint8(s, flags);
-	in_uint16_le(s, length);
-	in_uint32_le(s, failureCode);
+	stream_read_uint8(s, flags);
+	stream_read_uint16(s, length);
+	stream_read_uint32(s, failureCode);
 
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
-			//printf("Error: SSL_REQUIRED_BY_SERVER\n");
+			DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
 			break;
 		case SSL_NOT_ALLOWED_BY_SERVER:
-			//printf("Error: SSL_NOT_ALLOWED_BY_SERVER\n");
+			DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
 			break;
 		case SSL_CERT_NOT_ON_SERVER:
-			//printf("Error: SSL_CERT_NOT_ON_SERVER\n");
+			DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
 			break;
 		case INCONSISTENT_FLAGS:
-			//printf("Error: INCONSISTENT_FLAGS\n");
+			DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
 			break;
 		case HYBRID_REQUIRED_BY_SERVER:
-			//printf("Error: HYBRID_REQUIRED_BY_SERVER\n");
+			DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
 		default:
-			printf("Error: Unknown protocol security error %d\n", failureCode);
+			DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
 			break;
 	}
-}
-
-/**
- * Create a new NEGO state machine instance.
- * @param iso
- * @return
- */
-
-NEGO* nego_new(struct rdp_network * net)
-{
-	NEGO *nego = (NEGO*) xmalloc(sizeof(NEGO));
-
-	if (nego != NULL)
-	{
-		memset(nego, '\0', sizeof(NEGO));
-		nego->net = net;
-		nego_init(nego);
-	}
-
-	return nego;
 }
 
 /**
@@ -294,10 +327,30 @@ NEGO* nego_new(struct rdp_network * net)
  * @param nego
  */
 
-void nego_init(NEGO *nego)
+void nego_init(rdpNego *nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->requested_protocols = PROTOCOL_RDP;
+	nego->transport->recv_callback = tpkt_recv;
+}
+
+/**
+ * Create a new NEGO state machine instance.
+ * @param transport
+ * @return
+ */
+
+rdpNego* nego_new(struct rdp_transport * transport)
+{
+	rdpNego *nego = (rdpNego*) xzalloc(sizeof(rdpNego));
+
+	if (nego != NULL)
+	{
+		nego->transport = transport;
+		nego_init(nego);
+	}
+
+	return nego;
 }
 
 /**
@@ -305,7 +358,57 @@ void nego_init(NEGO *nego)
  * @param nego
  */
 
-void nego_free(NEGO *nego)
+void nego_free(rdpNego *nego)
 {
 	xfree(nego);
+}
+
+/**
+ * Set target hostname and port.
+ * @param nego
+ * @param hostname
+ * @param port
+ */
+
+void nego_set_target(rdpNego *nego, char* hostname, int port)
+{
+	nego->hostname = hostname;
+	nego->port = port;
+}
+
+/**
+ * Set enabled security protocols.
+ * @param nego
+ * @param rdp
+ * @param tls
+ * @param nla
+ */
+
+void nego_set_protocols(rdpNego *nego, int rdp, int tls, int nla)
+{
+	nego->enabled_protocols[PROTOCOL_RDP] = rdp;
+	nego->enabled_protocols[PROTOCOL_TLS] = tls;
+	nego->enabled_protocols[PROTOCOL_NLA] = nla;
+}
+
+/**
+ * Set routing token.
+ * @param nego
+ * @param routing_token
+ */
+
+void nego_set_routing_token(rdpNego *nego, char* routing_token)
+{
+	nego->routing_token = routing_token;
+}
+
+/**
+ * Set cookie.
+ * @param nego
+ * @param cookie
+ */
+
+void nego_set_cookie(rdpNego *nego, char* cookie)
+{
+	nego->cookie = cookie;
 }

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Transport Packets (TPKTs)
+ * RDP Constants
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,24 +17,24 @@
  * limitations under the License.
  */
 
-#ifndef __TPKT_H
-#define __TPKT_H
+/**
+ * Protocol Security Negotiation Protocols
+ */
+enum RDP_NEG_PROTOCOLS
+{
+	PROTOCOL_RDP = 0x00000000,
+	PROTOCOL_TLS = 0x00000001,
+	PROTOCOL_NLA = 0x00000002
+};
 
-#include "tpdu.h"
-#include "transport.h"
-
-#include <freerdp/utils/stream.h>
-
-#define TPKT_HEADER_LENGTH	4
-
-uint16
-tpkt_read_header(STREAM* s);
-void
-tpkt_write_header(STREAM* s, int length);
-
-void
-tpkt_send_connection_request(rdpTransport * transport);
-int
-tpkt_recv(rdpTransport * transport, STREAM* s);
-
-#endif /* __TPKT_H */
+/**
+ * Protocol Security Negotiation Failure Codes
+ */
+enum RDP_NEG_FAILURE_FAILURECODES
+{
+	SSL_REQUIRED_BY_SERVER = 0x00000001,
+	SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
+	SSL_CERT_NOT_ON_SERVER = 0x00000003,
+	INCONSISTENT_FLAGS = 0x00000004,
+	HYBRID_REQUIRED_BY_SERVER = 0x00000005
+};

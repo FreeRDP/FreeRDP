@@ -55,3 +55,5 @@ add_subdirectory(libfreerdp-kbd)
 add_subdirectory(libfreerdp-gdi)
 
 add_subdirectory(libfreerdp-core)
+
+add_subdirectory(freerdp-ui)

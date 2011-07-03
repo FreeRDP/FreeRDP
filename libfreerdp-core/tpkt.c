@@ -79,6 +79,16 @@ void
 tpkt_write_header(STREAM* s, int length)
 {
 	stream_write_uint8(s, 3); /* version */
-	stream_write_uint8(s, 8); /* reserved */
+	stream_write_uint8(s, 0); /* reserved */
 	stream_write_uint16_be(s, length); /* length */
+}
+
+int
+tpkt_recv(rdpTransport * transport, STREAM* s)
+{
+	uint16 length;
+
+	length = tpkt_read_header(s);
+
+	freerdp_hexdump(s->buffer, length);
 }

@@ -81,7 +81,7 @@ tpdu_read_header(STREAM* s, uint16 length)
 void
 tpdu_write_header(STREAM* s, uint16 length, uint8 code)
 {
-	stream_write_uint8(s, length - 5); /* LI */
+	stream_write_uint8(s, length); /* LI */
 	stream_write_uint8(s, code); /* code */
 
 	if (code == X224_TPDU_DATA)
@@ -99,18 +99,17 @@ tpdu_write_header(STREAM* s, uint16 length, uint8 code)
 void
 tpdu_write_connection_request(STREAM* s, uint16 length)
 {
-	tpdu_write_header(s, length - 5, X224_TPDU_CONNECTION_REQUEST);
-	/* TODO: RDP_NEG_DATA */
+	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
 }
 
 void
 tpdu_write_disconnect_request(STREAM* s, uint16 length)
 {
-	tpdu_write_header(s, length - 5, X224_TPDU_DISCONNECT_REQUEST);
+	tpdu_write_header(s, length, X224_TPDU_DISCONNECT_REQUEST);
 }
 
 void
 tpdu_write_data(STREAM* s, uint16 length)
 {
-	tpdu_write_header(s, length - 5, X224_TPDU_DATA);
+	tpdu_write_header(s, length, X224_TPDU_DATA);
 }

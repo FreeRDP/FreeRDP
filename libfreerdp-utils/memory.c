@@ -23,64 +23,101 @@
 
 #include <freerdp/utils/memory.h>
 
+/**
+ * Allocate memory.
+ * @param size
+ */
+
 void *
 xmalloc(size_t size)
 {
 	void * mem;
 
 	if (size < 1)
-	{
 		size = 1;
-	}
+
 	mem = malloc(size);
+
 	if (mem == NULL)
-	{
 		perror("xmalloc");
-	}
+
 	return mem;
 }
 
+/**
+ * Allocate memory initialized to zero.
+ * @param size
+ */
+
 void *
-xrealloc(void * oldmem, size_t size)
+xzalloc(size_t size)
 {
 	void * mem;
 
 	if (size < 1)
-	{
 		size = 1;
-	}
-	mem = realloc(oldmem, size);
+
+	mem = calloc(1, size);
+
 	if (mem == NULL)
-	{
-		perror("xrealloc");
-	}
+		perror("xzalloc");
+
 	return mem;
 }
 
-void
-xfree(void * mem)
+/**
+ * Reallocate memory.
+ * @param ptr
+ * @param size
+ */
+
+void *
+xrealloc(void * ptr, size_t size)
 {
-	if (mem != NULL)
-	{
-		free(mem);
-	}
+	void * mem;
+
+	if (size < 1)
+		size = 1;
+
+	mem = realloc(ptr, size);
+
+	if (mem == NULL)
+		perror("xrealloc");
+
+	return mem;
 }
 
+/**
+ * Free memory.
+ * @param mem
+ */
+
+void
+xfree(void * ptr)
+{
+	if (ptr != NULL)
+		free(ptr);
+}
+
+/**
+ * Duplicate a string in memory.
+ * @param str
+ * @return
+ */
+
 char *
-xstrdup(const char * s)
+xstrdup(const char * str)
 {
 	char * mem;
 
 #ifdef _WIN32
-	mem = _strdup(s);
+	mem = _strdup(str);
 #else
-	mem = strdup(s);
+	mem = strdup(str);
 #endif
 
 	if (mem == NULL)
-	{
 		perror("strdup");
-	}
 
 	return mem;
 }

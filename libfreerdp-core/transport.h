@@ -20,9 +20,12 @@
 #ifndef __TRANSPORT_H
 #define __TRANSPORT_H
 
+#include <time.h>
+#include <freerdp/types/base.h>
 #include <freerdp/utils/stream.h>
 
-typedef int (* PacketReceivedCallback) (STREAM * stream, void * callback_data);
+typedef struct rdp_transport rdpTransport;
+typedef int (* PacketReceivedCallback) (rdpTransport * transport, STREAM * stream);
 
 struct rdp_transport
 {
@@ -30,19 +33,16 @@ struct rdp_transport
 	struct crypto_tls * tls;
 	struct timespec ts;
 	STREAM * recv_buffer;
-
 	PacketReceivedCallback recv_callback;
-	void * recv_callback_data;
 };
-typedef struct rdp_transport rdpTransport;
 
 rdpTransport *
 transport_new(void);
 void
 transport_free(rdpTransport * transport);
-int
+FRDP_BOOL
 transport_connect(rdpTransport * transport, const char * server, int port);
-int
+FRDP_BOOL
 transport_disconnect(rdpTransport * transport);
 int
 transport_start_tls(rdpTransport * transport);

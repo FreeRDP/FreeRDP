@@ -23,8 +23,9 @@
 #include <stddef.h>
 
 void* xmalloc(size_t size);
-void* xrealloc(void * oldmem, size_t size);
-void xfree(void * mem);
-char* xstrdup(const char * s);
+void* xzalloc(size_t size);
+void* xrealloc(void * ptr, size_t size);
+void xfree(void * ptr);
+char* xstrdup(const char * str);
 
 #endif /* __MEMORY_UTILS_H */

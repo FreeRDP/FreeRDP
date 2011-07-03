@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-core cmake build script
+# FreeRDP Test UI cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -18,26 +18,13 @@
 # limitations under the License.
 
 include_directories(.)
-include_directories(../include)
+include_directories(../../include)
+include_directories(../../libfreerdp-core)
 
-add_definitions(-DL_ENDIAN=1)
-add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
+add_executable(freerdp-test
+	freerdp.c)
 
-set(LIBFREERDP_CORE_SRCS
-	nego.c
-	nego.h
-#	credssp.c
-#	credssp.h
-#	ntlmssp.c
-#	ntlmssp.h
-	tpdu.c
-	tpdu.h
-	tpkt.c
-	tpkt.h
-	transport.c
-	transport.h
-)
-
-add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
-
-install(TARGETS freerdp-core DESTINATION lib)
+target_link_libraries(freerdp-test freerdp-core)
+target_link_libraries(freerdp-test freerdp-gdi)
+target_link_libraries(freerdp-test freerdp-asn1)
+target_link_libraries(freerdp-test freerdp-utils)

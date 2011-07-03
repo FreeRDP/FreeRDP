@@ -45,6 +45,8 @@ stream_extend(STREAM * stream);
 #define stream_get_pos(_s) (_s->ptr - _s->buffer)
 #define stream_set_pos(_s,_m) _s->ptr = _s->buffer + (_m)
 #define stream_seek(_s,_offset) _s->ptr += (_offset)
+#define stream_get_mark(_s,_mark) _mark = _s->ptr
+#define stream_set_mark(_s,_mark) _s->ptr = _mark
 #define stream_get_head(_s) _s->buffer
 #define stream_get_tail(_s) _s->ptr
 

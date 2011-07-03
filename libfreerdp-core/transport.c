@@ -61,34 +61,35 @@ transport_free(rdpTransport * transport)
 	xfree(transport);
 }
 
-static int
+static FRDP_BOOL
 transport_connect_sockfd(rdpTransport * transport, const char * server, int port)
 {
+	int status;
+	int sockfd = -1;
+	char servname[10];
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
-	int r;
-	char servname[10];
-	int sockfd = -1;
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
 	snprintf(servname, sizeof(servname), "%d", port);
-	r = getaddrinfo(server, servname, &hints, &res);
-	if (r != 0)
+	status = getaddrinfo(server, servname, &hints, &res);
+
+	if (status != 0)
 	{
-		printf("transport_connect: getaddrinfo (%s)\n", gai_strerror(r));
-		return -1;
+		printf("transport_connect: getaddrinfo (%s)\n", gai_strerror(status));
+		return False;
 	}
 
 	for (ai = res; ai; ai = ai->ai_next)
 	{
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
 		if (sockfd < 0)
 			continue;
 
-		r = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
-		if (r == 0)
+		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
 		{
 			printf("connected to %s:%s\n", server, servname);
 			break;
@@ -101,44 +102,42 @@ transport_connect_sockfd(rdpTransport * transport, const char * server, int port
 	if (sockfd == -1)
 	{
 		printf("unable to connect to %s:%s\n", server, servname);
-		return -1;
+		return False;
 	}
 
 	transport->sockfd = sockfd;
 
-	return 0;
+	return True;
 }
 
-static int
+static FRDP_BOOL
 transport_configure_sockfd(rdpTransport * transport)
 {
 	int flags;
 
 	flags = fcntl(transport->sockfd, F_GETFL);
+
 	if (flags == -1)
 	{
 		printf("transport_configure_sockfd: fcntl failed.\n");
-		return -1;
+		return False;
 	}
+
 	fcntl(transport->sockfd, F_SETFL, flags | O_NONBLOCK);
 
-	return 0;
+	return True;
 }
 
-int
+FRDP_BOOL
 transport_connect(rdpTransport * transport, const char * server, int port)
 {
-	int r;
+	if (transport_connect_sockfd(transport, server, port) != True)
+		return False;
 
-	r = transport_connect_sockfd(transport, server, port);
-	if (r != 0)
-		return r;
+	if (transport_configure_sockfd(transport) != True)
+		return False;
 
-	r = transport_configure_sockfd(transport);
-	if (r != 0)
-		return r;
-
-	return 0;
+	return True;
 }
 
 int
@@ -149,7 +148,8 @@ transport_disconnect(rdpTransport * transport)
 		close(transport->sockfd);
 		transport->sockfd = -1;
 	}
-	return 0;
+
+	return True;
 }
 
 int
@@ -174,28 +174,33 @@ transport_send_tls(rdpTransport * transport, STREAM * stream)
 static int
 transport_send_tcp(rdpTransport * transport, STREAM * stream)
 {
+	int bytes;
 	uint8 * head;
 	uint8 * tail;
-	int r;
 
 	head = stream_get_head(stream);
 	tail = stream_get_tail(stream);
+
 	while (head < tail)
 	{
-		r = send(transport->sockfd, head, tail - head, MSG_NOSIGNAL);
-		if (r < 0)
+		bytes = send(transport->sockfd, head, tail - head, MSG_NOSIGNAL);
+
+		if (bytes < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 			{
 				if (transport_delay(transport) != 0)
 					return -1;
+
 				continue;
 			}
-			printf("transport_send_tcp: send (%d)\n", errno);
+
+			perror("send");
 			return -1;
 		}
-		head += r;
+		head += bytes;
 	}
+
 	return 0;
 }
 
@@ -217,69 +222,77 @@ transport_recv_tls(rdpTransport * transport)
 static int
 transport_recv_tcp(rdpTransport * transport)
 {
-	int r;
+	int bytes;
 
 	stream_check_capacity(transport->recv_buffer, BUFFER_SIZE);
 
-	r = recv(transport->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
-	if (r == -1)
+	bytes = recv(transport->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
+
+	if (bytes == -1)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
-		printf("transport_recv_tcp: recv failed (%d).\n", errno);
+
+		perror("recv");
 		return -1;
 	}
-	stream_seek(transport->recv_buffer, r);
+
+	stream_seek(transport->recv_buffer, bytes);
 	
-	return r;
+	return bytes;
 }
 
 int
 transport_check_fds(rdpTransport * transport)
 {
-	int r;
 	int pos;
-	uint16 len;
+	int bytes;
+	uint16 length;
 	STREAM * received;
 
 	if (transport->tls)
-		r = transport_recv_tls(transport);
+		bytes = transport_recv_tls(transport);
 	else
-		r = transport_recv_tcp(transport);
+		bytes = transport_recv_tcp(transport);
 
-	if (r <= 0)
-		return r;
+	if (bytes <= 0)
+		return bytes;
 
 	pos = stream_get_pos(transport->recv_buffer);
+
 	/* Ensure the TPKT header is available. */
 	if (pos <= 4)
 		return 0;
 
 	stream_set_pos(transport->recv_buffer, 0);
-	len = tpkt_read_header(transport->recv_buffer);
-	if (len == 0)
+	length = tpkt_read_header(transport->recv_buffer);
+
+	if (length == 0)
 	{
 		printf("transport_check_fds: protocol error, not a TPKT header.\n");
 		return -1;
 	}
-	if (pos < len)
+
+	if (pos < length)
 		return 0; /* Packet is not yet completely received. */
 
-	/* A complete packet has been received. In case there are trailing data
+	/*
+	 * A complete packet has been received. In case there are trailing data
 	 * for the next packet, we copy it to the new receive buffer.
 	 */
 	received = transport->recv_buffer;
 	transport->recv_buffer = stream_new(BUFFER_SIZE);
-	if (pos > len)
+
+	if (pos > length)
 	{
-		stream_set_pos(received, len);
-		stream_check_capacity(transport->recv_buffer, pos - len);
-		stream_copy(transport->recv_buffer, received, pos - len);
+		stream_set_pos(received, length);
+		stream_check_capacity(transport->recv_buffer, pos - length);
+		stream_copy(transport->recv_buffer, received, pos - length);
 	}
 
 	stream_set_pos(received, 0);
-	r = transport->recv_callback(received, transport->recv_callback_data);
+	bytes = transport->recv_callback(transport, received);
 	stream_free(received);
 
-	return r;
+	return bytes;
 }

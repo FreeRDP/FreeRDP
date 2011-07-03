@@ -31,6 +31,10 @@ enum X224_TPDU_TYPE
 	X224_TPDU_ERROR = 0x70
 };
 
+#define TPDU_CONNECTION_REQUEST_LENGTH	7
+#define TPDU_CONNECTION_CONFIRM_LENGTH	7
+#define TPDU_DISCONNECT_REQUEST_LENGTH	7
+
 uint8
 tpdu_read_header(STREAM* s, uint16 length);
 void

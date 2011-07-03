@@ -28,7 +28,8 @@
 #include "transport.h"
 #include "test_transport.h"
 
-static const char test_server[] = "192.168.0.1";
+static const char test_server[] = "192.168.1.200";
+
 static const uint8 test_x224_req[] =
 {
 	"\x03\x00\x00\x2C\x27\xE0\x00\x00\x00\x00\x00\x43\x6F\x6F\x6B\x69"
@@ -58,7 +59,7 @@ int add_transport_suite(void)
 static int test_finished = 0;
 
 static int
-packet_received(STREAM * stream, void * callback_data)
+packet_received(rdpTransport * transport, STREAM * stream)
 {
 	uint16 len;
 
@@ -76,10 +77,9 @@ void test_transport(void)
 
 	transport = transport_new();
 	transport->recv_callback = packet_received;
-	transport->recv_callback_data = NULL;
 
 	r = transport_connect(transport, test_server, 3389);
-	CU_ASSERT(r == 0);
+	CU_ASSERT(r == True);
 	
 	stream = stream_new(sizeof(test_x224_req));
 	stream_write_buffer(stream, test_x224_req, sizeof(test_x224_req));
@@ -93,7 +93,7 @@ void test_transport(void)
 	}
 
 	r = transport_disconnect(transport);
-	CU_ASSERT(r == 0);
+	CU_ASSERT(r == True);
 
 	transport_free(transport);
 }
