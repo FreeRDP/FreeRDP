@@ -89,6 +89,10 @@ stream_extend(STREAM * stream);
 	*_s->ptr++ = ((_v) >> 40) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 48) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 56) & 0xFF; } while (0)
+#define stream_write_buffer(_s, _b, _n) do { \
+	memcpy(_s->ptr, (_b), (_n)); \
+	_s->ptr += (_n); \
+	} while (0)
 
 #define stream_peek_uint8(_s, _v) do { _v = *_s->ptr; } while (0)
 #define stream_peek_uint16(_s, _v) do { _v = \
