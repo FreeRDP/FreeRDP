@@ -17,34 +17,34 @@
  * limitations under the License.
  */
 
-#ifndef __NETWORK_H
-#define __NETWORK_H
+#ifndef __TRANSPORT_H
+#define __TRANSPORT_H
 
 #include <freerdp/utils/stream.h>
 
 typedef int (* PacketReceivedCallback) (STREAM * stream);
 
-struct rdp_network
+struct rdp_transport
 {
 	int sockfd;
 	struct crypto_tls * tls;
 	PacketReceivedCallback * recv_callback;
 };
-typedef struct rdp_network rdpNetwork;
+typedef struct rdp_transport rdpTransport;
 
-rdpNetwork *
-network_new(void);
+rdpTransport *
+transport_new(void);
 void
-network_free(rdpNetwork * network);
+transport_free(rdpTransport * transport);
 int
-network_connect(rdpNetwork * network, const char * server, int port);
+transport_connect(rdpTransport * transport, const char * server, int port);
 int
-network_disconnect(rdpNetwork * network);
+transport_disconnect(rdpTransport * transport);
 int
-network_start_tls(rdpNetwork * network);
+transport_start_tls(rdpTransport * transport);
 int
-network_send(rdpNetwork * network, STREAM * stream);
+transport_send(rdpTransport * transport, STREAM * stream);
 int
-network_check_fds(rdpNetwork * network);
+transport_check_fds(rdpTransport * transport);
 
 #endif

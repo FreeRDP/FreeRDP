@@ -30,12 +30,12 @@ set(LIBFREERDP_CORE_SRCS
 #	credssp.h
 #	ntlmssp.c
 #	ntlmssp.h
-	network.c
-	network.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
 	tpkt.h
+	transport.c
+	transport.h
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})

@@ -23,51 +23,51 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "network.h"
+#include "transport.h"
 
-rdpNetwork *
-network_new(void)
+rdpTransport *
+transport_new(void)
 {
-	rdpNetwork * network;
+	rdpTransport * transport;
 
-	network = (rdpNetwork *) xmalloc(sizeof(rdpNetwork));
-	memset(network, 0, sizeof(rdpNetwork));
+	transport = (rdpTransport *) xmalloc(sizeof(rdpTransport));
+	memset(transport, 0, sizeof(rdpTransport));
 
-	return network;
+	return transport;
 }
 
 void
-network_free(rdpNetwork * network)
+transport_free(rdpTransport * transport)
 {
-	xfree(network);
+	xfree(transport);
 }
 
 int
-network_connect(rdpNetwork * network, const char * server, int port)
-{
-	return 0;
-}
-
-int
-network_disconnect(rdpNetwork * network)
+transport_connect(rdpTransport * transport, const char * server, int port)
 {
 	return 0;
 }
 
 int
-network_start_tls(rdpNetwork * network)
+transport_disconnect(rdpTransport * transport)
 {
 	return 0;
 }
 
 int
-network_send(rdpNetwork * network, STREAM * stream)
+transport_start_tls(rdpTransport * transport)
 {
 	return 0;
 }
 
 int
-network_check_fds(rdpNetwork * network)
+transport_send(rdpTransport * transport, STREAM * stream)
+{
+	return 0;
+}
+
+int
+transport_check_fds(rdpTransport * transport)
 {
 	return 0;
 }
