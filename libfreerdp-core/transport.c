@@ -29,7 +29,10 @@
 #include <netdb.h>
 #include <fcntl.h>
 
+#include "tpkt.h"
 #include "transport.h"
+
+#define BUFFER_SIZE 16384
 
 rdpTransport *
 transport_new(void)
@@ -45,12 +48,16 @@ transport_new(void)
 	transport->ts.tv_sec = 0;
 	transport->ts.tv_nsec = 100000;
 
+	/* receive buffer for non-blocking read. */
+	transport->recv_buffer = stream_new(BUFFER_SIZE);
+
 	return transport;
 }
 
 void
 transport_free(rdpTransport * transport)
 {
+	stream_free(transport->recv_buffer);
 	xfree(transport);
 }
 
@@ -201,8 +208,78 @@ transport_send(rdpTransport * transport, STREAM * stream)
 		return transport_send_tcp(transport, stream);
 }
 
+static int
+transport_recv_tls(rdpTransport * transport)
+{
+	return 0;
+}
+
+static int
+transport_recv_tcp(rdpTransport * transport)
+{
+	int r;
+
+	stream_check_capacity(transport->recv_buffer, BUFFER_SIZE);
+
+	r = recv(transport->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
+	if (r == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return 0;
+		printf("transport_recv_tcp: recv failed (%d).\n", errno);
+		return -1;
+	}
+	stream_seek(transport->recv_buffer, r);
+	
+	return r;
+}
+
 int
 transport_check_fds(rdpTransport * transport)
 {
-	return 0;
+	int r;
+	int pos;
+	uint16 len;
+	STREAM * received;
+
+	if (transport->tls)
+		r = transport_recv_tls(transport);
+	else
+		r = transport_recv_tcp(transport);
+
+	if (r <= 0)
+		return r;
+
+	pos = stream_get_pos(transport->recv_buffer);
+	/* Ensure the TPKT header is available. */
+	if (pos <= 4)
+		return 0;
+
+	stream_set_pos(transport->recv_buffer, 0);
+	len = tpkt_read_header(transport->recv_buffer);
+	if (len == 0)
+	{
+		printf("transport_check_fds: protocol error, not a TPKT header.\n");
+		return -1;
+	}
+	if (pos < len)
+		return 0; /* Packet is not yet completely received. */
+
+	/* A complete packet has been received. In case there are trailing data
+	 * for the next packet, we copy it to the new receive buffer.
+	 */
+	received = transport->recv_buffer;
+	transport->recv_buffer = stream_new(BUFFER_SIZE);
+	if (pos > len)
+	{
+		stream_set_pos(received, len);
+		stream_check_capacity(transport->recv_buffer, pos - len);
+		stream_copy(transport->recv_buffer, received, pos - len);
+	}
+
+	stream_set_pos(received, 0);
+	r = transport->recv_callback(received, transport->recv_callback_data);
+	stream_free(received);
+
+	return r;
 }

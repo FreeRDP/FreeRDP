@@ -125,5 +125,11 @@ stream_extend(STREAM * stream);
 	*_s->ptr++ = ((_v) >> 8) & 0xFF; \
 	*_s->ptr++ = (_v) & 0xFF; } while (0)
 
+#define stream_copy(_dst, _src, _n) do { \
+	memcpy(_dst->ptr, _src->ptr, _n); \
+	_dst->ptr += _n; \
+	_src->ptr += _n; \
+	} while (0)
+
 #endif /* __STREAM_UTILS_H */
 

@@ -22,14 +22,17 @@
 
 #include <freerdp/utils/stream.h>
 
-typedef int (* PacketReceivedCallback) (STREAM * stream);
+typedef int (* PacketReceivedCallback) (STREAM * stream, void * callback_data);
 
 struct rdp_transport
 {
 	int sockfd;
 	struct crypto_tls * tls;
-	PacketReceivedCallback * recv_callback;
 	struct timespec ts;
+	STREAM * recv_buffer;
+
+	PacketReceivedCallback recv_callback;
+	void * recv_callback_data;
 };
 typedef struct rdp_transport rdpTransport;
 
