@@ -291,7 +291,7 @@ transport_check_fds(rdpTransport * transport)
 	}
 
 	stream_set_pos(received, 0);
-	bytes = transport->recv_callback(transport, received);
+	bytes = transport->recv_callback(transport, received, transport->recv_extra);
 	stream_free(received);
 
 	return bytes;

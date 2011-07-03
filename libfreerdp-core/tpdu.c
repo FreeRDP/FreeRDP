@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include "tpdu.h"
 
 /**
@@ -54,28 +56,25 @@
  */
 
 uint8
-tpdu_read_header(STREAM* s, uint16 length)
+tpdu_read_header(STREAM* s, uint8* code)
 {
 	uint8 li;
-	uint8 code;
 
 	stream_read_uint8(s, li); /* LI */
-	stream_read_uint8(s, code); /* Code */
+	stream_read_uint8(s, *code); /* Code */
+
+	/* DST-REF (2 bytes) */
+	/* SRC-REF (2 bytes) */
+	/* Class 0 (1 byte) */
+	stream_seek(s, 5);
 
 	if (code == X224_TPDU_DATA)
 	{
 		/* EOT (1 byte) */
 		stream_seek(s, 1);
 	}
-	else
-	{
-		/* DST-REF (2 bytes) */
-		/* SRC-REF (2 bytes) */
-		/* Class 0 (1 byte) */
-		stream_seek(s, 5);
-	}
 
-	return code;
+	return li;
 }
 
 void
@@ -100,6 +99,23 @@ void
 tpdu_write_connection_request(STREAM* s, uint16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
+}
+
+uint8
+tpdu_read_connection_confirm(STREAM* s)
+{
+	uint8 li;
+	uint8 code;
+
+	li = tpdu_read_header(s, &code);
+
+	if (code != X224_TPDU_CONNECTION_CONFIRM)
+	{
+		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		return 0;
+	}
+
+	return li;
 }
 
 void

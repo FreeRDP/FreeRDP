@@ -36,11 +36,13 @@ enum X224_TPDU_TYPE
 #define TPDU_DISCONNECT_REQUEST_LENGTH	7
 
 uint8
-tpdu_read_header(STREAM* s, uint16 length);
+tpdu_read_header(STREAM* s, uint8* code);
 void
 tpdu_write_header(STREAM* s, uint16 length, uint8 code);
 void
 tpdu_write_connection_request(STREAM* s, uint16 length);
+uint8
+tpdu_read_connection_confirm(STREAM* s);
 void
 tpdu_write_disconnect_request(STREAM* s, uint16 length);
 void

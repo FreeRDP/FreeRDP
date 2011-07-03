@@ -25,7 +25,7 @@
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_transport rdpTransport;
-typedef int (* PacketReceivedCallback) (rdpTransport * transport, STREAM * stream);
+typedef int (* PacketReceivedCallback) (rdpTransport * transport, STREAM * stream, void* extra);
 
 struct rdp_transport
 {
@@ -34,6 +34,7 @@ struct rdp_transport
 	struct timespec ts;
 	STREAM * recv_buffer;
 	PacketReceivedCallback recv_callback;
+	void* recv_extra;
 };
 
 rdpTransport *

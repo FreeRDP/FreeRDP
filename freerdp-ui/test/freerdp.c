@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 	nego_init(nego);
 	nego_set_target(nego, hostname, 3389);
-	nego_set_protocols(nego, 1, 0, 0);
+	nego_set_protocols(nego, 1, 1, 1);
 	nego_set_cookie(nego, username);
 	nego_connect(nego);
 

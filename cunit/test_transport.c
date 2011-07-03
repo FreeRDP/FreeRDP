@@ -59,13 +59,12 @@ int add_transport_suite(void)
 static int test_finished = 0;
 
 static int
-packet_received(rdpTransport * transport, STREAM * stream)
+packet_received(rdpTransport * transport, STREAM * stream, void * extra)
 {
-	uint16 len;
-
-	len = tpkt_read_header(stream);
-	CU_ASSERT(len == 19);
-	freerdp_hexdump(stream->buffer, len);
+	uint16 length;
+	length = tpkt_read_header(stream);
+	CU_ASSERT(length == 19);
+	freerdp_hexdump(stream->buffer, length);
 	test_finished = 1;
 }
 
