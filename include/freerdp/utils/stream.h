@@ -116,5 +116,14 @@ stream_extend(STREAM * stream);
 	(((uint64)(*(_s->ptr + 7))) << 56); \
 	} while (0)
 
+#define stream_read_uint16_be(_s, _v) do { _v = \
+	(((uint16)(*_s->ptr)) << 8) + \
+	(uint16)(*(_s->ptr + 1)); \
+	_s->ptr += 2; } while (0)
+
+#define stream_write_uint16_be(_s, _v) do { \
+	*_s->ptr++ = ((_v) >> 8) & 0xFF; \
+	*_s->ptr++ = (_v) & 0xFF; } while (0)
+
 #endif /* __STREAM_UTILS_H */
 
