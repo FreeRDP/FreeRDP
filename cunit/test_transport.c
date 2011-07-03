@@ -24,10 +24,17 @@
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/stream.h>
 
+#include "tpkt.h"
 #include "transport.h"
 #include "test_transport.h"
 
 static const char test_server[] = "192.168.0.1";
+static const uint8 test_x224_req[] =
+{
+	"\x03\x00\x00\x2C\x27\xE0\x00\x00\x00\x00\x00\x43\x6F\x6F\x6B\x69"
+	"\x65\x3A\x20\x6D\x73\x74\x73\x68\x61\x73\x68\x3D\x65\x6C\x74\x6F"
+	"\x6e\x73\x0D\x0A\x01\x00\x08\x00\x00\x00\x00\x00"
+};
 
 int init_transport_suite(void)
 {
@@ -48,17 +55,44 @@ int add_transport_suite(void)
 	return 0;
 }
 
+static int test_finished = 0;
+
+static int
+packet_received(STREAM * stream, void * callback_data)
+{
+	uint16 len;
+
+	len = tpkt_read_header(stream);
+	CU_ASSERT(len == 19);
+	freerdp_hexdump(stream->buffer, len);
+	test_finished = 1;
+}
+
 void test_transport(void)
 {
 	rdpTransport * transport;
+	STREAM * stream;
 	int r;
 
 	transport = transport_new();
+	transport->recv_callback = packet_received;
+	transport->recv_callback_data = NULL;
 
 	r = transport_connect(transport, test_server, 3389);
 	CU_ASSERT(r == 0);
 	
-	transport_disconnect(transport);
+	stream = stream_new(sizeof(test_x224_req));
+	stream_write_buffer(stream, test_x224_req, sizeof(test_x224_req));
+	r = transport_send(transport, stream);
+	CU_ASSERT(r == 0);
+
+	while (!test_finished)
+	{
+		transport_check_fds(transport);
+		sleep(1);
+	}
+
+	r = transport_disconnect(transport);
 	CU_ASSERT(r == 0);
 
 	transport_free(transport);
