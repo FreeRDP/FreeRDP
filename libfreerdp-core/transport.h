@@ -29,6 +29,7 @@ struct rdp_transport
 	int sockfd;
 	struct crypto_tls * tls;
 	PacketReceivedCallback * recv_callback;
+	struct timespec ts;
 };
 typedef struct rdp_transport rdpTransport;
 

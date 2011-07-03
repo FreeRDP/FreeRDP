@@ -23,6 +23,8 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
+#include <time.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
@@ -38,6 +40,10 @@ transport_new(void)
 	memset(transport, 0, sizeof(rdpTransport));
 
 	transport->sockfd = -1;
+
+	/* a small 0.1ms delay when transport is blocking. */
+	transport->ts.tv_sec = 0;
+	transport->ts.tv_nsec = 100000;
 
 	return transport;
 }
@@ -145,10 +151,54 @@ transport_start_tls(rdpTransport * transport)
 	return 0;
 }
 
+static int
+transport_delay(rdpTransport * transport)
+{
+	nanosleep(&transport->ts, NULL);
+	return 0;
+}
+
+static int
+transport_send_tls(rdpTransport * transport, STREAM * stream)
+{
+	return 0;
+}
+
+static int
+transport_send_tcp(rdpTransport * transport, STREAM * stream)
+{
+	uint8 * head;
+	uint8 * tail;
+	int r;
+
+	head = stream_get_head(stream);
+	tail = stream_get_tail(stream);
+	while (head < tail)
+	{
+		r = send(transport->sockfd, head, tail - head, MSG_NOSIGNAL);
+		if (r < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				if (transport_delay(transport) != 0)
+					return -1;
+				continue;
+			}
+			printf("transport_send_tcp: send (%d)\n", errno);
+			return -1;
+		}
+		head += r;
+	}
+	return 0;
+}
+
 int
 transport_send(rdpTransport * transport, STREAM * stream)
 {
-	return 0;
+	if (transport->tls)
+		return transport_send_tls(transport, stream);
+	else
+		return transport_send_tcp(transport, stream);
 }
 
 int
