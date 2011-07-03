@@ -213,10 +213,8 @@ int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
 				break;
 		}
 	}
-	else
-	{
-		nego->state = NEGO_STATE_FINAL;
-	}
+
+	nego->state = NEGO_STATE_FINAL;
 
 	return 0;
 }

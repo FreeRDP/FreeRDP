@@ -21,6 +21,7 @@
 #define __TRANSPORT_H
 
 #include "tcp.h"
+#include "tls.h"
 
 #include <time.h>
 #include <freerdp/types/base.h>
@@ -30,6 +31,7 @@ enum _TRANSPORT_STATE
 {
 	TRANSPORT_STATE_INITIAL,
 	TRANSPORT_STATE_NEGO,
+	TRANSPORT_STATE_RDP,
 	TRANSPORT_STATE_TLS,
 	TRANSPORT_STATE_NLA,
 	TRANSPORT_STATE_FINAL
@@ -43,7 +45,7 @@ struct rdp_transport
 {
 	TRANSPORT_STATE state;
 	struct rdp_tcp * tcp;
-	struct crypto_tls * tls;
+	struct rdp_tls * tls;
 	struct timespec ts;
 	STREAM * recv_buffer;
 	PacketReceivedCallback recv_callback;
@@ -58,8 +60,12 @@ FRDP_BOOL
 transport_connect(rdpTransport * transport, const char * server, int port);
 FRDP_BOOL
 transport_disconnect(rdpTransport * transport);
-int
-transport_start_tls(rdpTransport * transport);
+FRDP_BOOL
+transport_connect_rdp(rdpTransport * transport);
+FRDP_BOOL
+transport_connect_tls(rdpTransport * transport);
+FRDP_BOOL
+transport_connect_nla(rdpTransport * transport);
 int
 transport_send(rdpTransport * transport, STREAM * stream);
 int

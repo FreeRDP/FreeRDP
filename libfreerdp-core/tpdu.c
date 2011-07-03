@@ -68,7 +68,7 @@ tpdu_read_header(STREAM* s, uint8* code)
 	/* Class 0 (1 byte) */
 	stream_seek(s, 5);
 
-	if (code == X224_TPDU_DATA)
+	if (*code == X224_TPDU_DATA)
 	{
 		/* EOT (1 byte) */
 		stream_seek(s, 1);

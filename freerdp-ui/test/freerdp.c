@@ -44,17 +44,21 @@ int main(int argc, char* argv[])
 
 	hostname = (char*) xmalloc(strlen(argv[1]));
 	memcpy(hostname, argv[1], strlen(argv[1]));
+	hostname[strlen(argv[1])] = '\0';
 
 	username = (char*) xmalloc(strlen(argv[2]));
 	memcpy(username, argv[2], strlen(argv[2]));
+	username[strlen(argv[2])] = '\0';
 
 	printf("hostname: %s username: %s\n", hostname, username);
 
 	nego_init(nego);
 	nego_set_target(nego, hostname, 3389);
-	nego_set_protocols(nego, 1, 1, 1);
+	nego_set_protocols(nego, 1, 1, 0);
 	nego_set_cookie(nego, username);
 	nego_connect(nego);
+
+	transport_connect_tls(transport);
 
 	return 0;
 }

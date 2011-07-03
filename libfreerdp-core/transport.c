@@ -46,10 +46,48 @@ transport_disconnect(rdpTransport * transport)
 	return transport->tcp->disconnect(transport->tcp);
 }
 
-int
-transport_start_tls(rdpTransport * transport)
+FRDP_BOOL
+transport_connect_rdp(rdpTransport * transport)
 {
-	return 0;
+	transport->state = TRANSPORT_STATE_RDP;
+
+	/* RDP encryption */
+
+	return True;
+}
+
+FRDP_BOOL
+transport_connect_tls(rdpTransport * transport)
+{
+	if (transport->tls == NULL)
+		transport->tls = tls_new();
+
+	transport->state = TRANSPORT_STATE_TLS;
+
+	transport->tls->sockfd = transport->tcp->sockfd;
+
+	if (tls_connect(transport->tls) != True)
+		return False;
+
+	return True;
+}
+
+FRDP_BOOL
+transport_connect_nla(rdpTransport * transport)
+{
+	if (transport->tls == NULL)
+		transport->tls = tls_new();
+
+	transport->state = TRANSPORT_STATE_NLA;
+
+	transport->tls->sockfd = transport->tcp->sockfd;
+
+	if (tls_connect(transport->tls) != True)
+		return False;
+
+	/* Network Level Authentication */
+
+	return True;
 }
 
 static int
@@ -101,7 +139,7 @@ transport_send_tcp(rdpTransport * transport, STREAM * stream)
 int
 transport_send(rdpTransport * transport, STREAM * stream)
 {
-	if (transport->tls)
+	if (transport->state == TRANSPORT_STATE_TLS)
 		return transport_send_tls(transport, stream);
 	else
 		return transport_send_tcp(transport, stream);
@@ -144,7 +182,7 @@ transport_check_fds(rdpTransport * transport)
 	uint16 length;
 	STREAM * received;
 
-	if (transport->tls)
+	if (transport->state == TRANSPORT_STATE_TLS)
 		bytes = transport_recv_tls(transport);
 	else
 		bytes = transport_recv_tcp(transport);
