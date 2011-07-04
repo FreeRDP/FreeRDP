@@ -21,6 +21,11 @@ cmake_minimum_required(VERSION 2.8)
 project(FreeRDP C)
 set(CMAKE_COLOR_MAKEFILE ON)
 
+# Include cmake modules
+include(CheckIncludeFiles)
+include(CheckLibraryExists)
+include(TestBigEndian)
+
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
@@ -38,8 +43,20 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# Include files
+check_include_files(sys/param.h HAVE_SYS_PARAM_H)
+check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
+check_include_files(netdb.h HAVE_NETDB_H)
+check_include_files(fcntl.h HAVE_FCNTL_H)
+
+# Endian
+test_big_endian(BIG_ENDIAN)
+
 # Path to put keymaps
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
+
+# Configure files
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Build CUnit
 find_package(CUnit)
@@ -47,7 +64,7 @@ if(CUNIT_FOUND)
    add_subdirectory(cunit)
 endif()
 
-# Libraries
+# Sub-directories
 add_subdirectory(include)
 add_subdirectory(libfreerdp-asn1)
 add_subdirectory(libfreerdp-utils)

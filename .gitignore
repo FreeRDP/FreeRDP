@@ -2,6 +2,7 @@
 cmake_install.cmake
 CMakeFiles/
 CMakeCache.txt
+config.h
 
 # Make
 Makefile
