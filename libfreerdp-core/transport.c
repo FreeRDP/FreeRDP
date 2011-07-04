@@ -91,9 +91,12 @@ transport_connect_nla(rdpTransport * transport)
 }
 
 static int
+transport_recv(rdpTransport * transport);
+
+static int
 transport_delay(rdpTransport * transport)
 {
-	transport_check_fds(transport);
+	transport_recv(transport);
 	nanosleep(&transport->ts, NULL);
 	return 0;
 }
@@ -140,10 +143,17 @@ transport_send_tcp(rdpTransport * transport, STREAM * stream)
 int
 transport_send(rdpTransport * transport, STREAM * stream)
 {
+	int r;
+
 	if (transport->state == TRANSPORT_STATE_TLS)
-		return transport_send_tls(transport, stream);
+		r = transport_send_tls(transport, stream);
 	else
-		return transport_send_tcp(transport, stream);
+		r = transport_send_tcp(transport, stream);
+
+	if (r == 0)
+		r = transport_check_fds(transport);
+
+	return r;
 }
 
 static int
@@ -175,6 +185,15 @@ transport_recv_tcp(rdpTransport * transport)
 	return bytes;
 }
 
+static int
+transport_recv(rdpTransport * transport)
+{
+	if (transport->state == TRANSPORT_STATE_TLS)
+		return transport_recv_tls(transport);
+	else
+		return transport_recv_tcp(transport);
+}
+
 int
 transport_check_fds(rdpTransport * transport)
 {
@@ -183,10 +202,7 @@ transport_check_fds(rdpTransport * transport)
 	uint16 length;
 	STREAM * received;
 
-	if (transport->state == TRANSPORT_STATE_TLS)
-		bytes = transport_recv_tls(transport);
-	else
-		bytes = transport_recv_tcp(transport);
+	bytes = transport_recv(transport);
 
 	if (bytes <= 0)
 		return bytes;
