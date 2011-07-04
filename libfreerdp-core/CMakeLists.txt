@@ -24,6 +24,10 @@ add_definitions(-DL_ENDIAN=1)
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 
 set(LIBFREERDP_CORE_SRCS
+	ber.c
+	ber.h
+	mcs.c
+	mcs.h
 	nego.c
 	nego.h
 #	credssp.c
