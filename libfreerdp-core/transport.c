@@ -93,6 +93,7 @@ transport_connect_nla(rdpTransport * transport)
 static int
 transport_delay(rdpTransport * transport)
 {
+	transport_check_fds(transport);
 	nanosleep(&transport->ts, NULL);
 	return 0;
 }
