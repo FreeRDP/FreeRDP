@@ -6,3 +6,6 @@
 
 /* Endian */
 #cmakedefine BIG_ENDIAN
+
+/* Options */
+#cmakedefine WITH_DEBUG_TRANSPORT
