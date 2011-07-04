@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_definitions(-DL_ENDIAN=1)
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 
 set(LIBFREERDP_CORE_SRCS
