@@ -30,7 +30,7 @@
 
 #include <time.h>
 #include "ntlmssp.h"
-#include <freerdp/rdpset.h>
+#include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
 #include "credssp.h"
@@ -50,7 +50,7 @@ asn1_write(const void *buffer, size_t size, void *fd)
 void credssp_ntlmssp_init(rdpCredssp *credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	rdpSet *settings = credssp->net->rdp->settings;
+	rdpSettings *settings = credssp->net->rdp->settings;
 
 	ntlmssp_set_password(ntlmssp, settings->password);
 	ntlmssp_set_username(ntlmssp, settings->username);

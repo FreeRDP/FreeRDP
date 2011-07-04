@@ -20,9 +20,9 @@
 #ifndef __FREERDP_H
 #define __FREERDP_H
 
-#include "rdpset.h"
+#include "settings.h"
 #include "types/ui.h"
-#include "rdpext.h"
+#include "extension.h"
 
 #define FREERDP_INTERFACE_VERSION 4
 
@@ -61,7 +61,7 @@ struct rdp_inst
 {
 	int version;
 	int size;
-	rdpSet * settings;
+	rdpSettings * settings;
 	void * rdp;
 	void * param1;
 	void * param2;
@@ -146,7 +146,7 @@ struct rdp_inst
 };
 
 FREERDP_API rdpInst *
-freerdp_new(rdpSet * settings);
+freerdp_new(rdpSettings * settings);
 FREERDP_API void
 freerdp_free(rdpInst * inst);
 

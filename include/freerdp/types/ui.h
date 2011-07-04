@@ -133,8 +133,8 @@ typedef struct _FRDP_REDRAW_EVENT FRDP_REDRAW_EVENT;
 struct rdp_inst;
 typedef struct rdp_inst rdpInst;
 
-/* defined in include/freerdp/rdpset.h */
-struct rdp_set;
-typedef struct rdp_set rdpSet;
+/* defined in include/freerdp/settings.h */
+struct rdp_settings;
+typedef struct rdp_settings rdpSettings;
 
 #endif

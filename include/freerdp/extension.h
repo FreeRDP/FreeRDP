@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDPEXT_H
-#define __RDPEXT_H
+#ifndef __RDP_EXTENSION_H
+#define __RDP_EXTENSION_H
 
 #include <freerdp/types/ui.h>
 
@@ -61,4 +61,4 @@ typedef FREERDP_EXTENSION_ENTRY_POINTS * PFREERDP_EXTENSION_ENTRY_POINTS;
 
 typedef int (RDPEXT_CC * PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
 
-#endif
+#endif /* __RDP_EXTENSION_H */

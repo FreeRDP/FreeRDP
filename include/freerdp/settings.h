@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDPSET_H
-#define __RDPSET_H
+#ifndef __RDP_SETTINGS_H
+#define __RDP_SETTINGS_H
 
 struct rdp_chan
 {
@@ -43,7 +43,7 @@ struct rdp_monitor
 	int is_primary;
 };
 
-struct rdp_set
+struct rdp_settings
 {
 	int width;
 	int height;
@@ -95,4 +95,4 @@ struct rdp_set
 	struct rdp_monitor monitors[16];
 };
 
-#endif /* __RDPSET_H */
+#endif /* __RDP_SETTINGS_H */
