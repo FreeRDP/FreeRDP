@@ -19,8 +19,6 @@
 
 include_directories(${CUNIT_INCLUDE_DIRS})
 
-include_directories(.)
-include_directories(../include)
 include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)
 

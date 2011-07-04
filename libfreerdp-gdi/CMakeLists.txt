@@ -17,9 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_directories(.)
-include_directories(../include)
-
 set(FREERDP_GDI_SRCS
 	color.c
 	color.h

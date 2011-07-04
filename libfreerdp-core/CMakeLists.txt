@@ -17,9 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_directories(.)
-include_directories(../include)
-
 add_definitions(-DL_ENDIAN=1)
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 
