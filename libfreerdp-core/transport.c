@@ -91,8 +91,12 @@ transport_connect_nla(rdpTransport * transport)
 }
 
 static int
+transport_recv(rdpTransport * transport);
+
+static int
 transport_delay(rdpTransport * transport)
 {
+	transport_recv(transport);
 	nanosleep(&transport->ts, NULL);
 	return 0;
 }
@@ -139,10 +143,17 @@ transport_send_tcp(rdpTransport * transport, STREAM * stream)
 int
 transport_send(rdpTransport * transport, STREAM * stream)
 {
+	int r;
+
 	if (transport->state == TRANSPORT_STATE_TLS)
-		return transport_send_tls(transport, stream);
+		r = transport_send_tls(transport, stream);
 	else
-		return transport_send_tcp(transport, stream);
+		r = transport_send_tcp(transport, stream);
+
+	if (r == 0)
+		r = transport_check_fds(transport);
+
+	return r;
 }
 
 static int
@@ -174,6 +185,15 @@ transport_recv_tcp(rdpTransport * transport)
 	return bytes;
 }
 
+static int
+transport_recv(rdpTransport * transport)
+{
+	if (transport->state == TRANSPORT_STATE_TLS)
+		return transport_recv_tls(transport);
+	else
+		return transport_recv_tcp(transport);
+}
+
 int
 transport_check_fds(rdpTransport * transport)
 {
@@ -182,51 +202,55 @@ transport_check_fds(rdpTransport * transport)
 	uint16 length;
 	STREAM * received;
 
-	if (transport->state == TRANSPORT_STATE_TLS)
-		bytes = transport_recv_tls(transport);
-	else
-		bytes = transport_recv_tcp(transport);
+	bytes = transport_recv(transport);
 
 	if (bytes <= 0)
 		return bytes;
 
-	pos = stream_get_pos(transport->recv_buffer);
-
-	/* Ensure the TPKT header is available. */
-	if (pos <= 4)
-		return 0;
-
-	stream_set_pos(transport->recv_buffer, 0);
-	length = tpkt_read_header(transport->recv_buffer);
-
-	if (length == 0)
+	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
 	{
-		printf("transport_check_fds: protocol error, not a TPKT header.\n");
-		return -1;
+		/* Ensure the TPKT header is available. */
+		if (pos <= 4)
+			return 0;
+
+		stream_set_pos(transport->recv_buffer, 0);
+		length = tpkt_read_header(transport->recv_buffer);
+
+		if (length == 0)
+		{
+			printf("transport_check_fds: protocol error, not a TPKT header.\n");
+			return -1;
+		}
+
+		if (pos < length)
+		{
+			stream_set_pos(transport->recv_buffer, pos);
+			return 0; /* Packet is not yet completely received. */
+		}
+
+		/*
+		 * A complete packet has been received. In case there are trailing data
+		 * for the next packet, we copy it to the new receive buffer.
+		 */
+		received = transport->recv_buffer;
+		transport->recv_buffer = stream_new(BUFFER_SIZE);
+
+		if (pos > length)
+		{
+			stream_set_pos(received, length);
+			stream_check_capacity(transport->recv_buffer, pos - length);
+			stream_copy(transport->recv_buffer, received, pos - length);
+		}
+
+		stream_set_pos(received, 0);
+		bytes = transport->recv_callback(transport, received, transport->recv_extra);
+		stream_free(received);
+
+		if (bytes < 0)
+			return bytes;
 	}
 
-	if (pos < length)
-		return 0; /* Packet is not yet completely received. */
-
-	/*
-	 * A complete packet has been received. In case there are trailing data
-	 * for the next packet, we copy it to the new receive buffer.
-	 */
-	received = transport->recv_buffer;
-	transport->recv_buffer = stream_new(BUFFER_SIZE);
-
-	if (pos > length)
-	{
-		stream_set_pos(received, length);
-		stream_check_capacity(transport->recv_buffer, pos - length);
-		stream_copy(transport->recv_buffer, received, pos - length);
-	}
-
-	stream_set_pos(received, 0);
-	bytes = transport->recv_callback(transport, received, transport->recv_extra);
-	stream_free(received);
-
-	return bytes;
+	return 0;
 }
 
 void
