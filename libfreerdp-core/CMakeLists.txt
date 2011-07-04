@@ -22,6 +22,8 @@ add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 set(LIBFREERDP_CORE_SRCS
 	ber.c
 	ber.h
+	gcc.c
+	gcc.h
 	mcs.c
 	mcs.h
 	nego.c
@@ -30,6 +32,8 @@ set(LIBFREERDP_CORE_SRCS
 #	credssp.h
 #	ntlmssp.c
 #	ntlmssp.h
+	per.c
+	per.h
 	tcp.c
 	tcp.h
 	tls.c

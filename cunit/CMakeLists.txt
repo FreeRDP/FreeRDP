@@ -23,6 +23,10 @@ include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)
 
 add_executable(test_freerdp
+	test_per.c
+	test_per.h
+	test_ber.c
+	test_ber.h
 	test_color.c
 	test_color.h
 	test_libgdi.c

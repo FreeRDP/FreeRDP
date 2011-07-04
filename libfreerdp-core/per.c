@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * ASN.1 Basic Encoding Rules (BER)
+ * ASN.1 Packed Encoding Rules (BER)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,41 +17,25 @@
  * limitations under the License.
  */
 
-#include "ber.h"
+#include "per.h"
 
 void
-ber_write_length(STREAM* s, int length)
+per_write_length(STREAM* s, int length)
 {
 	if (length > 0x7F)
-	{
-		stream_write_uint8(s, 0x82);
-		stream_write_uint16_be(s, length);
-	}
+		stream_write_uint16_be(s, (length | 0x8000));
 	else
-	{
 		stream_write_uint8(s, length);
-	}
 }
 
 void
-ber_write_universal_tag(STREAM* s, uint8 tag, int length)
+per_write_object_identifier(STREAM* s, uint8 oid[6])
 {
-	stream_write_uint8(s, (BER_CLASS_UNIV | BER_PRIMITIVE) | (BER_TAG_MASK & tag));
-	ber_write_length(s, length);
-}
-
-void
-ber_write_application_tag(STREAM* s, uint8 tag, int length)
-{
-	if (tag > 30)
-	{
-		stream_write_uint8(s, (BER_CLASS_APPL | BER_CONSTRUCT) | BER_TAG_MASK);
-		stream_write_uint8(s, tag);
-		ber_write_length(s, length);
-	}
-	else
-	{
-		stream_write_uint8(s, (BER_CLASS_APPL | BER_CONSTRUCT) | (BER_TAG_MASK & tag));
-		ber_write_length(s, length);
-	}
+	uint8 t12 = (oid[0] << 4) & (oid[1] & 0x0F);
+	stream_write_uint8(s, 5); /* length */
+	stream_write_uint8(s, t12); /* first two tuples */
+	stream_write_uint8(s, oid[2]); /* tuple 3 */
+	stream_write_uint8(s, oid[3]); /* tuple 4 */
+	stream_write_uint8(s, oid[4]); /* tuple 5 */
+	stream_write_uint8(s, oid[5]); /* tuple 6 */
 }

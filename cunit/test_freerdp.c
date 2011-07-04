@@ -17,8 +17,10 @@
  * limitations under the License.
  */
 
-#include "CUnit/Basic.h"
+#include <CUnit/Basic.h>
 
+#include "test_per.h"
+#include "test_ber.h"
 #include "test_color.h"
 #include "test_libgdi.h"
 #include "test_stream.h"
@@ -51,6 +53,41 @@ void dump_data(unsigned char * p, int len, int width, char* name)
 	printf("\n");
 }
 
+void assert_stream(STREAM* s, uint8* data, int length, const char* func, int line)
+{
+	int i;
+	char* str;
+	int actual_length;
+	uint8* actual_data;
+
+	actual_length = stream_get_length(s);
+
+	if (actual_length != length)
+	{
+		printf("\n %s (%d): length mismatch, actual:%d, expected:%d", func, line, actual_length, length);
+		CU_FAIL("assert_stream, length mismatch");
+		return;
+	}
+
+	actual_data = s->buffer;
+	for (i = 0; i < length; i++)
+	{
+		if (actual_data[i] != data[i])
+		{
+			printf("\n %s (%d): buffer mismatch:\n", func, line);
+
+			printf("\nActual:\n");
+			freerdp_hexdump(actual_data, length);
+
+			printf("Expected:\n");
+			freerdp_hexdump(data, length);
+
+			CU_FAIL("assert_stream, buffer mismatch");
+			return;
+		}
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	int index = 1;
@@ -61,6 +98,8 @@ int main(int argc, char* argv[])
 
 	if (argc < *pindex + 1)
 	{
+		add_per_suite();
+		add_ber_suite();
 		add_color_suite();
 		add_libgdi_suite();
 		add_stream_suite();
@@ -85,6 +124,14 @@ int main(int argc, char* argv[])
 			else if (strcmp("transport", argv[*pindex]) == 0)
 			{
 				add_transport_suite();
+			}
+			else if (strcmp("per", argv[*pindex]) == 0)
+			{
+				add_per_suite();
+			}
+			else if (strcmp("ber", argv[*pindex]) == 0)
+			{
+				add_ber_suite();
 			}
 
 			*pindex = *pindex + 1;

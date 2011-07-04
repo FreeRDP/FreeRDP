@@ -18,7 +18,12 @@
  */
 
 #include <stdio.h>
-#include "CUnit/Basic.h"
+#include <stdlib.h>
+#include <string.h>
+#include <CUnit/Basic.h>
+#include <freerdp/types/base.h>
+#include <freerdp/utils/stream.h>
+#include <freerdp/utils/hexdump.h>
 
 #define add_test_suite(name) \
 	CU_pSuite pSuite; \
@@ -33,3 +38,6 @@
 	}
 
 void dump_data(unsigned char * p, int len, int width, char* name);
+void assert_stream(STREAM* s, uint8* data, int length, const char* func, int line);
+
+#define ASSERT_STREAM(_s, _data, _length) assert_stream(_s, _data, _length, __FUNCTION__, __LINE__)
