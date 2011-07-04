@@ -24,6 +24,7 @@
 
 #include <freerdp/utils/stream.h>
 
-
+void
+gcc_write_create_conference_request(STREAM* s, STREAM* user_data);
 
 #endif /* __GCC_H */

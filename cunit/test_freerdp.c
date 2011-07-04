@@ -21,6 +21,7 @@
 
 #include "test_per.h"
 #include "test_ber.h"
+#include "test_gcc.h"
 #include "test_color.h"
 #include "test_libgdi.h"
 #include "test_stream.h"
@@ -60,16 +61,23 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 	int actual_length;
 	uint8* actual_data;
 
+	actual_data = s->buffer;
 	actual_length = stream_get_length(s);
 
 	if (actual_length != length)
 	{
-		printf("\n %s (%d): length mismatch, actual:%d, expected:%d", func, line, actual_length, length);
+		printf("\n %s (%d): length mismatch, actual:%d, expected:%d\n", func, line, actual_length, length);
+
+		printf("\nActual:\n");
+		freerdp_hexdump(actual_data, actual_length);
+
+		printf("Expected:\n");
+		freerdp_hexdump(data, length);
+
 		CU_FAIL("assert_stream, length mismatch");
 		return;
 	}
 
-	actual_data = s->buffer;
 	for (i = 0; i < length; i++)
 	{
 		if (actual_data[i] != data[i])
@@ -132,6 +140,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("ber", argv[*pindex]) == 0)
 			{
 				add_ber_suite();
+			}
+			else if (strcmp("gcc", argv[*pindex]) == 0)
+			{
+				add_gcc_suite();
 			}
 
 			*pindex = *pindex + 1;

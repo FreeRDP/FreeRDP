@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * ASN.1 Packed Encoding Rules (BER)
+ * T.124 Generic Conference Control (GCC) Unit Tests
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,26 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef __PER_H
-#define __PER_H
+#include "test_freerdp.h"
 
-#include <freerdp/utils/stream.h>
+int init_gcc_suite(void);
+int clean_gcc_suite(void);
+int add_gcc_suite(void);
 
-void
-per_write_length(STREAM* s, int length);
-void
-per_write_choice(STREAM* s, uint8 choice);
-void
-per_write_selection(STREAM* s, uint8 selection);
-void
-per_write_number_of_sets(STREAM* s, uint8 number);
-void
-per_write_padding(STREAM* s, int length);
-void
-per_write_object_identifier(STREAM* s, uint8 oid[6]);
-void
-per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
-void
-per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
-
-#endif /* __PER_H */
+void test_gcc_write_create_conference_request(void);

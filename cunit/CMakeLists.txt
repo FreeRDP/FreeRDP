@@ -27,6 +27,8 @@ add_executable(test_freerdp
 	test_per.h
 	test_ber.c
 	test_ber.h
+	test_gcc.c
+	test_gcc.h
 	test_color.c
 	test_color.h
 	test_libgdi.c

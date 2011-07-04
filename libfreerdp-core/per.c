@@ -29,6 +29,33 @@ per_write_length(STREAM* s, int length)
 }
 
 void
+per_write_choice(STREAM* s, uint8 choice)
+{
+	stream_write_uint8(s, choice);
+}
+
+void
+per_write_selection(STREAM* s, uint8 selection)
+{
+	stream_write_uint8(s, selection);
+}
+
+void
+per_write_number_of_sets(STREAM* s, uint8 number)
+{
+	stream_write_uint8(s, number);
+}
+
+void
+per_write_padding(STREAM* s, int length)
+{
+	int i;
+
+	for (i = 0; i < length; i++)
+		stream_write_uint8(s, 0);
+}
+
+void
 per_write_object_identifier(STREAM* s, uint8 oid[6])
 {
 	uint8 t12 = (oid[0] << 4) & (oid[1] & 0x0F);
@@ -38,4 +65,51 @@ per_write_object_identifier(STREAM* s, uint8 oid[6])
 	stream_write_uint8(s, oid[3]); /* tuple 4 */
 	stream_write_uint8(s, oid[4]); /* tuple 5 */
 	stream_write_uint8(s, oid[5]); /* tuple 6 */
+}
+
+void
+per_write_string(STREAM* s, uint8* str, int length)
+{
+	int i;
+
+	for (i = 0; i < length; i++)
+		stream_write_uint8(s, str[i]);
+}
+
+void
+per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
+{
+	int i;
+	int mlength;
+
+	mlength = (length - min >= 0) ? length - min : min;
+
+	per_write_length(s, mlength);
+
+	for (i = 0; i < length; i++)
+		stream_write_uint8(s, oct_str[i]);
+}
+
+void
+per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min)
+{
+	int i;
+	int mlength;
+	uint8 num, c1, c2;
+
+	mlength = (length - min >= 0) ? length - min : min;
+
+	per_write_length(s, mlength);
+
+	for (i = 0; i < length; i += 2)
+	{
+		c1 = num_str[i];
+		c2 = ((i + 1) < length) ? num_str[i + 1] : 0x30;
+
+		c1 = (c1 - 0x30) % 10;
+		c2 = (c2 - 0x30) % 10;
+		num = (c1 << 4) | c2;
+
+		stream_write_uint8(s, num); /* string */
+	}
 }
