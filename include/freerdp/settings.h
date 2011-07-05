@@ -20,10 +20,12 @@
 #ifndef __RDP_SETTINGS_H
 #define __RDP_SETTINGS_H
 
+#include <freerdp/freerdp.h>
+
 struct rdp_chan
 {
 	char name[8]; /* ui sets */
-	int flags; /* ui sets */
+	int options; /* ui sets */
 	int chan_id; /* core sets */
 	void * handle; /* just for ui */
 };
@@ -45,8 +47,25 @@ struct rdp_monitor
 
 struct rdp_settings
 {
-	int width;
-	int height;
+	uint16 width;
+	uint16 height;
+	uint32 rdp_version;
+	uint16 color_depth;
+	uint32 kbd_layout;
+	uint32 kbd_type;
+	uint32 kbd_subtype;
+	uint32 kbd_fn_keys;
+	uint32 selected_protocol;
+
+	uint32 session_id;
+	int console_session;
+
+	int num_channels;
+	struct rdp_chan channels[16];
+
+	int num_monitors;
+	struct rdp_monitor monitors[16];
+
 	char hostname[16];
 	char server[64];
 	char domain[16];
@@ -55,26 +74,19 @@ struct rdp_settings
 	char directory[256];
 	char username[256];
 	int tcp_port_rdp;
-	int keyboard_layout;
-	int keyboard_type;
-	int keyboard_subtype;
-	int keyboard_functionkeys;
-	char xkb_layout[32];
-	char xkb_variant[32];
+	int performance_flags;
+
+	int encryption;
 	int tls_security;
 	int nla_security;
 	int rdp_security;
-	int encryption;
-	int rdp_version;
+
 	int remote_app;
 	char app_name[64];
-	int console_session;
-	int server_depth;
 	int bitmap_cache;
 	int bitmap_cache_persist_enable;
 	int bitmap_cache_precache;
 	int bitmap_compression;
-	int performanceflags;
 	int desktop_save;
 	int polygon_ellipse_orders;
 	int autologin;
@@ -87,12 +99,8 @@ struct rdp_settings
 	int rfx_flags;
 	int ui_decode_flags;
 	int use_frame_ack;
-	int num_channels;
 	int software_gdi;
-	struct rdp_chan channels[16];
 	struct rdp_ext_set extensions[16];
-	int num_monitors;
-	struct rdp_monitor monitors[16];
 };
 
 #endif /* __RDP_SETTINGS_H */

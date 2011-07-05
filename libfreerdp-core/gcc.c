@@ -135,6 +135,21 @@ gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 }
 
 /**
+ * Write a user data header (TS_UD_HEADER).\n
+ * @msdn{cc240509}
+ * @param s stream
+ * @param type data block type
+ * @param length data block length
+ */
+
+void
+gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
+{
+	stream_write_uint16(s, type); /* type */
+	stream_write_uint16(s, length); /* length */
+}
+
+/**
  * Write a client core data block (TS_UD_CS_CORE).\n
  * @msdn{cc240510}
  * @param s stream
@@ -144,7 +159,61 @@ gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 void
 gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 {
+	uint32 version;
+	uint16 highColorDepth;
+	uint16 supportedColorDepths;
+	uint16 earlyCapabilityFlags;
+	uint8 connectionType;
 
+	gcc_write_user_data_header(s, CS_CORE, 216);
+
+	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
+
+	stream_write_uint32(s, version); /* version */
+	stream_write_uint16(s, settings->width); /* desktopWidth */
+	stream_write_uint16(s, settings->height); /* desktopHeight */
+	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* colorDepth, ignored because of postBeta2ColorDepth */
+	stream_write_uint16(s, RNS_UD_SAS_DEL);	/* SASSequence (Secure Access Sequence) */
+	stream_write_uint32(s, settings->kbd_layout); /* keyboardLayout */
+	stream_write_uint32(s, 2600); /* clientBuild */
+
+	stream_write_padding(s, 32); /* clientName */
+
+	stream_write_uint32(s, settings->kbd_type); /* keyboardType */
+	stream_write_uint32(s, settings->kbd_subtype); /* keyboardSubType */
+	stream_write_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKey */
+
+	stream_write_padding(s, 64); /* imeFileName */
+
+	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
+	stream_write_uint16(s, 1); /* clientProductID */
+	stream_write_uint16(s, 0); /* serialNumber (should be initialized to 0) */
+
+	highColorDepth = MIN(settings->color_depth, 24);
+	supportedColorDepths = RNS_UD_32BPP_SUPPORT | RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
+
+	stream_write_uint16(s, highColorDepth); /* highColorDepth */
+	stream_write_uint16(s, supportedColorDepths); /* supportedColorDepths */
+
+	connectionType = 0;
+	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
+
+	if (settings->performance_flags == PERF_FLAG_NONE)
+	{
+		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
+		connectionType = CONNECTION_TYPE_LAN;
+	}
+
+	if (settings->color_depth == 32)
+		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
+
+	stream_write_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
+	stream_write_padding(s, 64); /* clientDigProductId (64 bytes) */
+
+	stream_write_uint8(s, connectionType); /* connectionType */
+	stream_write_uint8(s, 0); /* pad1octet */
+
+	stream_write_uint32(s, settings->selected_protocol); /* serverSelectedProtocol */
 }
 
 /**
@@ -157,7 +226,23 @@ gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 void
 gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 {
+	uint16 encryptionMethods;
 
+	gcc_write_user_data_header(s, CS_SECURITY, 12);
+
+	encryptionMethods = ENCRYPTION_40BIT_FLAG | ENCRYPTION_128BIT_FLAG;
+
+	if (settings->encryption)
+	{
+		stream_write_uint32(s, encryptionMethods); /* encryptionMethods */
+		stream_write_uint32(s, 0); /* extEncryptionMethods */
+	}
+	else
+	{
+		/* French locale, disable encryption */
+		stream_write_uint32(s, 0); /* encryptionMethods */
+		stream_write_uint32(s, encryptionMethods); /* extEncryptionMethods */
+	}
 }
 
 /**
@@ -170,7 +255,24 @@ gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 void
 gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 {
+	int i;
+	uint16 length;
 
+	if (settings->num_channels > 0)
+	{
+		length = settings->num_channels * 12 + 8;
+		gcc_write_user_data_header(s, CS_NET, length);
+
+		stream_write_uint32(s, settings->num_channels); /* channelCount */
+
+		/* channelDefArray */
+		for (i = 0; i < settings->num_channels; i++)
+		{
+			/* CHANNEL_DEF */
+			stream_write(s, settings->channels[i].name, 8); /* name (8 bytes) */
+			stream_write_uint32(s, settings->channels[i].options); /* options (4 bytes) */
+		}
+	}
 }
 
 /**
@@ -183,7 +285,18 @@ gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 void
 gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
 {
+	uint32 flags;
+	uint32 redirectedSessionID;
 
+	gcc_write_user_data_header(s, CS_CLUSTER, 12);
+
+	flags = REDIRECTION_SUPPORTED | REDIRECTION_VERSION4;
+
+	if (settings->console_session || settings->session_id)
+		flags |= REDIRECTED_SESSIONID_FIELD_VALID;
+
+	stream_write_uint32(s, flags); /* flags */
+	stream_write_uint32(s, settings->session_id); /* redirectedSessionID */
 }
 
 /**
@@ -196,5 +309,31 @@ gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
 void
 gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings)
 {
+	int i;
+	uint16 length;
+	uint32 left, top, right, bottom, flags;
 
+	if (settings->num_monitors > 1)
+	{
+		length = (20 * settings->num_monitors) + 12;
+		gcc_write_user_data_header(s, CS_MONITOR, length);
+
+		stream_write_uint32(s, 0); /* flags */
+		stream_write_uint32(s, settings->num_monitors); /* monitorCount */
+
+		for (i = 0; i < settings->num_monitors; i++)
+		{
+			left = settings->monitors[i].x;
+			top = settings->monitors[i].y;
+			right = settings->monitors[i].x + settings->monitors[i].width - 1;
+			bottom = settings->monitors[i].y + settings->monitors[i].height - 1;
+			flags = settings->monitors[i].is_primary ? MONITOR_PRIMARY : 0;
+
+			stream_write_uint32(s, left); /* left */
+			stream_write_uint32(s, top); /* top */
+			stream_write_uint32(s, right); /* right */
+			stream_write_uint32(s, bottom); /* bottom */
+			stream_write_uint32(s, flags); /* flags */
+		}
+	}
 }

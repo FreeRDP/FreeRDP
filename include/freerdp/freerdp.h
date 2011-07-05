@@ -20,8 +20,8 @@
 #ifndef __FREERDP_H
 #define __FREERDP_H
 
-#include "settings.h"
 #include "types/ui.h"
+#include "settings.h"
 #include "extension.h"
 
 #define FREERDP_INTERFACE_VERSION 4

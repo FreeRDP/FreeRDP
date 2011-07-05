@@ -81,7 +81,7 @@ void test_transport(void)
 	CU_ASSERT(r == True);
 	
 	stream = stream_new(sizeof(test_x224_req));
-	stream_write_buffer(stream, test_x224_req, sizeof(test_x224_req));
+	stream_write(stream, test_x224_req, sizeof(test_x224_req));
 	r = transport_send(transport, stream);
 	CU_ASSERT(r == 0);
 

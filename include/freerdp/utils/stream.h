@@ -21,6 +21,7 @@
 #ifndef __STREAM_UTILS_H
 #define __STREAM_UTILS_H
 
+#include <string.h>
 #include <freerdp/types/base.h>
 
 struct _STREAM
@@ -93,8 +94,12 @@ stream_extend(STREAM * stream);
 	*_s->ptr++ = ((_v) >> 40) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 48) & 0xFF; \
 	*_s->ptr++ = ((_v) >> 56) & 0xFF; } while (0)
-#define stream_write_buffer(_s, _b, _n) do { \
+#define stream_write(_s, _b, _n) do { \
 	memcpy(_s->ptr, (_b), (_n)); \
+	_s->ptr += (_n); \
+	} while (0)
+#define stream_write_padding(_s, _n) do { \
+	memset(_s->ptr, '\0', (_n)); \
 	_s->ptr += (_n); \
 	} while (0)
 

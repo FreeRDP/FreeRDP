@@ -257,8 +257,8 @@ void nego_send_negotiation_request(rdpNego *nego)
 	if (nego->cookie)
 	{
 		int cookie_length = strlen(nego->cookie);
-		stream_write_buffer(s, "Cookie: mstshash=", 17);
-		stream_write_buffer(s, nego->cookie, cookie_length);
+		stream_write(s, "Cookie: mstshash=", 17);
+		stream_write(s, nego->cookie, cookie_length);
 		stream_write_uint8(s, 0x0D); /* CR */
 		stream_write_uint8(s, 0x0A); /* LF */
 		length += cookie_length + 19;
@@ -266,7 +266,7 @@ void nego_send_negotiation_request(rdpNego *nego)
 	else if (nego->routing_token)
 	{
 		int routing_token_length = strlen(nego->routing_token);
-		stream_write_buffer(s, nego->routing_token, routing_token_length);
+		stream_write(s, nego->routing_token, routing_token_length);
 		length += routing_token_length;
 	}
 

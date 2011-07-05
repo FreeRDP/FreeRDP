@@ -44,4 +44,12 @@ typedef signed long long sint64;
 
 typedef int boolean;
 
+#ifndef MIN
+#define MIN(x,y)	(((x) < (y)) ? (x) : (y))
+#endif
+
+#ifndef MAX
+#define MAX(x,y)	(((x) > (y)) ? (x) : (y))
+#endif
+
 #endif

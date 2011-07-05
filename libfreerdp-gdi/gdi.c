@@ -1117,7 +1117,7 @@ gdi_init(rdpInst * inst, uint32 flags)
 
 	gdi->width = inst->settings->width;
 	gdi->height = inst->settings->height;
-	gdi->srcBpp = inst->settings->server_depth;
+	gdi->srcBpp = inst->settings->color_depth;
 
 	/* default internal buffer format */
 	gdi->dstBpp = 32;
