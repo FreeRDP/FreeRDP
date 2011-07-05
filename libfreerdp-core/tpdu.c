@@ -55,6 +55,13 @@
  * |         ...        |
  */
 
+/**
+ * Read TPDU header.
+ * @param s stream
+ * @param code variable pointer to receive TPDU code
+ * @return TPDU length indicator (LI)
+ */
+
 uint8
 tpdu_read_header(STREAM* s, uint8* code)
 {
@@ -77,6 +84,13 @@ tpdu_read_header(STREAM* s, uint8* code)
 	return li;
 }
 
+/**
+ * Write TDPU header.
+ * @param s stream
+ * @param length length
+ * @param code TPDU code
+ */
+
 void
 tpdu_write_header(STREAM* s, uint16 length, uint8 code)
 {
@@ -95,11 +109,23 @@ tpdu_write_header(STREAM* s, uint16 length, uint8 code)
 	}
 }
 
+/**
+ * Write Connection Request TPDU.
+ * @param s stream
+ * @param length TPDU length
+ */
+
 void
 tpdu_write_connection_request(STREAM* s, uint16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
 }
+
+/**
+ * Read Connection Confirm TPDU.
+ * @param s stream
+ * @return length indicator (LI)
+ */
 
 uint8
 tpdu_read_connection_confirm(STREAM* s)
@@ -118,11 +144,23 @@ tpdu_read_connection_confirm(STREAM* s)
 	return li;
 }
 
+/**
+ * Write Disconnect Request TPDU.
+ * @param s stream
+ * @param length TPDU length
+ */
+
 void
 tpdu_write_disconnect_request(STREAM* s, uint16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_DISCONNECT_REQUEST);
 }
+
+/**
+ * Write Data TPDU.
+ * @param s stream
+ * @param length TPDU length
+ */
 
 void
 tpdu_write_data(STREAM* s, uint16 length)

@@ -19,6 +19,12 @@
 
 #include "ber.h"
 
+/**
+ * Write BER length.
+ * @param s stream
+ * @param length length
+ */
+
 void
 ber_write_length(STREAM* s, int length)
 {
@@ -33,12 +39,26 @@ ber_write_length(STREAM* s, int length)
 	}
 }
 
+/**
+ * Write BER Universal tag.
+ * @param s stream
+ * @param tag BER universally-defined tag
+ * @param length length
+ */
+
 void
 ber_write_universal_tag(STREAM* s, uint8 tag, int length)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_PRIMITIVE) | (BER_TAG_MASK & tag));
 	ber_write_length(s, length);
 }
+
+/**
+ * Write BER Application tag.
+ * @param s stream
+ * @param tag BER application-defined tag
+ * @param length length
+ */
 
 void
 ber_write_application_tag(STREAM* s, uint8 tag, int length)

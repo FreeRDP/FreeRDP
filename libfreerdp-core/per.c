@@ -19,6 +19,12 @@
 
 #include "per.h"
 
+/**
+ * Write PER length.
+ * @param s stream
+ * @param length length
+ */
+
 void
 per_write_length(STREAM* s, int length)
 {
@@ -28,11 +34,23 @@ per_write_length(STREAM* s, int length)
 		stream_write_uint8(s, length);
 }
 
+/**
+ * Write PER CHOICE.
+ * @param s stream
+ * @param choice index of chosen field
+ */
+
 void
 per_write_choice(STREAM* s, uint8 choice)
 {
 	stream_write_uint8(s, choice);
 }
+
+/**
+ * Write PER selection for OPTIONAL fields.
+ * @param s stream
+ * @param selection bit map of selected fields
+ */
 
 void
 per_write_selection(STREAM* s, uint8 selection)
@@ -40,11 +58,23 @@ per_write_selection(STREAM* s, uint8 selection)
 	stream_write_uint8(s, selection);
 }
 
+/**
+ * Write PER number of sets for SET OF.
+ * @param s stream
+ * @param number number of sets
+ */
+
 void
 per_write_number_of_sets(STREAM* s, uint8 number)
 {
 	stream_write_uint8(s, number);
 }
+
+/**
+ * Write PER padding with zeros.
+ * @param s stream
+ * @param length
+ */
 
 void
 per_write_padding(STREAM* s, int length)
@@ -54,6 +84,12 @@ per_write_padding(STREAM* s, int length)
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, 0);
 }
+
+/**
+ * Write PER OBJECT_IDENTIFIER (OID)
+ * @param s stream
+ * @param oid object identifier (oid)
+ */
 
 void
 per_write_object_identifier(STREAM* s, uint8 oid[6])
@@ -67,6 +103,13 @@ per_write_object_identifier(STREAM* s, uint8 oid[6])
 	stream_write_uint8(s, oid[5]); /* tuple 6 */
 }
 
+/**
+ * Write PER string.
+ * @param s stream
+ * @param str string
+ * @param length string length
+ */
+
 void
 per_write_string(STREAM* s, uint8* str, int length)
 {
@@ -75,6 +118,14 @@ per_write_string(STREAM* s, uint8* str, int length)
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, str[i]);
 }
+
+/**
+ * Write PER OCTET_STRING
+ * @param s stream
+ * @param oct_str octet string
+ * @param length string length
+ * @param min minimum string length
+ */
 
 void
 per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
@@ -89,6 +140,14 @@ per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, oct_str[i]);
 }
+
+/**
+ * Write PER NumericString.
+ * @param s stream
+ * @param num_str numeric string
+ * @param length string length
+ * @param min minimum string length
+ */
 
 void
 per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min)

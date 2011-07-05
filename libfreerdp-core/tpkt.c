@@ -53,6 +53,12 @@
  * length includes the TPKT header (4 bytes), the maximum X.224 TPDU length is 65531.
  */
 
+/**
+ * Read a TPKT header.\n
+ * @param s
+ * @return length
+ */
+
 uint16
 tpkt_read_header(STREAM* s)
 {
@@ -75,20 +81,16 @@ tpkt_read_header(STREAM* s)
 	return length;
 }
 
+/**
+ * Write a TPKT header.\n
+ * @param s
+ * @param length
+ */
+
 void
 tpkt_write_header(STREAM* s, int length)
 {
 	stream_write_uint8(s, 3); /* version */
 	stream_write_uint8(s, 0); /* reserved */
 	stream_write_uint16_be(s, length); /* length */
-}
-
-int
-tpkt_recv(rdpTransport * transport, STREAM* s)
-{
-	uint16 length;
-
-	length = tpkt_read_header(s);
-
-	freerdp_hexdump(s->buffer, length);
 }

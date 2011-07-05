@@ -182,9 +182,11 @@ void nego_attempt_rdp(rdpNego *nego)
 }
 
 /**
- * Receive protocol security negotiation message.
- * @param nego
- * @param s
+ * Receive protocol security negotiation message.\n
+ * @msdn{cc240501}
+ * @param transport transport
+ * @param s stream
+ * @param extra nego pointer
  */
 
 int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
@@ -233,6 +235,13 @@ void nego_send(rdpNego *nego)
 	else if (nego->state == NEGO_STATE_RDP)
 		nego_attempt_rdp(nego);
 }
+
+/**
+ * Send RDP Negotiation Request (RDP_NEG_REQ).\n
+ * @msdn{cc240500}\n
+ * @msdn{cc240470}
+ * @param nego
+ */
 
 void nego_send_negotiation_request(rdpNego *nego)
 {

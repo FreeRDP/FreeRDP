@@ -91,14 +91,19 @@
  *
  */
 
-/* http://msdn.microsoft.com/en-us/library/cc240836/ */
-
 /*
  * OID = 0.0.20.124.0.1
  * { itu-t(0) recommendation(0) t(20) t124(124) version(0) 1 }
  * v.1 of ITU-T Recommendation T.124 (Feb 1998): "Generic Conference Control"
  */
 uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+
+/**
+ * Write a GCC Conference Create Request.\n
+ * @msdn{cc240836}
+ * @param s stream
+ * @param user_data client data blocks
+ */
 
 void
 gcc_write_create_conference_request(STREAM* s, STREAM* user_data)

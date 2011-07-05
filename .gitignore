@@ -11,8 +11,12 @@ Makefile
 *.project
 *.cproject
 
+# Doxygen
+docs/api
+
 # Binaries
 *.so
 *.so.*
+*.dylib
 cunit/test_freerdp
 freerdp-ui/test/freerdp-test

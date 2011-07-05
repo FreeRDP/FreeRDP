@@ -32,9 +32,4 @@ tpkt_read_header(STREAM* s);
 void
 tpkt_write_header(STREAM* s, int length);
 
-void
-tpkt_send_connection_request(rdpTransport * transport);
-int
-tpkt_recv(rdpTransport * transport, STREAM* s);
-
 #endif /* __TPKT_H */
