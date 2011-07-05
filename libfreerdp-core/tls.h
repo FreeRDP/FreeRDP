@@ -28,8 +28,8 @@
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_tls rdpTls;
-typedef FRDP_BOOL (*TlsConnect) (rdpTls * tls);
-typedef FRDP_BOOL (*TlsDisconnect) (rdpTls * tls);
+typedef boolean (*TlsConnect) (rdpTls * tls);
+typedef boolean (*TlsDisconnect) (rdpTls * tls);
 
 struct rdp_tls
 {
@@ -41,15 +41,15 @@ struct rdp_tls
 	TlsDisconnect disconnect;
 };
 
-FRDP_BOOL
+boolean
 tls_connect(rdpTls * tls);
-FRDP_BOOL
+boolean
 tls_disconnect(rdpTls * tls);
 int
 tls_read(rdpTls * tls, char* data, int length);
 int
 tls_write(rdpTls * tls, char* data, int length);
-FRDP_BOOL
+boolean
 tls_print_error(char *func, SSL *connection, int value);
 
 rdpTls*

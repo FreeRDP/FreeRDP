@@ -34,19 +34,19 @@
 
 #define BUFFER_SIZE 16384
 
-FRDP_BOOL
+boolean
 transport_connect(rdpTransport * transport, const char * server, int port)
 {
 	return transport->tcp->connect(transport->tcp, server, port);
 }
 
-FRDP_BOOL
+boolean
 transport_disconnect(rdpTransport * transport)
 {
 	return transport->tcp->disconnect(transport->tcp);
 }
 
-FRDP_BOOL
+boolean
 transport_connect_rdp(rdpTransport * transport)
 {
 	transport->state = TRANSPORT_STATE_RDP;
@@ -56,7 +56,7 @@ transport_connect_rdp(rdpTransport * transport)
 	return True;
 }
 
-FRDP_BOOL
+boolean
 transport_connect_tls(rdpTransport * transport)
 {
 	if (transport->tls == NULL)
@@ -72,7 +72,7 @@ transport_connect_tls(rdpTransport * transport)
 	return True;
 }
 
-FRDP_BOOL
+boolean
 transport_connect_nla(rdpTransport * transport)
 {
 	if (transport->tls == NULL)

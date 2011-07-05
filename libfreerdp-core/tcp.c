@@ -32,7 +32,7 @@
 
 #include "tcp.h"
 
-FRDP_BOOL
+boolean
 tcp_connect(rdpTcp * tcp, const char * hostname, int port)
 {
 	int status;
@@ -81,7 +81,7 @@ tcp_connect(rdpTcp * tcp, const char * hostname, int port)
 	return True;
 }
 
-FRDP_BOOL
+boolean
 tcp_disconnect(rdpTcp * tcp)
 {
 	if (tcp->sockfd != -1)
@@ -93,8 +93,8 @@ tcp_disconnect(rdpTcp * tcp)
 	return True;
 }
 
-FRDP_BOOL
-tcp_set_blocking_mode(rdpTcp * tcp, FRDP_BOOL blocking)
+boolean
+tcp_set_blocking_mode(rdpTcp * tcp, boolean blocking)
 {
 	int flags;
 	flags = fcntl(tcp->sockfd, F_GETFL);

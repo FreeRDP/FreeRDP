@@ -52,7 +52,7 @@
 extern "C" {
 #endif
 
-FREERDP_API FRDP_BOOL
+FREERDP_API boolean
 freerdp_global_init(void);
 FREERDP_API void
 freerdp_global_finish(void);
@@ -73,7 +73,7 @@ struct rdp_inst
 	int (* rdp_get_fds)(rdpInst * inst, void ** read_fds, int * read_count,
 		void ** write_fds, int * write_count);
 	int (* rdp_check_fds)(rdpInst * inst);
-	int (* rdp_send_input_scancode)(rdpInst * inst, FRDP_BOOL up, FRDP_BOOL extended, uint8 keyCode);
+	int (* rdp_send_input_scancode)(rdpInst * inst, boolean up, boolean extended, uint8 keyCode);
 	int (* rdp_send_input_unicode)(rdpInst * inst, uint16 character);
 	int (* rdp_send_input_mouse)(rdpInst * inst, uint16 pointerFlags, uint16 xPos, uint16 yPos);
 	int (* rdp_sync_input)(rdpInst * inst, int toggle_flags);
@@ -139,10 +139,10 @@ struct rdp_inst
 	void (* ui_destroy_surface)(rdpInst * inst, FRDP_HBITMAP surface);
 	void (* ui_channel_data)(rdpInst * inst, int chan_id, char * data, int data_size,
 		int flags, int total_size);
-	FRDP_BOOL (* ui_authenticate)(rdpInst * inst);
+	boolean (* ui_authenticate)(rdpInst * inst);
 	int (* ui_decode)(rdpInst * inst, uint8 * data, int data_size);
-	FRDP_BOOL (* ui_check_certificate)(rdpInst * inst, const char * fingerprint,
-		const char * subject, const char * issuer, FRDP_BOOL verified);
+	boolean (* ui_check_certificate)(rdpInst * inst, const char * fingerprint,
+		const char * subject, const char * issuer, boolean verified);
 };
 
 FREERDP_API rdpInst *

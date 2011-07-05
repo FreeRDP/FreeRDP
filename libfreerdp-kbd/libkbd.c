@@ -136,7 +136,7 @@ freerdp_kbd_get_layouts(int types)
 }
 
 uint8
-freerdp_kbd_get_scancode_by_keycode(uint8 keycode, FRDP_BOOL * extended)
+freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean * extended)
 {
 	DEBUG_KBD("%2x %4s -> %d/%d", keycode, x_keycode_to_rdp_keycode[keycode].keyname,
 			x_keycode_to_rdp_keycode[keycode].extended, x_keycode_to_rdp_keycode[keycode].keycode);
@@ -145,7 +145,7 @@ freerdp_kbd_get_scancode_by_keycode(uint8 keycode, FRDP_BOOL * extended)
 }
 
 uint8
-freerdp_kbd_get_scancode_by_virtualkey(int vkcode, FRDP_BOOL * extended)
+freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean * extended)
 {
 	*extended = virtualKeyboard[vkcode].extended;
 	return virtualKeyboard[vkcode].scancode;

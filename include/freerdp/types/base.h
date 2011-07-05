@@ -42,6 +42,6 @@ typedef signed long long sint64;
 #define False (0)
 #endif
 
-typedef int FRDP_BOOL;
+typedef int boolean;
 
 #endif

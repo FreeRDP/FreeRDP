@@ -37,8 +37,8 @@ freerdp_kbd_get_layouts(int types);
 unsigned int
 freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id);
 uint8
-freerdp_kbd_get_scancode_by_keycode(uint8 keycode, FRDP_BOOL * extended);
+freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean * extended);
 uint8
-freerdp_kbd_get_scancode_by_virtualkey(int vkcode, FRDP_BOOL * extended);
+freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean * extended);
 
 #endif /* __FREERDP_KBD_H */

@@ -56,15 +56,15 @@ rdpTransport *
 transport_new(void);
 void
 transport_free(rdpTransport * transport);
-FRDP_BOOL
+boolean
 transport_connect(rdpTransport * transport, const char * server, int port);
-FRDP_BOOL
+boolean
 transport_disconnect(rdpTransport * transport);
-FRDP_BOOL
+boolean
 transport_connect_rdp(rdpTransport * transport);
-FRDP_BOOL
+boolean
 transport_connect_tls(rdpTransport * transport);
-FRDP_BOOL
+boolean
 transport_connect_nla(rdpTransport * transport);
 int
 transport_send(rdpTransport * transport, STREAM * stream);

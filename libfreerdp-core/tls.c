@@ -22,7 +22,7 @@
 
 #include "tls.h"
 
-FRDP_BOOL
+boolean
 tls_connect(rdpTls * tls)
 {
 	int connection_status;
@@ -59,7 +59,7 @@ tls_connect(rdpTls * tls)
 	return True;
 }
 
-FRDP_BOOL
+boolean
 tls_disconnect(rdpTls * tls)
 {
 	return True;
@@ -123,7 +123,7 @@ tls_write(rdpTls * tls, char* data, int length)
 	return bytes;
 }
 
-FRDP_BOOL
+boolean
 tls_print_error(char *func, SSL *connection, int value)
 {
 	switch (SSL_get_error(connection, value))
