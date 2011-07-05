@@ -56,7 +56,7 @@ typedef struct _FRDP_PEN
 }
 FRDP_PEN;
 
-/* this is whats in the brush cache */
+/* this is what is in the brush cache */
 typedef struct _FRDP_BRUSHDATA
 {
 	uint32 color_code;

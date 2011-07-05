@@ -133,3 +133,68 @@ gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 	/* userData::value (OCTET_STRING) */
 	per_write_octet_string(s, user_data->buffer, stream_get_length(user_data), 0); /* array of client data blocks */
 }
+
+/**
+ * Write a client core data block (TS_UD_CS_CORE).\n
+ * @msdn{cc240510}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+void
+gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
+{
+
+}
+
+/**
+ * Write a client security data block (TS_UD_CS_SEC).\n
+ * @msdn{cc240511}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+void
+gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
+{
+
+}
+
+/**
+ * Write a client network data block (TS_UD_CS_NET).\n
+ * @msdn{cc240512}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+void
+gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
+{
+
+}
+
+/**
+ * Write a client cluster data block (TS_UD_CS_CLUSTER).\n
+ * @msdn{cc240514}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+void
+gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
+{
+
+}
+
+/**
+ * Write a client monitor data block (TS_UD_CS_MONITOR).\n
+ * @msdn{dd305336}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+void
+gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings)
+{
+
+}
