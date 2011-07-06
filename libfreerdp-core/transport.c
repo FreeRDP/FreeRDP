@@ -171,9 +171,9 @@ transport_recv_tcp(rdpTransport * transport)
 {
 	int bytes;
 
-	stream_check_capacity(transport->recv_buffer, BUFFER_SIZE);
+	stream_check_size(transport->recv_buffer, BUFFER_SIZE);
 
-	bytes = recv(transport->tcp->sockfd, transport->recv_buffer->ptr, BUFFER_SIZE, 0);
+	bytes = recv(transport->tcp->sockfd, transport->recv_buffer->p, BUFFER_SIZE, 0);
 
 	if (bytes == -1)
 	{
@@ -242,7 +242,7 @@ transport_check_fds(rdpTransport * transport)
 		if (pos > length)
 		{
 			stream_set_pos(received, length);
-			stream_check_capacity(transport->recv_buffer, pos - length);
+			stream_check_size(transport->recv_buffer, pos - length);
 			stream_copy(transport->recv_buffer, received, pos - length);
 		}
 
@@ -264,7 +264,7 @@ transport_init(rdpTransport * transport)
 }
 
 rdpTransport *
-transport_new(void)
+transport_new(rdpSettings * settings)
 {
 	rdpTransport * transport;
 

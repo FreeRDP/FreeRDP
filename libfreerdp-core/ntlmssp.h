@@ -22,8 +22,10 @@
 
 #include "credssp.h"
 
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/datablob.h>
 
 struct _AV_PAIR
 {
@@ -138,8 +140,8 @@ void ntlmssp_compute_lm_v2_response(NTLMSSP *ntlmssp);
 void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp);
 
 void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp);
-void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM s);
-void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM s);
+void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM* s);
+void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM* s);
 void ntlmssp_free_av_pairs(NTLMSSP *ntlmssp);
 
 void ntlmssp_compute_message_integrity_check(NTLMSSP *ntlmssp);
@@ -147,12 +149,14 @@ void ntlmssp_compute_message_integrity_check(NTLMSSP *ntlmssp);
 void ntlmssp_encrypt_message(NTLMSSP *ntlmssp, DATABLOB *msg, DATABLOB *encrypted_msg, uint8* signature);
 int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB *msg, uint8* signature);
 
-int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM s);
-int ntlmssp_send(NTLMSSP *ntlmssp, STREAM s);
+int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM* s);
+int ntlmssp_send(NTLMSSP *ntlmssp, STREAM* s);
 
 NTLMSSP* ntlmssp_new();
 void ntlmssp_init(NTLMSSP *ntlmssp);
 void ntlmssp_free(NTLMSSP *ntlmssp);
+
+#define WITH_DEBUG_NLA
 
 #ifdef WITH_DEBUG_NLA
 #define DEBUG_NLA(fmt, ...) DEBUG_CLASS(NLA, fmt, ## __VA_ARGS__)

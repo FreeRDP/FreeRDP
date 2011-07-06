@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 {
 	char* username;
 	char* hostname;
-	transport = transport_new();
+	transport = transport_new((rdpSettings*) NULL);
 	nego = nego_new(transport);
 
 	if (argc < 3)

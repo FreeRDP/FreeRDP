@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-#include "stream.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -30,8 +29,6 @@
 
 #include <time.h>
 #include "ntlmssp.h"
-#include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
 
 #include "credssp.h"
 
@@ -50,7 +47,7 @@ asn1_write(const void *buffer, size_t size, void *fd)
 void credssp_ntlmssp_init(rdpCredssp *credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	rdpSettings *settings = credssp->net->rdp->settings;
+	rdpSettings *settings = credssp->transport->settings;
 
 	ntlmssp_set_password(ntlmssp, settings->password);
 	ntlmssp_set_username(ntlmssp, settings->username);
@@ -81,15 +78,17 @@ void credssp_ntlmssp_init(rdpCredssp *credssp)
 
 int credssp_get_public_key(rdpCredssp *credssp)
 {
-	CryptoCert cert;
 	int ret;
+	CryptoCert cert;
 
-	cert = tls_get_certificate(credssp->net->tls);
+	cert = tls_get_certificate(credssp->transport->tls);
+
 	if (cert == NULL)
 	{
 		printf("credssp_get_public_key: tls_get_certificate failed to return the server certificate.\n");
 		return 0;
 	}
+
 	ret = crypto_cert_get_public_key(cert, &credssp->public_key);
 	crypto_cert_free(cert);
 
@@ -105,7 +104,7 @@ int credssp_get_public_key(rdpCredssp *credssp)
 int credssp_authenticate(rdpCredssp *credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	STREAM s = xmalloc(sizeof(struct stream));
+	STREAM* s = stream_new_empty();
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
 	credssp_ntlmssp_init(credssp);
@@ -114,10 +113,10 @@ int credssp_authenticate(rdpCredssp *credssp)
 		return 0;
 
 	/* NTLMSSP NEGOTIATE MESSAGE */
-	s->p = s->end = s->data = negoTokenBuffer;
+	s->p = s->data = negoTokenBuffer;
 	ntlmssp_send(ntlmssp, s);
 	credssp->negoToken.data = s->data;
-	credssp->negoToken.length = s->end - s->data;
+	credssp->negoToken.length = s->p - s->data;
 	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
 
 	/* NTLMSSP CHALLENGE MESSAGE */
@@ -125,18 +124,18 @@ int credssp_authenticate(rdpCredssp *credssp)
 		return -1;
 
 	s->p = s->data = credssp->negoToken.data;
-	s->end = s->p + credssp->negoToken.length;
+	s->p + credssp->negoToken.length;
 	ntlmssp_recv(ntlmssp, s);
 
 	datablob_free(&credssp->negoToken);
 
 	/* NTLMSSP AUTHENTICATE MESSAGE */
-	s->p = s->end = s->data = negoTokenBuffer;
+	s->p = s->data = negoTokenBuffer;
 	ntlmssp_send(ntlmssp, s);
 
 	/* The last NTLMSSP message is sent with the encrypted public key */
 	credssp->negoToken.data = s->data;
-	credssp->negoToken.length = s->end - s->data;
+	credssp->negoToken.length = s->p - s->data;
 	credssp_encrypt_public_key(credssp, &credssp->pubKeyAuth);
 	credssp_send(credssp, &credssp->negoToken, &credssp->pubKeyAuth, NULL);
 
@@ -388,7 +387,7 @@ void credssp_send(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth
 
 		if (enc_rval.encoded != -1)
 		{
-			tls_write(credssp->net->tls, buffer, size);
+			tls_write(credssp->transport->tls, buffer, size);
 		}
 
 		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
@@ -414,7 +413,7 @@ int credssp_recv(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth,
 	TSRequest_t *ts_request = 0;
 
 	recv_buffer = xmalloc(size);
-	bytes_read = tls_read(credssp->net->tls, recv_buffer, size);
+	bytes_read = tls_read(credssp->transport->tls, recv_buffer, size);
 
 	if (bytes_read < 0)
 		return -1;
@@ -490,12 +489,12 @@ void credssp_current_time(uint8* timestamp)
 
 /**
  * Create new CredSSP state machine.
- * @param sec
+ * @param transport
  * @return new CredSSP state machine.
  */
 
 rdpCredssp *
-credssp_new(struct rdp_network * net)
+credssp_new(rdpTransport * transport)
 {
 	rdpCredssp * self;
 
@@ -503,7 +502,7 @@ credssp_new(struct rdp_network * net)
 	if (self != NULL)
 	{
 		memset(self, 0, sizeof(rdpCredssp));
-		self->net = net;
+		self->transport = transport;
 		self->send_seq_num = 0;
 		self->ntlmssp = ntlmssp_new();
 	}

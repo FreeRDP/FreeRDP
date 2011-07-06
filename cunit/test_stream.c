@@ -57,7 +57,7 @@ void test_stream(void)
 
 	stream_write_uint8(stream, 0xFE);
 
-	stream_check_capacity(stream, 14);
+	stream_check_size(stream, 14);
 	stream_write_uint16(stream, 0x0102);
 	stream_write_uint32(stream, 0x03040506);
 	stream_write_uint64(stream, 0x0708091011121314LL);

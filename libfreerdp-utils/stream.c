@@ -33,9 +33,9 @@ stream_new(int capacity)
 	if (stream != NULL)
 	{
 		capacity = capacity > 0 ? capacity : 0x400;
-		stream->buffer = (uint8 *) xmalloc(capacity);
-		stream->ptr = stream->buffer;
-		stream->capacity = capacity;
+		stream->data = (uint8 *) xmalloc(capacity);
+		stream->p = stream->data;
+		stream->size = capacity;
 	}
 
 	return stream;
@@ -46,7 +46,7 @@ stream_free(STREAM * stream)
 {
 	if (stream != NULL)
 	{
-		xfree(stream->buffer);
+		xfree(stream->data);
 		xfree(stream);
 	}
 }
@@ -57,7 +57,7 @@ stream_extend(STREAM * stream)
 	int pos;
 
 	pos = stream_get_pos(stream);
-	stream->capacity <<= 1;
-	stream->buffer = (uint8 *) realloc(stream->buffer, stream->capacity);
+	stream->size <<= 1;
+	stream->data = (uint8 *) realloc(stream->data, stream->size);
 	stream_set_pos(stream, pos);
 }

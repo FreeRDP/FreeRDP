@@ -10,9 +10,13 @@ Makefile
 # Eclipse
 *.project
 *.cproject
+*.settings
 
 # Doxygen
 docs/api
+
+# Mac OS X
+.DS_Store
 
 # Binaries
 *.so

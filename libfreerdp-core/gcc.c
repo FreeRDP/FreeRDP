@@ -131,7 +131,7 @@ gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 	per_write_octet_string(s, "Duca", 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
 
 	/* userData::value (OCTET_STRING) */
-	per_write_octet_string(s, user_data->buffer, stream_get_length(user_data), 0); /* array of client data blocks */
+	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of client data blocks */
 }
 
 /**

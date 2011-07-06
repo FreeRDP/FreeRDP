@@ -91,9 +91,9 @@ void test_gcc_write_create_conference_request(void)
 	STREAM* s;
 	STREAM user_data;
 
-	user_data.buffer = gcc_user_data;
-	user_data.capacity = sizeof(gcc_user_data);
-	user_data.ptr = user_data.buffer + user_data.capacity;
+	user_data.data = gcc_user_data;
+	user_data.size = sizeof(gcc_user_data);
+	user_data.p = user_data.data + user_data.size;
 
 	s = stream_new(sizeof(gcc_create_conference_request_expected));
 

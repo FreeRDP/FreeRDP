@@ -596,7 +596,7 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp)
  * @param flags
  */
 
-void ntlmssp_input_negotiate_flags(STREAM s, uint32 *flags)
+void ntlmssp_input_negotiate_flags(STREAM* s, uint32 *flags)
 {
 	uint8* p;
 	uint8 tmp;
@@ -627,7 +627,7 @@ void ntlmssp_input_negotiate_flags(STREAM s, uint32 *flags)
  * @param flags
  */
 
-void ntlmssp_output_negotiate_flags(STREAM s, uint32 flags)
+void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 {
 	uint8* p;
 	uint8 tmp;
@@ -709,7 +709,7 @@ static void ntlmssp_print_negotiate_flags(uint32 flags)
 static void ntlmssp_output_restriction_encoding(NTLMSSP *ntlmssp)
 {
 	AV_PAIR *restrictions = &ntlmssp->av_pairs->Restrictions;
-	STREAM s = xmalloc(sizeof(struct stream));
+	STREAM* s = stream_new_empty();
 
 	uint8 machineID[32] =
 		"\x3A\x15\x8E\xA6\x75\x82\xD8\xF7\x3E\x06\xFA\x7A\xB4\xDF\xFD\x43"
@@ -720,7 +720,6 @@ static void ntlmssp_output_restriction_encoding(NTLMSSP *ntlmssp)
 
 	s->data = restrictions->value;
 	s->size = restrictions->length;
-	s->end = s->data + s->size;
 	s->p = s->data;
 
 	out_uint32_le(s, 48); /* Size */
@@ -744,7 +743,7 @@ static void ntlmssp_output_restriction_encoding(NTLMSSP *ntlmssp)
 
 void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
 {
-	STREAM s;
+	STREAM* s;
 	DATABLOB target_info;
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 
@@ -754,12 +753,12 @@ void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
 	/* Restriction_Encoding */
 	ntlmssp_output_restriction_encoding(ntlmssp);
 
-	s = xmalloc(sizeof(struct stream));
+	s = stream_new_empty();
 	s->data = xmalloc(ntlmssp->target_info.length + 512);
 	s->p = s->data;
 
 	ntlmssp_output_av_pairs(ntlmssp, s);
-	datablob_alloc(&target_info, s->end - s->data);
+	datablob_alloc(&target_info, s->p - s->data);
 	memcpy(target_info.data, s->data, target_info.length);
 
 	ntlmssp->target_info.data = target_info.data;
@@ -773,7 +772,7 @@ void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
  * @param s
  */
 
-void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM s)
+void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
 {
 	AV_ID AvId;
 	uint16 AvLen;
@@ -871,7 +870,7 @@ void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM s)
  * @param s
  */
 
-void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM s)
+void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
 {
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 	
@@ -1000,7 +999,7 @@ void ntlmssp_free_av_pairs(NTLMSSP *ntlmssp)
  * @param s
  */
 
-static void ntlmssp_output_version(STREAM s)
+static void ntlmssp_output_version(STREAM* s)
 {
 	/* The following version information was observed with Windows 7 */
 
@@ -1131,7 +1130,7 @@ int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB 
  * @param s
  */
 
-void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM s)
+void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM* s)
 {
 	int length;
 	uint32 negotiateFlags = 0;
@@ -1194,7 +1193,7 @@ void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM s)
 
 	s_mark_end(s);
 
-	length = s->end - s->data;
+	length = s->p - s->data;
 	datablob_alloc(&ntlmssp->negotiate_message, length);
 	memcpy(ntlmssp->negotiate_message.data, s->data, length);
 
@@ -1214,7 +1213,7 @@ void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM s)
  * @param s
  */
 
-void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM s)
+void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
 {
 	uint8* p;
 	int length;
@@ -1388,7 +1387,7 @@ void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM s)
  * @param s
  */
 
-void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM s)
+void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM* s)
 {
 	int length;
 	uint32 negotiateFlags = 0;
@@ -1584,7 +1583,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM s)
 	printf("\n");
 #endif
 
-	length = s->end - s->data;
+	length = s->p - s->data;
 	datablob_alloc(&ntlmssp->authenticate_message, length);
 	memcpy(ntlmssp->authenticate_message.data, s->data, length);
 
@@ -1613,7 +1612,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM s)
  * @return
  */
 
-int ntlmssp_send(NTLMSSP *ntlmssp, STREAM s)
+int ntlmssp_send(NTLMSSP *ntlmssp, STREAM* s)
 {
 	if (ntlmssp->state == NTLMSSP_STATE_INITIAL)
 		ntlmssp->state = NTLMSSP_STATE_NEGOTIATE;
@@ -1633,7 +1632,7 @@ int ntlmssp_send(NTLMSSP *ntlmssp, STREAM s)
  * @return
  */
 
-int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM s)
+int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM* s)
 {
 	char signature[8]; /* Signature, "NTLMSSP" */
 	uint32 messageType; /* MessageType */

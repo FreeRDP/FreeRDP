@@ -64,7 +64,7 @@ packet_received(rdpTransport * transport, STREAM * stream, void * extra)
 	uint16 length;
 	length = tpkt_read_header(stream);
 	CU_ASSERT(length == 19);
-	freerdp_hexdump(stream->buffer, length);
+	freerdp_hexdump(stream->data, length);
 	test_finished = 1;
 }
 
@@ -74,7 +74,7 @@ void test_transport(void)
 	STREAM * stream;
 	int r;
 
-	transport = transport_new();
+	transport = transport_new((rdpSettings*) NULL);
 	transport->recv_callback = packet_received;
 
 	r = transport_connect(transport, test_server, 3389);

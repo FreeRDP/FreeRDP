@@ -24,6 +24,7 @@
 #include "tls.h"
 
 #include <time.h>
+#include <freerdp/settings.h>
 #include <freerdp/types/base.h>
 #include <freerdp/utils/stream.h>
 
@@ -50,10 +51,11 @@ struct rdp_transport
 	STREAM * recv_buffer;
 	PacketReceivedCallback recv_callback;
 	void* recv_extra;
+	struct rdp_settings * settings;
 };
 
 rdpTransport *
-transport_new(void);
+transport_new(rdpSettings * settings);
 void
 transport_free(rdpTransport * transport);
 boolean

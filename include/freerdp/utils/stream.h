@@ -26,118 +26,120 @@
 
 struct _STREAM
 {
-	uint8 * ptr;
-	uint8 * buffer;
-	int capacity;
+	int size;
+	uint8 * p;
+	uint8 * data;
 };
 typedef struct _STREAM STREAM;
 
 STREAM *
-stream_new(int capacity);
+stream_new(int size);
+STREAM *
+stream_new_empty();
 void
 stream_free(STREAM * stream);
 
 void
 stream_extend(STREAM * stream);
-#define stream_check_capacity(_s,_n) \
-	while (_s->ptr - _s->buffer + (_n) > _s->capacity) \
+#define stream_check_size(_s,_n) \
+	while (_s->p - _s->data + (_n) > _s->size) \
 		stream_extend(_s)
 
-#define stream_get_pos(_s) (_s->ptr - _s->buffer)
-#define stream_set_pos(_s,_m) _s->ptr = _s->buffer + (_m)
-#define stream_seek(_s,_offset) _s->ptr += (_offset)
-#define stream_rewind(_s,_offset) _s->ptr -= (_offset)
-#define stream_get_mark(_s,_mark) _mark = _s->ptr
-#define stream_set_mark(_s,_mark) _s->ptr = _mark
-#define stream_get_head(_s) _s->buffer
-#define stream_get_tail(_s) _s->ptr
-#define stream_get_length(_s) (_s->ptr - _s->buffer)
+#define stream_get_pos(_s) (_s->p - _s->data)
+#define stream_set_pos(_s,_m) _s->p = _s->data + (_m)
+#define stream_seek(_s,_offset) _s->p += (_offset)
+#define stream_rewind(_s,_offset) _s->p -= (_offset)
+#define stream_get_mark(_s,_mark) _mark = _s->p
+#define stream_set_mark(_s,_mark) _s->p = _mark
+#define stream_get_head(_s) _s->data
+#define stream_get_tail(_s) _s->p
+#define stream_get_length(_s) (_s->p - _s->data)
 
-#define stream_read_uint8(_s, _v) do { _v = *_s->ptr++; } while (0)
+#define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
 #define stream_read_uint16(_s, _v) do { _v = \
-	(uint16)(*_s->ptr) + \
-	(((uint16)(*(_s->ptr + 1))) << 8); \
-	_s->ptr += 2; } while (0)
+	(uint16)(*_s->p) + \
+	(((uint16)(*(_s->p + 1))) << 8); \
+	_s->p += 2; } while (0)
 #define stream_read_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->ptr) + \
-	(((uint32)(*(_s->ptr + 1))) << 8) + \
-	(((uint32)(*(_s->ptr + 2))) << 16) + \
-	(((uint32)(*(_s->ptr + 3))) << 24); \
-	_s->ptr += 4; } while (0)
+	(uint32)(*_s->p) + \
+	(((uint32)(*(_s->p + 1))) << 8) + \
+	(((uint32)(*(_s->p + 2))) << 16) + \
+	(((uint32)(*(_s->p + 3))) << 24); \
+	_s->p += 4; } while (0)
 #define stream_read_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->ptr) + \
-	(((uint64)(*(_s->ptr + 1))) << 8) + \
-	(((uint64)(*(_s->ptr + 2))) << 16) + \
-	(((uint64)(*(_s->ptr + 3))) << 24) + \
-	(((uint64)(*(_s->ptr + 4))) << 32) + \
-	(((uint64)(*(_s->ptr + 5))) << 40) + \
-	(((uint64)(*(_s->ptr + 6))) << 48) + \
-	(((uint64)(*(_s->ptr + 7))) << 56); \
-	_s->ptr += 8; } while (0)
+	(uint64)(*_s->p) + \
+	(((uint64)(*(_s->p + 1))) << 8) + \
+	(((uint64)(*(_s->p + 2))) << 16) + \
+	(((uint64)(*(_s->p + 3))) << 24) + \
+	(((uint64)(*(_s->p + 4))) << 32) + \
+	(((uint64)(*(_s->p + 5))) << 40) + \
+	(((uint64)(*(_s->p + 6))) << 48) + \
+	(((uint64)(*(_s->p + 7))) << 56); \
+	_s->p += 8; } while (0)
 
 #define stream_write_uint8(_s, _v) do { \
-	*_s->ptr++ = (uint8)(_v); } while (0)
+	*_s->p++ = (uint8)(_v); } while (0)
 #define stream_write_uint16(_s, _v) do { \
-	*_s->ptr++ = (_v) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 8) & 0xFF; } while (0)
+	*_s->p++ = (_v) & 0xFF; \
+	*_s->p++ = ((_v) >> 8) & 0xFF; } while (0)
 #define stream_write_uint32(_s, _v) do { \
-	*_s->ptr++ = (_v) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 8) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 16) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 24) & 0xFF; } while (0)
+	*_s->p++ = (_v) & 0xFF; \
+	*_s->p++ = ((_v) >> 8) & 0xFF; \
+	*_s->p++ = ((_v) >> 16) & 0xFF; \
+	*_s->p++ = ((_v) >> 24) & 0xFF; } while (0)
 #define stream_write_uint64(_s, _v) do { \
-	*_s->ptr++ = (_v) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 8) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 16) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 24) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 32) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 40) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 48) & 0xFF; \
-	*_s->ptr++ = ((_v) >> 56) & 0xFF; } while (0)
+	*_s->p++ = (_v) & 0xFF; \
+	*_s->p++ = ((_v) >> 8) & 0xFF; \
+	*_s->p++ = ((_v) >> 16) & 0xFF; \
+	*_s->p++ = ((_v) >> 24) & 0xFF; \
+	*_s->p++ = ((_v) >> 32) & 0xFF; \
+	*_s->p++ = ((_v) >> 40) & 0xFF; \
+	*_s->p++ = ((_v) >> 48) & 0xFF; \
+	*_s->p++ = ((_v) >> 56) & 0xFF; } while (0)
 #define stream_write(_s, _b, _n) do { \
-	memcpy(_s->ptr, (_b), (_n)); \
-	_s->ptr += (_n); \
+	memcpy(_s->p, (_b), (_n)); \
+	_s->p += (_n); \
 	} while (0)
 #define stream_write_padding(_s, _n) do { \
-	memset(_s->ptr, '\0', (_n)); \
-	_s->ptr += (_n); \
+	memset(_s->p, '\0', (_n)); \
+	_s->p += (_n); \
 	} while (0)
 
-#define stream_peek_uint8(_s, _v) do { _v = *_s->ptr; } while (0)
+#define stream_peek_uint8(_s, _v) do { _v = *_s->p; } while (0)
 #define stream_peek_uint16(_s, _v) do { _v = \
-	(uint16)(*_s->ptr) + \
-	(((uint16)(*(_s->ptr + 1))) << 8); \
+	(uint16)(*_s->p) + \
+	(((uint16)(*(_s->p + 1))) << 8); \
 	} while (0)
 #define stream_peek_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->ptr) + \
-	(((uint32)(*(_s->ptr + 1))) << 8) + \
-	(((uint32)(*(_s->ptr + 2))) << 16) + \
-	(((uint32)(*(_s->ptr + 3))) << 24); \
+	(uint32)(*_s->p) + \
+	(((uint32)(*(_s->p + 1))) << 8) + \
+	(((uint32)(*(_s->p + 2))) << 16) + \
+	(((uint32)(*(_s->p + 3))) << 24); \
 	} while (0)
 #define stream_peek_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->ptr) + \
-	(((uint64)(*(_s->ptr + 1))) << 8) + \
-	(((uint64)(*(_s->ptr + 2))) << 16) + \
-	(((uint64)(*(_s->ptr + 3))) << 24) + \
-	(((uint64)(*(_s->ptr + 4))) << 32) + \
-	(((uint64)(*(_s->ptr + 5))) << 40) + \
-	(((uint64)(*(_s->ptr + 6))) << 48) + \
-	(((uint64)(*(_s->ptr + 7))) << 56); \
+	(uint64)(*_s->p) + \
+	(((uint64)(*(_s->p + 1))) << 8) + \
+	(((uint64)(*(_s->p + 2))) << 16) + \
+	(((uint64)(*(_s->p + 3))) << 24) + \
+	(((uint64)(*(_s->p + 4))) << 32) + \
+	(((uint64)(*(_s->p + 5))) << 40) + \
+	(((uint64)(*(_s->p + 6))) << 48) + \
+	(((uint64)(*(_s->p + 7))) << 56); \
 	} while (0)
 
 #define stream_read_uint16_be(_s, _v) do { _v = \
-	(((uint16)(*_s->ptr)) << 8) + \
-	(uint16)(*(_s->ptr + 1)); \
-	_s->ptr += 2; } while (0)
+	(((uint16)(*_s->p)) << 8) + \
+	(uint16)(*(_s->p + 1)); \
+	_s->p += 2; } while (0)
 
 #define stream_write_uint16_be(_s, _v) do { \
-	*_s->ptr++ = ((_v) >> 8) & 0xFF; \
-	*_s->ptr++ = (_v) & 0xFF; } while (0)
+	*_s->p++ = ((_v) >> 8) & 0xFF; \
+	*_s->p++ = (_v) & 0xFF; } while (0)
 
 #define stream_copy(_dst, _src, _n) do { \
-	memcpy(_dst->ptr, _src->ptr, _n); \
-	_dst->ptr += _n; \
-	_src->ptr += _n; \
+	memcpy(_dst->p, _src->p, _n); \
+	_dst->p += _n; \
+	_src->p += _n; \
 	} while (0)
 
 #endif /* __STREAM_UTILS_H */
