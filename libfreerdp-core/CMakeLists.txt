@@ -49,5 +49,6 @@ set(LIBFREERDP_CORE_SRCS
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
 
 target_link_libraries(freerdp-core ssl)
+target_link_libraries(freerdp-core freerdp-utils)
 
 install(TARGETS freerdp-core DESTINATION lib)

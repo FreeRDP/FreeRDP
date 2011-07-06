@@ -32,6 +32,10 @@
 #include "tpkt.h"
 #include "transport.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 #define BUFFER_SIZE 16384
 
 boolean

@@ -63,6 +63,12 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Configure files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+# Mac OS X
+if(APPLE)
+	include_directories(/opt/local/include)
+	link_directories(/opt/local/lib)
+endif()
+
 # Build CUnit
 find_package(CUnit)
 if(CUNIT_FOUND)
