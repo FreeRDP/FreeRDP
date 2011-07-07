@@ -177,13 +177,13 @@ gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	stream_write_uint32(s, settings->kbd_layout); /* keyboardLayout */
 	stream_write_uint32(s, 2600); /* clientBuild */
 
-	stream_write_padding(s, 32); /* clientName */
+	stream_write_zero(s, 32); /* clientName */
 
 	stream_write_uint32(s, settings->kbd_type); /* keyboardType */
 	stream_write_uint32(s, settings->kbd_subtype); /* keyboardSubType */
 	stream_write_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKey */
 
-	stream_write_padding(s, 64); /* imeFileName */
+	stream_write_zero(s, 64); /* imeFileName */
 
 	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
 	stream_write_uint16(s, 1); /* clientProductID */
@@ -208,7 +208,7 @@ gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
 
 	stream_write_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
-	stream_write_padding(s, 64); /* clientDigProductId (64 bytes) */
+	stream_write_zero(s, 64); /* clientDigProductId (64 bytes) */
 
 	stream_write_uint8(s, connectionType); /* connectionType */
 	stream_write_uint8(s, 0); /* pad1octet */

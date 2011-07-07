@@ -25,17 +25,26 @@
 #include <freerdp/utils/stream.h>
 
 STREAM *
-stream_new(int capacity)
+stream_new(int size)
 {
 	STREAM * stream;
 
 	stream = (STREAM *) xmalloc(sizeof(STREAM));
+
 	if (stream != NULL)
 	{
-		capacity = capacity > 0 ? capacity : 0x400;
-		stream->data = (uint8 *) xmalloc(capacity);
-		stream->p = stream->data;
-		stream->size = capacity;
+		if (size != 0)
+		{
+			size = size > 0 ? size : 0x400;
+			stream->data = (uint8 *) xmalloc(size);
+			stream->p = stream->data;
+			stream->size = size;
+		}
+		else
+		{
+			/* empty stream */
+			memset(stream, 0, sizeof(STREAM));
+		}
 	}
 
 	return stream;

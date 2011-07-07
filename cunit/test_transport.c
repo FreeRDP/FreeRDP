@@ -66,6 +66,7 @@ packet_received(rdpTransport * transport, STREAM * stream, void * extra)
 	CU_ASSERT(length == 19);
 	freerdp_hexdump(stream->data, length);
 	test_finished = 1;
+	return 0;
 }
 
 void test_transport(void)

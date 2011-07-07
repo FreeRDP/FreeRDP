@@ -28,12 +28,12 @@ set(LIBFREERDP_CORE_SRCS
 	mcs.h
 	nego.c
 	nego.h
-	#crypto.c
-	#crypto.h
-	#credssp.c
-	#credssp.h
-	#ntlmssp.c
-	#ntlmssp.h
+	crypto.c
+	crypto.h
+	credssp.c
+	credssp.h
+	ntlmssp.c
+	ntlmssp.h
 	per.c
 	per.h
 	tcp.c

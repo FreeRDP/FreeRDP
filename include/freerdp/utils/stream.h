@@ -32,12 +32,8 @@ struct _STREAM
 };
 typedef struct _STREAM STREAM;
 
-STREAM *
-stream_new(int size);
-STREAM *
-stream_new_empty();
-void
-stream_free(STREAM * stream);
+STREAM* stream_new(int size);
+void stream_free(STREAM * stream);
 
 void
 stream_extend(STREAM * stream);
@@ -76,6 +72,10 @@ stream_extend(STREAM * stream);
 	(((uint64)(*(_s->p + 6))) << 48) + \
 	(((uint64)(*(_s->p + 7))) << 56); \
 	_s->p += 8; } while (0)
+#define stream_read(_s, _b, _n) do { \
+	memcpy(_b, (_s->p), (_n)); \
+	_s->p += (_n); \
+	} while (0)
 
 #define stream_write_uint8(_s, _v) do { \
 	*_s->p++ = (uint8)(_v); } while (0)
@@ -100,7 +100,7 @@ stream_extend(STREAM * stream);
 	memcpy(_s->p, (_b), (_n)); \
 	_s->p += (_n); \
 	} while (0)
-#define stream_write_padding(_s, _n) do { \
+#define stream_write_zero(_s, _n) do { \
 	memset(_s->p, '\0', (_n)); \
 	_s->p += (_n); \
 	} while (0)
@@ -131,6 +131,12 @@ stream_extend(STREAM * stream);
 	(((uint16)(*_s->p)) << 8) + \
 	(uint16)(*(_s->p + 1)); \
 	_s->p += 2; } while (0)
+#define stream_read_uint32_be(_s, _v) do { _v = \
+	(((uint32)(*(_s->p))) << 8) + \
+	(((uint32)(*(_s->p + 1)))) + \
+	(((uint32)(*(_s->p + 2))) << 24) + \
+	(((uint32)(*(_s->p + 3))) << 16); \
+	_s->p += 4; } while (0)
 
 #define stream_write_uint16_be(_s, _v) do { \
 	*_s->p++ = ((_v) >> 8) & 0xFF; \

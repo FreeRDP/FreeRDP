@@ -649,6 +649,7 @@ uint8* gdi_mono_image_convert(uint8* srcData, int width, int height, int srcBpp,
 		default:
 			GetRGB32(redBg, greenBg, blueBg, bgcolor);
 			GetRGB32(redFg, greenFg, blueFg, fgcolor);
+			break;
 	}
 
 	if(dstBpp == 16)

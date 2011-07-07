@@ -104,7 +104,7 @@ int credssp_get_public_key(rdpCredssp *credssp)
 int credssp_authenticate(rdpCredssp *credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	STREAM* s = stream_new_empty();
+	STREAM* s = stream_new(0);
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
 	credssp_ntlmssp_init(credssp);
@@ -124,7 +124,6 @@ int credssp_authenticate(rdpCredssp *credssp)
 		return -1;
 
 	s->p = s->data = credssp->negoToken.data;
-	s->p + credssp->negoToken.length;
 	ntlmssp_recv(ntlmssp, s);
 
 	datablob_free(&credssp->negoToken);
@@ -180,15 +179,15 @@ void credssp_encrypt_public_key(rdpCredssp *credssp, DATABLOB *d)
 
 #ifdef WITH_DEBUG_NLA
 	printf("Public Key (length = %d)\n", credssp->public_key.length);
-	hexdump(credssp->public_key.data, credssp->public_key.length);
+	freerdp_hexdump(credssp->public_key.data, credssp->public_key.length);
 	printf("\n");
 
 	printf("Encrypted Public Key (length = %d)\n", encrypted_public_key.length);
-	hexdump(encrypted_public_key.data, encrypted_public_key.length);
+	freerdp_hexdump(encrypted_public_key.data, encrypted_public_key.length);
 	printf("\n");
 
 	printf("Signature\n");
-	hexdump(signature, 16);
+	freerdp_hexdump(signature, 16);
 	printf("\n");
 #endif
 
@@ -253,15 +252,15 @@ void credssp_encrypt_ts_credentials(rdpCredssp *credssp, DATABLOB *d)
 
 #ifdef WITH_DEBUG_NLA
 	printf("TSCredentials (length = %d)\n", credssp->ts_credentials.length);
-	hexdump(credssp->ts_credentials.data, credssp->ts_credentials.length);
+	freerdp_hexdump(credssp->ts_credentials.data, credssp->ts_credentials.length);
 	printf("\n");
 
 	printf("Encrypted TSCredentials (length = %d)\n", encrypted_ts_credentials.length);
-	hexdump(encrypted_ts_credentials.data, encrypted_ts_credentials.length);
+	freerdp_hexdump(encrypted_ts_credentials.data, encrypted_ts_credentials.length);
 	printf("\n");
 
 	printf("Signature\n");
-	hexdump(signature, 16);
+	freerdp_hexdump(signature, 16);
 	printf("\n");
 #endif
 

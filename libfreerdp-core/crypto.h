@@ -36,6 +36,8 @@
 #endif
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/memory.h>
+#include <freerdp/utils/datablob.h>
 
 struct crypto_sha1_struct
 {
@@ -57,24 +59,27 @@ struct crypto_cert_struct
 	X509 * px509;
 };
 
-typedef struct crypto_sha1_struct * CryptoSha1;
+typedef struct crypto_sha1_struct* CryptoSha1;
 CryptoSha1 crypto_sha1_init(void);
-void crypto_sha1_update(CryptoSha1 sha1, uint8 * data, uint32 length);
-void crypto_sha1_final(CryptoSha1 sha1, uint8 * out_data);
+void crypto_sha1_update(CryptoSha1 sha1, uint8* data, uint32 length);
+void crypto_sha1_final(CryptoSha1 sha1, uint8* out_data);
 
-typedef struct crypto_md5_struct * CryptoMd5;
+typedef struct crypto_md5_struct* CryptoMd5;
 CryptoMd5 crypto_md5_init(void);
-void crypto_md5_update(CryptoMd5 md5, uint8 * data, uint32 length);
-void crypto_md5_final(CryptoMd5 md5, uint8 * out_data);
+void crypto_md5_update(CryptoMd5 md5, uint8* data, uint32 length);
+void crypto_md5_final(CryptoMd5 md5, uint8* out_data);
 
-typedef struct crypto_rc4_struct * CryptoRc4;
-CryptoRc4 crypto_rc4_init(uint8 * key, uint32 length);
-void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8 * in_data, uint8 * out_data);
+typedef struct crypto_rc4_struct* CryptoRc4;
+CryptoRc4 crypto_rc4_init(uint8* key, uint32 length);
+void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8* in_data, uint8* out_data);
 void crypto_rc4_free(CryptoRc4 rc4);
 
-typedef struct crypto_cert_struct * CryptoCert;
-CryptoCert crypto_cert_read(uint8 * data, uint32 length);
+typedef struct crypto_cert_struct* CryptoCert;
+CryptoCert crypto_cert_read(uint8* data, uint32 length);
 void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
+boolean crypto_cert_get_public_key(CryptoCert cert, DATABLOB* public_key);
+
+void crypto_nonce(uint8* nonce, int size);
 
 #endif /* __CRYPTO_H */
