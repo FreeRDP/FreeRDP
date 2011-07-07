@@ -20,13 +20,8 @@
 #ifndef __RDP_EXTENSION_H
 #define __RDP_EXTENSION_H
 
+#include <freerdp/api.h>
 #include <freerdp/types/ui.h>
-
-#ifdef _WIN32
-#define RDPEXT_CC __stdcall
-#else
-#define RDPEXT_CC
-#endif
 
 /* Extensions ought to check for it to ensure compatibility */
 #define RDPEXT_API 1
@@ -42,11 +37,11 @@ struct rdp_ext_plugin
 	int (*uninit) (rdpExtPlugin * plugin, rdpInst * inst);
 };
 
-typedef uint32 (RDPEXT_CC * PFREERDP_EXTENSION_HOOK)(rdpExtPlugin * plugin, rdpInst * inst);
+typedef uint32 (FREERDP_CC * PFREERDP_EXTENSION_HOOK)(rdpExtPlugin * plugin, rdpInst * inst);
 
-typedef uint32 (RDPEXT_CC * PREGISTEREXTENSION)(rdpExtPlugin * plugin);
-typedef uint32 (RDPEXT_CC * PREGISTERPRECONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
-typedef uint32 (RDPEXT_CC * PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef uint32 (FREERDP_CC * PREGISTEREXTENSION)(rdpExtPlugin * plugin);
+typedef uint32 (FREERDP_CC * PREGISTERPRECONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef uint32 (FREERDP_CC * PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
 
 struct _FREERDP_EXTENSION_ENTRY_POINTS
 {
@@ -59,6 +54,6 @@ struct _FREERDP_EXTENSION_ENTRY_POINTS
 typedef struct _FREERDP_EXTENSION_ENTRY_POINTS FREERDP_EXTENSION_ENTRY_POINTS;
 typedef FREERDP_EXTENSION_ENTRY_POINTS * PFREERDP_EXTENSION_ENTRY_POINTS;
 
-typedef int (RDPEXT_CC * PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
+typedef int (FREERDP_CC * PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
 
 #endif /* __RDP_EXTENSION_H */

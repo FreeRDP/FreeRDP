@@ -44,4 +44,10 @@
   #endif
 #endif
 
+#ifdef _WIN32
+#define FREERDP_CC __stdcall
+#else
+#define FREERDP_CC
+#endif
+
 #endif
