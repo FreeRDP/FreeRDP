@@ -71,6 +71,11 @@ static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
 	domainParameters->maxUserIds = maxUserIds;
 	domainParameters->maxTokenIds = maxTokenIds;
 	domainParameters->maxMCSPDUsize = maxMCSPDUsize;
+
+	domainParameters->numPriorities = 1;
+	domainParameters->minThroughput = 0;
+	domainParameters->maxHeight = 1;
+	domainParameters->protocolVersion = 2;
 }
 
 /**
@@ -81,6 +86,12 @@ static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
 
 static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParameters)
 {
+	int length;
+	uint8 *bm, *em;
+
+	stream_get_mark(s, bm);
+	stream_seek(s, 2);
+
 	ber_write_integer(s, domainParameters->maxChannelIds);
 	ber_write_integer(s, domainParameters->maxUserIds);
 	ber_write_integer(s, domainParameters->maxTokenIds);
@@ -89,6 +100,13 @@ static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainPara
 	ber_write_integer(s, domainParameters->maxHeight);
 	ber_write_integer(s, domainParameters->maxMCSPDUsize);
 	ber_write_integer(s, domainParameters->protocolVersion);
+
+	stream_get_mark(s, em);
+	length = (em - bm) - 2;
+	stream_set_mark(s, bm);
+
+	ber_write_sequence_of_tag(s, length);
+	stream_set_mark(s, em);
 }
 
 /**
@@ -103,7 +121,7 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 	int length;
 	int gcc_CCrq_length = stream_get_length(user_data);
 
-	length = gcc_CCrq_length + 3 * 34 + 13;
+	length = gcc_CCrq_length + 97;
 
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
