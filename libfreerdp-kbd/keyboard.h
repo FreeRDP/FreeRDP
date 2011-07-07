@@ -19,8 +19,8 @@
 
 /* Microsoft Windows Virtual Key Codes: http://msdn.microsoft.com/en-us/library/ms645540.aspx */
 
-#ifndef __KEYBOAFRDP_H
-#define __KEYBOAFRDP_H
+#ifndef __KEYBOARD_H
+#define __KEYBOARD_H
 
 #include <stddef.h>
 
@@ -584,4 +584,4 @@ static const virtualKey virtualKeyboard[256 + 2] =
 	{ 0x1C, 1, ""                    , "KPEN" },
 };
 
-#endif /* __KEYBOAFRDP_H */
+#endif /* __KEYBOARD_H */
