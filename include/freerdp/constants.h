@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#ifndef __FREERDP_CONSTANTS
+#define __FREERDP_CONSTANTS
+
 /**
  * Protocol Security Negotiation Protocols
  */
@@ -38,3 +41,5 @@ enum RDP_NEG_FAILURE_FAILURECODES
 	INCONSISTENT_FLAGS = 0x00000004,
 	HYBRID_REQUIRED_BY_SERVER = 0x00000005
 };
+
+#endif
