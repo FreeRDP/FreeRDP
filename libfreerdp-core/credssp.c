@@ -44,7 +44,7 @@ asn1_write(const void *buffer, size_t size, void *fd)
  * @param credssp
  */
 
-void credssp_ntlmssp_init(rdpCredssp *credssp)
+void credssp_ntlmssp_init(rdpCredssp* credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 	rdpSettings *settings = credssp->transport->settings;
@@ -76,7 +76,7 @@ void credssp_ntlmssp_init(rdpCredssp *credssp)
  * @param credssp
  */
 
-int credssp_get_public_key(rdpCredssp *credssp)
+int credssp_get_public_key(rdpCredssp* credssp)
 {
 	int ret;
 	CryptoCert cert;
@@ -101,7 +101,7 @@ int credssp_get_public_key(rdpCredssp *credssp)
  * @return 1 if authentication is successful
  */
 
-int credssp_authenticate(rdpCredssp *credssp)
+int credssp_authenticate(rdpCredssp* credssp)
 {
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 	STREAM* s = stream_new(0);
@@ -126,7 +126,7 @@ int credssp_authenticate(rdpCredssp *credssp)
 	s->p = s->data = credssp->negoToken.data;
 	ntlmssp_recv(ntlmssp, s);
 
-	datablob_free(&credssp->negoToken);
+	freerdp_blob_free(&credssp->negoToken);
 
 	/* NTLMSSP AUTHENTICATE MESSAGE */
 	s->p = s->data = negoTokenBuffer;
@@ -148,8 +148,8 @@ int credssp_authenticate(rdpCredssp *credssp)
 		return 0; /* DO NOT SEND CREDENTIALS! */
 	}
 
-	datablob_free(&credssp->negoToken);
-	datablob_free(&credssp->pubKeyAuth);
+	freerdp_blob_free(&credssp->negoToken);
+	freerdp_blob_free(&credssp->pubKeyAuth);
 
 	/* Send encrypted credentials */
 	credssp_encode_ts_credentials(credssp);
@@ -167,14 +167,14 @@ int credssp_authenticate(rdpCredssp *credssp)
  * @param s
  */
 
-void credssp_encrypt_public_key(rdpCredssp *credssp, DATABLOB *d)
+void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d)
 {
 	uint8 *p;
 	uint8 signature[16];
-	DATABLOB encrypted_public_key;
+	BLOB encrypted_public_key;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 
-	datablob_alloc(d, credssp->public_key.length + 16);
+	freerdp_blob_alloc(d, credssp->public_key.length + 16);
 	ntlmssp_encrypt_message(ntlmssp, &credssp->public_key, &encrypted_public_key, signature);
 
 #ifdef WITH_DEBUG_NLA
@@ -195,7 +195,7 @@ void credssp_encrypt_public_key(rdpCredssp *credssp, DATABLOB *d)
 	memcpy(p, signature, 16); /* Message Signature */
 	memcpy(&p[16], encrypted_public_key.data, encrypted_public_key.length); /* Encrypted Public Key */
 
-	datablob_free(&encrypted_public_key);
+	freerdp_blob_free(&encrypted_public_key);
 }
 
 /**
@@ -205,12 +205,12 @@ void credssp_encrypt_public_key(rdpCredssp *credssp, DATABLOB *d)
  * @return 1 if verification is successful, 0 otherwise
  */
 
-int credssp_verify_public_key(rdpCredssp *credssp, DATABLOB *d)
+int credssp_verify_public_key(rdpCredssp* credssp, BLOB* d)
 {
 	uint8 *p1, *p2;
 	uint8 *signature;
-	DATABLOB public_key;
-	DATABLOB encrypted_public_key;
+	BLOB public_key;
+	BLOB encrypted_public_key;
 
 	signature = d->data;
 	encrypted_public_key.data = (void*) (signature + 16);
@@ -230,7 +230,7 @@ int credssp_verify_public_key(rdpCredssp *credssp, DATABLOB *d)
 	}
 
 	p2[0]++;
-	datablob_free(&public_key);
+	freerdp_blob_free(&public_key);
 	return 1;
 }
 
@@ -240,14 +240,14 @@ int credssp_verify_public_key(rdpCredssp *credssp, DATABLOB *d)
  * @param s
  */
 
-void credssp_encrypt_ts_credentials(rdpCredssp *credssp, DATABLOB *d)
+void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d)
 {
 	uint8 *p;
 	uint8 signature[16];
-	DATABLOB encrypted_ts_credentials;
+	BLOB encrypted_ts_credentials;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 
-	datablob_alloc(d, credssp->ts_credentials.length + 16);
+	freerdp_blob_alloc(d, credssp->ts_credentials.length + 16);
 	ntlmssp_encrypt_message(ntlmssp, &credssp->ts_credentials, &encrypted_ts_credentials, signature);
 
 #ifdef WITH_DEBUG_NLA
@@ -268,7 +268,7 @@ void credssp_encrypt_ts_credentials(rdpCredssp *credssp, DATABLOB *d)
 	memcpy(p, signature, 16); /* Message Signature */
 	memcpy(&p[16], encrypted_ts_credentials.data, encrypted_ts_credentials.length); /* Encrypted TSCredentials */
 
-	datablob_free(&encrypted_ts_credentials);
+	freerdp_blob_free(&encrypted_ts_credentials);
 }
 
 /**
@@ -276,12 +276,12 @@ void credssp_encrypt_ts_credentials(rdpCredssp *credssp, DATABLOB *d)
  * @param credssp
  */
 
-void credssp_encode_ts_credentials(rdpCredssp *credssp)
+void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
 	asn_enc_rval_t enc_rval;
 	TSCredentials_t *ts_credentials;
 	TSPasswordCreds_t *ts_passwoFRDP_creds;
-	DATABLOB ts_passwoFRDP_creds_buffer = { 0 };
+	BLOB ts_passwoFRDP_creds_buffer = { 0 };
 
 	ts_credentials = calloc(1, sizeof(TSCredentials_t));
 	ts_credentials->credType = 1; /* TSPasswordCreds */
@@ -305,7 +305,7 @@ void credssp_encode_ts_credentials(rdpCredssp *credssp)
 
 	if (enc_rval.encoded != -1)
 	{
-		datablob_alloc(&ts_passwoFRDP_creds_buffer, enc_rval.encoded);
+		freerdp_blob_alloc(&ts_passwoFRDP_creds_buffer, enc_rval.encoded);
 
 		enc_rval = der_encode_to_buffer(&asn_DEF_TSPasswordCreds, ts_passwoFRDP_creds,
 			ts_passwoFRDP_creds_buffer.data, ts_passwoFRDP_creds_buffer.length);
@@ -319,13 +319,13 @@ void credssp_encode_ts_credentials(rdpCredssp *credssp)
 
 	if (enc_rval.encoded != -1)
 	{
-		datablob_alloc(&credssp->ts_credentials, enc_rval.encoded);
+		freerdp_blob_alloc(&credssp->ts_credentials, enc_rval.encoded);
 
 		enc_rval = der_encode_to_buffer(&asn_DEF_TSCredentials, ts_credentials,
 			credssp->ts_credentials.data, credssp->ts_credentials.length);
 	}
 
-	datablob_free(&ts_passwoFRDP_creds_buffer);
+	freerdp_blob_free(&ts_passwoFRDP_creds_buffer);
 	free(ts_credentials);
 	free(ts_passwoFRDP_creds);
 }
@@ -338,7 +338,7 @@ void credssp_encode_ts_credentials(rdpCredssp *credssp)
  * @param authInfo
  */
 
-void credssp_send(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth, DATABLOB *authInfo)
+void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
 	TSRequest_t *ts_request;
 	OCTET_STRING_t *nego_token;
@@ -403,7 +403,7 @@ void credssp_send(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth
  * @return
  */
 
-int credssp_recv(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth, DATABLOB *authInfo)
+int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
 	int bytes_read;
 	int size = 2048;
@@ -425,14 +425,14 @@ int credssp_recv(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth,
 		{
 			if (ts_request->negoTokens->list.count > 0)
 			{
-				datablob_alloc(negoToken, ts_request->negoTokens->list.array[0]->negoToken.size);
+				freerdp_blob_alloc(negoToken, ts_request->negoTokens->list.array[0]->negoToken.size);
 				memcpy(negoToken->data, ts_request->negoTokens->list.array[0]->negoToken.buf, negoToken->length);
 			}
 		}
 
 		if (ts_request->pubKeyAuth != NULL)
 		{
-			datablob_alloc(pubKeyAuth, ts_request->pubKeyAuth->size);
+			freerdp_blob_alloc(pubKeyAuth, ts_request->pubKeyAuth->size);
 			memcpy(pubKeyAuth->data, ts_request->pubKeyAuth->buf, pubKeyAuth->length);
 		}
 
@@ -492,19 +492,20 @@ void credssp_current_time(uint8* timestamp)
  * @return new CredSSP state machine.
  */
 
-rdpCredssp *
-credssp_new(rdpTransport * transport)
+rdpCredssp*
+credssp_new(rdpTransport* transport)
 {
-	rdpCredssp * self;
+	rdpCredssp* self;
 
-	self = (rdpCredssp *) xmalloc(sizeof(rdpCredssp));
+	self = (rdpCredssp*) xzalloc(sizeof(rdpCredssp));
+
 	if (self != NULL)
 	{
-		memset(self, 0, sizeof(rdpCredssp));
 		self->transport = transport;
 		self->send_seq_num = 0;
 		self->ntlmssp = ntlmssp_new();
 	}
+
 	return self;
 }
 
@@ -514,12 +515,12 @@ credssp_new(rdpTransport * transport)
  */
 
 void
-credssp_free(rdpCredssp * credssp)
+credssp_free(rdpCredssp* credssp)
 {
 	if (credssp != NULL)
 	{
-		datablob_free(&credssp->public_key);
-		datablob_free(&credssp->ts_credentials);
+		freerdp_blob_free(&credssp->public_key);
+		freerdp_blob_free(&credssp->ts_credentials);
 
 		ntlmssp_free(credssp->ntlmssp);
 		xfree(credssp);

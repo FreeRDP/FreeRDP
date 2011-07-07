@@ -91,7 +91,7 @@ boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert)
 	return True; /* FIXME: do the actual verification */
 }
 
-boolean crypto_cert_get_public_key(CryptoCert cert, DATABLOB* public_key)
+boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key)
 {
 	uint8* p;
 	int length;
@@ -116,7 +116,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, DATABLOB* public_key)
 		goto exit;
 	}
 
-	datablob_alloc(public_key, length);
+	freerdp_blob_alloc(public_key, length);
 	p = (unsigned char*) public_key->data;
 	i2d_PublicKey(pkey, &p);
 

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * DATABLOB Utils
+ * BLOB Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,17 +17,31 @@
  * limitations under the License.
  */
 
-#ifndef __DATABLOB_UTILS_H
-#define __DATABLOB_UTILS_H
+#include <freerdp/utils/memory.h>
 
-struct _DATABLOB
+#include <freerdp/utils/blob.h>
+
+/**
+ * Allocate memory for data blob.
+ * @param blob blob structure
+ * @param length memory length
+ */
+
+void freerdp_blob_alloc(BLOB* blob, int length)
 {
-	void* data;
-	int length;
-};
-typedef struct _DATABLOB DATABLOB;
+	blob->data = xmalloc(length);
+	blob->length = length;
+}
 
-void datablob_alloc(DATABLOB *datablob, int length);
-void datablob_free(DATABLOB *datablob);
+/**
+ * Free memory allocated for data blob.
+ * @param blob
+ */
 
-#endif /* __DATABLOB_UTILS_H */
+void freerdp_blob_free(BLOB* blob)
+{
+	if (blob->data)
+		xfree(blob->data);
+	
+	blob->length = 0;
+}

@@ -18,7 +18,7 @@
 # limitations under the License.
 
 set(FREERDP_UTILS_SRCS
-	datablob.c
+	blob.c
 	hexdump.c
 	memory.c
 	semaphore.c

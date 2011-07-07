@@ -24,41 +24,41 @@
 #include "crypto.h"
 #include "transport.h"
 #include <freerdp/settings.h>
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/datablob.h>
 
 #include "ntlmssp.h"
 
 struct rdp_credssp
 {
-	DATABLOB negoToken;
-	DATABLOB pubKeyAuth;
-	DATABLOB authInfo;
+	BLOB negoToken;
+	BLOB pubKeyAuth;
+	BLOB authInfo;
 	int send_seq_num;
-	DATABLOB public_key;
-	DATABLOB ts_credentials;
+	BLOB public_key;
+	BLOB ts_credentials;
 	CryptoRc4 rc4_seal_state;
 	struct _NTLMSSP *ntlmssp;
 	struct rdp_transport * transport;
 };
 typedef struct rdp_credssp rdpCredssp;
 
-int credssp_authenticate(rdpCredssp *credssp);
+int credssp_authenticate(rdpCredssp* credssp);
 
-void credssp_send(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth, DATABLOB *authInfo);
-int credssp_recv(rdpCredssp *credssp, DATABLOB *negoToken, DATABLOB *pubKeyAuth, DATABLOB *authInfo);
+void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo);
+int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo);
 
-void credssp_encrypt_public_key(rdpCredssp *credssp, DATABLOB *d);
-void credssp_encrypt_ts_credentials(rdpCredssp *credssp, DATABLOB *d);
-int credssp_verify_public_key(rdpCredssp *credssp, DATABLOB *d);
-void credssp_encode_ts_credentials(rdpCredssp *credssp);
+void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d);
+void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d);
+int credssp_verify_public_key(rdpCredssp* credssp, BLOB* d);
+void credssp_encode_ts_credentials(rdpCredssp* credssp);
 
 void credssp_current_time(uint8* timestamp);
 void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
 
-rdpCredssp* credssp_new(rdpTransport * transport);
-void credssp_free(rdpCredssp *credssp);
+rdpCredssp* credssp_new(rdpTransport* transport);
+void credssp_free(rdpCredssp* credssp);
 
 #endif /* __CREDSSP_H */

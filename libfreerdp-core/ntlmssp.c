@@ -92,9 +92,9 @@ const char server_seal_magic[] = "session key to server-to-client sealing key ma
  * @param username username
  */
 
-void ntlmssp_set_username(NTLMSSP *ntlmssp, char* username)
+void ntlmssp_set_username(NTLMSSP* ntlmssp, char* username)
 {
-	datablob_free(&ntlmssp->username);
+	freerdp_blob_free(&ntlmssp->username);
 
 	if (username != NULL)
 	{
@@ -108,9 +108,9 @@ void ntlmssp_set_username(NTLMSSP *ntlmssp, char* username)
  * @param domain domain name
  */
 
-void ntlmssp_set_domain(NTLMSSP *ntlmssp, char* domain)
+void ntlmssp_set_domain(NTLMSSP* ntlmssp, char* domain)
 {
-	datablob_free(&ntlmssp->domain);
+	freerdp_blob_free(&ntlmssp->domain);
 
 	if (domain != NULL)
 	{
@@ -124,9 +124,9 @@ void ntlmssp_set_domain(NTLMSSP *ntlmssp, char* domain)
  * @param password password
  */
 
-void ntlmssp_set_password(NTLMSSP *ntlmssp, char* password)
+void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password)
 {
-	datablob_free(&ntlmssp->password);
+	freerdp_blob_free(&ntlmssp->password);
 
 	if (password != NULL)
 	{
@@ -139,7 +139,7 @@ void ntlmssp_set_password(NTLMSSP *ntlmssp, char* password)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_client_challenge(NTLMSSP *ntlmssp)
+void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp)
 {
 	/* ClientChallenge in computation of LMv2 and NTLMv2 responses */
 	crypto_nonce(ntlmssp->client_challenge, 8);
@@ -151,7 +151,7 @@ void ntlmssp_generate_client_challenge(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_key_exchange_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_key_exchange_key(NTLMSSP* ntlmssp)
 {
 	/* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
 	memcpy(ntlmssp->key_exchange_key, ntlmssp->session_base_key, 16);
@@ -162,7 +162,7 @@ void ntlmssp_generate_key_exchange_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_random_session_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_random_session_key(NTLMSSP* ntlmssp)
 {
 	crypto_nonce(ntlmssp->random_session_key, 16);
 }
@@ -172,7 +172,7 @@ void ntlmssp_generate_random_session_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_exported_session_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_exported_session_key(NTLMSSP* ntlmssp)
 {
 	memcpy(ntlmssp->exported_session_key, ntlmssp->random_session_key, 16);
 }
@@ -182,7 +182,7 @@ void ntlmssp_generate_exported_session_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_encrypt_random_session_key(NTLMSSP *ntlmssp)
+void ntlmssp_encrypt_random_session_key(NTLMSSP* ntlmssp)
 {
 	/* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the KeyExchangeKey */
 	credssp_rc4k(ntlmssp->key_exchange_key, 16, ntlmssp->random_session_key, ntlmssp->encrypted_random_session_key);
@@ -193,7 +193,7 @@ void ntlmssp_encrypt_random_session_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_timestamp(NTLMSSP *ntlmssp)
+void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp)
 {
 	credssp_current_time(ntlmssp->timestamp);
 
@@ -215,7 +215,7 @@ void ntlmssp_generate_timestamp(NTLMSSP *ntlmssp)
  * @param signing_key Destination signing key
  */
 
-void ntlmssp_generate_signing_key(uint8* exported_session_key, DATABLOB *sign_magic, uint8* signing_key)
+void ntlmssp_generate_signing_key(uint8* exported_session_key, BLOB* sign_magic, uint8* signing_key)
 {
 	int length;
 	uint8* value;
@@ -241,9 +241,9 @@ void ntlmssp_generate_signing_key(uint8* exported_session_key, DATABLOB *sign_ma
  * @param ntlmssp
  */
 
-void ntlmssp_generate_client_signing_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp)
 {
-	DATABLOB sign_magic;
+	BLOB sign_magic;
 	sign_magic.data = (void*) client_sign_magic;
 	sign_magic.length = sizeof(client_sign_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &sign_magic, ntlmssp->client_signing_key);
@@ -255,9 +255,9 @@ void ntlmssp_generate_client_signing_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_server_signing_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp)
 {
-	DATABLOB sign_magic;
+	BLOB sign_magic;
 	sign_magic.data = (void*) server_sign_magic;
 	sign_magic.length = sizeof(server_sign_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &sign_magic, ntlmssp->server_signing_key);
@@ -271,13 +271,13 @@ void ntlmssp_generate_server_signing_key(NTLMSSP *ntlmssp)
  * @param sealing_key Destination sealing key
  */
 
-void ntlmssp_generate_sealing_key(uint8* exported_session_key, DATABLOB *seal_magic, uint8* sealing_key)
+void ntlmssp_generate_sealing_key(uint8* exported_session_key, BLOB* seal_magic, uint8* sealing_key)
 {
 	uint8* p;
 	CryptoMd5 md5;
-	DATABLOB blob;
+	BLOB blob;
 
-	datablob_alloc(&blob, 16 + seal_magic->length);
+	freerdp_blob_alloc(&blob, 16 + seal_magic->length);
 	p = (uint8*) blob.data;
 
 	/* Concatenate ExportedSessionKey with seal magic */
@@ -288,7 +288,7 @@ void ntlmssp_generate_sealing_key(uint8* exported_session_key, DATABLOB *seal_ma
 	crypto_md5_update(md5, blob.data, blob.length);
 	crypto_md5_final(md5, sealing_key);
 
-	datablob_free(&blob);
+	freerdp_blob_free(&blob);
 }
 
 /**
@@ -297,9 +297,9 @@ void ntlmssp_generate_sealing_key(uint8* exported_session_key, DATABLOB *seal_ma
  * @param ntlmssp
  */
 
-void ntlmssp_generate_client_sealing_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp)
 {
-	DATABLOB seal_magic;
+	BLOB seal_magic;
 	seal_magic.data = (void*) client_seal_magic;
 	seal_magic.length = sizeof(client_seal_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &seal_magic, ntlmssp->client_sealing_key);
@@ -311,9 +311,9 @@ void ntlmssp_generate_client_sealing_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_generate_server_sealing_key(NTLMSSP *ntlmssp)
+void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp)
 {
-	DATABLOB seal_magic;
+	BLOB seal_magic;
 	seal_magic.data = (void*) server_seal_magic;
 	seal_magic.length = sizeof(server_seal_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &seal_magic, ntlmssp->server_sealing_key);
@@ -324,7 +324,7 @@ void ntlmssp_generate_server_sealing_key(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_init_rc4_seal_states(NTLMSSP *ntlmssp)
+void ntlmssp_init_rc4_seal_states(NTLMSSP* ntlmssp)
 {
 	ntlmssp->send_rc4_seal = crypto_rc4_init(ntlmssp->client_sealing_key, 16);
 	ntlmssp->recv_rc4_seal = crypto_rc4_init(ntlmssp->server_sealing_key, 16);
@@ -420,7 +420,7 @@ void ntlmssp_compute_lm_hash(char* password, char* hash)
 	DES_ecb_encrypt((const_DES_cblock*) lm_magic, (DES_cblock*)&hash[8], &ks, DES_ENCRYPT);
 }
 
-void ntlmssp_compute_ntlm_hash(DATABLOB* password, char* hash)
+void ntlmssp_compute_ntlm_hash(BLOB* password, char* hash)
 {
 	/* NTLMv1("password") = 8846F7EAEE8FB117AD06BDD830B7586C */
 
@@ -435,13 +435,13 @@ void ntlmssp_compute_ntlm_hash(DATABLOB* password, char* hash)
 	MD4_Final((void*) hash, &md4_ctx);
 }
 
-void ntlmssp_compute_ntlm_v2_hash(NTLMSSP *ntlmssp, char* hash)
+void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash)
 {
 	char* p;
-	DATABLOB blob;
+	BLOB blob;
 	char ntlm_hash[16];
 
-	datablob_alloc(&blob, ntlmssp->username.length + ntlmssp->domain.length);
+	freerdp_blob_alloc(&blob, ntlmssp->username.length + ntlmssp->domain.length);
 	p = (char*) blob.data;
 
 	/* First, compute the NTLMv1 hash of the password */
@@ -456,7 +456,7 @@ void ntlmssp_compute_ntlm_v2_hash(NTLMSSP *ntlmssp, char* hash)
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
 	HMAC(EVP_md5(), (void*) ntlm_hash, 16, blob.data, blob.length, (void*) hash, NULL);
 
-	datablob_free(&blob);
+	freerdp_blob_free(&blob);
 }
 
 void ntlmssp_compute_lm_response(char* password, char* challenge, char* response)
@@ -487,7 +487,7 @@ void ntlmssp_compute_lm_response(char* password, char* challenge, char* response
 	DES_ecb_encrypt((const_DES_cblock*)challenge, (DES_cblock*)&response[16], &ks, DES_ENCRYPT);
 }
 
-void ntlmssp_compute_lm_v2_response(NTLMSSP *ntlmssp)
+void ntlmssp_compute_lm_v2_response(NTLMSSP* ntlmssp)
 {
 	char *response;
 	char value[16];
@@ -500,7 +500,7 @@ void ntlmssp_compute_lm_v2_response(NTLMSSP *ntlmssp)
 	memcpy(value, ntlmssp->server_challenge, 8);
 	memcpy(&value[8], ntlmssp->client_challenge, 8);
 
-	datablob_alloc(&ntlmssp->lm_challenge_response, 24);
+	freerdp_blob_alloc(&ntlmssp->lm_challenge_response, 24);
 	response = (char*) ntlmssp->lm_challenge_response.data;
 
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
@@ -517,15 +517,15 @@ void ntlmssp_compute_lm_v2_response(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp)
+void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
 {
 	uint8* blob;
 	uint8 ntlm_v2_hash[16];
 	uint8 nt_proof_str[16];
-	DATABLOB ntlm_v2_temp;
-	DATABLOB ntlm_v2_temp_chal;
+	BLOB ntlm_v2_temp;
+	BLOB ntlm_v2_temp_chal;
 
-	datablob_alloc(&ntlm_v2_temp, ntlmssp->target_info.length + 28);
+	freerdp_blob_alloc(&ntlm_v2_temp, ntlmssp->target_info.length + 28);
 
 	memset(ntlm_v2_temp.data, '\0', ntlm_v2_temp.length);
 	blob = (uint8*) ntlm_v2_temp.data;
@@ -568,7 +568,7 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp)
 #endif
 
 	/* Concatenate server challenge with temp */
-	datablob_alloc(&ntlm_v2_temp_chal, ntlm_v2_temp.length + 8);
+	freerdp_blob_alloc(&ntlm_v2_temp_chal, ntlm_v2_temp.length + 8);
 	blob = (uint8*) ntlm_v2_temp_chal.data;
 	memcpy(blob, ntlmssp->server_challenge, 8);
 	memcpy(&blob[8], ntlm_v2_temp.data, ntlm_v2_temp.length);
@@ -577,7 +577,7 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp)
 		ntlm_v2_temp_chal.length, (void*) nt_proof_str, NULL);
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
-	datablob_alloc(&ntlmssp->nt_challenge_response, ntlm_v2_temp.length + 16);
+	freerdp_blob_alloc(&ntlmssp->nt_challenge_response, ntlm_v2_temp.length + 16);
 	blob = (uint8*) ntlmssp->nt_challenge_response.data;
 	memcpy(blob, nt_proof_str, 16);
 	memcpy(&blob[16], ntlm_v2_temp.data, ntlm_v2_temp.length);
@@ -586,8 +586,8 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp)
 	HMAC(EVP_md5(), (void*) ntlm_v2_hash, 16,
 		(void*) nt_proof_str, 16, (void*) ntlmssp->session_base_key, NULL);
 
-	datablob_free(&ntlm_v2_temp);
-	datablob_free(&ntlm_v2_temp_chal);
+	freerdp_blob_free(&ntlm_v2_temp);
+	freerdp_blob_free(&ntlm_v2_temp_chal);
 }
 
 /**
@@ -706,7 +706,7 @@ static void ntlmssp_print_negotiate_flags(uint32 flags)
  * @param ntlmssp
  */
 
-static void ntlmssp_output_restriction_encoding(NTLMSSP *ntlmssp)
+static void ntlmssp_output_restriction_encoding(NTLMSSP* ntlmssp)
 {
 	AV_PAIR *restrictions = &ntlmssp->av_pairs->Restrictions;
 	STREAM* s = stream_new(0);
@@ -741,10 +741,10 @@ static void ntlmssp_output_restriction_encoding(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
+void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp)
 {
 	STREAM* s;
-	DATABLOB target_info;
+	BLOB target_info;
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 
 	/* MsvAvFlags */
@@ -758,7 +758,7 @@ void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
 	s->p = s->data;
 
 	ntlmssp_output_av_pairs(ntlmssp, s);
-	datablob_alloc(&target_info, s->p - s->data);
+	freerdp_blob_alloc(&target_info, s->p - s->data);
 	memcpy(target_info.data, s->data, target_info.length);
 
 	ntlmssp->target_info.data = target_info.data;
@@ -772,7 +772,7 @@ void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp)
  * @param s
  */
 
-void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
+void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 {
 	AV_ID AvId;
 	uint16 AvLen;
@@ -870,7 +870,7 @@ void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
  * @param s
  */
 
-void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
+void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 {
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 	
@@ -960,7 +960,7 @@ void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM* s)
  * @param ntlmssp
  */
 
-void ntlmssp_free_av_pairs(NTLMSSP *ntlmssp)
+void ntlmssp_free_av_pairs(NTLMSSP* ntlmssp)
 {
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 	
@@ -1008,7 +1008,7 @@ static void ntlmssp_output_version(STREAM* s)
 	stream_write_uint8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
 }
 
-void ntlmssp_compute_message_integrity_check(NTLMSSP *ntlmssp)
+void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp)
 {
 	HMAC_CTX hmac_ctx;
 
@@ -1035,7 +1035,7 @@ void ntlmssp_compute_message_integrity_check(NTLMSSP *ntlmssp)
  * @param[out] signature destination signature
  */
 
-void ntlmssp_encrypt_message(NTLMSSP *ntlmssp, DATABLOB *msg, DATABLOB *encrypted_msg, uint8* signature)
+void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, BLOB* msg, BLOB* encrypted_msg, uint8* signature)
 {
 	HMAC_CTX hmac_ctx;
 	uint8 digest[16];
@@ -1050,7 +1050,7 @@ void ntlmssp_encrypt_message(NTLMSSP *ntlmssp, DATABLOB *msg, DATABLOB *encrypte
 	HMAC_Final(&hmac_ctx, digest, NULL);
 
 	/* Allocate space for encrypted message */
-	datablob_alloc(encrypted_msg, msg->length);
+	freerdp_blob_alloc(encrypted_msg, msg->length);
 
 	/* Encrypt message using with RC4 */
 	crypto_rc4(ntlmssp->send_rc4_seal, msg->length, msg->data, encrypted_msg->data);
@@ -1079,7 +1079,7 @@ void ntlmssp_encrypt_message(NTLMSSP *ntlmssp, DATABLOB *msg, DATABLOB *encrypte
  * @return
  */
 
-int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB *msg, uint8* signature)
+int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, BLOB* encrypted_msg, BLOB* msg, uint8* signature)
 {
 	HMAC_CTX hmac_ctx;
 	uint8 digest[16];
@@ -1088,7 +1088,7 @@ int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB 
 	uint8 expected_signature[16];
 
 	/* Allocate space for encrypted message */
-	datablob_alloc(msg, encrypted_msg->length);
+	freerdp_blob_alloc(msg, encrypted_msg->length);
 
 	/* Encrypt message using with RC4 */
 	crypto_rc4(ntlmssp->recv_rc4_seal, encrypted_msg->length, encrypted_msg->data, msg->data);
@@ -1128,7 +1128,7 @@ int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB 
  * @param s
  */
 
-void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM* s)
+void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 {
 	int length;
 	uint32 negotiateFlags = 0;
@@ -1190,7 +1190,7 @@ void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM* s)
 	}
 
 	length = s->p - s->data;
-	datablob_alloc(&ntlmssp->negotiate_message, length);
+	freerdp_blob_alloc(&ntlmssp->negotiate_message, length);
 	memcpy(ntlmssp->negotiate_message.data, s->data, length);
 
 #ifdef WITH_DEBUG_NLA
@@ -1209,7 +1209,7 @@ void ntlmssp_send_negotiate_message(NTLMSSP *ntlmssp, STREAM* s)
  * @param s
  */
 
-void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
+void ntlmssp_recv_challenge_message(NTLMSSP* ntlmssp, STREAM* s)
 {
 	uint8* p;
 	int length;
@@ -1256,7 +1256,7 @@ void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
 	if (targetNameLen > 0)
 	{
 		p = start_offset + targetNameBufferOffset;
-		datablob_alloc(&ntlmssp->target_name, targetNameLen);
+		freerdp_blob_alloc(&ntlmssp->target_name, targetNameLen);
 		memcpy(ntlmssp->target_name.data, p, targetNameLen);
 
 #ifdef WITH_DEBUG_NLA
@@ -1269,7 +1269,7 @@ void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
 	if (targetInfoLen > 0)
 	{
 		p = start_offset + targetInfoBufferOffset;
-		datablob_alloc(&ntlmssp->target_info, targetInfoLen);
+		freerdp_blob_alloc(&ntlmssp->target_info, targetInfoLen);
 		memcpy(ntlmssp->target_info.data, p, targetInfoLen);
 
 #ifdef WITH_DEBUG_NLA
@@ -1287,7 +1287,7 @@ void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
 
 	length = (payload_offset - start_offset) + targetNameLen + targetInfoLen;
 
-	datablob_alloc(&ntlmssp->challenge_message, length);
+	freerdp_blob_alloc(&ntlmssp->challenge_message, length);
 	memcpy(ntlmssp->challenge_message.data, start_offset, length);
 
 #ifdef WITH_DEBUG_NLA
@@ -1383,7 +1383,7 @@ void ntlmssp_recv_challenge_message(NTLMSSP *ntlmssp, STREAM* s)
  * @param s
  */
 
-void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM* s)
+void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 {
 	int length;
 	uint32 negotiateFlags = 0;
@@ -1579,7 +1579,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM* s)
 #endif
 
 	length = s->p - s->data;
-	datablob_alloc(&ntlmssp->authenticate_message, length);
+	freerdp_blob_alloc(&ntlmssp->authenticate_message, length);
 	memcpy(ntlmssp->authenticate_message.data, s->data, length);
 
 	if (ntlmssp->ntlm_v2)
@@ -1607,7 +1607,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP *ntlmssp, STREAM* s)
  * @return
  */
 
-int ntlmssp_send(NTLMSSP *ntlmssp, STREAM* s)
+int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s)
 {
 	if (ntlmssp->state == NTLMSSP_STATE_INITIAL)
 		ntlmssp->state = NTLMSSP_STATE_NEGOTIATE;
@@ -1627,7 +1627,7 @@ int ntlmssp_send(NTLMSSP *ntlmssp, STREAM* s)
  * @return
  */
 
-int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM* s)
+int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s)
 {
 	char signature[8]; /* Signature, "NTLMSSP" */
 	uint32 messageType; /* MessageType */
@@ -1648,7 +1648,7 @@ int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM* s)
 
 NTLMSSP* ntlmssp_new()
 {
-	NTLMSSP *ntlmssp = (NTLMSSP*) xmalloc(sizeof(NTLMSSP));
+	NTLMSSP* ntlmssp = (NTLMSSP*) xmalloc(sizeof(NTLMSSP));
 
 	if (ntlmssp != NULL)
 	{
@@ -1666,7 +1666,7 @@ NTLMSSP* ntlmssp_new()
  * @param ntlmssp
  */
 
-void ntlmssp_init(NTLMSSP *ntlmssp)
+void ntlmssp_init(NTLMSSP* ntlmssp)
 {
 	ntlmssp->state = NTLMSSP_STATE_INITIAL;
 	ntlmssp->uniconv = freerdp_uniconv_new();
@@ -1677,23 +1677,23 @@ void ntlmssp_init(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_uninit(NTLMSSP *ntlmssp)
+void ntlmssp_uninit(NTLMSSP* ntlmssp)
 {
-	datablob_free(&ntlmssp->username);
-	datablob_free(&ntlmssp->password);
-	datablob_free(&ntlmssp->domain);
+	freerdp_blob_free(&ntlmssp->username);
+	freerdp_blob_free(&ntlmssp->password);
+	freerdp_blob_free(&ntlmssp->domain);
 
-	datablob_free(&ntlmssp->spn);
-	datablob_free(&ntlmssp->workstation);
-	datablob_free(&ntlmssp->target_info);
-	datablob_free(&ntlmssp->target_name);
+	freerdp_blob_free(&ntlmssp->spn);
+	freerdp_blob_free(&ntlmssp->workstation);
+	freerdp_blob_free(&ntlmssp->target_info);
+	freerdp_blob_free(&ntlmssp->target_name);
 
-	datablob_free(&ntlmssp->negotiate_message);
-	datablob_free(&ntlmssp->challenge_message);
-	datablob_free(&ntlmssp->authenticate_message);
+	freerdp_blob_free(&ntlmssp->negotiate_message);
+	freerdp_blob_free(&ntlmssp->challenge_message);
+	freerdp_blob_free(&ntlmssp->authenticate_message);
 
-	datablob_free(&ntlmssp->lm_challenge_response);
-	datablob_free(&ntlmssp->nt_challenge_response);
+	freerdp_blob_free(&ntlmssp->lm_challenge_response);
+	freerdp_blob_free(&ntlmssp->nt_challenge_response);
 
 	ntlmssp_free_av_pairs(ntlmssp);
 	freerdp_uniconv_free(ntlmssp->uniconv);
@@ -1706,7 +1706,7 @@ void ntlmssp_uninit(NTLMSSP *ntlmssp)
  * @param ntlmssp
  */
 
-void ntlmssp_free(NTLMSSP *ntlmssp)
+void ntlmssp_free(NTLMSSP* ntlmssp)
 {
 	ntlmssp_uninit(ntlmssp);
 

@@ -36,8 +36,8 @@
 #endif
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/datablob.h>
 
 struct crypto_sha1_struct
 {
@@ -78,7 +78,7 @@ typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
 void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
-boolean crypto_cert_get_public_key(CryptoCert cert, DATABLOB* public_key);
+boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key);
 
 void crypto_nonce(uint8* nonce, int size);
 

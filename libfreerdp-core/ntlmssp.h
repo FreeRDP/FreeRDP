@@ -23,9 +23,9 @@
 #include "credssp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/unicode.h>
-#include <freerdp/utils/datablob.h>
 
 struct _AV_PAIR
 {
@@ -78,13 +78,13 @@ typedef enum _NTLMSSP_STATE NTLMSSP_STATE;
 struct _NTLMSSP
 {
 	NTLMSSP_STATE state;
-	DATABLOB password;
-	DATABLOB username;
-	DATABLOB domain;
-	DATABLOB workstation;
-	DATABLOB target_info;
-	DATABLOB target_name;
-	DATABLOB spn;
+	BLOB password;
+	BLOB username;
+	BLOB domain;
+	BLOB workstation;
+	BLOB target_info;
+	BLOB target_name;
+	BLOB spn;
 	UNICONV *uniconv;
 	uint32 negotiate_flags;
 	uint8 timestamp[8];
@@ -100,11 +100,11 @@ struct _NTLMSSP
 	uint8 server_signing_key[16];
 	uint8 server_sealing_key[16];
 	uint8 message_integrity_check[16];
-	DATABLOB nt_challenge_response;
-	DATABLOB lm_challenge_response;
-	DATABLOB negotiate_message;
-	DATABLOB challenge_message;
-	DATABLOB authenticate_message;
+	BLOB nt_challenge_response;
+	BLOB lm_challenge_response;
+	BLOB negotiate_message;
+	BLOB challenge_message;
+	BLOB authenticate_message;
 	CryptoRc4 send_rc4_seal;
 	CryptoRc4 recv_rc4_seal;
 	AV_PAIRS *av_pairs;
@@ -114,47 +114,47 @@ struct _NTLMSSP
 };
 typedef struct _NTLMSSP NTLMSSP;
 
-void ntlmssp_set_username(NTLMSSP *ntlmssp, char* username);
-void ntlmssp_set_domain(NTLMSSP *ntlmssp, char* domain);
-void ntlmssp_set_password(NTLMSSP *ntlmssp, char* password);
+void ntlmssp_set_username(NTLMSSP* ntlmssp, char* username);
+void ntlmssp_set_domain(NTLMSSP* ntlmssp, char* domain);
+void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password);
 
-void ntlmssp_generate_client_challenge(NTLMSSP *ntlmssp);
-void ntlmssp_generate_key_exchange_key(NTLMSSP *ntlmssp);
-void ntlmssp_generate_random_session_key(NTLMSSP *ntlmssp);
-void ntlmssp_generate_exported_session_key(NTLMSSP *ntlmssp);
-void ntlmssp_encrypt_random_session_key(NTLMSSP *ntlmssp);
+void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp);
+void ntlmssp_generate_key_exchange_key(NTLMSSP* ntlmssp);
+void ntlmssp_generate_random_session_key(NTLMSSP* ntlmssp);
+void ntlmssp_generate_exported_session_key(NTLMSSP* ntlmssp);
+void ntlmssp_encrypt_random_session_key(NTLMSSP* ntlmssp);
 
-void ntlmssp_generate_timestamp(NTLMSSP *ntlmssp);
-void ntlmssp_generate_client_signing_key(NTLMSSP *ntlmssp);
-void ntlmssp_generate_server_signing_key(NTLMSSP *ntlmssp);
-void ntlmssp_generate_client_sealing_key(NTLMSSP *ntlmssp);
-void ntlmssp_generate_server_sealing_key(NTLMSSP *ntlmssp);
-void ntlmssp_init_rc4_seal_states(NTLMSSP *ntlmssp);
+void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp);
+void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp);
+void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp);
+void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp);
+void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp);
+void ntlmssp_init_rc4_seal_states(NTLMSSP* ntlmssp);
 
 void ntlmssp_compute_lm_hash(char* password, char* hash);
-void ntlmssp_compute_ntlm_hash(DATABLOB* password, char* hash);
-void ntlmssp_compute_ntlm_v2_hash(NTLMSSP *ntlmssp, char* hash);
+void ntlmssp_compute_ntlm_hash(BLOB* password, char* hash);
+void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash);
 
 void ntlmssp_compute_lm_response(char* password, char* challenge, char* response);
-void ntlmssp_compute_lm_v2_response(NTLMSSP *ntlmssp);
-void ntlmssp_compute_ntlm_v2_response(NTLMSSP *ntlmssp);
+void ntlmssp_compute_lm_v2_response(NTLMSSP* ntlmssp);
+void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp);
 
-void ntlmssp_populate_av_pairs(NTLMSSP *ntlmssp);
-void ntlmssp_input_av_pairs(NTLMSSP *ntlmssp, STREAM* s);
-void ntlmssp_output_av_pairs(NTLMSSP *ntlmssp, STREAM* s);
-void ntlmssp_free_av_pairs(NTLMSSP *ntlmssp);
+void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp);
+void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
+void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
+void ntlmssp_free_av_pairs(NTLMSSP* ntlmssp);
 
-void ntlmssp_compute_message_integrity_check(NTLMSSP *ntlmssp);
+void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp);
 
-void ntlmssp_encrypt_message(NTLMSSP *ntlmssp, DATABLOB *msg, DATABLOB *encrypted_msg, uint8* signature);
-int ntlmssp_decrypt_message(NTLMSSP *ntlmssp, DATABLOB *encrypted_msg, DATABLOB *msg, uint8* signature);
+void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, BLOB* msg, BLOB* encrypted_msg, uint8* signature);
+int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, BLOB* encrypted_msg, BLOB* msg, uint8* signature);
 
-int ntlmssp_recv(NTLMSSP *ntlmssp, STREAM* s);
-int ntlmssp_send(NTLMSSP *ntlmssp, STREAM* s);
+int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s);
+int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s);
 
 NTLMSSP* ntlmssp_new();
-void ntlmssp_init(NTLMSSP *ntlmssp);
-void ntlmssp_free(NTLMSSP *ntlmssp);
+void ntlmssp_init(NTLMSSP* ntlmssp);
+void ntlmssp_free(NTLMSSP* ntlmssp);
 
 #define WITH_DEBUG_NLA
 
