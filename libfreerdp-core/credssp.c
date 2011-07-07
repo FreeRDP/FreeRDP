@@ -492,8 +492,7 @@ void credssp_current_time(uint8* timestamp)
  * @return new CredSSP state machine.
  */
 
-rdpCredssp*
-credssp_new(rdpTransport* transport)
+rdpCredssp* credssp_new(rdpTransport* transport)
 {
 	rdpCredssp* self;
 
@@ -514,8 +513,7 @@ credssp_new(rdpTransport* transport)
  * @param credssp
  */
 
-void
-credssp_free(rdpCredssp* credssp)
+void credssp_free(rdpCredssp* credssp)
 {
 	if (credssp != NULL)
 	{

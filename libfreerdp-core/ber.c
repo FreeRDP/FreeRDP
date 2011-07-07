@@ -25,8 +25,7 @@
  * @param length length
  */
 
-void
-ber_write_length(STREAM* s, int length)
+void ber_write_length(STREAM* s, int length)
 {
 	if (length > 0x7F)
 	{
@@ -46,8 +45,7 @@ ber_write_length(STREAM* s, int length)
  * @param length length
  */
 
-void
-ber_write_universal_tag(STREAM* s, uint8 tag, int length)
+void ber_write_universal_tag(STREAM* s, uint8 tag, int length)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_PRIMITIVE) | (BER_TAG_MASK & tag));
 	ber_write_length(s, length);
@@ -60,8 +58,7 @@ ber_write_universal_tag(STREAM* s, uint8 tag, int length)
  * @param length length
  */
 
-void
-ber_write_application_tag(STREAM* s, uint8 tag, int length)
+void ber_write_application_tag(STREAM* s, uint8 tag, int length)
 {
 	if (tag > 30)
 	{
@@ -73,5 +70,54 @@ ber_write_application_tag(STREAM* s, uint8 tag, int length)
 	{
 		stream_write_uint8(s, (BER_CLASS_APPL | BER_CONSTRUCT) | (BER_TAG_MASK & tag));
 		ber_write_length(s, length);
+	}
+}
+
+/**
+ * Write a BER OCTET_STRING
+ * @param s stream
+ * @param oct_str octet string
+ * @param length string length
+ */
+
+void ber_write_octet_string(STREAM* s, uint8* oct_str, int length)
+{
+	ber_write_universal_tag(s, BER_TAG_OCTET_STRING);
+	stream_write(s, oct_str, length);
+}
+
+/**
+ * Write a BER BOOLEAN
+ * @param s
+ * @param value
+ */
+
+void ber_write_boolean(STREAM* s, boolean value)
+{
+	ber_write_universal_tag(s, BER_TAG_BOOLEAN);
+	stream_write_uint8(s, (value == True) ? 0xFF : 0);
+}
+
+/**
+ * Write a BER INTEGER
+ * @param s
+ * @param value
+ */
+
+void ber_write_integer(STREAM* s, uint32 value)
+{
+	ber_write_universal_tag(s, BER_TAG_INTEGER);
+
+	if (value <= 0xFF)
+	{
+		stream_write_uint8(s, value);
+	}
+	else if (value <= 0xFFFF)
+	{
+		stream_write_uint16_be(s, value);
+	}
+	else if (value <= 0xFFFFFFFF)
+	{
+		stream_write_uint32_be(s, value);
 	}
 }

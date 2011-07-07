@@ -21,10 +21,37 @@
 #define __MCS_H
 
 #include "ber.h"
+#include "transport.h"
 
 #include <freerdp/utils/stream.h>
 
-#define MCS_BER_CONNECT_INITIAL		0x65
-#define MCS_BER_CONNECT_RESPONSE	0x66
+typedef struct
+{
+	uint32 maxChannelIds;
+	uint32 maxUserIds;
+	uint32 maxTokenIds;
+	uint32 numPriorities;
+	uint32 minThroughput;
+	uint32 maxHeight
+	uint32 maxMCSPDUsize;
+	uint32 protocolVersion;
+} DOMAIN_PARAMETERS;
+
+struct rdp_mcs
+{
+	struct rdp_transport* transport;
+	DOMAIN_PARAMETERS targetParameters;
+	DOMAIN_PARAMETERS minimumParameters;
+	DOMAIN_PARAMETERS maximumParameters;
+};
+typedef struct rdp_mcs rdpMcs;
+
+#define MCS_TYPE_CONNECT_INITIAL		0x65
+#define MCS_TYPE_CONNECT_RESPONSE		0x66
+
+void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, int length);
+
+rdpMcs* mcs_new(rdpTransport* transport);
+void mcs_free(rdpMcs* mcs);
 
 #endif /* __MCS_H */

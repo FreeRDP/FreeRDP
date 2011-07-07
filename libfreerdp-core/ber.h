@@ -20,6 +20,7 @@
 #ifndef __BER_H
 #define __BER_H
 
+#include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
 /* BER type */
@@ -42,11 +43,11 @@
 #define BER_TAG_INTEGER		0x02
 #define BER_TAG_OCTET_STRING	0x04
 
-void
-ber_write_length(STREAM* s, int length);
-void
-ber_write_universal_tag(STREAM* s, uint8 tag, int length);
-void
-ber_write_application_tag(STREAM* s, uint8 tag, int length);
+void ber_write_length(STREAM* s, int length);
+void ber_write_universal_tag(STREAM* s, uint8 tag, int length);
+void ber_write_application_tag(STREAM* s, uint8 tag, int length);
+void ber_write_octet_string(STREAM* s, uint8* oct_str, int length);
+void ber_write_boolean(STREAM* s, boolean value);
+void ber_write_integer(STREAM* s, uint32 value);
 
 #endif /* __BER_H */

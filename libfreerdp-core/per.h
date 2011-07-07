@@ -22,21 +22,13 @@
 
 #include <freerdp/utils/stream.h>
 
-void
-per_write_length(STREAM* s, int length);
-void
-per_write_choice(STREAM* s, uint8 choice);
-void
-per_write_selection(STREAM* s, uint8 selection);
-void
-per_write_number_of_sets(STREAM* s, uint8 number);
-void
-per_write_padding(STREAM* s, int length);
-void
-per_write_object_identifier(STREAM* s, uint8 oid[6]);
-void
-per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
-void
-per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
+void per_write_length(STREAM* s, int length);
+void per_write_choice(STREAM* s, uint8 choice);
+void per_write_selection(STREAM* s, uint8 selection);
+void per_write_number_of_sets(STREAM* s, uint8 number);
+void per_write_padding(STREAM* s, int length);
+void per_write_object_identifier(STREAM* s, uint8 oid[6]);
+void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
+void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
 
 #endif /* __PER_H */
