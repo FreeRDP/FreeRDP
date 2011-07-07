@@ -21,9 +21,9 @@
 #define __FREERDP_H
 
 #include <freerdp/api.h>
-#include "types/ui.h"
-#include "settings.h"
-#include "extension.h"
+#include <freerdp/types/ui.h>
+#include <freerdp/settings.h>
+#include <freerdp/extension.h>
 
 #ifdef __cplusplus
 extern "C" {
