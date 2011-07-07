@@ -52,15 +52,15 @@ detect_keyboard(void *dpy, unsigned int keyboardLayoutID, char *xkbfile, size_t 
 #if defined(sun)
 	if(keyboardLayoutID == 0)
 	{
-		keyboardLayoutID = detect_keyboaFRDP_type_and_layout_sunos(xkbfile, xkbfilelength);
-		DEBUG_KBD("detect_keyboaFRDP_type_and_layout_sunos: %X %s", keyboardLayoutID, xkbfile);
+		keyboardLayoutID = detect_keyboard_type_and_layout_sunos(xkbfile, xkbfilelength);
+		DEBUG_KBD("detect_keyboard_type_and_layout_sunos: %X %s", keyboardLayoutID, xkbfile);
 	}
 #endif
 
 	if(keyboardLayoutID == 0)
 	{
-		keyboardLayoutID = detect_keyboaFRDP_layout_from_locale();
-		DEBUG_KBD("detect_keyboaFRDP_layout_from_locale: %X", keyboardLayoutID);
+		keyboardLayoutID = detect_keyboard_layout_from_locale();
+		DEBUG_KBD("detect_keyboard_layout_from_locale: %X", keyboardLayoutID);
 	}
 
 	if (keyboardLayoutID == 0)
@@ -86,7 +86,7 @@ detect_keyboard(void *dpy, unsigned int keyboardLayoutID, char *xkbfile, size_t 
  */
 
 unsigned int
-freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id)
+freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id)
 {
 #ifdef WITH_XKBFILE
 	if (!init_xkb(dpy))
@@ -94,10 +94,10 @@ freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id)
 		DEBUG_KBD("Error initializing xkb");
 		return 0;
 	}
-	if (!keyboaFRDP_layout_id)
+	if (!keyboard_layout_id)
 	{
-		keyboaFRDP_layout_id = detect_keyboaFRDP_layout_from_xkb(dpy);
-		DEBUG_KBD("detect_keyboaFRDP_layout_from_xkb: %X", keyboaFRDP_layout_id);
+		keyboard_layout_id = detect_keyboard_layout_from_xkb(dpy);
+		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboard_layout_id);
 	}
 	init_keycodes_from_xkb(dpy, x_keycode_to_rdp_keycode);
 #else
@@ -105,11 +105,11 @@ freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id)
 	KeycodeToVkcode keycodeToVkcode;
 	int keycode;
 
-	keyboaFRDP_layout_id = detect_keyboard(dpy, keyboaFRDP_layout_id, xkbfile, sizeof(xkbfile));
+	keyboard_layout_id = detect_keyboard(dpy, keyboard_layout_id, xkbfile, sizeof(xkbfile));
 	DEBUG_KBD("Using keyboard layout 0x%X with xkb name %s and xkbfile %s",
-			keyboaFRDP_layout_id, get_layout_name(keyboaFRDP_layout_id), xkbfile);
+			keyboard_layout_id, get_layout_name(keyboard_layout_id), xkbfile);
 
-	load_keyboaFRDP_map(keycodeToVkcode, xkbfile);
+	load_keyboard_map(keycodeToVkcode, xkbfile);
 
 	for (keycode=0; keycode<256; keycode++)
 	{
@@ -126,13 +126,13 @@ freerdp_kbd_init(void *dpy, unsigned int keyboaFRDP_layout_id)
 	}
 #endif
 
-	return keyboaFRDP_layout_id;
+	return keyboard_layout_id;
 }
 
 rdpKeyboardLayout *
 freerdp_kbd_get_layouts(int types)
 {
-	return get_keyboaFRDP_layouts(types);
+	return get_keyboard_layouts(types);
 }
 
 uint8

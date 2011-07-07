@@ -20,33 +20,10 @@
 #ifndef __FREERDP_H
 #define __FREERDP_H
 
-#include "types/ui.h"
-#include "settings.h"
-#include "extension.h"
-
-#define FREERDP_INTERFACE_VERSION 4
-
-#if defined _WIN32 || defined __CYGWIN__
-  #ifdef FREERDP_EXPORTS
-    #ifdef __GNUC__
-      #define FREERDP_API __attribute__((dllexport))
-    #else
-      #define FREERDP_API __declspec(dllexport)
-    #endif
-  #else
-    #ifdef __GNUC__
-      #define FREERDP_API __attribute__((dllimport))
-    #else
-      #define FREERDP_API __declspec(dllimport)
-    #endif
-  #endif
-#else
-  #if __GNUC__ >= 4
-    #define FREERDP_API   __attribute__ ((visibility("default")))
-  #else
-    #define FREERDP_API
-  #endif
-#endif
+#include <freerdp/api.h>
+#include <freerdp/types/ui.h>
+#include <freerdp/settings.h>
+#include <freerdp/extension.h>
 
 #ifdef __cplusplus
 extern "C" {

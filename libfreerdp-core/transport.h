@@ -25,7 +25,7 @@
 
 #include <time.h>
 #include <freerdp/settings.h>
-#include <freerdp/types/base.h>
+#include <freerdp/types/ui.h>
 #include <freerdp/utils/stream.h>
 
 enum _TRANSPORT_STATE
