@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include "gcc.h"
+
 #include "mcs.h"
 
 /**
@@ -146,6 +148,41 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 
 	/* userData (OCTET_STRING) */
 	ber_write_octet_string(s, user_data->data, gcc_CCrq_length);
+}
+
+void mcs_send_connect_initial(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 *bm, *em;
+	STREAM* gcc_CCrq;
+	STREAM* client_data;
+
+	client_data = stream_new(512);
+	gcc_write_client_core_data(client_data, mcs->transport->settings);
+	gcc_write_client_security_data(client_data, mcs->transport->settings);
+	gcc_write_client_network_data(client_data, mcs->transport->settings);
+	gcc_write_client_cluster_data(client_data, mcs->transport->settings);
+	gcc_write_client_monitor_data(client_data, mcs->transport->settings);
+
+	gcc_CCrq = stream_new(512);
+	gcc_write_create_conference_request(gcc_CCrq, client_data);
+	length = stream_get_length(gcc_CCrq) + 7;
+
+	s = stream_new(512);
+	stream_get_mark(s, bm);
+	stream_seek(s, 7);
+
+	mcs_write_connect_initial(s, mcs, gcc_CCrq);
+	stream_get_mark(s, em);
+	length = (em - bm) + 7;
+	stream_set_mark(s, bm);
+
+	tpkt_write_header(s, length);
+	tpdu_write_connection_request(s, length - 5);
+	stream_set_mark(s, em);
+
+	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
 }
 
 /**

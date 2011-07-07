@@ -52,6 +52,8 @@ typedef struct rdp_mcs rdpMcs;
 
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
+void mcs_send_connect_initial(rdpMcs* mcs);
+
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
 

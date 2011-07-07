@@ -105,8 +105,7 @@ uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
  * @param user_data client data blocks
  */
 
-void
-gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
+void gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 {
 	/* ConnectData */
 	per_write_choice(s, 0); /* From Key select object (0) of type OBJECT_IDENTIFIER */
@@ -142,8 +141,7 @@ gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
  * @param length data block length
  */
 
-void
-gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
+void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
 {
 	stream_write_uint16(s, type); /* type */
 	stream_write_uint16(s, length); /* length */
@@ -156,8 +154,7 @@ gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
  * @param settings rdp settings
  */
 
-void
-gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
+void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 {
 	uint32 version;
 	uint16 highColorDepth;
@@ -223,8 +220,7 @@ gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-void
-gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
+void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 {
 	uint16 encryptionMethods;
 
@@ -252,8 +248,7 @@ gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-void
-gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
+void gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 {
 	int i;
 	uint16 length;
@@ -282,8 +277,7 @@ gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-void
-gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
+void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
 {
 	uint32 flags;
 	uint32 redirectedSessionID;
@@ -306,8 +300,7 @@ gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-void
-gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings)
+void gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings)
 {
 	int i;
 	uint16 length;

@@ -22,11 +22,13 @@
 
 #include "tpkt.h"
 #include "nego.h"
+#include "mcs.h"
 #include "transport.h"
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
+rdpMcs* mcs;
 rdpNego* nego;
 rdpSettings* settings;
 rdpTransport* transport;
@@ -74,6 +76,9 @@ int main(int argc, char* argv[])
 	nego_connect(nego);
 
 	transport_connect_nla(transport);
+
+	mcs = mcs_new(transport);
+	mcs_send_connect_initial(mcs);
 
 	return 0;
 }
