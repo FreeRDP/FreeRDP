@@ -20,7 +20,7 @@
 #ifndef __RDP_SETTINGS_H
 #define __RDP_SETTINGS_H
 
-#include <freerdp/freerdp.h>
+#include <freerdp/types/base.h>
 
 struct rdp_chan
 {
