@@ -24,6 +24,7 @@
 #include "test_gcc.h"
 #include "test_color.h"
 #include "test_libgdi.h"
+#include "test_list.h"
 #include "test_stream.h"
 #include "test_transport.h"
 #include "test_freerdp.h"
@@ -110,6 +111,7 @@ int main(int argc, char* argv[])
 		add_ber_suite();
 		add_color_suite();
 		add_libgdi_suite();
+		add_list_suite();
 		add_stream_suite();
 		add_transport_suite();
 	}
@@ -124,6 +126,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("libgdi", argv[*pindex]) == 0)
 			{
 				add_libgdi_suite();
+			}
+			else if (strcmp("list", argv[*pindex]) == 0)
+			{
+				add_list_suite();
 			}
 			else if (strcmp("stream", argv[*pindex]) == 0)
 			{
