@@ -21,7 +21,7 @@
 #define __RDP_EXTENSION_H
 
 #include <freerdp/api.h>
-#include <freerdp/types/ui.h>
+#include <freerdp/types.h>
 
 /* Extensions ought to check for it to ensure compatibility */
 #define RDPEXT_API 1

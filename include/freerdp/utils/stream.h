@@ -22,7 +22,7 @@
 #define __STREAM_UTILS_H
 
 #include <string.h>
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
 
 struct _STREAM
 {

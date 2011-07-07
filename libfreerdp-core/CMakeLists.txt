@@ -34,6 +34,7 @@ set(LIBFREERDP_CORE_SRCS
 	credssp.h
 	ntlmssp.c
 	ntlmssp.h
+	settings.c
 	per.c
 	per.h
 	tcp.c

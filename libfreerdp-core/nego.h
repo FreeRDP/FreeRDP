@@ -21,7 +21,8 @@
 #define __NEGO_H
 
 #include "transport.h"
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
+#include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
@@ -67,37 +68,38 @@ struct rdp_nego
 {
 	int port;
 	char* hostname;
-	char *cookie;
+	char* cookie;
 	char* routing_token;
 	NEGO_STATE state;
 	int tcp_connected;
 	uint32 selected_protocol;
 	uint32 requested_protocols;
 	uint8 enabled_protocols[3];
-	struct rdp_transport * transport;
+	rdpTransport* transport;
 };
 typedef struct rdp_nego rdpNego;
 
-int nego_connect(rdpNego *nego);
+int nego_connect(rdpNego* nego);
 
-void nego_attempt_nla(rdpNego *nego);
-void nego_attempt_tls(rdpNego *nego);
-void nego_attempt_rdp(rdpNego *nego);
+void nego_attempt_nla(rdpNego* nego);
+void nego_attempt_tls(rdpNego* nego);
+void nego_attempt_rdp(rdpNego* nego);
 
-void nego_send(rdpNego *nego);
-int nego_recv(rdpTransport * transport, STREAM* s, void * extra);
+void nego_send(rdpNego* nego);
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+void nego_recv_response(rdpNego* nego);
 
-void nego_send_negotiation_request(rdpNego *nego);
-void nego_process_negotiation_response(rdpNego *nego, STREAM* s);
-void nego_process_negotiation_failure(rdpNego *nego, STREAM* s);
+void nego_send_negotiation_request(rdpNego* nego);
+void nego_process_negotiation_response(rdpNego* nego, STREAM* s);
+void nego_process_negotiation_failure(rdpNego* nego, STREAM* s);
 
 rdpNego* nego_new(struct rdp_transport * transport);
-void nego_free(rdpNego *nego);
-void nego_init(rdpNego *nego);
-void nego_set_target(rdpNego *nego, char* hostname, int port);
-void nego_set_protocols(rdpNego *nego, int rdp, int tls, int nla);
-void nego_set_routing_token(rdpNego *nego, char* routing_token);
-void nego_set_cookie(rdpNego *nego, char* cookie);
+void nego_free(rdpNego* nego);
+void nego_init(rdpNego* nego);
+void nego_set_target(rdpNego* nego, char* hostname, int port);
+void nego_set_protocols(rdpNego* nego, int rdp, int tls, int nla);
+void nego_set_routing_token(rdpNego* nego, char* routing_token);
+void nego_set_cookie(rdpNego* nego, char* cookie);
 
 #define WITH_DEBUG_NEGO	1
 

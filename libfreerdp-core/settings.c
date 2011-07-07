@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Base Types
+ * RDP Settings
  *
  * Copyright 2009-2011 Jay Sorg
  *
@@ -17,39 +17,36 @@
  * limitations under the License.
  */
 
-#ifndef __TYPES_BASE_H
-#define __TYPES_BASE_H
+#include <freerdp/utils/memory.h>
 
-typedef unsigned char uint8;
-typedef signed char sint8;
-typedef unsigned short uint16;
-typedef signed short sint16;
-typedef unsigned int uint32;
-typedef signed int sint32;
-#ifdef _WIN32
-typedef unsigned __int64 uint64;
-typedef signed __int64 sint64;
-#else
-typedef unsigned long long uint64;
-typedef signed long long sint64;
-#endif
+#include <freerdp/settings.h>
 
-#ifndef True
-#define True  (1)
-#endif
+rdpSettings* settings_new()
+{
+	rdpSettings* settings;
 
-#ifndef False
-#define False (0)
-#endif
+	settings = (rdpSettings*) xzalloc(sizeof(rdpSettings));
 
-typedef int boolean;
+	if (settings != NULL)
+	{
+		/* assign default settings */
 
-#ifndef MIN
-#define MIN(x,y)	(((x) < (y)) ? (x) : (y))
-#endif
+		settings->width = 1024;
+		settings->height = 768;
+		settings->color_depth = 16;
+		settings->nla_security = 1;
+		settings->tls_security = 1;
+		settings->rdp_security = 1;
+		settings->encryption = 1;
+	}
 
-#ifndef MAX
-#define MAX(x,y)	(((x) > (y)) ? (x) : (y))
-#endif
+	return settings;
+}
 
-#endif
+void settings_free(rdpSettings* settings)
+{
+	if (settings != NULL)
+	{
+		xfree(settings);
+	}
+}

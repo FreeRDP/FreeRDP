@@ -33,7 +33,7 @@
  * @return
  */
 
-int nego_connect(rdpNego *nego)
+int nego_connect(rdpNego* nego)
 {
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
@@ -47,7 +47,7 @@ int nego_connect(rdpNego *nego)
 			nego->state = NEGO_STATE_FAIL;
 	}
 
-	while (nego->state != NEGO_STATE_FINAL)
+	do
 	{
 		DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
 
@@ -55,12 +55,17 @@ int nego_connect(rdpNego *nego)
 
 		if (nego->state == NEGO_STATE_FAIL)
 		{
+			DEBUG_NEGO("Protocol Security Negotiation Failure");
 			nego->state = NEGO_STATE_FINAL;
 			return 0;
 		}
 	}
+	while (nego->state != NEGO_STATE_FINAL);
 
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
+
+	/* update settings with negotiated protocol security */
+	nego->transport->settings->selected_protocol = nego->selected_protocol;
 
 	return 1;
 }
@@ -71,7 +76,7 @@ int nego_connect(rdpNego *nego)
  * @return
  */
 
-int nego_tcp_connect(rdpNego *nego)
+int nego_tcp_connect(rdpNego* nego)
 {
 	if (nego->tcp_connected == 0)
 	{
@@ -96,7 +101,7 @@ int nego_tcp_connect(rdpNego *nego)
  * @return
  */
 
-int nego_tcp_disconnect(rdpNego *nego)
+int nego_tcp_disconnect(rdpNego* nego)
 {
 	if (nego->tcp_connected)
 		transport_disconnect(nego->transport);
@@ -110,7 +115,7 @@ int nego_tcp_disconnect(rdpNego *nego)
  * @param nego
  */
 
-void nego_attempt_nla(rdpNego *nego)
+void nego_attempt_nla(rdpNego* nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
@@ -120,7 +125,7 @@ void nego_attempt_nla(rdpNego *nego)
 	nego_tcp_connect(nego);
 	nego_send_negotiation_request(nego);
 
-	transport_check_fds(nego->transport);
+	nego_recv_response(nego);
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -140,7 +145,7 @@ void nego_attempt_nla(rdpNego *nego)
  * @param nego
  */
 
-void nego_attempt_tls(rdpNego *nego)
+void nego_attempt_tls(rdpNego* nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_TLS;
@@ -150,7 +155,7 @@ void nego_attempt_tls(rdpNego *nego)
 	nego_tcp_connect(nego);
 	nego_send_negotiation_request(nego);
 
-	transport_check_fds(nego->transport);
+	nego_recv_response(nego);
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -168,7 +173,7 @@ void nego_attempt_tls(rdpNego *nego)
  * @param nego
  */
 
-void nego_attempt_rdp(rdpNego *nego)
+void nego_attempt_rdp(rdpNego* nego)
 {
 	uint8 code;
 	nego->requested_protocols = PROTOCOL_RDP;
@@ -178,7 +183,20 @@ void nego_attempt_rdp(rdpNego *nego)
 	nego_tcp_connect(nego);
 	nego_send_negotiation_request(nego);
 
-	transport_check_fds(nego->transport);
+	nego_recv_response(nego);
+}
+
+/**
+ * Wait to receive a negotiation response
+ * @param nego
+ */
+
+void nego_recv_response(rdpNego* nego)
+{
+	while (nego->state != NEGO_STATE_FINAL && nego->state != NEGO_STATE_FAIL)
+	{
+		transport_check_fds(nego->transport);
+	}
 }
 
 /**
@@ -189,11 +207,11 @@ void nego_attempt_rdp(rdpNego *nego)
  * @param extra nego pointer
  */
 
-int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	uint8 li;
 	uint8 type;
-	rdpNego *nego = (rdpNego*) extra;
+	rdpNego* nego = (rdpNego*) extra;
 
 	tpkt_read_header(s);
 	li = tpdu_read_connection_confirm(s);
@@ -215,8 +233,10 @@ int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
 				break;
 		}
 	}
-
-	nego->state = NEGO_STATE_FINAL;
+	else
+	{
+		nego->state = NEGO_STATE_FINAL;
+	}
 
 	return 0;
 }
@@ -226,7 +246,7 @@ int nego_recv(rdpTransport * transport, STREAM* s, void * extra)
  * @param nego
  */
 
-void nego_send(rdpNego *nego)
+void nego_send(rdpNego* nego)
 {
 	if (nego->state == NEGO_STATE_NLA)
 		nego_attempt_nla(nego);
@@ -234,6 +254,8 @@ void nego_send(rdpNego *nego)
 		nego_attempt_tls(nego);
 	else if (nego->state == NEGO_STATE_RDP)
 		nego_attempt_rdp(nego);
+	else
+		DEBUG_NEGO("invalid negotiation state for sending");
 }
 
 /**
@@ -243,7 +265,7 @@ void nego_send(rdpNego *nego)
  * @param nego
  */
 
-void nego_send_negotiation_request(rdpNego *nego)
+void nego_send_negotiation_request(rdpNego* nego)
 {
 	STREAM* s;
 	int length;
@@ -295,24 +317,16 @@ void nego_send_negotiation_request(rdpNego *nego)
  * @param s
  */
 
-void nego_process_negotiation_response(rdpNego *nego, STREAM* s)
+void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 {
 	uint8 flags;
 	uint16 length;
-	uint32 selectedProtocol;
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
 	stream_read_uint8(s, flags);
 	stream_read_uint16(s, length);
-	stream_read_uint32(s, selectedProtocol);
-
-	if (selectedProtocol == PROTOCOL_NLA)
-		nego->selected_protocol = PROTOCOL_NLA;
-	else if (selectedProtocol == PROTOCOL_TLS)
-		nego->selected_protocol = PROTOCOL_TLS;
-	else if (selectedProtocol == PROTOCOL_RDP)
-		nego->selected_protocol = PROTOCOL_RDP;
+	stream_read_uint32(s, nego->selected_protocol);
 
 	nego->state = NEGO_STATE_FINAL;
 }
@@ -323,7 +337,7 @@ void nego_process_negotiation_response(rdpNego *nego, STREAM* s)
  * @param s
  */
 
-void nego_process_negotiation_failure(rdpNego *nego, STREAM* s)
+void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 {
 	uint8 flags;
 	uint16 length;
@@ -365,7 +379,7 @@ void nego_process_negotiation_failure(rdpNego *nego, STREAM* s)
  * @param nego
  */
 
-void nego_init(rdpNego *nego)
+void nego_init(rdpNego* nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->requested_protocols = PROTOCOL_RDP;
@@ -381,7 +395,7 @@ void nego_init(rdpNego *nego)
 
 rdpNego* nego_new(struct rdp_transport * transport)
 {
-	rdpNego *nego = (rdpNego*) xzalloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) xzalloc(sizeof(rdpNego));
 
 	if (nego != NULL)
 	{
@@ -397,7 +411,7 @@ rdpNego* nego_new(struct rdp_transport * transport)
  * @param nego
  */
 
-void nego_free(rdpNego *nego)
+void nego_free(rdpNego* nego)
 {
 	xfree(nego);
 }
@@ -409,7 +423,7 @@ void nego_free(rdpNego *nego)
  * @param port
  */
 
-void nego_set_target(rdpNego *nego, char* hostname, int port)
+void nego_set_target(rdpNego* nego, char* hostname, int port)
 {
 	nego->hostname = hostname;
 	nego->port = port;
@@ -423,7 +437,7 @@ void nego_set_target(rdpNego *nego, char* hostname, int port)
  * @param nla
  */
 
-void nego_set_protocols(rdpNego *nego, int rdp, int tls, int nla)
+void nego_set_protocols(rdpNego* nego, int rdp, int tls, int nla)
 {
 	nego->enabled_protocols[PROTOCOL_RDP] = rdp;
 	nego->enabled_protocols[PROTOCOL_TLS] = tls;
@@ -436,7 +450,7 @@ void nego_set_protocols(rdpNego *nego, int rdp, int tls, int nla)
  * @param routing_token
  */
 
-void nego_set_routing_token(rdpNego *nego, char* routing_token)
+void nego_set_routing_token(rdpNego* nego, char* routing_token)
 {
 	nego->routing_token = routing_token;
 }
@@ -447,7 +461,7 @@ void nego_set_routing_token(rdpNego *nego, char* routing_token)
  * @param cookie
  */
 
-void nego_set_cookie(rdpNego *nego, char* cookie)
+void nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	nego->cookie = cookie;
 }

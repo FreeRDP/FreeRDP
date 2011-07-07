@@ -20,7 +20,7 @@
 #ifndef __RDP_SETTINGS_H
 #define __RDP_SETTINGS_H
 
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
 
 struct rdp_chan
 {
@@ -69,7 +69,8 @@ struct rdp_settings
 	char hostname[16];
 	char server[64];
 	char domain[16];
-	char password[64];
+	char* password;
+
 	char shell[256];
 	char directory[256];
 	char username[256];
@@ -102,5 +103,9 @@ struct rdp_settings
 	int software_gdi;
 	struct rdp_ext_set extensions[16];
 };
+typedef struct rdp_settings rdpSettings;
+
+rdpSettings* settings_new();
+void settings_free(rdpSettings* settings);
 
 #endif /* __RDP_SETTINGS_H */

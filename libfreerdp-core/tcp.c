@@ -32,8 +32,7 @@
 
 #include "tcp.h"
 
-boolean
-tcp_connect(rdpTcp * tcp, const char * hostname, int port)
+boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 {
 	int status;
 	int sockfd = -1;
@@ -81,8 +80,7 @@ tcp_connect(rdpTcp * tcp, const char * hostname, int port)
 	return True;
 }
 
-boolean
-tcp_disconnect(rdpTcp * tcp)
+boolean tcp_disconnect(rdpTcp * tcp)
 {
 	if (tcp->sockfd != -1)
 	{
@@ -93,8 +91,7 @@ tcp_disconnect(rdpTcp * tcp)
 	return True;
 }
 
-boolean
-tcp_set_blocking_mode(rdpTcp * tcp, boolean blocking)
+boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 {
 	int flags;
 	flags = fcntl(tcp->sockfd, F_GETFL);
@@ -119,10 +116,9 @@ tcp_set_blocking_mode(rdpTcp * tcp, boolean blocking)
 	return True;
 }
 
-rdpTcp*
-tcp_new()
+rdpTcp* tcp_new()
 {
-	rdpTcp *tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	rdpTcp* tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
@@ -135,8 +131,7 @@ tcp_new()
 	return tcp;
 }
 
-void
-tcp_free(rdpTcp* tcp)
+void tcp_free(rdpTcp* tcp)
 {
 	if (tcp != NULL)
 	{

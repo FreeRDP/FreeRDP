@@ -21,13 +21,13 @@
 #ifndef __TCP_H
 #define __TCP_H
 
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_tcp rdpTcp;
-typedef boolean (*TcpConnect) (rdpTcp * tcp, const char * hostname, int port);
-typedef boolean (*TcpDisconnect) (rdpTcp * tcp);
-typedef boolean (*TcpSetBlockingMode) (rdpTcp * tcp, boolean blocking);
+typedef boolean (*TcpConnect) (rdpTcp* tcp, const char* hostname, int port);
+typedef boolean (*TcpDisconnect) (rdpTcp* tcp);
+typedef boolean (*TcpSetBlockingMode) (rdpTcp* tcp, boolean blocking);
 
 struct rdp_tcp
 {
@@ -37,16 +37,11 @@ struct rdp_tcp
 	TcpSetBlockingMode set_blocking_mode;
 };
 
-boolean
-tcp_connect(rdpTcp * tcp, const char * hostname, int port);
-boolean
-tcp_disconnect(rdpTcp * tcp);
-boolean
-tcp_set_blocking_mode(rdpTcp * tcp, boolean blocking);
+boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port);
+boolean tcp_disconnect(rdpTcp* tcp);
+boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking);
 
-rdpTcp*
-tcp_new();
-void
-tcp_free(rdpTcp* tcp);
+rdpTcp* tcp_new();
+void tcp_free(rdpTcp* tcp);
 
 #endif /* __TCP_H */

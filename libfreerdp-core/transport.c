@@ -30,6 +30,7 @@
 #include <fcntl.h>
 
 #include "tpkt.h"
+#include "credssp.h"
 #include "transport.h"
 
 #ifndef MSG_NOSIGNAL
@@ -38,20 +39,17 @@
 
 #define BUFFER_SIZE 16384
 
-boolean
-transport_connect(rdpTransport * transport, const char * server, int port)
+boolean transport_connect(rdpTransport* transport, const char* server, int port)
 {
 	return transport->tcp->connect(transport->tcp, server, port);
 }
 
-boolean
-transport_disconnect(rdpTransport * transport)
+boolean transport_disconnect(rdpTransport* transport)
 {
 	return transport->tcp->disconnect(transport->tcp);
 }
 
-boolean
-transport_connect_rdp(rdpTransport * transport)
+boolean transport_connect_rdp(rdpTransport* transport)
 {
 	transport->state = TRANSPORT_STATE_RDP;
 
@@ -60,8 +58,7 @@ transport_connect_rdp(rdpTransport * transport)
 	return True;
 }
 
-boolean
-transport_connect_tls(rdpTransport * transport)
+boolean transport_connect_tls(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
 		transport->tls = tls_new();
@@ -76,8 +73,7 @@ transport_connect_tls(rdpTransport * transport)
 	return True;
 }
 
-boolean
-transport_connect_nla(rdpTransport * transport)
+boolean transport_connect_nla(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
 		transport->tls = tls_new();
@@ -91,28 +87,38 @@ transport_connect_nla(rdpTransport * transport)
 
 	/* Network Level Authentication */
 
+	if (transport->credssp == NULL)
+		transport->credssp = credssp_new(transport);
+
+	if (credssp_authenticate(transport->credssp) < 0)
+	{
+		printf("Authentication failure, check credentials.\n"
+			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
+
+		credssp_free(transport->credssp);
+		return False;
+	}
+
+	credssp_free(transport->credssp);
+
 	return True;
 }
 
-static int
-transport_recv(rdpTransport * transport);
+static int transport_read(rdpTransport* transport);
 
-static int
-transport_delay(rdpTransport * transport)
+static int transport_delay(rdpTransport* transport)
 {
-	transport_recv(transport);
+	transport_read(transport);
 	nanosleep(&transport->ts, NULL);
 	return 0;
 }
 
-static int
-transport_send_tls(rdpTransport * transport, STREAM * stream)
+static int transport_send_tls(rdpTransport* transport, STREAM * stream)
 {
 	return 0;
 }
 
-static int
-transport_send_tcp(rdpTransport * transport, STREAM * stream)
+static int transport_send_tcp(rdpTransport* transport, STREAM * stream)
 {
 	int bytes;
 	uint8 * head;
@@ -144,8 +150,7 @@ transport_send_tcp(rdpTransport * transport, STREAM * stream)
 	return 0;
 }
 
-int
-transport_send(rdpTransport * transport, STREAM * stream)
+int transport_send(rdpTransport* transport, STREAM * stream)
 {
 	int r;
 
@@ -160,14 +165,12 @@ transport_send(rdpTransport * transport, STREAM * stream)
 	return r;
 }
 
-static int
-transport_recv_tls(rdpTransport * transport)
+static int transport_read_tls(rdpTransport* transport)
 {
 	return 0;
 }
 
-static int
-transport_recv_tcp(rdpTransport * transport)
+static int transport_read_tcp(rdpTransport* transport)
 {
 	int bytes;
 
@@ -189,24 +192,22 @@ transport_recv_tcp(rdpTransport * transport)
 	return bytes;
 }
 
-static int
-transport_recv(rdpTransport * transport)
+static int transport_read(rdpTransport* transport)
 {
 	if (transport->state == TRANSPORT_STATE_TLS)
-		return transport_recv_tls(transport);
+		return transport_read_tls(transport);
 	else
-		return transport_recv_tcp(transport);
+		return transport_read_tcp(transport);
 }
 
-int
-transport_check_fds(rdpTransport * transport)
+int transport_check_fds(rdpTransport* transport)
 {
 	int pos;
 	int bytes;
 	uint16 length;
-	STREAM * received;
+	STREAM* received;
 
-	bytes = transport_recv(transport);
+	bytes = transport_read(transport);
 
 	if (bytes <= 0)
 		return bytes;
@@ -257,22 +258,21 @@ transport_check_fds(rdpTransport * transport)
 	return 0;
 }
 
-void
-transport_init(rdpTransport * transport)
+void transport_init(rdpTransport* transport)
 {
 	transport->state = TRANSPORT_STATE_NEGO;
 }
 
-rdpTransport *
-transport_new(rdpSettings * settings)
+rdpTransport* transport_new(rdpSettings* settings)
 {
-	rdpTransport * transport;
+	rdpTransport* transport;
 
-	transport = (rdpTransport *) xzalloc(sizeof(rdpTransport));
+	transport = (rdpTransport*) xzalloc(sizeof(rdpTransport));
 
 	if (transport != NULL)
 	{
 		transport->tcp = tcp_new();
+		transport->settings = settings;
 
 		/* a small 0.1ms delay when transport is blocking. */
 		transport->ts.tv_sec = 0;
@@ -285,8 +285,7 @@ transport_new(rdpSettings * settings)
 	return transport;
 }
 
-void
-transport_free(rdpTransport * transport)
+void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{

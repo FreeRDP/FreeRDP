@@ -21,7 +21,7 @@
 #define __FREERDP_H
 
 #include <freerdp/api.h>
-#include <freerdp/types/ui.h>
+#include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
 

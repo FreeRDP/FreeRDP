@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include <freerdp/kbd.h>
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
 
 #include "locales.h"
 #include "layout_ids.h"

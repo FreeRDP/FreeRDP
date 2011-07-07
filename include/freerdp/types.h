@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * User Interface Types
+ * Type Definitions
  *
  * Copyright 2009-2011 Jay Sorg
+ * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +18,44 @@
  * limitations under the License.
  */
 
-#ifndef __TYPES_UI_H
-#define __TYPES_UI_H
+#ifndef __RDP_TYPES_H
+#define __RDP_TYPES_H
 
-#include <freerdp/types/base.h>
+/* Base Types */
+
+typedef unsigned char uint8;
+typedef signed char sint8;
+typedef unsigned short uint16;
+typedef signed short sint16;
+typedef unsigned int uint32;
+typedef signed int sint32;
+#ifdef _WIN32
+typedef unsigned __int64 uint64;
+typedef signed __int64 sint64;
+#else
+typedef unsigned long long uint64;
+typedef signed long long sint64;
+#endif
+
+#ifndef True
+#define True  (1)
+#endif
+
+#ifndef False
+#define False (0)
+#endif
+
+typedef int boolean;
+
+#ifndef MIN
+#define MIN(x,y)	(((x) < (y)) ? (x) : (y))
+#endif
+
+#ifndef MAX
+#define MAX(x,y)	(((x) > (y)) ? (x) : (y))
+#endif
+
+#include <freerdp/settings.h>
 
 typedef void *FRDP_HBITMAP;
 typedef void *FRDP_HGLYPH;
@@ -129,12 +164,6 @@ struct _FRDP_REDRAW_EVENT
 };
 typedef struct _FRDP_REDRAW_EVENT FRDP_REDRAW_EVENT;
 
-/* defined in include/freerdp/freerdp.h */
-struct rdp_inst;
 typedef struct rdp_inst rdpInst;
 
-/* defined in include/freerdp/settings.h */
-struct rdp_settings;
-typedef struct rdp_settings rdpSettings;
-
-#endif
+#endif /* __RDP_TYPES_H */

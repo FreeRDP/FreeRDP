@@ -20,12 +20,15 @@
 #ifndef __TRANSPORT_H
 #define __TRANSPORT_H
 
+typedef struct rdp_transport rdpTransport;
+
 #include "tcp.h"
 #include "tls.h"
+#include "credssp.h"
 
 #include <time.h>
+#include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/types/ui.h>
 #include <freerdp/utils/stream.h>
 
 enum _TRANSPORT_STATE
@@ -39,38 +42,29 @@ enum _TRANSPORT_STATE
 };
 typedef enum _TRANSPORT_STATE TRANSPORT_STATE;
 
-typedef struct rdp_transport rdpTransport;
-typedef int (* PacketReceivedCallback) (rdpTransport * transport, STREAM * stream, void* extra);
+typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
 	TRANSPORT_STATE state;
-	struct rdp_tcp * tcp;
-	struct rdp_tls * tls;
+	struct rdp_tcp* tcp;
+	struct rdp_tls* tls;
+	struct rdp_settings* settings;
+	struct rdp_credssp* credssp;
 	struct timespec ts;
-	STREAM * recv_buffer;
-	PacketReceivedCallback recv_callback;
 	void* recv_extra;
-	struct rdp_settings * settings;
+	STREAM* recv_buffer;
+	TransportRecv recv_callback;
 };
 
-rdpTransport *
-transport_new(rdpSettings * settings);
-void
-transport_free(rdpTransport * transport);
-boolean
-transport_connect(rdpTransport * transport, const char * server, int port);
-boolean
-transport_disconnect(rdpTransport * transport);
-boolean
-transport_connect_rdp(rdpTransport * transport);
-boolean
-transport_connect_tls(rdpTransport * transport);
-boolean
-transport_connect_nla(rdpTransport * transport);
-int
-transport_send(rdpTransport * transport, STREAM * stream);
-int
-transport_check_fds(rdpTransport * transport);
+rdpTransport* transport_new(rdpSettings* settings);
+void transport_free(rdpTransport* transport);
+boolean transport_connect(rdpTransport* transport, const char* server, int port);
+boolean transport_disconnect(rdpTransport* transport);
+boolean transport_connect_rdp(rdpTransport* transport);
+boolean transport_connect_tls(rdpTransport* transport);
+boolean transport_connect_nla(rdpTransport* transport);
+int transport_send(rdpTransport* transport, STREAM* stream);
+int transport_check_fds(rdpTransport* transport);
 
 #endif

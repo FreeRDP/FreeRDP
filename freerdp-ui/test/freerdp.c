@@ -24,19 +24,24 @@
 #include "nego.h"
 #include "transport.h"
 
+#include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
-rdpNego * nego;
-rdpTransport * transport;
+rdpNego* nego;
+rdpSettings* settings;
+rdpTransport* transport;
 
 int main(int argc, char* argv[])
 {
 	char* username;
 	char* hostname;
-	transport = transport_new((rdpSettings*) NULL);
+	char* password;
+
+	settings = settings_new();
+	transport = transport_new(settings);
 	nego = nego_new(transport);
 
-	if (argc < 3)
+	if (argc < 4)
 	{
 		printf("Usage: freerdp-test <hostname> <username>\n");
 		return 0;
@@ -50,15 +55,22 @@ int main(int argc, char* argv[])
 	memcpy(username, argv[2], strlen(argv[2]));
 	username[strlen(argv[2])] = '\0';
 
-	printf("hostname: %s username: %s\n", hostname, username);
+	password = (char*) xmalloc(strlen(argv[3]));
+	memcpy(password, argv[3], strlen(argv[3]));
+	password[strlen(argv[3])] = '\0';
+
+	printf("hostname: %s username: %s password: %s\n",
+			hostname, username, password);
+
+	settings->password = password;
 
 	nego_init(nego);
 	nego_set_target(nego, hostname, 3389);
-	nego_set_protocols(nego, 1, 1, 0);
+	nego_set_protocols(nego, 1, 1, 1);
 	nego_set_cookie(nego, username);
 	nego_connect(nego);
 
-	transport_connect_tls(transport);
+	transport_connect_nla(transport);
 
 	return 0;
 }

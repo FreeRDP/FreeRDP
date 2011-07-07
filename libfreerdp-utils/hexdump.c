@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <freerdp/types/base.h>
+#include <freerdp/types.h>
 
 #include <freerdp/utils/hexdump.h>
 

@@ -20,6 +20,8 @@
 #ifndef __CREDSSP_H
 #define __CREDSSP_H
 
+typedef struct rdp_credssp rdpCredssp;
+
 #include "tls.h"
 #include "crypto.h"
 #include "transport.h"
@@ -41,9 +43,8 @@ struct rdp_credssp
 	BLOB ts_credentials;
 	CryptoRc4 rc4_seal_state;
 	struct _NTLMSSP *ntlmssp;
-	struct rdp_transport * transport;
+	struct rdp_transport* transport;
 };
-typedef struct rdp_credssp rdpCredssp;
 
 int credssp_authenticate(rdpCredssp* credssp);
 
