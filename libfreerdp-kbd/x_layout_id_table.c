@@ -1076,7 +1076,7 @@ SunOSKeyboard SunOSKeyboards[] =
 };
 
 unsigned int
-find_keyboaFRDP_layout_in_xorg_rules(char* layout, char* variant)
+find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
 	int i;
 	int j;
@@ -1108,7 +1108,7 @@ find_keyboaFRDP_layout_in_xorg_rules(char* layout, char* variant)
 #if defined(sun)
 
 unsigned int
-detect_keyboaFRDP_type_and_layout_sunos(char* xkbfile, int length)
+detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
 {
 	FILE* kbd;
 
