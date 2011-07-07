@@ -638,7 +638,7 @@ void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 	 */
 
 	p = s->p;
-	out_uint32_be(s, flags);
+	stream_write_uint32_be(s, flags);
 
 	tmp = p[0];
 	p[0] = p[3];

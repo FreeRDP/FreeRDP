@@ -24,6 +24,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "crypto.h"
+
 #include <freerdp/types/base.h>
 #include <freerdp/utils/stream.h>
 
@@ -49,6 +51,8 @@ int
 tls_read(rdpTls * tls, char* data, int length);
 int
 tls_write(rdpTls * tls, char* data, int length);
+CryptoCert
+tls_get_certificate(rdpTls * tls);
 boolean
 tls_print_error(char *func, SSL *connection, int value);
 

@@ -154,6 +154,28 @@ tls_print_error(char *func, SSL *connection, int value)
 	}
 }
 
+CryptoCert
+tls_get_certificate(rdpTls * tls)
+{
+	CryptoCert cert;
+	X509 * server_cert;
+
+	server_cert = SSL_get_peer_certificate(tls->ssl);
+
+	if (!server_cert)
+	{
+		printf("ssl_verify: failed to get the server SSL certificate\n");
+		cert = NULL;
+	}
+	else
+	{
+		cert = xmalloc(sizeof(*cert));
+		cert->px509 = server_cert;
+	}
+
+	return cert;
+}
+
 rdpTls*
 tls_new()
 {
