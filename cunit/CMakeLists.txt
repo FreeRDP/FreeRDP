@@ -29,6 +29,8 @@ add_executable(test_freerdp
 	test_ber.h
 	test_gcc.c
 	test_gcc.h
+	test_mcs.c
+	test_mcs.h
 	test_color.c
 	test_color.h
 	test_libgdi.c

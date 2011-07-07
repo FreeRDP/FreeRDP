@@ -81,14 +81,14 @@ static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
 
 static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParameters)
 {
-	ber_write_integer(domainParameters->maxChannelIds);
-	ber_write_integer(domainParameters->maxUserIds);
-	ber_write_integer(domainParameters->maxTokenIds);
-	ber_write_integer(domainParameters->numPriorities);
-	ber_write_integer(domainParameters->minThroughput);
-	ber_write_integer(domainParameters->maxHeight);
-	ber_write_integer(domainParameters->maxMCSPDUsize);
-	ber_write_integer(domainParameters->protocolVersion);
+	ber_write_integer(s, domainParameters->maxChannelIds);
+	ber_write_integer(s, domainParameters->maxUserIds);
+	ber_write_integer(s, domainParameters->maxTokenIds);
+	ber_write_integer(s, domainParameters->numPriorities);
+	ber_write_integer(s, domainParameters->minThroughput);
+	ber_write_integer(s, domainParameters->maxHeight);
+	ber_write_integer(s, domainParameters->maxMCSPDUsize);
+	ber_write_integer(s, domainParameters->protocolVersion);
 }
 
 /**

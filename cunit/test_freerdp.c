@@ -22,6 +22,7 @@
 #include "test_per.h"
 #include "test_ber.h"
 #include "test_gcc.h"
+#include "test_mcs.h"
 #include "test_color.h"
 #include "test_libgdi.h"
 #include "test_list.h"
@@ -109,6 +110,8 @@ int main(int argc, char* argv[])
 	{
 		add_per_suite();
 		add_ber_suite();
+		add_gcc_suite();
+		add_mcs_suite();
 		add_color_suite();
 		add_libgdi_suite();
 		add_list_suite();
@@ -150,6 +153,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("gcc", argv[*pindex]) == 0)
 			{
 				add_gcc_suite();
+			}
+			else if (strcmp("mcs", argv[*pindex]) == 0)
+			{
+				add_mcs_suite();
 			}
 
 			*pindex = *pindex + 1;

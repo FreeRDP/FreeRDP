@@ -45,10 +45,9 @@ void ber_write_length(STREAM* s, int length)
  * @param length length
  */
 
-void ber_write_universal_tag(STREAM* s, uint8 tag, int length)
+void ber_write_universal_tag(STREAM* s, uint8 tag)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_PRIMITIVE) | (BER_TAG_MASK & tag));
-	ber_write_length(s, length);
 }
 
 /**

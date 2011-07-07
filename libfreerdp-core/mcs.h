@@ -23,6 +23,7 @@
 #include "ber.h"
 #include "transport.h"
 
+#include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct
@@ -32,7 +33,7 @@ typedef struct
 	uint32 maxTokenIds;
 	uint32 numPriorities;
 	uint32 minThroughput;
-	uint32 maxHeight
+	uint32 maxHeight;
 	uint32 maxMCSPDUsize;
 	uint32 protocolVersion;
 } DOMAIN_PARAMETERS;
@@ -49,7 +50,7 @@ typedef struct rdp_mcs rdpMcs;
 #define MCS_TYPE_CONNECT_INITIAL		0x65
 #define MCS_TYPE_CONNECT_RESPONSE		0x66
 
-void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, int length);
+void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
