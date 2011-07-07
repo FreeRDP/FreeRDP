@@ -22,8 +22,7 @@
 
 #include "tls.h"
 
-boolean
-tls_connect(rdpTls * tls)
+boolean tls_connect(rdpTls* tls)
 {
 	int connection_status;
 
@@ -59,14 +58,12 @@ tls_connect(rdpTls * tls)
 	return True;
 }
 
-boolean
-tls_disconnect(rdpTls * tls)
+boolean tls_disconnect(rdpTls* tls)
 {
 	return True;
 }
 
-int
-tls_read(rdpTls * tls, char* data, int length)
+int tls_read(rdpTls* tls, char* data, int length)
 {
 	int status;
 
@@ -94,11 +91,10 @@ tls_read(rdpTls * tls, char* data, int length)
 	return 0;
 }
 
-int
-tls_write(rdpTls * tls, char* data, int length)
+int tls_write(rdpTls* tls, char* data, int length)
 {
-	int write_status;
 	int bytes = 0;
+	int write_status;
 
 	while (bytes < length)
 	{
@@ -123,8 +119,7 @@ tls_write(rdpTls * tls, char* data, int length)
 	return bytes;
 }
 
-boolean
-tls_print_error(char *func, SSL *connection, int value)
+boolean tls_print_error(char *func, SSL *connection, int value)
 {
 	switch (SSL_get_error(connection, value))
 	{
@@ -154,11 +149,10 @@ tls_print_error(char *func, SSL *connection, int value)
 	}
 }
 
-CryptoCert
-tls_get_certificate(rdpTls * tls)
+CryptoCert tls_get_certificate(rdpTls * tls)
 {
 	CryptoCert cert;
-	X509 * server_cert;
+	X509* server_cert;
 
 	server_cert = SSL_get_peer_certificate(tls->ssl);
 
@@ -176,10 +170,11 @@ tls_get_certificate(rdpTls * tls)
 	return cert;
 }
 
-rdpTls*
-tls_new()
+rdpTls* tls_new()
 {
-	rdpTls *tls = (rdpTls*) xzalloc(sizeof(rdpTls));
+	rdpTls* tls;
+
+	tls = (rdpTls*) xzalloc(sizeof(rdpTls));
 
 	if (tls != NULL)
 	{
@@ -216,8 +211,7 @@ tls_new()
 	return tls;
 }
 
-void
-tls_free(rdpTls* tls)
+void tls_free(rdpTls* tls)
 {
 	if (tls != NULL)
 	{

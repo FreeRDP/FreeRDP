@@ -62,7 +62,10 @@ int main(int argc, char* argv[])
 	printf("hostname: %s username: %s password: %s\n",
 			hostname, username, password);
 
+	settings->hostname = hostname;
+	settings->username = username;
 	settings->password = password;
+	settings->domain = NULL;
 
 	nego_init(nego);
 	nego_set_target(nego, hostname, 3389);

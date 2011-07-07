@@ -30,35 +30,27 @@
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_tls rdpTls;
-typedef boolean (*TlsConnect) (rdpTls * tls);
-typedef boolean (*TlsDisconnect) (rdpTls * tls);
+typedef boolean (*TlsConnect) (rdpTls* tls);
+typedef boolean (*TlsDisconnect) (rdpTls* tls);
 
 struct rdp_tls
 {
-	SSL * ssl;
+	SSL* ssl;
 	int sockfd;
-	SSL_CTX * ctx;
+	SSL_CTX* ctx;
 	struct timespec ts;
 	TlsConnect connect;
 	TlsDisconnect disconnect;
 };
 
-boolean
-tls_connect(rdpTls * tls);
-boolean
-tls_disconnect(rdpTls * tls);
-int
-tls_read(rdpTls * tls, char* data, int length);
-int
-tls_write(rdpTls * tls, char* data, int length);
-CryptoCert
-tls_get_certificate(rdpTls * tls);
-boolean
-tls_print_error(char *func, SSL *connection, int value);
+boolean tls_connect(rdpTls* tls);
+boolean tls_disconnect(rdpTls* tls);
+int tls_read(rdpTls* tls, char* data, int length);
+int tls_write(rdpTls* tls, char* data, int length);
+CryptoCert tls_get_certificate(rdpTls* tls);
+boolean tls_print_error(char* func, SSL* connection, int value);
 
-rdpTls*
-tls_new();
-void
-tls_free(rdpTls* tls);
+rdpTls* tls_new();
+void tls_free(rdpTls* tls);
 
 #endif /* __TLS_H */

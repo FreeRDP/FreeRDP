@@ -142,10 +142,9 @@ stream_extend(STREAM * stream);
 	*_s->p++ = ((_v) >> 8) & 0xFF; \
 	*_s->p++ = (_v) & 0xFF; } while (0)
 #define stream_write_uint32_be(_s, _v) do { \
-	*_s->p++ = ((_v) >> 8) & 0xFF; \
-	*_s->p++ = (_v) & 0xFF; \
-	*_s->p++ = ((_v) >> 24) & 0xFF; \
-	*_s->p++ = ((_v) >> 16) & 0xFF; } while (0)
+	stream_write_uint16_be(_s, ((_v) >> 16 & 0xFFFF)); \
+	stream_write_uint16_be(_s, ((_v) & 0xFFFF)); \
+	} while (0)
 
 #define stream_copy(_dst, _src, _n) do { \
 	memcpy(_dst->p, _src->p, _n); \

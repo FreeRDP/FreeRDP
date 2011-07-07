@@ -66,16 +66,15 @@ struct rdp_settings
 	int num_monitors;
 	struct rdp_monitor monitors[16];
 
-	char hostname[16];
-	char server[64];
-	char domain[16];
+	char* hostname;
+	char* username;
 	char* password;
+	char* domain;
 
 	char shell[256];
 	char directory[256];
-	char username[256];
-	int tcp_port_rdp;
 	int performance_flags;
+	int tcp_port_rdp;
 
 	int encryption;
 	int tls_security;
