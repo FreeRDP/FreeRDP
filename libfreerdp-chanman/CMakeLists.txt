@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-utils cmake build script
+# libfreerdp-chanman cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,23 +17,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_UTILS_SRCS
-	blob.c
-	hexdump.c
-	load_plugin.c
-	memory.c
-	mutex.c
-	semaphore.c
-	stream.c
-	unicode.c
-	wait_obj.c)
+set(FREERDP_CHANMAN_SRCS
+	libchanman.c
+	libchanman.h)
 
-add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
+add_library(freerdp-chanman SHARED ${FREERDP_CHANMAN_SRCS})
 
-add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
+set_target_properties(freerdp-chanman PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
-set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
+install(TARGETS freerdp-chanman DESTINATION lib)
 
-target_link_libraries(freerdp-utils pthread)
-
-install(TARGETS freerdp-utils DESTINATION lib)

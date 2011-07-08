@@ -1,8 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * FreeRDP: A Remote Desktop Protocol client.
+ * Virtual Channel Manager
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2009-2011 Jay Sorg
+ * Copyright 2010-2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +18,15 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef __LIBCHANMAN_H
+#define __LIBCHANMAN_H
 
-int init_list_suite(void);
-int clean_list_suite(void);
-int add_list_suite(void);
+#include <freerdp/utils/debug.h>
 
-void test_mutex(void);
-void test_semaphore(void);
-void test_load_plugin(void);
-void test_wait_obj(void);
+#ifdef WITH_DEBUG_CHANMAN
+#define DEBUG_CHANMAN(fmt, ...) DEBUG_CLASS(CHANMAN, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_CHANMAN(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
+#endif /* __LIBCHANMAN_H */

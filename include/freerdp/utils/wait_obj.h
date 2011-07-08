@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * FreeRDP: A Remote Desktop Protocol client.
+ * Virtual Channel Manager
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2009-2011 Jay Sorg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef __WAIT_OBJ_UTILS
+#define __WAIT_OBJ_UTILS
 
-int init_list_suite(void);
-int clean_list_suite(void);
-int add_list_suite(void);
+struct wait_obj* wait_obj_new(void);
+void wait_obj_free(struct wait_obj* obj);
+int wait_obj_is_set(struct wait_obj* obj);
+void wait_obj_set(struct wait_obj* obj);
+void wait_obj_clear(struct wait_obj* obj);
+int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout);
+void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
 
-void test_mutex(void);
-void test_semaphore(void);
-void test_load_plugin(void);
-void test_wait_obj(void);
+#endif

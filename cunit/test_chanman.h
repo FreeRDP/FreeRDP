@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * Channel Manager Unit Tests
  *
  * Copyright 2011 Vic Lee
  *
@@ -19,11 +19,8 @@
 
 #include "test_freerdp.h"
 
-int init_list_suite(void);
-int clean_list_suite(void);
-int add_list_suite(void);
+int init_chanman_suite(void);
+int clean_chanman_suite(void);
+int add_chanman_suite(void);
 
-void test_mutex(void);
-void test_semaphore(void);
-void test_load_plugin(void);
-void test_wait_obj(void);
+void test_chanman(void);
