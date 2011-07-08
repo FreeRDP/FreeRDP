@@ -3,9 +3,11 @@
 #cmakedefine HAVE_SYS_SOCKET_H
 #cmakedefine HAVE_NETDB_H
 #cmakedefine HAVE_FCNTL_H
+#cmakedefine HAVE_UNISTD_H
 
 /* Endian */
 #cmakedefine BIG_ENDIAN
 
 /* Options */
 #cmakedefine WITH_DEBUG_TRANSPORT
+#cmakedefine WITH_DEBUG_CHANMAN

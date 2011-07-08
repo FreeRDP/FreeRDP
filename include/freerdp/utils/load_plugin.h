@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * Plugin Loading Utils
  *
  * Copyright 2011 Vic Lee
  *
@@ -17,13 +17,9 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef __LOAD_PLUGIN_UTILS_H
+#define __LOAD_PLUGIN_UTILS_H
 
-int init_list_suite(void);
-int clean_list_suite(void);
-int add_list_suite(void);
+void* freerdp_load_plugin(const char* name, const char* entry_name);
 
-void test_mutex(void);
-void test_semaphore(void);
-void test_load_plugin(void);
-void test_wait_obj(void);
+#endif /* __LOAD_PLUGIN_UTILS_H */

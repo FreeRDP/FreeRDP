@@ -49,12 +49,16 @@ check_include_files(sys/param.h HAVE_SYS_PARAM_H)
 check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
 check_include_files(netdb.h HAVE_NETDB_H)
 check_include_files(fcntl.h HAVE_FCNTL_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
 
 # Endian
 test_big_endian(BIG_ENDIAN)
 
 # Path to put keymaps
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
+
+# Path to put plugins
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/lib/freerdp")
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
@@ -81,7 +85,7 @@ add_subdirectory(libfreerdp-asn1)
 add_subdirectory(libfreerdp-utils)
 add_subdirectory(libfreerdp-kbd)
 add_subdirectory(libfreerdp-gdi)
-
+add_subdirectory(libfreerdp-chanman)
 add_subdirectory(libfreerdp-core)
 
 add_subdirectory(freerdp-ui)
