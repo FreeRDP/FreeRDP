@@ -27,6 +27,7 @@
 #include "test_libgdi.h"
 #include "test_list.h"
 #include "test_stream.h"
+#include "test_utils.h"
 #include "test_transport.h"
 #include "test_freerdp.h"
 
@@ -116,6 +117,7 @@ int main(int argc, char* argv[])
 		add_libgdi_suite();
 		add_list_suite();
 		add_stream_suite();
+		add_utils_suite();
 		add_transport_suite();
 	}
 	else
@@ -137,6 +139,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("stream", argv[*pindex]) == 0)
 			{
 				add_stream_suite();
+			}
+			else if (strcmp("utils", argv[*pindex]) == 0)
+			{
+				add_utils_suite();
 			}
 			else if (strcmp("transport", argv[*pindex]) == 0)
 			{
