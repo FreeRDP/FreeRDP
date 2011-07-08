@@ -37,9 +37,9 @@ rdpSettings* settings_new()
 		settings->tls_security = 1;
 		settings->rdp_security = 1;
 		settings->client_build = 2600;
-		settings->kbd_type = 4;
+		settings->kbd_type = 0;
 		settings->kbd_subtype = 0;
-		settings->kbd_fn_keys = 12;
+		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0x409;
 		settings->encryption = 1;
 
@@ -49,7 +49,6 @@ rdpSettings* settings_new()
 				PERF_DISABLE_WALLPAPER;
 
 		settings->uniconv = freerdp_uniconv_new();
-		strcpy(settings->client_product_id, "69712-783-0357974-42714");
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
 	}
 

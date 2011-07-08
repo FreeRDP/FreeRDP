@@ -202,7 +202,12 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	stream_write_uint32(s, 0); /* serialNumber (should be initialized to 0) */
 
 	highColorDepth = MIN(settings->color_depth, 24);
-	supportedColorDepths = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
+
+	supportedColorDepths =
+			RNS_UD_32BPP_SUPPORT |
+			RNS_UD_24BPP_SUPPORT |
+			RNS_UD_16BPP_SUPPORT |
+			RNS_UD_15BPP_SUPPORT;
 
 	connectionType = 0;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
@@ -254,11 +259,7 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	encryptionMethods =
-			ENCRYPTION_40BIT_FLAG |
-			ENCRYPTION_56BIT_FLAG |
-			ENCRYPTION_128BIT_FLAG |
-			ENCRYPTION_FIPS_FLAG;
+	encryptionMethods = ENCRYPTION_40BIT_FLAG | ENCRYPTION_128BIT_FLAG;
 
 	if (settings->encryption > 0)
 	{

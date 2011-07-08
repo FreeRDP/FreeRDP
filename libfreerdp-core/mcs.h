@@ -28,14 +28,14 @@
 
 typedef struct
 {
-	uint32 maxChannelIds;
-	uint32 maxUserIds;
-	uint32 maxTokenIds;
-	uint32 numPriorities;
-	uint32 minThroughput;
-	uint32 maxHeight;
-	uint32 maxMCSPDUsize;
-	uint32 protocolVersion;
+	uint16 maxChannelIds;
+	uint16 maxUserIds;
+	uint16 maxTokenIds;
+	uint16 numPriorities;
+	uint16 minThroughput;
+	uint16 maxHeight;
+	uint16 maxMCSPDUsize;
+	uint16 protocolVersion;
 } DOMAIN_PARAMETERS;
 
 struct rdp_mcs
@@ -53,6 +53,8 @@ typedef struct rdp_mcs rdpMcs;
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
 void mcs_send_connect_initial(rdpMcs* mcs);
+
+int mcs_recv(rdpMcs* mcs);
 
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
