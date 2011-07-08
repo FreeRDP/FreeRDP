@@ -21,6 +21,7 @@ set(FREERDP_UTILS_SRCS
 	blob.c
 	hexdump.c
 	memory.c
+	mutex.c
 	semaphore.c
 	stream.c
 	unicode.c)
