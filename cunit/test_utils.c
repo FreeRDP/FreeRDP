@@ -23,6 +23,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/semaphore.h>
+#include <freerdp/utils/load_plugin.h>
 
 #include "test_utils.h"
 
@@ -42,6 +43,7 @@ int add_utils_suite(void)
 
 	add_test_function(mutex);
 	add_test_function(semaphore);
+	add_test_function(load_plugin);
 
 	return 0;
 }
@@ -64,4 +66,12 @@ void test_semaphore(void)
 	freerdp_sem_wait(sem);
 	freerdp_sem_signal(sem);
 	freerdp_sem_free(sem);
+}
+
+void test_load_plugin(void)
+{
+	void* entry;
+
+	entry = freerdp_load_plugin("cliprdr", "VirtualChannelEntry");
+	CU_ASSERT(entry != NULL);
 }
