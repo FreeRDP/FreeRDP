@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * Mutex Utils
  *
  * Copyright 2011 Vic Lee
  *
@@ -17,11 +17,14 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef __MUTEX_UTILS_H
+#define __MUTEX_UTILS_H
 
-int init_list_suite(void);
-int clean_list_suite(void);
-int add_list_suite(void);
+typedef void* freerdp_mutex;
 
-void test_mutex(void);
-void test_semaphore(void);
+freerdp_mutex freerdp_mutex_new(void);
+void freerdp_mutex_free(freerdp_mutex mutex);
+void freerdp_mutex_lock(freerdp_mutex mutex);
+void freerdp_mutex_unlock(freerdp_mutex mutex);
+
+#endif /* __MUTEX_UTILS_H */
