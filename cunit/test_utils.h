@@ -23,4 +23,5 @@ int init_list_suite(void);
 int clean_list_suite(void);
 int add_list_suite(void);
 
+void test_mutex(void);
 void test_semaphore(void);

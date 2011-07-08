@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/semaphore.h>
 
 #include "test_utils.h"
@@ -39,9 +40,20 @@ int add_utils_suite(void)
 {
 	add_test_suite(utils);
 
+	add_test_function(mutex);
 	add_test_function(semaphore);
 
 	return 0;
+}
+
+void test_mutex(void)
+{
+	freerdp_mutex mutex;
+
+	mutex = freerdp_mutex_new();
+	freerdp_mutex_lock(mutex);
+	freerdp_mutex_unlock(mutex);
+	freerdp_mutex_free(mutex);
 }
 
 void test_semaphore(void)
