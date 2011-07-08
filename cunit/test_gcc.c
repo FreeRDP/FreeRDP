@@ -40,6 +40,10 @@ int add_gcc_suite(void)
 	add_test_suite(gcc);
 
 	add_test_function(gcc_write_create_conference_request);
+	add_test_function(gcc_write_client_core_data);
+	add_test_function(gcc_write_client_security_data);
+	add_test_function(gcc_write_client_cluster_data);
+	add_test_function(gcc_write_client_network_data);
 
 	return 0;
 }
@@ -99,4 +103,104 @@ void test_gcc_write_create_conference_request(void)
 
 	gcc_write_create_conference_request(s, &user_data);
 	ASSERT_STREAM(s, (uint8*) gcc_create_conference_request_expected, sizeof(gcc_create_conference_request_expected));
+}
+
+uint8 gcc_client_core_data_expected[216] =
+	"\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
+	"\x09\x04\x00\x00\xCE\x0E\x00\x00\x45\x00\x4c\x00\x54\x00\x4f\x00"
+	"\x4e\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x32\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"
+	"\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x01\xCA\x01\x00\x00\x00\x00\x00\x18\x00\x07\x00"
+	"\x01\x00\x36\x00\x39\x00\x37\x00\x31\x00\x32\x00\x2d\x00\x37\x00"
+	"\x38\x00\x33\x00\x2d\x00\x30\x00\x33\x00\x35\x00\x37\x00\x39\x00"
+	"\x37\x00\x34\x00\x2d\x00\x34\x00\x32\x00\x37\x00\x31\x00\x34\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00";
+
+void test_gcc_write_client_core_data(void)
+{
+	STREAM* s;
+	rdpSettings* settings;
+
+	s = stream_new(512);
+	settings = settings_new();
+
+	settings->width = 1280;
+	settings->height = 1024;
+	settings->rdp_version = 5;
+	settings->color_depth = 24;
+	settings->kbd_layout = 0x409;
+	settings->client_build = 3790;
+	strcpy(settings->client_hostname, "ELTONS-DEV2");
+	strcpy(settings->client_product_id, "69712-783-0357974-42714");
+
+	gcc_write_client_core_data(s, settings);
+
+	ASSERT_STREAM(s, (uint8*) gcc_client_core_data_expected, sizeof(gcc_client_core_data_expected));
+}
+
+uint8 gcc_client_security_data_expected[12] =
+		"\x02\xC0\x0C\x00\x1B\x00\x00\x00\x00\x00\x00\x00";
+
+void test_gcc_write_client_security_data(void)
+{
+	STREAM* s;
+	rdpSettings* settings;
+
+	s = stream_new(12);
+	settings = settings_new();
+
+	gcc_write_client_security_data(s, settings);
+
+	ASSERT_STREAM(s, (uint8*) gcc_client_security_data_expected, sizeof(gcc_client_security_data_expected));
+}
+
+uint8 gcc_client_cluster_data_expected[12] =
+		"\x04\xC0\x0C\x00\x0D\x00\x00\x00\x00\x00\x00\x00";
+
+void test_gcc_write_client_cluster_data(void)
+{
+	STREAM* s;
+	rdpSettings* settings;
+
+	s = stream_new(12);
+	settings = settings_new();
+
+	gcc_write_client_cluster_data(s, settings);
+
+	ASSERT_STREAM(s, (uint8*) gcc_client_cluster_data_expected, sizeof(gcc_client_cluster_data_expected));
+}
+
+uint8 gcc_client_network_data_expected[44] =
+		"\x03\xC0\x2C\x00\x03\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00"
+		"\x00\x00\x80\x80\x63\x6c\x69\x70\x72\x64\x72\x00\x00\x00\xA0\xC0"
+		"\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
+
+void test_gcc_write_client_network_data(void)
+{
+	STREAM* s;
+	rdpSettings* settings;
+
+	s = stream_new(44);
+	settings = settings_new();
+
+	settings->num_channels = 3;
+	memset(settings->channels, 0, sizeof(struct rdp_chan) * settings->num_channels);
+
+	strcpy(settings->channels[0].name, "rdpdr");
+	settings->channels[0].options = 0x80800000;
+
+	strcpy(settings->channels[1].name, "cliprdr");
+	settings->channels[1].options = 0xc0A00000;
+
+	strcpy(settings->channels[2].name, "rdpsnd");
+	settings->channels[2].options = 0xc0000000;
+
+	gcc_write_client_network_data(s, settings);
+
+	ASSERT_STREAM(s, (uint8*) gcc_client_network_data_expected, sizeof(gcc_client_network_data_expected));
 }

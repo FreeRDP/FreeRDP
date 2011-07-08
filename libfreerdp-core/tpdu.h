@@ -46,6 +46,6 @@ tpdu_read_connection_confirm(STREAM* s);
 void
 tpdu_write_disconnect_request(STREAM* s, uint16 length);
 void
-tpdu_write_data(STREAM* s, uint16 length);
+tpdu_write_data(STREAM* s);
 
 #endif /* __TPDU_H */

@@ -159,11 +159,10 @@ tpdu_write_disconnect_request(STREAM* s, uint16 length)
 /**
  * Write Data TPDU.
  * @param s stream
- * @param length TPDU length
  */
 
 void
-tpdu_write_data(STREAM* s, uint16 length)
+tpdu_write_data(STREAM* s)
 {
-	tpdu_write_header(s, length, X224_TPDU_DATA);
+	tpdu_write_header(s, 2, X224_TPDU_DATA);
 }

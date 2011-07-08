@@ -65,14 +65,14 @@ void test_ber_write_length(void)
 }
 
 /* BOOLEAN, length 1, without value */
-uint8 ber_universal_tag_expected[2] = "\x01\x01";
+uint8 ber_universal_tag_expected[1] = "\x01";
 
 void test_ber_write_universal_tag(void)
 {
 	STREAM* s;
 
 	s = stream_new(sizeof(ber_universal_tag_expected));
-	ber_write_universal_tag(s, 1, 1);
+	ber_write_universal_tag(s, 1);
 
 	ASSERT_STREAM(s, (uint8*) ber_universal_tag_expected, sizeof(ber_universal_tag_expected));
 

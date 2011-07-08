@@ -24,3 +24,7 @@ int clean_gcc_suite(void);
 int add_gcc_suite(void);
 
 void test_gcc_write_create_conference_request(void);
+void test_gcc_write_client_core_data(void);
+void test_gcc_write_client_security_data(void);
+void test_gcc_write_client_cluster_data(void);
+void test_gcc_write_client_network_data(void);
