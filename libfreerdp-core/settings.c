@@ -48,6 +48,10 @@ rdpSettings* settings_new()
 				PERF_DISABLE_MENUANIMATIONS |
 				PERF_DISABLE_WALLPAPER;
 
+		settings->encryption_methods =
+				ENCRYPTION_40BIT_FLAG |
+				ENCRYPTION_128BIT_FLAG;
+
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
 	}

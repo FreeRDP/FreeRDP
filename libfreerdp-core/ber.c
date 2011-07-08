@@ -119,6 +119,20 @@ void ber_write_boolean(STREAM* s, boolean value)
 void ber_write_integer(STREAM* s, uint32 value)
 {
 	ber_write_universal_tag(s, BER_TAG_INTEGER);
-	ber_write_length(s, 2);
-	stream_write_uint16_be(s, value);
+
+	if (value <= 0xFF)
+	{
+		ber_write_length(s, 1);
+		stream_write_uint8(s, value);
+	}
+	else if (value <= 0xFFFF)
+	{
+		ber_write_length(s, 2);
+		stream_write_uint16_be(s, value);
+	}
+	else if (value <= 0xFFFFFFFF)
+	{
+		ber_write_length(s, 4);
+		stream_write_uint32_be(s, value);
+	}
 }

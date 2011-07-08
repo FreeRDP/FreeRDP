@@ -255,22 +255,18 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 
 void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 {
-	uint16 encryptionMethods;
-
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
-
-	encryptionMethods = ENCRYPTION_40BIT_FLAG | ENCRYPTION_128BIT_FLAG;
 
 	if (settings->encryption > 0)
 	{
-		stream_write_uint32(s, encryptionMethods); /* encryptionMethods */
+		stream_write_uint32(s, settings->encryption_methods); /* encryptionMethods */
 		stream_write_uint32(s, 0); /* extEncryptionMethods */
 	}
 	else
 	{
 		/* French locale, disable encryption */
 		stream_write_uint32(s, 0); /* encryptionMethods */
-		stream_write_uint32(s, encryptionMethods); /* extEncryptionMethods */
+		stream_write_uint32(s, settings->encryption_methods); /* extEncryptionMethods */
 	}
 }
 
