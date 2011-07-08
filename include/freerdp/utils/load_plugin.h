@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * Plugin Loading Utils
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#ifndef __LOAD_PLUGIN_UTILS_H
+#define __LOAD_PLUGIN_UTILS_H
 
-typedef void* freerdp_sem;
+void* freerdp_load_plugin(const char* name, const char* entry_name);
 
-freerdp_sem freerdp_sem_new(int iv);
-void freerdp_sem_free(freerdp_sem sem);
-void freerdp_sem_signal(freerdp_sem sem);
-void freerdp_sem_wait(freerdp_sem sem);
-
-#endif /* __SEMAPHORE_UTILS_H */
+#endif /* __LOAD_PLUGIN_UTILS_H */

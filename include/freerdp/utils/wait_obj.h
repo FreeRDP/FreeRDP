@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * FreeRDP: A Remote Desktop Protocol client.
+ * Virtual Channel Manager
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2011 Jay Sorg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#ifndef __WAIT_OBJ_UTILS
+#define __WAIT_OBJ_UTILS
 
-typedef void* freerdp_sem;
+struct wait_obj* wait_obj_new(void);
+void wait_obj_free(struct wait_obj* obj);
+int wait_obj_is_set(struct wait_obj* obj);
+void wait_obj_set(struct wait_obj* obj);
+void wait_obj_clear(struct wait_obj* obj);
+int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout);
+void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
 
-freerdp_sem freerdp_sem_new(int iv);
-void freerdp_sem_free(freerdp_sem sem);
-void freerdp_sem_signal(freerdp_sem sem);
-void freerdp_sem_wait(freerdp_sem sem);
-
-#endif /* __SEMAPHORE_UTILS_H */
+#endif

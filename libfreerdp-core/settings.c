@@ -29,15 +29,28 @@ rdpSettings* settings_new()
 
 	if (settings != NULL)
 	{
-		/* assign default settings */
-
 		settings->width = 1024;
 		settings->height = 768;
+		settings->rdp_version = 7;
 		settings->color_depth = 16;
 		settings->nla_security = 1;
 		settings->tls_security = 1;
 		settings->rdp_security = 1;
+		settings->client_build = 2600;
+		settings->kbd_type = 4;
+		settings->kbd_subtype = 0;
+		settings->kbd_fn_keys = 12;
+		settings->kbd_layout = 0x409;
 		settings->encryption = 1;
+
+		settings->performance_flags =
+				PERF_DISABLE_FULLWINDOWDRAG |
+				PERF_DISABLE_MENUANIMATIONS |
+				PERF_DISABLE_WALLPAPER;
+
+		settings->uniconv = freerdp_uniconv_new();
+		strcpy(settings->client_product_id, "69712-783-0357974-42714");
+		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
 	}
 
 	return settings;
@@ -47,6 +60,7 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
+		freerdp_uniconv_free(settings->uniconv);
 		xfree(settings);
 	}
 }

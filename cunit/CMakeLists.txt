@@ -39,8 +39,12 @@ add_executable(test_freerdp
 	test_list.h
 	test_stream.c
 	test_stream.h
+	test_utils.c
+	test_utils.h
 	test_transport.c
 	test_transport.h
+	test_chanman.c
+	test_chanman.h
 	test_freerdp.c
 	test_freerdp.h)
 
@@ -50,4 +54,5 @@ target_link_libraries(test_freerdp freerdp-core)
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-asn1)
 target_link_libraries(test_freerdp freerdp-utils)
+target_link_libraries(test_freerdp freerdp-chanman)
 

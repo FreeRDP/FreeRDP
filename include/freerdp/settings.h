@@ -21,6 +21,17 @@
 #define __RDP_SETTINGS_H
 
 #include <freerdp/types.h>
+#include <freerdp/utils/unicode.h>
+
+#define PERF_FLAG_NONE                  0x00000000
+#define PERF_DISABLE_WALLPAPER          0x00000001
+#define PERF_DISABLE_FULLWINDOWDRAG     0x00000002
+#define PERF_DISABLE_MENUANIMATIONS     0x00000004
+#define PERF_DISABLE_THEMING            0x00000008
+#define PERF_DISABLE_CURSOR_SHADOW      0x00000020
+#define PERF_DISABLE_CURSORSETTINGS     0x00000040
+#define PERF_ENABLE_FONT_SMOOTHING      0x00000080
+#define PERF_ENABLE_DESKTOP_COMPOSITION 0x00000100
 
 struct rdp_chan
 {
@@ -55,16 +66,21 @@ struct rdp_settings
 	uint32 kbd_type;
 	uint32 kbd_subtype;
 	uint32 kbd_fn_keys;
+	uint32 client_build;
 	uint32 selected_protocol;
 
-	uint32 session_id;
 	int console_session;
+	uint32 redirected_session_id;
 
 	int num_channels;
 	struct rdp_chan channels[16];
 
 	int num_monitors;
 	struct rdp_monitor monitors[16];
+
+	UNICONV* uniconv;
+	char client_hostname[32];
+	char client_product_id[32];
 
 	char* hostname;
 	char* username;

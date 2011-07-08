@@ -157,14 +157,20 @@ void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
 void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 {
 	uint32 version;
+	uint8* clientName;
+	size_t clientNameLength;
+	uint8 connectionType;
 	uint16 highColorDepth;
 	uint16 supportedColorDepths;
 	uint16 earlyCapabilityFlags;
-	uint8 connectionType;
+	uint8* clientDigProductId;
+	size_t clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
 	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
+	clientName = freerdp_uniconv_out(settings->uniconv, settings->client_hostname, &clientNameLength);
+	clientDigProductId = freerdp_uniconv_out(settings->uniconv, settings->client_product_id, &clientDigProductIdLength);
 
 	stream_write_uint32(s, version); /* version */
 	stream_write_uint16(s, settings->width); /* desktopWidth */
@@ -172,9 +178,18 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* colorDepth, ignored because of postBeta2ColorDepth */
 	stream_write_uint16(s, RNS_UD_SAS_DEL);	/* SASSequence (Secure Access Sequence) */
 	stream_write_uint32(s, settings->kbd_layout); /* keyboardLayout */
-	stream_write_uint32(s, 2600); /* clientBuild */
+	stream_write_uint32(s, settings->client_build); /* clientBuild */
 
-	stream_write_zero(s, 32); /* clientName */
+	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
+	if (clientNameLength > 30)
+	{
+		clientNameLength = 30;
+		clientName[clientNameLength] = 0;
+		clientName[clientNameLength + 1] = 0;
+	}
+	stream_write(s, clientName, clientNameLength + 2);
+	stream_write_zero(s, 32 - clientNameLength - 2);
+	xfree(clientName);
 
 	stream_write_uint32(s, settings->kbd_type); /* keyboardType */
 	stream_write_uint32(s, settings->kbd_subtype); /* keyboardSubType */
@@ -184,13 +199,10 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 
 	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
 	stream_write_uint16(s, 1); /* clientProductID */
-	stream_write_uint16(s, 0); /* serialNumber (should be initialized to 0) */
+	stream_write_uint32(s, 0); /* serialNumber (should be initialized to 0) */
 
 	highColorDepth = MIN(settings->color_depth, 24);
-	supportedColorDepths = RNS_UD_32BPP_SUPPORT | RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
-
-	stream_write_uint16(s, highColorDepth); /* highColorDepth */
-	stream_write_uint16(s, supportedColorDepths); /* supportedColorDepths */
+	supportedColorDepths = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
 
 	connectionType = 0;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
@@ -202,10 +214,26 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	}
 
 	if (settings->color_depth == 32)
+	{
+		supportedColorDepths |= RNS_UD_32BPP_SUPPORT;
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
+	}
+
+	stream_write_uint16(s, highColorDepth); /* highColorDepth */
+	stream_write_uint16(s, supportedColorDepths); /* supportedColorDepths */
 
 	stream_write_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
-	stream_write_zero(s, 64); /* clientDigProductId (64 bytes) */
+
+	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 30 characters) */
+	if (clientDigProductIdLength > 62)
+	{
+		clientDigProductIdLength = 62;
+		clientDigProductId[clientDigProductIdLength] = 0;
+		clientDigProductId[clientDigProductIdLength + 1] = 0;
+	}
+	stream_write(s, clientDigProductId, clientDigProductIdLength + 2);
+	stream_write_zero(s, 64 - clientDigProductIdLength - 2);
+	xfree(clientDigProductId);
 
 	stream_write_uint8(s, connectionType); /* connectionType */
 	stream_write_uint8(s, 0); /* pad1octet */
@@ -226,9 +254,13 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	encryptionMethods = ENCRYPTION_40BIT_FLAG | ENCRYPTION_128BIT_FLAG;
+	encryptionMethods =
+			ENCRYPTION_40BIT_FLAG |
+			ENCRYPTION_56BIT_FLAG |
+			ENCRYPTION_128BIT_FLAG |
+			ENCRYPTION_FIPS_FLAG;
 
-	if (settings->encryption)
+	if (settings->encryption > 0)
 	{
 		stream_write_uint32(s, encryptionMethods); /* encryptionMethods */
 		stream_write_uint32(s, 0); /* extEncryptionMethods */
@@ -280,17 +312,16 @@ void gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
 {
 	uint32 flags;
-	uint32 redirectedSessionID;
 
 	gcc_write_user_data_header(s, CS_CLUSTER, 12);
 
-	flags = REDIRECTION_SUPPORTED | REDIRECTION_VERSION4;
+	flags = REDIRECTION_SUPPORTED | (REDIRECTION_VERSION4 << 2);
 
-	if (settings->console_session || settings->session_id)
+	if (settings->console_session || settings->redirected_session_id)
 		flags |= REDIRECTED_SESSIONID_FIELD_VALID;
 
 	stream_write_uint32(s, flags); /* flags */
-	stream_write_uint32(s, settings->session_id); /* redirectedSessionID */
+	stream_write_uint32(s, settings->redirected_session_id); /* redirectedSessionID */
 }
 
 /**

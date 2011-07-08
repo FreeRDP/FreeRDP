@@ -1,8 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * FreeRDP: A Remote Desktop Protocol client.
+ * Virtual Channel Manager
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2011 Jay Sorg
+ * Copyright 2010-2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +18,15 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#ifndef __LIBCHANMAN_H
+#define __LIBCHANMAN_H
 
-typedef void* freerdp_sem;
+#include <freerdp/utils/debug.h>
 
-freerdp_sem freerdp_sem_new(int iv);
-void freerdp_sem_free(freerdp_sem sem);
-void freerdp_sem_signal(freerdp_sem sem);
-void freerdp_sem_wait(freerdp_sem sem);
+#ifdef WITH_DEBUG_CHANMAN
+#define DEBUG_CHANMAN(fmt, ...) DEBUG_CLASS(CHANMAN, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_CHANMAN(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
-#endif /* __SEMAPHORE_UTILS_H */
+#endif /* __LIBCHANMAN_H */

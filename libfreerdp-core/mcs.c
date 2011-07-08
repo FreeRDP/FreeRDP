@@ -160,9 +160,9 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 
 	client_data = stream_new(512);
 	gcc_write_client_core_data(client_data, mcs->transport->settings);
+	gcc_write_client_cluster_data(client_data, mcs->transport->settings);
 	gcc_write_client_security_data(client_data, mcs->transport->settings);
 	gcc_write_client_network_data(client_data, mcs->transport->settings);
-	gcc_write_client_cluster_data(client_data, mcs->transport->settings);
 	gcc_write_client_monitor_data(client_data, mcs->transport->settings);
 
 	gcc_CCrq = stream_new(512);
@@ -175,11 +175,11 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 
 	mcs_write_connect_initial(s, mcs, gcc_CCrq);
 	stream_get_mark(s, em);
-	length = (em - bm) + 7;
+	length = (em - bm);
 	stream_set_mark(s, bm);
 
 	tpkt_write_header(s, length);
-	tpdu_write_connection_request(s, length - 5);
+	tpdu_write_data(s, length - 5);
 	stream_set_mark(s, em);
 
 	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
