@@ -20,6 +20,8 @@
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
    http://msdn.microsoft.com/en-us/library/cc240895%28v=prot.10%29.aspx
+   pseudo-code
+   http://msdn.microsoft.com/en-us/library/dd240593%28v=prot.10%29.aspx
 */
 
 #include <freerdp/utils/stream.h>
@@ -166,6 +168,10 @@ ExtractCodeId(uint8 bOrderHdr)
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
+		case SPECIAL_FGBG_1:
+		case SPECIAL_FGBG_2:
+		case SPECIAL_WHITE:
+		case SPECIAL_BLACK:
 			return bOrderHdr;
 	}
 	code = bOrderHdr >> 5;
@@ -366,9 +372,7 @@ ExtractRunLengthRegular(uint8 * pbOrderHdr, uint32 * advance)
 	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		/*
-		   An extended (MEGA) run.
-		*/
+		/* An extended (MEGA) run. */
 		runLength = (*(pbOrderHdr + 1)) + 32;
 		*advance += 1;
 	}
@@ -386,9 +390,7 @@ ExtractRunLengthLite(uint8 * pbOrderHdr, uint32 * advance)
 	runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		/*
-		   An extended (MEGA) run.
-		*/
+		/* An extended (MEGA) run. */
 		runLength = (*(pbOrderHdr + 1)) + 16;
 		*advance += 1;
 	}
@@ -693,9 +695,7 @@ WriteFirstLineFgBgImage(uint8 * pbDest, uint8 bitmask,
 /*
    Decompress an RLE compressed bitmap.
 */
-void
-RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
-	uint8 * pbDestBuffer, uint32 rowDelta)
+void RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer, uint32 rowDelta)
 {
 	uint8 * pbSrc = pbSrcBuffer;
 	uint8 * pbEnd = pbSrcBuffer + cbSrcBuffer;
@@ -715,9 +715,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 
 	while (pbSrc < pbEnd)
 	{
-		/*
-		   Watch out for the end of the first scanline.
-		*/
+		/* Watch out for the end of the first scanline. */
 		if (fFirstLine)
 		{
 			if (pbDest - pbDestBuffer >= rowDelta)
@@ -733,9 +731,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		*/
 		code = ExtractCodeId(*pbSrc);
 
-		/*
-		   Handle Background Run Orders.
-		*/
+		/* Handle Background Run Orders. */
 		if (code == REGULAR_BG_RUN || code == MEGA_MEGA_BG_RUN)
 		{
 			runLength = ExtractRunLength(code, pbSrc, &advance);
@@ -787,9 +783,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		*/
 		fInsertFgPel = False;
 
-		/*
-		   Handle Foreground Run Orders.
-		*/
+		/* Handle Foreground Run Orders. */
 		if (code == REGULAR_FG_RUN || code == MEGA_MEGA_FG_RUN ||
 			code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 		{
@@ -821,9 +815,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 			continue;
 		}
 
-		/*
-		   Handle Dithered Run Orders.
-		*/
+		/* Handle Dithered Run Orders. */
 		if (code == LITE_DITHERED_RUN || code == MEGA_MEGA_DITHERED_RUN)
 		{
 			runLength = ExtractRunLength(code, pbSrc, &advance);
@@ -847,9 +839,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 			continue;
 		}
 
-		/*
-		   Handle Color Run Orders.
-		*/
+		/* Handle Color Run Orders. */
 		if (code == REGULAR_COLOR_RUN || code == MEGA_MEGA_COLOR_RUN)
 		{
 			runLength = ExtractRunLength(code, pbSrc, &advance);
@@ -869,9 +859,7 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 			continue;
 		}
 
-		/*
-		   Handle Foreground/Background Image Orders.
-		*/
+		/* Handle Foreground/Background Image Orders. */
 		if (code == REGULAR_FGBG_IMAGE || code == MEGA_MEGA_FGBG_IMAGE ||
 			code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 		{
@@ -918,49 +906,40 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 			continue;
 		}
 
-		/*
-		   Handle Color Image Orders.
-		*/
+		/* Handle Color Image Orders. */
 		if (code == REGULAR_COLOR_IMAGE || code == MEGA_MEGA_COLOR_IMAGE)
 		{
-			uint32 byteCount;
-
 			runLength = ExtractRunLength(code, pbSrc, &advance);
 			pbSrc = pbSrc + advance;
-
-			byteCount = runLength * GetColorDepthInBytes();
-
-			while (byteCount > 0)
+			while (runLength > 0)
 			{
-				*pbDest = *pbSrc;
-				pbDest = pbDest + 1;
-				pbSrc = pbSrc + 1;
-				byteCount = byteCount - 1;
+				WritePixel(pbDest, ReadPixel(pbSrc));
+				pbDest = NextPixel(pbDest);
+				pbSrc = NextPixel(pbSrc);
+				runLength = runLength - 1;
 			}
 			continue;
 		}
 
-		/*
-		   Handle Special Order 1.
-		*/
+		/* Handle Special Order 1. */
 		if (code == SPECIAL_FGBG_1)
 		{
+			pbSrc = pbSrc + 1;
 			if (fFirstLine)
 			{
 				pbDest = WriteFirstLineFgBgImage(pbDest, g_MaskSpecialFgBg1, fgPel, 8);
 			}
 			else
 			{
-				pbDest = WriteFgBgImage(pbDest, rowDelta, g_MaskSpecialFgBg1, fgPel, 8 );
+				pbDest = WriteFgBgImage(pbDest, rowDelta, g_MaskSpecialFgBg1, fgPel, 8);
 			}
 			continue;
 		}
 
-		/*
-		   Handle Special Order 2.
-		*/
+		/* Handle Special Order 2. */
 		if (code == SPECIAL_FGBG_2)
 		{
+			pbSrc = pbSrc + 1;
 			if (fFirstLine)
 			{
 				pbDest = WriteFirstLineFgBgImage(pbDest, g_MaskSpecialFgBg2, fgPel, 8);
@@ -972,21 +951,19 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 			continue;
 		}
 
-		/*
-		   Handle White Order.
-		*/
+		/* Handle White Order. */
 		if (code == SPECIAL_WHITE)
 		{
+			pbSrc = pbSrc + 1;
 			WritePixel(pbDest, GetColorWhite());
 			pbDest = NextPixel(pbDest);
 			continue;
 		}
 
-		/*
-		   Handle Black Order.
-		*/
+		/* Handle Black Order. */
 		if (code == SPECIAL_BLACK)
 		{
+			pbSrc = pbSrc + 1;
 			WritePixel(pbDest, GetColorBlack());
 			pbDest = NextPixel(pbDest);
 			continue;
