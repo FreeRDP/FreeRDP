@@ -26,3 +26,4 @@ int add_list_suite(void);
 void test_mutex(void);
 void test_semaphore(void);
 void test_load_plugin(void);
+void test_wait_obj(void);

@@ -24,6 +24,7 @@
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/wait_obj.h>
 
 #include "test_utils.h"
 
@@ -44,6 +45,7 @@ int add_utils_suite(void)
 	add_test_function(mutex);
 	add_test_function(semaphore);
 	add_test_function(load_plugin);
+	add_test_function(wait_obj);
 
 	return 0;
 }
@@ -74,4 +76,27 @@ void test_load_plugin(void)
 
 	entry = freerdp_load_plugin("cliprdr", "VirtualChannelEntry");
 	CU_ASSERT(entry != NULL);
+}
+
+void test_wait_obj(void)
+{
+	struct wait_obj* wo;
+	int set;
+
+	wo = wait_obj_new();
+
+	set = wait_obj_is_set(wo);
+	CU_ASSERT(set == 0);
+
+	wait_obj_set(wo);
+	set = wait_obj_is_set(wo);
+	CU_ASSERT(set == 1);
+
+	wait_obj_clear(wo);
+	set = wait_obj_is_set(wo);
+	CU_ASSERT(set == 0);
+
+	wait_obj_select(&wo, 1, 1000);
+
+	wait_obj_free(wo);
 }
