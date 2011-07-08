@@ -20,8 +20,11 @@
 #ifndef __SEMAPHORE_UTILS_H
 #define __SEMAPHORE_UTILS_H
 
-void freerdp_sem_create(void * sem_struct, int iv);
-void freerdp_sem_signal(void * sem_struct);
-void freerdp_sem_wait(void * sem_struct);
+typedef void* freerdp_sem;
+
+freerdp_sem freerdp_sem_new(int iv);
+void freerdp_sem_free(freerdp_sem sem);
+void freerdp_sem_signal(freerdp_sem sem);
+void freerdp_sem_wait(freerdp_sem sem);
 
 #endif /* __SEMAPHORE_UTILS_H */
