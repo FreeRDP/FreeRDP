@@ -25,7 +25,8 @@ set(FREERDP_UTILS_SRCS
 	mutex.c
 	semaphore.c
 	stream.c
-	unicode.c)
+	unicode.c
+	wait_obj.c)
 
 add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
 
