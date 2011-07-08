@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * Utils Unit Tests
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,39 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/utils/semaphore.h>
 
-typedef void* freerdp_sem;
+#include "test_utils.h"
 
-freerdp_sem freerdp_sem_new(int iv);
-void freerdp_sem_free(freerdp_sem sem);
-void freerdp_sem_signal(freerdp_sem sem);
-void freerdp_sem_wait(freerdp_sem sem);
+int init_utils_suite(void)
+{
+	return 0;
+}
 
-#endif /* __SEMAPHORE_UTILS_H */
+int clean_utils_suite(void)
+{
+	return 0;
+}
+
+int add_utils_suite(void)
+{
+	add_test_suite(utils);
+
+	add_test_function(semaphore);
+
+	return 0;
+}
+
+void test_semaphore(void)
+{
+	freerdp_sem sem;
+
+	sem = freerdp_sem_new(1);
+	freerdp_sem_wait(sem);
+	freerdp_sem_signal(sem);
+	freerdp_sem_free(sem);
+}
