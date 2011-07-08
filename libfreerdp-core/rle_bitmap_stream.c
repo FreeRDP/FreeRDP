@@ -67,13 +67,24 @@ static uint8 g_MaskSpecialFgBg2 = 0x05;
 typedef uint32 PIXEL;
 
 /*
-   Returns the color depth (in bytes per pixel) that was selected
+   Returns the color depth (in bits per pixel) that was selected
    for the RDP connection.
 */
 static uint32
 GetColorDepth(void)
 {
 	return 8;
+}
+
+/*
+   Returns the color depth (in bytes per pixel) that was selected
+   for the RDP connection.
+*/
+static uint32
+GetColorDepthInBytes(void)
+{
+	/* bytes per pixel, see above */
+	return 1;
 }
 
 /*
@@ -124,6 +135,7 @@ GetPixelSize(void)
 	{
 		return 3;
 	}
+	return 1;
 }
 
 /*
@@ -142,19 +154,31 @@ NextPixel(uint8 * pbBuffer)
 static uint32
 ExtractCodeId(uint8 bOrderHdr)
 {
-	/* TODO */
-	return 0;
-}
+	int code;
 
-/*
-   Returns a pointer to the data that follows the compression
-   order header and optional run length.
-*/
-static uint8 *
-AdvanceOverOrderHeader(uint32 codeId, uint8 * pbOrderHdr)
-{
-	/* TODO */
-	return pbOrderHdr;
+	switch (bOrderHdr)
+	{
+		case MEGA_MEGA_BG_RUN:
+		case MEGA_MEGA_FG_RUN:
+		case MEGA_MEGA_SET_FG_RUN:
+		case MEGA_MEGA_DITHERED_RUN:
+		case MEGA_MEGA_COLOR_RUN:
+		case MEGA_MEGA_FGBG_IMAGE:
+		case MEGA_MEGA_SET_FGBG_IMAGE:
+		case MEGA_MEGA_COLOR_IMAGE:
+			return bOrderHdr;
+	}
+	code = bOrderHdr >> 5;
+	switch (code)
+	{
+		case REGULAR_BG_RUN:
+		case REGULAR_FG_RUN:
+		case REGULAR_COLOR_RUN:
+		case REGULAR_FGBG_IMAGE:
+		case REGULAR_COLOR_IMAGE:
+			return code;
+	}
+	return bOrderHdr >> 4;
 }
 
 /*
@@ -243,6 +267,7 @@ GetColorBlack(void)
 	{
 		return (PIXEL) 0x000000;
 	}
+	return 0;
 }
 
 /*
@@ -291,7 +316,7 @@ GetColorWhite(void)
    Image Order.
 */
 static uint32
-ExtractRunLengthRegularFgBg(uint8 * pbOrderHdr)
+ExtractRunLengthRegularFgBg(uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
@@ -299,6 +324,7 @@ ExtractRunLengthRegularFgBg(uint8 * pbOrderHdr)
 	if (runLength == 0)
 	{
 		runLength = (*(pbOrderHdr + 1)) + 1;
+		*advance += 1;
 	}
 	else
 	{
@@ -312,7 +338,7 @@ ExtractRunLengthRegularFgBg(uint8 * pbOrderHdr)
    Image Order.
 */
 static uint32
-ExtractRunLengthLiteFgBg(uint8 * pbOrderHdr)
+ExtractRunLengthLiteFgBg(uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
@@ -320,6 +346,7 @@ ExtractRunLengthLiteFgBg(uint8 * pbOrderHdr)
 	if (runLength == 0)
 	{
 		runLength = (*(pbOrderHdr + 1)) + 1;
+		*advance += 1;
 	}
 	else
 	{
@@ -332,7 +359,7 @@ ExtractRunLengthLiteFgBg(uint8 * pbOrderHdr)
    Extract the run length of a regular-form compression order.
 */
 static uint32
-ExtractRunLengthRegular(uint8 * pbOrderHdr)
+ExtractRunLengthRegular(uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
@@ -343,6 +370,7 @@ ExtractRunLengthRegular(uint8 * pbOrderHdr)
 		   An extended (MEGA) run.
 		*/
 		runLength = (*(pbOrderHdr + 1)) + 32;
+		*advance += 1;
 	}
 	return runLength;
 }
@@ -351,7 +379,7 @@ ExtractRunLengthRegular(uint8 * pbOrderHdr)
    Extract the run length of a lite-form compression order.
 */
 static uint32
-ExtractRunLengthLite(uint8 * pbOrderHdr)
+ExtractRunLengthLite(uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
@@ -362,6 +390,7 @@ ExtractRunLengthLite(uint8 * pbOrderHdr)
 		   An extended (MEGA) run.
 		*/
 		runLength = (*(pbOrderHdr + 1)) + 16;
+		*advance += 1;
 	}
 	return runLength;
 }
@@ -370,12 +399,13 @@ ExtractRunLengthLite(uint8 * pbOrderHdr)
    Extract the run length of a MEGA_MEGA-type compression order.
 */
 static uint32
-ExtractRunLengthMegaMega(uint8 * pbOrderHdr)
+ExtractRunLengthMegaMega(uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
 	pbOrderHdr = pbOrderHdr + 1;
 	runLength = ((uint16) pbOrderHdr[0]) | ((uint16) (pbOrderHdr[1] << 8));
+	*advance += 2;
 	return runLength;
 }
 
@@ -383,29 +413,30 @@ ExtractRunLengthMegaMega(uint8 * pbOrderHdr)
    Extract the run length of a compression order.
 */
 static uint32
-ExtractRunLength(uint32 code, uint8 * pbOrderHdr)
+ExtractRunLength(uint32 code, uint8 * pbOrderHdr, uint32 * advance)
 {
 	uint32 runLength;
 
+	*advance = 1;
 	if (code == REGULAR_FGBG_IMAGE)
 	{
-		runLength = ExtractRunLengthRegularFgBg(pbOrderHdr);
+		runLength = ExtractRunLengthRegularFgBg(pbOrderHdr, advance);
 	}
 	else if (code == LITE_SET_FG_FGBG_IMAGE)
 	{
-		runLength = ExtractRunLengthLiteFgBg(pbOrderHdr);
+		runLength = ExtractRunLengthLiteFgBg(pbOrderHdr, advance);
 	}
 	else if (IsRegularCode(code))
 	{
-		runLength = ExtractRunLengthRegular(pbOrderHdr);
+		runLength = ExtractRunLengthRegular(pbOrderHdr, advance);
 	}
 	else if (IsLiteCode(code))
 	{
-		runLength = ExtractRunLengthLite(pbOrderHdr);
+		runLength = ExtractRunLengthLite(pbOrderHdr, advance);
 	}
 	else if (IsMegaMegaCode(code))
 	{
-		runLength = ExtractRunLengthMegaMega(pbOrderHdr);
+		runLength = ExtractRunLengthMegaMega(pbOrderHdr, advance);
 	}
 	else
 	{
@@ -680,6 +711,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 	uint32 runLength;
 	uint32 code;
 
+	uint32 advance;
+
 	while (pbSrc < pbEnd)
 	{
 		/*
@@ -705,8 +738,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		*/
 		if (code == REGULAR_BG_RUN || code == MEGA_MEGA_BG_RUN)
 		{
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
 			if (fFirstLine)
 			{
@@ -760,8 +793,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		if (code == REGULAR_FG_RUN || code == MEGA_MEGA_FG_RUN ||
 			code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 		{
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
 			if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 			{
@@ -793,8 +826,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		*/
 		if (code == LITE_DITHERED_RUN || code == MEGA_MEGA_DITHERED_RUN)
 		{
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
 			pixelA = ReadPixel(pbSrc);
 			pbSrc = NextPixel(pbSrc);
@@ -819,8 +852,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		*/
 		if (code == REGULAR_COLOR_RUN || code == MEGA_MEGA_COLOR_RUN)
 		{
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
 			pixelA = ReadPixel(pbSrc);
 			pbSrc = NextPixel(pbSrc);
@@ -842,8 +875,8 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		if (code == REGULAR_FGBG_IMAGE || code == MEGA_MEGA_FGBG_IMAGE ||
 			code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 		{
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
 			if (code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 			{
@@ -892,10 +925,10 @@ RleDecompress(uint8 * pbSrcBuffer, uint32 cbSrcBuffer,
 		{
 			uint32 byteCount;
 
-			runLength = ExtractRunLength(code, pbSrc);
-			pbSrc = AdvanceOverOrderHeader(code, pbSrc);
+			runLength = ExtractRunLength(code, pbSrc, &advance);
+			pbSrc = pbSrc + advance;
 
-			byteCount = runLength * GetColorDepth();
+			byteCount = runLength * GetColorDepthInBytes();
 
 			while (byteCount > 0)
 			{
