@@ -56,6 +56,9 @@ test_big_endian(BIG_ENDIAN)
 # Path to put keymaps
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
 
+# Path to put plugins
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/lib/freerdp")
+
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)

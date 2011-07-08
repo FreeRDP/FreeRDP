@@ -20,11 +20,14 @@
 set(FREERDP_UTILS_SRCS
 	blob.c
 	hexdump.c
+	load_plugin.c
 	memory.c
 	mutex.c
 	semaphore.c
 	stream.c
 	unicode.c)
+
+add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
 
 add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
 
