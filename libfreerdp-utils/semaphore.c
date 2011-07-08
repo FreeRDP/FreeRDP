@@ -17,41 +17,80 @@
  * limitations under the License.
  */
 
-#include <pthread.h>
-#include <semaphore.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 
-#ifdef __APPLE__
+#if defined __APPLE__
+
+#include <pthread.h>
+#include <semaphore.h>
 #include <mach/mach.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
+#define freerdp_sem_t semaphore_t
+
+#elif defined _WIN32
+
+#include <windows.h>
+#define freerdp_sem_t HANDLE
+
+#else
+
+#include <pthread.h>
+#include <semaphore.h>
+#define freerdp_sem_t sem_t
+
 #endif
 
-void freerdp_sem_create(void * sem_struct, int iv)
+freerdp_sem freerdp_sem_new(int iv)
 {
-#ifdef __APPLE__
-	semaphore_create(mach_task_self(), (semaphore_t *)sem_struct, SYNC_POLICY_FIFO, iv);
+	freerdp_sem_t* sem;
+
+	sem = (freerdp_sem_t*)xmalloc(sizeof(freerdp_sem_t));
+
+#if defined __APPLE__
+	semaphore_create(mach_task_self(), sem, SYNC_POLICY_FIFO, iv);
+#elif defined _WIN32
+	*sem = CreateSemaphore(NULL, 0, iv, NULL);
 #else
-	int pshared = 0;
-	sem_init((sem_t *)sem_struct, pshared, iv);
+	sem_init(sem, 0, iv);
+#endif
+
+	return sem;
+}
+
+void freerdp_sem_free(freerdp_sem sem)
+{
+#if defined __APPLE__
+	semaphore_destroy(mach_task_self(), *((freerdp_sem_t*)sem));
+#elif defined _WIN32
+	CloseHandle(*((freerdp_sem_t*)sem));
+#else
+	sem_destroy((freerdp_sem_t*)sem);
+#endif
+
+	xfree(sem);
+}
+
+void freerdp_sem_signal(freerdp_sem sem)
+{
+#if defined __APPLE__
+	semaphore_signal(*((freerdp_sem_t*)sem));
+#elif defined _WIN32
+	ReleaseSemaphore(*((freerdp_sem_t*)sem), 1, NULL);
+#else
+	sem_post((freerdp_sem_t*)sem);
 #endif
 }
 
-void freerdp_sem_signal(void * sem_struct)
+void freerdp_sem_wait(freerdp_sem sem)
 {
-#ifdef __APPLE__
-	semaphore_signal(*((semaphore_t *)sem_struct));
+#if defined __APPLE__
+	semaphore_wait(*((freerdp_sem_t*)sem));
+#elif defined _WIN32
+	WaitForSingleObject(*((freerdp_sem_t*)sem), INFINITE);
 #else
-	sem_post((sem_t *)sem_struct);
-#endif
-}
-
-void freerdp_sem_wait(void * sem_struct)
-{
-#ifdef __APPLE__
-	semaphore_wait(*((semaphore_t *)sem_struct));
-#else
-	sem_wait((sem_t *)sem_struct);
+	sem_wait((freerdp_sem_t*)sem);
 #endif
 }
 
