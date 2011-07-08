@@ -154,6 +154,12 @@ void test_gcc_write_client_security_data(void)
 	s = stream_new(12);
 	settings = settings_new();
 
+	settings->encryption_methods =
+			ENCRYPTION_40BIT_FLAG |
+			ENCRYPTION_56BIT_FLAG |
+			ENCRYPTION_128BIT_FLAG |
+			ENCRYPTION_FIPS_FLAG;
+
 	gcc_write_client_security_data(s, settings);
 
 	ASSERT_STREAM(s, (uint8*) gcc_client_security_data_expected, sizeof(gcc_client_security_data_expected));

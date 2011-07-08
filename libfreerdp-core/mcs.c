@@ -121,12 +121,12 @@ static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainPara
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 {
 	int length;
+	uint8 *bm, *em;
+
 	int gcc_CCrq_length = stream_get_length(user_data);
 
-	length = gcc_CCrq_length + 97;
-
-	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
-	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
+	stream_get_mark(s, bm);
+	stream_seek(s, 5);
 
 	/* callingDomainSelector (OCTET_STRING) */
 	ber_write_octet_string(s, callingDomainSelector, sizeof(callingDomainSelector));
@@ -148,6 +148,26 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 
 	/* userData (OCTET_STRING) */
 	ber_write_octet_string(s, user_data->data, gcc_CCrq_length);
+
+	stream_get_mark(s, em);
+	length = (em - bm) - 5;
+	stream_set_mark(s, bm);
+
+	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
+	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
+	stream_set_mark(s, em);
+}
+
+int mcs_recv(rdpMcs* mcs)
+{
+	int bytes_read;
+	int size = 2048;
+	char *recv_buffer;
+
+	recv_buffer = xmalloc(size);
+	bytes_read = tls_read(mcs->transport->tls, recv_buffer, size);
+
+	return 0;
 }
 
 void mcs_send_connect_initial(rdpMcs* mcs)

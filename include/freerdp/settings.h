@@ -23,15 +23,22 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/unicode.h>
 
-#define PERF_FLAG_NONE                  0x00000000
-#define PERF_DISABLE_WALLPAPER          0x00000001
-#define PERF_DISABLE_FULLWINDOWDRAG     0x00000002
-#define PERF_DISABLE_MENUANIMATIONS     0x00000004
-#define PERF_DISABLE_THEMING            0x00000008
-#define PERF_DISABLE_CURSOR_SHADOW      0x00000020
-#define PERF_DISABLE_CURSORSETTINGS     0x00000040
-#define PERF_ENABLE_FONT_SMOOTHING      0x00000080
-#define PERF_ENABLE_DESKTOP_COMPOSITION 0x00000100
+/* Performance Flags */
+#define PERF_FLAG_NONE                  	0x00000000
+#define PERF_DISABLE_WALLPAPER          	0x00000001
+#define PERF_DISABLE_FULLWINDOWDRAG    		0x00000002
+#define PERF_DISABLE_MENUANIMATIONS     	0x00000004
+#define PERF_DISABLE_THEMING            	0x00000008
+#define PERF_DISABLE_CURSOR_SHADOW      	0x00000020
+#define PERF_DISABLE_CURSORSETTINGS     	0x00000040
+#define PERF_ENABLE_FONT_SMOOTHING      	0x00000080
+#define PERF_ENABLE_DESKTOP_COMPOSITION 	0x00000100
+
+/* Encryption Methods */
+#define ENCRYPTION_40BIT_FLAG			0x00000001
+#define ENCRYPTION_128BIT_FLAG			0x00000002
+#define ENCRYPTION_56BIT_FLAG			0x00000008
+#define ENCRYPTION_FIPS_FLAG			0x00000010
 
 struct rdp_chan
 {
@@ -68,6 +75,7 @@ struct rdp_settings
 	uint32 kbd_fn_keys;
 	uint32 client_build;
 	uint32 selected_protocol;
+	uint32 encryption_methods;
 
 	int console_session;
 	uint32 redirected_session_id;
