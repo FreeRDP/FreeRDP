@@ -42,14 +42,21 @@
 #define BER_TAG_BOOLEAN		0x01
 #define BER_TAG_INTEGER		0x02
 #define BER_TAG_OCTET_STRING	0x04
+#define BER_TAG_ENUMERATED	0x0A
 #define BER_TAG_SEQUENCE_OF	0x10
 
+void ber_read_length(STREAM* s, int* length);
 void ber_write_length(STREAM* s, int length);
 void ber_write_universal_tag(STREAM* s, uint8 tag);
 void ber_write_application_tag(STREAM* s, uint8 tag, int length);
+boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);
+boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 max);
+boolean ber_read_sequence_of_tag(STREAM* s, int* length);
 void ber_write_sequence_of_tag(STREAM* s, int length);
+boolean ber_read_octet_string(STREAM* s, int* length);
 void ber_write_octet_string(STREAM* s, uint8* oct_str, int length);
 void ber_write_boolean(STREAM* s, boolean value);
+boolean ber_read_integer(STREAM* s, uint32* value);
 void ber_write_integer(STREAM* s, uint32 value);
 
 #endif /* __BER_H */

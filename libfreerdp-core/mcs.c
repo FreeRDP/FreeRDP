@@ -52,10 +52,58 @@
  * 	protocolVersion			INTEGER (0..MAX)
  * }
  *
+ * Connect-Response ::= [APPLICATION 102] IMPLICIT SEQUENCE
+ * {
+ * 	result				Result,
+ * 	calledConnectId			INTEGER (0..MAX),
+ * 	domainParameters		DomainParameters,
+ * 	userData			OCTET_STRING
+ * }
+ *
+ * Result ::= ENUMERATED
+ * {
+ * 	rt-successful			(0),
+ * 	rt-domain-merging		(1),
+ * 	rt-domain-not-hierarchical	(2),
+ * 	rt-no-such-channel		(3),
+ * 	rt-no-such-domain		(4),
+ * 	rt-no-such-user			(5),
+ * 	rt-not-admitted			(6),
+ * 	rt-other-user-id		(7),
+ * 	rt-parameters-unacceptable	(8),
+ * 	rt-token-not-available		(9),
+ * 	rt-token-not-possessed		(10),
+ * 	rt-too-many-channels		(11),
+ * 	rt-too-many-tokens		(12),
+ * 	rt-too-many-users		(13),
+ * 	rt-unspecified-failure		(14),
+ * 	rt-user-rejected		(15)
+ * }
+ *
  */
 
 uint8 callingDomainSelector[1] = "\x01";
 uint8 calledDomainSelector[1] = "\x01";
+
+uint8 mcs_result_enumerated[16][32] =
+{
+		"rt-successful",
+		"rt-domain-merging",
+		"rt-domain-not-hierarchical",
+		"rt-no-such-channel",
+		"rt-no-such-domain",
+		"rt-no-such-user",
+		"rt-not-admitted",
+		"rt-other-user-id",
+		"rt-parameters-unacceptable",
+		"rt-token-not-available",
+		"rt-token-not-possessed",
+		"rt-too-many-channels",
+		"rt-too-many-tokens",
+		"rt-too-many-users",
+		"rt-unspecified-failure",
+		"rt-user-rejected"
+};
 
 /**
  * Initialize MCS Domain Parameters.
@@ -78,6 +126,20 @@ static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
 	domainParameters->minThroughput = 0;
 	domainParameters->maxHeight = 1;
 	domainParameters->protocolVersion = 2;
+}
+
+static void mcs_read_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParameters)
+{
+	int length;
+	ber_read_sequence_of_tag(s, &length);
+	ber_read_integer(s, &(domainParameters->maxChannelIds));
+	ber_read_integer(s, &(domainParameters->maxUserIds));
+	ber_read_integer(s, &(domainParameters->maxTokenIds));
+	ber_read_integer(s, &(domainParameters->numPriorities));
+	ber_read_integer(s, &(domainParameters->minThroughput));
+	ber_read_integer(s, &(domainParameters->maxHeight));
+	ber_read_integer(s, &(domainParameters->maxMCSPDUsize));
+	ber_read_integer(s, &(domainParameters->protocolVersion));
 }
 
 /**
@@ -109,6 +171,20 @@ static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainPara
 
 	ber_write_sequence_of_tag(s, length);
 	stream_set_mark(s, em);
+}
+
+static void mcs_print_domain_parameters(DOMAIN_PARAMETERS* domainParameters)
+{
+	printf("DomainParameters {\n");
+	printf("\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
+	printf("\tmaxUserIds:%d\n", domainParameters->maxUserIds);
+	printf("\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
+	printf("\tnumPriorities:%d\n", domainParameters->numPriorities);
+	printf("\tminThroughput:%d\n", domainParameters->minThroughput);
+	printf("\tmaxHeight:%d\n", domainParameters->maxHeight);
+	printf("\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
+	printf("\tprotocolVersion:%d\n", domainParameters->protocolVersion);
+	printf("}\n");
 }
 
 /**
@@ -158,18 +234,6 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 	stream_set_mark(s, em);
 }
 
-int mcs_recv(rdpMcs* mcs)
-{
-	int bytes_read;
-	int size = 2048;
-	char *recv_buffer;
-
-	recv_buffer = xmalloc(size);
-	bytes_read = tls_read(mcs->transport->tls, recv_buffer, size);
-
-	return 0;
-}
-
 void mcs_send_connect_initial(rdpMcs* mcs)
 {
 	STREAM* s;
@@ -203,6 +267,33 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	stream_set_mark(s, em);
 
 	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+}
+
+void mcs_recv_connect_response(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 result;
+	uint32 calledConnectId;
+
+	s = stream_new(1024);
+	tls_read(mcs->transport->tls, s->data, s->size);
+
+	tpkt_read_header(s);
+	tpdu_read_data(s);
+
+	ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length);
+	ber_read_enumerated(s, &result, 15);
+	ber_read_integer(s, &calledConnectId);
+
+	printf("MCS Connect-Response Result: %s\n", mcs_result_enumerated[result]);
+
+	mcs_read_domain_parameters(s, &(mcs->domainParameters));
+	mcs_print_domain_parameters(&(mcs->domainParameters));
+
+	ber_read_octet_string(s, &length);
+
+	printf("userData, length:%d\n", length);
 }
 
 /**

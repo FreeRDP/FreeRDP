@@ -19,6 +19,25 @@
 
 #include "ber.h"
 
+void ber_read_length(STREAM* s, int* length)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte & 0x80)
+	{
+		if (byte & ~(0x80) == 2)
+		{
+			stream_read_uint16_be(s, *length);
+		}
+	}
+	else
+	{
+		*length = byte;
+	}
+}
+
 /**
  * Write BER length.
  * @param s stream
@@ -36,6 +55,18 @@ void ber_write_length(STREAM* s, int length)
 	{
 		stream_write_uint8(s, length);
 	}
+}
+
+boolean ber_read_universal_tag(STREAM* s, uint8 tag)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte != (BER_CLASS_UNIV | BER_PRIMITIVE) | (BER_TAG_MASK & tag))
+		return False;
+
+	return True;
 }
 
 /**
@@ -71,6 +102,51 @@ void ber_write_application_tag(STREAM* s, uint8 tag, int length)
 	}
 }
 
+boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length)
+{
+	uint8 byte;
+
+	if (tag > 30)
+	{
+		stream_read_uint8(s, byte);
+
+		if (byte != ((BER_CLASS_APPL | BER_CONSTRUCT) | BER_TAG_MASK))
+			return False;
+
+		stream_read_uint8(s, byte);
+
+		if (byte != tag)
+			return False;
+
+		ber_read_length(s, length);
+	}
+	else
+	{
+		stream_read_uint8(s, byte);
+
+		if (byte != ((BER_CLASS_APPL | BER_CONSTRUCT) | (BER_TAG_MASK & tag)))
+			return False;
+
+		ber_read_length(s, length);
+	}
+
+	return True;
+}
+
+boolean ber_read_sequence_of_tag(STREAM* s, int* length)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte != ((BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_SEQUENCE_OF)))
+		return False;
+
+	ber_read_length(s, length);
+
+	return True;
+}
+
 /**
  * Write BER SEQUENCE OF tag.
  * @param s stream
@@ -81,6 +157,33 @@ void ber_write_sequence_of_tag(STREAM* s, int length)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE_OF));
 	ber_write_length(s, length);
+}
+
+boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 max)
+{
+	int length;
+
+	ber_read_universal_tag(s, BER_TAG_ENUMERATED);
+	ber_read_length(s, &length);
+
+	if (length == 1)
+		stream_read_uint8(s, *enumerated);
+	else
+		return False;
+
+	/* check that enumerated value falls within expected range */
+	if (*enumerated > max)
+		return False;
+
+	return True;
+}
+
+boolean ber_read_octet_string(STREAM* s, int* length)
+{
+	ber_read_universal_tag(s, BER_TAG_OCTET_STRING);
+	ber_read_length(s, length);
+
+	return True;
 }
 
 /**
@@ -108,6 +211,30 @@ void ber_write_boolean(STREAM* s, boolean value)
 	ber_write_universal_tag(s, BER_TAG_BOOLEAN);
 	ber_write_length(s, 1);
 	stream_write_uint8(s, (value == True) ? 0xFF : 0);
+}
+
+boolean ber_read_integer(STREAM* s, uint32* value)
+{
+	int length;
+
+	ber_read_universal_tag(s, BER_TAG_INTEGER);
+	ber_read_length(s, &length);
+
+	if (length == 1)
+		stream_read_uint8(s, *value);
+	else if (length == 2)
+		stream_read_uint16_be(s, *value);
+	else if (length == 3)
+	{
+		uint8 byte;
+		stream_read_uint8(s, byte);
+		stream_read_uint16_be(s, *value);
+		*value += (byte << 16);
+	}
+	else
+		return False;
+
+	return True;
 }
 
 /**
