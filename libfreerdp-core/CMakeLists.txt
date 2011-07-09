@@ -47,6 +47,7 @@ set(LIBFREERDP_CORE_SRCS
 	tpkt.h
 	transport.c
 	transport.h
+	rle_bitmap_stream.c
 )
 
 include_directories(../libfreerdp-asn1)
