@@ -250,7 +250,7 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	gcc_write_client_monitor_data(client_data, mcs->transport->settings);
 
 	gcc_CCrq = stream_new(512);
-	gcc_write_create_conference_request(gcc_CCrq, client_data);
+	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = stream_get_length(gcc_CCrq) + 7;
 
 	s = stream_new(512);
@@ -293,7 +293,7 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 
 	ber_read_octet_string(s, &length);
 
-	printf("userData, length:%d\n", length);
+	gcc_read_conference_create_response(s);
 }
 
 /**

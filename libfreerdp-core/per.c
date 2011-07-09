@@ -19,6 +19,26 @@
 
 #include "per.h"
 
+boolean per_read_length(STREAM* s, int* length)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte & 0x80)
+	{
+		*length = (byte << 8);
+		stream_read_uint8(s, byte);
+		*length += byte;
+	}
+	else
+	{
+		*length = byte;
+	}
+
+	return True;
+}
+
 /**
  * Write PER length.
  * @param s stream
@@ -33,6 +53,12 @@ void per_write_length(STREAM* s, int length)
 		stream_write_uint8(s, length);
 }
 
+boolean per_read_choice(STREAM* s, uint8* choice)
+{
+	stream_read_uint8(s, *choice);
+	return True;
+}
+
 /**
  * Write PER CHOICE.
  * @param s stream
@@ -44,6 +70,12 @@ void per_write_choice(STREAM* s, uint8 choice)
 	stream_write_uint8(s, choice);
 }
 
+boolean per_read_selection(STREAM* s, uint8* selection)
+{
+	stream_read_uint8(s, *selection);
+	return True;
+}
+
 /**
  * Write PER selection for OPTIONAL fields.
  * @param s stream
@@ -53,6 +85,12 @@ void per_write_choice(STREAM* s, uint8 choice)
 void per_write_selection(STREAM* s, uint8 selection)
 {
 	stream_write_uint8(s, selection);
+}
+
+boolean per_read_number_of_sets(STREAM* s, uint8* number)
+{
+	stream_read_uint8(s, *number);
+	return True;
 }
 
 /**
@@ -78,6 +116,73 @@ void per_write_padding(STREAM* s, int length)
 
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, 0);
+}
+
+boolean per_read_integer(STREAM* s, uint32* integer)
+{
+	int length;
+
+	per_read_length(s, &length);
+
+	if (length == 1)
+		stream_read_uint8(s, *integer);
+	else if (length == 2)
+		stream_read_uint16_be(s, *integer);
+	else
+		return False;
+
+	return True;
+}
+
+boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
+{
+	stream_read_uint16_be(s, *integer);
+
+	if (*integer + min > 0xFFFF)
+		return False;
+
+	*integer += min;
+
+	return True;
+}
+
+boolean per_read_enumerated(STREAM* s, uint8* enumerated)
+{
+	stream_read_uint8(s, *enumerated);
+	return True;
+}
+
+boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
+{
+	uint8 t12;
+	int length;
+	uint8 a_oid[6];
+	boolean status;
+
+	per_read_length(s, &length); /* length */
+
+	if (length != 5)
+		return False;
+
+	stream_read_uint8(s, t12); /* first two tuples */
+	a_oid[0] = (t12 >> 4);
+	a_oid[1] = (t12 & 0x0F);
+
+	stream_read_uint8(s, a_oid[2]); /* tuple 3 */
+	stream_read_uint8(s, a_oid[3]); /* tuple 4 */
+	stream_read_uint8(s, a_oid[4]); /* tuple 5 */
+	stream_read_uint8(s, a_oid[5]); /* tuple 6 */
+
+	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) &&
+		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
+		(a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
+	{
+		return True;
+	}
+	else
+	{
+		return False;
+	}
 }
 
 /**
@@ -110,6 +215,29 @@ void per_write_string(STREAM* s, uint8* str, int length)
 
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, str[i]);
+}
+
+boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
+{
+	int i;
+	int mlength;
+	uint8* a_oct_str;
+
+	per_read_length(s, &mlength);
+
+	if (mlength + min != length)
+		return False;
+
+	a_oct_str = s->p;
+	stream_seek(s, length);
+
+	for (i = 0; i < length; i++)
+	{
+		if (a_oct_str[i] != oct_str[i])
+			return False;
+	}
+
+	return True;
 }
 
 /**

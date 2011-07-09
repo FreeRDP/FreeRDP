@@ -72,6 +72,22 @@
  * 	conferenceMode			ConferenceMode OPTIONAL
  * }
  *
+ * ConferenceCreateResponse ::= SEQUENCE
+ * {
+ * 	nodeID				UserID,
+ * 	tag				INTEGER,
+ * 	result				ENUMERATED
+ * 	{
+ * 		success				(0),
+ * 		userRejected			(1),
+ * 		resourcesNotAvailable		(2),
+ * 		rejectedForSymmetryBreaking	(3),
+ * 		lockedConferenceNotSupported	(4)
+ * 	},
+ * 	userData			UserData OPTIONAL,
+ * 	...
+ * }
+ *
  * ConferenceName ::= SEQUENCE
  * {
  * 	numeric				SimpleNumericString
@@ -89,6 +105,12 @@
  *
  * H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
  *
+ * UserID ::= DynamicChannelID
+ *
+ * ChannelID ::= INTEGER (1..65535)
+ * StaticChannelID ::= INTEGER (1..1000)
+ * DynamicChannelID ::= INTEGER (1001..65535)
+ *
  */
 
 /*
@@ -98,6 +120,9 @@
  */
 uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
+uint8 h221_cs_key[4] = "Duca";
+uint8 h221_sc_key[4] = "McDn";
+
 /**
  * Write a GCC Conference Create Request.\n
  * @msdn{cc240836}
@@ -105,7 +130,7 @@ uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
  * @param user_data client data blocks
  */
 
-void gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
+void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 {
 	/* ConnectData */
 	per_write_choice(s, 0); /* From Key select object (0) of type OBJECT_IDENTIFIER */
@@ -127,10 +152,54 @@ void gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 	per_write_choice(s, 0xC0); /* UserData::value present + select h221NonStandard (1) */
 
 	/* h221NonStandard */
-	per_write_octet_string(s, "Duca", 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
+	per_write_octet_string(s, h221_cs_key, 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
 
 	/* userData::value (OCTET_STRING) */
 	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of client data blocks */
+}
+
+void gcc_read_conference_create_response(STREAM* s)
+{
+	int length;
+	uint32 tag;
+	uint16 nodeID;
+	uint8 result;
+	uint8 choice;
+	uint8 selection;
+	uint8 number;
+
+	/* ConnectData */
+	per_read_choice(s, &choice);
+	per_read_object_identifier(s, t124_02_98_oid);
+
+	/* ConnectData::connectPDU (OCTET_STRING) */
+	per_read_length(s, &length);
+
+	/* ConnectGCCPDU */
+	per_read_choice(s, &choice);
+
+	/* ConferenceCreateResponse::nodeID (UserID) */
+	per_read_integer16(s, &nodeID, 1001);
+
+	/* ConferenceCreateResponse::tag (INTEGER) */
+	per_read_integer(s, &tag);
+
+	/* ConferenceCreateResponse::result (ENUMERATED) */
+	per_read_enumerated(s, &result);
+
+	/* number of UserData sets */
+	per_read_number_of_sets(s, &number);
+
+	/* UserData::value present + select h221NonStandard (1) */
+	per_read_choice(s, &choice);
+
+	/* h221NonStandard */
+	per_read_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
+
+	/* userData (OCTET_STRING) */
+	per_read_length(s, &length);
+
+	printf("server core data, length:%d\n", length);
 }
 
 /**
