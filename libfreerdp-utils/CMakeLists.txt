@@ -25,6 +25,7 @@ set(FREERDP_UTILS_SRCS
 	mutex.c
 	semaphore.c
 	stream.c
+	svc_plugin.c
 	unicode.c
 	wait_obj.c)
 
