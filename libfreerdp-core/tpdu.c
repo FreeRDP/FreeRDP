@@ -70,15 +70,17 @@ tpdu_read_header(STREAM* s, uint8* code)
 	stream_read_uint8(s, li); /* LI */
 	stream_read_uint8(s, *code); /* Code */
 
-	/* DST-REF (2 bytes) */
-	/* SRC-REF (2 bytes) */
-	/* Class 0 (1 byte) */
-	stream_seek(s, 5);
-
 	if (*code == X224_TPDU_DATA)
 	{
 		/* EOT (1 byte) */
 		stream_seek(s, 1);
+	}
+	else
+	{
+		/* DST-REF (2 bytes) */
+		/* SRC-REF (2 bytes) */
+		/* Class 0 (1 byte) */
+		stream_seek(s, 5);
 	}
 
 	return li;
@@ -165,4 +167,26 @@ void
 tpdu_write_data(STREAM* s)
 {
 	tpdu_write_header(s, 2, X224_TPDU_DATA);
+}
+
+/**
+ * Read Data TPDU.
+ * @param s stream
+ */
+
+uint16
+tpdu_read_data(STREAM* s)
+{
+	uint8 code;
+	uint16 li;
+
+	li = tpdu_read_header(s, &code);
+
+	if (code != X224_TPDU_DATA)
+	{
+		printf("expected X224_TPDU_DATA\n");
+		return 0;
+	}
+
+	return li;
 }

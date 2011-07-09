@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 	mcs = mcs_new(transport);
 	mcs_send_connect_initial(mcs);
 
-	mcs_recv(mcs);
+	mcs_recv_connect_response(mcs);
 
 	return 0;
 }
