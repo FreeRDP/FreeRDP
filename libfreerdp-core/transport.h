@@ -20,6 +20,22 @@
 #ifndef __TRANSPORT_H
 #define __TRANSPORT_H
 
+typedef enum
+{
+	TRANSPORT_LAYER_TCP,
+	TRANSPORT_LAYER_TLS
+} TRANSPORT_LAYER;
+
+typedef enum
+{
+	TRANSPORT_STATE_INITIAL,
+	TRANSPORT_STATE_NEGO,
+	TRANSPORT_STATE_RDP,
+	TRANSPORT_STATE_TLS,
+	TRANSPORT_STATE_NLA,
+	TRANSPORT_STATE_FINAL
+} TRANSPORT_STATE;
+
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
@@ -31,21 +47,13 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 
-enum _TRANSPORT_STATE
-{
-	TRANSPORT_STATE_INITIAL,
-	TRANSPORT_STATE_NEGO,
-	TRANSPORT_STATE_RDP,
-	TRANSPORT_STATE_TLS,
-	TRANSPORT_STATE_NLA,
-	TRANSPORT_STATE_FINAL
-};
-typedef enum _TRANSPORT_STATE TRANSPORT_STATE;
-
 typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
+	STREAM* recv_stream;
+	STREAM* send_stream;
+	TRANSPORT_LAYER layer;
 	TRANSPORT_STATE state;
 	struct rdp_tcp* tcp;
 	struct rdp_tls* tls;
@@ -57,14 +65,17 @@ struct rdp_transport
 	TransportRecv recv_callback;
 };
 
-rdpTransport* transport_new(rdpSettings* settings);
-void transport_free(rdpTransport* transport);
-boolean transport_connect(rdpTransport* transport, const char* server, int port);
+STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
+STREAM* transport_send_stream_init(rdpTransport* transport, int size);
+boolean transport_connect(rdpTransport* transport, const uint8* hostname, uint16 port);
 boolean transport_disconnect(rdpTransport* transport);
 boolean transport_connect_rdp(rdpTransport* transport);
 boolean transport_connect_tls(rdpTransport* transport);
 boolean transport_connect_nla(rdpTransport* transport);
-int transport_send(rdpTransport* transport, STREAM* stream);
+int transport_read(rdpTransport* transport, STREAM* s);
+int transport_write(rdpTransport* transport, STREAM* s);
 int transport_check_fds(rdpTransport* transport);
+rdpTransport* transport_new(rdpSettings* settings);
+void transport_free(rdpTransport* transport);
 
 #endif

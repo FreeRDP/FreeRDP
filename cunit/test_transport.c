@@ -61,16 +61,19 @@ static int test_finished = 0;
 static int
 packet_received(rdpTransport * transport, STREAM * stream, void * extra)
 {
+#if 0
 	uint16 length;
 	length = tpkt_read_header(stream);
 	CU_ASSERT(length == 19);
 	freerdp_hexdump(stream->data, length);
 	test_finished = 1;
 	return 0;
+#endif
 }
 
 void test_transport(void)
 {
+#if 0
 	rdpTransport * transport;
 	STREAM * stream;
 	int r;
@@ -96,4 +99,5 @@ void test_transport(void)
 	CU_ASSERT(r == True);
 
 	transport_free(transport);
+#endif
 }

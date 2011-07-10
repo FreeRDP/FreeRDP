@@ -321,17 +321,14 @@ void connection_send_client_info(rdpConnection* connection)
 {
 	STREAM* s;
 	int length;
-	s = stream_new(1024);
-
 	uint8 *bm, *em;
+
+	s = transport_send_stream_init(connection->transport, 1024);
 
 	stream_get_mark(s, bm);
 	stream_seek(s, 15);
 
-	/* security header */
-	stream_write_uint16(s, SEC_INFO_PKT); /* flags */
-	stream_write_uint16(s, 0); /* flagsHi */
-
+	rdp_write_security_header(s, SEC_INFO_PKT);
 	connection_write_info_packet(s, connection->settings);
 
 	stream_get_mark(s, em);
@@ -348,7 +345,7 @@ void connection_send_client_info(rdpConnection* connection)
 
 	stream_set_mark(s, em);
 
-	tls_write(connection->transport->tls, s->data, stream_get_length(s));
+	transport_write(connection->transport, s);
 }
 
 /**

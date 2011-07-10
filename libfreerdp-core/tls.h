@@ -45,8 +45,8 @@ struct rdp_tls
 
 boolean tls_connect(rdpTls* tls);
 boolean tls_disconnect(rdpTls* tls);
-int tls_read(rdpTls* tls, char* data, int length);
-int tls_write(rdpTls* tls, char* data, int length);
+int tls_read(rdpTls* tls, uint8* data, int length);
+int tls_write(rdpTls* tls, uint8* data, int length);
 CryptoCert tls_get_certificate(rdpTls* tls);
 boolean tls_print_error(char* func, SSL* connection, int value);
 

@@ -63,7 +63,7 @@ boolean tls_disconnect(rdpTls* tls)
 	return True;
 }
 
-int tls_read(rdpTls* tls, char* data, int length)
+int tls_read(rdpTls* tls, uint8* data, int length)
 {
 	int status;
 
@@ -91,19 +91,20 @@ int tls_read(rdpTls* tls, char* data, int length)
 	return 0;
 }
 
-int tls_write(rdpTls* tls, char* data, int length)
+int tls_write(rdpTls* tls, uint8* data, int length)
 {
-	int bytes = 0;
-	int write_status;
+	int status;
+	int sent = 0;
 
-	while (bytes < length)
+	while (sent < length)
 	{
-		write_status = SSL_write(tls->ssl, data, length);
+		status = SSL_write(tls->ssl, data, length);
 
-		switch (SSL_get_error(tls->ssl, write_status))
+		switch (SSL_get_error(tls->ssl, status))
 		{
 			case SSL_ERROR_NONE:
-				bytes += write_status;
+				sent += status;
+				data += status;
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
@@ -111,12 +112,13 @@ int tls_write(rdpTls* tls, char* data, int length)
 				break;
 
 			default:
-				tls_print_error("SSL_write", tls->ssl, write_status);
+				tls_print_error("SSL_write", tls->ssl, status);
 				return -1;
 				break;
 		}
 	}
-	return bytes;
+
+	return sent;
 }
 
 boolean tls_print_error(char *func, SSL *connection, int value)
