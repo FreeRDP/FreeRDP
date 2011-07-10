@@ -408,11 +408,6 @@ static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
 		DEBUG_CHANMAN("error bad chanhan");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
-	if (!chan_man->is_connected)
-	{
-		DEBUG_CHANMAN("error not connected");
-		return CHANNEL_RC_NOT_CONNECTED;
-	}
 	lchan = chan_man->chans + index;
 	if (lchan->flags != 2)
 	{
