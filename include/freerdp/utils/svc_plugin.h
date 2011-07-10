@@ -41,6 +41,6 @@ struct rdp_svc_plugin
 };
 
 void svc_plugin_init(rdpSvcPlugin* plugin);
-int svc_plugin_send(rdpSvcPlugin* plugin, uint8* data, int size);
+int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
 
 #endif /* __SVC_PLUGIN_UTILS_H */

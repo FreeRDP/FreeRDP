@@ -165,7 +165,7 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 			svc_plugin_process_received(plugin, pData, dataLength, totalLength, dataFlags);
 			break;
 		case CHANNEL_EVENT_WRITE_COMPLETE:
-			xfree(pData);
+			stream_free((STREAM*)pData);
 			break;
 	}
 }
@@ -253,14 +253,14 @@ void svc_plugin_init(rdpSvcPlugin* plugin)
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
 }
 
-int svc_plugin_send(rdpSvcPlugin* plugin, uint8* data, int size)
+int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 {
 	uint32 error = 0;
 
-	DEBUG_SVC("size %d", size);
+	DEBUG_SVC("length %d", stream_get_length(data_out));
 
 	error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->priv->open_handle,
-		data, size, data);
+		stream_get_data(data_out), stream_get_length(data_out), data_out);
 	if (error != CHANNEL_RC_OK)
 		printf("svc_plugin_send: VirtualChannelWrite failed %d", error);
 
