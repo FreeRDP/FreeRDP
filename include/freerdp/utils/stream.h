@@ -27,16 +27,16 @@
 struct _STREAM
 {
 	int size;
-	uint8 * p;
-	uint8 * data;
+	uint8* p;
+	uint8* data;
 };
 typedef struct _STREAM STREAM;
 
 STREAM* stream_new(int size);
-void stream_free(STREAM * stream);
+void stream_free(STREAM* stream);
 
 void
-stream_extend(STREAM * stream);
+stream_extend(STREAM* stream);
 #define stream_check_size(_s,_n) \
 	while (_s->p - _s->data + (_n) > _s->size) \
 		stream_extend(_s)
@@ -50,6 +50,8 @@ stream_extend(STREAM * stream);
 #define stream_get_head(_s) _s->data
 #define stream_get_tail(_s) _s->p
 #define stream_get_length(_s) (_s->p - _s->data)
+#define stream_get_data(_s) (_s->data)
+#define stream_get_size(_s) (_s->size)
 
 #define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
 #define stream_read_uint16(_s, _v) do { _v = \

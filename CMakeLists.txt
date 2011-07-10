@@ -87,5 +87,5 @@ add_subdirectory(libfreerdp-kbd)
 add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-chanman)
 add_subdirectory(libfreerdp-core)
-
+add_subdirectory(channels)
 add_subdirectory(freerdp-ui)

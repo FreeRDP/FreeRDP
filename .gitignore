@@ -3,6 +3,7 @@ cmake_install.cmake
 CMakeFiles/
 CMakeCache.txt
 config.h
+install_manifest.txt
 
 # Make
 Makefile
