@@ -140,6 +140,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 		}
 		/* the stream ownership is passed to the callback who is responsible for freeing it. */
 		plugin->priv->data_in = NULL;
+		stream_set_pos(data_in, 0);
 		plugin->receive_callback(plugin, data_in);
 	}
 }
