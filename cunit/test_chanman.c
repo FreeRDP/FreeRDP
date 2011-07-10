@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
 #include <freerdp/chanman.h>
 
 #include "test_chanman.h"
@@ -46,12 +47,32 @@ int add_chanman_suite(void)
 	return 0;
 }
 
+static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
+{
+	printf("chan_id %d data_size %d\n", chan_id, data_size);
+}
+
 void test_chanman(void)
 {
 	rdpChanMan* chan_man;
 	rdpSettings settings = { 0 };
+	rdpInst inst = { 0 };
+
+	settings.hostname = "testhost";
+	inst.settings = &settings;
+	inst.rdp_channel_data = test_rdp_channel_data;
 
 	chan_man = freerdp_chanman_new();
+
+	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/rdpdbg/rdpdbg.so", NULL);
+	freerdp_chanman_pre_connect(chan_man, &inst);
+	freerdp_chanman_post_connect(chan_man, &inst);
+
+	freerdp_chanman_data(&inst, 0, "testdata", 8, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 8);
+
+	freerdp_chanman_check_fds(chan_man, &inst);
+
+	freerdp_chanman_send_event(chan_man, "rdpdbg", CHANNEL_EVENT_USER + 1, "testevent", 9);
 
 	freerdp_chanman_close(chan_man, NULL);
 	freerdp_chanman_free(chan_man);
