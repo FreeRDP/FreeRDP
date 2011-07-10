@@ -56,7 +56,7 @@ static void tcp_get_ip_address(rdpTcp * tcp)
 	tcp->settings->ip_address = tcp->ip_address;
 }
 
-boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port)
+boolean tcp_connect(rdpTcp* tcp, const uint8* hostname, uint16 port)
 {
 	int status;
 	int sockfd = -1;
@@ -103,6 +103,51 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	tcp_get_ip_address(tcp);
 
 	return True;
+}
+
+int tcp_read(rdpTcp* tcp, uint8* data, int length)
+{
+	int status;
+
+	status = recv(tcp->sockfd, data, length, 0);
+
+	if (status < 0)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return 0;
+
+		perror("recv");
+		return -1;
+	}
+
+	return status;
+}
+
+int tcp_write(rdpTcp* tcp, uint8* data, int length)
+{
+	int status;
+	int sent = 0;
+
+	while (sent < length)
+	{
+		status = send(tcp->sockfd, data, (length - sent), MSG_NOSIGNAL);
+
+		if (status < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+				continue;
+
+			perror("send");
+			return -1;
+		}
+		else
+		{
+			sent += status;
+			data += status;
+		}
+	}
+
+	return sent;
 }
 
 boolean tcp_disconnect(rdpTcp * tcp)

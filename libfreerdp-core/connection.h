@@ -20,6 +20,7 @@
 #ifndef __CONNECTION_H
 #define __CONNECTION_H
 
+#include "rdp.h"
 #include "tpkt.h"
 #include "tpdu.h"
 #include "nego.h"
@@ -57,19 +58,6 @@
 #define PACKET_COMPR_TYPE_64K		0x00000200
 #define PACKET_COMPR_TYPE_RDP6		0x00000300
 #define PACKET_COMPR_TYPE_RDP61		0x00000400
-
-/* Security Header Flags */
-#define SEC_EXCHANGE_PKT		0x0001
-#define SEC_ENCRYPT			0x0008
-#define SEC_RESET_SEQNO			0x0010
-#define	SEC_IGNORE_SEQNO		0x0020
-#define	SEC_INFO_PKT			0x0040
-#define	SEC_LICENSE_PKT			0x0080
-#define SEC_LICENSE_ENCRYPT_CS		0x0200
-#define SEC_LICENSE_ENCRYPT_SC		0x0200
-#define SEC_REDIRECTION_PKT		0x0400
-#define SEC_SECURE_CHECKSUM		0x0800
-#define SEC_FLAGSHI_VALID		0x8000
 
 struct rdp_connection
 {

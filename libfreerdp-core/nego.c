@@ -210,10 +210,9 @@ void nego_attempt_rdp(rdpNego* nego)
 
 void nego_recv_response(rdpNego* nego)
 {
-	while (nego->state != NEGO_STATE_FINAL && nego->state != NEGO_STATE_FAIL)
-	{
-		transport_check_fds(nego->transport);
-	}
+	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
+	transport_read(nego->transport, s);
+	nego_recv(nego->transport, s, nego->transport->recv_extra);
 }
 
 /**
@@ -325,7 +324,7 @@ void nego_send_negotiation_request(rdpNego* nego)
 	tpdu_write_connection_request(s, length - 5);
 	stream_set_mark(s, em);
 
-	transport_send(nego->transport, s);
+	transport_write(nego->transport, s);
 }
 
 /**

@@ -303,7 +303,7 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = stream_get_length(gcc_CCrq) + 7;
 
-	s = stream_new(512);
+	s = transport_send_stream_init(mcs->transport, 1024);
 	stream_get_mark(s, bm);
 	stream_seek(s, 7);
 
@@ -316,7 +316,7 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	tpdu_write_data(s);
 	stream_set_mark(s, em);
 
-	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+	transport_write(mcs->transport, s);
 }
 
 void mcs_recv_connect_response(rdpMcs* mcs)
@@ -326,8 +326,8 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 	uint8 result;
 	uint32 calledConnectId;
 
-	s = stream_new(1024);
-	tls_read(mcs->transport->tls, s->data, s->size);
+	s = transport_recv_stream_init(mcs->transport, 1024);
+	transport_read(mcs->transport, s);
 
 	tpkt_read_header(s);
 	tpdu_read_data(s);
@@ -347,7 +347,7 @@ void mcs_send_erect_domain_request(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length = 12;
-	s = stream_new(length);
+	s = transport_send_stream_init(mcs->transport, length);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
@@ -357,14 +357,14 @@ void mcs_send_erect_domain_request(rdpMcs* mcs)
 	per_write_integer(s, 0); /* subHeight (INTEGER) */
 	per_write_integer(s, 0); /* subInterval (INTEGER) */
 
-	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+	transport_write(mcs->transport, s);
 }
 
 void mcs_send_attach_user_request(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length = 8;
-	s = stream_new(length);
+	s = transport_send_stream_init(mcs->transport, length);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
@@ -372,7 +372,7 @@ void mcs_send_attach_user_request(rdpMcs* mcs)
 	/* DomainMCSPDU, AttachUserRequest */
 	per_write_choice(s, DomainMCSPDU_AttachUserRequest << 2);
 
-	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+	transport_write(mcs->transport, s);
 }
 
 void mcs_recv_attach_user_confirm(rdpMcs* mcs)
@@ -382,8 +382,8 @@ void mcs_recv_attach_user_confirm(rdpMcs* mcs)
 	uint8 result;
 	uint8 choice;
 
-	s = stream_new(32);
-	tls_read(mcs->transport->tls, s->data, s->size);
+	s = transport_recv_stream_init(mcs->transport, 32);
+	transport_read(mcs->transport, s);
 
 	tpkt_read_header(s);
 	tpdu_read_data(s);
@@ -397,7 +397,7 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 {
 	STREAM* s;
 	int length = 12;
-	s = stream_new(length);
+	s = transport_send_stream_init(mcs->transport, 12);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
@@ -407,7 +407,7 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
 	per_write_integer16(s, channel_id + MCS_BASE_CHANNEL_ID, 0);
 
-	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+	transport_write(mcs->transport, s);
 }
 
 void mcs_recv_channel_join_confirm(rdpMcs* mcs)
@@ -420,8 +420,8 @@ void mcs_recv_channel_join_confirm(rdpMcs* mcs)
 	uint16 requested;
 	uint16 channelId;
 
-	s = stream_new(32);
-	tls_read(mcs->transport->tls, s->data, s->size);
+	s = transport_recv_stream_init(mcs->transport, 32);
+	transport_read(mcs->transport, s);
 
 	tpkt_read_header(s);
 	tpdu_read_data(s);
@@ -440,8 +440,8 @@ void mcs_recv(rdpMcs* mcs)
 	uint8 result;
 	uint8 choice;
 
-	s = stream_new(32);
-	tls_read(mcs->transport->tls, s->data, s->size);
+	s = transport_recv_stream_init(mcs->transport, 1024);
+	transport_read(mcs->transport, s);
 }
 
 /**

@@ -37,6 +37,8 @@ set(LIBFREERDP_CORE_SRCS
 	settings.c
 	connection.c
 	connection.h
+	rdp.c
+	rdp.h
 	per.c
 	per.h
 	tcp.c

@@ -39,9 +39,25 @@
 
 #define BUFFER_SIZE 16384
 
-boolean transport_connect(rdpTransport* transport, const char* server, int port)
+STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
 {
-	return transport->tcp->connect(transport->tcp, server, port);
+	STREAM* s = transport->recv_stream;
+	stream_check_size(s, size);
+	stream_set_pos(s, 0);
+	return s;
+}
+
+STREAM* transport_send_stream_init(rdpTransport* transport, int size)
+{
+	STREAM* s = transport->send_stream;
+	stream_check_size(s, size);
+	stream_set_pos(s, 0);
+	return s;
+}
+
+boolean transport_connect(rdpTransport* transport, const uint8* hostname, uint16 port)
+{
+	return transport->tcp->connect(transport->tcp, hostname, port);
 }
 
 boolean transport_disconnect(rdpTransport* transport)
@@ -63,8 +79,8 @@ boolean transport_connect_tls(rdpTransport* transport)
 	if (transport->tls == NULL)
 		transport->tls = tls_new();
 
+	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->state = TRANSPORT_STATE_TLS;
-
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != True)
@@ -78,8 +94,8 @@ boolean transport_connect_nla(rdpTransport* transport)
 	if (transport->tls == NULL)
 		transport->tls = tls_new();
 
+	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->state = TRANSPORT_STATE_NLA;
-
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != True)
@@ -104,100 +120,35 @@ boolean transport_connect_nla(rdpTransport* transport)
 	return True;
 }
 
-static int transport_read(rdpTransport* transport);
-
-static int transport_delay(rdpTransport* transport)
+int transport_delay(rdpTransport* transport, STREAM* s)
 {
-	transport_read(transport);
+	transport_read(transport, s);
 	nanosleep(&transport->ts, NULL);
 	return 0;
 }
 
-static int transport_send_tls(rdpTransport* transport, STREAM * stream)
+int transport_read(rdpTransport* transport, STREAM* s)
 {
-	return 0;
+	int status = -1;
+
+	if (transport->layer == TRANSPORT_LAYER_TLS)
+		status = tls_read(transport->tls, s->data, s->size);
+	else if (transport->layer == TRANSPORT_LAYER_TCP)
+		status = tcp_read(transport->tcp, s->data, s->size);
+
+	return status;
 }
 
-static int transport_send_tcp(rdpTransport* transport, STREAM * stream)
+int transport_write(rdpTransport* transport, STREAM* s)
 {
-	int bytes;
-	uint8 * head;
-	uint8 * tail;
+	int status = -1;
 
-	head = stream_get_head(stream);
-	tail = stream_get_tail(stream);
+	if (transport->layer == TRANSPORT_LAYER_TLS)
+		status = tls_write(transport->tls, s->data, stream_get_length(s));
+	else if (transport->layer == TRANSPORT_LAYER_TCP)
+		status = tcp_write(transport->tcp, s->data, stream_get_length(s));
 
-	while (head < tail)
-	{
-		bytes = send(transport->tcp->sockfd, head, tail - head, MSG_NOSIGNAL);
-
-		if (bytes < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				if (transport_delay(transport) != 0)
-					return -1;
-
-				continue;
-			}
-
-			perror("send");
-			return -1;
-		}
-		head += bytes;
-	}
-
-	return 0;
-}
-
-int transport_send(rdpTransport* transport, STREAM * stream)
-{
-	int r;
-
-	if (transport->state == TRANSPORT_STATE_TLS)
-		r = transport_send_tls(transport, stream);
-	else
-		r = transport_send_tcp(transport, stream);
-
-	if (r == 0)
-		r = transport_check_fds(transport);
-
-	return r;
-}
-
-static int transport_read_tls(rdpTransport* transport)
-{
-	return 0;
-}
-
-static int transport_read_tcp(rdpTransport* transport)
-{
-	int bytes;
-
-	stream_check_size(transport->recv_buffer, BUFFER_SIZE);
-
-	bytes = recv(transport->tcp->sockfd, transport->recv_buffer->p, BUFFER_SIZE, 0);
-
-	if (bytes == -1)
-	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return 0;
-
-		perror("recv");
-		return -1;
-	}
-
-	stream_seek(transport->recv_buffer, bytes);
-	
-	return bytes;
-}
-
-static int transport_read(rdpTransport* transport)
-{
-	if (transport->state == TRANSPORT_STATE_TLS)
-		return transport_read_tls(transport);
-	else
-		return transport_read_tcp(transport);
+	return status;
 }
 
 int transport_check_fds(rdpTransport* transport)
@@ -207,7 +158,7 @@ int transport_check_fds(rdpTransport* transport)
 	uint16 length;
 	STREAM* received;
 
-	bytes = transport_read(transport);
+	bytes = transport_read(transport, transport->recv_buffer);
 
 	if (bytes <= 0)
 		return bytes;
@@ -260,6 +211,7 @@ int transport_check_fds(rdpTransport* transport)
 
 void transport_init(rdpTransport* transport)
 {
+	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->state = TRANSPORT_STATE_NEGO;
 }
 
@@ -280,6 +232,10 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		/* receive buffer for non-blocking read. */
 		transport->recv_buffer = stream_new(BUFFER_SIZE);
+
+		/* buffers for blocking read/write */
+		transport->recv_stream = stream_new(BUFFER_SIZE);
+		transport->send_stream = stream_new(BUFFER_SIZE);
 	}
 
 	return transport;
@@ -290,6 +246,8 @@ void transport_free(rdpTransport* transport)
 	if (transport != NULL)
 	{
 		stream_free(transport->recv_buffer);
+		stream_free(transport->recv_stream);
+		stream_free(transport->send_stream);
 		tcp_free(transport->tcp);
 		xfree(transport);
 	}

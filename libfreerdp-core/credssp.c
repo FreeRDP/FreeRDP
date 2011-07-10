@@ -340,12 +340,11 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 
 void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
+	STREAM* s;
+	size_t size;
 	TSRequest_t *ts_request;
 	OCTET_STRING_t *nego_token;
 	asn_enc_rval_t enc_rval;
-
-	char* buffer;
-	size_t size;
 
 	ts_request = calloc(1, sizeof(TSRequest_t));
 	ts_request->version = 2;
@@ -380,17 +379,17 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* 
 	if (enc_rval.encoded != -1)
 	{
 		size = enc_rval.encoded;
-		buffer = xmalloc(size);
+		s = transport_send_stream_init(credssp->transport, size);
 
-		enc_rval = der_encode_to_buffer(&asn_DEF_TSRequest, ts_request, buffer, size);
+		enc_rval = der_encode_to_buffer(&asn_DEF_TSRequest, ts_request, s->data, size);
 
 		if (enc_rval.encoded != -1)
 		{
-			tls_write(credssp->transport->tls, buffer, size);
+			s->p = s->data + size;
+			transport_write(credssp->transport, s);
 		}
 
 		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
-		xfree(buffer);
 	}
 }
 
@@ -405,19 +404,18 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* 
 
 int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
-	int bytes_read;
-	int size = 2048;
-	char *recv_buffer;
+	STREAM* s;
+	int status;
 	asn_dec_rval_t dec_rval;
 	TSRequest_t *ts_request = 0;
 
-	recv_buffer = xmalloc(size);
-	bytes_read = tls_read(credssp->transport->tls, recv_buffer, size);
+	s = transport_recv_stream_init(credssp->transport, 2048);
+	status = transport_read(credssp->transport, s);
 
-	if (bytes_read < 0)
+	if (status < 0)
 		return -1;
 
-	dec_rval = ber_decode(0, &asn_DEF_TSRequest, (void **)&ts_request, recv_buffer, bytes_read);
+	dec_rval = ber_decode(0, &asn_DEF_TSRequest, (void **)&ts_request, s->data, status);
 
 	if(dec_rval.code == RC_OK)
 	{
@@ -444,7 +442,6 @@ int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* a
 		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
 	}
 
-	xfree(recv_buffer);
 	return 0;
 }
 
