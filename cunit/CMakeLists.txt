@@ -33,6 +33,8 @@ add_executable(test_freerdp
 	test_mcs.h
 	test_color.c
 	test_color.h
+	test_bitmap.c
+	test_bitmap.h
 	test_libgdi.c
 	test_libgdi.h
 	test_list.c

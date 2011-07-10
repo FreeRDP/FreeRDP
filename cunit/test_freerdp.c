@@ -24,6 +24,7 @@
 #include "test_gcc.h"
 #include "test_mcs.h"
 #include "test_color.h"
+#include "test_bitmap.h"
 #include "test_libgdi.h"
 #include "test_list.h"
 #include "test_stream.h"
@@ -115,6 +116,7 @@ int main(int argc, char* argv[])
 		add_gcc_suite();
 		add_mcs_suite();
 		add_color_suite();
+		add_bitmap_suite();
 		add_libgdi_suite();
 		add_list_suite();
 		add_stream_suite();
@@ -129,6 +131,10 @@ int main(int argc, char* argv[])
 			if (strcmp("color", argv[*pindex]) == 0)
 			{
 				add_color_suite();
+			}
+			if (strcmp("bitmap", argv[*pindex]) == 0)
+			{
+				add_bitmap_suite();
 			}
 			else if (strcmp("libgdi", argv[*pindex]) == 0)
 			{
