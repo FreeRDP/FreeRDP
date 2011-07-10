@@ -72,6 +72,22 @@
  * 	conferenceMode			ConferenceMode OPTIONAL
  * }
  *
+ * ConferenceCreateResponse ::= SEQUENCE
+ * {
+ * 	nodeID				UserID,
+ * 	tag				INTEGER,
+ * 	result				ENUMERATED
+ * 	{
+ * 		success				(0),
+ * 		userRejected			(1),
+ * 		resourcesNotAvailable		(2),
+ * 		rejectedForSymmetryBreaking	(3),
+ * 		lockedConferenceNotSupported	(4)
+ * 	},
+ * 	userData			UserData OPTIONAL,
+ * 	...
+ * }
+ *
  * ConferenceName ::= SEQUENCE
  * {
  * 	numeric				SimpleNumericString
@@ -89,6 +105,12 @@
  *
  * H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
  *
+ * UserID ::= DynamicChannelID
+ *
+ * ChannelID ::= INTEGER (1..65535)
+ * StaticChannelID ::= INTEGER (1..1000)
+ * DynamicChannelID ::= INTEGER (1001..65535)
+ *
  */
 
 /*
@@ -98,6 +120,9 @@
  */
 uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
+uint8 h221_cs_key[4] = "Duca";
+uint8 h221_sc_key[4] = "McDn";
+
 /**
  * Write a GCC Conference Create Request.\n
  * @msdn{cc240836}
@@ -105,7 +130,7 @@ uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
  * @param user_data client data blocks
  */
 
-void gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
+void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 {
 	/* ConnectData */
 	per_write_choice(s, 0); /* From Key select object (0) of type OBJECT_IDENTIFIER */
@@ -127,10 +152,93 @@ void gcc_write_create_conference_request(STREAM* s, STREAM* user_data)
 	per_write_choice(s, 0xC0); /* UserData::value present + select h221NonStandard (1) */
 
 	/* h221NonStandard */
-	per_write_octet_string(s, "Duca", 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
+	per_write_octet_string(s, h221_cs_key, 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
 
 	/* userData::value (OCTET_STRING) */
 	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of client data blocks */
+}
+
+void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
+{
+	int length;
+	uint32 tag;
+	uint16 nodeID;
+	uint8 result;
+	uint8 choice;
+	uint8 selection;
+	uint8 number;
+
+	/* ConnectData */
+	per_read_choice(s, &choice);
+	per_read_object_identifier(s, t124_02_98_oid);
+
+	/* ConnectData::connectPDU (OCTET_STRING) */
+	per_read_length(s, &length);
+
+	/* ConnectGCCPDU */
+	per_read_choice(s, &choice);
+
+	/* ConferenceCreateResponse::nodeID (UserID) */
+	per_read_integer16(s, &nodeID, 1001);
+
+	/* ConferenceCreateResponse::tag (INTEGER) */
+	per_read_integer(s, &tag);
+
+	/* ConferenceCreateResponse::result (ENUMERATED) */
+	per_read_enumerated(s, &result);
+
+	/* number of UserData sets */
+	per_read_number_of_sets(s, &number);
+
+	/* UserData::value present + select h221NonStandard (1) */
+	per_read_choice(s, &choice);
+
+	/* h221NonStandard */
+	per_read_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
+
+	/* userData (OCTET_STRING) */
+	per_read_length(s, &length);
+
+	printf("server core data, length:%d\n", length);
+	gcc_read_server_data_blocks(s, settings, length);
+}
+
+void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)
+{
+	uint16 type;
+	uint16 offset = 0;
+	uint16 blockLength;
+
+	while (offset < length)
+	{
+		gcc_read_user_data_header(s, &type, &blockLength);
+
+		switch (type)
+		{
+			case SC_CORE:
+				gcc_read_server_core_data(s, settings);
+				break;
+
+			case SC_SECURITY:
+				gcc_read_server_security_data(s, settings);
+				break;
+
+			case SC_NET:
+				gcc_read_server_network_data(s, settings);
+				break;
+
+			default:
+				break;
+		}
+
+		offset += blockLength;
+	}
+}
+
+void gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
+{
+	stream_read_uint16(s, *type); /* type */
+	stream_read_uint16(s, *length); /* length */
 }
 
 /**
@@ -246,6 +354,20 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	stream_write_uint32(s, settings->selected_protocol); /* serverSelectedProtocol */
 }
 
+void gcc_read_server_core_data(STREAM* s, rdpSettings *settings)
+{
+	uint32 version;
+	uint32 clientRequestedProtocols;
+
+	stream_read_uint32(s, version); /* version */
+	stream_read_uint32(s, clientRequestedProtocols); /* clientRequestedProtocols */
+
+	if (version == RDP_VERSION_4 && settings->rdp_version > 4)
+		settings->rdp_version = 4;
+	else if (version == RDP_VERSION_5_PLUS && settings->rdp_version < 5)
+		settings->rdp_version = 7;
+}
+
 /**
  * Write a client security data block (TS_UD_CS_SEC).\n
  * @msdn{cc240511}
@@ -267,6 +389,41 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 		/* French locale, disable encryption */
 		stream_write_uint32(s, 0); /* encryptionMethods */
 		stream_write_uint32(s, settings->encryption_methods); /* extEncryptionMethods */
+	}
+}
+
+void gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
+{
+	uint32 encryptionMethod;
+	uint32 encryptionLevel;
+	uint32 serverRandomLen;
+	uint32 serverCertLen;
+
+	stream_read_uint32(s, encryptionMethod); /* encryptionMethod */
+	stream_read_uint32(s, encryptionLevel); /* encryptionLevel */
+	stream_read_uint32(s, serverRandomLen); /* serverRandomLen */
+	stream_read_uint32(s, serverCertLen); /* serverCertLen */
+
+	if (encryptionMethod == 0 && encryptionLevel == 0)
+	{
+		/* serverRandom and serverRandom must not be present */
+		return;
+	}
+
+	if (serverRandomLen > 0)
+	{
+		/* serverRandom */
+		freerdp_blob_alloc(&settings->server_random, serverRandomLen);
+		memcpy(settings->server_random.data, s->p, serverRandomLen);
+		stream_seek(s, serverRandomLen);
+	}
+
+	if (serverCertLen > 0)
+	{
+		/* serverCertificate */
+		freerdp_blob_alloc(&settings->server_certificate, serverCertLen);
+		memcpy(settings->server_certificate.data, s->p, serverCertLen);
+		stream_seek(s, serverCertLen);
 	}
 }
 
@@ -297,6 +454,37 @@ void gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 			stream_write_uint32(s, settings->channels[i].options); /* options (4 bytes) */
 		}
 	}
+}
+
+void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
+{
+	int i;
+	uint16 MCSChannelId;
+	uint16 channelCount;
+	uint16 channelId;
+
+	stream_read_uint16(s, MCSChannelId); /* MCSChannelId */
+	stream_read_uint16(s, channelCount); /* channelCount */
+
+	if (channelCount != settings->num_channels)
+	{
+		printf("requested %d channels, got %d instead\n",
+				settings->num_channels, channelCount);
+	}
+
+	for (i = 0; i < channelCount; i++)
+	{
+		stream_read_uint16(s, channelId); /* channelId */
+
+		if (channelId != settings->channels[i].chan_id)
+		{
+			printf("channel %d is %d, but %d was expected\n",
+					i, channelId, settings->channels[i].chan_id);
+		}
+	}
+
+	if (channelCount % 2 == 1)
+		stream_seek(s, 2); /* padding */
 }
 
 /**

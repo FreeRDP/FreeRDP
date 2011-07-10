@@ -39,7 +39,7 @@ int add_gcc_suite(void)
 {
 	add_test_suite(gcc);
 
-	add_test_function(gcc_write_create_conference_request);
+	add_test_function(gcc_write_conference_create_request);
 	add_test_function(gcc_write_client_core_data);
 	add_test_function(gcc_write_client_security_data);
 	add_test_function(gcc_write_client_cluster_data);
@@ -68,7 +68,7 @@ uint8 gcc_user_data[284] =
 	"\x00\x00\x80\x80\x63\x6c\x69\x70\x72\x64\x72\x00\x00\x00\xA0\xC0"
 	"\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
-uint8 gcc_create_conference_request_expected[307] =
+uint8 gcc_conference_create_request_expected[307] =
 	"\x00\x05\x00\x14\x7C\x00\x01\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
 	"\x00\x44\x75\x63\x61\x81\x1c\x01\xc0\xd8\x00\x04\x00\x08\x00\x00"
 	"\x05\x00\x04\x01\xCA\x03\xAA\x09\x04\x00\x00\xCE\x0E\x00\x00\x45"
@@ -90,7 +90,7 @@ uint8 gcc_create_conference_request_expected[307] =
 	"\x64\x72\x00\x00\x00\xA0\xC0\x72\x64\x70\x73\x6e\x64\x00\x00\x00"
 	"\x00\x00\xc0";
 
-void test_gcc_write_create_conference_request(void)
+void test_gcc_write_conference_create_request(void)
 {
 	STREAM* s;
 	STREAM user_data;
@@ -99,10 +99,10 @@ void test_gcc_write_create_conference_request(void)
 	user_data.size = sizeof(gcc_user_data);
 	user_data.p = user_data.data + user_data.size;
 
-	s = stream_new(sizeof(gcc_create_conference_request_expected));
+	s = stream_new(sizeof(gcc_conference_create_request_expected));
 
-	gcc_write_create_conference_request(s, &user_data);
-	ASSERT_STREAM(s, (uint8*) gcc_create_conference_request_expected, sizeof(gcc_create_conference_request_expected));
+	gcc_write_conference_create_request(s, &user_data);
+	ASSERT_STREAM(s, (uint8*) gcc_conference_create_request_expected, sizeof(gcc_conference_create_request_expected));
 }
 
 uint8 gcc_client_core_data_expected[216] =

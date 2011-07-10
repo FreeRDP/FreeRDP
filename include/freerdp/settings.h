@@ -21,6 +21,7 @@
 #define __RDP_SETTINGS_H
 
 #include <freerdp/types.h>
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/unicode.h>
 
 /* Performance Flags */
@@ -76,6 +77,9 @@ struct rdp_settings
 	uint32 client_build;
 	uint32 selected_protocol;
 	uint32 encryption_methods;
+
+	BLOB server_random;
+	BLOB server_certificate;
 
 	int console_session;
 	uint32 redirected_session_id;

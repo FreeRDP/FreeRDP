@@ -99,12 +99,17 @@
 /* Monitor Flags */
 #define MONITOR_PRIMARY				0x00000001
 
-void gcc_write_create_conference_request(STREAM* s, STREAM* user_data);
-
+void gcc_write_conference_create_request(STREAM* s, STREAM* user_data);
+void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings);
+void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length);
+void gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length);
 void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length);
 void gcc_write_client_core_data(STREAM* s, rdpSettings *settings);
+void gcc_read_server_core_data(STREAM* s, rdpSettings *settings);
 void gcc_write_client_security_data(STREAM* s, rdpSettings *settings);
+void gcc_read_server_security_data(STREAM* s, rdpSettings *settings);
 void gcc_write_client_network_data(STREAM* s, rdpSettings *settings);
+void gcc_read_server_network_data(STREAM* s, rdpSettings *settings);
 void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings);
 void gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings);
 
