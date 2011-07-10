@@ -158,7 +158,7 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of client data blocks */
 }
 
-void gcc_read_conference_create_response(STREAM* s)
+void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 {
 	int length;
 	uint32 tag;
@@ -200,6 +200,45 @@ void gcc_read_conference_create_response(STREAM* s)
 	per_read_length(s, &length);
 
 	printf("server core data, length:%d\n", length);
+	gcc_read_server_data_blocks(s, settings, length);
+}
+
+void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)
+{
+	uint16 type;
+	uint16 offset = 0;
+	uint16 blockLength;
+
+	while (offset < length)
+	{
+		gcc_read_user_data_header(s, &type, &blockLength);
+
+		switch (type)
+		{
+			case SC_CORE:
+				gcc_read_server_core_data(s, settings);
+				break;
+
+			case SC_SECURITY:
+				gcc_read_server_security_data(s, settings);
+				break;
+
+			case SC_NET:
+				gcc_read_server_network_data(s, settings);
+				break;
+
+			default:
+				break;
+		}
+
+		offset += blockLength;
+	}
+}
+
+void gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
+{
+	stream_read_uint16(s, *type); /* type */
+	stream_read_uint16(s, *length); /* length */
 }
 
 /**
@@ -315,6 +354,20 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	stream_write_uint32(s, settings->selected_protocol); /* serverSelectedProtocol */
 }
 
+void gcc_read_server_core_data(STREAM* s, rdpSettings *settings)
+{
+	uint32 version;
+	uint32 clientRequestedProtocols;
+
+	stream_read_uint32(s, version); /* version */
+	stream_read_uint32(s, clientRequestedProtocols); /* clientRequestedProtocols */
+
+	if (version == RDP_VERSION_4 && settings->rdp_version > 4)
+		settings->rdp_version = 4;
+	else if (version == RDP_VERSION_5_PLUS && settings->rdp_version < 5)
+		settings->rdp_version = 7;
+}
+
 /**
  * Write a client security data block (TS_UD_CS_SEC).\n
  * @msdn{cc240511}
@@ -336,6 +389,41 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 		/* French locale, disable encryption */
 		stream_write_uint32(s, 0); /* encryptionMethods */
 		stream_write_uint32(s, settings->encryption_methods); /* extEncryptionMethods */
+	}
+}
+
+void gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
+{
+	uint32 encryptionMethod;
+	uint32 encryptionLevel;
+	uint32 serverRandomLen;
+	uint32 serverCertLen;
+
+	stream_read_uint32(s, encryptionMethod); /* encryptionMethod */
+	stream_read_uint32(s, encryptionLevel); /* encryptionLevel */
+	stream_read_uint32(s, serverRandomLen); /* serverRandomLen */
+	stream_read_uint32(s, serverCertLen); /* serverCertLen */
+
+	if (encryptionMethod == 0 && encryptionLevel == 0)
+	{
+		/* serverRandom and serverRandom must not be present */
+		return;
+	}
+
+	if (serverRandomLen > 0)
+	{
+		/* serverRandom */
+		freerdp_blob_alloc(&settings->server_random, serverRandomLen);
+		memcpy(settings->server_random.data, s->p, serverRandomLen);
+		stream_seek(s, serverRandomLen);
+	}
+
+	if (serverCertLen > 0)
+	{
+		/* serverCertificate */
+		freerdp_blob_alloc(&settings->server_certificate, serverCertLen);
+		memcpy(settings->server_certificate.data, s->p, serverCertLen);
+		stream_seek(s, serverCertLen);
 	}
 }
 
@@ -366,6 +454,37 @@ void gcc_write_client_network_data(STREAM* s, rdpSettings *settings)
 			stream_write_uint32(s, settings->channels[i].options); /* options (4 bytes) */
 		}
 	}
+}
+
+void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
+{
+	int i;
+	uint16 MCSChannelId;
+	uint16 channelCount;
+	uint16 channelId;
+
+	stream_read_uint16(s, MCSChannelId); /* MCSChannelId */
+	stream_read_uint16(s, channelCount); /* channelCount */
+
+	if (channelCount != settings->num_channels)
+	{
+		printf("requested %d channels, got %d instead\n",
+				settings->num_channels, channelCount);
+	}
+
+	for (i = 0; i < channelCount; i++)
+	{
+		stream_read_uint16(s, channelId); /* channelId */
+
+		if (channelId != settings->channels[i].chan_id)
+		{
+			printf("channel %d is %d, but %d was expected\n",
+					i, channelId, settings->channels[i].chan_id);
+		}
+	}
+
+	if (channelCount % 2 == 1)
+		stream_seek(s, 2); /* padding */
 }
 
 /**

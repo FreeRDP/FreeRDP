@@ -293,7 +293,7 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 
 	ber_read_octet_string(s, &length);
 
-	gcc_read_conference_create_response(s);
+	gcc_read_conference_create_response(s, mcs->transport->settings);
 }
 
 /**
