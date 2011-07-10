@@ -22,9 +22,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/debug.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #ifdef WITH_DEBUG_SVC
@@ -50,6 +52,7 @@ struct rdp_svc_plugin_private
 {
 	void* init_handle;
 	uint32 open_handle;
+	STREAM* data_in;
 };
 
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
@@ -116,7 +119,29 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint32 dataLength,
 	uint32 totalLength, uint32 dataFlags)
 {
-	plugin->receive_callback(plugin, (uint8*)pData, dataLength);
+	STREAM* data_in;
+
+	if (dataFlags & CHANNEL_FLAG_FIRST)
+	{
+		if (plugin->priv->data_in != NULL)
+			stream_free(plugin->priv->data_in);
+		plugin->priv->data_in = stream_new(totalLength);
+	}
+
+	data_in = plugin->priv->data_in;
+	stream_check_size(data_in, dataLength);
+	stream_write(data_in, pData, dataLength);
+
+	if (dataFlags & CHANNEL_FLAG_LAST)
+	{
+		if (stream_get_size(data_in) != stream_get_length(data_in))
+		{
+			printf("svc_plugin_process_received: read error\n");
+		}
+		/* the stream ownership is passed to the callback who is responsible for freeing it. */
+		plugin->priv->data_in = NULL;
+		plugin->receive_callback(plugin, data_in);
+	}
 }
 
 static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, uint32 dataLength,
@@ -124,7 +149,8 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 {
 	rdpSvcPlugin* plugin;
 
-	DEBUG_SVC("event %d dataLength %d", event, dataLength);
+	DEBUG_SVC("openHandle %d event %d dataLength %d totalLength %d dataFlags %d",
+		openHandle, event, dataLength, totalLength, dataFlags);
 
 	plugin = (rdpSvcPlugin*)svc_plugin_find_by_open_handle(openHandle);
 	if (plugin == NULL)
@@ -160,9 +186,17 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 {
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
+
 	svc_plugin_remove(plugin);
+
+	if (plugin->priv->data_in != NULL)
+	{
+		stream_free(plugin->priv->data_in);
+		plugin->priv->data_in = NULL;
+	}
 	xfree(plugin->priv);
 	plugin->priv = NULL;
+
 	plugin->terminate_callback(plugin);
 }
 

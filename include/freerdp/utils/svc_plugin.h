@@ -24,6 +24,7 @@
 /* static channel plugin base implementation */
 
 #include <freerdp/svc.h>
+#include <freerdp/utils/stream.h>
 
 typedef struct rdp_svc_plugin_private rdpSvcPluginPrivate;
 typedef struct rdp_svc_plugin rdpSvcPlugin;
@@ -33,7 +34,7 @@ struct rdp_svc_plugin
 	CHANNEL_DEF channel_def;
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
-	void (*receive_callback)(rdpSvcPlugin* plugin, uint8* data, int size);
+	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	rdpSvcPluginPrivate* priv;

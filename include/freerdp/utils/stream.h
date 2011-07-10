@@ -50,6 +50,7 @@ stream_extend(STREAM * stream);
 #define stream_get_head(_s) _s->data
 #define stream_get_tail(_s) _s->p
 #define stream_get_length(_s) (_s->p - _s->data)
+#define stream_get_size(_s) (_s->size)
 
 #define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
 #define stream_read_uint16(_s, _v) do { _v = \
