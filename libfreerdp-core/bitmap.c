@@ -428,21 +428,21 @@ int bitmap_decompress(void* inst, uint8* output, int width, int height,
 	else if (in_bpp == 15 && out_bpp == 15)
 	{
 		data = (uint8*)xmalloc(width * height * 2);
-		RleDecompress16to16(input, size, output, width * 2, width, height);
+		RleDecompress16to16(input, size, data, width * 2, width, height);
 		bitmap_flip(data, output, width * 2, height);
 		xfree(data);
 	}
 	else if (in_bpp == 8 && out_bpp == 8)
 	{
 		data = (uint8*)xmalloc(width * height);
-		RleDecompress8to8(input, size, output, width, width, height);
+		RleDecompress8to8(input, size, data, width, width, height);
 		bitmap_flip(data, output, width, height);
 		xfree(data);
 	}
 	else if (in_bpp == 24 && out_bpp == 24)
 	{
 		data = (uint8*)xmalloc(width * height * 3);
-		RleDecompress24to24(input, size, output, width * 3, width, height);
+		RleDecompress24to24(input, size, data, width * 3, width, height);
 		bitmap_flip(data, output, width * 3, height);
 		xfree(data);
 	}
