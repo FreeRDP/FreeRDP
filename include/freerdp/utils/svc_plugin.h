@@ -35,6 +35,7 @@ struct rdp_svc_plugin
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
+	void (*event_callback)(rdpSvcPlugin* plugin, void* data, int size);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	rdpSvcPluginPrivate* priv;

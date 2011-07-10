@@ -766,6 +766,36 @@ int freerdp_chanman_data(rdpInst* inst, int chan_id, char* data, int data_size,
 }
 
 /**
+ * Send a plugin-defined event to the plugin.
+ * called only from main thread
+ * @param chan_man the channel manager instance
+ * @param name the static virtual channel name, such as 'cliprdr'
+ * @param event plugin-defined event id, defined as CHANNEL_EVENT_USER + n
+ * @param data arbitrary buffer or struct to be passed to the plugin
+ * @param data_size the size of the data argument
+ */
+FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* name, uint32 event,
+	void* data, int data_size)
+{
+	struct chan_data* lchan_data;
+	int index;
+
+	lchan_data = freerdp_chanman_find_chan_data_by_name(chan_man, name, &index);
+	if (lchan_data == NULL)
+	{
+		DEBUG_CHANMAN("could not find channel name %s", name);
+		return 1;
+	}
+	if (lchan_data->open_event_proc != NULL)
+	{
+		lchan_data->open_event_proc(lchan_data->open_handle,
+			event,
+			data, data_size, data_size, 0);
+	}
+	return 0;
+}
+
+/**
  * called only from main thread
  */
 static void freerdp_chanman_process_sync(rdpChanMan* chan_man, rdpInst* inst)

@@ -72,6 +72,8 @@ void test_chanman(void)
 
 	freerdp_chanman_check_fds(chan_man, &inst);
 
+	freerdp_chanman_send_event(chan_man, "rdpdbg", CHANNEL_EVENT_USER + 1, "testevent", 9);
+
 	freerdp_chanman_close(chan_man, NULL);
 	freerdp_chanman_free(chan_man);
 }

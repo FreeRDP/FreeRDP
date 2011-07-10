@@ -22,7 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/constants.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/svc_plugin.h>
 
 typedef struct rdpdbg_plugin rdpdbgPlugin;
@@ -48,6 +50,12 @@ static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	svc_plugin_send(plugin, data_out);
 }
 
+static void rdpdbg_process_event(rdpSvcPlugin* plugin, void* data, int size)
+{
+	printf("rdpdbg_process_event: size %d\n", size);
+	freerdp_hexdump(data, size);
+}
+
 static void rdpdbg_process_terminate(rdpSvcPlugin* plugin)
 {
 	printf("rdpdbg_process_terminate\n");
@@ -69,6 +77,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	rdpdbg->plugin.connect_callback = rdpdbg_process_connect;
 	rdpdbg->plugin.receive_callback = rdpdbg_process_receive;
+	rdpdbg->plugin.event_callback = rdpdbg_process_event;
 	rdpdbg->plugin.terminate_callback = rdpdbg_process_terminate;
 
 	svc_plugin_init((rdpSvcPlugin*)rdpdbg);

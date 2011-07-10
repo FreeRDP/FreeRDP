@@ -40,6 +40,8 @@ FREERDP_API int freerdp_chanman_pre_connect(rdpChanMan* chan_man, rdpInst* inst)
 FREERDP_API int freerdp_chanman_post_connect(rdpChanMan* chan_man, rdpInst* inst);
 FREERDP_API int freerdp_chanman_data(rdpInst* inst, int chan_id, char* data, int data_size,
 	int flags, int total_size);
+FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* name, uint32 event,
+	void* data, int data_size);
 FREERDP_API int freerdp_chanman_get_fds(rdpChanMan* chan_man, rdpInst* inst, void** read_fds,
 	int* read_count, void** write_fds, int* write_count);
 FREERDP_API int freerdp_chanman_check_fds(rdpChanMan* chan_man, rdpInst* inst);

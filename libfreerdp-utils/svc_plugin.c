@@ -159,14 +159,21 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 		printf("svc_plugin_open_event: error no match\n");
 		return;
 	}
-	switch (event)
+	if (event >= CHANNEL_EVENT_USER)
 	{
-		case CHANNEL_EVENT_DATA_RECEIVED:
-			svc_plugin_process_received(plugin, pData, dataLength, totalLength, dataFlags);
-			break;
-		case CHANNEL_EVENT_WRITE_COMPLETE:
-			stream_free((STREAM*)pData);
-			break;
+		plugin->event_callback(plugin, pData, dataLength);
+	}
+	else
+	{
+		switch (event)
+		{
+			case CHANNEL_EVENT_DATA_RECEIVED:
+				svc_plugin_process_received(plugin, pData, dataLength, totalLength, dataFlags);
+				break;
+			case CHANNEL_EVENT_WRITE_COMPLETE:
+				stream_free((STREAM*)pData);
+				break;
+		}
 	}
 }
 
