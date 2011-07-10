@@ -70,8 +70,23 @@ char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len)
 
 char* freerdp_uniconv_out(UNICONV *uniconv, char *str, size_t *pout_len)
 {
-	size_t ibl = strlen(str), obl = 2 * ibl; /* FIXME: worst case */
-	char *pin = str, *pout0 = xmalloc(obl + 2), *pout = pout0;
+	size_t ibl;
+	size_t obl;
+	char* pin;
+	char* pout;
+	char* pout0;
+
+	if (str == NULL)
+	{
+		*pout_len = 0;
+		return NULL;
+	}
+
+	ibl = strlen(str);
+	obl = 2 * ibl;
+	pin = str;
+	pout0 = xmalloc(obl + 2);
+	pout = pout0;
 
 #ifdef HAVE_ICONV
 	if (iconv(uniconv->out_iconv_h, (ICONV_CONST char **) &pin, &ibl, &pout, &obl) == (size_t) - 1)
@@ -99,8 +114,9 @@ char* freerdp_uniconv_out(UNICONV *uniconv, char *str, size_t *pout_len)
 	}
 
 	*pout_len = pout - pout0;
-	*pout++ = 0;	/* Add extra double zero termination */
+	*pout++ = 0; /* Add extra double zero termination */
 	*pout = 0;
+
 	return pout0;
 }
 

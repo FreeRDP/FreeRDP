@@ -41,6 +41,43 @@
 #define ENCRYPTION_56BIT_FLAG			0x00000008
 #define ENCRYPTION_FIPS_FLAG			0x00000010
 
+/* Auto Reconnect Version */
+#define AUTO_RECONNECT_VERSION_1		0x00000001
+
+/* SYSTEM_TIME */
+typedef struct
+{
+	uint16 wYear;
+	uint16 wMonth;
+	uint16 wDayOfWeek;
+	uint16 wDay;
+	uint16 wHour;
+	uint16 wMinute;
+	uint16 wSecond;
+	uint16 wMilliseconds;
+} SYSTEM_TIME;
+
+/* TIME_ZONE_INFORMATION */
+typedef struct
+{
+	uint32 bias;
+	uint8 standardName[32];
+	SYSTEM_TIME standardDate;
+	uint32 standardBias;
+	uint8 daylightName[32];
+	SYSTEM_TIME daylightDate;
+	uint32 daylightBias;
+} TIME_ZONE_INFORMATION;
+
+/* ARC_CS_PRIVATE_PACKET */
+typedef struct
+{
+	uint32 cbLen;
+	uint32 version;
+	uint32 logonId;
+	uint8 securityVerifier[16];
+} ARC_CS_PRIVATE_PACKET;
+
 struct rdp_chan
 {
 	char name[8]; /* ui sets */
@@ -81,7 +118,7 @@ struct rdp_settings
 	BLOB server_random;
 	BLOB server_certificate;
 
-	int console_session;
+	boolean console_session;
 	uint32 redirected_session_id;
 
 	int num_channels;
@@ -90,24 +127,34 @@ struct rdp_settings
 	int num_monitors;
 	struct rdp_monitor monitors[16];
 
+	struct rdp_ext_set extensions[16];
+
 	UNICONV* uniconv;
 	char client_hostname[32];
 	char client_product_id[32];
 
-	char* hostname;
-	char* username;
-	char* password;
-	char* domain;
+	uint16 port;
+	uint8* hostname;
+	uint8* username;
+	uint8* password;
+	uint8* domain;
+	uint8* shell;
+	uint8* directory;
+	uint32 performance_flags;
 
-	char shell[256];
-	char directory[256];
-	int performance_flags;
-	int tcp_port_rdp;
+	boolean autologon;
+	boolean compression;
 
-	int encryption;
-	int tls_security;
-	int nla_security;
-	int rdp_security;
+	boolean ipv6;
+	uint8* ip_address;
+	uint8* client_dir;
+	TIME_ZONE_INFORMATION client_time_zone;
+	ARC_CS_PRIVATE_PACKET auto_reconnect_cookie;
+
+	boolean encryption;
+	boolean tls_security;
+	boolean nla_security;
+	boolean rdp_security;
 
 	int remote_app;
 	char app_name[64];
@@ -117,18 +164,15 @@ struct rdp_settings
 	int bitmap_compression;
 	int desktop_save;
 	int polygon_ellipse_orders;
-	int autologin;
 	int console_audio;
 	int off_screen_bitmaps;
 	int triblt;
 	int new_cursors;
 	int mouse_motion;
-	int bulk_compression;
 	int rfx_flags;
 	int ui_decode_flags;
 	int use_frame_ack;
 	int software_gdi;
-	struct rdp_ext_set extensions[16];
 };
 typedef struct rdp_settings rdpSettings;
 

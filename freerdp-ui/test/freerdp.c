@@ -25,27 +25,13 @@
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
-rdpMcs* mcs;
-rdpNego* nego;
-rdpSettings* settings;
-rdpTransport* transport;
-rdpConnection* connection;
-
 int main(int argc, char* argv[])
 {
-	int i;
-	char* username;
-	char* hostname;
-	char* password;
-	uint16 channelId;
+	rdpSettings* settings;
+	rdpConnection* connection;
 
 	settings = settings_new();
-	transport = transport_new(settings);
-	nego = nego_new(transport);
-	connection = connection_new();
-	connection->nego = nego;
-	connection->settings = settings;
-	connection->transport = transport;
+	connection = connection_new(settings);
 
 	if (argc < 4)
 	{
@@ -53,25 +39,20 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	hostname = (char*) xmalloc(strlen(argv[1]));
-	memcpy(hostname, argv[1], strlen(argv[1]));
-	hostname[strlen(argv[1])] = '\0';
+	settings->hostname = (uint8*) xmalloc(strlen(argv[1]));
+	memcpy(settings->hostname, argv[1], strlen(argv[1]));
+	settings->hostname[strlen(argv[1])] = '\0';
 
-	username = (char*) xmalloc(strlen(argv[2]));
-	memcpy(username, argv[2], strlen(argv[2]));
-	username[strlen(argv[2])] = '\0';
+	settings->username = (uint8*) xmalloc(strlen(argv[2]));
+	memcpy(settings->username, argv[2], strlen(argv[2]));
+	settings->username[strlen(argv[2])] = '\0';
 
-	password = (char*) xmalloc(strlen(argv[3]));
-	memcpy(password, argv[3], strlen(argv[3]));
-	password[strlen(argv[3])] = '\0';
+	settings->password = (uint8*) xmalloc(strlen(argv[3]));
+	memcpy(settings->password, argv[3], strlen(argv[3]));
+	settings->password[strlen(argv[3])] = '\0';
 
 	printf("hostname: %s username: %s password: %s\n",
-			hostname, username, password);
-
-	settings->hostname = hostname;
-	settings->username = username;
-	settings->password = password;
-	settings->domain = NULL;
+			settings->hostname, settings->username, settings->password);
 
 	connection_client_connect(connection);
 

@@ -110,6 +110,30 @@
  * 	channelId			ChannelId OPTIONAL
  * }
  *
+ * SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
+ * {
+ * 	initiator			UserId,
+ * 	channelId			ChannelId,
+ * 	dataPriority			DataPriority,
+ * 	segmentation			Segmentation,
+ * 	userData			OCTET_STRING
+ * }
+ *
+ * DataPriority ::= CHOICE
+ * {
+ * 	top				NULL,
+ * 	high				NULL,
+ * 	medium				NULL,
+ * 	low				NULL,
+ * 	...
+ * }
+ *
+ * Segmentation ::= BIT_STRING
+ * {
+ * 	begin				(0),
+ * 	end				(1)
+ * } (SIZE(2))
+ *
  */
 
 uint8 callingDomainSelector[1] = "\x01";
@@ -289,7 +313,7 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	stream_set_mark(s, bm);
 
 	tpkt_write_header(s, length);
-	tpdu_write_data(s, length - 5);
+	tpdu_write_data(s);
 	stream_set_mark(s, em);
 
 	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
@@ -326,7 +350,7 @@ void mcs_send_erect_domain_request(rdpMcs* mcs)
 	s = stream_new(length);
 
 	tpkt_write_header(s, length);
-	tpdu_write_data(s, length - 5);
+	tpdu_write_data(s);
 
 	/* DomainMCSPDU, ErectDomainRequest */
 	per_write_choice(s, DomainMCSPDU_ErectDomainRequest << 2);
@@ -343,7 +367,7 @@ void mcs_send_attach_user_request(rdpMcs* mcs)
 	s = stream_new(length);
 
 	tpkt_write_header(s, length);
-	tpdu_write_data(s, length - 5);
+	tpdu_write_data(s);
 
 	/* DomainMCSPDU, AttachUserRequest */
 	per_write_choice(s, DomainMCSPDU_AttachUserRequest << 2);
@@ -376,7 +400,7 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 	s = stream_new(length);
 
 	tpkt_write_header(s, length);
-	tpdu_write_data(s, length - 5);
+	tpdu_write_data(s);
 
 	/* DomainMCSPDU, ChannelJoinRequest*/
 	per_write_choice(s, DomainMCSPDU_ChannelJoinRequest << 2);

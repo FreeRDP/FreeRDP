@@ -21,6 +21,8 @@
 
 #include <freerdp/settings.h>
 
+static char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
+
 rdpSettings* settings_new()
 {
 	rdpSettings* settings;
@@ -51,6 +53,9 @@ rdpSettings* settings_new()
 		settings->encryption_methods =
 				ENCRYPTION_40BIT_FLAG |
 				ENCRYPTION_128BIT_FLAG;
+
+		settings->client_dir = xmalloc(strlen(client_dll));
+		strcpy(settings->client_dir, client_dll);
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);

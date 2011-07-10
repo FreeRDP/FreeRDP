@@ -271,7 +271,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 	if (transport != NULL)
 	{
-		transport->tcp = tcp_new();
+		transport->tcp = tcp_new(settings);
 		transport->settings = settings;
 
 		/* a small 0.1ms delay when transport is blocking. */

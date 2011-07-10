@@ -32,6 +32,30 @@
 
 #include "tcp.h"
 
+static void tcp_get_ip_address(rdpTcp * tcp)
+{
+	uint8* ip;
+	socklen_t length;
+	struct sockaddr_in sockaddr;
+
+	length = sizeof(sockaddr);
+
+	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
+	{
+		ip = (uint8*) (&sockaddr.sin_addr);
+		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
+				"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+	}
+
+	else
+		strncpy(tcp->ip_address, "127.0.0.1", sizeof(tcp->ip_address));
+
+	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
+
+	tcp->settings->ipv6 = 0;
+	tcp->settings->ip_address = tcp->ip_address;
+}
+
 boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 {
 	int status;
@@ -76,6 +100,7 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	}
 
 	tcp->sockfd = sockfd;
+	tcp_get_ip_address(tcp);
 
 	return True;
 }
@@ -116,13 +141,14 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	return True;
 }
 
-rdpTcp* tcp_new()
+rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
 		tcp->sockfd = -1;
+		tcp->settings = settings;
 		tcp->connect = tcp_connect;
 		tcp->disconnect = tcp_disconnect;
 		tcp->set_blocking_mode = tcp_set_blocking_mode;

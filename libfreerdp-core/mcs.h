@@ -27,6 +27,7 @@
 #include <freerdp/utils/stream.h>
 
 #define MCS_BASE_CHANNEL_ID	1001
+#define MCS_GLOBAL_CHANNEL_ID	1003
 
 enum MCS_Result
 {
