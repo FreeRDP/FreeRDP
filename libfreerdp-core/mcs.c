@@ -372,7 +372,7 @@ void mcs_recv_attach_user_confirm(rdpMcs* mcs)
 void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 {
 	STREAM* s;
-	int length = 8;
+	int length = 12;
 	s = stream_new(length);
 
 	tpkt_write_header(s, length);
@@ -407,6 +407,17 @@ void mcs_recv_channel_join_confirm(rdpMcs* mcs)
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, &requested, 0); /* requested (ChannelId) */
 	per_read_integer16(s, &channelId, 0); /* channelId */
+}
+
+void mcs_recv(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 result;
+	uint8 choice;
+
+	s = stream_new(32);
+	tls_read(mcs->transport->tls, s->data, s->size);
 }
 
 /**

@@ -132,6 +132,8 @@ void mcs_recv_attach_user_confirm(rdpMcs* mcs);
 void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id);
 void mcs_recv_channel_join_confirm(rdpMcs* mcs);
 
+void mcs_recv(rdpMcs* mcs);
+
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
 

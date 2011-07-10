@@ -20,10 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "tpkt.h"
-#include "nego.h"
-#include "mcs.h"
-#include "transport.h"
+#include "connection.h"
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
@@ -32,16 +29,23 @@ rdpMcs* mcs;
 rdpNego* nego;
 rdpSettings* settings;
 rdpTransport* transport;
+rdpConnection* connection;
 
 int main(int argc, char* argv[])
 {
+	int i;
 	char* username;
 	char* hostname;
 	char* password;
+	uint16 channelId;
 
 	settings = settings_new();
 	transport = transport_new(settings);
 	nego = nego_new(transport);
+	connection = connection_new();
+	connection->nego = nego;
+	connection->settings = settings;
+	connection->transport = transport;
 
 	if (argc < 4)
 	{
@@ -69,24 +73,7 @@ int main(int argc, char* argv[])
 	settings->password = password;
 	settings->domain = NULL;
 
-	nego_init(nego);
-	nego_set_target(nego, hostname, 3389);
-	nego_set_protocols(nego, 1, 1, 1);
-	nego_set_cookie(nego, username);
-	nego_connect(nego);
-
-	transport_connect_nla(transport);
-
-	mcs = mcs_new(transport);
-
-	mcs_send_connect_initial(mcs);
-
-	mcs_recv_connect_response(mcs);
-
-	mcs_send_erect_domain_request(mcs);
-	mcs_send_attach_user_request(mcs);
-
-	mcs_recv_attach_user_confirm(mcs);
+	connection_client_connect(connection);
 
 	return 0;
 }

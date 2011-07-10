@@ -37,16 +37,6 @@ enum _NEGO_STATE
 };
 typedef enum _NEGO_STATE NEGO_STATE;
 
-char NEGO_STATE_STRINGS[6][25] =
-{
-	"NEGO_STATE_INITIAL",
-	"NEGO_STATE_NLA",
-	"NEGO_STATE_TLS",
-	"NEGO_STATE_RDP",
-	"NEGO_STATE_FAIL",
-	"NEGO_STATE_FINAL"
-};
-
 /* RDP Negotiation Messages */
 enum RDP_NEG_MSG
 {
@@ -57,12 +47,8 @@ enum RDP_NEG_MSG
 	TYPE_RDP_NEG_FAILURE = 0x3
 };
 
-char PROTOCOL_SECURITY_STRINGS[3][4] =
-{
-	"RDP",
-	"TLS",
-	"NLA"
-};
+extern char NEGO_STATE_STRINGS[6][25];
+extern char PROTOCOL_SECURITY_STRINGS[3][4];
 
 struct rdp_nego
 {

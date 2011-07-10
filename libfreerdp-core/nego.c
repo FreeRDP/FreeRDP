@@ -27,6 +27,23 @@
 
 #include "nego.h"
 
+char NEGO_STATE_STRINGS[6][25] =
+{
+	"NEGO_STATE_INITIAL",
+	"NEGO_STATE_NLA",
+	"NEGO_STATE_TLS",
+	"NEGO_STATE_RDP",
+	"NEGO_STATE_FAIL",
+	"NEGO_STATE_FINAL"
+};
+
+char PROTOCOL_SECURITY_STRINGS[3][4] =
+{
+	"RDP",
+	"TLS",
+	"NLA"
+};
+
 /**
  * Negotiate protocol security and connect.
  * @param nego

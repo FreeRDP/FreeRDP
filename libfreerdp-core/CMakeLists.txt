@@ -35,6 +35,8 @@ set(LIBFREERDP_CORE_SRCS
 	ntlmssp.c
 	ntlmssp.h
 	settings.c
+	connection.c
+	connection.h
 	per.c
 	per.h
 	tcp.c
