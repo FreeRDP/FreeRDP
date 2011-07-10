@@ -21,6 +21,7 @@
 #define __GCC_H
 
 #include "per.h"
+#include "mcs.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
@@ -101,6 +102,7 @@
 
 void gcc_write_conference_create_request(STREAM* s, STREAM* user_data);
 void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings);
+void gcc_write_client_data_blocks(STREAM* s, rdpSettings *settings);
 void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length);
 void gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length);
 void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length);

@@ -80,6 +80,36 @@
  * 	rt-user-rejected		(15)
  * }
  *
+ * ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
+ * {
+ * 	subHeight			INTEGER (0..MAX),
+ * 	subInterval			INTEGER (0..MAX)
+ * }
+ *
+ * AttachUserRequest ::= [APPPLICATION 10] IMPLICIT SEQUENCE
+ * {
+ * }
+ *
+ * AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
+ * {
+ * 	result				Result,
+ * 	initiator			UserId OPTIONAL
+ * }
+ *
+ * ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+ * {
+ * 	initiator			UserId,
+ * 	channelId			ChannelId
+ * }
+ *
+ * ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+ * {
+ * 	result				Result,
+ * 	initiator			UserId,
+ * 	requested			ChannelId,
+ * 	channelId			ChannelId OPTIONAL
+ * }
+ *
  */
 
 uint8 callingDomainSelector[1] = "\x01";
@@ -114,7 +144,7 @@ uint8 mcs_result_enumerated[16][32] =
  * @param maxMCSPDUsize max MCS PDU size
  */
 
-static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
+static void mcs_init_domain_parameters(DomainParameters* domainParameters,
 		uint32 maxChannelIds, uint32 maxUserIds, uint32 maxTokenIds, uint32 maxMCSPDUsize)
 {
 	domainParameters->maxChannelIds = maxChannelIds;
@@ -128,7 +158,7 @@ static void mcs_init_domain_parameters(DOMAIN_PARAMETERS* domainParameters,
 	domainParameters->protocolVersion = 2;
 }
 
-static void mcs_read_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParameters)
+static void mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
 	ber_read_sequence_of_tag(s, &length);
@@ -148,7 +178,7 @@ static void mcs_read_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParam
  * @param domainParameters domain parameters
  */
 
-static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainParameters)
+static void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
 	uint8 *bm, *em;
@@ -173,7 +203,7 @@ static void mcs_write_domain_parameters(STREAM* s, DOMAIN_PARAMETERS* domainPara
 	stream_set_mark(s, em);
 }
 
-static void mcs_print_domain_parameters(DOMAIN_PARAMETERS* domainParameters)
+void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
 	printf("DomainParameters {\n");
 	printf("\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
@@ -243,11 +273,7 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	STREAM* client_data;
 
 	client_data = stream_new(512);
-	gcc_write_client_core_data(client_data, mcs->transport->settings);
-	gcc_write_client_cluster_data(client_data, mcs->transport->settings);
-	gcc_write_client_security_data(client_data, mcs->transport->settings);
-	gcc_write_client_network_data(client_data, mcs->transport->settings);
-	gcc_write_client_monitor_data(client_data, mcs->transport->settings);
+	gcc_write_client_data_blocks(client_data, mcs->transport->settings);
 
 	gcc_CCrq = stream_new(512);
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
@@ -283,17 +309,104 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 	tpdu_read_data(s);
 
 	ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length);
-	ber_read_enumerated(s, &result, 15);
+	ber_read_enumerated(s, &result, MCS_Result_enum_length);
 	ber_read_integer(s, &calledConnectId);
 
-	printf("MCS Connect-Response Result: %s\n", mcs_result_enumerated[result]);
-
 	mcs_read_domain_parameters(s, &(mcs->domainParameters));
-	mcs_print_domain_parameters(&(mcs->domainParameters));
 
 	ber_read_octet_string(s, &length);
 
 	gcc_read_conference_create_response(s, mcs->transport->settings);
+}
+
+void mcs_send_erect_domain_request(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length = 12;
+	s = stream_new(length);
+
+	tpkt_write_header(s, length);
+	tpdu_write_data(s, length - 5);
+
+	/* DomainMCSPDU, ErectDomainRequest */
+	per_write_choice(s, DomainMCSPDU_ErectDomainRequest << 2);
+	per_write_integer(s, 0); /* subHeight (INTEGER) */
+	per_write_integer(s, 0); /* subInterval (INTEGER) */
+
+	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+}
+
+void mcs_send_attach_user_request(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length = 8;
+	s = stream_new(length);
+
+	tpkt_write_header(s, length);
+	tpdu_write_data(s, length - 5);
+
+	/* DomainMCSPDU, AttachUserRequest */
+	per_write_choice(s, DomainMCSPDU_AttachUserRequest << 2);
+
+	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+}
+
+void mcs_recv_attach_user_confirm(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 result;
+	uint8 choice;
+
+	s = stream_new(32);
+	tls_read(mcs->transport->tls, s->data, s->size);
+
+	tpkt_read_header(s);
+	tpdu_read_data(s);
+
+	per_read_choice(s, &choice);
+	per_read_enumerated(s, &result, MCS_Result_enum_length); /* result */
+	per_read_integer16(s, &(mcs->user_id), MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+}
+
+void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
+{
+	STREAM* s;
+	int length = 8;
+	s = stream_new(length);
+
+	tpkt_write_header(s, length);
+	tpdu_write_data(s, length - 5);
+
+	/* DomainMCSPDU, ChannelJoinRequest*/
+	per_write_choice(s, DomainMCSPDU_ChannelJoinRequest << 2);
+	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
+	per_write_integer16(s, channel_id + MCS_BASE_CHANNEL_ID, 0);
+
+	tls_write(mcs->transport->tls, s->data, stream_get_length(s));
+}
+
+void mcs_recv_channel_join_confirm(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 choice;
+	uint8 result;
+	uint16 initiator;
+	uint16 requested;
+	uint16 channelId;
+
+	s = stream_new(32);
+	tls_read(mcs->transport->tls, s->data, s->size);
+
+	tpkt_read_header(s);
+	tpdu_read_data(s);
+
+	per_read_choice(s, &choice);
+	per_read_enumerated(s, &result, MCS_Result_enum_length); /* result */
+	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	per_read_integer16(s, &requested, 0); /* requested (ChannelId) */
+	per_read_integer16(s, &channelId, 0); /* channelId */
 }
 
 /**

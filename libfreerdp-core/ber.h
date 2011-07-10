@@ -50,7 +50,7 @@ void ber_write_length(STREAM* s, int length);
 void ber_write_universal_tag(STREAM* s, uint8 tag);
 void ber_write_application_tag(STREAM* s, uint8 tag, int length);
 boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);
-boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 max);
+boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
 boolean ber_read_sequence_of_tag(STREAM* s, int* length);
 void ber_write_sequence_of_tag(STREAM* s, int length);
 boolean ber_read_octet_string(STREAM* s, int* length);

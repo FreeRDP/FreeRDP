@@ -185,7 +185,7 @@ void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	per_read_integer(s, &tag);
 
 	/* ConferenceCreateResponse::result (ENUMERATED) */
-	per_read_enumerated(s, &result);
+	per_read_enumerated(s, &result, MCS_Result_enum_length);
 
 	/* number of UserData sets */
 	per_read_number_of_sets(s, &number);
@@ -198,9 +198,16 @@ void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 
 	/* userData (OCTET_STRING) */
 	per_read_length(s, &length);
-
-	printf("server core data, length:%d\n", length);
 	gcc_read_server_data_blocks(s, settings, length);
+}
+
+void gcc_write_client_data_blocks(STREAM* s, rdpSettings *settings)
+{
+	gcc_write_client_core_data(s, settings);
+	gcc_write_client_cluster_data(s, settings);
+	gcc_write_client_security_data(s, settings);
+	gcc_write_client_network_data(s, settings);
+	gcc_write_client_monitor_data(s, settings);
 }
 
 void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)

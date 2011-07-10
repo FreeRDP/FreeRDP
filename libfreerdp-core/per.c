@@ -146,9 +146,40 @@ boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
 	return True;
 }
 
-boolean per_read_enumerated(STREAM* s, uint8* enumerated)
+void per_write_integer(STREAM* s, uint32 integer)
+{
+	int length;
+
+	if (integer <= 0xFF)
+	{
+		per_write_length(s, 1);
+		stream_write_uint8(s, integer);
+	}
+	else if (integer <= 0xFFFF)
+	{
+		per_write_length(s, 2);
+		stream_write_uint16_be(s, integer);
+	}
+	else if (integer <= 0xFFFFFFFF)
+	{
+		per_write_length(s, 4);
+		stream_write_uint32_be(s, integer);
+	}
+}
+
+void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
+{
+	stream_write_uint16_be(s, integer - min);
+}
+
+boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
 	stream_read_uint8(s, *enumerated);
+
+	/* check that enumerated value falls within expected range */
+	if (*enumerated + 1 > count)
+		return False;
+
 	return True;
 }
 

@@ -78,9 +78,15 @@ int main(int argc, char* argv[])
 	transport_connect_nla(transport);
 
 	mcs = mcs_new(transport);
+
 	mcs_send_connect_initial(mcs);
 
 	mcs_recv_connect_response(mcs);
+
+	mcs_send_erect_domain_request(mcs);
+	mcs_send_attach_user_request(mcs);
+
+	mcs_recv_attach_user_confirm(mcs);
 
 	return 0;
 }

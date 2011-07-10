@@ -159,7 +159,7 @@ void ber_write_sequence_of_tag(STREAM* s, int length)
 	ber_write_length(s, length);
 }
 
-boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 max)
+boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
 	int length;
 
@@ -172,7 +172,7 @@ boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 max)
 		return False;
 
 	/* check that enumerated value falls within expected range */
-	if (*enumerated > max)
+	if (*enumerated + 1 > count)
 		return False;
 
 	return True;
