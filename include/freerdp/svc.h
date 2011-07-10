@@ -45,19 +45,10 @@ typedef CHANNEL_DEF** PPCHANNEL_DEF;
 typedef void (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(void* pInitHandle,
 	uint32 event, void* pData, uint32 dataLength);
 
-#define CHANNEL_EVENT_INITIALIZED  0
-#define CHANNEL_EVENT_CONNECTED    1
-#define CHANNEL_EVENT_V1_CONNECTED 2
-#define CHANNEL_EVENT_DISCONNECTED 3
-#define CHANNEL_EVENT_TERMINATED   4
 
 typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(uint32 openHandle,
 	uint32 event, void* pData, uint32 dataLength,
 	uint32 totalLength, uint32 dataFlags);
-
-#define CHANNEL_EVENT_DATA_RECEIVED   10
-#define CHANNEL_EVENT_WRITE_COMPLETE  11
-#define CHANNEL_EVENT_WRITE_CANCELLED 12
 
 #define CHANNEL_RC_OK                             0
 #define CHANNEL_RC_ALREADY_INITIALIZED            1
