@@ -24,12 +24,11 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
-STREAM *
-stream_new(int size)
+STREAM* stream_new(int size)
 {
-	STREAM * stream;
+	STREAM* stream;
 
-	stream = (STREAM *) xmalloc(sizeof(STREAM));
+	stream = (STREAM*)xmalloc(sizeof(STREAM));
 
 	if (stream != NULL)
 	{
@@ -50,8 +49,7 @@ stream_new(int size)
 	return stream;
 }
 
-void
-stream_free(STREAM * stream)
+void stream_free(STREAM* stream)
 {
 	if (stream != NULL)
 	{
@@ -60,8 +58,7 @@ stream_free(STREAM * stream)
 	}
 }
 
-void
-stream_extend(STREAM * stream)
+void stream_extend(STREAM* stream)
 {
 	int pos;
 
