@@ -19,10 +19,10 @@
 
 /* do not compile the file directly */
 
-/*
-   Write a foreground/background image to a destination buffer.
-*/
-static uint8 * WRITEFGBGIMAGE(uint8 * pbDest, uint32 rowDelta,
+/**
+ * Write a foreground/background image to a destination buffer.
+ */
+static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 	uint8 bitmask, PIXEL fgPel, uint32 cBits)
 {
 	PIXEL xorPixel;
@@ -138,11 +138,11 @@ static uint8 * WRITEFGBGIMAGE(uint8 * pbDest, uint32 rowDelta,
 	return pbDest;
 }
 
-/*
-   Write a foreground/background image to a destination buffer
-   for the first line of compressed data.
-*/
-static uint8 * WRITEFIRSTLINEFGBGIMAGE(uint8 * pbDest, uint8 bitmask,
+/**
+ * Write a foreground/background image to a destination buffer
+ * for the first line of compressed data.
+ */
+static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 	PIXEL fgPel, uint32 cBits)
 {
 	if (bitmask & g_MaskBit0)
@@ -248,15 +248,15 @@ static uint8 * WRITEFIRSTLINEFGBGIMAGE(uint8 * pbDest, uint8 bitmask,
 	return pbDest;
 }
 
-/*
-   Decompress an RLE compressed bitmap.
-*/
-void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer,
+/**
+ * Decompress an RLE compressed bitmap.
+ */
+void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 	uint32 rowDelta, uint32 width, uint32 height)
 {
-	uint8 * pbSrc = pbSrcBuffer;
-	uint8 * pbEnd = pbSrcBuffer + cbSrcBuffer;
-	uint8 * pbDest = pbDestBuffer;
+	uint8* pbSrc = pbSrcBuffer;
+	uint8* pbEnd = pbSrcBuffer + cbSrcBuffer;
+	uint8* pbDest = pbDestBuffer;
 
 	PIXEL temp;
 	PIXEL fgPel = WHITE_PIXEL;
@@ -304,7 +304,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 					DESTNEXTPIXEL(pbDest);
 					runLength = runLength - 1;
 				}
-				while (runLength > UNROLL_COUNT)
+				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
@@ -327,7 +327,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 					DESTNEXTPIXEL(pbDest);
 					runLength = runLength - 1;
 				}
-				while (runLength > UNROLL_COUNT)
+				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						DESTREADPIXEL(temp, pbDest - rowDelta);
@@ -368,7 +368,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 				}
 				if (fFirstLine)
 				{
-					while (runLength > UNROLL_COUNT)
+					while (runLength >= UNROLL_COUNT)
 					{
 						UNROLL(
 							DESTWRITEPIXEL(pbDest, fgPel);
@@ -384,7 +384,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 				}
 				else
 				{
-					while (runLength > UNROLL_COUNT)
+					while (runLength >= UNROLL_COUNT)
 					{
 						UNROLL(
 							DESTREADPIXEL(temp, pbDest - rowDelta);
@@ -411,7 +411,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 				SRCNEXTPIXEL(pbSrc);
 				SRCREADPIXEL(pixelB, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
-				while (runLength > UNROLL_COUNT)
+				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, pixelA);
@@ -437,7 +437,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 				pbSrc = pbSrc + advance;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
-				while (runLength > UNROLL_COUNT)
+				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, pixelA);
@@ -504,7 +504,7 @@ void RLEDECOMPRESS(uint8 * pbSrcBuffer, uint32 cbSrcBuffer, uint8 * pbDestBuffer
 			case MEGA_MEGA_COLOR_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
-				while (runLength > UNROLL_COUNT)
+				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						SRCREADPIXEL(temp, pbSrc);

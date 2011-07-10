@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RLE Compressed Bitmap Stream
+ * Compressed Bitmap
  *
  * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>
  *
@@ -71,10 +71,10 @@ typedef uint32 PIXEL;
 #define BLACK_PIXEL 0
 #define WHITE_PIXEL 0xffffff
 
-/*
-   Reads the supplied order header and extracts the compression
-   order code ID.
-*/
+/**
+ * Reads the supplied order header and extracts the compression
+ * order code ID.
+ */
 static uint32 ExtractCodeId(uint8 bOrderHdr)
 {
 	int code;
@@ -108,10 +108,10 @@ static uint32 ExtractCodeId(uint8 bOrderHdr)
 	return bOrderHdr >> 4;
 }
 
-/*
-   Extract the run length of a compression order.
-*/
-static uint32 ExtractRunLength(uint32 code, uint8 * pbOrderHdr, uint32 * advance)
+/**
+ * Extract the run length of a compression order.
+ */
+static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 {
 	uint32 runLength;
 	uint32 ladvance;
@@ -248,26 +248,207 @@ static uint32 ExtractRunLength(uint32 code, uint8 * pbOrderHdr, uint32 * advance
 #define RLEEXTRA
 #include "bitmap_inc.c"
 
-int bitmap_decompress(void * inst, uint8 * output, int width, int height,
-	uint8 * input, int size, int Bpp)
+#define IN_UINT8_MV(_p) (*((_p)++))
+
+/**
+ * decompress a color plane
+ */
+static int process_plane(uint8* in, int width, int height, uint8* out, int size)
 {
-	switch (Bpp)
+	int indexw;
+	int indexh;
+	int code;
+	int collen;
+	int replen;
+	int color;
+	int x;
+	int revcode;
+	uint8* last_line;
+	uint8* this_line;
+	uint8* org_in;
+	uint8* org_out;
+
+	org_in = in;
+	org_out = out;
+	last_line = 0;
+	indexh = 0;
+	while (indexh < height)
 	{
-		case 1:
-			RleDecompress8to8(input, size, output, width, width, height);
-			break;
-		case 2:
-			RleDecompress16to16(input, size, output, width * 2, width, height);
-			break;
-		case 3:
-			RleDecompress24to24(input, size, output, width * 3, width, height);
-			break;
-		case 4:
-			/* TODO */
-			break;
-		default:
-			/* TODO */
-			break;
+		out = (org_out + width * height * 4) - ((indexh + 1) * width * 4);
+		color = 0;
+		this_line = out;
+		indexw = 0;
+		if (last_line == 0)
+		{
+			while (indexw < width)
+			{
+				code = IN_UINT8_MV(in);
+				replen = code & 0xf;
+				collen = (code >> 4) & 0xf;
+				revcode = (replen << 4) | collen;
+				if ((revcode <= 47) && (revcode >= 16))
+				{
+					replen = revcode;
+					collen = 0;
+				}
+				while (collen > 0)
+				{
+					color = IN_UINT8_MV(in);
+					*out = color;
+					out += 4;
+					indexw++;
+					collen--;
+				}
+				while (replen > 0)
+				{
+					*out = color;
+					out += 4;
+					indexw++;
+					replen--;
+				}
+			}
+		}
+		else
+		{
+			while (indexw < width)
+			{
+				code = IN_UINT8_MV(in);
+				replen = code & 0xf;
+				collen = (code >> 4) & 0xf;
+				revcode = (replen << 4) | collen;
+				if ((revcode <= 47) && (revcode >= 16))
+				{
+					replen = revcode;
+					collen = 0;
+				}
+				while (collen > 0)
+				{
+					x = IN_UINT8_MV(in);
+					if (x & 1)
+					{
+						x = x >> 1;
+						x = x + 1;
+						color = -x;
+					}
+					else
+					{
+						x = x >> 1;
+						color = x;
+					}
+					x = last_line[indexw * 4] + color;
+					*out = x;
+					out += 4;
+					indexw++;
+					collen--;
+				}
+				while (replen > 0)
+				{
+					x = last_line[indexw * 4] + color;
+					*out = x;
+					out += 4;
+					indexw++;
+					replen--;
+				}
+			}
+		}
+		indexh++;
+		last_line = this_line;
+	}
+	return (int) (in - org_in);
+}
+
+/**
+ * 4 byte bitmap decompress
+ */
+static int bitmap_decompress4(uint8* output, int width, int height, uint8* input, int size)
+{
+	int code;
+	int bytes_pro;
+	int total_pro;
+
+	code = IN_UINT8_MV(input);
+	if (code != 0x10)
+	{
+		return False;
+	}
+	total_pro = 1;
+	bytes_pro = process_plane(input, width, height, output + 3, size - total_pro);
+	total_pro += bytes_pro;
+	input += bytes_pro;
+	bytes_pro = process_plane(input, width, height, output + 2, size - total_pro);
+	total_pro += bytes_pro;
+	input += bytes_pro;
+	bytes_pro = process_plane(input, width, height, output + 1, size - total_pro);
+	total_pro += bytes_pro;
+	input += bytes_pro;
+	bytes_pro = process_plane(input, width, height, output + 0, size - total_pro);
+	total_pro += bytes_pro;
+	return size == total_pro;
+}
+
+/**
+ * bitmap flip
+ */
+static int bitmap_flip(uint8* src, uint8* dst, int delta, int height)
+{
+	int index;
+
+	dst = (dst + delta * height) - delta;
+	for (index = 0; index < height; index++)
+	{
+		memcpy(dst, src, delta);
+		src += delta;
+		dst -= delta;
+	}
+	return 0;
+}
+
+/**
+ * bitmap decompression routine
+ */
+int bitmap_decompress(void* inst, uint8* output, int width, int height,
+	uint8* input, int size, int in_bpp, int out_bpp)
+{
+	uint8* data;
+
+	if (in_bpp == 16 && out_bpp == 16)
+	{
+		data = (uint8*)xmalloc(width * height * 2);
+		RleDecompress16to16(input, size, data, width * 2, width, height);
+		bitmap_flip(data, output, width * 2, height);
+		xfree(data);
+	}
+	else if (in_bpp == 32 && out_bpp == 32)
+	{
+		if (!bitmap_decompress4(output, width, height, input, size))
+		{
+			return 1;
+		}
+	}
+	else if (in_bpp == 15 && out_bpp == 15)
+	{
+		data = (uint8*)xmalloc(width * height * 2);
+		RleDecompress16to16(input, size, output, width * 2, width, height);
+		bitmap_flip(data, output, width * 2, height);
+		xfree(data);
+	}
+	else if (in_bpp == 8 && out_bpp == 8)
+	{
+		data = (uint8*)xmalloc(width * height);
+		RleDecompress8to8(input, size, output, width, width, height);
+		bitmap_flip(data, output, width, height);
+		xfree(data);
+	}
+	else if (in_bpp == 24 && out_bpp == 24)
+	{
+		data = (uint8*)xmalloc(width * height * 3);
+		RleDecompress24to24(input, size, output, width * 3, width, height);
+		bitmap_flip(data, output, width * 3, height);
+		xfree(data);
+	}
+	else
+	{
+		return 1;
 	}
 	return 0;
 }
