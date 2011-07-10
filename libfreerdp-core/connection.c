@@ -34,14 +34,28 @@
  *        |<-----------------------MCS Channel Join Confirm PDU---------------------|
  *        |----------------------------Security Exchange PDU----------------------->|
  *        |-------------------------------Client Info PDU-------------------------->|
+ *        |<---------------------License Error PDU - Valid Client-------------------|
+ *        |<-----------------------------Demand Active PDU--------------------------|
+ *        |------------------------------Confirm Active PDU------------------------>|
+ *        |-------------------------------Synchronize PDU-------------------------->|
+ *        |---------------------------Control PDU - Cooperate---------------------->|
+ *        |------------------------Control PDU - Request Control------------------->|
+ *        |--------------------------Persistent Key List PDU(s)-------------------->|
+ *        |--------------------------------Font List PDU--------------------------->|
+ *        |<------------------------------Synchronize PDU---------------------------|
+ *        |<--------------------------Control PDU - Cooperate-----------------------|
+ *        |<-----------------------Control PDU - Granted Control--------------------|
+ *        |<-------------------------------Font Map PDU-----------------------------|
  *
  */
 
 void connection_client_connect(rdpConnection* connection)
 {
 	int i;
+	STREAM* s;
 	uint16 channelId;
 
+	connection->settings->autologon = 1;
 	connection->transport = transport_new(connection->settings);
 	connection->nego = nego_new(connection->transport);
 
@@ -74,7 +88,8 @@ void connection_client_connect(rdpConnection* connection)
 
 	connection_send_client_info(connection);
 
-	mcs_recv(connection->mcs);
+	s = transport_recv_stream_init(connection->transport, 4096);
+	transport_read(connection->transport, s);
 }
 
 void connection_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
@@ -251,14 +266,20 @@ void connection_write_info_packet(STREAM* s, rdpSettings* settings)
 	uint8* workingDir;
 	uint16 cbWorkingDir;
 
-	flags = INFO_UNICODE |
+	flags = INFO_MOUSE |
+		INFO_UNICODE |
 		INFO_LOGONERRORS |
 		INFO_LOGONNOTIFY |
+		INFO_MAXIMIZESHELL |
 		INFO_ENABLEWINDOWSKEY |
+		INFO_DISABLECTRLALTDEL |
 		RNS_INFO_AUDIOCAPTURE;
 
 	if (settings->autologon)
 		flags |= INFO_AUTOLOGON;
+
+	if (settings->console_audio)
+		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->compression)
 		flags |= INFO_COMPRESSION | PACKET_COMPR_TYPE_64K;
