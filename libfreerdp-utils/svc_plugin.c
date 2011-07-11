@@ -159,21 +159,17 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 		printf("svc_plugin_open_event: error no match\n");
 		return;
 	}
-	if (event >= CHANNEL_EVENT_USER)
+	switch (event)
 	{
-		plugin->event_callback(plugin, pData, dataLength);
-	}
-	else
-	{
-		switch (event)
-		{
-			case CHANNEL_EVENT_DATA_RECEIVED:
-				svc_plugin_process_received(plugin, pData, dataLength, totalLength, dataFlags);
-				break;
-			case CHANNEL_EVENT_WRITE_COMPLETE:
-				stream_free((STREAM*)pData);
-				break;
-		}
+		case CHANNEL_EVENT_DATA_RECEIVED:
+			svc_plugin_process_received(plugin, pData, dataLength, totalLength, dataFlags);
+			break;
+		case CHANNEL_EVENT_WRITE_COMPLETE:
+			stream_free((STREAM*)pData);
+			break;
+		case CHANNEL_EVENT_USER:
+			plugin->event_callback(plugin, (FRDP_EVENT*)pData);
+			break;
 	}
 }
 
@@ -233,7 +229,7 @@ static void svc_plugin_init_event(void* pInitHandle, uint32 event, void* pData, 
 	}
 }
 
-void svc_plugin_init(rdpSvcPlugin* plugin)
+void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 {
 	rdpSvcPluginList* list;
 
@@ -243,6 +239,8 @@ void svc_plugin_init(rdpSvcPlugin* plugin)
 	 */
 	if (g_mutex == NULL)
 		g_mutex = freerdp_mutex_new();
+
+	memcpy(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
 
 	plugin->priv = (rdpSvcPluginPrivate*)xmalloc(sizeof(rdpSvcPluginPrivate));
 	memset(plugin->priv, 0, sizeof(rdpSvcPluginPrivate));
@@ -269,7 +267,21 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->priv->open_handle,
 		stream_get_data(data_out), stream_get_length(data_out), data_out);
 	if (error != CHANNEL_RC_OK)
-		printf("svc_plugin_send: VirtualChannelWrite failed %d", error);
+		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", error);
+
+	return error;
+}
+
+int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+{
+	uint32 error = 0;
+
+	DEBUG_SVC("event_type %d", event->event_type);
+
+	error = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->priv->open_handle,
+		event);
+	if (error != CHANNEL_RC_OK)
+		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", error);
 
 	return error;
 }
