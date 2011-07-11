@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Connection Sequence
+ * RDP Security
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,19 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __CONNECTION_H
-#define __CONNECTION_H
+#include "security.h"
 
-#include "rdp.h"
-#include "tpkt.h"
-#include "tpdu.h"
-#include "nego.h"
-#include "mcs.h"
-#include "transport.h"
+void security_read_license_packet(STREAM* s, uint16 sec_flags)
+{
+	printf("SEC_LICENSE_PKT\n");
+}
 
-#include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
-
-void rdp_client_connect(rdpRdp* rdp);
-
-#endif /* __CONNECTION_H */
+void security_read_redirection_packet(STREAM* s, uint16 sec_flags)
+{
+	printf("SEC_REDIRECTION_PKT\n");
+}

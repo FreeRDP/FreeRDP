@@ -27,11 +27,11 @@
 
 int main(int argc, char* argv[])
 {
+	rdpRdp* rdp;
 	rdpSettings* settings;
-	rdpConnection* connection;
 
-	settings = settings_new();
-	connection = connection_new(settings);
+	rdp = rdp_new();
+	settings = rdp->settings;
 
 	if (argc < 4)
 	{
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	printf("hostname: %s username: %s password: %s\n",
 			settings->hostname, settings->username, settings->password);
 
-	connection_client_connect(connection);
+	rdp_client_connect(rdp);
 
 	return 0;
 }
