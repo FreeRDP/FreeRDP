@@ -19,6 +19,7 @@
 
 set(FREERDP_UTILS_SRCS
 	blob.c
+	event.c
 	hexdump.c
 	load_plugin.c
 	memory.c
