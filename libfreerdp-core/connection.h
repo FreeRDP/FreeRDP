@@ -70,6 +70,7 @@ typedef struct rdp_connection rdpConnection;
 
 void connection_client_connect(rdpConnection* connection);
 void connection_send_client_info(rdpConnection* connection);
+void connection_recv_license_info(rdpConnection* connection);
 
 void connection_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void connection_get_client_time_zone(STREAM* s, rdpSettings* settings);

@@ -19,6 +19,13 @@
 
 #include "per.h"
 
+/**
+ * Read PER length.
+ * @param s stream
+ * @param length length
+ * @return
+ */
+
 boolean per_read_length(STREAM* s, int* length)
 {
 	uint8 byte;
@@ -27,6 +34,7 @@ boolean per_read_length(STREAM* s, int* length)
 
 	if (byte & 0x80)
 	{
+		byte &= ~(0x80);
 		*length = (byte << 8);
 		stream_read_uint8(s, byte);
 		*length += byte;
@@ -53,6 +61,13 @@ void per_write_length(STREAM* s, int length)
 		stream_write_uint8(s, length);
 }
 
+/**
+ * Read PER choice.
+ * @param s stream
+ * @param choice choice
+ * @return
+ */
+
 boolean per_read_choice(STREAM* s, uint8* choice)
 {
 	stream_read_uint8(s, *choice);
@@ -70,6 +85,13 @@ void per_write_choice(STREAM* s, uint8 choice)
 	stream_write_uint8(s, choice);
 }
 
+/**
+ * Read PER selection.
+ * @param s stream
+ * @param selection selection
+ * @return
+ */
+
 boolean per_read_selection(STREAM* s, uint8* selection)
 {
 	stream_read_uint8(s, *selection);
@@ -86,6 +108,13 @@ void per_write_selection(STREAM* s, uint8 selection)
 {
 	stream_write_uint8(s, selection);
 }
+
+/**
+ * Read PER number of sets.
+ * @param s stream
+ * @param number number of sets
+ * @return
+ */
 
 boolean per_read_number_of_sets(STREAM* s, uint8* number)
 {
@@ -118,6 +147,13 @@ void per_write_padding(STREAM* s, int length)
 		stream_write_uint8(s, 0);
 }
 
+/**
+ * Read PER INTEGER.
+ * @param s stream
+ * @param integer integer
+ * @return
+ */
+
 boolean per_read_integer(STREAM* s, uint32* integer)
 {
 	int length;
@@ -134,17 +170,11 @@ boolean per_read_integer(STREAM* s, uint32* integer)
 	return True;
 }
 
-boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
-{
-	stream_read_uint16_be(s, *integer);
-
-	if (*integer + min > 0xFFFF)
-		return False;
-
-	*integer += min;
-
-	return True;
-}
+/**
+ * Write PER INTEGER.
+ * @param s stream
+ * @param integer integer
+ */
 
 void per_write_integer(STREAM* s, uint32 integer)
 {
@@ -167,10 +197,45 @@ void per_write_integer(STREAM* s, uint32 integer)
 	}
 }
 
+/**
+ * Read PER INTEGER (uint16).
+ * @param s stream
+ * @param integer integer
+ * @param min minimum value
+ * @return
+ */
+
+boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
+{
+	stream_read_uint16_be(s, *integer);
+
+	if (*integer + min > 0xFFFF)
+		return False;
+
+	*integer += min;
+
+	return True;
+}
+
+/**
+ * Write PER INTEGER (uint16).
+ * @param s stream
+ * @param integer integer
+ * @param min minimum value
+ */
+
 void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
 {
 	stream_write_uint16_be(s, integer - min);
 }
+
+/**
+ * Read PER ENUMERATED.
+ * @param s stream
+ * @param enumerated enumerated
+ * @param count enumeration count
+ * @return
+ */
 
 boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
@@ -182,6 +247,13 @@ boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 
 	return True;
 }
+
+/**
+ * Read PER OBJECT_IDENTIFIER (OID).
+ * @param s stream
+ * @param oid object identifier (OID)
+ * @return
+ */
 
 boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 {
@@ -247,6 +319,15 @@ void per_write_string(STREAM* s, uint8* str, int length)
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, str[i]);
 }
+
+/**
+ * Read PER OCTET_STRING.
+ * @param s stream
+ * @param oct_str octet string
+ * @param length string length
+ * @param min minimum length
+ * @return
+ */
 
 boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 {

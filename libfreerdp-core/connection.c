@@ -49,6 +49,12 @@
  *
  */
 
+/**
+ * Establish RDP Connection.\n
+ * @msdn{cc240452}
+ * @param connection
+ */
+
 void connection_client_connect(rdpConnection* connection)
 {
 	STREAM* s;
@@ -70,13 +76,15 @@ void connection_client_connect(rdpConnection* connection)
 	mcs_connect(connection->mcs);
 
 	connection_send_client_info(connection);
-
-	s = transport_recv_stream_init(connection->transport, 4096);
-	transport_read(connection->transport, s);
-
-	s = transport_recv_stream_init(connection->transport, 4096);
-	transport_read(connection->transport, s);
+	connection_recv_license_info(connection);
 }
+
+/**
+ * Write SYSTEM_TIME structure (TS_SYSTEMTIME).\n
+ * @msdn{cc240478}
+ * @param s stream
+ * @param system_time system time structure
+ */
 
 void connection_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 {
@@ -89,6 +97,12 @@ void connection_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 	stream_write_uint16(s, system_time->wSecond); /* wSecond */
 	stream_write_uint16(s, system_time->wMilliseconds); /* wMilliseconds */
 }
+
+/**
+ * Get client time zone information.\n
+ * @param s stream
+ * @param settings settings
+ */
 
 void connection_get_client_time_zone(STREAM* s, rdpSettings* settings)
 {
@@ -130,6 +144,13 @@ void connection_get_client_time_zone(STREAM* s, rdpSettings* settings)
 	strftime(clientTimeZone->daylightName, 32, "%Z, Summer Time", local_time);
 	clientTimeZone->daylightName[31] = 0;
 }
+
+/**
+ * Write client time zone information (TS_TIME_ZONE_INFORMATION).\n
+ * @msdn{cc240477}
+ * @param s stream
+ * @param settings settings
+ */
 
 void connection_write_client_time_zone(STREAM* s, rdpSettings* settings)
 {
@@ -175,6 +196,13 @@ void connection_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	xfree(daylightName);
 }
 
+/**
+ * Write Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
+ * @msdn{cc240541}
+ * @param s stream
+ * @param settings settings
+ */
+
 void connection_write_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
@@ -185,6 +213,13 @@ void connection_write_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
 	stream_write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier */
 }
+
+/**
+ * Write Extended Info Packet (TS_EXTENDED_INFO_PACKET).\n
+ * @msdn{cc240476}
+ * @param s stream
+ * @param settings settings
+ */
 
 void connection_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 {
@@ -236,6 +271,13 @@ void connection_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 	xfree(clientAddress);
 	xfree(clientDir);
 }
+
+/**
+ * Write Info Packet (TS_INFO_PACKET).\n
+ * @msdn{cc240475}
+ * @param s stream
+ * @param settings settings
+ */
 
 void connection_write_info_packet(STREAM* s, rdpSettings* settings)
 {
@@ -324,6 +366,12 @@ void connection_write_info_packet(STREAM* s, rdpSettings* settings)
 		connection_write_extended_info_packet(s, settings); /* extraInfo */
 }
 
+/**
+ * Send Client Info PDU (CLIENT_INFO_PDU).\n
+ * @msdn{cc240474}
+ * @param connection connection module
+ */
+
 void connection_send_client_info(rdpConnection* connection)
 {
 	STREAM* s;
@@ -352,6 +400,29 @@ void connection_send_client_info(rdpConnection* connection)
 	stream_set_mark(s, em);
 
 	transport_write(connection->transport, s);
+}
+
+void connection_recv_license_info(rdpConnection* connection)
+{
+	STREAM* s;
+	int length;
+	int pduLength;
+	uint16 initiator;
+	uint16 channelId;
+	enum DomainMCSPDU MCSPDU;
+
+	s = transport_recv_stream_init(connection->transport, 4096);
+	transport_read(connection->transport, s);
+
+	MCSPDU = DomainMCSPDU_SendDataIndication;
+	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
+
+	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	per_read_integer16(s, &channelId, 0); /* channelId */
+	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
+	per_read_length(s, &pduLength); /* userData (OCTET_STRING) */
+
+	printf("initiator:%d channelId:%d pduLength:%d\n", initiator, channelId, pduLength);
 }
 
 /**

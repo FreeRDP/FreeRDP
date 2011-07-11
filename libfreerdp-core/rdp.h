@@ -36,6 +36,7 @@
 #define SEC_SECURE_CHECKSUM		0x0800
 #define SEC_FLAGSHI_VALID		0x8000
 
+void rdp_read_security_header(STREAM* s, uint16* flags);
 void rdp_write_security_header(STREAM* s, uint16 flags);
 
 #endif /* __RDP_H */

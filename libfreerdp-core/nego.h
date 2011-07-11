@@ -87,8 +87,6 @@ void nego_set_protocols(rdpNego* nego, int rdp, int tls, int nla);
 void nego_set_routing_token(rdpNego* nego, char* routing_token);
 void nego_set_cookie(rdpNego* nego, char* cookie);
 
-#define WITH_DEBUG_NEGO	1
-
 #ifdef WITH_DEBUG_NEGO
 #define DEBUG_NEGO(fmt, ...) DEBUG_CLASS(NEGO, fmt, ## __VA_ARGS__)
 #else

@@ -156,8 +156,6 @@ NTLMSSP* ntlmssp_new();
 void ntlmssp_init(NTLMSSP* ntlmssp);
 void ntlmssp_free(NTLMSSP* ntlmssp);
 
-#define WITH_DEBUG_NLA	1
-
 #ifdef WITH_DEBUG_NLA
 #define DEBUG_NLA(fmt, ...) DEBUG_CLASS(NLA, fmt, ## __VA_ARGS__)
 #else

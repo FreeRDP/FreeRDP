@@ -19,6 +19,27 @@
 
 #include "rdp.h"
 
+/**
+ * Read RDP Security Header.\n
+ * @msdn{cc240579}
+ * @param s stream
+ * @param flags security flags
+ */
+
+void rdp_read_security_header(STREAM* s, uint16* flags)
+{
+	/* Basic Security Header */
+	stream_read_uint16(s, *flags); /* flags */
+	stream_seek(s, 2); /* flagsHi (unused) */
+}
+
+/**
+ * Write RDP Security Header.\n
+ * @msdn{cc240579}
+ * @param s stream
+ * @param flags security flags
+ */
+
 void rdp_write_security_header(STREAM* s, uint16 flags)
 {
 	/* Basic Security Header */

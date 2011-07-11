@@ -134,6 +134,20 @@
  * 	end				(1)
  * } (SIZE(2))
  *
+ * SendDataIndication ::= SEQUENCE
+ * {
+ * 	initiator			UserId,
+ * 	channelId			ChannelId,
+ * 	reliability			BOOLEAN,
+ * 	domainReferenceID		INTEGER (0..65535) OPTIONAL,
+ * 	dataPriority			DataPriority,
+ * 	segmentation			Segmentation,
+ * 	userData			OCTET_STRING,
+ * 	totalDataSize			INTEGER OPTIONAL,
+ * 	nonStandard			SEQUENCE OF NonStandardParameter OPTIONAL,
+ * 	...
+ * }
+ *
  */
 
 uint8 callingDomainSelector[1] = "\x01";
@@ -330,7 +344,8 @@ void mcs_print_domain_parameters(DomainParameters* domainParameters)
 }
 
 /**
- * Write an MCS Connect Initial PDU.
+ * Write an MCS Connect Initial PDU.\n
+ * @msdn{cc240508}
  * @param s stream
  * @param mcs MCS module
  * @param user_data GCC Conference Create Request
@@ -377,7 +392,8 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 }
 
 /**
- * Send MCS Connect Initial.
+ * Send MCS Connect Initial.\n
+ * @msdn{cc240508}
  * @param mcs mcs module
  */
 
@@ -416,7 +432,8 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 }
 
 /**
- * Receive MCS Connect Response.
+ * Receive MCS Connect Response.\n
+ * @msdn{cc240501}
  * @param mcs mcs module
  */
 
@@ -445,7 +462,8 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 }
 
 /**
- * Send MCS Erect Domain Request.
+ * Send MCS Erect Domain Request.\n
+ * @msdn{cc240523}
  * @param mcs
  */
 
@@ -464,7 +482,8 @@ void mcs_send_erect_domain_request(rdpMcs* mcs)
 }
 
 /**
- * Send MCS Attach User Request.
+ * Send MCS Attach User Request.\n
+ * @msdn{cc240524}
  * @param mcs mcs module
  */
 
@@ -480,7 +499,8 @@ void mcs_send_attach_user_request(rdpMcs* mcs)
 }
 
 /**
- * Receive MCS Attach User Confirm.
+ * Receive MCS Attach User Confirm.\n
+ * @msdn{cc240525}
  * @param mcs mcs module
  */
 
@@ -502,7 +522,8 @@ void mcs_recv_attach_user_confirm(rdpMcs* mcs)
 }
 
 /**
- * Send MCS Channel Join Request.
+ * Send MCS Channel Join Request.\n
+ * @msdn{cc240526}
  * @param mcs mcs module
  * @param channel_id channel id
  */
@@ -522,7 +543,8 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 }
 
 /**
- * Receive MCS Channel Join Confirm.
+ * Receive MCS Channel Join Confirm.\n
+ * @msdn{cc240527}
  * @param mcs mcs module
  */
 
