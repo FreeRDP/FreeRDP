@@ -77,6 +77,10 @@ void test_chanman(void)
 	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
 	freerdp_chanman_send_event(chan_man, "rdpdbg", event);
 
+	event = freerdp_chanman_pop_event(chan_man);
+	printf("responded event_type %d\n", event->event_type);
+	freerdp_event_free(event);
+
 	freerdp_chanman_close(chan_man, NULL);
 	freerdp_chanman_free(chan_man);
 }
