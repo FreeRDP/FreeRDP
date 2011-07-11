@@ -24,7 +24,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/svc_plugin.h>
 
 typedef struct rdpdbg_plugin rdpdbgPlugin;
@@ -50,10 +49,13 @@ static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	svc_plugin_send(plugin, data_out);
 }
 
-static void rdpdbg_process_event(rdpSvcPlugin* plugin, void* data, int size)
+static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 {
-	printf("rdpdbg_process_event: size %d\n", size);
-	freerdp_hexdump(data, size);
+	printf("rdpdbg_process_event: event_type %d\n", event->event_type);
+	freerdp_event_free(event);
+
+	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
+	svc_plugin_send_event(plugin, event);
 }
 
 static void rdpdbg_process_terminate(rdpSvcPlugin* plugin)
@@ -69,7 +71,6 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rdpdbg = (rdpdbgPlugin*)xmalloc(sizeof(rdpdbgPlugin));
 	memset(rdpdbg, 0, sizeof(rdpdbgPlugin));
 
-	rdpdbg->plugin.channel_entry_points = *pEntryPoints;
 	rdpdbg->plugin.channel_def.options = CHANNEL_OPTION_INITIALIZED |
 		CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP |
 		CHANNEL_OPTION_SHOW_PROTOCOL;
@@ -80,7 +81,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rdpdbg->plugin.event_callback = rdpdbg_process_event;
 	rdpdbg->plugin.terminate_callback = rdpdbg_process_terminate;
 
-	svc_plugin_init((rdpSvcPlugin*)rdpdbg);
+	svc_plugin_init((rdpSvcPlugin*)rdpdbg, pEntryPoints);
 
 	return 1;
 }
