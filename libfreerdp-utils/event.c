@@ -22,7 +22,7 @@
 #include <string.h>
 #include <freerdp/utils/event.h>
 
-FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK callback, void* user_data)
+FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
 {
 	FRDP_EVENT* event = NULL;
 
@@ -44,7 +44,7 @@ FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK callback, v
 	if (event != NULL)
 	{
 		event->event_type = event_type;
-		event->event_callback = callback;
+		event->on_event_free_callback = on_event_free_callback;
 		event->user_data = user_data;
 	}
 
@@ -55,8 +55,8 @@ void freerdp_event_free(FRDP_EVENT* event)
 {
 	if (event != NULL)
 	{
-		if (event->event_callback != NULL)
-			event->event_callback(event);
+		if (event->on_event_free_callback != NULL)
+			event->on_event_free_callback(event);
 
 		switch (event->event_type)
 		{

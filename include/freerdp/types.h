@@ -113,7 +113,7 @@ FRDP_BRUSH;
 typedef struct _FRDP_PLUGIN_DATA
 {
 	uint16 size;
-	void * data[4];
+	void* data[4];
 }
 FRDP_PLUGIN_DATA;
 
@@ -128,19 +128,19 @@ FRDP_RECT;
 
 typedef struct _FRDP_EVENT FRDP_EVENT;
 
-typedef void (*FRDP_EVENT_CALLBACK) (FRDP_EVENT * event);
+typedef void (*FRDP_EVENT_CALLBACK) (FRDP_EVENT* event);
 
 struct _FRDP_EVENT
 {
 	uint16 event_type;
-	FRDP_EVENT_CALLBACK event_callback;
-	void * user_data;
+	FRDP_EVENT_CALLBACK on_event_free_callback;
+	void* user_data;
 };
 
 struct _FRDP_VIDEO_FRAME_EVENT
 {
 	FRDP_EVENT event;
-	uint8 * frame_data;
+	uint8* frame_data;
 	uint32 frame_size;
 	uint32 frame_pixfmt;
 	sint16 frame_width;
@@ -150,7 +150,7 @@ struct _FRDP_VIDEO_FRAME_EVENT
 	sint16 width;
 	sint16 height;
 	uint16 num_visible_rects;
-	FRDP_RECT * visible_rects;
+	FRDP_RECT* visible_rects;
 };
 typedef struct _FRDP_VIDEO_FRAME_EVENT FRDP_VIDEO_FRAME_EVENT;
 
