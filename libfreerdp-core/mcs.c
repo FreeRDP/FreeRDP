@@ -160,6 +160,83 @@ uint8 mcs_result_enumerated[16][32] =
 };
 
 /**
+ * MCS Connection Sequence.
+ * @param mcs mcs module
+ * @return
+ */
+
+boolean mcs_connect(rdpMcs* mcs)
+{
+	int i;
+	uint16 channelId;
+	rdpSettings* settings;
+
+	settings = mcs->transport->settings;
+
+	mcs_send_connect_initial(mcs);
+	mcs_recv_connect_response(mcs);
+
+	mcs_send_erect_domain_request(mcs);
+	mcs_send_attach_user_request(mcs);
+	mcs_recv_attach_user_confirm(mcs);
+
+	mcs_send_channel_join_request(mcs, mcs->user_id);
+	mcs_recv_channel_join_confirm(mcs);
+
+	mcs_send_channel_join_request(mcs, MCS_GLOBAL_CHANNEL_ID);
+	mcs_recv_channel_join_confirm(mcs);
+
+	for (i = 0; i < settings->num_channels; i++)
+	{
+		channelId = settings->channels[i].chan_id;
+		mcs_send_channel_join_request(mcs, channelId);
+		mcs_recv_channel_join_confirm(mcs);
+	}
+
+	return True;
+}
+
+/**
+ * Read a DomainMCSPDU header.
+ * @param s stream
+ * @param domainMCSPDU DomainMCSPDU type
+ * @param length TPKT length
+ * @return
+ */
+
+boolean mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, int* length)
+{
+	uint8 choice;
+	enum DomainMCSPDU MCSPDU;
+
+	*length = tpkt_read_header(s);
+	tpdu_read_data(s);
+
+	MCSPDU = *domainMCSPDU;
+	per_read_choice(s, &choice);
+	*domainMCSPDU = (choice >> 2);
+
+	if (*domainMCSPDU != MCSPDU)
+		return False;
+
+	return True;
+}
+
+/**
+ * Write a DomainMCSPDU header.
+ * @param s stream
+ * @param domainMCSPDU DomainMCSPDU type
+ * @param length TPKT length
+ */
+
+void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, int length)
+{
+	tpkt_write_header(s, length);
+	tpdu_write_data(s);
+	per_write_choice(s, domainMCSPDU << 2);
+}
+
+/**
  * Initialize MCS Domain Parameters.
  * @param domainParameters domain parameters
  * @param maxChannelIds max channel ids
@@ -182,7 +259,13 @@ static void mcs_init_domain_parameters(DomainParameters* domainParameters,
 	domainParameters->protocolVersion = 2;
 }
 
-static void mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParameters)
+/**
+ * Read MCS Domain Parameters.
+ * @param s stream
+ * @param domainParameters domain parameters
+ */
+
+void mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
 	ber_read_sequence_of_tag(s, &length);
@@ -202,7 +285,7 @@ static void mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParame
  * @param domainParameters domain parameters
  */
 
-static void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
+void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
 	uint8 *bm, *em;
@@ -226,6 +309,11 @@ static void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParam
 	ber_write_sequence_of_tag(s, length);
 	stream_set_mark(s, em);
 }
+
+/**
+ * Print MCS Domain Parameters.
+ * @param domainParameters domain parameters
+ */
 
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
@@ -288,6 +376,11 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 	stream_set_mark(s, em);
 }
 
+/**
+ * Send MCS Connect Initial.
+ * @param mcs mcs module
+ */
+
 void mcs_send_connect_initial(rdpMcs* mcs)
 {
 	STREAM* s;
@@ -317,7 +410,15 @@ void mcs_send_connect_initial(rdpMcs* mcs)
 	stream_set_mark(s, em);
 
 	transport_write(mcs->transport, s);
+
+	stream_free(gcc_CCrq);
+	stream_free(client_data);
 }
+
+/**
+ * Receive MCS Connect Response.
+ * @param mcs mcs module
+ */
 
 void mcs_recv_connect_response(rdpMcs* mcs)
 {
@@ -343,22 +444,29 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 	gcc_read_conference_create_response(s, mcs->transport->settings);
 }
 
+/**
+ * Send MCS Erect Domain Request.
+ * @param mcs
+ */
+
 void mcs_send_erect_domain_request(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length = 12;
 	s = transport_send_stream_init(mcs->transport, length);
 
-	tpkt_write_header(s, length);
-	tpdu_write_data(s);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length);
 
-	/* DomainMCSPDU, ErectDomainRequest */
-	per_write_choice(s, DomainMCSPDU_ErectDomainRequest << 2);
 	per_write_integer(s, 0); /* subHeight (INTEGER) */
 	per_write_integer(s, 0); /* subInterval (INTEGER) */
 
 	transport_write(mcs->transport, s);
 }
+
+/**
+ * Send MCS Attach User Request.
+ * @param mcs mcs module
+ */
 
 void mcs_send_attach_user_request(rdpMcs* mcs)
 {
@@ -366,32 +474,38 @@ void mcs_send_attach_user_request(rdpMcs* mcs)
 	int length = 8;
 	s = transport_send_stream_init(mcs->transport, length);
 
-	tpkt_write_header(s, length);
-	tpdu_write_data(s);
-
-	/* DomainMCSPDU, AttachUserRequest */
-	per_write_choice(s, DomainMCSPDU_AttachUserRequest << 2);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length);
 
 	transport_write(mcs->transport, s);
 }
+
+/**
+ * Receive MCS Attach User Confirm.
+ * @param mcs mcs module
+ */
 
 void mcs_recv_attach_user_confirm(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length;
 	uint8 result;
-	uint8 choice;
+	enum DomainMCSPDU MCSPDU;
 
 	s = transport_recv_stream_init(mcs->transport, 32);
 	transport_read(mcs->transport, s);
 
-	tpkt_read_header(s);
-	tpdu_read_data(s);
+	MCSPDU = DomainMCSPDU_AttachUserConfirm;
+	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
 
-	per_read_choice(s, &choice);
 	per_read_enumerated(s, &result, MCS_Result_enum_length); /* result */
 	per_read_integer16(s, &(mcs->user_id), MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 }
+
+/**
+ * Send MCS Channel Join Request.
+ * @param mcs mcs module
+ * @param channel_id channel id
+ */
 
 void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 {
@@ -399,49 +513,39 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 	int length = 12;
 	s = transport_send_stream_init(mcs->transport, 12);
 
-	tpkt_write_header(s, length);
-	tpdu_write_data(s);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, length);
 
-	/* DomainMCSPDU, ChannelJoinRequest*/
-	per_write_choice(s, DomainMCSPDU_ChannelJoinRequest << 2);
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
-	per_write_integer16(s, channel_id + MCS_BASE_CHANNEL_ID, 0);
+	per_write_integer16(s, channel_id, 0);
 
 	transport_write(mcs->transport, s);
 }
+
+/**
+ * Receive MCS Channel Join Confirm.
+ * @param mcs mcs module
+ */
 
 void mcs_recv_channel_join_confirm(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length;
-	uint8 choice;
 	uint8 result;
 	uint16 initiator;
 	uint16 requested;
 	uint16 channelId;
+	enum DomainMCSPDU MCSPDU;
 
 	s = transport_recv_stream_init(mcs->transport, 32);
 	transport_read(mcs->transport, s);
 
-	tpkt_read_header(s);
-	tpdu_read_data(s);
+	MCSPDU = DomainMCSPDU_ChannelJoinConfirm;
+	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
 
-	per_read_choice(s, &choice);
 	per_read_enumerated(s, &result, MCS_Result_enum_length); /* result */
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, &requested, 0); /* requested (ChannelId) */
 	per_read_integer16(s, &channelId, 0); /* channelId */
-}
-
-void mcs_recv(rdpMcs* mcs)
-{
-	STREAM* s;
-	int length;
-	uint8 result;
-	uint8 choice;
-
-	s = transport_recv_stream_init(mcs->transport, 1024);
-	transport_read(mcs->transport, s);
 }
 
 /**

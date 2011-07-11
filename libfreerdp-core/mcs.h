@@ -124,16 +124,17 @@ typedef struct rdp_mcs rdpMcs;
 #define MCS_TYPE_CONNECT_INITIAL		0x65
 #define MCS_TYPE_CONNECT_RESPONSE		0x66
 
+boolean mcs_connect(rdpMcs* mcs);
+
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
 void mcs_send_connect_initial(rdpMcs* mcs);
 void mcs_recv_connect_response(rdpMcs* mcs);
 void mcs_send_erect_domain_request(rdpMcs* mcs);
+void mcs_send_attach_user_request(rdpMcs* mcs);
 void mcs_recv_attach_user_confirm(rdpMcs* mcs);
 void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id);
 void mcs_recv_channel_join_confirm(rdpMcs* mcs);
-
-void mcs_recv(rdpMcs* mcs);
 
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);

@@ -51,9 +51,7 @@
 
 void connection_client_connect(rdpConnection* connection)
 {
-	int i;
 	STREAM* s;
-	uint16 channelId;
 
 	connection->settings->autologon = 1;
 	connection->transport = transport_new(connection->settings);
@@ -69,24 +67,12 @@ void connection_client_connect(rdpConnection* connection)
 
 	connection->mcs = mcs_new(connection->transport);
 
-	mcs_send_connect_initial(connection->mcs);
-	mcs_recv_connect_response(connection->mcs);
-
-	mcs_send_erect_domain_request(connection->mcs);
-	mcs_send_attach_user_request(connection->mcs);
-	mcs_recv_attach_user_confirm(connection->mcs);
-
-	mcs_send_channel_join_request(connection->mcs, connection->mcs->user_id);
-	mcs_recv_channel_join_confirm(connection->mcs);
-
-	for (i = 0; i < connection->settings->num_channels; i++)
-	{
-		channelId = connection->settings->channels[i].chan_id;
-		mcs_send_channel_join_request(connection->mcs, channelId);
-		mcs_recv_channel_join_confirm(connection->mcs);
-	}
+	mcs_connect(connection->mcs);
 
 	connection_send_client_info(connection);
+
+	s = transport_recv_stream_init(connection->transport, 4096);
+	transport_read(connection->transport, s);
 
 	s = transport_recv_stream_init(connection->transport, 4096);
 	transport_read(connection->transport, s);
@@ -356,9 +342,8 @@ void connection_send_client_info(rdpConnection* connection)
 	length = (em - bm);
 	stream_set_mark(s, bm);
 
-	tpkt_write_header(s, length);
-	tpdu_write_data(s);
-	per_write_choice(s, DomainMCSPDU_SendDataRequest << 2);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length);
+
 	per_write_integer16(s, connection->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
