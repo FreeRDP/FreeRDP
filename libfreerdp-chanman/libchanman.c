@@ -770,12 +770,9 @@ int freerdp_chanman_data(rdpInst* inst, int chan_id, char* data, int data_size,
  * called only from main thread
  * @param chan_man the channel manager instance
  * @param name the static virtual channel name, such as 'cliprdr'
- * @param event plugin-defined event id, defined as CHANNEL_EVENT_USER + n
- * @param data arbitrary buffer or struct to be passed to the plugin
- * @param data_size the size of the data argument
+ * @param event an event object created by freerdp_event_new()
  */
-FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* name, uint32 event,
-	void* data, int data_size)
+FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* name, FRDP_EVENT* event)
 {
 	struct chan_data* lchan_data;
 	int index;
@@ -789,8 +786,8 @@ FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* nam
 	if (lchan_data->open_event_proc != NULL)
 	{
 		lchan_data->open_event_proc(lchan_data->open_handle,
-			event,
-			data, data_size, data_size, 0);
+			CHANNEL_EVENT_USER,
+			event, sizeof(FRDP_EVENT), sizeof(FRDP_EVENT), 0);
 	}
 	return 0;
 }
@@ -867,11 +864,6 @@ FRDP_EVENT* freerdp_chanman_pop_event(rdpChanMan* chan_man)
 	chan_man->event = NULL;
 	freerdp_sem_signal(chan_man->event_sem); /* release chan_man->event */
 	return event;
-}
-
-void freerdp_chanman_free_event(rdpChanMan* chan_man, FRDP_EVENT * event)
-{
-	event->event_callback(event);
 }
 
 void freerdp_chanman_close(rdpChanMan* chan_man, rdpInst* inst)

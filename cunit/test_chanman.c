@@ -23,6 +23,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/chanman.h>
+#include <freerdp/utils/event.h>
 
 #include "test_chanman.h"
 
@@ -57,6 +58,7 @@ void test_chanman(void)
 	rdpChanMan* chan_man;
 	rdpSettings settings = { 0 };
 	rdpInst inst = { 0 };
+	FRDP_EVENT* event;
 
 	settings.hostname = "testhost";
 	inst.settings = &settings;
@@ -72,7 +74,8 @@ void test_chanman(void)
 
 	freerdp_chanman_check_fds(chan_man, &inst);
 
-	freerdp_chanman_send_event(chan_man, "rdpdbg", CHANNEL_EVENT_USER + 1, "testevent", 9);
+	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
+	freerdp_chanman_send_event(chan_man, "rdpdbg", event);
 
 	freerdp_chanman_close(chan_man, NULL);
 	freerdp_chanman_free(chan_man);

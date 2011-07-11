@@ -24,7 +24,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/svc_plugin.h>
 
 typedef struct rdpdbg_plugin rdpdbgPlugin;
@@ -50,10 +49,10 @@ static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	svc_plugin_send(plugin, data_out);
 }
 
-static void rdpdbg_process_event(rdpSvcPlugin* plugin, void* data, int size)
+static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 {
-	printf("rdpdbg_process_event: size %d\n", size);
-	freerdp_hexdump(data, size);
+	printf("rdpdbg_process_event: event_type %d\n", event->event_type);
+	freerdp_event_free(event);
 }
 
 static void rdpdbg_process_terminate(rdpSvcPlugin* plugin)

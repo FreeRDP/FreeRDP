@@ -25,6 +25,7 @@
 
 #include <freerdp/svc.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/event.h>
 
 typedef struct rdp_svc_plugin_private rdpSvcPluginPrivate;
 typedef struct rdp_svc_plugin rdpSvcPlugin;
@@ -35,7 +36,7 @@ struct rdp_svc_plugin
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
-	void (*event_callback)(rdpSvcPlugin* plugin, void* data, int size);
+	void (*event_callback)(rdpSvcPlugin* plugin, FRDP_EVENT* event);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	rdpSvcPluginPrivate* priv;
