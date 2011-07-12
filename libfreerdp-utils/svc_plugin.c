@@ -29,12 +29,6 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
-#ifdef WITH_DEBUG_SVC
-#define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
 /* The list of all plugin instances. */
 typedef struct rdp_svc_plugin_list rdpSvcPluginList;
 struct rdp_svc_plugin_list

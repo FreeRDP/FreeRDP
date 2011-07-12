@@ -26,6 +26,7 @@
 #include <freerdp/svc.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/debug.h>
 
 typedef struct rdp_svc_plugin_private rdpSvcPluginPrivate;
 typedef struct rdp_svc_plugin rdpSvcPlugin;
@@ -45,5 +46,11 @@ struct rdp_svc_plugin
 void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
 int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
+
+#ifdef WITH_DEBUG_SVC
+#define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 #endif /* __SVC_PLUGIN_UTILS_H */

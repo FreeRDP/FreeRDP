@@ -20,9 +20,7 @@
 #ifndef __UTILS_DEBUG_H
 #define __UTILS_DEBUG_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef WITH_DEBUG_ASSERT
 #include <assert.h>
