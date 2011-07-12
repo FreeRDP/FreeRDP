@@ -65,3 +65,70 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, FRDP_CB_FORMAT_LI
 
 	cliprdr_packet_send(cliprdr, data_out);
 }
+
+static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
+{
+	STREAM* data_out;
+
+	data_out = cliprdr_packet_new(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK, 0);
+	cliprdr_packet_send(cliprdr, data_out);
+}
+
+void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen)
+{
+	FRDP_CB_FORMAT_LIST_EVENT* cb_event;
+	uint32 format;
+	int num_formats;
+	int supported;
+	int i;
+
+	cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	num_formats = dataLen / 36;
+	cb_event->formats = (uint32*)xmalloc(sizeof(uint32) * num_formats);
+	cb_event->num_formats = 0;
+	if (num_formats * 36 != dataLen)
+		DEBUG_WARN("dataLen %d not devided by 36!");
+	for (i = 0; i < num_formats; i++)
+	{
+		stream_read_uint32(data_in, format);
+		supported = 1;
+		switch (format)
+		{
+			case CB_FORMAT_TEXT:
+			case CB_FORMAT_DIB:
+			case CB_FORMAT_UNICODETEXT:
+				break;
+
+			default:
+				if (memcmp(stream_get_tail(data_in), CFSTR_HTML, sizeof(CFSTR_HTML)) == 0)
+				{
+					format = CB_FORMAT_HTML;
+					break;
+				}
+				if (memcmp(stream_get_tail(data_in), CFSTR_PNG, sizeof(CFSTR_PNG)) == 0)
+				{
+					format = CB_FORMAT_PNG;
+					break;
+				}
+				if (memcmp(stream_get_tail(data_in), CFSTR_JPEG, sizeof(CFSTR_JPEG)) == 0)
+				{
+					format = CB_FORMAT_JPEG;
+					break;
+				}
+				if (memcmp(stream_get_tail(data_in), CFSTR_GIF, sizeof(CFSTR_GIF)) == 0)
+				{
+					format = CB_FORMAT_GIF;
+					break;
+				}
+				supported = 0;
+				break;
+		}
+		stream_seek(data_in, 32);
+
+		if (supported)
+			cb_event->formats[cb_event->num_formats++] = format;
+	}
+
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
+	cliprdr_send_format_list_response(cliprdr);
+}

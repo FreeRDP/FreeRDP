@@ -60,10 +60,19 @@ static const uint8 test_monitor_ready_data[] =
 	"\x01\x00\x00\x00\x00\x00\x00\x00"
 };
 
+static const uint8 test_format_list_data[] =
+{
+	"\x02\x00\x00\x00\x48\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\xd0\x00\x00"
+	"\x48\x00\x54\x00\x4D\x00\x4C\x00\x20\x00\x46\x00\x6F\x00\x72\x00"
+	"\x6D\x00\x61\x00\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+};
+
 static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
-	freerdp_hexdump(data, data_size);
+	/*freerdp_hexdump(data, data_size);*/
 }
 
 static int event_processed;
@@ -81,6 +90,7 @@ void test_cliprdr(void)
 	rdpInst inst = { 0 };
 	FRDP_EVENT* event;
 	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
+	int i;
 
 	settings.hostname = "testhost";
 	inst.settings = &settings;
@@ -92,12 +102,14 @@ void test_cliprdr(void)
 	freerdp_chanman_pre_connect(chan_man, &inst);
 	freerdp_chanman_post_connect(chan_man, &inst);
 
+	/* server sends cliprdr capabilities and monitor ready PDU */
 	freerdp_chanman_data(&inst, 0, (char*)test_clip_caps_data, sizeof(test_clip_caps_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_clip_caps_data) - 1);
 
 	freerdp_chanman_data(&inst, 0, (char*)test_monitor_ready_data, sizeof(test_monitor_ready_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_monitor_ready_data) - 1);
 
+	/* cliprdr sends clipboard_sync event to UI */
 	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
 	{
 		freerdp_chanman_check_fds(chan_man, &inst);
@@ -106,6 +118,7 @@ void test_cliprdr(void)
 	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_SYNC);
 	freerdp_event_free(event);
 
+	/* UI sends format_list event to cliprdr */
 	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
 	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 2;
@@ -113,12 +126,32 @@ void test_cliprdr(void)
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 
+	/* cliprdr sends format list PDU to server */
 	event_processed = 0;
 	freerdp_chanman_send_event(chan_man, "cliprdr", event);
 	while (!event_processed)
 	{
 		freerdp_chanman_check_fds(chan_man, &inst);
 	}
+
+	/* server sends format list PDU to cliprdr */
+	freerdp_chanman_data(&inst, 0, (char*)test_format_list_data, sizeof(test_format_list_data) - 1,
+		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_format_list_data) - 1);
+
+	/* cliprdr sends format_list event to UI */
+	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
+	printf("Got event %d\n", event->event_type);
+	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_FORMAT_LIST);
+	if (event->event_type == FRDP_EVENT_TYPE_CB_FORMAT_LIST)
+	{
+		format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+		for (i = 0; i < format_list_event->num_formats; i++)
+			printf("Format: 0x%X\n", format_list_event->formats[i]);
+	}
+	freerdp_event_free(event);
 
 	freerdp_chanman_close(chan_man, &inst);
 	freerdp_chanman_free(chan_man);

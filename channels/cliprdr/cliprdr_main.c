@@ -119,6 +119,10 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 			cliprdr_process_monitor_ready(cliprdr);
 			break;
 
+		case CB_FORMAT_LIST:
+			cliprdr_process_format_list(cliprdr, data_in, dataLen);
+			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
