@@ -28,6 +28,7 @@
 
 #include "cliprdr_constants.h"
 #include "cliprdr_main.h"
+#include "cliprdr_format.h"
 
 STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen)
 {
@@ -128,6 +129,17 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 {
+	switch (event->event_type)
+	{
+		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
+			cliprdr_process_format_list_event((cliprdrPlugin*)plugin, (FRDP_CB_FORMAT_LIST_EVENT*)event);
+			break;
+
+		default:
+			DEBUG_WARN("unknown event type %d", event->event_type);
+			break;
+	}
+	freerdp_event_free(event);
 }
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)

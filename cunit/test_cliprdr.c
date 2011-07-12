@@ -24,6 +24,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/chanman.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/hexdump.h>
 
 #include "test_cliprdr.h"
 
@@ -62,6 +63,15 @@ static const uint8 test_monitor_ready_data[] =
 static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
+	freerdp_hexdump(data, data_size);
+}
+
+static int event_processed;
+
+static void event_process_callback(FRDP_EVENT* event)
+{
+	printf("Event %d processed.\n", event->event_type);
+	event_processed = 1;
 }
 
 void test_cliprdr(void)
@@ -70,6 +80,7 @@ void test_cliprdr(void)
 	rdpSettings settings = { 0 };
 	rdpInst inst = { 0 };
 	FRDP_EVENT* event;
+	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
 	settings.hostname = "testhost";
 	inst.settings = &settings;
@@ -94,6 +105,20 @@ void test_cliprdr(void)
 	printf("Got event %d\n", event->event_type);
 	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_SYNC);
 	freerdp_event_free(event);
+
+	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
+	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event->num_formats = 2;
+	format_list_event->formats = (uint32*)xmalloc(sizeof(uint32) * 2);
+	format_list_event->formats[0] = CB_FORMAT_TEXT;
+	format_list_event->formats[1] = CB_FORMAT_HTML;
+
+	event_processed = 0;
+	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	while (!event_processed)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
 
 	freerdp_chanman_close(chan_man, &inst);
 	freerdp_chanman_free(chan_man);

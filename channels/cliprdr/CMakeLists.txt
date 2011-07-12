@@ -18,7 +18,11 @@
 # limitations under the License.
 
 set(CLIPRDR_SRCS
+	cliprdr_constants.h
+	cliprdr_format.c
+	cliprdr_format.h
 	cliprdr_main.c
+	cliprdr_main.h
 )
 
 add_library(cliprdr SHARED ${CLIPRDR_SRCS})
