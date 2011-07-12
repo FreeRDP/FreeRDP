@@ -30,19 +30,10 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
-#define CFSTR_HTML      "HTML Format"
-#define CFSTR_PNG       "PNG"
-#define CFSTR_JPEG      "JFIF"
-#define CFSTR_GIF       "GIF"
-
-static void cliprdr_copy_format_name(char* dest, const char* src)
-{
-	while (*src)
-	{
-		*dest = *src++;
-		dest += 2;
-	}
-}
+#define CFSTR_HTML      "H\0T\0M\0L\0 \0F\0o\0r\0m\0a\0t\0\0"
+#define CFSTR_PNG       "P\0N\0G\0\0"
+#define CFSTR_JPEG      "J\0F\0I\0F\0\0"
+#define CFSTR_GIF       "G\0I\0F\0\0"
 
 void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, FRDP_CB_FORMAT_LIST_EVENT* cb_event)
 {
@@ -57,16 +48,16 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, FRDP_CB_FORMAT_LI
 		switch (cb_event->formats[i])
 		{
 			case CB_FORMAT_HTML:
-				cliprdr_copy_format_name(stream_get_tail(data_out), CFSTR_HTML);
+				memcpy(stream_get_tail(data_out), CFSTR_HTML, sizeof(CFSTR_HTML));
 				break;
 			case CB_FORMAT_PNG:
-				cliprdr_copy_format_name(stream_get_tail(data_out), CFSTR_PNG);
+				memcpy(stream_get_tail(data_out), CFSTR_PNG, sizeof(CFSTR_PNG));
 				break;
 			case CB_FORMAT_JPEG:
-				cliprdr_copy_format_name(stream_get_tail(data_out), CFSTR_JPEG);
+				memcpy(stream_get_tail(data_out), CFSTR_JPEG, sizeof(CFSTR_JPEG));
 				break;
 			case CB_FORMAT_GIF:
-				cliprdr_copy_format_name(stream_get_tail(data_out), CFSTR_GIF);
+				memcpy(stream_get_tail(data_out), CFSTR_GIF, sizeof(CFSTR_GIF));
 				break;
 		}
 		stream_seek(data_out, 32);
