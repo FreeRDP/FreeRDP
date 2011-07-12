@@ -87,7 +87,12 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
 {
+	FRDP_EVENT* event;
+
 	cliprdr_send_clip_caps(cliprdr);
+
+	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, event);
 }
 
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)

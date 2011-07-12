@@ -87,8 +87,13 @@ void test_cliprdr(void)
 	freerdp_chanman_data(&inst, 0, (char*)test_monitor_ready_data, sizeof(test_monitor_ready_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_monitor_ready_data) - 1);
 
-	sleep(1);
-	freerdp_chanman_check_fds(chan_man, &inst);
+	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
+	printf("Got event %d\n", event->event_type);
+	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_SYNC);
+	freerdp_event_free(event);
 
 	freerdp_chanman_close(chan_man, &inst);
 	freerdp_chanman_free(chan_man);

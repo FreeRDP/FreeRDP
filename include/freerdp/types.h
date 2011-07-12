@@ -169,7 +169,7 @@ typedef FRDP_EVENT FRDP_CB_SYNC_EVENT;
 struct _FRDP_CB_FORMAT_LIST_EVENT
 {
 	FRDP_EVENT event;
-	uint16* formats;
+	uint32* formats;
 	uint16 num_formats;
 };
 typedef struct _FRDP_CB_FORMAT_LIST_EVENT FRDP_CB_FORMAT_LIST_EVENT;
@@ -177,7 +177,7 @@ typedef struct _FRDP_CB_FORMAT_LIST_EVENT FRDP_CB_FORMAT_LIST_EVENT;
 struct _FRDP_CB_DATA_REQUEST_EVENT
 {
 	FRDP_EVENT event;
-	uint16 format;
+	uint32 format;
 };
 typedef struct _FRDP_CB_DATA_REQUEST_EVENT FRDP_CB_DATA_REQUEST_EVENT;
 
