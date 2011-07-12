@@ -146,9 +146,20 @@ void license_recv(rdpLicense* license, STREAM* s)
 
 void license_generate_keys(rdpLicense* license)
 {
-	/* FIXME: generate real keys, not null keys */
+	crypto_nonce(license->client_random, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+	crypto_nonce(license->premaster_secret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
 
-	memset(license->client_random, 0, 32);
+	security_master_secret(license->premaster_secret, license->client_random,
+			license->server_random, license->master_secret); /* MasterSecret */
+
+	security_session_key_blob(license->master_secret, license->client_random,
+			license->server_random, license->session_key_blob); /* SessionKeyBlob */
+
+	security_mac_salt_key(license->session_key_blob, license->client_random,
+			license->server_random, license->mac_salt_key); /* MacSaltKey */
+
+	security_licensing_encryption_key(license->session_key_blob, license->client_random,
+			license->server_random, license->licensing_encryption_key); /* LicensingEncryptionKey */
 
 	license->encrypted_pre_master_secret->length = 72;
 	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(72);
@@ -164,12 +175,12 @@ void license_generate_hwid(rdpLicense* license)
 	CryptoMd5 md5;
 	uint8* mac_address;
 
-	memset(license->hwid, 0, 20);
+	memset(license->hwid, 0, HWID_LENGTH);
 	mac_address = license->rdp->transport->tcp->mac_address;
 
 	md5 = crypto_md5_init();
 	crypto_md5_update(md5, mac_address, 6);
-	crypto_md5_final(md5, &license->hwid[4]);
+	crypto_md5_final(md5, &license->hwid[HWID_PLATFORM_ID_LENGTH]);
 }
 
 /**

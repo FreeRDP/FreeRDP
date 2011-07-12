@@ -46,6 +46,18 @@ typedef struct rdp_license rdpLicense;
 #define LICENSE_PREAMBLE_LENGTH		4
 #define LICENSE_PACKET_HEADER_LENGTH	(RDP_PACKET_HEADER_LENGTH + RDP_SECURITY_HEADER_LENGTH + LICENSE_PREAMBLE_LENGTH)
 
+/* Cryptographic Lengths */
+#define CLIENT_RANDOM_LENGTH			32
+#define SERVER_RANDOM_LENGTH			32
+#define MASTER_SECRET_LENGTH			48
+#define PREMASTER_SECRET_LENGTH			48
+#define SESSION_KEY_BLOB_LENGTH			48
+#define MAC_SALT_KEY_LENGTH			16
+#define LICENSING_ENCRYPTION_KEY_LENGTH		16
+#define HWID_PLATFORM_ID_LENGTH			4
+#define HWID_UNIQUE_DATA_LENGTH			16
+#define HWID_LENGTH				20
+
 /* Licensing Preamble Flags */
 #define PREAMBLE_VERSION_2_0			0x02
 #define PREAMBLE_VERSION_3_0			0x03
@@ -91,10 +103,15 @@ typedef struct
 
 struct rdp_license
 {
-	uint8 hwid[20];
 	struct rdp_rdp* rdp;
-	uint8 client_random[32];
-	uint8 server_random[32];
+	uint8 hwid[HWID_LENGTH];
+	uint8 client_random[CLIENT_RANDOM_LENGTH];
+	uint8 server_random[SERVER_RANDOM_LENGTH];
+	uint8 master_secret[MASTER_SECRET_LENGTH];
+	uint8 premaster_secret[PREMASTER_SECRET_LENGTH];
+	uint8 session_key_blob[SESSION_KEY_BLOB_LENGTH];
+	uint8 mac_salt_key[MAC_SALT_KEY_LENGTH];
+	uint8 licensing_encryption_key[LICENSING_ENCRYPTION_KEY_LENGTH];
 	PRODUCT_INFO* product_info;
 	LICENSE_BLOB* key_exchange_list;
 	LICENSE_BLOB* server_certificate;

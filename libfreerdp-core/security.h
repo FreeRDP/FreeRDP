@@ -21,10 +21,17 @@
 #define __SECURITY_H
 
 #include "rdp.h"
+#include "crypto.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-
+void security_salted_hash(uint8* salt, uint8* input, int length, uint8* client_random, uint8* server_random, uint8* output);
+void security_premaster_hash(uint8* input, int length, uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output);
+void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output);
+void security_master_hash(uint8* input, int length, uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
+void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
+void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
+void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
 
 #endif /* __SECURITY_H */
