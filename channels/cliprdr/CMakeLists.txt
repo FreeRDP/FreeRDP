@@ -17,6 +17,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(rdpdbg)
+set(CLIPRDR_SRCS
+	cliprdr_main.c
+)
 
+add_library(cliprdr SHARED ${CLIPRDR_SRCS})
+set_target_properties(cliprdr PROPERTIES PREFIX "")
+
+target_link_libraries(cliprdr freerdp-utils)
+
+install(TARGETS cliprdr DESTINATION ${FREERDP_PLUGIN_PATH})

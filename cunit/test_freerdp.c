@@ -31,6 +31,7 @@
 #include "test_utils.h"
 #include "test_transport.h"
 #include "test_chanman.h"
+#include "test_cliprdr.h"
 #include "test_freerdp.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
@@ -123,6 +124,7 @@ int main(int argc, char* argv[])
 		add_utils_suite();
 		add_transport_suite();
 		add_chanman_suite();
+		add_cliprdr_suite();
 	}
 	else
 	{
@@ -159,6 +161,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("chanman", argv[*pindex]) == 0)
 			{
 				add_chanman_suite();
+			}
+			else if (strcmp("cliprdr", argv[*pindex]) == 0)
+			{
+				add_cliprdr_suite();
 			}
 			else if (strcmp("per", argv[*pindex]) == 0)
 			{
