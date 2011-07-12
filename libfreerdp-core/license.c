@@ -404,6 +404,10 @@ void license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 	/* ScopeList */
 	license_read_scope_list(s, license->scope_list);
+
+	/* Parse Server Certificate */
+	certificate_read_server_certificate(license->certificate,
+			license->server_certificate->data, license->server_certificate->length);
 }
 
 /**
@@ -561,6 +565,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 /**
  * Instantiate new license module.
+ * @param rdp RDP module
  * @return new license module
  */
 
@@ -573,6 +578,7 @@ rdpLicense* license_new(rdpRdp* rdp)
 	if (license != NULL)
 	{
 		license->rdp = rdp;
+		license->certificate = certificate_new(rdp);
 		license->product_info = license_new_product_info();
 		license->key_exchange_list = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB);
 		license->server_certificate = license_new_binary_blob(BB_CERTIFICATE_BLOB);
@@ -594,6 +600,7 @@ void license_free(rdpLicense* license)
 {
 	if (license != NULL)
 	{
+		certificate_free(license->certificate);
 		license_free_product_info(license->product_info);
 		license_free_binary_blob(license->key_exchange_list);
 		license_free_binary_blob(license->server_certificate);

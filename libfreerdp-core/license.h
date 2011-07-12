@@ -24,6 +24,7 @@ typedef struct rdp_license rdpLicense;
 
 #include "rdp.h"
 #include "crypto.h"
+#include "certificate.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
@@ -104,6 +105,7 @@ typedef struct
 struct rdp_license
 {
 	struct rdp_rdp* rdp;
+	struct rdp_certificate* certificate;
 	uint8 hwid[HWID_LENGTH];
 	uint8 client_random[CLIENT_RANDOM_LENGTH];
 	uint8 server_random[SERVER_RANDOM_LENGTH];

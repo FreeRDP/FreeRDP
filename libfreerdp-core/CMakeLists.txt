@@ -41,6 +41,8 @@ set(LIBFREERDP_CORE_SRCS
 	security.c
 	security.h
 	settings.c
+	certificate.c
+	certificate.h
 	connection.c
 	connection.h
 	redirection.c
