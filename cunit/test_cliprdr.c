@@ -89,7 +89,7 @@ static const uint8 test_data_response_data[] =
 static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
-	/*freerdp_hexdump(data, data_size);*/
+	freerdp_hexdump(data, data_size);
 }
 
 static int event_processed;
@@ -208,6 +208,38 @@ void test_cliprdr(void)
 	{
 		freerdp_chanman_check_fds(chan_man, &inst);
 	}
+
+	/* UI sends data request event to cliprdr */
+	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_REQUEST, event_process_callback, NULL);
+	data_request_event = (FRDP_CB_DATA_REQUEST_EVENT*)event;
+	data_request_event->format = CB_FORMAT_UNICODETEXT;
+	event_processed = 0;
+	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+
+	/* cliprdr sends data request PDU to server */
+	while (!event_processed)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
+
+	/* server sends data response PDU to cliprdr */
+	freerdp_chanman_data(&inst, 0, (char*)test_data_response_data, sizeof(test_data_response_data) - 1,
+		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_data_response_data) - 1);
+
+	/* cliprdr sends data response event to UI */
+	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
+	printf("Got event %d\n", event->event_type);
+	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_DATA_RESPONSE);
+	if (event->event_type == FRDP_EVENT_TYPE_CB_DATA_RESPONSE)
+	{
+		data_response_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+		printf("Data response size: %d\n", data_response_event->size);
+		freerdp_hexdump(data_response_event->data, data_response_event->size);
+	}
+	freerdp_event_free(event);
 
 	freerdp_chanman_close(chan_man, &inst);
 	freerdp_chanman_free(chan_man);

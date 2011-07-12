@@ -142,11 +142,31 @@ void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* data_in
 	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
 }
 
-void cliprdr_process_data_response_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_RESPONSE_EVENT* cb_event)
+void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_RESPONSE_EVENT* cb_event)
 {
 	STREAM* data_out;
 
 	data_out = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, cb_event->size);
 	stream_write(data_out, cb_event->data, cb_event->size);
 	cliprdr_packet_send(cliprdr, data_out);
+}
+
+void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_REQUEST_EVENT* cb_event)
+{
+	STREAM* data_out;
+
+	data_out = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
+	stream_write_uint32(data_out, cb_event->format);
+	cliprdr_packet_send(cliprdr, data_out);
+}
+
+void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen)
+{
+	FRDP_CB_DATA_RESPONSE_EVENT* cb_event;
+
+	cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	cb_event->size = dataLen;
+	cb_event->data = (uint8*)xmalloc(dataLen);
+	memcpy(cb_event->data, stream_get_tail(data_in), dataLen);
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
 }
