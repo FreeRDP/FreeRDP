@@ -107,11 +107,7 @@ void license_recv(rdpLicense* license, STREAM* s)
 	uint8 bMsgType;
 	uint16 wMsgSize;
 
-	printf("SEC_LICENSE_PKT\n");
-
 	license_read_preamble(s, &bMsgType, &flags, &wMsgSize); /* preamble (4 bytes) */
-
-	printf("bMsgType:%X, flags:%X, wMsgSize:%02x\n", bMsgType, flags, wMsgSize);
 
 	switch (bMsgType)
 	{
@@ -122,6 +118,7 @@ void license_recv(rdpLicense* license, STREAM* s)
 
 		case PLATFORM_CHALLENGE:
 			license_read_platform_challenge_packet(license, s);
+			license_send_platform_challenge_response_packet(license);
 			break;
 
 		case NEW_LICENSE:
@@ -140,6 +137,21 @@ void license_recv(rdpLicense* license, STREAM* s)
 			printf("invalid bMsgType:%d\n", bMsgType);
 			break;
 	}
+}
+
+/**
+ * Generate License Cryptographic Keys.
+ * @param license license module
+ */
+
+void license_generate_keys(rdpLicense* license)
+{
+	/* FIXME: generate real keys, not null keys */
+
+	memset(license->client_random, 0, 32);
+
+	license->encrypted_pre_master_secret->length = 72;
+	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(72);
 }
 
 /**
@@ -347,7 +359,7 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 
 void license_read_license_request_packet(rdpLicense* license, STREAM* s)
 {
-	printf("LICENSE_REQUEST\n");
+	DEBUG_LICENSE("Receiving License Request Packet");
 
 	/* ServerRandom (32 bytes) */
 	stream_read(s, license->server_random, 32);
@@ -374,7 +386,13 @@ void license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 {
+	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
+	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
+
+	/* EncryptedPlatformChallenge */
+
+	/* MACData (16 bytes) */
 }
 
 /**
@@ -386,7 +404,7 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 
 void license_read_new_license_packet(rdpLicense* license, STREAM* s)
 {
-
+	DEBUG_LICENSE("Receiving New License Packet");
 }
 
 /**
@@ -398,7 +416,7 @@ void license_read_new_license_packet(rdpLicense* license, STREAM* s)
 
 void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
 {
-
+	DEBUG_LICENSE("Receiving Upgrade License Packet");
 }
 
 /**
@@ -410,7 +428,7 @@ void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
 
 void license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 {
-
+	DEBUG_LICENSE("Receiving Error Alert Packet");
 }
 
 /**
@@ -455,12 +473,59 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	STREAM* s;
 
 	s = license_send_stream_init(license);
+	DEBUG_LICENSE("Sending New License Request Packet");
 
-	/* TODO: generate keys */
+	license->client_user_name->data = license->rdp->settings->username;
+	license->client_user_name->length = strlen(license->rdp->settings->username);
+
+	license->client_machine_name->data = license->rdp->settings->hostname;
+	license->client_machine_name->length = strlen(license->rdp->settings->hostname);
+
+	license_generate_keys(license);
 
 	license_write_new_license_request_packet(license, s);
 
 	license_send(license, s, NEW_LICENSE_REQUEST);
+
+	license->client_user_name->data = NULL;
+	license->client_user_name->length = 0;
+
+	license->client_machine_name->data = NULL;
+	license->client_machine_name->length = 0;
+}
+
+/**
+ * Write Client Challenge Response Packet.\n
+ * @msdn{cc241922}
+ * @param license license module
+ * @param s stream
+ */
+
+void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s)
+{
+	/* EncryptedPlatformChallengeResponse */
+
+	/* EncryptedHWID */
+
+	/* MACData */
+}
+
+/**
+ * Send Client Challenge Response Packet.\n
+ * @msdn{cc241922}
+ * @param license license module
+ */
+
+void license_send_platform_challenge_response_packet(rdpLicense* license)
+{
+	STREAM* s;
+
+	s = license_send_stream_init(license);
+	DEBUG_LICENSE("Sending Platform Challenge Response Packet");
+
+	license_write_platform_challenge_response_packet(license, s);
+
+	license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
 }
 
 /**

@@ -137,7 +137,7 @@ void rdp_recv(rdpRdp* rdp)
 				break;
 
 			default:
-				printf("incorrect security flags: 0x%02X\n", sec_flags);
+				printf("incorrect security flags: 0x%04X\n", sec_flags);
 				break;
 		}
 	}

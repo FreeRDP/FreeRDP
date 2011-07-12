@@ -70,8 +70,11 @@ void rdp_client_connect(rdpRdp* rdp)
 	mcs_connect(rdp->mcs);
 
 	rdp_send_client_info(rdp);
-	rdp_recv(rdp);
 
+	rdp_recv(rdp);
+	rdp_recv(rdp);
+	rdp_recv(rdp);
+	rdp_recv(rdp);
 	rdp_recv(rdp);
 }
 

@@ -25,6 +25,7 @@ typedef struct rdp_license rdpLicense;
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
 /* Licensing Packet Types */
@@ -105,6 +106,8 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type);
 void license_recv(rdpLicense* license, STREAM* s);
 STREAM* license_send_stream_init(rdpLicense* license);
 
+void license_generate_keys(rdpLicense* license);
+
 PRODUCT_INFO* license_new_product_info();
 void license_free_product_info(PRODUCT_INFO* productInfo);
 void license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo);
@@ -127,7 +130,18 @@ void license_read_error_alert_packet(rdpLicense* license, STREAM* s);
 void license_write_new_license_request_packet(rdpLicense* license, STREAM* s);
 void license_send_new_license_request_packet(rdpLicense* license);
 
+void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s);
+void license_send_platform_challenge_response_packet(rdpLicense* license);
+
 rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);
+
+#define WITH_DEBUG_LICENSE	1
+
+#ifdef WITH_DEBUG_LICENSE
+#define DEBUG_LICENSE(fmt, ...) DEBUG_CLASS(LICENSE, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_LICENSE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 #endif /* __LICENSE_H */
