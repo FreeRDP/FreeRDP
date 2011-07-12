@@ -47,6 +47,12 @@ void rdp_write_security_header(STREAM* s, uint16 flags)
 	stream_write_uint16(s, 0); /* flagsHi (unused) */
 }
 
+/**
+ * Initialize an RDP packet stream.\n
+ * @param rdp rdp module
+ * @return
+ */
+
 STREAM* rdp_send_stream_init(rdpRdp* rdp)
 {
 	STREAM* s;
@@ -54,6 +60,12 @@ STREAM* rdp_send_stream_init(rdpRdp* rdp)
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
 	return s;
 }
+
+/**
+ * Send an RDP packet.\n
+ * @param rdp RDP module
+ * @param s stream
+ */
 
 void rdp_send(rdpRdp* rdp, STREAM* s)
 {
@@ -72,6 +84,11 @@ void rdp_send(rdpRdp* rdp, STREAM* s)
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
 }
+
+/**
+ * Receive an RDP packet.\n
+ * @param rdp RDP module
+ */
 
 void rdp_recv(rdpRdp* rdp)
 {
@@ -101,11 +118,11 @@ void rdp_recv(rdpRdp* rdp)
 		switch (sec_flags & SEC_PKT_MASK)
 		{
 			case SEC_LICENSE_PKT:
-				security_read_license_packet(s, sec_flags);
+				license_recv(rdp->license, s, sec_flags);
 				break;
 
 			case SEC_REDIRECTION_PKT:
-				security_read_redirection_packet(s, sec_flags);
+				rdp_read_redirection_packet(rdp, s, sec_flags);
 				break;
 
 			default:
@@ -130,6 +147,7 @@ rdpRdp* rdp_new()
 	{
 		rdp->settings = settings_new();
 		rdp->transport = transport_new(rdp->settings);
+		rdp->license = license_new(rdp->license);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 	}
@@ -139,7 +157,7 @@ rdpRdp* rdp_new()
 
 /**
  * Free RDP module.
- * @param RDP connect module to be freed
+ * @param rdp RDP module to be freed
  */
 
 void rdp_free(rdpRdp* rdp)
@@ -147,6 +165,9 @@ void rdp_free(rdpRdp* rdp)
 	if (rdp != NULL)
 	{
 		settings_free(rdp->settings);
+		transport_free(rdp->transport);
+		license_free(rdp->license);
+		mcs_free(rdp->mcs);
 		xfree(rdp);
 	}
 }

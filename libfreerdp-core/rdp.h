@@ -26,6 +26,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "tpkt.h"
 #include "tpdu.h"
 #include "nego.h"
+#include "license.h"
 #include "security.h"
 #include "transport.h"
 #include "connection.h"
@@ -56,6 +57,7 @@ struct rdp_rdp
 {
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
+	struct rdp_license* license;
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 };

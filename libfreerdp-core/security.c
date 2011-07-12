@@ -19,12 +19,4 @@
 
 #include "security.h"
 
-void security_read_license_packet(STREAM* s, uint16 sec_flags)
-{
-	printf("SEC_LICENSE_PKT\n");
-}
 
-void security_read_redirection_packet(STREAM* s, uint16 sec_flags)
-{
-	printf("SEC_REDIRECTION_PKT\n");
-}

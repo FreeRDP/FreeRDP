@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Security
+ * RDP Server Redirection
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,14 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef __SECURITY_H
-#define __SECURITY_H
+#include "redirection.h"
 
-#include "rdp.h"
+/**
+ * Read an RDP Server Redirection Packet.\n
+ * @msdn{ee441959}
+ * @param rdp RDP module
+ * @param s stream
+ * @param sec_flags security flags
+ */
 
-#include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
-
-
-
-#endif /* __SECURITY_H */
+void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s, uint16 sec_flags)
+{
+	printf("SEC_REDIRECTION_PKT\n");
+}

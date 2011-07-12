@@ -36,11 +36,15 @@ set(LIBFREERDP_CORE_SRCS
 	credssp.h
 	ntlmssp.c
 	ntlmssp.h
+	license.c
+	license.h
 	security.c
 	security.h
 	settings.c
 	connection.c
 	connection.h
+	redirection.c
+	redirection.h
 	rdp.c
 	rdp.h
 	per.c
