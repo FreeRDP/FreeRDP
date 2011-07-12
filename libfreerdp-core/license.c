@@ -155,6 +155,24 @@ void license_generate_keys(rdpLicense* license)
 }
 
 /**
+ * Generate Unique Hardware Identifier (CLIENT_HARDWARE_ID).\n
+ * @param license license module
+ */
+
+void license_generate_hwid(rdpLicense* license)
+{
+	CryptoMd5 md5;
+	uint8* mac_address;
+
+	memset(license->hwid, 0, 20);
+	mac_address = license->rdp->transport->tcp->mac_address;
+
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, mac_address, 6);
+	crypto_md5_final(md5, &license->hwid[4]);
+}
+
+/**
  * Read Product Information (PRODUCT_INFO).\n
  * @msdn{cc241915}
  * @param s stream
@@ -442,7 +460,7 @@ void license_write_platform_id(rdpLicense* license, STREAM* s)
 {
 	stream_write_uint8(s, 0); /* Client Operating System Version */
 	stream_write_uint8(s, 0); /* Independent Software Vendor (ISV) */
-	stream_write_uint16(s, 0x0201); /* Client Software Build */
+	stream_write_uint16(s, 0); /* Client Software Build */
 }
 
 /**
@@ -503,6 +521,8 @@ void license_send_new_license_request_packet(rdpLicense* license)
 
 void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s)
 {
+	license_generate_hwid(license);
+
 	/* EncryptedPlatformChallengeResponse */
 
 	/* EncryptedHWID */

@@ -23,6 +23,7 @@
 typedef struct rdp_license rdpLicense;
 
 #include "rdp.h"
+#include "crypto.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
@@ -90,6 +91,7 @@ typedef struct
 
 struct rdp_license
 {
+	uint8 hwid[20];
 	struct rdp_rdp* rdp;
 	uint8 client_random[32];
 	uint8 server_random[32];
@@ -107,6 +109,7 @@ void license_recv(rdpLicense* license, STREAM* s);
 STREAM* license_send_stream_init(rdpLicense* license);
 
 void license_generate_keys(rdpLicense* license);
+void license_generate_hwid(rdpLicense* license);
 
 PRODUCT_INFO* license_new_product_info();
 void license_free_product_info(PRODUCT_INFO* productInfo);

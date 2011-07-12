@@ -23,16 +23,18 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
 #include "tcp.h"
 
-static void tcp_get_ip_address(rdpTcp * tcp)
+void tcp_get_ip_address(rdpTcp * tcp)
 {
 	uint8* ip;
 	socklen_t length;
@@ -54,6 +56,37 @@ static void tcp_get_ip_address(rdpTcp * tcp)
 
 	tcp->settings->ipv6 = 0;
 	tcp->settings->ip_address = tcp->ip_address;
+}
+
+void tcp_get_mac_address(rdpTcp * tcp)
+{
+	uint8* mac;
+	struct ifreq if_req;
+	struct if_nameindex* ni;
+
+	ni = if_nameindex();
+	mac = tcp->mac_address;
+
+	while (ni->if_name != NULL)
+	{
+		if (strcmp(ni->if_name, "lo") != 0)
+			break;
+
+		ni++;
+	}
+
+	strncpy(if_req.ifr_name, ni->if_name, IF_NAMESIZE);
+
+	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
+	{
+		printf("failed to obtain MAC address\n");
+		return;
+	}
+
+	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
+
+	/* printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
 boolean tcp_connect(rdpTcp* tcp, const uint8* hostname, uint16 port)
@@ -101,6 +134,7 @@ boolean tcp_connect(rdpTcp* tcp, const uint8* hostname, uint16 port)
 
 	tcp->sockfd = sockfd;
 	tcp_get_ip_address(tcp);
+	tcp_get_mac_address(tcp);
 
 	return True;
 }

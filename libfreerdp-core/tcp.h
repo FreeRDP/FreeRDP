@@ -39,6 +39,7 @@ struct rdp_tcp
 {
 	int sockfd;
 	uint8 ip_address[32];
+	uint8 mac_address[6];
 	struct rdp_settings* settings;
 	TcpConnect connect;
 	TcpDisconnect disconnect;
