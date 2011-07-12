@@ -126,6 +126,10 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 		case CB_FORMAT_LIST_RESPONSE:
 			break;
 
+		case CB_FORMAT_DATA_REQUEST:
+			cliprdr_process_format_data_request(cliprdr, data_in);
+			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
@@ -140,6 +144,10 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 	{
 		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
 			cliprdr_process_format_list_event((cliprdrPlugin*)plugin, (FRDP_CB_FORMAT_LIST_EVENT*)event);
+			break;
+
+		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			cliprdr_process_data_response_event((cliprdrPlugin*)plugin, (FRDP_CB_DATA_RESPONSE_EVENT*)event);
 			break;
 
 		default:

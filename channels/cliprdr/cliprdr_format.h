@@ -24,4 +24,7 @@
 void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, FRDP_CB_FORMAT_LIST_EVENT* cb_event);
 void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen);
 
+void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* data_in);
+void cliprdr_process_data_response_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_RESPONSE_EVENT* cb_event);
+
 #endif /* __CLIPRDR_FORMAT_H */
