@@ -75,12 +75,13 @@ void test_chanman(void)
 	freerdp_chanman_data(&inst, 0, "testdata11", 10, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 10);
 	freerdp_chanman_data(&inst, 0, "testdata111", 11, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 11);
 
-	freerdp_chanman_check_fds(chan_man, &inst);
-
 	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
 	freerdp_chanman_send_event(chan_man, "rdpdbg", event);
 
-	event = freerdp_chanman_pop_event(chan_man);
+	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	{
+		freerdp_chanman_check_fds(chan_man, &inst);
+	}
 	printf("responded event_type %d\n", event->event_type);
 	freerdp_event_free(event);
 

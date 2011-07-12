@@ -31,6 +31,7 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
 /* The list of all plugin instances. */
@@ -50,14 +51,23 @@ static freerdp_mutex g_mutex = NULL;
 struct svc_data_in_item
 {
 	STREAM* data_in;
+	FRDP_EVENT* event_in;
 };
 
 DEFINE_LIST_TYPE(svc_data_in_list, svc_data_in_item);
 
 void svc_data_in_item_free(struct svc_data_in_item* item)
 {
-	stream_free(item->data_in);
-	item->data_in = NULL;
+	if (item->data_in)
+	{
+		stream_free(item->data_in);
+		item->data_in = NULL;
+	}
+	if (item->event_in)
+	{
+		freerdp_event_free(item->event_in);
+		item->event_in = NULL;
+	}
 }
 
 struct rdp_svc_plugin_private
@@ -174,6 +184,20 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	}
 }
 
+static void svc_plugin_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event_in)
+{
+	struct svc_data_in_item* item;
+
+	item = svc_data_in_item_new();
+	item->event_in = event_in;
+
+	freerdp_mutex_lock(plugin->priv->data_in_mutex);
+	svc_data_in_list_enqueue(plugin->priv->data_in_list, item);
+	freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+
+	wait_obj_set(plugin->priv->signals[1]);
+}
+
 static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, uint32 dataLength,
 	uint32 totalLength, uint32 dataFlags)
 {
@@ -197,7 +221,7 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 			stream_free((STREAM*)pData);
 			break;
 		case CHANNEL_EVENT_USER:
-			plugin->event_callback(plugin, (FRDP_EVENT*)pData);
+			svc_plugin_process_event(plugin, (FRDP_EVENT*)pData);
 			break;
 	}
 }
@@ -219,7 +243,10 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 		if (item != NULL)
 		{
 			/* the ownership of the data is passed to the callback */
-			plugin->receive_callback(plugin, item->data_in);
+			if (item->data_in)
+				plugin->receive_callback(plugin, item->data_in);
+			if (item->event_in)
+				plugin->event_callback(plugin, item->event_in);
 			xfree(item);
 		}
 		else
