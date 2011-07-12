@@ -71,6 +71,9 @@ void test_chanman(void)
 	freerdp_chanman_post_connect(chan_man, &inst);
 
 	freerdp_chanman_data(&inst, 0, "testdata", 8, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 8);
+	freerdp_chanman_data(&inst, 0, "testdata1", 9, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 9);
+	freerdp_chanman_data(&inst, 0, "testdata11", 10, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 10);
+	freerdp_chanman_data(&inst, 0, "testdata111", 11, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 11);
 
 	freerdp_chanman_check_fds(chan_man, &inst);
 
@@ -81,6 +84,6 @@ void test_chanman(void)
 	printf("responded event_type %d\n", event->event_type);
 	freerdp_event_free(event);
 
-	freerdp_chanman_close(chan_man, NULL);
+	freerdp_chanman_close(chan_man, &inst);
 	freerdp_chanman_free(chan_man);
 }
