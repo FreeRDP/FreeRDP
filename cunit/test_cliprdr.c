@@ -69,6 +69,11 @@ static const uint8 test_format_list_data[] =
 	"\x6D\x00\x61\x00\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 };
 
+static const uint8 test_format_list_response_data[] =
+{
+	"\x03\x00\x01\x00\x00\x00\x00\x00"
+};
+
 static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
@@ -125,14 +130,18 @@ void test_cliprdr(void)
 	format_list_event->formats = (uint32*)xmalloc(sizeof(uint32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
-
-	/* cliprdr sends format list PDU to server */
 	event_processed = 0;
 	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+
+	/* cliprdr sends format list PDU to server */
 	while (!event_processed)
 	{
 		freerdp_chanman_check_fds(chan_man, &inst);
 	}
+
+	/* server sends format list response PDU to cliprdr */
+	freerdp_chanman_data(&inst, 0, (char*)test_format_list_response_data, sizeof(test_format_list_response_data) - 1,
+		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_format_list_response_data) - 1);
 
 	/* server sends format list PDU to cliprdr */
 	freerdp_chanman_data(&inst, 0, (char*)test_format_list_data, sizeof(test_format_list_data) - 1,
