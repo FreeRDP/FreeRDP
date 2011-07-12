@@ -41,6 +41,9 @@ typedef struct rdp_license rdpLicense;
 #define LICENSE_PKT_SC_MASK	(LICENSE_REQUEST | PLATFORM_CHALLENGE | NEW_LICENSE | UPGRADE_LICENSE | ERROR_ALERT)
 #define LICENSE_PKT_MASK	(LICENSE_PKT_CS_MASK | LICENSE_PKT_SC_MASK)
 
+#define LICENSE_PREAMBLE_LENGTH		4
+#define LICENSE_PACKET_HEADER_LENGTH	(RDP_PACKET_HEADER_LENGTH + RDP_SECURITY_HEADER_LENGTH + LICENSE_PREAMBLE_LENGTH)
+
 /* Licensing Preamble Flags */
 #define PREAMBLE_VERSION_2_0			0x02
 #define PREAMBLE_VERSION_3_0			0x03
@@ -48,6 +51,7 @@ typedef struct rdp_license rdpLicense;
 #define EXTENDED_ERROR_MSG_SUPPORTED		0x80
 
 /* Licensing Binary Blob Types */
+#define BB_ANY_BLOB				0x0000
 #define BB_DATA_BLOB				0x0001
 #define BB_RANDOM_BLOB				0x0002
 #define BB_CERTIFICATE_BLOB			0x0003
@@ -58,6 +62,7 @@ typedef struct rdp_license rdpLicense;
 #define BB_CLIENT_USER_NAME_BLOB		0x000F
 #define BB_CLIENT_MACHINE_NAME_BLOB		0x0010
 
+/* Key Exchange Algorithms */
 #define KEY_EXCHANGE_ALG_RSA			0x00000001
 
 typedef struct
@@ -84,17 +89,34 @@ typedef struct
 
 struct rdp_license
 {
+	struct rdp_rdp* rdp;
+	uint8 client_random[32];
 	uint8 server_random[32];
-	PRODUCT_INFO product_info;
-	LICENSE_BLOB key_exchange_list;
-	LICENSE_BLOB server_certificate;
-	SCOPE_LIST scope_list;
+	PRODUCT_INFO* product_info;
+	LICENSE_BLOB* key_exchange_list;
+	LICENSE_BLOB* server_certificate;
+	LICENSE_BLOB* client_user_name;
+	LICENSE_BLOB* client_machine_name;
+	LICENSE_BLOB* encrypted_pre_master_secret;
+	SCOPE_LIST* scope_list;
 };
 
-void license_recv(rdpLicense* license, STREAM* s, uint16 sec_flags);
+void license_send(rdpLicense* license, STREAM* s, uint8 type);
+void license_recv(rdpLicense* license, STREAM* s);
+STREAM* license_send_stream_init(rdpLicense* license);
 
+PRODUCT_INFO* license_new_product_info();
+void license_free_product_info(PRODUCT_INFO* productInfo);
 void license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo);
+
+LICENSE_BLOB* license_new_binary_blob(uint16 type);
+void license_free_binary_blob(LICENSE_BLOB* blob);
 void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob);
+void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob);
+
+SCOPE_LIST* license_new_scope_list();
+void license_free_scope_list(SCOPE_LIST* scopeList);
+void license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList);
 
 void license_read_license_request_packet(rdpLicense* license, STREAM* s);
 void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s);
@@ -102,7 +124,10 @@ void license_read_new_license_packet(rdpLicense* license, STREAM* s);
 void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s);
 void license_read_error_alert_packet(rdpLicense* license, STREAM* s);
 
-rdpLicense* license_new();
+void license_write_new_license_request_packet(rdpLicense* license, STREAM* s);
+void license_send_new_license_request_packet(rdpLicense* license);
+
+rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);
 
 #endif /* __LICENSE_H */

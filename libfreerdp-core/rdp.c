@@ -62,6 +62,22 @@ STREAM* rdp_send_stream_init(rdpRdp* rdp)
 }
 
 /**
+ * Write an RDP packet header.\n
+ * @param rdp rdp module
+ * @param s stream
+ * @param length RDP packet length
+ */
+
+void rdp_write_header(rdpRdp* rdp, STREAM* s, int length)
+{
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length);
+	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
+	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0); /* channelId */
+	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
+	per_write_length(s, length - RDP_PACKET_HEADER_LENGTH); /* userData (OCTET_STRING) */
+}
+
+/**
  * Send an RDP packet.\n
  * @param rdp RDP module
  * @param s stream
@@ -74,12 +90,7 @@ void rdp_send(rdpRdp* rdp, STREAM* s)
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length);
-
-	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
-	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0); /* channelId */
-	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
-	per_write_length(s, length - RDP_PACKET_HEADER_LENGTH); /* userData (OCTET_STRING) */
+	rdp_write_header(rdp, s, length);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
@@ -118,11 +129,11 @@ void rdp_recv(rdpRdp* rdp)
 		switch (sec_flags & SEC_PKT_MASK)
 		{
 			case SEC_LICENSE_PKT:
-				license_recv(rdp->license, s, sec_flags);
+				license_recv(rdp->license, s);
 				break;
 
 			case SEC_REDIRECTION_PKT:
-				rdp_read_redirection_packet(rdp, s, sec_flags);
+				rdp_read_redirection_packet(rdp, s);
 				break;
 
 			default:
@@ -147,7 +158,7 @@ rdpRdp* rdp_new()
 	{
 		rdp->settings = settings_new();
 		rdp->transport = transport_new(rdp->settings);
-		rdp->license = license_new(rdp->license);
+		rdp->license = license_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 	}

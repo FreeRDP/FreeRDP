@@ -51,6 +51,7 @@ typedef struct rdp_rdp rdpRdp;
 #define SEC_PKT_SC_MASK			(SEC_LICENSE_PKT | SEC_REDIRECTION_PKT)
 #define SEC_PKT_MASK			(SEC_PKT_CS_MASK | SEC_PKT_SC_MASK)
 
+#define RDP_SECURITY_HEADER_LENGTH	4
 #define RDP_PACKET_HEADER_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_LENGTH)
 
 struct rdp_rdp
@@ -66,6 +67,7 @@ void rdp_read_security_header(STREAM* s, uint16* flags);
 void rdp_write_security_header(STREAM* s, uint16 flags);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
+void rdp_write_header(rdpRdp* rdp, STREAM* s, int length);
 
 void rdp_send(rdpRdp* rdp, STREAM* s);
 void rdp_recv(rdpRdp* rdp);

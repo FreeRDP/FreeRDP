@@ -27,7 +27,7 @@
  * @param sec_flags security flags
  */
 
-void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s, uint16 sec_flags)
+void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
 	printf("SEC_REDIRECTION_PKT\n");
 }
