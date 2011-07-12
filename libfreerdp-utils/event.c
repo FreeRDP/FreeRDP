@@ -40,6 +40,22 @@ FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_fr
 			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_REDRAW_EVENT));
 			memset(event, 0, sizeof(FRDP_REDRAW_EVENT));
 			break;
+		case FRDP_EVENT_TYPE_CB_SYNC:
+			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_SYNC_EVENT));
+			memset(event, 0, sizeof(FRDP_CB_SYNC_EVENT));
+			break;
+		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
+			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_FORMAT_LIST_EVENT));
+			memset(event, 0, sizeof(FRDP_CB_FORMAT_LIST_EVENT));
+			break;
+		case FRDP_EVENT_TYPE_CB_DATA_REQUEST:
+			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_DATA_REQUEST_EVENT));
+			memset(event, 0, sizeof(FRDP_CB_DATA_REQUEST_EVENT));
+			break;
+		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_DATA_RESPONSE_EVENT));
+			memset(event, 0, sizeof(FRDP_CB_DATA_RESPONSE_EVENT));
+			break;
 	}
 	if (event != NULL)
 	{
@@ -66,6 +82,20 @@ void freerdp_event_free(FRDP_EVENT* event)
 
 					xfree(vevent->frame_data);
 					xfree(vevent->visible_rects);
+				}
+				break;
+			case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
+				{
+					FRDP_CB_FORMAT_LIST_EVENT* cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+
+					xfree(cb_event->formats);
+				}
+				break;
+			case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
+				{
+					FRDP_CB_DATA_RESPONSE_EVENT* cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+
+					xfree(cb_event->data);
 				}
 				break;
 		}
