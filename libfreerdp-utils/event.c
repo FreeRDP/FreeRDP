@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 
 FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
