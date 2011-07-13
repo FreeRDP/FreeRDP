@@ -26,4 +26,4 @@ set_target_properties(rdpdbg PROPERTIES PREFIX "")
 
 target_link_libraries(rdpdbg freerdp-utils)
 
-install(TARGETS rdpdbg DESTINATION lib/freerdp)
+install(TARGETS rdpdbg DESTINATION ${FREERDP_PLUGIN_PATH})
