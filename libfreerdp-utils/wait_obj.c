@@ -42,7 +42,7 @@ wait_obj_new(void)
 {
 	struct wait_obj* obj;
 
-	obj = (struct wait_obj*)xmalloc(sizeof(struct wait_obj));
+	obj = xnew(struct wait_obj);
 
 #ifdef _WIN32
 	obj->event = CreateEvent(NULL, TRUE, FALSE, NULL);

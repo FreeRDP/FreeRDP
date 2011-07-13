@@ -36,7 +36,7 @@ freerdp_mutex freerdp_mutex_new(void)
 {
 	freerdp_mutex_t* mutex;
 
-	mutex = (freerdp_mutex_t*)xmalloc(sizeof(freerdp_mutex_t));
+	mutex = xnew(freerdp_mutex_t);
 
 #if defined _WIN32
 	*mutex = CreateMutex(NULL, FALSE, NULL);

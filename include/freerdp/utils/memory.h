@@ -24,8 +24,10 @@
 
 void* xmalloc(size_t size);
 void* xzalloc(size_t size);
-void* xrealloc(void * ptr, size_t size);
-void xfree(void * ptr);
-char* xstrdup(const char * str);
+void* xrealloc(void* ptr, size_t size);
+void xfree(void* ptr);
+char* xstrdup(const char* str);
+
+#define xnew(_type) (_type*)xzalloc(sizeof(_type))
 
 #endif /* __MEMORY_UTILS_H */
