@@ -168,6 +168,20 @@ void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
 	ber_read_sequence_of_tag(s, &length); /* SEQUENCE */
 
 	ber_read_integer_length(s, &modulus_length); /* modulus (INTEGER) */
+
+	/* skip zero padding, if any */
+	do
+	{
+		stream_peek_uint8(s, padding);
+
+		if (padding == 0)
+		{
+			stream_seek(s, 1);
+			modulus_length--;
+		}
+	}
+	while (padding == 0);
+
 	freerdp_blob_alloc(&info->modulus, modulus_length);
 	stream_read(s, info->modulus.data, modulus_length);
 
