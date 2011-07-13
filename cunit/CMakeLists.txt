@@ -47,6 +47,8 @@ add_executable(test_freerdp
 	test_transport.h
 	test_chanman.c
 	test_chanman.h
+	test_cliprdr.c
+	test_cliprdr.h
 	test_freerdp.c
 	test_freerdp.h)
 

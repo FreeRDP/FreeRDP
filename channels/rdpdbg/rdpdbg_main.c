@@ -34,14 +34,14 @@ struct rdpdbg_plugin
 
 static void rdpdbg_process_connect(rdpSvcPlugin* plugin)
 {
-	printf("rdpdbg_process_connect\n");
+	DEBUG_WARN("connecting");
 }
 
 static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
 	STREAM* data_out;
 
-	printf("rdpdbg_process_receive: size %d\n", stream_get_size(data_in));
+	DEBUG_WARN("size %d", stream_get_size(data_in));
 	stream_free(data_in);
 
 	data_out = stream_new(8);
@@ -51,7 +51,7 @@ static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 {
-	printf("rdpdbg_process_event: event_type %d\n", event->event_type);
+	DEBUG_WARN("event_type %d", event->event_type);
 	freerdp_event_free(event);
 
 	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
@@ -60,7 +60,7 @@ static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 
 static void rdpdbg_process_terminate(rdpSvcPlugin* plugin)
 {
-	printf("rdpdbg_process_terminate\n");
+	DEBUG_WARN("terminating");
 	xfree(plugin);
 }
 
