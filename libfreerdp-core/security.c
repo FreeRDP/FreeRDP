@@ -19,6 +19,27 @@
 
 #include "security.h"
 
+/* 0x36 repeated 40 times */
+static uint8 pad1[40] =
+{
+	"\x36\x36\x36\x36\x36\x36\x36\x36"
+	"\x36\x36\x36\x36\x36\x36\x36\x36"
+	"\x36\x36\x36\x36\x36\x36\x36\x36"
+	"\x36\x36\x36\x36\x36\x36\x36\x36"
+	"\x36\x36\x36\x36\x36\x36\x36\x36"
+};
+
+/* 0x5C repeated 48 times */
+static uint8 pad2[48] =
+{
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
+};
+
 void security_salted_hash(uint8* salt, uint8* input, int length, uint8* client_random, uint8* server_random, uint8* output)
 {
 	CryptoMd5 md5;
@@ -86,6 +107,41 @@ void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_ra
 	crypto_md5_update(md5, &session_key_blob[16], 16); /* Second128Bits(SessionKeyBlob) */
 	crypto_md5_update(md5, client_random, 32); /* ClientRandom */
 	crypto_md5_update(md5, server_random, 32); /* ServerRandom */
+	crypto_md5_final(md5, output);
+}
+
+void security_uint32_le(uint8* output, uint32 value)
+{
+	output[0] = (value) & 0xFF;
+	output[1] = (value >> 8) & 0xFF;
+	output[2] = (value >> 16) & 0xFF;
+	output[3] = (value >> 24) & 0xFF;
+}
+
+void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* output)
+{
+	CryptoMd5 md5;
+	CryptoSha1 sha1;
+	uint8 length_le[4];
+	uint8 sha1_digest[20];
+
+	/* MacData = MD5(MacSaltKey + pad2 + SHA1(MacSaltKey + pad1 + length + data)) */
+
+	security_uint32_le(length_le, length); /* length must be little-endian */
+
+	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
+	sha1 = crypto_sha1_init();
+	crypto_sha1_update(sha1, mac_salt_key, 16); /* MacSaltKey */
+	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
+	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
+	crypto_sha1_update(sha1, data, length); /* data */
+	crypto_sha1_final(sha1, sha1_digest);
+
+	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, mac_salt_key, 16); /* MacSaltKey */
+	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
+	crypto_md5_update(md5, sha1_digest, 20); /* SHA1_Digest */
 	crypto_md5_final(md5, output);
 }
 

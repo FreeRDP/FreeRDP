@@ -80,6 +80,8 @@ void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key);
 
+void crypto_rsa(int length, uint8* in, uint8* out, uint32 modulus_length, uint8* modulus, uint8* exponent);
+
 void crypto_nonce(uint8* nonce, int size);
 
 #endif /* __CRYPTO_H */

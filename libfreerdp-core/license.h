@@ -121,6 +121,7 @@ struct rdp_license
 	LICENSE_BLOB* client_machine_name;
 	LICENSE_BLOB* encrypted_pre_master_secret;
 	LICENSE_BLOB* encrypted_platform_challenge;
+	LICENSE_BLOB* encrypted_hwid;
 	SCOPE_LIST* scope_list;
 };
 
@@ -153,7 +154,7 @@ void license_read_error_alert_packet(rdpLicense* license, STREAM* s);
 void license_write_new_license_request_packet(rdpLicense* license, STREAM* s);
 void license_send_new_license_request_packet(rdpLicense* license);
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s);
+void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, uint8* mac_data);
 void license_send_platform_challenge_response_packet(rdpLicense* license);
 
 rdpLicense* license_new(rdpRdp* rdp);

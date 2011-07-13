@@ -127,6 +127,31 @@ exit:
 	return status;
 }
 
+void crypto_rsa(int length, uint8* in, uint8* out, uint32 modulus_length, uint8* modulus, uint8* exponent)
+{
+	BN_CTX* ctx;
+	int out_length;
+	BIGNUM mod, exp, x, y;
+
+	ctx = BN_CTX_new();
+	BN_init(&mod);
+	BN_init(&exp);
+	BN_init(&x);
+	BN_init(&y);
+
+	BN_bin2bn(modulus, modulus_length, &mod);
+	BN_bin2bn(exponent, 4, &exp);
+	BN_bin2bn(in, length, &x);
+	BN_mod_exp(&y, &x, &exp, &mod, ctx);
+	out_length = BN_bn2bin(&y, out);
+
+	BN_free(&y);
+	BN_clear_free(&x);
+	BN_free(&exp);
+	BN_free(&mod);
+	BN_CTX_free(ctx);
+}
+
 void crypto_nonce(uint8* nonce, int size)
 {
 	RAND_bytes((void*) nonce, size);

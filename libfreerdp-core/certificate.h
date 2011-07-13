@@ -58,7 +58,7 @@ typedef struct
 struct rdp_certificate
 {
 	struct rdp_rdp* rdp;
-	CERT_INFO termserv_cert_info;
+	CERT_INFO cert_info;
 	X509_CERT_CHAIN* x509_cert_chain;
 };
 

@@ -33,5 +33,6 @@ void security_master_hash(uint8* input, int length, uint8* master_secret, uint8*
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
 void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
 void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
+void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* output);
 
 #endif /* __SECURITY_H */
