@@ -28,14 +28,14 @@ STREAM* stream_new(int size)
 {
 	STREAM* stream;
 
-	stream = (STREAM*)xmalloc(sizeof(STREAM));
+	stream = xnew(STREAM);
 
 	if (stream != NULL)
 	{
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (uint8 *) xmalloc(size);
+			stream->data = (uint8*)xmalloc(size);
 			stream->p = stream->data;
 			stream->size = size;
 		}
@@ -64,6 +64,6 @@ void stream_extend(STREAM* stream)
 
 	pos = stream_get_pos(stream);
 	stream->size <<= 1;
-	stream->data = (uint8 *) realloc(stream->data, stream->size);
+	stream->data = (uint8*)xrealloc(stream->data, stream->size);
 	stream_set_pos(stream, pos);
 }
