@@ -23,6 +23,7 @@
 typedef struct rdp_certificate rdpCertificate;
 
 #include "rdp.h"
+#include "ber.h"
 #include "crypto.h"
 
 #include <freerdp/utils/stream.h>

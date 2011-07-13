@@ -19,6 +19,151 @@
 
 #include "certificate.h"
 
+/**
+ *
+ * X.509 Certificate Structure
+ *
+ * Certificate ::= SEQUENCE
+ * {
+ * 	tbsCertificate			TBSCertificate,
+ * 	signatureAlgorithm		AlgorithmIdentifier,
+ * 	signatureValue			BIT_STRING
+ * }
+ *
+ * TBSCertificate ::= SEQUENCE
+ * {
+ * 	version			[0]	EXPLICIT Version DEFAULT v1,
+ * 	serialNumber			CertificateSerialNumber,
+ * 	signature			AlgorithmIdentifier,
+ * 	issuer				Name,
+ * 	validity			Validity,
+ * 	subject				Name,
+ * 	subjectPublicKeyInfo		SubjectPublicKeyInfo,
+ * 	issuerUniqueID		[1]	IMPLICIT UniqueIdentifier OPTIONAL,
+ * 	subjectUniqueId		[2]	IMPLICIT UniqueIdentifier OPTIONAL,
+ * 	extensions		[3]	EXPLICIT Extensions OPTIONAL
+ * }
+ *
+ * Version ::= INTEGER { v1(0), v2(1), v3(2) }
+ *
+ * CertificateSerialNumber ::= INTEGER
+ *
+ * AlgorithmIdentifier ::= SEQUENCE
+ * {
+ * 	algorithm			OBJECT_IDENTIFIER,
+ * 	parameters			ANY DEFINED BY algorithm OPTIONAL
+ * }
+ *
+ * Name ::= CHOICE { RDNSequence }
+ *
+ * RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+ *
+ * RelativeDistinguishedName ::= SET OF AttributeTypeAndValue
+ *
+ * AttributeTypeAndValue ::= SEQUENCE
+ * {
+ * 	type				AttributeType,
+ * 	value				AttributeValue
+ * }
+ *
+ * AttributeType ::= OBJECT_IDENTIFIER
+ *
+ * AttributeValue ::= ANY DEFINED BY AttributeType
+ *
+ * Validity ::= SEQUENCE
+ * {
+ * 	notBefore			Time,
+ * 	notAfter			Time
+ * }
+ *
+ * Time ::= CHOICE
+ * {
+ * 	utcTime				UTCTime,
+ * 	generalTime			GeneralizedTime
+ * }
+ *
+ * UniqueIdentifier ::= BIT_STRING
+ *
+ * SubjectPublicKeyInfo ::= SEQUENCE
+ * {
+ * 	algorithm			AlgorithmIdentifier,
+ * 	subjectPublicKey		BIT_STRING
+ * }
+ *
+ * Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
+ *
+ * Extension ::= SEQUENCE
+ * {
+ * 	extnID				OBJECT_IDENTIFIER
+ * 	critical			BOOLEAN DEFAULT FALSE,
+ * 	extnValue			OCTET_STRING
+ * }
+ *
+ */
+
+/**
+ * Read X.509 Certificate
+ * @param certificate certificate module
+ * @param cert X.509 certificate
+ */
+
+void certificate_read_x509_certificate(rdpCertificate* certificate, CERT_BLOB* cert)
+{
+	STREAM* s;
+	int length;
+	uint32 version;
+	uint8 serialNumber[8];
+
+	s = stream_new(0);
+	s->p = s->data = cert->data;
+
+	ber_read_sequence_of_tag(s, &length); /* Certificate (SEQUENCE) */
+
+	ber_read_sequence_of_tag(s, &length); /* TBSCertificate (SEQUENCE) */
+
+	/* Explicit Contextual Tag [0] */
+	ber_read_contextual_tag(s, 0, &length, True);
+	ber_read_integer(s, &version); /* version (INTEGER) */
+	version++;
+
+	printf("X509v%d\n", version);
+
+	/* serialNumber */
+	ber_read_integer(s, NULL); /* CertificateSerialNumber (INTEGER) */
+
+	/* signature */
+	ber_read_sequence_of_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	stream_seek(s, length);
+
+	/* issuer */
+	ber_read_sequence_of_tag(s, &length); /* Name (SEQUENCE) */
+	stream_seek(s, length);
+
+	/* validity */
+	ber_read_sequence_of_tag(s, &length); /* Validity (SEQUENCE) */
+	stream_seek(s, length);
+
+	/* subject */
+	ber_read_sequence_of_tag(s, &length); /* Name (SEQUENCE) */
+	stream_seek(s, length);
+
+	/* subjectPublicKeyInfo */
+	ber_read_sequence_of_tag(s, &length); /* SubjectPublicKeyInfo (SEQUENCE) */
+
+	/* subjectPublicKeyInfo::AlgorithmIdentifier */
+	ber_read_sequence_of_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	stream_seek(s, length);
+
+	/* subjectPublicKeyInfo::subjectPublicKey */
+	/* BIT_STRING */
+}
+
+/**
+ * Instantiate new X.509 Certificate Chain.
+ * @param count certificate chain count
+ * @return new X.509 certificate chain
+ */
+
 X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count)
 {
 	X509_CERT_CHAIN* x509_cert_chain;
@@ -30,6 +175,11 @@ X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count)
 
 	return x509_cert_chain;
 }
+
+/**
+ * Free X.509 Certificate Chain.
+ * @param x509_cert_chain X.509 certificate chain to be freed
+ */
 
 void certificate_free_x509_certificate_chain(X509_CERT_CHAIN* x509_cert_chain)
 {
@@ -47,10 +197,22 @@ void certificate_free_x509_certificate_chain(X509_CERT_CHAIN* x509_cert_chain)
 	xfree(x509_cert_chain);
 }
 
+/**
+ * Read a Server Proprietary Certificate.\n
+ * @param certificate certificate module
+ * @param s stream
+ */
+
 void certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
 {
 	printf("Server Proprietary Certificate\n");
 }
+
+/**
+ * Read an X.509 Certificate Chain.\n
+ * @param certificate certificate module
+ * @param s stream
+ */
 
 void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
 {
@@ -82,8 +244,17 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		certificate->x509_cert_chain->array[i].length = certLength;
 
 		freerdp_hexdump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
+
+		certificate_read_x509_certificate(certificate, &certificate->x509_cert_chain->array[i]);
 	}
 }
+
+/**
+ * Read a Server Certificate.\n
+ * @param certificate certificate module
+ * @param server_cert server certificate
+ * @param length certificate length
+ */
 
 void certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
 {

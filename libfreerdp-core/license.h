@@ -120,6 +120,7 @@ struct rdp_license
 	LICENSE_BLOB* client_user_name;
 	LICENSE_BLOB* client_machine_name;
 	LICENSE_BLOB* encrypted_pre_master_secret;
+	LICENSE_BLOB* encrypted_platform_challenge;
 	SCOPE_LIST* scope_list;
 };
 

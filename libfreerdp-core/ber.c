@@ -27,7 +27,8 @@ void ber_read_length(STREAM* s, int* length)
 
 	if (byte & 0x80)
 	{
-		if (byte & ~(0x80) == 2)
+		byte &= ~(0x80);
+		if (byte == 2)
 		{
 			stream_read_uint16_be(s, *length);
 		}
@@ -56,6 +57,13 @@ void ber_write_length(STREAM* s, int length)
 		stream_write_uint8(s, length);
 	}
 }
+
+/**
+ * Read BER Universal tag.
+ * @param s stream
+ * @param tag BER universally-defined tag
+ * @return
+ */
 
 boolean ber_read_universal_tag(STREAM* s, uint8 tag)
 {
@@ -129,6 +137,20 @@ boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length)
 
 		ber_read_length(s, length);
 	}
+
+	return True;
+}
+
+boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte != (BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag))
+		return False;
+
+	ber_read_length(s, length);
 
 	return True;
 }
@@ -213,12 +235,33 @@ void ber_write_boolean(STREAM* s, boolean value)
 	stream_write_uint8(s, (value == True) ? 0xFF : 0);
 }
 
+boolean ber_read_integer64(STREAM* s, uint8* value)
+{
+	int length;
+
+	ber_read_universal_tag(s, BER_TAG_INTEGER);
+	ber_read_length(s, &length);
+
+	if (length != 8)
+		return False;
+
+	stream_read(s, value, 8);
+
+	return True;
+}
+
 boolean ber_read_integer(STREAM* s, uint32* value)
 {
 	int length;
 
 	ber_read_universal_tag(s, BER_TAG_INTEGER);
 	ber_read_length(s, &length);
+
+	if (value == NULL)
+	{
+		stream_seek(s, length);
+		return True;
+	}
 
 	if (length == 1)
 		stream_read_uint8(s, *value);
