@@ -272,12 +272,12 @@ void test_license(void)
 	STREAM* s;
 
 	s = stream_new(0);
-	s->data = server_license_request;
-	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
 
 	memcpy(license->client_random, client_random, sizeof(client_random));
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
 
+	s->data = server_license_request;
+	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
 	license_read_license_request_packet(license, s);
 
 	printf("\n");
@@ -302,10 +302,31 @@ void test_license(void)
 	freerdp_hexdump(license->session_key_blob, 48);
 	printf("\n");
 
+	printf("licensing encryption key:\n");
+	freerdp_hexdump(license->licensing_encryption_key, 16);
+	printf("\n");
+
+	printf("mac salt key:\n");
+	freerdp_hexdump(license->mac_salt_key, 16);
+	printf("\n");
+
+	printf("modulus:\n");
+	freerdp_hexdump(license->certificate->cert_info.modulus.data,
+			license->certificate->cert_info.modulus.length);
+	printf("\n");
+
+	printf("exponent:\n");
+	freerdp_hexdump(license->certificate->cert_info.exponent, 4);
+	printf("\n");
+
 	/* the encrypted premaster secret is 256 + 8 bytes long, with 8 bytes of padding */
 
 	printf("encrypted premaster secret:\n");
 	freerdp_hexdump(license->encrypted_pre_master_secret->data,
 			license->encrypted_pre_master_secret->length);
 	printf("\n");
+
+	s->data = server_platform_challenge;
+	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
+	license_read_platform_challenge_packet(license, s);
 }

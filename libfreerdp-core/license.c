@@ -170,7 +170,7 @@ void license_generate_keys(rdpLicense* license)
 	license->encrypted_pre_master_secret->length = RSA_MAX_KEY_LENGTH + 8;
 	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(RSA_MAX_KEY_LENGTH + 8);
 
-	crypto_rsa(RSA_MAX_KEY_LENGTH, license->premaster_secret, license->encrypted_pre_master_secret->data,
+	crypto_rsa(PREMASTER_SECRET_LENGTH, license->premaster_secret, license->encrypted_pre_master_secret->data,
 			license->certificate->cert_info.modulus.length, license->certificate->cert_info.modulus.data,
 			license->certificate->cert_info.exponent);
 }
@@ -447,7 +447,7 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	/* MACData (16 bytes) */
 	stream_seek(s, 16);
 
-	printf("encrypted platform challenge\n", license->encrypted_platform_challenge->length);
+	printf("encrypted platform challenge\n");
 	freerdp_hexdump(license->encrypted_platform_challenge->data, license->encrypted_platform_challenge->length);
 
 	platform_challenge = (uint8*) xmalloc(license->encrypted_platform_challenge->length);
@@ -457,7 +457,7 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	crypto_rc4(rc4, license->encrypted_platform_challenge->length,
 			license->encrypted_platform_challenge->data, platform_challenge);
 
-	printf("decrypted platform challenge\n", license->encrypted_platform_challenge->length);
+	printf("decrypted platform challenge\n");
 	freerdp_hexdump(platform_challenge, license->encrypted_platform_challenge->length);
 
 	crypto_rc4_free(rc4);
