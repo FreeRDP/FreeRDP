@@ -26,6 +26,7 @@ typedef struct rdp_certificate rdpCertificate;
 #include "ber.h"
 #include "crypto.h"
 
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
@@ -48,11 +49,20 @@ typedef struct
 	CERT_BLOB* array;
 } X509_CERT_CHAIN;
 
+typedef struct
+{
+	BLOB modulus;
+	uint8 exponent[4];
+} CERT_INFO;
+
 struct rdp_certificate
 {
 	struct rdp_rdp* rdp;
+	CERT_INFO termserv_cert_info;
 	X509_CERT_CHAIN* x509_cert_chain;
 };
+
+void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info);
 
 X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count);
 void certificate_free_x509_certificate_chain(X509_CERT_CHAIN* x509_cert_chain);

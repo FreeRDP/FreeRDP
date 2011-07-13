@@ -90,6 +90,12 @@
  * 	subjectPublicKey		BIT_STRING
  * }
  *
+ * RSAPublicKey ::= SEQUENCE
+ * {
+ * 	modulus				INTEGER
+ * 	publicExponent			INTEGER
+ * }
+ *
  * Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
  *
  * Extension ::= SEQUENCE
@@ -107,12 +113,15 @@
  * @param cert X.509 certificate
  */
 
-void certificate_read_x509_certificate(rdpCertificate* certificate, CERT_BLOB* cert)
+void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
 {
 	STREAM* s;
 	int length;
+	uint8 padding;
 	uint32 version;
-	uint8 serialNumber[8];
+	uint8 exponent[4];
+	int modulus_length;
+	int exponent_length;
 
 	s = stream_new(0);
 	s->p = s->data = cert->data;
@@ -125,8 +134,6 @@ void certificate_read_x509_certificate(rdpCertificate* certificate, CERT_BLOB* c
 	ber_read_contextual_tag(s, 0, &length, True);
 	ber_read_integer(s, &version); /* version (INTEGER) */
 	version++;
-
-	printf("X509v%d\n", version);
 
 	/* serialNumber */
 	ber_read_integer(s, NULL); /* CertificateSerialNumber (INTEGER) */
@@ -155,7 +162,17 @@ void certificate_read_x509_certificate(rdpCertificate* certificate, CERT_BLOB* c
 	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
-	/* BIT_STRING */
+	ber_read_bit_string(s, &length, &padding); /* BIT_STRING */
+
+	/* RSAPublicKey (SEQUENCE) */
+	ber_read_sequence_of_tag(s, &length); /* SEQUENCE */
+
+	ber_read_integer_length(s, &modulus_length); /* modulus (INTEGER) */
+	freerdp_blob_alloc(&info->modulus, modulus_length);
+	stream_read(s, info->modulus.data, modulus_length);
+
+	ber_read_integer_length(s, &exponent_length); /* publicExponent (INTEGER) */
+	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
 }
 
 /**
@@ -232,20 +249,23 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 		printf("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
 
-		if (numCertBlobs - i == 2)
-			printf(", License Server Certificate\n");
-		else if (numCertBlobs - i == 1)
-			printf(", Terminal Server Certificate\n");
-		else
-			printf("\n");
-
 		certificate->x509_cert_chain->array[i].data = (uint8*) xmalloc(certLength);
 		stream_read(s, certificate->x509_cert_chain->array[i].data, certLength);
 		certificate->x509_cert_chain->array[i].length = certLength;
 
-		freerdp_hexdump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
-
-		certificate_read_x509_certificate(certificate, &certificate->x509_cert_chain->array[i]);
+		if (numCertBlobs - i == 2)
+		{
+			printf(", License Server Certificate\n");
+		}
+		else if (numCertBlobs - i == 1)
+		{
+			printf(", Terminal Server Certificate\n");
+			freerdp_hexdump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
+			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->termserv_cert_info);
+			printf("modulus length:%d\n", certificate->termserv_cert_info.modulus.length);
+		}
+		else
+			printf("\n");
 	}
 }
 
