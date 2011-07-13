@@ -129,6 +129,7 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type);
 void license_recv(rdpLicense* license, STREAM* s);
 STREAM* license_send_stream_init(rdpLicense* license);
 
+void license_generate_randoms(rdpLicense* license);
 void license_generate_keys(rdpLicense* license);
 void license_generate_hwid(rdpLicense* license);
 

@@ -139,6 +139,12 @@ void license_recv(rdpLicense* license, STREAM* s)
 	}
 }
 
+void license_generate_randoms(rdpLicense* license)
+{
+	crypto_nonce(license->client_random, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+	crypto_nonce(license->premaster_secret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+}
+
 /**
  * Generate License Cryptographic Keys.
  * @param license license module
@@ -146,9 +152,6 @@ void license_recv(rdpLicense* license, STREAM* s)
 
 void license_generate_keys(rdpLicense* license)
 {
-	crypto_nonce(license->client_random, CLIENT_RANDOM_LENGTH); /* ClientRandom */
-	crypto_nonce(license->premaster_secret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
-
 	security_master_secret(license->premaster_secret, license->client_random,
 			license->server_random, license->master_secret); /* MasterSecret */
 
@@ -439,7 +442,9 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
+	license->encrypted_platform_challenge->type = BB_ANY_BLOB;
 	license_read_binary_blob(s, license->encrypted_platform_challenge);
+	license->encrypted_platform_challenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
 	stream_seek(s, 16);
@@ -456,8 +461,6 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 
 	printf("decrypted platform challenge\n", license->encrypted_platform_challenge->length);
 	freerdp_hexdump(platform_challenge, license->encrypted_platform_challenge->length);
-
-	license->encrypted_platform_challenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	crypto_rc4_free(rc4);
 }
@@ -545,8 +548,8 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	license->client_user_name->data = license->rdp->settings->username;
 	license->client_user_name->length = strlen(license->rdp->settings->username);
 
-	license->client_machine_name->data = license->rdp->settings->hostname;
-	license->client_machine_name->length = strlen(license->rdp->settings->hostname);
+	license->client_machine_name->data = license->rdp->settings->client_hostname;
+	license->client_machine_name->length = strlen(license->rdp->settings->client_hostname);
 
 	license_write_new_license_request_packet(license, s);
 
@@ -638,6 +641,7 @@ rdpLicense* license_new(rdpRdp* rdp)
 		license->encrypted_platform_challenge = license_new_binary_blob(BB_ANY_BLOB);
 		license->encrypted_hwid = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB);
 		license->scope_list = license_new_scope_list();
+		license_generate_randoms(license);
 	}
 
 	return license;

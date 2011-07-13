@@ -29,6 +29,7 @@
 #include "test_list.h"
 #include "test_stream.h"
 #include "test_utils.h"
+#include "test_license.h"
 #include "test_transport.h"
 #include "test_chanman.h"
 #include "test_cliprdr.h"
@@ -120,6 +121,7 @@ int main(int argc, char* argv[])
 		add_bitmap_suite();
 		add_libgdi_suite();
 		add_list_suite();
+		add_license_suite();
 		add_stream_suite();
 		add_utils_suite();
 		add_transport_suite();
@@ -145,6 +147,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("list", argv[*pindex]) == 0)
 			{
 				add_list_suite();
+			}
+			else if (strcmp("license", argv[*pindex]) == 0)
+			{
+				add_license_suite();
 			}
 			else if (strcmp("stream", argv[*pindex]) == 0)
 			{
