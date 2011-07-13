@@ -39,11 +39,6 @@ STREAM* stream_new(int size)
 			stream->p = stream->data;
 			stream->size = size;
 		}
-		else
-		{
-			/* empty stream */
-			memset(stream, 0, sizeof(STREAM));
-		}
 	}
 
 	return stream;
