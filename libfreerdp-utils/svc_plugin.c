@@ -386,11 +386,10 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 
 	memcpy(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
 
-	plugin->priv = (rdpSvcPluginPrivate*)xmalloc(sizeof(rdpSvcPluginPrivate));
-	memset(plugin->priv, 0, sizeof(rdpSvcPluginPrivate));
+	plugin->priv = xnew(rdpSvcPluginPrivate);
 
 	/* Add it to the global list */
-	list = (rdpSvcPluginList*)xmalloc(sizeof(rdpSvcPluginList));
+	list = xnew(rdpSvcPluginList);
 	list->plugin = plugin;
 
 	freerdp_mutex_lock(g_mutex);

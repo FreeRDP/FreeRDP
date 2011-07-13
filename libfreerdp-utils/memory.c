@@ -28,10 +28,9 @@
  * @param size
  */
 
-void *
-xmalloc(size_t size)
+void* xmalloc(size_t size)
 {
-	void * mem;
+	void* mem;
 
 	if (size < 1)
 		size = 1;
@@ -49,10 +48,9 @@ xmalloc(size_t size)
  * @param size
  */
 
-void *
-xzalloc(size_t size)
+void* xzalloc(size_t size)
 {
-	void * mem;
+	void* mem;
 
 	if (size < 1)
 		size = 1;
@@ -71,10 +69,9 @@ xzalloc(size_t size)
  * @param size
  */
 
-void *
-xrealloc(void * ptr, size_t size)
+void* xrealloc(void* ptr, size_t size)
 {
-	void * mem;
+	void* mem;
 
 	if (size < 1)
 		size = 1;
@@ -92,8 +89,7 @@ xrealloc(void * ptr, size_t size)
  * @param mem
  */
 
-void
-xfree(void * ptr)
+void xfree(void* ptr)
 {
 	if (ptr != NULL)
 		free(ptr);
@@ -105,10 +101,9 @@ xfree(void * ptr)
  * @return
  */
 
-char *
-xstrdup(const char * str)
+char* xstrdup(const char* str)
 {
-	char * mem;
+	char* mem;
 
 #ifdef _WIN32
 	mem = _strdup(str);

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 
 FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
@@ -29,32 +30,25 @@ FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_fr
 	switch (event_type)
 	{
 		case FRDP_EVENT_TYPE_DEBUG:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_EVENT));
-			memset(event, 0, sizeof(FRDP_EVENT));
+			event = xnew(FRDP_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_VIDEO_FRAME:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_VIDEO_FRAME_EVENT));
-			memset(event, 0, sizeof(FRDP_VIDEO_FRAME_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_VIDEO_FRAME_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_REDRAW:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_REDRAW_EVENT));
-			memset(event, 0, sizeof(FRDP_REDRAW_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_REDRAW_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_CB_SYNC:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_SYNC_EVENT));
-			memset(event, 0, sizeof(FRDP_CB_SYNC_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_CB_SYNC_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_FORMAT_LIST_EVENT));
-			memset(event, 0, sizeof(FRDP_CB_FORMAT_LIST_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_CB_FORMAT_LIST_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_CB_DATA_REQUEST:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_DATA_REQUEST_EVENT));
-			memset(event, 0, sizeof(FRDP_CB_DATA_REQUEST_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_REQUEST_EVENT);
 			break;
 		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			event = (FRDP_EVENT*)xmalloc(sizeof(FRDP_CB_DATA_RESPONSE_EVENT));
-			memset(event, 0, sizeof(FRDP_CB_DATA_RESPONSE_EVENT));
+			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_RESPONSE_EVENT);
 			break;
 	}
 	if (event != NULL)

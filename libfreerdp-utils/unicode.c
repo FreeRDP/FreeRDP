@@ -137,8 +137,7 @@ void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length)
 
 UNICONV* freerdp_uniconv_new()
 {
-	UNICONV *uniconv = xmalloc(sizeof(UNICONV));
-	memset(uniconv, '\0', sizeof(UNICONV));
+	UNICONV *uniconv = xnew(UNICONV);
 
 #ifdef HAVE_ICONV
 	uniconv->iconv = 1;
