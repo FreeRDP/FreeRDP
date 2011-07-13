@@ -34,8 +34,7 @@ struct _item_type##_full \
 static struct _item_type* _item_type##_new(void) \
 { \
 	struct _item_type* item; \
-	item = (struct _item_type*)xmalloc(sizeof(struct _item_type##_full));\
-	memset(item, 0, sizeof(struct _item_type##_full)); \
+	item = (struct _item_type*)xnew(struct _item_type##_full);\
 	return item; \
 } \
 \
@@ -60,8 +59,7 @@ struct _list_type \
 static struct _list_type* _list_type##_new(void) \
 { \
 	struct _list_type* list; \
-	list = (struct _list_type*)xmalloc(sizeof(struct _list_type)); \
-	memset(list, 0, sizeof(struct _list_type)); \
+	list = xnew(struct _list_type); \
 	return list; \
 } \
 \

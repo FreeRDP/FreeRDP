@@ -542,15 +542,14 @@ rdpChanMan* freerdp_chanman_new(void)
 	rdpChanMan* chan_man;
 	rdpChanManList* list;
 
-	chan_man = (rdpChanMan*)xmalloc(sizeof(rdpChanMan));
-	memset(chan_man, 0, sizeof(rdpChanMan));
+	chan_man = xnew(rdpChanMan);
 
 	chan_man->sync_data_sem = freerdp_sem_new(1);
 	chan_man->event_sem = freerdp_sem_new(1);
 	chan_man->signal = wait_obj_new();
 
 	/* Add it to the global list */
-	list = (rdpChanManList*)xmalloc(sizeof(rdpChanManList));
+	list = xnew(rdpChanManList);
 	list->chan_man = chan_man;
 
 	freerdp_mutex_lock(g_mutex_list);

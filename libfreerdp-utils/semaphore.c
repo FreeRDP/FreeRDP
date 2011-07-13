@@ -46,7 +46,7 @@ freerdp_sem freerdp_sem_new(int iv)
 {
 	freerdp_sem_t* sem;
 
-	sem = (freerdp_sem_t*)xmalloc(sizeof(freerdp_sem_t));
+	sem = xnew(freerdp_sem_t);
 
 #if defined __APPLE__
 	semaphore_create(mach_task_self(), sem, SYNC_POLICY_FIFO, iv);
