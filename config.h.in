@@ -1,3 +1,6 @@
+#ifndef __CONFIG_H
+#define __CONFIG_H
+
 /* Include files */
 #cmakedefine HAVE_SYS_PARAM_H
 #cmakedefine HAVE_SYS_SOCKET_H
@@ -12,3 +15,5 @@
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_CHANMAN
 #cmakedefine WITH_DEBUG_SVC
+
+#endif
