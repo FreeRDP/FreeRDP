@@ -22,18 +22,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/list.h>
+#include <freerdp/utils/thread.h>
+#include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
-
-#ifdef WITH_DEBUG_SVC
-#define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
 
 /* The list of all plugin instances. */
 typedef struct rdp_svc_plugin_list rdpSvcPluginList;
@@ -48,11 +47,42 @@ static rdpSvcPluginList* g_svc_plugin_list = NULL;
 /* For locking the global resources */
 static freerdp_mutex g_mutex = NULL;
 
+/* Queue for receiving packets */
+struct svc_data_in_item
+{
+	STREAM* data_in;
+	FRDP_EVENT* event_in;
+};
+
+DEFINE_LIST_TYPE(svc_data_in_list, svc_data_in_item);
+
+void svc_data_in_item_free(struct svc_data_in_item* item)
+{
+	if (item->data_in)
+	{
+		stream_free(item->data_in);
+		item->data_in = NULL;
+	}
+	if (item->event_in)
+	{
+		freerdp_event_free(item->event_in);
+		item->event_in = NULL;
+	}
+}
+
 struct rdp_svc_plugin_private
 {
 	void* init_handle;
 	uint32 open_handle;
 	STREAM* data_in;
+
+	struct svc_data_in_list* data_in_list;
+	freerdp_mutex* data_in_mutex;
+
+	struct wait_obj* signals[5];
+	int num_signals;
+
+	int thread_status;
 };
 
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
@@ -120,6 +150,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	uint32 totalLength, uint32 dataFlags)
 {
 	STREAM* data_in;
+	struct svc_data_in_item* item;
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
@@ -138,11 +169,33 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 		{
 			printf("svc_plugin_process_received: read error\n");
 		}
-		/* the stream ownership is passed to the callback who is responsible for freeing it. */
+
 		plugin->priv->data_in = NULL;
 		stream_set_pos(data_in, 0);
-		plugin->receive_callback(plugin, data_in);
+
+		item = svc_data_in_item_new();
+		item->data_in = data_in;
+
+		freerdp_mutex_lock(plugin->priv->data_in_mutex);
+		svc_data_in_list_enqueue(plugin->priv->data_in_list, item);
+		freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+
+		wait_obj_set(plugin->priv->signals[1]);
 	}
+}
+
+static void svc_plugin_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event_in)
+{
+	struct svc_data_in_item* item;
+
+	item = svc_data_in_item_new();
+	item->event_in = event_in;
+
+	freerdp_mutex_lock(plugin->priv->data_in_mutex);
+	svc_data_in_list_enqueue(plugin->priv->data_in_list, item);
+	freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+
+	wait_obj_set(plugin->priv->signals[1]);
 }
 
 static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, uint32 dataLength,
@@ -168,9 +221,69 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 			stream_free((STREAM*)pData);
 			break;
 		case CHANNEL_EVENT_USER:
-			plugin->event_callback(plugin, (FRDP_EVENT*)pData);
+			svc_plugin_process_event(plugin, (FRDP_EVENT*)pData);
 			break;
 	}
+}
+
+static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
+{
+	struct svc_data_in_item* item;
+
+	while (1)
+	{
+		/* terminate signal */
+		if (wait_obj_is_set(plugin->priv->signals[0]))
+			break;
+
+		freerdp_mutex_lock(plugin->priv->data_in_mutex);
+		item = svc_data_in_list_dequeue(plugin->priv->data_in_list);
+		freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+
+		if (item != NULL)
+		{
+			/* the ownership of the data is passed to the callback */
+			if (item->data_in)
+				plugin->receive_callback(plugin, item->data_in);
+			if (item->event_in)
+				plugin->event_callback(plugin, item->event_in);
+			xfree(item);
+		}
+		else
+			break;
+	}
+}
+
+static void* svc_plugin_thread_func(void* arg)
+{
+	rdpSvcPlugin* plugin = (rdpSvcPlugin*)arg;
+
+	DEBUG_SVC("in");
+
+	plugin->connect_callback(plugin);
+
+	while (1)
+	{
+		wait_obj_select(plugin->priv->signals, plugin->priv->num_signals, -1);
+
+		/* terminate signal */
+		if (wait_obj_is_set(plugin->priv->signals[0]))
+			break;
+
+		/* data_in signal */
+		if (wait_obj_is_set(plugin->priv->signals[1]))
+		{
+			wait_obj_clear(plugin->priv->signals[1]);
+			/* process data in */
+			svc_plugin_process_data_in(plugin);
+		}
+	}
+
+	plugin->priv->thread_status = -1;
+
+	DEBUG_SVC("out");
+
+	return 0;
 }
 
 static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint32 dataLength)
@@ -184,14 +297,45 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 		printf("svc_plugin_process_connected: open failed\n");
 		return;
 	}
-	plugin->connect_callback(plugin);
+
+	plugin->priv->data_in_list = svc_data_in_list_new();
+	plugin->priv->data_in_mutex = freerdp_mutex_new();
+
+	/* terminate signal */
+	plugin->priv->signals[plugin->priv->num_signals++] = wait_obj_new();
+	/* data_in signal */
+	plugin->priv->signals[plugin->priv->num_signals++] = wait_obj_new();
+
+	plugin->priv->thread_status = 1;
+
+	freerdp_thread_create(svc_plugin_thread_func, plugin);
 }
 
 static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 {
+	struct timespec ts;
+	int i;
+
+	wait_obj_set(plugin->priv->signals[0]);
+	i = 0;
+	ts.tv_sec = 0;
+	ts.tv_nsec = 10000000;
+	while (plugin->priv->thread_status > 0 && i < 1000)
+	{
+		i++;
+		nanosleep(&ts, NULL);
+	}
+
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
 
 	svc_plugin_remove(plugin);
+
+	for (i = 0; i < plugin->priv->num_signals; i++)
+		wait_obj_free(plugin->priv->signals[i]);
+	plugin->priv->num_signals = 0;
+
+	freerdp_mutex_free(plugin->priv->data_in_mutex);
+	svc_data_in_list_free(plugin->priv->data_in_list);
 
 	if (plugin->priv->data_in != NULL)
 	{
@@ -267,7 +411,10 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->priv->open_handle,
 		stream_get_data(data_out), stream_get_length(data_out), data_out);
 	if (error != CHANNEL_RC_OK)
+	{
+		stream_free(data_out);
 		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", error);
+	}
 
 	return error;
 }

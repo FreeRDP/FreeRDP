@@ -164,6 +164,31 @@ struct _FRDP_REDRAW_EVENT
 };
 typedef struct _FRDP_REDRAW_EVENT FRDP_REDRAW_EVENT;
 
+typedef FRDP_EVENT FRDP_CB_SYNC_EVENT;
+
+struct _FRDP_CB_FORMAT_LIST_EVENT
+{
+	FRDP_EVENT event;
+	uint32* formats;
+	uint16 num_formats;
+};
+typedef struct _FRDP_CB_FORMAT_LIST_EVENT FRDP_CB_FORMAT_LIST_EVENT;
+
+struct _FRDP_CB_DATA_REQUEST_EVENT
+{
+	FRDP_EVENT event;
+	uint32 format;
+};
+typedef struct _FRDP_CB_DATA_REQUEST_EVENT FRDP_CB_DATA_REQUEST_EVENT;
+
+struct _FRDP_CB_DATA_RESPONSE_EVENT
+{
+	FRDP_EVENT event;
+	uint8* data;
+	uint32 size;
+};
+typedef struct _FRDP_CB_DATA_RESPONSE_EVENT FRDP_CB_DATA_RESPONSE_EVENT;
+
 typedef struct rdp_inst rdpInst;
 
 #endif /* __RDP_TYPES_H */
