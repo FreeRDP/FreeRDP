@@ -58,6 +58,7 @@ typedef struct rdp_license rdpLicense;
 #define HWID_PLATFORM_ID_LENGTH			4
 #define HWID_UNIQUE_DATA_LENGTH			16
 #define HWID_LENGTH				20
+#define RSA_MAX_KEY_LENGTH			256
 
 /* Licensing Preamble Flags */
 #define PREAMBLE_VERSION_2_0			0x02

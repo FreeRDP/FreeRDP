@@ -166,15 +166,13 @@ void license_generate_keys(rdpLicense* license)
 
 	/* EncryptedPremasterSecret */
 
-	license->encrypted_pre_master_secret->length = 72;
 	license->encrypted_pre_master_secret->type = BB_ANY_BLOB;
-	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(72);
+	license->encrypted_pre_master_secret->length = RSA_MAX_KEY_LENGTH + 8;
+	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(RSA_MAX_KEY_LENGTH + 8);
 
-#if 0
-	crypto_rsa(PREMASTER_SECRET_LENGTH, license->premaster_secret, license->encrypted_pre_master_secret->data,
+	crypto_rsa(RSA_MAX_KEY_LENGTH, license->premaster_secret, license->encrypted_pre_master_secret->data,
 			license->certificate->cert_info.modulus.length, license->certificate->cert_info.modulus.data,
 			license->certificate->cert_info.exponent);
-#endif
 }
 
 /**
