@@ -22,49 +22,72 @@
 static uint8 registry_dir[] = "freerdp";
 static uint8 registry_file[] = "config.txt";
 
-REG_ENTRY resolution =
+static REG_SECTION global[] =
 {
-	REG_TYPE_STRING, "resolution", 8, "1024x768"
+	REG_TYPE_SECTION, "global",		0,  NULL,
+	REG_TYPE_BOOLEAN, "fast_path",		1,  "1",
+	REG_TYPE_STRING,  "resolution",		8,  "1024x768",
+	REG_TYPE_INTEGER, "performance_flags",	4,  "0xFFFF",
+	REG_TYPE_NONE,    "",			0,  NULL
 };
 
-REG_ENTRY fast_path =
+static REG_SECTION licensing[] =
 {
-	REG_TYPE_BOOLEAN, "fast_path", 1, "1"
+	REG_TYPE_SECTION, "licensing",		0,  NULL,
+	REG_TYPE_STRING,  "platform_id",	1,  "0x000201",
+	REG_TYPE_STRING,  "hardware_id",	16, "0xe107d9d372bb6826bd81d3542a419d6",
+	REG_TYPE_NONE,    "",			0,  NULL
 };
 
-REG_ENTRY performance_flags =
+static REG_SECTION* sections[] =
 {
-	REG_TYPE_INTEGER, "performance_flags", 4, "0xFFFF"
+	(REG_SECTION*) &global,
+	(REG_SECTION*) &licensing,
+	(REG_SECTION*) NULL
 };
 
-REG_SECTION root =
-{
-	REG_TYPE_SECTION, "root", 0, NULL
-};
-
-void registry_print_entry(REG_ENTRY* entry)
+void registry_print_entry(REG_ENTRY* entry, FILE* fp)
 {
 	uint8* value;
 	value = (uint8*) entry->value;
-	printf("%s = %s\n", entry->name, value);
+	fprintf(fp, "%s = %s\n", entry->name, value);
 }
 
-void registry_print_section(REG_SECTION* section)
+void registry_print_section(REG_SECTION* section, FILE* fp)
 {
-	printf("[%s]\n", section->name);
-	registry_print_entry(&resolution);
-	registry_print_entry(&fast_path);
-	registry_print_entry(&performance_flags);
+	int i = 0;
+	REG_ENTRY* entries = (REG_ENTRY*) &section[1];
+
+	fprintf(fp, "\n");
+	fprintf(fp, "[%s]\n", section->name);
+
+	while (entries[i].type != REG_TYPE_NONE)
+	{
+		registry_print_entry(&entries[i], fp);
+		i++;
+	}
 }
 
-void registry_print(rdpRegistry* registry)
+void registry_print(rdpRegistry* registry, FILE* fp)
 {
-	registry_print_section(registry->root);
+	int i = 0;
+
+	fprintf(fp, "# FreeRDP Configuration Registry\n");
+
+	while (sections[i] != NULL)
+	{
+		registry_print_section(sections[i], fp);
+		i++;
+	}
+
+	fprintf(fp, "\n");
 }
 
 void registry_create(rdpRegistry* registry)
 {
 	registry->fp = fopen(registry->file, "w+");
+	registry_print(registry, registry->fp);
+	fflush(registry->fp);
 }
 
 void registry_load(rdpRegistry* registry)
@@ -125,8 +148,6 @@ void registry_init(rdpRegistry* registry)
 	printf("registry file: %s\n", registry->file);
 
 	registry_open(registry);
-
-	registry_print(registry);
 }
 
 rdpRegistry* registry_new(rdpSettings* settings)
@@ -135,7 +156,6 @@ rdpRegistry* registry_new(rdpSettings* settings)
 
 	if (registry != NULL)
 	{
-		registry->root = &root;
 		registry->settings = settings;
 		registry_init(registry);
 	}

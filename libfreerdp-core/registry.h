@@ -31,6 +31,7 @@ typedef struct rdp_registry rdpRegistry;
 
 enum REG_TYPE
 {
+	REG_TYPE_NONE,
 	REG_TYPE_STRING,
 	REG_TYPE_INTEGER,
 	REG_TYPE_BOOLEAN,
@@ -45,6 +46,9 @@ typedef struct
 	void* value;
 } REG_ENTRY;
 
+typedef REG_ENTRY REG_STRING;
+typedef REG_ENTRY REG_INTEGER;
+typedef REG_ENTRY REG_BOOLEAN;
 typedef REG_ENTRY REG_SECTION;
 
 struct rdp_registry
@@ -54,7 +58,6 @@ struct rdp_registry
 	uint8* file;
 	uint8* home;
 	boolean available;
-	REG_SECTION* root;
 	struct rdp_settings* settings;
 };
 
