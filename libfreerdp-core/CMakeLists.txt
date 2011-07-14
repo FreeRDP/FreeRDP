@@ -38,6 +38,8 @@ set(LIBFREERDP_CORE_SRCS
 	ntlmssp.h
 	license.c
 	license.h
+	registry.c
+	registry.h
 	security.c
 	security.h
 	settings.c

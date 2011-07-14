@@ -157,6 +157,7 @@ rdpRdp* rdp_new()
 	if (rdp != NULL)
 	{
 		rdp->settings = settings_new();
+		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
