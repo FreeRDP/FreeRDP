@@ -58,7 +58,9 @@ typedef struct rdp_license rdpLicense;
 #define HWID_PLATFORM_ID_LENGTH			4
 #define HWID_UNIQUE_DATA_LENGTH			16
 #define HWID_LENGTH				20
-#define RSA_MAX_KEY_LENGTH			256
+#define MODULUS_MAX_SIZE			256
+#define EXPONENT_MAX_SIZE			4
+#define LICENSING_PADDING_SIZE			8
 
 /* Licensing Preamble Flags */
 #define PREAMBLE_VERSION_2_0			0x02
@@ -108,6 +110,8 @@ struct rdp_license
 	struct rdp_rdp* rdp;
 	struct rdp_certificate* certificate;
 	uint8 hwid[HWID_LENGTH];
+	uint8 modulus[MODULUS_MAX_SIZE];
+	uint8 exponent[EXPONENT_MAX_SIZE];
 	uint8 client_random[CLIENT_RANDOM_LENGTH];
 	uint8 server_random[SERVER_RANDOM_LENGTH];
 	uint8 master_secret[MASTER_SECRET_LENGTH];

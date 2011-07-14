@@ -40,32 +40,32 @@ static uint8 pad2[48] =
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
 };
 
-void security_salted_hash(uint8* salt, uint8* input, int length, uint8* client_random, uint8* server_random, uint8* output)
+void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, uint8* salt2, uint8* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
 	uint8 sha1_digest[20];
 
-	/* SaltedHash(Salt, Input) = MD5(S + SHA1(Input + Salt + ClientRandom + ServerRandom)) */
+	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1(Input + Salt + Salt1 + Salt2)) */
 
-	/* SHA1_Digest = SHA1(Input + Salt + ClientRandom + ServerRandom) */
+	/* SHA1_Digest = SHA1(Input + Salt + Salt1 + Salt2) */
 	sha1 = crypto_sha1_init();
 	crypto_sha1_update(sha1, input, length); /* Input */
-	crypto_sha1_update(sha1, salt, 48); /* Salt */
-	crypto_sha1_update(sha1, client_random, 32); /* ClientRandom */
-	crypto_sha1_update(sha1, server_random, 32); /* ServerRandom */
+	crypto_sha1_update(sha1, salt, 48); /* Salt (48 bytes) */
+	crypto_sha1_update(sha1, salt1, 32); /* Salt1 (32 bytes) */
+	crypto_sha1_update(sha1, salt2, 32); /* Salt2 (32 bytes) */
 	crypto_sha1_final(sha1, sha1_digest);
 
-	/* SaltedHash(S, I) = MD5(S + SHA1_Digest) */
+	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
 	md5 = crypto_md5_init();
-	crypto_md5_update(md5, salt, 48); /* Salt */
+	crypto_md5_update(md5, salt, 48); /* Salt (48 bytes) */
 	crypto_md5_update(md5, sha1_digest, 20); /* SHA1_Digest */
 	crypto_md5_final(md5, output);
 }
 
 void security_premaster_hash(uint8* input, int length, uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
-	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input) */
+	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
 	security_salted_hash(premaster_secret, input, length, client_random, server_random, output);
 }
 
@@ -79,8 +79,8 @@ void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8
 
 void security_master_hash(uint8* input, int length, uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
-	/* MasterHash(Input) = SaltedHash(MasterSecret, Input) */
-	security_salted_hash(master_secret, input, length, client_random, server_random, output);
+	/* MasterHash(Input) = SaltedHash(MasterSecret, Input, ServerRandom, ClientRandom) */
+	security_salted_hash(master_secret, input, length, server_random, client_random, output);
 }
 
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)

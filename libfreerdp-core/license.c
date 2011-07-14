@@ -152,6 +152,8 @@ void license_generate_randoms(rdpLicense* license)
 
 void license_generate_keys(rdpLicense* license)
 {
+	int paddingLength;
+
 	security_master_secret(license->premaster_secret, license->client_random,
 			license->server_random, license->master_secret); /* MasterSecret */
 
@@ -164,15 +166,24 @@ void license_generate_keys(rdpLicense* license)
 	security_licensing_encryption_key(license->session_key_blob, license->client_random,
 			license->server_random, license->licensing_encryption_key); /* LicensingEncryptionKey */
 
+	paddingLength = MODULUS_MAX_SIZE - license->certificate->cert_info.modulus.length;
+
+	memset(license->modulus, 0, paddingLength);
+	memcpy(&license->modulus[paddingLength],
+			license->certificate->cert_info.modulus.data,
+			MODULUS_MAX_SIZE - paddingLength);
+
+	memcpy(license->exponent, license->certificate->cert_info.exponent, EXPONENT_MAX_SIZE);
+
 	/* EncryptedPremasterSecret */
 
 	license->encrypted_pre_master_secret->type = BB_ANY_BLOB;
-	license->encrypted_pre_master_secret->length = RSA_MAX_KEY_LENGTH + 8;
-	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(RSA_MAX_KEY_LENGTH + 8);
+	license->encrypted_pre_master_secret->length = MODULUS_MAX_SIZE + 8;
+	license->encrypted_pre_master_secret->data = (uint8*) xzalloc(MODULUS_MAX_SIZE + 8);
 
-	crypto_rsa(PREMASTER_SECRET_LENGTH, license->premaster_secret, license->encrypted_pre_master_secret->data,
-			license->certificate->cert_info.modulus.length, license->certificate->cert_info.modulus.data,
-			license->certificate->cert_info.exponent);
+	crypto_rsa(PREMASTER_SECRET_LENGTH, license->premaster_secret,
+			license->encrypted_pre_master_secret->data,
+			MODULUS_MAX_SIZE, license->modulus, license->exponent);
 }
 
 /**

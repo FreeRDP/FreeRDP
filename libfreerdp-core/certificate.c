@@ -270,6 +270,14 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		if (numCertBlobs - i == 2)
 		{
 			printf(", License Server Certificate\n");
+			//freerdp_hexdump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
+			//certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->cert_info);
+
+			//printf("license modulus (%d):\n", certificate->cert_info.modulus.length);
+			//freerdp_hexdump(certificate->cert_info.modulus.data, certificate->cert_info.modulus.length);
+
+			//printf("license exponent:\n");
+			//freerdp_hexdump(certificate->cert_info.exponent, 4);
 		}
 		else if (numCertBlobs - i == 1)
 		{
