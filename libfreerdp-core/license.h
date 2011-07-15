@@ -81,6 +81,23 @@ typedef struct rdp_license rdpLicense;
 /* Key Exchange Algorithms */
 #define KEY_EXCHANGE_ALG_RSA			0x00000001
 
+/* Licensing Error Codes */
+#define ERR_INVALID_SERVER_CERTIFICATE		0x00000001
+#define ERR_NO_LICENSE				0x00000002
+#define ERR_INVALID_MAC				0x00000003
+#define ERR_INVALID_SCOPE			0x00000004
+#define ERR_NO_LICENSE_SERVER			0x00000006
+#define STATUS_VALID_CLIENT			0x00000007
+#define ERR_INVALID_CLIENT			0x00000008
+#define ERR_INVALID_PRODUCT_ID			0x0000000B
+#define ERR_INVALID_MESSAGE_LENGTH		0x0000000C
+
+/* Licensing State Transition Codes */
+#define ST_TOTAL_ABORT				0x00000001
+#define ST_NO_TRANSITION			0x00000002
+#define ST_RESET_PHASE_TO_START			0x00000003
+#define ST_RESEND_LAST_MESSAGE			0x00000004
+
 typedef struct
 {
 	uint32 dwVersion;
@@ -103,8 +120,17 @@ typedef struct
 	LICENSE_BLOB* array;
 } SCOPE_LIST;
 
+typedef enum
+{
+	LICENSE_STATE_AWAIT,
+	LICENSE_STATE_PROCESS,
+	LICENSE_STATE_ABORTED,
+	LICENSE_STATE_COMPLETED
+} LICENSE_STATE;
+
 struct rdp_license
 {
+	LICENSE_STATE state;
 	struct rdp_rdp* rdp;
 	struct rdp_certificate* certificate;
 	uint8 hwid[HWID_LENGTH];
@@ -118,6 +144,7 @@ struct rdp_license
 	uint8 mac_salt_key[MAC_SALT_KEY_LENGTH];
 	uint8 licensing_encryption_key[LICENSING_ENCRYPTION_KEY_LENGTH];
 	PRODUCT_INFO* product_info;
+	LICENSE_BLOB* error_info;
 	LICENSE_BLOB* key_exchange_list;
 	LICENSE_BLOB* server_certificate;
 	LICENSE_BLOB* client_user_name;
