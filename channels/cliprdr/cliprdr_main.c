@@ -170,24 +170,6 @@ static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
-{
-	cliprdrPlugin* cliprdr;
-
-	cliprdr = (cliprdrPlugin*)xmalloc(sizeof(cliprdrPlugin));
-	memset(cliprdr, 0, sizeof(cliprdrPlugin));
-
-	cliprdr->plugin.channel_def.options = CHANNEL_OPTION_INITIALIZED |
-		CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP |
-		CHANNEL_OPTION_SHOW_PROTOCOL;
-	strcpy(cliprdr->plugin.channel_def.name, "cliprdr");
-
-	cliprdr->plugin.connect_callback = cliprdr_process_connect;
-	cliprdr->plugin.receive_callback = cliprdr_process_receive;
-	cliprdr->plugin.event_callback = cliprdr_process_event;
-	cliprdr->plugin.terminate_callback = cliprdr_process_terminate;
-
-	svc_plugin_init((rdpSvcPlugin*)cliprdr, pEntryPoints);
-
-	return 1;
-}
+DEFINE_SVC_PLUGIN(cliprdr, "cliprdr",
+	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
+	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)

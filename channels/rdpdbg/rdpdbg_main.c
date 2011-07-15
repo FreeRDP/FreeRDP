@@ -64,24 +64,6 @@ static void rdpdbg_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
-{
-	rdpdbgPlugin* rdpdbg;
-
-	rdpdbg = (rdpdbgPlugin*)xmalloc(sizeof(rdpdbgPlugin));
-	memset(rdpdbg, 0, sizeof(rdpdbgPlugin));
-
-	rdpdbg->plugin.channel_def.options = CHANNEL_OPTION_INITIALIZED |
-		CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP |
-		CHANNEL_OPTION_SHOW_PROTOCOL;
-	strcpy(rdpdbg->plugin.channel_def.name, "rdpdbg");
-
-	rdpdbg->plugin.connect_callback = rdpdbg_process_connect;
-	rdpdbg->plugin.receive_callback = rdpdbg_process_receive;
-	rdpdbg->plugin.event_callback = rdpdbg_process_event;
-	rdpdbg->plugin.terminate_callback = rdpdbg_process_terminate;
-
-	svc_plugin_init((rdpSvcPlugin*)rdpdbg, pEntryPoints);
-
-	return 1;
-}
+DEFINE_SVC_PLUGIN(rdpdbg, "rdpdbg",
+	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
+	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)
