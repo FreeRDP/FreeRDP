@@ -87,7 +87,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32
 	cb_event->formats = (uint32*)xmalloc(sizeof(uint32) * num_formats);
 	cb_event->num_formats = 0;
 	if (num_formats * 36 != dataLen)
-		DEBUG_WARN("dataLen %d not devided by 36!");
+		DEBUG_WARN("dataLen %d not devided by 36!", dataLen);
 	for (i = 0; i < num_formats; i++)
 	{
 		stream_read_uint32(data_in, format);
