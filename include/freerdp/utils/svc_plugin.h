@@ -53,4 +53,25 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
 #define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+#define DEFINE_SVC_PLUGIN(_prefix, _name, _options) \
+\
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints) \
+{ \
+	_prefix##Plugin* _p; \
+\
+	_p = xnew(_prefix##Plugin); \
+\
+	_p->plugin.channel_def.options = _options; \
+	strcpy(_p->plugin.channel_def.name, _name); \
+\
+	_p->plugin.connect_callback = _prefix##_process_connect; \
+	_p->plugin.receive_callback = _prefix##_process_receive; \
+	_p->plugin.event_callback = _prefix##_process_event; \
+	_p->plugin.terminate_callback = _prefix##_process_terminate; \
+\
+	svc_plugin_init((rdpSvcPlugin*)_p, pEntryPoints); \
+\
+	return 1; \
+}
+
 #endif /* __SVC_PLUGIN_UTILS_H */
