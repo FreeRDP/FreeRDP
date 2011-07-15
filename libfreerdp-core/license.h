@@ -58,8 +58,6 @@ typedef struct rdp_license rdpLicense;
 #define HWID_PLATFORM_ID_LENGTH			4
 #define HWID_UNIQUE_DATA_LENGTH			16
 #define HWID_LENGTH				20
-#define MODULUS_MAX_SIZE			256
-#define EXPONENT_MAX_SIZE			4
 #define LICENSING_PADDING_SIZE			8
 
 /* Licensing Preamble Flags */
@@ -124,7 +122,8 @@ struct rdp_license
 	LICENSE_BLOB* server_certificate;
 	LICENSE_BLOB* client_user_name;
 	LICENSE_BLOB* client_machine_name;
-	LICENSE_BLOB* encrypted_pre_master_secret;
+	LICENSE_BLOB* platform_challenge;
+	LICENSE_BLOB* encrypted_premaster_secret;
 	LICENSE_BLOB* encrypted_platform_challenge;
 	LICENSE_BLOB* encrypted_hwid;
 	SCOPE_LIST* scope_list;
@@ -137,6 +136,8 @@ STREAM* license_send_stream_init(rdpLicense* license);
 void license_generate_randoms(rdpLicense* license);
 void license_generate_keys(rdpLicense* license);
 void license_generate_hwid(rdpLicense* license);
+void license_encrypt_premaster_secret(rdpLicense* license);
+void license_decrypt_platform_challenge(rdpLicense* license);
 
 PRODUCT_INFO* license_new_product_info();
 void license_free_product_info(PRODUCT_INFO* productInfo);

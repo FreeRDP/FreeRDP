@@ -46,6 +46,9 @@ int add_license_suite(void)
 	add_test_suite(license);
 
 	add_test_function(license);
+	add_test_function(license_generate_keys);
+	add_test_function(license_encrypt_premaster_secret);
+	add_test_function(license_decrypt_platform_challenge);
 
 	return 0;
 }
@@ -322,6 +325,7 @@ void test_license(void)
 	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
 	license_read_license_request_packet(license, s);
 
+#if 0
 	printf("\n");
 
 	printf("client random:\n");
@@ -361,14 +365,136 @@ void test_license(void)
 	freerdp_hexdump(license->certificate->cert_info.exponent, 4);
 	printf("\n");
 
-	/* the encrypted premaster secret is 256 + 8 bytes long, with 8 bytes of padding */
-
 	printf("encrypted premaster secret:\n");
-	freerdp_hexdump(license->encrypted_pre_master_secret->data,
-			license->encrypted_pre_master_secret->length);
+	freerdp_hexdump(license->encrypted_premaster_secret->data,
+			license->encrypted_premaster_secret->length);
 	printf("\n");
+#endif
 
 	s->data = server_platform_challenge;
 	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
 	license_read_platform_challenge_packet(license, s);
+}
+
+uint8 test_client_random[32] =
+	"\xdc\x73\xa0\xc8\x69\x25\x6b\x18\xaf\x0b\x94\x7a\xa9\xa5\x20\xaf"
+	"\x8b\xbc\x0d\xcc\xa3\x95\xb7\xb9\xeb\x81\x5d\xbe\x0a\x10\x9c\xd8";
+
+uint8 test_server_random[32] =
+	"\x16\x7e\xf8\x71\x48\x16\x1a\x4f\xa5\x2c\xcd\x73\x63\x60\xa6\xc3"
+	"\xb9\x19\x1b\x4b\x6b\xb2\x0a\xb8\xec\xf1\x8d\x95\x4e\xa8\x21\xc5";
+
+uint8 test_premaster_secret[48] =
+	"\xcf\x7a\xdb\xcb\xfb\x0e\x15\x23\x87\x1c\x84\x81\xba\x9d\x4e\x15"
+	"\xbb\xd2\x56\xbd\xd8\xf7\xf3\x16\xcc\x35\x3b\xe1\x93\x42\x78\xdd"
+	"\x92\x9a\xe4\x7a\xe2\x99\xd4\x73\xb1\xaa\x6f\x55\x94\x3b\xc9\xbc";
+
+uint8 test_modulus[64] =
+	"\x23\xc9\xec\x0e\x9f\x1e\x0e\x1a\x78\xaf\xa5\x14\xd4\xf5\x45\xe4"
+	"\x04\x6e\xf4\x01\xe9\xdf\x45\xd1\xc2\xae\xf4\x7f\xd3\xb9\xcb\xf3"
+	"\x1a\x23\xa1\x0d\x4b\xd4\xd1\x4a\xd2\xd1\xc9\x7c\xab\x24\x8b\xb1"
+	"\x5a\x93\xca\x34\x44\x17\xb5\xe4\xfe\xf7\x9a\xaa\x72\x0d\x41\x95";
+
+uint8 test_exponent[4] = "\x01\x00\x01\x00";
+
+uint8 test_master_secret[48] =
+	"\xbe\x51\xee\x63\x23\x90\xd0\xf4\x3a\xce\x3a\x37\x65\xc3\xdd\xcf"
+	"\xed\xf0\xc8\x19\xed\x77\x33\x4e\xfd\x2b\x7d\x5a\xe2\xca\xf3\x0a"
+	"\xf1\x16\xe5\x0c\x78\x59\x7e\xd4\x4b\x57\xce\x17\x60\x3a\x5a\xb3";
+
+uint8 test_session_key_blob[48] =
+	"\x07\x4f\xa0\x2e\xee\xc4\x5a\x46\x21\x8c\xae\x01\x45\x02\x26\xe4"
+	"\x54\x6b\x59\x10\xcc\x5b\xd1\x96\xd0\x5c\xeb\xc2\x96\x9b\x44\x7b"
+	"\x1c\xd9\x66\xb1\x9e\x24\xaa\x60\x4f\x89\xd1\x4e\xf8\xb9\x55\x3b";
+
+uint8 test_mac_salt_key[16] =
+	"\x07\x4f\xa0\x2e\xee\xc4\x5a\x46\x21\x8c\xae\x01\x45\x02\x26\xe4";
+
+uint8 test_licensing_encryption_key[16] =
+	"\xf3\xb1\xe0\x3b\xfe\xb4\xf2\xc5\x28\xa9\x48\xcd\x90\xf1\x93\xe5";
+
+uint8 test_encrypted_premaster_secret[64] =
+	"\x6b\xbc\x77\x9f\x20\x0c\x98\x39\xc1\x85\x77\xc8\x19\x87\xd8\x82"
+	"\x93\xbd\x21\x69\x5f\x87\xe0\xd6\x4e\xad\x5e\x23\x13\x80\x8c\x63"
+	"\x3e\xd6\x6e\x60\xc9\x40\xe9\x86\x08\x8c\xd5\xaa\xa9\x54\xfe\x27"
+	"\x4c\x1f\x87\x57\xde\xca\xd4\xc7\x1e\x46\x9e\x00\x7a\xdb\x47\x23";
+
+void test_license_generate_keys(void)
+{
+	STREAM* s;
+	s = stream_new(0);
+
+	memcpy(license->client_random, client_random, sizeof(client_random));
+	memcpy(license->server_random, test_server_random, sizeof(test_server_random));
+	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
+	memcpy(license->certificate->cert_info.exponent, test_exponent, sizeof(test_exponent));
+	memcpy(license->certificate->cert_info.modulus.data, test_modulus, sizeof(test_modulus));
+	license->certificate->cert_info.modulus.length = sizeof(test_modulus);
+
+	license_generate_keys(license);
+	license_encrypt_premaster_secret(license);
+
+	s->data = license->master_secret;
+	s->p = s->data + sizeof(test_master_secret);
+	ASSERT_STREAM(s, test_master_secret, sizeof(test_master_secret));
+
+	s->data = license->session_key_blob;
+	s->p = s->data + sizeof(test_session_key_blob);
+	ASSERT_STREAM(s, test_session_key_blob, sizeof(test_session_key_blob));
+
+	s->data = license->mac_salt_key;
+	s->p = s->data + sizeof(test_mac_salt_key);
+	ASSERT_STREAM(s, test_mac_salt_key, sizeof(test_mac_salt_key));
+
+	s->data = license->licensing_encryption_key;
+	s->p = s->data + sizeof(test_licensing_encryption_key);
+	ASSERT_STREAM(s, test_licensing_encryption_key, sizeof(test_licensing_encryption_key));
+
+	s->data = license->encrypted_premaster_secret->data;
+	s->p = s->data + sizeof(test_encrypted_premaster_secret);
+	ASSERT_STREAM(s, test_encrypted_premaster_secret, sizeof(test_encrypted_premaster_secret));
+}
+
+void test_license_encrypt_premaster_secret(void)
+{
+	STREAM* s;
+	s = stream_new(0);
+
+	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
+	memcpy(license->certificate->cert_info.exponent, test_exponent, sizeof(test_exponent));
+	memcpy(license->certificate->cert_info.modulus.data, test_modulus, sizeof(test_modulus));
+	license->certificate->cert_info.modulus.length = sizeof(test_modulus);
+
+	s->data = license->encrypted_premaster_secret->data;
+	s->p = s->data + sizeof(test_encrypted_premaster_secret);
+	ASSERT_STREAM(s, test_encrypted_premaster_secret, sizeof(test_encrypted_premaster_secret));
+}
+
+uint8 test_encrypted_platform_challenge[10] =
+	"\x84\x0a\x42\x50\xad\x5e\xc1\x29\x30\xbd";
+
+uint8 test_platform_challenge[10] =
+	"\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00";
+
+void test_license_decrypt_platform_challenge(void)
+{
+	STREAM* s;
+	s = stream_new(0);
+
+	memcpy(license->licensing_encryption_key, test_licensing_encryption_key,
+			sizeof(test_licensing_encryption_key));
+
+	license->encrypted_platform_challenge->data =
+			(uint8*) xmalloc(sizeof(test_encrypted_platform_challenge));
+	license->encrypted_platform_challenge->length =
+			sizeof(test_encrypted_platform_challenge);
+
+	memcpy(license->encrypted_platform_challenge->data, test_encrypted_platform_challenge,
+			sizeof(test_encrypted_platform_challenge));
+
+	license_decrypt_platform_challenge(license);
+
+	s->data = license->platform_challenge->data;
+	s->p = s->data + sizeof(test_platform_challenge);
+	ASSERT_STREAM(s, test_platform_challenge, sizeof(test_platform_challenge));
 }

@@ -127,11 +127,25 @@ exit:
 	return status;
 }
 
-void crypto_rsa(int length, uint8* in, uint8* out, uint32 modulus_length, uint8* modulus, uint8* exponent)
+void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output)
 {
-	BN_CTX* ctx;
-	int out_length;
+	BN_CTX *ctx;
+	int output_length;
+	uint8* input_reverse;
+	uint8* modulus_reverse;
+	uint8* exponent_reverse;
 	BIGNUM mod, exp, x, y;
+
+	input_reverse = (uint8*) xmalloc(2 * MODULUS_MAX_SIZE + EXPONENT_MAX_SIZE);
+	modulus_reverse = input_reverse + MODULUS_MAX_SIZE;
+	exponent_reverse = modulus_reverse + MODULUS_MAX_SIZE;
+
+	memcpy(modulus_reverse, modulus, key_length);
+	crypto_reverse(modulus_reverse, key_length);
+	memcpy(exponent_reverse, exponent, EXPONENT_MAX_SIZE);
+	crypto_reverse(exponent_reverse, EXPONENT_MAX_SIZE);
+	memcpy(input_reverse, input, length);
+	crypto_reverse(input_reverse, length);
 
 	ctx = BN_CTX_new();
 	BN_init(&mod);
@@ -139,17 +153,36 @@ void crypto_rsa(int length, uint8* in, uint8* out, uint32 modulus_length, uint8*
 	BN_init(&x);
 	BN_init(&y);
 
-	BN_bin2bn(modulus, modulus_length, &mod);
-	BN_bin2bn(exponent, 4, &exp);
-	BN_bin2bn(in, length, &x);
+	BN_bin2bn(modulus_reverse, key_length, &mod);
+	BN_bin2bn(exponent_reverse, EXPONENT_MAX_SIZE, &exp);
+	BN_bin2bn(input_reverse, length, &x);
 	BN_mod_exp(&y, &x, &exp, &mod, ctx);
-	out_length = BN_bn2bin(&y, out);
+
+	output_length = BN_bn2bin(&y, output);
+	crypto_reverse(output, output_length);
+
+	if (output_length < (int) key_length)
+		memset(output + output_length, 0, key_length - output_length);
 
 	BN_free(&y);
 	BN_clear_free(&x);
 	BN_free(&exp);
 	BN_free(&mod);
 	BN_CTX_free(ctx);
+	xfree(input_reverse);
+}
+
+void crypto_reverse(uint8* data, int length)
+{
+	int i, j;
+	uint8 temp;
+
+	for (i = 0, j = length - 1; i < j; i++, j--)
+	{
+		temp = data[i];
+		data[i] = data[j];
+		data[j] = temp;
+	}
 }
 
 void crypto_nonce(uint8* nonce, int size)

@@ -74,4 +74,12 @@ void certificate_read_server_certificate(rdpCertificate* certificate, uint8* ser
 rdpCertificate* certificate_new(rdpRdp* rdp);
 void certificate_free(rdpCertificate* certificate);
 
+//#define WITH_DEBUG_CERTIFICATE	1
+
+#ifdef WITH_DEBUG_CERTIFICATE
+#define DEBUG_CERTIFICATE(fmt, ...) DEBUG_CLASS(CERTIFICATE, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_CERTIFICATE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
 #endif /* __CERTIFICATE_H */

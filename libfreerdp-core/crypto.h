@@ -35,6 +35,9 @@
 #define D2I_X509_CONST
 #endif
 
+#define EXPONENT_MAX_SIZE			4
+#define MODULUS_MAX_SIZE			256
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
@@ -80,8 +83,8 @@ void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key);
 
-void crypto_rsa(int length, uint8* in, uint8* out, uint32 modulus_length, uint8* modulus, uint8* exponent);
-
+void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output);
+void crypto_reverse(uint8* data, int length);
 void crypto_nonce(uint8* nonce, int size);
 
 #endif /* __CRYPTO_H */
