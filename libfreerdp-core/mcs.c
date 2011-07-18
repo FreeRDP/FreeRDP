@@ -284,7 +284,7 @@ static void mcs_init_domain_parameters(DomainParameters* domainParameters,
 void mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
-	ber_read_sequence_of_tag(s, &length);
+	ber_read_sequence_tag(s, &length);
 	ber_read_integer(s, &(domainParameters->maxChannelIds));
 	ber_read_integer(s, &(domainParameters->maxUserIds));
 	ber_read_integer(s, &(domainParameters->maxTokenIds));
@@ -322,7 +322,7 @@ void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 	length = (em - bm) - 2;
 	stream_set_mark(s, bm);
 
-	ber_write_sequence_of_tag(s, length);
+	ber_write_sequence_tag(s, length);
 	stream_set_mark(s, em);
 }
 

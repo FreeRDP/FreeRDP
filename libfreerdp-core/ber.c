@@ -173,8 +173,11 @@ boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
 
 	stream_read_uint8(s, byte);
 
-	if (byte != (BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag))
+	if (byte != ((BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag)))
+	{
+		stream_rewind(s, 1);
 		return False;
+	}
 
 	ber_read_length(s, length);
 
@@ -212,44 +215,13 @@ boolean ber_read_sequence_tag(STREAM* s, int* length)
  * @param length length
  */
 
-void ber_write_sequence_tag(STREAM* s, int length)
+int ber_write_sequence_tag(STREAM* s, int length)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE));
-	ber_write_length(s, length);
-}
-
-int ber_skip_sequence_tag(int length)
-{
-	return _ber_skip_length(length) + 1;
-}
-
-boolean ber_read_sequence_of_tag(STREAM* s, int* length)
-{
-	uint8 byte;
-
-	stream_read_uint8(s, byte);
-
-	if (byte != ((BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_SEQUENCE_OF)))
-		return False;
-
-	ber_read_length(s, length);
-
-	return True;
-}
-
-/**
- * Write BER SEQUENCE OF tag.
- * @param s stream
- * @param length length
- */
-
-int ber_write_sequence_of_tag(STREAM* s, int length)
-{
-	stream_write_uint8(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE_OF));
 	return ber_write_length(s, length) + 1;
 }
 
-int ber_skip_sequence_of_tag(int length)
+int ber_skip_sequence_tag(int length)
 {
 	return _ber_skip_length(length) + 1;
 }

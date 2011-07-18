@@ -126,9 +126,9 @@ void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
 	s = stream_new(0);
 	s->p = s->data = cert->data;
 
-	ber_read_sequence_of_tag(s, &length); /* Certificate (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* Certificate (SEQUENCE) */
 
-	ber_read_sequence_of_tag(s, &length); /* TBSCertificate (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* TBSCertificate (SEQUENCE) */
 
 	/* Explicit Contextual Tag [0] */
 	ber_read_contextual_tag(s, 0, &length, True);
@@ -139,33 +139,33 @@ void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
 	ber_read_integer(s, NULL); /* CertificateSerialNumber (INTEGER) */
 
 	/* signature */
-	ber_read_sequence_of_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
 	stream_seek(s, length);
 
 	/* issuer */
-	ber_read_sequence_of_tag(s, &length); /* Name (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* Name (SEQUENCE) */
 	stream_seek(s, length);
 
 	/* validity */
-	ber_read_sequence_of_tag(s, &length); /* Validity (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* Validity (SEQUENCE) */
 	stream_seek(s, length);
 
 	/* subject */
-	ber_read_sequence_of_tag(s, &length); /* Name (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* Name (SEQUENCE) */
 	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo */
-	ber_read_sequence_of_tag(s, &length); /* SubjectPublicKeyInfo (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* SubjectPublicKeyInfo (SEQUENCE) */
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	ber_read_sequence_of_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	ber_read_sequence_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
 	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
 	ber_read_bit_string(s, &length, &padding); /* BIT_STRING */
 
 	/* RSAPublicKey (SEQUENCE) */
-	ber_read_sequence_of_tag(s, &length); /* SEQUENCE */
+	ber_read_sequence_tag(s, &length); /* SEQUENCE */
 
 	ber_read_integer_length(s, &modulus_length); /* modulus (INTEGER) */
 

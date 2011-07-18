@@ -422,8 +422,8 @@ int credssp_skip_ts_request(int length)
  * Send CredSSP message.
  * @param credssp
  * @param negoToken
- * @param pubKeyAuth
  * @param authInfo
+ * @param pubKeyAuth
  */
 
 void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
@@ -455,8 +455,8 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pu
 	{
 		length = ber_get_content_length(nego_tokens_length);
 		length -= ber_write_contextual_tag(s, 1, length, True); /* NegoData */
-		length -= ber_write_sequence_of_tag(s, length); /* SEQUENCE OF NegoDataItem */
-		length -= ber_write_sequence_of_tag(s, length); /* NegoDataItem */
+		length -= ber_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
+		length -= ber_write_sequence_tag(s, length); /* NegoDataItem */
 		length -= ber_write_contextual_tag(s, 0, length, True); /* [0] negoToken */
 		ber_write_octet_string(s, negoToken->data, length); /* OCTET STRING */
 	}
@@ -484,17 +484,17 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pu
  * Receive CredSSP message.
  * @param credssp
  * @param negoToken
- * @param pubKeyAuth
  * @param authInfo
+ * @param pubKeyAuth
  * @return
  */
 
 int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
 {
 	STREAM* s;
+	int length;
 	int status;
-	asn_dec_rval_t dec_rval;
-	TSRequest_t *ts_request = 0;
+	uint32 version;
 
 	s = transport_recv_stream_init(credssp->transport, 2048);
 	status = transport_read(credssp->transport, s);
@@ -502,31 +502,36 @@ int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pub
 	if (status < 0)
 		return -1;
 
-	dec_rval = ber_decode(0, &asn_DEF_TSRequest, (void **)&ts_request, s->data, status);
+	/* TSRequest */
+	ber_read_sequence_tag(s, &length);
+	ber_read_contextual_tag(s, 0, &length, True);
+	ber_read_integer(s, &version);
 
-	if(dec_rval.code == RC_OK)
+	/* [1] negoTokens (NegoData) */
+	if (ber_read_contextual_tag(s, 1, &length, True) != False)
 	{
-		if (ts_request->negoTokens != NULL)
-		{
-			if (ts_request->negoTokens->list.count > 0)
-			{
-				freerdp_blob_alloc(negoToken, ts_request->negoTokens->list.array[0]->negoToken.size);
-				memcpy(negoToken->data, ts_request->negoTokens->list.array[0]->negoToken.buf, negoToken->length);
-			}
-		}
-
-		if (ts_request->pubKeyAuth != NULL)
-		{
-			freerdp_blob_alloc(pubKeyAuth, ts_request->pubKeyAuth->size);
-			memcpy(pubKeyAuth->data, ts_request->pubKeyAuth->buf, pubKeyAuth->length);
-		}
-
-		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
+		ber_read_sequence_tag(s, &length); /* SEQUENCE OF NegoDataItem */
+		ber_read_sequence_tag(s, &length); /* NegoDataItem */
+		ber_read_contextual_tag(s, 0, &length, True); /* [0] negoToken */
+		ber_read_octet_string(s, &length); /* OCTET STRING */
+		freerdp_blob_alloc(negoToken, length);
+		stream_read(s, negoToken->data, length);
 	}
-	else
+
+	/* [2] authInfo (OCTET STRING) */
+	if (ber_read_contextual_tag(s, 2, &length, True) != False)
 	{
-		printf("Failed to decode TSRequest\n");
-		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
+		ber_read_octet_string(s, &length); /* OCTET STRING */
+		freerdp_blob_alloc(authInfo, length);
+		stream_read(s, authInfo->data, length);
+	}
+
+	/* [3] pubKeyAuth (OCTET STRING) */
+	if (ber_read_contextual_tag(s, 3, &length, True) != False)
+	{
+		ber_read_octet_string(s, &length); /* OCTET STRING */
+		freerdp_blob_alloc(pubKeyAuth, length);
+		stream_read(s, pubKeyAuth->data, length);
 	}
 
 	return 0;
