@@ -46,17 +46,27 @@ void ber_read_length(STREAM* s, int* length)
  * @param length length
  */
 
-void ber_write_length(STREAM* s, int length)
+int ber_write_length(STREAM* s, int length)
 {
 	if (length > 0x7F)
 	{
 		stream_write_uint8(s, 0x82);
 		stream_write_uint16_be(s, length);
+		return 3;
 	}
 	else
 	{
 		stream_write_uint8(s, length);
+		return 1;
 	}
+}
+
+int _ber_skip_length(int length)
+{
+	if (length > 0x7F)
+		return 3;
+	else
+		return 1;
 }
 
 /**
@@ -163,11 +173,15 @@ boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
 	return True;
 }
 
-boolean ber_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
+int ber_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
 {
 	stream_write_uint8(s, (BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag));
-	ber_write_length(s, length);
-	return True;
+	return ber_write_length(s, length) + 1;
+}
+
+int ber_skip_contextual_tag(int length)
+{
+	return _ber_skip_length(length) + 1;
 }
 
 boolean ber_read_sequence_tag(STREAM* s, int* length)
@@ -196,6 +210,11 @@ void ber_write_sequence_tag(STREAM* s, int length)
 	ber_write_length(s, length);
 }
 
+int ber_skip_sequence_tag(int length)
+{
+	return _ber_skip_length(length) + 1;
+}
+
 boolean ber_read_sequence_of_tag(STREAM* s, int* length)
 {
 	uint8 byte;
@@ -216,10 +235,15 @@ boolean ber_read_sequence_of_tag(STREAM* s, int* length)
  * @param length length
  */
 
-void ber_write_sequence_of_tag(STREAM* s, int length)
+int ber_write_sequence_of_tag(STREAM* s, int length)
 {
 	stream_write_uint8(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE_OF));
-	ber_write_length(s, length);
+	return ber_write_length(s, length) + 1;
+}
+
+int ber_skip_sequence_of_tag(int length)
+{
+	return _ber_skip_length(length) + 1;
 }
 
 boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
@@ -270,6 +294,11 @@ void ber_write_octet_string(STREAM* s, uint8* oct_str, int length)
 	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, False);
 	ber_write_length(s, length);
 	stream_write(s, oct_str, length);
+}
+
+int ber_skip_octet_string(int length)
+{
+	return 1 + _ber_skip_length(length) + length;
 }
 
 /**
@@ -342,6 +371,24 @@ void ber_write_integer(STREAM* s, uint32 value)
 		ber_write_length(s, 4);
 		stream_write_uint32_be(s, value);
 	}
+}
+
+int ber_skip_integer(uint32 value)
+{
+	if (value <= 0xFF)
+	{
+		return _ber_skip_length(1) + 2;
+	}
+	else if (value <= 0xFFFF)
+	{
+		return _ber_skip_length(2) + 3;
+	}
+	else if (value <= 0xFFFFFFFF)
+	{
+		return _ber_skip_length(4) + 5;
+	}
+
+	return 0;
 }
 
 boolean ber_read_integer_length(STREAM* s, int* length)

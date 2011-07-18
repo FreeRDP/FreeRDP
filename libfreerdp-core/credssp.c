@@ -444,28 +444,56 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* 
 	}
 }
 #else
+
+int credssp_skip_nego_token(int length)
+{
+	return ber_skip_contextual_tag(length) + ber_skip_octet_string(length);
+}
+
+int credssp_skip_nego_data(int length)
+{
+	length = credssp_skip_nego_token(length);
+	length += _ber_skip_length(length);
+	length += _ber_skip_length(length);
+	length += ber_skip_contextual_tag(length);
+	return length;
+}
+
+int credssp_skip_ts_request(int length)
+{
+	length += ber_skip_integer(2);
+	length += ber_skip_contextual_tag(3);
+	length += ber_skip_sequence_tag(length);
+	return length;
+}
+
 void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
 	STREAM* s;
+	uint8 *bm, *em;
 	int length;
-	int ber_length;
+	int header_length;
 
 	s = stream_new(2048);
 
+	int nego_data_length = credssp_skip_nego_data(negoToken->length);
+	int ts_request_length = credssp_skip_ts_request(nego_data_length);
+
+	printf("nego_data_length:%d\n", nego_data_length);
+	printf("ts_request_length:%d\n", ts_request_length);
+
 	/* TSRequest */
-	ber_write_sequence_tag(s, length); /* SEQUENCE */
+	ber_write_sequence_tag(s, ts_request_length); /* SEQUENCE */
 	ber_write_contextual_tag(s, 0, 3, True); /* [0] version */
 	ber_write_integer(s, 2); /* INTEGER */
-	length -= 7;
 
 	/* NegoData */
-	ber_write_contextual_tag(s, 1, length, True); /* [1] negoTokens */
-	ber_write_sequence_of_tag(s, length - 2); /* SEQUENCE OF NegoDataItem */
-	ber_write_sequence_of_tag(s, length - 4); /* NegoDataItem */
-	length -= 6;
+	length = ber_write_contextual_tag(s, 1, nego_data_length, True); /* [1] negoTokens */
+	length += ber_write_sequence_of_tag(s, nego_data_length - length); /* SEQUENCE OF NegoDataItem */
+	length += ber_write_sequence_of_tag(s, nego_data_length - length); /* NegoDataItem */
 
-	/* negoToken */
-	ber_write_contextual_tag(s, 0, length, True); /* [0] negoToken */
+	/* NegoToken */
+	ber_write_contextual_tag(s, 0, nego_data_length - length, True); /* [0] negoToken */
 	ber_write_octet_string(s, negoToken->data, negoToken->length); /* OCTET STRING */
 
 	transport_write(credssp->transport, s);

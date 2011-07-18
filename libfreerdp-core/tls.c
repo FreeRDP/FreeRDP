@@ -92,7 +92,7 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 				break;
 
 			default:
-				tls_print_error("SSL_read", tls->ssl, status);
+				//tls_print_error("SSL_read", tls->ssl, status);
 				return -1;
 				break;
 		}
