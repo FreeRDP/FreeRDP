@@ -18,4 +18,4 @@
 # limitations under the License.
 
 file(GLOB HEADERS "freerdp/*.h")
-install_files(/include/oshwcollect FILES ${HEADERS})
+install_files(/include/freerdp FILES ${HEADERS})
