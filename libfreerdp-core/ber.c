@@ -69,6 +69,14 @@ int _ber_skip_length(int length)
 		return 1;
 }
 
+int ber_get_content_length(int length)
+{
+	if (length - 1 > 0x7F)
+		return length - 4;
+	else
+		return length - 2;
+}
+
 /**
  * Read BER Universal tag.
  * @param s stream

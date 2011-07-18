@@ -53,6 +53,7 @@
 void ber_read_length(STREAM* s, int* length);
 int ber_write_length(STREAM* s, int length);
 int _ber_skip_length(int length);
+int ber_get_content_length(int length);
 boolean ber_read_universal_tag(STREAM* s, uint8 tag, boolean pc);
 void ber_write_universal_tag(STREAM* s, uint8 tag, boolean pc);
 boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);

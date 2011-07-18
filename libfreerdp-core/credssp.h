@@ -49,8 +49,8 @@ struct rdp_credssp
 
 int credssp_authenticate(rdpCredssp* credssp);
 
-void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo);
-int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo);
+void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth);
+int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth);
 
 void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d);
 void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d);

@@ -186,10 +186,10 @@ int credssp_authenticate(rdpCredssp* credssp)
 	credssp->negoToken.data = s->data;
 	credssp->negoToken.length = s->p - s->data;
 	credssp_encrypt_public_key(credssp, &credssp->pubKeyAuth);
-	credssp_send(credssp, &credssp->negoToken, &credssp->pubKeyAuth, NULL);
+	credssp_send(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth);
 
 	/* Encrypted Public Key +1 */
-	if (credssp_recv(credssp, &credssp->negoToken, &credssp->pubKeyAuth, NULL) < 0)
+	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
 		return -1;
 
 	if (credssp_verify_public_key(credssp, &credssp->pubKeyAuth) == 0)
@@ -204,7 +204,7 @@ int credssp_authenticate(rdpCredssp* credssp)
 	/* Send encrypted credentials */
 	credssp_encode_ts_credentials(credssp);
 	credssp_encrypt_ts_credentials(credssp, &credssp->authInfo);
-	credssp_send(credssp, NULL, NULL, &credssp->authInfo);
+	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
 
 	xfree(s);
 
@@ -380,81 +380,32 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	free(ts_passwoFRDP_creds);
 }
 
-/**
- * Send CredSSP message.
- * @param credssp
- * @param negoToken
- * @param pubKeyAuth
- * @param authInfo
- */
-
-#if 1
-void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
-{
-	STREAM* s;
-	size_t size;
-	TSRequest_t *ts_request;
-	OCTET_STRING_t *nego_token;
-	asn_enc_rval_t enc_rval;
-
-	ts_request = calloc(1, sizeof(TSRequest_t));
-	ts_request->version = 2;
-
-	if (negoToken != NULL)
-	{
-		ts_request->negoTokens = calloc(1, sizeof(NegoData_t));
-		nego_token = calloc(1, sizeof(OCTET_STRING_t));
-		nego_token->size = negoToken->length;
-		nego_token->buf = malloc(nego_token->size);
-		memcpy(nego_token->buf, negoToken->data, nego_token->size);
-		ASN_SEQUENCE_ADD(ts_request->negoTokens, nego_token);
-	}
-
-	if (pubKeyAuth != NULL)
-	{
-		ts_request->pubKeyAuth = calloc(1, sizeof(OCTET_STRING_t));
-		ts_request->pubKeyAuth->buf = pubKeyAuth->data;
-		ts_request->pubKeyAuth->size = pubKeyAuth->length;
-	}
-
-	if (authInfo != NULL)
-	{
-		ts_request->authInfo = calloc(1, sizeof(OCTET_STRING_t));
-		ts_request->authInfo->buf = authInfo->data;
-		ts_request->authInfo->size = authInfo->length;
-	}
-
-	/* get size of the encoded ASN.1 payload */
-	enc_rval = der_encode(&asn_DEF_TSRequest, ts_request, asn1_write, 0);
-
-	if (enc_rval.encoded != -1)
-	{
-		size = enc_rval.encoded;
-		s = transport_send_stream_init(credssp->transport, size);
-
-		enc_rval = der_encode_to_buffer(&asn_DEF_TSRequest, ts_request, s->data, size);
-
-		if (enc_rval.encoded != -1)
-		{
-			s->p = s->data + size;
-			transport_write(credssp->transport, s);
-		}
-
-		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
-	}
-}
-#else
-
 int credssp_skip_nego_token(int length)
 {
-	return ber_skip_contextual_tag(length) + ber_skip_octet_string(length);
+	length = ber_skip_octet_string(length);
+	length += ber_skip_contextual_tag(length);
+	return length;
 }
 
-int credssp_skip_nego_data(int length)
+int credssp_skip_nego_tokens(int length)
 {
 	length = credssp_skip_nego_token(length);
-	length += _ber_skip_length(length);
-	length += _ber_skip_length(length);
+	length += ber_skip_sequence_tag(length);
+	length += ber_skip_sequence_tag(length);
+	length += ber_skip_contextual_tag(length);
+	return length;
+}
+
+int credssp_skip_pub_key_auth(int length)
+{
+	length = ber_skip_octet_string(length);
+	length += ber_skip_contextual_tag(length);
+	return length;
+}
+
+int credssp_skip_auth_info(int length)
+{
+	length = ber_skip_octet_string(length);
 	length += ber_skip_contextual_tag(length);
 	return length;
 }
@@ -467,38 +418,67 @@ int credssp_skip_ts_request(int length)
 	return length;
 }
 
-void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
+/**
+ * Send CredSSP message.
+ * @param credssp
+ * @param negoToken
+ * @param pubKeyAuth
+ * @param authInfo
+ */
+
+void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
 {
 	STREAM* s;
-	uint8 *bm, *em;
 	int length;
-	int header_length;
+	int ts_request_length;
+	int nego_tokens_length;
+	int pub_key_auth_length;
+	int auth_info_length;
 
-	s = stream_new(2048);
+	nego_tokens_length = (negoToken != NULL) ? credssp_skip_nego_tokens(negoToken->length) : 0;
+	pub_key_auth_length = (pubKeyAuth != NULL) ? credssp_skip_pub_key_auth(pubKeyAuth->length) : 0;
+	auth_info_length = (authInfo != NULL) ? credssp_skip_auth_info(authInfo->length) : 0;
 
-	int nego_data_length = credssp_skip_nego_data(negoToken->length);
-	int ts_request_length = credssp_skip_ts_request(nego_data_length);
+	length = nego_tokens_length + pub_key_auth_length + auth_info_length;
+	ts_request_length = credssp_skip_ts_request(length);
 
-	printf("nego_data_length:%d\n", nego_data_length);
-	printf("ts_request_length:%d\n", ts_request_length);
+	s = stream_new(ts_request_length);
 
 	/* TSRequest */
-	ber_write_sequence_tag(s, ts_request_length); /* SEQUENCE */
+	length = ber_get_content_length(ts_request_length);
+	ber_write_sequence_tag(s, length); /* SEQUENCE */
 	ber_write_contextual_tag(s, 0, 3, True); /* [0] version */
 	ber_write_integer(s, 2); /* INTEGER */
 
-	/* NegoData */
-	length = ber_write_contextual_tag(s, 1, nego_data_length, True); /* [1] negoTokens */
-	length += ber_write_sequence_of_tag(s, nego_data_length - length); /* SEQUENCE OF NegoDataItem */
-	length += ber_write_sequence_of_tag(s, nego_data_length - length); /* NegoDataItem */
+	/* [1] negoTokens (NegoData) */
+	if (nego_tokens_length > 0)
+	{
+		length = ber_get_content_length(nego_tokens_length);
+		length -= ber_write_contextual_tag(s, 1, length, True); /* NegoData */
+		length -= ber_write_sequence_of_tag(s, length); /* SEQUENCE OF NegoDataItem */
+		length -= ber_write_sequence_of_tag(s, length); /* NegoDataItem */
+		length -= ber_write_contextual_tag(s, 0, length, True); /* [0] negoToken */
+		ber_write_octet_string(s, negoToken->data, length); /* OCTET STRING */
+	}
 
-	/* NegoToken */
-	ber_write_contextual_tag(s, 0, nego_data_length - length, True); /* [0] negoToken */
-	ber_write_octet_string(s, negoToken->data, negoToken->length); /* OCTET STRING */
+	/* [2] authInfo (OCTET STRING) */
+	if (auth_info_length > 0)
+	{
+		length = ber_get_content_length(auth_info_length);
+		length -= ber_write_contextual_tag(s, 2, length, True);
+		ber_write_octet_string(s, authInfo->data, authInfo->length);
+	}
+
+	/* [3] pubKeyAuth (OCTET STRING) */
+	if (pub_key_auth_length > 0)
+	{
+		length = ber_get_content_length(pub_key_auth_length);
+		length -= ber_write_contextual_tag(s, 3, length, True);
+		ber_write_octet_string(s, pubKeyAuth->data, length);
+	}
 
 	transport_write(credssp->transport, s);
 }
-#endif
 
 /**
  * Receive CredSSP message.
@@ -509,7 +489,7 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* 
  * @return
  */
 
-int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
+int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
 {
 	STREAM* s;
 	int status;
