@@ -163,6 +163,39 @@ boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
 	return True;
 }
 
+boolean ber_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
+{
+	stream_write_uint8(s, (BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag));
+	ber_write_length(s, length);
+	return True;
+}
+
+boolean ber_read_sequence_tag(STREAM* s, int* length)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte != ((BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_SEQUENCE_OF)))
+		return False;
+
+	ber_read_length(s, length);
+
+	return True;
+}
+
+/**
+ * Write BER SEQUENCE tag.
+ * @param s stream
+ * @param length length
+ */
+
+void ber_write_sequence_tag(STREAM* s, int length)
+{
+	stream_write_uint8(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE));
+	ber_write_length(s, length);
+}
+
 boolean ber_read_sequence_of_tag(STREAM* s, int* length)
 {
 	uint8 byte;

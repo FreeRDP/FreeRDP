@@ -23,6 +23,7 @@
 typedef struct rdp_credssp rdpCredssp;
 
 #include "tls.h"
+#include "ber.h"
 #include "crypto.h"
 #include "transport.h"
 #include <freerdp/settings.h>

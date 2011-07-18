@@ -224,7 +224,9 @@ boolean mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU
 	enum DomainMCSPDU MCSPDU;
 
 	*length = tpkt_read_header(s);
-	tpdu_read_data(s);
+
+	if (tpdu_read_data(s) == 0)
+		return False;
 
 	MCSPDU = *domainMCSPDU;
 	per_read_choice(s, &choice);
@@ -448,7 +450,9 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 	transport_read(mcs->transport, s);
 
 	tpkt_read_header(s);
-	tpdu_read_data(s);
+
+	if (tpdu_read_data(s) == 0)
+		return;
 
 	ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length);
 	ber_read_enumerated(s, &result, MCS_Result_enum_length);

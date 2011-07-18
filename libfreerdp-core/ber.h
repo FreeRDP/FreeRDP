@@ -45,6 +45,7 @@
 #define BER_TAG_OCTET_STRING	0x04
 #define BER_TAG_OBJECT_IDENFIER	0x06
 #define BER_TAG_ENUMERATED	0x0A
+#define BER_TAG_SEQUENCE	0x10
 #define BER_TAG_SEQUENCE_OF	0x10
 
 #define BER_PC(_pc)	(_pc ? BER_CONSTRUCT : BER_PRIMITIVE)
@@ -59,6 +60,10 @@ boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);
 boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
 boolean ber_read_sequence_of_tag(STREAM* s, int* length);
 boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc);
+boolean ber_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc);
+boolean ber_read_sequence_tag(STREAM* s, int* length);
+void ber_write_sequence_tag(STREAM* s, int length);
+boolean ber_read_sequence_of_tag(STREAM* s, int* length);
 void ber_write_sequence_of_tag(STREAM* s, int length);
 boolean ber_read_bit_string(STREAM* s, int* length, uint8* padding);
 boolean ber_read_octet_string(STREAM* s, int* length);

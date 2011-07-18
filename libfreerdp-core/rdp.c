@@ -124,6 +124,11 @@ void rdp_recv(rdpRdp* rdp)
 
 	rdp_read_security_header(s, &sec_flags);
 
+	if (sec_flags & SEC_ENCRYPT)
+	{
+		printf("RDP packet is encrypted\n");
+	}
+
 	if (sec_flags & SEC_PKT_MASK)
 	{
 		switch (sec_flags & SEC_PKT_MASK)

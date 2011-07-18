@@ -183,10 +183,7 @@ tpdu_read_data(STREAM* s)
 	li = tpdu_read_header(s, &code);
 
 	if (code != X224_TPDU_DATA)
-	{
-		printf("expected X224_TPDU_DATA\n");
 		return 0;
-	}
 
 	return li;
 }

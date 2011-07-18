@@ -64,7 +64,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	nego_set_cookie(rdp->nego, rdp->settings->username);
 	nego_set_protocols(rdp->nego, 1, 1, 1);
 
-	if (nego_connect(rdp->nego) == False)
+	if (nego_connect(rdp->nego) != True)
 	{
 		printf("Error: protocol security negotiation failure\n");
 		return False;
@@ -77,11 +77,21 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
 		transport_connect_rdp(rdp->transport);
 
-	mcs_connect(rdp->mcs);
+	if (mcs_connect(rdp->mcs) != True)
+	{
+		printf("Error: Multipoint Connection Service (MCS) connection failure\n");
+		return False;
+	}
 
 	rdp_send_client_info(rdp);
 
-	license_connect(rdp->license);
+	if (license_connect(rdp->license) != True)
+	{
+		printf("Error: license connection sequence failure\n");
+		return False;
+	}
+
+	rdp_recv(rdp);
 
 	return True;
 }

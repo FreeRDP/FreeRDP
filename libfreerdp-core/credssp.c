@@ -32,6 +32,56 @@
 
 #include "credssp.h"
 
+/**
+ * TSRequest ::= SEQUENCE {
+ * 	version    [0] INTEGER,
+ * 	negoTokens [1] NegoData OPTIONAL,
+ * 	authInfo   [2] OCTET STRING OPTIONAL,
+ * 	pubKeyAuth [3] OCTET STRING OPTIONAL
+ * }
+ *
+ * NegoData ::= SEQUENCE OF NegoDataItem
+ *
+ * NegoDataItem ::= SEQUENCE {
+ * 	negoToken [0] OCTET STRING
+ * }
+ *
+ * TSCredentials ::= SEQUENCE {
+ * 	credType    [0] INTEGER,
+ * 	credentials [1] OCTET STRING
+ * }
+ *
+ * TSPasswordCreds ::= SEQUENCE {
+ * 	domainName  [0] OCTET STRING,
+ * 	userName    [1] OCTET STRING,
+ * 	password    [2] OCTET STRING
+ * }
+ *
+ * TSSmartCardCreds ::= SEQUENCE {
+ * 	pin        [0] OCTET STRING,
+ * 	cspData    [1] TSCspDataDetail,
+ * 	userHint   [2] OCTET STRING OPTIONAL,
+ * 	domainHint [3] OCTET STRING OPTIONAL
+ * }
+ *
+ * TSCspDataDetail ::= SEQUENCE {
+ * 	keySpec       [0] INTEGER,
+ * 	cardName      [1] OCTET STRING OPTIONAL,
+ * 	readerName    [2] OCTET STRING OPTIONAL,
+ * 	containerName [3] OCTET STRING OPTIONAL,
+ * 	cspName       [4] OCTET STRING OPTIONAL
+ * }
+ *
+ */
+
+/**
+ *
+ * @param buffer
+ * @param size
+ * @param fd
+ * @return
+ */
+
 static int
 asn1_write(const void *buffer, size_t size, void *fd)
 {
@@ -338,6 +388,7 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
  * @param authInfo
  */
 
+#if 1
 void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
 {
 	STREAM* s;
@@ -392,6 +443,34 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* 
 		asn_DEF_TSRequest.free_struct(&asn_DEF_TSRequest, ts_request, 0);
 	}
 }
+#else
+void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* pubKeyAuth, BLOB* authInfo)
+{
+	STREAM* s;
+	int length;
+	int ber_length;
+
+	s = stream_new(2048);
+
+	/* TSRequest */
+	ber_write_sequence_tag(s, length); /* SEQUENCE */
+	ber_write_contextual_tag(s, 0, 3, True); /* [0] version */
+	ber_write_integer(s, 2); /* INTEGER */
+	length -= 7;
+
+	/* NegoData */
+	ber_write_contextual_tag(s, 1, length, True); /* [1] negoTokens */
+	ber_write_sequence_of_tag(s, length - 2); /* SEQUENCE OF NegoDataItem */
+	ber_write_sequence_of_tag(s, length - 4); /* NegoDataItem */
+	length -= 6;
+
+	/* negoToken */
+	ber_write_contextual_tag(s, 0, length, True); /* [0] negoToken */
+	ber_write_octet_string(s, negoToken->data, negoToken->length); /* OCTET STRING */
+
+	transport_write(credssp->transport, s);
+}
+#endif
 
 /**
  * Receive CredSSP message.
