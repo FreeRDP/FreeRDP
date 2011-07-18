@@ -21,12 +21,6 @@
 #include <unistd.h>
 #endif
 
-#include "TSRequest.h"
-#include "NegoData.h"
-#include "NegotiationToken.h"
-#include "TSCredentials.h"
-#include "TSPasswordCreds.h"
-
 #include <time.h>
 #include "ntlmssp.h"
 
@@ -73,21 +67,6 @@
  * }
  *
  */
-
-/**
- *
- * @param buffer
- * @param size
- * @param fd
- * @return
- */
-
-static int
-asn1_write(const void *buffer, size_t size, void *fd)
-{
-	/* this is used to get the size of the ASN.1 encoded result */
-	return 0;
-}
 
 /**
  * Initialize NTLMSSP authentication module.
@@ -321,6 +300,95 @@ void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d)
 	freerdp_blob_free(&encrypted_ts_credentials);
 }
 
+int credssp_skip_ts_password_creds(rdpCredssp* credssp)
+{
+	int length;
+	int ts_password_creds_length = 0;
+
+	length = ber_skip_octet_string(credssp->ntlmssp->domain.length);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_octet_string(credssp->ntlmssp->username.length);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_octet_string(credssp->ntlmssp->password.length);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_sequence(ts_password_creds_length);
+
+	return length;
+}
+
+void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+{
+	int length;
+
+	length = credssp_skip_ts_password_creds(credssp);
+
+	/* TSPasswordCreds (SEQUENCE) */
+	length = ber_get_content_length(length);
+	ber_write_sequence_tag(s, length);
+
+	/* [0] domainName (OCTET STRING) */
+	ber_write_contextual_tag(s, 0, credssp->ntlmssp->domain.length + 2, True);
+	ber_write_octet_string(s, credssp->ntlmssp->domain.data, credssp->ntlmssp->domain.length);
+
+	/* [1] userName (OCTET STRING) */
+	ber_write_contextual_tag(s, 1, credssp->ntlmssp->username.length + 2, True);
+	ber_write_octet_string(s, credssp->ntlmssp->username.data, credssp->ntlmssp->username.length);
+
+	/* [2] password (OCTET STRING) */
+	ber_write_contextual_tag(s, 2, credssp->ntlmssp->password.length + 2, True);
+	ber_write_octet_string(s, credssp->ntlmssp->password.data, credssp->ntlmssp->password.length);
+}
+
+int credssp_skip_ts_credentials(rdpCredssp* credssp)
+{
+	int length;
+	int ts_password_creds_length;
+	int ts_credentials_length = 0;
+
+	length = ber_skip_integer(0);
+	length += ber_skip_contextual_tag(length);
+	ts_credentials_length += length;
+
+	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
+	length = ber_skip_octet_string(ts_password_creds_length);
+	length += ber_skip_contextual_tag(length);
+	ts_credentials_length += length;
+
+	length = ber_skip_sequence(ts_credentials_length);
+
+	return length;
+}
+
+void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
+{
+	int length;
+	int ts_password_creds_length;
+
+	length = credssp_skip_ts_credentials(credssp);
+	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
+
+	/* TSCredentials (SEQUENCE) */
+	length = ber_get_content_length(length);
+	length -= ber_write_sequence_tag(s, length);
+
+	/* [0] credType (INTEGER) */
+	length -= ber_write_contextual_tag(s, 0, 3, True);
+	length -= ber_write_integer(s, 1);
+
+	/* [1] credentials (OCTET STRING) */
+	length -= 1;
+	length -= ber_write_contextual_tag(s, 1, length, True);
+	length -= ber_write_octet_string_tag(s, ts_password_creds_length);
+
+	credssp_write_ts_password_creds(credssp, s);
+}
+
 /**
  * Encode TSCredentials structure.
  * @param credssp
@@ -328,56 +396,16 @@ void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d)
 
 void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
-	asn_enc_rval_t enc_rval;
-	TSCredentials_t *ts_credentials;
-	TSPasswordCreds_t *ts_passwoFRDP_creds;
-	BLOB ts_passwoFRDP_creds_buffer = { 0 };
+	STREAM* s;
+	int length;
 
-	ts_credentials = calloc(1, sizeof(TSCredentials_t));
-	ts_credentials->credType = 1; /* TSPasswordCreds */
+	s = stream_new(0);
+	length = credssp_skip_ts_credentials(credssp);
+	freerdp_blob_alloc(&credssp->ts_credentials, length);
+	s->p = s->data = credssp->ts_credentials.data;
+	s->size = length;
 
-	ts_passwoFRDP_creds = calloc(1, sizeof(TSPasswordCreds_t));
-
-	/* Domain */
-	ts_passwoFRDP_creds->domainName.buf = credssp->ntlmssp->domain.data;
-	ts_passwoFRDP_creds->domainName.size = credssp->ntlmssp->domain.length;
-
-	/* Username */
-	ts_passwoFRDP_creds->userName.buf = credssp->ntlmssp->username.data;
-	ts_passwoFRDP_creds->userName.size = credssp->ntlmssp->username.length;
-
-	/* Password */
-	ts_passwoFRDP_creds->password.buf = credssp->ntlmssp->password.data;
-	ts_passwoFRDP_creds->password.size = credssp->ntlmssp->password.length;
-
-	/* get size ASN.1 encoded TSPasswordCreds */
-	enc_rval = der_encode(&asn_DEF_TSPasswordCreds, ts_passwoFRDP_creds, asn1_write, 0);
-
-	if (enc_rval.encoded != -1)
-	{
-		freerdp_blob_alloc(&ts_passwoFRDP_creds_buffer, enc_rval.encoded);
-
-		enc_rval = der_encode_to_buffer(&asn_DEF_TSPasswordCreds, ts_passwoFRDP_creds,
-			ts_passwoFRDP_creds_buffer.data, ts_passwoFRDP_creds_buffer.length);
-	}
-
-	ts_credentials->credentials.buf = ts_passwoFRDP_creds_buffer.data;
-	ts_credentials->credentials.size = ts_passwoFRDP_creds_buffer.length;
-
-	/* get size ASN.1 encoded TSCredentials */
-	enc_rval = der_encode(&asn_DEF_TSCredentials, ts_credentials, asn1_write, 0);
-
-	if (enc_rval.encoded != -1)
-	{
-		freerdp_blob_alloc(&credssp->ts_credentials, enc_rval.encoded);
-
-		enc_rval = der_encode_to_buffer(&asn_DEF_TSCredentials, ts_credentials,
-			credssp->ts_credentials.data, credssp->ts_credentials.length);
-	}
-
-	freerdp_blob_free(&ts_passwoFRDP_creds_buffer);
-	free(ts_credentials);
-	free(ts_passwoFRDP_creds);
+	credssp_write_ts_credentials(credssp, s);
 }
 
 int credssp_skip_nego_token(int length)

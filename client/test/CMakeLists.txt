@@ -24,5 +24,4 @@ add_executable(freerdp-test
 
 target_link_libraries(freerdp-test freerdp-core)
 target_link_libraries(freerdp-test freerdp-gdi)
-target_link_libraries(freerdp-test freerdp-asn1)
 target_link_libraries(freerdp-test freerdp-utils)
