@@ -46,6 +46,33 @@ uint8 state_transitions[][32] =
 };
 
 /**
+ * Perform licensing phase of connection sequence.\n
+ * @param license license module
+ * @return
+ */
+
+boolean license_connect(rdpLicense* license)
+{
+	while (1)
+	{
+		rdp_recv(license->rdp);
+
+		if (license->state == LICENSE_STATE_COMPLETED)
+		{
+			printf("license connection sequence completed.\n");
+			return True;
+		}
+		else if (license->state == LICENSE_STATE_ABORTED)
+		{
+			printf("license connection sequence aborted.\n");
+			return False;
+		}
+	}
+
+	return False;
+}
+
+/**
  * Read a licensing preamble.\n
  * @msdn{cc240480}
  * @param s stream

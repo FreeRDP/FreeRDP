@@ -118,6 +118,7 @@ struct rdp_settings
 	BLOB server_random;
 	BLOB server_certificate;
 
+	boolean console_audio;
 	boolean console_session;
 	uint32 redirected_session_id;
 
@@ -164,7 +165,6 @@ struct rdp_settings
 	int bitmap_compression;
 	int desktop_save;
 	int polygon_ellipse_orders;
-	int console_audio;
 	int off_screen_bitmaps;
 	int triblt;
 	int new_cursors;

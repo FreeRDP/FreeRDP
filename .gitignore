@@ -24,4 +24,4 @@ docs/api
 *.so.*
 *.dylib
 cunit/test_freerdp
-freerdp-ui/test/freerdp-test
+client/test/freerdp-test

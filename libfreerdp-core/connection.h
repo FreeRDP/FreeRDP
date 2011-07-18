@@ -30,6 +30,6 @@
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
-void rdp_client_connect(rdpRdp* rdp);
+boolean rdp_client_connect(rdpRdp* rdp);
 
 #endif /* __CONNECTION_H */

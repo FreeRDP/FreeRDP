@@ -50,7 +50,7 @@ char PROTOCOL_SECURITY_STRINGS[3][4] =
  * @return
  */
 
-int nego_connect(rdpNego* nego)
+boolean nego_connect(rdpNego* nego)
 {
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
@@ -74,7 +74,7 @@ int nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("Protocol Security Negotiation Failure");
 			nego->state = NEGO_STATE_FINAL;
-			return 0;
+			return False;
 		}
 	}
 	while (nego->state != NEGO_STATE_FINAL);
@@ -84,7 +84,7 @@ int nego_connect(rdpNego* nego)
 	/* update settings with negotiated protocol security */
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
 
-	return 1;
+	return True;
 }
 
 /**

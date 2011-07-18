@@ -55,7 +55,7 @@
  * @param rdp RDP module
  */
 
-void rdp_client_connect(rdpRdp* rdp)
+boolean rdp_client_connect(rdpRdp* rdp)
 {
 	rdp->settings->autologon = 1;
 
@@ -63,18 +63,26 @@ void rdp_client_connect(rdpRdp* rdp)
 	nego_set_target(rdp->nego, rdp->settings->hostname, 3389);
 	nego_set_cookie(rdp->nego, rdp->settings->username);
 	nego_set_protocols(rdp->nego, 1, 1, 1);
-	nego_connect(rdp->nego);
 
-	transport_connect_nla(rdp->transport);
+	if (nego_connect(rdp->nego) == False)
+	{
+		printf("Error: protocol security negotiation failure\n");
+		return False;
+	}
+
+	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+		transport_connect_nla(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+		transport_connect_tls(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+		transport_connect_rdp(rdp->transport);
 
 	mcs_connect(rdp->mcs);
 
 	rdp_send_client_info(rdp);
 
-	rdp_recv(rdp);
-	rdp_recv(rdp);
-	rdp_recv(rdp);
-	rdp_recv(rdp);
-	rdp_recv(rdp);
+	license_connect(rdp->license);
+
+	return True;
 }
 
