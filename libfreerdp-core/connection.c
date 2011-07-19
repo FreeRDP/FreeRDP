@@ -91,6 +91,8 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		return False;
 	}
 
+	rdp->connected = True;
+
 	rdp_recv(rdp);
 
 	return True;

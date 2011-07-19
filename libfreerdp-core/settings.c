@@ -43,16 +43,15 @@ rdpSettings* settings_new()
 		settings->kbd_subtype = 0;
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0x409;
-		settings->encryption = 1;
+		settings->encryption = False;
 
 		settings->performance_flags =
 				PERF_DISABLE_FULLWINDOWDRAG |
 				PERF_DISABLE_MENUANIMATIONS |
 				PERF_DISABLE_WALLPAPER;
 
-		settings->encryption_methods =
-				ENCRYPTION_40BIT_FLAG |
-				ENCRYPTION_128BIT_FLAG;
+		settings->encryption_method = ENCRYPTION_METHOD_NONE;
+		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
 		settings->client_dir = xmalloc(strlen(client_dll));
 		strcpy(settings->client_dir, client_dll);

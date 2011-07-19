@@ -29,5 +29,11 @@
 
 void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
-	printf("SEC_REDIRECTION_PKT\n");
+	printf("Redirection Packet\n");
 }
+
+void rdp_read_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
+{
+	printf("Enhanced Security Redirection Packet\n");
+}
+

@@ -47,6 +47,15 @@ void rdp_write_security_header(STREAM* s, uint16 flags)
 	stream_write_uint16(s, 0); /* flagsHi (unused) */
 }
 
+void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id)
+{
+	/* Share Control Header */
+	stream_read_uint16(s, *length); /* totalLength */
+	stream_read_uint16(s, *type); /* pduType */
+	stream_read_uint16(s, *channel_id); /* pduSource */
+	*type &= 0x0F; /* type is in the 4 least significant bits */
+}
+
 /**
  * Initialize an RDP packet stream.\n
  * @param rdp rdp module
@@ -105,7 +114,8 @@ void rdp_recv(rdpRdp* rdp)
 {
 	STREAM* s;
 	int length;
-	int pduLength;
+	uint16 pduType;
+	uint16 pduLength;
 	uint16 initiator;
 	uint16 channelId;
 	uint16 sec_flags;
@@ -122,27 +132,48 @@ void rdp_recv(rdpRdp* rdp)
 	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
 	per_read_length(s, &pduLength); /* userData (OCTET_STRING) */
 
-	rdp_read_security_header(s, &sec_flags);
-
-	if (sec_flags & SEC_ENCRYPT)
+	if (rdp->connected != True)
 	{
-		printf("RDP packet is encrypted\n");
-	}
+		rdp_read_security_header(s, &sec_flags);
 
-	if (sec_flags & SEC_PKT_MASK)
-	{
-		switch (sec_flags & SEC_PKT_MASK)
+		if (sec_flags & SEC_PKT_MASK)
 		{
-			case SEC_LICENSE_PKT:
-				license_recv(rdp->license, s);
+			switch (sec_flags & SEC_PKT_MASK)
+			{
+				case SEC_LICENSE_PKT:
+					license_recv(rdp->license, s);
+					break;
+
+				case SEC_REDIRECTION_PKT:
+					rdp_read_redirection_packet(rdp, s);
+					break;
+
+				default:
+					printf("incorrect security flags: 0x%04X\n", sec_flags);
+					break;
+			}
+		}
+	}
+	else
+	{
+		rdp_read_share_control_header(s, &pduLength, &pduType, &channelId);
+
+		switch (pduType)
+		{
+			case PDU_TYPE_DEMAND_ACTIVE:
+				rdp_read_demand_active(s, rdp->settings);
 				break;
 
-			case SEC_REDIRECTION_PKT:
-				rdp_read_redirection_packet(rdp, s);
+			case PDU_TYPE_DEACTIVATE_ALL:
+				rdp_read_deactivate_all(s, rdp->settings);
+				break;
+
+			case PDU_TYPE_SERVER_REDIRECTION:
+				rdp_read_enhanced_security_redirection_packet(rdp, s);
 				break;
 
 			default:
-				printf("incorrect security flags: 0x%04X\n", sec_flags);
+				printf("incorrect PDU type: 0x%04X\n", pduType);
 				break;
 		}
 	}
@@ -161,6 +192,7 @@ rdpRdp* rdp_new()
 
 	if (rdp != NULL)
 	{
+		rdp->connected = False;
 		rdp->settings = settings_new();
 		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);

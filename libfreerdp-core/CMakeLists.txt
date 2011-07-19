@@ -43,6 +43,8 @@ set(LIBFREERDP_CORE_SRCS
 	security.c
 	security.h
 	settings.c
+	capabilities.c
+	capabilities.h
 	certificate.c
 	certificate.h
 	connection.c

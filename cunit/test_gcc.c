@@ -154,11 +154,11 @@ void test_gcc_write_client_security_data(void)
 	s = stream_new(12);
 	settings = settings_new();
 
-	settings->encryption_methods =
-			ENCRYPTION_40BIT_FLAG |
-			ENCRYPTION_56BIT_FLAG |
-			ENCRYPTION_128BIT_FLAG |
-			ENCRYPTION_FIPS_FLAG;
+	settings->encryption_method =
+			ENCRYPTION_METHOD_40BIT |
+			ENCRYPTION_METHOD_56BIT |
+			ENCRYPTION_METHOD_128BIT |
+			ENCRYPTION_METHOD_FIPS;
 
 	gcc_write_client_security_data(s, settings);
 

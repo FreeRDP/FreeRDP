@@ -36,10 +36,18 @@
 #define PERF_ENABLE_DESKTOP_COMPOSITION 	0x00000100
 
 /* Encryption Methods */
-#define ENCRYPTION_40BIT_FLAG			0x00000001
-#define ENCRYPTION_128BIT_FLAG			0x00000002
-#define ENCRYPTION_56BIT_FLAG			0x00000008
-#define ENCRYPTION_FIPS_FLAG			0x00000010
+#define ENCRYPTION_METHOD_NONE			0x00000000
+#define ENCRYPTION_METHOD_40BIT			0x00000001
+#define ENCRYPTION_METHOD_128BIT		0x00000002
+#define ENCRYPTION_METHOD_56BIT			0x00000008
+#define ENCRYPTION_METHOD_FIPS			0x00000010
+
+/* Encryption Levels */
+#define ENCRYPTION_LEVEL_NONE			0x00000000
+#define ENCRYPTION_LEVEL_LOW			0x00000001
+#define ENCRYPTION_LEVEL_CLIENT_COMPATIBLE	0x00000002
+#define ENCRYPTION_LEVEL_HIGH			0x00000003
+#define ENCRYPTION_LEVEL_FIPS			0x00000004
 
 /* Auto Reconnect Version */
 #define AUTO_RECONNECT_VERSION_1		0x00000001
@@ -113,7 +121,8 @@ struct rdp_settings
 	uint32 kbd_fn_keys;
 	uint32 client_build;
 	uint32 selected_protocol;
-	uint32 encryption_methods;
+	uint32 encryption_method;
+	uint32 encryption_level;
 
 	BLOB server_random;
 	BLOB server_certificate;
@@ -156,6 +165,8 @@ struct rdp_settings
 	boolean tls_security;
 	boolean nla_security;
 	boolean rdp_security;
+
+	uint32 share_id;
 
 	int remote_app;
 	char app_name[64];

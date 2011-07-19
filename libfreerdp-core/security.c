@@ -145,3 +145,30 @@ void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* o
 	crypto_md5_final(md5, output);
 }
 
+void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uint32 length, uint8* output)
+{
+	CryptoMd5 md5;
+	CryptoSha1 sha1;
+	uint8 length_le[4];
+	uint8 md5_digest[16];
+	uint8 sha1_digest[20];
+
+	security_uint32_le(length_le, length); /* length must be little-endian */
+
+	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
+	sha1 = crypto_sha1_init();
+	crypto_sha1_update(sha1, mac_key, mac_key_length); /* MacKeyN */
+	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
+	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
+	crypto_sha1_update(sha1, data, length); /* data */
+	crypto_sha1_final(sha1, sha1_digest);
+
+	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, mac_key, mac_key_length); /* MacKeyN */
+	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
+	crypto_md5_update(md5, sha1_digest, 20); /* SHA1_Digest */
+	crypto_md5_final(md5, md5_digest);
+
+	memcpy(output, md5_digest, 8);
+}

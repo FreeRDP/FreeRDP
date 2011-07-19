@@ -31,6 +31,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "registry.h"
 #include "transport.h"
 #include "connection.h"
+#include "capabilities.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -56,8 +57,15 @@ typedef struct rdp_rdp rdpRdp;
 #define RDP_SECURITY_HEADER_LENGTH	4
 #define RDP_PACKET_HEADER_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_LENGTH)
 
+#define PDU_TYPE_DEMAND_ACTIVE		0x1
+#define PDU_TYPE_CONFIRM_ACTIVE		0x3
+#define PDU_TYPE_DEACTIVATE_ALL		0x6
+#define PDU_TYPE_DATA			0x7
+#define PDU_TYPE_SERVER_REDIRECTION	0xA
+
 struct rdp_rdp
 {
+	boolean connected;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_license* license;

@@ -388,14 +388,14 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 
 	if (settings->encryption > 0)
 	{
-		stream_write_uint32(s, settings->encryption_methods); /* encryptionMethods */
+		stream_write_uint32(s, settings->encryption_method); /* encryptionMethods */
 		stream_write_uint32(s, 0); /* extEncryptionMethods */
 	}
 	else
 	{
 		/* French locale, disable encryption */
 		stream_write_uint32(s, 0); /* encryptionMethods */
-		stream_write_uint32(s, settings->encryption_methods); /* extEncryptionMethods */
+		stream_write_uint32(s, settings->encryption_method); /* extEncryptionMethods */
 	}
 }
 
