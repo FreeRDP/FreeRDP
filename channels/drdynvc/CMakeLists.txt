@@ -17,7 +17,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rdpdbg)
+set(DRDYNVC_SRCS
+	drdynvc_main.c
+	drdynvc_main.h
+	drdynvc_types.h
+	dvcman.c
+	dvcman.h
+)
 
+add_library(drdynvc SHARED ${DRDYNVC_SRCS})
+set_target_properties(drdynvc PROPERTIES PREFIX "")
+
+target_link_libraries(drdynvc freerdp-utils)
+
+install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
