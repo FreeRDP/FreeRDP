@@ -86,4 +86,32 @@ void rdp_read_large_pointer_capability_set(STREAM* s, rdpSettings* settings);
 void rdp_read_surface_commands_capability_set(STREAM* s, rdpSettings* settings);
 void rdp_read_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings);
 
+void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_control_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_window_activation_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_share_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_color_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_sound_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_input_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_font_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_brush_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_bitmap_cache_host_support_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_draw_gdi_plus_cache_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_remote_programs_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_window_list_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_desktop_composition_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_multifragment_update_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_large_pointer_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_surface_commands_capability_set(STREAM* s, rdpSettings* settings);
+void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings);
+
 #endif /* __CAPABILITIES_H */
