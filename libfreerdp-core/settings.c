@@ -77,6 +77,18 @@ rdpSettings* settings_new()
 		settings->order_support[NEG_INDEX_INDEX] = True;
 
 		settings->color_pointer = True;
+		settings->large_pointer = True;
+
+		settings->draw_gdi_plus = True;
+
+		settings->frame_marker = False;
+		settings->bitmap_cache_v3 = False;
+
+		settings->offscreen_bitmap_cache_size = 7680;
+		settings->offscreen_bitmap_cache_entries = 100;
+
+		settings->draw_nine_grid_cache_size = 2560;
+		settings->draw_nine_grid_cache_entries = 256;
 
 		settings->client_dir = xmalloc(strlen(client_dll));
 		strcpy(settings->client_dir, client_dll);

@@ -52,11 +52,18 @@
 #define CAPSET_TYPE_LARGE_POINTER		0x001B
 #define CAPSET_TYPE_SURFACE_COMMANDS		0x001C
 #define CAPSET_TYPE_BITMAP_CODECS		0x001D
+#define CAPSET_TYPE_FRAME_ACKNOWLEDGE           0x001E
 
 #define CAPSET_HEADER_LENGTH			4
 
+#define SOURCE_DESCRIPTOR			"MSTSC"
+
+/* Capabilities Protocol Version */
+#define CAPS_PROTOCOL_VERSION			0x0200
+
 /* General Capability Flags */
 #define FASTPATH_OUTPUT_SUPPORTED		0x0001
+#define NO_BITMAP_COMPRESSION_HDR		0x0400
 #define LONG_CREDENTIALS_SUPPORTED		0x0004
 #define AUTORECONNECT_SUPPORTED			0x0008
 #define ENC_SALTED_CHECKSUM			0x0010
@@ -74,7 +81,7 @@
 #define ORDER_FLAGS_EXTRA_SUPPORT		0x0080
 
 /* Extended Order Flags */
-#define CACHE_BITMAP_REV3_SUPPORT		0x0002
+#define CACHE_BITMAP_V3_SUPPORT			0x0002
 #define ALTSEC_FRAME_MARKER_SUPPORT		0x0004
 
 /* Order Support */
@@ -171,6 +178,8 @@
 #define SURFCMDS_STREAM_SURFACE_BITS		0x00000040
 
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
+void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
+
 void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings);
 
 #endif /* __CAPABILITIES_H */

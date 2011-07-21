@@ -172,12 +172,16 @@ struct rdp_settings
 	boolean suppress_output;
 	boolean desktop_resize;
 
+	boolean frame_marker;
+	boolean bitmap_cache_v3;
+
 	uint8 order_support[32];
 
 	boolean color_pointer;
 	boolean sound_beeps;
 
 	boolean fast_path_input;
+	boolean auto_reconnection;
 
 	boolean offscreen_bitmap_cache;
 	uint16 offscreen_bitmap_cache_size;
@@ -194,13 +198,18 @@ struct rdp_settings
 	boolean draw_gdi_plus;
 	boolean draw_gdi_plus_cache;
 
+	boolean large_pointer;
+
+	boolean surface_commands;
+	uint32 multifrag_max_request_size;
+
+	boolean desktop_composition;
+
+	boolean frame_acknowledge;
+
 	boolean remote_app;
 
 	char app_name[64];
-	int bitmap_cache;
-	int bitmap_cache_persist_enable;
-	int bitmap_cache_precache;
-	int bitmap_compression;
 	int desktop_save;
 	int polygon_ellipse_orders;
 	int off_screen_bitmaps;
