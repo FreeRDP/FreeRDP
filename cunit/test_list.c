@@ -62,6 +62,8 @@ void test_list(void)
 {
 	struct my_list* list;
 	struct my_list_item* item;
+	struct my_list_item* item1;
+	struct my_list_item* item2;
 	int i;
 
 	list = my_list_new();
@@ -80,6 +82,17 @@ void test_list(void)
 		CU_ASSERT(item->b == i * i);
 		/*printf("%d %d\n", item->a, item->b);*/
 	}
+
+	item1 = my_list_item_new();
+	my_list_add(list, item1);
+	item2 = my_list_item_new();
+	my_list_add(list, item2);
+
+	CU_ASSERT(my_list_remove(list, item1) == item1);
+	my_list_item_free(item1);
+	CU_ASSERT(my_list_remove(list, item2) == item2);
+	CU_ASSERT(my_list_remove(list, item2) == NULL);
+	my_list_item_free(item2);
 
 	my_list_free(list);
 }

@@ -47,6 +47,8 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
 int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
 
+#define svc_plugin_get_data(_p) (FRDP_PLUGIN_DATA*)(((rdpSvcPlugin*)_p)->channel_entry_points.pExtendedData)
+
 #ifdef WITH_DEBUG_SVC
 #define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
 #else
