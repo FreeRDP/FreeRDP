@@ -64,25 +64,24 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
-void rdp_read_share_data_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id)
+void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id)
 {
 	/* Share Data Header */
-	rdp_read_share_control_header(s, length, type, channel_id);
-	stream_seek_uint32(s); /* shareId (4 bytes) */
+	stream_read_uint32(s, *share_id); /* shareId (4 bytes) */
 	stream_seek_uint8(s); /* pad1 (1 byte) */
 	stream_seek_uint8(s); /* streamId (1 byte) */
-	stream_seek_uint16(s); /* uncompressedLength (2 bytes) */
-	stream_seek_uint8(s); /* pduType2, Data PDU Type (1 byte) */
-	stream_seek_uint16(s); /* compressedLength (2 byte2) */
+	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
+	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
+	stream_seek_uint8(s); /* compressedType (1 byte) */
+	stream_seek_uint16(s); /* compressedLength (2 bytes) */
 }
 
-void rdp_write_share_data_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id, uint32 share_id)
+void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id)
 {
 	/* Share Data Header */
-	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
-	stream_write_uint32(s, 0); /* shareId (4 bytes) */
+	stream_write_uint32(s, share_id); /* shareId (4 bytes) */
 	stream_write_uint8(s, 0); /* pad1 (1 byte) */
-	stream_write_uint8(s, 0); /* streamId (1 byte) */
+	stream_write_uint8(s, STREAM_LOW); /* streamId (1 byte) */
 	stream_write_uint16(s, length); /* uncompressedLength (2 bytes) */
 	stream_write_uint8(s, type); /* pduType2, Data PDU Type (1 byte) */
 	stream_write_uint16(s, length); /* compressedLength (2 byte2) */
@@ -154,10 +153,41 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length);
-	rdp_write_share_data_header(s, length, type, channel_id, rdp->settings->share_id);
+	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
+	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
+}
+
+void rdp_read_set_error_info_data_pdu(STREAM* s)
+{
+	uint32 errorInfo;
+
+	stream_read_uint32(s, errorInfo); /* errorInfo (4 bytes) */
+
+	printf("Error Info: 0x%08X\n", errorInfo);
+}
+
+void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
+{
+	uint8 type;
+	uint16 length;
+	uint32 share_id;
+
+	rdp_read_share_data_header(s, &length, &type, &share_id);
+
+	printf("data pdu type:%d length:%d\n", type, length);
+
+	switch (type)
+	{
+		case DATA_PDU_TYPE_SET_ERROR_INFO:
+			rdp_read_set_error_info_data_pdu(s);
+			break;
+
+		default:
+			break;
+	}
 }
 
 /**
@@ -215,6 +245,10 @@ void rdp_recv(rdpRdp* rdp)
 
 		switch (pduType)
 		{
+			case PDU_TYPE_DATA:
+				rdp_read_data_pdu(rdp, s);
+				break;
+
 			case PDU_TYPE_DEMAND_ACTIVE:
 				rdp_read_demand_active(s, rdp->settings);
 				rdp_send_confirm_active(rdp);

@@ -101,6 +101,24 @@ typedef struct rdp_rdp rdpRdp;
 #define PACKET_COMPR_TYPE_RDP61		0x03
 #define CompressionTypeMask		0x0F
 
+/* Stream Identifiers */
+#define STREAM_UNDEFINED		0x00
+#define STREAM_LOW			0x01
+#define STREAM_MED			0x02
+#define STREAM_HI			0x04
+
+/* Error Info Codes */
+#define ERRINFO_RPC_INITIATED_DISCONNECT			0x00000001
+#define ERRINFO_RPC_INITIATED_LOGOFF				0x00000002
+#define ERRINFO_IDLE_TIMEOUT					0x00000003
+#define ERRINFO_LOGON_TIMEOUT					0x00000004
+#define ERRINFO_DISCONNECTED_BY_OTHER_CONNECTION		0x00000005
+#define ERRINFO_OUT_OF_MEMORY					0x00000006
+#define ERRINFO_SERVER_DENIED_CONNECTION			0x00000007
+#define ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES			0x00000008
+#define ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED		0x0000000A
+#define ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER		0x0000000B
+
 struct rdp_rdp
 {
 	boolean connected;
@@ -117,6 +135,9 @@ void rdp_write_security_header(STREAM* s, uint16 flags);
 
 void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
+
+void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id);
+void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
 void rdp_write_header(rdpRdp* rdp, STREAM* s, int length);

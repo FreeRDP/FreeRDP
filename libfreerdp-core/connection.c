@@ -97,11 +97,16 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_send_client_synchronize_pdu(rdp);
 	rdp_send_client_cooperate_pdu(rdp);
-	rdp_send_client_request_control_pdu(rdp);
-	rdp_send_client_persistent_key_list_pdu(rdp);
-	rdp_send_client_font_list_pdu(rdp);
 
 	rdp_recv(rdp);
+	rdp_recv(rdp);
+	rdp_recv(rdp);
+
+	rdp_recv(rdp);
+
+	//rdp_send_client_request_control_pdu(rdp);
+	//rdp_send_client_persistent_key_list_pdu(rdp);
+	//rdp_send_client_font_list_pdu(rdp);
 
 	return True;
 }
@@ -128,7 +133,7 @@ void rdp_write_client_cooperate_pdu(STREAM* s, rdpSettings* settings)
 {
 	stream_write_uint16(s, CTRLACTION_COOPERATE); /* action (2 bytes) */
 	stream_write_uint16(s, 0); /* grantId (2 bytes) */
-	stream_write_uint16(s, 0); /* controlId (2 bytes) */
+	stream_write_uint32(s, 0); /* controlId (4 bytes) */
 }
 
 void rdp_send_client_cooperate_pdu(rdpRdp* rdp)
@@ -147,7 +152,7 @@ void rdp_write_client_request_control_pdu(STREAM* s, rdpSettings* settings)
 {
 	stream_write_uint16(s, CTRLACTION_REQUEST_CONTROL); /* action (2 bytes) */
 	stream_write_uint16(s, 0); /* grantId (2 bytes) */
-	stream_write_uint16(s, 0); /* controlId (2 bytes) */
+	stream_write_uint32(s, 0); /* controlId (4 bytes) */
 }
 
 void rdp_send_client_request_control_pdu(rdpRdp* rdp)
