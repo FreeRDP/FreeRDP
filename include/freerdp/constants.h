@@ -99,4 +99,9 @@ enum FRDP_CB_FORMAT
 	CB_FORMAT_GIF = 0xD013
 };
 
+/**
+ * Virtual Channel Constants
+ */
+#define CHANNEL_CHUNK_LENGTH 1600
+
 #endif

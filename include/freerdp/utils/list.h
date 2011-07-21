@@ -94,6 +94,32 @@ static struct _item_type* _list_type##_dequeue(struct _list_type* list) \
 	return item; \
 } \
 \
+static void _list_type##_add(struct _list_type* list, struct _item_type* item) \
+{ \
+	_list_type##_enqueue(list, item); \
+} \
+\
+static struct _item_type* _list_type##_remove(struct _list_type* list, struct _item_type* item) \
+{ \
+	struct _item_type* prev; \
+	struct _item_type* curr; \
+\
+	for (prev = NULL, curr = (struct _item_type*)list->head; curr; prev = curr, curr = ((struct _item_type##_full*)curr)->next) \
+	{ \
+		if (curr == item) \
+		{ \
+			if (prev) \
+				((struct _item_type##_full*)prev)->next = ((struct _item_type##_full*)curr)->next; \
+			if (list->head == item) \
+				list->head = ((struct _item_type##_full*)curr)->next; \
+			if (list->tail == item) \
+				list->tail = prev; \
+			return item; \
+		} \
+	} \
+	return NULL; \
+} \
+\
 void _list_type##_free(struct _list_type* list) \
 { \
 	struct _item_type* item; \
