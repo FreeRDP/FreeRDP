@@ -95,6 +95,126 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_recv(rdp);
 
+	rdp_send_client_synchronize_pdu(rdp);
+	rdp_send_client_cooperate_pdu(rdp);
+	rdp_send_client_request_control_pdu(rdp);
+	rdp_send_client_persistent_key_list_pdu(rdp);
+	rdp_send_client_font_list_pdu(rdp);
+
+	rdp_recv(rdp);
+
 	return True;
 }
 
+void rdp_write_client_synchronize_pdu(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
+	stream_write_uint16(s, settings->pdu_source); /* targetUser (2 bytes) */
+}
+
+void rdp_send_client_synchronize_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_client_synchronize_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE,
+			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+}
+
+void rdp_write_client_cooperate_pdu(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, CTRLACTION_COOPERATE); /* action (2 bytes) */
+	stream_write_uint16(s, 0); /* grantId (2 bytes) */
+	stream_write_uint16(s, 0); /* controlId (2 bytes) */
+}
+
+void rdp_send_client_cooperate_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_client_cooperate_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL,
+			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+}
+
+void rdp_write_client_request_control_pdu(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, CTRLACTION_REQUEST_CONTROL); /* action (2 bytes) */
+	stream_write_uint16(s, 0); /* grantId (2 bytes) */
+	stream_write_uint16(s, 0); /* controlId (2 bytes) */
+}
+
+void rdp_send_client_request_control_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_client_request_control_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL,
+			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+}
+
+void rdp_write_persistent_list_entry(STREAM* s, uint32 key1, uint32 key2)
+{
+	stream_write_uint32(s, key1); /* key1 (4 bytes) */
+	stream_write_uint32(s, key2); /* key2 (4 bytes) */
+}
+
+void rdp_write_client_persistent_key_list_pdu(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 0); /* numEntriesCache0 (2 bytes) */
+	stream_write_uint16(s, 0); /* numEntriesCache1 (2 bytes) */
+	stream_write_uint16(s, 0); /* numEntriesCache2 (2 bytes) */
+	stream_write_uint16(s, 0); /* numEntriesCache3 (2 bytes) */
+	stream_write_uint16(s, 0); /* numEntriesCache4 (2 bytes) */
+	stream_write_uint16(s, 0); /* totalEntriesCache0 (2 bytes) */
+	stream_write_uint16(s, 0); /* totalEntriesCache1 (2 bytes) */
+	stream_write_uint16(s, 0); /* totalEntriesCache2 (2 bytes) */
+	stream_write_uint16(s, 0); /* totalEntriesCache3 (2 bytes) */
+	stream_write_uint16(s, 0); /* totalEntriesCache4 (2 bytes) */
+	stream_write_uint8(s, PERSIST_LAST_PDU); /* bBitMask (1 byte) */
+	stream_write_uint8(s, 0); /* pad1 (1 byte) */
+	stream_write_uint16(s, 0); /* pad3 (2 bytes) */
+
+	/* entries */
+}
+
+void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_client_persistent_key_list_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST,
+			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+}
+
+void rdp_write_client_font_list_pdu(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 0); /* numberFonts (2 bytes) */
+	stream_write_uint16(s, 0); /* totalNumFonts (2 bytes) */
+	stream_write_uint16(s, FONTLIST_FIRST | FONTLIST_LAST); /* listFlags (2 bytes) */
+	stream_write_uint16(s, 50); /* entrySize (2 bytes) */
+}
+
+void rdp_send_client_font_list_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_client_font_list_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST,
+			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+}

@@ -167,6 +167,7 @@ struct rdp_settings
 	boolean rdp_security;
 
 	uint32 share_id;
+	uint16 pdu_source;
 
 	boolean refresh_rect;
 	boolean suppress_output;

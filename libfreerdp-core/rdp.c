@@ -64,6 +64,30 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
+void rdp_read_share_data_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id)
+{
+	/* Share Data Header */
+	rdp_read_share_control_header(s, length, type, channel_id);
+	stream_seek_uint32(s); /* shareId (4 bytes) */
+	stream_seek_uint8(s); /* pad1 (1 byte) */
+	stream_seek_uint8(s); /* streamId (1 byte) */
+	stream_seek_uint16(s); /* uncompressedLength (2 bytes) */
+	stream_seek_uint8(s); /* pduType2, Data PDU Type (1 byte) */
+	stream_seek_uint16(s); /* compressedLength (2 byte2) */
+}
+
+void rdp_write_share_data_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id, uint32 share_id)
+{
+	/* Share Data Header */
+	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
+	stream_write_uint32(s, 0); /* shareId (4 bytes) */
+	stream_write_uint8(s, 0); /* pad1 (1 byte) */
+	stream_write_uint8(s, 0); /* streamId (1 byte) */
+	stream_write_uint16(s, length); /* uncompressedLength (2 bytes) */
+	stream_write_uint8(s, type); /* pduType2, Data PDU Type (1 byte) */
+	stream_write_uint16(s, length); /* compressedLength (2 byte2) */
+}
+
 /**
  * Initialize an RDP packet stream.\n
  * @param rdp rdp module
@@ -75,6 +99,15 @@ STREAM* rdp_send_stream_init(rdpRdp* rdp)
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	return s;
+}
+
+STREAM* rdp_data_pdu_init(rdpRdp* rdp)
+{
+	STREAM* s;
+	s = transport_send_stream_init(rdp->transport, 2048);
+	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
 	return s;
 }
 
@@ -108,6 +141,20 @@ void rdp_send(rdpRdp* rdp, STREAM* s)
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length);
+
+	stream_set_pos(s, length);
+	transport_write(rdp->transport, s);
+}
+
+void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
+{
+	int length;
+
+	length = stream_get_length(s);
+	stream_set_pos(s, 0);
+
+	rdp_write_header(rdp, s, length);
+	rdp_write_share_data_header(s, length, type, channel_id, rdp->settings->share_id);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
@@ -164,7 +211,7 @@ void rdp_recv(rdpRdp* rdp)
 	}
 	else
 	{
-		rdp_read_share_control_header(s, &pduLength, &pduType, &channelId);
+		rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source);
 
 		switch (pduType)
 		{

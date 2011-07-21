@@ -56,6 +56,7 @@ typedef struct rdp_rdp rdpRdp;
 
 #define RDP_SECURITY_HEADER_LENGTH	4
 #define RDP_SHARE_CONTROL_HEADER_LENGTH	6
+#define RDP_SHARE_DATA_HEADER_LENGTH	18
 #define RDP_PACKET_HEADER_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_LENGTH)
 
 #define PDU_TYPE_DEMAND_ACTIVE		0x1
@@ -63,6 +64,42 @@ typedef struct rdp_rdp rdpRdp;
 #define PDU_TYPE_DEACTIVATE_ALL		0x6
 #define PDU_TYPE_DATA			0x7
 #define PDU_TYPE_SERVER_REDIRECTION	0xA
+
+/* Data PDU Types */
+#define DATA_PDU_TYPE_UPDATE					0x02
+#define DATA_PDU_TYPE_CONTROL					0x14
+#define DATA_PDU_TYPE_POINTER					0x1B
+#define DATA_PDU_TYPE_INPUT					0x1C
+#define DATA_PDU_TYPE_SYNCHRONIZE				0x1F
+#define DATA_PDU_TYPE_REFRESH_RECT				0x21
+#define DATA_PDU_TYPE_PLAY_SOUND				0x22
+#define DATA_PDU_TYPE_SUPPRESS_OUTPUT				0x23
+#define DATA_PDU_TYPE_SHUTDOWN_REQUEST				0x24
+#define DATA_PDU_TYPE_SHUTDOWN_DENIED				0x25
+#define DATA_PDU_TYPE_SAVE_SESSION_INFO				0x26
+#define DATA_PDU_TYPE_FONT_LIST					0x27
+#define DATA_PDU_TYPE_FONT_MAP					0x28
+#define DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS			0x29
+#define DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST		0x2B
+#define DATA_PDU_TYPE_BITMAP_CACHE_ERROR			0x2C
+#define DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS			0x2D
+#define DATA_PDU_TYPE_OFFSCREEN_CACHE_ERROR			0x2E
+#define DATA_PDU_TYPE_SET_ERROR_INFO				0x2F
+#define DATA_PDU_TYPE_DRAW_NINEGRID_ERROR			0x30
+#define DATA_PDU_TYPE_DRAW_GDIPLUS_ERROR			0x31
+#define DATA_PDU_TYPE_ARC_STATUS				0x32
+#define DATA_PDU_TYPE_STATUS_INFO				0x36
+#define DATA_PDU_TYPE_MONITOR_LAYOUT				0x37
+
+/* Compression Types */
+#define PACKET_COMPRESSED		0x20
+#define PACKET_AT_FRONT			0x40
+#define PACKET_FLUSHED			0x80
+#define PACKET_COMPR_TYPE_8K		0x00
+#define PACKET_COMPR_TYPE_64K		0x01
+#define PACKET_COMPR_TYPE_RDP6		0x02
+#define PACKET_COMPR_TYPE_RDP61		0x03
+#define CompressionTypeMask		0x0F
 
 struct rdp_rdp
 {
@@ -83,6 +120,9 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
 void rdp_write_header(rdpRdp* rdp, STREAM* s, int length);
+
+STREAM* rdp_data_pdu_init(rdpRdp* rdp);
+void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 
 void rdp_send(rdpRdp* rdp, STREAM* s);
 void rdp_recv(rdpRdp* rdp);
