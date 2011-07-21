@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include "capabilities.h"
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/settings.h>
@@ -52,6 +53,30 @@ rdpSettings* settings_new()
 
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+
+		settings->order_support[NEG_DSTBLT_INDEX] = True;
+		settings->order_support[NEG_PATBLT_INDEX] = True;
+		settings->order_support[NEG_SCRBLT_INDEX] = True;
+		settings->order_support[NEG_MEMBLT_INDEX] = True;
+		settings->order_support[NEG_MEM3BLT_INDEX] = True;
+		settings->order_support[NEG_DRAWNINEGRID_INDEX] = True;
+		settings->order_support[NEG_LINETO_INDEX] = True;
+		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = True;
+		settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
+		settings->order_support[NEG_MULTIDSTBLT_INDEX] = True;
+		settings->order_support[NEG_MULTIPATBLT_INDEX] = True;
+		settings->order_support[NEG_MULTISCRBLT_INDEX] = True;
+		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
+		settings->order_support[NEG_FAST_INDEX_INDEX] = True;
+		settings->order_support[NEG_POLYGON_SC_INDEX] = True;
+		settings->order_support[NEG_POLYGON_CB_INDEX] = True;
+		settings->order_support[NEG_POLYLINE_INDEX] = True;
+		settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
+		settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
+		settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
+		settings->order_support[NEG_INDEX_INDEX] = True;
+
+		settings->color_pointer = True;
 
 		settings->client_dir = xmalloc(strlen(client_dll));
 		strcpy(settings->client_dir, client_dll);

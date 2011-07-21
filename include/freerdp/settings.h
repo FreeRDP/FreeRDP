@@ -168,7 +168,34 @@ struct rdp_settings
 
 	uint32 share_id;
 
-	int remote_app;
+	boolean refresh_rect;
+	boolean suppress_output;
+	boolean desktop_resize;
+
+	uint8 order_support[32];
+
+	boolean color_pointer;
+	boolean sound_beeps;
+
+	boolean fast_path_input;
+
+	boolean offscreen_bitmap_cache;
+	uint16 offscreen_bitmap_cache_size;
+	uint16 offscreen_bitmap_cache_entries;
+
+	boolean persistent_bitmap_cache;
+
+	uint32 vc_chunk_size;
+
+	boolean draw_nine_grid;
+	uint16 draw_nine_grid_cache_size;
+	uint16 draw_nine_grid_cache_entries;
+
+	boolean draw_gdi_plus;
+	boolean draw_gdi_plus_cache;
+
+	boolean remote_app;
+
 	char app_name[64];
 	int bitmap_cache;
 	int bitmap_cache_persist_enable;

@@ -55,63 +55,122 @@
 
 #define CAPSET_HEADER_LENGTH			4
 
+/* General Capability Flags */
+#define FASTPATH_OUTPUT_SUPPORTED		0x0001
+#define LONG_CREDENTIALS_SUPPORTED		0x0004
+#define AUTORECONNECT_SUPPORTED			0x0008
+#define ENC_SALTED_CHECKSUM			0x0010
+
+/* Drawing Flags */
+#define DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY	0x02
+#define DRAW_ALLOW_COLOR_SUBSAMPLING		0x04
+#define DRAW_ALLOW_SKIP_ALPHA			0x08
+
+/* Order Flags */
+#define NEGOTIATE_ORDER_SUPPORT			0x0002
+#define ZERO_BOUNDS_DELTA_SUPPORT		0x0008
+#define COLOR_INDEX_SUPPORT			0x0020
+#define SOLID_PATTERN_BRUSH_ONLY		0x0040
+#define ORDER_FLAGS_EXTRA_SUPPORT		0x0080
+
+/* Extended Order Flags */
+#define CACHE_BITMAP_REV3_SUPPORT		0x0002
+#define ALTSEC_FRAME_MARKER_SUPPORT		0x0004
+
+/* Order Support */
+#define NEG_DSTBLT_INDEX			0x00
+#define NEG_PATBLT_INDEX			0x01
+#define NEG_SCRBLT_INDEX			0x02
+#define NEG_MEMBLT_INDEX			0x03
+#define NEG_MEM3BLT_INDEX			0x04
+#define NEG_DRAWNINEGRID_INDEX			0x07
+#define NEG_LINETO_INDEX			0x08
+#define NEG_MULTI_DRAWNINEGRID_INDEX		0x09
+#define NEG_SAVEBITMAP_INDEX			0x0B
+#define NEG_MULTIDSTBLT_INDEX			0x0F
+#define NEG_MULTIPATBLT_INDEX			0x10
+#define NEG_MULTISCRBLT_INDEX			0x11
+#define NEG_MULTIOPAQUERECT_INDEX		0x12
+#define NEG_FAST_INDEX_INDEX			0x13
+#define NEG_POLYGON_SC_INDEX			0x14
+#define NEG_POLYGON_CB_INDEX			0x15
+#define NEG_POLYLINE_INDEX			0x16
+#define NEG_FAST_GLYPH_INDEX			0x18
+#define NEG_ELLIPSE_SC_INDEX			0x19
+#define NEG_ELLIPSE_CB_INDEX			0x1A
+#define NEG_INDEX_INDEX				0x1B
+
+/* Sound Flags */
+#define SOUND_BEEPS_FLAG			0x0001
+
+/* Input Flags */
+#define INPUT_FLAG_SCANCODES			0x0001
+#define INPUT_FLAG_MOUSEX			0x0004
+#define INPUT_FLAG_FASTPATH_INPUT		0x0008
+#define INPUT_FLAG_UNICODE			0x0010
+#define INPUT_FLAG_FASTPATH_INPUT2		0x0020
+
+/* Font Support Flags */
+#define FONTSUPPORT_FONTLIST			0x0001
+
+/* Brush Support Level */
+#define BRUSH_DEFAULT				0x00000000
+#define BRUSH_COLOR_8x8				0x00000001
+#define BRUSH_COLOR_FULL			0x00000002
+
+/* Glyph Support Level */
+#define GLYPH_SUPPORT_NONE			0x0000
+#define GLYPH_SUPPORT_PARTIAL			0x0001
+#define GLYPH_SUPPORT_FULL			0x0002
+#define GLYPH_SUPPORT_ENCODE			0x0003
+
+/* Bitmap Cache Version */
+#define BITMAP_CACHE_V2				0x01
+
+/* Bitmap Cache V2 Flags */
+#define PERSISTENT_KEYS_EXPECTED_FLAG		0x0001
+#define ALLOW_CACHE_WAITING_LIST_FLAG		0x0002
+
+/* Virtual Channel Flags */
+#define VCCAPS_NO_COMPR				0x00000000
+#define VCCAPS_COMPR_SC				0x00000001
+#define VCCAPS_COMPR_CS_8K			0x00000002
+
+/* Draw Nine Grid Support Level */
+#define DRAW_NINEGRID_NO_SUPPORT		0x00000000
+#define DRAW_NINEGRID_SUPPORTED			0x00000001
+#define DRAW_NINEGRID_SUPPORTED_V2		0x00000002
+
+/* Draw GDI+ Support Level */
+#define DRAW_GDIPLUS_DEFAULT			0x00000000
+#define DRAW_GDIPLUS_SUPPORTED			0x00000001
+
+/* Draw GDI+ Cache Level */
+#define DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT	0x00000000
+#define DRAW_GDIPLUS_CACHE_LEVEL_ONE		0x00000001
+
+/* RAIL Support Level */
+#define RAIL_LEVEL_SUPPORTED			0x00000001
+#define RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED	0x00000002
+
+/* Window Support Level */
+#define WINDOW_LEVEL_NOT_SUPPORTED		0x00000000
+#define WINDOW_LEVEL_SUPPORTED			0x00000001
+#define WINDOW_LEVEL_SUPPORTED_EX		0x00000002
+
+/* Desktop Composition Support Level */
+#define COMPDESK_NOT_SUPPORTED			0x0000
+#define COMPDESK_SUPPORTED			0x0001
+
+/* Large Pointer Support Flags */
+#define LARGE_POINTER_FLAG_96x96		0x00000001
+
+/* Surface Commands Flags */
+#define SURFCMDS_SET_SURFACE_BITS		0x00000002
+#define SURFCMDS_FRAME_MARKER			0x00000010
+#define SURFCMDS_STREAM_SURFACE_BITS		0x00000040
+
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
 void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings);
-
-void rdp_read_general_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_bitmap_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_order_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_control_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_window_activation_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_pointer_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_share_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_color_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_sound_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_input_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_font_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_brush_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_glyph_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_bitmap_cache_host_support_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_virtual_channel_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_draw_gdi_plus_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_remote_programs_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_window_list_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_desktop_composition_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_multifragment_update_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_large_pointer_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_surface_commands_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_read_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings);
-
-void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_control_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_window_activation_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_share_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_color_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_sound_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_input_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_font_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_brush_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_bitmap_cache_host_support_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_draw_gdi_plus_cache_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_remote_programs_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_window_list_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_desktop_composition_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_multifragment_update_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_large_pointer_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_surface_commands_capability_set(STREAM* s, rdpSettings* settings);
-void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings);
 
 #endif /* __CAPABILITIES_H */
