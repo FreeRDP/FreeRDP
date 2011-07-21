@@ -55,6 +55,7 @@ typedef struct rdp_rdp rdpRdp;
 #define SEC_PKT_MASK			(SEC_PKT_CS_MASK | SEC_PKT_SC_MASK)
 
 #define RDP_SECURITY_HEADER_LENGTH	4
+#define RDP_SHARE_CONTROL_HEADER_LENGTH	6
 #define RDP_PACKET_HEADER_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_LENGTH)
 
 #define PDU_TYPE_DEMAND_ACTIVE		0x1
@@ -76,6 +77,9 @@ struct rdp_rdp
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
 void rdp_write_security_header(STREAM* s, uint16 flags);
+
+void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
+void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
 void rdp_write_header(rdpRdp* rdp, STREAM* s, int length);

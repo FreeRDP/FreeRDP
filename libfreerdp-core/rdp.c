@@ -56,6 +56,14 @@ void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint
 	*type &= 0x0F; /* type is in the 4 least significant bits */
 }
 
+void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)
+{
+	/* Share Control Header */
+	stream_write_uint16(s, length); /* totalLength */
+	stream_write_uint16(s, type); /* pduType */
+	stream_write_uint16(s, channel_id); /* pduSource */
+}
+
 /**
  * Initialize an RDP packet stream.\n
  * @param rdp rdp module
@@ -65,7 +73,7 @@ void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint
 STREAM* rdp_send_stream_init(rdpRdp* rdp)
 {
 	STREAM* s;
-	s = transport_send_stream_init(rdp->transport, 1024);
+	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
 	return s;
 }
@@ -162,6 +170,7 @@ void rdp_recv(rdpRdp* rdp)
 		{
 			case PDU_TYPE_DEMAND_ACTIVE:
 				rdp_read_demand_active(s, rdp->settings);
+				rdp_send_confirm_active(rdp);
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:

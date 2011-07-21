@@ -20,6 +20,8 @@
 #ifndef __CAPABILITIES_H
 #define __CAPABILITIES_H
 
+#include "rdp.h"
+
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
@@ -179,6 +181,7 @@
 
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
+void rdp_send_confirm_active(rdpRdp* rdp);
 
 void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings);
 
