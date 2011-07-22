@@ -101,6 +101,15 @@ STREAM* rdp_send_stream_init(rdpRdp* rdp)
 	return s;
 }
 
+STREAM* rdp_pdu_init(rdpRdp* rdp)
+{
+	STREAM* s;
+	s = transport_send_stream_init(rdp->transport, 2048);
+	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
+	return s;
+}
+
 STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 {
 	STREAM* s;
@@ -140,6 +149,20 @@ void rdp_send(rdpRdp* rdp, STREAM* s)
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length);
+
+	stream_set_pos(s, length);
+	transport_write(rdp->transport, s);
+}
+
+void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
+{
+	int length;
+
+	length = stream_get_length(s);
+	stream_set_pos(s, 0);
+
+	rdp_write_header(rdp, s, length);
+	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);

@@ -1540,7 +1540,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 
 	stream_write_uint32(s, settings->share_id); /* shareId (4 bytes) */
 	stream_write_uint16(s, 0x03EA); /* originatorId (2 bytes) */
-	stream_write_uint16(s, sizeof(SOURCE_DESCRIPTOR));/* lengthSourceDescriptor (2 bytes) */
+	stream_write_uint16(s, lengthSourceDescriptor);/* lengthSourceDescriptor (2 bytes) */
 
 	stream_get_mark(s, lm);
 	stream_seek_uint16(s); /* lengthCombinedCapabilities (2 bytes) */
@@ -1581,26 +1581,12 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 void rdp_send_confirm_active(rdpRdp* rdp)
 {
 	STREAM* s;
-	uint8 *bm, *em;
-	uint16 totalLength;
 
-	s = rdp_send_stream_init(rdp);
-	stream_get_mark(s, bm);
-	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
+	s = rdp_pdu_init(rdp);
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	stream_get_mark(s, em);
-	totalLength = (em - bm);
-
-	stream_set_mark(s, bm); /* go back to share control header */
-	rdp_write_share_control_header(s, totalLength, PDU_TYPE_CONFIRM_ACTIVE,
-			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
-
-	stream_set_mark(s, em);
-	rdp_write_header(rdp, s, totalLength);
-
-	transport_write(rdp->transport, s);
+	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
 }
 
 void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings)
