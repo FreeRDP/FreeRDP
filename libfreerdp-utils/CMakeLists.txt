@@ -18,6 +18,7 @@
 # limitations under the License.
 
 set(FREERDP_UTILS_SRCS
+	args.c
 	blob.c
 	event.c
 	hexdump.c
