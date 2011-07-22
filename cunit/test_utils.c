@@ -25,6 +25,7 @@
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/args.h>
 
 #include "test_utils.h"
 
@@ -46,6 +47,7 @@ int add_utils_suite(void)
 	add_test_function(semaphore);
 	add_test_function(load_plugin);
 	add_test_function(wait_obj);
+	add_test_function(args);
 
 	return 0;
 }
@@ -99,4 +101,56 @@ void test_wait_obj(void)
 	wait_obj_select(&wo, 1, 1000);
 
 	wait_obj_free(wo);
+}
+
+static int process_plugin_args(rdpSettings* settings, const char* name,
+	FRDP_PLUGIN_DATA* plugin_data, void* user_data)
+{
+	/*printf("load plugin: %s\n", name);*/
+	return 1;
+}
+
+static int process_ui_args(rdpSettings* settings, const char* opt,
+	const char* val, void* user_data)
+{
+	/*printf("ui arg: %s %s\n", opt, val);*/
+	return 1;
+}
+
+void test_args(void)
+{
+	char* argv_c[] =
+	{
+		"-a", "8", "-u", "testuser", "-d", "testdomain", "-g", "640x480", "address1:3389",
+		"-a", "16", "-u", "testuser", "-d", "testdomain", "-g", "1280x960", "address2:3390"
+	};
+	char** argv = argv_c;
+	int argc = sizeof(argv_c) / sizeof(char*);
+	int i;
+	int c;
+	rdpSettings* settings;
+
+	i = 0;
+	while (argc > 0)
+	{
+		settings = settings_new();
+
+		i++;
+		c = freerdp_parse_args(settings, argc, argv, process_plugin_args, NULL, process_ui_args, NULL);
+		CU_ASSERT(c > 0);
+		if (c == 0)
+		{
+			settings_free(settings);
+			break;
+		}
+		CU_ASSERT(settings->color_depth == i * 8);
+		CU_ASSERT(settings->width == i * 640);
+		CU_ASSERT(settings->height == i * 480);
+		CU_ASSERT(settings->port == i + 3388);
+
+		settings_free(settings);
+		argc -= c;
+		argv += c;
+	}
+	CU_ASSERT(i == 2);
 }

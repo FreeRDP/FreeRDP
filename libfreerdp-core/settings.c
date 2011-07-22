@@ -17,8 +17,13 @@
  * limitations under the License.
  */
 
+#include "config.h"
 #include "capabilities.h"
 #include <freerdp/utils/memory.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <freerdp/settings.h>
 
@@ -90,8 +95,7 @@ rdpSettings* settings_new()
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
 
-		settings->client_dir = xmalloc(strlen(client_dll));
-		strcpy(settings->client_dir, client_dll);
+		settings->client_dir = (uint8*)xstrdup(client_dll);
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
@@ -105,6 +109,13 @@ void settings_free(rdpSettings* settings)
 	if (settings != NULL)
 	{
 		freerdp_uniconv_free(settings->uniconv);
+		xfree(settings->hostname);
+		xfree(settings->username);
+		xfree(settings->password);
+		xfree(settings->domain);
+		xfree(settings->shell);
+		xfree(settings->directory);
+		xfree(settings->client_dir);
 		xfree(settings);
 	}
 }
