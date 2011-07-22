@@ -19,6 +19,44 @@
 
 #include "rdp.h"
 
+uint8 DATA_PDU_TYPE_STRINGS[][32] =
+{
+		"", "", /* 0x00 - 0x01 */
+		"Update", /* 0x02 */
+		"", "", "", "", "", "", "", "", /* 0x03 - 0x0A */
+		"", "", "", "", "", "", "", "", "", /* 0x0B - 0x13 */
+		"Control", /* 0x14 */
+		"", "", "", "", "", "", /* 0x15 - 0x1A */
+		"Pointer", /* 0x1B */
+		"Input", /* 0x1C */
+		"", "", /* 0x1D - 0x1E */
+		"Synchronize", /* 0x1F */
+		"", /* 0x20 */
+		"Refresh Rect", /* 0x21 */
+		"Play Sound", /* 0x22 */
+		"Suppress Output", /* 0x23 */
+		"Shutdown Request", /* 0x24 */
+		"Shutdown Denied", /* 0x25 */
+		"Save Session Info", /* 0x26 */
+		"Font List", /* 0x27 */
+		"Font Map", /* 0x28 */
+		"Set Keyboard Indicators", /* 0x29 */
+		"", /* 0x2A */
+		"Bitmap Cache Persistent List", /* 0x2B */
+		"Bitmap Cache Error", /* 0x2C */
+		"Set Keyboard IME Status", /* 0x2D */
+		"Offscreen Cache Error", /* 0x2E */
+		"Set Error Info", /* 0x2F */
+		"Draw Nine Grid Error", /* 0x30 */
+		"Draw GDI+ Error", /* 0x31 */
+		"ARC Status", /* 0x32 */
+		"", "", "", /* 0x33 - 0x35 */
+		"Status Info", /* 0x36 */
+		"Monitor Layout" /* 0x37 */
+		"", "", "", /* 0x38 - 0x40 */
+		"", "", "", "", "", "" /* 0x41 - 0x46 */
+};
+
 /**
  * Read RDP Security Header.\n
  * @msdn{cc240579}
@@ -201,7 +239,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	rdp_read_share_data_header(s, &length, &type, &share_id);
 
-	printf("data pdu type:%d length:%d\n", type, length);
+	printf("%s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	switch (type)
 	{
