@@ -97,16 +97,16 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_send_client_synchronize_pdu(rdp);
 	rdp_send_client_cooperate_pdu(rdp);
+	rdp_recv(rdp); /* synchronize */
+	rdp_recv(rdp); /* cooperate */
 
-	rdp_recv(rdp);
-	rdp_recv(rdp);
-	rdp_recv(rdp);
+	rdp_send_client_request_control_pdu(rdp);
+	rdp_recv(rdp); /* request control */
 
-	rdp_recv(rdp);
-
-	//rdp_send_client_request_control_pdu(rdp);
 	//rdp_send_client_persistent_key_list_pdu(rdp);
 	//rdp_send_client_font_list_pdu(rdp);
+
+	sleep(1);
 
 	return True;
 }
