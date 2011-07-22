@@ -1,6 +1,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define FREERDP_VERSION_FULL "${FREERDP_VERSION_FULL}"
+
 /* Include files */
 #cmakedefine HAVE_SYS_PARAM_H
 #cmakedefine HAVE_SYS_SOCKET_H
