@@ -180,6 +180,7 @@
 #define SURFCMDS_STREAM_SURFACE_BITS		0x00000040
 
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
+void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
 void rdp_send_confirm_active(rdpRdp* rdp);
 

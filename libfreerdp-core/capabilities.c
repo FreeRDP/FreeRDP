@@ -1529,6 +1529,33 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 	}
 }
 
+void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
+{
+	rdp_read_demand_active(s, settings);
+	rdp_send_confirm_active(rdp);
+
+	rdp_recv(rdp); /* synchronize */
+	rdp_send_client_synchronize_pdu(rdp);
+
+	rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE);
+	rdp_recv(rdp); /* cooperate */
+
+	rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL);
+	rdp_recv(rdp); /* request control */
+
+	if (rdp->settings->rdp_version >= 5)
+	{
+		//rdp_send_client_persistent_key_list_pdu(rdp);
+		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST);
+		rdp_recv(rdp); /* font map */
+	}
+	else
+	{
+		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST);
+		rdp_send_client_font_list_pdu(rdp, FONTLIST_LAST);
+	}
+}
+
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 {
 	uint8 *bm, *em, *lm;
@@ -1550,10 +1577,8 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
-	/* capabilitySets */
-
-	/* Mandatory Capability Sets */
-	numberCapabilities = 11;
+	/* Capability Sets */
+	numberCapabilities = 15;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
@@ -1565,6 +1590,10 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	rdp_write_virtual_channel_capability_set(s, settings);
 	rdp_write_sound_capability_set(s, settings);
+	rdp_write_share_capability_set(s, settings);
+	rdp_write_control_capability_set(s, settings);
+	rdp_write_color_cache_capability_set(s, settings);
+	rdp_write_window_activation_capability_set(s, settings);
 
 	stream_get_mark(s, em);
 

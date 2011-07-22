@@ -218,6 +218,8 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
 
+	printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
 }
@@ -239,12 +241,81 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	rdp_read_share_data_header(s, &length, &type, &share_id);
 
-	printf("%s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+	printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	switch (type)
 	{
+		case DATA_PDU_TYPE_UPDATE:
+			break;
+
+		case DATA_PDU_TYPE_CONTROL:
+			break;
+
+		case DATA_PDU_TYPE_POINTER:
+			break;
+
+		case DATA_PDU_TYPE_INPUT:
+			break;
+
+		case DATA_PDU_TYPE_SYNCHRONIZE:
+			break;
+
+		case DATA_PDU_TYPE_REFRESH_RECT:
+			break;
+
+		case DATA_PDU_TYPE_PLAY_SOUND:
+			break;
+
+		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:
+			break;
+
+		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
+			break;
+
+		case DATA_PDU_TYPE_SHUTDOWN_DENIED:
+			break;
+
+		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
+			break;
+
+		case DATA_PDU_TYPE_FONT_LIST:
+			break;
+
+		case DATA_PDU_TYPE_FONT_MAP:
+			break;
+
+		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
+			break;
+
+		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
+			break;
+
+		case DATA_PDU_TYPE_BITMAP_CACHE_ERROR:
+			break;
+
+		case DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS:
+			break;
+
+		case DATA_PDU_TYPE_OFFSCREEN_CACHE_ERROR:
+			break;
+
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
 			rdp_read_set_error_info_data_pdu(s);
+			break;
+
+		case DATA_PDU_TYPE_DRAW_NINEGRID_ERROR:
+			break;
+
+		case DATA_PDU_TYPE_DRAW_GDIPLUS_ERROR:
+			break;
+
+		case DATA_PDU_TYPE_ARC_STATUS:
+			break;
+
+		case DATA_PDU_TYPE_STATUS_INFO:
+			break;
+
+		case DATA_PDU_TYPE_MONITOR_LAYOUT:
 			break;
 
 		default:
@@ -312,8 +383,7 @@ void rdp_recv(rdpRdp* rdp)
 				break;
 
 			case PDU_TYPE_DEMAND_ACTIVE:
-				rdp_read_demand_active(s, rdp->settings);
-				rdp_send_confirm_active(rdp);
+				rdp_recv_demand_active(rdp, s, rdp->settings);
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:

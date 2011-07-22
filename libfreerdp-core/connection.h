@@ -46,9 +46,8 @@
 boolean rdp_client_connect(rdpRdp* rdp);
 
 void rdp_send_client_synchronize_pdu(rdpRdp* rdp);
-void rdp_send_client_cooperate_pdu(rdpRdp* rdp);
-void rdp_send_client_request_control_pdu(rdpRdp* rdp);
+void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action);
 void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
-void rdp_send_client_font_list_pdu(rdpRdp* rdp);
+void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags);
 
 #endif /* __CONNECTION_H */
