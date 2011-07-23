@@ -138,8 +138,7 @@ void rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 
 	rdp_write_client_synchronize_pdu(s, rdp->settings);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE,
-			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
 }
 
 void rdp_read_server_control_pdu(STREAM* s, uint16* action)
@@ -170,7 +169,16 @@ void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 	}
 	else if (action == CTRLACTION_GRANTED_CONTROL)
 	{
-		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST);
+		if (rdp->settings->rdp_version >= 5)
+		{
+			//rdp_send_client_persistent_key_list_pdu(rdp);
+			rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST);
+		}
+		else
+		{
+			rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST);
+			rdp_send_client_font_list_pdu(rdp, FONTLIST_LAST);
+		}
 	}
 }
 
@@ -184,8 +192,7 @@ void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action)
 
 	rdp_write_client_control_pdu(s, action);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL,
-			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
 }
 
 void rdp_write_persistent_list_entry(STREAM* s, uint32 key1, uint32 key2)
@@ -221,8 +228,7 @@ void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 
 	rdp_write_client_persistent_key_list_pdu(s, rdp->settings);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST,
-			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST, rdp->mcs->user_id);
 }
 
 void rdp_write_client_font_list_pdu(STREAM* s, uint16 flags)
@@ -241,6 +247,10 @@ void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags)
 
 	rdp_write_client_font_list_pdu(s, flags);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST,
-			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST, rdp->mcs->user_id);
+}
+
+void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
+{
+	rdp->activated = True;
 }

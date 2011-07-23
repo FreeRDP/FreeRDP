@@ -1534,29 +1534,6 @@ void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 	rdp_read_demand_active(s, settings);
 	rdp_send_confirm_active(rdp);
 	rdp_send_client_synchronize_pdu(rdp);
-
-	return;
-	rdp_recv(rdp); /* synchronize */
-
-	rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE);
-	rdp_recv(rdp); /* cooperate */
-
-	rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL);
-	rdp_recv(rdp); /* request control */
-
-	if (rdp->settings->rdp_version >= 5)
-	{
-		//rdp_send_client_persistent_key_list_pdu(rdp);
-		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST);
-		rdp_recv(rdp); /* font map */
-	}
-	else
-	{
-		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST);
-		rdp_send_client_font_list_pdu(rdp, FONTLIST_LAST);
-	}
-
-	rdp->activated = True;
 }
 
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)

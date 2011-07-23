@@ -106,6 +106,9 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 	int status;
 	int sent = 0;
 
+	printf("length:%d\n", length);
+	freerdp_hexdump(data, length);
+
 	while (sent < length)
 	{
 		status = SSL_write(tls->ssl, data, length);

@@ -96,6 +96,8 @@ void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint
 
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)
 {
+	length -= RDP_PACKET_HEADER_LENGTH;
+
 	/* Share Control Header */
 	stream_write_uint16(s, length); /* totalLength */
 	stream_write_uint16(s, type | 0x10); /* pduType */
@@ -116,6 +118,10 @@ void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* 
 
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id)
 {
+	length -= RDP_PACKET_HEADER_LENGTH;
+	length -= RDP_SHARE_CONTROL_HEADER_LENGTH;
+	length -= RDP_SHARE_DATA_HEADER_LENGTH;
+
 	/* Share Data Header */
 	stream_write_uint32(s, share_id); /* shareId (4 bytes) */
 	stream_write_uint8(s, 0); /* pad1 (1 byte) */
@@ -154,6 +160,7 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	stream_seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
 	return s;
 }
@@ -171,7 +178,9 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, int length)
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
-	per_write_length(s, length - RDP_PACKET_HEADER_LENGTH); /* userData (OCTET_STRING) */
+
+	length = (length - RDP_PACKET_HEADER_LENGTH) | 0x8000;
+	stream_write_uint16_be(s, length); /* userData (OCTET_STRING) */
 }
 
 /**
@@ -284,6 +293,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
+			rdp_recv_server_font_map_pdu(rdp, s, rdp->settings);
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
@@ -369,7 +379,7 @@ void rdp_recv(rdpRdp* rdp)
 					break;
 
 				default:
-					printf("incorrect security flags: 0x%04X\n", sec_flags);
+					//printf("incorrect security flags: 0x%04X\n", sec_flags);
 					break;
 			}
 		}

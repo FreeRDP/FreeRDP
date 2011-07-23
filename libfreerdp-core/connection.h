@@ -53,5 +53,6 @@ void rdp_read_server_control_pdu(STREAM* s, uint16* action);
 void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action);
 void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
 void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags);
+void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 
 #endif /* __CONNECTION_H */
