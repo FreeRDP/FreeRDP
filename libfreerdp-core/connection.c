@@ -49,6 +49,15 @@
  *
  */
 
+uint8 CTRLACTION_STRINGS[][32] =
+{
+		"",
+		"CTRLACTION_REQUEST_CONTROL",
+		"CTRLACTION_GRANTED_CONTROL",
+		"CTRLACTION_DETACH",
+		"CTRLACTION_COOPERATE"
+};
+
 /**
  * Establish RDP Connection.\n
  * @msdn{cc240452}
@@ -91,9 +100,21 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		return False;
 	}
 
-	rdp->connected = True;
+	rdp->licensed = True;
 
-	rdp_recv(rdp);
+	rdp_client_activate(rdp);
+
+	return True;
+}
+
+boolean rdp_client_activate(rdpRdp* rdp)
+{
+	while (rdp->activated != True)
+	{
+		rdp_recv(rdp);
+	}
+
+	printf("client is activated\n");
 
 	return True;
 }
@@ -102,6 +123,11 @@ void rdp_write_client_synchronize_pdu(STREAM* s, rdpSettings* settings)
 {
 	stream_write_uint16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
 	stream_write_uint16(s, settings->pdu_source); /* targetUser (2 bytes) */
+}
+
+void rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
+{
+	rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE);
 }
 
 void rdp_send_client_synchronize_pdu(rdpRdp* rdp)
@@ -116,6 +142,13 @@ void rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 			MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
 }
 
+void rdp_read_server_control_pdu(STREAM* s, uint16* action)
+{
+	stream_read_uint16(s, *action); /* action (2 bytes) */
+	stream_seek_uint16(s); /* grantId (2 bytes) */
+	stream_seek_uint32(s); /* controlId (4 bytes) */
+}
+
 void rdp_write_client_control_pdu(STREAM* s, uint16 action)
 {
 	stream_write_uint16(s, action); /* action (2 bytes) */
@@ -123,11 +156,31 @@ void rdp_write_client_control_pdu(STREAM* s, uint16 action)
 	stream_write_uint32(s, 0); /* controlId (4 bytes) */
 }
 
+void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
+{
+	uint16 action;
+
+	rdp_read_server_control_pdu(s, &action);
+
+	printf("Server Control Action: %s\n", CTRLACTION_STRINGS[action]);
+
+	if (action == CTRLACTION_COOPERATE)
+	{
+		rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL);
+	}
+	else if (action == CTRLACTION_GRANTED_CONTROL)
+	{
+		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST);
+	}
+}
+
 void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action)
 {
 	STREAM* s;
 
 	s = rdp_data_pdu_init(rdp);
+
+	printf("Client Control Action: %s\n", CTRLACTION_STRINGS[action]);
 
 	rdp_write_client_control_pdu(s, action);
 

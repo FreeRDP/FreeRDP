@@ -249,6 +249,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
+			rdp_recv_server_control_pdu(rdp, s, rdp->settings);
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
@@ -258,6 +259,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
+			rdp_recv_server_synchronize_pdu(rdp, s, rdp->settings);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -350,7 +352,7 @@ void rdp_recv(rdpRdp* rdp)
 	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
 	per_read_length(s, &pduLength); /* userData (OCTET_STRING) */
 
-	if (rdp->connected != True)
+	if (rdp->licensed != True)
 	{
 		rdp_read_security_header(s, &sec_flags);
 
@@ -414,7 +416,7 @@ rdpRdp* rdp_new()
 
 	if (rdp != NULL)
 	{
-		rdp->connected = False;
+		rdp->licensed = False;
 		rdp->settings = settings_new();
 		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);

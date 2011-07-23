@@ -1533,9 +1533,10 @@ void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	rdp_read_demand_active(s, settings);
 	rdp_send_confirm_active(rdp);
-
-	rdp_recv(rdp); /* synchronize */
 	rdp_send_client_synchronize_pdu(rdp);
+
+	return;
+	rdp_recv(rdp); /* synchronize */
 
 	rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE);
 	rdp_recv(rdp); /* cooperate */
@@ -1554,6 +1555,8 @@ void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 		rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST);
 		rdp_send_client_font_list_pdu(rdp, FONTLIST_LAST);
 	}
+
+	rdp->activated = True;
 }
 
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)

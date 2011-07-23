@@ -201,7 +201,8 @@ typedef struct rdp_rdp rdpRdp;
 
 struct rdp_rdp
 {
-	boolean connected;
+	boolean licensed;
+	boolean activated;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_license* license;
