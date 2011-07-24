@@ -60,6 +60,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 void tcp_get_mac_address(rdpTcp * tcp)
 {
+#ifdef LINUX
 	uint8* mac;
 	struct ifreq if_req;
 	struct if_nameindex* ni;
@@ -84,6 +85,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 	}
 
 	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
+#endif
 
 	/* printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */

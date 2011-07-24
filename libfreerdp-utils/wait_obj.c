@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
 
