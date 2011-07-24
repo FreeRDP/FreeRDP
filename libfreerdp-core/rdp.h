@@ -91,6 +91,11 @@ typedef struct rdp_rdp rdpRdp;
 #define DATA_PDU_TYPE_STATUS_INFO				0x36
 #define DATA_PDU_TYPE_MONITOR_LAYOUT				0x37
 
+#define UPDATE_TYPE_ORDERS		0x0000
+#define UPDATE_TYPE_BITMAP		0x0001
+#define UPDATE_TYPE_PALETTE		0x0002
+#define UPDATE_TYPE_SYNCHRONIZE		0x0003
+
 /* Compression Types */
 #define PACKET_COMPRESSED		0x20
 #define PACKET_AT_FRONT			0x40

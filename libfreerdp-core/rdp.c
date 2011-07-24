@@ -242,6 +242,32 @@ void rdp_read_set_error_info_data_pdu(STREAM* s)
 	printf("Error Info: 0x%08X\n", errorInfo);
 }
 
+void rdp_recv_update_data_pdu(rdpRdp* rdp, STREAM* s)
+{
+	uint16 updateType;
+
+	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
+
+	switch (updateType)
+	{
+		case UPDATE_TYPE_ORDERS:
+			printf("Orders Update\n");
+			break;
+
+		case UPDATE_TYPE_BITMAP:
+			printf("Bitmap Update\n");
+			break;
+
+		case UPDATE_TYPE_PALETTE:
+			printf("Palette Update\n");
+			break;
+
+		case UPDATE_TYPE_SYNCHRONIZE:
+			printf("Synchronize Update\n");
+			break;
+	}
+}
+
 void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint8 type;
@@ -255,6 +281,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_UPDATE:
+			rdp_recv_update_data_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:

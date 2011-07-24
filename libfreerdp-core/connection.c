@@ -104,6 +104,11 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_client_activate(rdp);
 
+	while(1)
+	{
+		rdp_recv(rdp);
+	}
+
 	return True;
 }
 
