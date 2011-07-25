@@ -263,15 +263,15 @@ void rdp_recv_order(rdpRdp* rdp, STREAM* s)
 	switch (controlFlags & ORDER_CLASS_MASK)
 	{
 		case ORDER_PRIMARY_CLASS:
-			rdp_recv_primary_order(rdp, s, controlFlags);
+			//rdp_recv_primary_order(rdp, s, controlFlags);
 			break;
 
 		case ORDER_SECONDARY_CLASS:
-			rdp_recv_secondary_order(rdp, s, controlFlags);
+			//rdp_recv_secondary_order(rdp, s, controlFlags);
 			break;
 
 		case ORDER_ALTSEC_CLASS:
-			rdp_recv_altsec_order(rdp, s, controlFlags);
+			//rdp_recv_altsec_order(rdp, s, controlFlags);
 			break;
 	}
 }

@@ -34,12 +34,19 @@ void rdp_recv_orders_update(rdpRdp* rdp, STREAM* s)
 	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
 	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
+
+	while (numberOrders > 0)
+	{
+		//rdp_recv_order(rdp, s);
+		numberOrders--;
+	}
 }
 
 void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
 	uint8* srcData;
 	uint16 dstSize;
+	boolean status;
 	uint16 bytesPerPixel;
 
 	stream_read_uint16(s, bitmap_data->left);
@@ -51,19 +58,40 @@ void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	stream_read_uint16(s, bitmap_data->bpp);
 	stream_read_uint16(s, bitmap_data->flags);
 	stream_read_uint16(s, bitmap_data->length);
+
+	bytesPerPixel = (bitmap_data->bpp + 7) / 8;
+
+	if (bitmap_data->flags & BITMAP_COMPRESSION)
+	{
+		uint16 cbCompMainBodySize;
+		uint16 cbUncompressedSize;
+
+		stream_seek_uint16(s); /* cbCompFirstRowSize (2 bytes) */
+		stream_read_uint16(s, cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+		stream_seek_uint16(s); /* cbScanWidth (2 bytes) */
+		stream_read_uint16(s, cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+
+		dstSize = cbUncompressedSize;
+		bitmap_data->length = cbCompMainBodySize;
+	}
+	else
+	{
+		dstSize = bitmap_data->width * bitmap_data->height * bytesPerPixel;
+	}
+
 	stream_get_mark(s, srcData);
 	stream_seek(s, bitmap_data->length);
 
-	bytesPerPixel = (bitmap_data->bpp + 7) / 8;
-	dstSize = bitmap_data->width * bitmap_data->height * bytesPerPixel;
+	bitmap_data->data = (uint8*) xmalloc(dstSize);
 
-	if (bitmap_data->data != NULL)
-		bitmap_data->data = (uint8*) xrealloc(bitmap_data->data, dstSize);
-	else
-		bitmap_data->data = (uint8*) xmalloc(dstSize);
+	//printf("bytesPerPixel:%d, width:%d, height:%d dstSize:%d flags:0x%04X\n",
+	//		bytesPerPixel, bitmap_data->width, bitmap_data->height, dstSize, bitmap_data->flags);
 
-	/*printf("width:%d height:%d bitsPerPixel:%d bytesPerPixel:%d dstSize:%d\n",
-			bitmap_data->width, bitmap_data->height, bitmap_data->bpp, bytesPerPixel, dstSize);*/
+	status = bitmap_decompress(srcData, bitmap_data->data, bitmap_data->width, bitmap_data->height,
+			bitmap_data->length, bitmap_data->bpp, bitmap_data->bpp);
+
+	if (status != True)
+		printf("bitmap decompression failed\n");
 }
 
 void rdp_recv_bitmap_update(rdpRdp* rdp, STREAM* s)
@@ -80,9 +108,6 @@ void rdp_recv_bitmap_update(rdpRdp* rdp, STREAM* s)
 		rdp_read_bitmap_data(s, &bitmap_data);
 		numberRectangles--;
 	}
-
-	if (bitmap_data.data != NULL)
-		xfree(bitmap_data.data);
 }
 
 void rdp_recv_palette_update(rdpRdp* rdp, STREAM* s)

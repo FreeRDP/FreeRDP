@@ -17,36 +17,14 @@
  * limitations under the License.
  */
 
+#include "bitmap.h"
+
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
    http://msdn.microsoft.com/en-us/library/cc240895%28v=prot.10%29.aspx
    pseudo-code
    http://msdn.microsoft.com/en-us/library/dd240593%28v=prot.10%29.aspx
 */
-
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
-
-#define REGULAR_BG_RUN 0x0
-#define MEGA_MEGA_BG_RUN 0xF0
-#define REGULAR_FG_RUN 0x1
-#define MEGA_MEGA_FG_RUN 0xF1
-#define LITE_SET_FG_FG_RUN 0xC
-#define MEGA_MEGA_SET_FG_RUN 0xF6
-#define LITE_DITHERED_RUN 0xE
-#define MEGA_MEGA_DITHERED_RUN 0xF8
-#define REGULAR_COLOR_RUN 0x3
-#define MEGA_MEGA_COLOR_RUN 0xF3
-#define REGULAR_FGBG_IMAGE 0x2
-#define MEGA_MEGA_FGBG_IMAGE 0xF2
-#define LITE_SET_FG_FGBG_IMAGE 0xD
-#define MEGA_MEGA_SET_FGBG_IMAGE 0xF7
-#define REGULAR_COLOR_IMAGE 0x4
-#define MEGA_MEGA_COLOR_IMAGE 0xF4
-#define SPECIAL_FGBG_1 0xF9
-#define SPECIAL_FGBG_2 0xFA
-#define SPECIAL_WHITE 0xFD
-#define SPECIAL_BLACK 0xFE
 
 /*
    Bitmasks
@@ -65,11 +43,6 @@ static uint8 g_MaskLiteRunLength = 0x0F;
 
 static uint8 g_MaskSpecialFgBg1 = 0x03;
 static uint8 g_MaskSpecialFgBg2 = 0x05;
-
-typedef uint32 PIXEL;
-
-#define BLACK_PIXEL 0
-#define WHITE_PIXEL 0xffffff
 
 /**
  * Reads the supplied order header and extracts the compression
@@ -360,30 +333,31 @@ static int process_plane(uint8* in, int width, int height, uint8* out, int size)
 /**
  * 4 byte bitmap decompress
  */
-static int bitmap_decompress4(uint8* output, int width, int height, uint8* input, int size)
+static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
 {
 	int code;
 	int bytes_pro;
 	int total_pro;
 
-	code = IN_UINT8_MV(input);
+	code = IN_UINT8_MV(srcData);
+
 	if (code != 0x10)
-	{
 		return False;
-	}
+
 	total_pro = 1;
-	bytes_pro = process_plane(input, width, height, output + 3, size - total_pro);
+	bytes_pro = process_plane(srcData, width, height, dstData + 3, size - total_pro);
 	total_pro += bytes_pro;
-	input += bytes_pro;
-	bytes_pro = process_plane(input, width, height, output + 2, size - total_pro);
+	srcData += bytes_pro;
+	bytes_pro = process_plane(srcData, width, height, dstData + 2, size - total_pro);
 	total_pro += bytes_pro;
-	input += bytes_pro;
-	bytes_pro = process_plane(input, width, height, output + 1, size - total_pro);
+	srcData += bytes_pro;
+	bytes_pro = process_plane(srcData, width, height, dstData + 1, size - total_pro);
 	total_pro += bytes_pro;
-	input += bytes_pro;
-	bytes_pro = process_plane(input, width, height, output + 0, size - total_pro);
+	srcData += bytes_pro;
+	bytes_pro = process_plane(srcData, width, height, dstData + 0, size - total_pro);
 	total_pro += bytes_pro;
-	return size == total_pro;
+
+	return (size == total_pro) ? True : False;
 }
 
 /**
@@ -406,49 +380,47 @@ static int bitmap_flip(uint8* src, uint8* dst, int delta, int height)
 /**
  * bitmap decompression routine
  */
-int bitmap_decompress(void* inst, uint8* output, int width, int height,
-	uint8* input, int size, int in_bpp, int out_bpp)
+boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
 	uint8* data;
 
-	if (in_bpp == 16 && out_bpp == 16)
+	if (srcBpp == 16 && dstBpp == 16)
 	{
-		data = (uint8*)xmalloc(width * height * 2);
-		RleDecompress16to16(input, size, data, width * 2, width, height);
-		bitmap_flip(data, output, width * 2, height);
+		data = (uint8*) xmalloc(width * height * 2);
+		RleDecompress16to16(srcData, size, data, width * 2, width, height);
+		bitmap_flip(data, dstData, width * 2, height);
 		xfree(data);
 	}
-	else if (in_bpp == 32 && out_bpp == 32)
+	else if (srcBpp == 32 && dstBpp == 32)
 	{
-		if (!bitmap_decompress4(output, width, height, input, size))
-		{
-			return 1;
-		}
+		if (bitmap_decompress4(srcData, dstData, width, height, size) != True)
+			return False;
 	}
-	else if (in_bpp == 15 && out_bpp == 15)
+	else if (srcBpp == 15 && dstBpp == 15)
 	{
-		data = (uint8*)xmalloc(width * height * 2);
-		RleDecompress16to16(input, size, data, width * 2, width, height);
-		bitmap_flip(data, output, width * 2, height);
+		data = (uint8*) xmalloc(width * height * 2);
+		RleDecompress16to16(srcData, size, data, width * 2, width, height);
+		bitmap_flip(data, dstData, width * 2, height);
 		xfree(data);
 	}
-	else if (in_bpp == 8 && out_bpp == 8)
+	else if (srcBpp == 8 && dstBpp == 8)
 	{
-		data = (uint8*)xmalloc(width * height);
-		RleDecompress8to8(input, size, data, width, width, height);
-		bitmap_flip(data, output, width, height);
+		data = (uint8*) xmalloc(width * height);
+		RleDecompress8to8(srcData, size, data, width, width, height);
+		bitmap_flip(data, dstData, width, height);
 		xfree(data);
 	}
-	else if (in_bpp == 24 && out_bpp == 24)
+	else if (srcBpp == 24 && dstBpp == 24)
 	{
-		data = (uint8*)xmalloc(width * height * 3);
-		RleDecompress24to24(input, size, data, width * 3, width, height);
-		bitmap_flip(data, output, width * 3, height);
+		data = (uint8*) xmalloc(width * height * 3);
+		RleDecompress24to24(srcData, size, data, width * 3, width, height);
+		bitmap_flip(data, dstData, width * 3, height);
 		xfree(data);
 	}
 	else
 	{
-		return 1;
+		return False;
 	}
-	return 0;
+
+	return True;
 }

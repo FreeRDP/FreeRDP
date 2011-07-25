@@ -22,6 +22,8 @@ add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 set(LIBFREERDP_CORE_SRCS
 	activation.c
 	activation.h
+	bitmap.c
+	bitmap.h
 	ber.c
 	ber.h
 	gcc.c
@@ -71,7 +73,6 @@ set(LIBFREERDP_CORE_SRCS
 	transport.h
 	update.c
 	update.h
-	bitmap.c
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
