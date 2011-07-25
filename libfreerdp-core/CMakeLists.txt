@@ -43,6 +43,8 @@ set(LIBFREERDP_CORE_SRCS
 	security.c
 	security.h
 	settings.c
+	orders.c
+	orders.h
 	capabilities.c
 	capabilities.h
 	certificate.c
@@ -65,6 +67,8 @@ set(LIBFREERDP_CORE_SRCS
 	tpkt.h
 	transport.c
 	transport.h
+	update.c
+	update.h
 	bitmap.c
 )
 
