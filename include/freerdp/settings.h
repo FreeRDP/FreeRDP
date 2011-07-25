@@ -86,6 +86,15 @@ typedef struct
 	uint8 securityVerifier[16];
 } ARC_CS_PRIVATE_PACKET;
 
+/* ARC_SC_PRIVATE_PACKET */
+typedef struct
+{
+	uint32 cbLen;
+	uint32 version;
+	uint32 logonId;
+	uint8 arcRandomBits[16];
+} ARC_SC_PRIVATE_PACKET;
+
 struct rdp_chan
 {
 	char name[8]; /* ui sets */
@@ -159,7 +168,10 @@ struct rdp_settings
 	uint8* ip_address;
 	uint8* client_dir;
 	TIME_ZONE_INFORMATION client_time_zone;
-	ARC_CS_PRIVATE_PACKET auto_reconnect_cookie;
+
+	boolean auto_reconnection;
+	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;
+	ARC_SC_PRIVATE_PACKET server_auto_reconnect_cookie;
 
 	boolean encryption;
 	boolean tls_security;
@@ -183,12 +195,12 @@ struct rdp_settings
 	boolean sound_beeps;
 
 	boolean fast_path_input;
-	boolean auto_reconnection;
 
 	boolean offscreen_bitmap_cache;
 	uint16 offscreen_bitmap_cache_size;
 	uint16 offscreen_bitmap_cache_entries;
 
+	boolean bitmap_cache;
 	boolean persistent_bitmap_cache;
 
 	uint32 vc_chunk_size;

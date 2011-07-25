@@ -54,12 +54,31 @@
 #define INFO_PACKET_COMPR_TYPE_RDP6	0x00000300
 #define INFO_PACKET_COMPR_TYPE_RDP61	0x00000400
 
+/* Logon Information Types */
+#define INFO_TYPE_LOGON			0x00000000
+#define INFO_TYPE_LOGON_LONG		0x00000001
+#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
+#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
+
+/* Extended Logon Info */
+#define LOGON_EX_AUTORECONNECTCOOKIE	0x00000001
+#define LOGON_EX_LOGONERRORS		0x00000002
+
+/* Logon Error Info */
+#define LOGON_FAILED_BAD_PASSWORD	0x00000000
+#define LOGON_FAILED_UPDATE_PASSWORD	0x00000001
+#define LOGON_FAILED_OTHER		0x00000002
+#define LOGON_WARNING			0x00000003
+
 void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings);
 void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
+void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
+void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
 void rdp_write_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
 void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings);
 void rdp_write_info_packet(STREAM* s, rdpSettings* settings);
 void rdp_send_client_info(rdpRdp* rdp);
+void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s);
 
 #endif /* __INFO_H */

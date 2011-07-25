@@ -19,6 +19,19 @@
 
 #include "info.h"
 
+#define INFO_TYPE_LOGON			0x00000000
+#define INFO_TYPE_LOGON_LONG		0x00000001
+#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
+#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
+
+uint8 INFO_TYPE_LOGON_STRINGS[][32] =
+{
+	"Logon Info V1",
+	"Logon Info V2",
+	"Logon Plain Notify",
+	"Logon Extended Info"
+};
+
 /**
  * Write SYSTEM_TIME structure (TS_SYSTEMTIME).\n
  * @msdn{cc240478}
@@ -137,16 +150,34 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 }
 
 /**
- * Write Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
+ * Read Server Auto Reconnect Cookie (ARC_SC_PRIVATE_PACKET).\n
+ * @msdn{cc240540}
+ * @param s stream
+ * @param settings settings
+ */
+
+void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+{
+	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
+	autoReconnectCookie = &settings->server_auto_reconnect_cookie;
+
+	stream_read_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
+	stream_read_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
+	stream_read_uint32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
+	stream_read(s, autoReconnectCookie->arcRandomBits, 16); /* arcRandomBits (16 bytes) */
+}
+
+/**
+ * Write Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
  * @msdn{cc240541}
  * @param s stream
  * @param settings settings
  */
 
-void rdp_write_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	autoReconnectCookie = &settings->auto_reconnect_cookie;
+	autoReconnectCookie = &settings->client_auto_reconnect_cookie;
 
 	stream_write_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	stream_write_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
@@ -179,7 +210,7 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 	clientDir = freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
 	cbClientDir = length;
 
-	cbAutoReconnectLen = settings->auto_reconnect_cookie.cbLen;
+	cbAutoReconnectLen = settings->client_auto_reconnect_cookie.cbLen;
 
 	stream_write_uint16(s, clientAddressFamily); /* clientAddressFamily */
 
@@ -203,7 +234,7 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
 
 	if (cbAutoReconnectLen > 0)
-		rdp_write_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
 
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
@@ -322,5 +353,101 @@ void rdp_send_client_info(rdpRdp* rdp)
 	rdp_write_info_packet(s, rdp->settings);
 
 	rdp_send(rdp, s);
+}
+
+void rdp_recv_logon_info_v1(rdpRdp* rdp, STREAM* s)
+{
+	uint32 cbDomain;
+	uint32 cbUserName;
+
+	stream_read_uint32(s, cbDomain); /* cbDomain (4 bytes) */
+	stream_seek(s, 52); /* domain (52 bytes) */
+	stream_read_uint32(s, cbUserName); /* cbUserName (4 bytes) */
+	stream_seek(s, 512); /* userName (512 bytes) */
+	stream_seek_uint32(s); /* sessionId (4 bytes) */
+}
+
+void rdp_recv_logon_info_v2(rdpRdp* rdp, STREAM* s)
+{
+	uint32 cbDomain;
+	uint32 cbUserName;
+
+	stream_seek_uint16(s); /* version (2 bytes) */
+	stream_seek_uint32(s); /* size (4 bytes) */
+	stream_read_uint32(s, cbDomain); /* cbDomain (4 bytes) */
+	stream_read_uint32(s, cbUserName); /* cbUserName (4 bytes) */
+	stream_seek(s, 558); /* pad */
+	stream_seek(s, cbDomain); /* domain */
+	stream_seek(s, cbUserName); /* userName */
+}
+
+void rdp_recv_logon_plain_notify(rdpRdp* rdp, STREAM* s)
+{
+	stream_seek(s, 576); /* pad */
+}
+
+void rdp_recv_logon_error_info(rdpRdp* rdp, STREAM* s)
+{
+	uint32 errorNotificationType;
+	uint32 errorNotificationData;
+
+	stream_read_uint32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
+	stream_read_uint32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
+}
+
+void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
+{
+	uint8* m;
+	uint32 cbFieldData;
+	uint32 fieldsPresent;
+
+	stream_read_uint32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
+
+	/* logonFields */
+
+	if (fieldsPresent & LOGON_EX_AUTORECONNECTCOOKIE)
+	{
+		stream_read_uint32(s, cbFieldData); /* cbFieldData (4 bytes) */
+		rdp_read_server_auto_reconnect_cookie(s, rdp->settings);
+	}
+
+	if (fieldsPresent & LOGON_EX_LOGONERRORS)
+	{
+		stream_read_uint32(s, cbFieldData); /* cbFieldData (4 bytes) */
+		rdp_recv_logon_error_info(rdp, s);
+	}
+
+	stream_seek(s, 570); /* pad */
+}
+
+void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
+{
+	uint32 infoType;
+
+	stream_read_uint32(s, infoType); /* infoType (4 bytes) */
+
+	printf("%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
+
+	switch (infoType)
+	{
+		case INFO_TYPE_LOGON:
+			rdp_recv_logon_info_v1(rdp, s);
+			break;
+
+		case INFO_TYPE_LOGON_LONG:
+			rdp_recv_logon_info_v2(rdp, s);
+			break;
+
+		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
+			rdp_recv_logon_plain_notify(rdp, s);
+			break;
+
+		case INFO_TYPE_LOGON_EXTENDED_INF:
+			rdp_recv_logon_info_extended(rdp, s);
+			break;
+
+		default:
+			break;
+	}
 }
 

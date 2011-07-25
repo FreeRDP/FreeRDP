@@ -289,6 +289,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
+			rdp_recv_save_session_info(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:

@@ -56,6 +56,8 @@ rdpSettings* settings_new()
 				PERF_DISABLE_MENUANIMATIONS |
 				PERF_DISABLE_WALLPAPER;
 
+		settings->auto_reconnection = True;
+
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
@@ -88,6 +90,9 @@ rdpSettings* settings_new()
 
 		settings->frame_marker = False;
 		settings->bitmap_cache_v3 = False;
+
+		settings->bitmap_cache = True;
+		settings->persistent_bitmap_cache = False;
 
 		settings->offscreen_bitmap_cache = True;
 		settings->offscreen_bitmap_cache_size = 7680;
