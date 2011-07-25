@@ -86,6 +86,11 @@ void registry_print(rdpRegistry* registry, FILE* fp)
 void registry_create(rdpRegistry* registry)
 {
 	registry->fp = fopen(registry->file, "w+");
+	if (registry->fp == NULL)
+	{
+		printf("registry_create: error opening [%s] for writing\n", registry->file);
+		return;
+	}
 	registry_print(registry, registry->fp);
 	fflush(registry->fp);
 }
