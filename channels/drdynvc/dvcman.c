@@ -366,7 +366,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelI
 		stream_free(channel->dvc_data);
 		channel->dvc_data = NULL;
 	}
-	DEBUG_PRINT("DVC", "dvcman_close_channel: channel %d closed", ChannelId);
+	DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
 	ichannel = (IWTSVirtualChannel*)channel;
 	ichannel->Close(ichannel);
 	return 0;
