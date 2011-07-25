@@ -77,6 +77,232 @@ uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
 	"Frame Marker"
 };
 
+/* Primary Drawing Orders */
+
+void rdp_recv_dstblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_patblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_scrblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_nine_grid_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_multi_draw_nine_grid_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_line_to_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_opaque_rect_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_save_bitmap_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_memblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_mem3blt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_multi_dstblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_multi_patblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_multi_scrblt_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_multi_opaque_rect_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_fast_index_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_polygon_sc_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_polygon_cb_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_polyline_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_fast_glyph_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_ellipse_sc_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_ellipse_cb_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_glyph_index_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+/* Secondary Drawing Orders */
+
+void rdp_recv_cache_bitmap_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_color_table_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_bitmap_compressed_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_glyph_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_bitmap_v2_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_bitmap_v2_compressed_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_brush_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_cache_bitmap_v3_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+/* Alternate Secondary Drawing Orders */
+
+void rdp_recv_switch_surface_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_create_offscreen_bitmap_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_stream_bitmap_first_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_stream_bitmap_next_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_create_nine_grid_bitmap_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_first_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_next_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_end_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_cache_first_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_cache_next_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_draw_gdiplus_cache_end_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_windowing_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_desktop_composition_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
+void rdp_recv_frame_marker_order(rdpRdp* rdp, STREAM* s)
+{
+
+}
+
 void rdp_recv_primary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 {
 	uint8 orderType;
@@ -88,69 +314,91 @@ void rdp_recv_primary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
+			rdp_recv_dstblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_PATBLT:
+			rdp_recv_patblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
+			rdp_recv_scrblt_order(rdp, s);
 			break;
 
-		case ORDER_TYPE_DRAW_NINEGRID:
+		case ORDER_TYPE_DRAW_NINE_GRID:
+			rdp_recv_draw_nine_grid_order(rdp, s);
 			break;
 
-		case ORDER_TYPE_MULTI_DRAW_NINEGRID:
+		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
+			rdp_recv_multi_draw_nine_grid_order(rdp, s);
 			break;
 
-		case ORDER_TYPE_LINETO:
+		case ORDER_TYPE_LINE_TO:
+			rdp_recv_line_to_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
+			rdp_recv_opaque_rect_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
+			rdp_recv_save_bitmap_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MEMBLT:
+			rdp_recv_memblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
+			rdp_recv_mem3blt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
+			rdp_recv_multi_dstblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
+			rdp_recv_multi_patblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
+			rdp_recv_multi_scrblt_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
+			rdp_recv_multi_opaque_rect_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
+			rdp_recv_fast_index_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
+			rdp_recv_polygon_sc_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
+			rdp_recv_polygon_cb_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_POLYLINE:
+			rdp_recv_polyline_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
+			rdp_recv_fast_glyph_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
+			rdp_recv_ellipse_sc_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
+			rdp_recv_ellipse_cb_order(rdp, s);
 			break;
 
-		case ORDER_TYPE_INDEX_ORDER:
+		case ORDER_TYPE_GLYPH_INDEX:
+			rdp_recv_glyph_index_order(rdp, s);
 			break;
 
 		default:
@@ -169,27 +417,35 @@ void rdp_recv_secondary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
+			rdp_recv_cache_bitmap_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
+			rdp_recv_cache_color_table_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
+			rdp_recv_cache_bitmap_compressed_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_CACHE_GLYPH:
+			rdp_recv_cache_glyph_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
+			rdp_recv_cache_bitmap_v2_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
+			rdp_recv_cache_bitmap_v2_compressed_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_CACHE_BRUSH:
+			rdp_recv_cache_brush_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
+			rdp_recv_cache_bitmap_v3_order(rdp, s);
 			break;
 
 		default:
@@ -208,45 +464,59 @@ void rdp_recv_altsec_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_SWITCH_SURFACE:
+			rdp_recv_switch_surface_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_CREATE_OFFSCR_BITMAP:
+			rdp_recv_create_offscreen_bitmap_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
+			rdp_recv_stream_bitmap_first_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
+			rdp_recv_stream_bitmap_next_order(rdp, s);
 			break;
 
-		case ORDER_TYPE_CREATE_NINEGRID_BITMAP:
+		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
+			rdp_recv_create_nine_grid_bitmap_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
+			rdp_recv_draw_gdiplus_first_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_NEXT:
+			rdp_recv_draw_gdiplus_next_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
+			rdp_recv_draw_gdiplus_end_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
+			rdp_recv_draw_gdiplus_cache_first_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
+			rdp_recv_draw_gdiplus_cache_next_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
+			rdp_recv_draw_gdiplus_cache_end_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_WINDOW:
+			rdp_recv_windowing_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
+			rdp_recv_desktop_composition_order(rdp, s);
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
+			rdp_recv_frame_marker_order(rdp, s);
 			break;
 
 		default:
@@ -263,15 +533,15 @@ void rdp_recv_order(rdpRdp* rdp, STREAM* s)
 	switch (controlFlags & ORDER_CLASS_MASK)
 	{
 		case ORDER_PRIMARY_CLASS:
-			//rdp_recv_primary_order(rdp, s, controlFlags);
+			rdp_recv_primary_order(rdp, s, controlFlags);
 			break;
 
 		case ORDER_SECONDARY_CLASS:
-			//rdp_recv_secondary_order(rdp, s, controlFlags);
+			rdp_recv_secondary_order(rdp, s, controlFlags);
 			break;
 
 		case ORDER_ALTSEC_CLASS:
-			//rdp_recv_altsec_order(rdp, s, controlFlags);
+			rdp_recv_altsec_order(rdp, s, controlFlags);
 			break;
 	}
 }
