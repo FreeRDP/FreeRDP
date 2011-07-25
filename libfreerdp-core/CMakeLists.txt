@@ -20,6 +20,8 @@
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
 
 set(LIBFREERDP_CORE_SRCS
+	activation.c
+	activation.h
 	ber.c
 	ber.h
 	gcc.c

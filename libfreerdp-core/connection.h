@@ -26,33 +26,11 @@
 #include "nego.h"
 #include "mcs.h"
 #include "transport.h"
+#include "activation.h"
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
-#define SYNCMSGTYPE_SYNC		0x0001
-
-#define CTRLACTION_REQUEST_CONTROL	0x0001
-#define CTRLACTION_GRANTED_CONTROL	0x0002
-#define CTRLACTION_DETACH		0x0003
-#define CTRLACTION_COOPERATE		0x0004
-
-#define PERSIST_FIRST_PDU		0x01
-#define PERSIST_LAST_PDU		0x02
-
-#define FONTLIST_FIRST			0x0001
-#define FONTLIST_LAST			0x0002
-
 boolean rdp_client_connect(rdpRdp* rdp);
-boolean rdp_client_activate(rdpRdp* rdp);
-
-void rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
-void rdp_send_client_synchronize_pdu(rdpRdp* rdp);
-void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
-void rdp_read_server_control_pdu(STREAM* s, uint16* action);
-void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action);
-void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
-void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags);
-void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 
 #endif /* __CONNECTION_H */
