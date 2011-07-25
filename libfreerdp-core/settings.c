@@ -89,6 +89,7 @@ rdpSettings* settings_new()
 		settings->frame_marker = False;
 		settings->bitmap_cache_v3 = False;
 
+		settings->offscreen_bitmap_cache = True;
 		settings->offscreen_bitmap_cache_size = 7680;
 		settings->offscreen_bitmap_cache_entries = 100;
 

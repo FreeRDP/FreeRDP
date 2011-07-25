@@ -183,7 +183,6 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
 void rdp_send_confirm_active(rdpRdp* rdp);
-
-void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings);
+void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s);
 
 #endif /* __CAPABILITIES_H */

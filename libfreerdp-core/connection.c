@@ -166,8 +166,6 @@ void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 
 	rdp_read_server_control_pdu(s, &action);
 
-	printf("Server Control Action: %s\n", CTRLACTION_STRINGS[action]);
-
 	if (action == CTRLACTION_COOPERATE)
 	{
 		rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL);
@@ -192,8 +190,6 @@ void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action)
 	STREAM* s;
 
 	s = rdp_data_pdu_init(rdp);
-
-	printf("Client Control Action: %s\n", CTRLACTION_STRINGS[action]);
 
 	rdp_write_client_control_pdu(s, action);
 

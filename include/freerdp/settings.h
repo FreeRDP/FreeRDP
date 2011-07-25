@@ -176,6 +176,7 @@ struct rdp_settings
 	boolean frame_marker;
 	boolean bitmap_cache_v3;
 
+	uint8 received_caps[32];
 	uint8 order_support[32];
 
 	boolean color_pointer;
@@ -208,19 +209,12 @@ struct rdp_settings
 
 	boolean frame_acknowledge;
 
+	uint8* app_name;
 	boolean remote_app;
 
-	char app_name[64];
-	int desktop_save;
-	int polygon_ellipse_orders;
-	int off_screen_bitmaps;
-	int triblt;
-	int new_cursors;
-	int mouse_motion;
 	int rfx_flags;
 	int ui_decode_flags;
-	int use_frame_ack;
-	int software_gdi;
+	boolean mouse_motion;
 };
 typedef struct rdp_settings rdpSettings;
 

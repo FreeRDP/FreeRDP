@@ -816,10 +816,14 @@ void rdp_read_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* sett
 void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
+	uint32 offscreenSupportLevel;
 
 	header = rdp_capability_set_start(s);
 
-	stream_read_uint32(s, settings->offscreen_bitmap_cache); /* offscreenSupportLevel (4 bytes) */
+	if (settings->offscreen_bitmap_cache)
+		offscreenSupportLevel = True;
+
+	stream_read_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_size); /* offscreenCacheSize (2 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_entries); /* offscreenCacheEntries (2 bytes) */
 
@@ -1400,7 +1404,7 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 
 		rdp_read_capability_set_header(s, &length, &type);
 		printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
-
+		settings->received_caps[type] = True;
 		em = bm + length;
 
 		switch (type)
@@ -1575,6 +1579,48 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_color_cache_capability_set(s, settings);
 	rdp_write_window_activation_capability_set(s, settings);
 
+	if (settings->offscreen_bitmap_cache)
+	{
+		numberCapabilities++;
+		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
+	}
+
+	if (settings->received_caps[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
+	{
+		numberCapabilities++;
+		rdp_write_multifragment_update_capability_set(s, settings);
+	}
+
+	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
+	{
+		numberCapabilities++;
+		rdp_write_large_pointer_capability_set(s, settings);
+	}
+
+	if (settings->received_caps[CAPSET_TYPE_SURFACE_COMMANDS])
+	{
+		numberCapabilities++;
+		rdp_write_surface_commands_capability_set(s, settings);
+	}
+
+#if 0
+	if (settings->received_caps[CAPSET_TYPE_BITMAP_CODECS])
+	{
+		numberCapabilities++;
+		rdp_write_bitmap_codecs_capability_set(s, settings);
+	}
+
+#endif
+
+	if (settings->received_caps[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	{
+		if (settings->frame_acknowledge)
+		{
+			numberCapabilities++;
+			rdp_write_frame_acknowledge_capability_set(s, settings);
+		}
+	}
+
 	stream_get_mark(s, em);
 
 	stream_set_mark(s, lm); /* go back to lengthCombinedCapabilities */
@@ -1598,7 +1644,13 @@ void rdp_send_confirm_active(rdpRdp* rdp)
 	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
 }
 
-void rdp_read_deactivate_all(STREAM* s, rdpSettings* settings)
+void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 {
+	uint16 lengthSourceDescriptor;
+
 	printf("Deactivate All PDU\n");
+
+	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
 }

@@ -172,14 +172,14 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
-			settings->off_screen_bitmaps = 0;
+			settings->offscreen_bitmap_cache = 0;
 		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->rfx_flags = 1;
 			settings->ui_decode_flags = 1;
-			settings->use_frame_ack = 0;
 			settings->color_depth = 32;
+			settings->frame_acknowledge = False;
 			settings->performance_flags = PERF_FLAG_NONE;
 		}
 		else if (strcmp("-m", argv[index]) == 0)
@@ -194,9 +194,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing application name\n");
 				return 0;
 			}
-			strncpy(settings->app_name, argv[index], sizeof(settings->app_name) - 1);
-			settings->app_name[sizeof(settings->app_name) - 1] = 0;
-			settings->remote_app = 1;
+			settings->app_name = (uint8*) xstrdup(argv[index]);
+			settings->remote_app = True;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
 		{

@@ -239,7 +239,8 @@ void rdp_read_set_error_info_data_pdu(STREAM* s)
 
 	stream_read_uint32(s, errorInfo); /* errorInfo (4 bytes) */
 
-	printf("Error Info: 0x%08X\n", errorInfo);
+	if (errorInfo != 0)
+		printf("Error Info: 0x%08X\n", errorInfo);
 }
 
 void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
@@ -400,7 +401,7 @@ void rdp_recv(rdpRdp* rdp)
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:
-				rdp_read_deactivate_all(s, rdp->settings);
+				rdp_recv_deactivate_all(rdp, s);
 				break;
 
 			case PDU_TYPE_SERVER_REDIRECTION:
