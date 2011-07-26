@@ -77,114 +77,141 @@ uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
 	"Frame Marker"
 };
 
+uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
+{
+	DSTBLT_ORDER_FIELD_BYTES,
+	PATBLT_ORDER_FIELD_BYTES,
+	SCRBLT_ORDER_FIELD_BYTES,
+	0, 0, 0, 0,
+	DRAW_NINE_GRID_ORDER_FIELD_BYTES,
+	MULTI_DRAW_NINE_GRID_ORDER_FIELD_BYTES,
+	LINE_TO_ORDER_FIELD_BYTES,
+	OPAQUE_RECT_ORDER_FIELD_BYTES,
+	SAVE_BITMAP_ORDER_FIELD_BYTES,
+	MEMBLT_ORDER_FIELD_BYTES,
+	MEM3BLT_ORDER_FIELD_BYTES,
+	MULTI_DSTBLT_ORDER_FIELD_BYTES,
+	MULTI_PATBLT_ORDER_FIELD_BYTES,
+	MULTI_SCRBLT_ORDER_FIELD_BYTES,
+	MULTI_OPAQUE_RECT_ORDER_FIELD_BYTES,
+	FAST_INDEX_ORDER_FIELD_BYTES,
+	POLYGON_SC_ORDER_FIELD_BYTES,
+	POLYGON_CB_ORDER_FIELD_BYTES,
+	POLYLINE_ORDER_FIELD_BYTES,
+	FAST_GLYPH_ORDER_FIELD_BYTES,
+	ELLIPSE_SC_ORDER_FIELD_BYTES,
+	ELLIPSE_CB_ORDER_FIELD_BYTES,
+	GLYPH_INDEX_ORDER_FIELD_BYTES
+};
+
 /* Primary Drawing Orders */
 
-void rdp_recv_dstblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_dstblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_patblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_patblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_scrblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_scrblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_draw_nine_grid_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_draw_nine_grid_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_multi_draw_nine_grid_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_multi_draw_nine_grid_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_line_to_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_line_to_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_opaque_rect_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_opaque_rect_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_save_bitmap_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_save_bitmap_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_memblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_memblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_mem3blt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_mem3blt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_multi_dstblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_multi_dstblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_multi_patblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_multi_patblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_multi_scrblt_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_multi_scrblt_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_multi_opaque_rect_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_multi_opaque_rect_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_fast_index_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_fast_index_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_polygon_sc_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_polygon_sc_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_polygon_cb_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_polygon_cb_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_polyline_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_polyline_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_fast_glyph_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_fast_glyph_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_ellipse_sc_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_ellipse_sc_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_ellipse_cb_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_ellipse_cb_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
 
-void rdp_recv_glyph_index_order(rdpRdp* rdp, STREAM* s)
+void rdp_recv_glyph_index_order(rdpRdp* rdp, STREAM* s, ORDER_INFO* orderInfo)
 {
 
 }
@@ -303,102 +330,167 @@ void rdp_recv_frame_marker_order(rdpRdp* rdp, STREAM* s)
 
 }
 
+void rdp_read_field_flags(STREAM* s, uint32* fieldFlags, uint8 flags, uint8 fieldBytes)
+{
+	int i;
+	uint8 byte;
+
+	if (flags & ORDER_ZERO_FIELD_BYTE_BIT0)
+		fieldBytes--;
+
+	if (flags & ORDER_ZERO_FIELD_BYTE_BIT1)
+	{
+		if (fieldBytes < 2)
+			fieldBytes = 0;
+		else
+			fieldBytes -= 2;
+	}
+
+	*fieldFlags = 0;
+	for (i = 0; i < fieldBytes; i++)
+	{
+		stream_read_uint8(s, byte);
+		*fieldFlags |= byte << (i * 8);
+	}
+}
+
+void rdp_read_bounds(STREAM* s, ORDER_INFO* orderInfo)
+{
+	uint8 flags;
+
+	stream_read_uint8(s, flags); /* field flags */
+
+	if (flags & BOUND_DELTA_LEFT)
+		stream_read_uint8(s, orderInfo->deltaBoundLeft);
+	else if (flags & BOUND_LEFT)
+		stream_read_uint16(s, orderInfo->boundLeft);
+
+	if (flags & BOUND_DELTA_TOP)
+		stream_read_uint8(s, orderInfo->deltaBoundTop);
+	else if (flags & BOUND_TOP)
+		stream_read_uint16(s, orderInfo->boundTop);
+
+	if (flags & BOUND_DELTA_RIGHT)
+		stream_read_uint8(s, orderInfo->deltaBoundRight);
+	else if (flags & BOUND_RIGHT)
+		stream_read_uint16(s, orderInfo->boundRight);
+
+	if (flags & BOUND_DELTA_BOTTOM)
+		stream_read_uint8(s, orderInfo->deltaBoundBottom);
+	else if (flags & BOUND_BOTTOM)
+		stream_read_uint16(s, orderInfo->boundBottom);
+}
+
 void rdp_recv_primary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 {
-	uint8 orderType;
+	ORDER_INFO* orderInfo = &(rdp->order_info);
 
-	stream_read_uint8(s, orderType); /* orderType (1 byte) */
+	if (flags & ORDER_TYPE_CHANGE)
+		stream_read_uint8(s, orderInfo->orderType); /* orderType (1 byte) */
 
-	printf("%s Primary Drawing Order\n", PRIMARY_DRAWING_ORDER_STRINGS[orderType]);
+	rdp_read_field_flags(s, &(orderInfo->fieldFlags), flags,
+			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]);
 
-	switch (orderType)
+	if (flags & ORDER_BOUNDS)
+	{
+		if (!(flags & ORDER_ZERO_BOUNDS_DELTAS))
+		{
+			rdp_read_bounds(s, orderInfo);
+		}
+	}
+
+	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? True : False;
+
+	printf("%s Primary Drawing Order\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType]);
+
+	switch (orderInfo->orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
-			rdp_recv_dstblt_order(rdp, s);
+			rdp_recv_dstblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_PATBLT:
-			rdp_recv_patblt_order(rdp, s);
+			rdp_recv_patblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
-			rdp_recv_scrblt_order(rdp, s);
+			rdp_recv_scrblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
-			rdp_recv_draw_nine_grid_order(rdp, s);
+			rdp_recv_draw_nine_grid_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			rdp_recv_multi_draw_nine_grid_order(rdp, s);
+			rdp_recv_multi_draw_nine_grid_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_LINE_TO:
-			rdp_recv_line_to_order(rdp, s);
+			rdp_recv_line_to_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
-			rdp_recv_opaque_rect_order(rdp, s);
+			rdp_recv_opaque_rect_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
-			rdp_recv_save_bitmap_order(rdp, s);
+			rdp_recv_save_bitmap_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MEMBLT:
-			rdp_recv_memblt_order(rdp, s);
+			rdp_recv_memblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
-			rdp_recv_mem3blt_order(rdp, s);
+			rdp_recv_mem3blt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
-			rdp_recv_multi_dstblt_order(rdp, s);
+			rdp_recv_multi_dstblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
-			rdp_recv_multi_patblt_order(rdp, s);
+			rdp_recv_multi_patblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
-			rdp_recv_multi_scrblt_order(rdp, s);
+			rdp_recv_multi_scrblt_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
-			rdp_recv_multi_opaque_rect_order(rdp, s);
+			rdp_recv_multi_opaque_rect_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
-			rdp_recv_fast_index_order(rdp, s);
+			rdp_recv_fast_index_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
-			rdp_recv_polygon_sc_order(rdp, s);
+			rdp_recv_polygon_sc_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
-			rdp_recv_polygon_cb_order(rdp, s);
+			rdp_recv_polygon_cb_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_POLYLINE:
-			rdp_recv_polyline_order(rdp, s);
+			rdp_recv_polyline_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
-			rdp_recv_fast_glyph_order(rdp, s);
+			rdp_recv_fast_glyph_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
-			rdp_recv_ellipse_sc_order(rdp, s);
+			rdp_recv_ellipse_sc_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
-			rdp_recv_ellipse_cb_order(rdp, s);
+			rdp_recv_ellipse_cb_order(rdp, s, orderInfo);
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
-			rdp_recv_glyph_index_order(rdp, s);
+			rdp_recv_glyph_index_order(rdp, s, orderInfo);
 			break;
 
 		default:
@@ -408,9 +500,18 @@ void rdp_recv_primary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 
 void rdp_recv_secondary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 {
+	uint8* next;
 	uint8 orderType;
+	uint16 extraFlags;
+	uint16 orderLength;
 
+	stream_get_mark(s, next);
+	stream_read_uint16(s, orderLength); /* orderLength (2 bytes) */
+	stream_read_uint16(s, extraFlags); /* extraFlags (2 bytes) */
 	stream_read_uint8(s, orderType); /* orderType (1 byte) */
+
+	orderLength += 13; /* adjust length (13 bytes less than actual length) */
+	next += orderLength;
 
 	printf("%s Secondary Drawing Order\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType]);
 
@@ -451,13 +552,15 @@ void rdp_recv_secondary_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 		default:
 			break;
 	}
+
+	stream_set_mark(s, next);
 }
 
 void rdp_recv_altsec_order(rdpRdp* rdp, STREAM* s, uint8 flags)
 {
 	uint8 orderType;
 
-	stream_read_uint8(s, orderType); /* orderType (1 byte) */
+	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 
 	printf("%s Alternate Secondary Drawing Order\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType]);
 

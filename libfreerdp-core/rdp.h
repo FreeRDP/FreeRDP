@@ -27,6 +27,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "tpdu.h"
 #include "nego.h"
 #include "update.h"
+#include "orders.h"
 #include "license.h"
 #include "security.h"
 #include "registry.h"
@@ -204,6 +205,7 @@ struct rdp_rdp
 {
 	boolean licensed;
 	boolean activated;
+	ORDER_INFO order_info;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_license* license;

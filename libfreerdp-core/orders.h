@@ -20,9 +20,25 @@
 #ifndef __ORDERS_H
 #define __ORDERS_H
 
-#include "rdp.h"
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
+
+typedef struct
+{
+	uint8 orderType;
+	uint32 fieldFlags;
+	uint16 boundLeft;
+	uint16 boundTop;
+	uint16 boundRight;
+	uint16 boundBottom;
+	sint8 deltaBoundLeft;
+	sint8 deltaBoundTop;
+	sint8 deltaBoundRight;
+	sint8 deltaBoundBottom;
+	boolean deltaCoordinates;
+} ORDER_INFO;
+
+#include "rdp.h"
 
 /* Order Control Flags */
 #define ORDER_STANDARD				0x01
@@ -33,6 +49,16 @@
 #define ORDER_ZERO_BOUNDS_DELTAS		0x20
 #define ORDER_ZERO_FIELD_BYTE_BIT0		0x40
 #define ORDER_ZERO_FIELD_BYTE_BIT1		0x80
+
+/* Bound Field Flags */
+#define BOUND_LEFT				0x01
+#define BOUND_TOP				0x02
+#define BOUND_RIGHT				0x04
+#define BOUND_BOTTOM				0x08
+#define BOUND_DELTA_LEFT			0x10
+#define BOUND_DELTA_TOP				0x20
+#define BOUND_DELTA_RIGHT			0x40
+#define BOUND_DELTA_BOTTOM			0x80
 
 /* Order Classes */
 #define ORDER_PRIMARY_CLASS			0x01
@@ -87,6 +113,30 @@
 #define ELLIPSE_SC_ORDER_FIELDS			7
 #define ELLIPSE_CB_ORDER_FIELDS			13
 #define GLYPH_INDEX_ORDER_FIELDS		22
+
+/* Primary Drawing Orders Field Bytes */
+#define DSTBLT_ORDER_FIELD_BYTES		1
+#define PATBLT_ORDER_FIELD_BYTES		2
+#define SCRBLT_ORDER_FIELD_BYTES		1
+#define DRAW_NINE_GRID_ORDER_FIELD_BYTES	1
+#define MULTI_DRAW_NINE_GRID_ORDER_FIELD_BYTES	1
+#define LINE_TO_ORDER_FIELD_BYTES		2
+#define OPAQUE_RECT_ORDER_FIELD_BYTES		1
+#define SAVE_BITMAP_ORDER_FIELD_BYTES		1
+#define MEMBLT_ORDER_FIELD_BYTES		2
+#define MEM3BLT_ORDER_FIELD_BYTES		3
+#define MULTI_DSTBLT_ORDER_FIELD_BYTES		1
+#define MULTI_PATBLT_ORDER_FIELD_BYTES		2
+#define MULTI_SCRBLT_ORDER_FIELD_BYTES		2
+#define MULTI_OPAQUE_RECT_ORDER_FIELD_BYTES	2
+#define FAST_INDEX_ORDER_FIELD_BYTES		2
+#define POLYGON_SC_ORDER_FIELD_BYTES		1
+#define POLYGON_CB_ORDER_FIELD_BYTES		2
+#define POLYLINE_ORDER_FIELD_BYTES		1
+#define FAST_GLYPH_ORDER_FIELD_BYTES		2
+#define ELLIPSE_SC_ORDER_FIELD_BYTES		1
+#define ELLIPSE_CB_ORDER_FIELD_BYTES		2
+#define GLYPH_INDEX_ORDER_FIELD_BYTES		3
 
 /* Secondary Drawing Orders */
 #define ORDER_TYPE_BITMAP_UNCOMPRESSED		0x00
