@@ -20,6 +20,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/stream.h>
+#include <stdbool.h>
 
 #include "test_ber.h"
 
@@ -72,7 +73,7 @@ void test_ber_write_universal_tag(void)
 	STREAM* s;
 
 	s = stream_new(sizeof(ber_universal_tag_expected));
-	ber_write_universal_tag(s, 1);
+	ber_write_universal_tag(s, 1, false);
 
 	ASSERT_STREAM(s, (uint8*) ber_universal_tag_expected, sizeof(ber_universal_tag_expected));
 
