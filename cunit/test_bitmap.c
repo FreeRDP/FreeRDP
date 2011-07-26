@@ -20,6 +20,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/stream.h>
+#include "libfreerdp-core/bitmap.h"
 
 #include "test_bitmap.h"
 
