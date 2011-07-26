@@ -22,6 +22,7 @@
 
 #include "rdp.h"
 #include "orders.h"
+#include <freerdp/freerdp.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -44,11 +45,82 @@ typedef struct
 	uint8* data;
 } BITMAP_DATA;
 
+typedef struct
+{
+	uint16 number;
+	BITMAP_DATA* bitmaps;
+} BITMAP_UPDATE;
+
 #define BITMAP_COMPRESSION		0x0001
 #define NO_BITMAP_COMPRESSION_HDR	0x0400
 
-void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data);
-void rdp_recv_bitmap_update(rdpRdp* rdp, STREAM* s);
+typedef struct
+{
+	uint32 number;
+	uint32 entries[256];
+} PALETTE_UPDATE;
+
+typedef struct rdp_update rdpUpdate;
+
+typedef int (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
+typedef int (*pcDstBlt)(rdpUpdate* update, DSTBLT_ORDER* dstblt);
+typedef int (*pcPatBlt)(rdpUpdate* update, PATBLT_ORDER* patblt);
+typedef int (*pcScrBlt)(rdpUpdate* update, PATBLT_ORDER* scrblt);
+typedef int (*pcDrawNineGrid)(rdpUpdate* update, DRAW_NINE_GRID_ORDER* draw_nine_grid);
+typedef int (*pcMultiDrawNineGrid)(rdpUpdate* update, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
+typedef int (*pcLineTo)(rdpUpdate* update, LINE_TO_ORDER* line_to);
+typedef int (*pcOpaqueRect)(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect);
+typedef int (*pcSaveBitmap)(rdpUpdate* update, SAVE_BITMAP_ORDER* save_bitmap);
+typedef int (*pcMemBlt)(rdpUpdate* update, MEMBLT_ORDER* memblt);
+typedef int (*pcMem3Blt)(rdpUpdate* update, MEM3BLT_ORDER* memblt);
+typedef int (*pcMultiDstBlt)(rdpUpdate* update, MULTI_DSTBLT_ORDER* dstblt);
+typedef int (*pcMultiPatBlt)(rdpUpdate* update, MULTI_PATBLT_ORDER* patblt);
+typedef int (*pcMultiScrBlt)(rdpUpdate* update, MULTI_PATBLT_ORDER* scrblt);
+typedef int (*pcMultiOpaqueRect)(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
+typedef int (*pcFastIndex)(rdpUpdate* update, FAST_INDEX_ORDER* fast_index);
+typedef int (*pcPolygonSC)(rdpUpdate* update, POLYGON_SC_ORDER* polygon_sc);
+typedef int (*pcPolygonCB)(rdpUpdate* update, POLYGON_CB_ORDER* polygon_cb);
+typedef int (*pcPolyline)(rdpUpdate* update, POLYLINE_ORDER* polyline);
+typedef int (*pcFastGlyph)(rdpUpdate* update, FAST_GLYPH_ORDER* fast_glyph);
+typedef int (*pcEllipseSC)(rdpUpdate* update, ELLIPSE_SC_ORDER* ellipse_sc);
+typedef int (*pcEllipseCB)(rdpUpdate* update, ELLIPSE_CB_ORDER* ellipse_cb);
+typedef int (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
+
+struct rdp_update
+{
+	BITMAP_UPDATE bitmap_update;
+	PALETTE_UPDATE palette_update;
+
+	pcBitmap Bitmap;
+	pcDstBlt DstBlt;
+	pcPatBlt PatBlt;
+	pcScrBlt ScrBlt;
+	pcDrawNineGrid DrawNineGrid;
+	pcMultiDrawNineGrid MultiDrawNineGrid;
+	pcLineTo LineTo;
+	pcOpaqueRect OpaqueRect;
+	pcSaveBitmap SaveBitmap;
+	pcMemBlt MemBlt;
+	pcMem3Blt Mem3Blt;
+	pcMultiDstBlt MultiDstBlt;
+	pcMultiPatBlt MultiPatBlt;
+	pcMultiScrBlt MultiScrBlt;
+	pcMultiOpaqueRect MultiOpaqueRect;
+	pcFastIndex FastIndex;
+	pcPolygonSC PolygonSC;
+	pcPolygonCB PolygonCB;
+	pcPolyline Polyline;
+	pcFastGlyph FastGlyph;
+	pcEllipseSC EllipseSC;
+	pcEllipseCB EllipseCB;
+	pcGlyphIndex GlyphIndex;
+};
+
+rdpUpdate* update_new();
+void update_free(rdpUpdate* update);
+
+void rdp_read_bitmap_update(rdpRdp* rdp, STREAM* s, BITMAP_UPDATE* bitmap_update);
+void rdp_read_palette_update(rdpRdp* rdp, STREAM* s, PALETTE_UPDATE* palette_update);
 void rdp_recv_update_data_pdu(rdpRdp* rdp, STREAM* s);
 
 #endif /* __UPDATE_H */

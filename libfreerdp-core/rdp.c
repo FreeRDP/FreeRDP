@@ -251,7 +251,8 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	rdp_read_share_data_header(s, &length, &type, &share_id);
 
-	printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+	if (type != DATA_PDU_TYPE_UPDATE)
+		printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	switch (type)
 	{
@@ -435,6 +436,7 @@ rdpRdp* rdp_new()
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->orders = orders_new();
+		rdp->update = update_new();
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 	}
@@ -455,6 +457,7 @@ void rdp_free(rdpRdp* rdp)
 		transport_free(rdp->transport);
 		license_free(rdp->license);
 		orders_free(rdp->orders);
+		update_free(rdp->update);
 		mcs_free(rdp->mcs);
 		xfree(rdp);
 	}

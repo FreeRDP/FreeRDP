@@ -94,31 +94,47 @@ void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 		printf("bitmap decompression failed\n");
 }
 
-void rdp_recv_bitmap_update(rdpRdp* rdp, STREAM* s)
+void rdp_read_bitmap_update(rdpRdp* rdp, STREAM* s, BITMAP_UPDATE* bitmap_update)
 {
-	uint16 numberRectangles;
-	BITMAP_DATA bitmap_data;
+	int i;
 
-	bitmap_data.data = NULL;
-	stream_read_uint16(s, numberRectangles); /* numberRectangles (2 bytes) */
+	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
+
+	bitmap_update->bitmaps = (BITMAP_DATA*) xmalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
 
 	/* rectangles */
-	while (numberRectangles > 0)
+	for (i = 0; i < bitmap_update->number; i++)
 	{
-		rdp_read_bitmap_data(s, &bitmap_data);
-		numberRectangles--;
+		rdp_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
 	}
 }
 
-void rdp_recv_palette_update(rdpRdp* rdp, STREAM* s)
+void rdp_read_palette_update(rdpRdp* rdp, STREAM* s, PALETTE_UPDATE* palette_update)
 {
+	int i;
+	uint8 byte;
+	uint32 color;
+
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
-	stream_seek_uint32(s); /* numberColors (4 bytes), must be set to 256 */
+	stream_seek_uint32(palette_update->number); /* numberColors (4 bytes), must be set to 256 */
+
+	if (palette_update->number > 256)
+		palette_update->number = 256;
 
 	/* paletteEntries */
+	for (i = 0; i < palette_update->number; i++)
+	{
+		stream_read_uint8(s, byte);
+		color = byte;
+		stream_read_uint8(s, byte);
+		color |= (byte << 8);
+		stream_read_uint8(s, byte);
+		color |= (byte << 16);
+		palette_update->entries[i] = color;
+	}
 }
 
-void rdp_recv_synchronize_update(rdpRdp* rdp, STREAM* s)
+void rdp_read_synchronize_update(rdpRdp* rdp, STREAM* s)
 {
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
 
@@ -134,7 +150,8 @@ void rdp_recv_update_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
-	printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	if (updateType != UPDATE_TYPE_ORDERS)
+		printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	switch (updateType)
 	{
@@ -143,16 +160,38 @@ void rdp_recv_update_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			rdp_recv_bitmap_update(rdp, s);
+			rdp_read_bitmap_update(rdp, s, &rdp->update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			rdp_recv_palette_update(rdp, s);
+			rdp_read_palette_update(rdp, s, &rdp->update->palette_update);
 			break;
 
 		case UPDATE_TYPE_SYNCHRONIZE:
-			rdp_recv_synchronize_update(rdp, s);
+			rdp_read_synchronize_update(rdp, s);
 			break;
+	}
+}
+
+rdpUpdate* update_new()
+{
+	rdpUpdate* update;
+
+	update = (rdpUpdate*) xzalloc(sizeof(rdpUpdate));
+
+	if (update != NULL)
+	{
+
+	}
+
+	return update;
+}
+
+void update_free(rdpUpdate* update)
+{
+	if (update != NULL)
+	{
+		xfree(update);
 	}
 }
 

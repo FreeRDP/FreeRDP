@@ -208,6 +208,7 @@ struct rdp_rdp
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_orders* orders;
+	struct rdp_update* update;
 	struct rdp_license* license;
 	struct rdp_settings* settings;
 	struct rdp_registry* registry;

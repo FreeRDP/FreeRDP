@@ -20,11 +20,9 @@
 #ifndef __ORDERS_H
 #define __ORDERS_H
 
-typedef struct rdp_orders rdpOrders;
-
-#include "rdp.h"
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+typedef struct rdp_orders rdpOrders;
 
 typedef struct
 {
@@ -372,6 +370,9 @@ struct rdp_orders
 	ELLIPSE_CB_ORDER ellipse_cb;
 	GLYPH_INDEX_ORDER glyph_index;
 };
+
+#include "rdp.h"
+#include <freerdp/utils/stream.h>
 
 /* Order Control Flags */
 #define ORDER_STANDARD				0x01
