@@ -132,12 +132,10 @@ void registry_init(rdpRegistry* registry)
 		return;
 	}
 
-	length = strlen(home_path);
-	registry->home = (uint8*) xmalloc(length);
-	memcpy(registry->home, home_path, length);
+	registry->home = (uint8*) xstrdup(home_path);
 	printf("home path: %s\n", registry->home);
 
-	registry->path = (uint8*) xmalloc(length + sizeof(registry_dir) + 2);
+	registry->path = (uint8*) xmalloc(strlen(registry->home) + strlen("/.") + strlen(registry_dir) + 1);
 	sprintf(registry->path, "%s/.%s", registry->home, registry_dir);
 	printf("registry path: %s\n", registry->path);
 
@@ -148,7 +146,7 @@ void registry_init(rdpRegistry* registry)
 	}
 
 	length = strlen(registry->path);
-	registry->file = (uint8*) xmalloc(length + sizeof(registry_file) + 1);
+	registry->file = (uint8*) xmalloc(strlen(registry->path) + strlen("/") + strlen(registry_file) + 1);
 	sprintf(registry->file, "%s/%s", registry->path, registry_file);
 	printf("registry file: %s\n", registry->file);
 

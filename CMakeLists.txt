@@ -77,6 +77,7 @@ endif()
 find_package(CUnit)
 if(CUNIT_FOUND)
    add_subdirectory(cunit)
+   enable_testing()
 endif()
 
 # Sub-directories
