@@ -4,6 +4,7 @@ CMakeFiles/
 CMakeCache.txt
 config.h
 install_manifest.txt
+CTestTestfile.cmake
 
 # Make
 Makefile

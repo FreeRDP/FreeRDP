@@ -205,9 +205,9 @@ struct rdp_rdp
 {
 	boolean licensed;
 	boolean activated;
-	ORDER_INFO order_info;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
+	struct rdp_orders* orders;
 	struct rdp_license* license;
 	struct rdp_settings* settings;
 	struct rdp_registry* registry;

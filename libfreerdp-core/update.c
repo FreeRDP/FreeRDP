@@ -37,7 +37,7 @@ void rdp_recv_orders_update(rdpRdp* rdp, STREAM* s)
 
 	while (numberOrders > 0)
 	{
-		//rdp_recv_order(rdp, s);
+		rdp_recv_order(rdp, s);
 		numberOrders--;
 	}
 }

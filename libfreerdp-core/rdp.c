@@ -434,6 +434,7 @@ rdpRdp* rdp_new()
 		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
+		rdp->orders = orders_new();
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 	}
@@ -453,6 +454,7 @@ void rdp_free(rdpRdp* rdp)
 		settings_free(rdp->settings);
 		transport_free(rdp->transport);
 		license_free(rdp->license);
+		orders_free(rdp->orders);
 		mcs_free(rdp->mcs);
 		xfree(rdp);
 	}
