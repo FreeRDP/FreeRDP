@@ -22,6 +22,7 @@
 #include <freerdp/utils/stream.h>
 
 #include "test_per.h"
+#include "libfreerdp-core/per.h"
 
 int init_per_suite(void)
 {

@@ -67,7 +67,7 @@ struct rdp_transport
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
 STREAM* transport_send_stream_init(rdpTransport* transport, int size);
-boolean transport_connect(rdpTransport* transport, const uint8* hostname, uint16 port);
+boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
 boolean transport_disconnect(rdpTransport* transport);
 boolean transport_connect_rdp(rdpTransport* transport);
 boolean transport_connect_tls(rdpTransport* transport);

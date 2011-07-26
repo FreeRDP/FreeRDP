@@ -41,7 +41,7 @@ enum REG_TYPE
 typedef struct
 {
 	uint8 type;
-	uint8* name;
+	char* name;
 	uint32 length;
 	void* value;
 } REG_ENTRY;
@@ -54,9 +54,9 @@ typedef REG_ENTRY REG_SECTION;
 struct rdp_registry
 {
 	FILE* fp;
-	uint8* path;
-	uint8* file;
-	uint8* home;
+	char* path;
+	char* file;
+	char* home;
 	boolean available;
 	struct rdp_settings* settings;
 };

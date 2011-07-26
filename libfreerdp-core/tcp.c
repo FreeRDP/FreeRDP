@@ -28,6 +28,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
@@ -46,11 +47,12 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	{
 		ip = (uint8*) (&sockaddr.sin_addr);
 		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
-				"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
-
 	else
+	{
 		strncpy(tcp->ip_address, "127.0.0.1", sizeof(tcp->ip_address));
+	}
 
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
@@ -91,7 +93,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-boolean tcp_connect(rdpTcp* tcp, const uint8* hostname, uint16 port)
+boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
 	int status;
 	int sockfd = -1;

@@ -795,8 +795,6 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 void rdp_read_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint32 offscreenSupportLevel;
-	uint16 offscreenCacheSize;
-	uint16 offscreenCacheEntries;
 
 	stream_read_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
 	stream_read_uint16(s, settings->offscreen_bitmap_cache_size); /* offscreenCacheSize (2 bytes) */
@@ -977,8 +975,6 @@ void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 void rdp_read_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint32 drawNineGridSupportLevel;
-	uint16 drawNineGridCacheSize;
-	uint16 drawNineGridCacheEntries;
 
 	stream_read_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
 	stream_read_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */

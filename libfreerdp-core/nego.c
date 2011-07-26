@@ -134,7 +134,6 @@ int nego_tcp_disconnect(rdpNego* nego)
 
 void nego_attempt_nla(rdpNego* nego)
 {
-	uint8 code;
 	nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
 
 	DEBUG_NEGO("Attempting NLA security");
@@ -164,7 +163,6 @@ void nego_attempt_nla(rdpNego* nego)
 
 void nego_attempt_tls(rdpNego* nego)
 {
-	uint8 code;
 	nego->requested_protocols = PROTOCOL_TLS;
 
 	DEBUG_NEGO("Attempting TLS security");
@@ -192,7 +190,6 @@ void nego_attempt_tls(rdpNego* nego)
 
 void nego_attempt_rdp(rdpNego* nego)
 {
-	uint8 code;
 	nego->requested_protocols = PROTOCOL_RDP;
 
 	DEBUG_NEGO("Attempting RDP security");
@@ -296,7 +293,7 @@ void nego_send_negotiation_request(rdpNego* nego)
 	{
 		int cookie_length = strlen(nego->cookie);
 		stream_write(s, "Cookie: mstshash=", 17);
-		stream_write(s, nego->cookie, cookie_length);
+		stream_write(s, (uint8*)nego->cookie, cookie_length);
 		stream_write_uint8(s, 0x0D); /* CR */
 		stream_write_uint8(s, 0x0A); /* LF */
 		length += cookie_length + 19;

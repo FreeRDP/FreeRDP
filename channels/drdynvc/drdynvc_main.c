@@ -75,8 +75,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
 int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, char* data, uint32 data_size)
 {
 	STREAM* data_out;
-	uint32 pos;
-	uint32 t;
+	uint32 pos = 0;
 	uint32 cbChId;
 	uint32 cbLen;
 	uint32 chunk_len;
@@ -209,7 +208,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	pos = stream_get_pos(data_in);
 	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, stream_get_tail(data_in));
 
-	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, stream_get_tail(data_in));
+	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*)stream_get_tail(data_in));
 
 	data_out = stream_new(pos + 4);
 	stream_write_uint8(data_out, 0x10 | cbChId);
@@ -271,7 +270,6 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, STRE
 
 static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* data_in)
 {
-	int pos;
 	uint32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(data_in, cbChId);

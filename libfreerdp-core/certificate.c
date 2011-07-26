@@ -119,7 +119,6 @@ void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
 	int length;
 	uint8 padding;
 	uint32 version;
-	uint8 exponent[4];
 	int modulus_length;
 	int exponent_length;
 
