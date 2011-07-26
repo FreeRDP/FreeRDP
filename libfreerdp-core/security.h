@@ -26,10 +26,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, uint8* salt2, uint8* output);
-void security_premaster_hash(uint8* input, int length, uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output);
 void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output);
-void security_master_hash(uint8* input, int length, uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
 void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
 void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);

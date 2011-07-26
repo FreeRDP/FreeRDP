@@ -128,7 +128,7 @@ struct _IWTSVirtualChannelCallback
 	/* Notifies the user about data that is being received. */
 	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback,
 		uint32 cbSize,
-		char* pBuffer);
+		uint8* pBuffer);
 	/* Notifies the user that the channel has been closed. */
 	int (*OnClose) (IWTSVirtualChannelCallback* pChannelCallback);
 };

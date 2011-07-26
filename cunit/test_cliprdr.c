@@ -86,7 +86,7 @@ static const uint8 test_data_response_data[] =
 	"\x6F\x00\x20\x00\x77\x00\x6F\x00\x72\x00\x6c\x00\x64\x00\x00\x00"
 };
 
-static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
+static int test_rdp_channel_data(rdpInst* inst, int chan_id, uint8* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);
@@ -198,7 +198,7 @@ void test_cliprdr(void)
 	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
 	data_response_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
 	data_response_event->data = (uint8*)xmalloc(6);
-	strcpy(data_response_event->data, "hello");
+	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;
 	freerdp_chanman_send_event(chan_man, "cliprdr", event);

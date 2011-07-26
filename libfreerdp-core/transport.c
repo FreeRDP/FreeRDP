@@ -51,7 +51,7 @@ STREAM* transport_send_stream_init(rdpTransport* transport, int size)
 	return s;
 }
 
-boolean transport_connect(rdpTransport* transport, const uint8* hostname, uint16 port)
+boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
 	return transport->tcp->connect(transport->tcp, hostname, port);
 }

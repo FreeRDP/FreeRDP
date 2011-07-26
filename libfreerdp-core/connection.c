@@ -18,6 +18,7 @@
  */
 
 #include "connection.h"
+#include "info.h"
 
 /**
  *                                      Connection Sequence

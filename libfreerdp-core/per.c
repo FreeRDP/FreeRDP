@@ -178,8 +178,6 @@ boolean per_read_integer(STREAM* s, uint32* integer)
 
 void per_write_integer(STREAM* s, uint32 integer)
 {
-	int length;
-
 	if (integer <= 0xFF)
 	{
 		per_write_length(s, 1);
@@ -260,7 +258,7 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 	uint8 t12;
 	int length;
 	uint8 a_oid[6];
-	boolean status;
+
 
 	per_read_length(s, &length); /* length */
 
