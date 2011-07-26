@@ -63,3 +63,4 @@ target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-utils)
 target_link_libraries(test_freerdp freerdp-chanman)
 
+add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)
