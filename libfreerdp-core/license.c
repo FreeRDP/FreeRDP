@@ -207,8 +207,6 @@ void license_generate_randoms(rdpLicense* license)
 
 void license_generate_keys(rdpLicense* license)
 {
-	int paddingLength;
-
 	security_master_secret(license->premaster_secret, license->client_random,
 			license->server_random, license->master_secret); /* MasterSecret */
 
@@ -540,9 +538,6 @@ void license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 {
-	CryptoRc4 rc4;
-	uint8* platform_challenge;
-
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
 	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
@@ -675,10 +670,10 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	s = license_send_stream_init(license);
 	DEBUG_LICENSE("Sending New License Request Packet");
 
-	license->client_user_name->data = license->rdp->settings->username;
-	license->client_user_name->length = strlen(license->rdp->settings->username);
+	license->client_user_name->data = (uint8*)license->rdp->settings->username;
+	license->client_user_name->length = strlen((char*)license->rdp->settings->username);
 
-	license->client_machine_name->data = license->rdp->settings->client_hostname;
+	license->client_machine_name->data = (uint8*)license->rdp->settings->client_hostname;
 	license->client_machine_name->length = strlen(license->rdp->settings->client_hostname);
 
 	license_write_new_license_request_packet(license, s);

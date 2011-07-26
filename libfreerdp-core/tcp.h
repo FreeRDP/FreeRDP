@@ -31,14 +31,14 @@
 
 
 typedef struct rdp_tcp rdpTcp;
-typedef boolean (*TcpConnect) (rdpTcp* tcp, const uint8* hostname, uint16 port);
+typedef boolean (*TcpConnect) (rdpTcp* tcp, const char* hostname, uint16 port);
 typedef boolean (*TcpDisconnect) (rdpTcp* tcp);
 typedef boolean (*TcpSetBlockingMode) (rdpTcp* tcp, boolean blocking);
 
 struct rdp_tcp
 {
 	int sockfd;
-	uint8 ip_address[32];
+	char ip_address[32];
 	uint8 mac_address[6];
 	struct rdp_settings* settings;
 	TcpConnect connect;
@@ -46,7 +46,7 @@ struct rdp_tcp
 	TcpSetBlockingMode set_blocking_mode;
 };
 
-boolean tcp_connect(rdpTcp* tcp, const uint8* hostname, uint16 port);
+boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port);
 boolean tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, uint8* data, int length);
 int tcp_write(rdpTcp* tcp, uint8* data, int length);

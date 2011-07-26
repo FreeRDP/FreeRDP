@@ -19,6 +19,10 @@
 
 #include "rdp.h"
 
+#include "info.h"
+#include "per.h"
+#include "redirection.h"
+
 uint8 DATA_PDU_TYPE_STRINGS[][32] =
 {
 		"", "", /* 0x00 - 0x01 */

@@ -57,7 +57,7 @@ static const uint8 test_capability_request_data[] =
 
 static int data_received = 0;
 
-static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
+static int test_rdp_channel_data(rdpInst* inst, int chan_id, uint8* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);
@@ -69,7 +69,6 @@ void test_drdynvc(void)
 	rdpChanMan* chan_man;
 	rdpSettings settings = { 0 };
 	rdpInst inst = { 0 };
-	int i;
 
 	settings.hostname = "testhost";
 	inst.settings = &settings;

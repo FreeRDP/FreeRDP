@@ -117,10 +117,10 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	rdp_get_client_time_zone(s, settings);
 	clientTimeZone = &settings->client_time_zone;
 
-	standardName = freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
+	standardName = (uint8*)freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
 	standardNameLength = length;
 
-	daylightName = freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
+	daylightName = (uint8*)freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
 	daylightNameLength = length;
 
 	if (standardNameLength > 62)
@@ -204,10 +204,10 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	clientAddressFamily = settings->ipv6 ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
-	clientAddress = freerdp_uniconv_out(settings->uniconv, settings->ip_address, &length);
+	clientAddress = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->ip_address, &length);
 	cbClientAddress = length;
 
-	clientDir = freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
+	clientDir = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
 	cbClientDir = length;
 
 	cbAutoReconnectLen = settings->client_auto_reconnect_cookie.cbLen;
@@ -283,19 +283,19 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->compression)
 		flags |= INFO_COMPRESSION | PACKET_COMPR_TYPE_64K;
 
-	domain = freerdp_uniconv_out(settings->uniconv, settings->domain, &length);
+	domain = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->domain, &length);
 	cbDomain = length;
 
-	userName = freerdp_uniconv_out(settings->uniconv, settings->username, &length);
+	userName = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->username, &length);
 	cbUserName = length;
 
-	password = freerdp_uniconv_out(settings->uniconv, settings->password, &length);
+	password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &length);
 	cbPassword = length;
 
-	alternateShell = freerdp_uniconv_out(settings->uniconv, settings->shell, &length);
+	alternateShell = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->shell, &length);
 	cbAlternateShell = length;
 
-	workingDir = freerdp_uniconv_out(settings->uniconv, settings->directory, &length);
+	workingDir = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->directory, &length);
 	cbWorkingDir = length;
 
 	stream_write_uint32(s, 0); /* CodePage */
@@ -397,7 +397,6 @@ void rdp_recv_logon_error_info(rdpRdp* rdp, STREAM* s)
 
 void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 {
-	uint8* m;
 	uint32 cbFieldData;
 	uint32 fieldsPresent;
 

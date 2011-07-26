@@ -65,7 +65,6 @@ void dump_data(unsigned char * p, int len, int width, char* name)
 void assert_stream(STREAM* s, uint8* data, int length, const char* func, int line)
 {
 	int i;
-	char* str;
 	int actual_length;
 	uint8* actual_data;
 

@@ -40,7 +40,7 @@ static uint8 pad2[48] =
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
 };
 
-void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, uint8* salt2, uint8* output)
+static void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, uint8* salt2, uint8* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -63,10 +63,10 @@ void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, u
 	crypto_md5_final(md5, output);
 }
 
-void security_premaster_hash(uint8* input, int length, uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output)
+static void security_premaster_hash(char* input, int length, uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
 	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
-	security_salted_hash(premaster_secret, input, length, client_random, server_random, output);
+	security_salted_hash(premaster_secret, (uint8*)input, length, client_random, server_random, output);
 }
 
 void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output)
@@ -77,10 +77,10 @@ void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8
 	security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32]);
 }
 
-void security_master_hash(uint8* input, int length, uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
+static void security_master_hash(char* input, int length, uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
 	/* MasterHash(Input) = SaltedHash(MasterSecret, Input, ServerRandom, ClientRandom) */
-	security_salted_hash(master_secret, input, length, server_random, client_random, output);
+	security_salted_hash(master_secret, (uint8*)input, length, server_random, client_random, output);
 }
 
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)

@@ -69,7 +69,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing username\n");
 				return 0;
 			}
-			settings->username = (uint8*)xstrdup(argv[index]);
+			settings->username = xstrdup(argv[index]);
 		}
 		else if (strcmp("-p", argv[index]) == 0)
 		{
@@ -79,7 +79,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing password\n");
 				return 0;
 			}
-			settings->password = (uint8*)xstrdup(argv[index]);
+			settings->password = xstrdup(argv[index]);
 			settings->autologon = 1;
 
 			/*
@@ -97,7 +97,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing domain\n");
 				return 0;
 			}
-			settings->domain = (uint8*)xstrdup(argv[index]);
+			settings->domain = xstrdup(argv[index]);
 		}
 		else if (strcmp("-s", argv[index]) == 0)
 		{
@@ -107,7 +107,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing shell\n");
 				return 0;
 			}
-			settings->shell = (uint8*)xstrdup(argv[index]);
+			settings->shell = xstrdup(argv[index]);
 		}
 		else if (strcmp("-c", argv[index]) == 0)
 		{
@@ -117,7 +117,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing directory\n");
 				return 0;
 			}
-			settings->directory = (uint8*)xstrdup(argv[index]);
+			settings->directory = xstrdup(argv[index]);
 		}
 		else if (strcmp("-g", argv[index]) == 0)
 		{
@@ -349,7 +349,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
 			{
 				/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-				settings->hostname = (uint8*)xstrdup(argv[index] + 1);
+				settings->hostname = xstrdup(argv[index] + 1);
 				if ((p = strchr((char*)settings->hostname, ']')))
 				{
 					*p = 0;
@@ -360,7 +360,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			else
 			{
 				/* Port number is cut off and used if exactly one : in the string */
-				settings->hostname = (uint8*)xstrdup(argv[index]);
+				settings->hostname = xstrdup(argv[index]);
 				if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
 				{
 					*p = 0;
