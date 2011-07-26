@@ -108,6 +108,7 @@ int main(int argc, char* argv[])
 {
 	int index = 1;
 	int *pindex = &index;
+	int ret = 0;
 
 	if (CU_initialize_registry() != CUE_SUCCESS)
 		return CU_get_error();
@@ -201,8 +202,9 @@ int main(int argc, char* argv[])
 
 	CU_basic_set_mode(CU_BRM_VERBOSE);
 	CU_basic_run_tests();
+	ret = CU_get_number_of_failure_records();
 	CU_cleanup_registry();
 
-	return CU_get_error();
+	return ret;
 }
 
