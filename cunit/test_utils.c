@@ -76,7 +76,12 @@ void test_load_plugin(void)
 {
 	void* entry;
 
-	entry = freerdp_load_plugin("cliprdr", "VirtualChannelEntry");
+#ifdef _WIN32
+	/* untested */
+	entry = freerdp_load_plugin("..\\channels\\cliprdr\\cliprdr", "VirtualChannelEntry");
+#else
+	entry = freerdp_load_plugin("../channels/cliprdr/cliprdr.so", "VirtualChannelEntry");
+#endif
 	CU_ASSERT(entry != NULL);
 }
 
