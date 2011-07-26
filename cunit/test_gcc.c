@@ -134,6 +134,8 @@ void test_gcc_write_client_core_data(void)
 	settings->rdp_version = 5;
 	settings->color_depth = 24;
 	settings->kbd_layout = 0x409;
+	settings->kbd_type = 0x04;
+	settings->kbd_fn_keys = 12;
 	settings->client_build = 3790;
 	strcpy(settings->client_hostname, "ELTONS-DEV2");
 	strcpy(settings->client_product_id, "69712-783-0357974-42714");
@@ -154,6 +156,7 @@ void test_gcc_write_client_security_data(void)
 	s = stream_new(12);
 	settings = settings_new();
 
+	settings->encryption = 1; /* turn on encryption */
 	settings->encryption_method =
 			ENCRYPTION_METHOD_40BIT |
 			ENCRYPTION_METHOD_56BIT |

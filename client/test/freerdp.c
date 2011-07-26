@@ -148,7 +148,7 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 				settings->hostname = (uint8*) xmalloc(strlen(argv[*i] + 1));
 				strncpy(settings->hostname, argv[*i] + 1, strlen(argv[*i] + 1));
 
-				if ((p = strchr(settings->hostname, ']')))
+				if ((p = strchr((const char*)settings->hostname, ']')))
 				{
 					*p = 0;
 					if (p[1] == ':')
@@ -161,7 +161,7 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 				settings->hostname = (uint8*) xmalloc(strlen(argv[*i]));
 				strncpy(settings->hostname, argv[*i], strlen(argv[*i]));
 
-				if ((p = strchr(settings->hostname, ':')) && !strchr(p + 1, ':'))
+				if ((p = strchr((const char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
 				{
 					*p = 0;
 					settings->port = (uint16) atoi(p + 1);

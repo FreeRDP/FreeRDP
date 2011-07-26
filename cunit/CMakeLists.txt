@@ -18,6 +18,7 @@
 # limitations under the License.
 
 include_directories(${CUNIT_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}) # for some internal tests
 
 include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)

@@ -319,7 +319,6 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	highColorDepth = MIN(settings->color_depth, 24);
 
 	supportedColorDepths =
-			RNS_UD_32BPP_SUPPORT |
 			RNS_UD_24BPP_SUPPORT |
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;

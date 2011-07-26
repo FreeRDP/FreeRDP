@@ -318,8 +318,8 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 Channel
 			if (listener->listener_callback->OnNewChannelConnection(listener->listener_callback,
 				(IWTSVirtualChannel*)channel, NULL, &bAccept, &pCallback) == 0 && bAccept == 1)
 			{
-				DEBUG_PRINT("DVC", "listener %s created new channel %d",
-					listener->channel_name, channel->channel_id);
+				DEBUG_DVC("listener %s created new channel %d",
+					  listener->channel_name, channel->channel_id);
 				channel->channel_callback = pCallback;
 				dvcman_channel_list_add(dvcman->channels, item);
 				return 0;
