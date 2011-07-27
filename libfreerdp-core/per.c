@@ -26,7 +26,7 @@
  * @return
  */
 
-boolean per_read_length(STREAM* s, int* length)
+boolean per_read_length(STREAM* s, uint16* length)
 {
 	uint8 byte;
 
@@ -156,7 +156,7 @@ void per_write_padding(STREAM* s, int length)
 
 boolean per_read_integer(STREAM* s, uint32* integer)
 {
-	int length;
+	uint16 length;
 
 	per_read_length(s, &length);
 
@@ -256,7 +256,7 @@ boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 {
 	uint8 t12;
-	int length;
+	uint16 length;
 	uint8 a_oid[6];
 
 
@@ -330,7 +330,7 @@ void per_write_string(STREAM* s, uint8* str, int length)
 boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 {
 	int i;
-	int mlength;
+	uint16 mlength;
 	uint8* a_oct_str;
 
 	per_read_length(s, &mlength);

@@ -22,7 +22,7 @@
 
 #include <freerdp/utils/stream.h>
 
-boolean per_read_length(STREAM* s, int* length);
+boolean per_read_length(STREAM* s, uint16* length);
 void per_write_length(STREAM* s, int length);
 boolean per_read_choice(STREAM* s, uint8* choice);
 void per_write_choice(STREAM* s, uint8 choice);

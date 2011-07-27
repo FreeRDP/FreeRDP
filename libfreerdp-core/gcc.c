@@ -160,7 +160,7 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 
 void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 {
-	int length;
+	uint16 length;
 	uint32 tag;
 	uint16 nodeID;
 	uint8 result;
