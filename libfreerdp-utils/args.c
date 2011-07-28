@@ -42,11 +42,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	ProcessPluginArgs plugin_callback, void* plugin_user_data,
 	ProcessUIArgs ui_callback, void* ui_user_data)
 {
-	int index = 0;
-	int num_extensions = 0;
-	int i, j;
 	int t;
 	char* p;
+	int i, j;
+	int index = 1;
+	int num_extensions = 0;
 	FRDP_PLUGIN_DATA plugin_data[MAX_PLUGIN_DATA + 1];
 
 	while (index < argc)
@@ -134,7 +134,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			else
 			{
-				ui_callback(settings, "-g", p, ui_user_data);
+				if (ui_callback != NULL)
+					ui_callback(settings, "-g", p, ui_user_data);
 			}
 		}
 		else if (strcmp("-t", argv[index]) == 0)
@@ -305,8 +306,12 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 					i++;
 				}
 			}
-			if (!plugin_callback(settings, argv[t], plugin_data, plugin_user_data))
-				return 0;
+
+			if (plugin_callback != NULL)
+			{
+				if (!plugin_callback(settings, argv[t], plugin_data, plugin_user_data))
+					return 0;
+			}
 		}
 		else if (strcmp("--ext", argv[index]) == 0)
 		{
@@ -375,14 +380,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else
 		{
-			t = ui_callback(settings, argv[index], (index + 1 < argc && argv[index + 1][0] != '-' ?
-				argv[index + 1] : NULL), ui_user_data);
-			if (t == 0)
+			if (ui_callback != NULL)
 			{
-				printf("invalid option: %s\n", argv[index]);
-				return 0;
+				t = ui_callback(settings, argv[index], (index + 1 < argc && argv[index + 1][0] != '-' ?
+					argv[index + 1] : NULL), ui_user_data);
+				if (t == 0)
+				{
+					printf("invalid option: %s\n", argv[index]);
+					return 0;
+				}
+				index += t - 1;
 			}
-			index += t - 1;
 		}
 		index++;
 	}

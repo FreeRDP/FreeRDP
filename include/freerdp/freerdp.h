@@ -37,6 +37,7 @@ FREERDP_API void freerdp_global_finish();
 
 typedef struct rdp_freerdp freerdp;
 
+typedef boolean (*pcConnect)(freerdp* freerdp);
 typedef int (*pcChannelDataInput)(freerdp* freerdp, int channelId, uint8* data, int size);
 
 struct rdp_freerdp
@@ -46,9 +47,12 @@ struct rdp_freerdp
 	void* param2;
 	void* param3;
 	void* param4;
+
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
+
+	pcConnect Connect;
 	pcChannelDataInput ChannelDataInput;
 };
 

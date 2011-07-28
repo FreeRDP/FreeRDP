@@ -126,8 +126,8 @@ void test_args(void)
 {
 	char* argv_c[] =
 	{
-		"-a", "8", "-u", "testuser", "-d", "testdomain", "-g", "640x480", "address1:3389",
-		"-a", "16", "-u", "testuser", "-d", "testdomain", "-g", "1280x960", "address2:3390"
+		"freerdp", "-a", "8", "-u", "testuser", "-d", "testdomain", "-g", "640x480", "address1:3389",
+		"freerdp", "-a", "16", "-u", "testuser", "-d", "testdomain", "-g", "1280x960", "address2:3390"
 	};
 	char** argv = argv_c;
 	int argc = sizeof(argv_c) / sizeof(char*);

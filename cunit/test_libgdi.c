@@ -1892,6 +1892,8 @@ void test_gdi_FillRect(void)
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
 	GDI_COLOR color;
+	GDI_COLOR pixel;
+	GDI_COLOR rawPixel;
 
 	int x, y;
 	int badPixels;
@@ -1926,9 +1928,12 @@ void test_gdi_FillRect(void)
 	{
 		for (y = 0; y < height; y++)
 		{
+			rawPixel = gdi_GetPixel(hdc, x, y);
+			pixel = gdi_get_color_32bpp(hdc, rawPixel);
+
 			if (gdi_PtInRect(hRect, x, y))
 			{
-				if (gdi_GetPixel(hdc, x, y) == color) {
+				if (pixel == color) {
 					goodPixels++;
 				}
 				else {
@@ -1938,7 +1943,7 @@ void test_gdi_FillRect(void)
 			}
 			else
 			{
-				if (gdi_GetPixel(hdc, x, y) == color) {
+				if (pixel == color) {
 					badPixels++;
 				}
 				else {

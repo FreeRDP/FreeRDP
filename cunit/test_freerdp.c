@@ -124,11 +124,6 @@ int main(int argc, char* argv[])
 		add_list_suite();
 		add_license_suite();
 		add_stream_suite();
-		add_utils_suite();
-		add_transport_suite();
-		//add_chanman_suite();
-		//add_cliprdr_suite();
-		//add_drdynvc_suite();
 	}
 	else
 	{
@@ -168,15 +163,15 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp("chanman", argv[*pindex]) == 0)
 			{
-				//add_chanman_suite();
+				add_chanman_suite();
 			}
 			else if (strcmp("cliprdr", argv[*pindex]) == 0)
 			{
-				//add_cliprdr_suite();
+				add_cliprdr_suite();
 			}
 			else if (strcmp("drdynvc", argv[*pindex]) == 0)
 			{
-				//add_drdynvc_suite();
+				add_drdynvc_suite();
 			}
 			else if (strcmp("per", argv[*pindex]) == 0)
 			{

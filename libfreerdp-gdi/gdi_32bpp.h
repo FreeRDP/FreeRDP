@@ -22,6 +22,8 @@
 
 typedef void (*pSetPixel32_ROP2)(uint32 *pixel, uint32 *pen);
 
+uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color);
+
 int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);

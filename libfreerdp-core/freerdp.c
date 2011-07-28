@@ -20,9 +20,15 @@
 #include "rdp.h"
 #include "input.h"
 #include "update.h"
+#include "connection.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
+
+boolean freerdp_connect(freerdp* instance)
+{
+	return rdp_client_connect((rdpRdp*) instance->rdp);
+}
 
 freerdp* freerdp_new()
 {
@@ -37,6 +43,8 @@ freerdp* freerdp_new()
 		instance->input = rdp->input;
 		instance->update = rdp->update;
 		instance->settings = rdp->settings;
+
+		instance->Connect = freerdp_connect;
 	}
 
 	return instance;
