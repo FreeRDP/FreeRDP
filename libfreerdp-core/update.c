@@ -153,6 +153,8 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
+	IFCALL(update->BeginPaint, update);
+
 	switch (updateType)
 	{
 		case UPDATE_TYPE_ORDERS:
@@ -174,6 +176,8 @@ void update_recv(rdpUpdate* update, STREAM* s)
 			IFCALL(update->Synchronize, update);
 			break;
 	}
+
+	IFCALL(update->EndPaint, update);
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

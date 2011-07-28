@@ -256,8 +256,8 @@ void gdi_bitmap_free(GDI_IMAGE *gdi_bmp);
 int gdi_init(freerdp* instance, uint32 flags);
 void gdi_free(freerdp* instance);
 
-#define SET_GDI(_instance, _gdi) (_instance)->param1 = _gdi
-#define GET_GDI(_instance) ((GDI*) ((_instance)->param1))
+#define SET_GDI(_instance, _gdi) (_instance)->gdi = _gdi
+#define GET_GDI(_instance) ((GDI*) ((_instance)->gdi))
 
 #ifdef WITH_DEBUG_GDI
 #define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)

@@ -20,6 +20,7 @@
 #include "rdp.h"
 #include "input.h"
 #include "update.h"
+#include "transport.h"
 #include "connection.h"
 
 #include <freerdp/freerdp.h>
@@ -27,7 +28,41 @@
 
 boolean freerdp_connect(freerdp* instance)
 {
-	return rdp_client_connect((rdpRdp*) instance->rdp);
+	rdpRdp* rdp;
+	boolean status;
+
+	rdp = (rdpRdp*) instance->rdp;
+
+	IFCALL(instance->PreConnect, instance);
+	status = rdp_client_connect((rdpRdp*) instance->rdp);
+	IFCALL(instance->PostConnect, instance);
+
+	while(1)
+	{
+		rdp_recv(rdp);
+	}
+
+	return status;
+}
+
+boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+{
+	rdpRdp* rdp;
+
+	rdp = (rdpRdp*) instance->rdp;
+	rfds[*rcount] = (void*)(long)(rdp->transport->tcp->sockfd);
+	(*rcount)++;
+
+	return True;
+}
+
+boolean freerdp_check_fds(freerdp* instance)
+{
+	rdpRdp* rdp;
+
+	rdp = (rdpRdp*) instance->rdp;
+
+	return True;
 }
 
 freerdp* freerdp_new()
@@ -45,6 +80,8 @@ freerdp* freerdp_new()
 		instance->settings = rdp->settings;
 
 		instance->Connect = freerdp_connect;
+		instance->GetFileDescriptor = freerdp_get_fds;
+		instance->CheckFileDescriptor = freerdp_check_fds;
 	}
 
 	return instance;

@@ -378,6 +378,8 @@ typedef struct
 
 typedef struct rdp_update rdpUpdate;
 
+typedef int (*pcBeginPaint)(rdpUpdate* update);
+typedef int (*pcEndPaint)(rdpUpdate* update);
 typedef int (*pcSynchronize)(rdpUpdate* update);
 typedef int (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef int (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
@@ -407,9 +409,12 @@ typedef int (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
 struct rdp_update
 {
 	void* rdp;
+	void* gdi;
 	void* param1;
 	void* param2;
 
+	pcBeginPaint BeginPaint;
+	pcEndPaint EndPaint;
 	pcSynchronize Synchronize;
 	pcBitmap Bitmap;
 	pcPalette Palette;

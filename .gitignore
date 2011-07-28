@@ -26,3 +26,4 @@ docs/api
 *.dylib
 cunit/test_freerdp
 client/test/freerdp-test
+client/DirectFB/dfreerdp

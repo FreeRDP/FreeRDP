@@ -1195,7 +1195,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 
 void gdi_free(freerdp* instance)
 {
-	GDI *gdi = GET_GDI(instance);
+	GDI *gdi = GET_GDI(instance->update);
 
 	if (gdi)
 	{
@@ -1205,6 +1205,6 @@ void gdi_free(freerdp* instance)
 		free(gdi);
 	}
 	
-	SET_GDI(instance, NULL);
+	SET_GDI(instance->update, NULL);
 }
 
