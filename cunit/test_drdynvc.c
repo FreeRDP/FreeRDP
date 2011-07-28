@@ -57,7 +57,7 @@ static const uint8 test_capability_request_data[] =
 
 static int data_received = 0;
 
-static int test_rdp_channel_data(rdpInst* inst, int chan_id, uint8* data, int data_size)
+static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);
@@ -68,29 +68,29 @@ void test_drdynvc(void)
 {
 	rdpChanMan* chan_man;
 	rdpSettings settings = { 0 };
-	rdpInst inst = { 0 };
+	freerdp instance = { 0 };
 
 	settings.hostname = "testhost";
-	inst.settings = &settings;
-	inst.rdp_channel_data = test_rdp_channel_data;
+	instance.settings = &settings;
+	instance.ChannelDataInput = test_rdp_channel_data;
 
 	chan_man = freerdp_chanman_new();
 
 	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/drdynvc/drdynvc.so", NULL);
-	freerdp_chanman_pre_connect(chan_man, &inst);
-	freerdp_chanman_post_connect(chan_man, &inst);
+	freerdp_chanman_pre_connect(chan_man, &instance);
+	freerdp_chanman_post_connect(chan_man, &instance);
 
 	/* server sends capability request PDU */
-	freerdp_chanman_data(&inst, 0, (char*)test_capability_request_data, sizeof(test_capability_request_data) - 1,
+	freerdp_chanman_data(&instance, 0, (char*)test_capability_request_data, sizeof(test_capability_request_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_capability_request_data) - 1);
 
 	/* drdynvc sends capability response PDU to server */
 	data_received = 0;
 	while (!data_received)
 	{
-		freerdp_chanman_check_fds(chan_man, &inst);
+		freerdp_chanman_check_fds(chan_man, &instance);
 	}
 
-	freerdp_chanman_close(chan_man, &inst);
+	freerdp_chanman_close(chan_man, &instance);
 	freerdp_chanman_free(chan_man);
 }

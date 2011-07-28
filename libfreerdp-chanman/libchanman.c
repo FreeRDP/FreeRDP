@@ -98,7 +98,7 @@ struct rdp_chan_man
 	int is_connected;
 
 	/* used for locating the chan_man for a given instance */
-	rdpInst* inst;
+	freerdp* instance;
 
 	/* signal for incoming data or event */
 	struct wait_obj* signal;
@@ -164,7 +164,7 @@ static rdpChanMan* freerdp_chanman_find_by_open_handle(int open_handle, int* pin
 }
 
 /* returns the chan_man for the rdp instance passed in */
-static rdpChanMan* freerdp_chanman_find_by_rdp_inst(rdpInst* inst)
+static rdpChanMan* freerdp_chanman_find_by_rdp_inst(freerdp* instance)
 {
 	rdpChanManList* list;
 	rdpChanMan* chan_man;
@@ -173,7 +173,7 @@ static rdpChanMan* freerdp_chanman_find_by_rdp_inst(rdpInst* inst)
 	for (list = g_chan_man_list; list; list = list->next)
 	{
 		chan_man = list->chan_man;
-		if (chan_man->inst == inst)
+		if (chan_man->instance == instance)
 		{
 			freerdp_mutex_unlock(g_mutex_list);
 			return chan_man;
@@ -647,7 +647,7 @@ int freerdp_chanman_load_plugin(rdpChanMan* chan_man, rdpSettings* settings,
  * go through and inform all the libraries that we are initialized
  * called only from main thread
  */
-int freerdp_chanman_pre_connect(rdpChanMan* chan_man, rdpInst* inst)
+int freerdp_chanman_pre_connect(rdpChanMan* chan_man, freerdp* instance)
 {
 	int index;
 	struct lib_data* llib;
@@ -655,7 +655,7 @@ int freerdp_chanman_pre_connect(rdpChanMan* chan_man, rdpInst* inst)
 	void* dummy;
 
 	DEBUG_CHANMAN("enter");
-	chan_man->inst = inst;
+	chan_man->instance = instance;
 
 	/**
          * If rdpsnd is registered but not rdpdr, it's necessary to register a fake
@@ -669,7 +669,7 @@ int freerdp_chanman_pre_connect(rdpChanMan* chan_man, rdpInst* inst)
 			CHANNEL_OPTION_ENCRYPT_RDP;
 		strcpy(lchannel_def.name, "rdpdr");
 		chan_man->can_call_init = 1;
-		chan_man->settings = inst->settings;
+		chan_man->settings = instance->settings;
 		freerdp_mutex_lock(g_mutex_init);
 		g_init_chan_man = chan_man;
 		MyVirtualChannelInit(&dummy, &lchannel_def, 1,
@@ -698,7 +698,7 @@ int freerdp_chanman_pre_connect(rdpChanMan* chan_man, rdpInst* inst)
  * this will tell the libraries that its ok to call MyVirtualChannelOpen
  * called only from main thread
  */
-int freerdp_chanman_post_connect(rdpChanMan* chan_man, rdpInst* inst)
+int freerdp_chanman_post_connect(rdpChanMan* chan_man, freerdp* instance)
 {
 	int index;
 	struct lib_data* llib;
@@ -706,7 +706,7 @@ int freerdp_chanman_post_connect(rdpChanMan* chan_man, rdpInst* inst)
 	int hostname_len;
 
 	chan_man->is_connected = 1;
-	hostname = inst->settings->hostname;
+	hostname = instance->settings->hostname;
 	hostname_len = strlen(hostname);
 	DEBUG_CHANMAN("hostname [%s] chan_man->num_libs [%d]",
 		hostname, chan_man->num_libs);
@@ -726,7 +726,7 @@ int freerdp_chanman_post_connect(rdpChanMan* chan_man, rdpInst* inst)
  * data comming from the server to the client
  * called only from main thread
  */
-int freerdp_chanman_data(rdpInst* inst, int chan_id, char* data, int data_size,
+int freerdp_chanman_data(freerdp* instance, int chan_id, char* data, int data_size,
 	int flags, int total_size)
 {
 	rdpChanMan* chan_man;
@@ -734,14 +734,14 @@ int freerdp_chanman_data(rdpInst* inst, int chan_id, char* data, int data_size,
 	struct chan_data* lchan_data;
 	int index;
 
-	chan_man = freerdp_chanman_find_by_rdp_inst(inst);
+	chan_man = freerdp_chanman_find_by_rdp_inst(instance);
 	if (chan_man == 0)
 	{
 		DEBUG_CHANMAN("could not find channel manager");
 		return 1;
 	}
 
-	lrdp_chan = freerdp_chanman_find_rdp_chan_by_id(chan_man, inst->settings,
+	lrdp_chan = freerdp_chanman_find_rdp_chan_by_id(chan_man, instance->settings,
 		chan_id, &index);
 	if (lrdp_chan == 0)
 	{
@@ -794,7 +794,7 @@ FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* nam
 /**
  * called only from main thread
  */
-static void freerdp_chanman_process_sync(rdpChanMan* chan_man, rdpInst* inst)
+static void freerdp_chanman_process_sync(rdpChanMan* chan_man, freerdp* instance)
 {
 	void* ldata;
 	uint32 ldata_len;
@@ -816,11 +816,11 @@ static void freerdp_chanman_process_sync(rdpChanMan* chan_man, rdpInst* inst)
 	chan_man->sync_index = 0;
 	freerdp_sem_signal(chan_man->sync_data_sem); /* release chan_man->sync* vars */
 	lchan_data = chan_man->chans + lindex;
-	lrdp_chan = freerdp_chanman_find_rdp_chan_by_name(chan_man, inst->settings,
+	lrdp_chan = freerdp_chanman_find_rdp_chan_by_name(chan_man, instance->settings,
 		lchan_data->name, &lindex);
 	if (lrdp_chan != 0)
 	{
-		inst->rdp_channel_data(inst, lrdp_chan->chan_id, ldata, ldata_len);
+		instance->ChannelDataInput(instance, lrdp_chan->chan_id, ldata, ldata_len);
 	}
 	if (lchan_data->open_event_proc != 0)
 	{
@@ -833,7 +833,7 @@ static void freerdp_chanman_process_sync(rdpChanMan* chan_man, rdpInst* inst)
 /**
  * called only from main thread
  */
-int freerdp_chanman_get_fds(rdpChanMan* chan_man, rdpInst* inst, void** read_fds,
+int freerdp_chanman_get_fds(rdpChanMan* chan_man, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
 	wait_obj_get_fds(chan_man->signal, read_fds, read_count);
@@ -843,12 +843,12 @@ int freerdp_chanman_get_fds(rdpChanMan* chan_man, rdpInst* inst, void** read_fds
 /**
  * called only from main thread
  */
-int freerdp_chanman_check_fds(rdpChanMan * chan_man, rdpInst * inst)
+int freerdp_chanman_check_fds(rdpChanMan * chan_man, freerdp* instance)
 {
 	if (wait_obj_is_set(chan_man->signal))
 	{
 		wait_obj_clear(chan_man->signal);
-		freerdp_chanman_process_sync(chan_man, inst);
+		freerdp_chanman_process_sync(chan_man, instance);
 	}
 	return 0;
 }
@@ -865,14 +865,14 @@ FRDP_EVENT* freerdp_chanman_pop_event(rdpChanMan* chan_man)
 	return event;
 }
 
-void freerdp_chanman_close(rdpChanMan* chan_man, rdpInst* inst)
+void freerdp_chanman_close(rdpChanMan* chan_man, freerdp* instance)
 {
 	int index;
 	struct lib_data* llib;
 
 	DEBUG_CHANMAN("closing");
 	chan_man->is_connected = 0;
-	freerdp_chanman_check_fds(chan_man, inst);
+	freerdp_chanman_check_fds(chan_man, instance);
 	/* tell all libraries we are shutting down */
 	for (index = 0; index < chan_man->num_libs; index++)
 	{

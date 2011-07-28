@@ -48,12 +48,12 @@ add_executable(test_freerdp
 	test_utils.h
 	test_transport.c
 	test_transport.h
-	#test_chanman.c
-	#test_chanman.h
-	#test_cliprdr.c
-	#test_cliprdr.h
-	#test_drdynvc.c
-	#test_drdynvc.h
+	test_chanman.c
+	test_chanman.h
+	test_cliprdr.c
+	test_cliprdr.h
+	test_drdynvc.c
+	test_drdynvc.h
 	test_freerdp.c
 	test_freerdp.h)
 
@@ -62,6 +62,6 @@ target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 target_link_libraries(test_freerdp freerdp-core)
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-utils)
-#target_link_libraries(test_freerdp freerdp-chanman)
+target_link_libraries(test_freerdp freerdp-chanman)
 
 add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)
