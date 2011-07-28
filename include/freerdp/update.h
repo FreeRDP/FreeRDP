@@ -407,6 +407,8 @@ typedef int (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
 struct rdp_update
 {
 	void* rdp;
+	void* param1;
+	void* param2;
 
 	pcSynchronize Synchronize;
 	pcBitmap Bitmap;

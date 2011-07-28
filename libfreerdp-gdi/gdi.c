@@ -1065,6 +1065,24 @@ gdi_ui_decode(struct rdp_inst * inst, uint8 * data, int size)
 }
 #endif
 
+int gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
+{
+	int i;
+	BITMAP_DATA* bmp;
+	GDI_IMAGE* gdi_bmp;
+	GDI* gdi = GET_GDI(update);
+
+	for (i = 0; i < bitmap->number; i++)
+	{
+		bmp = &bitmap->bitmaps[i];
+		gdi_bmp = gdi_bitmap_new(gdi, bmp->width, bmp->height, gdi->dstBpp, bmp->data);
+		gdi_BitBlt(gdi->primary->hdc, bmp->left, bmp->top, bmp->width, bmp->height, gdi_bmp->hdc, 0, 0, GDI_SRCCOPY);
+		gdi_bitmap_free((GDI_IMAGE*) gdi_bmp);
+	}
+
+	return 0;
+}
+
 /**
  * Register GDI callbacks with libfreerdp.
  * @param inst current instance
@@ -1073,7 +1091,7 @@ gdi_ui_decode(struct rdp_inst * inst, uint8 * data, int size)
 
 void gdi_register_update_callbacks(rdpUpdate* update)
 {
-	update->Bitmap = NULL;
+	update->Bitmap = gdi_bitmap_update;
 	update->Palette = NULL;
 	update->DstBlt = NULL;
 	update->PatBlt = NULL;
@@ -1109,7 +1127,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 {
 	GDI *gdi = (GDI*) malloc(sizeof(GDI));
 	memset(gdi, 0, sizeof(GDI));
-	SET_GDI(instance, gdi);
+	SET_GDI(instance->update, gdi);
 
 	gdi->width = instance->settings->width;
 	gdi->height = instance->settings->height;

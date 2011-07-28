@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "gdi.h"
 #include "connection.h"
 
 #include <freerdp/freerdp.h>
@@ -190,23 +191,11 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 	return True;
 }
 
-int bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
-{
-	printf("received bitmap update from core\n");
-	return 0;
-}
-
-void register_update_callbacks(rdpUpdate* update)
-{
-	update->Bitmap = bitmap_update;
-}
-
 int main(int argc, char* argv[])
 {
 	int index = 1;
 
 	instance = freerdp_new();
-	register_update_callbacks(instance->update);
 
 	settings = instance->settings;
 	rdp = (rdpRdp*) instance->rdp;
@@ -217,8 +206,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	printf("hostname:%s username:%s password:%s\n",
-			settings->hostname, settings->username, settings->password);
+	gdi_init(instance, 0);
 
 	rdp_client_connect(rdp);
 
