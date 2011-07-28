@@ -28,7 +28,7 @@ uint8 UPDATE_TYPE_STRINGS[][32] =
 	"Synchronize"
 };
 
-void rdp_recv_orders_update(rdpRdp* rdp, STREAM* s)
+void update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	uint16 numberOrders;
 
@@ -38,12 +38,12 @@ void rdp_recv_orders_update(rdpRdp* rdp, STREAM* s)
 
 	while (numberOrders > 0)
 	{
-		rdp_recv_order(rdp, s);
+		update_recv_order(update, s);
 		numberOrders--;
 	}
 }
 
-void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
+void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
 	uint8* srcData;
 	uint16 dstSize;
@@ -95,7 +95,7 @@ void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 		printf("bitmap decompression failed\n");
 }
 
-void rdp_read_bitmap_update(rdpRdp* rdp, STREAM* s, BITMAP_UPDATE* bitmap_update)
+void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
 
@@ -106,11 +106,11 @@ void rdp_read_bitmap_update(rdpRdp* rdp, STREAM* s, BITMAP_UPDATE* bitmap_update
 	/* rectangles */
 	for (i = 0; i < bitmap_update->number; i++)
 	{
-		rdp_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
+		update_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
 	}
 }
 
-void rdp_read_palette_update(rdpRdp* rdp, STREAM* s, PALETTE_UPDATE* palette_update)
+void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update)
 {
 	int i;
 	uint8 byte;
@@ -135,7 +135,7 @@ void rdp_read_palette_update(rdpRdp* rdp, STREAM* s, PALETTE_UPDATE* palette_upd
 	}
 }
 
-void rdp_read_synchronize_update(rdpRdp* rdp, STREAM* s)
+void update_read_synchronize(rdpUpdate* update, STREAM* s)
 {
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
 
@@ -145,36 +145,38 @@ void rdp_read_synchronize_update(rdpRdp* rdp, STREAM* s)
 	 */
 }
 
-void rdp_recv_update_data_pdu(rdpRdp* rdp, STREAM* s)
+void update_recv(rdpUpdate* update, STREAM* s)
 {
 	uint16 updateType;
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
-	if (updateType != UPDATE_TYPE_ORDERS)
-		printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	switch (updateType)
 	{
 		case UPDATE_TYPE_ORDERS:
-			rdp_recv_orders_update(rdp, s);
+			update_recv_orders(update, s);
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			rdp_read_bitmap_update(rdp, s, &rdp->update->bitmap_update);
+			update_read_bitmap(update, s, &update->bitmap_update);
+			IFCALL(update->Bitmap, update, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			rdp_read_palette_update(rdp, s, &rdp->update->palette_update);
+			update_read_palette(update, s, &update->palette_update);
+			IFCALL(update->Palette, update, &update->palette_update);
 			break;
 
 		case UPDATE_TYPE_SYNCHRONIZE:
-			rdp_read_synchronize_update(rdp, s);
+			update_read_synchronize(update, s);
+			IFCALL(update->Synchronize, update);
 			break;
 	}
 }
 
-rdpUpdate* update_new()
+rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
 
@@ -182,7 +184,7 @@ rdpUpdate* update_new()
 
 	if (update != NULL)
 	{
-
+		update->rdp = (void*) rdp;
 	}
 
 	return update;

@@ -51,6 +51,7 @@ set(LIBFREERDP_CORE_SRCS
 	settings.c
 	orders.c
 	orders.h
+	freerdp.c
 	capabilities.c
 	capabilities.h
 	certificate.c

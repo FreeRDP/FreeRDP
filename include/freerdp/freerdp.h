@@ -25,9 +25,31 @@
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
 
+#include <freerdp/input.h>
+#include <freerdp/update.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* New Interface */
+
+FREERDP_API boolean freerdp_global_init();
+FREERDP_API void freerdp_global_finish();
+
+typedef struct
+{
+	void* rdp;
+	rdpInput* input;
+	rdpUpdate* update;
+	rdpSettings* settings;
+} freerdp;
+
+FREERDP_API freerdp* freerdp_new();
+FREERDP_API void freerdp_free(freerdp* instance);
+
+#if 0
+/* Old Interface */
 
 FREERDP_API boolean
 freerdp_global_init(void);
@@ -38,12 +60,12 @@ struct rdp_inst
 {
 	int version;
 	int size;
-	rdpSettings * settings;
-	void * rdp;
-	void * param1;
-	void * param2;
-	void * param3;
-	void * param4;
+	rdpSettings* settings;
+	void* rdp;
+	void* param1;
+	void* param2;
+	void* param3;
+	void* param4;
 	uint32 disc_reason;
 	/* calls from ui to library */
 	int (* rdp_connect)(rdpInst * inst);
@@ -126,6 +148,7 @@ FREERDP_API rdpInst *
 freerdp_new(rdpSettings * settings);
 FREERDP_API void
 freerdp_free(rdpInst * inst);
+#endif
 
 #ifdef __cplusplus
 }

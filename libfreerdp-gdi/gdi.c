@@ -444,6 +444,8 @@ gdi_bitmap_free(GDI_IMAGE *gdi_bmp)
 	}
 }
 
+#if 0
+
 /* GDI callbacks registered in libfreerdp */
 
 static void
@@ -1193,3 +1195,6 @@ void gdi_free(rdpInst* inst)
 	
 	SET_GDI(inst, NULL);
 }
+
+#endif
+

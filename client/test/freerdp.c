@@ -22,8 +22,13 @@
 
 #include "connection.h"
 
+#include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
+
+rdpRdp* rdp;
+freerdp* instance;
+rdpSettings* settings;
 
 #define PARAM_EQUALS(_param)		(strcmp(_param, argv[*i]) == 0)
 
@@ -185,14 +190,26 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 	return True;
 }
 
+int bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
+{
+	printf("received bitmap update from core\n");
+	return 0;
+}
+
+void register_update_callbacks(rdpUpdate* update)
+{
+	update->Bitmap = bitmap_update;
+}
+
 int main(int argc, char* argv[])
 {
-	rdpRdp* rdp;
 	int index = 1;
-	rdpSettings* settings;
 
-	rdp = rdp_new();
-	settings = rdp->settings;
+	instance = freerdp_new();
+	register_update_callbacks(instance->update);
+
+	settings = instance->settings;
+	rdp = (rdpRdp*) instance->rdp;
 
 	if (freerdp_process_params(argc, argv, settings, &index) != True)
 	{
@@ -204,6 +221,8 @@ int main(int argc, char* argv[])
 			settings->hostname, settings->username, settings->password);
 
 	rdp_client_connect(rdp);
+
+	freerdp_free(instance);
 
 	return 0;
 }

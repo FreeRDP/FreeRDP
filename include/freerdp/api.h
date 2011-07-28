@@ -50,4 +50,6 @@
 #define FREERDP_CC
 #endif
 
+#define IFCALL(_cb, ...) do { if (_cb != NULL) { _cb( __VA_ARGS__ ); } } while (0)
+
 #endif

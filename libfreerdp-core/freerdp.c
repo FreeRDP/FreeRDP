@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Update Data PDUs
+ * FreeRDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,29 +17,32 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_H
-#define __UPDATE_H
-
 #include "rdp.h"
-#include "orders.h"
-#include <freerdp/types.h>
-#include <freerdp/update.h>
+#include "input.h"
+#include "update.h"
+
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+#include <freerdp/utils/memory.h>
 
-#define UPDATE_TYPE_ORDERS		0x0000
-#define UPDATE_TYPE_BITMAP		0x0001
-#define UPDATE_TYPE_PALETTE		0x0002
-#define UPDATE_TYPE_SYNCHRONIZE		0x0003
+freerdp* freerdp_new()
+{
+	freerdp* instance;
 
-#define BITMAP_COMPRESSION		0x0001
-#define NO_BITMAP_COMPRESSION_HDR	0x0400
+	instance = xzalloc(sizeof(freerdp));
 
-rdpUpdate* update_new(rdpRdp* rdp);
-void update_free(rdpUpdate* update);
+	if (instance != NULL)
+	{
+		rdpRdp* rdp = rdp_new();
+		instance->rdp = (void*) rdp;
+		instance->input = rdp->input;
+		instance->update = rdp->update;
+		instance->settings = rdp->settings;
+	}
 
-void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update);
-void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update);
-void update_recv(rdpUpdate* update, STREAM* s);
+	return instance;
+}
 
-#endif /* __UPDATE_H */
+void freerdp_free(freerdp* freerdp)
+{
+	xfree(freerdp);
+}
