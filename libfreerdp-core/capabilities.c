@@ -1640,13 +1640,3 @@ void rdp_send_confirm_active(rdpRdp* rdp)
 	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
 }
 
-void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
-{
-	uint16 lengthSourceDescriptor;
-
-	printf("Deactivate All PDU\n");
-
-	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
-	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
-}

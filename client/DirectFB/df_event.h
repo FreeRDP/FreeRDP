@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * DirectFB Client
+ * DirectFB Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,31 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __DFREERDP_H
-#define __DFREERDP_H
+#ifndef __DF_EVENT_H
+#define __DF_EVENT_H
 
-#include "gdi.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <directfb.h>
-#include <freerdp/freerdp.h>
+#include "dfreerdp.h"
 
-#define SET_DFI(_instance, _dfi) (_instance)->param1 = _dfi
-#define GET_DFI(_instance) ((dfInfo *) ((_instance)->param1))
+boolean df_event_process(freerdp* instance, DFBEvent* event);
 
-struct df_info
-{
-	int read_fds;
-	DFBResult err;
-	IDirectFB* dfb;
-	DFBEvent event;
-	DFBRectangle update_rect;
-	DFBSurfaceDescription dsc;
-	IDirectFBSurface* primary;
-	IDirectFBSurface* surface;
-	IDirectFBDisplayLayer* layer;
-	IDirectFBEventBuffer* event_buffer;
-};
-typedef struct df_info dfInfo;
-
-#endif /* __DFREERDP_H */
+#endif /* __DF_EVENT_H */

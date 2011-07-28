@@ -170,4 +170,20 @@ void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags)
 void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	rdp->activated = True;
+	rdp->transport->tcp->set_blocking_mode(rdp->transport->tcp, False);
 }
+
+void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
+{
+	uint16 lengthSourceDescriptor;
+
+	printf("Deactivate All PDU\n");
+
+	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
+
+	rdp->activated = False;
+	rdp->transport->tcp->set_blocking_mode(rdp->transport->tcp, True);
+}
+

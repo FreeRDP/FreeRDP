@@ -17,12 +17,13 @@
  * limitations under the License.
  */
 
-#include "gdi.h"
+#include <errno.h>
 #include <pthread.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
+
+#include "df_event.h"
 
 #include "dfreerdp.h"
 
@@ -63,11 +64,28 @@ void df_end_paint(rdpUpdate* update)
 
 boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
+	dfInfo* dfi;
+
+	dfi = GET_DFI(instance);
+
+	rfds[*rcount] = (void*)(long)(dfi->read_fds);
+	(*rcount)++;
+
 	return True;
 }
 
-boolean df_check_fds(freerdp* instance)
+boolean df_check_fds(freerdp* instance, fd_set* set)
 {
+	dfInfo* dfi;
+
+	dfi = GET_DFI(instance);
+
+	if (!FD_ISSET(dfi->read_fds, set))
+		return True;
+
+	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
+		df_event_process(instance, &(dfi->event));
+
 	return True;
 }
 
@@ -131,6 +149,9 @@ boolean df_post_connect(freerdp* instance)
 
 int dfreerdp_run(freerdp* instance)
 {
+	int i;
+	int fds;
+	int max_fds;
 	int rcount;
 	int wcount;
 	void* rfds[32];
@@ -144,6 +165,67 @@ int dfreerdp_run(freerdp* instance)
 	printf("DirectFB Run\n");
 
 	instance->Connect(instance);
+
+	int count = 0;
+
+	while (1)
+	{
+		rcount = 0;
+		wcount = 0;
+
+		printf("loop... %d\n", count++);
+
+		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
+		{
+			printf("Failed to get FreeRDP file descriptor\n");
+			break;
+		}
+		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
+		{
+			printf("Failed to get dfreerdp file descriptor\n");
+			break;
+		}
+
+		max_fds = 0;
+		FD_ZERO(&rfds_set);
+
+		for (i = 0; i < rcount; i++)
+		{
+			fds = (int)(long)(rfds[i]);
+
+			if (fds > max_fds)
+				max_fds = fds;
+
+			FD_SET(fds, &wfds_set);
+		}
+
+		if (max_fds == 0)
+			break;
+
+		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		{
+			/* these are not really errors */
+			if (!((errno == EAGAIN) ||
+				(errno == EWOULDBLOCK) ||
+				(errno == EINPROGRESS) ||
+				(errno == EINTR))) /* signal occurred */
+			{
+				printf("dfreerdp_run: select failed\n");
+				break;
+			}
+		}
+
+		if (instance->CheckFileDescriptor(instance) != True)
+		{
+			printf("Failed to check FreeRDP file descriptor\n");
+			break;
+		}
+		if (df_check_fds(instance, &rfds_set) != True)
+		{
+			printf("Failed to check dfreerdp file descriptor\n");
+			break;
+		}
+	}
 
 	freerdp_free(instance);
 

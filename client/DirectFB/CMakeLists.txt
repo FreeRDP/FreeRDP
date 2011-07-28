@@ -22,6 +22,8 @@ include_directories(../../libfreerdp-core)
 include_directories(${DIRECTFB_INCLUDE_DIRS})
 
 add_executable(dfreerdp
+	df_event.c
+	df_event.h
 	dfreerdp.c
 	dfreerdp.h)
 

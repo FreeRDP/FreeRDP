@@ -39,6 +39,7 @@
 #define FONTLIST_LAST			0x0002
 
 boolean rdp_client_activate(rdpRdp* rdp);
+void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s);
 
 void rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 void rdp_send_client_synchronize_pdu(rdpRdp* rdp);

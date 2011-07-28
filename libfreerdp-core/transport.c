@@ -149,59 +149,6 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 int transport_check_fds(rdpTransport* transport)
 {
-	int pos;
-	int bytes;
-	uint16 length;
-	STREAM* received;
-
-	bytes = transport_read(transport, transport->recv_buffer);
-
-	if (bytes <= 0)
-		return bytes;
-
-	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
-	{
-		/* Ensure the TPKT header is available. */
-		if (pos <= 4)
-			return 0;
-
-		stream_set_pos(transport->recv_buffer, 0);
-		length = tpkt_read_header(transport->recv_buffer);
-
-		if (length == 0)
-		{
-			printf("transport_check_fds: protocol error, not a TPKT header.\n");
-			return -1;
-		}
-
-		if (pos < length)
-		{
-			stream_set_pos(transport->recv_buffer, pos);
-			return 0; /* Packet is not yet completely received. */
-		}
-
-		/*
-		 * A complete packet has been received. In case there are trailing data
-		 * for the next packet, we copy it to the new receive buffer.
-		 */
-		received = transport->recv_buffer;
-		transport->recv_buffer = stream_new(BUFFER_SIZE);
-
-		if (pos > length)
-		{
-			stream_set_pos(received, length);
-			stream_check_size(transport->recv_buffer, pos - length);
-			stream_copy(transport->recv_buffer, received, pos - length);
-		}
-
-		stream_set_pos(received, 0);
-		bytes = transport->recv_callback(transport, received, transport->recv_extra);
-		stream_free(received);
-
-		if (bytes < 0)
-			return bytes;
-	}
-
 	return 0;
 }
 
