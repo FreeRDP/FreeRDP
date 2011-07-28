@@ -1063,6 +1063,7 @@ gdi_ui_decode(struct rdp_inst * inst, uint8 * data, int size)
 	gdi_decode_data(gdi, data, size);
 	return 0;
 }
+#endif
 
 /**
  * Register GDI callbacks with libfreerdp.
@@ -1070,38 +1071,32 @@ gdi_ui_decode(struct rdp_inst * inst, uint8 * data, int size)
  * @return
  */
 
-static int
-gdi_register_callbacks(rdpInst * inst)
+void gdi_register_update_callbacks(rdpUpdate* update)
 {
-	inst->ui_desktop_save = gdi_ui_desktop_save;
-	inst->ui_desktop_restore = gdi_ui_desktop_restore;
-	inst->ui_create_bitmap = gdi_ui_create_bitmap;
-	inst->ui_paint_bitmap = gdi_ui_paint_bitmap;
-	inst->ui_destroy_bitmap = gdi_ui_destroy_bitmap;
-	inst->ui_line = gdi_ui_line;
-	inst->ui_rect = gdi_ui_rect;
-	inst->ui_polygon = gdi_ui_polygon;
-	inst->ui_polyline = gdi_ui_polyline;
-	inst->ui_ellipse = gdi_ui_ellipse;
-	inst->ui_start_draw_glyphs = gdi_ui_start_draw_glyphs;
-	inst->ui_draw_glyph = gdi_ui_draw_glyph;
-	inst->ui_end_draw_glyphs = gdi_ui_end_draw_glyphs;
-	inst->ui_destblt = gdi_ui_destblt;
-	inst->ui_patblt = gdi_ui_patblt;
-	inst->ui_screenblt = gdi_ui_screenblt;
-	inst->ui_memblt = gdi_ui_memblt;
-	inst->ui_triblt = gdi_ui_mem3blt;
-	inst->ui_create_palette = gdi_ui_create_palette;
-	inst->ui_set_palette = gdi_ui_set_palette;
-	inst->ui_create_glyph = gdi_ui_create_glyph;
-	inst->ui_destroy_glyph = gdi_ui_destroy_glyph;
-	inst->ui_set_clip = gdi_ui_set_clipping_region;
-	inst->ui_reset_clip = gdi_ui_reset_clipping_region;
-	inst->ui_create_surface = gdi_ui_create_surface;
-	inst->ui_set_surface = gdi_ui_switch_surface;
-	inst->ui_destroy_surface = gdi_ui_destroy_surface;
-	inst->ui_decode = gdi_ui_decode;
-	return 0;
+	update->Bitmap = NULL;
+	update->Palette = NULL;
+	update->DstBlt = NULL;
+	update->PatBlt = NULL;
+	update->ScrBlt = NULL;
+	update->DrawNineGrid = NULL;
+	update->MultiDrawNineGrid = NULL;
+	update->LineTo = NULL;
+	update->OpaqueRect = NULL;
+	update->SaveBitmap = NULL;
+	update->MemBlt = NULL;
+	update->Mem3Blt = NULL;
+	update->MultiDstBlt = NULL;
+	update->MultiPatBlt = NULL;
+	update->MultiScrBlt = NULL;
+	update->MultiOpaqueRect = NULL;
+	update->FastIndex = NULL;
+	update->PolygonSC = NULL;
+	update->PolygonCB = NULL;
+	update->Polyline = NULL;
+	update->FastGlyph = NULL;
+	update->EllipseSC = NULL;
+	update->EllipseCB = NULL;
+	update->GlyphIndex = NULL;
 }
 
 /**
@@ -1110,16 +1105,15 @@ gdi_register_callbacks(rdpInst * inst)
  * @return
  */
 
-int
-gdi_init(rdpInst * inst, uint32 flags)
+int gdi_init(freerdp* instance, uint32 flags)
 {
 	GDI *gdi = (GDI*) malloc(sizeof(GDI));
 	memset(gdi, 0, sizeof(GDI));
-	SET_GDI(inst, gdi);
+	SET_GDI(instance, gdi);
 
-	gdi->width = inst->settings->width;
-	gdi->height = inst->settings->height;
-	gdi->srcBpp = inst->settings->color_depth;
+	gdi->width = instance->settings->width;
+	gdi->height = instance->settings->height;
+	gdi->srcBpp = instance->settings->color_depth;
 
 	/* default internal buffer format */
 	gdi->dstBpp = 32;
@@ -1176,14 +1170,14 @@ gdi_init(rdpInst * inst, uint32 flags)
 
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
 
-	gdi_register_callbacks(inst);
+	gdi_register_update_callbacks(instance->update);
 
 	return 0;
 }
 
-void gdi_free(rdpInst* inst)
+void gdi_free(freerdp* instance)
 {
-	GDI *gdi = GET_GDI(inst);
+	GDI *gdi = GET_GDI(instance);
 
 	if (gdi)
 	{
@@ -1193,8 +1187,6 @@ void gdi_free(rdpInst* inst)
 		free(gdi);
 	}
 	
-	SET_GDI(inst, NULL);
+	SET_GDI(instance, NULL);
 }
-
-#endif
 

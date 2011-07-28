@@ -251,10 +251,10 @@ void gdi_copy_mem_backwards(uint8 *d, uint8 *s, int n);
 uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
-int gdi_init(rdpInst * inst, uint32 flags);
 GDI_IMAGE* gdi_bitmap_new(GDI *gdi, int width, int height, int bpp, uint8* data);
 void gdi_bitmap_free(GDI_IMAGE *gdi_bmp);
-void gdi_free(rdpInst* inst);
+int gdi_init(freerdp* instance, uint32 flags);
+void gdi_free(freerdp* instance);
 
 #define SET_GDI(_inst, _gdi) (_inst)->param2 = _gdi
 #define GET_GDI(_inst) ((GDI*) ((_inst)->param2))
