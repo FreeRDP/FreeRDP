@@ -34,6 +34,8 @@ set(LIBFREERDP_CORE_SRCS
 	nego.h
 	info.c
 	info.h
+	input.c
+	input.h
 	crypto.c
 	crypto.h
 	credssp.c

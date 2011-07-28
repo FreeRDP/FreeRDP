@@ -82,7 +82,7 @@ void rdp_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	stream_get_mark(s, srcData);
 	stream_seek(s, bitmap_data->length);
 
-	bitmap_data->data = (uint8*) xmalloc(dstSize);
+	bitmap_data->data = (uint8*) xzalloc(dstSize);
 
 	//printf("bytesPerPixel:%d, width:%d, height:%d dstSize:%d flags:0x%04X\n",
 	//		bytesPerPixel, bitmap_data->width, bitmap_data->height, dstSize, bitmap_data->flags);
@@ -100,7 +100,7 @@ void rdp_read_bitmap_update(rdpRdp* rdp, STREAM* s, BITMAP_UPDATE* bitmap_update
 
 	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
-	bitmap_update->bitmaps = (BITMAP_DATA*) xmalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
+	bitmap_update->bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
 
 	/* rectangles */
 	for (i = 0; i < bitmap_update->number; i++)
