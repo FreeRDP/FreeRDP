@@ -34,7 +34,7 @@
 	} while(0)
 
 #define STRING_COPY(_str)		do { \
-	settings->_str = (uint8*) xmalloc(strlen(argv[*i])); \
+	settings->_str = xmalloc(strlen(argv[*i]) + 1); \
 	memcpy(settings->_str, argv[*i], strlen(argv[*i])); \
 	settings->_str[strlen(argv[*i])] = '\0'; \
 	} while(0)
@@ -145,10 +145,10 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 				&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
 			{
 				/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-				settings->hostname = (uint8*) xmalloc(strlen(argv[*i] + 1));
+				settings->hostname = (char*) xmalloc(strlen(argv[*i]) + 1);
 				strncpy(settings->hostname, argv[*i] + 1, strlen(argv[*i] + 1));
 
-				if ((p = strchr(settings->hostname, ']')))
+				if ((p = strchr((const char*)settings->hostname, ']')))
 				{
 					*p = 0;
 					if (p[1] == ':')
@@ -158,8 +158,9 @@ boolean freerdp_process_params(int argc, char* argv[], rdpSettings* settings, in
 			else
 			{
 				/* Port number is cut off and used if exactly one : in the string */
-				settings->hostname = (uint8*) xmalloc(strlen(argv[*i]));
+				settings->hostname = (char*) xmalloc(strlen(argv[*i]) + 1);
 				strncpy(settings->hostname, argv[*i], strlen(argv[*i]));
+				settings->hostname[strlen(argv[*i])] = '\0';
 
 				if ((p = strchr(settings->hostname, ':')) && !strchr(p + 1, ':'))
 				{

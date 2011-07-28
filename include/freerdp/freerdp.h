@@ -54,8 +54,8 @@ struct rdp_inst
 	int (* rdp_send_input_unicode)(rdpInst * inst, uint16 character);
 	int (* rdp_send_input_mouse)(rdpInst * inst, uint16 pointerFlags, uint16 xPos, uint16 yPos);
 	int (* rdp_sync_input)(rdpInst * inst, int toggle_flags);
-	int (* rdp_channel_data)(rdpInst * inst, int chan_id, char * data, int data_size);
-	void (*rdp_suppress_output)(rdpInst * inst, int allow_display_updates);
+	int (* rdp_channel_data)(rdpInst * inst, int chan_id, uint8 * data, int data_size);
+	void (* rdp_suppress_output)(rdpInst * inst, int allow_display_updates);
 	void (* rdp_disconnect)(rdpInst * inst);
 	int (* rdp_send_frame_ack)(rdpInst * inst, int frame_id);
 	/* calls from library to ui */

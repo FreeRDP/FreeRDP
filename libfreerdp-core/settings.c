@@ -101,7 +101,7 @@ rdpSettings* settings_new()
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
 
-		settings->client_dir = (uint8*)xstrdup(client_dll);
+		settings->client_dir = xstrdup(client_dll);
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);

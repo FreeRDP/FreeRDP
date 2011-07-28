@@ -48,7 +48,7 @@ int add_chanman_suite(void)
 	return 0;
 }
 
-static int test_rdp_channel_data(rdpInst* inst, int chan_id, char* data, int data_size)
+static int test_rdp_channel_data(rdpInst* inst, int chan_id, uint8* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 }

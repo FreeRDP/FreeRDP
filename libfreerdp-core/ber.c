@@ -90,7 +90,7 @@ boolean ber_read_universal_tag(STREAM* s, uint8 tag, boolean pc)
 
 	stream_read_uint8(s, byte);
 
-	if (byte != (BER_CLASS_UNIV | BER_PC(pc)) | (BER_TAG_MASK & tag))
+	if (byte != (BER_CLASS_UNIV | BER_PC(pc) | (BER_TAG_MASK & tag)))
 		return False;
 
 	return True;
@@ -100,6 +100,7 @@ boolean ber_read_universal_tag(STREAM* s, uint8 tag, boolean pc)
  * Write BER Universal tag.
  * @param s stream
  * @param tag BER universally-defined tag
+ * @param pc primitive (False) or constructed (True)
  */
 
 void ber_write_universal_tag(STREAM* s, uint8 tag, boolean pc)

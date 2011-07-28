@@ -22,7 +22,7 @@
 
 #include <freerdp/utils/stream.h>
 
-boolean per_read_length(STREAM* s, int* length);
+boolean per_read_length(STREAM* s, uint16* length);
 void per_write_length(STREAM* s, int length);
 boolean per_read_choice(STREAM* s, uint8* choice);
 void per_write_choice(STREAM* s, uint8 choice);
@@ -41,5 +41,7 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6]);
 boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min);
 void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
 void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
+boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min);
+void per_write_integer16(STREAM* s, uint16 integer, uint16 min);
 
 #endif /* __PER_H */

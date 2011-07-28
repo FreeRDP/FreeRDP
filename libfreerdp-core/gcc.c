@@ -144,7 +144,7 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 	per_write_selection(s, 0x08); /* select optional userData from ConferenceCreateRequest */
 
 	/* ConferenceCreateRequest::conferenceName */
-	per_write_numeric_string(s, "1", 1, 1); /* ConferenceName::numeric */
+	per_write_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
 	per_write_padding(s, 1); /* padding */
 
 	/* UserData (SET OF SEQUENCE) */
@@ -160,12 +160,11 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 
 void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 {
-	int length;
+	uint16 length;
 	uint32 tag;
 	uint16 nodeID;
 	uint8 result;
 	uint8 choice;
-	uint8 selection;
 	uint8 number;
 
 	/* ConnectData */
@@ -272,13 +271,13 @@ void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
 void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 {
 	uint32 version;
-	uint8* clientName;
+	char* clientName;
 	size_t clientNameLength;
 	uint8 connectionType;
 	uint16 highColorDepth;
 	uint16 supportedColorDepths;
 	uint16 earlyCapabilityFlags;
-	uint8* clientDigProductId;
+	char* clientDigProductId;
 	size_t clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
@@ -319,7 +318,6 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	highColorDepth = MIN(settings->color_depth, 24);
 
 	supportedColorDepths =
-			RNS_UD_32BPP_SUPPORT |
 			RNS_UD_24BPP_SUPPORT |
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;

@@ -18,6 +18,7 @@
  */
 
 #include "update.h"
+#include "bitmap.h"
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
 {

@@ -20,6 +20,8 @@
 #include "gcc.h"
 
 #include "mcs.h"
+#include "tpdu.h"
+#include "tpkt.h"
 
 /**
  * T.125 MCS is defined in:
