@@ -1009,6 +1009,7 @@ void update_read_bounds(STREAM* s, ORDER_INFO* orderInfo)
 
 void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
+	BOUNDS bounds;
 	ORDER_INFO* orderInfo = &(update->order_info);
 
 	if (flags & ORDER_TYPE_CHANGE)
@@ -1022,6 +1023,13 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		if (!(flags & ORDER_ZERO_BOUNDS_DELTAS))
 		{
 			update_read_bounds(s, orderInfo);
+
+			bounds.left = orderInfo->boundLeft;
+			bounds.top = orderInfo->boundTop;
+			bounds.right = orderInfo->boundRight;
+			bounds.bottom = orderInfo->boundBottom;
+
+			IFCALL(update->SetBounds, update, &bounds);
 		}
 	}
 
@@ -1144,6 +1152,9 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		default:
 			break;
 	}
+
+	if (flags & ORDER_BOUNDS)
+		IFCALL(update->SetBounds, update, NULL);
 }
 
 void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)

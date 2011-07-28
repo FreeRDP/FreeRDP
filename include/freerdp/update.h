@@ -22,6 +22,16 @@
 
 #include <freerdp/types.h>
 
+/* Common */
+
+typedef struct
+{
+	uint16 left;
+	uint16 top;
+	uint16 right;
+	uint16 bottom;
+} BOUNDS;
+
 /* Bitmap Updates */
 
 typedef struct
@@ -378,33 +388,34 @@ typedef struct
 
 typedef struct rdp_update rdpUpdate;
 
-typedef int (*pcBeginPaint)(rdpUpdate* update);
-typedef int (*pcEndPaint)(rdpUpdate* update);
-typedef int (*pcSynchronize)(rdpUpdate* update);
-typedef int (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
-typedef int (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
-typedef int (*pcDstBlt)(rdpUpdate* update, DSTBLT_ORDER* dstblt);
-typedef int (*pcPatBlt)(rdpUpdate* update, PATBLT_ORDER* patblt);
-typedef int (*pcScrBlt)(rdpUpdate* update, SCRBLT_ORDER* scrblt);
-typedef int (*pcDrawNineGrid)(rdpUpdate* update, DRAW_NINE_GRID_ORDER* draw_nine_grid);
-typedef int (*pcMultiDrawNineGrid)(rdpUpdate* update, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
-typedef int (*pcLineTo)(rdpUpdate* update, LINE_TO_ORDER* line_to);
-typedef int (*pcOpaqueRect)(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect);
-typedef int (*pcSaveBitmap)(rdpUpdate* update, SAVE_BITMAP_ORDER* save_bitmap);
-typedef int (*pcMemBlt)(rdpUpdate* update, MEMBLT_ORDER* memblt);
-typedef int (*pcMem3Blt)(rdpUpdate* update, MEM3BLT_ORDER* memblt);
-typedef int (*pcMultiDstBlt)(rdpUpdate* update, MULTI_DSTBLT_ORDER* multi_dstblt);
-typedef int (*pcMultiPatBlt)(rdpUpdate* update, MULTI_PATBLT_ORDER* multi_patblt);
-typedef int (*pcMultiScrBlt)(rdpUpdate* update, MULTI_SCRBLT_ORDER* multi_scrblt);
-typedef int (*pcMultiOpaqueRect)(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
-typedef int (*pcFastIndex)(rdpUpdate* update, FAST_INDEX_ORDER* fast_index);
-typedef int (*pcPolygonSC)(rdpUpdate* update, POLYGON_SC_ORDER* polygon_sc);
-typedef int (*pcPolygonCB)(rdpUpdate* update, POLYGON_CB_ORDER* polygon_cb);
-typedef int (*pcPolyline)(rdpUpdate* update, POLYLINE_ORDER* polyline);
-typedef int (*pcFastGlyph)(rdpUpdate* update, FAST_GLYPH_ORDER* fast_glyph);
-typedef int (*pcEllipseSC)(rdpUpdate* update, ELLIPSE_SC_ORDER* ellipse_sc);
-typedef int (*pcEllipseCB)(rdpUpdate* update, ELLIPSE_CB_ORDER* ellipse_cb);
-typedef int (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
+typedef void (*pcBeginPaint)(rdpUpdate* update);
+typedef void (*pcEndPaint)(rdpUpdate* update);
+typedef void (*pcSetBounds)(rdpUpdate* update, BOUNDS* bounds);
+typedef void (*pcSynchronize)(rdpUpdate* update);
+typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
+typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
+typedef void (*pcDstBlt)(rdpUpdate* update, DSTBLT_ORDER* dstblt);
+typedef void (*pcPatBlt)(rdpUpdate* update, PATBLT_ORDER* patblt);
+typedef void (*pcScrBlt)(rdpUpdate* update, SCRBLT_ORDER* scrblt);
+typedef void (*pcDrawNineGrid)(rdpUpdate* update, DRAW_NINE_GRID_ORDER* draw_nine_grid);
+typedef void (*pcMultiDrawNineGrid)(rdpUpdate* update, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
+typedef void (*pcLineTo)(rdpUpdate* update, LINE_TO_ORDER* line_to);
+typedef void (*pcOpaqueRect)(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect);
+typedef void (*pcSaveBitmap)(rdpUpdate* update, SAVE_BITMAP_ORDER* save_bitmap);
+typedef void (*pcMemBlt)(rdpUpdate* update, MEMBLT_ORDER* memblt);
+typedef void (*pcMem3Blt)(rdpUpdate* update, MEM3BLT_ORDER* memblt);
+typedef void (*pcMultiDstBlt)(rdpUpdate* update, MULTI_DSTBLT_ORDER* multi_dstblt);
+typedef void (*pcMultiPatBlt)(rdpUpdate* update, MULTI_PATBLT_ORDER* multi_patblt);
+typedef void (*pcMultiScrBlt)(rdpUpdate* update, MULTI_SCRBLT_ORDER* multi_scrblt);
+typedef void (*pcMultiOpaqueRect)(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
+typedef void (*pcFastIndex)(rdpUpdate* update, FAST_INDEX_ORDER* fast_index);
+typedef void (*pcPolygonSC)(rdpUpdate* update, POLYGON_SC_ORDER* polygon_sc);
+typedef void (*pcPolygonCB)(rdpUpdate* update, POLYGON_CB_ORDER* polygon_cb);
+typedef void (*pcPolyline)(rdpUpdate* update, POLYLINE_ORDER* polyline);
+typedef void (*pcFastGlyph)(rdpUpdate* update, FAST_GLYPH_ORDER* fast_glyph);
+typedef void (*pcEllipseSC)(rdpUpdate* update, ELLIPSE_SC_ORDER* ellipse_sc);
+typedef void (*pcEllipseCB)(rdpUpdate* update, ELLIPSE_CB_ORDER* ellipse_cb);
+typedef void (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
 
 struct rdp_update
 {
@@ -415,6 +426,7 @@ struct rdp_update
 
 	pcBeginPaint BeginPaint;
 	pcEndPaint EndPaint;
+	pcSetBounds SetBounds;
 	pcSynchronize Synchronize;
 	pcBitmap Bitmap;
 	pcPalette Palette;

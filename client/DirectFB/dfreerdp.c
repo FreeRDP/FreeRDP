@@ -34,17 +34,15 @@ struct thread_data
 	freerdp* instance;
 };
 
-int df_begin_paint(rdpUpdate* update)
+void df_begin_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 
 	gdi = GET_GDI(update);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
-
-	return 0;
 }
 
-int df_end_paint(rdpUpdate* update)
+void df_end_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 	dfInfo* dfi;
@@ -53,7 +51,7 @@ int df_end_paint(rdpUpdate* update)
 	dfi = GET_DFI(update);
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
-		return 0;
+		return;
 
 	dfi->update_rect.x = gdi->primary->hdc->hwnd->invalid->x;
 	dfi->update_rect.y = gdi->primary->hdc->hwnd->invalid->y;
@@ -61,8 +59,6 @@ int df_end_paint(rdpUpdate* update)
 	dfi->update_rect.h = gdi->primary->hdc->hwnd->invalid->h;
 
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
-
-	return 0;
 }
 
 boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)

@@ -1065,7 +1065,7 @@ gdi_ui_decode(struct rdp_inst * inst, uint8 * data, int size)
 }
 #endif
 
-int gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
+void gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 {
 	int i;
 	BITMAP_DATA* bmp;
@@ -1079,8 +1079,44 @@ int gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 		gdi_BitBlt(gdi->primary->hdc, bmp->left, bmp->top, bmp->width, bmp->height, gdi_bmp->hdc, 0, 0, GDI_SRCCOPY);
 		gdi_bitmap_free((GDI_IMAGE*) gdi_bmp);
 	}
+}
 
-	return 0;
+void gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
+{
+
+}
+
+void gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
+{
+	GDI* gdi = GET_GDI(update);
+
+	if (bounds != NULL)
+	{
+		gdi_SetClipRgn(gdi->drawing->hdc, bounds->left, bounds->top,
+				bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
+	}
+	else
+	{
+		gdi_SetNullClipRgn(gdi->drawing->hdc);
+	}
+}
+
+void gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+{
+	GDI_RECT rect;
+	HGDI_BRUSH hBrush;
+	uint32 brush_color;
+	GDI *gdi = GET_GDI(update);
+
+	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
+			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
+
+	brush_color = gdi_color_convert(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+
+	hBrush = gdi_CreateSolidBrush(brush_color);
+	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
+
+	gdi_DeleteObject((HGDIOBJECT) hBrush);
 }
 
 /**
@@ -1092,14 +1128,15 @@ int gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 void gdi_register_update_callbacks(rdpUpdate* update)
 {
 	update->Bitmap = gdi_bitmap_update;
-	update->Palette = NULL;
+	update->Palette = gdi_palette_update;
+	update->SetBounds = gdi_set_bounds;
 	update->DstBlt = NULL;
 	update->PatBlt = NULL;
 	update->ScrBlt = NULL;
 	update->DrawNineGrid = NULL;
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = NULL;
-	update->OpaqueRect = NULL;
+	update->OpaqueRect = gdi_opaque_rect;
 	update->SaveBitmap = NULL;
 	update->MemBlt = NULL;
 	update->Mem3Blt = NULL;
