@@ -443,18 +443,39 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
 }
 
 /**
- * Set enabled security protocols.
- * @param nego
- * @param rdp
- * @param tls
- * @param nla
+ * Enable RDP security protocol.
+ * @param nego pointer to the negotiation structure
+ * @param enable_rdp whether to enable normal RDP protocol (True for enabled, False for disabled)
  */
 
-void nego_set_protocols(rdpNego* nego, int rdp, int tls, int nla)
+void nego_enable_rdp(rdpNego* nego, boolean enable_rdp)
 {
-	nego->enabled_protocols[PROTOCOL_RDP] = rdp;
-	nego->enabled_protocols[PROTOCOL_TLS] = tls;
-	nego->enabled_protocols[PROTOCOL_NLA] = nla;
+	DEBUG_NEGO("Enabling RDP security: %s", enable_rdp ? "True" : "False");
+	nego->enabled_protocols[PROTOCOL_RDP] = enable_rdp;
+}
+
+/**
+ * Enable TLS security protocol.
+ * @param nego pointer to the negotiation structure
+ * @param enable_tls whether to enable TLS + RDP protocol (True for enabled, False for disabled)
+ */
+void nego_enable_tls(rdpNego* nego, boolean enable_tls)
+{
+	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "True" : "False");
+	nego->enabled_protocols[PROTOCOL_TLS] = enable_tls;
+}
+
+
+/**
+ * Enable NLA security protocol.
+ * @param nego pointer to the negotiation structure
+ * @param enable_nla whether to enable network level authentication protocol (True for enabled, False for disabled)
+ */
+
+void nego_enable_nla(rdpNego* nego, boolean enable_nla)
+{
+	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "True" : "False");
+	nego->enabled_protocols[PROTOCOL_NLA] = enable_nla;
 }
 
 /**

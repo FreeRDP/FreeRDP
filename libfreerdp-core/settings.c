@@ -41,9 +41,9 @@ rdpSettings* settings_new()
 		settings->height = 768;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;
-		settings->nla_security = 1;
-		settings->tls_security = 1;
-		settings->rdp_security = 1;
+		settings->nla_security = True;
+		settings->tls_security = True;
+		settings->rdp_security = True;
 		settings->client_build = 2600;
 		settings->kbd_type = 0;
 		settings->kbd_subtype = 0;

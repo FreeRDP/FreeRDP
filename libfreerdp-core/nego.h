@@ -101,7 +101,9 @@ rdpNego* nego_new(struct rdp_transport * transport);
 void nego_free(rdpNego* nego);
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
-void nego_set_protocols(rdpNego* nego, int rdp, int tls, int nla);
+void nego_enable_rdp(rdpNego* nego, boolean enable_rdp);
+void nego_enable_nla(rdpNego* nego, boolean enable_nla);
+void nego_enable_tls(rdpNego* nego, boolean enable_tls);
 void nego_set_routing_token(rdpNego* nego, char* routing_token);
 void nego_set_cookie(rdpNego* nego, char* cookie);
 
