@@ -227,15 +227,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-rdp", argv[index]) == 0)
 		{
-			settings->rdp_security = 0;
+			settings->rdp_security = False;
 		}
 		else if (strcmp("--no-tls", argv[index]) == 0)
 		{
-			settings->tls_security = 0;
+			settings->tls_security = False;
 		}
 		else if (strcmp("--no-nla", argv[index]) == 0)
 		{
-			settings->nla_security = 0;
+			settings->nla_security = False;
 		}
 		else if (strcmp("--sec", argv[index]) == 0)
 		{
@@ -247,21 +247,21 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (strncmp("rdp", argv[index], 1) == 0) /* Standard RDP */
 			{
-				settings->rdp_security = 1;
-				settings->tls_security = 0;
-				settings->nla_security = 0;
+				settings->rdp_security = True;
+				settings->tls_security = False;
+				settings->nla_security = False;
 			}
 			else if (strncmp("tls", argv[index], 1) == 0) /* TLS */
 			{
-				settings->rdp_security = 0;
-				settings->tls_security = 1;
-				settings->nla_security = 0;
+				settings->rdp_security = False;
+				settings->tls_security = True;
+				settings->nla_security = False;
 			}
 			else if (strncmp("nla", argv[index], 1) == 0) /* NLA */
 			{
-				settings->rdp_security = 0;
-				settings->tls_security = 0;
-				settings->nla_security = 1;
+				settings->rdp_security = False;
+				settings->tls_security = False;
+				settings->nla_security = True;
 			}
 			else
 			{

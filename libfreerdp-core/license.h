@@ -196,8 +196,6 @@ void license_send_platform_challenge_response_packet(rdpLicense* license);
 rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);
 
-#define WITH_DEBUG_LICENSE	1
-
 #ifdef WITH_DEBUG_LICENSE
 #define DEBUG_LICENSE(fmt, ...) DEBUG_CLASS(LICENSE, fmt, ## __VA_ARGS__)
 #else

@@ -22,13 +22,6 @@
 
 #include "config.h"
 
-#ifdef WITH_DEBUG_ASSERT
-#include <assert.h>
-#define ASSERT(a)	assert(a)
-#else
-#define ASSERT(a)	do { } while (0)
-#endif
-
 #include <stdio.h>
 
 #define DEBUG_NULL(fmt, ...) do { } while (0)

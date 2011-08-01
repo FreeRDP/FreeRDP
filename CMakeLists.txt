@@ -51,6 +51,10 @@ check_include_files(netdb.h HAVE_NETDB_H)
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 
+# Libraries that we have a hard dependency on
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
+
 # Endian
 test_big_endian(BIG_ENDIAN)
 
