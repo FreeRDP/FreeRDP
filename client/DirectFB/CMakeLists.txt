@@ -18,6 +18,7 @@
 # limitations under the License.
 
 include_directories(../../libfreerdp-gdi)
+include_directories(../../libfreerdp-kbd)
 include_directories(../../libfreerdp-core)
 include_directories(${DIRECTFB_INCLUDE_DIRS})
 
@@ -29,5 +30,6 @@ add_executable(dfreerdp
 
 target_link_libraries(dfreerdp freerdp-core)
 target_link_libraries(dfreerdp freerdp-gdi)
+target_link_libraries(dfreerdp freerdp-kbd)
 target_link_libraries(dfreerdp freerdp-utils)
 target_link_libraries(dfreerdp ${DIRECTFB_LIBRARIES})

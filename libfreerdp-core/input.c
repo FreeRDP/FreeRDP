@@ -25,11 +25,18 @@ void rdp_write_client_input_pdu_header(STREAM* s, uint16 number)
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 }
 
-STREAM* rdp_client_input_pdu_init(rdpRdp* rdp)
+void rdp_write_input_event_header(STREAM* s, uint32 time, uint16 type)
+{
+	stream_write_uint32(s, time); /* eventTime (4 bytes) */
+	stream_write_uint16(s, type); /* messageType (2 bytes) */
+}
+
+STREAM* rdp_client_input_pdu_init(rdpRdp* rdp, uint16 type)
 {
 	STREAM* s;
 	s = rdp_data_pdu_init(rdp);
 	rdp_write_client_input_pdu_header(s, 1);
+	rdp_write_input_event_header(s, 0, type);
 	return s;
 }
 
@@ -47,7 +54,7 @@ void input_write_synchronize_event(STREAM* s, uint32 flags)
 void input_send_synchronize_event(rdpInput* input, uint32 flags)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp);
+	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_SYNC);
 	input_write_synchronize_event(s, flags);
 	rdp_send_client_input_pdu(input->rdp, s);
 }
@@ -62,7 +69,7 @@ void input_write_keyboard_event(STREAM* s, uint16 flags, uint16 code)
 void input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp);
+	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_SCANCODE);
 	input_write_keyboard_event(s, flags, code);
 	rdp_send_client_input_pdu(input->rdp, s);
 }
@@ -77,7 +84,7 @@ void input_write_unicode_keyboard_event(STREAM* s, uint16 code)
 void input_send_unicode_keyboard_event(rdpInput* input, uint16 code)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp);
+	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_UNICODE);
 	input_write_unicode_keyboard_event(s, code);
 	rdp_send_client_input_pdu(input->rdp, s);
 }
@@ -92,7 +99,7 @@ void input_write_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 y)
 void input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp);
+	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_MOUSE);
 	input_write_mouse_event(s, flags, x, y);
 	rdp_send_client_input_pdu(input->rdp, s);
 }
@@ -107,7 +114,7 @@ void input_write_extended_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 
 void input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp);
+	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_MOUSEX);
 	input_write_extended_mouse_event(s, flags, x, y);
 	rdp_send_client_input_pdu(input->rdp, s);
 }

@@ -144,6 +144,8 @@ boolean df_post_connect(freerdp* instance)
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
 
+	df_keyboard_init();
+
 	return True;
 }
 
@@ -166,14 +168,10 @@ int dfreerdp_run(freerdp* instance)
 
 	instance->Connect(instance);
 
-	int count = 0;
-
 	while (1)
 	{
 		rcount = 0;
 		wcount = 0;
-
-		printf("loop... %d\n", count++);
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
@@ -196,7 +194,7 @@ int dfreerdp_run(freerdp* instance)
 			if (fds > max_fds)
 				max_fds = fds;
 
-			FD_SET(fds, &wfds_set);
+			FD_SET(fds, &rfds_set);
 		}
 
 		if (max_fds == 0)
