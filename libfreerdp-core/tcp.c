@@ -164,28 +164,18 @@ int tcp_read(rdpTcp* tcp, uint8* data, int length)
 int tcp_write(rdpTcp* tcp, uint8* data, int length)
 {
 	int status;
-	int sent = 0;
 
-	while (sent < length)
+	status = send(tcp->sockfd, data, length, MSG_NOSIGNAL);
+
+	if (status < 0)
 	{
-		status = send(tcp->sockfd, data, (length - sent), MSG_NOSIGNAL);
-
-		if (status < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				continue;
-
-			perror("send");
-			return -1;
-		}
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			status = 0;
 		else
-		{
-			sent += status;
-			data += status;
-		}
+			perror("send");
 	}
 
-	return sent;
+	return status;
 }
 
 boolean tcp_disconnect(rdpTcp * tcp)

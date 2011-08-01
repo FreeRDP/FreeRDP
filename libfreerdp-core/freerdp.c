@@ -54,10 +54,13 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 boolean freerdp_check_fds(freerdp* instance)
 {
 	rdpRdp* rdp;
+	int status;
 
 	rdp = (rdpRdp*) instance->rdp;
 
-	rdp_recv(rdp);
+	status = rdp_check_fds(rdp);
+	if (status < 0)
+		return False;
 
 	return True;
 }

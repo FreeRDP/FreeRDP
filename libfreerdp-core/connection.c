@@ -95,6 +95,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	rdp->licensed = True;
 
 	rdp_client_activate(rdp);
+	rdp_set_blocking_mode(rdp, False);
 
 	return True;
 }
