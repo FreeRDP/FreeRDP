@@ -30,6 +30,7 @@
 #include <fcntl.h>
 
 #include "tpkt.h"
+#include "fastpath.h"
 #include "credssp.h"
 #include "transport.h"
 
@@ -214,8 +215,8 @@ int transport_check_fds(rdpTransport* transport)
 		stream_peek_uint8(transport->recv_buffer, header);
 		if (header == 0x03) /* TPKT */
 			length = tpkt_read_header(transport->recv_buffer);
-		else /* TODO: Fast Path */
-			length = 0;
+		else /* Fast Path */
+			length = fastpath_read_header(transport->recv_buffer, NULL);
 
 		if (length == 0)
 		{

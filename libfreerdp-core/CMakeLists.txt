@@ -72,6 +72,8 @@ set(LIBFREERDP_CORE_SRCS
 	tpdu.h
 	tpkt.c
 	tpkt.h
+	fastpath.c
+	fastpath.h
 	transport.c
 	transport.h
 	update.c
