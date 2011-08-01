@@ -116,13 +116,6 @@ boolean transport_connect_nla(rdpTransport* transport)
 	return True;
 }
 
-int transport_delay(rdpTransport* transport, STREAM* s)
-{
-	transport_read(transport, s);
-	nanosleep(&transport->ts, NULL);
-	return 0;
-}
-
 int transport_read(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
