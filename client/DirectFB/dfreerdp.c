@@ -196,7 +196,7 @@ int dfreerdp_run(freerdp* instance)
 			if (fds > max_fds)
 				max_fds = fds;
 
-			FD_SET(fds, &wfds_set);
+			FD_SET(fds, &rfds_set);
 		}
 
 		if (max_fds == 0)
