@@ -170,7 +170,6 @@ void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags)
 void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	rdp->activated = True;
-	rdp->transport->tcp->set_blocking_mode(rdp->transport->tcp, False);
 }
 
 void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
@@ -184,6 +183,5 @@ void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
 
 	rdp->activated = False;
-	rdp->transport->tcp->set_blocking_mode(rdp->transport->tcp, True);
 }
 

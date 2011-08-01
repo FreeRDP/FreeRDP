@@ -135,6 +135,21 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	return status;
 }
 
+static int transport_read_nonblocking(rdpTransport* transport)
+{
+	int status;
+
+	stream_check_size(transport->recv_buffer, 4096);
+	status = transport_read(transport, transport->recv_buffer);
+
+	if (status <= 0)
+		return status;
+
+	stream_seek(transport->recv_buffer, status);
+
+	return status;
+}
+
 int transport_write(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
@@ -149,6 +164,63 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 int transport_check_fds(rdpTransport* transport)
 {
+	int pos;
+	int status;
+	uint8 header;
+	uint16 length;
+	STREAM* received;
+
+	status = transport_read_nonblocking(transport);
+	if (status <= 0)
+		return status;
+
+	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
+	{
+		/* Ensure the TPKT or Fast Path header is available. */
+		if (pos <= 4)
+			return 0;
+
+		stream_set_pos(transport->recv_buffer, 0);
+		stream_peek_uint8(transport->recv_buffer, header);
+		if (header == 0x03) /* TPKT */
+			length = tpkt_read_header(transport->recv_buffer);
+		else /* TODO: Fast Path */
+			length = 0;
+
+		if (length == 0)
+		{
+			printf("transport_check_fds: protocol error, not a TPKT header (%d).\n", header);
+			return -1;
+		}
+
+		if (pos < length)
+		{
+			stream_set_pos(transport->recv_buffer, pos);
+			return 0; /* Packet is not yet completely received. */
+		}
+
+		/*
+		 * A complete packet has been received. In case there are trailing data
+		 * for the next packet, we copy it to the new receive buffer.
+		 */
+		received = transport->recv_buffer;
+		transport->recv_buffer = stream_new(BUFFER_SIZE);
+
+		if (pos > length)
+		{
+			stream_set_pos(received, length);
+			stream_check_size(transport->recv_buffer, pos - length);
+			stream_copy(transport->recv_buffer, received, pos - length);
+		}
+
+		stream_set_pos(received, 0);
+		status = transport->recv_callback(transport, received, transport->recv_extra);
+		stream_free(received);
+
+		if (status < 0)
+			return status;
+	}
+
 	return 0;
 }
 
@@ -156,6 +228,12 @@ void transport_init(rdpTransport* transport)
 {
 	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->state = TRANSPORT_STATE_NEGO;
+}
+
+boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking)
+{
+	transport->blocking = blocking;
+	return transport->tcp->set_blocking_mode(transport->tcp, blocking);
 }
 
 rdpTransport* transport_new(rdpSettings* settings)
@@ -179,6 +257,8 @@ rdpTransport* transport_new(rdpSettings* settings)
 		/* buffers for blocking read/write */
 		transport->recv_stream = stream_new(BUFFER_SIZE);
 		transport->send_stream = stream_new(BUFFER_SIZE);
+
+		transport->blocking = True;
 	}
 
 	return transport;
