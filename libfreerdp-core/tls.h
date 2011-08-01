@@ -20,7 +20,6 @@
 #ifndef __TLS_H
 #define __TLS_H
 
-#include <time.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
@@ -38,7 +37,6 @@ struct rdp_tls
 	SSL* ssl;
 	int sockfd;
 	SSL_CTX* ctx;
-	struct timespec ts;
 	TlsConnect connect;
 	TlsDisconnect disconnect;
 };
