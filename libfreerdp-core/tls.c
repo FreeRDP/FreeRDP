@@ -77,28 +77,23 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 {
 	int status;
 
-	while (True)
+	status = SSL_read(tls->ssl, data, length);
+
+	switch (SSL_get_error(tls->ssl, status))
 	{
-		status = SSL_read(tls->ssl, data, length);
+		case SSL_ERROR_NONE:
+			break;
 
-		switch (SSL_get_error(tls->ssl, status))
-		{
-			case SSL_ERROR_NONE:
-				return status;
-				break;
+		case SSL_ERROR_WANT_READ:
+			status = 0;
+			break;
 
-			case SSL_ERROR_WANT_READ:
-				nanosleep(&tls->ts, NULL);
-				break;
-
-			default:
-				//tls_print_error("SSL_read", tls->ssl, status);
-				return -1;
-				break;
-		}
+		default:
+			status = -1;
+			break;
 	}
 
-	return 0;
+	return status;
 }
 
 int tls_write(rdpTls* tls, uint8* data, int length)

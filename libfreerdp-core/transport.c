@@ -127,10 +127,21 @@ int transport_read(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
 
-	if (transport->layer == TRANSPORT_LAYER_TLS)
-		status = tls_read(transport->tls, s->data, s->size);
-	else if (transport->layer == TRANSPORT_LAYER_TCP)
-		status = tcp_read(transport->tcp, s->data, s->size);
+	while (True)
+	{
+		if (transport->layer == TRANSPORT_LAYER_TLS)
+			status = tls_read(transport->tls, s->data, s->size);
+		else if (transport->layer == TRANSPORT_LAYER_TCP)
+			status = tcp_read(transport->tcp, s->data, s->size);
+
+		if (status == 0 && transport->blocking)
+		{
+			nanosleep(&transport->ts, NULL);
+			continue;
+		}
+
+		break;
+	}
 
 	return status;
 }
@@ -172,12 +183,18 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		{
 			/* blocking while sending */
 			nanosleep(&transport->ts, NULL);
-			continue;
+
+			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
+			if (!transport->blocking)
+				transport_read_nonblocking(transport);
 		}
 
 		sent += status;
 		stream_seek(s, status);
 	}
+
+	if (!transport->blocking)
+		transport_check_fds(transport);
 
 	return status;
 }
