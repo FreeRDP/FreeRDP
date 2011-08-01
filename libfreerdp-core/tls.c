@@ -104,31 +104,24 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 int tls_write(rdpTls* tls, uint8* data, int length)
 {
 	int status;
-	int sent = 0;
 
-	while (sent < length)
+	status = SSL_write(tls->ssl, data, length);
+
+	switch (SSL_get_error(tls->ssl, status))
 	{
-		status = SSL_write(tls->ssl, data, length);
+		case SSL_ERROR_NONE:
+			break;
 
-		switch (SSL_get_error(tls->ssl, status))
-		{
-			case SSL_ERROR_NONE:
-				sent += status;
-				data += status;
-				break;
+		case SSL_ERROR_WANT_WRITE:
+			status = 0;
+			break;
 
-			case SSL_ERROR_WANT_WRITE:
-				nanosleep(&tls->ts, NULL);
-				break;
-
-			default:
-				tls_print_error("SSL_write", tls->ssl, status);
-				return -1;
-				break;
-		}
+		default:
+			tls_print_error("SSL_write", tls->ssl, status);
+			status = -1;
 	}
 
-	return sent;
+	return status;
 }
 
 boolean tls_print_error(char *func, SSL *connection, int value)
@@ -214,10 +207,6 @@ rdpTls* tls_new()
 		 */
 
 		SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
-
-		/* a small 0.1ms delay when network blocking happens. */
-		tls->ts.tv_sec = 0;
-		tls->ts.tv_nsec = 100000;
 	}
 
 	return tls;
