@@ -344,13 +344,13 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 }
 
 /**
- * Receive an RDP packet.\n
+ * Process an RDP packet.\n
  * @param rdp RDP module
+ * @param s stream
  */
 
-void rdp_recv(rdpRdp* rdp)
+void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 {
-	STREAM* s;
 	int length;
 	uint16 pduType;
 	uint16 pduLength;
@@ -358,9 +358,6 @@ void rdp_recv(rdpRdp* rdp)
 	uint16 channelId;
 	uint16 sec_flags;
 	enum DomainMCSPDU MCSPDU;
-
-	s = transport_recv_stream_init(rdp->transport, 4096);
-	transport_read(rdp->transport, s);
 
 	MCSPDU = DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
@@ -419,6 +416,47 @@ void rdp_recv(rdpRdp* rdp)
 				break;
 		}
 	}
+}
+
+/**
+ * Receive an RDP packet.\n
+ * @param rdp RDP module
+ */
+
+void rdp_recv(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = transport_recv_stream_init(rdp->transport, 4096);
+	transport_read(rdp->transport, s);
+
+	rdp_process_pdu(rdp, s);
+}
+
+static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
+{
+	rdpRdp* rdp = (rdpRdp*) extra;
+
+	rdp_process_pdu(rdp, s);
+
+	return 1;
+}
+
+/**
+ * Set non-blocking mode information.
+ * @param rdp RDP module
+ * @param blocking blocking mode
+ */
+void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking)
+{
+	rdp->transport->recv_callback = rdp_recv_callback;
+	rdp->transport->recv_extra = rdp;
+	transport_set_blocking_mode(rdp->transport, blocking);
+}
+
+int rdp_check_fds(rdpRdp* rdp)
+{
+	return transport_check_fds(rdp->transport);
 }
 
 /**

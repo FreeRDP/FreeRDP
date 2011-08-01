@@ -63,6 +63,7 @@ struct rdp_transport
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
+	boolean blocking;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
@@ -75,6 +76,7 @@ boolean transport_connect_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
 int transport_check_fds(rdpTransport* transport);
+boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking);
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
 
