@@ -359,6 +359,8 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 sec_flags;
 	enum DomainMCSPDU MCSPDU;
 
+	/* TODO: Check Fast Path header */
+
 	MCSPDU = DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
 
