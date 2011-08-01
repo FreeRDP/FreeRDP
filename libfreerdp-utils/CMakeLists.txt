@@ -17,6 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(CMAKE_THREAD_PREFER_PTHREAD)
+find_package(Threads REQUIRED)
+
 set(FREERDP_UTILS_SRCS
 	args.c
 	blob.c
@@ -37,6 +40,6 @@ add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
 
 set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
-target_link_libraries(freerdp-utils pthread)
+target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS freerdp-utils DESTINATION lib)

@@ -33,6 +33,7 @@
 #include "gdi_palette.h"
 #include "gdi_drawing.h"
 #include "gdi_clipping.h"
+#include "gdi_32bpp.h"
 
 #include "test_libgdi.h"
 

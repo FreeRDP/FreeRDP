@@ -18,6 +18,8 @@
 # limitations under the License.
 
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
+include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(LIBFREERDP_CORE_SRCS
 	activation.c
@@ -80,9 +82,8 @@ set(LIBFREERDP_CORE_SRCS
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
 
-target_link_libraries(freerdp-core z)
-target_link_libraries(freerdp-core ssl)
-target_link_libraries(freerdp-core crypto)
+target_link_libraries(freerdp-core ${ZLIB_LIBRARIES})
+target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 target_link_libraries(freerdp-core freerdp-utils)
 
 install(TARGETS freerdp-core DESTINATION lib)
