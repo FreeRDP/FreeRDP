@@ -42,7 +42,8 @@ typedef boolean (*pcPreConnect)(freerdp* freerdp);
 typedef boolean (*pcPostConnect)(freerdp* freerdp);
 typedef boolean (*pcGetFileDescriptor)(freerdp* freerdp, void** rfds, int* rcount, void** wfds, int* wcount);
 typedef boolean (*pcCheckFileDescriptor)(freerdp* freerdp);
-typedef int (*pcChannelDataInput)(freerdp* freerdp, int channelId, uint8* data, int size);
+typedef int (*pcSendChannelData)(freerdp* freerdp, int channelId, uint8* data, int size);
+typedef int (*pcReceiveChannelData)(freerdp* freerdp, int channelId, uint8* data, int size, int flags, int total_size);
 
 struct rdp_freerdp
 {
@@ -61,7 +62,8 @@ struct rdp_freerdp
 	pcPostConnect PostConnect;
 	pcGetFileDescriptor GetFileDescriptor;
 	pcCheckFileDescriptor CheckFileDescriptor;
-	pcChannelDataInput ChannelDataInput;
+	pcSendChannelData SendChannelData;
+	pcReceiveChannelData ReceiveChannelData;
 };
 
 FREERDP_API freerdp* freerdp_new();

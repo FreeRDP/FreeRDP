@@ -820,7 +820,7 @@ static void freerdp_chanman_process_sync(rdpChanMan* chan_man, freerdp* instance
 		lchan_data->name, &lindex);
 	if (lrdp_chan != 0)
 	{
-		instance->ChannelDataInput(instance, lrdp_chan->chan_id, ldata, ldata_len);
+		IFCALL(instance->SendChannelData, instance, lrdp_chan->chan_id, ldata, ldata_len);
 	}
 	if (lchan_data->open_event_proc != 0)
 	{
