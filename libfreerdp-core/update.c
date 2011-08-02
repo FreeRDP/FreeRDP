@@ -92,7 +92,7 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 			bitmap_data->length, bitmap_data->bpp, bitmap_data->bpp);
 
 	if (status != True)
-		printf("bitmap decompression failed\n");
+		printf("bitmap decompression failed, bpp:%d\n", bitmap_data->bpp);
 }
 
 void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)

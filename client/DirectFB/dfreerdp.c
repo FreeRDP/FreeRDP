@@ -164,8 +164,6 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	printf("DirectFB Run\n");
-
 	instance->Connect(instance);
 
 	while (1)
