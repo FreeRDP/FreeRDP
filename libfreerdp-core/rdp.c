@@ -391,6 +391,10 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 			}
 		}
 	}
+	else if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	{
+		vchan_process(rdp->vchan, s, channelId);
+	}
 	else
 	{
 		rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source);
@@ -466,7 +470,7 @@ int rdp_check_fds(rdpRdp* rdp)
  * @return new RDP module
  */
 
-rdpRdp* rdp_new()
+rdpRdp* rdp_new(freerdp* instance)
 {
 	rdpRdp* rdp;
 
@@ -483,6 +487,7 @@ rdpRdp* rdp_new()
 		rdp->update = update_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
+		rdp->vchan = vchan_new(instance);
 	}
 
 	return rdp;
@@ -503,6 +508,7 @@ void rdp_free(rdpRdp* rdp)
 		input_free(rdp->input);
 		update_free(rdp->update);
 		mcs_free(rdp->mcs);
+		vchan_free(rdp->vchan);
 		xfree(rdp);
 	}
 }

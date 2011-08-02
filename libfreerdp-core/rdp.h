@@ -34,6 +34,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "transport.h"
 #include "connection.h"
 #include "capabilities.h"
+#include "vchan.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -213,6 +214,7 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_registry* registry;
 	struct rdp_transport* transport;
+	struct rdp_vchan* vchan;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
@@ -239,7 +241,7 @@ void rdp_recv(rdpRdp* rdp);
 void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
-rdpRdp* rdp_new();
+rdpRdp* rdp_new(freerdp* instance);
 void rdp_free(rdpRdp* rdp);
 
 #endif /* __RDP_H */

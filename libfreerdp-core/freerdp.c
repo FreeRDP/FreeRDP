@@ -73,7 +73,7 @@ freerdp* freerdp_new()
 
 	if (instance != NULL)
 	{
-		rdpRdp* rdp = rdp_new();
+		rdpRdp* rdp = rdp_new(instance);
 		instance->rdp = (void*) rdp;
 		instance->input = rdp->input;
 		instance->update = rdp->update;
