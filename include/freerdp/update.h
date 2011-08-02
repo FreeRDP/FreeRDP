@@ -119,40 +119,6 @@ typedef struct
 
 typedef struct
 {
-	sint16 srcLeft;
-	sint16 srcTop;
-	sint16 srcRight;
-	sint16 srcBottom;
-	uint16 bitmapId;
-} DRAW_NINE_GRID_ORDER;
-
-typedef struct
-{
-	sint16 srcLeft;
-	sint16 srcTop;
-	sint16 srcRight;
-	sint16 srcBottom;
-	uint16 bitmapId;
-	uint8 nDeltaEntries;
-	uint8* codeDeltaList;
-} MULTI_DRAW_NINE_GRID_ORDER;
-
-typedef struct
-{
-	uint16 backMode;
-	sint16 nXStart;
-	sint16 nYStart;
-	sint16 nXEnd;
-	sint16 nYEnd;
-	uint32 backColor;
-	uint8 bRop2;
-	uint8 penStyle;
-	uint8 penWidth;
-	uint32 penColor;
-} LINE_TO_ORDER;
-
-typedef struct
-{
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;
@@ -162,46 +128,12 @@ typedef struct
 
 typedef struct
 {
-	uint32 savedBitmapPosition;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nRightRect;
-	sint16 nBottomRect;
-	uint8 operation;
-} SAVE_BITMAP_ORDER;
-
-typedef struct
-{
-	uint16 cacheId;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
-	uint16 cacheIndex;
-} MEMBLT_ORDER;
-
-typedef struct
-{
-	uint16 cacheId;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
-	uint32 backColor;
-	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
-	uint16 cacheIndex;
-} MEM3BLT_ORDER;
+	sint16 srcLeft;
+	sint16 srcTop;
+	sint16 srcRight;
+	sint16 srcBottom;
+	uint16 bitmapId;
+} DRAW_NINE_GRID_ORDER;
 
 typedef struct
 {
@@ -258,6 +190,84 @@ typedef struct
 
 typedef struct
 {
+	sint16 srcLeft;
+	sint16 srcTop;
+	sint16 srcRight;
+	sint16 srcBottom;
+	uint16 bitmapId;
+	uint8 nDeltaEntries;
+	uint8* codeDeltaList;
+} MULTI_DRAW_NINE_GRID_ORDER;
+
+typedef struct
+{
+	uint16 backMode;
+	sint16 nXStart;
+	sint16 nYStart;
+	sint16 nXEnd;
+	sint16 nYEnd;
+	uint32 backColor;
+	uint8 bRop2;
+	uint8 penStyle;
+	uint8 penWidth;
+	uint32 penColor;
+} LINE_TO_ORDER;
+
+typedef struct
+{
+	sint16 xStart;
+	sint16 yStart;
+	uint8 bRop2;
+	uint32 penColor;
+	uint8 nDeltaEntries;
+	uint8* codeDeltaList;
+} POLYLINE_ORDER;
+
+typedef struct
+{
+	uint16 cacheId;
+	sint16 nLeftRect;
+	sint16 nTopRect;
+	sint16 nWidth;
+	sint16 nHeight;
+	uint8 bRop;
+	sint16 nXSrc;
+	sint16 nYSrc;
+	uint16 cacheIndex;
+} MEMBLT_ORDER;
+
+typedef struct
+{
+	uint16 cacheId;
+	sint16 nLeftRect;
+	sint16 nTopRect;
+	sint16 nWidth;
+	sint16 nHeight;
+	uint8 bRop;
+	sint16 nXSrc;
+	sint16 nYSrc;
+	uint32 backColor;
+	uint32 foreColor;
+	uint8 brushOrgX;
+	uint8 brushOrgY;
+	uint8 brushStyle;
+	uint8 brushHatch;
+	uint8 brushExtra[7];
+	uint16 cacheIndex;
+} MEM3BLT_ORDER;
+
+typedef struct
+{
+	uint32 savedBitmapPosition;
+	sint16 nLeftRect;
+	sint16 nTopRect;
+	sint16 nRightRect;
+	sint16 nBottomRect;
+	uint8 operation;
+} SAVE_BITMAP_ORDER;
+
+typedef struct
+{
 	uint8 cacheId;
 	uint16 fDrawing;
 	uint32 backColor;
@@ -274,6 +284,51 @@ typedef struct
 	uint16 y;
 	uint8* data;
 } FAST_INDEX_ORDER;
+
+typedef struct
+{
+	uint8 cacheId;
+	uint16 fDrawing;
+	uint32 backColor;
+	uint32 foreColor;
+	sint16 bkLeft;
+	sint16 bkTop;
+	sint16 bkRight;
+	sint16 bkBottom;
+	sint16 opLeft;
+	sint16 opTop;
+	sint16 opRight;
+	sint16 opBottom;
+	uint16 x;
+	uint16 y;
+	uint8* data;
+} FAST_GLYPH_ORDER;
+
+typedef struct
+{
+	uint8 cacheId;
+	uint8 flAccel;
+	uint8 ulCharInc;
+	uint8 fOpRedundant;
+	uint32 backColor;
+	uint32 foreColor;
+	sint16 bkLeft;
+	sint16 bkTop;
+	sint16 bkRight;
+	sint16 bkBottom;
+	sint16 opLeft;
+	sint16 opTop;
+	sint16 opRight;
+	sint16 opBottom;
+	uint8 brushOrgX;
+	uint8 brushOrgY;
+	uint8 brushStyle;
+	uint8 brushHatch;
+	uint8 brushExtra[7];
+	sint16 x;
+	sint16 y;
+	uint8* data;
+} GLYPH_INDEX_ORDER;
 
 typedef struct
 {
@@ -305,35 +360,6 @@ typedef struct
 
 typedef struct
 {
-	sint16 xStart;
-	sint16 yStart;
-	uint8 bRop2;
-	uint32 penColor;
-	uint8 nDeltaEntries;
-	uint8* codeDeltaList;
-} POLYLINE_ORDER;
-
-typedef struct
-{
-	uint8 cacheId;
-	uint16 fDrawing;
-	uint32 backColor;
-	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
-	uint16 x;
-	uint16 y;
-	uint8* data;
-} FAST_GLYPH_ORDER;
-
-typedef struct
-{
 	sint16 leftRect;
 	sint16 topRect;
 	sint16 rightRect;
@@ -360,32 +386,6 @@ typedef struct
 	uint8 brushExtra[7];
 } ELLIPSE_CB_ORDER;
 
-typedef struct
-{
-	uint8 cacheId;
-	uint8 flAccel;
-	uint8 ulCharInc;
-	uint8 fOpRedundant;
-	uint32 backColor;
-	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
-	sint16 x;
-	sint16 y;
-	uint8* data;
-} GLYPH_INDEX_ORDER;
-
 /* Secondary Drawing Orders */
 
 typedef struct
@@ -396,7 +396,7 @@ typedef struct
 	uint8 bitmapHeight;
 	uint16 bitmapLength;
 	uint16 cacheIndex;
-	uint8* bitmapComprHdr;
+	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 } CACHE_BITMAP_ORDER;
 
@@ -411,7 +411,7 @@ typedef struct
 	uint8 bitmapHeight;
 	uint16 bitmapLength;
 	uint16 cacheIndex;
-	uint8* bitmapComprHdr;
+	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 } CACHE_BITMAP_V2_ORDER;
 
@@ -528,42 +528,73 @@ typedef struct
 
 typedef struct
 {
-
+	uint8 bitmapFlags;
+	uint8 bitmapBpp;
+	uint16 bitmapType;
+	uint16 bitmapWidth;
+	uint16 bitmapHeight;
+	uint32 bitmapSize;
+	uint16 bitmapBlockSize;
+	uint8* bitmapBlock;
 } STREAM_BITMAP_FIRST_ORDER;
 
 typedef struct
 {
-
+	uint8 bitmapFlags;
+	uint16 bitmapType;
+	uint16 bitmapBlockSize;
+	uint8* bitmapBlock;
 } STREAM_BITMAP_NEXT_ORDER;
 
 typedef struct
 {
-
+	uint16 cbSize;
+	uint32 cbTotalSize;
+	uint32 cbTotalEmfSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_FIRST_ORDER;
 
 typedef struct
 {
-
+	uint16 cbSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_NEXT_ORDER;
 
 typedef struct
 {
-
+	uint16 cbSize;
+	uint32 cbTotalSize;
+	uint32 cbTotalEmfSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_END_ORDER;
 
 typedef struct
 {
-
+	uint8 flags;
+	uint16 cacheType;
+	uint16 cacheIndex;
+	uint16 cbSize;
+	uint32 cbTotalSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_CACHE_FIRST_ORDER;
 
 typedef struct
 {
-
+	uint8 flags;
+	uint16 cacheType;
+	uint16 cacheIndex;
+	uint16 cbSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_CACHE_NEXT_ORDER;
 
 typedef struct
 {
-
+	uint8 flags;
+	uint16 cacheType;
+	uint16 cacheIndex;
+	uint16 cbSize;
+	uint32 cbTotalSize;
+	uint8* emfRecords;
 } DRAW_GDIPLUS_CACHE_END_ORDER;
 
 /* Constants */
@@ -597,6 +628,10 @@ typedef struct
 
 #define FRAME_START		0x00000000
 #define FRAME_END		0x00000001
+
+#define STREAM_BITMAP_END		0x01
+#define STREAM_BITMAP_COMPRESSED	0x02
+#define STREAM_BITMAP_V2		0x04
 
 /* Update Interface */
 

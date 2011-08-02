@@ -151,7 +151,8 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	if (updateType != UPDATE_TYPE_BITMAP)
+		printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, update);
 

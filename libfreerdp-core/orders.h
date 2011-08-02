@@ -70,6 +70,25 @@
 #define ORDER_FIELD_22				0x200000
 #define ORDER_FIELD_23				0x400000
 
+/* Bitmap Cache Flags */
+#define CBR2_8BPP			0x3
+#define CBR2_16BPP			0x4
+#define CBR2_24BPP			0x5
+#define CBR2_32BPP			0x6
+
+#define CBR2_HEIGHT_SAME_AS_WIDTH	0x01
+#define CBR2_PERSISTENT_KEY_PRESENT	0x02
+#define CBR2_NO_BITMAP_COMPRESSION_HDR	0x08
+#define CBR2_DO_NOT_CACHE		0x10
+
+#define CBR23_8BPP			0x3
+#define CBR23_16BPP			0x4
+#define CBR23_24BPP			0x5
+#define CBR23_32BPP			0x6
+
+#define CBR3_IGNORABLE_FLAG		0x08
+#define CBR3_DO_NOT_CACHE		0x10
+
 /* Order Classes */
 #define ORDER_PRIMARY_CLASS			0x01
 #define ORDER_SECONDARY_CLASS 			0x03
