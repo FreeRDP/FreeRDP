@@ -96,6 +96,8 @@ boolean df_pre_connect(freerdp* instance)
 	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
 	SET_DFI(instance, dfi);
 
+	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+
 	return True;
 }
 
@@ -146,7 +148,20 @@ boolean df_post_connect(freerdp* instance)
 
 	df_keyboard_init();
 
+	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
+
 	return True;
+}
+
+static int df_process_plugin_args(rdpSettings* settings, const char* name,
+	FRDP_PLUGIN_DATA* plugin_data, void* user_data)
+{
+	rdpChanMan* chanman = (rdpChanMan*) user_data;
+
+	printf("Load plugin %s\n", name);
+	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
+
+	return 1;
 }
 
 int dfreerdp_run(freerdp* instance)
@@ -160,6 +175,7 @@ int dfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	rdpChanMan* chanman;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -225,6 +241,9 @@ int dfreerdp_run(freerdp* instance)
 		}
 	}
 
+	chanman = GET_CHANMAN(instance);
+	freerdp_chanman_close(chanman, instance);
+	freerdp_chanman_free(chanman);
 	freerdp_free(instance);
 
 	return 0;
@@ -254,6 +273,9 @@ int main(int argc, char* argv[])
 	pthread_t thread;
 	freerdp* instance;
 	struct thread_data* data;
+	rdpChanMan* chanman;
+
+	freerdp_chanman_global_init();
 
 	g_sem = freerdp_sem_new(1);
 
@@ -261,8 +283,11 @@ int main(int argc, char* argv[])
 	instance->PreConnect = df_pre_connect;
 	instance->PostConnect = df_post_connect;
 
+	chanman = freerdp_chanman_new();
+	SET_CHANMAN(instance, chanman);
+
 	DirectFBInit(&argc, &argv);
-	freerdp_parse_args(instance->settings, argc, argv, NULL, NULL, NULL, NULL);
+	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, chanman, NULL, NULL);
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
@@ -274,6 +299,8 @@ int main(int argc, char* argv[])
 	{
                 freerdp_sem_wait(g_sem);
 	}
+
+	freerdp_chanman_global_uninit();
 
 	return 0;
 }
