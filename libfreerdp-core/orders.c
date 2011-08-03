@@ -184,15 +184,15 @@ void update_read_2byte_unsigned(STREAM* s, uint16* value)
 
 	stream_read_uint8(s, byte);
 
-	if (byte & 0x01)
+	if (byte & 0x80)
 	{
-		*value = (byte & 0x7F) << 16;
+		*value = (byte & 0x7F) << 8;
 		stream_read_uint8(s, byte);
 		*value |= byte;
 	}
 	else
 	{
-		*value = byte;
+		*value = (byte & 0x7F);
 	}
 }
 
@@ -203,17 +203,17 @@ void update_read_2byte_signed(STREAM* s, sint16* value)
 
 	stream_read_uint8(s, byte);
 
-	negative = (byte & 0x02) ? True : False;
+	negative = (byte & 0x40) ? True : False;
 
-	if (byte & 0x01)
+	if (byte & 0x80)
 	{
-		*value = (byte & 0x3F) << 16;
+		*value = (byte & 0x3F) << 8;
 		stream_read_uint8(s, byte);
 		*value |= byte;
 	}
 	else
 	{
-		*value = byte;
+		*value = (byte & 0x3F);
 	}
 
 	if (negative)
@@ -506,12 +506,47 @@ void update_read_multi_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, MULTI
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_opaque_rect->nDeltaEntries);
+		stream_read_uint8(s, multi_opaque_rect->numRectangles);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
 	{
+		int i;
+		uint8 flags;
+		uint8* zeroBits;
+		int zeroBitsSize;
+		DELTA_RECT* rectangles;
+
+		rectangles = multi_opaque_rect->rectangles;
+		zeroBitsSize = ((multi_opaque_rect->numRectangles + 1) / 2);
+
 		stream_read_uint16(s, cbData);
-		stream_seek(s, cbData);
+
+		stream_get_mark(s, zeroBits);
+		stream_seek(s, zeroBitsSize);
+
+		memset(&rectangles[0], 0, sizeof(DELTA_RECT));
+
+		for (i = 0; i < multi_opaque_rect->numRectangles; i++)
+		{
+			flags = zeroBits[i / 2];
+
+			if (i % 2 == 0)
+				flags = (flags >> 4) & 0x0F;
+			else
+				flags = flags & 0x0F;
+
+			if (~flags & 0x80)
+				update_read_2byte_signed(s, &rectangles[i].left);
+
+			if (~flags & 0x40);
+				update_read_2byte_signed(s, &rectangles[i].top);
+
+			if (~flags & 0x20);
+				update_read_2byte_signed(s, &rectangles[i].right);
+
+			if (~flags & 0x10);
+				update_read_2byte_signed(s, &rectangles[i].bottom);
+		}
 	}
 }
 

@@ -179,13 +179,21 @@ typedef struct
 
 typedef struct
 {
+	sint16 left;
+	sint16 top;
+	sint16 right;
+	sint16 bottom;
+} DELTA_RECT;
+
+typedef struct
+{
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;
 	sint16 nHeight;
 	uint32 color;
-	uint8 nDeltaEntries;
-	uint8* codeDeltaList;
+	uint8 numRectangles;
+	DELTA_RECT rectangles[45];
 } MULTI_OPAQUE_RECT_ORDER;
 
 typedef struct

@@ -1187,7 +1187,29 @@ void gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 
 void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
+	int i;
+	GDI_RECT rect;
+	HGDI_BRUSH hBrush;
+	uint32 brush_color;
+	DELTA_RECT* rectangle;
+	GDI *gdi = GET_GDI(update);
 
+	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
+	{
+		rectangle = &multi_opaque_rect->rectangles[i];
+
+		rect.left = rectangle->left;
+		rect.top = rectangle->top;
+		rect.right = rectangle->right;
+		rect.bottom = rectangle->bottom;
+
+		brush_color = gdi_color_convert(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+
+		hBrush = gdi_CreateSolidBrush(brush_color);
+		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
+	}
+
+	gdi_DeleteObject((HGDIOBJECT) hBrush);
 }
 
 void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
