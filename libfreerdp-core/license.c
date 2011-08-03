@@ -141,7 +141,7 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type)
 	wMsgSize = length - LICENSE_PACKET_HEADER_LENGTH;
 	flags = EXTENDED_ERROR_MSG_SUPPORTED | PREAMBLE_VERSION_3_0;
 
-	rdp_write_header(license->rdp, s, length);
+	rdp_write_header(license->rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, sec_flags);
 	license_write_preamble(s, type, flags, wMsgSize);
 
