@@ -62,7 +62,7 @@ void test_chanman(void)
 
 	settings.hostname = "testhost";
 	instance.settings = &settings;
-	instance.ChannelDataInput = test_rdp_channel_data;
+	instance.SendChannelData = test_rdp_channel_data;
 
 	chan_man = freerdp_chanman_new();
 

@@ -26,9 +26,13 @@
 #include <string.h>
 #include <directfb.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/chanman.h>
 
 #define SET_DFI(_instance, _dfi) (_instance)->param1 = _dfi
-#define GET_DFI(_instance) ((dfInfo *) ((_instance)->param1))
+#define GET_DFI(_instance) ((dfInfo*) ((_instance)->param1))
+
+#define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
+#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
 
 struct df_info
 {
