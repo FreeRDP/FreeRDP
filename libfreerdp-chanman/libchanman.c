@@ -833,24 +833,24 @@ static void freerdp_chanman_process_sync(rdpChanMan* chan_man, freerdp* instance
 /**
  * called only from main thread
  */
-int freerdp_chanman_get_fds(rdpChanMan* chan_man, freerdp* instance, void** read_fds,
+boolean freerdp_chanman_get_fds(rdpChanMan* chan_man, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
 	wait_obj_get_fds(chan_man->signal, read_fds, read_count);
-	return 0;
+	return True;
 }
 
 /**
  * called only from main thread
  */
-int freerdp_chanman_check_fds(rdpChanMan * chan_man, freerdp* instance)
+boolean freerdp_chanman_check_fds(rdpChanMan * chan_man, freerdp* instance)
 {
 	if (wait_obj_is_set(chan_man->signal))
 	{
 		wait_obj_clear(chan_man->signal);
 		freerdp_chanman_process_sync(chan_man, instance);
 	}
-	return 0;
+	return True;
 }
 
 FRDP_EVENT* freerdp_chanman_pop_event(rdpChanMan* chan_man)
