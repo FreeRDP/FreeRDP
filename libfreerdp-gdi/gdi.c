@@ -1190,6 +1190,27 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 
 }
 
+void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
+{
+	int cx, cy;
+	uint32 color;
+	HGDI_PEN hPen;
+	GDI *gdi = GET_GDI(update);
+
+	cx = line_to->nXEnd - line_to->nXStart + 1;
+	cy = line_to->nYEnd - line_to->nYStart + 1;
+
+	color = gdi_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
+	gdi_SetROP2(gdi->drawing->hdc, line_to->bRop2);
+
+	gdi_MoveToEx(gdi->drawing->hdc, line_to->nXStart, line_to->nYStart, NULL);
+	gdi_LineTo(gdi->drawing->hdc, line_to->nXEnd, line_to->nYEnd);
+
+	gdi_DeleteObject((HGDIOBJECT) hPen);
+}
+
 /**
  * Register GDI callbacks with libfreerdp.
  * @param inst current instance
@@ -1211,14 +1232,14 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiScrBlt = NULL;
 	update->MultiOpaqueRect = gdi_multi_opaque_rect;
 	update->MultiDrawNineGrid = NULL;
-	update->LineTo = NULL;
+	update->LineTo = gdi_line_to;
 	update->Polyline = NULL;
 	update->MemBlt = NULL;
 	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
+	update->GlyphIndex = NULL;
 	update->FastIndex = NULL;
 	update->FastGlyph = NULL;
-	update->GlyphIndex = NULL;
 	update->PolygonSC = NULL;
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;

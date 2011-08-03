@@ -269,44 +269,6 @@ typedef struct
 typedef struct
 {
 	uint8 cacheId;
-	uint16 fDrawing;
-	uint32 backColor;
-	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
-	uint16 x;
-	uint16 y;
-	uint8* data;
-} FAST_INDEX_ORDER;
-
-typedef struct
-{
-	uint8 cacheId;
-	uint16 fDrawing;
-	uint32 backColor;
-	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
-	uint16 x;
-	uint16 y;
-	uint8* data;
-} FAST_GLYPH_ORDER;
-
-typedef struct
-{
-	uint8 cacheId;
 	uint8 flAccel;
 	uint8 ulCharInc;
 	uint8 fOpRedundant;
@@ -329,6 +291,46 @@ typedef struct
 	sint16 y;
 	uint8* data;
 } GLYPH_INDEX_ORDER;
+
+typedef struct
+{
+	uint8 cacheId;
+	uint8 flAccel;
+	uint8 ulCharInc;
+	uint32 backColor;
+	uint32 foreColor;
+	sint16 bkLeft;
+	sint16 bkTop;
+	sint16 bkRight;
+	sint16 bkBottom;
+	sint16 opLeft;
+	sint16 opTop;
+	sint16 opRight;
+	sint16 opBottom;
+	uint16 x;
+	uint16 y;
+	uint8* data;
+} FAST_INDEX_ORDER;
+
+typedef struct
+{
+	uint8 cacheId;
+	uint8 flAccel;
+	uint8 ulCharInc;
+	uint32 backColor;
+	uint32 foreColor;
+	sint16 bkLeft;
+	sint16 bkTop;
+	sint16 bkRight;
+	sint16 bkBottom;
+	sint16 opLeft;
+	sint16 opTop;
+	sint16 opRight;
+	sint16 opBottom;
+	uint16 x;
+	uint16 y;
+	uint8* data;
+} FAST_GLYPH_ORDER;
 
 typedef struct
 {
@@ -440,6 +442,7 @@ typedef struct
 	uint16 y;
 	uint16 cx;
 	uint16 cy;
+	uint16 cb;
 	uint8* aj;
 } GLYPH_DATA;
 
@@ -458,6 +461,7 @@ typedef struct
 	sint16 y;
 	uint16 cx;
 	uint16 cy;
+	uint16 cb;
 	uint8* aj;
 } GLYPH_DATA_V2;
 
@@ -473,11 +477,11 @@ typedef struct
 typedef struct
 {
 	uint8 cacheEntry;
-	uint8 iBitmapFormat;
+	uint8 bpp;
 	uint8 cx;
 	uint8 cy;
 	uint8 style;
-	uint8 iBytes;
+	uint8 length;
 	uint8* brushData;
 } CACHE_BRUSH_ORDER;
 
@@ -659,9 +663,9 @@ typedef void (*pcPolyline)(rdpUpdate* update, POLYLINE_ORDER* polyline);
 typedef void (*pcMemBlt)(rdpUpdate* update, MEMBLT_ORDER* memblt);
 typedef void (*pcMem3Blt)(rdpUpdate* update, MEM3BLT_ORDER* memblt);
 typedef void (*pcSaveBitmap)(rdpUpdate* update, SAVE_BITMAP_ORDER* save_bitmap);
+typedef void (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
 typedef void (*pcFastIndex)(rdpUpdate* update, FAST_INDEX_ORDER* fast_index);
 typedef void (*pcFastGlyph)(rdpUpdate* update, FAST_GLYPH_ORDER* fast_glyph);
-typedef void (*pcGlyphIndex)(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index);
 typedef void (*pcPolygonSC)(rdpUpdate* update, POLYGON_SC_ORDER* polygon_sc);
 typedef void (*pcPolygonCB)(rdpUpdate* update, POLYGON_CB_ORDER* polygon_cb);
 typedef void (*pcEllipseSC)(rdpUpdate* update, ELLIPSE_SC_ORDER* ellipse_sc);
@@ -717,9 +721,9 @@ struct rdp_update
 	pcMemBlt MemBlt;
 	pcMem3Blt Mem3Blt;
 	pcSaveBitmap SaveBitmap;
+	pcGlyphIndex GlyphIndex;
 	pcFastIndex FastIndex;
 	pcFastGlyph FastGlyph;
-	pcGlyphIndex GlyphIndex;
 	pcPolygonSC PolygonSC;
 	pcPolygonCB PolygonCB;
 	pcEllipseSC EllipseSC;
@@ -766,9 +770,9 @@ struct rdp_update
 	MEMBLT_ORDER memblt;
 	MEM3BLT_ORDER mem3blt;
 	SAVE_BITMAP_ORDER save_bitmap;
+	GLYPH_INDEX_ORDER glyph_index;
 	FAST_INDEX_ORDER fast_index;
 	FAST_GLYPH_ORDER fast_glyph;
-	GLYPH_INDEX_ORDER glyph_index;
 	POLYGON_SC_ORDER polygon_sc;
 	POLYGON_CB_ORDER polygon_cb;
 	ELLIPSE_SC_ORDER ellipse_sc;
