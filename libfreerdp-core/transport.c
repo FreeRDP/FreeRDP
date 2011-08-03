@@ -263,6 +263,8 @@ int transport_check_fds(rdpTransport* transport)
 			stream_copy(transport->recv_buffer, received, pos - length);
 		}
 
+		stream_set_pos(received, length);
+		stream_seal(received);
 		stream_set_pos(received, 0);
 		status = transport->recv_callback(transport, received, transport->recv_extra);
 		stream_free(received);
