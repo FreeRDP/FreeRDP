@@ -238,6 +238,8 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 void rdp_send(rdpRdp* rdp, STREAM* s);
 void rdp_recv(rdpRdp* rdp);
 
+int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size);
+
 void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking);
 int rdp_check_fds(rdpRdp* rdp);
 

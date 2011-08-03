@@ -65,6 +65,11 @@ boolean freerdp_check_fds(freerdp* instance)
 	return True;
 }
 
+static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
+{
+	return rdp_send_channel_data(instance->rdp, channel_id, data, size);
+}
+
 freerdp* freerdp_new()
 {
 	freerdp* instance;
@@ -82,6 +87,7 @@ freerdp* freerdp_new()
 		instance->Connect = freerdp_connect;
 		instance->GetFileDescriptor = freerdp_get_fds;
 		instance->CheckFileDescriptor = freerdp_check_fds;
+		instance->SendChannelData = freerdp_send_channel_data;
 	}
 
 	return instance;

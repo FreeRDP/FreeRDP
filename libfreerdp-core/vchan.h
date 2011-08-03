@@ -26,6 +26,7 @@ struct rdp_vchan
 };
 typedef struct rdp_vchan rdpVchan;
 
+int vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size);
 void vchan_process(rdpVchan* vchan, STREAM* s, uint16 channel_id);
 
 rdpVchan* vchan_new(freerdp* instance);

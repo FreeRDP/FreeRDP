@@ -448,6 +448,11 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 	return 1;
 }
 
+int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size)
+{
+	return vchan_send(rdp->vchan, channel_id, data, size);
+}
+
 /**
  * Set non-blocking mode information.
  * @param rdp RDP module
