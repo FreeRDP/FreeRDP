@@ -22,6 +22,8 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
+#include <freerdp/utils/event.h>
+#include <freerdp/constants.h>
 
 #include "df_event.h"
 
@@ -170,6 +172,41 @@ df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size,
 	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
 }
 
+static void
+df_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
+{
+	FRDP_EVENT* event;
+	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
+
+	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+
+	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event->num_formats = 0;
+
+	freerdp_chanman_send_event(chanman, "cliprdr", event);
+}
+
+static void
+df_process_channel_event(rdpChanMan* chanman, freerdp* instance)
+{
+	FRDP_EVENT* event;
+
+	event = freerdp_chanman_pop_event(chanman);
+	if (event)
+	{
+		switch (event->event_type)
+		{
+			case FRDP_EVENT_TYPE_CB_SYNC:
+				df_process_cb_sync_event(chanman, instance);
+				break;
+			default:
+				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
+				break;
+		}
+		freerdp_event_free(event);
+	}
+}
+
 int dfreerdp_run(freerdp* instance)
 {
 	int i;
@@ -247,16 +284,17 @@ int dfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_chanman_check_fds(chanman, instance) != True)
-		{
-			printf("Failed to check channel manager file descriptor\n");
-			break;
-		}
 		if (df_check_fds(instance, &rfds_set) != True)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
+		if (freerdp_chanman_check_fds(chanman, instance) != True)
+		{
+			printf("Failed to check channel manager file descriptor\n");
+			break;
+		}
+		df_process_channel_event(chanman, instance);
 	}
 
 	freerdp_chanman_close(chanman, instance);
