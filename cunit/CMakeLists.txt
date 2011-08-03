@@ -40,6 +40,8 @@ add_executable(test_freerdp
 	test_libgdi.h
 	test_list.c
 	test_list.h
+	test_orders.c
+	test_orders.h
 	test_license.c
 	test_license.h
 	test_stream.c
