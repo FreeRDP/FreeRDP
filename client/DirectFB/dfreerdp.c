@@ -164,6 +164,12 @@ static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	return 1;
 }
 
+static int
+df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+{
+	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
+}
+
 int dfreerdp_run(freerdp* instance)
 {
 	int i;
@@ -182,6 +188,8 @@ int dfreerdp_run(freerdp* instance)
 
 	printf("DirectFB Run\n");
 
+	chanman = GET_CHANMAN(instance);
+
 	instance->Connect(instance);
 
 	while (1)
@@ -192,6 +200,11 @@ int dfreerdp_run(freerdp* instance)
 		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
+			break;
+		}
+		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		{
+			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
 		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
@@ -234,6 +247,11 @@ int dfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+		if (freerdp_chanman_check_fds(chanman, instance) != True)
+		{
+			printf("Failed to check channel manager file descriptor\n");
+			break;
+		}
 		if (df_check_fds(instance, &rfds_set) != True)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
@@ -241,7 +259,6 @@ int dfreerdp_run(freerdp* instance)
 		}
 	}
 
-	chanman = GET_CHANMAN(instance);
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
 	freerdp_free(instance);
@@ -282,6 +299,7 @@ int main(int argc, char* argv[])
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;
 	instance->PostConnect = df_post_connect;
+	instance->ReceiveChannelData = df_receive_channel_data;
 
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
