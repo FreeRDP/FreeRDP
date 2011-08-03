@@ -46,6 +46,8 @@ uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
 	"GlyphIndex"
 };
 
+#define PRIMARY_DRAWING_ORDER_COUNT	(sizeof(PRIMARY_DRAWING_ORDER_STRINGS) / sizeof(PRIMARY_DRAWING_ORDER_STRINGS[0]))
+
 uint8 SECONDARY_DRAWING_ORDER_STRINGS[][32] =
 {
 	"Cache Bitmap",
@@ -58,6 +60,8 @@ uint8 SECONDARY_DRAWING_ORDER_STRINGS[][32] =
 	"Cache Brush",
 	"Cache Bitmap V3"
 };
+
+#define SECONDARY_DRAWING_ORDER_COUNT	(sizeof(SECONDARY_DRAWING_ORDER_STRINGS) / sizeof(SECONDARY_DRAWING_ORDER_STRINGS[0]))
 
 uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
 {
@@ -76,6 +80,8 @@ uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
 	"Desktop Composition",
 	"Frame Marker"
 };
+
+#define ALTSEC_DRAWING_ORDER_COUNT	(sizeof(ALTSEC_DRAWING_ORDER_STRINGS) / sizeof(ALTSEC_DRAWING_ORDER_STRINGS[0]))
 
 uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 {
@@ -104,6 +110,16 @@ uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	GLYPH_INDEX_ORDER_FIELD_BYTES
 };
 
+uint8 CBR2_BPP[] =
+{
+		0, 0, 0, 8, 16, 24, 32
+};
+
+uint8 CBR23_BPP[] =
+{
+		0, 0, 0, 8, 16, 24, 32
+};
+
 void update_read_coord(STREAM* s, sint16* coord, boolean delta)
 {
 	sint8 byte;
@@ -129,6 +145,37 @@ void update_read_color(STREAM* s, uint32* color)
 	*color |= (byte << 8);
 	stream_read_uint8(s, byte);
 	*color |= (byte << 16);
+}
+
+void update_read_colorref(STREAM* s, uint32* color)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+	*color = byte;
+	stream_read_uint8(s, byte);
+	*color |= (byte << 8);
+	stream_read_uint8(s, byte);
+	*color |= (byte << 16);
+	stream_seek_uint8(s);
+}
+
+void update_read_2byte_unsigned_encoding(STREAM* s, uint16* value)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte & 0x01)
+	{
+		*value = (byte & 0x7F) << 16;
+		stream_read_uint8(s, byte);
+		*value |= byte;
+	}
+	else
+	{
+		*value = byte;
+	}
 }
 
 /* Primary Drawing Orders */
@@ -214,9 +261,195 @@ void update_read_scrblt_order(STREAM* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* sc
 		update_read_coord(s, &scrblt->nYSrc, orderInfo->deltaCoordinates);
 }
 
+void update_read_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect)
+{
+	uint8 byte;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &opaque_rect->nLeftRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &opaque_rect->nTopRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		update_read_coord(s, &opaque_rect->nWidth, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		update_read_coord(s, &opaque_rect->nHeight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+	{
+		stream_read_uint8(s, byte);
+		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
+	}
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+	{
+		stream_read_uint8(s, byte);
+		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+	}
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+	{
+		stream_read_uint8(s, byte);
+		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+	}
+}
+
 void update_read_draw_nine_grid_order(STREAM* s, ORDER_INFO* orderInfo, DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
 
+}
+
+void update_read_multi_dstblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_DSTBLT_ORDER* multi_dstblt)
+{
+	uint16 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &multi_dstblt->nLeftRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &multi_dstblt->nTopRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		update_read_coord(s, &multi_dstblt->nWidth, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		update_read_coord(s, &multi_dstblt->nHeight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		stream_read_uint8(s, multi_dstblt->bRop);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		stream_read_uint8(s, multi_dstblt->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint16(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_multi_patblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_PATBLT_ORDER* multi_patblt)
+{
+	uint16 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &multi_patblt->nLeftRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &multi_patblt->nTopRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		update_read_coord(s, &multi_patblt->nWidth, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		update_read_coord(s, &multi_patblt->nHeight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		stream_read_uint8(s, multi_patblt->bRop);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		update_read_color(s, &multi_patblt->backColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+		update_read_color(s, &multi_patblt->foreColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_08)
+		stream_read_uint8(s, multi_patblt->brushOrgX);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_09)
+		stream_read_uint8(s, multi_patblt->brushOrgY);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_10)
+		stream_read_uint8(s, multi_patblt->brushStyle);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_11)
+		stream_read_uint8(s, multi_patblt->brushHatch);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_12)
+		stream_read(s, multi_patblt->brushExtra, 7);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_13)
+		stream_read_uint8(s, multi_patblt->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint16(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_multi_scrblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_SCRBLT_ORDER* multi_scrblt)
+{
+	uint16 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &multi_scrblt->nLeftRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &multi_scrblt->nTopRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		update_read_coord(s, &multi_scrblt->nWidth, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		update_read_coord(s, &multi_scrblt->nHeight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		stream_read_uint8(s, multi_scrblt->bRop);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		update_read_coord(s, &multi_scrblt->nXSrc, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+		update_read_coord(s, &multi_scrblt->nYSrc, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_08)
+		stream_read_uint8(s, multi_scrblt->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint16(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_multi_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+{
+	uint8 byte;
+	uint16 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &multi_opaque_rect->nLeftRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &multi_opaque_rect->nTopRect, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		update_read_coord(s, &multi_opaque_rect->nWidth, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		update_read_coord(s, &multi_opaque_rect->nHeight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+	{
+		stream_read_uint8(s, byte);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | byte;
+	}
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+	{
+		stream_read_uint8(s, byte);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+	}
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+	{
+		stream_read_uint8(s, byte);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+	}
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_08)
+		stream_read_uint8(s, multi_opaque_rect->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint16(s, cbData);
+	stream_seek(s, cbData);
 }
 
 void update_read_multi_draw_nine_grid_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
@@ -257,60 +490,28 @@ void update_read_line_to_order(STREAM* s, ORDER_INFO* orderInfo, LINE_TO_ORDER* 
 		update_read_color(s, &line_to->penColor);
 }
 
-void update_read_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect)
+void update_read_polyline_order(STREAM* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
 {
-	uint8 byte;
+	uint8 cbData;
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &opaque_rect->nLeftRect, orderInfo->deltaCoordinates);
+		update_read_coord(s, &polyline->xStart, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &opaque_rect->nTopRect, orderInfo->deltaCoordinates);
+		update_read_coord(s, &polyline->yStart, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &opaque_rect->nWidth, orderInfo->deltaCoordinates);
+		stream_read_uint8(s, polyline->bRop2);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &opaque_rect->nHeight, orderInfo->deltaCoordinates);
+		update_read_color(s, &polyline->penColor);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-	{
-		stream_read_uint8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
-	}
+		stream_read_uint8(s, polyline->nDeltaEntries);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-	{
-		stream_read_uint8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
-	}
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-	{
-		stream_read_uint8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
-	}
-}
-
-void update_read_save_bitmap_order(STREAM* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		stream_read_uint32(s, save_bitmap->savedBitmapPosition);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &save_bitmap->nLeftRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &save_bitmap->nTopRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &save_bitmap->nRightRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		update_read_coord(s, &save_bitmap->nBottomRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		stream_read_uint8(s, save_bitmap->operation);
+	/* codeDeltaList */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
 }
 
 void update_read_memblt_order(STREAM* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt)
@@ -394,144 +595,31 @@ void update_read_mem3blt_order(STREAM* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* 
 		stream_read_uint16(s, mem3blt->cacheIndex);
 }
 
-void update_read_multi_dstblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_DSTBLT_ORDER* multi_dstblt)
+void update_read_save_bitmap_order(STREAM* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)
 {
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &multi_dstblt->nLeftRect, orderInfo->deltaCoordinates);
+		stream_read_uint32(s, save_bitmap->savedBitmapPosition);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &multi_dstblt->nTopRect, orderInfo->deltaCoordinates);
+		update_read_coord(s, &save_bitmap->nLeftRect, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &multi_dstblt->nWidth, orderInfo->deltaCoordinates);
+		update_read_coord(s, &save_bitmap->nTopRect, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &multi_dstblt->nHeight, orderInfo->deltaCoordinates);
+		update_read_coord(s, &save_bitmap->nRightRect, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		stream_read_uint8(s, multi_dstblt->bRop);
+		update_read_coord(s, &save_bitmap->nBottomRect, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		stream_read_uint8(s, multi_dstblt->nDeltaEntries);
-
-	/* codeDeltaList */
-}
-
-void update_read_multi_patblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_PATBLT_ORDER* multi_patblt)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &multi_patblt->nLeftRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &multi_patblt->nTopRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &multi_patblt->nWidth, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &multi_patblt->nHeight, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		stream_read_uint8(s, multi_patblt->bRop);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		update_read_color(s, &multi_patblt->backColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-		update_read_color(s, &multi_patblt->foreColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_patblt->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, multi_patblt->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, multi_patblt->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read_uint8(s, multi_patblt->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read(s, multi_patblt->brushExtra, 7);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		stream_read_uint8(s, multi_patblt->nDeltaEntries);
-
-	/* codeDeltaList */
-}
-
-void update_read_multi_scrblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_SCRBLT_ORDER* multi_scrblt)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &multi_scrblt->nLeftRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &multi_scrblt->nTopRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &multi_scrblt->nWidth, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &multi_scrblt->nHeight, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		stream_read_uint8(s, multi_scrblt->bRop);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		update_read_coord(s, &multi_scrblt->nXSrc, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-		update_read_coord(s, &multi_scrblt->nYSrc, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_scrblt->nDeltaEntries);
-
-	/* codeDeltaList */
-}
-
-void update_read_multi_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
-{
-	uint8 byte;
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &multi_opaque_rect->nLeftRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &multi_opaque_rect->nTopRect, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		update_read_coord(s, &multi_opaque_rect->nWidth, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_coord(s, &multi_opaque_rect->nHeight, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-	{
-		stream_read_uint8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | byte;
-	}
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-	{
-		stream_read_uint8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | (byte << 8);
-	}
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-	{
-		stream_read_uint8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | (byte << 16);
-	}
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_opaque_rect->nDeltaEntries);
-
-	/* codeDeltaList */
+		stream_read_uint8(s, save_bitmap->operation);
 }
 
 void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
+	uint8 cbData;
+
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_index->cacheId);
 
@@ -575,94 +663,14 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 		update_read_coord(s, &fast_index->y, orderInfo->deltaCoordinates);
 
 	/* bytes */
-}
-
-void update_read_polygon_sc_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &polygon_sc->xStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &polygon_sc->yStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		stream_read_uint8(s, polygon_sc->bRop2);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		stream_read_uint8(s, polygon_sc->fillMode);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		update_read_color(s, &polygon_sc->brushColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		stream_read_uint8(s, polygon_sc->nDeltaEntries);
-
-	/* codeDeltaList */
-}
-
-void update_read_polygon_cb_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &polygon_cb->xStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &polygon_cb->yStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		stream_read_uint8(s, polygon_cb->bRop2);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		stream_read_uint8(s, polygon_cb->fillMode);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		update_read_color(s, &polygon_cb->backColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		update_read_color(s, &polygon_cb->foreColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-		stream_read_uint8(s, polygon_cb->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, polygon_cb->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, polygon_cb->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, polygon_cb->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read(s, polygon_cb->brushExtra, 7);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		stream_read_uint8(s, polygon_cb->nDeltaEntries);
-
-	/* codeDeltaList */
-}
-
-void update_read_polyline_order(STREAM* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		update_read_coord(s, &polyline->xStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		update_read_coord(s, &polyline->yStart, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		stream_read_uint8(s, polyline->bRop2);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_color(s, &polyline->penColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		stream_read_uint8(s, polyline->nDeltaEntries);
-
-	/* codeDeltaList */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
 }
 
 void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
 {
+	uint8 cbData;
+
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_glyph->cacheId);
 
@@ -706,6 +714,152 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 		update_read_coord(s, &fast_glyph->y, orderInfo->deltaCoordinates);
 
 	/* bytes */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index)
+{
+	uint8 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		stream_read_uint8(s, glyph_index->cacheId);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		stream_read_uint8(s, glyph_index->flAccel);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		stream_read_uint8(s, glyph_index->ulCharInc);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		stream_read_uint8(s, glyph_index->fOpRedundant);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		update_read_color(s, &glyph_index->backColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		update_read_color(s, &glyph_index->foreColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+		update_read_coord(s, &glyph_index->bkLeft, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_08)
+		update_read_coord(s, &glyph_index->bkTop, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_09)
+		update_read_coord(s, &glyph_index->bkRight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_10)
+		update_read_coord(s, &glyph_index->bkBottom, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_10)
+		update_read_coord(s, &glyph_index->opLeft, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_11)
+		update_read_coord(s, &glyph_index->opTop, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_12)
+		update_read_coord(s, &glyph_index->opRight, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_13)
+		update_read_coord(s, &glyph_index->opBottom, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_14)
+		stream_read_uint8(s, glyph_index->brushOrgX);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_15)
+		stream_read_uint8(s, glyph_index->brushOrgY);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_16)
+		stream_read_uint8(s, glyph_index->brushStyle);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_17)
+		stream_read_uint8(s, glyph_index->brushHatch);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_18)
+		stream_read(s, glyph_index->brushExtra, 7);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_19)
+		update_read_coord(s, &glyph_index->x, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_20)
+		update_read_coord(s, &glyph_index->y, orderInfo->deltaCoordinates);
+
+	/* bytes */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_polygon_sc_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
+{
+	uint8 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &polygon_sc->xStart, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &polygon_sc->yStart, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		stream_read_uint8(s, polygon_sc->bRop2);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		stream_read_uint8(s, polygon_sc->fillMode);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		update_read_color(s, &polygon_sc->brushColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		stream_read_uint8(s, polygon_sc->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
+}
+
+void update_read_polygon_cb_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
+{
+	uint8 cbData;
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_01)
+		update_read_coord(s, &polygon_cb->xStart, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_02)
+		update_read_coord(s, &polygon_cb->yStart, orderInfo->deltaCoordinates);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_03)
+		stream_read_uint8(s, polygon_cb->bRop2);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_04)
+		stream_read_uint8(s, polygon_cb->fillMode);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_05)
+		update_read_color(s, &polygon_cb->backColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		update_read_color(s, &polygon_cb->foreColor);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+		stream_read_uint8(s, polygon_cb->brushOrgX);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_08)
+		stream_read_uint8(s, polygon_cb->brushOrgY);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_09)
+		stream_read_uint8(s, polygon_cb->brushStyle);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_10)
+		stream_read_uint8(s, polygon_cb->brushHatch);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_12)
+		stream_read(s, polygon_cb->brushExtra, 7);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_13)
+		stream_read_uint8(s, polygon_cb->nDeltaEntries);
+
+	/* codeDeltaList */
+	stream_read_uint8(s, cbData);
+	stream_seek(s, cbData);
 }
 
 void update_read_ellipse_sc_order(STREAM* s, ORDER_INFO* orderInfo, ELLIPSE_SC_ORDER* ellipse_sc)
@@ -774,186 +928,246 @@ void update_read_ellipse_cb_order(STREAM* s, ORDER_INFO* orderInfo, ELLIPSE_CB_O
 		stream_read(s, ellipse_cb->brushExtra, 7);
 }
 
-void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index)
-{
-	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		stream_read_uint8(s, glyph_index->cacheId);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_02)
-		stream_read_uint8(s, glyph_index->flAccel);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_03)
-		stream_read_uint8(s, glyph_index->ulCharInc);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		stream_read_uint8(s, glyph_index->fOpRedundant);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		update_read_color(s, &glyph_index->backColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		update_read_color(s, &glyph_index->foreColor);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-		update_read_coord(s, &glyph_index->bkLeft, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		update_read_coord(s, &glyph_index->bkTop, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		update_read_coord(s, &glyph_index->bkRight, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		update_read_coord(s, &glyph_index->bkBottom, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		update_read_coord(s, &glyph_index->opLeft, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		update_read_coord(s, &glyph_index->opTop, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		update_read_coord(s, &glyph_index->opRight, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		update_read_coord(s, &glyph_index->opBottom, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_14)
-		stream_read_uint8(s, glyph_index->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_15)
-		stream_read_uint8(s, glyph_index->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_16)
-		stream_read_uint8(s, glyph_index->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_17)
-		stream_read_uint8(s, glyph_index->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_18)
-		stream_read(s, glyph_index->brushExtra, 7);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_19)
-		update_read_coord(s, &glyph_index->x, orderInfo->deltaCoordinates);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_20)
-		update_read_coord(s, &glyph_index->y, orderInfo->deltaCoordinates);
-
-	/* bytes */
-}
-
 /* Secondary Drawing Orders */
 
-void update_recv_cache_bitmap_order(rdpUpdate* update, STREAM* s)
+void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_order, boolean compressed, uint16 flags)
+{
+	stream_read_uint8(s, cache_bitmap_order->cacheId); /* cacheId (1 byte) */
+	stream_seek_uint8(s); /* pad1Octet (1 byte) */
+	stream_read_uint8(s, cache_bitmap_order->bitmapWidth); /* bitmapWidth (1 byte) */
+	stream_read_uint8(s, cache_bitmap_order->bitmapHeight); /* bitmapHeight (1 byte) */
+	stream_read_uint8(s, cache_bitmap_order->bitmapBpp); /* bitmapBpp (1 byte) */
+	stream_read_uint8(s, cache_bitmap_order->bitmapLength); /* bitmapLength (2 bytes) */
+	stream_read_uint8(s, cache_bitmap_order->cacheIndex); /* cacheIndex (2 bytes) */
+
+	if (compressed)
+	{
+		if (flags & NO_BITMAP_COMPRESSION_HDR)
+		{
+			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+		}
+		else
+		{
+			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_order->bitmapComprHdr);
+			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
+			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+		}
+	}
+	else
+	{
+		stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+	}
+}
+
+void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
+{
+	uint8 bitsPerPixelId;
+
+	cache_bitmap_v2_order->cacheId = flags & 0x00000003;
+	cache_bitmap_v2_order->flags = (flags & 0x0000FF80) >> 7;
+
+	bitsPerPixelId = (flags & 0x00000078) >> 3;
+	cache_bitmap_v2_order->bitmapBpp = CBR2_BPP[bitsPerPixelId];
+
+	stream_read_uint32(s, cache_bitmap_v2_order->key1); /* key1 (4 bytes) */
+	stream_read_uint32(s, cache_bitmap_v2_order->key2); /* key2 (4 bytes) */
+	stream_read_uint8(s, cache_bitmap_v2_order->bitmapWidth); /* bitmapWidth (1 byte) */
+	stream_read_uint8(s, cache_bitmap_v2_order->bitmapHeight); /* bitmapHeight (1 byte) */
+	stream_read_uint8(s, cache_bitmap_v2_order->bitmapLength); /* bitmapLength (2 bytes) */
+	update_read_2byte_unsigned_encoding(s, &cache_bitmap_v2_order->cacheIndex); /* cacheIndex */
+
+	if (compressed)
+	{
+		if (cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR)
+		{
+			stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
+		}
+		else
+		{
+			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_v2_order->bitmapComprHdr);
+			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
+			stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
+		}
+	}
+	else
+	{
+		stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
+	}
+}
+
+void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, boolean compressed, uint16 flags)
+{
+	uint8 bitsPerPixelId;
+
+	cache_bitmap_v3_order->cacheId = flags & 0x00000003;
+	cache_bitmap_v3_order->flags = (flags & 0x0000FF80) >> 7;
+
+	bitsPerPixelId = (flags & 0x00000078) >> 3;
+	cache_bitmap_v3_order->bpp = CBR23_BPP[bitsPerPixelId];
+
+	stream_read_uint16(s, cache_bitmap_v3_order->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_uint32(s, cache_bitmap_v3_order->key1); /* key1 (4 bytes) */
+	stream_read_uint32(s, cache_bitmap_v3_order->key2); /* key2 (4 bytes) */
+}
+
+void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cache_color_table_order)
 {
 
 }
 
-void update_recv_cache_color_table_order(rdpUpdate* update, STREAM* s)
+void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_order)
 {
 
 }
 
-void update_recv_cache_bitmap_compressed_order(rdpUpdate* update, STREAM* s)
+void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order)
 {
 
 }
 
-void update_recv_cache_glyph_order(rdpUpdate* update, STREAM* s)
-{
-
-}
-
-void update_recv_cache_bitmap_v2_order(rdpUpdate* update, STREAM* s)
-{
-
-}
-
-void update_recv_cache_bitmap_v2_compressed_order(rdpUpdate* update, STREAM* s)
-{
-
-}
-
-void update_recv_cache_brush_order(rdpUpdate* update, STREAM* s)
-{
-
-}
-
-void update_recv_cache_bitmap_v3_order(rdpUpdate* update, STREAM* s)
+void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_order)
 {
 
 }
 
 /* Alternate Secondary Drawing Orders */
 
-void update_recv_switch_surface_order(rdpUpdate* update, STREAM* s)
+void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
+	uint16 flags;
+	boolean deleteListPresent;
 
+	stream_read_uint16(s, flags); /* flags (2 bytes) */
+	create_offscreen_bitmap->offscreenBitmapId = flags & 0x7FFF;
+	deleteListPresent = (flags & 0x8000) ? True : False;
+
+	stream_read_uint16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
+	stream_read_uint16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
+
+	if (deleteListPresent)
+	{
+		int i;
+		OFFSCREEN_DELETE_LIST* deleteList;
+
+		deleteList = &(create_offscreen_bitmap->deleteList);
+
+		stream_read_uint16(s, deleteList->cIndices);
+
+		if (deleteList->indices == NULL)
+			deleteList->indices = xmalloc(deleteList->cIndices * 2);
+		else
+			deleteList->indices = xrealloc(deleteList->indices, deleteList->cIndices * 2);
+
+		for (i = 0; i < deleteList->cIndices; i++)
+		{
+			stream_read_uint16(s, deleteList->indices[i]);
+		}
+	}
 }
 
-void update_recv_create_offscreen_bitmap_order(rdpUpdate* update, STREAM* s)
+void update_read_switch_surface_order(STREAM* s, SWITCH_SURFACE_ORDER* switch_surface)
 {
-
+	stream_read_uint16(s, switch_surface->bitmapId); /* bitmapId (2 bytes) */
 }
 
-void update_recv_stream_bitmap_first_order(rdpUpdate* update, STREAM* s)
+void update_read_create_nine_grid_bitmap_order(STREAM* s, CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap)
 {
+	NINE_GRID_BITMAP_INFO* nineGridInfo;
 
+	stream_read_uint8(s, create_nine_grid_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	stream_read_uint16(s, create_nine_grid_bitmap->bitmapId); /* bitmapId (2 bytes) */
+
+	nineGridInfo = &(create_nine_grid_bitmap->nineGridInfo);
+	stream_read_uint32(s, nineGridInfo->flFlags); /* flFlags (4 bytes) */
+	stream_read_uint16(s, nineGridInfo->ulLeftWidth); /* ulLeftWidth (2 bytes) */
+	stream_read_uint16(s, nineGridInfo->ulRightWidth); /* ulRightWidth (2 bytes) */
+	stream_read_uint16(s, nineGridInfo->ulTopHeight); /* ulTopHeight (2 bytes) */
+	stream_read_uint16(s, nineGridInfo->ulBottomHeight); /* ulBottomHeight (2 bytes) */
+	update_read_colorref(s, &nineGridInfo->crTransparent); /* crTransparent (4 bytes) */
 }
 
-void update_recv_stream_bitmap_next_order(rdpUpdate* update, STREAM* s)
+void update_read_frame_marker_order(STREAM* s, FRAME_MARKER_ORDER* frame_marker)
 {
-
+	stream_read_uint32(s, frame_marker->action); /* action (4 bytes) */
 }
 
-void update_recv_create_nine_grid_bitmap_order(rdpUpdate* update, STREAM* s)
+void update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first)
 {
+	stream_read_uint8(s, stream_bitmap_first->bitmapFlags); /* bitmapFlags (1 byte) */
+	stream_read_uint8(s, stream_bitmap_first->bitmapBpp); /* bitmapBpp (1 byte) */
+	stream_read_uint16(s, stream_bitmap_first->bitmapType); /* bitmapType (2 bytes) */
+	stream_read_uint16(s, stream_bitmap_first->bitmapWidth); /* bitmapWidth (2 bytes) */
+	stream_read_uint16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */
 
+	if (stream_bitmap_first->bitmapFlags & STREAM_BITMAP_V2)
+		stream_read_uint32(s, stream_bitmap_first->bitmapSize); /* bitmapSize (4 bytes) */
+	else
+		stream_read_uint16(s, stream_bitmap_first->bitmapSize); /* bitmapSize (2 bytes) */
+
+	stream_read_uint16(s, stream_bitmap_first->bitmapBlockSize); /* bitmapBlockSize (2 bytes) */
+	stream_seek(s, stream_bitmap_first->bitmapBlockSize); /* bitmapBlock */
 }
 
-void update_recv_draw_gdiplus_first_order(rdpUpdate* update, STREAM* s)
+void update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_next)
 {
-
+	stream_read_uint8(s, stream_bitmap_next->bitmapFlags); /* bitmapFlags (1 byte) */
+	stream_read_uint16(s, stream_bitmap_next->bitmapType); /* bitmapType (2 bytes) */
+	stream_read_uint16(s, stream_bitmap_next->bitmapBlockSize); /* bitmapBlockSize (2 bytes) */
+	stream_seek(s, stream_bitmap_next->bitmapBlockSize); /* bitmapBlock */
 }
 
-void update_recv_draw_gdiplus_next_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_first_order(STREAM* s, DRAW_GDIPLUS_FIRST_ORDER* draw_gdiplus_first)
 {
-
+	stream_seek_uint8(s); /* pad1Octet (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_first->cbSize); /* cbSize (2 bytes) */
+	stream_read_uint32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_uint32(s, draw_gdiplus_first->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
+	stream_seek(s, draw_gdiplus_first->cbSize); /* emfRecords */
 }
 
-void update_recv_draw_gdiplus_end_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_next_order(STREAM* s, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next)
 {
-
+	stream_seek_uint8(s); /* pad1Octet (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_next->cbSize); /* cbSize (2 bytes) */
+	stream_seek(s, draw_gdiplus_next->cbSize); /* emfRecords */
 }
 
-void update_recv_draw_gdiplus_cache_first_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_end_order(STREAM* s, DRAW_GDIPLUS_END_ORDER* draw_gdiplus_end)
 {
-
+	stream_seek_uint8(s); /* pad1Octet (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_end->cbSize); /* cbSize (2 bytes) */
+	stream_read_uint32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_uint32(s, draw_gdiplus_end->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
+	stream_seek(s, draw_gdiplus_end->cbSize); /* emfRecords */
 }
 
-void update_recv_draw_gdiplus_cache_next_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_cache_first_order(STREAM* s, DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first)
 {
-
+	stream_read_uint8(s, draw_gdiplus_cache_first->flags); /* flags (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_cache_first->cacheType); /* cacheType (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_first->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_first->cbSize); /* cbSize (2 bytes) */
+	stream_read_uint32(s, draw_gdiplus_cache_first->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_seek(s, draw_gdiplus_cache_first->cbSize); /* emfRecords */
 }
 
-void update_recv_draw_gdiplus_cache_end_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_cache_next_order(STREAM* s, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next)
 {
-
+	stream_read_uint8(s, draw_gdiplus_cache_next->flags); /* flags (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_cache_next->cacheType); /* cacheType (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_next->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_next->cbSize); /* cbSize (2 bytes) */
+	stream_seek(s, draw_gdiplus_cache_next->cbSize); /* emfRecords */
 }
 
-void update_recv_windowing_order(rdpUpdate* update, STREAM* s)
+void update_read_draw_gdiplus_cache_end_order(STREAM* s, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end)
 {
-
-}
-
-void update_recv_desktop_composition_order(rdpUpdate* update, STREAM* s)
-{
-
-}
-
-void update_recv_frame_marker_order(rdpUpdate* update, STREAM* s)
-{
-
+	stream_read_uint8(s, draw_gdiplus_cache_end->flags); /* flags (1 byte) */
+	stream_read_uint16(s, draw_gdiplus_cache_end->cacheType); /* cacheType (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_end->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_uint16(s, draw_gdiplus_cache_end->cbSize); /* cbSize (2 bytes) */
+	stream_read_uint32(s, draw_gdiplus_cache_end->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_seek(s, draw_gdiplus_cache_end->cbSize); /* emfRecords */
 }
 
 void update_read_field_flags(STREAM* s, uint32* fieldFlags, uint8 flags, uint8 fieldBytes)
@@ -1035,7 +1249,10 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? True : False;
 
-	printf("%s Primary Drawing Order\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType]);
+	if (orderInfo->orderType < PRIMARY_DRAWING_ORDER_COUNT)
+		printf("%s Primary Drawing Order (%d)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+	else
+		printf("Unknown Primary Drawing Order (%d)\n", orderInfo->orderType);
 
 	switch (orderInfo->orderType)
 	{
@@ -1054,39 +1271,14 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			IFCALL(update->ScrBlt, update, &update->scrblt);
 			break;
 
-		case ORDER_TYPE_DRAW_NINE_GRID:
-			update_read_draw_nine_grid_order(s, orderInfo, &(update->draw_nine_grid));
-			IFCALL(update->DrawNineGrid, update, &update->draw_nine_grid);
-			break;
-
-		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			update_read_multi_draw_nine_grid_order(s, orderInfo, &(update->multi_draw_nine_grid));
-			IFCALL(update->MultiDrawNineGrid, update, &update->multi_draw_nine_grid);
-			break;
-
-		case ORDER_TYPE_LINE_TO:
-			update_read_line_to_order(s, orderInfo, &(update->line_to));
-			IFCALL(update->LineTo, update, &update->line_to);
-			break;
-
 		case ORDER_TYPE_OPAQUE_RECT:
 			update_read_opaque_rect_order(s, orderInfo, &(update->opaque_rect));
 			IFCALL(update->OpaqueRect, update, &update->opaque_rect);
 			break;
 
-		case ORDER_TYPE_SAVE_BITMAP:
-			update_read_save_bitmap_order(s, orderInfo, &(update->save_bitmap));
-			IFCALL(update->SaveBitmap, update, &update->save_bitmap);
-			break;
-
-		case ORDER_TYPE_MEMBLT:
-			update_read_memblt_order(s, orderInfo, &(update->memblt));
-			IFCALL(update->MemBlt, update, &update->memblt);
-			break;
-
-		case ORDER_TYPE_MEM3BLT:
-			update_read_mem3blt_order(s, orderInfo, &(update->mem3blt));
-			IFCALL(update->Mem3Blt, update, &update->mem3blt);
+		case ORDER_TYPE_DRAW_NINE_GRID:
+			update_read_draw_nine_grid_order(s, orderInfo, &(update->draw_nine_grid));
+			IFCALL(update->DrawNineGrid, update, &update->draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
@@ -1109,9 +1301,49 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			IFCALL(update->MultiOpaqueRect, update, &update->multi_opaque_rect);
 			break;
 
+		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
+			update_read_multi_draw_nine_grid_order(s, orderInfo, &(update->multi_draw_nine_grid));
+			IFCALL(update->MultiDrawNineGrid, update, &update->multi_draw_nine_grid);
+			break;
+
+		case ORDER_TYPE_LINE_TO:
+			update_read_line_to_order(s, orderInfo, &(update->line_to));
+			IFCALL(update->LineTo, update, &update->line_to);
+			break;
+
+		case ORDER_TYPE_POLYLINE:
+			update_read_polyline_order(s, orderInfo, &(update->polyline));
+			IFCALL(update->Polyline, update, &update->polyline);
+			break;
+
+		case ORDER_TYPE_MEMBLT:
+			update_read_memblt_order(s, orderInfo, &(update->memblt));
+			IFCALL(update->MemBlt, update, &update->memblt);
+			break;
+
+		case ORDER_TYPE_MEM3BLT:
+			update_read_mem3blt_order(s, orderInfo, &(update->mem3blt));
+			IFCALL(update->Mem3Blt, update, &update->mem3blt);
+			break;
+
+		case ORDER_TYPE_SAVE_BITMAP:
+			update_read_save_bitmap_order(s, orderInfo, &(update->save_bitmap));
+			IFCALL(update->SaveBitmap, update, &update->save_bitmap);
+			break;
+
 		case ORDER_TYPE_FAST_INDEX:
 			update_read_fast_index_order(s, orderInfo, &(update->fast_index));
 			IFCALL(update->FastIndex, update, &update->fast_index);
+			break;
+
+		case ORDER_TYPE_FAST_GLYPH:
+			update_read_fast_glyph_order(s, orderInfo, &(update->fast_glyph));
+			IFCALL(update->FastGlyph, update, &update->fast_glyph);
+			break;
+
+		case ORDER_TYPE_GLYPH_INDEX:
+			update_read_glyph_index_order(s, orderInfo, &(update->glyph_index));
+			IFCALL(update->GlyphIndex, update, &update->glyph_index);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
@@ -1124,16 +1356,6 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			IFCALL(update->PolygonCB, update, &update->polygon_cb);
 			break;
 
-		case ORDER_TYPE_POLYLINE:
-			update_read_polyline_order(s, orderInfo, &(update->polyline));
-			IFCALL(update->Polyline, update, &update->polyline);
-			break;
-
-		case ORDER_TYPE_FAST_GLYPH:
-			update_read_fast_glyph_order(s, orderInfo, &(update->fast_glyph));
-			IFCALL(update->FastGlyph, update, &update->fast_glyph);
-			break;
-
 		case ORDER_TYPE_ELLIPSE_SC:
 			update_read_ellipse_sc_order(s, orderInfo, &(update->ellipse_sc));
 			IFCALL(update->EllipseSC, update, &update->ellipse_sc);
@@ -1142,11 +1364,6 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		case ORDER_TYPE_ELLIPSE_CB:
 			update_read_ellipse_cb_order(s, orderInfo, &(update->ellipse_cb));
 			IFCALL(update->EllipseCB, update, &update->ellipse_cb);
-			break;
-
-		case ORDER_TYPE_GLYPH_INDEX:
-			update_read_glyph_index_order(s, orderInfo, &(update->glyph_index));
-			IFCALL(update->GlyphIndex, update, &update->glyph_index);
 			break;
 
 		default:
@@ -1172,40 +1389,59 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	orderLength += 13; /* adjust length (13 bytes less than actual length) */
 	next += orderLength;
 
-	printf("%s Secondary Drawing Order\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType]);
+	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
+		printf("%s Secondary Drawing Order (%d)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
+	else
+		printf("Unknown Secondary Drawing Order (%d)\n", orderType);
 
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
-			update_recv_cache_bitmap_order(update, s);
-			break;
-
-		case ORDER_TYPE_CACHE_COLOR_TABLE:
-			update_recv_cache_color_table_order(update, s);
+			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), False, extraFlags);
+			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			update_recv_cache_bitmap_compressed_order(update, s);
-			break;
-
-		case ORDER_TYPE_CACHE_GLYPH:
-			update_recv_cache_glyph_order(update, s);
+			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), True, extraFlags);
+			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
-			update_recv_cache_bitmap_v2_order(update, s);
+			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), False, extraFlags);
+			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			update_recv_cache_bitmap_v2_compressed_order(update, s);
-			break;
-
-		case ORDER_TYPE_CACHE_BRUSH:
-			update_recv_cache_brush_order(update, s);
+			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), True, extraFlags);
+			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			update_recv_cache_bitmap_v3_order(update, s);
+			update_read_cache_bitmap_v3_order(s, &(update->cache_bitmap_v3_order), True, extraFlags);
+			IFCALL(update->CacheBitmapV3, update, &(update->cache_bitmap_v3_order));
+			break;
+
+		case ORDER_TYPE_CACHE_COLOR_TABLE:
+			update_read_cache_color_table_order(s, &(update->cache_color_table_order));
+			IFCALL(update->CacheColorTable, update, &(update->cache_color_table_order));
+			break;
+
+		case ORDER_TYPE_CACHE_GLYPH:
+			if (update->glyph_v2)
+			{
+				update_read_cache_glyph_v2_order(s, &(update->cache_glyph_v2_order));
+				IFCALL(update->CacheGlyph, update, &(update->cache_glyph_order));
+			}
+			else
+			{
+				update_read_cache_glyph_order(s, &(update->cache_glyph_order));
+				IFCALL(update->CacheGlyphV2, update, &(update->cache_glyph_v2_order));
+			}
+			break;
+
+		case ORDER_TYPE_CACHE_BRUSH:
+			update_read_cache_brush_order(s, &(update->cache_brush_order));
+			IFCALL(update->CacheBrush, update, &(update->cache_brush_order));
 			break;
 
 		default:
@@ -1221,64 +1457,77 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 
-	printf("%s Alternate Secondary Drawing Order\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType]);
+	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
+		printf("%s Alternate Secondary Drawing Order (%d)\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
+	else
+		printf("Unknown Alternate Secondary Drawing Order: %d\n", orderType);
 
 	switch (orderType)
 	{
+		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
+			update_read_create_offscreen_bitmap_order(s, &(update->create_offscreen_bitmap));
+			IFCALL(update->CreateOffscreenBitmap, update, &(update->create_offscreen_bitmap));
+			break;
+
 		case ORDER_TYPE_SWITCH_SURFACE:
-			update_recv_switch_surface_order(update, s);
-			break;
-
-		case ORDER_TYPE_CREATE_OFFSCR_BITMAP:
-			update_recv_create_offscreen_bitmap_order(update, s);
-			break;
-
-		case ORDER_TYPE_STREAM_BITMAP_FIRST:
-			update_recv_stream_bitmap_first_order(update, s);
-			break;
-
-		case ORDER_TYPE_STREAM_BITMAP_NEXT:
-			update_recv_stream_bitmap_next_order(update, s);
+			update_read_switch_surface_order(s, &(update->switch_surface));
+			IFCALL(update->SwitchSurface, update, &(update->switch_surface));
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
-			update_recv_create_nine_grid_bitmap_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_FIRST:
-			update_recv_draw_gdiplus_first_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_NEXT:
-			update_recv_draw_gdiplus_next_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_END:
-			update_recv_draw_gdiplus_end_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
-			update_recv_draw_gdiplus_cache_first_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
-			update_recv_draw_gdiplus_cache_next_order(update, s);
-			break;
-
-		case ORDER_TYPE_GDIPLUS_CACHE_END:
-			update_recv_draw_gdiplus_cache_end_order(update, s);
-			break;
-
-		case ORDER_TYPE_WINDOW:
-			update_recv_windowing_order(update, s);
-			break;
-
-		case ORDER_TYPE_COMPDESK_FIRST:
-			update_recv_desktop_composition_order(update, s);
+			update_read_create_nine_grid_bitmap_order(s, &(update->create_nine_grid_bitmap));
+			IFCALL(update->CreateNineGridBitmap, update, &(update->create_nine_grid_bitmap));
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
-			update_recv_frame_marker_order(update, s);
+			update_read_frame_marker_order(s, &(update->frame_marker));
+			IFCALL(update->FrameMarker, update, &(update->frame_marker));
+			break;
+
+		case ORDER_TYPE_STREAM_BITMAP_FIRST:
+			update_read_stream_bitmap_first_order(s, &(update->stream_bitmap_first));
+			IFCALL(update->StreamBitmapFirst, update, &(update->stream_bitmap_first));
+			break;
+
+		case ORDER_TYPE_STREAM_BITMAP_NEXT:
+			update_read_stream_bitmap_next_order(s, &(update->stream_bitmap_next));
+			IFCALL(update->StreamBitmapNext, update, &(update->stream_bitmap_next));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_FIRST:
+			update_read_draw_gdiplus_first_order(s, &(update->draw_gdiplus_first));
+			IFCALL(update->DrawGdiPlusFirst, update, &(update->draw_gdiplus_first));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_NEXT:
+			update_read_draw_gdiplus_next_order(s, &(update->draw_gdiplus_next));
+			IFCALL(update->DrawGdiPlusNext, update, &(update->draw_gdiplus_next));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_END:
+			update_read_draw_gdiplus_end_order(s, &(update->draw_gdiplus_end));
+			IFCALL(update->DrawGdiPlusEnd, update, &(update->draw_gdiplus_end));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
+			update_read_draw_gdiplus_cache_first_order(s, &(update->draw_gdiplus_cache_first));
+			IFCALL(update->DrawGdiPlusCacheFirst, update, &(update->draw_gdiplus_cache_first));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
+			update_read_draw_gdiplus_cache_next_order(s, &(update->draw_gdiplus_cache_next));
+			IFCALL(update->DrawGdiPlusCacheNext, update, &(update->draw_gdiplus_cache_next));
+			break;
+
+		case ORDER_TYPE_GDIPLUS_CACHE_END:
+			update_read_draw_gdiplus_cache_end_order(s, &(update->draw_gdiplus_cache_end));
+			IFCALL(update->DrawGdiPlusCacheEnd, update, &(update->draw_gdiplus_cache_end));
+			break;
+
+		case ORDER_TYPE_WINDOW:
+			break;
+
+		case ORDER_TYPE_COMPDESK_FIRST:
 			break;
 
 		default:
