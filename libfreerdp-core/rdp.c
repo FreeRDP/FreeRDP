@@ -174,13 +174,14 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
  * @param rdp rdp module
  * @param s stream
  * @param length RDP packet length
+ * @param channel_id channel id
  */
 
-void rdp_write_header(rdpRdp* rdp, STREAM* s, int length)
+void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id)
 {
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
-	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0); /* channelId */
+	per_write_integer16(s, channel_id, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
 
 	length = (length - RDP_PACKET_HEADER_LENGTH) | 0x8000;
@@ -191,16 +192,17 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, int length)
  * Send an RDP packet.\n
  * @param rdp RDP module
  * @param s stream
+ * @param channel_id channel id
  */
 
-void rdp_send(rdpRdp* rdp, STREAM* s)
+void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 {
 	int length;
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
-	rdp_write_header(rdp, s, length);
+	rdp_write_header(rdp, s, length, channel_id);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);
@@ -213,7 +215,7 @@ void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
-	rdp_write_header(rdp, s, length);
+	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_share_control_header(s, length, type, channel_id);
 
 	stream_set_pos(s, length);
@@ -227,7 +229,7 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
-	rdp_write_header(rdp, s, length);
+	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
 
@@ -391,6 +393,10 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 			}
 		}
 	}
+	else if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	{
+		vchan_process(rdp->vchan, s, channelId);
+	}
 	else
 	{
 		rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source);
@@ -444,6 +450,11 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 	return 1;
 }
 
+int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size)
+{
+	return vchan_send(rdp->vchan, channel_id, data, size);
+}
+
 /**
  * Set non-blocking mode information.
  * @param rdp RDP module
@@ -466,7 +477,7 @@ int rdp_check_fds(rdpRdp* rdp)
  * @return new RDP module
  */
 
-rdpRdp* rdp_new()
+rdpRdp* rdp_new(freerdp* instance)
 {
 	rdpRdp* rdp;
 
@@ -483,6 +494,7 @@ rdpRdp* rdp_new()
 		rdp->update = update_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
+		rdp->vchan = vchan_new(instance);
 	}
 
 	return rdp;
@@ -503,6 +515,7 @@ void rdp_free(rdpRdp* rdp)
 		input_free(rdp->input);
 		update_free(rdp->update);
 		mcs_free(rdp->mcs);
+		vchan_free(rdp->vchan);
 		xfree(rdp);
 	}
 }

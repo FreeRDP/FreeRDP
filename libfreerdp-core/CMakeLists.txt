@@ -80,6 +80,8 @@ set(LIBFREERDP_CORE_SRCS
 	transport.h
 	update.c
 	update.h
+	vchan.c
+	vchan.h
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})

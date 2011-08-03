@@ -480,12 +480,7 @@ void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
 	for (i = 0; i < channelCount; i++)
 	{
 		stream_read_uint16(s, channelId); /* channelId */
-
-		if (channelId != settings->channels[i].chan_id)
-		{
-			printf("channel %d is %d, but %d was expected\n",
-					i, channelId, settings->channels[i].chan_id);
-		}
+		settings->channels[i].chan_id = channelId;
 	}
 
 	if (channelCount % 2 == 1)

@@ -30,7 +30,7 @@ rdpLicense* license;
 
 int init_license_suite(void)
 {
-	rdp = rdp_new();
+	rdp = rdp_new(NULL);
 	license = rdp->license;
 	return 0;
 }
