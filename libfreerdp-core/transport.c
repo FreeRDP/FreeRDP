@@ -17,11 +17,13 @@
  * limitations under the License.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/hexdump.h>
 
 #include <time.h>
 #include <errno.h>
@@ -137,6 +139,14 @@ int transport_read(rdpTransport* transport, STREAM* s)
 		break;
 	}
 
+#ifdef WITH_DEBUG_TRANSPORT
+	if (status > 0)
+	{
+		printf("Server > Client\n");
+		freerdp_hexdump(s->data, status);
+	}
+#endif
+
 	return status;
 }
 
@@ -163,6 +173,15 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
+
+#ifdef WITH_DEBUG_TRANSPORT
+	if (length > 0)
+	{
+		printf("Client > Server\n");
+		freerdp_hexdump(s->data, length);
+	}
+#endif
+
 	while (sent < length)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
