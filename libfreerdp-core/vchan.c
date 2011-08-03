@@ -21,14 +21,67 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
+#include "rdp.h"
 #include "vchan.h"
 
-int vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
+boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 {
-	printf("vchan_send\n");
+	STREAM* s;
+	uint32 flags;
+	struct rdp_chan* channel = NULL;
+	int i;
+	int chunk_size;
+
+	for (i = 0; i < vchan->instance->settings->num_channels; i++)
+	{
+		if (vchan->instance->settings->channels[i].chan_id == channel_id)
+		{
+			channel = &vchan->instance->settings->channels[i];
+			break;
+		}
+	}
+	if (channel == NULL)
+	{
+		printf("vchan_send: unknown channel_id %d\n", channel_id);
+		return False;
+	}
+
+	flags = CHANNEL_FLAG_FIRST;
+	while (size > 0)
+	{
+		s = rdp_send_stream_init(vchan->instance->rdp);
+
+		if (size > vchan->instance->settings->vc_chunk_size)
+		{
+			chunk_size = vchan->instance->settings->vc_chunk_size;
+		}
+		else
+		{
+			chunk_size = size;
+			flags |= CHANNEL_FLAG_LAST;
+		}
+		if ((channel->options & CHANNEL_OPTION_SHOW_PROTOCOL))
+		{
+			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+		}
+
+		stream_write_uint32(s, chunk_size);
+		stream_write_uint32(s, flags);
+		stream_check_size(s, chunk_size);
+		stream_write(s, data, chunk_size);
+
+		rdp_send(vchan->instance->rdp, s, channel_id);
+
+		data += chunk_size;
+		size -= chunk_size;
+		flags = 0;
+	}
+
+	return True;
 }
 
 void vchan_process(rdpVchan* vchan, STREAM* s, uint16 channel_id)
