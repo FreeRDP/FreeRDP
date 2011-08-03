@@ -35,8 +35,7 @@ typedef struct _STREAM STREAM;
 STREAM* stream_new(int size);
 void stream_free(STREAM* stream);
 
-void
-stream_extend(STREAM* stream);
+void stream_extend(STREAM* stream);
 #define stream_check_size(_s,_n) \
 	while (_s->p - _s->data + (_n) > _s->size) \
 		stream_extend(_s)
@@ -45,6 +44,7 @@ stream_extend(STREAM* stream);
 #define stream_set_pos(_s,_m) _s->p = _s->data + (_m)
 #define stream_seek(_s,_offset) _s->p += (_offset)
 #define stream_rewind(_s,_offset) _s->p -= (_offset)
+#define stream_seal(_s) _s->size = (_s->p - _s->data)
 #define stream_get_mark(_s,_mark) _mark = _s->p
 #define stream_set_mark(_s,_mark) _s->p = _mark
 #define stream_get_head(_s) _s->data
@@ -52,6 +52,7 @@ stream_extend(STREAM* stream);
 #define stream_get_length(_s) (_s->p - _s->data)
 #define stream_get_data(_s) (_s->data)
 #define stream_get_size(_s) (_s->size)
+#define stream_get_left(_s) (_s->size - (_s->p - _s->data))
 
 #define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
 #define stream_read_uint16(_s, _v) do { _v = \

@@ -34,6 +34,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "transport.h"
 #include "connection.h"
 #include "capabilities.h"
+#include "vchan.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -213,6 +214,7 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_registry* registry;
 	struct rdp_transport* transport;
+	struct rdp_vchan* vchan;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
@@ -225,7 +227,7 @@ void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* 
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
-void rdp_write_header(rdpRdp* rdp, STREAM* s, int length);
+void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id);
 
 STREAM* rdp_pdu_init(rdpRdp* rdp);
 void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
@@ -233,13 +235,15 @@ void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 STREAM* rdp_data_pdu_init(rdpRdp* rdp);
 void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 
-void rdp_send(rdpRdp* rdp, STREAM* s);
+void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
 void rdp_recv(rdpRdp* rdp);
+
+int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size);
 
 void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
-rdpRdp* rdp_new();
+rdpRdp* rdp_new(freerdp* instance);
 void rdp_free(rdpRdp* rdp);
 
 #endif /* __RDP_H */

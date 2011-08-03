@@ -271,8 +271,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--plugin", argv[index]) == 0)
 		{
-			t = index;
 			index++;
+			t = index;
 			if (index == argc)
 			{
 				printf("missing plugin name\n");

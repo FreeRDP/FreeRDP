@@ -352,7 +352,7 @@ void rdp_send_client_info(rdpRdp* rdp)
 	rdp_write_security_header(s, SEC_INFO_PKT);
 	rdp_write_info_packet(s, rdp->settings);
 
-	rdp_send(rdp, s);
+	rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
 void rdp_recv_logon_info_v1(rdpRdp* rdp, STREAM* s)
