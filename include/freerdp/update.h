@@ -24,17 +24,18 @@
 
 /* Common */
 
-typedef struct
+struct _BOUNDS
 {
 	uint16 left;
 	uint16 top;
 	uint16 right;
 	uint16 bottom;
-} BOUNDS;
+};
+typedef struct _BOUNDS BOUNDS;
 
 /* Bitmap Updates */
 
-typedef struct
+struct _BITMAP_DATA
 {
 	uint16 left;
 	uint16 top;
@@ -46,27 +47,30 @@ typedef struct
 	uint16 flags;
 	uint16 length;
 	uint8* data;
-} BITMAP_DATA;
+};
+typedef struct _BITMAP_DATA BITMAP_DATA;
 
-typedef struct
+struct _BITMAP_UPDATE
 {
 	uint16 number;
 	BITMAP_DATA* bitmaps;
-} BITMAP_UPDATE;
+};
+typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
 /* Palette Updates */
 
-typedef struct
+struct _PALETTE_UPDATE
 {
 	uint32 number;
 	uint32 entries[256];
-} PALETTE_UPDATE;
+};
+typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 
 /* Orders Updates */
 
 /* Primary Drawing Orders */
 
-typedef struct
+struct _ORDER_INFO
 {
 	uint8 orderType;
 	uint32 fieldFlags;
@@ -79,18 +83,20 @@ typedef struct
 	sint8 deltaBoundRight;
 	sint8 deltaBoundBottom;
 	boolean deltaCoordinates;
-} ORDER_INFO;
+};
+typedef struct _ORDER_INFO ORDER_INFO;
 
-typedef struct
+struct _DSTBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;
 	sint16 nHeight;
 	uint8 bRop;
-} DSTBLT_ORDER;
+};
+typedef struct _DSTBLT_ORDER DSTBLT_ORDER;
 
-typedef struct
+struct _PATBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -104,9 +110,10 @@ typedef struct
 	uint8 brushStyle;
 	uint8 brushHatch;
 	uint8 brushExtra[7];
-} PATBLT_ORDER;
+};
+typedef struct _PATBLT_ORDER PATBLT_ORDER;
 
-typedef struct
+struct _SCRBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -115,27 +122,30 @@ typedef struct
 	uint8 bRop;
 	sint16 nXSrc;
 	sint16 nYSrc;
-} SCRBLT_ORDER;
+};
+typedef struct _SCRBLT_ORDER SCRBLT_ORDER;
 
-typedef struct
+struct _OPAQUE_RECT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;
 	sint16 nHeight;
 	uint32 color;
-} OPAQUE_RECT_ORDER;
+};
+typedef struct _OPAQUE_RECT_ORDER OPAQUE_RECT_ORDER;
 
-typedef struct
+struct _DRAW_NINE_GRID_ORDER
 {
 	sint16 srcLeft;
 	sint16 srcTop;
 	sint16 srcRight;
 	sint16 srcBottom;
 	uint16 bitmapId;
-} DRAW_NINE_GRID_ORDER;
+};
+typedef struct _DRAW_NINE_GRID_ORDER DRAW_NINE_GRID_ORDER;
 
-typedef struct
+struct _MULTI_DSTBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -145,9 +155,10 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint16 cbData;
 	uint8* codeDeltaList;
-} MULTI_DSTBLT_ORDER;
+};
+typedef struct _MULTI_DSTBLT_ORDER MULTI_DSTBLT_ORDER;
 
-typedef struct
+struct _MULTI_PATBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -164,9 +175,10 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint16 cbData;
 	uint8* codeDeltaList;
-} MULTI_PATBLT_ORDER;
+};
+typedef struct _MULTI_PATBLT_ORDER MULTI_PATBLT_ORDER;
 
-typedef struct
+struct _MULTI_SCRBLT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -178,17 +190,19 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint16 cbData;
 	uint8* codeDeltaList;
-} MULTI_SCRBLT_ORDER;
+};
+typedef struct _MULTI_SCRBLT_ORDER MULTI_SCRBLT_ORDER;
 
-typedef struct
+struct _DELTA_RECT
 {
 	sint16 left;
 	sint16 top;
-	sint16 right;
-	sint16 bottom;
-} DELTA_RECT;
+	sint16 width;
+	sint16 height;
+};
+typedef struct _DELTA_RECT DELTA_RECT;
 
-typedef struct
+struct _MULTI_OPAQUE_RECT_ORDER
 {
 	sint16 nLeftRect;
 	sint16 nTopRect;
@@ -198,9 +212,10 @@ typedef struct
 	uint8 numRectangles;
 	uint16 cbData;
 	DELTA_RECT rectangles[45];
-} MULTI_OPAQUE_RECT_ORDER;
+};
+typedef struct _MULTI_OPAQUE_RECT_ORDER MULTI_OPAQUE_RECT_ORDER;
 
-typedef struct
+struct _MULTI_DRAW_NINE_GRID_ORDER
 {
 	sint16 srcLeft;
 	sint16 srcTop;
@@ -210,9 +225,10 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint16 cbData;
 	uint8* codeDeltaList;
-} MULTI_DRAW_NINE_GRID_ORDER;
+};
+typedef struct _MULTI_DRAW_NINE_GRID_ORDER MULTI_DRAW_NINE_GRID_ORDER;
 
-typedef struct
+struct _LINE_TO_ORDER
 {
 	uint16 backMode;
 	sint16 nXStart;
@@ -224,20 +240,29 @@ typedef struct
 	uint8 penStyle;
 	uint8 penWidth;
 	uint32 penColor;
-} LINE_TO_ORDER;
+};
+typedef struct _LINE_TO_ORDER LINE_TO_ORDER;
 
-typedef struct
+struct _DELTA_POINT
+{
+	sint16 x;
+	sint16 y;
+};
+typedef struct _DELTA_POINT DELTA_POINT;
+
+struct _POLYLINE_ORDER
 {
 	sint16 xStart;
 	sint16 yStart;
 	uint8 bRop2;
 	uint32 penColor;
-	uint8 nDeltaEntries;
+	uint8 numPoints;
 	uint8 cbData;
-	uint8* codeDeltaList;
-} POLYLINE_ORDER;
+	DELTA_POINT* points;
+};
+typedef struct _POLYLINE_ORDER POLYLINE_ORDER;
 
-typedef struct
+struct _MEMBLT_ORDER
 {
 	uint16 cacheId;
 	sint16 nLeftRect;
@@ -248,9 +273,10 @@ typedef struct
 	sint16 nXSrc;
 	sint16 nYSrc;
 	uint16 cacheIndex;
-} MEMBLT_ORDER;
+};
+typedef struct _MEMBLT_ORDER MEMBLT_ORDER;
 
-typedef struct
+struct _MEM3BLT_ORDER
 {
 	uint16 cacheId;
 	sint16 nLeftRect;
@@ -268,9 +294,10 @@ typedef struct
 	uint8 brushHatch;
 	uint8 brushExtra[7];
 	uint16 cacheIndex;
-} MEM3BLT_ORDER;
+};
+typedef struct _MEM3BLT_ORDER MEM3BLT_ORDER;
 
-typedef struct
+struct _SAVE_BITMAP_ORDER
 {
 	uint32 savedBitmapPosition;
 	sint16 nLeftRect;
@@ -278,9 +305,10 @@ typedef struct
 	sint16 nRightRect;
 	sint16 nBottomRect;
 	uint8 operation;
-} SAVE_BITMAP_ORDER;
+};
+typedef struct _SAVE_BITMAP_ORDER SAVE_BITMAP_ORDER;
 
-typedef struct
+struct _GLYPH_INDEX_ORDER
 {
 	uint8 cacheId;
 	uint8 flAccel;
@@ -305,9 +333,10 @@ typedef struct
 	sint16 y;
 	uint8 cbData;
 	uint8* data;
-} GLYPH_INDEX_ORDER;
+};
+typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 
-typedef struct
+struct _FAST_INDEX_ORDER
 {
 	uint8 cacheId;
 	uint8 flAccel;
@@ -326,9 +355,10 @@ typedef struct
 	sint16 y;
 	uint8 cbData;
 	uint8* data;
-} FAST_INDEX_ORDER;
+};
+typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 
-typedef struct
+struct _FAST_GLYPH_ORDER
 {
 	uint8 cacheId;
 	uint8 flAccel;
@@ -347,9 +377,10 @@ typedef struct
 	sint16 y;
 	uint8 cbData;
 	uint8* data;
-} FAST_GLYPH_ORDER;
+};
+typedef struct _FAST_GLYPH_ORDER FAST_GLYPH_ORDER;
 
-typedef struct
+struct _POLYGON_SC_ORDER
 {
 	sint16 xStart;
 	sint16 yStart;
@@ -359,9 +390,10 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint8 cbData;
 	uint8* codeDeltaList;
-} POLYGON_SC_ORDER;
+};
+typedef struct _POLYGON_SC_ORDER POLYGON_SC_ORDER;
 
-typedef struct
+struct _POLYGON_CB_ORDER
 {
 	sint16 xStart;
 	sint16 yStart;
@@ -377,9 +409,10 @@ typedef struct
 	uint8 nDeltaEntries;
 	uint8 cbData;
 	uint8* codeDeltaList;
-} POLYGON_CB_ORDER;
+};
+typedef struct _POLYGON_CB_ORDER POLYGON_CB_ORDER;
 
-typedef struct
+struct _ELLIPSE_SC_ORDER
 {
 	sint16 leftRect;
 	sint16 topRect;
@@ -388,9 +421,10 @@ typedef struct
 	uint8 bRop2;
 	uint8 fillMode;
 	uint32 color;
-} ELLIPSE_SC_ORDER;
+};
+typedef struct _ELLIPSE_SC_ORDER ELLIPSE_SC_ORDER;
 
-typedef struct
+struct _ELLIPSE_CB_ORDER
 {
 	sint16 leftRect;
 	sint16 topRect;
@@ -405,11 +439,12 @@ typedef struct
 	uint8 brushStyle;
 	uint8 brushHatch;
 	uint8 brushExtra[7];
-} ELLIPSE_CB_ORDER;
+};
+typedef struct _ELLIPSE_CB_ORDER ELLIPSE_CB_ORDER;
 
 /* Secondary Drawing Orders */
 
-typedef struct
+struct _CACHE_BITMAP_ORDER
 {
 	uint8 cacheId;
 	uint8 bitmapBpp;
@@ -419,9 +454,10 @@ typedef struct
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
-} CACHE_BITMAP_ORDER;
+};
+typedef struct _CACHE_BITMAP_ORDER CACHE_BITMAP_ORDER;
 
-typedef struct
+struct _CACHE_BITMAP_V2_ORDER
 {
 	uint8 cacheId;
 	uint16 flags;
@@ -434,9 +470,10 @@ typedef struct
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
-} CACHE_BITMAP_V2_ORDER;
+};
+typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
-typedef struct
+struct _BITMAP_DATA_EX
 {
 	uint8 bpp;
 	uint8 codecID;
@@ -444,9 +481,10 @@ typedef struct
 	uint16 height;
 	uint32 length;
 	uint8* data;
-} BITMAP_DATA_EX;
+};
+typedef struct _BITMAP_DATA_EX BITMAP_DATA_EX;
 
-typedef struct
+struct _CACHE_BITMAP_V3_ORDER
 {
 	uint8 cacheId;
 	uint8 bpp;
@@ -455,16 +493,18 @@ typedef struct
 	uint32 key1;
 	uint32 key2;
 	BITMAP_DATA_EX bitmapData;
-} CACHE_BITMAP_V3_ORDER;
+};
+typedef struct _CACHE_BITMAP_V3_ORDER CACHE_BITMAP_V3_ORDER;
 
-typedef struct
+struct _CACHE_COLOR_TABLE_ORDER
 {
 	uint8 cacheIndex;
 	uint16 numberColors;
 	uint32* colorTable;
-} CACHE_COLOR_TABLE_ORDER;
+};
+typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
 
-typedef struct
+struct _GLYPH_DATA
 {
 	uint16 cacheIndex;
 	uint16 x;
@@ -473,17 +513,19 @@ typedef struct
 	uint16 cy;
 	uint16 cb;
 	uint8* aj;
-} GLYPH_DATA;
+};
+typedef struct _GLYPH_DATA GLYPH_DATA;
 
-typedef struct
+struct _CACHE_GLYPH_ORDER
 {
 	uint8 cacheId;
 	uint8 cGlyphs;
 	GLYPH_DATA* glyphData;
 	uint8* unicodeCharacters;
-} CACHE_GLYPH_ORDER;
+};
+typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
 
-typedef struct
+struct _GLYPH_DATA_V2
 {
 	uint8 cacheIndex;
 	sint16 x;
@@ -492,18 +534,20 @@ typedef struct
 	uint16 cy;
 	uint16 cb;
 	uint8* aj;
-} GLYPH_DATA_V2;
+};
+typedef struct _GLYPH_DATA_V2 GLYPH_DATA_V2;
 
-typedef struct
+struct _CACHE_GLYPH_V2_ORDER
 {
 	uint8 cacheId;
 	uint8 flags;
 	uint8 cGlyphs;
 	GLYPH_DATA_V2* glyphData;
 	uint8* unicodeCharacters;
-} CACHE_GLYPH_V2_ORDER;
+};
+typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
 
-typedef struct
+struct _CACHE_BRUSH_ORDER
 {
 	uint8 cacheEntry;
 	uint8 bpp;
@@ -512,30 +556,34 @@ typedef struct
 	uint8 style;
 	uint8 length;
 	uint8* brushData;
-} CACHE_BRUSH_ORDER;
+};
+typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 
 /* Alternate Secondary Drawing Orders */
 
-typedef struct
+struct _OFFSCREEN_DELETE_LIST
 {
 	uint16 cIndices;
 	uint16* indices;
-} OFFSCREEN_DELETE_LIST;
+};
+typedef struct _OFFSCREEN_DELETE_LIST OFFSCREEN_DELETE_LIST;
 
-typedef struct
+struct _CREATE_OFFSCREEN_BITMAP_ORDER
 {
-	uint16 offscreenBitmapId;
+	uint16 id;
 	uint16 cx;
 	uint16 cy;
 	OFFSCREEN_DELETE_LIST deleteList;
-} CREATE_OFFSCREEN_BITMAP_ORDER;
+};
+typedef struct _CREATE_OFFSCREEN_BITMAP_ORDER CREATE_OFFSCREEN_BITMAP_ORDER;
 
-typedef struct
+struct _SWITCH_SURFACE_ORDER
 {
 	uint16 bitmapId;
-} SWITCH_SURFACE_ORDER;
+};
+typedef struct _SWITCH_SURFACE_ORDER SWITCH_SURFACE_ORDER;
 
-typedef struct
+struct _NINE_GRID_BITMAP_INFO
 {
 	uint32 flFlags;
 	uint16 ulLeftWidth;
@@ -543,23 +591,26 @@ typedef struct
 	uint16 ulTopHeight;
 	uint16 ulBottomHeight;
 	uint32 crTransparent;
-} NINE_GRID_BITMAP_INFO;
+};
+typedef struct _NINE_GRID_BITMAP_INFO NINE_GRID_BITMAP_INFO;
 
-typedef struct
+struct _CREATE_NINE_GRID_BITMAP_ORDER
 {
 	uint8 bitmapBpp;
 	uint16 bitmapId;
 	uint16 cx;
 	uint16 cy;
 	NINE_GRID_BITMAP_INFO nineGridInfo;
-} CREATE_NINE_GRID_BITMAP_ORDER;
+};
+typedef struct _CREATE_NINE_GRID_BITMAP_ORDER CREATE_NINE_GRID_BITMAP_ORDER;
 
-typedef struct
+struct _FRAME_MARKER_ORDER
 {
 	uint32 action;
-} FRAME_MARKER_ORDER;
+};
+typedef struct _FRAME_MARKER_ORDER FRAME_MARKER_ORDER;
 
-typedef struct
+struct _STREAM_BITMAP_FIRST_ORDER
 {
 	uint8 bitmapFlags;
 	uint8 bitmapBpp;
@@ -569,39 +620,44 @@ typedef struct
 	uint32 bitmapSize;
 	uint16 bitmapBlockSize;
 	uint8* bitmapBlock;
-} STREAM_BITMAP_FIRST_ORDER;
+};
+typedef struct _STREAM_BITMAP_FIRST_ORDER STREAM_BITMAP_FIRST_ORDER;
 
-typedef struct
+struct _STREAM_BITMAP_NEXT_ORDER
 {
 	uint8 bitmapFlags;
 	uint16 bitmapType;
 	uint16 bitmapBlockSize;
 	uint8* bitmapBlock;
-} STREAM_BITMAP_NEXT_ORDER;
+};
+typedef struct _STREAM_BITMAP_NEXT_ORDER STREAM_BITMAP_NEXT_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_FIRST_ORDER
 {
 	uint16 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_FIRST_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_FIRST_ORDER DRAW_GDIPLUS_FIRST_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_NEXT_ORDER
 {
 	uint16 cbSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_NEXT_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_NEXT_ORDER DRAW_GDIPLUS_NEXT_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_END_ORDER
 {
 	uint16 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_END_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_END_ORDER DRAW_GDIPLUS_END_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER
 {
 	uint8 flags;
 	uint16 cacheType;
@@ -609,18 +665,20 @@ typedef struct
 	uint16 cbSize;
 	uint32 cbTotalSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_CACHE_FIRST_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER DRAW_GDIPLUS_CACHE_FIRST_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER
 {
 	uint8 flags;
 	uint16 cacheType;
 	uint16 cacheIndex;
 	uint16 cbSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_CACHE_NEXT_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER DRAW_GDIPLUS_CACHE_NEXT_ORDER;
 
-typedef struct
+struct _DRAW_GDIPLUS_CACHE_END_ORDER
 {
 	uint8 flags;
 	uint16 cacheType;
@@ -628,7 +686,8 @@ typedef struct
 	uint16 cbSize;
 	uint32 cbTotalSize;
 	uint8* emfRecords;
-} DRAW_GDIPLUS_CACHE_END_ORDER;
+};
+typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 
 /* Constants */
 

@@ -205,15 +205,12 @@ void update_read_2byte_signed(STREAM* s, sint16* value)
 
 	negative = (byte & 0x40) ? True : False;
 
+	*value = (byte & 0x3F);
+
 	if (byte & 0x80)
 	{
-		*value = (byte & 0x3F) << 8;
 		stream_read_uint8(s, byte);
-		*value |= byte;
-	}
-	else
-	{
-		*value = (byte & 0x3F);
+		*value = (*value << 8) | byte;
 	}
 
 	if (negative)
@@ -262,6 +259,107 @@ void update_read_4byte_unsigned(STREAM* s, uint32* value)
 		default:
 			break;
 	}
+}
+
+void update_read_delta(STREAM* s, sint16* value)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte & 0x40)
+		*value = (byte | ~0x3F);
+	else
+		*value = (byte & 0x3F);
+
+	if (byte & 0x80)
+	{
+		stream_read_uint8(s, byte);
+		*value = (*value << 8) | byte;
+	}
+}
+
+void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
+{
+	int i;
+	uint8 flags;
+	uint8* zeroBits;
+	int zeroBitsSize;
+
+	if (number > 45)
+		number = 45;
+
+	zeroBitsSize = ((number + 1) / 2);
+
+	stream_get_mark(s, zeroBits);
+	stream_seek(s, zeroBitsSize);
+
+	memset(rectangles, 0, sizeof(DELTA_RECT) * number);
+
+	for (i = 1; i < number + 1; i++)
+	{
+		if ((i - 1) % 2 == 0)
+			flags = zeroBits[(i - 1) / 2];
+
+		if (~flags & 0x80)
+			update_read_delta(s, &rectangles[i].left);
+
+		if (~flags & 0x40)
+			update_read_delta(s, &rectangles[i].top);
+
+		if (~flags & 0x20)
+			update_read_delta(s, &rectangles[i].width);
+		else
+			rectangles[i].width = rectangles[i - 1].width;
+
+		if (~flags & 0x10)
+			update_read_delta(s, &rectangles[i].height);
+		else
+			rectangles[i].height = rectangles[i - 1].height;
+
+		rectangles[i].left = rectangles[i].left + rectangles[i - 1].left;
+		rectangles[i].top = rectangles[i].top + rectangles[i - 1].top;
+
+		flags <<= 4;
+	}
+}
+
+void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number, sint16 x, sint16 y)
+{
+	int i;
+	uint8 flags;
+	uint8* zeroBits;
+	int zeroBitsSize;
+
+	zeroBitsSize = ((number + 3) / 4);
+
+	stream_get_mark(s, zeroBits);
+	stream_seek(s, zeroBitsSize);
+
+	memset(points, 0, sizeof(DELTA_POINT) * number);
+
+	for (i = 1; i < number + 1; i++)
+	{
+		if ((i - 1) % 4 == 0)
+			flags = zeroBits[(i - 1) / 4];
+
+		if (~flags & 0x80)
+			update_read_delta(s, &points[i].x);
+
+		if (~flags & 0x40)
+			update_read_delta(s, &points[i].y);
+
+		points[i].x = points[i].x + points[i - 1].x;
+		points[i].y = points[i].y + points[i - 1].y;
+
+		points[i - 1].x += x;
+		points[i - 1].y += y;
+
+		flags <<= 2;
+	}
+
+	points[i - 1].x += x;
+	points[i - 1].y += y;
 }
 
 /* Primary Drawing Orders */
@@ -549,43 +647,8 @@ void update_read_multi_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, MULTI
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
 	{
-		int i;
-		uint8 flags;
-		uint8* zeroBits;
-		int zeroBitsSize;
-		DELTA_RECT* rectangles;
-
-		rectangles = multi_opaque_rect->rectangles;
-		zeroBitsSize = ((multi_opaque_rect->numRectangles + 1) / 2);
-
 		stream_read_uint16(s, multi_opaque_rect->cbData);
-
-		stream_get_mark(s, zeroBits);
-		stream_seek(s, zeroBitsSize);
-
-		memset(&rectangles[0], 0, sizeof(DELTA_RECT));
-
-		for (i = 0; i < multi_opaque_rect->numRectangles; i++)
-		{
-			flags = zeroBits[i / 2];
-
-			if (i % 2 == 0)
-				flags = (flags >> 4) & 0x0F;
-			else
-				flags = flags & 0x0F;
-
-			if (~flags & 0x80)
-				update_read_2byte_signed(s, &rectangles[i].left);
-
-			if (~flags & 0x40);
-				update_read_2byte_signed(s, &rectangles[i].top);
-
-			if (~flags & 0x20);
-				update_read_2byte_signed(s, &rectangles[i].right);
-
-			if (~flags & 0x10);
-				update_read_2byte_signed(s, &rectangles[i].bottom);
-		}
+		update_read_delta_rects(s, multi_opaque_rect->rectangles, multi_opaque_rect->numRectangles);
 	}
 }
 
@@ -661,15 +724,24 @@ void update_read_polyline_order(STREAM* s, ORDER_INFO* orderInfo, POLYLINE_ORDER
 		stream_read_uint8(s, polyline->bRop2);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_04)
-		update_read_color(s, &polyline->penColor);
+		stream_seek_uint16(s);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_05)
-		stream_read_uint8(s, polyline->nDeltaEntries);
+		update_read_color(s, &polyline->penColor);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+		stream_read_uint8(s, polyline->numPoints);
+
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
 		stream_read_uint8(s, polyline->cbData);
-		stream_seek(s, polyline->cbData);
+
+		if (polyline->points == NULL)
+			polyline->points = (DELTA_POINT*) xmalloc(polyline->cbData);
+		else
+			polyline->points = (DELTA_POINT*) xrealloc(polyline->points, polyline->cbData);
+
+		update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
 	}
 }
 
@@ -1337,7 +1409,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 	boolean deleteListPresent;
 
 	stream_read_uint16(s, flags); /* flags (2 bytes) */
-	create_offscreen_bitmap->offscreenBitmapId = flags & 0x7FFF;
+	create_offscreen_bitmap->id = flags & 0x7FFF;
 	deleteListPresent = (flags & 0x8000) ? True : False;
 
 	stream_read_uint16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */

@@ -1198,10 +1198,8 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
-		rect.left = rectangle->left;
-		rect.top = rectangle->top;
-		rect.right = rectangle->right;
-		rect.bottom = rectangle->bottom;
+		gdi_CRgnToRect(rectangle->left, rectangle->top,
+				rectangle->width, rectangle->height, &rect);
 
 		brush_color = gdi_color_convert(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 

@@ -47,14 +47,21 @@ int add_orders_suite(void)
 	add_test_function(read_scrblt_order);
 	add_test_function(read_opaque_rect_order);
 	add_test_function(read_draw_nine_grid_order);
+	add_test_function(read_multi_opaque_rect_order);
 	add_test_function(read_line_to_order);
+	add_test_function(read_polyline_order);
 	add_test_function(read_glyph_index_order);
 	add_test_function(read_fast_index_order);
 	add_test_function(read_fast_glyph_order);
+	add_test_function(read_polygon_cb_order);
 
 	add_test_function(read_cache_bitmap_order);
 	add_test_function(read_cache_bitmap_v2_order);
 	add_test_function(read_cache_bitmap_v3_order);
+	add_test_function(read_cache_brush_order);
+
+	add_test_function(read_create_offscreen_bitmap_order);
+	add_test_function(read_switch_surface_order);
 
 	return 0;
 }
@@ -199,6 +206,57 @@ void test_read_draw_nine_grid_order(void)
 	CU_ASSERT(stream_get_length(s) == (sizeof(draw_nine_grid_order) - 1));
 }
 
+
+uint8 multi_opaque_rect_order[] =
+	"\x87\x01\x1c\x01\xf1\x00\x12\x00\x5c\xef\x04\x16\x00\x08\x40\x81"
+	"\x87\x81\x1c\x80\xf1\x01\x01\x01\x10\x80\xf0\x01\x10\xff\x10\x10"
+	"\x80\xf1\x01";
+
+void test_read_multi_opaque_rect_order(void)
+{
+	STREAM* s;
+	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
+
+	s = stream_new(0);
+	s->p = s->data = multi_opaque_rect_order;
+
+	memset(orderInfo, 0, sizeof(ORDER_INFO));
+	orderInfo->fieldFlags = 0x01BF;
+	memset(&multi_opaque_rect, 0, sizeof(MULTI_OPAQUE_RECT_ORDER));
+
+	update_read_multi_opaque_rect_order(s, orderInfo, &multi_opaque_rect);
+
+	CU_ASSERT(multi_opaque_rect.nLeftRect == 391);
+	CU_ASSERT(multi_opaque_rect.nTopRect == 284);
+	CU_ASSERT(multi_opaque_rect.nWidth == 241);
+	CU_ASSERT(multi_opaque_rect.nHeight == 18);
+	CU_ASSERT(multi_opaque_rect.color == 0x0000EF5C);
+	CU_ASSERT(multi_opaque_rect.cbData == 22);
+	CU_ASSERT(multi_opaque_rect.numRectangles == 4);
+
+	CU_ASSERT(multi_opaque_rect.rectangles[1].left == 391);
+	CU_ASSERT(multi_opaque_rect.rectangles[1].top == 284);
+	CU_ASSERT(multi_opaque_rect.rectangles[1].width == 241);
+	CU_ASSERT(multi_opaque_rect.rectangles[1].height == 1);
+
+	CU_ASSERT(multi_opaque_rect.rectangles[2].left == 391);
+	CU_ASSERT(multi_opaque_rect.rectangles[2].top == 285);
+	CU_ASSERT(multi_opaque_rect.rectangles[2].width == 1);
+	CU_ASSERT(multi_opaque_rect.rectangles[2].height == 16);
+
+	CU_ASSERT(multi_opaque_rect.rectangles[3].left == 631);
+	CU_ASSERT(multi_opaque_rect.rectangles[3].top == 285);
+	CU_ASSERT(multi_opaque_rect.rectangles[3].width == 1);
+	CU_ASSERT(multi_opaque_rect.rectangles[3].height == 16);
+
+	CU_ASSERT(multi_opaque_rect.rectangles[4].left == 391);
+	CU_ASSERT(multi_opaque_rect.rectangles[4].top == 301);
+	CU_ASSERT(multi_opaque_rect.rectangles[4].width == 241);
+	CU_ASSERT(multi_opaque_rect.rectangles[4].height == 1);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(multi_opaque_rect_order) - 1));
+}
+
 uint8 line_to_order[] = "\x03\xb1\x0e\xa6\x5b\xef\x00";
 
 void test_read_line_to_order(void)
@@ -236,6 +294,106 @@ void test_read_line_to_order(void)
 	CU_ASSERT(line_to.penColor == 0x00EF5B);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(line_to_order) - 1));
+}
+
+uint8 polyline_order[] =
+	"\xf8\x01\xb8\x02\x00\xc0\x00\x20\x6c\x00\x00\x00\x00\x00\x04\x00"
+	"\x00\xff\x7e\x76\xff\x41\x6c\xff\x24\x62\xff\x2b\x59\xff\x55\x51"
+	"\xff\x9c\x49\x73\x43\x80\x4d\xff\xbe\x80\x99\xff\xba\x80\xcd\xff"
+	"\xb7\x80\xde\xff\xb6\x80\xca\xff\xb6\x80\x96\xff\xb7\x80\x48\xff"
+	"\xba\x6f\xff\xbe\xff\x97\x43\xff\x52\x4a\xff\x2b\x51\xff\x24\x59"
+	"\xff\x44\x63\xff\x81\x6c\x56\x76\x2f\x80\x82\x0a\x80\xbf\x14\x80"
+	"\xdd\x1e\x80\xd4\x27\x80\xab\x2f\x80\x64\x37\x0d\x3d\xff\xb3\x80"
+	"\x42\xff\x67\x80\x46";
+
+void test_read_polyline_order(void)
+{
+	STREAM* s;
+	POLYLINE_ORDER polyline;
+
+	s = stream_new(0);
+	s->p = s->data = polyline_order;
+
+	memset(orderInfo, 0, sizeof(ORDER_INFO));
+	orderInfo->fieldFlags = 0x73;
+
+	memset(&polyline, 0, sizeof(POLYLINE_ORDER));
+
+	update_read_polyline_order(s, orderInfo, &polyline);
+
+	CU_ASSERT(polyline.xStart == 504);
+	CU_ASSERT(polyline.yStart == 696);
+	CU_ASSERT(polyline.bRop2 == 0);
+	CU_ASSERT(polyline.penColor == 0x0000C000);
+	CU_ASSERT(polyline.numPoints == 32);
+	CU_ASSERT(polyline.cbData == 108);
+
+	CU_ASSERT(polyline.points[1].x == 374);
+	CU_ASSERT(polyline.points[1].y == 686);
+	CU_ASSERT(polyline.points[2].x == 183);
+	CU_ASSERT(polyline.points[2].y == 666);
+	CU_ASSERT(polyline.points[3].x == -37);
+	CU_ASSERT(polyline.points[3].y == 636);
+	CU_ASSERT(polyline.points[4].x == -250);
+	CU_ASSERT(polyline.points[4].y == 597);
+	CU_ASSERT(polyline.points[5].x == -421);
+	CU_ASSERT(polyline.points[5].y == 550);
+	CU_ASSERT(polyline.points[6].x == -521);
+	CU_ASSERT(polyline.points[6].y == 495);
+	CU_ASSERT(polyline.points[7].x == -534);
+	CU_ASSERT(polyline.points[7].y == 434);
+	CU_ASSERT(polyline.points[8].x == -457);
+	CU_ASSERT(polyline.points[8].y == 368);
+	CU_ASSERT(polyline.points[9].x == -304);
+	CU_ASSERT(polyline.points[9].y == 298);
+	CU_ASSERT(polyline.points[10].x == -99);
+	CU_ASSERT(polyline.points[10].y == 225);
+	CU_ASSERT(polyline.points[11].x == 123);
+	CU_ASSERT(polyline.points[11].y == 151);
+	CU_ASSERT(polyline.points[12].x == 325);
+	CU_ASSERT(polyline.points[12].y == 77);
+	CU_ASSERT(polyline.points[13].x == 475);
+	CU_ASSERT(polyline.points[13].y == 4);
+	CU_ASSERT(polyline.points[14].x == 547);
+	CU_ASSERT(polyline.points[14].y == -66);
+	CU_ASSERT(polyline.points[15].x == 530);
+	CU_ASSERT(polyline.points[15].y == -132);
+	CU_ASSERT(polyline.points[16].x == 425);
+	CU_ASSERT(polyline.points[16].y == -193);
+	CU_ASSERT(polyline.points[17].x == 251);
+	CU_ASSERT(polyline.points[17].y == -247);
+	CU_ASSERT(polyline.points[18].x == 38);
+	CU_ASSERT(polyline.points[18].y == -294);
+	CU_ASSERT(polyline.points[19].x == -182);
+	CU_ASSERT(polyline.points[19].y == -333);
+	CU_ASSERT(polyline.points[20].x == -370);
+	CU_ASSERT(polyline.points[20].y == -362);
+	CU_ASSERT(polyline.points[21].x == -497);
+	CU_ASSERT(polyline.points[21].y == -382);
+	CU_ASSERT(polyline.points[22].x == -539);
+	CU_ASSERT(polyline.points[22].y == -392);
+	CU_ASSERT(polyline.points[23].x == -492);
+	CU_ASSERT(polyline.points[23].y == -392);
+	CU_ASSERT(polyline.points[24].x == -362);
+	CU_ASSERT(polyline.points[24].y == -382);
+	CU_ASSERT(polyline.points[25].x == -171);
+	CU_ASSERT(polyline.points[25].y == -362);
+	CU_ASSERT(polyline.points[26].x == 50);
+	CU_ASSERT(polyline.points[26].y == -332);
+	CU_ASSERT(polyline.points[27].x == 262);
+	CU_ASSERT(polyline.points[27].y == -293);
+	CU_ASSERT(polyline.points[28].x == 433);
+	CU_ASSERT(polyline.points[28].y == -246);
+	CU_ASSERT(polyline.points[29].x == 533);
+	CU_ASSERT(polyline.points[29].y == -191);
+	CU_ASSERT(polyline.points[30].x == 546);
+	CU_ASSERT(polyline.points[30].y == -130);
+	CU_ASSERT(polyline.points[31].x == 469);
+	CU_ASSERT(polyline.points[31].y == -64);
+	CU_ASSERT(polyline.points[32].x == 316);
+	CU_ASSERT(polyline.points[32].y == 6);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(polyline_order) - 1));
 }
 
 uint8 glyph_index_order_1[] =
@@ -370,6 +528,40 @@ void test_read_fast_glyph_order(void)
 	CU_ASSERT(stream_get_length(s) == (sizeof(fast_glyph_order) - 1));
 }
 
+uint8 polygon_cb_order[] =
+	"\xea\x00\x46\x01\x0d\x01\x08\x00\x00\x04\x03\x81\x08\x03\x05\x88"
+	"\x09\x26\x09\x77";
+
+void test_read_polygon_cb_order(void)
+{
+	STREAM* s;
+	POLYGON_CB_ORDER polygon_cb;
+
+	s = stream_new(0);
+	s->p = s->data = polygon_cb_order;
+
+	memset(orderInfo, 0, sizeof(ORDER_INFO));
+	orderInfo->fieldFlags = 0x1BEF;
+
+	memset(&polygon_cb, 0, sizeof(POLYGON_CB_ORDER));
+
+	update_read_polygon_cb_order(s, orderInfo, &polygon_cb);
+
+	CU_ASSERT(polygon_cb.xStart == 234);
+	CU_ASSERT(polygon_cb.yStart == 326);
+	CU_ASSERT(polygon_cb.bRop2 == 0x0D);
+	CU_ASSERT(polygon_cb.fillMode == 1);
+	CU_ASSERT(polygon_cb.backColor == 0);
+	CU_ASSERT(polygon_cb.foreColor == 0x00000008);
+	CU_ASSERT(polygon_cb.brushOrgX == 4);
+	CU_ASSERT(polygon_cb.brushOrgY == 3);
+	CU_ASSERT(polygon_cb.brushStyle == 0x81);
+	CU_ASSERT(polygon_cb.nDeltaEntries == 3);
+	CU_ASSERT(polygon_cb.cbData == 5);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(polygon_cb_order) - 1));
+}
+
 uint8 cache_bitmap_order[] = "\x00\x00\x10\x01\x08\x01\x00\x00\x00\x10";
 
 void test_read_cache_bitmap_order(void)
@@ -470,5 +662,70 @@ void test_read_cache_bitmap_v3_order(void)
 	CU_ASSERT(cache_bitmap_v3.bitmapData.length == 40);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(cache_bitmap_v3_order) - 1));
+}
+
+uint8 cache_brush_order[] = "\x00\x01\x08\x08\x81\x08\xaa\x55\xaa\x55\xaa\x55\xaa\x55";
+
+void test_read_cache_brush_order(void)
+{
+	STREAM* s;
+	CACHE_BRUSH_ORDER cache_brush;
+
+	s = stream_new(0);
+	s->p = s->data = cache_brush_order;
+
+	memset(&cache_brush, 0, sizeof(CACHE_BRUSH_ORDER));
+
+	update_read_cache_brush_order(s, &cache_brush, 0);
+
+	CU_ASSERT(cache_brush.cacheEntry == 0);
+	CU_ASSERT(cache_brush.bpp == 1);
+	CU_ASSERT(cache_brush.cx == 8);
+	CU_ASSERT(cache_brush.cy == 8);
+	CU_ASSERT(cache_brush.style == 0x81);
+	CU_ASSERT(cache_brush.length == 8);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(cache_brush_order) - 1));
+}
+
+uint8 create_offscreen_bitmap_order[] = "\x00\x80\x60\x01\x10\x00\x01\x00\x02\x00";
+
+void test_read_create_offscreen_bitmap_order(void)
+{
+	STREAM* s;
+	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
+
+	s = stream_new(0);
+	s->p = s->data = create_offscreen_bitmap_order;
+
+	memset(&create_offscreen_bitmap, 0, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
+
+	update_read_create_offscreen_bitmap_order(s, &create_offscreen_bitmap);
+
+	CU_ASSERT(create_offscreen_bitmap.id == 0);
+	CU_ASSERT(create_offscreen_bitmap.cx == 352);
+	CU_ASSERT(create_offscreen_bitmap.cy == 16);
+	CU_ASSERT(create_offscreen_bitmap.deleteList.cIndices == 1);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(create_offscreen_bitmap_order) - 1));
+}
+
+uint8 switch_surface_order[] = "\xff\xff";
+
+void test_read_switch_surface_order(void)
+{
+	STREAM* s;
+	SWITCH_SURFACE_ORDER switch_surface;
+
+	s = stream_new(0);
+	s->p = s->data = switch_surface_order;
+
+	memset(&switch_surface, 0, sizeof(SWITCH_SURFACE_ORDER));
+
+	update_read_switch_surface_order(s, &switch_surface);
+
+	CU_ASSERT(switch_surface.bitmapId == 0xFFFF);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(switch_surface_order) - 1));
 }
 
