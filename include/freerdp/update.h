@@ -143,6 +143,7 @@ typedef struct
 	sint16 nHeight;
 	uint8 bRop;
 	uint8 nDeltaEntries;
+	uint16 cbData;
 	uint8* codeDeltaList;
 } MULTI_DSTBLT_ORDER;
 
@@ -161,6 +162,7 @@ typedef struct
 	uint8 brushHatch;
 	uint8 brushExtra[7];
 	uint8 nDeltaEntries;
+	uint16 cbData;
 	uint8* codeDeltaList;
 } MULTI_PATBLT_ORDER;
 
@@ -174,6 +176,7 @@ typedef struct
 	sint16 nXSrc;
 	sint16 nYSrc;
 	uint8 nDeltaEntries;
+	uint16 cbData;
 	uint8* codeDeltaList;
 } MULTI_SCRBLT_ORDER;
 
@@ -193,6 +196,7 @@ typedef struct
 	sint16 nHeight;
 	uint32 color;
 	uint8 numRectangles;
+	uint16 cbData;
 	DELTA_RECT rectangles[45];
 } MULTI_OPAQUE_RECT_ORDER;
 
@@ -204,6 +208,7 @@ typedef struct
 	sint16 srcBottom;
 	uint16 bitmapId;
 	uint8 nDeltaEntries;
+	uint16 cbData;
 	uint8* codeDeltaList;
 } MULTI_DRAW_NINE_GRID_ORDER;
 
@@ -228,6 +233,7 @@ typedef struct
 	uint8 bRop2;
 	uint32 penColor;
 	uint8 nDeltaEntries;
+	uint8 cbData;
 	uint8* codeDeltaList;
 } POLYLINE_ORDER;
 
@@ -297,6 +303,7 @@ typedef struct
 	uint8 brushExtra[7];
 	sint16 x;
 	sint16 y;
+	uint8 cbData;
 	uint8* data;
 } GLYPH_INDEX_ORDER;
 
@@ -315,8 +322,9 @@ typedef struct
 	sint16 opTop;
 	sint16 opRight;
 	sint16 opBottom;
-	uint16 x;
-	uint16 y;
+	sint16 x;
+	sint16 y;
+	uint8 cbData;
 	uint8* data;
 } FAST_INDEX_ORDER;
 
@@ -335,8 +343,9 @@ typedef struct
 	sint16 opTop;
 	sint16 opRight;
 	sint16 opBottom;
-	uint16 x;
-	uint16 y;
+	sint16 x;
+	sint16 y;
+	uint8 cbData;
 	uint8* data;
 } FAST_GLYPH_ORDER;
 
@@ -348,6 +357,7 @@ typedef struct
 	uint8 fillMode;
 	uint32 brushColor;
 	uint8 nDeltaEntries;
+	uint8 cbData;
 	uint8* codeDeltaList;
 } POLYGON_SC_ORDER;
 
@@ -365,6 +375,7 @@ typedef struct
 	uint8 brushHatch;
 	uint8 brushExtra[7];
 	uint8 nDeltaEntries;
+	uint8 cbData;
 	uint8* codeDeltaList;
 } POLYGON_CB_ORDER;
 
@@ -417,13 +428,23 @@ typedef struct
 	uint32 key1;
 	uint32 key2;
 	uint8 bitmapBpp;
-	uint8 bitmapWidth;
-	uint8 bitmapHeight;
-	uint16 bitmapLength;
+	uint16 bitmapWidth;
+	uint16 bitmapHeight;
+	uint32 bitmapLength;
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 } CACHE_BITMAP_V2_ORDER;
+
+typedef struct
+{
+	uint8 bpp;
+	uint8 codecID;
+	uint16 width;
+	uint16 height;
+	uint32 length;
+	uint8* data;
+} BITMAP_DATA_EX;
 
 typedef struct
 {
@@ -433,7 +454,7 @@ typedef struct
 	uint16 cacheIndex;
 	uint32 key1;
 	uint32 key2;
-	uint8* bitmapData;
+	BITMAP_DATA_EX bitmapData;
 } CACHE_BITMAP_V3_ORDER;
 
 typedef struct

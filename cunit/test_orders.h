@@ -30,3 +30,9 @@ void test_read_opaque_rect_order(void);
 void test_read_draw_nine_grid_order(void);
 void test_read_line_to_order(void);
 void test_read_glyph_index_order(void);
+void test_read_fast_index_order(void);
+void test_read_fast_glyph_order(void);
+
+void test_read_cache_bitmap_order(void);
+void test_read_cache_bitmap_v2_order(void);
+void test_read_cache_bitmap_v3_order(void);

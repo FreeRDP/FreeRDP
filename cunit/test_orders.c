@@ -49,6 +49,12 @@ int add_orders_suite(void)
 	add_test_function(read_draw_nine_grid_order);
 	add_test_function(read_line_to_order);
 	add_test_function(read_glyph_index_order);
+	add_test_function(read_fast_index_order);
+	add_test_function(read_fast_glyph_order);
+
+	add_test_function(read_cache_bitmap_order);
+	add_test_function(read_cache_bitmap_v2_order);
+	add_test_function(read_cache_bitmap_v3_order);
 
 	return 0;
 }
@@ -74,6 +80,8 @@ void test_read_dstblt_order(void)
 	CU_ASSERT(dstblt.nWidth == 72);
 	CU_ASSERT(dstblt.nHeight == 311);
 	CU_ASSERT(dstblt.bRop == 0);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(dstblt_order) - 1));
 }
 
 uint8 patblt_order[] = "\x1a\x00\xc3\x01\x0d\x00\x0d\x00\xf0\xff\xff\x00\x5b\xef\x00\x81";
@@ -102,9 +110,11 @@ void test_read_patblt_order(void)
 	CU_ASSERT(patblt.brushOrgX == 0);
 	CU_ASSERT(patblt.brushOrgY == 0);
 	CU_ASSERT(patblt.brushStyle == (BMF_1BPP | CACHED_BRUSH));
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(patblt_order) - 1));
 }
 
-uint8 scrblt_order[] = "\x07\x00\xa1\x01\xf1\x00\xcc\x2f\x01\x8e";
+uint8 scrblt_order[] = "\x07\x00\xa1\x01\xf1\x00\xcc\x2f\x01\x8e\x00";
 
 void test_read_scrblt_order(void)
 {
@@ -127,6 +137,8 @@ void test_read_scrblt_order(void)
 	CU_ASSERT(scrblt.bRop == 204);
 	CU_ASSERT(scrblt.nXSrc == 303);
 	CU_ASSERT(scrblt.nYSrc == 142);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(scrblt_order) - 1));
 }
 
 uint8 opaque_rect_order[] = "\x00\x04\x00\x03\x73\x02\x06";
@@ -140,7 +152,7 @@ void test_read_opaque_rect_order(void)
 	s->p = s->data = opaque_rect_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
-	orderInfo->fieldFlags = 0x3C;
+	orderInfo->fieldFlags = 0x7C;
 	memset(&opaque_rect, 0, sizeof(OPAQUE_RECT_ORDER));
 
 	update_read_opaque_rect_order(s, orderInfo, &opaque_rect);
@@ -149,9 +161,12 @@ void test_read_opaque_rect_order(void)
 	CU_ASSERT(opaque_rect.nTopRect == 0);
 	CU_ASSERT(opaque_rect.nWidth == 1024);
 	CU_ASSERT(opaque_rect.nHeight == 768);
+	CU_ASSERT(opaque_rect.color == 0x00060273);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(opaque_rect_order) - 1));
 }
 
-uint8 draw_nine_grid_order[] = "\xfb\xf9\x0d";
+uint8 draw_nine_grid_order[] = "\xfb\xf9\x0d\x00";
 
 void test_read_draw_nine_grid_order(void)
 {
@@ -180,6 +195,8 @@ void test_read_draw_nine_grid_order(void)
 	CU_ASSERT(draw_nine_grid.srcRight == 33);
 	CU_ASSERT(draw_nine_grid.srcBottom == 33);
 	CU_ASSERT(draw_nine_grid.bitmapId == 13);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(draw_nine_grid_order) - 1));
 }
 
 uint8 line_to_order[] = "\x03\xb1\x0e\xa6\x5b\xef\x00";
@@ -217,16 +234,18 @@ void test_read_line_to_order(void)
 	CU_ASSERT(line_to.penStyle == 0);
 	CU_ASSERT(line_to.penWidth == 0);
 	CU_ASSERT(line_to.penColor == 0x00EF5B);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(line_to_order) - 1));
 }
 
 uint8 glyph_index_order_1[] =
-		"\x6a\x02\x27\x38\x00\x39\x07\x3a\x06\x3b\x07\x3c\x06\x3d\x06\x18"
-		"\x04\x1f\x06\x17\x02\x14\x04\x1b\x06\x19\x06\x45\x05\x18\x06\x1f"
-		"\x06\x1f\x02\x14\x02\x46\x06\xff\x15\x24";
+	"\x6a\x02\x27\x38\x00\x39\x07\x3a\x06\x3b\x07\x3c\x06\x3d\x06\x18"
+	"\x04\x1f\x06\x17\x02\x14\x04\x1b\x06\x19\x06\x45\x05\x18\x06\x1f"
+	"\x06\x1f\x02\x14\x02\x46\x06\xff\x15\x24";
 
 uint8 glyph_index_order_2[] =
-		"\x00\xff\xff\xff\x0c\x02\x6e\x01\x4d\x02\x7b\x01\x09\x02\x6e\x01"
-		"\xf6\x02\x7b\x01\x0c\x02\x79\x01\x03\xfe\x04\x00";
+	"\x00\xff\xff\xff\x0c\x02\x6e\x01\x4d\x02\x7b\x01\x09\x02\x6e\x01"
+	"\xf6\x02\x7b\x01\x0c\x02\x79\x01\x03\xfe\x04\x00";
 
 void test_read_glyph_index_order(void)
 {
@@ -245,6 +264,8 @@ void test_read_glyph_index_order(void)
 	update_read_glyph_index_order(s, orderInfo, &glyph_index);
 
 	CU_ASSERT(glyph_index.bkRight == 618);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(glyph_index_order_1) - 1));
 
 	s->p = s->data = glyph_index_order_2;
 
@@ -268,4 +289,186 @@ void test_read_glyph_index_order(void)
 	CU_ASSERT(glyph_index.opBottom == 379);
 	CU_ASSERT(glyph_index.x == 524);
 	CU_ASSERT(glyph_index.y == 377);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(glyph_index_order_2) - 1));
 }
+
+uint8 fast_index_order[] =
+	"\x07\x00\x03\xff\xff\x00\x74\x3b\x00\x0e\x00\x71\x00\x42\x00\x7e"
+	"\x00\x00\x80\x7c\x00\x15\x00\x00\x01\x06\x02\x04\x03\x08\x05\x09"
+	"\x06\x06\x06\x06\x07\x06\x08\x02\xff\x00\x12";
+
+void test_read_fast_index_order(void)
+{
+	STREAM* s;
+	FAST_INDEX_ORDER fast_index;
+
+	s = stream_new(0);
+	s->p = s->data = fast_index_order;
+
+	memset(orderInfo, 0, sizeof(ORDER_INFO));
+	orderInfo->fieldFlags = 0x70FF;
+
+	update_read_fast_index_order(s, orderInfo, &fast_index);
+
+	CU_ASSERT(fast_index.cacheId == 7);
+	CU_ASSERT(fast_index.flAccel == 3);
+	CU_ASSERT(fast_index.ulCharInc == 0);
+	CU_ASSERT(fast_index.backColor == 0x0000FFFF);
+	CU_ASSERT(fast_index.foreColor == 0x00003B74);
+	CU_ASSERT(fast_index.bkLeft == 14);
+	CU_ASSERT(fast_index.bkTop == 113);
+	CU_ASSERT(fast_index.bkRight == 66);
+	CU_ASSERT(fast_index.bkBottom == 126);
+	CU_ASSERT(fast_index.opLeft == 0);
+	CU_ASSERT(fast_index.opTop == 0);
+	CU_ASSERT(fast_index.opRight == 0);
+	CU_ASSERT(fast_index.opBottom == 0);
+	CU_ASSERT(fast_index.x == -32768);
+	CU_ASSERT(fast_index.y == 124);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(fast_index_order) - 1));
+}
+
+uint8 fast_glyph_order[] =
+	"\x06\x00\x03\xff\xff\x00\x8b\x00\xb1\x00\x93\x00\xbe\x00\x0d\x00"
+	"\xfe\x7f\x00\x80\x00\x80\xbb\x00\x13\x00\x01\x4a\x06\x0a\x80\x80"
+	"\x80\xb8\xc4\x84\x84\x84\x84\x84\x00\x00\x68\x00";
+
+void test_read_fast_glyph_order(void)
+{
+	STREAM* s;
+	FAST_GLYPH_ORDER fast_glyph;
+
+	s = stream_new(0);
+	s->p = s->data = fast_glyph_order;
+
+	memset(orderInfo, 0, sizeof(ORDER_INFO));
+	orderInfo->fieldFlags = 0x7EFB;
+	orderInfo->boundLeft = 139;
+	orderInfo->boundTop = 177;
+	orderInfo->boundRight = 1068;
+	orderInfo->boundBottom = 189;
+
+	memset(&fast_glyph, 0, sizeof(FAST_GLYPH_ORDER));
+
+	update_read_fast_glyph_order(s, orderInfo, &fast_glyph);
+
+	CU_ASSERT(fast_glyph.backColor == 0);
+	CU_ASSERT(fast_glyph.foreColor == 0x0000FFFF);
+	CU_ASSERT(fast_glyph.bkLeft == 139);
+	CU_ASSERT(fast_glyph.bkTop == 177);
+	CU_ASSERT(fast_glyph.bkRight == 147);
+	CU_ASSERT(fast_glyph.bkBottom == 190);
+	CU_ASSERT(fast_glyph.opLeft == 0);
+	CU_ASSERT(fast_glyph.opTop == 13);
+	CU_ASSERT(fast_glyph.opRight == 32766);
+	CU_ASSERT(fast_glyph.opBottom == -32768);
+	CU_ASSERT(fast_glyph.x == -32768);
+	CU_ASSERT(fast_glyph.y == 187);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(fast_glyph_order) - 1));
+}
+
+uint8 cache_bitmap_order[] = "\x00\x00\x10\x01\x08\x01\x00\x00\x00\x10";
+
+void test_read_cache_bitmap_order(void)
+{
+	STREAM* s;
+	uint16 extraFlags;
+	CACHE_BITMAP_ORDER cache_bitmap;
+
+	s = stream_new(0);
+	extraFlags = 0x0400;
+	s->p = s->data = cache_bitmap_order;
+
+	memset(&cache_bitmap, 0, sizeof(CACHE_BITMAP_ORDER));
+
+	update_read_cache_bitmap_order(s, &cache_bitmap, True, extraFlags);
+
+	CU_ASSERT(cache_bitmap.cacheId == 0);
+	CU_ASSERT(cache_bitmap.bitmapWidth == 16);
+	CU_ASSERT(cache_bitmap.bitmapHeight == 1);
+	CU_ASSERT(cache_bitmap.bitmapBpp == 8);
+	CU_ASSERT(cache_bitmap.bitmapLength == 1);
+	CU_ASSERT(cache_bitmap.cacheIndex == 0);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(cache_bitmap_order) - 1));
+}
+
+uint8 cache_bitmap_v2_order[] =
+	"\x20\x40\xdc\xff\xff\x85\xff\xff\x99\xd6\x99\xd6\x99\xd6\x99\xd6"
+	"\x06\x8b\x99\xd6\x99\xd6\x99\xd6\x10\x84\x08\x42\x08\x42\x10\x84"
+	"\x99\xd6\x99\xd6\x99\xd6\x99\xd6\x06\x84\x99\xd6\x99\xd6\x99\xd6"
+	"\xff\xff\x16\x69\x99\xd6\x06\x69\x99\xd6\x04\xcc\x89\x52\x03\x6e"
+	"\xff\xff\x02\x6e\x08\x42\x01\x70\x08\x42\x71\xff\xff\xce\x18\xc6"
+	"\x01\x81\x08\x42\xce\x66\x29\x02\xcd\x89\x52\x03\x88\x10\x84\x99"
+	"\xd6\x99\xd6\x99\xd6\x00\x00\x00\x00\x00\x00\x00\x00\xd8\x99\xd6"
+	"\x03\xf8\x01\x00\x00\x00\x00\xf0\x66\x99\xd6\x05\x6a\x99\xd6\x00"
+	"\xc4\xcc\x89\x52\x03\x6e\xff\xff\x02\x6e\x08\x42\x01\x70\x08\x42"
+	"\x71\xff\xff\xce\x18\xc6\x01\x81\x08\x42\xce\x66\x29\x02\xcd\x89"
+	"\x52\x03\x00\x04\xd6\x99\xd6\xc3\x80\x61\x00\xa5\x80\x40\xec\x52"
+	"\x00\x5a\x00\x2d\x00\x24\x00\x12\x00\x24\x00\x12\x00\x5a\x00\x2d"
+	"\x00\xa5\x80\x52\x00\xc3\x80\x61\x00\x00\x00\x00\x00\xcc\x89\x52"
+	"\x03\x6e\xff\xff\x02\xcb\x18\xc6\x84\x08\x42\x08\x42\x08\x42\xff"
+	"\xff";
+
+void test_read_cache_bitmap_v2_order(void)
+{
+	STREAM* s;
+	uint16 extraFlags;
+	CACHE_BITMAP_V2_ORDER cache_bitmap_v2;
+
+	s = stream_new(0);
+	extraFlags = 0x0CA1;
+	s->p = s->data = cache_bitmap_v2_order;
+
+	memset(&cache_bitmap_v2, 0, sizeof(CACHE_BITMAP_V2_ORDER));
+
+	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, True, extraFlags);
+
+	CU_ASSERT(cache_bitmap_v2.cacheId == 1);
+	CU_ASSERT(cache_bitmap_v2.bitmapBpp == 16);
+	CU_ASSERT(cache_bitmap_v2.flags == 0x19);
+	CU_ASSERT(cache_bitmap_v2.bitmapWidth == 32);
+	CU_ASSERT(cache_bitmap_v2.bitmapHeight == 32);
+	CU_ASSERT(cache_bitmap_v2.bitmapLength == 220);
+	CU_ASSERT(cache_bitmap_v2.cacheIndex == 32767);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(cache_bitmap_v2_order) - 1));
+}
+
+uint8 cache_bitmap_v3_order[] =
+	"\xff\x7f\x35\x50\xec\xbc\x74\x52\x65\xb7\x20\x00\x00\x00\x05\x00"
+	"\x02\x00\x28\x00\x00\x00\x5b\x4f\x45\xff\x5b\x4f\x45\xff\x5b\x4f"
+	"\x45\xff\x5b\x4f\x45\xff\x5b\x4f\x45\xff\x5b\x50\x45\xff\x5b\x50"
+	"\x45\xff\x5b\x50\x45\xff\x5b\x50\x45\xff\x5b\x50\x45\xff";
+
+void test_read_cache_bitmap_v3_order(void)
+{
+	STREAM* s;
+	uint16 extraFlags;
+	CACHE_BITMAP_V3_ORDER cache_bitmap_v3;
+
+	s = stream_new(0);
+	extraFlags = 0x0C30;
+	s->p = s->data = cache_bitmap_v3_order;
+
+	memset(&cache_bitmap_v3, 0, sizeof(CACHE_BITMAP_V3_ORDER));
+
+	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, True, extraFlags);
+
+	CU_ASSERT(cache_bitmap_v3.cacheIndex == 32767);
+	CU_ASSERT(cache_bitmap_v3.key1 == 0xBCEC5035);
+	CU_ASSERT(cache_bitmap_v3.key2 == 0xB7655274);
+	CU_ASSERT(cache_bitmap_v3.bpp == 32);
+
+	CU_ASSERT(cache_bitmap_v3.bitmapData.bpp == 32);
+	CU_ASSERT(cache_bitmap_v3.bitmapData.codecID == 0);
+	CU_ASSERT(cache_bitmap_v3.bitmapData.width == 5);
+	CU_ASSERT(cache_bitmap_v3.bitmapData.height == 2);
+	CU_ASSERT(cache_bitmap_v3.bitmapData.length == 40);
+
+	CU_ASSERT(stream_get_length(s) == (sizeof(cache_bitmap_v3_order) - 1));
+}
+
