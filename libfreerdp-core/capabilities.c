@@ -1558,7 +1558,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	/* Capability Sets */
-	numberCapabilities = 15;
+	numberCapabilities = 14;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
@@ -1567,7 +1567,6 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_input_capability_set(s, settings);
 	rdp_write_brush_capability_set(s, settings);
 	rdp_write_glyph_cache_capability_set(s, settings);
-	rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	rdp_write_virtual_channel_capability_set(s, settings);
 	rdp_write_sound_capability_set(s, settings);
 	rdp_write_share_capability_set(s, settings);

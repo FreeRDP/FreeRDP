@@ -36,6 +36,8 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
 
+	printf("numberOrders:%d\n", numberOrders);
+
 	while (numberOrders > 0)
 	{
 		update_recv_order(update, s);

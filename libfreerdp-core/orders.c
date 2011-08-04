@@ -30,6 +30,7 @@ uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
 	"LineTo",
 	"OpaqueRect",
 	"SaveBitmap",
+	"",
 	"MemBlt",
 	"Mem3Blt",
 	"MultiDstBlt",
@@ -40,6 +41,7 @@ uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
 	"PolygonSC",
 	"PolygonCB",
 	"Polyline",
+	"",
 	"FastGlyph",
 	"EllipseSC",
 	"EllipseCB",
@@ -1750,13 +1752,11 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	uint16 extraFlags;
 	uint16 orderLength;
 
-	stream_get_mark(s, next);
 	stream_read_uint16(s, orderLength); /* orderLength (2 bytes) */
 	stream_read_uint16(s, extraFlags); /* extraFlags (2 bytes) */
 	stream_read_uint8(s, orderType); /* orderType (1 byte) */
 
-	orderLength += 13; /* adjust length (13 bytes less than actual length) */
-	next += orderLength;
+	next = s->p + ((sint16) orderLength) + 7;
 
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
 		printf("%s Secondary Drawing Order (0x%02X)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
@@ -1817,7 +1817,7 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			break;
 	}
 
-	stream_set_mark(s, next);
+	s->p = next;
 }
 
 void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
@@ -1910,19 +1910,11 @@ void update_recv_order(rdpUpdate* update, STREAM* s)
 
 	stream_read_uint8(s, controlFlags); /* controlFlags (1 byte) */
 
-	switch (controlFlags & ORDER_CLASS_MASK)
-	{
-		case ORDER_PRIMARY_CLASS:
-			update_recv_primary_order(update, s, controlFlags);
-			break;
-
-		case ORDER_SECONDARY_CLASS:
-			update_recv_secondary_order(update, s, controlFlags);
-			break;
-
-		case ORDER_ALTSEC_CLASS:
-			update_recv_altsec_order(update, s, controlFlags);
-			break;
-	}
+	if (!(controlFlags & ORDER_STANDARD))
+		update_recv_altsec_order(update, s, controlFlags);
+	else if (controlFlags & ORDER_SECONDARY)
+		update_recv_secondary_order(update, s, controlFlags);
+	else
+		update_recv_primary_order(update, s, controlFlags);
 }
 

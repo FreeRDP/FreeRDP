@@ -99,12 +99,6 @@
 
 #define SCREEN_BITMAP_SURFACE		0xFFFF
 
-/* Order Classes */
-#define ORDER_PRIMARY_CLASS			0x01
-#define ORDER_SECONDARY_CLASS 			0x03
-#define ORDER_ALTSEC_CLASS			0x02
-#define ORDER_CLASS_MASK			0x03
-
 /* Primary Drawing Orders */
 #define ORDER_TYPE_DSTBLT			0x00
 #define ORDER_TYPE_PATBLT			0x01

@@ -1237,8 +1237,42 @@ void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	gdi_DeleteObject((HGDIOBJECT) hPen);
 }
 
+void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+{
+	int i;
+	uint32 color;
+	HGDI_PEN hPen;
+	DELTA_POINT* points;
+	GDI *gdi = GET_GDI(update);
+
+	color = gdi_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	hPen = gdi_CreatePen(0, 1, (GDI_COLOR) color);
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
+	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
+
+	points = polyline->points;
+	for (i = 0; i < polyline->numPoints; i++)
+	{
+		gdi_MoveToEx(gdi->drawing->hdc, points[i].x, points[i].y, NULL);
+		gdi_LineTo(gdi->drawing->hdc, points[i + 1].x, points[i + 1].y);
+	}
+
+	gdi_DeleteObject((HGDIOBJECT) hPen);
+}
+
+void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
+{
+	printf("create_offscreen_bitmap: id:%d cx:%d cy:%d\n",
+			create_offscreen_bitmap->id, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy);
+}
+
+void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
+{
+	printf("switch surface: 0x%04X\n", switch_surface->bitmapId);
+}
+
 /**
- * Register GDI callbacks with libfreerdp.
+ * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
  * @return
  */
@@ -1259,7 +1293,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiOpaqueRect = gdi_multi_opaque_rect;
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = gdi_line_to;
-	update->Polyline = NULL;
+	update->Polyline = gdi_polyline;
 	update->MemBlt = NULL;
 	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
@@ -1270,6 +1304,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
+	update->CreateOffscreenBitmap = gdi_create_offscreen_bitmap;
+	update->SwitchSurface = gdi_switch_surface;
 }
 
 /**

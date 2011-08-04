@@ -94,9 +94,35 @@ boolean df_check_fds(freerdp* instance, fd_set* set)
 boolean df_pre_connect(freerdp* instance)
 {
 	dfInfo* dfi;
+	rdpSettings* settings;
 
 	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
 	SET_DFI(instance, dfi);
+
+	settings = instance->settings;
+
+	settings->order_support[NEG_DSTBLT_INDEX] = True;
+	settings->order_support[NEG_PATBLT_INDEX] = True;
+	settings->order_support[NEG_SCRBLT_INDEX] = True;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = False;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = False;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = False;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = False;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
+	settings->order_support[NEG_LINETO_INDEX] = True;
+	settings->order_support[NEG_POLYLINE_INDEX] = True;
+	settings->order_support[NEG_MEMBLT_INDEX] = False;
+	settings->order_support[NEG_MEM3BLT_INDEX] = False;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = False;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = False;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
 	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
 

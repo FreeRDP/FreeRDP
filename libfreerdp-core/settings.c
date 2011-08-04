@@ -61,42 +61,45 @@ rdpSettings* settings_new()
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
+		/*
 		settings->order_support[NEG_DSTBLT_INDEX] = True;
 		settings->order_support[NEG_PATBLT_INDEX] = True;
 		settings->order_support[NEG_SCRBLT_INDEX] = True;
-		settings->order_support[NEG_MEMBLT_INDEX] = True;
-		settings->order_support[NEG_MEM3BLT_INDEX] = True;
+		settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
 		settings->order_support[NEG_DRAWNINEGRID_INDEX] = True;
-		settings->order_support[NEG_LINETO_INDEX] = True;
-		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = True;
-		settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
 		settings->order_support[NEG_MULTIDSTBLT_INDEX] = True;
 		settings->order_support[NEG_MULTIPATBLT_INDEX] = True;
 		settings->order_support[NEG_MULTISCRBLT_INDEX] = True;
 		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
+		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = True;
+		settings->order_support[NEG_LINETO_INDEX] = True;
+		settings->order_support[NEG_POLYLINE_INDEX] = True;
+		settings->order_support[NEG_MEMBLT_INDEX] = True;
+		settings->order_support[NEG_MEM3BLT_INDEX] = True;
+		settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
+		settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
 		settings->order_support[NEG_FAST_INDEX_INDEX] = True;
+		settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
 		settings->order_support[NEG_POLYGON_SC_INDEX] = True;
 		settings->order_support[NEG_POLYGON_CB_INDEX] = True;
-		settings->order_support[NEG_POLYLINE_INDEX] = True;
-		settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
 		settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
 		settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
-		settings->order_support[NEG_INDEX_INDEX] = True;
+		*/
 
 		settings->color_pointer = True;
 		settings->large_pointer = True;
 
-		settings->draw_gdi_plus = True;
+		settings->draw_gdi_plus = False;
 
 		settings->frame_marker = False;
 		settings->bitmap_cache_v3 = False;
 
-		settings->bitmap_cache = True;
+		settings->bitmap_cache = False;
 		settings->persistent_bitmap_cache = False;
 
-		settings->offscreen_bitmap_cache = True;
-		settings->offscreen_bitmap_cache_size = 7680;
-		settings->offscreen_bitmap_cache_entries = 100;
+		settings->offscreen_bitmap_cache = False;
+		settings->offscreen_bitmap_cache_size = 0;
+		settings->offscreen_bitmap_cache_entries = 0;
 
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
