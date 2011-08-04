@@ -74,25 +74,26 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 		dstSize = cbUncompressedSize;
 		bitmap_data->length = cbCompMainBodySize;
+
+		bitmap_data->data = (uint8*) xzalloc(dstSize);
+
+		stream_get_mark(s, srcData);
+		stream_seek(s, bitmap_data->length);
+
+		status = bitmap_decompress(srcData, bitmap_data->data, bitmap_data->width, bitmap_data->height,
+				bitmap_data->length, bitmap_data->bpp, bitmap_data->bpp);
+
+		if (status != True)
+			printf("bitmap decompression failed, bpp:%d\n", bitmap_data->bpp);
 	}
 	else
 	{
-		dstSize = bitmap_data->width * bitmap_data->height * bytesPerPixel;
+		stream_get_mark(s, srcData);
+		dstSize = bitmap_data->length;
+		stream_seek(s, bitmap_data->length);
+		bitmap_data->data = (uint8*) xzalloc(dstSize);
+		memcpy(bitmap_data->data, srcData, dstSize);
 	}
-
-	stream_get_mark(s, srcData);
-	stream_seek(s, bitmap_data->length);
-
-	bitmap_data->data = (uint8*) xzalloc(dstSize);
-
-	//printf("bytesPerPixel:%d, width:%d, height:%d dstSize:%d flags:0x%04X\n",
-	//		bytesPerPixel, bitmap_data->width, bitmap_data->height, dstSize, bitmap_data->flags);
-
-	status = bitmap_decompress(srcData, bitmap_data->data, bitmap_data->width, bitmap_data->height,
-			bitmap_data->length, bitmap_data->bpp, bitmap_data->bpp);
-
-	if (status != True)
-		printf("bitmap decompression failed, bpp:%d\n", bitmap_data->bpp);
 }
 
 void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)

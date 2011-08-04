@@ -1117,6 +1117,8 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	if (patblt->brushStyle & CACHED_BRUSH)
 	{
 		/* obtain brush from cache */
+		printf("should obtain brush from cache.\n");
+		return;
 	}
 
 	patblt->brushStyle &= 0x7F;
@@ -1155,6 +1157,10 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
+	}
+	else
+	{
+		printf("unimplemented brush style:%d\n", patblt->brushStyle);
 	}
 }
 
