@@ -328,6 +328,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	}
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
+	xfree(plugin->channel_entry_points.pExtendedData);
 
 	svc_plugin_remove(plugin);
 
