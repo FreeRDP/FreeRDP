@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-utils cmake build script
+# FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,30 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_package(Threads REQUIRED)
+set(DISK_SRCS
+	disk_main.c
+)
 
-set(FREERDP_UTILS_SRCS
-	args.c
-	blob.c
-	event.c
-	hexdump.c
-	list.c
-	load_plugin.c
-	memory.c
-	mutex.c
-	semaphore.c
-	stream.c
-	svc_plugin.c
-	unicode.c
-	wait_obj.c)
+include_directories(..)
 
-add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
+add_library(disk SHARED ${DISK_SRCS})
+set_target_properties(disk PROPERTIES PREFIX "")
 
-add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
+target_link_libraries(disk freerdp-utils)
 
-set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
-
-target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
-
-install(TARGETS freerdp-utils DESTINATION lib)
+install(TARGETS disk DESTINATION ${FREERDP_PLUGIN_PATH})
