@@ -49,17 +49,15 @@ typedef void (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
-	DEVICE* dev;
+	DEVICE* device;
 	DEVMAN* devman;
-	uint32 packetID;
-	uint32 fileID;
-	uint32 completionID;
-	uint32 majorFunction;
-	uint32 minorFunction;
+	uint32 FileId;
+	uint32 CompletionId;
+	uint32 MajorFunction;
+	uint32 MinorFunction;
 	STREAM* input;
 
-	uint32 ioStatus;
-	uint32 outputResult;
+	uint32 IoStatus;
 	STREAM* output;
 
 	pcIRPResponse Complete;

@@ -24,6 +24,8 @@ set(RDPDR_SRCS
 	rdpdr_capabilities.h
 	devman.c
 	devman.h
+	irp.c
+	irp.h
 	rdpdr_main.c
 	rdpdr_main.h
 )

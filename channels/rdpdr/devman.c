@@ -87,3 +87,17 @@ boolean devman_load_device_service(DEVMAN* devman, FRDP_PLUGIN_DATA* plugin_data
 
 	return True;
 }
+
+DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)
+{
+	LIST_ITEM* item;
+	DEVICE* device;
+
+	for (item = devman->devices->head; item; item = item->next)
+	{
+		device = (DEVICE*)item->data;
+		if (device->id == id)
+			return device;
+	}
+	return NULL;
+}

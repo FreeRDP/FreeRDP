@@ -18,12 +18,11 @@
  * limitations under the License.
  */
 
-#ifndef __DEVMAN_H
-#define __DEVMAN_H
+#ifndef __IRP_H
+#define __IRP_H
 
-DEVMAN* devman_new(rdpSvcPlugin* plugin);
-void devman_free(DEVMAN* devman);
-boolean devman_load_device_service(DEVMAN* devman, FRDP_PLUGIN_DATA* plugin_data);
-DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id);
+#include "rdpdr_types.h"
 
-#endif /* __DEVMAN_H */
+IRP* irp_new(DEVMAN* devman, STREAM* data_in);
+
+#endif /* __IRP_H */

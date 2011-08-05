@@ -26,8 +26,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <fnmatch.h>
 #include <utime.h>
@@ -36,6 +34,13 @@
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include "rdpdr_constants.h"
 #include "rdpdr_types.h"
@@ -66,7 +71,7 @@ void disk_irp_request(DEVICE* device, IRP* irp)
 {
 	DISK_DEVICE* disk = (DISK_DEVICE*)device;
 
-	irp->Discard(irp);
+	IFCALL(irp->Complete, irp);
 }
 
 void disk_free(DEVICE* device)

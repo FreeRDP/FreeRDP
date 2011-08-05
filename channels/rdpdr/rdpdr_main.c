@@ -35,8 +35,9 @@
 
 #include "rdpdr_types.h"
 #include "rdpdr_constants.h"
-#include "devman.h"
 #include "rdpdr_capabilities.h"
+#include "devman.h"
+#include "irp.h"
 #include "rdpdr_main.h"
 
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)
@@ -207,6 +208,19 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 	svc_plugin_send((rdpSvcPlugin*)rdpdr, data_out);
 }
 
+static boolean rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
+{
+	IRP* irp;
+
+	irp = irp_new(rdpdr->devman, data_in);
+	if (irp == NULL)
+		return False;
+
+	IFCALL(irp->device->IRPRequest, irp->device, irp);
+
+	return True;
+}
+
 static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)plugin;
@@ -255,6 +269,8 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 			case PAKID_CORE_DEVICE_IOREQUEST:
 				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_IOREQUEST");
+				if (rdpdr_process_irp(rdpdr, data_in))
+					data_in = NULL;
 				break;
 
 			default:
