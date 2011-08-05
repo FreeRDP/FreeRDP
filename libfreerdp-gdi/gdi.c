@@ -1262,13 +1262,33 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
+	GDI_IMAGE* gdi_bmp;
+	GDI* gdi = GET_GDI(update);
+
 	printf("create_offscreen_bitmap: id:%d cx:%d cy:%d\n",
 			create_offscreen_bitmap->id, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy);
+
+	gdi_bmp = gdi_bitmap_new(gdi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, gdi->dstBpp, NULL);
+
+	offscreen_put(gdi->cache->offscreen, create_offscreen_bitmap->id, (void*) gdi_bmp);
 }
 
 void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 {
+	GDI_IMAGE* gdi_bmp;
+	GDI* gdi = GET_GDI(update);
+
 	printf("switch surface: 0x%04X\n", switch_surface->bitmapId);
+
+	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
+	{
+		gdi->drawing = (GDI_IMAGE*) gdi->primary;
+	}
+	else
+	{
+		gdi_bmp = (GDI_IMAGE*) offscreen_get(gdi->cache->offscreen, switch_surface->bitmapId);
+		gdi->drawing = gdi_bmp;
+	}
 }
 
 /**
@@ -1293,7 +1313,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiOpaqueRect = gdi_multi_opaque_rect;
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = gdi_line_to;
-	update->Polyline = gdi_polyline;
+	update->Polyline = NULL;
 	update->MemBlt = NULL;
 	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
@@ -1380,6 +1400,8 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
 
 	gdi_register_update_callbacks(instance->update);
+
+	gdi->cache = cache_new(instance->settings);
 
 	return 0;
 }

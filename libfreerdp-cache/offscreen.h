@@ -41,7 +41,7 @@ typedef struct rdp_offscreen rdpOffscreen;
 void* offscreen_get(rdpOffscreen* offscreen, uint16 index);
 void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap);
 
-rdpOffscreen* offscreen_new();
+rdpOffscreen* offscreen_new(rdpSettings* settings);
 void offscreen_free(rdpOffscreen* offscreen);
 
 #endif /* __OFFSCREEN_CACHE_H */

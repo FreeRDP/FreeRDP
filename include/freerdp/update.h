@@ -725,6 +725,8 @@ typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 #define STREAM_BITMAP_COMPRESSED	0x02
 #define STREAM_BITMAP_V2		0x04
 
+#define SCREEN_BITMAP_SURFACE		0xFFFF
+
 /* Update Interface */
 
 typedef struct rdp_update rdpUpdate;

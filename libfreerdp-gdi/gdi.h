@@ -20,6 +20,7 @@
 #ifndef __GDI_H
 #define __GDI_H
 
+#include "cache.h"
 #include "color.h"
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
@@ -242,6 +243,8 @@ struct _GDI
 	GDI_COLOR textColor;
 	void * rfx_context;
 	GDI_IMAGE *tile;
+
+	rdpCache* cache;
 };
 typedef struct _GDI GDI;
 

@@ -19,6 +19,7 @@
 
 include_directories(../../libfreerdp-gdi)
 include_directories(../../libfreerdp-core)
+include_directories(../../libfreerdp-cache)
 
 add_executable(freerdp-test
 	freerdp.c)

@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_directories(../libfreerdp-cache)
+
 set(FREERDP_GDI_SRCS
 	color.c
 	color.h
@@ -52,6 +54,8 @@ set(FREERDP_GDI_SRCS
 	gdi.h)
 
 add_library(freerdp-gdi SHARED ${FREERDP_GDI_SRCS})
+
+target_link_libraries(freerdp-gdi freerdp-cache)
 
 set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 

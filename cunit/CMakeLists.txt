@@ -22,6 +22,7 @@ include_directories(${CMAKE_SOURCE_DIR}) # for some internal tests
 
 include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)
+include_directories(../libfreerdp-cache)
 
 add_executable(test_freerdp
 	test_per.c

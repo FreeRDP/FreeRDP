@@ -22,7 +22,7 @@
 
 #include "cache.h"
 
-rdpCache* cache_new()
+rdpCache* cache_new(rdpSettings* settings)
 {
 	rdpCache* cache;
 
@@ -30,7 +30,8 @@ rdpCache* cache_new()
 
 	if (cache != NULL)
 	{
-		cache->offscreen = offscreen_new();
+		cache->settings = settings;
+		cache->offscreen = offscreen_new(settings);
 	}
 
 	return cache;

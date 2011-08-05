@@ -26,7 +26,7 @@ void* offscreen_get(rdpOffscreen* offscreen, uint16 index)
 {
 	void* bitmap;
 
-	if (index < offscreen->maxEntries)
+	if (index > offscreen->maxEntries)
 	{
 		printf("invalid offscreen bitmap index: 0x%04X\n", index);
 		return NULL;
@@ -45,7 +45,7 @@ void* offscreen_get(rdpOffscreen* offscreen, uint16 index)
 
 void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap)
 {
-	if (index < offscreen->maxEntries)
+	if (index > offscreen->maxEntries)
 	{
 		printf("invalid offscreen bitmap index: 0x%04X\n", index);
 		return;

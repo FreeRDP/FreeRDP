@@ -29,10 +29,11 @@ typedef struct rdp_cache rdpCache;
 
 struct rdp_cache
 {
+	rdpSettings* settings;
 	rdpOffscreen* offscreen;
 };
 
-rdpCache* cache_new();
+rdpCache* cache_new(rdpSettings* settings);
 void cache_free(rdpCache* cache);
 
 #endif /* __CACHE_H */

@@ -20,6 +20,7 @@
 include_directories(../../libfreerdp-gdi)
 include_directories(../../libfreerdp-kbd)
 include_directories(../../libfreerdp-core)
+include_directories(../../libfreerdp-cache)
 include_directories(${DIRECTFB_INCLUDE_DIRS})
 
 add_executable(dfreerdp
