@@ -202,7 +202,7 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	drawingFlags = 0;
+	drawingFlags = 1;
 
 	if (settings->rdp_version > 5)
 		preferredBitsPerPixel = settings->color_depth;
@@ -280,10 +280,9 @@ void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	orderFlags = NEGOTIATE_ORDER_SUPPORT |
+	orderFlags =	NEGOTIATE_ORDER_SUPPORT |
 			ZERO_BOUNDS_DELTA_SUPPORT |
-			COLOR_INDEX_SUPPORT |
-			ORDER_FLAGS_EXTRA_SUPPORT;
+			COLOR_INDEX_SUPPORT;
 
 	orderSupportExFlags = 0;
 
@@ -1384,7 +1383,7 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
 
-	printf("Demand Active PDU\n");
+	//printf("Demand Active PDU\n");
 
 	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
 	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
@@ -1399,7 +1398,7 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 		stream_get_mark(s, bm);
 
 		rdp_read_capability_set_header(s, &length, &type);
-		printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
+		//printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
 		settings->received_caps[type] = True;
 		em = bm + length;
 
@@ -1562,7 +1561,12 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
-	rdp_write_bitmap_cache_capability_set(s, settings);
+
+	if (settings->rdp_version >= 5)
+		rdp_write_bitmap_cache_v2_capability_set(s, settings);
+	else
+		rdp_write_bitmap_cache_capability_set(s, settings);
+
 	rdp_write_pointer_capability_set(s, settings);
 	rdp_write_input_capability_set(s, settings);
 	rdp_write_brush_capability_set(s, settings);

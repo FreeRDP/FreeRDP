@@ -90,11 +90,19 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
+		int y;
+		int offset;
+		int scanline;
 		stream_get_mark(s, srcData);
 		dstSize = bitmap_data->length;
-		stream_seek(s, bitmap_data->length);
 		bitmap_data->data = (uint8*) xzalloc(dstSize);
-		memcpy(bitmap_data->data, srcData, dstSize);
+		scanline = bitmap_data->width * (bitmap_data->bpp / 8);
+
+		for (y = 0; y < bitmap_data->height; y++)
+		{
+			offset = (bitmap_data->height - y - 1) * scanline;
+			stream_read(s, &bitmap_data->data[offset], scanline);
+		}
 	}
 }
 
@@ -154,8 +162,7 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
-	if (updateType != UPDATE_TYPE_BITMAP)
-		printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, update);
 

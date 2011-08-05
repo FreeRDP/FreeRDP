@@ -97,9 +97,9 @@ rdpSettings* settings_new()
 		settings->bitmap_cache = True;
 		settings->persistent_bitmap_cache = False;
 
-		settings->offscreen_bitmap_cache = False;
-		settings->offscreen_bitmap_cache_size = 0;
-		settings->offscreen_bitmap_cache_entries = 0;
+		settings->offscreen_bitmap_cache = True;
+		settings->offscreen_bitmap_cache_size = 7680;
+		settings->offscreen_bitmap_cache_entries = 100;
 
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;

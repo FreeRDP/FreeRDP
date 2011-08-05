@@ -454,8 +454,13 @@ void gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	for (i = 0; i < bitmap->number; i++)
 	{
 		bmp = &bitmap->bitmaps[i];
+
 		gdi_bmp = gdi_bitmap_new(gdi, bmp->width, bmp->height, gdi->dstBpp, bmp->data);
-		gdi_BitBlt(gdi->primary->hdc, bmp->left, bmp->top, bmp->width, bmp->height, gdi_bmp->hdc, 0, 0, GDI_SRCCOPY);
+
+		gdi_BitBlt(gdi->primary->hdc,
+				bmp->left, bmp->top, bmp->right - bmp->left + 1,
+				bmp->bottom - bmp->top + 1, gdi_bmp->hdc, 0, 0, GDI_SRCCOPY);
+
 		gdi_bitmap_free((GDI_IMAGE*) gdi_bmp);
 	}
 }
@@ -584,7 +589,7 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 	DELTA_RECT* rectangle;
 	GDI *gdi = GET_GDI(update);
 
-	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
+	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
@@ -649,9 +654,6 @@ void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDE
 	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
-	printf("create_offscreen_bitmap: id:%d cx:%d cy:%d\n",
-			create_offscreen_bitmap->id, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy);
-
 	gdi_bmp = gdi_bitmap_new(gdi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, gdi->dstBpp, NULL);
 
 	offscreen_put(gdi->cache->offscreen, create_offscreen_bitmap->id, (void*) gdi_bmp);
@@ -662,8 +664,6 @@ void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
-	printf("switch surface: 0x%04X\n", switch_surface->bitmapId);
-
 	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
 		gdi->drawing = (GDI_IMAGE*) gdi->primary;
@@ -673,6 +673,14 @@ void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 		gdi_bmp = (GDI_IMAGE*) offscreen_get(gdi->cache->offscreen, switch_surface->bitmapId);
 		gdi->drawing = gdi_bmp;
 	}
+}
+
+void gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
+{
+	GDI* gdi = GET_GDI(update);
+
+	bitmap_v2_put(gdi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
+			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->bitmapDataStream);
 }
 
 void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -723,6 +731,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->CreateOffscreenBitmap = gdi_create_offscreen_bitmap;
 	update->SwitchSurface = gdi_switch_surface;
 
+	update->CacheBitmapV2 = gdi_cache_bitmap_v2;
 	update->CacheColorTable = gdi_cache_color_table;
 	update->CacheBrush = gdi_cache_brush;
 }

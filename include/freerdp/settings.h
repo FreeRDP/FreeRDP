@@ -133,6 +133,20 @@ struct rdp_ext_set
 	void * data; /* plugin data */
 };
 
+struct _BITMAP_CACHE_CELL_INFO
+{
+	uint16 numEntries;
+	uint16 maxSize;
+};
+typedef struct _BITMAP_CACHE_CELL_INFO BITMAP_CACHE_CELL_INFO;
+
+struct _BITMAP_CACHE_V2_CELL_INFO
+{
+	uint32 numEntries;
+	boolean persistent;
+};
+typedef struct _BITMAP_CACHE_V2_CELL_INFO BITMAP_CACHE_V2_CELL_INFO;
+
 struct rdp_monitor
 {
 	int x;
@@ -226,6 +240,9 @@ struct rdp_settings
 
 	boolean bitmap_cache;
 	boolean persistent_bitmap_cache;
+
+	uint8 bitmapCacheV2NumCells;
+	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[6];
 
 	uint32 vc_chunk_size;
 

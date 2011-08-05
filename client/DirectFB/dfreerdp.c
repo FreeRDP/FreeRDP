@@ -56,10 +56,17 @@ void df_end_paint(rdpUpdate* update)
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
 
+#if 1
 	dfi->update_rect.x = gdi->primary->hdc->hwnd->invalid->x;
 	dfi->update_rect.y = gdi->primary->hdc->hwnd->invalid->y;
 	dfi->update_rect.w = gdi->primary->hdc->hwnd->invalid->w;
 	dfi->update_rect.h = gdi->primary->hdc->hwnd->invalid->h;
+#else
+	dfi->update_rect.x = 0;
+	dfi->update_rect.y = 0;
+	dfi->update_rect.w = gdi->width;
+	dfi->update_rect.h = gdi->height;
+#endif
 
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 }
@@ -115,7 +122,7 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_POLYLINE_INDEX] = True;
 	settings->order_support[NEG_MEMBLT_INDEX] = True;
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
 	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;

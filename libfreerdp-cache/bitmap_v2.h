@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Caches
+ * Bitmap Cache V2
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,30 +17,37 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
-
-#include "brush.h"
-#include "bitmap_v2.h"
-#include "offscreen.h"
-#include "color_table.h"
+#ifndef __BITMAP_V2_CACHE_H
+#define __BITMAP_V2_CACHE_H
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
-
-struct rdp_cache
+struct _BITMAP_V2_ENTRY
 {
-	rdpSettings* settings;
-
-	rdpBrush* brush;
-	rdpBitmapV2* bitmap_v2;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	void* entry;
 };
+typedef struct _BITMAP_V2_ENTRY BITMAP_V2_ENTRY;
 
-rdpCache* cache_new(rdpSettings* settings);
-void cache_free(rdpCache* cache);
+struct _BITMAP_V2_CELL
+{
+	uint32 number;
+	BITMAP_V2_ENTRY* entries;
+};
+typedef struct _BITMAP_V2_CELL BITMAP_V2_CELL;
 
-#endif /* __CACHE_H */
+struct rdp_bitmap_v2
+{
+	uint8 maxCells;
+	rdpSettings* settings;
+	BITMAP_V2_CELL* cells;
+};
+typedef struct rdp_bitmap_v2 rdpBitmapV2;
+
+void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index);
+void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry);
+
+rdpBitmapV2* bitmap_v2_new(rdpSettings* settings);
+void bitmap_v2_free(rdpBitmapV2* bitmap_v2);
+
+#endif /* __BITMAP_V2_CACHE_H */
