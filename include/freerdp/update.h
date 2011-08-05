@@ -26,10 +26,10 @@
 
 struct _BOUNDS
 {
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	sint16 left;
+	sint16 top;
+	sint16 right;
+	sint16 bottom;
 };
 typedef struct _BOUNDS BOUNDS;
 
@@ -74,10 +74,7 @@ struct _ORDER_INFO
 {
 	uint8 orderType;
 	uint32 fieldFlags;
-	uint16 boundLeft;
-	uint16 boundTop;
-	uint16 boundRight;
-	uint16 boundBottom;
+	BOUNDS bounds;
 	sint8 deltaBoundLeft;
 	sint8 deltaBoundTop;
 	sint8 deltaBoundRight;

@@ -1567,36 +1567,35 @@ void update_read_field_flags(STREAM* s, uint32* fieldFlags, uint8 flags, uint8 f
 	}
 }
 
-void update_read_bounds(STREAM* s, ORDER_INFO* orderInfo)
+void update_read_bounds(STREAM* s, BOUNDS* bounds)
 {
 	uint8 flags;
 
 	stream_read_uint8(s, flags); /* field flags */
 
-	if (flags & BOUND_DELTA_LEFT)
-		stream_read_uint8(s, orderInfo->deltaBoundLeft);
-	else if (flags & BOUND_LEFT)
-		stream_read_uint16(s, orderInfo->boundLeft);
+	if (flags & BOUND_LEFT)
+		update_read_coord(s, &bounds->left, False);
+	else if (flags & BOUND_DELTA_LEFT)
+		update_read_coord(s, &bounds->left, True);
 
-	if (flags & BOUND_DELTA_TOP)
-		stream_read_uint8(s, orderInfo->deltaBoundTop);
-	else if (flags & BOUND_TOP)
-		stream_read_uint16(s, orderInfo->boundTop);
+	if (flags & BOUND_TOP)
+		update_read_coord(s, &bounds->top, False);
+	else if (flags & BOUND_DELTA_TOP)
+		update_read_coord(s, &bounds->top, True);
 
-	if (flags & BOUND_DELTA_RIGHT)
-		stream_read_uint8(s, orderInfo->deltaBoundRight);
-	else if (flags & BOUND_RIGHT)
-		stream_read_uint16(s, orderInfo->boundRight);
+	if (flags & BOUND_RIGHT)
+		update_read_coord(s, &bounds->right, False);
+	else if (flags & BOUND_DELTA_RIGHT)
+		update_read_coord(s, &bounds->right, True);
 
-	if (flags & BOUND_DELTA_BOTTOM)
-		stream_read_uint8(s, orderInfo->deltaBoundBottom);
-	else if (flags & BOUND_BOTTOM)
-		stream_read_uint16(s, orderInfo->boundBottom);
+	if (flags & BOUND_BOTTOM)
+		update_read_coord(s, &bounds->bottom, False);
+	else if (flags & BOUND_DELTA_BOTTOM)
+		update_read_coord(s, &bounds->bottom, True);
 }
 
 void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
-	BOUNDS bounds;
 	ORDER_INFO* orderInfo = &(update->order_info);
 
 	if (flags & ORDER_TYPE_CHANGE)
@@ -1608,14 +1607,9 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	if (flags & ORDER_BOUNDS)
 	{
 		if (!(flags & ORDER_ZERO_BOUNDS_DELTAS))
-			update_read_bounds(s, orderInfo);
+			update_read_bounds(s, &orderInfo->bounds);
 
-		bounds.left = orderInfo->boundLeft;
-		bounds.top = orderInfo->boundTop;
-		bounds.right = orderInfo->boundRight;
-		bounds.bottom = orderInfo->boundBottom;
-
-		IFCALL(update->SetBounds, update, &bounds);
+		IFCALL(update->SetBounds, update, &orderInfo->bounds);
 	}
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? True : False;
@@ -1742,7 +1736,9 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	}
 
 	if (flags & ORDER_BOUNDS)
+	{
 		IFCALL(update->SetBounds, update, NULL);
+	}
 }
 
 void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)

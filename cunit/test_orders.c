@@ -188,10 +188,6 @@ void test_read_draw_nine_grid_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x1C;
-	orderInfo->boundLeft = 925;
-	orderInfo->boundTop = 134;
-	orderInfo->boundRight = 846;
-	orderInfo->boundBottom = 155;
 	orderInfo->deltaCoordinates = True;
 
 	memset(&draw_nine_grid, 0, sizeof(DRAW_NINE_GRID_ORDER));
@@ -272,10 +268,6 @@ void test_read_line_to_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x021E;
-	orderInfo->boundLeft = 829;
-	orderInfo->boundTop = 257;
-	orderInfo->boundRight = 842;
-	orderInfo->boundBottom = 270;
 	orderInfo->deltaCoordinates = True;
 
 	memset(&line_to, 0, sizeof(LINE_TO_ORDER));
@@ -506,10 +498,6 @@ void test_read_fast_glyph_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x7EFB;
-	orderInfo->boundLeft = 139;
-	orderInfo->boundTop = 177;
-	orderInfo->boundRight = 1068;
-	orderInfo->boundBottom = 189;
 
 	memset(&fast_glyph, 0, sizeof(FAST_GLYPH_ORDER));
 
