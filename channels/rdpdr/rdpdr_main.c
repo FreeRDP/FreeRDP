@@ -156,7 +156,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 
 	count_pos = stream_get_pos(data_out);
 	count = 0;
-	stream_seek_uint32(out_data); /* deviceCount */
+	stream_seek_uint32(data_out); /* deviceCount */
 
 	for (item = rdpdr->devman->devices->head; item; item = item->next)
 	{
