@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/list.h>
 
 typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
@@ -63,6 +64,13 @@ struct _IRP
 
 	pcIRPResponse Complete;
 	pcIRPResponse Discard;
+};
+
+struct _DEVMAN
+{
+	rdpSvcPlugin* plugin;
+	uint32 id_sequence; /* generate unique device id */
+	LIST* devices;
 };
 
 typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);

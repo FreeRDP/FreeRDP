@@ -32,13 +32,6 @@
 #include "rdpdr_types.h"
 #include "devman.h"
 
-struct _DEVMAN
-{
-	rdpSvcPlugin* plugin;
-	uint32 id_sequence; /* generate unique device id */
-	LIST* devices;
-};
-
 DEVMAN* devman_new(rdpSvcPlugin* plugin)
 {
 	DEVMAN* devman;
