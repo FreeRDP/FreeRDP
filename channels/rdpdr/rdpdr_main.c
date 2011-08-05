@@ -172,7 +172,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 			device->type == RDPDR_DTYP_SMARTCARD ||
 			user_loggedon)
 		{
-			data_len = stream_get_length(device->data);
+			data_len = (device->data == NULL ? 0 : stream_get_length(device->data));
 			stream_check_size(data_out, 20 + data_len);
 
 			stream_write_uint32(data_out, device->type); /* deviceType */
@@ -185,7 +185,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 				if (c > 0x7F)
 					stream_write_uint8(data_out, '_');
 				else
-					streak_seek_uint8(data_out);
+					stream_seek_uint8(data_out);
 			}
 
 			stream_write_uint32(data_out, data_len);
@@ -248,9 +248,9 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 			case PAKID_CORE_DEVICE_REPLY:
 				/* connect to a specific resource */
-				stream_get_uint32(data_in, deviceID);
-				stream_get_uint32(data_in, status);
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_REPLY (deviceID=%d status=%d)", deviceID, status);
+				stream_read_uint32(data_in, deviceID);
+				stream_read_uint32(data_in, status);
+				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_REPLY (deviceID=%d status=0x%08X)", deviceID, status);
 				break;
 
 			case PAKID_CORE_DEVICE_IOREQUEST:
