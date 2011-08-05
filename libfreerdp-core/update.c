@@ -117,7 +117,7 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	uint32 color;
 
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
-	stream_seek_uint32(palette_update->number); /* numberColors (4 bytes), must be set to 256 */
+	stream_read_uint32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
 
 	if (palette_update->number > 256)
 		palette_update->number = 256;
