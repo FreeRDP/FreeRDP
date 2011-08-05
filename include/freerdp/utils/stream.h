@@ -130,9 +130,9 @@ void stream_extend(STREAM* stream);
 	(((uint64)(*(_s->p + 7))) << 56); \
 	} while (0)
 
-#define stream_seek_uint8(_s)	stream_seek(s, 1)
-#define stream_seek_uint16(_s)	stream_seek(s, 2)
-#define stream_seek_uint32(_s)	stream_seek(s, 4)
+#define stream_seek_uint8(_s)	stream_seek(_s, 1)
+#define stream_seek_uint16(_s)	stream_seek(_s, 2)
+#define stream_seek_uint32(_s)	stream_seek(_s, 4)
 
 #define stream_read_uint16_be(_s, _v) do { _v = \
 	(((uint16)(*_s->p)) << 8) + \

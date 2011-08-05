@@ -22,114 +22,27 @@
 
 #include <freerdp/utils/memory.h>
 
-#define DEFINE_LIST_TYPE(_list_type, _item_type) \
-\
-struct _item_type##_full \
-{ \
-	struct _item_type item; \
-	struct _item_type* prev; \
-	struct _item_type* next; \
-}; \
-\
-static struct _item_type* _item_type##_new(void) \
-{ \
-	struct _item_type* item; \
-	item = (struct _item_type*)xnew(struct _item_type##_full);\
-	return item; \
-} \
-\
-static void _item_type##_free(struct _item_type* item); \
-\
-static struct _item_type* _item_type##_next(struct _item_type* item) \
-{ \
-	return ((struct _item_type##_full*)item)->next; \
-} \
-\
-static struct _item_type* _item_type##_prev(struct _item_type* item) \
-{ \
-	return ((struct _item_type##_full*)item)->prev; \
-} \
-\
-struct _list_type \
-{ \
-	struct _item_type* head; \
-	struct _item_type* tail; \
-}; \
-\
-static struct _list_type* _list_type##_new(void) \
-{ \
-	struct _list_type* list; \
-	list = xnew(struct _list_type); \
-	return list; \
-} \
-\
-static void _list_type##_enqueue(struct _list_type* list, struct _item_type* item) \
-{ \
-	if (list->tail == NULL) \
-	{ \
-		list->head = item; \
-		list->tail = item; \
-	} \
-	else \
-	{ \
-		((struct _item_type##_full*)item)->prev = list->tail; \
-		((struct _item_type##_full*)(list->tail))->next = item; \
-		list->tail = item; \
-	} \
-} \
-\
-static struct _item_type* _list_type##_dequeue(struct _list_type* list) \
-{ \
-	struct _item_type* item; \
-	item = list->head; \
-	if (item != NULL) \
-	{ \
-		list->head = ((struct _item_type##_full*)item)->next; \
-		((struct _item_type##_full*)item)->next = NULL; \
-		if (list->head == NULL) \
-			list->tail = NULL; \
-		else \
-			((struct _item_type##_full*)(list->head))->prev = NULL; \
-	} \
-	return item; \
-} \
-\
-static void _list_type##_add(struct _list_type* list, struct _item_type* item) \
-{ \
-	_list_type##_enqueue(list, item); \
-} \
-\
-static struct _item_type* _list_type##_remove(struct _list_type* list, struct _item_type* item) \
-{ \
-	struct _item_type* prev; \
-	struct _item_type* curr; \
-\
-	for (prev = NULL, curr = (struct _item_type*)list->head; curr; prev = curr, curr = ((struct _item_type##_full*)curr)->next) \
-	{ \
-		if (curr == item) \
-		{ \
-			if (prev) \
-				((struct _item_type##_full*)prev)->next = ((struct _item_type##_full*)curr)->next; \
-			if (list->head == item) \
-				list->head = ((struct _item_type##_full*)curr)->next; \
-			if (list->tail == item) \
-				list->tail = prev; \
-			return item; \
-		} \
-	} \
-	return NULL; \
-} \
-\
-void _list_type##_free(struct _list_type* list) \
-{ \
-	struct _item_type* item; \
-	while (list->head) \
-	{ \
-		item = _list_type##_dequeue(list); \
-		_item_type##_free(item); \
-		xfree(item); \
-	} \
-	xfree(list); \
-}
+typedef struct _LIST_ITEM LIST_ITEM;
+struct _LIST_ITEM
+{
+	void* data;
+	LIST_ITEM* prev;
+	LIST_ITEM* next;
+};
 
-#endif
+typedef struct _LIST LIST;
+struct _LIST
+{
+	int count;
+	LIST_ITEM* head;
+	LIST_ITEM* tail;
+};
+
+LIST* list_new(void);
+void list_free(LIST* list);
+void list_enqueue(LIST* list, void* data);
+void* list_dequeue(LIST* list);
+#define list_add(_l, _d) list_enqueue(_l, _d)
+void* list_remove(LIST* list, void* data);
+
+#endif /* __LIST_UTILS_H */
