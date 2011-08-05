@@ -44,57 +44,51 @@ int add_list_suite(void)
 	return 0;
 }
 
-struct my_list_item
+struct _my_list_item
 {
 	uint32 a;
 	uint32 b;
 };
-
-DEFINE_LIST_TYPE(my_list, my_list_item);
-
-void my_list_item_free(struct my_list_item* item)
-{
-	item->a = 0;
-	item->b = 0;
-}
+typedef struct _my_list_item my_list_item;
 
 void test_list(void)
 {
-	struct my_list* list;
-	struct my_list_item* item;
-	struct my_list_item* item1;
-	struct my_list_item* item2;
+	LIST* list;
+	LIST_ITEM* list_item;
+	my_list_item* item;
+	my_list_item* item1;
+	my_list_item* item2;
 	int i;
 
-	list = my_list_new();
+	list = list_new();
 
 	for (i = 0; i < 10; i++)
 	{
-		item = my_list_item_new();
+		item = xnew(my_list_item);
 		item->a = i;
 		item->b = i * i;
-		my_list_enqueue(list, item);
+		list_enqueue(list, item);
 	}
 
-	for (i = 0, item = list->head; item; i++, item = my_list_item_next(item))
+	for (i = 0, list_item = list->head; list_item; i++, list_item = list_item->next)
 	{
-		CU_ASSERT(item->a == i);
-		CU_ASSERT(item->b == i * i);
+		CU_ASSERT(((my_list_item*)list_item->data)->a == i);
+		CU_ASSERT(((my_list_item*)list_item->data)->b == i * i);
 		/*printf("%d %d\n", item->a, item->b);*/
 	}
 
-	item1 = my_list_item_new();
-	my_list_add(list, item1);
-	item2 = my_list_item_new();
-	my_list_add(list, item2);
+	item1 = xnew(my_list_item);
+	list_add(list, item1);
+	item2 = xnew(my_list_item);
+	list_add(list, item2);
 
-	CU_ASSERT(my_list_remove(list, item1) == item1);
-	my_list_item_free(item1);
+	CU_ASSERT(list_remove(list, item1) == item1);
 	xfree(item1);
-	CU_ASSERT(my_list_remove(list, item2) == item2);
-	CU_ASSERT(my_list_remove(list, item2) == NULL);
-	my_list_item_free(item2);
+	CU_ASSERT(list_remove(list, item2) == item2);
+	CU_ASSERT(list_remove(list, item2) == NULL);
 	xfree(item2);
 
-	my_list_free(list);
+	while ((item = list_dequeue(list)) != NULL)
+		xfree(item);
+	list_free(list);
 }

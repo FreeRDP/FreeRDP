@@ -25,8 +25,6 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
 
-#define MAX_PLUGIN_DATA 20
-
 /**
  * Parse command-line arguments and update rdpSettings members accordingly.
  * @param settings pointer to rdpSettings struct to be updated.
@@ -47,7 +45,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	int i, j;
 	int index = 1;
 	int num_extensions = 0;
-	FRDP_PLUGIN_DATA plugin_data[MAX_PLUGIN_DATA + 1];
+	FRDP_PLUGIN_DATA* plugin_data;
 
 	while (index < argc)
 	{
@@ -278,14 +276,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing plugin name\n");
 				return 0;
 			}
-			memset(plugin_data, 0, sizeof(plugin_data));
+			plugin_data = NULL;
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
 			{
 				index += 2;
 				i = 0;
-				while (index < argc && strcmp("--", argv[index]) != 0 && i < MAX_PLUGIN_DATA)
+				while (index < argc && strcmp("--", argv[index]) != 0)
 				{
+					plugin_data = (FRDP_PLUGIN_DATA*)xrealloc(plugin_data, sizeof(FRDP_PLUGIN_DATA) * (i + 2));
 					plugin_data[i].size = sizeof(FRDP_PLUGIN_DATA);
+					plugin_data[i + 1].size = 0;
 					for (j = 0, p = argv[index]; j < 4 && p != NULL; j++)
 					{
 						if (*p == '\'')
