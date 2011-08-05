@@ -23,6 +23,7 @@
 
 #include "test_orders.h"
 #include "libfreerdp-core/orders.h"
+#include "libfreerdp-core/update.h"
 
 ORDER_INFO* orderInfo;
 
@@ -62,6 +63,8 @@ int add_orders_suite(void)
 
 	add_test_function(read_create_offscreen_bitmap_order);
 	add_test_function(read_switch_surface_order);
+
+	add_test_function(update_recv_orders);
 
 	return 0;
 }
@@ -727,5 +730,49 @@ void test_read_switch_surface_order(void)
 	CU_ASSERT(switch_surface.bitmapId == 0xFFFF);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(switch_surface_order) - 1));
+}
+
+int opaque_rect_count;
+int polyline_count;
+
+uint8 orders_update[] =
+	"\x00\x00\x33\xd0\x07\x00\x80\xba\x0d\x0a\x7f\x1e\x2c\x4d\x00\x36"
+	"\x02\xd3\x00\x47\x00\x4d\x00\xf0\x01\x87\x00\xc2\xdc\xff\x05\x7f"
+	"\x0f\x67\x01\x90\x01\x8e\x01\xa5\x01\x67\x01\x90\x01\x28\x00\x16"
+	"\x00\xf0\xf0\xf0\x15\x0f\xf0\x2d\x01\x19\xfe\x2d\x01\xec\xfd\x0d"
+	"\x16\x77\xf0\xff\xff\x01\x01\xa8\x01\x90\x01\x0d\xf0\xf0\xf0\x04"
+	"\x05\x66\x6b\x14\x15\x6c\x1d\x0a\x0f\xd0\x16\x64\x01\x15\xff\x50"
+	"\x03\x15\x0f\xf0\x65\x01\x15\xfe\x65\x01\xb0\xfd\x1d\x16\x01\xf0"
+	"\xff\xff\x01\x01\x7a";
+
+void test_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+{
+	opaque_rect_count++;
+}
+
+void test_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+{
+	polyline_count++;
+}
+
+void test_update_recv_orders(void)
+{
+	STREAM* s;
+	rdpUpdate* update;
+
+	s = stream_new(0);
+	update = update_new(NULL);
+	s->p = s->data = orders_update;
+
+	opaque_rect_count = 0;
+	polyline_count = 0;
+
+	update->OpaqueRect = test_opaque_rect;
+	update->Polyline = test_polyline;
+
+	update_recv(update, s);
+
+	CU_ASSERT(opaque_rect_count == 5);
+	CU_ASSERT(polyline_count == 2);
 }
 

@@ -145,6 +145,15 @@ struct _DRAW_NINE_GRID_ORDER
 };
 typedef struct _DRAW_NINE_GRID_ORDER DRAW_NINE_GRID_ORDER;
 
+struct _DELTA_RECT
+{
+	sint16 left;
+	sint16 top;
+	sint16 width;
+	sint16 height;
+};
+typedef struct _DELTA_RECT DELTA_RECT;
+
 struct _MULTI_DSTBLT_ORDER
 {
 	sint16 nLeftRect;
@@ -152,9 +161,9 @@ struct _MULTI_DSTBLT_ORDER
 	sint16 nWidth;
 	sint16 nHeight;
 	uint8 bRop;
-	uint8 nDeltaEntries;
+	uint8 numRectangles;
 	uint16 cbData;
-	uint8* codeDeltaList;
+	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_DSTBLT_ORDER MULTI_DSTBLT_ORDER;
 
@@ -172,9 +181,9 @@ struct _MULTI_PATBLT_ORDER
 	uint8 brushStyle;
 	uint8 brushHatch;
 	uint8 brushExtra[7];
-	uint8 nDeltaEntries;
+	uint8 numRectangles;
 	uint16 cbData;
-	uint8* codeDeltaList;
+	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_PATBLT_ORDER MULTI_PATBLT_ORDER;
 
@@ -187,20 +196,11 @@ struct _MULTI_SCRBLT_ORDER
 	uint8 bRop;
 	sint16 nXSrc;
 	sint16 nYSrc;
-	uint8 nDeltaEntries;
+	uint8 numRectangles;
 	uint16 cbData;
-	uint8* codeDeltaList;
+	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_SCRBLT_ORDER MULTI_SCRBLT_ORDER;
-
-struct _DELTA_RECT
-{
-	sint16 left;
-	sint16 top;
-	sint16 width;
-	sint16 height;
-};
-typedef struct _DELTA_RECT DELTA_RECT;
 
 struct _MULTI_OPAQUE_RECT_ORDER
 {

@@ -96,6 +96,7 @@ uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	LINE_TO_ORDER_FIELD_BYTES,
 	OPAQUE_RECT_ORDER_FIELD_BYTES,
 	SAVE_BITMAP_ORDER_FIELD_BYTES,
+	0,
 	MEMBLT_ORDER_FIELD_BYTES,
 	MEM3BLT_ORDER_FIELD_BYTES,
 	MULTI_DSTBLT_ORDER_FIELD_BYTES,
@@ -106,6 +107,7 @@ uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	POLYGON_SC_ORDER_FIELD_BYTES,
 	POLYGON_CB_ORDER_FIELD_BYTES,
 	POLYLINE_ORDER_FIELD_BYTES,
+	0,
 	FAST_GLYPH_ORDER_FIELD_BYTES,
 	ELLIPSE_SC_ORDER_FIELD_BYTES,
 	ELLIPSE_CB_ORDER_FIELD_BYTES,
@@ -463,24 +465,22 @@ void update_read_opaque_rect_order(STREAM* s, ORDER_INFO* orderInfo, OPAQUE_RECT
 	if (orderInfo->fieldFlags & ORDER_FIELD_04)
 		update_read_coord(s, &opaque_rect->nHeight, orderInfo->deltaCoordinates);
 
-	opaque_rect->color = 0;
-
 	if (orderInfo->fieldFlags & ORDER_FIELD_05)
 	{
 		stream_read_uint8(s, byte);
-		opaque_rect->color = byte;
+		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
 	{
 		stream_read_uint8(s, byte);
-		opaque_rect->color |= (byte << 8);
+		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
 		stream_read_uint8(s, byte);
-		opaque_rect->color |= (byte << 16);
+		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
 	}
 }
 
@@ -520,12 +520,12 @@ void update_read_multi_dstblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_DSTB
 		stream_read_uint8(s, multi_dstblt->bRop);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		stream_read_uint8(s, multi_dstblt->nDeltaEntries);
+		stream_read_uint8(s, multi_dstblt->numRectangles);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
 		stream_read_uint16(s, multi_dstblt->cbData);
-		stream_seek(s, multi_dstblt->cbData);
+		update_read_delta_rects(s, multi_dstblt->rectangles, multi_dstblt->numRectangles);
 	}
 }
 
@@ -568,12 +568,12 @@ void update_read_multi_patblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_PATB
 		stream_read(s, multi_patblt->brushExtra, 7);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		stream_read_uint8(s, multi_patblt->nDeltaEntries);
+		stream_read_uint8(s, multi_patblt->numRectangles);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_14)
 	{
 		stream_read_uint16(s, multi_patblt->cbData);
-		stream_seek(s, multi_patblt->cbData);
+		update_read_delta_rects(s, multi_patblt->rectangles, multi_patblt->numRectangles);
 	}
 }
 
@@ -601,12 +601,12 @@ void update_read_multi_scrblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_SCRB
 		update_read_coord(s, &multi_scrblt->nYSrc, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_scrblt->nDeltaEntries);
+		stream_read_uint8(s, multi_scrblt->numRectangles);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
 	{
 		stream_read_uint16(s, multi_scrblt->cbData);
-		stream_seek(s, multi_scrblt->cbData);
+		update_read_delta_rects(s, multi_scrblt->rectangles, multi_scrblt->numRectangles);
 	}
 }
 

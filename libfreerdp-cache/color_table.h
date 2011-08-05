@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Caches
+ * Color Table Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,25 +17,30 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
-
-#include "offscreen.h"
-#include "color_table.h"
+#ifndef __COLOR_TABLE_CACHE_H
+#define __COLOR_TABLE_CACHE_H
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
-
-struct rdp_cache
+struct _COLOR_TABLE_ENTRY
 {
-	rdpSettings* settings;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	void* color_table;
 };
+typedef struct _COLOR_TABLE_ENTRY COLOR_TABLE_ENTRY;
 
-rdpCache* cache_new(rdpSettings* settings);
-void cache_free(rdpCache* cache);
+struct rdp_color_table
+{
+	uint8 maxEntries;
+	rdpSettings* settings;
+	COLOR_TABLE_ENTRY* entries;
+};
+typedef struct rdp_color_table rdpColorTable;
 
-#endif /* __CACHE_H */
+void* color_table_get(rdpColorTable* color_table, uint8 index);
+void color_table_put(rdpColorTable* color_table, uint8 index, void* entry);
+
+rdpColorTable* color_table_new(rdpSettings* settings);
+void color_table_free(rdpColorTable* color_table);
+
+#endif /* __COLOR_TABLE_CACHE_H */

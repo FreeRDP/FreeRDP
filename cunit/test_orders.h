@@ -43,3 +43,6 @@ void test_read_cache_brush_order(void);
 
 void test_read_create_offscreen_bitmap_order(void);
 void test_read_switch_surface_order(void);
+
+void test_update_recv_orders(void);
+

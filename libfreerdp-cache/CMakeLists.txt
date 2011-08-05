@@ -20,6 +20,8 @@
 set(FREERDP_CACHE_SRCS
 	offscreen.c
 	offscreen.h
+	color_table.c
+	color_table.h
 	cache.c
 	cache.h)
 

@@ -1291,6 +1291,12 @@ void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 	}
 }
 
+void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
+{
+	GDI* gdi = GET_GDI(update);
+	color_table_put(gdi->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
+}
+
 /**
  * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
@@ -1326,6 +1332,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseCB = NULL;
 	update->CreateOffscreenBitmap = gdi_create_offscreen_bitmap;
 	update->SwitchSurface = gdi_switch_surface;
+
+	update->CacheColorTable = gdi_cache_color_table;
 }
 
 /**
