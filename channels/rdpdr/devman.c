@@ -40,6 +40,8 @@ DEVMAN* devman_new(rdpSvcPlugin* plugin)
 	devman->plugin = plugin;
 	devman->id_sequence = 1;
 	devman->devices = list_new();
+
+	return devman;
 }
 
 void devman_free(DEVMAN* devman)
