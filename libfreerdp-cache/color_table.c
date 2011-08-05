@@ -28,15 +28,15 @@ void* color_table_get(rdpColorTable* color_table, uint8 index)
 
 	if (index > color_table->maxEntries)
 	{
-		printf("invalid color table bitmap index: 0x%04X\n", index);
+		printf("invalid color table index: 0x%04X\n", index);
 		return NULL;
 	}
 
-	entry = color_table->entries[index].color_table;
+	entry = color_table->entries[index].entry;
 
 	if (entry == NULL)
 	{
-		printf("invalid color table bitmap at index: 0x%04X\n", index);
+		printf("invalid color table at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -47,11 +47,11 @@ void color_table_put(rdpColorTable* color_table, uint8 index, void* entry)
 {
 	if (index > color_table->maxEntries)
 	{
-		printf("invalid color table bitmap index: 0x%04X\n", index);
+		printf("invalid color table index: 0x%04X\n", index);
 		return;
 	}
 
-	color_table->entries[index].color_table = entry;
+	color_table->entries[index].entry = entry;
 }
 
 rdpColorTable* color_table_new(rdpSettings* settings)
@@ -79,3 +79,4 @@ void color_table_free(rdpColorTable* color_table)
 		xfree(color_table);
 	}
 }
+

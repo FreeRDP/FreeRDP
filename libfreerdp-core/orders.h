@@ -97,6 +97,8 @@
 #define SO_CHAR_INC_EQUAL_BM_BASE	0x20
 #define SO_MAXEXT_EQUAL_BM_SIDE		0x40
 
+#define COMPRESSED_BRUSH_LENGTH		20
+
 /* Primary Drawing Orders */
 #define ORDER_TYPE_DSTBLT			0x00
 #define ORDER_TYPE_PATBLT			0x01

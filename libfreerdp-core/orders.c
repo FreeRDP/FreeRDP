@@ -1381,11 +1381,38 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 	}
 }
 
+void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)
+{
+	int index;
+	int x, y, k;
+	uint8 byte;
+	uint8* palette;
+
+	palette = s->p + 16;
+
+	for (y = 7; y >= 0; y--)
+	{
+		for (x = 0; x < 8; x++)
+		{
+			if (x % 4 == 0)
+				stream_read_uint8(s, byte);
+
+			index = (byte >> ((3 - (x % 4)) * 2));
+
+			for (k = 0; k < bpp; k++)
+			{
+				output[(y * 8 + x) * (bpp / 8) + k] = palette[index * (bpp / 8) + k];
+			}
+		}
+	}
+}
+
 void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_order, uint16 flags)
 {
+	int size;
 	uint8 iBitmapFormat;
 
-	stream_read_uint8(s, cache_brush_order->cacheEntry); /* cacheEntry (1 byte) */
+	stream_read_uint8(s, cache_brush_order->index); /* cacheEntry (1 byte) */
 
 	stream_read_uint8(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
 	cache_brush_order->bpp = BMF_BPP[iBitmapFormat];
@@ -1395,12 +1422,45 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	stream_read_uint8(s, cache_brush_order->style); /* style (1 byte) */
 	stream_read_uint8(s, cache_brush_order->length); /* iBytes (1 byte) */
 
-	if (cache_brush_order->brushData == NULL)
-		cache_brush_order->brushData = (uint8*) xmalloc(cache_brush_order->length);
-	else
-		cache_brush_order->brushData = (uint8*) xrealloc(cache_brush_order->brushData, cache_brush_order->length);
+	if ((cache_brush_order->cx == 8) && (cache_brush_order->cy == 8))
+	{
+		size = (cache_brush_order->bpp == 1) ? 8 : 8 * 8 * cache_brush_order->bpp;
 
-	stream_read(s, cache_brush_order->brushData, cache_brush_order->length);
+		cache_brush_order->data = (uint8*) xmalloc(size);
+
+		if (cache_brush_order->bpp == 1)
+		{
+			int i;
+
+			if (cache_brush_order->length != 8)
+			{
+				printf("incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
+				return;
+			}
+
+			/* rows are encoded in reverse order */
+
+			for (i = 7; i >= 0; i--)
+			{
+				stream_read_uint8(s, cache_brush_order->data[i]);
+			}
+		}
+		else
+		{
+			if (cache_brush_order->length == COMPRESSED_BRUSH_LENGTH * cache_brush_order->bpp)
+			{
+				/* compressed brush */
+				update_decompress_brush(s, cache_brush_order->data, cache_brush_order->bpp);
+			}
+			else
+			{
+				/* uncompressed brush */
+				stream_read(s, cache_brush_order->data, cache_brush_order->length);
+			}
+		}
+
+		stream_read(s, cache_brush_order->data, cache_brush_order->length);
+	}
 }
 
 /* Alternate Secondary Drawing Orders */

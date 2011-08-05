@@ -18,6 +18,8 @@
 # limitations under the License.
 
 set(FREERDP_CACHE_SRCS
+	brush.c
+	brush.h
 	offscreen.c
 	offscreen.h
 	color_table.c

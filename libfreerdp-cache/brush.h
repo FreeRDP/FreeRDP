@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Caches
+ * Brush Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,28 +17,31 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
-
-#include "brush.h"
-#include "offscreen.h"
-#include "color_table.h"
+#ifndef __BRUSH_CACHE_H
+#define __BRUSH_CACHE_H
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
-
-struct rdp_cache
+struct _BRUSH_ENTRY
 {
-	rdpSettings* settings;
-
-	rdpBrush* brush;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	uint8 bpp;
+	void* entry;
 };
+typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
 
-rdpCache* cache_new(rdpSettings* settings);
-void cache_free(rdpCache* cache);
+struct rdp_brush
+{
+	uint8 maxEntries;
+	rdpSettings* settings;
+	BRUSH_ENTRY* entries;
+};
+typedef struct rdp_brush rdpBrush;
 
-#endif /* __CACHE_H */
+void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp);
+void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp);
+
+rdpBrush* brush_new(rdpSettings* settings);
+void brush_free(rdpBrush* brush);
+
+#endif /* __BRUSH_CACHE_H */

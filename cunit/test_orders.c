@@ -669,7 +669,7 @@ void test_read_cache_brush_order(void)
 
 	update_read_cache_brush_order(s, &cache_brush, 0);
 
-	CU_ASSERT(cache_brush.cacheEntry == 0);
+	CU_ASSERT(cache_brush.index == 0);
 	CU_ASSERT(cache_brush.bpp == 1);
 	CU_ASSERT(cache_brush.cx == 8);
 	CU_ASSERT(cache_brush.cy == 8);

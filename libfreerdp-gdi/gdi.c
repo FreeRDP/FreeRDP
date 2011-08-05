@@ -490,14 +490,20 @@ void gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 {
+	uint8* data;
 	HGDI_BRUSH originalBrush;
 	GDI* gdi = GET_GDI(update);
 
 	if (patblt->brushStyle & CACHED_BRUSH)
 	{
-		/* obtain brush from cache */
-		printf("should obtain brush from cache.\n");
-		return;
+		uint8 bpp;
+		uint8* cachedBrush;
+		data = (uint8*) &patblt->brushHatch;
+
+		cachedBrush = brush_get(gdi->cache->brush, patblt->brushHatch, &bpp);
+		memcpy(data, cachedBrush, (bpp / 8) * 64);
+
+		patblt->brushStyle = 0;
 	}
 
 	patblt->brushStyle &= 0x7F;
@@ -518,7 +524,6 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	}
 	else if (patblt->brushStyle == BS_PATTERN)
 	{
-		uint8* data;
 		HGDI_BITMAP hBmp;
 
 		data = (uint8*) &patblt->brushHatch;
@@ -676,6 +681,12 @@ void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_col
 	color_table_put(gdi->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
+void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
+{
+	GDI* gdi = GET_GDI(update);
+	brush_put(gdi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+}
+
 /**
  * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
@@ -713,6 +724,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->SwitchSurface = gdi_switch_surface;
 
 	update->CacheColorTable = gdi_cache_color_table;
+	update->CacheBrush = gdi_cache_brush;
 }
 
 /**

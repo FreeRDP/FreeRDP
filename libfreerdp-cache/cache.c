@@ -31,6 +31,7 @@ rdpCache* cache_new(rdpSettings* settings)
 	if (cache != NULL)
 	{
 		cache->settings = settings;
+		cache->brush = brush_new(settings);
 		cache->offscreen = offscreen_new(settings);
 		cache->color_table = color_table_new(settings);
 	}
@@ -42,6 +43,7 @@ void cache_free(rdpCache* cache)
 {
 	if (cache != NULL)
 	{
+		brush_free(cache->brush);
 		offscreen_free(cache->offscreen);
 		color_table_free(cache->color_table);
 		xfree(cache);

@@ -546,13 +546,13 @@ typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
 
 struct _CACHE_BRUSH_ORDER
 {
-	uint8 cacheEntry;
+	uint8 index;
 	uint8 bpp;
 	uint8 cx;
 	uint8 cy;
 	uint8 style;
 	uint8 length;
-	uint8* brushData;
+	uint8* data;
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 

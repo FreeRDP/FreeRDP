@@ -25,7 +25,7 @@
 
 struct _COLOR_TABLE_ENTRY
 {
-	void* color_table;
+	void* entry;
 };
 typedef struct _COLOR_TABLE_ENTRY COLOR_TABLE_ENTRY;
 
