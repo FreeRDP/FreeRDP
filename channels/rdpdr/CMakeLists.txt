@@ -20,9 +20,12 @@
 set(RDPDR_SRCS
 	rdpdr_constants.h
 	rdpdr_types.h
+	rdpdr_capabilities.c
+	rdpdr_capabilities.h
 	devman.c
 	devman.h
 	rdpdr_main.c
+	rdpdr_main.h
 )
 
 add_library(rdpdr SHARED ${RDPDR_SRCS})

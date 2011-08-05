@@ -26,6 +26,7 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
@@ -35,19 +36,8 @@
 #include "rdpdr_types.h"
 #include "rdpdr_constants.h"
 #include "devman.h"
-
-typedef struct rdpdr_plugin rdpdrPlugin;
-struct rdpdr_plugin
-{
-	rdpSvcPlugin plugin;
-
-	DEVMAN* devman;
-
-	uint16 versionMajor;
-	uint16 versionMinor;
-	uint16 clientID;
-	char computerName[256];
-};
+#include "rdpdr_capabilities.h"
+#include "rdpdr_main.h"
 
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 {
@@ -147,6 +137,8 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 			case PAKID_CORE_SERVER_CAPABILITY:
 				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_SERVER_CAPABILITY");
+				rdpdr_process_capability_request(rdpdr, data_in);
+				rdpdr_send_capability_response(rdpdr);
 				break;
 
 			case PAKID_CORE_CLIENTID_CONFIRM:
