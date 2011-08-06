@@ -32,6 +32,7 @@ set(FREERDP_UTILS_SRCS
 	semaphore.c
 	stream.c
 	svc_plugin.c
+	thread.c
 	unicode.c
 	wait_obj.c)
 
