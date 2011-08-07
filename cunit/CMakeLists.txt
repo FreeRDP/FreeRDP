@@ -49,8 +49,6 @@ add_executable(test_freerdp
 	test_stream.h
 	test_utils.c
 	test_utils.h
-	test_transport.c
-	test_transport.h
 	test_chanman.c
 	test_chanman.h
 	test_cliprdr.c

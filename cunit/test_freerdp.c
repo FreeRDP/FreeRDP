@@ -31,7 +31,6 @@
 #include "test_utils.h"
 #include "test_orders.h"
 #include "test_license.h"
-#include "test_transport.h"
 #include "test_chanman.h"
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
@@ -162,10 +161,6 @@ int main(int argc, char* argv[])
 			else if (strcmp("utils", argv[*pindex]) == 0)
 			{
 				add_utils_suite();
-			}
-			else if (strcmp("transport", argv[*pindex]) == 0)
-			{
-				add_transport_suite();
 			}
 			else if (strcmp("chanman", argv[*pindex]) == 0)
 			{

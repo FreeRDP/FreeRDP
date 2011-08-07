@@ -114,6 +114,7 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 		default:
 			tls_print_error("SSL_write", tls->ssl, status);
 			status = -1;
+			break;
 	}
 
 	return status;

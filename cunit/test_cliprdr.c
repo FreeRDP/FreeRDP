@@ -90,6 +90,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, in
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);
+	return 0;
 }
 
 static int event_processed;
