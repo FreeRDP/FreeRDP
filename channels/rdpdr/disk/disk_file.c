@@ -26,6 +26,7 @@
 #include <fnmatch.h>
 #include <utime.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
@@ -38,6 +39,17 @@
 #include "rdpdr_constants.h"
 #include "rdpdr_types.h"
 #include "disk_file.h"
+
+#define FILE_TIME_SYSTEM_TO_RDP(_t) \
+	(((uint64)(_t) + 11644473600LL) * 10000000LL)
+#define FILE_TIME_RDP_TO_SYSTEM(_t) \
+	(((_t) == 0LL || (_t) == (uint64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - 11644473600LL))
+
+#define FILE_ATTR_SYSTEM_TO_RDP(_f, _st) ( \
+	(S_ISDIR(_st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) | \
+	(_f->filename[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0) | \
+	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
+	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
 
 static char* disk_file_get_fullpath(const char* base_path, const char* path)
 {
@@ -203,6 +215,11 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 	file = xnew(DISK_FILE);
 	file->id = id;
 	file->fullpath = disk_file_get_fullpath(base_path, path);
+	file->filename = strrchr(file->fullpath, '/');
+	if (file->filename == NULL)
+		file->filename = file->fullpath;
+	else
+		file->filename += 1;
 	file->fd = -1;
 
 	if (!disk_file_init(file, DesiredAccess, CreateDisposition, CreateOptions))
@@ -264,7 +281,6 @@ boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
 {
 	ssize_t r;
 
-
 	if (file->is_dir || file->fd == -1)
 		return False;
 
@@ -277,5 +293,56 @@ boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
 		buffer += r;
 	}
 
+	return True;
+}
+
+boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output)
+{
+	struct stat st;
+
+	if (stat(file->fullpath, &st) != 0)
+	{
+		stream_write_uint32(output, 0); /* Length */
+		return False;
+	}
+	switch (FsInformationClass)
+	{
+		case FileBasicInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
+			stream_write_uint32(output, 40); /* Length */
+			stream_check_size(output, 40);
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* ChangeTime */
+			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
+			stream_write_uint32(output, 0); /* Reserved */
+			break;
+
+		case FileStandardInformation:
+			/*  http://msdn.microsoft.com/en-us/library/cc232088.aspx */
+			stream_write_uint32(output, 24); /* Length */
+			stream_check_size(output, 24);
+			stream_write_uint64(output, st.st_size); /* AllocationSize */
+			stream_write_uint64(output, st.st_size); /* EndOfFile */
+			stream_write_uint32(output, st.st_nlink); /* NumberOfLinks */
+			stream_write_uint8(output, file->delete_pending ? 1 : 0); /* DeletePending */
+			stream_write_uint8(output, file->is_dir ? 1 : 0); /* Directory */
+			stream_write_uint16(output, 0); /* Reserved */
+			break;
+
+		case FileAttributeTagInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232093.aspx */
+			stream_write_uint32(output, 8); /* Length */
+			stream_check_size(output, 8);
+			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
+			stream_write_uint32(output, 0); /* ReparseTag */
+			break;
+
+		default:
+			stream_write_uint32(output, 0); /* Length */
+			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
+			return False;
+	}
 	return True;
 }

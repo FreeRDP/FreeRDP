@@ -147,6 +147,8 @@ static void disk_process_irp_close(DISK_DEVICE* disk, IRP* irp)
 	}
 
 	stream_write(irp->output, "\0\0\0\0\0", 5); /* Padding(5) */
+
+	irp->Complete(irp);
 }
 
 static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
@@ -187,6 +189,10 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 
 			DEBUG_WARN("read %s(%d) failed.", file->fullpath, file->id);
 		}
+		else
+		{
+			DEBUG_SVC("read %u-%u from %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+		}
 	}
 
 	stream_write_uint32(irp->output, Length);
@@ -196,6 +202,8 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 		stream_write(irp->output, buffer, Length);
 	}
 	xfree(buffer);
+
+	irp->Complete(irp);
 }
 
 static void disk_process_irp_write(DISK_DEVICE* disk, IRP* irp)
@@ -231,9 +239,117 @@ static void disk_process_irp_write(DISK_DEVICE* disk, IRP* irp)
 
 		DEBUG_WARN("write %s(%d) failed.", file->fullpath, file->id);
 	}
+	else
+	{
+		DEBUG_SVC("write %u-%u to %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+	}
 
 	stream_write_uint32(irp->output, Length);
 	stream_write_uint8(irp->output, 0); /* Padding */
+
+	irp->Complete(irp);
+}
+
+static void disk_process_irp_query_information(DISK_DEVICE* disk, IRP* irp)
+{
+	DISK_FILE* file;
+	uint32 FsInformationClass;
+
+	stream_read_uint32(irp->input, FsInformationClass);
+
+	file = disk_get_file_by_id(disk, irp->FileId);
+
+	if (file == NULL)
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+		DEBUG_WARN("FileId %d not valid.", irp->FileId);
+	}
+	else if (!disk_file_query_information(file, FsInformationClass, irp->output))
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+		DEBUG_WARN("query_information %s(%d) failed.", file->fullpath, file->id);
+	}
+	else
+	{
+		DEBUG_SVC("query_information %d on %s(%d).", FsInformationClass, file->fullpath, file->id);
+	}
+
+	irp->Complete(irp);
+}
+
+static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* irp)
+{
+	uint32 FsInformationClass;
+	STREAM* output = irp->output;
+
+	stream_read_uint32(irp->input, FsInformationClass);
+
+	switch (FsInformationClass)
+	{
+		case FileFsVolumeInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
+			stream_write_uint32(output, 34); /* Length */
+			stream_check_size(output, 34);
+			stream_write_uint64(output, 0); /* VolumeCreationTime */
+			stream_write_uint32(output, 0); /* VolumeSerialNumber */
+			stream_write_uint32(output, 16); /* VolumeLabelLength */
+			stream_write_uint8(output, 0); /* SupportsObjects */
+			stream_write_uint8(output, 0); /* Reserved */
+			stream_write(output, "F\0R\0E\0E\0R\0D\0P\0\0\0", 16); /* VolumeLabel (Unicode) */
+			break;
+
+		case FileFsSizeInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232107.aspx */
+			stream_write_uint32(output, 24); /* Length */
+			stream_check_size(output, 24);
+			stream_write_uint64(output, 0x1000000); /* TotalAllocationUnits */
+			stream_write_uint64(output, 0x800000); /* AvailableAllocationUnits */
+			stream_write_uint32(output, 1); /* SectorsPerAllocationUnit */
+			stream_write_uint32(output, 0x400); /* BytesPerSector */
+			break;
+
+		case FileFsAttributeInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
+			stream_write_uint32(output, 22); /* Length */
+			stream_check_size(output, 22);
+			stream_write_uint32(output,
+				FILE_CASE_SENSITIVE_SEARCH | 
+				FILE_CASE_PRESERVED_NAMES | 
+				FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
+			stream_write_uint32(output, 510); /* MaximumComponentNameLength */
+			stream_write_uint32(output, 10); /* FileSystemNameLength */
+			stream_write(output, "F\0A\0T\03\02\0", 10); /* FileSystemName */
+			break;
+
+		case FileFsFullSizeInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232104.aspx */
+			stream_write_uint32(output, 32); /* Length */
+			stream_check_size(output, 32);
+			stream_write_uint64(output, 0x1000000); /* TotalAllocationUnits */
+			stream_write_uint64(output, 0x800000); /* CallerAvailableAllocationUnits */
+			stream_write_uint64(output, 0x800000); /* ActualAvailableAllocationUnits */
+			stream_write_uint32(output, 1); /* SectorsPerAllocationUnit */
+			stream_write_uint32(output, 0x400); /* BytesPerSector */
+			break;
+
+		case FileFsDeviceInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232109.aspx */
+			stream_write_uint32(output, 8); /* Length */
+			stream_check_size(output, 8);
+			stream_write_uint32(output, FILE_DEVICE_DISK); /* DeviceType */
+			stream_write_uint32(output, 0); /* Characteristics */
+			break;
+
+		default:
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
+			stream_write_uint32(output, 0); /* Length */
+			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
+			break;
+	}
+
+	irp->Complete(irp);
 }
 
 static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
@@ -254,6 +370,14 @@ static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 
 		case IRP_MJ_WRITE:
 			disk_process_irp_write(disk, irp);
+			break;
+
+		case IRP_MJ_QUERY_INFORMATION:
+			disk_process_irp_query_information(disk, irp);
+			break;
+
+		case IRP_MJ_QUERY_VOLUME_INFORMATION:
+			disk_process_irp_query_volume_information(disk, irp);
 			break;
 
 		default:

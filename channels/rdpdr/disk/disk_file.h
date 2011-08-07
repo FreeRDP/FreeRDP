@@ -29,11 +29,11 @@ typedef struct _DISK_FILE DISK_FILE;
 struct _DISK_FILE
 {
 	uint32 id;
-	uint32 attr;
 	boolean is_dir;
 	int fd;
 	DIR* dir;
 	char* fullpath;
+	char* filename;
 	char* pattern;
 	boolean delete_pending;
 };
@@ -45,5 +45,6 @@ void disk_file_free(DISK_FILE* file);
 boolean disk_file_seek(DISK_FILE* file, uint64 Offset);
 boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length);
 boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length);
+boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output);
 
 #endif /* __DISK_FILE_H */
