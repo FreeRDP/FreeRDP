@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <fnmatch.h>
 #include <utime.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -247,7 +246,6 @@ void disk_file_free(DISK_FILE* file)
 	}
 
 	xfree(file->fullpath);
-	xfree(file->pattern);
 	xfree(file);
 }
 
@@ -309,26 +307,26 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 	{
 		case FileBasicInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			stream_write_uint32(output, 40); /* Length */
-			stream_check_size(output, 40);
+			stream_write_uint32(output, 36); /* Length */
+			stream_check_size(output, 36);
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* ChangeTime */
 			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
-			stream_write_uint32(output, 0); /* Reserved */
+			/* Reserved(4), MUST NOT be added! */
 			break;
 
 		case FileStandardInformation:
 			/*  http://msdn.microsoft.com/en-us/library/cc232088.aspx */
-			stream_write_uint32(output, 24); /* Length */
-			stream_check_size(output, 24);
+			stream_write_uint32(output, 22); /* Length */
+			stream_check_size(output, 22);
 			stream_write_uint64(output, st.st_size); /* AllocationSize */
 			stream_write_uint64(output, st.st_size); /* EndOfFile */
 			stream_write_uint32(output, st.st_nlink); /* NumberOfLinks */
 			stream_write_uint8(output, file->delete_pending ? 1 : 0); /* DeletePending */
 			stream_write_uint8(output, file->is_dir ? 1 : 0); /* Directory */
-			stream_write_uint16(output, 0); /* Reserved */
+			/* Reserved(2), MUST NOT be added! */
 			break;
 
 		case FileAttributeTagInformation:
@@ -345,4 +343,124 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 			return False;
 	}
 	return True;
+}
+
+boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
+	const char* path, STREAM* output)
+{
+	struct dirent* ent;
+	char* ent_path;
+	struct stat st;
+	UNICONV* uniconv;
+	size_t len;
+	boolean ret;
+
+	DEBUG_SVC("path %s FsInformationClass %d", path, FsInformationClass);
+
+	if (InitialQuery != 0)
+	{
+		rewinddir(file->dir);
+	}
+
+	ent = readdir(file->dir);
+	if (ent == NULL)
+	{
+		stream_write_uint32(output, 0); /* Length */
+		stream_write_uint8(output, 0); /* Padding */
+		return False;
+	}
+
+	memset(&st, 0, sizeof(struct stat));
+	ent_path = xmalloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
+	sprintf(ent_path, "%s/%s", file->fullpath, ent->d_name);
+	if (stat(ent_path, &st) != 0)
+	{
+		DEBUG_WARN("stat %s failed.", ent_path);
+	}
+	xfree(ent_path);
+
+	uniconv = freerdp_uniconv_new();
+	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);
+	freerdp_uniconv_free(uniconv);
+
+	ret = True;
+	switch (FsInformationClass)
+	{
+		case FileDirectoryInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232097.aspx */
+			stream_write_uint32(output, 64 + len); /* Length */
+			stream_check_size(output, 64 + len);
+			stream_write_uint32(output, 0); /* NextEntryOffset */
+			stream_write_uint32(output, 0); /* FileIndex */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* ChangeTime */
+			stream_write_uint64(output, st.st_size); /* EndOfFile */
+			stream_write_uint64(output, st.st_size); /* AllocationSize */
+			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
+			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write(output, ent_path, len);
+			break;
+
+		case FileFullDirectoryInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232068.aspx */
+			stream_write_uint32(output, 68 + len); /* Length */
+			stream_check_size(output, 68 + len);
+			stream_write_uint32(output, 0); /* NextEntryOffset */
+			stream_write_uint32(output, 0); /* FileIndex */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* ChangeTime */
+			stream_write_uint64(output, st.st_size); /* EndOfFile */
+			stream_write_uint64(output, st.st_size); /* AllocationSize */
+			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
+			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write_uint32(output, 0); /* EaSize */
+			stream_write(output, ent_path, len);
+			break;
+
+		case FileBothDirectoryInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232095.aspx */
+			stream_write_uint32(output, 93 + len); /* Length */
+			stream_check_size(output, 93 + len);
+			stream_write_uint32(output, 0); /* NextEntryOffset */
+			stream_write_uint32(output, 0); /* FileIndex */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* ChangeTime */
+			stream_write_uint64(output, st.st_size); /* EndOfFile */
+			stream_write_uint64(output, st.st_size); /* AllocationSize */
+			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
+			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write_uint32(output, 0); /* EaSize */
+			stream_write_uint8(output, 0); /* ShortNameLength */
+			/* Reserved(1), MUST NOT be added! */
+			stream_write_zero(output, 24); /* ShortName */
+			stream_write(output, ent_path, len);
+			break;
+
+		case FileNamesInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232077.aspx */
+			stream_write_uint32(output, 12 + len); /* Length */
+			stream_check_size(output, 12 + len);
+			stream_write_uint32(output, 0); /* NextEntryOffset */
+			stream_write_uint32(output, 0); /* FileIndex */
+			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write(output, ent_path, len);
+			break;
+
+		default:
+			stream_write_uint32(output, 0); /* Length */
+			stream_write_uint8(output, 0); /* Padding */
+			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
+			ret = False;
+			break;
+	}
+
+	xfree(ent_path);
+
+	return ret;
 }

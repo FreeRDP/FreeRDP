@@ -352,6 +352,63 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	irp->Complete(irp);
 }
 
+static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
+{
+	DISK_FILE* file;
+	uint32 FsInformationClass;
+	uint8 InitialQuery;
+	uint32 PathLength;
+	UNICONV* uniconv;
+	char* path;
+
+	stream_read_uint32(irp->input, FsInformationClass);
+	stream_read_uint8(irp->input, InitialQuery);
+	stream_read_uint32(irp->input, PathLength);
+	stream_seek(irp->input, 23); /* Padding */
+
+	uniconv = freerdp_uniconv_new();
+	path = freerdp_uniconv_in(uniconv, stream_get_tail(irp->input), PathLength);
+	freerdp_uniconv_free(uniconv);
+
+	file = disk_get_file_by_id(disk, irp->FileId);
+
+	if (file == NULL)
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		stream_write_uint32(irp->output, 0); /* Length */
+		DEBUG_WARN("FileId %d not valid.", irp->FileId);
+	}
+	else if (!disk_file_query_directory(file, FsInformationClass, InitialQuery, path, irp->output))
+	{
+		irp->IoStatus = STATUS_NO_MORE_FILES;
+	}
+
+	xfree(path);
+
+	irp->Complete(irp);
+}
+
+static void disk_process_irp_directory_control(DISK_DEVICE* disk, IRP* irp)
+{
+	switch (irp->MinorFunction)
+	{
+		case IRP_MN_QUERY_DIRECTORY:
+			disk_process_irp_query_directory(disk, irp);
+			break;
+
+		case IRP_MN_NOTIFY_CHANGE_DIRECTORY: /* TODO */
+			irp->Discard(irp);
+			break;
+
+		default:
+			DEBUG_WARN("MinorFunction 0x%X not supported", irp->MinorFunction);
+			irp->IoStatus = STATUS_NOT_SUPPORTED;
+			stream_write_uint32(irp->output, 0); /* Length */
+			irp->Complete(irp);
+			break;
+	}
+}
+
 static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 {
 	switch (irp->MajorFunction)
@@ -378,6 +435,10 @@ static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 
 		case IRP_MJ_QUERY_VOLUME_INFORMATION:
 			disk_process_irp_query_volume_information(disk, irp);
+			break;
+
+		case IRP_MJ_DIRECTORY_CONTROL:
+			disk_process_irp_directory_control(disk, irp);
 			break;
 
 		default:
