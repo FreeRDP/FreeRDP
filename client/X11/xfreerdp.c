@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 #include <errno.h>
 #include <pthread.h>
 #include <sys/select.h>
@@ -29,6 +32,19 @@
 #include "xf_event.h"
 
 #include "xfreerdp.h"
+
+#define MWM_HINTS_DECORATIONS   (1L << 1)
+#define PROP_MOTIF_WM_HINTS_ELEMENTS    5
+
+struct _PropMotifWmHints
+{
+	uint32 flags;
+	uint32 functions;
+	uint32 decorations;
+	sint32 inputMode;
+	uint32 status;
+};
+typedef struct _PropMotifWmHints PropMotifWmHints;
 
 freerdp_sem g_sem;
 static int g_thread_count = 0;
@@ -50,24 +66,55 @@ void xf_end_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 	xfInfo* xfi;
+	XImage* image;
 
 	gdi = GET_GDI(update);
 	xfi = GET_XFI(update);
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
+
+	image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+
+	XPutImage(xfi->display, xfi->primary, xfi->gc_default, image, 0, 0, 0, 0, gdi->width, gdi->height);
+
+	XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default,
+			gdi->primary->hdc->hwnd->invalid->x,
+			gdi->primary->hdc->hwnd->invalid->y,
+			gdi->primary->hdc->hwnd->invalid->w,
+			gdi->primary->hdc->hwnd->invalid->h,
+			gdi->primary->hdc->hwnd->invalid->x,
+			gdi->primary->hdc->hwnd->invalid->y);
+
+	XFlush(xfi->display);
+
+	XFree(image);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	xfInfo* xfi = GET_XFI(instance);
 
+	rfds[*rcount] = (void*)(long)(xfi->xfds);
+	(*rcount)++;
+
 	return True;
 }
 
 boolean xf_check_fds(freerdp* instance, fd_set* set)
 {
-	xfInfo* xfi;
+	XEvent xevent;
+	xfInfo* xfi = GET_XFI(instance);
+
+	while (XPending(xfi->display))
+	{
+		memset(&xevent, 0, sizeof(xevent));
+		XNextEvent(xfi->display, &xevent);
+
+		if (xf_event_process(instance, &xevent) != True)
+			return False;
+	}
 
 	return True;
 }
@@ -79,6 +126,8 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
 	SET_XFI(instance, xfi);
+
+	xfi->instance = instance;
 
 	settings = instance->settings;
 
@@ -107,6 +156,104 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
 
+	xfi->display = XOpenDisplay(NULL);
+
+	if (xfi->display == NULL)
+	{
+		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		return False;
+	}
+
+	xf_kbd_init(xfi);
+
+	xfi->xfds = ConnectionNumber(xfi->display);
+	xfi->screen_number = DefaultScreen(xfi->display);
+	xfi->screen = ScreenOfDisplay(xfi->display, xfi->screen_number);
+	xfi->depth = DefaultDepthOfScreen(xfi->screen);
+	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
+
+	xfi->decoration = True;
+	xfi->mouse_motion = True;
+
+	return True;
+}
+
+void xf_toggle_fullscreen(xfInfo* xfi)
+{
+	Pixmap contents = 0;
+
+	contents = XCreatePixmap(xfi->display, xfi->window, xfi->width, xfi->height, xfi->depth);
+	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
+
+	//xf_destroy_window(xfi);
+	xfi->fullscreen = (xfi->fullscreen) ? False : True;
+	//xf_post_connect(xfi);
+
+	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
+	XFreePixmap(xfi->display, contents);
+}
+
+boolean xf_get_pixmap_info(xfInfo* xfi)
+{
+	int i;
+	int vi_count;
+	int pf_count;
+	XVisualInfo* vi;
+	XVisualInfo* vis;
+	XVisualInfo template;
+	XPixmapFormatValues* pf;
+	XPixmapFormatValues* pfs;
+
+	pfs = XListPixmapFormats(xfi->display, &pf_count);
+
+	if (pfs == NULL)
+	{
+		printf("xf_get_pixmap_info: XListPixmapFormats failed\n");
+		return 1;
+	}
+
+	for (i = 0; i < pf_count; i++)
+	{
+		pf = pfs + i;
+
+		if (pf->depth == xfi->depth)
+		{
+			xfi->bpp = pf->bits_per_pixel;
+			xfi->scanline_pad = pf->scanline_pad;
+			break;
+		}
+	}
+	XFree(pfs);
+
+	memset(&template, 0, sizeof(template));
+	template.class = TrueColor;
+	template.screen = xfi->screen_number;
+
+	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
+
+	if (vis == NULL)
+	{
+		printf("xf_get_pixmap_info: XGetVisualInfo failed\n");
+		return False;
+	}
+
+	for (i = 0; i < vi_count; i++)
+	{
+		vi = vis + i;
+
+		if (vi->depth == xfi->depth)
+		{
+			xfi->visual = vi->visual;
+			break;
+		}
+	}
+	XFree(vis);
+
+	if ((xfi->visual == NULL) || (xfi->scanline_pad == 0))
+	{
+		return False;
+	}
+
 	return True;
 }
 
@@ -114,25 +261,134 @@ boolean xf_post_connect(freerdp* instance)
 {
 	GDI* gdi;
 	xfInfo* xfi;
+	int input_mask;
+	XEvent xevent;
+	XGCValues gcv;
+	Atom kill_atom;
+	Atom protocol_atom;
+	XSizeHints *size_hints;
+	XClassHint *class_hints;
+	XSetWindowAttributes attribs;
 
 	xfi = GET_XFI(instance);
 	SET_XFI(instance->update, xfi);
 
+	if (xf_get_pixmap_info(xfi) != True)
+		return False;
+
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
+	if (xfi->fullscreen)
+		xfi->decoration = False;
+
+	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : gdi->width;
+	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : gdi->height;
+
+	attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
+	attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
+	attribs.backing_store = xfi->primary ? NotUseful : Always;
+	attribs.override_redirect = xfi->fullscreen;
+	attribs.colormap = xfi->colormap;
+
+	xfi->window = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
+		0, 0, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
+		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+		CWBorderPixel, &attribs);
+
+	class_hints = XAllocClassHint();
+
+	if (class_hints != NULL)
+	{
+		class_hints->res_name = "xfreerdp";
+		class_hints->res_class = "freerdp";
+		XSetClassHint(xfi->display, xfi->window, class_hints);
+		XFree(class_hints);
+	}
+
+	size_hints = XAllocSizeHints();
+
+	if (size_hints)
+	{
+		size_hints->flags = PMinSize | PMaxSize;
+		size_hints->min_width = size_hints->max_width = xfi->width;
+		size_hints->min_height = size_hints->max_height = xfi->height;
+		XSetWMNormalHints(xfi->display, xfi->window, size_hints);
+		XFree(size_hints);
+	}
+
+	input_mask =
+		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
+		VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
+		PointerMotionMask | ExposureMask;
+
+	XSelectInput(xfi->display, xfi->window, input_mask);
+	XMapWindow(xfi->display, xfi->window);
+
+	if (xfi->decoration == False)
+	{
+		Atom atom;
+		PropMotifWmHints hints;
+
+		hints.decorations = 0;
+		hints.flags = MWM_HINTS_DECORATIONS;
+
+		atom = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
+
+		if (!atom)
+		{
+			printf("xf_post_connect: failed to obtain atom _MOTIF_WM_HINTS\n");
+		}
+		else
+		{
+			XChangeProperty(xfi->display, xfi->window, atom, atom, 32,
+					PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
+		}
+	}
+
+	if (xfi->fullscreen)
+	{
+		XSetInputFocus(xfi->display, xfi->window, RevertToParent, CurrentTime);
+	}
+
+	/* wait for VisibilityNotify */
+	do
+	{
+		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+	}
+	while (xevent.type != VisibilityNotify);
+
+	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+	memset(&gcv, 0, sizeof(gcv));
+
+	protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
+	kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
+	XSetWMProtocols(xfi->display, xfi->window, &kill_atom, 1);
+
+	if (!xfi->gc)
+		xfi->gc = XCreateGC(xfi->display, xfi->window, GCGraphicsExposures, &gcv);
+
+	if (!xfi->primary)
+		xfi->primary = XCreatePixmap(xfi->display, xfi->window, xfi->width, xfi->height, xfi->depth);
+
+	xfi->drawing = xfi->primary;
+
+	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window, 8, 8, 1);
+	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
+	xfi->gc_default = XCreateGC(xfi->display, xfi->window, GCGraphicsExposures, &gcv);
+	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
+	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
+	xfi->modifier_map = XGetModifierMapping(xfi->display);
+
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
-
-	xf_keyboard_init();
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
 	return True;
 }
 
-static int xf_process_plugin_args(rdpSettings* settings, const char* name,
-	FRDP_PLUGIN_DATA* plugin_data, void* user_data)
+int xf_process_plugin_args(rdpSettings* settings, const char* name, FRDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	rdpChanMan* chanman = (rdpChanMan*) user_data;
 
@@ -142,14 +398,12 @@ static int xf_process_plugin_args(rdpSettings* settings, const char* name,
 	return 1;
 }
 
-static int
-xf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+int xf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
 {
 	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
 }
 
-static void
-xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
+void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 {
 	FRDP_EVENT* event;
 	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -162,8 +416,7 @@ xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	freerdp_chanman_send_event(chanman, "cliprdr", event);
 }
 
-static void
-xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
+void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 {
 	FRDP_EVENT* event;
 
@@ -183,10 +436,45 @@ xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 	}
 }
 
+void xf_window_free(xfInfo* xfi)
+{
+	XFreeModifiermap(xfi->modifier_map);
+	xfi->modifier_map = 0;
+
+	XFreeGC(xfi->display, xfi->gc_default);
+	xfi->gc_default = 0;
+
+	XFreeGC(xfi->display, xfi->gc_mono);
+	xfi->gc_mono = 0;
+
+	/* Note: valgrind reports this at lost no matter what */
+	XFreePixmap(xfi->display, xfi->bitmap_mono);
+	xfi->bitmap_mono = 0;
+
+	XFreeGC(xfi->display, xfi->gc);
+	xfi->gc = 0;
+
+	XDestroyWindow(xfi->display, xfi->window);
+	xfi->window = 0;
+
+	if (xfi->primary)
+	{
+		XFreePixmap(xfi->display, xfi->primary);
+		xfi->primary = 0;
+	}
+}
+
+void xf_free(xfInfo* xfi)
+{
+	xf_window_free(xfi);
+	XCloseDisplay(xfi->display);
+}
+
 int dfreerdp_run(freerdp* instance)
 {
 	int i;
 	int fds;
+	xfInfo* xfi;
 	int max_fds;
 	int rcount;
 	int wcount;
@@ -199,6 +487,7 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
+	xfi = GET_XFI(instance);
 	chanman = GET_CHANMAN(instance);
 
 	instance->Connect(instance);
@@ -220,7 +509,7 @@ int dfreerdp_run(freerdp* instance)
 		}
 		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
-			printf("Failed to get dfreerdp file descriptor\n");
+			printf("Failed to get xfreerdp file descriptor\n");
 			break;
 		}
 
@@ -248,7 +537,7 @@ int dfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("dfreerdp_run: select failed\n");
+				printf("xfreerdp_run: select failed\n");
 				break;
 			}
 		}
@@ -260,7 +549,7 @@ int dfreerdp_run(freerdp* instance)
 		}
 		if (xf_check_fds(instance, &rfds_set) != True)
 		{
-			printf("Failed to check dfreerdp file descriptor\n");
+			printf("Failed to check xfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_chanman_check_fds(chanman, instance) != True)
@@ -274,6 +563,7 @@ int dfreerdp_run(freerdp* instance)
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
 	freerdp_free(instance);
+	xf_free(xfi);
 
 	return 0;
 }

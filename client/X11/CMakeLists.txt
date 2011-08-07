@@ -21,11 +21,13 @@ include_directories(../../libfreerdp-gdi)
 include_directories(../../libfreerdp-kbd)
 include_directories(../../libfreerdp-core)
 include_directories(../../libfreerdp-cache)
-include_directories(${DIRECTFB_INCLUDE_DIRS})
+include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp
 	xf_event.c
 	xf_event.h
+	xf_keyboard.c
+	xf_keyboard.h
 	xfreerdp.c
 	xfreerdp.h)
 
@@ -34,4 +36,4 @@ target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)
 target_link_libraries(xfreerdp freerdp-chanman)
 target_link_libraries(xfreerdp freerdp-utils)
-target_link_libraries(xfreerdp ${DIRECTFB_LIBRARIES})
+target_link_libraries(xfreerdp ${X11_LIBRARIES})

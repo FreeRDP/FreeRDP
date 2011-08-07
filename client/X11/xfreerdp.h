@@ -21,6 +21,7 @@
 #define __XFREERDP_H
 
 #include "gdi.h"
+#include <X11/Xlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/chanman.h>
 
@@ -32,8 +33,41 @@
 
 struct xf_info
 {
+	GC gc;
+	int bpp;
+	int xfds;
+	int depth;
+	int width;
+	int height;
+	Window window;
+	Screen* screen;
+	Pixmap primary;
+	Drawable drawing;
+	Visual* visual;
+	Display* display;
+	Colormap colormap;
+	int screen_number;
+	int scanline_pad;
+	boolean big_endian;
+	boolean fullscreen;
+	boolean unobscured;
+	boolean decoration;
+	freerdp* instance;
 
+	GC gc_mono;
+	GC gc_default;
+	Pixmap bitmap_mono;
+
+	boolean focused;
+	boolean mouse_active;
+	boolean mouse_motion;
+	boolean fullscreen_toggle;
+	uint32 keyboard_layout_id;
+	boolean pressed_keys[256];
+	XModifierKeymap* modifier_map;
 };
 typedef struct xf_info xfInfo;
+
+void xf_toggle_fullscreen(xfInfo* xfi);
 
 #endif /* __XFREERDP_H */

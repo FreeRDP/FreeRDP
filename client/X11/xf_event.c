@@ -22,31 +22,351 @@
 
 #include "xf_event.h"
 
-void xf_keyboard_init()
+void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
 {
-
+	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
-void xf_send_mouse_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
+boolean xf_event_Expose(xfInfo* xfi, XEvent* event)
 {
-	uint16 flags;
+	int x;
+	int y;
+	int cx;
+	int cy;
 
-	flags = (down) ? PTR_FLAGS_DOWN : 0;
+	if (event->xexpose.window == xfi->window)
+	{
+		x = event->xexpose.x;
+		y = event->xexpose.y;
+		cx = event->xexpose.width;
+		cy = event->xexpose.height;
+		XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default, x, y, cx, cy, x, y);
+	}
 
-	if (flags != 0)
-		input->MouseEvent(input, flags, x, y);
-}
-
-void xf_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode)
-{
-	uint16 flags;
-	uint8 scancode;
-	boolean extended;
-
-	input->KeyboardEvent(input, flags, scancode);
-}
-
-boolean xf_event_process(freerdp* instance, void* event)
-{
 	return True;
+}
+
+boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event)
+{
+	if (event->xvisibility.window == xfi->window)
+		xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
+
+	return True;
+}
+
+boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event)
+{
+	rdpInput* input;
+
+	input = xfi->instance->input;
+
+	if (event->xmotion.window == xfi->window)
+	{
+		if (xfi->mouse_motion != True)
+		{
+			if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
+				return True;
+		}
+
+		input->MouseEvent(input, PTR_FLAGS_MOVE, event->xmotion.x, event->xmotion.y);
+	}
+
+	if (xfi->fullscreen)
+		XSetInputFocus(xfi->display, xfi->window, RevertToPointerRoot, CurrentTime);
+
+	return True;
+}
+
+boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event)
+{
+	uint16 x, y;
+	uint16 flags;
+	rdpInput* input;
+
+	input = xfi->instance->input;
+
+	if (event->xbutton.window == xfi->window)
+	{
+		x = 0;
+		y = 0;
+		flags = 0;
+
+		switch (event->xbutton.button)
+		{
+			case 1:
+				x = event->xmotion.x;
+				y = event->xmotion.y;
+				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
+				break;
+
+			case 2:
+				x = event->xmotion.x;
+				y = event->xmotion.y;
+				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
+				break;
+
+			case 3:
+				x = event->xmotion.x;
+				y = event->xmotion.y;
+				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
+				break;
+
+			case 4:
+				x = 0;
+				y = 0;
+				flags = PTR_FLAGS_WHEEL | 0x0078;
+				break;
+
+			case 5:
+				x = 0;
+				y = 0;
+				flags = PTR_FLAGS_WHEEL | 0x0088;
+				break;
+
+			default:
+				x = 0;
+				y = 0;
+				flags = 0;
+				break;
+		}
+
+		if (flags != 0)
+			input->MouseEvent(input, flags, x, y);
+	}
+
+	return True;
+}
+
+boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event)
+{
+	uint16 flags;
+	rdpInput* input;
+
+	input = xfi->instance->input;
+
+	if (event->xbutton.window == xfi->window)
+	{
+		flags = 0;
+
+		switch (event->xbutton.button)
+		{
+			case 1:
+				flags = PTR_FLAGS_BUTTON1;
+				break;
+
+			case 2:
+				flags = PTR_FLAGS_BUTTON3;
+				break;
+
+			case 3:
+				flags = PTR_FLAGS_BUTTON2;
+				break;
+
+			default:
+				flags = 0;
+				break;
+		}
+
+		if (flags != 0)
+			input->MouseEvent(input, flags, event->xbutton.x, event->xbutton.y);
+	}
+
+	return True;
+}
+
+boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event)
+{
+	KeySym keysym;
+	char str[256];
+
+	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
+
+	xf_kbd_set_keypress(xfi, event->xkey.keycode, keysym);
+
+	if (xfi->fullscreen_toggle && xf_kbd_handle_special_keys(xfi, keysym))
+		return True;
+
+	xf_kbd_send_key(xfi, True, event->xkey.keycode);
+
+	return True;
+}
+
+boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event)
+{
+	XEvent next_event;
+
+	if (XPending(xfi->display))
+	{
+		memset(&next_event, 0, sizeof(next_event));
+		XPeekEvent(xfi->display, &next_event);
+
+		if (next_event.type == KeyPress)
+		{
+			if (next_event.xkey.keycode == event->xkey.keycode)
+				return True;
+		}
+	}
+
+	xf_kbd_unset_keypress(xfi, event->xkey.keycode);
+	xf_kbd_send_key(xfi, False, event->xkey.keycode);
+
+	return True;
+}
+
+boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event)
+{
+	if (event->xfocus.mode == NotifyGrab)
+		return True;
+
+	xfi->focused = True;
+
+	if (xfi->mouse_active)
+		XGrabKeyboard(xfi->display, xfi->window, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+
+	xf_kbd_focus_in(xfi);
+
+	return True;
+}
+
+boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event)
+{
+	if (event->xfocus.mode == NotifyUngrab)
+		return True;
+
+	xfi->focused = False;
+
+	if (event->xfocus.mode == NotifyWhileGrabbed)
+		XUngrabKeyboard(xfi->display, CurrentTime);
+
+	return True;
+}
+
+boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event)
+{
+	if (event->xmapping.request == MappingModifier)
+	{
+		XFreeModifiermap(xfi->modifier_map);
+		xfi->modifier_map = XGetModifierMapping(xfi->display);
+	}
+
+	return True;
+}
+
+boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event)
+{
+	Atom kill_atom;
+	Atom protocol_atom;
+
+	protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
+	kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
+
+	if ((event->xclient.message_type == protocol_atom)
+	    && ((Atom) event->xclient.data.l[0] == kill_atom))
+	{
+		return False;
+	}
+
+	return True;
+}
+
+boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event)
+{
+	xfi->mouse_active = True;
+
+	if (xfi->fullscreen)
+		XSetInputFocus(xfi->display, xfi->window, RevertToPointerRoot, CurrentTime);
+
+	if (xfi->focused)
+		XGrabKeyboard(xfi->display, xfi->window, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+
+	return True;
+}
+
+boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event)
+{
+	xfi->mouse_active = False;
+	XUngrabKeyboard(xfi->display, CurrentTime);
+
+	return True;
+}
+boolean xf_event_process(freerdp* instance, XEvent* event)
+{
+	boolean status = True;
+	xfInfo* xfi = GET_XFI(instance);
+
+	switch (event->type)
+	{
+		case Expose:
+			status = xf_event_Expose(xfi, event);
+			break;
+
+		case VisibilityNotify:
+			status = xf_event_VisibilityNotify(xfi, event);
+			break;
+
+		case MotionNotify:
+			status = xf_event_MotionNotify(xfi, event);
+			break;
+
+		case ButtonPress:
+			status = xf_event_ButtonPress(xfi, event);
+			break;
+
+		case ButtonRelease:
+			status = xf_event_ButtonRelease(xfi, event);
+			break;
+
+		case KeyPress:
+			status = xf_event_KeyPress(xfi, event);
+			break;
+
+		case KeyRelease:
+			status = xf_event_KeyRelease(xfi, event);
+			break;
+
+		case FocusIn:
+			status = xf_event_FocusIn(xfi, event);
+			break;
+
+		case FocusOut:
+			status = xf_event_FocusOut(xfi, event);
+			break;
+
+		case EnterNotify:
+			status = xf_event_EnterNotify(xfi, event);
+			break;
+
+		case LeaveNotify:
+			status = xf_event_LeaveNotify(xfi, event);
+			break;
+
+		case NoExpose:
+			break;
+
+		case GraphicsExpose:
+			break;
+
+		case ConfigureNotify:
+			break;
+
+		case MapNotify:
+			break;
+
+		case ReparentNotify:
+			break;
+
+		case MappingNotify:
+			status = xf_event_MappingNotify(xfi, event);
+			break;
+
+		case ClientMessage:
+			status = xf_event_ClientMessage(xfi, event);
+			break;
+
+		default:
+			printf("xf_event_process unknown event %d\n", event->type);
+			break;
+	}
+
+	return status;
 }

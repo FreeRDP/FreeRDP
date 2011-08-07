@@ -18,8 +18,14 @@
 # limitations under the License.
 
 # User Interfaces
-add_subdirectory(X11)
+
 add_subdirectory(test)
+
+# Build DirectFB Client
+find_package(X11)
+if(X11_FOUND)
+	add_subdirectory(X11)
+endif()
 
 # Build DirectFB Client
 find_package(DirectFB)

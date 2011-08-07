@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * X11 Event Handling
+ * X11 Keyboard Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,13 +17,19 @@
  * limitations under the License.
  */
 
-#ifndef __XF_EVENT_H
-#define __XF_EVENT_H
-
-#include "xf_keyboard.h"
+#ifndef __XF_KEYBOARD_H
+#define __XF_KEYBOARD_H
 
 #include "xfreerdp.h"
 
-boolean xf_event_process(freerdp* instance, XEvent* event);
+void xf_kbd_init(xfInfo* xfi);
+void xf_kbd_set_keypress(xfInfo* xfi, uint8 keycode, KeySym keysym);
+void xf_kbd_unset_keypress(xfInfo* xfi, uint8 keycode);
+boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym);
+void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode);
+int xf_kbd_read_keyboard_state(xfInfo* xfi);
+boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym);
+int xf_kbd_get_toggle_keys_state(xfInfo* xfi);
+void xf_kbd_focus_in(xfInfo* xfi);
 
-#endif /* __XF_EVENT_H */
+#endif /* __XF_KEYBOARD_H */

@@ -30,9 +30,16 @@ set(FREERDP_KBD_SRCS
 	libkbd.c
 	libkbd.h)
 
-add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
-
 add_library(freerdp-kbd SHARED ${FREERDP_KBD_SRCS})
+
+find_package(XKBFile)
+if(XKBFILE_FOUND)
+	add_definitions(-DWITH_XKBFILE)
+	include_directories(${XKBFILE_INCLUDE_DIRS})
+	target_link_libraries(freerdp-kbd ${XKBFILE_LIBRARIES})
+endif()
+
+add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
 
 set_target_properties(freerdp-kbd PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
