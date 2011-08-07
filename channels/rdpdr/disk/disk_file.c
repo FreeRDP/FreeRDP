@@ -23,7 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <utime.h>
+#include <sys/time.h>
+#include <sys/stat.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -50,7 +51,7 @@
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
 
-static char* disk_file_get_fullpath(const char* base_path, const char* path)
+static char* disk_file_combine_fullpath(const char* base_path, const char* path)
 {
 	char* fullpath;
 	int len;
@@ -131,7 +132,18 @@ static boolean disk_file_remove_dir(const char* path)
 	return ret;
 }
 
-boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions)
+static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
+{
+	xfree(file->fullpath);
+	file->fullpath = fullpath;
+	file->filename = strrchr(file->fullpath, '/');
+	if (file->filename == NULL)
+		file->filename = file->fullpath;
+	else
+		file->filename += 1;
+}
+
+static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions)
 {
 	const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 	struct stat st;
@@ -184,7 +196,7 @@ boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDispo
 				break;
 		}
 		if (!exists && (CreateOptions & FILE_DELETE_ON_CLOSE))
-			file->delete_pending = 1;
+			file->delete_pending = True;
 
 		if ((DesiredAccess & GENERIC_ALL)
 			|| (DesiredAccess & GENERIC_WRITE)
@@ -213,12 +225,7 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 
 	file = xnew(DISK_FILE);
 	file->id = id;
-	file->fullpath = disk_file_get_fullpath(base_path, path);
-	file->filename = strrchr(file->fullpath, '/');
-	if (file->filename == NULL)
-		file->filename = file->fullpath;
-	else
-		file->filename += 1;
+	disk_file_set_fullpath(file, disk_file_combine_fullpath(base_path, path));
 	file->fd = -1;
 
 	if (!disk_file_init(file, DesiredAccess, CreateDisposition, CreateOptions))
@@ -339,6 +346,100 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 
 		default:
 			stream_write_uint32(output, 0); /* Length */
+			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
+			return False;
+	}
+	return True;
+}
+
+boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input)
+{
+	struct stat st;
+	struct timeval tv[2];
+	uint64 LastWriteTime;
+	uint32 FileAttributes;
+	mode_t m;
+	uint64 size;
+	uint32 FileNameLength;
+	UNICONV* uniconv;
+	char* s;
+	char* p;
+	char* fullpath;
+
+	switch (FsInformationClass)
+	{
+		case FileBasicInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
+			stream_seek_uint64(input); /* CreationTime */
+			stream_seek_uint64(input); /* LastAccessTime */
+			stream_read_uint64(input, LastWriteTime);
+			stream_seek_uint64(input); /* ChangeTime */
+			stream_read_uint32(input, FileAttributes);
+
+			if (fstat(file->fd, &st) != 0)
+				return False;
+			tv[0].tv_sec = st.st_atime;
+			tv[0].tv_usec = 0;
+			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
+			tv[1].tv_usec = 0;
+			futimes(file->fd, tv);
+
+			if (FileAttributes > 0)
+			{
+				m = st.st_mode;
+				if ((FileAttributes & FILE_ATTRIBUTE_READONLY) == 0)
+					m |= S_IWUSR;
+				else
+					m &= ~S_IWUSR;
+				if (m != st.st_mode)
+					fchmod(file->fd, st.st_mode);
+			}
+			break;
+
+		case FileEndOfFileInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
+		case FileAllocationInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
+			stream_read_uint64(input, size);
+			ftruncate(file->fd, size);
+			break;
+
+		case FileDispositionInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
+			stream_read_uint8(input, file->delete_pending);
+			break;
+
+		case FileRenameInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
+			stream_seek_uint8(input); /* ReplaceIfExists */
+			stream_seek_uint8(input); /* RootDirectory */
+			stream_read_uint32(input, FileNameLength);
+			uniconv = freerdp_uniconv_new();
+			s = freerdp_uniconv_in(uniconv, stream_get_tail(input), FileNameLength);
+			freerdp_uniconv_free(uniconv);
+			fullpath = xmalloc(strlen(file->fullpath) + strlen(s) + 2);
+			strcpy(fullpath, file->fullpath);
+			p = strrchr(fullpath, '/');
+			if (p == NULL)
+				p = fullpath;
+			else
+				p++;
+			strcpy(p, s);
+			xfree(s);
+
+			if (rename(file->fullpath, fullpath) == 0)
+			{
+				disk_file_set_fullpath(file, fullpath);
+			}
+			else
+			{
+				free(fullpath);
+				return False;
+			}
+
+			break;
+
+		default:
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			return False;
 	}

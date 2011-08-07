@@ -146,7 +146,7 @@ static void disk_process_irp_close(DISK_DEVICE* disk, IRP* irp)
 		disk_file_free(file);
 	}
 
-	stream_write(irp->output, "\0\0\0\0\0", 5); /* Padding(5) */
+	stream_write_zero(irp->output, 5); /* Padding(5) */
 
 	irp->Complete(irp);
 }
@@ -191,7 +191,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 		}
 		else
 		{
-			DEBUG_SVC("read %u-%u from %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+			DEBUG_SVC("read %llu-%llu from %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
 		}
 	}
 
@@ -241,7 +241,7 @@ static void disk_process_irp_write(DISK_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("write %u-%u to %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+		DEBUG_SVC("write %llu-%llu to %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
 	}
 
 	stream_write_uint32(irp->output, Length);
@@ -269,12 +269,46 @@ static void disk_process_irp_query_information(DISK_DEVICE* disk, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 
-		DEBUG_WARN("query_information %s(%d) failed.", file->fullpath, file->id);
+		DEBUG_WARN("FsInformationClass %d on %s(%d) failed.", FsInformationClass, file->fullpath, file->id);
 	}
 	else
 	{
-		DEBUG_SVC("query_information %d on %s(%d).", FsInformationClass, file->fullpath, file->id);
+		DEBUG_SVC("FsInformationClass %d on %s(%d).", FsInformationClass, file->fullpath, file->id);
 	}
+
+	irp->Complete(irp);
+}
+
+static void disk_process_irp_set_information(DISK_DEVICE* disk, IRP* irp)
+{
+	DISK_FILE* file;
+	uint32 FsInformationClass;
+	uint32 Length;
+
+	stream_read_uint32(irp->input, FsInformationClass);
+	stream_read_uint32(irp->input, Length);
+	stream_seek(irp->input, 24); /* Padding */
+
+	file = disk_get_file_by_id(disk, irp->FileId);
+
+	if (file == NULL)
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+		DEBUG_WARN("FileId %d not valid.", irp->FileId);
+	}
+	else if (!disk_file_set_information(file, FsInformationClass, Length, irp->input))
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+		DEBUG_WARN("FsInformationClass %d on %s(%d) failed.", FsInformationClass, file->fullpath, file->id);
+	}
+	else
+	{
+		DEBUG_SVC("FsInformationClass %d on %s(%d) ok.", FsInformationClass, file->fullpath, file->id);
+	}
+
+	stream_write_uint32(irp->output, Length);
 
 	irp->Complete(irp);
 }
@@ -409,6 +443,12 @@ static void disk_process_irp_directory_control(DISK_DEVICE* disk, IRP* irp)
 	}
 }
 
+static void disk_process_irp_device_control(DISK_DEVICE* disk, IRP* irp)
+{
+	stream_write_uint32(irp->output, 0); /* OutputBufferLength */
+	irp->Complete(irp);
+}
+
 static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 {
 	switch (irp->MajorFunction)
@@ -433,12 +473,20 @@ static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 			disk_process_irp_query_information(disk, irp);
 			break;
 
+		case IRP_MJ_SET_INFORMATION:
+			disk_process_irp_set_information(disk, irp);
+			break;
+
 		case IRP_MJ_QUERY_VOLUME_INFORMATION:
 			disk_process_irp_query_volume_information(disk, irp);
 			break;
 
 		case IRP_MJ_DIRECTORY_CONTROL:
 			disk_process_irp_directory_control(disk, irp);
+			break;
+
+		case IRP_MJ_DEVICE_CONTROL:
+			disk_process_irp_device_control(disk, irp);
 			break;
 
 		default:

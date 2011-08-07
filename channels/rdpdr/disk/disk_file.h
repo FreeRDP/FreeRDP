@@ -45,6 +45,7 @@ boolean disk_file_seek(DISK_FILE* file, uint64 Offset);
 boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length);
 boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length);
 boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output);
+boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input);
 boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
 	const char* path, STREAM* output);
 
