@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Client User Interfaces
+# FreeRDP X11 Client
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,12 +17,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# User Interfaces
-add_subdirectory(X11)
-add_subdirectory(test)
+include_directories(../../libfreerdp-gdi)
+include_directories(../../libfreerdp-kbd)
+include_directories(../../libfreerdp-core)
+include_directories(../../libfreerdp-cache)
+include_directories(${DIRECTFB_INCLUDE_DIRS})
 
-# Build DirectFB Client
-find_package(DirectFB)
-if(DIRECTFB_FOUND)
-	add_subdirectory(DirectFB)
-endif()
+add_executable(xfreerdp
+	xf_event.c
+	xf_event.h
+	xfreerdp.c
+	xfreerdp.h)
+
+target_link_libraries(xfreerdp freerdp-core)
+target_link_libraries(xfreerdp freerdp-gdi)
+target_link_libraries(xfreerdp freerdp-kbd)
+target_link_libraries(xfreerdp freerdp-chanman)
+target_link_libraries(xfreerdp freerdp-utils)
+target_link_libraries(xfreerdp ${DIRECTFB_LIBRARIES})

@@ -25,5 +25,6 @@ docs/api
 *.so.*
 *.dylib
 cunit/test_freerdp
+client/X11/xfreerdp
 client/test/freerdp-test
 client/DirectFB/dfreerdp
