@@ -41,6 +41,7 @@ struct xf_info
 	int height;
 	Window window;
 	Screen* screen;
+	XImage* image;
 	Pixmap primary;
 	Drawable drawing;
 	Visual* visual;

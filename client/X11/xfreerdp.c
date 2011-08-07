@@ -66,6 +66,8 @@ void xf_end_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 	xfInfo* xfi;
+	sint32 x, y;
+	uint32 w, h;
 	XImage* image;
 
 	gdi = GET_GDI(update);
@@ -74,22 +76,14 @@ void xf_end_paint(rdpUpdate* update)
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
 
-	image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
-			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+	x = gdi->primary->hdc->hwnd->invalid->x;
+	y = gdi->primary->hdc->hwnd->invalid->y;
+	w = gdi->primary->hdc->hwnd->invalid->w;
+	h = gdi->primary->hdc->hwnd->invalid->h;
 
-	XPutImage(xfi->display, xfi->primary, xfi->gc_default, image, 0, 0, 0, 0, gdi->width, gdi->height);
-
-	XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default,
-			gdi->primary->hdc->hwnd->invalid->x,
-			gdi->primary->hdc->hwnd->invalid->y,
-			gdi->primary->hdc->hwnd->invalid->w,
-			gdi->primary->hdc->hwnd->invalid->h,
-			gdi->primary->hdc->hwnd->invalid->x,
-			gdi->primary->hdc->hwnd->invalid->y);
-
+	XPutImage(xfi->display, xfi->primary, xfi->gc_default, xfi->image, x, y, x, y, w, h);
+	XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default, x, y, w, h, x, y);
 	XFlush(xfi->display);
-
-	XFree(image);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -379,6 +373,9 @@ boolean xf_post_connect(freerdp* instance)
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
 	xfi->modifier_map = XGetModifierMapping(xfi->display);
+
+	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
 
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
