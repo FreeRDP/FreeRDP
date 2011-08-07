@@ -51,23 +51,29 @@
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
 
+static void disk_file_fix_path(char* path)
+{
+	int len;
+	int i;
+
+	len = strlen(path);
+	for (i = 0; i < len; i++)
+	{
+		if (path[i] == '\\')
+			path[i] = '/';
+	}
+	if (len > 0 && path[len - 1] == '/')
+		path[len - 1] = '\0';
+}
+
 static char* disk_file_combine_fullpath(const char* base_path, const char* path)
 {
 	char* fullpath;
-	int len;
-	int i;
 
 	fullpath = xmalloc(strlen(base_path) + strlen(path) + 1);
 	strcpy(fullpath, base_path);
 	strcat(fullpath, path);
-	len = strlen(fullpath);
-	for (i = 0; i < len; i++)
-	{
-		if (fullpath[i] == '\\')
-			fullpath[i] = '/';
-	}
-	if (len > 0 && fullpath[len - 1] == '/')
-		fullpath[len - 1] = '\0';
+	disk_file_fix_path(fullpath);
 
 	return fullpath;
 }
@@ -424,15 +430,18 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 				p = fullpath;
 			else
 				p++;
-			strcpy(p, s);
+			strcpy(p, s[0] == '\\' || s[0] == '/' ? s + 1 : s);
 			xfree(s);
+			disk_file_fix_path(fullpath);
 
 			if (rename(file->fullpath, fullpath) == 0)
 			{
+				DEBUG_SVC("renamed %s to %s", file->fullpath, fullpath);
 				disk_file_set_fullpath(file, fullpath);
 			}
 			else
 			{
+				DEBUG_WARN("rename %s to %s failed", file->fullpath, fullpath);
 				free(fullpath);
 				return False;
 			}
