@@ -91,14 +91,14 @@ void stream_extend(STREAM* stream);
 	*_s->p++ = ((_v) >> 16) & 0xFF; \
 	*_s->p++ = ((_v) >> 24) & 0xFF; } while (0)
 #define stream_write_uint64(_s, _v) do { \
-	*_s->p++ = (_v) & 0xFF; \
-	*_s->p++ = ((_v) >> 8) & 0xFF; \
-	*_s->p++ = ((_v) >> 16) & 0xFF; \
-	*_s->p++ = ((_v) >> 24) & 0xFF; \
-	*_s->p++ = ((_v) >> 32) & 0xFF; \
-	*_s->p++ = ((_v) >> 40) & 0xFF; \
-	*_s->p++ = ((_v) >> 48) & 0xFF; \
-	*_s->p++ = ((_v) >> 56) & 0xFF; } while (0)
+	*_s->p++ = (uint64)(_v) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 8) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 16) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 24) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 32) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 40) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 48) & 0xFF; \
+	*_s->p++ = ((uint64)(_v) >> 56) & 0xFF; } while (0)
 #define stream_write(_s, _b, _n) do { \
 	memcpy(_s->p, (_b), (_n)); \
 	_s->p += (_n); \
