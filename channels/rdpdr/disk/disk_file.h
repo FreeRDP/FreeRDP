@@ -42,4 +42,8 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 	uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions);
 void disk_file_free(DISK_FILE* file);
 
+boolean disk_file_seek(DISK_FILE* file, uint64 Offset);
+boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length);
+boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length);
+
 #endif /* __DISK_FILE_H */

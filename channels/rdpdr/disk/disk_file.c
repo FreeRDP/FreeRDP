@@ -233,3 +233,49 @@ void disk_file_free(DISK_FILE* file)
 	xfree(file->pattern);
 	xfree(file);
 }
+
+boolean disk_file_seek(DISK_FILE* file, uint64 Offset)
+{
+	if (file->is_dir || file->fd == -1)
+		return False;
+
+	if (lseek(file->fd, Offset, SEEK_SET) == (off_t)-1)
+		return False;
+
+	return True;
+}
+
+boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
+{
+	ssize_t r;
+
+	if (file->is_dir || file->fd == -1)
+		return False;
+
+	r = read(file->fd, buffer, *Length);
+	if (r < 0)
+		return False;
+	*Length = (uint32)r;
+
+	return True;
+}
+
+boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
+{
+	ssize_t r;
+
+
+	if (file->is_dir || file->fd == -1)
+		return False;
+
+	while (Length > 0)
+	{
+		r = write(file->fd, buffer, Length);
+		if (r == -1)
+			return False;
+		Length -= r;
+		buffer += r;
+	}
+
+	return True;
+}

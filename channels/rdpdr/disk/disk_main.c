@@ -149,6 +149,93 @@ static void disk_process_irp_close(DISK_DEVICE* disk, IRP* irp)
 	stream_write(irp->output, "\0\0\0\0\0", 5); /* Padding(5) */
 }
 
+static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
+{
+	DISK_FILE* file;
+	uint32 Length;
+	uint64 Offset;
+	uint8* buffer = NULL;
+
+	stream_read_uint32(irp->input, Length);
+	stream_read_uint64(irp->input, Offset);
+
+	file = disk_get_file_by_id(disk, irp->FileId);
+
+	if (file == NULL)
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		Length = 0;
+
+		DEBUG_WARN("FileId %d not valid.", irp->FileId);
+	}
+	else if (!disk_file_seek(file, Offset))
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		Length = 0;
+
+		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
+	}
+	else
+	{
+		buffer = (uint8*)xmalloc(Length);
+		if (!disk_file_read(file, buffer, &Length))
+		{
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
+			xfree(buffer);
+			buffer = NULL;
+			Length = 0;
+
+			DEBUG_WARN("read %s(%d) failed.", file->fullpath, file->id);
+		}
+	}
+
+	stream_write_uint32(irp->output, Length);
+	if (Length > 0)
+	{
+		stream_check_size(irp->output, Length);
+		stream_write(irp->output, buffer, Length);
+	}
+	xfree(buffer);
+}
+
+static void disk_process_irp_write(DISK_DEVICE* disk, IRP* irp)
+{
+	DISK_FILE* file;
+	uint32 Length;
+	uint64 Offset;
+
+	stream_read_uint32(irp->input, Length);
+	stream_read_uint64(irp->input, Offset);
+	stream_seek(irp->input, 20); /* Padding */
+
+	file = disk_get_file_by_id(disk, irp->FileId);
+
+	if (file == NULL)
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		Length = 0;
+
+		DEBUG_WARN("FileId %d not valid.", irp->FileId);
+	}
+	else if (!disk_file_seek(file, Offset))
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		Length = 0;
+
+		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
+	}
+	else if (!disk_file_write(file, stream_get_tail(irp->input), Length))
+	{
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		Length = 0;
+
+		DEBUG_WARN("write %s(%d) failed.", file->fullpath, file->id);
+	}
+
+	stream_write_uint32(irp->output, Length);
+	stream_write_uint8(irp->output, 0); /* Padding */
+}
+
 static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 {
 	switch (irp->MajorFunction)
@@ -159,6 +246,14 @@ static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 
 		case IRP_MJ_CLOSE:
 			disk_process_irp_close(disk, irp);
+			break;
+
+		case IRP_MJ_READ:
+			disk_process_irp_read(disk, irp);
+			break;
+
+		case IRP_MJ_WRITE:
+			disk_process_irp_write(disk, irp);
 			break;
 
 		default:
