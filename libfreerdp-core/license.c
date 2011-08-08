@@ -627,6 +627,7 @@ void license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 void license_read_new_license_packet(rdpLicense* license, STREAM* s)
 {
 	DEBUG_LICENSE("Receiving New License Packet");
+	license->state = LICENSE_STATE_COMPLETED;
 }
 
 /**
@@ -639,6 +640,7 @@ void license_read_new_license_packet(rdpLicense* license, STREAM* s)
 void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
 {
 	DEBUG_LICENSE("Receiving Upgrade License Packet");
+	license->state = LICENSE_STATE_COMPLETED;
 }
 
 /**
