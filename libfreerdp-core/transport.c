@@ -126,9 +126,9 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	while (True)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
-			status = tls_read(transport->tls, s->data, s->size);
+			status = tls_read(transport->tls, stream_get_tail(s), stream_get_left(s));
 		else if (transport->layer == TRANSPORT_LAYER_TCP)
-			status = tcp_read(transport->tcp, s->data, s->size);
+			status = tcp_read(transport->tcp, stream_get_tail(s), stream_get_left(s));
 
 		if (status == 0 && transport->blocking)
 		{
@@ -239,7 +239,8 @@ int transport_check_fds(rdpTransport* transport)
 
 		if (length == 0)
 		{
-			printf("transport_check_fds: protocol error, not a TPKT header (%d).\n", header);
+			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
+			freerdp_hexdump(stream_get_head(transport->recv_buffer), pos);
 			return -1;
 		}
 
