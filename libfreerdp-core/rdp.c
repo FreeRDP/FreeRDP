@@ -245,8 +245,8 @@ void rdp_read_set_error_info_data_pdu(STREAM* s)
 
 	stream_read_uint32(s, errorInfo); /* errorInfo (4 bytes) */
 
-	if (errorInfo != 0)
-		printf("Error Info: 0x%08X\n", errorInfo);
+	if (errorInfo != ERRINFO_SUCCESS)
+		rdp_print_errinfo(errorInfo);
 }
 
 void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
@@ -359,6 +359,7 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 initiator;
 	uint16 channelId;
 	uint16 sec_flags;
+	boolean processed;
 	enum DomainMCSPDU MCSPDU;
 
 	/* TODO: Check Fast Path header */
@@ -373,6 +374,7 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->licensed != True)
 	{
+		processed = False;
 		rdp_read_security_header(s, &sec_flags);
 
 		if (sec_flags & SEC_PKT_MASK)
@@ -380,20 +382,27 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 			switch (sec_flags & SEC_PKT_MASK)
 			{
 				case SEC_LICENSE_PKT:
+					processed = True;
 					license_recv(rdp->license, s);
 					break;
 
 				case SEC_REDIRECTION_PKT:
+					processed = True;
 					rdp_read_redirection_packet(rdp, s);
 					break;
 
 				default:
-					//printf("incorrect security flags: 0x%04X\n", sec_flags);
 					break;
 			}
 		}
+
+		if (processed)
+			return;
+		else
+			stream_rewind(s, 4);
 	}
-	else if (channelId != MCS_GLOBAL_CHANNEL_ID)
+
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
 		vchan_process(rdp->vchan, s, channelId);
 	}

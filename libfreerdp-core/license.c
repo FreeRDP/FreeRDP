@@ -19,6 +19,24 @@
 
 #include "license.h"
 
+uint8 LICENSE_MESSAGE_STRINGS[][32] =
+{
+		"",
+		"License Request",
+		"Platform Challenge",
+		"New License",
+		"Upgrade License",
+		"", "", "", "", "", "",
+		"", "", "", "", "", "",
+		"",
+		"License Info",
+		"New License Request",
+		"",
+		"Platform Challenge Response",
+		"", "", "", "", "", "", "", "", "",
+		"Error Alert"
+};
+
 uint8 error_codes[][32] =
 {
 	"ERR_UNKNOWN",
@@ -134,6 +152,8 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type)
 	uint16 wMsgSize;
 	uint16 sec_flags;
 
+	DEBUG_LICENSE("Sending %s Packet", LICENSE_MESSAGE_STRINGS[type & 0x1F]);
+
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
@@ -163,6 +183,8 @@ void license_recv(rdpLicense* license, STREAM* s)
 	uint16 wMsgSize;
 
 	license_read_preamble(s, &bMsgType, &flags, &wMsgSize); /* preamble (4 bytes) */
+
+	DEBUG_LICENSE("Receiving %s Packet", LICENSE_MESSAGE_STRINGS[bMsgType & 0x1F]);
 
 	switch (bMsgType)
 	{
@@ -503,8 +525,6 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 
 void license_read_license_request_packet(rdpLicense* license, STREAM* s)
 {
-	DEBUG_LICENSE("Receiving License Request Packet");
-
 	/* ServerRandom (32 bytes) */
 	stream_read(s, license->server_random, 32);
 
@@ -668,7 +688,6 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	STREAM* s;
 
 	s = license_send_stream_init(license);
-	DEBUG_LICENSE("Sending New License Request Packet");
 
 	license->client_user_name->data = (uint8*)license->rdp->settings->username;
 	license->client_user_name->length = strlen((char*)license->rdp->settings->username);
