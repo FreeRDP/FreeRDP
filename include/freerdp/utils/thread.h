@@ -20,22 +20,34 @@
 #ifndef __THREAD_UTILS_H
 #define __THREAD_UTILS_H
 
-#ifdef _WIN32
-
-#define freerdp_thread_create(_proc, _arg) do { \
-	DWORD thread; \
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)_proc, _arg, 0, &thread); \
-	while (0)
-
-#else
-
+#include <freerdp/types.h>
+#include <freerdp/utils/mutex.h>
+#include <freerdp/utils/wait_obj.h>
+#ifndef _WIN32
 #include <pthread.h>
-#define freerdp_thread_create(_proc, _arg) do { \
-	pthread_t thread; \
-	pthread_create(&thread, 0, _proc, _arg); \
-	pthread_detach(thread); \
-	} while (0)
-
 #endif
+
+typedef struct _freerdp_thread freerdp_thread;
+struct _freerdp_thread
+{
+	freerdp_mutex* mutex;
+
+	struct wait_obj* signals[5];
+	int num_signals;
+
+	int status;
+};
+
+freerdp_thread* freerdp_thread_new(void);
+void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
+void freerdp_thread_stop(freerdp_thread* thread);
+
+#define freerdp_thread_wait(_t) wait_obj_select(_t->signals, _t->num_signals, -1)
+#define freerdp_thread_is_stopped(_t) wait_obj_is_set(_t->signals[0])
+#define freerdp_thread_quit(_t) _t->status = -1
+#define freerdp_thread_signal(_t) wait_obj_set(_t->signals[1])
+#define freerdp_thread_reset(_t) wait_obj_clear(_t->signals[1])
+#define freerdp_thread_lock(_t) freerdp_mutex_lock(_t->mutex)
+#define freerdp_thread_unlock(_t) freerdp_mutex_unlock(_t->mutex)
 
 #endif /* __THREAD_UTILS_H */
