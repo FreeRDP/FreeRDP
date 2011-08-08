@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
@@ -30,7 +29,6 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -77,12 +75,7 @@ struct rdp_svc_plugin_private
 	STREAM* data_in;
 
 	LIST* data_in_list;
-	freerdp_mutex* data_in_mutex;
-
-	struct wait_obj* signals[5];
-	int num_signals;
-
-	int thread_status;
+	freerdp_thread* thread;
 };
 
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
@@ -176,11 +169,11 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 		item = xnew(svc_data_in_item);
 		item->data_in = data_in;
 
-		freerdp_mutex_lock(plugin->priv->data_in_mutex);
+		freerdp_thread_lock(plugin->priv->thread);
 		list_enqueue(plugin->priv->data_in_list, item);
-		freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+		freerdp_thread_unlock(plugin->priv->thread);
 
-		wait_obj_set(plugin->priv->signals[1]);
+		freerdp_thread_signal(plugin->priv->thread);
 	}
 }
 
@@ -191,11 +184,11 @@ static void svc_plugin_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event_in)
 	item = xnew(svc_data_in_item);
 	item->event_in = event_in;
 
-	freerdp_mutex_lock(plugin->priv->data_in_mutex);
+	freerdp_thread_lock(plugin->priv->thread);
 	list_enqueue(plugin->priv->data_in_list, item);
-	freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+	freerdp_thread_unlock(plugin->priv->thread);
 
-	wait_obj_set(plugin->priv->signals[1]);
+	freerdp_thread_signal(plugin->priv->thread);
 }
 
 static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, uint32 dataLength,
@@ -233,12 +226,12 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 	while (1)
 	{
 		/* terminate signal */
-		if (wait_obj_is_set(plugin->priv->signals[0]))
+		if (freerdp_thread_is_stopped(plugin->priv->thread))
 			break;
 
-		freerdp_mutex_lock(plugin->priv->data_in_mutex);
+		freerdp_thread_lock(plugin->priv->thread);
 		item = list_dequeue(plugin->priv->data_in_list);
-		freerdp_mutex_unlock(plugin->priv->data_in_mutex);
+		freerdp_thread_unlock(plugin->priv->thread);
 
 		if (item != NULL)
 		{
@@ -264,22 +257,16 @@ static void* svc_plugin_thread_func(void* arg)
 
 	while (1)
 	{
-		wait_obj_select(plugin->priv->signals, plugin->priv->num_signals, -1);
+		freerdp_thread_wait(plugin->priv->thread);
 
-		/* terminate signal */
-		if (wait_obj_is_set(plugin->priv->signals[0]))
+		if (freerdp_thread_is_stopped(plugin->priv->thread))
 			break;
 
-		/* data_in signal */
-		if (wait_obj_is_set(plugin->priv->signals[1]))
-		{
-			wait_obj_clear(plugin->priv->signals[1]);
-			/* process data in */
-			svc_plugin_process_data_in(plugin);
-		}
+		freerdp_thread_reset(plugin->priv->thread);
+		svc_plugin_process_data_in(plugin);
 	}
 
-	plugin->priv->thread_status = -1;
+	freerdp_thread_quit(plugin->priv->thread);
 
 	DEBUG_SVC("out");
 
@@ -299,44 +286,21 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 	}
 
 	plugin->priv->data_in_list = list_new();
-	plugin->priv->data_in_mutex = freerdp_mutex_new();
+	plugin->priv->thread = freerdp_thread_new();
 
-	/* terminate signal */
-	plugin->priv->signals[plugin->priv->num_signals++] = wait_obj_new();
-	/* data_in signal */
-	plugin->priv->signals[plugin->priv->num_signals++] = wait_obj_new();
-
-	plugin->priv->thread_status = 1;
-
-	freerdp_thread_create(svc_plugin_thread_func, plugin);
+	freerdp_thread_start(plugin->priv->thread, svc_plugin_thread_func, plugin);
 }
 
 static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 {
 	svc_data_in_item* item;
-	struct timespec ts;
-	int i;
 
-	wait_obj_set(plugin->priv->signals[0]);
-	i = 0;
-	ts.tv_sec = 0;
-	ts.tv_nsec = 10000000;
-	while (plugin->priv->thread_status > 0 && i < 1000)
-	{
-		i++;
-		nanosleep(&ts, NULL);
-	}
+	freerdp_thread_stop(plugin->priv->thread);
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
 	xfree(plugin->channel_entry_points.pExtendedData);
 
 	svc_plugin_remove(plugin);
-
-	for (i = 0; i < plugin->priv->num_signals; i++)
-		wait_obj_free(plugin->priv->signals[i]);
-	plugin->priv->num_signals = 0;
-
-	freerdp_mutex_free(plugin->priv->data_in_mutex);
 
 	while ((item = list_dequeue(plugin->priv->data_in_list)) != NULL)
 		svc_data_in_item_free(item);

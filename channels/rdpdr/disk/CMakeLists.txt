@@ -18,6 +18,8 @@
 # limitations under the License.
 
 set(DISK_SRCS
+	disk_file.c
+	disk_file.h
 	disk_main.c
 )
 
