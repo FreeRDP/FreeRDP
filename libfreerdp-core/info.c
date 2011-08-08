@@ -277,6 +277,9 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->autologon)
 		flags |= INFO_AUTOLOGON;
 
+	if (settings->remote_app)
+		flags |= INFO_RAIL;
+
 	if (settings->console_audio)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 

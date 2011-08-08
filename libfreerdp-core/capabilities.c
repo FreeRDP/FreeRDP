@@ -1584,6 +1584,13 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	}
 
+	if (settings->remote_app)
+	{
+		numberCapabilities += 2;
+		rdp_write_remote_programs_capability_set(s, settings);
+		rdp_write_window_list_capability_set(s, settings);
+	}
+
 	if (settings->received_caps[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
 	{
 		numberCapabilities++;
