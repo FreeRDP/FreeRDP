@@ -496,24 +496,19 @@ void gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 {
 	uint8* data;
+	BRUSH* brush;
 	HGDI_BRUSH originalBrush;
 	GDI* gdi = GET_GDI(update);
 
-	if (patblt->brushStyle & CACHED_BRUSH)
+	brush = &patblt->brush;
+
+	if (brush->style & CACHED_BRUSH)
 	{
-		uint8 bpp;
-		uint8* cachedBrush;
-		data = (uint8*) &patblt->brushHatch;
-
-		cachedBrush = brush_get(gdi->cache->brush, patblt->brushHatch, &bpp);
-		memcpy(data, cachedBrush, (bpp / 8) * 64);
-
-		patblt->brushStyle = 0;
+		brush->data = brush_get(gdi->cache->brush, brush->index, &brush->bpp);
+		brush->style = BS_PATTERN;
 	}
 
-	patblt->brushStyle &= 0x7F;
-
-	if (patblt->brushStyle == BS_SOLID)
+	if (brush->style == BS_SOLID)
 	{
 		uint32 color;
 		originalBrush = gdi->drawing->hdc->brush;
@@ -527,14 +522,19 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
 	}
-	else if (patblt->brushStyle == BS_PATTERN)
+	else if (brush->style == BS_PATTERN)
 	{
 		HGDI_BITMAP hBmp;
 
-		data = (uint8*) &patblt->brushHatch;
-
-		data = gdi_mono_image_convert(data, 8, 8, gdi->srcBpp, gdi->dstBpp,
+		if (brush->bpp > 1)
+		{
+			data = gdi_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+		}
+		else
+		{
+			data = gdi_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
 				patblt->backColor, patblt->foreColor, gdi->clrconv);
+		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 
@@ -549,7 +549,7 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		printf("unimplemented brush style:%d\n", patblt->brushStyle);
+		printf("unimplemented brush style:%d\n", brush->style);
 	}
 }
 

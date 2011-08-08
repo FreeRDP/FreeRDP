@@ -170,6 +170,7 @@ void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags)
 void rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	rdp->activated = True;
+	update_reset_state(rdp->update);
 	rdp->update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(rdp->update->SwitchSurface, rdp->update, &(rdp->update->switch_surface));
 }

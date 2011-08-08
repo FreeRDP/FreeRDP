@@ -233,7 +233,7 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
 
-	printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+	//printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	stream_set_pos(s, length);
 	transport_write(rdp->transport, s);

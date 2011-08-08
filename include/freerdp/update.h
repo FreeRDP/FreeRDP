@@ -33,6 +33,19 @@ struct _BOUNDS
 };
 typedef struct _BOUNDS BOUNDS;
 
+struct _BRUSH
+{
+	uint8 x;
+	uint8 y;
+	uint8 bpp;
+	uint8 style;
+	uint8 hatch;
+	uint8 index;
+	uint8* data;
+	uint8 p8x8[8];
+};
+typedef struct _BRUSH BRUSH;
+
 /* Bitmap Updates */
 
 struct _BITMAP_DATA
@@ -102,11 +115,7 @@ struct _PATBLT_ORDER
 	uint8 bRop;
 	uint32 backColor;
 	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 };
 typedef struct _PATBLT_ORDER PATBLT_ORDER;
 
@@ -173,11 +182,7 @@ struct _MULTI_PATBLT_ORDER
 	uint8 bRop;
 	uint32 backColor;
 	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 	uint8 numRectangles;
 	uint16 cbData;
 	DELTA_RECT rectangles[45];
@@ -285,11 +290,7 @@ struct _MEM3BLT_ORDER
 	sint16 nYSrc;
 	uint32 backColor;
 	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 	uint16 cacheIndex;
 };
 typedef struct _MEM3BLT_ORDER MEM3BLT_ORDER;
@@ -321,11 +322,7 @@ struct _GLYPH_INDEX_ORDER
 	sint16 opTop;
 	sint16 opRight;
 	sint16 opBottom;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 	sint16 x;
 	sint16 y;
 	uint8 cbData;
@@ -398,11 +395,7 @@ struct _POLYGON_CB_ORDER
 	uint8 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 	uint8 nDeltaEntries;
 	uint8 cbData;
 	uint8* codeDeltaList;
@@ -431,11 +424,7 @@ struct _ELLIPSE_CB_ORDER
 	uint8 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
-	uint8 brushOrgX;
-	uint8 brushOrgY;
-	uint8 brushStyle;
-	uint8 brushHatch;
-	uint8 brushExtra[7];
+	BRUSH brush;
 };
 typedef struct _ELLIPSE_CB_ORDER ELLIPSE_CB_ORDER;
 

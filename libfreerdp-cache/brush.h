@@ -32,9 +32,11 @@ typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
 
 struct rdp_brush
 {
-	uint8 maxEntries;
 	rdpSettings* settings;
+	uint8 maxEntries;
+	uint8 maxMonoEntries;
 	BRUSH_ENTRY* entries;
+	BRUSH_ENTRY* monoEntries;
 };
 typedef struct rdp_brush rdpBrush;
 

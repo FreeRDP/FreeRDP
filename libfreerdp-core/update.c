@@ -162,7 +162,7 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
-	printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, update);
 
@@ -208,6 +208,12 @@ void update_recv(rdpUpdate* update, STREAM* s)
 		if (type == DATA_PDU_TYPE_UPDATE)
 			update_recv(update, s);
 	}
+}
+
+void update_reset_state(rdpUpdate* update)
+{
+	memset(&update->order_info, 0, sizeof(ORDER_INFO));
+	update->order_info.orderType = ORDER_TYPE_PATBLT;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

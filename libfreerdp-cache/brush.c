@@ -26,18 +26,32 @@ void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp)
 {
 	void* entry;
 
-	if (index > brush->maxEntries)
+	if (*bpp == 1)
 	{
-		printf("invalid brush index: 0x%04X\n", index);
-		return NULL;
-	}
+		if (index > brush->maxMonoEntries)
+		{
+			printf("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			return NULL;
+		}
 
-	*bpp = brush->entries[index].bpp;
-	entry = brush->entries[index].entry;
+		*bpp = brush->monoEntries[index].bpp;
+		entry = brush->monoEntries[index].entry;
+	}
+	else
+	{
+		if (index > brush->maxEntries)
+		{
+			printf("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			return NULL;
+		}
+
+		*bpp = brush->entries[index].bpp;
+		entry = brush->entries[index].entry;
+	}
 
 	if (entry == NULL)
 	{
-		printf("invalid brush at index: 0x%04X\n", index);
+		printf("invalid brush (%d bpp) at index: 0x%04X\n", *bpp, index);
 		return NULL;
 	}
 
@@ -46,14 +60,28 @@ void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp)
 
 void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp)
 {
-	if (index > brush->maxEntries)
+	if (bpp == 1)
 	{
-		printf("invalid brush index: 0x%04X\n", index);
-		return;
-	}
+		if (index > brush->maxMonoEntries)
+		{
+			printf("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			return;
+		}
 
-	brush->entries[index].bpp = bpp;
-	brush->entries[index].entry = entry;
+		brush->monoEntries[index].bpp = bpp;
+		brush->monoEntries[index].entry = entry;
+	}
+	else
+	{
+		if (index > brush->maxEntries)
+		{
+			printf("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			return;
+		}
+
+		brush->entries[index].bpp = bpp;
+		brush->entries[index].entry = entry;
+	}
 }
 
 rdpBrush* brush_new(rdpSettings* settings)
@@ -67,8 +95,10 @@ rdpBrush* brush_new(rdpSettings* settings)
 		brush->settings = settings;
 
 		brush->maxEntries = 64;
+		brush->maxMonoEntries = 64;
 
 		brush->entries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
+		brush->monoEntries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
 	}
 
 	return brush;

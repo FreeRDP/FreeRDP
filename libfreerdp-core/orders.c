@@ -283,6 +283,44 @@ void update_read_delta(STREAM* s, sint16* value)
 	}
 }
 
+void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
+{
+	if (fieldFlags & ORDER_FIELD_01)
+		stream_read_uint8(s, brush->x);
+
+	if (fieldFlags & ORDER_FIELD_02)
+		stream_read_uint8(s, brush->y);
+
+	if (fieldFlags & ORDER_FIELD_03)
+		stream_read_uint8(s, brush->style);
+
+	if (fieldFlags & ORDER_FIELD_04)
+		stream_read_uint8(s, brush->hatch);
+
+	if (brush->style & CACHED_BRUSH)
+	{
+		brush->index = brush->hatch;
+
+		brush->bpp = BMF_BPP[brush->style & 0x0F];
+
+		if (brush->bpp == 0)
+			brush->bpp = 1;
+	}
+
+	if (fieldFlags & ORDER_FIELD_05)
+	{
+		brush->data = (uint8*) brush->p8x8;
+		stream_read_uint8(s, brush->data[7]);
+		stream_read_uint8(s, brush->data[6]);
+		stream_read_uint8(s, brush->data[5]);
+		stream_read_uint8(s, brush->data[4]);
+		stream_read_uint8(s, brush->data[3]);
+		stream_read_uint8(s, brush->data[2]);
+		stream_read_uint8(s, brush->data[1]);
+		brush->data[0] = brush->hatch;
+	}
+}
+
 void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 {
 	int i;
@@ -409,20 +447,7 @@ void update_read_patblt_order(STREAM* s, ORDER_INFO* orderInfo, PATBLT_ORDER* pa
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 		update_read_color(s, &patblt->foreColor);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, patblt->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, patblt->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, patblt->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read_uint8(s, patblt->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read(s, patblt->brushExtra, 7);
+	update_read_brush(s, &patblt->brush, orderInfo->fieldFlags >> 7);
 }
 
 void update_read_scrblt_order(STREAM* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
@@ -552,20 +577,7 @@ void update_read_multi_patblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_PATB
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 		update_read_color(s, &multi_patblt->foreColor);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, multi_patblt->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, multi_patblt->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, multi_patblt->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read_uint8(s, multi_patblt->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read(s, multi_patblt->brushExtra, 7);
+	update_read_brush(s, &multi_patblt->brush, orderInfo->fieldFlags >> 7);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_13)
 		stream_read_uint8(s, multi_patblt->numRectangles);
@@ -809,20 +821,7 @@ void update_read_mem3blt_order(STREAM* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* 
 	if (orderInfo->fieldFlags & ORDER_FIELD_10)
 		update_read_color(s, &mem3blt->foreColor);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read_uint8(s, mem3blt->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read_uint8(s, mem3blt->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		stream_read_uint8(s, mem3blt->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_14)
-		stream_read_uint8(s, mem3blt->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_15)
-		stream_read(s, mem3blt->brushExtra, 7);
+	update_read_brush(s, &mem3blt->brush, orderInfo->fieldFlags >> 10);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_16)
 		stream_read_uint16(s, mem3blt->cacheIndex);
@@ -893,20 +892,7 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 	if (orderInfo->fieldFlags & ORDER_FIELD_14)
 		stream_read_uint16(s, glyph_index->opBottom);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_15)
-		stream_read_uint8(s, glyph_index->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_16)
-		stream_read_uint8(s, glyph_index->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_17)
-		stream_read_uint8(s, glyph_index->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_18)
-		stream_read_uint8(s, glyph_index->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_19)
-		stream_read(s, glyph_index->brushExtra, 7);
+	update_read_brush(s, &glyph_index->brush, orderInfo->fieldFlags >> 14);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_20)
 		stream_read_uint16(s, glyph_index->x);
@@ -1076,20 +1062,7 @@ void update_read_polygon_cb_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_CB_O
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
 		update_read_color(s, &polygon_cb->foreColor);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_07)
-		stream_read_uint8(s, polygon_cb->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_08)
-		stream_read_uint8(s, polygon_cb->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, polygon_cb->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, polygon_cb->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read(s, polygon_cb->brushExtra, 7);
+	update_read_brush(s, &polygon_cb->brush, orderInfo->fieldFlags >> 6);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_12)
 		stream_read_uint8(s, polygon_cb->nDeltaEntries);
@@ -1151,20 +1124,7 @@ void update_read_ellipse_cb_order(STREAM* s, ORDER_INFO* orderInfo, ELLIPSE_CB_O
 	if (orderInfo->fieldFlags & ORDER_FIELD_08)
 		update_read_color(s, &ellipse_cb->foreColor);
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-		stream_read_uint8(s, ellipse_cb->brushOrgX);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_10)
-		stream_read_uint8(s, ellipse_cb->brushOrgY);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_11)
-		stream_read_uint8(s, ellipse_cb->brushStyle);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read_uint8(s, ellipse_cb->brushHatch);
-
-	if (orderInfo->fieldFlags & ORDER_FIELD_13)
-		stream_read(s, ellipse_cb->brushExtra, 7);
+	update_read_brush(s, &ellipse_cb->brush, orderInfo->fieldFlags >> 8);
 }
 
 /* Secondary Drawing Orders */
@@ -1409,6 +1369,7 @@ void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)
 
 void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_order, uint16 flags)
 {
+	int i;
 	int size;
 	uint8 iBitmapFormat;
 
@@ -1430,8 +1391,6 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 
 		if (cache_brush_order->bpp == 1)
 		{
-			int i;
-
 			if (cache_brush_order->length != 8)
 			{
 				printf("incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
@@ -1455,11 +1414,14 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 			else
 			{
 				/* uncompressed brush */
-				stream_read(s, cache_brush_order->data, cache_brush_order->length);
+				int scanline = (cache_brush_order->bpp / 8) * 8;
+
+				for (i = 7; i >= 0; i--)
+				{
+					stream_read(s, &cache_brush_order->data[i * scanline], scanline);
+				}
 			}
 		}
-
-		stream_read(s, cache_brush_order->data, cache_brush_order->length);
 	}
 }
 
@@ -1613,10 +1575,10 @@ void update_read_field_flags(STREAM* s, uint32* fieldFlags, uint8 flags, uint8 f
 
 	if (flags & ORDER_ZERO_FIELD_BYTE_BIT1)
 	{
-		if (fieldBytes < 2)
-			fieldBytes = 0;
-		else
+		if (fieldBytes > 1)
 			fieldBytes -= 2;
+		else
+			fieldBytes = 0;
 	}
 
 	*fieldFlags = 0;

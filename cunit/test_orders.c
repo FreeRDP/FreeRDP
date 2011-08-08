@@ -117,9 +117,9 @@ void test_read_patblt_order(void)
 	CU_ASSERT(patblt.bRop == 240);
 	CU_ASSERT(patblt.backColor == 0x00FFFF);
 	CU_ASSERT(patblt.foreColor == 0x00EF5B);
-	CU_ASSERT(patblt.brushOrgX == 0);
-	CU_ASSERT(patblt.brushOrgY == 0);
-	CU_ASSERT(patblt.brushStyle == (BMF_1BPP | CACHED_BRUSH));
+	CU_ASSERT(patblt.brush.x == 0);
+	CU_ASSERT(patblt.brush.y == 0);
+	CU_ASSERT(patblt.brush.style == (BMF_1BPP | CACHED_BRUSH));
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(patblt_order) - 1));
 }
@@ -544,9 +544,9 @@ void test_read_polygon_cb_order(void)
 	CU_ASSERT(polygon_cb.fillMode == 1);
 	CU_ASSERT(polygon_cb.backColor == 0);
 	CU_ASSERT(polygon_cb.foreColor == 0x00000008);
-	CU_ASSERT(polygon_cb.brushOrgX == 4);
-	CU_ASSERT(polygon_cb.brushOrgY == 3);
-	CU_ASSERT(polygon_cb.brushStyle == 0x81);
+	CU_ASSERT(polygon_cb.brush.x == 4);
+	CU_ASSERT(polygon_cb.brush.y == 3);
+	CU_ASSERT(polygon_cb.brush.style == 0x81);
 	CU_ASSERT(polygon_cb.nDeltaEntries == 3);
 	CU_ASSERT(polygon_cb.cbData == 5);
 
@@ -722,8 +722,9 @@ void test_read_switch_surface_order(void)
 
 int opaque_rect_count;
 int polyline_count;
+int patblt_count;
 
-uint8 orders_update[] =
+uint8 orders_update_1[] =
 	"\x00\x00\x33\xd0\x07\x00\x80\xba\x0d\x0a\x7f\x1e\x2c\x4d\x00\x36"
 	"\x02\xd3\x00\x47\x00\x4d\x00\xf0\x01\x87\x00\xc2\xdc\xff\x05\x7f"
 	"\x0f\x67\x01\x90\x01\x8e\x01\xa5\x01\x67\x01\x90\x01\x28\x00\x16"
@@ -732,6 +733,11 @@ uint8 orders_update[] =
 	"\x05\x66\x6b\x14\x15\x6c\x1d\x0a\x0f\xd0\x16\x64\x01\x15\xff\x50"
 	"\x03\x15\x0f\xf0\x65\x01\x15\xfe\x65\x01\xb0\xfd\x1d\x16\x01\xf0"
 	"\xff\xff\x01\x01\x7a";
+
+uint8 orders_update_2[] =
+	"\x00\x00\x45\x62\x03\x00\x93\x14\x55\x01\x50\xff\xff\xff\x55\x01"
+	"\x50\x01\x01\x01\x55\x01\x50\xff\xff\xff\x16\x00\x17\x00\xea\x03"
+	"\xea\x03\x02\x00\x85\x02\x16\x00\x02\x00\x00\x00\x03\x00\x14\xb2";
 
 void test_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 {
@@ -743,6 +749,11 @@ void test_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	polyline_count++;
 }
 
+void test_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+{
+	patblt_count++;
+}
+
 void test_update_recv_orders(void)
 {
 	STREAM* s;
@@ -750,17 +761,27 @@ void test_update_recv_orders(void)
 
 	s = stream_new(0);
 	update = update_new(NULL);
-	s->p = s->data = orders_update;
 
 	opaque_rect_count = 0;
 	polyline_count = 0;
+	patblt_count = 0;
 
 	update->OpaqueRect = test_opaque_rect;
 	update->Polyline = test_polyline;
+	update->PatBlt = test_patblt;
+
+	s->p = s->data = orders_update_1;
 
 	update_recv(update, s);
 
 	CU_ASSERT(opaque_rect_count == 5);
 	CU_ASSERT(polyline_count == 2);
+
+	update->order_info.orderType = ORDER_TYPE_PATBLT;
+	s->p = s->data = orders_update_2;
+
+	update_recv(update, s);
+
+	CU_ASSERT(patblt_count == 3);
 }
 
