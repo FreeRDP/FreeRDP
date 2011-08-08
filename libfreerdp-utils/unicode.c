@@ -28,8 +28,8 @@ char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len)
 {
 	unsigned char *conv_pin = pin;
 	size_t conv_in_len = in_len;
-	char *pout = xmalloc(in_len + 1), *conv_pout = pout;
-	size_t conv_out_len = in_len;
+	char *pout = xmalloc(in_len * 2 + 1), *conv_pout = pout;
+	size_t conv_out_len = in_len * 2;
 
 #ifdef HAVE_ICONV
 	if (iconv(uniconv->in_iconv_h, (ICONV_CONST char **) &conv_pin, &conv_in_len, &conv_pout, &conv_out_len) == (size_t) - 1)
@@ -41,18 +41,47 @@ char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len)
 #else
 	while (conv_in_len >= 2)
 	{
-		if ((signed char)(*conv_pin) < 0)
-		{
-			printf("freerdp_uniconv_in: wrong input conversion of char %d\n", *conv_pin);
-		}
-		*conv_pout++ = *conv_pin++;
-		if ((*conv_pin) != 0)
-		{
-			printf("freerdp_uniconv_in: wrong input conversion skipping non-zero char %d\n", *conv_pin);
-		}
-		conv_pin++;
+		unsigned int wc;
+
+		wc = (unsigned int)(unsigned char)(*conv_pin++);
+		wc += ((unsigned int)(unsigned char)(*conv_pin++)) << 8;
 		conv_in_len -= 2;
-		conv_out_len--;
+
+		if (wc >= 0xD800 && wc <= 0xDFFF && conv_in_len >= 2)
+		{
+			/* Code points U+10000 to U+10FFFF using surrogate pair */
+			wc = ((wc - 0xD800) << 10) + 0x10000;
+			wc += (unsigned int)(unsigned char)(*conv_pin++);
+			wc += ((unsigned int)(unsigned char)(*conv_pin++) - 0xDC) << 8;
+			conv_in_len -= 2;
+		}
+
+		if (wc <= 0x7F)
+		{
+			*conv_pout++ = (char)wc;
+			conv_out_len--;
+		}
+		else if (wc <= 0x07FF)
+		{
+			*conv_pout++ = (char)(0xC0 + (wc >> 6));
+			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
+			conv_out_len -= 2;
+		}
+		else if (wc <= 0xFFFF)
+		{
+			*conv_pout++ = (char)(0xE0 + (wc >> 12));
+			*conv_pout++ = (char)(0x80 + ((wc >> 6) & 0x3F));
+			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
+			conv_out_len -= 3;
+		}
+		else
+		{
+			*conv_pout++ = (char)(0xF0 + (wc >> 18));
+			*conv_pout++ = (char)(0x80 + ((wc >> 12) & 0x3F));
+			*conv_pout++ = (char)(0x80 + ((wc >> 6) & 0x3F));
+			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
+			conv_out_len -= 4;
+		}
 	}
 #endif
 
@@ -97,14 +126,47 @@ char* freerdp_uniconv_out(UNICONV *uniconv, char *str, size_t *pout_len)
 #else
 	while ((ibl > 0) && (obl > 0))
 	{
-		if ((signed char)(*pin) < 0)
-		{
-			return NULL;
-		}
-		*pout++ = *pin++;
-		*pout++ = 0;
+		unsigned int wc;
+
+		wc = (unsigned int)(unsigned char)(*pin++);
 		ibl--;
-		obl -= 2;
+		if (wc >= 0xF0)
+		{
+			wc = (wc - 0xF0) << 18;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 12;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 6;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
+			ibl -= 3;
+		}
+		else if (wc >= 0xE0)
+		{
+			wc = (wc - 0xE0) << 12;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 6;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
+			ibl -= 2;
+		}
+		else if (wc >= 0xC0)
+		{
+			wc = (wc - 0xC0) << 6;
+			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
+			ibl -= 1;
+		}
+
+		if (wc <= 0xFFFF)
+		{
+			*pout++ = (char)(wc & 0xFF);
+			*pout++ = (char)(wc >> 8);
+			obl -= 2;
+		}
+		else
+		{
+			wc -= 0x10000;
+			*pout++ = (char)((wc >> 10) & 0xFF);
+			*pout++ = (char)((wc >> 18) + 0xD8);
+			*pout++ = (char)(wc & 0xFF);
+			*pout++ = (char)(((wc >> 8) & 0x03) + 0xDC);
+			obl -= 4;
+		}
 	}
 #endif
 
