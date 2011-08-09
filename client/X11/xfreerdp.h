@@ -25,6 +25,10 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/chanman.h>
 
+typedef struct xf_info xfInfo;
+
+#include "xf_window.h"
+
 #define SET_XFI(_instance, _xfi) (_instance)->param1 = _xfi
 #define GET_XFI(_instance) ((xfInfo*) ((_instance)->param1))
 
@@ -39,7 +43,6 @@ struct xf_info
 	int depth;
 	int width;
 	int height;
-	Window window;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
@@ -54,6 +57,7 @@ struct xf_info
 	boolean unobscured;
 	boolean decoration;
 	freerdp* instance;
+	xfWindow* window;
 
 	GC gc_mono;
 	GC gc_default;
@@ -66,8 +70,8 @@ struct xf_info
 	uint32 keyboard_layout_id;
 	boolean pressed_keys[256];
 	XModifierKeymap* modifier_map;
+	XSetWindowAttributes attribs;
 };
-typedef struct xf_info xfInfo;
 
 void xf_toggle_fullscreen(xfInfo* xfi);
 

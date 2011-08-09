@@ -34,13 +34,13 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event)
 	int cx;
 	int cy;
 
-	if (event->xexpose.window == xfi->window)
+	if (event->xexpose.window == xfi->window->handle)
 	{
 		x = event->xexpose.x;
 		y = event->xexpose.y;
 		cx = event->xexpose.width;
 		cy = event->xexpose.height;
-		XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default, x, y, cx, cy, x, y);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, cx, cy, x, y);
 	}
 
 	return True;
@@ -48,7 +48,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event)
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event)
 {
-	if (event->xvisibility.window == xfi->window)
+	if (event->xvisibility.window == xfi->window->handle)
 		xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
 
 	return True;
@@ -60,7 +60,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event)
 
 	input = xfi->instance->input;
 
-	if (event->xmotion.window == xfi->window)
+	if (event->xmotion.window == xfi->window->handle)
 	{
 		if (xfi->mouse_motion != True)
 		{
@@ -72,7 +72,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event)
 	}
 
 	if (xfi->fullscreen)
-		XSetInputFocus(xfi->display, xfi->window, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 
 	return True;
 }
@@ -85,7 +85,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event)
 
 	input = xfi->instance->input;
 
-	if (event->xbutton.window == xfi->window)
+	if (event->xbutton.window == xfi->window->handle)
 	{
 		x = 0;
 		y = 0;
@@ -144,7 +144,7 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event)
 
 	input = xfi->instance->input;
 
-	if (event->xbutton.window == xfi->window)
+	if (event->xbutton.window == xfi->window->handle)
 	{
 		flags = 0;
 
@@ -221,7 +221,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event)
 	xfi->focused = True;
 
 	if (xfi->mouse_active)
-		XGrabKeyboard(xfi->display, xfi->window, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	xf_kbd_focus_in(xfi);
 
@@ -274,10 +274,10 @@ boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event)
 	xfi->mouse_active = True;
 
 	if (xfi->fullscreen)
-		XSetInputFocus(xfi->display, xfi->window, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 
 	if (xfi->focused)
-		XGrabKeyboard(xfi->display, xfi->window, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	return True;
 }

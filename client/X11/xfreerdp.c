@@ -33,19 +33,6 @@
 
 #include "xfreerdp.h"
 
-#define MWM_HINTS_DECORATIONS   (1L << 1)
-#define PROP_MOTIF_WM_HINTS_ELEMENTS    5
-
-struct _PropMotifWmHints
-{
-	uint32 flags;
-	uint32 functions;
-	uint32 decorations;
-	sint32 inputMode;
-	uint32 status;
-};
-typedef struct _PropMotifWmHints PropMotifWmHints;
-
 freerdp_sem g_sem;
 static int g_thread_count = 0;
 
@@ -82,7 +69,7 @@ void xf_end_paint(rdpUpdate* update)
 	h = gdi->primary->hdc->hwnd->invalid->h;
 
 	XPutImage(xfi->display, xfi->primary, xfi->gc_default, xfi->image, x, y, x, y, w, h);
-	XCopyArea(xfi->display, xfi->primary, xfi->window, xfi->gc_default, x, y, w, h, x, y);
+	XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, w, h, x, y);
 	XFlush(xfi->display);
 }
 
@@ -176,7 +163,7 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 {
 	Pixmap contents = 0;
 
-	contents = XCreatePixmap(xfi->display, xfi->window, xfi->width, xfi->height, xfi->depth);
+	contents = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
 	//xf_destroy_window(xfi);
@@ -262,7 +249,6 @@ boolean xf_post_connect(freerdp* instance)
 	Atom protocol_atom;
 	XSizeHints *size_hints;
 	XClassHint *class_hints;
-	XSetWindowAttributes attribs;
 
 	xfi = GET_XFI(instance);
 	SET_XFI(instance->update, xfi);
@@ -279,71 +265,16 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : gdi->width;
 	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : gdi->height;
 
-	attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
-	attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
-	attribs.backing_store = xfi->primary ? NotUseful : Always;
-	attribs.override_redirect = xfi->fullscreen;
-	attribs.colormap = xfi->colormap;
+	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
+	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
+	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
+	xfi->attribs.override_redirect = xfi->fullscreen;
+	xfi->attribs.colormap = xfi->colormap;
 
-	xfi->window = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-		0, 0, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
-		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-		CWBorderPixel, &attribs);
+	xfi->window = window_create(xfi, "xfreerdp");
 
-	class_hints = XAllocClassHint();
-
-	if (class_hints != NULL)
-	{
-		class_hints->res_name = "xfreerdp";
-		class_hints->res_class = "freerdp";
-		XSetClassHint(xfi->display, xfi->window, class_hints);
-		XFree(class_hints);
-	}
-
-	size_hints = XAllocSizeHints();
-
-	if (size_hints)
-	{
-		size_hints->flags = PMinSize | PMaxSize;
-		size_hints->min_width = size_hints->max_width = xfi->width;
-		size_hints->min_height = size_hints->max_height = xfi->height;
-		XSetWMNormalHints(xfi->display, xfi->window, size_hints);
-		XFree(size_hints);
-	}
-
-	input_mask =
-		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
-		VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
-		PointerMotionMask | ExposureMask;
-
-	XSelectInput(xfi->display, xfi->window, input_mask);
-	XMapWindow(xfi->display, xfi->window);
-
-	if (xfi->decoration == False)
-	{
-		Atom atom;
-		PropMotifWmHints hints;
-
-		hints.decorations = 0;
-		hints.flags = MWM_HINTS_DECORATIONS;
-
-		atom = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
-
-		if (!atom)
-		{
-			printf("xf_post_connect: failed to obtain atom _MOTIF_WM_HINTS\n");
-		}
-		else
-		{
-			XChangeProperty(xfi->display, xfi->window, atom, atom, 32,
-					PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
-		}
-	}
-
-	if (xfi->fullscreen)
-	{
-		XSetInputFocus(xfi->display, xfi->window, RevertToParent, CurrentTime);
-	}
+	window_show_decorations(xfi, xfi->window, xfi->decoration);
+	window_fullscreen(xfi, xfi->window, xfi->fullscreen);
 
 	/* wait for VisibilityNotify */
 	do
@@ -357,19 +288,19 @@ boolean xf_post_connect(freerdp* instance)
 
 	protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
 	kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
-	XSetWMProtocols(xfi->display, xfi->window, &kill_atom, 1);
+	XSetWMProtocols(xfi->display, xfi->window->handle, &kill_atom, 1);
 
 	if (!xfi->gc)
-		xfi->gc = XCreateGC(xfi->display, xfi->window, GCGraphicsExposures, &gcv);
+		xfi->gc = XCreateGC(xfi->display, xfi->window->handle, GCGraphicsExposures, &gcv);
 
 	if (!xfi->primary)
-		xfi->primary = XCreatePixmap(xfi->display, xfi->window, xfi->width, xfi->height, xfi->depth);
+		xfi->primary = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 
 	xfi->drawing = xfi->primary;
 
-	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window, 8, 8, 1);
+	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window->handle, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
-	xfi->gc_default = XCreateGC(xfi->display, xfi->window, GCGraphicsExposures, &gcv);
+	xfi->gc_default = XCreateGC(xfi->display, xfi->window->handle, GCGraphicsExposures, &gcv);
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
 	xfi->modifier_map = XGetModifierMapping(xfi->display);
@@ -451,8 +382,8 @@ void xf_window_free(xfInfo* xfi)
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;
 
-	XDestroyWindow(xfi->display, xfi->window);
-	xfi->window = 0;
+	window_destroy(xfi, xfi->window);
+	xfi->window = NULL;
 
 	if (xfi->primary)
 	{

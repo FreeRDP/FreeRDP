@@ -106,7 +106,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 	uint32 state;
 	Window wdummy;
 
-	XQueryPointer(xfi->display, xfi->window,
+	XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
 
 	return state;
