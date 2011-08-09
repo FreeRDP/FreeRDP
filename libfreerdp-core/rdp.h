@@ -24,6 +24,7 @@ typedef struct rdp_rdp rdpRdp;
 
 #include "mcs.h"
 #include "tpkt.h"
+#include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"
 #include "input.h"

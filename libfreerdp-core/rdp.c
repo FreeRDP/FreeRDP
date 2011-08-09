@@ -351,7 +351,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param s stream
  */
 
-void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
+static void rdp_process_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 {
 	int length;
 	uint16 pduType;
@@ -361,8 +361,6 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 sec_flags;
 	boolean processed;
 	enum DomainMCSPDU MCSPDU;
-
-	/* TODO: Check Fast Path header */
 
 	MCSPDU = DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
@@ -433,6 +431,21 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 				break;
 		}
 	}
+}
+
+static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
+{
+	uint32 length = fastpath_read_header(s, NULL);
+
+	printf("FastPath PDU: length=%d\n", length);
+}
+
+static void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
+{
+	if (tpkt_verify_header(s))
+		rdp_process_tpkt_pdu(rdp, s);
+	else
+		rdp_process_fastpath_pdu(rdp, s);
 }
 
 /**
