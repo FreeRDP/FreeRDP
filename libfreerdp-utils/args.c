@@ -175,11 +175,12 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
-			settings->rfx_flags = 1;
-			settings->ui_decode_flags = 1;
+			settings->rfx_decode = True;
+			settings->fast_path_input = True;
 			settings->color_depth = 32;
 			settings->frame_acknowledge = False;
 			settings->performance_flags = PERF_FLAG_NONE;
+			settings->large_pointer = True;
 		}
 		else if (strcmp("-m", argv[index]) == 0)
 		{

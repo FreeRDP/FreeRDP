@@ -24,6 +24,7 @@ typedef struct rdp_rdp rdpRdp;
 
 #include "mcs.h"
 #include "tpkt.h"
+#include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"
 #include "input.h"
@@ -119,6 +120,7 @@ struct rdp_rdp
 	struct rdp_nego* nego;
 	struct rdp_input* input;
 	struct rdp_update* update;
+	struct rdp_fastpath* fastpath;
 	struct rdp_license* license;
 	struct rdp_settings* settings;
 	struct rdp_registry* registry;
