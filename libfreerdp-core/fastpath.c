@@ -41,15 +41,15 @@
  * @return length
  */
 
-uint16 fastpath_read_header(STREAM* s, uint8* encryptionFlags)
+uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 header;
 	uint16 length;
 	uint8 t;
 
 	stream_read_uint8(s, header);
-	if (encryptionFlags != NULL)
-		*encryptionFlags = (header & 0xC0) >> 6;
+	if (fastpath != NULL)
+		fastpath->encryptionFlags = (header & 0xC0) >> 6;
 
 	stream_read_uint8(s, length); /* length1 */
 	/* If most significant bit is not set, length2 is not presented. */
@@ -62,4 +62,193 @@ uint16 fastpath_read_header(STREAM* s, uint8* encryptionFlags)
 	}
 
 	return length;
+}
+
+static int fastpath_recv_update_surfcmd_surface_bits(rdpFastPath* fastpath, STREAM* s)
+{
+	uint32 bitmapDataLength;
+
+	stream_seek(s, 16);
+	stream_read_uint32(s, bitmapDataLength);
+	stream_seek(s, bitmapDataLength);
+
+	/*printf("surface_bits %d\n", bitmapDataLength);*/
+
+	return 20 + bitmapDataLength;
+}
+
+static int fastpath_recv_update_surfcmd_frame_marker(rdpFastPath* fastpath, STREAM* s)
+{
+	uint16 frameAction;
+	uint32 frameId;
+	STREAM* ack;
+
+	stream_read_uint16(s, frameAction);
+	stream_read_uint32(s, frameId);
+	/*printf("frameAction %d frameId %d\n", frameAction, frameId);*/
+
+	return 6;
+}
+
+static void fastpath_recv_update_surfcmds(rdpFastPath* fastpath, uint16 size, STREAM* s)
+{
+	uint16 cmdType;
+
+	while (size > 2)
+	{
+		stream_read_uint16(s, cmdType);
+		size -= 2;
+
+		switch (cmdType)
+		{
+			case CMDTYPE_SET_SURFACE_BITS:
+			case CMDTYPE_STREAM_SURFACE_BITS:
+				size -= fastpath_recv_update_surfcmd_surface_bits(fastpath, s);
+				break;
+
+			case CMDTYPE_FRAME_MARKER:
+				size -= fastpath_recv_update_surfcmd_frame_marker(fastpath, s);
+				break;
+
+			default:
+				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
+				return;
+		}
+	}
+}
+
+static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16 size, STREAM* s)
+{
+	switch (updateCode)
+	{
+		case FASTPATH_UPDATETYPE_ORDERS:
+			printf("FASTPATH_UPDATETYPE_ORDERS\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_BITMAP:
+			printf("FASTPATH_UPDATETYPE_BITMAP\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_PALETTE:
+			printf("FASTPATH_UPDATETYPE_PALETTE\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
+			break;
+
+		case FASTPATH_UPDATETYPE_SURFCMDS:
+			fastpath_recv_update_surfcmds(fastpath, size, s);
+			break;
+
+		case FASTPATH_UPDATETYPE_PTR_NULL:
+			printf("FASTPATH_UPDATETYPE_PTR_NULL\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
+			printf("FASTPATH_UPDATETYPE_PTR_DEFAULT\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_PTR_POSITION:
+			printf("FASTPATH_UPDATETYPE_PTR_POSITION\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_COLOR:
+			printf("FASTPATH_UPDATETYPE_COLOR\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_CACHED:
+			printf("FASTPATH_UPDATETYPE_CACHED\n");
+			break;
+
+		case FASTPATH_UPDATETYPE_POINTER:
+			printf("FASTPATH_UPDATETYPE_POINTER\n");
+			break;
+
+		default:
+			DEBUG_WARN("unknown updateCode 0x%X", updateCode);
+			break;
+	}
+}
+
+static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
+{
+	uint8 updateHeader;
+	uint8 updateCode;
+	uint8 fragmentation;
+	uint8 compression;
+	uint8 compressionFlags;
+	uint16 size;
+	STREAM* update_stream;
+	int next_pos;
+
+	stream_read_uint8(s, updateHeader);
+	updateCode = updateHeader & 0x0F;
+	fragmentation = (updateHeader >> 4) & 0x03;
+	compression = (updateHeader >> 6) & 0x03;
+
+	if (compression == FASTPATH_OUTPUT_COMPRESSION_USED)
+		stream_read_uint8(s, compressionFlags);
+	else
+		compressionFlags = 0;
+
+	stream_read_uint16(s, size);
+	next_pos = stream_get_pos(s) + size;
+
+	if (compressionFlags != 0)
+	{
+		printf("FastPath compression is not yet implemented!\n");
+		stream_seek(s, size);
+		return;
+	}
+
+	update_stream = NULL;
+	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
+	{
+		update_stream = s;
+	}
+	else
+	{
+		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
+			stream_set_pos(fastpath->updateData, 0);
+
+		stream_check_size(fastpath->updateData, size);
+		stream_copy(fastpath->updateData, s, size);
+
+		if (fragmentation == FASTPATH_FRAGMENT_LAST)
+		{
+			update_stream = fastpath->updateData;
+			size = stream_get_length(update_stream);
+			stream_set_pos(update_stream, 0);
+		}
+	}
+
+	if (update_stream)
+		fastpath_recv_update(fastpath, updateCode, size, update_stream);
+
+	stream_set_pos(s, next_pos);
+}
+
+void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
+{
+	while (stream_get_left(s) > 3)
+	{
+		fastpath_recv_update_data(fastpath, s);
+	}
+}
+
+rdpFastPath* fastpath_new(rdpRdp* rdp)
+{
+	rdpFastPath* fastpath;
+
+	fastpath = xnew(rdpFastPath);
+	fastpath->rdp = rdp;
+	fastpath->updateData = stream_new(4096);
+
+	return fastpath;
+}
+
+void fastpath_free(rdpFastPath* fastpath)
+{
+	stream_free(fastpath->updateData);
+	xfree(fastpath);
 }

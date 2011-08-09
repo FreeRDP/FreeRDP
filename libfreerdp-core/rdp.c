@@ -435,9 +435,18 @@ static void rdp_process_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 {
-	uint32 length = fastpath_read_header(s, NULL);
+	uint16 length;
 
-	printf("FastPath PDU: length=%d\n", length);
+	length = fastpath_read_header(rdp->fastpath, s);
+
+	/* TODO: fipsInformation */
+
+	if ((rdp->fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED))
+	{
+		stream_seek(s, 8); /* dataSignature */
+	}
+
+	fastpath_recv_updates(rdp->fastpath, s);
 }
 
 static void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
@@ -514,6 +523,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
 		rdp->update = update_new(rdp);
+		rdp->fastpath = fastpath_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->vchan = vchan_new(instance);
@@ -536,6 +546,7 @@ void rdp_free(rdpRdp* rdp)
 		license_free(rdp->license);
 		input_free(rdp->input);
 		update_free(rdp->update);
+		fastpath_free(rdp->fastpath);
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		xfree(rdp);
