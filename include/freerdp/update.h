@@ -21,6 +21,7 @@
 #define __UPDATE_API_H
 
 #include <freerdp/types.h>
+#include <freerdp/utils/stream.h>
 
 /* Common */
 
@@ -675,6 +676,22 @@ struct _DRAW_GDIPLUS_CACHE_END_ORDER
 };
 typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 
+struct _SURFACE_BITS_COMMAND
+{
+	uint16 cmdType;
+	uint16 destLeft;
+	uint16 destTop;
+	uint16 destRight;
+	uint16 destBottom;
+	uint8 bpp;
+	uint8 codecID;
+	uint16 width;
+	uint16 height;
+	uint32 bitmapDataLength;
+	STREAM* bitmapData;
+};
+typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
+
 /* Constants */
 
 #define CACHED_BRUSH	0x80
@@ -768,6 +785,8 @@ typedef void (*pcDrawGdiPlusCacheFirst)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_FI
 typedef void (*pcDrawGdiPlusCacheNext)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef void (*pcDrawGdiPlusCacheEnd)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 
+typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
+
 struct rdp_update
 {
 	void* rdp;
@@ -827,6 +846,8 @@ struct rdp_update
 	pcDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
 	pcDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
 
+	pcSurfaceBits SurfaceBits;
+
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	ORDER_INFO order_info;
@@ -874,6 +895,8 @@ struct rdp_update
 	DRAW_GDIPLUS_FIRST_ORDER draw_gdiplus_first;
 	DRAW_GDIPLUS_NEXT_ORDER draw_gdiplus_next;
 	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
+
+	SURFACE_BITS_COMMAND surface_bits_command;
 };
 
 #endif /* __UPDATE_API_H */

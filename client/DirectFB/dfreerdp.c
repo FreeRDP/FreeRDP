@@ -72,6 +72,19 @@ void df_end_paint(rdpUpdate* update)
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 }
 
+void df_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+{
+#if 0
+	printf("df_surface_bits: destLeft %d destTop %d destRight %d destBottom %d "
+		"bpp %d codecID %d width %d height %d length %d\n",
+		surface_bits_command->destLeft, surface_bits_command->destTop,
+		surface_bits_command->destRight, surface_bits_command->destBottom,
+		surface_bits_command->bpp, surface_bits_command->codecID,
+		surface_bits_command->width, surface_bits_command->height,
+		surface_bits_command->bitmapDataLength);
+#endif
+}
+
 boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	dfInfo* dfi;
@@ -181,6 +194,7 @@ boolean df_post_connect(freerdp* instance)
 
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
+	instance->update->SurfaceBits = df_surface_bits;
 
 	df_keyboard_init();
 

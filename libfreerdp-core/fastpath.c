@@ -66,15 +66,28 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 
 static int fastpath_recv_update_surfcmd_surface_bits(rdpFastPath* fastpath, STREAM* s)
 {
-	uint32 bitmapDataLength;
+	rdpUpdate* update = fastpath->rdp->update;
+	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
+	int pos;
 
-	stream_seek(s, 16);
-	stream_read_uint32(s, bitmapDataLength);
-	stream_seek(s, bitmapDataLength);
+	stream_read_uint16(s, cmd->destLeft);
+	stream_read_uint16(s, cmd->destTop);
+	stream_read_uint16(s, cmd->destRight);
+	stream_read_uint16(s, cmd->destBottom);
+	stream_read_uint8(s, cmd->bpp);
+	stream_seek(s, 2); /* reserved1, reserved2 */
+	stream_read_uint8(s, cmd->codecID);
+	stream_read_uint16(s, cmd->width);
+	stream_read_uint16(s, cmd->height);
+	stream_read_uint32(s, cmd->bitmapDataLength);
+	pos = stream_get_pos(s) + cmd->bitmapDataLength;
+	cmd->bitmapData = s;
 
-	/*printf("surface_bits %d\n", bitmapDataLength);*/
+	IFCALL(update->SurfaceBits, update, cmd);
 
-	return 20 + bitmapDataLength;
+	stream_set_pos(s, pos);
+
+	return 20 + cmd->bitmapDataLength;
 }
 
 static int fastpath_recv_update_surfcmd_frame_marker(rdpFastPath* fastpath, STREAM* s)
