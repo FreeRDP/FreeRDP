@@ -216,7 +216,6 @@ int transport_check_fds(rdpTransport* transport)
 {
 	int pos;
 	int status;
-	uint8 header;
 	uint16 length;
 	STREAM* received;
 
@@ -231,11 +230,10 @@ int transport_check_fds(rdpTransport* transport)
 			return 0;
 
 		stream_set_pos(transport->recv_buffer, 0);
-		stream_peek_uint8(transport->recv_buffer, header);
-		if (header == 0x03) /* TPKT */
+		if (tpkt_verify_header(transport->recv_buffer)) /* TPKT */
 			length = tpkt_read_header(transport->recv_buffer);
 		else /* Fast Path */
-			length = fastpath_read_header(transport->recv_buffer, NULL);
+			length = fastpath_read_header(NULL, transport->recv_buffer);
 
 		if (length == 0)
 		{

@@ -21,6 +21,7 @@
 #define __UPDATE_API_H
 
 #include <freerdp/types.h>
+#include <freerdp/utils/stream.h>
 
 /* Common */
 
@@ -792,6 +793,22 @@ struct _MONITORED_DESKTOP_ORDER
 };
 typedef struct _MONITORED_DESKTOP_ORDER MONITORED_DESKTOP_ORDER;
 
+struct _SURFACE_BITS_COMMAND
+{
+	uint16 cmdType;
+	uint16 destLeft;
+	uint16 destTop;
+	uint16 destRight;
+	uint16 destBottom;
+	uint8 bpp;
+	uint8 codecID;
+	uint16 width;
+	uint16 height;
+	uint32 bitmapDataLength;
+	STREAM* bitmapData;
+};
+typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
+
 /* Constants */
 
 #define CACHED_BRUSH	0x80
@@ -894,6 +911,8 @@ typedef void (*pcNotifyIconDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderI
 typedef void (*pcMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
 typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
+typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
+
 struct rdp_update
 {
 	void* rdp;
@@ -962,6 +981,8 @@ struct rdp_update
 	pcMonitoredDesktop MonitoredDesktop;
 	pcNonMonitoredDesktop NonMonitoredDesktop;
 
+	pcSurfaceBits SurfaceBits;
+
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	ORDER_INFO order_info;
@@ -1016,6 +1037,8 @@ struct rdp_update
 	WINDOW_CACHED_ICON_ORDER window_cached_icon;
 	NOTIFY_ICON_STATE_ORDER notify_icon_state;
 	MONITORED_DESKTOP_ORDER monitored_desktop;
+
+	SURFACE_BITS_COMMAND surface_bits_command;
 };
 
 #endif /* __UPDATE_API_H */

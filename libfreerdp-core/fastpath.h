@@ -20,7 +20,10 @@
 #ifndef __FASTPATH_H
 #define __FASTPATH_H
 
+#include "rdp.h"
 #include <freerdp/utils/stream.h>
+
+typedef struct rdp_fastpath rdpFastPath;
 
 enum FASTPATH_OUTPUT_ACTION_TYPE
 {
@@ -34,6 +37,52 @@ enum FASTPATH_OUTPUT_ENCRYPTION_FLAGS
 	FASTPATH_OUTPUT_ENCRYPTED = 0x2
 };
 
-uint16 fastpath_read_header(STREAM* s, uint8* encryptionFlags);
+enum FASTPATH_UPDATETYPE
+{
+	FASTPATH_UPDATETYPE_ORDERS = 0x0,
+	FASTPATH_UPDATETYPE_BITMAP = 0x1,
+	FASTPATH_UPDATETYPE_PALETTE = 0x2,
+	FASTPATH_UPDATETYPE_SYNCHRONIZE = 0x3,
+	FASTPATH_UPDATETYPE_SURFCMDS = 0x4,
+	FASTPATH_UPDATETYPE_PTR_NULL = 0x5,
+	FASTPATH_UPDATETYPE_PTR_DEFAULT = 0x6,
+	FASTPATH_UPDATETYPE_PTR_POSITION = 0x8,
+	FASTPATH_UPDATETYPE_COLOR = 0x9,
+	FASTPATH_UPDATETYPE_CACHED = 0xA,
+	FASTPATH_UPDATETYPE_POINTER = 0xB
+};
+
+enum FASTPATH_FRAGMENT
+{
+	FASTPATH_FRAGMENT_SINGLE = 0x0,
+	FASTPATH_FRAGMENT_LAST = 0x1,
+	FASTPATH_FRAGMENT_FIRST = 0x2,
+	FASTPATH_FRAGMENT_NEXT = 0x3
+};
+
+enum SURFCMD_CMDTYPE
+{
+	CMDTYPE_SET_SURFACE_BITS = 0x0001,
+	CMDTYPE_FRAME_MARKER = 0x0004,
+	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
+};
+
+enum FASTPATH_OUTPUT_COMPRESSION
+{
+	FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
+};
+
+struct rdp_fastpath
+{
+	rdpRdp* rdp;
+	uint8 encryptionFlags;
+	STREAM* updateData;
+};
+
+uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
+void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
+
+rdpFastPath* fastpath_new(rdpRdp* rdp);
+void fastpath_free(rdpFastPath* fastpath);
 
 #endif

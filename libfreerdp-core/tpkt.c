@@ -54,13 +54,29 @@
  */
 
 /**
+ * Verify if a packet has valid TPKT header.\n
+ * @param s
+ * @return boolean
+ */
+
+boolean tpkt_verify_header(STREAM* s)
+{
+	uint8 version;
+
+	stream_peek_uint8(s, version);
+	if (version == 3)
+		return True;
+	else
+		return False;
+}
+
+/**
  * Read a TPKT header.\n
  * @param s
  * @return length
  */
 
-uint16
-tpkt_read_header(STREAM* s)
+uint16 tpkt_read_header(STREAM* s)
 {
 	uint8 version;
 	uint16 length;
@@ -87,8 +103,7 @@ tpkt_read_header(STREAM* s)
  * @param length
  */
 
-void
-tpkt_write_header(STREAM* s, int length)
+void tpkt_write_header(STREAM* s, int length)
 {
 	stream_write_uint8(s, 3); /* version */
 	stream_write_uint8(s, 0); /* reserved */

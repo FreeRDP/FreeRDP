@@ -21,6 +21,15 @@
 #define __FREERDP_CONSTANTS
 
 /**
+ * Codec IDs
+ */
+enum RDP_CODEC_ID
+{
+	CODEC_ID_NSCODEC = 0x01,
+	CODEC_ID_REMOTEFX = 0x02
+};
+
+/**
  * Static Virtual Channel Flags
  */
 enum RDP_SVC_CHANNEL_FLAG
@@ -34,8 +43,6 @@ enum RDP_SVC_CHANNEL_FLAG
 	CHANNEL_FLAG_RESUME = 0x40,
 	CHANNEL_FLAG_FAIL = 0x100
 };
-
-//#define CHANNEL_FLAG_ONLY (CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST)
 
 /**
  * Static Virtual Channel Options

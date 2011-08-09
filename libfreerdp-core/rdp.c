@@ -351,7 +351,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param s stream
  */
 
-void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
+static void rdp_process_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 {
 	int length;
 	uint16 pduType;
@@ -361,8 +361,6 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 sec_flags;
 	boolean processed;
 	enum DomainMCSPDU MCSPDU;
-
-	/* TODO: Check Fast Path header */
 
 	MCSPDU = DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
@@ -435,6 +433,30 @@ void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
 	}
 }
 
+static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
+{
+	uint16 length;
+
+	length = fastpath_read_header(rdp->fastpath, s);
+
+	/* TODO: fipsInformation */
+
+	if ((rdp->fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED))
+	{
+		stream_seek(s, 8); /* dataSignature */
+	}
+
+	fastpath_recv_updates(rdp->fastpath, s);
+}
+
+static void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
+{
+	if (tpkt_verify_header(s))
+		rdp_process_tpkt_pdu(rdp, s);
+	else
+		rdp_process_fastpath_pdu(rdp, s);
+}
+
 /**
  * Receive an RDP packet.\n
  * @param rdp RDP module
@@ -501,6 +523,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
 		rdp->update = update_new(rdp);
+		rdp->fastpath = fastpath_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->vchan = vchan_new(instance);
@@ -523,6 +546,7 @@ void rdp_free(rdpRdp* rdp)
 		license_free(rdp->license);
 		input_free(rdp->input);
 		update_free(rdp->update);
+		fastpath_free(rdp->fastpath);
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		xfree(rdp);
