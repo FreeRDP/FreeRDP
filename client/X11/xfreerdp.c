@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <locale.h>
 #include <sys/select.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
@@ -590,6 +591,8 @@ int main(int argc, char* argv[])
 	freerdp* instance;
 	struct thread_data* data;
 	rdpChanMan* chanman;
+
+	setlocale(LC_ALL, "");
 
 	freerdp_chanman_global_init();
 
