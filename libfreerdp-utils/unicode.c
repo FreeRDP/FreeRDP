@@ -18,6 +18,7 @@
  */
 
 #include <errno.h>
+#include <wctype.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/unicode.h>
@@ -187,13 +188,21 @@ char* freerdp_uniconv_out(UNICONV *uniconv, char *str, size_t *pout_len)
 void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length)
 {
 	int i;
-	char* p;
+	unsigned char* p;
+	unsigned int wc, uwc;
 
-	p = wstr;
+	p = (unsigned char*)wstr;
 	for (i = 0; i < length; i++)
 	{
-		if (p[i * 2] >= 'a' && p[i * 2] <= 'z')
-			p[i * 2] = p[i * 2] - 32;
+		wc = (unsigned int)(*p);
+		wc += (unsigned int)(*(p + 1)) << 8;
+		uwc = towupper(wc);
+		if (uwc != wc)
+		{
+			*p = uwc & 0xFF;
+			*(p + 1) = (uwc >> 8) & 0xFF;
+		}
+		p += 2;
 	}
 }
 
