@@ -675,6 +675,123 @@ struct _DRAW_GDIPLUS_CACHE_END_ORDER
 };
 typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 
+/* Window Alternate Secondary Drawing Orders */
+
+struct _WINDOW_ORDER_INFO
+{
+	uint32 windowId;
+	uint32 fieldFlags;
+	uint32 notifyIconId;
+};
+typedef struct _WINDOW_ORDER_INFO WINDOW_ORDER_INFO;
+
+struct _UNICODE_STRING
+{
+	uint16 cbString;
+	uint8* string;
+};
+typedef struct _UNICODE_STRING UNICODE_STRING;
+
+struct _RECTANGLE_16
+{
+	uint16 left;
+	uint16 top;
+	uint16 right;
+	uint16 bottom;
+};
+typedef struct _RECTANGLE_16 RECTANGLE_16;
+
+struct _ICON_INFO
+{
+	uint16 cacheEntry;
+	uint8 cacheId;
+	uint8 bpp;
+	uint16 width;
+	uint16 height;
+	uint16 cbColorTable;
+	uint16 cbBitsMask;
+	uint16 cbBitsColor;
+	uint8* bitsMask;
+	uint8* colorTable;
+	uint8* bitsColor;
+};
+typedef struct _ICON_INFO ICON_INFO;
+
+struct _CACHED_ICON_INFO
+{
+	uint16 cacheEntry;
+	uint8 cacheId;
+};
+typedef struct _CACHED_ICON_INFO CACHED_ICON_INFO;
+
+struct _NOTIFY_ICON_INFOTIP
+{
+	uint32 timeout;
+	uint32 flags;
+	UNICODE_STRING text;
+	UNICODE_STRING title;
+};
+typedef struct _NOTIFY_ICON_INFOTIP NOTIFY_ICON_INFOTIP;
+
+struct _WINDOW_STATE_ORDER
+{
+	uint32 ownerWindowId;
+	uint32 style;
+	uint32 extendedStyle;
+	uint8 showState;
+	UNICODE_STRING titleInfo;
+	uint32 clientOffsetX;
+	uint32 clientOffsetY;
+	uint32 clientAreaWidth;
+	uint32 clientAreaHeight;
+	uint8 RPContent;
+	uint32 rootParentHandle;
+	uint32 windowOffsetX;
+	uint32 windowOffsetY;
+	uint32 windowClientDeltaX;
+	uint32 windowClientDeltaY;
+	uint32 windowWidth;
+	uint32 windowHeight;
+	uint16 numWindowRects;
+	RECTANGLE_16* windowRects;
+	uint32 visibleOffsetX;
+	uint32 visibleOffsetY;
+	uint16 numVisibilityRects;
+	RECTANGLE_16* visibilityRects;
+};
+typedef struct _WINDOW_STATE_ORDER WINDOW_STATE_ORDER;
+
+struct _WINDOW_ICON_ORDER
+{
+	ICON_INFO iconInfo;
+};
+typedef struct _WINDOW_ICON_ORDER WINDOW_ICON_ORDER;
+
+struct _WINDOW_CACHED_ICON_ORDER
+{
+	CACHED_ICON_INFO cachedIcon;
+};
+typedef struct _WINDOW_CACHED_ICON_ORDER WINDOW_CACHED_ICON_ORDER;
+
+struct _NOTIFY_ICON_STATE_ORDER
+{
+	uint32 version;
+	UNICODE_STRING toolTip;
+	NOTIFY_ICON_INFOTIP infoTip;
+	uint32 state;
+	ICON_INFO icon;
+	CACHED_ICON_INFO cachedIcon;
+};
+typedef struct _NOTIFY_ICON_STATE_ORDER NOTIFY_ICON_STATE_ORDER;
+
+struct _MONITORED_DESKTOP_ORDER
+{
+	uint32 activeWindowId;
+	uint8 numWindowIds;
+	uint32* windowIds;
+};
+typedef struct _MONITORED_DESKTOP_ORDER MONITORED_DESKTOP_ORDER;
+
 /* Constants */
 
 #define CACHED_BRUSH	0x80
@@ -768,6 +885,15 @@ typedef void (*pcDrawGdiPlusCacheFirst)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_FI
 typedef void (*pcDrawGdiPlusCacheNext)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef void (*pcDrawGdiPlusCacheEnd)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 
+typedef void (*pcWindowState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+typedef void (*pcWindowIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon);
+typedef void (*pcWindowCachedIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon);
+typedef void (*pcWindowDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcNotifyIconState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef void (*pcNotifyIconDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
+typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+
 struct rdp_update
 {
 	void* rdp;
@@ -827,6 +953,15 @@ struct rdp_update
 	pcDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
 	pcDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
 
+	pcWindowState WindowState;
+	pcWindowIcon WindowIcon;
+	pcWindowCachedIcon WindowCachedIcon;
+	pcWindowDeleted WindowDeleted;
+	pcNotifyIconState NotifyIconState;
+	pcNotifyIconDeleted NotifyIconDeleted;
+	pcMonitoredDesktop MonitoredDesktop;
+	pcNonMonitoredDesktop NonMonitoredDesktop;
+
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	ORDER_INFO order_info;
@@ -874,6 +1009,13 @@ struct rdp_update
 	DRAW_GDIPLUS_FIRST_ORDER draw_gdiplus_first;
 	DRAW_GDIPLUS_NEXT_ORDER draw_gdiplus_next;
 	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
+
+	WINDOW_ORDER_INFO orderInfo;
+	WINDOW_STATE_ORDER window_state;
+	WINDOW_ICON_ORDER window_icon;
+	WINDOW_CACHED_ICON_ORDER window_cached_icon;
+	NOTIFY_ICON_STATE_ORDER notify_icon_state;
+	MONITORED_DESKTOP_ORDER monitored_desktop;
 };
 
 #endif /* __UPDATE_API_H */

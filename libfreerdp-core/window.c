@@ -203,20 +203,30 @@ void update_read_window_deleted_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 	/* window deletion event */
 }
 
-void update_read_window_info_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_STATE_ORDER window_state;
-	WINDOW_ICON_ORDER window_icon;
-	WINDOW_CACHED_ICON_ORDER window_cached_icon;
+	stream_read_uint32(s, orderInfo->windowId); /* windowId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
-		update_read_window_icon_order(s, orderInfo, &window_icon);
+	{
+		update_read_window_icon_order(s, orderInfo, &update->window_icon);
+		IFCALL(update->WindowIcon, update, orderInfo, &update->window_icon);
+	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
-		update_read_window_cached_icon_order(s, orderInfo, &window_cached_icon);
+	{
+		update_read_window_cached_icon_order(s, orderInfo, &update->window_cached_icon);
+		IFCALL(update->WindowCachedIcon, update, orderInfo, &update->window_cached_icon);
+	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
+	{
 		update_read_window_deleted_order(s, orderInfo);
+		IFCALL(update->WindowDeleted, update, orderInfo);
+	}
 	else
-		update_read_window_state_order(s, orderInfo, &window_state);
+	{
+		update_read_window_state_order(s, orderInfo, &update->window_state);
+		IFCALL(update->WindowState, update, orderInfo, &update->window_state);
+	}
 }
 
 void update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
@@ -245,14 +255,21 @@ void update_read_notification_icon_deleted_order(STREAM* s, WINDOW_ORDER_INFO* o
 	/* notification icon deletion event */
 }
 
-void update_read_notification_icon_info_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 {
-	NOTIFY_ICON_STATE_ORDER notify_icon_state_order;
+	stream_read_uint32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	stream_read_uint32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
+	{
 		update_read_notification_icon_deleted_order(s, orderInfo);
+		IFCALL(update->NotifyIconDeleted, update, orderInfo);
+	}
 	else
-		update_read_notification_icon_state_order(s, orderInfo, &notify_icon_state_order);
+	{
+		update_read_notification_icon_state_order(s, orderInfo, &update->notify_icon_state);
+		IFCALL(update->NotifyIconState, update, orderInfo, &update->notify_icon_state);
+	}
 }
 
 void update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
@@ -287,30 +304,32 @@ void update_read_desktop_non_monitored_order(STREAM* s, WINDOW_ORDER_INFO* order
 	/* non-monitored desktop notification event */
 }
 
-void update_read_desktop_info_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_recv_desktop_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 {
-	MONITORED_DESKTOP_ORDER monitored_desktop_order;
-
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
+	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
+		IFCALL(update->NonMonitoredDesktop, update, orderInfo);
+	}
 	else
-		update_read_desktop_actively_monitored_order(s, orderInfo, &monitored_desktop_order);
+	{
+		update_read_desktop_actively_monitored_order(s, orderInfo, &update->monitored_desktop);
+		IFCALL(update->MonitoredDesktop, update, orderInfo, &update->monitored_desktop);
+	}
 }
 
 void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s)
 {
 	uint16 orderSize;
-	WINDOW_ORDER_INFO windowOrderInfo;
 
 	stream_read_uint16(s, orderSize); /* orderSize (2 bytes) */
-	stream_read_uint32(s, windowOrderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
-	stream_read_uint32(s, windowOrderInfo.windowId); /* windowId (4 bytes) */
+	stream_read_uint32(s, update->orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
 
-	if (windowOrderInfo.fieldFlags & WINDOW_ORDER_TYPE_WINDOW)
-		update_read_window_info_order(s, &windowOrderInfo);
-	else if (windowOrderInfo.fieldFlags & WINDOW_ORDER_TYPE_NOTIFY)
-		update_read_notification_icon_info_order(s, &windowOrderInfo);
-	else if (windowOrderInfo.fieldFlags & WINDOW_ORDER_TYPE_DESKTOP)
-		update_read_desktop_info_order(s, &windowOrderInfo);
+	if (update->orderInfo.fieldFlags & WINDOW_ORDER_TYPE_WINDOW)
+		update_recv_window_info_order(update, s, &update->orderInfo);
+	else if (update->orderInfo.fieldFlags & WINDOW_ORDER_TYPE_NOTIFY)
+		update_recv_notification_icon_info_order(update, s, &update->orderInfo);
+	else if (update->orderInfo.fieldFlags & WINDOW_ORDER_TYPE_DESKTOP)
+		update_recv_desktop_info_order(update, s, &update->orderInfo);
 }
 
