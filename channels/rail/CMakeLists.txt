@@ -17,9 +17,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rdpdbg)
-add_subdirectory(rdpdr)
-add_subdirectory(rail)
+set(RAIL_SRCS
+	rail_main.c
+	rail_main.h	
+	rail_core.c
+	rail_core.h
+	rail_channel_orders.c
+	rail_channel_orders.h	
+)
+
+add_library(rail SHARED ${RAIL_SRCS})
+set_target_properties(rail PROPERTIES PREFIX "")
+
+target_link_libraries(rail freerdp-utils)
+
+install(TARGETS rail DESTINATION ${FREERDP_PLUGIN_PATH})
 
