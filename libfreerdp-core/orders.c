@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include "window.h"
+
 #include "orders.h"
 
 uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
@@ -1912,6 +1914,7 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			break;
 
 		case ORDER_TYPE_WINDOW:
+			update_recv_altsec_window_order(update, s);
 			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
