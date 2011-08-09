@@ -260,13 +260,12 @@ struct rdp_settings
 
 	boolean desktop_composition;
 
+	boolean rfx_decode;
 	boolean frame_acknowledge;
 
 	uint8* app_name;
 	boolean remote_app;
 
-	int rfx_flags;
-	int ui_decode_flags;
 	boolean mouse_motion;
 };
 typedef struct rdp_settings rdpSettings;

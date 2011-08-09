@@ -23,6 +23,7 @@
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 
@@ -155,6 +156,18 @@
 #define SURFCMDS_SET_SURFACE_BITS		0x00000002
 #define SURFCMDS_FRAME_MARKER			0x00000010
 #define SURFCMDS_STREAM_SURFACE_BITS		0x00000040
+
+/* Bitmap Codec Constants */
+#define CARDP_CAPS_CAPTURE_NON_CAC		0x00000001
+#define CBY_CAPS				0xCBC0
+#define CBY_CAPSET				0xCBC1
+#define CLY_CAPSET				0xCFC0
+#define CLW_VERSION_1_0				0x0100
+#define CT_TILE_64x64				0x0040
+#define CLW_COL_CONV_ICT			0x1
+#define CLW_XFORM_DWT_53_A			0x1
+#define CLW_ENTROPY_RLGR1			0x01
+#define CLW_ENTROPY_RLGR3			0x04
 
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
