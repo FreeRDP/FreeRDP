@@ -84,6 +84,8 @@ set(LIBFREERDP_CORE_SRCS
 	update.h
 	vchan.c
 	vchan.h
+	window.c
+	window.h
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
