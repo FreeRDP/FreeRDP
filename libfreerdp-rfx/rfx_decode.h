@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * GDI RemoteFX Decoder
+ * FreeRDP: A Remote Desktop Protocol client.
+ * RemoteFX Codec Library - Decode
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,16 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+#ifndef __RFX_DECODE_H
+#define __RFX_DECODE_H
 
-#include "gdi.h"
-#include "gdi_bitmap.h"
-#include "gdi_region.h"
-#include "gdi_clipping.h"
+#include <freerdp/rfx.h>
 
-#include "decode.h"
+void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
 
-void gdi_decode_frame(GDI *gdi, int x, int y, uint8 * data, uint32 length)
-{
+void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
+	int y_size, const uint32 * y_quants,
+	int cb_size, const uint32 * cb_quants,
+	int cr_size, const uint32 * cr_quants, uint8* rgb_buffer);
 
-}
-
-void gdi_decode_data(GDI *gdi, uint8 * data, int data_size)
-{
-
-}
+#endif /* __RFX_DECODE_H */
