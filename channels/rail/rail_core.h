@@ -48,7 +48,7 @@ typedef struct _RAIL_STRING
 typedef struct _RAIL_HIGHCONTRAST
 {
 	uint32 flags;
-	RAIL_UNICODE_STRING color_scheme;
+	UNICODE_STRING color_scheme;
 
 } RAIL_HIGHCONTRAST;
 
@@ -62,9 +62,9 @@ typedef struct _RAIL_CLIENT_SYSPARAM
 		uint8 menu_access_key_always_underlined;
 		uint8 keyboard_for_user_prefered;
 		uint8 left_right_mouse_buttons_swapped;
-		RAIL_RECT_16 work_area;
-		RAIL_RECT_16 display_resolution;
-		RAIL_RECT_16 taskbar_size;
+		RECTANGLE_16 work_area;
+		RECTANGLE_16 display_resolution;
+		RECTANGLE_16 taskbar_size;
 		RAIL_HIGHCONTRAST high_contrast_system_info;
 	} value;
 } RAIL_CLIENT_SYSPARAM;
@@ -120,7 +120,7 @@ void rail_core_handle_ui_event(RAIL_SESSION* session, RAIL_UI_EVENT* event);
 void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_number);
 
 void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags,
-		uint16 exec_result, uint32 raw_result, RAIL_UNICODE_STRING* exe_or_file);
+		uint16 exec_result, uint32 raw_result, UNICODE_STRING* exe_or_file);
 
 void rail_core_handle_server_sysparam(RAIL_SESSION* session, RAIL_SERVER_SYSPARAM* sysparam);
 
@@ -132,6 +132,12 @@ void rail_core_handle_server_minmax_info(RAIL_SESSION* session, uint32 window_id
 	uint16 min_track_width, uint16 min_track_height, uint16 max_track_width, uint16 max_track_height);
 
 void rail_core_handle_server_langbar_info(RAIL_SESSION* session, uint32 langbar_status);
-void rail_core_handle_server_get_app_resp(RAIL_SESSION* session, uint32 window_id, RAIL_UNICODE_STRING* app_id);
+void rail_core_handle_server_get_app_resp(RAIL_SESSION* session, uint32 window_id, UNICODE_STRING* app_id);
+
+void rail_core_send_client_execute(RAIL_SESSION* session,
+	boolean exec_or_file_is_file_path, const char* rail_exe_or_file,
+	const char* rail_working_directory, const char* rail_arguments);
+
+void rail_core_handle_ui_update_client_sysparam(RAIL_SESSION* session, RAIL_UI_EVENT* event);
 
 #endif /* __RAIL_CORE_H */

@@ -78,32 +78,33 @@ void init_rail_string(RAIL_STRING * rail_string, const char * string)
 	rail_string->length = strlen(string) + 1;
 }
 
-void rail_string2unicode_string(RAIL_SESSION* session, RAIL_STRING* string, RAIL_UNICODE_STRING* unicode_string)
+void rail_string2unicode_string(RAIL_SESSION* session, RAIL_STRING* string, UNICODE_STRING* unicode_string)
 {
 	size_t   result_length = 0;
 	char*    result_buffer = NULL;
 
-	unicode_string->buffer = NULL;
-	unicode_string->length = 0;
+	unicode_string->string = NULL;
+	unicode_string->cbString = 0;
 
 	if (string->length == 0) return;
 
 	result_buffer = freerdp_uniconv_out(session->uniconv, (char*) string->buffer, &result_length);
 
-	unicode_string->buffer = (uint8*)result_buffer;
-	unicode_string->length = (uint16)result_length;
+	unicode_string->string = (uint8*) result_buffer;
+	unicode_string->cbString = (uint16) result_length;
 }
 
-void rail_unicode_string2string(RAIL_SESSION* session, RAIL_UNICODE_STRING* unicode_string, RAIL_STRING* string)
+void rail_unicode_string2string(RAIL_SESSION* session, UNICODE_STRING* unicode_string, RAIL_STRING* string)
 {
 	char* result_buffer = NULL;
 
 	string->buffer = NULL;
 	string->length = 0;
 
-	if (unicode_string->length == 0) return;
+	if (unicode_string->cbString == 0)
+		return;
 
-	result_buffer = freerdp_uniconv_in(session->uniconv, unicode_string->buffer, unicode_string->length);
+	result_buffer = freerdp_uniconv_in(session->uniconv, unicode_string->string, unicode_string->cbString);
 
 	string->buffer = (uint8*)result_buffer;
 	string->length = strlen(result_buffer) + 1;
@@ -149,7 +150,7 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 	uint32 client_build_number = 0x00001db0;
 	RAIL_VCHANNEL_EVENT event = {0};
 
-	DEBUG_RAIL("rail_core_handle_server_hadshake: session=0x%p buildNumber=0x%X.", session, build_number);
+	DEBUG_RAIL("rail_core_handle_server_handshake: session=0x%p buildNumber=0x%X.", session, build_number);
 
 	// Step 1. Send Handshake PDU (2.2.2.2.1)
 	// Fixed: MS-RDPERP 1.3.2.1 is not correct!
@@ -162,19 +163,26 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 	//         start UI initialization stage.
 	init_vchannel_event(&event, RAIL_VCHANNEL_EVENT_SESSION_ESTABLISHED);
 	session->event_sender->send_rail_vchannel_event(session->event_sender->event_sender_object, &event);
+
+	// Step 4. Send Client Execute
+	// FIXME:
+	// According to "3.1.1.1 Server State Machine" Client Execute
+	// will be processed after Destop Sync processed.
+	// So maybe send after receive Destop Sync sequence?
+	rail_core_send_client_execute(session, False, "||firefox", "", "");
 }
 
-void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 exec_result, uint32 raw_result, RAIL_UNICODE_STRING* exe_or_file)
+void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 exec_result, uint32 raw_result, UNICODE_STRING* exe_or_file)
 {
 	RAIL_VCHANNEL_EVENT event = {0};
 	RAIL_STRING exe_or_file_;
 
 	DEBUG_RAIL("rail_core_handle_exec_result: session=0x%p flags=0x%X "
 		"exec_result=0x%X raw_result=0x%X exe_or_file=(length=%d dump>)",
-		session, flags, exec_result, raw_result, exe_or_file->length);
+		session, flags, exec_result, raw_result, exe_or_file->cbString);
 
 #ifdef WITH_DEBUG_RAIL
-	freerdp_hexdump(exe_or_file->buffer, exe_or_file->length);
+	freerdp_hexdump(exe_or_file->string, exe_or_file->cbString);
 #endif
 
 	rail_unicode_string2string(session, exe_or_file, &exe_or_file_);
@@ -271,16 +279,16 @@ void rail_core_handle_server_langbar_info(RAIL_SESSION* session, uint32 langbar_
 	session->event_sender->send_rail_vchannel_event(session->event_sender->event_sender_object, &event);
 }
 
-void rail_core_handle_server_get_app_resp(RAIL_SESSION* session, uint32 window_id, RAIL_UNICODE_STRING * app_id)
+void rail_core_handle_server_get_app_resp(RAIL_SESSION* session, uint32 window_id, UNICODE_STRING * app_id)
 {
 	RAIL_VCHANNEL_EVENT event = { 0 };
 	RAIL_STRING app_id_;
 
 	DEBUG_RAIL("rail_core_handle_server_get_app_resp: session=0x%p "
-		"window_id=0x%X app_id=(length=%d dump>)", session, window_id, app_id->length);
+		"window_id=0x%X app_id=(length=%d dump>)", session, window_id, app_id->cbString);
 
 #ifdef WITH_DEBUG_RAIL
-	freerdp_hexdump(app_id->buffer, app_id->length);
+	freerdp_hexdump(app_id->string, app_id->cbString);
 #endif
 
 	rail_unicode_string2string(session, app_id, &app_id_);
@@ -300,10 +308,12 @@ void rail_core_send_client_execute(RAIL_SESSION* session,
 	RAIL_STRING exe_or_file_;
 	RAIL_STRING working_directory_;
 	RAIL_STRING arguments_;
-	RAIL_UNICODE_STRING exe_or_file;
-	RAIL_UNICODE_STRING working_directory;
-	RAIL_UNICODE_STRING arguments;
+	UNICODE_STRING exe_or_file;
+	UNICODE_STRING working_directory;
+	UNICODE_STRING arguments;
 	uint16 flags;
+
+	DEBUG_RAIL("RAIL_ORDER_EXEC");
 
 	init_rail_string(&exe_or_file_, rail_exe_or_file);
 	init_rail_string(&working_directory_, rail_working_directory);
@@ -323,9 +333,9 @@ void rail_core_send_client_execute(RAIL_SESSION* session,
 	rail_vchannel_send_exec_order(session, flags, &exe_or_file,
 		&working_directory,	&arguments);
 
-	free_rail_unicode_string(&exe_or_file);
-	free_rail_unicode_string(&working_directory);
-	free_rail_unicode_string(&arguments);
+	rail_unicode_string_free(&exe_or_file);
+	rail_unicode_string_free(&working_directory);
+	rail_unicode_string_free(&arguments);
 }
 
 uint8 boolean2uint8(boolean value)
@@ -333,13 +343,13 @@ uint8 boolean2uint8(boolean value)
 	return ((value == True) ? 1 : 0);
 }
 
-uint8 copy_rail_rect_16(RAIL_RECT_16* src, RAIL_RECT_16* dst)
+uint8 copy_rail_rect_16(RECTANGLE_16* src, RECTANGLE_16* dst)
 {
-	memcpy(dst, src, sizeof(RAIL_RECT_16));
+	memcpy(dst, src, sizeof(RECTANGLE_16));
 	return 0;
 }
 
-static void rail_core_handle_ui_update_client_sysparam(RAIL_SESSION* session, RAIL_UI_EVENT* event)
+void rail_core_handle_ui_update_client_sysparam(RAIL_SESSION* session, RAIL_UI_EVENT* event)
 {
 	RAIL_CLIENT_SYSPARAM sys_param;
 
@@ -372,7 +382,7 @@ static void rail_core_handle_ui_update_client_sysparam(RAIL_SESSION* session, RA
 		event->param.sysparam_info.value.high_contrast_system_info.flags;
 
 
-	if (sys_param.type == SPI_SETHIGHCONTRAST)
+	if (sys_param.type == SPI_SET_HIGH_CONTRAST)
 	{
 		RAIL_STRING color_scheme;
 
@@ -383,7 +393,7 @@ static void rail_core_handle_ui_update_client_sysparam(RAIL_SESSION* session, RA
 	}
 
 	rail_vchannel_send_client_sysparam_update_order(session, &sys_param);
-	free_rail_unicode_string(&sys_param.value.high_contrast_system_info.color_scheme);
+	rail_unicode_string_free(&sys_param.value.high_contrast_system_info.color_scheme);
 }
 
 static void rail_core_handle_ui_execute_remote_app(RAIL_SESSION* session, RAIL_UI_EVENT* event)

@@ -21,26 +21,7 @@
 #ifndef __RAIL_H
 #define __RAIL_H
 
-/* RAIL Constants*/
-
-enum RDP_RAIL_PDU_TYPE
-{
-	RDP_RAIL_ORDER_EXEC		= 0x0001,
-	RDP_RAIL_ORDER_ACTIVATE		= 0x0002,
-	RDP_RAIL_ORDER_SYSPARAM		= 0x0003,
-	RDP_RAIL_ORDER_SYSCOMMAND	= 0x0004,
-	RDP_RAIL_ORDER_HANDSHAKE	= 0x0005,
-	RDP_RAIL_ORDER_NOTIFY_EVENT	= 0x0006,
-	RDP_RAIL_ORDER_WINDOWMOVE	= 0x0008,
-	RDP_RAIL_ORDER_LOCALMOVESIZE	= 0x0009,
-	RDP_RAIL_ORDER_MINMAXINFO	= 0x000A,
-	RDP_RAIL_ORDER_CLIENTSTATUS	= 0x000B,
-	RDP_RAIL_ORDER_SYSMENU		= 0x000C,
-	RDP_RAIL_ORDER_LANGBARINFO	= 0x000D,
-	RDP_RAIL_ORDER_EXEC_RESULT	= 0x0080,
-	RDP_RAIL_ORDER_GET_APPID_REQ	= 0x000E,
-	RDP_RAIL_ORDER_GET_APPID_RESP	= 0x000F
-};
+#include <freerdp/types.h>
 
 /* RAIL PDU flags */
 #define RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY		0x0001
@@ -72,18 +53,18 @@ enum RDP_RAIL_PDU_TYPE
 #define RAIL_EXEC_E_SESSION_LOCKED			0x0007
 
 /* Client System Parameters Update PDU */
-#define SPI_SETDRAGFULLWINDOWS				0x00000025
-#define SPI_SETKEYBOARDCUES				0x0000100B
-#define SPI_SETKEYBOARDPREF				0x00000045
-#define SPI_SETWORKAREA					0x0000002F
-#define SPI_SETMOUSEBUTTONSWAP				0x00000021
-#define SPI_SETHIGHCONTRAST				0x00000043
-#define RAIL_SPI_DISPLAYCHANGE				0x0000F001
-#define RAIL_SPI_TASKBARPOS				0x0000F000
+#define SPI_SET_DRAG_FULL_WINDOWS			0x00000025
+#define SPI_SET_KEYBOARD_CUES				0x0000100B
+#define SPI_SET_KEYBOARD_PREF				0x00000045
+#define SPI_SET_WORK_AREA				0x0000002F
+#define SPI_SET_MOUSE_BUTTON_SWAP			0x00000021
+#define SPI_SET_HIGH_CONTRAST				0x00000043
+#define RAIL_SPI_DISPLAY_CHANGE				0x0000F001
+#define RAIL_SPI_TASKBAR_POS				0x0000F000
 
 /* Server System Parameters Update PDU */
-#define SPI_SETSCREENSAVEACTIVE				0x00000011
-#define SPI_SETSCREENSAVESECURE				0x00000077
+#define SPI_SET_SCREEN_SAVE_ACTIVE			0x00000011
+#define SPI_SET_SCREEN_SAVE_SECURE			0x00000077
 
 /* Client System Command PDU */
 #define SC_SIZE						0xF000
@@ -151,23 +132,166 @@ enum RDP_RAIL_PDU_TYPE
 #define TF_SFT_NOEXTRAICONSONMINIMIZED			0x00000400
 #define TF_SFT_DESKBAND					0x00000800
 
-/* RAIL Common structures */
+struct _UNICODE_STRING
+{
+	uint16 cbString;
+	uint8* string;
+};
+typedef struct _UNICODE_STRING UNICODE_STRING;
 
-typedef struct _RAIL_RECT_16
+struct _RECTANGLE_16
 {
 	uint16 left;
 	uint16 top;
 	uint16 right;
 	uint16 bottom;
-}
-RAIL_RECT_16;
+};
+typedef struct _RECTANGLE_16 RECTANGLE_16;
 
-typedef struct _RAIL_UNICODE_STRING
+/* RAIL Orders */
+
+struct _RAIL_HANDSHAKE_ORDER
 {
-	uint16  length;
-	uint8	*buffer;
-}
-RAIL_UNICODE_STRING;
+	uint32 buildNumber;
+};
+typedef struct _RAIL_HANDSHAKE_ORDER RAIL_HANDSHAKE_ORDER;
+
+struct _RAIL_CLIENT_STATUS_ORDER
+{
+	uint32 flags;
+};
+typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
+
+struct _RAIL_EXEC_ORDER
+{
+	uint16 flags;
+	UNICODE_STRING exeOrFile;
+	UNICODE_STRING workingDir;
+	UNICODE_STRING arguments;
+};
+typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
+
+struct _RAIL_EXEC_RESULT_ORDER
+{
+	uint16 flags;
+	uint16 execResult;
+	uint32 rawResult;
+	UNICODE_STRING exeOrFile;
+};
+typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
+
+struct _RAIL_SYSPARAM_ORDER
+{
+	uint32 systemParam;
+	uint8* body;
+};
+typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
+
+struct _RAIL_ACTIVATE_ORDER
+{
+	uint32 windowId;
+	boolean enabled;
+};
+typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
+
+struct _RAIL_SYSMENU_ORDER
+{
+	uint32 windowId;
+	uint16 left;
+	uint16 top;
+};
+typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
+
+struct _RAIL_SYSCOMMAND_ORDER
+{
+	uint32 windowId;
+	uint16 command;
+};
+typedef struct _RAIL_SYSCOMMAND_ORDER RAIL_SYSCOMMAND_ORDER;
+
+struct _RAIL_NOTIFY_EVENT_ORDER
+{
+	uint32 windowId;
+	uint32 notifyIconId;
+	uint32 message;
+};
+typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
+
+struct _RAIL_MINMAXINFO_ORDER
+{
+	uint32 windowId;
+	uint16 maxWidth;
+	uint16 maxHeight;
+	uint16 maxPosX;
+	uint16 maxPosY;
+	uint16 minTrackWidth;
+	uint16 minTrackHeight;
+	uint16 maxTrackWidth;
+	uint16 maxTrackHeight;
+};
+typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
+
+struct _RAIL_LOCALMOVESIZE_ORDER
+{
+	uint32 windowId;
+	uint16 isMoveSizeStart;
+	uint16 moveSizeType;
+	uint16 posX;
+	uint16 posY;
+};
+typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
+
+struct _RAIL_WINDOWMOVE_ORDER
+{
+	uint32 windowId;
+	uint16 left;
+	uint16 top;
+	uint16 right;
+	uint16 bottom;
+};
+typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOWMOVE_ORDER;
+
+struct _RAIL_GET_APPID_REQ_ORDER
+{
+	uint32 windowId;
+};
+typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
+
+struct _RAIL_GET_APPID_RESP_ORDER
+{
+	uint32 windowId;
+	UNICODE_STRING applicationId;
+};
+typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
+
+struct _RAIL_LANGBARINFO_ORDER
+{
+	uint32 languageBarStatus;
+};
+typedef struct _RAIL_LANGBARINFO_ORDER RAIL_LANGBARINFO_ORDER;
+
+/* RAIL Constants */
+
+enum RDP_RAIL_PDU_TYPE
+{
+	RDP_RAIL_ORDER_EXEC		= 0x0001,
+	RDP_RAIL_ORDER_ACTIVATE		= 0x0002,
+	RDP_RAIL_ORDER_SYSPARAM		= 0x0003,
+	RDP_RAIL_ORDER_SYSCOMMAND	= 0x0004,
+	RDP_RAIL_ORDER_HANDSHAKE	= 0x0005,
+	RDP_RAIL_ORDER_NOTIFY_EVENT	= 0x0006,
+	RDP_RAIL_ORDER_WINDOWMOVE	= 0x0008,
+	RDP_RAIL_ORDER_LOCALMOVESIZE	= 0x0009,
+	RDP_RAIL_ORDER_MINMAXINFO	= 0x000A,
+	RDP_RAIL_ORDER_CLIENTSTATUS	= 0x000B,
+	RDP_RAIL_ORDER_SYSMENU		= 0x000C,
+	RDP_RAIL_ORDER_LANGBARINFO	= 0x000D,
+	RDP_RAIL_ORDER_EXEC_RESULT	= 0x0080,
+	RDP_RAIL_ORDER_GET_APPID_REQ	= 0x000E,
+	RDP_RAIL_ORDER_GET_APPID_RESP	= 0x000F
+};
+
+/* RAIL Common structures */
 
 // Events from 'rail' vchannel plugin to UI
 enum RAIL_VCHANNEL_EVENT
@@ -270,9 +394,9 @@ typedef struct _RAIL_UI_EVENT
 				boolean menu_access_key_always_underlined;
 				boolean keyboard_for_user_prefered;
 				boolean left_right_mouse_buttons_swapped;
-				RAIL_RECT_16 work_area;
-				RAIL_RECT_16 display_resolution;
-				RAIL_RECT_16 taskbar_size;
+				RECTANGLE_16 work_area;
+				RECTANGLE_16 display_resolution;
+				RECTANGLE_16 taskbar_size;
 				struct
 				{
 					uint32 flags;
@@ -312,7 +436,7 @@ typedef struct _RAIL_UI_EVENT
 		struct
 		{
 			uint32 window_id;
-			RAIL_RECT_16 new_position;
+			RECTANGLE_16 new_position;
 		} window_move_info;
 
 		struct

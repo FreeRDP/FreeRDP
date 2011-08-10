@@ -18,29 +18,10 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/rail.h>
 #include <freerdp/utils/memory.h>
 
 #include "window.h"
-
-void update_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
-{
-	stream_read_uint16(s, unicode_string->cbString); /* cbString (2 bytes) */
-
-	if (unicode_string->string == NULL)
-		unicode_string->string = (uint8*) xmalloc(unicode_string->cbString);
-	else
-		unicode_string->string = (uint8*) xrealloc(unicode_string->string, unicode_string->cbString);
-
-	stream_read(s, unicode_string->string, unicode_string->cbString);
-}
-
-void update_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
-{
-	stream_read_uint16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_read_uint16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_read_uint16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_read_uint16(s, rectangle_16->bottom); /* bottom (2 bytes) */
-}
 
 void update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
 {
@@ -85,8 +66,8 @@ void update_read_notify_icon_infotip(STREAM* s, NOTIFY_ICON_INFOTIP* notify_icon
 {
 	stream_read_uint32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
 	stream_read_uint32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
-	update_read_unicode_string(s, &notify_icon_infotip->text); /* infoTipText */
-	update_read_unicode_string(s, &notify_icon_infotip->title); /* title */
+	rail_read_unicode_string(s, &notify_icon_infotip->text); /* infoTipText */
+	rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
 }
 
 void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
@@ -107,7 +88,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		stream_read_uint8(s, window_state->showState); /* showState (1 byte) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
-		update_read_unicode_string(s, &window_state->titleInfo); /* titleInfo */
+		rail_read_unicode_string(s, &window_state->titleInfo); /* titleInfo */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
@@ -159,7 +140,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* windowRects */
 		for (i = 0; i < window_state->numWindowRects; i++)
 		{
-			update_read_rectangle_16(s, &window_state->windowRects[i]);
+			rail_read_rectangle_16(s, &window_state->windowRects[i]);
 		}
 	}
 
@@ -183,7 +164,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* visibilityRects */
 		for (i = 0; i < window_state->numVisibilityRects; i++)
 		{
-			update_read_rectangle_16(s, &window_state->visibilityRects[i]);
+			rail_read_rectangle_16(s, &window_state->visibilityRects[i]);
 		}
 	}
 }
@@ -235,7 +216,7 @@ void update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* ord
 		stream_read_uint32(s, notify_icon_state->version); /* version (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP)
-		update_read_unicode_string(s, &notify_icon_state->toolTip); /* toolTip (UNICODE_STRING) */
+		rail_read_unicode_string(s, &notify_icon_state->toolTip); /* toolTip (UNICODE_STRING) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP)
 		update_read_notify_icon_infotip(s, &notify_icon_state->infoTip); /* infoTip (NOTIFY_ICON_INFOTIP) */

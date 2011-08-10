@@ -345,6 +345,11 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	freerdp_chanman_send_event(chanman, "cliprdr", event);
 }
 
+void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
+{
+
+}
+
 void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 {
 	FRDP_EVENT* event;
@@ -356,6 +361,9 @@ void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 		{
 			case FRDP_EVENT_TYPE_CB_SYNC:
 				xf_process_cb_sync_event(chanman, instance);
+				break;
+			case FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI:
+				xf_process_rail_event(chanman, instance);
 				break;
 			default:
 				printf("xf_process_channel_event: unknown event type %d\n", event->event_type);

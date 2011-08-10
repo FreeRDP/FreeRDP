@@ -54,50 +54,6 @@ void* rail_alloc_order_data(size_t length)
 	return (order_start + RAIL_PDU_HEADER_SIZE);
 }
 
-void write_rail_unicode_string_content(STREAM* s, RAIL_UNICODE_STRING* string)
-{
-	if (string->length > 0)
-		stream_write(s, string->buffer, string->length);
-}
-
-void write_rail_unicode_string(STREAM* s, RAIL_UNICODE_STRING* string)
-{
-	stream_write_uint16(s, string->length);
-
-	if (string->length > 0)
-		stream_write(s, string->buffer, string->length);
-}
-
-void write_rail_rect_16(STREAM* s, RAIL_RECT_16* rect)
-{
-	stream_write_uint16(s, rect->left); /*Left*/
-	stream_write_uint16(s, rect->top); /*Top*/
-	stream_write_uint16(s, rect->right); /*Right*/
-	stream_write_uint16(s, rect->bottom); /*Bottom*/
-}
-
-void read_rail_unicode_string(STREAM* s, RAIL_UNICODE_STRING * string)
-{
-	stream_read_uint16(s, string->length);
-
-	string->buffer = NULL;
-	if (string->length > 0)
-	{
-		string->buffer = xmalloc(string->length);
-		stream_read(s, string->buffer, string->length);
-	}
-}
-
-void free_rail_unicode_string(RAIL_UNICODE_STRING * string)
-{
-	if (string->buffer != NULL)
-	{
-		xfree(string->buffer);
-		string->buffer = NULL;
-		string->length = 0;
-	}
-}
-
 // Used by 'rail_vchannel_send_' routines for sending constructed RAIL PDU to
 // the 'rail' channel
 static void rail_vchannel_send_order_data(RAIL_SESSION* session, uint16 order_type, void* allocated_order_data, uint16 data_length)
@@ -105,7 +61,6 @@ static void rail_vchannel_send_order_data(RAIL_SESSION* session, uint16 order_ty
 	STREAM st_stream = {0};
 	STREAM* s = &st_stream;
 	uint8* header_start = ((uint8*)allocated_order_data - RAIL_PDU_HEADER_SIZE);
-
 
 	data_length += RAIL_PDU_HEADER_SIZE;
 
@@ -134,6 +89,8 @@ void rail_vchannel_send_handshake_order(RAIL_SESSION * session, uint32 build_num
 	STREAM* s = &st_stream;
 	uint16 data_length = 4;
 	void*  data = rail_alloc_order_data(data_length);
+
+	DEBUG_RAIL("Send Handshake Order");
 
 	stream_init_by_allocated_data(s, data, data_length);
 
@@ -166,14 +123,14 @@ void rail_vchannel_send_activate_order(RAIL_SESSION* session, uint32 window_id, 
  * remote application launch on the server.
  * */
 void rail_vchannel_send_exec_order(RAIL_SESSION* session, uint16 flags,
-		RAIL_UNICODE_STRING* exe_or_file, RAIL_UNICODE_STRING* working_directory, RAIL_UNICODE_STRING* arguments)
+		UNICODE_STRING* exe_or_file, UNICODE_STRING* working_directory, UNICODE_STRING* arguments)
 {
 	STREAM st_stream = {0};
 	STREAM* s = &st_stream;
 
-	uint16 exe_or_file_length        = exe_or_file->length;
-	uint16 working_directory_length  = working_directory->length;
-	uint16 arguments_length          = arguments->length;
+	uint16 exe_or_file_length        = exe_or_file->cbString;
+	uint16 working_directory_length  = working_directory->cbString;
+	uint16 arguments_length          = arguments->cbString;
 
 	size_t data_length =
 		2 +                         /*Flags (2 bytes)*/
@@ -193,9 +150,9 @@ void rail_vchannel_send_exec_order(RAIL_SESSION* session, uint16 flags,
 	stream_write_uint16(s, working_directory_length);
 	stream_write_uint16(s, arguments_length);
 
-	write_rail_unicode_string_content(s, exe_or_file);
-	write_rail_unicode_string_content(s, working_directory);
-	write_rail_unicode_string_content(s, arguments);
+	rail_write_unicode_string_value(s, exe_or_file);
+	rail_write_unicode_string_value(s, working_directory);
+	rail_write_unicode_string_value(s, arguments);
 
 	rail_vchannel_send_order_data(session, RDP_RAIL_ORDER_EXEC, data, data_length);
 }
@@ -204,20 +161,20 @@ size_t get_sysparam_size_in_rdp_stream(RAIL_CLIENT_SYSPARAM * sysparam)
 {
 	switch (sysparam->type)
 	{
-	case SPI_SETDRAGFULLWINDOWS: {return 1;}
-	case SPI_SETKEYBOARDCUES:    {return 1;}
-	case SPI_SETKEYBOARDPREF:    {return 1;}
-	case SPI_SETMOUSEBUTTONSWAP: {return 1;}
-	case SPI_SETWORKAREA:        {return 8;}
-	case RAIL_SPI_DISPLAYCHANGE: {return 8;}
-	case RAIL_SPI_TASKBARPOS:    {return 8;}
-	case SPI_SETHIGHCONTRAST:
-		{
-			return (4 + /*Flags (4 bytes)*/
-					4 + /*ColorSchemeLength (4 bytes)*/
-					2 + /*UNICODE_STRING.cbString (2 bytes)*/
-					sysparam->value.high_contrast_system_info.color_scheme.length);
-		}
+		case SPI_SET_DRAG_FULL_WINDOWS: {return 1;}
+		case SPI_SET_KEYBOARD_CUES:    {return 1;}
+		case SPI_SET_KEYBOARD_PREF:    {return 1;}
+		case SPI_SET_MOUSE_BUTTON_SWAP: {return 1;}
+		case SPI_SET_WORK_AREA:        {return 8;}
+		case RAIL_SPI_DISPLAY_CHANGE: {return 8;}
+		case RAIL_SPI_TASKBAR_POS:    {return 8;}
+		case SPI_SET_HIGH_CONTRAST:
+			{
+				return (4 + /*Flags (4 bytes)*/
+						4 + /*ColorSchemeLength (4 bytes)*/
+						2 + /*UNICODE_STRING.cbString (2 bytes)*/
+						sysparam->value.high_contrast_system_info.color_scheme.cbString);
+			}
 	};
 
 	assert(!"Unknown sysparam type");
@@ -244,38 +201,38 @@ void rail_vchannel_send_client_sysparam_update_order(RAIL_SESSION* session, RAIL
 
 	switch (sysparam->type)
 	{
-		case SPI_SETDRAGFULLWINDOWS:
+		case SPI_SET_DRAG_FULL_WINDOWS:
 			stream_write_uint8(s, sysparam->value.full_window_drag_enabled);
 			break;
 
-		case SPI_SETKEYBOARDCUES:
+		case SPI_SET_KEYBOARD_CUES:
 			stream_write_uint8(s, sysparam->value.menu_access_key_always_underlined);
 			break;
 
-		case SPI_SETKEYBOARDPREF:
+		case SPI_SET_KEYBOARD_PREF:
 			stream_write_uint8(s, sysparam->value.keyboard_for_user_prefered);
 			break;
 
-		case SPI_SETMOUSEBUTTONSWAP:
+		case SPI_SET_MOUSE_BUTTON_SWAP:
 			stream_write_uint8(s, sysparam->value.left_right_mouse_buttons_swapped);
 			break;
 
-		case SPI_SETWORKAREA:
-			write_rail_rect_16(s, &sysparam->value.work_area);
+		case SPI_SET_WORK_AREA:
+			rail_write_rectangle_16(s, &sysparam->value.work_area);
 			break;
 
-		case RAIL_SPI_DISPLAYCHANGE:
-			write_rail_rect_16(s, &sysparam->value.display_resolution);
+		case RAIL_SPI_DISPLAY_CHANGE:
+			rail_write_rectangle_16(s, &sysparam->value.display_resolution);
 			break;
 
-		case RAIL_SPI_TASKBARPOS:
-			write_rail_rect_16(s, &sysparam->value.taskbar_size);
+		case RAIL_SPI_TASKBAR_POS:
+			rail_write_rectangle_16(s, &sysparam->value.taskbar_size);
 			break;
 
-		case SPI_SETHIGHCONTRAST:
+		case SPI_SET_HIGH_CONTRAST:
 			{
 				uint32 color_scheme_length = 2 +
-						sysparam->value.high_contrast_system_info.color_scheme.length;
+						sysparam->value.high_contrast_system_info.color_scheme.cbString;
 
 				stream_write_uint32(s, sysparam->value.high_contrast_system_info.flags);
 				stream_write_uint32(s, color_scheme_length);
@@ -338,7 +295,7 @@ void rail_vchannel_send_notify_event_order(RAIL_SESSION * session, uint32 window
  * when a local window is ending a move or resize. The client communicates the
  * locally moved or resized window's position to the server by using this packet.
  * The server uses this information to reposition its window.*/
-void rail_vchannel_send_client_windowmove_order(RAIL_SESSION* session, uint32 window_id, RAIL_RECT_16* new_position)
+void rail_vchannel_send_client_windowmove_order(RAIL_SESSION* session, uint32 window_id, RECTANGLE_16* new_position)
 {
 	STREAM st_stream = {0};
 	STREAM* s = &st_stream;
@@ -366,6 +323,8 @@ void rail_vchannel_send_client_information_order(RAIL_SESSION* session, uint32 f
 	STREAM* s = &st_stream;
 	uint16 data_length = 4;
 	void*  data = rail_alloc_order_data(data_length);
+
+	DEBUG_RAIL("Send Client Information Order");
 
 	stream_init_by_allocated_data(s, data, data_length);
 
@@ -458,16 +417,16 @@ void rail_vchannel_process_exec_result_order(RAIL_SESSION* session, STREAM* s)
 	uint16 flags = 0;
 	uint16 exec_result = 0;
 	uint32 raw_result = 0;
-	RAIL_UNICODE_STRING exe_or_file = {0};
+	UNICODE_STRING exe_or_file = {0};
 
 	stream_read_uint16(s, flags); /*Flags (2 bytes)*/
 	stream_read_uint16(s, exec_result); /*ExecResult (2 bytes)*/
 	stream_read_uint32(s, raw_result); /*RawResult (4 bytes)*/
 	stream_seek(s, 2);  /*Padding (2 bytes)*/
-	read_rail_unicode_string(s, &exe_or_file); /*ExeOrFileLength with ExeOrFile (variable)*/
+	rail_read_unicode_string(s, &exe_or_file); /*ExeOrFileLength with ExeOrFile (variable)*/
 
 	rail_core_handle_exec_result(session, flags, exec_result, raw_result, &exe_or_file);
-	free_rail_unicode_string(&exe_or_file);
+	rail_unicode_string_free(&exe_or_file);
 }
 
 /*
@@ -482,17 +441,17 @@ void rail_vchannel_process_server_sysparam_update_order(RAIL_SESSION* session, S
 
 	switch (sysparam.type)
 	{
-	case SPI_SETSCREENSAVEACTIVE:
-		stream_read_uint8(s, sysparam.value.screen_saver_enabled);
-		break;
+		case SPI_SET_SCREEN_SAVE_ACTIVE:
+			stream_read_uint8(s, sysparam.value.screen_saver_enabled);
+			break;
 
-	case SPI_SETSCREENSAVESECURE:
-		stream_read_uint8(s, sysparam.value.screen_saver_lock_enabled);
-		break;
+		case SPI_SET_SCREEN_SAVE_SECURE:
+			stream_read_uint8(s, sysparam.value.screen_saver_lock_enabled);
+			break;
 
-	default:
-		assert(!"Undocumented RAIL server sysparam type");
-		break;
+		default:
+			assert(!"Undocumented RAIL server sysparam type");
+			break;
 	};
 
 	rail_core_handle_server_sysparam(session, &sysparam);
@@ -581,16 +540,16 @@ void rail_vchannel_process_server_langbar_info_order(RAIL_SESSION* session, STRE
 static void rail_vchannel_process_server_get_appid_resp_order(RAIL_SESSION* session, STREAM* s)
 {
 	uint32 window_id = 0;
-	RAIL_UNICODE_STRING app_id = {0};
+	UNICODE_STRING app_id = {0};
 
-	app_id.length = 256;
-	app_id.buffer = xmalloc(app_id.length);
+	app_id.cbString = 256;
+	app_id.string = xmalloc(app_id.cbString);
 
 	stream_read_uint32(s, window_id);
-	stream_read(s, app_id.buffer, app_id.length);
+	stream_read(s, app_id.string, app_id.cbString);
 
 	rail_core_handle_server_get_app_resp(session, window_id, &app_id);
-	free_rail_unicode_string(&app_id);
+	rail_unicode_string_free(&app_id);
 }
 
 void rail_vchannel_process_received_vchannel_data(RAIL_SESSION * session, STREAM* s)

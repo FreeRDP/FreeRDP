@@ -26,12 +26,12 @@
 void rail_vchannel_send_handshake_order(RAIL_SESSION* session, uint32 build_number);
 void rail_vchannel_send_client_information_order(RAIL_SESSION* session, uint32 flags);
 void rail_vchannel_send_activate_order(RAIL_SESSION* session, uint32 window_id, uint8 enabled);
-void rail_vchannel_send_exec_order(RAIL_SESSION* session, uint16 flags, RAIL_UNICODE_STRING* exe_or_file,
-		RAIL_UNICODE_STRING* working_directory, RAIL_UNICODE_STRING* arguments);
+void rail_vchannel_send_exec_order(RAIL_SESSION* session, uint16 flags, UNICODE_STRING* exe_or_file,
+		UNICODE_STRING* working_directory, UNICODE_STRING* arguments);
 void rail_vchannel_send_client_sysparam_update_order(RAIL_SESSION* session, RAIL_CLIENT_SYSPARAM* sysparam);
 void rail_vchannel_send_syscommand_order(RAIL_SESSION* session, uint32 window_id, uint16 command);
 void rail_vchannel_send_notify_event_order(RAIL_SESSION* session, uint32 window_id, uint32 notify_icon_id, uint32 message);
-void rail_vchannel_send_client_windowmove_order(RAIL_SESSION* session, uint32 window_id, RAIL_RECT_16* new_position);
+void rail_vchannel_send_client_windowmove_order(RAIL_SESSION* session, uint32 window_id, RECTANGLE_16* new_position);
 void rail_vchannel_send_client_system_menu_order(RAIL_SESSION* session, uint32 window_id, uint16 left, uint16 top);
 void rail_vchannel_send_client_langbar_information_order(RAIL_SESSION* session, uint32 langbar_status);
 void rail_vchannel_send_get_appid_req_order(RAIL_SESSION* session, uint32 window_id);
