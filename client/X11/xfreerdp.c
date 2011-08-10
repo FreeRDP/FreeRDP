@@ -257,7 +257,7 @@ boolean xf_post_connect(freerdp* instance)
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP);
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
 	if (xfi->fullscreen)
