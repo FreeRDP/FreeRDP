@@ -735,8 +735,9 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 				for (j = 0; j < message->num_rects; j++)
 				{
 					gdi_SetClipRgn(gdi->primary->hdc,
-							message->rects[j].x, message->rects[j].y,
-							message->rects[j].width, message->rects[j].height);
+						surface_bits_command->destLeft + message->rects[j].x,
+						surface_bits_command->destTop + message->rects[j].y,
+						message->rects[j].width, message->rects[j].height);
 
 					gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
 				}
@@ -745,12 +746,18 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 			for (i = 0; i < message->num_rects; i++)
 			{
 				gdi_InvalidateRegion(gdi->primary->hdc,
-						message->rects[i].x, message->rects[i].y,
-						message->rects[i].width, message->rects[i].height);
+					surface_bits_command->destLeft + message->rects[i].x,
+					surface_bits_command->destTop + message->rects[i].y,
+					message->rects[i].width, message->rects[i].height);
 			}
 		}
 		else /* RDSH */
 		{
+			gdi_SetClipRgn(gdi->primary->hdc,
+				surface_bits_command->destLeft + message->rects[0].x,
+				surface_bits_command->destTop + message->rects[0].y,
+				message->rects[0].width, message->rects[0].height);
+
 			/* blit each tile */
 			for (i = 0; i < message->num_tiles; i++)
 			{
@@ -761,8 +768,12 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
 
-				gdi_InvalidateRegion(gdi->primary->hdc, tx, ty, 64, 64);
 			}
+
+			gdi_InvalidateRegion(gdi->primary->hdc,
+				surface_bits_command->destLeft + message->rects[0].x,
+				surface_bits_command->destTop + message->rects[0].y,
+				message->rects[0].width, message->rects[0].height);
 		}
 
 		rfx_message_free(context, message);
