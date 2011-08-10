@@ -50,6 +50,10 @@ FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_fr
 		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
 			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_RESPONSE_EVENT);
 			break;
+		case FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL:
+		case FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI:
+			event = xnew(FRDP_EVENT);
+			break;
 	}
 	if (event != NULL)
 	{

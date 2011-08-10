@@ -30,6 +30,7 @@ set(FREERDP_UTILS_SRCS
 	memory.c
 	mutex.c
 	profiler.c
+	rail.c
 	semaphore.c
 	stopwatch.c
 	stream.c

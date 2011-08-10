@@ -257,7 +257,7 @@ boolean xf_post_connect(freerdp* instance)
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP);
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
 	if (xfi->fullscreen)
@@ -345,6 +345,11 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	freerdp_chanman_send_event(chanman, "cliprdr", event);
 }
 
+void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
+{
+
+}
+
 void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 {
 	FRDP_EVENT* event;
@@ -356,6 +361,9 @@ void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 		{
 			case FRDP_EVENT_TYPE_CB_SYNC:
 				xf_process_cb_sync_event(chanman, instance);
+				break;
+			case FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI:
+				xf_process_rail_event(chanman, instance);
 				break;
 			default:
 				printf("xf_process_channel_event: unknown event type %d\n", event->event_type);

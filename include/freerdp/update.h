@@ -20,6 +20,7 @@
 #ifndef __UPDATE_API_H
 #define __UPDATE_API_H
 
+#include <freerdp/rail.h>
 #include <freerdp/types.h>
 
 /* Common */
@@ -684,22 +685,6 @@ struct _WINDOW_ORDER_INFO
 	uint32 notifyIconId;
 };
 typedef struct _WINDOW_ORDER_INFO WINDOW_ORDER_INFO;
-
-struct _UNICODE_STRING
-{
-	uint16 cbString;
-	uint8* string;
-};
-typedef struct _UNICODE_STRING UNICODE_STRING;
-
-struct _RECTANGLE_16
-{
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
-};
-typedef struct _RECTANGLE_16 RECTANGLE_16;
 
 struct _ICON_INFO
 {

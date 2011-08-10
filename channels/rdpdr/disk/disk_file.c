@@ -407,7 +407,8 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 		case FileAllocationInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
 			stream_read_uint64(input, size);
-			ftruncate(file->fd, size);
+			if (ftruncate(file->fd, size) != 0)
+				return False;
 			break;
 
 		case FileDispositionInformation:
