@@ -92,6 +92,7 @@ add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-chanman)
 add_subdirectory(libfreerdp-core)
+add_subdirectory(libfreerdp-rfx)
 add_subdirectory(channels)
 
 add_subdirectory(client)

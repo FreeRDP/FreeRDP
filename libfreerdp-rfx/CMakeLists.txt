@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-utils cmake build script
+# libfreerdp-core cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,34 +17,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_package(Threads REQUIRED)
+set(LIBFREERDP_RFX_SRCS
+	rfx_bitstream.c
+	rfx_bitstream.h
+	rfx_constants.h
+	rfx_decode.c
+	rfx_decode.h
+	rfx_differential.c
+	rfx_differential.h
+	rfx_dwt.c
+	rfx_dwt.h
+	rfx_encode.c
+	rfx_encode.h
+	rfx_pool.c
+	rfx_pool.h
+	rfx_quantization.c
+	rfx_quantization.h
+	rfx_rlgr.c
+	rfx_rlgr.h
+	rfx_types.h
+	librfx.c
+)
 
-set(FREERDP_UTILS_SRCS
-	args.c
-	blob.c
-	event.c
-	hexdump.c
-	list.c
-	load_plugin.c
-	memory.c
-	mutex.c
-	profiler.c
-	rail.c
-	semaphore.c
-	stopwatch.c
-	stream.c
-	svc_plugin.c
-	thread.c
-	unicode.c
-	wait_obj.c)
+add_library(freerdp-rfx SHARED ${LIBFREERDP_RFX_SRCS})
 
-add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
+target_link_libraries(freerdp-rfx freerdp-utils)
 
-add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
-
-set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
-
-target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
-
-install(TARGETS freerdp-utils DESTINATION lib)
+install(TARGETS freerdp-rfx DESTINATION lib)

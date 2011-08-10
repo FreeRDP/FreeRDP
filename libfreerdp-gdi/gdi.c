@@ -21,9 +21,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
+#include <freerdp/rfx.h>
 
 #include "color.h"
-#include "decode.h"
 
 #include "gdi_dc.h"
 #include "gdi_pen.h"
@@ -695,6 +696,97 @@ void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 	brush_put(gdi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
+void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+{
+	GDI* gdi = GET_GDI(update);
+	RFX_CONTEXT* context = (RFX_CONTEXT*)gdi->rfx_context;
+	RFX_MESSAGE* message;
+	STREAM* s;
+	int i, j;
+	int tx, ty;
+
+	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
+		"bpp %d codecID %d width %d height %d length %d",
+		surface_bits_command->destLeft, surface_bits_command->destTop,
+		surface_bits_command->destRight, surface_bits_command->destBottom,
+		surface_bits_command->bpp, surface_bits_command->codecID,
+		surface_bits_command->width, surface_bits_command->height,
+		surface_bits_command->bitmapDataLength);
+
+	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	{
+		s = stream_new(0);
+		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+
+		message = rfx_process_message(context, s);
+
+		DEBUG_GDI("num_rects %d num_tiles %d", message->num_rects, message->num_tiles);
+
+		if (message->num_rects > 1) /* RDVH */
+		{
+			/* blit each tile */
+			for (i = 0; i < message->num_tiles; i++)
+			{
+				tx = message->tiles[i]->x + surface_bits_command->destLeft;
+				ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+				for (j = 0; j < message->num_rects; j++)
+				{
+					gdi_SetClipRgn(gdi->primary->hdc,
+						surface_bits_command->destLeft + message->rects[j].x,
+						surface_bits_command->destTop + message->rects[j].y,
+						message->rects[j].width, message->rects[j].height);
+
+					gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
+				}
+			}
+
+			for (i = 0; i < message->num_rects; i++)
+			{
+				gdi_InvalidateRegion(gdi->primary->hdc,
+					surface_bits_command->destLeft + message->rects[i].x,
+					surface_bits_command->destTop + message->rects[i].y,
+					message->rects[i].width, message->rects[i].height);
+			}
+		}
+		else /* RDSH */
+		{
+			gdi_SetClipRgn(gdi->primary->hdc,
+				surface_bits_command->destLeft + message->rects[0].x,
+				surface_bits_command->destTop + message->rects[0].y,
+				message->rects[0].width, message->rects[0].height);
+
+			/* blit each tile */
+			for (i = 0; i < message->num_tiles; i++)
+			{
+				tx = message->tiles[i]->x + surface_bits_command->destLeft;
+				ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
+
+			}
+
+			gdi_InvalidateRegion(gdi->primary->hdc,
+				surface_bits_command->destLeft + message->rects[0].x,
+				surface_bits_command->destTop + message->rects[0].y,
+				message->rects[0].width, message->rects[0].height);
+		}
+
+		rfx_message_free(context, message);
+
+		stream_detach(s);
+		stream_free(s);
+	}
+	else
+	{
+		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+	}
+}
+
 /**
  * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
@@ -734,6 +826,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBitmapV2 = gdi_cache_bitmap_v2;
 	update->CacheColorTable = gdi_cache_color_table;
 	update->CacheBrush = gdi_cache_brush;
+
+	update->SurfaceBits = gdi_surface_bits;
 }
 
 /**
@@ -811,6 +905,8 @@ int gdi_init(freerdp* instance, uint32 flags)
 
 	gdi->cache = cache_new(instance->settings);
 
+	gdi->rfx_context = rfx_context_new();
+
 	return 0;
 }
 
@@ -822,6 +918,7 @@ void gdi_free(freerdp* instance)
 	{
 		gdi_bitmap_free(gdi->primary);
 		gdi_DeleteDC(gdi->hdc);
+		rfx_context_free((RFX_CONTEXT*)gdi->rfx_context);
 		free(gdi->clrconv);
 		free(gdi);
 	}

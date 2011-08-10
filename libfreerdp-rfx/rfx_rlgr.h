@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * GDI RemoteFX Decoder
+ * FreeRDP: A Remote Desktop Protocol client.
+ * RemoteFX Codec Library - RLGR
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __DECODE_H
-#define __DECODE_H
+#ifndef __RFX_RLGR_H
+#define __RFX_RLGR_H
 
-#include <freerdp/freerdp.h>
+#include <freerdp/rfx.h>
 
-#include "gdi.h"
+int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* buffer, int buffer_size);
+int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* buffer, int buffer_size);
 
-void gdi_decode_frame(GDI *gdi, int x, int y, uint8 * data, uint32 length);
-void gdi_decode_data(GDI *gdi, uint8 * data, int data_size);
-
-#endif /* __DECODE_H */
+#endif /* __RFX_RLGR_H */

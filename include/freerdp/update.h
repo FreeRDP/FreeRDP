@@ -22,7 +22,6 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
 
 /* Common */
 
@@ -790,7 +789,7 @@ struct _SURFACE_BITS_COMMAND
 	uint16 width;
 	uint16 height;
 	uint32 bitmapDataLength;
-	STREAM* bitmapData;
+	uint8* bitmapData;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 

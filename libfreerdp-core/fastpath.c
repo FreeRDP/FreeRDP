@@ -81,7 +81,7 @@ static int fastpath_recv_update_surfcmd_surface_bits(rdpFastPath* fastpath, STRE
 	stream_read_uint16(s, cmd->height);
 	stream_read_uint32(s, cmd->bitmapDataLength);
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
-	cmd->bitmapData = s;
+	cmd->bitmapData = stream_get_tail(s);
 
 	IFCALL(update->SurfaceBits, update, cmd);
 
@@ -243,10 +243,16 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
+	rdpUpdate* update = fastpath->rdp->update;
+
+	IFCALL(update->BeginPaint, update);
+
 	while (stream_get_left(s) > 3)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
+
+	IFCALL(update->EndPaint, update);
 }
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)
