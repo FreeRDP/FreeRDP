@@ -705,7 +705,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 	int i, j;
 	int tx, ty;
 
-	DEBUG_GDI("gdi_surface_bits: destLeft %d destTop %d destRight %d destBottom %d "
+	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
 		surface_bits_command->destLeft, surface_bits_command->destTop,
 		surface_bits_command->destRight, surface_bits_command->destBottom,
@@ -719,6 +719,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		message = rfx_process_message(context, s);
+
+		DEBUG_GDI("num_rects %d num_tiles %d", message->num_rects, message->num_tiles);
 
 		if (message->num_rects > 1) /* RDVH */
 		{

@@ -243,10 +243,16 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
+	rdpUpdate* update = fastpath->rdp->update;
+
+	IFCALL(update->BeginPaint, update);
+
 	while (stream_get_left(s) > 3)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
+
+	IFCALL(update->EndPaint, update);
 }
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)
