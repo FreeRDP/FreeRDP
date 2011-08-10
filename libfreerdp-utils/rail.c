@@ -55,7 +55,8 @@ void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
 
 void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string)
 {
-	stream_write(s, unicode_string->string, unicode_string->length); /* string */
+	if (unicode_string->length > 0)
+		stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
 void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)

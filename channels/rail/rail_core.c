@@ -24,6 +24,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/rail.h>
 
@@ -76,6 +77,20 @@ void init_rail_string(RAIL_STRING * rail_string, const char * string)
 	rail_string->length = strlen(string) + 1;
 }
 
+void rail_string_to_unicode_string(rdpRail* rail, char* string, UNICODE_STRING* unicode_string)
+{
+	char* buffer;
+	size_t length = 0;
+
+	unicode_string->string = NULL;
+	unicode_string->length = 0;
+
+	buffer = freerdp_uniconv_out(rail->uniconv, string, &length);
+
+	unicode_string->string = (uint8*) buffer;
+	unicode_string->length = (uint16) length;
+}
+
 void rail_string2unicode_string(RAIL_SESSION* session, RAIL_STRING* string, UNICODE_STRING* unicode_string)
 {
 	size_t   result_length = 0;
@@ -119,6 +134,9 @@ RAIL_SESSION* rail_core_session_new(RAIL_VCHANNEL_DATA_SENDER* data_sender, RAIL
 		self->data_sender = data_sender;
 		self->event_sender = event_sender;
 		self->uniconv = freerdp_uniconv_new();
+		self->rail = rail_new();
+		self->rail->data_sender = data_sender;
+		self->rail->event_sender = event_sender;
 	}
 
 	return self;
@@ -128,6 +146,7 @@ void rail_core_session_free(RAIL_SESSION* rail_session)
 {
 	if (rail_session != NULL)
 	{
+		rail_free(rail_session->rail);
 		freerdp_uniconv_free(rail_session->uniconv);
 		xfree(rail_session);
 	}
@@ -150,6 +169,26 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 
 	DEBUG_RAIL("rail_core_handle_server_handshake: session=0x%p buildNumber=0x%X.", session, build_number);
 
+#if 1
+	session->rail->handshake.buildNumber = 0x00001DB0;
+	rail_send_handshake_order(session->rail);
+
+	session->rail->client_status.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	rail_send_client_status_order(session->rail);
+
+	session->rail->exec.flags =
+			RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY |
+			RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
+
+	rail_string_to_unicode_string(session->rail, "||firefox", &session->rail->exec.exeOrFile);
+	rail_string_to_unicode_string(session->rail, "", &session->rail->exec.workingDir);
+	rail_string_to_unicode_string(session->rail, "", &session->rail->exec.arguments);
+
+	//rail_send_client_exec_order(session->rail);
+
+	rail_core_send_client_execute(session, False, "||firefox", "", "");
+
+#else
 	// Step 1. Send Handshake PDU (2.2.2.2.1)
 	// Fixed: MS-RDPERP 1.3.2.1 is not correct!
 	rail_vchannel_send_handshake_order(session, client_build_number);
@@ -168,6 +207,7 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 	// will be processed after Destop Sync processed.
 	// So maybe send after receive Destop Sync sequence?
 	rail_core_send_client_execute(session, False, "||firefox", "", "");
+#endif
 }
 
 void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 exec_result, uint32 raw_result, UNICODE_STRING* exe_or_file)
@@ -203,6 +243,20 @@ void rail_core_handle_server_sysparam(RAIL_SESSION* session, RAIL_SERVER_SYSPARA
 		session, sysparam->type, sysparam->value.screen_saver_enabled,
 		sysparam->value.screen_saver_lock_enabled);
 
+#if 1
+	session->rail->sysparam.systemParam = SPI_SET_DRAG_FULL_WINDOWS;
+	session->rail->sysparam.value = True;
+
+	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_CUES;
+	session->rail->sysparam.value = False;
+
+	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_PREF;
+	session->rail->sysparam.value = False;
+
+	session->rail->sysparam.systemParam = SPI_SET_MOUSE_BUTTON_SWAP;
+	session->rail->sysparam.value = False;
+
+#else
 	init_vchannel_event(&event, RAIL_VCHANNEL_EVENT_SERVER_SYSPARAM_RECEIVED);
 	event.param.server_param_info.param_type = sysparam->type;
 	event.param.server_param_info.screen_saver_enabled =
@@ -212,6 +266,7 @@ void rail_core_handle_server_sysparam(RAIL_SESSION* session, RAIL_SERVER_SYSPARA
 		((sysparam->value.screen_saver_lock_enabled != 0) ? True: False);
 
 	session->event_sender->send_rail_vchannel_event(session->event_sender->event_sender_object, &event);
+#endif
 }
 
 void rail_core_handle_server_movesize(RAIL_SESSION* session, uint32 window_id,
@@ -310,8 +365,6 @@ void rail_core_send_client_execute(RAIL_SESSION* session,
 	UNICODE_STRING working_directory;
 	UNICODE_STRING arguments;
 	uint16 flags;
-
-	DEBUG_RAIL("RAIL_ORDER_EXEC");
 
 	init_rail_string(&exe_or_file_, rail_exe_or_file);
 	init_rail_string(&working_directory_, rail_working_directory);

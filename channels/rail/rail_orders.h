@@ -21,6 +21,10 @@
 #ifndef __RAIL_ORDERS_H
 #define	__RAIL_ORDERS_H
 
+typedef struct rdp_rail rdpRail;
+
+#include "rail_core.h"
+
 #include <freerdp/rail.h>
 #include <freerdp/utils/stream.h>
 
@@ -42,8 +46,9 @@ struct rdp_rail
 	RAIL_LANGBAR_INFO_ORDER langbar_info;
 	RAIL_GET_APPID_REQ_ORDER get_appid_req;
 	RAIL_GET_APPID_RESP_ORDER get_appid_resp;
+	RAIL_VCHANNEL_DATA_SENDER* data_sender;
+	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
 };
-typedef struct rdp_rail rdpRail;
 
 #define RAIL_ORDER_TYPE_EXEC			0x0001
 #define RAIL_ORDER_TYPE_ACTIVATE		0x0002

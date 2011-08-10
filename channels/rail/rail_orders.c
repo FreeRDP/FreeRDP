@@ -22,6 +22,43 @@
 
 #include "rail_orders.h"
 
+#define RAIL_ORDER_TYPE_EXEC			0x0001
+#define RAIL_ORDER_TYPE_ACTIVATE		0x0002
+#define RAIL_ORDER_TYPE_SYSPARAM		0x0003
+#define RAIL_ORDER_TYPE_SYSCOMMAND		0x0004
+#define RAIL_ORDER_TYPE_HANDSHAKE		0x0005
+#define RAIL_ORDER_TYPE_NOTIFY_EVENT		0x0006
+#define RAIL_ORDER_TYPE_WINDOW_MOVE		0x0008
+#define RAIL_ORDER_TYPE_LOCALMOVESIZE		0x0009
+#define RAIL_ORDER_TYPE_MINMAXINFO		0x000A
+#define RAIL_ORDER_TYPE_CLIENT_STATUS		0x000B
+#define RAIL_ORDER_TYPE_SYSMENU			0x000C
+#define RAIL_ORDER_TYPE_LANGBAR_INFO		0x000D
+#define RAIL_ORDER_TYPE_EXEC_RESULT		0x0080
+#define RAIL_ORDER_TYPE_GET_APPID_REQ		0x000E
+#define RAIL_ORDER_TYPE_GET_APPID_RESP		0x000F
+
+uint8 RAIL_ORDER_TYPE_STRINGS[][32] =
+{
+	"",
+	"Execute",
+	"Activate",
+	"System Parameters Update",
+	"System Command",
+	"Handshake",
+	"Notify Event",
+	"",
+	"Window Move",
+	"Local Move/Size",
+	"Min Max Info",
+	"Client Status",
+	"System Menu",
+	"Language Bar Info",
+	"Get Application ID Request",
+	"Get Application ID Response",
+	"Execute Result"
+};
+
 void rail_read_pdu_header(STREAM* s, uint16* orderType, uint16* orderLength)
 {
 	stream_read_uint16(s, *orderType); /* orderType (2 bytes) */
@@ -42,7 +79,7 @@ STREAM* rail_pdu_init(int length)
 	return s;
 }
 
-void rail_send_pdu(STREAM* s, uint16 orderType)
+void rail_send_pdu(rdpRail* rail, STREAM* s, uint16 orderType)
 {
 	uint16 orderLength;
 
@@ -53,6 +90,10 @@ void rail_send_pdu(STREAM* s, uint16 orderType)
 	stream_set_pos(s, orderLength);
 
 	/* send */
+	printf("Sending %s PDU, length:%d\n",
+			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + orderType], orderLength);
+
+	rail->data_sender->send_rail_vchannel_data(rail->data_sender->data_sender_object, s->data, orderLength);
 }
 
 void rail_write_high_contrast(STREAM* s, HIGH_CONTRAST* high_contrast)
@@ -139,9 +180,9 @@ void rail_write_client_exec_order(STREAM* s, RAIL_EXEC_ORDER* exec)
 	stream_write_uint16(s, exec->exeOrFile.length); /* exeOrFileLength (2 bytes) */
 	stream_write_uint16(s, exec->workingDir.length); /* workingDirLength (2 bytes) */
 	stream_write_uint16(s, exec->arguments.length); /* argumentsLength (2 bytes) */
-	rail_write_unicode_string_value(s, exec->exeOrFile); /* exeOrFile */
-	rail_write_unicode_string_value(s, exec->workingDir); /* workingDir */
-	rail_write_unicode_string_value(s, exec->arguments); /* arguments */
+	rail_write_unicode_string_value(s, &exec->exeOrFile); /* exeOrFile */
+	rail_write_unicode_string_value(s, &exec->workingDir); /* workingDir */
+	rail_write_unicode_string_value(s, &exec->arguments); /* arguments */
 }
 
 void rail_write_client_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
@@ -227,6 +268,9 @@ void rail_order_recv(rdpRail* rail, STREAM* s)
 
 	rail_read_pdu_header(s, &orderType, &orderLength);
 
+	printf("Received %s PDU, length:%d\n",
+			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + orderType], orderLength);
+
 	switch (orderType)
 	{
 		case RDP_RAIL_ORDER_HANDSHAKE:
@@ -267,7 +311,7 @@ void rail_send_handshake_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
 	rail_write_handshake_order(s, &rail->handshake);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_HANDSHAKE);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_HANDSHAKE);
 }
 
 void rail_send_client_status_order(rdpRail* rail)
@@ -275,7 +319,7 @@ void rail_send_client_status_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_CLIENT_STATUS_ORDER_LENGTH);
 	rail_write_client_status_order(s, &rail->client_status);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_CLIENT_STATUS);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_CLIENT_STATUS);
 }
 
 void rail_send_client_exec_order(rdpRail* rail)
@@ -285,12 +329,12 @@ void rail_send_client_exec_order(rdpRail* rail)
 
 	length = RAIL_EXEC_ORDER_LENGTH +
 			rail->exec.exeOrFile.length +
-			rail->exec.workingDir.length;
+			rail->exec.workingDir.length +
 			rail->exec.arguments.length;
 
 	s = rail_pdu_init(RAIL_EXEC_ORDER_LENGTH);
-	rail_write_exec_order(s, &rail->exec);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_EXEC);
+	rail_write_client_exec_order(s, &rail->exec);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_EXEC);
 }
 
 void rail_send_client_sysparam_order(rdpRail* rail)
@@ -322,7 +366,7 @@ void rail_send_client_sysparam_order(rdpRail* rail)
 
 	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH);
 	rail_write_sysparam_order(s, &rail->sysparam);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_SYSPARAM);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_SYSPARAM);
 }
 
 void rail_send_client_activate_order(rdpRail* rail)
@@ -330,7 +374,7 @@ void rail_send_client_activate_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_ACTIVATE_ORDER_LENGTH);
 	rail_write_activate_order(s, &rail->activate);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_ACTIVATE);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_ACTIVATE);
 }
 
 void rail_send_client_sysmenu_order(rdpRail* rail)
@@ -338,7 +382,7 @@ void rail_send_client_sysmenu_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_SYSMENU_ORDER_LENGTH);
 	rail_write_sysmenu_order(s, &rail->sysmenu);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_SYSMENU);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_SYSMENU);
 }
 
 void rail_send_client_syscommand_order(rdpRail* rail)
@@ -346,7 +390,7 @@ void rail_send_client_syscommand_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_SYSCOMMAND_ORDER_LENGTH);
 	rail_write_syscommand_order(s, &rail->syscommand);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_SYSCOMMAND);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_SYSCOMMAND);
 }
 
 void rail_send_client_notify_event_order(rdpRail* rail)
@@ -354,7 +398,7 @@ void rail_send_client_notify_event_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_NOTIFY_EVENT_ORDER_LENGTH);
 	rail_write_notify_event_order(s, &rail->notify_event);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_NOTIFY_EVENT);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_NOTIFY_EVENT);
 }
 
 void rail_send_client_window_move_order(rdpRail* rail)
@@ -362,7 +406,7 @@ void rail_send_client_window_move_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_WINDOW_MOVE_ORDER_LENGTH);
 	rail_write_window_move_order(s, &rail->window_move);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_WINDOW_MOVE);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_WINDOW_MOVE);
 }
 
 void rail_send_client_get_appid_req_order(rdpRail* rail)
@@ -370,7 +414,7 @@ void rail_send_client_get_appid_req_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_GET_APPID_REQ_ORDER_LENGTH);
 	rail_write_window_move_order(s, &rail->get_appid_req);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_GET_APPID_REQ);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_GET_APPID_REQ);
 }
 
 void rail_send_client_langbar_info_order(rdpRail* rail)
@@ -378,7 +422,7 @@ void rail_send_client_langbar_info_order(rdpRail* rail)
 	STREAM* s;
 	s = rail_pdu_init(RAIL_LANGBAR_INFO_ORDER_LENGTH);
 	rail_write_window_move_order(s, &rail->langbar_info);
-	rail_send_pdu(s, RAIL_ORDER_TYPE_LANGBAR_INFO);
+	rail_send_pdu(rail, s, RAIL_ORDER_TYPE_LANGBAR_INFO);
 }
 
 rdpRail* rail_new()

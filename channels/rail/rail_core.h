@@ -29,6 +29,12 @@
 #include <assert.h>
 #include <freerdp/utils/debug.h>
 
+typedef struct _RAIL_SESSION RAIL_SESSION;
+typedef struct _RAIL_VCHANNEL_DATA_SENDER RAIL_VCHANNEL_DATA_SENDER;
+typedef struct _RAIL_VCHANNEL_EVENT_SENDER RAIL_VCHANNEL_EVENT_SENDER;
+
+#include "rail_orders.h"
+
 #define WITH_DEBUG_RAIL	1
 
 #ifdef WITH_DEBUG_RAIL
@@ -86,22 +92,20 @@ struct _RAIL_VCHANNEL_DATA_SENDER
 	void* data_sender_object;
 	void  (*send_rail_vchannel_data)(void* sender_object, void* data, size_t length);
 };
-typedef struct _RAIL_VCHANNEL_DATA_SENDER RAIL_VCHANNEL_DATA_SENDER;
 
 struct _RAIL_VCHANNEL_EVENT_SENDER
 {
 	void * event_sender_object;
 	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_VCHANNEL_EVENT* event);
 };
-typedef struct _RAIL_VCHANNEL_EVENT_SENDER RAIL_VCHANNEL_EVENT_SENDER;
 
 struct _RAIL_SESSION
 {
+	rdpRail* rail;
 	UNICONV* uniconv;
 	RAIL_VCHANNEL_DATA_SENDER* data_sender;
 	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
 };
-typedef struct _RAIL_SESSION RAIL_SESSION;
 
 RAIL_SESSION* rail_core_session_new(RAIL_VCHANNEL_DATA_SENDER *data_sender, RAIL_VCHANNEL_EVENT_SENDER *event_sender);
 void rail_core_session_free(RAIL_SESSION * rail_session);
