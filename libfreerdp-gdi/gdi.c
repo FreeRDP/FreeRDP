@@ -21,9 +21,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
+#include <freerdp/rfx.h>
 
 #include "color.h"
-#include "decode.h"
 
 #include "gdi_dc.h"
 #include "gdi_pen.h"
@@ -695,6 +696,38 @@ void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 	brush_put(gdi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
+void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+{
+	GDI* gdi = GET_GDI(update);
+	RFX_CONTEXT* context = (RFX_CONTEXT*)gdi->rfx_context;
+	RFX_MESSAGE* message;
+	STREAM* s;
+
+	DEBUG_GDI("gdi_surface_bits: destLeft %d destTop %d destRight %d destBottom %d "
+		"bpp %d codecID %d width %d height %d length %d",
+		surface_bits_command->destLeft, surface_bits_command->destTop,
+		surface_bits_command->destRight, surface_bits_command->destBottom,
+		surface_bits_command->bpp, surface_bits_command->codecID,
+		surface_bits_command->width, surface_bits_command->height,
+		surface_bits_command->bitmapDataLength);
+
+	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	{
+		s = stream_new(0);
+		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+
+		message = rfx_process_message(context, s);
+		rfx_message_free(context, message);
+
+		stream_detach(s);
+		stream_free(s);
+	}
+	else
+	{
+		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+	}
+}
+
 /**
  * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
@@ -734,6 +767,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBitmapV2 = gdi_cache_bitmap_v2;
 	update->CacheColorTable = gdi_cache_color_table;
 	update->CacheBrush = gdi_cache_brush;
+
+	update->SurfaceBits = gdi_surface_bits;
 }
 
 /**
@@ -811,6 +846,8 @@ int gdi_init(freerdp* instance, uint32 flags)
 
 	gdi->cache = cache_new(instance->settings);
 
+	gdi->rfx_context = rfx_context_new();
+
 	return 0;
 }
 
@@ -822,6 +859,7 @@ void gdi_free(freerdp* instance)
 	{
 		gdi_bitmap_free(gdi->primary);
 		gdi_DeleteDC(gdi->hdc);
+		rfx_context_free((RFX_CONTEXT*)gdi->rfx_context);
 		free(gdi->clrconv);
 		free(gdi);
 	}

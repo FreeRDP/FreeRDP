@@ -22,8 +22,6 @@ include_directories(../libfreerdp-cache)
 set(FREERDP_GDI_SRCS
 	color.c
 	color.h
-	decode.c
-	decode.h
 	gdi_8bpp.c
 	gdi_8bpp.h
 	gdi_16bpp.c
@@ -56,6 +54,7 @@ set(FREERDP_GDI_SRCS
 add_library(freerdp-gdi SHARED ${FREERDP_GDI_SRCS})
 
 target_link_libraries(freerdp-gdi freerdp-cache)
+target_link_libraries(freerdp-gdi freerdp-rfx)
 
 set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
