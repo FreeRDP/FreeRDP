@@ -29,7 +29,9 @@ set(FREERDP_UTILS_SRCS
 	load_plugin.c
 	memory.c
 	mutex.c
+	profiler.c
 	semaphore.c
+	stopwatch.c
 	stream.c
 	svc_plugin.c
 	thread.c
