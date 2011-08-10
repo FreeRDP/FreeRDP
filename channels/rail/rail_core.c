@@ -41,8 +41,6 @@
 //
 */
 
-
-
 /*
 Flow of init stage over channel;
 
@@ -84,14 +82,14 @@ void rail_string2unicode_string(RAIL_SESSION* session, RAIL_STRING* string, UNIC
 	char*    result_buffer = NULL;
 
 	unicode_string->string = NULL;
-	unicode_string->cbString = 0;
+	unicode_string->length = 0;
 
 	if (string->length == 0) return;
 
 	result_buffer = freerdp_uniconv_out(session->uniconv, (char*) string->buffer, &result_length);
 
 	unicode_string->string = (uint8*) result_buffer;
-	unicode_string->cbString = (uint16) result_length;
+	unicode_string->length = (uint16) result_length;
 }
 
 void rail_unicode_string2string(RAIL_SESSION* session, UNICODE_STRING* unicode_string, RAIL_STRING* string)
@@ -101,10 +99,10 @@ void rail_unicode_string2string(RAIL_SESSION* session, UNICODE_STRING* unicode_s
 	string->buffer = NULL;
 	string->length = 0;
 
-	if (unicode_string->cbString == 0)
+	if (unicode_string->length == 0)
 		return;
 
-	result_buffer = freerdp_uniconv_in(session->uniconv, unicode_string->string, unicode_string->cbString);
+	result_buffer = freerdp_uniconv_in(session->uniconv, unicode_string->string, unicode_string->length);
 
 	string->buffer = (uint8*)result_buffer;
 	string->length = strlen(result_buffer) + 1;
@@ -179,10 +177,10 @@ void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 ex
 
 	DEBUG_RAIL("rail_core_handle_exec_result: session=0x%p flags=0x%X "
 		"exec_result=0x%X raw_result=0x%X exe_or_file=(length=%d dump>)",
-		session, flags, exec_result, raw_result, exe_or_file->cbString);
+		session, flags, exec_result, raw_result, exe_or_file->length);
 
 #ifdef WITH_DEBUG_RAIL
-	freerdp_hexdump(exe_or_file->string, exe_or_file->cbString);
+	freerdp_hexdump(exe_or_file->string, exe_or_file->length);
 #endif
 
 	rail_unicode_string2string(session, exe_or_file, &exe_or_file_);
@@ -285,10 +283,10 @@ void rail_core_handle_server_get_app_resp(RAIL_SESSION* session, uint32 window_i
 	RAIL_STRING app_id_;
 
 	DEBUG_RAIL("rail_core_handle_server_get_app_resp: session=0x%p "
-		"window_id=0x%X app_id=(length=%d dump>)", session, window_id, app_id->cbString);
+		"window_id=0x%X app_id=(length=%d dump>)", session, window_id, app_id->length);
 
 #ifdef WITH_DEBUG_RAIL
-	freerdp_hexdump(app_id->string, app_id->cbString);
+	freerdp_hexdump(app_id->string, app_id->length);
 #endif
 
 	rail_unicode_string2string(session, app_id, &app_id_);

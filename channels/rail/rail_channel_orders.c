@@ -128,9 +128,9 @@ void rail_vchannel_send_exec_order(RAIL_SESSION* session, uint16 flags,
 	STREAM st_stream = {0};
 	STREAM* s = &st_stream;
 
-	uint16 exe_or_file_length        = exe_or_file->cbString;
-	uint16 working_directory_length  = working_directory->cbString;
-	uint16 arguments_length          = arguments->cbString;
+	uint16 exe_or_file_length        = exe_or_file->length;
+	uint16 working_directory_length  = working_directory->length;
+	uint16 arguments_length          = arguments->length;
 
 	size_t data_length =
 		2 +                         /*Flags (2 bytes)*/
@@ -166,14 +166,14 @@ size_t get_sysparam_size_in_rdp_stream(RAIL_CLIENT_SYSPARAM * sysparam)
 		case SPI_SET_KEYBOARD_PREF:    {return 1;}
 		case SPI_SET_MOUSE_BUTTON_SWAP: {return 1;}
 		case SPI_SET_WORK_AREA:        {return 8;}
-		case RAIL_SPI_DISPLAY_CHANGE: {return 8;}
-		case RAIL_SPI_TASKBAR_POS:    {return 8;}
+		case SPI_DISPLAY_CHANGE: {return 8;}
+		case SPI_TASKBAR_POS:    {return 8;}
 		case SPI_SET_HIGH_CONTRAST:
 			{
 				return (4 + /*Flags (4 bytes)*/
 						4 + /*ColorSchemeLength (4 bytes)*/
 						2 + /*UNICODE_STRING.cbString (2 bytes)*/
-						sysparam->value.high_contrast_system_info.color_scheme.cbString);
+						sysparam->value.high_contrast_system_info.color_scheme.length);
 			}
 	};
 
@@ -221,18 +221,18 @@ void rail_vchannel_send_client_sysparam_update_order(RAIL_SESSION* session, RAIL
 			rail_write_rectangle_16(s, &sysparam->value.work_area);
 			break;
 
-		case RAIL_SPI_DISPLAY_CHANGE:
+		case SPI_DISPLAY_CHANGE:
 			rail_write_rectangle_16(s, &sysparam->value.display_resolution);
 			break;
 
-		case RAIL_SPI_TASKBAR_POS:
+		case SPI_TASKBAR_POS:
 			rail_write_rectangle_16(s, &sysparam->value.taskbar_size);
 			break;
 
 		case SPI_SET_HIGH_CONTRAST:
 			{
 				uint32 color_scheme_length = 2 +
-						sysparam->value.high_contrast_system_info.color_scheme.cbString;
+						sysparam->value.high_contrast_system_info.color_scheme.length;
 
 				stream_write_uint32(s, sysparam->value.high_contrast_system_info.flags);
 				stream_write_uint32(s, color_scheme_length);
@@ -352,8 +352,7 @@ void rail_vchannel_send_client_system_menu_order(RAIL_SESSION* session, uint32 w
 	stream_write_uint16(s, left);
 	stream_write_uint16(s, top);
 
-	rail_vchannel_send_order_data(session, RDP_RAIL_ORDER_SYSMENU, data,
-			data_length);
+	rail_vchannel_send_order_data(session, RDP_RAIL_ORDER_SYSMENU, data, data_length);
 }
 
 /*
@@ -542,11 +541,11 @@ static void rail_vchannel_process_server_get_appid_resp_order(RAIL_SESSION* sess
 	uint32 window_id = 0;
 	UNICODE_STRING app_id = {0};
 
-	app_id.cbString = 256;
-	app_id.string = xmalloc(app_id.cbString);
+	app_id.length = 256;
+	app_id.string = xmalloc(app_id.length);
 
 	stream_read_uint32(s, window_id);
-	stream_read(s, app_id.string, app_id.cbString);
+	stream_read(s, app_id.string, app_id.length);
 
 	rail_core_handle_server_get_app_resp(session, window_id, &app_id);
 	rail_unicode_string_free(&app_id);

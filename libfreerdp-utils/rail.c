@@ -23,13 +23,13 @@
 
 void rail_unicode_string_alloc(UNICODE_STRING* unicode_string, uint16 cbString)
 {
-	unicode_string->cbString = cbString;
+	unicode_string->length = cbString;
 	unicode_string->string = xzalloc(cbString);
 }
 
 void rail_unicode_string_free(UNICODE_STRING* unicode_string)
 {
-	unicode_string->cbString = 0;
+	unicode_string->length = 0;
 
 	if (unicode_string->string != NULL)
 		xfree(unicode_string->string);
@@ -37,25 +37,25 @@ void rail_unicode_string_free(UNICODE_STRING* unicode_string)
 
 void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
 {
-	stream_read_uint16(s, unicode_string->cbString); /* cbString (2 bytes) */
+	stream_read_uint16(s, unicode_string->length); /* cbString (2 bytes) */
 
 	if (unicode_string->string == NULL)
-		unicode_string->string = (uint8*) xmalloc(unicode_string->cbString);
+		unicode_string->string = (uint8*) xmalloc(unicode_string->length);
 	else
-		unicode_string->string = (uint8*) xrealloc(unicode_string->string, unicode_string->cbString);
+		unicode_string->string = (uint8*) xrealloc(unicode_string->string, unicode_string->length);
 
-	stream_read(s, unicode_string->string, unicode_string->cbString);
+	stream_read(s, unicode_string->string, unicode_string->length);
 }
 
 void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
 {
-	stream_write_uint16(s, unicode_string->cbString); /* cbString (2 bytes) */
-	stream_write(s, unicode_string->string, unicode_string->cbString); /* string */
+	stream_write_uint16(s, unicode_string->length); /* cbString (2 bytes) */
+	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
 void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string)
 {
-	stream_write(s, unicode_string->string, unicode_string->cbString); /* string */
+	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
 void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)

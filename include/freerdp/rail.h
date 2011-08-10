@@ -56,11 +56,11 @@
 #define SPI_SET_DRAG_FULL_WINDOWS			0x00000025
 #define SPI_SET_KEYBOARD_CUES				0x0000100B
 #define SPI_SET_KEYBOARD_PREF				0x00000045
-#define SPI_SET_WORK_AREA				0x0000002F
 #define SPI_SET_MOUSE_BUTTON_SWAP			0x00000021
+#define SPI_SET_WORK_AREA				0x0000002F
+#define SPI_DISPLAY_CHANGE				0x0000F001
+#define SPI_TASKBAR_POS					0x0000F000
 #define SPI_SET_HIGH_CONTRAST				0x00000043
-#define RAIL_SPI_DISPLAY_CHANGE				0x0000F001
-#define RAIL_SPI_TASKBAR_POS				0x0000F000
 
 /* Server System Parameters Update PDU */
 #define SPI_SET_SCREEN_SAVE_ACTIVE			0x00000011
@@ -134,7 +134,7 @@
 
 struct _UNICODE_STRING
 {
-	uint16 cbString;
+	uint16 length;
 	uint8* string;
 };
 typedef struct _UNICODE_STRING UNICODE_STRING;
@@ -147,6 +147,14 @@ struct _RECTANGLE_16
 	uint16 bottom;
 };
 typedef struct _RECTANGLE_16 RECTANGLE_16;
+
+struct _HIGH_CONTRAST
+{
+	uint32 flags;
+	uint32 colorSchemeLength;
+	uint8* colorScheme;
+};
+typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
 
 /* RAIL Orders */
 
@@ -183,6 +191,7 @@ typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 struct _RAIL_SYSPARAM_ORDER
 {
 	uint32 systemParam;
+	boolean value;
 	uint8* body;
 };
 typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
@@ -234,7 +243,7 @@ typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
 struct _RAIL_LOCALMOVESIZE_ORDER
 {
 	uint32 windowId;
-	uint16 isMoveSizeStart;
+	boolean isMoveSizeStart;
 	uint16 moveSizeType;
 	uint16 posX;
 	uint16 posY;
@@ -249,7 +258,7 @@ struct _RAIL_WINDOWMOVE_ORDER
 	uint16 right;
 	uint16 bottom;
 };
-typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOWMOVE_ORDER;
+typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
 
 struct _RAIL_GET_APPID_REQ_ORDER
 {
@@ -268,7 +277,7 @@ struct _RAIL_LANGBARINFO_ORDER
 {
 	uint32 languageBarStatus;
 };
-typedef struct _RAIL_LANGBARINFO_ORDER RAIL_LANGBARINFO_ORDER;
+typedef struct _RAIL_LANGBARINFO_ORDER RAIL_LANGBAR_INFO_ORDER;
 
 /* RAIL Constants */
 

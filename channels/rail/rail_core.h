@@ -97,7 +97,7 @@ typedef struct _RAIL_VCHANNEL_EVENT_SENDER RAIL_VCHANNEL_EVENT_SENDER;
 
 struct _RAIL_SESSION
 {
-	UNICONV * uniconv;
+	UNICONV* uniconv;
 	RAIL_VCHANNEL_DATA_SENDER* data_sender;
 	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
 };

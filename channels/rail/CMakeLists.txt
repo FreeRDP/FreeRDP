@@ -22,6 +22,8 @@ set(RAIL_SRCS
 	rail_main.h	
 	rail_core.c
 	rail_core.h
+	rail_orders.c
+	rail_orders.h
 	rail_channel_orders.c
 	rail_channel_orders.h	
 )
