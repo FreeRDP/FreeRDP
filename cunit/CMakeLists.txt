@@ -23,6 +23,7 @@ include_directories(${CMAKE_SOURCE_DIR}) # for some internal tests
 include_directories(../libfreerdp-core)
 include_directories(../libfreerdp-gdi)
 include_directories(../libfreerdp-cache)
+include_directories(../libfreerdp-rfx)
 
 add_executable(test_freerdp
 	test_per.c
@@ -55,6 +56,8 @@ add_executable(test_freerdp
 	test_cliprdr.h
 	test_drdynvc.c
 	test_drdynvc.h
+	test_librfx.c
+	test_librfx.h
 	test_freerdp.c
 	test_freerdp.h)
 
@@ -64,5 +67,6 @@ target_link_libraries(test_freerdp freerdp-core)
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-utils)
 target_link_libraries(test_freerdp freerdp-chanman)
+target_link_libraries(test_freerdp freerdp-rfx)
 
 add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)

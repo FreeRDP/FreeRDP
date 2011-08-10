@@ -35,6 +35,13 @@ typedef struct _STREAM STREAM;
 STREAM* stream_new(int size);
 void stream_free(STREAM* stream);
 
+#define stream_attach(_s, _buf, _size) do { \
+	_s->size = _size; \
+	_s->data = _buf; \
+	_s->p = _buf; } while (0)
+#define stream_detach(_s) memset(_s, 0, sizeof(STREAM))
+#define stream_clear(_s) memset(_s->data, 0, _s->size)
+
 void stream_extend(STREAM* stream);
 #define stream_check_size(_s,_n) \
 	while (_s->p - _s->data + (_n) > _s->size) \

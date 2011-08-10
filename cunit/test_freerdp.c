@@ -34,6 +34,7 @@
 #include "test_chanman.h"
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
+#include "test_librfx.h"
 #include "test_freerdp.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
@@ -173,6 +174,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("drdynvc", argv[*pindex]) == 0)
 			{
 				add_drdynvc_suite();
+			}
+			else if (strcmp("librfx", argv[*pindex]) == 0)
+			{
+				add_librfx_suite();
 			}
 			else if (strcmp("per", argv[*pindex]) == 0)
 			{
