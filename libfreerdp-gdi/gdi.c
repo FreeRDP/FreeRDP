@@ -702,6 +702,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 	RFX_CONTEXT* context = (RFX_CONTEXT*)gdi->rfx_context;
 	RFX_MESSAGE* message;
 	STREAM* s;
+	int i, j;
+	int tx, ty;
 
 	DEBUG_GDI("gdi_surface_bits: destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
@@ -717,6 +719,50 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		message = rfx_process_message(context, s);
+
+		if (message->num_rects > 1) /* RDVH */
+		{
+			/* blit each tile */
+			for (i = 0; i < message->num_tiles; i++)
+			{
+				tx = message->tiles[i]->x + surface_bits_command->destLeft;
+				ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+				for (j = 0; j < message->num_rects; j++)
+				{
+					gdi_SetClipRgn(gdi->primary->hdc,
+							message->rects[j].x, message->rects[j].y,
+							message->rects[j].width, message->rects[j].height);
+
+					gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
+				}
+			}
+
+			for (i = 0; i < message->num_rects; i++)
+			{
+				gdi_InvalidateRegion(gdi->primary->hdc,
+						message->rects[i].x, message->rects[i].y,
+						message->rects[i].width, message->rects[i].height);
+			}
+		}
+		else /* RDSH */
+		{
+			/* blit each tile */
+			for (i = 0; i < message->num_tiles; i++)
+			{
+				tx = message->tiles[i]->x + surface_bits_command->destLeft;
+				ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
+
+				gdi_InvalidateRegion(gdi->primary->hdc, tx, ty, 64, 64);
+			}
+		}
+
 		rfx_message_free(context, message);
 
 		stream_detach(s);
