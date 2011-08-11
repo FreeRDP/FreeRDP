@@ -24,7 +24,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/plugins/tsmf.h>
-#include <freerdp/plugins/rail.h>
+#include <freerdp/rail.h>
 
 static FRDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 {
