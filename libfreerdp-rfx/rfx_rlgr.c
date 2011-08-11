@@ -293,7 +293,6 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 {
 	int k;
 	int kp;
-	int kr;
 	int krp;
 	RFX_BITSTREAM* bs;
 	int processed_size;
@@ -304,7 +303,6 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 	/* initialize the parameters */
 	k = 1;
 	kp = 1 << LSGR;
-	kr = 1;
 	krp = 1 << LSGR;
 
 	/* process all the input coefficients */

@@ -477,7 +477,6 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in)
 {
-	uint32 offset;
 	uint32 blockLen;
 	uint32 blockType;
 	RFX_MESSAGE* message;
