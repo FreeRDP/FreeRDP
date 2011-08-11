@@ -54,7 +54,7 @@ static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 	DEBUG_WARN("event_type %d", event->event_type);
 	freerdp_event_free(event);
 
-	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_DEBUG, 0, NULL, NULL);
 	svc_plugin_send_event(plugin, event);
 }
 

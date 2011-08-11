@@ -29,6 +29,8 @@
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
+#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/rail.h>
 
 #include "xf_event.h"
 
@@ -337,7 +339,7 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	FRDP_EVENT* event;
 	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
 	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;

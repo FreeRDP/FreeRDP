@@ -76,7 +76,7 @@ void test_chanman(void)
 	freerdp_chanman_data(&instance, 0, "testdata11", 10, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 10);
 	freerdp_chanman_data(&instance, 0, "testdata111", 11, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 11);
 
-	event = freerdp_event_new(FRDP_EVENT_TYPE_DEBUG, NULL, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_DEBUG, 0, NULL, NULL);
 	freerdp_chanman_send_event(chan_man, "rdpdbg", event);
 
 	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)

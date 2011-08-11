@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/rail.h>
