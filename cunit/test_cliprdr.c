@@ -147,7 +147,7 @@ void test_cliprdr(void)
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends format list PDU to server */
 	while (!event_processed)
@@ -203,7 +203,7 @@ void test_cliprdr(void)
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends data response PDU to server */
 	while (!event_processed)
@@ -216,7 +216,7 @@ void test_cliprdr(void)
 	data_request_event = (FRDP_CB_DATA_REQUEST_EVENT*)event;
 	data_request_event->format = CB_FORMAT_UNICODETEXT;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends data request PDU to server */
 	while (!event_processed)

@@ -344,7 +344,7 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
-	freerdp_chanman_send_event(chanman, "cliprdr", event);
+	freerdp_chanman_send_event(chanman, event);
 }
 
 void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
