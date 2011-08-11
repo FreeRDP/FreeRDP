@@ -58,7 +58,6 @@ void xf_end_paint(rdpUpdate* update)
 	xfInfo* xfi;
 	sint32 x, y;
 	uint32 w, h;
-	XImage* image;
 
 	gdi = GET_GDI(update);
 	xfi = GET_XFI(update);
@@ -245,13 +244,10 @@ boolean xf_post_connect(freerdp* instance)
 {
 	GDI* gdi;
 	xfInfo* xfi;
-	int input_mask;
 	XEvent xevent;
 	XGCValues gcv;
 	Atom kill_atom;
 	Atom protocol_atom;
-	XSizeHints *size_hints;
-	XClassHint *class_hints;
 
 	xfi = GET_XFI(instance);
 	SET_XFI(instance->update, xfi);
