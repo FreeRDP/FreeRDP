@@ -22,6 +22,7 @@
 
 #include "gdi.h"
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/chanman.h>
 

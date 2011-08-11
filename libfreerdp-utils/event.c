@@ -22,22 +22,16 @@
 #include <string.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/plugins/tsmf.h>
+#include <freerdp/rail.h>
 
-FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
+static FRDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 {
 	FRDP_EVENT* event = NULL;
 
 	switch (event_type)
 	{
-		case FRDP_EVENT_TYPE_DEBUG:
-			event = xnew(FRDP_EVENT);
-			break;
-		case FRDP_EVENT_TYPE_VIDEO_FRAME:
-			event = (FRDP_EVENT*)xnew(FRDP_VIDEO_FRAME_EVENT);
-			break;
-		case FRDP_EVENT_TYPE_REDRAW:
-			event = (FRDP_EVENT*)xnew(FRDP_REDRAW_EVENT);
-			break;
 		case FRDP_EVENT_TYPE_CB_SYNC:
 			event = (FRDP_EVENT*)xnew(FRDP_CB_SYNC_EVENT);
 			break;
@@ -50,19 +44,99 @@ FRDP_EVENT* freerdp_event_new(uint32 event_type, FRDP_EVENT_CALLBACK on_event_fr
 		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
 			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_RESPONSE_EVENT);
 			break;
-		case FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL:
-		case FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI:
+	}
+
+	return event;
+}
+
+static FRDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
+{
+	FRDP_EVENT* event = NULL;
+
+	switch (event_type)
+	{
+		case FRDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+			event = (FRDP_EVENT*)xnew(FRDP_VIDEO_FRAME_EVENT);
+			break;
+		case FRDP_EVENT_TYPE_TSMF_REDRAW:
+			event = (FRDP_EVENT*)xnew(FRDP_REDRAW_EVENT);
+			break;
+	}
+
+	return event;
+}
+
+static FRDP_EVENT* freerdp_rail_event_new(uint16 event_type)
+{
+	return xnew(FRDP_EVENT);
+}
+
+FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+	FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
+{
+	FRDP_EVENT* event = NULL;
+
+	switch (event_class)
+	{
+		case FRDP_EVENT_CLASS_DEBUG:
 			event = xnew(FRDP_EVENT);
+			break;
+		case FRDP_EVENT_CLASS_CLIPRDR:
+			event = freerdp_cliprdr_event_new(event_type);
+			break;
+		case FRDP_EVENT_CLASS_TSMF:
+			event = freerdp_tsmf_event_new(event_type);
+			break;
+		case FRDP_EVENT_CLASS_RAIL:
+			event = freerdp_rail_event_new(event_type);
 			break;
 	}
 	if (event != NULL)
 	{
+		event->event_class = event_class;
 		event->event_type = event_type;
 		event->on_event_free_callback = on_event_free_callback;
 		event->user_data = user_data;
 	}
 
 	return event;
+}
+
+static void freerdp_cliprdr_event_free(FRDP_EVENT* event)
+{
+	switch (event->event_type)
+	{
+		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
+			{
+				FRDP_CB_FORMAT_LIST_EVENT* cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+				xfree(cb_event->formats);
+			}
+			break;
+		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			{
+				FRDP_CB_DATA_RESPONSE_EVENT* cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+				xfree(cb_event->data);
+			}
+			break;
+	}
+}
+
+static void freerdp_tsmf_event_free(FRDP_EVENT* event)
+{
+	switch (event->event_type)
+	{
+		case FRDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+			{
+				FRDP_VIDEO_FRAME_EVENT* vevent = (FRDP_VIDEO_FRAME_EVENT*)event;
+				xfree(vevent->frame_data);
+				xfree(vevent->visible_rects);
+			}
+			break;
+	}
+}
+
+static void freerdp_rail_event_free(FRDP_EVENT* event)
+{
 }
 
 void freerdp_event_free(FRDP_EVENT* event)
@@ -72,29 +146,16 @@ void freerdp_event_free(FRDP_EVENT* event)
 		if (event->on_event_free_callback != NULL)
 			event->on_event_free_callback(event);
 
-		switch (event->event_type)
+		switch (event->event_class)
 		{
-			case FRDP_EVENT_TYPE_VIDEO_FRAME:
-				{
-					FRDP_VIDEO_FRAME_EVENT* vevent = (FRDP_VIDEO_FRAME_EVENT*)event;
-
-					xfree(vevent->frame_data);
-					xfree(vevent->visible_rects);
-				}
+			case FRDP_EVENT_CLASS_CLIPRDR:
+				freerdp_cliprdr_event_free(event);
 				break;
-			case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
-				{
-					FRDP_CB_FORMAT_LIST_EVENT* cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
-
-					xfree(cb_event->formats);
-				}
+			case FRDP_EVENT_CLASS_TSMF:
+				freerdp_tsmf_event_free(event);
 				break;
-			case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
-				{
-					FRDP_CB_DATA_RESPONSE_EVENT* cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
-
-					xfree(cb_event->data);
-				}
+			case FRDP_EVENT_CLASS_RAIL:
+				freerdp_rail_event_free(event);
 				break;
 		}
 		xfree(event);

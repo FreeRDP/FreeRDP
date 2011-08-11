@@ -26,6 +26,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
 #include "rail_core.h"
@@ -236,7 +237,7 @@ void rail_vchannel_send_client_sysparam_update_order(RAIL_SESSION* session, RAIL
 
 				stream_write_uint32(s, sysparam->value.high_contrast_system_info.flags);
 				stream_write_uint32(s, color_scheme_length);
-				write_rail_unicode_string(s, &sysparam->value.high_contrast_system_info.color_scheme);
+				rail_write_unicode_string_value(s, &sysparam->value.high_contrast_system_info.color_scheme);
 				break;
 			}
 

@@ -178,7 +178,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 
 			stream_write_uint32(data_out, device->type); /* deviceType */
 			stream_write_uint32(data_out, device->id); /* deviceID */
-			strncpy(stream_get_tail(data_out), device->name, 8);
+			strncpy((char*)stream_get_tail(data_out), device->name, 8);
 
 			for (i = 0; i < 8; i++)
 			{

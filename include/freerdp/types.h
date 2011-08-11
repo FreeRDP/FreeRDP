@@ -126,68 +126,26 @@ typedef struct _FRDP_RECT
 }
 FRDP_RECT;
 
+/* Plugin events */
 typedef struct _FRDP_EVENT FRDP_EVENT;
 
 typedef void (*FRDP_EVENT_CALLBACK) (FRDP_EVENT* event);
 
 struct _FRDP_EVENT
 {
+	uint16 event_class;
 	uint16 event_type;
 	FRDP_EVENT_CALLBACK on_event_free_callback;
 	void* user_data;
 };
 
-struct _FRDP_VIDEO_FRAME_EVENT
+enum FRDP_EVENT_CLASS
 {
-	FRDP_EVENT event;
-	uint8* frame_data;
-	uint32 frame_size;
-	uint32 frame_pixfmt;
-	sint16 frame_width;
-	sint16 frame_height;
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
-	uint16 num_visible_rects;
-	FRDP_RECT* visible_rects;
+	FRDP_EVENT_CLASS_DEBUG = 0,
+	FRDP_EVENT_CLASS_CLIPRDR,
+	FRDP_EVENT_CLASS_TSMF,
+	FRDP_EVENT_CLASS_RAIL
 };
-typedef struct _FRDP_VIDEO_FRAME_EVENT FRDP_VIDEO_FRAME_EVENT;
-
-struct _FRDP_REDRAW_EVENT
-{
-	FRDP_EVENT event;
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
-};
-typedef struct _FRDP_REDRAW_EVENT FRDP_REDRAW_EVENT;
-
-typedef FRDP_EVENT FRDP_CB_SYNC_EVENT;
-
-struct _FRDP_CB_FORMAT_LIST_EVENT
-{
-	FRDP_EVENT event;
-	uint32* formats;
-	uint16 num_formats;
-};
-typedef struct _FRDP_CB_FORMAT_LIST_EVENT FRDP_CB_FORMAT_LIST_EVENT;
-
-struct _FRDP_CB_DATA_REQUEST_EVENT
-{
-	FRDP_EVENT event;
-	uint32 format;
-};
-typedef struct _FRDP_CB_DATA_REQUEST_EVENT FRDP_CB_DATA_REQUEST_EVENT;
-
-struct _FRDP_CB_DATA_RESPONSE_EVENT
-{
-	FRDP_EVENT event;
-	uint8* data;
-	uint32 size;
-};
-typedef struct _FRDP_CB_DATA_RESPONSE_EVENT FRDP_CB_DATA_RESPONSE_EVENT;
 
 typedef struct rdp_inst rdpInst;
 

@@ -94,7 +94,6 @@ static int fastpath_recv_update_surfcmd_frame_marker(rdpFastPath* fastpath, STRE
 {
 	uint16 frameAction;
 	uint32 frameId;
-	STREAM* ack;
 
 	stream_read_uint16(s, frameAction);
 	stream_read_uint32(s, frameId);

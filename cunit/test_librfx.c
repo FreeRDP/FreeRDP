@@ -364,7 +364,6 @@ void test_message(void)
 {
 	RFX_CONTEXT* context;
 	STREAM* s;
-	int size;
 	int i, j;
 	RFX_RECT rect = {0, 0, 100, 80};
 	RFX_MESSAGE * message;

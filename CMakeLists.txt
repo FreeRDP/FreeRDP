@@ -44,6 +44,16 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# Compiler-specific flags
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-but-set-variable")
+	if(CMAKE_BUILD_TYPE EQUAL "Release")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+	endif()
+endif()
+
 # Include files
 check_include_files(sys/param.h HAVE_SYS_PARAM_H)
 check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)

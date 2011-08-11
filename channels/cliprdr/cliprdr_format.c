@@ -25,6 +25,7 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/plugins/cliprdr.h>
 
 #include "cliprdr_constants.h"
 #include "cliprdr_main.h"
@@ -82,7 +83,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32
 	int supported;
 	int i;
 
-	cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
+		FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 	num_formats = dataLen / 36;
 	cb_event->formats = (uint32*)xmalloc(sizeof(uint32) * num_formats);
 	cb_event->num_formats = 0;
@@ -137,7 +139,8 @@ void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* data_in
 {
 	FRDP_CB_DATA_REQUEST_EVENT* cb_event;
 
-	cb_event = (FRDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+	cb_event = (FRDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
+		FRDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 	stream_read_uint32(data_in, cb_event->format);
 	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
 }
@@ -164,7 +167,8 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* data_i
 {
 	FRDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
-	cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
+		FRDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
 	cb_event->size = dataLen;
 	cb_event->data = (uint8*)xmalloc(dataLen);
 	memcpy(cb_event->data, stream_get_tail(data_in), dataLen);

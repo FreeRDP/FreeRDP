@@ -374,7 +374,6 @@ int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	GDI_RECT inv;
 	GDI_RECT rgn;
 	HGDI_RGN invalid;
-	HGDI_BITMAP bmp;
 
 	if (hdc->hwnd == NULL)
 		return 0;
@@ -383,7 +382,6 @@ int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		return 0;
 
 	invalid = hdc->hwnd->invalid;
-	bmp = (HGDI_BITMAP) hdc->selectedObject;
 
 	if (invalid->null)
 	{

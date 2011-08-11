@@ -31,5 +31,6 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi);
 boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym);
 int xf_kbd_get_toggle_keys_state(xfInfo* xfi);
 void xf_kbd_focus_in(xfInfo* xfi);
+boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym);
 
 #endif /* __XF_KEYBOARD_H */

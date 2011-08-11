@@ -29,6 +29,8 @@
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
+#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/rail.h>
 
 #include "xf_event.h"
 
@@ -56,7 +58,6 @@ void xf_end_paint(rdpUpdate* update)
 	xfInfo* xfi;
 	sint32 x, y;
 	uint32 w, h;
-	XImage* image;
 
 	gdi = GET_GDI(update);
 	xfi = GET_XFI(update);
@@ -243,13 +244,10 @@ boolean xf_post_connect(freerdp* instance)
 {
 	GDI* gdi;
 	xfInfo* xfi;
-	int input_mask;
 	XEvent xevent;
 	XGCValues gcv;
 	Atom kill_atom;
 	Atom protocol_atom;
-	XSizeHints *size_hints;
-	XClassHint *class_hints;
 
 	xfi = GET_XFI(instance);
 	SET_XFI(instance->update, xfi);
@@ -337,12 +335,12 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	FRDP_EVENT* event;
 	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
 	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
-	freerdp_chanman_send_event(chanman, "cliprdr", event);
+	freerdp_chanman_send_event(chanman, event);
 }
 
 void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)

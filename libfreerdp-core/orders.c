@@ -1211,7 +1211,6 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, boolean compressed, uint16 flags)
 {
-	uint32 bitmapLength;
 	uint8 bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
 

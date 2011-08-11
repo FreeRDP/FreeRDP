@@ -45,8 +45,6 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	long e, e2;
 	long dx, dy;
 	int a, b, c;
-	int bx1, by1;
-	int bx2, by2;
 
 	HGDI_BITMAP bmp;
 	uint8 pixel8;
@@ -81,21 +79,6 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	pixel16 = 0;
 	pixel32 = 0;
 	bmp = (HGDI_BITMAP) hdc->selectedObject;
-
-	if (hdc->clip->null)
-	{
-		bx1 = (x1 < x2) ? x1 : x2;
-		by1 = (y1 < y2) ? y1 : y2;
-		bx2 = (x1 > x2) ? x1 : x2;
-		by2 = (y1 > y2) ? y1 : y2;
-	}
-	else
-	{
-		bx1 = hdc->clip->x;
-		by1 = hdc->clip->y;
-		bx2 = bx1 + hdc->clip->w - 1;
-		by2 = by1 + hdc->clip->h - 1;
-	}
 
 	do
 	{
