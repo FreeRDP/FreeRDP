@@ -552,6 +552,8 @@ static void rail_vchannel_process_server_get_appid_resp_order(RAIL_SESSION* sess
 	rail_unicode_string_free(&app_id);
 }
 
+extern uint8 RAIL_ORDER_TYPE_STRINGS[][32];
+
 void rail_vchannel_process_received_vchannel_data(RAIL_SESSION * session, STREAM* s)
 {
 	size_t length = 0;
@@ -565,6 +567,9 @@ void rail_vchannel_process_received_vchannel_data(RAIL_SESSION * session, STREAM
 
 	DEBUG_RAIL("rail_on_channel_data_received: session=0x%p data_size=%d "
 			    "orderType=0x%X orderLength=%d", session, (int) length, order_type, order_length);
+
+	printf("Received %s PDU, length:%d\n",
+			RAIL_ORDER_TYPE_STRINGS[((order_type & 0xF0) >> 3) + (order_type & 0x0F)], order_length);
 
 	switch (order_type)
 	{

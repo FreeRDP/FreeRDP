@@ -87,6 +87,9 @@ void rail_string_to_unicode_string(rdpRail* rail, char* string, UNICODE_STRING* 
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
 
+	if (strlen(string) < 1)
+		return;
+
 	buffer = freerdp_uniconv_out(rail->uniconv, string, &length);
 
 	unicode_string->string = (uint8*) buffer;
@@ -166,17 +169,54 @@ void rail_core_on_channel_terminated(RAIL_SESSION* session)
 
 void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_number)
 {
-	uint32 client_build_number = 0x00001db0;
-	RAIL_VCHANNEL_EVENT event = {0};
-
-	DEBUG_RAIL("rail_core_handle_server_handshake: session=0x%p buildNumber=0x%X.", session, build_number);
-
 #if 1
-	session->rail->handshake.buildNumber = 0x00001DB0;
+	DEBUG_RAIL("Server Handshake");
+
+	session->rail->handshake.buildNumber = 0x00001DB1;
 	rail_send_handshake_order(session->rail);
 
 	session->rail->client_status.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 	rail_send_client_status_order(session->rail);
+
+	/* sysparam update */
+
+	session->rail->sysparam.systemParam = SPI_SET_HIGH_CONTRAST;
+	session->rail->sysparam.highContrast.colorScheme.string = NULL;
+	session->rail->sysparam.highContrast.colorScheme.length = 0;
+	session->rail->sysparam.highContrast.flags = 0x7E;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_TASKBAR_POS;
+	session->rail->sysparam.rectangle.left = 0;
+	session->rail->sysparam.rectangle.top = 0;
+	session->rail->sysparam.rectangle.right = 1024;
+	session->rail->sysparam.rectangle.bottom = 29;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_SET_MOUSE_BUTTON_SWAP;
+	session->rail->sysparam.value = False;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_PREF;
+	session->rail->sysparam.value = False;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_SET_DRAG_FULL_WINDOWS;
+	session->rail->sysparam.value = True;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_CUES;
+	session->rail->sysparam.value = False;
+	rail_send_client_sysparam_order(session->rail);
+
+	session->rail->sysparam.systemParam = SPI_SET_WORK_AREA;
+	session->rail->sysparam.rectangle.left = 0;
+	session->rail->sysparam.rectangle.top = 0;
+	session->rail->sysparam.rectangle.right = 1024;
+	session->rail->sysparam.rectangle.bottom = 768;
+	rail_send_client_sysparam_order(session->rail);
+
+	/* execute */
 
 	session->rail->exec.flags =
 			RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY |
@@ -191,6 +231,11 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 	rail_core_send_client_execute(session, False, "||firefox", "", "");
 
 #else
+	uint32 client_build_number = 0x00001db0;
+	RAIL_VCHANNEL_EVENT event = {0};
+
+	DEBUG_RAIL("rail_core_handle_server_handshake: session=0x%p buildNumber=0x%X.", session, build_number);
+
 	// Step 1. Send Handshake PDU (2.2.2.2.1)
 	// Fixed: MS-RDPERP 1.3.2.1 is not correct!
 	rail_vchannel_send_handshake_order(session, client_build_number);
@@ -214,6 +259,8 @@ void rail_core_handle_server_handshake(RAIL_SESSION* session, uint32 build_numbe
 
 void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 exec_result, uint32 raw_result, UNICODE_STRING* exe_or_file)
 {
+	DEBUG_RAIL("EXEC_RESULT");
+#if 0
 	RAIL_VCHANNEL_EVENT event = {0};
 	RAIL_STRING exe_or_file_;
 
@@ -234,10 +281,12 @@ void rail_core_handle_exec_result(RAIL_SESSION* session, uint16 flags, uint16 ex
 	event.param.exec_result_info.exe_or_file = exe_or_file_.buffer;
 
 	session->event_sender->send_rail_vchannel_event(session->event_sender->event_sender_object, &event);
+#endif
 }
 
 void rail_core_handle_server_sysparam(RAIL_SESSION* session, RAIL_SERVER_SYSPARAM* sysparam)
 {
+#if 0
 	RAIL_VCHANNEL_EVENT event = {0};
 
 	DEBUG_RAIL("rail_core_handle_server_sysparam: session=0x%p "
@@ -245,20 +294,6 @@ void rail_core_handle_server_sysparam(RAIL_SESSION* session, RAIL_SERVER_SYSPARA
 		session, sysparam->type, sysparam->value.screen_saver_enabled,
 		sysparam->value.screen_saver_lock_enabled);
 
-#if 1
-	session->rail->sysparam.systemParam = SPI_SET_DRAG_FULL_WINDOWS;
-	session->rail->sysparam.value = True;
-
-	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_CUES;
-	session->rail->sysparam.value = False;
-
-	session->rail->sysparam.systemParam = SPI_SET_KEYBOARD_PREF;
-	session->rail->sysparam.value = False;
-
-	session->rail->sysparam.systemParam = SPI_SET_MOUSE_BUTTON_SWAP;
-	session->rail->sysparam.value = False;
-
-#else
 	init_vchannel_event(&event, RAIL_VCHANNEL_EVENT_SERVER_SYSPARAM_RECEIVED);
 	event.param.server_param_info.param_type = sysparam->type;
 	event.param.server_param_info.screen_saver_enabled =
@@ -502,6 +537,7 @@ static void rail_core_handle_ui_get_app_id(RAIL_SESSION* session, RAIL_UI_EVENT*
 
 void rail_core_handle_ui_event(RAIL_SESSION* session, RAIL_UI_EVENT* event)
 {
+	return;
 
 	struct
 	{

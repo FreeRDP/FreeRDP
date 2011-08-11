@@ -152,7 +152,7 @@ struct _HIGH_CONTRAST
 {
 	uint32 flags;
 	uint32 colorSchemeLength;
-	uint8* colorScheme;
+	UNICODE_STRING colorScheme;
 };
 typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
 
@@ -192,7 +192,8 @@ struct _RAIL_SYSPARAM_ORDER
 {
 	uint32 systemParam;
 	boolean value;
-	uint8* body;
+	RECTANGLE_16 rectangle;
+	HIGH_CONTRAST highContrast;
 };
 typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
 
