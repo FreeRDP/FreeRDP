@@ -726,7 +726,7 @@ int freerdp_chanman_post_connect(rdpChanMan* chan_man, freerdp* instance)
  * data comming from the server to the client
  * called only from main thread
  */
-int freerdp_chanman_data(freerdp* instance, int chan_id, char* data, int data_size,
+int freerdp_chanman_data(freerdp* instance, int chan_id, void* data, int data_size,
 	int flags, int total_size)
 {
 	rdpChanMan* chan_man;
