@@ -300,6 +300,12 @@ enum RDP_RAIL_PDU_TYPE
 	RDP_RAIL_ORDER_GET_APPID_RESP	= 0x000F
 };
 
+enum FRDP_EVENT_TYPE_RAIL
+{
+	FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL = 1,
+	FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI
+};
+
 /* RAIL Common structures */
 
 // Events from 'rail' vchannel plugin to UI

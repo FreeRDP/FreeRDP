@@ -29,6 +29,7 @@
 #include <freerdp/rail.h>
 
 #include "rail_core.h"
+#include "rail_channel_orders.h"
 #include "rail_main.h"
 
 static void rail_plugin_process_connect(rdpSvcPlugin* plugin)
@@ -91,7 +92,7 @@ static void rail_plugin_send_vchannel_event(void* rail_plugin_object, RAIL_VCHAN
 	memset(payload, 0, sizeof(RAIL_VCHANNEL_EVENT));
 	memcpy(payload, event, sizeof(RAIL_VCHANNEL_EVENT));
 
-	out_event = freerdp_event_new(FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI, on_free_rail_vchannel_event, payload);
+	out_event = freerdp_event_new(FRDP_EVENT_CLASS_RAIL, FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI, on_free_rail_vchannel_event, payload);
 
 	svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
 }

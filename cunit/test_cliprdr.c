@@ -26,6 +26,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/plugins/cliprdr.h>
 
 #include "test_cliprdr.h"
 
@@ -139,14 +140,14 @@ void test_cliprdr(void)
 	freerdp_event_free(event);
 
 	/* UI sends format_list event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
 	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 2;
 	format_list_event->formats = (uint32*)xmalloc(sizeof(uint32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends format list PDU to server */
 	while (!event_processed)
@@ -196,13 +197,13 @@ void test_cliprdr(void)
 	freerdp_event_free(event);
 
 	/* UI sends data response event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
 	data_response_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
 	data_response_event->data = (uint8*)xmalloc(6);
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends data response PDU to server */
 	while (!event_processed)
@@ -211,11 +212,11 @@ void test_cliprdr(void)
 	}
 
 	/* UI sends data request event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_DATA_REQUEST, event_process_callback, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_DATA_REQUEST, event_process_callback, NULL);
 	data_request_event = (FRDP_CB_DATA_REQUEST_EVENT*)event;
 	data_request_event->format = CB_FORMAT_UNICODETEXT;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, "cliprdr", event);
+	freerdp_chanman_send_event(chan_man, event);
 
 	/* cliprdr sends data request PDU to server */
 	while (!event_processed)

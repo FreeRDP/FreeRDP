@@ -726,7 +726,7 @@ int freerdp_chanman_post_connect(rdpChanMan* chan_man, freerdp* instance)
  * data comming from the server to the client
  * called only from main thread
  */
-int freerdp_chanman_data(freerdp* instance, int chan_id, char* data, int data_size,
+int freerdp_chanman_data(freerdp* instance, int chan_id, void* data, int data_size,
 	int flags, int total_size)
 {
 	rdpChanMan* chan_man;
@@ -764,17 +764,33 @@ int freerdp_chanman_data(freerdp* instance, int chan_id, char* data, int data_si
 	return 0;
 }
 
+static const char* event_class_to_name_table[] =
+{
+	"rdpdbg",   /* FRDP_EVENT_CLASS_DEBUG */
+	"cliprdr",  /* FRDP_EVENT_CLASS_CLIPRDR */
+	"tsmf",     /* FRDP_EVENT_CLASS_TSMF */
+	"rail",     /* FRDP_EVENT_CLASS_RAIL */
+	NULL
+};
+
 /**
  * Send a plugin-defined event to the plugin.
  * called only from main thread
  * @param chan_man the channel manager instance
- * @param name the static virtual channel name, such as 'cliprdr'
  * @param event an event object created by freerdp_event_new()
  */
-FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, const char* name, FRDP_EVENT* event)
+FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, FRDP_EVENT* event)
 {
 	struct chan_data* lchan_data;
 	int index;
+	const char* name;
+
+	name = event_class_to_name_table[event->event_class];
+	if (name == NULL)
+	{
+		DEBUG_CHANMAN("unknown event_class %d", event->event_class);
+		return 1;
+	}
 
 	lchan_data = freerdp_chanman_find_chan_data_by_name(chan_man, name, &index);
 	if (lchan_data == NULL)

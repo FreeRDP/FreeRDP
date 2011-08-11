@@ -608,13 +608,9 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 
 void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 {
-	int cx, cy;
 	uint32 color;
 	HGDI_PEN hPen;
 	GDI *gdi = GET_GDI(update);
-
-	cx = line_to->nXEnd - line_to->nXStart + 1;
-	cy = line_to->nYEnd - line_to->nYStart + 1;
 
 	color = gdi_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);

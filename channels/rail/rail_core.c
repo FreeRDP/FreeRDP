@@ -24,8 +24,10 @@
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
 #include "rail_core.h"

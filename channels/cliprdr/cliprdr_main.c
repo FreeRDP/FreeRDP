@@ -25,6 +25,7 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/plugins/cliprdr.h>
 
 #include "cliprdr_constants.h"
 #include "cliprdr_main.h"
@@ -92,7 +93,7 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
 
 	cliprdr_send_clip_caps(cliprdr);
 
-	event = freerdp_event_new(FRDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
+	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
 	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, event);
 }
 
