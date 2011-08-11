@@ -29,6 +29,7 @@
 #include <freerdp/rail.h>
 
 #include "rail_core.h"
+#include "rail_channel_orders.h"
 #include "rail_main.h"
 
 static void rail_plugin_process_connect(rdpSvcPlugin* plugin)
