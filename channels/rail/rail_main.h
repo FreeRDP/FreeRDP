@@ -22,13 +22,63 @@
 #ifndef __RAIL_MAIN_H
 #define	__RAIL_MAIN_H
 
+#include <freerdp/rail.h>
+#include <freerdp/utils/stream.h>
+#include <freerdp/utils/svc_plugin.h>
+
+typedef struct _RAIL_VCHANNEL_DATA_SENDER RAIL_VCHANNEL_DATA_SENDER;
+typedef struct _RAIL_VCHANNEL_EVENT_SENDER RAIL_VCHANNEL_EVENT_SENDER;
+
+struct _RAIL_VCHANNEL_DATA_SENDER
+{
+	void* data_sender_object;
+	void  (*send_rail_vchannel_data)(void* sender_object, void* data, size_t length);
+};
+
+struct _RAIL_VCHANNEL_EVENT_SENDER
+{
+	void * event_sender_object;
+	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_VCHANNEL_EVENT* event);
+};
+
+struct rdp_rail
+{
+	UNICONV* uniconv;
+	RAIL_HANDSHAKE_ORDER handshake;
+	RAIL_CLIENT_STATUS_ORDER client_status;
+	RAIL_EXEC_ORDER exec;
+	RAIL_EXEC_RESULT_ORDER exec_result;
+	RAIL_SYSPARAM_ORDER sysparam;
+	RAIL_ACTIVATE_ORDER activate;
+	RAIL_SYSMENU_ORDER sysmenu;
+	RAIL_SYSCOMMAND_ORDER syscommand;
+	RAIL_NOTIFY_EVENT_ORDER notify_event;
+	RAIL_MINMAXINFO_ORDER minmaxinfo;
+	RAIL_LOCALMOVESIZE_ORDER localmovesize;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+	RAIL_LANGBAR_INFO_ORDER langbar_info;
+	RAIL_GET_APPID_REQ_ORDER get_appid_req;
+	RAIL_GET_APPID_RESP_ORDER get_appid_resp;
+	RAIL_VCHANNEL_DATA_SENDER* data_sender;
+	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
+};
+typedef struct rdp_rail rdpRail;
+
 struct rail_plugin
 {
 	rdpSvcPlugin plugin;
 	RAIL_VCHANNEL_DATA_SENDER rail_data_sender;
 	RAIL_VCHANNEL_EVENT_SENDER rail_event_sender;
-	RAIL_SESSION * session;
+	rdpRail* rail;
 };
 typedef struct rail_plugin railPlugin;
+
+#define WITH_DEBUG_RAIL	1
+
+#ifdef WITH_DEBUG_RAIL
+#define DEBUG_RAIL(fmt, ...) DEBUG_CLASS(RAIL, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_RAIL(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 #endif /* __RAIL_MAIN_H */

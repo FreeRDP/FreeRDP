@@ -60,6 +60,23 @@ uint8 RAIL_ORDER_TYPE_STRINGS[][32] =
 	"Execute Result"
 };
 
+void rail_string_to_unicode_string(rdpRail* rail, char* string, UNICODE_STRING* unicode_string)
+{
+	char* buffer;
+	size_t length = 0;
+
+	unicode_string->string = NULL;
+	unicode_string->length = 0;
+
+	if (strlen(string) < 1)
+		return;
+
+	buffer = freerdp_uniconv_out(rail->uniconv, string, &length);
+
+	unicode_string->string = (uint8*) buffer;
+	unicode_string->length = (uint16) length;
+}
+
 void rail_read_pdu_header(STREAM* s, uint16* orderType, uint16* orderLength)
 {
 	stream_read_uint16(s, *orderType); /* orderType (2 bytes) */
@@ -263,6 +280,67 @@ void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_i
 	stream_write_uint32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
 }
 
+void rail_recv_handshake_order(rdpRail* rail, STREAM* s)
+{
+	rail_read_handshake_order(s, &rail->handshake);
+
+	rail->handshake.buildNumber = 0x00001DB1;
+	rail_send_handshake_order(rail);
+
+	rail->client_status.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	rail_send_client_status_order(rail);
+
+	/* sysparam update */
+
+	rail->sysparam.systemParam = SPI_SET_HIGH_CONTRAST;
+	rail->sysparam.highContrast.colorScheme.string = NULL;
+	rail->sysparam.highContrast.colorScheme.length = 0;
+	rail->sysparam.highContrast.flags = 0x7E;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_TASKBAR_POS;
+	rail->sysparam.rectangle.left = 0;
+	rail->sysparam.rectangle.top = 0;
+	rail->sysparam.rectangle.right = 1024;
+	rail->sysparam.rectangle.bottom = 29;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_SET_MOUSE_BUTTON_SWAP;
+	rail->sysparam.value = False;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_SET_KEYBOARD_PREF;
+	rail->sysparam.value = False;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_SET_DRAG_FULL_WINDOWS;
+	rail->sysparam.value = False;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_SET_KEYBOARD_CUES;
+	rail->sysparam.value = False;
+	rail_send_client_sysparam_order(rail);
+
+	rail->sysparam.systemParam = SPI_SET_WORK_AREA;
+	rail->sysparam.rectangle.left = 0;
+	rail->sysparam.rectangle.top = 0;
+	rail->sysparam.rectangle.right = 1024;
+	rail->sysparam.rectangle.bottom = 768;
+	rail_send_client_sysparam_order(rail);
+
+	/* execute */
+
+	rail->exec.flags =
+			RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY |
+			RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
+
+	rail_string_to_unicode_string(rail, "||cmd", &rail->exec.exeOrFile);
+	rail_string_to_unicode_string(rail, "", &rail->exec.workingDir);
+	rail_string_to_unicode_string(rail, "", &rail->exec.arguments);
+
+	rail_send_client_exec_order(rail);
+}
+
 void rail_order_recv(rdpRail* rail, STREAM* s)
 {
 	uint16 orderType;
@@ -276,7 +354,7 @@ void rail_order_recv(rdpRail* rail, STREAM* s)
 	switch (orderType)
 	{
 		case RDP_RAIL_ORDER_HANDSHAKE:
-			rail_read_handshake_order(s, &rail->handshake);
+			rail_recv_handshake_order(rail, s);
 			break;
 
 		case RDP_RAIL_ORDER_EXEC_RESULT:

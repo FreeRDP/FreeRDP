@@ -21,34 +21,7 @@
 #ifndef __RAIL_ORDERS_H
 #define	__RAIL_ORDERS_H
 
-typedef struct rdp_rail rdpRail;
-
-#include "rail_core.h"
-
-#include <freerdp/rail.h>
-#include <freerdp/utils/stream.h>
-
-struct rdp_rail
-{
-	UNICONV* uniconv;
-	RAIL_HANDSHAKE_ORDER handshake;
-	RAIL_CLIENT_STATUS_ORDER client_status;
-	RAIL_EXEC_ORDER exec;
-	RAIL_EXEC_RESULT_ORDER exec_result;
-	RAIL_SYSPARAM_ORDER sysparam;
-	RAIL_ACTIVATE_ORDER activate;
-	RAIL_SYSMENU_ORDER sysmenu;
-	RAIL_SYSCOMMAND_ORDER syscommand;
-	RAIL_NOTIFY_EVENT_ORDER notify_event;
-	RAIL_MINMAXINFO_ORDER minmaxinfo;
-	RAIL_LOCALMOVESIZE_ORDER localmovesize;
-	RAIL_WINDOW_MOVE_ORDER window_move;
-	RAIL_LANGBAR_INFO_ORDER langbar_info;
-	RAIL_GET_APPID_REQ_ORDER get_appid_req;
-	RAIL_GET_APPID_RESP_ORDER get_appid_resp;
-	RAIL_VCHANNEL_DATA_SENDER* data_sender;
-	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
-};
+#include "rail_main.h"
 
 #define RAIL_ORDER_TYPE_EXEC			0x0001
 #define RAIL_ORDER_TYPE_ACTIVATE		0x0002

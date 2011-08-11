@@ -19,14 +19,9 @@
 
 set(RAIL_SRCS
 	rail_main.c
-	rail_main.h	
-	rail_core.c
-	rail_core.h
+	rail_main.h
 	rail_orders.c
-	rail_orders.h
-	rail_channel_orders.c
-	rail_channel_orders.h	
-)
+	rail_orders.h)
 
 add_library(rail SHARED ${RAIL_SRCS})
 set_target_properties(rail PROPERTIES PREFIX "")

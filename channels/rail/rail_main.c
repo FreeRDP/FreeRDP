@@ -28,22 +28,17 @@
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/rail.h>
 
-#include "rail_core.h"
-#include "rail_channel_orders.h"
+#include "rail_orders.h"
 #include "rail_main.h"
 
 static void rail_plugin_process_connect(rdpSvcPlugin* plugin)
 {
-	railPlugin* rail_plugin = (railPlugin*)plugin;
-
 	DEBUG_RAIL("rail_plugin_process_connect() called.");
-	rail_core_on_channel_connected(rail_plugin->session);
 }
 
 static void rail_plugin_process_terminate(rdpSvcPlugin* plugin)
 {
 	DEBUG_RAIL("rail_plugin_process_terminate\n");
-	xfree(plugin);
 }
 
 static void rail_plugin_send_vchannel_data(void* rail_plugin_object, void* data, size_t length)
@@ -51,35 +46,27 @@ static void rail_plugin_send_vchannel_data(void* rail_plugin_object, void* data,
 	STREAM* s = NULL;
 	railPlugin* plugin = (railPlugin*) rail_plugin_object;
 
+	DEBUG_RAIL("rail_plugin_send_vchannel_data\n");
+
 	s = stream_new(length);
 	stream_write(s, data, length);
 
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }
 
-static void rail_plugin_process_received_vchannel_data(rdpSvcPlugin* plugin, STREAM* data_in)
+static void rail_plugin_process_received_vchannel_data(rdpSvcPlugin* plugin, STREAM* s)
 {
 	railPlugin* rail_plugin = (railPlugin*) plugin;
 
-	DEBUG_RAIL("rail_plugin_process_receive: size=%d", stream_get_size(data_in));
+	DEBUG_RAIL("rail_plugin_process_received_vchannel_data\n");
 
-	rail_vchannel_process_received_vchannel_data(rail_plugin->session, data_in);
-	stream_free(data_in);
+	rail_order_recv(rail_plugin->rail, s);
+	stream_free(s);
 }
 
 static void on_free_rail_vchannel_event(FRDP_EVENT* event)
 {
-	assert(event->event_type == FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI);
 
-	RAIL_VCHANNEL_EVENT* rail_event = (RAIL_VCHANNEL_EVENT*)event->user_data;
-
-	if (rail_event->event_id == RAIL_VCHANNEL_EVENT_APP_RESPONSE_RECEIVED)
-		xfree((void*)rail_event->param.app_response_info.application_id);
-
-	if (rail_event->event_id == RAIL_VCHANNEL_EVENT_EXEC_RESULT_RETURNED)
-		xfree((void*)rail_event->param.exec_result_info.exe_or_file);
-
-	xfree(rail_event);
 }
 
 static void rail_plugin_send_vchannel_event(void* rail_plugin_object, RAIL_VCHANNEL_EVENT* event)
@@ -87,6 +74,8 @@ static void rail_plugin_send_vchannel_event(void* rail_plugin_object, RAIL_VCHAN
 	railPlugin* plugin = (railPlugin*) rail_plugin_object;
 	RAIL_VCHANNEL_EVENT* payload = NULL;
 	FRDP_EVENT* out_event = NULL;
+
+	DEBUG_RAIL("rail_plugin_send_vchannel_event\n");
 
 	payload = xnew(RAIL_VCHANNEL_EVENT);
 	memset(payload, 0, sizeof(RAIL_VCHANNEL_EVENT));
@@ -107,41 +96,42 @@ static void rail_plugin_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
 	rail_plugin = (railPlugin*)plugin;
 	rail_ui_event = (RAIL_UI_EVENT*)event->user_data;
 
-	if (event->event_type == FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL)
-		rail_core_handle_ui_event(rail_plugin->session, rail_ui_event);
+	//if (event->event_type == FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL)
+		//rail_core_handle_ui_event(rail_plugin->session, rail_ui_event);
 
 	freerdp_event_free(event);
 }
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
-	railPlugin* rail;
+	railPlugin* rail_plugin;
 
 	DEBUG_RAIL("RAIL plugin VirtualChannelEntry started.");
 
-	rail = (railPlugin*) xzalloc(sizeof(railPlugin));
+	rail_plugin = (railPlugin*) xzalloc(sizeof(railPlugin));
 
-	rail->plugin.channel_def.options = CHANNEL_OPTION_INITIALIZED |
+	rail_plugin->plugin.channel_def.options = CHANNEL_OPTION_INITIALIZED |
 		CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP |
 		CHANNEL_OPTION_SHOW_PROTOCOL;
-	strcpy(rail->plugin.channel_def.name, "rail");
+	strcpy(rail_plugin->plugin.channel_def.name, "rail");
 
-	rail->plugin.connect_callback = rail_plugin_process_connect;
-	rail->plugin.terminate_callback = rail_plugin_process_terminate;
+	rail_plugin->plugin.connect_callback = rail_plugin_process_connect;
+	rail_plugin->plugin.terminate_callback = rail_plugin_process_terminate;
 
-	rail->plugin.receive_callback = rail_plugin_process_received_vchannel_data;
-	rail->plugin.event_callback = rail_plugin_process_event;
+	rail_plugin->plugin.receive_callback = rail_plugin_process_received_vchannel_data;
+	rail_plugin->plugin.event_callback = rail_plugin_process_event;
 
-	rail->rail_event_sender.event_sender_object = rail;
-	rail->rail_event_sender.send_rail_vchannel_event = rail_plugin_send_vchannel_event;
+	rail_plugin->rail_event_sender.event_sender_object = rail_plugin;
+	rail_plugin->rail_event_sender.send_rail_vchannel_event = rail_plugin_send_vchannel_event;
 
-	rail->rail_data_sender.data_sender_object  = rail;
-	rail->rail_data_sender.send_rail_vchannel_data =
-			rail_plugin_send_vchannel_data;
+	rail_plugin->rail_data_sender.data_sender_object  = rail_plugin;
+	rail_plugin->rail_data_sender.send_rail_vchannel_data = rail_plugin_send_vchannel_data;
 
-	rail->session = rail_core_session_new(&rail->rail_data_sender, &rail->rail_event_sender);
+	rail_plugin->rail = rail_new();
+	rail_plugin->rail->data_sender = &(rail_plugin->rail_data_sender);
+	rail_plugin->rail->event_sender = &(rail_plugin->rail_event_sender);
 
-	svc_plugin_init((rdpSvcPlugin*) rail, pEntryPoints);
+	svc_plugin_init((rdpSvcPlugin*) rail_plugin, pEntryPoints);
 
 	DEBUG_RAIL("RAIL plugin VirtualChannelEntry finished.");
 
