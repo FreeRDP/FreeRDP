@@ -42,10 +42,10 @@ void stream_free(STREAM* stream);
 #define stream_detach(_s) memset(_s, 0, sizeof(STREAM))
 #define stream_clear(_s) memset(_s->data, 0, _s->size)
 
-void stream_extend(STREAM* stream);
-#define stream_check_size(_s,_n) \
+void stream_extend(STREAM* stream, int request_size);
+#define stream_check_size(_s, _n) \
 	while (_s->p - _s->data + (_n) > _s->size) \
-		stream_extend(_s)
+		stream_extend(_s, _n)
 
 #define stream_get_pos(_s) (_s->p - _s->data)
 #define stream_set_pos(_s,_m) _s->p = _s->data + (_m)

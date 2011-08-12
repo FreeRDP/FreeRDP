@@ -41,7 +41,7 @@ struct _RAIL_VCHANNEL_EVENT_SENDER
 	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_VCHANNEL_EVENT* event);
 };
 
-struct rdp_rail
+struct rdp_rail_order
 {
 	UNICONV* uniconv;
 	RAIL_HANDSHAKE_ORDER handshake;
@@ -62,14 +62,14 @@ struct rdp_rail
 	RAIL_VCHANNEL_DATA_SENDER* data_sender;
 	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
 };
-typedef struct rdp_rail rdpRail;
+typedef struct rdp_rail_order rdpRailOrder;
 
 struct rail_plugin
 {
 	rdpSvcPlugin plugin;
 	RAIL_VCHANNEL_DATA_SENDER rail_data_sender;
 	RAIL_VCHANNEL_EVENT_SENDER rail_event_sender;
-	rdpRail* rail;
+	rdpRailOrder* rail_order;
 };
 typedef struct rail_plugin railPlugin;
 
