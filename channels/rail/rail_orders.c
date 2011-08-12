@@ -444,7 +444,7 @@ void rail_send_client_sysparam_order(rdpRailOrder* rail_order)
 			break;
 	}
 
-	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH);
+	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH + 8);
 	rail_write_client_sysparam_order(s, &rail_order->sysparam);
 	rail_send_pdu(rail_order, s, RAIL_ORDER_TYPE_SYSPARAM);
 }
