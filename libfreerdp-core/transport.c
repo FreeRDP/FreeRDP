@@ -220,7 +220,7 @@ int transport_check_fds(rdpTransport* transport)
 	STREAM* received;
 
 	status = transport_read_nonblocking(transport);
-	if (status <= 0)
+	if (status < 0)
 		return status;
 
 	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
