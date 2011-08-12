@@ -60,7 +60,7 @@ static void rail_plugin_process_received_vchannel_data(rdpSvcPlugin* plugin, STR
 
 	DEBUG_RAIL("rail_plugin_process_received_vchannel_data\n");
 
-	rail_order_recv(rail_plugin->rail, s);
+	rail_order_recv(rail_plugin->rail_order, s);
 	stream_free(s);
 }
 
@@ -127,9 +127,9 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rail_plugin->rail_data_sender.data_sender_object  = rail_plugin;
 	rail_plugin->rail_data_sender.send_rail_vchannel_data = rail_plugin_send_vchannel_data;
 
-	rail_plugin->rail = rail_new();
-	rail_plugin->rail->data_sender = &(rail_plugin->rail_data_sender);
-	rail_plugin->rail->event_sender = &(rail_plugin->rail_event_sender);
+	rail_plugin->rail_order = rail_order_new();
+	rail_plugin->rail_order->data_sender = &(rail_plugin->rail_data_sender);
+	rail_plugin->rail_order->event_sender = &(rail_plugin->rail_event_sender);
 
 	svc_plugin_init((rdpSvcPlugin*) rail_plugin, pEntryPoints);
 

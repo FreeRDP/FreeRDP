@@ -74,21 +74,21 @@ void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* wind
 void rail_write_client_get_appid_req_order(STREAM* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
 void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-void rail_order_recv(rdpRail* rail, STREAM* s);
+void rail_order_recv(rdpRailOrder* rail_order, STREAM* s);
 
-void rail_send_handshake_order(rdpRail* rail);
-void rail_send_client_status_order(rdpRail* rail);
-void rail_send_client_exec_order(rdpRail* rail);
-void rail_send_client_sysparam_order(rdpRail* rail);
-void rail_send_client_activate_order(rdpRail* rail);
-void rail_send_client_sysmenu_order(rdpRail* rail);
-void rail_send_client_syscommand_order(rdpRail* rail);
-void rail_send_client_notify_event_order(rdpRail* rail);
-void rail_send_client_window_move_order(rdpRail* rail);
-void rail_send_client_get_appid_req_order(rdpRail* rail);
-void rail_send_client_langbar_info_order(rdpRail* rail);
+void rail_send_handshake_order(rdpRailOrder* rail_order);
+void rail_send_client_status_order(rdpRailOrder* rail_order);
+void rail_send_client_exec_order(rdpRailOrder* rail_order);
+void rail_send_client_sysparam_order(rdpRailOrder* rail_order);
+void rail_send_client_activate_order(rdpRailOrder* rail_order);
+void rail_send_client_sysmenu_order(rdpRailOrder* rail_order);
+void rail_send_client_syscommand_order(rdpRailOrder* rail_order);
+void rail_send_client_notify_event_order(rdpRailOrder* rail_order);
+void rail_send_client_window_move_order(rdpRailOrder* rail_order);
+void rail_send_client_get_appid_req_order(rdpRailOrder* rail_order);
+void rail_send_client_langbar_info_order(rdpRailOrder* rail_order);
 
-rdpRail* rail_new();
-void rail_free(rdpRail* rail);
+rdpRailOrder* rail_order_new();
+void rail_order_free(rdpRailOrder* rail_order);
 
 #endif /* __RAIL_ORDERS_H */
