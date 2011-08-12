@@ -1,22 +1,22 @@
-/*
-   FreeRDP: A Remote Desktop Protocol client.
-   Remote Applications Integrated Locally (RAIL)
-
-   Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
-   Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
+/**
+ * FreeRDP: A Remote Desktop Protocol client.
+ * Remote Applications Integrated Locally (RAIL)
+ *
+ * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef __RAIL_ORDERS_H
 #define	__RAIL_ORDERS_H
@@ -74,21 +74,21 @@ void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* wind
 void rail_write_client_get_appid_req_order(STREAM* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
 void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-void rail_order_recv(rdpRail* rail, STREAM* s);
+void rail_order_recv(rdpRailOrder* rail_order, STREAM* s);
 
-void rail_send_handshake_order(rdpRail* rail);
-void rail_send_client_status_order(rdpRail* rail);
-void rail_send_client_exec_order(rdpRail* rail);
-void rail_send_client_sysparam_order(rdpRail* rail);
-void rail_send_client_activate_order(rdpRail* rail);
-void rail_send_client_sysmenu_order(rdpRail* rail);
-void rail_send_client_syscommand_order(rdpRail* rail);
-void rail_send_client_notify_event_order(rdpRail* rail);
-void rail_send_client_window_move_order(rdpRail* rail);
-void rail_send_client_get_appid_req_order(rdpRail* rail);
-void rail_send_client_langbar_info_order(rdpRail* rail);
+void rail_send_handshake_order(rdpRailOrder* rail_order);
+void rail_send_client_status_order(rdpRailOrder* rail_order);
+void rail_send_client_exec_order(rdpRailOrder* rail_order);
+void rail_send_client_sysparam_order(rdpRailOrder* rail_order);
+void rail_send_client_activate_order(rdpRailOrder* rail_order);
+void rail_send_client_sysmenu_order(rdpRailOrder* rail_order);
+void rail_send_client_syscommand_order(rdpRailOrder* rail_order);
+void rail_send_client_notify_event_order(rdpRailOrder* rail_order);
+void rail_send_client_window_move_order(rdpRailOrder* rail_order);
+void rail_send_client_get_appid_req_order(rdpRailOrder* rail_order);
+void rail_send_client_langbar_info_order(rdpRailOrder* rail_order);
 
-rdpRail* rail_new();
-void rail_free(rdpRail* rail);
+rdpRailOrder* rail_order_new();
+void rail_order_free(rdpRailOrder* rail_order);
 
 #endif /* __RAIL_ORDERS_H */
