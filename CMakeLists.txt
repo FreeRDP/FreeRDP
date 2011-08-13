@@ -52,6 +52,9 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 	endif()
+	if(WITH_SSE2)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+	endif()
 endif()
 
 # Include files

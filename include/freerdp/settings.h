@@ -232,7 +232,8 @@ struct rdp_settings
 	boolean color_pointer;
 	boolean sound_beeps;
 
-	boolean fast_path_input;
+	boolean fastpath_input;
+	boolean fastpath_output;
 
 	boolean offscreen_bitmap_cache;
 	uint16 offscreen_bitmap_cache_size;

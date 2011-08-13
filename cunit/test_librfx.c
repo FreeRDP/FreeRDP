@@ -389,7 +389,7 @@ void test_message(void)
 	rfx_message_free(context, message);
 	stream_free(s);
 
-	for (i = 0; i < 1; i++)
+	for (i = 0; i < 1000; i++)
 	{
 		s = stream_new(65536);
 		stream_clear(s);
