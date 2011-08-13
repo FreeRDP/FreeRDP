@@ -93,23 +93,23 @@ boolean nego_connect(rdpNego* nego)
  * @return
  */
 
-int nego_tcp_connect(rdpNego* nego)
+boolean nego_tcp_connect(rdpNego* nego)
 {
 	if (nego->tcp_connected == 0)
 	{
 		if (transport_connect(nego->transport, nego->hostname, nego->port) == False)
 		{
 			nego->tcp_connected = 0;
-			return 0;
+			return False;
 		}
 		else
 		{
 			nego->tcp_connected = 1;
-			return 1;
+			return True;
 		}
 	}
 
-	return 1;
+	return True;
 }
 
 /**
@@ -138,7 +138,12 @@ void nego_attempt_nla(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting NLA security");
 
-	nego_tcp_connect(nego);
+	if (!nego_tcp_connect(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
 	nego_send_negotiation_request(nego);
 
 	nego_recv_response(nego);
@@ -167,7 +172,12 @@ void nego_attempt_tls(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting TLS security");
 
-	nego_tcp_connect(nego);
+	if (!nego_tcp_connect(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
 	nego_send_negotiation_request(nego);
 
 	nego_recv_response(nego);
@@ -194,7 +204,12 @@ void nego_attempt_rdp(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting RDP security");
 
-	nego_tcp_connect(nego);
+	if (!nego_tcp_connect(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
 	nego_send_negotiation_request(nego);
 
 	nego_recv_response(nego);
