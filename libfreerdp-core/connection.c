@@ -58,6 +58,8 @@
 
 boolean rdp_client_connect(rdpRdp* rdp)
 {
+	boolean ret;
+
 	rdp->settings->autologon = 1;
 
 	nego_init(rdp->nego);
@@ -73,12 +75,16 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		return False;
 	}
 
+	ret = False;
 	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
-		transport_connect_nla(rdp->transport);
+		ret = transport_connect_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
-		transport_connect_tls(rdp->transport);
+		ret = transport_connect_tls(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
-		transport_connect_rdp(rdp->transport);
+		ret = transport_connect_rdp(rdp->transport);
+
+	if (!ret)
+		return False;
 
 	if (mcs_connect(rdp->mcs) != True)
 	{
