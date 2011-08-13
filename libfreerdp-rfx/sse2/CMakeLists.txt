@@ -17,36 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(LIBFREERDP_RFX_SRCS
-	rfx_bitstream.c
-	rfx_bitstream.h
-	rfx_constants.h
-	rfx_decode.c
-	rfx_decode.h
-	rfx_differential.c
-	rfx_differential.h
-	rfx_dwt.c
-	rfx_dwt.h
-	rfx_encode.c
-	rfx_encode.h
-	rfx_pool.c
-	rfx_pool.h
-	rfx_quantization.c
-	rfx_quantization.h
-	rfx_rlgr.c
-	rfx_rlgr.h
-	rfx_types.h
-	librfx.c
+set(LIBFREERDP_RFX_SSE2_SRCS
+	rfx_sse2.c
+	rfx_sse2.h
 )
 
-add_library(freerdp-rfx SHARED ${LIBFREERDP_RFX_SRCS})
+include_directories(..)
 
-target_link_libraries(freerdp-rfx freerdp-utils)
+add_library(freerdp-rfx-sse2 STATIC ${LIBFREERDP_RFX_SSE2_SRCS})
 
-if(WITH_SSE2)
-	include_directories(sse2)
-	add_subdirectory(sse2)
-	target_link_libraries(freerdp-rfx freerdp-rfx-sse2)
-endif()
-
-install(TARGETS freerdp-rfx DESTINATION lib)

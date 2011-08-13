@@ -438,6 +438,11 @@ static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 length;
 
 	length = fastpath_read_header(rdp->fastpath, s);
+	if (length > stream_get_size(s))
+	{
+		printf("incorrect FastPath PDU header length %d\n", length);
+		return;
+	}
 
 	/* TODO: fipsInformation */
 

@@ -136,7 +136,7 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->auto_reconnection)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
 
-	if (settings->fast_path_input)
+	if (settings->fastpath_output)
 		extraFlags |= FASTPATH_OUTPUT_SUPPORTED;
 
 	stream_write_uint16(s, 0); /* osMajorType (2 bytes) */
@@ -613,10 +613,9 @@ void rdp_read_input_capability_set(STREAM* s, rdpSettings* settings)
 	stream_read_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKeys (4 bytes) */
 	stream_seek(s, 64); /* imeFileName (64 bytes) */
 
-	if ((inputFlags & INPUT_FLAG_FASTPATH_INPUT) || (inputFlags & INPUT_FLAG_FASTPATH_INPUT2))
+	if ((inputFlags & INPUT_FLAG_FASTPATH_INPUT) == 0 && (inputFlags & INPUT_FLAG_FASTPATH_INPUT2) == 0)
 	{
-		if (settings->fast_path_input != False)
-			settings->fast_path_input = True;
+		settings->fastpath_input = False;
 	}
 }
 
@@ -636,7 +635,7 @@ void rdp_write_input_capability_set(STREAM* s, rdpSettings* settings)
 
 	inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_MOUSEX | INPUT_FLAG_UNICODE;
 
-	if (settings->fast_path_input)
+	if (settings->fastpath_input)
 	{
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT;
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT2;
