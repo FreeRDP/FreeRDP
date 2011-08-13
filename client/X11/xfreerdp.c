@@ -403,9 +403,10 @@ void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
 	XCloseDisplay(xfi->display);
+	xfree(xfi);
 }
 
-int dfreerdp_run(freerdp* instance)
+int xfreerdp_run(freerdp* instance)
 {
 	int i;
 	int fds;
@@ -422,10 +423,10 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
+	instance->Connect(instance);
+
 	xfi = GET_XFI(instance);
 	chanman = GET_CHANMAN(instance);
-
-	instance->Connect(instance);
 
 	while (1)
 	{
@@ -508,7 +509,7 @@ void* thread_func(void* param)
 	struct thread_data* data;
 	data = (struct thread_data*) param;
 
-	dfreerdp_run(data->instance);
+	xfreerdp_run(data->instance);
 
 	xfree(data);
 
@@ -517,7 +518,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
         if (g_thread_count < 1)
-                freerdp_sem_signal(&g_sem);
+                freerdp_sem_signal(g_sem);
 
 	return NULL;
 }
