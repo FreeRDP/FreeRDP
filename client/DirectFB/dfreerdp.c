@@ -242,6 +242,12 @@ df_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 	}
 }
 
+static void df_free(dfInfo* dfi)
+{
+	dfi->dfb->Release(dfi->dfb);
+	xfree(dfi);
+}
+
 int dfreerdp_run(freerdp* instance)
 {
 	int i;
@@ -259,10 +265,10 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
+	instance->Connect(instance);
+
 	dfi = GET_DFI(instance);
 	chanman = GET_CHANMAN(instance);
-
-	instance->Connect(instance);
 
 	while (1)
 	{
@@ -334,7 +340,7 @@ int dfreerdp_run(freerdp* instance)
 
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
-	xfree(dfi);
+	df_free(dfi);
 	gdi_free(instance);
 	freerdp_free(instance);
 
@@ -355,7 +361,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
         if (g_thread_count < 1)
-                freerdp_sem_signal(&g_sem);
+                freerdp_sem_signal(g_sem);
 
 	return NULL;
 }
