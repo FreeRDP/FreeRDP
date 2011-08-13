@@ -27,5 +27,6 @@
 #cmakedefine WITH_DEBUG_ASSERT
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_PROFILER
+#cmakedefine WITH_SSE2
 
 #endif

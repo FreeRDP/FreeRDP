@@ -32,8 +32,8 @@
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
 
-#ifdef WITH_SSE
-#include "rfx_sse.h"
+#ifdef WITH_SSE2
+#include "rfx_sse2.h"
 #endif
 
 #ifdef WITH_NEON
