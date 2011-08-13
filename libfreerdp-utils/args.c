@@ -173,10 +173,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->offscreen_bitmap_cache = 0;
 		}
+		else if (strcmp("-fastpath", argv[index]) == 0)
+		{
+			settings->fastpath_input = True;
+			settings->fastpath_output = True;
+		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->rfx_decode = True;
-			settings->fast_path_input = True;
+			settings->fastpath_output = True;
 			settings->color_depth = 32;
 			settings->frame_acknowledge = False;
 			settings->performance_flags = PERF_FLAG_NONE;
