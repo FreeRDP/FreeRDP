@@ -84,7 +84,7 @@ static boolean disk_file_remove_dir(const char* path)
 	struct dirent* pdirent;
 	struct stat st;
 	char* p;
-	boolean ret;
+	boolean ret = True;
 
 	dir = opendir(path);
 	if (dir == NULL)

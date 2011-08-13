@@ -601,9 +601,9 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
-	}
 
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
+		gdi_DeleteObject((HGDIOBJECT) hBrush);
+	}
 }
 
 void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)

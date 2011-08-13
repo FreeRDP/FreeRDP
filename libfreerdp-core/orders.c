@@ -326,7 +326,7 @@ void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
 void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 {
 	int i;
-	uint8 flags;
+	uint8 flags = 0;
 	uint8* zeroBits;
 	int zeroBitsSize;
 
@@ -371,7 +371,7 @@ void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number, sint16 x, sint16 y)
 {
 	int i;
-	uint8 flags;
+	uint8 flags = 0;
 	uint8* zeroBits;
 	int zeroBitsSize;
 
@@ -1346,7 +1346,7 @@ void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)
 {
 	int index;
 	int x, y, k;
-	uint8 byte;
+	uint8 byte = 0;
 	uint8* palette;
 
 	palette = s->p + 16;
