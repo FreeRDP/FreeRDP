@@ -79,6 +79,7 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	rail->rail_data_sender.send_rail_vchannel_data = rail_send_vchannel_data;
 
 	rail->rail_order = rail_order_new();
+	rail->rail_order->plugin_data = (FRDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
 	rail->rail_order->data_sender = &(rail->rail_data_sender);
 	rail->rail_order->event_sender = &(rail->rail_event_sender);
 }

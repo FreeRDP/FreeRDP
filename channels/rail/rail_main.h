@@ -44,6 +44,7 @@ struct _RAIL_VCHANNEL_EVENT_SENDER
 struct rdp_rail_order
 {
 	UNICONV* uniconv;
+	FRDP_PLUGIN_DATA* plugin_data;
 	RAIL_HANDSHAKE_ORDER handshake;
 	RAIL_CLIENT_STATUS_ORDER client_status;
 	RAIL_EXEC_ORDER exec;

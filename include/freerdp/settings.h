@@ -263,7 +263,6 @@ struct rdp_settings
 	boolean rfx_decode;
 	boolean frame_acknowledge;
 
-	uint8* app_name;
 	boolean remote_app;
 
 	boolean mouse_motion;

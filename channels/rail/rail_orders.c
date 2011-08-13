@@ -65,10 +65,13 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, UNICO
 	char* buffer;
 	size_t length = 0;
 
+	if (unicode_string->string != NULL)
+		xfree(unicode_string->string);
+
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
 
-	if (strlen(string) < 1)
+	if (string == NULL || strlen(string) < 1)
 		return;
 
 	buffer = freerdp_uniconv_out(rail_order->uniconv, string, &length);
@@ -282,6 +285,8 @@ void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_i
 
 void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 {
+	FRDP_PLUGIN_DATA* data;
+
 	rail_read_handshake_order(s, &rail_order->handshake);
 
 	rail_order->handshake.buildNumber = 0x00001DB1;
@@ -334,11 +339,17 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 			RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY |
 			RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
 
-	rail_string_to_unicode_string(rail_order, "||cmd", &rail_order->exec.exeOrFile);
-	rail_string_to_unicode_string(rail_order, "", &rail_order->exec.workingDir);
-	rail_string_to_unicode_string(rail_order, "", &rail_order->exec.arguments);
+	data = rail_order->plugin_data;
+	while (data && data->size > 0)
+	{
+		rail_string_to_unicode_string(rail_order, (char*)data->data[0], &rail_order->exec.exeOrFile);
+		rail_string_to_unicode_string(rail_order, (char*)data->data[1], &rail_order->exec.workingDir);
+		rail_string_to_unicode_string(rail_order, (char*)data->data[2], &rail_order->exec.arguments);
 
-	rail_send_client_exec_order(rail_order);
+		rail_send_client_exec_order(rail_order);
+
+		data = (FRDP_PLUGIN_DATA*)(((void*)data) + data->size);
+	}
 }
 
 void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
