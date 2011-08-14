@@ -30,7 +30,13 @@ void update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
 	stream_read_uint8(s, icon_info->bpp); /* bpp (1 byte) */
 	stream_read_uint16(s, icon_info->width); /* width (2 bytes) */
 	stream_read_uint16(s, icon_info->height); /* height (2 bytes) */
-	stream_read_uint16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
+
+	/* cbColorTable is only present when bpp is 1, 2 or 4 */
+	if (icon_info->bpp == 1 || icon_info->bpp == 2 || icon_info->bpp == 4)
+		stream_read_uint16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
+	else
+		icon_info->cbColorTable = 0;
+
 	stream_read_uint16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
 	stream_read_uint16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
 
@@ -190,21 +196,25 @@ void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
+		DEBUG_WND("Window Icon Order");
 		update_read_window_icon_order(s, orderInfo, &update->window_icon);
 		IFCALL(update->WindowIcon, update, orderInfo, &update->window_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
+		DEBUG_WND("Window Cached Icon Order");
 		update_read_window_cached_icon_order(s, orderInfo, &update->window_cached_icon);
 		IFCALL(update->WindowCachedIcon, update, orderInfo, &update->window_cached_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
+		DEBUG_WND("Window Deleted Order");
 		update_read_window_deleted_order(s, orderInfo);
 		IFCALL(update->WindowDeleted, update, orderInfo);
 	}
 	else
 	{
+		DEBUG_WND("Window State Order");
 		update_read_window_state_order(s, orderInfo, &update->window_state);
 		IFCALL(update->WindowState, update, orderInfo, &update->window_state);
 	}
@@ -243,11 +253,13 @@ void update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WIND
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
+		DEBUG_WND("Deleted Notification Icon Deleted Order");
 		update_read_notification_icon_deleted_order(s, orderInfo);
 		IFCALL(update->NotifyIconDeleted, update, orderInfo);
 	}
 	else
 	{
+		DEBUG_WND("Notification Icon State Order");
 		update_read_notification_icon_state_order(s, orderInfo, &update->notify_icon_state);
 		IFCALL(update->NotifyIconState, update, orderInfo, &update->notify_icon_state);
 	}
@@ -289,11 +301,13 @@ void update_recv_desktop_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_I
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
+		DEBUG_WND("Non-Monitored Desktop Order");
 		update_read_desktop_non_monitored_order(s, orderInfo);
 		IFCALL(update->NonMonitoredDesktop, update, orderInfo);
 	}
 	else
 	{
+		DEBUG_WND("Actively Monitored Desktop Order");
 		update_read_desktop_actively_monitored_order(s, orderInfo, &update->monitored_desktop);
 		IFCALL(update->MonitoredDesktop, update, orderInfo, &update->monitored_desktop);
 	}
