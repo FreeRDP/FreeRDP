@@ -338,7 +338,7 @@ void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 	stream_get_mark(s, zeroBits);
 	stream_seek(s, zeroBitsSize);
 
-	memset(rectangles, 0, sizeof(DELTA_RECT) * number);
+	memset(rectangles, 0, sizeof(DELTA_RECT) * (number + 1));
 
 	for (i = 1; i < number + 1; i++)
 	{
