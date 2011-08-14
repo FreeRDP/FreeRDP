@@ -289,7 +289,7 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 
 	rail_read_handshake_order(s, &rail_order->handshake);
 
-	rail_order->handshake.buildNumber = 0x00001DB1;
+	rail_order->handshake.buildNumber = 0x00001DB0;
 	rail_send_handshake_order(rail_order);
 
 	rail_order->client_status.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
@@ -319,7 +319,7 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 	rail_send_client_sysparam_order(rail_order);
 
 	rail_order->sysparam.systemParam = SPI_SET_DRAG_FULL_WINDOWS;
-	rail_order->sysparam.value = False;
+	rail_order->sysparam.value = True;
 	rail_send_client_sysparam_order(rail_order);
 
 	rail_order->sysparam.systemParam = SPI_SET_KEYBOARD_CUES;

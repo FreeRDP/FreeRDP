@@ -106,6 +106,9 @@ rdpSettings* settings_new()
 
 		settings->client_dir = xstrdup(client_dll);
 
+		settings->num_icon_caches = 3;
+		settings->num_icon_cache_entries = 12;
+
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
 	}

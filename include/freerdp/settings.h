@@ -265,6 +265,8 @@ struct rdp_settings
 	boolean frame_acknowledge;
 
 	boolean remote_app;
+	uint8 num_icon_caches;
+	uint16 num_icon_cache_entries;
 
 	boolean mouse_motion;
 };

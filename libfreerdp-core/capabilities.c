@@ -1117,14 +1117,13 @@ void rdp_read_remote_programs_capability_set(STREAM* s, rdpSettings* settings)
 void rdp_write_remote_programs_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
-	uint32 railSupportLevel = 0;
+	uint32 railSupportLevel;
 
 	header = rdp_capability_set_start(s);
 
-	if (settings->remote_app)
-		railSupportLevel = RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+	railSupportLevel = RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
 
-	stream_read_uint32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
+	stream_write_uint32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_RAIL);
 }
@@ -1157,11 +1156,11 @@ void rdp_write_window_list_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	wndSupportLevel = WINDOW_LEVEL_SUPPORTED | WINDOW_LEVEL_SUPPORTED_EX;
+	wndSupportLevel = WINDOW_LEVEL_SUPPORTED_EX;
 
 	stream_write_uint32(s, wndSupportLevel); /* wndSupportLevel (4 bytes) */
-	stream_write_uint8(s, 3); /* numIconCaches (1 byte) */
-	stream_write_uint16(s, 12); /* numIconCacheEntries (2 bytes) */
+	stream_write_uint8(s, settings->num_icon_caches); /* numIconCaches (1 byte) */
+	stream_write_uint16(s, settings->num_icon_cache_entries); /* numIconCacheEntries (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
 }
