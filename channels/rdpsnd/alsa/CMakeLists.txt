@@ -17,19 +17,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_SRCS
-	rdpsnd_main.c
-	rdpsnd_main.h
+set(RDPSND_ALSA_SRCS
+	rdpsnd_alsa.c
 )
 
-add_library(rdpsnd SHARED ${RDPSND_SRCS})
-set_target_properties(rdpsnd PROPERTIES PREFIX "")
+include_directories(..)
+include_directories(${ALSA_INCLUDE_DIRS})
 
-target_link_libraries(rdpsnd freerdp-utils)
+add_library(rdpsnd_alsa SHARED ${RDPSND_ALSA_SRCS})
+set_target_properties(rdpsnd_alsa PROPERTIES PREFIX "")
 
-install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(rdpsnd_alsa freerdp-utils)
+target_link_libraries(rdpsnd_alsa ${ALSA_LIBRARIES})
 
-if(ALSA_FOUND)
-	add_subdirectory(alsa)
-endif()
-
+install(TARGETS rdpsnd_alsa DESTINATION ${FREERDP_PLUGIN_PATH})

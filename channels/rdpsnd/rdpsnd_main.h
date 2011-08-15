@@ -36,13 +36,13 @@ struct rdpsnd_format
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef boolean (*pcFormatSupported) (rdpsndDevicePlugin* devplugin, rdpsndFormat* format);
-typedef void (*pcOpen) (rdpsndDevicePlugin* devplugin, rdpsndFormat* format);
-typedef void (*pcSetFormat) (rdpsndDevicePlugin* devplugin, rdpsndFormat* format);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* devplugin, uint32 value);
-typedef void (*pcPlay) (rdpsndDevicePlugin* devplugin, uint8* data, int size);
-typedef void (*pcClose) (rdpsndDevicePlugin* devplugin);
-typedef void (*pcFree) (rdpsndDevicePlugin* devplugin);
+typedef boolean (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
+typedef void (*pcPlay) (rdpsndDevicePlugin* device, uint8* data, int size);
+typedef void (*pcClose) (rdpsndDevicePlugin* device);
+typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
 struct rdpsnd_device_plugin
 {

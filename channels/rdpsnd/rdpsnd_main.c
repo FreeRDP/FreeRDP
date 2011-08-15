@@ -213,6 +213,10 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		stream_seek(data_in, format->cbSize);
 		format->data = NULL;
 
+		DEBUG_SVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d nBlockAlign=%d wBitsPerSample=%d",
+			format->wFormatTag, format->nChannels, format->nSamplesPerSec,
+			format->nBlockAlign, format->wBitsPerSample);
+
 		if (rdpsnd->fixed_format > 0 && rdpsnd->fixed_format != format->wFormatTag)
 			continue;
 		if (rdpsnd->fixed_channel > 0 && rdpsnd->fixed_channel != format->nChannels)
@@ -221,6 +225,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 			continue;
 		if (rdpsnd->device && rdpsnd->device->FormatSupported(rdpsnd->device, format))
 		{
+			DEBUG_SVC("format supported.");
+
 			stream_check_size(data_out, 18 + format->cbSize);
 			stream_write(data_out, format_mark, 18 + format->cbSize);
 			if (format->cbSize > 0)

@@ -67,6 +67,7 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 # Libraries that we have a hard dependency on
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(ALSA)
 
 # Endian
 test_big_endian(BIG_ENDIAN)
