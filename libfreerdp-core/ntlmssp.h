@@ -78,13 +78,13 @@ typedef enum _NTLMSSP_STATE NTLMSSP_STATE;
 struct _NTLMSSP
 {
 	NTLMSSP_STATE state;
-	BLOB password;
-	BLOB username;
-	BLOB domain;
-	BLOB workstation;
-	BLOB target_info;
-	BLOB target_name;
-	BLOB spn;
+	rdpBlob password;
+	rdpBlob username;
+	rdpBlob domain;
+	rdpBlob workstation;
+	rdpBlob target_info;
+	rdpBlob target_name;
+	rdpBlob spn;
 	UNICONV *uniconv;
 	uint32 negotiate_flags;
 	uint8 timestamp[8];
@@ -100,11 +100,11 @@ struct _NTLMSSP
 	uint8 server_signing_key[16];
 	uint8 server_sealing_key[16];
 	uint8 message_integrity_check[16];
-	BLOB nt_challenge_response;
-	BLOB lm_challenge_response;
-	BLOB negotiate_message;
-	BLOB challenge_message;
-	BLOB authenticate_message;
+	rdpBlob nt_challenge_response;
+	rdpBlob lm_challenge_response;
+	rdpBlob negotiate_message;
+	rdpBlob challenge_message;
+	rdpBlob authenticate_message;
 	CryptoRc4 send_rc4_seal;
 	CryptoRc4 recv_rc4_seal;
 	AV_PAIRS *av_pairs;
@@ -132,7 +132,7 @@ void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp);
 void ntlmssp_init_rc4_seal_states(NTLMSSP* ntlmssp);
 
 void ntlmssp_compute_lm_hash(char* password, char* hash);
-void ntlmssp_compute_ntlm_hash(BLOB* password, char* hash);
+void ntlmssp_compute_ntlm_hash(rdpBlob* password, char* hash);
 void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash);
 
 void ntlmssp_compute_lm_response(char* password, char* challenge, char* response);
@@ -146,8 +146,8 @@ void ntlmssp_free_av_pairs(NTLMSSP* ntlmssp);
 
 void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp);
 
-void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, BLOB* msg, BLOB* encrypted_msg, uint8* signature);
-int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, BLOB* encrypted_msg, BLOB* msg, uint8* signature);
+void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, rdpBlob* msg, rdpBlob* encrypted_msg, uint8* signature);
+int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, rdpBlob* encrypted_msg, rdpBlob* msg, uint8* signature);
 
 int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s);
 int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s);

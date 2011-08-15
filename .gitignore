@@ -20,6 +20,16 @@ docs/api
 # Mac OS X
 .DS_Store
 
+# Windows
+*.vcxproj
+*.vcxproj.*
+*.sdf
+*.sln
+*.suo
+*.opensdf
+ipch
+Debug
+
 # Binaries
 *.so
 *.so.*

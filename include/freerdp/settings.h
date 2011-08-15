@@ -90,7 +90,7 @@ typedef struct
 } SYSTEM_TIME;
 
 /* TIME_ZONE_INFORMATION */
-typedef struct
+struct _TIME_ZONE_INFO
 {
 	uint32 bias;
 	char standardName[32];
@@ -99,7 +99,8 @@ typedef struct
 	char daylightName[32];
 	SYSTEM_TIME daylightDate;
 	uint32 daylightBias;
-} TIME_ZONE_INFORMATION;
+};
+typedef struct _TIME_ZONE_INFO TIME_ZONE_INFO;
 
 /* ARC_CS_PRIVATE_PACKET */
 typedef struct
@@ -171,8 +172,8 @@ struct rdp_settings
 	uint32 encryption_method;
 	uint32 encryption_level;
 
-	BLOB server_random;
-	BLOB server_certificate;
+	rdpBlob server_random;
+	rdpBlob server_certificate;
 
 	boolean console_audio;
 	boolean console_session;
@@ -205,7 +206,7 @@ struct rdp_settings
 	boolean ipv6;
 	char* ip_address;
 	char* client_dir;
-	TIME_ZONE_INFORMATION client_time_zone;
+	TIME_ZONE_INFO client_time_zone;
 
 	boolean auto_reconnection;
 	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;

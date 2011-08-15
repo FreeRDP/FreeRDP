@@ -803,10 +803,12 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 #define BMF_24BPP	0x5
 #define BMF_32BPP	0x6
 
+#ifndef _WIN32
 #define BS_SOLID	0x00
 #define BS_NULL		0x01
 #define BS_HATCHED	0x02
 #define BS_PATTERN	0x03
+#endif
 
 #define HS_HORIZONTAL	0x00
 #define HS_VERTICAL	0x01

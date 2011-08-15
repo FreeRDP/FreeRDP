@@ -67,9 +67,12 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 
 # Libraries that we have a hard dependency on
 find_package(OpenSSL REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(ALSA)
-find_package(PulseAudio)
+
+if(!WINDOWS)
+	find_package(ZLIB REQUIRED)
+	find_package(ALSA)
+	find_package(PulseAudio)
+endif()
 
 # Endian
 test_big_endian(BIG_ENDIAN)

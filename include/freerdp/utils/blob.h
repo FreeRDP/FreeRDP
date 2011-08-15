@@ -25,9 +25,9 @@ struct rdp_blob
 	void* data;
 	int length;
 };
-typedef struct rdp_blob BLOB;
+typedef struct rdp_blob rdpBlob;
 
-void freerdp_blob_alloc(BLOB* blob, int length);
-void freerdp_blob_free(BLOB* blob);
+void freerdp_blob_alloc(rdpBlob* blob, int length);
+void freerdp_blob_free(rdpBlob* blob);
 
 #endif /* __BLOB_UTILS_H */

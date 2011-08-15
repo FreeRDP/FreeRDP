@@ -51,7 +51,7 @@ typedef struct
 
 typedef struct
 {
-	BLOB modulus;
+	rdpBlob modulus;
 	uint8 exponent[4];
 } CERT_INFO;
 

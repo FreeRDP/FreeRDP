@@ -36,12 +36,12 @@ typedef struct rdp_credssp rdpCredssp;
 
 struct rdp_credssp
 {
-	BLOB negoToken;
-	BLOB pubKeyAuth;
-	BLOB authInfo;
+	rdpBlob negoToken;
+	rdpBlob pubKeyAuth;
+	rdpBlob authInfo;
 	int send_seq_num;
-	BLOB public_key;
-	BLOB ts_credentials;
+	rdpBlob public_key;
+	rdpBlob ts_credentials;
 	CryptoRc4 rc4_seal_state;
 	struct _NTLMSSP *ntlmssp;
 	struct rdp_transport* transport;
@@ -49,12 +49,12 @@ struct rdp_credssp
 
 int credssp_authenticate(rdpCredssp* credssp);
 
-void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth);
-int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth);
+void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
+int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
 
-void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d);
-void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d);
-int credssp_verify_public_key(rdpCredssp* credssp, BLOB* d);
+void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d);
+void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d);
+int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d);
 void credssp_encode_ts_credentials(rdpCredssp* credssp);
 
 void credssp_current_time(uint8* timestamp);
