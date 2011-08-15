@@ -426,8 +426,18 @@ static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 {
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
+	char* fullname;
 
-	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+	if (strrchr(name, '.') != NULL)
+		entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+	else
+	{
+		fullname = xzalloc(strlen(name) + 8);
+		strcpy(fullname, "rdpsnd_");
+		strcat(fullname, name);
+		entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+		xfree(fullname);
+	}
 	if (entry == NULL)
 	{
 		return False;
