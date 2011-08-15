@@ -24,6 +24,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
+include(FindPkgConfig)
 include(TestBigEndian)
 
 # Include our extra modules
@@ -67,6 +68,8 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 # Libraries that we have a hard dependency on
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(ALSA)
+find_package(PulseAudio)
 
 # Endian
 test_big_endian(BIG_ENDIAN)

@@ -237,9 +237,9 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 		{
 			/* the ownership of the data is passed to the callback */
 			if (item->data_in)
-				plugin->receive_callback(plugin, item->data_in);
+				IFCALL(plugin->receive_callback, plugin, item->data_in);
 			if (item->event_in)
-				plugin->event_callback(plugin, item->event_in);
+				IFCALL(plugin->event_callback, plugin, item->event_in);
 			xfree(item);
 		}
 		else
@@ -253,17 +253,23 @@ static void* svc_plugin_thread_func(void* arg)
 
 	DEBUG_SVC("in");
 
-	plugin->connect_callback(plugin);
+	IFCALL(plugin->connect_callback, plugin);
 
 	while (1)
 	{
-		freerdp_thread_wait(plugin->priv->thread);
+		if (plugin->interval_ms > 0)
+			freerdp_thread_wait_timeout(plugin->priv->thread, plugin->interval_ms);
+		else
+			freerdp_thread_wait(plugin->priv->thread);
 
 		if (freerdp_thread_is_stopped(plugin->priv->thread))
 			break;
 
 		freerdp_thread_reset(plugin->priv->thread);
 		svc_plugin_process_data_in(plugin);
+
+		if (plugin->interval_ms > 0)
+			IFCALL(plugin->interval_callback, plugin);
 	}
 
 	freerdp_thread_quit(plugin->priv->thread);
@@ -314,7 +320,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	xfree(plugin->priv);
 	plugin->priv = NULL;
 
-	plugin->terminate_callback(plugin);
+	IFCALL(plugin->terminate_callback, plugin);
 }
 
 static void svc_plugin_init_event(void* pInitHandle, uint32 event, void* pData, uint32 dataLength)

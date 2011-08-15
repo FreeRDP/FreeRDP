@@ -23,6 +23,7 @@ find_package(Threads REQUIRED)
 set(FREERDP_UTILS_SRCS
 	args.c
 	blob.c
+	dsp.c
 	event.c
 	hexdump.c
 	list.c
