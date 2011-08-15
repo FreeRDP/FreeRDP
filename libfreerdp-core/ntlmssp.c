@@ -215,7 +215,7 @@ void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp)
  * @param signing_key Destination signing key
  */
 
-void ntlmssp_generate_signing_key(uint8* exported_session_key, BLOB* sign_magic, uint8* signing_key)
+void ntlmssp_generate_signing_key(uint8* exported_session_key, rdpBlob* sign_magic, uint8* signing_key)
 {
 	int length;
 	uint8* value;
@@ -243,7 +243,7 @@ void ntlmssp_generate_signing_key(uint8* exported_session_key, BLOB* sign_magic,
 
 void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp)
 {
-	BLOB sign_magic;
+	rdpBlob sign_magic;
 	sign_magic.data = (void*) client_sign_magic;
 	sign_magic.length = sizeof(client_sign_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &sign_magic, ntlmssp->client_signing_key);
@@ -257,7 +257,7 @@ void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp)
 
 void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp)
 {
-	BLOB sign_magic;
+	rdpBlob sign_magic;
 	sign_magic.data = (void*) server_sign_magic;
 	sign_magic.length = sizeof(server_sign_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &sign_magic, ntlmssp->server_signing_key);
@@ -271,11 +271,11 @@ void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp)
  * @param sealing_key Destination sealing key
  */
 
-void ntlmssp_generate_sealing_key(uint8* exported_session_key, BLOB* seal_magic, uint8* sealing_key)
+void ntlmssp_generate_sealing_key(uint8* exported_session_key, rdpBlob* seal_magic, uint8* sealing_key)
 {
 	uint8* p;
 	CryptoMd5 md5;
-	BLOB blob;
+	rdpBlob blob;
 
 	freerdp_blob_alloc(&blob, 16 + seal_magic->length);
 	p = (uint8*) blob.data;
@@ -299,7 +299,7 @@ void ntlmssp_generate_sealing_key(uint8* exported_session_key, BLOB* seal_magic,
 
 void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp)
 {
-	BLOB seal_magic;
+	rdpBlob seal_magic;
 	seal_magic.data = (void*) client_seal_magic;
 	seal_magic.length = sizeof(client_seal_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &seal_magic, ntlmssp->client_sealing_key);
@@ -313,7 +313,7 @@ void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp)
 
 void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp)
 {
-	BLOB seal_magic;
+	rdpBlob seal_magic;
 	seal_magic.data = (void*) server_seal_magic;
 	seal_magic.length = sizeof(server_seal_magic);
 	ntlmssp_generate_signing_key(ntlmssp->exported_session_key, &seal_magic, ntlmssp->server_sealing_key);
@@ -420,7 +420,7 @@ void ntlmssp_compute_lm_hash(char* password, char* hash)
 	DES_ecb_encrypt((const_DES_cblock*) lm_magic, (DES_cblock*)&hash[8], &ks, DES_ENCRYPT);
 }
 
-void ntlmssp_compute_ntlm_hash(BLOB* password, char* hash)
+void ntlmssp_compute_ntlm_hash(rdpBlob* password, char* hash)
 {
 	/* NTLMv1("password") = 8846F7EAEE8FB117AD06BDD830B7586C */
 
@@ -438,7 +438,7 @@ void ntlmssp_compute_ntlm_hash(BLOB* password, char* hash)
 void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash)
 {
 	char* p;
-	BLOB blob;
+	rdpBlob blob;
 	char ntlm_hash[16];
 
 	freerdp_blob_alloc(&blob, ntlmssp->username.length + ntlmssp->domain.length);
@@ -522,8 +522,8 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
 	uint8* blob;
 	uint8 ntlm_v2_hash[16];
 	uint8 nt_proof_str[16];
-	BLOB ntlm_v2_temp;
-	BLOB ntlm_v2_temp_chal;
+	rdpBlob ntlm_v2_temp;
+	rdpBlob ntlm_v2_temp_chal;
 
 	freerdp_blob_alloc(&ntlm_v2_temp, ntlmssp->target_info.length + 28);
 
@@ -744,7 +744,7 @@ static void ntlmssp_output_restriction_encoding(NTLMSSP* ntlmssp)
 void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp)
 {
 	STREAM* s;
-	BLOB target_info;
+	rdpBlob target_info;
 	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
 
 	/* MsvAvFlags */
@@ -1035,7 +1035,7 @@ void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp)
  * @param[out] signature destination signature
  */
 
-void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, BLOB* msg, BLOB* encrypted_msg, uint8* signature)
+void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, rdpBlob* msg, rdpBlob* encrypted_msg, uint8* signature)
 {
 	HMAC_CTX hmac_ctx;
 	uint8 digest[16];
@@ -1079,7 +1079,7 @@ void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, BLOB* msg, BLOB* encrypted_msg, u
  * @return
  */
 
-int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, BLOB* encrypted_msg, BLOB* msg, uint8* signature)
+int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, rdpBlob* encrypted_msg, rdpBlob* msg, uint8* signature)
 {
 	HMAC_CTX hmac_ctx;
 	uint8 digest[16];

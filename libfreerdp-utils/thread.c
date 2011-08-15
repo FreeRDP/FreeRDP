@@ -24,6 +24,10 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 freerdp_thread* freerdp_thread_new(void)
 {
 	freerdp_thread* thread;

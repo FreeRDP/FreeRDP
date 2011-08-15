@@ -27,9 +27,12 @@
 
 #include <time.h>
 #include <errno.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+
+#ifndef _WIN32
+#include <sys/socket.h>
+#endif
 
 #include "tpkt.h"
 #include "fastpath.h"

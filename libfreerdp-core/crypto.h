@@ -81,7 +81,7 @@ typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
 void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
-boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key);
+boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 
 void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output);
 void crypto_reverse(uint8* data, int length);

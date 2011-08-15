@@ -196,11 +196,11 @@ int credssp_authenticate(rdpCredssp* credssp)
  * @param s
  */
 
-void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d)
+void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
 {
 	uint8 *p;
 	uint8 signature[16];
-	BLOB encrypted_public_key;
+	rdpBlob encrypted_public_key;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 
 	freerdp_blob_alloc(d, credssp->public_key.length + 16);
@@ -234,12 +234,12 @@ void credssp_encrypt_public_key(rdpCredssp* credssp, BLOB* d)
  * @return 1 if verification is successful, 0 otherwise
  */
 
-int credssp_verify_public_key(rdpCredssp* credssp, BLOB* d)
+int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 {
 	uint8 *p1, *p2;
 	uint8 *signature;
-	BLOB public_key;
-	BLOB encrypted_public_key;
+	rdpBlob public_key;
+	rdpBlob encrypted_public_key;
 
 	signature = d->data;
 	encrypted_public_key.data = (void*) (signature + 16);
@@ -269,11 +269,11 @@ int credssp_verify_public_key(rdpCredssp* credssp, BLOB* d)
  * @param s
  */
 
-void credssp_encrypt_ts_credentials(rdpCredssp* credssp, BLOB* d)
+void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d)
 {
 	uint8 *p;
 	uint8 signature[16];
-	BLOB encrypted_ts_credentials;
+	rdpBlob encrypted_ts_credentials;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
 
 	freerdp_blob_alloc(d, credssp->ts_credentials.length + 16);
@@ -454,7 +454,7 @@ int credssp_skip_ts_request(int length)
  * @param pubKeyAuth
  */
 
-void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
+void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth)
 {
 	STREAM* s;
 	int length;
@@ -517,7 +517,7 @@ void credssp_send(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pu
  * @return
  */
 
-int credssp_recv(rdpCredssp* credssp, BLOB* negoToken, BLOB* authInfo, BLOB* pubKeyAuth)
+int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth)
 {
 	STREAM* s;
 	int length;
