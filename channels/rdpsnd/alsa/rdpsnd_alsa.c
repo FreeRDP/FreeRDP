@@ -298,6 +298,16 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 		free(decoded_data);
 }
 
+static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
+{
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
+
+	if (alsa->out_handle == 0)
+		return;
+
+	snd_pcm_start(alsa->out_handle);
+}
+
 int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndAlsaPlugin* alsa;
@@ -310,6 +320,7 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	alsa->device.SetFormat = rdpsnd_alsa_set_format;
 	alsa->device.SetVolume = rdpsnd_alsa_set_volume;
 	alsa->device.Play = rdpsnd_alsa_play;
+	alsa->device.Start = rdpsnd_alsa_start;
 	alsa->device.Close = rdpsnd_alsa_close;
 	alsa->device.Free = rdpsnd_alsa_free;
 

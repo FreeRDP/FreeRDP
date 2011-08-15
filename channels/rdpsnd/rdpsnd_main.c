@@ -363,6 +363,8 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 {
 	DEBUG_SVC("server closes.");
+	if (rdpsnd->device)
+		IFCALL(rdpsnd->device->Start, rdpsnd->device);
 	rdpsnd->close_timestamp = get_mstime() + 2000;
 	rdpsnd->plugin.interval_ms = 10;
 }

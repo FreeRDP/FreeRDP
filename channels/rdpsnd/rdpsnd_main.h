@@ -41,6 +41,7 @@ typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
 typedef void (*pcPlay) (rdpsndDevicePlugin* device, uint8* data, int size);
+typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
@@ -51,6 +52,7 @@ struct rdpsnd_device_plugin
 	pcSetFormat SetFormat;
 	pcSetVolume SetVolume;
 	pcPlay Play;
+	pcStart Start;
 	pcClose Close;
 	pcFree Free;
 };
