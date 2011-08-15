@@ -27,7 +27,7 @@
  * @param length memory length
  */
 
-void freerdp_blob_alloc(BLOB* blob, int length)
+void freerdp_blob_alloc(rdpBlob* blob, int length)
 {
 	blob->data = xmalloc(length);
 	blob->length = length;
@@ -38,7 +38,7 @@ void freerdp_blob_alloc(BLOB* blob, int length)
  * @param blob
  */
 
-void freerdp_blob_free(BLOB* blob)
+void freerdp_blob_free(rdpBlob* blob)
 {
 	if (blob->data)
 		xfree(blob->data);

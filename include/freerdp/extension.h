@@ -20,6 +20,7 @@
 #ifndef __RDP_EXTENSION_H
 #define __RDP_EXTENSION_H
 
+#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -32,28 +33,29 @@ typedef struct rdp_ext_plugin rdpExtPlugin;
 
 struct rdp_ext_plugin
 {
-	void * ext;
-	int (*init) (rdpExtPlugin * plugin, rdpInst * inst);
-	int (*uninit) (rdpExtPlugin * plugin, rdpInst * inst);
+	void* ext;
+	int (*init) (rdpExtPlugin* plugin, freerdp* instance);
+	int (*uninit) (rdpExtPlugin* plugin, freerdp* instance);
 };
 
-typedef uint32 (FREERDP_CC * PFREERDP_EXTENSION_HOOK)(rdpExtPlugin * plugin, rdpInst * inst);
+typedef uint32 (FREERDP_CC* PFREERDP_EXTENSION_HOOK)(rdpExtPlugin* plugin, freerdp* instance);
 
-typedef uint32 (FREERDP_CC * PREGISTEREXTENSION)(rdpExtPlugin * plugin);
-typedef uint32 (FREERDP_CC * PREGISTERPRECONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
-typedef uint32 (FREERDP_CC * PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin * plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef uint32 (FREERDP_CC* PREGISTEREXTENSION)(rdpExtPlugin* plugin);
+typedef uint32 (FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef uint32 (FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
 
 struct _FREERDP_EXTENSION_ENTRY_POINTS
 {
-	void * ext; /* Reference to internal instance */
+	void* ext; /* Reference to internal instance */
 	PREGISTEREXTENSION pRegisterExtension;
 	PREGISTERPRECONNECTHOOK pRegisterPreConnectHook;
 	PREGISTERPOSTCONNECTHOOK pRegisterPostConnectHook;
-	void * data;
+	void* data;
 };
 typedef struct _FREERDP_EXTENSION_ENTRY_POINTS FREERDP_EXTENSION_ENTRY_POINTS;
-typedef FREERDP_EXTENSION_ENTRY_POINTS * PFREERDP_EXTENSION_ENTRY_POINTS;
+typedef FREERDP_EXTENSION_ENTRY_POINTS* PFREERDP_EXTENSION_ENTRY_POINTS;
 
-typedef int (FREERDP_CC * PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
+typedef int (FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
 
 #endif /* __RDP_EXTENSION_H */
+

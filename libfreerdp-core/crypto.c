@@ -91,7 +91,7 @@ boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert)
 	return True; /* FIXME: do the actual verification */
 }
 
-boolean crypto_cert_get_public_key(CryptoCert cert, BLOB* public_key)
+boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 {
 	uint8* p;
 	int length;

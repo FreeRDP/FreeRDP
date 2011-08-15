@@ -21,6 +21,10 @@
 #ifndef __RDP_TYPES_H
 #define __RDP_TYPES_H
 
+#ifdef _WIN32
+#include <WinDef.h>
+#endif
+
 /* Base Types */
 
 typedef unsigned char uint8;
@@ -45,7 +49,11 @@ typedef signed long long sint64;
 #define False (0)
 #endif
 
+#ifndef _WIN32
 typedef int boolean;
+#else
+#define boolean BOOLEAN
+#endif
 
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
@@ -57,74 +65,75 @@ typedef int boolean;
 
 #include <freerdp/settings.h>
 
-typedef void *FRDP_HBITMAP;
-typedef void *FRDP_HGLYPH;
-typedef void *FRDP_HPALETTE;
-typedef void *FRDP_HCURSOR;
+typedef void* FRDP_HBITMAP;
+typedef void* FRDP_HGLYPH;
+typedef void* FRDP_HPALETTE;
+typedef void* FRDP_HCURSOR;
 
-typedef struct _FRDP_POINT
+struct _FRDP_POINT
 {
-	sint16 x, y;
-}
-FRDP_POINT;
+	sint16 x;
+	sint16 y;
+};
+typedef struct _FRDP_POINT FRDP_POINT;
 
-typedef struct _FRDP_PALETTEENTRY
+struct _FRDP_PALETTEENTRY
 {
 	uint8 red;
 	uint8 green;
 	uint8 blue;
-}
-FRDP_PALETTEENTRY;
+};
+typedef struct _FRDP_PALETTEENTRY FRDP_PALETTEENTRY;
 
-typedef struct _FRDP_PALETTE
+struct _FRDP_PALETTE
 {
 	uint16 count;
-	FRDP_PALETTEENTRY *entries;
-}
-FRDP_PALETTE;
+	FRDP_PALETTEENTRY* entries;
+};
+typedef struct _FRDP_PALETTE FRDP_PALETTE;
 
-typedef struct _FRDP_PEN
+struct _FRDP_PEN
 {
 	uint8 style;
 	uint8 width;
 	uint32 color;
-}
-FRDP_PEN;
+};
+typedef struct _FRDP_PEN FRDP_PEN;
 
 /* this is what is in the brush cache */
-typedef struct _FRDP_BRUSHDATA
+struct _FRDP_BRUSHDATA
 {
 	uint32 color_code;
 	uint32 data_size;
 	uint8 *data;
-}
-FRDP_BRUSHDATA;
+};
+typedef struct _FRDP_BRUSHDATA FRDP_BRUSHDATA;
 
-typedef struct _FRDP_BRUSH
+struct _FRDP_BRUSH
 {
 	uint8 xorigin;
 	uint8 yorigin;
 	uint8 style;
 	uint8 pattern[8];
 	FRDP_BRUSHDATA *bd;
-}
-FRDP_BRUSH;
+};
+typedef struct _FRDP_BRUSH FRDP_BRUSH;
 
-typedef struct _FRDP_PLUGIN_DATA
+struct _FRDP_PLUGIN_DATA
 {
 	uint16 size;
 	void* data[4];
-}
-FRDP_PLUGIN_DATA;
+};
+typedef struct _FRDP_PLUGIN_DATA FRDP_PLUGIN_DATA;
 
-typedef struct _FRDP_RECT
+struct _FRDP_RECT
 {
 	sint16 x;
 	sint16 y;
 	sint16 width;
 	sint16 height;
-}
-FRDP_RECT;
+};
+typedef struct _FRDP_RECT FRDP_RECT;
 
 /* Plugin events */
 typedef struct _FRDP_EVENT FRDP_EVENT;
@@ -146,7 +155,5 @@ enum FRDP_EVENT_CLASS
 	FRDP_EVENT_CLASS_TSMF,
 	FRDP_EVENT_CLASS_RAIL
 };
-
-typedef struct rdp_inst rdpInst;
 
 #endif /* __RDP_TYPES_H */

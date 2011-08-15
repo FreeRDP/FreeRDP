@@ -20,6 +20,8 @@
 #ifndef __FREERDP_H
 #define __FREERDP_H
 
+typedef struct rdp_freerdp freerdp;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -34,8 +36,6 @@ extern "C" {
 
 FREERDP_API boolean freerdp_global_init();
 FREERDP_API void freerdp_global_finish();
-
-typedef struct rdp_freerdp freerdp;
 
 typedef boolean (*pcConnect)(freerdp* freerdp);
 typedef boolean (*pcPreConnect)(freerdp* freerdp);
