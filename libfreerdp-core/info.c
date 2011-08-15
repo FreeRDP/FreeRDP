@@ -61,7 +61,7 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 {
 	time_t t;
 	struct tm* local_time;
-	TIME_ZONE_INFORMATION* clientTimeZone;
+	TIME_ZONE_INFO* clientTimeZone;
 
 	time(&t);
 	local_time = localtime(&t);
@@ -112,7 +112,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	uint8* daylightName;
 	size_t standardNameLength;
 	size_t daylightNameLength;
-	TIME_ZONE_INFORMATION* clientTimeZone;
+	TIME_ZONE_INFO* clientTimeZone;
 
 	rdp_get_client_time_zone(s, settings);
 	clientTimeZone = &settings->client_time_zone;
