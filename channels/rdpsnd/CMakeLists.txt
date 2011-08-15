@@ -17,10 +17,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rdpdbg)
-add_subdirectory(rdpdr)
-add_subdirectory(rail)
-add_subdirectory(rdpsnd)
+set(RDPSND_SRCS
+	rdpsnd_main.c
+	rdpsnd_main.h
+)
+
+add_library(rdpsnd SHARED ${RDPSND_SRCS})
+set_target_properties(rdpsnd PROPERTIES PREFIX "")
+
+target_link_libraries(rdpsnd freerdp-utils)
+
+install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
+
+if(ALSA_FOUND)
+	add_subdirectory(alsa)
+endif()
+
+if(PULSE_FOUND)
+	add_subdirectory(pulse)
+endif()
 

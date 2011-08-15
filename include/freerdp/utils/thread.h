@@ -43,6 +43,7 @@ void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
 void freerdp_thread_stop(freerdp_thread* thread);
 
 #define freerdp_thread_wait(_t) wait_obj_select(_t->signals, _t->num_signals, -1)
+#define freerdp_thread_wait_timeout(_t, _timeout) wait_obj_select(_t->signals, _t->num_signals, _timeout)
 #define freerdp_thread_is_stopped(_t) wait_obj_is_set(_t->signals[0])
 #define freerdp_thread_quit(_t) _t->status = -1
 #define freerdp_thread_signal(_t) wait_obj_set(_t->signals[1])
