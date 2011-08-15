@@ -293,9 +293,9 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	}
 
 	if (resampled_data)
-		free(resampled_data);
+		xfree(resampled_data);
 	if (decoded_data)
-		free(decoded_data);
+		xfree(decoded_data);
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
