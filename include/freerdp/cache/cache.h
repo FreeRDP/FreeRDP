@@ -20,10 +20,10 @@
 #ifndef __CACHE_H
 #define __CACHE_H
 
-#include "brush.h"
-#include "bitmap_v2.h"
-#include "offscreen.h"
-#include "color_table.h"
+#include <freerdp/cache/brush.h>
+#include <freerdp/cache/bitmap_v2.h>
+#include <freerdp/cache/offscreen.h>
+#include <freerdp/cache/color_table.h>
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>

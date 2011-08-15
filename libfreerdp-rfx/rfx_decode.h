@@ -20,7 +20,7 @@
 #ifndef __RFX_DECODE_H
 #define __RFX_DECODE_H
 
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 
 void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
 

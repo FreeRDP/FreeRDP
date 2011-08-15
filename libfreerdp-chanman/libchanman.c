@@ -38,7 +38,7 @@
 #include <string.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman.h>
+#include <freerdp/chanman/chanman.h>
 #include <freerdp/svc.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/list.h>

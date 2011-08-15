@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "bitmap_v2.h"
+#include <freerdp/cache/bitmap_v2.h>
 
 void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index)
 {

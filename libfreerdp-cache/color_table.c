@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "color_table.h"
+#include <freerdp/cache/color_table.h>
 
 void* color_table_get(rdpColorTable* color_table, uint8 index)
 {

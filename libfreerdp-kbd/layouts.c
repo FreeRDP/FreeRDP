@@ -22,7 +22,7 @@
 #include <string.h>
 #include "libkbd.h"
 
-#include "layout_ids.h"
+#include <freerdp/kbd/layouts.h>
 
 typedef struct
 {
@@ -229,8 +229,7 @@ keyboardIME keyboardIMEs[] =
 };
 
 
-rdpKeyboardLayout *
-get_keyboard_layouts(int types)
+rdpKeyboardLayout* get_keyboard_layouts(int types)
 {
 	rdpKeyboardLayout * layouts;
 	int num;
@@ -276,8 +275,7 @@ get_keyboard_layouts(int types)
 	return layouts;
 }
 
-char *
-get_layout_name(unsigned int keyboardLayoutID)
+char* get_layout_name(unsigned int keyboardLayoutID)
 {
 	int i;
 	for(i = 0; i < sizeof(keyboardLayouts) / sizeof(keyboardLayout); i++)

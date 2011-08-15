@@ -20,13 +20,13 @@
 #ifndef __DFREERDP_H
 #define __DFREERDP_H
 
-#include "gdi.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <directfb.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/chanman.h>
+#include <freerdp/chanman/chanman.h>
+#include <freerdp/gdi/gdi.h>
 
 #define SET_DFI(_instance, _dfi) (_instance)->param1 = _dfi
 #define GET_DFI(_instance) ((dfInfo*) ((_instance)->param1))

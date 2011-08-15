@@ -20,7 +20,7 @@
 #ifndef __RFX_DWT_H
 #define __RFX_DWT_H
 
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 
 void rfx_dwt_2d_decode(sint16* buffer, sint16* dwt_buffer);
 void rfx_dwt_2d_encode(sint16* buffer, sint16* dwt_buffer);

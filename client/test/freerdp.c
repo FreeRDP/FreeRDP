@@ -17,19 +17,19 @@
  * limitations under the License.
  */
 
-#include "gdi.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/select.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman.h>
+#include <freerdp/chanman/chanman.h>
 #include <freerdp/plugins/cliprdr.h>
 
 #define SET_TFI(_instance, _tfi) (_instance)->param1 = _tfi

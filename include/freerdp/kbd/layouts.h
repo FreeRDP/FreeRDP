@@ -22,7 +22,7 @@
 #ifndef __LAYOUT_IDS_H
 #define __LAYOUT_IDS_H
 
-#include <freerdp/kbd.h>
+#include <freerdp/kbd/kbd.h>
 
 /* Keyboard layout IDs */
 
@@ -177,10 +177,7 @@
 #define KBD_CHINESE_TRADITIONAL_MICROSOFT_PINYIN_IME_3		0xE00E0804
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
-rdpKeyboardLayout *
-get_keyboard_layouts(int types);
-
-char *
-get_layout_name(unsigned int keyboardLayoutID);
+rdpKeyboardLayout* get_keyboard_layouts(int types);
+char* get_layout_name(unsigned int keyboardLayoutID);
 
 #endif

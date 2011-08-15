@@ -20,7 +20,7 @@
 #ifndef __RFX_QUANTIZATION_H
 #define __RFX_QUANTIZATION_H
 
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 
 void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values);
 void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values);

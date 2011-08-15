@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "offscreen.h"
+#include <freerdp/cache/offscreen.h>
 
 void* offscreen_get(rdpOffscreen* offscreen, uint16 index)
 {

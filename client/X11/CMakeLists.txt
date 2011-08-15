@@ -17,10 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_directories(../../libfreerdp-gdi)
-include_directories(../../libfreerdp-kbd)
-include_directories(../../libfreerdp-core)
-include_directories(../../libfreerdp-cache)
 include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp

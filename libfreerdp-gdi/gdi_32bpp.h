@@ -18,7 +18,7 @@
  */
 
 #include <freerdp/freerdp.h>
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 typedef void (*pSetPixel32_ROP2)(uint32 *pixel, uint32 *pen);
 

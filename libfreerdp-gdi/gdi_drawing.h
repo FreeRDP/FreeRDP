@@ -20,7 +20,7 @@
 #ifndef __GDI_DRAWING_H
 #define __GDI_DRAWING_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 int gdi_GetROP2(HGDI_DC hdc);
 int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);

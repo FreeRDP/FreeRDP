@@ -17,11 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_directories(../libfreerdp-cache)
-
 set(FREERDP_GDI_SRCS
 	color.c
-	color.h
 	gdi_8bpp.c
 	gdi_8bpp.h
 	gdi_16bpp.c
@@ -48,8 +45,7 @@ set(FREERDP_GDI_SRCS
 	gdi_region.h
 	gdi_shape.c
 	gdi_shape.h
-	gdi.c
-	gdi.h)
+	gdi.c)
 
 add_library(freerdp-gdi SHARED ${FREERDP_GDI_SRCS})
 

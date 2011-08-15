@@ -19,12 +19,11 @@
 
 /* Microsoft Windows Virtual Key Codes: http://msdn.microsoft.com/en-us/library/ms645540.aspx */
 
-#ifndef __KEYBOARD_H
-#define __KEYBOARD_H
+#ifndef __VKCODES_H
+#define __VKCODES_H
 
 #include <stddef.h>
-
-#include "layout_ids.h"
+#include <freerdp/kbd/layouts.h>
 
 /* Mouse buttons */
 
@@ -584,4 +583,4 @@ static const virtualKey virtualKeyboard[256 + 2] =
 	{ 0x1C, 1, ""                    , "KPEN" },
 };
 
-#endif /* __KEYBOARD_H */
+#endif /* __VKCODES_H */

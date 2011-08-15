@@ -20,7 +20,7 @@
 #ifndef __GDI_PEN_H
 #define __GDI_PEN_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor);
 uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen);

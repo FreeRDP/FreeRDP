@@ -20,7 +20,7 @@
 #ifndef __GDI_BITMAP_H
 #define __GDI_BITMAP_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos);
 GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor);

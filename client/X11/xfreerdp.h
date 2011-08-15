@@ -20,11 +20,11 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
-#include "gdi.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/chanman.h>
+#include <freerdp/chanman/chanman.h>
+#include <freerdp/gdi/gdi.h>
 
 typedef struct xf_info xfInfo;
 

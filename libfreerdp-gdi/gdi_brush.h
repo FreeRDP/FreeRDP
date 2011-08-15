@@ -20,7 +20,7 @@
 #ifndef __GDI_BRUSH_H
 #define __GDI_BRUSH_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor);
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);

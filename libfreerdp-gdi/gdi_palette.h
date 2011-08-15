@@ -20,7 +20,7 @@
 #ifndef __GDI_PALETTE_H
 #define __GDI_PALETTE_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette);
 HGDI_PALETTE gdi_GetSystemPalette();

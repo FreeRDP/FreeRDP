@@ -20,16 +20,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <freerdp/kbd.h>
 #include <freerdp/types.h>
+#include <freerdp/kbd/kbd.h>
 
 #include "libkbd.h"
 
-#include "locales.h"
-#include "layout_ids.h"
+#include <freerdp/kbd/locales.h>
+#include <freerdp/kbd/vkcodes.h>
+#include <freerdp/kbd/layouts.h>
 #include "layouts_xkb.h"
-#include "keyboard.h"
 
 /*
  * The actual mapping from X keycodes to RDP keycodes, initialized from xkb keycodes or similar.

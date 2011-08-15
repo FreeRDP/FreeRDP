@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 #include <freerdp/utils/memory.h>
 
 #include "rfx_constants.h"

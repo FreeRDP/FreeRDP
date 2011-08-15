@@ -20,7 +20,7 @@
 #ifndef __GDI_REGION_H
 #define __GDI_REGION_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom);

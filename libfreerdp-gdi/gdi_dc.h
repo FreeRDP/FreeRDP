@@ -20,7 +20,7 @@
 #ifndef __GDI_DC_H
 #define __GDI_DC_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 HGDI_DC gdi_GetDC();
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);

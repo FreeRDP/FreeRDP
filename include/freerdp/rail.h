@@ -309,173 +309,19 @@ enum FRDP_EVENT_TYPE_RAIL
 
 /* RAIL Common structures */
 
-// Events from 'rail' vchannel plugin to UI
-enum RAIL_VCHANNEL_EVENT
-{
-	RAIL_VCHANNEL_EVENT_SESSION_ESTABLISHED = 1,
-	RAIL_VCHANNEL_EVENT_EXEC_RESULT_RETURNED,
-	RAIL_VCHANNEL_EVENT_SERVER_SYSPARAM_RECEIVED,
-	RAIL_VCHANNEL_EVENT_MOVESIZE_STARTED,
-	RAIL_VCHANNEL_EVENT_MOVESIZE_FINISHED,
-	RAIL_VCHANNEL_EVENT_MINMAX_INFO_UPDATED,
-	RAIL_VCHANNEL_EVENT_LANGBAR_STATUS_UPDATED,
-	RAIL_VCHANNEL_EVENT_APP_RESPONSE_RECEIVED
-};
-
 typedef struct _RAIL_VCHANNEL_EVENT
 {
 	uint32 event_id;
-
-	union
-	{
-		struct
-		{
-			uint16 flags;
-			uint16 exec_result;
-			uint32 raw_result;
-			const char* exe_or_file;
-		} exec_result_info;
-
-		struct
-		{
-			uint32 param_type;
-			boolean screen_saver_enabled;
-			boolean screen_saver_lock_enabled;
-		} server_param_info;
-
-		struct
-		{
-			uint32 window_id;
-			uint16 move_size_type;
-			uint16 pos_x;
-			uint16 pos_y;
-		} movesize_info;
-
-		struct
-		{
-			uint32 window_id;
-			uint16 max_width;
-			uint16 max_height;
-			uint16 max_pos_x;
-			uint16 max_pos_y;
-			uint16 min_track_width;
-			uint16 min_track_height;
-			uint16 max_track_width;
-			uint16 max_track_height;
-		} minmax_info;
-
-		struct
-		{
-			uint32 status;
-		} langbar_info;
-
-		struct
-		{
-			uint32 window_id;
-			const char* application_id;
-
-		} app_response_info;
-
-	}param;
+	void* param;
 }
 RAIL_VCHANNEL_EVENT;
-
-// Events from UI to 'rail' vchannel plugin
-enum RAIL_UI_EVENT
-{
-	RAIL_UI_EVENT_UPDATE_CLIENT_SYSPARAM = 1,
-	RAIL_UI_EVENT_EXECUTE_REMOTE_APP,
-	RAIL_UI_EVENT_ACTIVATE,
-	RAIL_UI_EVENT_SYS_COMMAND,
-	RAIL_UI_EVENT_NOTIFY,
-	RAIL_UI_EVENT_WINDOW_MOVE,
-	RAIL_UI_EVENT_SYSTEM_MENU,
-	RAIL_UI_EVENT_LANGBAR_INFO,
-	RAIL_UI_EVENT_GET_APP_ID
-};
 
 typedef struct _RAIL_UI_EVENT
 {
 	uint32 event_id;
-
-	union
-	{
-		struct
-		{
-			uint32 param;
-
-			union
-			{
-				boolean full_window_drag_enabled;
-				boolean menu_access_key_always_underlined;
-				boolean keyboard_for_user_prefered;
-				boolean left_right_mouse_buttons_swapped;
-				RECTANGLE_16 work_area;
-				RECTANGLE_16 display_resolution;
-				RECTANGLE_16 taskbar_size;
-				struct
-				{
-					uint32 flags;
-					const char* color_scheme;
-				} high_contrast_system_info;
-			} value;
-
-		} sysparam_info;
-
-		struct
-		{
-			boolean     exec_or_file_is_file_path;
-			const char* exe_or_file;
-			const char* working_directory;
-			const char* arguments;
-		} execute_info;
-
-		struct
-		{
-			uint32 window_id;
-			boolean enabled;
-		} activate_info;
-
-		struct
-		{
-			uint32 window_id;
-			uint32 syscommand;
-		} syscommand_info;
-
-		struct
-		{
-			uint32 window_id;
-			uint32 notify_icon_id;
-			uint32 message;
-		} notify_info;
-
-		struct
-		{
-			uint32 window_id;
-			RECTANGLE_16 new_position;
-		} window_move_info;
-
-		struct
-		{
-			uint32 window_id;
-			uint16 left;
-			uint16 top;
-		} system_menu_info;
-
-		struct
-		{
-			uint32 status;
-		} langbar_info;
-
-
-		struct
-		{
-			uint32 window_id;
-		} get_app_id_info;
-	} param;
+	void* param;
 }
 RAIL_UI_EVENT;
-
 
 #endif /* __RAIL_H */
 

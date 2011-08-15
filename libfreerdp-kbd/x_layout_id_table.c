@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "libkbd.h"
-#include "layout_ids.h"
+#include <freerdp/kbd/layouts.h>
 
 #include "x_layout_id_table.h"
 

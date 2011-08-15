@@ -28,7 +28,7 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 #include "rfx_types.h"
 #include "rfx_bitstream.h"
 #include "rfx_rlgr.h"

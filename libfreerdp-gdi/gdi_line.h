@@ -20,7 +20,7 @@
 #ifndef __GDI_LINE_H
 #define __GDI_LINE_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd);
 int gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, int cCount);

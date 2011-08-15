@@ -20,7 +20,7 @@
 #ifndef __RFX_DIFFERENTIAL_H
 #define __RFX_DIFFERENTIAL_H
 
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 
 void rfx_differential_decode(sint16* buffer, int buffer_size);
 void rfx_differential_encode(sint16* buffer, int buffer_size);

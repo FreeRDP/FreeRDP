@@ -19,15 +19,10 @@
 
 set(FREERDP_CACHE_SRCS
 	brush.c
-	brush.h
 	bitmap_v2.c
-	bitmap_v2.h
 	offscreen.c
-	offscreen.h
 	color_table.c
-	color_table.h
-	cache.c
-	cache.h)
+	cache.c)
 
 add_library(freerdp-cache SHARED ${FREERDP_CACHE_SRCS})
 

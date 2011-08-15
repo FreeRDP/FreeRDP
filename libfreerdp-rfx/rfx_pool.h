@@ -20,7 +20,7 @@
 #ifndef __RFX_POOL_H
 #define __RFX_POOL_H
 
-#include <freerdp/rfx.h>
+#include <freerdp/rfx/rfx.h>
 
 struct _RFX_POOL
 {

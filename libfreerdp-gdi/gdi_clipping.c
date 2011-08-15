@@ -21,8 +21,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/gdi.h>
 
-#include "gdi.h"
 #include "gdi_region.h"
 
 #include "gdi_clipping.h"

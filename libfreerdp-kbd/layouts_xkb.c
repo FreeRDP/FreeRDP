@@ -22,10 +22,14 @@
 #include <string.h>
 
 #include "libkbd.h"
-#include "keyboard.h"
+#include <freerdp/kbd/vkcodes.h>
 #include "x_layout_id_table.h"
 
 #include "layouts_xkb.h"
+
+#ifndef KEYMAP_PATH
+#define KEYMAP_PATH	"/usr/local/freerdp/keymaps"
+#endif
 
 #ifdef WITH_XKBFILE
 
@@ -33,15 +37,13 @@
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
 
-int
-init_xkb(void *dpy)
+int init_xkb(void *dpy)
 {
 	return XkbQueryExtension(dpy, NULL, NULL, NULL, NULL, NULL);
 }
 
 /* return substring starting after nth comma, ending at following comma */
-static char *
-comma_substring(char *s, int n)
+static char* comma_substring(char *s, int n)
 {
 	char *p;
 	if (!s)
@@ -56,8 +58,7 @@ comma_substring(char *s, int n)
 	return s;
 }
 
-unsigned int
-detect_keyboard_layout_from_xkb(void *dpy)
+unsigned int detect_keyboard_layout_from_xkb(void *dpy)
 {
 	char *layout, *variant;
 	unsigned int keyboard_layout = 0, group = 0;
@@ -93,8 +94,7 @@ detect_keyboard_layout_from_xkb(void *dpy)
 	return keyboard_layout;
 }
 
-int
-init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode)
+int init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode)
 {
 	int ret = 0;
 	XkbDescPtr xkb;
@@ -163,8 +163,7 @@ static const KeycodeToVkcode defaultKeycodeToVkcode =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static int
-load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
+static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 {
 	char* pch;
 	char *beg, *end;
@@ -357,8 +356,7 @@ load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 	return 1;
 }
 
-void
-load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
+void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
 {
 	char* kbd;
 	char* xkbfileEnd;

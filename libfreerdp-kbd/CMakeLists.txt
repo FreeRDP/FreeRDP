@@ -18,11 +18,8 @@
 # limitations under the License.
 
 set(FREERDP_KBD_SRCS
-	keyboard.h
 	locales.c
-	locales.h
-	layout_ids.c
-	layout_ids.h
+	layouts.c
 	layouts_xkb.c
 	layouts_xkb.h
 	x_layout_id_table.c

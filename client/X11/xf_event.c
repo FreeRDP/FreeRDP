@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include "keyboard.h"
-#include <freerdp/kbd.h>
+#include <freerdp/kbd/kbd.h>
+#include <freerdp/kbd/vkcodes.h>
 
 #include "xf_event.h"
 

@@ -20,7 +20,7 @@
 #ifndef __GDI_CLIPPING_H
 #define __GDI_CLIPPING_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight);
 HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);

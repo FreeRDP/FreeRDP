@@ -20,7 +20,7 @@
 #ifndef __GDI_SHAPE_H
 #define __GDI_SHAPE_H
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);

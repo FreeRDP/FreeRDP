@@ -20,11 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include <freerdp/freerdp.h>
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/color.h>
 
-#include "color.h"
 #include "gdi_32bpp.h"
 #include "gdi_16bpp.h"
 #include "gdi_8bpp.h"

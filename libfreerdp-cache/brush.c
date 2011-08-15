@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "brush.h"
+#include <freerdp/cache/brush.h>
 
 void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp)
 {

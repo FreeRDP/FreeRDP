@@ -21,9 +21,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/color.h>
 
-#include "gdi.h"
-#include "color.h"
 #include "gdi_pen.h"
 #include "gdi_bitmap.h"
 #include "gdi_region.h"

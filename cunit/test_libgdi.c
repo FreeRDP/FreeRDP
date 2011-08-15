@@ -22,7 +22,8 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
+
 #include "gdi_dc.h"
 #include "gdi_pen.h"
 #include "gdi_line.h"

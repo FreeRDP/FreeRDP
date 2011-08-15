@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-#include "gdi.h"
-#include "color.h"
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/color.h>
 #include "test_color.h"
 
 int init_color_suite(void)

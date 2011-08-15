@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "cache.h"
+#include <freerdp/cache/cache.h>
 
 rdpCache* cache_new(rdpSettings* settings)
 {

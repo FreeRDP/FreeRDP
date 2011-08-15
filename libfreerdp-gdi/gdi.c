@@ -22,9 +22,8 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/rfx.h>
-
-#include "color.h"
+#include <freerdp/gdi/color.h>
+#include <freerdp/rfx/rfx.h>
 
 #include "gdi_dc.h"
 #include "gdi_pen.h"
@@ -37,7 +36,7 @@
 #include "gdi_drawing.h"
 #include "gdi_clipping.h"
 
-#include "gdi.h"
+#include <freerdp/gdi/gdi.h>
 
 /* Ternary Raster Operation Table */
 const uint32 rop3_code_table[] =

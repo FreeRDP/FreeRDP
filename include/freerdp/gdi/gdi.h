@@ -20,7 +20,7 @@
 #ifndef __GDI_H
 #define __GDI_H
 
-#include "cache.h"
+#include <freerdp/cache/cache.h>
 #include "color.h"
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
