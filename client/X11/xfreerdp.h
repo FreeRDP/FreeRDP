@@ -25,6 +25,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/rail/rail.h>
 
 typedef struct xf_info xfInfo;
 

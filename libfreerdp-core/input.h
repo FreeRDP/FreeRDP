@@ -21,11 +21,30 @@
 #define __INPUT_H
 
 #include "rdp.h"
+#include "fastpath.h"
 
 #include <freerdp/input.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+
+/* Input Events */
+#define INPUT_EVENT_SYNC		0x0000
+#define INPUT_EVENT_SCANCODE		0x0004
+#define INPUT_EVENT_UNICODE		0x0005
+#define INPUT_EVENT_MOUSE		0x8001
+#define INPUT_EVENT_MOUSEX		0x8002
+
+/* FastPath Input Events */
+#define FASTPATH_INPUT_EVENT_SCANCODE	0x0
+#define FASTPATH_INPUT_EVENT_MOUSE	0x1
+#define FASTPATH_INPUT_EVENT_MOUSEX	0x2
+#define FASTPATH_INPUT_EVENT_SYNC	0x3
+#define FASTPATH_INPUT_EVENT_UNICODE	0x4
+
+/* FastPath Keyboard Event Flags */
+#define FASTPATH_INPUT_KBDFLAGS_RELEASE		0x01
+#define FASTPATH_INPUT_KBDFLAGS_EXTENDED	0x02
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
@@ -34,6 +53,12 @@ void input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
 void input_send_unicode_keyboard_event(rdpInput* input, uint16 code);
 void input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 void input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+
+void input_send_fastpath_synchronize_event(rdpInput* input, uint32 flags);
+void input_send_fastpath_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code);
+void input_send_fastpath_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 
 rdpInput* input_new(rdpRdp* rdp);
 void input_free(rdpInput* input);

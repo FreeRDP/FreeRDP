@@ -20,6 +20,8 @@
 include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp
+	xf_rail.c
+	xf_rail.h
 	xf_event.c
 	xf_event.h
 	xf_keyboard.c
@@ -32,6 +34,7 @@ add_executable(xfreerdp
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)
+target_link_libraries(xfreerdp freerdp-rail)
 target_link_libraries(xfreerdp freerdp-chanman)
 target_link_libraries(xfreerdp freerdp-utils)
 target_link_libraries(xfreerdp ${X11_LIBRARIES})

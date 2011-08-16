@@ -22,6 +22,9 @@
 #include <string.h>
 #include <freerdp/utils/stream.h>
 
+#include "orders.h"
+#include "update.h"
+
 #include "fastpath.h"
 
 /**
@@ -129,23 +132,58 @@ static void fastpath_recv_update_surfcmds(rdpFastPath* fastpath, uint16 size, ST
 	}
 }
 
+static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
+{
+	rdpUpdate* update = fastpath->rdp->update;
+	uint16 numberOrders;
+
+	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
+
+	printf("numberOrders(FastPath):%d\n", numberOrders);
+
+	while (numberOrders > 0)
+	{
+		update_recv_order(update, s);
+		numberOrders--;
+	}
+}
+
+static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
+{
+	rdpUpdate* update = fastpath->rdp->update;
+	uint16 updateType;
+
+	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
+
+	switch (updateType)
+	{
+		case UPDATE_TYPE_BITMAP:
+			update_read_bitmap(update, s, &update->bitmap_update);
+			IFCALL(update->Bitmap, update, &update->bitmap_update);
+			break;
+
+		case UPDATE_TYPE_PALETTE:
+			update_read_palette(update, s, &update->palette_update);
+			IFCALL(update->Palette, update, &update->palette_update);
+			break;
+	}
+}
+
 static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16 size, STREAM* s)
 {
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
-			printf("FASTPATH_UPDATETYPE_ORDERS\n");
+			fastpath_recv_orders(fastpath, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
-			printf("FASTPATH_UPDATETYPE_BITMAP\n");
-			break;
-
 		case FASTPATH_UPDATETYPE_PALETTE:
-			printf("FASTPATH_UPDATETYPE_PALETTE\n");
+			fastpath_recv_update_common(fastpath, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
+			IFCALL(fastpath->rdp->update->Synchronize, fastpath->rdp->update);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
@@ -252,6 +290,34 @@ void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	}
 
 	IFCALL(update->EndPaint, update);
+}
+
+STREAM* fastpath_pdu_init(rdpFastPath* fastpath)
+{
+	STREAM* s;
+	s = transport_send_stream_init(fastpath->rdp->transport, 127);
+	stream_seek(s, 2); /* fpInputHeader and length1 */
+	/* length2 is not necessary since input PDU should not exceed 127 bytes */
+	return s;
+}
+
+void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
+{
+	int length;
+
+	length = stream_get_length(s);
+	if (length > 127)
+	{
+		printf("Maximum FastPath PDU length is 127\n");
+		return;
+	}
+
+	stream_set_pos(s, 0);
+	stream_write_uint8(s, (numberEvents << 2));
+	stream_write_uint8(s, length);
+
+	stream_set_pos(s, length);
+	transport_write(fastpath->rdp->transport, s);
 }
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)

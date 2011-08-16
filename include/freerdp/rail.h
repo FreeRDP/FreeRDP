@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_H
-#define __RAIL_H
+#ifndef __RAIL_GLOBAL_H
+#define __RAIL_GLOBAL_H
 
 #include <freerdp/types.h>
 
@@ -325,5 +325,5 @@ typedef struct _RAIL_UI_EVENT
 }
 RAIL_UI_EVENT;
 
-#endif /* __RAIL_H */
+#endif /* __RAIL_GLOBAL_H */
 

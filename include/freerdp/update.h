@@ -833,6 +833,40 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
 #define SCREEN_BITMAP_SURFACE		0xFFFF
 
+/* Window Order Header Flags */
+#define WINDOW_ORDER_TYPE_WINDOW			0x01000000
+#define WINDOW_ORDER_TYPE_NOTIFY			0x02000000
+#define WINDOW_ORDER_TYPE_DESKTOP			0x04000000
+#define WINDOW_ORDER_STATE_NEW				0x10000000
+#define WINDOW_ORDER_STATE_DELETED			0x20000000
+#define WINDOW_ORDER_FIELD_OWNER			0x00000002
+#define WINDOW_ORDER_FIELD_STYLE			0x00000008
+#define WINDOW_ORDER_FIELD_SHOW				0x00000010
+#define WINDOW_ORDER_FIELD_TITLE			0x00000004
+#define WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET		0x00004000
+#define WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE		0x00010000
+#define WINDOW_ORDER_FIELD_RP_CONTENT			0x00020000
+#define WINDOW_ORDER_FIELD_ROOT_PARENT			0x00040000
+#define WINDOW_ORDER_FIELD_WND_OFFSET			0x00000800
+#define WINDOW_ORDER_FIELD_WND_CLIENT_DELTA		0x00008000
+#define WINDOW_ORDER_FIELD_WND_SIZE			0x00000400
+#define WINDOW_ORDER_FIELD_WND_RECTS			0x00000100
+#define WINDOW_ORDER_FIELD_VIS_OFFSET			0x00001000
+#define WINDOW_ORDER_FIELD_VISIBILITY			0x00000200
+#define WINDOW_ORDER_FIELD_ICON_BIG			0x00002000
+#define WINDOW_ORDER_ICON				0x40000000
+#define WINDOW_ORDER_CACHED_ICON			0x80000000
+#define WINDOW_ORDER_FIELD_NOTIFY_VERSION		0x00000008
+#define WINDOW_ORDER_FIELD_NOTIFY_TIP			0x00000001
+#define WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP		0x00000002
+#define WINDOW_ORDER_FIELD_NOTIFY_STATE			0x00000004
+#define WINDOW_ORDER_FIELD_DESKTOP_NONE			0x00000001
+#define WINDOW_ORDER_FIELD_DESKTOP_HOOKED		0x00000002
+#define WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED	0x00000004
+#define WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN		0x00000008
+#define WINDOW_ORDER_FIELD_DESKTOP_ZORDER		0x00000010
+#define WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND		0x00000020
+
 /* Update Interface */
 
 typedef struct rdp_update rdpUpdate;
@@ -888,12 +922,14 @@ typedef void (*pcDrawGdiPlusCacheFirst)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_FI
 typedef void (*pcDrawGdiPlusCacheNext)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef void (*pcDrawGdiPlusCacheEnd)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 
-typedef void (*pcWindowState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+typedef void (*pcWindowCreate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+typedef void (*pcWindowUpdate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 typedef void (*pcWindowIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon);
 typedef void (*pcWindowCachedIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon);
-typedef void (*pcWindowDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
-typedef void (*pcNotifyIconState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef void (*pcNotifyIconDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcWindowDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcNotifyIconCreate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef void (*pcNotifyIconUpdate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef void (*pcNotifyIconDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 typedef void (*pcMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
 typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
@@ -903,6 +939,7 @@ struct rdp_update
 {
 	void* rdp;
 	void* gdi;
+	void* rail;
 	void* param1;
 	void* param2;
 
@@ -958,12 +995,14 @@ struct rdp_update
 	pcDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
 	pcDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
 
-	pcWindowState WindowState;
+	pcWindowCreate WindowCreate;
+	pcWindowUpdate WindowUpdate;
 	pcWindowIcon WindowIcon;
 	pcWindowCachedIcon WindowCachedIcon;
-	pcWindowDeleted WindowDeleted;
-	pcNotifyIconState NotifyIconState;
-	pcNotifyIconDeleted NotifyIconDeleted;
+	pcWindowDelete WindowDelete;
+	pcNotifyIconCreate NotifyIconCreate;
+	pcNotifyIconUpdate NotifyIconUpdate;
+	pcNotifyIconDelete NotifyIconDelete;
 	pcMonitoredDesktop MonitoredDesktop;
 	pcNonMonitoredDesktop NonMonitoredDesktop;
 

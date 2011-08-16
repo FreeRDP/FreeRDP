@@ -210,13 +210,17 @@ void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 	{
 		DEBUG_WND("Window Deleted Order");
 		update_read_window_deleted_order(s, orderInfo);
-		IFCALL(update->WindowDeleted, update, orderInfo);
+		IFCALL(update->WindowDelete, update, orderInfo);
 	}
 	else
 	{
 		DEBUG_WND("Window State Order");
 		update_read_window_state_order(s, orderInfo, &update->window_state);
-		IFCALL(update->WindowState, update, orderInfo, &update->window_state);
+
+		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
+			IFCALL(update->WindowCreate, update, orderInfo, &update->window_state);
+		else
+			IFCALL(update->WindowUpdate, update, orderInfo, &update->window_state);
 	}
 }
 
@@ -253,15 +257,19 @@ void update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WIND
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
-		DEBUG_WND("Deleted Notification Icon Deleted Order");
+		DEBUG_WND("Delete Notification Icon Deleted Order");
 		update_read_notification_icon_deleted_order(s, orderInfo);
-		IFCALL(update->NotifyIconDeleted, update, orderInfo);
+		IFCALL(update->NotifyIconDelete, update, orderInfo);
 	}
 	else
 	{
 		DEBUG_WND("Notification Icon State Order");
 		update_read_notification_icon_state_order(s, orderInfo, &update->notify_icon_state);
-		IFCALL(update->NotifyIconState, update, orderInfo, &update->notify_icon_state);
+
+		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
+			IFCALL(update->NotifyIconCreate, update, orderInfo, &update->notify_icon_state);
+		else
+			IFCALL(update->NotifyIconUpdate, update, orderInfo, &update->notify_icon_state);
 	}
 }
 

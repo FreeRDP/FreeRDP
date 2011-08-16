@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Windowing Alternate Secondary Orders
+ * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +17,27 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_H
-#define __WINDOW_H
+#ifndef __RAIL_H
+#define __RAIL_H
 
-#include "update.h"
-
+#include <freerdp/rail.h>
+#include <freerdp/types.h>
+#include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
-void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
+typedef struct rdp_rail rdpRail;
 
-#ifdef WITH_DEBUG_WND
-#define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_WND(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+#include <freerdp/rail/window.h>
+#include <freerdp/rail/window_list.h>
 
-#endif /* __WINDOW_H */
+struct rdp_rail
+{
+	rdpWindowList* list;
+};
+
+void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
+
+rdpRail* rail_new();
+void rail_free(rdpRail* rail);
+
+#endif /* __RAIL_H */

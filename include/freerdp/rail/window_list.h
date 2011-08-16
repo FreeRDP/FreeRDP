@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Windowing Alternate Secondary Orders
+ * RAIL Window List
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +17,28 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_H
-#define __WINDOW_H
+#ifndef __WINDOW_LIST_H
+#define __WINDOW_LIST_H
 
-#include "update.h"
-
+#include <freerdp/types.h>
+#include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
-void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
+#include <freerdp/rail/window.h>
 
-#ifdef WITH_DEBUG_WND
-#define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_WND(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+typedef struct rdp_window_list rdpWindowList;
 
-#endif /* __WINDOW_H */
+struct rdp_window_list
+{
+	rdpWindow* head;
+	rdpWindow* tail;
+};
+
+void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo);
+
+rdpWindowList* window_list_new();
+void window_list_free(rdpWindowList* list);
+
+#endif /* __WINDOW_LIST_H */

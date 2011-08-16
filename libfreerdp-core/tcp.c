@@ -23,12 +23,15 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
-#include <netdb.h>
 #include <fcntl.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#ifndef _WIN32
+#include <netdb.h>
+#endif
 
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>

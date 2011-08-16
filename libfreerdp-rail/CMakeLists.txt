@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Client User Interfaces
+# libfreerdp-rail cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,20 +17,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# User Interfaces
+set(FREERDP_RAIL_SRCS
+	window_list.c
+	window.c
+	rail.c)
 
-add_subdirectory(test)
+add_library(freerdp-rail SHARED ${FREERDP_RAIL_SRCS})
 
-if(NOT WIN32)
-	# Build X11 Client
-	find_package(X11)
-	if(X11_FOUND)
-		add_subdirectory(X11)
-	endif()
+set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
-	# Build DirectFB Client
-	find_package(DirectFB)
-	if(DIRECTFB_FOUND)
-		add_subdirectory(DirectFB)
-	endif()
-endif()
+install(TARGETS freerdp-rail DESTINATION lib)

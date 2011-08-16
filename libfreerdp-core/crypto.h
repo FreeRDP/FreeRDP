@@ -20,6 +20,10 @@
 #ifndef __CRYPTO_H
 #define __CRYPTO_H
 
+#ifdef _WIN32
+#include <winsock.h>
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rc4.h>

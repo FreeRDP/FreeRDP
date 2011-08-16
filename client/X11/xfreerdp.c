@@ -32,6 +32,7 @@
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
 
+#include "xf_rail.h"
 #include "xf_event.h"
 
 #include "xfreerdp.h"
@@ -310,6 +311,9 @@ boolean xf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
 
+	instance->update->rail = (void*) rail_new();
+	rail_register_update_callbacks((rdpRail*) instance->update->rail, instance->update);
+
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
 	return True;
@@ -341,11 +345,6 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	format_list_event->num_formats = 0;
 
 	freerdp_chanman_send_event(chanman, event);
-}
-
-void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
-{
-
 }
 
 void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
@@ -451,6 +450,7 @@ int xfreerdp_run(freerdp* instance)
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
+		FD_ZERO(&wfds_set);
 
 		for (i = 0; i < rcount; i++)
 		{
