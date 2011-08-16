@@ -133,7 +133,7 @@ void
 wait_obj_clear(struct wait_obj* obj)
 {
 #ifdef _WIN32
-	ResetEvent(chan_man->chan_event);
+	ResetEvent(obj->event);
 #else
 	int len;
 
@@ -149,13 +149,15 @@ wait_obj_clear(struct wait_obj* obj)
 int
 wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 {
+#ifndef _WIN32
 	int max;
-	int rv;
-	int index;
 	int sock;
-	struct timeval time;
-	struct timeval * ptime;
+	int index;
+#endif
 	fd_set fds;
+	int status;
+	struct timeval time;
+	struct timeval* ptime;
 
 	ptime = 0;
 	if (timeout >= 0)
@@ -164,6 +166,8 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 		time.tv_usec = (timeout * 1000) % 1000000;
 		ptime = &time;
 	}
+
+#ifndef _WIN32
 	max = 0;
 	FD_ZERO(&fds);
 	if (listobj)
@@ -172,14 +176,17 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 		{
 			sock = listobj[index]->pipe_fd[0];
 			FD_SET(sock, &fds);
+
 			if (sock > max)
-			{
 				max = sock;
-			}
 		}
 	}
-	rv = select(max + 1, &fds, 0, 0, ptime);
-	return rv;
+	status = select(max + 1, &fds, 0, 0, ptime);
+#else
+	status = select(0, &fds, 0, 0, ptime);
+#endif
+
+	return status;
 }
 
 void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count)

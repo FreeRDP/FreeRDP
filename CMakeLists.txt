@@ -58,6 +58,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
+if(MSVC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_X86_")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_X86_ -D_CRT_SECURE_NO_WARNINGS")
+endif()
+
 # Include files
 check_include_files(sys/param.h HAVE_SYS_PARAM_H)
 check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
@@ -106,7 +111,11 @@ endif()
 # Sub-directories
 add_subdirectory(include)
 add_subdirectory(libfreerdp-utils)
-add_subdirectory(libfreerdp-kbd)
+
+if(NOT WIN32)
+	add_subdirectory(libfreerdp-kbd)
+endif()
+
 add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)

@@ -283,8 +283,9 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 {
 	uint32 error;
 
-	error = plugin->channel_entry_points.pVirtualChannelOpen(plugin->priv->init_handle, &plugin->priv->open_handle,
-		plugin->channel_def.name, svc_plugin_open_event);
+	error = plugin->channel_entry_points.pVirtualChannelOpen(plugin->priv->init_handle,
+		&plugin->priv->open_handle, plugin->channel_def.name, svc_plugin_open_event);
+
 	if (error != CHANNEL_RC_OK)
 	{
 		printf("svc_plugin_process_connected: open failed\n");
