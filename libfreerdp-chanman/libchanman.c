@@ -67,6 +67,14 @@ struct chan_data
 	PCHANNEL_OPEN_EVENT_FN open_event_proc;
 };
 
+struct sync_data
+{
+	void* data;
+	uint32 data_length;
+	void* user_data;
+	int index;
+};
+
 typedef struct rdp_init_handle rdpInitHandle;
 struct rdp_init_handle
 {
@@ -104,11 +112,8 @@ struct rdp_chan_man
 	struct wait_obj* signal;
 
 	/* used for sync write */
-	freerdp_sem sync_data_sem;
-	void* sync_data;
-	uint32 sync_data_length;
-	void* sync_user_data;
-	int sync_index;
+	freerdp_mutex sync_data_mutex;
+	LIST* sync_data_list;
 
 	/* used for sync event */
 	freerdp_sem event_sem;
@@ -424,6 +429,7 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 {
 	rdpChanMan* chan_man;
 	struct chan_data* lchan;
+	struct sync_data* item;
 	int index;
 
 	chan_man = freerdp_chanman_find_by_open_handle(openHandle, &index);
@@ -453,19 +459,24 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 		DEBUG_CHANMAN("error not open");
 		return CHANNEL_RC_NOT_OPEN;
 	}
-	freerdp_sem_wait(chan_man->sync_data_sem); /* lock chan_man->sync* vars */
+	freerdp_mutex_lock(chan_man->sync_data_mutex); /* lock chan_man->sync* vars */
 	if (!chan_man->is_connected)
 	{
-		freerdp_sem_signal(chan_man->sync_data_sem);
+		freerdp_mutex_unlock(chan_man->sync_data_mutex);
 		DEBUG_CHANMAN("error not connected");
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
-	chan_man->sync_data = pData;
-	chan_man->sync_data_length = dataLength;
-	chan_man->sync_user_data = pUserData;
-	chan_man->sync_index = index;
+	item = xnew(struct sync_data);
+	item->data = pData;
+	item->data_length = dataLength;
+	item->user_data = pUserData;
+	item->index = index;
+	list_enqueue(chan_man->sync_data_list, item);
+	freerdp_mutex_unlock(chan_man->sync_data_mutex);
+
 	/* set the event */
 	wait_obj_set(chan_man->signal);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -544,7 +555,9 @@ rdpChanMan* freerdp_chanman_new(void)
 
 	chan_man = xnew(rdpChanMan);
 
-	chan_man->sync_data_sem = freerdp_sem_new(1);
+	chan_man->sync_data_mutex = freerdp_mutex_new();
+	chan_man->sync_data_list = list_new();
+
 	chan_man->event_sem = freerdp_sem_new(1);
 	chan_man->signal = wait_obj_new();
 
@@ -565,7 +578,9 @@ void freerdp_chanman_free(rdpChanMan * chan_man)
 	rdpChanManList * list;
 	rdpChanManList * prev;
 
-	freerdp_sem_free(chan_man->sync_data_sem);
+	freerdp_mutex_free(chan_man->sync_data_mutex);
+	list_free(chan_man->sync_data_list);
+
 	freerdp_sem_free(chan_man->event_sem);
 	wait_obj_free(chan_man->signal);
 
@@ -812,37 +827,30 @@ FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, FRDP_EVENT* eve
  */
 static void freerdp_chanman_process_sync(rdpChanMan* chan_man, freerdp* instance)
 {
-	void* ldata;
-	uint32 ldata_len;
-	void* luser_data;
-	int lindex;
 	struct chan_data* lchan_data;
 	struct rdp_chan* lrdp_chan;
+	struct sync_data* item;
 
-	if (chan_man->sync_data == NULL)
-		return;
+	while (chan_man->sync_data_list->head != NULL)
+	{
+		freerdp_mutex_lock(chan_man->sync_data_mutex);
+		item = (struct sync_data*)list_dequeue(chan_man->sync_data_list);
+		freerdp_mutex_unlock(chan_man->sync_data_mutex);
 
-	ldata = chan_man->sync_data;
-	ldata_len = chan_man->sync_data_length;
-	luser_data = chan_man->sync_user_data;
-	lindex = chan_man->sync_index;
-	chan_man->sync_data = NULL;
-	chan_man->sync_data_length = 0;
-	chan_man->sync_user_data = NULL;
-	chan_man->sync_index = 0;
-	freerdp_sem_signal(chan_man->sync_data_sem); /* release chan_man->sync* vars */
-	lchan_data = chan_man->chans + lindex;
-	lrdp_chan = freerdp_chanman_find_rdp_chan_by_name(chan_man, instance->settings,
-		lchan_data->name, &lindex);
-	if (lrdp_chan != 0)
-	{
-		IFCALL(instance->SendChannelData, instance, lrdp_chan->chan_id, ldata, ldata_len);
-	}
-	if (lchan_data->open_event_proc != 0)
-	{
-		lchan_data->open_event_proc(lchan_data->open_handle,
-			CHANNEL_EVENT_WRITE_COMPLETE,
-			luser_data, sizeof(void *), sizeof(void *), 0);
+		lchan_data = chan_man->chans + item->index;
+		lrdp_chan = freerdp_chanman_find_rdp_chan_by_name(chan_man, instance->settings,
+			lchan_data->name, &item->index);
+		if (lrdp_chan != NULL)
+		{
+			IFCALL(instance->SendChannelData, instance, lrdp_chan->chan_id, item->data, item->data_length);
+		}
+		if (lchan_data->open_event_proc != 0)
+		{
+			lchan_data->open_event_proc(lchan_data->open_handle,
+				CHANNEL_EVENT_WRITE_COMPLETE,
+				item->user_data, sizeof(void *), sizeof(void *), 0);
+		}
+		xfree(item);
 	}
 }
 
