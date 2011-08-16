@@ -254,6 +254,34 @@ void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	IFCALL(update->EndPaint, update);
 }
 
+STREAM* fastpath_pdu_init(rdpFastPath* fastpath)
+{
+	STREAM* s;
+	s = transport_send_stream_init(fastpath->rdp->transport, 127);
+	stream_seek(s, 2); /* fpInputHeader and length1 */
+	/* length2 is not necessary since input PDU should not exceed 127 bytes */
+	return s;
+}
+
+void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
+{
+	int length;
+
+	length = stream_get_length(s);
+	if (length > 127)
+	{
+		printf("Maximum FastPath PDU length is 127\n");
+		return;
+	}
+
+	stream_set_pos(s, 0);
+	stream_write_uint8(s, (numberEvents << 2));
+	stream_write_uint8(s, length);
+
+	stream_set_pos(s, length);
+	transport_write(fastpath->rdp->transport, s);
+}
+
 rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
 	rdpFastPath* fastpath;

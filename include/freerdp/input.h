@@ -20,13 +20,6 @@
 #ifndef __INPUT_API_H
 #define __INPUT_API_H
 
-/* Input Events */
-#define INPUT_EVENT_SYNC		0x0000
-#define INPUT_EVENT_SCANCODE		0x0004
-#define INPUT_EVENT_UNICODE		0x0005
-#define INPUT_EVENT_MOUSE		0x8001
-#define INPUT_EVENT_MOUSEX		0x8002
-
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED		0x0100
 #define KBD_FLAGS_DOWN			0x4000
