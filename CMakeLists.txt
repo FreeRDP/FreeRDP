@@ -68,7 +68,7 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 # Libraries that we have a hard dependency on
 find_package(OpenSSL REQUIRED)
 
-if(!WINDOWS)
+if(NOT WIN32)
 	find_package(ZLIB REQUIRED)
 	find_package(ALSA)
 	find_package(PulseAudio)
