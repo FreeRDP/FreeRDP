@@ -110,6 +110,7 @@ rdpSettings* settings_new()
 		settings->num_icon_cache_entries = 12;
 
 		settings->fastpath_input = True;
+		settings->fastpath_output = True;
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);

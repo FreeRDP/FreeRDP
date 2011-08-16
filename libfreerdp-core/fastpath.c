@@ -22,6 +22,9 @@
 #include <string.h>
 #include <freerdp/utils/stream.h>
 
+#include "orders.h"
+#include "update.h"
+
 #include "fastpath.h"
 
 /**
@@ -129,23 +132,58 @@ static void fastpath_recv_update_surfcmds(rdpFastPath* fastpath, uint16 size, ST
 	}
 }
 
+static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
+{
+	rdpUpdate* update = fastpath->rdp->update;
+	uint16 numberOrders;
+
+	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
+
+	printf("numberOrders(FastPath):%d\n", numberOrders);
+
+	while (numberOrders > 0)
+	{
+		update_recv_order(update, s);
+		numberOrders--;
+	}
+}
+
+static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
+{
+	rdpUpdate* update = fastpath->rdp->update;
+	uint16 updateType;
+
+	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
+
+	switch (updateType)
+	{
+		case UPDATE_TYPE_BITMAP:
+			update_read_bitmap(update, s, &update->bitmap_update);
+			IFCALL(update->Bitmap, update, &update->bitmap_update);
+			break;
+
+		case UPDATE_TYPE_PALETTE:
+			update_read_palette(update, s, &update->palette_update);
+			IFCALL(update->Palette, update, &update->palette_update);
+			break;
+	}
+}
+
 static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16 size, STREAM* s)
 {
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
-			printf("FASTPATH_UPDATETYPE_ORDERS\n");
+			fastpath_recv_orders(fastpath, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
-			printf("FASTPATH_UPDATETYPE_BITMAP\n");
-			break;
-
 		case FASTPATH_UPDATETYPE_PALETTE:
-			printf("FASTPATH_UPDATETYPE_PALETTE\n");
+			fastpath_recv_update_common(fastpath, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
+			IFCALL(fastpath->rdp->update->Synchronize, fastpath->rdp->update);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
