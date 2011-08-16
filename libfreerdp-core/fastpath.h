@@ -82,6 +82,9 @@ struct rdp_fastpath
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
 void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
 
+STREAM* fastpath_pdu_init(rdpFastPath* fastpath);
+void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents);
+
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);
 
