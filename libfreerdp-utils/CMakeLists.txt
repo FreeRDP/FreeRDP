@@ -32,6 +32,7 @@ set(FREERDP_UTILS_SRCS
 	mutex.c
 	profiler.c
 	rail.c
+	registry.c
 	semaphore.c
 	sleep.c
 	stopwatch.c

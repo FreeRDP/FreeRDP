@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Configuration Registry
+ * Registry Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __REGISTRY_H
-#define __REGISTRY_H
+#ifndef __REGISTRY_UTILS_H
+#define __REGISTRY_UTILS_H
 
 typedef struct rdp_registry rdpRegistry;
 
@@ -68,4 +68,4 @@ void registry_init(rdpRegistry* registry);
 rdpRegistry* registry_new(rdpSettings* settings);
 void registry_free(rdpRegistry* registry);
 
-#endif /* __REGISTRY_H */
+#endif /* __REGISTRY_UTILS_H */

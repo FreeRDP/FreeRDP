@@ -523,7 +523,6 @@ rdpRdp* rdp_new(freerdp* instance)
 	{
 		rdp->licensed = False;
 		rdp->settings = settings_new();
-		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);

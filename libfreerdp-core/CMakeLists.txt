@@ -48,8 +48,6 @@ set(LIBFREERDP_CORE_SRCS
 	license.h
 	errinfo.c
 	errinfo.h
-	registry.c
-	registry.h
 	security.c
 	security.h
 	settings.c

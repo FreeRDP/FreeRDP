@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Configuration Registry
+ * Registry Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#include "registry.h"
-
-#include <windows.h>
+#include <freerdp/utils/registry.h>
 
 static char registry_dir[] = "freerdp";
 static char registry_file[] = "config.txt";
