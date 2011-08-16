@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/types.h>
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/rfx/rfx.h>

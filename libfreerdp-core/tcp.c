@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
