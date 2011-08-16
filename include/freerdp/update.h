@@ -888,12 +888,14 @@ typedef void (*pcDrawGdiPlusCacheFirst)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_FI
 typedef void (*pcDrawGdiPlusCacheNext)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef void (*pcDrawGdiPlusCacheEnd)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 
-typedef void (*pcWindowState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+typedef void (*pcWindowCreate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+typedef void (*pcWindowUpdate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 typedef void (*pcWindowIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon);
 typedef void (*pcWindowCachedIcon)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon);
-typedef void (*pcWindowDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
-typedef void (*pcNotifyIconState)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef void (*pcNotifyIconDeleted)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcWindowDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
+typedef void (*pcNotifyIconCreate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef void (*pcNotifyIconUpdate)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+typedef void (*pcNotifyIconDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 typedef void (*pcMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
 typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
@@ -958,12 +960,14 @@ struct rdp_update
 	pcDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
 	pcDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
 
-	pcWindowState WindowState;
+	pcWindowCreate WindowCreate;
+	pcWindowUpdate WindowUpdate;
 	pcWindowIcon WindowIcon;
 	pcWindowCachedIcon WindowCachedIcon;
-	pcWindowDeleted WindowDeleted;
-	pcNotifyIconState NotifyIconState;
-	pcNotifyIconDeleted NotifyIconDeleted;
+	pcWindowDelete WindowDelete;
+	pcNotifyIconCreate NotifyIconCreate;
+	pcNotifyIconUpdate NotifyIconUpdate;
+	pcNotifyIconDelete NotifyIconDelete;
 	pcMonitoredDesktop MonitoredDesktop;
 	pcNonMonitoredDesktop NonMonitoredDesktop;
 
