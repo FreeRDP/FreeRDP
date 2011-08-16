@@ -22,7 +22,88 @@
 
 #include <freerdp/rail/window.h>
 
-rdpWindow* rail_CreateWindow()
+void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+{
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
+	{
+		window->ownerWindowId = window_state->ownerWindowId;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
+	{
+		window->style = window_state->style;
+		window->extendedStyle = window_state->extendedStyle;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
+	{
+		window->showState = window_state->showState;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
+	{
+		window->clientOffsetX = window_state->clientOffsetX;
+		window->clientOffsetY = window_state->clientOffsetY;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
+	{
+		window->clientOffsetX = window_state->clientOffsetX;
+		window->clientOffsetY = window_state->clientOffsetY;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
+	{
+		window->clientAreaWidth = window_state->clientAreaWidth;
+		window->clientAreaHeight = window_state->clientAreaHeight;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
+	{
+		window->RPContent = window_state->RPContent;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
+	{
+		window->rootParentHandle = window_state->rootParentHandle;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
+	{
+		window->windowOffsetX = window_state->windowOffsetX;
+		window->windowOffsetY = window_state->windowOffsetY;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
+	{
+		window->windowClientDeltaX = window_state->windowClientDeltaX;
+		window->windowClientDeltaY = window_state->windowClientDeltaY;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
+	{
+		window->windowWidth = window_state->windowWidth;
+		window->windowHeight = window_state->windowHeight;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
+	{
+
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
+	{
+		window->visibleOffsetX = window_state->visibleOffsetX;
+		window->visibleOffsetY = window_state->visibleOffsetY;
+	}
+
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
+	{
+
+	}
+}
+
+rdpWindow* rail_CreateWindow(uint32 windowId)
 {
 	rdpWindow* window;
 
@@ -30,7 +111,7 @@ rdpWindow* rail_CreateWindow()
 
 	if (window != NULL)
 	{
-
+		window->windowId = windowId;
 	}
 
 	return window;

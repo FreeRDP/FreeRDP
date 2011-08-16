@@ -46,7 +46,7 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 {
 	rdpWindow* window;
 
-	window = rail_CreateWindow();
+	window = rail_CreateWindow(orderInfo->windowId);
 
 	if (list->head == NULL)
 	{
@@ -62,6 +62,8 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 	}
 
 	window->windowId = orderInfo->windowId;
+
+	window_state_update(window, orderInfo, window_state);
 }
 
 void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
@@ -72,6 +74,8 @@ void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 
 	if (window == NULL)
 		return;
+
+	window_state_update(window, orderInfo, window_state);
 }
 
 void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)
@@ -81,6 +85,9 @@ void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)
 	rdpWindow* window;
 
 	window = window_list_get_by_id(list, orderInfo->windowId);
+
+	if (window == NULL)
+		return;
 
 	prev = window->prev;
 	next = window->next;

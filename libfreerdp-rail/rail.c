@@ -22,6 +22,34 @@
 
 #include <freerdp/rail/rail.h>
 
+static void rail_WindowCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	window_list_create(rail->list, orderInfo, window_state);
+}
+
+static void rail_WindowUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	window_list_update(rail->list, orderInfo, window_state);
+}
+
+static void rail_WindowDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	window_list_delete(rail->list, orderInfo);
+}
+
+void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
+{
+	update->WindowCreate = rail_WindowCreate;
+	update->WindowUpdate = rail_WindowUpdate;
+	update->WindowDelete = rail_WindowDelete;
+}
+
 rdpRail* rail_new()
 {
 	rdpRail* rail;

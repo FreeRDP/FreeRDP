@@ -22,6 +22,7 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_window rdpWindow;
@@ -56,7 +57,9 @@ struct rdp_window
 	RECTANGLE_16* visibilityRects;
 };
 
-rdpWindow* rail_CreateWindow();
+void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+
+rdpWindow* rail_CreateWindow(uint32 windowId);
 void rail_DestroyWindow(rdpWindow* window);
 
 #endif /* __WINDOW_H */

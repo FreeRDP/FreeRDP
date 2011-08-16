@@ -37,13 +37,13 @@ extern "C" {
 FREERDP_API boolean freerdp_global_init();
 FREERDP_API void freerdp_global_finish();
 
-typedef boolean (*pcConnect)(freerdp* freerdp);
-typedef boolean (*pcPreConnect)(freerdp* freerdp);
-typedef boolean (*pcPostConnect)(freerdp* freerdp);
-typedef boolean (*pcGetFileDescriptor)(freerdp* freerdp, void** rfds, int* rcount, void** wfds, int* wcount);
-typedef boolean (*pcCheckFileDescriptor)(freerdp* freerdp);
-typedef int (*pcSendChannelData)(freerdp* freerdp, int channelId, uint8* data, int size);
-typedef int (*pcReceiveChannelData)(freerdp* freerdp, int channelId, uint8* data, int size, int flags, int total_size);
+typedef boolean (*pcConnect)(freerdp* instance);
+typedef boolean (*pcPreConnect)(freerdp* instance);
+typedef boolean (*pcPostConnect)(freerdp* instance);
+typedef boolean (*pcGetFileDescriptor)(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
+typedef boolean (*pcCheckFileDescriptor)(freerdp* instance);
+typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
+typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 
 struct rdp_freerdp
 {

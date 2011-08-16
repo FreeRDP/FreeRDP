@@ -35,6 +35,8 @@ struct rdp_rail
 	rdpWindowList* list;
 };
 
+void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
+
 rdpRail* rail_new();
 void rail_free(rdpRail* rail);
 

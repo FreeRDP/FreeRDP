@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Windowing Alternate Secondary Orders
+ * X11 RAIL
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_H
-#define __WINDOW_H
+#include "xf_rail.h"
 
-#include "update.h"
+void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
+{
 
-#include <freerdp/utils/stream.h>
-
-void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
-
-#ifdef WITH_DEBUG_WND
-#define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_WND(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
-#endif /* __WINDOW_H */
+}
