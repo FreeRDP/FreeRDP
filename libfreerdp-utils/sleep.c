@@ -19,12 +19,31 @@
 
 #include <freerdp/utils/sleep.h>
 
-#define _XOPEN_SOURCE 500
-
 #include <time.h>
+
+#ifndef _WIN32
+#define _XOPEN_SOURCE 500
 #include <unistd.h>
+#else
+#include <windows.h>
+#endif
 
 void freerdp_usleep(uint32 useconds)
 {
+#ifndef _WIN32
 	usleep(useconds);
+#else
+	uint64 t1;
+	uint64 t2;
+	uint64 freq;
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &t1);
+	QueryPerformanceCounter((LARGE_INTEGER*) &freq);
+
+	do
+	{
+		QueryPerformanceCounter((LARGE_INTEGER*) &t2);
+	}
+	while((t2 - t1) < useconds);
+#endif
 }

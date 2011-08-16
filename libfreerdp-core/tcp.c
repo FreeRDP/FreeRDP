@@ -28,9 +28,12 @@
 #ifndef _WIN32
 #include <netdb.h>
 #include <net/if.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <unistd.h>
+#else
+#define socklen_t int
+#define close(_fd) closesocket(_fd)
 #endif
 
 #include <freerdp/utils/print.h>
@@ -195,6 +198,7 @@ boolean tcp_disconnect(rdpTcp * tcp)
 
 boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 {
+#ifndef _WIN32
 	int flags;
 	flags = fcntl(tcp->sockfd, F_GETFL);
 
@@ -205,15 +209,15 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	}
 
 	if (blocking == True)
-	{
-		/* blocking */
 		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
-	}
 	else
-	{
-		/* non-blocking */
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
-	}
+#else
+	u_long arg = blocking;
+	ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+	tcp->wsa_event = WSACreateEvent();
+	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
+#endif
 
 	return True;
 }

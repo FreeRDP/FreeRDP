@@ -19,6 +19,8 @@
 
 #include "registry.h"
 
+#include <windows.h>
+
 static char registry_dir[] = "freerdp";
 static char registry_file[] = "config.txt";
 
@@ -142,7 +144,11 @@ void registry_init(rdpRegistry* registry)
 
 	if (stat(registry->path, &stat_info) != 0)
 	{
+#ifndef _WIN32
 		mkdir(registry->path, S_IRUSR | S_IWUSR | S_IXUSR);
+#else
+		CreateDirectory(registry->path, 0);
+#endif
 		printf("creating directory %s\n", registry->path);
 	}
 

@@ -21,6 +21,11 @@
 #ifndef __TCP_H
 #define __TCP_H
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
@@ -28,7 +33,6 @@
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
-
 
 typedef struct rdp_tcp rdpTcp;
 typedef boolean (*TcpConnect) (rdpTcp* tcp, const char* hostname, uint16 port);
@@ -44,6 +48,9 @@ struct rdp_tcp
 	TcpConnect connect;
 	TcpDisconnect disconnect;
 	TcpSetBlockingMode set_blocking_mode;
+#ifdef _WIN32
+	WSAEVENT wsa_event;
+#endif
 };
 
 boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port);

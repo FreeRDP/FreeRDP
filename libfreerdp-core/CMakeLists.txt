@@ -90,7 +90,12 @@ set(LIBFREERDP_CORE_SRCS
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
 
-target_link_libraries(freerdp-core ${ZLIB_LIBRARIES})
+if(WIN32)
+	target_link_libraries(freerdp-core ws2_32)
+else()
+	target_link_libraries(freerdp-core ${ZLIB_LIBRARIES})	
+endif()
+
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 target_link_libraries(freerdp-core freerdp-utils)
 

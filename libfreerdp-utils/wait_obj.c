@@ -27,7 +27,7 @@
 #ifndef _WIN32
 #include <sys/time.h>
 #else
-#include <windows.h>
+#include <winsock2.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
