@@ -33,6 +33,7 @@ set(FREERDP_UTILS_SRCS
 	profiler.c
 	rail.c
 	semaphore.c
+	sleep.c
 	stopwatch.c
 	stream.c
 	svc_plugin.c

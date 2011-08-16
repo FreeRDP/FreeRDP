@@ -21,18 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
-
-#ifdef _WIN32
-#include <Windows.h>
-
-struct timespec
-{
-	uint64 tv_sec;
-	uint64 tv_nsec;
-};
-#endif
 
 freerdp_thread* freerdp_thread_new(void)
 {
@@ -69,25 +60,12 @@ void freerdp_thread_stop(freerdp_thread* thread)
 {
 	int i = 0;
 
-#ifndef _WIN32
-	struct timespec ts;
-	ts.tv_sec = 0;
-	ts.tv_nsec = 10000000;
-#else
-	DWORD dwMilliseconds;
-	dwMilliseconds = 10000;
-#endif
-
 	wait_obj_set(thread->signals[0]);
 
 	while (thread->status > 0 && i < 1000)
 	{
 		i++;
-#ifndef _WIN32
-		nanosleep(&ts, NULL);
-#else
-		SleepEx(dwMilliseconds, 0);
-#endif
+		freerdp_usleep(100);
 	}
 
 	for (i = 0; i < thread->num_signals; i++)

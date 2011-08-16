@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
@@ -135,7 +136,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 		if (status == 0 && transport->blocking)
 		{
-			nanosleep(&transport->ts, NULL);
+			freerdp_usleep(transport->usleep_interval);
 			continue;
 		}
 
@@ -198,7 +199,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		if (status == 0)
 		{
 			/* blocking while sending */
-			nanosleep(&transport->ts, NULL);
+			freerdp_usleep(transport->usleep_interval);
 
 			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
 			if (!transport->blocking)
@@ -302,8 +303,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->settings = settings;
 
 		/* a small 0.1ms delay when transport is blocking. */
-		transport->ts.tv_sec = 0;
-		transport->ts.tv_nsec = 100000;
+		transport->usleep_interval = 100;
 
 		/* receive buffer for non-blocking read. */
 		transport->recv_buffer = stream_new(BUFFER_SIZE);
