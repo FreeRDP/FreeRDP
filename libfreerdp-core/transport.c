@@ -27,10 +27,10 @@
 
 #include <time.h>
 #include <errno.h>
-#include <netdb.h>
 #include <fcntl.h>
 
 #ifndef _WIN32
+#include <netdb.h>
 #include <sys/socket.h>
 #endif
 

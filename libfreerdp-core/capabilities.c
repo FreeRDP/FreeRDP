@@ -198,6 +198,7 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
 	uint8 drawingFlags;
+	uint16 desktopResizeFlag;
 	uint16 preferredBitsPerPixel;
 
 	header = rdp_capability_set_start(s);
@@ -209,6 +210,8 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 	else
 		preferredBitsPerPixel = 8;
 
+	desktopResizeFlag = settings->desktop_resize;
+
 	stream_write_uint16(s, preferredBitsPerPixel); /* preferredBitsPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive1BitPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive4BitsPerPixel (2 bytes) */
@@ -216,7 +219,7 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, settings->width); /* desktopWidth (2 bytes) */
 	stream_write_uint16(s, settings->height); /* desktopHeight (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
-	stream_write_uint16(s, settings->desktop_resize); /* desktopResizeFlag (2 bytes) */
+	stream_write_uint16(s, desktopResizeFlag); /* desktopResizeFlag (2 bytes) */
 	stream_write_uint16(s, 1); /* bitmapCompressionFlag (2 bytes) */
 	stream_write_uint8(s, 0); /* highColorFlags (1 byte) */
 	stream_write_uint8(s, drawingFlags); /* drawingFlags (1 byte) */
