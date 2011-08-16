@@ -306,6 +306,7 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 
 	DEBUG_SVC("waveDataSize %d wFormatNo %d", rdpsnd->waveDataSize, wFormatNo);
 
+	rdpsnd->close_timestamp = 0;
 	if (!rdpsnd->is_open)
 	{
 		rdpsnd->current_format = wFormatNo;

@@ -451,6 +451,7 @@ int xfreerdp_run(freerdp* instance)
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
+		FD_ZERO(&wfds_set);
 
 		for (i = 0; i < rcount; i++)
 		{
