@@ -20,6 +20,7 @@
 #ifndef __FREERDP_KBD_H
 #define __FREERDP_KBD_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
@@ -32,13 +33,9 @@ typedef struct rdp_keyboard_layout
 	char name[50];
 } rdpKeyboardLayout;
 
-rdpKeyboardLayout *
-freerdp_kbd_get_layouts(int types);
-unsigned int
-freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id);
-uint8
-freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean * extended);
-uint8
-freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean * extended);
+FREERDP_API rdpKeyboardLayout* freerdp_kbd_get_layouts(int types);
+FREERDP_API uint32 freerdp_kbd_init(void *dpy, uint32 keyboard_layout_id);
+FREERDP_API uint8 freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean* extended);
+FREERDP_API uint8 freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean* extended);
 
 #endif /* __FREERDP_KBD_H */

@@ -18,12 +18,15 @@
  * limitations under the License.
  */
 
+#ifndef _WIN32
+#include <sys/time.h>
+#endif
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>

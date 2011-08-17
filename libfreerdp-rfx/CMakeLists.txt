@@ -41,6 +41,8 @@ set(LIBFREERDP_RFX_SRCS
 
 add_library(freerdp-rfx SHARED ${LIBFREERDP_RFX_SRCS})
 
+set_target_properties(freerdp-rfx PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
 target_link_libraries(freerdp-rfx freerdp-utils)
 
 if(WITH_SSE2)

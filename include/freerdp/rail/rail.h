@@ -20,6 +20,7 @@
 #ifndef __RAIL_H
 #define __RAIL_H
 
+#include <freerdp/api.h>
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
@@ -35,9 +36,9 @@ struct rdp_rail
 	rdpWindowList* list;
 };
 
-void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
+FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
 
-rdpRail* rail_new();
-void rail_free(rdpRail* rail);
+FREERDP_API rdpRail* rail_new();
+FREERDP_API void rail_free(rdpRail* rail);
 
 #endif /* __RAIL_H */

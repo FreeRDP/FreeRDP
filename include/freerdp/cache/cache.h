@@ -25,6 +25,7 @@
 #include <freerdp/cache/offscreen.h>
 #include <freerdp/cache/color_table.h>
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -40,7 +41,7 @@ struct rdp_cache
 	rdpColorTable* color_table;
 };
 
-rdpCache* cache_new(rdpSettings* settings);
-void cache_free(rdpCache* cache);
+FREERDP_API rdpCache* cache_new(rdpSettings* settings);
+FREERDP_API void cache_free(rdpCache* cache);
 
 #endif /* __CACHE_H */

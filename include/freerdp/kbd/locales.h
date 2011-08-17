@@ -27,6 +27,8 @@
 #ifndef __LOCALES_H
 #define __LOCALES_H
 
+#include <freerdp/api.h>
+
 #define AFRIKAANS				0x0436
 #define ALBANIAN				0x041c
 #define ALSATIAN				0x0484
@@ -320,7 +322,6 @@ Time zones, taken from Windows Server 2008
 (GMT +13:00) Nuku'alofa
 */
 
-unsigned int
-detect_keyboard_layout_from_locale();
+FREERDP_API uint32 detect_keyboard_layout_from_locale();
 
 #endif /* __LOCALES_H */

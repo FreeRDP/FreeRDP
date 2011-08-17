@@ -20,15 +20,16 @@
 #ifndef __RAIL_UTILS_H
 #define __RAIL_UTILS_H
 
+#include <freerdp/api.h>
 #include <freerdp/rail.h>
 #include <freerdp/utils/stream.h>
 
-void rail_unicode_string_alloc(UNICODE_STRING* unicode_string, uint16 cbString);
-void rail_unicode_string_free(UNICODE_STRING* unicode_string);
-void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
-void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
-void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string);
-void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
-void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
+FREERDP_API void rail_unicode_string_alloc(UNICODE_STRING* unicode_string, uint16 cbString);
+FREERDP_API void rail_unicode_string_free(UNICODE_STRING* unicode_string);
+FREERDP_API void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
+FREERDP_API void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
+FREERDP_API void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string);
+FREERDP_API void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
+FREERDP_API void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
 
 #endif /* __RAIL_UTILS_H */

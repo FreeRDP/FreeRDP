@@ -20,11 +20,13 @@
 #ifndef __SEMAPHORE_UTILS_H
 #define __SEMAPHORE_UTILS_H
 
+#include <freerdp/api.h>
+
 typedef void* freerdp_sem;
 
-freerdp_sem freerdp_sem_new(int iv);
-void freerdp_sem_free(freerdp_sem sem);
-void freerdp_sem_signal(freerdp_sem sem);
-void freerdp_sem_wait(freerdp_sem sem);
+FREERDP_API freerdp_sem freerdp_sem_new(int iv);
+FREERDP_API void freerdp_sem_free(freerdp_sem sem);
+FREERDP_API void freerdp_sem_signal(freerdp_sem sem);
+FREERDP_API void freerdp_sem_wait(freerdp_sem sem);
 
 #endif /* __SEMAPHORE_UTILS_H */

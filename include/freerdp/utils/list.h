@@ -20,6 +20,7 @@
 #ifndef __LIST_UTILS_H
 #define __LIST_UTILS_H
 
+#include <freerdp/api.h>
 #include <freerdp/utils/memory.h>
 
 typedef struct _LIST_ITEM LIST_ITEM;
@@ -38,11 +39,11 @@ struct _LIST
 	LIST_ITEM* tail;
 };
 
-LIST* list_new(void);
-void list_free(LIST* list);
-void list_enqueue(LIST* list, void* data);
-void* list_dequeue(LIST* list);
+FREERDP_API LIST* list_new(void);
+FREERDP_API void list_free(LIST* list);
+FREERDP_API void list_enqueue(LIST* list, void* data);
+FREERDP_API void* list_dequeue(LIST* list);
 #define list_add(_l, _d) list_enqueue(_l, _d)
-void* list_remove(LIST* list, void* data);
+FREERDP_API void* list_remove(LIST* list, void* data);
 
 #endif /* __LIST_UTILS_H */

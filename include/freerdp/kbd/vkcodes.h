@@ -23,6 +23,7 @@
 #define __VKCODES_H
 
 #include <stddef.h>
+#include <freerdp/api.h>
 #include <freerdp/kbd/layouts.h>
 
 /* Mouse buttons */

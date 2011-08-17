@@ -46,7 +46,7 @@ add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
 
 add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
 
-set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
+set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
 

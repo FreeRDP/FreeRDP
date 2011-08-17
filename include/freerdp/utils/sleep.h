@@ -20,8 +20,9 @@
 #ifndef __SLEEP_UTILS_H
 #define __SLEEP_UTILS_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
-void freerdp_usleep(uint32 useconds);
+FREERDP_API void freerdp_usleep(uint32 useconds);
 
 #endif /* __SLEEP_UTILS_H */

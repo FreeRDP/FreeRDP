@@ -20,12 +20,14 @@
 #ifndef __WAIT_OBJ_UTILS
 #define __WAIT_OBJ_UTILS
 
-struct wait_obj* wait_obj_new(void);
-void wait_obj_free(struct wait_obj* obj);
-int wait_obj_is_set(struct wait_obj* obj);
-void wait_obj_set(struct wait_obj* obj);
-void wait_obj_clear(struct wait_obj* obj);
-int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout);
-void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
+#include <freerdp/api.h>
+
+FREERDP_API struct wait_obj* wait_obj_new(void);
+FREERDP_API void wait_obj_free(struct wait_obj* obj);
+FREERDP_API int wait_obj_is_set(struct wait_obj* obj);
+FREERDP_API void wait_obj_set(struct wait_obj* obj);
+FREERDP_API void wait_obj_clear(struct wait_obj* obj);
+FREERDP_API int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout);
+FREERDP_API void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
 
 #endif

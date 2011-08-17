@@ -20,6 +20,7 @@
 #ifndef __RFX_H
 #define __RFX_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -116,15 +117,15 @@ struct _RFX_CONTEXT
 };
 typedef struct _RFX_CONTEXT RFX_CONTEXT;
 
-RFX_CONTEXT* rfx_context_new(void);
-void rfx_context_free(RFX_CONTEXT* context);
-void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format);
+FREERDP_API RFX_CONTEXT* rfx_context_new(void);
+FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
+FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format);
 
-RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in);
-void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
+FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in);
+FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
-void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out);
-void rfx_compose_message_data(RFX_CONTEXT* context, STREAM* data_out,
+FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out);
+FREERDP_API void rfx_compose_message_data(RFX_CONTEXT* context, STREAM* data_out,
 	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride);
 
 #ifdef __cplusplus
