@@ -25,6 +25,6 @@
 typedef struct drdynvc_plugin drdynvcPlugin;
 
 int drdynvc_write_data(drdynvcPlugin* plugin, uint32 ChannelId, char* data, uint32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, FRDP_EVENT* event);
+int drdynvc_push_event(drdynvcPlugin* plugin, RDP_EVENT* event);
 
 #endif

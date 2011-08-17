@@ -109,7 +109,7 @@ void test_wait_obj(void)
 }
 
 static int process_plugin_args(rdpSettings* settings, const char* name,
-	FRDP_PLUGIN_DATA* plugin_data, void* user_data)
+	RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	/*printf("load plugin: %s\n", name);*/
 	return 1;

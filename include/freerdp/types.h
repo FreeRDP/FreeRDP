@@ -65,95 +65,56 @@ typedef int boolean;
 
 #include <freerdp/settings.h>
 
-typedef void* FRDP_HBITMAP;
-typedef void* FRDP_HGLYPH;
-typedef void* FRDP_HPALETTE;
-typedef void* FRDP_HCURSOR;
-
-struct _FRDP_POINT
-{
-	sint16 x;
-	sint16 y;
-};
-typedef struct _FRDP_POINT FRDP_POINT;
-
-struct _FRDP_PALETTEENTRY
+struct _RDP_PALETTEENTRY
 {
 	uint8 red;
 	uint8 green;
 	uint8 blue;
 };
-typedef struct _FRDP_PALETTEENTRY FRDP_PALETTEENTRY;
+typedef struct _RDP_PALETTEENTRY RDP_PALETTEENTRY;
 
-struct _FRDP_PALETTE
+struct _RDP_PALETTE
 {
 	uint16 count;
-	FRDP_PALETTEENTRY* entries;
+	RDP_PALETTEENTRY* entries;
 };
-typedef struct _FRDP_PALETTE FRDP_PALETTE;
+typedef struct _RDP_PALETTE RDP_PALETTE;
 
-struct _FRDP_PEN
-{
-	uint8 style;
-	uint8 width;
-	uint32 color;
-};
-typedef struct _FRDP_PEN FRDP_PEN;
-
-/* this is what is in the brush cache */
-struct _FRDP_BRUSHDATA
-{
-	uint32 color_code;
-	uint32 data_size;
-	uint8 *data;
-};
-typedef struct _FRDP_BRUSHDATA FRDP_BRUSHDATA;
-
-struct _FRDP_BRUSH
-{
-	uint8 xorigin;
-	uint8 yorigin;
-	uint8 style;
-	uint8 pattern[8];
-	FRDP_BRUSHDATA *bd;
-};
-typedef struct _FRDP_BRUSH FRDP_BRUSH;
-
-struct _FRDP_PLUGIN_DATA
+struct _RDP_PLUGIN_DATA
 {
 	uint16 size;
 	void* data[4];
 };
-typedef struct _FRDP_PLUGIN_DATA FRDP_PLUGIN_DATA;
+typedef struct _RDP_PLUGIN_DATA RDP_PLUGIN_DATA;
 
-struct _FRDP_RECT
+struct _RDP_RECT
 {
 	sint16 x;
 	sint16 y;
 	sint16 width;
 	sint16 height;
 };
-typedef struct _FRDP_RECT FRDP_RECT;
+typedef struct _RDP_RECT RDP_RECT;
 
 /* Plugin events */
-typedef struct _FRDP_EVENT FRDP_EVENT;
+typedef struct _RDP_EVENT RDP_EVENT;
 
-typedef void (*FRDP_EVENT_CALLBACK) (FRDP_EVENT* event);
+typedef void (*RDP_EVENT_CALLBACK) (RDP_EVENT* event);
 
-struct _FRDP_EVENT
+struct _RDP_EVENT
 {
 	uint16 event_class;
 	uint16 event_type;
-	FRDP_EVENT_CALLBACK on_event_free_callback;
+	RDP_EVENT_CALLBACK on_event_free_callback;
 	void* user_data;
 };
 
-enum FRDP_EVENT_CLASS
+enum RDP_EVENT_CLASS
 {
-	FRDP_EVENT_CLASS_DEBUG = 0,
-	FRDP_EVENT_CLASS_CLIPRDR,
-	FRDP_EVENT_CLASS_TSMF,
-	FRDP_EVENT_CLASS_RAIL
+	RDP_EVENT_CLASS_DEBUG = 0,
+	RDP_EVENT_CLASS_CLIPRDR,
+	RDP_EVENT_CLASS_TSMF,
+	RDP_EVENT_CLASS_RAIL
 };
 
 #endif /* __RDP_TYPES_H */

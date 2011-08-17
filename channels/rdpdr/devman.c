@@ -69,7 +69,7 @@ static void devman_unregister_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s unregistered", device->id, device->name);
 }
 
-boolean devman_load_device_service(DEVMAN* devman, FRDP_PLUGIN_DATA* plugin_data)
+boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 {
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry;

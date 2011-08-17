@@ -36,7 +36,7 @@
 #define CFSTR_JPEG      "J\0F\0I\0F\0\0"
 #define CFSTR_GIF       "G\0I\0F\0\0"
 
-void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, FRDP_CB_FORMAT_LIST_EVENT* cb_event)
+void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIST_EVENT* cb_event)
 {
 	STREAM* data_out;
 	int i;
@@ -77,14 +77,14 @@ static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
 
 void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen)
 {
-	FRDP_CB_FORMAT_LIST_EVENT* cb_event;
+	RDP_CB_FORMAT_LIST_EVENT* cb_event;
 	uint32 format;
 	int num_formats;
 	int supported;
 	int i;
 
-	cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
-		FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	cb_event = (RDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 	num_formats = dataLen / 36;
 	cb_event->formats = (uint32*)xmalloc(sizeof(uint32) * num_formats);
 	cb_event->num_formats = 0;
@@ -131,21 +131,21 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32
 			cb_event->formats[cb_event->num_formats++] = format;
 	}
 
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
 	cliprdr_send_format_list_response(cliprdr);
 }
 
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* data_in)
 {
-	FRDP_CB_DATA_REQUEST_EVENT* cb_event;
+	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
-	cb_event = (FRDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
-		FRDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+	cb_event = (RDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 	stream_read_uint32(data_in, cb_event->format);
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
 }
 
-void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_RESPONSE_EVENT* cb_event)
+void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_RESPONSE_EVENT* cb_event)
 {
 	STREAM* data_out;
 
@@ -154,7 +154,7 @@ void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, FRDP_CB_
 	cliprdr_packet_send(cliprdr, data_out);
 }
 
-void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, FRDP_CB_DATA_REQUEST_EVENT* cb_event)
+void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_REQUEST_EVENT* cb_event)
 {
 	STREAM* data_out;
 
@@ -165,12 +165,12 @@ void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, FRDP_CB_D
 
 void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen)
 {
-	FRDP_CB_DATA_RESPONSE_EVENT* cb_event;
+	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
-	cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR,
-		FRDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+		RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
 	cb_event->size = dataLen;
 	cb_event->data = (uint8*)xmalloc(dataLen);
 	memcpy(cb_event->data, stream_get_tail(data_in), dataLen);
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (FRDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
 }

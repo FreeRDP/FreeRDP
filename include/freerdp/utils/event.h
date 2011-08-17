@@ -23,8 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-FREERDP_API FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
-	FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data);
-FREERDP_API void freerdp_event_free(FRDP_EVENT* event);
+FREERDP_API RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+	RDP_EVENT_CALLBACK on_event_free_callback, void* user_data);
+FREERDP_API void freerdp_event_free(RDP_EVENT* event);
 
 #endif

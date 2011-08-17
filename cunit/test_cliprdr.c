@@ -96,7 +96,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, in
 
 static int event_processed;
 
-static void event_process_callback(FRDP_EVENT* event)
+static void event_process_callback(RDP_EVENT* event)
 {
 	printf("Event %d processed.\n", event->event_type);
 	event_processed = 1;
@@ -108,10 +108,10 @@ void test_cliprdr(void)
 	rdpChanMan* chan_man;
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
-	FRDP_EVENT* event;
-	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
-	FRDP_CB_DATA_REQUEST_EVENT* data_request_event;
-	FRDP_CB_DATA_RESPONSE_EVENT* data_response_event;
+	RDP_EVENT* event;
+	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
+	RDP_CB_DATA_REQUEST_EVENT* data_request_event;
+	RDP_CB_DATA_RESPONSE_EVENT* data_response_event;
 
 	settings.hostname = "testhost";
 	instance.settings = &settings;
@@ -136,12 +136,12 @@ void test_cliprdr(void)
 		freerdp_chanman_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
-	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_SYNC);
+	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_SYNC);
 	freerdp_event_free(event);
 
 	/* UI sends format_list event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
-	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 2;
 	format_list_event->formats = (uint32*)xmalloc(sizeof(uint32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
@@ -169,10 +169,10 @@ void test_cliprdr(void)
 		freerdp_chanman_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
-	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_FORMAT_LIST);
-	if (event->event_type == FRDP_EVENT_TYPE_CB_FORMAT_LIST)
+	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_FORMAT_LIST);
+	if (event->event_type == RDP_EVENT_TYPE_CB_FORMAT_LIST)
 	{
-		format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+		format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 		for (i = 0; i < format_list_event->num_formats; i++)
 			printf("Format: 0x%X\n", format_list_event->formats[i]);
 	}
@@ -188,17 +188,17 @@ void test_cliprdr(void)
 		freerdp_chanman_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
-	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_DATA_REQUEST);
-	if (event->event_type == FRDP_EVENT_TYPE_CB_DATA_REQUEST)
+	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_DATA_REQUEST);
+	if (event->event_type == RDP_EVENT_TYPE_CB_DATA_REQUEST)
 	{
-		data_request_event = (FRDP_CB_DATA_REQUEST_EVENT*)event;
+		data_request_event = (RDP_CB_DATA_REQUEST_EVENT*)event;
 		printf("Requested format: 0x%X\n", data_request_event->format);
 	}
 	freerdp_event_free(event);
 
 	/* UI sends data response event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
-	data_response_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
+	data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
 	data_response_event->data = (uint8*)xmalloc(6);
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
@@ -212,8 +212,8 @@ void test_cliprdr(void)
 	}
 
 	/* UI sends data request event to cliprdr */
-	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_DATA_REQUEST, event_process_callback, NULL);
-	data_request_event = (FRDP_CB_DATA_REQUEST_EVENT*)event;
+	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_REQUEST, event_process_callback, NULL);
+	data_request_event = (RDP_CB_DATA_REQUEST_EVENT*)event;
 	data_request_event->format = CB_FORMAT_UNICODETEXT;
 	event_processed = 0;
 	freerdp_chanman_send_event(chan_man, event);
@@ -234,10 +234,10 @@ void test_cliprdr(void)
 		freerdp_chanman_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
-	CU_ASSERT(event->event_type == FRDP_EVENT_TYPE_CB_DATA_RESPONSE);
-	if (event->event_type == FRDP_EVENT_TYPE_CB_DATA_RESPONSE)
+	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_DATA_RESPONSE);
+	if (event->event_type == RDP_EVENT_TYPE_CB_DATA_RESPONSE)
 	{
-		data_response_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+		data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
 		printf("Data response size: %d\n", data_response_event->size);
 		freerdp_hexdump(data_response_event->data, data_response_event->size);
 	}

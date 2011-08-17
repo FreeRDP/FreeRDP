@@ -49,12 +49,12 @@ static void rdpdbg_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	svc_plugin_send(plugin, data_out);
 }
 
-static void rdpdbg_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void rdpdbg_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	DEBUG_WARN("event_type %d", event->event_type);
 	freerdp_event_free(event);
 
-	event = freerdp_event_new(FRDP_EVENT_CLASS_DEBUG, 0, NULL, NULL);
+	event = freerdp_event_new(RDP_EVENT_CLASS_DEBUG, 0, NULL, NULL);
 	svc_plugin_send_event(plugin, event);
 }
 

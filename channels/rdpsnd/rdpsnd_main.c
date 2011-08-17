@@ -434,7 +434,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 	rdpsnd->device = device;
 }
 
-static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, FRDP_PLUGIN_DATA* data)
+static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RDP_PLUGIN_DATA* data)
 {
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
@@ -466,7 +466,7 @@ static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	return True;
 }
 
-static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, FRDP_PLUGIN_DATA* data)
+static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, RDP_PLUGIN_DATA* data)
 {
 	if (strcmp((char*)data->data[0], "format") == 0)
 	{
@@ -489,8 +489,8 @@ static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, FRDP_PLUGIN_DATA* d
 static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 {
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)plugin;
-	FRDP_PLUGIN_DATA* data;
-	FRDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
+	RDP_PLUGIN_DATA* data;
+	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
 	DEBUG_SVC("connecting");
 
@@ -498,16 +498,16 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	rdpsnd->data_out_list = list_new();
 
-	data = (FRDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
 	while (data && data->size > 0)
 	{
 		rdpsnd_process_plugin_data(rdpsnd, data);
-		data = (FRDP_PLUGIN_DATA*) (((void*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*) (((void*) data) + data->size);
 	}
 
 	if (rdpsnd->device == NULL)
 	{
-		default_data[0].size = sizeof(FRDP_PLUGIN_DATA);
+		default_data[0].size = sizeof(RDP_PLUGIN_DATA);
 		default_data[0].data[0] = "pulse";
 		default_data[0].data[1] = "";
 		if (!rdpsnd_load_device_plugin(rdpsnd, "pulse", default_data))
@@ -523,7 +523,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	}
 }
 
-static void rdpsnd_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void rdpsnd_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	freerdp_event_free(event);
 }

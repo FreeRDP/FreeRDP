@@ -117,7 +117,7 @@ struct rdp_chan_man
 
 	/* used for sync event */
 	freerdp_sem event_sem;
-	FRDP_EVENT* event;
+	RDP_EVENT* event;
 };
 
 /**
@@ -480,7 +480,7 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 	return CHANNEL_RC_OK;
 }
 
-static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, FRDP_EVENT* event)
+static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, RDP_EVENT* event)
 {
 	rdpChanMan* chan_man;
 	struct chan_data* lchan;
@@ -781,10 +781,10 @@ int freerdp_chanman_data(freerdp* instance, int chan_id, void* data, int data_si
 
 static const char* event_class_to_name_table[] =
 {
-	"rdpdbg",   /* FRDP_EVENT_CLASS_DEBUG */
-	"cliprdr",  /* FRDP_EVENT_CLASS_CLIPRDR */
-	"tsmf",     /* FRDP_EVENT_CLASS_TSMF */
-	"rail",     /* FRDP_EVENT_CLASS_RAIL */
+	"rdpdbg",   /* RDP_EVENT_CLASS_DEBUG */
+	"cliprdr",  /* RDP_EVENT_CLASS_CLIPRDR */
+	"tsmf",     /* RDP_EVENT_CLASS_TSMF */
+	"rail",     /* RDP_EVENT_CLASS_RAIL */
 	NULL
 };
 
@@ -794,7 +794,7 @@ static const char* event_class_to_name_table[] =
  * @param chan_man the channel manager instance
  * @param event an event object created by freerdp_event_new()
  */
-FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, FRDP_EVENT* event)
+FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, RDP_EVENT* event)
 {
 	struct chan_data* lchan_data;
 	int index;
@@ -817,7 +817,7 @@ FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, FRDP_EVENT* eve
 	{
 		lchan_data->open_event_proc(lchan_data->open_handle,
 			CHANNEL_EVENT_USER,
-			event, sizeof(FRDP_EVENT), sizeof(FRDP_EVENT), 0);
+			event, sizeof(RDP_EVENT), sizeof(RDP_EVENT), 0);
 	}
 	return 0;
 }
@@ -877,9 +877,9 @@ boolean freerdp_chanman_check_fds(rdpChanMan * chan_man, freerdp* instance)
 	return True;
 }
 
-FRDP_EVENT* freerdp_chanman_pop_event(rdpChanMan* chan_man)
+RDP_EVENT* freerdp_chanman_pop_event(rdpChanMan* chan_man)
 {
-	FRDP_EVENT* event;
+	RDP_EVENT* event;
 
 	if (chan_man->event == NULL)
 		return NULL;

@@ -23,15 +23,15 @@
 /**
  * Event Types
  */
-enum FRDP_EVENT_TYPE_TSMF
+enum RDP_EVENT_TYPE_TSMF
 {
-	FRDP_EVENT_TYPE_TSMF_VIDEO_FRAME = 1,
-	FRDP_EVENT_TYPE_TSMF_REDRAW
+	RDP_EVENT_TYPE_TSMF_VIDEO_FRAME = 1,
+	RDP_EVENT_TYPE_TSMF_REDRAW
 };
 
-struct _FRDP_VIDEO_FRAME_EVENT
+struct _RDP_VIDEO_FRAME_EVENT
 {
-	FRDP_EVENT event;
+	RDP_EVENT event;
 	uint8* frame_data;
 	uint32 frame_size;
 	uint32 frame_pixfmt;
@@ -42,18 +42,18 @@ struct _FRDP_VIDEO_FRAME_EVENT
 	sint16 width;
 	sint16 height;
 	uint16 num_visible_rects;
-	FRDP_RECT* visible_rects;
+	RDP_RECT* visible_rects;
 };
-typedef struct _FRDP_VIDEO_FRAME_EVENT FRDP_VIDEO_FRAME_EVENT;
+typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
 
-struct _FRDP_REDRAW_EVENT
+struct _RDP_REDRAW_EVENT
 {
-	FRDP_EVENT event;
+	RDP_EVENT event;
 	sint16 x;
 	sint16 y;
 	sint16 width;
 	sint16 height;
 };
-typedef struct _FRDP_REDRAW_EVENT FRDP_REDRAW_EVENT;
+typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
 
 #endif /* __TSMF_PLUGIN */

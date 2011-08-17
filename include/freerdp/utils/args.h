@@ -26,7 +26,7 @@
 
 /* Returns 1 if succeed, otherwise returns zero */
 typedef int (*ProcessPluginArgs) (rdpSettings* settings, const char* name,
-	FRDP_PLUGIN_DATA* plugin_data, void* user_data);
+	RDP_PLUGIN_DATA* plugin_data, void* user_data);
 
 /* Returns number of arguments processed (1 or 2), otherwise returns zero */
 typedef int (*ProcessUIArgs) (rdpSettings* settings, const char* opt,

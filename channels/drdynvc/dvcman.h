@@ -24,7 +24,7 @@
 #include "drdynvc_main.h"
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin);
-int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, FRDP_PLUGIN_DATA* data);
+int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* data);
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, const char* ChannelName);

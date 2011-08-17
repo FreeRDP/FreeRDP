@@ -285,7 +285,7 @@ void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_i
 
 void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 {
-	FRDP_PLUGIN_DATA* data;
+	RDP_PLUGIN_DATA* data;
 
 	rail_read_handshake_order(s, &rail_order->handshake);
 
@@ -348,7 +348,7 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 
 		rail_send_client_exec_order(rail_order);
 
-		data = (FRDP_PLUGIN_DATA*)(((void*)data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
 	}
 }
 

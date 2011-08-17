@@ -38,13 +38,13 @@ struct _RAIL_VCHANNEL_DATA_SENDER
 struct _RAIL_VCHANNEL_EVENT_SENDER
 {
 	void * event_sender_object;
-	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_VCHANNEL_EVENT* event);
+	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_CHANNEL_EVENT* event);
 };
 
 struct rdp_rail_order
 {
 	UNICONV* uniconv;
-	FRDP_PLUGIN_DATA* plugin_data;
+	RDP_PLUGIN_DATA* plugin_data;
 	RAIL_HANDSHAKE_ORDER handshake;
 	RAIL_CLIENT_STATUS_ORDER client_status;
 	RAIL_EXEC_ORDER exec;

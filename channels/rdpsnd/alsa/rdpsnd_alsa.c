@@ -311,7 +311,7 @@ static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
 int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndAlsaPlugin* alsa;
-	FRDP_PLUGIN_DATA* data;
+	RDP_PLUGIN_DATA* data;
 
 	alsa = xnew(rdpsndAlsaPlugin);
 

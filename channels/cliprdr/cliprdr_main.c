@@ -89,11 +89,11 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
 {
-	FRDP_EVENT* event;
+	RDP_EVENT* event;
 
 	cliprdr_send_clip_caps(cliprdr);
 
-	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
+	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
 	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, event);
 }
 
@@ -143,20 +143,20 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	stream_free(data_in);
 }
 
-static void cliprdr_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	switch (event->event_type)
 	{
-		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
-			cliprdr_process_format_list_event((cliprdrPlugin*)plugin, (FRDP_CB_FORMAT_LIST_EVENT*)event);
+		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+			cliprdr_process_format_list_event((cliprdrPlugin*)plugin, (RDP_CB_FORMAT_LIST_EVENT*)event);
 			break;
 
-		case FRDP_EVENT_TYPE_CB_DATA_REQUEST:
-			cliprdr_process_format_data_request_event((cliprdrPlugin*)plugin, (FRDP_CB_DATA_REQUEST_EVENT*)event);
+		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+			cliprdr_process_format_data_request_event((cliprdrPlugin*)plugin, (RDP_CB_DATA_REQUEST_EVENT*)event);
 			break;
 
-		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			cliprdr_process_format_data_response_event((cliprdrPlugin*)plugin, (FRDP_CB_DATA_RESPONSE_EVENT*)event);
+		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			cliprdr_process_format_data_response_event((cliprdrPlugin*)plugin, (RDP_CB_DATA_RESPONSE_EVENT*)event);
 			break;
 
 		default:

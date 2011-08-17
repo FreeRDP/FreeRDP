@@ -137,7 +137,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, char* data, uin
 	return 0;
 }
 
-int drdynvc_push_event(drdynvcPlugin* drdynvc, FRDP_EVENT* event)
+int drdynvc_push_event(drdynvcPlugin* drdynvc, RDP_EVENT* event)
 {
 	int error;
 
@@ -332,7 +332,7 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	dvcman_init(drdynvc->channel_mgr);
 }
 
-static void drdynvc_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void drdynvc_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	freerdp_event_free(event);
 }

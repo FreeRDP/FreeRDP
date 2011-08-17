@@ -49,7 +49,7 @@ static freerdp_mutex g_mutex = NULL;
 struct _svc_data_in_item
 {
 	STREAM* data_in;
-	FRDP_EVENT* event_in;
+	RDP_EVENT* event_in;
 };
 typedef struct _svc_data_in_item svc_data_in_item;
 
@@ -177,7 +177,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	}
 }
 
-static void svc_plugin_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event_in)
+static void svc_plugin_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event_in)
 {
 	svc_data_in_item* item;
 
@@ -214,7 +214,7 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 			stream_free((STREAM*)pData);
 			break;
 		case CHANNEL_EVENT_USER:
-			svc_plugin_process_event(plugin, (FRDP_EVENT*)pData);
+			svc_plugin_process_event(plugin, (RDP_EVENT*)pData);
 			break;
 	}
 }
@@ -394,7 +394,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	return error;
 }
 
-int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	uint32 error = 0;
 

@@ -434,7 +434,7 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndPulsePlugin* pulse;
-	FRDP_PLUGIN_DATA* data;
+	RDP_PLUGIN_DATA* data;
 
 	pulse = xnew(rdpsndPulsePlugin);
 

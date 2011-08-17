@@ -83,7 +83,7 @@ typedef uint32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(uint32 openHandle,
 	void* pData, uint32 dataLength, void* pUserData);
 
 typedef uint32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(uint32 openHandle,
-	FRDP_EVENT* event);
+	RDP_EVENT* event);
 
 struct _CHANNEL_ENTRY_POINTS
 {

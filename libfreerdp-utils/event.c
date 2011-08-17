@@ -26,68 +26,68 @@
 #include <freerdp/plugins/tsmf.h>
 #include <freerdp/rail.h>
 
-static FRDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 {
-	FRDP_EVENT* event = NULL;
+	RDP_EVENT* event = NULL;
 
 	switch (event_type)
 	{
-		case FRDP_EVENT_TYPE_CB_SYNC:
-			event = (FRDP_EVENT*)xnew(FRDP_CB_SYNC_EVENT);
+		case RDP_EVENT_TYPE_CB_SYNC:
+			event = (RDP_EVENT*)xnew(RDP_CB_SYNC_EVENT);
 			break;
-		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
-			event = (FRDP_EVENT*)xnew(FRDP_CB_FORMAT_LIST_EVENT);
+		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+			event = (RDP_EVENT*)xnew(RDP_CB_FORMAT_LIST_EVENT);
 			break;
-		case FRDP_EVENT_TYPE_CB_DATA_REQUEST:
-			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_REQUEST_EVENT);
+		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+			event = (RDP_EVENT*)xnew(RDP_CB_DATA_REQUEST_EVENT);
 			break;
-		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			event = (FRDP_EVENT*)xnew(FRDP_CB_DATA_RESPONSE_EVENT);
+		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			event = (RDP_EVENT*)xnew(RDP_CB_DATA_RESPONSE_EVENT);
 			break;
 	}
 
 	return event;
 }
 
-static FRDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
 {
-	FRDP_EVENT* event = NULL;
+	RDP_EVENT* event = NULL;
 
 	switch (event_type)
 	{
-		case FRDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
-			event = (FRDP_EVENT*)xnew(FRDP_VIDEO_FRAME_EVENT);
+		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+			event = (RDP_EVENT*)xnew(RDP_VIDEO_FRAME_EVENT);
 			break;
-		case FRDP_EVENT_TYPE_TSMF_REDRAW:
-			event = (FRDP_EVENT*)xnew(FRDP_REDRAW_EVENT);
+		case RDP_EVENT_TYPE_TSMF_REDRAW:
+			event = (RDP_EVENT*)xnew(RDP_REDRAW_EVENT);
 			break;
 	}
 
 	return event;
 }
 
-static FRDP_EVENT* freerdp_rail_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_rail_event_new(uint16 event_type)
 {
-	return xnew(FRDP_EVENT);
+	return xnew(RDP_EVENT);
 }
 
-FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
-	FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
+RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+	RDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
 {
-	FRDP_EVENT* event = NULL;
+	RDP_EVENT* event = NULL;
 
 	switch (event_class)
 	{
-		case FRDP_EVENT_CLASS_DEBUG:
-			event = xnew(FRDP_EVENT);
+		case RDP_EVENT_CLASS_DEBUG:
+			event = xnew(RDP_EVENT);
 			break;
-		case FRDP_EVENT_CLASS_CLIPRDR:
+		case RDP_EVENT_CLASS_CLIPRDR:
 			event = freerdp_cliprdr_event_new(event_type);
 			break;
-		case FRDP_EVENT_CLASS_TSMF:
+		case RDP_EVENT_CLASS_TSMF:
 			event = freerdp_tsmf_event_new(event_type);
 			break;
-		case FRDP_EVENT_CLASS_RAIL:
+		case RDP_EVENT_CLASS_RAIL:
 			event = freerdp_rail_event_new(event_type);
 			break;
 	}
@@ -102,32 +102,32 @@ FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
 	return event;
 }
 
-static void freerdp_cliprdr_event_free(FRDP_EVENT* event)
+static void freerdp_cliprdr_event_free(RDP_EVENT* event)
 {
 	switch (event->event_type)
 	{
-		case FRDP_EVENT_TYPE_CB_FORMAT_LIST:
+		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
 			{
-				FRDP_CB_FORMAT_LIST_EVENT* cb_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+				RDP_CB_FORMAT_LIST_EVENT* cb_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 				xfree(cb_event->formats);
 			}
 			break;
-		case FRDP_EVENT_TYPE_CB_DATA_RESPONSE:
+		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
 			{
-				FRDP_CB_DATA_RESPONSE_EVENT* cb_event = (FRDP_CB_DATA_RESPONSE_EVENT*)event;
+				RDP_CB_DATA_RESPONSE_EVENT* cb_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
 				xfree(cb_event->data);
 			}
 			break;
 	}
 }
 
-static void freerdp_tsmf_event_free(FRDP_EVENT* event)
+static void freerdp_tsmf_event_free(RDP_EVENT* event)
 {
 	switch (event->event_type)
 	{
-		case FRDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
 			{
-				FRDP_VIDEO_FRAME_EVENT* vevent = (FRDP_VIDEO_FRAME_EVENT*)event;
+				RDP_VIDEO_FRAME_EVENT* vevent = (RDP_VIDEO_FRAME_EVENT*)event;
 				xfree(vevent->frame_data);
 				xfree(vevent->visible_rects);
 			}
@@ -135,11 +135,11 @@ static void freerdp_tsmf_event_free(FRDP_EVENT* event)
 	}
 }
 
-static void freerdp_rail_event_free(FRDP_EVENT* event)
+static void freerdp_rail_event_free(RDP_EVENT* event)
 {
 }
 
-void freerdp_event_free(FRDP_EVENT* event)
+void freerdp_event_free(RDP_EVENT* event)
 {
 	if (event != NULL)
 	{
@@ -148,13 +148,13 @@ void freerdp_event_free(FRDP_EVENT* event)
 
 		switch (event->event_class)
 		{
-			case FRDP_EVENT_CLASS_CLIPRDR:
+			case RDP_EVENT_CLASS_CLIPRDR:
 				freerdp_cliprdr_event_free(event);
 				break;
-			case FRDP_EVENT_CLASS_TSMF:
+			case RDP_EVENT_CLASS_TSMF:
 				freerdp_tsmf_event_free(event);
 				break;
-			case FRDP_EVENT_CLASS_RAIL:
+			case RDP_EVENT_CLASS_RAIL:
 				freerdp_rail_event_free(event);
 				break;
 		}

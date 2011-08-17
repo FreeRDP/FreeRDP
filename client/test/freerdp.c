@@ -85,7 +85,7 @@ int tf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int s
 	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
 }
 
-int tf_process_plugin_args(rdpSettings* settings, const char* name, FRDP_PLUGIN_DATA* plugin_data, void* user_data)
+int tf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	rdpChanMan* chanman = (rdpChanMan*) user_data;
 
@@ -97,12 +97,12 @@ int tf_process_plugin_args(rdpSettings* settings, const char* name, FRDP_PLUGIN_
 
 void tf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 {
-	FRDP_EVENT* event;
-	FRDP_CB_FORMAT_LIST_EVENT* format_list_event;
+	RDP_EVENT* event;
+	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(FRDP_EVENT_CLASS_CLIPRDR, FRDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	format_list_event = (FRDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
 	freerdp_chanman_send_event(chanman, event);
@@ -110,14 +110,14 @@ void tf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 
 void tf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 {
-	FRDP_EVENT* event;
+	RDP_EVENT* event;
 
 	event = freerdp_chanman_pop_event(chanman);
 	if (event)
 	{
 		switch (event->event_type)
 		{
-			case FRDP_EVENT_TYPE_CB_SYNC:
+			case RDP_EVENT_TYPE_CB_SYNC:
 				tf_process_cb_sync_event(chanman, instance);
 				break;
 			default:

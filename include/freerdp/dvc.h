@@ -91,7 +91,7 @@ struct _IWTSVirtualChannelManager
 	/* Push a virtual channel event.
 	   This is a FreeRDP extension to standard MS API. */
 	int (*PushEvent) (IWTSVirtualChannelManager* pChannelMgr,
-		FRDP_EVENT* pEvent);
+		RDP_EVENT* pEvent);
 };
 
 struct _IWTSPlugin
@@ -141,7 +141,7 @@ struct _IDRDYNVC_ENTRY_POINTS
 		const char* name, IWTSPlugin* pPlugin);
 	IWTSPlugin* (*GetPlugin) (IDRDYNVC_ENTRY_POINTS* pEntryPoints,
 		const char* name);
-	FRDP_PLUGIN_DATA* (*GetPluginData) (IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	RDP_PLUGIN_DATA* (*GetPluginData) (IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 };
 
 typedef int (*PDVC_PLUGIN_ENTRY) (IDRDYNVC_ENTRY_POINTS*);

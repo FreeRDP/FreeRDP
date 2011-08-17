@@ -43,10 +43,10 @@
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 {
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)plugin;
-	FRDP_PLUGIN_DATA* data;
+	RDP_PLUGIN_DATA* data;
 
 	rdpdr->devman = devman_new(plugin);
-	data = (FRDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
 	while (data && data->size > 0)
 	{
 		if (strcmp((char*)data->data[0], "clientname") == 0)
@@ -58,7 +58,7 @@ static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 		{
 			devman_load_device_service(rdpdr->devman, data);
 		}
-		data = (FRDP_PLUGIN_DATA*)(((void*)data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
 	}
 }
 
@@ -291,7 +291,7 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	stream_free(data_in);
 }
 
-static void rdpdr_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void rdpdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	freerdp_event_free(event);
 }

@@ -41,7 +41,7 @@ struct rdp_svc_plugin
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
-	void (*event_callback)(rdpSvcPlugin* plugin, FRDP_EVENT* event);
+	void (*event_callback)(rdpSvcPlugin* plugin, RDP_EVENT* event);
 	void (*interval_callback)(rdpSvcPlugin* plugin);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
@@ -50,9 +50,9 @@ struct rdp_svc_plugin
 
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
-FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
+FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
 
-#define svc_plugin_get_data(_p) (FRDP_PLUGIN_DATA*)(((rdpSvcPlugin*)_p)->channel_entry_points.pExtendedData)
+#define svc_plugin_get_data(_p) (RDP_PLUGIN_DATA*)(((rdpSvcPlugin*)_p)->channel_entry_points.pExtendedData)
 
 #ifdef WITH_DEBUG_SVC
 #define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)

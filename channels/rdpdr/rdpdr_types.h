@@ -79,7 +79,7 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 
 	pcRegisterDevice RegisterDevice;
 	pcRegisterDevice UnregisterDevice;
-	FRDP_PLUGIN_DATA* plugin_data;
+	RDP_PLUGIN_DATA* plugin_data;
 };
 typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;

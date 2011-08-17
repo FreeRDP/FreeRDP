@@ -31,7 +31,7 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-static void rail_send_vchannel_data(void* rail_object, void* data, size_t length)
+static void rail_send_channel_data(void* rail_object, void* data, size_t length)
 {
 	STREAM* s = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
@@ -42,22 +42,22 @@ static void rail_send_vchannel_data(void* rail_object, void* data, size_t length
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }
 
-static void on_free_rail_vchannel_event(FRDP_EVENT* event)
+static void on_free_rail_channel_event(RDP_EVENT* event)
 {
 
 }
 
-static void rail_send_vchannel_event(void* rail_object, RAIL_VCHANNEL_EVENT* event)
+static void rail_send_channel_event(void* rail_object, RAIL_CHANNEL_EVENT* event)
 {
 	railPlugin* plugin = (railPlugin*) rail_object;
-	RAIL_VCHANNEL_EVENT* payload = NULL;
-	FRDP_EVENT* out_event = NULL;
+	RAIL_CHANNEL_EVENT* payload = NULL;
+	RDP_EVENT* out_event = NULL;
 
-	payload = xnew(RAIL_VCHANNEL_EVENT);
-	memset(payload, 0, sizeof(RAIL_VCHANNEL_EVENT));
-	memcpy(payload, event, sizeof(RAIL_VCHANNEL_EVENT));
+	payload = xnew(RAIL_CHANNEL_EVENT);
+	memset(payload, 0, sizeof(RAIL_CHANNEL_EVENT));
+	memcpy(payload, event, sizeof(RAIL_CHANNEL_EVENT));
 
-	out_event = freerdp_event_new(FRDP_EVENT_CLASS_RAIL, FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI, on_free_rail_vchannel_event, payload);
+	out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, RDP_EVENT_TYPE_RAIL_CHANNEL, on_free_rail_channel_event, payload);
 
 	svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
 }
@@ -67,13 +67,13 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	rail->rail_event_sender.event_sender_object = rail;
-	rail->rail_event_sender.send_rail_vchannel_event = rail_send_vchannel_event;
+	rail->rail_event_sender.send_rail_vchannel_event = rail_send_channel_event;
 
 	rail->rail_data_sender.data_sender_object  = rail;
-	rail->rail_data_sender.send_rail_vchannel_data = rail_send_vchannel_data;
+	rail->rail_data_sender.send_rail_vchannel_data = rail_send_channel_data;
 
 	rail->rail_order = rail_order_new();
-	rail->rail_order->plugin_data = (FRDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	rail->rail_order->plugin_data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
 	rail->rail_order->data_sender = &(rail->rail_data_sender);
 	rail->rail_order->event_sender = &(rail->rail_event_sender);
 }
@@ -90,13 +90,13 @@ static void rail_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	stream_free(s);
 }
 
-static void rail_process_event(rdpSvcPlugin* plugin, FRDP_EVENT* event)
+static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
-	RAIL_UI_EVENT* rail_ui_event = NULL;
+	RAIL_CLIENT_EVENT* rail_ui_event = NULL;
 	railPlugin* rail = NULL;
 
 	rail = (railPlugin*)plugin;
-	rail_ui_event = (RAIL_UI_EVENT*)event->user_data;
+	rail_ui_event = (RAIL_CLIENT_EVENT*)event->user_data;
 
 	freerdp_event_free(event);
 }

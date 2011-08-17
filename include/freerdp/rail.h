@@ -303,27 +303,27 @@ enum RDP_RAIL_PDU_TYPE
 	RDP_RAIL_ORDER_GET_APPID_RESP	= 0x000F
 };
 
-enum FRDP_EVENT_TYPE_RAIL
+enum RDP_EVENT_TYPE_RAIL
 {
-	FRDP_EVENT_TYPE_RAIL_UI_2_VCHANNEL = 1,
-	FRDP_EVENT_TYPE_RAIL_VCHANNEL_2_UI
+	RDP_EVENT_TYPE_RAIL_CLIENT = 1,
+	RDP_EVENT_TYPE_RAIL_CHANNEL
 };
 
 /* RAIL Common structures */
 
-typedef struct _RAIL_VCHANNEL_EVENT
+struct _RAIL_CHANNEL_EVENT
 {
-	uint32 event_id;
+	uint32 id;
 	void* param;
-}
-RAIL_VCHANNEL_EVENT;
+};
+typedef struct _RAIL_CHANNEL_EVENT RAIL_CHANNEL_EVENT;
 
-typedef struct _RAIL_UI_EVENT
+struct _RAIL_CLIENT_EVENT
 {
-	uint32 event_id;
+	uint32 id;
 	void* param;
-}
-RAIL_UI_EVENT;
+};
+typedef struct _RAIL_CLIENT_EVENT RAIL_CLIENT_EVENT;
 
 #endif /* __RAIL_GLOBAL_H */
 

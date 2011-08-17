@@ -64,7 +64,7 @@ struct _DVCMAN_ENTRY_POINTS
 	IDRDYNVC_ENTRY_POINTS iface;
 
 	DVCMAN* dvcman;
-	FRDP_PLUGIN_DATA* plugin_data;
+	RDP_PLUGIN_DATA* plugin_data;
 };
 
 typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;
@@ -119,7 +119,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 }
 
 static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr,
-	FRDP_EVENT* pEvent)
+	RDP_EVENT* pEvent)
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	int error;
@@ -172,7 +172,7 @@ IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
 	return NULL;
 }
 
-FRDP_PLUGIN_DATA* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+RDP_PLUGIN_DATA* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	return ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->plugin_data;
 }
@@ -190,7 +190,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	return (IWTSVirtualChannelManager*)dvcman;
 }
 
-int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, FRDP_PLUGIN_DATA* data)
+int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* data)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
