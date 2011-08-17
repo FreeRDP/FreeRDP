@@ -294,13 +294,13 @@ uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
 		{
 			*dst++ = adpcm->last_sample[0] & 0xff;
 			*dst++ = (adpcm->last_sample[0] >> 8) & 0xff;
-			*dst++ = adpcm->last_step[0];
+			*dst++ = (uint8) adpcm->last_step[0];
 			*dst++ = 0;
 			if (channels > 1)
 			{
 				*dst++ = adpcm->last_sample[1] & 0xff;
 				*dst++ = (adpcm->last_sample[1] >> 8) & 0xff;
-				*dst++ = adpcm->last_step[1];
+				*dst++ = (uint8) adpcm->last_step[1];
 				*dst++ = 0;
 			}
 		}

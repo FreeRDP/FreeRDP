@@ -21,14 +21,16 @@
 
 add_subdirectory(test)
 
-# Build DirectFB Client
-find_package(X11)
-if(X11_FOUND)
-	add_subdirectory(X11)
-endif()
+if(NOT WIN32)
+	# Build X11 Client
+	find_package(X11)
+	if(X11_FOUND)
+		add_subdirectory(X11)
+	endif()
 
-# Build DirectFB Client
-find_package(DirectFB)
-if(DIRECTFB_FOUND)
-	add_subdirectory(DirectFB)
+	# Build DirectFB Client
+	find_package(DirectFB)
+	if(DIRECTFB_FOUND)
+		add_subdirectory(DirectFB)
+	endif()
 endif()

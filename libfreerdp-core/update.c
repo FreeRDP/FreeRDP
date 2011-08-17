@@ -134,7 +134,7 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 		palette_update->number = 256;
 
 	/* paletteEntries */
-	for (i = 0; i < palette_update->number; i++)
+	for (i = 0; i < (int) palette_update->number; i++)
 	{
 		stream_read_uint8(s, byte);
 		color = byte;

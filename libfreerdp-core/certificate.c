@@ -113,7 +113,7 @@
  * @param cert X.509 certificate
  */
 
-void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
+void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
 	STREAM* s;
 	int length;
@@ -194,14 +194,14 @@ void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info)
  * @return new X.509 certificate chain
  */
 
-X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count)
+rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count)
 {
-	X509_CERT_CHAIN* x509_cert_chain;
+	rdpX509CertChain* x509_cert_chain;
 
-	x509_cert_chain = (X509_CERT_CHAIN*) xmalloc(sizeof(X509_CERT_CHAIN));
+	x509_cert_chain = (rdpX509CertChain*) xmalloc(sizeof(rdpX509CertChain));
 
 	x509_cert_chain->count = count;
-	x509_cert_chain->array = (CERT_BLOB*) xzalloc(sizeof(CERT_BLOB) * count);
+	x509_cert_chain->array = (rdpCertBlob*) xzalloc(sizeof(rdpCertBlob) * count);
 
 	return x509_cert_chain;
 }
@@ -211,14 +211,14 @@ X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count)
  * @param x509_cert_chain X.509 certificate chain to be freed
  */
 
-void certificate_free_x509_certificate_chain(X509_CERT_CHAIN* x509_cert_chain)
+void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
 	int i;
 
 	if (x509_cert_chain == NULL)
 		return;
 
-	for (i = 0; i < x509_cert_chain->count; i++)
+	for (i = 0; i < (int) x509_cert_chain->count; i++)
 	{
 		if (x509_cert_chain->array[i].data != NULL)
 			xfree(x509_cert_chain->array[i].data);
@@ -256,7 +256,7 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	certificate->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
 
-	for (i = 0; i < numCertBlobs; i++)
+	for (i = 0; i < (int) numCertBlobs; i++)
 	{
 		stream_read_uint32(s, certLength);
 
@@ -268,7 +268,7 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 		if (numCertBlobs - i == 2)
 		{
-			CERT_INFO cert_info;
+			rdpCertInfo cert_info;
 			DEBUG_CERTIFICATE("License Server Certificate");
 			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			DEBUG_LICENSE("modulus length:%d", cert_info.modulus.length);

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/load_plugin.h>
 
 #ifdef _WIN32

@@ -17,12 +17,15 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <pthread.h>
-#include <stdio.h>
+#ifndef _WIN32
 #include <unistd.h>
-#include <string.h>
+#include <pthread.h>
 #include <sys/select.h>
+#endif
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>

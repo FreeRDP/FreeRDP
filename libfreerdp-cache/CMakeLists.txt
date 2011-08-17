@@ -28,5 +28,6 @@ add_library(freerdp-cache SHARED ${FREERDP_CACHE_SRCS})
 
 set_target_properties(freerdp-cache PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
-install(TARGETS freerdp-cache DESTINATION lib)
+target_link_libraries(freerdp-cache freerdp-utils)
 
+install(TARGETS freerdp-cache DESTINATION lib)

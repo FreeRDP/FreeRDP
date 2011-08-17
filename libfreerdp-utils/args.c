@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/settings.h>
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
 
@@ -126,10 +127,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing width\n");
 				return 0;
 			}
-			settings->width = strtol(argv[index], &p, 10);
+			settings->width = (uint16) strtol(argv[index], &p, 10);
 			if (*p == 'x')
 			{
-				settings->height = strtol(p + 1, &p, 10);
+				settings->height = (uint16) strtol(p + 1, &p, 10);
 			}
 			else
 			{

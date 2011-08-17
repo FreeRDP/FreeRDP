@@ -59,7 +59,7 @@ struct rdp_transport
 	struct rdp_tls* tls;
 	struct rdp_settings* settings;
 	struct rdp_credssp* credssp;
-	struct timespec ts;
+	uint32 usleep_interval;
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;

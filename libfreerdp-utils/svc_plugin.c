@@ -153,7 +153,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	}
 
 	data_in = plugin->priv->data_in;
-	stream_check_size(data_in, dataLength);
+	stream_check_size(data_in, (int) dataLength);
 	stream_write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -283,8 +283,9 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 {
 	uint32 error;
 
-	error = plugin->channel_entry_points.pVirtualChannelOpen(plugin->priv->init_handle, &plugin->priv->open_handle,
-		plugin->channel_def.name, svc_plugin_open_event);
+	error = plugin->channel_entry_points.pVirtualChannelOpen(plugin->priv->init_handle,
+		&plugin->priv->open_handle, plugin->channel_def.name, svc_plugin_open_event);
+
 	if (error != CHANNEL_RC_OK)
 	{
 		printf("svc_plugin_process_connected: open failed\n");

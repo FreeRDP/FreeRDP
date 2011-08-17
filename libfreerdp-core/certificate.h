@@ -37,35 +37,38 @@ typedef struct rdp_certificate rdpCertificate;
 #define CERT_PERMANENTLY_ISSUED		0x00000000
 #define CERT_TEMPORARILY_ISSUED		0x80000000
 
-typedef struct
+struct rdp_CertBlob
 {
 	uint32 length;
 	uint8* data;
-} CERT_BLOB;
+};
+typedef struct rdp_CertBlob rdpCertBlob;
 
-typedef struct
+struct rdp_X509CertChain
 {
 	uint32 count;
-	CERT_BLOB* array;
-} X509_CERT_CHAIN;
+	rdpCertBlob* array;
+};
+typedef struct rdp_X509CertChain rdpX509CertChain;
 
-typedef struct
+struct rdp_CertInfo
 {
 	rdpBlob modulus;
 	uint8 exponent[4];
-} CERT_INFO;
+};
+typedef struct rdp_CertInfo rdpCertInfo;
 
 struct rdp_certificate
 {
 	struct rdp_rdp* rdp;
-	CERT_INFO cert_info;
-	X509_CERT_CHAIN* x509_cert_chain;
+	rdpCertInfo cert_info;
+	rdpX509CertChain* x509_cert_chain;
 };
 
-void certificate_read_x509_certificate(CERT_BLOB* cert, CERT_INFO* info);
+void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
-X509_CERT_CHAIN* certificate_new_x509_certificate_chain(uint32 count);
-void certificate_free_x509_certificate_chain(X509_CERT_CHAIN* x509_cert_chain);
+rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count);
+void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain);
 
 void certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s);
 void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);

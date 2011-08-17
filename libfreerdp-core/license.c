@@ -148,7 +148,7 @@ STREAM* license_send_stream_init(rdpLicense* license)
 void license_send(rdpLicense* license, STREAM* s, uint8 type)
 {
 	int length;
-	uint16 flags;
+	uint8 flags;
 	uint16 wMsgSize;
 	uint16 sec_flags;
 
@@ -515,7 +515,7 @@ void license_free_binary_blob(LICENSE_BLOB* blob)
 
 void license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
 {
-	int i;
+	uint32 i;
 	uint32 scopeCount;
 
 	stream_read_uint32(s, scopeCount); /* ScopeCount (4 bytes) */
@@ -556,7 +556,7 @@ SCOPE_LIST* license_new_scope_list()
 
 void license_free_scope_list(SCOPE_LIST* scopeList)
 {
-	int i;
+	uint32 i;
 
 	for (i = 0; i < scopeList->count; i++)
 	{

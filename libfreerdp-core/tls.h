@@ -20,10 +20,10 @@
 #ifndef __TLS_H
 #define __TLS_H
 
+#include "crypto.h"
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-#include "crypto.h"
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
