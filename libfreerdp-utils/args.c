@@ -196,6 +196,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--app", argv[index]) == 0)
 		{
 			settings->remote_app = True;
+			settings->rail_langbar_supported = True;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
 		{

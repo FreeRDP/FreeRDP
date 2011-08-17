@@ -30,9 +30,11 @@ typedef struct xf_window xfWindow;
 
 struct xf_window
 {
+	GC gc;
 	int width;
 	int height;
 	Window handle;
+	Pixmap surface;
 	boolean fullscreen;
 	boolean decorations;
 };
@@ -42,5 +44,7 @@ void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
 
 xfWindow* window_create(xfInfo* xfi, char* name);
 void window_destroy(xfInfo* xfi, xfWindow* window);
+
+xfWindow* xf_CreateWindow(xfInfo* xfi, int width, int height, char* name);
 
 #endif /* __XF_WINDOW_H */

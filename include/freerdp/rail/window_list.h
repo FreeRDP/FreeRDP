@@ -25,21 +25,28 @@
 #include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
-#include <freerdp/rail/window.h>
-
 typedef struct rdp_window_list rdpWindowList;
+
+#include <freerdp/rail/rail.h>
+#include <freerdp/rail/window.h>
 
 struct rdp_window_list
 {
+	rdpRail* rail;
 	rdpWindow* head;
 	rdpWindow* tail;
+	rdpWindow* iterator;
 };
+
+FREERDP_API void window_list_rewind(rdpWindowList* list);
+FREERDP_API boolean window_list_has_next(rdpWindowList* list);
+FREERDP_API rdpWindow* window_list_get_next(rdpWindowList* list);
 
 FREERDP_API void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 FREERDP_API void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 FREERDP_API void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo);
 
-FREERDP_API rdpWindowList* window_list_new();
+FREERDP_API rdpWindowList* window_list_new(rdpRail* rail);
 FREERDP_API void window_list_free(rdpWindowList* list);
 
 #endif /* __WINDOW_LIST_H */

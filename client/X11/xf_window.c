@@ -128,6 +128,71 @@ xfWindow* window_create(xfInfo* xfi, char* name)
 	return window;
 }
 
+xfWindow* xf_CreateWindow(xfInfo* xfi, int width, int height, char* name)
+{
+	xfWindow* window;
+
+	window = (xfWindow*) xzalloc(sizeof(xfWindow));
+
+	window->width = width;
+	window->height = height;
+
+	if (window != NULL)
+	{
+		XGCValues gcv;
+		int input_mask;
+		XSizeHints* size_hints;
+		XClassHint* class_hints;
+
+		window->decorations = True;
+		window->fullscreen = False;
+
+		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
+			0, 0, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
+			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+			CWBorderPixel, &xfi->attribs);
+
+		window_show_decorations(xfi, window, window->decorations);
+
+		class_hints = XAllocClassHint();
+
+		if (class_hints != NULL)
+		{
+			if (name != NULL)
+				class_hints->res_name = name;
+
+			class_hints->res_class = "freerdp";
+			XSetClassHint(xfi->display, window->handle, class_hints);
+			XFree(class_hints);
+		}
+
+		size_hints = XAllocSizeHints();
+
+		if (size_hints)
+		{
+			size_hints->flags = PMinSize | PMaxSize;
+			size_hints->min_width = size_hints->max_width = window->width;
+			size_hints->min_height = size_hints->max_height = window->height;
+			XSetWMNormalHints(xfi->display, window->handle, size_hints);
+			XFree(size_hints);
+		}
+
+		input_mask =
+			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
+			VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
+			PointerMotionMask | ExposureMask;
+
+		XSelectInput(xfi->display, window->handle, input_mask);
+		XMapWindow(xfi->display, window->handle);
+
+		memset(&gcv, 0, sizeof(gcv));
+		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
+		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
+	}
+
+	return window;
+}
+
 void window_destroy(xfInfo* xfi, xfWindow* window)
 {
 	XDestroyWindow(xfi->display, window->handle);

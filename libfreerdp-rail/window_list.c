@@ -22,6 +22,35 @@
 
 #include <freerdp/rail/window_list.h>
 
+void window_list_rewind(rdpWindowList* list)
+{
+	list->iterator = list->head;
+}
+
+boolean window_list_has_next(rdpWindowList* list)
+{
+	if (list->iterator != NULL)
+	{
+		if (list->iterator != NULL)
+			return True;
+	}
+
+	return False;
+}
+
+rdpWindow* window_list_get_next(rdpWindowList* list)
+{
+	rdpWindow* next = NULL;
+
+	if (list->iterator != NULL)
+	{
+		next = list->iterator;
+		list->iterator = list->iterator->next;
+	}
+
+	return next;
+}
+
 rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId)
 {
 	rdpWindow* window;
@@ -46,7 +75,12 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 {
 	rdpWindow* window;
 
-	window = rail_CreateWindow(orderInfo->windowId);
+	window = (rdpWindow*) xzalloc(sizeof(rdpWindow));
+
+	if (window == NULL)
+		return;
+
+	window->windowId = orderInfo->windowId;
 
 	if (list->head == NULL)
 	{
@@ -64,6 +98,8 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 	window->windowId = orderInfo->windowId;
 
 	window_state_update(window, orderInfo, window_state);
+
+	rail_CreateWindow(list->rail, window);
 }
 
 void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
@@ -111,10 +147,10 @@ void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)
 			list->tail = prev;
 	}
 
-	rail_DestroyWindow(window);
+	rail_DestroyWindow(list->rail, window);
 }
 
-rdpWindowList* window_list_new()
+rdpWindowList* window_list_new(rdpRail* rail)
 {
 	rdpWindowList* list;
 
@@ -124,6 +160,7 @@ rdpWindowList* window_list_new()
 	{
 		list->head = NULL;
 		list->tail = NULL;
+		list->rail = rail;
 	}
 
 	return list;

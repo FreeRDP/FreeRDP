@@ -268,6 +268,7 @@ struct rdp_settings
 	boolean remote_app;
 	uint8 num_icon_caches;
 	uint16 num_icon_cache_entries;
+	boolean rail_langbar_supported;
 
 	boolean mouse_motion;
 };

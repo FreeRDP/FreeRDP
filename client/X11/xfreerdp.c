@@ -74,6 +74,8 @@ void xf_end_paint(rdpUpdate* update)
 	XPutImage(xfi->display, xfi->primary, xfi->gc_default, xfi->image, x, y, x, y, w, h);
 	XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, w, h, x, y);
 	XFlush(xfi->display);
+
+	xf_rail_paint(xfi, update->rail);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -313,6 +315,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	instance->update->rail = (void*) rail_new();
 	rail_register_update_callbacks((rdpRail*) instance->update->rail, instance->update);
+	xf_rail_register_callbacks(xfi, (rdpRail*) instance->update->rail);
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 

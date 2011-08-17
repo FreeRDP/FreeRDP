@@ -1124,7 +1124,10 @@ void rdp_write_remote_programs_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	railSupportLevel = RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+	railSupportLevel = RAIL_LEVEL_SUPPORTED;
+
+	if (settings->rail_langbar_supported)
+		railSupportLevel |= RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
 
 	stream_write_uint32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
 

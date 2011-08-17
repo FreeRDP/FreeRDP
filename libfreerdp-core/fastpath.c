@@ -191,27 +191,27 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
-			printf("FASTPATH_UPDATETYPE_PTR_NULL\n");
+			//printf("FASTPATH_UPDATETYPE_PTR_NULL\n");
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
-			printf("FASTPATH_UPDATETYPE_PTR_DEFAULT\n");
+			//printf("FASTPATH_UPDATETYPE_PTR_DEFAULT\n");
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			printf("FASTPATH_UPDATETYPE_PTR_POSITION\n");
+			//printf("FASTPATH_UPDATETYPE_PTR_POSITION\n");
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			printf("FASTPATH_UPDATETYPE_COLOR\n");
+			//printf("FASTPATH_UPDATETYPE_COLOR\n");
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			printf("FASTPATH_UPDATETYPE_CACHED\n");
+			//printf("FASTPATH_UPDATETYPE_CACHED\n");
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			printf("FASTPATH_UPDATETYPE_POINTER\n");
+			//printf("FASTPATH_UPDATETYPE_POINTER\n");
 			break;
 
 		default:

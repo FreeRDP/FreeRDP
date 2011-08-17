@@ -22,6 +22,8 @@
 
 #include "xfreerdp.h"
 
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail);
 void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance);
+void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 
 #endif /* __XF_RAIL_H */

@@ -28,8 +28,11 @@
 
 typedef struct rdp_window rdpWindow;
 
+#include <freerdp/rail/rail.h>
+
 struct rdp_window
 {
+	void* extra;
 	rdpWindow* prev;
 	rdpWindow* next;
 	uint32 windowId;
@@ -60,7 +63,7 @@ struct rdp_window
 
 FREERDP_API void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 
-FREERDP_API rdpWindow* rail_CreateWindow(uint32 windowId);
-FREERDP_API void rail_DestroyWindow(rdpWindow* window);
+FREERDP_API void rail_CreateWindow(rdpRail* rail, rdpWindow* window);
+FREERDP_API void rail_DestroyWindow(rdpRail* rail, rdpWindow* window);
 
 #endif /* __WINDOW_H */

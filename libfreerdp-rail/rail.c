@@ -58,7 +58,7 @@ rdpRail* rail_new()
 
 	if (rail != NULL)
 	{
-		rail->list = window_list_new();
+		rail->list = window_list_new(rail);
 	}
 
 	return rail;

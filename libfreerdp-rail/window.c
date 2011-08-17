@@ -103,21 +103,12 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	}
 }
 
-rdpWindow* rail_CreateWindow(uint32 windowId)
+void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
-	rdpWindow* window;
-
-	window = (rdpWindow*) xzalloc(sizeof(rdpWindow));
-
-	if (window != NULL)
-	{
-		window->windowId = windowId;
-	}
-
-	return window;
+	IFCALL(rail->CreateWindow, rail, window);
 }
 
-void rail_DestroyWindow(rdpWindow* window)
+void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	if (window != NULL)
 	{
