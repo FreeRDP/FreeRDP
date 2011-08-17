@@ -28,6 +28,7 @@
 #define __LOCALES_H
 
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 
 #define AFRIKAANS				0x0436
 #define ALBANIAN				0x041c

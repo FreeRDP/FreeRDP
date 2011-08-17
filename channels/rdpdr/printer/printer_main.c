@@ -251,7 +251,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	CachedFieldsLen = 0;
 	CachedPrinterConfigData = NULL;
 
-printf("**** printer %s %X register\n", printer->name, printer);
+	printf("**** printer %s %X register\n", printer->name, (unsigned int) printer);
 
 	Flags = 0;
 	if (printer->is_default)
