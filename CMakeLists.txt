@@ -64,6 +64,7 @@ if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_EXPORTS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
+
 endif()
 
 # Include files
@@ -125,6 +126,9 @@ add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-chanman)
 add_subdirectory(libfreerdp-core)
 add_subdirectory(libfreerdp-rfx)
-add_subdirectory(channels)
+
+if(NOT WIN32)
+	add_subdirectory(channels)
+endif()
 
 add_subdirectory(client)

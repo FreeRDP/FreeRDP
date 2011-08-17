@@ -20,6 +20,7 @@
 #ifndef __WINDOW_LIST_H
 #define __WINDOW_LIST_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
@@ -34,11 +35,11 @@ struct rdp_window_list
 	rdpWindow* tail;
 };
 
-void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
-void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
-void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo);
+FREERDP_API void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+FREERDP_API void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+FREERDP_API void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo);
 
-rdpWindowList* window_list_new();
-void window_list_free(rdpWindowList* list);
+FREERDP_API rdpWindowList* window_list_new();
+FREERDP_API void window_list_free(rdpWindowList* list);
 
 #endif /* __WINDOW_LIST_H */

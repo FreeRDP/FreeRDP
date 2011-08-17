@@ -20,6 +20,8 @@
 #ifndef __LOAD_PLUGIN_UTILS_H
 #define __LOAD_PLUGIN_UTILS_H
 
-void* freerdp_load_plugin(const char* name, const char* entry_name);
+#include <freerdp/api.h>
+
+FREERDP_API void* freerdp_load_plugin(const char* name, const char* entry_name);
 
 #endif /* __LOAD_PLUGIN_UTILS_H */

@@ -20,6 +20,8 @@
 #ifndef __BLOB_UTILS_H
 #define __BLOB_UTILS_H
 
+#include <freerdp/api.h>
+
 struct rdp_blob
 {
 	void* data;
@@ -27,7 +29,7 @@ struct rdp_blob
 };
 typedef struct rdp_blob rdpBlob;
 
-void freerdp_blob_alloc(rdpBlob* blob, int length);
-void freerdp_blob_free(rdpBlob* blob);
+FREERDP_API void freerdp_blob_alloc(rdpBlob* blob, int length);
+FREERDP_API void freerdp_blob_free(rdpBlob* blob);
 
 #endif /* __BLOB_UTILS_H */

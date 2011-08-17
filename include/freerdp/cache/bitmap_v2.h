@@ -20,6 +20,7 @@
 #ifndef __BITMAP_V2_CACHE_H
 #define __BITMAP_V2_CACHE_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -44,10 +45,10 @@ struct rdp_bitmap_v2
 };
 typedef struct rdp_bitmap_v2 rdpBitmapV2;
 
-void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index);
-void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry);
+FREERDP_API void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index);
+FREERDP_API void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry);
 
-rdpBitmapV2* bitmap_v2_new(rdpSettings* settings);
-void bitmap_v2_free(rdpBitmapV2* bitmap_v2);
+FREERDP_API rdpBitmapV2* bitmap_v2_new(rdpSettings* settings);
+FREERDP_API void bitmap_v2_free(rdpBitmapV2* bitmap_v2);
 
 #endif /* __BITMAP_V2_CACHE_H */

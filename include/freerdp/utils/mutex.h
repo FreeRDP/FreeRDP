@@ -20,11 +20,13 @@
 #ifndef __MUTEX_UTILS_H
 #define __MUTEX_UTILS_H
 
+#include <freerdp/api.h>
+
 typedef void* freerdp_mutex;
 
-freerdp_mutex freerdp_mutex_new(void);
-void freerdp_mutex_free(freerdp_mutex mutex);
-void freerdp_mutex_lock(freerdp_mutex mutex);
-void freerdp_mutex_unlock(freerdp_mutex mutex);
+FREERDP_API freerdp_mutex freerdp_mutex_new(void);
+FREERDP_API void freerdp_mutex_free(freerdp_mutex mutex);
+FREERDP_API void freerdp_mutex_lock(freerdp_mutex mutex);
+FREERDP_API void freerdp_mutex_unlock(freerdp_mutex mutex);
 
 #endif /* __MUTEX_UTILS_H */

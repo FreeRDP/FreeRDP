@@ -20,8 +20,9 @@
 #ifndef __UTILS_STOPWATCH_H
 #define __UTILS_STOPWATCH_H
 
-#include <freerdp/utils/memory.h>
 #include <time.h>
+#include <freerdp/api.h>
+#include <freerdp/utils/memory.h>
 
 struct _STOPWATCH
 {
@@ -32,12 +33,12 @@ struct _STOPWATCH
 };
 typedef struct _STOPWATCH STOPWATCH;
 
-STOPWATCH* stopwatch_create();
-void stopwatch_free(STOPWATCH* stopwatch);
+FREERDP_API STOPWATCH* stopwatch_create();
+FREERDP_API void stopwatch_free(STOPWATCH* stopwatch);
 
-void stopwatch_start(STOPWATCH* stopwatch);
-void stopwatch_stop(STOPWATCH* stopwatch);
-void stopwatch_reset(STOPWATCH* stopwatch);
+FREERDP_API void stopwatch_start(STOPWATCH* stopwatch);
+FREERDP_API void stopwatch_stop(STOPWATCH* stopwatch);
+FREERDP_API void stopwatch_reset(STOPWATCH* stopwatch);
 
 double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
 

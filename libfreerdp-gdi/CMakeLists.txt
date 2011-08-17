@@ -52,6 +52,6 @@ add_library(freerdp-gdi SHARED ${FREERDP_GDI_SRCS})
 target_link_libraries(freerdp-gdi freerdp-cache)
 target_link_libraries(freerdp-gdi freerdp-rfx)
 
-set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
+set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 install(TARGETS freerdp-gdi DESTINATION lib)

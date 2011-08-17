@@ -20,6 +20,8 @@
 #ifndef __UTILS_PROFILER_H
 #define __UTILS_PROFILER_H
 
+#include <freerdp/api.h>
+
 #include "config.h"
 
 #include <stdio.h>
@@ -34,15 +36,15 @@ struct _PROFILER
 };
 typedef struct _PROFILER PROFILER;
 
-PROFILER* profiler_create(char* name);
-void profiler_free(PROFILER* profiler);
+FREERDP_API PROFILER* profiler_create(char* name);
+FREERDP_API void profiler_free(PROFILER* profiler);
 
-void profiler_enter(PROFILER* profiler);
-void profiler_exit(PROFILER* profiler);
+FREERDP_API void profiler_enter(PROFILER* profiler);
+FREERDP_API void profiler_exit(PROFILER* profiler);
 
-void profiler_print_header();
-void profiler_print(PROFILER* profiler);
-void profiler_print_footer();
+FREERDP_API void profiler_print_header();
+FREERDP_API void profiler_print(PROFILER* profiler);
+FREERDP_API void profiler_print_footer();
 
 #ifdef WITH_PROFILER
 #define IF_PROFILER(then)			then
