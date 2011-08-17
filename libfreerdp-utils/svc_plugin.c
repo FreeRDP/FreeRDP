@@ -153,7 +153,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	}
 
 	data_in = plugin->priv->data_in;
-	stream_check_size(data_in, dataLength);
+	stream_check_size(data_in, (int) dataLength);
 	stream_write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)

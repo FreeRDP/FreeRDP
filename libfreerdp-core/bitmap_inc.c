@@ -409,7 +409,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 		/* Watch out for the end of the first scanline. */
 		if (fFirstLine)
 		{
-			if (pbDest - pbDestBuffer >= rowDelta)
+			if ((uint32)(pbDest - pbDestBuffer) >= rowDelta)
 			{
 				fFirstLine = False;
 				fInsertFgPel = False;

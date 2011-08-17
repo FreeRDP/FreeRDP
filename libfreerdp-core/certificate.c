@@ -218,7 +218,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 	if (x509_cert_chain == NULL)
 		return;
 
-	for (i = 0; i < x509_cert_chain->count; i++)
+	for (i = 0; i < (int) x509_cert_chain->count; i++)
 	{
 		if (x509_cert_chain->array[i].data != NULL)
 			xfree(x509_cert_chain->array[i].data);
@@ -256,7 +256,7 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	certificate->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
 
-	for (i = 0; i < numCertBlobs; i++)
+	for (i = 0; i < (int) numCertBlobs; i++)
 	{
 		stream_read_uint32(s, certLength);
 
