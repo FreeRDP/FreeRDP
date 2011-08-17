@@ -300,6 +300,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				{
 					plugin_data = (FRDP_PLUGIN_DATA*)xrealloc(plugin_data, sizeof(FRDP_PLUGIN_DATA) * (i + 2));
 					plugin_data[i].size = sizeof(FRDP_PLUGIN_DATA);
+					plugin_data[i].data[0] = NULL;
+					plugin_data[i].data[1] = NULL;
+					plugin_data[i].data[2] = NULL;
+					plugin_data[i].data[3] = NULL;
 					plugin_data[i + 1].size = 0;
 					for (j = 0, p = argv[index]; j < 4 && p != NULL; j++)
 					{
