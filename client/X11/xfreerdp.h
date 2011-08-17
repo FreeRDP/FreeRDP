@@ -37,6 +37,15 @@ typedef struct xf_info xfInfo;
 #define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
 #define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
 
+struct xf_WorkArea
+{
+	uint32 x;
+	uint32 y;
+	uint32 width;
+	uint32 height;
+};
+typedef struct xf_WorkArea xfWorkArea;
+
 struct xf_info
 {
 	GC gc;
@@ -60,6 +69,8 @@ struct xf_info
 	boolean decoration;
 	freerdp* instance;
 	xfWindow* window;
+	xfWorkArea workArea;
+	int current_desktop;
 
 	GC gc_mono;
 	GC gc_default;

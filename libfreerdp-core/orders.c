@@ -1637,10 +1637,12 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? True : False;
 
+#if 0
 	if (orderInfo->orderType < PRIMARY_DRAWING_ORDER_COUNT)
 		printf("%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
 	else
 		printf("Unknown Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+#endif
 
 	switch (orderInfo->orderType)
 	{
@@ -1777,10 +1779,12 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	next = s->p + ((sint16) orderLength) + 7;
 
+#if 0
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
 		printf("%s Secondary Drawing Order (0x%02X)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
 		printf("Unknown Secondary Drawing Order (0x%02X)\n", orderType);
+#endif
 
 	switch (orderType)
 	{
@@ -1845,10 +1849,12 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 
+#if 0
 	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
 		printf("%s Alternate Secondary Drawing Order (0x%02X)\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
 		printf("Unknown Alternate Secondary Drawing Order: 0x%02X\n", orderType);
+#endif
 
 	switch (orderType)
 	{

@@ -21,6 +21,8 @@
 
 #include "xf_window.h"
 
+/* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
+
 #define MWM_HINTS_DECORATIONS		(1L << 1)
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
 
@@ -44,6 +46,79 @@ void window_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 		XSetInputFocus(xfi->display, window->handle, RevertToParent, CurrentTime);
 		window->fullscreen = True;
 	}
+}
+
+/* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
+
+boolean window_GetProperty(xfInfo* xfi, Window window, char* name, int length,
+		unsigned long* nitems, unsigned long* bytes, uint8** prop)
+{
+	int status;
+	Atom property;
+	Atom actual_type;
+	int actual_format;
+
+	property = XInternAtom(xfi->display, name, True);
+
+	if (property == None)
+		return False;
+
+	status = XGetWindowProperty(xfi->display, window,
+			property, 0, length, False, AnyPropertyType,
+			&actual_type, &actual_format, nitems, bytes, prop);
+
+	if (status != Success)
+		return False;
+
+	return True;
+}
+
+boolean window_GetCurrentDesktop(xfInfo* xfi)
+{
+	boolean status;
+	unsigned long nitems;
+	unsigned long bytes;
+	unsigned char* prop;
+
+	status = window_GetProperty(xfi, DefaultRootWindow(xfi->display),
+			"_NET_CURRENT_DESKTOP", 1, &nitems, &bytes, &prop);
+
+	if (status != True)
+		return False;
+
+	xfi->current_desktop = (int) *prop;
+	xfree(prop);
+
+	return True;
+}
+
+boolean window_GetWorkArea(xfInfo* xfi)
+{
+	long* plong;
+	boolean status;
+	unsigned long nitems;
+	unsigned long bytes;
+	unsigned char* prop;
+
+	status = window_GetProperty(xfi, DefaultRootWindow(xfi->display),
+			"_NET_WORKAREA", 32 * 4, &nitems, &bytes, &prop);
+
+	if (status != True)
+		return False;
+
+	window_GetCurrentDesktop(xfi);
+
+	plong = (long*) prop;
+
+	xfi->workArea.x = plong[xfi->current_desktop * 4 + 0];
+	xfi->workArea.y = plong[xfi->current_desktop * 4 + 1];
+	xfi->workArea.width = plong[xfi->current_desktop * 4 + 2];
+	xfi->workArea.height = plong[xfi->current_desktop * 4 + 3];
+	xfree(prop);
+
+	printf("x:%d y:%d w:%d h:%d\n", xfi->workArea.x, xfi->workArea.y, xfi->workArea.width, xfi->workArea.height);
+
+	return True;
 }
 
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
@@ -128,7 +203,7 @@ xfWindow* window_create(xfInfo* xfi, char* name)
 	return window;
 }
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, int width, int height, char* name)
+xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name)
 {
 	xfWindow* window;
 
@@ -148,7 +223,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int width, int height, char* name)
 		window->fullscreen = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-			0, 0, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
+			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 

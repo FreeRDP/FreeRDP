@@ -124,19 +124,32 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			index++;
 			if (index == argc)
 			{
-				printf("missing width\n");
+				printf("missing dimensions\n");
 				return 0;
 			}
-			settings->width = (uint16) strtol(argv[index], &p, 10);
-			if (*p == 'x')
+
+			if (strncmp("workarea", argv[index], 1) == 0)
 			{
-				settings->height = (uint16) strtol(p + 1, &p, 10);
+				settings->workarea = True;
 			}
 			else
 			{
-				if (ui_callback != NULL)
-					ui_callback(settings, "-g", p, ui_user_data);
+				settings->width = (uint16) strtol(argv[index], &p, 10);
+
+				if (*p == 'x')
+				{
+					settings->height = (uint16) strtol(p + 1, &p, 10);
+				}
+				else
+				{
+					if (ui_callback != NULL)
+						ui_callback(settings, "-g", p, ui_user_data);
+				}
 			}
+		}
+		else if (strcmp("-D", argv[index]) == 0)
+		{
+			settings->decorations = False;
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{

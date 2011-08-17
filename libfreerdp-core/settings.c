@@ -39,6 +39,8 @@ rdpSettings* settings_new()
 	{
 		settings->width = 1024;
 		settings->height = 768;
+		settings->workarea = False;
+		settings->decorations = True;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;
 		settings->nla_security = True;

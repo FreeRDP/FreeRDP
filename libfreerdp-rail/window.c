@@ -38,24 +38,30 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
 		window->showState = window_state->showState;
+		printf("ShowState:%d\n", window->showState);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		window->clientOffsetX = window_state->clientOffsetX;
-		window->clientOffsetY = window_state->clientOffsetY;
+
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
 		window->clientOffsetX = window_state->clientOffsetX;
 		window->clientOffsetY = window_state->clientOffsetY;
+
+		printf("Client Area Offset: (%d, %d)\n",
+				window->clientOffsetX, window->clientOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
 		window->clientAreaWidth = window_state->clientAreaWidth;
 		window->clientAreaHeight = window_state->clientAreaHeight;
+
+		printf("Client Area Size: (%d, %d)\n",
+				window->clientAreaWidth, window->clientAreaHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
@@ -72,18 +78,27 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->windowOffsetX = window_state->windowOffsetX;
 		window->windowOffsetY = window_state->windowOffsetY;
+
+		printf("Window Offset: (%d, %d)\n",
+				window->windowOffsetX, window->windowOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
 		window->windowClientDeltaX = window_state->windowClientDeltaX;
 		window->windowClientDeltaY = window_state->windowClientDeltaY;
+
+		printf("Window Client Delta: (%d, %d)\n",
+				window->windowClientDeltaX, window->windowClientDeltaY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
 		window->windowWidth = window_state->windowWidth;
 		window->windowHeight = window_state->windowHeight;
+
+		printf("Window Size: (%d, %d)\n",
+				window->windowWidth, window->windowHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -95,6 +110,9 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->visibleOffsetX = window_state->visibleOffsetX;
 		window->visibleOffsetY = window_state->visibleOffsetY;
+
+		printf("Window Visible Offset: (%d, %d)\n",
+				window->visibleOffsetX, window->visibleOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)

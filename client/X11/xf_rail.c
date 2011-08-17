@@ -33,11 +33,12 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
-		printf("painting window 0x%08X\n", window->windowId);
+		//printf("painting window 0x%08X\n", window->windowId);
 
 		XCopyArea(xfi->display, xfi->window->handle, xfw->handle, xfw->gc,
-				window->clientOffsetX, window->clientOffsetY,
-				window->windowWidth, window->windowHeight, 0, 0);
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowWidth, window->windowHeight,
+				0, 0);
 
 		XFlush(xfi->display);
 	}
@@ -46,7 +47,11 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
 void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfWindow* xfw;
-	xfw = xf_CreateWindow((xfInfo*) rail->extra, window->windowWidth, window->windowHeight, "RAIL");
+
+	xfw = xf_CreateWindow((xfInfo*) rail->extra,
+			window->windowOffsetX, window->windowOffsetY,
+			window->windowWidth, window->windowHeight, "RAIL");
+
 	window->extra = (void*) xfw;
 }
 
@@ -58,5 +63,5 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 
 void xf_process_rail_event(rdpChanMan* chanman, freerdp* instance)
 {
-
+	printf("xf_process_rail_event");
 }

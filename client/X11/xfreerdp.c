@@ -158,8 +158,16 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
-	xfi->decoration = True;
 	xfi->mouse_motion = True;
+	xfi->decoration = settings->decorations;
+
+	window_GetWorkArea(xfi);
+
+	if (settings->workarea)
+	{
+		settings->width = xfi->workArea.width;
+		settings->height = xfi->workArea.height;
+	}
 
 	return True;
 }
