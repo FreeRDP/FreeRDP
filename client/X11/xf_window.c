@@ -28,11 +28,11 @@
 
 struct _PropMotifWmHints
 {
-	uint32 flags;
-	uint32 functions;
-	uint32 decorations;
-	sint32 inputMode;
-	uint32 status;
+	unsigned long flags;
+	unsigned long functions;
+	unsigned long decorations;
+	long inputMode;
+	unsigned long status;
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
@@ -141,7 +141,7 @@ void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
 	hints.decorations = 0;
 	hints.flags = MWM_HINTS_DECORATIONS;
 
-	atom = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
+	atom = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
 
 	if (!atom)
 	{
