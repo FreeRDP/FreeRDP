@@ -222,7 +222,7 @@ void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	transport_write(rdp->transport, s);
 }
 
-void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
+void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 {
 	int length;
 
@@ -523,7 +523,6 @@ rdpRdp* rdp_new(freerdp* instance)
 	{
 		rdp->licensed = False;
 		rdp->settings = settings_new();
-		rdp->registry = registry_new(rdp->settings);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);

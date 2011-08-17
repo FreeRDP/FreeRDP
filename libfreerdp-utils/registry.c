@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Configuration Registry
+ * Registry Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,7 +17,11 @@
  * limitations under the License.
  */
 
-#include "registry.h"
+#include <freerdp/utils/registry.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 static char registry_dir[] = "freerdp";
 static char registry_file[] = "config.txt";
@@ -142,7 +146,11 @@ void registry_init(rdpRegistry* registry)
 
 	if (stat(registry->path, &stat_info) != 0)
 	{
+#ifndef _WIN32
 		mkdir(registry->path, S_IRUSR | S_IWUSR | S_IXUSR);
+#else
+		CreateDirectory(registry->path, 0);
+#endif
 		printf("creating directory %s\n", registry->path);
 	}
 

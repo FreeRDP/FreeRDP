@@ -55,7 +55,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 	{
 		s = rdp_send_stream_init(vchan->instance->rdp);
 
-		if (size > vchan->instance->settings->vc_chunk_size)
+		if (size > (int) vchan->instance->settings->vc_chunk_size)
 		{
 			chunk_size = vchan->instance->settings->vc_chunk_size;
 		}

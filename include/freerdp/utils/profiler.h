@@ -55,15 +55,15 @@ void profiler_print_footer();
 #define PROFILER_PRINT(prof)		profiler_print(prof)
 #define PROFILER_PRINT_FOOTER		profiler_print_footer()
 #else
-#define IF_PROFILER(then)
-#define PROFILER_DEFINE(prof)
-#define PROFILER_CREATE(prof,name)
-#define PROFILER_FREE(prof)
-#define PROFILER_ENTER(prof)
-#define PROFILER_EXIT(prof)
-#define PROFILER_PRINT_HEADER
-#define PROFILER_PRINT(prof)
-#define PROFILER_PRINT_FOOTER
+#define IF_PROFILER(then)		do { } while (0)
+#define PROFILER_DEFINE(prof)		void* prof
+#define PROFILER_CREATE(prof,name)	do { } while (0)
+#define PROFILER_FREE(prof)		do { } while (0)
+#define PROFILER_ENTER(prof)		do { } while (0)
+#define PROFILER_EXIT(prof)		do { } while (0)
+#define PROFILER_PRINT_HEADER		do { } while (0)
+#define PROFILER_PRINT(prof)		do { } while (0)
+#define PROFILER_PRINT_FOOTER		do { } while (0)
 #endif
 
 #endif /* __UTILS_PROFILER_H */

@@ -112,7 +112,7 @@ void bitmap_v2_free(rdpBitmapV2* bitmap_v2)
 	{
 		for (i = 0; i < bitmap_v2->maxCells; i++)
 		{
-			for (j = 0; j < bitmap_v2->cells[i].number; j++)
+			for (j = 0; j < (int) bitmap_v2->cells[i].number; j++)
 			{
 				if (bitmap_v2->cells[i].entries[j].entry != NULL)
 					xfree(bitmap_v2->cells[i].entries[j].entry);

@@ -505,10 +505,10 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->data = brush_get(gdi->cache->brush, brush->index, &brush->bpp);
-		brush->style = BS_PATTERN;
+		brush->style = GDI_BS_PATTERN;
 	}
 
-	if (brush->style == BS_SOLID)
+	if (brush->style == GDI_BS_SOLID)
 	{
 		uint32 color;
 		originalBrush = gdi->drawing->hdc->brush;
@@ -522,7 +522,7 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
 	}
-	else if (brush->style == BS_PATTERN)
+	else if (brush->style == GDI_BS_PATTERN)
 	{
 		HGDI_BITMAP hBmp;
 

@@ -32,7 +32,9 @@ set(FREERDP_UTILS_SRCS
 	mutex.c
 	profiler.c
 	rail.c
+	registry.c
 	semaphore.c
+	sleep.c
 	stopwatch.c
 	stream.c
 	svc_plugin.c
@@ -47,5 +49,9 @@ add_library(freerdp-utils SHARED ${FREERDP_UTILS_SRCS})
 set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
 target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
+
+if(WIN32)
+	target_link_libraries(freerdp-utils ws2_32)
+endif()
 
 install(TARGETS freerdp-utils DESTINATION lib)

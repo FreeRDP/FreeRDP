@@ -32,7 +32,6 @@ typedef struct rdp_rdp rdpRdp;
 #include "license.h"
 #include "errinfo.h"
 #include "security.h"
-#include "registry.h"
 #include "transport.h"
 #include "connection.h"
 #include "capabilities.h"
@@ -123,7 +122,6 @@ struct rdp_rdp
 	struct rdp_fastpath* fastpath;
 	struct rdp_license* license;
 	struct rdp_settings* settings;
-	struct rdp_registry* registry;
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;
 };
@@ -144,7 +142,7 @@ STREAM* rdp_pdu_init(rdpRdp* rdp);
 void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 
 STREAM* rdp_data_pdu_init(rdpRdp* rdp);
-void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
+void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id);
 
 void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
 void rdp_recv(rdpRdp* rdp);
