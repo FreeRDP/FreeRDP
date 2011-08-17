@@ -20,6 +20,7 @@
 #ifndef __OFFSCREEN_CACHE_H
 #define __OFFSCREEN_CACHE_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -38,10 +39,10 @@ struct rdp_offscreen
 };
 typedef struct rdp_offscreen rdpOffscreen;
 
-void* offscreen_get(rdpOffscreen* offscreen, uint16 index);
-void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap);
+FREERDP_API void* offscreen_get(rdpOffscreen* offscreen, uint16 index);
+FREERDP_API void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap);
 
-rdpOffscreen* offscreen_new(rdpSettings* settings);
-void offscreen_free(rdpOffscreen* offscreen);
+FREERDP_API rdpOffscreen* offscreen_new(rdpSettings* settings);
+FREERDP_API void offscreen_free(rdpOffscreen* offscreen);
 
 #endif /* __OFFSCREEN_CACHE_H */

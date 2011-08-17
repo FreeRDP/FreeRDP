@@ -20,6 +20,7 @@
 #ifndef __THREAD_UTILS_H
 #define __THREAD_UTILS_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/wait_obj.h>
@@ -28,6 +29,7 @@
 #endif
 
 typedef struct _freerdp_thread freerdp_thread;
+
 struct _freerdp_thread
 {
 	freerdp_mutex* mutex;
@@ -38,9 +40,9 @@ struct _freerdp_thread
 	int status;
 };
 
-freerdp_thread* freerdp_thread_new(void);
-void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
-void freerdp_thread_stop(freerdp_thread* thread);
+FREERDP_API freerdp_thread* freerdp_thread_new(void);
+FREERDP_API void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
+FREERDP_API void freerdp_thread_stop(freerdp_thread* thread);
 
 #define freerdp_thread_wait(_t) wait_obj_select(_t->signals, _t->num_signals, -1)
 #define freerdp_thread_wait_timeout(_t, _timeout) wait_obj_select(_t->signals, _t->num_signals, _timeout)

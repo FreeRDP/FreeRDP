@@ -20,6 +20,7 @@
 #ifndef __COLOR_TABLE_CACHE_H
 #define __COLOR_TABLE_CACHE_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -37,10 +38,10 @@ struct rdp_color_table
 };
 typedef struct rdp_color_table rdpColorTable;
 
-void* color_table_get(rdpColorTable* color_table, uint8 index);
-void color_table_put(rdpColorTable* color_table, uint8 index, void* entry);
+FREERDP_API void* color_table_get(rdpColorTable* color_table, uint8 index);
+FREERDP_API void color_table_put(rdpColorTable* color_table, uint8 index, void* entry);
 
-rdpColorTable* color_table_new(rdpSettings* settings);
-void color_table_free(rdpColorTable* color_table);
+FREERDP_API rdpColorTable* color_table_new(rdpSettings* settings);
+FREERDP_API void color_table_free(rdpColorTable* color_table);
 
 #endif /* __COLOR_TABLE_CACHE_H */

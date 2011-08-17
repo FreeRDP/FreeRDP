@@ -19,9 +19,11 @@
 
 # User Interfaces
 
-add_subdirectory(test)
-
 if(NOT WIN32)
+
+	# Build Test Client
+	add_subdirectory(test)
+
 	# Build X11 Client
 	find_package(X11)
 	if(X11_FOUND)

@@ -25,6 +25,7 @@ typedef struct rdp_registry rdpRegistry;
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
@@ -61,11 +62,11 @@ struct rdp_registry
 	struct rdp_settings* settings;
 };
 
-void registry_open(rdpRegistry* registry);
-void registry_close(rdpRegistry* registry);
+FREERDP_API void registry_open(rdpRegistry* registry);
+FREERDP_API void registry_close(rdpRegistry* registry);
 
-void registry_init(rdpRegistry* registry);
-rdpRegistry* registry_new(rdpSettings* settings);
-void registry_free(rdpRegistry* registry);
+FREERDP_API void registry_init(rdpRegistry* registry);
+FREERDP_API rdpRegistry* registry_new(rdpSettings* settings);
+FREERDP_API void registry_free(rdpRegistry* registry);
 
 #endif /* __REGISTRY_UTILS_H */

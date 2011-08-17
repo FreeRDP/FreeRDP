@@ -21,6 +21,10 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/select.h>
+#else
+#include <winsock2.h>
+#include <Windows.h>
+#include <ws2tcpip.h>
 #endif
 
 #include <errno.h>
@@ -43,7 +47,7 @@
 
 struct tf_info
 {
-
+	void* data;
 };
 typedef struct tf_info tfInfo;
 

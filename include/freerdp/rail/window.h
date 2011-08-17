@@ -20,6 +20,7 @@
 #ifndef __WINDOW_H
 #define __WINDOW_H
 
+#include <freerdp/api.h>
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
@@ -57,9 +58,9 @@ struct rdp_window
 	RECTANGLE_16* visibilityRects;
 };
 
-void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
+FREERDP_API void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 
-rdpWindow* rail_CreateWindow(uint32 windowId);
-void rail_DestroyWindow(rdpWindow* window);
+FREERDP_API rdpWindow* rail_CreateWindow(uint32 windowId);
+FREERDP_API void rail_DestroyWindow(rdpWindow* window);
 
 #endif /* __WINDOW_H */

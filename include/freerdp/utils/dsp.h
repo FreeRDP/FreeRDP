@@ -20,6 +20,8 @@
 #ifndef __DSP_UTILS_H
 #define __DSP_UTILS_H
 
+#include <freerdp/api.h>
+
 struct _ADPCM
 {
 	sint16 last_sample[2];
@@ -27,13 +29,13 @@ struct _ADPCM
 };
 typedef struct _ADPCM ADPCM;
 
-uint8* dsp_resample(uint8* src, int bytes_per_sample,
+FREERDP_API uint8* dsp_resample(uint8* src, int bytes_per_sample,
 	uint32 schan, uint32 srate, int sframes,
 	uint32 rchan, uint32 rrate, int * prframes);
 
-uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
+FREERDP_API uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
 	uint8* src, int size, int channels, int block_size, int* out_size);
-uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
+FREERDP_API uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
 	uint8* src, int size, int channels, int block_size, int* out_size);
 
 #endif /* __DSP_UTILS_H */

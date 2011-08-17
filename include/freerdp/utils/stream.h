@@ -22,6 +22,7 @@
 #define __STREAM_UTILS_H
 
 #include <string.h>
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 struct _STREAM
@@ -32,8 +33,8 @@ struct _STREAM
 };
 typedef struct _STREAM STREAM;
 
-STREAM* stream_new(int size);
-void stream_free(STREAM* stream);
+FREERDP_API STREAM* stream_new(int size);
+FREERDP_API void stream_free(STREAM* stream);
 
 #define stream_attach(_s, _buf, _size) do { \
 	_s->size = _size; \
@@ -42,7 +43,7 @@ void stream_free(STREAM* stream);
 #define stream_detach(_s) memset(_s, 0, sizeof(STREAM))
 #define stream_clear(_s) memset(_s->data, 0, _s->size)
 
-void stream_extend(STREAM* stream, int request_size);
+FREERDP_API void stream_extend(STREAM* stream, int request_size);
 #define stream_check_size(_s, _n) \
 	while (_s->p - _s->data + (_n) > _s->size) \
 		stream_extend(_s, _n)

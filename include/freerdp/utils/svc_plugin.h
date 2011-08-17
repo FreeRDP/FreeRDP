@@ -23,6 +23,7 @@
 
 /* static channel plugin base implementation */
 
+#include <freerdp/api.h>
 #include <freerdp/svc.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/event.h>
@@ -30,6 +31,7 @@
 
 typedef struct rdp_svc_plugin_private rdpSvcPluginPrivate;
 typedef struct rdp_svc_plugin rdpSvcPlugin;
+
 struct rdp_svc_plugin
 {
 	CHANNEL_ENTRY_POINTS_EX channel_entry_points;
@@ -46,9 +48,9 @@ struct rdp_svc_plugin
 	rdpSvcPluginPrivate* priv;
 };
 
-void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
-int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
-int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
+FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
+FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
+FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, FRDP_EVENT* event);
 
 #define svc_plugin_get_data(_p) (FRDP_PLUGIN_DATA*)(((rdpSvcPlugin*)_p)->channel_entry_points.pExtendedData)
 

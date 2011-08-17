@@ -20,6 +20,7 @@
 #ifndef __BRUSH_CACHE_H
 #define __BRUSH_CACHE_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -40,10 +41,10 @@ struct rdp_brush
 };
 typedef struct rdp_brush rdpBrush;
 
-void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp);
-void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp);
+FREERDP_API void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp);
+FREERDP_API void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp);
 
-rdpBrush* brush_new(rdpSettings* settings);
-void brush_free(rdpBrush* brush);
+FREERDP_API rdpBrush* brush_new(rdpSettings* settings);
+FREERDP_API void brush_free(rdpBrush* brush);
 
 #endif /* __BRUSH_CACHE_H */

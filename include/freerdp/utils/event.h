@@ -20,10 +20,11 @@
 #ifndef __EVENT_UTILS_H
 #define __EVENT_UTILS_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
-FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+FREERDP_API FRDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
 	FRDP_EVENT_CALLBACK on_event_free_callback, void* user_data);
-void freerdp_event_free(FRDP_EVENT* event);
+FREERDP_API void freerdp_event_free(FRDP_EVENT* event);
 
 #endif

@@ -20,8 +20,10 @@
 #ifndef __UTILS_HEXDUMP_H
 #define __UTILS_HEXDUMP_H
 
+#include <freerdp/api.h>
+
 #define FREERDP_HEXDUMP_LINE_LENGTH	16
 
-void freerdp_hexdump(uint8* data, int length);
+FREERDP_API void freerdp_hexdump(uint8* data, int length);
 
 #endif /* __UTILS_HEXDUMP_H */
