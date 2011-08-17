@@ -72,6 +72,7 @@ if(NOT WIN32)
 	find_package(ZLIB REQUIRED)
 	find_package(ALSA)
 	find_package(PulseAudio)
+	find_package(Cups)
 endif()
 
 # Endian
