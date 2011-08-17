@@ -72,6 +72,7 @@ struct xf_info
 	xfWorkArea workArea;
 	int current_desktop;
 	boolean remote_app;
+	rdpRail* rail;
 
 	GC gc_mono;
 	GC gc_default;

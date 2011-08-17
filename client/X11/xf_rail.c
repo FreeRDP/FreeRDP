@@ -53,6 +53,7 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 			window->windowWidth, window->windowHeight, "RAIL");
 
 	window->extra = (void*) xfw;
+	window->extraId = (void*) xfw->handle;
 }
 
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)

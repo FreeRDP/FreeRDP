@@ -33,6 +33,7 @@ typedef struct rdp_window rdpWindow;
 struct rdp_window
 {
 	void* extra;
+	void* extraId;
 	rdpWindow* prev;
 	rdpWindow* next;
 	uint32 windowId;

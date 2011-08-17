@@ -51,6 +51,26 @@ rdpWindow* window_list_get_next(rdpWindowList* list)
 	return next;
 }
 
+rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId)
+{
+	rdpWindow* window;
+
+	window = list->head;
+
+	if (window == NULL)
+		return NULL;
+
+	while (window->next != NULL)
+	{
+		if (window->extraId == extraId)
+			return window;
+
+		window = window->next;
+	}
+
+	return NULL;
+}
+
 rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId)
 {
 	rdpWindow* window;

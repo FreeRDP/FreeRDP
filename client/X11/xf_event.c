@@ -138,7 +138,14 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			if (app)
 			{
+				rdpWindow* window;
+				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
 
+				if (window != NULL)
+				{
+					x += window->windowOffsetX;
+					y += window->windowOffsetY;
+				}
 			}
 
 			input->MouseEvent(input, flags, x, y);
@@ -150,24 +157,33 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 {
+	uint16 x, y;
 	uint16 flags;
 	rdpInput* input;
 
 	input = xfi->instance->input;
 
+	x = 0;
+	y = 0;
 	flags = 0;
 
 	switch (event->xbutton.button)
 	{
 		case 1:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
 			flags = PTR_FLAGS_BUTTON1;
 			break;
 
 		case 2:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
 			flags = PTR_FLAGS_BUTTON3;
 			break;
 
 		case 3:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
 			flags = PTR_FLAGS_BUTTON2;
 			break;
 
@@ -180,10 +196,17 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
+			rdpWindow* window;
+			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
 
+			if (window != NULL)
+			{
+				x += window->windowOffsetX;
+				y += window->windowOffsetY;
+			}
 		}
 
-		input->MouseEvent(input, flags, event->xbutton.x, event->xbutton.y);
+		input->MouseEvent(input, flags, x, y);
 	}
 
 	return True;

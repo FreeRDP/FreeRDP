@@ -323,9 +323,10 @@ boolean xf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
 
-	instance->update->rail = (void*) rail_new();
-	rail_register_update_callbacks((rdpRail*) instance->update->rail, instance->update);
-	xf_rail_register_callbacks(xfi, (rdpRail*) instance->update->rail);
+	xfi->rail = rail_new();
+	instance->update->rail = (void*) xfi->rail;
+	rail_register_update_callbacks(xfi->rail, instance->update);
+	xf_rail_register_callbacks(xfi, xfi->rail);
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
