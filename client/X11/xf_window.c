@@ -121,6 +121,18 @@ boolean window_GetWorkArea(xfInfo* xfi)
 	return True;
 }
 
+void window_move(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
+{
+	XWindowChanges changes;
+
+	changes.x = x;
+	changes.y = y;
+	changes.width = width;
+	changes.height = height;
+
+	XConfigureWindow(xfi->display, window->handle, CWX | CWY | CWWidth | CWHeight, &changes);
+}
+
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
 {
 	Atom atom;
@@ -145,7 +157,7 @@ void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
 		}
 	}
 
-	window->decorations = False;
+	window->decorations = show;
 }
 
 xfWindow* window_create(xfInfo* xfi, char* name)
@@ -164,7 +176,7 @@ xfWindow* window_create(xfInfo* xfi, char* name)
 		window->fullscreen = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-			0, 0, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
+			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 
@@ -219,7 +231,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 		XSizeHints* size_hints;
 		XClassHint* class_hints;
 
-		window->decorations = True;
+		window->decorations = False;
 		window->fullscreen = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
@@ -263,6 +275,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 		memset(&gcv, 0, sizeof(gcv));
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
+
+		window_move(xfi, window, x, y, width, height);
 	}
 
 	return window;

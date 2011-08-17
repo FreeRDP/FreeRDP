@@ -75,7 +75,8 @@ void xf_end_paint(rdpUpdate* update)
 	XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, w, h, x, y);
 	XFlush(xfi->display);
 
-	xf_rail_paint(xfi, update->rail);
+	if (xfi->remote_app == True)
+		xf_rail_paint(xfi, update->rail);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -160,6 +161,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->mouse_motion = True;
 	xfi->decoration = settings->decorations;
+	xfi->remote_app = settings->remote_app;
 
 	window_GetWorkArea(xfi);
 

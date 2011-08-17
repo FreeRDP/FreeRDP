@@ -71,6 +71,7 @@ struct xf_info
 	xfWindow* window;
 	xfWorkArea workArea;
 	int current_desktop;
+	boolean remote_app;
 
 	GC gc_mono;
 	GC gc_default;

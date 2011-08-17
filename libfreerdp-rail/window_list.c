@@ -91,6 +91,7 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 	else
 	{
 		window->prev = list->tail;
+		list->tail->next = window;
 		window->next = NULL;
 		list->tail = window;
 	}

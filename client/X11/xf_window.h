@@ -43,6 +43,7 @@ boolean window_GetCurrentDesktop(xfInfo* xfi);
 boolean window_GetWorkArea(xfInfo* xfi);
 
 void window_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
+void window_move(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
 
 xfWindow* window_create(xfInfo* xfi, char* name);
