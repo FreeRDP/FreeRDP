@@ -10,6 +10,9 @@
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_UNISTD_H
 
+/* Found packages */
+#cmakedefine CUPS_FOUND
+
 /* Endian */
 #cmakedefine BIG_ENDIAN
 
