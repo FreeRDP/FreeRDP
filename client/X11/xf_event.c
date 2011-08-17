@@ -27,7 +27,7 @@ void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, ui
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
-boolean xf_event_Expose(xfInfo* xfi, XEvent* event)
+boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 {
 	int x;
 	int y;
@@ -46,7 +46,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event)
+boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xvisibility.window == xfi->window->handle)
 		xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
@@ -54,7 +54,7 @@ boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event)
+boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpInput* input;
 
@@ -77,104 +77,119 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event)
+boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 {
 	uint16 x, y;
 	uint16 flags;
+	boolean wheel;
 	rdpInput* input;
 
 	input = xfi->instance->input;
 
-	if (event->xbutton.window == xfi->window->handle)
+	x = 0;
+	y = 0;
+	flags = 0;
+	wheel = False;
+
+	switch (event->xbutton.button)
 	{
-		x = 0;
-		y = 0;
-		flags = 0;
+		case 1:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
+			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
+			break;
 
-		switch (event->xbutton.button)
+		case 2:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
+			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
+			break;
+
+		case 3:
+			x = event->xmotion.x;
+			y = event->xmotion.y;
+			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
+			break;
+
+		case 4:
+			wheel = True;
+			flags = PTR_FLAGS_WHEEL | 0x0078;
+			break;
+
+		case 5:
+			wheel = True;
+			flags = PTR_FLAGS_WHEEL | 0x0088;
+			break;
+
+		default:
+			x = 0;
+			y = 0;
+			flags = 0;
+			break;
+	}
+
+	if (flags != 0)
+	{
+		if (wheel)
 		{
-			case 1:
-				x = event->xmotion.x;
-				y = event->xmotion.y;
-				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
-				break;
-
-			case 2:
-				x = event->xmotion.x;
-				y = event->xmotion.y;
-				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
-				break;
-
-			case 3:
-				x = event->xmotion.x;
-				y = event->xmotion.y;
-				flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
-				break;
-
-			case 4:
-				x = 0;
-				y = 0;
-				flags = PTR_FLAGS_WHEEL | 0x0078;
-				break;
-
-			case 5:
-				x = 0;
-				y = 0;
-				flags = PTR_FLAGS_WHEEL | 0x0088;
-				break;
-
-			default:
-				x = 0;
-				y = 0;
-				flags = 0;
-				break;
+			input->MouseEvent(input, flags, 0, 0);
 		}
+		else
+		{
+			if (app)
+			{
 
-		if (flags != 0)
+			}
+
 			input->MouseEvent(input, flags, x, y);
+		}
 	}
 
 	return True;
 }
 
-boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event)
+boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 {
 	uint16 flags;
 	rdpInput* input;
 
 	input = xfi->instance->input;
 
-	if (event->xbutton.window == xfi->window->handle)
+	flags = 0;
+
+	switch (event->xbutton.button)
 	{
-		flags = 0;
+		case 1:
+			flags = PTR_FLAGS_BUTTON1;
+			break;
 
-		switch (event->xbutton.button)
+		case 2:
+			flags = PTR_FLAGS_BUTTON3;
+			break;
+
+		case 3:
+			flags = PTR_FLAGS_BUTTON2;
+			break;
+
+		default:
+			flags = 0;
+			break;
+	}
+
+	if (flags != 0)
+	{
+		if (app)
 		{
-			case 1:
-				flags = PTR_FLAGS_BUTTON1;
-				break;
 
-			case 2:
-				flags = PTR_FLAGS_BUTTON3;
-				break;
-
-			case 3:
-				flags = PTR_FLAGS_BUTTON2;
-				break;
-
-			default:
-				flags = 0;
-				break;
 		}
 
-		if (flags != 0)
-			input->MouseEvent(input, flags, event->xbutton.x, event->xbutton.y);
+		input->MouseEvent(input, flags, event->xbutton.x, event->xbutton.y);
 	}
 
 	return True;
 }
 
-boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event)
+boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event, boolean app)
 {
 	KeySym keysym;
 	char str[256];
@@ -191,7 +206,7 @@ boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event)
+boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event, boolean app)
 {
 	XEvent next_event;
 
@@ -213,7 +228,7 @@ boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event)
+boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xfocus.mode == NotifyGrab)
 		return True;
@@ -228,7 +243,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event)
+boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xfocus.mode == NotifyUngrab)
 		return True;
@@ -241,7 +256,7 @@ boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event)
+boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xmapping.request == MappingModifier)
 	{
@@ -252,7 +267,7 @@ boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event)
+boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 {
 	Atom kill_atom;
 	Atom protocol_atom;
@@ -269,7 +284,7 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event)
+boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	xfi->mouse_active = True;
 
@@ -282,62 +297,67 @@ boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event)
 	return True;
 }
 
-boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event)
+boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	xfi->mouse_active = False;
 	XUngrabKeyboard(xfi->display, CurrentTime);
 
 	return True;
 }
+
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
+	boolean app = False;
 	boolean status = True;
 	xfInfo* xfi = GET_XFI(instance);
+
+	if (event->xany.window != xfi->window->handle)
+		app = True;
 
 	switch (event->type)
 	{
 		case Expose:
-			status = xf_event_Expose(xfi, event);
+			status = xf_event_Expose(xfi, event, app);
 			break;
 
 		case VisibilityNotify:
-			status = xf_event_VisibilityNotify(xfi, event);
+			status = xf_event_VisibilityNotify(xfi, event, app);
 			break;
 
 		case MotionNotify:
-			status = xf_event_MotionNotify(xfi, event);
+			status = xf_event_MotionNotify(xfi, event, app);
 			break;
 
 		case ButtonPress:
-			status = xf_event_ButtonPress(xfi, event);
+			status = xf_event_ButtonPress(xfi, event, app);
 			break;
 
 		case ButtonRelease:
-			status = xf_event_ButtonRelease(xfi, event);
+			status = xf_event_ButtonRelease(xfi, event, app);
 			break;
 
 		case KeyPress:
-			status = xf_event_KeyPress(xfi, event);
+			status = xf_event_KeyPress(xfi, event, app);
 			break;
 
 		case KeyRelease:
-			status = xf_event_KeyRelease(xfi, event);
+			status = xf_event_KeyRelease(xfi, event, app);
 			break;
 
 		case FocusIn:
-			status = xf_event_FocusIn(xfi, event);
+			status = xf_event_FocusIn(xfi, event, app);
 			break;
 
 		case FocusOut:
-			status = xf_event_FocusOut(xfi, event);
+			status = xf_event_FocusOut(xfi, event, app);
 			break;
 
 		case EnterNotify:
-			status = xf_event_EnterNotify(xfi, event);
+			status = xf_event_EnterNotify(xfi, event, app);
 			break;
 
 		case LeaveNotify:
-			status = xf_event_LeaveNotify(xfi, event);
+			status = xf_event_LeaveNotify(xfi, event, app);
 			break;
 
 		case NoExpose:
@@ -356,11 +376,11 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		case MappingNotify:
-			status = xf_event_MappingNotify(xfi, event);
+			status = xf_event_MappingNotify(xfi, event, app);
 			break;
 
 		case ClientMessage:
-			status = xf_event_ClientMessage(xfi, event);
+			status = xf_event_ClientMessage(xfi, event, app);
 			break;
 
 		default:
