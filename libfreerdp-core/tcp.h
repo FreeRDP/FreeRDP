@@ -23,7 +23,8 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
-#include <windows.h>
+#include <Windows.h>
+#include <ws2tcpip.h>
 #endif
 
 #include <freerdp/types.h>

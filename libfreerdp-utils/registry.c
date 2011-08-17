@@ -19,6 +19,10 @@
 
 #include <freerdp/utils/registry.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 static char registry_dir[] = "freerdp";
 static char registry_file[] = "config.txt";
 

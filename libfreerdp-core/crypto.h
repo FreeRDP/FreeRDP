@@ -21,7 +21,7 @@
 #define __CRYPTO_H
 
 #ifdef _WIN32
-#include <winsock.h>
+#include "tcp.h"
 #endif
 
 #include <openssl/ssl.h>

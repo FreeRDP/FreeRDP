@@ -26,4 +26,6 @@ add_library(freerdp-rail SHARED ${FREERDP_RAIL_SRCS})
 
 set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION})
 
+target_link_libraries(freerdp-rail freerdp-utils)
+
 install(TARGETS freerdp-rail DESTINATION lib)

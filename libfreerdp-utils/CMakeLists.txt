@@ -50,4 +50,8 @@ set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} S
 
 target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
 
+if(WIN32)
+	target_link_libraries(freerdp-utils ws2_32)
+endif()
+
 install(TARGETS freerdp-utils DESTINATION lib)

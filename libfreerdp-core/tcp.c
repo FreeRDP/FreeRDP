@@ -32,7 +32,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #else
-#define socklen_t int
 #define close(_fd) closesocket(_fd)
 #endif
 
