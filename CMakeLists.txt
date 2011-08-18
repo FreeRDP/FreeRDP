@@ -32,6 +32,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
 include(AutoVersioning)
 include(ConfigOptions)
+include(FindOptionalPackage)
 
 # Soname versioning - 0.0.0 since it is not being managed yet
 set(FREERDP_VERSION_MAJOR "0")
@@ -79,9 +80,9 @@ find_package(OpenSSL REQUIRED)
 
 if(NOT WIN32)
 	find_package(ZLIB REQUIRED)
-	find_package(ALSA)
-	find_package(PulseAudio)
-	find_package(Cups)
+	find_optional_package(ALSA)
+	find_optional_package(PulseAudio)
+	find_optional_package(Cups)
 endif()
 
 # Endian
