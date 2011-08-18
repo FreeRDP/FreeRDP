@@ -212,7 +212,6 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	rdpCupsPrinter* cups_printer;
 
 	cups_printer = xnew(rdpCupsPrinter);
-printf("*** created printer %s %X of size %d\n", name, cups_printer, sizeof(rdpCupsPrinter));
 
 	cups_printer->printer.id = cups_driver->id_sequence++;
 	cups_printer->printer.name = xstrdup(name);
