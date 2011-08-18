@@ -155,12 +155,14 @@ int tcp_read(rdpTcp* tcp, uint8* data, int length)
 
 	status = recv(tcp->sockfd, data, length, 0);
 
-	if (status < 0)
+	if (status <= 0)
 	{
+		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
-
-		perror("recv");
+		/* When peer disconnects we get status 0 with no error. */
+		if (status < 0)
+			perror("recv");
 		return -1;
 	}
 
