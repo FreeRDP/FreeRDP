@@ -52,6 +52,7 @@ rdpSettings* settings_new()
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0x409;
 		settings->encryption = False;
+		settings->port = 3389;
 
 		settings->performance_flags =
 				PERF_DISABLE_FULLWINDOWDRAG |

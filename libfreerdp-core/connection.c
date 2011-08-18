@@ -63,7 +63,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	rdp->settings->autologon = 1;
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, rdp->settings->hostname, 3389);
+	nego_set_target(rdp->nego, rdp->settings->hostname, rdp->settings->port);
 	nego_set_cookie(rdp->nego, rdp->settings->username);
 	nego_enable_rdp(rdp->nego, rdp->settings->rdp_security);
 	nego_enable_nla(rdp->nego, rdp->settings->nla_security);
