@@ -19,6 +19,8 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/hexdump.h>
+#include <freerdp/utils/unicode.h>
 
 #include <freerdp/rail/window.h>
 
@@ -43,7 +45,10 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-
+		window->titleInfo.length = window_state->titleInfo.length;
+		window->titleInfo.string = xmalloc(window_state->titleInfo.length);
+		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
+		freerdp_hexdump(window->titleInfo.string, window->titleInfo.length);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
@@ -123,11 +128,25 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
+	if (window->titleInfo.length > 0)
+	{
+		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
+	}
+	else
+	{
+		window->title = (char*) xmalloc(sizeof("RAIL"));
+		memcpy(window->title, "RAIL", sizeof("RAIL"));
+	}
+
 	IFCALL(rail->CreateWindow, rail, window);
 }
 
 void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
+	printf("rail_DestroyWindow\n");
+
+	IFCALL(rail->DestroyWindow, rail, window);
+
 	if (window != NULL)
 	{
 		xfree(window);

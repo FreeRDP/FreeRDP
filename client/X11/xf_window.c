@@ -245,9 +245,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 		if (class_hints != NULL)
 		{
-			if (name != NULL)
-				class_hints->res_name = name;
-
+			class_hints->res_name = "rail";
 			class_hints->res_class = "freerdp";
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
@@ -276,14 +274,19 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
 
+		XStoreName(xfi->display, window->handle, name);
+
 		window_move(xfi, window, x, y, width, height);
 	}
 
 	return window;
 }
 
-void window_destroy(xfInfo* xfi, xfWindow* window)
+void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
+	XFreeGC(xfi->display, window->gc);
+	XFreePixmap(xfi->display, window->surface);
+	XUnmapWindow(xfi->display, window->handle);
 	XDestroyWindow(xfi->display, window->handle);
 	xfree(window);
 }

@@ -32,12 +32,15 @@ typedef struct rdp_rail rdpRail;
 #include <freerdp/rail/window_list.h>
 
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
+typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
 
 struct rdp_rail
 {
 	void* extra;
+	UNICONV* uniconv;
 	rdpWindowList* list;
 	railCreateWindow CreateWindow;
+	railDestroyWindow DestroyWindow;
 };
 
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);

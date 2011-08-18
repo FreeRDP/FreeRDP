@@ -80,7 +80,7 @@ rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId)
 	if (window == NULL)
 		return NULL;
 
-	while (window->next != NULL)
+	while (window != NULL)
 	{
 		if (window->windowId == windowId)
 			return window;

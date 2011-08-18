@@ -412,7 +412,7 @@ void xf_window_free(xfInfo* xfi)
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;
 
-	window_destroy(xfi, xfi->window);
+	xf_DestroyWindow(xfi, xfi->window);
 	xfi->window = NULL;
 
 	if (xfi->primary)

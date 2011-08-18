@@ -185,7 +185,7 @@ void update_read_window_cached_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInf
 	update_read_cached_icon_info(s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
-void update_read_window_deleted_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_read_window_delete_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	/* window deletion event */
 }
@@ -209,7 +209,7 @@ void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		DEBUG_WND("Window Deleted Order");
-		update_read_window_deleted_order(s, orderInfo);
+		update_read_window_delete_order(s, orderInfo);
 		IFCALL(update->WindowDelete, update, orderInfo);
 	}
 	else
@@ -245,7 +245,7 @@ void update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* ord
 		update_read_cached_icon_info(s, &notify_icon_state->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
-void update_read_notification_icon_deleted_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_read_notification_icon_delete_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	/* notification icon deletion event */
 }
@@ -258,7 +258,7 @@ void update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WIND
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		DEBUG_WND("Delete Notification Icon Deleted Order");
-		update_read_notification_icon_deleted_order(s, orderInfo);
+		update_read_notification_icon_delete_order(s, orderInfo);
 		IFCALL(update->NotifyIconDelete, update, orderInfo);
 	}
 	else

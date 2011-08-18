@@ -34,6 +34,7 @@ struct rdp_window
 {
 	void* extra;
 	void* extraId;
+	char* title;
 	rdpWindow* prev;
 	rdpWindow* next;
 	uint32 windowId;

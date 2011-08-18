@@ -51,16 +51,24 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra,
 			window->windowOffsetX, window->windowOffsetY,
-			window->windowWidth, window->windowHeight, "RAIL");
+			window->windowWidth, window->windowHeight, window->title);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;
+}
+
+void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
+{
+	xfWindow* xfw;
+	xfw = (xfWindow*) window->extra;
+	xf_DestroyWindow((xfInfo*) rail->extra, xfw);
 }
 
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 {
 	rail->extra = (void*) xfi;
 	rail->CreateWindow = xf_rail_CreateWindow;
+	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
 void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)

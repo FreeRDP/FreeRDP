@@ -59,6 +59,7 @@ rdpRail* rail_new()
 	if (rail != NULL)
 	{
 		rail->list = window_list_new(rail);
+		rail->uniconv = freerdp_uniconv_new();
 	}
 
 	return rail;
@@ -68,6 +69,8 @@ void rail_free(rdpRail* rail)
 {
 	if (rail != NULL)
 	{
+		window_list_free(rail->list);
+		freerdp_uniconv_free(rail->uniconv);
 		xfree(rail);
 	}
 }

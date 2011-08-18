@@ -47,8 +47,9 @@ void window_move(xfInfo* xfi, xfWindow* window, int x, int y, int width, int hei
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
 
 xfWindow* window_create(xfInfo* xfi, char* name);
-void window_destroy(xfInfo* xfi, xfWindow* window);
+void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 
 xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name);
+void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 
 #endif /* __XF_WINDOW_H */
