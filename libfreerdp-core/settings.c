@@ -52,6 +52,7 @@ rdpSettings* settings_new()
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0x409;
 		settings->encryption = False;
+		settings->port = 3389;
 
 		settings->performance_flags =
 				PERF_DISABLE_FULLWINDOWDRAG |
@@ -62,6 +63,8 @@ rdpSettings* settings_new()
 
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+
+		settings->authentication = True;
 
 		/*
 		settings->order_support[NEG_DSTBLT_INDEX] = True;

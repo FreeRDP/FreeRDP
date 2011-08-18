@@ -111,6 +111,9 @@ boolean transport_connect_nla(rdpTransport* transport)
 
 	/* Network Level Authentication */
 
+	if (transport->settings->authentication != True)
+		return True;
+
 	if (transport->credssp == NULL)
 		transport->credssp = credssp_new(transport);
 
