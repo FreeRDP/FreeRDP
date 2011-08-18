@@ -26,10 +26,10 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
-typedef boolean (*pcPeerInitialize)(freerdp_peer* client);
-typedef boolean (*pcPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
-typedef boolean (*pcPeerCheckFileDescriptor)(freerdp_peer* client);
-typedef void (*pcPeerDisconnect)(freerdp_peer* client);
+typedef boolean (*psPeerInitialize)(freerdp_peer* client);
+typedef boolean (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
+typedef boolean (*psPeerCheckFileDescriptor)(freerdp_peer* client);
+typedef void (*psPeerDisconnect)(freerdp_peer* client);
 
 struct rdp_freerdp_peer
 {
@@ -41,10 +41,10 @@ struct rdp_freerdp_peer
 
 	rdpSettings* settings;
 
-	pcPeerInitialize Initialize;
-	pcPeerGetFileDescriptor GetFileDescriptor;
-	pcPeerCheckFileDescriptor CheckFileDescriptor;
-	pcPeerDisconnect Disconnect;
+	psPeerInitialize Initialize;
+	psPeerGetFileDescriptor GetFileDescriptor;
+	psPeerCheckFileDescriptor CheckFileDescriptor;
+	psPeerDisconnect Disconnect;
 };
 
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);

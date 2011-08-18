@@ -31,11 +31,11 @@ typedef struct rdp_freerdp_listener freerdp_listener;
 extern "C" {
 #endif
 
-typedef boolean (*pcListenerOpen)(freerdp_listener* instance, const char* bind_address, uint16 port);
-typedef boolean (*pcListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds, int* rcount);
-typedef boolean (*pcListenerCheckFileDescriptor)(freerdp_listener* instance);
-typedef void (*pcListenerClose)(freerdp_listener* instance);
-typedef void (*pcPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
+typedef boolean (*psListenerOpen)(freerdp_listener* instance, const char* bind_address, uint16 port);
+typedef boolean (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds, int* rcount);
+typedef boolean (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
+typedef void (*psListenerClose)(freerdp_listener* instance);
+typedef void (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
 
 struct rdp_freerdp_listener
 {
@@ -45,12 +45,12 @@ struct rdp_freerdp_listener
 	void* param3;
 	void* param4;
 
-	pcListenerOpen Open;
-	pcListenerGetFileDescriptor GetFileDescriptor;
-	pcListenerCheckFileDescriptor CheckFileDescriptor;
-	pcListenerClose Close;
+	psListenerOpen Open;
+	psListenerGetFileDescriptor GetFileDescriptor;
+	psListenerCheckFileDescriptor CheckFileDescriptor;
+	psListenerClose Close;
 
-	pcPeerAccepted PeerAccepted;
+	psPeerAccepted PeerAccepted;
 };
 
 FREERDP_API freerdp_listener* freerdp_listener_new(void);
