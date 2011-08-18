@@ -26,19 +26,19 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
-typedef struct _RAIL_VCHANNEL_DATA_SENDER RAIL_VCHANNEL_DATA_SENDER;
-typedef struct _RAIL_VCHANNEL_EVENT_SENDER RAIL_VCHANNEL_EVENT_SENDER;
+typedef struct _RAIL_CHANNEL_DATA_SENDER RAIL_CHANNEL_DATA_SENDER;
+typedef struct _RAIL_CHANNEL_EVENT_SENDER RAIL_CHANNEL_EVENT_SENDER;
 
-struct _RAIL_VCHANNEL_DATA_SENDER
+struct _RAIL_CHANNEL_DATA_SENDER
 {
 	void* data_sender_object;
-	void  (*send_rail_vchannel_data)(void* sender_object, void* data, size_t length);
+	void  (*send_rail_channel_data)(void* sender_object, void* data, size_t length);
 };
 
-struct _RAIL_VCHANNEL_EVENT_SENDER
+struct _RAIL_CHANNEL_EVENT_SENDER
 {
 	void * event_sender_object;
-	void (*send_rail_vchannel_event)(void* ui_event_sender_object, RAIL_CHANNEL_EVENT* event);
+	void (*send_rail_channel_event)(void* ui_event_sender_object, uint16 event_type, void* param);
 };
 
 struct rdp_rail_order
@@ -60,19 +60,21 @@ struct rdp_rail_order
 	RAIL_LANGBAR_INFO_ORDER langbar_info;
 	RAIL_GET_APPID_REQ_ORDER get_appid_req;
 	RAIL_GET_APPID_RESP_ORDER get_appid_resp;
-	RAIL_VCHANNEL_DATA_SENDER* data_sender;
-	RAIL_VCHANNEL_EVENT_SENDER* event_sender;
+	RAIL_CHANNEL_DATA_SENDER* data_sender;
+	RAIL_CHANNEL_EVENT_SENDER* event_sender;
 };
 typedef struct rdp_rail_order rdpRailOrder;
 
 struct rail_plugin
 {
 	rdpSvcPlugin plugin;
-	RAIL_VCHANNEL_DATA_SENDER rail_data_sender;
-	RAIL_VCHANNEL_EVENT_SENDER rail_event_sender;
+	RAIL_CHANNEL_DATA_SENDER rail_data_sender;
+	RAIL_CHANNEL_EVENT_SENDER rail_event_sender;
 	rdpRailOrder* rail_order;
 };
 typedef struct rail_plugin railPlugin;
+
+void rail_send_channel_event(void* rail_object, uint16 event_type, void* param);
 
 #define WITH_DEBUG_RAIL	1
 

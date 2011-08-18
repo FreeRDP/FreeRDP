@@ -47,18 +47,11 @@ static void on_free_rail_channel_event(RDP_EVENT* event)
 
 }
 
-static void rail_send_channel_event(void* rail_object, RAIL_CHANNEL_EVENT* event)
+void rail_send_channel_event(void* rail_object, uint16 event_type, void* param)
 {
-	railPlugin* plugin = (railPlugin*) rail_object;
-	RAIL_CHANNEL_EVENT* payload = NULL;
 	RDP_EVENT* out_event = NULL;
-
-	payload = xnew(RAIL_CHANNEL_EVENT);
-	memset(payload, 0, sizeof(RAIL_CHANNEL_EVENT));
-	memcpy(payload, event, sizeof(RAIL_CHANNEL_EVENT));
-
-	out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, RDP_EVENT_TYPE_RAIL_CHANNEL, on_free_rail_channel_event, payload);
-
+	railPlugin* plugin = (railPlugin*) rail_object;
+	out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type, on_free_rail_channel_event, param);
 	svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
 }
 
@@ -67,10 +60,10 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	rail->rail_event_sender.event_sender_object = rail;
-	rail->rail_event_sender.send_rail_vchannel_event = rail_send_channel_event;
+	rail->rail_event_sender.send_rail_channel_event = rail_send_channel_event;
 
 	rail->rail_data_sender.data_sender_object  = rail;
-	rail->rail_data_sender.send_rail_vchannel_data = rail_send_channel_data;
+	rail->rail_data_sender.send_rail_channel_data = rail_send_channel_data;
 
 	rail->rail_order = rail_order_new();
 	rail->rail_order->plugin_data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
@@ -90,13 +83,47 @@ static void rail_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	stream_free(s);
 }
 
+void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+{
+	RDP_PLUGIN_DATA* data;
+
+	/* Send System Parameters */
+
+	rail_send_client_sysparams_order(rail_order);
+
+	/* execute */
+
+	rail_order->exec.flags =
+			RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY |
+			RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
+
+	data = rail_order->plugin_data;
+	while (data && data->size > 0)
+	{
+		rail_string_to_unicode_string(rail_order, (char*)data->data[0], &rail_order->exec.exeOrFile);
+		rail_string_to_unicode_string(rail_order, (char*)data->data[1], &rail_order->exec.workingDir);
+		rail_string_to_unicode_string(rail_order, (char*)data->data[2], &rail_order->exec.arguments);
+
+		rail_send_client_exec_order(rail_order);
+
+		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
+	}
+}
+
 static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
-	RAIL_CLIENT_EVENT* rail_ui_event = NULL;
 	railPlugin* rail = NULL;
+	rail = (railPlugin*) plugin;
 
-	rail = (railPlugin*)plugin;
-	rail_ui_event = (RAIL_CLIENT_EVENT*)event->user_data;
+	switch (event->event_type)
+	{
+		case RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS:
+			rail_recv_set_sysparams_event(rail->rail_order, event);
+			break;
+
+		default:
+			break;
+	}
 
 	freerdp_event_free(event);
 }

@@ -56,10 +56,10 @@ static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
 	switch (event_type)
 	{
 		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
-			event = (RDP_EVENT*)xnew(RDP_VIDEO_FRAME_EVENT);
+			event = (RDP_EVENT*) xnew(RDP_VIDEO_FRAME_EVENT);
 			break;
 		case RDP_EVENT_TYPE_TSMF_REDRAW:
-			event = (RDP_EVENT*)xnew(RDP_REDRAW_EVENT);
+			event = (RDP_EVENT*) xnew(RDP_REDRAW_EVENT);
 			break;
 	}
 
@@ -68,7 +68,9 @@ static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
 
 static RDP_EVENT* freerdp_rail_event_new(uint16 event_type)
 {
-	return xnew(RDP_EVENT);
+	RDP_EVENT* event = NULL;
+	event = xnew(RDP_EVENT);
+	return event;
 }
 
 RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
@@ -91,6 +93,7 @@ RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
 			event = freerdp_rail_event_new(event_type);
 			break;
 	}
+
 	if (event != NULL)
 	{
 		event->event_class = event_class;

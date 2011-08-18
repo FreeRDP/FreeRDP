@@ -355,7 +355,7 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
 
 	freerdp_chanman_send_event(chanman, event);
@@ -363,21 +363,31 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 
 void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 {
+	xfInfo* xfi;
 	RDP_EVENT* event;
 
+	xfi = GET_XFI(instance);
+
 	event = freerdp_chanman_pop_event(chanman);
+
 	if (event)
 	{
+		switch (event->event_class)
+		{
+			case RDP_EVENT_CLASS_RAIL:
+				xf_process_rail_event(xfi, chanman, event);
+				break;
+
+			default:
+				break;
+		}
+
 		switch (event->event_type)
 		{
 			case RDP_EVENT_TYPE_CB_SYNC:
 				xf_process_cb_sync_event(chanman, instance);
 				break;
-			case RDP_EVENT_TYPE_RAIL_CHANNEL:
-				xf_process_rail_event(chanman, instance);
-				break;
 			default:
-				printf("xf_process_channel_event: unknown event type %d\n", event->event_type);
 				break;
 		}
 		freerdp_event_free(event);

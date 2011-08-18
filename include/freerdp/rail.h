@@ -192,10 +192,18 @@ typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 
 struct _RAIL_SYSPARAM_ORDER
 {
-	uint32 systemParam;
-	boolean value;
-	RECTANGLE_16 rectangle;
+	uint32 param;
+	uint32 params;
+	boolean dragFullWindows;
+	boolean keyboardCues;
+	boolean keyboardPref;
+	boolean mouseButtonSwap;
+	RECTANGLE_16 workArea;
+	RECTANGLE_16 displayChange;
+	RECTANGLE_16 taskbarPos;
 	HIGH_CONTRAST highContrast;
+	boolean set_screen_save_active;
+	boolean set_screen_save_secure;
 };
 typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
 
@@ -305,25 +313,9 @@ enum RDP_RAIL_PDU_TYPE
 
 enum RDP_EVENT_TYPE_RAIL
 {
-	RDP_EVENT_TYPE_RAIL_CLIENT = 1,
-	RDP_EVENT_TYPE_RAIL_CHANNEL
+	RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS = 1,
+	RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS = 2
 };
-
-/* RAIL Common structures */
-
-struct _RAIL_CHANNEL_EVENT
-{
-	uint32 id;
-	void* param;
-};
-typedef struct _RAIL_CHANNEL_EVENT RAIL_CHANNEL_EVENT;
-
-struct _RAIL_CLIENT_EVENT
-{
-	uint32 id;
-	void* param;
-};
-typedef struct _RAIL_CLIENT_EVENT RAIL_CLIENT_EVENT;
 
 #endif /* __RAIL_GLOBAL_H */
 
