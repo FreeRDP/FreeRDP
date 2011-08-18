@@ -116,8 +116,6 @@ boolean window_GetWorkArea(xfInfo* xfi)
 	xfi->workArea.height = plong[xfi->current_desktop * 4 + 3];
 	xfree(prop);
 
-	printf("x:%d y:%d w:%d h:%d\n", xfi->workArea.x, xfi->workArea.y, xfi->workArea.width, xfi->workArea.height);
-
 	return True;
 }
 
@@ -148,7 +146,7 @@ void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
 	window->decorations = show;
 }
 
-xfWindow* window_create(xfInfo* xfi, char* name)
+xfWindow* desktop_create(xfInfo* xfi, char* name)
 {
 	xfWindow* window;
 
@@ -272,6 +270,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
+	XSizeHints* size_hints;
 	XWindowChanges changes;
 
 	changes.x = x;
@@ -280,6 +279,22 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	changes.height = height;
 
 	XConfigureWindow(xfi->display, window->handle, CWX | CWY | CWWidth | CWHeight, &changes);
+
+	window->width = width;
+	window->height = height;
+	XFreePixmap(xfi->display, window->surface);
+	window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
+
+	size_hints = XAllocSizeHints();
+
+	if (size_hints)
+	{
+		size_hints->flags = PMinSize | PMaxSize;
+		size_hints->min_width = size_hints->max_width = window->width;
+		size_hints->min_height = size_hints->max_height = window->height;
+		XSetWMNormalHints(xfi->display, window->handle, size_hints);
+		XFree(size_hints);
+	}
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

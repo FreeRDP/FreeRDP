@@ -71,12 +71,16 @@ void xf_end_paint(rdpUpdate* update)
 	w = gdi->primary->hdc->hwnd->invalid->w;
 	h = gdi->primary->hdc->hwnd->invalid->h;
 
-	XPutImage(xfi->display, xfi->primary, xfi->gc_default, xfi->image, x, y, x, y, w, h);
-	XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, w, h, x, y);
-	XFlush(xfi->display);
-
-	if (xfi->remote_app == True)
+	if (xfi->remote_app != True)
+	{
+		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		XFlush(xfi->display);
+	}
+	else
+	{
 		xf_rail_paint(xfi, update->rail);
+	}
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -283,39 +287,35 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
 
-	xfi->window = window_create(xfi, "xfreerdp");
-
-	window_show_decorations(xfi, xfi->window, xfi->decoration);
-	window_fullscreen(xfi, xfi->window, xfi->fullscreen);
-
-	/* wait for VisibilityNotify */
-	do
+	if (xfi->remote_app != True)
 	{
-		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+		xfi->window = desktop_create(xfi, "xfreerdp");
+
+		window_show_decorations(xfi, xfi->window, xfi->decoration);
+		window_fullscreen(xfi, xfi->window, xfi->fullscreen);
+
+		/* wait for VisibilityNotify */
+		do
+		{
+			XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+		}
+		while (xevent.type != VisibilityNotify);
+
+		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+
+		protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
+		kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
+		XSetWMProtocols(xfi->display, xfi->window->handle, &kill_atom, 1);
 	}
-	while (xevent.type != VisibilityNotify);
 
-	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 	memset(&gcv, 0, sizeof(gcv));
+	xfi->modifier_map = XGetModifierMapping(xfi->display);
 
-	protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
-	kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
-	XSetWMProtocols(xfi->display, xfi->window->handle, &kill_atom, 1);
+	xfi->gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCGraphicsExposures, &gcv);
+	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
 
-	if (!xfi->gc)
-		xfi->gc = XCreateGC(xfi->display, xfi->window->handle, GCGraphicsExposures, &gcv);
-
-	if (!xfi->primary)
-		xfi->primary = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
-
-	xfi->drawing = xfi->primary;
-
-	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window->handle, 8, 8, 1);
-	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
-	xfi->gc_default = XCreateGC(xfi->display, xfi->window->handle, GCGraphicsExposures, &gcv);
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
-	xfi->modifier_map = XGetModifierMapping(xfi->display);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
@@ -398,16 +398,6 @@ void xf_window_free(xfInfo* xfi)
 {
 	XFreeModifiermap(xfi->modifier_map);
 	xfi->modifier_map = 0;
-
-	XFreeGC(xfi->display, xfi->gc_default);
-	xfi->gc_default = 0;
-
-	XFreeGC(xfi->display, xfi->gc_mono);
-	xfi->gc_mono = 0;
-
-	/* Note: valgrind reports this at lost no matter what */
-	XFreePixmap(xfi->display, xfi->bitmap_mono);
-	xfi->bitmap_mono = 0;
 
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;

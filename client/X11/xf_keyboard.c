@@ -103,11 +103,14 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 int xf_kbd_read_keyboard_state(xfInfo* xfi)
 {
 	int dummy;
-	uint32 state;
 	Window wdummy;
+	uint32 state = 0;
 
-	XQueryPointer(xfi->display, xfi->window->handle,
+	if (xfi->remote_app != True)
+	{
+		XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
+	}
 
 	return state;
 }

@@ -57,7 +57,6 @@ struct xf_info
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
-	Drawable drawing;
 	Visual* visual;
 	Display* display;
 	Colormap colormap;
@@ -73,10 +72,6 @@ struct xf_info
 	int current_desktop;
 	boolean remote_app;
 	rdpRail* rail;
-
-	GC gc_mono;
-	GC gc_default;
-	Pixmap bitmap_mono;
 
 	boolean focused;
 	boolean mouse_active;

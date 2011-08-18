@@ -29,18 +29,37 @@ void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, ui
 
 boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 {
-	int x;
-	int y;
-	int cx;
-	int cy;
+	int x, y;
+	int cx, cy;
 
-	if (event->xexpose.window == xfi->window->handle)
+	if (app != True)
 	{
 		x = event->xexpose.x;
 		y = event->xexpose.y;
 		cx = event->xexpose.width;
 		cy = event->xexpose.height;
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc_default, x, y, cx, cy, x, y);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, cx, cy, x, y);
+	}
+	else
+	{
+		xfWindow* xfw;
+		rdpWindow* window;
+
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+
+		if (window != NULL)
+		{
+			xfw = (xfWindow*) window->extra;
+
+			XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
+					window->windowOffsetX, window->windowOffsetY,
+					window->windowOffsetX, window->windowOffsetY,
+					window->windowWidth, window->windowHeight);
+
+			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
+					window->windowOffsetX, window->windowOffsetY,
+					window->windowWidth, window->windowHeight, 0, 0);
+		}
 	}
 
 	return True;
@@ -48,7 +67,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (event->xvisibility.window == xfi->window->handle)
+	if (app != True)
 		xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
 
 	return True;
@@ -60,7 +79,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 	input = xfi->instance->input;
 
-	if (event->xmotion.window == xfi->window->handle)
+	if (app != True)
 	{
 		if (xfi->mouse_motion != True)
 		{
@@ -69,10 +88,10 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		}
 
 		input->MouseEvent(input, PTR_FLAGS_MOVE, event->xmotion.x, event->xmotion.y);
-	}
 
-	if (xfi->fullscreen)
-		XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
+		if (xfi->fullscreen)
+			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
+	}
 
 	return True;
 }
@@ -258,7 +277,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 
 	xfi->focused = True;
 
-	if (xfi->mouse_active)
+	if (xfi->mouse_active && (app != True))
 		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	xf_kbd_focus_in(xfi);
@@ -309,13 +328,16 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	xfi->mouse_active = True;
+	if (app != True)
+	{
+		xfi->mouse_active = True;
 
-	if (xfi->fullscreen)
-		XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
+		if (xfi->fullscreen)
+			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 
-	if (xfi->focused)
-		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		if (xfi->focused)
+			XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+	}
 
 	return True;
 }
@@ -328,14 +350,26 @@ boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return True;
 }
 
+boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
+{
+	return True;
+}
+
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
 	boolean app = False;
 	boolean status = True;
 	xfInfo* xfi = GET_XFI(instance);
 
-	if (event->xany.window != xfi->window->handle)
+	if (xfi->remote_app == True)
+	{
 		app = True;
+	}
+	else
+	{
+		if (event->xany.window != xfi->window->handle)
+			app = True;
+	}
 
 	switch (event->type)
 	{
@@ -390,6 +424,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		case ConfigureNotify:
+			status = xf_event_ConfigureNotify(xfi, event, app);
 			break;
 
 		case MapNotify:

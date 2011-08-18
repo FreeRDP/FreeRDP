@@ -34,12 +34,14 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
-		//printf("painting window 0x%08X\n", window->windowId);
-
-		XCopyArea(xfi->display, xfi->window->handle, xfw->handle, xfw->gc,
+		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
 				window->windowOffsetX, window->windowOffsetY,
-				window->windowWidth, window->windowHeight,
-				0, 0);
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowWidth, window->windowHeight);
+
+		XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowWidth, window->windowHeight, 0, 0);
 
 		XFlush(xfi->display);
 	}
@@ -73,6 +75,8 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 			window->windowOffsetX + xfi->workArea.x,
 			window->windowOffsetY + xfi->workArea.y,
 			window->windowWidth, window->windowHeight);
+
+	XFlush(xfi->display);
 }
 
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
