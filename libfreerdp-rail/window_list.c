@@ -60,7 +60,7 @@ rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId)
 	if (window == NULL)
 		return NULL;
 
-	while (window->next != NULL)
+	while (window != NULL)
 	{
 		if (window->extraId == extraId)
 			return window;

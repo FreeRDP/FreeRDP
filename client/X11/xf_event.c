@@ -139,7 +139,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 			if (app)
 			{
 				rdpWindow* window;
-				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
 
 				if (window != NULL)
 				{
