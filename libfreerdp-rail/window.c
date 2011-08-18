@@ -26,6 +26,8 @@
 
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
+	window->fieldFlags = orderInfo->fieldFlags;
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
 		window->ownerWindowId = window_state->ownerWindowId;
@@ -141,10 +143,77 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	IFCALL(rail->CreateWindow, rail, window);
 }
 
+void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
+{
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
+	{
+		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
+	{
+
+	}
+
+	if ((window->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
+			(window->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
+	{
+		IFCALL(rail->MoveWindow, rail, window);
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
+	{
+
+	}
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
+	{
+
+	}
+}
+
 void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
-	printf("rail_DestroyWindow\n");
-
 	IFCALL(rail->DestroyWindow, rail, window);
 
 	if (window != NULL)

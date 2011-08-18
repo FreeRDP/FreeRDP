@@ -33,6 +33,7 @@ typedef struct rdp_rail rdpRail;
 
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
+typedef void (*railMoveWindow)(rdpRail* rail, rdpWindow* window);
 
 struct rdp_rail
 {
@@ -41,6 +42,7 @@ struct rdp_rail
 	rdpWindowList* list;
 	railCreateWindow CreateWindow;
 	railDestroyWindow DestroyWindow;
+	railMoveWindow MoveWindow;
 };
 
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);

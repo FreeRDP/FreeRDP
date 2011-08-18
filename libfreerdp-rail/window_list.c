@@ -133,6 +133,8 @@ void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 		return;
 
 	window_state_update(window, orderInfo, window_state);
+
+	rail_UpdateWindow(list->rail, window);
 }
 
 void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)

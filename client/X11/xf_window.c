@@ -121,18 +121,6 @@ boolean window_GetWorkArea(xfInfo* xfi)
 	return True;
 }
 
-void window_move(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
-{
-	XWindowChanges changes;
-
-	changes.x = x;
-	changes.y = y;
-	changes.width = width;
-	changes.height = height;
-
-	XConfigureWindow(xfi->display, window->handle, CWX | CWY | CWWidth | CWHeight, &changes);
-}
-
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
 {
 	Atom atom;
@@ -276,10 +264,22 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 		XStoreName(xfi->display, window->handle, name);
 
-		window_move(xfi, window, x, y, width, height);
+		xf_MoveWindow(xfi, window, x, y, width, height);
 	}
 
 	return window;
+}
+
+void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
+{
+	XWindowChanges changes;
+
+	changes.x = x;
+	changes.y = y;
+	changes.width = width;
+	changes.height = height;
+
+	XConfigureWindow(xfi->display, window->handle, CWX | CWY | CWWidth | CWHeight, &changes);
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

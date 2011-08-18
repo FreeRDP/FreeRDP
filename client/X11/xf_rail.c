@@ -57,6 +57,16 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	window->extraId = (void*) xfw->handle;
 }
 
+void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
+{
+	xfWindow* xfw;
+	xfw = (xfWindow*) window->extra;
+
+	xf_MoveWindow((xfInfo*) rail->extra, xfw,
+			window->windowOffsetX, window->windowOffsetY,
+			window->windowWidth, window->windowHeight);
+}
+
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfWindow* xfw;
@@ -68,6 +78,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 {
 	rail->extra = (void*) xfi;
 	rail->CreateWindow = xf_rail_CreateWindow;
+	rail->MoveWindow = xf_rail_MoveWindow;
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
