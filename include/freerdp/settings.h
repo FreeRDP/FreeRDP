@@ -173,6 +173,7 @@ struct rdp_settings
 	uint32 selected_protocol;
 	uint32 encryption_method;
 	uint32 encryption_level;
+	boolean authentication;
 
 	rdpBlob server_random;
 	rdpBlob server_certificate;

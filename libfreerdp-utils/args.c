@@ -188,6 +188,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->offscreen_bitmap_cache = 0;
 		}
+		else if (strcmp("--no-auth", argv[index]) == 0)
+		{
+			settings->authentication = False;
+		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
 			settings->fastpath_input = False;

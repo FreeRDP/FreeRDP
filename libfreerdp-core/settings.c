@@ -64,6 +64,8 @@ rdpSettings* settings_new()
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
+		settings->authentication = True;
+
 		/*
 		settings->order_support[NEG_DSTBLT_INDEX] = True;
 		settings->order_support[NEG_PATBLT_INDEX] = True;
