@@ -133,3 +133,4 @@ if(NOT WIN32)
 endif()
 
 add_subdirectory(client)
+add_subdirectory(server)
