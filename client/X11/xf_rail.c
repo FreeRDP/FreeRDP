@@ -47,10 +47,14 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
 
 void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
+	xfInfo* xfi;
 	xfWindow* xfw;
 
+	xfi = (xfInfo*) rail->extra;
+
 	xfw = xf_CreateWindow((xfInfo*) rail->extra,
-			window->windowOffsetX, window->windowOffsetY,
+			window->windowOffsetX + xfi->workArea.x,
+			window->windowOffsetY + xfi->workArea.y,
 			window->windowWidth, window->windowHeight, window->title);
 
 	window->extra = (void*) xfw;
@@ -59,11 +63,15 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 
 void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 {
+	xfInfo* xfi;
 	xfWindow* xfw;
+
+	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
-			window->windowOffsetX, window->windowOffsetY,
+			window->windowOffsetX + xfi->workArea.x,
+			window->windowOffsetY + xfi->workArea.y,
 			window->windowWidth, window->windowHeight);
 }
 
