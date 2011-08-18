@@ -63,6 +63,11 @@ boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 
 	return transport->tcp->connect(transport->tcp, hostname, port);
 }
 
+void transport_attach(rdpTransport* transport, int sockfd)
+{
+	transport->tcp->sockfd = sockfd;
+}
+
 boolean transport_disconnect(rdpTransport* transport)
 {
 	return transport->tcp->disconnect(transport->tcp);

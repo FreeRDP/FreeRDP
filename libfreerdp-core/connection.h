@@ -31,6 +31,12 @@
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 
+enum CONNECTION_STATE
+{
+	CONNECTION_STATE_INITIAL = 0,
+	CONNECTION_STATE_NEGO
+};
+
 boolean rdp_client_connect(rdpRdp* rdp);
 
 #endif /* __CONNECTION_H */

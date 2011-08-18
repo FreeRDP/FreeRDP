@@ -85,10 +85,10 @@ static void* test_peer_mainloop(void* arg)
 			break;
 	}
 
+	printf("Client %s disconnected.\n", client->settings->hostname);
+
 	client->Disconnect(client);
 	freerdp_peer_free(client);
-
-	printf("Client %s disconnected.\n", client->settings->hostname);
 
 	return NULL;
 }

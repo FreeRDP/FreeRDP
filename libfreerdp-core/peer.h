@@ -29,7 +29,8 @@ struct rdp_peer
 {
 	freerdp_peer* client;
 
-	int sockfd;
+	rdpRdp* rdp;
+	int state;
 };
 
 #endif /* __PEER */
