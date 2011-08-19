@@ -169,8 +169,18 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 {
+	int i;
+
 	if (!mcs_read_connect_initial(rdp->mcs, s))
 		return False;
+
+	printf("Accepted client: %s\n", rdp->settings->client_hostname);
+	printf("Accepted channels:");
+	for (i = 0; i < rdp->settings->num_channels; i++)
+	{
+		printf(" %s", rdp->settings->channels[i].name);
+	}
+	printf("\n");
 
 	return True;
 }

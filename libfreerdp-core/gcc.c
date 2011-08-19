@@ -276,22 +276,22 @@ boolean gcc_read_client_data_blocks(STREAM* s, rdpSettings *settings, int length
 				break;
 
 			case CS_SECURITY:
-				if (!gcc_read_client_security_data(s, settings))
+				if (!gcc_read_client_security_data(s, settings, blockLength - 4))
 					return False;
 				break;
 
 			case CS_NET:
-				if (!gcc_read_client_network_data(s, settings))
+				if (!gcc_read_client_network_data(s, settings, blockLength - 4))
 					return False;
 				break;
 
 			case CS_CLUSTER:
-				if (!gcc_read_client_cluster_data(s, settings))
+				if (!gcc_read_client_cluster_data(s, settings, blockLength - 4))
 					return False;
 				break;
 
 			case CS_MONITOR:
-				if (!gcc_read_client_monitor_data(s, settings))
+				if (!gcc_read_client_monitor_data(s, settings, blockLength - 4))
 					return False;
 				break;
 
@@ -479,6 +479,46 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings *settings, uint16 block
 			return False;
 	} while (0);
 
+	if (highColorDepth > 0)
+		settings->color_depth = highColorDepth;
+	else if (postBeta2ColorDepth > 0)
+	{
+		switch (postBeta2ColorDepth)
+		{
+			case RNS_UD_COLOR_4BPP:
+				settings->color_depth = 4;
+				break;
+			case RNS_UD_COLOR_8BPP:
+				settings->color_depth = 8;
+				break;
+			case RNS_UD_COLOR_16BPP_555:
+				settings->color_depth = 15;
+				break;
+			case RNS_UD_COLOR_16BPP_565:
+				settings->color_depth = 16;
+				break;
+			case RNS_UD_COLOR_24BPP:
+				settings->color_depth = 24;
+				break;
+			default:
+				return False;
+		}
+	}
+	else
+	{
+		switch (colorDepth)
+		{
+			case RNS_UD_COLOR_4BPP:
+				settings->color_depth = 4;
+				break;
+			case RNS_UD_COLOR_8BPP:
+				settings->color_depth = 8;
+				break;
+			default:
+				return False;
+		}
+	}
+
 	return True;
 }
 
@@ -601,9 +641,15 @@ void gcc_read_server_core_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings)
+boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings, uint16 blockLength)
 {
-	printf("CS_SECURITY\n");
+	if (blockLength < 8)
+		return False;
+
+	stream_read_uint32(s, settings->encryption_method); /* encryptionMethods */
+	if (settings->encryption_method == 0)
+		stream_read_uint32(s, settings->encryption_method); /* extEncryptionMethods */
+
 	return True;
 }
 
@@ -673,9 +719,27 @@ void gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings)
+boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings, uint16 blockLength)
 {
-	printf("CS_NETWORK\n");
+	int i;
+
+	if (blockLength < 4)
+		return False;
+
+	stream_read_uint32(s, settings->num_channels); /* channelCount */
+	if (blockLength < 4 + settings->num_channels * 12)
+		return False;
+	if (settings->num_channels > 16)
+		return False;
+
+	/* channelDefArray */
+	for (i = 0; i < settings->num_channels; i++)
+	{
+		/* CHANNEL_DEF */
+		stream_read(s, settings->channels[i].name, 8); /* name (8 bytes) */
+		stream_read_uint32(s, settings->channels[i].options); /* options (4 bytes) */
+	}
+
 	return True;
 }
 
@@ -741,9 +805,18 @@ void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings *settings)
+boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings *settings, uint16 blockLength)
 {
-	printf("CS_CLUSTER\n");
+	uint32 flags;
+
+	if (blockLength < 8)
+		return False;
+
+	stream_read_uint32(s, flags); /* flags */
+
+	if ((flags | REDIRECTED_SESSIONID_FIELD_VALID))
+		stream_read_uint32(s, settings->redirected_session_id); /* redirectedSessionID */
+
 	return True;
 }
 
@@ -776,7 +849,7 @@ void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
  * @param settings rdp settings
  */
 
-boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings)
+boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings, uint16 blockLength)
 {
 	printf("CS_MONITOR\n");
 	return True;

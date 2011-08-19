@@ -111,15 +111,15 @@ void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length);
 boolean gcc_read_client_core_data(STREAM* s, rdpSettings *settings, uint16 blockLength);
 void gcc_write_client_core_data(STREAM* s, rdpSettings *settings);
 void gcc_read_server_core_data(STREAM* s, rdpSettings *settings);
-boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings);
+boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings, uint16 blockLength);
 void gcc_write_client_security_data(STREAM* s, rdpSettings *settings);
 void gcc_read_server_security_data(STREAM* s, rdpSettings *settings);
-boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings);
+boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings, uint16 blockLength);
 void gcc_write_client_network_data(STREAM* s, rdpSettings *settings);
 void gcc_read_server_network_data(STREAM* s, rdpSettings *settings);
-boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings *settings);
+boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings *settings, uint16 blockLength);
 void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings);
-boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings);
+boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings, uint16 blockLength);
 void gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings);
 
 #endif /* __GCC_H */
