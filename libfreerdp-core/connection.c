@@ -108,3 +108,45 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	return True;
 }
 
+boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
+{
+	if (!nego_recv_request(rdp->nego, s))
+		return False;
+	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
+	{
+		printf("Standard RDP encryption is not supported.\n");
+		return False;
+	}
+
+	printf("Requested protocols:");
+	if ((rdp->nego->requested_protocols | PROTOCOL_TLS))
+	{
+		printf(" TLS");
+		if (rdp->settings->tls_security)
+		{
+			printf("(Y)");
+			rdp->nego->selected_protocol |= PROTOCOL_TLS;
+		}
+		else
+			printf("(n)");
+	}
+	if ((rdp->nego->requested_protocols | PROTOCOL_NLA))
+	{
+		printf(" NLA");
+		if (rdp->settings->nla_security)
+		{
+			printf("(Y)");
+			rdp->nego->selected_protocol |= PROTOCOL_NLA;
+		}
+		else
+			printf("(n)");
+	}
+	printf("\n");
+
+	nego_send_negotiation_response(rdp->nego);
+
+	rdp->state = CONNECTION_STATE_NEGO;
+
+	return True;
+}
+

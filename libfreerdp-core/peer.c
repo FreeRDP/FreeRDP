@@ -23,7 +23,7 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	rdpPeer* peer = (rdpPeer*)client->peer;
 
-	peer->state = CONNECTION_STATE_INITIAL;
+	peer->rdp->state = CONNECTION_STATE_INITIAL;
 
 	return True;
 }
@@ -53,59 +53,19 @@ static boolean freerdp_peer_check_fds(freerdp_peer* client)
 	return True;
 }
 
-static int peer_process_connection_nego(rdpPeer* peer, STREAM* s)
-{
-	if (!nego_recv_request(peer->rdp->nego, s))
-		return -1;
-	if (peer->rdp->nego->requested_protocols == PROTOCOL_RDP)
-	{
-		printf("Standard RDP encryption is not supported.\n");
-		return -1;
-	}
-
-	printf("Requested protocols:");
-	if ((peer->rdp->nego->requested_protocols | PROTOCOL_TLS))
-	{
-		printf(" TLS");
-		if (peer->rdp->settings->tls_security)
-		{
-			printf("(Y)");
-			peer->rdp->nego->selected_protocol |= PROTOCOL_TLS;
-		}
-		else
-			printf("(n)");
-	}
-	if ((peer->rdp->nego->requested_protocols | PROTOCOL_NLA))
-	{
-		printf(" NLA");
-		if (peer->rdp->settings->nla_security)
-		{
-			printf("(Y)");
-			peer->rdp->nego->selected_protocol |= PROTOCOL_NLA;
-		}
-		else
-			printf("(n)");
-	}
-	printf("\n");
-
-	nego_send_negotiation_response(peer->rdp->nego);
-
-	peer->state = CONNECTION_STATE_NEGO;
-
-	return 1;
-}
-
 static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	rdpPeer* peer = (rdpPeer*)extra;
 
-	switch (peer->state)
+	switch (peer->rdp->state)
 	{
 		case CONNECTION_STATE_INITIAL:
-			return peer_process_connection_nego(peer, s);
+			if (!rdp_server_accept_nego(peer->rdp, s))
+				return -1;
+			break;
 
 		default:
-			printf("Invalid state %d\n", peer->state);
+			printf("Invalid state %d\n", peer->rdp->state);
 			return -1;
 	}
 
