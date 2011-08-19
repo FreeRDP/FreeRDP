@@ -63,6 +63,11 @@ boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 
 	return transport->tcp->connect(transport->tcp, hostname, port);
 }
 
+void transport_attach(rdpTransport* transport, int sockfd)
+{
+	transport->tcp->sockfd = sockfd;
+}
+
 boolean transport_disconnect(rdpTransport* transport)
 {
 	return transport->tcp->disconnect(transport->tcp);
@@ -122,6 +127,52 @@ boolean transport_connect_nla(rdpTransport* transport)
 	}
 
 	credssp_free(transport->credssp);
+
+	return True;
+}
+
+boolean transport_accept_rdp(rdpTransport* transport)
+{
+	transport->state = TRANSPORT_STATE_RDP;
+
+	/* RDP encryption */
+
+	return True;
+}
+
+boolean transport_accept_tls(rdpTransport* transport)
+{
+	if (transport->tls == NULL)
+		transport->tls = tls_new();
+
+	transport->layer = TRANSPORT_LAYER_TLS;
+	transport->state = TRANSPORT_STATE_TLS;
+	transport->tls->sockfd = transport->tcp->sockfd;
+
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
+		return False;
+
+	return True;
+}
+
+boolean transport_accept_nla(rdpTransport* transport)
+{
+	if (transport->tls == NULL)
+		transport->tls = tls_new();
+
+	transport->layer = TRANSPORT_LAYER_TLS;
+	transport->state = TRANSPORT_STATE_NLA;
+	transport->tls->sockfd = transport->tcp->sockfd;
+
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
+		return False;
+
+	/* Network Level Authentication */
+
+	if (transport->settings->authentication != True)
+		return True;
+
+	/* Blocking here until NLA is complete */
 
 	return True;
 }

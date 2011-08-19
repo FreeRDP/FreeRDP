@@ -179,7 +179,7 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 
 void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id)
 {
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, channel_id, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */

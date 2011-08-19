@@ -26,6 +26,24 @@ boolean tls_connect(rdpTls* tls)
 {
 	int connection_status;
 
+	tls->ctx = SSL_CTX_new(TLSv1_client_method());
+
+	if (tls->ctx == NULL)
+	{
+		printf("SSL_CTX_new failed\n");
+		return False;
+	}
+
+	/*
+	 * This is necessary, because the Microsoft TLS implementation is not perfect.
+	 * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
+	 * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
+	 * As the size of the encrypted payload may give hints about its contents,
+	 * block padding is normally used, but the Microsoft TLS implementation
+	 * won't recognize it and will disconnect you after sending a TLS alert.
+	 */
+	SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
+
 	tls->ssl = SSL_new(tls->ctx);
 
 	if (tls->ssl == NULL)
@@ -40,30 +58,66 @@ boolean tls_connect(rdpTls* tls)
 		return False;
 	}
 
-	while (1)
-	{
-		connection_status = SSL_connect(tls->ssl);
+	connection_status = SSL_connect(tls->ssl);
 
-		/*
-		 * SSL_WANT_READ and SSL_WANT_WRITE errors are normal,
-		 * just try again if it happens
-		 */
-
-		if (connection_status == SSL_ERROR_WANT_READ)
-			continue;
-		else if (connection_status == SSL_ERROR_WANT_WRITE)
-			continue;
-		else
-			break;
-	}
-
-	if (connection_status < 0)
+	if (connection_status <= 0)
 	{
 		if (tls_print_error("SSL_connect", tls->ssl, connection_status))
 			return False;
 	}
 
 	printf("TLS connection established\n");
+
+	return True;
+}
+
+boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
+{
+	int connection_status;
+
+	tls->ctx = SSL_CTX_new(TLSv1_server_method());
+
+	if (tls->ctx == NULL)
+	{
+		printf("SSL_CTX_new failed\n");
+		return False;
+	}
+
+	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
+	{
+		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
+		return False;
+	}
+
+	tls->ssl = SSL_new(tls->ctx);
+
+	if (tls->ssl == NULL)
+	{
+		printf("SSL_new failed\n");
+		return False;
+	}
+
+	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
+	{
+		printf("SSL_use_certificate_file failed\n");
+		return False;
+	}
+
+	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
+	{
+		printf("SSL_set_fd failed\n");
+		return False;
+	}
+
+	connection_status = SSL_accept(tls->ssl);
+
+	if (connection_status <= 0)
+	{
+		if (tls_print_error("SSL_accept", tls->ssl, connection_status))
+			return False;
+	}
+
+	printf("TLS connection accepted\n");
 
 	return True;
 }
@@ -85,10 +139,12 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 			break;
 
 		case SSL_ERROR_WANT_READ:
+		case SSL_ERROR_WANT_WRITE:
 			status = 0;
 			break;
 
 		default:
+			tls_print_error("SSL_read", tls->ssl, status);
 			status = -1;
 			break;
 	}
@@ -107,6 +163,7 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 		case SSL_ERROR_NONE:
 			break;
 
+		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
 			status = 0;
 			break;
@@ -180,29 +237,11 @@ rdpTls* tls_new()
 	if (tls != NULL)
 	{
 		tls->connect = tls_connect;
+		tls->accept = tls_accept;
 		tls->disconnect = tls_disconnect;
 
 		SSL_load_error_strings();
 		SSL_library_init();
-
-		tls->ctx = SSL_CTX_new(TLSv1_client_method());
-
-		if (tls->ctx == NULL)
-		{
-			printf("SSL_CTX_new failed\n");
-			return NULL;
-		}
-
-		/*
-		 * This is necessary, because the Microsoft TLS implementation is not perfect.
-		 * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
-		 * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
-		 * As the size of the encrypted payload may give hints about its contents,
-		 * block padding is normally used, but the Microsoft TLS implementation
-		 * won't recognize it and will disconnect you after sending a TLS alert.
-		 */
-
-		SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
 	}
 
 	return tls;
