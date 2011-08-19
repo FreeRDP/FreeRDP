@@ -257,6 +257,40 @@ void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	gcc_read_server_data_blocks(s, settings, length);
 }
 
+void gcc_write_conference_create_response(STREAM* s, STREAM* user_data)
+{
+	/* ConnectData */
+	per_write_choice(s, 0);
+	per_write_object_identifier(s, t124_02_98_oid);
+
+	/* ConnectData::connectPDU (OCTET_STRING) */
+	per_write_length(s, stream_get_length(user_data) + 2);
+
+	/* ConnectGCCPDU */
+	per_write_choice(s, 0x14);
+
+	/* ConferenceCreateResponse::nodeID (UserID) */
+	per_write_integer16(s, 0x79F3, 1001);
+
+	/* ConferenceCreateResponse::tag (INTEGER) */
+	per_write_integer(s, 1);
+
+	/* ConferenceCreateResponse::result (ENUMERATED) */
+	per_write_enumerated(s, 0, MCS_Result_enum_length);
+
+	/* number of UserData sets */
+	per_write_number_of_sets(s, 1);
+
+	/* UserData::value present + select h221NonStandard (1) */
+	per_write_choice(s, 0xC0);
+
+	/* h221NonStandard */
+	per_write_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
+
+	/* userData (OCTET_STRING) */
+	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of server data blocks */
+}
+
 boolean gcc_read_client_data_blocks(STREAM* s, rdpSettings *settings, int length)
 {
 	uint16 type;
@@ -347,6 +381,13 @@ void gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)
 	}
 }
 
+void gcc_write_server_data_blocks(STREAM* s, rdpSettings *settings)
+{
+	gcc_write_server_core_data(s, settings);
+	gcc_write_server_network_data(s, settings);
+	gcc_write_server_security_data(s, settings);
+}
+
 void gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
 {
 	stream_read_uint16(s, *type); /* type */
@@ -390,7 +431,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings *settings, uint16 block
 		return False;
 
 	stream_read_uint32(s, version); /* version */
-	settings->rdp_version = (version == RDP_VERSION_4 ? 5 : 4);
+	settings->rdp_version = (version == RDP_VERSION_4 ? 4 : 7);
 
 	stream_read_uint16(s, settings->width); /* desktopWidth */
 	stream_read_uint16(s, settings->height); /* desktopHeight */
@@ -634,6 +675,14 @@ void gcc_read_server_core_data(STREAM* s, rdpSettings *settings)
 		settings->rdp_version = 7;
 }
 
+void gcc_write_server_core_data(STREAM* s, rdpSettings *settings)
+{
+	gcc_write_user_data_header(s, SC_CORE, 12);
+
+	stream_write_uint32(s, settings->rdp_version == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
+	stream_write_uint32(s, settings->requested_protocols); /* clientRequestedProtocols */
+}
+
 /**
  * Read a client security data block (TS_UD_CS_SEC).\n
  * @msdn{cc240511}
@@ -712,6 +761,18 @@ void gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 	}
 }
 
+void gcc_write_server_security_data(STREAM* s, rdpSettings *settings)
+{
+	gcc_write_user_data_header(s, SC_SECURITY, 12);
+
+	stream_write_uint32(s, ENCRYPTION_METHOD_NONE); /* encryptionMethod */
+	stream_write_uint32(s, ENCRYPTION_LEVEL_NONE); /* encryptionLevel */
+#if 0
+	stream_write_uint32(s, 0); /* serverRandomLen */
+	stream_write_uint32(s, 0); /* serverCertLen */
+#endif
+}
+
 /**
  * Read a client network data block (TS_UD_CS_NET).\n
  * @msdn{cc240512}
@@ -738,6 +799,7 @@ boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings, uint16 bl
 		/* CHANNEL_DEF */
 		stream_read(s, settings->channels[i].name, 8); /* name (8 bytes) */
 		stream_read_uint32(s, settings->channels[i].options); /* options (4 bytes) */
+		settings->channels[i].chan_id = MCS_GLOBAL_CHANNEL_ID + 1 + i;
 	}
 
 	return True;
@@ -796,6 +858,24 @@ void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
 
 	if (channelCount % 2 == 1)
 		stream_seek(s, 2); /* padding */
+}
+
+void gcc_write_server_network_data(STREAM* s, rdpSettings *settings)
+{
+	int i;
+
+	gcc_write_user_data_header(s, SC_NET, 8 + settings->num_channels * 2 + (settings->num_channels % 2 == 1 ? 2 : 0));
+
+	stream_write_uint16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
+	stream_write_uint16(s, settings->num_channels); /* channelCount */
+
+	for (i = 0; i < settings->num_channels; i++)
+	{
+		stream_write_uint16(s, settings->channels[i].chan_id);
+	}
+
+	if (settings->num_channels % 2 == 1)
+		stream_write_uint16(s, 0);
 }
 
 /**

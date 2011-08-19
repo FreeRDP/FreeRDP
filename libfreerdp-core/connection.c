@@ -182,6 +182,11 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	}
 	printf("\n");
 
+	if (!mcs_send_connect_response(rdp->mcs))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_CONNECT;
+
 	return True;
 }
 

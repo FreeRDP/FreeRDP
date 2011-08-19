@@ -42,6 +42,7 @@ static void* test_peer_mainloop(void* arg)
 
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
+	client->settings->nla_security = False;
 	client->Initialize(client);
 
 	while (1)

@@ -170,6 +170,7 @@ struct rdp_settings
 	uint32 kbd_subtype;
 	uint32 kbd_fn_keys;
 	uint32 client_build;
+	uint32 requested_protocols;
 	uint32 selected_protocol;
 	uint32 encryption_method;
 	uint32 encryption_level;

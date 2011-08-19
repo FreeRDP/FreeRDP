@@ -129,6 +129,7 @@ typedef struct rdp_mcs rdpMcs;
 boolean mcs_connect(rdpMcs* mcs);
 
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
+void mcs_write_connect_response(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
 boolean mcs_read_connect_initial(rdpMcs* mcs, STREAM* s);
 void mcs_send_connect_initial(rdpMcs* mcs);

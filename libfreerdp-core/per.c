@@ -260,6 +260,19 @@ boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 }
 
 /**
+ * Write PER ENUMERATED.
+ * @param s stream
+ * @param enumerated enumerated
+ * @param count enumeration count
+ * @return
+ */
+
+void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count)
+{
+	stream_write_uint8(s, enumerated);
+}
+
+/**
  * Read PER OBJECT_IDENTIFIER (OID).
  * @param s stream
  * @param oid object identifier (OID)

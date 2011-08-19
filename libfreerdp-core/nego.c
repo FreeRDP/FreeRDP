@@ -82,6 +82,7 @@ boolean nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
+	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
 
 	return True;
@@ -510,6 +511,7 @@ void nego_send_negotiation_response(rdpNego* nego)
 	transport_write(nego->transport, s);
 
 	/* update settings with negotiated protocol security */
+	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
 }
 

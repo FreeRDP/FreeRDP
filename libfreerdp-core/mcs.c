@@ -448,6 +448,41 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 }
 
 /**
+ * Write an MCS Connect Response PDU.\n
+ * @msdn{cc240508}
+ * @param s stream
+ * @param mcs MCS module
+ * @param user_data GCC Conference Create Response
+ */
+
+void mcs_write_connect_response(STREAM* s, rdpMcs* mcs, STREAM* user_data)
+{
+	int length;
+	uint8 *bm, *em;
+
+	int gcc_CCrsp_length = stream_get_length(user_data);
+
+	stream_get_mark(s, bm);
+	stream_seek(s, 3);
+
+	ber_write_enumerated(s, 0, MCS_Result_enum_length);
+	ber_write_integer(s, 0); /* calledConnectId */
+
+	mcs->domainParameters = mcs->targetParameters;
+	mcs_write_domain_parameters(s, &(mcs->domainParameters));
+
+	/* userData (OCTET_STRING) */
+	ber_write_octet_string(s, user_data->data, gcc_CCrsp_length);
+
+	stream_get_mark(s, em);
+	length = (em - bm) - 3;
+	stream_set_mark(s, bm);
+
+	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
+	stream_set_mark(s, em);
+}
+
+/**
  * Send MCS Connect Initial.\n
  * @msdn{cc240508}
  * @param mcs mcs module
@@ -527,6 +562,37 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 
 boolean mcs_send_connect_response(rdpMcs* mcs)
 {
+	STREAM* s;
+	int length;
+	uint8 *bm, *em;
+	STREAM* gcc_CCrsp;
+	STREAM* server_data;
+
+	server_data = stream_new(512);
+	gcc_write_server_data_blocks(server_data, mcs->transport->settings);
+
+	gcc_CCrsp = stream_new(512);
+	gcc_write_conference_create_response(gcc_CCrsp, server_data);
+	length = stream_get_length(gcc_CCrsp) + 7;
+
+	s = transport_send_stream_init(mcs->transport, 1024);
+	stream_get_mark(s, bm);
+	stream_seek(s, 7);
+
+	mcs_write_connect_response(s, mcs, gcc_CCrsp);
+	stream_get_mark(s, em);
+	length = (em - bm);
+	stream_set_mark(s, bm);
+
+	tpkt_write_header(s, length);
+	tpdu_write_data(s);
+	stream_set_mark(s, em);
+
+	transport_write(mcs->transport, s);
+
+	stream_free(gcc_CCrsp);
+	stream_free(server_data);
+
 	return True;
 }
 

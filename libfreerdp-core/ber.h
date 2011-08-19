@@ -60,6 +60,7 @@ boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);
 void ber_write_application_tag(STREAM* s, uint8 tag, int length);
 boolean ber_read_application_tag(STREAM* s, uint8 tag, int* length);
 boolean ber_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
+void ber_write_enumerated(STREAM* s, uint8 enumerated, uint8 count);
 boolean ber_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc);
 int ber_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc);
 int ber_skip_contextual_tag(int length);

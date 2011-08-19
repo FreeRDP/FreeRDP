@@ -37,6 +37,7 @@ boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min);
 void per_write_integer(STREAM* s, uint32 integer);
 void per_write_integer16(STREAM* s, uint16 integer, uint16 min);
 boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
+void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count);
 void per_write_object_identifier(STREAM* s, uint8 oid[6]);
 boolean per_read_object_identifier(STREAM* s, uint8 oid[6]);
 boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min);
