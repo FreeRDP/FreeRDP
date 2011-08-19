@@ -148,11 +148,11 @@ void rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 	switch (sysparam->param)
 	{
 		case SPI_SET_SCREEN_SAVE_ACTIVE:
-			sysparam->set_screen_save_active = (body != 0) ? True : False;
+			sysparam->setScreenSaveActive = (body != 0) ? True : False;
 			break;
 
 		case SPI_SET_SCREEN_SAVE_SECURE:
-			sysparam->set_screen_save_secure = (body != 0) ? True : False;
+			sysparam->setScreenSaveSecure = (body != 0) ? True : False;
 			break;
 
 		default:
@@ -352,14 +352,49 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 	rail_order->sysparam.workArea.bottom = 768;
 
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
+		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, &rail_order->sysparam);
 }
 
 void rail_recv_exec_result_order(rdpRailOrder* rail_order, STREAM* s)
 {
 	rail_read_server_exec_result_order(s, &rail_order->exec_result);
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, (void*) &rail_order->exec_result);
+		RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, &rail_order->exec_result);
+}
+
+void rail_recv_server_sysparam_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_sysparam_order(s, &rail_order->sysparam);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM, &rail_order->sysparam);
+}
+
+void rail_recv_server_minmaxinfo_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_minmaxinfo_order(s, &rail_order->minmaxinfo);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO, &rail_order->minmaxinfo);
+}
+
+void rail_recv_server_localmovesize_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_localmovesize_order(s, &rail_order->localmovesize);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE, &rail_order->localmovesize);
+}
+
+void rail_recv_server_get_appid_resp_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_get_appid_resp_order(s, &rail_order->get_appid_resp);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP, &rail_order->get_appid_resp);
+}
+
+void rail_recv_langbar_info_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_langbar_info_order(s, &rail_order->langbar_info);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO, &rail_order->langbar_info);
 }
 
 void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
@@ -383,26 +418,27 @@ void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 			break;
 
 		case RDP_RAIL_ORDER_SYSPARAM:
-			rail_read_server_sysparam_order(s, &rail_order->sysparam);
+			rail_recv_server_sysparam_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_MINMAXINFO:
-			rail_read_server_minmaxinfo_order(s, &rail_order->minmaxinfo);
+			rail_recv_server_minmaxinfo_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_LOCALMOVESIZE:
-			rail_read_server_localmovesize_order(s, &rail_order->localmovesize);
+			rail_recv_server_localmovesize_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_GET_APPID_RESP:
-			rail_read_server_get_appid_resp_order(s, &rail_order->get_appid_resp);
+			rail_recv_server_get_appid_resp_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_LANGBARINFO:
-			rail_read_langbar_info_order(s, &rail_order->langbar_info);
+			rail_recv_langbar_info_order(rail_order, s);
 			break;
 
 		default:
+			printf("Unknown RAIL PDU order reveived.");
 			break;
 	}
 }
