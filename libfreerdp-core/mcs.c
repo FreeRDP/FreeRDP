@@ -247,11 +247,11 @@ boolean mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU
  * @param length TPKT length
  */
 
-void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, int length)
+void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, int length, uint8 options)
 {
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	per_write_choice(s, domainMCSPDU << 2);
+	per_write_choice(s, (domainMCSPDU << 2) | options);
 }
 
 /**
@@ -348,6 +348,58 @@ void mcs_print_domain_parameters(DomainParameters* domainParameters)
 }
 
 /**
+ * Read an MCS Connect Initial PDU.\n
+ * @msdn{cc240508}
+ * @param mcs MCS module
+ * @param s stream
+ */
+
+boolean mcs_read_connect_initial(rdpMcs* mcs, STREAM* s)
+{
+	int length;
+	boolean upwardFlag;
+
+	tpkt_read_header(s);
+
+	if (tpdu_read_data(s) == 0)
+		return False;
+
+	if (!ber_read_application_tag(s, MCS_TYPE_CONNECT_INITIAL, &length))
+		return False;
+
+	/* callingDomainSelector (OCTET_STRING) */
+	if (!ber_read_octet_string(s, &length))
+		return False;
+	stream_seek(s, length);
+
+	/* calledDomainSelector (OCTET_STRING) */
+	if (!ber_read_octet_string(s, &length))
+		return False;
+	stream_seek(s, length);
+
+	/* upwardFlag (BOOLEAN) */
+	if (!ber_read_boolean(s, &upwardFlag))
+		return False;
+
+	/* targetParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->targetParameters);
+
+	/* minimumParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->minimumParameters);
+
+	/* maximumParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->maximumParameters);
+
+	if (!ber_read_octet_string(s, &length))
+		return False;
+
+	if (!gcc_read_conference_create_request(s, mcs->transport->settings))
+		return False;
+
+	return True;
+}
+
+/**
  * Write an MCS Connect Initial PDU.\n
  * @msdn{cc240508}
  * @param s stream
@@ -392,6 +444,41 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
+	stream_set_mark(s, em);
+}
+
+/**
+ * Write an MCS Connect Response PDU.\n
+ * @msdn{cc240508}
+ * @param s stream
+ * @param mcs MCS module
+ * @param user_data GCC Conference Create Response
+ */
+
+void mcs_write_connect_response(STREAM* s, rdpMcs* mcs, STREAM* user_data)
+{
+	int length;
+	uint8 *bm, *em;
+
+	int gcc_CCrsp_length = stream_get_length(user_data);
+
+	stream_get_mark(s, bm);
+	stream_seek(s, 3);
+
+	ber_write_enumerated(s, 0, MCS_Result_enum_length);
+	ber_write_integer(s, 0); /* calledConnectId */
+
+	mcs->domainParameters = mcs->targetParameters;
+	mcs_write_domain_parameters(s, &(mcs->domainParameters));
+
+	/* userData (OCTET_STRING) */
+	ber_write_octet_string(s, user_data->data, gcc_CCrsp_length);
+
+	stream_get_mark(s, em);
+	length = (em - bm) - 3;
+	stream_set_mark(s, bm);
+
+	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
 	stream_set_mark(s, em);
 }
 
@@ -468,6 +555,67 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 }
 
 /**
+ * Send MCS Connect Response.\n
+ * @msdn{cc240501}
+ * @param mcs mcs module
+ */
+
+boolean mcs_send_connect_response(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length;
+	uint8 *bm, *em;
+	STREAM* gcc_CCrsp;
+	STREAM* server_data;
+
+	server_data = stream_new(512);
+	gcc_write_server_data_blocks(server_data, mcs->transport->settings);
+
+	gcc_CCrsp = stream_new(512);
+	gcc_write_conference_create_response(gcc_CCrsp, server_data);
+	length = stream_get_length(gcc_CCrsp) + 7;
+
+	s = transport_send_stream_init(mcs->transport, 1024);
+	stream_get_mark(s, bm);
+	stream_seek(s, 7);
+
+	mcs_write_connect_response(s, mcs, gcc_CCrsp);
+	stream_get_mark(s, em);
+	length = (em - bm);
+	stream_set_mark(s, bm);
+
+	tpkt_write_header(s, length);
+	tpdu_write_data(s);
+	stream_set_mark(s, em);
+
+	transport_write(mcs->transport, s);
+
+	stream_free(gcc_CCrsp);
+	stream_free(server_data);
+
+	return True;
+}
+
+/**
+ * Read MCS Erect Domain Request.\n
+ * @msdn{cc240523}
+ * @param mcs
+ * @param s stream
+ */
+
+boolean mcs_read_erect_domain_request(rdpMcs* mcs, STREAM* s)
+{
+	int length;
+	enum DomainMCSPDU MCSPDU;
+
+	MCSPDU = DomainMCSPDU_ErectDomainRequest;
+	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+		return False;
+
+	return True;
+}
+
+/**
  * Send MCS Erect Domain Request.\n
  * @msdn{cc240523}
  * @param mcs
@@ -479,12 +627,31 @@ void mcs_send_erect_domain_request(rdpMcs* mcs)
 	int length = 12;
 	s = transport_send_stream_init(mcs->transport, length);
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length, 0);
 
 	per_write_integer(s, 0); /* subHeight (INTEGER) */
 	per_write_integer(s, 0); /* subInterval (INTEGER) */
 
 	transport_write(mcs->transport, s);
+}
+
+/**
+ * Read MCS Attach User Request.\n
+ * @msdn{cc240524}
+ * @param mcs mcs module
+ * @param s stream
+ */
+
+boolean mcs_read_attach_user_request(rdpMcs* mcs, STREAM* s)
+{
+	int length;
+	enum DomainMCSPDU MCSPDU;
+
+	MCSPDU = DomainMCSPDU_AttachUserRequest;
+	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+		return False;
+
+	return True;
 }
 
 /**
@@ -499,7 +666,7 @@ void mcs_send_attach_user_request(rdpMcs* mcs)
 	int length = 8;
 	s = transport_send_stream_init(mcs->transport, length);
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length, 0);
 
 	transport_write(mcs->transport, s);
 }
@@ -528,6 +695,30 @@ void mcs_recv_attach_user_confirm(rdpMcs* mcs)
 }
 
 /**
+ * Send MCS Attach User Confirm.\n
+ * @msdn{cc240525}
+ * @param mcs mcs module
+ */
+
+boolean mcs_send_attach_user_confirm(rdpMcs* mcs)
+{
+	STREAM* s;
+	int length = 11;
+	
+	s = transport_send_stream_init(mcs->transport, length);
+
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
+
+	per_write_enumerated(s, 0, MCS_Result_enum_length); /* result */
+	mcs->user_id = 1002;
+	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+
+	transport_write(mcs->transport, s);
+
+	return True;
+}
+
+/**
  * Send MCS Channel Join Request.\n
  * @msdn{cc240526}
  * @param mcs mcs module
@@ -540,7 +731,7 @@ void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id)
 	int length = 12;
 	s = transport_send_stream_init(mcs->transport, 12);
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, length);
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, length, 0);
 
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
 	per_write_integer16(s, channel_id, 0);

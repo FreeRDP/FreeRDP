@@ -82,6 +82,7 @@ boolean nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
+	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
 
 	return True;
@@ -270,6 +271,59 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 }
 
 /**
+ * Receive protocol security negotiation request message.\n
+ * @param nego
+ * @param s stream
+ */
+
+boolean nego_recv_request(rdpNego* nego, STREAM* s)
+{
+	uint8 li;
+	uint8 c;
+	uint8 type;
+
+	tpkt_read_header(s);
+	li = tpdu_read_connection_request(s);
+	if (li != stream_get_left(s) + 6)
+	{
+		printf("Incorrect TPDU length indicator.\n");
+		return False;
+	}
+
+	if (stream_get_left(s) > 8)
+	{
+		/* Optional routingToken or cookie, ending with CR+LF */
+		while (stream_get_left(s) > 0)
+		{
+			stream_read_uint8(s, c);
+			if (c != '\x0D')
+				continue;
+			stream_peek_uint8(s, c);
+			if (c != '\x0A')
+				continue;
+
+			break;
+		}
+	}
+
+	if (stream_get_left(s) >= 8)
+	{
+		/* rdpNegData (optional) */
+
+		stream_read_uint8(s, type); /* Type */
+		if (type != TYPE_RDP_NEG_REQ)
+		{
+			printf("Incorrect negotiation request type %d\n", type);
+			return False;
+		}
+
+		nego_process_negotiation_request(nego, s);
+	}
+
+	return True;
+}
+
+/**
  * Send protocol security negotiation message.
  * @param nego
  */
@@ -340,6 +394,26 @@ void nego_send_negotiation_request(rdpNego* nego)
 }
 
 /**
+ * Process Negotiation Request from Connection Request message.
+ * @param nego
+ * @param s
+ */
+
+void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
+{
+	uint8 flags;
+	uint16 length;
+
+	DEBUG_NEGO("RDP_NEG_REQ");
+
+	stream_read_uint8(s, flags);
+	stream_read_uint16(s, length);
+	stream_read_uint32(s, nego->requested_protocols);
+
+	nego->state = NEGO_STATE_FINAL;
+}
+
+/**
  * Process Negotiation Response from Connection Confirm message.
  * @param nego
  * @param s
@@ -400,6 +474,45 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 	}
 
 	nego->state = NEGO_STATE_FAIL;
+}
+
+/**
+ * Send RDP Negotiation Response (RDP_NEG_RSP).\n
+ * @param nego
+ */
+
+void nego_send_negotiation_response(rdpNego* nego)
+{
+	STREAM* s;
+	int length;
+	uint8 *bm, *em;
+
+	s = stream_new(64);
+	length = TPDU_CONNECTION_CONFIRM_LENGTH;
+	stream_get_mark(s, bm);
+	stream_seek(s, length);
+
+	if (nego->selected_protocol > PROTOCOL_RDP)
+	{
+		/* RDP_NEG_DATA must be present for TLS and NLA */
+		stream_write_uint8(s, TYPE_RDP_NEG_RSP);
+		stream_write_uint8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
+		stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+		stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
+		length += 8;
+	}
+
+	stream_get_mark(s, em);
+	stream_set_mark(s, bm);
+	tpkt_write_header(s, length);
+	tpdu_write_connection_confirm(s, length - 5);
+	stream_set_mark(s, em);
+
+	transport_write(nego->transport, s);
+
+	/* update settings with negotiated protocol security */
+	nego->transport->settings->requested_protocols = nego->requested_protocols;
+	nego->transport->settings->selected_protocol = nego->selected_protocol;
 }
 
 /**

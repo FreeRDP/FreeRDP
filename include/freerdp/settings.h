@@ -171,6 +171,7 @@ struct rdp_settings
 	uint32 kbd_subtype;
 	uint32 kbd_fn_keys;
 	uint32 client_build;
+	uint32 requested_protocols;
 	uint32 selected_protocol;
 	uint32 encryption_method;
 	uint32 encryption_level;
@@ -203,6 +204,9 @@ struct rdp_settings
 	char* shell;
 	char* directory;
 	uint32 performance_flags;
+
+	char* cert_file;
+	char* privatekey_file;
 
 	boolean autologon;
 	boolean compression;

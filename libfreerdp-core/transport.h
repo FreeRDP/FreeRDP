@@ -69,10 +69,14 @@ struct rdp_transport
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
 STREAM* transport_send_stream_init(rdpTransport* transport, int size);
 boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
+void transport_attach(rdpTransport* transport, int sockfd);
 boolean transport_disconnect(rdpTransport* transport);
 boolean transport_connect_rdp(rdpTransport* transport);
 boolean transport_connect_tls(rdpTransport* transport);
 boolean transport_connect_nla(rdpTransport* transport);
+boolean transport_accept_rdp(rdpTransport* transport);
+boolean transport_accept_tls(rdpTransport* transport);
+boolean transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
 int transport_check_fds(rdpTransport* transport);
