@@ -22,7 +22,8 @@
 
 #include "xfreerdp.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail);
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32 iright, uint32 ibottom);
+
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event);

@@ -79,7 +79,7 @@ void xf_end_paint(rdpUpdate* update)
 	}
 	else
 	{
-		xf_rail_paint(xfi, update->rail);
+		xf_rail_paint(xfi, update->rail, x, y, x + w - 1, y + h - 1);
 	}
 }
 

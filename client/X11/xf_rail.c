@@ -23,10 +23,15 @@
 
 #include "xf_rail.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32 iright, uint32 ibottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
+	boolean intersect;
+	uint32 uwidth, uheight;
+	uint32 uleft, utop, uright, ubottom;
+	uint32 wleft, wtop, wright, wbottom;
+
 	window_list_rewind(rail->list);
 
 	while (window_list_has_next(rail->list))
@@ -34,17 +39,34 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail)
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
-		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowWidth, window->windowHeight);
+		wleft = window->windowOffsetX;
+		wtop = window->windowOffsetY;
+		wright = window->windowOffsetX + window->windowWidth - 1;
+		wbottom = window->windowOffsetY + window->windowHeight - 1;
 
-		XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowWidth, window->windowHeight, 0, 0);
+		intersect = ((iright > wleft) && (ileft < wright) &&
+				(ibottom > wtop) && (itop < wbottom)) ? True : False;
 
-		XFlush(xfi->display);
+		uleft = (ileft > wleft) ? ileft : wleft;
+		utop = (itop > wtop) ? itop : wtop;
+		uright = (iright < wright) ? iright : wright;
+		ubottom = (ibottom < wbottom) ? ibottom : wbottom;
+		uwidth = uright - uleft + 1;
+		uheight = ubottom - utop + 1;
+
+		if (intersect)
+		{
+			XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
+					uleft, utop, uleft, utop, uwidth, uheight);
+
+			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
+					uleft, utop, uwidth, uheight,
+					uleft - window->windowOffsetX,
+					utop - window->windowOffsetY);
+		}
 	}
+
+	XFlush(xfi->display);
 }
 
 void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
