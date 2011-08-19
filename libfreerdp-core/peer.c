@@ -64,6 +64,11 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 				return -1;
 			break;
 
+		case CONNECTION_STATE_NEGO:
+			if (!rdp_server_accept_mcs_connect_initial(peer->rdp, s))
+				return -1;
+			break;
+
 		default:
 			printf("Invalid state %d\n", peer->rdp->state);
 			return -1;

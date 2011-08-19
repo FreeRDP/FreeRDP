@@ -40,5 +40,6 @@ enum CONNECTION_STATE
 boolean rdp_client_connect(rdpRdp* rdp);
 
 boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s);
+boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s);
 
 #endif /* __CONNECTION_H */

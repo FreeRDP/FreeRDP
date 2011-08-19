@@ -167,3 +167,11 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
+boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_connect_initial(rdp->mcs, s))
+		return False;
+
+	return True;
+}
+

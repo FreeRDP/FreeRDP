@@ -508,6 +508,9 @@ void nego_send_negotiation_response(rdpNego* nego)
 	stream_set_mark(s, em);
 
 	transport_write(nego->transport, s);
+
+	/* update settings with negotiated protocol security */
+	nego->transport->settings->selected_protocol = nego->selected_protocol;
 }
 
 /**

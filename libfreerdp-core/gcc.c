@@ -124,6 +124,63 @@ uint8 h221_cs_key[4] = "Duca";
 uint8 h221_sc_key[4] = "McDn";
 
 /**
+ * Read a GCC Conference Create Request.\n
+ * @msdn{cc240836}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_conference_create_request(STREAM* s, rdpSettings* settings)
+{
+	uint16 length;
+	uint8 choice;
+	uint8 number;
+	uint8 selection;
+
+	/* ConnectData */
+	if (!per_read_choice(s, &choice))
+		return False;
+	if (!per_read_object_identifier(s, t124_02_98_oid))
+		return False;
+
+	/* ConnectData::connectPDU (OCTET_STRING) */
+	if (!per_read_length(s, &length))
+		return False;
+
+	/* ConnectGCCPDU */
+	if (!per_read_choice(s, &choice))
+		return False;
+	if (!per_read_selection(s, &selection))
+		return False;
+
+	/* ConferenceCreateRequest::conferenceName */
+	if (!per_read_numeric_string(s, 1)) /* ConferenceName::numeric */
+		return False;
+	if (!per_read_padding(s, 1)) /* padding */
+		return False;
+
+	/* UserData (SET OF SEQUENCE) */
+	if (!per_read_number_of_sets(s, &number) || number != 1) /* one set of UserData */
+		return False;
+	if (!per_read_choice(s, &choice) || choice != 0xC0) /* UserData::value present + select h221NonStandard (1) */
+		return False;
+
+	/* h221NonStandard */
+	if (!per_read_octet_string(s, h221_cs_key, 4, 4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
+		return False;
+
+	/* userData::value (OCTET_STRING) */
+	if (!per_read_length(s, &length))
+		return False;
+	if (stream_get_left(s) < length)
+		return False;
+	if (!gcc_read_client_data_blocks(s, settings, length))
+		return False;
+
+	return True;
+}
+
+/**
  * Write a GCC Conference Create Request.\n
  * @msdn{cc240836}
  * @param s stream
@@ -200,6 +257,55 @@ void gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	gcc_read_server_data_blocks(s, settings, length);
 }
 
+boolean gcc_read_client_data_blocks(STREAM* s, rdpSettings *settings, int length)
+{
+	uint16 type;
+	uint16 blockLength;
+	int pos;
+
+	while (length > 0)
+	{
+		pos = stream_get_pos(s);
+		gcc_read_user_data_header(s, &type, &blockLength);
+
+		switch (type)
+		{
+			case CS_CORE:
+				if (!gcc_read_client_core_data(s, settings, blockLength - 4))
+					return False;
+				break;
+
+			case CS_SECURITY:
+				if (!gcc_read_client_security_data(s, settings))
+					return False;
+				break;
+
+			case CS_NET:
+				if (!gcc_read_client_network_data(s, settings))
+					return False;
+				break;
+
+			case CS_CLUSTER:
+				if (!gcc_read_client_cluster_data(s, settings))
+					return False;
+				break;
+
+			case CS_MONITOR:
+				if (!gcc_read_client_monitor_data(s, settings))
+					return False;
+				break;
+
+			default:
+				break;
+		}
+
+		length -= blockLength;
+		stream_set_pos(s, pos + blockLength);
+	}
+
+	return True;
+}
+
 void gcc_write_client_data_blocks(STREAM* s, rdpSettings *settings)
 {
 	gcc_write_client_core_data(s, settings);
@@ -259,6 +365,121 @@ void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
 {
 	stream_write_uint16(s, type); /* type */
 	stream_write_uint16(s, length); /* length */
+}
+
+/**
+ * Read a client core data block (TS_UD_CS_CORE).\n
+ * @msdn{cc240510}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_client_core_data(STREAM* s, rdpSettings *settings, uint16 blockLength)
+{
+	uint32 version;
+	uint16 colorDepth = 0;
+	uint16 postBeta2ColorDepth = 0;
+	uint16 highColorDepth = 0;
+	uint16 supportedColorDepths = 0;
+	uint16 earlyCapabilityFlags = 0;
+	uint32 serverSelectedProtocol = 0;
+	char* str;
+
+	/* Length of all required fields, until imeFileName */
+	if (blockLength < 128)
+		return False;
+
+	stream_read_uint32(s, version); /* version */
+	settings->rdp_version = (version == RDP_VERSION_4 ? 5 : 4);
+
+	stream_read_uint16(s, settings->width); /* desktopWidth */
+	stream_read_uint16(s, settings->height); /* desktopHeight */
+	stream_read_uint16(s, colorDepth); /* colorDepth */
+	stream_seek_uint16(s); /* SASSequence (Secure Access Sequence) */
+	stream_read_uint32(s, settings->kbd_layout); /* keyboardLayout */
+	stream_read_uint32(s, settings->client_build); /* clientBuild */
+	
+	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
+	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 32);
+	stream_seek(s, 32);
+	snprintf(settings->client_hostname, sizeof(settings->client_hostname), "%s", str);
+	xfree(str);
+
+	stream_read_uint32(s, settings->kbd_type); /* keyboardType */
+	stream_read_uint32(s, settings->kbd_subtype); /* keyboardSubType */
+	stream_read_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKey */
+
+	stream_seek(s, 64); /* imeFileName */
+
+	blockLength -= 128;
+
+	/**
+	 * The following fields are all optional. If one field is present, all of the preceding
+	 * fields MUST also be present. If one field is not present, all of the subsequent fields
+	 * MUST NOT be present.
+	 * We must check the bytes left before reading each field.
+	 */
+
+	do
+	{
+		if (blockLength < 2)
+			break;
+		stream_read_uint16(s, postBeta2ColorDepth); /* postBeta2ColorDepth */
+		blockLength -= 2;
+
+		if (blockLength < 2)
+			break;
+		stream_seek_uint16(s); /* clientProductID */
+		blockLength -= 2;
+
+		if (blockLength < 4)
+			break;
+		stream_seek_uint32(s); /* serialNumber */
+		blockLength -= 4;
+
+		if (blockLength < 2)
+			break;
+		stream_read_uint16(s, highColorDepth); /* highColorDepth */
+		blockLength -= 2;
+
+		if (blockLength < 2)
+			break;
+		stream_read_uint16(s, supportedColorDepths); /* supportedColorDepths */
+		blockLength -= 2;
+
+		if (blockLength < 2)
+			break;
+		stream_read_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
+		blockLength -= 2;
+
+		if (blockLength < 64)
+			break;
+		str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+		stream_seek(s, 64);
+		snprintf(settings->client_product_id, sizeof(settings->client_product_id), "%s", str);
+		xfree(str);
+		blockLength -= 64;
+
+		if (blockLength < 1)
+			break;
+		stream_read_uint8(s, settings->performance_flags); /* connectionType */
+		blockLength -= 1;
+
+		if (blockLength < 1)
+			break;
+		stream_seek_uint8(s); /* pad1octet */
+		blockLength -= 1;
+
+		if (blockLength < 4)
+			break;
+		stream_read_uint32(s, serverSelectedProtocol); /* serverSelectedProtocol */
+		blockLength -= 4;
+
+		if (settings->selected_protocol != serverSelectedProtocol)
+			return False;
+	} while (0);
+
+	return True;
 }
 
 /**
@@ -374,6 +595,19 @@ void gcc_read_server_core_data(STREAM* s, rdpSettings *settings)
 }
 
 /**
+ * Read a client security data block (TS_UD_CS_SEC).\n
+ * @msdn{cc240511}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings)
+{
+	printf("CS_SECURITY\n");
+	return True;
+}
+
+/**
  * Write a client security data block (TS_UD_CS_SEC).\n
  * @msdn{cc240511}
  * @param s stream
@@ -433,6 +667,19 @@ void gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 }
 
 /**
+ * Read a client network data block (TS_UD_CS_NET).\n
+ * @msdn{cc240512}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings)
+{
+	printf("CS_NETWORK\n");
+	return True;
+}
+
+/**
  * Write a client network data block (TS_UD_CS_NET).\n
  * @msdn{cc240512}
  * @param s stream
@@ -488,6 +735,19 @@ void gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
 }
 
 /**
+ * Read a client cluster data block (TS_UD_CS_CLUSTER).\n
+ * @msdn{cc240514}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings *settings)
+{
+	printf("CS_CLUSTER\n");
+	return True;
+}
+
+/**
  * Write a client cluster data block (TS_UD_CS_CLUSTER).\n
  * @msdn{cc240514}
  * @param s stream
@@ -507,6 +767,19 @@ void gcc_write_client_cluster_data(STREAM* s, rdpSettings *settings)
 
 	stream_write_uint32(s, flags); /* flags */
 	stream_write_uint32(s, settings->redirected_session_id); /* redirectedSessionID */
+}
+
+/**
+ * Read a client monitor data block (TS_UD_CS_MONITOR).\n
+ * @msdn{dd305336}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
+boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings)
+{
+	printf("CS_MONITOR\n");
+	return True;
 }
 
 /**
@@ -546,3 +819,4 @@ void gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings)
 		}
 	}
 }
+

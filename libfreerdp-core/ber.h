@@ -72,6 +72,7 @@ boolean ber_read_octet_string(STREAM* s, int* length);
 void ber_write_octet_string(STREAM* s, uint8* oct_str, int length);
 int ber_write_octet_string_tag(STREAM* s, int length);
 int ber_skip_octet_string(int length);
+boolean ber_read_boolean(STREAM* s, boolean* value);
 void ber_write_boolean(STREAM* s, boolean value);
 boolean ber_read_integer(STREAM* s, uint32* value);
 int ber_write_integer(STREAM* s, uint32 value);

@@ -295,6 +295,27 @@ int ber_skip_octet_string(int length)
 }
 
 /**
+ * Read a BER BOOLEAN
+ * @param s
+ * @param value
+ */
+
+boolean ber_read_boolean(STREAM* s, boolean* value)
+{
+	int length;
+	uint8 v;
+
+	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, False))
+		return False;
+	ber_read_length(s, &length);
+	if (length != 1)
+		return False;
+	stream_read_uint8(s, v);
+	*value = (v ? True : False);
+	return True;
+}
+
+/**
  * Write a BER BOOLEAN
  * @param s
  * @param value

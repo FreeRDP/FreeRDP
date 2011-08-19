@@ -348,6 +348,58 @@ void mcs_print_domain_parameters(DomainParameters* domainParameters)
 }
 
 /**
+ * Read an MCS Connect Initial PDU.\n
+ * @msdn{cc240508}
+ * @param mcs MCS module
+ * @param s stream
+ */
+
+boolean mcs_read_connect_initial(rdpMcs* mcs, STREAM* s)
+{
+	int length;
+	boolean upwardFlag;
+
+	tpkt_read_header(s);
+
+	if (tpdu_read_data(s) == 0)
+		return False;
+
+	if (!ber_read_application_tag(s, MCS_TYPE_CONNECT_INITIAL, &length))
+		return False;
+
+	/* callingDomainSelector (OCTET_STRING) */
+	if (!ber_read_octet_string(s, &length))
+		return False;
+	stream_seek(s, length);
+
+	/* calledDomainSelector (OCTET_STRING) */
+	if (!ber_read_octet_string(s, &length))
+		return False;
+	stream_seek(s, length);
+
+	/* upwardFlag (BOOLEAN) */
+	if (!ber_read_boolean(s, &upwardFlag))
+		return False;
+
+	/* targetParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->targetParameters);
+
+	/* minimumParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->minimumParameters);
+
+	/* maximumParameters (DomainParameters) */
+	mcs_read_domain_parameters(s, &mcs->maximumParameters);
+
+	if (!ber_read_octet_string(s, &length))
+		return False;
+
+	if (!gcc_read_conference_create_request(s, mcs->transport->settings))
+		return False;
+
+	return True;
+}
+
+/**
  * Write an MCS Connect Initial PDU.\n
  * @msdn{cc240508}
  * @param s stream
@@ -465,6 +517,17 @@ void mcs_recv_connect_response(rdpMcs* mcs)
 	ber_read_octet_string(s, &length);
 
 	gcc_read_conference_create_response(s, mcs->transport->settings);
+}
+
+/**
+ * Send MCS Connect Response.\n
+ * @msdn{cc240501}
+ * @param mcs mcs module
+ */
+
+boolean mcs_send_connect_response(rdpMcs* mcs)
+{
+	return True;
 }
 
 /**

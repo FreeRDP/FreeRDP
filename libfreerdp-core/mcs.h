@@ -130,8 +130,10 @@ boolean mcs_connect(rdpMcs* mcs);
 
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data);
 
+boolean mcs_read_connect_initial(rdpMcs* mcs, STREAM* s);
 void mcs_send_connect_initial(rdpMcs* mcs);
 void mcs_recv_connect_response(rdpMcs* mcs);
+boolean mcs_send_connect_response(rdpMcs* mcs);
 void mcs_send_erect_domain_request(rdpMcs* mcs);
 void mcs_send_attach_user_request(rdpMcs* mcs);
 void mcs_recv_attach_user_confirm(rdpMcs* mcs);
