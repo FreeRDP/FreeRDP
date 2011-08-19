@@ -65,6 +65,7 @@
 #define GDI_DSPDxax			0x00E20746 /* D = (S & P) | (~S & D) */
 #define GDI_SPna			0x000C0324 /* D = S & ~P */
 #define GDI_DSna			0x00220326 /* D = D & ~S */
+#define GDI_PDxn			0x00A50065 /* D = D ^ ~P */
 
 /* Brush Styles */
 #define GDI_BS_SOLID			0x00
