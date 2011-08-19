@@ -203,6 +203,9 @@ struct rdp_settings
 	char* directory;
 	uint32 performance_flags;
 
+	char* cert_file;
+	char* privatekey_file;
+
 	boolean autologon;
 	boolean compression;
 

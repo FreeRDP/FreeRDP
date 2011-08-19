@@ -110,6 +110,10 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 {
+	boolean ret;
+
+	transport_set_blocking_mode(rdp->transport, True);
+
 	if (!nego_recv_request(rdp->nego, s))
 		return False;
 	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
@@ -144,6 +148,19 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	printf("\n");
 
 	nego_send_negotiation_response(rdp->nego);
+
+	ret = False;
+	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+		ret = transport_accept_nla(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+		ret = transport_accept_tls(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+		ret = transport_accept_rdp(rdp->transport);
+
+	if (!ret)
+		return False;
+
+	transport_set_blocking_mode(rdp->transport, False);
 
 	rdp->state = CONNECTION_STATE_NEGO;
 

@@ -30,6 +30,7 @@
 
 typedef struct rdp_tls rdpTls;
 typedef boolean (*TlsConnect) (rdpTls* tls);
+typedef boolean (*TlsAccept) (rdpTls* tls, const char* cert_file, const char* privatekey_file);
 typedef boolean (*TlsDisconnect) (rdpTls* tls);
 
 struct rdp_tls
@@ -38,10 +39,12 @@ struct rdp_tls
 	int sockfd;
 	SSL_CTX* ctx;
 	TlsConnect connect;
+	TlsAccept accept;
 	TlsDisconnect disconnect;
 };
 
 boolean tls_connect(rdpTls* tls);
+boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
 boolean tls_disconnect(rdpTls* tls);
 int tls_read(rdpTls* tls, uint8* data, int length);
 int tls_write(rdpTls* tls, uint8* data, int length);

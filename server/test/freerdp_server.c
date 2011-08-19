@@ -40,6 +40,8 @@ static void* test_peer_mainloop(void* arg)
 
 	printf("We've got a client %s\n", client->settings->hostname);
 
+	client->settings->cert_file = xstrdup("server.crt");
+	client->settings->privatekey_file = xstrdup("server.key");
 	client->Initialize(client);
 
 	while (1)

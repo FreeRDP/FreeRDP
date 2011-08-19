@@ -136,6 +136,8 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->shell);
 		xfree(settings->directory);
 		xfree(settings->client_dir);
+		xfree(settings->cert_file);
+		xfree(settings->privatekey_file);
 		xfree(settings);
 	}
 }
