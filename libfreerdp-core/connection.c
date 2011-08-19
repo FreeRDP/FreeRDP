@@ -190,3 +190,26 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
+boolean rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_erect_domain_request(rdp->mcs, s))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_ERECT_DOMAIN;
+
+	return True;
+}
+
+boolean rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_attach_user_request(rdp->mcs, s))
+		return False;
+
+	if (!mcs_send_attach_user_confirm(rdp->mcs))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_ATTACH_USER;
+
+	return True;
+}
+

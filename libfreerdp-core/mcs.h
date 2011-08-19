@@ -135,13 +135,16 @@ boolean mcs_read_connect_initial(rdpMcs* mcs, STREAM* s);
 void mcs_send_connect_initial(rdpMcs* mcs);
 void mcs_recv_connect_response(rdpMcs* mcs);
 boolean mcs_send_connect_response(rdpMcs* mcs);
+boolean mcs_read_erect_domain_request(rdpMcs* mcs, STREAM* s);
 void mcs_send_erect_domain_request(rdpMcs* mcs);
+boolean mcs_read_attach_user_request(rdpMcs* mcs, STREAM* s);
 void mcs_send_attach_user_request(rdpMcs* mcs);
 void mcs_recv_attach_user_confirm(rdpMcs* mcs);
+boolean mcs_send_attach_user_confirm(rdpMcs* mcs);
 void mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id);
 void mcs_recv_channel_join_confirm(rdpMcs* mcs);
 boolean mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, int* length);
-void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, int length);
+void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, int length, uint8 options);
 
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
