@@ -30,18 +30,19 @@ boolean per_read_selection(STREAM* s, uint8* selection);
 void per_write_selection(STREAM* s, uint8 selection);
 boolean per_read_number_of_sets(STREAM* s, uint8* number);
 void per_write_number_of_sets(STREAM* s, uint8 number);
+boolean per_read_padding(STREAM* s, int length);
 void per_write_padding(STREAM* s, int length);
 boolean per_read_integer(STREAM* s, uint32* integer);
 boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min);
 void per_write_integer(STREAM* s, uint32 integer);
 void per_write_integer16(STREAM* s, uint16 integer, uint16 min);
 boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
+void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count);
 void per_write_object_identifier(STREAM* s, uint8 oid[6]);
 boolean per_read_object_identifier(STREAM* s, uint8 oid[6]);
 boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min);
 void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
+boolean per_read_numeric_string(STREAM* s, int min);
 void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
-boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min);
-void per_write_integer16(STREAM* s, uint16 integer, uint16 min);
 
 #endif /* __PER_H */

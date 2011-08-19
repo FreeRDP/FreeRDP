@@ -134,6 +134,19 @@ void per_write_number_of_sets(STREAM* s, uint8 number)
 }
 
 /**
+ * Read PER padding with zeros.
+ * @param s stream
+ * @param length
+ */
+
+boolean per_read_padding(STREAM* s, int length)
+{
+	stream_seek(s, length);
+
+	return True;
+}
+
+/**
  * Write PER padding with zeros.
  * @param s stream
  * @param length
@@ -244,6 +257,19 @@ boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 		return False;
 
 	return True;
+}
+
+/**
+ * Write PER ENUMERATED.
+ * @param s stream
+ * @param enumerated enumerated
+ * @param count enumeration count
+ * @return
+ */
+
+void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count)
+{
+	stream_write_uint8(s, enumerated);
 }
 
 /**
@@ -369,6 +395,32 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 
 	for (i = 0; i < length; i++)
 		stream_write_uint8(s, oct_str[i]);
+}
+
+/**
+ * Read PER NumericString.
+ * @param s stream
+ * @param num_str numeric string
+ * @param length string length
+ * @param min minimum string length
+ */
+
+boolean per_read_numeric_string(STREAM* s, int min)
+{
+	int i;
+	int length;
+	uint16 mlength;
+
+	per_read_length(s, &mlength);
+
+	length = mlength + min;
+
+	for (i = 0; i < length; i += 2)
+	{
+		stream_seek(s, 1);
+	}
+
+	return True;
 }
 
 /**

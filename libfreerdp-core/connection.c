@@ -108,3 +108,108 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	return True;
 }
 
+boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
+{
+	boolean ret;
+
+	transport_set_blocking_mode(rdp->transport, True);
+
+	if (!nego_recv_request(rdp->nego, s))
+		return False;
+	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
+	{
+		printf("Standard RDP encryption is not supported.\n");
+		return False;
+	}
+
+	printf("Requested protocols:");
+	if ((rdp->nego->requested_protocols | PROTOCOL_TLS))
+	{
+		printf(" TLS");
+		if (rdp->settings->tls_security)
+		{
+			printf("(Y)");
+			rdp->nego->selected_protocol |= PROTOCOL_TLS;
+		}
+		else
+			printf("(n)");
+	}
+	if ((rdp->nego->requested_protocols | PROTOCOL_NLA))
+	{
+		printf(" NLA");
+		if (rdp->settings->nla_security)
+		{
+			printf("(Y)");
+			rdp->nego->selected_protocol |= PROTOCOL_NLA;
+		}
+		else
+			printf("(n)");
+	}
+	printf("\n");
+
+	nego_send_negotiation_response(rdp->nego);
+
+	ret = False;
+	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+		ret = transport_accept_nla(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+		ret = transport_accept_tls(rdp->transport);
+	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+		ret = transport_accept_rdp(rdp->transport);
+
+	if (!ret)
+		return False;
+
+	transport_set_blocking_mode(rdp->transport, False);
+
+	rdp->state = CONNECTION_STATE_NEGO;
+
+	return True;
+}
+
+boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
+{
+	int i;
+
+	if (!mcs_read_connect_initial(rdp->mcs, s))
+		return False;
+
+	printf("Accepted client: %s\n", rdp->settings->client_hostname);
+	printf("Accepted channels:");
+	for (i = 0; i < rdp->settings->num_channels; i++)
+	{
+		printf(" %s", rdp->settings->channels[i].name);
+	}
+	printf("\n");
+
+	if (!mcs_send_connect_response(rdp->mcs))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_CONNECT;
+
+	return True;
+}
+
+boolean rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_erect_domain_request(rdp->mcs, s))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_ERECT_DOMAIN;
+
+	return True;
+}
+
+boolean rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_attach_user_request(rdp->mcs, s))
+		return False;
+
+	if (!mcs_send_attach_user_confirm(rdp->mcs))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_ATTACH_USER;
+
+	return True;
+}
+

@@ -43,8 +43,10 @@ enum X224_TPDU_TYPE
 
 uint8 tpdu_read_header(STREAM* s, uint8* code);
 void tpdu_write_header(STREAM* s, uint16 length, uint8 code);
+uint8 tpdu_read_connection_request(STREAM* s);
 void tpdu_write_connection_request(STREAM* s, uint16 length);
 uint8 tpdu_read_connection_confirm(STREAM* s);
+void tpdu_write_connection_confirm(STREAM* s, uint16 length);
 void tpdu_write_disconnect_request(STREAM* s, uint16 length);
 uint16 tpdu_read_data(STREAM* s);
 void tpdu_write_data(STREAM* s);

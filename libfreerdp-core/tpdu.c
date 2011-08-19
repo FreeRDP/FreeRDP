@@ -112,6 +112,28 @@ tpdu_write_header(STREAM* s, uint16 length, uint8 code)
 }
 
 /**
+ * Read Connection Request TPDU
+ * @param s stream
+ * @return length indicator (LI)
+ */
+
+uint8 tpdu_read_connection_request(STREAM* s)
+{
+	uint8 li;
+	uint8 code;
+
+	li = tpdu_read_header(s, &code);
+
+	if (code != X224_TPDU_CONNECTION_REQUEST)
+	{
+		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		return 0;
+	}
+
+	return li;
+}
+
+/**
  * Write Connection Request TPDU.
  * @param s stream
  * @param length TPDU length
@@ -144,6 +166,18 @@ tpdu_read_connection_confirm(STREAM* s)
 	}
 
 	return li;
+}
+
+/**
+ * Write Connection Confirm TPDU.
+ * @param s stream
+ * @param length TPDU length
+ */
+
+void
+tpdu_write_connection_confirm(STREAM* s, uint16 length)
+{
+	tpdu_write_header(s, length, X224_TPDU_CONNECTION_CONFIRM);
 }
 
 /**

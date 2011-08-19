@@ -65,6 +65,8 @@ enum RDP_NEG_MSG
 	TYPE_RDP_NEG_FAILURE = 0x3
 };
 
+#define EXTENDED_CLIENT_DATA_SUPPORTED 0x01
+
 extern char NEGO_STATE_STRINGS[6][25];
 extern char PROTOCOL_SECURITY_STRINGS[3][4];
 
@@ -92,10 +94,13 @@ void nego_attempt_rdp(rdpNego* nego);
 void nego_send(rdpNego* nego);
 int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
 void nego_recv_response(rdpNego* nego);
+boolean nego_recv_request(rdpNego* nego, STREAM* s);
 
 void nego_send_negotiation_request(rdpNego* nego);
+void nego_process_negotiation_request(rdpNego* nego, STREAM* s);
 void nego_process_negotiation_response(rdpNego* nego, STREAM* s);
 void nego_process_negotiation_failure(rdpNego* nego, STREAM* s);
+void nego_send_negotiation_response(rdpNego* nego);
 
 rdpNego* nego_new(struct rdp_transport * transport);
 void nego_free(rdpNego* nego);
