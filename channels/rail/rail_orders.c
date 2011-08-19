@@ -114,7 +114,7 @@ void rail_send_pdu(rdpRailOrder* rail_order, STREAM* s, uint16 orderType)
 	printf("Sending %s PDU, length:%d\n",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
-	rail_order->data_sender->send_rail_channel_data(rail_order->data_sender->data_sender_object, s->data, orderLength);
+	rail_send_channel_data(rail_order->plugin, s->data, orderLength);
 }
 
 void rail_write_high_contrast(STREAM* s, HIGH_CONTRAST* high_contrast)
@@ -357,8 +357,8 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 	rail_order->sysparam.workArea.right = 1024;
 	rail_order->sysparam.workArea.bottom = 768;
 
-	rail_send_channel_event(rail_order->event_sender->event_sender_object,
-			RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
 }
 
 void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)

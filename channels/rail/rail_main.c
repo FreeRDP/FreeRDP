@@ -31,7 +31,7 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-static void rail_send_channel_data(void* rail_object, void* data, size_t length)
+void rail_send_channel_data(void* rail_object, void* data, size_t length)
 {
 	STREAM* s = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
@@ -59,16 +59,9 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 {
 	railPlugin* rail = (railPlugin*) plugin;
 
-	rail->rail_event_sender.event_sender_object = rail;
-	rail->rail_event_sender.send_rail_channel_event = rail_send_channel_event;
-
-	rail->rail_data_sender.data_sender_object  = rail;
-	rail->rail_data_sender.send_rail_channel_data = rail_send_channel_data;
-
 	rail->rail_order = rail_order_new();
 	rail->rail_order->plugin_data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
-	rail->rail_order->data_sender = &(rail->rail_data_sender);
-	rail->rail_order->event_sender = &(rail->rail_event_sender);
+	rail->rail_order->plugin = rail;
 }
 
 static void rail_process_terminate(rdpSvcPlugin* plugin)
