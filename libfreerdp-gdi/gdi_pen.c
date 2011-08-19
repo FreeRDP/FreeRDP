@@ -47,13 +47,13 @@ HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 	return hPen;
 }
 
-uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
+inline uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
 {
 	/* TODO: implement conversion using palette */
 	return 0xFF;
 }
 
-uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
+inline uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 {
 	uint16 p;
 	int r, g, b;
@@ -63,7 +63,7 @@ uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 	return p;
 }
 
-uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
+inline uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
 {
 	return pen->color;
 }

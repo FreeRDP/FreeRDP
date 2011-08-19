@@ -41,7 +41,7 @@ int FillRect_8bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 static int BitBlt_BLACKNESS_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int y;
-	uint8 *dstp;
+	uint8* dstp;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -57,7 +57,7 @@ static int BitBlt_BLACKNESS_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_WHITENESS_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int y;
-	uint8 *dstp;
+	uint8* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -73,8 +73,8 @@ static int BitBlt_WHITENESS_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_SRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
@@ -142,8 +142,8 @@ static int BitBlt_SRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 static int BitBlt_NOTSRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -167,7 +167,7 @@ static int BitBlt_NOTSRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_DSTINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint8 *dstp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -189,8 +189,8 @@ static int BitBlt_DSTINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_SRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -214,8 +214,8 @@ static int BitBlt_SRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_NOTSRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -239,8 +239,8 @@ static int BitBlt_NOTSRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 static int BitBlt_SRCINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -264,8 +264,8 @@ static int BitBlt_SRCINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_SRCAND_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -289,8 +289,8 @@ static int BitBlt_SRCAND_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidt
 static int BitBlt_SRCPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
@@ -320,9 +320,9 @@ static int BitBlt_DSPDxax_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 static int BitBlt_SPna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* srcp;
+	uint8* dstp;
+	uint8* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -349,8 +349,8 @@ static int BitBlt_SPna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 static int BitBlt_PDxn_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* dstp;
+	uint8* patp;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -375,8 +375,8 @@ static int BitBlt_PDxn_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 static int BitBlt_DSna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -400,9 +400,9 @@ static int BitBlt_DSna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 static int BitBlt_MERGECOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* srcp;
+	uint8* dstp;
+	uint8* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -429,8 +429,8 @@ static int BitBlt_MERGECOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_MERGEPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
+	uint8* srcp;
+	uint8* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -454,8 +454,8 @@ static int BitBlt_MERGEPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_PATCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* dstp;
+	uint8* patp;
 	uint8 palIndex;
 
 	if(hdcDest->brush->style == GDI_BS_SOLID)
@@ -500,8 +500,8 @@ static int BitBlt_PATCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 static int BitBlt_PATINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* dstp;
+	uint8* patp;
 	uint8 palIndex;
 
 	if(hdcDest->brush->style == GDI_BS_SOLID)
@@ -546,9 +546,9 @@ static int BitBlt_PATINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_PATPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
-	uint8 *patp;
+	uint8* srcp;
+	uint8* dstp;
+	uint8* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -707,96 +707,96 @@ int PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, in
 	return 1;
 }
 
-void SetPixel_BLACK_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_BLACK_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = 0 */
 	*pixel = 0;
 }
 
-void SetPixel_NOTMERGEPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOTMERGEPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D | P) */
 	*pixel = ~(*pixel | *pen);
 }
 
-void SetPixel_MASKNOTPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MASKNOTPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D & ~P */
 	*pixel &= ~(*pen);
 }
 
-void SetPixel_NOTCOPYPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOTCOPYPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~P */
 	*pixel = ~(*pen);
 }
 
-void SetPixel_MASKPENNOT_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MASKPENNOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P & ~D */
 	*pixel = *pen & ~*pixel;
 }
 
-void SetPixel_NOT_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~D */
 	*pixel = ~(*pixel);
 }
 
-void SetPixel_XORPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_XORPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D ^ P */
 	*pixel = *pixel ^ *pen;
 }
 
-void SetPixel_NOTMASKPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOTMASKPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D & P) */
 	*pixel = ~(*pixel & *pen);
 }
 
-void SetPixel_MASKPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MASKPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D & P */
 	*pixel &= *pen;
 }
 
-void SetPixel_NOTXORPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOTXORPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D ^ P) */
 	*pixel = ~(*pixel ^ *pen);
 }
 
-void SetPixel_NOP_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_NOP_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D */
 }
 
-void SetPixel_MERGENOTPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MERGENOTPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D | ~P */
 	*pixel |= ~(*pen);
 }
 
-void SetPixel_COPYPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_COPYPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P */
 	*pixel = *pen;
 }
 
-void SetPixel_MERGEPENNOT_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MERGEPENNOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P | ~D */
 	*pixel = *pen | ~(*pixel);
 }
 
-void SetPixel_MERGEPEN_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_MERGEPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P | D */
 	*pixel |= *pen;
 }
 
-void SetPixel_WHITE_8bpp(uint8 *pixel, uint8 *pen)
+inline void SetPixel_WHITE_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = 1 */
 	*pixel = 0xFF;
@@ -836,7 +836,7 @@ int LineTo_8bpp(HGDI_DC hdc, int nXEnd, int nYEnd)
 
 	int irop2;
 	uint8 pen;
-	uint8 *pixel;
+	uint8* pixel;
 
 	x1 = hdc->pen->posX;
 	y1 = hdc->pen->posY;

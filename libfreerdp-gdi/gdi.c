@@ -301,20 +301,17 @@ const uint32 rop3_code_table[] =
 
 /* GDI Helper Functions */
 
-uint32
-gdi_rop3_code(uint8 code)
+inline uint32 gdi_rop3_code(uint8 code)
 {
 	return rop3_code_table[code];
 }
 
-void
-gdi_copy_mem(uint8 * d, uint8 * s, int n)
+inline void gdi_copy_mem(uint8 * d, uint8 * s, int n)
 {
 	memcpy(d, s, n);
 }
 
-void
-gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
+inline void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
 {
 	d = (d + n) - 1;
 	s = (s + n) - 1;
@@ -339,8 +336,7 @@ gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
 	}
 }
 
-uint8*
-gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
+inline uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	uint8 * p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
@@ -357,8 +353,7 @@ gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 }
 
-uint8*
-gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
+inline uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 {
 	uint8 * p;
 
@@ -382,8 +377,7 @@ gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 	return p;
 }
 
-int
-gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
+inline int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 {
 	int byte;
 	int shift;
@@ -395,8 +389,7 @@ gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 	return (data[byte] & (0x80 >> shift)) != 0;
 }
 
-HGDI_BITMAP
-gdi_create_bitmap(GDI* gdi, int width, int height, int bpp, uint8* data)
+HGDI_BITMAP gdi_create_bitmap(GDI* gdi, int width, int height, int bpp, uint8* data)
 {
 	uint8* bmpData;
 	HGDI_BITMAP bitmap;
@@ -407,8 +400,7 @@ gdi_create_bitmap(GDI* gdi, int width, int height, int bpp, uint8* data)
 	return bitmap;
 }
 
-GDI_IMAGE*
-gdi_bitmap_new(GDI *gdi, int width, int height, int bpp, uint8* data)
+GDI_IMAGE* gdi_bitmap_new(GDI *gdi, int width, int height, int bpp, uint8* data)
 {
 	GDI_IMAGE *gdi_bmp;
 	
@@ -432,8 +424,7 @@ gdi_bitmap_new(GDI *gdi, int width, int height, int bpp, uint8* data)
 	return gdi_bmp;
 }
 
-void
-gdi_bitmap_free(GDI_IMAGE *gdi_bmp)
+void gdi_bitmap_free(GDI_IMAGE *gdi_bmp)
 {
 	if (gdi_bmp != 0)
 	{
