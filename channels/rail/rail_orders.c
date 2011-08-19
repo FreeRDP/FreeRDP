@@ -114,7 +114,7 @@ void rail_send_pdu(rdpRailOrder* rail_order, STREAM* s, uint16 orderType)
 	printf("Sending %s PDU, length:%d\n",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
-	rail_order->data_sender->send_rail_channel_data(rail_order->data_sender->data_sender_object, s->data, orderLength);
+	rail_send_channel_data(rail_order->plugin, s->data, orderLength);
 }
 
 void rail_write_high_contrast(STREAM* s, HIGH_CONTRAST* high_contrast)
@@ -328,37 +328,38 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 
 	rail_order->sysparam.params = 0;
 
-	rail_order->sysparam.params |= SPI_SET_HIGH_CONTRAST;
+	rail_order->sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
 	rail_order->sysparam.highContrast.colorScheme.string = NULL;
 	rail_order->sysparam.highContrast.colorScheme.length = 0;
 	rail_order->sysparam.highContrast.flags = 0x7E;
 
-	rail_order->sysparam.params |= SPI_TASKBAR_POS;
-	rail_order->sysparam.taskbarPos.left = 0;
-	rail_order->sysparam.taskbarPos.top = 0;
-	rail_order->sysparam.taskbarPos.right = 1024;
-	rail_order->sysparam.taskbarPos.bottom = 29;
-
-	rail_order->sysparam.params |= SPI_SET_MOUSE_BUTTON_SWAP;
+	rail_order->sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
 	rail_order->sysparam.mouseButtonSwap = False;
 
-	rail_order->sysparam.params |= SPI_SET_KEYBOARD_PREF;
+	rail_order->sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
 	rail_order->sysparam.keyboardPref = False;
 
-	rail_order->sysparam.params |= SPI_SET_DRAG_FULL_WINDOWS;
+	rail_order->sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
 	rail_order->sysparam.dragFullWindows = True;
 
-	rail_order->sysparam.params |= SPI_SET_KEYBOARD_CUES;
+	rail_order->sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
 	rail_order->sysparam.keyboardCues = False;
 
-	rail_order->sysparam.params |= SPI_SET_WORK_AREA;
+	rail_order->sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	rail_order->sysparam.workArea.left = 0;
 	rail_order->sysparam.workArea.top = 0;
 	rail_order->sysparam.workArea.right = 1024;
 	rail_order->sysparam.workArea.bottom = 768;
 
-	rail_send_channel_event(rail_order->event_sender->event_sender_object,
-			RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
+}
+
+void rail_recv_exec_result_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_exec_result_order(s, &rail_order->exec_result);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, (void*) &rail_order->exec_result);
 }
 
 void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
@@ -378,7 +379,7 @@ void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 			break;
 
 		case RDP_RAIL_ORDER_EXEC_RESULT:
-			rail_read_server_exec_result_order(s, &rail_order->exec_result);
+			rail_recv_exec_result_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_SYSPARAM:
@@ -471,43 +472,43 @@ void rail_send_client_sysparam_order(rdpRailOrder* rail_order)
 
 void rail_send_client_sysparams_order(rdpRailOrder* rail_order)
 {
-	if (rail_order->sysparam.params & SPI_SET_HIGH_CONTRAST)
+	if (rail_order->sysparam.params & SPI_MASK_SET_HIGH_CONTRAST)
 	{
 		rail_order->sysparam.param = SPI_SET_HIGH_CONTRAST;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_TASKBAR_POS)
+	if (rail_order->sysparam.params & SPI_MASK_TASKBAR_POS)
 	{
 		rail_order->sysparam.param = SPI_TASKBAR_POS;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_SET_MOUSE_BUTTON_SWAP)
+	if (rail_order->sysparam.params & SPI_MASK_SET_MOUSE_BUTTON_SWAP)
 	{
 		rail_order->sysparam.param = SPI_SET_MOUSE_BUTTON_SWAP;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_SET_KEYBOARD_PREF)
+	if (rail_order->sysparam.params & SPI_MASK_SET_KEYBOARD_PREF)
 	{
 		rail_order->sysparam.param = SPI_SET_KEYBOARD_PREF;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_SET_DRAG_FULL_WINDOWS)
+	if (rail_order->sysparam.params & SPI_MASK_SET_DRAG_FULL_WINDOWS)
 	{
 		rail_order->sysparam.param = SPI_SET_DRAG_FULL_WINDOWS;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_SET_KEYBOARD_CUES)
+	if (rail_order->sysparam.params & SPI_MASK_SET_KEYBOARD_CUES)
 	{
 		rail_order->sysparam.param = SPI_SET_KEYBOARD_CUES;
 		rail_send_client_sysparam_order(rail_order);
 	}
 
-	if (rail_order->sysparam.params & SPI_SET_WORK_AREA)
+	if (rail_order->sysparam.params & SPI_MASK_SET_WORK_AREA)
 	{
 		rail_order->sysparam.param = SPI_SET_WORK_AREA;
 		rail_send_client_sysparam_order(rail_order);
