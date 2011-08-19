@@ -166,6 +166,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->mouse_motion = True;
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
+	xfi->fullscreen = settings->fullscreen;
 
 	window_GetWorkArea(xfi);
 
@@ -292,7 +293,9 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->window = desktop_create(xfi, "xfreerdp");
 
 		window_show_decorations(xfi, xfi->window, xfi->decoration);
-		window_fullscreen(xfi, xfi->window, xfi->fullscreen);
+
+		if (xfi->fullscreen)
+			desktop_fullscreen(xfi, xfi->window, xfi->fullscreen);
 
 		/* wait for VisibilityNotify */
 		do

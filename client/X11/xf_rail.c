@@ -75,8 +75,6 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 			window->windowOffsetX + xfi->workArea.x,
 			window->windowOffsetY + xfi->workArea.y,
 			window->windowWidth, window->windowHeight);
-
-	XFlush(xfi->display);
 }
 
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)

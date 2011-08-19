@@ -36,7 +36,7 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
-void window_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
+void desktop_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 {
 	if (fullscreen)
 	{
@@ -159,7 +159,7 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 		XClassHint* class_hints;
 
 		window->decorations = True;
-		window->fullscreen = False;
+		window->fullscreen = True;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -270,31 +270,36 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
+	Pixmap surface;
 	XSizeHints* size_hints;
-	XWindowChanges changes;
-
-	changes.x = x;
-	changes.y = y;
-	changes.width = width;
-	changes.height = height;
-
-	XConfigureWindow(xfi->display, window->handle, CWX | CWY | CWWidth | CWHeight, &changes);
-
-	window->width = width;
-	window->height = height;
-	XFreePixmap(xfi->display, window->surface);
-	window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
 
 	size_hints = XAllocSizeHints();
 
 	if (size_hints)
 	{
 		size_hints->flags = PMinSize | PMaxSize;
-		size_hints->min_width = size_hints->max_width = window->width;
-		size_hints->min_height = size_hints->max_height = window->height;
+		size_hints->min_width = size_hints->max_width = width;
+		size_hints->min_height = size_hints->max_height = height;
 		XSetWMNormalHints(xfi->display, window->handle, size_hints);
 		XFree(size_hints);
 	}
+
+	if (window->width == width && window->height == height)
+		XMoveWindow(xfi->display, window->handle, x, y);
+	else if (window->x == x && window->y == y)
+		XResizeWindow(xfi->display, window->handle, width, height);
+	else
+		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+
+	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
+	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
+	XFreePixmap(xfi->display, window->surface);
+	window->surface = surface;
+
+	window->x = x;
+	window->y = y;
+	window->width = width;
+	window->height = height;
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

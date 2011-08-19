@@ -31,6 +31,8 @@ typedef struct xf_window xfWindow;
 struct xf_window
 {
 	GC gc;
+	int x;
+	int y;
 	int width;
 	int height;
 	Window handle;
@@ -42,7 +44,7 @@ struct xf_window
 boolean window_GetCurrentDesktop(xfInfo* xfi);
 boolean window_GetWorkArea(xfInfo* xfi);
 
-void window_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
+void desktop_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
 void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
 
 xfWindow* desktop_create(xfInfo* xfi, char* name);

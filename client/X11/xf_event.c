@@ -22,6 +22,45 @@
 
 #include "xf_event.h"
 
+uint8 X11_EVENT_STRINGS[][20] =
+{
+	"", "",
+	"KeyPress",
+	"KeyRelease",
+	"ButtonPress",
+	"ButtonRelease",
+	"MotionNotify",
+	"EnterNotify",
+	"LeaveNotify",
+	"FocusIn",
+	"FocusOut",
+	"KeymapNotify",
+	"Expose",
+	"GraphicsExpose",
+	"NoExpose",
+	"VisibilityNotify",
+	"CreateNotify",
+	"DestroyNotify",
+	"UnmapNotify",
+	"MapNotify",
+	"MapRequest",
+	"ReparentNotify",
+	"ConfigureNotify",
+	"ConfigureRequest",
+	"GravityNotify",
+	"ResizeRequest",
+	"CirculateNotify",
+	"CirculateRequest",
+	"PropertyNotify",
+	"SelectionClear",
+	"SelectionRequest",
+	"SelectionNotify",
+	"ColormapNotify",
+	"ClientMessage",
+	"MappingNotify",
+	"GenericEvent",
+};
+
 void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
 {
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -59,6 +98,8 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
 					window->windowOffsetX, window->windowOffsetY,
 					window->windowWidth, window->windowHeight, 0, 0);
+
+			XFlush(xfi->display);
 		}
 	}
 
@@ -67,9 +108,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (app != True)
-		xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
-
+	xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
 	return True;
 }
 
@@ -344,14 +383,38 @@ boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	xfi->mouse_active = False;
-	XUngrabKeyboard(xfi->display, CurrentTime);
+	if (app != True)
+	{
+		xfi->mouse_active = False;
+		XUngrabKeyboard(xfi->display, CurrentTime);
+	}
 
 	return True;
 }
 
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
+	xfWindow* xfw;
+	rdpWindow* window;
+
+	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+
+	if (window != NULL)
+	{
+		xfw = (xfWindow*) window->extra;
+
+		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowWidth, window->windowHeight);
+
+		XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
+				window->windowOffsetX, window->windowOffsetY,
+				window->windowWidth, window->windowHeight, 0, 0);
+
+		XFlush(xfi->display);
+	}
+
 	return True;
 }
 
@@ -370,6 +433,11 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 		if (event->xany.window != xfi->window->handle)
 			app = True;
 	}
+
+#if 0
+	if (event->type != MotionNotify)
+		printf("X11 %s Event\n", X11_EVENT_STRINGS[event->type]);
+#endif
 
 	switch (event->type)
 	{

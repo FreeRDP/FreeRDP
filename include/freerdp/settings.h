@@ -162,6 +162,7 @@ struct rdp_settings
 	uint16 width;
 	uint16 height;
 	boolean workarea;
+	boolean fullscreen;
 	boolean decorations;
 	uint32 rdp_version;
 	uint16 color_depth;

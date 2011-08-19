@@ -147,6 +147,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				}
 			}
 		}
+		else if (strcmp("-f", argv[index]) == 0)
+		{
+			settings->fullscreen = True;
+		}
 		else if (strcmp("-D", argv[index]) == 0)
 		{
 			settings->decorations = False;
@@ -214,6 +218,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->remote_app = True;
 			settings->rail_langbar_supported = True;
+			settings->workarea = True;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
 		{
