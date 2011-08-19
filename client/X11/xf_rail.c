@@ -122,12 +122,39 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	freerdp_chanman_send_event(chanman, new_event);
 }
 
+void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_EXEC_RESULT_ORDER * exec_result;
+	const char* error_code_names[] =
+	{
+	"RAIL_EXEC_S_OK",
+	"RAIL_EXEC_E_HOOK_NOT_LOADED",
+	"RAIL_EXEC_E_DECODE_FAILED",
+	"RAIL_EXEC_E_NOT_IN_ALLOWLIST",
+	"RAIL_EXEC_E_FILE_NOT_FOUND",
+	"RAIL_EXEC_E_FAIL",
+	"RAIL_EXEC_E_SESSION_LOCKED"
+	};
+
+	exec_result = (RAIL_EXEC_RESULT_ORDER *)event->user_data;
+
+	if (exec_result->execResult != RAIL_EXEC_S_OK)
+	{
+		printf("RAIL exec error: execResult=%s NtError=0x%X\n",
+			error_code_names[exec_result->execResult], exec_result->rawResult);
+	}
+}
+
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	switch (event->event_type)
 	{
 		case RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS:
 			xf_process_rail_get_sysparams_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS:
+			xf_process_rail_exec_result_event(xfi, chanman, event);
 			break;
 
 		default:

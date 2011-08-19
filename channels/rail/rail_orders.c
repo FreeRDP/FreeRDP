@@ -355,6 +355,13 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, (void*) &rail_order->sysparam);
 }
 
+void rail_recv_exec_result_order(rdpRailOrder* rail_order, STREAM* s)
+{
+	rail_read_server_exec_result_order(s, &rail_order->exec_result);
+	rail_send_channel_event(rail_order->plugin,
+		RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, (void*) &rail_order->exec_result);
+}
+
 void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 {
 	uint16 orderType;
@@ -372,7 +379,7 @@ void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 			break;
 
 		case RDP_RAIL_ORDER_EXEC_RESULT:
-			rail_read_server_exec_result_order(s, &rail_order->exec_result);
+			rail_recv_exec_result_order(rail_order, s);
 			break;
 
 		case RDP_RAIL_ORDER_SYSPARAM:
