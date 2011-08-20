@@ -32,7 +32,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 {
 	STREAM* s;
 	uint32 flags;
-	struct rdp_chan* channel = NULL;
+	rdpChan* channel = NULL;
 	int i;
 	int chunk_size;
 
