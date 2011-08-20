@@ -200,7 +200,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 #ifdef WITH_DEBUG_TRANSPORT
 	if (status > 0)
 	{
-		printf("Server > Client\n");
+		printf("Local < Remote\n");
 		freerdp_hexdump(s->data, status);
 	}
 #endif
@@ -235,7 +235,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{
-		printf("Client > Server\n");
+		printf("Local > Remote\n");
 		freerdp_hexdump(s->data, length);
 	}
 #endif
@@ -257,17 +257,25 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
 			if (!transport->blocking)
-				transport_read_nonblocking(transport);
+			{
+				/* and in case we do have buffered some data, we set the event so next loop will get it */
+				if (transport_read_nonblocking(transport) > 0)
+					wait_obj_set(transport->recv_event);
+			}
 		}
 
 		sent += status;
 		stream_seek(s, status);
 	}
 
-	if (!transport->blocking)
-		transport_check_fds(transport);
-
 	return status;
+}
+
+void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
+{
+	rfds[*rcount] = (void*)(long)(transport->tcp->sockfd);
+	(*rcount)++;
+	wait_obj_get_fds(transport->recv_event, rfds, rcount);
 }
 
 int transport_check_fds(rdpTransport* transport)
@@ -276,6 +284,8 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	uint16 length;
 	STREAM* received;
+
+	wait_obj_clear(transport->recv_event);
 
 	status = transport_read_nonblocking(transport);
 	if (status < 0)
@@ -361,6 +371,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		/* receive buffer for non-blocking read. */
 		transport->recv_buffer = stream_new(BUFFER_SIZE);
+		transport->recv_event = wait_obj_new();
 
 		/* buffers for blocking read/write */
 		transport->recv_stream = stream_new(BUFFER_SIZE);
@@ -379,6 +390,7 @@ void transport_free(rdpTransport* transport)
 		stream_free(transport->recv_buffer);
 		stream_free(transport->recv_stream);
 		stream_free(transport->send_stream);
+		wait_obj_free(transport->recv_event);
 		tcp_free(transport->tcp);
 		xfree(transport);
 	}
