@@ -33,6 +33,25 @@ uint8 INFO_TYPE_LOGON_STRINGS[][32] =
 };
 
 /**
+ * Read SYSTEM_TIME structure (TS_SYSTEMTIME).\n
+ * @msdn{cc240478}
+ * @param s stream
+ * @param system_time system time structure
+ */
+
+void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
+{
+	stream_read_uint16(s, system_time->wYear); /* wYear, must be set to 0 */
+	stream_read_uint16(s, system_time->wMonth); /* wMonth */
+	stream_read_uint16(s, system_time->wDayOfWeek); /* wDayOfWeek */
+	stream_read_uint16(s, system_time->wDay); /* wDay */
+	stream_read_uint16(s, system_time->wHour); /* wHour */
+	stream_read_uint16(s, system_time->wMinute); /* wMinute */
+	stream_read_uint16(s, system_time->wSecond); /* wSecond */
+	stream_read_uint16(s, system_time->wMilliseconds); /* wMilliseconds */
+}
+
+/**
  * Write SYSTEM_TIME structure (TS_SYSTEMTIME).\n
  * @msdn{cc240478}
  * @param s stream
@@ -96,6 +115,46 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 	clientTimeZone->standardName[31] = 0;
 	strftime(clientTimeZone->daylightName, 32, "%Z, Summer Time", local_time);
 	clientTimeZone->daylightName[31] = 0;
+}
+
+/**
+ * Read client time zone information (TS_TIME_ZONE_INFORMATION).\n
+ * @msdn{cc240477}
+ * @param s stream
+ * @param settings settings
+ */
+
+boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
+{
+	char* str;
+	TIME_ZONE_INFO* clientTimeZone;
+
+	if (stream_get_left(s) < 172)
+		return False;
+
+	clientTimeZone = &settings->client_time_zone;
+
+	stream_read_uint32(s, clientTimeZone->bias); /* Bias */
+
+	/* standardName (64 bytes) */
+	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	stream_seek(s, 64);
+	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
+	xfree(str);
+
+	rdp_read_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
+	stream_read_uint32(s, clientTimeZone->standardBias); /* StandardBias */
+
+	/* daylightName (64 bytes) */
+	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	stream_seek(s, 64);
+	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
+	xfree(str);
+
+	rdp_read_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
+	stream_read_uint32(s, clientTimeZone->daylightBias); /* DaylightBias */
+
+	return True;
 }
 
 /**
@@ -168,6 +227,29 @@ void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 }
 
 /**
+ * Read Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
+ * @msdn{cc240541}
+ * @param s stream
+ * @param settings settings
+ */
+
+boolean rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+{
+	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+	autoReconnectCookie = &settings->client_auto_reconnect_cookie;
+
+	if (stream_get_left(s) < 28)
+		return False;
+
+	stream_write_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
+	stream_write_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
+	stream_write_uint32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
+	stream_write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier */
+
+	return True;
+}
+
+/**
  * Write Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
  * @msdn{cc240541}
  * @param s stream
@@ -183,6 +265,52 @@ void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
 	stream_write_uint32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
 	stream_write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier */
+}
+
+/**
+ * Read Extended Info Packet (TS_EXTENDED_INFO_PACKET).\n
+ * @msdn{cc240476}
+ * @param s stream
+ * @param settings settings
+ */
+
+boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
+{
+	uint16 clientAddressFamily;
+	uint16 cbClientAddress;
+	uint16 cbClientDir;
+	uint16 cbAutoReconnectLen;
+
+	stream_read_uint16(s, clientAddressFamily); /* clientAddressFamily */
+	stream_read_uint16(s, cbClientAddress); /* cbClientAddress */
+
+	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? True : False);
+	if (stream_get_left(s) < cbClientAddress)
+		return False;
+	settings->ip_address = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbClientAddress);
+	stream_seek(s, cbClientAddress);
+
+	stream_read_uint16(s, cbClientDir); /* cbClientDir */
+	if (stream_get_left(s) < cbClientDir)
+		return False;
+	settings->client_dir = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbClientDir);
+	stream_seek(s, cbClientDir);
+
+	if (!rdp_read_client_time_zone(s, settings))
+		return False;
+
+	stream_seek_uint32(s); /* clientSessionId, should be set to 0 */
+	stream_read_uint32(s, settings->performance_flags); /* performanceFlags */
+
+	stream_read_uint16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
+
+	if (cbAutoReconnectLen > 0)
+		return rdp_read_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+
+	/* reserved1 (2 bytes) */
+	/* reserved2 (2 bytes) */
+
+	return True;
 }
 
 /**
@@ -241,6 +369,87 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	xfree(clientAddress);
 	xfree(clientDir);
+}
+
+/**
+ * Read Info Packet (TS_INFO_PACKET).\n
+ * @msdn{cc240475}
+ * @param s stream
+ * @param settings settings
+ */
+
+boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
+{
+	uint32 flags;
+	uint16 cbDomain;
+	uint16 cbUserName;
+	uint16 cbPassword;
+	uint16 cbAlternateShell;
+	uint16 cbWorkingDir;
+
+	stream_seek_uint32(s); /* CodePage */
+	stream_read_uint32(s, flags); /* flags */
+
+	settings->autologon = ((flags & INFO_AUTOLOGON) ? True : False);
+	settings->remote_app = ((flags & INFO_RAIL) ? True : False);
+	settings->console_audio = ((flags & INFO_REMOTECONSOLEAUDIO) ? True : False);
+	settings->compression = ((flags & INFO_COMPRESSION) ? True : False);
+
+	stream_read_uint16(s, cbDomain); /* cbDomain */
+	stream_read_uint16(s, cbUserName); /* cbUserName */
+	stream_read_uint16(s, cbPassword); /* cbPassword */
+	stream_read_uint16(s, cbAlternateShell); /* cbAlternateShell */
+	stream_read_uint16(s, cbWorkingDir); /* cbWorkingDir */
+
+	if (stream_get_left(s) < cbDomain + 2)
+		return False;
+	if (cbDomain > 0)
+	{
+		settings->domain = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbDomain);
+		stream_seek(s, cbDomain);
+	}
+	stream_seek(s, 2);
+
+	if (stream_get_left(s) < cbUserName + 2)
+		return False;
+	if (cbUserName > 0)
+	{
+		settings->username = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbUserName);
+		stream_seek(s, cbUserName);
+	}
+	stream_seek(s, 2);
+
+	if (stream_get_left(s) < cbPassword + 2)
+		return False;
+	if (cbPassword > 0)
+	{
+		settings->password = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbPassword);
+		stream_seek(s, cbPassword);
+	}
+	stream_seek(s, 2);
+
+	if (stream_get_left(s) < cbAlternateShell + 2)
+		return False;
+	if (cbAlternateShell > 0)
+	{
+		settings->shell = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbAlternateShell);
+		stream_seek(s, cbAlternateShell);
+	}
+	stream_seek(s, 2);
+
+	if (stream_get_left(s) < cbWorkingDir + 2)
+		return False;
+	if (cbWorkingDir > 0)
+	{
+		settings->directory = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbWorkingDir);
+		stream_seek(s, cbWorkingDir);
+	}
+	stream_seek(s, 2);
+
+	if (settings->rdp_version >= 5)
+		return rdp_read_extended_info_packet(s, settings); /* extraInfo */
+
+	return True;
 }
 
 /**
@@ -338,6 +547,29 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (settings->rdp_version >= 5)
 		rdp_write_extended_info_packet(s, settings); /* extraInfo */
+}
+
+/**
+ * Read Client Info PDU (CLIENT_INFO_PDU).\n
+ * @msdn{cc240474}
+ * @param rdp RDP module
+ * @param s stream
+ */
+
+boolean rdp_read_client_info(rdpRdp* rdp, STREAM* s)
+{
+	uint16 length;
+	uint16 channelId;
+	uint16 sec_flags;
+
+	if (!rdp_read_header(rdp, s, &length, &channelId))
+		return False;
+
+	rdp_read_security_header(s, &sec_flags);
+	if ((sec_flags & SEC_INFO_PKT) == 0)
+		return False;
+
+	return rdp_read_info_packet(s, rdp->settings);
 }
 
 /**

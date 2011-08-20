@@ -38,7 +38,9 @@ enum CONNECTION_STATE
 	CONNECTION_STATE_MCS_CONNECT,
 	CONNECTION_STATE_MCS_ERECT_DOMAIN,
 	CONNECTION_STATE_MCS_ATTACH_USER,
-	CONNECTION_STATE_CHANNEL_JOIN
+	CONNECTION_STATE_CHANNEL_JOIN,
+	CONNECTION_STATE_LICENSE,
+	CONNECTION_STATE_ACTIVE
 };
 
 boolean rdp_client_connect(rdpRdp* rdp);
@@ -48,5 +50,6 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s);
+boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s);
 
 #endif /* __CONNECTION_H */

@@ -70,14 +70,20 @@
 #define LOGON_FAILED_OTHER		0x00000002
 #define LOGON_WARNING			0x00000003
 
+void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings);
+boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
 void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
 void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
+boolean rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
 void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
 void rdp_write_auto_reconnect_cookie(STREAM* s, rdpSettings* settings);
+boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings);
 void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings);
+boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings);
 void rdp_write_info_packet(STREAM* s, rdpSettings* settings);
+boolean rdp_read_client_info(rdpRdp* rdp, STREAM* s);
 void rdp_send_client_info(rdpRdp* rdp);
 void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s);
 
