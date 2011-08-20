@@ -250,6 +250,9 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 	if (!rdp_read_client_info(rdp, s))
 		return False;
 
+	if (!license_send_valid_client_error_packet(rdp->license))
+		return False;
+
 	return True;
 }
 
