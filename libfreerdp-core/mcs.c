@@ -719,6 +719,33 @@ boolean mcs_send_attach_user_confirm(rdpMcs* mcs)
 }
 
 /**
+ * Read MCS Channel Join Request.\n
+ * @msdn{cc240526}
+ * @param mcs mcs module
+ * @param s stream
+ */
+
+boolean mcs_read_channel_join_request(rdpMcs* mcs, STREAM* s, uint16* channel_id)
+{
+	int length;
+	enum DomainMCSPDU MCSPDU;
+	uint16 user_id;
+
+	MCSPDU = DomainMCSPDU_ChannelJoinRequest;
+	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+		return False;
+
+	if (!per_read_integer16(s, &user_id, MCS_BASE_CHANNEL_ID))
+		return False;
+	if (user_id != mcs->user_id)
+		return False;
+	if (!per_read_integer16(s, channel_id, 0))
+		return False;
+
+	return True;
+}
+
+/**
  * Send MCS Channel Join Request.\n
  * @msdn{cc240526}
  * @param mcs mcs module
@@ -765,6 +792,30 @@ void mcs_recv_channel_join_confirm(rdpMcs* mcs)
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, &requested, 0); /* requested (ChannelId) */
 	per_read_integer16(s, &channelId, 0); /* channelId */
+}
+
+/**
+ * Send MCS Channel Join Confirm.\n
+ * @msdn{cc240527}
+ * @param mcs mcs module
+ */
+
+boolean mcs_send_channel_join_confirm(rdpMcs* mcs, uint16 channel_id)
+{
+	STREAM* s;
+	int length = 15;
+	s = transport_send_stream_init(mcs->transport, 15);
+
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, length, 2);
+
+	per_write_enumerated(s, 0, MCS_Result_enum_length); /* result */
+	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	per_write_integer16(s, channel_id, 0); /* requested (ChannelId) */
+	per_write_integer16(s, channel_id, 0); /* channelId */
+
+	transport_write(mcs->transport, s);
+
+	return True;
 }
 
 /**
