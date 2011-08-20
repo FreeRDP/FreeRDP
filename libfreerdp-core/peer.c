@@ -23,6 +23,7 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	rdpPeer* peer = (rdpPeer*)client->peer;
 
+	peer->rdp->server_mode = True;
 	peer->rdp->state = CONNECTION_STATE_INITIAL;
 
 	return True;

@@ -170,6 +170,32 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 }
 
 /**
+ * Read an RDP packet header.\n
+ * @param rdp rdp module
+ * @param s stream
+ * @param length RDP packet length
+ * @param channel_id channel id
+ */
+
+boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_id)
+{
+	uint16 initiator;
+	enum DomainMCSPDU MCSPDU;
+
+	MCSPDU = (rdp->server_mode ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication);
+	mcs_read_domain_mcspdu_header(s, &MCSPDU, length);
+
+	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	per_read_integer16(s, channel_id, 0); /* channelId */
+	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
+	per_read_length(s, length); /* userData (OCTET_STRING) */
+	if (*length > stream_get_left(s))
+		return False;
+
+	return True;
+}
+
+/**
  * Write an RDP packet header.\n
  * @param rdp rdp module
  * @param s stream
@@ -177,9 +203,13 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
  * @param channel_id channel id
  */
 
-void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id)
+void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 {
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_SendDataRequest, length, 0);
+	enum DomainMCSPDU MCSPDU;
+
+	MCSPDU = (rdp->server_mode ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest);
+
+	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, channel_id, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
@@ -197,7 +227,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id)
 
 void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 {
-	int length;
+	uint16 length;
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
@@ -210,7 +240,7 @@ void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 
 void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 {
-	int length;
+	uint16 length;
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
@@ -224,7 +254,7 @@ void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 
 void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 {
-	int length;
+	uint16 length;
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
@@ -351,24 +381,20 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param s stream
  */
 
-static void rdp_process_tpkt_pdu(rdpRdp* rdp, STREAM* s)
+static void rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 {
-	int length;
+	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
-	uint16 initiator;
 	uint16 channelId;
 	uint16 sec_flags;
 	boolean processed;
-	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = DomainMCSPDU_SendDataIndication;
-	mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
-
-	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_read_integer16(s, &channelId, 0); /* channelId */
-	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
-	per_read_length(s, &pduLength); /* userData (OCTET_STRING) */
+	if (!rdp_read_header(rdp, s, &length, &channelId))
+	{
+		printf("Incorrect RDP header.\n");
+		return;
+	}
 
 	if (rdp->licensed != True)
 	{
@@ -433,7 +459,7 @@ static void rdp_process_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	}
 }
 
-static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
+static void rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 
@@ -454,12 +480,12 @@ static void rdp_process_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	fastpath_recv_updates(rdp->fastpath, s);
 }
 
-static void rdp_process_pdu(rdpRdp* rdp, STREAM* s)
+static void rdp_read_pdu(rdpRdp* rdp, STREAM* s)
 {
 	if (tpkt_verify_header(s))
-		rdp_process_tpkt_pdu(rdp, s);
+		rdp_read_tpkt_pdu(rdp, s);
 	else
-		rdp_process_fastpath_pdu(rdp, s);
+		rdp_read_fastpath_pdu(rdp, s);
 }
 
 /**
@@ -474,14 +500,14 @@ void rdp_recv(rdpRdp* rdp)
 	s = transport_recv_stream_init(rdp->transport, 4096);
 	transport_read(rdp->transport, s);
 
-	rdp_process_pdu(rdp, s);
+	rdp_read_pdu(rdp, s);
 }
 
 static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	rdpRdp* rdp = (rdpRdp*) extra;
 
-	rdp_process_pdu(rdp, s);
+	rdp_read_pdu(rdp, s);
 
 	return 1;
 }

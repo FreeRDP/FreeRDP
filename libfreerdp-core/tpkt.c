@@ -103,7 +103,7 @@ uint16 tpkt_read_header(STREAM* s)
  * @param length
  */
 
-void tpkt_write_header(STREAM* s, int length)
+void tpkt_write_header(STREAM* s, uint16 length)
 {
 	stream_write_uint8(s, 3); /* version */
 	stream_write_uint8(s, 0); /* reserved */
