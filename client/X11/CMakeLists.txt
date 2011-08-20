@@ -30,6 +30,13 @@ add_executable(xfreerdp
 	xf_window.h
 	xfreerdp.c
 	xfreerdp.h)
+	
+find_package(Xinerama)
+if(XINERAMA_FOUND)
+	add_definitions(-DWITH_XINERAMA)
+	include_directories(${XINERAMA_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
+endif()
 
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
