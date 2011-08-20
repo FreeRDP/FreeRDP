@@ -1586,6 +1586,68 @@ void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 	rdp_send_client_synchronize_pdu(rdp);
 }
 
+void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
+{
+	uint8 *bm, *em, *lm;
+	uint16 numberCapabilities;
+	uint16 lengthCombinedCapabilities;
+
+	stream_write_uint32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_write_uint16(s, 4); /* lengthSourceDescriptor (2 bytes) */
+
+	stream_get_mark(s, lm);
+	stream_seek_uint16(s); /* lengthCombinedCapabilities (2 bytes) */
+	stream_write(s, "RDP", 4); /* sourceDescriptor */
+
+	stream_get_mark(s, bm);
+	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
+	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
+
+	numberCapabilities = 14;
+	rdp_write_general_capability_set(s, settings);
+	rdp_write_bitmap_capability_set(s, settings);
+	rdp_write_order_capability_set(s, settings);
+	rdp_write_pointer_capability_set(s, settings);
+	rdp_write_input_capability_set(s, settings);
+	rdp_write_virtual_channel_capability_set(s, settings);
+	rdp_write_bitmap_cache_host_support_capability_set(s, settings);
+	rdp_write_share_capability_set(s, settings);
+	rdp_write_font_capability_set(s, settings);
+	rdp_write_multifragment_update_capability_set(s, settings);
+	rdp_write_large_pointer_capability_set(s, settings);
+	rdp_write_desktop_composition_capability_set(s, settings);
+	rdp_write_surface_commands_capability_set(s, settings);
+	rdp_write_bitmap_codecs_capability_set(s, settings);
+
+	stream_get_mark(s, em);
+
+	stream_set_mark(s, lm); /* go back to lengthCombinedCapabilities */
+	lengthCombinedCapabilities = (em - bm);
+	stream_write_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+
+	stream_set_mark(s, bm); /* go back to numberCapabilities */
+	stream_write_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+
+	stream_set_mark(s, em);
+
+	stream_write_uint32(s, 0); /* sessionId */
+}
+
+boolean rdp_send_demand_active(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_pdu_init(rdp);
+
+	rdp->settings->share_id = 0x10000 + rdp->mcs->user_id;
+
+	rdp_write_demand_active(s, rdp->settings);
+
+	rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+
+	return True;
+}
+
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 {
 	uint8 *bm, *em, *lm;
@@ -1695,6 +1757,6 @@ void rdp_send_confirm_active(rdpRdp* rdp)
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
 }
 

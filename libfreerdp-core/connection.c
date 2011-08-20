@@ -253,6 +253,11 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 	if (!license_send_valid_client_error_packet(rdp->license))
 		return False;
 
+	rdp->state = CONNECTION_STATE_LICENSE;
+
+	if (!rdp_send_demand_active(rdp))
+		return False;
+
 	return True;
 }
 
