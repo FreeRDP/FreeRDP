@@ -162,7 +162,12 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
+		if (window->title != NULL)
+			xfree(window->title);
+
 		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
+
+		IFCALL(rail->SetWindowText, rail, window);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
