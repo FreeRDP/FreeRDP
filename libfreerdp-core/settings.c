@@ -101,6 +101,30 @@ rdpSettings* settings_new()
 		settings->bitmap_cache = True;
 		settings->persistent_bitmap_cache = False;
 
+		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+		settings->glyphCache[0].cacheEntries = 254;
+		settings->glyphCache[0].cacheMaximumCellSize = 4;
+		settings->glyphCache[1].cacheEntries = 254;
+		settings->glyphCache[1].cacheMaximumCellSize = 4;
+		settings->glyphCache[2].cacheEntries = 254;
+		settings->glyphCache[2].cacheMaximumCellSize = 8;
+		settings->glyphCache[3].cacheEntries = 254;
+		settings->glyphCache[3].cacheMaximumCellSize = 8;
+		settings->glyphCache[4].cacheEntries = 254;
+		settings->glyphCache[4].cacheMaximumCellSize = 16;
+		settings->glyphCache[5].cacheEntries = 254;
+		settings->glyphCache[5].cacheMaximumCellSize = 32;
+		settings->glyphCache[6].cacheEntries = 254;
+		settings->glyphCache[6].cacheMaximumCellSize = 64;
+		settings->glyphCache[7].cacheEntries = 254;
+		settings->glyphCache[7].cacheMaximumCellSize = 128;
+		settings->glyphCache[8].cacheEntries = 254;
+		settings->glyphCache[8].cacheMaximumCellSize = 256;
+		settings->glyphCache[9].cacheEntries = 64;
+		settings->glyphCache[9].cacheMaximumCellSize = 248;
+		settings->fragCache.cacheEntries = 64;
+		settings->fragCache.cacheMaximumCellSize = 248;
+
 		settings->offscreen_bitmap_cache = True;
 		settings->offscreen_bitmap_cache_size = 7680;
 		settings->offscreen_bitmap_cache_entries = 100;

@@ -31,6 +31,7 @@ rdpCache* cache_new(rdpSettings* settings)
 	if (cache != NULL)
 	{
 		cache->settings = settings;
+		cache->glyph = glyph_new(settings);
 		cache->brush = brush_new(settings);
 		cache->bitmap_v2 = bitmap_v2_new(settings);
 		cache->offscreen = offscreen_new(settings);

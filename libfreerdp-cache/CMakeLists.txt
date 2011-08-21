@@ -22,6 +22,7 @@ set(FREERDP_CACHE_SRCS
 	bitmap_v2.c
 	offscreen.c
 	color_table.c
+	glyph.c
 	cache.c)
 
 add_library(freerdp-cache SHARED ${FREERDP_CACHE_SRCS})

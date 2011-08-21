@@ -76,6 +76,12 @@
 #define NEG_ELLIPSE_CB_INDEX			0x1A
 #define NEG_GLYPH_INDEX_INDEX			0x1B
 
+/* Glyph Support Level */
+#define GLYPH_SUPPORT_NONE			0x0000
+#define GLYPH_SUPPORT_PARTIAL			0x0001
+#define GLYPH_SUPPORT_FULL			0x0002
+#define GLYPH_SUPPORT_ENCODE			0x0003
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -149,6 +155,13 @@ struct _BITMAP_CACHE_V2_CELL_INFO
 	boolean persistent;
 };
 typedef struct _BITMAP_CACHE_V2_CELL_INFO BITMAP_CACHE_V2_CELL_INFO;
+
+struct _GLYPH_CACHE_DEFINITION
+{
+	uint16 cacheEntries;
+	uint16 cacheMaximumCellSize;
+};
+typedef struct _GLYPH_CACHE_DEFINITION GLYPH_CACHE_DEFINITION;
 
 struct rdp_monitor
 {
@@ -257,6 +270,10 @@ struct rdp_settings
 
 	uint8 bitmapCacheV2NumCells;
 	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[6];
+
+	uint16 glyphSupportLevel;
+	GLYPH_CACHE_DEFINITION glyphCache[10];
+	GLYPH_CACHE_DEFINITION fragCache;
 
 	uint32 vc_chunk_size;
 

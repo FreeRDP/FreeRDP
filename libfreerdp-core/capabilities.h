@@ -105,12 +105,6 @@
 #define BRUSH_COLOR_8x8				0x00000001
 #define BRUSH_COLOR_FULL			0x00000002
 
-/* Glyph Support Level */
-#define GLYPH_SUPPORT_NONE			0x0000
-#define GLYPH_SUPPORT_PARTIAL			0x0001
-#define GLYPH_SUPPORT_FULL			0x0002
-#define GLYPH_SUPPORT_ENCODE			0x0003
-
 /* Bitmap Cache Version */
 #define BITMAP_CACHE_V2				0x01
 

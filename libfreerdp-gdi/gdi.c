@@ -676,6 +676,32 @@ void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_col
 	color_table_put(gdi->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
+void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
+{
+	int i;
+	GLYPH_DATA* glyph;
+	GDI* gdi = GET_GDI(update);
+
+	for (i = 0; i < cache_glyph->cGlyphs; i++)
+	{
+		glyph = cache_glyph->glyphData[i];
+		glyph_put(gdi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph);
+	}
+}
+
+void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
+{
+	int i;
+	GLYPH_DATA_V2* glyph;
+	GDI* gdi = GET_GDI(update);
+
+	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
+	{
+		glyph = cache_glyph_v2->glyphData[i];
+		glyph_put(gdi->cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph);
+	}
+}
+
 void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 {
 	GDI* gdi = GET_GDI(update);
@@ -811,6 +837,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->CacheBitmapV2 = gdi_cache_bitmap_v2;
 	update->CacheColorTable = gdi_cache_color_table;
+	update->CacheGlyph = gdi_cache_glyph;
+	update->CacheGlyphV2 = gdi_cache_glyph_v2;
 	update->CacheBrush = gdi_cache_brush;
 
 	update->SurfaceBits = gdi_surface_bits;

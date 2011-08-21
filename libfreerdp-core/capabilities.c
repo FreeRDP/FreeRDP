@@ -722,10 +722,10 @@ void rdp_write_brush_capability_set(STREAM* s, rdpSettings* settings)
  * @msdn{cc240566}
  * @param s stream
  */
-void rdp_read_cache_definition(STREAM* s, uint16* numEntries, uint16* maxCellSize)
+void rdp_read_cache_definition(STREAM* s, GLYPH_CACHE_DEFINITION* cache_definition)
 {
-	stream_read_uint16(s, *numEntries); /* cacheEntries (2 bytes) */
-	stream_read_uint16(s, *maxCellSize); /* cacheMaximumCellSize (2 bytes) */
+	stream_read_uint16(s, cache_definition->cacheEntries); /* cacheEntries (2 bytes) */
+	stream_read_uint16(s, cache_definition->cacheMaximumCellSize); /* cacheMaximumCellSize (2 bytes) */
 }
 
 /**
@@ -733,10 +733,10 @@ void rdp_read_cache_definition(STREAM* s, uint16* numEntries, uint16* maxCellSiz
  * @msdn{cc240566}
  * @param s stream
  */
-void rdp_write_cache_definition(STREAM* s, uint16 numEntries, uint16 maxCellSize)
+void rdp_write_cache_definition(STREAM* s, GLYPH_CACHE_DEFINITION* cache_definition)
 {
-	stream_write_uint16(s, numEntries); /* cacheEntries (2 bytes) */
-	stream_write_uint16(s, maxCellSize); /* cacheMaximumCellSize (2 bytes) */
+	stream_write_uint16(s, cache_definition->cacheEntries); /* cacheEntries (2 bytes) */
+	stream_write_uint16(s, cache_definition->cacheMaximumCellSize); /* cacheMaximumCellSize (2 bytes) */
 }
 
 /**
@@ -768,20 +768,22 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	/* glyphCache (40 bytes) */
-	rdp_write_cache_definition(s, 254, 4);
-	rdp_write_cache_definition(s, 254, 4);
-	rdp_write_cache_definition(s, 254, 8);
-	rdp_write_cache_definition(s, 254, 8);
-	rdp_write_cache_definition(s, 254, 16);
-	rdp_write_cache_definition(s, 254, 32);
-	rdp_write_cache_definition(s, 254, 64);
-	rdp_write_cache_definition(s, 254, 128);
-	rdp_write_cache_definition(s, 254, 256);
-	rdp_write_cache_definition(s, 64, 2048);
+	rdp_write_cache_definition(s, &settings->glyphCache[0]);
+	rdp_write_cache_definition(s, &settings->glyphCache[1]);
+	rdp_write_cache_definition(s, &settings->glyphCache[2]);
+	rdp_write_cache_definition(s, &settings->glyphCache[3]);
+	rdp_write_cache_definition(s, &settings->glyphCache[4]);
+	rdp_write_cache_definition(s, &settings->glyphCache[5]);
+	rdp_write_cache_definition(s, &settings->glyphCache[6]);
+	rdp_write_cache_definition(s, &settings->glyphCache[7]);
+	rdp_write_cache_definition(s, &settings->glyphCache[8]);
+	rdp_write_cache_definition(s, &settings->glyphCache[9]);
 
-	rdp_write_cache_definition(s, 64, 2048); /* fragCache */
+	/* fragCache */
+	rdp_write_cache_definition(s, &settings->fragCache);
 
-	stream_write_uint16(s, GLYPH_SUPPORT_NONE); /* glyphSupportLevel (2 bytes) */
+	stream_write_uint16(s, settings->glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
+
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_GLYPH_CACHE);
@@ -1596,7 +1598,11 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	rdp_read_demand_active(s, settings);
+
+	rdp->update->glyph_v2 = (settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? True : False;
+
 	rdp_send_confirm_active(rdp);
+
 	rdp_send_client_synchronize_pdu(rdp);
 }
 

@@ -1268,22 +1268,15 @@ void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_order, uint16 flags)
 {
 	int i;
-	int size;
 	GLYPH_DATA* glyph;
 
 	stream_read_uint8(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
 	stream_read_uint8(s, cache_glyph_order->cGlyphs); /* cGlyphs (1 byte) */
 
-	size = cache_glyph_order->cGlyphs * sizeof(GLYPH_DATA);
-
-	if (cache_glyph_order->glyphData == NULL)
-		cache_glyph_order->glyphData = (GLYPH_DATA*) xmalloc(size);
-	else
-		cache_glyph_order->glyphData = (GLYPH_DATA*) xrealloc(cache_glyph_order->glyphData, size);
-
 	for (i = 0; i < cache_glyph_order->cGlyphs; i++)
 	{
-		glyph = &cache_glyph_order->glyphData[i];
+		glyph = (GLYPH_DATA*) xmalloc(sizeof(GLYPH_DATA));
+		cache_glyph_order->glyphData[i] = glyph;
 
 		stream_read_uint16(s, glyph->cacheIndex);
 		stream_read_uint16(s, glyph->x);
@@ -1294,10 +1287,7 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += glyph->cb % 4;
 
-		if (glyph->aj == NULL)
-			glyph->aj = (uint8*) xmalloc(glyph->cb);
-		else
-			glyph->aj = (uint8*) xrealloc(glyph->aj, glyph->cb);
+		glyph->aj = (uint8*) xmalloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
@@ -1306,23 +1296,16 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order, uint16 flags)
 {
 	int i;
-	int size;
 	GLYPH_DATA_V2* glyph;
 
 	cache_glyph_v2_order->cacheId = (flags & 0x000F);
 	cache_glyph_v2_order->flags = (flags & 0x00F0) >> 4;
 	cache_glyph_v2_order->cGlyphs = (flags & 0xFF00) >> 8;
 
-	size = cache_glyph_v2_order->cGlyphs * sizeof(GLYPH_DATA_V2);
-
-	if (cache_glyph_v2_order->glyphData == NULL)
-		cache_glyph_v2_order->glyphData = (GLYPH_DATA_V2*) xmalloc(size);
-	else
-		cache_glyph_v2_order->glyphData = (GLYPH_DATA_V2*) xrealloc(cache_glyph_v2_order->glyphData, size);
-
 	for (i = 0; i < cache_glyph_v2_order->cGlyphs; i++)
 	{
-		glyph = &cache_glyph_v2_order->glyphData[i];
+		glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
+		cache_glyph_v2_order->glyphData[i] = glyph;
 
 		stream_read_uint16(s, glyph->cacheIndex);
 		update_read_2byte_signed(s, &glyph->x);
@@ -1333,10 +1316,7 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += glyph->cb % 4;
 
-		if (glyph->aj == NULL)
-			glyph->aj = (uint8*) xmalloc(glyph->cb);
-		else
-			glyph->aj = (uint8*) xrealloc(glyph->aj, glyph->cb);
+		glyph->aj = (uint8*) xmalloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
@@ -1822,12 +1802,12 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 			if (update->glyph_v2)
 			{
 				update_read_cache_glyph_v2_order(s, &(update->cache_glyph_v2_order), extraFlags);
-				IFCALL(update->CacheGlyph, update, &(update->cache_glyph_order));
+				IFCALL(update->CacheGlyphV2, update, &(update->cache_glyph_v2_order));
 			}
 			else
 			{
 				update_read_cache_glyph_order(s, &(update->cache_glyph_order), extraFlags);
-				IFCALL(update->CacheGlyphV2, update, &(update->cache_glyph_v2_order));
+				IFCALL(update->CacheGlyph, update, &(update->cache_glyph_order));
 			}
 			break;
 

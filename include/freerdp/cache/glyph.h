@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Caches
+ * Glyph Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,33 +17,39 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
-
-#include <freerdp/cache/glyph.h>
-#include <freerdp/cache/brush.h>
-#include <freerdp/cache/bitmap_v2.h>
-#include <freerdp/cache/offscreen.h>
-#include <freerdp/cache/color_table.h>
+#ifndef __GLYPH_CACHE_H
+#define __GLYPH_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
+struct _GLYPH_CACHE_ENTRY
+{
+	void* entry;
+};
+typedef struct _GLYPH_CACHE_ENTRY GLYPH_CACHE_ENTRY;
 
-struct rdp_cache
+struct _GLYPH_CACHE
+{
+	uint16 number;
+	uint16 maxCellSize;
+	GLYPH_CACHE_ENTRY* entries;
+};
+typedef struct _GLYPH_CACHE GLYPH_CACHE;
+
+struct rdp_glyph
 {
 	rdpSettings* settings;
-
-	rdpGlyph* glyph;
-	rdpBrush* brush;
-	rdpBitmapV2* bitmap_v2;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	GLYPH_CACHE glyphCache[10];
+	GLYPH_CACHE fragCache;
 };
+typedef struct rdp_glyph rdpGlyph;
 
-FREERDP_API rdpCache* cache_new(rdpSettings* settings);
-FREERDP_API void cache_free(rdpCache* cache);
+FREERDP_API void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index);
+FREERDP_API void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry);
 
-#endif /* __CACHE_H */
+FREERDP_API rdpGlyph* glyph_new(rdpSettings* settings);
+FREERDP_API void glyph_free(rdpGlyph* glyph);
+
+#endif /* __GLYPH_CACHE_H */

@@ -507,7 +507,7 @@ struct _CACHE_GLYPH_ORDER
 {
 	uint8 cacheId;
 	uint8 cGlyphs;
-	GLYPH_DATA* glyphData;
+	GLYPH_DATA* glyphData[255];
 	uint8* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
@@ -529,7 +529,7 @@ struct _CACHE_GLYPH_V2_ORDER
 	uint8 cacheId;
 	uint8 flags;
 	uint8 cGlyphs;
-	GLYPH_DATA_V2* glyphData;
+	GLYPH_DATA_V2* glyphData[255];
 	uint8* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
