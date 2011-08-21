@@ -261,3 +261,13 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
+boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
+{
+	if (!rdp_read_confirm_active(rdp, s))
+		return False;
+
+	rdp->state = CONNECTION_STATE_ACTIVE;
+
+	return True;
+}
+

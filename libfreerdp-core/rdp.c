@@ -89,13 +89,18 @@ void rdp_write_security_header(STREAM* s, uint16 flags)
 	stream_write_uint16(s, 0); /* flagsHi (unused) */
 }
 
-void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id)
+boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id)
 {
 	/* Share Control Header */
 	stream_read_uint16(s, *length); /* totalLength */
 	stream_read_uint16(s, *type); /* pduType */
 	stream_read_uint16(s, *channel_id); /* pduSource */
 	*type &= 0x0F; /* type is in the 4 least significant bits */
+
+	if (*length - 6 > stream_get_left(s))
+		return False;
+
+	return True;
 }
 
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)

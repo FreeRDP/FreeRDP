@@ -775,6 +775,7 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 	rdp_write_cache_definition(s, 254, 16);
 	rdp_write_cache_definition(s, 254, 32);
 	rdp_write_cache_definition(s, 254, 64);
+	rdp_write_cache_definition(s, 254, 128);
 	rdp_write_cache_definition(s, 254, 256);
 	rdp_write_cache_definition(s, 64, 2048);
 
@@ -1425,25 +1426,12 @@ void rdp_write_frame_acknowledge_capability_set(STREAM* s, rdpSettings* settings
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }
 
-void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
+boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 numberCapabilities)
 {
 	uint16 type;
 	uint16 length;
 	uint8 *bm, *em;
-	uint16 numberCapabilities;
-	uint16 lengthSourceDescriptor;
-	uint16 lengthCombinedCapabilities;
 
-	//printf("Demand Active PDU\n");
-
-	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
-	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
-	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
-	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
-
-	/* capabilitySets */
 	while (numberCapabilities > 0)
 	{
 		stream_get_mark(s, bm);
@@ -1452,6 +1440,9 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 		//printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
 		settings->received_caps[type] = True;
 		em = bm + length;
+
+		if (stream_get_left(s) < length - 4)
+			return False;
 
 		switch (type)
 		{
@@ -1568,15 +1559,38 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 				break;
 
 			default:
+				printf("unknown capability type %d\n", type);
 				break;
 		}
 
 		if (s->p != em)
-			printf("incorrect offset, actual:%d expected:%d\n", (int) (s->p - bm), (int) (em - bm));
+			printf("incorrect offset, type:%d actual:%d expected:%d\n",
+				type, (int) (s->p - bm), (int) (em - bm));
 
 		stream_set_mark(s, em);
 		numberCapabilities--;
 	}
+
+	return True;
+}
+
+void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
+{
+	uint16 numberCapabilities;
+	uint16 lengthSourceDescriptor;
+	uint16 lengthCombinedCapabilities;
+
+	//printf("Demand Active PDU\n");
+
+	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
+	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	/* capabilitySets */
+	rdp_read_capability_sets(s, settings, numberCapabilities);
 }
 
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
@@ -1644,6 +1658,40 @@ boolean rdp_send_demand_active(rdpRdp* rdp)
 	rdp_write_demand_active(s, rdp->settings);
 
 	rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+
+	return True;
+}
+
+boolean rdp_read_confirm_active(rdpRdp* rdp, STREAM* s)
+{
+	uint16 length;
+	uint16 channelId;
+	uint16 pduType;
+	uint16 pduLength;
+	uint16 lengthSourceDescriptor;
+	uint16 lengthCombinedCapabilities;
+	uint16 numberCapabilities;
+
+	if (!rdp_read_header(rdp, s, &length, &channelId))
+		return False;
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+		return False;
+
+	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+		return False;
+	if (pduType != PDU_TYPE_CONFIRM_ACTIVE)
+		return False;
+
+	stream_seek_uint32(s); /* shareId (4 bytes) */
+	stream_seek_uint16(s); /* originatorId (2 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
+	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
+		return False;
 
 	return True;
 }
