@@ -182,7 +182,7 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 	uint16 initiator;
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->server_mode ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication);
+	MCSPDU = (rdp->settings->server_mode ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication);
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, length);
 
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
@@ -207,7 +207,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 {
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->server_mode ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest);
+	MCSPDU = (rdp->settings->server_mode ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest);
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */

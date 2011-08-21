@@ -115,7 +115,6 @@ struct rdp_rdp
 {
 	boolean licensed;
 	boolean activated;
-	boolean server_mode;
 	int state;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
