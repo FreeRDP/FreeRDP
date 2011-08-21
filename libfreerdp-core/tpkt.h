@@ -29,6 +29,6 @@
 
 boolean tpkt_verify_header(STREAM* s);
 uint16 tpkt_read_header(STREAM* s);
-void tpkt_write_header(STREAM* s, int length);
+void tpkt_write_header(STREAM* s, uint16 length);
 
 #endif /* __TPKT_H */

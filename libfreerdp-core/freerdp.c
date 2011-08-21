@@ -45,8 +45,7 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 	rdpRdp* rdp;
 
 	rdp = (rdpRdp*) instance->rdp;
-	rfds[*rcount] = (void*)(long)(rdp->transport->tcp->sockfd);
-	(*rcount)++;
+	transport_get_fds(rdp->transport, rfds, rcount);
 
 	return True;
 }

@@ -159,7 +159,11 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type)
 
 	sec_flags = SEC_LICENSE_PKT;
 	wMsgSize = length - LICENSE_PACKET_HEADER_LENGTH + 4;
-	flags = EXTENDED_ERROR_MSG_SUPPORTED | PREAMBLE_VERSION_3_0;
+	/**
+	 * Using EXTENDED_ERROR_MSG_SUPPORTED here would cause mstsc to crash when
+	 * running in server mode! This flag seems to be incorrectly documented.
+	 */
+	flags = PREAMBLE_VERSION_3_0;
 
 	rdp_write_header(license->rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, sec_flags);
@@ -825,6 +829,29 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	license_write_platform_challenge_response_packet(license, s, mac_data);
 
 	license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
+}
+
+
+/**
+ * Send Server License Error - Valid Client Packet.\n
+ * @msdn{cc241922}
+ * @param license license module
+ */
+
+boolean license_send_valid_client_error_packet(rdpLicense* license)
+{
+	STREAM* s;
+
+	s = license_send_stream_init(license);
+
+	stream_write_uint32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
+	stream_write_uint32(s, ST_NO_TRANSITION); /* dwStateTransition */
+
+	license_write_binary_blob(s, license->error_info);
+
+	license_send(license, s, ERROR_ALERT);
+
+	return True;
 }
 
 /**

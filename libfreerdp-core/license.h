@@ -193,6 +193,8 @@ void license_send_new_license_request_packet(rdpLicense* license);
 void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, uint8* mac_data);
 void license_send_platform_challenge_response_packet(rdpLicense* license);
 
+boolean license_send_valid_client_error_packet(rdpLicense* license);
+
 rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);
 
