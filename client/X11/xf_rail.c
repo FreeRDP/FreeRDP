@@ -112,6 +112,17 @@ void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 	XStoreName(xfi->display, xfw->handle, window->title);
 }
 
+void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
+{
+	xfInfo* xfi;
+	xfWindow* xfw;
+
+	xfi = (xfInfo*) rail->extra;
+	xfw = (xfWindow*) window->extra;
+
+	xf_SetWindowIcon(xfi, xfw, icon);
+}
+
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfWindow* xfw;
@@ -125,6 +136,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->CreateWindow = xf_rail_CreateWindow;
 	rail->MoveWindow = xf_rail_MoveWindow;
 	rail->SetWindowText = xf_rail_SetWindowText;
+	rail->SetWindowIcon = xf_rail_SetWindowIcon;
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
@@ -186,12 +198,15 @@ void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChanMan* chanman, RDP
 
 	switch (sysparam->param)
 	{
-	case SPI_SET_SCREEN_SAVE_ACTIVE:
-		printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveActive=%d\n", sysparam->setScreenSaveActive);
-		break;
-	case SPI_SET_SCREEN_SAVE_SECURE:
-		printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveSecure=%d\n", sysparam->setScreenSaveSecure);
-		break;
+		case SPI_SET_SCREEN_SAVE_ACTIVE:
+			printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveActive=%d\n",
+					sysparam->setScreenSaveActive);
+			break;
+
+		case SPI_SET_SCREEN_SAVE_SECURE:
+			printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveSecure=%d\n",
+					sysparam->setScreenSaveSecure);
+			break;
 	}
 }
 
@@ -202,23 +217,14 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, R
 	printf("Server Min Max Info PDU: windowId=0x%X "
 		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
-		minmax->windowId,
-		minmax->maxWidth,
-		minmax->maxHeight,
-		minmax->maxPosX,
-		minmax->maxPosY,
-		minmax->minTrackWidth,
-		minmax->minTrackHeight,
-		minmax->maxTrackWidth,
-		minmax->maxTrackHeight
-		);
+		minmax->windowId, minmax->maxWidth, minmax->maxHeight,
+		minmax->maxPosX, minmax->maxPosY,
+		minmax->minTrackWidth, minmax->minTrackHeight,
+		minmax->maxTrackWidth, minmax->maxTrackHeight);
 }
 
-void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+const char* movetype_names[] =
 {
-	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*)event->user_data;
-	const char* movetype_names[] =
-	{
 	"(invalid)",
 	"RAIL_WMSZ_LEFT",
 	"RAIL_WMSZ_RIGHT",
@@ -230,17 +236,17 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman
 	"RAIL_WMSZ_BOTTOMRIGHT",
 	"RAIL_WMSZ_MOVE",
 	"RAIL_WMSZ_KEYMOVE",
-	"RAIL_WMSZ_KEYSIZE",
-	};
+	"RAIL_WMSZ_KEYSIZE"
+};
+
+void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
 
 	printf("Server Local MoveSize PDU: windowId=0x%X "
 		"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
-		movesize->windowId,
-		movesize->isMoveSizeStart,
-		movetype_names[movesize->moveSizeType],
-		movesize->posX,
-		movesize->posY
-		);
+		movesize->windowId, movesize->isMoveSizeStart,
+		movetype_names[movesize->moveSizeType], movesize->posX, movesize->posY);
 }
 
 void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
@@ -250,20 +256,18 @@ void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVEN
 
 	printf("Server Application ID Response PDU: windowId=0x%X "
 		"applicationId=(length=%d dump)\n",
-		appid_resp->windowId,
-		appid_resp->applicationId.length
-		);
+		appid_resp->windowId, appid_resp->applicationId.length);
+
 	freerdp_hexdump(appid_resp->applicationId.string, appid_resp->applicationId.length);
 }
 
 void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	RAIL_LANGBAR_INFO_ORDER* langbar =
-		(RAIL_LANGBAR_INFO_ORDER*)event->user_data;
+		(RAIL_LANGBAR_INFO_ORDER*) event->user_data;
 
 	printf("Language Bar Information PDU: languageBarStatus=0x%X\n",
-		langbar->languageBarStatus
-		);
+		langbar->languageBarStatus);
 }
 
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)

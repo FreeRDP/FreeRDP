@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_H
-#define __WINDOW_H
+#ifndef __RAIL_WINDOW_H
+#define __RAIL_WINDOW_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -29,12 +29,15 @@
 typedef struct rdp_window rdpWindow;
 
 #include <freerdp/rail/rail.h>
+#include <freerdp/rail/icon.h>
 
 struct rdp_window
 {
 	void* extra;
 	void* extraId;
 	char* title;
+	rdpIcon* bigIcon;
+	rdpIcon* smallIcon;
 	uint32 fieldFlags;
 	rdpWindow* prev;
 	rdpWindow* next;
@@ -70,4 +73,4 @@ FREERDP_API void rail_CreateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_UpdateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_DestroyWindow(rdpRail* rail, rdpWindow* window);
 
-#endif /* __WINDOW_H */
+#endif /* __RAIL_WINDOW_H */

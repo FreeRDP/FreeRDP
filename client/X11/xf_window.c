@@ -23,6 +23,10 @@
 
 /* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
 
+#ifndef XA_CARDINAL
+#define XA_CARDINAL			6
+#endif
+
 #define MWM_HINTS_DECORATIONS		(1L << 1)
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
 
@@ -303,6 +307,52 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->y = y;
 	window->width = width;
 	window->height = height;
+}
+
+void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
+{
+	Atom atom;
+	int x, y;
+	int pixels;
+	int propsize;
+	long* propdata;
+	long* dstp;
+	uint32* srcp;
+
+	if ((icon->big != True) || (icon->entry->bpp != 32))
+		return;
+
+	pixels = icon->entry->width * icon->entry->height;
+	propsize = 2 + pixels;
+	propdata = xmalloc(propsize * sizeof(long));
+
+	propdata[0] = icon->entry->width;
+	propdata[1] = icon->entry->height;
+	dstp = &(propdata[2]);
+	srcp = (uint32*) icon->entry->bitsColor;
+
+	for (y = 0; y < icon->entry->height; y++)
+	{
+		for (x = 0; x < icon->entry->width; x++)
+		{
+			*dstp++ = *srcp++;
+		}
+	}
+
+	atom = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+
+	if (!atom)
+	{
+		printf("xf_SetWindowIcon: failed to obtain atom _NET_WM_ICON\n");
+		return;
+	}
+	else
+	{
+		XChangeProperty(xfi->display, window->handle, atom, XA_CARDINAL, 32,
+			PropModeReplace, (uint8*) propdata, propsize);
+
+		XFlush(xfi->display);
+	}
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

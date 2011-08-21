@@ -21,6 +21,7 @@
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/rail/rail.h>
+#include <freerdp/rail/window_list.h>
 
 static void rail_WindowCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
@@ -43,14 +44,54 @@ static void rail_WindowDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 	window_list_delete(rail->list, orderInfo);
 }
 
+static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
+{
+	rdpRail* rail;
+	rdpIcon* icon;
+	rdpWindow* window;
+	rail = (rdpRail*) update->rail;
+
+	if (window_icon->iconInfo->cacheEntry != 0xFFFF)
+	{
+		/* cache icon */
+	}
+
+	window = window_list_get_by_id(rail->list, orderInfo->windowId);
+
+	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
+	icon->entry = window_icon->iconInfo;
+	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? True : False;
+
+	printf("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d\n",
+			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
+			window_icon->iconInfo->cbBitsColor, window_icon->iconInfo->cbBitsMask, window_icon->iconInfo->cbColorTable);
+
+	if (icon->big)
+		window->bigIcon = icon;
+	else
+		window->smallIcon = icon;
+
+	IFCALL(rail->SetWindowIcon, rail, window, icon);
+}
+
+static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+
+	printf("rail_WindowCachedIcon\n");
+}
+
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {
 	update->WindowCreate = rail_WindowCreate;
 	update->WindowUpdate = rail_WindowUpdate;
 	update->WindowDelete = rail_WindowDelete;
+	update->WindowIcon = rail_WindowIcon;
+	update->WindowCachedIcon = rail_WindowCachedIcon;
 }
 
-rdpRail* rail_new()
+rdpRail* rail_new(rdpSettings* settings)
 {
 	rdpRail* rail;
 
@@ -58,6 +99,8 @@ rdpRail* rail_new()
 
 	if (rail != NULL)
 	{
+		rail->settings = settings;
+		rail->cache = icon_cache_new(rail);
 		rail->list = window_list_new(rail);
 		rail->uniconv = freerdp_uniconv_new();
 	}
@@ -69,6 +112,7 @@ void rail_free(rdpRail* rail)
 {
 	if (rail != NULL)
 	{
+		icon_cache_free(rail->cache);
 		window_list_free(rail->list);
 		freerdp_uniconv_free(rail->uniconv);
 		xfree(rail);

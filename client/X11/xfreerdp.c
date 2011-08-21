@@ -376,7 +376,7 @@ boolean xf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
 
-	xfi->rail = rail_new();
+	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;
 	rail_register_update_callbacks(xfi->rail, instance->update);
 	xf_rail_register_callbacks(xfi, xfi->rail);

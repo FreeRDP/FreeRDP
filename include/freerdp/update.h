@@ -748,7 +748,7 @@ typedef struct _WINDOW_STATE_ORDER WINDOW_STATE_ORDER;
 
 struct _WINDOW_ICON_ORDER
 {
-	ICON_INFO iconInfo;
+	ICON_INFO* iconInfo;
 };
 typedef struct _WINDOW_ICON_ORDER WINDOW_ICON_ORDER;
 

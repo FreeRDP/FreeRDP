@@ -31,12 +31,14 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
 		window->ownerWindowId = window_state->ownerWindowId;
+		printf("ownerWindowId:0x%08X\n", window->ownerWindowId);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		window->style = window_state->style;
 		window->extendedStyle = window_state->extendedStyle;
+		printf("Style:%d, ExtendedStyle:%d\n", window->style, window->extendedStyle);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
@@ -110,7 +112,14 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
+		int i;
 
+		for (i = 0; i < window_state->numWindowRects; i++)
+		{
+			printf("Window Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
+					window_state->windowRects->left, window_state->windowRects->top,
+					window_state->windowRects->right, window_state->windowRects->bottom);
+		}
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
@@ -124,7 +133,14 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
+		int i;
 
+		for (i = 0; i < window_state->numVisibilityRects; i++)
+		{
+			printf("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
+					window_state->visibilityRects->left, window_state->visibilityRects->top,
+					window_state->visibilityRects->right, window_state->visibilityRects->bottom);
+		}
 	}
 }
 
