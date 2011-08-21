@@ -133,7 +133,7 @@ void rdp_write_security_header(STREAM* s, uint16 flags);
 boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
 
-void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id);
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id);
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
