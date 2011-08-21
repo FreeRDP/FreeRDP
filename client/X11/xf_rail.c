@@ -139,7 +139,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->taskbarPos.bottom = 0;
 
 	new_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL,
-			RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, NULL, (void*) sysparam);
+			RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, NULL, sysparam);
 
 	freerdp_chanman_send_event(chanman, new_event);
 }
