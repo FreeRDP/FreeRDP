@@ -189,14 +189,10 @@ void rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* l
 void rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp)
 {
 	stream_read_uint32(s, get_appid_resp->windowId); /* windowId (4 bytes) */
+	stream_read(s, &get_appid_resp->applicationIdBuffer[0], 512); /* applicationId (256 UNICODE chars) */
 
 	get_appid_resp->applicationId.length = 512;
-	if (get_appid_resp->applicationId.string == NULL)
-	{
-		get_appid_resp->applicationId.string = xmalloc(
-				get_appid_resp->applicationId.length);
-	}
-	stream_read(s, get_appid_resp->applicationId.string, 512); /* applicationId (256 UNICODE chars) */
+	get_appid_resp->applicationId.string = &get_appid_resp->applicationIdBuffer[0];
 }
 
 void rail_read_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info)
