@@ -67,7 +67,6 @@ rdpSettings* settings_new()
 
 		settings->authentication = True;
 
-		/*
 		settings->order_support[NEG_DSTBLT_INDEX] = True;
 		settings->order_support[NEG_PATBLT_INDEX] = True;
 		settings->order_support[NEG_SCRBLT_INDEX] = True;
@@ -90,7 +89,6 @@ rdpSettings* settings_new()
 		settings->order_support[NEG_POLYGON_CB_INDEX] = True;
 		settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
 		settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
-		*/
 
 		settings->color_pointer = True;
 		settings->large_pointer = True;
@@ -114,6 +112,10 @@ rdpSettings* settings_new()
 
 		settings->num_icon_caches = 3;
 		settings->num_icon_cache_entries = 12;
+
+		settings->vc_chunk_size = CHANNEL_CHUNK_LENGTH;
+
+		settings->multifrag_max_request_size = 0x200000;
 
 		settings->fastpath_input = True;
 		settings->fastpath_output = True;
