@@ -42,9 +42,12 @@ boolean rdp_client_activate(rdpRdp* rdp);
 void rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s);
 
 void rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
-void rdp_send_client_synchronize_pdu(rdpRdp* rdp);
+boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp);
+boolean rdp_send_client_synchronize_pdu(rdpRdp* rdp);
 void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
 void rdp_read_server_control_pdu(STREAM* s, uint16* action);
+boolean rdp_send_server_control_cooperate_pdu(rdpRdp* rdp);
+boolean rdp_send_server_control_granted_pdu(rdpRdp* rdp);
 void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action);
 void rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
 void rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags);

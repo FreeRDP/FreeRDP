@@ -213,3 +213,67 @@ boolean rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
+boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
+{
+	int i;
+	uint16 channel_id;
+	boolean all_joined = True;
+
+	if (!mcs_read_channel_join_request(rdp->mcs, s, &channel_id))
+		return False;
+
+	if (!mcs_send_channel_join_confirm(rdp->mcs, channel_id))
+		return False;
+
+	if (channel_id == rdp->mcs->user_id)
+		rdp->mcs->user_channel_joined = True;
+	else if (channel_id == MCS_GLOBAL_CHANNEL_ID)
+		rdp->mcs->global_channel_joined = True;
+
+	for (i = 0; i < rdp->settings->num_channels; i++)
+	{
+		if (rdp->settings->channels[i].chan_id == channel_id)
+			rdp->settings->channels[i].joined = True;
+
+		if (!rdp->settings->channels[i].joined)
+			all_joined = False;
+	}
+
+	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
+		rdp->state = CONNECTION_STATE_CHANNEL_JOIN;
+
+	return True;
+}
+
+boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
+{
+	if (!rdp_read_client_info(rdp, s))
+		return False;
+
+	if (!license_send_valid_client_error_packet(rdp->license))
+		return False;
+
+	rdp->state = CONNECTION_STATE_LICENSE;
+
+	if (!rdp_send_demand_active(rdp))
+		return False;
+
+	return True;
+}
+
+boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
+{
+	if (!rdp_read_confirm_active(rdp, s))
+		return False;
+
+	rdp->state = CONNECTION_STATE_ACTIVE;
+
+	if (!rdp_send_server_synchronize_pdu(rdp))
+		return False;
+
+	if (!rdp_send_server_control_cooperate_pdu(rdp))
+		return False;
+
+	return True;
+}
+

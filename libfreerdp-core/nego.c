@@ -302,6 +302,7 @@ boolean nego_recv_request(rdpNego* nego, STREAM* s)
 			if (c != '\x0A')
 				continue;
 
+			stream_seek_uint8(s);
 			break;
 		}
 	}

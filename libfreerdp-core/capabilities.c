@@ -203,7 +203,7 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	drawingFlags = 1;
+	drawingFlags = 0;
 
 	if (settings->rdp_version > 5)
 		preferredBitsPerPixel = settings->color_depth;
@@ -520,7 +520,7 @@ void rdp_write_share_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint16(s, 0); /* nodeId (2 bytes) */
+	stream_write_uint16(s, settings->server_mode ? 0x03EA : 0); /* nodeId (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_SHARE);
@@ -775,6 +775,7 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 	rdp_write_cache_definition(s, 254, 16);
 	rdp_write_cache_definition(s, 254, 32);
 	rdp_write_cache_definition(s, 254, 64);
+	rdp_write_cache_definition(s, 254, 128);
 	rdp_write_cache_definition(s, 254, 256);
 	rdp_write_cache_definition(s, 64, 2048);
 
@@ -960,8 +961,8 @@ void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint32(s, VCCAPS_COMPR_SC); /* flags (4 bytes) */
-	stream_write_uint32(s, 0); /* VCChunkSize (4 bytes) */
+	stream_write_uint32(s, settings->server_mode ? VCCAPS_COMPR_CS_8K : VCCAPS_COMPR_SC); /* flags (4 bytes) */
+	stream_write_uint32(s, settings->vc_chunk_size); /* VCChunkSize (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
 }
@@ -1425,25 +1426,12 @@ void rdp_write_frame_acknowledge_capability_set(STREAM* s, rdpSettings* settings
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }
 
-void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
+boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 numberCapabilities)
 {
 	uint16 type;
 	uint16 length;
 	uint8 *bm, *em;
-	uint16 numberCapabilities;
-	uint16 lengthSourceDescriptor;
-	uint16 lengthCombinedCapabilities;
 
-	//printf("Demand Active PDU\n");
-
-	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
-	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
-	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
-	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
-
-	/* capabilitySets */
 	while (numberCapabilities > 0)
 	{
 		stream_get_mark(s, bm);
@@ -1452,6 +1440,9 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 		//printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
 		settings->received_caps[type] = True;
 		em = bm + length;
+
+		if (stream_get_left(s) < length - 4)
+			return False;
 
 		switch (type)
 		{
@@ -1568,15 +1559,38 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 				break;
 
 			default:
+				printf("unknown capability type %d\n", type);
 				break;
 		}
 
 		if (s->p != em)
-			printf("incorrect offset, actual:%d expected:%d\n", (int) (s->p - bm), (int) (em - bm));
+			printf("incorrect offset, type:%d actual:%d expected:%d\n",
+				type, (int) (s->p - bm), (int) (em - bm));
 
 		stream_set_mark(s, em);
 		numberCapabilities--;
 	}
+
+	return True;
+}
+
+void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
+{
+	uint16 numberCapabilities;
+	uint16 lengthSourceDescriptor;
+	uint16 lengthCombinedCapabilities;
+
+	//printf("Demand Active PDU\n");
+
+	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
+	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	/* capabilitySets */
+	rdp_read_capability_sets(s, settings, numberCapabilities);
 }
 
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
@@ -1584,6 +1598,102 @@ void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 	rdp_read_demand_active(s, settings);
 	rdp_send_confirm_active(rdp);
 	rdp_send_client_synchronize_pdu(rdp);
+}
+
+void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
+{
+	uint8 *bm, *em, *lm;
+	uint16 numberCapabilities;
+	uint16 lengthCombinedCapabilities;
+
+	stream_write_uint32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_write_uint16(s, 4); /* lengthSourceDescriptor (2 bytes) */
+
+	stream_get_mark(s, lm);
+	stream_seek_uint16(s); /* lengthCombinedCapabilities (2 bytes) */
+	stream_write(s, "RDP", 4); /* sourceDescriptor */
+
+	stream_get_mark(s, bm);
+	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
+	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
+
+	numberCapabilities = 14;
+	rdp_write_general_capability_set(s, settings);
+	rdp_write_bitmap_capability_set(s, settings);
+	rdp_write_order_capability_set(s, settings);
+	rdp_write_pointer_capability_set(s, settings);
+	rdp_write_input_capability_set(s, settings);
+	rdp_write_virtual_channel_capability_set(s, settings);
+	rdp_write_bitmap_cache_host_support_capability_set(s, settings);
+	rdp_write_share_capability_set(s, settings);
+	rdp_write_font_capability_set(s, settings);
+	rdp_write_multifragment_update_capability_set(s, settings);
+	rdp_write_large_pointer_capability_set(s, settings);
+	rdp_write_desktop_composition_capability_set(s, settings);
+	rdp_write_surface_commands_capability_set(s, settings);
+	rdp_write_bitmap_codecs_capability_set(s, settings);
+
+	stream_get_mark(s, em);
+
+	stream_set_mark(s, lm); /* go back to lengthCombinedCapabilities */
+	lengthCombinedCapabilities = (em - bm);
+	stream_write_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+
+	stream_set_mark(s, bm); /* go back to numberCapabilities */
+	stream_write_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+
+	stream_set_mark(s, em);
+
+	stream_write_uint32(s, 0); /* sessionId */
+}
+
+boolean rdp_send_demand_active(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_pdu_init(rdp);
+
+	rdp->settings->share_id = 0x10000 + rdp->mcs->user_id;
+
+	rdp_write_demand_active(s, rdp->settings);
+
+	rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+
+	return True;
+}
+
+boolean rdp_read_confirm_active(rdpRdp* rdp, STREAM* s)
+{
+	uint16 length;
+	uint16 channelId;
+	uint16 pduType;
+	uint16 pduLength;
+	uint16 lengthSourceDescriptor;
+	uint16 lengthCombinedCapabilities;
+	uint16 numberCapabilities;
+
+	if (!rdp_read_header(rdp, s, &length, &channelId))
+		return False;
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+		return False;
+
+	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+		return False;
+	if (pduType != PDU_TYPE_CONFIRM_ACTIVE)
+		return False;
+
+	stream_seek_uint32(s); /* shareId (4 bytes) */
+	stream_seek_uint16(s); /* originatorId (2 bytes) */
+	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
+	stream_read_uint16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
+		return False;
+
+	return True;
 }
 
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
@@ -1695,6 +1805,6 @@ void rdp_send_confirm_active(rdpRdp* rdp)
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, MCS_BASE_CHANNEL_ID + rdp->mcs->user_id);
+	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
 }
 

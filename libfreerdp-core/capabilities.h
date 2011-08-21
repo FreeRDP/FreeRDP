@@ -171,6 +171,9 @@
 
 void rdp_read_demand_active(STREAM* s, rdpSettings* settings);
 void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings);
+void rdp_write_demand_active(STREAM* s, rdpSettings* settings);
+boolean rdp_send_demand_active(rdpRdp* rdp);
+boolean rdp_read_confirm_active(rdpRdp* rdp, STREAM* s);
 void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
 void rdp_send_confirm_active(rdpRdp* rdp);
 

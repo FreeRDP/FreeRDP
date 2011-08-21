@@ -23,6 +23,7 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	rdpPeer* peer = (rdpPeer*)client->peer;
 
+	peer->rdp->settings->server_mode = True;
 	peer->rdp->state = CONNECTION_STATE_INITIAL;
 
 	return True;
@@ -76,6 +77,21 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_attach_user_request(peer->rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_MCS_ATTACH_USER:
+			if (!rdp_server_accept_mcs_channel_join_request(peer->rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_CHANNEL_JOIN:
+			if (!rdp_server_accept_client_info(peer->rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_LICENSE:
+			if (!rdp_server_accept_confirm_active(peer->rdp, s))
 				return -1;
 			break;
 

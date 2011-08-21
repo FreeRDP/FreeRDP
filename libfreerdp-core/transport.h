@@ -46,6 +46,7 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/wait_obj.h>
 
 typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
@@ -63,6 +64,7 @@ struct rdp_transport
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
+	struct wait_obj* recv_event;
 	boolean blocking;
 };
 
@@ -79,6 +81,7 @@ boolean transport_accept_tls(rdpTransport* transport);
 boolean transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
+void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
 boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking);
 rdpTransport* transport_new(rdpSettings* settings);

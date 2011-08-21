@@ -130,14 +130,16 @@ struct rdp_rdp
 void rdp_read_security_header(STREAM* s, uint16* flags);
 void rdp_write_security_header(STREAM* s, uint16 flags);
 
-void rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
+boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
 
 void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id);
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
-void rdp_write_header(rdpRdp* rdp, STREAM* s, int length, uint16 channel_id);
+
+boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_id);
+void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id);
 
 STREAM* rdp_pdu_init(rdpRdp* rdp);
 void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
