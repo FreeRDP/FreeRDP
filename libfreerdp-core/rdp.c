@@ -113,16 +113,25 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
-void rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id)
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id)
 {
+	if (stream_get_left(s) < 12)
+		return False;
+
 	/* Share Data Header */
 	stream_read_uint32(s, *share_id); /* shareId (4 bytes) */
 	stream_seek_uint8(s); /* pad1 (1 byte) */
 	stream_seek_uint8(s); /* streamId (1 byte) */
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
+
+	if (stream_get_left(s) < *length)
+		return False;
+
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 	stream_seek_uint8(s); /* compressedType (1 byte) */
 	stream_seek_uint16(s); /* compressedLength (2 bytes) */
+
+	return True;
 }
 
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id)

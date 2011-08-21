@@ -54,6 +54,96 @@ static boolean freerdp_peer_check_fds(freerdp_peer* client)
 	return True;
 }
 
+static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
+{
+	uint8 type;
+	uint16 length;
+	uint32 share_id;
+
+	if (!rdp_read_share_data_header(s, &length, &type, &share_id))
+		return False;
+
+	switch (type)
+	{
+		case DATA_PDU_TYPE_SYNCHRONIZE:
+			if (!rdp_read_client_synchronize_pdu(s))
+				return False;
+			break;
+
+		case DATA_PDU_TYPE_CONTROL:
+			if (!rdp_server_accept_client_control_pdu(peer->rdp, s))
+				return False;
+			break;
+
+		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
+			/* TODO: notify server bitmap cache data */
+			break;
+
+		case DATA_PDU_TYPE_FONT_LIST:
+			if (!rdp_server_accept_client_font_list_pdu(peer->rdp, s))
+				return False;
+			break;
+
+		default:
+			printf("Data PDU type %d\n", type);
+			break;
+	}
+
+	return True;
+}
+
+static boolean peer_read_tpkt_pdu(rdpPeer* peer, STREAM* s)
+{
+	uint16 length;
+	uint16 pduType;
+	uint16 pduLength;
+	uint16 channelId;
+
+	if (!rdp_read_header(peer->rdp, s, &length, &channelId))
+	{
+		printf("Incorrect RDP header.\n");
+		return False;
+	}
+
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	{
+		/* TODO: process channel data from client */
+	}
+	else
+	{
+		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &peer->rdp->settings->pdu_source))
+			return False;
+
+		switch (pduType)
+		{
+			case PDU_TYPE_DATA:
+				if (!peer_read_data_pdu(peer, s))
+					return False;
+				break;
+
+			default:
+				printf("Client sent pduType %d\n", pduType);
+				return False;
+		}
+	}
+
+	return True;
+}
+
+static boolean peer_read_fastpath_pdu(rdpPeer* peer, STREAM* s)
+{
+	printf("FastPath Input PDU\n");
+	return True;
+}
+
+static boolean peer_read_pdu(rdpPeer* peer, STREAM* s)
+{
+	if (tpkt_verify_header(s))
+		return peer_read_tpkt_pdu(peer, s);
+	else
+		return peer_read_fastpath_pdu(peer, s);
+}
+
 static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	rdpPeer* peer = (rdpPeer*)extra;
@@ -92,6 +182,11 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_LICENSE:
 			if (!rdp_server_accept_confirm_active(peer->rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_ACTIVE:
+			if (!peer_read_pdu(peer, s))
 				return -1;
 			break;
 
