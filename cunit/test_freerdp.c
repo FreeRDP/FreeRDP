@@ -36,6 +36,7 @@
 #include "test_drdynvc.h"
 #include "test_librfx.h"
 #include "test_freerdp.h"
+#include "test_rail.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
 {
@@ -131,6 +132,10 @@ int main(int argc, char* argv[])
 	{
 		while (*pindex < argc)
 		{
+			if (strcmp("rail", argv[*pindex]) == 0)
+			{
+				add_rail_suite();
+			}
 			if (strcmp("color", argv[*pindex]) == 0)
 			{
 				add_color_suite();
