@@ -781,7 +781,7 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 
 	rdp_write_cache_definition(s, 64, 2048); /* fragCache */
 
-	stream_write_uint16(s, GLYPH_SUPPORT_FULL); /* glyphSupportLevel (2 bytes) */
+	stream_write_uint16(s, GLYPH_SUPPORT_NONE); /* glyphSupportLevel (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_GLYPH_CACHE);
