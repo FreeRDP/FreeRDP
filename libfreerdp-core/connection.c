@@ -268,6 +268,12 @@ boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 
 	rdp->state = CONNECTION_STATE_ACTIVE;
 
+	if (!rdp_send_server_synchronize_pdu(rdp))
+		return False;
+
+	if (!rdp_send_server_control_cooperate_pdu(rdp))
+		return False;
+
 	return True;
 }
 

@@ -40,7 +40,7 @@ boolean rdp_client_activate(rdpRdp* rdp)
 	return True;
 }
 
-void rdp_write_client_synchronize_pdu(STREAM* s, rdpSettings* settings)
+void rdp_write_synchronize_pdu(STREAM* s, rdpSettings* settings)
 {
 	stream_write_uint16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
 	stream_write_uint16(s, settings->pdu_source); /* targetUser (2 bytes) */
@@ -51,15 +51,30 @@ void rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settin
 	rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE);
 }
 
-void rdp_send_client_synchronize_pdu(rdpRdp* rdp)
+boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 {
 	STREAM* s;
 
 	s = rdp_data_pdu_init(rdp);
 
-	rdp_write_client_synchronize_pdu(s, rdp->settings);
+	rdp_write_synchronize_pdu(s, rdp->settings);
 
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
+
+	return True;
+}
+
+boolean rdp_send_client_synchronize_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	rdp_write_synchronize_pdu(s, rdp->settings);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
+
+	return True;
 }
 
 void rdp_read_server_control_pdu(STREAM* s, uint16* action)
@@ -99,6 +114,36 @@ void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 			rdp_send_client_font_list_pdu(rdp, FONTLIST_LAST);
 		}
 	}
+}
+
+boolean rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	stream_write_uint16(s, CTRLACTION_COOPERATE); /* action (2 bytes) */
+	stream_write_uint16(s, 0); /* grantId (2 bytes) */
+	stream_write_uint32(s, 0); /* controlId (4 bytes) */
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
+
+	return True;
+}
+
+boolean rdp_send_server_control_granted_pdu(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_data_pdu_init(rdp);
+
+	stream_write_uint16(s, CTRLACTION_GRANTED_CONTROL); /* action (2 bytes) */
+	stream_write_uint16(s, rdp->mcs->user_id); /* grantId (2 bytes) */
+	stream_write_uint32(s, 0x03EA); /* controlId (4 bytes) */
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
+
+	return True;
 }
 
 void rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action)
