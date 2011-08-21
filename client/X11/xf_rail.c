@@ -18,9 +18,11 @@
  */
 
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/hexdump.h>
 #include <freerdp/rail/rail.h>
-#include "xf_window.h"
 
+
+#include "xf_window.h"
 #include "xf_rail.h"
 
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32 iright, uint32 ibottom)
@@ -149,7 +151,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->taskbarPos.bottom = 0;
 
 	new_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL,
-			RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, NULL, (void*) sysparam);
+			RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, NULL, sysparam);
 
 	freerdp_chanman_send_event(chanman, new_event);
 }
@@ -178,6 +180,92 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVE
 	}
 }
 
+void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*)event->user_data;
+
+	switch (sysparam->param)
+	{
+	case SPI_SET_SCREEN_SAVE_ACTIVE:
+		printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveActive=%d\n", sysparam->setScreenSaveActive);
+		break;
+	case SPI_SET_SCREEN_SAVE_SECURE:
+		printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveSecure=%d\n", sysparam->setScreenSaveSecure);
+		break;
+	}
+}
+
+void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*)event->user_data;
+
+	printf("Server Min Max Info PDU: windowId=0x%X "
+		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
+		minmax->windowId,
+		minmax->maxWidth,
+		minmax->maxHeight,
+		minmax->maxPosX,
+		minmax->maxPosY,
+		minmax->minTrackWidth,
+		minmax->minTrackHeight,
+		minmax->maxTrackWidth,
+		minmax->maxTrackHeight
+		);
+}
+
+void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*)event->user_data;
+	const char* movetype_names[] =
+	{
+	"(invalid)",
+	"RAIL_WMSZ_LEFT",
+	"RAIL_WMSZ_RIGHT",
+	"RAIL_WMSZ_TOP",
+	"RAIL_WMSZ_TOPLEFT",
+	"RAIL_WMSZ_TOPRIGHT",
+	"RAIL_WMSZ_BOTTOM",
+	"RAIL_WMSZ_BOTTOMLEFT",
+	"RAIL_WMSZ_BOTTOMRIGHT",
+	"RAIL_WMSZ_MOVE",
+	"RAIL_WMSZ_KEYMOVE",
+	"RAIL_WMSZ_KEYSIZE",
+	};
+
+	printf("Server Local MoveSize PDU: windowId=0x%X "
+		"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
+		movesize->windowId,
+		movesize->isMoveSizeStart,
+		movetype_names[movesize->moveSizeType],
+		movesize->posX,
+		movesize->posY
+		);
+}
+
+void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_GET_APPID_RESP_ORDER* appid_resp =
+		(RAIL_GET_APPID_RESP_ORDER*)event->user_data;
+
+	printf("Server Application ID Response PDU: windowId=0x%X "
+		"applicationId=(length=%d dump)\n",
+		appid_resp->windowId,
+		appid_resp->applicationId.length
+		);
+	freerdp_hexdump(appid_resp->applicationId.string, appid_resp->applicationId.length);
+}
+
+void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	RAIL_LANGBAR_INFO_ORDER* langbar =
+		(RAIL_LANGBAR_INFO_ORDER*)event->user_data;
+
+	printf("Language Bar Information PDU: languageBarStatus=0x%X\n",
+		langbar->languageBarStatus
+		);
+}
+
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	switch (event->event_type)
@@ -188,6 +276,26 @@ void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 
 		case RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS:
 			xf_process_rail_exec_result_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM:
+			xf_process_rail_server_sysparam_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO:
+			xf_process_rail_server_minmaxinfo_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE:
+			xf_process_rail_server_localmovesize_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP:
+			xf_process_rail_appid_resp_event(xfi, chanman, event);
+			break;
+
+		case RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO:
+			xf_process_rail_langbarinfo_event(xfi, chanman, event);
 			break;
 
 		default:

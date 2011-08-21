@@ -59,7 +59,9 @@ add_executable(test_freerdp
 	test_librfx.c
 	test_librfx.h
 	test_freerdp.c
-	test_freerdp.h)
+	test_freerdp.h
+	test_rail.c
+	test_rail.h)
 
 target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 
