@@ -27,6 +27,7 @@
 struct _GLYPH_CACHE_ENTRY
 {
 	void* entry;
+	void* extra;
 };
 typedef struct _GLYPH_CACHE_ENTRY GLYPH_CACHE_ENTRY;
 
@@ -46,8 +47,8 @@ struct rdp_glyph
 };
 typedef struct rdp_glyph rdpGlyph;
 
-FREERDP_API void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index);
-FREERDP_API void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry);
+FREERDP_API void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra);
+FREERDP_API void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra);
 
 FREERDP_API rdpGlyph* glyph_new(rdpSettings* settings);
 FREERDP_API void glyph_free(rdpGlyph* glyph);

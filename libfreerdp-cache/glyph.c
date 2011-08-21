@@ -22,7 +22,7 @@
 
 #include <freerdp/cache/glyph.h>
 
-void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index)
+void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra)
 {
 	void* entry;
 
@@ -40,10 +40,13 @@ void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index)
 
 	entry = glyph->glyphCache[id].entries[index].entry;
 
+	if (extra != NULL)
+		*extra = glyph->glyphCache[id].entries[index].extra;
+
 	return entry;
 }
 
-void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry)
+void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra)
 {
 	if (id > 9)
 	{
@@ -58,6 +61,9 @@ void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry)
 	}
 
 	glyph->glyphCache[id].entries[index].entry = entry;
+
+	if (extra != NULL)
+		glyph->glyphCache[id].entries[index].extra = extra;
 }
 
 rdpGlyph* glyph_new(rdpSettings* settings)
@@ -72,7 +78,7 @@ rdpGlyph* glyph_new(rdpSettings* settings)
 
 		glyph->settings = settings;
 
-		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+		//settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
 
 		for (i = 0; i < 10; i++)
 		{

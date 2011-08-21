@@ -636,6 +636,19 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	gdi_DeleteObject((HGDIOBJECT) hPen);
 }
 
+void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
+{
+	uint32 color;
+	GDI* gdi = GET_GDI(update);
+
+	color = gdi_color_convert(fast_index->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, color);
+
+
+
+	gdi_SetTextColor(gdi->drawing->hdc, gdi->textColor);
+}
+
 void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	GDI_IMAGE* gdi_bmp;
@@ -679,26 +692,58 @@ void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_col
 void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	int i;
+	uint8* extra;
 	GLYPH_DATA* glyph;
+	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
 	for (i = 0; i < cache_glyph->cGlyphs; i++)
 	{
 		glyph = cache_glyph->glyphData[i];
-		glyph_put(gdi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph);
+		gdi_bmp = (GDI_IMAGE*) malloc(sizeof(GDI_IMAGE));
+
+		gdi_bmp->hdc = gdi_GetDC();
+		gdi_bmp->hdc->bytesPerPixel = 1;
+		gdi_bmp->hdc->bitsPerPixel = 1;
+
+		extra = gdi_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
+		gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
+		gdi_bmp->bitmap->bytesPerPixel = 1;
+		gdi_bmp->bitmap->bitsPerPixel = 1;
+
+		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
+		gdi_bmp->org_bitmap = NULL;
+
+		glyph_put(gdi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
 	}
 }
 
 void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
 	int i;
+	uint8* extra;
 	GLYPH_DATA_V2* glyph;
+	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
 	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
 	{
 		glyph = cache_glyph_v2->glyphData[i];
-		glyph_put(gdi->cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph);
+		gdi_bmp = (GDI_IMAGE*) malloc(sizeof(GDI_IMAGE));
+
+		gdi_bmp->hdc = gdi_GetDC();
+		gdi_bmp->hdc->bytesPerPixel = 1;
+		gdi_bmp->hdc->bitsPerPixel = 1;
+
+		extra = gdi_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
+		gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
+		gdi_bmp->bitmap->bytesPerPixel = 1;
+		gdi_bmp->bitmap->bitsPerPixel = 1;
+
+		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
+		gdi_bmp->org_bitmap = NULL;
+
+		glyph_put(gdi->cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
 	}
 }
 
@@ -826,7 +871,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
-	update->FastIndex = NULL;
+	update->FastIndex = gdi_fast_index;
 	update->FastGlyph = NULL;
 	update->PolygonSC = NULL;
 	update->PolygonCB = NULL;
