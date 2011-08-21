@@ -123,10 +123,6 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_seek_uint8(s); /* pad1 (1 byte) */
 	stream_seek_uint8(s); /* streamId (1 byte) */
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
-
-	if (stream_get_left(s) < *length)
-		return False;
-
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 	stream_seek_uint8(s); /* compressedType (1 byte) */
 	stream_seek_uint16(s); /* compressedLength (2 bytes) */
