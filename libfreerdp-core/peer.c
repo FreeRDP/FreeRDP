@@ -59,7 +59,6 @@ static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
 	uint8 type;
 	uint16 length;
 	uint32 share_id;
-	uint16 action;
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id))
 		return False;
@@ -72,13 +71,17 @@ static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			if (!rdp_read_control_pdu(s, &action))
+			if (!rdp_server_accept_client_control_pdu(peer->rdp, s))
 				return False;
-			if (action == CTRLACTION_REQUEST_CONTROL)
-			{
-				if (!rdp_send_server_control_granted_pdu(peer->rdp))
-					return False;
-			}
+			break;
+
+		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
+			/* TODO: notify server bitmap cache data */
+			break;
+
+		case DATA_PDU_TYPE_FONT_LIST:
+			if (!rdp_server_accept_client_font_list_pdu(peer->rdp, s))
+				return False;
 			break;
 
 		default:
