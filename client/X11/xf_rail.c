@@ -101,6 +101,17 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 			window->windowWidth, window->windowHeight);
 }
 
+void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
+{
+	xfInfo* xfi;
+	xfWindow* xfw;
+
+	xfi = (xfInfo*) rail->extra;
+	xfw = (xfWindow*) window->extra;
+
+	XStoreName(xfi->display, xfw->handle, window->title);
+}
+
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfWindow* xfw;
@@ -113,6 +124,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->extra = (void*) xfi;
 	rail->CreateWindow = xf_rail_CreateWindow;
 	rail->MoveWindow = xf_rail_MoveWindow;
+	rail->SetWindowText = xf_rail_SetWindowText;
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
@@ -144,21 +156,22 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	freerdp_chanman_send_event(chanman, new_event);
 }
 
+const char* error_code_names[] =
+{
+		"RAIL_EXEC_S_OK",
+		"RAIL_EXEC_E_HOOK_NOT_LOADED",
+		"RAIL_EXEC_E_DECODE_FAILED",
+		"RAIL_EXEC_E_NOT_IN_ALLOWLIST",
+		"RAIL_EXEC_E_FILE_NOT_FOUND",
+		"RAIL_EXEC_E_FAIL",
+		"RAIL_EXEC_E_SESSION_LOCKED"
+};
+
 void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
-	RAIL_EXEC_RESULT_ORDER * exec_result;
-	const char* error_code_names[] =
-	{
-	"RAIL_EXEC_S_OK",
-	"RAIL_EXEC_E_HOOK_NOT_LOADED",
-	"RAIL_EXEC_E_DECODE_FAILED",
-	"RAIL_EXEC_E_NOT_IN_ALLOWLIST",
-	"RAIL_EXEC_E_FILE_NOT_FOUND",
-	"RAIL_EXEC_E_FAIL",
-	"RAIL_EXEC_E_SESSION_LOCKED"
-	};
+	RAIL_EXEC_RESULT_ORDER* exec_result;
 
-	exec_result = (RAIL_EXEC_RESULT_ORDER *)event->user_data;
+	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->user_data;
 
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{

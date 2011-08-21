@@ -125,8 +125,10 @@ struct rdp_chan
 	char name[8]; /* ui sets */
 	int options; /* ui sets */
 	int chan_id; /* core sets */
+	boolean joined; /* client has joined the channel */
 	void * handle; /* just for ui */
 };
+typedef struct rdp_chan rdpChan;
 
 struct rdp_ext_set
 {
@@ -185,7 +187,7 @@ struct rdp_settings
 	uint32 redirected_session_id;
 
 	int num_channels;
-	struct rdp_chan channels[16];
+	rdpChan channels[16];
 
 	int num_monitors;
 	struct rdp_monitor monitors[16];

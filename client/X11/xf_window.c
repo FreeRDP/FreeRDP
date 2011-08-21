@@ -273,6 +273,9 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	Pixmap surface;
 	XSizeHints* size_hints;
 
+	if ((width * height) < 1)
+		return;
+
 	size_hints = XAllocSizeHints();
 
 	if (size_hints)

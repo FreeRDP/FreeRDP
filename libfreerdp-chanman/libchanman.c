@@ -210,13 +210,13 @@ static struct chan_data* freerdp_chanman_find_chan_data_by_name(rdpChanMan* chan
 	return NULL;
 }
 
-/* returns struct rdp_chan for the channel id passed in */
-static struct rdp_chan* freerdp_chanman_find_rdp_chan_by_id(rdpChanMan* chan_man,
+/* returns rdpChan for the channel id passed in */
+static rdpChan* freerdp_chanman_find_rdp_chan_by_id(rdpChanMan* chan_man,
 	rdpSettings* settings, int chan_id, int* pindex)
 {
 	int lindex;
 	int lcount;
-	struct rdp_chan* lrdp_chan;
+	rdpChan* lrdp_chan;
 
 	lcount = settings->num_channels;
 	for (lindex = 0; lindex < lcount; lindex++)
@@ -234,13 +234,13 @@ static struct rdp_chan* freerdp_chanman_find_rdp_chan_by_id(rdpChanMan* chan_man
 	return NULL;
 }
 
-/* returns struct rdp_chan for the channel name passed in */
-static struct rdp_chan* freerdp_chanman_find_rdp_chan_by_name(rdpChanMan* chan_man,
+/* returns rdpChan for the channel name passed in */
+static rdpChan* freerdp_chanman_find_rdp_chan_by_name(rdpChanMan* chan_man,
 	rdpSettings* settings, const char* chan_name, int* pindex)
 {
 	int lindex;
 	int lcount;
-	struct rdp_chan* lrdp_chan;
+	rdpChan* lrdp_chan;
 
 	lcount = settings->num_channels;
 	for (lindex = 0; lindex < lcount; lindex++)
@@ -271,7 +271,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	int index;
 	struct lib_data* llib;
 	struct chan_data* lchan;
-	struct rdp_chan* lrdp_chan;
+	rdpChan* lrdp_chan;
 	PCHANNEL_DEF lchan_def;
 
 	chan_man = g_init_chan_man;
@@ -745,7 +745,7 @@ int freerdp_chanman_data(freerdp* instance, int chan_id, void* data, int data_si
 	int flags, int total_size)
 {
 	rdpChanMan* chan_man;
-	struct rdp_chan* lrdp_chan;
+	rdpChan* lrdp_chan;
 	struct chan_data* lchan_data;
 	int index;
 
@@ -828,7 +828,7 @@ FREERDP_API int freerdp_chanman_send_event(rdpChanMan* chan_man, RDP_EVENT* even
 static void freerdp_chanman_process_sync(rdpChanMan* chan_man, freerdp* instance)
 {
 	struct chan_data* lchan_data;
-	struct rdp_chan* lrdp_chan;
+	rdpChan* lrdp_chan;
 	struct sync_data* item;
 
 	while (chan_man->sync_data_list->head != NULL)
