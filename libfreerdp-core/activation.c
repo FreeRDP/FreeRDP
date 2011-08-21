@@ -64,6 +64,21 @@ boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 	return True;
 }
 
+boolean rdp_read_client_synchronize_pdu(STREAM* s)
+{
+	uint16 messageType;
+
+	if (stream_get_left(s) < 4)
+		return False;
+
+	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
+	if (messageType != SYNCMSGTYPE_SYNC)
+		return False;
+	/* targetUser (2 bytes) */
+
+	return True;
+}
+
 boolean rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 {
 	STREAM* s;
@@ -77,11 +92,16 @@ boolean rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 	return True;
 }
 
-void rdp_read_server_control_pdu(STREAM* s, uint16* action)
+boolean rdp_read_control_pdu(STREAM* s, uint16* action)
 {
+	if (stream_get_left(s) < 8)
+		return False;
+
 	stream_read_uint16(s, *action); /* action (2 bytes) */
 	stream_seek_uint16(s); /* grantId (2 bytes) */
 	stream_seek_uint32(s); /* controlId (4 bytes) */
+
+	return True;
 }
 
 void rdp_write_client_control_pdu(STREAM* s, uint16 action)
@@ -95,7 +115,7 @@ void rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
 {
 	uint16 action;
 
-	rdp_read_server_control_pdu(s, &action);
+	rdp_read_control_pdu(s, &action);
 
 	if (action == CTRLACTION_COOPERATE)
 	{
