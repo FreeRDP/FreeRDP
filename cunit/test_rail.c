@@ -30,6 +30,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
 
@@ -378,8 +379,6 @@ static uint8 server_app_get_resp_app_id[] =
 };
 
 
-#define RAIL_ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))
-
 #define EMULATE_SERVER_SEND_CHANNEL_DATA(inst, byte_array) \
 	emulate_server_send_channel_data(inst, byte_array, RAIL_ARRAY_SIZE(byte_array))
 
@@ -477,6 +476,14 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 	return 1;
 }
 //-----------------------------------------------------------------------------
+static void test_on_free_rail_client_event(RDP_EVENT* event)
+{
+	if (event->event_class == RDP_EVENT_CLASS_RAIL)
+	{
+		rail_free_cloned_order(event->event_type, event->user_data);
+	}
+}
+//-----------------------------------------------------------------------------
 static void send_ui_event2plugin(
 	rdpChanMan* chan_man,
 	uint16 event_type,
@@ -484,10 +491,15 @@ static void send_ui_event2plugin(
 	)
 {
 	RDP_EVENT* out_event = NULL;
-	out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
-			NULL, data);
+	void * payload = NULL;
 
-	freerdp_chanman_send_event(chan_man, out_event);
+	payload = rail_clone_order(event_type, data);
+	if (payload != NULL)
+	{
+		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
+				test_on_free_rail_client_event, payload);
+		freerdp_chanman_send_event(chan_man, out_event);
+	}
 }
 //-----------------------------------------------------------------------------
 static void emulate_server_send_channel_data(
@@ -530,9 +542,9 @@ static int emulate_client_send_channel_data(
 	printf("Client send to server (%d packet):\n", counter);
 	freerdp_hexdump(data, size);
 
+	// add to global dumps list
 	save_dump(data, size);
 
-	// add to global dumps list
 	return 0;
 }
 //-----------------------------------------------------------------------------
@@ -547,9 +559,19 @@ void save_event(RDP_EVENT* event, RAIL_EVENT* rail_event)
 			break;
 
 		case RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS:
-			printf("UI receive Exec Results Event\n");
-			memcpy(&rail_event->order_info.exec_result, event->user_data,
-				sizeof(RAIL_EXEC_ORDER));
+			{
+				RAIL_EXEC_RESULT_ORDER* exec_result = (RAIL_EXEC_RESULT_ORDER*)event->user_data;
+				printf("UI receive Exec Results Event\n");
+				memcpy(&rail_event->order_info.exec_result, event->user_data,
+					sizeof(RAIL_EXEC_RESULT_ORDER));
+
+				rail_unicode_string_alloc(&rail_event->order_info.exec_result.exeOrFile,
+						exec_result->exeOrFile.length);
+
+				memcpy(rail_event->order_info.exec_result.exeOrFile.string,
+					exec_result->exeOrFile.string,
+					exec_result->exeOrFile.length);
+			}
 			break;
 
 		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM:
@@ -574,6 +596,9 @@ void save_event(RDP_EVENT* event, RAIL_EVENT* rail_event)
 			printf("UI receive AppId Response Event\n");
 			memcpy(&rail_event->order_info.get_appid_resp, event->user_data,
 				sizeof(RAIL_GET_APPID_RESP_ORDER));
+
+			rail_event->order_info.get_appid_resp.applicationId.string =
+				&rail_event->order_info.get_appid_resp.applicationIdBuffer[0];
 			break;
 
 		case RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO:
@@ -605,13 +630,12 @@ static void process_events_and_channel_data_from_plugin(thread_param* param)
 					event->event_type,
 					counter);
 
+			// add to global event list
 			if (param->in_events_number < RAIL_ARRAY_SIZE(param->in_events))
 			{
 				save_event(event, &param->in_events[param->in_events_number]);
 				param->in_events_number++;
 			}
-
-			// add to global event list
 			freerdp_event_free(event);
 		}
 

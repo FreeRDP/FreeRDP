@@ -19,6 +19,7 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
+#include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 
 #include "xf_window.h"
@@ -157,27 +158,43 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
+static void xf_on_free_rail_client_event(RDP_EVENT* event)
+{
+	if (event->event_class == RDP_EVENT_CLASS_RAIL)
+	{
+		rail_free_cloned_order(event->event_type, event->user_data);
+	}
+}
+
+static void xf_send_rail_client_event(rdpChanMan* chanman, uint16 event_type, void* param)
+{
+	RDP_EVENT* out_event = NULL;
+	void * payload = NULL;
+
+	payload = rail_clone_order(event_type, param);
+	if (payload != NULL)
+	{
+		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
+			xf_on_free_rail_client_event, payload);
+		freerdp_chanman_send_event(chanman, out_event);
+	}
+}
+
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
 {
-	RDP_EVENT* event;
 	rdpChanMan* chanman;
-	RAIL_SYSCOMMAND_ORDER* syscommand;
+	RAIL_SYSCOMMAND_ORDER syscommand;
 
 	chanman = GET_CHANMAN(xfi->instance);
-	syscommand = (RAIL_SYSCOMMAND_ORDER*) xmalloc(sizeof(RAIL_SYSCOMMAND_ORDER));
 
-	syscommand->windowId = windowId;
-	syscommand->command = command;
+	syscommand.windowId = windowId;
+	syscommand.command = command;
 
-	event = freerdp_event_new(RDP_EVENT_CLASS_RAIL,
-			RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, NULL, syscommand);
-
-	freerdp_chanman_send_event(chanman, event);
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, &syscommand);	
 }
 
 void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
-	RDP_EVENT* new_event;
 	RAIL_SYSPARAM_ORDER* sysparam;
 
 	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
@@ -197,10 +214,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->taskbarPos.right = 0;
 	sysparam->taskbarPos.bottom = 0;
 
-	new_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL,
-			RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, NULL, sysparam);
-
-	freerdp_chanman_send_event(chanman, new_event);
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }
 
 const char* error_code_names[] =
