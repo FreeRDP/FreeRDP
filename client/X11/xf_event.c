@@ -20,6 +20,8 @@
 #include <freerdp/kbd/kbd.h>
 #include <freerdp/kbd/vkcodes.h>
 
+#include "xf_rail.h"
+
 #include "xf_event.h"
 
 uint8 X11_EVENT_STRINGS[][20] =
@@ -420,7 +422,6 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	xfWindow* xfw;
 	rdpWindow* window;
 
 	if (app != True)
@@ -430,11 +431,8 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 	if (window != NULL)
 	{
-		xfw = (xfWindow*) window->extra;
-
-		/* local maximize event */
-
-		XFlush(xfi->display);
+		/* local restore event */
+		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
 	}
 
 	return True;

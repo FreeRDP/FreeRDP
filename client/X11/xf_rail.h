@@ -26,6 +26,8 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32
 
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 
+void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command);
+
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event);
 
 #endif /* __XF_RAIL_H */

@@ -154,6 +154,24 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 
+void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
+{
+	RDP_EVENT* event;
+	rdpChanMan* chanman;
+	RAIL_SYSCOMMAND_ORDER* syscommand;
+
+	chanman = GET_CHANMAN(xfi->instance);
+	syscommand = (RAIL_SYSCOMMAND_ORDER*) xmalloc(sizeof(RAIL_SYSCOMMAND_ORDER));
+
+	syscommand->windowId = windowId;
+	syscommand->command = command;
+
+	event = freerdp_event_new(RDP_EVENT_CLASS_RAIL,
+			RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, NULL, syscommand);
+
+	freerdp_chanman_send_event(chanman, event);
+}
+
 void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	RDP_EVENT* new_event;
