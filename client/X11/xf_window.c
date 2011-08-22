@@ -397,8 +397,8 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	{
 		xrects[i].x = rects[i].left;
 		xrects[i].y = rects[i].top;
-		xrects[i].width = rects[i].right - rects[i].left + 1;
-		xrects[i].height = rects[i].bottom - rects[i].top + 1;
+		xrects[i].width = rects[i].right - rects[i].left;
+		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
 	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
