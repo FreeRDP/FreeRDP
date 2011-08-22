@@ -26,6 +26,7 @@
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
 #include "rail_orders.h"
@@ -44,15 +45,25 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length)
 
 static void on_free_rail_channel_event(RDP_EVENT* event)
 {
-
+	if (event->event_class == RDP_EVENT_CLASS_RAIL)
+	{
+		rail_free_cloned_order(event->event_type, event->user_data);
+	}
 }
 
 void rail_send_channel_event(void* rail_object, uint16 event_type, void* param)
 {
 	RDP_EVENT* out_event = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
-	out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type, on_free_rail_channel_event, param);
-	svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
+	void * payload = NULL;
+
+	payload = rail_clone_order(event_type, param);
+	if (payload != NULL)
+	{
+		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
+			on_free_rail_channel_event, payload);
+		svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
+	}
 }
 
 static void rail_process_connect(rdpSvcPlugin* plugin)
