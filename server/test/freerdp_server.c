@@ -26,6 +26,29 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/listener.h>
 
+boolean test_peer_post_connect(freerdp_peer* client)
+{
+	/**
+	 * This callback is called when the entire connection sequence is done, i.e. we've received the
+	 * Font List PDU from the client and sent out the Font Map PDU.
+	 * The server may start sending graphics output and receiving keyboard/mouse input after this
+	 * callback returns.
+	 */
+	printf("Client %s is activated", client->settings->hostname);
+	if (client->settings->autologon)
+	{
+		printf(" and wants to login automatically as %s\\%s",
+			client->settings->domain ? client->settings->domain : "",
+			client->settings->username);
+
+		/* A real server may perform OS login here if NLA is not executed previously. */
+	}
+	printf("\n");
+
+	/* Return False here would stop the execution of the peer mainloop. */
+	return True;
+}
+
 static void* test_peer_mainloop(void* arg)
 {
 	freerdp_peer* client = (freerdp_peer*)arg;
@@ -43,6 +66,8 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
 	client->settings->nla_security = False;
+
+	client->PostConnect = test_peer_post_connect;
 	client->Initialize(client);
 
 	while (1)

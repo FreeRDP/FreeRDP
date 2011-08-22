@@ -82,6 +82,11 @@ static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
 		case DATA_PDU_TYPE_FONT_LIST:
 			if (!rdp_server_accept_client_font_list_pdu(peer->rdp, s))
 				return False;
+			if (peer->client->PostConnect)
+			{
+				if (!peer->client->PostConnect(peer->client))
+					return False;
+			}
 			break;
 
 		default:
