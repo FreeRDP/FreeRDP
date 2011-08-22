@@ -38,12 +38,18 @@ enum CONNECTION_STATE
 	CONNECTION_STATE_MCS_CONNECT,
 	CONNECTION_STATE_MCS_ERECT_DOMAIN,
 	CONNECTION_STATE_MCS_ATTACH_USER,
-	CONNECTION_STATE_CHANNEL_JOIN,
+	CONNECTION_STATE_MCS_CHANNEL_JOIN,
 	CONNECTION_STATE_LICENSE,
+	CONNECTION_STATE_CAPABILITY,
 	CONNECTION_STATE_ACTIVE
 };
 
 boolean rdp_client_connect(rdpRdp* rdp);
+boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s);
+boolean rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s);
+boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s);
+boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s);
+boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s);
 
 boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s);

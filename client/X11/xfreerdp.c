@@ -489,7 +489,8 @@ int xfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	instance->Connect(instance);
+	if (!instance->Connect(instance))
+		return 0;
 
 	xfi = GET_XFI(instance);
 	chanman = GET_CHANMAN(instance);

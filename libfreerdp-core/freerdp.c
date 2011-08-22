@@ -35,7 +35,8 @@ boolean freerdp_connect(freerdp* instance)
 
 	IFCALL(instance->PreConnect, instance);
 	status = rdp_client_connect((rdpRdp*) instance->rdp);
-	IFCALL(instance->PostConnect, instance);
+	if (status)
+		IFCALL(instance->PostConnect, instance);
 
 	return status;
 }

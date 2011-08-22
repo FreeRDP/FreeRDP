@@ -86,24 +86,168 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	if (!ret)
 		return False;
 
-	if (mcs_connect(rdp->mcs) != True)
-	{
-		printf("Error: Multipoint Connection Service (MCS) connection failure\n");
-		return False;
-	}
-
-	rdp_send_client_info(rdp);
-
-	if (license_connect(rdp->license) != True)
-	{
-		printf("Error: license connection sequence failure\n");
-		return False;
-	}
-
-	rdp->licensed = True;
-
-	rdp_client_activate(rdp);
 	rdp_set_blocking_mode(rdp, False);
+	rdp->state = CONNECTION_STATE_NEGO;
+
+	if (!mcs_send_connect_initial(rdp->mcs))
+	{
+		printf("Error: unable to send MCS Connect Initial\n");
+		return False;
+	}
+
+	while (rdp->state != CONNECTION_STATE_ACTIVE)
+	{
+		if (rdp_check_fds(rdp) < 0)
+			return False;
+	}
+
+	return True;
+}
+
+boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_connect_response(rdp->mcs, s))
+		return False;
+
+	if (!mcs_send_erect_domain_request(rdp->mcs))
+		return False;
+	if (!mcs_send_attach_user_request(rdp->mcs))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_ATTACH_USER;
+
+	return True;
+}
+
+boolean rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
+{
+	if (!mcs_read_attach_user_confirm(rdp->mcs, s))
+		return False;
+
+	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->user_id))
+		return False;
+
+	rdp->state = CONNECTION_STATE_MCS_CHANNEL_JOIN;
+
+	return True;
+}
+
+boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
+{
+	int i;
+	uint16 channel_id;
+	boolean all_joined = True;
+
+	if (!mcs_read_channel_join_confirm(rdp->mcs, s, &channel_id))
+		return False;
+
+	if (!rdp->mcs->user_channel_joined)
+	{
+		if (channel_id != rdp->mcs->user_id)
+			return False;
+		rdp->mcs->user_channel_joined = True;
+
+		if (!mcs_send_channel_join_request(rdp->mcs, MCS_GLOBAL_CHANNEL_ID))
+			return False;
+	}
+	else if (!rdp->mcs->global_channel_joined)
+	{
+		if (channel_id != MCS_GLOBAL_CHANNEL_ID)
+			return False;
+		rdp->mcs->global_channel_joined = True;
+
+		if (rdp->settings->num_channels > 0)
+		{
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[0].chan_id))
+				return False;
+
+			all_joined = False;
+		}
+	}
+	else
+	{
+		for (i = 0; i < rdp->settings->num_channels; i++)
+		{
+			if (rdp->settings->channels[i].joined)
+				continue;
+
+			if (rdp->settings->channels[i].chan_id != channel_id)
+				return False;
+
+			rdp->settings->channels[i].joined = True;
+			break;
+		}
+		if (i + 1 < rdp->settings->num_channels)
+		{
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[i + 1].chan_id))
+				return False;
+
+			all_joined = False;
+		}
+	}
+
+	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
+	{
+		if (!rdp_send_client_info(rdp))
+			return False;
+		rdp->state = CONNECTION_STATE_LICENSE;
+	}
+
+	return True;
+}
+
+boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
+{
+	if (!license_read(rdp->license, s))
+		return False;
+
+	if (rdp->license->state == LICENSE_STATE_ABORTED)
+	{
+		printf("license connection sequence aborted.\n");
+		return False;
+	}
+
+	if (rdp->license->state == LICENSE_STATE_COMPLETED)
+	{
+		printf("license connection sequence completed.\n");
+
+		rdp->state = CONNECTION_STATE_CAPABILITY;
+	}
+
+	return True;
+}
+
+boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
+{
+	if (!rdp_read_demand_active(rdp, s))
+		return False;
+
+	if (!rdp_send_confirm_active(rdp))
+		return False;
+
+	/**
+	 * [MS-RDPBCGR] 1.3.1.1 - 8.
+	 * The client-to-server PDUs sent during this phase have no dependencies on any of the server-to-
+	 * client PDUs; they may be sent as a single batch, provided that sequencing is maintained.
+	 */
+	if (!rdp_send_client_synchronize_pdu(rdp))
+		return False;
+	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE))
+		return False;
+	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
+		return False;
+	if (!rdp_send_client_persistent_key_list_pdu(rdp))
+		return False;
+	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
+		return False;
+
+	rdp->state = CONNECTION_STATE_ACTIVE;
+
+	update_reset_state(rdp->update);
+	rdp->update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+	IFCALL(rdp->update->SwitchSurface, rdp->update, &(rdp->update->switch_surface));
+
+	printf("client is activated\n");
 
 	return True;
 }
@@ -114,7 +258,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 
 	transport_set_blocking_mode(rdp->transport, True);
 
-	if (!nego_recv_request(rdp->nego, s))
+	if (!nego_read_request(rdp->nego, s))
 		return False;
 	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
 	{
@@ -240,7 +384,7 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	}
 
 	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
-		rdp->state = CONNECTION_STATE_CHANNEL_JOIN;
+		rdp->state = CONNECTION_STATE_MCS_CHANNEL_JOIN;
 
 	return True;
 }

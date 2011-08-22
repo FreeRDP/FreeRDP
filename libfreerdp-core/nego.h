@@ -94,7 +94,7 @@ void nego_attempt_rdp(rdpNego* nego);
 void nego_send(rdpNego* nego);
 int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
 void nego_recv_response(rdpNego* nego);
-boolean nego_recv_request(rdpNego* nego, STREAM* s);
+boolean nego_read_request(rdpNego* nego, STREAM* s);
 
 void nego_send_negotiation_request(rdpNego* nego);
 void nego_process_negotiation_request(rdpNego* nego, STREAM* s);
