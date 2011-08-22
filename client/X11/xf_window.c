@@ -357,9 +357,14 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
-	XFreeGC(xfi->display, window->gc);
-	XFreePixmap(xfi->display, window->surface);
-	XUnmapWindow(xfi->display, window->handle);
-	XDestroyWindow(xfi->display, window->handle);
+	if (window->gc)
+		XFreeGC(xfi->display, window->gc);
+	if (window->surface)
+		XFreePixmap(xfi->display, window->surface);
+	if (window->handle)
+	{
+		XUnmapWindow(xfi->display, window->handle);
+		XDestroyWindow(xfi->display, window->handle);
+	}
 	xfree(window);
 }
