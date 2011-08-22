@@ -113,8 +113,6 @@ typedef struct rdp_rdp rdpRdp;
 
 struct rdp_rdp
 {
-	boolean licensed;
-	boolean activated;
 	int state;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
@@ -142,12 +140,12 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id);
 
 STREAM* rdp_pdu_init(rdpRdp* rdp);
-void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
+boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 
 STREAM* rdp_data_pdu_init(rdpRdp* rdp);
-void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id);
+boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id);
 
-void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
+boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
 void rdp_recv(rdpRdp* rdp);
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size);

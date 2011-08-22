@@ -578,7 +578,7 @@ boolean rdp_read_client_info(rdpRdp* rdp, STREAM* s)
  * @param rdp RDP module
  */
 
-void rdp_send_client_info(rdpRdp* rdp)
+boolean rdp_send_client_info(rdpRdp* rdp)
 {
 	STREAM* s;
 
@@ -587,7 +587,7 @@ void rdp_send_client_info(rdpRdp* rdp)
 	rdp_write_security_header(s, SEC_INFO_PKT);
 	rdp_write_info_packet(s, rdp->settings);
 
-	rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
+	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
 void rdp_recv_logon_info_v1(rdpRdp* rdp, STREAM* s)
@@ -654,7 +654,7 @@ void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 	stream_seek(s, 570); /* pad */
 }
 
-void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
+boolean rdp_read_save_session_info(rdpRdp* rdp, STREAM* s)
 {
 	uint32 infoType;
 
@@ -683,5 +683,7 @@ void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 		default:
 			break;
 	}
+
+	return True;
 }
 

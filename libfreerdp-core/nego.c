@@ -271,12 +271,12 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 }
 
 /**
- * Receive protocol security negotiation request message.\n
+ * Read protocol security negotiation request message.\n
  * @param nego
  * @param s stream
  */
 
-boolean nego_recv_request(rdpNego* nego, STREAM* s)
+boolean nego_read_request(rdpNego* nego, STREAM* s)
 {
 	uint8 li;
 	uint8 c;

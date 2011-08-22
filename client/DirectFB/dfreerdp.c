@@ -265,7 +265,8 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	instance->Connect(instance);
+	if (!instance->Connect(instance))
+		return 0;
 
 	dfi = GET_DFI(instance);
 	chanman = GET_CHANMAN(instance);
