@@ -654,7 +654,7 @@ void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 	stream_seek(s, 570); /* pad */
 }
 
-void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
+boolean rdp_read_save_session_info(rdpRdp* rdp, STREAM* s)
 {
 	uint32 infoType;
 
@@ -683,5 +683,7 @@ void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 		default:
 			break;
 	}
+
+	return True;
 }
 
