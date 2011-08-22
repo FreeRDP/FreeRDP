@@ -26,7 +26,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_dc.h"
+#include <freerdp/gdi/dc.h>
 
 /**
  * Set current foreground draw mode.\n

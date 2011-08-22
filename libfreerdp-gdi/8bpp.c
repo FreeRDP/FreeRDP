@@ -24,13 +24,13 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/color.h>
 
-#include "gdi_pen.h"
-#include "gdi_bitmap.h"
-#include "gdi_region.h"
-#include "gdi_clipping.h"
-#include "gdi_drawing.h"
+#include <freerdp/gdi/pen.h>
+#include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/gdi/clipping.h>
+#include <freerdp/gdi/drawing.h>
 
-#include "gdi_8bpp.h"
+#include <freerdp/gdi/8bpp.h>
 
 int FillRect_8bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {

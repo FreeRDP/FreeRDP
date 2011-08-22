@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_region.h"
+#include <freerdp/gdi/region.h>
 
 /**
  * Create a region from rectangular coordinates.\n

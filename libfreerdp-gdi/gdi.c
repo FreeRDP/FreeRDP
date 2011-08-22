@@ -25,16 +25,16 @@
 #include <freerdp/gdi/color.h>
 #include <freerdp/rfx/rfx.h>
 
-#include "gdi_dc.h"
-#include "gdi_pen.h"
-#include "gdi_line.h"
-#include "gdi_shape.h"
-#include "gdi_brush.h"
-#include "gdi_region.h"
-#include "gdi_bitmap.h"
-#include "gdi_palette.h"
-#include "gdi_drawing.h"
-#include "gdi_clipping.h"
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/pen.h>
+#include <freerdp/gdi/line.h>
+#include <freerdp/gdi/shape.h>
+#include <freerdp/gdi/brush.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/palette.h>
+#include <freerdp/gdi/drawing.h>
+#include <freerdp/gdi/clipping.h>
 
 #include <freerdp/gdi/gdi.h>
 

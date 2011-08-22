@@ -26,7 +26,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_pen.h"
+#include <freerdp/gdi/pen.h>
 
 /**
  * Create a new pen.\n

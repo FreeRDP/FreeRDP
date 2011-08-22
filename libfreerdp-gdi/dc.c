@@ -25,9 +25,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_region.h"
+#include <freerdp/gdi/region.h>
 
-#include "gdi_dc.h"
+#include <freerdp/gdi/dc.h>
 
 /**
  * Get the current device context (a new one is created each time).\n

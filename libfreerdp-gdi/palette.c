@@ -26,7 +26,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_palette.h"
+#include <freerdp/gdi/palette.h>
 
 static HGDI_PALETTE hSystemPalette = NULL;
 

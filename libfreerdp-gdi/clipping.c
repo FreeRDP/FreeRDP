@@ -23,9 +23,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include "gdi_region.h"
+#include <freerdp/gdi/region.h>
 
-#include "gdi_clipping.h"
+#include <freerdp/gdi/clipping.h>
 
 int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight)
 {

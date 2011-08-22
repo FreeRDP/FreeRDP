@@ -24,11 +24,11 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/color.h>
 
-#include "gdi_32bpp.h"
-#include "gdi_16bpp.h"
-#include "gdi_8bpp.h"
+#include <freerdp/gdi/32bpp.h>
+#include <freerdp/gdi/16bpp.h>
+#include <freerdp/gdi/8bpp.h>
 
-#include "gdi_bitmap.h"
+#include <freerdp/gdi/bitmap.h>
 
 pBitBlt BitBlt_[5] =
 {
