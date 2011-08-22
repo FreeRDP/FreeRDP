@@ -20,14 +20,15 @@
 #ifndef __GDI_DRAWING_H
 #define __GDI_DRAWING_H
 
+#include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
-int gdi_GetROP2(HGDI_DC hdc);
-int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
-GDI_COLOR gdi_GetBkColor(HGDI_DC hdc);
-GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor);
-int gdi_GetBkMode(HGDI_DC hdc);
-int gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
-GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
+FREERDP_API int gdi_GetROP2(HGDI_DC hdc);
+FREERDP_API int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
+FREERDP_API GDI_COLOR gdi_GetBkColor(HGDI_DC hdc);
+FREERDP_API GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor);
+FREERDP_API int gdi_GetBkMode(HGDI_DC hdc);
+FREERDP_API int gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
+FREERDP_API GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
 
 #endif /* __GDI_DRAWING_H */

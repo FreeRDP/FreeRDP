@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 

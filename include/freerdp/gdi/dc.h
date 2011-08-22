@@ -20,12 +20,13 @@
 #ifndef __GDI_DC_H
 #define __GDI_DC_H
 
+#include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
-HGDI_DC gdi_GetDC();
-HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
-HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
-int gdi_DeleteObject(HGDIOBJECT hgdiobject);
-int gdi_DeleteDC(HGDI_DC hdc);
+FREERDP_API HGDI_DC gdi_GetDC();
+FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
+FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
+FREERDP_API int gdi_DeleteObject(HGDIOBJECT hgdiobject);
+FREERDP_API int gdi_DeleteDC(HGDI_DC hdc);
 
 #endif /* __GDI_DC_H */
