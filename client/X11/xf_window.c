@@ -18,6 +18,7 @@
  */
 
 #include <X11/Xutil.h>
+#include <X11/extensions/shape.h>
 
 #include "xf_window.h"
 
@@ -383,6 +384,25 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 
 		XFlush(xfi->display);
 	}
+}
+
+void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)
+{
+	int i;
+	XRectangle* xrects;
+
+	xrects = xmalloc(sizeof(XRectangle) * nrects);
+
+	for (i = 0; i < nrects; i++)
+	{
+		xrects[i].x = rects[i].left;
+		xrects[i].y = rects[i].top;
+		xrects[i].width = rects[i].right - rects[i].left + 1;
+		xrects[i].height = rects[i].bottom - rects[i].top + 1;
+	}
+
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	xfree(xrects);
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

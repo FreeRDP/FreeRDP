@@ -53,6 +53,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state);
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
+void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 
 #endif /* __XF_WINDOW_H */

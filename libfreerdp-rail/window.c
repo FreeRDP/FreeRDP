@@ -224,6 +224,12 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		int i;
 
+		if (window->windowRects != NULL)
+			xfree(window->windowRects);
+
+		window->windowRects = window_state->windowRects;
+		window->numWindowRects = window_state->numWindowRects;
+
 		for (i = 0; i < window_state->numWindowRects; i++)
 		{
 			printf("Window Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
@@ -244,6 +250,12 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		int i;
+
+		if (window->visibilityRects != NULL)
+			xfree(window->visibilityRects);
+
+		window->visibilityRects = window_state->visibilityRects;
+		window->numVisibilityRects = window_state->numVisibilityRects;
 
 		for (i = 0; i < window_state->numVisibilityRects; i++)
 		{
@@ -267,6 +279,11 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	}
 
 	IFCALL(rail->CreateWindow, rail, window);
+
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
+	{
+		IFCALL(rail->SetWindowVisibilityRects, rail, window);
+	}
 }
 
 void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
@@ -339,7 +356,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-
+		IFCALL(rail->SetWindowVisibilityRects, rail, window);
 	}
 }
 
