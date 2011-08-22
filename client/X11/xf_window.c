@@ -205,7 +205,9 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 	return window;
 }
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name)
+char rail_window_class[] = "RAIL:00000000";
+
+xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id)
 {
 	xfWindow* window;
 
@@ -235,10 +237,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 		if (class_hints != NULL)
 		{
-			class_hints->res_name = "rail";
-			class_hints->res_class = "freerdp";
+			char* class;
+			class = xmalloc(sizeof(rail_window_class));
+			snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
+			class_hints->res_name = "RAIL";
+			class_hints->res_class = class;
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
+			xfree(class);
 		}
 
 		size_hints = XAllocSizeHints();
@@ -263,8 +269,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 		memset(&gcv, 0, sizeof(gcv));
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
-
-		XStoreName(xfi->display, window->handle, name);
 
 		xf_MoveWindow(xfi, window, x, y, width, height);
 	}
@@ -311,12 +315,12 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 {
-	printf("xf_ShowWindow:%d\n", state);
+	//printf("xf_ShowWindow:%d\n", state);
 
 	switch (state)
 	{
 		case WINDOW_HIDE:
-			XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			//XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:

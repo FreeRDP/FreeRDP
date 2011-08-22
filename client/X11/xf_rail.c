@@ -80,7 +80,10 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	xfw = xf_CreateWindow((xfInfo*) rail->extra,
 			window->windowOffsetX + xfi->workArea.x,
 			window->windowOffsetY + xfi->workArea.y,
-			window->windowWidth, window->windowHeight, window->title);
+			window->windowWidth, window->windowHeight,
+			window->windowId);
+
+	XStoreName(xfi->display, xfw->handle, window->title);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;
