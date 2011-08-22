@@ -64,33 +64,6 @@ uint8 state_transitions[][32] =
 };
 
 /**
- * Perform licensing phase of connection sequence.\n
- * @param license license module
- * @return
- */
-
-boolean license_connect(rdpLicense* license)
-{
-	while (1)
-	{
-		rdp_recv(license->rdp);
-
-		if (license->state == LICENSE_STATE_COMPLETED)
-		{
-			printf("license connection sequence completed.\n");
-			return True;
-		}
-		else if (license->state == LICENSE_STATE_ABORTED)
-		{
-			printf("license connection sequence aborted.\n");
-			return False;
-		}
-	}
-
-	return False;
-}
-
-/**
  * Read a licensing preamble.\n
  * @msdn{cc240480}
  * @param s stream
@@ -145,7 +118,7 @@ STREAM* license_send_stream_init(rdpLicense* license)
  * @param s stream
  */
 
-void license_send(rdpLicense* license, STREAM* s, uint8 type)
+boolean license_send(rdpLicense* license, STREAM* s, uint8 type)
 {
 	int length;
 	uint8 flags;
@@ -175,7 +148,10 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type)
 #endif
 
 	stream_set_pos(s, length);
-	transport_write(license->rdp->transport, s);
+	if (transport_write(license->rdp->transport, s) < 0)
+		return False;
+
+	return True;
 }
 
 /**
@@ -185,11 +161,27 @@ void license_send(rdpLicense* license, STREAM* s, uint8 type)
  * @param s stream
  */
 
-void license_recv(rdpLicense* license, STREAM* s)
+boolean license_read(rdpLicense* license, STREAM* s)
 {
+	uint16 length;
+	uint16 channelId;
+	uint16 sec_flags;
 	uint8 flags;
 	uint8 bMsgType;
 	uint16 wMsgSize;
+
+	if (!rdp_read_header(license->rdp, s, &length, &channelId))
+	{
+		printf("Incorrect RDP header.\n");
+		return False;
+	}
+
+	rdp_read_security_header(s, &sec_flags);
+	if (!(sec_flags & SEC_LICENSE_PKT))
+	{
+		printf("Unexpected license packet.\n");
+		return False;
+	}
 
 	license_read_preamble(s, &bMsgType, &flags, &wMsgSize); /* preamble (4 bytes) */
 
@@ -221,8 +213,10 @@ void license_recv(rdpLicense* license, STREAM* s)
 
 		default:
 			printf("invalid bMsgType:%d\n", bMsgType);
-			break;
+			return False;
 	}
+
+	return True;
 }
 
 void license_generate_randoms(rdpLicense* license)

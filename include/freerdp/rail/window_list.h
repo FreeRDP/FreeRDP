@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __WINDOW_LIST_H
-#define __WINDOW_LIST_H
+#ifndef __RAIL_WINDOW_LIST_H
+#define __RAIL_WINDOW_LIST_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -42,7 +42,8 @@ FREERDP_API void window_list_rewind(rdpWindowList* list);
 FREERDP_API boolean window_list_has_next(rdpWindowList* list);
 FREERDP_API rdpWindow* window_list_get_next(rdpWindowList* list);
 
-rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId);
+FREERDP_API rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId);
+FREERDP_API rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId);
 
 FREERDP_API void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 FREERDP_API void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
@@ -51,4 +52,4 @@ FREERDP_API void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orde
 FREERDP_API rdpWindowList* window_list_new(rdpRail* rail);
 FREERDP_API void window_list_free(rdpWindowList* list);
 
-#endif /* __WINDOW_LIST_H */
+#endif /* __RAIL_WINDOW_LIST_H */

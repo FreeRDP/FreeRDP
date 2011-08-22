@@ -23,6 +23,10 @@
 
 /* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
 
+#ifndef XA_CARDINAL
+#define XA_CARDINAL			6
+#endif
+
 #define MWM_HINTS_DECORATIONS		(1L << 1)
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
 
@@ -201,7 +205,9 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 	return window;
 }
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name)
+char rail_window_class[] = "RAIL:00000000";
+
+xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id)
 {
 	xfWindow* window;
 
@@ -231,10 +237,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 
 		if (class_hints != NULL)
 		{
-			class_hints->res_name = "rail";
-			class_hints->res_class = "freerdp";
+			char* class;
+			class = xmalloc(sizeof(rail_window_class));
+			snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
+			class_hints->res_name = "RAIL";
+			class_hints->res_class = class;
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
+			xfree(class);
 		}
 
 		size_hints = XAllocSizeHints();
@@ -259,8 +269,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char
 		memset(&gcv, 0, sizeof(gcv));
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
-
-		XStoreName(xfi->display, window->handle, name);
 
 		xf_MoveWindow(xfi, window, x, y, width, height);
 	}
@@ -305,11 +313,88 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->height = height;
 }
 
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
+{
+	//printf("xf_ShowWindow:%d\n", state);
+
+	switch (state)
+	{
+		case WINDOW_HIDE:
+			//XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			break;
+
+		case WINDOW_SHOW_MINIMIZED:
+			XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			break;
+
+		case WINDOW_SHOW_MAXIMIZED:
+			XRaiseWindow(xfi->display, window->handle);
+			break;
+
+		case WINDOW_SHOW:
+			XRaiseWindow(xfi->display, window->handle);
+			break;
+	}
+
+	XFlush(xfi->display);
+}
+
+void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
+{
+	Atom atom;
+	int x, y;
+	int pixels;
+	int propsize;
+	long* propdata;
+	long* dstp;
+	uint32* srcp;
+
+	if (icon->big != True)
+		return;
+
+	pixels = icon->entry->width * icon->entry->height;
+	propsize = 2 + pixels;
+	propdata = xmalloc(propsize * sizeof(long));
+
+	propdata[0] = icon->entry->width;
+	propdata[1] = icon->entry->height;
+	dstp = &(propdata[2]);
+	srcp = (uint32*) icon->extra;
+
+	for (y = 0; y < icon->entry->height; y++)
+	{
+		for (x = 0; x < icon->entry->width; x++)
+		{
+			*dstp++ = *srcp++;
+		}
+	}
+
+	atom = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+
+	if (!atom)
+	{
+		printf("xf_SetWindowIcon: failed to obtain atom _NET_WM_ICON\n");
+		return;
+	}
+	else
+	{
+		XChangeProperty(xfi->display, window->handle, atom, XA_CARDINAL, 32,
+			PropModeReplace, (uint8*) propdata, propsize);
+
+		XFlush(xfi->display);
+	}
+}
+
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
-	XFreeGC(xfi->display, window->gc);
-	XFreePixmap(xfi->display, window->surface);
-	XUnmapWindow(xfi->display, window->handle);
-	XDestroyWindow(xfi->display, window->handle);
+	if (window->gc)
+		XFreeGC(xfi->display, window->gc);
+	if (window->surface)
+		XFreePixmap(xfi->display, window->surface);
+	if (window->handle)
+	{
+		XUnmapWindow(xfi->display, window->handle);
+		XDestroyWindow(xfi->display, window->handle);
+	}
 	xfree(window);
 }

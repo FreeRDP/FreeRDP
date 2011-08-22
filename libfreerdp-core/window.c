@@ -177,7 +177,8 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 
 void update_read_window_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
-	update_read_icon_info(s, &window_icon->iconInfo); /* iconInfo (ICON_INFO) */
+	window_icon->iconInfo = (ICON_INFO*) xzalloc(sizeof(ICON_INFO));
+	update_read_icon_info(s, window_icon->iconInfo); /* iconInfo (ICON_INFO) */
 }
 
 void update_read_window_cached_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)

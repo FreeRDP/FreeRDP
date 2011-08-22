@@ -175,7 +175,7 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 				return -1;
 			break;
 
-		case CONNECTION_STATE_CHANNEL_JOIN:
+		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_server_accept_client_info(peer->rdp, s))
 				return -1;
 			break;

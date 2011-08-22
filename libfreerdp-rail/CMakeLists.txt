@@ -20,6 +20,7 @@
 set(FREERDP_RAIL_SRCS
 	window_list.c
 	window.c
+	icon.c
 	rail.c)
 
 add_library(freerdp-rail SHARED ${FREERDP_RAIL_SRCS})

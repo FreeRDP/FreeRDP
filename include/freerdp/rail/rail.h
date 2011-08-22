@@ -24,32 +24,41 @@
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
+#include <freerdp/gdi/color.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_rail rdpRail;
 
+#include <freerdp/rail/icon.h>
 #include <freerdp/rail/window.h>
 #include <freerdp/rail/window_list.h>
 
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railMoveWindow)(rdpRail* rail, rdpWindow* window);
+typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, uint8 state);
 typedef void (*railSetWindowText)(rdpRail* rail, rdpWindow* window);
+typedef void (*railSetWindowIcon)(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
 
 struct rdp_rail
 {
 	void* extra;
 	UNICONV* uniconv;
+	CLRCONV* clrconv;
+	rdpIconCache* cache;
 	rdpWindowList* list;
+	rdpSettings* settings;
 	railCreateWindow CreateWindow;
 	railDestroyWindow DestroyWindow;
 	railMoveWindow MoveWindow;
+	railShowWindow ShowWindow;
 	railSetWindowText SetWindowText;
+	railSetWindowIcon SetWindowIcon;
 };
 
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
 
-FREERDP_API rdpRail* rail_new();
+FREERDP_API rdpRail* rail_new(rdpSettings* settings);
 FREERDP_API void rail_free(rdpRail* rail);
 
 #endif /* __RAIL_H */

@@ -20,6 +20,8 @@
 #include <freerdp/kbd/kbd.h>
 #include <freerdp/kbd/vkcodes.h>
 
+#include "xf_rail.h"
+
 #include "xf_event.h"
 
 uint8 X11_EVENT_STRINGS[][20] =
@@ -418,6 +420,24 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return True;
 }
 
+boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
+{
+	rdpWindow* window;
+
+	if (app != True)
+		return True;
+
+	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+
+	if (window != NULL)
+	{
+		/* local restore event */
+		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+	}
+
+	return True;
+}
+
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
 	boolean app = False;
@@ -434,7 +454,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			app = True;
 	}
 
-#if 0
+#if 1
 	if (event->type != MotionNotify)
 		printf("X11 %s Event\n", X11_EVENT_STRINGS[event->type]);
 #endif
@@ -496,6 +516,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		case MapNotify:
+			status = xf_event_MapNotify(xfi, event, app);
 			break;
 
 		case ReparentNotify:

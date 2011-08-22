@@ -49,8 +49,10 @@ void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
 
 xfWindow* desktop_create(xfInfo* xfi, char* name);
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name);
+xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state);
+void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 
 #endif /* __XF_WINDOW_H */

@@ -575,8 +575,74 @@ uint8* gdi_image_convert(uint8* srcData, uint8* dstData, int width, int height, 
 		return 0;
 }
 
-uint8*
-gdi_glyph_convert(int width, int height, uint8* data)
+uint8* gdi_image_invert(uint8* srcData, uint8* dstData, int width, int height, int bpp)
+{
+	int y;
+	uint8* srcp;
+	uint8* dstp;
+	int scanline;
+
+	scanline = width * (bpp / 8);
+
+	if (dstData == NULL)
+		dstData = (uint8*) malloc(width * height * (bpp / 8));
+
+	dstp = dstData;
+	srcp = &srcData[scanline * (height - 1)];
+
+	for (y = height - 1; y >= 0; y--)
+	{
+		memcpy(dstp, srcp, scanline);
+		dstp += scanline;
+		srcp -= scanline;
+	}
+
+	return dstData;
+}
+
+uint8* gdi_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
+{
+	int x, y;
+	int pixel;
+	uint8* data;
+	uint8 bmask;
+	uint32 pmask;
+	uint32* icon;
+
+	pixel = 0;
+	data = gdi_image_invert(srcData, dstData, width, height, bpp);
+	dstData = gdi_image_convert(data, NULL, width, height, bpp, 32, clrconv);
+
+	free(data);
+	bmask = mask[pixel];
+	icon = (uint32*) dstData;
+
+	if (bpp < 32)
+	{
+		for (y = 0; y < height; y++)
+		{
+			for (x = 0; x < width; x++)
+			{
+				if (pixel % 8 == 0)
+					bmask = mask[pixel / 8];
+				else
+					bmask <<= 1;
+
+				pmask = (bmask & 0x80) ? 0x00000000 : 0xFF000000;
+
+				*icon++ |= pmask;
+
+				pixel++;
+			}
+		}
+	}
+
+	free(mask);
+
+	return dstData;
+}
+
+uint8* gdi_glyph_convert(int width, int height, uint8* data)
 {
 	int x, y;
 	uint8 *srcp;
