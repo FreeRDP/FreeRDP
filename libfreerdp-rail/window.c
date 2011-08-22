@@ -24,6 +24,96 @@
 
 #include <freerdp/rail/window.h>
 
+struct _WINDOW_STYLE
+{
+	uint32 style;
+	char* name;
+};
+typedef struct _WINDOW_STYLE WINDOW_STYLE;
+
+WINDOW_STYLE WINDOW_STYLES[] =
+{
+	{ WS_BORDER, "WS_BORDER" },
+	{ WS_CAPTION, "WS_CAPTION" },
+	{ WS_CHILD, "WS_CHILD" },
+	{ WS_CLIPCHILDREN, "WS_CLIPCHILDREN" },
+	{ WS_CLIPSIBLINGS, "WS_CLIPSIBLINGS" },
+	{ WS_DISABLED, "WS_DISABLED" },
+	{ WS_DLGFRAME, "WS_DLGFRAME" },
+	{ WS_GROUP, "WS_GROUP" },
+	{ WS_HSCROLL, "WS_HSCROLL" },
+	{ WS_ICONIC, "WS_ICONIC" },
+	{ WS_MAXIMIZE, "WS_MAXIMIZE" },
+	{ WS_MAXIMIZEBOX, "WS_MAXIMIZEBOX" },
+	{ WS_MINIMIZE, "WS_MINIMIZE" },
+	{ WS_MINIMIZEBOX, "WS_MINIMIZEBOX" },
+	{ WS_OVERLAPPED, "WS_OVERLAPPED" },
+	{ WS_OVERLAPPEDWINDOW, "WS_OVERLAPPEDWINDOW" },
+	{ WS_POPUP, "WS_POPUP" },
+	{ WS_POPUPWINDOW, "WS_POPUPWINDOW" },
+	{ WS_SIZEBOX, "WS_SIZEBOX" },
+	{ WS_SYSMENU, "WS_SYSMENU" },
+	{ WS_TABSTOP, "WS_TABSTOP" },
+	{ WS_THICKFRAME, "WS_THICKFRAME" },
+	{ WS_VISIBLE, "WS_VISIBLE" }
+};
+
+WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
+{
+	{ WS_EX_ACCEPTFILES, "WS_EX_ACCEPTFILES" },
+	{ WS_EX_APPWINDOW, "WS_EX_APPWINDOW" },
+	{ WS_EX_CLIENTEDGE, "WS_EX_CLIENTEDGE" },
+	{ WS_EX_COMPOSITED, "WS_EX_COMPOSITED" },
+	{ WS_EX_CONTEXTHELP, "WS_EX_CONTEXTHELP" },
+	{ WS_EX_CONTROLPARENT, "WS_EX_CONTROLPARENT" },
+	{ WS_EX_DLGMODALFRAME, "WS_EX_DLGMODALFRAME" },
+	{ WS_EX_LAYERED, "WS_EX_LAYERED" },
+	{ WS_EX_LAYOUTRTL, "WS_EX_LAYOUTRTL" },
+	{ WS_EX_LEFT, "WS_EX_LEFT" },
+	{ WS_EX_LEFTSCROLLBAR, "WS_EX_LEFTSCROLLBAR" },
+	{ WS_EX_LTRREADING, "WS_EX_LTRREADING" },
+	{ WS_EX_MDICHILD, "WS_EX_MDICHILD" },
+	{ WS_EX_NOACTIVATE, "WS_EX_NOACTIVATE" },
+	{ WS_EX_NOINHERITLAYOUT, "WS_EX_NOINHERITLAYOUT" },
+	{ WS_EX_NOPARENTNOTIFY, "WS_EX_NOPARENTNOTIFY" },
+	{ WS_EX_OVERLAPPEDWINDOW, "WS_EX_OVERLAPPEDWINDOW" },
+	{ WS_EX_PALETTEWINDOW, "WS_EX_PALETTEWINDOW" },
+	{ WS_EX_RIGHT, "WS_EX_RIGHT" },
+	{ WS_EX_RIGHTSCROLLBAR, "WS_EX_RIGHTSCROLLBAR" },
+	{ WS_EX_RTLREADING, "WS_EX_RTLREADING" },
+	{ WS_EX_STATICEDGE, "WS_EX_STATICEDGE" },
+	{ WS_EX_TOOLWINDOW, "WS_EX_TOOLWINDOW" },
+	{ WS_EX_TOPMOST, "WS_EX_TOPMOST" },
+	{ WS_EX_TRANSPARENT, "WS_EX_TRANSPARENT" },
+	{ WS_EX_WINDOWEDGE, "WS_EX_WINDOWEDGE" }
+};
+
+void print_window_styles(uint32 style)
+{
+	int i;
+
+	printf("Window Styles:\n{\n");
+	for (i = 0; i < sizeof(WINDOW_STYLES) / sizeof(WINDOW_STYLE); i++)
+	{
+		if (style & WINDOW_STYLES[i].style)
+			printf("\t%s\n", WINDOW_STYLES[i].name);
+	}
+	printf("}\n");
+}
+
+void print_extended_window_styles(uint32 style)
+{
+	int i;
+
+	printf("Extended Window Styles:\n{\n");
+	for (i = 0; i < sizeof(EXTENDED_WINDOW_STYLES) / sizeof(WINDOW_STYLE); i++)
+	{
+		if (style & EXTENDED_WINDOW_STYLES[i].style)
+			printf("\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
+	}
+	printf("}\n");
+}
+
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
 	window->fieldFlags = orderInfo->fieldFlags;
@@ -38,7 +128,10 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->style = window_state->style;
 		window->extendedStyle = window_state->extendedStyle;
-		printf("Style:%d, ExtendedStyle:%d\n", window->style, window->extendedStyle);
+		//printf("Style:%d, ExtendedStyle:%d\n", window->style, window->extendedStyle);
+
+		print_window_styles(window->style);
+		print_extended_window_styles(window->extendedStyle);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
