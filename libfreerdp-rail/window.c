@@ -227,8 +227,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		for (i = 0; i < window_state->numWindowRects; i++)
 		{
 			printf("Window Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
-					window_state->windowRects->left, window_state->windowRects->top,
-					window_state->windowRects->right, window_state->windowRects->bottom);
+					window_state->windowRects[i].left, window_state->windowRects[i].top,
+					window_state->windowRects[i].right, window_state->windowRects[i].bottom);
 		}
 	}
 
@@ -248,8 +248,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		for (i = 0; i < window_state->numVisibilityRects; i++)
 		{
 			printf("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
-					window_state->visibilityRects->left, window_state->visibilityRects->top,
-					window_state->visibilityRects->right, window_state->visibilityRects->bottom);
+					window_state->visibilityRects[i].left, window_state->visibilityRects[i].top,
+					window_state->visibilityRects[i].right, window_state->visibilityRects[i].bottom);
 		}
 	}
 }

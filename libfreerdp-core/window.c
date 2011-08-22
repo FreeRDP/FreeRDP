@@ -137,11 +137,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		stream_read_uint16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numWindowRects;
-
-		if (window_state->windowRects == NULL)
-			window_state->windowRects = (RECTANGLE_16*) xmalloc(size);
-		else
-			window_state->windowRects = (RECTANGLE_16*) xrealloc(window_state->windowRects, size);
+		window_state->windowRects = (RECTANGLE_16*) xmalloc(size);
 
 		/* windowRects */
 		for (i = 0; i < window_state->numWindowRects; i++)
@@ -161,11 +157,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		stream_read_uint16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numVisibilityRects;
-
-		if (window_state->visibilityRects == NULL)
-			window_state->visibilityRects = (RECTANGLE_16*) xmalloc(size);
-		else
-			window_state->visibilityRects = (RECTANGLE_16*) xrealloc(window_state->visibilityRects, size);
+		window_state->visibilityRects = (RECTANGLE_16*) xmalloc(size);
 
 		/* visibilityRects */
 		for (i = 0; i < window_state->numVisibilityRects; i++)
