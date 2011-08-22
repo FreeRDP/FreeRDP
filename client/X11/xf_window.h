@@ -51,6 +51,7 @@ xfWindow* desktop_create(xfInfo* xfi, char* name);
 
 xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, char* name);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state);
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 

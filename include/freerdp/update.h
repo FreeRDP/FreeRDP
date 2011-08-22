@@ -867,6 +867,12 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 #define WINDOW_ORDER_FIELD_DESKTOP_ZORDER		0x00000010
 #define WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND		0x00000020
 
+/* Window Show States */
+#define WINDOW_HIDE					0x00
+#define WINDOW_SHOW_MINIMIZED				0x02
+#define WINDOW_SHOW_MAXIMIZED				0x03
+#define WINDOW_SHOW					0x05
+
 /* Update Interface */
 
 typedef struct rdp_update rdpUpdate;

@@ -309,6 +309,32 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->height = height;
 }
 
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
+{
+	printf("xf_ShowWindow:%d\n", state);
+
+	switch (state)
+	{
+		case WINDOW_HIDE:
+			XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			break;
+
+		case WINDOW_SHOW_MINIMIZED:
+			XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			break;
+
+		case WINDOW_SHOW_MAXIMIZED:
+			XRaiseWindow(xfi->display, window->handle);
+			break;
+
+		case WINDOW_SHOW:
+			XRaiseWindow(xfi->display, window->handle);
+			break;
+	}
+
+	XFlush(xfi->display);
+}
+
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 {
 	Atom atom;

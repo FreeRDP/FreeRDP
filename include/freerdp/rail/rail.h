@@ -36,6 +36,7 @@ typedef struct rdp_rail rdpRail;
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railMoveWindow)(rdpRail* rail, rdpWindow* window);
+typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, uint8 state);
 typedef void (*railSetWindowText)(rdpRail* rail, rdpWindow* window);
 typedef void (*railSetWindowIcon)(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
 
@@ -50,6 +51,7 @@ struct rdp_rail
 	railCreateWindow CreateWindow;
 	railDestroyWindow DestroyWindow;
 	railMoveWindow MoveWindow;
+	railShowWindow ShowWindow;
 	railSetWindowText SetWindowText;
 	railSetWindowIcon SetWindowIcon;
 };

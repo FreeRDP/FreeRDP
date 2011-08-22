@@ -173,7 +173,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-
+		IFCALL(rail->ShowWindow, rail, window, window->showState);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
