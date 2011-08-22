@@ -21,7 +21,6 @@
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/rail/rail.h>
 
-
 #include "xf_window.h"
 #include "xf_rail.h"
 
@@ -119,6 +118,9 @@ void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
+
+	icon->extra = gdi_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
+			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
 
 	xf_SetWindowIcon(xfi, xfw, icon);
 }

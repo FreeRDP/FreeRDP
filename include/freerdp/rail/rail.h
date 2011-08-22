@@ -24,6 +24,7 @@
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
+#include <freerdp/gdi/color.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_rail rdpRail;
@@ -42,6 +43,7 @@ struct rdp_rail
 {
 	void* extra;
 	UNICONV* uniconv;
+	CLRCONV* clrconv;
 	rdpIconCache* cache;
 	rdpWindowList* list;
 	rdpSettings* settings;

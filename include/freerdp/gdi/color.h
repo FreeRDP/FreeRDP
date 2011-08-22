@@ -239,6 +239,8 @@ typedef uint8* (*p_gdi_image_convert)(uint8* srcData, uint8* dstData, int width,
 FREERDP_API uint32 gdi_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* gdi_image_convert(uint8* srcData, uint8 *dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* gdi_glyph_convert(int width, int height, uint8* data);
+FREERDP_API uint8* gdi_image_invert(uint8* srcData, uint8* dstData, int width, int height, int bpp);
+FREERDP_API uint8* gdi_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv);
 FREERDP_API uint8* gdi_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv);
 
 #ifdef __cplusplus

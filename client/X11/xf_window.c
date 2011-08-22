@@ -319,7 +319,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	long* dstp;
 	uint32* srcp;
 
-	if ((icon->big != True) || (icon->entry->bpp != 32))
+	if (icon->big != True)
 		return;
 
 	pixels = icon->entry->width * icon->entry->height;
@@ -329,7 +329,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	propdata[0] = icon->entry->width;
 	propdata[1] = icon->entry->height;
 	dstp = &(propdata[2]);
-	srcp = (uint32*) icon->entry->bitsColor;
+	srcp = (uint32*) icon->extra;
 
 	for (y = 0; y < icon->entry->height; y++)
 	{
