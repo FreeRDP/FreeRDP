@@ -84,7 +84,7 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings);
 boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings);
 void rdp_write_info_packet(STREAM* s, rdpSettings* settings);
 boolean rdp_read_client_info(rdpRdp* rdp, STREAM* s);
-void rdp_send_client_info(rdpRdp* rdp);
+boolean rdp_send_client_info(rdpRdp* rdp);
 void rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s);
 
 #endif /* __INFO_H */

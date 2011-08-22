@@ -156,10 +156,8 @@ struct rdp_license
 	SCOPE_LIST* scope_list;
 };
 
-boolean license_connect(rdpLicense* license);
-
-void license_send(rdpLicense* license, STREAM* s, uint8 type);
-void license_recv(rdpLicense* license, STREAM* s);
+boolean license_read(rdpLicense* license, STREAM* s);
+boolean license_send(rdpLicense* license, STREAM* s, uint8 type);
 STREAM* license_send_stream_init(rdpLicense* license);
 
 void license_generate_randoms(rdpLicense* license);

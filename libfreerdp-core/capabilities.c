@@ -1576,15 +1576,29 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 	return True;
 }
 
-void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
+boolean rdp_read_demand_active(rdpRdp* rdp, STREAM* s)
 {
+	uint16 length;
+	uint16 channelId;
+	uint16 pduType;
+	uint16 pduLength;
 	uint16 numberCapabilities;
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
 
+	if (!rdp_read_header(rdp, s, &length, &channelId))
+		return False;
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+		return False;
+
+	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+		return False;
+	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
+		return False;
+
 	//printf("Demand Active PDU\n");
 
-	stream_read_uint32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
@@ -1592,18 +1606,12 @@ void rdp_read_demand_active(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* capabilitySets */
-	rdp_read_capability_sets(s, settings, numberCapabilities);
-}
+	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
+		return False;
 
-void rdp_recv_demand_active(rdpRdp* rdp, STREAM* s, rdpSettings* settings)
-{
-	rdp_read_demand_active(s, settings);
+	rdp->update->glyph_v2 = (rdp->settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? True : False;
 
-	rdp->update->glyph_v2 = (settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? True : False;
-
-	rdp_send_confirm_active(rdp);
-
-	rdp_send_client_synchronize_pdu(rdp);
+	return True;
 }
 
 void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
@@ -1803,7 +1811,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_set_mark(s, em);
 }
 
-void rdp_send_confirm_active(rdpRdp* rdp)
+boolean rdp_send_confirm_active(rdpRdp* rdp)
 {
 	STREAM* s;
 
@@ -1811,6 +1819,6 @@ void rdp_send_confirm_active(rdpRdp* rdp)
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
+	return rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
 }
 

@@ -235,7 +235,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
  * @param channel_id channel id
  */
 
-void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
+boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 {
 	uint16 length;
 
@@ -245,10 +245,13 @@ void rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 	rdp_write_header(rdp, s, length, channel_id);
 
 	stream_set_pos(s, length);
-	transport_write(rdp->transport, s);
+	if (transport_write(rdp->transport, s) < 0)
+		return False;
+
+	return True;
 }
 
-void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
+boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 {
 	uint16 length;
 
@@ -259,10 +262,13 @@ void rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	rdp_write_share_control_header(s, length, type, channel_id);
 
 	stream_set_pos(s, length);
-	transport_write(rdp->transport, s);
+	if (transport_write(rdp->transport, s) < 0)
+		return False;
+
+	return True;
 }
 
-void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
+boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 {
 	uint16 length;
 
@@ -276,7 +282,10 @@ void rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 	//printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	stream_set_pos(s, length);
-	transport_write(rdp->transport, s);
+	if (transport_write(rdp->transport, s) < 0)
+		return False;
+
+	return True;
 }
 
 void rdp_read_set_error_info_data_pdu(STREAM* s)
@@ -307,7 +316,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			rdp_recv_server_control_pdu(rdp, s, rdp->settings);
+			rdp_read_server_control_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
@@ -317,7 +326,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			rdp_recv_server_synchronize_pdu(rdp, s, rdp->settings);
+			rdp_read_server_synchronize_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -343,7 +352,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
-			rdp_recv_server_font_map_pdu(rdp, s, rdp->settings);
+			rdp_read_server_font_map_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
@@ -391,49 +400,17 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param s stream
  */
 
-static void rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
 	uint16 channelId;
-	uint16 sec_flags;
-	boolean processed;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
-		return;
-	}
-
-	if (rdp->licensed != True)
-	{
-		processed = False;
-		rdp_read_security_header(s, &sec_flags);
-
-		if (sec_flags & SEC_PKT_MASK)
-		{
-			switch (sec_flags & SEC_PKT_MASK)
-			{
-				case SEC_LICENSE_PKT:
-					processed = True;
-					license_recv(rdp->license, s);
-					break;
-
-				case SEC_REDIRECTION_PKT:
-					processed = True;
-					rdp_read_redirection_packet(rdp, s);
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		if (processed)
-			return;
-		else
-			stream_rewind(s, 4);
+		return False;
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
@@ -450,12 +427,9 @@ static void rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 				rdp_read_data_pdu(rdp, s);
 				break;
 
-			case PDU_TYPE_DEMAND_ACTIVE:
-				rdp_recv_demand_active(rdp, s, rdp->settings);
-				break;
-
 			case PDU_TYPE_DEACTIVATE_ALL:
-				rdp_recv_deactivate_all(rdp, s);
+				if (!rdp_read_deactivate_all(rdp, s))
+					return False;
 				break;
 
 			case PDU_TYPE_SERVER_REDIRECTION:
@@ -467,9 +441,11 @@ static void rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 				break;
 		}
 	}
+
+	return True;
 }
 
-static void rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 
@@ -477,7 +453,7 @@ static void rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	if (length > stream_get_size(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
-		return;
+		return False;
 	}
 
 	/* TODO: fipsInformation */
@@ -488,14 +464,16 @@ static void rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	}
 
 	fastpath_recv_updates(rdp->fastpath, s);
+
+	return True;
 }
 
-static void rdp_read_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_read_pdu(rdpRdp* rdp, STREAM* s)
 {
 	if (tpkt_verify_header(s))
-		rdp_read_tpkt_pdu(rdp, s);
+		return rdp_read_tpkt_pdu(rdp, s);
 	else
-		rdp_read_fastpath_pdu(rdp, s);
+		return rdp_read_fastpath_pdu(rdp, s);
 }
 
 /**
@@ -517,7 +495,42 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	rdpRdp* rdp = (rdpRdp*) extra;
 
-	rdp_read_pdu(rdp, s);
+	switch (rdp->state)
+	{
+		case CONNECTION_STATE_NEGO:
+			if (!rdp_client_connect_mcs_connect_response(rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_MCS_ATTACH_USER:
+			if (!rdp_client_connect_mcs_attach_user_confirm(rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_LICENSE:
+			if (!rdp_client_connect_license(rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_CAPABILITY:
+			if (!rdp_client_connect_demand_active(rdp, s))
+				return -1;
+			break;
+
+		case CONNECTION_STATE_ACTIVE:
+			if (!rdp_read_pdu(rdp, s))
+				return -1;
+			break;
+
+		default:
+			printf("Invalid state %d\n", rdp->state);
+			return -1;
+	}
 
 	return 1;
 }
@@ -557,7 +570,6 @@ rdpRdp* rdp_new(freerdp* instance)
 
 	if (rdp != NULL)
 	{
-		rdp->licensed = False;
 		rdp->settings = settings_new();
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
