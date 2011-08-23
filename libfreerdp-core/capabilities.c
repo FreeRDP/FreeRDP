@@ -1576,7 +1576,7 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 	return True;
 }
 
-boolean rdp_read_demand_active(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
@@ -1676,7 +1676,7 @@ boolean rdp_send_demand_active(rdpRdp* rdp)
 	return True;
 }
 
-boolean rdp_read_confirm_active(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;

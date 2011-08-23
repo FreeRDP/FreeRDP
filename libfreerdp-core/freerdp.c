@@ -88,6 +88,8 @@ freerdp* freerdp_new()
 		instance->GetFileDescriptor = freerdp_get_fds;
 		instance->CheckFileDescriptor = freerdp_check_fds;
 		instance->SendChannelData = freerdp_send_channel_data;
+
+		input_register_client_callbacks(rdp->input);
 	}
 
 	return instance;

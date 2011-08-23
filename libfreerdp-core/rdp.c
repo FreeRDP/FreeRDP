@@ -288,7 +288,7 @@ boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 	return True;
 }
 
-void rdp_read_set_error_info_data_pdu(STREAM* s)
+void rdp_recv_set_error_info_data_pdu(STREAM* s)
 {
 	uint32 errorInfo;
 
@@ -298,7 +298,7 @@ void rdp_read_set_error_info_data_pdu(STREAM* s)
 		rdp_print_errinfo(errorInfo);
 }
 
-void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
+void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint8 type;
 	uint16 length;
@@ -316,7 +316,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			rdp_read_server_control_pdu(rdp, s);
+			rdp_recv_server_control_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
@@ -326,7 +326,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			rdp_read_server_synchronize_pdu(rdp, s);
+			rdp_recv_server_synchronize_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -345,14 +345,14 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
-			rdp_read_save_session_info(rdp, s);
+			rdp_recv_save_session_info(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
-			rdp_read_server_font_map_pdu(rdp, s);
+			rdp_recv_server_font_map_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
@@ -371,7 +371,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
-			rdp_read_set_error_info_data_pdu(s);
+			rdp_recv_set_error_info_data_pdu(s);
 			break;
 
 		case DATA_PDU_TYPE_DRAW_NINEGRID_ERROR:
@@ -400,7 +400,7 @@ void rdp_read_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param s stream
  */
 
-static boolean rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 pduType;
@@ -424,16 +424,16 @@ static boolean rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
-				rdp_read_data_pdu(rdp, s);
+				rdp_recv_data_pdu(rdp, s);
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:
-				if (!rdp_read_deactivate_all(rdp, s))
+				if (!rdp_recv_deactivate_all(rdp, s))
 					return False;
 				break;
 
 			case PDU_TYPE_SERVER_REDIRECTION:
-				rdp_read_enhanced_security_redirection_packet(rdp, s);
+				rdp_recv_enhanced_security_redirection_packet(rdp, s);
 				break;
 
 			default:
@@ -445,35 +445,29 @@ static boolean rdp_read_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
-static boolean rdp_read_fastpath_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 
 	length = fastpath_read_header(rdp->fastpath, s);
-	if (length > stream_get_size(s))
+	if (length == 0 || length > stream_get_size(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
 		return False;
 	}
 
-	/* TODO: fipsInformation */
+	if (!fastpath_read_security_header(rdp->fastpath, s))
+		return False;
 
-	if ((rdp->fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED))
-	{
-		stream_seek(s, 8); /* dataSignature */
-	}
-
-	fastpath_recv_updates(rdp->fastpath, s);
-
-	return True;
+	return fastpath_recv_updates(rdp->fastpath, s);
 }
 
-static boolean rdp_read_pdu(rdpRdp* rdp, STREAM* s)
+static boolean rdp_recv_pdu(rdpRdp* rdp, STREAM* s)
 {
 	if (tpkt_verify_header(s))
-		return rdp_read_tpkt_pdu(rdp, s);
+		return rdp_recv_tpkt_pdu(rdp, s);
 	else
-		return rdp_read_fastpath_pdu(rdp, s);
+		return rdp_recv_fastpath_pdu(rdp, s);
 }
 
 /**
@@ -488,7 +482,7 @@ void rdp_recv(rdpRdp* rdp)
 	s = transport_recv_stream_init(rdp->transport, 4096);
 	transport_read(rdp->transport, s);
 
-	rdp_read_pdu(rdp, s);
+	rdp_recv_pdu(rdp, s);
 }
 
 static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
@@ -523,7 +517,7 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!rdp_read_pdu(rdp, s))
+			if (!rdp_recv_pdu(rdp, s))
 				return -1;
 			break;
 

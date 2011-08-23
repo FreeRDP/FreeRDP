@@ -59,6 +59,9 @@ typedef void (*pcExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, ui
 struct rdp_input
 {
 	void* rdp;
+	void* param1;
+	void* param2;
+
 	pcSynchronizeEvent SynchronizeEvent;
 	pcKeyboardEvent KeyboardEvent;
 	pcUnicodeKeyboardEvent UnicodeKeyboardEvent;

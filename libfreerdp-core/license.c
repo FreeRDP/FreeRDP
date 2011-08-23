@@ -161,7 +161,7 @@ boolean license_send(rdpLicense* license, STREAM* s, uint8 type)
  * @param s stream
  */
 
-boolean license_read(rdpLicense* license, STREAM* s)
+boolean license_recv(rdpLicense* license, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
