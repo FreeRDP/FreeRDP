@@ -102,11 +102,13 @@ boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
 
-STREAM* fastpath_pdu_init(rdpFastPath* fastpath);
-boolean fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents);
-
 STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 eventCode);
 boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
+
+STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath);
+boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s);
+
+boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd);
 
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);

@@ -225,10 +225,18 @@ static void update_end_paint(rdpUpdate* update)
 {
 }
 
+static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+{
+	rdpRdp* rdp = (rdpRdp*)update->rdp;
+
+	fastpath_send_surface_bits(rdp->fastpath, surface_bits_command);
+}
+
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
 	update->EndPaint = update_end_paint;
+	update->SurfaceBits = update_send_surface_bits;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

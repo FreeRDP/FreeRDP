@@ -25,5 +25,8 @@
 
 boolean update_recv_surfcmds(rdpUpdate* update, uint16 size, STREAM* s);
 
+int update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd);
+int update_write_surfcmd_frame_marker(STREAM* s, uint16 frameAction, uint32 frameId);
+
 #endif /* __SURFACE */
 
