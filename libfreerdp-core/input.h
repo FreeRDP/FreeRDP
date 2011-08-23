@@ -60,6 +60,8 @@ void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code);
 void input_send_fastpath_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 
+void input_register_client_callbacks(rdpInput* input);
+
 rdpInput* input_new(rdpRdp* rdp);
 void input_free(rdpInput* input);
 

@@ -49,6 +49,31 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	return True;
 }
 
+void test_peer_synchronize_event(rdpInput* input, uint32 flags)
+{
+	printf("Client sent a synchronize event\n");
+}
+
+void test_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+{
+	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+}
+
+void test_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
+{
+	printf("Client sent a unicode keyboard event (code:0x%X)\n", code);
+}
+
+void test_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+{
+	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+}
+
+void test_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+{
+	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+}
+
 static void* test_peer_mainloop(void* arg)
 {
 	freerdp_peer* client = (freerdp_peer*)arg;
@@ -63,11 +88,20 @@ static void* test_peer_mainloop(void* arg)
 
 	printf("We've got a client %s\n", client->settings->hostname);
 
+	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
 	client->settings->nla_security = False;
 
 	client->PostConnect = test_peer_post_connect;
+
+	client->input->param1 = client;
+	client->input->SynchronizeEvent = test_peer_synchronize_event;
+	client->input->KeyboardEvent = test_peer_keyboard_event;
+	client->input->UnicodeKeyboardEvent = test_peer_unicode_keyboard_event;
+	client->input->MouseEvent = test_peer_mouse_event;
+	client->input->ExtendedMouseEvent = test_peer_extended_mouse_event;
+
 	client->Initialize(client);
 
 	while (1)

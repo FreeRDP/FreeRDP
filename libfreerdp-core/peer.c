@@ -225,6 +225,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	client->peer = (void*)peer;
 	client->settings = peer->rdp->settings;
+	client->input = peer->rdp->input;
+	client->update = peer->rdp->update;
 
 	transport_attach(peer->rdp->transport, sockfd);
 

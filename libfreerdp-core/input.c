@@ -175,6 +175,28 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uin
 	rdp_send_client_fastpath_input_pdu(input->rdp, s);
 }
 
+void input_register_client_callbacks(rdpInput* input)
+{
+	rdpRdp* rdp = (rdpRdp*)input->rdp;
+
+	if (rdp->settings->fastpath_input)
+	{
+		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
+		input->KeyboardEvent = input_send_fastpath_keyboard_event;
+		input->UnicodeKeyboardEvent = input_send_fastpath_unicode_keyboard_event;
+		input->MouseEvent = input_send_fastpath_mouse_event;
+		input->ExtendedMouseEvent = input_send_fastpath_extended_mouse_event;
+	}
+	else
+	{
+		input->SynchronizeEvent = input_send_synchronize_event;
+		input->KeyboardEvent = input_send_keyboard_event;
+		input->UnicodeKeyboardEvent = input_send_unicode_keyboard_event;
+		input->MouseEvent = input_send_mouse_event;
+		input->ExtendedMouseEvent = input_send_extended_mouse_event;
+	}
+}
+
 rdpInput* input_new(rdpRdp* rdp)
 {
 	rdpInput* input;
@@ -184,22 +206,6 @@ rdpInput* input_new(rdpRdp* rdp)
 	if (input != NULL)
 	{
 		input->rdp = rdp;
-		if (rdp->settings->fastpath_input)
-		{
-			input->SynchronizeEvent = input_send_fastpath_synchronize_event;
-			input->KeyboardEvent = input_send_fastpath_keyboard_event;
-			input->UnicodeKeyboardEvent = input_send_fastpath_unicode_keyboard_event;
-			input->MouseEvent = input_send_fastpath_mouse_event;
-			input->ExtendedMouseEvent = input_send_fastpath_extended_mouse_event;
-		}
-		else
-		{
-			input->SynchronizeEvent = input_send_synchronize_event;
-			input->KeyboardEvent = input_send_keyboard_event;
-			input->UnicodeKeyboardEvent = input_send_unicode_keyboard_event;
-			input->MouseEvent = input_send_mouse_event;
-			input->ExtendedMouseEvent = input_send_extended_mouse_event;
-		}
 	}
 
 	return input;
