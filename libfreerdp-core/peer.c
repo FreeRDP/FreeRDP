@@ -216,6 +216,9 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
+	rdpPeer* peer = (rdpPeer*)client->peer;
+
+	transport_disconnect(peer->rdp->transport);
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)

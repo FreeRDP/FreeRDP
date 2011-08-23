@@ -70,6 +70,8 @@ void transport_attach(rdpTransport* transport, int sockfd)
 
 boolean transport_disconnect(rdpTransport* transport)
 {
+	if (transport->tls)
+		IFCALL(transport->tls->disconnect, transport->tls);
 	return transport->tcp->disconnect(transport->tcp);
 }
 
@@ -403,6 +405,8 @@ void transport_free(rdpTransport* transport)
 		stream_free(transport->recv_stream);
 		stream_free(transport->send_stream);
 		wait_obj_free(transport->recv_event);
+		if (transport->tls)
+			tls_free(transport->tls);
 		tcp_free(transport->tcp);
 		xfree(transport);
 	}
