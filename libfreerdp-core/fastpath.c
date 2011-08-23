@@ -24,6 +24,7 @@
 
 #include "orders.h"
 #include "update.h"
+#include "surface.h"
 
 #include "fastpath.h"
 
@@ -82,71 +83,6 @@ boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s)
 	return True;
 }
 
-static int fastpath_recv_update_surfcmd_surface_bits(rdpFastPath* fastpath, STREAM* s)
-{
-	rdpUpdate* update = fastpath->rdp->update;
-	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
-	int pos;
-
-	stream_read_uint16(s, cmd->destLeft);
-	stream_read_uint16(s, cmd->destTop);
-	stream_read_uint16(s, cmd->destRight);
-	stream_read_uint16(s, cmd->destBottom);
-	stream_read_uint8(s, cmd->bpp);
-	stream_seek(s, 2); /* reserved1, reserved2 */
-	stream_read_uint8(s, cmd->codecID);
-	stream_read_uint16(s, cmd->width);
-	stream_read_uint16(s, cmd->height);
-	stream_read_uint32(s, cmd->bitmapDataLength);
-	pos = stream_get_pos(s) + cmd->bitmapDataLength;
-	cmd->bitmapData = stream_get_tail(s);
-
-	IFCALL(update->SurfaceBits, update, cmd);
-
-	stream_set_pos(s, pos);
-
-	return 20 + cmd->bitmapDataLength;
-}
-
-static int fastpath_recv_update_surfcmd_frame_marker(rdpFastPath* fastpath, STREAM* s)
-{
-	uint16 frameAction;
-	uint32 frameId;
-
-	stream_read_uint16(s, frameAction);
-	stream_read_uint32(s, frameId);
-	/*printf("frameAction %d frameId %d\n", frameAction, frameId);*/
-
-	return 6;
-}
-
-static void fastpath_recv_update_surfcmds(rdpFastPath* fastpath, uint16 size, STREAM* s)
-{
-	uint16 cmdType;
-
-	while (size > 2)
-	{
-		stream_read_uint16(s, cmdType);
-		size -= 2;
-
-		switch (cmdType)
-		{
-			case CMDTYPE_SET_SURFACE_BITS:
-			case CMDTYPE_STREAM_SURFACE_BITS:
-				size -= fastpath_recv_update_surfcmd_surface_bits(fastpath, s);
-				break;
-
-			case CMDTYPE_FRAME_MARKER:
-				size -= fastpath_recv_update_surfcmd_frame_marker(fastpath, s);
-				break;
-
-			default:
-				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
-				return;
-		}
-	}
-}
-
 static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
@@ -202,7 +138,7 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			fastpath_recv_update_surfcmds(fastpath, size, s);
+			update_recv_surfcmds(fastpath->rdp->update, size, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
