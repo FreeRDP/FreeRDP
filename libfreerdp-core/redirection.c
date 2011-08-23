@@ -27,13 +27,17 @@
  * @param sec_flags security flags
  */
 
-void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
 	printf("Redirection Packet\n");
+
+	return True;
 }
 
-void rdp_read_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
 	printf("Enhanced Security Redirection Packet\n");
+
+	return True;
 }
 

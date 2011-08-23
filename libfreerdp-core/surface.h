@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Server Redirection
+ * Surface Commands
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
  * limitations under the License.
  */
 
-#ifndef __REDIRECTION_H
-#define __REDIRECTION_H
+#ifndef __SURFACE
+#define __SURFACE
 
 #include "rdp.h"
-
-#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
-boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+boolean update_recv_surfcmds(rdpUpdate* update, uint16 size, STREAM* s);
 
-#endif /* __REDIRECTION_H */
+int update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd);
+int update_write_surfcmd_frame_marker(STREAM* s, uint16 frameAction, uint32 frameId);
+
+#endif /* __SURFACE */
+

@@ -70,6 +70,8 @@ void transport_attach(rdpTransport* transport, int sockfd)
 
 boolean transport_disconnect(rdpTransport* transport)
 {
+	if (transport->tls)
+		IFCALL(transport->tls->disconnect, transport->tls);
 	return transport->tcp->disconnect(transport->tcp);
 }
 
@@ -293,15 +295,27 @@ int transport_check_fds(rdpTransport* transport)
 
 	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
 	{
-		/* Ensure the TPKT or Fast Path header is available. */
-		if (pos <= 4)
-			return 0;
-
 		stream_set_pos(transport->recv_buffer, 0);
 		if (tpkt_verify_header(transport->recv_buffer)) /* TPKT */
+		{
+			/* Ensure the TPKT header is available. */
+			if (pos <= 4)
+			{
+				stream_set_pos(transport->recv_buffer, pos);
+				return 0;
+			}
 			length = tpkt_read_header(transport->recv_buffer);
+		}
 		else /* Fast Path */
+		{
+			/* Ensure the Fast Path header is available. */
+			if (pos <= 2)
+			{
+				stream_set_pos(transport->recv_buffer, pos);
+				return 0;
+			}
 			length = fastpath_read_header(NULL, transport->recv_buffer);
+		}
 
 		if (length == 0)
 		{
@@ -391,6 +405,8 @@ void transport_free(rdpTransport* transport)
 		stream_free(transport->recv_stream);
 		stream_free(transport->send_stream);
 		wait_obj_free(transport->recv_event);
+		if (transport->tls)
+			tls_free(transport->tls);
 		tcp_free(transport->tcp);
 		xfree(transport);
 	}
