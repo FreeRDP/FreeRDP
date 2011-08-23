@@ -219,6 +219,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->remote_app = True;
 			settings->rail_langbar_supported = True;
 			settings->workarea = True;
+			settings->performance_flags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
 		{

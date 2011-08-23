@@ -18,15 +18,12 @@
  */
 
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 
 #include "xf_window.h"
 
 /* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
-
-#ifndef XA_CARDINAL
-#define XA_CARDINAL			6
-#endif
 
 #define MWM_HINTS_DECORATIONS		(1L << 1)
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
@@ -343,12 +340,10 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 {
-	//printf("xf_ShowWindow:%d\n", state);
-
 	switch (state)
 	{
 		case WINDOW_HIDE:
-			//XIconifyWindow(xfi->display, window->handle, xfi->screen_number);
+			XWithdrawWindow(xfi->display, window->handle, xfi->screen_number);
 			break;
 
 		case WINDOW_SHOW_MINIMIZED:
@@ -360,7 +355,7 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 			break;
 
 		case WINDOW_SHOW:
-			XRaiseWindow(xfi->display, window->handle);
+			XMapWindow(xfi->display, window->handle);
 			break;
 	}
 

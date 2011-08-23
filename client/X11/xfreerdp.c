@@ -205,7 +205,7 @@ boolean xf_pre_connect(freerdp* instance)
 					if (settings->workarea)
 					{
 						settings->monitors[n].x = screen_info[n].x_org;
-						settings->monitors[n].y = xfi->workArea.y;
+						settings->monitors[n].y = screen_info[n].y_org;
 						settings->monitors[n].width = screen_info[n].width;
 						settings->monitors[n].height = xfi->workArea.height;
 					}

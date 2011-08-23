@@ -103,6 +103,20 @@ static void rail_NotifyIconDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInf
 	printf("NotifyIconDelete\n");
 }
 
+static void rail_MonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	printf("MonitoredDesktop\n");
+}
+
+static void rail_NonMonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	printf("NonMonitoredDesktop\n");
+}
+
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {
 	update->WindowCreate = rail_WindowCreate;
@@ -113,6 +127,8 @@ void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 	update->NotifyIconCreate = rail_NotifyIconCreate;
 	update->NotifyIconUpdate = rail_NotifyIconUpdate;
 	update->NotifyIconDelete = rail_NotifyIconDelete;
+	update->MonitoredDesktop = rail_MonitoredDesktop;
+	update->NonMonitoredDesktop = rail_NonMonitoredDesktop;
 }
 
 rdpRail* rail_new(rdpSettings* settings)
