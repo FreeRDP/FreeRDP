@@ -38,21 +38,21 @@
 #define FONTLIST_FIRST			0x0001
 #define FONTLIST_LAST			0x0002
 
-boolean rdp_read_deactivate_all(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s);
 
-boolean rdp_read_server_synchronize_pdu(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s);
 boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp);
-boolean rdp_read_client_synchronize_pdu(STREAM* s);
+boolean rdp_recv_client_synchronize_pdu(STREAM* s);
 boolean rdp_send_client_synchronize_pdu(rdpRdp* rdp);
-boolean rdp_read_control_pdu(STREAM* s, uint16* action);
-boolean rdp_read_server_control_pdu(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_control_pdu(STREAM* s, uint16* action);
+boolean rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s);
 boolean rdp_send_server_control_cooperate_pdu(rdpRdp* rdp);
 boolean rdp_send_server_control_granted_pdu(rdpRdp* rdp);
 boolean rdp_send_client_control_pdu(rdpRdp* rdp, uint16 action);
 boolean rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
-boolean rdp_read_client_font_list_pdu(STREAM* s);
+boolean rdp_recv_client_font_list_pdu(STREAM* s);
 boolean rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags);
-boolean rdp_read_server_font_map_pdu(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s);
 boolean rdp_send_server_font_map_pdu(rdpRdp* rdp);
 
 boolean rdp_server_accept_client_control_pdu(rdpRdp* rdp, STREAM* s);

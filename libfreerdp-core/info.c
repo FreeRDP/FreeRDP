@@ -556,7 +556,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
  * @param s stream
  */
 
-boolean rdp_read_client_info(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
@@ -654,7 +654,7 @@ void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 	stream_seek(s, 570); /* pad */
 }
 
-boolean rdp_read_save_session_info(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 {
 	uint32 infoType;
 
