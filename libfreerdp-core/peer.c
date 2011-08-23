@@ -54,7 +54,7 @@ static boolean freerdp_peer_check_fds(freerdp_peer* client)
 	return True;
 }
 
-static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
+static boolean peer_recv_data_pdu(rdpPeer* peer, STREAM* s)
 {
 	uint8 type;
 	uint16 length;
@@ -66,7 +66,7 @@ static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if (!rdp_read_client_synchronize_pdu(s))
+			if (!rdp_recv_client_synchronize_pdu(s))
 				return False;
 			break;
 
@@ -97,7 +97,7 @@ static boolean peer_read_data_pdu(rdpPeer* peer, STREAM* s)
 	return True;
 }
 
-static boolean peer_read_tpkt_pdu(rdpPeer* peer, STREAM* s)
+static boolean peer_recv_tpkt_pdu(rdpPeer* peer, STREAM* s)
 {
 	uint16 length;
 	uint16 pduType;
@@ -122,7 +122,7 @@ static boolean peer_read_tpkt_pdu(rdpPeer* peer, STREAM* s)
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
-				if (!peer_read_data_pdu(peer, s))
+				if (!peer_recv_data_pdu(peer, s))
 					return False;
 				break;
 
@@ -135,18 +135,17 @@ static boolean peer_read_tpkt_pdu(rdpPeer* peer, STREAM* s)
 	return True;
 }
 
-static boolean peer_read_fastpath_pdu(rdpPeer* peer, STREAM* s)
+static boolean peer_recv_fastpath_pdu(rdpPeer* peer, STREAM* s)
 {
-	printf("FastPath Input PDU\n");
 	return True;
 }
 
-static boolean peer_read_pdu(rdpPeer* peer, STREAM* s)
+static boolean peer_recv_pdu(rdpPeer* peer, STREAM* s)
 {
 	if (tpkt_verify_header(s))
-		return peer_read_tpkt_pdu(peer, s);
+		return peer_recv_tpkt_pdu(peer, s);
 	else
-		return peer_read_fastpath_pdu(peer, s);
+		return peer_recv_fastpath_pdu(peer, s);
 }
 
 static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
@@ -191,7 +190,7 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!peer_read_pdu(peer, s))
+			if (!peer_recv_pdu(peer, s))
 				return -1;
 			break;
 

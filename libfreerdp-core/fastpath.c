@@ -67,6 +67,18 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	return length;
 }
 
+boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s)
+{
+	/* TODO: fipsInformation */
+
+	if ((fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED))
+	{
+		stream_seek(s, 8); /* dataSignature */
+	}
+
+	return True;
+}
+
 static int fastpath_recv_update_surfcmd_surface_bits(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
@@ -278,7 +290,7 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	stream_set_pos(s, next_pos);
 }
 
-void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
+boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 
@@ -290,6 +302,13 @@ void fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	}
 
 	IFCALL(update->EndPaint, update);
+
+	return True;
+}
+
+boolean fastpath_recv_input(rdpFastPath* fastpath, STREAM* s)
+{
+	return True;
 }
 
 STREAM* fastpath_pdu_init(rdpFastPath* fastpath)

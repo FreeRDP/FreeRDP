@@ -25,7 +25,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-void rdp_read_redirection_packet(rdpRdp* rdp, STREAM* s);
-void rdp_read_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
+boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
 
 #endif /* __REDIRECTION_H */

@@ -391,7 +391,7 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 {
-	if (!rdp_read_client_info(rdp, s))
+	if (!rdp_recv_client_info(rdp, s))
 		return False;
 
 	if (!license_send_valid_client_error_packet(rdp->license))
