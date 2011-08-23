@@ -52,7 +52,10 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 
 	stream_read_uint8(s, header);
 	if (fastpath != NULL)
+	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
+		fastpath->numberEvents = (header & 0x3C) >> 2;
+	}
 
 	stream_read_uint8(s, length); /* length1 */
 	/* If most significant bit is not set, length2 is not presented. */
@@ -306,8 +309,168 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	return True;
 }
 
-boolean fastpath_recv_input(rdpFastPath* fastpath, STREAM* s)
+static boolean fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, uint8* eventCode)
 {
+	uint8 eventHeader;
+
+	if (stream_get_left(s) < 1)
+		return False;
+
+	stream_read_uint8(s, eventHeader); /* eventHeader (1 byte) */
+
+	*eventFlags = (eventHeader & 0x1F);
+	*eventCode = (eventHeader >> 5);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+{
+	uint16 flags;
+	uint16 code;
+
+	if (stream_get_left(s) < 1)
+		return False;
+
+	stream_read_uint8(s, code); /* keyCode (1 byte) */
+
+	flags = 0;
+	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
+		flags |= KBD_FLAGS_RELEASE;
+	else
+		flags |= KBD_FLAGS_DOWN;
+
+	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED))
+		flags |= KBD_FLAGS_EXTENDED;
+
+	IFCALL(fastpath->rdp->input->KeyboardEvent, fastpath->rdp->input, flags, code);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+{
+	uint16 pointerFlags;
+	uint16 xPos;
+	uint16 yPos;
+
+	if (stream_get_left(s) < 6)
+		return False;
+
+	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, yPos); /* yPos (2 bytes) */
+
+	IFCALL(fastpath->rdp->input->MouseEvent, fastpath->rdp->input, pointerFlags, xPos, yPos);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+{
+	uint16 pointerFlags;
+	uint16 xPos;
+	uint16 yPos;
+
+	if (stream_get_left(s) < 6)
+		return False;
+
+	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, yPos); /* yPos (2 bytes) */
+
+	IFCALL(fastpath->rdp->input->ExtendedMouseEvent, fastpath->rdp->input, pointerFlags, xPos, yPos);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+{
+	IFCALL(fastpath->rdp->input->SynchronizeEvent, fastpath->rdp->input, eventFlags);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+{
+	uint16 unicodeCode;
+
+	if (stream_get_left(s) < 2)
+		return False;
+
+	stream_read_uint16(s, unicodeCode); /* unicodeCode (2 bytes) */
+
+	IFCALL(fastpath->rdp->input->UnicodeKeyboardEvent, fastpath->rdp->input, unicodeCode);
+
+	return True;
+}
+
+static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
+{
+	uint8 eventFlags;
+	uint8 eventCode;
+
+	if (!fastpath_read_input_event_header(s, &eventFlags, &eventCode))
+		return False;
+
+	switch (eventCode)
+	{
+		case FASTPATH_INPUT_EVENT_SCANCODE:
+			if (!fastpath_recv_input_event_scancode(fastpath, s, eventFlags))
+				return False;
+			break;
+
+		case FASTPATH_INPUT_EVENT_MOUSE:
+			if (!fastpath_recv_input_event_mouse(fastpath, s, eventFlags))
+				return False;
+			break;
+
+		case FASTPATH_INPUT_EVENT_MOUSEX:
+			if (!fastpath_recv_input_event_mousex(fastpath, s, eventFlags))
+				return False;
+			break;
+
+		case FASTPATH_INPUT_EVENT_SYNC:
+			if (!fastpath_recv_input_event_sync(fastpath, s, eventFlags))
+				return False;
+			break;
+
+		case FASTPATH_INPUT_EVENT_UNICODE:
+			if (!fastpath_recv_input_event_unicode(fastpath, s, eventFlags))
+				return False;
+			break;
+
+		default:
+			printf("Unknown eventCode %d\n", eventCode);
+			break;
+	}
+
+	return True;
+}
+
+boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
+{
+	uint8 i;
+
+	if (fastpath->numberEvents == 0)
+	{
+		/**
+		 * If numberEvents is not provided in fpInputHeader, it will be provided
+		 * as onee additional byte here.
+		 */
+
+		if (stream_get_left(s) < 1)
+			return False;
+
+		stream_read_uint8(s, fastpath->numberEvents); /* eventHeader (1 byte) */
+	}
+
+	for (i = 0; i < fastpath->numberEvents; i++)
+	{
+		if (!fastpath_recv_input_event(fastpath, s))
+			return False;
+	}
+
 	return True;
 }
 
@@ -320,7 +483,7 @@ STREAM* fastpath_pdu_init(rdpFastPath* fastpath)
 	return s;
 }
 
-void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
+boolean fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
 {
 	int length;
 
@@ -328,7 +491,7 @@ void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
 	if (length > 127)
 	{
 		printf("Maximum FastPath PDU length is 127\n");
-		return;
+		return False;
 	}
 
 	stream_set_pos(s, 0);
@@ -336,7 +499,23 @@ void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents)
 	stream_write_uint8(s, length);
 
 	stream_set_pos(s, length);
-	transport_write(fastpath->rdp->transport, s);
+	if (transport_write(fastpath->rdp->transport, s) < 0)
+		return False;
+
+	return True;
+}
+
+STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 eventCode)
+{
+	STREAM* s;
+	s = fastpath_pdu_init(fastpath);
+	stream_write_uint8(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
+	return s;
+}
+
+boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
+{
+	return fastpath_send_pdu(fastpath, s, 1);
 }
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)

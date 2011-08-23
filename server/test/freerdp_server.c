@@ -45,13 +45,16 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	}
 	printf("\n");
 
+	printf("Client requested desktop: %dx%dx%d\n",
+		client->settings->width, client->settings->height, client->settings->color_depth);
+
 	/* Return False here would stop the execution of the peer mainloop. */
 	return True;
 }
 
 void test_peer_synchronize_event(rdpInput* input, uint32 flags)
 {
-	printf("Client sent a synchronize event\n");
+	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
 void test_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)

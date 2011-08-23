@@ -137,7 +137,19 @@ static boolean peer_recv_tpkt_pdu(rdpPeer* peer, STREAM* s)
 
 static boolean peer_recv_fastpath_pdu(rdpPeer* peer, STREAM* s)
 {
-	return True;
+	uint16 length;
+
+	length = fastpath_read_header(peer->rdp->fastpath, s);
+	if (length == 0 || length > stream_get_size(s))
+	{
+		printf("incorrect FastPath PDU header length %d\n", length);
+		return False;
+	}
+
+	if (!fastpath_read_security_header(peer->rdp->fastpath, s))
+		return False;
+
+	return fastpath_recv_inputs(peer->rdp->fastpath, s);
 }
 
 static boolean peer_recv_pdu(rdpPeer* peer, STREAM* s)

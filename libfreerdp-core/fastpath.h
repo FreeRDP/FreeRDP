@@ -72,20 +72,41 @@ enum FASTPATH_OUTPUT_COMPRESSION
 	FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
 };
 
+/* FastPath Input Events */
+enum FASTPATH_INPUT_EVENT_CODE
+{
+	FASTPATH_INPUT_EVENT_SCANCODE = 0x0,
+	FASTPATH_INPUT_EVENT_MOUSE = 0x1,
+	FASTPATH_INPUT_EVENT_MOUSEX = 0x2,
+	FASTPATH_INPUT_EVENT_SYNC = 0x3,
+	FASTPATH_INPUT_EVENT_UNICODE = 0x4
+};
+
+/* FastPath Keyboard Event Flags */
+enum FASTPATH_INPUT_KBDFLAGS
+{
+	FASTPATH_INPUT_KBDFLAGS_RELEASE = 0x01,
+	FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
+};
+
 struct rdp_fastpath
 {
 	rdpRdp* rdp;
 	uint8 encryptionFlags;
+	uint8 numberEvents;
 	STREAM* updateData;
 };
 
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
-boolean fastpath_recv_input(rdpFastPath* fastpath, STREAM* s);
+boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
 
 STREAM* fastpath_pdu_init(rdpFastPath* fastpath);
-void fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents);
+boolean fastpath_send_pdu(rdpFastPath* fastpath, STREAM* s, uint8 numberEvents);
+
+STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 eventCode);
+boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
 
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);
