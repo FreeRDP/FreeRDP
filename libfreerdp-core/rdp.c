@@ -459,9 +459,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	if (!fastpath_read_security_header(rdp->fastpath, s))
 		return False;
 
-	fastpath_recv_updates(rdp->fastpath, s);
-
-	return True;
+	return fastpath_recv_updates(rdp->fastpath, s);
 }
 
 static boolean rdp_recv_pdu(rdpRdp* rdp, STREAM* s)

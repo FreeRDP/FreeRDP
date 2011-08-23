@@ -106,7 +106,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
-	if (!mcs_read_connect_response(rdp->mcs, s))
+	if (!mcs_recv_connect_response(rdp->mcs, s))
 		return False;
 
 	if (!mcs_send_erect_domain_request(rdp->mcs))
@@ -121,7 +121,7 @@ boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
 {
-	if (!mcs_read_attach_user_confirm(rdp->mcs, s))
+	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
 		return False;
 
 	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->user_id))
@@ -138,7 +138,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	uint16 channel_id;
 	boolean all_joined = True;
 
-	if (!mcs_read_channel_join_confirm(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_confirm(rdp->mcs, s, &channel_id))
 		return False;
 
 	if (!rdp->mcs->user_channel_joined)
@@ -198,7 +198,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 {
-	if (!license_read(rdp->license, s))
+	if (!license_recv(rdp->license, s))
 		return False;
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
@@ -219,7 +219,7 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 {
-	if (!rdp_read_demand_active(rdp, s))
+	if (!rdp_recv_demand_active(rdp, s))
 		return False;
 
 	if (!rdp_send_confirm_active(rdp))
@@ -315,7 +315,7 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 {
 	int i;
 
-	if (!mcs_read_connect_initial(rdp->mcs, s))
+	if (!mcs_recv_connect_initial(rdp->mcs, s))
 		return False;
 
 	printf("Accepted client: %s\n", rdp->settings->client_hostname);
@@ -336,7 +336,7 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
 {
-	if (!mcs_read_erect_domain_request(rdp->mcs, s))
+	if (!mcs_recv_erect_domain_request(rdp->mcs, s))
 		return False;
 
 	rdp->state = CONNECTION_STATE_MCS_ERECT_DOMAIN;
@@ -346,7 +346,7 @@ boolean rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
 {
-	if (!mcs_read_attach_user_request(rdp->mcs, s))
+	if (!mcs_recv_attach_user_request(rdp->mcs, s))
 		return False;
 
 	if (!mcs_send_attach_user_confirm(rdp->mcs))
@@ -363,7 +363,7 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	uint16 channel_id;
 	boolean all_joined = True;
 
-	if (!mcs_read_channel_join_request(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_request(rdp->mcs, s, &channel_id))
 		return False;
 
 	if (!mcs_send_channel_join_confirm(rdp->mcs, channel_id))
@@ -407,7 +407,7 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 {
-	if (!rdp_read_confirm_active(rdp, s))
+	if (!rdp_recv_confirm_active(rdp, s))
 		return False;
 
 	rdp->state = CONNECTION_STATE_ACTIVE;
