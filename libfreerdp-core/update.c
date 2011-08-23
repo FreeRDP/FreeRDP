@@ -216,6 +216,21 @@ void update_reset_state(rdpUpdate* update)
 	update->order_info.orderType = ORDER_TYPE_PATBLT;
 }
 
+static void update_begin_paint(rdpUpdate* update)
+{
+	update_reset_state(update);
+}
+
+static void update_end_paint(rdpUpdate* update)
+{
+}
+
+void update_register_server_callbacks(rdpUpdate* update)
+{
+	update->BeginPaint = update_begin_paint;
+	update->EndPaint = update_end_paint;
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;

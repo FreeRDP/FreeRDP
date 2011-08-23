@@ -242,6 +242,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	client->input = peer->rdp->input;
 	client->update = peer->rdp->update;
 
+	update_register_server_callbacks(client->update);
+
 	transport_attach(peer->rdp->transport, sockfd);
 
 	peer->rdp->transport->recv_callback = peer_recv_callback;

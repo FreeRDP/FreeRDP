@@ -43,4 +43,6 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update);
 void update_recv(rdpUpdate* update, STREAM* s);
 
+void update_register_server_callbacks(rdpUpdate* update);
+
 #endif /* __UPDATE_H */
