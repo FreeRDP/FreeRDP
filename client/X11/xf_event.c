@@ -83,6 +83,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 	}
 	else
 	{
+#if 0
 		xfWindow* xfw;
 		rdpWindow* window;
 
@@ -102,6 +103,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 
 			xfw = (xfWindow*) window->extra;
 		}
+#endif
 	}
 
 	return True;
