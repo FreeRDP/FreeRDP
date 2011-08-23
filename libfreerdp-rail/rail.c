@@ -82,6 +82,27 @@ static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInf
 	printf("rail_WindowCachedIcon\n");
 }
 
+static void rail_NotifyIconCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	printf("NotifyIconCreate\n");
+}
+
+static void rail_NotifyIconUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	printf("NotifyIconUpdate\n");
+}
+
+static void rail_NotifyIconDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+{
+	rdpRail* rail;
+	rail = (rdpRail*) update->rail;
+	printf("NotifyIconDelete\n");
+}
+
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {
 	update->WindowCreate = rail_WindowCreate;
@@ -89,6 +110,9 @@ void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 	update->WindowDelete = rail_WindowDelete;
 	update->WindowIcon = rail_WindowIcon;
 	update->WindowCachedIcon = rail_WindowCachedIcon;
+	update->NotifyIconCreate = rail_NotifyIconCreate;
+	update->NotifyIconUpdate = rail_NotifyIconUpdate;
+	update->NotifyIconDelete = rail_NotifyIconDelete;
 }
 
 rdpRail* rail_new(rdpSettings* settings)

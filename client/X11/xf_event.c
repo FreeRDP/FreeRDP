@@ -93,15 +93,14 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 			xfw = (xfWindow*) window->extra;
 
 			XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-					window->windowOffsetX, window->windowOffsetY,
-					window->windowOffsetX, window->windowOffsetY,
-					window->windowWidth, window->windowHeight);
+					xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
 
 			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-					window->windowOffsetX, window->windowOffsetY,
-					window->windowWidth, window->windowHeight, 0, 0);
+					xfw->left, xfw->top, xfw->width, xfw->height, 0, 0);
 
 			XFlush(xfi->display);
+
+			xfw = (xfWindow*) window->extra;
 		}
 	}
 
@@ -178,7 +177,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 
 		case 5:
 			wheel = True;
-			flags = PTR_FLAGS_WHEEL | 0x0088;
+			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 			break;
 
 		default:
@@ -198,13 +197,15 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			if (app)
 			{
+				xfWindow* xfw;
 				rdpWindow* window;
 				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
 
 				if (window != NULL)
 				{
-					x += window->windowOffsetX;
-					y += window->windowOffsetY;
+					xfw = (xfWindow*) window->extra;
+					x += xfw->left;
+					y += xfw->top;
 				}
 			}
 
@@ -256,13 +257,15 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
+			xfWindow* xfw;
 			rdpWindow* window;
 			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
 
 			if (window != NULL)
 			{
-				x += window->windowOffsetX;
-				y += window->windowOffsetY;
+				xfw = (xfWindow*) window->extra;
+				x += xfw->left;
+				y += xfw->top;
 			}
 		}
 
@@ -406,13 +409,10 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 		xfw = (xfWindow*) window->extra;
 
 		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowWidth, window->windowHeight);
+				xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
 
 		XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-				window->windowOffsetX, window->windowOffsetY,
-				window->windowWidth, window->windowHeight, 0, 0);
+				xfw->left, xfw->top, xfw->width, xfw->height, 0, 0);
 
 		XFlush(xfi->display);
 	}

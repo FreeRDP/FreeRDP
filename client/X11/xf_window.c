@@ -206,6 +206,20 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 	return window;
 }
 
+void xf_fix_window_coordinates(int* x, int* y, int* width, int* height)
+{
+	if (*x < 0)
+	{
+		*width += *x;
+		*x = 0;
+	}
+	if (*y < 0)
+	{
+		*height += *y;
+		*y = 0;
+	}
+}
+
 char rail_window_class[] = "RAIL:00000000";
 
 xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id)
@@ -214,6 +228,15 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 
 	window = (xfWindow*) xzalloc(sizeof(xfWindow));
 
+	if ((width * height) < 1)
+		return NULL;
+
+	xf_fix_window_coordinates(&x, &y, &width, &height);
+
+	window->left = x;
+	window->top = y;
+	window->right = x + width - 1;
+	window->bottom = y + height - 1;
 	window->width = width;
 	window->height = height;
 
@@ -285,6 +308,8 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if ((width * height) < 1)
 		return;
 
+	xf_fix_window_coordinates(&x, &y, &width, &height);
+
 	size_hints = XAllocSizeHints();
 
 	if (size_hints)
@@ -298,7 +323,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 	if (window->width == width && window->height == height)
 		XMoveWindow(xfi->display, window->handle, x, y);
-	else if (window->x == x && window->y == y)
+	else if (window->left == x && window->top == y)
 		XResizeWindow(xfi->display, window->handle, width, height);
 	else
 		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
@@ -308,8 +333,10 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	XFreePixmap(xfi->display, window->surface);
 	window->surface = surface;
 
-	window->x = x;
-	window->y = y;
+	window->left = x;
+	window->top = y;
+	window->right = x + width - 1;
+	window->bottom = y + height - 1;
 	window->width = width;
 	window->height = height;
 }

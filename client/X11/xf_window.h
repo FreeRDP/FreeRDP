@@ -31,8 +31,10 @@ typedef struct xf_window xfWindow;
 struct xf_window
 {
 	GC gc;
-	int x;
-	int y;
+	int left;
+	int top;
+	int right;
+	int bottom;
 	int width;
 	int height;
 	Window handle;

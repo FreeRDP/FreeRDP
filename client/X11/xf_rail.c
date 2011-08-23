@@ -41,10 +41,10 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
-		wleft = window->windowOffsetX;
-		wtop = window->windowOffsetY;
-		wright = window->windowOffsetX + window->windowWidth - 1;
-		wbottom = window->windowOffsetY + window->windowHeight - 1;
+		wleft = xfw->left;
+		wtop = xfw->top;
+		wright = xfw->right;
+		wbottom = xfw->bottom;
 
 		intersect = ((iright > wleft) && (ileft < wright) &&
 				(ibottom > wtop) && (itop < wbottom)) ? True : False;
@@ -63,8 +63,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32
 
 			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
 					uleft, utop, uwidth, uheight,
-					uleft - window->windowOffsetX,
-					utop - window->windowOffsetY);
+					uleft - xfw->left, utop - xfw->top);
 		}
 	}
 
@@ -79,8 +78,7 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra,
-			window->windowOffsetX + xfi->workArea.x,
-			window->windowOffsetY + xfi->workArea.y,
+			window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight,
 			window->windowId);
 
@@ -99,8 +97,7 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 	xfw = (xfWindow*) window->extra;
 
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
-			window->windowOffsetX + xfi->workArea.x,
-			window->windowOffsetY + xfi->workArea.y,
+			window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight);
 }
 
