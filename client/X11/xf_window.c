@@ -19,7 +19,10 @@
 
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+
+#ifdef WITH_XEXT
 #include <X11/extensions/shape.h>
+#endif
 
 #include "xf_window.h"
 
@@ -423,7 +426,10 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
+#ifdef WITH_XEXT
 	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+#endif
+
 	xfree(xrects);
 }
 

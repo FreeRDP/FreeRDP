@@ -38,6 +38,13 @@ if(XINERAMA_FOUND)
 	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
 endif()
 
+find_package(Xext)
+if(Xext_FOUND)
+	add_definitions(-DWITH_XEXT)
+	include_directories(${Xext_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)
