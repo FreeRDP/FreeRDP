@@ -54,6 +54,7 @@ void xf_begin_paint(rdpUpdate* update)
 	GDI* gdi;
 	gdi = GET_GDI(update);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
 void xf_end_paint(rdpUpdate* update)
@@ -66,22 +67,41 @@ void xf_end_paint(rdpUpdate* update)
 	gdi = GET_GDI(update);
 	xfi = GET_XFI(update);
 
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
-
-	x = gdi->primary->hdc->hwnd->invalid->x;
-	y = gdi->primary->hdc->hwnd->invalid->y;
-	w = gdi->primary->hdc->hwnd->invalid->w;
-	h = gdi->primary->hdc->hwnd->invalid->h;
-
 	if (xfi->remote_app != True)
 	{
-		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		int i;
+		int ninvalid;
+		HGDI_RGN* cinvalid;
+
+		if (gdi->primary->hdc->hwnd->ninvalid < 1)
+			return;
+
+		ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+		cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+		for (i = 0; i < ninvalid; i++)
+		{
+			x = cinvalid[i]->x;
+			y = cinvalid[i]->y;
+			w = cinvalid[i]->w;
+			h = cinvalid[i]->h;
+
+			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		}
+
 		XFlush(xfi->display);
 	}
 	else
 	{
+		if (gdi->primary->hdc->hwnd->invalid->null)
+			return;
+
+		x = gdi->primary->hdc->hwnd->invalid->x;
+		y = gdi->primary->hdc->hwnd->invalid->y;
+		w = gdi->primary->hdc->hwnd->invalid->w;
+		h = gdi->primary->hdc->hwnd->invalid->h;
+
 		xf_rail_paint(xfi, update->rail, x, y, x + w - 1, y + h - 1);
 	}
 }

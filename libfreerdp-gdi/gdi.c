@@ -949,6 +949,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;
 	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
+	gdi->hdc->complex = 1;
 
 	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
 	gdi->primary_buffer = gdi->primary->bitmap->data;

@@ -378,6 +378,28 @@ inline int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	if (hdc->hwnd == NULL)
 		return 0;
 
+	if (hdc->complex)
+	{
+		HGDI_RGN* cinvalid;
+
+		cinvalid = hdc->hwnd->cinvalid;
+
+		if (hdc->hwnd->ninvalid < 1)
+		{
+			hdc->hwnd->ninvalid = 0;
+			cinvalid = (HGDI_RGN*) malloc(sizeof(HGDI_RGN));
+		}
+		else
+		{
+			cinvalid = (HGDI_RGN*) realloc(cinvalid, sizeof(HGDI_RGN) * (hdc->hwnd->ninvalid + 1));
+		}
+
+		invalid = gdi_CreateRectRgn(x, y, x + w - 1, y + h - 1);
+		cinvalid[hdc->hwnd->ninvalid] = invalid;
+		hdc->hwnd->cinvalid = cinvalid;
+		hdc->hwnd->ninvalid++;
+	}
+
 	if (hdc->hwnd->invalid == NULL)
 		return 0;
 
