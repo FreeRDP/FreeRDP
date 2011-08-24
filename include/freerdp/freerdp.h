@@ -44,6 +44,7 @@ typedef boolean (*pcGetFileDescriptor)(freerdp* instance, void** rfds, int* rcou
 typedef boolean (*pcCheckFileDescriptor)(freerdp* instance);
 typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
 typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
+typedef void (*pcDisconnect)(freerdp* instance);
 
 struct rdp_freerdp
 {
@@ -64,6 +65,7 @@ struct rdp_freerdp
 	pcCheckFileDescriptor CheckFileDescriptor;
 	pcSendChannelData SendChannelData;
 	pcReceiveChannelData ReceiveChannelData;
+	pcDisconnect Disconnect;
 };
 
 FREERDP_API freerdp* freerdp_new();
