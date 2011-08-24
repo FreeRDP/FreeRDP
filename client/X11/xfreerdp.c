@@ -52,7 +52,6 @@ struct thread_data
 void xf_begin_paint(rdpUpdate* update)
 {
 	GDI* gdi;
-
 	gdi = GET_GDI(update);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
@@ -114,121 +113,6 @@ boolean xf_check_fds(freerdp* instance, fd_set* set)
 	return True;
 }
 
-boolean xf_pre_connect(freerdp* instance)
-{
-	xfInfo* xfi;
-	rdpSettings* settings;
-
-#ifdef WITH_XINERAMA
-	int n, ignored, ignored2;
-	XineramaScreenInfo* screen_info = NULL;
-#endif
-
-	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
-	SET_XFI(instance, xfi);
-
-	xfi->instance = instance;
-
-	settings = instance->settings;
-
-	settings->order_support[NEG_DSTBLT_INDEX] = True;
-	settings->order_support[NEG_PATBLT_INDEX] = True;
-	settings->order_support[NEG_SCRBLT_INDEX] = True;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = False;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = False;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = False;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = False;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
-	settings->order_support[NEG_LINETO_INDEX] = True;
-	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = True;
-	settings->order_support[NEG_MEM3BLT_INDEX] = False;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = False;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = False;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
-
-	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
-
-	xfi->display = XOpenDisplay(NULL);
-
-	if (xfi->display == NULL)
-	{
-		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
-		return False;
-	}
-
-	xf_kbd_init(xfi);
-
-	xfi->xfds = ConnectionNumber(xfi->display);
-	xfi->screen_number = DefaultScreen(xfi->display);
-	xfi->screen = ScreenOfDisplay(xfi->display, xfi->screen_number);
-	xfi->depth = DefaultDepthOfScreen(xfi->screen);
-	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
-
-	xfi->mouse_motion = True;
-	xfi->decoration = settings->decorations;
-	xfi->remote_app = settings->remote_app;
-	xfi->fullscreen = settings->fullscreen;
-
-	window_GetWorkArea(xfi);
-
-	if (settings->workarea)
-	{
-		settings->width = xfi->workArea.width;
-		settings->height = xfi->workArea.height;
-	}
-
-	if (settings->fullscreen != True && settings->workarea != True)
-		return True;
-
-#ifdef WITH_XINERAMA
-	if (XineramaQueryExtension(xfi->display, &ignored, &ignored2))
-	{
-		if (XineramaIsActive(xfi->display))
-		{
-			screen_info = XineramaQueryScreens(xfi->display, &settings->num_monitors);
-
-			if (settings->num_monitors > 16)
-				settings->num_monitors = 0;
-
-			if (settings->num_monitors)
-			{
-				for (n = 0; n < settings->num_monitors; n++)
-				{
-					if (settings->workarea)
-					{
-						settings->monitors[n].x = screen_info[n].x_org;
-						settings->monitors[n].y = screen_info[n].y_org;
-						settings->monitors[n].width = screen_info[n].width;
-						settings->monitors[n].height = xfi->workArea.height;
-					}
-					else
-					{
-						settings->monitors[n].x = screen_info[n].x_org;
-						settings->monitors[n].y = screen_info[n].y_org;
-						settings->monitors[n].width = screen_info[n].width;
-						settings->monitors[n].height = screen_info[n].height;
-					}
-
-					settings->monitors[n].is_primary = screen_info[n].x_org == 0 && screen_info[n].y_org == 0;
-				}
-			}
-
-			XFree(screen_info);
-		}
-	}
-#endif
-
-	return True;
-}
-
 void xf_toggle_fullscreen(xfInfo* xfi)
 {
 	Pixmap contents = 0;
@@ -236,9 +120,7 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	contents = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
-	//xf_destroy_window(xfi);
 	xfi->fullscreen = (xfi->fullscreen) ? False : True;
-	//xf_post_connect(xfi);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
@@ -308,6 +190,135 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	return True;
 }
 
+boolean xf_pre_connect(freerdp* instance)
+{
+	xfInfo* xfi;
+	rdpSettings* settings;
+
+#ifdef WITH_XINERAMA
+	int n, ignored, ignored2;
+	XineramaScreenInfo* screen_info = NULL;
+#endif
+
+	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
+	SET_XFI(instance, xfi);
+
+	xfi->instance = instance;
+
+	settings = instance->settings;
+
+	settings->order_support[NEG_DSTBLT_INDEX] = True;
+	settings->order_support[NEG_PATBLT_INDEX] = True;
+	settings->order_support[NEG_SCRBLT_INDEX] = True;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = False;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = False;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = False;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = False;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
+	settings->order_support[NEG_LINETO_INDEX] = True;
+	settings->order_support[NEG_POLYLINE_INDEX] = True;
+	settings->order_support[NEG_MEMBLT_INDEX] = True;
+	settings->order_support[NEG_MEM3BLT_INDEX] = False;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = False;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = False;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
+
+	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+
+	xfi->display = XOpenDisplay(NULL);
+
+	if (xfi->display == NULL)
+	{
+		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		return False;
+	}
+
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
+	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", False);
+	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", False);
+	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", False);
+	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", False);
+
+	xf_kbd_init(xfi);
+
+	xfi->xfds = ConnectionNumber(xfi->display);
+	xfi->screen_number = DefaultScreen(xfi->display);
+	xfi->screen = ScreenOfDisplay(xfi->display, xfi->screen_number);
+	xfi->depth = DefaultDepthOfScreen(xfi->screen);
+	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
+
+	xfi->mouse_motion = True;
+	xfi->decoration = settings->decorations;
+	xfi->remote_app = settings->remote_app;
+	xfi->fullscreen = settings->fullscreen;
+
+	xf_GetWorkArea(xfi);
+
+	if (settings->workarea)
+	{
+		settings->width = xfi->workArea.width;
+		settings->height = xfi->workArea.height;
+	}
+
+	if (settings->fullscreen != True && settings->workarea != True)
+		return True;
+
+#ifdef WITH_XINERAMA
+	if (XineramaQueryExtension(xfi->display, &ignored, &ignored2))
+	{
+		if (XineramaIsActive(xfi->display))
+		{
+			screen_info = XineramaQueryScreens(xfi->display, &settings->num_monitors);
+
+			if (settings->num_monitors > 16)
+				settings->num_monitors = 0;
+
+			settings->width = 0;
+			settings->height = 0;
+
+			if (settings->num_monitors)
+			{
+				for (n = 0; n < settings->num_monitors; n++)
+				{
+					if (settings->workarea)
+					{
+						settings->monitors[n].x = screen_info[n].x_org;
+						settings->monitors[n].y = screen_info[n].y_org;
+						settings->monitors[n].width = screen_info[n].width;
+						settings->monitors[n].height = xfi->workArea.height;
+						settings->width += settings->monitors[n].width;
+						settings->height = settings->monitors[n].height;
+					}
+					else
+					{
+						settings->monitors[n].x = screen_info[n].x_org;
+						settings->monitors[n].y = screen_info[n].y_org;
+						settings->monitors[n].width = screen_info[n].width;
+						settings->monitors[n].height = screen_info[n].height;
+						settings->width += settings->monitors[n].width;
+						settings->height = settings->monitors[n].height;
+					}
+
+					settings->monitors[n].is_primary = screen_info[n].x_org == 0 && screen_info[n].y_org == 0;
+				}
+			}
+
+			XFree(screen_info);
+		}
+	}
+#endif
+
+	return True;
+}
+
 boolean xf_post_connect(freerdp* instance)
 {
 	GDI* gdi;
@@ -340,12 +351,12 @@ boolean xf_post_connect(freerdp* instance)
 
 	if (xfi->remote_app != True)
 	{
-		xfi->window = desktop_create(xfi, "xfreerdp");
+		xfi->window = xf_CreateDesktopWindow(xfi, "xfreerdp", xfi->width, xfi->height);
 
-		window_show_decorations(xfi, xfi->window, xfi->decoration);
+		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
 
 		if (xfi->fullscreen)
-			desktop_fullscreen(xfi, xfi->window, xfi->fullscreen);
+			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
 
 		/* wait for VisibilityNotify */
 		do

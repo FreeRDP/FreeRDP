@@ -41,29 +41,51 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
-void desktop_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
+void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, long d1, long d2, long d3)
+{
+	XEvent xevent;
+
+	xevent.xclient.type = ClientMessage;
+	xevent.xclient.message_type = atom;
+	xevent.xclient.window = window->handle;
+	xevent.xclient.format = 32;
+	xevent.xclient.data.l[0] = CurrentTime;
+	xevent.xclient.data.l[1] = msg;
+	xevent.xclient.data.l[2] = d1;
+	xevent.xclient.data.l[3] = d2;
+	xevent.xclient.data.l[4] = d3;
+
+	XSendEvent(xfi->display, window->handle, False, NoEventMask, &xevent);
+	XSync(xfi->display, False);
+}
+
+void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 {
 	if (fullscreen)
 	{
 		if (window->decorations)
-			window_show_decorations(xfi, window, False);
+			xf_SetWindowDecorations(xfi, window, False);
 
-		XSetInputFocus(xfi->display, window->handle, RevertToParent, CurrentTime);
+		printf("width:%d height:%d\n", window->width, window->height);
+
+                XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
+                XMapRaised(xfi->display, window->handle);
+                //XGrabPointer(xfi->display, window->handle, True, 0, GrabModeAsync, GrabModeAsync, window->handle, 0L, CurrentTime);
+                //XGrabKeyboard(xfi->display, window->handle, False, GrabModeAsync, GrabModeAsync, CurrentTime);
+
+		//XSetInputFocus(xfi->display, window->handle, RevertToParent, CurrentTime);
 		window->fullscreen = True;
 	}
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
 
-boolean window_GetProperty(xfInfo* xfi, Window window, char* name, int length,
+boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
 		unsigned long* nitems, unsigned long* bytes, uint8** prop)
 {
 	int status;
-	Atom property;
 	Atom actual_type;
 	int actual_format;
-
-	property = XInternAtom(xfi->display, name, True);
 
 	if (property == None)
 		return False;
@@ -78,15 +100,15 @@ boolean window_GetProperty(xfInfo* xfi, Window window, char* name, int length,
 	return True;
 }
 
-boolean window_GetCurrentDesktop(xfInfo* xfi)
+boolean xf_GetCurrentDesktop(xfInfo* xfi)
 {
 	boolean status;
 	unsigned long nitems;
 	unsigned long bytes;
 	unsigned char* prop;
 
-	status = window_GetProperty(xfi, DefaultRootWindow(xfi->display),
-			"_NET_CURRENT_DESKTOP", 1, &nitems, &bytes, &prop);
+	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
+			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
 	if (status != True)
 		return False;
@@ -97,7 +119,7 @@ boolean window_GetCurrentDesktop(xfInfo* xfi)
 	return True;
 }
 
-boolean window_GetWorkArea(xfInfo* xfi)
+boolean xf_GetWorkArea(xfInfo* xfi)
 {
 	long* plong;
 	boolean status;
@@ -105,13 +127,13 @@ boolean window_GetWorkArea(xfInfo* xfi)
 	unsigned long bytes;
 	unsigned char* prop;
 
-	status = window_GetProperty(xfi, DefaultRootWindow(xfi->display),
-			"_NET_WORKAREA", 32 * 4, &nitems, &bytes, &prop);
+	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
+			xfi->_NET_WORKAREA, 32 * 4, &nitems, &bytes, &prop);
 
 	if (status != True)
 		return False;
 
-	window_GetCurrentDesktop(xfi);
+	xf_GetCurrentDesktop(xfi);
 
 	plong = (long*) prop;
 
@@ -124,34 +146,20 @@ boolean window_GetWorkArea(xfInfo* xfi)
 	return True;
 }
 
-void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show)
+void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 {
-	Atom atom;
 	PropMotifWmHints hints;
 
-	hints.decorations = 0;
+	hints.decorations = show;
 	hints.flags = MWM_HINTS_DECORATIONS;
 
-	atom = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
-
-	if (!atom)
-	{
-		printf("window_show_decorations: failed to obtain atom _MOTIF_WM_HINTS\n");
-		return;
-	}
-	else
-	{
-		if (show != True)
-		{
-			XChangeProperty(xfi->display, window->handle, atom, atom, 32,
-				PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
-		}
-	}
+	XChangeProperty(xfi->display, window->handle, xfi->_MOTIF_WM_HINTS, xfi->_MOTIF_WM_HINTS, 32,
+		PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
 
 	window->decorations = show;
 }
 
-xfWindow* desktop_create(xfInfo* xfi, char* name)
+xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 {
 	xfWindow* window;
 
@@ -163,6 +171,8 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 		XSizeHints* size_hints;
 		XClassHint* class_hints;
 
+		window->width = width;
+		window->height = height;
 		window->decorations = True;
 		window->fullscreen = True;
 
@@ -206,7 +216,7 @@ xfWindow* desktop_create(xfInfo* xfi, char* name)
 	return window;
 }
 
-void xf_fix_window_coordinates(int* x, int* y, int* width, int* height)
+void xf_FixWindowCoordinates(int* x, int* y, int* width, int* height)
 {
 	if (*x < 0)
 	{
@@ -231,7 +241,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 	if ((width * height) < 1)
 		return NULL;
 
-	xf_fix_window_coordinates(&x, &y, &width, &height);
+	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
 	window->left = x;
 	window->top = y;
@@ -255,7 +265,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 
-		window_show_decorations(xfi, window, window->decorations);
+		xf_SetWindowDecorations(xfi, window, window->decorations);
 
 		class_hints = XAllocClassHint();
 
@@ -308,7 +318,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if ((width * height) < 1)
 		return;
 
-	xf_fix_window_coordinates(&x, &y, &width, &height);
+	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
 	size_hints = XAllocSizeHints();
 
@@ -367,7 +377,6 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 {
-	Atom atom;
 	int x, y;
 	int pixels;
 	int propsize;
@@ -395,20 +404,10 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 		}
 	}
 
-	atom = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
+		PropModeReplace, (uint8*) propdata, propsize);
 
-	if (!atom)
-	{
-		printf("xf_SetWindowIcon: failed to obtain atom _NET_WM_ICON\n");
-		return;
-	}
-	else
-	{
-		XChangeProperty(xfi->display, window->handle, atom, XA_CARDINAL, 32,
-			PropModeReplace, (uint8*) propdata, propsize);
-
-		XFlush(xfi->display);
-	}
+	XFlush(xfi->display);
 }
 
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)

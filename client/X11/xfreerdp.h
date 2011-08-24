@@ -81,6 +81,13 @@ struct xf_info
 	boolean pressed_keys[256];
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;
+
+	Atom _NET_WM_ICON;
+	Atom _MOTIF_WM_HINTS;
+	Atom _NET_CURRENT_DESKTOP;
+	Atom _NET_WORKAREA;
+	Atom _NET_WM_STATE;
+	Atom _NET_WM_STATE_FULLSCREEN;
 };
 
 void xf_toggle_fullscreen(xfInfo* xfi);

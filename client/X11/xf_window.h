@@ -43,13 +43,15 @@ struct xf_window
 	boolean decorations;
 };
 
-boolean window_GetCurrentDesktop(xfInfo* xfi);
-boolean window_GetWorkArea(xfInfo* xfi);
+void xf_ewmhints_init(xfInfo* xfi);
 
-void desktop_fullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
-void window_show_decorations(xfInfo* xfi, xfWindow* window, boolean show);
+boolean xf_GetCurrentDesktop(xfInfo* xfi);
+boolean xf_GetWorkArea(xfInfo* xfi);
 
-xfWindow* desktop_create(xfInfo* xfi, char* name);
+void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
+void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show);
+
+xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height);
 
 xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
