@@ -92,6 +92,7 @@ rdpSettings* settings_new()
 
 		settings->color_pointer = True;
 		settings->large_pointer = True;
+		settings->pointer_cache_size = 32;
 
 		settings->draw_gdi_plus = False;
 

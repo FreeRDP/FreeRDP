@@ -19,6 +19,7 @@
 
 set(FREERDP_CACHE_SRCS
 	brush.c
+	pointer.c
 	bitmap_v2.c
 	offscreen.c
 	color_table.c

@@ -255,8 +255,9 @@ struct rdp_settings
 	uint8 received_caps[32];
 	uint8 order_support[32];
 
-	boolean color_pointer;
 	boolean sound_beeps;
+	boolean color_pointer;
+	uint16 pointer_cache_size;
 
 	boolean fastpath_input;
 	boolean fastpath_output;

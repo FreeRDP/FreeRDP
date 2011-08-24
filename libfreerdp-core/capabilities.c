@@ -488,8 +488,8 @@ void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings)
 	colorPointerFlag = (settings->color_pointer) ? True : False;
 
 	stream_write_uint16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
-	stream_write_uint16(s, 20); /* colorPointerCacheSize (2 bytes) */
-	stream_write_uint16(s, 20); /* pointerCacheSize (2 bytes) */
+	stream_write_uint16(s, settings->pointer_cache_size); /* colorPointerCacheSize (2 bytes) */
+	stream_write_uint16(s, settings->pointer_cache_size); /* pointerCacheSize (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_POINTER);
 }
