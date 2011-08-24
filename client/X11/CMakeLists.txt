@@ -31,26 +31,28 @@ add_executable(xfreerdp
 	xfreerdp.c
 	xfreerdp.h)
 	
-find_package(Xinerama)
+find_optional_package(Xinerama)
 if(XINERAMA_FOUND)
 	add_definitions(-DWITH_XINERAMA)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
 endif()
 
-find_package(Xext)
+find_optional_package(Xext)
 if(Xext_FOUND)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${Xext_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
 endif()
 
-find_package(Xcursor)
+find_optional_package(Xcursor)
 if(Xcursor_FOUND)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${Xcursor_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
 endif()
+
+INSTALL_PROGRAMS(/bin FILES xfreerdp)
 
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
