@@ -1634,11 +1634,13 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return False;
+
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 		return False;
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
 		return False;
+
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 		return False;
 

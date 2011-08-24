@@ -230,6 +230,7 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the server-to-
 	 * client PDUs; they may be sent as a single batch, provided that sequencing is maintained.
 	 */
+
 	if (!rdp_send_client_synchronize_pdu(rdp))
 		return False;
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE))

@@ -263,7 +263,7 @@ void license_generate_keys(rdpLicense* license)
 	freerdp_hexdump(license->master_secret, MASTER_SECRET_LENGTH);
 
 	printf("SessionKeyBlob:\n");
-	freerdp_hexdump(license->session_key_blob, SESSION_KEY_rdpBlob_LENGTH);
+	freerdp_hexdump(license->session_key_blob, SESSION_KEY_BLOB_LENGTH);
 
 	printf("MacSaltKey:\n");
 	freerdp_hexdump(license->mac_salt_key, MAC_SALT_KEY_LENGTH);
