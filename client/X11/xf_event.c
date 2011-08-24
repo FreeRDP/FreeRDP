@@ -134,6 +134,23 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 	}
+	else
+	{
+		xfWindow* xfw;
+		rdpWindow* window;
+		int x = event->xmotion.x;
+		int y = event->xmotion.y;
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*)event->xmotion.window);
+
+		if (window != NULL)
+		{
+			xfw = (xfWindow*) window->extra;
+			x += xfw->left;
+			y += xfw->top;
+
+			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+		}
+	}
 
 	return True;
 }
