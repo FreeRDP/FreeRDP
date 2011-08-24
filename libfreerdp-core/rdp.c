@@ -334,6 +334,7 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_PLAY_SOUND:
+			update_recv_play_sound(rdp->update, s);
 			break;
 
 		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:

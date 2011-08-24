@@ -121,6 +121,15 @@ struct _POINTER_CACHED_UPDATE
 };
 typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
 
+/* Play Sound (System Beep) Updates */
+
+struct _PLAY_SOUND_UPDATE
+{
+	uint32 duration;
+	uint32 frequency;
+};
+typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
+
 /* Orders Updates */
 
 /* Primary Drawing Orders */
@@ -988,7 +997,7 @@ typedef void (*pcSetBounds)(rdpUpdate* update, BOUNDS* bounds);
 typedef void (*pcSynchronize)(rdpUpdate* update);
 typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
-
+typedef void (*pcPlaySound)(rdpUpdate* update, PLAY_SOUND_UPDATE* play_sound);
 typedef void (*pcPointerPosition)(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position);
 typedef void (*pcPointerSystem)(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system);
 typedef void (*pcPointerColor)(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color);
@@ -1066,7 +1075,7 @@ struct rdp_update
 	pcSynchronize Synchronize;
 	pcBitmap Bitmap;
 	pcPalette Palette;
-
+	pcPlaySound PlaySound;
 	pcPointerPosition PointerPosition;
 	pcPointerSystem PointerSystem;
 	pcPointerColor PointerColor;
@@ -1133,7 +1142,7 @@ struct rdp_update
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
-
+	PLAY_SOUND_UPDATE play_sound;
 	POINTER_POSITION_UPDATE pointer_position;
 	POINTER_SYSTEM_UPDATE pointer_system;
 	POINTER_COLOR_UPDATE pointer_color;

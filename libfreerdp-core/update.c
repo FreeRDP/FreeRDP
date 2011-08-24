@@ -156,6 +156,18 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 	 */
 }
 
+void update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
+{
+	stream_read_uint32(s, play_sound->duration); /* duration (4 bytes) */
+	stream_read_uint32(s, play_sound->frequency); /* frequency (4 bytes) */
+}
+
+void update_recv_play_sound(rdpUpdate* update, STREAM* s)
+{
+	update_read_play_sound(s, &update->play_sound);
+	IFCALL(update->PlaySound, update, &update->play_sound);
+}
+
 void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
 {
 	stream_read_uint16(s, pointer_position->xPos); /* xPos (2 bytes) */
