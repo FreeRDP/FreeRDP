@@ -344,6 +344,7 @@ int dfreerdp_run(freerdp* instance)
 	freerdp_chanman_free(chanman);
 	df_free(dfi);
 	gdi_free(instance);
+	instance->Disconnect(instance);
 	freerdp_free(instance);
 
 	return 0;
