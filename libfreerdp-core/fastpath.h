@@ -60,13 +60,6 @@ enum FASTPATH_FRAGMENT
 	FASTPATH_FRAGMENT_NEXT = 0x3
 };
 
-enum SURFCMD_CMDTYPE
-{
-	CMDTYPE_SET_SURFACE_BITS = 0x0001,
-	CMDTYPE_FRAME_MARKER = 0x0004,
-	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
-};
-
 enum FASTPATH_OUTPUT_COMPRESSION
 {
 	FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
@@ -108,7 +101,8 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
 STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath);
 boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s);
 
-boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd);
+boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId);
+boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd);
 
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);

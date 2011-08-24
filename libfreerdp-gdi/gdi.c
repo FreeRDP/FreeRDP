@@ -808,7 +808,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 					message->rects[i].width, message->rects[i].height);
 			}
 		}
-		else /* RDSH */
+		else if (message->num_rects == 1) /* RDSH */
 		{
 			gdi_SetClipRgn(gdi->primary->hdc,
 				surface_bits_command->destLeft + message->rects[0].x,
