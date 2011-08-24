@@ -71,6 +71,9 @@ static const uint8 rgb_scanline_data[] =
 	0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF
 };
 
+#define WIDTH 64
+#define HEIGHT 48
+
 void test_peer_init_desktop(freerdp_peer* client)
 {
 	rdpUpdate* update = client->update;
@@ -79,34 +82,37 @@ void test_peer_init_desktop(freerdp_peer* client)
 	uint8* rgb_data;
 	STREAM* s;
 	int i;
-	RFX_RECT rect = {0, 0, 100, 80};
+	RFX_RECT rect = {0, 0, WIDTH, HEIGHT};
 
-	rgb_data = (uint8*) xmalloc(100 * 80 * 3);
-	for (i = 0; i < 80; i++)
-		memcpy(rgb_data + i * 100 * 3, rgb_scanline_data, 100 * 3);
+	if (!client->settings->rfx_codec)
+		return;
+
+	rgb_data = (uint8*) xmalloc(128 * 128 * 3);
+	for (i = 0; i < 128; i++)
+		memcpy(rgb_data + i * 128 * 3, rgb_scanline_data, 128 * 3);
 
 	s = stream_new(65536);
 	stream_clear(s);
 
 	context = rfx_context_new();
 	context->mode = RLGR3;
-	context->width = 800;
-	context->height = 600;
+	context->width = client->settings->width;
+	context->height = client->settings->height;
 	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
 
 	/* In Video mode, the RemoteFX header should only be sent once */
 	rfx_compose_message_header(context, s);
 
 	rfx_compose_message_data(context, s,
-		&rect, 1, rgb_data, 100, 80, 100 * 3);
+		&rect, 1, rgb_data, WIDTH, HEIGHT, 128 * 3);
 	cmd->destLeft = 0;
 	cmd->destTop = 0;
-	cmd->destRight = 100;
-	cmd->destBottom = 80;
+	cmd->destRight = WIDTH;
+	cmd->destBottom = HEIGHT;
 	cmd->bpp = 32;
-	cmd->codecID = CODEC_ID_REMOTEFX;
-	cmd->width = 100;
-	cmd->height = 80;
+	cmd->codecID = client->settings->rfx_codec_id;
+	cmd->width = WIDTH;
+	cmd->height = HEIGHT;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update, cmd);
@@ -188,6 +194,7 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
 	client->settings->nla_security = False;
+	client->settings->rfx_codec = True;
 
 	client->PostConnect = test_peer_post_connect;
 
