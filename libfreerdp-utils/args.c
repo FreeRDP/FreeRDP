@@ -203,7 +203,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
-			settings->rfx_decode = True;
+			settings->rfx_codec = True;
 			settings->fastpath_output = True;
 			settings->color_depth = 32;
 			settings->frame_acknowledge = False;
