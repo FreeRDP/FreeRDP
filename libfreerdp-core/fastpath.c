@@ -498,7 +498,10 @@ boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* 
 		size = 0;
 
 		if (i == 0)
-			size += update_write_surfcmd_surface_bits_header(s, cmd);
+		{
+			update_write_surfcmd_surface_bits_header(s, cmd);
+			size += SURFCMD_SURFACE_BITS_HEADER_LENGTH;
+		}
 
 		fragment_size = MIN(stream_get_left(s), bitmapDataLength);
 		if (fragment_size == bitmapDataLength)
