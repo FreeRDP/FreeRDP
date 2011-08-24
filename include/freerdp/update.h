@@ -80,6 +80,47 @@ struct _PALETTE_UPDATE
 };
 typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 
+/* Pointer Updates */
+
+struct _POINTER_POSITION_UPDATE
+{
+	uint16 xPos;
+	uint16 yPos;
+};
+typedef struct _POINTER_POSITION_UPDATE POINTER_POSITION_UPDATE;
+
+struct _POINTER_SYSTEM_UPDATE
+{
+	uint32 type;
+};
+typedef struct _POINTER_SYSTEM_UPDATE POINTER_SYSTEM_UPDATE;
+
+struct _POINTER_COLOR_UPDATE
+{
+	uint16 cacheIndex;
+	uint32 hotSpot;
+	uint16 width;
+	uint16 height;
+	uint16 lengthAndMask;
+	uint16 lengthXorMask;
+	uint8* xorMaskData;
+	uint8* andMaskData;
+};
+typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
+
+struct _POINTER_NEW_UPDATE
+{
+	uint16 xorBpp;
+	POINTER_COLOR_UPDATE colorPtrAttr;
+};
+typedef struct _POINTER_NEW_UPDATE POINTER_NEW_UPDATE;
+
+struct _POINTER_CACHED_UPDATE
+{
+	uint16 cacheIndex;
+};
+typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
+
 /* Orders Updates */
 
 /* Primary Drawing Orders */
@@ -795,37 +836,43 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
 /* Constants */
 
-#define CACHED_BRUSH	0x80
+#define PTR_MSG_TYPE_SYSTEM		0x0001
+#define PTR_MSG_TYPE_POSITION		0x0003
+#define PTR_MSG_TYPE_COLOR		0x0006
+#define PTR_MSG_TYPE_CACHED		0x0007
+#define PTR_MSG_TYPE_POINTER		0x0008
 
-#define BMF_1BPP	0x1
-#define BMF_8BPP	0x3
-#define BMF_16BPP	0x4
-#define BMF_24BPP	0x5
-#define BMF_32BPP	0x6
+#define CACHED_BRUSH			0x80
+
+#define BMF_1BPP			0x1
+#define BMF_8BPP			0x3
+#define BMF_16BPP			0x4
+#define BMF_24BPP			0x5
+#define BMF_32BPP			0x6
 
 #ifndef _WIN32
-#define BS_SOLID	0x00
-#define BS_NULL		0x01
-#define BS_HATCHED	0x02
-#define BS_PATTERN	0x03
+#define BS_SOLID			0x00
+#define BS_NULL				0x01
+#define BS_HATCHED			0x02
+#define BS_PATTERN			0x03
 #endif
 
-#define HS_HORIZONTAL	0x00
-#define HS_VERTICAL	0x01
-#define HS_FDIAGONAL	0x02
-#define HS_BDIAGONAL	0x03
-#define HS_CROSS	0x04
-#define HS_DIAGCROSS	0x05
+#define HS_HORIZONTAL			0x00
+#define HS_VERTICAL			0x01
+#define HS_FDIAGONAL			0x02
+#define HS_BDIAGONAL			0x03
+#define HS_CROSS			0x04
+#define HS_DIAGCROSS			0x05
 
-#define DSDNG_STRETCH 		0x00000001
-#define DSDNG_TILE 		0x00000002
-#define DSDNG_PERPIXELALPHA 	0x00000004
-#define DSDNG_TRANSPARENT 	0x00000008
-#define DSDNG_MUSTFLIP 		0x00000010
-#define DSDNG_TRUESIZE 		0x00000020
+#define DSDNG_STRETCH 			0x00000001
+#define DSDNG_TILE 			0x00000002
+#define DSDNG_PERPIXELALPHA 		0x00000004
+#define DSDNG_TRANSPARENT 		0x00000008
+#define DSDNG_MUSTFLIP 			0x00000010
+#define DSDNG_TRUESIZE 			0x00000020
 
-#define FRAME_START		0x00000000
-#define FRAME_END		0x00000001
+#define FRAME_START			0x00000000
+#define FRAME_END			0x00000001
 
 #define STREAM_BITMAP_END		0x01
 #define STREAM_BITMAP_COMPRESSED	0x02
@@ -942,6 +989,12 @@ typedef void (*pcSynchronize)(rdpUpdate* update);
 typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
 
+typedef void (*pcPointerPosition)(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position);
+typedef void (*pcPointerSystem)(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system);
+typedef void (*pcPointerColor)(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color);
+typedef void (*pcPointerNew)(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new);
+typedef void (*pcPointerCached)(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached);
+
 typedef void (*pcDstBlt)(rdpUpdate* update, DSTBLT_ORDER* dstblt);
 typedef void (*pcPatBlt)(rdpUpdate* update, PATBLT_ORDER* patblt);
 typedef void (*pcScrBlt)(rdpUpdate* update, SCRBLT_ORDER* scrblt);
@@ -1014,6 +1067,12 @@ struct rdp_update
 	pcBitmap Bitmap;
 	pcPalette Palette;
 
+	pcPointerPosition PointerPosition;
+	pcPointerSystem PointerSystem;
+	pcPointerColor PointerColor;
+	pcPointerNew PointerNew;
+	pcPointerCached PointerCached;
+
 	pcDstBlt DstBlt;
 	pcPatBlt PatBlt;
 	pcScrBlt ScrBlt;
@@ -1074,8 +1133,14 @@ struct rdp_update
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
-	ORDER_INFO order_info;
 
+	POINTER_POSITION_UPDATE pointer_position;
+	POINTER_SYSTEM_UPDATE pointer_system;
+	POINTER_COLOR_UPDATE pointer_color;
+	POINTER_NEW_UPDATE pointer_new;
+	POINTER_CACHED_UPDATE pointer_cached;
+
+	ORDER_INFO order_info;
 	DSTBLT_ORDER dstblt;
 	PATBLT_ORDER patblt;
 	SCRBLT_ORDER scrblt;

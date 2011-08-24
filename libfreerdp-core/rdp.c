@@ -320,6 +320,7 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
+			update_recv_pointer(rdp->update, s);
 			break;
 
 		case DATA_PDU_TYPE_INPUT:

@@ -45,6 +45,13 @@ if(Xext_FOUND)
 	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
 endif()
 
+find_package(Xcursor)
+if(Xcursor_FOUND)
+	add_definitions(-DWITH_XCURSOR)
+	include_directories(${Xcursor_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)

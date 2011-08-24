@@ -156,6 +156,91 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 	 */
 }
 
+void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
+{
+	stream_read_uint16(s, pointer_position->xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, pointer_position->yPos); /* yPos (2 bytes) */
+}
+
+void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
+{
+	stream_read_uint32(s, pointer_system->type); /* systemPointerType (4 bytes) */
+}
+
+void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
+{
+	stream_read_uint16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_uint32(s, pointer_color->hotSpot); /* hotSpot (4 bytes) */
+	stream_read_uint16(s, pointer_color->width); /* width (2 bytes) */
+	stream_read_uint16(s, pointer_color->height); /* height (2 bytes) */
+	stream_read_uint16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
+	stream_read_uint16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
+
+	if (pointer_color->lengthXorMask > 0)
+	{
+		pointer_color->xorMaskData = (uint8*) xmalloc(pointer_color->lengthXorMask);
+		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
+	}
+
+	if (pointer_color->lengthAndMask > 0)
+	{
+		pointer_color->andMaskData = (uint8*) xmalloc(pointer_color->lengthAndMask);
+		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
+	}
+
+	stream_seek_uint8(s); /* pad (1 byte) */
+}
+
+void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
+{
+	stream_read_uint16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
+	update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
+}
+
+void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
+{
+	stream_read_uint16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
+}
+
+void update_recv_pointer(rdpUpdate* update, STREAM* s)
+{
+	uint16 messageType;
+
+	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
+	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+
+	switch (messageType)
+	{
+		case PTR_MSG_TYPE_POSITION:
+			update_read_pointer_position(s, &update->pointer_position);
+			IFCALL(update->PointerPosition, update, &update->pointer_position);
+			break;
+
+		case PTR_MSG_TYPE_SYSTEM:
+			update_read_pointer_system(s, &update->pointer_system);
+			IFCALL(update->PointerSystem, update, &update->pointer_system);
+			break;
+
+		case PTR_MSG_TYPE_COLOR:
+			update_read_pointer_color(s, &update->pointer_color);
+			IFCALL(update->PointerColor, update, &update->pointer_color);
+			break;
+
+		case PTR_MSG_TYPE_POINTER:
+			update_read_pointer_new(s, &update->pointer_new);
+			IFCALL(update->PointerNew, update, &update->pointer_new);
+			break;
+
+		case PTR_MSG_TYPE_CACHED:
+			update_read_pointer_cached(s, &update->pointer_cached);
+			IFCALL(update->PointerCached, update, &update->pointer_cached);
+			break;
+
+		default:
+			break;
+	}
+}
+
 void update_recv(rdpUpdate* update, STREAM* s)
 {
 	uint16 updateType;
