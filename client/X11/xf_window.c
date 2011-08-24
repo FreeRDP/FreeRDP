@@ -41,6 +41,9 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
+void xf_RefrenceWindow(xfInfo* xfi, xfWindow* window);
+void xf_DerefrenceWindow(xfInfo* xfi, xfWindow* window);
+
 void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, long d1, long d2, long d3)
 {
 	XEvent xevent;
@@ -159,6 +162,43 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 	window->decorations = show;
 }
 
+void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style)
+{
+	Atom window_type;
+
+	window_type = xfi->_NET_WM_WINDOW_TYPE_NORMAL;
+
+	if (((style & WS_POPUP) !=0) ||
+		((style & WS_DLGFRAME) != 0) ||
+		((ex_style & WS_EX_DLGMODALFRAME) != 0)
+		)
+	{
+		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
+	}
+	else if ((ex_style & WS_EX_TOOLWINDOW) != 0)
+	{
+		window_type = xfi->_NET_WM_WINDOW_TYPE_UTILITY;
+	}
+
+	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_WINDOW_TYPE,
+		xfi->_NET_WM_WINDOW_TYPE, 32, PropModeReplace, (unsigned char*)&window_type, 1);
+}
+
+void xf_SetWindowChildState(xfInfo* xfi, xfWindow* window)
+{
+	Atom window_state[2];
+
+	if (window->parent != NULL)
+	{
+		window_state[0] = xfi->_NET_WM_STATE_SKIP_PAGER;
+		window_state[1] = xfi->_NET_WM_STATE_SKIP_TASKBAR;
+
+		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_STATE,
+			xfi->_NET_WM_STATE, 32, PropModeReplace, (unsigned char*)&window_state, 2);
+	}
+}
+
+
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 {
 	xfWindow* window;
@@ -232,7 +272,7 @@ void xf_FixWindowCoordinates(int* x, int* y, int* width, int* height)
 
 char rail_window_class[] = "RAIL:00000000";
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint32 id)
+xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width, int height, uint32 id)
 {
 	xfWindow* window;
 
@@ -254,18 +294,36 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 	{
 		XGCValues gcv;
 		int input_mask;
-		XSizeHints* size_hints;
 		XClassHint* class_hints;
+		Window parent_handle;
+		int lx;
+		int ly;
 
+		window->ref_count = 0;
 		window->decorations = False;
 		window->fullscreen = False;
+		window->parent = parent;
 
-		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
+		lx = x;
+		ly = y;
+		parent_handle = RootWindowOfScreen(xfi->screen);
+	    if (window->parent != NULL)
+	    {
+	    	lx = x - window->parent->left;
+	    	ly = y - window->parent->top;
+	    	parent_handle = parent->handle;
+	    }
+
+		window->handle = XCreateWindow(xfi->display, parent_handle,
+			lx, ly, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 
+		xf_RefrenceWindow(xfi, window);
+		xf_RefrenceWindow(xfi, window->parent);
+
 		xf_SetWindowDecorations(xfi, window, window->decorations);
+		//xf_SetWindowChildState(xfi, window);
 
 		class_hints = XAllocClassHint();
 
@@ -281,17 +339,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 			xfree(class);
 		}
 
-		size_hints = XAllocSizeHints();
-
-		if (size_hints)
-		{
-			size_hints->flags = PMinSize | PMaxSize;
-			size_hints->min_width = size_hints->max_width = window->width;
-			size_hints->min_height = size_hints->max_height = window->height;
-			XSetWMNormalHints(xfi->display, window->handle, size_hints);
-			XFree(size_hints);
-		}
-
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
 			VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
@@ -304,6 +351,10 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
 
+		printf("xf_CreateWindow: h=0x%X p=0x%X x=%d y=%d w=%d h=%d\n", (uint32)window->handle,
+				(window->parent != NULL) ? (uint32)window->parent->handle : 0,
+				x, y, width, height);
+
 		xf_MoveWindow(xfi, window, x, y, width, height);
 	}
 
@@ -313,30 +364,32 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, int x, int y, int width, int height, uint
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
 	Pixmap surface;
-	XSizeHints* size_hints;
+	int    lx = x;
+	int    ly = y;
 
 	if ((width * height) < 1)
 		return;
 
-	xf_FixWindowCoordinates(&x, &y, &width, &height);
+	printf("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d\n", (uint32)window->handle,
+			x, y, width, height);
 
-	size_hints = XAllocSizeHints();
+    xf_FixWindowCoordinates(&x, &y, &width, &height);
 
-	if (size_hints)
-	{
-		size_hints->flags = PMinSize | PMaxSize;
-		size_hints->min_width = size_hints->max_width = width;
-		size_hints->min_height = size_hints->max_height = height;
-		XSetWMNormalHints(xfi->display, window->handle, size_hints);
-		XFree(size_hints);
-	}
+    if (window->parent != NULL)
+    {
+    	lx = x - window->parent->left;
+    	ly = y - window->parent->top;
+    }
+
+    printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n", (uint32)window->handle,
+			x, y, lx, ly, width, height);
 
 	if (window->width == width && window->height == height)
-		XMoveWindow(xfi->display, window->handle, x, y);
+		XMoveWindow(xfi->display, window->handle, lx, ly);
 	else if (window->left == x && window->top == y)
 		XResizeWindow(xfi->display, window->handle, width, height);
 	else
-		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+		XMoveResizeWindow(xfi->display, window->handle, lx, ly, width, height);
 
 	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
@@ -432,16 +485,42 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	xfree(xrects);
 }
 
+void xf_RefrenceWindow(xfInfo* xfi, xfWindow* window)
+{
+	if (window == NULL) return;
+	window->ref_count++;
+}
+
+void xf_DerefrenceWindow(xfInfo* xfi, xfWindow* window)
+{
+	if (window == NULL) return;
+
+	window->ref_count--;
+	if (window->ref_count == 0)
+	{
+		printf("xf_DerefrenceWindow: destroying h=0x%X p=0x%X\n", (uint32)window->handle,
+				(window->parent != NULL) ? (uint32)window->parent->handle : 0);
+
+		if (window->gc)
+			XFreeGC(xfi->display, window->gc);
+		if (window->surface)
+			XFreePixmap(xfi->display, window->surface);
+		if (window->handle)
+		{
+			XUnmapWindow(xfi->display, window->handle);
+			XDestroyWindow(xfi->display, window->handle);
+		}
+		xfree(window);
+	}
+}
+
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
-	if (window->gc)
-		XFreeGC(xfi->display, window->gc);
-	if (window->surface)
-		XFreePixmap(xfi->display, window->surface);
-	if (window->handle)
-	{
-		XUnmapWindow(xfi->display, window->handle);
-		XDestroyWindow(xfi->display, window->handle);
-	}
-	xfree(window);
+	xfWindow* parent = window->parent;
+
+	printf("xf_DestroyWindow: h=0x%X p=0x%X\n", (uint32)window->handle,
+			(window->parent != NULL) ? (uint32)window->parent->handle : 0);
+
+	xf_DerefrenceWindow(xfi, window);
+	xf_DerefrenceWindow(xfi, parent);
 }

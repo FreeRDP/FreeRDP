@@ -458,7 +458,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 
 #if 1
 	if (event->type != MotionNotify)
-		printf("X11 %s Event\n", X11_EVENT_STRINGS[event->type]);
+		printf("X11 %s Event: wnd=0x%X\n", X11_EVENT_STRINGS[event->type], (uint32)event->xany.window);
 #endif
 
 	switch (event->type)
