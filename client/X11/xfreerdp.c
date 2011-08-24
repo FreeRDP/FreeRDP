@@ -597,6 +597,7 @@ int xfreerdp_run(freerdp* instance)
 
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
+	instance->Disconnect(instance);
 	freerdp_free(instance);
 	xf_free(xfi);
 
@@ -643,7 +644,9 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL, NULL);
+	if (freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL,
+	NULL) < 0)
+		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
