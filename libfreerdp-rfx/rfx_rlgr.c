@@ -344,17 +344,17 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 			/* output the remaining run length using k bits */
 			OutputBits(k, numZeros);
 
-			if (input != 0)
-			{
-				/* encode the nonzero value using GR coding */
-				mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
-				sign = (input < 0 ? 1 : 0);  /* sign of input coefficient */
+			/* note: when we reach here and the last byte being encoded is 0, we still
+			   need to output the last two bits, otherwise mstsc will crash */
 
-				OutputBit(1, sign); /* output the sign bit */
-				CodeGR(&krp, mag - 1); /* output GR code for (mag - 1) */
+			/* encode the nonzero value using GR coding */
+			mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
+			sign = (input < 0 ? 1 : 0);  /* sign of input coefficient */
 
-				UpdateParam(kp, -DN_GR, k);
-			}
+			OutputBit(1, sign); /* output the sign bit */
+			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
+
+			UpdateParam(kp, -DN_GR, k);
 		}
 		else
 		{
