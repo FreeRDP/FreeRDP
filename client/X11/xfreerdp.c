@@ -643,7 +643,9 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL, NULL);
+	if (freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL,
+	NULL) < 0)
+		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
