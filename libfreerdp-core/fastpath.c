@@ -475,7 +475,23 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	return True;
 }
 
-boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd)
+boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId)
+{
+	STREAM* s;
+	s = transport_send_stream_init(fastpath->rdp->transport, 127);
+	stream_write_uint8(s, 0); /* fpOutputHeader (1 byte) */
+	stream_write_uint8(s, 5 + SURFCMD_FRAME_MARKER_LENGTH); /* length1 */
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_SURFCMDS); /* updateHeader (1 byte) */
+	stream_write_uint16(s, SURFCMD_FRAME_MARKER_LENGTH); /* size (2 bytes) */
+	update_write_surfcmd_frame_marker(s, frameAction, frameId);
+
+	if (transport_write(fastpath->rdp->transport, s) < 0)
+		return False;
+
+	return True;
+}
+
+boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd)
 {
 	STREAM* s;
 	uint16 size;
@@ -498,7 +514,10 @@ boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* 
 		size = 0;
 
 		if (i == 0)
-			size += update_write_surfcmd_surface_bits_header(s, cmd);
+		{
+			update_write_surfcmd_surface_bits_header(s, cmd);
+			size += SURFCMD_SURFACE_BITS_HEADER_LENGTH;
+		}
 
 		fragment_size = MIN(stream_get_left(s), bitmapDataLength);
 		if (fragment_size == bitmapDataLength)
@@ -524,6 +543,7 @@ boolean fastpath_send_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* 
 		if (!fastpath_send_update_pdu(fastpath, s))
 			return False;
 	}
+
 	return True;
 }
 

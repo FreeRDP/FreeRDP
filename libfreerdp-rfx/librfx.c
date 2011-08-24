@@ -614,6 +614,14 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, STREAM* data_out)
 	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 9); /* et */
 	properties |= (SCALAR_QUANTIZATION << 13); /* qt */
 	stream_write_uint16(data_out, properties);
+
+	/* properties in tilesets: note that this has different format from the one in TS_RFX_CONTEXT */
+	properties = 1; /* lt */
+	properties |= (context->flags << 1); /* flags */
+	properties |= (COL_CONV_ICT << 4); /* cct */
+	properties |= (CLW_XFORM_DWT_53_A << 6); /* xft */
+	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 10); /* et */
+	properties |= (SCALAR_QUANTIZATION << 14); /* qt */
 	context->properties = properties;
 }
 
@@ -622,9 +630,9 @@ void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
 	stream_check_size(data_out, 12 + 10 + 12 + 13);
 
 	rfx_compose_message_sync(context, data_out);
+	rfx_compose_message_context(context, data_out);
 	rfx_compose_message_codec_versions(context, data_out);
 	rfx_compose_message_channels(context, data_out);
-	rfx_compose_message_context(context, data_out);
 }
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* data_out)

@@ -19,6 +19,7 @@
 
 #include "update.h"
 #include "bitmap.h"
+#include "surface.h"
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
 {
@@ -326,7 +327,7 @@ static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* su
 {
 	rdpRdp* rdp = (rdpRdp*)update->rdp;
 
-	fastpath_send_surface_bits(rdp->fastpath, surface_bits_command);
+	fastpath_send_surfcmd_surface_bits(rdp->fastpath, surface_bits_command);
 }
 
 void update_register_server_callbacks(rdpUpdate* update)
