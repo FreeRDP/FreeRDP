@@ -210,6 +210,23 @@ static void xf_send_rail_client_event(rdpChanMan* chanman, uint16 event_type, vo
 	}
 }
 
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
+{
+	rdpChanMan* chanman;
+	rdpWindow* rail_window;
+	RAIL_ACTIVATE_ORDER activate;
+
+	chanman = GET_CHANMAN(xfi->instance);
+	rail_window = window_list_get_by_extra_id(xfi->rail->list, (void*)xwindow);
+
+	if (rail_window == NULL) return;
+
+	activate.windowId = rail_window->windowId;
+	activate.enabled = enabled;
+
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
+}
+
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
 {
 	rdpChanMan* chanman;

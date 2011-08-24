@@ -28,6 +28,8 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command);
 
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled);
+
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event);
 
 #endif /* __XF_RAIL_H */
