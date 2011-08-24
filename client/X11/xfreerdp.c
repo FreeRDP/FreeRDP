@@ -597,6 +597,7 @@ int xfreerdp_run(freerdp* instance)
 
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
+	instance->Disconnect(instance);
 	freerdp_free(instance);
 	xf_free(xfi);
 
