@@ -293,6 +293,8 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_read_uint16(s, cbClientDir); /* cbClientDir */
 	if (stream_get_left(s) < cbClientDir)
 		return False;
+	if (settings->client_dir)
+		xfree(settings->client_dir);
 	settings->client_dir = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbClientDir);
 	stream_seek(s, cbClientDir);
 

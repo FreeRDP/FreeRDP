@@ -282,6 +282,7 @@ static void dump_ppm_image(uint8* image_buf)
 	snprintf(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
 	fp = fopen(buf, "wb");
 	fwrite("P6\n", 1, 3, fp);
+	fwrite("# Created by FreeRDP\n", 1, 21, fp);
 	fwrite("64 64\n", 1, 6, fp);
 	fwrite("255\n", 1, 4, fp);
 	fwrite(image_buf, 1, 4096 * 3, fp);
@@ -382,19 +383,11 @@ void test_message(void)
 	context->height = 600;
 	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
 
-	rfx_compose_message_header(context, s);
-	/*hexdump(buffer, size);*/
-	stream_seal(s);
-	stream_set_pos(s, 0);
-	message = rfx_process_message(context, s);
-	rfx_message_free(context, message);
-	stream_free(s);
-
 	for (i = 0; i < 1000; i++)
 	{
 		s = stream_new(65536);
 		stream_clear(s);
-		rfx_compose_message_data(context, s,
+		rfx_compose_message(context, s,
 			&rect, 1, rgb_data, 100, 80, 100 * 3);
 		stream_seal(s);
 		/*hexdump(buffer, size);*/
