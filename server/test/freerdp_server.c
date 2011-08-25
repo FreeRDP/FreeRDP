@@ -39,8 +39,9 @@ static const unsigned int test_quantization_values[] =
 struct test_peer_info
 {
 	RFX_CONTEXT* context;
-	STREAM* bg_s;
-	STREAM* icon_s;
+	STREAM* s;
+	uint8* icon_data;
+	uint8* bg_data;
 	int icon_width;
 	int icon_height;
 	int icon_x;
@@ -60,8 +61,7 @@ static void test_peer_init(freerdp_peer* client)
 	info->context->height = client->settings->height;
 	rfx_context_set_pixel_format(info->context, RFX_PIXEL_FORMAT_RGB);
 
-	info->bg_s = stream_new(65536);
-	info->icon_s = stream_new(65536);
+	info->s = stream_new(65536);
 
 	info->icon_x = -1;
 	info->icon_y = -1;
@@ -75,27 +75,19 @@ static void test_peer_uninit(freerdp_peer* client)
 
 	if (info)
 	{
-		stream_free(info->bg_s);
-		stream_free(info->icon_s);
+		stream_free(info->s);
+		xfree(info->icon_data);
+		xfree(info->bg_data);
 		rfx_context_free(info->context);
 		xfree(info);
 	}
 }
 
-static STREAM* test_peer_stream_init(testPeerInfo* info, boolean icon)
+static STREAM* test_peer_stream_init(testPeerInfo* info)
 {
-	if (icon)
-	{
-		stream_clear(info->icon_s);
-		stream_set_pos(info->icon_s, 0);
-		return info->icon_s;
-	}
-	else
-	{
-		stream_clear(info->bg_s);
-		stream_set_pos(info->bg_s, 0);
-		return info->bg_s;
-	}
+	stream_clear(info->s);
+	stream_set_pos(info->s, 0);
+	return info->s;
 }
 
 static void test_peer_draw_background(freerdp_peer* client)
@@ -111,7 +103,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	if (!client->settings->rfx_codec)
 		return;
 
-	s = test_peer_stream_init(info, False);
+	s = test_peer_stream_init(info);
 
 	rect.x = 0;
 	rect.y = 0;
@@ -122,10 +114,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rgb_data = xmalloc(size);
 	memset(rgb_data, 0xA0, size);
 
-	/* In Video mode, the RemoteFX header should only be sent once */
-	rfx_compose_message_header(info->context, s);
-
-	rfx_compose_message_data(info->context, s,
+	rfx_compose_message(info->context, s,
 		&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
 
 	cmd->destLeft = 0;
@@ -146,18 +135,14 @@ static void test_peer_draw_background(freerdp_peer* client)
 static void test_peer_load_icon(freerdp_peer* client)
 {
 	testPeerInfo* info = (testPeerInfo*)client->param1;
-	STREAM* s;
 	FILE* fp;
 	int i;
 	char line[50];
 	uint8* rgb_data;
 	int c;
-	RFX_RECT rect;
 
 	if (!client->settings->rfx_codec)
 		return;
-
-	s = test_peer_stream_init(info, True);
 
 	if ((fp = fopen("test_icon.ppm", "r")) == NULL)
 		return;
@@ -183,22 +168,11 @@ static void test_peer_load_icon(freerdp_peer* client)
 		}
 	}
 
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = info->icon_width;
-	rect.height = info->icon_height;
+	info->icon_data = rgb_data;
 
-	rfx_compose_message_data(info->context, s,
-		&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
-
-	/* background with same size */
-	s = test_peer_stream_init(info, False);
-	memset(rgb_data, 0xA0, info->icon_width * info->icon_height * 3);
-
-	rfx_compose_message_data(info->context, s,
-		&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
-
-	xfree(rgb_data);
+	/* background with same size, which will be used to erase the icon from old position */
+	info->bg_data = xmalloc(info->icon_width * info->icon_height * 3);
+	memset(info->bg_data, 0xA0, info->icon_width * info->icon_height * 3);
 }
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
@@ -206,32 +180,52 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	testPeerInfo* info = (testPeerInfo*)client->param1;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
+	RFX_RECT rect;
+	STREAM* s;
 
 	if (!client->settings->rfx_codec)
 		return;
-	if (stream_get_length(info->icon_s) < 1)
+	if (info->icon_width < 1)
 		return;
 
-	cmd->destRight = info->icon_width;
-	cmd->destBottom = info->icon_height;
+	rect.x = 0;
+	rect.y = 0;
+	rect.width = info->icon_width;
+	rect.height = info->icon_height;
+
+	if (info->icon_x >= 0)
+	{
+		s = test_peer_stream_init(info);
+		rfx_compose_message(info->context, s,
+			&rect, 1, info->bg_data, rect.width, rect.height, rect.width * 3);
+
+		cmd->destLeft = info->icon_x;
+		cmd->destTop = info->icon_y;
+		cmd->destRight = info->icon_x + info->icon_width;
+		cmd->destBottom = info->icon_y + info->icon_height;
+		cmd->bpp = 32;
+		cmd->codecID = client->settings->rfx_codec_id;
+		cmd->width = info->icon_width;
+		cmd->height = info->icon_height;
+		cmd->bitmapDataLength = stream_get_length(s);
+		cmd->bitmapData = stream_get_head(s);
+		update->SurfaceBits(update, cmd);
+	}
+
+	s = test_peer_stream_init(info);
+	rfx_compose_message(info->context, s,
+		&rect, 1, info->icon_data, rect.width, rect.height, rect.width * 3);
+
+	cmd->destLeft = x;
+	cmd->destTop = y;
+	cmd->destRight = x + info->icon_width;
+	cmd->destBottom = y + info->icon_height;
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
 	cmd->width = info->icon_width;
 	cmd->height = info->icon_height;
-
-	if (info->icon_x >= 0)
-	{
-		cmd->destLeft = info->icon_x;
-		cmd->destTop = info->icon_y;
-		cmd->bitmapDataLength = stream_get_length(info->bg_s);
-		cmd->bitmapData = stream_get_head(info->bg_s);
-		update->SurfaceBits(update, cmd);
-	}
-
-	cmd->destLeft = x;
-	cmd->destTop = y;
-	cmd->bitmapDataLength = stream_get_length(info->icon_s);
-	cmd->bitmapData = stream_get_head(info->icon_s);
+	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update, cmd);
 
 	info->icon_x = x;
@@ -288,7 +282,7 @@ void test_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 
-	test_peer_draw_icon(input->param1, x, y);
+	test_peer_draw_icon(input->param1, x + 10, y);
 }
 
 void test_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
