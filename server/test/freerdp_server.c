@@ -23,6 +23,7 @@
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
@@ -449,6 +450,9 @@ static void test_server_mainloop(freerdp_listener* instance)
 int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
+
+	/* Ignore SIGPIPE, otherwise an SSL_write failure could crash your server */
+	signal(SIGPIPE, SIG_IGN);
 
 	instance = freerdp_listener_new();
 
