@@ -74,15 +74,36 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
+	xfWindow* xfparent;
 
 	xfi = (xfInfo*) rail->extra;
 
-	xfw = xf_CreateWindow((xfInfo*) rail->extra,
+	printf("xf_rail_CreateWindow: wid=0x%X own_wid=0x%X\n",
+			window->windowId, window->ownerWindowId);
+
+
+	// When ownerWindowId is equal to 0, it means that
+	// it is a main application window.
+	// For main application windows screen window is parent. (0 in Win32)
+	xfparent = NULL;
+	if (window->ownerWindowId != 0)
+	{
+		rdpWindow* p = NULL;
+
+		p = window_list_get_by_id(xfi->rail->list, window->ownerWindowId);
+
+		if (p != NULL)
+			xfparent = (xfWindow *)p->extra;
+	}
+
+	xfw = xf_CreateWindow((xfInfo*) rail->extra, xfparent,
 			window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight,
 			window->windowId);
 
 	XStoreName(xfi->display, xfw->handle, window->title);
+
+	xf_SetWindowStyle(xfi, xfw, window->style, window->extendedStyle);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;
@@ -189,6 +210,23 @@ static void xf_send_rail_client_event(rdpChanMan* chanman, uint16 event_type, vo
 	}
 }
 
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
+{
+	rdpChanMan* chanman;
+	rdpWindow* rail_window;
+	RAIL_ACTIVATE_ORDER activate;
+
+	chanman = GET_CHANMAN(xfi->instance);
+	rail_window = window_list_get_by_extra_id(xfi->rail->list, (void*)xwindow);
+
+	if (rail_window == NULL) return;
+
+	activate.windowId = rail_window->windowId;
+	activate.enabled = enabled;
+
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
+}
+
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
 {
 	rdpChanMan* chanman;
@@ -276,7 +314,7 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, R
 		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
 		minmax->windowId, minmax->maxWidth, minmax->maxHeight,
-		minmax->maxPosX, minmax->maxPosY,
+		(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
 		minmax->minTrackWidth, minmax->minTrackHeight,
 		minmax->maxTrackWidth, minmax->maxTrackHeight);
 }
@@ -304,7 +342,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman
 	printf("Server Local MoveSize PDU: windowId=0x%X "
 		"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
 		movesize->windowId, movesize->isMoveSizeStart,
-		movetype_names[movesize->moveSizeType], movesize->posX, movesize->posY);
+		movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
 }
 
 void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)

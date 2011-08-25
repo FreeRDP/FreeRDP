@@ -134,6 +134,23 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 	}
+	else
+	{
+		xfWindow* xfw;
+		rdpWindow* window;
+		int x = event->xmotion.x;
+		int y = event->xmotion.y;
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*)event->xmotion.window);
+
+		if (window != NULL)
+		{
+			xfw = (xfWindow*) window->extra;
+			x += xfw->left;
+			y += xfw->top;
+
+			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+		}
+	}
 
 	return True;
 }
@@ -326,6 +343,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	if (xfi->mouse_active && (app != True))
 		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
+	xf_rail_send_activate(xfi, event->xany.window, True);
 	xf_kbd_focus_in(xfi);
 
 	return True;
@@ -340,6 +358,8 @@ boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
+
+	xf_rail_send_activate(xfi, event->xany.window, False);
 
 	return True;
 }
@@ -458,7 +478,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 
 #if 1
 	if (event->type != MotionNotify)
-		printf("X11 %s Event\n", X11_EVENT_STRINGS[event->type]);
+		printf("X11 %s Event: wnd=0x%X\n", X11_EVENT_STRINGS[event->type], (uint32)event->xany.window);
 #endif
 
 	switch (event->type)
