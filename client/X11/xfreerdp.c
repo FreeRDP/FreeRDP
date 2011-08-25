@@ -36,6 +36,7 @@
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
 
+#include "xf_gdi.h"
 #include "xf_rail.h"
 #include "xf_event.h"
 
@@ -377,11 +378,13 @@ boolean xf_post_connect(freerdp* instance)
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
+	//xf_gdi_register_update_callbacks(instance->update);
+
 	if (xfi->fullscreen)
 		xfi->decoration = False;
 
-	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : gdi->width;
-	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : gdi->height;
+	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : instance->settings->width;
+	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : instance->settings->height;
 
 	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
 	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);

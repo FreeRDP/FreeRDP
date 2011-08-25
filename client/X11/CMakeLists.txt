@@ -20,6 +20,8 @@
 include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp
+	xf_gdi.c
+	xf_gdi.h
 	xf_rail.c
 	xf_rail.h
 	xf_event.c
