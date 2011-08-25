@@ -77,8 +77,6 @@ boolean transport_disconnect(rdpTransport* transport)
 
 boolean transport_connect_rdp(rdpTransport* transport)
 {
-	transport->state = TRANSPORT_STATE_RDP;
-
 	/* RDP encryption */
 
 	return True;
@@ -90,7 +88,6 @@ boolean transport_connect_tls(rdpTransport* transport)
 		transport->tls = tls_new();
 
 	transport->layer = TRANSPORT_LAYER_TLS;
-	transport->state = TRANSPORT_STATE_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != True)
@@ -105,7 +102,6 @@ boolean transport_connect_nla(rdpTransport* transport)
 		transport->tls = tls_new();
 
 	transport->layer = TRANSPORT_LAYER_TLS;
-	transport->state = TRANSPORT_STATE_NLA;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != True)
@@ -135,8 +131,6 @@ boolean transport_connect_nla(rdpTransport* transport)
 
 boolean transport_accept_rdp(rdpTransport* transport)
 {
-	transport->state = TRANSPORT_STATE_RDP;
-
 	/* RDP encryption */
 
 	return True;
@@ -148,7 +142,6 @@ boolean transport_accept_tls(rdpTransport* transport)
 		transport->tls = tls_new();
 
 	transport->layer = TRANSPORT_LAYER_TLS;
-	transport->state = TRANSPORT_STATE_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
@@ -163,7 +156,6 @@ boolean transport_accept_nla(rdpTransport* transport)
 		transport->tls = tls_new();
 
 	transport->layer = TRANSPORT_LAYER_TLS;
-	transport->state = TRANSPORT_STATE_NLA;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
@@ -270,6 +262,12 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		stream_seek(s, status);
 	}
 
+	if (status < 0)
+	{
+		/* A write error indicates that the peer has dropped the connection */
+		transport->layer = TRANSPORT_LAYER_CLOSED;
+	}
+
 	return status;
 }
 
@@ -360,7 +358,6 @@ int transport_check_fds(rdpTransport* transport)
 void transport_init(rdpTransport* transport)
 {
 	transport->layer = TRANSPORT_LAYER_TCP;
-	transport->state = TRANSPORT_STATE_NEGO;
 }
 
 boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking)

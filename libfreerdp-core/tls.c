@@ -251,6 +251,10 @@ void tls_free(rdpTls* tls)
 {
 	if (tls != NULL)
 	{
+		if (tls->ssl)
+			SSL_free(tls->ssl);
+		if (tls->ctx)
+			SSL_CTX_free(tls->ctx);
 		xfree(tls);
 	}
 }
