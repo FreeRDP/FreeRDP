@@ -364,15 +364,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
+	int lx, ly;
 	Pixmap surface;
-	int    lx = x;
-	int    ly = y;
 
 	if ((width * height) < 1)
 		return;
 
-	printf("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d\n", (uint32)window->handle,
-			x, y, width, height);
+	printf("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d\n",
+			(uint32) window->handle, x, y, width, height);
 
 	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
@@ -381,9 +380,14 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 		lx = x - window->parent->left;
 		ly = y - window->parent->top;
 	}
+	else
+	{
+		lx = x;
+		ly = y;
+	}
 
-	printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n", (uint32)window->handle,
-			x, y, lx, ly, width, height);
+	printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n",
+			(uint32) window->handle, x, y, lx, ly, width, height);
 
 	if (window->width == width && window->height == height)
 		XMoveWindow(xfi->display, window->handle, lx, ly);

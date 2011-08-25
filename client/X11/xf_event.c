@@ -134,7 +134,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 	}
-	else
+	else if (xfi->mouse_motion == True)
 	{
 		xfWindow* xfw;
 		rdpWindow* window;

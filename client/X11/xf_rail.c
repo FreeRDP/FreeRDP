@@ -81,10 +81,6 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	printf("xf_rail_CreateWindow: wid=0x%X own_wid=0x%X\n",
 			window->windowId, window->ownerWindowId);
 
-
-	// When ownerWindowId is equal to 0, it means that
-	// it is a main application window.
-	// For main application windows screen window is parent. (0 in Win32)
 	xfparent = NULL;
 	if (window->ownerWindowId != 0)
 	{
@@ -165,8 +161,6 @@ void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
-
-	printf("SetWindowRects\n");
 
 	xf_SetWindowRects(xfi, xfw, window->windowRects, window->numWindowRects);
 }
@@ -262,6 +256,8 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->taskbarPos.top = 0;
 	sysparam->taskbarPos.right = 0;
 	sysparam->taskbarPos.bottom = 0;
+
+	sysparam->dragFullWindows = False;
 
 	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }

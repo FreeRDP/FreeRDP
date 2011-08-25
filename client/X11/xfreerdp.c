@@ -295,7 +295,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
-	xfi->mouse_motion = True;
+	xfi->mouse_motion = False;
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
