@@ -645,6 +645,8 @@ static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* data_o
 	stream_write_uint8(data_out, 0); /* CodecChannelT.channelId */
 	stream_write_uint32(data_out, context->frame_idx); /* frameIdx */
 	stream_write_uint16(data_out, 1); /* numRegions */
+
+	context->frame_idx++;
 }
 
 static void rfx_compose_message_region(RFX_CONTEXT* context, STREAM* data_out,
