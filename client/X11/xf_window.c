@@ -41,8 +41,8 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
-void xf_RefrenceWindow(xfInfo* xfi, xfWindow* window);
-void xf_DerefrenceWindow(xfInfo* xfi, xfWindow* window);
+void xf_ReferenceWindow(xfInfo* xfi, xfWindow* window);
+void xf_DereferenceWindow(xfInfo* xfi, xfWindow* window);
 
 void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, long d1, long d2, long d3)
 {
@@ -307,23 +307,24 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		lx = x;
 		ly = y;
 		parent_handle = RootWindowOfScreen(xfi->screen);
-	    if (window->parent != NULL)
-	    {
-	    	lx = x - window->parent->left;
-	    	ly = y - window->parent->top;
-	    	parent_handle = parent->handle;
-	    }
+
+		if (window->parent != NULL)
+		{
+			lx = x - window->parent->left;
+			ly = y - window->parent->top;
+			parent_handle = parent->handle;
+		}
 
 		window->handle = XCreateWindow(xfi->display, parent_handle,
 			lx, ly, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 
-		xf_RefrenceWindow(xfi, window);
-		xf_RefrenceWindow(xfi, window->parent);
+		xf_ReferenceWindow(xfi, window);
+		xf_ReferenceWindow(xfi, window->parent);
 
 		xf_SetWindowDecorations(xfi, window, window->decorations);
-		//xf_SetWindowChildState(xfi, window);
+		xf_SetWindowChildState(xfi, window);
 
 		class_hints = XAllocClassHint();
 
@@ -373,15 +374,15 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	printf("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d\n", (uint32)window->handle,
 			x, y, width, height);
 
-    xf_FixWindowCoordinates(&x, &y, &width, &height);
+	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
-    if (window->parent != NULL)
-    {
-    	lx = x - window->parent->left;
-    	ly = y - window->parent->top;
-    }
+	if (window->parent != NULL)
+	{
+		lx = x - window->parent->left;
+		ly = y - window->parent->top;
+	}
 
-    printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n", (uint32)window->handle,
+	printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n", (uint32)window->handle,
 			x, y, lx, ly, width, height);
 
 	if (window->width == width && window->height == height)
@@ -463,7 +464,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	XFlush(xfi->display);
 }
 
-void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)
 {
 	int i;
 	XRectangle* xrects;
@@ -485,13 +486,13 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	xfree(xrects);
 }
 
-void xf_RefrenceWindow(xfInfo* xfi, xfWindow* window)
+void xf_ReferenceWindow(xfInfo* xfi, xfWindow* window)
 {
 	if (window == NULL) return;
 	window->ref_count++;
 }
 
-void xf_DerefrenceWindow(xfInfo* xfi, xfWindow* window)
+void xf_DereferenceWindow(xfInfo* xfi, xfWindow* window)
 {
 	if (window == NULL) return;
 
@@ -521,6 +522,6 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 	printf("xf_DestroyWindow: h=0x%X p=0x%X\n", (uint32)window->handle,
 			(window->parent != NULL) ? (uint32)window->parent->handle : 0);
 
-	xf_DerefrenceWindow(xfi, window);
-	xf_DerefrenceWindow(xfi, parent);
+	xf_DereferenceWindow(xfi, window);
+	xf_DereferenceWindow(xfi, parent);
 }

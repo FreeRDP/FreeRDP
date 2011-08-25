@@ -158,7 +158,7 @@ void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 	xf_SetWindowIcon(xfi, xfw, icon);
 }
 
-void xf_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
+void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
@@ -166,7 +166,9 @@ void xf_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_SetWindowVisibilityRects(xfi, xfw, window->visibilityRects, window->numVisibilityRects);
+	printf("SetWindowRects\n");
+
+	xf_SetWindowRects(xfi, xfw, window->windowRects, window->numWindowRects);
 }
 
 void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
@@ -184,7 +186,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->ShowWindow = xf_rail_ShowWindow;
 	rail->SetWindowText = xf_rail_SetWindowText;
 	rail->SetWindowIcon = xf_rail_SetWindowIcon;
-	rail->SetWindowVisibilityRects = xf_rail_SetWindowVisibilityRects;
+	rail->SetWindowRects = xf_rail_SetWindowRects;
 	rail->DestroyWindow = xf_rail_DestroyWindow;
 }
 

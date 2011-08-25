@@ -31,21 +31,21 @@ add_executable(xfreerdp
 	xfreerdp.c
 	xfreerdp.h)
 	
-find_optional_package(Xinerama)
+find_package(Xinerama)
 if(XINERAMA_FOUND)
 	add_definitions(-DWITH_XINERAMA)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
 endif()
 
-find_optional_package(Xext)
+find_package(Xext)
 if(Xext_FOUND)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${Xext_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
 endif()
 
-find_optional_package(Xcursor)
+find_package(Xcursor)
 if(Xcursor_FOUND)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${Xcursor_INCLUDE_DIRS})

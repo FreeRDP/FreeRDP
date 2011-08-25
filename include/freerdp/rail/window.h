@@ -43,6 +43,7 @@ struct rdp_window
 	rdpWindow* next;
 	uint32 windowId;
 	uint32 ownerWindowId;
+	rdpWindow* ownerWindow;
 	uint32 style;
 	uint32 extendedStyle;
 	uint8 showState;
