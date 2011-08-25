@@ -29,4 +29,4 @@ set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SO
 
 target_link_libraries(freerdp-rail freerdp-utils)
 
-install(TARGETS freerdp-rail DESTINATION lib)
+install(TARGETS freerdp-rail DESTINATION ${CMAKE_INSTALL_LIBDIR})

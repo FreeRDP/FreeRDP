@@ -51,4 +51,4 @@ if(WITH_SSE2)
 	target_link_libraries(freerdp-rfx freerdp-rfx-sse2)
 endif()
 
-install(TARGETS freerdp-rfx DESTINATION lib)
+install(TARGETS freerdp-rfx DESTINATION ${CMAKE_INSTALL_LIBDIR})

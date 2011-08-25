@@ -54,4 +54,4 @@ if(WIN32)
 	target_link_libraries(freerdp-utils ws2_32)
 endif()
 
-install(TARGETS freerdp-utils DESTINATION lib)
+install(TARGETS freerdp-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})

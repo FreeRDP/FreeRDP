@@ -69,6 +69,18 @@ void xf_end_paint(rdpUpdate* update)
 
 	if (xfi->remote_app != True)
 	{
+#if 1
+		if (gdi->primary->hdc->hwnd->invalid->null)
+			 return;
+
+		x = gdi->primary->hdc->hwnd->invalid->x;
+		y = gdi->primary->hdc->hwnd->invalid->y;
+		w = gdi->primary->hdc->hwnd->invalid->w;
+		h = gdi->primary->hdc->hwnd->invalid->h;
+
+		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+#else
 		int i;
 		int ninvalid;
 		HGDI_RGN* cinvalid;
@@ -91,6 +103,7 @@ void xf_end_paint(rdpUpdate* update)
 		}
 
 		XFlush(xfi->display);
+#endif
 	}
 	else
 	{
@@ -604,6 +617,7 @@ int xfreerdp_run(freerdp* instance)
 
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
+	instance->Disconnect(instance);
 	freerdp_free(instance);
 	xf_free(xfi);
 
@@ -650,7 +664,9 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL, NULL);
+	if (freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL,
+	NULL) < 0)
+		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

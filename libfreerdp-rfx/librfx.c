@@ -614,17 +614,25 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, STREAM* data_out)
 	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 9); /* et */
 	properties |= (SCALAR_QUANTIZATION << 13); /* qt */
 	stream_write_uint16(data_out, properties);
+
+	/* properties in tilesets: note that this has different format from the one in TS_RFX_CONTEXT */
+	properties = 1; /* lt */
+	properties |= (context->flags << 1); /* flags */
+	properties |= (COL_CONV_ICT << 4); /* cct */
+	properties |= (CLW_XFORM_DWT_53_A << 6); /* xft */
+	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 10); /* et */
+	properties |= (SCALAR_QUANTIZATION << 14); /* qt */
 	context->properties = properties;
 }
 
-void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
+static void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
 {
 	stream_check_size(data_out, 12 + 10 + 12 + 13);
 
 	rfx_compose_message_sync(context, data_out);
+	rfx_compose_message_context(context, data_out);
 	rfx_compose_message_codec_versions(context, data_out);
 	rfx_compose_message_channels(context, data_out);
-	rfx_compose_message_context(context, data_out);
 }
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* data_out)
@@ -637,6 +645,8 @@ static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* data_o
 	stream_write_uint8(data_out, 0); /* CodecChannelT.channelId */
 	stream_write_uint32(data_out, context->frame_idx); /* frameIdx */
 	stream_write_uint16(data_out, 1); /* numRegions */
+
+	context->frame_idx++;
 }
 
 static void rfx_compose_message_region(RFX_CONTEXT* context, STREAM* data_out,
@@ -808,7 +818,7 @@ static void rfx_compose_message_frame_end(RFX_CONTEXT* context, STREAM* data_out
 	stream_write_uint8(data_out, 0); /* CodecChannelT.channelId */
 }
 
-void rfx_compose_message_data(RFX_CONTEXT* context, STREAM* data_out,
+static void rfx_compose_message_data(RFX_CONTEXT* context, STREAM* data_out,
 	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride)
 {
 	rfx_compose_message_frame_begin(context, data_out);
@@ -816,3 +826,14 @@ void rfx_compose_message_data(RFX_CONTEXT* context, STREAM* data_out,
 	rfx_compose_message_tileset(context, data_out, image_data, width, height, rowstride);
 	rfx_compose_message_frame_end(context, data_out);
 }
+
+FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* data_out,
+	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride)
+{
+	/* Only the first frame should send the RemoteFX header */
+	if (context->frame_idx == 0)
+		rfx_compose_message_header(context, data_out);
+
+	rfx_compose_message_data(context, data_out, rects, num_rects, image_data, width, height, rowstride);
+}
+

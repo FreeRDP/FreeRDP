@@ -33,6 +33,7 @@ rdpCache* cache_new(rdpSettings* settings)
 		cache->settings = settings;
 		cache->glyph = glyph_new(settings);
 		cache->brush = brush_new(settings);
+		cache->pointer = pointer_new(settings);
 		cache->bitmap_v2 = bitmap_v2_new(settings);
 		cache->offscreen = offscreen_new(settings);
 		cache->color_table = color_table_new(settings);
@@ -45,7 +46,9 @@ void cache_free(rdpCache* cache)
 {
 	if (cache != NULL)
 	{
+		glyph_free(cache->glyph);
 		brush_free(cache->brush);
+		pointer_free(cache->pointer);
 		bitmap_v2_free(cache->bitmap_v2);
 		offscreen_free(cache->offscreen);
 		color_table_free(cache->color_table);

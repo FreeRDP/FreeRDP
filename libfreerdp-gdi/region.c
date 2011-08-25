@@ -384,7 +384,7 @@ inline int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 
 		cinvalid = hdc->hwnd->cinvalid;
 
-		if (hdc->hwnd->ninvalid < 1)
+		if (hdc->hwnd->ninvalid <= 0)
 		{
 			hdc->hwnd->ninvalid = 0;
 			cinvalid = (HGDI_RGN*) malloc(sizeof(HGDI_RGN));

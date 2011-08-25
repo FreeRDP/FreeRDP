@@ -102,7 +102,6 @@ void tcp_get_mac_address(rdpTcp * tcp)
 boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
 	int status;
-	int sockfd = -1;
 	char servname[10];
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
@@ -119,30 +118,31 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 		return False;
 	}
 
+	tcp->sockfd = -1;
 	for (ai = res; ai; ai = ai->ai_next)
 	{
-		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		tcp->sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
-		if (sockfd < 0)
+		if (tcp->sockfd < 0)
 			continue;
 
-		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
+		if (connect(tcp->sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
 		{
 			printf("connected to %s:%s\n", hostname, servname);
 			break;
 		}
 
-		sockfd = -1;
+		close(tcp->sockfd);
+		tcp->sockfd = -1;
 	}
 	freeaddrinfo(res);
 
-	if (sockfd == -1)
+	if (tcp->sockfd == -1)
 	{
 		printf("unable to connect to %s:%s\n", hostname, servname);
 		return False;
 	}
 
-	tcp->sockfd = sockfd;
 	tcp_get_ip_address(tcp);
 	tcp_get_mac_address(tcp);
 

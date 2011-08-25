@@ -19,6 +19,7 @@
 
 #include "update.h"
 #include "bitmap.h"
+#include "surface.h"
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
 {
@@ -326,13 +327,41 @@ static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* su
 {
 	rdpRdp* rdp = (rdpRdp*)update->rdp;
 
-	fastpath_send_surface_bits(rdp->fastpath, surface_bits_command);
+	fastpath_send_surfcmd_surface_bits(rdp->fastpath, surface_bits_command);
+}
+
+static void update_send_synchronize(rdpUpdate* update)
+{
+	rdpRdp* rdp = (rdpRdp*)update->rdp;
+	STREAM* s;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_SYNCHRONIZE); /* updateHeader (1 byte) */
+	stream_write_uint16(s, 0); /* size (2 bytes) */
+	fastpath_send_update_pdu(rdp->fastpath, s);
+}
+
+static void update_send_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
+{
+	rdpRdp* rdp = (rdpRdp*)update->rdp;
+	STREAM* s;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	/* updateHeader (1 byte) */
+	if (pointer_system->type == SYSPTR_NULL)
+		stream_write_uint8(s, FASTPATH_UPDATETYPE_PTR_NULL);
+	else
+		stream_write_uint8(s, FASTPATH_UPDATETYPE_PTR_DEFAULT);
+	stream_write_uint16(s, 0); /* size (2 bytes) */
+	fastpath_send_update_pdu(rdp->fastpath, s);
 }
 
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
 	update->EndPaint = update_end_paint;
+	update->Synchronize = update_send_synchronize;
+	update->PointerSystem = update_send_pointer_system;
 	update->SurfaceBits = update_send_surface_bits;
 }
 

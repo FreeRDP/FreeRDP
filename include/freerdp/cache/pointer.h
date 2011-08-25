@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Caches
+ * Pointer Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,35 +17,32 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
-
-#include <freerdp/cache/glyph.h>
-#include <freerdp/cache/brush.h>
-#include <freerdp/cache/pointer.h>
-#include <freerdp/cache/bitmap_v2.h>
-#include <freerdp/cache/offscreen.h>
-#include <freerdp/cache/color_table.h>
+#ifndef __POINTER_CACHE_H
+#define __POINTER_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
-
-struct rdp_cache
+struct _POINTER_CACHE_ENTRY
 {
-	rdpSettings* settings;
-
-	rdpGlyph* glyph;
-	rdpBrush* brush;
-	rdpPointer* pointer;
-	rdpBitmapV2* bitmap_v2;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	void* entry;
+	void* extra;
 };
+typedef struct _POINTER_CACHE_ENTRY POINTER_CACHE_ENTRY;
 
-FREERDP_API rdpCache* cache_new(rdpSettings* settings);
-FREERDP_API void cache_free(rdpCache* cache);
+struct rdp_pointer
+{
+	uint16 cacheSize;
+	rdpSettings* settings;
+	POINTER_CACHE_ENTRY* entries;
+};
+typedef struct rdp_pointer rdpPointer;
 
-#endif /* __CACHE_H */
+FREERDP_API void* pointer_get(rdpPointer* pointer, uint16 index, void** extra);
+FREERDP_API void pointer_put(rdpPointer* pointer, uint16 index, void* entry, void* extra);
+
+FREERDP_API rdpPointer* pointer_new(rdpSettings* settings);
+FREERDP_API void pointer_free(rdpPointer* pointer);
+
+#endif /* __POINTER_CACHE_H */

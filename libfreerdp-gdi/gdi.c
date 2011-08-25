@@ -808,7 +808,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 					message->rects[i].width, message->rects[i].height);
 			}
 		}
-		else /* RDSH */
+		else if (message->num_rects == 1) /* RDSH */
 		{
 			gdi_SetClipRgn(gdi->primary->hdc,
 				surface_bits_command->destLeft + message->rects[0].x,
@@ -958,6 +958,8 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
 	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->cinvalid = NULL;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
 
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
 

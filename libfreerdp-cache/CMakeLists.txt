@@ -19,6 +19,7 @@
 
 set(FREERDP_CACHE_SRCS
 	brush.c
+	pointer.c
 	bitmap_v2.c
 	offscreen.c
 	color_table.c
@@ -31,4 +32,4 @@ set_target_properties(freerdp-cache PROPERTIES VERSION ${FREERDP_VERSION_FULL} S
 
 target_link_libraries(freerdp-cache freerdp-utils)
 
-install(TARGETS freerdp-cache DESTINATION lib)
+install(TARGETS freerdp-cache DESTINATION ${CMAKE_INSTALL_LIBDIR})

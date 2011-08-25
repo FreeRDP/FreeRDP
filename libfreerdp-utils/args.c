@@ -57,7 +57,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing color depth\n");
-				return 0;
+				return -1;
 			}
 			settings->color_depth = atoi(argv[index]);
 		}
@@ -67,7 +67,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing username\n");
-				return 0;
+				return -1;
 			}
 			settings->username = xstrdup(argv[index]);
 		}
@@ -77,7 +77,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing password\n");
-				return 0;
+				return -1;
 			}
 			settings->password = xstrdup(argv[index]);
 			settings->autologon = 1;
@@ -95,7 +95,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing domain\n");
-				return 0;
+				return -1;
 			}
 			settings->domain = xstrdup(argv[index]);
 		}
@@ -105,7 +105,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing shell\n");
-				return 0;
+				return -1;
 			}
 			settings->shell = xstrdup(argv[index]);
 		}
@@ -115,7 +115,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing directory\n");
-				return 0;
+				return -1;
 			}
 			settings->directory = xstrdup(argv[index]);
 		}
@@ -125,7 +125,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing dimensions\n");
-				return 0;
+				return -1;
 			}
 
 			if (strncmp("workarea", argv[index], 1) == 0)
@@ -161,7 +161,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing port number\n");
-				return 0;
+				return -1;
 			}
 			settings->port = atoi(argv[index]);
 		}
@@ -171,7 +171,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing client hostname\n");
-				return 0;
+				return -1;
 			}
 			strncpy(settings->client_hostname, argv[index], sizeof(settings->client_hostname) - 1);
 			settings->client_hostname[sizeof(settings->client_hostname) - 1] = 0;
@@ -203,7 +203,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
-			settings->rfx_decode = True;
+			settings->rfx_codec = True;
 			settings->fastpath_output = True;
 			settings->color_depth = 32;
 			settings->frame_acknowledge = False;
@@ -227,7 +227,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing performance flag\n");
-				return 0;
+				return -1;
 			}
 			if (argv[index][0] == 'm') /* modem */
 			{
@@ -266,7 +266,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing protocol security\n");
-				return 0;
+				return -1;
 			}
 			if (strncmp("rdp", argv[index], 1) == 0) /* Standard RDP */
 			{
@@ -289,7 +289,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			else
 			{
 				printf("unknown protocol security\n");
-				return 0;
+				return -1;
 			}
 		}
 		else if (strcmp("--plugin", argv[index]) == 0)
@@ -299,7 +299,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing plugin name\n");
-				return 0;
+				return -1;
 			}
 			plugin_data = NULL;
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
@@ -339,7 +339,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (plugin_callback != NULL)
 			{
 				if (!plugin_callback(settings, argv[t], plugin_data, plugin_user_data))
-					return 0;
+					return -1;
 			}
 		}
 		else if (strcmp("--ext", argv[index]) == 0)
@@ -348,12 +348,12 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (index == argc)
 			{
 				printf("missing extension name\n");
-				return 0;
+				return -1;
 			}
 			if (num_extensions >= sizeof(settings->extensions) / sizeof(struct rdp_ext_set))
 			{
 				printf("maximum extensions reached\n");
-				return 0;
+				return -1;
 			}
 			snprintf(settings->extensions[num_extensions].name,
 				sizeof(settings->extensions[num_extensions].name),
@@ -375,7 +375,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--version", argv[index]) == 0)
 		{
 			printf("This is FreeRDP version %s\n", FREERDP_VERSION_FULL);
-			return 0;
+			return -1;
 		}
 		else if (argv[index][0] != '-')
 		{
@@ -416,7 +416,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				if (t == 0)
 				{
 					printf("invalid option: %s\n", argv[index]);
-					return 0;
+					return -1;
 				}
 				index += t - 1;
 			}
@@ -424,5 +424,5 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		index++;
 	}
 	printf("missing server name\n");
-	return 0;
+	return -1;
 }

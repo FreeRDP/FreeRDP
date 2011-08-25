@@ -262,13 +262,13 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
 
-static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, uint16 val)
+static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, uint32 val)
 {
 	int kr = *krp >> LSGR;
 
 	/* unary part of GR code */
 
-	uint16 vk = (val) >> kr;
+	uint32 vk = (val) >> kr;
 	OutputBit(vk, 1);
 	OutputBit(1, 0);
 
@@ -344,17 +344,17 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 			/* output the remaining run length using k bits */
 			OutputBits(k, numZeros);
 
-			if (input != 0)
-			{
-				/* encode the nonzero value using GR coding */
-				mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
-				sign = (input < 0 ? 1 : 0);  /* sign of input coefficient */
+			/* note: when we reach here and the last byte being encoded is 0, we still
+			   need to output the last two bits, otherwise mstsc will crash */
 
-				OutputBit(1, sign); /* output the sign bit */
-				CodeGR(&krp, mag - 1); /* output GR code for (mag - 1) */
+			/* encode the nonzero value using GR coding */
+			mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
+			sign = (input < 0 ? 1 : 0);  /* sign of input coefficient */
 
-				UpdateParam(kp, -DN_GR, k);
-			}
+			OutputBit(1, sign); /* output the sign bit */
+			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
+
+			UpdateParam(kp, -DN_GR, k);
 		}
 		else
 		{
@@ -372,13 +372,15 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 				CodeGR(&krp, twoMs);
 
 				/* update k, kp */
+				/* NOTE: as of Aug 2011, the algorithm is still wrongly documented
+				   and the update direction is reversed */
 				if (twoMs)
 				{
-					UpdateParam(kp, UQ_GR, k);
+					UpdateParam(kp, -DQ_GR, k);
 				}
 				else
 				{
-					UpdateParam(kp, -DQ_GR, k);
+					UpdateParam(kp, UQ_GR, k);
 				}
 			}
 			else /* mode == RLGR3 */

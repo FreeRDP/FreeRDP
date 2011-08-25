@@ -192,13 +192,14 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 	uint16 initiator;
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->settings->server_mode ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication);
+	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, length);
 
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, channel_id, 0); /* channelId */
 	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */
 	per_read_length(s, length); /* userData (OCTET_STRING) */
+
 	if (*length > stream_get_left(s))
 		return False;
 
@@ -217,7 +218,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 {
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->settings->server_mode ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest);
+	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
@@ -595,6 +596,7 @@ void rdp_free(rdpRdp* rdp)
 		input_free(rdp->input);
 		update_free(rdp->update);
 		fastpath_free(rdp->fastpath);
+		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		xfree(rdp);

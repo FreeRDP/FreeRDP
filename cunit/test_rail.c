@@ -445,7 +445,7 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 	{
 		printf("----------------- stream_equal_dump -----------------\n");
 		printf("Stream and dump have different length (%d != %d)\n",
-			sizeS, size);
+			(int) sizeS, (int) size);
 		printf("Stream hexdump:\n");
 		freerdp_hexdump(dataS, sizeS);
 
@@ -462,7 +462,7 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 		if (((uint8*)dataS)[i] != ((uint8*)data)[i])
 		{
 			printf("----------------- stream_equal_dump -----------------\n");
-			printf("Stream and dump have different content from %d offset.\n", i);
+			printf("Stream and dump have different content from %d offset.\n", (int) i);
 			printf("Stream hexdump:\n");
 			freerdp_hexdump(dataS, sizeS);
 
