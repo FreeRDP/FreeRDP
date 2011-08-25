@@ -86,8 +86,16 @@ struct xf_info
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;
 	Atom _NET_WORKAREA;
+
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
+	Atom _NET_WM_STATE_SKIP_TASKBAR;
+	Atom _NET_WM_STATE_SKIP_PAGER;
+
+	Atom _NET_WM_WINDOW_TYPE;
+	Atom _NET_WM_WINDOW_TYPE_NORMAL;
+	Atom _NET_WM_WINDOW_TYPE_DIALOG;
+	Atom _NET_WM_WINDOW_TYPE_UTILITY;
 };
 
 void xf_toggle_fullscreen(xfInfo* xfi);
