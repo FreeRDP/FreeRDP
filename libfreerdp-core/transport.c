@@ -262,6 +262,12 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		stream_seek(s, status);
 	}
 
+	if (status < 0)
+	{
+		/* A write error indicates that the peer has dropped the connection */
+		transport->layer = TRANSPORT_LAYER_CLOSED;
+	}
+
 	return status;
 }
 
