@@ -69,6 +69,18 @@ void xf_end_paint(rdpUpdate* update)
 
 	if (xfi->remote_app != True)
 	{
+#if 1
+		if (gdi->primary->hdc->hwnd->invalid->null)
+			 return;
+
+		x = gdi->primary->hdc->hwnd->invalid->x;
+		y = gdi->primary->hdc->hwnd->invalid->y;
+		w = gdi->primary->hdc->hwnd->invalid->w;
+		h = gdi->primary->hdc->hwnd->invalid->h;
+
+		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+#else
 		int i;
 		int ninvalid;
 		HGDI_RGN* cinvalid;
@@ -91,6 +103,7 @@ void xf_end_paint(rdpUpdate* update)
 		}
 
 		XFlush(xfi->display);
+#endif
 	}
 	else
 	{
