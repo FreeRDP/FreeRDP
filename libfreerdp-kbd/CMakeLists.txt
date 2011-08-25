@@ -40,5 +40,5 @@ add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
 
 set_target_properties(freerdp-kbd PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS freerdp-kbd DESTINATION lib)
+install(TARGETS freerdp-kbd DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

@@ -46,6 +46,11 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# Set default libdir
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+	set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-but-set-variable")
@@ -90,7 +95,7 @@ test_big_endian(BIG_ENDIAN)
 set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
 
 # Path to put plugins
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/lib/freerdp")
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
