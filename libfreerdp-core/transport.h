@@ -26,16 +26,6 @@ typedef enum
 	TRANSPORT_LAYER_TLS
 } TRANSPORT_LAYER;
 
-typedef enum
-{
-	TRANSPORT_STATE_INITIAL,
-	TRANSPORT_STATE_NEGO,
-	TRANSPORT_STATE_RDP,
-	TRANSPORT_STATE_TLS,
-	TRANSPORT_STATE_NLA,
-	TRANSPORT_STATE_FINAL
-} TRANSPORT_STATE;
-
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
@@ -55,7 +45,6 @@ struct rdp_transport
 	STREAM* recv_stream;
 	STREAM* send_stream;
 	TRANSPORT_LAYER layer;
-	TRANSPORT_STATE state;
 	struct rdp_tcp* tcp;
 	struct rdp_tls* tls;
 	struct rdp_settings* settings;
