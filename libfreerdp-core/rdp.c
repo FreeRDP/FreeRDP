@@ -596,6 +596,7 @@ void rdp_free(rdpRdp* rdp)
 		input_free(rdp->input);
 		update_free(rdp->update);
 		fastpath_free(rdp->fastpath);
+		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		xfree(rdp);

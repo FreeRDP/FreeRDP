@@ -354,7 +354,7 @@ void nego_send_negotiation_request(rdpNego* nego)
 	int length;
 	uint8 *bm, *em;
 
-	s = stream_new(64);
+	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
@@ -488,7 +488,7 @@ void nego_send_negotiation_response(rdpNego* nego)
 	int length;
 	uint8 *bm, *em;
 
-	s = stream_new(64);
+	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
