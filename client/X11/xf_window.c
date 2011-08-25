@@ -94,7 +94,7 @@ boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int leng
 			property, 0, length, False, AnyPropertyType,
 			&actual_type, &actual_format, nitems, bytes, prop);
 
-	if (status == None)
+	if (status != Success)
 		return False;
 
 	return True;
