@@ -52,8 +52,6 @@ if(Xcursor_FOUND)
 	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
 endif()
 
-INSTALL_PROGRAMS(/bin FILES xfreerdp)
-
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)
@@ -61,3 +59,5 @@ target_link_libraries(xfreerdp freerdp-rail)
 target_link_libraries(xfreerdp freerdp-chanman)
 target_link_libraries(xfreerdp freerdp-utils)
 target_link_libraries(xfreerdp ${X11_LIBRARIES})
+
+install(TARGETS xfreerdp DESTINATION bin)

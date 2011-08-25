@@ -26,5 +26,5 @@ add_library(freerdp-chanman SHARED ${FREERDP_CHANMAN_SRCS})
 set_target_properties(freerdp-chanman PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 target_link_libraries(freerdp-chanman freerdp-utils)
 
-install(TARGETS freerdp-chanman DESTINATION lib)
+install(TARGETS freerdp-chanman DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
