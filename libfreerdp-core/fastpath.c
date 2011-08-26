@@ -38,7 +38,7 @@
  * two less significant bits of the first byte.
  */
 
-#define FASTPATH_MAX_PACKET_SIZE 0x7FFF
+#define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
 /**
  * Read a Fast-Path packet header.\n
@@ -519,7 +519,7 @@ boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_C
 			size += SURFCMD_SURFACE_BITS_HEADER_LENGTH;
 		}
 
-		fragment_size = MIN(stream_get_left(s), bitmapDataLength);
+		fragment_size = MIN(FASTPATH_MAX_PACKET_SIZE - stream_get_length(s), bitmapDataLength);
 		if (fragment_size == bitmapDataLength)
 		{
 			fragmentation = (i == 0 ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST);
