@@ -183,7 +183,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	RFX_RECT rect;
 	STREAM* s;
 
-	if (!client->settings->rfx_codec)
+	if (!client->settings->rfx_codec || !info)
 		return;
 	if (info->icon_width < 1)
 		return;
