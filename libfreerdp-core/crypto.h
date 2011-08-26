@@ -41,6 +41,7 @@
 
 #define EXPONENT_MAX_SIZE			4
 #define MODULUS_MAX_SIZE			64
+#define CA_LOCAL_PATH   ".freerdp/cacert"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
@@ -83,6 +84,8 @@ void crypto_rc4_free(CryptoRc4 rc4);
 
 typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
+char* cypto_cert_fingerprint(X509* xcert);
+void crypto_cert_printinfo(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);

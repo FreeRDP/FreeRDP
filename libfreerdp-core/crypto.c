@@ -189,3 +189,33 @@ void crypto_nonce(uint8* nonce, int size)
 {
 	RAND_bytes((void*) nonce, size);
 }
+char* crypto_cert_fingerprint(X509 *xcert)
+{
+    unsigned char fp[EVP_MAX_MD_SIZE];
+    int i;
+    unsigned int fp_len;
+    X509_digest(xcert,EVP_sha1(),fp,&fp_len);
+    char *fp_buf=xzalloc(3*fp_len);
+    char *p = fp_buf;
+    for (i = 0; i < fp_len - 1; i++)
+    {
+        sprintf(p, "%02x:", fp[i]);
+        p = (char*) &fp_buf[i * 3];
+    }
+        sprintf(p, "%02x", fp[i]);
+    return fp_buf;
+}
+void crypto_cert_printinfo(X509 *xcert)
+{
+    char *subject;
+    char *issuer;
+    char *fp;
+    subject=X509_NAME_oneline(X509_get_subject_name(xcert),NULL,0);
+    issuer=X509_NAME_oneline(X509_get_issuer_name(xcert),NULL,0);
+    fp=crypto_cert_fingerprint(xcert);
+    printf("Cerificate details:\n");
+    printf("\tSubject : %s\n",subject);
+    printf("\tIssuer : %s\n",issuer);
+    printf("\tCert Thumbprint (sha1) : %s\n",fp);
+    xfree(fp);
+}

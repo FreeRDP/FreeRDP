@@ -246,6 +246,41 @@ rdpTls* tls_new()
 
 	return tls;
 }
+boolean tls_verify_cert(CryptoCert cert)
+{
+    X509 *xcert=cert->px509;
+    char dir_path[1024]="";
+    int ret=0;
+    X509_STORE *cert_ctx=NULL;
+    X509_LOOKUP *lookup=NULL;
+    X509_STORE_CTX *csc;
+    cert_ctx=X509_STORE_new();
+    if (cert_ctx == NULL)
+        goto end;
+    OpenSSL_add_all_algorithms();
+    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
+    if (lookup == NULL)
+        goto end;
+    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
+    if (lookup == NULL)
+        goto end;
+    X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+    X509_LOOKUP_add_dir(lookup,"/home/whoami/project/install",X509_FILETYPE_ASN1);
+    csc = X509_STORE_CTX_new();
+    if (csc == NULL)
+        goto end;
+    X509_STORE_set_flags(cert_ctx, 0);
+    if(!X509_STORE_CTX_init(csc,cert_ctx,xcert,0))
+        goto end;
+    int i=X509_verify_cert(csc);
+    int cert_error=X509_STORE_CTX_get_error(cert_ctx);
+    X509_STORE_CTX_free(csc);
+    X509_STORE_free(cert_ctx);
+    ret=0;
+    end:
+    ret = (i > 0);
+    return(ret);
+}
 
 void tls_free(rdpTls* tls)
 {
