@@ -296,6 +296,14 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xf_kbd_init(xfi);
 
+	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	xfi->clrconv->palette = NULL;
+	xfi->clrconv->alpha = 1;
+	xfi->clrconv->invert = 0;
+	xfi->clrconv->rgb555 = 0;
+
+	xfi->cache = cache_new(instance->settings);
+
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->screen_number = DefaultScreen(xfi->display);
 	xfi->screen = ScreenOfDisplay(xfi->display, xfi->screen_number);
@@ -385,7 +393,11 @@ boolean xf_post_connect(freerdp* instance)
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
-	//xf_gdi_register_update_callbacks(instance->update);
+	if (instance->settings->sw_gdi != True)
+	{
+		xfi->srcBpp = instance->settings->color_depth;
+		xf_gdi_register_update_callbacks(instance->update);
+	}
 
 	if (xfi->fullscreen)
 		xfi->decoration = False;
@@ -427,6 +439,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xfi->gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCGraphicsExposures, &gcv);
 	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
+	xfi->drawing = xfi->primary;
 
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
@@ -704,6 +717,8 @@ int main(int argc, char* argv[])
 
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
+
+	instance->settings->sw_gdi = False;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)

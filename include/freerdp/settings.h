@@ -176,6 +176,7 @@ struct rdp_settings
 {
 	uint16 width;
 	uint16 height;
+	boolean sw_gdi;
 	boolean workarea;
 	boolean fullscreen;
 	boolean decorations;

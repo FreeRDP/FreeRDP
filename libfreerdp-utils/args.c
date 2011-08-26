@@ -211,6 +211,28 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->fastpath_input = False;
 			settings->fastpath_output = False;
 		}
+		else if (strcmp("--gdi", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing GDI backend\n");
+				return -1;
+			}
+			if (strncmp("sw", argv[index], 1) == 0) /* software */
+			{
+				settings->sw_gdi = True;
+			}
+			else if (strncmp("hw", argv[index], 1) == 0) /* hardware */
+			{
+				settings->sw_gdi = False;
+			}
+			else
+			{
+				printf("unknown GDI backend\n");
+				return -1;
+			}
+		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->rfx_codec = True;
