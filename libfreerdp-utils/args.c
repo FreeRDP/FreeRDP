@@ -165,6 +165,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			settings->port = atoi(argv[index]);
 		}
+		else if (strcmp("-k", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing keyboard layout id\n");
+				return -1;
+			}
+			sscanf(argv[index], "%X", &(settings->kbd_layout));
+		}
 		else if (strcmp("-n", argv[index]) == 0)
 		{
 			index++;

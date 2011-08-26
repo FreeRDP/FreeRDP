@@ -613,10 +613,22 @@ void rdp_read_input_capability_set(STREAM* s, rdpSettings* settings)
 
 	stream_read_uint16(s, inputFlags); /* inputFlags (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
-	stream_read_uint32(s, settings->kbd_layout); /* keyboardLayout (4 bytes) */
-	stream_read_uint32(s, settings->kbd_type); /* keyboardType (4 bytes) */
-	stream_read_uint32(s, settings->kbd_subtype); /* keyboardSubType (4 bytes) */
-	stream_read_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKeys (4 bytes) */
+
+	if (settings->server_mode)
+	{
+		stream_read_uint32(s, settings->kbd_layout); /* keyboardLayout (4 bytes) */
+		stream_read_uint32(s, settings->kbd_type); /* keyboardType (4 bytes) */
+		stream_read_uint32(s, settings->kbd_subtype); /* keyboardSubType (4 bytes) */
+		stream_read_uint32(s, settings->kbd_fn_keys); /* keyboardFunctionKeys (4 bytes) */
+	}
+	else
+	{
+		stream_seek_uint32(s); /* keyboardLayout (4 bytes) */
+		stream_seek_uint32(s); /* keyboardType (4 bytes) */
+		stream_seek_uint32(s); /* keyboardSubType (4 bytes) */
+		stream_seek_uint32(s); /* keyboardFunctionKeys (4 bytes) */
+	}
+
 	stream_seek(s, 64); /* imeFileName (64 bytes) */
 
 	if ((inputFlags & INPUT_FLAG_FASTPATH_INPUT) == 0 && (inputFlags & INPUT_FLAG_FASTPATH_INPUT2) == 0)

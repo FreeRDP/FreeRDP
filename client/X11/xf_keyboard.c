@@ -32,6 +32,7 @@
 void xf_kbd_init(xfInfo* xfi)
 {
 	memset(xfi->pressed_keys, 0, 256 * sizeof(boolean));
+	xfi->keyboard_layout_id = xfi->instance->settings->kbd_layout;
 	xfi->keyboard_layout_id = freerdp_kbd_init(xfi->display, xfi->keyboard_layout_id);
 	xfi->instance->settings->kbd_layout = xfi->keyboard_layout_id;
 }
