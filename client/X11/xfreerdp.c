@@ -24,6 +24,8 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <pthread.h>
 #include <locale.h>
@@ -39,6 +41,7 @@
 #include "xf_gdi.h"
 #include "xf_rail.h"
 #include "xf_event.h"
+#include "xf_keyboard.h"
 
 #include "xfreerdp.h"
 
@@ -440,6 +443,37 @@ boolean xf_post_connect(freerdp* instance)
 	return True;
 }
 
+int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
+{
+	if (strcmp("--kbd-list", opt) == 0)
+	{
+		int i;
+		rdpKeyboardLayout* layouts;
+
+		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+		printf("\nKeyboard Layouts\n");
+		for (i = 0; layouts[i].code; i++)
+			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+		free(layouts);
+
+		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+		printf("\nKeyboard Layout Variants\n");
+		for (i = 0; layouts[i].code; i++)
+			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+		free(layouts);
+
+		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+		printf("\nKeyboard Input Method Editors (IMEs)\n");
+		for (i = 0; layouts[i].code; i++)
+			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+		free(layouts);
+
+		exit(0);
+	}
+
+	return 1;
+}
+
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	rdpChanMan* chanman = (rdpChanMan*) user_data;
@@ -667,8 +701,8 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	if (freerdp_parse_args(instance->settings, argc, argv, xf_process_plugin_args, chanman, NULL,
-	NULL) < 0)
+	if (freerdp_parse_args(instance->settings, argc, argv,
+			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));

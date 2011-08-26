@@ -24,9 +24,6 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
-#include <freerdp/kbd/kbd.h>
-#include <freerdp/kbd/vkcodes.h>
-
 #include "xf_keyboard.h"
 
 void xf_kbd_init(xfInfo* xfi)

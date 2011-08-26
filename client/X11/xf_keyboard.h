@@ -20,6 +20,9 @@
 #ifndef __XF_KEYBOARD_H
 #define __XF_KEYBOARD_H
 
+#include <freerdp/kbd/kbd.h>
+#include <freerdp/kbd/vkcodes.h>
+
 #include "xfreerdp.h"
 
 void xf_kbd_init(xfInfo* xfi);
