@@ -31,6 +31,7 @@ ipch
 Debug
 
 # Binaries
+*.a
 *.so
 *.so.*
 *.dylib
