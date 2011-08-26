@@ -142,7 +142,8 @@ static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 		/* b = cr_b_buf[i]; */
 		b = _mm_load_si128(&cr_b_buf[i]);
 
-		/* y = ((r >> 2) + (r >> 5) + (r >> 6)) + ((g >> 1) + (g >> 4) + (g >> 6) + (g >> 7)) + ((b >> 4) + (b >> 5) + (b >> 6)); */
+		/* y = ((r >> 2) + (r >> 5) + (r >> 6)) + ((g >> 1) + (g >> 4) + (g >> 6) + (g >> 7)) +
+			((b >> 4) + (b >> 5) + (b >> 6) + (b >> 7)); */
 		/* y_r_buf[i] = MINMAX(y, 0, 255) - 128; */
 		y = _mm_add_epi16(_mm_srai_epi16(r, 2), _mm_srai_epi16(r, 5));
 		y = _mm_add_epi16(y, _mm_srai_epi16(r, 6));
@@ -153,27 +154,28 @@ static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 		y = _mm_add_epi16(y, _mm_srai_epi16(b, 4));
 		y = _mm_add_epi16(y, _mm_srai_epi16(b, 5));
 		y = _mm_add_epi16(y, _mm_srai_epi16(b, 6));
+		y = _mm_add_epi16(y, _mm_srai_epi16(b, 7));
 		y = _mm_add_epi16(y, min);
 		_mm_between_epi16(y, min, max);
 		_mm_store_si128(&y_r_buf[i], y);
 
-		/* cb = 0 - ((r >> 3) + (r >> 5) + (r >> 7)) - ((g >> 2) + (g >> 4) + (g >> 6)) + (b >> 1); */
+		/* cb = 0 - ((r >> 3) + (r >> 5) + (r >> 6)) - ((g >> 2) + (g >> 4) + (g >> 6)) + (b >> 1); */
 		/* cb_g_buf[i] = MINMAX(cb, -128, 127); */
 		cb = _mm_sub_epi16(_mm_srai_epi16(b, 1), _mm_srai_epi16(r, 3));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 5));
-		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 7));
+		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 6));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 2));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 4));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 6));
 		_mm_between_epi16(cb, min, max);
 		_mm_store_si128(&cb_g_buf[i], cb);
 
-		/* cr = (r >> 1) - ((g >> 2) + (g >> 3) + (g >> 5) + (g >> 7)) - ((b >> 4) + (b >> 6)); */
+		/* cr = (r >> 1) - ((g >> 2) + (g >> 3) + (g >> 5) + (g >> 6)) - ((b >> 4) + (b >> 6)); */
 		/* cr_b_buf[i] = MINMAX(cr, -128, 127); */
 		cr = _mm_sub_epi16(_mm_srai_epi16(r, 1), _mm_srai_epi16(g, 2));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 3));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 5));
-		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 7));
+		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 6));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 4));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 6));
 		_mm_between_epi16(cr, min, max);
