@@ -22,6 +22,7 @@
 
 #include <time.h>
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 
 struct _STOPWATCH
@@ -40,6 +41,7 @@ FREERDP_API void stopwatch_start(STOPWATCH* stopwatch);
 FREERDP_API void stopwatch_stop(STOPWATCH* stopwatch);
 FREERDP_API void stopwatch_reset(STOPWATCH* stopwatch);
 
-double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
+FREERDP_API double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
+FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, uint32* usec);
 
 #endif /* __UTILS_STOPWATCH_H */
