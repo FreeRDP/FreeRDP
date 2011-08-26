@@ -77,8 +77,7 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 		dstSize = cbUncompressedSize;
 		bitmap_data->length = cbCompMainBodySize;
-
-		bitmap_data->data = (uint8*) xzalloc(dstSize);
+		bitmap_data->data = (uint8*) xmalloc(dstSize);
 
 		stream_get_mark(s, srcData);
 		stream_seek(s, bitmap_data->length);

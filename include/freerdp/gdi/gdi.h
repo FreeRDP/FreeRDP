@@ -193,9 +193,10 @@ typedef GDI_BRUSH* HGDI_BRUSH;
 
 struct _GDI_WND
 {
+	int count;
 	int ninvalid;
 	HGDI_RGN invalid;
-	HGDI_RGN* cinvalid;
+	HGDI_RGN cinvalid;
 };
 typedef struct _GDI_WND GDI_WND;
 typedef GDI_WND* HGDI_WND;
@@ -216,7 +217,6 @@ struct _GDI_DC
 	int alpha;
 	int invert;
 	int rgb555;
-	int complex;
 };
 typedef struct _GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;

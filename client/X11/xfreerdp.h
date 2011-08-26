@@ -81,6 +81,7 @@ struct xf_info
 	boolean pressed_keys[256];
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;
+	boolean complex_regions;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

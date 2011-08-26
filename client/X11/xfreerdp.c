@@ -73,41 +73,44 @@ void xf_end_paint(rdpUpdate* update)
 
 	if (xfi->remote_app != True)
 	{
-#if 1
-		if (gdi->primary->hdc->hwnd->invalid->null)
-			 return;
-
-		x = gdi->primary->hdc->hwnd->invalid->x;
-		y = gdi->primary->hdc->hwnd->invalid->y;
-		w = gdi->primary->hdc->hwnd->invalid->w;
-		h = gdi->primary->hdc->hwnd->invalid->h;
-
-		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
-#else
-		int i;
-		int ninvalid;
-		HGDI_RGN* cinvalid;
-
-		if (gdi->primary->hdc->hwnd->ninvalid < 1)
-			return;
-
-		ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-		cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-
-		for (i = 0; i < ninvalid; i++)
+		if (xfi->complex_regions != True)
 		{
-			x = cinvalid[i]->x;
-			y = cinvalid[i]->y;
-			w = cinvalid[i]->w;
-			h = cinvalid[i]->h;
+			if (gdi->primary->hdc->hwnd->invalid->null)
+				return;
+
+			x = gdi->primary->hdc->hwnd->invalid->x;
+			y = gdi->primary->hdc->hwnd->invalid->y;
+			w = gdi->primary->hdc->hwnd->invalid->w;
+			h = gdi->primary->hdc->hwnd->invalid->h;
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 		}
+		else
+		{
+			int i;
+			int ninvalid;
+			HGDI_RGN cinvalid;
 
-		XFlush(xfi->display);
-#endif
+			if (gdi->primary->hdc->hwnd->ninvalid < 1)
+				return;
+
+			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+			for (i = 0; i < ninvalid; i++)
+			{
+				x = cinvalid[i].x;
+				y = cinvalid[i].y;
+				w = cinvalid[i].w;
+				h = cinvalid[i].h;
+
+				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+			}
+
+			XFlush(xfi->display);
+		}
 	}
 	else
 	{
@@ -300,6 +303,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
 	xfi->mouse_motion = False;
+	xfi->complex_regions = True;
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
