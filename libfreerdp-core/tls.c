@@ -265,7 +265,7 @@ boolean tls_verify_cert(CryptoCert cert)
     if (lookup == NULL)
         goto end;
     X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
-    X509_LOOKUP_add_dir(lookup,"/home/whoami/project/install",X509_FILETYPE_ASN1);
+    X509_LOOKUP_add_dir(lookup,CA_LOCAL_PATH,X509_FILETYPE_ASN1);
     csc = X509_STORE_CTX_new();
     if (csc == NULL)
         goto end;
@@ -273,7 +273,6 @@ boolean tls_verify_cert(CryptoCert cert)
     if(!X509_STORE_CTX_init(csc,cert_ctx,xcert,0))
         goto end;
     int i=X509_verify_cert(csc);
-    int cert_error=X509_STORE_CTX_get_error(cert_ctx);
     X509_STORE_CTX_free(csc);
     X509_STORE_free(cert_ctx);
     ret=0;
