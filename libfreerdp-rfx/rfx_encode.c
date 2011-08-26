@@ -37,6 +37,8 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 	int x_exceed;
 	int y_exceed;
 	const uint8* src;
+	sint16 r, g, b;
+	sint16 *r_last, *g_last, *b_last;
 
 	x_exceed = 64 - width;
 	y_exceed = 64 - height;
@@ -83,24 +85,37 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 			default:
 				break;
 		}
-		/* Fill the horizontal region outside of 64x64 tile size to 0 in order to be better compressed. */
+		/* Fill the horizontal region outside of 64x64 tile size with the right-most pixel for best quality */
 		if (x_exceed > 0)
 		{
-			memset(r_buf, 0, x_exceed * sizeof(sint16));
-			memset(g_buf, 0, x_exceed * sizeof(sint16));
-			memset(b_buf, 0, x_exceed * sizeof(sint16));
-			r_buf += x_exceed;
-			g_buf += x_exceed;
-			b_buf += x_exceed;
+			r = *(r_buf - 1);
+			g = *(g_buf - 1);
+			b = *(b_buf - 1);
+			for (x = 0; x < x_exceed; x++)
+			{
+				*r_buf++ = r;
+				*g_buf++ = g;
+				*b_buf++ = b;
+			}
 		}
 	}
 
-	/* Fill the vertical region outside of 64x64 tile size to 0 in order to be better compressed. */
+	/* Fill the vertical region outside of 64x64 tile size with the last line. */
 	if (y_exceed > 0)
 	{
-		memset(r_buf, 0, y_exceed * 64 * sizeof(sint16));
-		memset(g_buf, 0, y_exceed * 64 * sizeof(sint16));
-		memset(b_buf, 0, y_exceed * 64 * sizeof(sint16));
+		r_last = r_buf - 64;
+		g_last = g_buf - 64;
+		b_last = b_buf - 64;
+		while (y_exceed > 0)
+		{
+			memcpy(r_buf, r_last, 64 * sizeof(sint16));
+			memcpy(g_buf, g_last, 64 * sizeof(sint16));
+			memcpy(b_buf, b_last, 64 * sizeof(sint16));
+			r_buf += 64;
+			g_buf += 64;
+			b_buf += 64;
+			y_exceed--;
+		}
 	}
 }
 
