@@ -22,6 +22,7 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
+#include <freerdp/utils/pcap.h>
 
 /* Common */
 
@@ -1071,6 +1072,9 @@ struct rdp_update
 	void* rail;
 	void* param1;
 	void* param2;
+
+	boolean dump_rfx;
+	rdpPcap* pcap_rfx;
 
 	pcBeginPaint BeginPaint;
 	pcEndPaint EndPaint;

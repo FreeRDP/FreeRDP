@@ -76,7 +76,9 @@ void test_pcap(void)
 
 	pcap = pcap_open("/tmp/test.pcap", True);
 	pcap_add_record(pcap, test_packet_1, sizeof(test_packet_1));
+	pcap_flush(pcap);
 	pcap_add_record(pcap, test_packet_2, sizeof(test_packet_2));
+	pcap_flush(pcap);
 	pcap_add_record(pcap, test_packet_3, sizeof(test_packet_3));
 	pcap_close(pcap);
 
@@ -89,6 +91,8 @@ void test_pcap(void)
 		CU_ASSERT(record.length == packets[i].length)
 		i++;
 	}
+
+	CU_ASSERT(i == 3);
 
 	pcap_close(pcap);
 }

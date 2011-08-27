@@ -34,9 +34,19 @@ boolean freerdp_connect(freerdp* instance)
 	rdp = (rdpRdp*) instance->rdp;
 
 	IFCALL(instance->PreConnect, instance);
+
 	status = rdp_client_connect((rdpRdp*) instance->rdp);
+
 	if (status)
+	{
+		if (instance->settings->dump_rfx)
+		{
+			instance->update->dump_rfx = instance->settings->dump_rfx;
+			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, True);
+		}
+
 		IFCALL(instance->PostConnect, instance);
+	}
 
 	return status;
 }

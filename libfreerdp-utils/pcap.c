@@ -80,6 +80,9 @@ void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 		pcap->tail = record;
 	}
 
+	if (pcap->record == NULL)
+		pcap->record = record;
+
 	record->data = data;
 	record->length = length;
 	record->header.incl_len = length;

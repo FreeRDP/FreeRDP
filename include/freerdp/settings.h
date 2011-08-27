@@ -297,6 +297,9 @@ struct rdp_settings
 	uint8 rfx_codec_id;
 	boolean frame_acknowledge;
 
+	boolean dump_rfx;
+	char* dump_rfx_file;
+
 	boolean remote_app;
 	uint8 num_icon_caches;
 	uint16 num_icon_cache_entries;
