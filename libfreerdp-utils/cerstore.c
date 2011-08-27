@@ -24,7 +24,51 @@
 #endif
 
 static char cert_dir[] = "freerdp";
+static char cert_loc[] = "cacert";
 static char certstore_file[] = "known_hosts";
+
+void certstore_create(rdpCertstore* certstore)
+{
+  certstore->fp = fopen((char*)certstore->file, "w+");
+
+  if (certstore->fp == NULL)
+  {
+    printf("certstore_create: error opening [%s] for writing\n", certstore->file);
+    return;
+  }
+  fflush(certstore->fp);
+}
+
+void certstore_load(rdpCertstore* certstore)
+{
+  certstore->fp = fopen((char*)certstore->file, "r+");
+}
+
+void certstore_open(rdpCertstore* certstore)
+{
+  struct stat stat_info;
+
+  if (stat((char*)certstore->file, &stat_info) != 0)
+    certstore_create(certstore);
+  else
+    certstore_load(certstore);
+}
+
+void certstore_close(rdpcertstore* certstore)
+{
+  if (certstore->fp != NULL)
+    fclose(certstore->fp);
+}
+
+char* get_local_certloc()
+{
+  char *home_path;
+  char *cert_loc;
+  home_path=getenv("HOME");
+  cert_loc=(char*)xmalloc(strlen(home_path)+strlen("/.")+strlen(cert_dir)+strlen("/")+strlen(cert_loc)+1);
+  sprintf(cert_loc,"%s/.%s/%s",home_path,cert_dir,cert_loc);
+  return cert_loc;
+}
 
 void certstore_init(rdpCertstore* certstore)
 {
@@ -33,7 +77,6 @@ void certstore_init(rdpCertstore* certstore)
 	struct stat stat_info;
 
 	home_path = getenv("HOME");
-	certstore->available = True;
 
 	if (home_path == NULL)
 	{
@@ -65,4 +108,29 @@ void certstore_init(rdpCertstore* certstore)
 	printf("certstore file: %s\n", certstore->file);
 
 	certstore_open(certstore);
+}
+
+rdpCertstore* certstore_new(rdpCertdata* certdata)
+{
+  rdpCertstore* certstore = (rdpCertstore*) xzalloc(sizeof(rdpCertstore));
+
+  if (certstore != NULL)
+  {
+    certstore->certdata = certdata;
+    certstore_init(certstore);
+  }
+
+  return certstore;
+}
+
+void cerstore_free(rdpCertsore* certstore)
+{
+  if (certstore != NULL)
+  {
+    certstore_close(certstore);
+    xfree(certstore->path);
+    xfree(certstore->file);
+    xfree(certstore->home);
+    xfree(certstore);
+  }
 }

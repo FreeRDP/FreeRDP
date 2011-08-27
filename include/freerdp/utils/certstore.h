@@ -9,7 +9,6 @@ typedef struct rdp_certdata rdpCertdata;
 #include <sys/stat.h>
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 struct rdp_certdata
 {
@@ -22,6 +21,13 @@ struct rdp_certstore
 	char* path;
 	char* file;
 	char* home;
-	boolean available;
 	struct rdp_certdata* certdata;
 };
+void certstore_create(rdpCertstore* certstore);
+void certstore_open(rdpCertstore* certstore);
+void certstore_load(rdpCertstore* certstore);
+void certstore_close(rdpcertstore* certstore);
+char* get_local_certloc();
+void certstore_init(rdpCertstore* certstore);
+rdpCertstore* certstore_new(rdpCertdata* certdata);
+void cerstore_free(rdpCertsore* certstore);

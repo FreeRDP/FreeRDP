@@ -250,7 +250,7 @@ rdpTls* tls_new()
 boolean tls_verify_cert(CryptoCert cert)
 {
     X509 *xcert=cert->px509;
-    char dir_path[1024]="";
+    char *cert_loc;
     int ret=0;
     X509_STORE *cert_ctx=NULL;
     X509_LOOKUP *lookup=NULL;
@@ -266,7 +266,9 @@ boolean tls_verify_cert(CryptoCert cert)
     if (lookup == NULL)
         goto end;
     X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
-    X509_LOOKUP_add_dir(lookup,CA_LOCAL_PATH,X509_FILETYPE_ASN1);
+    cert_loc=get_local_certloc();
+    X509_LOOKUP_add_dir(lookup,cert_loc,X509_FILETYPE_ASN1);
+    xfree(cert_loc);
     csc = X509_STORE_CTX_new();
     if (csc == NULL)
         goto end;
