@@ -38,7 +38,7 @@
  * two less significant bits of the first byte.
  */
 
-#define FASTPATH_MAX_PACKET_SIZE 0x7FFF
+#define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
 /**
  * Read a Fast-Path packet header.\n
@@ -394,7 +394,7 @@ boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	{
 		/**
 		 * If numberEvents is not provided in fpInputHeader, it will be provided
-		 * as onee additional byte here.
+		 * as one additional byte here.
 		 */
 
 		if (stream_get_left(s) < 1)
@@ -475,6 +475,36 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	return True;
 }
 
+boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
+{
+	uint16 length;
+	uint32 totalLength;
+	STREAM* update;
+
+	totalLength = stream_get_length(s);
+	update = fastpath_update_pdu_init(fastpath);
+
+	if (totalLength <= FASTPATH_MAX_PACKET_SIZE)
+	{
+		stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_SINGLE << 4));
+		stream_write_uint16(update, totalLength);
+		stream_write(update, s->data, totalLength);
+		return fastpath_send_update_pdu(fastpath, update);
+	}
+
+	while (totalLength > 0)
+	{
+		if (totalLength < FASTPATH_MAX_PACKET_SIZE)
+			length = totalLength;
+		else
+			length = FASTPATH_MAX_PACKET_SIZE;
+
+		totalLength -= length;
+	}
+
+	return True;
+}
+
 boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId)
 {
 	STREAM* s;
@@ -519,7 +549,7 @@ boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_C
 			size += SURFCMD_SURFACE_BITS_HEADER_LENGTH;
 		}
 
-		fragment_size = MIN(stream_get_left(s), bitmapDataLength);
+		fragment_size = MIN(FASTPATH_MAX_PACKET_SIZE - stream_get_length(s), bitmapDataLength);
 		if (fragment_size == bitmapDataLength)
 		{
 			fragmentation = (i == 0 ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST);

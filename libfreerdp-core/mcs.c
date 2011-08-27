@@ -793,6 +793,26 @@ boolean mcs_send_channel_join_confirm(rdpMcs* mcs, uint16 channel_id)
 }
 
 /**
+ * Send MCS Disconnect Provider Ultimatum PDU.\n
+ * @param mcs mcs module
+ */
+
+boolean mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
+{
+	STREAM* s;
+	uint16 length = 9;
+	s = transport_send_stream_init(mcs->transport, 9);
+
+	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1);
+
+	per_write_enumerated(s, 0, 0); /* reason */
+
+	transport_write(mcs->transport, s);
+
+	return True;
+}
+
+/**
  * Instantiate new MCS module.
  * @param transport transport
  * @return new MCS module

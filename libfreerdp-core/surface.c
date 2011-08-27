@@ -17,12 +17,14 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/pcap.h>
+
 #include "surface.h"
 
 static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
 {
-	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	int pos;
+	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
 	stream_read_uint16(s, cmd->destLeft);
 	stream_read_uint16(s, cmd->destTop);
@@ -59,6 +61,12 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 boolean update_recv_surfcmds(rdpUpdate* update, uint16 size, STREAM* s)
 {
 	uint16 cmdType;
+
+	if (update->dump_rfx)
+	{
+		pcap_add_record(update->pcap_rfx, s->p, size);
+		pcap_flush(update->pcap_rfx);
+	}
 
 	while (size > 2)
 	{

@@ -26,6 +26,7 @@
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/rail/rail.h>
+#include <freerdp/cache/cache.h>
 
 typedef struct xf_info xfInfo;
 
@@ -54,9 +55,11 @@ struct xf_info
 	int depth;
 	int width;
 	int height;
+	int srcBpp;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
+	Pixmap drawing;
 	Visual* visual;
 	Display* display;
 	Colormap colormap;
@@ -71,7 +74,9 @@ struct xf_info
 	xfWorkArea workArea;
 	int current_desktop;
 	boolean remote_app;
+	HCLRCONV clrconv;
 	rdpRail* rail;
+	rdpCache* cache;
 
 	boolean focused;
 	boolean mouse_active;
@@ -81,6 +86,7 @@ struct xf_info
 	boolean pressed_keys[256];
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;
+	boolean complex_regions;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

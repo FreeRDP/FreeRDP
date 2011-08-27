@@ -37,6 +37,7 @@
 #include "test_librfx.h"
 #include "test_freerdp.h"
 #include "test_rail.h"
+#include "test_pcap.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
 {
@@ -187,6 +188,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("per", argv[*pindex]) == 0)
 			{
 				add_per_suite();
+			}
+			else if (strcmp("pcap", argv[*pindex]) == 0)
+			{
+				add_pcap_suite();
 			}
 			else if (strcmp("ber", argv[*pindex]) == 0)
 			{

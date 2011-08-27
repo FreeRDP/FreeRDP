@@ -73,41 +73,44 @@ void xf_end_paint(rdpUpdate* update)
 
 	if (xfi->remote_app != True)
 	{
-#if 1
-		if (gdi->primary->hdc->hwnd->invalid->null)
-			 return;
-
-		x = gdi->primary->hdc->hwnd->invalid->x;
-		y = gdi->primary->hdc->hwnd->invalid->y;
-		w = gdi->primary->hdc->hwnd->invalid->w;
-		h = gdi->primary->hdc->hwnd->invalid->h;
-
-		XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
-#else
-		int i;
-		int ninvalid;
-		HGDI_RGN* cinvalid;
-
-		if (gdi->primary->hdc->hwnd->ninvalid < 1)
-			return;
-
-		ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-		cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-
-		for (i = 0; i < ninvalid; i++)
+		if (xfi->complex_regions != True)
 		{
-			x = cinvalid[i]->x;
-			y = cinvalid[i]->y;
-			w = cinvalid[i]->w;
-			h = cinvalid[i]->h;
+			if (gdi->primary->hdc->hwnd->invalid->null)
+				return;
+
+			x = gdi->primary->hdc->hwnd->invalid->x;
+			y = gdi->primary->hdc->hwnd->invalid->y;
+			w = gdi->primary->hdc->hwnd->invalid->w;
+			h = gdi->primary->hdc->hwnd->invalid->h;
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 		}
+		else
+		{
+			int i;
+			int ninvalid;
+			HGDI_RGN cinvalid;
 
-		XFlush(xfi->display);
-#endif
+			if (gdi->primary->hdc->hwnd->ninvalid < 1)
+				return;
+
+			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+			for (i = 0; i < ninvalid; i++)
+			{
+				x = cinvalid[i].x;
+				y = cinvalid[i].y;
+				w = cinvalid[i].w;
+				h = cinvalid[i].h;
+
+				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+			}
+
+			XFlush(xfi->display);
+		}
 	}
 	else
 	{
@@ -293,6 +296,14 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xf_kbd_init(xfi);
 
+	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	xfi->clrconv->palette = NULL;
+	xfi->clrconv->alpha = 1;
+	xfi->clrconv->invert = 0;
+	xfi->clrconv->rgb555 = 0;
+
+	xfi->cache = cache_new(instance->settings);
+
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->screen_number = DefaultScreen(xfi->display);
 	xfi->screen = ScreenOfDisplay(xfi->display, xfi->screen_number);
@@ -300,6 +311,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
 	xfi->mouse_motion = False;
+	xfi->complex_regions = True;
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
@@ -381,7 +393,11 @@ boolean xf_post_connect(freerdp* instance)
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
 
-	//xf_gdi_register_update_callbacks(instance->update);
+	if (instance->settings->sw_gdi != True)
+	{
+		xfi->srcBpp = instance->settings->color_depth;
+		xf_gdi_register_update_callbacks(instance->update);
+	}
 
 	if (xfi->fullscreen)
 		xfi->decoration = False;
@@ -423,6 +439,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xfi->gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCGraphicsExposures, &gcv);
 	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
+	xfi->drawing = xfi->primary;
 
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
@@ -700,6 +717,8 @@ int main(int argc, char* argv[])
 
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
+
+	instance->settings->sw_gdi = True;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)

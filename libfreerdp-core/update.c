@@ -77,8 +77,7 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 		dstSize = cbUncompressedSize;
 		bitmap_data->length = cbCompMainBodySize;
-
-		bitmap_data->data = (uint8*) xzalloc(dstSize);
+		bitmap_data->data = (uint8*) xmalloc(dstSize);
 
 		stream_get_mark(s, srcData);
 		stream_seek(s, bitmap_data->length);
@@ -323,10 +322,15 @@ static void update_end_paint(rdpUpdate* update)
 {
 }
 
+static void update_send_surface_command(rdpUpdate* update, STREAM* s)
+{
+	rdpRdp* rdp = (rdpRdp*) update->rdp;
+	fastpath_send_fragmented_update_pdu(rdp->fastpath, s);
+}
+
 static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	rdpRdp* rdp = (rdpRdp*)update->rdp;
-
 	fastpath_send_surfcmd_surface_bits(rdp->fastpath, surface_bits_command);
 }
 
@@ -363,6 +367,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->Synchronize = update_send_synchronize;
 	update->PointerSystem = update_send_pointer_system;
 	update->SurfaceBits = update_send_surface_bits;
+	update->SurfaceCommand = update_send_surface_command;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

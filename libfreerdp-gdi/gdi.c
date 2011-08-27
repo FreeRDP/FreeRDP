@@ -308,7 +308,7 @@ inline uint32 gdi_rop3_code(uint8 code)
 
 inline void gdi_copy_mem(uint8 * d, uint8 * s, int n)
 {
-	memcpy(d, s, n);
+	memmove(d, s, n);
 }
 
 inline void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
@@ -949,7 +949,6 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;
 	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
-	gdi->hdc->complex = 1;
 
 	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
 	gdi->primary_buffer = gdi->primary->bitmap->data;
@@ -958,7 +957,9 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
 	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
-	gdi->primary->hdc->hwnd->cinvalid = NULL;
+
+	gdi->primary->hdc->hwnd->count = 32;
+	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);

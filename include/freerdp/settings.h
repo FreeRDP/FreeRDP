@@ -176,6 +176,7 @@ struct rdp_settings
 {
 	uint16 width;
 	uint16 height;
+	boolean sw_gdi;
 	boolean workarea;
 	boolean fullscreen;
 	boolean decorations;
@@ -295,6 +296,9 @@ struct rdp_settings
 	boolean rfx_codec;
 	uint8 rfx_codec_id;
 	boolean frame_acknowledge;
+
+	boolean dump_rfx;
+	char* dump_rfx_file;
 
 	boolean remote_app;
 	uint8 num_icon_caches;

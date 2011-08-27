@@ -100,6 +100,7 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
 
 STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath);
 boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s);
+boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s);
 
 boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId);
 boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd);

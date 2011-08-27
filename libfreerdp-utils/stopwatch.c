@@ -56,5 +56,15 @@ void stopwatch_reset(STOPWATCH* stopwatch)
 
 double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 {
-	return ((double)stopwatch->elapsed) / CLOCKS_PER_SEC;
+	return ((double) stopwatch->elapsed) / CLOCKS_PER_SEC;
 }
+
+void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, uint32* usec)
+{
+	double uelapsed;
+
+	*sec = ((uint32) stopwatch->elapsed) / CLOCKS_PER_SEC;
+	uelapsed = stopwatch->elapsed - ((double)(*sec) * CLOCKS_PER_SEC);
+	*usec = (uelapsed / (CLOCKS_PER_SEC / 1000000));
+}
+

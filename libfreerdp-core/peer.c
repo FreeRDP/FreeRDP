@@ -89,6 +89,10 @@ static boolean peer_recv_data_pdu(rdpPeer* peer, STREAM* s)
 			}
 			break;
 
+		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
+			mcs_send_disconnect_provider_ultimatum(peer->rdp->mcs);
+			return False;
+
 		default:
 			printf("Data PDU type %d\n", type);
 			break;
