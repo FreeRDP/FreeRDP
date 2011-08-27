@@ -101,6 +101,24 @@ boolean pcap_has_next_record(rdpPcap* pcap)
 	return True;
 }
 
+boolean pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
+{
+	if (pcap_has_next_record(pcap) != True)
+		return False;
+
+	pcap_read_record_header(pcap, &record->header);
+	record->length = record->header.incl_len;
+	record->data = xmalloc(record->length);
+
+	return True;
+}
+
+boolean pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
+{
+	fread(record->data, record->length, 1, pcap->fp);
+	return True;
+}
+
 boolean pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
 	if (pcap_has_next_record(pcap) != True)

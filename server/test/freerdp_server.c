@@ -232,6 +232,33 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	info->icon_y = y;
 }
 
+void test_peer_dump_rfx(freerdp_peer* client)
+{
+	STREAM* s;
+	rdpUpdate* update;
+	rdpPcap* pcap_rfx;
+	pcap_record record;
+
+	s = stream_new(512);
+	update = client->update;
+	client->update->pcap_rfx = pcap_open("rfx_test.pcap", False);
+	pcap_rfx = client->update->pcap_rfx;
+
+	while (pcap_has_next_record(pcap_rfx))
+	{
+		pcap_get_next_record_header(pcap_rfx, &record);
+
+		s->data = xrealloc(s->data, record.length);
+		record.data = s->data;
+		s->size = record.length;
+
+		pcap_get_next_record_content(pcap_rfx, &record);
+		s->p = s->data + s->size;
+
+		update->SurfaceCommand(update, s);
+	}
+}
+
 boolean test_peer_post_connect(freerdp_peer* client)
 {
 	/**
@@ -258,6 +285,11 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	test_peer_init(client);
 	test_peer_draw_background(client);
 	test_peer_load_icon(client);
+
+	if (client->update->dump_rfx)
+	{
+		test_peer_dump_rfx(client);
+	}
 
 	/* Return False here would stop the execution of the peer mainloop. */
 	return True;

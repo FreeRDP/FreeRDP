@@ -23,6 +23,7 @@
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/pcap.h>
+#include <freerdp/utils/stream.h>
 
 /* Common */
 
@@ -1064,6 +1065,7 @@ typedef void (*pcMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderIn
 typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
 typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
+typedef void (*pcSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
 struct rdp_update
 {
@@ -1146,6 +1148,7 @@ struct rdp_update
 	pcNonMonitoredDesktop NonMonitoredDesktop;
 
 	pcSurfaceBits SurfaceBits;
+	pcSurfaceCommand SurfaceCommand;
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;

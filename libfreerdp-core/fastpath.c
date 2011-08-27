@@ -394,7 +394,7 @@ boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	{
 		/**
 		 * If numberEvents is not provided in fpInputHeader, it will be provided
-		 * as onee additional byte here.
+		 * as one additional byte here.
 		 */
 
 		if (stream_get_left(s) < 1)
@@ -471,6 +471,36 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	stream_set_pos(s, length);
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return False;
+
+	return True;
+}
+
+boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
+{
+	uint16 length;
+	uint32 totalLength;
+	STREAM* update;
+
+	totalLength = stream_get_length(s);
+	update = fastpath_update_pdu_init(fastpath);
+
+	if (totalLength <= FASTPATH_MAX_PACKET_SIZE)
+	{
+		stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_SINGLE << 4));
+		stream_write_uint16(update, totalLength);
+		stream_write(update, s->data, totalLength);
+		return fastpath_send_update_pdu(fastpath, update);
+	}
+
+	while (totalLength > 0)
+	{
+		if (totalLength < FASTPATH_MAX_PACKET_SIZE)
+			length = totalLength;
+		else
+			length = FASTPATH_MAX_PACKET_SIZE;
+
+		totalLength -= length;
+	}
 
 	return True;
 }
