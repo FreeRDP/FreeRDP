@@ -60,16 +60,14 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 
 boolean update_recv_surfcmds(rdpUpdate* update, uint16 size, STREAM* s)
 {
+	uint8* mark;
 	uint16 cmdType;
-
-	if (update->dump_rfx)
-	{
-		pcap_add_record(update->pcap_rfx, s->p, size);
-		pcap_flush(update->pcap_rfx);
-	}
+	uint16 cmdLength;
 
 	while (size > 2)
 	{
+		stream_get_mark(s, mark);
+
 		stream_read_uint16(s, cmdType);
 		size -= 2;
 
@@ -77,16 +75,24 @@ boolean update_recv_surfcmds(rdpUpdate* update, uint16 size, STREAM* s)
 		{
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
-				size -= update_recv_surfcmd_surface_bits(update, s);
+				cmdLength = update_recv_surfcmd_surface_bits(update, s);
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
-				size -= update_recv_surfcmd_frame_marker(update, s);
+				cmdLength = update_recv_surfcmd_frame_marker(update, s);
 				break;
 
 			default:
 				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
 				return False;
+		}
+
+		size -= cmdLength;
+
+		if (update->dump_rfx)
+		{
+			pcap_add_record(update->pcap_rfx, mark, cmdLength + 2);
+			pcap_flush(update->pcap_rfx);
 		}
 	}
 	return True;
