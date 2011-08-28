@@ -298,7 +298,9 @@ struct rdp_settings
 	boolean frame_acknowledge;
 
 	boolean dump_rfx;
+	boolean play_rfx;
 	char* dump_rfx_file;
+	char* play_rfx_file;
 
 	boolean remote_app;
 	uint8 num_icon_caches;
