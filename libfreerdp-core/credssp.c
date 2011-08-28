@@ -100,43 +100,6 @@ void credssp_ntlmssp_init(rdpCredssp* credssp)
 	ntlmssp->ntlm_v2 = 0;
 }
 
-int tls_verify_certificate(CryptoCert cert,char* hostname)
-{
-	boolean ret;
-	ret=x509_verify_cert(cert);
-	if(!ret)
-	{
-		Certdata* certdata;
-		certdata=crypto_get_certdata(cert->px509,hostname);
-		Certstore* certstore=certstore_new(certdata);
-		if(match_certdata(certstore)==0)
-			return 0;
-		if(certstore->match==1)
-		{
-			crypto_cert_printinfo(cert->x509);
-			char answer;
-			while(1)
-			{
-				printf("Do you trust the above certificate? (Y/N)");
-				answer=fgetc(stdin);
-				if(answer=='y' || answer =='Y')
-				{	
-					print_certdata(certstore);break;
-				}
-				else if(answer=='n' || answer=='N')
-				{
-					/*disconnect*/break;
-				}
-			}
-		return 0;
-		}
-		else if(certstore->match==-1)
-		{
-			cert_print_error();/*disconnect*/
-		}
-		certstore_free(certstore);
-	}
-}
 /**
  * Get TLS public key.
  * @param credssp
@@ -154,7 +117,8 @@ int credssp_get_public_key(rdpCredssp* credssp)
 		printf("credssp_get_public_key: tls_get_certificate failed to return the server certificate.\n");
 		return 0;
 	}
-	tls_verify_certificate(cert,credssp->transport->settings->hostname);
+	if(tls_verify_certificate(cert,credssp->transport->settings->hostname))
+		tls_disconnect(credssp->transport->tls);
 	ret = crypto_cert_get_public_key(cert, &credssp->public_key);
 	crypto_cert_free(cert);
 

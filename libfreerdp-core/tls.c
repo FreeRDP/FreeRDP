@@ -258,7 +258,7 @@ int tls_verify_certificate(CryptoCert cert,char* hostname)
 		certdata=crypto_get_certdata(cert->px509,hostname);
 		Certstore* certstore=certstore_new(certdata);
 		if(match_certdata(certstore)==0)
-			return 0;
+			goto end;
 		if(certstore->match==1)
 		{
 			crypto_cert_printinfo(cert->x509);
@@ -273,16 +273,20 @@ int tls_verify_certificate(CryptoCert cert,char* hostname)
 				}
 				else if(answer=='n' || answer=='N')
 				{
-					/*disconnect*/break;
+					certstore_free(certstore);
+					return 1;
 				}
 			}
-		return 0;
 		}
 		else if(certstore->match==-1)
 		{
-			tls_print_cert_error();/*disconnect*/
+			tls_print_cert_error();
+			certstore_free(certstore);
+			return 1;
 		}
+		end:
 		certstore_free(certstore);
+		return 0;
 	}
 }
 
