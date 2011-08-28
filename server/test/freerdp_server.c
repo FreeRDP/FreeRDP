@@ -286,7 +286,7 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	test_peer_draw_background(client);
 	test_peer_load_icon(client);
 
-	//client->update->dump_rfx = True;
+	client->update->dump_rfx = True;
 
 	if (client->update->dump_rfx)
 	{

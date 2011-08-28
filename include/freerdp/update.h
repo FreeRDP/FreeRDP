@@ -1076,6 +1076,7 @@ struct rdp_update
 	void* param2;
 
 	boolean dump_rfx;
+	boolean play_rfx;
 	rdpPcap* pcap_rfx;
 
 	pcBeginPaint BeginPaint;

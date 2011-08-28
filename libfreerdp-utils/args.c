@@ -293,6 +293,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->dump_rfx_file = xstrdup(argv[index]);
 			settings->dump_rfx = True;
 		}
+		else if (strcmp("--play-rfx", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing file name\n");
+				return -1;
+			}
+			settings->play_rfx_file = xstrdup(argv[index]);
+			settings->play_rfx = True;
+		}
 		else if (strcmp("-m", argv[index]) == 0)
 		{
 			settings->mouse_motion = 0;

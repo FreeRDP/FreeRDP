@@ -20,6 +20,7 @@
 #include "rdp.h"
 #include "input.h"
 #include "update.h"
+#include "surface.h"
 #include "transport.h"
 #include "connection.h"
 
@@ -46,6 +47,37 @@ boolean freerdp_connect(freerdp* instance)
 		}
 
 		IFCALL(instance->PostConnect, instance);
+
+		if (instance->settings->play_rfx)
+		{
+			STREAM* s;
+			rdpUpdate* update;
+			pcap_record record;
+
+			s = stream_new(1024);
+			instance->update->play_rfx = instance->settings->play_rfx;
+			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, False);
+			update = instance->update;
+
+			while (pcap_has_next_record(update->pcap_rfx))
+			{
+				pcap_get_next_record_header(update->pcap_rfx, &record);
+
+				s->data = xrealloc(s->data, record.length);
+				record.data = s->data;
+				s->size = record.length;
+
+				pcap_get_next_record_content(update->pcap_rfx, &record);
+				stream_set_pos(s, 0);
+
+				update->BeginPaint(update);
+				update_recv_surfcmds(update, s->size, s);
+				update->EndPaint(update);
+			}
+
+			xfree(s->data);
+			return True;
+		}
 	}
 
 	return status;

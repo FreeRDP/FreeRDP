@@ -149,7 +149,7 @@ rdpPcap* pcap_open(char* name, boolean write)
 			pcap->header.version_minor = 4;
 			pcap->header.thiszone = 0;
 			pcap->header.sigfigs = 0;
-			pcap->header.snaplen = 65535;
+			pcap->header.snaplen = 0xFFFFFFFF;
 			pcap->header.network = 0;
 			pcap_write_header(pcap, &pcap->header);
 		}
