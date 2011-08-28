@@ -254,14 +254,14 @@ int tls_verify_certificate(CryptoCert cert,char* hostname)
 	ret=x509_verify_cert(cert);
 	if(!ret)
 	{
-		Certdata* certdata;
+		rdpCertdata* certdata;
 		certdata=crypto_get_certdata(cert->px509,hostname);
-		Certstore* certstore=certstore_new(certdata);
+		rdpCertstore* certstore=certstore_new(certdata);
 		if(match_certdata(certstore)==0)
 			goto end;
 		if(certstore->match==1)
 		{
-			crypto_cert_printinfo(cert->x509);
+			crypto_cert_printinfo(cert->px509);
 			char answer;
 			while(1)
 			{
@@ -286,8 +286,8 @@ int tls_verify_certificate(CryptoCert cert,char* hostname)
 		}
 		end:
 		certstore_free(certstore);
-		return 0;
 	}
+	return 0;
 }
 
 void tls_print_cert_error()
