@@ -23,7 +23,7 @@ struct rdp_certstore
 	char* path;
 	char* file;
 	char* home;
-  int match;
+	int match;
 	struct rdp_certdata* certdata;
 };
 
