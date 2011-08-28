@@ -228,10 +228,10 @@ boolean x509_verify_cert(CryptoCert cert)
 	X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 	cert_loc=get_local_certloc();
 	if(cert_loc!=NULL)
-  {
-	  X509_LOOKUP_add_dir(lookup,cert_loc,X509_FILETYPE_ASN1);
-	  xfree(cert_loc);
-  }
+	{
+		X509_LOOKUP_add_dir(lookup,cert_loc,X509_FILETYPE_ASN1);
+		xfree(cert_loc);
+	}
 	csc = X509_STORE_CTX_new();
 	if (csc == NULL)
 		goto end;
