@@ -142,7 +142,7 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 	}
 }
 
-static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16 size, STREAM* s)
+static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
 	switch (updateCode)
 	{
@@ -195,13 +195,14 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint16
 
 static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
+	uint16 size;
+	int next_pos;
+	uint32 totalSize;
 	uint8 updateCode;
 	uint8 fragmentation;
 	uint8 compression;
 	uint8 compressionFlags;
-	uint16 size;
 	STREAM* update_stream;
-	int next_pos;
 
 	fastpath_read_update_header(s, &updateCode, &fragmentation, &compression);
 
@@ -223,14 +224,13 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	update_stream = NULL;
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
+		totalSize = size;
 		update_stream = s;
 	}
 	else
 	{
 		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
-		{
 			stream_set_pos(fastpath->updateData, 0);
-		}
 
 		stream_check_size(fastpath->updateData, size);
 		stream_copy(fastpath->updateData, s, size);
@@ -238,13 +238,13 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
 			update_stream = fastpath->updateData;
-			size = stream_get_length(update_stream);
+			totalSize = stream_get_length(update_stream);
 			stream_set_pos(update_stream, 0);
 		}
 	}
 
 	if (update_stream)
-		fastpath_recv_update(fastpath, updateCode, size, update_stream);
+		fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
 
 	stream_set_pos(s, next_pos);
 }
@@ -499,7 +499,6 @@ boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	int fragment;
 	uint16 length;
 	uint16 maxLength;
-	uint16 fragLength;
 	uint32 totalLength;
 	uint8 fragmentation;
 	STREAM* update;
@@ -512,7 +511,6 @@ boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	{
 		update = fastpath_update_pdu_init(fastpath);
 		length = MIN(maxLength, totalLength);
-		fragLength = length - 3;
 		totalLength -= length;
 
 		if (totalLength == 0)
@@ -522,8 +520,8 @@ boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
 
 		fastpath_write_update_header(update, FASTPATH_UPDATETYPE_SURFCMDS, fragmentation, 0);
 		stream_write_uint16(update, length);
-		stream_write(update, s->p, fragLength);
-		stream_seek(s, fragLength);
+		stream_write(update, s->p, length);
+		stream_seek(s, length);
 
 		fastpath_send_update_pdu(fastpath, update);
 	}

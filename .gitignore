@@ -30,9 +30,6 @@ docs/api
 ipch
 Debug
 
-# test files
-*.pcap
-
 # Binaries
 *.a
 *.so
