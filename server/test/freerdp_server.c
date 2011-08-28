@@ -286,6 +286,8 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	test_peer_draw_background(client);
 	test_peer_load_icon(client);
 
+	//client->update->dump_rfx = True;
+
 	if (client->update->dump_rfx)
 	{
 		test_peer_dump_rfx(client);
@@ -324,13 +326,13 @@ void test_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uin
 
 static void* test_peer_mainloop(void* arg)
 {
-	freerdp_peer* client = (freerdp_peer*)arg;
 	int i;
 	int fds;
 	int max_fds;
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	freerdp_peer* client = (freerdp_peer*) arg;
 
 	memset(rfds, 0, sizeof(rfds));
 

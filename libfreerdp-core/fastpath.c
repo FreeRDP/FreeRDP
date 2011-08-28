@@ -457,9 +457,10 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
 	uint16 length;
 
 	length = stream_get_length(s);
+
 	if (length > FASTPATH_MAX_PACKET_SIZE)
 	{
-		printf("Maximum FastPath Update PDU length is %d\n", FASTPATH_MAX_PACKET_SIZE);
+		printf("Maximum FastPath Update PDU length is %d (actual:%d)\n", FASTPATH_MAX_PACKET_SIZE, length);
 		return False;
 	}
 
@@ -477,29 +478,64 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
 
 boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
 {
+	int fragment;
 	uint16 length;
+	uint16 maxLength;
 	uint32 totalLength;
 	STREAM* update;
 
 	totalLength = stream_get_length(s);
-	update = fastpath_update_pdu_init(fastpath);
+	maxLength = FASTPATH_MAX_PACKET_SIZE - 6;
 
-	if (totalLength <= FASTPATH_MAX_PACKET_SIZE)
+	if (totalLength <= maxLength)
 	{
+		update = fastpath_update_pdu_init(fastpath);
 		stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_SINGLE << 4));
 		stream_write_uint16(update, totalLength);
 		stream_write(update, s->data, totalLength);
 		return fastpath_send_update_pdu(fastpath, update);
 	}
 
+	fragment = 0;
 	while (totalLength > 0)
 	{
-		if (totalLength < FASTPATH_MAX_PACKET_SIZE)
+		if (totalLength < maxLength)
 			length = totalLength;
 		else
-			length = FASTPATH_MAX_PACKET_SIZE;
+			length = maxLength;
 
 		totalLength -= length;
+		update = fastpath_update_pdu_init(fastpath);
+
+		if (fragment == 0)
+		{
+			stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_FIRST << 4));
+			stream_write_uint16(update, length);
+			stream_write(update, s->p, length);
+			fastpath_send_update_pdu(fastpath, update);
+			s->p += length;
+		}
+		else
+		{
+			if (totalLength == 0)
+			{
+				stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_LAST << 4));
+				stream_write_uint16(update, length);
+				stream_write(update, s->p, length);
+				fastpath_send_update_pdu(fastpath, update);
+				s->p += length;
+			}
+			else
+			{
+				stream_write_uint8(update, FASTPATH_UPDATETYPE_SURFCMDS | (FASTPATH_FRAGMENT_NEXT << 4));
+				stream_write_uint16(update, length);
+				stream_write(update, s->p, length);
+				fastpath_send_update_pdu(fastpath, update);
+				s->p += length;
+			}
+		}
+
+		fragment++;
 	}
 
 	return True;
