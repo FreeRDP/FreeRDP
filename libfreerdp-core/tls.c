@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *		 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -240,48 +240,63 @@ rdpTls* tls_new()
 		tls->connect = tls_connect;
 		tls->accept = tls_accept;
 		tls->disconnect = tls_disconnect;
-
+	
 		SSL_load_error_strings();
 		SSL_library_init();
 	}
 
 	return tls;
 }
-boolean tls_verify_cert(CryptoCert cert)
+
+int tls_verify_certificate(CryptoCert cert,char* hostname)
 {
-    X509 *xcert=cert->px509;
-    char *cert_loc;
-    int ret=0;
-    X509_STORE *cert_ctx=NULL;
-    X509_LOOKUP *lookup=NULL;
-    X509_STORE_CTX *csc;
-    cert_ctx=X509_STORE_new();
-    if (cert_ctx == NULL)
-        goto end;
-    OpenSSL_add_all_algorithms();
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
-    if (lookup == NULL)
-        goto end;
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
-    if (lookup == NULL)
-        goto end;
-    X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
-    cert_loc=get_local_certloc();
-    X509_LOOKUP_add_dir(lookup,cert_loc,X509_FILETYPE_ASN1);
-    xfree(cert_loc);
-    csc = X509_STORE_CTX_new();
-    if (csc == NULL)
-        goto end;
-    X509_STORE_set_flags(cert_ctx, 0);
-    if(!X509_STORE_CTX_init(csc,cert_ctx,xcert,0))
-        goto end;
-    int i=X509_verify_cert(csc);
-    X509_STORE_CTX_free(csc);
-    X509_STORE_free(cert_ctx);
-    ret=0;
-    end:
-    ret = (i > 0);
-    return(ret);
+	boolean ret;
+	ret=x509_verify_cert(cert);
+	if(!ret)
+	{
+		Certdata* certdata;
+		certdata=crypto_get_certdata(cert->px509,hostname);
+		Certstore* certstore=certstore_new(certdata);
+		if(match_certdata(certstore)==0)
+			return 0;
+		if(certstore->match==1)
+		{
+			crypto_cert_printinfo(cert->x509);
+			char answer;
+			while(1)
+			{
+				printf("Do you trust the above certificate? (Y/N)");
+				answer=fgetc(stdin);
+				if(answer=='y' || answer =='Y')
+				{	
+					print_certdata(certstore);break;
+				}
+				else if(answer=='n' || answer=='N')
+				{
+					/*disconnect*/break;
+				}
+			}
+		return 0;
+		}
+		else if(certstore->match==-1)
+		{
+			tls_print_cert_error();/*disconnect*/
+		}
+		certstore_free(certstore);
+	}
+}
+
+void tls_print_cert_error()
+{
+	printf("#####################################\n");
+	printf("##############WARNING################\n");
+	printf("#####################################\n");
+	printf("The thumbprint of certificate recieved\n");
+	printf("did not match the stored thumbprint.You\n");
+	printf("might be a victim of MAN in the MIDDLE\n");
+	printf("ATTACK.It is also possible that server's\n");
+	printf("certificate have been changed.In that case\n");
+	printf("contact your server administrator\n");
 }
 
 void tls_free(rdpTls* tls)

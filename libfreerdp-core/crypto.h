@@ -46,6 +46,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/certstore.h>
 
 struct crypto_sha1_struct
 {
@@ -87,6 +88,7 @@ CryptoCert crypto_cert_read(uint8* data, uint32 length);
 char* cypto_cert_fingerprint(X509* xcert);
 void crypto_cert_printinfo(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
+boolean x509_verify_cert(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 

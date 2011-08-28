@@ -10,6 +10,7 @@ typedef struct rdp_certdata rdpCertdata;
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
+
 struct rdp_certdata
 {
     char* thumbprint;
@@ -24,11 +25,17 @@ struct rdp_certstore
   int match;
 	struct rdp_certdata* certdata;
 };
+
 void certstore_create(rdpCertstore* certstore);
 void certstore_open(rdpCertstore* certstore);
 void certstore_load(rdpCertstore* certstore);
 void certstore_close(rdpcertstore* certstore);
 char* get_local_certloc();
+rdpCertdata* certdata_new(char* host_name,char* fingerprint);
+void certdata_free(rdpCertdata* certdata);
 void certstore_init(rdpCertstore* certstore);
 rdpCertstore* certstore_new(rdpCertdata* certdata);
-void cerstore_free(rdpCertsore* certstore);
+void certstore_free(rdpCertsore* certstore);
+int match_certdata(rdpCertdata* certdata);
+void print_certdata(rdpCertstore* certstore);
+#endif /* __CERTSTORE_UTILS_H */

@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *		 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,9 +28,9 @@
 
 /**
  * TSRequest ::= SEQUENCE {
- * 	version    [0] INTEGER,
+ * 	version		[0] INTEGER,
  * 	negoTokens [1] NegoData OPTIONAL,
- * 	authInfo   [2] OCTET STRING OPTIONAL,
+ * 	authInfo	 [2] OCTET STRING OPTIONAL,
  * 	pubKeyAuth [3] OCTET STRING OPTIONAL
  * }
  *
@@ -41,29 +41,29 @@
  * }
  *
  * TSCredentials ::= SEQUENCE {
- * 	credType    [0] INTEGER,
+ * 	credType		[0] INTEGER,
  * 	credentials [1] OCTET STRING
  * }
  *
  * TSPasswordCreds ::= SEQUENCE {
- * 	domainName  [0] OCTET STRING,
- * 	userName    [1] OCTET STRING,
- * 	password    [2] OCTET STRING
+ * 	domainName	[0] OCTET STRING,
+ * 	userName		[1] OCTET STRING,
+ * 	password		[2] OCTET STRING
  * }
  *
  * TSSmartCardCreds ::= SEQUENCE {
- * 	pin        [0] OCTET STRING,
- * 	cspData    [1] TSCspDataDetail,
- * 	userHint   [2] OCTET STRING OPTIONAL,
+ * 	pin				[0] OCTET STRING,
+ * 	cspData		[1] TSCspDataDetail,
+ * 	userHint	 [2] OCTET STRING OPTIONAL,
  * 	domainHint [3] OCTET STRING OPTIONAL
  * }
  *
  * TSCspDataDetail ::= SEQUENCE {
- * 	keySpec       [0] INTEGER,
- * 	cardName      [1] OCTET STRING OPTIONAL,
- * 	readerName    [2] OCTET STRING OPTIONAL,
+ * 	keySpec			 [0] INTEGER,
+ * 	cardName			[1] OCTET STRING OPTIONAL,
+ * 	readerName		[2] OCTET STRING OPTIONAL,
  * 	containerName [3] OCTET STRING OPTIONAL,
- * 	cspName       [4] OCTET STRING OPTIONAL
+ * 	cspName			 [4] OCTET STRING OPTIONAL
  * }
  *
  */
@@ -100,6 +100,43 @@ void credssp_ntlmssp_init(rdpCredssp* credssp)
 	ntlmssp->ntlm_v2 = 0;
 }
 
+int tls_verify_certificate(CryptoCert cert,char* hostname)
+{
+	boolean ret;
+	ret=x509_verify_cert(cert);
+	if(!ret)
+	{
+		Certdata* certdata;
+		certdata=crypto_get_certdata(cert->px509,hostname);
+		Certstore* certstore=certstore_new(certdata);
+		if(match_certdata(certstore)==0)
+			return 0;
+		if(certstore->match==1)
+		{
+			crypto_cert_printinfo(cert->x509);
+			char answer;
+			while(1)
+			{
+				printf("Do you trust the above certificate? (Y/N)");
+				answer=fgetc(stdin);
+				if(answer=='y' || answer =='Y')
+				{	
+					print_certdata(certstore);break;
+				}
+				else if(answer=='n' || answer=='N')
+				{
+					/*disconnect*/break;
+				}
+			}
+		return 0;
+		}
+		else if(certstore->match==-1)
+		{
+			cert_print_error();/*disconnect*/
+		}
+		certstore_free(certstore);
+	}
+}
 /**
  * Get TLS public key.
  * @param credssp
@@ -109,7 +146,7 @@ int credssp_get_public_key(rdpCredssp* credssp)
 {
 	int ret;
 	CryptoCert cert;
-
+	
 	cert = tls_get_certificate(credssp->transport->tls);
 
 	if (cert == NULL)
@@ -117,7 +154,7 @@ int credssp_get_public_key(rdpCredssp* credssp)
 		printf("credssp_get_public_key: tls_get_certificate failed to return the server certificate.\n");
 		return 0;
 	}
-
+	tls_verify_certificate(cert,credssp->transport->settings->hostname);
 	ret = crypto_cert_get_public_key(cert, &credssp->public_key);
 	crypto_cert_free(cert);
 
