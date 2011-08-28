@@ -75,7 +75,8 @@ void certstore_init(rdpCertstore* certstore)
 	int length;
 	char* home_path;
 	struct stat stat_info;
-
+  
+  certstore->match=1;
 	home_path = getenv("HOME");
 
 	if (home_path == NULL)
@@ -133,4 +134,52 @@ void cerstore_free(rdpCertsore* certstore)
     xfree(certstore->home);
     xfree(certstore);
   }
+}
+
+int match_certdata(rdpCertdata* certdata)
+{
+  char *host;
+  char *p;
+  char *thumb_print;
+  int length;
+  unsigned char c;
+  FILE* cfp;
+  rdpCertstore* certstore=certstore_new(certdata);
+  cfp=certstore->fp;
+  length=strlen(certdata->thumbprint);
+  for(;;)
+  {
+    if((int)fread(host,sizeof(char),strlen(certdata->hostname),cfp) < strlen(certdata->hostname))
+      break;
+    if((!strcmp(host,certdata->hostname)) && ((c=fgetc(cfp))==' ' || c=='\t') )
+      {
+        ungetc(c,cfp);
+        while((c=fgetc(cfp))==' ' || c=='\t');
+        if(c==EOF)
+          break;
+        ungetc(c,cfp);
+        thumb_print=xzalloc(length+1);
+        p=thumb_print;
+        while((p-thumb_print < length) && (*p=fgetc(cfp))!=EOF && *p!='\n' && *p==certdata->thumbprint+p-thumb_print)
+          p++;
+        if(p-thumb_print==length)
+          certdata->match=0;
+        else
+          certdata->match=-1;
+        break;
+      }
+    else
+      while(c!='\n'||c!=EOF)
+        c=fgetc(cfp);
+      if(c==EOF)
+        break;
+      else
+        ungetc(c,cfp);
+  }
+  return certdata->match;
+}
+void print_certdata(rdpCertstore* certstore)
+{
+  lseek(certstore->fp,0,SEEK_END);
+  fprintf(certstore->fp,"%s %s\n",certstore->certdata->hostname,certstore->certdata->thumbprint);
 }
