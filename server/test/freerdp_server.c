@@ -30,6 +30,8 @@
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/listener.h>
 
+static char* test_pcap_file = NULL;
+
 /* HL1, LH1, HH1, HL2, LH2, HH2, HL3, LH3, HH3, LL3 */
 static const unsigned int test_quantization_values[] =
 {
@@ -183,6 +185,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	RFX_RECT rect;
 	STREAM* s;
 
+	if (client->update->dump_rfx)
+		return;
 	if (!client->settings->rfx_codec || !info)
 		return;
 	if (info->icon_width < 1)
@@ -241,7 +245,7 @@ void test_peer_dump_rfx(freerdp_peer* client)
 
 	s = stream_new(512);
 	update = client->update;
-	client->update->pcap_rfx = pcap_open("rfx_test.pcap", False);
+	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
 	pcap_rfx = client->update->pcap_rfx;
 
 	while (pcap_has_next_record(pcap_rfx))
@@ -283,14 +287,16 @@ boolean test_peer_post_connect(freerdp_peer* client)
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 	test_peer_init(client);
-	test_peer_draw_background(client);
 	test_peer_load_icon(client);
 
-	client->update->dump_rfx = True;
-
-	if (client->update->dump_rfx)
+	if (test_pcap_file != NULL)
 	{
+		client->update->dump_rfx = True;
 		test_peer_dump_rfx(client);
+	}
+	else
+	{
+		test_peer_draw_background(client);
 	}
 
 	/* Return False here would stop the execution of the peer mainloop. */
@@ -486,8 +492,11 @@ int main(int argc, char* argv[])
 
 	instance->PeerAccepted = test_peer_accepted;
 
+	if (argc > 1)
+		test_pcap_file = argv[1];
+
 	/* Open the server socket and start listening. */
-	if (instance->Open(instance, (argc > 1 ? argv[1] : NULL), 3389))
+	if (instance->Open(instance, NULL, 3389))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
