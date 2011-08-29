@@ -88,8 +88,8 @@ inline void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 frag
 	uint8 updateHeader = 0;
 
 	updateHeader |= updateCode & 0x0F;
-	updateHeader |= (fragmentation << 4) & 0x03;
-	updateHeader |= (compression << 6) & 0x03;
+	updateHeader |= (fragmentation & 0x03) << 4;
+	updateHeader |= (compression & 0x03) << 6;
 	stream_write_uint8(s, updateHeader);
 }
 
