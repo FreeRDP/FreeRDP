@@ -41,7 +41,6 @@ struct rdp_tls
 	TlsConnect connect;
 	TlsAccept accept;
 	TlsDisconnect disconnect;
-	struct rdp_settings* settings;
 };
 
 boolean tls_connect(rdpTls* tls);
