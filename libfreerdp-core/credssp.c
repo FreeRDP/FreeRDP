@@ -25,12 +25,11 @@
 #include "ntlmssp.h"
 
 #include "credssp.h"
-
 /**
  * TSRequest ::= SEQUENCE {
- * 	version		[0] INTEGER,
+ * 	version    [0] INTEGER,
  * 	negoTokens [1] NegoData OPTIONAL,
- * 	authInfo	 [2] OCTET STRING OPTIONAL,
+ * 	authInfo   [2] OCTET STRING OPTIONAL,
  * 	pubKeyAuth [3] OCTET STRING OPTIONAL
  * }
  *
@@ -41,29 +40,29 @@
  * }
  *
  * TSCredentials ::= SEQUENCE {
- * 	credType		[0] INTEGER,
+ * 	credType    [0] INTEGER,
  * 	credentials [1] OCTET STRING
  * }
  *
  * TSPasswordCreds ::= SEQUENCE {
- * 	domainName	[0] OCTET STRING,
- * 	userName		[1] OCTET STRING,
- * 	password		[2] OCTET STRING
+ * 	domainName  [0] OCTET STRING,
+ * 	userName    [1] OCTET STRING,
+ * 	password    [2] OCTET STRING
  * }
  *
  * TSSmartCardCreds ::= SEQUENCE {
- * 	pin				[0] OCTET STRING,
- * 	cspData		[1] TSCspDataDetail,
- * 	userHint	 [2] OCTET STRING OPTIONAL,
+ * 	pin        [0] OCTET STRING,
+ * 	cspData    [1] TSCspDataDetail,
+ * 	userHint   [2] OCTET STRING OPTIONAL,
  * 	domainHint [3] OCTET STRING OPTIONAL
  * }
  *
  * TSCspDataDetail ::= SEQUENCE {
- * 	keySpec			 [0] INTEGER,
- * 	cardName			[1] OCTET STRING OPTIONAL,
- * 	readerName		[2] OCTET STRING OPTIONAL,
+ * 	keySpec       [0] INTEGER,
+ * 	cardName      [1] OCTET STRING OPTIONAL,
+ * 	readerName    [2] OCTET STRING OPTIONAL,
  * 	containerName [3] OCTET STRING OPTIONAL,
- * 	cspName			 [4] OCTET STRING OPTIONAL
+ * 	cspName       [4] OCTET STRING OPTIONAL
  * }
  *
  */

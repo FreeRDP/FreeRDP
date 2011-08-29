@@ -196,12 +196,12 @@ int match_certdata(rdpCertstore* certstore)
 			break;
 		}
 		else
-			while(c!='\n'||c!=EOF)
+		{
+			while(c!='\n' && c!=EOF)
 				c=fgetc(cfp);
 			if(c==EOF)
 				break;
-			else
-				ungetc(c,cfp);
+		}
 	}
 	xfree(host);
 	return certstore->match;
