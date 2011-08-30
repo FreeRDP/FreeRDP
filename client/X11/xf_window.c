@@ -41,9 +41,6 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
-void xf_ReferenceWindow(xfInfo* xfi, xfWindow* window);
-void xf_DereferenceWindow(xfInfo* xfi, xfWindow* window);
-
 void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, long d1, long d2, long d3)
 {
 	XEvent xevent;
@@ -162,42 +159,37 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 	window->decorations = show;
 }
 
+void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window)
+{
+	Atom window_state[2];
+
+	window_state[0] = xfi->_NET_WM_STATE_SKIP_PAGER;
+	window_state[1] = xfi->_NET_WM_STATE_SKIP_TASKBAR;
+
+	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_STATE,
+		XA_ATOM, 32, PropModeReplace, (uint8*) &window_state, 2);
+}
+
 void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style)
 {
 	Atom window_type;
 
 	window_type = xfi->_NET_WM_WINDOW_TYPE_NORMAL;
 
-	if (((style & WS_POPUP) !=0) ||
-		((style & WS_DLGFRAME) != 0) ||
-		((ex_style & WS_EX_DLGMODALFRAME) != 0)
-		)
+	if ((style & WS_POPUP) || (style & WS_DLGFRAME) || (ex_style & WS_EX_DLGMODALFRAME))
 	{
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 	}
-	else if ((ex_style & WS_EX_TOOLWINDOW) != 0)
+
+	if (ex_style & WS_EX_TOOLWINDOW)
 	{
+		xf_SetWindowUnlisted(xfi, window);
 		window_type = xfi->_NET_WM_WINDOW_TYPE_UTILITY;
 	}
 
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_WINDOW_TYPE,
-		xfi->_NET_WM_WINDOW_TYPE, 32, PropModeReplace, (unsigned char*)&window_type, 1);
+		XA_ATOM, 32, PropModeReplace, (uint8*) &window_type, 1);
 }
-
-void xf_SetWindowChildState(xfInfo* xfi, xfWindow* window)
-{
-	Atom window_state[2];
-
-	if (window->parent != NULL)
-	{
-		window_state[0] = xfi->_NET_WM_STATE_SKIP_PAGER;
-		window_state[1] = xfi->_NET_WM_STATE_SKIP_TASKBAR;
-
-		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_STATE,
-			xfi->_NET_WM_STATE, 32, PropModeReplace, (unsigned char*)&window_state, 2);
-	}
-}
-
 
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 {
@@ -295,36 +287,19 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		XGCValues gcv;
 		int input_mask;
 		XClassHint* class_hints;
-		Window parent_handle;
-		int lx;
-		int ly;
 
 		window->ref_count = 0;
 		window->decorations = False;
 		window->fullscreen = False;
 		window->parent = parent;
 
-		lx = x;
-		ly = y;
-		parent_handle = RootWindowOfScreen(xfi->screen);
-
-		if (window->parent != NULL)
-		{
-			lx = x - window->parent->left;
-			ly = y - window->parent->top;
-			parent_handle = parent->handle;
-		}
-
-		window->handle = XCreateWindow(xfi->display, parent_handle,
-			lx, ly, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
+		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
+			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel, &xfi->attribs);
 
-		xf_ReferenceWindow(xfi, window);
-		xf_ReferenceWindow(xfi, window->parent);
-
 		xf_SetWindowDecorations(xfi, window, window->decorations);
-		xf_SetWindowChildState(xfi, window);
+		xf_SetWindowUnlisted(xfi, window);
 
 		class_hints = XAllocClassHint();
 
@@ -352,10 +327,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
 
-		printf("xf_CreateWindow: h=0x%X p=0x%X x=%d y=%d w=%d h=%d\n", (uint32)window->handle,
-				(window->parent != NULL) ? (uint32)window->parent->handle : 0,
-				x, y, width, height);
-
 		xf_MoveWindow(xfi, window, x, y, width, height);
 	}
 
@@ -364,37 +335,19 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
-	int lx, ly;
 	Pixmap surface;
 
 	if ((width * height) < 1)
 		return;
 
-	printf("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d\n",
-			(uint32) window->handle, x, y, width, height);
-
 	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
-	if (window->parent != NULL)
-	{
-		lx = x - window->parent->left;
-		ly = y - window->parent->top;
-	}
-	else
-	{
-		lx = x;
-		ly = y;
-	}
-
-	printf("xf_MoveWindow: AFTER correctness h=0x%X x=%d y=%d lx=%d ly=%d w=%d h=%d \n",
-			(uint32) window->handle, x, y, lx, ly, width, height);
-
 	if (window->width == width && window->height == height)
-		XMoveWindow(xfi->display, window->handle, lx, ly);
+		XMoveWindow(xfi->display, window->handle, x, y);
 	else if (window->left == x && window->top == y)
 		XResizeWindow(xfi->display, window->handle, width, height);
 	else
-		XMoveResizeWindow(xfi->display, window->handle, lx, ly, width, height);
+		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
 
 	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
@@ -490,42 +443,41 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	xfree(xrects);
 }
 
-void xf_ReferenceWindow(xfInfo* xfi, xfWindow* window)
+void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)
 {
-	if (window == NULL) return;
-	window->ref_count++;
-}
+	int i;
+	XRectangle* xrects;
 
-void xf_DereferenceWindow(xfInfo* xfi, xfWindow* window)
-{
-	if (window == NULL) return;
+	xrects = xmalloc(sizeof(XRectangle) * nrects);
 
-	window->ref_count--;
-	if (window->ref_count == 0)
+	for (i = 0; i < nrects; i++)
 	{
-		printf("xf_DerefrenceWindow: destroying h=0x%X p=0x%X\n", (uint32)window->handle,
-				(window->parent != NULL) ? (uint32)window->parent->handle : 0);
-
-		if (window->gc)
-			XFreeGC(xfi->display, window->gc);
-		if (window->surface)
-			XFreePixmap(xfi->display, window->surface);
-		if (window->handle)
-		{
-			XUnmapWindow(xfi->display, window->handle);
-			XDestroyWindow(xfi->display, window->handle);
-		}
-		xfree(window);
+		xrects[i].x = rects[i].left;
+		xrects[i].y = rects[i].top;
+		xrects[i].width = rects[i].right - rects[i].left;
+		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
+
+#ifdef WITH_XEXT
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+#endif
+
+	xfree(xrects);
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
-	xfWindow* parent = window->parent;
+	if (window->gc)
+		XFreeGC(xfi->display, window->gc);
 
-	printf("xf_DestroyWindow: h=0x%X p=0x%X\n", (uint32)window->handle,
-			(window->parent != NULL) ? (uint32)window->parent->handle : 0);
+	if (window->surface)
+		XFreePixmap(xfi->display, window->surface);
 
-	xf_DereferenceWindow(xfi, window);
-	xf_DereferenceWindow(xfi, parent);
+	if (window->handle)
+	{
+		XUnmapWindow(xfi->display, window->handle);
+		XDestroyWindow(xfi->display, window->handle);
+	}
+
+	xfree(window);
 }

@@ -343,7 +343,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	if (xfi->mouse_active && (app != True))
 		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, True);
+	//xf_rail_send_activate(xfi, event->xany.window, True);
 	xf_kbd_focus_in(xfi);
 
 	return True;
@@ -359,7 +359,7 @@ boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, False);
+	//xf_rail_send_activate(xfi, event->xany.window, False);
 
 	return True;
 }
