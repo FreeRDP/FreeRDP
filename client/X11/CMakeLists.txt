@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp
@@ -34,15 +35,19 @@ add_executable(xfreerdp
 	xfreerdp.h)
 
 if(WITH_MANPAGES)
-	add_custom_command(OUTPUT xfreerdp.1
-		COMMAND xmlto man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
-		DEPENDS xfreerdp.1.xml)
+	if(XMLTO_FOUND)
+		add_custom_command(OUTPUT xfreerdp.1
+			COMMAND ${XMLTO_EXECUTABLE} man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
+			DEPENDS xfreerdp.1.xml)
 
-	add_custom_target(xfreerdp.manpage ALL
-		DEPENDS xfreerdp.1)
+		add_custom_target(xfreerdp.manpage ALL
+			DEPENDS xfreerdp.1)
 
-	install(FILES xfreerdp.1 DESTINATION share/man/man1)
-endif()
+		install(FILES xfreerdp.1 DESTINATION share/man/man1)
+	else(XMLTO_FOUND)
+		message(WARNING "WITH_MANPAGES was set, but xmlto was not found. man-pages will not be installed")
+	endif(XMLTO_FOUND)
+endif(WITH_MANPAGES)
 
 find_package(Xinerama)
 if(XINERAMA_FOUND)
