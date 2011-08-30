@@ -32,7 +32,18 @@ add_executable(xfreerdp
 	xf_window.h
 	xfreerdp.c
 	xfreerdp.h)
-	
+
+if(WITH_MANPAGES)
+	add_custom_command(OUTPUT xfreerdp.1
+		COMMAND xmlto man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
+		DEPENDS xfreerdp.1.xml)
+
+	add_custom_target(xfreerdp.manpage ALL
+		DEPENDS xfreerdp.1)
+
+	install(FILES xfreerdp.1 DESTINATION share/man/man1)
+endif()
+
 find_package(Xinerama)
 if(XINERAMA_FOUND)
 	add_definitions(-DWITH_XINERAMA)
@@ -63,3 +74,4 @@ target_link_libraries(xfreerdp freerdp-utils)
 target_link_libraries(xfreerdp ${X11_LIBRARIES})
 
 install(TARGETS xfreerdp DESTINATION bin)
+
