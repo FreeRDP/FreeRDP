@@ -111,7 +111,7 @@ if(APPLE)
 endif()
 
 # Build CUnit
-find_package(CUnit)
+find_optional_package(CUnit)
 if(CUNIT_FOUND)
    add_subdirectory(cunit)
    enable_testing()
