@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp
@@ -32,26 +33,41 @@ add_executable(xfreerdp
 	xf_window.h
 	xfreerdp.c
 	xfreerdp.h)
-	
+
+if(WITH_MANPAGES)
+	if(XMLTO_FOUND)
+		add_custom_command(OUTPUT xfreerdp.1
+			COMMAND ${XMLTO_EXECUTABLE} man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
+			DEPENDS xfreerdp.1.xml)
+
+		add_custom_target(xfreerdp.manpage ALL
+			DEPENDS xfreerdp.1)
+
+		install(FILES xfreerdp.1 DESTINATION share/man/man1)
+	else(XMLTO_FOUND)
+		message(WARNING "WITH_MANPAGES was set, but xmlto was not found. man-pages will not be installed")
+	endif(XMLTO_FOUND)
+endif(WITH_MANPAGES)
+
 find_package(Xinerama)
 if(XINERAMA_FOUND)
-	add_definitions(-DWITH_XINERAMA)
+	add_definitions(-DWITH_XINERAMA -DWITH_XEXT)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
 endif()
 
 find_package(Xext)
-if(Xext_FOUND)
+if(XEXT_FOUND)
 	add_definitions(-DWITH_XEXT)
-	include_directories(${Xext_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
+	include_directories(${XEXT_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${XEXT_LIBRARIES})
 endif()
 
 find_package(Xcursor)
 if(Xcursor_FOUND)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${Xcursor_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${Xext_LIBRARIES})
+	target_link_libraries(xfreerdp ${Xcursor_LIBRARIES})
 endif()
 
 target_link_libraries(xfreerdp freerdp-core)
@@ -63,3 +79,4 @@ target_link_libraries(xfreerdp freerdp-utils)
 target_link_libraries(xfreerdp ${X11_LIBRARIES})
 
 install(TARGETS xfreerdp DESTINATION bin)
+

@@ -51,7 +51,47 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 	while (index < argc)
 	{
-		if (strcmp("-a", argv[index]) == 0)
+		if ((strcmp("-h", argv[index]) == 0 ) || (strcmp("--help", argv[index]) == 0 ))
+		{
+			printf("\n"
+				"FreeRDP - A Free Remote Desktop Protocol Client\n"
+				"See http://www.freerdp.com for more information\n"
+				"\n"
+				"Usage: %s [options] server:port\n"
+				"  -0: connect to console session\n"
+				"  -a: set color depth in bit, default is 16\n"
+				"  -c: initial working directory\n"
+				"  -D: hide window decorations\n"
+				"  -d: domain\n"
+				"  -f: fullscreen mode\n"
+				"  -g: set geometry, using format WxH or X%% or 'workarea', default is 1024x768\n"
+				"  -h: print this help\n"
+				"  -k: set keyboard layout ID\n"
+				"  -m: don't send mouse motion events\n"
+				"  -n: hostname\n"
+				"  -o: console audio\n"
+				"  -p: password\n"
+				"  -s: set startup-shell\n"
+				"  -t: alternative port number, default is 3389\n"
+				"  -u: username\n"
+				"  -x: performance flags (m[odem], b[roadband] or l[an])\n"
+				"  -z: enable compression\n"
+				"  --app: RemoteApp connection. This implies -g workarea\n"
+				"  --ext: load an extension\n"
+				"  --no-auth: disable authentication\n"
+				"  --no-fastpath: disable fast-path\n"
+				"  --no-osb: disable off screen bitmaps, default on\n"
+				"  --plugin: load a virtual channel plugin\n"
+				"  --rfx: enable RemoteFX\n"
+				"  --no-rdp: disable Standard RDP encryption\n"
+				"  --no-tls: disable TLS encryption\n"
+				"  --no-nla: disable network level authentication\n"
+				"  --sec: force protocol security (rdp, tls or nla)\n"
+				"  --version: print version information\n"
+				"\n", argv[0]);
+			return -1; //TODO: What is the correct return
+		}
+		else if (strcmp("-a", argv[index]) == 0)
 		{
 			index++;
 			if (index == argc)
@@ -241,6 +281,28 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->frame_acknowledge = False;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = True;
+		}
+		else if (strcmp("--dump-rfx", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing file name\n");
+				return -1;
+			}
+			settings->dump_rfx_file = xstrdup(argv[index]);
+			settings->dump_rfx = True;
+		}
+		else if (strcmp("--play-rfx", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing file name\n");
+				return -1;
+			}
+			settings->play_rfx_file = xstrdup(argv[index]);
+			settings->play_rfx = True;
 		}
 		else if (strcmp("-m", argv[index]) == 0)
 		{

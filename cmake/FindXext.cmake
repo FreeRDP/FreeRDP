@@ -28,22 +28,22 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(Xext_INCLUDE_DIR NAMES Xext.h
+find_path(XEXT_INCLUDE_DIR NAMES Xext.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xext include directory"
 )
 
-find_library(Xext_LIBRARY NAMES Xext
+find_library(XEXT_LIBRARY NAMES Xext
           DOC "The Xext library"
 )
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xext DEFAULT_MSG Xext_LIBRARY Xext_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(XEXT DEFAULT_MSG XEXT_LIBRARY XEXT_INCLUDE_DIR)
 
-if(Xext_FOUND)
-  set( Xext_LIBRARIES ${Xext_LIBRARY} )
-  set( Xext_INCLUDE_DIRS ${Xext_INCLUDE_DIR} )
+if(XEXT_FOUND)
+  set( XEXT_LIBRARIES ${XEXT_LIBRARY} )
+  set( XEXT_INCLUDE_DIRS ${XEXT_INCLUDE_DIR} )
 endif()
 
-mark_as_advanced(Xext_INCLUDE_DIR Xext_LIBRARY)
+mark_as_advanced(XEXT_INCLUDE_DIR XEXT_LIBRARY)
 

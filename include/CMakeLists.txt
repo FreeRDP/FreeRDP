@@ -17,5 +17,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-file(GLOB HEADERS "freerdp/*.h")
+file(GLOB HEADERS "freerdp/*")
 install_files(/include/freerdp FILES ${HEADERS})

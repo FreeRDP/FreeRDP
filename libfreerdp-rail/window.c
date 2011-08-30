@@ -284,6 +284,10 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	{
 		IFCALL(rail->SetWindowRects, rail, window);
 	}
+	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
+	{
+		IFCALL(rail->SetWindowVisibilityRects, rail, window);
+	}
 }
 
 void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
@@ -356,7 +360,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-
+		IFCALL(rail->SetWindowVisibilityRects, rail, window);
 	}
 }
 

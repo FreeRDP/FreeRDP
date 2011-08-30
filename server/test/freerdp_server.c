@@ -30,6 +30,8 @@
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/listener.h>
 
+static char* test_pcap_file = NULL;
+
 /* HL1, LH1, HH1, HL2, LH2, HH2, HL3, LH3, HH3, LL3 */
 static const unsigned int test_quantization_values[] =
 {
@@ -183,6 +185,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	RFX_RECT rect;
 	STREAM* s;
 
+	if (client->update->dump_rfx)
+		return;
 	if (!client->settings->rfx_codec || !info)
 		return;
 	if (info->icon_width < 1)
@@ -232,6 +236,33 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	info->icon_y = y;
 }
 
+void test_peer_dump_rfx(freerdp_peer* client)
+{
+	STREAM* s;
+	rdpUpdate* update;
+	rdpPcap* pcap_rfx;
+	pcap_record record;
+
+	s = stream_new(512);
+	update = client->update;
+	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
+	pcap_rfx = client->update->pcap_rfx;
+
+	while (pcap_has_next_record(pcap_rfx))
+	{
+		pcap_get_next_record_header(pcap_rfx, &record);
+
+		s->data = xrealloc(s->data, record.length);
+		record.data = s->data;
+		s->size = record.length;
+
+		pcap_get_next_record_content(pcap_rfx, &record);
+		s->p = s->data + s->size;
+
+		update->SurfaceCommand(update, s);
+	}
+}
+
 boolean test_peer_post_connect(freerdp_peer* client)
 {
 	/**
@@ -256,8 +287,17 @@ boolean test_peer_post_connect(freerdp_peer* client)
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 	test_peer_init(client);
-	test_peer_draw_background(client);
 	test_peer_load_icon(client);
+
+	if (test_pcap_file != NULL)
+	{
+		client->update->dump_rfx = True;
+		test_peer_dump_rfx(client);
+	}
+	else
+	{
+		test_peer_draw_background(client);
+	}
 
 	/* Return False here would stop the execution of the peer mainloop. */
 	return True;
@@ -292,13 +332,13 @@ void test_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uin
 
 static void* test_peer_mainloop(void* arg)
 {
-	freerdp_peer* client = (freerdp_peer*)arg;
 	int i;
 	int fds;
 	int max_fds;
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	freerdp_peer* client = (freerdp_peer*) arg;
 
 	memset(rfds, 0, sizeof(rfds));
 
@@ -452,8 +492,11 @@ int main(int argc, char* argv[])
 
 	instance->PeerAccepted = test_peer_accepted;
 
+	if (argc > 1)
+		test_pcap_file = argv[1];
+
 	/* Open the server socket and start listening. */
-	if (instance->Open(instance, (argc > 1 ? argv[1] : NULL), 3389))
+	if (instance->Open(instance, NULL, 3389))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);

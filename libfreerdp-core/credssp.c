@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *		 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,6 @@
 #include "ntlmssp.h"
 
 #include "credssp.h"
-
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -109,7 +108,7 @@ int credssp_get_public_key(rdpCredssp* credssp)
 {
 	int ret;
 	CryptoCert cert;
-
+	
 	cert = tls_get_certificate(credssp->transport->tls);
 
 	if (cert == NULL)
@@ -117,7 +116,8 @@ int credssp_get_public_key(rdpCredssp* credssp)
 		printf("credssp_get_public_key: tls_get_certificate failed to return the server certificate.\n");
 		return 0;
 	}
-
+	if(tls_verify_certificate(cert,credssp->transport->settings->hostname))
+		tls_disconnect(credssp->transport->tls);
 	ret = crypto_cert_get_public_key(cert, &credssp->public_key);
 	crypto_cert_free(cert);
 

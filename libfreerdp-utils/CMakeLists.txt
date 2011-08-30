@@ -30,9 +30,11 @@ set(FREERDP_UTILS_SRCS
 	load_plugin.c
 	memory.c
 	mutex.c
+	pcap.c
 	profiler.c
 	rail.c
 	registry.c
+	certstore.c
 	semaphore.c
 	sleep.c
 	stopwatch.c

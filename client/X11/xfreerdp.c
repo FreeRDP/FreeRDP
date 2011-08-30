@@ -718,7 +718,7 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	instance->settings->sw_gdi = False;
+	instance->settings->sw_gdi = True;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)

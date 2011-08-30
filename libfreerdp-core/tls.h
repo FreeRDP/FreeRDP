@@ -49,8 +49,9 @@ boolean tls_disconnect(rdpTls* tls);
 int tls_read(rdpTls* tls, uint8* data, int length);
 int tls_write(rdpTls* tls, uint8* data, int length);
 CryptoCert tls_get_certificate(rdpTls* tls);
+int tls_verify_certificate(CryptoCert cert,char* hostname);
+void tls_print_cert_error();
 boolean tls_print_error(char* func, SSL* connection, int value);
-
 rdpTls* tls_new();
 void tls_free(rdpTls* tls);
 
