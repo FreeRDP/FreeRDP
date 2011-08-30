@@ -98,9 +98,9 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 			window->windowWidth, window->windowHeight,
 			window->windowId);
 
-	XStoreName(xfi->display, xfw->handle, window->title);
-
 	xf_SetWindowStyle(xfi, xfw, window->style, window->extendedStyle);
+
+	XStoreName(xfi->display, xfw->handle, window->title);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;

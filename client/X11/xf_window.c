@@ -299,7 +299,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 			CWBorderPixel, &xfi->attribs);
 
 		xf_SetWindowDecorations(xfi, window, window->decorations);
-		xf_SetWindowUnlisted(xfi, window);
 
 		class_hints = XAllocClassHint();
 
