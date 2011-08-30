@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -188,4 +188,87 @@ void crypto_reverse(uint8* data, int length)
 void crypto_nonce(uint8* nonce, int size)
 {
 	RAND_bytes((void*) nonce, size);
+}
+
+char* crypto_cert_fingerprint(X509 *xcert)
+{
+	unsigned char fp[EVP_MAX_MD_SIZE];
+	int i;
+	unsigned int fp_len;
+	X509_digest(xcert,EVP_sha1(),fp,&fp_len);
+	char *fp_buf=xzalloc(3*fp_len);
+	char *p = fp_buf;
+	for (i = 0; i < fp_len - 1; i++)
+	{
+		sprintf(p, "%02x:", fp[i]);
+		p = (char*) &fp_buf[i * 3];
+	}
+		sprintf(p, "%02x", fp[i]);
+	return fp_buf;
+}
+
+boolean x509_verify_cert(CryptoCert cert)
+{
+	X509 *xcert=cert->px509;
+	char *cert_loc;
+	int ret=0;
+	X509_STORE *cert_ctx=NULL;
+	X509_LOOKUP *lookup=NULL;
+	X509_STORE_CTX *csc;
+	cert_ctx=X509_STORE_new();
+	if (cert_ctx == NULL)
+		goto end;
+	OpenSSL_add_all_algorithms();
+	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
+	if (lookup == NULL)
+		goto end;
+	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
+	if (lookup == NULL)
+		goto end;
+	X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+	cert_loc=get_local_certloc();
+	if(cert_loc!=NULL)
+	{
+		X509_LOOKUP_add_dir(lookup,cert_loc,X509_FILETYPE_ASN1);
+		xfree(cert_loc);
+	}
+	csc = X509_STORE_CTX_new();
+	if (csc == NULL)
+		goto end;
+	X509_STORE_set_flags(cert_ctx, 0);
+	if(!X509_STORE_CTX_init(csc,cert_ctx,xcert,0))
+		goto end;
+	int i=X509_verify_cert(csc);
+	X509_STORE_CTX_free(csc);
+	X509_STORE_free(cert_ctx);
+	ret=0;
+	end:
+	ret = (i > 0);
+	return(ret);
+}
+
+rdpCertdata* crypto_get_certdata(X509 *xcert,char* hostname)
+{
+	rdpCertdata* certdata;
+	char *fp;
+	fp=crypto_cert_fingerprint(xcert);
+	certdata=certdata_new(hostname,fp);
+	xfree(fp);
+	return certdata;
+}
+
+void crypto_cert_printinfo(X509 *xcert)
+{
+	char *subject;
+	char *issuer;
+	char *fp;
+	subject=X509_NAME_oneline(X509_get_subject_name(xcert),NULL,0);
+	issuer=X509_NAME_oneline(X509_get_issuer_name(xcert),NULL,0);
+	fp=crypto_cert_fingerprint(xcert);
+	printf("Cerificate details:\n");
+	printf("\tSubject : %s\n",subject);
+	printf("\tIssuer : %s\n",issuer);
+	printf("\tThumbprint (sha1) : %s\n",fp);
+	printf("The above x509 certificate couldn't be verified.Possibly because you do not have the CA cetificate in your certstore or certificate has expired.\nPlease look at the docs on how to create local certstore for private CA.\n");
+	xfree(fp);
 }

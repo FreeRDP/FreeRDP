@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *		 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -240,12 +240,67 @@ rdpTls* tls_new()
 		tls->connect = tls_connect;
 		tls->accept = tls_accept;
 		tls->disconnect = tls_disconnect;
-
+	
 		SSL_load_error_strings();
 		SSL_library_init();
 	}
 
 	return tls;
+}
+
+int tls_verify_certificate(CryptoCert cert,char* hostname)
+{
+	boolean ret;
+	ret=x509_verify_cert(cert);
+	if(!ret)
+	{
+		rdpCertdata* certdata;
+		certdata=crypto_get_certdata(cert->px509,hostname);
+		rdpCertstore* certstore=certstore_new(certdata);
+		if(match_certdata(certstore)==0)
+			goto end;
+		if(certstore->match==1)
+		{
+			crypto_cert_printinfo(cert->px509);
+			char answer;
+			while(1)
+			{
+				printf("Do you trust the above certificate? (Y/N)");
+				answer=fgetc(stdin);
+				if(answer=='y' || answer =='Y')
+				{	
+					print_certdata(certstore);break;
+				}
+				else if(answer=='n' || answer=='N')
+				{
+					certstore_free(certstore);
+					return 1;
+				}
+			}
+		}
+		else if(certstore->match==-1)
+		{
+			tls_print_cert_error();
+			certstore_free(certstore);
+			return 1;
+		}
+		end:
+		certstore_free(certstore);
+	}
+	return 0;
+}
+
+void tls_print_cert_error()
+{
+	printf("#####################################\n");
+	printf("##############WARNING################\n");
+	printf("#####################################\n");
+	printf("The thumbprint of certificate recieved\n");
+	printf("did not match the stored thumbprint.You\n");
+	printf("might be a victim of MAN in the MIDDLE\n");
+	printf("ATTACK.It is also possible that server's\n");
+	printf("certificate have been changed.In that case\n");
+	printf("contact your server administrator\n");
 }
 
 void tls_free(rdpTls* tls)
