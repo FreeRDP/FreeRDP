@@ -248,28 +248,34 @@ rdpTls* tls_new()
 	return tls;
 }
 
-int tls_verify_certificate(CryptoCert cert,char* hostname)
+int tls_verify_certificate(CryptoCert cert, char* hostname)
 {
 	boolean ret;
-	ret=x509_verify_cert(cert);
-	if(!ret)
+	ret = x509_verify_cert(cert);
+
+	if (!ret)
 	{
 		rdpCertdata* certdata;
-		certdata=crypto_get_certdata(cert->px509,hostname);
-		rdpCertstore* certstore=certstore_new(certdata);
-		if(match_certdata(certstore)==0)
+		certdata = crypto_get_certdata(cert->px509, hostname);
+		rdpCertstore* certstore = certstore_new(certdata);
+
+		if (match_certdata(certstore) == 0)
 			goto end;
-		if(certstore->match==1)
+
+		if (certstore->match == 1)
 		{
-			crypto_cert_printinfo(cert->px509);
 			char answer;
+			crypto_cert_printinfo(cert->px509);
+
 			while(1)
 			{
-				printf("Do you trust the above certificate? (Y/N)");
+				printf("Do you trust the above certificate? (Y/N) ");
 				answer=fgetc(stdin);
+
 				if(answer=='y' || answer =='Y')
-				{	
-					print_certdata(certstore);break;
+				{
+					print_certdata(certstore);
+					break;
 				}
 				else if(answer=='n' || answer=='N')
 				{
@@ -278,15 +284,17 @@ int tls_verify_certificate(CryptoCert cert,char* hostname)
 				}
 			}
 		}
-		else if(certstore->match==-1)
+		else if (certstore->match == -1)
 		{
 			tls_print_cert_error();
 			certstore_free(certstore);
 			return 1;
 		}
-		end:
+
+end:
 		certstore_free(certstore);
 	}
+
 	return 0;
 }
 
@@ -295,7 +303,7 @@ void tls_print_cert_error()
 	printf("#####################################\n");
 	printf("##############WARNING################\n");
 	printf("#####################################\n");
-	printf("The thumbprint of certificate recieved\n");
+	printf("The thumbprint of certificate received\n");
 	printf("did not match the stored thumbprint.You\n");
 	printf("might be a victim of MAN in the MIDDLE\n");
 	printf("ATTACK.It is also possible that server's\n");

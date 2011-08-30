@@ -14,8 +14,9 @@ Makefile
 *.cproject
 *.settings
 
-# Doxygen
+# Documentation
 docs/api
+client/X11/xfreerdp.1
 
 # Mac OS X
 .DS_Store
