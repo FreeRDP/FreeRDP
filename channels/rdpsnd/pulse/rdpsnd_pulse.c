@@ -122,6 +122,8 @@ static void rdpsnd_pulse_stream_success_callback(pa_stream* stream, int success,
 
 static void rdpsnd_pulse_wait_for_operation(rdpsndPulsePlugin* pulse, pa_operation* operation)
 {
+	if (operation == NULL)
+		return;
 	while (pa_operation_get_state(operation) == PA_OPERATION_RUNNING)
 	{
 		pa_threaded_mainloop_wait(pulse->mainloop);
