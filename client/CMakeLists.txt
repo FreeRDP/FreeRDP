@@ -25,7 +25,7 @@ if(NOT WIN32)
 	add_subdirectory(test)
 
 	# Build X11 Client
-	find_optional_package(X11)
+	find_suggested_package(X11)
 	if(X11_FOUND)
 		add_subdirectory(X11)
 	endif()
