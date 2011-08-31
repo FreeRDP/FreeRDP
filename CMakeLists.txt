@@ -79,13 +79,13 @@ check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 
 # Libraries that we have a hard dependency on
-find_package(OpenSSL REQUIRED)
+find_required_package(OpenSSL)
 
 if(NOT WIN32)
-	find_package(ZLIB REQUIRED)
-	find_optional_package(ALSA)
+	find_required_package(ZLIB)
+	find_suggested_package(ALSA)
 	find_optional_package(PulseAudio)
-	find_optional_package(Cups)
+	find_suggested_package(Cups)
 endif()
 
 # Endian
@@ -111,7 +111,7 @@ if(APPLE)
 endif()
 
 # Build CUnit
-find_package(CUnit)
+find_optional_package(CUnit)
 if(CUNIT_FOUND)
    add_subdirectory(cunit)
    enable_testing()
