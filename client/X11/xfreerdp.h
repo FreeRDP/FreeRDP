@@ -31,6 +31,7 @@
 typedef struct xf_info xfInfo;
 
 #include "xf_window.h"
+#include "xf_monitor.h"
 
 #define SET_XFI(_instance, _xfi) (_instance)->param1 = _xfi
 #define GET_XFI(_instance) ((xfInfo*) ((_instance)->param1))
@@ -87,6 +88,7 @@ struct xf_info
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;
 	boolean complex_regions;
+	VIRTUAL_SCREEN vscreen;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

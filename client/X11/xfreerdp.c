@@ -41,6 +41,7 @@
 #include "xf_gdi.h"
 #include "xf_rail.h"
 #include "xf_event.h"
+#include "xf_monitor.h"
 #include "xf_keyboard.h"
 
 #include "xfreerdp.h"
@@ -235,11 +236,6 @@ boolean xf_pre_connect(freerdp* instance)
 	xfInfo* xfi;
 	rdpSettings* settings;
 
-#ifdef WITH_XINERAMA
-	int n, ignored, ignored2;
-	XineramaScreenInfo* screen_info = NULL;
-#endif
-
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
 	SET_XFI(instance, xfi);
 
@@ -316,61 +312,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
 
-	xf_GetWorkArea(xfi);
-
-	if (settings->workarea)
-	{
-		settings->width = xfi->workArea.width;
-		settings->height = xfi->workArea.height;
-	}
-
-	if (settings->fullscreen != True && settings->workarea != True)
-		return True;
-
-#ifdef WITH_XINERAMA
-	if (XineramaQueryExtension(xfi->display, &ignored, &ignored2))
-	{
-		if (XineramaIsActive(xfi->display))
-		{
-			screen_info = XineramaQueryScreens(xfi->display, &settings->num_monitors);
-
-			if (settings->num_monitors > 16)
-				settings->num_monitors = 0;
-
-			settings->width = 0;
-			settings->height = 0;
-
-			if (settings->num_monitors)
-			{
-				for (n = 0; n < settings->num_monitors; n++)
-				{
-					if (settings->workarea)
-					{
-						settings->monitors[n].x = screen_info[n].x_org;
-						settings->monitors[n].y = screen_info[n].y_org;
-						settings->monitors[n].width = screen_info[n].width;
-						settings->monitors[n].height = xfi->workArea.height;
-						settings->width += settings->monitors[n].width;
-						settings->height = settings->monitors[n].height;
-					}
-					else
-					{
-						settings->monitors[n].x = screen_info[n].x_org;
-						settings->monitors[n].y = screen_info[n].y_org;
-						settings->monitors[n].width = screen_info[n].width;
-						settings->monitors[n].height = screen_info[n].height;
-						settings->width += settings->monitors[n].width;
-						settings->height = settings->monitors[n].height;
-					}
-
-					settings->monitors[n].is_primary = screen_info[n].x_org == 0 && screen_info[n].y_org == 0;
-				}
-			}
-
-			XFree(screen_info);
-		}
-	}
-#endif
+	xf_detect_monitors(xfi, settings);
 
 	return True;
 }

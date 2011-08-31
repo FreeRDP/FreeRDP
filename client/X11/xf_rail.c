@@ -260,11 +260,6 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->workArea.right = xfi->workArea.x + xfi->workArea.width;
 	sysparam->workArea.bottom = xfi->workArea.y + xfi->workArea.height;
 
-	sysparam->displayChange.left = xfi->workArea.x;
-	sysparam->displayChange.top = xfi->workArea.y;
-	sysparam->displayChange.right = xfi->workArea.x + xfi->workArea.width;
-	sysparam->displayChange.bottom = xfi->workArea.y + xfi->workArea.height;
-
 	sysparam->taskbarPos.left = 0;
 	sysparam->taskbarPos.top = 0;
 	sysparam->taskbarPos.right = 0;

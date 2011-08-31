@@ -29,6 +29,8 @@ add_executable(xfreerdp
 	xf_event.h
 	xf_keyboard.c
 	xf_keyboard.h
+	xf_monitor.c
+	xf_monitor.h
 	xf_window.c
 	xf_window.h
 	xfreerdp.c

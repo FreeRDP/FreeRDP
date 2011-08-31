@@ -341,7 +341,7 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 	rail_order->sysparam.keyboardPref = False;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	rail_order->sysparam.dragFullWindows = True;
+	rail_order->sysparam.dragFullWindows = False;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
 	rail_order->sysparam.keyboardCues = False;
