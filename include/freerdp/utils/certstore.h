@@ -27,16 +27,17 @@ struct rdp_certstore
 	struct rdp_certdata* certdata;
 };
 
-void certstore_create(rdpCertstore* certstore);
-void certstore_open(rdpCertstore* certstore);
-void certstore_load(rdpCertstore* certstore);
-void certstore_close(rdpCertstore* certstore);
-char* get_local_certloc();
-rdpCertdata* certdata_new(char* host_name,char* fingerprint);
-void certdata_free(rdpCertdata* certdata);
-void certstore_init(rdpCertstore* certstore);
-rdpCertstore* certstore_new(rdpCertdata* certdata);
-void certstore_free(rdpCertstore* certstore);
-int match_certdata(rdpCertstore* certstore);
-void print_certdata(rdpCertstore* certstore);
+FREERDP_API void certstore_create(rdpCertstore* certstore);
+FREERDP_API void certstore_open(rdpCertstore* certstore);
+FREERDP_API void certstore_load(rdpCertstore* certstore);
+FREERDP_API void certstore_close(rdpCertstore* certstore);
+FREERDP_API char* get_local_certloc();
+FREERDP_API rdpCertdata* certdata_new(char* host_name, char* fingerprint);
+FREERDP_API void certdata_free(rdpCertdata* certdata);
+FREERDP_API void certstore_init(rdpCertstore* certstore);
+FREERDP_API rdpCertstore* certstore_new(rdpCertdata* certdata);
+FREERDP_API void certstore_free(rdpCertstore* certstore);
+FREERDP_API int match_certdata(rdpCertstore* certstore);
+FREERDP_API void print_certdata(rdpCertstore* certstore);
+
 #endif /* __CERTSTORE_UTILS_H */

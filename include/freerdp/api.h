@@ -45,9 +45,15 @@
 #endif
 
 #ifdef _WIN32
-#define FREERDP_CC __stdcall
+#define FREERDP_CC __cdecl
 #else
 #define FREERDP_CC
+#endif
+
+#ifdef _WIN32
+#define INLINE	__inline
+#else
+#define INLINE	inline
 #endif
 
 #define IFCALL(_cb, ...) do { if (_cb != NULL) { _cb( __VA_ARGS__ ); } } while (0)
