@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/color.h>
@@ -707,96 +708,96 @@ int PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, in
 	return 1;
 }
 
-inline void SetPixel_BLACK_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_BLACK_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = 0 */
 	*pixel = 0;
 }
 
-inline void SetPixel_NOTMERGEPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOTMERGEPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D | P) */
 	*pixel = ~(*pixel | *pen);
 }
 
-inline void SetPixel_MASKNOTPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MASKNOTPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D & ~P */
 	*pixel &= ~(*pen);
 }
 
-inline void SetPixel_NOTCOPYPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOTCOPYPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~P */
 	*pixel = ~(*pen);
 }
 
-inline void SetPixel_MASKPENNOT_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MASKPENNOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P & ~D */
 	*pixel = *pen & ~*pixel;
 }
 
-inline void SetPixel_NOT_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~D */
 	*pixel = ~(*pixel);
 }
 
-inline void SetPixel_XORPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_XORPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D ^ P */
 	*pixel = *pixel ^ *pen;
 }
 
-inline void SetPixel_NOTMASKPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOTMASKPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D & P) */
 	*pixel = ~(*pixel & *pen);
 }
 
-inline void SetPixel_MASKPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MASKPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D & P */
 	*pixel &= *pen;
 }
 
-inline void SetPixel_NOTXORPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOTXORPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = ~(D ^ P) */
 	*pixel = ~(*pixel ^ *pen);
 }
 
-inline void SetPixel_NOP_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_NOP_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D */
 }
 
-inline void SetPixel_MERGENOTPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MERGENOTPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = D | ~P */
 	*pixel |= ~(*pen);
 }
 
-inline void SetPixel_COPYPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_COPYPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P */
 	*pixel = *pen;
 }
 
-inline void SetPixel_MERGEPENNOT_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MERGEPENNOT_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P | ~D */
 	*pixel = *pen | ~(*pixel);
 }
 
-inline void SetPixel_MERGEPEN_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_MERGEPEN_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = P | D */
 	*pixel |= *pen;
 }
 
-inline void SetPixel_WHITE_8bpp(uint8* pixel, uint8* pen)
+INLINE void SetPixel_WHITE_8bpp(uint8* pixel, uint8* pen)
 {
 	/* D = 1 */
 	*pixel = 0xFF;

@@ -50,14 +50,14 @@ struct rdp_rail
 	rdpIconCache* cache;
 	rdpWindowList* list;
 	rdpSettings* settings;
-	railCreateWindow CreateWindow;
-	railDestroyWindow DestroyWindow;
-	railMoveWindow MoveWindow;
-	railShowWindow ShowWindow;
-	railSetWindowText SetWindowText;
-	railSetWindowIcon SetWindowIcon;
-	railSetWindowRects SetWindowRects;
-	railSetWindowVisibilityRects SetWindowVisibilityRects;
+	railCreateWindow rail_CreateWindow;
+	railDestroyWindow rail_DestroyWindow;
+	railMoveWindow rail_MoveWindow;
+	railShowWindow rail_ShowWindow;
+	railSetWindowText rail_SetWindowText;
+	railSetWindowIcon rail_SetWindowIcon;
+	railSetWindowRects rail_SetWindowRects;
+	railSetWindowVisibilityRects rail_SetWindowVisibilityRects;
 };
 
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);

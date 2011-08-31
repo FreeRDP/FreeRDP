@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/api.h>
 #include <freerdp/utils/stream.h>
 
 #include "orders.h"
@@ -73,7 +74,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	return length;
 }
 
-inline void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
+INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
 {
 	uint8 updateHeader;
 
@@ -83,7 +84,7 @@ inline void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fra
 	*compression = (updateHeader >> 6) & 0x03;
 }
 
-inline void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
+INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
 {
 	uint8 updateHeader = 0;
 

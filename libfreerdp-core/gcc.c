@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/print.h>
+
 #include "gcc.h"
 
 /**

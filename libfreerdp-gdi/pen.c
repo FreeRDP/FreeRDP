@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
@@ -47,13 +48,13 @@ HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 	return hPen;
 }
 
-inline uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
+INLINE uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
 {
 	/* TODO: implement conversion using palette */
 	return 0xFF;
 }
 
-inline uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
+INLINE uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 {
 	uint16 p;
 	int r, g, b;
@@ -63,7 +64,7 @@ inline uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 	return p;
 }
 
-inline uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
+INLINE uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
 {
 	return pen->color;
 }

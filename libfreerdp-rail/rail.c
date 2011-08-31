@@ -71,7 +71,7 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 	else
 		window->smallIcon = icon;
 
-	IFCALL(rail->SetWindowIcon, rail, window, icon);
+	IFCALL(rail->rail_SetWindowIcon, rail, window, icon);
 }
 
 static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
