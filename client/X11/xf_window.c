@@ -349,12 +349,39 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 
 }
 
+
+void SentMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_root, int y_root)
+{
+	// TODO:
+	// - how to receive movesize canceling event?
+	// - how to produce correct RAIL movesize finish?
+	// - how to receive move/size window coordinates in process of local move/size?
+
+	XEvent event;
+
+	event.xclient.type = ClientMessage;
+	event.xclient.window = window->handle;
+	event.xclient.message_type = xfi->_NET_WM_MOVERESIZE;
+	event.xclient.serial = 0;
+	event.xclient.display = xfi->display;
+	event.xclient.send_event = True;
+	event.xclient.format = 32;
+	event.xclient.data.l[0] = x_root;
+	event.xclient.data.l[1] = y_root;
+	event.xclient.data.l[2] = direction;
+	event.xclient.data.l[3] = 1; // BUTTON 1
+	event.xclient.data.l[4] = 0;
+
+	XUngrabPointer(xfi->display, CurrentTime);
+	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, SubstructureNotifyMask, &event);
+}
+
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
 {
-	window->isLocalMoveSizeStarted = True;
 	printf("xf_StartLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
 		(uint32)window->handle, moveSizeType, posX, posY);
 
+	window->isLocalMoveSizeStarted = True;
 }
 
 void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)

@@ -294,6 +294,8 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
 	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", False);
 
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", False);
+
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
