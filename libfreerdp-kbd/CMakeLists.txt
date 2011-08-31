@@ -29,7 +29,7 @@ set(FREERDP_KBD_SRCS
 
 add_library(freerdp-kbd SHARED ${FREERDP_KBD_SRCS})
 
-find_package(XKBFile)
+find_suggested_package(XKBFile)
 if(XKBFILE_FOUND)
 	add_definitions(-DWITH_XKBFILE)
 	include_directories(${XKBFILE_INCLUDE_DIRS})
