@@ -292,6 +292,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		window->decorations = False;
 		window->fullscreen = False;
 		window->parent = parent;
+		window->isLocalMoveSizeStarted = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -332,6 +333,37 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 	return window;
 }
 
+void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
+		int maxWidth, int maxHeight,
+		int maxPosX, int maxPosY,
+		int minTrackWidth, int minTrackHeight,
+		int maxTrackWidth, int maxTrackHeight)
+{
+	printf("xf_SetWindowMinMaxInfo: windowHandle=0x%X "
+		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
+		(uint32)window->handle, maxWidth, maxHeight,
+		(sint16)maxPosX, (sint16)maxPosY,
+		minTrackWidth, minTrackHeight,
+		maxTrackWidth, maxTrackHeight);
+
+}
+
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
+{
+	window->isLocalMoveSizeStarted = True;
+	printf("xf_StartLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
+		(uint32)window->handle, moveSizeType, posX, posY);
+
+}
+
+void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)
+{
+	window->isLocalMoveSizeStarted = False;
+	printf("xf_StopLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
+		(uint32)window->handle, moveSizeType, topLeftX, topLeftY);
+}
+
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
 	Pixmap surface;
@@ -341,12 +373,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
-	if (window->width == width && window->height == height)
-		XMoveWindow(xfi->display, window->handle, x, y);
-	else if (window->left == x && window->top == y)
-		XResizeWindow(xfi->display, window->handle, width, height);
-	else
-		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
 
 	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
@@ -458,7 +485,7 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	}
 
 #ifdef WITH_XEXT
-	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	//XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	xfree(xrects);
