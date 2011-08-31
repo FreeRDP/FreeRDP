@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/gdi/color.h>
@@ -301,17 +302,17 @@ const uint32 rop3_code_table[] =
 
 /* GDI Helper Functions */
 
-inline uint32 gdi_rop3_code(uint8 code)
+INLINE uint32 gdi_rop3_code(uint8 code)
 {
 	return rop3_code_table[code];
 }
 
-inline void gdi_copy_mem(uint8 * d, uint8 * s, int n)
+INLINE void gdi_copy_mem(uint8 * d, uint8 * s, int n)
 {
 	memmove(d, s, n);
 }
 
-inline void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
+INLINE void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
 {
 	d = (d + n) - 1;
 	s = (s + n) - 1;
@@ -336,7 +337,7 @@ inline void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
 	}
 }
 
-inline uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
+INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	uint8 * p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
@@ -353,7 +354,7 @@ inline uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 }
 
-inline uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
+INLINE uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 {
 	uint8 * p;
 
@@ -377,7 +378,7 @@ inline uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 	return p;
 }
 
-inline int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
+INLINE int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 {
 	int byte;
 	int shift;

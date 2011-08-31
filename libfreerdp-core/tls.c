@@ -251,13 +251,14 @@ rdpTls* tls_new()
 int tls_verify_certificate(CryptoCert cert, char* hostname)
 {
 	boolean ret;
+	rdpCertstore* certstore;
 	ret = x509_verify_cert(cert);
 
 	if (!ret)
 	{
 		rdpCertdata* certdata;
 		certdata = crypto_get_certdata(cert->px509, hostname);
-		rdpCertstore* certstore = certstore_new(certdata);
+		certstore = certstore_new(certdata);
 
 		if (match_certdata(certstore) == 0)
 			goto end;
@@ -267,17 +268,17 @@ int tls_verify_certificate(CryptoCert cert, char* hostname)
 			char answer;
 			crypto_cert_printinfo(cert->px509);
 
-			while(1)
+			while (1)
 			{
 				printf("Do you trust the above certificate? (Y/N) ");
-				answer=fgetc(stdin);
+				answer = fgetc(stdin);
 
-				if(answer=='y' || answer =='Y')
+				if (answer == 'y' || answer == 'Y')
 				{
 					print_certdata(certstore);
 					break;
 				}
-				else if(answer=='n' || answer=='N')
+				else if (answer == 'n' || answer == 'N')
 				{
 					certstore_free(certstore);
 					return 1;

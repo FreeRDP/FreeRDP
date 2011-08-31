@@ -36,19 +36,20 @@ void certstore_create(rdpCertstore* certstore)
 		printf("certstore_create: error opening [%s] for writing\n", certstore->file);
 		return;
 	}
+
 	fflush(certstore->fp);
 }
 
 void certstore_load(rdpCertstore* certstore)
 {
-	certstore->fp = fopen((char*)certstore->file, "r+");
+	certstore->fp = fopen((char*) certstore->file, "r+");
 }
 
 void certstore_open(rdpCertstore* certstore)
 {
 	struct stat stat_info;
 
-	if (stat((char*)certstore->file, &stat_info) != 0)
+	if (stat((char*) certstore->file, &stat_info) != 0)
 		certstore_create(certstore);
 	else
 		certstore_load(certstore);
@@ -62,14 +63,23 @@ void certstore_close(rdpCertstore* certstore)
 
 char* get_local_certloc()
 {
-	char *home_path;
-	char *certloc;
+	char* home_path;
+	char* certloc;
 	struct stat stat_info;
-	home_path=getenv("HOME");
-	certloc=(char*)xmalloc(strlen(home_path)+strlen("/.")+strlen(cert_dir)+strlen("/")+strlen(cert_loc)+1);
+	home_path = getenv("HOME");
+
+	certloc = (char*) xmalloc(strlen(home_path) + strlen("/.") + strlen(cert_dir) + strlen("/") + strlen(cert_loc) + 1);
 	sprintf(certloc,"%s/.%s/%s",home_path,cert_dir,cert_loc);
-	if(stat((char*)certloc, &stat_info) != 0)
+
+	if(stat((char*) certloc, &stat_info) != 0)
+	{
+#ifndef _WIN32
 		mkdir(certloc, S_IRUSR | S_IWUSR | S_IXUSR);
+#else
+		CreateDirectory(certloc, 0);
+#endif
+	}
+	
 	return certloc;
 }
 
@@ -115,14 +125,18 @@ void certstore_init(rdpCertstore* certstore)
 
 rdpCertdata* certdata_new(char* host_name,char* fingerprint)
 {
-	rdpCertdata* certdata=(rdpCertdata*)xzalloc(sizeof(rdpCertdata));
-	if(certdata !=NULL)
+	rdpCertdata* certdata;
+
+	certdata = (rdpCertdata*) xzalloc(sizeof(rdpCertdata));
+
+	if (certdata !=NULL)
 	{
-		certdata->hostname=xzalloc(strlen(host_name)+1);
-		certdata->thumbprint=xzalloc(strlen(fingerprint)+1);
-		sprintf(certdata->hostname,"%s",host_name);
-		sprintf(certdata->thumbprint,"%s",fingerprint);
+		certdata->hostname = xzalloc(strlen(host_name) + 1);
+		certdata->thumbprint = xzalloc(strlen(fingerprint) + 1);
+		sprintf(certdata->hostname, "%s", host_name);
+		sprintf(certdata->thumbprint, "%s", fingerprint);
 	}
+
 	return certdata;
 }
 
@@ -138,7 +152,9 @@ void certdata_free(rdpCertdata* certdata)
 
 rdpCertstore* certstore_new(rdpCertdata* certdata)
 {
-	rdpCertstore* certstore = (rdpCertstore*) xzalloc(sizeof(rdpCertstore));
+	rdpCertstore* certstore;
+
+	certstore = (rdpCertstore*) xzalloc(sizeof(rdpCertstore));
 
 	if (certstore != NULL)
 	{
@@ -164,32 +180,39 @@ void certstore_free(rdpCertstore* certstore)
 
 int match_certdata(rdpCertstore* certstore)
 {
-	char *host;
-	char *p;
-	char *thumb_print;
+	char* host;
+	char* p;
+	char* thumb_print;
 	int length;
 	unsigned char c;
+	rdpCertdata* cert_data;
 	FILE* cfp;
-	cfp=certstore->fp;
-	rdpCertdata* cert_data=certstore->certdata;
-	length=strlen(cert_data->thumbprint);
-	host=xzalloc(strlen(cert_data->hostname)+1);
-	for(;;)
+	cfp = certstore->fp;
+	cert_data = certstore->certdata;
+	length = strlen(cert_data->thumbprint);
+	host = xzalloc(strlen(cert_data->hostname) + 1);
+	
+	for (;;)
 	{
-		if((int)fread(host,sizeof(char),strlen(cert_data->hostname),cfp) < strlen(cert_data->hostname))
+		if ((int) fread(host, sizeof(char), strlen(cert_data->hostname), cfp) < strlen(cert_data->hostname))
 			break;
-		if((!strcmp(host,cert_data->hostname)) && ((c=fgetc(cfp))==' ' || c=='\t') )
+
+		if ((!strcmp(host, cert_data->hostname)) && ((c = fgetc(cfp)) ==' ' || c == '\t') )
 		{
-			ungetc(c,cfp);
-			while((c=fgetc(cfp))==' ' || c=='\t');
-			if(c==EOF)
+			ungetc(c, cfp);
+			while((c = fgetc(cfp)) == ' ' || c == '\t');
+
+			if (c == EOF)
 				break;
-			ungetc(c,cfp);
-			thumb_print=xzalloc(length+1);
-			p=thumb_print;
-			while((p-thumb_print) < length && (*p=fgetc(cfp))!=EOF && *p!='\n' && *p==*(cert_data->thumbprint+(p-thumb_print)))
+			
+			ungetc(c, cfp);
+			thumb_print = xzalloc(length + 1);
+			p = thumb_print;
+
+			while((p - thumb_print) < length && (*p = fgetc(cfp)) != EOF && *p != '\n' && *p == *(cert_data->thumbprint + (p - thumb_print)))
 				p++;
-			if(p-thumb_print==length)
+
+			if(p - thumb_print == length)
 				certstore->match=0;
 			else
 				certstore->match=-1;
@@ -197,13 +220,15 @@ int match_certdata(rdpCertstore* certstore)
 		}
 		else
 		{
-			while(c!='\n' && c!=EOF)
-				c=fgetc(cfp);
-			if(c==EOF)
+			while (c != '\n' && c != EOF)
+				c = fgetc(cfp);
+
+			if(c == EOF)
 				break;
 		}
 	}
 	xfree(host);
+
 	return certstore->match;
 }
 void print_certdata(rdpCertstore* certstore)

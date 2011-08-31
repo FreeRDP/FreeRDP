@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/color.h>
@@ -48,39 +49,39 @@ pBitBlt BitBlt_[5] =
  * @return pixel color
  */
 
-inline GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos)
+INLINE GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
 	GDI_COLOR* colorp = (GDI_COLOR*)&(hBmp->data[(nYPos * hBmp->width * hdc->bytesPerPixel) + nXPos * hdc->bytesPerPixel]);
 	return (GDI_COLOR) *colorp;
 }
 
-inline uint8 gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint8 gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return *((uint8*)&(hBmp->data[(Y * hBmp->width) + X]));
 }
 
-inline uint16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return *((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
 }
 
-inline uint32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return *((uint32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4]));
 }
 
-inline uint8* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint8* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return ((uint8*)&(hBmp->data[(Y * hBmp->width) + X]));
 }
 
-inline uint16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return ((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
 }
 
-inline uint32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE uint32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
 	return ((uint32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4]));
 }
@@ -95,24 +96,24 @@ inline uint32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
  * @return
  */
 
-inline GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor)
+INLINE GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
 	*((GDI_COLOR*)&(hBmp->data[(Y * hBmp->width * hdc->bytesPerPixel) + X * hdc->bytesPerPixel])) = crColor;
 	return 0;
 }
 
-inline void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, uint8 pixel)
+INLINE void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, uint8 pixel)
 {
 	*((uint8*)&(hBmp->data[(Y * hBmp->width) + X])) = pixel;
 }
 
-inline void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, uint16 pixel)
+INLINE void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, uint16 pixel)
 {
 	*((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2])) = pixel;
 }
 
-inline void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel)
+INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel)
 {
 	*((uint32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4])) = pixel;
 }
