@@ -219,6 +219,22 @@ static void xf_send_rail_client_event(rdpChanMan* chanman, uint16 event_type, vo
 	}
 }
 
+void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 top, uint32 right, uint32 bottom)
+{
+	rdpChanMan* chanman;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+
+	chanman = GET_CHANMAN(xfi->instance);
+
+	window_move.windowId = windowId;
+	window_move.left = left;
+	window_move.top = top;
+	window_move.right = right;
+	window_move.bottom = bottom;
+
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+}
+
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
 {
 	rdpChanMan* chanman;

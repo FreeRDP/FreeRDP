@@ -30,6 +30,8 @@ void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 com
 
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled);
 
+void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 top, uint32 right, uint32 bottom);
+
 void xf_process_rail_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event);
 
 #endif /* __XF_RAIL_H */
