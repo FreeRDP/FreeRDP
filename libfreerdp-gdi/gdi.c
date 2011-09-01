@@ -756,12 +756,12 @@ void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 
 void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	GDI* gdi = GET_GDI(update);
-	RFX_CONTEXT* context = (RFX_CONTEXT*)gdi->rfx_context;
-	RFX_MESSAGE* message;
-	STREAM* s;
 	int i, j;
 	int tx, ty;
+	STREAM* s;
+	RFX_MESSAGE* message;
+	GDI* gdi = GET_GDI(update);
+	RFX_CONTEXT* context = (RFX_CONTEXT*) gdi->rfx_context;
 
 	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
@@ -839,6 +839,32 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		stream_detach(s);
 		stream_free(s);
 	}
+	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	{
+		gdi->image->bitmap->width = surface_bits_command->width;
+		gdi->image->bitmap->height = surface_bits_command->height;
+		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
+		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
+
+		gdi->image->bitmap->data = (uint8*) xrealloc(gdi->image->bitmap->data,
+				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+
+		if (surface_bits_command->bpp != 32)
+		{
+			gdi_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+				gdi->image->bitmap->width, gdi->image->bitmap->height,
+				gdi->image->bitmap->bitsPerPixel, 32, gdi->clrconv);
+
+			surface_bits_command->bpp = 32;
+			surface_bits_command->bitmapData = gdi->image->bitmap->data;
+		}
+
+		gdi_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+				gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+
+		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
+	}
 	else
 	{
 		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
@@ -898,7 +924,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 int gdi_init(freerdp* instance, uint32 flags)
 {
-	GDI *gdi = (GDI*) malloc(sizeof(GDI));
+	GDI* gdi = (GDI*) malloc(sizeof(GDI));
 	memset(gdi, 0, sizeof(GDI));
 	SET_GDI(instance->update, gdi);
 
@@ -964,6 +990,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
+	gdi->image = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
 
 	gdi_register_update_callbacks(instance->update);
 
