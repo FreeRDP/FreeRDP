@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Sleep Utils
+ * X11 Monitor Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,38 +17,31 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/sleep.h>
+#ifndef __XF_MONITOR_H
+#define __XF_MONITOR_H
 
-#include <time.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/rail/rail.h>
 
-#ifndef _WIN32
-#define _XOPEN_SOURCE 500
-#include <unistd.h>
-#else
-#include <windows.h>
-#endif
-
-void freerdp_sleep(uint32 seconds)
+struct _MONITOR_INFO
 {
-	sleep(seconds);
-}
+	RECTANGLE_16 area;
+	RECTANGLE_16 workarea;
+	boolean primary;
+};
+typedef struct _MONITOR_INFO MONITOR_INFO;
 
-void freerdp_usleep(uint32 useconds)
+struct _VIRTUAL_SCREEN
 {
-#ifndef _WIN32
-	usleep(useconds);
-#else
-	uint64 t1;
-	uint64 t2;
-	uint64 freq;
+	int nmonitors;
+	RECTANGLE_16 area;
+	RECTANGLE_16 workarea;
+	MONITOR_INFO* monitors;
+};
+typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
-	QueryPerformanceCounter((LARGE_INTEGER*) &t1);
-	QueryPerformanceCounter((LARGE_INTEGER*) &freq);
+#include "xfreerdp.h"
 
-	do
-	{
-		QueryPerformanceCounter((LARGE_INTEGER*) &t2);
-	}
-	while((t2 - t1) < useconds);
-#endif
-}
+boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
+
+#endif /* __XF_MONITOR_H */

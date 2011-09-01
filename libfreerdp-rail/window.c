@@ -281,15 +281,15 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 		memcpy(window->title, "RAIL", sizeof("RAIL"));
 	}
 
-	IFCALL(rail->CreateWindow, rail, window);
+	IFCALL(rail->rail_CreateWindow, rail, window);
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
-		IFCALL(rail->SetWindowRects, rail, window);
+		IFCALL(rail->rail_SetWindowRects, rail, window);
 	}
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-		IFCALL(rail->SetWindowVisibilityRects, rail, window);
+		IFCALL(rail->rail_SetWindowVisibilityRects, rail, window);
 	}
 }
 
@@ -307,7 +307,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-		IFCALL(rail->ShowWindow, rail, window, window->showState);
+		IFCALL(rail->rail_ShowWindow, rail, window, window->showState);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -317,7 +317,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
 
-		IFCALL(rail->SetWindowText, rail, window);
+		IFCALL(rail->rail_SetWindowText, rail, window);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
@@ -343,7 +343,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 	if ((window->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
 			(window->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
 	{
-		IFCALL(rail->MoveWindow, rail, window);
+		IFCALL(rail->rail_MoveWindow, rail, window);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
@@ -353,7 +353,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
-		IFCALL(rail->SetWindowRects, rail, window);
+		IFCALL(rail->rail_SetWindowRects, rail, window);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
@@ -363,13 +363,13 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-		IFCALL(rail->SetWindowVisibilityRects, rail, window);
+		IFCALL(rail->rail_SetWindowVisibilityRects, rail, window);
 	}
 }
 
 void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
-	IFCALL(rail->DestroyWindow, rail, window);
+	IFCALL(rail->rail_DestroyWindow, rail, window);
 
 	if (window != NULL)
 	{

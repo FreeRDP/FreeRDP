@@ -29,6 +29,8 @@ add_executable(xfreerdp
 	xf_event.h
 	xf_keyboard.c
 	xf_keyboard.h
+	xf_monitor.c
+	xf_monitor.h
 	xf_window.c
 	xf_window.h
 	xfreerdp.c
@@ -49,21 +51,21 @@ if(WITH_MANPAGES)
 	endif(XMLTO_FOUND)
 endif(WITH_MANPAGES)
 
-find_package(Xinerama)
+find_suggested_package(Xinerama)
 if(XINERAMA_FOUND)
 	add_definitions(-DWITH_XINERAMA -DWITH_XEXT)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
 endif()
 
-find_package(Xext)
+find_suggested_package(Xext)
 if(XEXT_FOUND)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${XEXT_LIBRARIES})
 endif()
 
-find_package(Xcursor)
+find_suggested_package(Xcursor)
 if(Xcursor_FOUND)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${Xcursor_INCLUDE_DIRS})

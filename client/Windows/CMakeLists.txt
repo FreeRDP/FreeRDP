@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-kbd cmake build script
+# FreeRDP Windows cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,28 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_KBD_SRCS
-	locales.c
-	layouts.c
-	layouts_xkb.c
-	layouts_xkb.h
-	x_layout_id_table.c
-	x_layout_id_table.h
-	libkbd.c
-	libkbd.h)
+add_executable(wfreerdp
+	wfreerdp.c
+	wfreerdp.h)
 
-add_library(freerdp-kbd SHARED ${FREERDP_KBD_SRCS})
-
-find_suggested_package(XKBFile)
-if(XKBFILE_FOUND)
-	add_definitions(-DWITH_XKBFILE)
-	include_directories(${XKBFILE_INCLUDE_DIRS})
-	target_link_libraries(freerdp-kbd ${XKBFILE_LIBRARIES})
-endif()
-
-add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
-
-set_target_properties(freerdp-kbd PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-
-install(TARGETS freerdp-kbd DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+target_link_libraries(wfreerdp freerdp-core)
+target_link_libraries(wfreerdp freerdp-gdi)
+target_link_libraries(wfreerdp freerdp-utils)
+target_link_libraries(wfreerdp freerdp-chanman)

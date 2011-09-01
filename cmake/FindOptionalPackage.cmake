@@ -1,7 +1,10 @@
 # - FindOptionalPackage
 # Enable or disable optional packages. Also force optional packages.
 #
-#  This module defines the following variables:
+#  This module defines the following macros:
+#    find_required_package   : find a required package, can not be disabled
+#    find_suggested_package  : find a suggested package - required but can be disabled
+#    find_optional_package   : find an optional package - required only if enabled
 #
 
 #=============================================================================
@@ -20,15 +23,29 @@
 # limitations under the License.
 #=============================================================================
 
+macro(find_required_package _normal_package)
+	find_package(${_normal_package} REQUIRED)
+endmacro(find_required_package)
+
+macro(find_suggested_package _normal_package)
+	string(TOUPPER ${_normal_package} _upper_package)
+	option(WITH_${_upper_package} "Add dependency to ${_normal_package} - recommended" ON)
+	
+	if(NOT WITHOUT_${_upper_package})
+		message(STATUS "Finding suggested package ${_normal_package}.")
+		message(STATUS "  Disable this using \"-DWITH_${_upper_package}=OFF\".")
+		find_package(${_normal_package} REQUIRED)
+	endif(NOT WITHOUT_${_upper_package})
+endmacro(find_suggested_package)
 
 macro(find_optional_package _normal_package)
-	STRING(TOUPPER ${_normal_package} _upper_package)
-	OPTION(WITH_${_upper_package} "Force dependencies to ${_normal_package}" OFF)
-	OPTION(WITHOUT_${_upper_package} "Never depend on ${_normal_package}" OFF)
+	string(TOUPPER ${_normal_package} _upper_package)
+	option(WITH_${_upper_package} "Add dependency to ${_normal_package}" OFF)
 
 	if(WITH_${_upper_package})
 		find_package(${_normal_package} REQUIRED)
-	elseif(NOT WITHOUT_${_upper_package})
-		find_package(${_normal_package})
+	else(WITH_${_upper_package})
+		message(STATUS "Skipping optional package ${_normal_package}.")
+		message(STATUS "  Enable this using \"-DWITH_${_upper_package}=ON\".")
 	endif(WITH_${_upper_package})
 endmacro(find_optional_package)

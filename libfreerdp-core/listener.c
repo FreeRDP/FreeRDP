@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <freerdp/utils/print.h>
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -47,6 +48,9 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 	int option_value;
 	void* sin_addr;
 	char buf[50];
+#ifdef _WIN32
+	u_long arg;
+#endif
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -78,7 +82,13 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 		{
 			perror("setsockopt");
 		}
+
+#ifndef _WIN32
 		fcntl(sockfd, F_SETFL, O_NONBLOCK);
+#else
+		arg = 1;
+		ioctlsocket(sockfd, FIONBIO, &arg);
+#endif
 
 		status = bind(sockfd, ai->ai_addr, ai->ai_addrlen);
 		if (status != 0)

@@ -65,6 +65,6 @@ void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, u
 
 	*sec = ((uint32) stopwatch->elapsed) / CLOCKS_PER_SEC;
 	uelapsed = stopwatch->elapsed - ((double)(*sec) * CLOCKS_PER_SEC);
-	*usec = (uelapsed / (CLOCKS_PER_SEC / 1000000));
+	*usec = (uint32)(uelapsed / (CLOCKS_PER_SEC / 1000000));
 }
 

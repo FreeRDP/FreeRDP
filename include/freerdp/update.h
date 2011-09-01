@@ -25,6 +25,10 @@
 #include <freerdp/utils/pcap.h>
 #include <freerdp/utils/stream.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /* Common */
 
 struct _BOUNDS

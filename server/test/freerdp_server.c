@@ -25,6 +25,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <freerdp/constants.h>
+#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/rfx/rfx.h>
@@ -239,6 +240,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 void test_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
+	uint32 seconds;
+	uint32 useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
 	pcap_record record;
@@ -247,6 +250,8 @@ void test_peer_dump_rfx(freerdp_peer* client)
 	update = client->update;
 	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
 	pcap_rfx = client->update->pcap_rfx;
+
+	seconds = useconds = 0;
 
 	while (pcap_has_next_record(pcap_rfx))
 	{
@@ -258,6 +263,15 @@ void test_peer_dump_rfx(freerdp_peer* client)
 
 		pcap_get_next_record_content(pcap_rfx, &record);
 		s->p = s->data + s->size;
+
+		seconds = record.header.ts_sec - seconds;
+		useconds = record.header.ts_usec - useconds;
+
+		if (seconds > 0)
+			freerdp_sleep(seconds);
+
+		if (useconds > 0)
+			freerdp_usleep(useconds);
 
 		update->SurfaceCommand(update, s);
 	}

@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+FREERDP_API void freerdp_sleep(uint32 seconds);
 FREERDP_API void freerdp_usleep(uint32 useconds);
 
 #endif /* __SLEEP_UTILS_H */

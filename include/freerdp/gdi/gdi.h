@@ -242,12 +242,13 @@ struct _GDI
 
 	HGDI_DC hdc;
 	HCLRCONV clrconv;
-	GDI_IMAGE *primary;
-	GDI_IMAGE *drawing;
+	GDI_IMAGE* primary;
+	GDI_IMAGE* drawing;
 	uint8* primary_buffer;
 	GDI_COLOR textColor;
-	void * rfx_context;
-	GDI_IMAGE *tile;
+	void* rfx_context;
+	GDI_IMAGE* tile;
+	GDI_IMAGE* image;
 
 	rdpCache* cache;
 };

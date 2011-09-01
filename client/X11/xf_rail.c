@@ -187,14 +187,14 @@ void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 {
 	rail->extra = (void*) xfi;
-	rail->CreateWindow = xf_rail_CreateWindow;
-	rail->MoveWindow = xf_rail_MoveWindow;
-	rail->ShowWindow = xf_rail_ShowWindow;
-	rail->SetWindowText = xf_rail_SetWindowText;
-	rail->SetWindowIcon = xf_rail_SetWindowIcon;
-	rail->SetWindowRects = xf_rail_SetWindowRects;
-	rail->SetWindowVisibilityRects = xf_rail_SetWindowVisibilityRects;
-	rail->DestroyWindow = xf_rail_DestroyWindow;
+	rail->rail_CreateWindow = xf_rail_CreateWindow;
+	rail->rail_MoveWindow = xf_rail_MoveWindow;
+	rail->rail_ShowWindow = xf_rail_ShowWindow;
+	rail->rail_SetWindowText = xf_rail_SetWindowText;
+	rail->rail_SetWindowIcon = xf_rail_SetWindowIcon;
+	rail->rail_SetWindowRects = xf_rail_SetWindowRects;
+	rail->rail_SetWindowVisibilityRects = xf_rail_SetWindowVisibilityRects;
+	rail->rail_DestroyWindow = xf_rail_DestroyWindow;
 }
 
 static void xf_on_free_rail_client_event(RDP_EVENT* event)
@@ -275,11 +275,6 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChanMan* chanman, RDP_E
 	sysparam->workArea.top = xfi->workArea.y;
 	sysparam->workArea.right = xfi->workArea.x + xfi->workArea.width;
 	sysparam->workArea.bottom = xfi->workArea.y + xfi->workArea.height;
-
-	sysparam->displayChange.left = xfi->workArea.x;
-	sysparam->displayChange.top = xfi->workArea.y;
-	sysparam->displayChange.right = xfi->workArea.x + xfi->workArea.width;
-	sysparam->displayChange.bottom = xfi->workArea.y + xfi->workArea.height;
 
 	sysparam->taskbarPos.left = 0;
 	sysparam->taskbarPos.top = 0;
