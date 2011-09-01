@@ -180,57 +180,57 @@ void certstore_free(rdpCertstore* certstore)
 
 int match_certdata(rdpCertstore* certstore)
 {
-	char* host;
-	char* p;
-	char* thumb_print;
+	FILE* fp;
 	int length;
-	unsigned char c;
+	char* data;
+	char* pline;
+	long int size;
 	rdpCertdata* cert_data;
-	FILE* cfp;
-	cfp = certstore->fp;
+
+	fp = certstore->fp;
 	cert_data = certstore->certdata;
-	length = strlen(cert_data->thumbprint);
-	host = xzalloc(strlen(cert_data->hostname) + 1);
-	
-	for (;;)
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data = (char*) xmalloc(size + 1);
+	length = fread(data, size, 1, fp);
+
+	if (size < 1)
+		return certstore->match;
+
+	data[size] = '\n';
+	pline = strtok(data, "\n");
+
+	while (pline != NULL)
 	{
-		if ((int) fread(host, sizeof(char), strlen(cert_data->hostname), cfp) < strlen(cert_data->hostname))
-			break;
+		length = strlen(pline);
 
-		if ((!strcmp(host, cert_data->hostname)) && ((c = fgetc(cfp)) ==' ' || c == '\t') )
+		if (length > 0)
 		{
-			ungetc(c, cfp);
-			while((c = fgetc(cfp)) == ' ' || c == '\t');
+			length = strcspn(pline, " \t");
+			pline[length] = '\0';
 
-			if (c == EOF)
+			if (strcmp(pline, cert_data->hostname) == 0)
+			{
+				pline = &pline[length + 1];
+
+				if (strcmp(pline, cert_data->thumbprint) == 0)
+					certstore->match = 0;
+				else
+					certstore->match = -1;
 				break;
-			
-			ungetc(c, cfp);
-			thumb_print = xzalloc(length + 1);
-			p = thumb_print;
-
-			while((p - thumb_print) < length && (*p = fgetc(cfp)) != EOF && *p != '\n' && *p == *(cert_data->thumbprint + (p - thumb_print)))
-				p++;
-
-			if(p - thumb_print == length)
-				certstore->match=0;
-			else
-				certstore->match=-1;
-			break;
+			}
 		}
-		else
-		{
-			while (c != '\n' && c != EOF)
-				c = fgetc(cfp);
 
-			if(c == EOF)
-				break;
-		}
+		pline = strtok(NULL, "\n");
 	}
-	xfree(host);
+	xfree(data);
 
 	return certstore->match;
 }
+
 void print_certdata(rdpCertstore* certstore)
 {
 	fseek(certstore->fp,0,SEEK_END);
