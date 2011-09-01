@@ -80,7 +80,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		ret = transport_connect_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
 		ret = transport_connect_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
 		ret = transport_connect_rdp(rdp->transport);
 
 	if (!ret)
