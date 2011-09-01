@@ -58,7 +58,7 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
-			DEBUG_SVC("state %d", (int)state);
+			DEBUG_SVC("PA_CONTEXT_FAILED/PA_CONTEXT_TERMINATED %d", (int)state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
@@ -224,12 +224,20 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	pa_stream_state_t state;
-	pa_buffer_attr buffer_attr = { 0 };
+	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
-	if (!pulse->context || pulse->stream)
+	if (!pulse->context || pulse->stream) {
+	        DEBUG_WARN("pulse stream has been created.");
 		return;
+	}
 
 	rdpsnd_pulse_set_format_spec(pulse, format);
+
+	if (pa_sample_spec_valid(&pulse->sample_spec) == 0) {
+	    pa_sample_spec_snprint(ss, sizeof(ss), &pulse->sample_spec);
+	    DEBUG_WARN("Invalid sample spec %s", ss);
+	    return;
+	}
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	pulse->stream = pa_stream_new(pulse->context, "freerdp",
@@ -241,17 +249,15 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format)
 			pa_context_errno(pulse->context));
 		return;
 	}
+
+	/* install essential callbacks */
 	pa_stream_set_state_callback(pulse->stream,
 		rdpsnd_pulse_stream_state_callback, pulse);
 	pa_stream_set_write_callback(pulse->stream,
 		rdpsnd_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = (uint32_t) -1;
-	buffer_attr.tlength = (uint32_t) -1; /* pa_usec_to_bytes(2000000, &pulse->sample_spec); */
-	buffer_attr.prebuf = (uint32_t) -1;
-	buffer_attr.minreq = (uint32_t) -1;
-	buffer_attr.fragsize = (uint32_t) -1;
+
 	if (pa_stream_connect_playback(pulse->stream,
-		pulse->device_name, &buffer_attr, 0, NULL, NULL) < 0)
+		pulse->device_name, NULL, PA_STREAM_INTERPOLATE_TIMING|PA_STREAM_AUTO_TIMING_UPDATE, NULL, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_stream_connect_playback failed (%d)",
@@ -452,7 +458,10 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	data = pEntryPoints->plugin_data;
 	if (data && strcmp((char*)data->data[0], "pulse") == 0)
 	{
+	        if(strlen((char*)data->data[1]) > 0) 
 		pulse->device_name = xstrdup((char*)data->data[1]);
+		else
+			pulse->device_name = NULL;
 	}
 
 	pulse->mainloop = pa_threaded_mainloop_new();
