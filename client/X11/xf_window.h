@@ -44,7 +44,7 @@ struct xf_window
 	xfWindow* parent;
 	size_t ref_count;
 
-	boolean isLocalMoveSizeStarted;
+	boolean isLocalMoveSizeModeEnabled;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);
@@ -66,6 +66,10 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
+
+void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int maxHeight,
+		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
+
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY);
 void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY);
