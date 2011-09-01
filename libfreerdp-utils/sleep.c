@@ -28,6 +28,11 @@
 #include <windows.h>
 #endif
 
+void freerdp_sleep(uint32 seconds)
+{
+	sleep(seconds);
+}
+
 void freerdp_usleep(uint32 useconds)
 {
 #ifndef _WIN32
