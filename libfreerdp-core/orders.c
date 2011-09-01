@@ -753,9 +753,9 @@ void update_read_polyline_order(STREAM* s, ORDER_INFO* orderInfo, POLYLINE_ORDER
 		stream_read_uint8(s, polyline->cbData);
 
 		if (polyline->points == NULL)
-			polyline->points = (DELTA_POINT*) xmalloc(polyline->cbData);
+			polyline->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polyline->cbData);
 		else
-			polyline->points = (DELTA_POINT*) xrealloc(polyline->points, polyline->cbData);
+			polyline->points = (DELTA_POINT*) xrealloc(polyline->points, sizeof(DELTA_POINT) * polyline->cbData);
 
 		update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
 	}
