@@ -25,7 +25,7 @@ set(DRDYNVC_SRCS
 	dvcman.h
 )
 
-add_library(drdynvc SHARED ${DRDYNVC_SRCS})
+add_library(drdynvc ${DRDYNVC_SRCS})
 set_target_properties(drdynvc PROPERTIES PREFIX "")
 
 target_link_libraries(drdynvc freerdp-utils)
