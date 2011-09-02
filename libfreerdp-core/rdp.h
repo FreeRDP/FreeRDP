@@ -36,6 +36,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "connection.h"
 #include "capabilities.h"
 #include "vchan.h"
+#include "mppc.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -123,6 +124,7 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;
+    struct rdp_mppc* mppc;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
