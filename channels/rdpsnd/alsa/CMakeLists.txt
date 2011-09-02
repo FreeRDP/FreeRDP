@@ -24,7 +24,7 @@ set(RDPSND_ALSA_SRCS
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
 
-add_library(rdpsnd_alsa SHARED ${RDPSND_ALSA_SRCS})
+add_library(rdpsnd_alsa ${RDPSND_ALSA_SRCS})
 set_target_properties(rdpsnd_alsa PROPERTIES PREFIX "")
 
 target_link_libraries(rdpsnd_alsa freerdp-utils)

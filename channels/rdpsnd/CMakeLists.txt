@@ -22,7 +22,7 @@ set(RDPSND_SRCS
 	rdpsnd_main.h
 )
 
-add_library(rdpsnd SHARED ${RDPSND_SRCS})
+add_library(rdpsnd ${RDPSND_SRCS})
 set_target_properties(rdpsnd PROPERTIES PREFIX "")
 
 target_link_libraries(rdpsnd freerdp-utils)

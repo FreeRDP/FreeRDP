@@ -25,7 +25,7 @@ set(DISK_SRCS
 
 include_directories(..)
 
-add_library(disk SHARED ${DISK_SRCS})
+add_library(disk ${DISK_SRCS})
 set_target_properties(disk PROPERTIES PREFIX "")
 
 target_link_libraries(disk freerdp-utils)

@@ -625,7 +625,7 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, STREAM* data_out)
 	context->properties = properties;
 }
 
-static void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
+void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
 {
 	stream_check_size(data_out, 12 + 10 + 12 + 13);
 
@@ -633,6 +633,8 @@ static void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out)
 	rfx_compose_message_context(context, data_out);
 	rfx_compose_message_codec_versions(context, data_out);
 	rfx_compose_message_channels(context, data_out);
+
+	context->header_processed = True;
 }
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* data_out)
@@ -831,7 +833,7 @@ FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* data_out,
 	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride)
 {
 	/* Only the first frame should send the RemoteFX header */
-	if (context->frame_idx == 0)
+	if (context->frame_idx == 0 && !context->header_processed)
 		rfx_compose_message_header(context, data_out);
 
 	rfx_compose_message_data(context, data_out, rects, num_rects, image_data, width, height, rowstride);

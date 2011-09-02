@@ -25,7 +25,7 @@ set(CLIPRDR_SRCS
 	cliprdr_main.h
 )
 
-add_library(cliprdr SHARED ${CLIPRDR_SRCS})
+add_library(cliprdr ${CLIPRDR_SRCS})
 set_target_properties(cliprdr PROPERTIES PREFIX "")
 
 target_link_libraries(cliprdr freerdp-utils)

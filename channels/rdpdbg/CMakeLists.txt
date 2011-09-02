@@ -21,7 +21,7 @@ set(RDPDBG_SRCS
 	rdpdbg_main.c
 )
 
-add_library(rdpdbg SHARED ${RDPDBG_SRCS})
+add_library(rdpdbg ${RDPDBG_SRCS})
 set_target_properties(rdpdbg PROPERTIES PREFIX "")
 
 target_link_libraries(rdpdbg freerdp-utils)

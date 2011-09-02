@@ -24,6 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/gdi/color.h>
+#include <freerdp/utils/bitmap.h>
 #include <freerdp/rfx/rfx.h>
 
 #include <freerdp/gdi/dc.h>
@@ -754,11 +755,14 @@ void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 	brush_put(gdi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
+int tilenum = 0;
+
 void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, j;
 	int tx, ty;
 	STREAM* s;
+	char* tile_bitmap;
 	RFX_MESSAGE* message;
 	GDI* gdi = GET_GDI(update);
 	RFX_CONTEXT* context = (RFX_CONTEXT*) gdi->rfx_context;
@@ -770,6 +774,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		surface_bits_command->bpp, surface_bits_command->codecID,
 		surface_bits_command->width, surface_bits_command->height,
 		surface_bits_command->bitmapDataLength);
+
+	tile_bitmap = xzalloc(32);
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
@@ -789,6 +795,11 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 				ty = message->tiles[i]->y + surface_bits_command->destTop;
 
 				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+#ifdef DUMP_REMOTEFX_TILES
+				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
+				freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+#endif
 
 				for (j = 0; j < message->num_rects; j++)
 				{
@@ -823,6 +834,11 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 				ty = message->tiles[i]->y + surface_bits_command->destTop;
 
 				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+
+#ifdef DUMP_REMOTEFX_TILES
+				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
+				freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+#endif
 
 				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
 
