@@ -63,7 +63,8 @@ add_executable(test_freerdp
 	test_freerdp.c
 	test_freerdp.h
 	test_rail.c
-	test_rail.h)
+	test_rail.h
+	test_mppc)
 
 target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 
