@@ -23,7 +23,7 @@ set(RAIL_SRCS
 	rail_orders.c
 	rail_orders.h)
 
-add_library(rail SHARED ${RAIL_SRCS})
+add_library(rail ${RAIL_SRCS})
 set_target_properties(rail PROPERTIES PREFIX "")
 
 target_link_libraries(rail freerdp-utils)

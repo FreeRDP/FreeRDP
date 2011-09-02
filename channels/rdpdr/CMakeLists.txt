@@ -30,7 +30,7 @@ set(RDPDR_SRCS
 	rdpdr_main.h
 )
 
-add_library(rdpdr SHARED ${RDPDR_SRCS})
+add_library(rdpdr ${RDPDR_SRCS})
 set_target_properties(rdpdr PROPERTIES PREFIX "")
 
 target_link_libraries(rdpdr freerdp-utils)

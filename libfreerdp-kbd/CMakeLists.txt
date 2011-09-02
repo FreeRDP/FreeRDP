@@ -27,7 +27,7 @@ set(FREERDP_KBD_SRCS
 	libkbd.c
 	libkbd.h)
 
-add_library(freerdp-kbd SHARED ${FREERDP_KBD_SRCS})
+add_library(freerdp-kbd ${FREERDP_KBD_SRCS})
 
 find_suggested_package(XKBFile)
 if(XKBFILE_FOUND)
