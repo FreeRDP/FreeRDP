@@ -306,7 +306,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-m", argv[index]) == 0)
 		{
-			settings->mouse_motion = 0;
+			settings->mouse_motion = True;
 		}
 		else if (strcmp("--app", argv[index]) == 0)
 		{

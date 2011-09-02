@@ -20,6 +20,10 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
+#include <freerdp/rail.h>
+#include <freerdp/utils/rail.h>
+
+
 #ifdef WITH_XEXT
 #include <X11/extensions/shape.h>
 #endif
@@ -292,6 +296,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		window->decorations = False;
 		window->fullscreen = False;
 		window->parent = parent;
+		window->isLocalMoveSizeModeEnabled = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -332,6 +337,156 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 	return window;
 }
 
+void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
+		int maxWidth, int maxHeight,
+		int maxPosX, int maxPosY,
+		int minTrackWidth, int minTrackHeight,
+		int maxTrackWidth, int maxTrackHeight)
+{
+	XSizeHints* size_hints;
+
+	printf("xf_SetWindowMinMaxInfo: windowHandle=0x%X "
+		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
+		(uint32)window->handle, maxWidth, maxHeight,
+		(sint16)maxPosX, (sint16)maxPosY,
+		minTrackWidth, minTrackHeight,
+		maxTrackWidth, maxTrackHeight);
+
+	size_hints = XAllocSizeHints();
+
+	if (size_hints)
+	{
+		size_hints->flags = PMinSize | PMaxSize | PResizeInc;
+
+		size_hints->min_width  = minTrackWidth;
+		size_hints->min_height = minTrackHeight;
+
+		size_hints->max_width  = maxTrackWidth;
+		size_hints->max_height = maxTrackHeight;
+
+		// For speedup window drawing we need to select optimal value
+		// for sizing step.
+		size_hints->width_inc = size_hints->height_inc = 5;
+
+		XSetWMNormalHints(xfi->display, window->handle, size_hints);
+		XFree(size_hints);
+	}
+
+
+}
+
+
+void SentMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_root, int y_root)
+{
+	// TODO:
+	// - how to receive movesize canceling event?
+	// - how to produce correct RAIL movesize finish?
+	// - how to receive move/size window coordinates in process of local move/size?
+
+	XEvent event;
+
+	event.xclient.type = ClientMessage;
+	event.xclient.window = window->handle;
+	event.xclient.message_type = xfi->_NET_WM_MOVERESIZE;
+	event.xclient.serial = 0;
+	event.xclient.display = xfi->display;
+	event.xclient.send_event = True;
+	event.xclient.format = 32;
+	event.xclient.data.l[0] = x_root;
+	event.xclient.data.l[1] = y_root;
+	event.xclient.data.l[2] = direction;
+	event.xclient.data.l[3] = 1; // BUTTON 1
+	event.xclient.data.l[4] = 0;
+
+	XUngrabPointer(xfi->display, CurrentTime);
+	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, SubstructureNotifyMask, &event);
+}
+
+#define XF_NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
+#define XF_NET_WM_MOVERESIZE_SIZE_TOP          1
+#define XF_NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
+#define XF_NET_WM_MOVERESIZE_SIZE_RIGHT        3
+#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
+#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOM       5
+#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
+#define XF_NET_WM_MOVERESIZE_SIZE_LEFT         7
+#define XF_NET_WM_MOVERESIZE_MOVE              8   /* movement only */
+#define XF_NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
+#define XF_NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
+#define XF_NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
+
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
+{
+	struct
+	{
+		uint16 moveSizeType;
+		int    direction;
+	} type2dir_table[] =
+	{
+		{ RAIL_WMSZ_LEFT,        XF_NET_WM_MOVERESIZE_SIZE_LEFT  },
+		{ RAIL_WMSZ_RIGHT,       XF_NET_WM_MOVERESIZE_SIZE_RIGHT },
+		{ RAIL_WMSZ_TOP,         XF_NET_WM_MOVERESIZE_SIZE_TOP },
+		{ RAIL_WMSZ_TOPLEFT,     XF_NET_WM_MOVERESIZE_SIZE_TOPLEFT },
+		{ RAIL_WMSZ_TOPRIGHT,    XF_NET_WM_MOVERESIZE_SIZE_TOPRIGHT },
+		{ RAIL_WMSZ_BOTTOM,      XF_NET_WM_MOVERESIZE_SIZE_BOTTOM },
+		{ RAIL_WMSZ_BOTTOMLEFT,  XF_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT },
+		{ RAIL_WMSZ_BOTTOMRIGHT, XF_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT },
+		{ RAIL_WMSZ_MOVE,        XF_NET_WM_MOVERESIZE_MOVE },
+		{ RAIL_WMSZ_KEYMOVE,     XF_NET_WM_MOVERESIZE_MOVE_KEYBOARD },
+		{ RAIL_WMSZ_KEYSIZE,     XF_NET_WM_MOVERESIZE_SIZE_KEYBOARD },
+	};
+
+	int x_root = 0;
+	int y_root = 0;
+	int direction = -1;
+	int i = 0;
+
+
+	printf("xf_StartLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
+		(uint32)window->handle, moveSizeType, posX, posY);
+
+	window->isLocalMoveSizeModeEnabled = True;
+	x_root = posX;
+	y_root = posY;
+
+	if (moveSizeType == RAIL_WMSZ_MOVE)
+	{
+		x_root += window->left;
+		y_root += window->top;
+	}
+
+	for (i = 0; i < RAIL_ARRAY_SIZE(type2dir_table); i++)
+	{
+		if (type2dir_table[i].moveSizeType == moveSizeType)
+		{
+			direction = type2dir_table[i].direction;
+			break;
+		}
+	}
+
+	if (direction == -1)
+	{
+		printf("xf_StartLocalMoveSize: unknown moveSizeType. (window=0x%X moveSizeType=0x%X)\n",
+			(uint32)window->handle, moveSizeType);
+		return;
+	}
+
+	SentMoveResizeEvent(xfi, window, direction, x_root, y_root);
+}
+
+void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)
+{
+	window->isLocalMoveSizeModeEnabled = False;
+	printf("xf_StopLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
+		(uint32)window->handle, moveSizeType, topLeftX, topLeftY);
+
+	if (moveSizeType == RAIL_WMSZ_MOVE)
+	{
+		xf_MoveWindow(xfi, window, topLeftX, topLeftY, window->width, window->height);
+	}
+}
+
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
 	Pixmap surface;
@@ -339,14 +494,12 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if ((width * height) < 1)
 		return;
 
+	if (window->isLocalMoveSizeModeEnabled)
+		return;
+
 	xf_FixWindowCoordinates(&x, &y, &width, &height);
 
-	if (window->width == width && window->height == height)
-		XMoveWindow(xfi->display, window->handle, x, y);
-	else if (window->left == x && window->top == y)
-		XResizeWindow(xfi->display, window->handle, width, height);
-	else
-		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
 
 	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
@@ -458,7 +611,7 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	}
 
 #ifdef WITH_XEXT
-	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	//XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	xfree(xrects);

@@ -290,6 +290,8 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
 	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", False);
 
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", False);
+
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
@@ -306,7 +308,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
-	xfi->mouse_motion = True;
+	xfi->mouse_motion = settings->mouse_motion;
 	xfi->complex_regions = True;
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
