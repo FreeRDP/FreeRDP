@@ -38,6 +38,7 @@
 #include "test_freerdp.h"
 #include "test_rail.h"
 #include "test_pcap.h"
+#include "test_mppc.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
 {
@@ -128,6 +129,7 @@ int main(int argc, char* argv[])
 		add_orders_suite();
 		add_license_suite();
 		add_stream_suite();
+		add_mppc_suite();
 	}
 	else
 	{
@@ -204,6 +206,10 @@ int main(int argc, char* argv[])
 			else if (strcmp("mcs", argv[*pindex]) == 0)
 			{
 				add_mcs_suite();
+			}
+			else if (strcmp("mppc", argv[*pindex]) == 0)
+			{
+				add_mppc_suite();
 			}
 
 			*pindex = *pindex + 1;

@@ -90,6 +90,7 @@ set(LIBFREERDP_CORE_SRCS
 	listener.h
 	peer.c
 	peer.h
+    mppc.c
 )
 
 add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
