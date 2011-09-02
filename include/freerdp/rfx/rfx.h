@@ -98,6 +98,7 @@ struct _RFX_CONTEXT
 
 	/* temporary data within a frame */
 	uint32 frame_idx;
+	boolean header_processed;
 	uint8 num_quants;
 	uint32* quants;
 	uint8 quant_idx_y;
@@ -124,6 +125,7 @@ FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FO
 FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in);
 FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
+FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out);
 FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* data_out,
 	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride);
 
