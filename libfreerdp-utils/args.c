@@ -304,9 +304,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->play_rfx_file = xstrdup(argv[index]);
 			settings->play_rfx = True;
 		}
-		else if (strcmp("-m", argv[index]) == 0)
+		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
-			settings->mouse_motion = True;
+			settings->mouse_motion = False;
 		}
 		else if (strcmp("--app", argv[index]) == 0)
 		{

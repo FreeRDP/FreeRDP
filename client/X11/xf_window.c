@@ -365,19 +365,16 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 		size_hints->max_width  = maxTrackWidth;
 		size_hints->max_height = maxTrackHeight;
 
-		// For speedup window drawing we need to select optimal value
-		// for sizing step.
+		/* to speedup window drawing we need to select optimal value for sizing step. */
 		size_hints->width_inc = size_hints->height_inc = 5;
 
 		XSetWMNormalHints(xfi->display, window->handle, size_hints);
 		XFree(size_hints);
 	}
-
-
 }
 
 
-void SentMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_root, int y_root)
+void xf_SendMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_root, int y_root)
 {
 	// TODO:
 	// - how to receive movesize canceling event?
@@ -396,7 +393,7 @@ void SentMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_roo
 	event.xclient.data.l[0] = x_root;
 	event.xclient.data.l[1] = y_root;
 	event.xclient.data.l[2] = direction;
-	event.xclient.data.l[3] = 1; // BUTTON 1
+	event.xclient.data.l[3] = 1; /* button 1 */
 	event.xclient.data.l[4] = 0;
 
 	XUngrabPointer(xfi->display, CurrentTime);
@@ -444,7 +441,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, i
 
 
 	printf("xf_StartLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
-		(uint32)window->handle, moveSizeType, posX, posY);
+		(uint32) window->handle, moveSizeType, posX, posY);
 
 	window->isLocalMoveSizeModeEnabled = True;
 	x_root = posX;
@@ -472,14 +469,14 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, i
 		return;
 	}
 
-	SentMoveResizeEvent(xfi, window, direction, x_root, y_root);
+	xf_SendMoveResizeEvent(xfi, window, direction, x_root, y_root);
 }
 
 void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)
 {
 	window->isLocalMoveSizeModeEnabled = False;
 	printf("xf_StopLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
-		(uint32)window->handle, moveSizeType, topLeftX, topLeftY);
+		(uint32) window->handle, moveSizeType, topLeftX, topLeftY);
 
 	if (moveSizeType == RAIL_WMSZ_MOVE)
 	{

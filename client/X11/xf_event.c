@@ -451,6 +451,7 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 			xf_rail_send_windowmove(xfi, window->windowId, left, top, right, bottom);
 		}
+
 		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
 				xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
 
