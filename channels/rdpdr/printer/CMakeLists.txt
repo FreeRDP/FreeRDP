@@ -33,7 +33,7 @@ endif()
 
 include_directories(..)
 
-add_library(printer SHARED ${PRINTER_SRCS})
+add_library(printer ${PRINTER_SRCS})
 set_target_properties(printer PROPERTIES PREFIX "")
 
 target_link_libraries(printer freerdp-utils)

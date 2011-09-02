@@ -39,7 +39,7 @@ set(LIBFREERDP_RFX_SRCS
 	librfx.c
 )
 
-add_library(freerdp-rfx SHARED ${LIBFREERDP_RFX_SRCS})
+add_library(freerdp-rfx ${LIBFREERDP_RFX_SRCS})
 
 set_target_properties(freerdp-rfx PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 

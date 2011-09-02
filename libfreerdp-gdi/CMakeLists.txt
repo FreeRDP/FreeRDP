@@ -34,7 +34,7 @@ set(FREERDP_GDI_SRCS
 	shape.c
 	gdi.c)
 
-add_library(freerdp-gdi SHARED ${FREERDP_GDI_SRCS})
+add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
 
 target_link_libraries(freerdp-gdi freerdp-cache)
 target_link_libraries(freerdp-gdi freerdp-rfx)

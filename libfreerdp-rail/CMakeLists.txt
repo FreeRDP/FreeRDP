@@ -23,7 +23,7 @@ set(FREERDP_RAIL_SRCS
 	icon.c
 	rail.c)
 
-add_library(freerdp-rail SHARED ${FREERDP_RAIL_SRCS})
+add_library(freerdp-rail ${FREERDP_RAIL_SRCS})
 
 set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 

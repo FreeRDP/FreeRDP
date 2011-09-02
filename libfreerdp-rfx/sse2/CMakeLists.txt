@@ -24,8 +24,9 @@ set(LIBFREERDP_RFX_SSE2_SRCS
 
 include_directories(..)
 
-add_library(freerdp-rfx-sse2 STATIC ${LIBFREERDP_RFX_SSE2_SRCS})
+add_library(freerdp-rfx-sse2 ${LIBFREERDP_RFX_SSE2_SRCS})
 
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 	set_target_properties(freerdp-rfx-sse2 PROPERTIES COMPILE_FLAGS "-fPIC")
 endif()
+install(TARGETS freerdp-rfx-sse2 DESTINATION ${CMAKE_INSTALL_LIBDIR})

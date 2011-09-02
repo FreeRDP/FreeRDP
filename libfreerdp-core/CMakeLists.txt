@@ -92,7 +92,7 @@ set(LIBFREERDP_CORE_SRCS
 	peer.h
 )
 
-add_library(freerdp-core SHARED ${LIBFREERDP_CORE_SRCS})
+add_library(freerdp-core ${LIBFREERDP_CORE_SRCS})
 
 set_target_properties(freerdp-core PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
