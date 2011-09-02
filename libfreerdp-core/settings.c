@@ -147,6 +147,7 @@ rdpSettings* settings_new()
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
+		settings->mouse_motion = False;
 	}
 
 	return settings;

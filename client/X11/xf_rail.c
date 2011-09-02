@@ -219,6 +219,22 @@ static void xf_send_rail_client_event(rdpChanMan* chanman, uint16 event_type, vo
 	}
 }
 
+void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 top, uint32 right, uint32 bottom)
+{
+	rdpChanMan* chanman;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+
+	chanman = GET_CHANMAN(xfi->instance);
+
+	window_move.windowId = windowId;
+	window_move.left = left;
+	window_move.top = top;
+	window_move.right = right;
+	window_move.bottom = bottom;
+
+	xf_send_rail_client_event(chanman, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+}
+
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
 {
 	rdpChanMan* chanman;
@@ -315,14 +331,26 @@ void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChanMan* chanman, RDP
 void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*)event->user_data;
+	rdpWindow* rail_window = NULL;
 
-	printf("Server Min Max Info PDU: windowId=0x%X "
-		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
-		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
-		minmax->windowId, minmax->maxWidth, minmax->maxHeight,
-		(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
-		minmax->minTrackWidth, minmax->minTrackHeight,
-		minmax->maxTrackWidth, minmax->maxTrackHeight);
+	rail_window = window_list_get_by_id(xfi->rail->list, minmax->windowId);
+
+	if (rail_window != NULL)
+	{
+		xfWindow * window = NULL;
+		window = (xfWindow *) rail_window->extra;
+
+		printf("Server Min Max Info PDU: windowId=0x%X "
+			"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
+			minmax->windowId, minmax->maxWidth, minmax->maxHeight,
+			(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
+			minmax->minTrackWidth, minmax->minTrackHeight,
+			minmax->maxTrackWidth, minmax->maxTrackHeight);
+
+		xf_SetWindowMinMaxInfo(xfi, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
+				minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
+	}
 }
 
 const char* movetype_names[] =
@@ -344,11 +372,27 @@ const char* movetype_names[] =
 void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
 	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
+	rdpWindow* rail_window = NULL;
 
-	printf("Server Local MoveSize PDU: windowId=0x%X "
-		"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
-		movesize->windowId, movesize->isMoveSizeStart,
-		movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
+	rail_window = window_list_get_by_id(xfi->rail->list, movesize->windowId);
+
+	if (rail_window != NULL)
+	{
+		xfWindow * window = NULL;
+		window = (xfWindow *) rail_window->extra;
+
+		printf("Server Local MoveSize PDU: windowId=0x%X "
+			"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
+			movesize->windowId, movesize->isMoveSizeStart,
+			movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
+
+		if (movesize->isMoveSizeStart)
+			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int)movesize->posX, (int)movesize->posY);
+		else
+			xf_StopLocalMoveSize(xfi, window, movesize->moveSizeType, (int)movesize->posX, (int)movesize->posY);
+
+	}
+
 }
 
 void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)

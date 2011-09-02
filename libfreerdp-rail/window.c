@@ -141,6 +141,9 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		printf("ownerWindowId:0x%08X\n", window->ownerWindowId);
 	}
 
+	printf("window_state_update: windowId=0x%X ownerWindowId=0x%X\n",
+			window->windowId, window->ownerWindowId);
+
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		window->style = window_state->style;

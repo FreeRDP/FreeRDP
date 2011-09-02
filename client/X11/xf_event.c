@@ -421,15 +421,36 @@ boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	xfWindow* xfw;
 	rdpWindow* window;
 
-	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+	printf( "ConfigureNotify event: send_event=%d eventWindow=0x%X window=0x%X above=0x%X x=%d y=%d "
+			"width=%d height=%d override_redirect=%d\n",
+			event->xconfigure.send_event,
+			(uint32)event->xconfigure.event,
+			(uint32)event->xconfigure.window,
+			(uint32)event->xconfigure.above,
+			event->xconfigure.x,
+			event->xconfigure.y,
+			event->xconfigure.width,
+			event->xconfigure.height,
+			event->xconfigure.override_redirect);
+
+	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xconfigure.window);
 
 	if (window != NULL)
 	{
+		xfWindow* xfw;
 		xfw = (xfWindow*) window->extra;
 
+		if (xfw->isLocalMoveSizeModeEnabled)
+		{
+			uint32 left = event->xconfigure.x;
+			uint32 top = event->xconfigure.y;
+			uint32 right = event->xconfigure.y + event->xconfigure.width - 1;
+			uint32 bottom = event->xconfigure.y + event->xconfigure.height - 1;
+
+			xf_rail_send_windowmove(xfi, window->windowId, left, top, right, bottom);
+		}
 		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
 				xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
 
@@ -476,7 +497,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			app = True;
 	}
 
-#if 0
+#if 1
 	if (event->type != MotionNotify)
 		printf("X11 %s Event: wnd=0x%X\n", X11_EVENT_STRINGS[event->type], (uint32)event->xany.window);
 #endif

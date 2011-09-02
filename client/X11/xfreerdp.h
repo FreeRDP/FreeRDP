@@ -104,6 +104,8 @@ struct xf_info
 	Atom _NET_WM_WINDOW_TYPE_NORMAL;
 	Atom _NET_WM_WINDOW_TYPE_DIALOG;
 	Atom _NET_WM_WINDOW_TYPE_UTILITY;
+
+	Atom _NET_WM_MOVERESIZE;
 };
 
 void xf_toggle_fullscreen(xfInfo* xfi);

@@ -113,7 +113,7 @@ static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 
 	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
 
-	printf("numberOrders(FastPath):%d\n", numberOrders);
+	//printf("numberOrders(FastPath):%d\n", numberOrders);
 
 	while (numberOrders > 0)
 	{
