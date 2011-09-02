@@ -423,18 +423,6 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpWindow* window;
 
-	printf( "ConfigureNotify event: send_event=%d eventWindow=0x%X window=0x%X above=0x%X x=%d y=%d "
-			"width=%d height=%d override_redirect=%d\n",
-			event->xconfigure.send_event,
-			(uint32)event->xconfigure.event,
-			(uint32)event->xconfigure.window,
-			(uint32)event->xconfigure.above,
-			event->xconfigure.x,
-			event->xconfigure.y,
-			event->xconfigure.width,
-			event->xconfigure.height,
-			event->xconfigure.override_redirect);
-
 	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xconfigure.window);
 
 	if (window != NULL)
@@ -498,9 +486,9 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			app = True;
 	}
 
-#if 1
+#if WITH_DEBUG_X11
 	if (event->type != MotionNotify)
-		printf("X11 %s Event: wnd=0x%X\n", X11_EVENT_STRINGS[event->type], (uint32)event->xany.window);
+		DEBUG_X11("%s Event: wnd=0x%04X", X11_EVENT_STRINGS[event->type], (uint32) event->xany.window);
 #endif
 
 	switch (event->type)
@@ -575,7 +563,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		default:
-			printf("xf_event_process unknown event %d\n", event->type);
+			DEBUG_X11("xf_event_process unknown event %d", event->type);
 			break;
 	}
 

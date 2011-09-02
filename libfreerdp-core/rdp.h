@@ -40,6 +40,7 @@ typedef struct rdp_rdp rdpRdp;
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
 /* Security Header Flags */
@@ -157,5 +158,11 @@ int rdp_check_fds(rdpRdp* rdp);
 
 rdpRdp* rdp_new(freerdp* instance);
 void rdp_free(rdpRdp* rdp);
+
+#ifdef WITH_DEBUG_RDP
+#define DEBUG_RDP(fmt, ...) DEBUG_CLASS(RDP, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 #endif /* __RDP_H */

@@ -66,8 +66,6 @@ boolean tls_connect(rdpTls* tls)
 			return False;
 	}
 
-	printf("TLS connection established\n");
-
 	return True;
 }
 

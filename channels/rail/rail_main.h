@@ -23,6 +23,7 @@
 #define	__RAIL_MAIN_H
 
 #include <freerdp/rail.h>
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -58,8 +59,6 @@ typedef struct rail_plugin railPlugin;
 
 void rail_send_channel_event(void* rail_object, uint16 event_type, void* param);
 void rail_send_channel_data(void* rail_object, void* data, size_t length);
-
-#define WITH_DEBUG_RAIL	1
 
 #ifdef WITH_DEBUG_RAIL
 #define DEBUG_RAIL(fmt, ...) DEBUG_CLASS(RAIL, fmt, ## __VA_ARGS__)

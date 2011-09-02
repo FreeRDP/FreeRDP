@@ -20,6 +20,8 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
+#include "librail.h"
+
 #include <freerdp/rail/window_list.h>
 
 void window_list_rewind(rdpWindowList* list)

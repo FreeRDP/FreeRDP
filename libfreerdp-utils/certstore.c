@@ -99,11 +99,9 @@ void certstore_init(rdpCertstore* certstore)
 	}
 
 	certstore->home = (char*) xstrdup(home_path);
-	printf("home path: %s\n", certstore->home);
 
 	certstore->path = (char*) xmalloc(strlen(certstore->home) + strlen("/.") + strlen(cert_dir) + 1);
 	sprintf(certstore->path, "%s/.%s", certstore->home, cert_dir);
-	printf("certstore path: %s\n", certstore->path);
 
 	if (stat(certstore->path, &stat_info) != 0)
 	{
@@ -118,7 +116,6 @@ void certstore_init(rdpCertstore* certstore)
 	length = strlen(certstore->path);
 	certstore->file = (char*) xmalloc(strlen(certstore->path) + strlen("/") + strlen(certstore_file) + 1);
 	sprintf(certstore->file, "%s/%s", certstore->path, certstore_file);
-	printf("certstore file: %s\n", certstore->file);
 
 	certstore_open(certstore);
 }

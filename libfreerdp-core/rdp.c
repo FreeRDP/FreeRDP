@@ -307,8 +307,10 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	rdp_read_share_data_header(s, &length, &type, &share_id);
 
+#ifdef WITH_DEBUG_RDP
 	if (type != DATA_PDU_TYPE_UPDATE)
 		printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+#endif
 
 	switch (type)
 	{

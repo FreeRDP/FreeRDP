@@ -87,9 +87,6 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 
 	settings->num_monitors = vscreen->nmonitors;
 
-	settings->width = 0;
-	settings->height = 0;
-
 	for (i = 0; i < vscreen->nmonitors; i++)
 	{
 		settings->monitors[i].x = vscreen->monitors[i].area.left;
@@ -98,9 +95,14 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		settings->monitors[i].height = vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1;
 		settings->monitors[i].is_primary = vscreen->monitors[i].primary;
 
-		settings->width += settings->monitors[i].width;
-		settings->height = settings->monitors[i].height;
+		vscreen->area.left = MIN(vscreen->monitors[i].area.left, vscreen->area.left);
+		vscreen->area.right = MAX(vscreen->monitors[i].area.right, vscreen->area.right);
+		vscreen->area.top = MIN(vscreen->monitors[i].area.top, vscreen->area.top);
+		vscreen->area.bottom = MAX(vscreen->monitors[i].area.bottom, vscreen->area.bottom);
 	}
+
+	settings->width = vscreen->area.right - vscreen->area.left + 1;
+	settings->height = vscreen->area.bottom - vscreen->area.top + 1;
 
 	return True;
 }

@@ -42,8 +42,6 @@ struct xf_window
 	boolean fullscreen;
 	boolean decorations;
 	xfWindow* parent;
-	size_t ref_count;
-
 	boolean isLocalMoveSizeModeEnabled;
 };
 

@@ -78,9 +78,6 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 
 	xfi = (xfInfo*) rail->extra;
 
-	printf("xf_rail_CreateWindow: wid=0x%X own_wid=0x%X\n",
-			window->windowId, window->ownerWindowId);
-
 	xfparent = NULL;
 
 	if (window->ownerWindowId != 0)
@@ -90,7 +87,7 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 		p = window_list_get_by_id(xfi->rail->list, window->ownerWindowId);
 
 		if (p != NULL)
-			xfparent = (xfWindow *) p->extra;
+			xfparent = (xfWindow*) p->extra;
 	}
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra, xfparent,
@@ -312,18 +309,14 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVE
 
 void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
-	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*)event->user_data;
+	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
 
 	switch (sysparam->param)
 	{
 		case SPI_SET_SCREEN_SAVE_ACTIVE:
-			printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveActive=%d\n",
-					sysparam->setScreenSaveActive);
 			break;
 
 		case SPI_SET_SCREEN_SAVE_SECURE:
-			printf("xf_process_rail_server_sysparam_event: Server System Param PDU: setScreenSaveSecure=%d\n",
-					sysparam->setScreenSaveSecure);
 			break;
 	}
 }

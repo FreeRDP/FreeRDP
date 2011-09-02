@@ -209,8 +209,6 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->license->state == LICENSE_STATE_COMPLETED)
 	{
-		printf("license connection sequence completed.\n");
-
 		rdp->state = CONNECTION_STATE_CAPABILITY;
 	}
 
@@ -247,8 +245,6 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	update_reset_state(rdp->update);
 	rdp->update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(rdp->update->SwitchSurface, rdp->update, &(rdp->update->switch_surface));
-
-	printf("client is activated\n");
 
 	return True;
 }

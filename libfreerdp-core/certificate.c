@@ -235,7 +235,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 
 void certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
 {
-	printf("Server Proprietary Certificate\n");
+	DEBUG_CERTIFICATE("Server Proprietary Certificate");
 }
 
 /**

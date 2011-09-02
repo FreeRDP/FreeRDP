@@ -195,7 +195,7 @@ static int df_process_plugin_args(rdpSettings* settings, const char* name,
 {
 	rdpChanMan* chanman = (rdpChanMan*) user_data;
 
-	printf("Load plugin %s\n", name);
+	printf("loading plugin %s\n", name);
 	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
 
 	return 1;

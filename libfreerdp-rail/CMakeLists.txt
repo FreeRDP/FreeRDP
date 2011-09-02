@@ -21,7 +21,8 @@ set(FREERDP_RAIL_SRCS
 	window_list.c
 	window.c
 	icon.c
-	rail.c)
+	rail.c
+	librail.h)
 
 add_library(freerdp-rail ${FREERDP_RAIL_SRCS})
 

@@ -235,8 +235,6 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 {
 	uint16 lengthSourceDescriptor;
 
-	printf("Deactivate All PDU\n");
-
 	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */

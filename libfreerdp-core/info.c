@@ -662,7 +662,7 @@ boolean rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 
 	stream_read_uint32(s, infoType); /* infoType (4 bytes) */
 
-	printf("%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
+	//printf("%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
 
 	switch (infoType)
 	{

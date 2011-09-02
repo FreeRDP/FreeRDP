@@ -111,7 +111,7 @@ void rail_send_pdu(rdpRailOrder* rail_order, STREAM* s, uint16 orderType)
 	stream_set_pos(s, orderLength);
 
 	/* send */
-	printf("Sending %s PDU, length:%d\n",
+	DEBUG_RAIL("Sending %s PDU, length:%d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
 	rail_send_channel_data(rail_order->plugin, s->data, orderLength);
@@ -405,7 +405,7 @@ void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 
 	rail_read_pdu_header(s, &orderType, &orderLength);
 
-	printf("Received %s PDU, length:%d\n",
+	DEBUG_RAIL("Received %s PDU, length:%d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
 	switch (orderType)

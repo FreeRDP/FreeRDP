@@ -22,6 +22,8 @@
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 
+#include "librail.h"
+
 #include <freerdp/rail/window.h>
 
 struct _WINDOW_STYLE
@@ -138,26 +140,27 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
 		window->ownerWindowId = window_state->ownerWindowId;
-		printf("ownerWindowId:0x%08X\n", window->ownerWindowId);
+		DEBUG_RAIL("ownerWindowId:0x%08X", window->ownerWindowId);
 	}
 
-	printf("window_state_update: windowId=0x%X ownerWindowId=0x%X\n",
+	DEBUG_RAIL("window_state_update: windowId=0x%X ownerWindowId=0x%X\n",
 			window->windowId, window->ownerWindowId);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		window->style = window_state->style;
 		window->extendedStyle = window_state->extendedStyle;
-		//printf("Style:%d, ExtendedStyle:%d\n", window->style, window->extendedStyle);
 
+#ifdef WITH_DEBUG_RAIL
 		print_window_styles(window->style);
 		print_extended_window_styles(window->extendedStyle);
+#endif
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
 		window->showState = window_state->showState;
-		printf("ShowState:%d\n", window->showState);
+		DEBUG_RAIL("ShowState:%d", window->showState);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -165,7 +168,10 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->titleInfo.length = window_state->titleInfo.length;
 		window->titleInfo.string = xmalloc(window_state->titleInfo.length);
 		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
+
+#ifdef WITH_DEBUG_RAIL
 		freerdp_hexdump(window->titleInfo.string, window->titleInfo.length);
+#endif
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
@@ -173,7 +179,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->clientOffsetX = window_state->clientOffsetX;
 		window->clientOffsetY = window_state->clientOffsetY;
 
-		printf("Client Area Offset: (%d, %d)\n",
+		DEBUG_RAIL("Client Area Offset: (%d, %d)",
 				window->clientOffsetX, window->clientOffsetY);
 	}
 
@@ -182,7 +188,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->clientAreaWidth = window_state->clientAreaWidth;
 		window->clientAreaHeight = window_state->clientAreaHeight;
 
-		printf("Client Area Size: (%d, %d)\n",
+		DEBUG_RAIL("Client Area Size: (%d, %d)",
 				window->clientAreaWidth, window->clientAreaHeight);
 	}
 
@@ -201,7 +207,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->windowOffsetX = window_state->windowOffsetX;
 		window->windowOffsetY = window_state->windowOffsetY;
 
-		printf("Window Offset: (%d, %d)\n",
+		DEBUG_RAIL("Window Offset: (%d, %d)",
 				window->windowOffsetX, window->windowOffsetY);
 	}
 
@@ -210,7 +216,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->windowClientDeltaX = window_state->windowClientDeltaX;
 		window->windowClientDeltaY = window_state->windowClientDeltaY;
 
-		printf("Window Client Delta: (%d, %d)\n",
+		DEBUG_RAIL("Window Client Delta: (%d, %d)",
 				window->windowClientDeltaX, window->windowClientDeltaY);
 	}
 
@@ -219,7 +225,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->windowWidth = window_state->windowWidth;
 		window->windowHeight = window_state->windowHeight;
 
-		printf("Window Size: (%d, %d)\n",
+		DEBUG_RAIL("Window Size: (%d, %d)",
 				window->windowWidth, window->windowHeight);
 	}
 
@@ -235,7 +241,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 		for (i = 0; i < window_state->numWindowRects; i++)
 		{
-			printf("Window Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
+			DEBUG_RAIL("Window Rect #%d: left:%d top:%d right:%d bottom:%d", i,
 					window_state->windowRects[i].left, window_state->windowRects[i].top,
 					window_state->windowRects[i].right, window_state->windowRects[i].bottom);
 		}
@@ -246,7 +252,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->visibleOffsetX = window_state->visibleOffsetX;
 		window->visibleOffsetY = window_state->visibleOffsetY;
 
-		printf("Window Visible Offset: (%d, %d)\n",
+		DEBUG_RAIL("Window Visible Offset: (%d, %d)",
 				window->visibleOffsetX, window->visibleOffsetY);
 	}
 
@@ -262,7 +268,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 
 		for (i = 0; i < window_state->numVisibilityRects; i++)
 		{
-			printf("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d\n", i,
+			DEBUG_RAIL("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d", i,
 					window_state->visibilityRects[i].left, window_state->visibilityRects[i].top,
 					window_state->visibilityRects[i].right, window_state->visibilityRects[i].bottom);
 		}

@@ -110,4 +110,10 @@ struct xf_info
 
 void xf_toggle_fullscreen(xfInfo* xfi);
 
+#ifdef WITH_DEBUG_X11
+#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
 #endif /* __XFREERDP_H */

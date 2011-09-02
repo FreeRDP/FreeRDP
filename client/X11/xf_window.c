@@ -70,8 +70,6 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 		if (window->decorations)
 			xf_SetWindowDecorations(xfi, window, False);
 
-		printf("width:%d height:%d\n", window->width, window->height);
-
                 XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
                 //XGrabPointer(xfi->display, window->handle, True, 0, GrabModeAsync, GrabModeAsync, window->handle, 0L, CurrentTime);
@@ -252,17 +250,31 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 	return window;
 }
 
-void xf_FixWindowCoordinates(int* x, int* y, int* width, int* height)
+void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* height)
 {
-	if (*x < 0)
+	int vscreen_width;
+	int vscreen_height;
+
+	vscreen_width = xfi->vscreen.area.right - xfi->vscreen.area.left + 1;
+	vscreen_height = xfi->vscreen.area.bottom - xfi->vscreen.area.top + 1;
+
+	if (*x < xfi->vscreen.area.left)
 	{
 		*width += *x;
-		*x = 0;
+		*x = xfi->vscreen.area.left;
 	}
-	if (*y < 0)
+	if (*y < xfi->vscreen.area.top)
 	{
 		*height += *y;
-		*y = 0;
+		*y = xfi->vscreen.area.top;
+	}
+	if (*width > vscreen_width)
+	{
+		*width = vscreen_width;
+	}
+	if (*height > vscreen_height)
+	{
+		*height = vscreen_height;
 	}
 }
 
@@ -277,7 +289,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 	if ((width * height) < 1)
 		return NULL;
 
-	xf_FixWindowCoordinates(&x, &y, &width, &height);
+	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 
 	window->left = x;
 	window->top = y;
@@ -292,7 +304,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 		int input_mask;
 		XClassHint* class_hints;
 
-		window->ref_count = 0;
 		window->decorations = False;
 		window->fullscreen = False;
 		window->parent = parent;
@@ -338,20 +349,10 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 }
 
 void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
-		int maxWidth, int maxHeight,
-		int maxPosX, int maxPosY,
-		int minTrackWidth, int minTrackHeight,
-		int maxTrackWidth, int maxTrackHeight)
+		int maxWidth, int maxHeight, int maxPosX, int maxPosY,
+		int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight)
 {
 	XSizeHints* size_hints;
-
-	printf("xf_SetWindowMinMaxInfo: windowHandle=0x%X "
-		"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
-		"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
-		(uint32)window->handle, maxWidth, maxHeight,
-		(sint16)maxPosX, (sint16)maxPosY,
-		minTrackWidth, minTrackHeight,
-		maxTrackWidth, maxTrackHeight);
 
 	size_hints = XAllocSizeHints();
 
@@ -434,14 +435,10 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, i
 		{ RAIL_WMSZ_KEYSIZE,     XF_NET_WM_MOVERESIZE_SIZE_KEYBOARD },
 	};
 
+	int i = 0;
 	int x_root = 0;
 	int y_root = 0;
 	int direction = -1;
-	int i = 0;
-
-
-	printf("xf_StartLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
-		(uint32) window->handle, moveSizeType, posX, posY);
 
 	window->isLocalMoveSizeModeEnabled = True;
 	x_root = posX;
@@ -465,7 +462,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, i
 	if (direction == -1)
 	{
 		printf("xf_StartLocalMoveSize: unknown moveSizeType. (window=0x%X moveSizeType=0x%X)\n",
-			(uint32)window->handle, moveSizeType);
+			(uint32) window->handle, moveSizeType);
 		return;
 	}
 
@@ -475,8 +472,6 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, i
 void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)
 {
 	window->isLocalMoveSizeModeEnabled = False;
-	printf("xf_StopLocalMoveSize: window=0x%X moveSizeType=0x%X PosX=%d PosY=%d\n",
-		(uint32) window->handle, moveSizeType, topLeftX, topLeftY);
 
 	if (moveSizeType == RAIL_WMSZ_MOVE)
 	{
@@ -494,7 +489,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if (window->isLocalMoveSizeModeEnabled)
 		return;
 
-	xf_FixWindowCoordinates(&x, &y, &width, &height);
+	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 
 	XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
 

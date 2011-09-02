@@ -20,6 +20,8 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
+#include "librail.h"
+
 #include <freerdp/rail/rail.h>
 #include <freerdp/rail/window_list.h>
 
@@ -62,7 +64,7 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 	icon->entry = window_icon->iconInfo;
 	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? True : False;
 
-	printf("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d\n",
+	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
 			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
 			window_icon->iconInfo->cbBitsColor, window_icon->iconInfo->cbBitsMask, window_icon->iconInfo->cbColorTable);
 
@@ -78,43 +80,36 @@ static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInf
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-
-	printf("rail_WindowCachedIcon\n");
 }
 
 static void rail_NotifyIconCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-	printf("NotifyIconCreate\n");
 }
 
 static void rail_NotifyIconUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-	printf("NotifyIconUpdate\n");
 }
 
 static void rail_NotifyIconDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-	printf("NotifyIconDelete\n");
 }
 
 static void rail_MonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-	printf("MonitoredDesktop\n");
 }
 
 static void rail_NonMonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpRail* rail;
 	rail = (rdpRail*) update->rail;
-	printf("NonMonitoredDesktop\n");
 }
 
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
