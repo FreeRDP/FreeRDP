@@ -25,6 +25,7 @@ set(FREERDP_UTILS_SRCS
 	blob.c
 	dsp.c
 	event.c
+	bitmap.c
 	hexdump.c
 	list.c
 	load_plugin.c
