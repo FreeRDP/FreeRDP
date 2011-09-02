@@ -31,11 +31,11 @@ macro(find_suggested_package _normal_package)
 	string(TOUPPER ${_normal_package} _upper_package)
 	option(WITH_${_upper_package} "Add dependency to ${_normal_package} - recommended" ON)
 	
-	if(NOT WITHOUT_${_upper_package})
+	if(WITH_${_upper_package})
 		message(STATUS "Finding suggested package ${_normal_package}.")
 		message(STATUS "  Disable this using \"-DWITH_${_upper_package}=OFF\".")
 		find_package(${_normal_package} REQUIRED)
-	endif(NOT WITHOUT_${_upper_package})
+	endif(WITH_${_upper_package})
 endmacro(find_suggested_package)
 
 macro(find_optional_package _normal_package)
