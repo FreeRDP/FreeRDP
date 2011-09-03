@@ -118,8 +118,10 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
+	license_free(rdp->license);
 	transport_free(rdp->transport);
 	rdp->transport = transport_new(settings);
+	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 

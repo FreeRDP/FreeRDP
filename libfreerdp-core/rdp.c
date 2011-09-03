@@ -405,6 +405,8 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 length;
 	uint16 channelId;
 
+	//freerdp_hexdump(s->p, stream_get_left(s));
+
 	rdp_read_share_control_header(s, &length, &type, &channelId);
 
 	if (type == PDU_TYPE_DATA)

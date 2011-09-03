@@ -1660,8 +1660,6 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 		return False;
 
-	//printf("Demand Active PDU\n");
-
 	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_uint16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
