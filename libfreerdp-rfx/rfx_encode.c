@@ -123,20 +123,37 @@ void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 {
 	sint16 y, cb, cr;
 	sint16 r, g, b;
-
 	int i;
+
+	/**
+	 * The encoded YCbCr coeffectients are represented as 11.5 fixed-point numbers:
+	 *
+	 * 1 sign bit + 10 integer bits + 5 fractional bits
+	 *
+	 * However only 7 integer bits will be actually used since the value range is [-128.0, 127.0].
+	 * In other words, the encoded coeffectients is scaled by << 5 when intepreted as sint16.
+	 * It will be scaled down to original during the quantization phase.
+	 */
 	for (i = 0; i < 4096; i++)
 	{
 		r = y_r_buf[i];
 		g = cb_g_buf[i];
 		b = cr_b_buf[i];
-		y = ((r >> 2) + (r >> 5) + (r >> 6)) + ((g >> 1) + (g >> 4) + (g >> 6) + (g >> 7)) +
-			((b >> 4) + (b >> 5) + (b >> 6) + (b >> 7));
-		y_r_buf[i] = MINMAX(y, 0, 255) - 128;
-		cb = 0 - ((r >> 3) + (r >> 5) + (r >> 6)) - ((g >> 2) + (g >> 4) + (g >> 6)) + (b >> 1);
-		cb_g_buf[i] = MINMAX(cb, -128, 127);
-		cr = (r >> 1) - ((g >> 2) + (g >> 3) + (g >> 5) + (g >> 6)) - ((b >> 4) + (b >> 6));
-		cr_b_buf[i] = MINMAX(cr, -128, 127);
+		/* 0.299 << 5 = 1001.10010001(b), 0.587 << 5 = 10010.11001000(b), 0.114 << 5 = 11.10100101(b) */
+		y = ((r << 3) + (r) + (r >> 1) + (r >> 4) + (r >> 7)) +
+			((g << 4) + (g << 1) + (g >> 1) + (g >> 2) + (g >> 5)) +
+			((b << 1) + (b) + (b >> 1) + (b >> 3) + (b >> 6) + (b >> 7));
+		y_r_buf[i] = MINMAX(y - 4096, -4096, 4095);
+		/* 0.168935 << 5 = 101.01100111(b), 0.331665 << 5 = 1010.10011100(b), 0.50059 << 5 = 10000.00000100(b) */
+		cb = 0 - ((r << 2) + (r) + (r >> 2) + (r >> 3) + (r >> 5)) -
+			((g << 3) + (g << 1) + (g >> 1) + (g >> 4) + (g >> 5) + (g >> 6)) +
+			((b << 4) + (b >> 6));
+		cb_g_buf[i] = MINMAX(cb, -4096, 4095);
+		/* 0.499813 << 5 = 1111.11111110(b), 0.418531 << 5 = 1101.01100100(b), 0.081282 << 5 = 10.10011001(b) */
+		cr = ((r << 4) - (r >> 7)) -
+			((g << 3) + (g << 2) + (g) + (g >> 2) + (g >> 3) + (g >> 6)) -
+			((b << 1) + (b >> 1) + (b >> 4) + (b >> 5) + (b >> 7));
+		cr_b_buf[i] = MINMAX(cr, -4096, 4095);
 	}
 }
 
