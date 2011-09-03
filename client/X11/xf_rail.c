@@ -333,16 +333,15 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, R
 		xfWindow * window = NULL;
 		window = (xfWindow *) rail_window->extra;
 
-		printf("Server Min Max Info PDU: windowId=0x%X "
-			"maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
-			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
+		DEBUG_X11("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
 			minmax->windowId, minmax->maxWidth, minmax->maxHeight,
 			(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
 			minmax->minTrackWidth, minmax->minTrackHeight,
 			minmax->maxTrackWidth, minmax->maxTrackHeight);
 
 		xf_SetWindowMinMaxInfo(xfi, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
-				minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
+			minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
 	}
 }
 
@@ -374,8 +373,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman
 		xfWindow * window = NULL;
 		window = (xfWindow *) rail_window->extra;
 
-		printf("Server Local MoveSize PDU: windowId=0x%X "
-			"isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d\n",
+		DEBUG_X11("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
 			movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
 

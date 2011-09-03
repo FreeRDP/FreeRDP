@@ -486,10 +486,9 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			app = True;
 	}
 
-#if WITH_DEBUG_X11
+
 	if (event->type != MotionNotify)
 		DEBUG_X11("%s Event: wnd=0x%04X", X11_EVENT_STRINGS[event->type], (uint32) event->xany.window);
-#endif
 
 	switch (event->type)
 	{
