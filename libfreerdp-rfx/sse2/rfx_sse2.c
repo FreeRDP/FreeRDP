@@ -218,17 +218,16 @@ static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_decode_block_sse2(sint16* buffer, const int buffer_size, const uint32 factor)
 {
-	int shift = factor-6;
-	if (shift <= 0)
+	if (factor == 0)
 		return;
-	
+
 	__m128i a;
 	__m128i * ptr = (__m128i*) buffer;
 	__m128i * buf_end = (__m128i*) (buffer + buffer_size);
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_slli_epi16(a, shift);
+		a = _mm_slli_epi16(a, factor);
 		_mm_store_si128(ptr, a);
 
 		ptr++;
@@ -239,23 +238,24 @@ static void rfx_quantization_decode_sse2(sint16* buffer, const uint32* quantizat
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(sint16));
 
-	rfx_quantization_decode_block_sse2(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_decode_block_sse2(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_decode_block_sse2(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_decode_block_sse2(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_decode_block_sse2(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_decode_block_sse2(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_decode_block_sse2(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_decode_block_sse2(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_decode_block_sse2(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_decode_block_sse2(buffer, 4096, 5);
+
+	rfx_quantization_decode_block_sse2(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_decode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_decode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_decode_block_sse2(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_decode_block_sse2(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_decode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_decode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_decode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_decode_block_sse2(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_encode_block_sse2(sint16* buffer, const int buffer_size, const uint32 factor)
 {
-	int shift = factor-6;
-	if (shift <= 0)
+	if (factor == 0)
 		return;
 	
 	__m128i a;
@@ -264,7 +264,7 @@ rfx_quantization_encode_block_sse2(sint16* buffer, const int buffer_size, const 
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_srai_epi16(a, shift);
+		a = _mm_srai_epi16(a, factor);
 		_mm_store_si128(ptr, a);
 
 		ptr++;
@@ -275,16 +275,18 @@ static void rfx_quantization_encode_sse2(sint16* buffer, const uint32* quantizat
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(sint16));
 
-	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_encode_block_sse2(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_encode_block_sse2(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_encode_block_sse2(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_encode_block_sse2(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_encode_block_sse2(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_encode_block_sse2(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_encode_block_sse2(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_encode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_encode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_encode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_encode_block_sse2(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_encode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
+
+	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))

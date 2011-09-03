@@ -23,10 +23,9 @@ static void rfx_quantization_decode_block(sint16* buffer, int buffer_size, uint3
 {
 	sint16* dst;
 
-	if (factor <= 6)
+	if (factor == 0)
 		return;
 
-	factor -= 6;
 	for (dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
 		*dst <<= factor;
@@ -35,26 +34,28 @@ static void rfx_quantization_decode_block(sint16* buffer, int buffer_size, uint3
 
 void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values)
 {
-	rfx_quantization_decode_block(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_decode_block(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_decode_block(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_decode_block(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_decode_block(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_decode_block(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_decode_block(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_decode_block(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_decode_block(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_decode_block(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	/* Scale the values so that they are represented as 11.5 fixed-point number */
+	rfx_quantization_decode_block(buffer, 4096, 5);
+
+	rfx_quantization_decode_block(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_decode_block(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_decode_block(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_decode_block(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_decode_block(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_decode_block(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_decode_block(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_decode_block(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_decode_block(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_decode_block(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
 static void rfx_quantization_encode_block(sint16* buffer, int buffer_size, uint32 factor)
 {
 	sint16* dst;
 
-	if (factor <= 6)
+	if (factor == 0)
 		return;
 
-	factor -= 6;
 	for (dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
 		*dst >>= factor;
@@ -63,14 +64,17 @@ static void rfx_quantization_encode_block(sint16* buffer, int buffer_size, uint3
 
 void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values)
 {
-	rfx_quantization_encode_block(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_encode_block(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_encode_block(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_encode_block(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_encode_block(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_encode_block(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_encode_block(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_encode_block(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_encode_block(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_encode_block(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_encode_block(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_encode_block(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_encode_block(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_encode_block(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_encode_block(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_encode_block(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_encode_block(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_encode_block(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_encode_block(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_encode_block(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
+
+	/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
+	rfx_quantization_encode_block(buffer, 4096, 5);
 }

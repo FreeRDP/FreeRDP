@@ -95,7 +95,7 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	 *
 	 * However only 7 integer bits will be actually used since the value range is [-128.0, 127.0].
 	 * In other words, the decoded coeffectients is scaled by << 5 when intepreted as sint16.
-	 * It was scaled in the first RLGR decoding phase, so we must scale it back here.
+	 * It was scaled in the quantization phase, so we must scale it back here.
 	 */
 	for (i = 0; i < 4096; i++)
 	{

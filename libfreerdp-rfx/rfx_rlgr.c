@@ -42,11 +42,10 @@
 #define GetBits(nBits) rfx_bitstream_get_bits(bs, nBits)
 
 /* From current output pointer, write "value", check and update buffer_size */
-/* The value is represented as 11.5 fixed-point number */
 #define WriteValue(value) \
 { \
 	if (buffer_size > 0) \
-		*dst++ = ((value) << 5); \
+		*dst++ = (value); \
 	buffer_size--; \
 }
 
@@ -232,13 +231,11 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 }
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */
-/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
 #define GetNextInput(_n) \
 { \
 	if (data_size > 0) \
 	{ \
 		_n = *data++; \
-		_n = ((_n) + (1 << 4)) >> 5; \
 		data_size--; \
 	} \
 	else \
