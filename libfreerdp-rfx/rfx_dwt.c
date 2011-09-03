@@ -133,7 +133,7 @@ static void rfx_dwt_2d_encode_block(sint16* buffer, sint16* dwt, int subband_wid
 			src = buffer + y * total_width + x;
 
 			/* H */
-			*h = (src[total_width] - ((src[0] + src[n < subband_width - 1 ? 2 * total_width : total_width]) >> 1)) >> 1;
+			*h = (src[total_width] - ((src[0] + src[n < subband_width - 1 ? 2 * total_width : 0]) >> 1)) >> 1;
 
 			/* L */
 			*l = src[0] + (n == 0 ? *h : (*(h - total_width) + *h) >> 1);
