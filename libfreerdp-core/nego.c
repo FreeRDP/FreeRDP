@@ -359,7 +359,12 @@ void nego_send_negotiation_request(rdpNego* nego)
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
 
-	if (nego->cookie)
+	if (nego->routing_token != NULL)
+	{
+		stream_write(s, nego->routing_token->data, nego->routing_token->length);
+		length += nego->routing_token->length;
+	}
+	else
 	{
 		int cookie_length = strlen(nego->cookie);
 		stream_write(s, "Cookie: mstshash=", 17);
@@ -367,12 +372,6 @@ void nego_send_negotiation_request(rdpNego* nego)
 		stream_write_uint8(s, 0x0D); /* CR */
 		stream_write_uint8(s, 0x0A); /* LF */
 		length += cookie_length + 19;
-	}
-	else if (nego->routing_token)
-	{
-		int routing_token_length = strlen(nego->routing_token);
-		stream_write(s, nego->routing_token, routing_token_length);
-		length += routing_token_length;
 	}
 
 	if (nego->requested_protocols > PROTOCOL_RDP)
@@ -613,7 +612,7 @@ void nego_enable_nla(rdpNego* nego, boolean enable_nla)
  * @param routing_token
  */
 
-void nego_set_routing_token(rdpNego* nego, char* routing_token)
+void nego_set_routing_token(rdpNego* nego, rdpBlob* routing_token)
 {
 	nego->routing_token = routing_token;
 }

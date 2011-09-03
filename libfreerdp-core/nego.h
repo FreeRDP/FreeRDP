@@ -23,6 +23,7 @@
 #include "transport.h"
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/utils/blob.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
@@ -75,9 +76,9 @@ struct rdp_nego
 	int port;
 	char* hostname;
 	char* cookie;
-	char* routing_token;
 	NEGO_STATE state;
 	int tcp_connected;
+	rdpBlob* routing_token;
 	uint32 selected_protocol;
 	uint32 requested_protocols;
 	uint8 enabled_protocols[3];
@@ -109,7 +110,7 @@ void nego_set_target(rdpNego* nego, char* hostname, int port);
 void nego_enable_rdp(rdpNego* nego, boolean enable_rdp);
 void nego_enable_nla(rdpNego* nego, boolean enable_nla);
 void nego_enable_tls(rdpNego* nego, boolean enable_tls);
-void nego_set_routing_token(rdpNego* nego, char* routing_token);
+void nego_set_routing_token(rdpNego* nego, rdpBlob* routing_token);
 void nego_set_cookie(rdpNego* nego, char* cookie);
 
 #ifdef WITH_DEBUG_NEGO

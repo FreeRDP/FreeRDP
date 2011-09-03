@@ -128,8 +128,13 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 	settings->redirected_session_id = redirection->sessionID;
 
+	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+		nego_set_routing_token(rdp->nego, &redirection->loadBalanceInfo);
+
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		settings->hostname = redirection->targetNetAddress.ascii;
+	else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+		settings->hostname = redirection->targetNetBiosName.ascii;
 
 	if (redirection->flags & LB_USERNAME)
 		settings->username = redirection->username.ascii;
