@@ -104,6 +104,33 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	return True;
 }
 
+boolean rdp_client_disconnect(rdpRdp* rdp)
+{
+	return transport_disconnect(rdp->transport);
+}
+
+boolean rdp_client_redirect(rdpRdp* rdp)
+{
+	rdpSettings* settings = rdp->settings;
+	rdpRedirection* redirection = rdp->redirection;
+
+	rdp_client_disconnect(rdp);
+
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	settings->redirected_session_id = redirection->sessionID;
+
+	if (redirection->flags & LB_TARGET_NET_ADDRESS)
+		settings->hostname = redirection->targetNetAddress.ascii;
+
+	if (redirection->flags & LB_USERNAME)
+		settings->username = redirection->username.ascii;
+
+	if (redirection->flags & LB_DOMAIN)
+		settings->domain = redirection->domain.ascii;
+
+	return rdp_client_connect(rdp);
+}
+
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))

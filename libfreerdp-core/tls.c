@@ -235,10 +235,6 @@ rdpTls* tls_new()
 
 	if (tls != NULL)
 	{
-		tls->connect = tls_connect;
-		tls->accept = tls_accept;
-		tls->disconnect = tls_disconnect;
-	
 		SSL_load_error_strings();
 		SSL_library_init();
 	}

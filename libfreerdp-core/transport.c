@@ -60,7 +60,7 @@ STREAM* transport_send_stream_init(rdpTransport* transport, int size)
 
 boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
-	return transport->tcp->connect(transport->tcp, hostname, port);
+	return tcp_connect(transport->tcp, hostname, port);
 }
 
 void transport_attach(rdpTransport* transport, int sockfd)
@@ -70,9 +70,10 @@ void transport_attach(rdpTransport* transport, int sockfd)
 
 boolean transport_disconnect(rdpTransport* transport)
 {
-	if (transport->tls)
-		IFCALL(transport->tls->disconnect, transport->tls);
-	return transport->tcp->disconnect(transport->tcp);
+	if (transport->layer == TRANSPORT_LAYER_TLS)
+		return tls_disconnect(transport->tls);
+	else
+		return tcp_disconnect(transport->tcp);
 }
 
 boolean transport_connect_rdp(rdpTransport* transport)
@@ -355,15 +356,10 @@ int transport_check_fds(rdpTransport* transport)
 	return 0;
 }
 
-void transport_init(rdpTransport* transport)
-{
-	transport->layer = TRANSPORT_LAYER_TCP;
-}
-
 boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking)
 {
 	transport->blocking = blocking;
-	return transport->tcp->set_blocking_mode(transport->tcp, blocking);
+	return tcp_set_blocking_mode(transport->tcp, blocking);
 }
 
 rdpTransport* transport_new(rdpSettings* settings)
@@ -389,6 +385,8 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->send_stream = stream_new(BUFFER_SIZE);
 
 		transport->blocking = True;
+
+		transport->layer = TRANSPORT_LAYER_TCP;
 	}
 
 	return transport;

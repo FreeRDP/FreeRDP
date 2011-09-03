@@ -231,9 +231,6 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	{
 		tcp->sockfd = -1;
 		tcp->settings = settings;
-		tcp->connect = tcp_connect;
-		tcp->disconnect = tcp_disconnect;
-		tcp->set_blocking_mode = tcp_set_blocking_mode;
 	}
 
 	return tcp;

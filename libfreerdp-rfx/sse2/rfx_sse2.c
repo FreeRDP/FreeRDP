@@ -68,49 +68,59 @@ static void rfx_decode_ycbcr_to_rgb_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 	}
 	for (i = 0; i < (4096 * sizeof(sint16) / sizeof(__m128i)); i++)
 	{
-		/* y = y_r_buf[i] + 128; */
+		/* y = (y_r_buf[i] >> 5) + 128; */
 		y = _mm_load_si128(&y_r_buf[i]);
-		y = _mm_add_epi16(y, _mm_set1_epi16(128));
+		y = _mm_add_epi16(_mm_srai_epi16(y, 5), _mm_set1_epi16(128));
 
 		/* cr = cr_b_buf[i]; */
 		cr = _mm_load_si128(&cr_b_buf[i]);
 
-		/* r = between(y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5), 0, 255); */
-		r = _mm_add_epi16(y, cr);
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 2));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 3));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 5));
+		/* r = y + ((cr >> 5) + (cr >> 7) + (cr >> 8) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* y_r_buf[i] = MINMAX(r, 0, 255); */
+		r = _mm_add_epi16(y, _mm_srai_epi16(cr, 5));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 7));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 8));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 11));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 12));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(r, zero, max);
 		_mm_store_si128(&y_r_buf[i], r);
 
 		/* cb = cb_g_buf[i]; */
 		cb = _mm_load_si128(&cb_g_buf[i]);
 
-		/* g = between(y - (cb >> 2) - (cb >> 4) - (cb >> 5) - (cr >> 1) - (cr >> 3) - (cr >> 4) - (cr >> 5), 0, 255); */
-		g = _mm_sub_epi16(y, _mm_srai_epi16(cb, 2));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 4));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 5));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 1));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 3));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 4));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 5));
+		/* g = y - ((cb >> 7) + (cb >> 9) + (cb >> 10)) -
+			((cr >> 6) + (cr >> 8) + (cr >> 9) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* cb_g_buf[i] = MINMAX(g, 0, 255); */
+		g = _mm_sub_epi16(y, _mm_srai_epi16(cb, 7));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 9));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 10));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 6));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 8));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 9));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 11));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 12));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(g, zero, max);
-		_mm_store_si128(&cb_g_buf[i], g);		
+		_mm_store_si128(&cb_g_buf[i], g);
 
-		/* b = between(y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6), 0, 255); */
-		b = _mm_add_epi16(y, cb);
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 1));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 2));
+		/* b = y + ((cb >> 5) + (cb >> 6) + (cb >> 7) + (cb >> 11) + (cb >> 13)); */
+		/* cr_b_buf[i] = MINMAX(b, 0, 255); */
+		b = _mm_add_epi16(y, _mm_srai_epi16(cb, 5));
 		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 6));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 7));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 11));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 13));
 		_mm_between_epi16(b, zero, max);
 		_mm_store_si128(&cr_b_buf[i], b);
 	}
 }
 
+/* The encodec YCbCr coeffectients are represented as 11.5 fixed-point numbers. See rfx_encode.c */
 static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer, sint16* cr_b_buffer)
 {
-	__m128i min = _mm_set1_epi16(-128);
-	__m128i max = _mm_set1_epi16(127);
+	__m128i min = _mm_set1_epi16(-128 << 5);
+	__m128i max = _mm_set1_epi16(127 << 5);
 
 	__m128i* y_r_buf = (__m128i*) y_r_buffer;
 	__m128i* cb_g_buf = (__m128i*) cb_g_buffer;
@@ -142,42 +152,64 @@ static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 		/* b = cr_b_buf[i]; */
 		b = _mm_load_si128(&cr_b_buf[i]);
 
-		/* y = ((r >> 2) + (r >> 5) + (r >> 6)) + ((g >> 1) + (g >> 4) + (g >> 6) + (g >> 7)) +
-			((b >> 4) + (b >> 5) + (b >> 6) + (b >> 7)); */
-		/* y_r_buf[i] = MINMAX(y, 0, 255) - 128; */
-		y = _mm_add_epi16(_mm_srai_epi16(r, 2), _mm_srai_epi16(r, 5));
-		y = _mm_add_epi16(y, _mm_srai_epi16(r, 6));
+		/* y = ((r << 3) + (r) + (r >> 1) + (r >> 4) + (r >> 7)) +
+			((g << 4) + (g << 1) + (g >> 1) + (g >> 2) + (g >> 5)) +
+			((b << 1) + (b) + (b >> 1) + (b >> 3) + (b >> 6) + (b >> 7)); */
+		/* y_r_buf[i] = MINMAX(y, 0, (255 << 5)) - (128 << 5); */
+		y = _mm_add_epi16(_mm_slli_epi16(r, 3), r);
+		y = _mm_add_epi16(y, _mm_srai_epi16(r, 1));
+		y = _mm_add_epi16(y, _mm_srai_epi16(r, 4));
+		y = _mm_add_epi16(y, _mm_srai_epi16(r, 7));
+		y = _mm_add_epi16(y, _mm_slli_epi16(g, 4));
+		y = _mm_add_epi16(y, _mm_slli_epi16(g, 1));
 		y = _mm_add_epi16(y, _mm_srai_epi16(g, 1));
-		y = _mm_add_epi16(y, _mm_srai_epi16(g, 4));
-		y = _mm_add_epi16(y, _mm_srai_epi16(g, 6));
-		y = _mm_add_epi16(y, _mm_srai_epi16(g, 7));
-		y = _mm_add_epi16(y, _mm_srai_epi16(b, 4));
-		y = _mm_add_epi16(y, _mm_srai_epi16(b, 5));
+		y = _mm_add_epi16(y, _mm_srai_epi16(g, 2));
+		y = _mm_add_epi16(y, _mm_srai_epi16(g, 5));
+		y = _mm_add_epi16(y, _mm_slli_epi16(b, 1));
+		y = _mm_add_epi16(y, b);
+		y = _mm_add_epi16(y, _mm_srai_epi16(b, 1));
+		y = _mm_add_epi16(y, _mm_srai_epi16(b, 3));
 		y = _mm_add_epi16(y, _mm_srai_epi16(b, 6));
 		y = _mm_add_epi16(y, _mm_srai_epi16(b, 7));
 		y = _mm_add_epi16(y, min);
 		_mm_between_epi16(y, min, max);
 		_mm_store_si128(&y_r_buf[i], y);
 
-		/* cb = 0 - ((r >> 3) + (r >> 5) + (r >> 6)) - ((g >> 2) + (g >> 4) + (g >> 6)) + (b >> 1); */
-		/* cb_g_buf[i] = MINMAX(cb, -128, 127); */
-		cb = _mm_sub_epi16(_mm_srai_epi16(b, 1), _mm_srai_epi16(r, 3));
+		/* cb = 0 - ((r << 2) + (r) + (r >> 2) + (r >> 3) + (r >> 5)) -
+			((g << 3) + (g << 1) + (g >> 1) + (g >> 4) + (g >> 5) + (g >> 6)) +
+			((b << 4) + (b >> 6)); */
+		/* cb_g_buf[i] = MINMAX(cb, (-128 << 5), (127 << 5)); */
+		cb = _mm_add_epi16(_mm_slli_epi16(b, 4), _mm_srai_epi16(b, 6));
+		cb = _mm_sub_epi16(cb, _mm_slli_epi16(r, 2));
+		cb = _mm_sub_epi16(cb, r);
+		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 2));
+		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 3));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 5));
-		cb = _mm_sub_epi16(cb, _mm_srai_epi16(r, 6));
-		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 2));
+		cb = _mm_sub_epi16(cb, _mm_slli_epi16(g, 3));
+		cb = _mm_sub_epi16(cb, _mm_slli_epi16(g, 1));
+		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 1));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 4));
+		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 5));
 		cb = _mm_sub_epi16(cb, _mm_srai_epi16(g, 6));
 		_mm_between_epi16(cb, min, max);
 		_mm_store_si128(&cb_g_buf[i], cb);
 
-		/* cr = (r >> 1) - ((g >> 2) + (g >> 3) + (g >> 5) + (g >> 6)) - ((b >> 4) + (b >> 6)); */
-		/* cr_b_buf[i] = MINMAX(cr, -128, 127); */
-		cr = _mm_sub_epi16(_mm_srai_epi16(r, 1), _mm_srai_epi16(g, 2));
+		/* cr = ((r << 4) - (r >> 7)) -
+			((g << 3) + (g << 2) + (g) + (g >> 2) + (g >> 3) + (g >> 6)) -
+			((b << 1) + (b >> 1) + (b >> 4) + (b >> 5) + (b >> 7)); */
+		/* cr_b_buf[i] = MINMAX(cr, (-128 << 5), (127 << 5)); */
+		cr = _mm_sub_epi16(_mm_slli_epi16(r, 4), _mm_srai_epi16(r, 7));
+		cr = _mm_sub_epi16(cr, _mm_slli_epi16(g, 3));
+		cr = _mm_sub_epi16(cr, _mm_slli_epi16(g, 2));
+		cr = _mm_sub_epi16(cr, g);
+		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 2));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 3));
-		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 5));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(g, 6));
+		cr = _mm_sub_epi16(cr, _mm_slli_epi16(b, 1));
+		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 1));
 		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 4));
-		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 6));
+		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 5));
+		cr = _mm_sub_epi16(cr, _mm_srai_epi16(b, 7));
 		_mm_between_epi16(cr, min, max);
 		_mm_store_si128(&cr_b_buf[i], cr);
 	}
@@ -186,17 +218,16 @@ static void rfx_encode_rgb_to_ycbcr_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_decode_block_sse2(sint16* buffer, const int buffer_size, const uint32 factor)
 {
-	int shift = factor-6;
-	if (shift <= 0)
+	if (factor == 0)
 		return;
-	
+
 	__m128i a;
 	__m128i * ptr = (__m128i*) buffer;
 	__m128i * buf_end = (__m128i*) (buffer + buffer_size);
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_slli_epi16(a, shift);
+		a = _mm_slli_epi16(a, factor);
 		_mm_store_si128(ptr, a);
 
 		ptr++;
@@ -207,23 +238,24 @@ static void rfx_quantization_decode_sse2(sint16* buffer, const uint32* quantizat
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(sint16));
 
-	rfx_quantization_decode_block_sse2(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_decode_block_sse2(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_decode_block_sse2(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_decode_block_sse2(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_decode_block_sse2(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_decode_block_sse2(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_decode_block_sse2(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_decode_block_sse2(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_decode_block_sse2(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_decode_block_sse2(buffer, 4096, 5);
+
+	rfx_quantization_decode_block_sse2(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_decode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_decode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_decode_block_sse2(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_decode_block_sse2(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_decode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_decode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_decode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_decode_block_sse2(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_encode_block_sse2(sint16* buffer, const int buffer_size, const uint32 factor)
 {
-	int shift = factor-6;
-	if (shift <= 0)
+	if (factor == 0)
 		return;
 	
 	__m128i a;
@@ -232,7 +264,7 @@ rfx_quantization_encode_block_sse2(sint16* buffer, const int buffer_size, const 
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_srai_epi16(a, shift);
+		a = _mm_srai_epi16(a, factor);
 		_mm_store_si128(ptr, a);
 
 		ptr++;
@@ -243,16 +275,18 @@ static void rfx_quantization_encode_sse2(sint16* buffer, const uint32* quantizat
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(sint16));
 
-	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_encode_block_sse2(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_encode_block_sse2(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_encode_block_sse2(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_encode_block_sse2(buffer + 3868, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_encode_block_sse2(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_encode_block_sse2(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_encode_block_sse2(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_encode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_encode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_encode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_encode_block_sse2(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_encode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
+
+	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -482,7 +516,7 @@ rfx_dwt_2d_encode_block_vert_sse2(sint16* src, sint16* l, sint16* h, int subband
 			if (n < subband_width - 1)
 				src_2n_2 = _mm_load_si128((__m128i*) (src + 2 * total_width));
 			else
-				src_2n_2 = src_2n_1;
+				src_2n_2 = src_2n;
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
 
@@ -534,7 +568,7 @@ rfx_dwt_2d_encode_block_horiz_sse2(sint16* src, sint16* l, sint16* h, int subban
 			/* The following 3 Set operations consumes more than half of the total DWT processing time! */
 			src_2n = _mm_set_epi16(src[14], src[12], src[10], src[8], src[6], src[4], src[2], src[0]);
 			src_2n_1 = _mm_set_epi16(src[15], src[13], src[11], src[9], src[7], src[5], src[3], src[1]);
-			src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[15] : src[16],
+			src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[14] : src[16],
 				src[14], src[12], src[10], src[8], src[6], src[4], src[2]);
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */

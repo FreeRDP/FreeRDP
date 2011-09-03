@@ -25,6 +25,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/string.h>
 
 /* Redirection Flags */
 #define LB_TARGET_NET_ADDRESS		0x00000001
@@ -41,8 +42,28 @@
 #define LB_CLIENT_TSV_URL		0x00001000
 #define LB_SERVER_TSV_CAPABLE		0x00002000
 
+struct rdp_redirection
+{
+	uint32 flags;
+	uint32 sessionID;
+	rdpString tsvUrl;
+	rdpString username;
+	rdpString domain;
+	rdpString password;
+	rdpString targetFQDN;
+	rdpString loadBalanceInfo;
+	rdpString targetNetBiosName;
+	rdpString targetNetAddress;
+	uint32 targetNetAddressesCount;
+	rdpString* targetNetAddresses;
+};
+typedef struct rdp_redirection rdpRedirection;
+
 boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
 boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+
+rdpRedirection* redirection_new();
+void redirection_free(rdpRedirection* redirection);
 
 #ifdef WITH_DEBUG_REDIR
 #define DEBUG_REDIR(fmt, ...) DEBUG_CLASS(REDIR, fmt, ## __VA_ARGS__)
