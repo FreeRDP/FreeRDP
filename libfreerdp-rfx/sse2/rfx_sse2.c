@@ -514,7 +514,7 @@ rfx_dwt_2d_encode_block_vert_sse2(sint16* src, sint16* l, sint16* h, int subband
 			if (n < subband_width - 1)
 				src_2n_2 = _mm_load_si128((__m128i*) (src + 2 * total_width));
 			else
-				src_2n_2 = src_2n_1;
+				src_2n_2 = src_2n;
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
 
