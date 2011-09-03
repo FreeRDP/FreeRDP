@@ -40,6 +40,7 @@ set(FREERDP_UTILS_SRCS
 	sleep.c
 	stopwatch.c
 	stream.c
+	string.c
 	svc_plugin.c
 	thread.c
 	unicode.c

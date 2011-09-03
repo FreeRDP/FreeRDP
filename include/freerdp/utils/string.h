@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Transport Layer Security
+ * String Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,36 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef __TLS_H
-#define __TLS_H
+#ifndef __STRING_UTILS_H
+#define __STRING_UTILS_H
 
-#include "crypto.h"
-
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/unicode.h>
 
-typedef struct rdp_tls rdpTls;
-
-struct rdp_tls
+struct rdp_string
 {
-	SSL* ssl;
-	int sockfd;
-	SSL_CTX* ctx;
+	char* ascii;
+	char* unicode;
+	uint32 length;
 };
+typedef struct rdp_string rdpString;
 
-boolean tls_connect(rdpTls* tls);
-boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
-boolean tls_disconnect(rdpTls* tls);
-int tls_read(rdpTls* tls, uint8* data, int length);
-int tls_write(rdpTls* tls, uint8* data, int length);
-CryptoCert tls_get_certificate(rdpTls* tls);
-int tls_verify_certificate(CryptoCert cert,char* hostname);
-void tls_print_cert_error();
-boolean tls_print_error(char* func, SSL* connection, int value);
-rdpTls* tls_new();
-void tls_free(rdpTls* tls);
+FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string, UNICONV* uniconv);
+FREERDP_API void freerdp_string_free(rdpString* string);
 
-#endif /* __TLS_H */
+#endif /* __STRING_UTILS_H */

@@ -34,6 +34,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "security.h"
 #include "transport.h"
 #include "connection.h"
+#include "redirection.h"
 #include "capabilities.h"
 #include "vchan.h"
 #include "mppc.h"
@@ -122,6 +123,7 @@ struct rdp_rdp
 	struct rdp_update* update;
 	struct rdp_fastpath* fastpath;
 	struct rdp_license* license;
+	struct rdp_redirection* redirection;
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;

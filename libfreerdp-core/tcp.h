@@ -36,9 +36,6 @@
 #endif
 
 typedef struct rdp_tcp rdpTcp;
-typedef boolean (*TcpConnect) (rdpTcp* tcp, const char* hostname, uint16 port);
-typedef boolean (*TcpDisconnect) (rdpTcp* tcp);
-typedef boolean (*TcpSetBlockingMode) (rdpTcp* tcp, boolean blocking);
 
 struct rdp_tcp
 {
@@ -46,9 +43,6 @@ struct rdp_tcp
 	char ip_address[32];
 	uint8 mac_address[6];
 	struct rdp_settings* settings;
-	TcpConnect connect;
-	TcpDisconnect disconnect;
-	TcpSetBlockingMode set_blocking_mode;
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif

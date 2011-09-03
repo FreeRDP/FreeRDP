@@ -602,6 +602,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->vchan = vchan_new(instance);
+		rdp->redirection = redirection_new();
 	}
 
 	return rdp;
@@ -625,6 +626,7 @@ void rdp_free(rdpRdp* rdp)
 		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
+		redirection_free(rdp->redirection);
 		xfree(rdp);
 	}
 }
