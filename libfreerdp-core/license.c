@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include "redirection.h"
+
 #include "license.h"
 
 uint8 LICENSE_MESSAGE_STRINGS[][32] =
@@ -179,8 +181,13 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 	rdp_read_security_header(s, &sec_flags);
 	if (!(sec_flags & SEC_LICENSE_PKT))
 	{
-		printf("Unexpected license packet.\n");
-		return False;
+		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != True)
+		{
+			printf("Unexpected license packet.\n");
+			return False;
+		}
+		return True;
 	}
 
 	license_read_preamble(s, &bMsgType, &flags, &wMsgSize); /* preamble (4 bytes) */
@@ -824,7 +831,6 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
 }
-
 
 /**
  * Send Server License Error - Valid Client Packet.\n

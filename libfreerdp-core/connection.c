@@ -217,8 +217,22 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 {
+	uint8* mark;
+
+	stream_get_mark(s, mark);
+
 	if (!rdp_recv_demand_active(rdp, s))
-		return False;
+	{
+		stream_set_mark(s, mark);
+		stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+
+		if (rdp_recv_out_of_sequence_pdu(rdp, s) != True)
+		{
+			printf("Unexpected PDU when expecting Demand Active PDU\n");
+			return False;
+		}
+		return True;
+	}
 
 	if (!rdp_send_confirm_active(rdp))
 		return False;

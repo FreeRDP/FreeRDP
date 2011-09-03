@@ -399,6 +399,30 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	}
 }
 
+boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
+{
+	uint16 type;
+	uint16 length;
+	uint16 channelId;
+
+	rdp_read_share_control_header(s, &length, &type, &channelId);
+
+	if (type == PDU_TYPE_DATA)
+	{
+		rdp_recv_data_pdu(rdp, s);
+		return True;
+	}
+	else if (type == PDU_TYPE_SERVER_REDIRECTION)
+	{
+		rdp_recv_enhanced_security_redirection_packet(rdp, s);
+		return True;
+	}
+	else
+	{
+		return False;
+	}
+}
+
 /**
  * Process an RDP packet.\n
  * @param rdp RDP module
