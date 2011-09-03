@@ -333,7 +333,7 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, R
 		xfWindow * window = NULL;
 		window = (xfWindow *) rail_window->extra;
 
-		DEBUG_X11("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
+		DEBUG_X11_LMS("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
 			minmax->windowId, minmax->maxWidth, minmax->maxHeight,
 			(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
@@ -373,11 +373,11 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman
 		xfWindow * window = NULL;
 		window = (xfWindow *) rail_window->extra;
 
-		DEBUG_X11("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
+		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
 			movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
 
-#if 0
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
 		if (movesize->isMoveSizeStart)
 			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
 		else

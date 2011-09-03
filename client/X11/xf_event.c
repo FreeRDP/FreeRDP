@@ -148,7 +148,8 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 			x += xfw->left;
 			y += xfw->top;
 
-			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+			if (!xfw->isLocalMoveSizeModeEnabled)
+				input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 		}
 	}
 
@@ -430,12 +431,30 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 		xfWindow* xfw;
 		xfw = (xfWindow*) window->extra;
 
-		if (xfw->isLocalMoveSizeModeEnabled)
+		DEBUG_X11_LMS("ConfigureNotify: send_event=%d eventWindow=0x%X window=0x%X above=0x%X rc={l=%d t=%d r=%d b=%d} "
+			"w=%d h=%d override_redirect=%d",
+			event->xconfigure.send_event,
+			(uint32)event->xconfigure.event,
+			(uint32)event->xconfigure.window,
+			(uint32)event->xconfigure.above,
+			event->xconfigure.x,
+			event->xconfigure.y,
+			event->xconfigure.x + event->xconfigure.width - 1,
+			event->xconfigure.y + event->xconfigure.height - 1,
+			event->xconfigure.width,
+			event->xconfigure.height,
+			event->xconfigure.override_redirect);
+
+		if (xfw->isLocalMoveSizeModeEnabled && event->xconfigure.above != 0)
 		{
 			uint32 left = event->xconfigure.x;
 			uint32 top = event->xconfigure.y;
-			uint32 right = event->xconfigure.y + event->xconfigure.width - 1;
+			uint32 right = event->xconfigure.x + event->xconfigure.width;
 			uint32 bottom = event->xconfigure.y + event->xconfigure.height - 1;
+
+			DEBUG_X11_LMS("MoveSendToServer: windowId=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d \n",
+				(uint32)xfw->handle, left, top, right, bottom, event->xconfigure.width,
+				event->xconfigure.height);
 
 			xf_rail_send_windowmove(xfi, window->windowId, left, top, right, bottom);
 		}
