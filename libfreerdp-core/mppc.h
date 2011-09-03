@@ -26,11 +26,11 @@
 
 struct rdp_mppc
 {
-    uint8_t *history_buf;
-    uint8_t *history_ptr;
+	uint8 *history_buf;
+	uint8 *history_ptr;
 };
 
 // forward declarations
-int decompress_rdp_5(rdpRdp *, uint8_t *, int, int, uint32_t *, uint32_t *);
+int decompress_rdp_5(rdpRdp *, uint8 *, int, int, uint32 *, uint32 *);
 
 #endif
