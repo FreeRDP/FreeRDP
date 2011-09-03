@@ -86,18 +86,31 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 {
 	sint16 y, cb, cr;
 	sint16 r, g, b;
-
 	int i;
+
+	/**
+	 * The decoded YCbCr coeffectients are represented as 11.5 fixed-point numbers:
+	 *
+	 * 1 sign bit + 10 integer bits + 5 fractional bits
+	 *
+	 * However only 7 integer bits will be actually used since the value range is [-128.0, 127.0].
+	 * In other words, the decoded coeffectients is scaled by << 5 when intepreted as sint16.
+	 * It was scaled in the first RLGR decoding phase, so we must scale it back here.
+	 */
 	for (i = 0; i < 4096; i++)
 	{
-		y = y_r_buf[i] + 128;
+		y = (y_r_buf[i] >> 5) + 128;
 		cb = cb_g_buf[i];
 		cr = cr_b_buf[i];
-		r = (y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5));
+		/* 1.403 >> 5 = 0.000010110011100(b) */
+		r = y + ((cr >> 5) + (cr >> 7) + (cr >> 8) + (cr >> 11) + (cr >> 12) + (cr >> 13));
 		y_r_buf[i] = MINMAX(r, 0, 255);
-		g = (y - ((cb >> 2) + (cb >> 4) + (cb >> 5)) - ((cr >> 1) + (cr >> 3) + (cr >> 4) + (cr >> 5)));
+		/* 0.344 >> 5 = 0.000000101100000(b), 0.714 >> 5 = 0.000001011011011(b) */
+		g = y - ((cb >> 7) + (cb >> 9) + (cb >> 10)) -
+			((cr >> 6) + (cr >> 8) + (cr >> 9) + (cr >> 11) + (cr >> 12) + (cr >> 13));
 		cb_g_buf[i] = MINMAX(g, 0, 255);
-		b = (y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6));
+		/* 1.77 >> 5 = 0.000011100010100(b) */
+		b = y + ((cb >> 5) + (cb >> 6) + (cb >> 7) + (cb >> 11) + (cb >> 13));
 		cr_b_buf[i] = MINMAX(b, 0, 255);
 	}
 }

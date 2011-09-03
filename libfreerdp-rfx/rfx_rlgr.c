@@ -42,10 +42,11 @@
 #define GetBits(nBits) rfx_bitstream_get_bits(bs, nBits)
 
 /* From current output pointer, write "value", check and update buffer_size */
+/* The value is represented as 11.5 fixed-point number */
 #define WriteValue(value) \
 { \
 	if (buffer_size > 0) \
-		*dst++ = (value); \
+		*dst++ = ((value) << 5); \
 	buffer_size--; \
 }
 

@@ -68,40 +68,49 @@ static void rfx_decode_ycbcr_to_rgb_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 	}
 	for (i = 0; i < (4096 * sizeof(sint16) / sizeof(__m128i)); i++)
 	{
-		/* y = y_r_buf[i] + 128; */
+		/* y = (y_r_buf[i] >> 5) + 128; */
 		y = _mm_load_si128(&y_r_buf[i]);
-		y = _mm_add_epi16(y, _mm_set1_epi16(128));
+		y = _mm_add_epi16(_mm_srai_epi16(y, 5), _mm_set1_epi16(128));
 
 		/* cr = cr_b_buf[i]; */
 		cr = _mm_load_si128(&cr_b_buf[i]);
 
-		/* r = between(y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5), 0, 255); */
-		r = _mm_add_epi16(y, cr);
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 2));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 3));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 5));
+		/* r = y + ((cr >> 5) + (cr >> 7) + (cr >> 8) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* y_r_buf[i] = MINMAX(r, 0, 255); */
+		r = _mm_add_epi16(y, _mm_srai_epi16(cr, 5));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 7));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 8));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 11));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 12));
+		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(r, zero, max);
 		_mm_store_si128(&y_r_buf[i], r);
 
 		/* cb = cb_g_buf[i]; */
 		cb = _mm_load_si128(&cb_g_buf[i]);
 
-		/* g = between(y - (cb >> 2) - (cb >> 4) - (cb >> 5) - (cr >> 1) - (cr >> 3) - (cr >> 4) - (cr >> 5), 0, 255); */
-		g = _mm_sub_epi16(y, _mm_srai_epi16(cb, 2));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 4));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 5));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 1));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 3));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 4));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 5));
+		/* g = y - ((cb >> 7) + (cb >> 9) + (cb >> 10)) -
+			((cr >> 6) + (cr >> 8) + (cr >> 9) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* cb_g_buf[i] = MINMAX(g, 0, 255); */
+		g = _mm_sub_epi16(y, _mm_srai_epi16(cb, 7));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 9));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 10));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 6));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 8));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 9));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 11));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 12));
+		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(g, zero, max);
-		_mm_store_si128(&cb_g_buf[i], g);		
+		_mm_store_si128(&cb_g_buf[i], g);
 
-		/* b = between(y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6), 0, 255); */
-		b = _mm_add_epi16(y, cb);
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 1));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 2));
+		/* b = y + ((cb >> 5) + (cb >> 6) + (cb >> 7) + (cb >> 11) + (cb >> 13)); */
+		/* cr_b_buf[i] = MINMAX(b, 0, 255); */
+		b = _mm_add_epi16(y, _mm_srai_epi16(cb, 5));
 		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 6));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 7));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 11));
+		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 13));
 		_mm_between_epi16(b, zero, max);
 		_mm_store_si128(&cr_b_buf[i], b);
 	}
