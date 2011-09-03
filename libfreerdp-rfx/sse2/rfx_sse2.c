@@ -566,7 +566,7 @@ rfx_dwt_2d_encode_block_horiz_sse2(sint16* src, sint16* l, sint16* h, int subban
 			/* The following 3 Set operations consumes more than half of the total DWT processing time! */
 			src_2n = _mm_set_epi16(src[14], src[12], src[10], src[8], src[6], src[4], src[2], src[0]);
 			src_2n_1 = _mm_set_epi16(src[15], src[13], src[11], src[9], src[7], src[5], src[3], src[1]);
-			src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[15] : src[16],
+			src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[14] : src[16],
 				src[14], src[12], src[10], src[8], src[6], src[4], src[2]);
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
