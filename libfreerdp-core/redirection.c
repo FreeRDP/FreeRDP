@@ -143,9 +143,10 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	stream_seek(s, 8); /* pad (8 bytes) */
 
-	rdp_client_redirect(rdp);
-
-	return True;
+	if (redirection->flags & LB_NOREDIRECT)
+		return True;
+	else
+		return rdp_client_redirect(rdp);
 }
 
 boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s)

@@ -116,6 +116,13 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	rdp_client_disconnect(rdp);
 
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	transport_free(rdp->transport);
+	rdp->transport = transport_new(settings);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 	settings->redirected_session_id = redirection->sessionID;
 

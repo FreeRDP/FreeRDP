@@ -289,6 +289,7 @@ int transport_check_fds(rdpTransport* transport)
 	wait_obj_clear(transport->recv_event);
 
 	status = transport_read_nonblocking(transport);
+
 	if (status < 0)
 		return status;
 
