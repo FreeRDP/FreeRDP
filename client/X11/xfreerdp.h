@@ -116,4 +116,11 @@ void xf_toggle_fullscreen(xfInfo* xfi);
 #define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
+
 #endif /* __XFREERDP_H */
