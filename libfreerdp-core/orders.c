@@ -18,6 +18,7 @@
  */
 
 #include "window.h"
+#include <freerdp/api.h>
 
 #include "orders.h"
 
@@ -131,7 +132,7 @@ uint8 BMF_BPP[] =
 		0, 1, 0, 8, 16, 24, 32
 };
 
-void update_read_coord(STREAM* s, sint16* coord, boolean delta)
+INLINE void update_read_coord(STREAM* s, sint16* coord, boolean delta)
 {
 	sint8 byte;
 
@@ -146,7 +147,7 @@ void update_read_coord(STREAM* s, sint16* coord, boolean delta)
 	}
 }
 
-void update_read_color(STREAM* s, uint32* color)
+INLINE void update_read_color(STREAM* s, uint32* color)
 {
 	uint8 byte;
 
@@ -158,7 +159,7 @@ void update_read_color(STREAM* s, uint32* color)
 	*color |= (byte << 16);
 }
 
-void update_read_colorref(STREAM* s, uint32* color)
+INLINE void update_read_colorref(STREAM* s, uint32* color)
 {
 	uint8 byte;
 
@@ -171,7 +172,7 @@ void update_read_colorref(STREAM* s, uint32* color)
 	stream_seek_uint8(s);
 }
 
-void update_read_color_quad(STREAM* s, uint32* color)
+INLINE void update_read_color_quad(STREAM* s, uint32* color)
 {
 	uint8 byte;
 
@@ -184,7 +185,7 @@ void update_read_color_quad(STREAM* s, uint32* color)
 	stream_seek_uint8(s);
 }
 
-void update_read_2byte_unsigned(STREAM* s, uint16* value)
+INLINE void update_read_2byte_unsigned(STREAM* s, uint16* value)
 {
 	uint8 byte;
 
@@ -202,7 +203,7 @@ void update_read_2byte_unsigned(STREAM* s, uint16* value)
 	}
 }
 
-void update_read_2byte_signed(STREAM* s, sint16* value)
+INLINE void update_read_2byte_signed(STREAM* s, sint16* value)
 {
 	uint8 byte;
 	boolean negative;
@@ -223,7 +224,7 @@ void update_read_2byte_signed(STREAM* s, sint16* value)
 		*value *= -1;
 }
 
-void update_read_4byte_unsigned(STREAM* s, uint32* value)
+INLINE void update_read_4byte_unsigned(STREAM* s, uint32* value)
 {
 	uint8 byte;
 	uint8 count;
@@ -267,7 +268,7 @@ void update_read_4byte_unsigned(STREAM* s, uint32* value)
 	}
 }
 
-void update_read_delta(STREAM* s, sint16* value)
+INLINE void update_read_delta(STREAM* s, sint16* value)
 {
 	uint8 byte;
 
@@ -285,7 +286,29 @@ void update_read_delta(STREAM* s, sint16* value)
 	}
 }
 
-void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
+INLINE void update_read_glyph_delta(STREAM* s, uint16* value)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte == 0x80)
+		stream_read_uint16(s, *value);
+	else
+		*value = (byte & 0x3F);
+}
+
+INLINE void update_seek_glyph_delta(STREAM* s)
+{
+	uint8 byte;
+
+	stream_read_uint8(s, byte);
+
+	if (byte & 0x80)
+		stream_seek_uint8(s);
+}
+
+INLINE void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
 {
 	if (fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, brush->x);
@@ -323,7 +346,7 @@ void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
 	}
 }
 
-void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
+INLINE void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 {
 	int i;
 	uint8 flags = 0;
@@ -368,7 +391,7 @@ void update_read_delta_rects(STREAM* s, DELTA_RECT* rectangles, int number)
 	}
 }
 
-void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number, sint16 x, sint16 y)
+INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number, sint16 x, sint16 y)
 {
 	int i;
 	uint8 flags = 0;
@@ -404,6 +427,174 @@ void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number, sint16
 
 	points[i - 1].x += x;
 	points[i - 1].y += y;
+}
+
+INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments, boolean delta, uint8 size)
+{
+	int index;
+	uint8 byte;
+	uint16 count;
+	uint8** offsets;
+	uint16* lengths;
+	uint8* operations;
+	uint8* array_mark;
+	uint8* stream_end;
+	uint8* stream_start;
+	GLYPH_FRAGMENT* fragment;
+
+	count = 0;
+	fragment = NULL;
+	*fragments = NULL;
+	array_mark = NULL;
+	stream_end = s->p + size;
+	stream_get_mark(s, stream_start);
+	offsets = (uint8**) xmalloc(size / 2);
+	lengths = (uint16*) xmalloc(size / 2);
+	operations = (uint8*) xmalloc(size / 2);
+
+	while (s->p < stream_end)
+	{
+		stream_read_uint8(s, byte);
+
+		if (byte == GLYPH_FRAGMENT_USE)
+		{
+			if (array_mark != NULL)
+			{
+				offsets[count] = array_mark;
+				lengths[count] = array_mark - ((count < 1) ? stream_start : offsets[count - 1]);
+				operations[count] = GLYPH_FRAGMENT_NOP;
+				array_mark = NULL;
+				count++;
+			}
+
+			offsets[count] = (s->p - 1);
+			stream_seek_uint8(s);
+
+			if (delta)
+				update_seek_glyph_delta(s);
+
+			lengths[count] = (s->p - offsets[count]);
+			operations[count] = GLYPH_FRAGMENT_USE;
+			count++;
+		}
+		else if (byte == GLYPH_FRAGMENT_ADD)
+		{
+			stream_seek_uint8(s);
+			stream_read_uint8(s, byte);
+
+			if ((s->p - (byte + 3)) != array_mark)
+			{
+				offsets[count] = array_mark;
+				lengths[count] = (s->p - (byte + 3)) - array_mark;
+				array_mark = NULL;
+				count++;
+			}
+
+			offsets[count] = (s->p - (byte + 3));
+			lengths[count] = (s->p - offsets[count]);
+			operations[count] = GLYPH_FRAGMENT_ADD;
+			array_mark = NULL;
+			count++;
+		}
+		else
+		{
+			if (array_mark == NULL)
+				array_mark = (s->p - 1);
+
+			if (delta)
+				update_seek_glyph_delta(s);
+		}
+	}
+
+	if (array_mark != NULL)
+	{
+		lengths[count] = array_mark - ((count < 1) ? stream_start : offsets[count - 1]);
+
+		if (lengths[count] > 1)
+		{
+			offsets[count] = array_mark;
+			operations[count] = GLYPH_FRAGMENT_NOP;
+			array_mark = NULL;
+			count++;
+		}
+	}
+
+	index = 0;
+	stream_set_mark(s, stream_start);
+	*fragments = (GLYPH_FRAGMENT*) xmalloc(sizeof(GLYPH_FRAGMENT) * count);
+
+	for (index = 0; index < count; index++)
+	{
+		fragment = &(*fragments[index]);
+		stream_set_mark(s, offsets[index]);
+
+		if (operations[index] == GLYPH_FRAGMENT_USE)
+		{
+			stream_seek_uint8(s);
+			fragment->operation = GLYPH_FRAGMENT_USE;
+			stream_read_uint8(s, fragment->index);
+		}
+		else if (operations[index] == GLYPH_FRAGMENT_ADD)
+		{
+			uint16 icount;
+			fragment->operation = GLYPH_FRAGMENT_ADD;
+
+			fragment->nindices = 0;
+			icount = (lengths[index] - 3) / (delta) ? 2 : 1;
+			fragment->indices = (GLYPH_FRAGMENT_INDEX*) xmalloc(icount * sizeof(GLYPH_FRAGMENT_INDEX));
+
+			while (s->p < (offsets[index] + (lengths[index] - 3)))
+			{
+				if ((fragment->nindices + 1) > icount)
+				{
+					fragment->indices = (GLYPH_FRAGMENT_INDEX*) xrealloc(fragment->indices,
+									++icount * sizeof(GLYPH_FRAGMENT_INDEX));
+				}
+
+				stream_read_uint8(s, fragment->indices[fragment->nindices].index);
+
+				if (delta)
+					update_read_glyph_delta(s, &fragment->indices[fragment->nindices].delta);
+
+				fragment->nindices++;
+			}
+
+			stream_seek_uint8(s);
+			stream_read_uint8(s, fragment->index);
+			stream_read_uint8(s, fragment->size);
+		}
+		else
+		{
+			uint16 icount;
+			fragment->operation = GLYPH_FRAGMENT_NOP;
+
+			fragment->nindices = 0;
+			icount = lengths[index] / (delta) ? 2 : 1;
+			fragment->indices = (GLYPH_FRAGMENT_INDEX*) xmalloc(icount * sizeof(GLYPH_FRAGMENT_INDEX));
+
+			while (s->p < (offsets[index] + lengths[index]))
+			{
+				if ((fragment->nindices + 1) > icount)
+				{
+					fragment->indices = (GLYPH_FRAGMENT_INDEX*) xrealloc(fragment->indices,
+									++icount * sizeof(GLYPH_FRAGMENT_INDEX));
+				}
+
+				stream_read_uint8(s, fragment->indices[fragment->nindices].index);
+
+				if (delta)
+					update_read_glyph_delta(s, &fragment->indices[fragment->nindices].delta);
+
+				fragment->nindices++;
+			}
+		}
+	}
+
+	xfree(offsets);
+	xfree(lengths);
+	xfree(operations);
+
+	return count;
 }
 
 /* Primary Drawing Orders */
@@ -904,8 +1095,8 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_22)
 	{
-		stream_read_uint8(s, glyph_index->cbData);
-		stream_seek(s, glyph_index->cbData);
+		stream_read_uint8(s, glyph_index->cbFragments);
+		stream_seek(s, glyph_index->cbFragments);
 	}
 }
 
@@ -958,8 +1149,19 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
-		stream_read_uint8(s, fast_index->cbData);
-		stream_seek(s, fast_index->cbData);
+		uint8* mark;
+		uint8 cbData;
+		boolean delta = False;
+
+		stream_read_uint8(s, cbData);
+		stream_get_mark(s, mark);
+
+		if ((fast_index->ulCharInc == 0) && !(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
+			delta = True;
+
+		fast_index->nfragments = update_read_glyph_fragments(s, &fast_index->fragments, delta, cbData);
+
+		stream_set_mark(s, mark);
 	}
 }
 

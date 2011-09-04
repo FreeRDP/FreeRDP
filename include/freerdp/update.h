@@ -363,6 +363,23 @@ struct _SAVE_BITMAP_ORDER
 };
 typedef struct _SAVE_BITMAP_ORDER SAVE_BITMAP_ORDER;
 
+struct _GLYPH_FRAGMENT_INDEX
+{
+	uint8 index;
+	uint16 delta;
+};
+typedef struct _GLYPH_FRAGMENT_INDEX GLYPH_FRAGMENT_INDEX;
+
+struct _GLYPH_FRAGMENT
+{
+	uint8 operation;
+	uint8 index;
+	uint8 size;
+	uint8 nindices;
+	GLYPH_FRAGMENT_INDEX* indices;
+};
+typedef struct _GLYPH_FRAGMENT GLYPH_FRAGMENT;
+
 struct _GLYPH_INDEX_ORDER
 {
 	uint8 cacheId;
@@ -382,8 +399,8 @@ struct _GLYPH_INDEX_ORDER
 	BRUSH brush;
 	sint16 x;
 	sint16 y;
-	uint8 cbData;
-	uint8* data;
+	uint8 cbFragments;
+	uint8* fragments;
 };
 typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 
@@ -404,8 +421,8 @@ struct _FAST_INDEX_ORDER
 	sint16 opBottom;
 	sint16 x;
 	sint16 y;
-	uint8 cbData;
-	uint8* data;
+	uint16 nfragments;
+	GLYPH_FRAGMENT* fragments;
 };
 typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 
@@ -897,6 +914,10 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 #define STREAM_BITMAP_V2		0x04
 
 #define SCREEN_BITMAP_SURFACE		0xFFFF
+
+#define GLYPH_FRAGMENT_NOP		0x00
+#define GLYPH_FRAGMENT_USE		0xFE
+#define GLYPH_FRAGMENT_ADD		0xFF
 
 /* Window Order Header Flags */
 #define WINDOW_ORDER_TYPE_WINDOW			0x01000000

@@ -268,10 +268,8 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 		stream_seek(s, RDP_PACKET_HEADER_LENGTH);
 
 		if (rdp_recv_out_of_sequence_pdu(rdp, s) != True)
-		{
-			printf("Unexpected PDU when expecting Demand Active PDU\n");
 			return False;
-		}
+
 		return True;
 	}
 
