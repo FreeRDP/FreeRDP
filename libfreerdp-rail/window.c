@@ -143,7 +143,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		DEBUG_RAIL("ownerWindowId:0x%08X", window->ownerWindowId);
 	}
 
-	DEBUG_RAIL("window_state_update: windowId=0x%X ownerWindowId=0x%X\n",
+	DEBUG_RAIL("windowId=0x%X ownerWindowId=0x%X",
 			window->windowId, window->ownerWindowId);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)

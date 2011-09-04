@@ -367,7 +367,7 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 		size_hints->max_height = maxTrackHeight;
 
 		/* to speedup window drawing we need to select optimal value for sizing step. */
-		size_hints->width_inc = size_hints->height_inc = 5;
+		size_hints->width_inc = size_hints->height_inc = 1;
 
 		XSetWMNormalHints(xfi->display, window->handle, size_hints);
 		XFree(size_hints);
@@ -473,10 +473,7 @@ void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, in
 {
 	window->isLocalMoveSizeModeEnabled = False;
 
-	if (moveSizeType == RAIL_WMSZ_MOVE)
-	{
-		xf_MoveWindow(xfi, window, topLeftX, topLeftY, window->width, window->height);
-	}
+	xf_MoveWindow(xfi, window, topLeftX, topLeftY, window->width, window->height);
 }
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
@@ -486,8 +483,8 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if ((width * height) < 1)
 		return;
 
-	if (window->isLocalMoveSizeModeEnabled)
-		return;
+	DEBUG_X11_LMS("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d",
+		(uint32) window->handle, x, y, width, height);
 
 	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 
@@ -504,6 +501,10 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->bottom = y + height - 1;
 	window->width = width;
 	window->height = height;
+
+	DEBUG_X11_LMS("xf_MoveWindow: window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+			(uint32)window->handle, window->left, window->top, window->right, window->bottom,
+			window->width, window->height);
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
