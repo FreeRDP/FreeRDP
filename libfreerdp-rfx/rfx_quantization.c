@@ -52,13 +52,15 @@ void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values)
 static void rfx_quantization_encode_block(sint16* buffer, int buffer_size, uint32 factor)
 {
 	sint16* dst;
+	sint16 half;
 
 	if (factor == 0)
 		return;
 
+	half = (1 << (factor - 1));
 	for (dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
-		*dst >>= factor;
+		*dst = (*dst + half) >> factor;
 	}
 }
 
