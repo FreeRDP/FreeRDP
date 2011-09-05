@@ -167,6 +167,8 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->client_dir);
 		xfree(settings->cert_file);
 		xfree(settings->privatekey_file);
+		freerdp_blob_free(&(settings->server_certificate));
+		certificate_free(settings->server_cert);
 		xfree(settings);
 	}
 }

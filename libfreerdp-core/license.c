@@ -864,7 +864,8 @@ rdpLicense* license_new(rdpRdp* rdp)
 	{
 		license->rdp = rdp;
 		license->state = LICENSE_STATE_AWAIT;
-		license->certificate = certificate_new(rdp);
+		//license->certificate = certificate_new(rdp);
+		license->certificate = certificate_new();
 		license->product_info = license_new_product_info();
 		license->error_info = license_new_binary_blob(BB_ERROR_BLOB);
 		license->key_exchange_list = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB);

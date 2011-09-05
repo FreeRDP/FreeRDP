@@ -398,6 +398,20 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 }
 
 /**
+ * Decrypt an RDP packet.\n
+ * @param rdp RDP module
+ * @param s stream
+ * @param length int
+ */
+
+static boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
+{
+	printf("rdp_decrypt:\n");
+	stream_seek(s, 8); /* signature */
+	return True;
+}
+
+/**
  * Process an RDP packet.\n
  * @param rdp RDP module
  * @param s stream
@@ -409,11 +423,30 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 pduType;
 	uint16 pduLength;
 	uint16 channelId;
+	uint32 securityHeader;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
 		return False;
+	}
+
+	if (rdp->settings->encryption)
+	{
+		stream_read_uint32(s, securityHeader);
+		if (securityHeader & SEC_SECURE_CHECKSUM)
+		{
+			printf("Error: TODO\n");
+			return False;
+		}
+		if (securityHeader & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length))
+			{
+				printf("rdp_decrypt failed\n");
+				return False;
+			}
+		}
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
@@ -492,6 +525,7 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	rdpRdp* rdp = (rdpRdp*) extra;
 
+	printf("state %d\n", rdp->state);
 	switch (rdp->state)
 	{
 		case CONNECTION_STATE_NEGO:

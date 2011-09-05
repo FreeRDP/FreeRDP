@@ -104,11 +104,38 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	return True;
 }
 
+static boolean rdp_establish_keys(rdpRdp* rdp)
+{
+	uint8 client_random[32];
+	uint8 crypt_client_random[256];
+	uint32 key_len;
+	uint8* mod;
+	uint8* exp;
+
+	printf("rdp_establish_keys:\n");
+	if (rdp->settings->encryption == False)
+	{
+		/* no RDP encryption */
+		return True;
+	}
+
+	memset(client_random, 0x5e, 32); /* TODO: get real random */
+	crypto_nonce(client_random, 32);
+	key_len = rdp->settings->server_cert->cert_info.modulus.length;
+	mod = rdp->settings->server_cert->cert_info.modulus.data;
+	exp = rdp->settings->server_cert->cert_info.exponent;
+	crypto_rsa_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+
+	return True;
+}
+
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
+	{
+		printf("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
 		return False;
-
+	}
 	if (!mcs_send_erect_domain_request(rdp->mcs))
 		return False;
 	if (!mcs_send_attach_user_request(rdp->mcs))
@@ -188,6 +215,8 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
 	{
+		if (!rdp_establish_keys(rdp))
+			return False;
 		if (!rdp_send_client_info(rdp))
 			return False;
 		rdp->state = CONNECTION_STATE_LICENSE;

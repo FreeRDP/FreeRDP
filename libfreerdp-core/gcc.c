@@ -18,6 +18,7 @@
  */
 
 #include "gcc.h"
+#include "certificate.h"
 
 /**
  * T.124 GCC is defined in:
@@ -250,12 +251,16 @@ boolean gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	per_read_choice(s, &choice);
 
 	/* h221NonStandard */
-	per_read_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
+	if (!per_read_octet_string(s, h221_sc_key, 4, 4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
+		return False;
 
 	/* userData (OCTET_STRING) */
 	per_read_length(s, &length);
 	if (!gcc_read_server_data_blocks(s, settings, length))
+	{
+		printf("gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
 		return False;
+	}
 
 	return True;
 }
@@ -357,34 +362,49 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length
 	uint16 type;
 	uint16 offset = 0;
 	uint16 blockLength;
+	uint8* holdp;
 
 	while (offset < length)
 	{
+		holdp = s->p;
+
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
+		{
+			printf("gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
 			return False;
+		}
 
 		switch (type)
 		{
 			case SC_CORE:
 				if (!gcc_read_server_core_data(s, settings))
+				{
+					printf("gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
 					return False;
+				}
 				break;
 
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(s, settings))
+				{
+					printf("gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
 					return False;
+				}
 				break;
 
 			case SC_NET:
 				if (!gcc_read_server_network_data(s, settings))
+				{
+					printf("gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
 					return False;
+				}
 				break;
 
 			default:
 				break;
 		}
-
 		offset += blockLength;
+		s->p = holdp + blockLength;
 	}
 
 	return True;
@@ -729,7 +749,11 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 {
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	if (settings->encryption > 0)
+	printf("settings->encryption %d\n", settings->encryption);
+	printf("settings->encryption_method %d\n", settings->encryption_method);
+	printf("settings->encryption_level %d\n", settings->encryption_level);
+
+	if (settings->encryption)
 	{
 		stream_write_uint32(s, settings->encryption_method); /* encryptionMethods */
 		stream_write_uint32(s, 0); /* extEncryptionMethods */
@@ -744,22 +768,29 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 
 boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 {
-	uint32 encryptionMethod;
-	uint32 encryptionLevel;
 	uint32 serverRandomLen;
 	uint32 serverCertLen;
+	uint8* data;
+	uint32 len;
 
-	stream_read_uint32(s, encryptionMethod); /* encryptionMethod */
-	stream_read_uint32(s, encryptionLevel); /* encryptionLevel */
+	stream_read_uint32(s, settings->encryption_method); /* encryptionMethod */
+	stream_read_uint32(s, settings->encryption_level); /* encryptionLevel */
 
-	if (encryptionMethod == 0 && encryptionLevel == 0)
+	printf("gcc_read_server_security_data: encryption_method %d encryption_level %d\n", settings->encryption_method, settings->encryption_level);
+
+	if (settings->encryption_method == 0 && settings->encryption_level == 0)
 	{
 		/* serverRandom and serverRandom must not be present */
+		settings->encryption = False;
+		settings->encryption_method = ENCRYPTION_METHOD_NONE;
+		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 		return True;
 	}
 
 	stream_read_uint32(s, serverRandomLen); /* serverRandomLen */
 	stream_read_uint32(s, serverCertLen); /* serverCertLen */
+
+	printf("gcc_read_server_security_data: serverRandomLen %d serverCertLen %d\n", serverRandomLen, serverCertLen);
 
 	if (serverRandomLen > 0)
 	{
@@ -768,6 +799,10 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 		memcpy(settings->server_random.data, s->p, serverRandomLen);
 		stream_seek(s, serverRandomLen);
 	}
+	else
+	{
+		return False;
+	}
 
 	if (serverCertLen > 0)
 	{
@@ -775,6 +810,18 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 		freerdp_blob_alloc(&settings->server_certificate, serverCertLen);
 		memcpy(settings->server_certificate.data, s->p, serverCertLen);
 		stream_seek(s, serverCertLen);
+		certificate_free(settings->server_cert);
+		settings->server_cert = certificate_new();
+		data = settings->server_certificate.data;
+		len = settings->server_certificate.length;
+		if (!certificate_read_server_certificate(settings->server_cert, data, len))
+		{
+			return False;
+		}
+	}
+	else
+	{
+		return False;
 	}
 
 	return True;
