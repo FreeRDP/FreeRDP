@@ -196,6 +196,7 @@ struct rdp_settings
 
 	rdpBlob server_random;
 	rdpBlob server_certificate;
+	struct rdp_certificate* server_cert;
 
 	boolean console_audio;
 	boolean console_session;
