@@ -612,6 +612,9 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
+	if (window == NULL)
+		return;
+
 	if (window->gc)
 		XFreeGC(xfi->display, window->gc);
 
