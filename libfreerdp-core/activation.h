@@ -39,6 +39,7 @@
 #define FONTLIST_LAST			0x0002
 
 boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s);
+boolean rdp_send_deactivate_all(rdpRdp* rdp);
 
 boolean rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s);
 boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp);

@@ -226,9 +226,7 @@ boolean rdp_send_server_font_map_pdu(rdpRdp* rdp)
 	stream_write_uint16(s, FONTLIST_FIRST | FONTLIST_LAST); /* mapFlags (2 bytes) */
 	stream_write_uint16(s, 4); /* entrySize (2 bytes) */
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_MAP, rdp->mcs->user_id);
-
-	return True;
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_MAP, rdp->mcs->user_id);
 }
 
 boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
@@ -242,6 +240,19 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 	rdp->state = CONNECTION_STATE_CAPABILITY;
 
 	return True;
+}
+
+boolean rdp_send_deactivate_all(rdpRdp* rdp)
+{
+	STREAM* s;
+
+	s = rdp_pdu_init(rdp);
+
+	stream_write_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+	stream_write_uint16(s, 1); /* lengthSourceDescriptor (2 bytes) */
+	stream_write_uint8(s, 0); /* sourceDescriptor (should be 0x00) */
+
+	return rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->user_id);
 }
 
 boolean rdp_server_accept_client_control_pdu(rdpRdp* rdp, STREAM* s)

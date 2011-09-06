@@ -485,3 +485,16 @@ boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 	return True;
 }
 
+boolean rdp_server_reactivate(rdpRdp* rdp)
+{
+	if (!rdp_send_deactivate_all(rdp))
+		return False;
+
+	rdp->state = CONNECTION_STATE_LICENSE;
+
+	if (!rdp_send_demand_active(rdp))
+		return False;
+
+	return True;
+}
+

@@ -345,6 +345,13 @@ static void update_send_synchronize(rdpUpdate* update)
 	fastpath_send_update_pdu(rdp->fastpath, s);
 }
 
+static void update_send_desktop_resize(rdpUpdate* update)
+{
+	rdpRdp* rdp = (rdpRdp*)update->rdp;
+
+	rdp_server_reactivate(rdp);
+}
+
 static void update_send_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	rdpRdp* rdp = (rdpRdp*)update->rdp;
@@ -365,6 +372,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->BeginPaint = update_begin_paint;
 	update->EndPaint = update_end_paint;
 	update->Synchronize = update_send_synchronize;
+	update->DesktopResize = update_send_desktop_resize;
 	update->PointerSystem = update_send_pointer_system;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceCommand = update_send_surface_command;
