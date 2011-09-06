@@ -49,6 +49,7 @@ struct test_peer_info
 	int icon_height;
 	int icon_x;
 	int icon_y;
+	boolean activated;
 };
 typedef struct test_peer_info testPeerInfo;
 
@@ -190,7 +191,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		return;
 	if (!client->settings->rfx_codec || !info)
 		return;
-	if (info->icon_width < 1)
+	if (info->icon_width < 1 || !info->activated)
 		return;
 
 	rect.x = 0;
@@ -303,6 +304,17 @@ boolean test_peer_post_connect(freerdp_peer* client)
 	test_peer_init(client);
 	test_peer_load_icon(client);
 
+	/* Return False here would stop the execution of the peer mainloop. */
+	return True;
+}
+
+boolean test_peer_activate(freerdp_peer* client)
+{
+	testPeerInfo* info = (testPeerInfo*)client->param1;
+
+	rfx_context_reset(info->context);
+	info->activated = True;
+
 	if (test_pcap_file != NULL)
 	{
 		client->update->dump_rfx = True;
@@ -313,7 +325,6 @@ boolean test_peer_post_connect(freerdp_peer* client)
 		test_peer_draw_background(client);
 	}
 
-	/* Return False here would stop the execution of the peer mainloop. */
 	return True;
 }
 
@@ -324,7 +335,27 @@ void test_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void test_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
+	freerdp_peer* client = (freerdp_peer*) input->param1;
+	rdpUpdate* update = client->update;
+	testPeerInfo* info = (testPeerInfo*)client->param1;
+
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+
+	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+	{
+		if (client->settings->width != 800)
+		{
+			client->settings->width = 800;
+			client->settings->height = 600;
+		}
+		else
+		{
+			client->settings->width = 640;
+			client->settings->height = 480;
+		}
+		update->DesktopResize(update);
+		info->activated = False;
+	}
 }
 
 void test_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
@@ -365,6 +396,7 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->rfx_codec = True;
 
 	client->PostConnect = test_peer_post_connect;
+	client->Activate = test_peer_activate;
 
 	client->input->param1 = client;
 	client->input->SynchronizeEvent = test_peer_synchronize_event;

@@ -186,8 +186,21 @@ void rdp_read_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* multipleRectangleSupport (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
 
+	if (!settings->server_mode && preferredBitsPerPixel != settings->color_depth)
+	{
+		/* The client must respect the actual color depth used by the server */
+		settings->color_depth = preferredBitsPerPixel;
+	}
+
 	if (desktopResizeFlag == False)
 		settings->desktop_resize = False;
+
+	if (!settings->server_mode && settings->desktop_resize)
+	{
+		/* The server may request a different desktop size during Deactivation-Reactivation sequence */
+		settings->width = desktopWidth;
+		settings->height = desktopHeight;
+	}
 }
 
 /**
@@ -631,7 +644,8 @@ void rdp_read_input_capability_set(STREAM* s, rdpSettings* settings)
 
 	stream_seek(s, 64); /* imeFileName (64 bytes) */
 
-	if ((inputFlags & INPUT_FLAG_FASTPATH_INPUT) == 0 && (inputFlags & INPUT_FLAG_FASTPATH_INPUT2) == 0)
+	if (!settings->server_mode &&
+		(inputFlags & INPUT_FLAG_FASTPATH_INPUT) == 0 && (inputFlags & INPUT_FLAG_FASTPATH_INPUT2) == 0)
 	{
 		settings->fastpath_input = False;
 	}
@@ -961,8 +975,15 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 
 void rdp_read_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 {
+	uint32 VCChunkSize;
+
 	stream_seek_uint32(s); /* flags (4 bytes) */
-	stream_read_uint32(s, settings->vc_chunk_size); /* VCChunkSize (4 bytes) */
+	stream_read_uint32(s, VCChunkSize); /* VCChunkSize (4 bytes) */
+
+	if (!settings->server_mode)
+	{
+		settings->vc_chunk_size = VCChunkSize;
+	}
 }
 
 /**

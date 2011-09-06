@@ -259,6 +259,11 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 {
 	uint8* mark;
+	uint16 width;
+	uint16 height;
+
+	width = rdp->settings->width;
+	height = rdp->settings->height;
 
 	stream_get_mark(s, mark);
 
@@ -275,6 +280,15 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_send_confirm_active(rdp))
 		return False;
+
+	/**
+	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
+	 * In this case, the UI should be informed and do actual window resizing at this point.
+	 */
+	if (width != rdp->settings->width || height != rdp->settings->height)
+	{
+		IFCALL(rdp->update->DesktopResize, rdp->update);
+	}
 
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
@@ -457,8 +471,12 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 {
+	/**
+	 * During reactivation sequence the client might sent some input before receiving
+	 * the Deactivate All PDU. We need to ignore those noises here.
+	 */
 	if (!rdp_recv_confirm_active(rdp, s))
-		return False;
+		return True;
 
 	rdp->state = CONNECTION_STATE_ACTIVE;
 
@@ -466,6 +484,19 @@ boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 		return False;
 
 	if (!rdp_send_server_control_cooperate_pdu(rdp))
+		return False;
+
+	return True;
+}
+
+boolean rdp_server_reactivate(rdpRdp* rdp)
+{
+	if (!rdp_send_deactivate_all(rdp))
+		return False;
+
+	rdp->state = CONNECTION_STATE_LICENSE;
+
+	if (!rdp_send_demand_active(rdp))
 		return False;
 
 	return True;

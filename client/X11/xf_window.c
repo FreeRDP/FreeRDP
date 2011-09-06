@@ -202,7 +202,6 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 	if (window != NULL)
 	{
 		int input_mask;
-		XSizeHints* size_hints;
 		XClassHint* class_hints;
 
 		window->width = width;
@@ -227,16 +226,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 			XFree(class_hints);
 		}
 
-		size_hints = XAllocSizeHints();
-
-		if (size_hints)
-		{
-			size_hints->flags = PMinSize | PMaxSize;
-			size_hints->min_width = size_hints->max_width = xfi->width;
-			size_hints->min_height = size_hints->max_height = xfi->height;
-			XSetWMNormalHints(xfi->display, window->handle, size_hints);
-			XFree(size_hints);
-		}
+		xf_ResizeDesktopWindow(xfi, window, width, height);
 
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
@@ -248,6 +238,22 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 	}
 
 	return window;
+}
+
+void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height)
+{
+	XSizeHints* size_hints;
+
+	size_hints = XAllocSizeHints();
+
+	if (size_hints)
+	{
+		size_hints->flags = PMinSize | PMaxSize;
+		size_hints->min_width = size_hints->max_width = xfi->width;
+		size_hints->min_height = size_hints->max_height = xfi->height;
+		XSetWMNormalHints(xfi->display, window->handle, size_hints);
+		XFree(size_hints);
+	}
 }
 
 void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* height)
