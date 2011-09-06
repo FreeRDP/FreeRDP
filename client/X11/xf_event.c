@@ -450,7 +450,7 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			uint32 left = event->xconfigure.x;
 			uint32 top = event->xconfigure.y;
 			uint32 right = event->xconfigure.x + event->xconfigure.width;
-			uint32 bottom = event->xconfigure.y + event->xconfigure.height - 1;
+			uint32 bottom = event->xconfigure.y + event->xconfigure.height;
 
 			DEBUG_X11_LMS("MoveSendToServer: windowId=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d \n",
 				(uint32)xfw->handle, left, top, right, bottom, event->xconfigure.width,

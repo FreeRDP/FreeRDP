@@ -494,7 +494,10 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 
-	XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	if (!window->isLocalMoveSizeModeEnabled)
+	{
+		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	}
 
 	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
@@ -618,6 +621,9 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
+	if (window == NULL)
+		return;
+
 	if (window->gc)
 		XFreeGC(xfi->display, window->gc);
 
