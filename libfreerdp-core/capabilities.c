@@ -186,6 +186,12 @@ void rdp_read_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* multipleRectangleSupport (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
 
+	if (!settings->server_mode && preferredBitsPerPixel != settings->color_depth)
+	{
+		/* The client must respect the actual color depth used by the server */
+		settings->color_depth = preferredBitsPerPixel;
+	}
+
 	if (desktopResizeFlag == False)
 		settings->desktop_resize = False;
 }
