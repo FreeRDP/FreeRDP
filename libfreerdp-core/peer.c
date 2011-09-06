@@ -92,6 +92,12 @@ static boolean peer_recv_data_pdu(rdpPeer* peer, STREAM* s)
 				 */
 				peer->client->PostConnect = NULL;
 			}
+			if (peer->client->Activate)
+			{
+				/* Activate will be called everytime after the client is activated/reactivated. */
+				if (!peer->client->Activate(peer->client))
+					return False;
+			}
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
