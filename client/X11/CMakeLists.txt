@@ -45,7 +45,7 @@ if(WITH_MANPAGES)
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
 
-		install(FILES xfreerdp.1 DESTINATION share/man/man1)
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION share/man/man1)
 	else(XMLTO_FOUND)
 		message(WARNING "WITH_MANPAGES was set, but xmlto was not found. man-pages will not be installed")
 	endif(XMLTO_FOUND)
