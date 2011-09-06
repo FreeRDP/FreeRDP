@@ -324,7 +324,25 @@ void test_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void test_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
+	freerdp_peer* client = (freerdp_peer*) input->param1;
+	rdpUpdate* update = client->update;
+
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+
+	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+	{
+		if (client->settings->width != 800)
+		{
+			client->settings->width = 800;
+			client->settings->height = 600;
+		}
+		else
+		{
+			client->settings->width = 640;
+			client->settings->height = 480;
+		}
+		update->DesktopResize(update);
+	}
 }
 
 void test_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
