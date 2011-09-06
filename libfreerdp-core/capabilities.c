@@ -194,6 +194,13 @@ void rdp_read_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	if (desktopResizeFlag == False)
 		settings->desktop_resize = False;
+
+	if (!settings->server_mode && settings->desktop_resize)
+	{
+		/* The server may request a different desktop size during Deactivation-Reactivation sequence */
+		settings->width = desktopWidth;
+		settings->height = desktopHeight;
+	}
 }
 
 /**

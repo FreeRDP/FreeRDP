@@ -259,6 +259,11 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 {
 	uint8* mark;
+	uint16 width;
+	uint16 height;
+
+	width = rdp->settings->width;
+	height = rdp->settings->height;
 
 	stream_get_mark(s, mark);
 
@@ -275,6 +280,15 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_send_confirm_active(rdp))
 		return False;
+
+	/**
+	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
+	 * In this case, the UI should be informed and do actual window resizing at this point.
+	 */
+	if (width != rdp->settings->width || height != rdp->settings->height)
+	{
+		IFCALL(rdp->update->DesktopResize, rdp->update);
+	}
 
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
