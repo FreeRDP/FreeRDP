@@ -127,6 +127,20 @@ void xf_end_paint(rdpUpdate* update)
 	}
 }
 
+void xf_desktop_resize(rdpUpdate* update)
+{
+	xfInfo* xfi;
+	rdpSettings* settings;
+
+	xfi = GET_XFI(update);
+	settings = xfi->instance->settings;
+	xfi->width = settings->width;
+	xfi->height = settings->height;
+
+	if (xfi->window)
+		xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+}
+
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	xfInfo* xfi = GET_XFI(instance);
@@ -393,6 +407,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
+	instance->update->DesktopResize = xf_desktop_resize;
 
 	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;
