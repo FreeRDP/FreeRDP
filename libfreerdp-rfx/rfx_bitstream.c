@@ -72,6 +72,7 @@ void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, uint16 bits, int nbits)
 		if (b > bs->bits_left)
 			b = bs->bits_left;
 
+		bs->buffer[bs->byte_pos] &= ~(((1 << b) - 1) << (bs->bits_left - b));
 		bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs->bits_left - b);
 		bs->bits_left -= b;
 		nbits -= b;
