@@ -239,6 +239,12 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 
 	rdp->state = CONNECTION_STATE_CAPABILITY;
 
+	while (rdp->state != CONNECTION_STATE_ACTIVE)
+	{
+		if (rdp_check_fds(rdp) < 0)
+			return False;
+	}
+
 	return True;
 }
 
