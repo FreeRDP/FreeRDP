@@ -377,7 +377,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman
 			movesize->windowId, movesize->isMoveSizeStart,
 			movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
 
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
+#if 1
 		if (movesize->isMoveSizeStart)
 			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
 		else
