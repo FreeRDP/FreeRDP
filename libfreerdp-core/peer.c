@@ -86,6 +86,11 @@ static boolean peer_recv_data_pdu(rdpPeer* peer, STREAM* s)
 			{
 				if (!peer->client->PostConnect(peer->client))
 					return False;
+				/**
+				 * PostConnect should only be called once and should not be called
+				 * after a reactivation sequence.
+				 */
+				peer->client->PostConnect = NULL;
 			}
 			break;
 
