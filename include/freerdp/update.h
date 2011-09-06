@@ -1025,6 +1025,7 @@ typedef void (*pcBeginPaint)(rdpUpdate* update);
 typedef void (*pcEndPaint)(rdpUpdate* update);
 typedef void (*pcSetBounds)(rdpUpdate* update, BOUNDS* bounds);
 typedef void (*pcSynchronize)(rdpUpdate* update);
+typedef void (*pcDesktopResize)(rdpUpdate* update);
 typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
 typedef void (*pcPlaySound)(rdpUpdate* update, PLAY_SOUND_UPDATE* play_sound);
@@ -1108,6 +1109,7 @@ struct rdp_update
 	pcEndPaint EndPaint;
 	pcSetBounds SetBounds;
 	pcSynchronize Synchronize;
+	pcDesktopResize DesktopResize;
 	pcBitmap Bitmap;
 	pcPalette Palette;
 	pcPlaySound PlaySound;

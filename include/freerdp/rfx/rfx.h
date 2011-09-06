@@ -121,6 +121,7 @@ typedef struct _RFX_CONTEXT RFX_CONTEXT;
 FREERDP_API RFX_CONTEXT* rfx_context_new(void);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format);
+FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
 
 FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in);
 FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);

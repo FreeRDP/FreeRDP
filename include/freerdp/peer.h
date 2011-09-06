@@ -33,6 +33,7 @@ typedef boolean (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, in
 typedef boolean (*psPeerCheckFileDescriptor)(freerdp_peer* client);
 typedef void (*psPeerDisconnect)(freerdp_peer* client);
 typedef boolean (*psPeerPostConnect)(freerdp_peer* client);
+typedef boolean (*psPeerActivate)(freerdp_peer* client);
 
 struct rdp_freerdp_peer
 {
@@ -52,6 +53,7 @@ struct rdp_freerdp_peer
 	psPeerDisconnect Disconnect;
 
 	psPeerPostConnect PostConnect;
+	psPeerActivate Activate;
 };
 
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);

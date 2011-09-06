@@ -195,6 +195,12 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_f
 	}
 }
 
+void rfx_context_reset(RFX_CONTEXT* context)
+{
+	context->header_processed = False;
+	context->frame_idx = 0;
+}
+
 static void rfx_process_message_sync(RFX_CONTEXT* context, STREAM* data_in)
 {
 	uint32 magic;
