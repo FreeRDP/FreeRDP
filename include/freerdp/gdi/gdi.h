@@ -262,6 +262,7 @@ FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
 FREERDP_API GDI_IMAGE* gdi_bitmap_new(GDI *gdi, int width, int height, int bpp, uint8* data);
 FREERDP_API void gdi_bitmap_free(GDI_IMAGE *gdi_bmp);
+FREERDP_API void gdi_resize(GDI* gdi, int width, int height);
 FREERDP_API int gdi_init(freerdp* instance, uint32 flags);
 FREERDP_API void gdi_free(freerdp* instance);
 

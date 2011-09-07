@@ -76,6 +76,7 @@ void color_table_free(rdpColorTable* color_table)
 {
 	if (color_table != NULL)
 	{
+		xfree(color_table->entries);
 		xfree(color_table);
 	}
 }
