@@ -1048,7 +1048,10 @@ void gdi_free(freerdp* instance)
 	if (gdi)
 	{
 		gdi_bitmap_free(gdi->primary);
+		gdi_bitmap_free(gdi->tile);
+		gdi_bitmap_free(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
+		cache_free(gdi->cache);
 		rfx_context_free((RFX_CONTEXT*)gdi->rfx_context);
 		free(gdi->clrconv);
 		free(gdi);

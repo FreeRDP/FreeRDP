@@ -555,6 +555,19 @@ void xf_window_free(xfInfo* xfi)
 		XFreePixmap(xfi->display, xfi->primary);
 		xfi->primary = 0;
 	}
+
+	if (xfi->image)
+	{
+		xfi->image->data = NULL;
+		XDestroyImage(xfi->image);
+		xfi->image = NULL;
+	}
+
+	if (xfi->cache)
+	{
+		cache_free(xfi->cache);
+		xfi->cache = NULL;
+	}
 }
 
 void xf_free(xfInfo* xfi)
@@ -659,6 +672,7 @@ int xfreerdp_run(freerdp* instance)
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
 	instance->Disconnect(instance);
+	gdi_free(instance);
 	freerdp_free(instance);
 	xf_free(xfi);
 
