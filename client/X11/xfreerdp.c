@@ -336,7 +336,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xf_kbd_init(xfi);
 
-	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	xfi->clrconv = xnew(CLRCONV);
 	xfi->clrconv->palette = NULL;
 	xfi->clrconv->alpha = 1;
 	xfi->clrconv->invert = 0;
@@ -568,6 +568,9 @@ void xf_window_free(xfInfo* xfi)
 		cache_free(xfi->cache);
 		xfi->cache = NULL;
 	}
+
+	xfree(xfi->clrconv);
+	rail_free(xfi->rail);
 }
 
 void xf_free(xfInfo* xfi)

@@ -885,6 +885,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 	{
 		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
+
+	xfree(tile_bitmap);
 }
 
 /**
