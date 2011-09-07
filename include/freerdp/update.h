@@ -567,8 +567,8 @@ typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
 struct _GLYPH_DATA
 {
 	uint16 cacheIndex;
-	uint16 x;
-	uint16 y;
+	sint16 x;
+	sint16 y;
 	uint16 cx;
 	uint16 cy;
 	uint16 cb;

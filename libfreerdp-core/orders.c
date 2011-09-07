@@ -1155,6 +1155,7 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 
 		stream_read_uint8(s, cbData);
 		stream_get_mark(s, mark);
+		mark += cbData;
 
 		if ((fast_index->ulCharInc == 0) && !(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
 			delta = True;
@@ -1487,12 +1488,15 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 		stream_read_uint16(s, glyph->cy);
 
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-		glyph->cb += glyph->cb % 4;
+		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
 		glyph->aj = (uint8*) xmalloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
+
+	if (flags & CG_GLYPH_UNICODE_PRESENT)
+		stream_seek(s, cache_glyph_order->cGlyphs * 2);
 }
 
 void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order, uint16 flags)
