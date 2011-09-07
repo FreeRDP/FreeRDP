@@ -129,16 +129,44 @@ void xf_end_paint(rdpUpdate* update)
 
 void xf_desktop_resize(rdpUpdate* update)
 {
+	GDI* gdi;
 	xfInfo* xfi;
+	boolean same;
 	rdpSettings* settings;
 
 	xfi = GET_XFI(update);
+	gdi = GET_GDI(update);
 	settings = xfi->instance->settings;
-	xfi->width = settings->width;
-	xfi->height = settings->height;
 
-	if (xfi->window)
-		xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+	if (!xfi->fullscreen)
+	{
+		xfi->width = settings->width;
+		xfi->height = settings->height;
+
+		if (xfi->window)
+			xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+
+		if (xfi->primary)
+		{
+			same = (xfi->primary == xfi->drawing ? True : False);
+			XFreePixmap(xfi->display, xfi->primary);
+			xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display),
+				xfi->width, xfi->height, xfi->depth);
+			if (same)
+				xfi->drawing = xfi->primary;
+		}
+
+		if (gdi)
+			gdi_resize(gdi, xfi->width, xfi->height);
+
+		if (gdi && xfi->image)
+		{
+			xfi->image->data = NULL;
+			XDestroyImage(xfi->image);
+			xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+		}
+	}
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
