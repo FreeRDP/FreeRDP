@@ -129,16 +129,44 @@ void xf_end_paint(rdpUpdate* update)
 
 void xf_desktop_resize(rdpUpdate* update)
 {
+	GDI* gdi;
 	xfInfo* xfi;
+	boolean same;
 	rdpSettings* settings;
 
 	xfi = GET_XFI(update);
+	gdi = GET_GDI(update);
 	settings = xfi->instance->settings;
-	xfi->width = settings->width;
-	xfi->height = settings->height;
 
-	if (xfi->window)
-		xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+	if (!xfi->fullscreen)
+	{
+		xfi->width = settings->width;
+		xfi->height = settings->height;
+
+		if (xfi->window)
+			xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+
+		if (xfi->primary)
+		{
+			same = (xfi->primary == xfi->drawing ? True : False);
+			XFreePixmap(xfi->display, xfi->primary);
+			xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display),
+				xfi->width, xfi->height, xfi->depth);
+			if (same)
+				xfi->drawing = xfi->primary;
+		}
+
+		if (gdi)
+			gdi_resize(gdi, xfi->width, xfi->height);
+
+		if (gdi && xfi->image)
+		{
+			xfi->image->data = NULL;
+			XDestroyImage(xfi->image);
+			xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+		}
+	}
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -308,7 +336,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xf_kbd_init(xfi);
 
-	xfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	xfi->clrconv = xnew(CLRCONV);
 	xfi->clrconv->palette = NULL;
 	xfi->clrconv->alpha = 1;
 	xfi->clrconv->invert = 0;
@@ -527,6 +555,22 @@ void xf_window_free(xfInfo* xfi)
 		XFreePixmap(xfi->display, xfi->primary);
 		xfi->primary = 0;
 	}
+
+	if (xfi->image)
+	{
+		xfi->image->data = NULL;
+		XDestroyImage(xfi->image);
+		xfi->image = NULL;
+	}
+
+	if (xfi->cache)
+	{
+		cache_free(xfi->cache);
+		xfi->cache = NULL;
+	}
+
+	xfree(xfi->clrconv);
+	rail_free(xfi->rail);
 }
 
 void xf_free(xfInfo* xfi)
@@ -631,6 +675,7 @@ int xfreerdp_run(freerdp* instance)
 	freerdp_chanman_close(chanman, instance);
 	freerdp_chanman_free(chanman);
 	instance->Disconnect(instance);
+	gdi_free(instance);
 	freerdp_free(instance);
 	xf_free(xfi);
 

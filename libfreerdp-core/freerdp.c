@@ -148,5 +148,9 @@ freerdp* freerdp_new()
 
 void freerdp_free(freerdp* freerdp)
 {
-	xfree(freerdp);
+	if (freerdp)
+	{
+		rdp_free(freerdp->rdp);
+		xfree(freerdp);
+	}
 }
