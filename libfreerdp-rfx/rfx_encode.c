@@ -82,6 +82,24 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					*b_buf++ = (sint16) (*src++);
 				}
 				break;
+			case RFX_PIXEL_FORMAT_BGR565_LE:
+				for (x = 0; x < width; x++)
+				{
+					*b_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					*g_buf++ = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					*r_buf++ = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					src += 2;
+				}
+				break;
+			case RFX_PIXEL_FORMAT_RGB565_LE:
+				for (x = 0; x < width; x++)
+				{
+					*r_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					*g_buf++ = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					*b_buf++ = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					src += 2;
+				}
+				break;
 			default:
 				break;
 		}

@@ -151,6 +151,7 @@ void rail_free(rdpRail* rail)
 		icon_cache_free(rail->cache);
 		window_list_free(rail->list);
 		freerdp_uniconv_free(rail->uniconv);
+		xfree(rail->clrconv);
 		xfree(rail);
 	}
 }

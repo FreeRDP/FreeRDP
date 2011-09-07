@@ -182,6 +182,7 @@ int gdi_DeleteDC(HGDI_DC hdc)
 {
 	if (hdc->hwnd)
 	{
+		free(hdc->hwnd->cinvalid);
 		free(hdc->hwnd->invalid);
 		free(hdc->hwnd);
 	}

@@ -189,6 +189,10 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_f
 		case RFX_PIXEL_FORMAT_RGB:
 			context->bytes_per_pixel = 3;
 			break;
+		case RFX_PIXEL_FORMAT_BGR565_LE:
+		case RFX_PIXEL_FORMAT_RGB565_LE:
+			context->bytes_per_pixel = 2;
+			break;
 		default:
 			context->bytes_per_pixel = 0;
 			break;

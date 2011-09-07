@@ -108,6 +108,8 @@ void brush_free(rdpBrush* brush)
 {
 	if (brush != NULL)
 	{
+		xfree(brush->entries);
+		xfree(brush->monoEntries);
 		xfree(brush);
 	}
 }

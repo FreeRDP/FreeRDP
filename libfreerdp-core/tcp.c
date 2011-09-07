@@ -63,7 +63,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
 	tcp->settings->ipv6 = 0;
-	tcp->settings->ip_address = tcp->ip_address;
+	tcp->settings->ip_address = xstrdup(tcp->ip_address);
 }
 
 void tcp_get_mac_address(rdpTcp * tcp)
