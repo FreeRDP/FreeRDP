@@ -29,6 +29,17 @@ uint8 UPDATE_TYPE_STRINGS[][32] =
 	"Synchronize"
 };
 
+void update_free_bitmap(BITMAP_UPDATE* bitmap_update)
+{
+	int i;
+
+	for (i = 0; i < bitmap_update->number; i++)
+	{
+		xfree(bitmap_update->bitmaps[i].data);
+	}
+	xfree(bitmap_update->bitmaps);
+}
+
 void update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	uint16 numberOrders;
@@ -110,6 +121,7 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 {
 	int i;
 
+	update_free_bitmap(bitmap_update);
 	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
 	bitmap_update->bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
@@ -394,6 +406,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 void update_free(rdpUpdate* update)
 {
+	update_free_bitmap(&update->bitmap_update);
+
 	if (update != NULL)
 	{
 		xfree(update);
