@@ -55,13 +55,15 @@ void stream_free(STREAM* stream)
 
 void stream_extend(STREAM* stream, int request_size)
 {
+	int original_size;
 	int increased_size;
 	int pos;
 
 	pos = stream_get_pos(stream);
-	increased_size = (request_size > stream->size ? request_size : stream->size);
+	original_size = stream->size;
+	increased_size = (request_size > original_size ? request_size : original_size);
 	stream->size += increased_size;
 	stream->data = (uint8*)xrealloc(stream->data, stream->size);
+	memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);
-	memset(stream->p, 0, increased_size);
 }
