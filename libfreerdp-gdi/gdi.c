@@ -932,6 +932,40 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->SurfaceBits = gdi_surface_bits;
 }
 
+static void gdi_init_primary(GDI* gdi)
+{
+	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
+	gdi->primary_buffer = gdi->primary->bitmap->data;
+
+	if (gdi->drawing == NULL)
+		gdi->drawing = gdi->primary;
+
+	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+	gdi->primary->hdc->hwnd->invalid->null = 1;
+
+	gdi->primary->hdc->hwnd->count = 32;
+	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
+	gdi->primary->hdc->hwnd->ninvalid = 0;
+}
+
+void gdi_resize(GDI* gdi, int width, int height)
+{
+	if (gdi && gdi->primary)
+	{
+		if (gdi->width != width || gdi->height != height)
+		{
+			if (gdi->drawing == gdi->primary)
+				gdi->drawing = NULL;
+
+			gdi->width = width;
+			gdi->height = height;
+			gdi_bitmap_free(gdi->primary);
+			gdi_init_primary(gdi);
+		}
+	}
+}
+
 /**
  * Initialize GDI
  * @param inst current instance
@@ -993,17 +1027,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->hdc->invert = gdi->clrconv->invert;
 	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
 
-	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
-	gdi->primary_buffer = gdi->primary->bitmap->data;
-	gdi->drawing = gdi->primary;
-
-	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-	gdi->primary->hdc->hwnd->invalid->null = 1;
-
-	gdi->primary->hdc->hwnd->count = 32;
-	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
-	gdi->primary->hdc->hwnd->ninvalid = 0;
+	gdi_init_primary(gdi);
 
 	gdi->tile = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
 	gdi->image = gdi_bitmap_new(gdi, 64, 64, 32, NULL);
