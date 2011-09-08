@@ -37,6 +37,7 @@
 
 rdpUpdate* update_new(rdpRdp* rdp);
 void update_free(rdpUpdate* update);
+void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 void update_reset_state(rdpUpdate* update);
 
 void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update);
