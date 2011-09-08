@@ -727,6 +727,11 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
+	if (strcmp("-", instance->settings->password) == 0)
+	{
+		fgets(instance->settings->password, 512-1, stdin);
+		*(instance->settings->password + strlen(instance->settings->password) - 1) = '\0';
+	}
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
