@@ -113,7 +113,8 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
-boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id)
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
+					uint8 *compressed_type, uint16 *compressed_len)
 {
 	if (stream_get_left(s) < 12)
 		return False;
@@ -124,8 +125,16 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_seek_uint8(s); /* streamId (1 byte) */
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
-	stream_seek_uint8(s); /* compressedType (1 byte) */
-	stream_seek_uint16(s); /* compressedLength (2 bytes) */
+	if (*type & 0x80) 
+	{
+		stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
+		stream_read_uint16(s, *compressed_len); /* compressedLength (2 bytes) */
+	}
+	else
+	{
+		*compressed_type = 0;
+		*compressed_len = 0;
+	}
 
 	return True;
 }
@@ -304,8 +313,10 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	uint8 type;
 	uint16 length;
 	uint32 share_id;
+	uint8 compressed_type;
+	uint16 compressed_len;
 
-	rdp_read_share_data_header(s, &length, &type, &share_id);
+	rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len);
 
 	if (type != DATA_PDU_TYPE_UPDATE)
 		printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
@@ -576,6 +587,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->vchan = vchan_new(instance);
+		rdp->mppc = mppc_new(rdp);
 	}
 
 	return rdp;
@@ -600,6 +612,7 @@ void rdp_free(rdpRdp* rdp)
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		xfree(rdp);
+		mppc_free(rdp);
 	}
 }
 
