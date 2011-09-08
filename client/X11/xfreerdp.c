@@ -737,6 +737,7 @@ int main(int argc, char* argv[])
 
 		printf("Password: ");
 
+		/* Turn off ECHO on stdin, but still echo newlines */
 		if (tcgetattr(fileno(stdin), &orig_flags) != 0)
 		{
 			perror(strerror(errno));
@@ -754,6 +755,7 @@ int main(int argc, char* argv[])
 
 		fgets(password, 512 - 1, stdin);
 
+		/* Reset stdin to how it was */
 		if (tcsetattr(fileno(stdin), TCSADRAIN, &orig_flags) != 0)
 		{
 			tcsetattr(fileno(stdin), TCSANOW, &orig_flags);
