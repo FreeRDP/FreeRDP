@@ -729,6 +729,7 @@ int main(int argc, char* argv[])
 		return 1;
 	if (strcmp("-", instance->settings->password) == 0)
 	{
+		printf("Password: ");
 		fgets(instance->settings->password, 512-1, stdin);
 		*(instance->settings->password + strlen(instance->settings->password) - 1) = '\0';
 	}
