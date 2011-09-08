@@ -731,37 +731,57 @@ int main(int argc, char* argv[])
 	if (strcmp("-", instance->settings->password) == 0)
 	{
 		char* password;
-		struct termios orig_flags, no_echo_flags;
+		const int PASSSIZE = 512;
+		struct termios term_flags;
+		int pipe_ends[2];
 
-		password = xmalloc(512 * sizeof(char));
+		password = xmalloc(PASSSIZE * sizeof(char));
 
 		printf("Password: ");
 
 		/* Turn off ECHO on stdin, but still echo newlines */
-		if (tcgetattr(fileno(stdin), &orig_flags) != 0)
+		if (tcgetattr(fileno(stdin), &term_flags) != 0)
 		{
 			perror(strerror(errno));
-			return(errno);
-		}
-		no_echo_flags = orig_flags;
-		no_echo_flags.c_lflag &= ~ECHO;
-		no_echo_flags.c_lflag |= ECHONL;
-		if (tcsetattr(fileno(stdin), TCSAFLUSH, &no_echo_flags) != 0)
-		{
-			tcsetattr(fileno(stdin), TCSANOW, &orig_flags);
-			perror(strerror(errno));
-			return(errno);
+			exit(errno);
 		}
 
-		fgets(password, 512 - 1, stdin);
-
-		/* Reset stdin to how it was */
-		if (tcsetattr(fileno(stdin), TCSADRAIN, &orig_flags) != 0)
+		if (pipe(pipe_ends) != 0)
 		{
-			tcsetattr(fileno(stdin), TCSANOW, &orig_flags);
 			perror(strerror(errno));
-			return(errno);
+			exit(errno);
 		}
+
+		switch (fork())
+		{
+		case -1:
+			perror(strerror(errno));
+			exit(errno);
+
+		case 0:
+			close(pipe_ends[0]);
+			term_flags.c_lflag &= ~ECHO;
+			term_flags.c_lflag |= ECHONL;
+			tcsetattr(fileno(stdin), TCSAFLUSH, &term_flags);
+			fgets(password, PASSSIZE - 1, stdin);
+			write(pipe_ends[1], password, strlen(password));
+			close(pipe_ends[1]);
+			exit(EXIT_SUCCESS);
+
+		default:
+			wait();
+			if (tcsetattr(fileno(stdin), TCSADRAIN, &term_flags) != 0)
+			{
+				tcsetattr(fileno(stdin), TCSANOW, &term_flags);
+				perror(strerror(errno));
+				exit(errno);
+			}
+			break;
+		}
+
+		close(pipe_ends[1]);
+		read(pipe_ends[0], password, PASSSIZE);
+		close(pipe_ends[0]);
 
 		*(password + strlen(password) - 1) = '\0';
 		xfree(instance->settings->password);
