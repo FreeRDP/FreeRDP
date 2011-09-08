@@ -146,7 +146,7 @@ void df_keyboard_init()
 	keymap[DIKI_SUPER_L - DIKI_UNKNOWN] = VK_APPS;
 }
 
-void df_send_mouse_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
+void df_send_mouse_button_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
 {
 	uint16 flags;
 
@@ -161,6 +161,11 @@ void df_send_mouse_event(rdpInput* input, boolean down, uint32 button, uint16 x,
 
 	if (flags != 0)
 		input->MouseEvent(input, flags, x, y);
+}
+
+void df_send_mouse_motion_event(rdpInput* input, uint16 x, uint16 y)
+{
+	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
 void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode)
@@ -206,14 +211,15 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 				if (pointer_y > (gdi->height - 1))
 					pointer_y = gdi->height - 1;
 
+				df_send_mouse_motion_event(instance->input, pointer_x, pointer_y);
 				break;
 
 			case DIET_BUTTONPRESS:
-				df_send_mouse_event(instance->input, True, input_event->button, pointer_x, pointer_y);
+				df_send_mouse_button_event(instance->input, True, input_event->button, pointer_x, pointer_y);
 				break;
 
 			case DIET_BUTTONRELEASE:
-				df_send_mouse_event(instance->input, False, input_event->button, pointer_x, pointer_y);
+				df_send_mouse_button_event(instance->input, False, input_event->button, pointer_x, pointer_y);
 				break;
 
 			case DIET_KEYPRESS:
