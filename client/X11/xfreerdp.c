@@ -729,9 +729,13 @@ int main(int argc, char* argv[])
 		return 1;
 	if (strcmp("-", instance->settings->password) == 0)
 	{
+		char* password;
+		password = xmalloc(512 * sizeof(char));
 		printf("Password: ");
-		fgets(instance->settings->password, 512-1, stdin);
-		*(instance->settings->password + strlen(instance->settings->password) - 1) = '\0';
+		fgets(password, 512 - 1, stdin);
+		*(password + strlen(password) - 1) = '\0';
+		xfree(instance->settings->password);
+		instance->settings->password = password;
 	}
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
