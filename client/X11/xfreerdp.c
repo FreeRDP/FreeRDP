@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <locale.h>
 #include <sys/select.h>
+#include <termios.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -730,9 +731,36 @@ int main(int argc, char* argv[])
 	if (strcmp("-", instance->settings->password) == 0)
 	{
 		char* password;
+		struct termios orig_flags, no_echo_flags;
+
 		password = xmalloc(512 * sizeof(char));
+
 		printf("Password: ");
+
+		if (tcgetattr(fileno(stdin), &orig_flags) != 0)
+		{
+			perror(strerror(errno));
+			return(errno);
+		}
+		no_echo_flags = orig_flags;
+		no_echo_flags.c_lflag &= ~ECHO;
+		no_echo_flags.c_lflag |= ECHONL;
+		if (tcsetattr(fileno(stdin), TCSAFLUSH, &no_echo_flags) != 0)
+		{
+			tcsetattr(fileno(stdin), TCSANOW, &orig_flags);
+			perror(strerror(errno));
+			return(errno);
+		}
+
 		fgets(password, 512 - 1, stdin);
+
+		if (tcsetattr(fileno(stdin), TCSADRAIN, &orig_flags) != 0)
+		{
+			tcsetattr(fileno(stdin), TCSANOW, &orig_flags);
+			perror(strerror(errno));
+			return(errno);
+		}
+
 		*(password + strlen(password) - 1) = '\0';
 		xfree(instance->settings->password);
 		instance->settings->password = password;
