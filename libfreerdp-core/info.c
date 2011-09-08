@@ -495,7 +495,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->compression)
-		flags |= INFO_COMPRESSION | PACKET_COMPR_TYPE_64K;
+		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_64K;
 
 	domain = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->domain, &length);
 	cbDomain = length;

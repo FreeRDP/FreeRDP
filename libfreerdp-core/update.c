@@ -306,13 +306,15 @@ void update_recv(rdpUpdate* update, STREAM* s)
 		uint16 length;
 		uint16 source;
 		uint32 shareId;
+		uint8 compressed_type;
+		uint16 compressed_len;
 
 		rdp_read_share_control_header(s, &length, &pduType, &source);
 
 		if (pduType != PDU_TYPE_DATA)
 			return;
 
-		rdp_read_share_data_header(s, &length, &type, &shareId);
+		rdp_read_share_data_header(s, &length, &type, &shareId, &compressed_type, &compressed_len);
 
 		if (type == DATA_PDU_TYPE_UPDATE)
 			update_recv(update, s);

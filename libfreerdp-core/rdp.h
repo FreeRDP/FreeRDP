@@ -127,7 +127,7 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;
-    struct rdp_mppc* mppc;
+	struct rdp_mppc* mppc;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
@@ -136,7 +136,9 @@ void rdp_write_security_header(STREAM* s, uint16 flags);
 boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
 
-boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id);
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
+			uint8 *compressed_type, uint16 *compressed_len);
+
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);

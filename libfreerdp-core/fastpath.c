@@ -204,6 +204,12 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	uint8 compression;
 	uint8 compressionFlags;
 	STREAM* update_stream;
+	rdpRdp  *rdp;
+	uint32 roff;
+	uint32 rlen;
+	uint32 i;
+
+	rdp = fastpath->rdp;
 
 	fastpath_read_update_header(s, &updateCode, &fragmentation, &compression);
 
@@ -217,9 +223,21 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	if (compressionFlags != 0)
 	{
-		printf("FastPath compression is not yet implemented!\n");
-		stream_seek(s, size);
-		return;
+		if (decompress_rdp(rdp, s->data, size, 
+		  		   compressionFlags, &roff, &rlen))
+		{
+			/* need more space to insert decompressed data */
+			i = rlen - size;
+			stream_extend(s, i);
+
+			/* copy decompressed data */
+			memcpy(s->p, &rdp->mppc->history_buf[roff], rlen);
+		}
+		else
+		{
+			printf("decompress_rdp() failed\n");
+			stream_seek(s, size);
+		}
 	}
 
 	update_stream = NULL;

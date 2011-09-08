@@ -59,8 +59,11 @@ static boolean peer_recv_data_pdu(rdpPeer* peer, STREAM* s)
 	uint8 type;
 	uint16 length;
 	uint32 share_id;
+	uint8 compressed_type;
+	uint16 compressed_len;
 
-	if (!rdp_read_share_data_header(s, &length, &type, &share_id))
+
+	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return False;
 
 	switch (type)
