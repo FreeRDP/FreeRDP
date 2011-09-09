@@ -132,6 +132,7 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	}
 	else
 	{
+		stream_seek(s, 3);
 		*compressed_type = 0;
 		*compressed_len = 0;
 	}
