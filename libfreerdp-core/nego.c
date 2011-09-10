@@ -364,7 +364,7 @@ void nego_send_negotiation_request(rdpNego* nego)
 		stream_write(s, nego->routing_token->data, nego->routing_token->length);
 		length += nego->routing_token->length;
 	}
-	else
+	else if (nego->cookie != NULL)
 	{
 		int cookie_length = strlen(nego->cookie);
 		stream_write(s, "Cookie: mstshash=", 17);
