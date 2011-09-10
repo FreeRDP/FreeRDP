@@ -642,8 +642,8 @@ void rdp_free(rdpRdp* rdp)
 		mcs_free(rdp->mcs);
 		vchan_free(rdp->vchan);
 		redirection_free(rdp->redirection);
-		xfree(rdp);
 		mppc_free(rdp);
+		xfree(rdp);
 	}
 }
 
