@@ -405,10 +405,10 @@ INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number,
 
 	memset(points, 0, sizeof(DELTA_POINT) * number);
 
-	for (i = 1; i < number + 1; i++)
+	for (i = 0; i < number; i++)
 	{
-		if ((i - 1) % 4 == 0)
-			flags = zeroBits[(i - 1) / 4];
+		if (i % 4 == 0)
+			flags = zeroBits[i / 4];
 
 		if (~flags & 0x80)
 			update_read_delta(s, &points[i].x);
@@ -416,17 +416,11 @@ INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number,
 		if (~flags & 0x40)
 			update_read_delta(s, &points[i].y);
 
-		points[i].x = points[i].x + points[i - 1].x;
-		points[i].y = points[i].y + points[i - 1].y;
-
-		points[i - 1].x += x;
-		points[i - 1].y += y;
+		points[i].x += (i > 0 ? points[i - 1].x : x);
+		points[i].y += (i > 0 ? points[i - 1].y : y);
 
 		flags <<= 2;
 	}
-
-	points[i - 1].x += x;
-	points[i - 1].y += y;
 }
 
 INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments, boolean delta, uint8 size)

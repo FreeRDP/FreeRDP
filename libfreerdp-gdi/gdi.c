@@ -628,11 +628,13 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 
+	gdi_MoveToEx(gdi->drawing->hdc, polyline->xStart, polyline->yStart, NULL);
+
 	points = polyline->points;
 	for (i = 0; i < polyline->numPoints; i++)
 	{
+		gdi_LineTo(gdi->drawing->hdc, points[i].x, points[i].y);
 		gdi_MoveToEx(gdi->drawing->hdc, points[i].x, points[i].y, NULL);
-		gdi_LineTo(gdi->drawing->hdc, points[i + 1].x, points[i + 1].y);
 	}
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
