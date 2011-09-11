@@ -272,6 +272,11 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 			}
 		}
 
+		if (!copy_offset)
+		{
+			continue;
+		}
+
 		/*
 		** compute Length of Match
 		*/
@@ -381,12 +386,31 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
-		while (lom > 0)
+		if (src_ptr >= rdp->mppc->history_buf)
 		{
-			*history_ptr = *src_ptr;
+			/* data does not wrap around */
+			while (lom > 0)
+			{
+				*history_ptr++ = *src_ptr++;
+				lom--;
+			}
+		}
+		else
+		{
+			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
 			src_ptr++;
-			history_ptr++;
-			lom--;
+			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			{
+				*history_ptr++ = *src_ptr++;
+				lom--;
+			}
+
+			src_ptr = rdp->mppc->history_buf;
+			while (lom > 0)
+			{
+				*history_ptr++ = *src_ptr++;
+				lom--;
+			}
 		}
 
 		/*

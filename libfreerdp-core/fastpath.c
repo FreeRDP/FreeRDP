@@ -222,11 +222,10 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	next_pos = stream_get_pos(s) + size;
 	comp_stream = s;
 
-	if (compressionFlags != 0)
+	if (compressionFlags & PACKET_COMPRESSED)
 	{
 		if (decompress_rdp(rdp, s->p, size, compressionFlags, &roff, &rlen))
 		{
-			//printf("roff %d rlen %d\n", roff, rlen);
 			comp_stream = stream_new(0);
 			comp_stream->data = rdp->mppc->history_buf + roff;
 			comp_stream->p = comp_stream->data;
