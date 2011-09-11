@@ -204,10 +204,10 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	uint8 compression;
 	uint8 compressionFlags;
 	STREAM* update_stream;
+	STREAM* comp_stream;
 	rdpRdp  *rdp;
 	uint32 roff;
 	uint32 rlen;
-	uint32 i;
 
 	rdp = fastpath->rdp;
 
@@ -220,18 +220,18 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	stream_read_uint16(s, size);
 	next_pos = stream_get_pos(s) + size;
+	comp_stream = s;
 
 	if (compressionFlags != 0)
 	{
-		if (decompress_rdp(rdp, s->data, size, 
-		  		   compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp, s->p, size, compressionFlags, &roff, &rlen))
 		{
-			/* need more space to insert decompressed data */
-			i = rlen - size;
-			stream_extend(s, i);
-
-			/* copy decompressed data */
-			memcpy(s->p, &rdp->mppc->history_buf[roff], rlen);
+			//printf("roff %d rlen %d\n", roff, rlen);
+			comp_stream = stream_new(0);
+			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->p = comp_stream->data;
+			comp_stream->size = rlen;
+			size = comp_stream->size;
 		}
 		else
 		{
@@ -244,7 +244,7 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
 		totalSize = size;
-		update_stream = s;
+		update_stream = comp_stream;
 	}
 	else
 	{
@@ -252,7 +252,7 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 			stream_set_pos(fastpath->updateData, 0);
 
 		stream_check_size(fastpath->updateData, size);
-		stream_copy(fastpath->updateData, s, size);
+		stream_copy(fastpath->updateData, comp_stream, size);
 
 		if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
@@ -266,6 +266,9 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
 
 	stream_set_pos(s, next_pos);
+
+	if (comp_stream != s)
+		xfree(comp_stream);
 }
 
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)

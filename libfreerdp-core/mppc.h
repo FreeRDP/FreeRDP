@@ -35,6 +35,7 @@
 struct rdp_mppc
 {
 	uint8 *history_buf;
+	uint8 *history_buf_end;
 	uint8 *history_ptr;
 };
 
