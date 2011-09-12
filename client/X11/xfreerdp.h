@@ -57,12 +57,14 @@ struct xf_info
 	int width;
 	int height;
 	int srcBpp;
+	GC gc_mono;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
 	Pixmap drawing;
 	Visual* visual;
 	Display* display;
+	Pixmap bitmap_mono;
 	Colormap colormap;
 	int screen_number;
 	int scanline_pad;

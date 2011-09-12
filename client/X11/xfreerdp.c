@@ -431,6 +431,9 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
 	xfi->drawing = xfi->primary;
 
+	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window->handle, 8, 8, 1);
+	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
+
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
 
