@@ -530,6 +530,7 @@ struct _CACHE_BITMAP_V2_ORDER
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
+	uint8* data;
 };
 typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 

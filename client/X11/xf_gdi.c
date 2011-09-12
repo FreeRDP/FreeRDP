@@ -541,7 +541,7 @@ void xf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitm
 	xfInfo* xfi = GET_XFI(update);
 
 	bitmap_v2_put(xfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
-			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->bitmapDataStream);
+			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->data);
 }
 
 void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)

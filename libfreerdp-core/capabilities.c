@@ -900,7 +900,7 @@ void rdp_write_bitmap_cache_host_support_capability_set(STREAM* s, rdpSettings* 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT);
 }
 
-void rdp_write_bitmap_cache_cell_info(STREAM* s, uint16 numEntries, boolean persistent)
+void rdp_write_bitmap_cache_cell_info(STREAM* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
 {
 	uint32 info;
 
@@ -909,8 +909,7 @@ void rdp_write_bitmap_cache_cell_info(STREAM* s, uint16 numEntries, boolean pers
 	 * is used to indicate a persistent bitmap cache.
 	 */
 
-	info = numEntries & persistent;
-
+	info = cellInfo->numEntries || (cellInfo->persistent << 31);
 	stream_write_uint32(s, info);
 }
 
@@ -955,12 +954,12 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 
 	stream_write_uint16(s, cacheFlags); /* cacheFlags (2 bytes) */
 	stream_write_uint8(s, 0); /* pad2 (1 byte) */
-	stream_write_uint8(s, 5); /* numCellCaches (1 byte) */
-	rdp_write_bitmap_cache_cell_info(s, 600, 0); /* bitmapCache0CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, 600, 0); /* bitmapCache1CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, 2048, 0); /* bitmapCache2CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, 4096, 0); /* bitmapCache3CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(s, 2048, 0); /* bitmapCache4CellInfo (4 bytes) */
+	stream_write_uint8(s, settings->bitmapCacheV2NumCells); /* numCellCaches (1 byte) */
+	rdp_write_bitmap_cache_cell_info(s, &settings->bitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s, &settings->bitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s, &settings->bitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s, &settings->bitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
+	rdp_write_bitmap_cache_cell_info(s, &settings->bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	stream_write_zero(s, 12); /* pad3 (12 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V2);

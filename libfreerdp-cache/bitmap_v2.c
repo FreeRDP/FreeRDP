@@ -79,7 +79,7 @@ rdpBitmapV2* bitmap_v2_new(rdpSettings* settings)
 
 		bitmap_v2->maxCells = 5;
 
-		settings->bitmap_cache = True;
+		settings->bitmap_cache = False;
 		settings->bitmapCacheV2NumCells = 5;
 		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
 		settings->bitmapCacheV2CellInfo[0].persistent = False;

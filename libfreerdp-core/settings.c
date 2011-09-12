@@ -100,7 +100,7 @@ rdpSettings* settings_new()
 		settings->frame_marker = False;
 		settings->bitmap_cache_v3 = False;
 
-		settings->bitmap_cache = True;
+		settings->bitmap_cache = False;
 		settings->persistent_bitmap_cache = False;
 
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
