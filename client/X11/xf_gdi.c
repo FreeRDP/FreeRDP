@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/rfx/rfx.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 
 #include "xf_gdi.h"
@@ -433,7 +435,63 @@ void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
+	STREAM* s;
+	XImage* image;
+	int i, tx, ty;
+	RFX_MESSAGE* message;
+	xfInfo* xfi = GET_XFI(update);
+	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
 
+	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	{
+		s = stream_new(0);
+		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+
+		message = rfx_process_message(context, s);
+
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+
+		XSetClipRectangles(xfi->display, xfi->gc,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				(XRectangle*) message->rects, message->num_rects, YXBanded);
+
+		/* Draw the tiles to primary surface, each is 64x64. */
+		for (i = 0; i < message->num_tiles; i++)
+		{
+			image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
+				(char*) message->tiles[i]->data, 64, 64, 32, 0);
+
+			tx = message->tiles[i]->x + surface_bits_command->destLeft;
+			ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+			XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0, tx, ty, 64, 64);
+			XFree(image);
+		}
+
+		/* Copy the updated region from backstore to the window. */
+		for (i = 0; i < message->num_rects; i++)
+		{
+			tx = message->rects[i].x + surface_bits_command->destLeft;
+			ty = message->rects[i].y + surface_bits_command->destTop;
+
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+				tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+		}
+
+		XSetClipMask(xfi->display, xfi->gc, None);
+		rfx_message_free(context, message);
+		stream_detach(s);
+		stream_free(s);
+	}
+	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	{
+
+	}
+	else
+	{
+		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+	}
 }
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update)

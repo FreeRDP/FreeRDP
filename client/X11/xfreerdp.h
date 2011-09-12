@@ -89,6 +89,7 @@ struct xf_info
 	XSetWindowAttributes attribs;
 	boolean complex_regions;
 	VIRTUAL_SCREEN vscreen;
+	void* rfx_context;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

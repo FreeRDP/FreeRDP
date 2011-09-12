@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <locale.h>
 #include <sys/select.h>
+#include <freerdp/rfx/rfx.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -383,6 +384,9 @@ boolean xf_post_connect(freerdp* instance)
 	{
 		xfi->srcBpp = instance->settings->color_depth;
 		xf_gdi_register_update_callbacks(instance->update);
+
+		if (instance->settings->rfx_codec)
+			xfi->rfx_context = (void*) rfx_context_new();
 	}
 
 	if (xfi->fullscreen)
