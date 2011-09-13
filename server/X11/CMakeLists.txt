@@ -17,11 +17,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_directories(${X11_INCLUDE_DIRS})
+
 add_executable(xfreerdp-server
 	xf_peer.c
 	xf_encode.c
 	xfreerdp.c)
 
+find_suggested_package(Xext)
+if(XEXT_FOUND)
+	add_definitions(-DWITH_XEXT)
+	include_directories(${XEXT_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp-server ${XEXT_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp-server freerdp-core)
+target_link_libraries(xfreerdp-server freerdp-common)
 target_link_libraries(xfreerdp-server freerdp-utils)
 target_link_libraries(xfreerdp-server freerdp-rfx)
+target_link_libraries(xfreerdp-server ${X11_LIBRARIES})

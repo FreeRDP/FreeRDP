@@ -238,7 +238,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	info->icon_y = y;
 }
 
-void xf_peer_dump_rfx(freerdp_peer* client)
+void tf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
 	uint32 seconds;
@@ -278,7 +278,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
-boolean xf_peer_post_connect(freerdp_peer* client)
+boolean tf_peer_post_connect(freerdp_peer* client)
 {
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
@@ -308,7 +308,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 	return True;
 }
 
-boolean xf_peer_activate(freerdp_peer* client)
+boolean tf_peer_activate(freerdp_peer* client)
 {
 	testPeerInfo* info = (testPeerInfo*)client->param1;
 
@@ -318,7 +318,7 @@ boolean xf_peer_activate(freerdp_peer* client)
 	if (test_pcap_file != NULL)
 	{
 		client->update->dump_rfx = True;
-		xf_peer_dump_rfx(client);
+		tf_peer_dump_rfx(client);
 	}
 	else
 	{
@@ -328,12 +328,12 @@ boolean xf_peer_activate(freerdp_peer* client)
 	return True;
 }
 
-void xf_peer_synchronize_event(rdpInput* input, uint32 flags)
+void tf_peer_synchronize_event(rdpInput* input, uint32 flags)
 {
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
-void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	freerdp_peer* client = (freerdp_peer*) input->param1;
 	rdpUpdate* update = client->update;
@@ -358,19 +358,19 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	}
 }
 
-void xf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
+void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
 {
 	printf("Client sent a unicode keyboard event (code:0x%X)\n", code);
 }
 
-void xf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void tf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 
 	test_peer_draw_icon(input->param1, x + 10, y);
 }
 
-void xf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void tf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
@@ -395,15 +395,15 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->nla_security = False;
 	client->settings->rfx_codec = True;
 
-	client->PostConnect = xf_peer_post_connect;
-	client->Activate = xf_peer_activate;
+	client->PostConnect = tf_peer_post_connect;
+	client->Activate = tf_peer_activate;
 
 	client->input->param1 = client;
-	client->input->SynchronizeEvent = xf_peer_synchronize_event;
-	client->input->KeyboardEvent = xf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = xf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = xf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = xf_peer_extended_mouse_event;
+	client->input->SynchronizeEvent = tf_peer_synchronize_event;
+	client->input->KeyboardEvent = tf_peer_keyboard_event;
+	client->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
+	client->input->MouseEvent = tf_peer_mouse_event;
+	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 
 	client->Initialize(client);
 

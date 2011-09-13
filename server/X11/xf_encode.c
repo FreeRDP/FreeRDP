@@ -18,3 +18,10 @@
  */
 
 #include "xf_encode.h"
+
+XImage* xf_snapshot(xfInfo* xfi, int x, int y, int width, int height)
+{
+	XImage* image;
+	image = XGetImage(xfi->display, RootWindow(xfi->display, xfi->number), x, y, width, height, AllPlanes, ZPixmap);
+	return image;
+}

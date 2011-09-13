@@ -20,6 +20,8 @@
 #ifndef __XF_ENCODE_H
 #define __XF_ENCODE_H
 
+#include "xfreerdp.h"
 
+XImage* xf_snapshot(xfInfo* xfi, int x, int y, int width, int height);
 
 #endif /* __XF_ENCODE_H */

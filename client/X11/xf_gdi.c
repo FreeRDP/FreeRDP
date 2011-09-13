@@ -199,7 +199,7 @@ Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 
 	bitmap = XCreatePixmap(xfi->display, xfi->window->handle, width, height, xfi->bpp);
 
-	cdata = gdi_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
+	cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
 
 	image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 			ZPixmap, 0, (char *) cdata, width, height, xfi->scanline_pad, 0);
@@ -246,7 +246,7 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	{
 		bmp = &bitmap->bitmaps[i];
 
-		data = gdi_image_convert(bmp->data, NULL, bmp->width, bmp->height, bmp->bpp, xfi->bpp, xfi->clrconv);
+		data = freerdp_image_convert(bmp->data, NULL, bmp->width, bmp->height, bmp->bpp, xfi->bpp, xfi->clrconv);
 
 		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 				ZPixmap, 0, (char*) data, bmp->width, bmp->height, xfi->scanline_pad, 0);
@@ -314,8 +314,8 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
 
-	foreColor = gdi_color_convert(patblt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
-	backColor = gdi_color_convert(patblt->backColor, xfi->srcBpp, 32, xfi->clrconv);
+	foreColor = freerdp_color_convert(patblt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
+	backColor = freerdp_color_convert(patblt->backColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -408,7 +408,7 @@ void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 color;
 	xfInfo* xfi = GET_XFI(update);
 
-	color = gdi_color_convert(opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert(opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -431,7 +431,7 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 	DELTA_RECT* rectangle;
 	xfInfo* xfi = GET_XFI(update);
 
-	color = gdi_color_convert(multi_opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert(multi_opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -459,7 +459,7 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop2(xfi, line_to->bRop2);
-	color = gdi_color_convert(line_to->penColor, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert(line_to->penColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);
@@ -482,7 +482,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop2(xfi, polyline->bRop2);
-	color = gdi_color_convert(polyline->penColor, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert(polyline->penColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);

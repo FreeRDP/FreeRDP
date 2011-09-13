@@ -20,11 +20,88 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <freerdp/utils/memory.h>
 
 #include "xf_peer.h"
 #include "xfreerdp.h"
 
 char* xf_pcap_file = NULL;
+
+xfInfo* xf_info_init()
+{
+	int i;
+	xfInfo* xfi;
+	int pf_count;
+	int vi_count;
+	XVisualInfo* vi;
+	XVisualInfo* vis;
+	XVisualInfo template;
+	XPixmapFormatValues* pf;
+	XPixmapFormatValues* pfs;
+
+	xfi = xnew(xfInfo);
+
+	xfi->display = XOpenDisplay(NULL);
+
+	if (xfi->display == NULL)
+		printf("failed to open display: %s\n", XDisplayName(NULL));
+
+	xfi->number = DefaultScreen(xfi->display);
+	xfi->screen = ScreenOfDisplay(xfi->display, xfi->number);
+	xfi->depth = DefaultDepthOfScreen(xfi->screen);
+	xfi->width = WidthOfScreen(xfi->screen);
+	xfi->height = HeightOfScreen(xfi->screen);
+
+	pfs = XListPixmapFormats(xfi->display, &pf_count);
+
+	if (pfs == NULL)
+	{
+		printf("XListPixmapFormats failed\n");
+		exit(1);
+	}
+
+	for (i = 0; i < pf_count; i++)
+	{
+		pf = pfs + i;
+
+		if (pf->depth == xfi->depth)
+		{
+			xfi->bpp = pf->bits_per_pixel;
+			xfi->scanline_pad = pf->scanline_pad;
+			break;
+		}
+	}
+	XFree(pfs);
+
+	memset(&template, 0, sizeof(template));
+	template.class = TrueColor;
+	template.screen = xfi->number;
+
+	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
+
+	if (vis == NULL)
+	{
+		printf("XGetVisualInfo failed\n");
+		exit(1);
+	}
+
+	for (i = 0; i < vi_count; i++)
+	{
+		vi = vis + i;
+
+		if (vi->depth == xfi->depth)
+		{
+			xfi->visual = vi->visual;
+			break;
+		}
+	}
+	XFree(vis);
+
+	xfi->clrconv = xnew(HCLRCONV);
+	xfi->clrconv->alpha = 1;
+
+	return xfi;
+}
 
 void xf_server_main_loop(freerdp_listener* instance)
 {
@@ -90,11 +167,11 @@ int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
 
-	/* Ignore SIGPIPE, otherwise an SSL_write failure could crash your server */
+	/* ignore SIGPIPE, otherwise an SSL_write failure could crash the server */
 	signal(SIGPIPE, SIG_IGN);
 
 	instance = freerdp_listener_new();
-
+	instance->info = (void*) xf_info_init();
 	instance->PeerAccepted = xf_peer_accepted;
 
 	if (argc > 1)

@@ -20,6 +20,14 @@
 # Servers
 
 if(NOT WIN32)
-	add_subdirectory(X11)
+
+	# Build Test Server
 	add_subdirectory(test)
+
+	# Build X11 Server
+	find_suggested_package(X11)
+	if(X11_FOUND)
+		add_subdirectory(X11)
+	endif()
+	
 endif()

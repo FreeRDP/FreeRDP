@@ -20,6 +20,27 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <freerdp/common/color.h>
 
+struct xf_info
+{
+	int bpp;
+	int depth;
+	int width;
+	int height;
+	int number;
+	XImage* image;
+	Screen* screen;
+	Visual* visual;
+	Display* display;
+	int scanline_pad;
+	HCLRCONV clrconv;
+};
+typedef struct xf_info xfInfo;
 
 #endif /* __XFREERDP_H */

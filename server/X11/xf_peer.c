@@ -24,16 +24,19 @@
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
+#include <freerdp/common/color.h>
 
 extern char* xf_pcap_file;
+
+#include "xf_encode.h"
 
 #include "xf_peer.h"
 
 void xf_peer_init(freerdp_peer* client)
 {
-	xfPeerInfo* info;
+	xfPeer* info;
 
-	info = xnew(xfPeerInfo);
+	info = xnew(xfPeer);
 
 	info->context = rfx_context_new();
 	info->context->mode = RLGR3;
@@ -48,7 +51,7 @@ void xf_peer_init(freerdp_peer* client)
 
 void xf_peer_uninit(freerdp_peer* client)
 {
-	xfPeerInfo* info = (xfPeerInfo*) client->param1;
+	xfPeer* info = (xfPeer*) client->param1;
 
 	if (info)
 	{
@@ -58,11 +61,71 @@ void xf_peer_uninit(freerdp_peer* client)
 	}
 }
 
-STREAM* xf_peer_stream_init(xfPeerInfo* info)
+STREAM* xf_peer_stream_init(xfPeer* info)
 {
 	stream_clear(info->s);
 	stream_set_pos(info->s, 0);
 	return info->s;
+}
+
+void xf_peer_live_rfx(freerdp_peer* client)
+{
+	STREAM* s;
+	uint8* data;
+	xfInfo* xfi;
+	xfPeer* xfp;
+	XImage* image;
+	RFX_RECT rect;
+	uint32 seconds;
+	uint32 useconds;
+	rdpUpdate* update;
+	uint8* background;
+	SURFACE_BITS_COMMAND* cmd;
+
+	seconds = 1;
+	useconds = 0;
+	update = client->update;
+	xfi = (xfInfo*) client->info;
+	xfp = (xfPeer*) client->param1;
+	cmd = &update->surface_bits_command;
+
+	rect.x = 0;
+	rect.y = 0;
+	rect.width = 64;
+	rect.height = 64;
+
+	data = (uint8*) xmalloc(64 * 64 * 3);
+	background = (uint8*) xmalloc(64 * 64 * 3);
+	memset(background, 0xA0, 64 * 64 * 3);
+
+	while (1)
+	{
+		if (seconds > 0)
+			freerdp_sleep(seconds);
+
+		if (useconds > 0)
+			freerdp_usleep(useconds);
+
+		s = xf_peer_stream_init(xfp);
+		image = xf_snapshot(xfi, 0, 0, 64, 64);
+
+		freerdp_image_convert((uint8*) image->data, data, 64, 64, 32, 24, xfi->clrconv);
+
+		rfx_compose_message(xfp->context, s,
+			&rect, 1, data, rect.width, rect.height, 64 * 3);
+
+		cmd->destLeft = 0;
+		cmd->destTop = 0;
+		cmd->destRight = 64;
+		cmd->destBottom = 64;
+		cmd->bpp = 32;
+		cmd->codecID = client->settings->rfx_codec_id;
+		cmd->width = 64;
+		cmd->height = 64;
+		cmd->bitmapDataLength = stream_get_length(s);
+		cmd->bitmapData = stream_get_head(s);
+		update->SurfaceBits(update, cmd);
+	}
 }
 
 void xf_peer_dump_rfx(freerdp_peer* client)
@@ -136,15 +199,19 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 
 boolean xf_peer_activate(freerdp_peer* client)
 {
-	xfPeerInfo* info = (xfPeerInfo*) client->param1;
+	xfPeer* xfp = (xfPeer*) client->param1;
 
-	rfx_context_reset(info->context);
-	info->activated = True;
+	rfx_context_reset(xfp->context);
+	xfp->activated = True;
 
 	if (xf_pcap_file != NULL)
 	{
 		client->update->dump_rfx = True;
 		xf_peer_dump_rfx(client);
+	}
+	else
+	{
+		xf_peer_live_rfx(client);
 	}
 
 	return True;
@@ -159,7 +226,7 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	freerdp_peer* client = (freerdp_peer*) input->param1;
 	rdpUpdate* update = client->update;
-	xfPeerInfo* info = (xfPeerInfo*)client->param1;
+	xfPeer* xfp = (xfPeer*) client->param1;
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
@@ -176,7 +243,7 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->height = 480;
 		}
 		update->DesktopResize(update);
-		info->activated = False;
+		xfp->activated = False;
 	}
 }
 
@@ -282,6 +349,8 @@ void* xf_peer_main_loop(void* arg)
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	pthread_t th;
+
+	client->info = instance->info;
 	pthread_create(&th, 0, xf_peer_main_loop, client);
 	pthread_detach(th);
 }

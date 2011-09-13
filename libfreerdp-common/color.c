@@ -23,7 +23,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/common/color.h>
 
-uint32 gdi_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	uint8 red = 0;
 	uint8 green = 0;
@@ -107,7 +107,7 @@ uint32 gdi_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV c
 	return dstColor;
 }
 
-uint32 gdi_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	uint8 red = 0;
 	uint8 green = 0;
@@ -191,15 +191,15 @@ uint32 gdi_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV c
 	return dstColor;
 }
 
-uint32 gdi_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint32 freerdp_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (clrconv->invert)
-		return gdi_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
+		return freerdp_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
 	else
-		return gdi_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
+		return freerdp_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
 }
 
-uint8* gdi_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
 	uint8 red;
@@ -280,7 +280,7 @@ uint8* gdi_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int hei
 	return srcData;
 }
 
-uint8* gdi_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
 	uint8 red;
@@ -341,10 +341,10 @@ uint8* gdi_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, int he
 	return srcData;
 }
 
-uint8* gdi_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (srcBpp == 15)
-		return gdi_image_convert_15bpp(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
+		return freerdp_image_convert_15bpp(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
 
 	if (dstBpp == 16)
 	{
@@ -434,29 +434,21 @@ uint8* gdi_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, int he
 	return srcData;
 }
 
-uint8* gdi_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
-	uint8 red;
-	uint8 green;
-	uint8 blue;
-	uint32 pixel;
-	uint32 *dst32;
 
 	if (dstBpp == 32)
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
 		
-		dst32 = (uint32 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
-			red = *(srcData++);
-			green = *(srcData++);
-			blue = *(srcData++);
-			pixel = BGR24(red, green, blue);
-			*dst32 = pixel;
-			dst32++;
+			*(dstData++) = *(srcData++);
+			*(dstData++) = *(srcData++);
+			*(dstData++) = *(srcData++);
+			*(dstData++) = 0xFF;
 		}
 		return dstData;
 	}
@@ -464,7 +456,7 @@ uint8* gdi_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, int he
 	return srcData;
 }
 
-uint8* gdi_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (dstBpp == 16)
 	{
@@ -556,26 +548,26 @@ uint8* gdi_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, int he
 	return srcData;
 }
 
-p_gdi_image_convert gdi_image_convert_[5] =
+p_freerdp_image_convert freerdp_image_convert_[5] =
 {
 	NULL,
-	gdi_image_convert_8bpp,
-	gdi_image_convert_16bpp,
-	gdi_image_convert_24bpp,
-	gdi_image_convert_32bpp
+	freerdp_image_convert_8bpp,
+	freerdp_image_convert_16bpp,
+	freerdp_image_convert_24bpp,
+	freerdp_image_convert_32bpp
 };
 
-uint8* gdi_image_convert(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint8* freerdp_image_convert(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	p_gdi_image_convert _p_gdi_image_convert = gdi_image_convert_[IBPP(srcBpp)];
+	p_freerdp_image_convert _p_freerdp_image_convert = freerdp_image_convert_[IBPP(srcBpp)];
 
-	if (_p_gdi_image_convert != NULL)
-		return _p_gdi_image_convert(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
+	if (_p_freerdp_image_convert != NULL)
+		return _p_freerdp_image_convert(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
 	else
 		return 0;
 }
 
-uint8* gdi_image_invert(uint8* srcData, uint8* dstData, int width, int height, int bpp)
+uint8* freerdp_image_invert(uint8* srcData, uint8* dstData, int width, int height, int bpp)
 {
 	int y;
 	uint8* srcp;
@@ -600,7 +592,7 @@ uint8* gdi_image_invert(uint8* srcData, uint8* dstData, int width, int height, i
 	return dstData;
 }
 
-uint8* gdi_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
+uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
 {
 	int x, y;
 	int pixel;
@@ -610,8 +602,8 @@ uint8* gdi_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, 
 	uint32* icon;
 
 	pixel = 0;
-	data = gdi_image_invert(srcData, dstData, width, height, bpp);
-	dstData = gdi_image_convert(data, NULL, width, height, bpp, 32, clrconv);
+	data = freerdp_image_invert(srcData, dstData, width, height, bpp);
+	dstData = freerdp_image_convert(data, NULL, width, height, bpp, 32, clrconv);
 
 	free(data);
 	bmask = mask[pixel];
@@ -642,7 +634,7 @@ uint8* gdi_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, 
 	return dstData;
 }
 
-uint8* gdi_glyph_convert(int width, int height, uint8* data)
+uint8* freerdp_glyph_convert(int width, int height, uint8* data)
 {
 	int x, y;
 	uint8 *srcp;
@@ -679,7 +671,7 @@ uint8* gdi_glyph_convert(int width, int height, uint8* data)
 	return dstData;
 }
 
-uint8* gdi_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv)
+uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv)
 {
 	int index;
 	uint16* dst16;

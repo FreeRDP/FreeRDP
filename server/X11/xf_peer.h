@@ -30,7 +30,7 @@ struct xf_peer_info
 	boolean activated;
 	RFX_CONTEXT* context;
 };
-typedef struct xf_peer_info xfPeerInfo;
+typedef struct xf_peer_info xfPeer;
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 

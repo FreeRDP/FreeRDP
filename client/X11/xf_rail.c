@@ -146,7 +146,7 @@ void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	icon->extra = gdi_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
+	icon->extra = freerdp_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
 			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
 
 	xf_SetWindowIcon(xfi, xfw, icon);

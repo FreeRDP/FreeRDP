@@ -396,7 +396,7 @@ HGDI_BITMAP gdi_create_bitmap(GDI* gdi, int width, int height, int bpp, uint8* d
 	uint8* bmpData;
 	HGDI_BITMAP bitmap;
 	
-	bmpData = gdi_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
+	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
 	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
 	
 	return bitmap;
@@ -506,7 +506,7 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		uint32 color;
 		originalBrush = gdi->drawing->hdc->brush;
 
-		color = gdi_color_convert(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+		color = freerdp_color_convert(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
 		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(color);
 
 		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
@@ -521,11 +521,11 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 		if (brush->bpp > 1)
 		{
-			data = gdi_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
 		}
 		else
 		{
-			data = gdi_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
+			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
 				patblt->backColor, patblt->foreColor, gdi->clrconv);
 		}
 
@@ -565,7 +565,7 @@ void gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	brush_color = gdi_color_convert(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+	brush_color = freerdp_color_convert(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
 	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -589,7 +589,7 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				rectangle->width, rectangle->height, &rect);
 
-		brush_color = gdi_color_convert(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+		brush_color = freerdp_color_convert(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -604,7 +604,7 @@ void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	HGDI_PEN hPen;
 	GDI *gdi = GET_GDI(update);
 
-	color = gdi_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, line_to->bRop2);
@@ -623,7 +623,7 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	DELTA_POINT* points;
 	GDI *gdi = GET_GDI(update);
 
-	color = gdi_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(0, 1, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
@@ -645,7 +645,7 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	uint32 color;
 	GDI* gdi = GET_GDI(update);
 
-	color = gdi_color_convert(fast_index->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert(fast_index->foreColor, gdi->srcBpp, 32, gdi->clrconv);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, color);
 
 
@@ -710,7 +710,7 @@ void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 		gdi_bmp->hdc->bytesPerPixel = 1;
 		gdi_bmp->hdc->bitsPerPixel = 1;
 
-		extra = gdi_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
+		extra = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
 		gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
 		gdi_bmp->bitmap->bytesPerPixel = 1;
 		gdi_bmp->bitmap->bitsPerPixel = 1;
@@ -739,7 +739,7 @@ void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 		gdi_bmp->hdc->bytesPerPixel = 1;
 		gdi_bmp->hdc->bitsPerPixel = 1;
 
-		extra = gdi_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
+		extra = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
 		gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
 		gdi_bmp->bitmap->bytesPerPixel = 1;
 		gdi_bmp->bitmap->bitsPerPixel = 1;
@@ -796,7 +796,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 				tx = message->tiles[i]->x + surface_bits_command->destLeft;
 				ty = message->tiles[i]->y + surface_bits_command->destTop;
 
-				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+				freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
 
 #ifdef DUMP_REMOTEFX_TILES
 				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
@@ -835,7 +835,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 				tx = message->tiles[i]->x + surface_bits_command->destLeft;
 				ty = message->tiles[i]->y + surface_bits_command->destTop;
 
-				gdi_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+				freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
 
 #ifdef DUMP_REMOTEFX_TILES
 				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
@@ -869,7 +869,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 		if (surface_bits_command->bpp != 32)
 		{
-			gdi_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
 				gdi->image->bitmap->bitsPerPixel, 32, gdi->clrconv);
 
@@ -877,7 +877,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
 		}
 
-		gdi_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+		freerdp_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
