@@ -57,6 +57,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	if (fastpath != NULL)
 	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
+		printf("fastpath_read_header: fastpath->encryptionFlags %d\n", fastpath->encryptionFlags);
 		fastpath->numberEvents = (header & 0x3C) >> 2;
 	}
 

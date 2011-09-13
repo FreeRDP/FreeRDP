@@ -226,6 +226,8 @@ int transport_write(rdpTransport* transport, STREAM* s)
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
+	printf("transport_write:\n");
+
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{

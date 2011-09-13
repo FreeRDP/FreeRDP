@@ -123,6 +123,12 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;
+	struct crypto_rc4_struct* rc4_decrypt_key;
+	int decrypt_use_count;
+	struct crypto_rc4_struct* rc4_encrypt_key;
+	int encrypt_use_count;
+	uint32 sec_flags;
+	boolean do_crypt;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);

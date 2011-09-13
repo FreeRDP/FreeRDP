@@ -584,11 +584,10 @@ boolean rdp_send_client_info(rdpRdp* rdp)
 {
 	STREAM* s;
 
+	//rdp->settings->crypt_flags |= SEC_INFO_PKT;
+	rdp->sec_flags |= SEC_INFO_PKT;
 	s = rdp_send_stream_init(rdp);
-
-	rdp_write_security_header(s, SEC_INFO_PKT);
 	rdp_write_info_packet(s, rdp->settings);
-
 	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 

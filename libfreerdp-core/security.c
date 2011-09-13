@@ -85,10 +85,10 @@ static void security_master_hash(char* input, int length, uint8* master_secret, 
 
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
-	/* MasterHash = MasterHash('A') + MasterHash('BB') + MasterHash('CCC') */
-	security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]);
-	security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
-	security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+	/* MasterHash = MasterHash('X') + MasterHash('YY') + MasterHash('ZZZ') */
+	security_master_hash("X", 1, master_secret, client_random, server_random, &output[0]);
+	security_master_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
+	security_master_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
 }
 
 void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
@@ -97,17 +97,21 @@ void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8*
 	memcpy(output, session_key_blob, 16);
 }
 
-void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
+void security_md5_16_32_32(uint8* in0, uint8* in1, uint8* in2, uint8* output)
 {
 	CryptoMd5 md5;
 
-	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
-
 	md5 = crypto_md5_init();
-	crypto_md5_update(md5, &session_key_blob[16], 16); /* Second128Bits(SessionKeyBlob) */
-	crypto_md5_update(md5, client_random, 32); /* ClientRandom */
-	crypto_md5_update(md5, server_random, 32); /* ServerRandom */
+	crypto_md5_update(md5, in0, 16);
+	crypto_md5_update(md5, in1, 32);
+	crypto_md5_update(md5, in2, 32);
 	crypto_md5_final(md5, output);
+}
+
+void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
+{
+	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
+	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
 }
 
 void security_uint32_le(uint8* output, uint32 value)
@@ -171,4 +175,103 @@ void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uin
 	crypto_md5_final(md5, md5_digest);
 
 	memcpy(output, md5_digest, 8);
+}
+
+boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
+{
+	uint8 pre_master_secret[48];
+	uint8 master_secret[48];
+	uint8 session_key_blob[48];
+	uint8* server_random;
+	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
+
+	printf("security_establish_keys:\n");
+
+	server_random = settings->server_random.data;
+
+	memcpy(pre_master_secret, client_random, 24);
+	memcpy(pre_master_secret + 24, server_random, 24);
+
+	security_master_secret(pre_master_secret, client_random, server_random, master_secret);
+	security_session_key_blob(master_secret, client_random, server_random, session_key_blob);
+
+	memcpy(settings->sign_key, session_key_blob, 16);
+
+	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, settings->decrypt_key);
+	security_md5_16_32_32(&session_key_blob[32], client_random, server_random, settings->encrypt_key);
+
+	if (settings->encryption_method == 1) /* 40 and 56 bit */
+	{
+		memcpy(settings->sign_key, salt40, 3); /* TODO 56 bit */
+		memcpy(settings->decrypt_key, salt40, 3); /* TODO 56 bit */
+		memcpy(settings->encrypt_key, salt40, 3); /* TODO 56 bit */
+		settings->rc4_key_len = 8;
+	}
+	else /* 128 bit */
+	{
+		settings->rc4_key_len = 16;
+	}
+
+	memcpy(settings->decrypt_update_key, settings->decrypt_key, 16);
+	memcpy(settings->encrypt_update_key, settings->encrypt_key, 16);
+
+	return True;
+}
+
+boolean security_key_update(uint8* key, uint8* update_key, int key_len)
+{
+	uint8 sha1h[20];
+	CryptoMd5 md5;
+	CryptoSha1 sha1;
+	CryptoRc4 rc4;
+	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
+
+	sha1 = crypto_sha1_init();
+	crypto_sha1_update(sha1, update_key, key_len);
+	crypto_sha1_update(sha1, pad1, sizeof(pad1));
+	crypto_sha1_update(sha1, key, key_len);
+	crypto_sha1_final(sha1, sha1h);
+
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, update_key, key_len);
+	crypto_md5_update(md5, pad2, sizeof(pad2));
+	crypto_md5_update(md5, sha1h, 20);
+	crypto_md5_final(md5, key);
+
+	rc4 = crypto_rc4_init(key, key_len);
+	crypto_rc4(rc4, key_len, key, key);
+	crypto_rc4_free(rc4);
+
+	if (key_len == 8)
+		memcpy(key, salt40, 3); /* TODO 56 bit */
+
+	return True;
+}
+
+boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	if (rdp->encrypt_use_count >= 4096)
+	{
+		security_key_update(rdp->settings->encrypt_key, rdp->settings->encrypt_update_key, rdp->settings->rc4_key_len);
+		crypto_rc4_free(rdp->rc4_encrypt_key);
+		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+		rdp->encrypt_use_count = 0;
+	}
+	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
+	rdp->encrypt_use_count += 1;
+	return True;
+}
+
+boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	if (rdp->decrypt_use_count >= 4096)
+	{
+		security_key_update(rdp->settings->decrypt_key, rdp->settings->decrypt_update_key, rdp->settings->rc4_key_len);
+		crypto_rc4_free(rdp->rc4_decrypt_key);
+		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+		rdp->decrypt_use_count = 0;
+	}
+	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);
+	rdp->decrypt_use_count += 1;
+	return True;
 }

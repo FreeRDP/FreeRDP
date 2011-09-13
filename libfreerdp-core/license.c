@@ -179,7 +179,7 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 	rdp_read_security_header(s, &sec_flags);
 	if (!(sec_flags & SEC_LICENSE_PKT))
 	{
-		printf("Unexpected license packet.\n");
+		printf("Unexpected license packet.  got 0x%4.4x need bit 0x%4.4x set\n", sec_flags, SEC_LICENSE_PKT);
 		return False;
 	}
 

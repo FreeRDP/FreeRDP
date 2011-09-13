@@ -146,6 +146,21 @@ void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 sh
 	stream_write_uint16(s, 0); /* compressedLength (2 bytes) */
 }
 
+static int rdp_security_stream_init(rdpRdp* rdp, STREAM* s)
+{
+	printf("rdp_security_stream_init:\n");
+	if (rdp->do_crypt)
+	{
+		stream_seek(s, 12);
+		rdp->sec_flags |= SEC_ENCRYPT;
+	}
+	else if (rdp->sec_flags != 0)
+	{
+		stream_seek(s, 4);
+	}
+	return 0;
+}
+
 /**
  * Initialize an RDP packet stream.\n
  * @param rdp rdp module
@@ -155,8 +170,10 @@ void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 sh
 STREAM* rdp_send_stream_init(rdpRdp* rdp)
 {
 	STREAM* s;
+
 	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	rdp_security_stream_init(rdp, s);
 	return s;
 }
 
@@ -165,6 +182,7 @@ STREAM* rdp_pdu_init(rdpRdp* rdp)
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	rdp_security_stream_init(rdp, s);
 	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	return s;
 }
@@ -174,6 +192,7 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
 	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	rdp_security_stream_init(rdp, s);
 	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	stream_seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
 	return s;
@@ -229,6 +248,46 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 	stream_write_uint16_be(s, length); /* userData (OCTET_STRING) */
 }
 
+static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
+{
+	uint32 sec_flags;
+	uint32 ml;
+	uint8* mk;
+	uint8* data;
+
+	printf("rdp_security_stream_out:\n");
+	sec_flags = rdp->sec_flags;
+	if (sec_flags != 0)
+	{
+		rdp_write_security_header(s, sec_flags);
+		if (sec_flags & SEC_ENCRYPT)
+		{
+			data = s->p + 8;
+			length = length - (data - s->data);
+			mk = rdp->settings->sign_key;
+			ml = rdp->settings->rc4_key_len;
+			security_mac_signature(mk, ml, data, length, s->p);
+			stream_seek(s, 8);
+			security_encrypt(s->p, length, rdp);
+		}
+		rdp->sec_flags = 0;
+	}
+	return 0;
+}
+
+static uint32 rdp_get_sec_bytes(uint32 sec_flags)
+{
+	uint32 sec_bytes;
+
+	if (sec_flags & SEC_ENCRYPT)
+		sec_bytes = 12;
+	else if (sec_flags != 0)
+		sec_bytes = 4;
+	else
+		sec_bytes = 0;
+	return sec_bytes;
+}
+
 /**
  * Send an RDP packet.\n
  * @param rdp RDP module
@@ -239,12 +298,22 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 {
 	uint16 length;
+	uint32 sec_bytes;
+	uint8* sec_hold;
 
+	printf("rdp_send:\n");
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length, channel_id);
 
+	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_hold = s->p;
+	stream_seek(s, sec_bytes);
+
+	s->p = sec_hold;
+	rdp_security_stream_out(rdp, s, length);
+	
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
 		return False;
@@ -255,12 +324,23 @@ boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 {
 	uint16 length;
+	uint32 sec_bytes;
+	uint8* sec_hold;
 
+	printf("rdp_send_pdu:\n");
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
+
+	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_hold = s->p;
+	stream_seek(s, sec_bytes);
+
 	rdp_write_share_control_header(s, length, type, channel_id);
+
+	s->p = sec_hold;
+	rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
@@ -272,15 +352,26 @@ boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 {
 	uint16 length;
+	uint32 sec_bytes;
+	uint8* sec_hold;
 
+	printf("rdp_send_data_pdu:\n");
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
+
+	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_hold = s->p;
+	stream_seek(s, sec_bytes);
+
 	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
 
 	//printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+
+	s->p = sec_hold;
+	rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
