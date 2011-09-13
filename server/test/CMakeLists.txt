@@ -17,9 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(freerdp-server-test
-	freerdp_server.c)
+add_executable(tfreerdp-server
+	tfreerdp.c)
 
-target_link_libraries(freerdp-server-test freerdp-core)
-target_link_libraries(freerdp-server-test freerdp-utils)
-target_link_libraries(freerdp-server-test freerdp-rfx)
+target_link_libraries(tfreerdp-server freerdp-core)
+target_link_libraries(tfreerdp-server freerdp-utils)
+target_link_libraries(tfreerdp-server freerdp-rfx)
