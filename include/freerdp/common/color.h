@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * GDI Color Conversion Routines
+ * Color Conversion Routines
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
