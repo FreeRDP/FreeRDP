@@ -41,4 +41,4 @@ client/X11/xfreerdp
 client/test/freerdp-test
 client/DirectFB/dfreerdp
 server/test/tfreerdp-server
-server/test/xfreerdp-server
+server/X11/xfreerdp-server
