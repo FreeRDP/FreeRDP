@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-gdi cmake build script
+# libfreerdp-common cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,28 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_GDI_SRCS
-	8bpp.c
-	16bpp.c
-	32bpp.c
+set(FREERDP_COMMON_SRCS
 	bitmap.c
-	brush.c
-	clipping.c
-	dc.c
-	drawing.c
-	line.c
-	palette.c
-	pen.c
-	region.c
-	shape.c
-	gdi.c)
+	color.c)
 
-add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
+add_library(freerdp-common ${FREERDP_COMMON_SRCS})
 
-target_link_libraries(freerdp-gdi freerdp-cache)
-target_link_libraries(freerdp-gdi freerdp-common)
-target_link_libraries(freerdp-gdi freerdp-rfx)
+set_target_properties(freerdp-common PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+target_link_libraries(freerdp-common freerdp-utils)
 
-set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+install(TARGETS freerdp-common DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(TARGETS freerdp-gdi DESTINATION ${CMAKE_INSTALL_LIBDIR})

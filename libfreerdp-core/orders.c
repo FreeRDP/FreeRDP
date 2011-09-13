@@ -18,8 +18,8 @@
  */
 
 #include "window.h"
-#include "bitmap.h"
 #include <freerdp/api.h>
+#include <freerdp/common/bitmap.h>
 
 #include "orders.h"
 

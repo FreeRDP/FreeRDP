@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/gdi/color.h>
+#include <freerdp/common/color.h>
 
 uint32 gdi_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {

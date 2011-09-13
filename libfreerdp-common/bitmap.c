@@ -17,7 +17,10 @@
  * limitations under the License.
  */
 
-#include "bitmap.h"
+#include <freerdp/utils/stream.h>
+#include <freerdp/utils/memory.h>
+
+#include <freerdp/common/bitmap.h>
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
