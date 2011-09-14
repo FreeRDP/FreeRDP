@@ -112,6 +112,7 @@ struct xf_info
 };
 
 void xf_toggle_fullscreen(xfInfo* xfi);
+boolean xf_post_connect(freerdp* instance);
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)

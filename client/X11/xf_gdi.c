@@ -334,8 +334,6 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	}
 	else if (brush->style == GDI_BS_PATTERN)
 	{
-		printf("pattern bpp:%d\n", brush->bpp);
-
 		if (brush->bpp > 1)
 		{
 			pattern = xf_bitmap_new(xfi, 8, 8, brush->bpp, brush->data);

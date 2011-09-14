@@ -204,7 +204,9 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	contents = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
+	XDestroyWindow(xfi->display, xfi->window->handle);
 	xfi->fullscreen = (xfi->fullscreen) ? False : True;
+	xf_post_connect(xfi->instance);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
@@ -358,6 +360,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
+	xfi->fullscreen_toggle = xfi->fullscreen;
 
 	xf_detect_monitors(xfi, settings);
 
@@ -405,7 +408,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	if (xfi->remote_app != True)
 	{
-		xfi->window = xf_CreateDesktopWindow(xfi, "xfreerdp", xfi->width, xfi->height);
+		xfi->window = xf_CreateDesktopWindow(xfi, "FreeRDP", xfi->width, xfi->height);
 
 		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
 
