@@ -70,16 +70,21 @@ STREAM* xf_peer_stream_init(xfPeer* info)
 
 void xf_peer_live_rfx(freerdp_peer* client)
 {
+	int x, y;
 	STREAM* s;
+	int width;
+	int height;
+	int wrects;
+	int hrects;
+	int nrects;
 	uint8* data;
 	xfInfo* xfi;
 	xfPeer* xfp;
 	XImage* image;
-	RFX_RECT rect;
+	RFX_RECT* rects;
 	uint32 seconds;
 	uint32 useconds;
 	rdpUpdate* update;
-	uint8* background;
 	SURFACE_BITS_COMMAND* cmd;
 
 	seconds = 1;
@@ -89,14 +94,27 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	xfp = (xfPeer*) client->param1;
 	cmd = &update->surface_bits_command;
 
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = 64;
-	rect.height = 64;
+	wrects = 16;
+	hrects = 12;
 
-	data = (uint8*) xmalloc(64 * 64 * 3);
-	background = (uint8*) xmalloc(64 * 64 * 3);
-	memset(background, 0xA0, 64 * 64 * 3);
+	nrects = wrects * hrects;
+	rects = xmalloc(sizeof(RFX_RECT) * nrects);
+
+	for (y = 0; y < hrects; y++)
+	{
+		for (x = 0; x < wrects; x++)
+		{
+			rects[(y * wrects) + x].x = x * 64;
+			rects[(y * wrects) + x].y = y * 64;
+			rects[(y * wrects) + x].width = 64;
+			rects[(y * wrects) + x].height = 64;
+		}
+	}
+
+	width = wrects * 64;
+	height = hrects * 64;
+
+	data = (uint8*) xmalloc(width * height * 3);
 
 	while (1)
 	{
@@ -107,21 +125,19 @@ void xf_peer_live_rfx(freerdp_peer* client)
 			freerdp_usleep(useconds);
 
 		s = xf_peer_stream_init(xfp);
-		image = xf_snapshot(xfi, 0, 0, 64, 64);
 
-		freerdp_image_convert((uint8*) image->data, data, 64, 64, 32, 24, xfi->clrconv);
-
-		rfx_compose_message(xfp->context, s,
-			&rect, 1, data, rect.width, rect.height, 64 * 3);
+		image = xf_snapshot(xfi, 0, 0, width, height);
+		freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
+		rfx_compose_message(xfp->context, s, rects, nrects, data, width, height, 64 * wrects * 3);
 
 		cmd->destLeft = 0;
 		cmd->destTop = 0;
-		cmd->destRight = 64;
-		cmd->destBottom = 64;
+		cmd->destRight = width;
+		cmd->destBottom = height;
 		cmd->bpp = 32;
 		cmd->codecID = client->settings->rfx_codec_id;
-		cmd->width = 64;
-		cmd->height = 64;
+		cmd->width = width;
+		cmd->height = height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
 		update->SurfaceBits(update, cmd);

@@ -97,7 +97,8 @@ xfInfo* xf_info_init()
 	}
 	XFree(vis);
 
-	xfi->clrconv = xnew(HCLRCONV);
+	xfi->clrconv = (HCLRCONV) xnew(HCLRCONV);
+	xfi->clrconv->invert = 1;
 	xfi->clrconv->alpha = 1;
 
 	return xfi;
