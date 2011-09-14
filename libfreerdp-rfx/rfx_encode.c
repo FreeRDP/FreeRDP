@@ -31,7 +31,7 @@
 #define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
 static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, int rowstride,
-	RFX_PIXEL_FORMAT pixel_format, sint16* r_buf, sint16* g_buf, sint16* b_buf)
+	RFX_PIXEL_FORMAT pixel_format, const uint8* palette, sint16* r_buf, sint16* g_buf, sint16* b_buf)
 {
 	int x, y;
 	int x_exceed;
@@ -98,6 +98,40 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					*g_buf++ = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
 					*b_buf++ = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					src += 2;
+				}
+				break;
+			case RFX_PIXEL_FORMAT_PALETTE4_PLANER:
+				if (!palette)
+					break;
+				for (x = 0; x < width; x++)
+				{
+					int shift;
+					uint8 idx;
+
+					shift = (7 - (x % 8));
+					idx = ((*src) >> shift) & 1;
+					idx |= (((*(src + 1)) >> shift) & 1) << 1;
+					idx |= (((*(src + 2)) >> shift) & 1) << 2;
+					idx |= (((*(src + 3)) >> shift) & 1) << 3;
+					idx *= 3;
+					*r_buf++ = (sint16) palette[idx];
+					*g_buf++ = (sint16) palette[idx + 1];
+					*b_buf++ = (sint16) palette[idx + 2];
+					if (shift == 0)
+						src += 4;
+				}
+				break;
+			case RFX_PIXEL_FORMAT_PALETTE8:
+				if (!palette)
+					break;
+				for (x = 0; x < width; x++)
+				{
+					int idx = (*src) * 3;
+
+					*r_buf++ = (sint16) palette[idx];
+					*g_buf++ = (sint16) palette[idx + 1];
+					*b_buf++ = (sint16) palette[idx + 2];
+					src++;
 				}
 				break;
 			default:
@@ -211,7 +245,7 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const uint8* rgb_data, int width, int 
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb);
 		rfx_encode_format_rgb(rgb_data, width, height, rowstride,
-			context->pixel_format, y_r_buffer, cb_g_buffer, cr_b_buffer);
+			context->pixel_format, context->palette, y_r_buffer, cb_g_buffer, cr_b_buffer);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb_to_ycbcr);

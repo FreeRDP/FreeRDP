@@ -183,18 +183,24 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_f
 	{
 		case RFX_PIXEL_FORMAT_BGRA:
 		case RFX_PIXEL_FORMAT_RGBA:
-			context->bytes_per_pixel = 4;
+			context->bits_per_pixel = 32;
 			break;
 		case RFX_PIXEL_FORMAT_BGR:
 		case RFX_PIXEL_FORMAT_RGB:
-			context->bytes_per_pixel = 3;
+			context->bits_per_pixel = 24;
 			break;
 		case RFX_PIXEL_FORMAT_BGR565_LE:
 		case RFX_PIXEL_FORMAT_RGB565_LE:
-			context->bytes_per_pixel = 2;
+			context->bits_per_pixel = 16;
+			break;
+		case RFX_PIXEL_FORMAT_PALETTE4_PLANER:
+			context->bits_per_pixel = 4;
+			break;
+		case RFX_PIXEL_FORMAT_PALETTE8:
+			context->bits_per_pixel = 8;
 			break;
 		default:
-			context->bytes_per_pixel = 0;
+			context->bits_per_pixel = 0;
 			break;
 	}
 }
@@ -802,7 +808,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, STREAM* data_out,
 		for (xIdx = 0; xIdx < numTilesX; xIdx++)
 		{
 			rfx_compose_message_tile(context, data_out,
-				image_data + yIdx * 64 * rowstride + xIdx * 64 * context->bytes_per_pixel,
+				image_data + yIdx * 64 * rowstride + xIdx * 8 * context->bits_per_pixel,
 				xIdx < numTilesX - 1 ? 64 : width - xIdx * 64,
 				yIdx < numTilesY - 1 ? 64 : height - yIdx * 64,
 				rowstride, quantVals, quantIdxY, quantIdxCb, quantIdxCr, xIdx, yIdx);
