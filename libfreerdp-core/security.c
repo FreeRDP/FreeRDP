@@ -85,10 +85,10 @@ static void security_master_hash(char* input, int length, uint8* master_secret, 
 
 void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
 {
-	/* MasterHash = MasterHash('X') + MasterHash('YY') + MasterHash('ZZZ') */
-	security_master_hash("X", 1, master_secret, client_random, server_random, &output[0]);
-	security_master_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
-	security_master_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
+	/* MasterHash = MasterHash('A') + MasterHash('BB') + MasterHash('CCC') */
+	security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]);
+	security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
+	security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
 }
 
 void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
@@ -177,6 +177,20 @@ void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uin
 	memcpy(output, md5_digest, 8);
 }
 
+static void security_A(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
+{
+	security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]);
+	security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
+	security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+}
+
+static void security_X(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
+{
+	security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]);
+	security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
+	security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
+}
+
 boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 {
 	uint8 pre_master_secret[48];
@@ -189,11 +203,14 @@ boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 
 	server_random = settings->server_random.data;
 
+	freerdp_hexdump(client_random, 32);
+	freerdp_hexdump(server_random, 32);
+
 	memcpy(pre_master_secret, client_random, 24);
 	memcpy(pre_master_secret + 24, server_random, 24);
 
-	security_master_secret(pre_master_secret, client_random, server_random, master_secret);
-	security_session_key_blob(master_secret, client_random, server_random, session_key_blob);
+	security_A(pre_master_secret, client_random, server_random, master_secret);
+	security_X(master_secret, client_random, server_random, session_key_blob);
 
 	memcpy(settings->sign_key, session_key_blob, 16);
 

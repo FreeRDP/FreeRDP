@@ -125,7 +125,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	memset(client_random, 0x5e, 32);
-	//crypto_nonce(client_random, 32);
+	crypto_nonce(client_random, 32);
 	printf("client random\n");
 	freerdp_hexdump(client_random, 32);
 	key_len = rdp->settings->server_cert->cert_info.modulus.length;
@@ -165,6 +165,12 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+
+	printf("key_len %d\n", rdp->settings->rc4_key_len);
+	printf("decrypt_key\n");
+	freerdp_hexdump(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+	printf("encrypt_key\n");
+	freerdp_hexdump(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
 
 	rdp->do_crypt = True;
 

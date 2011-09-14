@@ -798,6 +798,7 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 		freerdp_blob_alloc(&settings->server_random, serverRandomLen);
 		memcpy(settings->server_random.data, s->p, serverRandomLen);
 		stream_seek(s, serverRandomLen);
+		freerdp_hexdump(settings->server_random.data, settings->server_random.length);
 	}
 	else
 	{
