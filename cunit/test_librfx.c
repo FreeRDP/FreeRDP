@@ -195,7 +195,8 @@ void test_bitstream(void)
 	rfx_bitstream_attach(bs, (uint8*) y_data, sizeof(y_data));
 	while (!rfx_bitstream_eos(bs))
 	{
-		b = rfx_bitstream_get_bits(bs, 3);
+		rfx_bitstream_get_bits(bs, 3, b);
+		(void) b;
 		//printf("%u ", b);
 	}
 	xfree(bs);

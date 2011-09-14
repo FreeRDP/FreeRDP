@@ -18,7 +18,6 @@
 # limitations under the License.
 
 set(LIBFREERDP_RFX_SRCS
-	rfx_bitstream.c
 	rfx_bitstream.h
 	rfx_constants.h
 	rfx_decode.c

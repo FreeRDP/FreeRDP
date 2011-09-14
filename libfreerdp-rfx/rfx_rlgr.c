@@ -39,7 +39,7 @@
 #define DQ_GR	(3)   /* decrease in kp after zero symbol in GR mode */
 
 /* Gets (returns) the next nBits from the bitstream */
-#define GetBits(nBits) rfx_bitstream_get_bits(bs, nBits)
+#define GetBits(nBits, r) rfx_bitstream_get_bits(bs, nBits, r)
 
 /* From current output pointer, write "value", check and update buffer_size */
 #define WriteValue(value) \
@@ -99,13 +99,22 @@ static uint16 rfx_rlgr_get_gr_code(RFX_BITSTREAM* bs, int* krp, int* kr)
 {
 	int vk;
 	uint16 mag;
+	uint16 r;
 
 	/* chew up/count leading 1s and escape 0 */
-	for (vk = 0; GetBits(1) == 1;)
-		vk++;
+	vk = 0;
+	do
+	{
+		GetBits(1, r);
+		if (r == 1)
+			vk++;
+		else
+			break;
+	} while (1);
 
 	/* get next *kr bits, and combine with leading 1s */
-	mag = (vk << *kr) | GetBits(*kr);
+	GetBits(*kr, mag);
+	mag |= (vk << *kr);
 
 	/* adjust krp and kr based on vk */
 	if (!vk)
@@ -127,11 +136,12 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 	int kp;
 	int kr;
 	int krp;
+	uint16 r;
 	sint16* dst;
 	RFX_BITSTREAM* bs;
 
 	bs = xnew(RFX_BITSTREAM);
-	rfx_bitstream_attach(bs, (uint8*) data, data_size);
+	rfx_bitstream_attach(bs, data, data_size);
 	dst = buffer;
 
 	/* initialize the parameters */
@@ -149,19 +159,22 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 			uint32 sign;
 
 			/* RL MODE */
-			while (!rfx_bitstream_eos(bs) && GetBits(1) == 0)
+			while (!rfx_bitstream_eos(bs))
 			{
+				GetBits(1, r);
+				if (r)
+					break;
 				/* we have an RL escape "0", which translates to a run (1<<k) of zeros */
 				WriteZeroes(1 << k);
 				UpdateParam(kp, UP_GR, k); /* raise k and kp up because of zero run */
 			}
 
 			/* next k bits will contain remaining run or zeros */
-			run = GetBits(k);
+			GetBits(k, run);
 			WriteZeroes(run);
 
 			/* get nonzero value, starting with sign bit and then GRCode for magnitude -1 */
-			sign = GetBits(1);
+			GetBits(1, sign);
 
 			/* magnitude - 1 was coded (because it was nonzero) */
 			mag = (int) GetGRCode(&krp, &kr) + 1;
@@ -203,7 +216,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 				GetMinBits(mag, nIdx);
 
 				/* decode val1 is first term's (2 * mag - sign) value */
-				val1 = GetBits(nIdx);
+				GetBits(nIdx, val1);
 
 				/* val2 is second term's (2 * mag - sign) value */
 				val2 = mag - val1;
@@ -245,7 +258,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 }
 
 /* Emit bitPattern to the output bitstream */
-#define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits);
+#define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
 #define OutputBit(count, bit) \
