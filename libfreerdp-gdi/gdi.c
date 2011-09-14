@@ -788,70 +788,31 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 		DEBUG_GDI("num_rects %d num_tiles %d", message->num_rects, message->num_tiles);
 
-		if (message->num_rects > 1) /* RDVH */
+		/* blit each tile */
+		for (i = 0; i < message->num_tiles; i++)
 		{
-			/* blit each tile */
-			for (i = 0; i < message->num_tiles; i++)
-			{
-				tx = message->tiles[i]->x + surface_bits_command->destLeft;
-				ty = message->tiles[i]->y + surface_bits_command->destTop;
+			tx = message->tiles[i]->x + surface_bits_command->destLeft;
+			ty = message->tiles[i]->y + surface_bits_command->destTop;
 
-				freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+			freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
 
 #ifdef DUMP_REMOTEFX_TILES
-				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-				freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
+			freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
 #endif
 
-				for (j = 0; j < message->num_rects; j++)
-				{
-					gdi_SetClipRgn(gdi->primary->hdc,
-						surface_bits_command->destLeft + message->rects[j].x,
-						surface_bits_command->destTop + message->rects[j].y,
-						message->rects[j].width, message->rects[j].height);
-
-					gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
-				}
-			}
-
-			for (i = 0; i < message->num_rects; i++)
+			for (j = 0; j < message->num_rects; j++)
 			{
-				gdi_InvalidateRegion(gdi->primary->hdc,
-					surface_bits_command->destLeft + message->rects[i].x,
-					surface_bits_command->destTop + message->rects[i].y,
-					message->rects[i].width, message->rects[i].height);
-			}
-		}
-		else if (message->num_rects == 1) /* RDSH */
-		{
-			gdi_SetClipRgn(gdi->primary->hdc,
-				surface_bits_command->destLeft + message->rects[0].x,
-				surface_bits_command->destTop + message->rects[0].y,
-				message->rects[0].width, message->rects[0].height);
-
-			/* blit each tile */
-			for (i = 0; i < message->num_tiles; i++)
-			{
-				tx = message->tiles[i]->x + surface_bits_command->destLeft;
-				ty = message->tiles[i]->y + surface_bits_command->destTop;
-
-				freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
-
-#ifdef DUMP_REMOTEFX_TILES
-				sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-				freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
-#endif
+				gdi_SetClipRgn(gdi->primary->hdc,
+					surface_bits_command->destLeft + message->rects[j].x,
+					surface_bits_command->destTop + message->rects[j].y,
+					message->rects[j].width, message->rects[j].height);
 
 				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
-
 			}
-
-			gdi_InvalidateRegion(gdi->primary->hdc,
-				surface_bits_command->destLeft + message->rects[0].x,
-				surface_bits_command->destTop + message->rects[0].y,
-				message->rects[0].width, message->rects[0].height);
 		}
 
+		gdi_SetNullClipRgn(gdi->primary->hdc);
 		rfx_message_free(context, message);
 
 		stream_detach(s);
