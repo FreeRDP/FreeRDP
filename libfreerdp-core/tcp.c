@@ -167,8 +167,8 @@ int tcp_read(rdpTcp* tcp, uint8* data, int length)
 	}
 	else
 	{
-		printf("tcp_read: length %d\n", status);
-		freerdp_hexdump(data, status);
+		//printf("tcp_read: length %d\n", status);
+		//freerdp_hexdump(data, status);
 	}
 
 	return status;
@@ -180,8 +180,8 @@ int tcp_write(rdpTcp* tcp, uint8* data, int length)
 
 	status = send(tcp->sockfd, data, length, MSG_NOSIGNAL);
 
-	printf("tcp_write: length %d\n", status);
-	freerdp_hexdump(data, status);
+	//printf("tcp_write: length %d\n", status);
+	//freerdp_hexdump(data, status);
 
 	if (status < 0)
 	{

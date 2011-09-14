@@ -22,4 +22,4 @@ add_executable(freerdp-server-test
 
 target_link_libraries(freerdp-server-test freerdp-core)
 target_link_libraries(freerdp-server-test freerdp-utils)
-target_link_libraries(freerdp-server-test freerdp-rfx)
+target_link_libraries(freerdp-server-test freerdp-rfx dl)

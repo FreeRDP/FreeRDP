@@ -60,6 +60,6 @@ target_link_libraries(xfreerdp freerdp-kbd)
 target_link_libraries(xfreerdp freerdp-rail)
 target_link_libraries(xfreerdp freerdp-chanman)
 target_link_libraries(xfreerdp freerdp-utils)
-target_link_libraries(xfreerdp ${X11_LIBRARIES})
+target_link_libraries(xfreerdp ${X11_LIBRARIES} dl)
 
 install(TARGETS xfreerdp DESTINATION bin)

@@ -162,4 +162,6 @@ int rdp_check_fds(rdpRdp* rdp);
 rdpRdp* rdp_new(freerdp* instance);
 void rdp_free(rdpRdp* rdp);
 
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length);
+
 #endif /* __RDP_H */

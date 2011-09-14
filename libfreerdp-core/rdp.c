@@ -495,10 +495,16 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
  * @param length int
  */
 
-static boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 {
-	printf("rdp_decrypt:\n");
+	int cryptlen;
+
+	//printf("rdp_decrypt:\n");
 	stream_seek(s, 8); /* signature */
+	cryptlen = length - 8;
+	//printf("length %d cryptlen %d\n", length, cryptlen);
+	security_decrypt(s->p, cryptlen, rdp);
+	//freerdp_hexdump(s->p, cryptlen);
 	return True;
 }
 
@@ -532,7 +538,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		}
 		if (securityHeader & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length))
+			if (!rdp_decrypt(rdp, s, length - 4))
 			{
 				printf("rdp_decrypt failed\n");
 				return False;
@@ -576,15 +582,23 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 
-	length = fastpath_read_header(rdp->fastpath, s);
-	if (length == 0 || length > stream_get_size(s))
+	length = fastpath_read_header_rdp(rdp->fastpath, s);
+	
+	if (length == 0 || length > stream_get_left(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
 		return False;
 	}
 
-	if (!fastpath_read_security_header(rdp->fastpath, s))
-		return False;
+	printf("rdp_recv_fastpath_pdu:  length %d stream size %d\n", length, stream_get_size(s));
+
+	if (rdp->fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
+	{
+		rdp_decrypt(rdp, s, length);
+	}
+
+	//if (!fastpath_read_security_header(rdp->fastpath, s))
+	//	return False;
 
 	return fastpath_recv_updates(rdp->fastpath, s);
 }
@@ -641,7 +655,10 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_client_connect_demand_active(rdp, s))
+			{
+				printf("rdp_client_connect_demand_active failed\n");
 				return -1;
+			}
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
