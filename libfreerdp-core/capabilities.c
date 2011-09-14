@@ -50,7 +50,8 @@ uint8 CAPSET_TYPE_STRINGS[][32] =
 		"Multifragment Update",
 		"Large Pointer",
 		"Surface Commands",
-		"Bitmap Codecs"
+		"Bitmap Codecs",
+		"Frame Acknowledge"
 };
 
 /* CODEC_GUID_REMOTEFX 0x76772F12BD724463AFB3B73C9C6F7886 */
@@ -974,9 +975,10 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 
 void rdp_read_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 {
+	uint32 flags;
 	uint32 VCChunkSize;
 
-	stream_seek_uint32(s); /* flags (4 bytes) */
+	stream_read_uint32(s, flags); /* flags (4 bytes) */
 	stream_read_uint32(s, VCChunkSize); /* VCChunkSize (4 bytes) */
 
 	if (!settings->server_mode)
@@ -1648,7 +1650,7 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 		}
 
 		if (s->p != em)
-			printf("incorrect offset, type:%d actual:%d expected:%d\n",
+			printf("incorrect offset, type:0x%02X actual:%d expected:%d\n",
 				type, (int) (s->p - bm), (int) (em - bm));
 
 		stream_set_mark(s, em);

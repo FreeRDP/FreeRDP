@@ -445,6 +445,8 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
 
+	xfi->bmp_codec_none = (uint8*) xmalloc(64 * 64 * 4);
+
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;
 	instance->update->DesktopResize = xf_desktop_resize;

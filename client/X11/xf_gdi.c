@@ -616,7 +616,28 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
+		xfi->bmp_codec_none = (uint8*) xrealloc(xfi->bmp_codec_none,
+				surface_bits_command->width * surface_bits_command->height * 4);
+
+		freerdp_image_invert(surface_bits_command->bitmapData, xfi->bmp_codec_none,
+				surface_bits_command->width, surface_bits_command->height, 32);
+
+		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
+			(char*) xfi->bmp_codec_none, surface_bits_command->width, surface_bits_command->height, 32, 0);
+
+		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height);
+
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height,
+				surface_bits_command->destLeft, surface_bits_command->destTop);
+
+		XSetClipMask(xfi->display, xfi->gc, None);
 	}
 	else
 	{
