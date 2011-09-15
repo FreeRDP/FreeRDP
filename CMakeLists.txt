@@ -58,7 +58,8 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-but-set-variable")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-but-set-variable")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -lncurses")
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	endif()

@@ -157,15 +157,20 @@ static boolean peer_recv_fastpath_pdu(rdpPeer* peer, STREAM* s)
 {
 	uint16 length;
 
-	length = fastpath_read_header(peer->rdp->fastpath, s);
-	if (length == 0 || length > stream_get_size(s))
+	length = fastpath_read_header_rdp(peer->rdp->fastpath, s);
+	if (length == 0 || length > stream_get_left(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
 		return False;
 	}
 
-	if (!fastpath_read_security_header(peer->rdp->fastpath, s))
-		return False;
+	if (peer->rdp->fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
+	{
+		rdp_decrypt(peer->rdp, s, length);
+	}
+
+	//if (!fastpath_read_security_header(peer->rdp->fastpath, s))
+	//	return False;
 
 	return fastpath_recv_inputs(peer->rdp->fastpath, s);
 }

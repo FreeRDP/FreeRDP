@@ -19,6 +19,7 @@
 
 #include "connection.h"
 #include "info.h"
+#include "per.h"
 
 /**
  *                                      Connection Sequence
@@ -80,7 +81,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		ret = transport_connect_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
 		ret = transport_connect_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
 		ret = transport_connect_rdp(rdp->transport);
 
 	if (!ret)
@@ -145,11 +146,85 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	return rdp_client_connect(rdp);
 }
 
+static boolean rdp_establish_keys(rdpRdp* rdp)
+{
+	uint8 client_random[32];
+	uint8 crypt_client_random[256 + 8];
+	uint32 key_len;
+	uint8* mod;
+	uint8* exp;
+	uint32 length;
+	STREAM* s;
+
+	printf("rdp_establish_keys:\n");
+	if (rdp->settings->encryption == False)
+	{
+		/* no RDP encryption */
+		return True;
+	}
+
+	/* encrypt client random */
+	memset(crypt_client_random, 0, sizeof(crypt_client_random));
+	memset(client_random, 0x5e, 32);
+	crypto_nonce(client_random, 32);
+	printf("client random\n");
+	freerdp_hexdump(client_random, 32);
+	key_len = rdp->settings->server_cert->cert_info.modulus.length;
+	printf("key_len %d %d %d\n", key_len, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID);
+	mod = rdp->settings->server_cert->cert_info.modulus.data;
+	exp = rdp->settings->server_cert->cert_info.exponent;
+	crypto_rsa_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+	printf("client crypt random\n");
+	freerdp_hexdump(crypt_client_random, key_len);
+
+	/* send crypt client random to server */
+	length = 7 + 8 + 4 + 4 + key_len + 8;
+	s = transport_send_stream_init(rdp->mcs->transport, length);
+	tpkt_write_header(s, length);
+	tpdu_write_header(s, 2, 0xf0);
+	per_write_choice(s, DomainMCSPDU_SendDataRequest << 2);
+	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID);
+	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0);
+	stream_write_uint8(s, 0x70);
+	length = (4 + 4 + key_len + 8) | 0x8000;
+	stream_write_uint16_be(s, length);
+	stream_write_uint32(s, 1); /* SEC_CLIENT_RANDOM */
+	length = key_len + 8;
+	stream_write_uint32(s, length);
+	memcpy(s->p, crypt_client_random, length);
+	stream_seek(s, length);
+	if (transport_write(rdp->mcs->transport, s) < 0)
+	{
+		return False;
+	}
+
+	/* now calculate encrypt / decrypt and upate keys */
+	if (!security_establish_keys(client_random, rdp->settings))
+	{
+		return False;
+	}
+
+	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+
+	printf("key_len %d\n", rdp->settings->rc4_key_len);
+	printf("decrypt_key\n");
+	freerdp_hexdump(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+	printf("encrypt_key\n");
+	freerdp_hexdump(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+
+	rdp->do_crypt = True;
+
+	return True;
+}
+
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
+	{
+		printf("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
 		return False;
-
+	}
 	if (!mcs_send_erect_domain_request(rdp->mcs))
 		return False;
 	if (!mcs_send_attach_user_request(rdp->mcs))
@@ -229,6 +304,8 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
 	{
+		if (!rdp_establish_keys(rdp))
+			return False;
 		if (!rdp_send_client_info(rdp))
 			return False;
 		rdp->state = CONNECTION_STATE_LICENSE;

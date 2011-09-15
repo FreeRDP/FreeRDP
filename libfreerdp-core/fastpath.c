@@ -55,6 +55,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	uint8 t;
 
 	stream_read_uint8(s, header);
+
 	if (fastpath != NULL)
 	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
@@ -92,6 +93,36 @@ INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 frag
 	updateHeader |= (fragmentation & 0x03) << 4;
 	updateHeader |= (compression & 0x03) << 6;
 	stream_write_uint8(s, updateHeader);
+}
+
+uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
+{
+	uint8 header;
+	uint16 length;
+	uint8 t;
+	uint16 hs;
+
+	hs = 2;
+	stream_read_uint8(s, header);
+
+	if (fastpath != NULL)
+	{
+		fastpath->encryptionFlags = (header & 0xC0) >> 6;
+		fastpath->numberEvents = (header & 0x3C) >> 2;
+	}
+
+	stream_read_uint8(s, length); /* length1 */
+	/* If most significant bit is not set, length2 is not presented. */
+	if ((length & 0x80))
+	{
+		hs++;
+		length &= 0x7F;
+		length <<= 8;
+		stream_read_uint8(s, t);
+		length += t;
+	}
+
+	return length - hs;
 }
 
 boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s)

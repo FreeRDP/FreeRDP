@@ -128,6 +128,12 @@ struct rdp_rdp
 	struct rdp_transport* transport;
 	struct rdp_vchan* vchan;
 	struct rdp_mppc* mppc;
+	struct crypto_rc4_struct* rc4_decrypt_key;
+	int decrypt_use_count;
+	struct crypto_rc4_struct* rc4_encrypt_key;
+	int encrypt_use_count;
+	uint32 sec_flags;
+	boolean do_crypt;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
@@ -170,5 +176,7 @@ void rdp_free(rdpRdp* rdp);
 #else
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
+
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length);
 
 #endif /* __RDP_H */

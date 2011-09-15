@@ -1522,13 +1522,17 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 	{
 		stream_get_mark(s, bm);
 
+		freerdp_hexdump(s->p, 4);
 		rdp_read_capability_set_header(s, &length, &type);
 		//printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
 		settings->received_caps[type] = True;
 		em = bm + length;
 
 		if (stream_get_left(s) < length - 4)
+		{
+			printf("stream problem\n");
 			return False;
+		}
 
 		switch (type)
 		{
@@ -1669,18 +1673,46 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	uint16 numberCapabilities;
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
+	uint32 securityHeader;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return False;
 
+	if (rdp->settings->encryption)
+	{
+		stream_read_uint32(s, securityHeader);
+		if (securityHeader & SEC_SECURE_CHECKSUM)
+		{
+			printf("Error: TODO\n");
+			return False;
+		}
+		if (securityHeader & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length - 4))
+			{
+				printf("rdp_decrypt failed\n");
+				return False;
+			}
+		}
+	}
+
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	{
+		printf("channelId bad\n");
 		return False;
+	}
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+	{
+		printf("rdp_read_share_control_header failed\n");
 		return False;
+	}
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
+	{
+		printf("pduType bad\n");
 		return False;
+	}
 
 	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
@@ -1691,7 +1723,10 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
+	{
+		printf("rdp_read_capability_sets failes\n");
 		return False;
+	}
 
 	rdp->update->glyph_v2 = (rdp->settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? True : False;
 
