@@ -199,12 +199,7 @@ boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 	uint8* server_random;
 	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
 
-	printf("security_establish_keys:\n");
-
 	server_random = settings->server_random.data;
-
-	freerdp_hexdump(client_random, 32);
-	freerdp_hexdump(server_random, 32);
 
 	memcpy(pre_master_secret, client_random, 24);
 	memcpy(pre_master_secret + 24, server_random, 24);

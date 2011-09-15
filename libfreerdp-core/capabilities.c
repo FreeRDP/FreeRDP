@@ -1522,7 +1522,6 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 	{
 		stream_get_mark(s, bm);
 
-		freerdp_hexdump(s->p, 4);
 		rdp_read_capability_set_header(s, &length, &type);
 		//printf("%s Capability Set (0x%02X), length:%d\n", CAPSET_TYPE_STRINGS[type], type, length);
 		settings->received_caps[type] = True;
@@ -1530,7 +1529,7 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 
 		if (stream_get_left(s) < length - 4)
 		{
-			printf("stream problem\n");
+			printf("error processing stream\n");
 			return False;
 		}
 

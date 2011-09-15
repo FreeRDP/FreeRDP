@@ -310,7 +310,6 @@ boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 	uint32 sec_bytes;
 	uint8* sec_hold;
 
-	printf("rdp_send:\n");
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
 
@@ -536,12 +535,9 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 {
 	int cryptlen;
 
-	//printf("rdp_decrypt:\n");
 	stream_seek(s, 8); /* signature */
 	cryptlen = length - 8;
-	//printf("length %d cryptlen %d\n", length, cryptlen);
 	security_decrypt(s->p, cryptlen, rdp);
-	//freerdp_hexdump(s->p, cryptlen);
 	return True;
 }
 
