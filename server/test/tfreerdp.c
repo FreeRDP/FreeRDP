@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/time.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
