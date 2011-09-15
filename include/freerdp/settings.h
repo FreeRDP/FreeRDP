@@ -214,6 +214,10 @@ struct rdp_settings
 	uint8 encrypt_update_key[16];
 	int rc4_key_len;
 
+	uint8 fips_sign_key[20];
+	uint8 fips_encrypt_key[24];
+	uint8 fips_decrypt_key[24];
+
 	boolean console_audio;
 	boolean console_session;
 	uint32 redirected_session_id;

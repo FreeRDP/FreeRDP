@@ -198,10 +198,20 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 		return False;
 	}
 
+	rdp->do_crypt = True;
+
+	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	{
+		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->settings->fips_encrypt_key, fips_ivec);
+		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->settings->fips_decrypt_key, fips_ivec);
+
+		rdp->fips_hmac = crypto_hmac_new();
+		return True;
+	}
+
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
-
-	rdp->do_crypt = True;
 
 	return True;
 }

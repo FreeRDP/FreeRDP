@@ -1,3 +1,4 @@
+
 /**
  * FreeRDP: A Remote Desktop Protocol Client
  * RDP Core
@@ -161,6 +162,8 @@ static int rdp_security_stream_init(rdpRdp* rdp, STREAM* s)
 	if (rdp->do_crypt)
 	{
 		stream_seek(s, 12);
+		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+			stream_seek(s, 4);
 		rdp->sec_flags |= SEC_ENCRYPT;
 	}
 	else if (rdp->sec_flags != 0)
@@ -246,8 +249,19 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 {
 	enum DomainMCSPDU MCSPDU;
+	int body_length;
 
 	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
+
+	if (rdp->sec_flags & SEC_ENCRYPT && rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS) {
+		int pad;
+
+		body_length = length - RDP_PACKET_HEADER_LENGTH - 16;
+		pad = 8 - (body_length % 8);
+		if (pad != 8)
+			length += pad;
+		//printf("rdp_write_header: %d %d (%d)\n", length, body_length, pad);
+	}
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
@@ -264,6 +278,7 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 	uint8* mk;
 	uint8* data;
 	uint32 sec_flags;
+	uint32 pad = 0;
 
 	sec_flags = rdp->sec_flags;
 	if (sec_flags != 0)
@@ -271,26 +286,53 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 		rdp_write_security_header(s, sec_flags);
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			data = s->p + 8;
-			length = length - (data - s->data);
-			mk = rdp->settings->sign_key;
-			ml = rdp->settings->rc4_key_len;
-			security_mac_signature(mk, ml, data, length, s->p);
-			stream_seek(s, 8);
-			security_encrypt(s->p, length, rdp);
+			if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+			{
+				data = s->p + 12;
+
+				length = length - (data - s->data);
+				stream_write_uint16(s, 0x10); /* length */
+				stream_write_uint8(s, 0x1); /* TSFIPS_VERSION 1*/
+				/* handle padding */
+				pad = 8 - (length % 8);
+				if (pad == 8)
+					pad = 0;
+				if (pad)
+					memset(data+length, 0, pad);
+				stream_write_uint8(s, pad);
+
+				// printf("FIPS padding %d, length %d\n", pad, length);
+
+				security_hmac_signature(data, length, s->p, rdp);
+				stream_seek(s, 8);
+				security_fips_encrypt(data, length + pad, rdp);
+			}
+			else
+			{
+				data = s->p + 8;
+				length = length - (data - s->data);
+
+				mk = rdp->settings->sign_key;
+				ml = rdp->settings->rc4_key_len;
+				security_mac_signature(mk, ml, data, length, s->p);
+				stream_seek(s, 8);
+				security_encrypt(s->p, length, rdp);
+			}
 		}
 		rdp->sec_flags = 0;
 	}
-	return 0;
+	return pad;
 }
 
-static uint32 rdp_get_sec_bytes(uint32 sec_flags)
+static uint32 rdp_get_sec_bytes(rdpRdp* rdp)
 {
 	uint32 sec_bytes;
 
-	if (sec_flags & SEC_ENCRYPT)
+	if (rdp->sec_flags & SEC_ENCRYPT) {
 		sec_bytes = 12;
-	else if (sec_flags != 0)
+		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+			sec_bytes += 4;
+	} else if (rdp->sec_flags != 0)
 		sec_bytes = 4;
 	else
 		sec_bytes = 0;
@@ -315,12 +357,12 @@ boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 
 	rdp_write_header(rdp, s, length, channel_id);
 
-	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_bytes = rdp_get_sec_bytes(rdp);
 	sec_hold = s->p;
 	stream_seek(s, sec_bytes);
 
 	s->p = sec_hold;
-	rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length);
 	
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
@@ -340,14 +382,14 @@ boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
-	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_bytes = rdp_get_sec_bytes(rdp);
 	sec_hold = s->p;
 	stream_seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length, type, channel_id);
 
 	s->p = sec_hold;
-	rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
@@ -367,7 +409,7 @@ boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
-	sec_bytes = rdp_get_sec_bytes(rdp->sec_flags);
+	sec_bytes = rdp_get_sec_bytes(rdp);
 	sec_hold = s->p;
 	stream_seek(s, sec_bytes);
 
@@ -377,7 +419,7 @@ boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 	//printf("send %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
 
 	s->p = sec_hold;
-	rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
@@ -534,6 +576,38 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 {
 	int cryptlen;
+
+	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	{
+		uint16 len;
+		uint8 version, pad;
+		uint8 *sig;
+
+		stream_read_uint16(s, len);	// 0x10
+		stream_read_uint8(s, version);	// 0x1
+		stream_read_uint8(s, pad);
+
+		sig = s->p;
+		stream_seek(s, 8);	/* signature */
+
+		cryptlen = length - 12;
+
+		if (!security_fips_decrypt(s->p, cryptlen, rdp))
+		{
+			printf("FATAL: cannot decrypt\n");
+			return False;	// TODO
+		}
+
+		if (!security_fips_check_signature(s->p, cryptlen-pad, sig, rdp))
+		{
+			printf("FATAL: invalid packet signature\n");
+			return False;	// TODO
+		}
+
+		// is this what needs adjusting?
+		s->size -= pad;
+		return True;
+	}
 
 	stream_seek(s, 8); /* signature */
 	cryptlen = length - 8;
