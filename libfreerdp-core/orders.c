@@ -19,6 +19,7 @@
 
 #include "window.h"
 #include <freerdp/api.h>
+#include <freerdp/common/bitmap.h>
 
 #include "orders.h"
 
@@ -405,10 +406,10 @@ INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number,
 
 	memset(points, 0, sizeof(DELTA_POINT) * number);
 
-	for (i = 1; i < number + 1; i++)
+	for (i = 0; i < number; i++)
 	{
-		if ((i - 1) % 4 == 0)
-			flags = zeroBits[(i - 1) / 4];
+		if (i % 4 == 0)
+			flags = zeroBits[i / 4];
 
 		if (~flags & 0x80)
 			update_read_delta(s, &points[i].x);
@@ -416,17 +417,11 @@ INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number,
 		if (~flags & 0x40)
 			update_read_delta(s, &points[i].y);
 
-		points[i].x = points[i].x + points[i - 1].x;
-		points[i].y = points[i].y + points[i - 1].y;
-
-		points[i - 1].x += x;
-		points[i - 1].y += y;
+		points[i].x += (i > 0 ? points[i - 1].x : x);
+		points[i].y += (i > 0 ? points[i - 1].y : y);
 
 		flags <<= 2;
 	}
-
-	points[i - 1].x += x;
-	points[i - 1].y += y;
 }
 
 INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments, boolean delta, uint8 size)
@@ -1365,6 +1360,9 @@ void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_
 
 void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
 {
+	boolean status;
+	uint16 dstSize;
+	uint8* srcData;
 	uint8 bitsPerPixelId;
 
 	cache_bitmap_v2_order->cacheId = flags & 0x0003;
@@ -1395,20 +1393,40 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 	if (compressed)
 	{
-		if (cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR)
-		{
-			stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
-		}
-		else
+		if (!(cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
 		{
 			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_v2_order->bitmapComprHdr);
 			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
 		}
+
+		dstSize = cache_bitmap_v2_order->bitmapLength;
+		cache_bitmap_v2_order->data = (uint8*) xmalloc(dstSize);
+
+		stream_get_mark(s, srcData);
+		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
+
+		status = bitmap_decompress(srcData, cache_bitmap_v2_order->data, cache_bitmap_v2_order->bitmapWidth,
+				cache_bitmap_v2_order->bitmapHeight, cache_bitmap_v2_order->bitmapLength,
+				cache_bitmap_v2_order->bitmapBpp, cache_bitmap_v2_order->bitmapBpp);
+
+		if (status != True)
+			printf("bitmap decompression failed, bpp:%d\n", cache_bitmap_v2_order->bitmapBpp);
 	}
 	else
 	{
-		stream_seek(s, cache_bitmap_v2_order->bitmapLength); /* bitmapDataStream */
+		int y;
+		int offset;
+		int scanline;
+		stream_get_mark(s, srcData);
+		dstSize = cache_bitmap_v2_order->bitmapLength;
+		cache_bitmap_v2_order->data = (uint8*) xmalloc(dstSize);
+		scanline = cache_bitmap_v2_order->bitmapWidth * (cache_bitmap_v2_order->bitmapBpp / 8);
+
+		for (y = 0; y < cache_bitmap_v2_order->bitmapHeight; y++)
+		{
+			offset = (cache_bitmap_v2_order->bitmapHeight - y - 1) * scanline;
+			stream_read(s, &cache_bitmap_v2_order->data[offset], scanline);
+		}
 	}
 }
 

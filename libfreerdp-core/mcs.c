@@ -517,7 +517,10 @@ boolean mcs_recv_connect_response(rdpMcs* mcs, STREAM* s)
 	ber_read_octet_string(s, &length);
 
 	if (!gcc_read_conference_create_response(s, mcs->transport->settings))
+	{
+		printf("mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
 		return False;
+	}
 
 	return True;
 }

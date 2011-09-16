@@ -495,7 +495,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->compression)
-		flags |= INFO_COMPRESSION | PACKET_COMPR_TYPE_64K;
+		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_64K;
 
 	domain = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->domain, &length);
 	cbDomain = length;
@@ -584,11 +584,10 @@ boolean rdp_send_client_info(rdpRdp* rdp)
 {
 	STREAM* s;
 
+	//rdp->settings->crypt_flags |= SEC_INFO_PKT;
+	rdp->sec_flags |= SEC_INFO_PKT;
 	s = rdp_send_stream_init(rdp);
-
-	rdp_write_security_header(s, SEC_INFO_PKT);
 	rdp_write_info_packet(s, rdp->settings);
-
 	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 

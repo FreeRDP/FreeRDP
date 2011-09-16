@@ -17,7 +17,10 @@
  * limitations under the License.
  */
 
-#include "bitmap.h"
+#include <freerdp/utils/stream.h>
+#include <freerdp/utils/memory.h>
+
+#include <freerdp/common/bitmap.h>
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
@@ -25,6 +28,158 @@
    pseudo-code
    http://msdn.microsoft.com/en-us/library/dd240593%28v=prot.10%29.aspx
 */
+
+#define REGULAR_BG_RUN              0x00
+#define MEGA_MEGA_BG_RUN            0xF0
+#define REGULAR_FG_RUN              0x01
+#define MEGA_MEGA_FG_RUN            0xF1
+#define LITE_SET_FG_FG_RUN          0x0C
+#define MEGA_MEGA_SET_FG_RUN        0xF6
+#define LITE_DITHERED_RUN           0x0E
+#define MEGA_MEGA_DITHERED_RUN      0xF8
+#define REGULAR_COLOR_RUN           0x03
+#define MEGA_MEGA_COLOR_RUN         0xF3
+#define REGULAR_FGBG_IMAGE          0x02
+#define MEGA_MEGA_FGBG_IMAGE        0xF2
+#define LITE_SET_FG_FGBG_IMAGE      0x0D
+#define MEGA_MEGA_SET_FGBG_IMAGE    0xF7
+#define REGULAR_COLOR_IMAGE         0x04
+#define MEGA_MEGA_COLOR_IMAGE       0xF4
+#define SPECIAL_FGBG_1              0xF9
+#define SPECIAL_FGBG_2              0xFA
+#define SPECIAL_WHITE               0xFD
+#define SPECIAL_BLACK               0xFE
+
+#define BLACK_PIXEL 0x000000
+#define WHITE_PIXEL 0xFFFFFF
+
+typedef uint32 PIXEL;
+
+static uint8 g_MaskBit0 = 0x01; /* Least significant bit */
+static uint8 g_MaskBit1 = 0x02;
+static uint8 g_MaskBit2 = 0x04;
+static uint8 g_MaskBit3 = 0x08;
+static uint8 g_MaskBit4 = 0x10;
+static uint8 g_MaskBit5 = 0x20;
+static uint8 g_MaskBit6 = 0x40;
+static uint8 g_MaskBit7 = 0x80; /* Most significant bit */
+
+static uint8 g_MaskSpecialFgBg1 = 0x03;
+static uint8 g_MaskSpecialFgBg2 = 0x05;
+
+static uint8 g_MaskRegularRunLength = 0x1F;
+static uint8 g_MaskLiteRunLength = 0x0F;
+
+/**
+ * Reads the supplied order header and extracts the compression
+ * order code ID.
+ */
+static uint32 ExtractCodeId(uint8 bOrderHdr)
+{
+	int code;
+
+	switch (bOrderHdr)
+	{
+		case MEGA_MEGA_BG_RUN:
+		case MEGA_MEGA_FG_RUN:
+		case MEGA_MEGA_SET_FG_RUN:
+		case MEGA_MEGA_DITHERED_RUN:
+		case MEGA_MEGA_COLOR_RUN:
+		case MEGA_MEGA_FGBG_IMAGE:
+		case MEGA_MEGA_SET_FGBG_IMAGE:
+		case MEGA_MEGA_COLOR_IMAGE:
+		case SPECIAL_FGBG_1:
+		case SPECIAL_FGBG_2:
+		case SPECIAL_WHITE:
+		case SPECIAL_BLACK:
+			return bOrderHdr;
+	}
+	code = bOrderHdr >> 5;
+	switch (code)
+	{
+		case REGULAR_BG_RUN:
+		case REGULAR_FG_RUN:
+		case REGULAR_COLOR_RUN:
+		case REGULAR_FGBG_IMAGE:
+		case REGULAR_COLOR_IMAGE:
+			return code;
+	}
+	return bOrderHdr >> 4;
+}
+
+/**
+ * Extract the run length of a compression order.
+ */
+static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
+{
+	uint32 runLength;
+	uint32 ladvance;
+
+	ladvance = 1;
+	runLength = 0;
+	switch (code)
+	{
+		case REGULAR_FGBG_IMAGE:
+			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+			if (runLength == 0)
+			{
+				runLength = (*(pbOrderHdr + 1)) + 1;
+				ladvance += 1;
+			}
+			else
+			{
+				runLength = runLength * 8;
+			}
+			break;
+		case LITE_SET_FG_FGBG_IMAGE:
+			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
+			if (runLength == 0)
+			{
+				runLength = (*(pbOrderHdr + 1)) + 1;
+				ladvance += 1;
+			}
+			else
+			{
+				runLength = runLength * 8;
+			}
+			break;
+		case REGULAR_BG_RUN:
+		case REGULAR_FG_RUN:
+		case REGULAR_COLOR_RUN:
+		case REGULAR_COLOR_IMAGE:
+			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+			if (runLength == 0)
+			{
+				/* An extended (MEGA) run. */
+				runLength = (*(pbOrderHdr + 1)) + 32;
+				ladvance += 1;
+			}
+			break;
+		case LITE_SET_FG_FG_RUN:
+		case LITE_DITHERED_RUN:
+			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
+			if (runLength == 0)
+			{
+				/* An extended (MEGA) run. */
+				runLength = (*(pbOrderHdr + 1)) + 16;
+				ladvance += 1;
+			}
+			break;
+		case MEGA_MEGA_BG_RUN:
+		case MEGA_MEGA_FG_RUN:
+		case MEGA_MEGA_SET_FG_RUN:
+		case MEGA_MEGA_DITHERED_RUN:
+		case MEGA_MEGA_COLOR_RUN:
+		case MEGA_MEGA_FGBG_IMAGE:
+		case MEGA_MEGA_SET_FGBG_IMAGE:
+		case MEGA_MEGA_COLOR_IMAGE:
+			runLength = ((uint16) pbOrderHdr[1]) | ((uint16) (pbOrderHdr[2] << 8));
+			ladvance += 2;
+			break;
+	}
+	*advance = ladvance;
+	return runLength;
+}
 
 #define UNROLL_COUNT 4
 #define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)

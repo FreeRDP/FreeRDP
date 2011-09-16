@@ -23,7 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/color.h>
+#include <freerdp/common/color.h>
 
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/bitmap.h>

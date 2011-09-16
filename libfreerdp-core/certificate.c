@@ -227,15 +227,92 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 	xfree(x509_cert_chain);
 }
 
+static boolean certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
+{
+	uint8 magic[4];
+	uint32 keylen;
+	uint32 bitlen;
+	uint32 datalen;
+	uint32 modlen;
+
+	memcpy(magic, s->p, 4);
+
+	if (memcmp(magic, "RSA1", 4) != 0)
+	{
+		printf("gcc_process_server_public_key: magic error\n");
+		return False;
+	}
+
+	stream_seek(s, 4);
+	stream_read_uint32(s, keylen);
+	stream_read_uint32(s, bitlen);
+	stream_read_uint32(s, datalen);
+	memcpy(certificate->cert_info.exponent, s->p, 4);
+	stream_seek(s, 4);
+	modlen = keylen - 8;
+	freerdp_blob_alloc(&(certificate->cert_info.modulus), modlen);
+	memcpy(certificate->cert_info.modulus.data, s->p, modlen);
+	stream_seek(s, keylen);
+
+	return True;
+}
+
+static boolean certificate_process_server_public_signature(rdpCertificate* certificate, STREAM* s, uint32 length)
+{
+	stream_seek(s, length);
+	return True;
+}
+
 /**
  * Read a Server Proprietary Certificate.\n
  * @param certificate certificate module
  * @param s stream
  */
 
-void certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
+boolean certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
 {
-	DEBUG_CERTIFICATE("Server Proprietary Certificate");
+	uint32 dwSigAlgId;
+	uint32 dwKeyAlgId;
+	uint32 wPublicKeyBlobType;
+	uint32 wPublicKeyBlobLen;
+	uint32 wSignatureBlobType;
+	uint32 wSignatureBlobLen;
+
+	printf("Server Proprietary Certificate\n");
+
+	stream_read_uint32(s, dwSigAlgId);
+	stream_read_uint32(s, dwKeyAlgId);
+	if (!(dwSigAlgId == 1 && dwKeyAlgId == 1))
+	{
+		printf("certificate_read_server_proprietary_certificate: parse error 1\n");
+		return False;
+	}
+	stream_read_uint16(s, wPublicKeyBlobType);
+	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
+	{
+		printf("certificate_read_server_proprietary_certificate: parse error 2\n");
+		return False;
+	}
+	stream_read_uint16(s, wPublicKeyBlobLen);
+	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
+	{
+		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
+		return False;
+	}
+	stream_read_uint16(s, wSignatureBlobType);
+	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
+	{
+		printf("certificate_read_server_proprietary_certificate: parse error 4\n");
+		return False;
+	}
+	stream_read_uint16(s, wSignatureBlobLen);
+	if (!certificate_process_server_public_signature(certificate, s, wSignatureBlobLen))
+	{
+		printf("certificate_read_server_proprietary_certificate: parse error 5\n");
+		return False;
+	}
+
+	return True;
 }
 
 /**
@@ -244,7 +321,7 @@ void certificate_read_server_proprietary_certificate(rdpCertificate* certificate
  * @param s stream
  */
 
-void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
+boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
 {
 	int i;
 	uint32 certLength;
@@ -280,6 +357,8 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			DEBUG_CERTIFICATE("modulus length:%d", certificate->cert_info.modulus.length);
 		}
 	}
+
+	return True;
 }
 
 /**
@@ -289,7 +368,7 @@ void certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
  * @param length certificate length
  */
 
-void certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
+boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
 {
 	STREAM* s;
 	uint32 dwVersion;
@@ -300,7 +379,7 @@ void certificate_read_server_certificate(rdpCertificate* certificate, uint8* ser
 	if (length < 1)
 	{
 		printf("null server certificate\n");
-		return;
+		return False;
 	}
 
 	stream_read_uint32(s, dwVersion); /* dwVersion (4 bytes) */
@@ -319,6 +398,9 @@ void certificate_read_server_certificate(rdpCertificate* certificate, uint8* ser
 			printf("invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
 			break;
 	}
+
+	xfree(s);
+	return True;
 }
 
 /**
@@ -327,7 +409,7 @@ void certificate_read_server_certificate(rdpCertificate* certificate, uint8* ser
  * @return new certificate module
  */
 
-rdpCertificate* certificate_new(rdpRdp* rdp)
+rdpCertificate* certificate_new(void)
 {
 	rdpCertificate* certificate;
 
@@ -335,7 +417,6 @@ rdpCertificate* certificate_new(rdpRdp* rdp)
 
 	if (certificate != NULL)
 	{
-		certificate->rdp = rdp;
 		certificate->x509_cert_chain = NULL;
 	}
 

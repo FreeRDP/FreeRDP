@@ -39,6 +39,7 @@ typedef void (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client)
 
 struct rdp_freerdp_listener
 {
+	void* info;
 	void* listener;
 	void* param1;
 	void* param2;

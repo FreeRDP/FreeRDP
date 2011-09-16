@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Servers
+# libfreerdp-common cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,17 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Servers
+set(FREERDP_COMMON_SRCS
+	bitmap.c
+	color.c)
 
-if(NOT WIN32)
+add_library(freerdp-common ${FREERDP_COMMON_SRCS})
 
-	# Build Test Server
-	add_subdirectory(test)
+set_target_properties(freerdp-common PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+target_link_libraries(freerdp-common freerdp-utils)
 
-	# Build X11 Server
-	find_suggested_package(X11)
-	if(X11_FOUND)
-		add_subdirectory(X11)
-	endif()
-	
-endif()
+install(TARGETS freerdp-common DESTINATION ${CMAKE_INSTALL_LIBDIR})
+

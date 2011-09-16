@@ -40,6 +40,79 @@ static uint8 pad2[48] =
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
 };
 
+static uint8
+fips_reverse_table[256] = {
+ 0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
+ 0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
+ 0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
+ 0x18, 0x98, 0x58, 0xd8, 0x38, 0xb8, 0x78, 0xf8,
+ 0x04, 0x84, 0x44, 0xc4, 0x24, 0xa4, 0x64, 0xe4,
+ 0x14, 0x94, 0x54, 0xd4, 0x34, 0xb4, 0x74, 0xf4,
+ 0x0c, 0x8c, 0x4c, 0xcc, 0x2c, 0xac, 0x6c, 0xec,
+ 0x1c, 0x9c, 0x5c, 0xdc, 0x3c, 0xbc, 0x7c, 0xfc,
+ 0x02, 0x82, 0x42, 0xc2, 0x22, 0xa2, 0x62, 0xe2,
+ 0x12, 0x92, 0x52, 0xd2, 0x32, 0xb2, 0x72, 0xf2,
+ 0x0a, 0x8a, 0x4a, 0xca, 0x2a, 0xaa, 0x6a, 0xea,
+ 0x1a, 0x9a, 0x5a, 0xda, 0x3a, 0xba, 0x7a, 0xfa,
+ 0x06, 0x86, 0x46, 0xc6, 0x26, 0xa6, 0x66, 0xe6,
+ 0x16, 0x96, 0x56, 0xd6, 0x36, 0xb6, 0x76, 0xf6,
+ 0x0e, 0x8e, 0x4e, 0xce, 0x2e, 0xae, 0x6e, 0xee,
+ 0x1e, 0x9e, 0x5e, 0xde, 0x3e, 0xbe, 0x7e, 0xfe,
+ 0x01, 0x81, 0x41, 0xc1, 0x21, 0xa1, 0x61, 0xe1,
+ 0x11, 0x91, 0x51, 0xd1, 0x31, 0xb1, 0x71, 0xf1,
+ 0x09, 0x89, 0x49, 0xc9, 0x29, 0xa9, 0x69, 0xe9,
+ 0x19, 0x99, 0x59, 0xd9, 0x39, 0xb9, 0x79, 0xf9,
+ 0x05, 0x85, 0x45, 0xc5, 0x25, 0xa5, 0x65, 0xe5,
+ 0x15, 0x95, 0x55, 0xd5, 0x35, 0xb5, 0x75, 0xf5,
+ 0x0d, 0x8d, 0x4d, 0xcd, 0x2d, 0xad, 0x6d, 0xed,
+ 0x1d, 0x9d, 0x5d, 0xdd, 0x3d, 0xbd, 0x7d, 0xfd,
+ 0x03, 0x83, 0x43, 0xc3, 0x23, 0xa3, 0x63, 0xe3,
+ 0x13, 0x93, 0x53, 0xd3, 0x33, 0xb3, 0x73, 0xf3,
+ 0x0b, 0x8b, 0x4b, 0xcb, 0x2b, 0xab, 0x6b, 0xeb,
+ 0x1b, 0x9b, 0x5b, 0xdb, 0x3b, 0xbb, 0x7b, 0xfb,
+ 0x07, 0x87, 0x47, 0xc7, 0x27, 0xa7, 0x67, 0xe7,
+ 0x17, 0x97, 0x57, 0xd7, 0x37, 0xb7, 0x77, 0xf7,
+ 0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
+ 0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
+};
+
+static uint8
+fips_oddparity_table[256] = {
+ 0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x07, 0x07,
+ 0x08, 0x08, 0x0b, 0x0b, 0x0d, 0x0d, 0x0e, 0x0e,
+ 0x10, 0x10, 0x13, 0x13, 0x15, 0x15, 0x16, 0x16,
+ 0x19, 0x19, 0x1a, 0x1a, 0x1c, 0x1c, 0x1f, 0x1f,
+ 0x20, 0x20, 0x23, 0x23, 0x25, 0x25, 0x26, 0x26,
+ 0x29, 0x29, 0x2a, 0x2a, 0x2c, 0x2c, 0x2f, 0x2f,
+ 0x31, 0x31, 0x32, 0x32, 0x34, 0x34, 0x37, 0x37,
+ 0x38, 0x38, 0x3b, 0x3b, 0x3d, 0x3d, 0x3e, 0x3e,
+ 0x40, 0x40, 0x43, 0x43, 0x45, 0x45, 0x46, 0x46,
+ 0x49, 0x49, 0x4a, 0x4a, 0x4c, 0x4c, 0x4f, 0x4f,
+ 0x51, 0x51, 0x52, 0x52, 0x54, 0x54, 0x57, 0x57,
+ 0x58, 0x58, 0x5b, 0x5b, 0x5d, 0x5d, 0x5e, 0x5e,
+ 0x61, 0x61, 0x62, 0x62, 0x64, 0x64, 0x67, 0x67,
+ 0x68, 0x68, 0x6b, 0x6b, 0x6d, 0x6d, 0x6e, 0x6e,
+ 0x70, 0x70, 0x73, 0x73, 0x75, 0x75, 0x76, 0x76,
+ 0x79, 0x79, 0x7a, 0x7a, 0x7c, 0x7c, 0x7f, 0x7f,
+ 0x80, 0x80, 0x83, 0x83, 0x85, 0x85, 0x86, 0x86,
+ 0x89, 0x89, 0x8a, 0x8a, 0x8c, 0x8c, 0x8f, 0x8f,
+ 0x91, 0x91, 0x92, 0x92, 0x94, 0x94, 0x97, 0x97,
+ 0x98, 0x98, 0x9b, 0x9b, 0x9d, 0x9d, 0x9e, 0x9e,
+ 0xa1, 0xa1, 0xa2, 0xa2, 0xa4, 0xa4, 0xa7, 0xa7,
+ 0xa8, 0xa8, 0xab, 0xab, 0xad, 0xad, 0xae, 0xae,
+ 0xb0, 0xb0, 0xb3, 0xb3, 0xb5, 0xb5, 0xb6, 0xb6,
+ 0xb9, 0xb9, 0xba, 0xba, 0xbc, 0xbc, 0xbf, 0xbf,
+ 0xc1, 0xc1, 0xc2, 0xc2, 0xc4, 0xc4, 0xc7, 0xc7,
+ 0xc8, 0xc8, 0xcb, 0xcb, 0xcd, 0xcd, 0xce, 0xce,
+ 0xd0, 0xd0, 0xd3, 0xd3, 0xd5, 0xd5, 0xd6, 0xd6,
+ 0xd9, 0xd9, 0xda, 0xda, 0xdc, 0xdc, 0xdf, 0xdf,
+ 0xe0, 0xe0, 0xe3, 0xe3, 0xe5, 0xe5, 0xe6, 0xe6,
+ 0xe9, 0xe9, 0xea, 0xea, 0xec, 0xec, 0xef, 0xef,
+ 0xf1, 0xf1, 0xf2, 0xf2, 0xf4, 0xf4, 0xf7, 0xf7,
+ 0xf8, 0xf8, 0xfb, 0xfb, 0xfd, 0xfd, 0xfe, 0xfe,
+};
+
+
 static void security_salted_hash(uint8* salt, uint8* input, int length, uint8* salt1, uint8* salt2, uint8* output)
 {
 	CryptoMd5 md5;
@@ -97,17 +170,21 @@ void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8*
 	memcpy(output, session_key_blob, 16);
 }
 
-void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
+void security_md5_16_32_32(uint8* in0, uint8* in1, uint8* in2, uint8* output)
 {
 	CryptoMd5 md5;
 
-	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
-
 	md5 = crypto_md5_init();
-	crypto_md5_update(md5, &session_key_blob[16], 16); /* Second128Bits(SessionKeyBlob) */
-	crypto_md5_update(md5, client_random, 32); /* ClientRandom */
-	crypto_md5_update(md5, server_random, 32); /* ServerRandom */
+	crypto_md5_update(md5, in0, 16);
+	crypto_md5_update(md5, in1, 32);
+	crypto_md5_update(md5, in2, 32);
 	crypto_md5_final(md5, output);
+}
+
+void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output)
+{
+	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
+	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
 }
 
 void security_uint32_le(uint8* output, uint32 value)
@@ -172,3 +249,227 @@ void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uin
 
 	memcpy(output, md5_digest, 8);
 }
+
+static void security_A(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
+{
+	security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]);
+	security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
+	security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+}
+
+static void security_X(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output)
+{
+	security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]);
+	security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
+	security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
+}
+
+static void
+fips_expand_key_bits(uint8 *in, uint8 *out)
+{
+	uint8 buf[21], c;
+	int i, b, p, r;
+
+	// reverse every byte in the key
+	for (i = 0; i < 21; i++)
+		buf[i] = fips_reverse_table[in[i]];
+
+	// insert a zero-bit after every 7th bit
+	for (i = 0, b = 0; i < 24; i++, b += 7)
+	{
+		p = b/8;
+		r = b%8;
+		if (r == 0)
+		{
+			out[i] = buf[p] & 0xfe;
+		}
+		else
+		{
+			// c is accumulator
+			c = buf[p] << r;
+			c |= buf[p+1] >> (8-r);
+			out[i] = c & 0xfe;
+		}
+	}
+
+	// reverse every byte
+	// alter lsb so the byte has odd parity
+	for (i = 0; i < 24; i++)
+		out[i] = fips_oddparity_table[fips_reverse_table[out[i]]];
+}
+
+
+boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
+{
+	uint8 pre_master_secret[48];
+	uint8 master_secret[48];
+	uint8 session_key_blob[48];
+	uint8* server_random;
+	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
+
+	server_random = settings->server_random.data;
+
+	if (settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	{
+		CryptoSha1 sha1;
+		uint8 client_encrypt_key_t[21], client_decrypt_key_t[21];
+
+		printf("FIPS Compliant encryption level.\n");
+
+		sha1 = crypto_sha1_init();
+		crypto_sha1_update(sha1, client_random + 16, 16);
+		crypto_sha1_update(sha1, server_random + 16, 16);
+		crypto_sha1_final(sha1, client_encrypt_key_t);
+
+		client_encrypt_key_t[20] = client_encrypt_key_t[0];
+		fips_expand_key_bits(client_encrypt_key_t, settings->fips_encrypt_key);
+
+		sha1 = crypto_sha1_init();
+		crypto_sha1_update(sha1, client_random, 16);
+		crypto_sha1_update(sha1, server_random, 16);
+		crypto_sha1_final(sha1, client_decrypt_key_t);
+
+		client_decrypt_key_t[20] = client_decrypt_key_t[0];
+		fips_expand_key_bits(client_decrypt_key_t, settings->fips_decrypt_key);
+
+		sha1 = crypto_sha1_init();
+		crypto_sha1_update(sha1, client_decrypt_key_t, 20);
+		crypto_sha1_update(sha1, client_encrypt_key_t, 20);
+		crypto_sha1_final(sha1, settings->fips_sign_key);
+	}
+
+	memcpy(pre_master_secret, client_random, 24);
+	memcpy(pre_master_secret + 24, server_random, 24);
+
+	security_A(pre_master_secret, client_random, server_random, master_secret);
+	security_X(master_secret, client_random, server_random, session_key_blob);
+
+	memcpy(settings->sign_key, session_key_blob, 16);
+
+	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, settings->decrypt_key);
+	security_md5_16_32_32(&session_key_blob[32], client_random, server_random, settings->encrypt_key);
+
+	if (settings->encryption_method == 1) /* 40 and 56 bit */
+	{
+		memcpy(settings->sign_key, salt40, 3); /* TODO 56 bit */
+		memcpy(settings->decrypt_key, salt40, 3); /* TODO 56 bit */
+		memcpy(settings->encrypt_key, salt40, 3); /* TODO 56 bit */
+		settings->rc4_key_len = 8;
+	}
+	else if (settings->encryption_method == 2) /* 128 bit */
+	{
+		settings->rc4_key_len = 16;
+	}
+
+	memcpy(settings->decrypt_update_key, settings->decrypt_key, 16);
+	memcpy(settings->encrypt_update_key, settings->encrypt_key, 16);
+
+	return True;
+}
+
+boolean security_key_update(uint8* key, uint8* update_key, int key_len)
+{
+	uint8 sha1h[20];
+	CryptoMd5 md5;
+	CryptoSha1 sha1;
+	CryptoRc4 rc4;
+	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
+
+	sha1 = crypto_sha1_init();
+	crypto_sha1_update(sha1, update_key, key_len);
+	crypto_sha1_update(sha1, pad1, sizeof(pad1));
+	crypto_sha1_update(sha1, key, key_len);
+	crypto_sha1_final(sha1, sha1h);
+
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, update_key, key_len);
+	crypto_md5_update(md5, pad2, sizeof(pad2));
+	crypto_md5_update(md5, sha1h, 20);
+	crypto_md5_final(md5, key);
+
+	rc4 = crypto_rc4_init(key, key_len);
+	crypto_rc4(rc4, key_len, key, key);
+	crypto_rc4_free(rc4);
+
+	if (key_len == 8)
+		memcpy(key, salt40, 3); /* TODO 56 bit */
+
+	return True;
+}
+
+boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	if (rdp->encrypt_use_count >= 4096)
+	{
+		security_key_update(rdp->settings->encrypt_key, rdp->settings->encrypt_update_key, rdp->settings->rc4_key_len);
+		crypto_rc4_free(rdp->rc4_encrypt_key);
+		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+		rdp->encrypt_use_count = 0;
+	}
+	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
+	rdp->encrypt_use_count += 1;
+	return True;
+}
+
+boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	if (rdp->decrypt_use_count >= 4096)
+	{
+		security_key_update(rdp->settings->decrypt_key, rdp->settings->decrypt_update_key, rdp->settings->rc4_key_len);
+		crypto_rc4_free(rdp->rc4_decrypt_key);
+		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+		rdp->decrypt_use_count = 0;
+	}
+	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);
+	rdp->decrypt_use_count += 1;
+	return True;
+}
+
+void security_hmac_signature(uint8* data, int length, uint8* output, rdpRdp* rdp)
+{
+	uint8 buf[20];
+	uint8 use_count_le[4];
+
+	security_uint32_le(use_count_le, rdp->encrypt_use_count);
+
+	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->settings->fips_sign_key, 20);
+	crypto_hmac_update(rdp->fips_hmac, data, length);
+	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
+	crypto_hmac_final(rdp->fips_hmac, buf, 20);
+
+	memmove(output, buf, 8);
+}
+
+boolean security_fips_encrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	crypto_des3_encrypt(rdp->fips_encrypt, length, data, data);
+	rdp->encrypt_use_count++;
+	return True;
+}
+
+boolean security_fips_decrypt(uint8* data, int length, rdpRdp* rdp)
+{
+	crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
+	return True;
+}
+
+boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRdp* rdp)
+{
+	uint8 buf[20];
+	uint8 use_count_le[4];
+
+	security_uint32_le(use_count_le, rdp->decrypt_use_count);
+
+	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->settings->fips_sign_key, 20);
+	crypto_hmac_update(rdp->fips_hmac, data, length);
+	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
+	crypto_hmac_final(rdp->fips_hmac, buf, 20);
+
+	rdp->decrypt_use_count++;
+
+	if (memcmp(sig, buf, 8))
+		return False;
+
+	return True;
+}
+

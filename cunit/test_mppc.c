@@ -650,12 +650,12 @@ void test_mppc(void)
     rdp.mppc->history_ptr = rdp.mppc->history_buf;
 
 
-    /* store starting time */
+    /* save starting time */
     gettimeofday(&start_time, NULL);
 
     /* uncompress data */
     CU_ASSERT(decompress_rdp_5(&rdp, compressed_rd5, sizeof(compressed_rd5), 
-        PACKET_COMPRESSED, &roff, &rlen) == 0);
+        PACKET_COMPRESSED, &roff, &rlen) == True);
 
     /* get end time */
     gettimeofday(&end_time, NULL);

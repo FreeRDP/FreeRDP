@@ -58,11 +58,16 @@
 #define NEG_SCRBLT_INDEX			0x02
 #define NEG_MEMBLT_INDEX			0x03
 #define NEG_MEM3BLT_INDEX			0x04
+#define NEG_ATEXTOUT_INDEX			0x05
+#define NEG_AEXTTEXTOUT_INDEX			0x06
 #define NEG_DRAWNINEGRID_INDEX			0x07
 #define NEG_LINETO_INDEX			0x08
 #define NEG_MULTI_DRAWNINEGRID_INDEX		0x09
 #define NEG_OPAQUE_RECT_INDEX			0x0A
 #define NEG_SAVEBITMAP_INDEX			0x0B
+#define NEG_WTEXTOUT_INDEX			0x0C
+#define NEG_MEMBLT_V2_INDEX			0x0D
+#define NEG_MEM3BLT_V2_INDEX			0x0E
 #define NEG_MULTIDSTBLT_INDEX			0x0F
 #define NEG_MULTIPATBLT_INDEX			0x10
 #define NEG_MULTISCRBLT_INDEX			0x11
@@ -75,6 +80,9 @@
 #define NEG_ELLIPSE_SC_INDEX			0x19
 #define NEG_ELLIPSE_CB_INDEX			0x1A
 #define NEG_GLYPH_INDEX_INDEX			0x1B
+#define NEG_GLYPH_WEXTTEXTOUT_INDEX		0x1C
+#define NEG_GLYPH_WLONGTEXTOUT_INDEX		0x1D
+#define NEG_GLYPH_WLONGEXTTEXTOUT_INDEX		0x1E
 
 /* Glyph Support Level */
 #define GLYPH_SUPPORT_NONE			0x0000
@@ -197,6 +205,18 @@ struct rdp_settings
 
 	rdpBlob server_random;
 	rdpBlob server_certificate;
+	struct rdp_certificate* server_cert;
+
+	uint8 sign_key[16];
+	uint8 decrypt_key[16];
+	uint8 encrypt_key[16];
+	uint8 decrypt_update_key[16];
+	uint8 encrypt_update_key[16];
+	int rc4_key_len;
+
+	uint8 fips_sign_key[20];
+	uint8 fips_encrypt_key[24];
+	uint8 fips_decrypt_key[24];
 
 	boolean console_audio;
 	boolean console_session;

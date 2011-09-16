@@ -55,6 +55,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	uint8 t;
 
 	stream_read_uint8(s, header);
+
 	if (fastpath != NULL)
 	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
@@ -92,6 +93,36 @@ INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 frag
 	updateHeader |= (fragmentation & 0x03) << 4;
 	updateHeader |= (compression & 0x03) << 6;
 	stream_write_uint8(s, updateHeader);
+}
+
+uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
+{
+	uint8 header;
+	uint16 length;
+	uint8 t;
+	uint16 hs;
+
+	hs = 2;
+	stream_read_uint8(s, header);
+
+	if (fastpath != NULL)
+	{
+		fastpath->encryptionFlags = (header & 0xC0) >> 6;
+		fastpath->numberEvents = (header & 0x3C) >> 2;
+	}
+
+	stream_read_uint8(s, length); /* length1 */
+	/* If most significant bit is not set, length2 is not presented. */
+	if ((length & 0x80))
+	{
+		hs++;
+		length &= 0x7F;
+		length <<= 8;
+		stream_read_uint8(s, t);
+		length += t;
+	}
+
+	return length - hs;
 }
 
 boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s)
@@ -204,6 +235,12 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	uint8 compression;
 	uint8 compressionFlags;
 	STREAM* update_stream;
+	STREAM* comp_stream;
+	rdpRdp  *rdp;
+	uint32 roff;
+	uint32 rlen;
+
+	rdp = fastpath->rdp;
 
 	fastpath_read_update_header(s, &updateCode, &fragmentation, &compression);
 
@@ -214,19 +251,30 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	stream_read_uint16(s, size);
 	next_pos = stream_get_pos(s) + size;
+	comp_stream = s;
 
-	if (compressionFlags != 0)
+	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		printf("FastPath compression is not yet implemented!\n");
-		stream_seek(s, size);
-		return;
+		if (decompress_rdp(rdp, s->p, size, compressionFlags, &roff, &rlen))
+		{
+			comp_stream = stream_new(0);
+			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->p = comp_stream->data;
+			comp_stream->size = rlen;
+			size = comp_stream->size;
+		}
+		else
+		{
+			printf("decompress_rdp() failed\n");
+			stream_seek(s, size);
+		}
 	}
 
 	update_stream = NULL;
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
 		totalSize = size;
-		update_stream = s;
+		update_stream = comp_stream;
 	}
 	else
 	{
@@ -234,7 +282,7 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 			stream_set_pos(fastpath->updateData, 0);
 
 		stream_check_size(fastpath->updateData, size);
-		stream_copy(fastpath->updateData, s, size);
+		stream_copy(fastpath->updateData, comp_stream, size);
 
 		if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
@@ -248,6 +296,9 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
 
 	stream_set_pos(s, next_pos);
+
+	if (comp_stream != s)
+		xfree(comp_stream);
 }
 
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)

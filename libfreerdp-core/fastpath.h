@@ -91,6 +91,7 @@ struct rdp_fastpath
 };
 
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
+uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
 boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);

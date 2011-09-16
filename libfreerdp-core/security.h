@@ -33,5 +33,14 @@ void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_ra
 void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* output);
 
 void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uint32 length, uint8* output);
+boolean security_establish_keys(uint8* client_random, rdpSettings* settings);
+
+boolean security_encrypt(uint8* data, int length, rdpRdp* rdp);
+boolean security_decrypt(uint8* data, int length, rdpRdp* rdp);
+
+void security_hmac_signature(uint8* data, int length, uint8* output, rdpRdp* rdp);
+boolean security_fips_encrypt(uint8* data, int length, rdpRdp* rdp);
+boolean security_fips_decrypt(uint8* data, int length, rdpRdp* rdp);
+boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRdp* rdp);
 
 #endif /* __SECURITY_H */

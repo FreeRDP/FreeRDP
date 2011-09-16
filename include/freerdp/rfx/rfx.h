@@ -42,7 +42,9 @@ enum _RFX_PIXEL_FORMAT
 	RFX_PIXEL_FORMAT_BGR,
 	RFX_PIXEL_FORMAT_RGB,
 	RFX_PIXEL_FORMAT_BGR565_LE,
-	RFX_PIXEL_FORMAT_RGB565_LE
+	RFX_PIXEL_FORMAT_RGB565_LE,
+	RFX_PIXEL_FORMAT_PALETTE4_PLANER,
+	RFX_PIXEL_FORMAT_PALETTE8
 };
 typedef enum _RFX_PIXEL_FORMAT RFX_PIXEL_FORMAT;
 
@@ -96,7 +98,10 @@ struct _RFX_CONTEXT
 	uint32 codec_id;
 	uint32 codec_version;
 	RFX_PIXEL_FORMAT pixel_format;
-	uint8 bytes_per_pixel;
+	uint8 bits_per_pixel;
+
+	/* color palette allocated by the application */
+	const uint8* palette;
 
 	/* temporary data within a frame */
 	uint32 frame_idx;

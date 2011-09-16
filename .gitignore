@@ -40,4 +40,5 @@ cunit/test_freerdp
 client/X11/xfreerdp
 client/test/freerdp-test
 client/DirectFB/dfreerdp
-server/test/freerdp-server-test
+server/test/tfreerdp-server
+server/X11/xfreerdp-server

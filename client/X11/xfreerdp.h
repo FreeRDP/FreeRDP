@@ -57,12 +57,14 @@ struct xf_info
 	int width;
 	int height;
 	int srcBpp;
+	GC gc_mono;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
 	Pixmap drawing;
 	Visual* visual;
 	Display* display;
+	Pixmap bitmap_mono;
 	Colormap colormap;
 	int screen_number;
 	int scanline_pad;
@@ -89,6 +91,8 @@ struct xf_info
 	XSetWindowAttributes attribs;
 	boolean complex_regions;
 	VIRTUAL_SCREEN vscreen;
+	uint8* bmp_codec_none;
+	void* rfx_context;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
@@ -109,6 +113,7 @@ struct xf_info
 };
 
 void xf_toggle_fullscreen(xfInfo* xfi);
+boolean xf_post_connect(freerdp* instance);
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)

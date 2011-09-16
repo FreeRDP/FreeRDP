@@ -72,10 +72,7 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 
                 XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
-                //XGrabPointer(xfi->display, window->handle, True, 0, GrabModeAsync, GrabModeAsync, window->handle, 0L, CurrentTime);
-                //XGrabKeyboard(xfi->display, window->handle, False, GrabModeAsync, GrabModeAsync, CurrentTime);
 
-		//XSetInputFocus(xfi->display, window->handle, RevertToParent, CurrentTime);
 		window->fullscreen = True;
 	}
 }
@@ -218,10 +215,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 
 		if (class_hints != NULL)
 		{
-			if (name != NULL)
-				class_hints->res_name = name;
-
-			class_hints->res_class = "freerdp";
+			class_hints->res_name = "xfreerdp";
+			class_hints->res_class = "xfreerdp";
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
 		}
@@ -236,6 +231,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
 	}
+
+	XStoreName(xfi->display, window->handle, name);
 
 	return window;
 }

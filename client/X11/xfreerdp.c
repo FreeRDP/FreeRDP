@@ -31,6 +31,7 @@
 #include <locale.h>
 #include <sys/select.h>
 #include <termios.h>
+#include <freerdp/rfx/rfx.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -204,7 +205,9 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	contents = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
+	XDestroyWindow(xfi->display, xfi->window->handle);
 	xfi->fullscreen = (xfi->fullscreen) ? False : True;
+	xf_post_connect(xfi->instance);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
@@ -298,8 +301,10 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
 	settings->order_support[NEG_LINETO_INDEX] = True;
 	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = True;
+	settings->order_support[NEG_MEMBLT_INDEX] = False;
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
+	settings->order_support[NEG_MEMBLT_V2_INDEX] = False;
+	settings->order_support[NEG_MEM3BLT_V2_INDEX] = False;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
@@ -356,6 +361,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
+	xfi->fullscreen_toggle = xfi->fullscreen;
 
 	xf_detect_monitors(xfi, settings);
 
@@ -384,6 +390,9 @@ boolean xf_post_connect(freerdp* instance)
 	{
 		xfi->srcBpp = instance->settings->color_depth;
 		xf_gdi_register_update_callbacks(instance->update);
+
+		if (instance->settings->rfx_codec)
+			xfi->rfx_context = (void*) rfx_context_new();
 	}
 
 	if (xfi->fullscreen)
@@ -400,7 +409,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	if (xfi->remote_app != True)
 	{
-		xfi->window = xf_CreateDesktopWindow(xfi, "xfreerdp", xfi->width, xfi->height);
+		xfi->window = xf_CreateDesktopWindow(xfi, "FreeRDP", xfi->width, xfi->height);
 
 		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
 
@@ -428,11 +437,16 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
 	xfi->drawing = xfi->primary;
 
+	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->window->handle, 8, 8, 1);
+	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
+
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+
+	xfi->bmp_codec_none = (uint8*) xmalloc(64 * 64 * 4);
 
 	instance->update->BeginPaint = xf_begin_paint;
 	instance->update->EndPaint = xf_end_paint;

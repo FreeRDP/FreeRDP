@@ -37,6 +37,7 @@ typedef boolean (*psPeerActivate)(freerdp_peer* client);
 
 struct rdp_freerdp_peer
 {
+	void* info;
 	void* peer;
 	void* param1;
 	void* param2;

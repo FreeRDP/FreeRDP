@@ -31,9 +31,53 @@ struct _RFX_BITSTREAM
 };
 typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 
-void rfx_bitstream_attach(RFX_BITSTREAM* bs, uint8* buffer, int nbytes);
-uint16 rfx_bitstream_get_bits(RFX_BITSTREAM* bs, int nbits);
-void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, uint16 bits, int nbits);
+#define rfx_bitstream_attach(bs, _buffer, _nbytes) do { \
+	bs->buffer = (uint8*) (_buffer); \
+	bs->nbytes = (_nbytes); \
+	bs->byte_pos = 0; \
+	bs->bits_left = 8; } while (0)
+
+#define rfx_bitstream_get_bits(bs, _nbits, _r) do { \
+	int nbits = _nbits; \
+	int b; \
+	uint16 n = 0; \
+	while (bs->byte_pos < bs->nbytes && nbits > 0) \
+	{ \
+		b = nbits; \
+		if (b > bs->bits_left) \
+			b = bs->bits_left; \
+		if (n) \
+			n <<= b; \
+		n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1); \
+		bs->bits_left -= b; \
+		nbits -= b; \
+		if (bs->bits_left == 0) \
+		{ \
+			bs->bits_left = 8; \
+			bs->byte_pos++; \
+		} \
+	} \
+	_r = n; } while (0)
+
+#define rfx_bitstream_put_bits(bs, _bits, _nbits) do { \
+	uint16 bits = (_bits); \
+	int nbits = (_nbits); \
+	int b; \
+	while (bs->byte_pos < bs->nbytes && nbits > 0) \
+	{ \
+		b = nbits; \
+		if (b > bs->bits_left) \
+			b = bs->bits_left; \
+		bs->buffer[bs->byte_pos] &= ~(((1 << b) - 1) << (bs->bits_left - b)); \
+		bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs->bits_left - b); \
+		bs->bits_left -= b; \
+		nbits -= b; \
+		if (bs->bits_left == 0) \
+		{ \
+			bs->bits_left = 8; \
+			bs->byte_pos++; \
+		} \
+	} } while (0)
 
 #define rfx_bitstream_eos(_bs) ((_bs)->byte_pos >= (_bs)->nbytes)
 #define rfx_bitstream_left(_bs) ((_bs)->byte_pos >= (_bs)->nbytes ? 0 : ((_bs)->nbytes - (_bs)->byte_pos - 1) * 8 + (_bs)->bits_left)

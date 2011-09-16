@@ -18,8 +18,8 @@
  */
 
 #include "update.h"
-#include "bitmap.h"
 #include "surface.h"
+#include <freerdp/common/bitmap.h>
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
 {
@@ -28,6 +28,17 @@ uint8 UPDATE_TYPE_STRINGS[][32] =
 	"Palette",
 	"Synchronize"
 };
+
+void update_free_bitmap(BITMAP_UPDATE* bitmap_update)
+{
+	int i;
+
+	for (i = 0; i < bitmap_update->number; i++)
+	{
+		xfree(bitmap_update->bitmaps[i].data);
+	}
+	xfree(bitmap_update->bitmaps);
+}
 
 void update_recv_orders(rdpUpdate* update, STREAM* s)
 {
@@ -110,6 +121,7 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 {
 	int i;
 
+	update_free_bitmap(bitmap_update);
 	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
 	bitmap_update->bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
@@ -294,13 +306,15 @@ void update_recv(rdpUpdate* update, STREAM* s)
 		uint16 length;
 		uint16 source;
 		uint32 shareId;
+		uint8 compressed_type;
+		uint16 compressed_len;
 
 		rdp_read_share_control_header(s, &length, &pduType, &source);
 
 		if (pduType != PDU_TYPE_DATA)
 			return;
 
-		rdp_read_share_data_header(s, &length, &type, &shareId);
+		rdp_read_share_data_header(s, &length, &type, &shareId, &compressed_type, &compressed_len);
 
 		if (type == DATA_PDU_TYPE_UPDATE)
 			update_recv(update, s);
@@ -394,6 +408,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 void update_free(rdpUpdate* update)
 {
+	update_free_bitmap(&update->bitmap_update);
+
 	if (update != NULL)
 	{
 		xfree(update);
