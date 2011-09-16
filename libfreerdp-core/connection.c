@@ -430,7 +430,8 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	}
 	printf("\n");
 
-	nego_send_negotiation_response(rdp->nego);
+	if (!nego_send_negotiation_response(rdp->nego))
+		return False;
 
 	ret = False;
 	if (rdp->nego->selected_protocol & PROTOCOL_NLA)

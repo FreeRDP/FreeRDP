@@ -145,9 +145,17 @@ void nego_attempt_nla(rdpNego* nego)
 		return;
 	}
 
-	nego_send_negotiation_request(nego);
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
-	nego_recv_response(nego);
+	if (!nego_recv_response(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -179,9 +187,17 @@ void nego_attempt_tls(rdpNego* nego)
 		return;
 	}
 
-	nego_send_negotiation_request(nego);
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
-	nego_recv_response(nego);
+	if (!nego_recv_response(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
@@ -211,9 +227,17 @@ void nego_attempt_rdp(rdpNego* nego)
 		return;
 	}
 
-	nego_send_negotiation_request(nego);
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
-	nego_recv_response(nego);
+	if (!nego_recv_response(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 }
 
 /**
@@ -221,11 +245,12 @@ void nego_attempt_rdp(rdpNego* nego)
  * @param nego
  */
 
-void nego_recv_response(rdpNego* nego)
+boolean nego_recv_response(rdpNego* nego)
 {
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
-	transport_read(nego->transport, s);
-	nego_recv(nego->transport, s, nego->transport->recv_extra);
+	if (transport_read(nego->transport, s) < 0)
+		return False;
+	return nego_recv(nego->transport, s, nego->transport->recv_extra);
 }
 
 /**
@@ -236,13 +261,14 @@ void nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	uint8 li;
 	uint8 type;
 	rdpNego* nego = (rdpNego*) extra;
 
-	tpkt_read_header(s);
+	if (tpkt_read_header(s) == 0)
+		return False;
 	li = tpdu_read_connection_confirm(s);
 
 	if (li > 6)
@@ -267,7 +293,7 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		nego->state = NEGO_STATE_FINAL;
 	}
 
-	return 0;
+	return True;
 }
 
 /**
@@ -348,7 +374,7 @@ void nego_send(rdpNego* nego)
  * @param nego
  */
 
-void nego_send_negotiation_request(rdpNego* nego)
+boolean nego_send_negotiation_request(rdpNego* nego)
 {
 	STREAM* s;
 	int length;
@@ -390,7 +416,10 @@ void nego_send_negotiation_request(rdpNego* nego)
 	tpdu_write_connection_request(s, length - 5);
 	stream_set_mark(s, em);
 
-	transport_write(nego->transport, s);
+	if (transport_write(nego->transport, s) < 0)
+		return False;
+
+	return True;
 }
 
 /**
@@ -481,7 +510,7 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
  * @param nego
  */
 
-void nego_send_negotiation_response(rdpNego* nego)
+boolean nego_send_negotiation_response(rdpNego* nego)
 {
 	STREAM* s;
 	int length;
@@ -508,11 +537,14 @@ void nego_send_negotiation_response(rdpNego* nego)
 	tpdu_write_connection_confirm(s, length - 5);
 	stream_set_mark(s, em);
 
-	transport_write(nego->transport, s);
+	if (transport_write(nego->transport, s) < 0)
+		return False;
 
 	/* update settings with negotiated protocol security */
 	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
+
+	return True;
 }
 
 /**
