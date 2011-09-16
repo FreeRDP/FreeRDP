@@ -132,6 +132,9 @@ struct rdp_rdp
 	int decrypt_use_count;
 	struct crypto_rc4_struct* rc4_encrypt_key;
 	int encrypt_use_count;
+	struct crypto_des3_struct* fips_encrypt;
+	struct crypto_des3_struct* fips_decrypt;
+	struct crypto_hmac_struct* fips_hmac;
 	uint32 sec_flags;
 	boolean do_crypt;
 };
