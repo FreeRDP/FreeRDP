@@ -31,3 +31,5 @@ target_link_libraries(dfreerdp freerdp-kbd)
 target_link_libraries(dfreerdp freerdp-chanman)
 target_link_libraries(dfreerdp freerdp-utils)
 target_link_libraries(dfreerdp ${DIRECTFB_LIBRARIES})
+
+install(TARGETS dfreerdp DESTINATION bin)
