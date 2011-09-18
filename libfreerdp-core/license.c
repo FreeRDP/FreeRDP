@@ -300,14 +300,21 @@ void license_generate_hwid(rdpLicense* license)
 
 void license_encrypt_premaster_secret(rdpLicense* license)
 {
+	uint8* encrypted_premaster_secret;
+#if 0
 	int key_length;
 	uint8* modulus;
 	uint8* exponent;
-	uint8* encrypted_premaster_secret;
+	rdpCertificate *certificate;
 
-	exponent = license->certificate->cert_info.exponent;
-	modulus = license->certificate->cert_info.modulus.data;
-	key_length = license->certificate->cert_info.modulus.length;
+	if (license->server_certificate->length)
+		certificate = license->certificate;
+	else
+		certificate = license->rdp->settings->server_cert;
+
+	exponent = certificate->cert_info.exponent;
+	modulus = certificate->cert_info.modulus.data;
+	key_length = certificate->cert_info.modulus.length;
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("modulus (%d bits):\n", key_length * 8);
@@ -317,7 +324,6 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	freerdp_hexdump(exponent, 4);
 #endif
 
-#if 0
 	encrypted_premaster_secret = (uint8*) xmalloc(MODULUS_MAX_SIZE);
 	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
 
@@ -436,17 +442,21 @@ void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 	uint16 wBlobType;
 
 	stream_read_uint16(s, wBlobType); /* wBlobType (2 bytes) */
+	stream_read_uint16(s, blob->length); /* wBlobLen (2 bytes) */
+
+	/*
+ 	 * Server can choose to not send a certificate by setting len to 0.
+ 	 * If so, it may not bother to set the type, so shortcut the warning
+ 	 */
+	if (blob->type == BB_CERTIFICATE_BLOB && blob->length == 0)
+		return;
 
 	if (blob->type != wBlobType && blob->type != BB_ANY_BLOB)
 	{
-		printf("license binary blob type does not match expected type.\n");
-		return;
+		printf("license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
 	}
 
 	blob->type = wBlobType;
-
-	stream_read_uint16(s, blob->length); /* wBlobLen (2 bytes) */
-
 	blob->data = (uint8*) xmalloc(blob->length);
 
 	stream_read(s, blob->data, blob->length); /* blobData */
