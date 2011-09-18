@@ -72,6 +72,72 @@ void crypto_rc4_free(CryptoRc4 rc4)
 	xfree(rc4);
 }
 
+CryptoDes3 crypto_des3_encrypt_init(uint8 key[24], uint8 ivec[8])
+{
+	CryptoDes3 des3 = xmalloc(sizeof(*des3));
+	EVP_CIPHER_CTX_init(&des3->des3_ctx);
+	EVP_EncryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
+	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
+	return des3;
+}
+
+CryptoDes3 crypto_des3_decrypt_init(uint8 key[24], uint8 ivec[8])
+{
+	CryptoDes3 des3 = xmalloc(sizeof(*des3));
+	EVP_CIPHER_CTX_init(&des3->des3_ctx);
+	EVP_DecryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
+	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
+	return des3;
+}
+
+void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8 *out_data)
+{
+	int len;
+	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
+}
+
+void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8* out_data)
+{
+	int len;
+	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
+	if (length != len)
+		abort();	// TODO
+}
+
+void crypto_des3_free(CryptoDes3 des3)
+{
+	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
+	xfree(des3);
+}
+
+CryptoHmac crypto_hmac_new(void)
+{
+	CryptoHmac hmac = xmalloc(sizeof(*hmac));
+	HMAC_CTX_init(&hmac->hmac_ctx);
+	return hmac;
+}
+
+void crypto_hmac_sha1_init(CryptoHmac hmac, uint8 *data, uint32 length)
+{
+	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
+}
+
+void crypto_hmac_update(CryptoHmac hmac, uint8 *data, uint32 length)
+{
+	HMAC_Update(&hmac->hmac_ctx, data, length);
+}
+
+void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length)
+{
+	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
+}
+
+void crypto_hmac_free(CryptoHmac hmac)
+{
+	HMAC_CTX_cleanup(&hmac->hmac_ctx);
+	xfree(hmac);
+}
+
 CryptoCert crypto_cert_read(uint8* data, uint32 length)
 {
 	CryptoCert cert = xmalloc(sizeof(*cert));

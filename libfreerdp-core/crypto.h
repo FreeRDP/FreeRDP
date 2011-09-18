@@ -29,6 +29,7 @@
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -62,6 +63,16 @@ struct crypto_rc4_struct
 	RC4_KEY rc4_key;
 };
 
+struct crypto_des3_struct
+{
+	EVP_CIPHER_CTX des3_ctx;
+};
+
+struct crypto_hmac_struct
+{
+	HMAC_CTX hmac_ctx;
+};
+
 struct crypto_cert_struct
 {
 	X509 * px509;
@@ -81,6 +92,20 @@ typedef struct crypto_rc4_struct* CryptoRc4;
 CryptoRc4 crypto_rc4_init(uint8* key, uint32 length);
 void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8* in_data, uint8* out_data);
 void crypto_rc4_free(CryptoRc4 rc4);
+
+typedef struct crypto_des3_struct* CryptoDes3;
+CryptoDes3 crypto_des3_encrypt_init(uint8 key[24], uint8 ivec[8]);
+CryptoDes3 crypto_des3_decrypt_init(uint8 key[24], uint8 ivec[8]);
+void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8 *out_data);
+void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8* out_data);
+void crypto_des3_free(CryptoDes3 des3);
+
+typedef struct crypto_hmac_struct* CryptoHmac;
+CryptoHmac crypto_hmac_new(void);
+void crypto_hmac_sha1_init(CryptoHmac hmac, uint8 *data, uint32 length);
+void crypto_hmac_update(CryptoHmac hmac, uint8 *data, uint32 length);
+void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length);
+void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);

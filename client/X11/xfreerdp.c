@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <locale.h>
 #include <sys/select.h>
+#include <termios.h>
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
@@ -741,6 +742,65 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
+	if (strcmp("-", instance->settings->password) == 0)
+	{
+		char* password;
+		const int PASSSIZE = 512;
+		struct termios term_flags;
+		int pipe_ends[2];
+
+		password = xmalloc(PASSSIZE * sizeof(char));
+
+		printf("Password: ");
+
+		/* Turn off ECHO on stdin, but still echo newlines */
+		if (tcgetattr(fileno(stdin), &term_flags) != 0)
+		{
+			perror(strerror(errno));
+			exit(errno);
+		}
+
+		if (pipe(pipe_ends) != 0)
+		{
+			perror(strerror(errno));
+			exit(errno);
+		}
+
+		switch (fork())
+		{
+		case -1:
+			perror(strerror(errno));
+			exit(errno);
+
+		case 0:
+			close(pipe_ends[0]);
+			term_flags.c_lflag &= ~ECHO;
+			term_flags.c_lflag |= ECHONL;
+			tcsetattr(fileno(stdin), TCSAFLUSH, &term_flags);
+			fgets(password, PASSSIZE - 1, stdin);
+			write(pipe_ends[1], password, strlen(password));
+			close(pipe_ends[1]);
+			exit(EXIT_SUCCESS);
+
+		default:
+			wait();
+			if (tcsetattr(fileno(stdin), TCSADRAIN, &term_flags) != 0)
+			{
+				tcsetattr(fileno(stdin), TCSANOW, &term_flags);
+				perror(strerror(errno));
+				exit(errno);
+			}
+			break;
+		}
+
+		close(pipe_ends[1]);
+		read(pipe_ends[0], password, PASSSIZE);
+		close(pipe_ends[0]);
+
+		*(password + strlen(password) - 1) = '\0';
+		xfree(instance->settings->password);
+		instance->settings->password = password;
+	}
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
