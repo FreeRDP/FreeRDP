@@ -24,19 +24,23 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <pthread.h>
 #include <locale.h>
-#include <sys/select.h>
+#include <unistd.h>
+#include <string.h>
 #include <termios.h>
+#include <pthread.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/select.h>
 #include <freerdp/rfx/rfx.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/constants.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
 
@@ -742,14 +746,16 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
-	if (strcmp("-", instance->settings->password) == 0)
-	{
-		char* password;
-		const int PASSSIZE = 512;
-		struct termios term_flags;
-		int pipe_ends[2];
 
-		password = xmalloc(PASSSIZE * sizeof(char));
+	if (instance->settings->password == NULL)
+	{
+		int status;
+		char* password;
+		int pipe_ends[2];
+		struct termios term_flags;
+		const int password_size = 512;
+
+		password = xmalloc(password_size * sizeof(char));
 
 		printf("Password: ");
 
@@ -768,33 +774,33 @@ int main(int argc, char* argv[])
 
 		switch (fork())
 		{
-		case -1:
-			perror(strerror(errno));
-			exit(errno);
-
-		case 0:
-			close(pipe_ends[0]);
-			term_flags.c_lflag &= ~ECHO;
-			term_flags.c_lflag |= ECHONL;
-			tcsetattr(fileno(stdin), TCSAFLUSH, &term_flags);
-			fgets(password, PASSSIZE - 1, stdin);
-			write(pipe_ends[1], password, strlen(password));
-			close(pipe_ends[1]);
-			exit(EXIT_SUCCESS);
-
-		default:
-			wait();
-			if (tcsetattr(fileno(stdin), TCSADRAIN, &term_flags) != 0)
-			{
-				tcsetattr(fileno(stdin), TCSANOW, &term_flags);
+			case -1:
 				perror(strerror(errno));
 				exit(errno);
-			}
-			break;
+
+			case 0:
+				close(pipe_ends[0]);
+				term_flags.c_lflag &= ~ECHO;
+				term_flags.c_lflag |= ECHONL;
+				tcsetattr(fileno(stdin), TCSAFLUSH, &term_flags);
+				fgets(password, password_size - 1, stdin);
+				write(pipe_ends[1], password, strlen(password));
+				close(pipe_ends[1]);
+				exit(EXIT_SUCCESS);
+
+			default:
+				wait(&status);
+				if (tcsetattr(fileno(stdin), TCSADRAIN, &term_flags) != 0)
+				{
+					tcsetattr(fileno(stdin), TCSANOW, &term_flags);
+					perror(strerror(errno));
+					exit(errno);
+				}
+				break;
 		}
 
 		close(pipe_ends[1]);
-		read(pipe_ends[0], password, PASSSIZE);
+		read(pipe_ends[0], password, password_size);
 		close(pipe_ends[0]);
 
 		*(password + strlen(password) - 1) = '\0';
