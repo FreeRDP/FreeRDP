@@ -419,6 +419,7 @@ struct _FAST_INDEX_ORDER
 	sint16 opTop;
 	sint16 opRight;
 	sint16 opBottom;
+	boolean opaqueRect;
 	sint16 x;
 	sint16 y;
 	uint16 nfragments;
@@ -899,6 +900,14 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 #define HS_BDIAGONAL			0x03
 #define HS_CROSS			0x04
 #define HS_DIAGCROSS			0x05
+
+#define SO_FLAG_DEFAULT_PLACEMENT	0x01
+#define SO_HORIZONTAL			0x02
+#define SO_VERTICAL			0x04
+#define SO_REVERSED			0x08
+#define SO_ZERO_BEARINGS		0x10
+#define SO_CHAR_INC_EQUAL_BM_BASE	0x20
+#define SO_MAXEXT_EQUAL_BM_SIDE		0x40
 
 #define DSDNG_STRETCH 			0x00000001
 #define DSDNG_TILE 			0x00000002

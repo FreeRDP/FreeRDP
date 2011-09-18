@@ -66,6 +66,26 @@ void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra
 		glyph->glyphCache[id].entries[index].extra = extra;
 }
 
+void* glyph_fragment_get(rdpGlyph* glyph, uint8 index, uint8* count, void** extra)
+{
+	void* entry;
+
+	entry = glyph->fragCache.entries[index].entry;
+	*count = glyph->fragCache.entries[index].count;
+
+	if (extra != NULL)
+		*extra = glyph->fragCache.entries[index].extra;
+
+	return entry;
+}
+
+void glyph_fragment_put(rdpGlyph* glyph, uint8 index, uint8 count, void* entry, void* extra)
+{
+	glyph->fragCache.entries[index].entry = entry;
+	glyph->fragCache.entries[index].count = count;
+	glyph->fragCache.entries[index].extra = extra;
+}
+
 rdpGlyph* glyph_new(rdpSettings* settings)
 {
 	rdpGlyph* glyph;
@@ -78,7 +98,7 @@ rdpGlyph* glyph_new(rdpSettings* settings)
 
 		glyph->settings = settings;
 
-		//settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
+		settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
 
 		for (i = 0; i < 10; i++)
 		{
@@ -87,9 +107,7 @@ rdpGlyph* glyph_new(rdpSettings* settings)
 			glyph->glyphCache[i].entries = xzalloc(sizeof(GLYPH_CACHE) * glyph->glyphCache[i].number);
 		}
 
-		glyph->fragCache.number = settings->fragCache.cacheEntries;
-		glyph->fragCache.maxCellSize = settings->fragCache.cacheMaximumCellSize;
-		glyph->fragCache.entries = xzalloc(sizeof(GLYPH_CACHE) * glyph->fragCache.number);
+		glyph->fragCache.entries = xzalloc(sizeof(FRAGMENT_CACHE_ENTRY) * 256);
 	}
 
 	return glyph;

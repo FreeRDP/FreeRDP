@@ -535,7 +535,7 @@ INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments,
 			fragment->operation = GLYPH_FRAGMENT_ADD;
 
 			fragment->nindices = 0;
-			icount = (lengths[index] - 3) / (delta) ? 2 : 1;
+			icount = (lengths[index] - 3) / ((delta) ? 2 : 1);
 			fragment->indices = (GLYPH_FRAGMENT_INDEX*) xmalloc(icount * sizeof(GLYPH_FRAGMENT_INDEX));
 
 			while (s->p < (offsets[index] + (lengths[index] - 3)))
@@ -550,6 +550,8 @@ INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments,
 
 				if (delta)
 					update_read_glyph_delta(s, &fragment->indices[fragment->nindices].delta);
+				else
+					fragment->indices[fragment->nindices].delta = 0;
 
 				fragment->nindices++;
 			}
@@ -564,7 +566,7 @@ INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments,
 			fragment->operation = GLYPH_FRAGMENT_NOP;
 
 			fragment->nindices = 0;
-			icount = lengths[index] / (delta) ? 2 : 1;
+			icount = lengths[index] / ((delta) ? 2 : 1);
 			fragment->indices = (GLYPH_FRAGMENT_INDEX*) xmalloc(icount * sizeof(GLYPH_FRAGMENT_INDEX));
 
 			while (s->p < (offsets[index] + lengths[index]))
@@ -579,6 +581,8 @@ INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments,
 
 				if (delta)
 					update_read_glyph_delta(s, &fragment->indices[fragment->nindices].delta);
+				else
+					fragment->indices[fragment->nindices].delta = 0;
 
 				fragment->nindices++;
 			}
@@ -1097,6 +1101,8 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
+	fast_index->opaqueRect = False;
+
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_index->cacheId);
 
@@ -1125,7 +1131,10 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 		update_read_coord(s, &fast_index->bkBottom, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
+	{
 		update_read_coord(s, &fast_index->opLeft, orderInfo->deltaCoordinates);
+		fast_index->opaqueRect = True;
+	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_10)
 		update_read_coord(s, &fast_index->opTop, orderInfo->deltaCoordinates);
@@ -1141,6 +1150,37 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_14)
 		update_read_coord(s, &fast_index->y, orderInfo->deltaCoordinates);
+
+	if (fast_index->opRight == 0)
+		fast_index->opRight = fast_index->bkRight;
+
+	if (fast_index->opBottom == -32768)
+	{
+		if ((fast_index->opTop & 0x0F) == 0x0F)
+		{
+			fast_index->opLeft = fast_index->bkLeft;
+			fast_index->opTop = fast_index->bkTop;
+			fast_index->opRight = fast_index->bkRight;
+			fast_index->opBottom = fast_index->bkBottom;
+			fast_index->opaqueRect = True;
+		}
+		else if ((fast_index->opTop & 0x0F) == 0x0D)
+		{
+			fast_index->opLeft = fast_index->bkLeft;
+			fast_index->opTop = fast_index->bkTop;
+			fast_index->opBottom = fast_index->bkBottom;
+			fast_index->opaqueRect = True;
+		}
+	}
+
+	if (fast_index->opRight - fast_index->opLeft > 1)
+		fast_index->opaqueRect = True;
+
+	if (fast_index->x == -32768)
+		fast_index->x = fast_index->bkLeft;
+
+	if (fast_index->y == -32768)
+		fast_index->y = fast_index->bkTop;
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{

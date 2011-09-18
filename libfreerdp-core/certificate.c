@@ -278,8 +278,6 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 	uint32 wSignatureBlobType;
 	uint32 wSignatureBlobLen;
 
-	printf("Server Proprietary Certificate\n");
-
 	stream_read_uint32(s, dwSigAlgId);
 	stream_read_uint32(s, dwKeyAlgId);
 	if (!(dwSigAlgId == 1 && dwKeyAlgId == 1))
