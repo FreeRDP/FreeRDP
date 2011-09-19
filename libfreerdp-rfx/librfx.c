@@ -569,6 +569,9 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, uint8* data, uint32 lengt
 		stream_set_pos(s, pos);
 	}
 
+	stream_detach(s);
+	stream_free(s);
+
 	return message;
 }
 
