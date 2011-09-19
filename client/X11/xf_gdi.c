@@ -232,6 +232,29 @@ Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, uint8* data)
 	return bitmap;
 }
 
+Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
+{
+	int scanline;
+	Pixmap bitmap;
+	XImage* image;
+
+	scanline = (width + 7) / 8;
+
+	bitmap = XCreatePixmap(xfi->display, xfi->window->handle, width, height, 1);
+
+	image = XCreateImage(xfi->display, xfi->visual, 1,
+			ZPixmap, 0, (char*) data, width, height, 8, scanline);
+
+	image->byte_order = MSBFirst;
+	image->bitmap_bit_order = MSBFirst;
+
+	XInitImage(image);
+	XPutImage(xfi->display, bitmap, xfi->gc_mono, image, 0, 0, 0, 0, width, height);
+	XFree(image);
+
+	return bitmap;
+}
+
 void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 {
 	int i;
@@ -319,7 +342,6 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 	if (brush->style & CACHED_BRUSH)
 	{
-		printf("cached brush bpp:%d\n", brush->bpp);
 		brush->data = brush_get(xfi->cache->brush, brush->index, &brush->bpp);
 		brush->style = GDI_BS_PATTERN;
 	}
@@ -505,7 +527,117 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
+	int i, j;
+	int x, y;
+	Pixmap bmp;
+	Pixmap* bmps;
+	uint32 fg_color;
+	uint32 bg_color;
+	GLYPH_DATA* glyph;
+	GLYPH_DATA** glyphs;
+	GLYPH_FRAGMENT* fragment;
+	xfInfo* xfi = GET_XFI(update);
 
+	x = fast_index->bkLeft;
+	y = fast_index->y;
+
+	fg_color = freerdp_color_convert(fast_index->foreColor, 32, xfi->bpp, xfi->clrconv);
+	bg_color = freerdp_color_convert(fast_index->backColor, 32, xfi->bpp, xfi->clrconv);
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetForeground(xfi->display, xfi->gc, bg_color);
+	XSetBackground(xfi->display, xfi->gc, fg_color);
+
+#if 0
+	if (fast_index->opaqueRect)
+	{
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+
+		XFillRectangle(xfi->display, xfi->drawing, xfi->gc, fast_index->opLeft, fast_index->opTop,
+				fast_index->opRight - fast_index->opLeft + 1, fast_index->opBottom - fast_index->opTop + 1);
+
+		if (xfi->drawing == xfi->primary)
+		{
+			XFillRectangle(xfi->display, xfi->window->handle, xfi->gc, fast_index->opLeft, fast_index->opTop,
+					fast_index->opRight - fast_index->opLeft + 1, fast_index->opBottom - fast_index->opTop + 1);
+		}
+	}
+#endif
+
+	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
+
+	for (i = 0; i < fast_index->nfragments; i++)
+	{
+		fragment = &fast_index->fragments[i];
+
+		if (fragment->operation == GLYPH_FRAGMENT_USE)
+		{
+			fragment->indices = (GLYPH_FRAGMENT_INDEX*) glyph_fragment_get(xfi->cache->glyph,
+							fragment->index, &fragment->nindices, (void**) &bmps);
+
+			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
+
+			for (j = 0; j < fragment->nindices; j++)
+			{
+				glyphs[j] = glyph_get(xfi->cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
+			}
+		}
+		else
+		{
+			bmps = (Pixmap*) xmalloc(sizeof(Pixmap*) * fragment->nindices);
+			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
+
+			for (j = 0; j < fragment->nindices; j++)
+			{
+				glyphs[j] = glyph_get(xfi->cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
+			}
+		}
+
+		for (j = 0; j < fragment->nindices; j++)
+		{
+			bmp = bmps[j];
+			glyph = glyphs[j];
+
+			XSetStipple(xfi->display, xfi->gc, bmp);
+			XSetTSOrigin(xfi->display, xfi->gc, glyph->x + x, glyph->y + y);
+			XFillRectangle(xfi->display, xfi->drawing, xfi->gc, glyph->x + x, glyph->y + y, glyph->cx, glyph->cy);
+			XSetStipple(xfi->display, xfi->gc, xfi->bitmap_mono);
+
+			if ((j + 1) < fragment->nindices)
+			{
+				if (!(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
+				{
+					if (fast_index->flAccel & SO_VERTICAL)
+					{
+						y += fragment->indices[j + 1].delta;
+					}
+					else
+					{
+						x += fragment->indices[j + 1].delta;
+					}
+				}
+				else
+				{
+					x += glyph->cx;
+				}
+			}
+		}
+
+		if (fragment->operation == GLYPH_FRAGMENT_ADD)
+		{
+			glyph_fragment_put(xfi->cache->glyph, fragment->index,
+					fragment->nindices, (void*) fragment->indices, (void*) bmps);
+		}
+	}
+
+	if (xfi->drawing == xfi->primary)
+	{
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+				fast_index->bkLeft, fast_index->bkTop,
+				fast_index->bkRight - fast_index->bkLeft + 1,
+				fast_index->bkBottom - fast_index->bkTop + 1,
+				fast_index->bkLeft, fast_index->bkTop);
+	}
 }
 
 void xf_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
@@ -549,7 +681,17 @@ void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_
 
 void xf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 {
+	int i;
+	Pixmap bitmap;
+	GLYPH_DATA* glyph;
+	xfInfo* xfi = GET_XFI(update);
 
+	for (i = 0; i < cache_glyph->cGlyphs; i++)
+	{
+		glyph = cache_glyph->glyphData[i];
+		bitmap = xf_glyph_new(xfi, glyph->cx, glyph->cy, glyph->aj);
+		glyph_put(xfi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
+	}
 }
 
 void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
@@ -565,19 +707,15 @@ void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	STREAM* s;
-	XImage* image;
 	int i, tx, ty;
+	XImage* image;
 	RFX_MESSAGE* message;
 	xfInfo* xfi = GET_XFI(update);
 	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
-		s = stream_new(0);
-		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-
-		message = rfx_process_message(context, s);
+		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -611,8 +749,6 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 		rfx_message_free(context, message);
-		stream_detach(s);
-		stream_free(s);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{

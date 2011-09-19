@@ -89,14 +89,6 @@
 #define CBR3_IGNORABLE_FLAG		0x08
 #define CBR3_DO_NOT_CACHE		0x10
 
-#define SO_FLAG_DEFAULT_PLACEMENT	0x01
-#define SO_HORIZONTAL			0x02
-#define SO_VERTICAL			0x04
-#define SO_REVERSED			0x08
-#define SO_ZERO_BEARINGS		0x10
-#define SO_CHAR_INC_EQUAL_BM_BASE	0x20
-#define SO_MAXEXT_EQUAL_BM_SIDE		0x40
-
 #define COMPRESSED_BRUSH_LENGTH		20
 
 /* Primary Drawing Orders */

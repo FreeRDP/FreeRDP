@@ -39,16 +39,33 @@ struct _GLYPH_CACHE
 };
 typedef struct _GLYPH_CACHE GLYPH_CACHE;
 
+struct _FRAGMENT_CACHE_ENTRY
+{
+	void* entry;
+	void* extra;
+	uint16 count;
+};
+typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
+
+struct _FRAGMENT_CACHE
+{
+	FRAGMENT_CACHE_ENTRY* entries;
+};
+typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
+
 struct rdp_glyph
 {
 	rdpSettings* settings;
 	GLYPH_CACHE glyphCache[10];
-	GLYPH_CACHE fragCache;
+	FRAGMENT_CACHE fragCache;
 };
 typedef struct rdp_glyph rdpGlyph;
 
 FREERDP_API void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra);
 FREERDP_API void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra);
+
+FREERDP_API void* glyph_fragment_get(rdpGlyph* glyph, uint8 index, uint8* count, void** extra);
+FREERDP_API void glyph_fragment_put(rdpGlyph* glyph, uint8 index, uint8 count, void* entry, void* extra);
 
 FREERDP_API rdpGlyph* glyph_new(rdpSettings* settings);
 FREERDP_API void glyph_free(rdpGlyph* glyph);
