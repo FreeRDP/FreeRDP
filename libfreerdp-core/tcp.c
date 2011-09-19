@@ -199,6 +199,7 @@ boolean tcp_disconnect(rdpTcp * tcp)
 {
 	if (tcp->sockfd != -1)
 	{
+		shutdown(tcp->sockfd, SHUT_RDWR);
 		close(tcp->sockfd);
 		tcp->sockfd = -1;
 	}
