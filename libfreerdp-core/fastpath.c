@@ -198,12 +198,12 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
-			update->pointer_system->type = SYSPTR_NULL;
+			update->pointer_system.type = SYSPTR_NULL;
 			IFCALL(update->PointerSystem, update, &update->pointer_system);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
-			update->pointer_system->type = SYSPTR_DEFAULT;
+			update->pointer_system.type = SYSPTR_DEFAULT;
 			IFCALL(update->PointerSystem, update, &update->pointer_system);
 			break;
 
