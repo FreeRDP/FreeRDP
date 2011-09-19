@@ -853,7 +853,6 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 {
 	int i, j;
 	int tx, ty;
-	STREAM* s;
 	char* tile_bitmap;
 	RFX_MESSAGE* message;
 	GDI* gdi = GET_GDI(update);
@@ -871,10 +870,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
-		s = stream_new(0);
-		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-
-		message = rfx_process_message(context, s);
+		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		DEBUG_GDI("num_rects %d num_tiles %d", message->num_rects, message->num_tiles);
 
@@ -904,9 +900,6 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 		gdi_SetNullClipRgn(gdi->primary->hdc);
 		rfx_message_free(context, message);
-
-		stream_detach(s);
-		stream_free(s);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{

@@ -130,11 +130,15 @@ FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format);
 FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
 
-FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, STREAM* data_in);
+FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, uint8* data, uint32 length);
+FREERDP_API uint16 rfx_message_get_tile_count(RFX_MESSAGE* message);
+FREERDP_API RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* message, int index);
+FREERDP_API uint16 rfx_message_get_rect_count(RFX_MESSAGE* message);
+FREERDP_API RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index);
 FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
-FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* data_out);
-FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* data_out,
+FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* s);
+FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* s,
 	const RFX_RECT* rects, int num_rects, uint8* image_data, int width, int height, int rowstride);
 
 #ifdef __cplusplus

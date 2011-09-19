@@ -707,19 +707,15 @@ void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	STREAM* s;
-	XImage* image;
 	int i, tx, ty;
+	XImage* image;
 	RFX_MESSAGE* message;
 	xfInfo* xfi = GET_XFI(update);
 	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
-		s = stream_new(0);
-		stream_attach(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-
-		message = rfx_process_message(context, s);
+		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -753,8 +749,6 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 		rfx_message_free(context, message);
-		stream_detach(s);
-		stream_free(s);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
