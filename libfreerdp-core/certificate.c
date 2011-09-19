@@ -186,6 +186,8 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 	ber_read_integer_length(s, &exponent_length); /* publicExponent (INTEGER) */
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
+	crypto_reverse(info->modulus.data, modulus_length);
+	crypto_reverse(info->exponent, 4);
 }
 
 /**
