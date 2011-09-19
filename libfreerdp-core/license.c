@@ -330,15 +330,15 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	crypto_rsa_encrypt(license->premaster_secret, PREMASTER_SECRET_LENGTH,
 			key_length, modulus, exponent, encrypted_premaster_secret);
 
-	license->encrypted_premaster_secret->type = BB_ANY_BLOB;
+	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
 	license->encrypted_premaster_secret->length = PREMASTER_SECRET_LENGTH;
 	license->encrypted_premaster_secret->data = encrypted_premaster_secret;
 #else
 	encrypted_premaster_secret = (uint8*) xmalloc(MODULUS_MAX_SIZE);
 	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
 
-	license->encrypted_premaster_secret->type = BB_ANY_BLOB;
-	license->encrypted_premaster_secret->length = MODULUS_MAX_SIZE;
+	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
+	license->encrypted_premaster_secret->length = PREMASTER_SECRET_LENGTH;
 	license->encrypted_premaster_secret->data = encrypted_premaster_secret;
 #endif
 }
@@ -480,13 +480,16 @@ void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 
 void license_write_padded_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 {
+	uint16 pad_len;
+
+	pad_len = 72 % blob->length;
 	stream_write_uint16(s, blob->type); /* wBlobType (2 bytes) */
-	stream_write_uint16(s, blob->length + LICENSING_PADDING_SIZE); /* wBlobLen (2 bytes) */
+	stream_write_uint16(s, blob->length + pad_len); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
 		stream_write(s, blob->data, blob->length); /* blobData */
 
-	stream_write_zero(s, LICENSING_PADDING_SIZE);
+	stream_write_zero(s, pad_len);
 }
 
 /**
