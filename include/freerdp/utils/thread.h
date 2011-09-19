@@ -43,11 +43,15 @@ struct _freerdp_thread
 FREERDP_API freerdp_thread* freerdp_thread_new(void);
 FREERDP_API void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
 FREERDP_API void freerdp_thread_stop(freerdp_thread* thread);
+FREERDP_API void freerdp_thread_free(freerdp_thread* thread);
 
 #define freerdp_thread_wait(_t) wait_obj_select(_t->signals, _t->num_signals, -1)
 #define freerdp_thread_wait_timeout(_t, _timeout) wait_obj_select(_t->signals, _t->num_signals, _timeout)
 #define freerdp_thread_is_stopped(_t) wait_obj_is_set(_t->signals[0])
-#define freerdp_thread_quit(_t) _t->status = -1
+#define freerdp_thread_is_running(_t) (_t->status == 1)
+#define freerdp_thread_quit(_t) do { \
+	_t->status = -1; \
+	wait_obj_clear(_t->signals[0]); } while (0)
 #define freerdp_thread_signal(_t) wait_obj_set(_t->signals[1])
 #define freerdp_thread_reset(_t) wait_obj_clear(_t->signals[1])
 #define freerdp_thread_lock(_t) freerdp_mutex_lock(_t->mutex)

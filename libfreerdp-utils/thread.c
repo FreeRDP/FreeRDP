@@ -72,6 +72,11 @@ void freerdp_thread_stop(freerdp_thread* thread)
 		i++;
 		freerdp_usleep(100);
 	}
+}
+
+void freerdp_thread_free(freerdp_thread* thread)
+{
+	int i;
 
 	for (i = 0; i < thread->num_signals; i++)
 		wait_obj_free(thread->signals[i]);
