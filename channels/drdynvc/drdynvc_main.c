@@ -71,7 +71,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
 	return cb;
 }
 
-int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, char* data, uint32 data_size)
+int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, uint32 data_size)
 {
 	STREAM* data_out;
 	uint32 pos = 0;
