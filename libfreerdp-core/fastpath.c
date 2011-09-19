@@ -176,6 +176,8 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 
 static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
+	rdpUpdate* update = fastpath->rdp->update;
+
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
@@ -196,27 +198,33 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
-			//printf("FASTPATH_UPDATETYPE_PTR_NULL\n");
+			update->pointer_system->type = SYSPTR_NULL;
+			IFCALL(update->PointerSystem, update, &update->pointer_system);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
-			//printf("FASTPATH_UPDATETYPE_PTR_DEFAULT\n");
+			update->pointer_system->type = SYSPTR_DEFAULT;
+			IFCALL(update->PointerSystem, update, &update->pointer_system);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			//printf("FASTPATH_UPDATETYPE_PTR_POSITION\n");
+			update_read_pointer_position(s, &update->pointer_position);
+			IFCALL(update->PointerPosition, update, &update->pointer_position);
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			//printf("FASTPATH_UPDATETYPE_COLOR\n");
+			update_read_pointer_color(s, &update->pointer_color);
+			IFCALL(update->PointerColor, update, &update->pointer_color);
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			//printf("FASTPATH_UPDATETYPE_CACHED\n");
+			update_read_pointer_cached(s, &update->pointer_cached);
+			IFCALL(update->PointerCached, update, &update->pointer_cached);
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			//printf("FASTPATH_UPDATETYPE_POINTER\n");
+			update_read_pointer_new(s, &update->pointer_new);
+			IFCALL(update->PointerNew, update, &update->pointer_new);
 			break;
 
 		default:
