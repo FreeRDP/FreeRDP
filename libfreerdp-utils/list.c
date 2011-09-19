@@ -97,6 +97,14 @@ void* list_dequeue(LIST* list)
 	return data;
 }
 
+void* list_peek(LIST* list)
+{
+	LIST_ITEM* item;
+
+	item = list->head;
+	return item ? item->data : NULL;
+}
+
 void* list_remove(LIST* list, void* data)
 {
 	LIST_ITEM* item;
