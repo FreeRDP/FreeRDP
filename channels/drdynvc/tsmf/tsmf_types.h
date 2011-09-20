@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * Dynamic Virtual Channel
+ * Video Redirection Virtual Channel - Types
  *
  * Copyright 2010-2011 Vic Lee
  *
@@ -17,14 +17,31 @@
  * limitations under the License.
  */
 
-#ifndef __DRDYNVC_MAIN_H
-#define __DRDYNVC_MAIN_H
+#ifndef __TSMF_TYPES_H
+#define __TSMF_TYPES_H
 
 #include <freerdp/types.h>
 
-typedef struct drdynvc_plugin drdynvcPlugin;
+typedef struct _TS_AM_MEDIA_TYPE
+{
+	int MajorType;
+	int SubType;
+	int FormatType;
 
-int drdynvc_write_data(drdynvcPlugin* plugin, uint32 ChannelId, uint8* data, uint32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, RDP_EVENT* event);
+	uint32 Width;
+	uint32 Height;	
+	uint32 BitRate;
+	struct
+	{
+		uint32 Numerator;
+		uint32 Denominator;
+	} SamplesPerSecond;
+	uint32 Channels;
+	uint32 BitsPerSample;
+	uint32 BlockAlign;
+	const uint8* ExtraData;
+	uint32 ExtraDataSize;
+} TS_AM_MEDIA_TYPE;
 
 #endif
+

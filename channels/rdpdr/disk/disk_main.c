@@ -555,6 +555,7 @@ static void disk_free(DEVICE* device)
 	DISK_FILE* file;
 
 	freerdp_thread_stop(disk->thread);
+	freerdp_thread_free(disk->thread);
 	
 	while ((irp = (IRP*)list_dequeue(disk->irp_list)) != NULL)
 		irp->Discard(irp);

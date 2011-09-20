@@ -17,20 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(DRDYNVC_SRCS
-	drdynvc_main.c
-	drdynvc_main.h
-	drdynvc_types.h
-	dvcman.c
-	dvcman.h
+set(TSMF_PULSE_SRCS
+	tsmf_pulse.c
 )
 
-add_library(drdynvc ${DRDYNVC_SRCS})
-set_target_properties(drdynvc PROPERTIES PREFIX "")
+include_directories(..)
+include_directories(${PULSE_INCLUDE_DIRS})
 
-target_link_libraries(drdynvc freerdp-utils)
+add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
+set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
 
-install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(tsmf_pulse freerdp-utils)
+target_link_libraries(tsmf_pulse ${PULSE_LIBRARIES})
 
-add_subdirectory(tsmf)
+install(TARGETS tsmf_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 
