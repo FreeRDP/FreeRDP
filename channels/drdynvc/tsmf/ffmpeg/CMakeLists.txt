@@ -17,20 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(DRDYNVC_SRCS
-	drdynvc_main.c
-	drdynvc_main.h
-	drdynvc_types.h
-	dvcman.c
-	dvcman.h
+set(TSMF_FFMPEG_SRCS
+	tsmf_ffmpeg.c
 )
 
-add_library(drdynvc ${DRDYNVC_SRCS})
-set_target_properties(drdynvc PROPERTIES PREFIX "")
+include_directories(..)
+include_directories(${FFMPEG_INCLUDE_DIRS})
 
-target_link_libraries(drdynvc freerdp-utils)
+add_library(tsmf_ffmpeg ${TSMF_FFMPEG_SRCS})
+set_target_properties(tsmf_ffmpeg PROPERTIES PREFIX "")
 
-install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(tsmf_ffmpeg freerdp-utils)
+target_link_libraries(tsmf_ffmpeg ${FFMPEG_LIBRARIES})
 
-add_subdirectory(tsmf)
+install(TARGETS tsmf_ffmpeg DESTINATION ${FREERDP_PLUGIN_PATH})
 

@@ -25,6 +25,8 @@ add_executable(xfreerdp
 	xf_gdi.h
 	xf_rail.c
 	xf_rail.h
+	xf_tsmf.c
+	xf_tsmf.h
 	xf_event.c
 	xf_event.h
 	xf_keyboard.c
@@ -70,6 +72,13 @@ if(Xcursor_FOUND)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${Xcursor_INCLUDE_DIRS})
 	target_link_libraries(xfreerdp ${Xcursor_LIBRARIES})
+endif()
+
+find_suggested_package(Xv)
+if(XV_FOUND)
+	add_definitions(-DWITH_XV)
+	include_directories(${XV_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${XV_LIBRARIES})
 endif()
 
 target_link_libraries(xfreerdp freerdp-core)

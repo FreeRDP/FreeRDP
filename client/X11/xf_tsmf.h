@@ -1,6 +1,6 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * Dynamic Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Client
+ * X11 Video Redirection
  *
  * Copyright 2010-2011 Vic Lee
  *
@@ -17,14 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef __DRDYNVC_MAIN_H
-#define __DRDYNVC_MAIN_H
+#ifndef __XF_TSMF_H
+#define __XF_TSMF_H
 
-#include <freerdp/types.h>
+#include "xfreerdp.h"
 
-typedef struct drdynvc_plugin drdynvcPlugin;
+void xf_tsmf_init(xfInfo* xfi, long xv_port);
+void xf_tsmf_uninit(xfInfo* xfi);
+void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event);
 
-int drdynvc_write_data(drdynvcPlugin* plugin, uint32 ChannelId, uint8* data, uint32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, RDP_EVENT* event);
-
-#endif
+#endif /* __XF_TSMF_H */

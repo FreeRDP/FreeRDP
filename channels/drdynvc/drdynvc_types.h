@@ -21,6 +21,8 @@
 #define __DRDYNVC_TYPES_H
 
 #include "config.h"
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_DVC

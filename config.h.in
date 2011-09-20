@@ -33,5 +33,6 @@
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_DEBUG_X11
 #cmakedefine WITH_DEBUG_RAIL
+#cmakedefine WITH_DEBUG_XV
 
 #endif

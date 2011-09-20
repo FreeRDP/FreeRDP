@@ -210,6 +210,7 @@ static void printer_free(DEVICE* device)
 	IRP* irp;
 
 	freerdp_thread_stop(printer_dev->thread);
+	freerdp_thread_free(printer_dev->thread);
 	
 	while ((irp = (IRP*)list_dequeue(printer_dev->irp_list)) != NULL)
 		irp->Discard(irp);

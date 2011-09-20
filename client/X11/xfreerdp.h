@@ -93,6 +93,7 @@ struct xf_info
 	VIRTUAL_SCREEN vscreen;
 	uint8* bmp_codec_none;
 	void* rfx_context;
+	void* xv_context;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

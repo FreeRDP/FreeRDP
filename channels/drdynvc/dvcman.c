@@ -263,7 +263,7 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 
 static int dvcman_write_channel(IWTSVirtualChannel* pChannel,
 	uint32 cbSize,
-	char* pBuffer,
+	uint8* pBuffer,
 	void* pReserved)
 {
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*)pChannel;
