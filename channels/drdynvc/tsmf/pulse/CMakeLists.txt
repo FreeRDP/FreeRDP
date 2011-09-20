@@ -17,41 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TSMF_SRCS
-	tsmf_audio.c
-	tsmf_audio.h
-	tsmf_codec.c
-	tsmf_codec.h
-	tsmf_constants.h
-	tsmf_decoder.c
-	tsmf_decoder.h
-	tsmf_ifman.c
-	tsmf_ifman.h
-	tsmf_main.c
-	tsmf_main.h
-	tsmf_media.c
-	tsmf_media.h
-	tsmf_types.h
+set(TSMF_PULSE_SRCS
+	tsmf_pulse.c
 )
 
 include_directories(..)
+include_directories(${PULSE_INCLUDE_DIRS})
 
-add_library(tsmf ${TSMF_SRCS})
-set_target_properties(tsmf PROPERTIES PREFIX "")
+add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
+set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf freerdp-utils)
+target_link_libraries(tsmf_pulse freerdp-utils)
+target_link_libraries(tsmf_pulse ${PULSE_LIBRARIES})
 
-install(TARGETS tsmf DESTINATION ${FREERDP_PLUGIN_PATH})
-
-if(FFMPEG_FOUND)
-	add_subdirectory(ffmpeg)
-endif()
-
-if(ALSA_FOUND)
-	add_subdirectory(alsa)
-endif()
-
-if(PULSE_FOUND)
-	add_subdirectory(pulse)
-endif()
+install(TARGETS tsmf_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 

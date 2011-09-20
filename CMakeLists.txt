@@ -92,6 +92,7 @@ if(NOT WIN32)
 	find_suggested_package(ALSA)
 	find_optional_package(PulseAudio)
 	find_suggested_package(Cups)
+	find_suggested_package(FFmpeg)
 endif()
 
 # Endian
