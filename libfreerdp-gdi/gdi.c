@@ -677,7 +677,10 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
 	int i, j;
 	int x, y;
-	uint32 color;
+	GDI_RECT rect;
+	uint32 bgcolor;
+	uint32 fgcolor;
+	HGDI_BRUSH brush;
 	GDI_IMAGE* bmp;
 	GDI_IMAGE** bmps;
 	GLYPH_DATA* glyph;
@@ -688,9 +691,17 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	x = fast_index->bkLeft;
 	y = fast_index->y;
 
-	color = freerdp_color_convert(fast_index->backColor, gdi->srcBpp, 32, gdi->clrconv);
-	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, color);
+	bgcolor = freerdp_color_convert(fast_index->backColor, gdi->srcBpp, 32, gdi->clrconv);
+	fgcolor = freerdp_color_convert(fast_index->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 	gdi_SetNullClipRgn(gdi->drawing->hdc);
+	brush = gdi_CreateSolidBrush(fgcolor);
+
+	if (fast_index->opaqueRect)
+	{
+		gdi_SetRect(&rect, fast_index->opLeft, fast_index->opTop, fast_index->opRight, fast_index->opBottom);
+		gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+	}
 
 	for (i = 0; i < fast_index->nfragments; i++)
 	{
@@ -758,6 +769,7 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, gdi->textColor);
+	gdi_DeleteObject((HGDIOBJECT) brush);
 }
 
 void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)

@@ -1131,10 +1131,7 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 		update_read_coord(s, &fast_index->bkBottom, orderInfo->deltaCoordinates);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
-	{
 		update_read_coord(s, &fast_index->opLeft, orderInfo->deltaCoordinates);
-		fast_index->opaqueRect = True;
-	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_10)
 		update_read_coord(s, &fast_index->opTop, orderInfo->deltaCoordinates);
@@ -1151,36 +1148,34 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 	if (orderInfo->fieldFlags & ORDER_FIELD_14)
 		update_read_coord(s, &fast_index->y, orderInfo->deltaCoordinates);
 
-	if (fast_index->opRight == 0)
-		fast_index->opRight = fast_index->bkRight;
-
 	if (fast_index->opBottom == -32768)
 	{
-		if ((fast_index->opTop & 0x0F) == 0x0F)
-		{
-			fast_index->opLeft = fast_index->bkLeft;
-			fast_index->opTop = fast_index->bkTop;
+		uint8 flags = (uint8) (fast_index->opTop & 0x0F);
+
+		if (flags & 0x01)
+			fast_index->opBottom = fast_index->bkBottom;
+		if (flags & 0x02)
 			fast_index->opRight = fast_index->bkRight;
-			fast_index->opBottom = fast_index->bkBottom;
-			fast_index->opaqueRect = True;
-		}
-		else if ((fast_index->opTop & 0x0F) == 0x0D)
-		{
-			fast_index->opLeft = fast_index->bkLeft;
+		if (flags & 0x04)
 			fast_index->opTop = fast_index->bkTop;
-			fast_index->opBottom = fast_index->bkBottom;
-			fast_index->opaqueRect = True;
-		}
+		if (flags & 0x08)
+			fast_index->opLeft = fast_index->bkLeft;
 	}
 
-	if (fast_index->opRight - fast_index->opLeft > 1)
-		fast_index->opaqueRect = True;
+	if (fast_index->opLeft == 0)
+		fast_index->opLeft = fast_index->bkLeft;
+
+	if (fast_index->opRight == 0)
+		fast_index->opRight = fast_index->bkRight;
 
 	if (fast_index->x == -32768)
 		fast_index->x = fast_index->bkLeft;
 
 	if (fast_index->y == -32768)
 		fast_index->y = fast_index->bkTop;
+
+	if ((fast_index->opRight > fast_index->opLeft) && (fast_index->opBottom > fast_index->opTop))
+		fast_index->opaqueRect = True;
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{

@@ -531,8 +531,8 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	int x, y;
 	Pixmap bmp;
 	Pixmap* bmps;
-	uint32 fg_color;
-	uint32 bg_color;
+	uint32 fgcolor;
+	uint32 bgcolor;
 	GLYPH_DATA* glyph;
 	GLYPH_DATA** glyphs;
 	GLYPH_FRAGMENT* fragment;
@@ -541,14 +541,13 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	x = fast_index->bkLeft;
 	y = fast_index->y;
 
-	fg_color = freerdp_color_convert(fast_index->foreColor, 32, xfi->bpp, xfi->clrconv);
-	bg_color = freerdp_color_convert(fast_index->backColor, 32, xfi->bpp, xfi->clrconv);
+	fgcolor = freerdp_color_convert(fast_index->foreColor, xfi->srcBpp, 32, xfi->clrconv);
+	bgcolor = freerdp_color_convert(fast_index->backColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	XSetForeground(xfi->display, xfi->gc, bg_color);
-	XSetBackground(xfi->display, xfi->gc, fg_color);
+	XSetForeground(xfi->display, xfi->gc, bgcolor);
+	XSetBackground(xfi->display, xfi->gc, fgcolor);
 
-#if 0
 	if (fast_index->opaqueRect)
 	{
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -562,7 +561,6 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 					fast_index->opRight - fast_index->opLeft + 1, fast_index->opBottom - fast_index->opTop + 1);
 		}
 	}
-#endif
 
 	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
 
