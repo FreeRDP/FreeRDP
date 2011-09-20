@@ -46,6 +46,7 @@
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
+#include "xf_tsmf.h"
 #include "xf_event.h"
 #include "xf_monitor.h"
 #include "xf_keyboard.h"
@@ -54,6 +55,8 @@
 
 freerdp_sem g_sem;
 static int g_thread_count = 0;
+
+static long xv_port = 0;
 
 struct thread_data
 {
@@ -463,11 +466,15 @@ boolean xf_post_connect(freerdp* instance)
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
+	xf_tsmf_init(xfi, xv_port);
+
 	return True;
 }
 
 int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
+	int argc = 0;
+
 	if (strcmp("--kbd-list", opt) == 0)
 	{
 		int i;
@@ -493,8 +500,13 @@ int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, 
 
 		exit(0);
 	}
+	else if (strcmp("--xv-port", opt) == 0)
+	{
+		xv_port = atoi(val);
+		argc = 2;
+	}
 
-	return 1;
+	return argc;
 }
 
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
@@ -512,7 +524,7 @@ int xf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int s
 	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
 }
 
-void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
+void xf_process_cb_sync_event(xfInfo* xfi, rdpChanMan* chanman)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -523,6 +535,19 @@ void xf_process_cb_sync_event(rdpChanMan* chanman, freerdp* instance)
 	format_list_event->num_formats = 0;
 
 	freerdp_chanman_send_event(chanman, event);
+}
+
+void xf_process_cliprdr_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
+{
+	switch (event->event_type)
+	{
+		case RDP_EVENT_TYPE_CB_SYNC:
+			xf_process_cb_sync_event(xfi, chanman);
+			break;
+
+		default:
+			break;
+	}
 }
 
 void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
@@ -542,18 +567,18 @@ void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 				xf_process_rail_event(xfi, chanman, event);
 				break;
 
+			case RDP_EVENT_CLASS_TSMF:
+				xf_process_tsmf_event(xfi, event);
+				break;
+
+			case RDP_EVENT_CLASS_CLIPRDR:
+				xf_process_cliprdr_event(xfi, chanman, event);
+				break;
+
 			default:
 				break;
 		}
 
-		switch (event->event_type)
-		{
-			case RDP_EVENT_TYPE_CB_SYNC:
-				xf_process_cb_sync_event(chanman, instance);
-				break;
-			default:
-				break;
-		}
 		freerdp_event_free(event);
 	}
 }
@@ -590,6 +615,8 @@ void xf_window_free(xfInfo* xfi)
 
 	xfree(xfi->clrconv);
 	rail_free(xfi->rail);
+
+	xf_tsmf_uninit(xfi);
 }
 
 void xf_free(xfInfo* xfi)
