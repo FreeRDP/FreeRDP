@@ -443,8 +443,8 @@ INLINE uint16 update_read_glyph_fragments(STREAM* s, GLYPH_FRAGMENT** fragments,
 	array_mark = NULL;
 	stream_end = s->p + size;
 	stream_get_mark(s, stream_start);
-	offsets = (uint8**) xmalloc(size / 2);
-	lengths = (uint16*) xmalloc(size / 2);
+	offsets = (uint8**) xmalloc(sizeof(uint8*) * size / 2);
+	lengths = (uint16*) xmalloc(sizeof(uint16) * size / 2);
 	operations = (uint8*) xmalloc(size / 2);
 
 	while (s->p < stream_end)

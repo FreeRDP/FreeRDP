@@ -724,6 +724,9 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 			bmp = bmps[j];
 			glyph = glyphs[j];
 
+			if (bmp == NULL || glyph == NULL)
+				continue;
+
 			gdi_BitBlt(gdi->drawing->hdc, glyph->x + x, glyph->y + y, bmp->bitmap->width,
 					bmp->bitmap->height, bmp->hdc, 0, 0, GDI_DSPDxax);
 
