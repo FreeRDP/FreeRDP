@@ -33,6 +33,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 include(AutoVersioning)
 include(ConfigOptions)
 include(FindOptionalPackage)
+include(CheckCCompilerFlag)
 
 # Soname versioning - 0.0.0 since it is not being managed yet
 set(FREERDP_VERSION_MAJOR "0")
@@ -58,7 +59,11 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-but-set-variable")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+	CHECK_C_COMPILER_FLAG (-Wno-unused-but-set-variable Wno-unused-but-set-variable)
+	if(Wno-unused-but-set-variable)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-but-set-variable")
+	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	endif()
