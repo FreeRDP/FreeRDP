@@ -1188,6 +1188,8 @@ struct rdp_update
 	pcSurfaceBits SurfaceBits;
 	pcSurfaceCommand SurfaceCommand;
 
+	void* state_start;
+
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
@@ -1250,6 +1252,8 @@ struct rdp_update
 	MONITORED_DESKTOP_ORDER monitored_desktop;
 
 	SURFACE_BITS_COMMAND surface_bits_command;
+
+	void* state_end;
 };
 
 #endif /* __UPDATE_API_H */

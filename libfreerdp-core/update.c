@@ -323,13 +323,17 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 void update_reset_state(rdpUpdate* update)
 {
-	memset(&update->order_info, 0, sizeof(ORDER_INFO));
+	update->state_start = &update->state_start;
+	update->state_end = &update->state_end;
+	memset(update->state_start, 0, update->state_end - update->state_start);
 	update->order_info.orderType = ORDER_TYPE_PATBLT;
+	update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
 }
 
 static void update_begin_paint(rdpUpdate* update)
 {
-	update_reset_state(update);
+
 }
 
 static void update_end_paint(rdpUpdate* update)
