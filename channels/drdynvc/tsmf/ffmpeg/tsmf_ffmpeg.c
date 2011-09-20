@@ -346,7 +346,7 @@ static boolean tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const uint8* data
 		/* Ensure enough space for decoding */
 		if (mdecoder->decoded_size_max - mdecoder->decoded_size < AVCODEC_MAX_AUDIO_FRAME_SIZE)
 		{
-			mdecoder->decoded_size_max *= 2;
+			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2 + 16;
 			mdecoder->decoded_data = xrealloc(mdecoder->decoded_data, mdecoder->decoded_size_max);
 			dst = (uint8*) (((uintptr_t)mdecoder->decoded_data + 15) & ~ 0x0F);
 			if (dst - mdecoder->decoded_data != dst_offset)
@@ -391,7 +391,7 @@ static boolean tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const uint8* data
 	else if (dst_offset)
 	{
 		/* move the aligned decoded data to original place */
-		memmove(mdecoder->decoded_data, dst, mdecoder->decoded_size);
+		memmove(mdecoder->decoded_data, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
 	}
 
 	DEBUG_DVC("data_size %d decoded_size %d",
