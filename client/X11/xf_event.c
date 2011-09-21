@@ -378,16 +378,26 @@ boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 {
-	Atom kill_atom;
-	Atom protocol_atom;
-
-	protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
-	kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
-
-	if ((event->xclient.message_type == protocol_atom)
-	    && ((Atom) event->xclient.data.l[0] == kill_atom))
+	if ((event->xclient.message_type == xfi->WM_PROTOCOLS)
+	    && ((Atom) event->xclient.data.l[0] == xfi->WM_DELETE_WINDOW))
 	{
-		return False;
+		if (app)
+		{
+			rdpWindow* window;
+
+			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xclient.window);
+
+			if (window != NULL)
+			{
+				xf_rail_send_client_system_command(xfi, window->windowId, SC_CLOSE);
+			}
+
+			return True;
+		}
+		else
+		{
+			return False;
+		}
 	}
 
 	return True;

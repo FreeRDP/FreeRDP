@@ -347,6 +347,9 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", False);
 
+	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
+	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
+
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = xnew(CLRCONV);
@@ -381,8 +384,6 @@ boolean xf_post_connect(freerdp* instance)
 	xfInfo* xfi;
 	XEvent xevent;
 	XGCValues gcv;
-	Atom kill_atom;
-	Atom protocol_atom;
 
 	xfi = GET_XFI(instance);
 	SET_XFI(instance->update, xfi);
@@ -432,9 +433,7 @@ boolean xf_post_connect(freerdp* instance)
 
 		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
-		protocol_atom = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
-		kill_atom = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
-		XSetWMProtocols(xfi->display, xfi->window->handle, &kill_atom, 1);
+		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 	}
 
 	memset(&gcv, 0, sizeof(gcv));
