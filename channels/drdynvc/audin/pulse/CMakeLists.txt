@@ -17,21 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(DRDYNVC_SRCS
-	drdynvc_main.c
-	drdynvc_main.h
-	drdynvc_types.h
-	dvcman.c
-	dvcman.h
+set(AUDIN_PULSE_SRCS
+	audin_pulse.c
 )
 
-add_library(drdynvc ${DRDYNVC_SRCS})
-set_target_properties(drdynvc PROPERTIES PREFIX "")
+include_directories(..)
+include_directories(${PULSE_INCLUDE_DIRS})
 
-target_link_libraries(drdynvc freerdp-utils)
+add_library(audin_pulse ${AUDIN_PULSE_SRCS})
+set_target_properties(audin_pulse PROPERTIES PREFIX "")
 
-install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(audin_pulse freerdp-utils)
+target_link_libraries(audin_pulse ${PULSE_LIBRARIES})
 
-add_subdirectory(tsmf)
-add_subdirectory(audin)
+install(TARGETS audin_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 
