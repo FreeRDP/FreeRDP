@@ -926,7 +926,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		gdi->image->bitmap->data = (uint8*) xrealloc(gdi->image->bitmap->data,
 				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 
-		if (surface_bits_command->bpp != 32)
+		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == True))
 		{
 			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
