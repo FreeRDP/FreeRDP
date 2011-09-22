@@ -22,23 +22,25 @@
 
 /* OPENBSD ORIGINAL: lib/libc/gen/readpassphrase.c */
 
-#include "includes.h"
-
 #ifndef HAVE_READPASSPHRASE
 
 #include <termios.h>
 #include <signal.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <readpassphrase.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <freerdp/utils/readpassphrase.h>
 
 #ifdef TCSASOFT
 # define _T_FLUSH	(TCSAFLUSH|TCSASOFT)
 #else
 # define _T_FLUSH	(TCSAFLUSH)
+#endif
+
+#ifndef _PATH_TTY
+# define _PATH_TTY "/dev/tty"
 #endif
 
 /* SunOS 4.x which lacks _POSIX_VDISABLE, but has VDISABLE */
