@@ -34,6 +34,7 @@ set(FREERDP_UTILS_SRCS
 	pcap.c
 	profiler.c
 	rail.c
+	readpassphrase.c
 	registry.c
 	certstore.c
 	semaphore.c

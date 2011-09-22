@@ -41,6 +41,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/readpassphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
 
@@ -775,63 +776,11 @@ int main(int argc, char* argv[])
 
 	if (instance->settings->password == NULL)
 	{
-		int status;
-		char* password;
-		int pipe_ends[2];
-		struct termios term_flags;
 		const int password_size = 512;
 
-		password = xmalloc(password_size * sizeof(char));
+		instance->settings->password = xmalloc(password_size * sizeof(char));
 
-		printf("Password: ");
-
-		/* Turn off ECHO on stdin, but still echo newlines */
-		if (tcgetattr(fileno(stdin), &term_flags) != 0)
-		{
-			perror(strerror(errno));
-			exit(errno);
-		}
-
-		if (pipe(pipe_ends) != 0)
-		{
-			perror(strerror(errno));
-			exit(errno);
-		}
-
-		switch (fork())
-		{
-			case -1:
-				perror(strerror(errno));
-				exit(errno);
-
-			case 0:
-				close(pipe_ends[0]);
-				term_flags.c_lflag &= ~ECHO;
-				term_flags.c_lflag |= ECHONL;
-				tcsetattr(fileno(stdin), TCSAFLUSH, &term_flags);
-				fgets(password, password_size - 1, stdin);
-				write(pipe_ends[1], password, strlen(password));
-				close(pipe_ends[1]);
-				exit(EXIT_SUCCESS);
-
-			default:
-				wait(&status);
-				if (tcsetattr(fileno(stdin), TCSADRAIN, &term_flags) != 0)
-				{
-					tcsetattr(fileno(stdin), TCSANOW, &term_flags);
-					perror(strerror(errno));
-					exit(errno);
-				}
-				break;
-		}
-
-		close(pipe_ends[1]);
-		read(pipe_ends[0], password, password_size);
-		close(pipe_ends[0]);
-
-		*(password + strlen(password) - 1) = '\0';
-		xfree(instance->settings->password);
-		instance->settings->password = password;
+		readpassphrase("Password: ", instance->settings->password, password_size, RPP_ECHO_OFF);
 	}
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
