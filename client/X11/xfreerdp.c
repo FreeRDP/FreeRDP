@@ -547,7 +547,9 @@ boolean xf_post_connect(freerdp* instance)
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
 	xf_tsmf_init(xfi, xv_port);
-	xf_cliprdr_init(xfi, GET_CHANMAN(instance));
+
+	if (xfi->remote_app != True)
+		xf_cliprdr_init(xfi, GET_CHANMAN(instance));
 
 	return True;
 }

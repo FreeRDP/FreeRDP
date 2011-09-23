@@ -353,7 +353,8 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	xf_rail_send_activate(xfi, event->xany.window, True);
 	xf_kbd_focus_in(xfi);
 
-	xf_cliprdr_check_owner(xfi);
+	if (xfi->remote_app != True)
+		xf_cliprdr_check_owner(xfi);
 
 	return True;
 }
@@ -492,32 +493,44 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xf_cliprdr_process_selection_notify(xfi, event))
-		return True;
+	if (xfi->remote_app != True)
+	{
+		if (xf_cliprdr_process_selection_notify(xfi, event))
+			return True;
+	}
 
 	return True;
 }
 
 boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xf_cliprdr_process_selection_request(xfi, event))
-		return True;
+	if (xfi->remote_app != True)
+	{
+		if (xf_cliprdr_process_selection_request(xfi, event))
+			return True;
+	}
 
 	return True;
 }
 
 boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xf_cliprdr_process_selection_clear(xfi, event))
-		return True;
+	if (xfi->remote_app != True)
+	{
+		if (xf_cliprdr_process_selection_clear(xfi, event))
+			return True;
+	}
 
 	return True;
 }
 
 boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xf_cliprdr_process_property_notify(xfi, event))
-		return True;
+	if (xfi->remote_app != True)
+	{
+		if (xf_cliprdr_process_property_notify(xfi, event))
+			return True;
+	}
 
 	return True;
 }

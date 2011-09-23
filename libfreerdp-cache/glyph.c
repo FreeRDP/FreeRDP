@@ -98,7 +98,7 @@ rdpGlyph* glyph_new(rdpSettings* settings)
 
 		glyph->settings = settings;
 
-		settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
+		//settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
 
 		for (i = 0; i < 10; i++)
 		{
