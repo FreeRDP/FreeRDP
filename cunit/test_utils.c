@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Client
  * Utils Unit Tests
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2011 Vic Lee, 2011 Shea Levy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/args.h>
+#include <freerdp/utils/passphrase.h>
 
 #include "test_utils.h"
 
@@ -48,6 +49,7 @@ int add_utils_suite(void)
 	add_test_function(load_plugin);
 	add_test_function(wait_obj);
 	add_test_function(args);
+	add_test_function(passphrase_read);
 
 	return 0;
 }
@@ -158,4 +160,10 @@ void test_args(void)
 		argv += c;
 	}
 	CU_ASSERT(i == 2);
+}
+
+void test_passphrase_read(void)
+{
+	freerdp_passphrase_read(NULL, NULL, 0, 0);
+	return;
 }
