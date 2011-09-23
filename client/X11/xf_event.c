@@ -21,6 +21,7 @@
 #include <freerdp/kbd/vkcodes.h>
 
 #include "xf_rail.h"
+#include "xf_cliprdr.h"
 
 #include "xf_event.h"
 
@@ -347,6 +348,8 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	//xf_rail_send_activate(xfi, event->xany.window, True);
 	xf_kbd_focus_in(xfi);
 
+	xf_cliprdr_check_owner(xfi);
+
 	return True;
 }
 
@@ -499,6 +502,38 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return True;
 }
 
+boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
+{
+	if (xf_cliprdr_process_selection_notify(xfi, event))
+		return True;
+
+	return True;
+}
+
+boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
+{
+	if (xf_cliprdr_process_selection_request(xfi, event))
+		return True;
+
+	return True;
+}
+
+boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
+{
+	if (xf_cliprdr_process_selection_clear(xfi, event))
+		return True;
+
+	return True;
+}
+
+boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
+{
+	if (xf_cliprdr_process_property_notify(xfi, event))
+		return True;
+
+	return True;
+}
+
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
 	boolean app = False;
@@ -588,6 +623,22 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 
 		case ClientMessage:
 			status = xf_event_ClientMessage(xfi, event, app);
+			break;
+
+		case SelectionNotify:
+			status = xf_event_SelectionNotify(xfi, event, app);
+			break;
+
+		case SelectionRequest:
+			status = xf_event_SelectionRequest(xfi, event, app);
+			break;
+
+		case SelectionClear:
+			status = xf_event_SelectionClear(xfi, event, app);
+			break;
+
+		case PropertyNotify:
+			status = xf_event_PropertyNotify(xfi, event, app);
 			break;
 
 		default:
