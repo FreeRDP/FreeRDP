@@ -20,6 +20,7 @@
 #ifndef __UTILS_PASSPHRASE_H
 #define __UTILS_PASSPHRASE_H
 
+#include <stdlib.h>
 #include <freerdp/api.h>
 
 #define	FREERDP_PASSPHRASE_READ_ECHO_OFF	0x00
