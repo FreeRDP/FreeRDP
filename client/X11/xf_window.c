@@ -568,8 +568,11 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
 		height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
 
-	XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,
+	if (xfi->sw_gdi)
+	{
+		XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,
 			ax, ay, ax, ay, width, height);
+	}
 
 	XCopyArea(xfi->display, xfi->primary, window->handle, window->gc,
 			ax, ay, width, height, x, y);

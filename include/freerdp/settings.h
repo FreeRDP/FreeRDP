@@ -278,6 +278,7 @@ struct rdp_settings
 
 	boolean sound_beeps;
 	boolean color_pointer;
+	boolean smooth_fonts;
 	uint16 pointer_cache_size;
 
 	boolean fastpath_input;

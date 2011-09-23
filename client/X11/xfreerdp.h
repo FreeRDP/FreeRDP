@@ -25,6 +25,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
 #include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
 
@@ -64,6 +66,7 @@ struct xf_info
 	Pixmap drawing;
 	Visual* visual;
 	Display* display;
+	Drawable drawable;
 	Pixmap bitmap_mono;
 	Colormap colormap;
 	int screen_number;
@@ -80,6 +83,10 @@ struct xf_info
 	HCLRCONV clrconv;
 	rdpRail* rail;
 	rdpCache* cache;
+
+	HGDI_DC hdc;
+	boolean sw_gdi;
+	uint8* primary_buffer;
 
 	boolean focused;
 	boolean mouse_active;
@@ -118,8 +125,6 @@ struct xf_info
 
 void xf_toggle_fullscreen(xfInfo* xfi);
 boolean xf_post_connect(freerdp* instance);
-
-//#define WITH_DEBUG_X11
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)

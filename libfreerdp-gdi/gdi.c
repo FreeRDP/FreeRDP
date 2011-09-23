@@ -995,7 +995,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->SurfaceBits = gdi_surface_bits;
 }
 
-static void gdi_init_primary(GDI* gdi)
+void gdi_init_primary(GDI* gdi)
 {
 	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
 	gdi->primary_buffer = gdi->primary->bitmap->data;

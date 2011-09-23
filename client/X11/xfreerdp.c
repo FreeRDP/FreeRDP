@@ -63,7 +63,7 @@ struct thread_data
 	freerdp* instance;
 };
 
-void xf_begin_paint(rdpUpdate* update)
+void xf_sw_begin_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 	gdi = GET_GDI(update);
@@ -71,7 +71,7 @@ void xf_begin_paint(rdpUpdate* update)
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
-void xf_end_paint(rdpUpdate* update)
+void xf_sw_end_paint(rdpUpdate* update)
 {
 	GDI* gdi;
 	xfInfo* xfi;
@@ -136,18 +136,70 @@ void xf_end_paint(rdpUpdate* update)
 	}
 }
 
-void xf_desktop_resize(rdpUpdate* update)
+void xf_sw_desktop_resize(rdpUpdate* update)
 {
-	GDI* gdi;
+	xfInfo* xfi;
+	rdpSettings* settings;
+
+	xfi = GET_XFI(update);
+	settings = xfi->instance->settings;
+
+	if (xfi->fullscreen != True)
+	{
+		GDI* gdi = GET_GDI(update);
+		gdi_resize(gdi, xfi->width, xfi->height);
+
+		if (xfi->image)
+		{
+			xfi->image->data = NULL;
+			XDestroyImage(xfi->image);
+			xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+		}
+	}
+}
+
+
+void xf_hw_begin_paint(rdpUpdate* update)
+{
+	xfInfo* xfi;
+	xfi = GET_XFI(update);
+	xfi->hdc->hwnd->invalid->null = 1;
+	xfi->hdc->hwnd->ninvalid = 0;
+}
+
+void xf_hw_end_paint(rdpUpdate* update)
+{
+	xfInfo* xfi;
+	sint32 x, y;
+	uint32 w, h;
+
+	xfi = GET_XFI(update);
+
+	if (xfi->remote_app)
+	{
+		if (xfi->hdc->hwnd->invalid->null)
+			return;
+
+		x = xfi->hdc->hwnd->invalid->x;
+		y = xfi->hdc->hwnd->invalid->y;
+		w = xfi->hdc->hwnd->invalid->w;
+		h = xfi->hdc->hwnd->invalid->h;
+
+		xf_rail_paint(xfi, update->rail, x, y, x + w - 1, y + h - 1);
+	}
+}
+
+void xf_hw_desktop_resize(rdpUpdate* update)
+{
 	xfInfo* xfi;
 	boolean same;
 	rdpSettings* settings;
 
 	xfi = GET_XFI(update);
-	gdi = GET_GDI(update);
 	settings = xfi->instance->settings;
 
-	if (!xfi->fullscreen)
+	if (xfi->fullscreen != True)
 	{
 		xfi->width = settings->width;
 		xfi->height = settings->height;
@@ -157,23 +209,15 @@ void xf_desktop_resize(rdpUpdate* update)
 
 		if (xfi->primary)
 		{
-			same = (xfi->primary == xfi->drawing ? True : False);
+			same = (xfi->primary == xfi->drawing) ? True : False;
+
 			XFreePixmap(xfi->display, xfi->primary);
-			xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display),
-				xfi->width, xfi->height, xfi->depth);
+
+			xfi->primary = XCreatePixmap(xfi->display, xfi->drawable,
+					xfi->width, xfi->height, xfi->depth);
+
 			if (same)
 				xfi->drawing = xfi->primary;
-		}
-
-		if (gdi)
-			gdi_resize(gdi, xfi->width, xfi->height);
-
-		if (gdi && xfi->image)
-		{
-			xfi->image->data = NULL;
-			XDestroyImage(xfi->image);
-			xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
-					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
 		}
 	}
 }
@@ -372,6 +416,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
 	xfi->fullscreen_toggle = xfi->fullscreen;
+	xfi->sw_gdi = settings->sw_gdi;
 
 	xf_detect_monitors(xfi, settings);
 
@@ -380,7 +425,6 @@ boolean xf_pre_connect(freerdp* instance)
 
 boolean xf_post_connect(freerdp* instance)
 {
-	GDI* gdi;
 	xfInfo* xfi;
 	XEvent xevent;
 	XGCValues gcv;
@@ -391,13 +435,35 @@ boolean xf_post_connect(freerdp* instance)
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
-	gdi = GET_GDI(instance->update);
-
-	if (instance->settings->sw_gdi != True)
+	if (xfi->sw_gdi)
+	{
+		GDI* gdi;
+		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
+		gdi = GET_GDI(instance->update);
+		xfi->primary_buffer = gdi->primary_buffer;
+	}
+	else
 	{
 		xfi->srcBpp = instance->settings->color_depth;
 		xf_gdi_register_update_callbacks(instance->update);
+
+		xfi->hdc = gdi_GetDC();
+		xfi->hdc->bitsPerPixel = xfi->bpp;
+		xfi->hdc->bytesPerPixel = xfi->bpp / 8;
+
+		xfi->hdc->alpha = xfi->clrconv->alpha;
+		xfi->hdc->invert = xfi->clrconv->invert;
+		xfi->hdc->rgb555 = xfi->clrconv->rgb555;
+
+		xfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+		xfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+		xfi->hdc->hwnd->invalid->null = 1;
+
+		xfi->hdc->hwnd->count = 32;
+		xfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * xfi->hdc->hwnd->count);
+		xfi->hdc->hwnd->ninvalid = 0;
+
+		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
 
 		if (instance->settings->rfx_codec)
 			xfi->rfx_context = (void*) rfx_context_new();
@@ -434,6 +500,11 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
 		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
+		xfi->drawable = xfi->window->handle;
+	}
+	else
+	{
+		xfi->drawable = DefaultRootWindow(xfi->display);
 	}
 
 	memset(&gcv, 0, sizeof(gcv));
@@ -450,13 +521,22 @@ boolean xf_post_connect(freerdp* instance)
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
-			(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
+			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
 
 	xfi->bmp_codec_none = (uint8*) xmalloc(64 * 64 * 4);
 
-	instance->update->BeginPaint = xf_begin_paint;
-	instance->update->EndPaint = xf_end_paint;
-	instance->update->DesktopResize = xf_desktop_resize;
+	if (xfi->sw_gdi)
+	{
+		instance->update->BeginPaint = xf_sw_begin_paint;
+		instance->update->EndPaint = xf_sw_end_paint;
+		instance->update->DesktopResize = xf_sw_desktop_resize;
+	}
+	else
+	{
+		instance->update->BeginPaint = xf_hw_begin_paint;
+		instance->update->EndPaint = xf_hw_end_paint;
+		instance->update->DesktopResize = xf_hw_desktop_resize;
+	}
 
 	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;

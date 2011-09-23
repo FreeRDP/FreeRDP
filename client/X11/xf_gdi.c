@@ -197,7 +197,7 @@ Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 	uint8* cdata;
 	XImage* image;
 
-	bitmap = XCreatePixmap(xfi->display, xfi->window->handle, width, height, xfi->bpp);
+	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->bpp);
 
 	cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
 
@@ -221,7 +221,7 @@ Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, uint8* data)
 
 	scanline = (width + 7) / 8;
 
-	bitmap = XCreatePixmap(xfi->display, xfi->window->handle, width, height, 1);
+	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, 1);
 
 	image = XCreateImage(xfi->display, xfi->visual, 1,
 			ZPixmap, 0, (char*) data, width, height, 8, scanline);
@@ -240,7 +240,7 @@ Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
 
 	scanline = (width + 7) / 8;
 
-	bitmap = XCreatePixmap(xfi->display, xfi->window->handle, width, height, 1);
+	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, 1);
 
 	image = XCreateImage(xfi->display, xfi->visual, 1,
 			ZPixmap, 0, (char*) data, width, height, 8, scanline);
@@ -280,7 +280,11 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 		h = bmp->bottom - bmp->top + 1;
 
 		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0, x, y, w, h);
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+		if (xfi->remote_app != True)
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+
+		gdi_InvalidateRegion(xfi->hdc, x, y, w, h);
 	}
 }
 
@@ -321,8 +325,13 @@ void xf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XFillRectangle(xfi->display, xfi->window->handle, xfi->gc,
+		if (xfi->remote_app != True)
+		{
+			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
 	}
 }
 
@@ -392,8 +401,14 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	if (xfi->drawing == xfi->primary)
 	{
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, patblt->nLeftRect, patblt->nTopRect,
+
+		if (xfi->remote_app != True)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 	}
 }
 
@@ -402,24 +417,30 @@ void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop3(xfi, gdi_rop3_code(scrblt->bRop));
+
 	XCopyArea(xfi->display, xfi->primary, xfi->drawing, xfi->gc, scrblt->nXSrc, scrblt->nYSrc,
 			scrblt->nWidth, scrblt->nHeight, scrblt->nLeftRect, scrblt->nTopRect);
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->unobscured)
+		if (xfi->remote_app != True)
 		{
-			XCopyArea(xfi->display, xfi->window->handle, xfi->window->handle, xfi->gc,
-					scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight,
-					scrblt->nLeftRect, scrblt->nTopRect);
+			if (xfi->unobscured)
+			{
+				XCopyArea(xfi->display, xfi->drawable, xfi->drawable, xfi->gc,
+						scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight,
+						scrblt->nLeftRect, scrblt->nTopRect);
+			}
+			else
+			{
+				XSetFunction(xfi->display, xfi->gc, GXcopy);
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+						scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight,
+						scrblt->nLeftRect, scrblt->nTopRect);
+			}
 		}
-		else
-		{
-			XSetFunction(xfi->display, xfi->gc, GXcopy);
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
-					scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight,
-					scrblt->nLeftRect, scrblt->nTopRect);
-		}
+
+		gdi_InvalidateRegion(xfi->hdc, scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight);
 	}
 }
 
@@ -439,8 +460,14 @@ void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XFillRectangle(xfi->display, xfi->window->handle, xfi->gc,
+		if (xfi->remote_app != True)
+		{
+			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				opaque_rect->nLeftRect, opaque_rect->nTopRect, opaque_rect->nWidth, opaque_rect->nHeight);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, opaque_rect->nLeftRect, opaque_rect->nTopRect,
+				opaque_rect->nWidth, opaque_rect->nHeight);
 	}
 }
 
@@ -467,8 +494,13 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 
 		if (xfi->drawing == xfi->primary)
 		{
-			XFillRectangle(xfi->display, xfi->window->handle, xfi->gc,
+			if (xfi->remote_app != True)
+			{
+				XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 					rectangle->left, rectangle->top, rectangle->width, rectangle->height);
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, rectangle->left, rectangle->top, rectangle->width, rectangle->height);
 		}
 	}
 }
@@ -489,8 +521,24 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XDrawLine(xfi->display, xfi->window->handle, xfi->gc,
+		if (xfi->remote_app != True)
+		{
+			int width, height;
+
+			XDrawLine(xfi->display, xfi->drawable, xfi->gc,
 				line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
+
+			width = line_to->nXStart - line_to->nXEnd;
+			height = line_to->nYStart - line_to->nYEnd;
+
+			if (width < 0)
+				width *= (-1);
+
+			if (height < 0)
+				height *= (-1);
+
+			gdi_InvalidateRegion(xfi->hdc, line_to->nXStart, line_to->nYStart, width, height);
+		}
 	}
 }
 
@@ -519,7 +567,10 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XDrawLines(xfi->display, xfi->window->handle, xfi->gc, points, polyline->numPoints, CoordModePrevious);
+		if (xfi->remote_app != True)
+		{
+			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, polyline->numPoints, CoordModePrevious);
+		}
 	}
 
 	xfree(points);
@@ -529,6 +580,7 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
 	int i, j;
 	int x, y;
+	int w, h;
 	Pixmap bmp;
 	Pixmap* bmps;
 	uint32 fgcolor;
@@ -537,9 +589,6 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	GLYPH_DATA** glyphs;
 	GLYPH_FRAGMENT* fragment;
 	xfInfo* xfi = GET_XFI(update);
-
-	x = fast_index->bkLeft;
-	y = fast_index->y;
 
 	fgcolor = freerdp_color_convert(fast_index->foreColor, xfi->srcBpp, 32, xfi->clrconv);
 	bgcolor = freerdp_color_convert(fast_index->backColor, xfi->srcBpp, 32, xfi->clrconv);
@@ -552,15 +601,26 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	{
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
-		XFillRectangle(xfi->display, xfi->drawing, xfi->gc, fast_index->opLeft, fast_index->opTop,
-				fast_index->opRight - fast_index->opLeft + 1, fast_index->opBottom - fast_index->opTop + 1);
+		x = fast_index->opLeft;
+		y = fast_index->opTop;
+		w = fast_index->opRight - fast_index->opLeft + 1;
+		h = fast_index->opBottom - fast_index->opTop + 1;
+
+		XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, w, h);
 
 		if (xfi->drawing == xfi->primary)
 		{
-			XFillRectangle(xfi->display, xfi->window->handle, xfi->gc, fast_index->opLeft, fast_index->opTop,
-					fast_index->opRight - fast_index->opLeft + 1, fast_index->opBottom - fast_index->opTop + 1);
+			if (xfi->remote_app != True)
+			{
+				XFillRectangle(xfi->display, xfi->drawable, xfi->gc, x, y, w, h);
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, x, y, w, h);
 		}
 	}
+
+	x = fast_index->bkLeft;
+	y = fast_index->y;
 
 	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
 
@@ -630,11 +690,18 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+		if (xfi->remote_app != True)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
 				fast_index->bkLeft, fast_index->bkTop,
 				fast_index->bkRight - fast_index->bkLeft + 1,
 				fast_index->bkBottom - fast_index->bkTop + 1,
 				fast_index->bkLeft, fast_index->bkTop);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, fast_index->bkLeft, fast_index->bkTop,
+				fast_index->bkRight - fast_index->bkLeft + 1,
+				fast_index->bkBottom - fast_index->bkTop + 1);
 	}
 }
 
@@ -741,8 +808,13 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 			tx = message->rects[i].x + surface_bits_command->destLeft;
 			ty = message->rects[i].y + surface_bits_command->destTop;
 
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
-				tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+			if (xfi->remote_app != True)
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+						tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, tx, ty, message->rects[i].width, message->rects[i].height);
 		}
 
 		XSetClipMask(xfi->display, xfi->gc, None);
@@ -766,10 +838,16 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
 
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+		if (xfi->remote_app != True)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height,
 				surface_bits_command->destLeft, surface_bits_command->destTop);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height);
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 	}

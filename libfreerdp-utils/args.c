@@ -304,6 +304,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->play_rfx_file = xstrdup(argv[index]);
 			settings->play_rfx = True;
 		}
+		else if (strcmp("--fonts", argv[index]) == 0)
+		{
+			settings->smooth_fonts = True;
+		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
 			settings->mouse_motion = False;
@@ -501,6 +505,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			/* server is the last argument for the current session. arguments
 			   followed will be parsed for the next session. */
 			index++;
+
+			if (settings->smooth_fonts)
+				settings->performance_flags |= PERF_ENABLE_FONT_SMOOTHING;
 
 			return index;
 		}
