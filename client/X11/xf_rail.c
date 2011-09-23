@@ -25,13 +25,13 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32 iright, uint32 ibottom)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32 uright, uint32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
 	boolean intersect;
-	uint32 uwidth, uheight;
-	uint32 uleft, utop, uright, ubottom;
+	uint32 iwidth, iheight;
+	uint32 ileft, itop, iright, ibottom;
 	uint32 wleft, wtop, wright, wbottom;
 
 	window_list_rewind(rail->list);
@@ -41,56 +41,47 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
-		wleft = xfw->left;
-		wtop = xfw->top;
-		wright = xfw->right;
-		wbottom = xfw->bottom;
+		wleft = window->windowOffsetX;
+		wtop = window->windowOffsetY;
+		wright = window->windowOffsetX + window->windowWidth - 1;
+		wbottom = window->windowOffsetY + window->windowHeight - 1;
 
-		intersect = ((iright > wleft) && (ileft < wright) &&
-				(ibottom > wtop) && (itop < wbottom)) ? True : False;
+		ileft = MAX(uleft, wleft);
+		itop = MAX(utop, wtop);
+		iright = MIN(uright, wright);
+		ibottom = MIN(ubottom, wbottom);
 
-		uleft = (ileft > wleft) ? ileft : wleft;
-		utop = (itop > wtop) ? itop : wtop;
-		uright = (iright < wright) ? iright : wright;
-		ubottom = (ibottom < wbottom) ? ibottom : wbottom;
-		uwidth = uright - uleft + 1;
-		uheight = ubottom - utop + 1;
+		iwidth = iright - ileft + 1;
+		iheight = ibottom - itop + 1;
+
+		intersect = ((iright > ileft) && (ibottom > itop)) ? True : False;
 
 		if (intersect)
 		{
-			XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-					uleft, utop, uleft, utop, uwidth, uheight);
-
-			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-					uleft, utop, uwidth, uheight,
-					uleft - xfw->left, utop - xfw->top);
+			xf_UpdateWindowArea(xfi, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
+}
 
-	XFlush(xfi->display);
+void xf_rail_FilterWindowInfo(rdpRail* rail, rdpWindow* window)
+{
+	if (window->windowOffsetX < 0)
+	{
+		window->windowWidth += (window->windowOffsetX * 2);
+		window->windowOffsetX = 0;
+	}
 }
 
 void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
-	xfWindow* xfparent;
 
 	xfi = (xfInfo*) rail->extra;
 
-	xfparent = NULL;
+	xf_rail_FilterWindowInfo(rail, window);
 
-	if (window->ownerWindowId != 0)
-	{
-		rdpWindow* p = NULL;
-
-		p = window_list_get_by_id(xfi->rail->list, window->ownerWindowId);
-
-		if (p != NULL)
-			xfparent = (xfWindow*) p->extra;
-	}
-
-	xfw = xf_CreateWindow((xfInfo*) rail->extra, xfparent,
+	xfw = xf_CreateWindow((xfInfo*) rail->extra, window,
 			window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight,
 			window->windowId);
@@ -110,6 +101,8 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
+
+	xf_rail_FilterWindowInfo(rail, window);
 
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
 			window->windowOffsetX, window->windowOffsetY,
@@ -363,27 +356,24 @@ const char* movetype_names[] =
 
 void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
-	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
 	rdpWindow* rail_window = NULL;
+	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
 
 	rail_window = window_list_get_by_id(xfi->rail->list, movesize->windowId);
 
 	if (rail_window != NULL)
 	{
-		xfWindow * window = NULL;
-		window = (xfWindow *) rail_window->extra;
+		xfWindow* window = NULL;
+		window = (xfWindow*) rail_window->extra;
 
 		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
-			movetype_names[movesize->moveSizeType], (sint16)movesize->posX, (sint16)movesize->posY);
+			movetype_names[movesize->moveSizeType], (sint16) movesize->posX, (sint16) movesize->posY);
 
-#if 1
 		if (movesize->isMoveSizeStart)
 			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
 		else
 			xf_StopLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
-#endif
-
 	}
 
 }

@@ -22,7 +22,7 @@
 
 #include "xfreerdp.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 ileft, uint32 itop, uint32 iright, uint32 ibottom);
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32 uright, uint32 ubottom);
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command);
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled);

@@ -283,7 +283,7 @@ void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* heigh
 
 char rail_window_class[] = "RAIL:00000000";
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width, int height, uint32 id)
+xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id)
 {
 	xfWindow* window;
 
@@ -309,8 +309,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, xfWindow* parent, int x, int y, int width
 
 		window->decorations = False;
 		window->fullscreen = False;
-		window->parent = parent;
-		window->isLocalMoveSizeModeEnabled = False;
+		window->window = wnd;
+		window->localMoveSize = False;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -406,102 +406,30 @@ void xf_SendMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_
 	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, SubstructureNotifyMask, &event);
 }
 
-#define XF_NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
-#define XF_NET_WM_MOVERESIZE_SIZE_TOP          1
-#define XF_NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
-#define XF_NET_WM_MOVERESIZE_SIZE_RIGHT        3
-#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
-#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOM       5
-#define XF_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
-#define XF_NET_WM_MOVERESIZE_SIZE_LEFT         7
-#define XF_NET_WM_MOVERESIZE_MOVE              8   /* movement only */
-#define XF_NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
-#define XF_NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
-#define XF_NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
-
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
 {
-	struct
-	{
-		uint16 moveSizeType;
-		int    direction;
-	} type2dir_table[] =
-	{
-		{ RAIL_WMSZ_LEFT,        XF_NET_WM_MOVERESIZE_SIZE_LEFT  },
-		{ RAIL_WMSZ_RIGHT,       XF_NET_WM_MOVERESIZE_SIZE_RIGHT },
-		{ RAIL_WMSZ_TOP,         XF_NET_WM_MOVERESIZE_SIZE_TOP },
-		{ RAIL_WMSZ_TOPLEFT,     XF_NET_WM_MOVERESIZE_SIZE_TOPLEFT },
-		{ RAIL_WMSZ_TOPRIGHT,    XF_NET_WM_MOVERESIZE_SIZE_TOPRIGHT },
-		{ RAIL_WMSZ_BOTTOM,      XF_NET_WM_MOVERESIZE_SIZE_BOTTOM },
-		{ RAIL_WMSZ_BOTTOMLEFT,  XF_NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT },
-		{ RAIL_WMSZ_BOTTOMRIGHT, XF_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT },
-		{ RAIL_WMSZ_MOVE,        XF_NET_WM_MOVERESIZE_MOVE },
-		{ RAIL_WMSZ_KEYMOVE,     XF_NET_WM_MOVERESIZE_MOVE_KEYBOARD },
-		{ RAIL_WMSZ_KEYSIZE,     XF_NET_WM_MOVERESIZE_SIZE_KEYBOARD },
-	};
-
-	int i = 0;
-	int x_root = 0;
-	int y_root = 0;
-	int direction = -1;
-
-	window->isLocalMoveSizeModeEnabled = True;
-	x_root = posX;
-	y_root = posY;
-
-	if (moveSizeType == RAIL_WMSZ_MOVE)
-	{
-		x_root += window->left;
-		y_root += window->top;
-	}
-
-	for (i = 0; i < RAIL_ARRAY_SIZE(type2dir_table); i++)
-	{
-		if (type2dir_table[i].moveSizeType == moveSizeType)
-		{
-			direction = type2dir_table[i].direction;
-			break;
-		}
-	}
-
-	if (direction == -1)
-	{
-		printf("xf_StartLocalMoveSize: unknown moveSizeType. (window=0x%X moveSizeType=0x%X)\n",
-			(uint32) window->handle, moveSizeType);
-		return;
-	}
-
-	xf_SendMoveResizeEvent(xfi, window, direction, x_root, y_root);
+	window->localMoveSize = True;
 }
 
-void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY)
+void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
 {
-	window->isLocalMoveSizeModeEnabled = False;
-
-	xf_MoveWindow(xfi, window, topLeftX, topLeftY, window->width, window->height);
+	window->localMoveSize = False;
 }
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
-	Pixmap surface;
+	boolean resize = False;
 
 	if ((width * height) < 1)
 		return;
 
-	DEBUG_X11_LMS("xf_MoveWindow: BEFORE correctness h=0x%X x=%d y=%d w=%d h=%d",
-		(uint32) window->handle, x, y, width, height);
+	if ((window->width != width) || (window->height != height))
+		resize = True;
 
-	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
-
-	if (!window->isLocalMoveSizeModeEnabled)
-	{
+	if (resize)
 		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
-	}
-
-	surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
-	XCopyArea(xfi->display, surface, window->surface, window->gc, 0, 0, window->width, window->height, 0, 0);
-	XFreePixmap(xfi->display, window->surface);
-	window->surface = surface;
+	else
+		XMoveWindow(xfi->display, window->handle, x, y);
 
 	window->left = x;
 	window->top = y;
@@ -511,8 +439,15 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->height = height;
 
 	DEBUG_X11_LMS("xf_MoveWindow: window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-			(uint32)window->handle, window->left, window->top, window->right, window->bottom,
+			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
 			window->width, window->height);
+
+	if (resize)
+	{
+		XFreePixmap(xfi->display, window->surface);
+		window->surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
+		xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
+	}
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
@@ -616,6 +551,49 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 #endif
 
 	xfree(xrects);
+}
+
+void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
+{
+	int ax, ay;
+	rdpWindow* wnd;
+
+	wnd = window->window;
+	ax = x + wnd->windowOffsetX;
+	ay = y + wnd->windowOffsetY;
+
+	if (ax + width > wnd->windowOffsetX + wnd->windowWidth)
+		width = (wnd->windowOffsetX + wnd->windowWidth - 1) - ax;
+
+	if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
+		height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
+
+	XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,
+			ax, ay, ax, ay, width, height);
+
+	XCopyArea(xfi->display, xfi->primary, window->handle, window->gc,
+			ax, ay, width, height, x, y);
+
+	XFlush(xfi->display);
+}
+
+boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y)
+{
+	rdpWindow* wnd;
+	boolean clientArea = False;
+	boolean windowArea = False;
+
+	wnd = xfw->window;
+
+	if (((x > wnd->clientOffsetX) && (x < wnd->clientOffsetX + wnd->clientAreaWidth)) &&
+		((y > wnd->clientOffsetY) && (y < wnd->clientOffsetY + wnd->clientAreaHeight)))
+		clientArea = True;
+
+	if (((x > wnd->windowOffsetX) && (x < wnd->windowOffsetX + wnd->windowWidth)) &&
+		((y > wnd->windowOffsetY) && (y < wnd->windowOffsetY + wnd->windowHeight)))
+		windowArea = True;
+
+	return (windowArea && !(clientArea));
 }
 
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)

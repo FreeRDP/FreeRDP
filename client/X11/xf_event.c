@@ -71,39 +71,29 @@ void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, ui
 boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 {
 	int x, y;
-	int cx, cy;
+	int w, h;
+
+	x = event->xexpose.x;
+	y = event->xexpose.y;
+	w = event->xexpose.width;
+	h = event->xexpose.height;
 
 	if (app != True)
 	{
-		x = event->xexpose.x;
-		y = event->xexpose.y;
-		cx = event->xexpose.width;
-		cy = event->xexpose.height;
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, cx, cy, x, y);
+		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 	}
 	else
 	{
-#if 0
 		xfWindow* xfw;
 		rdpWindow* window;
 
-		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xexpose.window);
 
 		if (window != NULL)
 		{
 			xfw = (xfWindow*) window->extra;
-
-			XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-					xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
-
-			XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-					xfw->left, xfw->top, xfw->width, xfw->height, 0, 0);
-
-			XFlush(xfi->display);
-
-			xfw = (xfWindow*) window->extra;
+			xf_UpdateWindowArea(xfi, xfw, x, y, w, h);
 		}
-#endif
 	}
 
 	return True;
@@ -111,7 +101,30 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
+	int x, y;
+	int w, h;
+
+	x = event->xexpose.x;
+	y = event->xexpose.y;
+	w = event->xexpose.width;
+	h = event->xexpose.height;
+
 	xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
+
+	if (app)
+	{
+		xfWindow* xfw;
+		rdpWindow* window;
+
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xvisibility.window);
+
+		if (window != NULL)
+		{
+			xfw = (xfWindow*) window->extra;
+			xf_UpdateWindowArea(xfi, xfw, x, y, w, h);
+		}
+	}
+
 	return True;
 }
 
@@ -136,20 +149,16 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 	}
 	else if (xfi->mouse_motion == True)
 	{
-		xfWindow* xfw;
 		rdpWindow* window;
 		int x = event->xmotion.x;
 		int y = event->xmotion.y;
-		window = window_list_get_by_extra_id(xfi->rail->list, (void*)event->xmotion.window);
+		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xmotion.window);
 
 		if (window != NULL)
 		{
-			xfw = (xfWindow*) window->extra;
-			x += xfw->left;
-			y += xfw->top;
-
-			if (!xfw->isLocalMoveSizeModeEnabled)
-				input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+			x += window->windowOffsetX;
+			y += window->windowOffsetY;
+			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 		}
 	}
 
@@ -173,20 +182,20 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 	switch (event->xbutton.button)
 	{
 		case 1:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
 			break;
 
 		case 2:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
 			break;
 
 		case 3:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
 			break;
 
@@ -217,15 +226,13 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			if (app)
 			{
-				xfWindow* xfw;
 				rdpWindow* window;
 				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
 
 				if (window != NULL)
 				{
-					xfw = (xfWindow*) window->extra;
-					x += xfw->left;
-					y += xfw->top;
+					x += window->windowOffsetX;
+					y += window->windowOffsetY;
 				}
 			}
 
@@ -251,20 +258,20 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	switch (event->xbutton.button)
 	{
 		case 1:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON1;
 			break;
 
 		case 2:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON3;
 			break;
 
 		case 3:
-			x = event->xmotion.x;
-			y = event->xmotion.y;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON2;
 			break;
 
@@ -277,15 +284,13 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
-			xfWindow* xfw;
 			rdpWindow* window;
-			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
 
 			if (window != NULL)
 			{
-				xfw = (xfWindow*) window->extra;
-				x += xfw->left;
-				y += xfw->top;
+				x += window->windowOffsetX;
+				y += window->windowOffsetY;
 			}
 		}
 
@@ -344,7 +349,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	if (xfi->mouse_active && (app != True))
 		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 
-	//xf_rail_send_activate(xfi, event->xany.window, True);
+	xf_rail_send_activate(xfi, event->xany.window, True);
 	xf_kbd_focus_in(xfi);
 
 	return True;
@@ -360,7 +365,7 @@ boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
 
-	//xf_rail_send_activate(xfi, event->xany.window, False);
+	xf_rail_send_activate(xfi, event->xany.window, False);
 
 	return True;
 }
@@ -439,43 +444,26 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 	if (window != NULL)
 	{
 		xfWindow* xfw;
+		uint32 left, top;
+		uint32 right, bottom;
+		uint32 width, height;
 		xfw = (xfWindow*) window->extra;
+
+		left = event->xconfigure.x;
+		top = event->xconfigure.y;
+		width = event->xconfigure.width;
+		height = event->xconfigure.height;
+		right = left + width - 1;
+		bottom = top + height - 1;
 
 		DEBUG_X11_LMS("ConfigureNotify: send_event=%d eventWindow=0x%X window=0x%X above=0x%X rc={l=%d t=%d r=%d b=%d} "
 			"w=%d h=%d override_redirect=%d",
 			event->xconfigure.send_event,
-			(uint32)event->xconfigure.event,
-			(uint32)event->xconfigure.window,
-			(uint32)event->xconfigure.above,
-			event->xconfigure.x,
-			event->xconfigure.y,
-			event->xconfigure.x + event->xconfigure.width - 1,
-			event->xconfigure.y + event->xconfigure.height - 1,
-			event->xconfigure.width,
-			event->xconfigure.height,
+			(uint32) event->xconfigure.event,
+			(uint32) event->xconfigure.window,
+			(uint32) event->xconfigure.above,
+			left, top, right, bottom, width, height,
 			event->xconfigure.override_redirect);
-
-		if (xfw->isLocalMoveSizeModeEnabled && event->xconfigure.above != 0)
-		{
-			uint32 left = event->xconfigure.x;
-			uint32 top = event->xconfigure.y;
-			uint32 right = event->xconfigure.x + event->xconfigure.width;
-			uint32 bottom = event->xconfigure.y + event->xconfigure.height;
-
-			DEBUG_X11_LMS("MoveSendToServer: windowId=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d \n",
-				(uint32)xfw->handle, left, top, right, bottom, event->xconfigure.width,
-				event->xconfigure.height);
-
-			xf_rail_send_windowmove(xfi, window->windowId, left, top, right, bottom);
-		}
-
-		XPutImage(xfi->display, xfi->primary, xfw->gc, xfi->image,
-				xfw->left, xfw->top, xfw->left, xfw->top, xfw->width, xfw->height);
-
-		XCopyArea(xfi->display, xfi->primary, xfw->handle, xfw->gc,
-				xfw->left, xfw->top, xfw->width, xfw->height, 0, 0);
-
-		XFlush(xfi->display);
 	}
 
 	return True;

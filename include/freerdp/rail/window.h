@@ -54,8 +54,8 @@ struct rdp_window
 	uint32 clientAreaHeight;
 	uint8 RPContent;
 	uint32 rootParentHandle;
-	uint32 windowOffsetX;
-	uint32 windowOffsetY;
+	sint32 windowOffsetX;
+	sint32 windowOffsetY;
 	uint32 windowClientDeltaX;
 	uint32 windowClientDeltaY;
 	uint32 windowWidth;
