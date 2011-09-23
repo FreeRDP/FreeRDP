@@ -33,29 +33,29 @@
 
 STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen)
 {
-	STREAM* data_out;
+	STREAM* s;
 
-	data_out = stream_new(dataLen + 8);
-	stream_write_uint16(data_out, msgType);
-	stream_write_uint16(data_out, msgFlags);
+	s = stream_new(dataLen + 8);
+	stream_write_uint16(s, msgType);
+	stream_write_uint16(s, msgFlags);
 	/* Write actual length after the entire packet has been constructed. */
-	stream_seek(data_out, 4);
+	stream_seek(s, 4);
 
-	return data_out;
+	return s;
 }
 
-void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* data_out)
+void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* s)
 {
 	int pos;
 	uint32 dataLen;
 
-	pos = stream_get_pos(data_out);
+	pos = stream_get_pos(s);
 	dataLen = pos - 8;
-	stream_set_pos(data_out, 4);
-	stream_write_uint32(data_out, dataLen);
-	stream_set_pos(data_out, pos);
+	stream_set_pos(s, 4);
+	stream_write_uint32(s, dataLen);
+	stream_set_pos(s, pos);
 
-	svc_plugin_send((rdpSvcPlugin*)cliprdr, data_out);
+	svc_plugin_send((rdpSvcPlugin*)cliprdr, s);
 }
 
 static void cliprdr_process_connect(rdpSvcPlugin* plugin)
@@ -63,28 +63,28 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 	DEBUG_SVC("connecting");
 }
 
-static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* data_in)
+static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s)
 {
 	uint16 cCapabilitiesSets;
 
-	stream_read_uint16(data_in, cCapabilitiesSets);
+	stream_read_uint16(s, cCapabilitiesSets);
 	DEBUG_SVC("cCapabilitiesSets %d", cCapabilitiesSets);
 }
 
 static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 {
-	STREAM* data_out;
+	STREAM* s;
 
-	data_out = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
-	stream_write_uint16(data_out, 1); /* cCapabilitiesSets */
-	stream_write_uint16(data_out, 0); /* pad1 */
-	stream_write_uint16(data_out, CB_CAPSTYPE_GENERAL); /* capabilitySetType */
-	stream_write_uint16(data_out, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability */
-	stream_write_uint32(data_out, CB_CAPS_VERSION_2); /* version */
-	stream_write_uint32(data_out, 0); /* generalFlags */
+	stream_write_uint16(s, 1); /* cCapabilitiesSets */
+	stream_write_uint16(s, 0); /* pad1 */
+	stream_write_uint16(s, CB_CAPSTYPE_GENERAL); /* capabilitySetType */
+	stream_write_uint16(s, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability */
+	stream_write_uint32(s, CB_CAPS_VERSION_2); /* version */
+	stream_write_uint32(s, 0); /* generalFlags */
 
-	cliprdr_packet_send(cliprdr, data_out);
+	cliprdr_packet_send(cliprdr, s);
 }
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
@@ -97,23 +97,23 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
 	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, event);
 }
 
-static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 {
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*)plugin;
 	uint16 msgType;
 	uint16 msgFlags;
 	uint32 dataLen;
 
-	stream_read_uint16(data_in, msgType);
-	stream_read_uint16(data_in, msgFlags);
-	stream_read_uint32(data_in, dataLen);
+	stream_read_uint16(s, msgType);
+	stream_read_uint16(s, msgFlags);
+	stream_read_uint32(s, dataLen);
 
 	DEBUG_SVC("msgType %d msgFlags %d dataLen %d", msgType, msgFlags, dataLen);
 
 	switch (msgType)
 	{
 		case CB_CLIP_CAPS:
-			cliprdr_process_clip_caps(cliprdr, data_in);
+			cliprdr_process_clip_caps(cliprdr, s);
 			break;
 
 		case CB_MONITOR_READY:
@@ -121,18 +121,19 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 			break;
 
 		case CB_FORMAT_LIST:
-			cliprdr_process_format_list(cliprdr, data_in, dataLen);
+			cliprdr_process_format_list(cliprdr, s, dataLen);
 			break;
 
 		case CB_FORMAT_LIST_RESPONSE:
+			cliprdr_process_format_list_response(cliprdr, msgFlags);
 			break;
 
 		case CB_FORMAT_DATA_REQUEST:
-			cliprdr_process_format_data_request(cliprdr, data_in);
+			cliprdr_process_format_data_request(cliprdr, s);
 			break;
 
 		case CB_FORMAT_DATA_RESPONSE:
-			cliprdr_process_format_data_response(cliprdr, data_in, dataLen);
+			cliprdr_process_format_data_response(cliprdr, s, dataLen);
 			break;
 
 		default:
@@ -140,7 +141,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 			break;
 	}
 
-	stream_free(data_in);
+	stream_free(s);
 }
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)

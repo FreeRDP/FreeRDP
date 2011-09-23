@@ -113,6 +113,7 @@ static void freerdp_cliprdr_event_free(RDP_EVENT* event)
 			{
 				RDP_CB_FORMAT_LIST_EVENT* cb_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 				xfree(cb_event->formats);
+				xfree(cb_event->raw_format_data);
 			}
 			break;
 		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
