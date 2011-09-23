@@ -30,6 +30,6 @@
 #define	FREERDP_PASSPHRASE_READ_SEVENBIT	0x10
 #define	FREERDP_PASSPHRASE_STDIN	0x20
 
-FREERDP_API char * freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int flags);
+FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int flags);
 
 #endif /* __UTILS_PASSPHRASE_H */
