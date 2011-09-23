@@ -33,6 +33,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #else
+#define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
 #endif
 

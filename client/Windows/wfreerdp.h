@@ -31,7 +31,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/color.h>
+#include <freerdp/common/color.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/chanman/chanman.h>
 
