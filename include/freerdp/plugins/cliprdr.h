@@ -56,6 +56,8 @@ struct _RDP_CB_FORMAT_LIST_EVENT
 	RDP_EVENT event;
 	uint32* formats;
 	uint16 num_formats;
+	uint8* raw_format_data;
+	uint32 raw_format_data_size;
 };
 typedef struct _RDP_CB_FORMAT_LIST_EVENT RDP_CB_FORMAT_LIST_EVENT;
 

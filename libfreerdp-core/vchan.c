@@ -35,6 +35,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 	rdpChan* channel = NULL;
 	int i;
 	int chunk_size;
+	int left;
 
 	for (i = 0; i < vchan->instance->settings->num_channels; i++)
 	{
@@ -51,17 +52,18 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 	}
 
 	flags = CHANNEL_FLAG_FIRST;
-	while (size > 0)
+	left = size;
+	while (left > 0)
 	{
 		s = rdp_send_stream_init(vchan->instance->rdp);
 
-		if (size > (int) vchan->instance->settings->vc_chunk_size)
+		if (left > (int) vchan->instance->settings->vc_chunk_size)
 		{
 			chunk_size = vchan->instance->settings->vc_chunk_size;
 		}
 		else
 		{
-			chunk_size = size;
+			chunk_size = left;
 			flags |= CHANNEL_FLAG_LAST;
 		}
 		if ((channel->options & CHANNEL_OPTION_SHOW_PROTOCOL))
@@ -69,7 +71,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}
 
-		stream_write_uint32(s, chunk_size);
+		stream_write_uint32(s, size);
 		stream_write_uint32(s, flags);
 		stream_check_size(s, chunk_size);
 		stream_write(s, data, chunk_size);
@@ -77,7 +79,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 		rdp_send(vchan->instance->rdp, s, channel_id);
 
 		data += chunk_size;
-		size -= chunk_size;
+		left -= chunk_size;
 		flags = 0;
 	}
 
