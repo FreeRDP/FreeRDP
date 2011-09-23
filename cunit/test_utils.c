@@ -164,6 +164,6 @@ void test_args(void)
 
 void test_passphrase_read(void)
 {
-	freerdp_passphrase_read(NULL, NULL, 0, 0);
+	freerdp_passphrase_read(NULL, NULL, 0);
 	return;
 }

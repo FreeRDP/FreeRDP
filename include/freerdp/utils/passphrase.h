@@ -23,14 +23,6 @@
 #include <stdlib.h>
 #include <freerdp/api.h>
 
-#define	FREERDP_PASSPHRASE_READ_ECHO_OFF	0x00
-#define	FREERDP_PASSPHRASE_READ_ECHO_ON	0x01
-#define	FREERDP_PASSPHRASE_READ_REQUIRE_TTY	0x02
-#define	FREERDP_PASSPHRASE_READ_FORCELOWER	0x04
-#define	FREERDP_PASSPHRASE_READ_FORCEUPPER	0x08
-#define	FREERDP_PASSPHRASE_READ_SEVENBIT	0x10
-#define	FREERDP_PASSPHRASE_STDIN	0x20
-
-FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int flags);
+FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz);
 
 #endif /* __UTILS_PASSPHRASE_H */

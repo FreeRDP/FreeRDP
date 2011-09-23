@@ -19,7 +19,7 @@
 
 #include <freerdp/utils/passphrase.h>
 
-char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int flags)
+char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 {
 	return NULL;
 }
