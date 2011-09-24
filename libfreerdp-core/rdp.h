@@ -137,6 +137,15 @@ struct rdp_rdp
 	struct crypto_hmac_struct* fips_hmac;
 	uint32 sec_flags;
 	boolean do_crypt;
+	uint8 sign_key[16];
+	uint8 decrypt_key[16];
+	uint8 encrypt_key[16];
+	uint8 decrypt_update_key[16];
+	uint8 encrypt_update_key[16];
+	int rc4_key_len;
+	uint8 fips_sign_key[20];
+	uint8 fips_encrypt_key[24];
+	uint8 fips_decrypt_key[24];
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);

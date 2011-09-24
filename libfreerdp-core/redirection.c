@@ -200,7 +200,7 @@ void redirection_free(rdpRedirection* redirection)
 		{
 			int i;
 
-			for (i = 0; i < redirection->targetNetAddressesCount; i++)
+			for (i = 0; i < (int) redirection->targetNetAddressesCount; i++)
 				freerdp_string_free(&redirection->targetNetAddresses[i]);
 
 			xfree(redirection->targetNetAddresses);

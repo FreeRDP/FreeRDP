@@ -30,7 +30,11 @@
 
 void freerdp_sleep(uint32 seconds)
 {
+#ifndef _WIN32
 	sleep(seconds);
+#else
+	Sleep(seconds * 1000);
+#endif
 }
 
 void freerdp_usleep(uint32 useconds)

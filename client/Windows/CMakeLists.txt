@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(wfreerdp
+add_executable(wfreerdp WIN32
 	wfreerdp.c
 	wfreerdp.h)
 

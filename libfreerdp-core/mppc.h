@@ -22,14 +22,6 @@
 
 #include <stdint.h>
 
-#define _MPPC_DEBUG
-
-#ifdef MPPC_DEBUG
-#define mprintf(y...) printf(y);
-#else
-#define mprintf(y...)
-#endif 
-
 #define RDP5_HISTORY_BUF_SIZE     65536
 
 struct rdp_mppc

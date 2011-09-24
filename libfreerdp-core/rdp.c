@@ -1,4 +1,3 @@
-
 /**
  * FreeRDP: A Remote Desktop Protocol Client
  * RDP Core
@@ -312,8 +311,8 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 				data = s->p + 8;
 				length = length - (data - s->data);
 
-				mk = rdp->settings->sign_key;
-				ml = rdp->settings->rc4_key_len;
+				mk = rdp->sign_key;
+				ml = rdp->rc4_key_len;
 				security_mac_signature(mk, ml, data, length, s->p);
 				stream_seek(s, 8);
 				security_encrypt(s->p, length, rdp);
@@ -328,11 +327,13 @@ static uint32 rdp_get_sec_bytes(rdpRdp* rdp)
 {
 	uint32 sec_bytes;
 
-	if (rdp->sec_flags & SEC_ENCRYPT) {
+	if (rdp->sec_flags & SEC_ENCRYPT)
+	{
 		sec_bytes = 12;
 		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
-	} else if (rdp->sec_flags != 0)
+	}
+	else if (rdp->sec_flags != 0)
 		sec_bytes = 4;
 	else
 		sec_bytes = 0;
