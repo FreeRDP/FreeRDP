@@ -31,7 +31,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	char read_char;
 	char* buf_iter;
 	char term_name[L_ctermid];
-	int term_id, reset_terminal = 0;
+	int term_id, write_file, reset_terminal = 0;
 	ssize_t nbytes;
 	size_t read_bytes = 0;
 	struct termios orig_flags, no_echo_flags;
@@ -43,9 +43,11 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	}
 
 	ctermid(term_name);
-	term_id = open(term_name, O_RDWR);
-	if (term_id == -1)
-		goto error;
+	if(strcmp(term_name, "") == 0
+		|| (term_id = open(term_name, O_RDWR)) == -1)
+		write_file = STDERR_FILENO;
+	else
+		write_file = term_id;
 
 	if (tcgetattr(term_id, &orig_flags) != -1)
 	{
@@ -57,7 +59,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 			reset_terminal = 0;
 	}
 
-	if (write(term_id, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
+	if (write(write_file, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
 		goto error;
 
 	buf_iter = buf;
