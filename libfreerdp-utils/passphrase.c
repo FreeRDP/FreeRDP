@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,18 +31,25 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	char* buf_iter;
 	char term_name[L_ctermid];
 	int term_id;
+	ssize_t nbytes;
 	size_t read_bytes = 0;
 
 	if (bufsiz == 0)
+	{
+		errno = EINVAL;
 		return NULL;
+	}
 
 	ctermid(term_name);
 	term_id = open(term_name, O_RDWR);
+	if (term_id == -1)
+		return NULL;
 
-	write(term_id, prompt, strlen(prompt) + sizeof '\0');
+	if (write(term_id, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
+		return NULL;
 
 	buf_iter = buf;
-	while (read(term_id, &read_char, sizeof read_char) == (sizeof read_char))
+	while ((nbytes = read(term_id, &read_char, sizeof read_char)) == (sizeof read_char))
 	{
 		read_bytes++;
 		if (read_char == '\n')
@@ -52,10 +60,13 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 			buf_iter++;
 		}
 	}
+	if (nbytes == (ssize_t) -1)
+		return NULL;
 	*buf_iter = '\0';
 	buf_iter = NULL;
 
-	close(term_id);
+	if (close(term_id) == -1)
+		return NULL;
 
 	return buf;
 }
