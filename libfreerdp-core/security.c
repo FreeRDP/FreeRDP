@@ -298,15 +298,16 @@ fips_expand_key_bits(uint8 *in, uint8 *out)
 		out[i] = fips_oddparity_table[fips_reverse_table[out[i]]];
 }
 
-
-boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
+boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 {
 	uint8 pre_master_secret[48];
 	uint8 master_secret[48];
 	uint8 session_key_blob[48];
 	uint8* server_random;
 	uint8 salt40[] = { 0xD1, 0x26, 0x9E };
+	rdpSettings* settings;
 
+	settings = rdp->settings;
 	server_random = settings->server_random.data;
 
 	if (settings->encryption_method == ENCRYPTION_METHOD_FIPS)
@@ -322,7 +323,7 @@ boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 		crypto_sha1_final(sha1, client_encrypt_key_t);
 
 		client_encrypt_key_t[20] = client_encrypt_key_t[0];
-		fips_expand_key_bits(client_encrypt_key_t, settings->fips_encrypt_key);
+		fips_expand_key_bits(client_encrypt_key_t, rdp->fips_encrypt_key);
 
 		sha1 = crypto_sha1_init();
 		crypto_sha1_update(sha1, client_random, 16);
@@ -330,12 +331,12 @@ boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 		crypto_sha1_final(sha1, client_decrypt_key_t);
 
 		client_decrypt_key_t[20] = client_decrypt_key_t[0];
-		fips_expand_key_bits(client_decrypt_key_t, settings->fips_decrypt_key);
+		fips_expand_key_bits(client_decrypt_key_t, rdp->fips_decrypt_key);
 
 		sha1 = crypto_sha1_init();
 		crypto_sha1_update(sha1, client_decrypt_key_t, 20);
 		crypto_sha1_update(sha1, client_encrypt_key_t, 20);
-		crypto_sha1_final(sha1, settings->fips_sign_key);
+		crypto_sha1_final(sha1, rdp->fips_sign_key);
 	}
 
 	memcpy(pre_master_secret, client_random, 24);
@@ -344,25 +345,25 @@ boolean security_establish_keys(uint8* client_random, rdpSettings* settings)
 	security_A(pre_master_secret, client_random, server_random, master_secret);
 	security_X(master_secret, client_random, server_random, session_key_blob);
 
-	memcpy(settings->sign_key, session_key_blob, 16);
+	memcpy(rdp->sign_key, session_key_blob, 16);
 
-	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, settings->decrypt_key);
-	security_md5_16_32_32(&session_key_blob[32], client_random, server_random, settings->encrypt_key);
+	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->decrypt_key);
+	security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->encrypt_key);
 
 	if (settings->encryption_method == 1) /* 40 and 56 bit */
 	{
-		memcpy(settings->sign_key, salt40, 3); /* TODO 56 bit */
-		memcpy(settings->decrypt_key, salt40, 3); /* TODO 56 bit */
-		memcpy(settings->encrypt_key, salt40, 3); /* TODO 56 bit */
-		settings->rc4_key_len = 8;
+		memcpy(rdp->sign_key, salt40, 3); /* TODO 56 bit */
+		memcpy(rdp->decrypt_key, salt40, 3); /* TODO 56 bit */
+		memcpy(rdp->encrypt_key, salt40, 3); /* TODO 56 bit */
+		rdp->rc4_key_len = 8;
 	}
 	else if (settings->encryption_method == 2) /* 128 bit */
 	{
-		settings->rc4_key_len = 16;
+		rdp->rc4_key_len = 16;
 	}
 
-	memcpy(settings->decrypt_update_key, settings->decrypt_key, 16);
-	memcpy(settings->encrypt_update_key, settings->encrypt_key, 16);
+	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
+	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
 
 	return True;
 }
@@ -401,9 +402,9 @@ boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
 {
 	if (rdp->encrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->settings->encrypt_key, rdp->settings->encrypt_update_key, rdp->settings->rc4_key_len);
+		security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len);
 		crypto_rc4_free(rdp->rc4_encrypt_key);
-		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 		rdp->encrypt_use_count = 0;
 	}
 	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
@@ -415,9 +416,9 @@ boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
 {
 	if (rdp->decrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->settings->decrypt_key, rdp->settings->decrypt_update_key, rdp->settings->rc4_key_len);
+		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len);
 		crypto_rc4_free(rdp->rc4_decrypt_key);
-		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
+		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 		rdp->decrypt_use_count = 0;
 	}
 	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);
@@ -432,7 +433,7 @@ void security_hmac_signature(uint8* data, int length, uint8* output, rdpRdp* rdp
 
 	security_uint32_le(use_count_le, rdp->encrypt_use_count);
 
-	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->settings->fips_sign_key, 20);
+	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
 	crypto_hmac_update(rdp->fips_hmac, data, length);
 	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
 	crypto_hmac_final(rdp->fips_hmac, buf, 20);
@@ -460,7 +461,7 @@ boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRd
 
 	security_uint32_le(use_count_le, rdp->decrypt_use_count);
 
-	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->settings->fips_sign_key, 20);
+	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
 	crypto_hmac_update(rdp->fips_hmac, data, length);
 	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
 	crypto_hmac_final(rdp->fips_hmac, buf, 20);

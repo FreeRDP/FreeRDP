@@ -193,7 +193,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	}
 
 	/* now calculate encrypt / decrypt and upate keys */
-	if (!security_establish_keys(client_random, rdp->settings))
+	if (!security_establish_keys(client_random, rdp))
 	{
 		return False;
 	}
@@ -203,15 +203,15 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
 		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
-		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->settings->fips_encrypt_key, fips_ivec);
-		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->settings->fips_decrypt_key, fips_ivec);
+		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
 		rdp->fips_hmac = crypto_hmac_new();
 		return True;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->settings->decrypt_key, rdp->settings->rc4_key_len);
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->settings->encrypt_key, rdp->settings->rc4_key_len);
+	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 
 	return True;
 }

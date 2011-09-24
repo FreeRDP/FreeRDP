@@ -207,17 +207,6 @@ struct rdp_settings
 	rdpBlob server_certificate;
 	struct rdp_certificate* server_cert;
 
-	uint8 sign_key[16];
-	uint8 decrypt_key[16];
-	uint8 encrypt_key[16];
-	uint8 decrypt_update_key[16];
-	uint8 encrypt_update_key[16];
-	int rc4_key_len;
-
-	uint8 fips_sign_key[20];
-	uint8 fips_encrypt_key[24];
-	uint8 fips_decrypt_key[24];
-
 	boolean console_audio;
 	boolean console_session;
 	uint32 redirected_session_id;
