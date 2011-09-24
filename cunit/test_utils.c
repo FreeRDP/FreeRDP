@@ -226,6 +226,7 @@ void passphrase_read_reads_from_tty()
 {
 	static const int read_nbyte = 11;
 	int masterfd;
+	int pipe_ends[2];
 	char* slavedevice;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
@@ -237,6 +238,9 @@ void passphrase_read_reads_from_tty()
 		|| unlockpt (masterfd) == -1
 		|| (slavedevice = ptsname (masterfd)) == NULL)
 		CU_FAIL_FATAL("Could not create pty");
+
+	if (pipe(pipe_ends) != 0)
+		CU_FAIL_FATAL("Could not create pipe");
 
 	switch (fork())
 	{
@@ -256,13 +260,16 @@ void passphrase_read_reads_from_tty()
 			close(STDOUT_FILENO);
 			close(STDERR_FILENO);
 			close(masterfd);
+			close(pipe_ends[0]);
 			freerdp_passphrase_read("Password: ", buffer, password_size);
-			write(slavefd, buffer, password_size);
+			write(pipe_ends[1], buffer, password_size);
 			close(slavefd);
+			close(pipe_ends[1]);
 			exit(EXIT_SUCCESS);
 		}
 	}
 
+	close(pipe_ends[1]);
 	read_buf[read_nbyte - 1] = '\0';
 
 	FD_ZERO(&fd_set_write);
@@ -272,11 +279,12 @@ void passphrase_read_reads_from_tty()
 	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
 		CU_FAIL_FATAL("Nothing written to slave end of pty");
 
-	write(masterfd, "passw0rd\n", (size_t) 2);
-	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
-		CU_FAIL_FATAL("Nothing written to slave end of pty");
+	write(masterfd, "passw0rd\n", sizeof "passw0rd\n");
+	if (read(pipe_ends[0], read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to pipe");
 	CU_ASSERT_STRING_EQUAL(read_buf, "passw0rd");
 	close(masterfd);
+	close(pipe_ends[0]);
 	return;
 }
 
