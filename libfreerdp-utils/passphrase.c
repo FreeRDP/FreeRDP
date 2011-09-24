@@ -65,7 +65,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 			reset_terminal = 0;
 	}
 
-	if (write(write_file, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
+	if (write(write_file, prompt, strlen(prompt)) == (ssize_t) -1)
 		goto error;
 
 	buf_iter = buf;
