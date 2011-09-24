@@ -561,6 +561,64 @@ void passphrase_read_prompts_to_stderr_when_no_tty()
 	return;
 }
 
+void passphrase_read_reads_from_stdin_when_no_tty()
+{
+	static const int read_nbyte = 11;
+	int stdin_pipe[2], stderr_pipe[2], result_pipe[2];
+	char read_buf[read_nbyte];
+	struct sigaction ignore, orig;
+
+	ignore.sa_handler = SIG_IGN;
+	sigemptyset(&ignore.sa_mask);
+
+	if (pipe(stdin_pipe) != 0
+		|| pipe(stderr_pipe) != 0
+		|| pipe(result_pipe) !=0)
+		CU_FAIL_FATAL("Could not create pipe");
+
+	switch (fork())
+	{
+	case -1:
+		CU_FAIL_FATAL("Could not fork");
+	case 0:
+		{
+			static const int password_size = 512;
+			char buffer[password_size];
+			close(stderr_pipe[0]);
+			close(result_pipe[0]);
+			close(stdin_pipe[1]);
+			if (setsid() == (pid_t) -1)
+				CU_FAIL_FATAL("Could not create new session");
+
+			dup2(stdin_pipe[0], STDIN_FILENO);
+			dup2(stderr_pipe[1], STDERR_FILENO);
+			freerdp_passphrase_read("Password: ", buffer, password_size);
+			write(result_pipe[1], buffer, strlen(buffer) + (size_t) 1);
+			exit(EXIT_SUCCESS);
+		}
+	}
+	close(stderr_pipe[1]);
+	close(result_pipe[1]);
+	close(stdin_pipe[0]);
+
+	read_buf[read_nbyte - 1] = '\0';
+
+	if (read(stderr_pipe[0], read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to pipe");
+
+	sigaction(SIGPIPE, &ignore, &orig);
+	write(stdin_pipe[1], "passw0rd\n", sizeof "passw0rd\n");
+	sigaction(SIGPIPE, &orig, NULL);
+
+	if (read(result_pipe[0], read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to pipe");
+	CU_ASSERT_STRING_EQUAL(read_buf, "passw0rd");
+
+	close(stderr_pipe[0]);
+	close(stdin_pipe[1]);
+	return;
+}
+
 void test_passphrase_read(void)
 {
 	passphrase_read_prompts_to_tty();
@@ -569,4 +627,5 @@ void test_passphrase_read(void)
 	passphrase_read_resets_terminal_after_read();
 	passphrase_read_turns_on_newline_echo_during_read();
 	passphrase_read_prompts_to_stderr_when_no_tty();
+	passphrase_read_reads_from_stdin_when_no_tty();
 }
