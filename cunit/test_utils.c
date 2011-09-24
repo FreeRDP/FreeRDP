@@ -222,7 +222,66 @@ void passphrase_read_prompts_to_tty()
 	return;
 }
 
+void passphrase_read_reads_from_tty()
+{
+	static const int read_nbyte = 11;
+	int masterfd;
+	char* slavedevice;
+	char read_buf[read_nbyte];
+	fd_set fd_set_write;
+
+	masterfd = posix_openpt(O_RDWR|O_NOCTTY);
+
+	if (masterfd == -1
+		|| grantpt (masterfd) == -1
+		|| unlockpt (masterfd) == -1
+		|| (slavedevice = ptsname (masterfd)) == NULL)
+		CU_FAIL_FATAL("Could not create pty");
+
+	switch (fork())
+	{
+	case -1:
+		CU_FAIL_FATAL("Could not fork");
+	case 0:
+		{
+			static const int password_size = 512;
+			char buffer[password_size];
+			int slavefd;
+			if (setsid() == (pid_t) -1)
+				CU_FAIL_FATAL("Could not create new session");
+
+			if ((slavefd = open(slavedevice, O_RDWR)) == 0)
+				CU_FAIL_FATAL("Could not open slave end of pty");
+			close(STDIN_FILENO);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+			close(masterfd);
+			freerdp_passphrase_read("Password: ", buffer, password_size);
+			write(slavefd, buffer, password_size);
+			close(slavefd);
+			exit(EXIT_SUCCESS);
+		}
+	}
+
+	read_buf[read_nbyte - 1] = '\0';
+
+	FD_ZERO(&fd_set_write);
+	FD_SET(masterfd, &fd_set_write);
+	if (select(masterfd + 1, NULL, &fd_set_write, NULL, NULL) == -1)
+		CU_FAIL_FATAL("Master end of pty not writeable");
+	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to slave end of pty");
+
+	write(masterfd, "passw0rd\n", (size_t) 2);
+	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to slave end of pty");
+	CU_ASSERT_STRING_EQUAL(read_buf, "passw0rd");
+	close(masterfd);
+	return;
+}
+
 void test_passphrase_read(void)
 {
 	passphrase_read_prompts_to_tty();
+	passphrase_read_reads_from_tty();
 }
