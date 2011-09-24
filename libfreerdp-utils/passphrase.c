@@ -45,7 +45,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	ctermid(term_name);
 	term_id = open(term_name, O_RDWR);
 	if (term_id == -1)
-		return NULL;
+		goto error;
 
 	if (tcgetattr(term_id, &orig_flags) != -1)
 	{
@@ -57,7 +57,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	}
 
 	if (write(term_id, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
-		return NULL;
+		goto error;
 
 	buf_iter = buf;
 	while ((nbytes = read(term_id, &read_char, sizeof read_char)) == (sizeof read_char))
@@ -75,22 +75,30 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	buf_iter = NULL;
 	read_char = '\0';
 	if (nbytes == (ssize_t) -1)
-		return NULL;
+		goto error;
 
 	if (reset_terminal)
 	{
 		if (tcsetattr(term_id, TCSADRAIN, &orig_flags) == -1)	
-		{
-			int saved_errno = errno;
-			tcsetattr(term_id, TCSANOW, &orig_flags);
-			errno = saved_errno;
-			return NULL;
-		}
+			goto error;
+		reset_terminal = 0;
 	}
 
 	if (close(term_id) == -1)
-		return NULL;
+		goto error;
 
 	return buf;
+
+	error:
+	{
+		int saved_errno = errno;
+		buf_iter = NULL;
+		read_char = '\0';
+		if (reset_terminal)
+			tcsetattr(term_id, TCSANOW, &orig_flags);
+		close(term_id);
+		errno = saved_errno;
+		return NULL;
+	}
 }
 
