@@ -31,7 +31,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	char read_char;
 	char* buf_iter;
 	char term_name[L_ctermid];
-	int term_id, write_file, reset_terminal = 0;
+	int term_file, write_file, read_file, reset_terminal = 0;
 	ssize_t nbytes;
 	size_t read_bytes = 0;
 	struct termios orig_flags, no_echo_flags;
@@ -44,18 +44,24 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 
 	ctermid(term_name);
 	if(strcmp(term_name, "") == 0
-		|| (term_id = open(term_name, O_RDWR)) == -1)
+		|| (term_file = open(term_name, O_RDWR)) == -1)
+	{
 		write_file = STDERR_FILENO;
+		read_file = STDIN_FILENO;
+	}
 	else
-		write_file = term_id;
+	{
+		write_file = term_file;
+		read_file = term_file;
+	}
 
-	if (tcgetattr(term_id, &orig_flags) != -1)
+	if (tcgetattr(read_file, &orig_flags) != -1)
 	{
 		reset_terminal = 1;
 		no_echo_flags = orig_flags;
 		no_echo_flags.c_lflag &= ~ECHO;
 		no_echo_flags.c_lflag |= ECHONL;
-		if (tcsetattr(term_id, TCSAFLUSH, &no_echo_flags) == -1)
+		if (tcsetattr(read_file, TCSAFLUSH, &no_echo_flags) == -1)
 			reset_terminal = 0;
 	}
 
@@ -63,7 +69,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 		goto error;
 
 	buf_iter = buf;
-	while ((nbytes = read(term_id, &read_char, sizeof read_char)) == (sizeof read_char))
+	while ((nbytes = read(read_file, &read_char, sizeof read_char)) == (sizeof read_char))
 	{
 		if (read_char == '\n')
 			break;
@@ -82,13 +88,16 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 
 	if (reset_terminal)
 	{
-		if (tcsetattr(term_id, TCSADRAIN, &orig_flags) == -1)	
+		if (tcsetattr(read_file, TCSADRAIN, &orig_flags) == -1)	
 			goto error;
 		reset_terminal = 0;
 	}
 
-	if (close(term_id) == -1)
-		goto error;
+	if (read_file != STDIN_FILENO)
+	{
+		if (close(read_file) == -1)
+			goto error;
+	}
 
 	return buf;
 
@@ -98,8 +107,9 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 		buf_iter = NULL;
 		read_char = '\0';
 		if (reset_terminal)
-			tcsetattr(term_id, TCSANOW, &orig_flags);
-		close(term_id);
+			tcsetattr(read_file, TCSANOW, &orig_flags);
+		if (read_file != STDIN_FILENO)
+			close(read_file);
 		errno = saved_errno;
 		return NULL;
 	}
