@@ -18,13 +18,20 @@
  */
 
 #include <errno.h>
+#include <freerdp/utils/passphrase.h>
+#ifdef _WIN32
+char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
+{
+	errno=ENOSYS;
+	return NULL;
+}
+#else
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
-#include <freerdp/utils/passphrase.h>
 
 char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 {
@@ -114,4 +121,4 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 		return NULL;
 	}
 }
-
+#endif
