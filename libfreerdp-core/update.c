@@ -326,7 +326,8 @@ void update_reset_state(rdpUpdate* update)
 	int length;
 	
 	length = &update->state_end - &update->state_start;
-	memset(update->state_start, 0, length);
+
+	memset(&update->state_start, 0, length);
 	update->order_info.orderType = ORDER_TYPE_PATBLT;
 	update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
