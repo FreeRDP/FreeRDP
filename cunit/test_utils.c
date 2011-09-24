@@ -355,7 +355,7 @@ void passphrase_read_turns_off_echo_during_read()
 
 	if (tcgetattr(slavefd, &term_flags) != 0)
 		CU_FAIL_FATAL("Could not get slave pty attributes");
-	CU_ASSERT(!(term_flags.c_lflag | ECHO))
+	CU_ASSERT(!(term_flags.c_lflag & ECHO))
 	write(masterfd, "\n", (size_t) 2);
 	close(masterfd);
 	close(slavefd);
