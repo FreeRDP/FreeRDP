@@ -26,13 +26,36 @@
 
 char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 {
+	char read_char;
+	char* buf_iter;
 	char term_name[L_ctermid];
 	int term_id;
+	size_t read_bytes = 0;
+
+	if (bufsiz == 0)
+		return NULL;
 
 	ctermid(term_name);
 	term_id = open(term_name, O_RDWR);
+
 	write(term_id, prompt, strlen(prompt) + sizeof '\0');
+
+	buf_iter = buf;
+	while (read(term_id, &read_char, sizeof read_char) == (sizeof read_char))
+	{
+		read_bytes++;
+		if (read_char == '\n')
+			break;
+		if (read_bytes < bufsiz)
+		{
+			*buf_iter = read_char;
+			buf_iter++;
+		}
+	}
+	*buf_iter = '\0';
+
 	close(term_id);
-	return NULL;
+
+	return buf;
 }
 
