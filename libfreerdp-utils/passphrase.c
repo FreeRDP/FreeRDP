@@ -51,11 +51,11 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	buf_iter = buf;
 	while ((nbytes = read(term_id, &read_char, sizeof read_char)) == (sizeof read_char))
 	{
-		read_bytes++;
 		if (read_char == '\n')
 			break;
-		if (read_bytes < bufsiz)
+		if (read_bytes < (bufsiz - (size_t) 1))
 		{
+			read_bytes++;
 			*buf_iter = read_char;
 			buf_iter++;
 		}
