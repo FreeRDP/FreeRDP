@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <termios.h>
 #include <unistd.h>
 #include <freerdp/utils/passphrase.h>
 
@@ -60,10 +61,11 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 			buf_iter++;
 		}
 	}
-	if (nbytes == (ssize_t) -1)
-		return NULL;
 	*buf_iter = '\0';
 	buf_iter = NULL;
+	read_char = '\0';
+	if (nbytes == (ssize_t) -1)
+		return NULL;
 
 	if (close(term_id) == -1)
 		return NULL;
