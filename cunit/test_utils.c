@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/semaphore.h>
@@ -162,8 +167,62 @@ void test_args(void)
 	CU_ASSERT(i == 2);
 }
 
+void passphrase_read_prompts_to_tty()
+{
+	static const int read_nbyte = 11;
+	int masterfd;
+	char* slavedevice;
+	char read_buf[read_nbyte];
+	fd_set fd_set_write;
+
+	masterfd = posix_openpt(O_RDWR|O_NOCTTY);
+
+	if (masterfd == -1
+		|| grantpt (masterfd) == -1
+		|| unlockpt (masterfd) == -1
+		|| (slavedevice = ptsname (masterfd)) == NULL)
+		CU_FAIL_FATAL("Could not create pty");
+
+	switch (fork())
+	{
+	case -1:
+		CU_FAIL_FATAL("Could not fork");
+	case 0:
+		{
+			static const int password_size = 512;
+			char buffer[password_size];
+			int slavefd;
+			if (setsid() == (pid_t) -1)
+				CU_FAIL_FATAL("Could not create new session");
+
+			close(STDIN_FILENO);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+			close(masterfd);
+			if ((slavefd = open(slavedevice, O_RDWR)) == 0)
+				CU_FAIL_FATAL("Could not open slave end of pty");
+			freerdp_passphrase_read("Password: ", buffer, password_size);
+			close(slavefd);
+			exit(EXIT_SUCCESS);
+		}
+	}
+
+	read_buf[read_nbyte - 1] = '\0';
+
+	FD_ZERO(&fd_set_write);
+	FD_SET(masterfd, &fd_set_write);
+	if (select(masterfd + 1, NULL, &fd_set_write, NULL, NULL) == -1)
+		CU_FAIL_FATAL("Master end of pty not writeable");
+	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to slave end of pty");
+	CU_ASSERT_STRING_EQUAL(read_buf, "Password: ");
+
+	write(masterfd, "\n", (size_t) 2);
+	close(masterfd);
+	return;
+}
+
 void test_passphrase_read(void)
 {
-	freerdp_passphrase_read(NULL, NULL, 0);
-	return;
+	passphrase_read_prompts_to_tty();
 }
