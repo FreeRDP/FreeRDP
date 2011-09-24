@@ -31,10 +31,10 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	char read_char;
 	char* buf_iter;
 	char term_name[L_ctermid];
-	int term_id;
+	int term_id, reset_terminal = 0;
 	ssize_t nbytes;
 	size_t read_bytes = 0;
-	struct termios term_flags;
+	struct termios orig_flags, no_echo_flags;
 
 	if (bufsiz == 0)
 	{
@@ -47,12 +47,13 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	if (term_id == -1)
 		return NULL;
 
-	if (tcgetattr(term_id, &term_flags) == -1)
-		;
-	else
+	if (tcgetattr(term_id, &orig_flags) != -1)
 	{
-		term_flags.c_lflag &= ~ECHO;
-		tcsetattr(term_id, TCSAFLUSH, &term_flags);
+		reset_terminal = 1;
+		no_echo_flags = orig_flags;
+		no_echo_flags.c_lflag &= ~ECHO;
+		if (tcsetattr(term_id, TCSAFLUSH, &no_echo_flags) == -1)
+			reset_terminal = 0;
 	}
 
 	if (write(term_id, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
@@ -75,6 +76,17 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	read_char = '\0';
 	if (nbytes == (ssize_t) -1)
 		return NULL;
+
+	if (reset_terminal)
+	{
+		if (tcsetattr(term_id, TCSADRAIN, &orig_flags) == -1)	
+		{
+			int saved_errno = errno;
+			tcsetattr(term_id, TCSANOW, &orig_flags);
+			errno = saved_errno;
+			return NULL;
+		}
+	}
 
 	if (close(term_id) == -1)
 		return NULL;
