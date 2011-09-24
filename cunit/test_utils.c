@@ -195,12 +195,12 @@ void passphrase_read_prompts_to_tty()
 			if (setsid() == (pid_t) -1)
 				CU_FAIL_FATAL("Could not create new session");
 
+			if ((slavefd = open(slavedevice, O_RDWR)) == 0)
+				CU_FAIL_FATAL("Could not open slave end of pty");
 			close(STDIN_FILENO);
 			close(STDOUT_FILENO);
 			close(STDERR_FILENO);
 			close(masterfd);
-			if ((slavefd = open(slavedevice, O_RDWR)) == 0)
-				CU_FAIL_FATAL("Could not open slave end of pty");
 			freerdp_passphrase_read("Password: ", buffer, password_size);
 			close(slavefd);
 			exit(EXIT_SUCCESS);
