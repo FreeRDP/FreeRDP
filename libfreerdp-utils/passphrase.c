@@ -34,6 +34,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	int term_id;
 	ssize_t nbytes;
 	size_t read_bytes = 0;
+	struct termios term_flags;
 
 	if (bufsiz == 0)
 	{
@@ -45,6 +46,14 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	term_id = open(term_name, O_RDWR);
 	if (term_id == -1)
 		return NULL;
+
+	if (tcgetattr(term_id, &term_flags) == -1)
+		;
+	else
+	{
+		term_flags.c_lflag &= ~ECHO;
+		tcsetattr(term_id, TCSAFLUSH, &term_flags);
+	}
 
 	if (write(term_id, prompt, strlen(prompt) + sizeof '\0') == (ssize_t) -1)
 		return NULL;
