@@ -17,10 +17,22 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <freerdp/utils/passphrase.h>
 
 char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 {
+	char term_name[L_ctermid];
+	int term_id;
+
+	ctermid(term_name);
+	term_id = open(term_name, O_RDWR);
+	write(term_id, prompt, strlen(prompt) + sizeof '\0');
+	close(term_id);
 	return NULL;
 }
 
