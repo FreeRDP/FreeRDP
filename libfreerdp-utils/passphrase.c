@@ -53,6 +53,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 		}
 	}
 	*buf_iter = '\0';
+	buf_iter = NULL;
 
 	close(term_id);
 
