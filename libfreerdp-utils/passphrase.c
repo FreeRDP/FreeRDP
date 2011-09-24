@@ -52,6 +52,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 		reset_terminal = 1;
 		no_echo_flags = orig_flags;
 		no_echo_flags.c_lflag &= ~ECHO;
+		no_echo_flags.c_lflag |= ECHONL;
 		if (tcsetattr(term_id, TCSAFLUSH, &no_echo_flags) == -1)
 			reset_terminal = 0;
 	}
