@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #include <sys/stat.h>
+#include <termios.h>
 #include <unistd.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/mutex.h>
@@ -288,8 +289,82 @@ void passphrase_read_reads_from_tty()
 	return;
 }
 
+void passphrase_read_turns_off_echo_during_read()
+{
+	static const int read_nbyte = 11;
+	int masterfd, slavefd;
+	char* slavedevice;
+	char read_buf[read_nbyte];
+	fd_set fd_set_write;
+	struct termios term_flags;
+
+	masterfd = posix_openpt(O_RDWR|O_NOCTTY);
+
+	if (masterfd == -1
+		|| grantpt (masterfd) == -1
+		|| unlockpt (masterfd) == -1
+		|| (slavedevice = ptsname (masterfd)) == NULL)
+		CU_FAIL_FATAL("Could not create pty");
+
+	slavefd = open(slavedevice, O_RDWR|O_NOCTTY);
+	if (slavefd == -1)
+		CU_FAIL_FATAL("Could not open slave end of pty");
+
+	if (tcgetattr(slavefd, &term_flags) != 0)
+		CU_FAIL_FATAL("Could not get slave pty attributes");
+	if (!(term_flags.c_lflag & ECHO))
+	{
+		term_flags.c_lflag |= ECHO;
+		if (tcsetattr(slavefd, TCSANOW, &term_flags) != 0)
+			CU_FAIL_FATAL("Could not turn ECHO on on slave pty");
+	}
+
+	switch (fork())
+	{
+	case -1:
+		CU_FAIL_FATAL("Could not fork");
+	case 0:
+		{
+			static const int password_size = 512;
+			int child_slavefd;
+			char buffer[password_size];
+			if (setsid() == (pid_t) -1)
+				CU_FAIL_FATAL("Could not create new session");
+
+			if ((child_slavefd = open(slavedevice, O_RDWR)) == 0)
+				CU_FAIL_FATAL("Could not open slave end of pty");
+			close(STDIN_FILENO);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+			close(masterfd);
+			close(slavefd);
+			freerdp_passphrase_read("Password: ", buffer, password_size);
+			close(child_slavefd);
+			exit(EXIT_SUCCESS);
+		}
+	}
+
+	read_buf[read_nbyte - 1] = '\0';
+
+	FD_ZERO(&fd_set_write);
+	FD_SET(masterfd, &fd_set_write);
+	if (select(masterfd + 1, NULL, &fd_set_write, NULL, NULL) == -1)
+		CU_FAIL_FATAL("Master end of pty not writeable");
+	if (read(masterfd, read_buf, read_nbyte) == (ssize_t) -1)
+		CU_FAIL_FATAL("Nothing written to slave end of pty");
+
+	if (tcgetattr(slavefd, &term_flags) != 0)
+		CU_FAIL_FATAL("Could not get slave pty attributes");
+	CU_ASSERT(!(term_flags.c_lflag | ECHO))
+	write(masterfd, "\n", (size_t) 2);
+	close(masterfd);
+	close(slavefd);
+	return;
+}
+
 void test_passphrase_read(void)
 {
 	passphrase_read_prompts_to_tty();
 	passphrase_read_reads_from_tty();
+	passphrase_read_turns_off_echo_during_read();
 }
