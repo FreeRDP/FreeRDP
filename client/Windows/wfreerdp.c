@@ -65,6 +65,7 @@ boolean wf_pre_connect(freerdp* instance)
 
 	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
 	SET_WFI(instance, wfi);
+	wfi->instance = instance;
 
 	settings = instance->settings;
 

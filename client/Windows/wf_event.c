@@ -128,20 +128,19 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	wfInfo* wfi;
 	PAINTSTRUCT ps;
 	rdpInput* input;
+	boolean processed;
 
+	processed = True;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
-	input = wfi->instance->input;
 
-	switch (Msg)
+	if (wfi != NULL)
 	{
-		case WM_DESTROY:
-			PostQuitMessage(WM_QUIT);
-			break;
+		input = wfi->instance->input;
 
-		case WM_PAINT:
-			if (wfi != NULL)
-			{
+		switch (Msg)
+		{
+			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
 				BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top,
 					ps.rcPaint.right - ps.rcPaint.left,
@@ -149,39 +148,53 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfi->primary->hdc, ps.rcPaint.left, ps.rcPaint.top,
 					SRCCOPY);
 				EndPaint(hWnd, &ps);
-			}
-			break;
+				break;
 
-		case WM_LBUTTONDOWN:
-			if (wfi != NULL)
+			case WM_LBUTTONDOWN:
 				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
-			break;
+				break;
 
-		case WM_LBUTTONUP:
-			if (wfi != NULL)
+			case WM_LBUTTONUP:
 				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
-			break;
+				break;
 
-		case WM_RBUTTONDOWN:
-			if (wfi != NULL)
+			case WM_RBUTTONDOWN:
 				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
-			break;
+				break;
 
-		case WM_RBUTTONUP:
-			if (wfi != NULL)
+			case WM_RBUTTONUP:
 				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
-			break;
+				break;
 
-		case WM_MOUSEMOVE:
-			if (wfi != NULL)
+			case WM_MOUSEMOVE:
 				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam), Y_POS(lParam));
+				break;
+
+			case WM_SETCURSOR:
+				SetCursor(wfi->cursor);
+				break;
+
+			default:
+				processed = False;
+				break;
+		}
+	}
+	else
+	{
+		processed = False;
+	}
+
+	if (processed)
+		return 0;
+
+	switch (Msg)
+	{
+		case WM_DESTROY:
+			PostQuitMessage(WM_QUIT);
 			break;
 
 		case WM_SETCURSOR:
-			if (wfi != NULL)
-				SetCursor(wfi->cursor);
-			else
-				SetCursor(g_default_cursor);
+			SetCursor(g_default_cursor);
 			break;
 
 		case WM_SETFOCUS:
