@@ -73,7 +73,12 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 		&alsa->actual_rate, NULL);
 	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params,
 		&alsa->actual_channels);
-	frames = alsa->actual_rate * 4;
+	if (alsa->latency < 0)
+		frames = alsa->actual_rate * 4; /* Default to 4-second buffer */
+	else
+		frames = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
+	if (frames < alsa->actual_rate / 2)
+		frames = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
 	snd_pcm_hw_params_set_buffer_size_near(alsa->out_handle, hw_params,
 		&frames);
 	snd_pcm_hw_params(alsa->out_handle, hw_params);
@@ -86,12 +91,10 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 		return;
 	}
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);
-	if (alsa->latency < 0)
-		start_threshold = frames / 2;
+	if (alsa->latency == 0)
+		start_threshold = 0;
 	else
-		start_threshold = alsa->latency * alsa->actual_rate / 1000;
-	if (start_threshold > frames)
-		start_threshold = frames;
+		start_threshold = frames / 2;
 	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params, start_threshold);
 	snd_pcm_sw_params(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_free(sw_params);
