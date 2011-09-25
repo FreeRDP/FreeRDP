@@ -25,3 +25,5 @@ target_link_libraries(wfreerdp freerdp-core)
 target_link_libraries(wfreerdp freerdp-gdi)
 target_link_libraries(wfreerdp freerdp-utils)
 target_link_libraries(wfreerdp freerdp-chanman)
+
+install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

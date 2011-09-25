@@ -91,5 +91,4 @@ target_link_libraries(xfreerdp freerdp-chanman)
 target_link_libraries(xfreerdp freerdp-utils)
 target_link_libraries(xfreerdp ${X11_LIBRARIES} dl)
 
-install(TARGETS xfreerdp DESTINATION bin)
-
+install(TARGETS xfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

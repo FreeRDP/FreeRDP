@@ -89,8 +89,6 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
-	printf("keyboard_layout: 0x%X\n", settings->kbd_layout);
-
 	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
 
 	return True;
@@ -142,6 +140,21 @@ boolean wf_check_fds(freerdp* instance)
 	return True;
 }
 
+int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
+{
+	rdpChanMan* chanman = (rdpChanMan*) user_data;
+
+	printf("loading plugin %s\n", name);
+	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
+
+	return 1;
+}
+
+int wf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
+{
+	return 0;
+}
+
 int wfreerdp_run(freerdp* instance)
 {
 	MSG msg;
@@ -156,6 +169,12 @@ int wfreerdp_run(freerdp* instance)
 	HANDLE fds[64];
 	rdpChanMan* chanman;
 
+	memset(rfds, 0, sizeof(rfds));
+	memset(wfds, 0, sizeof(wfds));
+
+	if (!instance->Connect(instance))
+		return 0;
+
 	chanman = GET_CHANMAN(instance);
 
 	/* program main loop */
@@ -169,14 +188,14 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
-		{
-			printf("Failed to get channel manager file descriptor\n");
-			break;
-		}
 		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get wfreerdp file descriptor\n");
+			break;
+		}
+		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		{
+			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
 
@@ -200,7 +219,7 @@ int wfreerdp_run(freerdp* instance)
 		/* do the wait */
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, INFINITE, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			printf("wfreerdp_run: WaitForMultipleObjects failed\n");
+			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
@@ -262,6 +281,7 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	SET_WFI(instance, wfi);
 
 	wfreerdp_run(instance);
+
 	g_thread_count--;
 
 	if (g_thread_count < 1)
@@ -337,6 +357,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RegisterClassEx(&wnd_cls);
 
 	g_hInstance = hInstance;
+	freerdp_chanman_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
@@ -354,12 +375,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		data = (thread_data*) xzalloc(sizeof(thread_data)); 
 		data->instance = instance;
 
-		freerdp_parse_args(instance->settings, __argc, __argv, NULL, NULL, NULL, NULL);
+		freerdp_parse_args(instance->settings, __argc, __argv,
+			wf_process_plugin_args, chanman, wf_process_ui_args, NULL);
 
 		if (CreateThread(NULL, 0, thread_func, data, 0, NULL) != 0)
-		{
 			g_thread_count++;
-		}
 	}
 
 	if (g_thread_count > 0)

@@ -108,6 +108,7 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
 
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -236,13 +237,29 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 
 rdpTcp* tcp_new(rdpSettings* settings)
 {
-	rdpTcp* tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	rdpTcp* tcp;
+
+#ifdef _WIN32
+		int wsaStatus;
+		WSADATA wsaData;
+		WORD wVersionRequested;
+#endif
+
+	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}
+
+#ifdef _WIN32
+	wVersionRequested = MAKEWORD(2, 2);
+	wsaStatus = WSAStartup(wVersionRequested, &wsaData);
+
+	if (wsaStatus != 0)
+		printf("WSAStartup failed with error: %d\n", wsaStatus);
+#endif
 
 	return tcp;
 }

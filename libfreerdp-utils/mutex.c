@@ -20,48 +20,42 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
 
-#if defined _WIN32
-
+#ifdef _WIN32
 #include <windows.h>
 #define freerdp_mutex_t HANDLE
-
 #else
-
 #include <pthread.h>
 #define freerdp_mutex_t pthread_mutex_t
-
 #endif
 
 freerdp_mutex freerdp_mutex_new(void)
 {
-	freerdp_mutex_t* mutex;
-
-	mutex = xnew(freerdp_mutex_t);
-
-#if defined _WIN32
-	*mutex = CreateMutex(NULL, FALSE, NULL);
+#ifdef _WIN32
+	freerdp_mutex_t mutex;
+	mutex = CreateMutex(NULL, FALSE, NULL);
+	return (freerdp_mutex) mutex;
 #else
+	freerdp_mutex_t* mutex;
+	mutex = xnew(freerdp_mutex_t);
 	pthread_mutex_init(mutex, 0);
-#endif
-
 	return mutex;
+#endif
 }
 
 void freerdp_mutex_free(freerdp_mutex mutex)
 {
-#if defined _WIN32
-	CloseHandle(*((freerdp_mutex_t*)mutex));
+#ifdef _WIN32
+	CloseHandle((freerdp_mutex_t) mutex);
 #else
-	pthread_mutex_destroy((freerdp_mutex_t*)mutex);
-#endif
-
+	pthread_mutex_destroy((freerdp_mutex_t*) mutex);
 	xfree(mutex);
+#endif
 }
 
 void freerdp_mutex_lock(freerdp_mutex mutex)
 {
-#if defined _WIN32
-	WaitForSingleObject(*((freerdp_mutex_t*)mutex), INFINITE);
+#ifdef _WIN32
+	WaitForSingleObject((freerdp_mutex_t) mutex, INFINITE);
 #else
 	pthread_mutex_lock(mutex);
 #endif
@@ -69,8 +63,8 @@ void freerdp_mutex_lock(freerdp_mutex mutex)
 
 void freerdp_mutex_unlock(freerdp_mutex mutex)
 {
-#if defined _WIN32
-	ReleaseMutex(*((freerdp_mutex_t*)mutex));
+#ifdef _WIN32
+	ReleaseMutex((freerdp_mutex_t) mutex);
 #else
 	pthread_mutex_unlock(mutex);
 #endif
