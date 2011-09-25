@@ -244,11 +244,11 @@ rdpTls* tls_new()
 
 int tls_verify_certificate(CryptoCert cert, char* hostname)
 {
-	boolean ret;
+	boolean status;
 	rdpCertstore* certstore;
-	ret = x509_verify_cert(cert);
+	status = x509_verify_cert(cert);
 
-	if (!ret)
+	if (status != True)
 	{
 		rdpCertdata* certdata;
 		certdata = crypto_get_certdata(cert->px509, hostname);
@@ -262,6 +262,7 @@ int tls_verify_certificate(CryptoCert cert, char* hostname)
 			char answer;
 			crypto_cert_printinfo(cert->px509);
 
+#ifndef _WIN32
 			while (1)
 			{
 				printf("Do you trust the above certificate? (Y/N) ");
@@ -278,6 +279,7 @@ int tls_verify_certificate(CryptoCert cert, char* hostname)
 					return 1;
 				}
 			}
+#endif
 		}
 		else if (certstore->match == -1)
 		{

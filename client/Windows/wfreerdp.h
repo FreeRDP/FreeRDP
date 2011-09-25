@@ -35,18 +35,21 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/chanman/chanman.h>
 
+#include "wf_event.h"
+
 #define SET_WFI(_instance, _wfi) (_instance)->param1 = _wfi
 #define GET_WFI(_instance) ((wfInfo*) ((_instance)->param1))
 
 #define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
 #define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
 
-struct wf_bitmap
+struct _WF_IMAGE
 {
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
 };
+typedef struct _WF_IMAGE WF_IMAGE;
 
 struct wf_info
 {
@@ -56,8 +59,9 @@ struct wf_info
 	char window_title[64];
 
 	HWND hwnd;
-	struct wf_bitmap* primary;
-	struct wf_bitmap* drawing;
+	freerdp* instance;
+	WF_IMAGE* primary;
+	WF_IMAGE* drawing;
 	HCLRCONV clrconv;
 	HCURSOR cursor;
 	HBRUSH brush;

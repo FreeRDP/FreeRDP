@@ -18,6 +18,10 @@
 # limitations under the License.
 
 add_executable(wfreerdp WIN32
+	wf_gdi.c
+	wf_gdi.h
+	wf_event.c
+	wf_event.h
 	wfreerdp.c
 	wfreerdp.h)
 

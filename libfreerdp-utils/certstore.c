@@ -76,7 +76,7 @@ char* get_local_certloc()
 #ifndef _WIN32
 		mkdir(certloc, S_IRUSR | S_IWUSR | S_IXUSR);
 #else
-		CreateDirectory(certloc, 0);
+		CreateDirectoryA(certloc, 0);
 #endif
 	}
 	
@@ -108,7 +108,7 @@ void certstore_init(rdpCertstore* certstore)
 #ifndef _WIN32
 		mkdir(certstore->path, S_IRUSR | S_IWUSR | S_IXUSR);
 #else
-		CreateDirectory(certstore->path, 0);
+		CreateDirectoryA(certstore->path, 0);
 #endif
 		printf("creating directory %s\n", certstore->path);
 	}

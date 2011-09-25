@@ -149,7 +149,7 @@ void registry_init(rdpRegistry* registry)
 #ifndef _WIN32
 		mkdir(registry->path, S_IRUSR | S_IWUSR | S_IXUSR);
 #else
-		CreateDirectory(registry->path, 0);
+		CreateDirectoryA(registry->path, 0);
 #endif
 		printf("creating directory %s\n", registry->path);
 	}
