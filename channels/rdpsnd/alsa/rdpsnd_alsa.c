@@ -44,6 +44,7 @@ struct rdpsnd_alsa_plugin
 	int bytes_per_channel;
 	int wformat;
 	int block_size;
+	int latency;
 	ADPCM adpcm;
 };
 
@@ -53,6 +54,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_sw_params_t* sw_params;
 	int error;
 	snd_pcm_uframes_t frames;
+	snd_pcm_uframes_t start_threshold;
 
 	snd_pcm_drop(alsa->out_handle);
 
@@ -84,8 +86,13 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 		return;
 	}
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);
-	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params,
-		frames / 2);
+	if (alsa->latency < 0)
+		start_threshold = frames / 2;
+	else
+		start_threshold = alsa->latency * alsa->actual_rate / 1000;
+	if (start_threshold > frames)
+		start_threshold = frames;
+	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params, start_threshold);
 	snd_pcm_sw_params(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_free(sw_params);
 
@@ -101,7 +108,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	}
 }
 
-static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 
@@ -136,10 +143,12 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 		alsa->block_size = format->nBlockAlign;
 	}
 
+	alsa->latency = latency;
+
 	rdpsnd_alsa_set_params(alsa);
 }
 
-static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	int error;
@@ -158,7 +167,7 @@ static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format)
 	else
 	{
 		memset(&alsa->adpcm, 0, sizeof(ADPCM));
-		rdpsnd_alsa_set_format(device, format);
+		rdpsnd_alsa_set_format(device, format, latency);
 	}
 }
 
@@ -286,7 +295,7 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 			DEBUG_WARN("error %d", error);
 			snd_pcm_close(alsa->out_handle);
 			alsa->out_handle = 0;
-			rdpsnd_alsa_open(device, NULL);
+			rdpsnd_alsa_open(device, NULL, alsa->latency);
 			break;
 		}
 		pindex += error * rbytes_per_frame;
