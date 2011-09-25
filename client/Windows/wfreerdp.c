@@ -172,7 +172,7 @@ int wfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (!instance->Connect(instance))
+	if (instance->Connect(instance) != True)
 		return 0;
 
 	chanman = GET_CHANMAN(instance);
@@ -349,7 +349,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wnd_cls.cbWndExtra    = 0;
 	wnd_cls.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wnd_cls.hCursor       = g_default_cursor;
-	wnd_cls.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wnd_cls.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	wnd_cls.lpszMenuName  = NULL;
 	wnd_cls.lpszClassName = g_wnd_class_name;
 	wnd_cls.hInstance     = hInstance;

@@ -183,63 +183,63 @@ static boolean peer_recv_pdu(rdpPeer* peer, STREAM* s)
 		return peer_recv_fastpath_pdu(peer, s);
 }
 
-static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
+static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
-	rdpPeer* peer = (rdpPeer*)extra;
+	rdpPeer* peer = (rdpPeer*) extra;
 
 	switch (peer->rdp->state)
 	{
 		case CONNECTION_STATE_INITIAL:
 			if (!rdp_server_accept_nego(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_mcs_connect_initial(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
 			if (!rdp_server_accept_mcs_erect_domain_request(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_attach_user_request(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_server_accept_mcs_channel_join_request(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_server_accept_client_info(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_LICENSE:
 			if (!rdp_server_accept_confirm_active(peer->rdp, s))
-				return -1;
+				return False;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			if (!peer_recv_pdu(peer, s))
-				return -1;
+				return False;
 			break;
 
 		default:
 			printf("Invalid state %d\n", peer->rdp->state);
-			return -1;
+			return False;
 	}
 
-	return 1;
+	return True;
 }
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
-	rdpPeer* peer = (rdpPeer*)client->peer;
+	rdpPeer* peer = (rdpPeer*) client->peer;
 
 	transport_disconnect(peer->rdp->transport);
 }
@@ -260,7 +260,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	peer->client = client;
 	peer->rdp = rdp_new(NULL);
 
-	client->peer = (void*)peer;
+	client->peer = (void*) peer;
 	client->settings = peer->rdp->settings;
 	client->input = peer->rdp->input;
 	client->update = peer->rdp->update;

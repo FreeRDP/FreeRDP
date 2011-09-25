@@ -160,12 +160,25 @@ int tcp_read(rdpTcp* tcp, uint8* data, int length)
 
 	if (status <= 0)
 	{
+#ifdef _WIN32
+		int wsa_error = WSAGetLastError();
+
+		/* No data available */
+		if (wsa_error == WSAEWOULDBLOCK)
+			return 0;
+
+		/* When peer disconnects we get status 0 with no error. */
+		if (status < 0)
+			printf("recv() error: %d\n", wsa_error);
+#else
 		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
+
 		/* When peer disconnects we get status 0 with no error. */
 		if (status < 0)
 			perror("recv");
+#endif
 		return -1;
 	}
 	else
@@ -239,12 +252,6 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-#ifdef _WIN32
-		int wsaStatus;
-		WSADATA wsaData;
-		WORD wVersionRequested;
-#endif
-
 	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
@@ -252,14 +259,6 @@ rdpTcp* tcp_new(rdpSettings* settings)
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}
-
-#ifdef _WIN32
-	wVersionRequested = MAKEWORD(2, 2);
-	wsaStatus = WSAStartup(wVersionRequested, &wsaData);
-
-	if (wsaStatus != 0)
-		printf("WSAStartup failed with error: %d\n", wsaStatus);
-#endif
 
 	return tcp;
 }
