@@ -225,6 +225,8 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	pa_stream_state_t state;
+	pa_stream_flags_t flags;
+	pa_buffer_attr buffer_attr = { 0 };
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
 	if (!pulse->context || pulse->stream)
@@ -260,8 +262,18 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	pa_stream_set_write_callback(pulse->stream,
 		rdpsnd_pulse_stream_request_callback, pulse);
 
+	flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE;
+	if (pulse->latency > 0)
+	{
+		buffer_attr.maxlength = pa_usec_to_bytes(pulse->latency * 2 * 1000, &pulse->sample_spec);
+		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
+		buffer_attr.prebuf = (uint32_t) -1;
+		buffer_attr.minreq = (uint32_t) -1;
+		buffer_attr.fragsize = (uint32_t) -1;
+		flags |= PA_STREAM_ADJUST_LATENCY;
+	}
 	if (pa_stream_connect_playback(pulse->stream,
-		pulse->device_name, NULL, PA_STREAM_INTERPOLATE_TIMING|PA_STREAM_AUTO_TIMING_UPDATE, NULL, NULL) < 0)
+		pulse->device_name, pulse->latency > 0 ? &buffer_attr : NULL, flags, NULL, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_stream_connect_playback failed (%d)",
