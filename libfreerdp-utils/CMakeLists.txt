@@ -31,6 +31,7 @@ set(FREERDP_UTILS_SRCS
 	load_plugin.c
 	memory.c
 	mutex.c
+	passphrase.c
 	pcap.c
 	profiler.c
 	rail.c

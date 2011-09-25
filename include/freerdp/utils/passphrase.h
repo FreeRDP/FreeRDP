@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Utils Unit Tests
+ * Passphrase Handling Utils
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2011 Shea Levy <shea@shealevy.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,12 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef __UTILS_PASSPHRASE_H
+#define __UTILS_PASSPHRASE_H
 
-int init_utils_suite(void);
-int clean_utils_suite(void);
-int add_utils_suite(void);
+#include <stdlib.h>
+#include <freerdp/api.h>
 
-void test_mutex(void);
-void test_semaphore(void);
-void test_load_plugin(void);
-void test_wait_obj(void);
-void test_args(void);
-void test_passphrase_read(void);
+FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz);
+
+#endif /* __UTILS_PASSPHRASE_H */
