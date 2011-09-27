@@ -242,25 +242,25 @@ rdpTls* tls_new()
 	return tls;
 }
 
-int tls_verify_certificate(CryptoCert cert, char* hostname)
+int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostname)
 {
 	boolean status;
-	rdpCertstore* certstore;
+	rdpCertStore* certstore;
 	status = x509_verify_cert(cert);
 
 	if (status != True)
 	{
-		rdpCertdata* certdata;
-		certdata = crypto_get_certdata(cert->px509, hostname);
-		certstore = certstore_new(certdata);
+		rdpCertData* certdata;
+		certdata = crypto_get_cert_data(cert->px509, hostname);
+		certstore = certstore_new(certdata, settings->home_path);
 
-		if (match_certdata(certstore) == 0)
+		if (cert_data_match(certstore) == 0)
 			goto end;
 
 		if (certstore->match == 1)
 		{
 			char answer;
-			crypto_cert_printinfo(cert->px509);
+			crypto_cert_print_info(cert->px509);
 
 #ifndef _WIN32
 			while (1)
@@ -270,7 +270,7 @@ int tls_verify_certificate(CryptoCert cert, char* hostname)
 
 				if (answer == 'y' || answer == 'Y')
 				{
-					print_certdata(certstore);
+					cert_data_print(certstore);
 					break;
 				}
 				else if (answer == 'n' || answer == 'N')

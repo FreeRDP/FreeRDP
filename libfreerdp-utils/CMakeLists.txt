@@ -28,6 +28,7 @@ set(FREERDP_UTILS_SRCS
 	bitmap.c
 	hexdump.c
 	list.c
+	file.c
 	load_plugin.c
 	memory.c
 	mutex.c

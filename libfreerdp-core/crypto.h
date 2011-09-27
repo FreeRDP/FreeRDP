@@ -110,11 +110,11 @@ void crypto_hmac_free(CryptoHmac hmac);
 typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
 char* cypto_cert_fingerprint(X509* xcert);
-void crypto_cert_printinfo(X509* xcert);
+void crypto_cert_print_info(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
 boolean x509_verify_cert(CryptoCert cert);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
-rdpCertdata* crypto_get_certdata(X509* xcert, char* hostname);
+rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 
 void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output);

@@ -42,6 +42,7 @@ struct rdp_credssp
 	int send_seq_num;
 	rdpBlob public_key;
 	rdpBlob ts_credentials;
+	rdpSettings* settings;
 	CryptoRc4 rc4_seal_state;
 	struct _NTLMSSP *ntlmssp;
 	struct rdp_transport* transport;

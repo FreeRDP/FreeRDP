@@ -17,19 +17,16 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/file.h>
 #include <freerdp/utils/certstore.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 static char cert_dir[] = "freerdp";
 static char cert_loc[] = "cacert";
 static char certstore_file[] = "known_hosts";
 
-void certstore_create(rdpCertstore* certstore)
+void certstore_create(rdpCertStore* certstore)
 {
-	certstore->fp = fopen((char*)certstore->file, "w+");
+	certstore->fp = fopen((char*) certstore->file, "w+");
 
 	if (certstore->fp == NULL)
 	{
@@ -40,12 +37,12 @@ void certstore_create(rdpCertstore* certstore)
 	fflush(certstore->fp);
 }
 
-void certstore_load(rdpCertstore* certstore)
+void certstore_load(rdpCertStore* certstore)
 {
 	certstore->fp = fopen((char*) certstore->file, "r+");
 }
 
-void certstore_open(rdpCertstore* certstore)
+void certstore_open(rdpCertStore* certstore)
 {
 	struct stat stat_info;
 
@@ -55,7 +52,7 @@ void certstore_open(rdpCertstore* certstore)
 		certstore_load(certstore);
 }
 
-void certstore_close(rdpCertstore* certstore)
+void certstore_close(rdpCertStore* certstore)
 {
 	if (certstore->fp != NULL)
 		fclose(certstore->fp);
@@ -66,31 +63,30 @@ char* get_local_certloc()
 	char* home_path;
 	char* certloc;
 	struct stat stat_info;
+
 	home_path = getenv("HOME");
 
 	certloc = (char*) xmalloc(strlen(home_path) + strlen("/.") + strlen(cert_dir) + strlen("/") + strlen(cert_loc) + 1);
 	sprintf(certloc,"%s/.%s/%s",home_path,cert_dir,cert_loc);
 
 	if(stat((char*) certloc, &stat_info) != 0)
-	{
-#ifndef _WIN32
-		mkdir(certloc, S_IRUSR | S_IWUSR | S_IXUSR);
-#else
-		CreateDirectoryA(certloc, 0);
-#endif
-	}
+		freerdp_mkdir(certloc);
 	
 	return certloc;
 }
 
-void certstore_init(rdpCertstore* certstore)
+void certstore_init(rdpCertStore* certstore)
 {
 	int length;
 	char* home_path;
 	struct stat stat_info;
 	
-	certstore->match=1;
-	home_path = getenv("HOME");
+	certstore->match = 1;
+
+	if (certstore->home_path == NULL)
+		home_path = getenv("HOME");
+	else
+		home_path = certstore->home_path;
 
 	if (home_path == NULL)
 	{
@@ -98,63 +94,60 @@ void certstore_init(rdpCertstore* certstore)
 		return;
 	}
 
-	certstore->home = (char*) xstrdup(home_path);
+	certstore->home_path = (char*) xstrdup(home_path);
 
-	certstore->path = (char*) xmalloc(strlen(certstore->home) + strlen("/.") + strlen(cert_dir) + 1);
-	sprintf(certstore->path, "%s/.%s", certstore->home, cert_dir);
+	certstore->path = (char*) xmalloc(strlen(certstore->home_path) + 2 + strlen(cert_dir) + 1);
+	sprintf(certstore->path, "%s/.%s", certstore->home_path, cert_dir);
 
 	if (stat(certstore->path, &stat_info) != 0)
 	{
-#ifndef _WIN32
-		mkdir(certstore->path, S_IRUSR | S_IWUSR | S_IXUSR);
-#else
-		CreateDirectoryA(certstore->path, 0);
-#endif
+		freerdp_mkdir(certstore->path);
 		printf("creating directory %s\n", certstore->path);
 	}
 
 	length = strlen(certstore->path);
-	certstore->file = (char*) xmalloc(strlen(certstore->path) + strlen("/") + strlen(certstore_file) + 1);
+	certstore->file = (char*) xmalloc(strlen(certstore->path) + 1 + strlen(certstore_file) + 1);
 	sprintf(certstore->file, "%s/%s", certstore->path, certstore_file);
 
 	certstore_open(certstore);
 }
 
-rdpCertdata* certdata_new(char* host_name,char* fingerprint)
+rdpCertData* certdata_new(char* hostname, char* fingerprint)
 {
-	rdpCertdata* certdata;
+	rdpCertData* certdata;
 
-	certdata = (rdpCertdata*) xzalloc(sizeof(rdpCertdata));
+	certdata = (rdpCertData*) xzalloc(sizeof(rdpCertData));
 
-	if (certdata !=NULL)
+	if (certdata != NULL)
 	{
-		certdata->hostname = xzalloc(strlen(host_name) + 1);
-		certdata->thumbprint = xzalloc(strlen(fingerprint) + 1);
-		sprintf(certdata->hostname, "%s", host_name);
-		sprintf(certdata->thumbprint, "%s", fingerprint);
+		certdata->hostname = xzalloc(strlen(hostname) + 1);
+		certdata->fingerprint = xzalloc(strlen(fingerprint) + 1);
+		sprintf(certdata->hostname, "%s", hostname);
+		sprintf(certdata->fingerprint, "%s", fingerprint);
 	}
 
 	return certdata;
 }
 
-void certdata_free(rdpCertdata* certdata)
+void certdata_free(rdpCertData* certdata)
 {
 	if(certdata != NULL)
 	{
 		xfree(certdata->hostname);
-		xfree(certdata->thumbprint);
+		xfree(certdata->fingerprint);
 		xfree(certdata);
 	}
 }
 
-rdpCertstore* certstore_new(rdpCertdata* certdata)
+rdpCertStore* certstore_new(rdpCertData* certdata, char* home_path)
 {
-	rdpCertstore* certstore;
+	rdpCertStore* certstore;
 
-	certstore = (rdpCertstore*) xzalloc(sizeof(rdpCertstore));
+	certstore = (rdpCertStore*) xzalloc(sizeof(rdpCertStore));
 
 	if (certstore != NULL)
 	{
+		certstore->home_path = home_path;
 		certstore->certdata = certdata;
 		certstore_init(certstore);
 	}
@@ -162,27 +155,27 @@ rdpCertstore* certstore_new(rdpCertdata* certdata)
 	return certstore;
 }
 
-void certstore_free(rdpCertstore* certstore)
+void certstore_free(rdpCertStore* certstore)
 {
 	if (certstore != NULL)
 	{
 		certstore_close(certstore);
 		xfree(certstore->path);
 		xfree(certstore->file);
-		xfree(certstore->home);
+		xfree(certstore->home_path);
 		certdata_free(certstore->certdata);
 		xfree(certstore);
 	}
 }
 
-int match_certdata(rdpCertstore* certstore)
+int cert_data_match(rdpCertStore* certstore)
 {
 	FILE* fp;
 	int length;
 	char* data;
 	char* pline;
 	long int size;
-	rdpCertdata* cert_data;
+	rdpCertData* cert_data;
 
 	fp = certstore->fp;
 	cert_data = certstore->certdata;
@@ -213,7 +206,7 @@ int match_certdata(rdpCertstore* certstore)
 			{
 				pline = &pline[length + 1];
 
-				if (strcmp(pline, cert_data->thumbprint) == 0)
+				if (strcmp(pline, cert_data->fingerprint) == 0)
 					certstore->match = 0;
 				else
 					certstore->match = -1;
@@ -228,8 +221,8 @@ int match_certdata(rdpCertstore* certstore)
 	return certstore->match;
 }
 
-void print_certdata(rdpCertstore* certstore)
+void cert_data_print(rdpCertStore* certstore)
 {
-	fseek(certstore->fp,0,SEEK_END);
-	fprintf(certstore->fp,"%s %s\n",certstore->certdata->hostname,certstore->certdata->thumbprint);
+	fseek(certstore->fp, 0, SEEK_END);
+	fprintf(certstore->fp,"%s %s\n", certstore->certdata->hostname, certstore->certdata->fingerprint);
 }
