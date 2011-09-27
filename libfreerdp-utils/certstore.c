@@ -58,16 +58,16 @@ void certstore_close(rdpCertStore* certstore)
 		fclose(certstore->fp);
 }
 
-char* get_local_certloc()
+char* get_local_certloc(char* home_path)
 {
-	char* home_path;
 	char* certloc;
 	struct stat stat_info;
 
-	home_path = getenv("HOME");
+	if (home_path == NULL)
+		home_path = getenv("HOME");
 
-	certloc = (char*) xmalloc(strlen(home_path) + strlen("/.") + strlen(cert_dir) + strlen("/") + strlen(cert_loc) + 1);
-	sprintf(certloc,"%s/.%s/%s",home_path,cert_dir,cert_loc);
+	certloc = (char*) xmalloc(strlen(home_path) + 2 + strlen(cert_dir) + 1 + strlen(cert_loc) + 1);
+	sprintf(certloc, "%s/.%s/%s", home_path, cert_dir, cert_loc);
 
 	if(stat((char*) certloc, &stat_info) != 0)
 		freerdp_mkdir(certloc);

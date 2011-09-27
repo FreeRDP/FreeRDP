@@ -279,7 +279,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	return fp_buffer;
 }
 
-boolean x509_verify_cert(CryptoCert cert)
+boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 {
 	char* cert_loc;
 	X509_STORE_CTX* csc;
@@ -305,7 +305,7 @@ boolean x509_verify_cert(CryptoCert cert)
 		goto end;
 
 	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-	cert_loc = get_local_certloc();
+	cert_loc = get_local_certloc(settings->home_path);
 
 	if(cert_loc != NULL)
 	{

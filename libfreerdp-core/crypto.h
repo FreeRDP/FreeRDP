@@ -112,7 +112,7 @@ CryptoCert crypto_cert_read(uint8* data, uint32 length);
 char* cypto_cert_fingerprint(X509* xcert);
 void crypto_cert_print_info(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
-boolean x509_verify_cert(CryptoCert cert);
+boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings);
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
