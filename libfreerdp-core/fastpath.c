@@ -125,26 +125,12 @@ uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 	return length - hs;
 }
 
-boolean fastpath_read_security_header(rdpFastPath* fastpath, STREAM* s)
-{
-	/* TODO: fipsInformation */
-
-	if ((fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED))
-	{
-		stream_seek(s, 8); /* dataSignature */
-	}
-
-	return True;
-}
-
 static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	uint16 numberOrders;
 
 	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
-
-	//printf("numberOrders(FastPath):%d\n", numberOrders);
 
 	while (numberOrders > 0)
 	{

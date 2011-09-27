@@ -94,8 +94,8 @@ void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8* in_data, uint8* out_data);
 void crypto_rc4_free(CryptoRc4 rc4);
 
 typedef struct crypto_des3_struct* CryptoDes3;
-CryptoDes3 crypto_des3_encrypt_init(uint8 key[24], uint8 ivec[8]);
-CryptoDes3 crypto_des3_decrypt_init(uint8 key[24], uint8 ivec[8]);
+CryptoDes3 crypto_des3_encrypt_init(uint8* key, uint8* ivec);
+CryptoDes3 crypto_des3_decrypt_init(uint8* key, uint8* ivec);
 void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8 *out_data);
 void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8* out_data);
 void crypto_des3_free(CryptoDes3 des3);

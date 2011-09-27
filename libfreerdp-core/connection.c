@@ -192,7 +192,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 		return False;
 	}
 
-	/* now calculate encrypt / decrypt and upate keys */
+	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
 	{
 		return False;
