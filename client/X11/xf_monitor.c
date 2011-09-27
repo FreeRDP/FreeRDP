@@ -43,7 +43,13 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 
 	vscreen = &xfi->vscreen;
 
-	xf_GetWorkArea(xfi);
+	if (xf_GetWorkArea(xfi) != True)
+	{
+		xfi->workArea.x = 0;
+		xfi->workArea.y = 0;
+		xfi->workArea.width = WidthOfScreen(xfi->screen);
+		xfi->workArea.height = HeightOfScreen(xfi->screen);
+	}
 
 	if (settings->workarea)
 	{

@@ -132,7 +132,10 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	if (status != True)
 		return False;
 
-	xf_GetCurrentDesktop(xfi);
+	status = xf_GetCurrentDesktop(xfi);
+
+	if (status != True)
+		return False;
 
 	plong = (long*) prop;
 
