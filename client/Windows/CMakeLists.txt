@@ -18,6 +18,10 @@
 # limitations under the License.
 
 add_executable(wfreerdp WIN32
+	wf_gdi.c
+	wf_gdi.h
+	wf_event.c
+	wf_event.h
 	wfreerdp.c
 	wfreerdp.h)
 
@@ -25,3 +29,5 @@ target_link_libraries(wfreerdp freerdp-core)
 target_link_libraries(wfreerdp freerdp-gdi)
 target_link_libraries(wfreerdp freerdp-utils)
 target_link_libraries(wfreerdp freerdp-chanman)
+
+install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

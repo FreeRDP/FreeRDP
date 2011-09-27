@@ -30,6 +30,8 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/chanman/chanman.h>
 
+#include "wf_gdi.h"
+
 #include "wfreerdp.h"
 
 struct _thread_data
@@ -57,11 +59,13 @@ int wf_create_console(void)
 
 boolean wf_pre_connect(freerdp* instance)
 {
+	int i1;
 	wfInfo* wfi;
 	rdpSettings* settings;
 
 	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
 	SET_WFI(instance, wfi);
+	wfi->instance = instance;
 
 	settings = instance->settings;
 
@@ -88,9 +92,38 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
-	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
-	printf("keyboard_layout: 0x%X\n", settings->kbd_layout);
+	wfi->cursor = g_default_cursor;
 
+	wfi->fullscreen = settings->fullscreen;
+	wfi->fs_toggle = wfi->fullscreen;
+
+	if (wfi->percentscreen > 0)
+	{
+		i1 = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
+		settings->width = i1;
+
+		i1 = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
+		settings->height = i1;
+	}
+
+	if (wfi->fs_toggle)
+	{
+		settings->width = GetSystemMetrics(SM_CXSCREEN);
+		settings->height = GetSystemMetrics(SM_CYSCREEN);
+	}
+
+	i1 = settings->width;
+	i1 = (i1 + 3) & (~3);
+	settings->width = i1;
+
+	if ((settings->width < 64) || (settings->height < 64) ||
+		(settings->width > 4096) || (settings->height > 4096))
+	{
+		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->width, settings->height);
+		return 1;
+	}
+
+	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
 	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
 
 	return True;
@@ -100,12 +133,64 @@ boolean wf_post_connect(freerdp* instance)
 {
 	GDI* gdi;
 	wfInfo* wfi;
+	int width, height;
+	wchar_t win_title[64];
+	rdpSettings* settings;
 
 	wfi = GET_WFI(instance);
 	SET_WFI(instance->update, wfi);
+	settings = instance->settings;
 
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
 	gdi = GET_GDI(instance->update);
+
+	width = settings->width;
+	height = settings->height;
+
+	if (strlen(wfi->window_title) > 0)
+		_snwprintf(win_title, sizeof(win_title), L"%S", wfi->window_title);
+	else if (settings->port == 3389)
+		_snwprintf(win_title, sizeof(win_title) / sizeof(win_title[0]), L"%S - FreeRDP", settings->hostname);
+	else
+		_snwprintf(win_title, sizeof(win_title) / sizeof(win_title[0]), L"%S:%d - FreeRDP", settings->hostname, settings->port);
+
+	if (wfi->hwnd == 0)
+	{
+		wfi->hwnd = CreateWindowEx((DWORD) NULL, g_wnd_class_name, win_title,
+				0, 0, 0, 0, 0, NULL, NULL, g_hInstance, NULL);
+
+		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
+	}
+
+	if (wfi->fullscreen)
+	{
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
+		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
+	}
+	else
+	{
+		POINT diff;
+		RECT rc_client, rc_wnd;
+
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
+		/* Now resize to get full canvas size and room for caption and borders */
+		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, width, height, SWP_FRAMECHANGED);
+		GetClientRect(wfi->hwnd, &rc_client);
+		GetWindowRect(wfi->hwnd, &rc_wnd);
+		diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
+		diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, width + diff.x, height + diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+	}
+
+	if (wfi->primary == NULL)
+	{
+		wfi->primary = wf_image_new(wfi, width, height, 0, NULL);
+		BitBlt(wfi->primary->hdc, 0, 0, width, height, NULL, 0, 0, BLACKNESS);
+	}
+	wfi->drawing = wfi->primary;
+
+	ShowWindow(wfi->hwnd, SW_SHOWNORMAL);
+	UpdateWindow(wfi->hwnd);
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
@@ -142,6 +227,21 @@ boolean wf_check_fds(freerdp* instance)
 	return True;
 }
 
+int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
+{
+	rdpChanMan* chanman = (rdpChanMan*) user_data;
+
+	printf("loading plugin %s\n", name);
+	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
+
+	return 1;
+}
+
+int wf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
+{
+	return 0;
+}
+
 int wfreerdp_run(freerdp* instance)
 {
 	MSG msg;
@@ -156,6 +256,12 @@ int wfreerdp_run(freerdp* instance)
 	HANDLE fds[64];
 	rdpChanMan* chanman;
 
+	memset(rfds, 0, sizeof(rfds));
+	memset(wfds, 0, sizeof(wfds));
+
+	if (instance->Connect(instance) != True)
+		return 0;
+
 	chanman = GET_CHANMAN(instance);
 
 	/* program main loop */
@@ -169,14 +275,14 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
-		{
-			printf("Failed to get channel manager file descriptor\n");
-			break;
-		}
 		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get wfreerdp file descriptor\n");
+			break;
+		}
+		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		{
+			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
 
@@ -200,7 +306,7 @@ int wfreerdp_run(freerdp* instance)
 		/* do the wait */
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, INFINITE, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			printf("wfreerdp_run: WaitForMultipleObjects failed\n");
+			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
@@ -260,8 +366,10 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	wfi->clrconv->alpha = 1;
 	wfi->clrconv->palette = NULL;
 	SET_WFI(instance, wfi);
+	wfi->instance = instance;
 
 	wfreerdp_run(instance);
+
 	g_thread_count--;
 
 	if (g_thread_count < 1)
@@ -272,18 +380,17 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 
 static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 {
-#if 0
 	MSG msg;
-	BOOL bRet;
+	BOOL status;
 	HHOOK hook_handle;
 
 	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, g_hInstance, 0);
 
 	if (hook_handle)
 	{
-		while( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
+		while( (status = GetMessage( &msg, NULL, 0, 0 )) != 0)
 		{
-			if (bRet == -1)
+			if (status == -1)
 			{
 				printf("keyboard thread error getting message\n");
 				break;
@@ -298,7 +405,6 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 	}
 	else
 		printf("failed to install keyboard hook\n");
-#endif
 
 	return (DWORD) NULL;
 }
@@ -324,12 +430,12 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
 	wnd_cls.style         = CS_HREDRAW | CS_VREDRAW;
-	//wnd_cls.lpfnWndProc   = wf_event_proc;
+	wnd_cls.lpfnWndProc   = wf_event_proc;
 	wnd_cls.cbClsExtra    = 0;
 	wnd_cls.cbWndExtra    = 0;
 	wnd_cls.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wnd_cls.hCursor       = g_default_cursor;
-	wnd_cls.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wnd_cls.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	wnd_cls.lpszMenuName  = NULL;
 	wnd_cls.lpszClassName = g_wnd_class_name;
 	wnd_cls.hInstance     = hInstance;
@@ -337,6 +443,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RegisterClassEx(&wnd_cls);
 
 	g_hInstance = hInstance;
+	freerdp_chanman_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
@@ -349,17 +456,16 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
 
-	while (1)
+	//while (1)
 	{
 		data = (thread_data*) xzalloc(sizeof(thread_data)); 
 		data->instance = instance;
 
-		freerdp_parse_args(instance->settings, __argc, __argv, NULL, NULL, NULL, NULL);
+		freerdp_parse_args(instance->settings, __argc, __argv,
+			wf_process_plugin_args, chanman, wf_process_ui_args, NULL);
 
 		if (CreateThread(NULL, 0, thread_func, data, 0, NULL) != 0)
-		{
 			g_thread_count++;
-		}
 	}
 
 	if (g_thread_count > 0)
@@ -370,6 +476,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			L"FreeRDP Error", MB_ICONSTOP);
 
 	WSACleanup();
+
+#ifdef _DEBUG
+	system("pause");
+#endif
 
 	return 0;
 }

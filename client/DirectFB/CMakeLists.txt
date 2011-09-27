@@ -32,4 +32,4 @@ target_link_libraries(dfreerdp freerdp-chanman)
 target_link_libraries(dfreerdp freerdp-utils)
 target_link_libraries(dfreerdp ${DIRECTFB_LIBRARIES})
 
-install(TARGETS dfreerdp DESTINATION bin)
+install(TARGETS dfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

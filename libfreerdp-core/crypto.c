@@ -333,10 +333,10 @@ end:
 	return status;
 }
 
-rdpCertdata* crypto_get_certdata(X509* xcert, char* hostname)
+rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname)
 {
 	char* fp;
-	rdpCertdata* certdata;
+	rdpCertData* certdata;
 
 	fp = crypto_cert_fingerprint(xcert);
 	certdata = certdata_new(hostname, fp);
@@ -345,7 +345,7 @@ rdpCertdata* crypto_get_certdata(X509* xcert, char* hostname)
 	return certdata;
 }
 
-void crypto_cert_printinfo(X509* xcert)
+void crypto_cert_print_info(X509* xcert)
 {
 	char* fp;
 	char* issuer;

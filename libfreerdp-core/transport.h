@@ -39,7 +39,7 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>
 
-typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
+typedef boolean (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {

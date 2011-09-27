@@ -201,6 +201,7 @@ struct rdp_settings
 	uint32 encryption_level;
 	boolean authentication;
 
+	char* home_path;
 	boolean server_mode;
 
 	rdpBlob server_random;

@@ -108,6 +108,7 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
 
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -159,12 +160,25 @@ int tcp_read(rdpTcp* tcp, uint8* data, int length)
 
 	if (status <= 0)
 	{
+#ifdef _WIN32
+		int wsa_error = WSAGetLastError();
+
+		/* No data available */
+		if (wsa_error == WSAEWOULDBLOCK)
+			return 0;
+
+		/* When peer disconnects we get status 0 with no error. */
+		if (status < 0)
+			printf("recv() error: %d\n", wsa_error);
+#else
 		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
+
 		/* When peer disconnects we get status 0 with no error. */
 		if (status < 0)
 			perror("recv");
+#endif
 		return -1;
 	}
 
@@ -228,7 +242,9 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 
 rdpTcp* tcp_new(rdpSettings* settings)
 {
-	rdpTcp* tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	rdpTcp* tcp;
+
+	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{

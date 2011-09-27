@@ -269,6 +269,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 
 	if (tpkt_read_header(s) == 0)
 		return False;
+
 	li = tpdu_read_connection_confirm(s);
 
 	if (li > 6)

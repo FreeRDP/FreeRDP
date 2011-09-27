@@ -575,8 +575,8 @@ rdpChanMan* freerdp_chanman_new(void)
 
 void freerdp_chanman_free(rdpChanMan * chan_man)
 {
-	rdpChanManList * list;
-	rdpChanManList * prev;
+	rdpChanManList* list;
+	rdpChanManList* prev;
 
 	freerdp_mutex_free(chan_man->sync_data_mutex);
 	list_free(chan_man->sync_data_list);
