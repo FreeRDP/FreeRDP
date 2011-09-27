@@ -105,6 +105,9 @@ char* xstrdup(const char* str)
 {
 	char* mem;
 
+	if (str == NULL)
+		return NULL;
+
 #ifdef _WIN32
 	mem = _strdup(str);
 #else
