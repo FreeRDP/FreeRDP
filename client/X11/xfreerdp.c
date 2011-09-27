@@ -440,7 +440,16 @@ boolean xf_post_connect(freerdp* instance)
 	if (xfi->sw_gdi)
 	{
 		GDI* gdi;
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
+		uint32 flags;
+
+		flags = CLRCONV_ALPHA;
+
+		if (xfi->bpp > 16)
+			flags |= CLRBUF_32BPP;
+		else
+			flags |= CLRBUF_16BPP;
+
+		gdi_init(instance, flags);
 		gdi = GET_GDI(instance->update);
 		xfi->primary_buffer = gdi->primary_buffer;
 	}
