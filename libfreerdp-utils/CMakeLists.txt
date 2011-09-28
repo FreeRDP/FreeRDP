@@ -39,6 +39,7 @@ set(FREERDP_UTILS_SRCS
 	registry.c
 	certstore.c
 	semaphore.c
+	signal.c
 	sleep.c
 	stopwatch.c
 	stream.c
