@@ -637,6 +637,7 @@ void handle_signals_resets_terminal(void)
 	int status, masterfd;
 	char* slavedevice;
 	struct termios test_flags;
+	pid_t child_pid;
 
 	masterfd = posix_openpt(O_RDWR|O_NOCTTY);
 
@@ -653,12 +654,12 @@ void handle_signals_resets_terminal(void)
 	tcsetattr(terminal_fildes, TCSANOW, &new_flags);
 	terminal_needs_reset = 1;
 
-	if(fork() == 0)
+	if((child_pid = fork()) == 0)
 	{
 		freerdp_handle_signals();
 		raise(SIGINT);
 	}
-	wait(&status);
+	while(wait(&status) != -1);
 	tcgetattr(terminal_fildes, &test_flags);
 	CU_ASSERT_EQUAL(orig_flags.c_lflag, test_flags.c_lflag);
 	close(masterfd);
