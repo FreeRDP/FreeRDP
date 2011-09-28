@@ -20,6 +20,7 @@
 #ifndef __UTILS_SIGNAL_H
 #define __UTILS_SIGNAL_H
 
+#ifndef _WIN32
 #include <signal.h>
 #include <termios.h>
 #include <freerdp/api.h>
@@ -28,7 +29,8 @@ extern volatile sig_atomic_t terminal_needs_reset;
 extern int terminal_fildes;
 extern struct termios orig_flags;
 extern struct termios new_flags;
+#endif
 
-FREERDP_API void freerdp_handle_signals(void);
+FREERDP_API int freerdp_handle_signals(void);
 
 #endif /* __UTILS_SIGNAL_H */

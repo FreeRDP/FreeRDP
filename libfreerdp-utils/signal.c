@@ -19,6 +19,14 @@
 
 #include <stddef.h>
 #include <freerdp/utils/signal.h>
+#ifdef _WIN32
+#include <errno.h>
+int freerdp_handle_signals(void)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#else
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;
 struct termios orig_flags;
@@ -44,7 +52,7 @@ static void fatal_handler(int signum)
 	raise(signum);
 }
 
-void freerdp_handle_signals(void)
+int freerdp_handle_signals(void)
 {
 	const int fatal_signals[] = {
 		SIGABRT,
@@ -102,4 +110,6 @@ void freerdp_handle_signals(void)
 					&fatal_sigaction, NULL); 
 
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
+	return 0;
 }
+#endif
