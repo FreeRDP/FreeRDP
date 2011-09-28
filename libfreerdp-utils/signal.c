@@ -86,6 +86,7 @@ void freerdp_handle_signals(void)
 	struct sigaction orig_sigaction, fatal_sigaction;
 
 	sigfillset(&(fatal_sigaction.sa_mask));
+	sigdelset(&(fatal_sigaction.sa_mask), SIGCONT);
 	pthread_sigmask(SIG_BLOCK, &(fatal_sigaction.sa_mask), &orig_set);
 
 	fatal_sigaction.sa_handler = fatal_handler;
