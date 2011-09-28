@@ -27,6 +27,7 @@ struct termios new_flags;
 static void fatal_handler(int signum)
 {
 	struct sigaction default_sigaction;
+	sigset_t this_mask;
 
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
@@ -36,6 +37,10 @@ static void fatal_handler(int signum)
 	default_sigaction.sa_flags = 0;
 
 	sigaction(signum, &default_sigaction, NULL);
+
+	sigemptyset(&this_mask);
+	sigaddset(&this_mask, signum);
+	pthread_sigmask(SIG_UNBLOCK, &this_mask, NULL);
 	raise(signum);
 }
 
@@ -53,7 +58,11 @@ void freerdp_handle_signals(void)
 		SIGPIPE,
 		SIGQUIT,
 		SIGSEGV,
+		SIGSTOP,
 		SIGTERM,
+		SIGTSTP,
+		SIGTTIN,
+		SIGTTOU,
 		SIGUSR1,
 		SIGUSR2,
 #ifdef SIGPOLL
