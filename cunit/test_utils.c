@@ -35,6 +35,7 @@
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/passphrase.h>
+#include <freerdp/utils/signal.h>
 
 #include "test_utils.h"
 
@@ -58,6 +59,7 @@ int add_utils_suite(void)
 	add_test_function(wait_obj);
 	add_test_function(args);
 	add_test_function(passphrase_read);
+	add_test_function(handle_signals);
 
 	return 0;
 }
@@ -628,4 +630,42 @@ void test_passphrase_read(void)
 	passphrase_read_turns_on_newline_echo_during_read();
 	passphrase_read_prompts_to_stderr_when_no_tty();
 	passphrase_read_reads_from_stdin_when_no_tty();
+}
+
+void handle_signals_resets_terminal(void)
+{
+	int status, masterfd;
+	char* slavedevice;
+	struct termios test_flags;
+
+	masterfd = posix_openpt(O_RDWR|O_NOCTTY);
+
+	if (masterfd == -1
+		|| grantpt (masterfd) == -1
+		|| unlockpt (masterfd) == -1
+		|| (slavedevice = ptsname (masterfd)) == NULL)
+		CU_FAIL_FATAL("Could not create pty");
+
+	terminal_fildes = open(slavedevice, O_RDWR|O_NOCTTY);
+	tcgetattr(terminal_fildes, &orig_flags);
+	new_flags = orig_flags;
+	new_flags.c_lflag &= ~ECHO;
+	tcsetattr(terminal_fildes, TCSANOW, &new_flags);
+	terminal_needs_reset = 1;
+
+	if(fork() == 0)
+	{
+		freerdp_handle_signals();
+		raise(SIGINT);
+	}
+	wait(&status);
+	tcgetattr(terminal_fildes, &test_flags);
+	CU_ASSERT_EQUAL(orig_flags.c_lflag, test_flags.c_lflag);
+	close(masterfd);
+	close(terminal_fildes);
+}
+
+void test_handle_signals(void)
+{
+	handle_signals_resets_terminal();
 }
