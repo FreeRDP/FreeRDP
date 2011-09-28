@@ -20,10 +20,10 @@
 #ifndef __UTILS_SIGNAL_H
 #define __UTILS_SIGNAL_H
 
+#include <freerdp/api.h>
 #ifndef _WIN32
 #include <signal.h>
 #include <termios.h>
-#include <freerdp/api.h>
 
 extern volatile sig_atomic_t terminal_needs_reset;
 extern int terminal_fildes;
