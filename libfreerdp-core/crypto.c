@@ -72,7 +72,7 @@ void crypto_rc4_free(CryptoRc4 rc4)
 	xfree(rc4);
 }
 
-CryptoDes3 crypto_des3_encrypt_init(uint8 key[24], uint8 ivec[8])
+CryptoDes3 crypto_des3_encrypt_init(uint8* key, uint8* ivec)
 {
 	CryptoDes3 des3 = xmalloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
@@ -81,7 +81,7 @@ CryptoDes3 crypto_des3_encrypt_init(uint8 key[24], uint8 ivec[8])
 	return des3;
 }
 
-CryptoDes3 crypto_des3_decrypt_init(uint8 key[24], uint8 ivec[8])
+CryptoDes3 crypto_des3_decrypt_init(uint8* key, uint8* ivec)
 {
 	CryptoDes3 des3 = xmalloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
@@ -90,13 +90,13 @@ CryptoDes3 crypto_des3_decrypt_init(uint8 key[24], uint8 ivec[8])
 	return des3;
 }
 
-void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8 *out_data)
+void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8* in_data, uint8* out_data)
 {
 	int len;
 	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
 }
 
-void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8* out_data)
+void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8* in_data, uint8* out_data)
 {
 	int len;
 	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
@@ -117,17 +117,17 @@ CryptoHmac crypto_hmac_new(void)
 	return hmac;
 }
 
-void crypto_hmac_sha1_init(CryptoHmac hmac, uint8 *data, uint32 length)
+void crypto_hmac_sha1_init(CryptoHmac hmac, uint8* data, uint32 length)
 {
 	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
 }
 
-void crypto_hmac_update(CryptoHmac hmac, uint8 *data, uint32 length)
+void crypto_hmac_update(CryptoHmac hmac, uint8* data, uint32 length)
 {
 	HMAC_Update(&hmac->hmac_ctx, data, length);
 }
 
-void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length)
+void crypto_hmac_final(CryptoHmac hmac, uint8* out_data, uint32 length)
 {
 	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
 }
@@ -142,7 +142,7 @@ CryptoCert crypto_cert_read(uint8* data, uint32 length)
 {
 	CryptoCert cert = xmalloc(sizeof(*cert));
 	/* this will move the data pointer but we don't care, we don't use it again */
-	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST unsigned char **) &data, length);
+	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST uint8 **) &data, length);
 	return cert;
 }
 
@@ -183,7 +183,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 	}
 
 	freerdp_blob_alloc(public_key, length);
-	p = (unsigned char*) public_key->data;
+	p = (uint8*) public_key->data;
 	i2d_PublicKey(pkey, &p);
 
 exit:
@@ -195,7 +195,7 @@ exit:
 
 void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output)
 {
-	BN_CTX *ctx;
+	BN_CTX* ctx;
 	int output_length;
 	uint8* input_reverse;
 	uint8* modulus_reverse;
@@ -258,28 +258,28 @@ void crypto_nonce(uint8* nonce, int size)
 
 char* crypto_cert_fingerprint(X509* xcert)
 {
-	char* p;
 	int i = 0;
+	char* p;
 	char* fp_buffer;
-	unsigned int fp_len;
-	unsigned char fp[EVP_MAX_MD_SIZE];
+	uint32 fp_len;
+	uint8 fp[EVP_MAX_MD_SIZE];
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-	fp_buffer = xzalloc(3 * fp_len);
+	fp_buffer = (char*) xzalloc(3 * fp_len);
 	p = fp_buffer;
 
 	for (i = 0; i < fp_len - 1; i++)
 	{
 		sprintf(p, "%02x:", fp[i]);
-		p = (char*) &fp_buffer[i * 3];
+		p = &fp_buffer[i * 3];
 	}
 	sprintf(p, "%02x", fp[i]);
 
 	return fp_buffer;
 }
 
-boolean x509_verify_cert(CryptoCert cert)
+boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 {
 	char* cert_loc;
 	X509_STORE_CTX* csc;
@@ -305,7 +305,7 @@ boolean x509_verify_cert(CryptoCert cert)
 		goto end;
 
 	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-	cert_loc = get_local_certloc();
+	cert_loc = get_local_certloc(settings->home_path);
 
 	if(cert_loc != NULL)
 	{

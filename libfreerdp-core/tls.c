@@ -246,7 +246,7 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 {
 	boolean status;
 	rdpCertStore* certstore;
-	status = x509_verify_cert(cert);
+	status = x509_verify_cert(cert, settings);
 
 	if (status != True)
 	{
