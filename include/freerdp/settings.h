@@ -182,6 +182,8 @@ struct rdp_monitor
 
 struct rdp_settings
 {
+	void* instance;
+
 	uint16 width;
 	uint16 height;
 	boolean sw_gdi;
@@ -322,7 +324,7 @@ struct rdp_settings
 };
 typedef struct rdp_settings rdpSettings;
 
-rdpSettings* settings_new();
+rdpSettings* settings_new(void* instance);
 void settings_free(rdpSettings* settings);
 
 #endif /* __RDP_SETTINGS_H */

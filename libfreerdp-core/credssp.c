@@ -74,8 +74,16 @@
 
 void credssp_ntlmssp_init(rdpCredssp* credssp)
 {
-	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	rdpSettings *settings = credssp->transport->settings;
+	freerdp* instance;
+	NTLMSSP* ntlmssp = credssp->ntlmssp;
+	rdpSettings* settings = credssp->transport->settings;
+	instance = (freerdp*) settings->instance;
+
+	if (settings->password == NULL)
+	{
+		IFCALL(instance->Authenticate, instance,
+				&settings->username, &settings->password, &settings->domain);
+	}
 
 	ntlmssp_set_password(ntlmssp, settings->password);
 	ntlmssp_set_username(ntlmssp, settings->username);
@@ -83,9 +91,7 @@ void credssp_ntlmssp_init(rdpCredssp* credssp)
 	if (settings->domain != NULL)
 	{
 		if (strlen(settings->domain) > 0)
-		{
 			ntlmssp_set_domain(ntlmssp, settings->domain);
-		}
 	}
 	else
 	{
@@ -134,7 +140,7 @@ int credssp_get_public_key(rdpCredssp* credssp)
 
 int credssp_authenticate(rdpCredssp* credssp)
 {
-	NTLMSSP *ntlmssp = credssp->ntlmssp;
+	NTLMSSP* ntlmssp = credssp->ntlmssp;
 	STREAM* s = stream_new(0);
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
@@ -200,7 +206,7 @@ int credssp_authenticate(rdpCredssp* credssp)
 
 void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
 {
-	uint8 *p;
+	uint8* p;
 	uint8 signature[16];
 	rdpBlob encrypted_public_key;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
@@ -239,7 +245,7 @@ void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
 int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 {
 	uint8 *p1, *p2;
-	uint8 *signature;
+	uint8* signature;
 	rdpBlob public_key;
 	rdpBlob encrypted_public_key;
 
@@ -273,10 +279,10 @@ int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 
 void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d)
 {
-	uint8 *p;
+	uint8* p;
 	uint8 signature[16];
 	rdpBlob encrypted_ts_credentials;
-	NTLMSSP *ntlmssp = credssp->ntlmssp;
+	NTLMSSP* ntlmssp = credssp->ntlmssp;
 
 	freerdp_blob_alloc(d, credssp->ts_credentials.length + 16);
 	ntlmssp_encrypt_message(ntlmssp, &credssp->ts_credentials, &encrypted_ts_credentials, signature);

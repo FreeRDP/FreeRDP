@@ -66,6 +66,7 @@ freerdp_sem g_sem;
 static int g_thread_count = 0;
 
 static long xv_port = 0;
+const size_t password_size = 512;
 
 struct thread_data
 {
@@ -647,6 +648,16 @@ boolean xf_post_connect(freerdp* instance)
 	return True;
 }
 
+boolean xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	*password = xmalloc(password_size * sizeof(char));
+
+	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
+		return False;
+
+	return True;
+}
+
 int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
@@ -902,8 +913,8 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
-	struct thread_data* data;
 	rdpChanMan* chanman;
+	struct thread_data* data;
 
 	freerdp_handle_signals();
 
@@ -916,6 +927,7 @@ int main(int argc, char* argv[])
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
+	instance->Authenticate = xf_authenticate;
 	instance->ReceiveChannelData = xf_receive_channel_data;
 
 	chanman = freerdp_chanman_new();
@@ -926,19 +938,6 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
-
-	if (instance->settings->password == NULL)
-	{
-		const size_t password_size = 512;
-
-		instance->settings->password = xmalloc(password_size * sizeof(char));
-
-		if(freerdp_passphrase_read("Password: ", instance->settings->password, password_size) == NULL)
-		{
-			perror("xfreerdp");
-			exit(errno);
-		}
-	}
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

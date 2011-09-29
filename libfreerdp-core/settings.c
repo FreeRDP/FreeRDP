@@ -29,7 +29,7 @@
 
 static char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
-rdpSettings* settings_new()
+rdpSettings* settings_new(void* instance)
 {
 	rdpSettings* settings;
 
@@ -37,6 +37,8 @@ rdpSettings* settings_new()
 
 	if (settings != NULL)
 	{
+		settings->instance = instance;
+
 		settings->width = 1024;
 		settings->height = 768;
 		settings->workarea = False;

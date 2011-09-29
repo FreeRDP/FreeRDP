@@ -807,7 +807,7 @@ rdpRdp* rdp_new(freerdp* instance)
 
 	if (rdp != NULL)
 	{
-		rdp->settings = settings_new();
+		rdp->settings = settings_new((void*) instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
