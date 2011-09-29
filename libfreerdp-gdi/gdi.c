@@ -934,10 +934,17 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
-		}
 
-		freerdp_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
-				gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+			uint8* temp_image = (uint8*) xmalloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+			freerdp_image_invert(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+			xfree(gdi->image->bitmap->data);
+			gdi->image->bitmap->data = temp_image;
+		}
+		else
+		{
+			freerdp_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+					gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+		}
 
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
