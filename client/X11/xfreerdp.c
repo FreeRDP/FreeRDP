@@ -47,6 +47,7 @@
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
