@@ -904,6 +904,8 @@ int main(int argc, char* argv[])
 	struct thread_data* data;
 	rdpChanMan* chanman;
 
+	freerdp_handle_signals();
+
 	setlocale(LC_ALL, "");
 
 	freerdp_chanman_global_init();
