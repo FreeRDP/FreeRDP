@@ -194,7 +194,8 @@ void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system
 void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 {
 	stream_read_uint16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
-	stream_read_uint32(s, pointer_color->hotSpot); /* hotSpot (4 bytes) */
+	stream_read_uint16(s, pointer_color->xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, pointer_color->yPos); /* yPos (2 bytes) */
 	stream_read_uint16(s, pointer_color->width); /* width (2 bytes) */
 	stream_read_uint16(s, pointer_color->height); /* height (2 bytes) */
 	stream_read_uint16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */

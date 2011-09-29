@@ -70,10 +70,10 @@ if(XEXT_FOUND)
 endif()
 
 find_suggested_package(Xcursor)
-if(Xcursor_FOUND)
+if(XCURSOR_FOUND)
 	add_definitions(-DWITH_XCURSOR)
-	include_directories(${Xcursor_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${Xcursor_LIBRARIES})
+	include_directories(${XCURSOR_INCLUDE_DIRS})
+	target_link_libraries(xfreerdp ${XCURSOR_LIBRARIES})
 endif()
 
 find_suggested_package(Xv)

@@ -104,7 +104,8 @@ typedef struct _POINTER_SYSTEM_UPDATE POINTER_SYSTEM_UPDATE;
 struct _POINTER_COLOR_UPDATE
 {
 	uint16 cacheIndex;
-	uint32 hotSpot;
+	uint16 xPos;
+	uint16 yPos;
 	uint16 width;
 	uint16 height;
 	uint16 lengthAndMask;

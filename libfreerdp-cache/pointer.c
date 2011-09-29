@@ -35,7 +35,7 @@ void* pointer_get(rdpPointer* pointer, uint16 index, void** extra)
 	entry = pointer->entries[index].entry;
 
 	if (extra != NULL)
-		extra = pointer->entries[index].extra;
+		*extra = pointer->entries[index].extra;
 
 	return entry;
 }

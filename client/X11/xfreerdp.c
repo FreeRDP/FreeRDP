@@ -20,6 +20,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#ifdef WITH_XCURSOR
+#include <X11/Xcursor/Xcursor.h>
+#endif
+
 #ifdef WITH_XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -37,9 +41,11 @@
 #include <sys/select.h>
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/constants.h>
+#include <freerdp/common/color.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
@@ -222,6 +228,76 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 				xfi->drawing = xfi->primary;
 		}
 	}
+}
+
+void xf_pointer_position(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position)
+{
+
+}
+
+void xf_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
+{
+
+}
+
+void xf_pointer_color(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color)
+{
+
+}
+
+void xf_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
+{
+	xfInfo* xfi;
+	Cursor cursor;
+	XcursorImage ci;
+	POINTER_COLOR_UPDATE* ptrAttr;
+
+	xfi = GET_XFI(update);
+	ptrAttr = &pointer_new->colorPtrAttr;
+
+	memset(&ci, 0, sizeof(ci));
+	ci.version = XCURSOR_IMAGE_VERSION;
+	ci.size = sizeof(ci);
+	ci.width = ptrAttr->width;
+	ci.height = ptrAttr->height;
+	ci.xhot = ptrAttr->xPos;
+	ci.yhot = ptrAttr->yPos;
+	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
+	memset(ci.pixels, 0, ci.width * ci.height * 4);
+
+	if ((ptrAttr->andMaskData != 0) && (ptrAttr->xorMaskData != 0))
+	{
+		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), ptrAttr->xorMaskData, ptrAttr->andMaskData,
+				ptrAttr->width, ptrAttr->height, pointer_new->xorBpp, xfi->clrconv);
+	}
+
+	if (pointer_new->xorBpp > 24)
+	{
+		printf("xorBpp:%d\n", pointer_new->xorBpp);
+	}
+
+	cursor = XcursorImageLoadCursor(xfi->display, &ci);
+	xfree(ci.pixels);
+
+	pointer_put(xfi->cache->pointer, ptrAttr->cacheIndex, NULL, (void*) cursor);
+
+	if (xfi->remote_app != True)
+		XDefineCursor(xfi->display, xfi->window->handle, cursor);
+}
+
+void xf_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached)
+{
+	xfInfo* xfi;
+	void* extra;
+	Cursor cursor;
+
+	xfi = GET_XFI(update);
+
+	pointer_get(xfi->cache->pointer, pointer_cached->cacheIndex, &extra);
+	cursor = (Cursor) extra;
+
+	if (xfi->remote_app != True)
+		XDefineCursor(xfi->display, xfi->window->handle, cursor);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -548,6 +624,12 @@ boolean xf_post_connect(freerdp* instance)
 		instance->update->EndPaint = xf_hw_end_paint;
 		instance->update->DesktopResize = xf_hw_desktop_resize;
 	}
+
+	instance->update->PointerPosition = xf_pointer_position;
+	instance->update->PointerSystem = xf_pointer_system;
+	instance->update->PointerColor = xf_pointer_color;
+	instance->update->PointerNew = xf_pointer_new;
+	instance->update->PointerCached = xf_pointer_cached;
 
 	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;
