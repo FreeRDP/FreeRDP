@@ -506,7 +506,11 @@ void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings)
 
 	stream_write_uint16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	stream_write_uint16(s, settings->pointer_cache_size); /* colorPointerCacheSize (2 bytes) */
-	stream_write_uint16(s, settings->pointer_cache_size); /* pointerCacheSize (2 bytes) */
+
+	if (settings->large_pointer)
+	{
+		stream_write_uint16(s, settings->pointer_cache_size); /* pointerCacheSize (2 bytes) */
+	}
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_POINTER);
 }
@@ -1875,6 +1879,12 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	{
 		numberCapabilities++;
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
+	}
+
+	if (settings->large_pointer)
+	{
+		numberCapabilities++;
+		rdp_write_large_pointer_capability_set(s, settings);
 	}
 
 	if (settings->remote_app)

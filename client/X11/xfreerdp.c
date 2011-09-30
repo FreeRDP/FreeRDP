@@ -275,7 +275,7 @@ void xf_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 
 	if (pointer_new->xorBpp > 24)
 	{
-		printf("xorBpp:%d\n", pointer_new->xorBpp);
+		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
 	}
 
 	cursor = XcursorImageLoadCursor(xfi->display, &ci);

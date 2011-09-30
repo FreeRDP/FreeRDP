@@ -862,10 +862,10 @@ void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMa
 				{
 					/* use pattern (not solid black) for xor area */
 					xpixel = (i & 1) == (j & 1);
-					xpixel = xpixel ? 0xffffff : 0;
-					xpixel |= 0xff000000;
+					xpixel = xpixel ? 0xFFFFFF : 0;
+					xpixel |= 0xFF000000;
 				}
-				else if (xpixel == 0xff000000)
+				else if (xpixel == 0xFF000000)
 				{
 					xpixel = 0;
 				}
@@ -876,3 +876,21 @@ void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMa
 	}
 }
 
+void freerdp_image_swap_color_order(uint8* data, int width, int height)
+{
+	int x, y;
+	uint32* pixel;
+	uint8 a, r, g, b;
+
+	pixel = (uint32*) data;
+
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			GetARGB32(a, r, g, b, *pixel);
+			*pixel = ABGR32(a, r, g, b);
+			pixel++;
+		}
+	}
+}
