@@ -147,6 +147,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 void xf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
+	double ttime;
 	uint32 seconds;
 	uint32 useconds;
 	rdpUpdate* update;
@@ -173,6 +174,11 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 
 		seconds = record.header.ts_sec - seconds;
 		useconds = record.header.ts_usec - useconds;
+
+		ttime = ((double) seconds * 1000000) + (double) useconds;
+
+		seconds = (uint32) (ttime / 1000000);
+		useconds = (uint32) (ttime - (((double) seconds) * 1000000));
 
 		if (seconds > 0)
 			freerdp_sleep(seconds);
