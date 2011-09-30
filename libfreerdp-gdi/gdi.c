@@ -308,36 +308,6 @@ INLINE uint32 gdi_rop3_code(uint8 code)
 	return rop3_code_table[code];
 }
 
-INLINE void gdi_copy_mem(uint8 * d, uint8 * s, int n)
-{
-	memmove(d, s, n);
-}
-
-INLINE void gdi_copy_mem_backwards(uint8 * d, uint8 * s, int n)
-{
-	d = (d + n) - 1;
-	s = (s + n) - 1;
-	
-	while (n & (~7))
-	{
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		*(d--) = *(s--);
-		n = n - 8;
-	}
-
-	while (n > 0)
-	{
-		*(d--) = *(s--);
-		n--;
-	}
-}
-
 INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	uint8 * p;

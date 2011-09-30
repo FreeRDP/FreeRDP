@@ -255,8 +255,6 @@ struct _GDI
 typedef struct _GDI GDI;
 
 FREERDP_API uint32 gdi_rop3_code(uint8 code);
-FREERDP_API void gdi_copy_mem(uint8 *d, uint8 *s, int n);
-FREERDP_API void gdi_copy_mem_backwards(uint8 *d, uint8 *s, int n);
 FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
