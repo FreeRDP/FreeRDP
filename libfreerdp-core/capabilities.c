@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,6 +56,9 @@ uint8 CAPSET_TYPE_STRINGS[][32] =
 
 /* CODEC_GUID_REMOTEFX 0x76772F12BD724463AFB3B73C9C6F7886 */
 #define CODEC_GUID_REMOTEFX "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86"
+
+/* CODEC_GUID_NSCODEC  0xCA8D1BB9000F154F589FAE2D1A87E2D6 */
+#define CODEC_GUID_NSCODEC "\xb9\x1b\x8d\xca\x0f\x00\x4f\x15\x58\x9f\xae\x2d\x1a\x87\xe2\xd6"
 
 void rdp_read_capability_set_header(STREAM* s, uint16* length, uint16* type)
 {
@@ -1367,6 +1370,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->server_mode)
 	{
 		settings->rfx_codec = False;
+		settings->ns_codec = False;
 	}
 
 	while (bitmapCodecCount > 0)
@@ -1376,6 +1380,12 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			stream_seek(s, 16); /* codecGUID (16 bytes) */
 			stream_read_uint8(s, settings->rfx_codec_id);
 			settings->rfx_codec = True;
+		}
+		if (settings->server_mode && strncmp((char*)stream_get_tail(s),CODEC_GUID_NSCODEC, 16) == 0)
+		{
+			stream_seek(s, 16); /*codec GUID (16 bytes) */
+			stream_read_uint8(s, settings->ns_codec_id);
+			settings->ns_codec = True;
 		}
 		else
 		{
@@ -1439,6 +1449,21 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 }
 
 /**
+ * Write NSCODEC Client Capability Container.\n
+ * @param s stream
+ * @param settings settings
+ */
+void rdp_write_nsc_client_capability_container(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 3); /* codecPropertiesLength */
+
+	/* TS_NSCODEC_CAPABILITYSET */
+	stream_write_uint8(s, 1);  /* fAllowDynamicFidelity */
+	stream_write_uint8(s, 1);  /* fAllowSubsampling */
+	stream_write_uint8(s, 3);  /* colorLossLevel */
+}
+
+/**
  * Write RemoteFX Server Capability Container.\n
  * @param s stream
  * @param settings settings
@@ -1448,6 +1473,18 @@ void rdp_write_rfx_server_capability_container(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 4); /* codecPropertiesLength */
 	stream_write_uint32(s, 0); /* reserved */
 }
+
+/**
+ * Write NSCODEC Server Capability Container.\n
+ * @param s stream
+ * @param settings settings
+ */
+void rdp_write_nsc_server_capability_container(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 4); /* codecPropertiesLength */
+	stream_write_uint32(s, 0); /* reserved */
+}
+
 
 /**
  * Write bitmap codecs capability set.\n
@@ -1465,6 +1502,8 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 
 	bitmapCodecCount = 0;
 	if (settings->rfx_codec)
+		bitmapCodecCount++;
+	if (settings->ns_codec)
 		bitmapCodecCount++;
 
 	stream_write_uint8(s, bitmapCodecCount);
@@ -1484,7 +1523,20 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			rdp_write_rfx_client_capability_container(s, settings);
 		}
 	}
-
+	if (settings->ns_codec)
+	{
+		stream_write(s, CODEC_GUID_NSCODEC, 16);
+		if (settings->server_mode)
+		{
+			stream_write_uint8(s, 0); /* codecID is defined by the client */
+			rdp_write_nsc_server_capability_container(s, settings);
+		}
+		else
+		{
+			stream_write_uint8(s, CODEC_ID_NSCODEC); /* codecID */
+			rdp_write_nsc_client_capability_container(s, settings);
+		}
+	}
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CODECS);
 }
 
