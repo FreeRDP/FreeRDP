@@ -99,10 +99,11 @@ struct xf_info
 	boolean complex_regions;
 	VIRTUAL_SCREEN vscreen;
 	uint8* bmp_codec_none;
+	uint8* bmp_codec_nsc;
 	void* rfx_context;
+	void* nsc_context;
 	void* xv_context;
 	void* clipboard_context;
-
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;

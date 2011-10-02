@@ -307,7 +307,9 @@ struct rdp_settings
 	boolean desktop_composition;
 
 	boolean rfx_codec;
+	boolean ns_codec;
 	uint8 rfx_codec_id;
+	uint8 ns_codec_id;
 	boolean frame_acknowledge;
 
 	boolean dump_rfx;
