@@ -556,6 +556,9 @@ boolean xf_post_connect(freerdp* instance)
 
 		if (instance->settings->rfx_codec)
 			xfi->rfx_context = (void*) rfx_context_new();
+
+		if (instance->settings->ns_codec)
+			xfi->nsc_context = (void*) nsc_context_new();
 	}
 
 	if (xfi->fullscreen)
