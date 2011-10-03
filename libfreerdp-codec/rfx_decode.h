@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * RemoteFX Codec Library - Encode
+ * RemoteFX Codec Library - Decode
  *
  * Copyright 2011 Vic Lee
  *
@@ -17,16 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_ENCODE_H
-#define __RFX_ENCODE_H
+#ifndef __RFX_DECODE_H
+#define __RFX_DECODE_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 
-void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
+void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
 
-void rfx_encode_rgb(RFX_CONTEXT* context, const uint8* rgb_data, int width, int height, int rowstride,
-	const uint32* y_quants, const uint32* cb_quants, const uint32* cr_quants,
-	STREAM* data_out, int* y_size, int* cb_size, int* cr_size);
+void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
+	int y_size, const uint32 * y_quants,
+	int cb_size, const uint32 * cb_quants,
+	int cr_size, const uint32 * cr_quants, uint8* rgb_buffer);
 
-#endif
+#endif /* __RFX_DECODE_H */
 

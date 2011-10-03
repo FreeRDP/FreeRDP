@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 #include "test_color.h"
 
 int init_color_suite(void)

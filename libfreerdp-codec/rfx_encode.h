@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * RemoteFX Codec Library - Quantization
+ * RemoteFX Codec Library - Encode
  *
  * Copyright 2011 Vic Lee
  *
@@ -17,12 +17,16 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_QUANTIZATION_H
-#define __RFX_QUANTIZATION_H
+#ifndef __RFX_ENCODE_H
+#define __RFX_ENCODE_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 
-void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values);
-void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values);
+void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
 
-#endif /* __RFX_QUANTIZATION_H */
+void rfx_encode_rgb(RFX_CONTEXT* context, const uint8* rgb_data, int width, int height, int rowstride,
+	const uint32* y_quants, const uint32* cb_quants, const uint32* cr_quants,
+	STREAM* data_out, int* y_size, int* cb_size, int* cr_size);
+
+#endif
+

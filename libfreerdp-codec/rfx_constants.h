@@ -57,3 +57,4 @@
 #define SCALAR_QUANTIZATION	0x1
 
 #endif /* __RFX_CONSTANTS_H */
+

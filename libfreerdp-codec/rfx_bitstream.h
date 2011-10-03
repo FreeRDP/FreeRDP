@@ -20,7 +20,7 @@
 #ifndef __RFX_BITSTREAM_H
 #define __RFX_BITSTREAM_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 
 struct _RFX_BITSTREAM
 {

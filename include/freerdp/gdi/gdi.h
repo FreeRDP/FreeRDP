@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 
 /* For more information, see [MS-RDPEGDI] */
 

@@ -41,7 +41,7 @@
 #include <sys/select.h>
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/constants.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>

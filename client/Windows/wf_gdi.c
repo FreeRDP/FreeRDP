@@ -25,7 +25,7 @@
 #include <conio.h>
 
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 
 #include "wfreerdp.h"
 

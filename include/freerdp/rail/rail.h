@@ -25,7 +25,7 @@
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 
 typedef struct rdp_rail rdpRail;
 

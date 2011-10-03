@@ -19,7 +19,7 @@
 
 #include "update.h"
 #include "surface.h"
-#include <freerdp/common/bitmap.h>
+#include <freerdp/codec/bitmap.h>
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
 {

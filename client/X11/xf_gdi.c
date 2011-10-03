@@ -21,7 +21,7 @@
 #include <freerdp/rfx/rfx.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 
 #include "xf_gdi.h"
 

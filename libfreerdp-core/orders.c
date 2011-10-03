@@ -19,7 +19,7 @@
 
 #include "window.h"
 #include <freerdp/api.h>
-#include <freerdp/common/bitmap.h>
+#include <freerdp/codec/bitmap.h>
 
 #include "orders.h"
 

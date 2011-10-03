@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-common cmake build script
+# libfreerdp-codec cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,14 +17,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_COMMON_SRCS
+set(FREERDP_CODEC_SRCS
 	bitmap.c
-	color.c)
+	color.c
+	rfx_bitstream.h
+	rfx_constants.h
+	rfx_decode.c
+	rfx_decode.h
+	rfx_differential.c
+	rfx_differential.h
+	rfx_dwt.c
+	rfx_dwt.h
+	rfx_encode.c
+	rfx_encode.h
+	rfx_pool.c
+	rfx_pool.h
+	rfx_quantization.c
+	rfx_quantization.h
+	rfx_rlgr.c
+	rfx_rlgr.h
+	rfx_types.h
+	rfx.c
+)
 
-add_library(freerdp-common ${FREERDP_COMMON_SRCS})
+if(WITH_SSE2)
+	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS}
+	rfx_sse2.c
+	rfx_sse2.h
+)
+endif()
 
-set_target_properties(freerdp-common PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-common freerdp-utils)
+add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
 
-install(TARGETS freerdp-common DESTINATION ${CMAKE_INSTALL_LIBDIR})
+set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+target_link_libraries(freerdp-codec freerdp-utils)
+
+install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

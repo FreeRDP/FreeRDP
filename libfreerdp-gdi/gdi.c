@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/bitmap.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/rfx/rfx.h>
 
 #include <freerdp/gdi/dc.h>

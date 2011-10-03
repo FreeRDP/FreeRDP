@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/common/color.h>
+#include <freerdp/codec/color.h>
 
 int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp)
 {

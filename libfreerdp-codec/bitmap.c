@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include <freerdp/common/bitmap.h>
+#include <freerdp/codec/bitmap.h>
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
@@ -202,7 +202,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
 #define RLEEXTRA
-#include "bitmap_inc.c"
+#include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -222,7 +222,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
 #define RLEEXTRA
-#include "bitmap_inc.c"
+#include "include/bitmap.c"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -245,7 +245,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
 #define RLEEXTRA
-#include "bitmap_inc.c"
+#include "include/bitmap.c"
 
 #define IN_UINT8_MV(_p) (*((_p)++))
 

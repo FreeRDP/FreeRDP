@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * RemoteFX Codec Library - RLGR
+ * RemoteFX Codec Library - Quantization
  *
  * Copyright 2011 Vic Lee
  *
@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_RLGR_H
-#define __RFX_RLGR_H
+#ifndef __RFX_QUANTIZATION_H
+#define __RFX_QUANTIZATION_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 
-int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* buffer, int buffer_size);
-int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* buffer, int buffer_size);
+void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values);
+void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values);
 
-#endif /* __RFX_RLGR_H */
+#endif /* __RFX_QUANTIZATION_H */
