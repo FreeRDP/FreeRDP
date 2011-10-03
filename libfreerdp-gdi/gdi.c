@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@
 #include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/rfx/rfx.h>
+#include <freerdp/nsc/nsc.h>
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
@@ -842,6 +843,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 	RFX_MESSAGE* message;
 	GDI* gdi = GET_GDI(update);
 	RFX_CONTEXT* context = (RFX_CONTEXT*) gdi->rfx_context;
+	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) gdi->nsc_context;
+
 
 	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
@@ -886,6 +889,20 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		gdi_SetNullClipRgn(gdi->primary->hdc);
 		rfx_message_free(context, message);
 	}
+	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	{
+		ncontext->width = surface_bits_command->width;
+		ncontext->height = surface_bits_command->height;
+		nsc_process_message(ncontext, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		gdi->image->bitmap->width = surface_bits_command->width;
+		gdi->image->bitmap->height = surface_bits_command->height;
+		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
+		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
+		gdi->image->bitmap->data = (uint8*) xrealloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+		freerdp_image_invert(ncontext->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
+		nsc_context_destroy(ncontext);
+	} 
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
 		gdi->image->bitmap->width = surface_bits_command->width;
@@ -1077,6 +1094,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->cache = cache_new(instance->settings);
 
 	gdi->rfx_context = rfx_context_new();
+	gdi->nsc_context = nsc_context_new();
 
 	return 0;
 }

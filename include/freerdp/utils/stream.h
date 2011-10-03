@@ -9,7 +9,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -113,6 +113,10 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	} while (0)
 #define stream_write_zero(_s, _n) do { \
 	memset(_s->p, '\0', (_n)); \
+	_s->p += (_n); \
+	} while (0)
+#define stream_set_byte(_s, _v, _n) do { \
+	memset(_s->p, _v, (_n)); \
 	_s->p += (_n); \
 	} while (0)
 

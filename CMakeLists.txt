@@ -150,6 +150,7 @@ add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-codec)
 add_subdirectory(libfreerdp-chanman)
 add_subdirectory(libfreerdp-core)
+add_subdirectory(libfreerdp-nsc)
 
 if(NOT WIN32)
 	add_subdirectory(channels)
@@ -158,3 +159,4 @@ endif()
 add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(keymaps)
+

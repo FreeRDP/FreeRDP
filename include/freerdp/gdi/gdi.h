@@ -247,6 +247,7 @@ struct _GDI
 	uint8* primary_buffer;
 	GDI_COLOR textColor;
 	void* rfx_context;
+	void* nsc_context;
 	GDI_IMAGE* tile;
 	GDI_IMAGE* image;
 

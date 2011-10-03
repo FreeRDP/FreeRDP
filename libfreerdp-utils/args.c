@@ -83,6 +83,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-osb: disable off screen bitmaps, default on\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
+				"  --nsc: enable NSCodec\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
@@ -281,6 +282,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->frame_acknowledge = False;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = True;
+		}
+        else if (strcmp("--nsc", argv[index]) == 0)
+		{
+			settings->ns_codec = True;
 		}
 		else if (strcmp("--dump-rfx", argv[index]) == 0)
 		{

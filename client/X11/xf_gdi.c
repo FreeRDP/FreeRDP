@@ -19,6 +19,7 @@
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/rfx/rfx.h>
+#include <freerdp/nsc/nsc.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
@@ -778,6 +779,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	RFX_MESSAGE* message;
 	xfInfo* xfi = GET_XFI(update);
 	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
+	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) xfi->nsc_context;
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
@@ -820,6 +822,41 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 		rfx_message_free(context, message);
+	}
+	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	{
+		ncontext->width = surface_bits_command->width;
+		ncontext->height = surface_bits_command->height;
+		nsc_process_message(ncontext, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+
+		xfi->bmp_codec_nsc = (uint8*) xrealloc(xfi->bmp_codec_nsc,
+				surface_bits_command->width * surface_bits_command->height * 4);
+
+		freerdp_image_invert(ncontext->bmpdata, xfi->bmp_codec_nsc,
+				surface_bits_command->width, surface_bits_command->height, 32);
+
+		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
+			(char*) xfi->bmp_codec_nsc, surface_bits_command->width, surface_bits_command->height, 32, 0);
+
+		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height);
+
+		if (xfi->remote_app != True)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height,
+				surface_bits_command->destLeft, surface_bits_command->destTop);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height);
+
+		XSetClipMask(xfi->display, xfi->gc, None);
+		nsc_context_destroy(ncontext);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
