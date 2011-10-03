@@ -20,7 +20,7 @@
 #ifndef __XF_PEER_H
 #define __XF_PEER_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
 #include <freerdp/utils/stream.h>
 

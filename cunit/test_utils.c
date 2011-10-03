@@ -150,7 +150,7 @@ void test_args(void)
 	i = 0;
 	while (argc > 0)
 	{
-		settings = settings_new();
+		settings = settings_new(NULL);
 
 		i++;
 		c = freerdp_parse_args(settings, argc, argv, process_plugin_args, NULL, process_ui_args, NULL);

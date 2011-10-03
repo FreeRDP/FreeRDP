@@ -20,7 +20,7 @@
 #ifndef __RFX_SSE2_H
 #define __RFX_SSE2_H
 
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 
 void rfx_init_sse2(RFX_CONTEXT* context);
 

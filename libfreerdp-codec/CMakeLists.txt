@@ -38,6 +38,7 @@ set(FREERDP_CODEC_SRCS
 	rfx_rlgr.h
 	rfx_types.h
 	rfx.c
+	nsc.c
 )
 
 if(WITH_SSE2)

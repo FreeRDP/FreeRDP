@@ -32,7 +32,6 @@ if(XEXT_FOUND)
 endif()
 
 target_link_libraries(xfreerdp-server freerdp-core)
-target_link_libraries(xfreerdp-server freerdp-common)
+target_link_libraries(xfreerdp-server freerdp-codec)
 target_link_libraries(xfreerdp-server freerdp-utils)
-target_link_libraries(xfreerdp-server freerdp-rfx)
 target_link_libraries(xfreerdp-server ${X11_LIBRARIES})

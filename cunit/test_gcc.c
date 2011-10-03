@@ -195,7 +195,7 @@ void test_gcc_write_client_network_data(void)
 	rdpSettings* settings;
 
 	s = stream_new(44);
-	settings = settings_new();
+	settings = settings_new(NULL);
 
 	settings->num_channels = 3;
 	memset(settings->channels, 0, sizeof(rdpChan) * settings->num_channels);

@@ -103,6 +103,6 @@ endif()
 
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 target_link_libraries(freerdp-core freerdp-utils)
-target_link_libraries(freerdp-core freerdp-common)
+target_link_libraries(freerdp-core freerdp-codec)
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -18,8 +18,8 @@
  */
 
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/rfx/rfx.h>
-#include <freerdp/nsc/nsc.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>

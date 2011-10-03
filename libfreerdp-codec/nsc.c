@@ -16,12 +16,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<stdint.h>
-#include<freerdp/nsc/nsc.h>
-#include<freerdp/utils/memory.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/utils/memory.h>
 
 /* we store the 9 th bits at the end of stream as bitstream */
 void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)

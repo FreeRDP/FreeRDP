@@ -29,7 +29,7 @@
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/rfx/rfx.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
 
 static char* test_pcap_file = NULL;

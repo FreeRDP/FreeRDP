@@ -39,8 +39,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/select.h>
-#include <freerdp/rfx/rfx.h>
 #include <freerdp/constants.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
