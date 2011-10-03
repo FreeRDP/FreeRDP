@@ -1,21 +1,21 @@
 /**
-* FreeRDP: A Remote Desktop Protocol client.
-* NSCODEC Codec Library
-*
-* Copyright 2011 Samsung 
-* Author Jiten Pathy
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*	 http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * FreeRDP: A Remote Desktop Protocol client.
+ * NSCodec Codec
+ *
+ * Copyright 2011 Samsung, Author Jiten Pathy
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *	 http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/utils/memory.h>
 
-/* we store the 9 th bits at the end of stream as bitstream */
+/* we store the 9th bits at the end of stream as bitstream */
 void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)
 {
 	uint8* sbitstream;
@@ -32,14 +32,18 @@ void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)
 	uint8 sign,bitoff;
 	uint32 bitno;
 	sbitstream = stream->data + origsz;
-	do{
+
+	do
+	{
 		sign = (*(stream->p) << (shiftcount - 1)) & 0x80;
 		bitno = stream->p - stream->data;
 		*(stream->p++) <<= shiftcount;
 		temptr = sbitstream + ((bitno) >> 3);
 		bitoff = bitno % 0x8; 
 		(*temptr) |= (sign >> bitoff);
-	}while(stream->p - stream->data < origsz);
+	}
+	while(stream->p - stream->data < origsz);
+
 	stream->p = stream->data;
 }
 
@@ -55,29 +59,36 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 	uint32 alloclen, orglen, bytno;
 	STREAM* new_s;
 	STREAM* temp;
+
 	w = context->width;
 	h = context->height;
 	alloclen = orglen = w * h;
 	pw = ROUND_UP_TO(context->width, 8);
 	temp = stream_new(0);
-	for (i=0; i<3; i++)
+
+	for (i = 0; i < 3; i++)
 	{
 		if(i != 0)
 			alloclen = orglen + ((orglen & 0x7) ? (orglen >> 3) + 0x1 : (orglen >> 3));
+
 		new_s = stream_new(alloclen);
 		stream_attach(temp, context->org_buf[i]->data, context->org_buf[i]->size);
+
 		sbitstream = temp->data + context->OrgByteCount[i];
 		nbitstream = new_s->data + orglen;
 		cur  = new_s->p;
+
 		if(i == 1)
 			pw >>= 1;
-		while((temp->p-temp->data) < context->OrgByteCount[i])
+
+		while ((temp->p - temp->data) < context->OrgByteCount[i])
 		{
 			bytno = temp->p - temp->data;
 			bitoff = bytno % 0x8; 
 			stream_read_uint8(temp, val);
 			*cur = val;
 			row = (temp->p - temp->data) % pw;
+
 			if(i == 0)
 			{
 				cur++;
@@ -91,13 +102,15 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 				bytno = cur - new_s->data;
 				bitoff = bytno % 8;
 				*(nbitstream + (bytno >> 3)) |= (sign >> bitoff);
-				if((bytno+w) < orglen)
+
+				if ((bytno+w) < orglen)
 				{
 					*(cur + w) = val;
 					bitoff = (bytno + w) % 8;
 					*(nbitstream + ((bytno + w) >> 3)) |= (sign >> bitoff);
 				}
-				if((bytno+1) % w)
+
+				if ((bytno+1) % w)
 				{
 					*(cur+1) = val;
 					bitoff = (bytno + 1) % 8;
@@ -109,19 +122,23 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 						*(nbitstream + ((bytno + w + 1) >> 3)) |= (sign >> bitoff);
 					}
 				}
+
 				cur += 2;
 				bytno = cur - new_s->data;
-				if(((bytno/w) < h) && ((bytno) % w) < 2 )
+
+				if (((bytno/w) < h) && ((bytno) % w) < 2 )
 				{
 					if(w % 2)
 						cur += w-1;
 					else
 						cur += w;
 				}
-				if((row*2) >= w)
+
+				if ((row*2) >= w)
 					stream_seek(temp, pw-row);
 			}
 		}
+
 		xfree(temp->data);
 		stream_detach(temp);
 		stream_attach(context->org_buf[i], new_s->data, new_s->size);
@@ -135,12 +152,16 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 	uint8 bitoff, sign[2], ycocg[3], rgb[3], i;
 	uint32 bytno, size;
 	size = context->OrgByteCount[0];
-	for(i = 1;i < 3;i++)
+
+	for (i = 1; i < 3; i++)
 		sbitstream[i-1] = context->org_buf[i]->data + context->OrgByteCount[i];
-	do{
-		for(i = 0;i < 3;i++)
+
+	do
+	{
+		for (i = 0; i < 3; i++)
 			ycocg[i] = *(context->org_buf[i]->p);
-		for(i = 1;i < 3;i++)
+
+		for(i = 1; i < 3; i++)
 		{
 			bytno = context->OrgByteCount[i] - size;
 			bitoff = bytno % 8;
@@ -148,19 +169,20 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 			if(sign[i-1])
 				ycocg[i] = ~(ycocg[i]) + 0x1;
 		}
-		if(sign[0] && sign[1])
+
+		if (sign[0] && sign[1])
 		{
 			rgb[0] = ycocg[0] - (ycocg[1] >> 1) + (ycocg[2] >> 1);
 			rgb[1] = ycocg[0] - (ycocg[2] >> 1);
 			rgb[2] = ycocg[0] + (ycocg[1] >> 1) + (ycocg[2] >> 1);
 		}
-		else if(sign[0])
+		else if (sign[0])
 		{
 			rgb[0] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
 			rgb[1] = ycocg[0] + (ycocg[2] >> 1);
 			rgb[2] = ycocg[0] + (ycocg[1] >> 1) - (ycocg[2] >> 1);
 		}
-		else if(sign[1])
+		else if (sign[1])
 		{
 			rgb[0] = ycocg[0] + (ycocg[1] >> 1) + (ycocg[2] >> 1);
 			rgb[1] = ycocg[0] - (ycocg[2] >> 1);
@@ -172,11 +194,15 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 			rgb[1] = ycocg[0] + (ycocg[2] >> 1);
 			rgb[2] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
 		}
-		for(i = 0;i < 3;i++)
+
+		for(i = 0; i < 3; i++)
 			stream_write_uint8(context->org_buf[i], rgb[i]);
+
 		size--;
-	}while(size);
-	for(i = 0;i < 3;i++)
+	}
+	while(size);
+
+	for(i = 0; i < 3; i++)
 		context->org_buf[i]->p = context->org_buf[i]->data;
 }
 
@@ -185,10 +211,9 @@ void nsc_colorloss_recover(NSC_CONTEXT* context)
 	int i;
 	uint8 cllvl;
 	cllvl = context->nsc_stream->colorLossLevel;
-	for(i = 1;i < 3;i++)
-	{
+
+	for(i = 1; i < 3; i++)
 		nsc_cl_expand(context->org_buf[i], cllvl, context->OrgByteCount[i]);
-	}
 }
 
 void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz)
@@ -196,18 +221,21 @@ void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz)
 	uint32 i;
 	uint8 value;
 	i = origsz;
-	while( i > 4 )
+
+	while (i > 4)
 	{
 		stream_read_uint8(in, value);
-		if( i == 5 )
+
+		if (i == 5)
 		{
 			stream_write_uint8(out,value);
 			i-=1;
 		}
-		else if( value == *(in->p) )
+		else if (value == *(in->p))
 		{
 			stream_seek(in, 1);
-			if( *(in->p) < 0xff )
+
+			if (*(in->p) < 0xFF)
 			{
 				uint8 len;
 				stream_read_uint8(in, len);
@@ -229,25 +257,29 @@ void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz)
 			i -= 1;
 		}
 	}
+
 	stream_copy(out, in, 4);
 }
 
 void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
 	STREAM* rles;
-	uint16 i,origsize;
+	uint16 i, origsize;
 	rles = stream_new(0);
 	rles->p = rles->data = context->nsc_stream->pdata->p;
 	rles->size = context->nsc_stream->pdata->size;
-	for (i=0; i<4 ;i++)
+
+	for (i = 0; i < 4; i++)
 	{
 		origsize = context->OrgByteCount[i];
-		if( i==3 && context->nsc_stream->PlaneByteCount[i] == 0 )
+
+		if (i == 3 && context->nsc_stream->PlaneByteCount[i] == 0)
 			stream_set_byte(context->org_buf[i], 0xff, origsize);
-		else if(context->nsc_stream->PlaneByteCount[i] < origsize)
+		else if (context->nsc_stream->PlaneByteCount[i] < origsize)
 			nsc_rle_decode(rles, context->org_buf[i], origsize);
 		else
 			stream_copy(context->org_buf[i], rles, origsize);
+
 		context->org_buf[i]->p = context->org_buf[i]->data;
 	}
 }
@@ -257,7 +289,8 @@ void nsc_combine_argb(NSC_CONTEXT* context)
 	int i;
 	uint8* bmp;
 	bmp = context->bmpdata;
-	for(i = 0;i < (context->width * context->height);i++)
+
+	for (i = 0; i < (context->width * context->height); i++)
 	{
 		stream_read_uint8(context->org_buf[2], *bmp++);
 		stream_read_uint8(context->org_buf[1], *bmp++);
@@ -269,24 +302,29 @@ void nsc_combine_argb(NSC_CONTEXT* context)
 void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
-	for (i=0; i<4; i++)
-		stream_read_uint32(s, context->nsc_stream->PlaneByteCount[i]);  
+
+	for (i = 0; i < 4; i++)
+		stream_read_uint32(s, context->nsc_stream->PlaneByteCount[i]);
+
 	stream_read_uint8(s, context->nsc_stream->colorLossLevel);
 	stream_read_uint8(s, context->nsc_stream->ChromaSubSamplingLevel);
 	stream_seek(s, 2);
+
 	context->nsc_stream->pdata = stream_new(0);
 	stream_attach(context->nsc_stream->pdata, s->p, BYTESUM(context->nsc_stream->PlaneByteCount));
 }
 
 void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 {
-	uint32 tempsz;
 	int i;
+	uint32 tempsz;
 	nsc_stream_initialize(context, s);
 	context->bmpdata = xzalloc(context->width * context->height * 4);
-	for (i=0; i<4; i++)
+
+	for (i = 0; i < 4; i++)
 		context->OrgByteCount[i]=context->width * context->height;
-	if(context->nsc_stream->ChromaSubSamplingLevel > 0)	/* [MS-RDPNSC] 2.2 */
+
+	if (context->nsc_stream->ChromaSubSamplingLevel > 0)	/* [MS-RDPNSC] 2.2 */
 	{
 		uint32 tempWidth,tempHeight;
 		tempWidth = ROUND_UP_TO(context->width, 8);
@@ -297,11 +335,13 @@ void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 		context->OrgByteCount[1] = tempWidth * tempHeight;
 		context->OrgByteCount[2] = tempWidth * tempHeight;
 	}
-	for (i=0 ; i<4; i++)
+	for (i = 0; i < 4; i++)
 	{
 		tempsz = context->OrgByteCount[i];
+
 		if (i == 1 || i == 2)
 			tempsz += (tempsz & 0x7) ? (tempsz >> 3) + 0x1 : (tempsz >> 3); /* extra bytes/8 bytes for bitstream to store the 9th bit after colorloss recover */
+
 		context->org_buf[i] = stream_new(tempsz);
 	}
 }
@@ -309,8 +349,10 @@ void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 void nsc_context_destroy(NSC_CONTEXT* context)
 {
 	int i;
-	for(i = 0;i < 4;i++)
+
+	for(i = 0;i < 4; i++)
 		stream_free(context->org_buf[i]);
+
 	stream_detach(context->nsc_stream->pdata);
 	xfree(context->bmpdata);
 }

@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * NSCODEC Codec Library - API Header
+ * NSCodec Codec
  *
- * Copyright 2011 Samsung
- * Author Jiten Pathy
+ * Copyright 2011 Samsung, Author Jiten Pathy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +65,7 @@ FREERDP_API void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz);
 FREERDP_API void nsc_colorloss_recover(NSC_CONTEXT* context);
 FREERDP_API void nsc_ycocg_rgb(NSC_CONTEXT* context);
 FREERDP_API void nsc_context_destroy(NSC_CONTEXT* context);
+
 #ifdef __cplusplus
 }
 #endif

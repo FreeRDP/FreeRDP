@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * RemoteFX Codec Library - API Header
+ * RemoteFX Codec
  *
  * Copyright 2011 Vic Lee
  *
