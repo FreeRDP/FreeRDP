@@ -29,17 +29,6 @@ uint8 UPDATE_TYPE_STRINGS[][32] =
 	"Synchronize"
 };
 
-void update_free_bitmap(BITMAP_UPDATE* bitmap_update)
-{
-	int i;
-
-	for (i = 0; i < bitmap_update->number; i++)
-	{
-		xfree(bitmap_update->bitmaps[i].data);
-	}
-	xfree(bitmap_update->bitmaps);
-}
-
 void update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	uint16 numberOrders;
@@ -47,8 +36,6 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
 	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
-
-	printf("numberOrders:%d\n", numberOrders);
 
 	while (numberOrders > 0)
 	{
@@ -59,9 +46,6 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 
 void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
-	uint8* srcData;
-	uint16 dstSize;
-	boolean status;
 	uint16 bytesPerPixel;
 
 	stream_read_uint16(s, bitmap_data->left);
@@ -86,34 +70,17 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 		stream_seek_uint16(s); /* cbScanWidth (2 bytes) */
 		stream_read_uint16(s, cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
 
-		dstSize = cbUncompressedSize;
 		bitmap_data->length = cbCompMainBodySize;
-		bitmap_data->data = (uint8*) xmalloc(dstSize);
 
-		stream_get_mark(s, srcData);
+		bitmap_data->compressed = True;
+		stream_get_mark(s, bitmap_data->srcData);
 		stream_seek(s, bitmap_data->length);
-
-		status = bitmap_decompress(srcData, bitmap_data->data, bitmap_data->width, bitmap_data->height,
-				bitmap_data->length, bitmap_data->bpp, bitmap_data->bpp);
-
-		if (status != True)
-			printf("bitmap decompression failed, bpp:%d\n", bitmap_data->bpp);
 	}
 	else
 	{
-		int y;
-		int offset;
-		int scanline;
-		stream_get_mark(s, srcData);
-		dstSize = bitmap_data->length;
-		bitmap_data->data = (uint8*) xzalloc(dstSize);
-		scanline = bitmap_data->width * (bitmap_data->bpp / 8);
-
-		for (y = 0; y < bitmap_data->height; y++)
-		{
-			offset = (bitmap_data->height - y - 1) * scanline;
-			stream_read(s, &bitmap_data->data[offset], scanline);
-		}
+		bitmap_data->compressed = False;
+		stream_get_mark(s, bitmap_data->srcData);
+		stream_seek(s, bitmap_data->length);
 	}
 }
 
@@ -121,15 +88,28 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 {
 	int i;
 
-	update_free_bitmap(bitmap_update);
 	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
-	bitmap_update->bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * bitmap_update->number);
+	if (bitmap_update->number > bitmap_update->count)
+	{
+		uint16 count;
+
+		count = bitmap_update->number * 2;
+
+		bitmap_update->bitmaps = (BITMAP_DATA*) xrealloc(bitmap_update->bitmaps,
+				sizeof(BITMAP_DATA) * count);
+
+		memset(&bitmap_update->bitmaps[bitmap_update->count], 0,
+				sizeof(BITMAP_DATA) * (count - bitmap_update->count));
+
+		bitmap_update->count = count;
+	}
 
 	/* rectangles */
 	for (i = 0; i < bitmap_update->number; i++)
 	{
 		update_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
+		IFCALL(update->BitmapDecompress, update, &bitmap_update->bitmaps[i]);
 	}
 }
 
@@ -325,6 +305,11 @@ void update_recv(rdpUpdate* update, STREAM* s)
 void update_reset_state(rdpUpdate* update)
 {
 	int length;
+	uint16 bitmap_count;
+	BITMAP_DATA* bitmaps;
+
+	bitmaps = update->bitmap_update.bitmaps;
+	bitmap_count = update->bitmap_update.count;
 	
 	length = &update->state_end - &update->state_start;
 
@@ -332,6 +317,9 @@ void update_reset_state(rdpUpdate* update)
 	update->order_info.orderType = ORDER_TYPE_PATBLT;
 	update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
+
+	update->bitmap_update.bitmaps = bitmaps;
+	update->bitmap_update.count = bitmap_count;
 }
 
 static void update_begin_paint(rdpUpdate* update)
@@ -408,6 +396,9 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (update != NULL)
 	{
 		update->rdp = (void*) rdp;
+
+		update->bitmap_update.count = 64;
+		update->bitmap_update.bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 	}
 
 	return update;
@@ -415,10 +406,21 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 void update_free(rdpUpdate* update)
 {
-	update_free_bitmap(&update->bitmap_update);
-
 	if (update != NULL)
 	{
+		uint16 i;
+		BITMAP_DATA* bitmaps;
+		BITMAP_UPDATE* bitmap_update;
+
+		bitmap_update = &update->bitmap_update;
+		bitmaps = update->bitmap_update.bitmaps;
+
+		for (i = 0; i < bitmap_update->count; i++)
+		{
+			if (bitmaps[i].dstData != NULL)
+				xfree(bitmaps[i].dstData);
+		}
+
 		xfree(update);
 	}
 }

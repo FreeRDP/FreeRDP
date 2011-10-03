@@ -66,12 +66,15 @@ struct _BITMAP_DATA
 	uint16 bpp;
 	uint16 flags;
 	uint16 length;
-	uint8* data;
+	uint8* srcData;
+	uint8* dstData;
+	boolean compressed;
 };
 typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
+	uint16 count;
 	uint16 number;
 	BITMAP_DATA* bitmaps;
 };
@@ -1104,6 +1107,8 @@ typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orde
 typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pcSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
+typedef void (*pcBitmapDecompress)(rdpUpdate* update, BITMAP_DATA* bitmap_data);
+
 struct rdp_update
 {
 	void* rdp;
@@ -1188,6 +1193,8 @@ struct rdp_update
 
 	pcSurfaceBits SurfaceBits;
 	pcSurfaceCommand SurfaceCommand;
+
+	pcBitmapDecompress BitmapDecompress;
 
 	void* state_start;
 

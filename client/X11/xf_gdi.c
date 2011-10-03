@@ -23,6 +23,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
 
 #include "xf_gdi.h"
 
@@ -271,7 +272,7 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	{
 		bmp = &bitmap->bitmaps[i];
 
-		data = freerdp_image_convert(bmp->data, NULL, bmp->width, bmp->height, bmp->bpp, xfi->bpp, xfi->clrconv);
+		data = freerdp_image_convert(bmp->dstData, NULL, bmp->width, bmp->height, bmp->bpp, xfi->bpp, xfi->clrconv);
 
 		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 				ZPixmap, 0, (char*) data, bmp->width, bmp->height, xfi->scanline_pad, 0);
@@ -895,6 +896,32 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	}
 }
 
+void xf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
+{
+	uint16 dstSize;
+
+	dstSize = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
+
+	if (bitmap_data->dstData == NULL)
+		bitmap_data->dstData = (uint8*) xmalloc(dstSize);
+	else
+		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, dstSize);
+
+	if (bitmap_data->compressed)
+	{
+		bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
+				bitmap_data->width, bitmap_data->height, bitmap_data->length,
+				bitmap_data->bpp, bitmap_data->bpp);
+	}
+	else
+	{
+		freerdp_image_invert(bitmap_data->srcData, bitmap_data->dstData,
+				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
+	}
+
+	bitmap_data->compressed = False;
+}
+
 void xf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	update->Bitmap = xf_gdi_bitmap_update;
@@ -932,5 +959,7 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBrush = xf_gdi_cache_brush;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
+
+	update->BitmapDecompress = xf_gdi_bitmap_decompress;
 }
 
