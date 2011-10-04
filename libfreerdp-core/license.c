@@ -756,13 +756,19 @@ void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 void license_send_new_license_request_packet(rdpLicense* license)
 {
 	STREAM* s;
+	char* username;
 
 	s = license_send_stream_init(license);
 
-	license->client_user_name->data = (uint8*)license->rdp->settings->username;
-	license->client_user_name->length = strlen((char*)license->rdp->settings->username) + 1;
+	if (license->rdp->settings->username != NULL)
+		username = license->rdp->settings->username;
+	else
+		username = "username";
 
-	license->client_machine_name->data = (uint8*)license->rdp->settings->client_hostname;
+	license->client_user_name->data = (uint8*) username;
+	license->client_user_name->length = strlen(username) + 1;
+
+	license->client_machine_name->data = (uint8*) license->rdp->settings->client_hostname;
 	license->client_machine_name->length = strlen(license->rdp->settings->client_hostname) + 1;
 
 	license_write_new_license_request_packet(license, s);
