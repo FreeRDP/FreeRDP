@@ -31,7 +31,10 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/common/color.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/cache/cache.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/chanman/chanman.h>
 
@@ -59,6 +62,9 @@ struct wf_info
 	char window_title[64];
 
 	HWND hwnd;
+	HGDI_DC hdc;
+	uint16 srcBpp;
+	uint16 dstBpp;
 	freerdp* instance;
 	WF_IMAGE* primary;
 	WF_IMAGE* drawing;
@@ -66,6 +72,9 @@ struct wf_info
 	HCURSOR cursor;
 	HBRUSH brush;
 	HBRUSH org_brush;
+
+	boolean sw_gdi;
+	rdpCache* cache;
 };
 typedef struct wf_info wfInfo;
 
