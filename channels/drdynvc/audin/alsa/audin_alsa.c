@@ -333,7 +333,8 @@ int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 	if (data && data->data[0] && strcmp(data->data[0], "audin") == 0 &&
 		data->data[1] && strcmp(data->data[1], "alsa") == 0)
 	{
-		strncpy(alsa->device_name, (char*)data->data[2], sizeof(alsa->device_name));
+		if (data[2].size)
+			strncpy(alsa->device_name, (char*)data->data[2], sizeof(alsa->device_name));
 	}
 	if (alsa->device_name[0] == '\0')
 	{
