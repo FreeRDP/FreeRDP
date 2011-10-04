@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <freerdp/constants.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/args.h>
