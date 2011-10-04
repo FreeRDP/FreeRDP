@@ -855,7 +855,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		surface_bits_command->width, surface_bits_command->height,
 		surface_bits_command->bitmapDataLength);
 
-	tile_bitmap = xzalloc(32);
+	tile_bitmap = (char*) xzalloc(32);
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
@@ -916,6 +916,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == True))
 		{
+			uint8* temp_image;
+
 			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
 				gdi->image->bitmap->bitsPerPixel, 32, gdi->clrconv);
@@ -923,7 +925,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
 
-			uint8* temp_image = (uint8*) xmalloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+			temp_image = (uint8*) xmalloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 			freerdp_image_invert(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 			xfree(gdi->image->bitmap->data);
 			gdi->image->bitmap->data = temp_image;
@@ -942,7 +944,8 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
-	xfree(tile_bitmap);
+	if (tile_bitmap != NULL)
+		xfree(tile_bitmap);
 }
 
 void gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
@@ -1019,7 +1022,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 void gdi_init_primary(GDI* gdi)
 {
-	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, NULL);
+	gdi->primary = gdi_bitmap_new(gdi, gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
 	gdi->primary_buffer = gdi->primary->bitmap->data;
 
 	if (gdi->drawing == NULL)
@@ -1057,7 +1060,7 @@ void gdi_resize(GDI* gdi, int width, int height)
  * @return
  */
 
-int gdi_init(freerdp* instance, uint32 flags)
+int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 {
 	GDI* gdi = (GDI*) malloc(sizeof(GDI));
 	memset(gdi, 0, sizeof(GDI));
@@ -1066,6 +1069,7 @@ int gdi_init(freerdp* instance, uint32 flags)
 	gdi->width = instance->settings->width;
 	gdi->height = instance->settings->height;
 	gdi->srcBpp = instance->settings->color_depth;
+	gdi->primary_buffer = buffer;
 
 	/* default internal buffer format */
 	gdi->dstBpp = 32;
@@ -1077,6 +1081,11 @@ int gdi_init(freerdp* instance, uint32 flags)
 		{
 			gdi->dstBpp = 32;
 			gdi->bytesPerPixel = 4;
+		}
+		else if (flags & CLRBUF_24BPP)
+		{
+			gdi->dstBpp = 24;
+			gdi->bytesPerPixel = 3;
 		}
 		else if (flags & CLRBUF_16BPP)
 		{

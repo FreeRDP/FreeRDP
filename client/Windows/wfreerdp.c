@@ -57,6 +57,62 @@ int wf_create_console(void)
 	return 0;
 }
 
+void wf_sw_begin_paint(rdpUpdate* update)
+{
+	GDI* gdi;
+	gdi = GET_GDI(update);
+	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->ninvalid = 0;
+}
+
+void wf_sw_end_paint(rdpUpdate* update)
+{
+	int i;
+	GDI* gdi;
+	wfInfo* wfi;
+	sint32 x, y;
+	uint32 w, h;
+	int ninvalid;
+	RECT update_rect;
+	HGDI_RGN cinvalid;
+
+	gdi = GET_GDI(update);
+	wfi = GET_WFI(update);
+
+	if (gdi->primary->hdc->hwnd->ninvalid < 1)
+		return;
+
+	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+	for (i = 0; i < ninvalid; i++)
+	{
+		x = cinvalid[i].x;
+		y = cinvalid[i].y;
+		w = cinvalid[i].w;
+		h = cinvalid[i].h;
+
+		update_rect.left = x;
+		update_rect.top = y;
+		update_rect.right = x + w - 1;
+		update_rect.bottom = y + h - 1;
+
+		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+	}
+}
+
+void wf_hw_begin_paint(rdpUpdate* update)
+{
+	wfInfo* wfi = GET_WFI(update);
+	wfi->hdc->hwnd->invalid->null = 1;
+	wfi->hdc->hwnd->ninvalid = 0;
+}
+
+void wf_hw_end_paint(rdpUpdate* update)
+{
+
+}
+
 boolean wf_pre_connect(freerdp* instance)
 {
 	int i1;
@@ -81,7 +137,7 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
 	settings->order_support[NEG_LINETO_INDEX] = True;
 	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = True;
+	settings->order_support[NEG_MEMBLT_INDEX] = False;
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
@@ -96,6 +152,16 @@ boolean wf_pre_connect(freerdp* instance)
 
 	wfi->fullscreen = settings->fullscreen;
 	wfi->fs_toggle = wfi->fullscreen;
+	wfi->sw_gdi = settings->sw_gdi;
+
+	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
+	wfi->clrconv->alpha = 1;
+	wfi->clrconv->palette = NULL;
+
+	if (wfi->sw_gdi)
+	{
+		wfi->cache = cache_new(instance->settings);
+	}
 
 	if (wfi->percentscreen > 0)
 	{
@@ -141,11 +207,39 @@ boolean wf_post_connect(freerdp* instance)
 	SET_WFI(instance->update, wfi);
 	settings = instance->settings;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP);
-	gdi = GET_GDI(instance->update);
-
+	wfi->dstBpp = 32;
 	width = settings->width;
 	height = settings->height;
+
+	if (wfi->sw_gdi)
+	{
+		uint8* primary_buffer;
+		primary_buffer = (uint8*) xmalloc(width * height * (wfi->dstBpp / 8));
+		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, primary_buffer);
+		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, primary_buffer);
+		gdi = GET_GDI(instance->update);
+		wfi->hdc = gdi->primary->hdc;
+	}
+	else
+	{
+		wf_gdi_register_update_callbacks(instance->update);
+		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, NULL);
+
+		wfi->hdc = gdi_GetDC();
+		wfi->hdc->bitsPerPixel = wfi->dstBpp;
+		wfi->hdc->bytesPerPixel = wfi->dstBpp / 8;
+
+		wfi->hdc->alpha = wfi->clrconv->alpha;
+		wfi->hdc->invert = wfi->clrconv->invert;
+
+		wfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+		wfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+		wfi->hdc->hwnd->invalid->null = 1;
+
+		wfi->hdc->hwnd->count = 32;
+		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
+		wfi->hdc->hwnd->ninvalid = 0;
+	}
 
 	if (strlen(wfi->window_title) > 0)
 		_snwprintf(win_title, sizeof(win_title), L"%S", wfi->window_title);
@@ -182,15 +276,22 @@ boolean wf_post_connect(freerdp* instance)
 		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, width + diff.x, height + diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 
-	if (wfi->primary == NULL)
-	{
-		wfi->primary = wf_image_new(wfi, width, height, 0, NULL);
-		BitBlt(wfi->primary->hdc, 0, 0, width, height, NULL, 0, 0, BLACKNESS);
-	}
+	BitBlt(wfi->primary->hdc, 0, 0, width, height, NULL, 0, 0, BLACKNESS);
 	wfi->drawing = wfi->primary;
 
 	ShowWindow(wfi->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfi->hwnd);
+
+	if (wfi->sw_gdi)
+	{
+		instance->update->BeginPaint = wf_sw_begin_paint;
+		instance->update->EndPaint = wf_sw_end_paint;
+	}
+	else
+	{
+		instance->update->BeginPaint = wf_hw_begin_paint;
+		instance->update->EndPaint = wf_hw_end_paint;
+	}
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
 
@@ -362,9 +463,6 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	instance = data->instance;
 
 	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
-	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
-	wfi->clrconv->alpha = 1;
-	wfi->clrconv->palette = NULL;
 	SET_WFI(instance, wfi);
 	wfi->instance = instance;
 
