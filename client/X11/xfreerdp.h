@@ -73,6 +73,7 @@ struct xf_info
 	int scanline_pad;
 	boolean big_endian;
 	boolean fullscreen;
+	boolean grab_keyboard;
 	boolean unobscured;
 	boolean decoration;
 	freerdp* instance;

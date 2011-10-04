@@ -535,6 +535,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->decoration = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
+	xfi->grab_keyboard = settings->grab_keyboard;
 	xfi->fullscreen_toggle = xfi->fullscreen;
 	xfi->sw_gdi = settings->sw_gdi;
 

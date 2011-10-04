@@ -43,6 +43,7 @@ rdpSettings* settings_new(void* instance)
 		settings->height = 768;
 		settings->workarea = False;
 		settings->fullscreen = False;
+		settings->grab_keyboard = True;
 		settings->decorations = True;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;

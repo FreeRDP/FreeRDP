@@ -189,6 +189,7 @@ struct rdp_settings
 	boolean sw_gdi;
 	boolean workarea;
 	boolean fullscreen;
+	boolean grab_keyboard;
 	boolean decorations;
 	uint32 rdp_version;
 	uint16 color_depth;

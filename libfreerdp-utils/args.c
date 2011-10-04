@@ -67,6 +67,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -g: set geometry, using format WxH or X%% or 'workarea', default is 1024x768\n"
 				"  -h: print this help\n"
 				"  -k: set keyboard layout ID\n"
+				"  -K: do not interfere with window manager bindings\n"
 				"  -m: don't send mouse motion events\n"
 				"  -n: hostname\n"
 				"  -o: console audio\n"
@@ -215,6 +216,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return -1;
 			}
 			sscanf(argv[index], "%X", &(settings->kbd_layout));
+		}
+		else if (strcmp("-K", argv[index]) == 0)
+		{
+			settings->grab_keyboard = False;
 		}
 		else if (strcmp("-n", argv[index]) == 0)
 		{

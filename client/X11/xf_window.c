@@ -229,8 +229,10 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
 			VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
-			PointerMotionMask | ExposureMask | EnterWindowMask | LeaveWindowMask |
-			PropertyChangeMask;
+			PointerMotionMask | ExposureMask | PropertyChangeMask;
+
+		if (xfi->grab_keyboard)
+			input_mask |= EnterWindowMask | LeaveWindowMask;
 
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
