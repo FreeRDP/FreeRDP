@@ -330,6 +330,45 @@ boolean xf_check_fds(freerdp* instance, fd_set* set)
 	return True;
 }
 
+void xf_create_window(xfInfo* xfi)
+{
+	XEvent xevent;
+
+	xfi->decoration = xfi->fullscreen ? False : True;
+
+	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
+	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
+	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
+	xfi->attribs.override_redirect = xfi->fullscreen;
+	xfi->attribs.colormap = xfi->colormap;
+
+	if (xfi->remote_app != True)
+	{
+		xfi->window = xf_CreateDesktopWindow(xfi, "FreeRDP", xfi->width, xfi->height);
+
+		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
+
+		if (xfi->fullscreen)
+			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
+
+		/* wait for VisibilityNotify */
+		do
+		{
+			XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+		}
+		while (xevent.type != VisibilityNotify);
+
+		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+
+		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
+		xfi->drawable = xfi->window->handle;
+	}
+	else
+	{
+		xfi->drawable = DefaultRootWindow(xfi->display);
+	}
+}
+
 void xf_toggle_fullscreen(xfInfo* xfi)
 {
 	Pixmap contents = 0;
@@ -339,7 +378,7 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 
 	XDestroyWindow(xfi->display, xfi->window->handle);
 	xfi->fullscreen = (xfi->fullscreen) ? False : True;
-	xf_post_connect(xfi->instance);
+	xf_create_window(xfi);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
@@ -507,7 +546,6 @@ boolean xf_pre_connect(freerdp* instance)
 boolean xf_post_connect(freerdp* instance)
 {
 	xfInfo* xfi;
-	XEvent xevent;
 	XGCValues gcv;
 
 	xfi = GET_XFI(instance);
@@ -562,43 +600,10 @@ boolean xf_post_connect(freerdp* instance)
 			xfi->nsc_context = (void*) nsc_context_new();
 	}
 
-	if (xfi->fullscreen)
-		xfi->decoration = False;
-
 	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : instance->settings->width;
 	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : instance->settings->height;
 
-	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
-	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
-	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
-	xfi->attribs.override_redirect = xfi->fullscreen;
-	xfi->attribs.colormap = xfi->colormap;
-
-	if (xfi->remote_app != True)
-	{
-		xfi->window = xf_CreateDesktopWindow(xfi, "FreeRDP", xfi->width, xfi->height);
-
-		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
-
-		if (xfi->fullscreen)
-			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
-
-		/* wait for VisibilityNotify */
-		do
-		{
-			XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
-		}
-		while (xevent.type != VisibilityNotify);
-
-		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
-
-		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
-		xfi->drawable = xfi->window->handle;
-	}
-	else
-	{
-		xfi->drawable = DefaultRootWindow(xfi->display);
-	}
+	xf_create_window(xfi);
 
 	memset(&gcv, 0, sizeof(gcv));
 	xfi->modifier_map = XGetModifierMapping(xfi->display);
