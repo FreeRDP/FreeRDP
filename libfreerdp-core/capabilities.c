@@ -1381,7 +1381,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			stream_read_uint8(s, settings->rfx_codec_id);
 			settings->rfx_codec = True;
 		}
-		if (settings->server_mode && strncmp((char*)stream_get_tail(s),CODEC_GUID_NSCODEC, 16) == 0)
+		else if (settings->server_mode && strncmp((char*)stream_get_tail(s),CODEC_GUID_NSCODEC, 16) == 0)
 		{
 			stream_seek(s, 16); /*codec GUID (16 bytes) */
 			stream_read_uint8(s, settings->ns_codec_id);
