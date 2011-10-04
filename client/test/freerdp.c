@@ -174,7 +174,7 @@ boolean tf_post_connect(freerdp* instance)
 	tfi = GET_TFI(instance);
 	SET_TFI(instance->update, tfi);
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP);
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
 	gdi = GET_GDI(instance->update);
 
 	instance->update->BeginPaint = tf_begin_paint;

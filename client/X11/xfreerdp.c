@@ -566,7 +566,7 @@ boolean xf_post_connect(freerdp* instance)
 		else
 			flags |= CLRBUF_16BPP;
 
-		gdi_init(instance, flags);
+		gdi_init(instance, flags, NULL);
 		gdi = GET_GDI(instance->update);
 		xfi->primary_buffer = gdi->primary_buffer;
 	}

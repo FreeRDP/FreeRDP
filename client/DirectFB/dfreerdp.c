@@ -146,7 +146,7 @@ boolean df_post_connect(freerdp* instance)
 	dfi = GET_DFI(instance);
 	SET_DFI(instance->update, dfi);
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP);
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
 	gdi = GET_GDI(instance->update);
 
 	dfi->err = DirectFBCreate(&(dfi->dfb));
