@@ -26,5 +26,5 @@ install(DIRECTORY freerdp/cache DESTINATION include/freerdp FILES_MATCHING PATTE
 install(DIRECTORY freerdp/gdi DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/kbd DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/rail DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/rfx DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/codec DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/plugins DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
