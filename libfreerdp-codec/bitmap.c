@@ -251,6 +251,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 
 /**
  * decompress a color plane
+ * RDP6_BITMAP_STREAM
  */
 static int process_plane(uint8* in, int width, int height, uint8* out, int size)
 {
@@ -358,22 +359,28 @@ static int process_plane(uint8* in, int width, int height, uint8* out, int size)
 
 /**
  * 4 byte bitmap decompress
+ * RDP6_BITMAP_STREAM
  */
 static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
 {
 	int code;
 	int bytes_pro;
 	int total_pro;
+	int RLE;
+	int NA; /* no alpha */
 
 	code = IN_UINT8_MV(srcData);
-
-	if (code != 0x10)
+	RLE = code & 0x10;
+	if (RLE == 0)
 		return False;
-
 	total_pro = 1;
-	bytes_pro = process_plane(srcData, width, height, dstData + 3, size - total_pro);
-	total_pro += bytes_pro;
-	srcData += bytes_pro;
+	NA = code & 0x20;
+	if (NA == 0)
+	{
+		bytes_pro = process_plane(srcData, width, height, dstData + 3, size - total_pro);
+		total_pro += bytes_pro;
+		srcData += bytes_pro;
+	}
 	bytes_pro = process_plane(srcData, width, height, dstData + 2, size - total_pro);
 	total_pro += bytes_pro;
 	srcData += bytes_pro;
@@ -382,7 +389,6 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 	srcData += bytes_pro;
 	bytes_pro = process_plane(srcData, width, height, dstData + 0, size - total_pro);
 	total_pro += bytes_pro;
-
 	return (size == total_pro) ? True : False;
 }
 
@@ -419,7 +425,7 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
-		if (bitmap_decompress4(srcData, dstData, width, height, size) != True)
+		if (!bitmap_decompress4(srcData, dstData, width, height, size))
 			return False;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
