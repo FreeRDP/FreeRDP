@@ -205,7 +205,7 @@ Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 	cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
 
 	image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
-			ZPixmap, 0, (char *) cdata, width, height, xfi->scanline_pad, 0);
+			ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
 
 	XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
 	XFree(image);
@@ -579,6 +579,34 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	xfree(points);
 }
 
+void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+{
+	void* extra;
+	Pixmap bitmap;
+	xfInfo* xfi = GET_XFI(update);
+
+	//xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
+	bitmap_v2_get(xfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+
+	bitmap = (Pixmap) extra;
+
+#if 0
+	XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+			memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight,
+			memblt->nLeftRect, memblt->nTopRect);
+#endif
+
+	if (xfi->drawing == xfi->primary)
+	{
+
+	}
+}
+
+void xf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+{
+
+}
+
 void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
 	int i, j;
@@ -736,10 +764,16 @@ void xf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surfa
 
 void xf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
+	Pixmap bitmap;
+	BITMAP_DATA* bitmap_data;
 	xfInfo* xfi = GET_XFI(update);
 
+	bitmap_data = cache_bitmap_v2->bitmap_data;
+
+	bitmap = xf_bitmap_new(xfi, bitmap_data->width, bitmap_data->height, bitmap_data->bpp, bitmap_data->dstData);
+
 	bitmap_v2_put(xfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
-			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->data);
+		cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 
 void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -835,7 +869,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 		xfi->bmp_codec_nsc = (uint8*) xrealloc(xfi->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_invert(ncontext->bmpdata, xfi->bmp_codec_nsc,
+		freerdp_image_flip(ncontext->bmpdata, xfi->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
@@ -867,7 +901,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 		xfi->bmp_codec_none = (uint8*) xrealloc(xfi->bmp_codec_none,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_invert(surface_bits_command->bitmapData, xfi->bmp_codec_none,
+		freerdp_image_flip(surface_bits_command->bitmapData, xfi->bmp_codec_none,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
@@ -915,7 +949,7 @@ void xf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
-		freerdp_image_invert(bitmap_data->srcData, bitmap_data->dstData,
+		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
 				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
 	}
 
@@ -939,8 +973,8 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = xf_gdi_line_to;
 	update->Polyline = NULL;
-	update->MemBlt = NULL;
-	update->Mem3Blt = NULL;
+	update->MemBlt = xf_gdi_memblt;
+	update->Mem3Blt = xf_gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
 	update->FastIndex = xf_gdi_fast_index;

@@ -65,7 +65,7 @@ struct _BITMAP_DATA
 	uint16 height;
 	uint16 bpp;
 	uint16 flags;
-	uint16 length;
+	uint32 length;
 	uint8* srcData;
 	uint8* dstData;
 	boolean compressed;
@@ -528,14 +528,9 @@ struct _CACHE_BITMAP_V2_ORDER
 	uint16 flags;
 	uint32 key1;
 	uint32 key2;
-	uint8 bitmapBpp;
-	uint16 bitmapWidth;
-	uint16 bitmapHeight;
-	uint32 bitmapLength;
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
-	uint8* bitmapDataStream;
-	uint8* data;
+	BITMAP_DATA* bitmap_data;
 };
 typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
@@ -928,6 +923,12 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 #define STREAM_BITMAP_V2		0x04
 
 #define SCREEN_BITMAP_SURFACE		0xFFFF
+#define BITMAP_CACHE_WAITING_LIST_INDEX 0x7FFF
+
+#define CBR2_HEIGHT_SAME_AS_WIDTH	0x01
+#define CBR2_PERSISTENT_KEY_PRESENT	0x02
+#define CBR2_NO_BITMAP_COMPRESSION_HDR	0x08
+#define CBR2_DO_NOT_CACHE		0x10
 
 #define GLYPH_FRAGMENT_NOP		0x00
 #define GLYPH_FRAGMENT_USE		0xFE

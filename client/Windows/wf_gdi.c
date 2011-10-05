@@ -403,7 +403,7 @@ void wf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
-		freerdp_image_invert(bitmap_data->srcData, bitmap_data->dstData,
+		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
 				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
 	}
 

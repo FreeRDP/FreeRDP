@@ -27,6 +27,7 @@
 struct _BITMAP_V2_ENTRY
 {
 	void* entry;
+	void* extra;
 };
 typedef struct _BITMAP_V2_ENTRY BITMAP_V2_ENTRY;
 
@@ -45,8 +46,8 @@ struct rdp_bitmap_v2
 };
 typedef struct rdp_bitmap_v2 rdpBitmapV2;
 
-FREERDP_API void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index);
-FREERDP_API void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry);
+FREERDP_API void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void** extra);
+FREERDP_API void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra);
 
 FREERDP_API rdpBitmapV2* bitmap_v2_new(rdpSettings* settings);
 FREERDP_API void bitmap_v2_free(rdpBitmapV2* bitmap_v2);

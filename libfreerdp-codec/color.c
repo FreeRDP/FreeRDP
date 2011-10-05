@@ -628,7 +628,7 @@ uint8* freerdp_image_convert(uint8* srcData, uint8* dstData, int width, int heig
 		return 0;
 }
 
-uint8* freerdp_image_invert(uint8* srcData, uint8* dstData, int width, int height, int bpp)
+uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height, int bpp)
 {
 	int y;
 	uint8* srcp;
@@ -663,7 +663,7 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 	uint32* icon;
 
 	pixel = 0;
-	data = freerdp_image_invert(srcData, dstData, width, height, bpp);
+	data = freerdp_image_flip(srcData, dstData, width, height, bpp);
 	dstData = freerdp_image_convert(data, NULL, width, height, bpp, 32, clrconv);
 
 	free(data);

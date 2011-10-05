@@ -312,7 +312,7 @@ INLINE uint32 gdi_rop3_code(uint8 code)
 
 INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
-	uint8 * p;
+	uint8* p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
 	
 	if (x >= 0 && x < hBmp->width && y >= 0 && y < hBmp->height)
@@ -626,7 +626,7 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	uint32 color;
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
-	GDI *gdi = GET_GDI(update);
+	GDI* gdi = GET_GDI(update);
 
 	color = freerdp_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(0, 1, (GDI_COLOR) color);
@@ -643,6 +643,25 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	}
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
+}
+
+void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+{
+	void* extra;
+	GDI_IMAGE* gdi_bmp;
+	GDI* gdi = GET_GDI(update);
+
+	bitmap_v2_get(gdi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	gdi_bmp = (GDI_IMAGE*) extra;
+
+	gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+			memblt->nWidth, memblt->nHeight, gdi_bmp->hdc,
+			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+}
+
+void gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+{
+
 }
 
 void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
@@ -772,10 +791,15 @@ void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 
 void gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
+	GDI_IMAGE* bitmap;
+	BITMAP_DATA* bitmap_data;
 	GDI* gdi = GET_GDI(update);
 
+	bitmap_data = cache_bitmap_v2->bitmap_data;
+	bitmap = gdi_bitmap_new(gdi, bitmap_data->width, bitmap_data->height, gdi->dstBpp, bitmap_data->dstData);
+
 	bitmap_v2_put(gdi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
-			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->bitmapDataStream);
+		cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 
 void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -900,7 +924,7 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 		gdi->image->bitmap->data = (uint8*) xrealloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
-		freerdp_image_invert(ncontext->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+		freerdp_image_flip(ncontext->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 		nsc_context_destroy(ncontext);
 	} 
@@ -926,13 +950,13 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
 
 			temp_image = (uint8*) xmalloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
-			freerdp_image_invert(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+			freerdp_image_flip(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 			xfree(gdi->image->bitmap->data);
 			gdi->image->bitmap->data = temp_image;
 		}
 		else
 		{
-			freerdp_image_invert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+			freerdp_image_flip(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 					gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		}
 
@@ -967,11 +991,12 @@ void gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
-		freerdp_image_invert(bitmap_data->srcData, bitmap_data->dstData,
+		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
 				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
 	}
 
 	bitmap_data->compressed = False;
+	bitmap_data->length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
 }
 
 /**
@@ -997,8 +1022,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = gdi_line_to;
 	update->Polyline = NULL;
-	update->MemBlt = NULL;
-	update->Mem3Blt = NULL;
+	update->MemBlt = gdi_memblt;
+	update->Mem3Blt = gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
 	update->FastIndex = gdi_fast_index;

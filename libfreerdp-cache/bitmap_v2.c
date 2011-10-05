@@ -22,48 +22,58 @@
 
 #include <freerdp/cache/bitmap_v2.h>
 
-void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index)
+void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void** extra)
 {
 	void* entry;
 
-	if (index > bitmap_v2->maxCells)
+	if (id > bitmap_v2->maxCells)
 	{
-		printf("invalid bitmap_v2 cell id: %d\n", id);
+		printf("get invalid bitmap_v2 cell id: %d\n", id);
 		return NULL;
 	}
 
+	if (index == 0x7FFF)
+		index = bitmap_v2->cells[id].number - 1;
+
 	if (index > bitmap_v2->cells[id].number)
 	{
-		printf("invalid bitmap_v2 index %d in cell id: %d\n", index, id);
+		printf("get invalid bitmap_v2 index %d in cell id: %d\n", index, id);
 		return NULL;
 	}
 
 	entry = bitmap_v2->cells[id].entries[index].entry;
 
+	if (extra != NULL)
+		*extra = bitmap_v2->cells[id].entries[index].extra;
+
 	if (entry == NULL)
 	{
-		printf("invalid bitmap_v2 at index %d in cell id: %d\n", index, id);
+		printf("get invalid bitmap_v2 at index %d in cell id: %d\n", index, id);
 		return NULL;
 	}
 
 	return entry;
 }
 
-void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry)
+void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra)
 {
 	if (id > bitmap_v2->maxCells)
 	{
-		printf("invalid bitmap_v2 cell id: %d\n", id);
+		printf("put invalid bitmap_v2 cell id: %d\n", id);
 		return;
 	}
 
+	if (index == 0x7FFF)
+		index = bitmap_v2->cells[id].number - 1;
+
 	if (index > bitmap_v2->cells[id].number)
 	{
-		printf("invalid bitmap_v2 index %d in cell id: %d\n", index, id);
+		printf("put invalid bitmap_v2 index %d in cell id: %d\n", index, id);
 		return;
 	}
 
 	bitmap_v2->cells[id].entries[index].entry = entry;
+	bitmap_v2->cells[id].entries[index].extra = extra;
 }
 
 rdpBitmapV2* bitmap_v2_new(rdpSettings* settings)

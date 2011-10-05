@@ -611,11 +611,11 @@ void test_read_cache_bitmap_v2_order(void)
 	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, True, extraFlags);
 
 	CU_ASSERT(cache_bitmap_v2.cacheId == 1);
-	CU_ASSERT(cache_bitmap_v2.bitmapBpp == 16);
+	CU_ASSERT(cache_bitmap_v2.bitmap_data->bpp == 16);
 	CU_ASSERT(cache_bitmap_v2.flags == 0x19);
-	CU_ASSERT(cache_bitmap_v2.bitmapWidth == 32);
-	CU_ASSERT(cache_bitmap_v2.bitmapHeight == 32);
-	CU_ASSERT(cache_bitmap_v2.bitmapLength == 220);
+	CU_ASSERT(cache_bitmap_v2.bitmap_data->width == 32);
+	CU_ASSERT(cache_bitmap_v2.bitmap_data->height == 32);
+	CU_ASSERT(cache_bitmap_v2.bitmap_data->length == 220);
 	CU_ASSERT(cache_bitmap_v2.cacheIndex == 32767);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(cache_bitmap_v2_order) - 1));
