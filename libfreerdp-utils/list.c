@@ -49,6 +49,7 @@ LIST* list_new(void)
 	LIST* list;
 
 	list = xnew(LIST);
+	list->count = 0;
 	return list;
 }
 
@@ -75,6 +76,7 @@ void list_enqueue(LIST* list, void* data)
 		list->tail->next = item;
 		list->tail = item;
 	}
+	list->count++;
 }
 
 void* list_dequeue(LIST* list)
@@ -93,6 +95,7 @@ void* list_dequeue(LIST* list)
 
 		data = item->data;
 		xfree(item);
+		list->count--;
 	}
 	return data;
 }
@@ -121,8 +124,14 @@ void* list_remove(LIST* list, void* data)
 		if (list->tail == item)
 			list->tail = item->prev;
 		xfree(item);
+		list->count--;
 	}
 	else
 		data = NULL;
 	return data;
+}
+
+int list_size(LIST* list)
+{
+	return list->count;
 }
