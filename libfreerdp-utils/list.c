@@ -108,6 +108,20 @@ void* list_peek(LIST* list)
 	return item ? item->data : NULL;
 }
 
+void* list_next(LIST* list, void* data)
+{
+	LIST_ITEM* item;
+
+	item = list_item_find(list, data);
+	data = NULL;
+	if (item != NULL)
+	{
+		if (item->next != NULL)
+			data = item->next->data;
+	}
+	return data;
+}
+
 void* list_remove(LIST* list, void* data)
 {
 	LIST_ITEM* item;
