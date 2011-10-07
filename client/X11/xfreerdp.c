@@ -334,7 +334,8 @@ void xf_create_window(xfInfo* xfi)
 {
 	XEvent xevent;
 
-	xfi->decoration = xfi->fullscreen ? False : True;
+	if (xfi->fullscreen)
+		xfi->decoration = False;
 
 	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
 	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
