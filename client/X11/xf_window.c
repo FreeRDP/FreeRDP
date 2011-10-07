@@ -67,8 +67,7 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 {
 	if (fullscreen)
 	{
-		if (window->decorations)
-			xf_SetWindowDecorations(xfi, window, False);
+		xf_SetWindowDecorations(xfi, window, False);
 
                 XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
@@ -157,8 +156,6 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 
 	XChangeProperty(xfi->display, window->handle, xfi->_MOTIF_WM_HINTS, xfi->_MOTIF_WM_HINTS, 32,
 		PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
-
-	window->decorations = show;
 }
 
 void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window)
@@ -193,7 +190,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		XA_ATOM, 32, PropModeReplace, (uint8*) &window_type, 1);
 }
 
-xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
+xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
 {
 	xfWindow* window;
 
@@ -206,8 +203,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 
 		window->width = width;
 		window->height = height;
-		window->decorations = True;
-		window->fullscreen = True;
+		window->fullscreen = False;
+		window->decorations = decorations;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -225,6 +222,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height)
 		}
 
 		xf_ResizeDesktopWindow(xfi, window, width, height);
+		xf_SetWindowDecorations(xfi, window, decorations);
 
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |

@@ -170,7 +170,6 @@ void xf_sw_desktop_resize(rdpUpdate* update)
 	}
 }
 
-
 void xf_hw_begin_paint(rdpUpdate* update)
 {
 	xfInfo* xfi;
@@ -333,9 +332,12 @@ boolean xf_check_fds(freerdp* instance, fd_set* set)
 void xf_create_window(xfInfo* xfi)
 {
 	XEvent xevent;
+	char* title;
+	char* hostname;
+	int width, height;
 
-	if (xfi->fullscreen)
-		xfi->decoration = False;
+	width = xfi->width;
+	height = xfi->height;
 
 	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
 	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
@@ -345,9 +347,18 @@ void xf_create_window(xfInfo* xfi)
 
 	if (xfi->remote_app != True)
 	{
-		xfi->window = xf_CreateDesktopWindow(xfi, "FreeRDP", xfi->width, xfi->height);
+		if (xfi->fullscreen)
+		{
+			width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : xfi->width;
+			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
+		}
 
-		xf_SetWindowDecorations(xfi, xfi->window, xfi->decoration);
+		hostname = xfi->instance->settings->hostname;
+		title = xmalloc(sizeof("FreeRDP: ") + strlen(hostname));
+		sprintf(title, "FreeRDP: %s", hostname);
+
+		xfi->window = xf_CreateDesktopWindow(xfi, title, width, height, xfi->decorations);
+		xfree(title);
 
 		if (xfi->fullscreen)
 			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
@@ -535,11 +546,11 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->mouse_motion = settings->mouse_motion;
 	xfi->complex_regions = True;
-	xfi->decoration = settings->decorations;
+	xfi->decorations = settings->decorations;
 	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
 	xfi->grab_keyboard = settings->grab_keyboard;
-	xfi->fullscreen_toggle = xfi->fullscreen;
+	xfi->fullscreen_toggle = True;
 	xfi->sw_gdi = settings->sw_gdi;
 
 	xf_detect_monitors(xfi, settings);
@@ -604,8 +615,8 @@ boolean xf_post_connect(freerdp* instance)
 			xfi->nsc_context = (void*) nsc_context_new();
 	}
 
-	xfi->width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : instance->settings->width;
-	xfi->height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : instance->settings->height;
+	xfi->width = instance->settings->width;
+	xfi->height = instance->settings->height;
 
 	xf_create_window(xfi);
 

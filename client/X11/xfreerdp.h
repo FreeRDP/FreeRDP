@@ -75,7 +75,7 @@ struct xf_info
 	boolean fullscreen;
 	boolean grab_keyboard;
 	boolean unobscured;
-	boolean decoration;
+	boolean decorations;
 	freerdp* instance;
 	xfWindow* window;
 	xfWorkArea workArea;

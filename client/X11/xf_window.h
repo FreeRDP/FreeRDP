@@ -54,7 +54,7 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
 void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show);
 void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window);
 
-xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height);
+xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations);
 void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height);
 
 xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id);
