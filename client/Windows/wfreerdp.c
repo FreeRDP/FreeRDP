@@ -97,6 +97,8 @@ void wf_sw_end_paint(rdpUpdate* update)
 		update_rect.right = x + w - 1;
 		update_rect.bottom = y + h - 1;
 
+		//printf("InvalidateRect: x:%d y:%d w:%d h:%d\n", x, y, w, h);
+
 		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
 	}
 }
@@ -213,12 +215,10 @@ boolean wf_post_connect(freerdp* instance)
 
 	if (wfi->sw_gdi)
 	{
-		uint8* primary_buffer;
-		primary_buffer = (uint8*) xmalloc(width * height * (wfi->dstBpp / 8));
-		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, primary_buffer);
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, primary_buffer);
+		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
 		gdi = GET_GDI(instance->update);
 		wfi->hdc = gdi->primary->hdc;
+		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
 	}
 	else
 	{

@@ -126,6 +126,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	HDC hdc;
 	LONG ptr;
 	wfInfo* wfi;
+	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
 	boolean processed;
@@ -142,11 +143,16 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		{
 			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
-				BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top,
-					ps.rcPaint.right - ps.rcPaint.left,
-					ps.rcPaint.bottom - ps.rcPaint.top,
-					wfi->primary->hdc, ps.rcPaint.left, ps.rcPaint.top,
-					SRCCOPY);
+				
+				x = ps.rcPaint.left;
+				y = ps.rcPaint.top;
+				w = ps.rcPaint.right - ps.rcPaint.left + 1;
+				h = ps.rcPaint.bottom - ps.rcPaint.top + 1;
+
+				//printf("WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
+
+				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x, y, SRCCOPY);
+
 				EndPaint(hWnd, &ps);
 				break;
 

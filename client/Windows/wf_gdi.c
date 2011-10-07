@@ -252,7 +252,7 @@ void wf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	DeleteObject(brush);
 
 	if (wfi->drawing == wfi->primary)
-		wf_invalidate_region(wfi, rect.left, rect.top, rect.right, rect.bottom);
+		wf_invalidate_region(wfi, rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1);
 }
 
 void wf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
@@ -309,6 +309,28 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 }
 
+void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+{
+	void* extra;
+	WF_IMAGE* wf_bmp;
+	wfInfo* wfi = GET_WFI(update);
+
+	bitmap_v2_get(wfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	wf_bmp = (WF_IMAGE*) extra;
+
+	BitBlt(wfi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+			memblt->nWidth, memblt->nHeight, wf_bmp->hdc,
+			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+
+	if (wfi->drawing == wfi->primary)
+		wf_invalidate_region(wfi, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
+}
+
+void wf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+{
+
+}
+
 void wf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
 
@@ -341,10 +363,15 @@ void wf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surfa
 
 void wf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
+	WF_IMAGE* bitmap;
+	BITMAP_DATA* bitmap_data;
 	wfInfo* wfi = GET_WFI(update);
 
+	bitmap_data = cache_bitmap_v2->bitmap_data;
+	bitmap = wf_image_new(wfi, bitmap_data->width, bitmap_data->height, wfi->dstBpp, bitmap_data->dstData);
+
 	bitmap_v2_put(wfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
-			cache_bitmap_v2->cacheIndex, cache_bitmap_v2->bitmapDataStream);
+			cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 
 void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -427,8 +454,8 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = wf_gdi_line_to;
 	update->Polyline = NULL;
-	update->MemBlt = NULL;
-	update->Mem3Blt = NULL;
+	update->MemBlt = wf_gdi_memblt;
+	update->Mem3Blt = wf_gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
 	update->FastIndex = wf_gdi_fast_index;
