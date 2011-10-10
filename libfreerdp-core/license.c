@@ -445,10 +445,10 @@ void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 	stream_read_uint16(s, blob->length); /* wBlobLen (2 bytes) */
 
 	/*
- 	 * Server can choose to not send a certificate by setting len to 0.
+ 	 * Server can choose to not send data by setting len to 0.
  	 * If so, it may not bother to set the type, so shortcut the warning
  	 */
-	if (blob->type == BB_CERTIFICATE_BLOB && blob->length == 0)
+	if (blob->type != BB_ANY_BLOB && blob->length == 0)
 		return;
 
 	if (blob->type != wBlobType && blob->type != BB_ANY_BLOB)
