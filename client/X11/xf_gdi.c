@@ -548,8 +548,10 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 {
 	int i;
+	int x, y;
 	uint32 color;
 	XPoint* points;
+	int width, height;
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop2(xfi, polyline->bRop2);
@@ -564,6 +566,34 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	{
 		points[i].x = polyline->points[i].x;
 		points[i].y = polyline->points[i].y;
+
+		if (i > 0)
+		{
+			width = points[i].x - points[i - 1].x;
+			height = points[i].y - points[i - 1].y;
+
+			if (width < 0)
+			{
+				width *= (-1);
+				x = points[i].x;
+			}
+			else
+			{
+				x = points[i - 1].x;
+			}
+
+			if (height < 0)
+			{
+				height *= (-1);
+				y = points[i].y;
+			}
+			else
+			{
+				y = points[i - 1].y;
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
+		}
 	}
 
 	XDrawLines(xfi->display, xfi->drawing, xfi->gc, points, polyline->numPoints, CoordModePrevious);
@@ -988,7 +1018,7 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiOpaqueRect = xf_gdi_multi_opaque_rect;
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = xf_gdi_line_to;
-	update->Polyline = NULL;
+	update->Polyline = xf_gdi_polyline;
 	update->MemBlt = xf_gdi_memblt;
 	update->Mem3Blt = xf_gdi_mem3blt;
 	update->SaveBitmap = NULL;

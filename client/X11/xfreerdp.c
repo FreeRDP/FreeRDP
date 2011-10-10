@@ -629,7 +629,6 @@ boolean xf_post_connect(freerdp* instance)
 
 	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->drawable, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
-	xfi->gc_default = XCreateGC(xfi->display, xfi->drawable, GCGraphicsExposures, &gcv);
 
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
@@ -958,7 +957,7 @@ int main(int argc, char* argv[])
 	chanman = freerdp_chanman_new();
 	SET_CHANMAN(instance, chanman);
 
-	instance->settings->sw_gdi = True;
+	instance->settings->sw_gdi = False;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
 			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)

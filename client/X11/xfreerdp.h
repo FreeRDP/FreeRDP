@@ -60,7 +60,6 @@ struct xf_info
 	int height;
 	int srcBpp;
 	GC gc_mono;
-	GC gc_default;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
@@ -141,6 +140,5 @@ boolean xf_post_connect(freerdp* instance);
 #else
 #define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
-
 
 #endif /* __XFREERDP_H */
