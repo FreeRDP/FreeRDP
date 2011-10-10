@@ -623,12 +623,13 @@ boolean xf_post_connect(freerdp* instance)
 	memset(&gcv, 0, sizeof(gcv));
 	xfi->modifier_map = XGetModifierMapping(xfi->display);
 
-	xfi->gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCGraphicsExposures, &gcv);
-	xfi->primary = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), xfi->width, xfi->height, xfi->depth);
+	xfi->gc = XCreateGC(xfi->display, xfi->drawable, GCGraphicsExposures, &gcv);
+	xfi->primary = XCreatePixmap(xfi->display, xfi->drawable, xfi->width, xfi->height, xfi->depth);
 	xfi->drawing = xfi->primary;
 
-	xfi->bitmap_mono = XCreatePixmap(xfi->display, DefaultRootWindow(xfi->display), 8, 8, 1);
+	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->drawable, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
+	xfi->gc_default = XCreateGC(xfi->display, xfi->drawable, GCGraphicsExposures, &gcv);
 
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);

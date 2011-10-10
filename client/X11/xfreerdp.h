@@ -60,6 +60,7 @@ struct xf_info
 	int height;
 	int srcBpp;
 	GC gc_mono;
+	GC gc_default;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;

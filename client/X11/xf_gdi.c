@@ -200,7 +200,7 @@ Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 	uint8* cdata;
 	XImage* image;
 
-	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->bpp);
+	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
 
 	cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
 
@@ -585,20 +585,29 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	Pixmap bitmap;
 	xfInfo* xfi = GET_XFI(update);
 
-	//xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
+	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
 	bitmap_v2_get(xfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
-
 	bitmap = (Pixmap) extra;
 
-#if 0
-	XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-			memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight,
+	if (extra == NULL)
+		return;
+
+	XCopyArea(xfi->display, bitmap, xfi->drawing, xfi->gc,
+			memblt->nXSrc, memblt->nYSrc,
+			memblt->nWidth, memblt->nHeight,
 			memblt->nLeftRect, memblt->nTopRect);
-#endif
 
 	if (xfi->drawing == xfi->primary)
 	{
+		if (xfi->remote_app != True)
+		{
+			XCopyArea(xfi->display, bitmap, xfi->drawable, xfi->gc,
+				memblt->nXSrc, memblt->nYSrc,
+				memblt->nWidth, memblt->nHeight,
+				memblt->nLeftRect, memblt->nTopRect);
+		}
 
+		gdi_InvalidateRegion(xfi->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
 }
 
@@ -769,7 +778,6 @@ void xf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitm
 	xfInfo* xfi = GET_XFI(update);
 
 	bitmap_data = cache_bitmap_v2->bitmap_data;
-
 	bitmap = xf_bitmap_new(xfi, bitmap_data->width, bitmap_data->height, bitmap_data->bpp, bitmap_data->dstData);
 
 	bitmap_v2_put(xfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
@@ -932,20 +940,27 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 void xf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 {
-	uint16 dstSize;
+	uint16 length;
 
-	dstSize = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
+	length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
 
 	if (bitmap_data->dstData == NULL)
-		bitmap_data->dstData = (uint8*) xmalloc(dstSize);
+		bitmap_data->dstData = (uint8*) xmalloc(length);
 	else
-		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, dstSize);
+		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, length);
 
 	if (bitmap_data->compressed)
 	{
-		bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
+		boolean status;
+
+		status = bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
 				bitmap_data->width, bitmap_data->height, bitmap_data->length,
 				bitmap_data->bpp, bitmap_data->bpp);
+
+		if (status != True)
+		{
+			printf("Bitmap Decompression Failed\n");
+		}
 	}
 	else
 	{
@@ -954,6 +969,7 @@ void xf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 	}
 
 	bitmap_data->compressed = False;
+	bitmap_data->length = length;
 }
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update)

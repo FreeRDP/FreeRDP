@@ -654,6 +654,9 @@ void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	bitmap_v2_get(gdi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
 	gdi_bmp = (GDI_IMAGE*) extra;
 
+	if (extra == NULL)
+		return;
+
 	gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
 			memblt->nWidth, memblt->nHeight, gdi_bmp->hdc,
 			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
@@ -974,20 +977,27 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 void gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 {
-	uint16 dstSize;
+	uint16 length;
 
-	dstSize = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
+	length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
 
 	if (bitmap_data->dstData == NULL)
-		bitmap_data->dstData = (uint8*) xmalloc(dstSize);
+		bitmap_data->dstData = (uint8*) xmalloc(length);
 	else
-		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, dstSize);
+		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, length);
 
 	if (bitmap_data->compressed)
 	{
-		bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
+		boolean status;
+
+		status = bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
 				bitmap_data->width, bitmap_data->height, bitmap_data->length,
 				bitmap_data->bpp, bitmap_data->bpp);
+
+		if (status != True)
+		{
+			printf("Bitmap Decompression Failed\n");
+		}
 	}
 	else
 	{
@@ -996,7 +1006,7 @@ void gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
 	}
 
 	bitmap_data->compressed = False;
-	bitmap_data->length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
+	bitmap_data->length = length;
 }
 
 /**

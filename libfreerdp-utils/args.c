@@ -81,7 +81,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
 				"  --no-fastpath: disable fast-path\n"
-				"  --no-osb: disable off screen bitmaps, default on\n"
+				"  --no-osb: disable offscreen bitmaps\n"
+				"  --no-bmp-cache: disable bitmap cache\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --nsc: enable NSCodec\n"
@@ -234,19 +235,23 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
-			settings->console_audio = 1;
+			settings->console_audio = True;
 		}
 		else if (strcmp("-0", argv[index]) == 0)
 		{
-			settings->console_session = 1;
+			settings->console_session = True;
 		}
 		else if (strcmp("-z", argv[index]) == 0)
 		{
-			settings->compression = 1;
+			settings->compression = True;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
-			settings->offscreen_bitmap_cache = 0;
+			settings->offscreen_bitmap_cache = False;
+		}
+		else if (strcmp("--no-bmp-cache", argv[index]) == 0)
+		{
+			settings->bitmap_cache = False;
 		}
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
