@@ -172,7 +172,7 @@ void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	{
 		bmp = &bitmap->bitmaps[i];
 
-		wf_bmp = wf_image_new(wfi, bmp->width, bmp->height, wfi->dstBpp, bmp->dstData);
+		wf_bmp = wf_image_new(wfi, bmp->width, bmp->height, wfi->srcBpp, bmp->dstData);
 
 		BitBlt(wfi->primary->hdc,
 				bmp->left, bmp->top, bmp->right - bmp->left + 1,
@@ -241,7 +241,7 @@ void wf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 brush_color;
 	wfInfo* wfi = GET_WFI(update);
 
-	brush_color = freerdp_color_convert(opaque_rect->color, wfi->dstBpp, 24, wfi->clrconv);
+	brush_color = freerdp_color_convert(opaque_rect->color, wfi->srcBpp, 24, wfi->clrconv);
 
 	rect.left = opaque_rect->nLeftRect;
 	rect.top = opaque_rect->nTopRect;
@@ -368,7 +368,7 @@ void wf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitm
 	wfInfo* wfi = GET_WFI(update);
 
 	bitmap_data = cache_bitmap_v2->bitmap_data;
-	bitmap = wf_image_new(wfi, bitmap_data->width, bitmap_data->height, wfi->dstBpp, bitmap_data->dstData);
+	bitmap = wf_image_new(wfi, bitmap_data->width, bitmap_data->height, wfi->srcBpp, bitmap_data->dstData);
 
 	bitmap_v2_put(wfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
 			cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);

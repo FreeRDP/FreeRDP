@@ -223,6 +223,7 @@ boolean wf_post_connect(freerdp* instance)
 	else
 	{
 		wf_gdi_register_update_callbacks(instance->update);
+		wfi->srcBpp = instance->settings->color_depth;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, NULL);
 
 		wfi->hdc = gdi_GetDC();
