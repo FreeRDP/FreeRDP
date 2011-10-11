@@ -165,7 +165,7 @@ void rdp_write_client_persistent_key_list_pdu(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0); /* totalEntriesCache2 (2 bytes) */
 	stream_write_uint16(s, 0); /* totalEntriesCache3 (2 bytes) */
 	stream_write_uint16(s, 0); /* totalEntriesCache4 (2 bytes) */
-	stream_write_uint8(s, PERSIST_LAST_PDU); /* bBitMask (1 byte) */
+	stream_write_uint8(s, PERSIST_FIRST_PDU | PERSIST_LAST_PDU); /* bBitMask (1 byte) */
 	stream_write_uint8(s, 0); /* pad1 (1 byte) */
 	stream_write_uint16(s, 0); /* pad3 (2 bytes) */
 
