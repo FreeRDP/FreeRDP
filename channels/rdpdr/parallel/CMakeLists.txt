@@ -17,27 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPDR_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
-	irp.c
-	irp.h
-	rdpdr_main.c
-	rdpdr_main.h
+set(PARALLEL_SRCS
+	parallel_main.c
 )
 
-add_library(rdpdr ${RDPDR_SRCS})
-set_target_properties(rdpdr PROPERTIES PREFIX "")
+include_directories(..)
 
-target_link_libraries(rdpdr freerdp-utils)
+add_library(parallel ${PARALLEL_SRCS})
+set_target_properties(parallel PROPERTIES PREFIX "")
 
-install(TARGETS rdpdr DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(parallel freerdp-utils)
 
-add_subdirectory(disk)
-add_subdirectory(printer)
-add_subdirectory(serial)
-add_subdirectory(parallel)
+install(TARGETS parallel DESTINATION ${FREERDP_PLUGIN_PATH})
