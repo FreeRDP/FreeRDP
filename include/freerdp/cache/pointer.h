@@ -22,27 +22,52 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-struct _POINTER_CACHE_ENTRY
-{
-	void* entry;
-	void* extra;
-};
-typedef struct _POINTER_CACHE_ENTRY POINTER_CACHE_ENTRY;
+typedef struct rdp_pointer rdpPointer;
+typedef struct rdp_pointer_cache rdpPointerCache;
+
+#include <freerdp/cache/cache.h>
 
 struct rdp_pointer
 {
-	uint16 cacheSize;
-	rdpSettings* settings;
-	POINTER_CACHE_ENTRY* entries;
+	uint16 xPos;
+	uint16 yPos;
+	uint16 width;
+	uint16 height;
+	uint16 xorBpp;
+	uint16 lengthAndMask;
+	uint16 lengthXorMask;
+	uint8* xorMaskData;
+	uint8* andMaskData;
 };
-typedef struct rdp_pointer rdpPointer;
 
-FREERDP_API void* pointer_get(rdpPointer* pointer, uint16 index, void** extra);
-FREERDP_API void pointer_put(rdpPointer* pointer, uint16 index, void* entry, void* extra);
+typedef void (*cbPointerSize)(rdpUpdate* update, uint32* size);
+typedef void (*cbPointerSet)(rdpUpdate* update, rdpPointer* pointer);
+typedef void (*cbPointerNew)(rdpUpdate* update, rdpPointer* pointer);
+typedef void (*cbPointerFree)(rdpUpdate* update, rdpPointer* pointer);
 
-FREERDP_API rdpPointer* pointer_new(rdpSettings* settings);
-FREERDP_API void pointer_free(rdpPointer* pointer);
+struct rdp_pointer_cache
+{
+	cbPointerSize PointerSize;
+	cbPointerNew PointerSet;
+	cbPointerNew PointerNew;
+	cbPointerFree PointerFree;
+
+	uint16 cacheSize;
+	rdpUpdate* update;
+	rdpSettings* settings;
+	rdpPointer** entries;
+};
+
+FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index);
+FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, uint16 index, rdpPointer* pointer);
+
+FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
+
+FREERDP_API rdpPointerCache* pointer_cache_new(rdpSettings* settings);
+FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
 
 #endif /* __POINTER_CACHE_H */

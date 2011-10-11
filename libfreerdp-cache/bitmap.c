@@ -20,31 +20,31 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include <freerdp/cache/bitmap_v2.h>
+#include <freerdp/cache/bitmap.h>
 
-void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void** extra)
+void* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, void** extra)
 {
 	void* entry;
 
-	if (id > bitmap_v2->maxCells)
+	if (id > bitmap_cache->maxCells)
 	{
 		printf("get invalid bitmap_v2 cell id: %d\n", id);
 		return NULL;
 	}
 
 	if (index == 0x7FFF)
-		index = bitmap_v2->cells[id].number - 1;
+		index = bitmap_cache->cells[id].number - 1;
 
-	if (index > bitmap_v2->cells[id].number)
+	if (index > bitmap_cache->cells[id].number)
 	{
 		printf("get invalid bitmap_v2 index %d in cell id: %d\n", index, id);
 		return NULL;
 	}
 
-	entry = bitmap_v2->cells[id].entries[index].entry;
+	entry = bitmap_cache->cells[id].entries[index].entry;
 
 	if (extra != NULL)
-		*extra = bitmap_v2->cells[id].entries[index].extra;
+		*extra = bitmap_cache->cells[id].entries[index].extra;
 
 	if (entry == NULL)
 	{
@@ -55,39 +55,39 @@ void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void** extra
 	return entry;
 }
 
-void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra)
+void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, void* entry, void* extra)
 {
-	if (id > bitmap_v2->maxCells)
+	if (id > bitmap_cache->maxCells)
 	{
 		printf("put invalid bitmap_v2 cell id: %d\n", id);
 		return;
 	}
 
 	if (index == 0x7FFF)
-		index = bitmap_v2->cells[id].number - 1;
+		index = bitmap_cache->cells[id].number - 1;
 
-	if (index > bitmap_v2->cells[id].number)
+	if (index > bitmap_cache->cells[id].number)
 	{
 		printf("put invalid bitmap_v2 index %d in cell id: %d\n", index, id);
 		return;
 	}
 
-	bitmap_v2->cells[id].entries[index].entry = entry;
-	bitmap_v2->cells[id].entries[index].extra = extra;
+	bitmap_cache->cells[id].entries[index].entry = entry;
+	bitmap_cache->cells[id].entries[index].extra = extra;
 }
 
-rdpBitmapV2* bitmap_v2_new(rdpSettings* settings)
+rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 {
 	int i;
-	rdpBitmapV2* bitmap_v2;
+	rdpBitmapCache* bitmap_cache;
 
-	bitmap_v2 = (rdpBitmapV2*) xzalloc(sizeof(rdpBitmapV2));
+	bitmap_cache = (rdpBitmapCache*) xzalloc(sizeof(rdpBitmapCache));
 
-	if (bitmap_v2 != NULL)
+	if (bitmap_cache != NULL)
 	{
-		bitmap_v2->settings = settings;
+		bitmap_cache->settings = settings;
 
-		bitmap_v2->maxCells = 5;
+		bitmap_cache->maxCells = 5;
 
 		settings->bitmap_cache = False;
 		settings->bitmapCacheV2NumCells = 5;
@@ -102,36 +102,36 @@ rdpBitmapV2* bitmap_v2_new(rdpSettings* settings)
 		settings->bitmapCacheV2CellInfo[4].numEntries = 2048;
 		settings->bitmapCacheV2CellInfo[4].persistent = False;
 
-		bitmap_v2->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_v2->maxCells);
+		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
-		for (i = 0; i < bitmap_v2->maxCells; i++)
+		for (i = 0; i < bitmap_cache->maxCells; i++)
 		{
-			bitmap_v2->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
-			bitmap_v2->cells[i].entries = (BITMAP_V2_ENTRY*) xzalloc(sizeof(BITMAP_V2_ENTRY) * bitmap_v2->cells[i].number);
+			bitmap_cache->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
+			bitmap_cache->cells[i].entries = (BITMAP_V2_ENTRY*) xzalloc(sizeof(BITMAP_V2_ENTRY) * bitmap_cache->cells[i].number);
 		}
 	}
 
-	return bitmap_v2;
+	return bitmap_cache;
 }
 
-void bitmap_v2_free(rdpBitmapV2* bitmap_v2)
+void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 {
 	int i, j;
 
-	if (bitmap_v2 != NULL)
+	if (bitmap_cache != NULL)
 	{
-		for (i = 0; i < bitmap_v2->maxCells; i++)
+		for (i = 0; i < bitmap_cache->maxCells; i++)
 		{
-			for (j = 0; j < (int) bitmap_v2->cells[i].number; j++)
+			for (j = 0; j < (int) bitmap_cache->cells[i].number; j++)
 			{
-				if (bitmap_v2->cells[i].entries[j].entry != NULL)
-					xfree(bitmap_v2->cells[i].entries[j].entry);
+				if (bitmap_cache->cells[i].entries[j].entry != NULL)
+					xfree(bitmap_cache->cells[i].entries[j].entry);
 			}
 
-			xfree(bitmap_v2->cells[i].entries);
+			xfree(bitmap_cache->cells[i].entries);
 		}
 
-		xfree(bitmap_v2->cells);
-		xfree(bitmap_v2);
+		xfree(bitmap_cache->cells);
+		xfree(bitmap_cache);
 	}
 }

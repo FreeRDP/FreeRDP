@@ -30,18 +30,18 @@ struct _COLOR_TABLE_ENTRY
 };
 typedef struct _COLOR_TABLE_ENTRY COLOR_TABLE_ENTRY;
 
-struct rdp_color_table
+struct rdp_color_table_cache
 {
 	uint8 maxEntries;
 	rdpSettings* settings;
 	COLOR_TABLE_ENTRY* entries;
 };
-typedef struct rdp_color_table rdpColorTable;
+typedef struct rdp_color_table_cache rdpColorTableCache;
 
-FREERDP_API void* color_table_get(rdpColorTable* color_table, uint8 index);
-FREERDP_API void color_table_put(rdpColorTable* color_table, uint8 index, void* entry);
+FREERDP_API void* color_table_get(rdpColorTableCache* color_table, uint8 index);
+FREERDP_API void color_table_put(rdpColorTableCache* color_table, uint8 index, void* entry);
 
-FREERDP_API rdpColorTable* color_table_new(rdpSettings* settings);
-FREERDP_API void color_table_free(rdpColorTable* color_table);
+FREERDP_API rdpColorTableCache* color_table_cache_new(rdpSettings* settings);
+FREERDP_API void color_table_cache_free(rdpColorTableCache* color_table);
 
 #endif /* __COLOR_TABLE_CACHE_H */

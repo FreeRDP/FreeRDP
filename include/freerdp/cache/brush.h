@@ -39,12 +39,12 @@ struct rdp_brush
 	BRUSH_ENTRY* entries;
 	BRUSH_ENTRY* monoEntries;
 };
-typedef struct rdp_brush rdpBrush;
+typedef struct rdp_brush rdpBrushCache;
 
-FREERDP_API void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp);
-FREERDP_API void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp);
+FREERDP_API void* brush_get(rdpBrushCache* brush, uint8 index, uint8* bpp);
+FREERDP_API void brush_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp);
 
-FREERDP_API rdpBrush* brush_new(rdpSettings* settings);
-FREERDP_API void brush_free(rdpBrush* brush);
+FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
+FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 
 #endif /* __BRUSH_CACHE_H */

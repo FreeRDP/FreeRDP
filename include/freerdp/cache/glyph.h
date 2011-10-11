@@ -53,21 +53,21 @@ struct _FRAGMENT_CACHE
 };
 typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
 
-struct rdp_glyph
+struct rdp_glyph_cache
 {
 	rdpSettings* settings;
 	GLYPH_CACHE glyphCache[10];
 	FRAGMENT_CACHE fragCache;
 };
-typedef struct rdp_glyph rdpGlyph;
+typedef struct rdp_glyph_cache rdpGlyphCache;
 
-FREERDP_API void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra);
-FREERDP_API void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra);
+FREERDP_API void* glyph_get(rdpGlyphCache* glyph, uint8 id, uint16 index, void** extra);
+FREERDP_API void glyph_put(rdpGlyphCache* glyph, uint8 id, uint16 index, void* entry, void* extra);
 
-FREERDP_API void* glyph_fragment_get(rdpGlyph* glyph, uint8 index, uint8* count, void** extra);
-FREERDP_API void glyph_fragment_put(rdpGlyph* glyph, uint8 index, uint8 count, void* entry, void* extra);
+FREERDP_API void* glyph_fragment_get(rdpGlyphCache* glyph, uint8 index, uint8* count, void** extra);
+FREERDP_API void glyph_fragment_put(rdpGlyphCache* glyph, uint8 index, uint8 count, void* entry, void* extra);
 
-FREERDP_API rdpGlyph* glyph_new(rdpSettings* settings);
-FREERDP_API void glyph_free(rdpGlyph* glyph);
+FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
+FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
 
 #endif /* __GLYPH_CACHE_H */

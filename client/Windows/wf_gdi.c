@@ -315,7 +315,7 @@ void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	WF_IMAGE* wf_bmp;
 	wfInfo* wfi = GET_WFI(update);
 
-	bitmap_v2_get(wfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	bitmap_cache_get(wfi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
 	wf_bmp = (WF_IMAGE*) extra;
 
 	BitBlt(wfi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
@@ -342,7 +342,7 @@ void wf_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_O
 	wfInfo* wfi = GET_WFI(update);
 
 	wf_bmp = wf_image_new(wfi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, wfi->dstBpp, NULL);
-	offscreen_put(wfi->cache->offscreen, create_offscreen_bitmap->id, (void*) wf_bmp);
+	offscreen_cache_put(wfi->cache->offscreen, create_offscreen_bitmap->id, (void*) wf_bmp);
 }
 
 void wf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
@@ -356,7 +356,7 @@ void wf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surfa
 	}
 	else
 	{
-		wf_bmp = (WF_IMAGE*) offscreen_get(wfi->cache->offscreen, switch_surface->bitmapId);
+		wf_bmp = (WF_IMAGE*) offscreen_cache_get(wfi->cache->offscreen, switch_surface->bitmapId);
 		wfi->drawing = wf_bmp;
 	}
 }
@@ -370,7 +370,7 @@ void wf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitm
 	bitmap_data = cache_bitmap_v2->bitmap_data;
 	bitmap = wf_image_new(wfi, bitmap_data->width, bitmap_data->height, wfi->srcBpp, bitmap_data->dstData);
 
-	bitmap_v2_put(wfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
+	bitmap_cache_put(wfi->cache->bitmap, cache_bitmap_v2->cacheId,
 			cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 

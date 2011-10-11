@@ -22,68 +22,136 @@
 
 #include <freerdp/cache/pointer.h>
 
-void* pointer_get(rdpPointer* pointer, uint16 index, void** extra)
+void update_pointer_position(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position)
 {
-	void* entry;
 
-	if (index >= pointer->cacheSize)
+}
+
+void update_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
+{
+
+}
+
+void update_pointer_color(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color)
+{
+
+}
+
+void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
+{
+	rdpPointer* pointer;
+	uint32 size = sizeof(rdpPointer);
+	rdpCache* cache = (rdpCache*) update->cache;
+
+	IFCALL(cache->pointer->PointerSize, update, &size);
+
+	pointer = (rdpPointer*) xzalloc(size);
+
+	if (pointer != NULL)
+	{
+		pointer->xorBpp = pointer_new->xorBpp;
+		pointer->xPos = pointer_new->colorPtrAttr.xPos;
+		pointer->yPos = pointer_new->colorPtrAttr.yPos;
+		pointer->width = pointer_new->colorPtrAttr.width;
+		pointer->height = pointer_new->colorPtrAttr.height;
+		pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
+		pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
+		pointer->xorMaskData = pointer_new->colorPtrAttr.xorMaskData;
+		pointer->andMaskData = pointer_new->colorPtrAttr.andMaskData;
+
+		IFCALL(cache->pointer->PointerNew, update, pointer);
+		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
+		IFCALL(cache->pointer->PointerSet, update, pointer);
+	}
+}
+
+void update_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached)
+{
+	rdpPointer* pointer;
+	rdpCache* cache = (rdpCache*) update->cache;
+
+	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
+	IFCALL(cache->pointer->PointerSet, update, pointer);
+}
+
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index)
+{
+	rdpPointer* pointer;
+
+	if (index >= pointer_cache->cacheSize)
 	{
 		printf("invalid pointer index:%d\n", index);
 		return NULL;
 	}
 
-	entry = pointer->entries[index].entry;
+	pointer = pointer_cache->entries[index];
 
-	if (extra != NULL)
-		*extra = pointer->entries[index].extra;
-
-	return entry;
+	return pointer;
 }
 
-void pointer_put(rdpPointer* pointer, uint16 index, void* entry, void* extra)
+void pointer_cache_put(rdpPointerCache* pointer_cache, uint16 index, rdpPointer* pointer)
 {
-	if (index >= pointer->cacheSize)
+	if (index >= pointer_cache->cacheSize)
 	{
 		printf("invalid pointer index:%d\n", index);
 		return;
 	}
 
-	pointer->entries[index].entry = entry;
-	pointer->entries[index].extra = extra;
+	pointer_cache->entries[index] = pointer;
 }
 
-rdpPointer* pointer_new(rdpSettings* settings)
+void pointer_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpPointer* pointer;
+	update->PointerPosition = update_pointer_position;
+	update->PointerSystem = update_pointer_system;
+	update->PointerColor = update_pointer_color;
+	update->PointerNew = update_pointer_new;
+	update->PointerCached = update_pointer_cached;
+}
 
-	pointer = (rdpPointer*) xzalloc(sizeof(rdpPointer));
+rdpPointerCache* pointer_cache_new(rdpSettings* settings)
+{
+	rdpPointerCache* pointer_cache;
 
-	if (pointer != NULL)
+	pointer_cache = (rdpPointerCache*) xzalloc(sizeof(rdpPointerCache));
+
+	if (pointer_cache != NULL)
 	{
-		pointer->settings = settings;
-		pointer->cacheSize = settings->pointer_cache_size;
-		pointer->entries = xzalloc(sizeof(POINTER_CACHE_ENTRY) * pointer->cacheSize);
+		pointer_cache->settings = settings;
+		pointer_cache->cacheSize = settings->pointer_cache_size;
+		pointer_cache->update = ((freerdp*) settings->instance)->update;
+		pointer_cache->entries = xzalloc(sizeof(rdpPointer**) * pointer_cache->cacheSize);
 	}
 
-	return pointer;
+	return pointer_cache;
 }
 
-void pointer_free(rdpPointer* pointer)
+void pointer_cache_free(rdpPointerCache* pointer_cache)
 {
-	if (pointer != NULL)
+	if (pointer_cache != NULL)
 	{
 		int i;
+		rdpPointer* pointer;
 
-		for (i = 0; i < pointer->cacheSize; i++)
+		for (i = 0; i < pointer_cache->cacheSize; i++)
 		{
-			if (pointer->entries[i].entry != NULL)
-				xfree(pointer->entries[i].entry);
+			pointer = pointer_cache->entries[i];
 
-			if (pointer->entries[i].extra != NULL)
-				xfree(pointer->entries[i].extra);
+			if (pointer != NULL)
+			{
+				pointer_cache->PointerFree(pointer_cache->update, pointer);
+
+				if (pointer->xorMaskData != NULL)
+					xfree(pointer->xorMaskData);
+
+				if (pointer->andMaskData != NULL)
+					xfree(pointer->andMaskData);
+
+				xfree(pointer);
+			}
 		}
 
-		xfree(pointer->entries);
-		xfree(pointer);
+		xfree(pointer_cache->entries);
+		xfree(pointer_cache);
 	}
 }

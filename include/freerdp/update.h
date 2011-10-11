@@ -1115,8 +1115,9 @@ struct rdp_update
 	void* rdp;
 	void* gdi;
 	void* rail;
-	void* param1;
-	void* param2;
+	void* cache;
+	void* client;
+	void* chanman;
 
 	boolean dump_rfx;
 	boolean play_rfx;

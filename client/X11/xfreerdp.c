@@ -232,74 +232,59 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 	}
 }
 
-void xf_pointer_position(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position)
+void xf_pointer_size(rdpUpdate* update, uint32* size)
 {
-
+	*size = sizeof(xfPointer);
 }
 
-void xf_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
+void xf_pointer_set(rdpUpdate* update, xfPointer* pointer)
 {
+	xfInfo* xfi = GET_XFI(update);
 
+	if (xfi->remote_app != True)
+		XDefineCursor(xfi->display, xfi->window->handle, pointer->cursor);
 }
 
-void xf_pointer_color(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color)
-{
-
-}
-
-void xf_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
+void xf_pointer_new(rdpUpdate* update, xfPointer* pointer)
 {
 	xfInfo* xfi;
-	Cursor cursor;
 	XcursorImage ci;
-	POINTER_COLOR_UPDATE* ptrAttr;
+	rdpPointer* _pointer;
 
 	xfi = GET_XFI(update);
-	ptrAttr = &pointer_new->colorPtrAttr;
+	_pointer = (rdpPointer*) &pointer->pointer;
 
 	memset(&ci, 0, sizeof(ci));
 	ci.version = XCURSOR_IMAGE_VERSION;
 	ci.size = sizeof(ci);
-	ci.width = ptrAttr->width;
-	ci.height = ptrAttr->height;
-	ci.xhot = ptrAttr->xPos;
-	ci.yhot = ptrAttr->yPos;
+	ci.width = _pointer->width;
+	ci.height = _pointer->height;
+	ci.xhot = _pointer->xPos;
+	ci.yhot = _pointer->yPos;
 	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
 	memset(ci.pixels, 0, ci.width * ci.height * 4);
 
-	if ((ptrAttr->andMaskData != 0) && (ptrAttr->xorMaskData != 0))
+	if ((_pointer->andMaskData != 0) && (_pointer->xorMaskData != 0))
 	{
-		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), ptrAttr->xorMaskData, ptrAttr->andMaskData,
-				ptrAttr->width, ptrAttr->height, pointer_new->xorBpp, xfi->clrconv);
+		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), _pointer->xorMaskData, _pointer->andMaskData,
+				_pointer->width, _pointer->height, _pointer->xorBpp, xfi->clrconv);
 	}
 
-	if (pointer_new->xorBpp > 24)
+	if (_pointer->xorBpp > 24)
 	{
 		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
 	}
 
-	cursor = XcursorImageLoadCursor(xfi->display, &ci);
+	pointer->cursor = XcursorImageLoadCursor(xfi->display, &ci);
 	xfree(ci.pixels);
-
-	pointer_put(xfi->cache->pointer, ptrAttr->cacheIndex, NULL, (void*) cursor);
-
-	if (xfi->remote_app != True)
-		XDefineCursor(xfi->display, xfi->window->handle, cursor);
 }
 
-void xf_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached)
+void xf_pointer_free(rdpUpdate* update, xfPointer* pointer)
 {
-	xfInfo* xfi;
-	void* extra;
-	Cursor cursor;
+	xfInfo* xfi = GET_XFI(update);
 
-	xfi = GET_XFI(update);
-
-	pointer_get(xfi->cache->pointer, pointer_cached->cacheIndex, &extra);
-	cursor = (Cursor) extra;
-
-	if (xfi->remote_app != True)
-		XDefineCursor(xfi->display, xfi->window->handle, cursor);
+	if (pointer->cursor != 0)
+		XFreeCursor(xfi->display, pointer->cursor);
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -537,6 +522,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->clrconv->rgb555 = 0;
 
 	xfi->cache = cache_new(instance->settings);
+	instance->update->cache = (void*) xfi->cache;
 
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->screen_number = DefaultScreen(xfi->display);
@@ -651,11 +637,11 @@ boolean xf_post_connect(freerdp* instance)
 		instance->update->DesktopResize = xf_hw_desktop_resize;
 	}
 
-	instance->update->PointerPosition = xf_pointer_position;
-	instance->update->PointerSystem = xf_pointer_system;
-	instance->update->PointerColor = xf_pointer_color;
-	instance->update->PointerNew = xf_pointer_new;
-	instance->update->PointerCached = xf_pointer_cached;
+	pointer_cache_register_callbacks(instance->update);
+	xfi->cache->pointer->PointerSize = (cbPointerSize) xf_pointer_size;
+	xfi->cache->pointer->PointerSet = (cbPointerSet) xf_pointer_set;
+	xfi->cache->pointer->PointerNew = (cbPointerNew) xf_pointer_new;
+	xfi->cache->pointer->PointerFree = (cbPointerFree) xf_pointer_free;
 
 	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;

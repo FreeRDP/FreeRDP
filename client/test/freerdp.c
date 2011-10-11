@@ -39,11 +39,11 @@
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/plugins/cliprdr.h>
 
-#define SET_TFI(_instance, _tfi) (_instance)->param1 = _tfi
-#define GET_TFI(_instance) ((tfInfo*) ((_instance)->param1))
+#define SET_TFI(_instance, _tfi) (_instance)->client = _tfi
+#define GET_TFI(_instance) ((tfInfo*) ((_instance)->client))
 
-#define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
+#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
+#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
 
 struct tf_info
 {

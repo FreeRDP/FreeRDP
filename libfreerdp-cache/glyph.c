@@ -22,7 +22,7 @@
 
 #include <freerdp/cache/glyph.h>
 
-void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra)
+void* glyph_get(rdpGlyphCache* glyph, uint8 id, uint16 index, void** extra)
 {
 	void* entry;
 
@@ -46,7 +46,7 @@ void* glyph_get(rdpGlyph* glyph, uint8 id, uint16 index, void** extra)
 	return entry;
 }
 
-void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra)
+void glyph_put(rdpGlyphCache* glyph, uint8 id, uint16 index, void* entry, void* extra)
 {
 	if (id > 9)
 	{
@@ -66,7 +66,7 @@ void glyph_put(rdpGlyph* glyph, uint8 id, uint16 index, void* entry, void* extra
 		glyph->glyphCache[id].entries[index].extra = extra;
 }
 
-void* glyph_fragment_get(rdpGlyph* glyph, uint8 index, uint8* count, void** extra)
+void* glyph_fragment_get(rdpGlyphCache* glyph, uint8 index, uint8* count, void** extra)
 {
 	void* entry;
 
@@ -79,18 +79,18 @@ void* glyph_fragment_get(rdpGlyph* glyph, uint8 index, uint8* count, void** extr
 	return entry;
 }
 
-void glyph_fragment_put(rdpGlyph* glyph, uint8 index, uint8 count, void* entry, void* extra)
+void glyph_fragment_put(rdpGlyphCache* glyph, uint8 index, uint8 count, void* entry, void* extra)
 {
 	glyph->fragCache.entries[index].entry = entry;
 	glyph->fragCache.entries[index].count = count;
 	glyph->fragCache.entries[index].extra = extra;
 }
 
-rdpGlyph* glyph_new(rdpSettings* settings)
+rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 {
-	rdpGlyph* glyph;
+	rdpGlyphCache* glyph;
 
-	glyph = (rdpGlyph*) xzalloc(sizeof(rdpGlyph));
+	glyph = (rdpGlyphCache*) xzalloc(sizeof(rdpGlyphCache));
 
 	if (glyph != NULL)
 	{
@@ -113,7 +113,7 @@ rdpGlyph* glyph_new(rdpSettings* settings)
 	return glyph;
 }
 
-void glyph_free(rdpGlyph* glyph)
+void glyph_cache_free(rdpGlyphCache* glyph)
 {
 	if (glyph != NULL)
 	{

@@ -35,11 +35,11 @@ typedef struct xf_info xfInfo;
 #include "xf_window.h"
 #include "xf_monitor.h"
 
-#define SET_XFI(_instance, _xfi) (_instance)->param1 = _xfi
-#define GET_XFI(_instance) ((xfInfo*) ((_instance)->param1))
+#define SET_XFI(_instance, _xfi) (_instance)->client = _xfi
+#define GET_XFI(_instance) ((xfInfo*) ((_instance)->client))
 
-#define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
+#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
+#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
 
 struct xf_WorkArea
 {
@@ -49,6 +49,13 @@ struct xf_WorkArea
 	uint32 height;
 };
 typedef struct xf_WorkArea xfWorkArea;
+
+struct xf_pointer
+{
+	rdpPointer pointer;
+	Cursor cursor;
+};
+typedef struct xf_pointer xfPointer;
 
 struct xf_info
 {

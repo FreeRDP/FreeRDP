@@ -20,29 +20,30 @@
 #ifndef __CACHE_H
 #define __CACHE_H
 
-#include <freerdp/cache/glyph.h>
-#include <freerdp/cache/brush.h>
-#include <freerdp/cache/pointer.h>
-#include <freerdp/cache/bitmap_v2.h>
-#include <freerdp/cache/offscreen.h>
-#include <freerdp/cache/color_table.h>
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_cache rdpCache;
+
+#include <freerdp/cache/glyph.h>
+#include <freerdp/cache/brush.h>
+#include <freerdp/cache/pointer.h>
+#include <freerdp/cache/bitmap.h>
+#include <freerdp/cache/offscreen.h>
+#include <freerdp/cache/color_table.h>
 
 struct rdp_cache
 {
 	rdpSettings* settings;
 
-	rdpGlyph* glyph;
-	rdpBrush* brush;
-	rdpPointer* pointer;
-	rdpBitmapV2* bitmap_v2;
-	rdpOffscreen* offscreen;
-	rdpColorTable* color_table;
+	rdpGlyphCache* glyph;
+	rdpBrushCache* brush;
+	rdpPointerCache* pointer;
+	rdpBitmapCache* bitmap;
+	rdpOffscreenCache* offscreen;
+	rdpColorTableCache* color_table;
 };
 
 FREERDP_API rdpCache* cache_new(rdpSettings* settings);

@@ -651,7 +651,7 @@ void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
-	bitmap_v2_get(gdi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	bitmap_cache_get(gdi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
 	gdi_bmp = (GDI_IMAGE*) extra;
 
 	if (extra == NULL)
@@ -773,7 +773,7 @@ void gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDE
 
 	gdi_bmp = gdi_bitmap_new(gdi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, gdi->dstBpp, NULL);
 
-	offscreen_put(gdi->cache->offscreen, create_offscreen_bitmap->id, (void*) gdi_bmp);
+	offscreen_cache_put(gdi->cache->offscreen, create_offscreen_bitmap->id, (void*) gdi_bmp);
 }
 
 void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
@@ -787,7 +787,7 @@ void gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 	}
 	else
 	{
-		gdi_bmp = (GDI_IMAGE*) offscreen_get(gdi->cache->offscreen, switch_surface->bitmapId);
+		gdi_bmp = (GDI_IMAGE*) offscreen_cache_get(gdi->cache->offscreen, switch_surface->bitmapId);
 		gdi->drawing = gdi_bmp;
 	}
 }
@@ -801,7 +801,7 @@ void gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_
 	bitmap_data = cache_bitmap_v2->bitmap_data;
 	bitmap = gdi_bitmap_new(gdi, bitmap_data->width, bitmap_data->height, gdi->dstBpp, bitmap_data->dstData);
 
-	bitmap_v2_put(gdi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
+	bitmap_cache_put(gdi->cache->bitmap, cache_bitmap_v2->cacheId,
 		cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 

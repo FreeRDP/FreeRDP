@@ -22,7 +22,7 @@
 
 #include <freerdp/cache/brush.h>
 
-void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp)
+void* brush_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
 {
 	void* entry;
 
@@ -58,7 +58,7 @@ void* brush_get(rdpBrush* brush, uint8 index, uint8* bpp)
 	return entry;
 }
 
-void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp)
+void brush_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp)
 {
 	if (bpp == 1)
 	{
@@ -84,11 +84,11 @@ void brush_put(rdpBrush* brush, uint8 index, void* entry, uint8 bpp)
 	}
 }
 
-rdpBrush* brush_new(rdpSettings* settings)
+rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
-	rdpBrush* brush;
+	rdpBrushCache* brush;
 
-	brush = (rdpBrush*) xzalloc(sizeof(rdpBrush));
+	brush = (rdpBrushCache*) xzalloc(sizeof(rdpBrushCache));
 
 	if (brush != NULL)
 	{
@@ -104,7 +104,7 @@ rdpBrush* brush_new(rdpSettings* settings)
 	return brush;
 }
 
-void brush_free(rdpBrush* brush)
+void brush_cache_free(rdpBrushCache* brush)
 {
 	if (brush != NULL)
 	{

@@ -50,8 +50,8 @@ typedef void (*pcDisconnect)(freerdp* instance);
 struct rdp_freerdp
 {
 	void* rdp;
-	void* param1;
-	void* param2;
+	void* client;
+	void* chanman;
 	void* param3;
 	void* param4;
 

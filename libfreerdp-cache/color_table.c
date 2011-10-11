@@ -22,7 +22,7 @@
 
 #include <freerdp/cache/color_table.h>
 
-void* color_table_get(rdpColorTable* color_table, uint8 index)
+void* color_table_get(rdpColorTableCache* color_table, uint8 index)
 {
 	void* entry;
 
@@ -43,7 +43,7 @@ void* color_table_get(rdpColorTable* color_table, uint8 index)
 	return entry;
 }
 
-void color_table_put(rdpColorTable* color_table, uint8 index, void* entry)
+void color_table_put(rdpColorTableCache* color_table, uint8 index, void* entry)
 {
 	if (index > color_table->maxEntries)
 	{
@@ -54,11 +54,11 @@ void color_table_put(rdpColorTable* color_table, uint8 index, void* entry)
 	color_table->entries[index].entry = entry;
 }
 
-rdpColorTable* color_table_new(rdpSettings* settings)
+rdpColorTableCache* color_table_cache_new(rdpSettings* settings)
 {
-	rdpColorTable* color_table;
+	rdpColorTableCache* color_table;
 
-	color_table = (rdpColorTable*) xzalloc(sizeof(rdpColorTable));
+	color_table = (rdpColorTableCache*) xzalloc(sizeof(rdpColorTableCache));
 
 	if (color_table != NULL)
 	{
@@ -72,7 +72,7 @@ rdpColorTable* color_table_new(rdpSettings* settings)
 	return color_table;
 }
 
-void color_table_free(rdpColorTable* color_table)
+void color_table_cache_free(rdpColorTableCache* color_table)
 {
 	if (color_table != NULL)
 	{

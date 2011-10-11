@@ -22,17 +22,17 @@
 
 #include <freerdp/cache/offscreen.h>
 
-void* offscreen_get(rdpOffscreen* offscreen, uint16 index)
+void* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index)
 {
 	void* bitmap;
 
-	if (index > offscreen->maxEntries)
+	if (index > offscreen_cache->maxEntries)
 	{
 		printf("invalid offscreen bitmap index: 0x%04X\n", index);
 		return NULL;
 	}
 
-	bitmap = offscreen->entries[index].bitmap;
+	bitmap = offscreen_cache->entries[index].bitmap;
 
 	if (bitmap == NULL)
 	{
@@ -43,7 +43,7 @@ void* offscreen_get(rdpOffscreen* offscreen, uint16 index)
 	return bitmap;
 }
 
-void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap)
+void offscreen_cache_put(rdpOffscreenCache* offscreen, uint16 index, void* bitmap)
 {
 	if (index > offscreen->maxEntries)
 	{
@@ -54,34 +54,34 @@ void offscreen_put(rdpOffscreen* offscreen, uint16 index, void* bitmap)
 	offscreen->entries[index].bitmap = bitmap;
 }
 
-rdpOffscreen* offscreen_new(rdpSettings* settings)
+rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 {
-	rdpOffscreen* offscreen;
+	rdpOffscreenCache* offscreen_cache;
 
-	offscreen = (rdpOffscreen*) xzalloc(sizeof(rdpOffscreen));
+	offscreen_cache = (rdpOffscreenCache*) xzalloc(sizeof(rdpOffscreenCache));
 
-	if (offscreen != NULL)
+	if (offscreen_cache != NULL)
 	{
-		offscreen->settings = settings;
+		offscreen_cache->settings = settings;
 
-		offscreen->maxSize = 7680;
-		offscreen->maxEntries = 100;
+		offscreen_cache->maxSize = 7680;
+		offscreen_cache->maxEntries = 100;
 
 		settings->offscreen_bitmap_cache = True;
-		settings->offscreen_bitmap_cache_size = offscreen->maxSize;
-		settings->offscreen_bitmap_cache_entries = offscreen->maxEntries;
+		settings->offscreen_bitmap_cache_size = offscreen_cache->maxSize;
+		settings->offscreen_bitmap_cache_entries = offscreen_cache->maxEntries;
 
-		offscreen->entries = (OFFSCREEN_ENTRY*) xzalloc(sizeof(OFFSCREEN_ENTRY) * offscreen->maxEntries);
+		offscreen_cache->entries = (OFFSCREEN_ENTRY*) xzalloc(sizeof(OFFSCREEN_ENTRY) * offscreen_cache->maxEntries);
 	}
 
-	return offscreen;
+	return offscreen_cache;
 }
 
-void offscreen_free(rdpOffscreen* offscreen)
+void offscreen_cache_free(rdpOffscreenCache* offscreen_cache)
 {
-	if (offscreen != NULL)
+	if (offscreen_cache != NULL)
 	{
-		xfree(offscreen->entries);
-		xfree(offscreen);
+		xfree(offscreen_cache->entries);
+		xfree(offscreen_cache);
 	}
 }

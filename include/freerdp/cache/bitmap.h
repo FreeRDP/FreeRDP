@@ -44,12 +44,12 @@ struct rdp_bitmap_v2
 	rdpSettings* settings;
 	BITMAP_V2_CELL* cells;
 };
-typedef struct rdp_bitmap_v2 rdpBitmapV2;
+typedef struct rdp_bitmap_v2 rdpBitmapCache;
 
-FREERDP_API void* bitmap_v2_get(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void** extra);
-FREERDP_API void bitmap_v2_put(rdpBitmapV2* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra);
+FREERDP_API void* bitmap_cache_get(rdpBitmapCache* bitmap_v2, uint8 id, uint16 index, void** extra);
+FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra);
 
-FREERDP_API rdpBitmapV2* bitmap_v2_new(rdpSettings* settings);
-FREERDP_API void bitmap_v2_free(rdpBitmapV2* bitmap_v2);
+FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
+FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_v2);
 
 #endif /* __BITMAP_V2_CACHE_H */

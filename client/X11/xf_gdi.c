@@ -616,7 +616,7 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
-	bitmap_v2_get(xfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	bitmap_cache_get(xfi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
 	bitmap = (Pixmap) extra;
 
 	if (extra == NULL)
@@ -782,7 +782,7 @@ void xf_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_O
 
 	surface = xf_bitmap_new(xfi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, xfi->bpp, NULL);
 
-	offscreen_put(xfi->cache->offscreen, create_offscreen_bitmap->id, (void*) surface);
+	offscreen_cache_put(xfi->cache->offscreen, create_offscreen_bitmap->id, (void*) surface);
 }
 
 void xf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
@@ -796,7 +796,7 @@ void xf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surfa
 	}
 	else
 	{
-		surface = (Pixmap) offscreen_get(xfi->cache->offscreen, switch_surface->bitmapId);
+		surface = (Pixmap) offscreen_cache_get(xfi->cache->offscreen, switch_surface->bitmapId);
 		xfi->drawing = surface;
 	}
 }
@@ -810,7 +810,7 @@ void xf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitm
 	bitmap_data = cache_bitmap_v2->bitmap_data;
 	bitmap = xf_bitmap_new(xfi, bitmap_data->width, bitmap_data->height, bitmap_data->bpp, bitmap_data->dstData);
 
-	bitmap_v2_put(xfi->cache->bitmap_v2, cache_bitmap_v2->cacheId,
+	bitmap_cache_put(xfi->cache->bitmap, cache_bitmap_v2->cacheId,
 		cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 
