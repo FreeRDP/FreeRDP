@@ -42,6 +42,7 @@ struct _PARALLEL_DEVICE
 {
 	DEVICE device;
 
+	int file;
 	char* path;
 
 	LIST* irp_list;
@@ -49,28 +50,112 @@ struct _PARALLEL_DEVICE
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
+static int get_error_status()
+{
+	int status = 0;
+
+	switch (errno)
+	{
+		case EAGAIN:
+			status = STATUS_DEVICE_OFF_LINE;
+			break;
+
+		case ENOSPC:
+			status = STATUS_DEVICE_PAPER_EMPTY;
+			break;
+
+		case EIO:
+			status = STATUS_DEVICE_OFF_LINE;
+			break;
+
+		default:
+			status = STATUS_DEVICE_POWERED_OFF;
+			break;
+	}
+
+	return status;
+}
+
 static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	parallel->file = open(parallel->path, O_RDWR);
+
+	if (parallel->file < 0)
+	{
+		perror("parallel open");
+		irp->IoStatus = STATUS_ACCESS_DENIED;
+		return;
+	}
+
+	/* all read and write operations should be non-blocking */
+	if (fcntl(parallel->file, F_SETFL, O_NONBLOCK) == -1)
+		perror("fcntl");
+
 	irp->Complete(irp);
 }
 
 static void parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	close(parallel->file);
 	irp->Complete(irp);
 }
 
 static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	uint32 length;
+	uint64 offset;
+	ssize_t status;
+
+	stream_read_uint32(irp->input, length);
+	stream_read_uint64(irp->input, offset);
+
+	irp->output = stream_new(length);
+
+	status = read(parallel->file, irp->output->p, length);
+
+	if (status < 0)
+	{
+		stream_free(irp->output);
+		irp->IoStatus = get_error_status();
+		return;
+	}
+
 	irp->Complete(irp);
 }
 
 static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	uint32 length;
+	uint64 offset;
+	ssize_t status;
+
+	stream_read_uint32(irp->input, length);
+	stream_read_uint64(irp->input, offset);
+	stream_seek(irp->input, 20); /* Padding */
+
+	while (stream_get_left(irp->input))
+	{
+		status = write(parallel->file, irp->input->p, stream_get_left(irp->input));
+
+		if (status < 0)
+		{
+			irp->IoStatus = get_error_status();
+			return;
+		}
+
+		stream_seek(irp->input, status);
+		length += status;
+	}
+
+	stream_write_uint32(irp->output, length);
+	stream_write_uint8(irp->output, 0); /* Padding */
+
 	irp->Complete(irp);
 }
 
 static void parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	stream_write_uint32(irp->output, 0); /* OutputBufferLength */
 	irp->Complete(irp);
 }
 
