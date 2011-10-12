@@ -567,34 +567,6 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	{
 		points[i].x = polyline->points[i].x;
 		points[i].y = polyline->points[i].y;
-
-		if (i > 0)
-		{
-			width = points[i].x - points[i - 1].x;
-			height = points[i].y - points[i - 1].y;
-
-			if (width < 0)
-			{
-				width *= (-1);
-				x = points[i].x;
-			}
-			else
-			{
-				x = points[i - 1].x;
-			}
-
-			if (height < 0)
-			{
-				height *= (-1);
-				y = points[i].y;
-			}
-			else
-			{
-				y = points[i - 1].y;
-			}
-
-			gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
-		}
 	}
 
 	XDrawLines(xfi->display, xfi->drawing, xfi->gc, points, polyline->numPoints, CoordModePrevious);
@@ -602,8 +574,33 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	if (xfi->drawing == xfi->primary)
 	{
 		if (xfi->remote_app != True)
-		{
 			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, polyline->numPoints, CoordModePrevious);
+
+		for (i = 1; i < polyline->numPoints; i++)
+		{
+			if (points[i].x > points[i - 1].x)
+			{
+				x = points[i - 1].x;
+				width = points[i].x - points[i - 1].x;
+			}
+			else
+			{
+				x = points[i].x;
+				width = points[i - 1].x - points[i].x;				
+			}
+
+			if (points[i].y > points[i - 1].y)
+			{
+				y = points[i - 1].y;
+				height = points[i].y - points[i - 1].y;
+			}
+			else
+			{
+				y = points[i].y;
+				height = points[i - 1].y - points[i].y;
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
 		}
 	}
 
