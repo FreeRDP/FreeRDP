@@ -550,6 +550,9 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 {
 	int i;
 	int x, y;
+	int x1, y1;
+	int x2, y2;
+	int npoints;
 	uint32 color;
 	XPoint* points;
 	int width, height;
@@ -561,44 +564,41 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);
 
-	points = xmalloc(sizeof(XPoint) * polyline->numPoints);
+	npoints = polyline->numPoints + 1;
+	points = xmalloc(sizeof(XPoint) * npoints);
+
+	points[0].x = polyline->xStart;
+	points[0].y = polyline->yStart;
 
 	for (i = 0; i < polyline->numPoints; i++)
 	{
-		points[i].x = polyline->points[i].x;
-		points[i].y = polyline->points[i].y;
+		points[i + 1].x = polyline->points[i].x;
+		points[i + 1].y = polyline->points[i].y;
 	}
 
-	XDrawLines(xfi->display, xfi->drawing, xfi->gc, points, polyline->numPoints, CoordModePrevious);
+	XDrawLines(xfi->display, xfi->drawing, xfi->gc, points, npoints, CoordModePrevious);
 
 	if (xfi->drawing == xfi->primary)
 	{
 		if (xfi->remote_app != True)
-			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, polyline->numPoints, CoordModePrevious);
+			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, npoints, CoordModePrevious);
 
-		for (i = 1; i < polyline->numPoints; i++)
+		x1 = points[0].x;
+		y1 = points[0].y;
+
+		for (i = 1; i < npoints; i++)
 		{
-			if (points[i].x > points[i - 1].x)
-			{
-				x = points[i - 1].x;
-				width = points[i].x - points[i - 1].x;
-			}
-			else
-			{
-				x = points[i].x;
-				width = points[i - 1].x - points[i].x;				
-			}
+			x2 = points[i].x + x1;
+			y2 = points[i].y + y1;
 
-			if (points[i].y > points[i - 1].y)
-			{
-				y = points[i - 1].y;
-				height = points[i].y - points[i - 1].y;
-			}
-			else
-			{
-				y = points[i].y;
-				height = points[i - 1].y - points[i].y;
-			}
+			x = (x2 < x1) ? x2 : x1;
+			width = (x2 > x1) ? x2 - x1 : x1 - x2;
+		
+			y = (y2 < y1) ? y2 : y1;
+			height = (y2 > y1) ? y2 - y1 : y1 - y2;
+
+			x1 = x2;
+			y1 = y2;
 
 			gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
 		}
