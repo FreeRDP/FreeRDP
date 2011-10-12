@@ -202,16 +202,17 @@ Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 
 	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
 
-	cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
+	if(data != NULL)
+	{
+		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
+		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
+						ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
 
-	image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
-			ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
-
-	XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
-	XFree(image);
-
-	if (cdata != data)
-		xfree(cdata);
+		XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
+		XFree(image);
+		if (cdata != data)
+			xfree(cdata);
+	}
 
 	return bitmap;
 }
