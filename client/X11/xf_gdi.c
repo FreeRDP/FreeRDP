@@ -617,7 +617,12 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	xfInfo* xfi = GET_XFI(update);
 
 	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
-	bitmap_v2_get(xfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+
+	if(memblt->cacheId == 255)
+		extra = offscreen_get(xfi->cache->offscreen, memblt->cacheIndex);
+	else
+		bitmap_v2_get(xfi->cache->bitmap_v2, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+
 	bitmap = (Pixmap) extra;
 
 	if (extra == NULL)
