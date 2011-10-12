@@ -651,7 +651,11 @@ void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	GDI_IMAGE* gdi_bmp;
 	GDI* gdi = GET_GDI(update);
 
-	bitmap_cache_get(gdi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+	if(memblt->cacheId == 0xFF)
+		extra = offscreen_cache_get(gdi->cache->offscreen, memblt->cacheIndex);
+	else
+		bitmap_cache_get(gdi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
+
 	gdi_bmp = (GDI_IMAGE*) extra;
 
 	if (extra == NULL)
