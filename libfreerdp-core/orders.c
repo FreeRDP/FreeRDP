@@ -417,9 +417,6 @@ INLINE void update_read_delta_points(STREAM* s, DELTA_POINT* points, int number,
 		if (~flags & 0x40)
 			update_read_delta(s, &points[i].y);
 
-		points[i].x += (i > 0 ? points[i - 1].x : x);
-		points[i].y += (i > 0 ? points[i - 1].y : y);
-
 		flags <<= 2;
 	}
 }
