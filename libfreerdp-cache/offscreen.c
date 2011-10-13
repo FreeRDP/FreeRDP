@@ -32,6 +32,9 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 	IFCALL(cache->offscreen->OffscreenBitmapSize, update, &size);
 	bitmap = (rdpBitmap*) xzalloc(size);
 
+	bitmap->width = create_offscreen_bitmap->cx;
+	bitmap->height = create_offscreen_bitmap->cy;
+
 	IFCALL(cache->offscreen->OffscreenBitmapNew, update, bitmap);
 	prevBitmap = offscreen_cache_get(cache->offscreen, create_offscreen_bitmap->id);
 
