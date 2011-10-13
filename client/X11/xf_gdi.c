@@ -194,7 +194,30 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 	return True;
 }
 
-Pixmap xf_bitmap_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
+Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
+{
+	Pixmap bitmap;
+	uint8* cdata;
+	XImage* image;
+
+	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
+
+	if(data != NULL)
+	{
+		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
+		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
+						ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
+
+		XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
+		XFree(image);
+		if (cdata != data)
+			xfree(cdata);
+	}
+
+	return bitmap;
+}
+
+Pixmap xf_offscreen_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 {
 	Pixmap bitmap;
 	uint8* cdata;
@@ -266,7 +289,7 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	int w, h;
 	uint8* data;
 	XImage* image;
-	BITMAP_DATA* bmp;
+	rdpBitmap* bmp;
 	xfInfo* xfi = GET_XFI(update);
 
 	for (i = 0; i < bitmap->number; i++)
@@ -371,7 +394,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	{
 		if (brush->bpp > 1)
 		{
-			pattern = xf_bitmap_new(xfi, 8, 8, brush->bpp, brush->data);
+			pattern = xf_brush_new(xfi, 8, 8, brush->bpp, brush->data);
 
 			XSetFillStyle(xfi->display, xfi->gc, FillTiled);
 			XSetTile(xfi->display, xfi->gc, pattern);
@@ -612,34 +635,22 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
-	void* extra;
-	Pixmap bitmap;
+	xfBitmap* bitmap;
 	xfInfo* xfi = GET_XFI(update);
 
+	bitmap = (xfBitmap*) memblt->bitmap;
 	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
 
-	if(memblt->cacheId == 0xFF)
-		extra = offscreen_cache_get(xfi->cache->offscreen, memblt->cacheIndex);
-	else
-		bitmap_cache_get(xfi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
-
-	bitmap = (Pixmap) extra;
-
-	if (extra == NULL)
-		return;
-
-	XCopyArea(xfi->display, bitmap, xfi->drawing, xfi->gc,
-			memblt->nXSrc, memblt->nYSrc,
-			memblt->nWidth, memblt->nHeight,
+	XCopyArea(xfi->display, bitmap->pixmap, xfi->drawing, xfi->gc,
+			memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
 			memblt->nLeftRect, memblt->nTopRect);
 
 	if (xfi->drawing == xfi->primary)
 	{
 		if (xfi->remote_app != True)
 		{
-			XCopyArea(xfi->display, bitmap, xfi->drawable, xfi->gc,
-				memblt->nXSrc, memblt->nYSrc,
-				memblt->nWidth, memblt->nHeight,
+			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
+				memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
 				memblt->nLeftRect, memblt->nTopRect);
 		}
 
@@ -779,45 +790,6 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 				fast_index->bkRight - fast_index->bkLeft + 1,
 				fast_index->bkBottom - fast_index->bkTop + 1);
 	}
-}
-
-void xf_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
-{
-	Pixmap surface;
-	xfInfo* xfi = GET_XFI(update);
-
-	surface = xf_bitmap_new(xfi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, xfi->bpp, NULL);
-
-	offscreen_cache_put(xfi->cache->offscreen, create_offscreen_bitmap->id, (void*) surface);
-}
-
-void xf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
-{
-	Pixmap surface;
-	xfInfo* xfi = GET_XFI(update);
-
-	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
-	{
-		xfi->drawing = xfi->primary;
-	}
-	else
-	{
-		surface = (Pixmap) offscreen_cache_get(xfi->cache->offscreen, switch_surface->bitmapId);
-		xfi->drawing = surface;
-	}
-}
-
-void xf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
-{
-	Pixmap bitmap;
-	BITMAP_DATA* bitmap_data;
-	xfInfo* xfi = GET_XFI(update);
-
-	bitmap_data = cache_bitmap_v2->bitmap_data;
-	bitmap = xf_bitmap_new(xfi, bitmap_data->width, bitmap_data->height, bitmap_data->bpp, bitmap_data->dstData);
-
-	bitmap_cache_put(xfi->cache->bitmap, cache_bitmap_v2->cacheId,
-		cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
 }
 
 void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -974,7 +946,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	}
 }
 
-void xf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
+void xf_gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
 {
 	uint16 length;
 
@@ -1035,10 +1007,7 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
-	update->CreateOffscreenBitmap = xf_gdi_create_offscreen_bitmap;
-	update->SwitchSurface = xf_gdi_switch_surface;
 
-	update->CacheBitmapV2 = xf_gdi_cache_bitmap_v2;
 	update->CacheColorTable = xf_gdi_cache_color_table;
 	update->CacheGlyph = xf_gdi_cache_glyph;
 	update->CacheGlyphV2 = xf_gdi_cache_glyph_v2;

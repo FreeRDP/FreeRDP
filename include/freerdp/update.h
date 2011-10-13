@@ -55,7 +55,7 @@ typedef struct _BRUSH BRUSH;
 
 /* Bitmap Updates */
 
-struct _BITMAP_DATA
+struct rdp_bitmap
 {
 	uint16 left;
 	uint16 top;
@@ -70,13 +70,13 @@ struct _BITMAP_DATA
 	uint8* dstData;
 	boolean compressed;
 };
-typedef struct _BITMAP_DATA BITMAP_DATA;
+typedef struct rdp_bitmap rdpBitmap;
 
 struct _BITMAP_UPDATE
 {
 	uint16 count;
 	uint16 number;
-	BITMAP_DATA* bitmaps;
+	rdpBitmap* bitmaps;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
@@ -336,6 +336,7 @@ struct _MEMBLT_ORDER
 	sint16 nXSrc;
 	sint16 nYSrc;
 	uint16 cacheIndex;
+	rdpBitmap* bitmap;
 };
 typedef struct _MEMBLT_ORDER MEMBLT_ORDER;
 
@@ -353,6 +354,7 @@ struct _MEM3BLT_ORDER
 	uint32 foreColor;
 	BRUSH brush;
 	uint16 cacheIndex;
+	rdpBitmap* bitmap;
 };
 typedef struct _MEM3BLT_ORDER MEM3BLT_ORDER;
 
@@ -530,7 +532,7 @@ struct _CACHE_BITMAP_V2_ORDER
 	uint32 key2;
 	uint16 cacheIndex;
 	uint8 bitmapComprHdr[8];
-	BITMAP_DATA* bitmap_data;
+	rdpBitmap* bitmap;
 };
 typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
@@ -1108,7 +1110,7 @@ typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orde
 typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pcSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
-typedef void (*pcBitmapDecompress)(rdpUpdate* update, BITMAP_DATA* bitmap_data);
+typedef void (*pcBitmapDecompress)(rdpUpdate* update, rdpBitmap* bitmap);
 
 struct rdp_update
 {
@@ -1198,8 +1200,6 @@ struct rdp_update
 
 	pcBitmapDecompress BitmapDecompress;
 
-	void* state_start;
-
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
@@ -1262,8 +1262,6 @@ struct rdp_update
 	MONITORED_DESKTOP_ORDER monitored_desktop;
 
 	SURFACE_BITS_COMMAND surface_bits_command;
-
-	void* state_end;
 };
 
 #endif /* __UPDATE_API_H */

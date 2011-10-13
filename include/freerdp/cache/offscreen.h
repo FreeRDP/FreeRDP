@@ -26,26 +26,34 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct _OFFSCREEN_ENTRY OFFSCREEN_ENTRY;
 typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
 #include <freerdp/cache/cache.h>
 
-struct _OFFSCREEN_ENTRY
-{
-	void* bitmap;
-};
+typedef void (*cbOffscreenBitmapSize)(rdpUpdate* update, uint32* size);
+typedef void (*cbOffscreenBitmapNew)(rdpUpdate* update, rdpBitmap* bitmap);
+typedef void (*cbOffscreenBitmapFree)(rdpUpdate* update, rdpBitmap* bitmap);
+typedef void (*cbSetSurface)(rdpUpdate* update, rdpBitmap* bitmap, boolean primary);
 
 struct rdp_offscreen_cache
 {
+	cbOffscreenBitmapSize OffscreenBitmapSize;
+	cbOffscreenBitmapNew OffscreenBitmapNew;
+	cbOffscreenBitmapFree OffscreenBitmapFree;
+
+	cbSetSurface SetSurface;
+
 	uint16 maxSize;
 	uint16 maxEntries;
+	rdpUpdate* update;
 	rdpSettings* settings;
-	OFFSCREEN_ENTRY* entries;
+	rdpBitmap** entries;
 };
 
-FREERDP_API void* offscreen_cache_get(rdpOffscreenCache* offscreen, uint16 index);
-FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen, uint16 index, void* bitmap);
+FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index);
+FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, uint16 index, rdpBitmap* bitmap);
+
+FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings);
 FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);

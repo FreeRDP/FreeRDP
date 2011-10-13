@@ -232,6 +232,64 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 	}
 }
 
+void xf_bitmap_size(rdpUpdate* update, uint32* size)
+{
+	*size = sizeof(xfBitmap);
+}
+
+void xf_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
+{
+	uint8* cdata;
+	XImage* image;
+	rdpBitmap* _bitmap;
+	xfInfo* xfi = GET_XFI(update);
+
+	_bitmap = (rdpBitmap*) &bitmap->bitmap;
+	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
+
+	if (_bitmap->dstData != NULL)
+	{
+		cdata = freerdp_image_convert(_bitmap->dstData, NULL,
+				_bitmap->width, _bitmap->height, _bitmap->bpp, xfi->bpp, xfi->clrconv);
+
+		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
+				ZPixmap, 0, (char*) cdata, _bitmap->width, _bitmap->height, xfi->scanline_pad, 0);
+
+		XPutImage(xfi->display, bitmap->pixmap, xfi->gc, image, 0, 0, 0, 0, _bitmap->width, _bitmap->height);
+		XFree(image);
+
+		if (cdata != _bitmap->dstData)
+			xfree(cdata);
+	}
+}
+
+void xf_offscreen_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
+{
+	rdpBitmap* _bitmap;
+	xfInfo* xfi = GET_XFI(update);
+
+	_bitmap = (rdpBitmap*) &bitmap->bitmap;
+	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
+}
+
+void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
+{
+	xfInfo* xfi = GET_XFI(update);
+
+	if (primary)
+		xfi->drawing = xfi->primary;
+	else
+		xfi->drawing = bitmap->pixmap;
+}
+
+void xf_bitmap_free(rdpUpdate* update, xfBitmap* bitmap)
+{
+	xfInfo* xfi = GET_XFI(update);
+
+	if (bitmap->pixmap != 0)
+		XFreePixmap(xfi->display, bitmap->pixmap);
+}
+
 void xf_pointer_size(rdpUpdate* update, uint32* size)
 {
 	*size = sizeof(xfPointer);
@@ -523,6 +581,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->cache = cache_new(instance->settings);
 	instance->update->cache = (void*) xfi->cache;
+	instance->cache = instance->update->cache;
 
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->screen_number = DefaultScreen(xfi->display);
@@ -642,6 +701,20 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->cache->pointer->PointerSet = (cbPointerSet) xf_pointer_set;
 	xfi->cache->pointer->PointerNew = (cbPointerNew) xf_pointer_new;
 	xfi->cache->pointer->PointerFree = (cbPointerFree) xf_pointer_free;
+
+	if (xfi->sw_gdi != True)
+	{
+		bitmap_cache_register_callbacks(instance->update);
+		xfi->cache->bitmap->BitmapSize = (cbBitmapSize) xf_bitmap_size;
+		xfi->cache->bitmap->BitmapNew = (cbBitmapNew) xf_bitmap_new;
+		xfi->cache->bitmap->BitmapFree = (cbBitmapFree) xf_bitmap_free;
+
+		offscreen_cache_register_callbacks(instance->update);
+		xfi->cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) xf_bitmap_size;
+		xfi->cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) xf_offscreen_bitmap_new;
+		xfi->cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) xf_bitmap_free;
+		xfi->cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
+	}
 
 	xfi->rail = rail_new(instance->settings);
 	instance->update->rail = (void*) xfi->rail;

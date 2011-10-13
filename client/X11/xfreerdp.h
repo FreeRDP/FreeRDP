@@ -57,6 +57,13 @@ struct xf_pointer
 };
 typedef struct xf_pointer xfPointer;
 
+struct xf_bitmap
+{
+	rdpBitmap bitmap;
+	Pixmap pixmap;
+};
+typedef struct xf_bitmap xfBitmap;
+
 struct xf_info
 {
 	GC gc;

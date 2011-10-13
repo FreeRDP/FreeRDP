@@ -22,34 +22,51 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-struct _BITMAP_V2_ENTRY
-{
-	void* entry;
-	void* extra;
-};
-typedef struct _BITMAP_V2_ENTRY BITMAP_V2_ENTRY;
+typedef struct _BITMAP_V2_CELL BITMAP_V2_CELL;
+typedef struct rdp_bitmap_cache rdpBitmapCache;
+
+#include <freerdp/cache/cache.h>
 
 struct _BITMAP_V2_CELL
 {
 	uint32 number;
-	BITMAP_V2_ENTRY* entries;
+	rdpBitmap** entries;
 };
-typedef struct _BITMAP_V2_CELL BITMAP_V2_CELL;
 
-struct rdp_bitmap_v2
+typedef void (*cbBitmapSize)(rdpUpdate* update, uint32* size);
+typedef void (*cbBitmapNew)(rdpUpdate* update, rdpBitmap* bitmap);
+typedef void (*cbBitmapFree)(rdpUpdate* update, rdpBitmap* bitmap);
+
+struct rdp_bitmap_cache
 {
+	pcMemBlt MemBlt;
+	pcMem3Blt Mem3Blt;
+	pcCacheBitmap CacheBitmap;
+	pcCacheBitmapV2 CacheBitmapV2;
+	pcCacheBitmapV3 CacheBitmapV3;
+
+	cbBitmapSize BitmapSize;
+	cbBitmapNew BitmapNew;
+	cbBitmapFree BitmapFree;
+
 	uint8 maxCells;
+	rdpUpdate* update;
 	rdpSettings* settings;
 	BITMAP_V2_CELL* cells;
 };
-typedef struct rdp_bitmap_v2 rdpBitmapCache;
 
-FREERDP_API void* bitmap_cache_get(rdpBitmapCache* bitmap_v2, uint8 id, uint16 index, void** extra);
-FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_v2, uint8 id, uint16 index, void* entry, void* extra);
+FREERDP_API void bitmap_free(rdpBitmap* bitmap);
+
+FREERDP_API rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index);
+FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, rdpBitmap* bitmap);
+
+FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
-FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_v2);
+FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
 #endif /* __BITMAP_V2_CACHE_H */

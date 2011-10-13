@@ -163,7 +163,7 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 {
 	int i;
-	BITMAP_DATA* bmp;
+	rdpBitmap* bmp;
 	WF_IMAGE* wf_bmp;
 
 	wfInfo* wfi = GET_WFI(update);
@@ -364,7 +364,7 @@ void wf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surfa
 void wf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	WF_IMAGE* bitmap;
-	BITMAP_DATA* bitmap_data;
+	rdpBitmap* bitmap_data;
 	wfInfo* wfi = GET_WFI(update);
 
 	bitmap_data = cache_bitmap_v2->bitmap_data;
@@ -411,7 +411,7 @@ void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 }
 
-void wf_gdi_bitmap_decompress(rdpUpdate* update, BITMAP_DATA* bitmap_data)
+void wf_gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
 {
 	uint16 dstSize;
 

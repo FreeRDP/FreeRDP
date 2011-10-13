@@ -44,7 +44,7 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 	}
 }
 
-void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
+void update_read_bitmap_data(STREAM* s, rdpBitmap* bitmap_data)
 {
 	uint16 bytesPerPixel;
 
@@ -96,11 +96,11 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 
 		count = bitmap_update->number * 2;
 
-		bitmap_update->bitmaps = (BITMAP_DATA*) xrealloc(bitmap_update->bitmaps,
-				sizeof(BITMAP_DATA) * count);
+		bitmap_update->bitmaps = (rdpBitmap*) xrealloc(bitmap_update->bitmaps,
+				sizeof(rdpBitmap) * count);
 
 		memset(&bitmap_update->bitmaps[bitmap_update->count], 0,
-				sizeof(BITMAP_DATA) * (count - bitmap_update->count));
+				sizeof(rdpBitmap) * (count - bitmap_update->count));
 
 		bitmap_update->count = count;
 	}
@@ -304,22 +304,33 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 void update_reset_state(rdpUpdate* update)
 {
-	int length;
-	uint16 bitmap_count;
-	BITMAP_DATA* bitmaps;
+	memset(&update->order_info, 0, sizeof(ORDER_INFO));
+	memset(&update->dstblt, 0, sizeof(DSTBLT_ORDER));
+	memset(&update->patblt, 0, sizeof(PATBLT_ORDER));
+	memset(&update->scrblt, 0, sizeof(SCRBLT_ORDER));
+	memset(&update->opaque_rect, 0, sizeof(OPAQUE_RECT_ORDER));
+	memset(&update->draw_nine_grid, 0, sizeof(DRAW_NINE_GRID_ORDER));
+	memset(&update->multi_dstblt, 0, sizeof(MULTI_DSTBLT_ORDER));
+	memset(&update->multi_patblt, 0, sizeof(MULTI_PATBLT_ORDER));
+	memset(&update->multi_scrblt, 0, sizeof(MULTI_SCRBLT_ORDER));
+	memset(&update->multi_opaque_rect, 0, sizeof(MULTI_OPAQUE_RECT_ORDER));
+	memset(&update->multi_draw_nine_grid, 0, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
+	memset(&update->line_to, 0, sizeof(LINE_TO_ORDER));
+	memset(&update->polyline, 0, sizeof(POLYLINE_ORDER));
+	memset(&update->memblt, 0, sizeof(MEMBLT_ORDER));
+	memset(&update->mem3blt, 0, sizeof(MEM3BLT_ORDER));
+	memset(&update->save_bitmap, 0, sizeof(SAVE_BITMAP_ORDER));
+	memset(&update->glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
+	memset(&update->fast_index, 0, sizeof(FAST_INDEX_ORDER));
+	memset(&update->fast_glyph, 0, sizeof(FAST_GLYPH_ORDER));
+	memset(&update->polygon_sc, 0, sizeof(POLYGON_SC_ORDER));
+	memset(&update->polygon_cb, 0, sizeof(POLYGON_CB_ORDER));
+	memset(&update->ellipse_sc, 0, sizeof(ELLIPSE_SC_ORDER));
+	memset(&update->ellipse_cb, 0, sizeof(ELLIPSE_CB_ORDER));
 
-	bitmaps = update->bitmap_update.bitmaps;
-	bitmap_count = update->bitmap_update.count;
-	
-	length = &update->state_end - &update->state_start;
-
-	memset(&update->state_start, 0, length);
 	update->order_info.orderType = ORDER_TYPE_PATBLT;
 	update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
-
-	update->bitmap_update.bitmaps = bitmaps;
-	update->bitmap_update.count = bitmap_count;
 }
 
 static void update_begin_paint(rdpUpdate* update)
@@ -398,7 +409,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->rdp = (void*) rdp;
 
 		update->bitmap_update.count = 64;
-		update->bitmap_update.bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		update->bitmap_update.bitmaps = (rdpBitmap*) xzalloc(sizeof(rdpBitmap) * update->bitmap_update.count);
 	}
 
 	return update;
@@ -409,7 +420,7 @@ void update_free(rdpUpdate* update)
 	if (update != NULL)
 	{
 		uint16 i;
-		BITMAP_DATA* bitmaps;
+		rdpBitmap* bitmaps;
 		BITMAP_UPDATE* bitmap_update;
 
 		bitmap_update = &update->bitmap_update;
