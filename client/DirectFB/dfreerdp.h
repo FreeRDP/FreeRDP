@@ -28,11 +28,11 @@
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/gdi/gdi.h>
 
-#define SET_DFI(_instance, _dfi) (_instance)->param1 = _dfi
-#define GET_DFI(_instance) ((dfInfo*) ((_instance)->param1))
+#define SET_DFI(_instance, _dfi) (_instance)->client = _dfi
+#define GET_DFI(_instance) ((dfInfo*) ((_instance)->client))
 
-#define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
+#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
+#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
 
 struct df_info
 {

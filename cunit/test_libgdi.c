@@ -2869,6 +2869,9 @@ void test_gdi_InvalidateRegion(void)
 	hdc->hwnd->invalid->null = 1;
 	invalid = hdc->hwnd->invalid;
 	
+	hdc->hwnd->count = 16;
+	hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hdc->hwnd->count);
+
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn1->null = 1;
