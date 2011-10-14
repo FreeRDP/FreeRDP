@@ -45,6 +45,9 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 	}
 
 	offscreen_cache_put(cache->offscreen, create_offscreen_bitmap->id, bitmap);
+
+	if(cache->offscreen->currentSurface == create_offscreen_bitmap->id)
+		IFCALL(cache->offscreen->SetSurface, update, bitmap, False);
 }
 
 void update_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
@@ -61,6 +64,7 @@ void update_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_s
 		bitmap = offscreen_cache_get(cache->offscreen, switch_surface->bitmapId);
 		IFCALL(cache->offscreen->SetSurface, update, bitmap, False);
 	}
+	cache->offscreen->currentSurface = switch_surface->bitmapId;
 }
 
 rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index)
@@ -112,6 +116,7 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 		offscreen_cache->settings = settings;
 		offscreen_cache->update = ((freerdp*) settings->instance)->update;
 
+		offscreen_cache->currentSurface = SCREEN_BITMAP_SURFACE;
 		offscreen_cache->maxSize = 7680;
 		offscreen_cache->maxEntries = 100;
 
