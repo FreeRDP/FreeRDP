@@ -98,13 +98,13 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	return bitmap;
 }
 
-WF_IMAGE* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 {
 	HDC hdc;
-	WF_IMAGE* image;
+	wfBitmap* image;
 
 	hdc = GetDC(NULL);
-	image = (WF_IMAGE*) malloc(sizeof(WF_IMAGE));
+	image = (wfBitmap*) malloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
 	if (data == NULL)
@@ -118,7 +118,7 @@ WF_IMAGE* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	return image;
 }
 
-void wf_image_free(WF_IMAGE* image)
+void wf_image_free(wfBitmap* image)
 {
 	if (image != 0)
 	{
@@ -129,14 +129,14 @@ void wf_image_free(WF_IMAGE* image)
 	}
 }
 
-WF_IMAGE* wf_glyph_new(wfInfo* wfi, GLYPH_DATA* glyph)
+wfBitmap* wf_glyph_new(wfInfo* wfi, GLYPH_DATA* glyph)
 {
-	WF_IMAGE* glyph_bmp;
+	wfBitmap* glyph_bmp;
 	glyph_bmp = wf_image_new(wfi, glyph->cx, glyph->cy, 1, glyph->aj);
 	return glyph_bmp;
 }
 
-void wf_glyph_free(WF_IMAGE* glyph)
+void wf_glyph_free(wfBitmap* glyph)
 {
 	wf_image_free(glyph);
 }
@@ -164,7 +164,7 @@ void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 {
 	int i;
 	rdpBitmap* bmp;
-	WF_IMAGE* wf_bmp;
+	wfBitmap* wf_bmp;
 
 	wfInfo* wfi = GET_WFI(update);
 
@@ -311,15 +311,13 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
-	void* extra;
-	WF_IMAGE* wf_bmp;
+	wfBitmap* bitmap;
 	wfInfo* wfi = GET_WFI(update);
 
-	bitmap_cache_get(wfi->cache->bitmap, memblt->cacheId, memblt->cacheIndex, (void**) &extra);
-	wf_bmp = (WF_IMAGE*) extra;
+	bitmap = (wfBitmap*) memblt->bitmap;
 
 	BitBlt(wfi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
-			memblt->nWidth, memblt->nHeight, wf_bmp->hdc,
+			memblt->nWidth, memblt->nHeight, bitmap->hdc,
 			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
 
 	if (wfi->drawing == wfi->primary)
@@ -336,44 +334,6 @@ void wf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 }
 
-void wf_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
-{
-	WF_IMAGE* wf_bmp;
-	wfInfo* wfi = GET_WFI(update);
-
-	wf_bmp = wf_image_new(wfi, create_offscreen_bitmap->cx, create_offscreen_bitmap->cy, wfi->dstBpp, NULL);
-	offscreen_cache_put(wfi->cache->offscreen, create_offscreen_bitmap->id, (void*) wf_bmp);
-}
-
-void wf_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
-{
-	WF_IMAGE* wf_bmp;
-	wfInfo* wfi = GET_WFI(update);
-
-	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
-	{
-		wfi->drawing = (WF_IMAGE*) wfi->primary;
-	}
-	else
-	{
-		wf_bmp = (WF_IMAGE*) offscreen_cache_get(wfi->cache->offscreen, switch_surface->bitmapId);
-		wfi->drawing = wf_bmp;
-	}
-}
-
-void wf_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
-{
-	WF_IMAGE* bitmap;
-	rdpBitmap* bitmap_data;
-	wfInfo* wfi = GET_WFI(update);
-
-	bitmap_data = cache_bitmap_v2->bitmap_data;
-	bitmap = wf_image_new(wfi, bitmap_data->width, bitmap_data->height, wfi->srcBpp, bitmap_data->dstData);
-
-	bitmap_cache_put(wfi->cache->bitmap, cache_bitmap_v2->cacheId,
-			cache_bitmap_v2->cacheIndex, bitmap_data, (void*) bitmap);
-}
-
 void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 	wfInfo* wfi = GET_WFI(update);
@@ -383,7 +343,7 @@ void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_
 void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	int i;
-	WF_IMAGE* wf_bmp;
+	wfBitmap* wf_bmp;
 	GLYPH_DATA* glyph;
 	wfInfo* wfi = GET_WFI(update);
 
@@ -402,8 +362,7 @@ void wf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_
 
 void wf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 {
-	//wfInfo* wfi = GET_WFI(update);
-	//brush_put(wfi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+
 }
 
 void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -464,10 +423,7 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
-	update->CreateOffscreenBitmap = wf_gdi_create_offscreen_bitmap;
-	update->SwitchSurface = wf_gdi_switch_surface;
 
-	update->CacheBitmapV2 = wf_gdi_cache_bitmap_v2;
 	update->CacheColorTable = wf_gdi_cache_color_table;
 	update->CacheGlyph = wf_gdi_cache_glyph;
 	update->CacheGlyphV2 = wf_gdi_cache_glyph_v2;

@@ -24,8 +24,9 @@
 
 #include "wfreerdp.h"
 
-WF_IMAGE* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
-void wf_image_free(WF_IMAGE* image);
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+void wf_image_free(wfBitmap* image);
 void wf_toggle_fullscreen(wfInfo* wfi);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);

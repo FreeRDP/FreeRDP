@@ -40,19 +40,20 @@
 
 #include "wf_event.h"
 
-#define SET_WFI(_instance, _wfi) (_instance)->param1 = _wfi
-#define GET_WFI(_instance) ((wfInfo*) ((_instance)->param1))
+#define SET_WFI(_instance, _wfi) (_instance)->client = _wfi
+#define GET_WFI(_instance) ((wfInfo*) ((_instance)->client))
 
-#define SET_CHANMAN(_instance, _chanman) (_instance)->param2 = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->param2))
+#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
+#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
 
-struct _WF_IMAGE
+struct wf_bitmap
 {
+	rdpBitmap _p;
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
 };
-typedef struct _WF_IMAGE WF_IMAGE;
+typedef struct wf_bitmap wfBitmap;
 
 struct wf_info
 {
@@ -66,8 +67,8 @@ struct wf_info
 	uint16 srcBpp;
 	uint16 dstBpp;
 	freerdp* instance;
-	WF_IMAGE* primary;
-	WF_IMAGE* drawing;
+	wfBitmap* primary;
+	wfBitmap* drawing;
 	HCLRCONV clrconv;
 	HCURSOR cursor;
 	HBRUSH brush;

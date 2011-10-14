@@ -97,8 +97,6 @@ void wf_sw_end_paint(rdpUpdate* update)
 		update_rect.right = x + w - 1;
 		update_rect.bottom = y + h - 1;
 
-		//printf("InvalidateRect: x:%d y:%d w:%d h:%d\n", x, y, w, h);
-
 		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
 	}
 }
@@ -113,6 +111,69 @@ void wf_hw_begin_paint(rdpUpdate* update)
 void wf_hw_end_paint(rdpUpdate* update)
 {
 
+}
+
+void wf_bitmap_size(rdpUpdate* update, uint32* size)
+{
+	*size = sizeof(wfBitmap);
+}
+
+void wf_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
+{
+	HDC hdc;
+	uint8* data;
+	rdpBitmap* _bitmap;
+	wfInfo* wfi = GET_WFI(update);
+
+	hdc = GetDC(NULL);
+	bitmap->hdc = CreateCompatibleDC(hdc);
+
+	_bitmap = &(bitmap->_p);
+	data = _bitmap->dstData;
+
+	if (data == NULL)
+		bitmap->bitmap = CreateCompatibleBitmap(hdc, _bitmap->width, _bitmap->height);
+	else
+		bitmap->bitmap = wf_create_dib(wfi, _bitmap->width, _bitmap->height, _bitmap->bpp, data);
+
+	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
+	ReleaseDC(NULL, hdc);
+}
+
+void wf_offscreen_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
+{
+	HDC hdc;
+	rdpBitmap* _bitmap;
+	wfInfo* wfi = GET_WFI(update);
+
+	hdc = GetDC(NULL);
+	bitmap->hdc = CreateCompatibleDC(hdc);
+
+	_bitmap = &(bitmap->_p);
+	bitmap->bitmap = CreateCompatibleBitmap(hdc, _bitmap->width, _bitmap->height);
+
+	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
+	ReleaseDC(NULL, hdc);
+}
+
+void wf_set_surface(rdpUpdate* update, wfBitmap* bitmap, boolean primary)
+{
+	wfInfo* wfi = GET_WFI(update);
+
+	if (primary)
+		wfi->drawing = wfi->primary;
+	else
+		wfi->drawing = bitmap;
+}
+
+void wf_bitmap_free(rdpUpdate* update, wfBitmap* bitmap)
+{
+	if (bitmap != 0)
+	{
+		SelectObject(bitmap->hdc, bitmap->org_bitmap);
+		DeleteObject(bitmap->bitmap);
+		DeleteDC(bitmap->hdc);
+	}
 }
 
 boolean wf_pre_connect(freerdp* instance)
@@ -160,10 +221,9 @@ boolean wf_pre_connect(freerdp* instance)
 	wfi->clrconv->alpha = 1;
 	wfi->clrconv->palette = NULL;
 
-	if (wfi->sw_gdi)
-	{
-		wfi->cache = cache_new(instance->settings);
-	}
+	wfi->cache = cache_new(settings);
+	instance->cache = (void*) wfi->cache;
+	instance->update->cache = instance->cache;
 
 	if (wfi->percentscreen > 0)
 	{
@@ -292,6 +352,20 @@ boolean wf_post_connect(freerdp* instance)
 	{
 		instance->update->BeginPaint = wf_hw_begin_paint;
 		instance->update->EndPaint = wf_hw_end_paint;
+	}
+
+	if (wfi->sw_gdi != True)
+	{
+		bitmap_cache_register_callbacks(instance->update);
+		wfi->cache->bitmap->BitmapSize = (cbBitmapSize) wf_bitmap_size;
+		wfi->cache->bitmap->BitmapNew = (cbBitmapNew) wf_bitmap_new;
+		wfi->cache->bitmap->BitmapFree = (cbBitmapFree) wf_bitmap_free;
+
+		offscreen_cache_register_callbacks(instance->update);
+		wfi->cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) wf_bitmap_size;
+		wfi->cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) wf_offscreen_bitmap_new;
+		wfi->cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) wf_bitmap_free;
+		wfi->cache->offscreen->SetSurface = (cbSetSurface) wf_set_surface;
 	}
 
 	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
