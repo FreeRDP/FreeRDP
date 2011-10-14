@@ -38,7 +38,7 @@ void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	rdpBitmap* bitmap;
 	rdpCache* cache = (rdpCache*) update->cache;
 
-	if (memblt->cacheIndex == 0xFF)
+	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, memblt->cacheId, memblt->cacheIndex);
@@ -52,7 +52,7 @@ void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 	rdpBitmap* bitmap;
 	rdpCache* cache = (rdpCache*) update->cache;
 
-	if (mem3blt->cacheIndex == 0xFF)
+	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, mem3blt->cacheId, mem3blt->cacheIndex);
