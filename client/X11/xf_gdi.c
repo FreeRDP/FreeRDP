@@ -308,6 +308,9 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 
 		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0, x, y, w, h);
 
+		XFree(image);
+		xfree(data);
+
 		if (xfi->remote_app != True)
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 
