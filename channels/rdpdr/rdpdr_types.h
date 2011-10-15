@@ -24,6 +24,7 @@
 #include "config.h"
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
+#include <freerdp/utils/svc_plugin.h>
 
 typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
