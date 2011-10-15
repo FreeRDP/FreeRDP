@@ -43,6 +43,7 @@ struct rdp_offscreen_cache
 
 	cbSetSurface SetSurface;
 
+	uint16 currentSurface;
 	uint16 maxSize;
 	uint16 maxEntries;
 	rdpUpdate* update;
