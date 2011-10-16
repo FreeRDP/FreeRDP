@@ -80,8 +80,8 @@ set(LIBFREERDP_CORE_SRCS
 	transport.h
 	update.c
 	update.h
-	vchan.c
-	vchan.h
+	channel.c
+	channel.h
 	window.c
 	window.h
 	listener.c

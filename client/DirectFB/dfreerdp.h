@@ -28,11 +28,17 @@
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/gdi/gdi.h>
 
-#define SET_DFI(_instance, _dfi) (_instance)->client = _dfi
-#define GET_DFI(_instance) ((dfInfo*) ((_instance)->client))
+typedef struct df_info dfInfo;
 
-#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
+struct df_context
+{
+	rdpContext _p;
+
+	dfInfo* dfi;
+	rdpChanMan* chanman;
+	rdpSettings* settings;
+};
+typedef struct df_context dfContext;
 
 struct df_info
 {
@@ -47,6 +53,5 @@ struct df_info
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
 };
-typedef struct df_info dfInfo;
 
 #endif /* __DFREERDP_H */

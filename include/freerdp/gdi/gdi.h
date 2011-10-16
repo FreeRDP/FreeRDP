@@ -230,8 +230,10 @@ struct gdi_bitmap
 };
 typedef struct gdi_bitmap gdiBitmap;
 
-struct _GDI
+struct rdp_gdi
 {
+	rdpContext* context;
+
 	int width;
 	int height;
 	int dstBpp;
@@ -250,23 +252,18 @@ struct _GDI
 	void* nsc_context;
 	gdiBitmap* tile;
 	gdiBitmap* image;
-
-	rdpCache* cache;
 };
-typedef struct _GDI GDI;
 
 FREERDP_API uint32 gdi_rop3_code(uint8 code);
 FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
-FREERDP_API gdiBitmap* gdi_bitmap_new_ex(GDI *gdi, int width, int height, int bpp, uint8* data);
-FREERDP_API void gdi_bitmap_free_ex(gdiBitmap *gdi_bmp);
-FREERDP_API void gdi_resize(GDI* gdi, int width, int height);
+FREERDP_API gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data);
+FREERDP_API void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
+FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
+
 FREERDP_API int gdi_init(freerdp* instance, uint32 flags, uint8* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
-
-#define SET_GDI(_instance, _gdi) (_instance)->gdi = _gdi
-#define GET_GDI(_instance) ((GDI*) ((_instance)->gdi))
 
 #ifdef WITH_DEBUG_GDI
 #define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)

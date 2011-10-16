@@ -39,21 +39,34 @@ struct thread_data
 	freerdp* instance;
 };
 
+void df_context_size(freerdp* instance, uint32* size)
+{
+	*size = sizeof(dfContext);
+}
+
+void df_context_new(freerdp* instance, dfContext* context)
+{
+	context->chanman = freerdp_chanman_new();
+}
+
+void df_context_free(freerdp* instance, dfContext* context)
+{
+
+}
+
 void df_begin_paint(rdpUpdate* update)
 {
-	GDI* gdi;
-
-	gdi = GET_GDI(update);
+	rdpGdi* gdi = update->context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
 void df_end_paint(rdpUpdate* update)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	dfInfo* dfi;
 
-	gdi = GET_GDI(update);
-	dfi = GET_DFI(update);
+	gdi = update->context->gdi;
+	dfi = ((dfContext*) update->context)->dfi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
@@ -77,7 +90,7 @@ boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 {
 	dfInfo* dfi;
 
-	dfi = GET_DFI(instance);
+	dfi = ((dfContext*) instance->context)->dfi;
 
 	rfds[*rcount] = (void*)(long)(dfi->read_fds);
 	(*rcount)++;
@@ -89,7 +102,7 @@ boolean df_check_fds(freerdp* instance, fd_set* set)
 {
 	dfInfo* dfi;
 
-	dfi = GET_DFI(instance);
+	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
 		return True;
@@ -103,10 +116,12 @@ boolean df_check_fds(freerdp* instance, fd_set* set)
 boolean df_pre_connect(freerdp* instance)
 {
 	dfInfo* dfi;
+	dfContext* context;
 	rdpSettings* settings;
 
 	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
-	SET_DFI(instance, dfi);
+	context = ((dfContext*) instance->context);
+	context->dfi = dfi;
 
 	settings = instance->settings;
 
@@ -133,21 +148,22 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
-	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_pre_connect(context->chanman, instance);
 
 	return True;
 }
 
 boolean df_post_connect(freerdp* instance)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	dfInfo* dfi;
+	dfContext* context;
 
-	dfi = GET_DFI(instance);
-	SET_DFI(instance->update, dfi);
+	context = ((dfContext*) instance->context);
+	dfi = context->dfi;
 
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = GET_GDI(instance->update);
+	gdi = instance->context->gdi;
 
 	dfi->err = DirectFBCreate(&(dfi->dfb));
 
@@ -185,7 +201,7 @@ boolean df_post_connect(freerdp* instance)
 
 	df_keyboard_init();
 
-	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_post_connect(context->chanman, instance);
 
 	return True;
 }
@@ -227,6 +243,7 @@ df_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 	RDP_EVENT* event;
 
 	event = freerdp_chanman_pop_event(chanman);
+
 	if (event)
 	{
 		switch (event->event_type)
@@ -238,6 +255,7 @@ df_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
 				break;
 		}
+
 		freerdp_event_free(event);
 	}
 }
@@ -260,6 +278,7 @@ int dfreerdp_run(freerdp* instance)
 	fd_set rfds_set;
 	fd_set wfds_set;
 	dfInfo* dfi;
+	dfContext* context;
 	rdpChanMan* chanman;
 
 	memset(rfds, 0, sizeof(rfds));
@@ -268,8 +287,10 @@ int dfreerdp_run(freerdp* instance)
 	if (!instance->Connect(instance))
 		return 0;
 
-	dfi = GET_DFI(instance);
-	chanman = GET_CHANMAN(instance);
+	context = (dfContext*) instance->context;
+
+	dfi = context->dfi;
+	chanman = context->chanman;
 
 	while (1)
 	{
@@ -373,6 +394,7 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
+	dfContext* context;
 	struct thread_data* data;
 	rdpChanMan* chanman;
 
@@ -387,8 +409,13 @@ int main(int argc, char* argv[])
 	instance->PostConnect = df_post_connect;
 	instance->ReceiveChannelData = df_receive_channel_data;
 
-	chanman = freerdp_chanman_new();
-	SET_CHANMAN(instance, chanman);
+	instance->ContextSize = (pcContextSize) df_context_size;
+	instance->ContextNew = (pcContextNew) df_context_new;
+	instance->ContextFree = (pcContextFree) df_context_free;
+	freerdp_context_new(instance);
+
+	context = (dfContext*) instance->context;
+	chanman = context->chanman;
 
 	DirectFBInit(&argc, &argv);
 	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, chanman, NULL, NULL);

@@ -35,12 +35,6 @@ typedef struct xf_info xfInfo;
 #include "xf_window.h"
 #include "xf_monitor.h"
 
-#define SET_XFI(_instance, _xfi) (_instance)->client = _xfi
-#define GET_XFI(_instance) ((xfInfo*) ((_instance)->client))
-
-#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
-
 struct xf_WorkArea
 {
 	uint32 x;
@@ -64,8 +58,21 @@ struct xf_bitmap
 };
 typedef struct xf_bitmap xfBitmap;
 
+struct xf_context
+{
+	rdpContext _p;
+
+	xfInfo* xfi;
+	rdpChanMan* chanman;
+	rdpSettings* settings;
+};
+typedef struct xf_context xfContext;
+
 struct xf_info
 {
+	freerdp* instance;
+	xfContext* context;
+
 	GC gc;
 	int bpp;
 	int xfds;
@@ -90,14 +97,11 @@ struct xf_info
 	boolean grab_keyboard;
 	boolean unobscured;
 	boolean decorations;
-	freerdp* instance;
 	xfWindow* window;
 	xfWorkArea workArea;
 	int current_desktop;
 	boolean remote_app;
 	HCLRCONV clrconv;
-	rdpRail* rail;
-	rdpCache* cache;
 
 	HGDI_DC hdc;
 	boolean sw_gdi;

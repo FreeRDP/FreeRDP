@@ -25,8 +25,6 @@
 #include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_cache rdpCache;
-
 #include <freerdp/cache/glyph.h>
 #include <freerdp/cache/brush.h>
 #include <freerdp/cache/pointer.h>

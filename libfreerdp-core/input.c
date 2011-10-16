@@ -54,9 +54,11 @@ void input_write_synchronize_event(STREAM* s, uint32 flags)
 void input_send_synchronize_event(rdpInput* input, uint32 flags)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_SYNC);
+	rdpRdp* rdp = input->context->rdp;
+
+	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SYNC);
 	input_write_synchronize_event(s, flags);
-	rdp_send_client_input_pdu(input->rdp, s);
+	rdp_send_client_input_pdu(rdp, s);
 }
 
 void input_write_keyboard_event(STREAM* s, uint16 flags, uint16 code)
@@ -69,9 +71,11 @@ void input_write_keyboard_event(STREAM* s, uint16 flags, uint16 code)
 void input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_SCANCODE);
+	rdpRdp* rdp = input->context->rdp;
+
+	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SCANCODE);
 	input_write_keyboard_event(s, flags, code);
-	rdp_send_client_input_pdu(input->rdp, s);
+	rdp_send_client_input_pdu(rdp, s);
 }
 
 void input_write_unicode_keyboard_event(STREAM* s, uint16 code)
@@ -84,9 +88,11 @@ void input_write_unicode_keyboard_event(STREAM* s, uint16 code)
 void input_send_unicode_keyboard_event(rdpInput* input, uint16 code)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_UNICODE);
+	rdpRdp* rdp = input->context->rdp;
+
+	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
 	input_write_unicode_keyboard_event(s, code);
-	rdp_send_client_input_pdu(input->rdp, s);
+	rdp_send_client_input_pdu(rdp, s);
 }
 
 void input_write_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 y)
@@ -99,9 +105,11 @@ void input_write_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 y)
 void input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_MOUSE);
+	rdpRdp* rdp = input->context->rdp;
+
+	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_MOUSE);
 	input_write_mouse_event(s, flags, x, y);
-	rdp_send_client_input_pdu(input->rdp, s);
+	rdp_send_client_input_pdu(rdp, s);
 }
 
 void input_write_extended_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 y)
@@ -114,26 +122,28 @@ void input_write_extended_mouse_event(STREAM* s, uint16 flags, uint16 x, uint16 
 void input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	STREAM* s;
-	s = rdp_client_input_pdu_init(input->rdp, INPUT_EVENT_MOUSEX);
+	rdpRdp* rdp = input->context->rdp;
+
+	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_MOUSEX);
 	input_write_extended_mouse_event(s, flags, x, y);
-	rdp_send_client_input_pdu(input->rdp, s);
+	rdp_send_client_input_pdu(rdp, s);
 }
 
 void input_send_fastpath_synchronize_event(rdpInput* input, uint32 flags)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
 	STREAM* s;
+	rdpRdp* rdp = input->context->rdp;
 
 	/* The FastPath Synchronization eventFlags has identical values as SlowPath */
-	s = fastpath_input_pdu_init(rdp->fastpath, (uint8)flags, FASTPATH_INPUT_EVENT_SYNC);
+	s = fastpath_input_pdu_init(rdp->fastpath, (uint8) flags, FASTPATH_INPUT_EVENT_SYNC);
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
 void input_send_fastpath_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
 	STREAM* s;
 	uint8 eventFlags = 0;
+	rdpRdp* rdp = input->context->rdp;
 
 	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
 	eventFlags |= (flags & KBD_FLAGS_EXTENDED) ? FASTPATH_INPUT_KBDFLAGS_EXTENDED : 0;
@@ -144,8 +154,8 @@ void input_send_fastpath_keyboard_event(rdpInput* input, uint16 flags, uint16 co
 
 void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
 	STREAM* s;
+	rdpRdp* rdp = input->context->rdp;
 
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_UNICODE);
 	stream_write_uint16(s, code); /* unicodeCode (2 bytes) */
@@ -154,8 +164,8 @@ void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code)
 
 void input_send_fastpath_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
 	STREAM* s;
+	rdpRdp* rdp = input->context->rdp;
 
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSE);
 	input_write_mouse_event(s, flags, x, y);
@@ -164,8 +174,8 @@ void input_send_fastpath_mouse_event(rdpInput* input, uint16 flags, uint16 x, ui
 
 void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
 	STREAM* s;
+	rdpRdp* rdp = input->context->rdp;
 
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSEX);
 	input_write_extended_mouse_event(s, flags, x, y);
@@ -174,7 +184,7 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uin
 
 void input_register_client_callbacks(rdpInput* input)
 {
-	rdpRdp* rdp = (rdpRdp*)input->rdp;
+	rdpRdp* rdp = input->context->rdp;
 
 	if (rdp->settings->fastpath_input)
 	{
@@ -202,7 +212,7 @@ rdpInput* input_new(rdpRdp* rdp)
 
 	if (input != NULL)
 	{
-		input->rdp = rdp;
+
 	}
 
 	return input;

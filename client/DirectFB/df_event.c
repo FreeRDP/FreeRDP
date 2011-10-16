@@ -184,15 +184,15 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode)
 
 boolean df_event_process(freerdp* instance, DFBEvent* event)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	dfInfo* dfi;
 	int pointer_x;
 	int pointer_y;
 	int flags;
 	DFBInputEvent* input_event;
 
-	dfi = GET_DFI(instance);
-	gdi = GET_GDI(instance->update);
+	gdi = instance->context->gdi;
+	dfi = ((dfContext*) instance->context)->dfi;
 
 	dfi->layer->GetCursorPosition(dfi->layer, &pointer_x, &pointer_y);
 

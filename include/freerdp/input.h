@@ -20,6 +20,10 @@
 #ifndef __INPUT_API_H
 #define __INPUT_API_H
 
+typedef struct rdp_input rdpInput;
+
+#include <freerdp/freerdp.h>
+
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED		0x0100
 #define KBD_FLAGS_DOWN			0x4000
@@ -48,8 +52,6 @@
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
-typedef struct rdp_input rdpInput;
-
 typedef void (*pcSynchronizeEvent)(rdpInput* input, uint32 flags);
 typedef void (*pcKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
 typedef void (*pcUnicodeKeyboardEvent)(rdpInput* input, uint16 code);
@@ -58,15 +60,15 @@ typedef void (*pcExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, ui
 
 struct rdp_input
 {
-	void* rdp;
-	void* param1;
-	void* param2;
+	rdpContext* context;
 
 	pcSynchronizeEvent SynchronizeEvent;
 	pcKeyboardEvent KeyboardEvent;
 	pcUnicodeKeyboardEvent UnicodeKeyboardEvent;
 	pcMouseEvent MouseEvent;
 	pcExtendedMouseEvent ExtendedMouseEvent;
+
+	void* param1;
 };
 
 #endif /* __INPUT_API_H */

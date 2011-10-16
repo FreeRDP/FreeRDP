@@ -26,28 +26,28 @@
 #include <freerdp/utils/stream.h>
 
 #include "rdp.h"
-#include "vchan.h"
+#include "channel.h"
 
-boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
+boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, int size)
 {
 	STREAM* s;
 	uint32 flags;
-	rdpChan* channel = NULL;
-	int i;
+	int i, left;
 	int chunk_size;
-	int left;
+	rdpChan* channel = NULL;
 
-	for (i = 0; i < vchan->instance->settings->num_channels; i++)
+	for (i = 0; i < instance->settings->num_channels; i++)
 	{
-		if (vchan->instance->settings->channels[i].chan_id == channel_id)
+		if (instance->settings->channels[i].chan_id == channel_id)
 		{
-			channel = &vchan->instance->settings->channels[i];
+			channel = &instance->settings->channels[i];
 			break;
 		}
 	}
+
 	if (channel == NULL)
 	{
-		printf("vchan_send: unknown channel_id %d\n", channel_id);
+		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
 		return False;
 	}
 
@@ -55,11 +55,11 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 	left = size;
 	while (left > 0)
 	{
-		s = rdp_send_stream_init(vchan->instance->rdp);
+		s = rdp_send_stream_init(instance->context->rdp);
 
-		if (left > (int) vchan->instance->settings->vc_chunk_size)
+		if (left > (int) instance->settings->vc_chunk_size)
 		{
-			chunk_size = vchan->instance->settings->vc_chunk_size;
+			chunk_size = instance->settings->vc_chunk_size;
 		}
 		else
 		{
@@ -76,7 +76,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 		stream_check_size(s, chunk_size);
 		stream_write(s, data, chunk_size);
 
-		rdp_send(vchan->instance->rdp, s, channel_id);
+		rdp_send(instance->context->rdp, s, channel_id);
 
 		data += chunk_size;
 		left -= chunk_size;
@@ -86,7 +86,7 @@ boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size)
 	return True;
 }
 
-void vchan_process(rdpVchan* vchan, STREAM* s, uint16 channel_id)
+void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id)
 {
 	uint32 length;
 	uint32 flags;
@@ -96,21 +96,7 @@ void vchan_process(rdpVchan* vchan, STREAM* s, uint16 channel_id)
 	stream_read_uint32(s, flags);
 	chunk_length = stream_get_left(s);
 
-	IFCALL(vchan->instance->ReceiveChannelData, vchan->instance,
+	IFCALL(instance->ReceiveChannelData, instance,
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
 }
 
-rdpVchan* vchan_new(freerdp* instance)
-{
-	rdpVchan* vchan;
-
-	vchan = xnew(rdpVchan);
-	vchan->instance = instance;
-
-	return vchan;
-}
-
-void vchan_free(rdpVchan* vchan)
-{
-	xfree(vchan);
-}

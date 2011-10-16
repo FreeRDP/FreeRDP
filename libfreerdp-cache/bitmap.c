@@ -36,7 +36,7 @@ void bitmap_free(rdpBitmap* bitmap)
 void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
@@ -50,7 +50,7 @@ void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
@@ -66,7 +66,7 @@ void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bit
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
 	uint32 size = sizeof(rdpBitmap);
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	bitmap = cache_bitmap->bitmap;
 	IFCALL(cache->bitmap->BitmapSize, update, &size);
@@ -132,7 +132,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, rdpB
 
 void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	cache->bitmap->MemBlt = update->MemBlt;
 	cache->bitmap->Mem3Blt = update->Mem3Blt;

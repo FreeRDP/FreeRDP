@@ -32,11 +32,11 @@ boolean freerdp_connect(freerdp* instance)
 	rdpRdp* rdp;
 	boolean status;
 
-	rdp = (rdpRdp*) instance->rdp;
+	rdp = instance->context->rdp;
 
 	IFCALL(instance->PreConnect, instance);
 
-	status = rdp_client_connect((rdpRdp*) instance->rdp);
+	status = rdp_client_connect(rdp);
 
 	if (status)
 	{
@@ -87,7 +87,7 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 {
 	rdpRdp* rdp;
 
-	rdp = (rdpRdp*) instance->rdp;
+	rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
 
 	return True;
@@ -95,12 +95,13 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 
 boolean freerdp_check_fds(freerdp* instance)
 {
-	rdpRdp* rdp;
 	int status;
+	rdpRdp* rdp;
 
-	rdp = (rdpRdp*) instance->rdp;
+	rdp = instance->context->rdp;
 
 	status = rdp_check_fds(rdp);
+
 	if (status < 0)
 		return False;
 
@@ -109,15 +110,43 @@ boolean freerdp_check_fds(freerdp* instance)
 
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
 {
-	return rdp_send_channel_data(instance->rdp, channel_id, data, size);
+	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
 }
 
 void freerdp_disconnect(freerdp* instance)
 {
 	rdpRdp* rdp;
 
-	rdp = (rdpRdp*) instance->rdp;
+	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
+}
+
+void freerdp_context_new(freerdp* instance)
+{
+	rdpRdp* rdp;
+	uint32 size = sizeof(rdpContext);
+
+	rdp = rdp_new(instance);
+	instance->input = rdp->input;
+	instance->update = rdp->update;
+	instance->settings = rdp->settings;
+
+	IFCALL(instance->ContextSize, instance, &size);
+
+	instance->context = (rdpContext*) xzalloc(size);
+	instance->context->instance = instance;
+	instance->context->rdp = rdp;
+
+	instance->update->context = instance->context;
+	instance->input->context = instance->context;
+	input_register_client_callbacks(rdp->input);
+
+	IFCALL(instance->ContextNew, instance, instance->context);
+}
+
+void freerdp_context_free(freerdp* instance)
+{
+	IFCALL(instance->ContextFree, instance, instance->context);
 }
 
 freerdp* freerdp_new()
@@ -128,19 +157,11 @@ freerdp* freerdp_new()
 
 	if (instance != NULL)
 	{
-		rdpRdp* rdp = rdp_new(instance);
-		instance->rdp = (void*) rdp;
-		instance->input = rdp->input;
-		instance->update = rdp->update;
-		instance->settings = rdp->settings;
-
 		instance->Connect = freerdp_connect;
 		instance->GetFileDescriptor = freerdp_get_fds;
 		instance->CheckFileDescriptor = freerdp_check_fds;
 		instance->SendChannelData = freerdp_send_channel_data;
 		instance->Disconnect = freerdp_disconnect;
-
-		input_register_client_callbacks(rdp->input);
 	}
 
 	return instance;
@@ -150,7 +171,7 @@ void freerdp_free(freerdp* freerdp)
 {
 	if (freerdp)
 	{
-		rdp_free(freerdp->rdp);
+		rdp_free(freerdp->context->rdp);
 		xfree(freerdp);
 	}
 }

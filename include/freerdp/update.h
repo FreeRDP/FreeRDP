@@ -20,8 +20,11 @@
 #ifndef __UPDATE_API_H
 #define __UPDATE_API_H
 
+typedef struct rdp_update rdpUpdate;
+
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/pcap.h>
 #include <freerdp/utils/stream.h>
 
@@ -1036,8 +1039,6 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
 /* Update Interface */
 
-typedef struct rdp_update rdpUpdate;
-
 typedef void (*pcBeginPaint)(rdpUpdate* update);
 typedef void (*pcEndPaint)(rdpUpdate* update);
 typedef void (*pcSetBounds)(rdpUpdate* update, BOUNDS* bounds);
@@ -1114,12 +1115,7 @@ typedef void (*pcBitmapDecompress)(rdpUpdate* update, rdpBitmap* bitmap);
 
 struct rdp_update
 {
-	void* rdp;
-	void* gdi;
-	void* rail;
-	void* cache;
-	void* client;
-	void* chanman;
+	rdpContext* context;
 
 	boolean dump_rfx;
 	boolean play_rfx;

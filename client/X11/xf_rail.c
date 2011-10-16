@@ -214,7 +214,7 @@ void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 t
 	rdpChanMan* chanman;
 	RAIL_WINDOW_MOVE_ORDER window_move;
 
-	chanman = GET_CHANMAN(xfi->instance);
+	chanman = xfi->context->chanman;
 
 	window_move.windowId = windowId;
 	window_move.left = left;
@@ -227,14 +227,18 @@ void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 t
 
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
 {
+	rdpRail* rail;
 	rdpChanMan* chanman;
 	rdpWindow* rail_window;
 	RAIL_ACTIVATE_ORDER activate;
 
-	chanman = GET_CHANMAN(xfi->instance);
-	rail_window = window_list_get_by_extra_id(xfi->rail->list, (void*)xwindow);
+	chanman = xfi->context->chanman;
+	rail = ((rdpContext*) xfi->context)->rail;
 
-	if (rail_window == NULL) return;
+	rail_window = window_list_get_by_extra_id(rail->list, (void*) xwindow);
+
+	if (rail_window == NULL)
+		return;
 
 	activate.windowId = rail_window->windowId;
 	activate.enabled = enabled;
@@ -247,7 +251,7 @@ void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 com
 	rdpChanMan* chanman;
 	RAIL_SYSCOMMAND_ORDER syscommand;
 
-	chanman = GET_CHANMAN(xfi->instance);
+	chanman = xfi->context->chanman;
 
 	syscommand.windowId = windowId;
 	syscommand.command = command;
@@ -316,10 +320,12 @@ void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChanMan* chanman, RDP
 
 void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
-	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*)event->user_data;
+	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
+	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*) event->user_data;
 
-	rail_window = window_list_get_by_id(xfi->rail->list, minmax->windowId);
+	rail = ((rdpContext*) xfi->context)->rail;
+	rail_window = window_list_get_by_id(rail->list, minmax->windowId);
 
 	if (rail_window != NULL)
 	{
@@ -356,10 +362,12 @@ const char* movetype_names[] =
 
 void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChanMan* chanman, RDP_EVENT* event)
 {
+	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
 	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
 
-	rail_window = window_list_get_by_id(xfi->rail->list, movesize->windowId);
+	rail = ((rdpContext*) xfi->context)->rail;
+	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
 
 	if (rail_window != NULL)
 	{

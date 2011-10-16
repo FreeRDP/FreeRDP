@@ -344,20 +344,20 @@ static void update_end_paint(rdpUpdate* update)
 
 static void update_send_surface_command(rdpUpdate* update, STREAM* s)
 {
-	rdpRdp* rdp = (rdpRdp*) update->rdp;
+	rdpRdp* rdp = update->context->rdp;
 	fastpath_send_fragmented_update_pdu(rdp->fastpath, s);
 }
 
 static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	rdpRdp* rdp = (rdpRdp*)update->rdp;
+	rdpRdp* rdp = update->context->rdp;
 	fastpath_send_surfcmd_surface_bits(rdp->fastpath, surface_bits_command);
 }
 
 static void update_send_synchronize(rdpUpdate* update)
 {
-	rdpRdp* rdp = (rdpRdp*)update->rdp;
 	STREAM* s;
+	rdpRdp* rdp = update->context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	stream_write_uint8(s, FASTPATH_UPDATETYPE_SYNCHRONIZE); /* updateHeader (1 byte) */
@@ -367,15 +367,15 @@ static void update_send_synchronize(rdpUpdate* update)
 
 static void update_send_desktop_resize(rdpUpdate* update)
 {
-	rdpRdp* rdp = (rdpRdp*)update->rdp;
+	rdpRdp* rdp = update->context->rdp;
 
 	rdp_server_reactivate(rdp);
 }
 
 static void update_send_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	rdpRdp* rdp = (rdpRdp*)update->rdp;
 	STREAM* s;
+	rdpRdp* rdp = update->context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	/* updateHeader (1 byte) */
@@ -406,8 +406,6 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (update != NULL)
 	{
-		update->rdp = (void*) rdp;
-
 		update->bitmap_update.count = 64;
 		update->bitmap_update.bitmaps = (rdpBitmap*) xzalloc(sizeof(rdpBitmap) * update->bitmap_update.count);
 	}

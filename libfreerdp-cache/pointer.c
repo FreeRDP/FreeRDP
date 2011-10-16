@@ -41,7 +41,7 @@ void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
 	uint32 size = sizeof(rdpPointer);
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = (rdpCache*) update->context->cache;
 
 	IFCALL(cache->pointer->PointerSize, update, &size);
 
@@ -68,7 +68,7 @@ void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 void update_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached)
 {
 	rdpPointer* pointer;
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = (rdpCache*) update->context->cache;
 
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
 	IFCALL(cache->pointer->PointerSet, update, pointer);

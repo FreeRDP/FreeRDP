@@ -59,7 +59,7 @@ int wf_create_console(void)
 
 void wf_sw_begin_paint(rdpUpdate* update)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	gdi = GET_GDI(update);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -68,7 +68,7 @@ void wf_sw_begin_paint(rdpUpdate* update)
 void wf_sw_end_paint(rdpUpdate* update)
 {
 	int i;
-	GDI* gdi;
+	rdpGdi* gdi;
 	wfInfo* wfi;
 	sint32 x, y;
 	uint32 w, h;
@@ -259,7 +259,7 @@ boolean wf_pre_connect(freerdp* instance)
 
 boolean wf_post_connect(freerdp* instance)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	wfInfo* wfi;
 	int width, height;
 	wchar_t win_title[64];

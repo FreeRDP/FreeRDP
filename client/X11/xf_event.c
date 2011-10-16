@@ -87,8 +87,9 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
+		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xexpose.window);
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
 
 		if (window != NULL)
 		{
@@ -116,8 +117,9 @@ boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
+		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xvisibility.window);
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xvisibility.window);
 
 		if (window != NULL)
 		{
@@ -153,7 +155,9 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		rdpWindow* window;
 		int x = event->xmotion.x;
 		int y = event->xmotion.y;
-		window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xmotion.window);
+		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xmotion.window);
 
 		if (window != NULL)
 		{
@@ -228,7 +232,9 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 			if (app)
 			{
 				rdpWindow* window;
-				window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
+				rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+				window = window_list_get_by_extra_id(rail->list, (void*) event->xbutton.window);
 
 				if (window != NULL)
 				{
@@ -286,7 +292,9 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 		if (app)
 		{
 			rdpWindow* window;
-			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xbutton.window);
+			rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+			window = window_list_get_by_extra_id(rail->list, (void*) event->xbutton.window);
 
 			if (window != NULL)
 			{
@@ -393,8 +401,9 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 		if (app)
 		{
 			rdpWindow* window;
+			rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-			window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xclient.window);
+			window = window_list_get_by_extra_id(rail->list, (void*) event->xclient.window);
 
 			if (window != NULL)
 			{
@@ -442,8 +451,9 @@ boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpWindow* window;
+	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xconfigure.window);
+	window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
 	if (window != NULL)
 	{
@@ -476,11 +486,12 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpWindow* window;
+	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	if (app != True)
 		return True;
 
-	window = window_list_get_by_extra_id(xfi->rail->list, (void*) event->xany.window);
+	window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
 
 	if (window != NULL)
 	{
@@ -539,7 +550,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 {
 	boolean app = False;
 	boolean status = True;
-	xfInfo* xfi = GET_XFI(instance);
+	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
 	if (xfi->remote_app == True)
 	{

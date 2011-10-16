@@ -20,7 +20,12 @@
 #ifndef __FREERDP_H
 #define __FREERDP_H
 
+typedef struct rdp_rdp rdpRdp;
+typedef struct rdp_gdi rdpGdi;
+typedef struct rdp_rail rdpRail;
+typedef struct rdp_cache rdpCache;
 typedef struct rdp_freerdp freerdp;
+typedef struct rdp_context rdpContext;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -47,17 +52,31 @@ typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, 
 typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 typedef void (*pcDisconnect)(freerdp* instance);
 
+typedef void (*pcContextSize)(freerdp* instance, uint32* size);
+typedef void (*pcContextNew)(freerdp* instance, rdpContext* context);
+typedef void (*pcContextFree)(freerdp* instance, rdpContext* context);
+
+struct rdp_context
+{
+	freerdp* instance;
+
+	rdpRdp* rdp;
+	rdpGdi* gdi;
+	rdpRail* rail;
+	rdpCache* cache;
+};
+
 struct rdp_freerdp
 {
-	void* rdp;
-	void* cache;
-	void* client;
-	void* chanman;
-	void* param4;
+	rdpContext* context;
 
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
+
+	pcContextSize ContextSize;
+	pcContextNew ContextNew;
+	pcContextFree ContextFree;
 
 	pcConnect Connect;
 	pcPreConnect PreConnect;
@@ -69,6 +88,9 @@ struct rdp_freerdp
 	pcReceiveChannelData ReceiveChannelData;
 	pcDisconnect Disconnect;
 };
+
+FREERDP_API void freerdp_context_new(freerdp* instance);
+FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API freerdp* freerdp_new();
 FREERDP_API void freerdp_free(freerdp* instance);

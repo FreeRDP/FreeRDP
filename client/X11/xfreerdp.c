@@ -74,23 +74,39 @@ struct thread_data
 	freerdp* instance;
 };
 
+void xf_context_size(freerdp* instance, uint32* size)
+{
+	*size = sizeof(xfContext);
+}
+
+void xf_context_new(freerdp* instance, xfContext* context)
+{
+	context->chanman = freerdp_chanman_new();
+}
+
+void xf_context_free(freerdp* instance, xfContext* context)
+{
+
+}
+
 void xf_sw_begin_paint(rdpUpdate* update)
 {
-	GDI* gdi;
-	gdi = GET_GDI(update);
+	rdpGdi* gdi = update->context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
 void xf_sw_end_paint(rdpUpdate* update)
 {
-	GDI* gdi;
+	rdpGdi* gdi;
 	xfInfo* xfi;
 	sint32 x, y;
 	uint32 w, h;
+	xfContext* context;
 
-	gdi = GET_GDI(update);
-	xfi = GET_XFI(update);
+	context = (xfContext*) update->context;
+	gdi = update->context->gdi;
+	xfi = context->xfi;
 
 	if (xfi->remote_app != True)
 	{
@@ -143,7 +159,7 @@ void xf_sw_end_paint(rdpUpdate* update)
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
 
-		xf_rail_paint(xfi, update->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfi, update->context->rail, x, y, x + w - 1, y + h - 1);
 	}
 }
 
@@ -152,12 +168,12 @@ void xf_sw_desktop_resize(rdpUpdate* update)
 	xfInfo* xfi;
 	rdpSettings* settings;
 
-	xfi = GET_XFI(update);
+	xfi = ((xfContext*) update->context)->xfi;
 	settings = xfi->instance->settings;
 
 	if (xfi->fullscreen != True)
 	{
-		GDI* gdi = GET_GDI(update);
+		rdpGdi* gdi = update->context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
 
 		if (xfi->image)
@@ -173,7 +189,7 @@ void xf_sw_desktop_resize(rdpUpdate* update)
 void xf_hw_begin_paint(rdpUpdate* update)
 {
 	xfInfo* xfi;
-	xfi = GET_XFI(update);
+	xfi = ((xfContext*) update->context)->xfi;
 	xfi->hdc->hwnd->invalid->null = 1;
 	xfi->hdc->hwnd->ninvalid = 0;
 }
@@ -184,7 +200,7 @@ void xf_hw_end_paint(rdpUpdate* update)
 	sint32 x, y;
 	uint32 w, h;
 
-	xfi = GET_XFI(update);
+	xfi = ((xfContext*) update->context)->xfi;
 
 	if (xfi->remote_app)
 	{
@@ -196,7 +212,7 @@ void xf_hw_end_paint(rdpUpdate* update)
 		w = xfi->hdc->hwnd->invalid->w;
 		h = xfi->hdc->hwnd->invalid->h;
 
-		xf_rail_paint(xfi, update->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfi, update->context->rail, x, y, x + w - 1, y + h - 1);
 	}
 }
 
@@ -206,7 +222,7 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 	boolean same;
 	rdpSettings* settings;
 
-	xfi = GET_XFI(update);
+	xfi = ((xfContext*) update->context)->xfi;
 	settings = xfi->instance->settings;
 
 	if (xfi->fullscreen != True)
@@ -242,7 +258,7 @@ void xf_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
 	uint8* cdata;
 	XImage* image;
 	rdpBitmap* _bitmap;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	_bitmap = (rdpBitmap*) &bitmap->bitmap;
 	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
@@ -266,7 +282,7 @@ void xf_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
 void xf_offscreen_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
 {
 	rdpBitmap* _bitmap;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	_bitmap = (rdpBitmap*) &bitmap->bitmap;
 	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
@@ -274,7 +290,7 @@ void xf_offscreen_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
 
 void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	if (primary)
 		xfi->drawing = xfi->primary;
@@ -284,7 +300,7 @@ void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
 
 void xf_bitmap_free(rdpUpdate* update, xfBitmap* bitmap)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	if (bitmap->pixmap != 0)
 		XFreePixmap(xfi->display, bitmap->pixmap);
@@ -297,7 +313,7 @@ void xf_pointer_size(rdpUpdate* update, uint32* size)
 
 void xf_pointer_set(rdpUpdate* update, xfPointer* pointer)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	if (xfi->remote_app != True)
 		XDefineCursor(xfi->display, xfi->window->handle, pointer->cursor);
@@ -309,7 +325,7 @@ void xf_pointer_new(rdpUpdate* update, xfPointer* pointer)
 	XcursorImage ci;
 	rdpPointer* _pointer;
 
-	xfi = GET_XFI(update);
+	xfi = ((xfContext*) update->context)->xfi;
 	_pointer = (rdpPointer*) &pointer->pointer;
 
 	memset(&ci, 0, sizeof(ci));
@@ -339,7 +355,7 @@ void xf_pointer_new(rdpUpdate* update, xfPointer* pointer)
 
 void xf_pointer_free(rdpUpdate* update, xfPointer* pointer)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	if (pointer->cursor != 0)
 		XFreeCursor(xfi->display, pointer->cursor);
@@ -347,7 +363,7 @@ void xf_pointer_free(rdpUpdate* update, xfPointer* pointer)
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	xfInfo* xfi = GET_XFI(instance);
+	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
 	rfds[*rcount] = (void*)(long)(xfi->xfds);
 	(*rcount)++;
@@ -358,7 +374,7 @@ boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 boolean xf_check_fds(freerdp* instance, fd_set* set)
 {
 	XEvent xevent;
-	xfInfo* xfi = GET_XFI(instance);
+	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
 	while (XPending(xfi->display))
 	{
@@ -510,8 +526,9 @@ boolean xf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
-	SET_XFI(instance, xfi);
-
+	((xfContext*) instance->context)->xfi = xfi;
+	xfi->context = (xfContext*) instance->context;
+	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 
 	settings = instance->settings;
@@ -542,7 +559,7 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
-	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_pre_connect(xfi->context->chanman, instance);
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -579,9 +596,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->clrconv->invert = 0;
 	xfi->clrconv->rgb555 = 0;
 
-	xfi->cache = cache_new(instance->settings);
-	instance->update->cache = (void*) xfi->cache;
-	instance->cache = instance->update->cache;
+	instance->context->cache = cache_new(instance->settings);
 
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->screen_number = DefaultScreen(xfi->display);
@@ -607,16 +622,19 @@ boolean xf_post_connect(freerdp* instance)
 {
 	xfInfo* xfi;
 	XGCValues gcv;
+	rdpCache* cache;
+	rdpChanMan* chanman;
 
-	xfi = GET_XFI(instance);
-	SET_XFI(instance->update, xfi);
+	xfi = ((xfContext*) instance->context)->xfi;
+	cache = instance->context->cache;
+	chanman = xfi->context->chanman;
 
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
 
 	if (xfi->sw_gdi)
 	{
-		GDI* gdi;
+		rdpGdi* gdi;
 		uint32 flags;
 
 		flags = CLRCONV_ALPHA;
@@ -627,7 +645,7 @@ boolean xf_post_connect(freerdp* instance)
 			flags |= CLRBUF_16BPP;
 
 		gdi_init(instance, flags, NULL);
-		gdi = GET_GDI(instance->update);
+		gdi = instance->context->gdi;
 		xfi->primary_buffer = gdi->primary_buffer;
 	}
 	else
@@ -697,36 +715,35 @@ boolean xf_post_connect(freerdp* instance)
 	}
 
 	pointer_cache_register_callbacks(instance->update);
-	xfi->cache->pointer->PointerSize = (cbPointerSize) xf_pointer_size;
-	xfi->cache->pointer->PointerSet = (cbPointerSet) xf_pointer_set;
-	xfi->cache->pointer->PointerNew = (cbPointerNew) xf_pointer_new;
-	xfi->cache->pointer->PointerFree = (cbPointerFree) xf_pointer_free;
+	cache->pointer->PointerSize = (cbPointerSize) xf_pointer_size;
+	cache->pointer->PointerSet = (cbPointerSet) xf_pointer_set;
+	cache->pointer->PointerNew = (cbPointerNew) xf_pointer_new;
+	cache->pointer->PointerFree = (cbPointerFree) xf_pointer_free;
 
 	if (xfi->sw_gdi != True)
 	{
 		bitmap_cache_register_callbacks(instance->update);
-		xfi->cache->bitmap->BitmapSize = (cbBitmapSize) xf_bitmap_size;
-		xfi->cache->bitmap->BitmapNew = (cbBitmapNew) xf_bitmap_new;
-		xfi->cache->bitmap->BitmapFree = (cbBitmapFree) xf_bitmap_free;
+		cache->bitmap->BitmapSize = (cbBitmapSize) xf_bitmap_size;
+		cache->bitmap->BitmapNew = (cbBitmapNew) xf_bitmap_new;
+		cache->bitmap->BitmapFree = (cbBitmapFree) xf_bitmap_free;
 
 		offscreen_cache_register_callbacks(instance->update);
-		xfi->cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) xf_bitmap_size;
-		xfi->cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) xf_offscreen_bitmap_new;
-		xfi->cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) xf_bitmap_free;
-		xfi->cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
+		cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) xf_bitmap_size;
+		cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) xf_offscreen_bitmap_new;
+		cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) xf_bitmap_free;
+		cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
 	}
 
-	xfi->rail = rail_new(instance->settings);
-	instance->update->rail = (void*) xfi->rail;
-	rail_register_update_callbacks(xfi->rail, instance->update);
-	xf_rail_register_callbacks(xfi, xfi->rail);
+	instance->context->rail = rail_new(instance->settings);
+	rail_register_update_callbacks(instance->context->rail, instance->update);
+	xf_rail_register_callbacks(xfi, instance->context->rail);
 
-	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_post_connect(chanman, instance);
 
 	xf_tsmf_init(xfi, xv_port);
 
 	if (xfi->remote_app != True)
-		xf_cliprdr_init(xfi, GET_CHANMAN(instance));
+		xf_cliprdr_init(xfi, chanman);
 
 	return True;
 }
@@ -799,7 +816,7 @@ void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 	xfInfo* xfi;
 	RDP_EVENT* event;
 
-	xfi = GET_XFI(instance);
+	xfi = ((xfContext*) instance->context)->xfi;
 
 	event = freerdp_chanman_pop_event(chanman);
 
@@ -829,6 +846,8 @@ void xf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 
 void xf_window_free(xfInfo* xfi)
 {
+	rdpContext* context = xfi->instance->context;
+
 	XFreeModifiermap(xfi->modifier_map);
 	xfi->modifier_map = 0;
 
@@ -851,14 +870,14 @@ void xf_window_free(xfInfo* xfi)
 		xfi->image = NULL;
 	}
 
-	if (xfi->cache)
+	if (context->cache)
 	{
-		cache_free(xfi->cache);
-		xfi->cache = NULL;
+		cache_free(context->cache);
+		context->cache = NULL;
 	}
 
 	xfree(xfi->clrconv);
-	rail_free(xfi->rail);
+	rail_free(context->rail);
 
 	xf_tsmf_uninit(xfi);
 	xf_cliprdr_uninit(xfi);
@@ -891,8 +910,8 @@ int xfreerdp_run(freerdp* instance)
 	if (!instance->Connect(instance))
 		return 0;
 
-	xfi = GET_XFI(instance);
-	chanman = GET_CHANMAN(instance);
+	xfi = ((xfContext*) instance->context)->xfi;
+	chanman = ((xfContext*) instance->context)->chanman;
 
 	while (1)
 	{
@@ -996,7 +1015,7 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
-	rdpChanMan* chanman;
+	xfContext* context;
 	struct thread_data* data;
 
 	freerdp_handle_signals();
@@ -1013,13 +1032,16 @@ int main(int argc, char* argv[])
 	instance->Authenticate = xf_authenticate;
 	instance->ReceiveChannelData = xf_receive_channel_data;
 
-	chanman = freerdp_chanman_new();
-	SET_CHANMAN(instance, chanman);
+	instance->ContextSize = (pcContextSize) xf_context_size;
+	instance->ContextNew = (pcContextNew) xf_context_new;
+	instance->ContextFree = (pcContextFree) xf_context_free;
+	freerdp_context_new(instance);
 
 	instance->settings->sw_gdi = False;
+	context = (xfContext*) instance->context;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
-			xf_process_plugin_args, chanman, xf_process_ui_args, NULL) < 0)
+			xf_process_plugin_args, context->chanman, xf_process_ui_args, NULL) < 0)
 		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));

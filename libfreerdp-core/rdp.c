@@ -650,7 +650,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		vchan_process(rdp->vchan, s, channelId);
+		freerdp_channel_process(rdp->instance, s, channelId);
 	}
 	else
 	{
@@ -774,7 +774,7 @@ static boolean rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size)
 {
-	return vchan_send(rdp->vchan, channel_id, data, size);
+	return freerdp_channel_send(rdp->instance, channel_id, data, size);
 }
 
 /**
@@ -807,6 +807,7 @@ rdpRdp* rdp_new(freerdp* instance)
 
 	if (rdp != NULL)
 	{
+		rdp->instance = instance;
 		rdp->settings = settings_new((void*) instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
@@ -815,7 +816,6 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->fastpath = fastpath_new(rdp);
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
-		rdp->vchan = vchan_new(instance);
 		rdp->redirection = redirection_new();
 		rdp->mppc = mppc_new(rdp);
 	}
@@ -840,7 +840,6 @@ void rdp_free(rdpRdp* rdp)
 		fastpath_free(rdp->fastpath);
 		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
-		vchan_free(rdp->vchan);
 		redirection_free(rdp->redirection);
 		mppc_free(rdp);
 		xfree(rdp);

@@ -39,17 +39,20 @@
 #include <freerdp/chanman/chanman.h>
 #include <freerdp/plugins/cliprdr.h>
 
-#define SET_TFI(_instance, _tfi) (_instance)->client = _tfi
-#define GET_TFI(_instance) ((tfInfo*) ((_instance)->client))
-
-#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
-
 struct tf_info
 {
 	void* data;
 };
 typedef struct tf_info tfInfo;
+
+struct tf_context
+{
+	rdpContext _p;
+
+	tfInfo* tfi;
+	rdpChanMan* chanman;
+};
+typedef struct tf_context tfContext;
 
 freerdp_sem g_sem;
 static int g_thread_count = 0;
@@ -62,19 +65,30 @@ struct thread_data
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 
+void tf_context_size(freerdp* instance, uint32* size)
+{
+	*size = sizeof(tfContext);
+}
+
+void tf_context_new(freerdp* instance, tfContext* context)
+{
+	context->chanman = freerdp_chanman_new();
+}
+
+void tf_context_free(freerdp* instance, tfContext* context)
+{
+
+}
+
 void tf_begin_paint(rdpUpdate* update)
 {
-	GDI* gdi = GET_GDI(update);
+	rdpGdi* gdi = update->context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
 void tf_end_paint(rdpUpdate* update)
 {
-	GDI* gdi;
-	tfInfo* tfi;
-
-	gdi = GET_GDI(update);
-	tfi = GET_TFI(update);
+	rdpGdi* gdi = update->context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
@@ -113,6 +127,7 @@ void tf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 	RDP_EVENT* event;
 
 	event = freerdp_chanman_pop_event(chanman);
+
 	if (event)
 	{
 		switch (event->event_type)
@@ -124,6 +139,7 @@ void tf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 				printf("tf_process_channel_event: unknown event type %d\n", event->event_type);
 				break;
 		}
+
 		freerdp_event_free(event);
 	}
 }
@@ -131,10 +147,12 @@ void tf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
 boolean tf_pre_connect(freerdp* instance)
 {
 	tfInfo* tfi;
+	tfContext* context;
 	rdpSettings* settings;
 
+	context = (tfContext*) instance->context;
 	tfi = (tfInfo*) xzalloc(sizeof(tfInfo));
-	SET_TFI(instance, tfi);
+	context->tfi = tfi;
 
 	settings = instance->settings;
 
@@ -161,26 +179,25 @@ boolean tf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
 
-	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_pre_connect(context->chanman, instance);
 
 	return True;
 }
 
 boolean tf_post_connect(freerdp* instance)
 {
-	GDI* gdi;
-	tfInfo* tfi;
+	rdpGdi* gdi;
+	tfContext* context;
 
-	tfi = GET_TFI(instance);
-	SET_TFI(instance->update, tfi);
+	context = (tfContext*) instance->context;
 
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = GET_GDI(instance->update);
+	gdi = instance->context->gdi;
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 
-	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
+	freerdp_chanman_post_connect(context->chanman, instance);
 
 	return True;
 }
@@ -196,12 +213,14 @@ int tfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	tfContext* context;
 	rdpChanMan* chanman;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	chanman = GET_CHANMAN(instance);
+	context = (tfContext*) instance->context;
+	chanman = context->chanman;
 
 	instance->Connect(instance);
 
@@ -293,6 +312,7 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
+	tfContext* context;
 	struct thread_data* data;
 	rdpChanMan* chanman;
 
@@ -305,8 +325,13 @@ int main(int argc, char* argv[])
 	instance->PostConnect = tf_post_connect;
 	instance->ReceiveChannelData = tf_receive_channel_data;
 
-	chanman = freerdp_chanman_new();
-	SET_CHANMAN(instance, chanman);
+	instance->ContextSize = (pcContextSize) tf_context_size;
+	instance->ContextNew = (pcContextNew) tf_context_new;
+	instance->ContextFree = (pcContextFree) tf_context_free;
+	freerdp_context_new(instance);
+
+	context = (tfContext*) instance->context;
+	chanman = context->chanman;
 
 	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, chanman, NULL, NULL);
 

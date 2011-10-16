@@ -27,31 +27,27 @@
 
 static void rail_WindowCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+	rdpRail* rail = update->context->rail;
 	window_list_create(rail->list, orderInfo, window_state);
 }
 
 static void rail_WindowUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+	rdpRail* rail = update->context->rail;
 	window_list_update(rail->list, orderInfo, window_state);
 }
 
 static void rail_WindowDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+	rdpRail* rail = update->context->rail;
 	window_list_delete(rail->list, orderInfo);
 }
 
 static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
-	rdpRail* rail;
 	rdpIcon* icon;
 	rdpWindow* window;
-	rail = (rdpRail*) update->rail;
+	rdpRail* rail = update->context->rail;
 
 	if (window_icon->iconInfo->cacheEntry != 0xFFFF)
 	{
@@ -78,38 +74,32 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 
 static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 static void rail_NotifyIconCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 static void rail_NotifyIconUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 static void rail_NotifyIconDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 static void rail_MonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 static void rail_NonMonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
 {
-	rdpRail* rail;
-	rail = (rdpRail*) update->rail;
+
 }
 
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)

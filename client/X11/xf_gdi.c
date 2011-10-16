@@ -290,7 +290,7 @@ void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	uint8* data;
 	XImage* image;
 	rdpBitmap* bmp;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	for (i = 0; i < bitmap->number; i++)
 	{
@@ -323,7 +323,7 @@ void xf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 void xf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 {
 	XRectangle clip;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	if (bounds != NULL)
 	{
@@ -341,7 +341,7 @@ void xf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 
 void xf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	xf_set_rop3(xfi, gdi_rop3_code(dstblt->bRop));
 
@@ -368,7 +368,8 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	Pixmap pattern;
 	uint32 foreColor;
 	uint32 backColor;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	rdpCache* cache = update->context->cache;
 
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
@@ -378,7 +379,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 	if (brush->style & CACHED_BRUSH)
 	{
-		brush->data = brush_get(xfi->cache->brush, brush->index, &brush->bpp);
+		brush->data = brush_get(cache->brush, brush->index, &brush->bpp);
 		brush->style = GDI_BS_PATTERN;
 	}
 
@@ -441,7 +442,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 {
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	xf_set_rop3(xfi, gdi_rop3_code(scrblt->bRop));
 
@@ -474,7 +475,7 @@ void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	uint32 color;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	color = freerdp_color_convert(opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
@@ -503,7 +504,7 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 	int i;
 	uint32 color;
 	DELTA_RECT* rectangle;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	color = freerdp_color_convert(multi_opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
@@ -535,7 +536,7 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 {
 	uint32 color;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	xf_set_rop2(xfi, line_to->bRop2);
 	color = freerdp_color_convert(line_to->penColor, xfi->srcBpp, 32, xfi->clrconv);
@@ -579,7 +580,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	uint32 color;
 	XPoint* points;
 	int width, height;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	xf_set_rop2(xfi, polyline->bRop2);
 	color = freerdp_color_convert(polyline->penColor, xfi->srcBpp, 32, xfi->clrconv);
@@ -633,7 +634,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
 	xfBitmap* bitmap;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	bitmap = (xfBitmap*) memblt->bitmap;
 	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
@@ -672,7 +673,8 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 	GLYPH_DATA* glyph;
 	GLYPH_DATA** glyphs;
 	GLYPH_FRAGMENT* fragment;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	rdpCache* cache = update->context->cache;
 
 	fgcolor = freerdp_color_convert(fast_index->foreColor, xfi->srcBpp, 32, xfi->clrconv);
 	bgcolor = freerdp_color_convert(fast_index->backColor, xfi->srcBpp, 32, xfi->clrconv);
@@ -714,14 +716,14 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 		if (fragment->operation == GLYPH_FRAGMENT_USE)
 		{
-			fragment->indices = (GLYPH_FRAGMENT_INDEX*) glyph_fragment_get(xfi->cache->glyph,
+			fragment->indices = (GLYPH_FRAGMENT_INDEX*) glyph_fragment_get(cache->glyph,
 							fragment->index, &fragment->nindices, (void**) &bmps);
 
 			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
 
 			for (j = 0; j < fragment->nindices; j++)
 			{
-				glyphs[j] = glyph_get(xfi->cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
+				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
 			}
 		}
 		else
@@ -731,7 +733,7 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 			for (j = 0; j < fragment->nindices; j++)
 			{
-				glyphs[j] = glyph_get(xfi->cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
+				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
 			}
 		}
 
@@ -767,7 +769,7 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 		if (fragment->operation == GLYPH_FRAGMENT_ADD)
 		{
-			glyph_fragment_put(xfi->cache->glyph, fragment->index,
+			glyph_fragment_put(cache->glyph, fragment->index,
 					fragment->nindices, (void*) fragment->indices, (void*) bmps);
 		}
 	}
@@ -799,13 +801,14 @@ void xf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 	int i;
 	Pixmap bitmap;
 	GLYPH_DATA* glyph;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	rdpCache* cache = update->context->cache;
 
 	for (i = 0; i < cache_glyph->cGlyphs; i++)
 	{
 		glyph = cache_glyph->glyphData[i];
 		bitmap = xf_glyph_new(xfi, glyph->cx, glyph->cy, glyph->aj);
-		glyph_put(xfi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
+		glyph_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
 	}
 }
 
@@ -816,8 +819,8 @@ void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_
 
 void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 {
-	xfInfo* xfi = GET_XFI(update);
-	brush_put(xfi->cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+	rdpCache* cache = update->context->cache;
+	brush_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -825,7 +828,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	int i, tx, ty;
 	XImage* image;
 	RFX_MESSAGE* message;
-	xfInfo* xfi = GET_XFI(update);
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
 	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) xfi->nsc_context;
 

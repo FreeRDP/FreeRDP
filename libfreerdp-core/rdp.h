@@ -20,8 +20,6 @@
 #ifndef __RDP_H
 #define __RDP_H
 
-typedef struct rdp_rdp rdpRdp;
-
 #include "mcs.h"
 #include "tpkt.h"
 #include "fastpath.h"
@@ -36,7 +34,7 @@ typedef struct rdp_rdp rdpRdp;
 #include "connection.h"
 #include "redirection.h"
 #include "capabilities.h"
-#include "vchan.h"
+#include "channel.h"
 #include "mppc.h"
 
 #include <freerdp/freerdp.h>
@@ -117,6 +115,7 @@ typedef struct rdp_rdp rdpRdp;
 struct rdp_rdp
 {
 	int state;
+	freerdp* instance;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_input* input;
@@ -126,7 +125,6 @@ struct rdp_rdp
 	struct rdp_redirection* redirection;
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
-	struct rdp_vchan* vchan;
 	struct rdp_mppc* mppc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;

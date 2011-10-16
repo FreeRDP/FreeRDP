@@ -17,19 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef __VCHAN_H
-#define __VCHAN_H
+#ifndef __CHANNEL_H
+#define __CHANNEL_H
 
-struct rdp_vchan
-{
-	freerdp* instance;
-};
-typedef struct rdp_vchan rdpVchan;
+boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, int size);
+void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id);
 
-boolean vchan_send(rdpVchan* vchan, uint16 channel_id, uint8* data, int size);
-void vchan_process(rdpVchan* vchan, STREAM* s, uint16 channel_id);
-
-rdpVchan* vchan_new(freerdp* instance);
-void vchan_free(rdpVchan* vchan);
-
-#endif /* __VCHAN_H */
+#endif /* __CHANNEL_H */
