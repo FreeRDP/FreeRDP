@@ -107,6 +107,7 @@ if(NOT WIN32)
 	find_required_package(ZLIB)
 	find_suggested_package(ALSA)
 	find_optional_package(PulseAudio)
+	find_optional_package(PCSC)
 	find_suggested_package(Cups)
 	find_suggested_package(FFmpeg)
 endif()
@@ -126,6 +127,10 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Configure files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+# Generate pkg-config
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 # Mac OS X
 if(APPLE)

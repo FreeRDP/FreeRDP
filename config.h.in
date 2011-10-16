@@ -34,5 +34,6 @@
 #cmakedefine WITH_DEBUG_X11
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_XV
+#cmakedefine WITH_DEBUG_SCARD
 
 #endif
