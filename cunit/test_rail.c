@@ -26,7 +26,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
@@ -47,13 +47,13 @@
 
 int init_rail_suite(void)
 {
-	freerdp_chanman_global_init();
+	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_rail_suite(void)
 {
-	freerdp_chanman_global_uninit();
+	freerdp_channels_global_uninit();
 	return 0;
 }
 
@@ -417,7 +417,7 @@ RAIL_EVENT;
 
 typedef struct
 {
-	rdpChanMan* chan_man;
+	rdpChannels* chan_man;
 	freerdp*    instance;
 	int         th_count;
 	int         th_to_finish;
@@ -485,7 +485,7 @@ static void test_on_free_rail_client_event(RDP_EVENT* event)
 }
 //-----------------------------------------------------------------------------
 static void send_ui_event2plugin(
-	rdpChanMan* chan_man,
+	rdpChannels* chan_man,
 	uint16 event_type,
 	void * data
 	)
@@ -498,7 +498,7 @@ static void send_ui_event2plugin(
 	{
 		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
 				test_on_free_rail_client_event, payload);
-		freerdp_chanman_send_event(chan_man, out_event);
+		freerdp_channels_send_event(chan_man, out_event);
 	}
 }
 //-----------------------------------------------------------------------------
@@ -514,7 +514,7 @@ static void emulate_server_send_channel_data(
 	printf("Emulate server packet (%d packet):\n", counter);
 	freerdp_hexdump(data, size);
 
-	freerdp_chanman_data(instance, 0, (char*)data, size,
+	freerdp_channels_data(instance, 0, (char*)data, size,
 			CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, size);
 	usleep(10*1000);
 }
@@ -616,11 +616,11 @@ static void process_events_and_channel_data_from_plugin(thread_param* param)
 	param->th_count++;
 	while (param->th_to_finish == 0)
 	{
-		freerdp_chanman_check_fds(param->chan_man, param->instance);
+		freerdp_channels_check_fds(param->chan_man, param->instance);
 
 		while (1)
 		{
-			event = freerdp_chanman_pop_event(param->chan_man);
+			event = freerdp_channels_pop_event(param->chan_man);
 			if (event == NULL) break;
 
 			static int counter = 0;
@@ -658,7 +658,7 @@ void test_rail_plugin(void)
 	thread_param param;
 	pthread_t thread;
 
-	rdpChanMan* chan_man;
+	rdpChannels* chan_man;
 	rdpSettings settings = { 0 };
 	freerdp s_inst = { 0 };
 	freerdp* inst = &s_inst;
@@ -673,11 +673,11 @@ void test_rail_plugin(void)
 	inst->settings = &settings;
 	inst->SendChannelData = emulate_client_send_channel_data;
 
-	chan_man = freerdp_chanman_new();
+	chan_man = freerdp_channels_new();
 
-	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/rail/rail.so", NULL);
-	freerdp_chanman_pre_connect(chan_man, inst);
-	freerdp_chanman_post_connect(chan_man, inst);
+	freerdp_channels_load_plugin(chan_man, &settings, "../channels/rail/rail.so", NULL);
+	freerdp_channels_pre_connect(chan_man, inst);
+	freerdp_channels_post_connect(chan_man, inst);
 
 	memset(&param, 0, sizeof(param));
 
@@ -882,8 +882,8 @@ void test_rail_plugin(void)
 			)
 		);
 
-	freerdp_chanman_close(chan_man, inst);
-	freerdp_chanman_free(chan_man);
+	freerdp_channels_close(chan_man, inst);
+	freerdp_channels_free(chan_man);
 }
 
 

@@ -18,15 +18,15 @@
  * limitations under the License.
  */
 
-#ifndef __LIBCHANMAN_H
-#define __LIBCHANMAN_H
+#ifndef __LIBCHANNELS_H
+#define __LIBCHANNELS_H
 
 #include <freerdp/utils/debug.h>
 
-#ifdef WITH_DEBUG_CHANMAN
-#define DEBUG_CHANMAN(fmt, ...) DEBUG_CLASS(CHANMAN, fmt, ## __VA_ARGS__)
+#ifdef WITH_DEBUG_CHANNELS
+#define DEBUG_CHANNELS(fmt, ...) DEBUG_CLASS(CHANNELS, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_CHANMAN(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_CHANNELS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __LIBCHANMAN_H */
+#endif /* __LIBCHANNELS_H */

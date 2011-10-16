@@ -198,7 +198,7 @@ void test_gcc_write_client_network_data(void)
 	settings = settings_new(NULL);
 
 	settings->num_channels = 3;
-	memset(settings->channels, 0, sizeof(rdpChan) * settings->num_channels);
+	memset(settings->channels, 0, sizeof(rdpChannel) * settings->num_channels);
 
 	strcpy(settings->channels[0].name, "rdpdr");
 	settings->channels[0].options = 0x80800000;

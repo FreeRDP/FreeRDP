@@ -17,14 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_CHANMAN_SRCS
-	libchanman.c
-	libchanman.h)
+set(FREERDP_CHANNELS_SRCS
+	libchannels.c
+	libchannels.h)
 
-add_library(freerdp-chanman ${FREERDP_CHANMAN_SRCS})
+add_library(freerdp-channels ${FREERDP_CHANNELS_SRCS})
 
-set_target_properties(freerdp-chanman PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-chanman freerdp-utils)
+set_target_properties(freerdp-channels PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+target_link_libraries(freerdp-channels freerdp-utils)
 
-install(TARGETS freerdp-chanman DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS freerdp-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

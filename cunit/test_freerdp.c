@@ -31,7 +31,7 @@
 #include "test_utils.h"
 #include "test_orders.h"
 #include "test_license.h"
-#include "test_chanman.h"
+#include "test_channels.h"
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
 #include "test_librfx.h"

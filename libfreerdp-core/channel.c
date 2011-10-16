@@ -34,11 +34,11 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 	uint32 flags;
 	int i, left;
 	int chunk_size;
-	rdpChan* channel = NULL;
+	rdpChannel* channel = NULL;
 
 	for (i = 0; i < instance->settings->num_channels; i++)
 	{
-		if (instance->settings->channels[i].chan_id == channel_id)
+		if (instance->settings->channels[i].channel_id == channel_id)
 		{
 			channel = &instance->settings->channels[i];
 			break;

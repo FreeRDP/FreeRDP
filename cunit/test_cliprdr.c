@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
@@ -32,13 +32,13 @@
 
 int init_cliprdr_suite(void)
 {
-	freerdp_chanman_global_init();
+	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_cliprdr_suite(void)
 {
-	freerdp_chanman_global_uninit();
+	freerdp_channels_global_uninit();
 	return 0;
 }
 
@@ -105,7 +105,7 @@ static void event_process_callback(RDP_EVENT* event)
 void test_cliprdr(void)
 {
 	int i;
-	rdpChanMan* chan_man;
+	rdpChannels* chan_man;
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 	RDP_EVENT* event;
@@ -117,23 +117,23 @@ void test_cliprdr(void)
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 
-	chan_man = freerdp_chanman_new();
+	chan_man = freerdp_channels_new();
 
-	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/cliprdr/cliprdr.so", NULL);
-	freerdp_chanman_pre_connect(chan_man, &instance);
-	freerdp_chanman_post_connect(chan_man, &instance);
+	freerdp_channels_load_plugin(chan_man, &settings, "../channels/cliprdr/cliprdr.so", NULL);
+	freerdp_channels_pre_connect(chan_man, &instance);
+	freerdp_channels_post_connect(chan_man, &instance);
 
 	/* server sends cliprdr capabilities and monitor ready PDU */
-	freerdp_chanman_data(&instance, 0, (char*)test_clip_caps_data, sizeof(test_clip_caps_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_clip_caps_data, sizeof(test_clip_caps_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_clip_caps_data) - 1);
 
-	freerdp_chanman_data(&instance, 0, (char*)test_monitor_ready_data, sizeof(test_monitor_ready_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_monitor_ready_data, sizeof(test_monitor_ready_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_monitor_ready_data) - 1);
 
 	/* cliprdr sends clipboard_sync event to UI */
-	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	while ((event = freerdp_channels_pop_event(chan_man)) == NULL)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
 	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_SYNC);
@@ -147,26 +147,26 @@ void test_cliprdr(void)
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, event);
+	freerdp_channels_send_event(chan_man, event);
 
 	/* cliprdr sends format list PDU to server */
 	while (!event_processed)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 
 	/* server sends format list response PDU to cliprdr */
-	freerdp_chanman_data(&instance, 0, (char*)test_format_list_response_data, sizeof(test_format_list_response_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_format_list_response_data, sizeof(test_format_list_response_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_format_list_response_data) - 1);
 
 	/* server sends format list PDU to cliprdr */
-	freerdp_chanman_data(&instance, 0, (char*)test_format_list_data, sizeof(test_format_list_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_format_list_data, sizeof(test_format_list_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_format_list_data) - 1);
 
 	/* cliprdr sends format_list event to UI */
-	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	while ((event = freerdp_channels_pop_event(chan_man)) == NULL)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
 	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_FORMAT_LIST);
@@ -179,13 +179,13 @@ void test_cliprdr(void)
 	freerdp_event_free(event);
 
 	/* server sends data request PDU to cliprdr */
-	freerdp_chanman_data(&instance, 0, (char*)test_data_request_data, sizeof(test_data_request_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_data_request_data, sizeof(test_data_request_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_data_request_data) - 1);
 
 	/* cliprdr sends data request event to UI */
-	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	while ((event = freerdp_channels_pop_event(chan_man)) == NULL)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
 	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_DATA_REQUEST);
@@ -203,12 +203,12 @@ void test_cliprdr(void)
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, event);
+	freerdp_channels_send_event(chan_man, event);
 
 	/* cliprdr sends data response PDU to server */
 	while (!event_processed)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 
 	/* UI sends data request event to cliprdr */
@@ -216,22 +216,22 @@ void test_cliprdr(void)
 	data_request_event = (RDP_CB_DATA_REQUEST_EVENT*)event;
 	data_request_event->format = CB_FORMAT_UNICODETEXT;
 	event_processed = 0;
-	freerdp_chanman_send_event(chan_man, event);
+	freerdp_channels_send_event(chan_man, event);
 
 	/* cliprdr sends data request PDU to server */
 	while (!event_processed)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 
 	/* server sends data response PDU to cliprdr */
-	freerdp_chanman_data(&instance, 0, (char*)test_data_response_data, sizeof(test_data_response_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_data_response_data, sizeof(test_data_response_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_data_response_data) - 1);
 
 	/* cliprdr sends data response event to UI */
-	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	while ((event = freerdp_channels_pop_event(chan_man)) == NULL)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 	printf("Got event %d\n", event->event_type);
 	CU_ASSERT(event->event_type == RDP_EVENT_TYPE_CB_DATA_RESPONSE);
@@ -243,6 +243,6 @@ void test_cliprdr(void)
 	}
 	freerdp_event_free(event);
 
-	freerdp_chanman_close(chan_man, &instance);
-	freerdp_chanman_free(chan_man);
+	freerdp_channels_close(chan_man, &instance);
+	freerdp_channels_free(chan_man);
 }

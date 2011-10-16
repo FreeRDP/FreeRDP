@@ -252,7 +252,7 @@ boolean wf_pre_connect(freerdp* instance)
 	}
 
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
-	freerdp_chanman_pre_connect(GET_CHANMAN(instance), instance);
+	freerdp_channels_pre_connect(GET_CHANMAN(instance), instance);
 
 	return True;
 }
@@ -368,24 +368,24 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->cache->offscreen->SetSurface = (cbSetSurface) wf_set_surface;
 	}
 
-	freerdp_chanman_post_connect(GET_CHANMAN(instance), instance);
+	freerdp_channels_post_connect(GET_CHANMAN(instance), instance);
 
 	return True;
 }
 
 int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
 {
-	return freerdp_chanman_data(instance, channelId, data, size, flags, total_size);
+	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-void wf_process_channel_event(rdpChanMan* chanman, freerdp* instance)
+void wf_process_channel_event(rdpChannels* chanman, freerdp* instance)
 {
 	wfInfo* wfi;
 	RDP_EVENT* event;
 
 	wfi = GET_WFI(instance);
 
-	event = freerdp_chanman_pop_event(chanman);
+	event = freerdp_channels_pop_event(chanman);
 
 	if (event)
 		freerdp_event_free(event);
@@ -405,10 +405,10 @@ boolean wf_check_fds(freerdp* instance)
 
 int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChanMan* chanman = (rdpChanMan*) user_data;
+	rdpChannels* chanman = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
-	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
 
 	return 1;
 }
@@ -430,7 +430,7 @@ int wfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	int fds_count;
 	HANDLE fds[64];
-	rdpChanMan* chanman;
+	rdpChannels* chanman;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -456,7 +456,7 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to get wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_chanman_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -496,7 +496,7 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to check wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_chanman_check_fds(chanman, instance) != True)
+		if (freerdp_channels_check_fds(chanman, instance) != True)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
@@ -522,7 +522,7 @@ int wfreerdp_run(freerdp* instance)
 	}
 
 	/* cleanup */
-	freerdp_chanman_free(chanman);
+	freerdp_channels_free(chanman);
 	freerdp_free(instance);
 	
 	return 0;
@@ -588,7 +588,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	thread_data* data;
 	WSADATA wsa_data;
 	WNDCLASSEX wnd_cls;
-	rdpChanMan* chanman;
+	rdpChannels* chanman;
 
 	if (WSAStartup(0x101, &wsa_data) != 0)
 		return 1;
@@ -616,14 +616,14 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RegisterClassEx(&wnd_cls);
 
 	g_hInstance = hInstance;
-	freerdp_chanman_global_init();
+	freerdp_channels_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	chanman = freerdp_chanman_new();
+	chanman = freerdp_channels_new();
 	SET_CHANMAN(instance, chanman);
 
 	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))

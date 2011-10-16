@@ -859,7 +859,7 @@ boolean gcc_read_client_network_data(STREAM* s, rdpSettings *settings, uint16 bl
 		/* CHANNEL_DEF */
 		stream_read(s, settings->channels[i].name, 8); /* name (8 bytes) */
 		stream_read_uint32(s, settings->channels[i].options); /* options (4 bytes) */
-		settings->channels[i].chan_id = MCS_GLOBAL_CHANNEL_ID + 1 + i;
+		settings->channels[i].channel_id = MCS_GLOBAL_CHANNEL_ID + 1 + i;
 	}
 
 	return True;
@@ -913,7 +913,7 @@ boolean gcc_read_server_network_data(STREAM* s, rdpSettings *settings)
 	for (i = 0; i < channelCount; i++)
 	{
 		stream_read_uint16(s, channelId); /* channelId */
-		settings->channels[i].chan_id = channelId;
+		settings->channels[i].channel_id = channelId;
 	}
 
 	if (channelCount % 2 == 1)
@@ -933,7 +933,7 @@ void gcc_write_server_network_data(STREAM* s, rdpSettings *settings)
 
 	for (i = 0; i < settings->num_channels; i++)
 	{
-		stream_write_uint16(s, settings->channels[i].chan_id);
+		stream_write_uint16(s, settings->channels[i].channel_id);
 	}
 
 	if (settings->num_channels % 2 == 1)

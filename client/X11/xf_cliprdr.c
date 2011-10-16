@@ -37,7 +37,7 @@ struct clipboard_format_mapping
 typedef struct clipboard_context clipboardContext;
 struct clipboard_context
 {
-	rdpChanMan* chanman;
+	rdpChannels* chanman;
 	Window root_window;
 	Atom clipboard_atom;
 	Atom property_atom;
@@ -69,7 +69,7 @@ struct clipboard_context
 	int incr_data_length;
 };
 
-void xf_cliprdr_init(xfInfo* xfi, rdpChanMan* chanman)
+void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 {
 	int n;
 	uint32 id;
@@ -317,7 +317,7 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 	event->raw_format_data_size = len;
 	XFree(format_data);
 
-	freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
@@ -330,7 +330,7 @@ static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
 
 	event->num_formats = 0;
 
-	freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
@@ -351,7 +351,7 @@ static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
 		event->formats[i] = cb->format_mappings[i].format_id;
 	}
 
-	freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_format_list(xfInfo* xfi)
@@ -384,7 +384,7 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, uint32 format)
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 	event->format = format;
 
-	freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_data_response(xfInfo* xfi, uint8* data, int size)
@@ -397,7 +397,7 @@ static void xf_cliprdr_send_data_response(xfInfo* xfi, uint8* data, int size)
 	event->data = data;
 	event->size = size;
 
-	freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_null_data_response(xfInfo* xfi)
@@ -494,7 +494,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		event->num_formats = num;
 		XFree(data);
 
-		freerdp_chanman_send_event(cb->chanman, (RDP_EVENT*) event);
+		freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
 	}
 	else
 	{

@@ -23,7 +23,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/region.h>
@@ -63,7 +63,7 @@ struct xf_context
 	rdpContext _p;
 
 	xfInfo* xfi;
-	rdpChanMan* chanman;
+	rdpChannels* channels;
 	rdpSettings* settings;
 };
 typedef struct xf_context xfContext;

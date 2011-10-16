@@ -134,15 +134,15 @@ typedef struct
 	uint8 arcRandomBits[16];
 } ARC_SC_PRIVATE_PACKET;
 
-struct rdp_chan
+struct rdp_channel
 {
 	char name[8]; /* ui sets */
 	int options; /* ui sets */
-	int chan_id; /* core sets */
+	int channel_id; /* core sets */
 	boolean joined; /* client has joined the channel */
 	void * handle; /* just for ui */
 };
-typedef struct rdp_chan rdpChan;
+typedef struct rdp_channel rdpChannel;
 
 struct rdp_ext_set
 {
@@ -216,7 +216,7 @@ struct rdp_settings
 	uint32 redirected_session_id;
 
 	int num_channels;
-	rdpChan channels[16];
+	rdpChannel channels[16];
 
 	int num_monitors;
 	struct rdp_monitor monitors[16];

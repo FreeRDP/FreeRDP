@@ -22,7 +22,7 @@
 
 #include "xfreerdp.h"
 
-void xf_cliprdr_init(xfInfo* xfi, rdpChanMan* chanman);
+void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman);
 void xf_cliprdr_uninit(xfInfo* xfi);
 void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event);
 boolean xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent);

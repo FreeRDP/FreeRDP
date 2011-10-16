@@ -157,7 +157,7 @@ add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-codec)
-add_subdirectory(libfreerdp-chanman)
+add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-core)
 
 if(NOT WIN32)

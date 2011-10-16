@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
@@ -31,13 +31,13 @@
 
 int init_drdynvc_suite(void)
 {
-	freerdp_chanman_global_init();
+	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_drdynvc_suite(void)
 {
-	freerdp_chanman_global_uninit();
+	freerdp_channels_global_uninit();
 	return 0;
 }
 
@@ -67,7 +67,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, in
 
 void test_drdynvc(void)
 {
-	rdpChanMan* chan_man;
+	rdpChannels* chan_man;
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 
@@ -75,23 +75,23 @@ void test_drdynvc(void)
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 
-	chan_man = freerdp_chanman_new();
+	chan_man = freerdp_channels_new();
 
-	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/drdynvc/drdynvc.so", NULL);
-	freerdp_chanman_pre_connect(chan_man, &instance);
-	freerdp_chanman_post_connect(chan_man, &instance);
+	freerdp_channels_load_plugin(chan_man, &settings, "../channels/drdynvc/drdynvc.so", NULL);
+	freerdp_channels_pre_connect(chan_man, &instance);
+	freerdp_channels_post_connect(chan_man, &instance);
 
 	/* server sends capability request PDU */
-	freerdp_chanman_data(&instance, 0, (char*)test_capability_request_data, sizeof(test_capability_request_data) - 1,
+	freerdp_channels_data(&instance, 0, (char*)test_capability_request_data, sizeof(test_capability_request_data) - 1,
 		CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, sizeof(test_capability_request_data) - 1);
 
 	/* drdynvc sends capability response PDU to server */
 	data_received = 0;
 	while (!data_received)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 
-	freerdp_chanman_close(chan_man, &instance);
-	freerdp_chanman_free(chan_man);
+	freerdp_channels_close(chan_man, &instance);
+	freerdp_channels_free(chan_man);
 }

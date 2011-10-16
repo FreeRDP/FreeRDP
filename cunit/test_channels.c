@@ -22,20 +22,20 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 
-#include "test_chanman.h"
+#include "test_channels.h"
 
 int init_chanman_suite(void)
 {
-	freerdp_chanman_global_init();
+	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_chanman_suite(void)
 {
-	freerdp_chanman_global_uninit();
+	freerdp_channels_global_uninit();
 	return 0;
 }
 
@@ -56,7 +56,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, in
 
 void test_chanman(void)
 {
-	rdpChanMan* chan_man;
+	rdpChannels* chan_man;
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 	RDP_EVENT* event;
@@ -65,27 +65,27 @@ void test_chanman(void)
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 
-	chan_man = freerdp_chanman_new();
+	chan_man = freerdp_channels_new();
 
-	freerdp_chanman_load_plugin(chan_man, &settings, "../channels/rdpdbg/rdpdbg.so", NULL);
-	freerdp_chanman_pre_connect(chan_man, &instance);
-	freerdp_chanman_post_connect(chan_man, &instance);
+	freerdp_channels_load_plugin(chan_man, &settings, "../channels/rdpdbg/rdpdbg.so", NULL);
+	freerdp_channels_pre_connect(chan_man, &instance);
+	freerdp_channels_post_connect(chan_man, &instance);
 
-	freerdp_chanman_data(&instance, 0, "testdata", 8, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 8);
-	freerdp_chanman_data(&instance, 0, "testdata1", 9, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 9);
-	freerdp_chanman_data(&instance, 0, "testdata11", 10, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 10);
-	freerdp_chanman_data(&instance, 0, "testdata111", 11, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 11);
+	freerdp_channels_data(&instance, 0, "testdata", 8, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 8);
+	freerdp_channels_data(&instance, 0, "testdata1", 9, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 9);
+	freerdp_channels_data(&instance, 0, "testdata11", 10, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 10);
+	freerdp_channels_data(&instance, 0, "testdata111", 11, CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, 11);
 
 	event = freerdp_event_new(RDP_EVENT_CLASS_DEBUG, 0, NULL, NULL);
-	freerdp_chanman_send_event(chan_man, event);
+	freerdp_channels_send_event(chan_man, event);
 
-	while ((event = freerdp_chanman_pop_event(chan_man)) == NULL)
+	while ((event = freerdp_channels_pop_event(chan_man)) == NULL)
 	{
-		freerdp_chanman_check_fds(chan_man, &instance);
+		freerdp_channels_check_fds(chan_man, &instance);
 	}
 	printf("responded event_type %d\n", event->event_type);
 	freerdp_event_free(event);
 
-	freerdp_chanman_close(chan_man, &instance);
-	freerdp_chanman_free(chan_man);
+	freerdp_channels_close(chan_man, &instance);
+	freerdp_channels_free(chan_man);
 }

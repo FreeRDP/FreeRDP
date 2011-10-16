@@ -272,7 +272,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 
 		if (rdp->settings->num_channels > 0)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[0].chan_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[0].channel_id))
 				return False;
 
 			all_joined = False;
@@ -285,7 +285,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 			if (rdp->settings->channels[i].joined)
 				continue;
 
-			if (rdp->settings->channels[i].chan_id != channel_id)
+			if (rdp->settings->channels[i].channel_id != channel_id)
 				return False;
 
 			rdp->settings->channels[i].joined = True;
@@ -293,7 +293,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 		}
 		if (i + 1 < rdp->settings->num_channels)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[i + 1].chan_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[i + 1].channel_id))
 				return False;
 
 			all_joined = False;
@@ -513,7 +513,7 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 
 	for (i = 0; i < rdp->settings->num_channels; i++)
 	{
-		if (rdp->settings->channels[i].chan_id == channel_id)
+		if (rdp->settings->channels[i].channel_id == channel_id)
 			rdp->settings->channels[i].joined = True;
 
 		if (!rdp->settings->channels[i].joined)

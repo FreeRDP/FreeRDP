@@ -25,7 +25,7 @@
 #include <string.h>
 #include <directfb.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
 
 typedef struct df_info dfInfo;
@@ -35,7 +35,7 @@ struct df_context
 	rdpContext _p;
 
 	dfInfo* dfi;
-	rdpChanMan* chanman;
+	rdpChannels* channels;
 	rdpSettings* settings;
 };
 typedef struct df_context dfContext;
