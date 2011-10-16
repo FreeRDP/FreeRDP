@@ -27,7 +27,7 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
 	uint32 size = sizeof(rdpBitmap);
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	IFCALL(cache->offscreen->OffscreenBitmapSize, update, &size);
 	bitmap = (rdpBitmap*) xzalloc(size);
@@ -52,7 +52,7 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 
 void update_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
 {
-	rdpCache* cache = (rdpCache*) update->cache;
+	rdpCache* cache = update->context->cache;
 
 	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
