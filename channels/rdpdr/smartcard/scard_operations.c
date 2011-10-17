@@ -796,7 +796,7 @@ handle_State(IRP* irp)	// TESTME
 	sc_output_alignment(irp, 8);
 
 #ifdef SCARD_AUTOALLOCATE
-	SCard
+	xfree(readerName);
 #else
 	xfree(readerName);
 #endif
