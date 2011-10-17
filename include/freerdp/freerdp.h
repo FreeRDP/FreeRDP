@@ -24,6 +24,8 @@ typedef struct rdp_rdp rdpRdp;
 typedef struct rdp_gdi rdpGdi;
 typedef struct rdp_rail rdpRail;
 typedef struct rdp_cache rdpCache;
+typedef struct rdp_channels rdpChannels;
+
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
 
@@ -64,6 +66,9 @@ struct rdp_context
 	rdpGdi* gdi;
 	rdpRail* rail;
 	rdpCache* cache;
+	rdpChannels* channels;
+
+	void* reserved[32 - 6];
 };
 
 struct rdp_freerdp

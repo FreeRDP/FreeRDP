@@ -81,7 +81,8 @@ void xf_context_size(freerdp* instance, uint32* size)
 
 void xf_context_new(freerdp* instance, xfContext* context)
 {
-	context->channels = freerdp_channels_new();
+	rdpContext* _context = &context->_p;
+	_context->channels = freerdp_channels_new();
 }
 
 void xf_context_free(freerdp* instance, xfContext* context)
@@ -527,6 +528,8 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
 	((xfContext*) instance->context)->xfi = xfi;
+
+	xfi->_context = instance->context;
 	xfi->context = (xfContext*) instance->context;
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
@@ -559,7 +562,7 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
-	freerdp_channels_pre_connect(xfi->context->channels, instance);
+	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -623,11 +626,11 @@ boolean xf_post_connect(freerdp* instance)
 	xfInfo* xfi;
 	XGCValues gcv;
 	rdpCache* cache;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	cache = instance->context->cache;
-	chanman = xfi->context->channels;
+	channels = xfi->_context->channels;
 
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
@@ -738,12 +741,12 @@ boolean xf_post_connect(freerdp* instance)
 	rail_register_update_callbacks(instance->context->rail, instance->update);
 	xf_rail_register_callbacks(xfi, instance->context->rail);
 
-	freerdp_channels_post_connect(chanman, instance);
+	freerdp_channels_post_connect(channels, instance);
 
 	xf_tsmf_init(xfi, xv_port);
 
 	if (xfi->remote_app != True)
-		xf_cliprdr_init(xfi, chanman);
+		xf_cliprdr_init(xfi, channels);
 
 	return True;
 }
@@ -902,7 +905,7 @@ int xfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -911,7 +914,7 @@ int xfreerdp_run(freerdp* instance)
 		return 0;
 
 	xfi = ((xfContext*) instance->context)->xfi;
-	chanman = ((xfContext*) instance->context)->channels;
+	channels = instance->context->channels;
 
 	while (1)
 	{
@@ -923,7 +926,7 @@ int xfreerdp_run(freerdp* instance)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -974,16 +977,16 @@ int xfreerdp_run(freerdp* instance)
 			printf("Failed to check xfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(chanman, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != True)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
-		xf_process_channel_event(chanman, instance);
+		xf_process_channel_event(channels, instance);
 	}
 
-	freerdp_channels_close(chanman, instance);
-	freerdp_channels_free(chanman);
+	freerdp_channels_close(channels, instance);
+	freerdp_channels_free(channels);
 	instance->Disconnect(instance);
 	gdi_free(instance);
 	freerdp_free(instance);
@@ -1015,7 +1018,6 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
-	xfContext* context;
 	struct thread_data* data;
 
 	freerdp_handle_signals();
@@ -1038,10 +1040,9 @@ int main(int argc, char* argv[])
 	freerdp_context_new(instance);
 
 	instance->settings->sw_gdi = False;
-	context = (xfContext*) instance->context;
 
 	if (freerdp_parse_args(instance->settings, argc, argv,
-			xf_process_plugin_args, context->channels, xf_process_ui_args, NULL) < 0)
+			xf_process_plugin_args, instance->context->channels, xf_process_ui_args, NULL) < 0)
 		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
