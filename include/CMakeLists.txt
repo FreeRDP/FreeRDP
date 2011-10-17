@@ -21,7 +21,7 @@ file(GLOB HEADERS "freerdp/*.h")
 install_files(/include/freerdp FILES ${HEADERS})
 
 install(DIRECTORY freerdp/utils DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/chanman DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/channels DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/cache DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/gdi DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/kbd DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
