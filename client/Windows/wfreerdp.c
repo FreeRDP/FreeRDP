@@ -28,7 +28,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 
 #include "wf_gdi.h"
 
@@ -46,6 +46,23 @@ HCURSOR g_default_cursor;
 volatile int g_thread_count = 0;
 LPCTSTR g_wnd_class_name = L"wfreerdp";
 
+void wf_context_size(freerdp* instance, uint32* size)
+{
+	*size = sizeof(wfContext);
+}
+
+void wf_context_new(freerdp* instance, wfContext* context)
+{
+	rdpContext* _context = (rdpContext*) &context->_p;
+
+	context->channels = freerdp_channels_new();
+}
+
+void wf_context_free(freerdp* instance, wfContext* context)
+{
+	rdpContext* _context = (rdpContext*) &context->_p;
+}
+
 int wf_create_console(void)
 {
 	if (!AllocConsole())
@@ -59,8 +76,7 @@ int wf_create_console(void)
 
 void wf_sw_begin_paint(rdpUpdate* update)
 {
-	rdpGdi* gdi;
-	gdi = GET_GDI(update);
+	rdpGdi* gdi = update->context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
@@ -76,8 +92,8 @@ void wf_sw_end_paint(rdpUpdate* update)
 	RECT update_rect;
 	HGDI_RGN cinvalid;
 
-	gdi = GET_GDI(update);
-	wfi = GET_WFI(update);
+	gdi = update->context->gdi;
+	wfi = ((wfContext*) update->context)->wfi;
 
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return;
@@ -103,7 +119,7 @@ void wf_sw_end_paint(rdpUpdate* update)
 
 void wf_hw_begin_paint(rdpUpdate* update)
 {
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 	wfi->hdc->hwnd->invalid->null = 1;
 	wfi->hdc->hwnd->ninvalid = 0;
 }
@@ -123,7 +139,7 @@ void wf_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
 	HDC hdc;
 	uint8* data;
 	rdpBitmap* _bitmap;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	hdc = GetDC(NULL);
 	bitmap->hdc = CreateCompatibleDC(hdc);
@@ -144,7 +160,7 @@ void wf_offscreen_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
 {
 	HDC hdc;
 	rdpBitmap* _bitmap;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	hdc = GetDC(NULL);
 	bitmap->hdc = CreateCompatibleDC(hdc);
@@ -158,7 +174,7 @@ void wf_offscreen_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
 
 void wf_set_surface(rdpUpdate* update, wfBitmap* bitmap, boolean primary)
 {
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	if (primary)
 		wfi->drawing = wfi->primary;
@@ -180,11 +196,13 @@ boolean wf_pre_connect(freerdp* instance)
 {
 	int i1;
 	wfInfo* wfi;
+	wfContext* context;
 	rdpSettings* settings;
 
 	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
-	SET_WFI(instance, wfi);
+	context = (wfContext*) instance->context;
 	wfi->instance = instance;
+	context->wfi = wfi;
 
 	settings = instance->settings;
 
@@ -221,9 +239,7 @@ boolean wf_pre_connect(freerdp* instance)
 	wfi->clrconv->alpha = 1;
 	wfi->clrconv->palette = NULL;
 
-	wfi->cache = cache_new(settings);
-	instance->cache = (void*) wfi->cache;
-	instance->update->cache = instance->cache;
+	instance->context->cache = cache_new(settings);
 
 	if (wfi->percentscreen > 0)
 	{
@@ -252,7 +268,7 @@ boolean wf_pre_connect(freerdp* instance)
 	}
 
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
-	freerdp_channels_pre_connect(GET_CHANMAN(instance), instance);
+	freerdp_channels_pre_connect(context->channels, instance);
 
 	return True;
 }
@@ -261,13 +277,16 @@ boolean wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	wfInfo* wfi;
+	rdpCache* cache;
+	wfContext* context;
 	int width, height;
 	wchar_t win_title[64];
 	rdpSettings* settings;
 
-	wfi = GET_WFI(instance);
-	SET_WFI(instance->update, wfi);
 	settings = instance->settings;
+	context = (wfContext*) instance->context;
+	cache = instance->context->cache;
+	wfi = context->wfi;
 
 	wfi->dstBpp = 32;
 	width = settings->width;
@@ -276,7 +295,7 @@ boolean wf_post_connect(freerdp* instance)
 	if (wfi->sw_gdi)
 	{
 		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
-		gdi = GET_GDI(instance->update);
+		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
 	}
@@ -357,18 +376,18 @@ boolean wf_post_connect(freerdp* instance)
 	if (wfi->sw_gdi != True)
 	{
 		bitmap_cache_register_callbacks(instance->update);
-		wfi->cache->bitmap->BitmapSize = (cbBitmapSize) wf_bitmap_size;
-		wfi->cache->bitmap->BitmapNew = (cbBitmapNew) wf_bitmap_new;
-		wfi->cache->bitmap->BitmapFree = (cbBitmapFree) wf_bitmap_free;
+		cache->bitmap->BitmapSize = (cbBitmapSize) wf_bitmap_size;
+		cache->bitmap->BitmapNew = (cbBitmapNew) wf_bitmap_new;
+		cache->bitmap->BitmapFree = (cbBitmapFree) wf_bitmap_free;
 
 		offscreen_cache_register_callbacks(instance->update);
-		wfi->cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) wf_bitmap_size;
-		wfi->cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) wf_offscreen_bitmap_new;
-		wfi->cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) wf_bitmap_free;
-		wfi->cache->offscreen->SetSurface = (cbSetSurface) wf_set_surface;
+		cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) wf_bitmap_size;
+		cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) wf_offscreen_bitmap_new;
+		cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) wf_bitmap_free;
+		cache->offscreen->SetSurface = (cbSetSurface) wf_set_surface;
 	}
 
-	freerdp_channels_post_connect(GET_CHANMAN(instance), instance);
+	freerdp_channels_post_connect(context->channels, instance);
 
 	return True;
 }
@@ -378,14 +397,11 @@ int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int s
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-void wf_process_channel_event(rdpChannels* chanman, freerdp* instance)
+void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	wfInfo* wfi;
 	RDP_EVENT* event;
 
-	wfi = GET_WFI(instance);
-
-	event = freerdp_channels_pop_event(chanman);
+	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 		freerdp_event_free(event);
@@ -393,22 +409,20 @@ void wf_process_channel_event(rdpChannels* chanman, freerdp* instance)
 
 boolean wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	wfInfo* wfi = GET_WFI(instance);
 	return True;
 }
 
 boolean wf_check_fds(freerdp* instance)
 {
-	wfInfo* wfi = GET_WFI(instance);
 	return True;
 }
 
 int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChannels* chanman = (rdpChannels*) user_data;
+	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
@@ -430,7 +444,7 @@ int wfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	int fds_count;
 	HANDLE fds[64];
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -438,7 +452,7 @@ int wfreerdp_run(freerdp* instance)
 	if (instance->Connect(instance) != True)
 		return 0;
 
-	chanman = GET_CHANMAN(instance);
+	channels = ((wfContext*) instance->context)->channels;
 
 	/* program main loop */
 	while (1)
@@ -456,7 +470,7 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to get wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -496,12 +510,12 @@ int wfreerdp_run(freerdp* instance)
 			printf("Failed to check wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(chanman, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != True)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
-		wf_process_channel_event(chanman, instance);
+		wf_process_channel_event(channels, instance);
 
 		alldone = FALSE;
 		while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
@@ -522,7 +536,7 @@ int wfreerdp_run(freerdp* instance)
 	}
 
 	/* cleanup */
-	freerdp_channels_free(chanman);
+	freerdp_channels_free(channels);
 	freerdp_free(instance);
 	
 	return 0;
@@ -538,7 +552,7 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	instance = data->instance;
 
 	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
-	SET_WFI(instance, wfi);
+	((wfContext*) instance->context)->wfi = wfi;
 	wfi->instance = instance;
 
 	wfreerdp_run(instance);
@@ -588,7 +602,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	thread_data* data;
 	WSADATA wsa_data;
 	WNDCLASSEX wnd_cls;
-	rdpChannels* chanman;
+	wfContext* context;
+	rdpChannels* channels;
 
 	if (WSAStartup(0x101, &wsa_data) != 0)
 		return 1;
@@ -623,8 +638,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->PostConnect = wf_post_connect;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	chanman = freerdp_channels_new();
-	SET_CHANMAN(instance, chanman);
+	instance->ContextSize = (pcContextSize) wf_context_size;
+	instance->ContextNew = (pcContextNew) wf_context_new;
+	instance->ContextFree = (pcContextFree) wf_context_free;
+	freerdp_context_new(instance);
+
+	context = (wfContext*) instance->context;
+	channels = context->channels;
 
 	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
@@ -635,7 +655,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		data->instance = instance;
 
 		freerdp_parse_args(instance->settings, __argc, __argv,
-			wf_process_plugin_args, chanman, wf_process_ui_args, NULL);
+			wf_process_plugin_args, channels, wf_process_ui_args, NULL);
 
 		if (CreateThread(NULL, 0, thread_func, data, 0, NULL) != 0)
 			g_thread_count++;

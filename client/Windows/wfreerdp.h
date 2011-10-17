@@ -36,15 +36,9 @@
 #include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/chanman/chanman.h>
+#include <freerdp/channels/channels.h>
 
 #include "wf_event.h"
-
-#define SET_WFI(_instance, _wfi) (_instance)->client = _wfi
-#define GET_WFI(_instance) ((wfInfo*) ((_instance)->client))
-
-#define SET_CHANMAN(_instance, _chanman) (_instance)->chanman = _chanman
-#define GET_CHANMAN(_instance) ((rdpChanMan*) ((_instance)->chanman))
 
 struct wf_bitmap
 {
@@ -54,6 +48,17 @@ struct wf_bitmap
 	HBITMAP org_bitmap;
 };
 typedef struct wf_bitmap wfBitmap;
+
+typedef struct wf_info wfInfo;
+
+struct wf_context
+{
+	rdpContext _p;
+
+	wfInfo* wfi;
+	rdpChannels* channels;
+};
+typedef struct wf_context wfContext;
 
 struct wf_info
 {
@@ -75,8 +80,6 @@ struct wf_info
 	HBRUSH org_brush;
 
 	boolean sw_gdi;
-	rdpCache* cache;
 };
-typedef struct wf_info wfInfo;
 
 #endif

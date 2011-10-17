@@ -166,7 +166,7 @@ void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 	rdpBitmap* bmp;
 	wfBitmap* wf_bmp;
 
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	for (i = 0; i < bitmap->number; i++)
 	{
@@ -192,7 +192,7 @@ void wf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 {
 	HRGN hrgn;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	if (bounds != NULL)
 	{
@@ -208,7 +208,7 @@ void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 
 void wf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 {
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	BitBlt(wfi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
 			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop));
@@ -224,7 +224,7 @@ void wf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 void wf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 {
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	BitBlt(wfi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, wfi->primary->hdc,
@@ -239,7 +239,7 @@ void wf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	RECT rect;
 	HBRUSH brush;
 	uint32 brush_color;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	brush_color = freerdp_color_convert(opaque_rect->color, wfi->srcBpp, 24, wfi->clrconv);
 
@@ -262,7 +262,7 @@ void wf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 	HBRUSH brush;
 	uint32 brush_color;
 	DELTA_RECT* rectangle;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
 	{
@@ -288,7 +288,7 @@ void wf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	HPEN pen;
 	HPEN org_pen;
 	uint32 pen_color;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	pen_color = freerdp_color_convert(line_to->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
@@ -312,7 +312,7 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
 	wfBitmap* bitmap;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	bitmap = (wfBitmap*) memblt->bitmap;
 
@@ -336,8 +336,7 @@ void wf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
-	wfInfo* wfi = GET_WFI(update);
-	color_table_put(wfi->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
+	color_table_put(update->context->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
 void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
@@ -345,13 +344,13 @@ void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 	int i;
 	wfBitmap* wf_bmp;
 	GLYPH_DATA* glyph;
-	wfInfo* wfi = GET_WFI(update);
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
 	for (i = 0; i < cache_glyph->cGlyphs; i++)
 	{
 		glyph = cache_glyph->glyphData[i];
 		wf_bmp = wf_glyph_new(wfi, glyph);
-		glyph_put(wfi->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) wf_bmp);
+		glyph_put(update->context->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) wf_bmp);
 	}
 }
 
