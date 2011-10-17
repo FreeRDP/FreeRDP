@@ -95,6 +95,12 @@ boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int leng
 	if (status != Success)
 		return False;
 
+	if (actual_type == None)
+	{
+		DEBUG_WARN("Property %lu does not exist", property);
+		return False;
+	}
+
 	return True;
 }
 
