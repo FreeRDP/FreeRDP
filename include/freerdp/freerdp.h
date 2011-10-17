@@ -56,6 +56,9 @@ struct rdp_context
 {
 	freerdp* instance;
 
+	int argc;
+	char** argv;
+
 	rdpRdp* rdp;
 	rdpGdi* gdi;
 	rdpRail* rail;

@@ -50,7 +50,7 @@ struct tf_context
 	rdpContext _p;
 
 	tfInfo* tfi;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 };
 typedef struct tf_context tfContext;
 
@@ -72,7 +72,7 @@ void tf_context_size(freerdp* instance, uint32* size)
 
 void tf_context_new(freerdp* instance, tfContext* context)
 {
-	context->chanman = freerdp_channels_new();
+	context->channels = freerdp_channels_new();
 }
 
 void tf_context_free(freerdp* instance, tfContext* context)
@@ -101,15 +101,15 @@ int tf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int s
 
 int tf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChannels* chanman = (rdpChannels*) user_data;
+	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("Load plugin %s\n", name);
-	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
 
-void tf_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
+void tf_process_cb_sync_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -119,21 +119,21 @@ void tf_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
-	freerdp_channels_send_event(chanman, event);
+	freerdp_channels_send_event(channels, event);
 }
 
-void tf_process_channel_event(rdpChannels* chanman, freerdp* instance)
+void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
-	event = freerdp_channels_pop_event(chanman);
+	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
 		switch (event->event_type)
 		{
 			case RDP_EVENT_TYPE_CB_SYNC:
-				tf_process_cb_sync_event(chanman, instance);
+				tf_process_cb_sync_event(channels, instance);
 				break;
 			default:
 				printf("tf_process_channel_event: unknown event type %d\n", event->event_type);
@@ -179,7 +179,7 @@ boolean tf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
 
-	freerdp_channels_pre_connect(context->chanman, instance);
+	freerdp_channels_pre_connect(context->channels, instance);
 
 	return True;
 }
@@ -197,7 +197,7 @@ boolean tf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 
-	freerdp_channels_post_connect(context->chanman, instance);
+	freerdp_channels_post_connect(context->channels, instance);
 
 	return True;
 }
@@ -214,13 +214,13 @@ int tfreerdp_run(freerdp* instance)
 	fd_set rfds_set;
 	fd_set wfds_set;
 	tfContext* context;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
 	context = (tfContext*) instance->context;
-	chanman = context->chanman;
+	channels = context->channels;
 
 	freerdp_connect(instance);
 
@@ -234,7 +234,7 @@ int tfreerdp_run(freerdp* instance)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -274,16 +274,16 @@ int tfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(chanman, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != True)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
-		tf_process_channel_event(chanman, instance);
+		tf_process_channel_event(channels, instance);
 	}
 
-	freerdp_channels_close(chanman, instance);
-	freerdp_channels_free(chanman);
+	freerdp_channels_close(channels, instance);
+	freerdp_channels_free(channels);
 	freerdp_free(instance);
 
 	return 0;
@@ -314,7 +314,7 @@ int main(int argc, char* argv[])
 	freerdp* instance;
 	tfContext* context;
 	struct thread_data* data;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	freerdp_channels_global_init();
 
@@ -331,9 +331,9 @@ int main(int argc, char* argv[])
 	freerdp_context_new(instance);
 
 	context = (tfContext*) instance->context;
-	chanman = context->chanman;
+	channels = context->channels;
 
-	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, chanman, NULL, NULL);
+	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, channels, NULL, NULL);
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

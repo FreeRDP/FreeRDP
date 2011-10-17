@@ -210,10 +210,10 @@ boolean df_post_connect(freerdp* instance)
 static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChannels* chanman = (rdpChannels*) user_data;
+	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
@@ -225,7 +225,7 @@ df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size,
 }
 
 static void
-df_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
+df_process_cb_sync_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -235,22 +235,22 @@ df_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
-	freerdp_channels_send_event(chanman, event);
+	freerdp_channels_send_event(channels, event);
 }
 
 static void
-df_process_channel_event(rdpChannels* chanman, freerdp* instance)
+df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
-	event = freerdp_channels_pop_event(chanman);
+	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
 		switch (event->event_type)
 		{
 			case RDP_EVENT_TYPE_CB_SYNC:
-				df_process_cb_sync_event(chanman, instance);
+				df_process_cb_sync_event(channels, instance);
 				break;
 			default:
 				printf("df_process_channel_event: unknown event type %d\n", event->event_type);

@@ -74,6 +74,9 @@ struct thread_data
 	freerdp* instance;
 };
 
+int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data);
+int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
+
 void xf_context_size(freerdp* instance, uint32* size)
 {
 	*size = sizeof(xfContext);
@@ -534,6 +537,13 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 
+	if (freerdp_parse_args(instance->settings, instance->context->argc, instance->context->argv,
+			xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi) < 0)
+	{
+		printf("failed to parse arguments.\n");
+		exit(0);
+	}
+
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
@@ -761,7 +771,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	return True;
 }
 
-int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
+int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
 
@@ -801,10 +811,10 @@ int xf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, 
 
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChannels* chanman = (rdpChannels*) user_data;
+	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
@@ -873,14 +883,21 @@ void xf_window_free(xfInfo* xfi)
 		xfi->image = NULL;
 	}
 
-	if (context->cache)
+	if (context != NULL)
 	{
-		cache_free(context->cache);
-		context->cache = NULL;
+		if (context->cache != NULL)
+		{
+			cache_free(context->cache);
+			context->cache = NULL;
+		}
+		if (context->rail != NULL)
+		{
+			rail_free(context->rail);
+			context->rail = NULL;
+		}
 	}
 
 	xfree(xfi->clrconv);
-	rail_free(context->rail);
 
 	xf_tsmf_uninit(xfi);
 	xf_cliprdr_uninit(xfi);
@@ -1039,11 +1056,9 @@ int main(int argc, char* argv[])
 	instance->ContextFree = (pcContextFree) xf_context_free;
 	freerdp_context_new(instance);
 
+	instance->context->argc = argc;
+	instance->context->argv = argv;
 	instance->settings->sw_gdi = False;
-
-	if (freerdp_parse_args(instance->settings, argc, argv,
-			xf_process_plugin_args, instance->context->channels, xf_process_ui_args, NULL) < 0)
-		return 1;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
