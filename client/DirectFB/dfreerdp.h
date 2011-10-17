@@ -35,7 +35,6 @@ struct df_context
 	rdpContext _p;
 
 	dfInfo* dfi;
-	rdpChannels* channels;
 	rdpSettings* settings;
 };
 typedef struct df_context dfContext;

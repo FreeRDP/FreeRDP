@@ -382,7 +382,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 	if (brush->style & CACHED_BRUSH)
 	{
-		brush->data = brush_get(cache->brush, brush->index, &brush->bpp);
+		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
 		brush->style = GDI_BS_PATTERN;
 	}
 
@@ -823,7 +823,7 @@ void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_
 void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 {
 	rdpCache* cache = update->context->cache;
-	brush_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)

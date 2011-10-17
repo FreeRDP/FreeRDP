@@ -41,8 +41,8 @@ struct rdp_brush
 };
 typedef struct rdp_brush rdpBrushCache;
 
-FREERDP_API void* brush_get(rdpBrushCache* brush, uint8 index, uint8* bpp);
-FREERDP_API void brush_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp);
+FREERDP_API void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp);
+FREERDP_API void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp);
 
 FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
 FREERDP_API void brush_cache_free(rdpBrushCache* brush);

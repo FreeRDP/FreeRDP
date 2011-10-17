@@ -18,17 +18,16 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CHANMAN_H
-#define __FREERDP_CHANMAN_H
+#ifndef __FREERDP_CHANNELS_H
+#define __FREERDP_CHANNELS_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct rdp_channels rdpChannels;
 
 FREERDP_API int freerdp_channels_global_init(void);
 FREERDP_API int freerdp_channels_global_uninit(void);
@@ -51,4 +50,4 @@ FREERDP_API void freerdp_channels_close(rdpChannels* channels, freerdp* instance
 }
 #endif
 
-#endif
+#endif /* __FREERDP_CHANNELS_H */

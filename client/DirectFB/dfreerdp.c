@@ -46,7 +46,8 @@ void df_context_size(freerdp* instance, uint32* size)
 
 void df_context_new(freerdp* instance, dfContext* context)
 {
-	context->channels = freerdp_channels_new();
+	rdpContext* _context = (rdpContext*) context;
+	_context->channels = freerdp_channels_new();
 }
 
 void df_context_free(freerdp* instance, dfContext* context)
@@ -148,7 +149,7 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
-	freerdp_channels_pre_connect(context->channels, instance);
+	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -201,7 +202,7 @@ boolean df_post_connect(freerdp* instance)
 
 	df_keyboard_init();
 
-	freerdp_channels_post_connect(context->channels, instance);
+	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -209,10 +210,10 @@ boolean df_post_connect(freerdp* instance)
 static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	rdpChannels* chanman = (rdpChannels*) user_data;
+	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(chanman, settings, name, plugin_data);
+	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
@@ -224,7 +225,7 @@ df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size,
 }
 
 static void
-df_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
+df_process_cb_sync_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -234,22 +235,22 @@ df_process_cb_sync_event(rdpChannels* chanman, freerdp* instance)
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
 	format_list_event->num_formats = 0;
 
-	freerdp_channels_send_event(chanman, event);
+	freerdp_channels_send_event(channels, event);
 }
 
 static void
-df_process_channel_event(rdpChannels* chanman, freerdp* instance)
+df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
-	event = freerdp_channels_pop_event(chanman);
+	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
 		switch (event->event_type)
 		{
 			case RDP_EVENT_TYPE_CB_SYNC:
-				df_process_cb_sync_event(chanman, instance);
+				df_process_cb_sync_event(channels, instance);
 				break;
 			default:
 				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
@@ -279,30 +280,30 @@ int dfreerdp_run(freerdp* instance)
 	fd_set wfds_set;
 	dfInfo* dfi;
 	dfContext* context;
-	rdpChannels* chanman;
+	rdpChannels* channels;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (!instance->Connect(instance))
+	if (!freerdp_connect(instance))
 		return 0;
 
 	context = (dfContext*) instance->context;
 
 	dfi = context->dfi;
-	chanman = context->channels;
+	channels = instance->context->channels;
 
 	while (1)
 	{
 		rcount = 0;
 		wcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(chanman, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -343,7 +344,7 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (freerdp_check_fds(instance) != True)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -353,19 +354,19 @@ int dfreerdp_run(freerdp* instance)
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(chanman, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != True)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
-		df_process_channel_event(chanman, instance);
+		df_process_channel_event(channels, instance);
 	}
 
-	freerdp_channels_close(chanman, instance);
-	freerdp_channels_free(chanman);
+	freerdp_channels_close(channels, instance);
+	freerdp_channels_free(channels);
 	df_free(dfi);
 	gdi_free(instance);
-	instance->Disconnect(instance);
+	freerdp_disconnect(instance);
 	freerdp_free(instance);
 
 	return 0;
@@ -395,8 +396,8 @@ int main(int argc, char* argv[])
 	pthread_t thread;
 	freerdp* instance;
 	dfContext* context;
+	rdpChannels* channels;
 	struct thread_data* data;
-	rdpChannels* chanman;
 
 	setlocale(LC_ALL, "");
 
@@ -415,10 +416,10 @@ int main(int argc, char* argv[])
 	freerdp_context_new(instance);
 
 	context = (dfContext*) instance->context;
-	chanman = context->channels;
+	channels = instance->context->channels;
 
 	DirectFBInit(&argc, &argv);
-	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, chanman, NULL, NULL);
+	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

@@ -113,12 +113,14 @@ static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* d
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
 }
 
-void freerdp_disconnect(freerdp* instance)
+boolean freerdp_disconnect(freerdp* instance)
 {
 	rdpRdp* rdp;
 
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
+
+	return True;
 }
 
 void freerdp_context_new(freerdp* instance)
@@ -157,11 +159,7 @@ freerdp* freerdp_new()
 
 	if (instance != NULL)
 	{
-		instance->Connect = freerdp_connect;
-		instance->GetFileDescriptor = freerdp_get_fds;
-		instance->CheckFileDescriptor = freerdp_check_fds;
 		instance->SendChannelData = freerdp_send_channel_data;
-		instance->Disconnect = freerdp_disconnect;
 	}
 
 	return instance;

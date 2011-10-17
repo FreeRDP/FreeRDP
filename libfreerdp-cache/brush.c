@@ -22,7 +22,7 @@
 
 #include <freerdp/cache/brush.h>
 
-void* brush_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
+void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
 {
 	void* entry;
 
@@ -58,7 +58,7 @@ void* brush_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
 	return entry;
 }
 
-void brush_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp)
+void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp)
 {
 	if (bpp == 1)
 	{

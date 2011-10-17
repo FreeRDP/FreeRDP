@@ -825,9 +825,9 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* chan_man, RDP_EVENT* ev
  */
 static void freerdp_channels_process_sync(rdpChannels* chan_man, freerdp* instance)
 {
-	struct channel_data* lchan_data;
 	rdpChannel* lrdp_chan;
 	struct sync_data* item;
+	struct channel_data* lchan_data;
 
 	while (chan_man->sync_data_list->head != NULL)
 	{
@@ -838,10 +838,10 @@ static void freerdp_channels_process_sync(rdpChannels* chan_man, freerdp* instan
 		lchan_data = chan_man->chans + item->index;
 		lrdp_chan = freerdp_channels_find_channel_by_name(chan_man, instance->settings,
 			lchan_data->name, &item->index);
+
 		if (lrdp_chan != NULL)
-		{
-			IFCALL(instance->SendChannelData, instance, lrdp_chan->channel_id, item->data, item->data_length);
-		}
+			instance->SendChannelData(instance, lrdp_chan->channel_id, item->data, item->data_length);
+
 		if (lchan_data->open_event_proc != 0)
 		{
 			lchan_data->open_event_proc(lchan_data->open_handle,

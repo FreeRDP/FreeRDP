@@ -63,7 +63,7 @@ struct xf_context
 	rdpContext _p;
 
 	xfInfo* xfi;
-	rdpChannels* channels;
+	//rdpChannels* channels;
 	rdpSettings* settings;
 };
 typedef struct xf_context xfContext;
@@ -72,6 +72,7 @@ struct xf_info
 {
 	freerdp* instance;
 	xfContext* context;
+	rdpContext* _context;
 
 	GC gc;
 	int bpp;

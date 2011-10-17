@@ -24,6 +24,8 @@ typedef struct rdp_rdp rdpRdp;
 typedef struct rdp_gdi rdpGdi;
 typedef struct rdp_rail rdpRail;
 typedef struct rdp_cache rdpCache;
+typedef struct rdp_channels rdpChannels;
+
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
 
@@ -39,31 +41,31 @@ typedef struct rdp_context rdpContext;
 extern "C" {
 #endif
 
-FREERDP_API boolean freerdp_global_init();
-FREERDP_API void freerdp_global_finish();
-
-typedef boolean (*pcConnect)(freerdp* instance);
-typedef boolean (*pcPreConnect)(freerdp* instance);
-typedef boolean (*pcPostConnect)(freerdp* instance);
-typedef boolean (*pcAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
-typedef boolean (*pcGetFileDescriptor)(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
-typedef boolean (*pcCheckFileDescriptor)(freerdp* instance);
-typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
-typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
-typedef void (*pcDisconnect)(freerdp* instance);
-
 typedef void (*pcContextSize)(freerdp* instance, uint32* size);
 typedef void (*pcContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pcContextFree)(freerdp* instance, rdpContext* context);
+
+typedef boolean (*pcPreConnect)(freerdp* instance);
+typedef boolean (*pcPostConnect)(freerdp* instance);
+typedef boolean (*pcAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
+
+typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
+typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 
 struct rdp_context
 {
 	freerdp* instance;
 
+	int argc;
+	char** argv;
+
 	rdpRdp* rdp;
 	rdpGdi* gdi;
 	rdpRail* rail;
 	rdpCache* cache;
+	rdpChannels* channels;
+
+	void* reserved[32 - 6];
 };
 
 struct rdp_freerdp
@@ -78,19 +80,22 @@ struct rdp_freerdp
 	pcContextNew ContextNew;
 	pcContextFree ContextFree;
 
-	pcConnect Connect;
 	pcPreConnect PreConnect;
 	pcPostConnect PostConnect;
 	pcAuthenticate Authenticate;
-	pcGetFileDescriptor GetFileDescriptor;
-	pcCheckFileDescriptor CheckFileDescriptor;
+
 	pcSendChannelData SendChannelData;
 	pcReceiveChannelData ReceiveChannelData;
-	pcDisconnect Disconnect;
 };
 
 FREERDP_API void freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
+
+FREERDP_API boolean freerdp_connect(freerdp* instance);
+FREERDP_API boolean freerdp_disconnect(freerdp* instance);
+
+FREERDP_API boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
+FREERDP_API boolean freerdp_check_fds(freerdp* instance);
 
 FREERDP_API freerdp* freerdp_new();
 FREERDP_API void freerdp_free(freerdp* instance);

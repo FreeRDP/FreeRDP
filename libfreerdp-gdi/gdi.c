@@ -558,7 +558,7 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 	if (brush->style & CACHED_BRUSH)
 	{
-		brush->data = brush_get(cache->brush, brush->index, &brush->bpp);
+		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
 		brush->style = GDI_BS_PATTERN;
 	}
 
@@ -873,7 +873,7 @@ void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
 {
 	rdpCache* cache = update->context->cache;
-	brush_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
 int tilenum = 0;
@@ -1191,9 +1191,9 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	cache->bitmap->BitmapFree = (cbBitmapFree) gdi_bitmap_free;
 
 	offscreen_cache_register_callbacks(instance->update);
-	cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) gdi_bitmap_size;
-	cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) gdi_offscreen_bitmap_new;
-	cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) gdi_bitmap_free;
+	cache->offscreen->BitmapSize = (cbBitmapSize) gdi_bitmap_size;
+	cache->offscreen->BitmapNew = (cbBitmapNew) gdi_offscreen_bitmap_new;
+	cache->offscreen->BitmapFree = (cbBitmapFree) gdi_bitmap_free;
 	cache->offscreen->SetSurface = (cbSetSurface) gdi_set_surface;
 
 	gdi->rfx_context = rfx_context_new();
