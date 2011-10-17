@@ -731,9 +731,9 @@ boolean xf_post_connect(freerdp* instance)
 		cache->bitmap->BitmapFree = (cbBitmapFree) xf_bitmap_free;
 
 		offscreen_cache_register_callbacks(instance->update);
-		cache->offscreen->OffscreenBitmapSize = (cbOffscreenBitmapSize) xf_bitmap_size;
-		cache->offscreen->OffscreenBitmapNew = (cbOffscreenBitmapNew) xf_offscreen_bitmap_new;
-		cache->offscreen->OffscreenBitmapFree = (cbOffscreenBitmapFree) xf_bitmap_free;
+		cache->offscreen->BitmapSize = (cbBitmapSize) xf_bitmap_size;
+		cache->offscreen->BitmapNew = (cbBitmapNew) xf_offscreen_bitmap_new;
+		cache->offscreen->BitmapFree = (cbBitmapFree) xf_bitmap_free;
 		cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
 	}
 
@@ -910,7 +910,7 @@ int xfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (!instance->Connect(instance))
+	if (!freerdp_connect(instance))
 		return 0;
 
 	xfi = ((xfContext*) instance->context)->xfi;
@@ -921,7 +921,7 @@ int xfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -967,7 +967,7 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (freerdp_check_fds(instance) != True)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -987,7 +987,7 @@ int xfreerdp_run(freerdp* instance)
 
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
-	instance->Disconnect(instance);
+	freerdp_disconnect(instance);
 	gdi_free(instance);
 	freerdp_free(instance);
 	xf_free(xfi);

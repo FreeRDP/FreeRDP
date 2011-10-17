@@ -222,14 +222,14 @@ int tfreerdp_run(freerdp* instance)
 	context = (tfContext*) instance->context;
 	chanman = context->chanman;
 
-	instance->Connect(instance);
+	freerdp_connect(instance);
 
 	while (1)
 	{
 		rcount = 0;
 		wcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -269,7 +269,7 @@ int tfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (freerdp_check_fds(instance) != True)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;

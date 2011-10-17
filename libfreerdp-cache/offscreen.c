@@ -29,18 +29,18 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 	uint32 size = sizeof(rdpBitmap);
 	rdpCache* cache = update->context->cache;
 
-	IFCALL(cache->offscreen->OffscreenBitmapSize, update, &size);
+	IFCALL(cache->offscreen->BitmapSize, update, &size);
 	bitmap = (rdpBitmap*) xzalloc(size);
 
 	bitmap->width = create_offscreen_bitmap->cx;
 	bitmap->height = create_offscreen_bitmap->cy;
 
-	IFCALL(cache->offscreen->OffscreenBitmapNew, update, bitmap);
+	IFCALL(cache->offscreen->BitmapNew, update, bitmap);
 	prevBitmap = offscreen_cache_get(cache->offscreen, create_offscreen_bitmap->id);
 
 	if (prevBitmap != NULL)
 	{
-		IFCALL(cache->offscreen->OffscreenBitmapFree, update, prevBitmap);
+		IFCALL(cache->offscreen->BitmapFree, update, prevBitmap);
 		bitmap_free(prevBitmap);
 	}
 
@@ -142,7 +142,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreen_cache)
 
 			if (bitmap != NULL)
 			{
-				IFCALL(offscreen_cache->OffscreenBitmapFree, offscreen_cache->update, bitmap);
+				IFCALL(offscreen_cache->BitmapFree, offscreen_cache->update, bitmap);
 				bitmap_free(bitmap);
 			}
 		}

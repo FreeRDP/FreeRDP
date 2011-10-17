@@ -1047,6 +1047,7 @@ typedef void (*pcDesktopResize)(rdpUpdate* update);
 typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
 typedef void (*pcPlaySound)(rdpUpdate* update, PLAY_SOUND_UPDATE* play_sound);
+
 typedef void (*pcPointerPosition)(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position);
 typedef void (*pcPointerSystem)(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system);
 typedef void (*pcPointerColor)(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color);
@@ -1117,10 +1118,6 @@ struct rdp_update
 {
 	rdpContext* context;
 
-	boolean dump_rfx;
-	boolean play_rfx;
-	rdpPcap* pcap_rfx;
-
 	pcBeginPaint BeginPaint;
 	pcEndPaint EndPaint;
 	pcSetBounds SetBounds;
@@ -1158,7 +1155,6 @@ struct rdp_update
 	pcEllipseSC EllipseSC;
 	pcEllipseCB EllipseCB;
 
-	boolean glyph_v2;
 	pcCacheBitmap CacheBitmap;
 	pcCacheBitmapV2 CacheBitmapV2;
 	pcCacheBitmapV3 CacheBitmapV3;
@@ -1195,6 +1191,12 @@ struct rdp_update
 	pcSurfaceCommand SurfaceCommand;
 
 	pcBitmapDecompress BitmapDecompress;
+
+	boolean glyph_v2;
+
+	boolean dump_rfx;
+	boolean play_rfx;
+	rdpPcap* pcap_rfx;
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;

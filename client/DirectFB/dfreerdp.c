@@ -285,7 +285,7 @@ int dfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (!instance->Connect(instance))
+	if (!freerdp_connect(instance))
 		return 0;
 
 	context = (dfContext*) instance->context;
@@ -298,7 +298,7 @@ int dfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -344,7 +344,7 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (freerdp_check_fds(instance) != True)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -366,7 +366,7 @@ int dfreerdp_run(freerdp* instance)
 	freerdp_channels_free(channels);
 	df_free(dfi);
 	gdi_free(instance);
-	instance->Disconnect(instance);
+	freerdp_disconnect(instance);
 	freerdp_free(instance);
 
 	return 0;
