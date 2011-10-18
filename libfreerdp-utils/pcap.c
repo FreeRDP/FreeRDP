@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include <time.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -65,6 +65,7 @@ void pcap_write_record(rdpPcap* pcap, pcap_record* record)
 void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 {
 	pcap_record* record;
+	struct timeval tp;
 
 	if (pcap->tail == NULL)
 	{
@@ -88,9 +89,9 @@ void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 	record->header.incl_len = length;
 	record->header.orig_len = length;
 
-	stopwatch_stop(pcap->sw);
-	stopwatch_get_elapsed_time_in_useconds(pcap->sw, &record->header.ts_sec, &record->header.ts_usec);
-	stopwatch_start(pcap->sw);
+	gettimeofday(&tp, 0);
+	record->header.ts_sec = tp.tv_sec;
+	record->header.ts_usec = tp.tv_usec;
 }
 
 boolean pcap_has_next_record(rdpPcap* pcap)
@@ -161,9 +162,6 @@ rdpPcap* pcap_open(char* name, boolean write)
 			fseek(pcap->fp, 0, SEEK_SET);
 			pcap_read_header(pcap, &pcap->header);
 		}
-
-		pcap->sw = stopwatch_create();
-		stopwatch_start(pcap->sw);
 	}
 
 	return pcap;
@@ -187,7 +185,4 @@ void pcap_close(rdpPcap* pcap)
 
 	if (pcap->fp != NULL)
 		fclose(pcap->fp);
-
-	stopwatch_stop(pcap->sw);
-	stopwatch_free(pcap->sw);
 }

@@ -22,7 +22,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stopwatch.h>
 
 struct _pcap_header
 {
@@ -59,7 +58,6 @@ struct rdp_pcap
 {
 	FILE* fp;
 	char* name;
-	STOPWATCH* sw;
 	boolean write;
 	int file_size;
 	int record_count;
