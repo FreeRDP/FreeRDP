@@ -897,6 +897,12 @@ void xf_window_free(xfInfo* xfi)
 		}
 	}
 
+	if (xfi->rfx_context) 
+	{
+		rfx_context_free(xfi->rfx_context);
+		xfi->rfx_context = NULL;
+	}
+	
 	xfree(xfi->clrconv);
 
 	xf_tsmf_uninit(xfi);
