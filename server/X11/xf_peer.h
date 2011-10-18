@@ -24,13 +24,18 @@
 #include <freerdp/listener.h>
 #include <freerdp/utils/stream.h>
 
-struct xf_peer_info
+#include "xfreerdp.h"
+
+struct xf_peer_context
 {
+	rdpContext _p;
+
 	STREAM* s;
+	xfInfo* info;
 	boolean activated;
-	RFX_CONTEXT* context;
+	RFX_CONTEXT* rfx_context;
 };
-typedef struct xf_peer_info xfPeer;
+typedef struct xf_peer_context xfPeerContext;
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 

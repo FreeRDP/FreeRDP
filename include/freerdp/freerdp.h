@@ -28,6 +28,7 @@ typedef struct rdp_channels rdpChannels;
 
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
+typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -55,6 +56,7 @@ typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* dat
 struct rdp_context
 {
 	freerdp* instance;
+	freerdp_peer* peer;
 
 	int argc;
 	char** argv;

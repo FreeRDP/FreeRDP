@@ -183,10 +183,7 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 			sin_addr = &(((struct sockaddr_in*)&peer_addr)->sin_addr);
 		else
 			sin_addr = &(((struct sockaddr_in6*)&peer_addr)->sin6_addr);
-		client->settings->hostname = xzalloc(50);
-		inet_ntop(peer_addr.ss_family, sin_addr, client->settings->hostname, 50);
-
-		printf("Accepted client from %s.\n", client->settings->hostname);
+		inet_ntop(peer_addr.ss_family, sin_addr, client->hostname, sizeof(client->hostname));
 
 		IFCALL(instance->PeerAccepted, instance, client);
 	}

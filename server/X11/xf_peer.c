@@ -32,40 +32,123 @@ extern char* xf_pcap_file;
 
 #include "xf_peer.h"
 
-void xf_peer_init(freerdp_peer* client)
+xfInfo* xf_info_init()
 {
-	xfPeer* info;
+	int i;
+	xfInfo* xfi;
+	int pf_count;
+	int vi_count;
+	XVisualInfo* vi;
+	XVisualInfo* vis;
+	XVisualInfo template;
+	XPixmapFormatValues* pf;
+	XPixmapFormatValues* pfs;
 
-	info = xnew(xfPeer);
+	xfi = xnew(xfInfo);
 
-	info->context = rfx_context_new();
-	info->context->mode = RLGR3;
-	info->context->width = client->settings->width;
-	info->context->height = client->settings->height;
-	rfx_context_set_pixel_format(info->context, RFX_PIXEL_FORMAT_RGB);
+	xfi->display = XOpenDisplay(NULL);
 
-	info->s = stream_new(65536);
+	if (xfi->display == NULL)
+		printf("failed to open display: %s\n", XDisplayName(NULL));
 
-	client->param1 = info;
+	xfi->number = DefaultScreen(xfi->display);
+	xfi->screen = ScreenOfDisplay(xfi->display, xfi->number);
+	xfi->depth = DefaultDepthOfScreen(xfi->screen);
+	xfi->width = WidthOfScreen(xfi->screen);
+	xfi->height = HeightOfScreen(xfi->screen);
+
+	pfs = XListPixmapFormats(xfi->display, &pf_count);
+
+	if (pfs == NULL)
+	{
+		printf("XListPixmapFormats failed\n");
+		exit(1);
+	}
+
+	for (i = 0; i < pf_count; i++)
+	{
+		pf = pfs + i;
+
+		if (pf->depth == xfi->depth)
+		{
+			xfi->bpp = pf->bits_per_pixel;
+			xfi->scanline_pad = pf->scanline_pad;
+			break;
+		}
+	}
+	XFree(pfs);
+
+	memset(&template, 0, sizeof(template));
+	template.class = TrueColor;
+	template.screen = xfi->number;
+
+	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
+
+	if (vis == NULL)
+	{
+		printf("XGetVisualInfo failed\n");
+		exit(1);
+	}
+
+	for (i = 0; i < vi_count; i++)
+	{
+		vi = vis + i;
+
+		if (vi->depth == xfi->depth)
+		{
+			xfi->visual = vi->visual;
+			break;
+		}
+	}
+	XFree(vis);
+
+	xfi->clrconv = (HCLRCONV) xnew(HCLRCONV);
+	xfi->clrconv->invert = 1;
+	xfi->clrconv->alpha = 1;
+
+	return xfi;
 }
 
-void xf_peer_uninit(freerdp_peer* client)
+void xf_peer_context_size(freerdp_peer* client, uint32* size)
 {
-	xfPeer* info = (xfPeer*) client->param1;
+	*size = sizeof(xfPeerContext);
+}
 
-	if (info)
+void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
+{
+	context->info = xf_info_init();
+	context->rfx_context = rfx_context_new();
+	context->rfx_context->mode = RLGR3;
+	context->rfx_context->width = client->settings->width;
+	context->rfx_context->height = client->settings->height;
+	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
+
+	context->s = stream_new(65536);
+}
+
+void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
+{
+	if (context)
 	{
-		stream_free(info->s);
-		rfx_context_free(info->context);
-		xfree(info);
+		stream_free(context->s);
+		rfx_context_free(context->rfx_context);
+		xfree(context);
 	}
 }
 
-STREAM* xf_peer_stream_init(xfPeer* info)
+void xf_peer_init(freerdp_peer* client)
 {
-	stream_clear(info->s);
-	stream_set_pos(info->s, 0);
-	return info->s;
+	client->ContextSize = (psPeerContextSize) xf_peer_context_size;
+	client->ContextNew = (psPeerContextNew) xf_peer_context_new;
+	client->ContextFree = (psPeerContextFree) xf_peer_context_free;
+	freerdp_peer_context_new(client);
+}
+
+STREAM* xf_peer_stream_init(xfPeerContext* context)
+{
+	stream_clear(context->s);
+	stream_set_pos(context->s, 0);
+	return context->s;
 }
 
 void xf_peer_live_rfx(freerdp_peer* client)
@@ -79,19 +162,19 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	int nrects;
 	uint8* data;
 	xfInfo* xfi;
-	xfPeer* xfp;
 	XImage* image;
 	RFX_RECT* rects;
 	uint32 seconds;
 	uint32 useconds;
 	rdpUpdate* update;
+	xfPeerContext* xfp;
 	SURFACE_BITS_COMMAND* cmd;
 
 	seconds = 1;
 	useconds = 0;
 	update = client->update;
-	xfi = (xfInfo*) client->info;
-	xfp = (xfPeer*) client->param1;
+	xfp = (xfPeerContext*) client->context;
+	xfi = (xfInfo*) xfp->info;
 	cmd = &update->surface_bits_command;
 
 	wrects = 16;
@@ -128,7 +211,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 
 		image = xf_snapshot(xfi, 0, 0, width, height);
 		freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
-		rfx_compose_message(xfp->context, s, rects, nrects, data, width, height, 64 * wrects * 3);
+		rfx_compose_message(xfp->rfx_context, s, rects, nrects, data, width, height, 64 * wrects * 3);
 
 		cmd->destLeft = 0;
 		cmd->destTop = 0;
@@ -198,7 +281,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	printf("Client %s is activated", client->settings->hostname);
+	printf("Client %s is activated", client->hostname);
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
@@ -213,7 +296,6 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
-	xf_peer_init(client);
 
 	/* Return False here would stop the execution of the peer mainloop. */
 	return True;
@@ -221,9 +303,9 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 
 boolean xf_peer_activate(freerdp_peer* client)
 {
-	xfPeer* xfp = (xfPeer*) client->param1;
+	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	rfx_context_reset(xfp->context);
+	rfx_context_reset(xfp->rfx_context);
 	xfp->activated = True;
 
 	if (xf_pcap_file != NULL)
@@ -246,9 +328,9 @@ void xf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	freerdp_peer* client = (freerdp_peer*) input->param1;
+	freerdp_peer* client = (freerdp_peer*) input->context->peer;
 	rdpUpdate* update = client->update;
-	xfPeer* xfp = (xfPeer*) client->param1;
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
@@ -296,7 +378,9 @@ void* xf_peer_main_loop(void* arg)
 
 	memset(rfds, 0, sizeof(rfds));
 
-	printf("We've got a client %s\n", client->settings->hostname);
+	printf("We've got a client %s\n", client->hostname);
+
+	xf_peer_init(client);
 
 	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
@@ -307,7 +391,6 @@ void* xf_peer_main_loop(void* arg)
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
 
-	client->input->param1 = client;
 	client->input->SynchronizeEvent = xf_peer_synchronize_event;
 	client->input->KeyboardEvent = xf_peer_keyboard_event;
 	client->input->UnicodeKeyboardEvent = xf_peer_unicode_keyboard_event;
@@ -359,10 +442,10 @@ void* xf_peer_main_loop(void* arg)
 			break;
 	}
 
-	printf("Client %s disconnected.\n", client->settings->hostname);
+	printf("Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
-	xf_peer_uninit(client);
+	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 
 	return NULL;
@@ -372,7 +455,6 @@ void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	pthread_t th;
 
-	client->info = instance->info;
 	pthread_create(&th, 0, xf_peer_main_loop, client);
 	pthread_detach(th);
 }

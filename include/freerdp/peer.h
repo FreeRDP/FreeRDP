@@ -20,13 +20,15 @@
 #ifndef __FREERDP_PEER_H
 #define __FREERDP_PEER_H
 
-typedef struct rdp_freerdp_peer freerdp_peer;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/input.h>
 #include <freerdp/update.h>
+
+typedef void (*psPeerContextSize)(freerdp_peer* client, uint32* size);
+typedef void (*psPeerContextNew)(freerdp_peer* client, rdpContext* context);
+typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
 
 typedef boolean (*psPeerInitialize)(freerdp_peer* client);
 typedef boolean (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
@@ -37,16 +39,17 @@ typedef boolean (*psPeerActivate)(freerdp_peer* client);
 
 struct rdp_freerdp_peer
 {
-	void* info;
-	void* peer;
-	void* param1;
-	void* param2;
-	void* param3;
-	void* param4;
+	rdpContext* context;
+	int sockfd;
+	char hostname[50];
 
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
+
+	psPeerContextSize ContextSize;
+	psPeerContextNew ContextNew;
+	psPeerContextFree ContextFree;
 
 	psPeerInitialize Initialize;
 	psPeerGetFileDescriptor GetFileDescriptor;
@@ -56,6 +59,9 @@ struct rdp_freerdp_peer
 	psPeerPostConnect PostConnect;
 	psPeerActivate Activate;
 };
+
+FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);
+FREERDP_API void freerdp_peer_context_free(freerdp_peer* client);
 
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 FREERDP_API void freerdp_peer_free(freerdp_peer* client);

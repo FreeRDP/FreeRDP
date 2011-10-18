@@ -40,9 +40,11 @@ static const unsigned int test_quantization_values[] =
 	6, 6, 6, 6, 7, 7, 8, 8, 8, 9
 };
 
-struct test_peer_info
+struct test_peer_context
 {
-	RFX_CONTEXT* context;
+	rdpContext _p;
+
+	RFX_CONTEXT* rfx_context;
 	STREAM* s;
 	uint8* icon_data;
 	uint8* bg_data;
@@ -52,52 +54,57 @@ struct test_peer_info
 	int icon_y;
 	boolean activated;
 };
-typedef struct test_peer_info testPeerInfo;
+typedef struct test_peer_context testPeerContext;
 
-static void test_peer_init(freerdp_peer* client)
+void test_peer_context_size(freerdp_peer* client, uint32* size)
 {
-	testPeerInfo* info;
-
-	info = xnew(testPeerInfo);
-
-	info->context = rfx_context_new();
-	info->context->mode = RLGR3;
-	info->context->width = client->settings->width;
-	info->context->height = client->settings->height;
-	rfx_context_set_pixel_format(info->context, RFX_PIXEL_FORMAT_RGB);
-
-	info->s = stream_new(65536);
-
-	info->icon_x = -1;
-	info->icon_y = -1;
-
-	client->param1 = info;
+	*size = sizeof(testPeerContext);
 }
 
-static void test_peer_uninit(freerdp_peer* client)
+void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	context->rfx_context = rfx_context_new();
+	context->rfx_context->mode = RLGR3;
+	context->rfx_context->width = client->settings->width;
+	context->rfx_context->height = client->settings->height;
+	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
 
-	if (info)
+	context->s = stream_new(65536);
+
+	context->icon_x = -1;
+	context->icon_y = -1;
+}
+
+void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
+{
+	if (context)
 	{
-		stream_free(info->s);
-		xfree(info->icon_data);
-		xfree(info->bg_data);
-		rfx_context_free(info->context);
-		xfree(info);
+		stream_free(context->s);
+		xfree(context->icon_data);
+		xfree(context->bg_data);
+		rfx_context_free(context->rfx_context);
+		xfree(context);
 	}
 }
 
-static STREAM* test_peer_stream_init(testPeerInfo* info)
+static void test_peer_init(freerdp_peer* client)
 {
-	stream_clear(info->s);
-	stream_set_pos(info->s, 0);
-	return info->s;
+	client->ContextSize = (psPeerContextSize) test_peer_context_size;
+	client->ContextNew = (psPeerContextNew) test_peer_context_new;
+	client->ContextFree = (psPeerContextFree) test_peer_context_free;
+	freerdp_peer_context_new(client);
+}
+
+static STREAM* test_peer_stream_init(testPeerContext* context)
+{
+	stream_clear(context->s);
+	stream_set_pos(context->s, 0);
+	return context->s;
 }
 
 static void test_peer_draw_background(freerdp_peer* client)
 {
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	testPeerContext* context = (testPeerContext*) client->context;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	STREAM* s;
@@ -108,7 +115,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	if (!client->settings->rfx_codec)
 		return;
 
-	s = test_peer_stream_init(info);
+	s = test_peer_stream_init(context);
 
 	rect.x = 0;
 	rect.y = 0;
@@ -119,7 +126,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rgb_data = xmalloc(size);
 	memset(rgb_data, 0xA0, size);
 
-	rfx_compose_message(info->context, s,
+	rfx_compose_message(context->rfx_context, s,
 		&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
 
 	cmd->destLeft = 0;
@@ -139,7 +146,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 
 static void test_peer_load_icon(freerdp_peer* client)
 {
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	testPeerContext* context = (testPeerContext*) client->context;
 	FILE* fp;
 	int i;
 	char line[50];
@@ -158,13 +165,13 @@ static void test_peer_load_icon(freerdp_peer* client)
 	fgets(line, sizeof(line), fp);
 	/* width height */
 	fgets(line, sizeof(line), fp);
-	sscanf(line, "%d %d", &info->icon_width, &info->icon_height);
+	sscanf(line, "%d %d", &context->icon_width, &context->icon_height);
 	/* Max */
 	fgets(line, sizeof(line), fp);
 
-	rgb_data = xmalloc(info->icon_width * info->icon_height * 3);
+	rgb_data = xmalloc(context->icon_width * context->icon_height * 3);
 
-	for (i = 0; i < info->icon_width * info->icon_height * 3; i++)
+	for (i = 0; i < context->icon_width * context->icon_height * 3; i++)
 	{
 		if (fgets(line, sizeof(line), fp))
 		{
@@ -173,16 +180,16 @@ static void test_peer_load_icon(freerdp_peer* client)
 		}
 	}
 
-	info->icon_data = rgb_data;
+	context->icon_data = rgb_data;
 
 	/* background with same size, which will be used to erase the icon from old position */
-	info->bg_data = xmalloc(info->icon_width * info->icon_height * 3);
-	memset(info->bg_data, 0xA0, info->icon_width * info->icon_height * 3);
+	context->bg_data = xmalloc(context->icon_width * context->icon_height * 3);
+	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);
 }
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 {
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	testPeerContext* context = (testPeerContext*) client->context;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	RFX_RECT rect;
@@ -190,53 +197,53 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	if (client->update->dump_rfx)
 		return;
-	if (!client->settings->rfx_codec || !info)
+	if (!client->settings->rfx_codec || !context)
 		return;
-	if (info->icon_width < 1 || !info->activated)
+	if (context->icon_width < 1 || !context->activated)
 		return;
 
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = info->icon_width;
-	rect.height = info->icon_height;
+	rect.width = context->icon_width;
+	rect.height = context->icon_height;
 
-	if (info->icon_x >= 0)
+	if (context->icon_x >= 0)
 	{
-		s = test_peer_stream_init(info);
-		rfx_compose_message(info->context, s,
-			&rect, 1, info->bg_data, rect.width, rect.height, rect.width * 3);
+		s = test_peer_stream_init(context);
+		rfx_compose_message(context->rfx_context, s,
+			&rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
 
-		cmd->destLeft = info->icon_x;
-		cmd->destTop = info->icon_y;
-		cmd->destRight = info->icon_x + info->icon_width;
-		cmd->destBottom = info->icon_y + info->icon_height;
+		cmd->destLeft = context->icon_x;
+		cmd->destTop = context->icon_y;
+		cmd->destRight = context->icon_x + context->icon_width;
+		cmd->destBottom = context->icon_y + context->icon_height;
 		cmd->bpp = 32;
 		cmd->codecID = client->settings->rfx_codec_id;
-		cmd->width = info->icon_width;
-		cmd->height = info->icon_height;
+		cmd->width = context->icon_width;
+		cmd->height = context->icon_height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
 		update->SurfaceBits(update, cmd);
 	}
 
-	s = test_peer_stream_init(info);
-	rfx_compose_message(info->context, s,
-		&rect, 1, info->icon_data, rect.width, rect.height, rect.width * 3);
+	s = test_peer_stream_init(context);
+	rfx_compose_message(context->rfx_context, s,
+		&rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
 
 	cmd->destLeft = x;
 	cmd->destTop = y;
-	cmd->destRight = x + info->icon_width;
-	cmd->destBottom = y + info->icon_height;
+	cmd->destRight = x + context->icon_width;
+	cmd->destBottom = y + context->icon_height;
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
-	cmd->width = info->icon_width;
-	cmd->height = info->icon_height;
+	cmd->width = context->icon_width;
+	cmd->height = context->icon_height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update, cmd);
 
-	info->icon_x = x;
-	info->icon_y = y;
+	context->icon_x = x;
+	context->icon_y = y;
 }
 
 void tf_peer_dump_rfx(freerdp_peer* client)
@@ -287,7 +294,7 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	printf("Client %s is activated", client->settings->hostname);
+	printf("Client %s is activated", client->hostname);
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
@@ -302,7 +309,6 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
-	test_peer_init(client);
 	test_peer_load_icon(client);
 
 	/* Return False here would stop the execution of the peer mainloop. */
@@ -311,10 +317,10 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 
 boolean tf_peer_activate(freerdp_peer* client)
 {
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	testPeerContext* context = (testPeerContext*) client->context;
 
-	rfx_context_reset(info->context);
-	info->activated = True;
+	rfx_context_reset(context->rfx_context);
+	context->activated = True;
 
 	if (test_pcap_file != NULL)
 	{
@@ -336,9 +342,9 @@ void tf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	freerdp_peer* client = (freerdp_peer*) input->param1;
+	freerdp_peer* client = input->context->peer;
 	rdpUpdate* update = client->update;
-	testPeerInfo* info = (testPeerInfo*)client->param1;
+	testPeerContext* context = (testPeerContext*) input->context;
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
@@ -355,7 +361,7 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->height = 480;
 		}
 		update->DesktopResize(update);
-		info->activated = False;
+		context->activated = False;
 	}
 }
 
@@ -368,7 +374,7 @@ void tf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 
-	test_peer_draw_icon(input->param1, x + 10, y);
+	test_peer_draw_icon(input->context->peer, x + 10, y);
 }
 
 void tf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
@@ -388,7 +394,7 @@ static void* test_peer_mainloop(void* arg)
 
 	memset(rfds, 0, sizeof(rfds));
 
-	printf("We've got a client %s\n", client->settings->hostname);
+	test_peer_init(client);
 
 	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
@@ -399,7 +405,6 @@ static void* test_peer_mainloop(void* arg)
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
 
-	client->input->param1 = client;
 	client->input->SynchronizeEvent = tf_peer_synchronize_event;
 	client->input->KeyboardEvent = tf_peer_keyboard_event;
 	client->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
@@ -407,6 +412,8 @@ static void* test_peer_mainloop(void* arg)
 	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 
 	client->Initialize(client);
+
+	printf("We've got a client %s\n", client->hostname);
 
 	while (1)
 	{
@@ -451,10 +458,10 @@ static void* test_peer_mainloop(void* arg)
 			break;
 	}
 
-	printf("Client %s disconnected.\n", client->settings->hostname);
+	printf("Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
-	test_peer_uninit(client);
+	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 
 	return NULL;

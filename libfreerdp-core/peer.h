@@ -20,17 +20,8 @@
 #ifndef __PEER
 #define __PEER
 
-typedef struct rdp_peer rdpPeer;
-
 #include "rdp.h"
 #include <freerdp/peer.h>
-
-struct rdp_peer
-{
-	freerdp_peer* client;
-
-	rdpRdp* rdp;
-};
 
 #endif /* __PEER */
 
