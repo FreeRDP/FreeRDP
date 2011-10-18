@@ -259,27 +259,22 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 
 		if (certstore->match == 1)
 		{
-			char answer;
-			crypto_cert_print_info(cert->px509);
+			char* issuer = crypto_cert_issuer(cert->px509);
+			char* subject = crypto_cert_subject(cert->px509);
+			char* fingerprint = crypto_cert_fingerprint(cert->px509);
 
-#ifndef _WIN32
-			while (1)
-			{
-				printf("Do you trust the above certificate? (Y/N) ");
-				answer = fgetc(stdin);
+			boolean accept_certificate = False;
+			freerdp* instance = (freerdp*)settings->instance;			
 
-				if (answer == 'y' || answer == 'Y')
-				{
-					cert_data_print(certstore);
-					break;
-				}
-				else if (answer == 'n' || answer == 'N')
-				{
-					certstore_free(certstore);
-					return 1;
-				}
-			}
-#endif
+			if(instance->VerifyCertificate)
+				accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
+
+			xfree(issuer);
+			xfree(subject);
+			xfree(fingerprint);
+
+			if(!accept_certificate)
+				return 1;
 		}
 		else if (certstore->match == -1)
 		{

@@ -279,6 +279,34 @@ char* crypto_cert_fingerprint(X509* xcert)
 	return fp_buffer;
 }
 
+char* crypto_print_name(X509_NAME* name)
+{
+	char* buffer = NULL;
+	BIO* outBIO = BIO_new(BIO_s_mem());
+	
+	if(X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0) 
+	{
+		unsigned long size = BIO_number_written(outBIO);
+		char* buffer = xzalloc(size);
+		memset(buffer, 0, size);
+		BIO_read(outBIO, buffer, size);
+	}
+
+	BIO_free(outBIO);
+	return buffer;
+}
+
+
+char* crypto_cert_subject(X509* xcert)
+{
+	return crypto_print_name(X509_get_subject_name(xcert));
+}
+
+char* crypto_cert_issuer(X509* xcert)
+{
+	return crypto_print_name(X509_get_issuer_name(xcert));
+}
+
 boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 {
 	char* cert_loc;
@@ -351,8 +379,8 @@ void crypto_cert_print_info(X509* xcert)
 	char* issuer;
 	char* subject;
 
-	subject = X509_NAME_oneline(X509_get_subject_name(xcert), NULL, 0);
-	issuer = X509_NAME_oneline(X509_get_issuer_name(xcert), NULL, 0);
+	subject = crypto_cert_subject(xcert);
+	issuer = crypto_cert_issuer(xcert);
 	fp = crypto_cert_fingerprint(xcert);
 
 	printf("Certificate details:\n");
@@ -363,5 +391,8 @@ void crypto_cert_print_info(X509* xcert)
 			"the CA certificate in your certificate store, or the certificate has expired."
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
+	xfree(subject);
+	xfree(issuer);
 	xfree(fp);
 }
+

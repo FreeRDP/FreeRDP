@@ -218,6 +218,35 @@ static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	return 1;
 }
 
+boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+{
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+		"the CA certificate in your certificate store, or the certificate has expired."
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+
+	char answer;
+	while (1)
+	{
+		printf("Do you trust the above certificate? (Y/N) ");
+		answer = fgetc(stdin);
+
+		if (answer == 'y' || answer == 'Y')
+		{
+			return True;
+		}
+		else if (answer == 'n' || answer == 'N')
+		{
+			break;
+		}
+	}
+
+	return False;
+}
+
 static int
 df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
 {
@@ -408,6 +437,7 @@ int main(int argc, char* argv[])
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;
 	instance->PostConnect = df_post_connect;
+	instance->VerifyCertificate = df_verify_certificate;
 	instance->ReceiveChannelData = df_receive_channel_data;
 
 	instance->ContextSize = (pcContextSize) df_context_size;

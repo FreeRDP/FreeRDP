@@ -109,7 +109,9 @@ void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
-char* cypto_cert_fingerprint(X509* xcert);
+char* crypto_cert_fingerprint(X509* xcert);
+char* crypto_cert_subject(X509* xcert);
+char* crypto_cert_issuer(X509* xcert);
 void crypto_cert_print_info(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
 boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings);
