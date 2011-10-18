@@ -771,6 +771,36 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	return True;
 }
 
+boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+{
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+		"the CA certificate in your certificate store, or the certificate has expired."
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+
+	char answer;
+	while (1)
+	{
+		printf("Do you trust the above certificate? (Y/N) ");
+		answer = fgetc(stdin);
+
+		if (answer == 'y' || answer == 'Y')
+		{
+			return True;
+		}
+		else if (answer == 'n' || answer == 'N')
+		{
+			break;
+		}
+	}
+
+	return False;
+}
+
+
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
@@ -1049,6 +1079,7 @@ int main(int argc, char* argv[])
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->Authenticate = xf_authenticate;
+	instance->VerifyCertificate = xf_verify_certificate;
 	instance->ReceiveChannelData = xf_receive_channel_data;
 
 	instance->ContextSize = (pcContextSize) xf_context_size;

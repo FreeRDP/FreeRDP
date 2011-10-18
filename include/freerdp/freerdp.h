@@ -49,6 +49,7 @@ typedef void (*pcContextFree)(freerdp* instance, rdpContext* context);
 typedef boolean (*pcPreConnect)(freerdp* instance);
 typedef boolean (*pcPostConnect)(freerdp* instance);
 typedef boolean (*pcAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
+typedef boolean (*pcVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 
 typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
 typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
@@ -85,6 +86,7 @@ struct rdp_freerdp
 	pcPreConnect PreConnect;
 	pcPostConnect PostConnect;
 	pcAuthenticate Authenticate;
+	pcVerifyCertificate VerifyCertificate;
 
 	pcSendChannelData SendChannelData;
 	pcReceiveChannelData ReceiveChannelData;

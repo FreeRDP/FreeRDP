@@ -392,6 +392,12 @@ boolean wf_post_connect(freerdp* instance)
 	return True;
 }
 
+boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+{
+	return True;
+}
+
+
 int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
@@ -636,6 +642,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
+	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
 	instance->ContextSize = (pcContextSize) wf_context_size;
