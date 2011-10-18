@@ -347,7 +347,10 @@ int transport_check_fds(rdpTransport* transport)
 		stream_set_pos(received, length);
 		stream_seal(received);
 		stream_set_pos(received, 0);
-		status = transport->recv_callback(transport, received, transport->recv_extra);
+		
+		if (transport->recv_callback(transport, received, transport->recv_extra) == False)
+			status = -1;
+	
 		stream_free(received);
 
 		if (status < 0)
