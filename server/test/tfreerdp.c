@@ -33,6 +33,7 @@
 #include <freerdp/listener.h>
 
 static char* test_pcap_file = NULL;
+static boolean test_dump_rfx_realtime = True;
 
 /* HL1, LH1, HH1, HL2, LH2, HH2, HL3, LH3, HH3, LL3 */
 static const unsigned int test_quantization_values[] =
@@ -246,11 +247,49 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	context->icon_y = y;
 }
 
+static boolean test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
+{
+	sint32 sec, usec;
+
+	if (*old_sec==0 && *old_usec==0)
+	{
+		*old_sec = new_sec;
+		*old_usec = new_usec;
+		return True;
+	}
+
+	sec = new_sec - *old_sec;
+	usec = new_usec - *old_usec;
+
+	if (sec<0 || (sec==0 && usec<0))
+	{
+		printf("Invalid time stamp detected.\n");
+		return False;
+	}
+
+	*old_sec = new_sec;
+	*old_usec = new_usec;
+	
+	while (usec < 0) 
+	{
+		usec += 1000000;
+		sec--;
+	}
+	
+	if (sec > 0)
+		freerdp_sleep(sec);
+	
+	if (usec > 0)
+		freerdp_usleep(usec);
+	
+	return True;
+}
+
 void tf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	uint32 seconds;
-	uint32 useconds;
+	uint32 prev_seconds;
+	uint32 prev_useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
 	pcap_record record;
@@ -260,7 +299,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
 	pcap_rfx = client->update->pcap_rfx;
 
-	seconds = useconds = 0;
+	prev_seconds = prev_useconds = 0;
 
 	while (pcap_has_next_record(pcap_rfx))
 	{
@@ -273,14 +312,8 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 		pcap_get_next_record_content(pcap_rfx, &record);
 		s->p = s->data + s->size;
 
-		seconds = record.header.ts_sec - seconds;
-		useconds = record.header.ts_usec - useconds;
-
-		if (seconds > 0)
-			freerdp_sleep(seconds);
-
-		if (useconds > 0)
-			freerdp_usleep(useconds);
+		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == False)
+			break;
 
 		update->SurfaceCommand(update, s);
 	}
@@ -548,6 +581,9 @@ int main(int argc, char* argv[])
 
 	if (argc > 1)
 		test_pcap_file = argv[1];
+	
+	if (argc > 2 && !strcmp(argv[2], "--fast"))
+		test_dump_rfx_realtime = False;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))
