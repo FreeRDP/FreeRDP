@@ -295,13 +295,20 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 		case IOCTL_SERIAL_PURGE:
 			stream_read_uint32(input, purge_mask);
 			DEBUG_SVC("SERIAL_PURGE purge_mask %X", purge_mask);
-			if ((purge_mask & SERIAL_PURGE_TXCLEAR)
-				&& (purge_mask & SERIAL_PURGE_RXCLEAR))
-				tcflush(tty->fd, TCIOFLUSH);
-			else if (purge_mask & SERIAL_PURGE_TXCLEAR)
-				tcflush(tty->fd, TCOFLUSH);
-			else if (purge_mask & SERIAL_PURGE_RXCLEAR)
-				tcflush(tty->fd, TCIFLUSH);
+
+		/*	See http://msdn.microsoft.com/en-us/library/ms901431.aspx
+			PURGE_TXCLEAR 	Clears the output buffer, if the driver has one.
+			PURGE_RXCLEAR 	Clears the input buffer, if the driver has one.
+
+			It clearly states to clear the *driver* buffer, not the port buffer
+		*/
+
+#ifdef DEBUG_SVC
+			if (purge_mask & SERIAL_PURGE_TXCLEAR)
+				DEBUG_SVC("Ignoring SERIAL_PURGE_TXCLEAR");
+			if (purge_mask & SERIAL_PURGE_RXCLEAR)
+				DEBUG_SVC("Ignoring SERIAL_PURGE_RXCLEAR");
+#endif
 
 			if (purge_mask & SERIAL_PURGE_TXABORT)
 				*abort_io |= SERIAL_ABORT_IO_WRITE;
