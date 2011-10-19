@@ -240,6 +240,7 @@ struct rdp_settings
 	char* privatekey_file;
 
 	boolean autologon;
+	boolean ignore_certificate;
 	boolean compression;
 
 	boolean ipv6;
