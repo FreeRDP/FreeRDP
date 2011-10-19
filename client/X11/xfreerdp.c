@@ -563,7 +563,7 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
 	settings->order_support[NEG_MEM3BLT_V2_INDEX] = False;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
 	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
