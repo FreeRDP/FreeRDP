@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +45,40 @@ struct _DISK_DEVICE
 	LIST* irp_list;
 	freerdp_thread* thread;
 };
+
+
+static uint32
+disk_map_posix_err(int fs_errno)
+{
+	uint32 rc;
+
+	/* try to return NTSTATUS version of error code */
+	switch (fs_errno)
+	{
+		case EPERM:
+		case EACCES:
+			rc = STATUS_ACCESS_DENIED;
+			break;
+		case ENOENT:
+			rc = STATUS_NO_SUCH_FILE;
+			break;
+		case EBUSY:
+			rc = STATUS_DEVICE_BUSY;
+			break;
+		case EEXIST:
+			rc  = STATUS_OBJECT_NAME_COLLISION;
+			break;
+		case EISDIR:
+			rc = STATUS_FILE_IS_A_DIRECTORY;
+			break;
+
+		default:
+			rc = STATUS_UNSUCCESSFUL;
+			break;
+	}
+	DEBUG_SVC("errno 0x%x mapped to 0x%x\n", fs_errno, rc);
+	return rc;
+}
 
 static DISK_FILE* disk_get_file_by_id(DISK_DEVICE* disk, uint32 id)
 {
@@ -92,6 +127,16 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 		Information = 0;
 
 		DEBUG_WARN("failed to create %s.", path);
+	}
+	else if (file->err)
+	{
+		FileId = 0;
+		Information = 0;
+
+		/* map errno to windows result*/
+		irp->IoStatus = disk_map_posix_err(file->err);
+
+		disk_file_free(file);
 	}
 	else
 	{

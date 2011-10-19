@@ -23,6 +23,7 @@
 #endif
 
 #include "config.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,7 +171,10 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		if (file->is_dir)
 		{
 			if (mkdir(file->fullpath, mode) != 0)
-				return False;
+			{
+				file->err = errno;
+				return True;
+			}
 		}
 		exists = False;
 	}
@@ -178,7 +182,10 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 	{
 		file->dir = opendir(file->fullpath);
 		if (file->dir == NULL)
-			return False;
+		{
+			file->err = errno;
+			return True;
+		}
 	}
 	else
 	{
@@ -221,7 +228,10 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 
 		file->fd = open(file->fullpath, oflag, mode);
 		if (file->fd == -1)
-			return False;
+		{
+			file->err = errno;
+			return True;
+		}
 	}
 
 	return True;
