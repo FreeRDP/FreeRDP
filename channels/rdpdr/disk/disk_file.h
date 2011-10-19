@@ -31,6 +31,7 @@ struct _DISK_FILE
 	uint32 id;
 	boolean is_dir;
 	int fd;
+	int err;
 	DIR* dir;
 	char* fullpath;
 	char* filename;
