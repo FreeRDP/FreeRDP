@@ -89,6 +89,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
+				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
@@ -256,6 +257,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
 			settings->authentication = False;
+		}
+		else if (strcmp("--ignore-certificate", argv[index]) == 0)
+		{
+			settings->ignore_certificate = True;
 		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
