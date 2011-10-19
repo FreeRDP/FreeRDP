@@ -120,6 +120,9 @@ static boolean audin_alsa_thread_receive(AudinALSADevice* alsa, uint8* src, int 
 
 	while (frames > 0)
 	{
+		if (freerdp_thread_is_stopped(alsa->thread))
+			break;
+
 		cframes = alsa->frames_per_packet - alsa->buffer_frames;
 		if (cframes > frames)
 			cframes = frames;
@@ -142,7 +145,13 @@ static boolean audin_alsa_thread_receive(AudinALSADevice* alsa, uint8* src, int 
 				encoded_size = alsa->buffer_frames * tbytes_per_frame;
 			}
 
-			ret = alsa->receive(encoded_data, encoded_size, alsa->user_data);
+			if (freerdp_thread_is_stopped(alsa->thread))
+			{
+				ret = 0;
+				frames = 0;
+			}
+			else
+				ret = alsa->receive(encoded_data, encoded_size, alsa->user_data);
 			alsa->buffer_frames = 0;
 			if (encoded_data != alsa->buffer)
 				xfree(encoded_data);
