@@ -168,3 +168,10 @@ add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(keymaps)
 
+# Source package
+set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
+
+string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}")
+
+include(CPack)
