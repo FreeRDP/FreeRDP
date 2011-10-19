@@ -464,6 +464,7 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, uint32 file_id, uint32
 		/* Process a SINGLE FileId and MajorFunction */
 		list_remove(serial->pending_irps, irp);
 		irp->IoStatus = io_status;
+		stream_write_uint32(irp->output, 0);
 		irp->Complete(irp);
 
 		wait_obj_set(serial->in_event);
