@@ -259,19 +259,21 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 
 		if (certstore->match == 1)
 		{
-			char* issuer = crypto_cert_issuer(cert->px509);
-			char* subject = crypto_cert_subject(cert->px509);
-			char* fingerprint = crypto_cert_fingerprint(cert->px509);
+			boolean accept_certificate = settings->ignore_certificate;		
+			if(!accept_certificate)
+			{
+				char* issuer = crypto_cert_issuer(cert->px509);
+				char* subject = crypto_cert_subject(cert->px509);
+				char* fingerprint = crypto_cert_fingerprint(cert->px509);
 
-			boolean accept_certificate = False;
-			freerdp* instance = (freerdp*)settings->instance;			
+				freerdp* instance = (freerdp*)settings->instance;			
+				if(instance->VerifyCertificate)
+					accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
 
-			if(instance->VerifyCertificate)
-				accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
-
-			xfree(issuer);
-			xfree(subject);
-			xfree(fingerprint);
+				xfree(issuer);
+				xfree(subject);
+				xfree(fingerprint);
+			}
 
 			if(!accept_certificate)
 				return 1;
