@@ -363,6 +363,7 @@ void xf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 		gdi_InvalidateRegion(xfi->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
 	}
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
@@ -441,6 +442,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 		gdi_InvalidateRegion(xfi->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 	}
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
@@ -473,6 +475,7 @@ void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 
 		gdi_InvalidateRegion(xfi->hdc, scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight);
 	}
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
@@ -571,6 +574,7 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 			gdi_InvalidateRegion(xfi->hdc, line_to->nXStart, line_to->nYStart, width, height);
 		}
 	}
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
@@ -631,6 +635,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 		}
 	}
 
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	xfree(points);
 }
 
@@ -657,6 +662,7 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 
 		gdi_InvalidateRegion(xfi->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
