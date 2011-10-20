@@ -42,8 +42,9 @@ boolean freerdp_connect(freerdp* instance)
 	{
 		if (instance->settings->dump_rfx)
 		{
-			instance->update->dump_rfx = instance->settings->dump_rfx;
 			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, True);
+			if (instance->update->pcap_rfx)
+				instance->update->dump_rfx = True;
 		}
 
 		IFCALL(instance->PostConnect, instance);
@@ -55,11 +56,12 @@ boolean freerdp_connect(freerdp* instance)
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->play_rfx = instance->settings->play_rfx;
 			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, False);
+			if (instance->update->pcap_rfx)
+				instance->update->play_rfx = True;
 			update = instance->update;
 
-			while (pcap_has_next_record(update->pcap_rfx))
+			while (instance->update->play_rfx && pcap_has_next_record(update->pcap_rfx))
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
