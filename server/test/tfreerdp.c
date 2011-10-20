@@ -299,6 +299,9 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
 	pcap_rfx = client->update->pcap_rfx;
 
+	if (pcap_rfx == NULL)
+		return;
+
 	prev_seconds = prev_useconds = 0;
 
 	while (pcap_has_next_record(pcap_rfx))

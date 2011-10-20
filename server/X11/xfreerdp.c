@@ -26,6 +26,7 @@
 #include "xfreerdp.h"
 
 char* xf_pcap_file = NULL;
+boolean xf_pcap_dump_realtime = True;
 
 void xf_server_main_loop(freerdp_listener* instance)
 {
@@ -99,6 +100,9 @@ int main(int argc, char* argv[])
 
 	if (argc > 1)
 		xf_pcap_file = argv[1];
+
+	if (argc > 2 && !strcmp(argv[2], "--fast"))
+		xf_pcap_dump_realtime = False;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))

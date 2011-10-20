@@ -27,6 +27,7 @@
 #include <freerdp/codec/color.h>
 
 extern char* xf_pcap_file;
+extern boolean xf_pcap_dump_realtime;
 
 #include "xf_encode.h"
 
@@ -49,7 +50,10 @@ xfInfo* xf_info_init()
 	xfi->display = XOpenDisplay(NULL);
 
 	if (xfi->display == NULL)
+	{
 		printf("failed to open display: %s\n", XDisplayName(NULL));
+		exit(1);
+	}
 
 	xfi->number = DefaultScreen(xfi->display);
 	xfi->screen = ScreenOfDisplay(xfi->display, xfi->number);
@@ -227,12 +231,49 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	}
 }
 
+static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
+{
+	sint32 sec, usec;
+
+	if (*old_sec==0 && *old_usec==0)
+	{
+		*old_sec = new_sec;
+		*old_usec = new_usec;
+		return True;
+	}
+
+	sec = new_sec - *old_sec;
+	usec = new_usec - *old_usec;
+
+	if (sec<0 || (sec==0 && usec<0))
+	{
+		printf("Invalid time stamp detected.\n");
+		return False;
+	}
+
+	*old_sec = new_sec;
+	*old_usec = new_usec;
+
+	while (usec < 0)
+	{
+		usec += 1000000;
+		sec--;
+	}
+
+	if (sec > 0)
+		freerdp_sleep(sec);
+
+	if (usec > 0)
+		freerdp_usleep(usec);
+
+	return True;
+}
+
 void xf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	double ttime;
-	uint32 seconds;
-	uint32 useconds;
+	uint32 prev_seconds;
+	uint32 prev_useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
 	pcap_record record;
@@ -242,7 +283,10 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	client->update->pcap_rfx = pcap_open(xf_pcap_file, False);
 	pcap_rfx = client->update->pcap_rfx;
 
-	seconds = useconds = 0;
+	if (pcap_rfx == NULL)
+		return;
+
+	prev_seconds = prev_useconds = 0;
 
 	while (pcap_has_next_record(pcap_rfx))
 	{
@@ -255,19 +299,8 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 		pcap_get_next_record_content(pcap_rfx, &record);
 		s->p = s->data + s->size;
 
-		seconds = record.header.ts_sec - seconds;
-		useconds = record.header.ts_usec - useconds;
-
-		ttime = ((double) seconds * 1000000) + (double) useconds;
-
-		seconds = (uint32) (ttime / 1000000);
-		useconds = (uint32) (ttime - (((double) seconds) * 1000000));
-
-		if (seconds > 0)
-			freerdp_sleep(seconds);
-
-		if (useconds > 0)
-			freerdp_usleep(useconds);
+		if (xf_pcap_dump_realtime && xf_peer_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == False)
+                        break;
 
 		update->SurfaceCommand(update, s);
 	}
