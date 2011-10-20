@@ -21,6 +21,8 @@
 
 #include <freerdp/graphics.h>
 
+/* Bitmap Class */
+
 rdpBitmap* Bitmap_Alloc(rdpContext* context)
 {
 	rdpBitmap* bitmap;
@@ -42,17 +44,6 @@ void Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 }
 
-void Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
-{
-	bitmap->Decompress(context, bitmap, data, width, height, bpp, length, compressed);
-}
-
-void Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap, int x, int y)
-{
-	bitmap->Paint(context, bitmap, x, y);
-}
-
 void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap != NULL)
@@ -64,10 +55,68 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
+void Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap, int x, int y)
+{
+	bitmap->Paint(context, bitmap, x, y);
+}
+
+void Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
+		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+{
+	bitmap->Decompress(context, bitmap, data, width, height, bpp, length, compressed);
+}
+
+/* static method */
+void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+{
+	context->graphics->Bitmap_Prototype->SetSurface(context, bitmap, primary);
+}
+
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
 {
 	memcpy(graphics->Bitmap_Prototype, bitmap, sizeof(rdpBitmap));
 }
+
+/* Pointer Class */
+
+rdpPointer* Pointer_Alloc(rdpContext* context)
+{
+	rdpPointer* pointer;
+	rdpGraphics* graphics;
+
+	graphics = context->graphics;
+	pointer = (rdpPointer*) xmalloc(graphics->Pointer_Prototype->size);
+
+	if (pointer != NULL)
+	{
+		memcpy(pointer, context->graphics->Pointer_Prototype, sizeof(rdpPointer));
+	}
+
+	return pointer;
+}
+
+void Pointer_New(rdpContext* context, rdpPointer* pointer)
+{
+
+}
+
+void Pointer_Free(rdpContext* context, rdpPointer* pointer)
+{
+
+}
+
+/* static method */
+void Pointer_Set(rdpContext* context, rdpPointer* pointer)
+{
+	context->graphics->Pointer_Prototype->Set(context, pointer);
+}
+
+void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
+{
+	memcpy(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
+}
+
+/* Graphics Module */
 
 rdpGraphics* graphics_new(rdpContext* context)
 {
@@ -81,6 +130,11 @@ rdpGraphics* graphics_new(rdpContext* context)
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
 		graphics->Bitmap_Prototype->Free = Bitmap_Free;
+
+		graphics->Pointer_Prototype = (rdpPointer*) xmalloc(sizeof(rdpPointer));
+		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
+		graphics->Pointer_Prototype->New = Pointer_New;
+		graphics->Pointer_Prototype->Free = Pointer_Free;
 	}
 
 	return graphics;
@@ -91,6 +145,7 @@ void graphics_free(rdpGraphics* graphics)
 	if (graphics != NULL)
 	{
 		xfree(graphics->Bitmap_Prototype);
+		xfree(graphics->Pointer_Prototype);
 		xfree(graphics);
 	}
 }

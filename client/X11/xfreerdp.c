@@ -254,71 +254,6 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 	}
 }
 
-void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
-{
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	if (primary)
-		xfi->drawing = xfi->primary;
-	else
-		xfi->drawing = bitmap->pixmap;
-}
-
-void xf_pointer_size(rdpUpdate* update, uint32* size)
-{
-	*size = sizeof(xfPointer);
-}
-
-void xf_pointer_set(rdpUpdate* update, xfPointer* pointer)
-{
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	if (xfi->remote_app != True)
-		XDefineCursor(xfi->display, xfi->window->handle, pointer->cursor);
-}
-
-void xf_pointer_new(rdpUpdate* update, xfPointer* pointer)
-{
-	xfInfo* xfi;
-	XcursorImage ci;
-	rdpPointer* _pointer;
-
-	xfi = ((xfContext*) update->context)->xfi;
-	_pointer = (rdpPointer*) &pointer->pointer;
-
-	memset(&ci, 0, sizeof(ci));
-	ci.version = XCURSOR_IMAGE_VERSION;
-	ci.size = sizeof(ci);
-	ci.width = _pointer->width;
-	ci.height = _pointer->height;
-	ci.xhot = _pointer->xPos;
-	ci.yhot = _pointer->yPos;
-	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
-	memset(ci.pixels, 0, ci.width * ci.height * 4);
-
-	if ((_pointer->andMaskData != 0) && (_pointer->xorMaskData != 0))
-	{
-		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), _pointer->xorMaskData, _pointer->andMaskData,
-				_pointer->width, _pointer->height, _pointer->xorBpp, xfi->clrconv);
-	}
-
-	if (_pointer->xorBpp > 24)
-	{
-		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
-	}
-
-	pointer->cursor = XcursorImageLoadCursor(xfi->display, &ci);
-	xfree(ci.pixels);
-}
-
-void xf_pointer_free(rdpUpdate* update, xfPointer* pointer)
-{
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	if (pointer->cursor != 0)
-		XFreeCursor(xfi->display, pointer->cursor);
-}
-
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
@@ -599,6 +534,8 @@ boolean xf_post_connect(freerdp* instance)
 	if (xf_get_pixmap_info(xfi) != True)
 		return False;
 
+	xf_register_graphics(instance->context->graphics);
+
 	if (xfi->sw_gdi)
 	{
 		rdpGdi* gdi;
@@ -682,18 +619,11 @@ boolean xf_post_connect(freerdp* instance)
 	}
 
 	pointer_cache_register_callbacks(instance->update);
-	cache->pointer->PointerSize = (cbPointerSize) xf_pointer_size;
-	cache->pointer->PointerSet = (cbPointerSet) xf_pointer_set;
-	cache->pointer->PointerNew = (cbPointerNew) xf_pointer_new;
-	cache->pointer->PointerFree = (cbPointerFree) xf_pointer_free;
 
 	if (xfi->sw_gdi != True)
 	{
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
-		cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
-
-		xf_register_graphics(instance->context->graphics);
 	}
 
 	instance->context->rail = rail_new(instance->settings);

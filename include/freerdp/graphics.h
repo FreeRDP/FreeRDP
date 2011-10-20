@@ -21,17 +21,21 @@
 #define __GRAPHICS_H
 
 typedef struct rdp_bitmap rdpBitmap;
+typedef struct rdp_pointer rdpPointer;
 
 #include <stdlib.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
 
+/* Bitmap Class */
+
 typedef void (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Free)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Paint)(rdpContext* context, rdpBitmap* bitmap, int x, int y);
 typedef void (*pBitmap_Decompress)(rdpContext* context, rdpBitmap* bitmap,
 		uint8* data, int width, int height, int bpp, int length, boolean compressed);
+typedef void (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap, boolean primary);
 
 struct rdp_bitmap
 {
@@ -41,6 +45,7 @@ struct rdp_bitmap
 	pBitmap_Free Free;
 	pBitmap_Paint Paint;
 	pBitmap_Decompress Decompress;
+	pBitmap_SetSurface SetSurface;
 
 	uint16 left;
 	uint16 top;
@@ -62,14 +67,49 @@ FREERDP_API void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
 FREERDP_API void Bitmap_Register(rdpContext* context, rdpBitmap* bitmap);
 FREERDP_API void Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		uint8* data, int width, int height, int bpp, int length, boolean compressed);
+FREERDP_API void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary);
+
+/* Pointer Class */
+
+typedef void (*pPointer_New)(rdpContext* context, rdpPointer* pointer);
+typedef void (*pPointer_Free)(rdpContext* context, rdpPointer* pointer);
+typedef void (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
+
+struct rdp_pointer
+{
+	size_t size;
+
+	pPointer_New New;
+	pPointer_Free Free;
+	pPointer_Set Set;
+
+	uint16 xPos;
+	uint16 yPos;
+	uint16 width;
+	uint16 height;
+	uint16 xorBpp;
+	uint16 lengthAndMask;
+	uint16 lengthXorMask;
+	uint8* xorMaskData;
+	uint8* andMaskData;
+};
+
+FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
+FREERDP_API void Pointer_New(rdpContext* context, rdpPointer* pointer);
+FREERDP_API void Pointer_Free(rdpContext* context, rdpPointer* pointer);
+FREERDP_API void Pointer_Set(rdpContext* context, rdpPointer* pointer);
+
+/* Graphics Module */
 
 struct rdp_graphics
 {
 	rdpContext* context;
 	rdpBitmap* Bitmap_Prototype;
+	rdpPointer* Pointer_Prototype;
 };
 
 FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap);
+FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer);
 
 FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 FREERDP_API void graphics_free(rdpGraphics* graphics);

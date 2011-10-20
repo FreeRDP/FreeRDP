@@ -366,16 +366,6 @@ INLINE int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 	return (data[byte] & (0x80 >> shift)) != 0;
 }
 
-void gdi_set_surface(rdpUpdate* update, gdiBitmap* bitmap, boolean primary)
-{
-	rdpGdi* gdi = update->context->gdi;
-
-	if (primary)
-		gdi->drawing = gdi->primary;
-	else
-		gdi->drawing = bitmap;
-}
-
 gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 {
 	uint8* extra;
@@ -1072,10 +1062,9 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	gdi_register_update_callbacks(instance->update);
 
 	bitmap_cache_register_callbacks(instance->update);
-	gdi_register_graphics(instance->context->graphics);
-
 	offscreen_cache_register_callbacks(instance->update);
-	cache->offscreen->SetSurface = (cbSetSurface) gdi_set_surface;
+
+	gdi_register_graphics(instance->context->graphics);
 
 	gdi->rfx_context = rfx_context_new();
 	gdi->nsc_context = nsc_context_new();

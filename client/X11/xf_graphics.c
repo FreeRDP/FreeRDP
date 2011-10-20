@@ -17,9 +17,18 @@
  * limitations under the License.
  */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+#ifdef WITH_XCURSOR
+#include <X11/Xcursor/Xcursor.h>
+#endif
+
 #include <freerdp/codec/bitmap.h>
 
 #include "xf_graphics.h"
+
+/* Bitmap Class */
 
 void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
@@ -105,9 +114,70 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bitmap->bpp = bpp;
 }
 
+void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+{
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	if (primary)
+		xfi->drawing = xfi->primary;
+	else
+		xfi->drawing = ((xfBitmap*) bitmap)->pixmap;
+}
+
+/* Pointer Class */
+
+void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
+{
+	XcursorImage ci;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	memset(&ci, 0, sizeof(ci));
+	ci.version = XCURSOR_IMAGE_VERSION;
+	ci.size = sizeof(ci);
+	ci.width = pointer->width;
+	ci.height = pointer->height;
+	ci.xhot = pointer->xPos;
+	ci.yhot = pointer->yPos;
+	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
+	memset(ci.pixels, 0, ci.width * ci.height * 4);
+
+	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
+	{
+		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
+				pointer->width, pointer->height, pointer->xorBpp, xfi->clrconv);
+	}
+
+	if (pointer->xorBpp > 24)
+	{
+		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
+	}
+
+	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfi->display, &ci);
+	xfree(ci.pixels);
+}
+
+void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
+{
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	if (((xfPointer*) pointer)->cursor != 0)
+		XFreeCursor(xfi->display, ((xfPointer*) pointer)->cursor);
+}
+
+void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
+{
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	if (xfi->remote_app != True)
+		XDefineCursor(xfi->display, xfi->window->handle, ((xfPointer*) pointer)->cursor);
+}
+
+/* Graphics Module */
+
 void xf_register_graphics(rdpGraphics* graphics)
 {
 	rdpBitmap bitmap;
+	rdpPointer pointer;
 
 	memset(&bitmap, 0, sizeof(rdpBitmap));
 	bitmap.size = sizeof(xfBitmap);
@@ -116,6 +186,14 @@ void xf_register_graphics(rdpGraphics* graphics)
 	bitmap.Free = xf_Bitmap_Free;
 	bitmap.Paint = xf_Bitmap_Paint;
 	bitmap.Decompress = xf_Bitmap_Decompress;
+	bitmap.SetSurface = xf_Bitmap_SetSurface;
+
+	memset(&pointer, 0, sizeof(rdpPointer));
+	pointer.size = sizeof(xfPointer);
+	pointer.New = xf_Pointer_New;
+	pointer.Free = xf_Pointer_Free;
+	pointer.Set = xf_Pointer_Set;
 
 	graphics_register_bitmap(graphics, &bitmap);
+	graphics_register_pointer(graphics, &pointer);
 }

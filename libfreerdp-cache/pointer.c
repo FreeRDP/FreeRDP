@@ -40,12 +40,9 @@ void update_pointer_color(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color
 void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
-	uint32 size = sizeof(rdpPointer);
 	rdpCache* cache = (rdpCache*) update->context->cache;
 
-	IFCALL(cache->pointer->PointerSize, update, &size);
-
-	pointer = (rdpPointer*) xzalloc(size);
+	pointer = Pointer_Alloc(update->context);
 
 	if (pointer != NULL)
 	{
@@ -59,9 +56,9 @@ void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 		pointer->xorMaskData = pointer_new->colorPtrAttr.xorMaskData;
 		pointer->andMaskData = pointer_new->colorPtrAttr.andMaskData;
 
-		IFCALL(cache->pointer->PointerNew, update, pointer);
+		pointer->New(update->context, pointer);
 		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
-		IFCALL(cache->pointer->PointerSet, update, pointer);
+		Pointer_Set(update->context, pointer);
 	}
 }
 
@@ -71,7 +68,7 @@ void update_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cac
 	rdpCache* cache = (rdpCache*) update->context->cache;
 
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
-	IFCALL(cache->pointer->PointerSet, update, pointer);
+	Pointer_Set(update->context, pointer);
 }
 
 rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index)
@@ -139,7 +136,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 
 			if (pointer != NULL)
 			{
-				pointer_cache->PointerFree(pointer_cache->update, pointer);
+				pointer->Free(pointer_cache->update->context, pointer);
 
 				if (pointer->xorMaskData != NULL)
 					xfree(pointer->xorMaskData);

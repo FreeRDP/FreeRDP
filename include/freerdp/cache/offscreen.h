@@ -27,14 +27,11 @@
 #include <freerdp/utils/stream.h>
 
 typedef struct rdp_offscreen_cache rdpOffscreenCache;
-typedef void (*cbSetSurface)(rdpUpdate* update, rdpBitmap* bitmap, boolean primary);
 
 #include <freerdp/cache/cache.h>
 
 struct rdp_offscreen_cache
 {
-	cbSetSurface SetSurface;
-
 	uint16 currentSurface;
 	uint16 maxSize;
 	uint16 maxEntries;

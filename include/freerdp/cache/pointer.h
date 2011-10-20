@@ -24,38 +24,15 @@
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/graphics.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct rdp_pointer rdpPointer;
 typedef struct rdp_pointer_cache rdpPointerCache;
 
 #include <freerdp/cache/cache.h>
 
-struct rdp_pointer
-{
-	uint16 xPos;
-	uint16 yPos;
-	uint16 width;
-	uint16 height;
-	uint16 xorBpp;
-	uint16 lengthAndMask;
-	uint16 lengthXorMask;
-	uint8* xorMaskData;
-	uint8* andMaskData;
-};
-
-typedef void (*cbPointerSize)(rdpUpdate* update, uint32* size);
-typedef void (*cbPointerSet)(rdpUpdate* update, rdpPointer* pointer);
-typedef void (*cbPointerNew)(rdpUpdate* update, rdpPointer* pointer);
-typedef void (*cbPointerFree)(rdpUpdate* update, rdpPointer* pointer);
-
 struct rdp_pointer_cache
 {
-	cbPointerSize PointerSize;
-	cbPointerNew PointerSet;
-	cbPointerNew PointerNew;
-	cbPointerFree PointerFree;
-
 	uint16 cacheSize;
 	rdpUpdate* update;
 	rdpSettings* settings;

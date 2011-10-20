@@ -111,6 +111,16 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bitmap->bpp = bpp;
 }
 
+void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+{
+	rdpGdi* gdi = context->gdi;
+
+	if (primary)
+		gdi->drawing = gdi->primary;
+	else
+		gdi->drawing = (gdiBitmap*) bitmap;
+}
+
 void gdi_register_graphics(rdpGraphics* graphics)
 {
 	rdpBitmap bitmap;
@@ -122,6 +132,7 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	bitmap.Free = gdi_Bitmap_Free;
 	bitmap.Paint = gdi_Bitmap_Paint;
 	bitmap.Decompress = gdi_Bitmap_Decompress;
+	bitmap.SetSurface = gdi_Bitmap_SetSurface;
 
 	graphics_register_bitmap(graphics, &bitmap);
 }
