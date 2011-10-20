@@ -71,9 +71,8 @@ void transport_attach(rdpTransport* transport, int sockfd)
 boolean transport_disconnect(rdpTransport* transport)
 {
 	if (transport->layer == TRANSPORT_LAYER_TLS)
-		return tls_disconnect(transport->tls);
-	else
-		return tcp_disconnect(transport->tcp);
+		tls_disconnect(transport->tls);
+	return tcp_disconnect(transport->tcp);
 }
 
 boolean transport_connect_rdp(rdpTransport* transport)
