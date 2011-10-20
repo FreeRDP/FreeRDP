@@ -1,5 +1,5 @@
 # CMake
-cmake_install.cmake
+*.cmake
 CMakeFiles/
 CMakeCache.txt
 config.h

@@ -43,6 +43,7 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -59,6 +60,7 @@
 #include "xf_event.h"
 #include "xf_cliprdr.h"
 #include "xf_monitor.h"
+#include "xf_graphics.h"
 #include "xf_keyboard.h"
 
 #include "xfreerdp.h"
@@ -252,46 +254,6 @@ void xf_hw_desktop_resize(rdpUpdate* update)
 	}
 }
 
-void xf_bitmap_size(rdpUpdate* update, uint32* size)
-{
-	*size = sizeof(xfBitmap);
-}
-
-void xf_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
-{
-	uint8* cdata;
-	XImage* image;
-	rdpBitmap* _bitmap;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	_bitmap = (rdpBitmap*) &bitmap->bitmap;
-	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
-
-	if (_bitmap->dstData != NULL)
-	{
-		cdata = freerdp_image_convert(_bitmap->dstData, NULL,
-				_bitmap->width, _bitmap->height, _bitmap->bpp, xfi->bpp, xfi->clrconv);
-
-		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
-				ZPixmap, 0, (char*) cdata, _bitmap->width, _bitmap->height, xfi->scanline_pad, 0);
-
-		XPutImage(xfi->display, bitmap->pixmap, xfi->gc, image, 0, 0, 0, 0, _bitmap->width, _bitmap->height);
-		XFree(image);
-
-		if (cdata != _bitmap->dstData)
-			xfree(cdata);
-	}
-}
-
-void xf_offscreen_bitmap_new(rdpUpdate* update, xfBitmap* bitmap)
-{
-	rdpBitmap* _bitmap;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	_bitmap = (rdpBitmap*) &bitmap->bitmap;
-	bitmap->pixmap = XCreatePixmap(xfi->display, xfi->drawable, _bitmap->width, _bitmap->height, xfi->depth);
-}
-
 void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
 {
 	xfInfo* xfi = ((xfContext*) update->context)->xfi;
@@ -300,14 +262,6 @@ void xf_set_surface(rdpUpdate* update, xfBitmap* bitmap, boolean primary)
 		xfi->drawing = xfi->primary;
 	else
 		xfi->drawing = bitmap->pixmap;
-}
-
-void xf_bitmap_free(rdpUpdate* update, xfBitmap* bitmap)
-{
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	if (bitmap->pixmap != 0)
-		XFreePixmap(xfi->display, bitmap->pixmap);
 }
 
 void xf_pointer_size(rdpUpdate* update, uint32* size)
@@ -736,15 +690,10 @@ boolean xf_post_connect(freerdp* instance)
 	if (xfi->sw_gdi != True)
 	{
 		bitmap_cache_register_callbacks(instance->update);
-		cache->bitmap->BitmapSize = (cbBitmapSize) xf_bitmap_size;
-		cache->bitmap->BitmapNew = (cbBitmapNew) xf_bitmap_new;
-		cache->bitmap->BitmapFree = (cbBitmapFree) xf_bitmap_free;
-
 		offscreen_cache_register_callbacks(instance->update);
-		cache->offscreen->BitmapSize = (cbBitmapSize) xf_bitmap_size;
-		cache->offscreen->BitmapNew = (cbBitmapNew) xf_offscreen_bitmap_new;
-		cache->offscreen->BitmapFree = (cbBitmapFree) xf_bitmap_free;
 		cache->offscreen->SetSurface = (cbSetSurface) xf_set_surface;
+
+		xf_register_graphics(instance->context->graphics);
 	}
 
 	instance->context->rail = rail_new(instance->settings);

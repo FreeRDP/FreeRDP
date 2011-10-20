@@ -44,21 +44,21 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 	}
 }
 
-void update_read_bitmap_data(STREAM* s, rdpBitmap* bitmap_data)
+void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
 	uint16 bytesPerPixel;
 
-	stream_read_uint16(s, bitmap_data->left);
-	stream_read_uint16(s, bitmap_data->top);
-	stream_read_uint16(s, bitmap_data->right);
-	stream_read_uint16(s, bitmap_data->bottom);
+	stream_read_uint16(s, bitmap_data->destLeft);
+	stream_read_uint16(s, bitmap_data->destTop);
+	stream_read_uint16(s, bitmap_data->destRight);
+	stream_read_uint16(s, bitmap_data->destBottom);
 	stream_read_uint16(s, bitmap_data->width);
 	stream_read_uint16(s, bitmap_data->height);
-	stream_read_uint16(s, bitmap_data->bpp);
+	stream_read_uint16(s, bitmap_data->bitsPerPixel);
 	stream_read_uint16(s, bitmap_data->flags);
-	stream_read_uint16(s, bitmap_data->length);
+	stream_read_uint16(s, bitmap_data->bitmapLength);
 
-	bytesPerPixel = (bitmap_data->bpp + 7) / 8;
+	bytesPerPixel = (bitmap_data->bitsPerPixel + 7) / 8;
 
 	if (bitmap_data->flags & BITMAP_COMPRESSION)
 	{
@@ -70,17 +70,17 @@ void update_read_bitmap_data(STREAM* s, rdpBitmap* bitmap_data)
 		stream_seek_uint16(s); /* cbScanWidth (2 bytes) */
 		stream_read_uint16(s, cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
 
-		bitmap_data->length = cbCompMainBodySize;
+		bitmap_data->bitmapLength = cbCompMainBodySize;
 
 		bitmap_data->compressed = True;
-		stream_get_mark(s, bitmap_data->srcData);
-		stream_seek(s, bitmap_data->length);
+		stream_get_mark(s, bitmap_data->bitmapDataStream);
+		stream_seek(s, bitmap_data->bitmapLength);
 	}
 	else
 	{
 		bitmap_data->compressed = False;
-		stream_get_mark(s, bitmap_data->srcData);
-		stream_seek(s, bitmap_data->length);
+		stream_get_mark(s, bitmap_data->bitmapDataStream);
+		stream_seek(s, bitmap_data->bitmapLength);
 	}
 }
 
@@ -96,11 +96,11 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 
 		count = bitmap_update->number * 2;
 
-		bitmap_update->bitmaps = (rdpBitmap*) xrealloc(bitmap_update->bitmaps,
-				sizeof(rdpBitmap) * count);
+		bitmap_update->bitmaps = (BITMAP_DATA*) xrealloc(bitmap_update->bitmaps,
+				sizeof(BITMAP_DATA) * count);
 
 		memset(&bitmap_update->bitmaps[bitmap_update->count], 0,
-				sizeof(rdpBitmap) * (count - bitmap_update->count));
+				sizeof(BITMAP_DATA) * (count - bitmap_update->count));
 
 		bitmap_update->count = count;
 	}
@@ -109,7 +109,6 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 	for (i = 0; i < bitmap_update->number; i++)
 	{
 		update_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
-		IFCALL(update->BitmapDecompress, update, &bitmap_update->bitmaps[i]);
 	}
 }
 
@@ -264,7 +263,7 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 		case UPDATE_TYPE_BITMAP:
 			update_read_bitmap(update, s, &update->bitmap_update);
-			IFCALL(update->Bitmap, update, &update->bitmap_update);
+			IFCALL(update->BitmapUpdate, update, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
@@ -407,7 +406,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (update != NULL)
 	{
 		update->bitmap_update.count = 64;
-		update->bitmap_update.bitmaps = (rdpBitmap*) xzalloc(sizeof(rdpBitmap) * update->bitmap_update.count);
+		update->bitmap_update.bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 	}
 
 	return update;
@@ -417,19 +416,7 @@ void update_free(rdpUpdate* update)
 {
 	if (update != NULL)
 	{
-		uint16 i;
-		rdpBitmap* bitmaps;
-		BITMAP_UPDATE* bitmap_update;
-
-		bitmap_update = &update->bitmap_update;
-		bitmaps = update->bitmap_update.bitmaps;
-
-		for (i = 0; i < bitmap_update->count; i++)
-		{
-			if (bitmaps[i].dstData != NULL)
-				xfree(bitmaps[i].dstData);
-		}
-
+		xfree(update->bitmap_update.bitmaps);
 		xfree(update);
 	}
 }

@@ -31,7 +31,10 @@ set(FREERDP_GDI_SRCS
 	pen.c
 	region.c
 	shape.c
-	gdi.c)
+	graphics.c
+	graphics.h
+	gdi.c
+	gdi.h)
 
 add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
 

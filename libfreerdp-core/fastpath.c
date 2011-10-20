@@ -150,7 +150,7 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 	{
 		case UPDATE_TYPE_BITMAP:
 			update_read_bitmap(update, s, &update->bitmap_update);
-			IFCALL(update->Bitmap, update, &update->bitmap_update);
+			IFCALL(update->BitmapUpdate, update, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:

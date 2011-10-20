@@ -29,10 +29,6 @@
 typedef struct _BITMAP_V2_CELL BITMAP_V2_CELL;
 typedef struct rdp_bitmap_cache rdpBitmapCache;
 
-typedef void (*cbBitmapSize)(rdpUpdate* update, uint32* size);
-typedef void (*cbBitmapNew)(rdpUpdate* update, rdpBitmap* bitmap);
-typedef void (*cbBitmapFree)(rdpUpdate* update, rdpBitmap* bitmap);
-
 #include <freerdp/cache/cache.h>
 
 struct _BITMAP_V2_CELL
@@ -45,16 +41,17 @@ struct rdp_bitmap_cache
 {
 	pcMemBlt MemBlt;
 	pcMem3Blt Mem3Blt;
+
 	pcCacheBitmap CacheBitmap;
 	pcCacheBitmapV2 CacheBitmapV2;
 	pcCacheBitmapV3 CacheBitmapV3;
 
-	cbBitmapSize BitmapSize;
-	cbBitmapNew BitmapNew;
-	cbBitmapFree BitmapFree;
+	pcBitmapUpdate BitmapUpdate;
 
 	uint8 maxCells;
+	rdpBitmap* bitmap;
 	rdpUpdate* update;
+	rdpContext* context;
 	rdpSettings* settings;
 	BITMAP_V2_CELL* cells;
 };

@@ -397,7 +397,7 @@ void wf_gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
-	update->Bitmap = wf_gdi_bitmap_update;
+	update->BitmapUpdate = wf_gdi_bitmap_update;
 	update->Palette = wf_gdi_palette_update;
 	update->SetBounds = wf_gdi_set_bounds;
 	update->DstBlt = wf_gdi_dstblt;

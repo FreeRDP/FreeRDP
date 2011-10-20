@@ -25,6 +25,7 @@ typedef struct rdp_update rdpUpdate;
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/graphics.h>
 #include <freerdp/utils/pcap.h>
 #include <freerdp/utils/stream.h>
 
@@ -43,7 +44,7 @@ struct _BOUNDS
 };
 typedef struct _BOUNDS BOUNDS;
 
-struct _BRUSH
+struct rdp_brush
 {
 	uint8 x;
 	uint8 y;
@@ -54,32 +55,43 @@ struct _BRUSH
 	uint8* data;
 	uint8 p8x8[8];
 };
-typedef struct _BRUSH BRUSH;
+typedef struct rdp_brush rdpBrush;
+
+struct rdp_glyph
+{
+	sint16 x;
+	sint16 y;
+	uint16 cx;
+	uint16 cy;
+	uint16 cb;
+	uint8* aj;
+};
+typedef struct rdp_glyph rdpGlyph;
 
 /* Bitmap Updates */
 
-struct rdp_bitmap
+struct _BITMAP_DATA
 {
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	uint16 destLeft;
+	uint16 destTop;
+	uint16 destRight;
+	uint16 destBottom;
 	uint16 width;
 	uint16 height;
-	uint16 bpp;
+	uint16 bitsPerPixel;
 	uint16 flags;
-	uint32 length;
-	uint8* srcData;
-	uint8* dstData;
+	uint16 bitmapLength;
+	uint8 bitmapComprHdr[8];
+	uint8* bitmapDataStream;
 	boolean compressed;
 };
-typedef struct rdp_bitmap rdpBitmap;
+typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
 	uint16 count;
 	uint16 number;
-	rdpBitmap* bitmaps;
+	BITMAP_DATA* bitmaps;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
@@ -179,7 +191,7 @@ struct _PATBLT_ORDER
 	uint8 bRop;
 	uint32 backColor;
 	uint32 foreColor;
-	BRUSH brush;
+	rdpBrush brush;
 };
 typedef struct _PATBLT_ORDER PATBLT_ORDER;
 
@@ -246,7 +258,7 @@ struct _MULTI_PATBLT_ORDER
 	uint8 bRop;
 	uint32 backColor;
 	uint32 foreColor;
-	BRUSH brush;
+	rdpBrush brush;
 	uint8 numRectangles;
 	uint16 cbData;
 	DELTA_RECT rectangles[45];
@@ -355,7 +367,7 @@ struct _MEM3BLT_ORDER
 	sint16 nYSrc;
 	uint32 backColor;
 	uint32 foreColor;
-	BRUSH brush;
+	rdpBrush brush;
 	uint16 cacheIndex;
 	rdpBitmap* bitmap;
 };
@@ -405,7 +417,7 @@ struct _GLYPH_INDEX_ORDER
 	sint16 opTop;
 	sint16 opRight;
 	sint16 opBottom;
-	BRUSH brush;
+	rdpBrush brush;
 	sint16 x;
 	sint16 y;
 	uint8 cbFragments;
@@ -479,7 +491,7 @@ struct _POLYGON_CB_ORDER
 	uint8 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
-	BRUSH brush;
+	rdpBrush brush;
 	uint8 nDeltaEntries;
 	uint8 cbData;
 	uint8* codeDeltaList;
@@ -508,7 +520,7 @@ struct _ELLIPSE_CB_ORDER
 	uint8 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
-	BRUSH brush;
+	rdpBrush brush;
 };
 typedef struct _ELLIPSE_CB_ORDER ELLIPSE_CB_ORDER;
 
@@ -533,9 +545,14 @@ struct _CACHE_BITMAP_V2_ORDER
 	uint16 flags;
 	uint32 key1;
 	uint32 key2;
+	uint8 bitmapBpp;
+	uint16 bitmapWidth;
+	uint16 bitmapHeight;
+	uint32 bitmapLength;
 	uint16 cacheIndex;
+	boolean compressed;
 	uint8 bitmapComprHdr[8];
-	rdpBitmap* bitmap;
+	uint8* bitmapDataStream;
 };
 typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
@@ -1044,7 +1061,7 @@ typedef void (*pcEndPaint)(rdpUpdate* update);
 typedef void (*pcSetBounds)(rdpUpdate* update, BOUNDS* bounds);
 typedef void (*pcSynchronize)(rdpUpdate* update);
 typedef void (*pcDesktopResize)(rdpUpdate* update);
-typedef void (*pcBitmap)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
+typedef void (*pcBitmapUpdate)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
 typedef void (*pcPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
 typedef void (*pcPlaySound)(rdpUpdate* update, PLAY_SOUND_UPDATE* play_sound);
 
@@ -1112,8 +1129,6 @@ typedef void (*pcNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orde
 typedef void (*pcSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pcSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
-typedef void (*pcBitmapDecompress)(rdpUpdate* update, rdpBitmap* bitmap);
-
 struct rdp_update
 {
 	rdpContext* context;
@@ -1123,7 +1138,7 @@ struct rdp_update
 	pcSetBounds SetBounds;
 	pcSynchronize Synchronize;
 	pcDesktopResize DesktopResize;
-	pcBitmap Bitmap;
+	pcBitmapUpdate BitmapUpdate;
 	pcPalette Palette;
 	pcPlaySound PlaySound;
 	pcPointerPosition PointerPosition;
@@ -1189,8 +1204,6 @@ struct rdp_update
 
 	pcSurfaceBits SurfaceBits;
 	pcSurfaceCommand SurfaceCommand;
-
-	pcBitmapDecompress BitmapDecompress;
 
 	boolean glyph_v2;
 

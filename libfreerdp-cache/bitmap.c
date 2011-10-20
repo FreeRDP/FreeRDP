@@ -17,21 +17,11 @@
  * limitations under the License.
  */
 
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/bitmap.h>
-
-void bitmap_free(rdpBitmap* bitmap)
-{
-	if (bitmap != NULL)
-	{
-		if (bitmap->dstData != NULL)
-			xfree(bitmap->dstData);
-
-		xfree(bitmap);
-	}
-}
 
 void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 {
@@ -65,25 +55,48 @@ void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bit
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
-	uint32 size = sizeof(rdpBitmap);
 	rdpCache* cache = update->context->cache;
 
-	bitmap = cache_bitmap->bitmap;
-	IFCALL(cache->bitmap->BitmapSize, update, &size);
-	bitmap = (rdpBitmap*) xrealloc(bitmap, size);
+	bitmap = Bitmap_Alloc(update->context);
 
-	IFCALL(cache->bitmap->BitmapNew, update, bitmap);
-	cache_bitmap->bitmap = bitmap;
+	bitmap->Decompress(update->context, bitmap,
+			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
+			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
+
+	bitmap->New(update->context, bitmap);
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex);
 
 	if (prevBitmap != NULL)
-	{
-		IFCALL(cache->bitmap->BitmapFree, update, prevBitmap);
-		bitmap_free(prevBitmap);
-	}
+		Bitmap_Free(update->context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex, bitmap);
+}
+
+void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
+{
+	int i;
+	rdpBitmap* bitmap;
+	BITMAP_DATA* bitmap_data;
+	rdpCache* cache = update->context->cache;
+
+	if (cache->bitmap->bitmap == NULL)
+		cache->bitmap->bitmap = Bitmap_Alloc(update->context);
+
+	bitmap = cache->bitmap->bitmap;
+
+	for (i = 0; i < bitmap_update->number; i++)
+	{
+		bitmap_data = &bitmap_update->bitmaps[i];
+
+		bitmap->Decompress(update->context, bitmap,
+				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
+				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength, bitmap_data->compressed);
+
+		bitmap->New(update->context, bitmap);
+
+		bitmap->Paint(update->context, bitmap, bitmap_data->destLeft, bitmap_data->destTop);
+	}
 }
 
 rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index)
@@ -140,6 +153,7 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 	update->MemBlt = update_gdi_memblt;
 	update->Mem3Blt = update_gdi_mem3blt;
 	update->CacheBitmapV2 = update_gdi_cache_bitmap;
+	update->BitmapUpdate = update_gdi_bitmap_update;
 }
 
 rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
@@ -153,6 +167,7 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 	{
 		bitmap_cache->settings = settings;
 		bitmap_cache->update = ((freerdp*) settings->instance)->update;
+		bitmap_cache->context = bitmap_cache->update->context;
 
 		bitmap_cache->maxCells = 5;
 
@@ -196,13 +211,14 @@ void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 
 				if (bitmap != NULL)
 				{
-					IFCALL(bitmap_cache->BitmapFree, bitmap_cache->update, bitmap);
-					bitmap_free(bitmap);
+					Bitmap_Free(bitmap_cache->context, bitmap);
 				}
 			}
 
 			xfree(bitmap_cache->cells[i].entries);
 		}
+
+		bitmap_cache->bitmap->Free(bitmap_cache->context, bitmap);
 
 		xfree(bitmap_cache->cells);
 		xfree(bitmap_cache);

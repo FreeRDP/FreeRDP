@@ -282,42 +282,6 @@ Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
 	return bitmap;
 }
 
-void xf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
-{
-	int i;
-	int x, y;
-	int w, h;
-	uint8* data;
-	XImage* image;
-	rdpBitmap* bmp;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-
-	for (i = 0; i < bitmap->number; i++)
-	{
-		bmp = &bitmap->bitmaps[i];
-
-		data = freerdp_image_convert(bmp->dstData, NULL, bmp->width, bmp->height, bmp->bpp, xfi->bpp, xfi->clrconv);
-
-		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
-				ZPixmap, 0, (char*) data, bmp->width, bmp->height, xfi->scanline_pad, 0);
-
-		x = bmp->left;
-		y = bmp->top;
-		w = bmp->right - bmp->left + 1;
-		h = bmp->bottom - bmp->top + 1;
-
-		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0, x, y, w, h);
-
-		XFree(image);
-		xfree(data);
-
-		if (xfi->remote_app != True)
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
-
-		gdi_InvalidateRegion(xfi->hdc, x, y, w, h);
-	}
-}
-
 void xf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
 
@@ -368,12 +332,12 @@ void xf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 {
-	BRUSH* brush;
 	Pixmap pattern;
+	rdpBrush* brush;
 	uint32 foreColor;
 	uint32 backColor;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 	rdpCache* cache = update->context->cache;
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
@@ -955,43 +919,8 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 	}
 }
 
-void xf_gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
-{
-	uint16 length;
-
-	length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
-
-	if (bitmap_data->dstData == NULL)
-		bitmap_data->dstData = (uint8*) xmalloc(length);
-	else
-		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, length);
-
-	if (bitmap_data->compressed)
-	{
-		boolean status;
-
-		status = bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->length,
-				bitmap_data->bpp, bitmap_data->bpp);
-
-		if (status != True)
-		{
-			printf("Bitmap Decompression Failed\n");
-		}
-	}
-	else
-	{
-		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
-	}
-
-	bitmap_data->compressed = False;
-	bitmap_data->length = length;
-}
-
 void xf_gdi_register_update_callbacks(rdpUpdate* update)
 {
-	update->Bitmap = xf_gdi_bitmap_update;
 	update->Palette = xf_gdi_palette_update;
 	update->SetBounds = xf_gdi_set_bounds;
 	update->DstBlt = xf_gdi_dstblt;
@@ -1023,7 +952,5 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBrush = xf_gdi_cache_brush;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
-
-	update->BitmapDecompress = xf_gdi_bitmap_decompress;
 }
 

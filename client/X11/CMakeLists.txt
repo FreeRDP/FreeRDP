@@ -27,14 +27,16 @@ add_executable(xfreerdp
 	xf_rail.h
 	xf_tsmf.c
 	xf_tsmf.h
-	xf_cliprdr.c
-	xf_cliprdr.h
 	xf_event.c
 	xf_event.h
-	xf_keyboard.c
-	xf_keyboard.h
+	xf_cliprdr.c
+	xf_cliprdr.h
 	xf_monitor.c
 	xf_monitor.h
+	xf_graphics.c
+	xf_graphics.h
+	xf_keyboard.c
+	xf_keyboard.h
 	xf_window.c
 	xf_window.h
 	xfreerdp.c

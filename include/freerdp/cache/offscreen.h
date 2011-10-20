@@ -33,9 +33,6 @@ typedef void (*cbSetSurface)(rdpUpdate* update, rdpBitmap* bitmap, boolean prima
 
 struct rdp_offscreen_cache
 {
-	cbBitmapSize BitmapSize;
-	cbBitmapNew BitmapNew;
-	cbBitmapFree BitmapFree;
 	cbSetSurface SetSurface;
 
 	uint16 currentSurface;

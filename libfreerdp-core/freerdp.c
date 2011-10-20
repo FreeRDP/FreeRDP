@@ -136,6 +136,7 @@ void freerdp_context_new(freerdp* instance)
 	IFCALL(instance->ContextSize, instance, &size);
 
 	instance->context = (rdpContext*) xzalloc(size);
+	instance->context->graphics = graphics_new(instance->context);
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
 

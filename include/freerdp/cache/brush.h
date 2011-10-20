@@ -31,7 +31,7 @@ struct _BRUSH_ENTRY
 };
 typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
 
-struct rdp_brush
+struct rdp_brush_cache
 {
 	rdpSettings* settings;
 	uint8 maxEntries;
@@ -39,7 +39,7 @@ struct rdp_brush
 	BRUSH_ENTRY* entries;
 	BRUSH_ENTRY* monoEntries;
 };
-typedef struct rdp_brush rdpBrushCache;
+typedef struct rdp_brush_cache rdpBrushCache;
 
 FREERDP_API void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp);
 FREERDP_API void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp);

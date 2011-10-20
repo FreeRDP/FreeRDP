@@ -19,6 +19,7 @@
 
 #include "window.h"
 #include <freerdp/api.h>
+#include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>
 
 #include "orders.h"
@@ -309,7 +310,7 @@ INLINE void update_seek_glyph_delta(STREAM* s)
 		stream_seek_uint8(s);
 }
 
-INLINE void update_read_brush(STREAM* s, BRUSH* brush, uint8 fieldFlags)
+INLINE void update_read_brush(STREAM* s, rdpBrush* brush, uint8 fieldFlags)
 {
 	if (fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, brush->x);
@@ -1393,16 +1394,12 @@ void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_
 void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
 {
 	uint8 bitsPerPixelId;
-	rdpBitmap* bitmap;
-
-	bitmap = (rdpBitmap*) xzalloc(sizeof(rdpBitmap));
-	cache_bitmap_v2_order->bitmap = bitmap;
 
 	cache_bitmap_v2_order->cacheId = flags & 0x0003;
 	cache_bitmap_v2_order->flags = (flags & 0xFF80) >> 7;
 
 	bitsPerPixelId = (flags & 0x0078) >> 3;
-	bitmap->bpp = CBR2_BPP[bitsPerPixelId];
+	cache_bitmap_v2_order->bitmapBpp = CBR2_BPP[bitsPerPixelId];
 
 	if (cache_bitmap_v2_order->flags & CBR2_PERSISTENT_KEY_PRESENT)
 	{
@@ -1412,36 +1409,36 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 	if (cache_bitmap_v2_order->flags & CBR2_HEIGHT_SAME_AS_WIDTH)
 	{
-		update_read_2byte_unsigned(s, &bitmap->width); /* bitmapWidth */
-		bitmap->height = bitmap->width;
+		update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapWidth); /* bitmapWidth */
+		cache_bitmap_v2_order->bitmapHeight = cache_bitmap_v2_order->bitmapWidth;
 	}
 	else
 	{
-		update_read_2byte_unsigned(s, &bitmap->width); /* bitmapWidth */
-		update_read_2byte_unsigned(s, &bitmap->height); /* bitmapHeight */
+		update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapWidth); /* bitmapWidth */
+		update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapHeight); /* bitmapHeight */
 	}
 
-	update_read_4byte_unsigned(s, &bitmap->length); /* bitmapLength */
+	update_read_4byte_unsigned(s, &cache_bitmap_v2_order->bitmapLength); /* bitmapLength */
 	update_read_2byte_unsigned(s, &cache_bitmap_v2_order->cacheIndex); /* cacheIndex */
 
 	if (compressed)
 	{
 		if ((cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
-			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_v2_order->bitmapComprHdr);
+			uint8* bitmapComprHdr = (uint8*) &cache_bitmap_v2_order->bitmapComprHdr;
 			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			bitmap->length -= 8;
+			cache_bitmap_v2_order->bitmapLength -= 8;
 		}
 
-		stream_get_mark(s, bitmap->srcData);
-		stream_seek(s, bitmap->length);
-		bitmap->compressed = True;
+		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
+		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
+		cache_bitmap_v2_order->compressed = True;
 	}
 	else
 	{
-		stream_get_mark(s, bitmap->srcData);
-		stream_seek(s, bitmap->length);
-		bitmap->compressed = False;
+		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
+		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
+		cache_bitmap_v2_order->compressed = False;
 	}
 }
 
@@ -2019,13 +2016,13 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), False, extraFlags);
-			IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
+			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
 			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
 			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), True, extraFlags);
-			IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
+			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
 			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 

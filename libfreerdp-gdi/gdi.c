@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
@@ -41,6 +42,8 @@
 #include <freerdp/gdi/clipping.h>
 
 #include <freerdp/gdi/gdi.h>
+
+#include "gdi.h"
 
 /* Ternary Raster Operation Table */
 const uint32 rop3_code_table[] =
@@ -363,87 +366,6 @@ INLINE int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 	return (data[byte] & (0x80 >> shift)) != 0;
 }
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
-{
-	uint8* bmpData;
-	HGDI_BITMAP bitmap;
-	
-	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
-	
-	return bitmap;
-}
-
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
-{
-	gdiBitmap* bitmap;
-	
-	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
-	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
-	
-	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
-
-	if (data == NULL)
-		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
-	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
-	
-	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
-	bitmap->org_bitmap = NULL;
-
-	return bitmap;
-}
-
-void gdi_bitmap_free_ex(gdiBitmap* bitmap)
-{
-	if (bitmap != NULL)
-	{
-		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->org_bitmap);
-		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
-		gdi_DeleteDC(bitmap->hdc);
-		free(bitmap);
-	}
-}
-
-void gdi_bitmap_size(rdpUpdate* update, uint32* size)
-{
-	*size = sizeof(gdiBitmap);
-}
-
-void gdi_bitmap_new(rdpUpdate* update, gdiBitmap* bitmap)
-{
-	uint8* data;
-	rdpBitmap* _bitmap;
-	rdpGdi* gdi = update->context->gdi;
-
-	_bitmap = &(bitmap->_p);
-	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
-
-	data = _bitmap->dstData;
-
-	if (data == NULL)
-		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, _bitmap->width, _bitmap->height);
-	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, _bitmap->width, _bitmap->height, gdi->dstBpp, data);
-
-	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
-	bitmap->org_bitmap = NULL;
-}
-
-void gdi_offscreen_bitmap_new(rdpUpdate* update, gdiBitmap* bitmap)
-{
-	rdpBitmap* _bitmap;
-	rdpGdi* gdi = update->context->gdi;
-
-	_bitmap = &(bitmap->_p);
-	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
-
-	bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, _bitmap->width, _bitmap->height);
-
-	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
-	bitmap->org_bitmap = NULL;
-}
-
 void gdi_set_surface(rdpUpdate* update, gdiBitmap* bitmap, boolean primary)
 {
 	rdpGdi* gdi = update->context->gdi;
@@ -452,16 +374,6 @@ void gdi_set_surface(rdpUpdate* update, gdiBitmap* bitmap, boolean primary)
 		gdi->drawing = gdi->primary;
 	else
 		gdi->drawing = bitmap;
-}
-
-void gdi_bitmap_free(rdpUpdate* update, gdiBitmap* bitmap)
-{
-	if (bitmap != NULL)
-	{
-		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->org_bitmap);
-		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
-		gdi_DeleteDC(bitmap->hdc);
-	}
 }
 
 gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
@@ -497,24 +409,34 @@ void gdi_glyph_free(gdiBitmap *gdi_bmp)
 	}
 }
 
-void gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
+gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
 {
-	int i;
-	rdpBitmap* bmp;
-	gdiBitmap* gdi_bmp;
-	rdpGdi* gdi = update->context->gdi;
+	gdiBitmap* bitmap;
 
-	for (i = 0; i < bitmap->number; i++)
+	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
+
+	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
+
+	if (data == NULL)
+		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
+	else
+		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
+
+	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
+	bitmap->org_bitmap = NULL;
+
+	return bitmap;
+}
+
+void gdi_bitmap_free_ex(gdiBitmap* bitmap)
+{
+	if (bitmap != NULL)
 	{
-		bmp = &bitmap->bitmaps[i];
-
-		gdi_bmp = gdi_bitmap_new_ex(gdi, bmp->width, bmp->height, gdi->dstBpp, bmp->dstData);
-
-		gdi_BitBlt(gdi->primary->hdc,
-				bmp->left, bmp->top, bmp->right - bmp->left + 1,
-				bmp->bottom - bmp->top + 1, gdi_bmp->hdc, 0, 0, GDI_SRCCOPY);
-
-		gdi_bitmap_free_ex((gdiBitmap*) gdi_bmp);
+		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->org_bitmap);
+		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
+		gdi_DeleteDC(bitmap->hdc);
+		free(bitmap);
 	}
 }
 
@@ -549,7 +471,7 @@ void gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 {
 	uint8* data;
-	BRUSH* brush;
+	rdpBrush* brush;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = update->context->gdi;
 	rdpCache* cache = update->context->cache;
@@ -989,40 +911,6 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 		xfree(tile_bitmap);
 }
 
-void gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
-{
-	uint16 length;
-
-	length = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
-
-	if (bitmap_data->dstData == NULL)
-		bitmap_data->dstData = (uint8*) xmalloc(length);
-	else
-		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, length);
-
-	if (bitmap_data->compressed)
-	{
-		boolean status;
-
-		status = bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->length,
-				bitmap_data->bpp, bitmap_data->bpp);
-
-		if (status != True)
-		{
-			printf("Bitmap Decompression Failed\n");
-		}
-	}
-	else
-	{
-		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
-	}
-
-	bitmap_data->compressed = False;
-	bitmap_data->length = length;
-}
-
 /**
  * Register GDI callbacks with libfreerdp-core.
  * @param inst current instance
@@ -1031,7 +919,6 @@ void gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
 
 void gdi_register_update_callbacks(rdpUpdate* update)
 {
-	update->Bitmap = gdi_bitmap_update;
 	update->Palette = gdi_palette_update;
 	update->SetBounds = gdi_set_bounds;
 	update->DstBlt = gdi_dstblt;
@@ -1063,7 +950,6 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBrush = gdi_cache_brush;
 
 	update->SurfaceBits = gdi_surface_bits;
-	update->BitmapDecompress = gdi_bitmap_decompress;
 }
 
 void gdi_init_primary(rdpGdi* gdi)
@@ -1186,14 +1072,9 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	gdi_register_update_callbacks(instance->update);
 
 	bitmap_cache_register_callbacks(instance->update);
-	cache->bitmap->BitmapSize = (cbBitmapSize) gdi_bitmap_size;
-	cache->bitmap->BitmapNew = (cbBitmapNew) gdi_bitmap_new;
-	cache->bitmap->BitmapFree = (cbBitmapFree) gdi_bitmap_free;
+	gdi_register_graphics(instance->context->graphics);
 
 	offscreen_cache_register_callbacks(instance->update);
-	cache->offscreen->BitmapSize = (cbBitmapSize) gdi_bitmap_size;
-	cache->offscreen->BitmapNew = (cbBitmapNew) gdi_offscreen_bitmap_new;
-	cache->offscreen->BitmapFree = (cbBitmapFree) gdi_bitmap_free;
 	cache->offscreen->SetSurface = (cbSetSurface) gdi_set_surface;
 
 	gdi->rfx_context = rfx_context_new();

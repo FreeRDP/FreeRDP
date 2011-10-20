@@ -52,6 +52,7 @@ set(LIBFREERDP_CORE_SRCS
 	orders.c
 	orders.h
 	freerdp.c
+	graphics.c
 	capabilities.c
 	capabilities.h
 	certificate.c

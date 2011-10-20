@@ -55,6 +55,7 @@ struct xf_bitmap
 {
 	rdpBitmap bitmap;
 	Pixmap pixmap;
+	XImage* image;
 };
 typedef struct xf_bitmap xfBitmap;
 
@@ -63,7 +64,6 @@ struct xf_context
 	rdpContext _p;
 
 	xfInfo* xfi;
-	//rdpChannels* channels;
 	rdpSettings* settings;
 };
 typedef struct xf_context xfContext;
