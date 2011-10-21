@@ -72,17 +72,22 @@
  * @param credssp
  */
 
-void credssp_ntlmssp_init(rdpCredssp* credssp)
+int credssp_ntlmssp_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
 	NTLMSSP* ntlmssp = credssp->ntlmssp;
 	rdpSettings* settings = credssp->transport->settings;
 	instance = (freerdp*) settings->instance;
 
-	if (settings->password == NULL)
+	if (settings->password == NULL || settings->username)
 	{
-		IFCALL(instance->Authenticate, instance,
-				&settings->username, &settings->password, &settings->domain);
+		if(instance->Authenticate)
+		{
+			boolean proceed = instance->Authenticate(instance,
+					&settings->username, &settings->password, &settings->domain);
+			if(!proceed)
+				return 0;
+		}
 	}
 
 	ntlmssp_set_password(ntlmssp, settings->password);
@@ -103,6 +108,8 @@ void credssp_ntlmssp_init(rdpCredssp* credssp)
 	ntlmssp_generate_exported_session_key(ntlmssp);
 	
 	ntlmssp->ntlm_v2 = 0;
+
+	return 1;
 }
 
 /**
@@ -144,7 +151,8 @@ int credssp_authenticate(rdpCredssp* credssp)
 	STREAM* s = stream_new(0);
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
-	credssp_ntlmssp_init(credssp);
+	if (credssp_ntlmssp_init(credssp) == 0)
+		return 0;
 
 	if (credssp_get_public_key(credssp) == 0)
 		return 0;
