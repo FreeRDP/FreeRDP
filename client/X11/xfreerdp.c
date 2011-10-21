@@ -487,10 +487,10 @@ boolean xf_pre_connect(freerdp* instance)
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = xnew(CLRCONV);
-	xfi->clrconv->palette = NULL;
 	xfi->clrconv->alpha = 1;
 	xfi->clrconv->invert = 0;
 	xfi->clrconv->rgb555 = 0;
+	xfi->clrconv->palette = xnew(rdpPalette);
 
 	instance->context->cache = cache_new(instance->settings);
 

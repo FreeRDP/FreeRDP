@@ -65,21 +65,6 @@ typedef int boolean;
 
 #include <freerdp/settings.h>
 
-struct _RDP_PALETTEENTRY
-{
-	uint8 red;
-	uint8 green;
-	uint8 blue;
-};
-typedef struct _RDP_PALETTEENTRY RDP_PALETTEENTRY;
-
-struct _RDP_PALETTE
-{
-	uint16 count;
-	RDP_PALETTEENTRY* entries;
-};
-typedef struct _RDP_PALETTE RDP_PALETTE;
-
 struct _RDP_PLUGIN_DATA
 {
 	uint16 size;

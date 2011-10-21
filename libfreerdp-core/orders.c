@@ -977,6 +977,9 @@ void update_read_memblt_order(STREAM* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* me
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_09)
 		stream_read_uint16(s, memblt->cacheIndex);
+
+	memblt->colorIndex = (memblt->cacheId >> 8);
+	memblt->cacheId = (memblt->cacheId & 0xFF);
 }
 
 void update_read_mem3blt_order(STREAM* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* mem3blt)
@@ -1015,6 +1018,9 @@ void update_read_mem3blt_order(STREAM* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* 
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_16)
 		stream_read_uint16(s, mem3blt->cacheIndex);
+
+	mem3blt->colorIndex = (mem3blt->cacheId >> 8);
+	mem3blt->cacheId = (mem3blt->cacheId & 0xFF);
 }
 
 void update_read_save_bitmap_order(STREAM* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)

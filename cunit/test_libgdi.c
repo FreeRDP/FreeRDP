@@ -1510,7 +1510,7 @@ void test_gdi_LineTo(void)
 	HGDI_BITMAP hBmp_LineTo_R2_MERGEPENNOT;
 	HGDI_BITMAP hBmp_LineTo_R2_MERGEPEN;
 	HGDI_BITMAP hBmp_LineTo_R2_WHITE;
-	RDP_PALETTE* hPalette;
+	rdpPalette* hPalette;
 	HCLRCONV clrconv;
 	int bitsPerPixel = 8;
 	int bytesPerPixel = 1;
@@ -1526,7 +1526,7 @@ void test_gdi_LineTo(void)
 	hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBmp);
 
-	hPalette = (RDP_PALETTE*) gdi_GetSystemPalette();
+	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
 	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	clrconv->alpha = 1;
@@ -1828,7 +1828,7 @@ void test_gdi_Ellipse(void)
 	HGDI_BITMAP hBmp_Ellipse_1;
 	HGDI_BITMAP hBmp_Ellipse_2;
 	HGDI_BITMAP hBmp_Ellipse_3;
-	RDP_PALETTE* hPalette;
+	rdpPalette* hPalette;
 	HCLRCONV clrconv;
 	int bitsPerPixel = 8;
 	int bytesPerPixel = 1;
@@ -1844,7 +1844,7 @@ void test_gdi_Ellipse(void)
 	hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBmp);
 
-	hPalette = (RDP_PALETTE*) gdi_GetSystemPalette();
+	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
 	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	clrconv->alpha = 1;
@@ -1988,7 +1988,7 @@ void test_gdi_BitBlt_32bpp(void)
 	HGDI_BITMAP hBmp_PATPAINT;
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	RDP_PALETTE* hPalette;
+	rdpPalette* hPalette;
 	HCLRCONV clrconv;
 
 	int bytesPerPixel = 4;
@@ -2002,7 +2002,7 @@ void test_gdi_BitBlt_32bpp(void)
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
-	hPalette = (RDP_PALETTE*) gdi_GetSystemPalette();
+	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
 	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	clrconv->alpha = 1;
@@ -2242,7 +2242,7 @@ void test_gdi_BitBlt_16bpp(void)
 	HGDI_BITMAP hBmp_PATPAINT;
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	RDP_PALETTE* hPalette;
+	rdpPalette* hPalette;
 	HCLRCONV clrconv;
 
 	int bytesPerPixel = 2;
@@ -2256,7 +2256,7 @@ void test_gdi_BitBlt_16bpp(void)
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
-	hPalette = (RDP_PALETTE*) gdi_GetSystemPalette();
+	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
 	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	clrconv->alpha = 1;
@@ -2496,7 +2496,7 @@ void test_gdi_BitBlt_8bpp(void)
 	HGDI_BITMAP hBmp_PATPAINT;
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	RDP_PALETTE* hPalette;
+	rdpPalette* hPalette;
 	HCLRCONV clrconv;
 
 	int bytesPerPixel = 1;
@@ -2510,7 +2510,7 @@ void test_gdi_BitBlt_8bpp(void)
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
-	hPalette = (RDP_PALETTE*) gdi_GetSystemPalette();
+	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
 	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	clrconv->alpha = 1;

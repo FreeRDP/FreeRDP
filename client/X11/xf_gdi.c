@@ -261,7 +261,9 @@ Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
 
 void xf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
-
+	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	xfi->clrconv->palette->count = palette->number;
+	xfi->clrconv->palette->entries = palette->entries;
 }
 
 void xf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)

@@ -97,12 +97,27 @@ typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
 /* Palette Updates */
 
+struct _PALETTE_ENTRY
+{
+	uint8 red;
+	uint8 green;
+	uint8 blue;
+};
+typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
+
 struct _PALETTE_UPDATE
 {
 	uint32 number;
-	uint32 entries[256];
+	PALETTE_ENTRY entries[256];
 };
 typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
+
+struct rdp_palette
+{
+	uint16 count;
+	PALETTE_ENTRY* entries;
+};
+typedef struct rdp_palette rdpPalette;
 
 /* Pointer Updates */
 
@@ -343,6 +358,7 @@ typedef struct _POLYLINE_ORDER POLYLINE_ORDER;
 struct _MEMBLT_ORDER
 {
 	uint16 cacheId;
+	uint8 colorIndex;
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;
@@ -358,6 +374,7 @@ typedef struct _MEMBLT_ORDER MEMBLT_ORDER;
 struct _MEM3BLT_ORDER
 {
 	uint16 cacheId;
+	uint8 colorIndex;
 	sint16 nLeftRect;
 	sint16 nTopRect;
 	sint16 nWidth;

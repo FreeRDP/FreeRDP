@@ -432,7 +432,9 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 
 void gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
-
+	rdpGdi* gdi = update->context->gdi;
+	gdi->clrconv->palette->count = palette->number;
+	gdi->clrconv->palette->entries = palette->entries;
 }
 
 void gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
@@ -726,7 +728,6 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 	rdpCache* cache = update->context->cache;
-
 	color_table_put(cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
@@ -1025,10 +1026,10 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
 	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	gdi->clrconv->palette = NULL;
 	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
 	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
 	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
+	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;

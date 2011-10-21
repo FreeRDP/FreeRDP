@@ -111,8 +111,7 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update)
 {
 	int i;
-	uint8 byte;
-	uint32 color;
+	PALETTE_ENTRY* entry;
 
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
 	stream_read_uint32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
@@ -123,13 +122,11 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	/* paletteEntries */
 	for (i = 0; i < (int) palette_update->number; i++)
 	{
-		stream_read_uint8(s, byte);
-		color = byte;
-		stream_read_uint8(s, byte);
-		color |= (byte << 8);
-		stream_read_uint8(s, byte);
-		color |= (byte << 16);
-		palette_update->entries[i] = color;
+		entry = &palette_update->entries[i];
+
+		stream_read_uint8(s, entry->blue);
+		stream_read_uint8(s, entry->green);
+		stream_read_uint8(s, entry->red);
 	}
 }
 

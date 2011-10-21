@@ -228,7 +228,7 @@ struct _CLRCONV
 	int alpha;
 	int invert;
 	int rgb555;
-	RDP_PALETTE* palette;
+	rdpPalette* palette;
 };
 typedef struct _CLRCONV CLRCONV;
 typedef CLRCONV* HCLRCONV;
