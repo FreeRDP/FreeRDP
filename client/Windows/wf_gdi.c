@@ -27,8 +27,10 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/utils/memory.h>
 
 #include "wfreerdp.h"
+#include "wf_graphics.h"
 
 const uint8 wf_rop2_table[] =
 {
@@ -63,72 +65,6 @@ boolean wf_set_rop2(HDC hdc, int rop2)
 	return True;
 }
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data)
-{
-	HDC hdc;
-	int negHeight;
-	HBITMAP bitmap;
-	BITMAPINFO bmi;
-	uint8* cdata = NULL;
-
-	/**
-	 * See: http://msdn.microsoft.com/en-us/library/dd183376
-	 * if biHeight is positive, the bitmap is bottom-up
-	 * if biHeight is negative, the bitmap is top-down
-	 * Since we get top-down bitmaps, let's keep it that way
-	 */
-
-	negHeight = (height < 0) ? height : height * (-1);
-
-	hdc = GetDC(NULL);
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
-	bmi.bmiHeader.biWidth = width;
-	bmi.bmiHeader.biHeight = negHeight;
-	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = 24;
-	bmi.bmiHeader.biCompression = BI_RGB;
-	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**) &cdata, NULL, 0);
-
-	if (data != NULL)
-		freerdp_image_convert(data, cdata, width, height, bpp, 24, wfi->clrconv);
-
-	ReleaseDC(NULL, hdc);
-	GdiFlush();
-
-	return bitmap;
-}
-
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
-{
-	HDC hdc;
-	wfBitmap* image;
-
-	hdc = GetDC(NULL);
-	image = (wfBitmap*) malloc(sizeof(wfBitmap));
-	image->hdc = CreateCompatibleDC(hdc);
-
-	if (data == NULL)
-		image->bitmap = CreateCompatibleBitmap(hdc, width, height);
-	else
-		image->bitmap = wf_create_dib(wfi, width, height, bpp, data);
-
-	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
-	ReleaseDC(NULL, hdc);
-	
-	return image;
-}
-
-void wf_image_free(wfBitmap* image)
-{
-	if (image != 0)
-	{
-		SelectObject(image->hdc, image->org_bitmap);
-		DeleteObject(image->bitmap);
-		DeleteDC(image->hdc);
-		free(image);
-	}
-}
-
 wfBitmap* wf_glyph_new(wfInfo* wfi, GLYPH_DATA* glyph)
 {
 	wfBitmap* glyph_bmp;
@@ -160,6 +96,7 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 	SetForegroundWindow(wfi->hwnd);
 }
 
+#if 0
 void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 {
 	int i;
@@ -183,6 +120,7 @@ void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 		wf_image_free(wf_bmp);
 	}
 }
+#endif
 
 void wf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
@@ -369,35 +307,8 @@ void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 }
 
-void wf_gdi_bitmap_decompress(rdpUpdate* update, rdpBitmap* bitmap_data)
-{
-	uint16 dstSize;
-
-	dstSize = bitmap_data->width * bitmap_data->height * (bitmap_data->bpp / 8);
-
-	if (bitmap_data->dstData == NULL)
-		bitmap_data->dstData = (uint8*) xmalloc(dstSize);
-	else
-		bitmap_data->dstData = (uint8*) xrealloc(bitmap_data->dstData, dstSize);
-
-	if (bitmap_data->compressed)
-	{
-		bitmap_decompress(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->length,
-				bitmap_data->bpp, bitmap_data->bpp);
-	}
-	else
-	{
-		freerdp_image_flip(bitmap_data->srcData, bitmap_data->dstData,
-				bitmap_data->width, bitmap_data->height, bitmap_data->bpp);
-	}
-
-	bitmap_data->compressed = False;
-}
-
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
-	update->BitmapUpdate = wf_gdi_bitmap_update;
 	update->Palette = wf_gdi_palette_update;
 	update->SetBounds = wf_gdi_set_bounds;
 	update->DstBlt = wf_gdi_dstblt;
@@ -429,6 +340,4 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheBrush = wf_gdi_cache_brush;
 
 	update->SurfaceBits = wf_gdi_surface_bits;
-
-	update->BitmapDecompress = wf_gdi_bitmap_decompress;
 }

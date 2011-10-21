@@ -17,9 +17,30 @@
  * limitations under the License.
  */
 
-#include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef _WIN32
+#include <sys/time.h>
+#else
+#include <time.h>
+#include <sys/timeb.h>
+
+struct timeval
+{
+	long tv_sec;
+	long tv_usec;
+};
+
+int gettimeofday(struct timeval* tp, void* tz)
+{
+	struct _timeb timebuffer;
+	_ftime (&timebuffer);
+	tp->tv_sec = (long) timebuffer.time;
+	tp->tv_usec = timebuffer.millitm * 1000;
+	return 0;
+}
+#endif
 
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>

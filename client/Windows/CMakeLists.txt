@@ -22,6 +22,8 @@ add_executable(wfreerdp WIN32
 	wf_gdi.h
 	wf_event.c
 	wf_event.h
+	wf_graphics.c
+	wf_graphics.h
 	wfreerdp.c
 	wfreerdp.h)
 

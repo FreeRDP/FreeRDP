@@ -42,12 +42,18 @@
 
 struct wf_bitmap
 {
-	rdpBitmap _p;
+	rdpBitmap _bitmap;
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
 };
 typedef struct wf_bitmap wfBitmap;
+
+struct wf_pointer
+{
+	rdpPointer pointer;
+};
+typedef struct wf_pointer wfPointer;
 
 typedef struct wf_info wfInfo;
 
@@ -56,7 +62,6 @@ struct wf_context
 	rdpContext _p;
 
 	wfInfo* wfi;
-	rdpChannels* channels;
 };
 typedef struct wf_context wfContext;
 

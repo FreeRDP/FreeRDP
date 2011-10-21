@@ -38,6 +38,7 @@ set(FREERDP_GDI_SRCS
 
 add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
 
+target_link_libraries(freerdp-gdi freerdp-core)
 target_link_libraries(freerdp-gdi freerdp-cache)
 target_link_libraries(freerdp-gdi freerdp-codec)
 

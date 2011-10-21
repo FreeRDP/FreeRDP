@@ -24,7 +24,7 @@
 
 #include "wfreerdp.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height);
 wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
 void wf_image_free(wfBitmap* image);
 void wf_toggle_fullscreen(wfInfo* wfi);

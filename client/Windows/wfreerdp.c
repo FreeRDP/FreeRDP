@@ -28,9 +28,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/channels/channels.h>
 
 #include "wf_gdi.h"
+#include "wf_graphics.h"
 
 #include "wfreerdp.h"
 
@@ -46,21 +48,14 @@ HCURSOR g_default_cursor;
 volatile int g_thread_count = 0;
 LPCTSTR g_wnd_class_name = L"wfreerdp";
 
-void wf_context_size(freerdp* instance, uint32* size)
+void wf_context_new(freerdp* instance, rdpContext* context)
 {
-	*size = sizeof(wfContext);
-}
-
-void wf_context_new(freerdp* instance, wfContext* context)
-{
-	rdpContext* _context = (rdpContext*) &context->_p;
-
 	context->channels = freerdp_channels_new();
 }
 
-void wf_context_free(freerdp* instance, wfContext* context)
+void wf_context_free(freerdp* instance, rdpContext* context)
 {
-	rdpContext* _context = (rdpContext*) &context->_p;
+
 }
 
 int wf_create_console(void)
@@ -127,69 +122,6 @@ void wf_hw_begin_paint(rdpUpdate* update)
 void wf_hw_end_paint(rdpUpdate* update)
 {
 
-}
-
-void wf_bitmap_size(rdpUpdate* update, uint32* size)
-{
-	*size = sizeof(wfBitmap);
-}
-
-void wf_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
-{
-	HDC hdc;
-	uint8* data;
-	rdpBitmap* _bitmap;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
-
-	hdc = GetDC(NULL);
-	bitmap->hdc = CreateCompatibleDC(hdc);
-
-	_bitmap = &(bitmap->_p);
-	data = _bitmap->dstData;
-
-	if (data == NULL)
-		bitmap->bitmap = CreateCompatibleBitmap(hdc, _bitmap->width, _bitmap->height);
-	else
-		bitmap->bitmap = wf_create_dib(wfi, _bitmap->width, _bitmap->height, _bitmap->bpp, data);
-
-	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
-	ReleaseDC(NULL, hdc);
-}
-
-void wf_offscreen_bitmap_new(rdpUpdate* update, wfBitmap* bitmap)
-{
-	HDC hdc;
-	rdpBitmap* _bitmap;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
-
-	hdc = GetDC(NULL);
-	bitmap->hdc = CreateCompatibleDC(hdc);
-
-	_bitmap = &(bitmap->_p);
-	bitmap->bitmap = CreateCompatibleBitmap(hdc, _bitmap->width, _bitmap->height);
-
-	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
-	ReleaseDC(NULL, hdc);
-}
-
-void wf_set_surface(rdpUpdate* update, wfBitmap* bitmap, boolean primary)
-{
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
-
-	if (primary)
-		wfi->drawing = wfi->primary;
-	else
-		wfi->drawing = bitmap;
-}
-
-void wf_bitmap_free(rdpUpdate* update, wfBitmap* bitmap)
-{
-	if (bitmap != 0)
-	{
-		SelectObject(bitmap->hdc, bitmap->org_bitmap);
-		DeleteObject(bitmap->bitmap);
-		DeleteDC(bitmap->hdc);
-	}
 }
 
 boolean wf_pre_connect(freerdp* instance)
@@ -268,7 +200,7 @@ boolean wf_pre_connect(freerdp* instance)
 	}
 
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
-	freerdp_channels_pre_connect(context->channels, instance);
+	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -291,6 +223,8 @@ boolean wf_post_connect(freerdp* instance)
 	wfi->dstBpp = 32;
 	width = settings->width;
 	height = settings->height;
+
+	wf_register_graphics(instance->context->graphics);
 
 	if (wfi->sw_gdi)
 	{
@@ -373,21 +307,16 @@ boolean wf_post_connect(freerdp* instance)
 		instance->update->EndPaint = wf_hw_end_paint;
 	}
 
+	pointer_cache_register_callbacks(instance->update);
+
 	if (wfi->sw_gdi != True)
 	{
+		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
-		cache->bitmap->BitmapSize = (cbBitmapSize) wf_bitmap_size;
-		cache->bitmap->BitmapNew = (cbBitmapNew) wf_bitmap_new;
-		cache->bitmap->BitmapFree = (cbBitmapFree) wf_bitmap_free;
-
 		offscreen_cache_register_callbacks(instance->update);
-		cache->offscreen->BitmapSize = (cbBitmapSize) wf_bitmap_size;
-		cache->offscreen->BitmapNew = (cbBitmapNew) wf_offscreen_bitmap_new;
-		cache->offscreen->BitmapFree = (cbBitmapFree) wf_bitmap_free;
-		cache->offscreen->SetSurface = (cbSetSurface) wf_set_surface;
 	}
 
-	freerdp_channels_post_connect(context->channels, instance);
+	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -433,7 +362,7 @@ int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 	return 1;
 }
 
-int wf_process_ui_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
+int wf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	return 0;
 }
@@ -458,7 +387,7 @@ int wfreerdp_run(freerdp* instance)
 	if (freerdp_connect(instance) != True)
 		return 0;
 
-	channels = ((wfContext*) instance->context)->channels;
+	channels = instance->context->channels;
 
 	/* program main loop */
 	while (1)
@@ -608,8 +537,6 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	thread_data* data;
 	WSADATA wsa_data;
 	WNDCLASSEX wnd_cls;
-	wfContext* context;
-	rdpChannels* channels;
 
 	if (WSAStartup(0x101, &wsa_data) != 0)
 		return 1;
@@ -645,13 +572,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	instance->ContextSize = (pContextSize) wf_context_size;
-	instance->ContextNew = (pcContextNew) wf_context_new;
-	instance->ContextFree = (pcContextFree) wf_context_free;
+	instance->context_size = sizeof(wfContext);
+	instance->ContextNew = wf_context_new;
+	instance->ContextFree = wf_context_free;
 	freerdp_context_new(instance);
 
-	context = (wfContext*) instance->context;
-	channels = context->channels;
+	instance->context->argc = __argc;
+	instance->context->argv = __argv;
 
 	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
@@ -662,7 +589,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		data->instance = instance;
 
 		freerdp_parse_args(instance->settings, __argc, __argv,
-			wf_process_plugin_args, channels, wf_process_ui_args, NULL);
+			wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
 
 		if (CreateThread(NULL, 0, thread_func, data, 0, NULL) != 0)
 			g_thread_count++;

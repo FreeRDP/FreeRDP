@@ -1,9 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Event Handling
+ * Windows Graphical Objects
  *
- * Copyright 2009-2011 Jay Sorg
- * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,18 +17,15 @@
  * limitations under the License.
  */
 
-#ifndef __WF_EVENT_H
-#define __WF_EVENT_H
+#ifndef __WF_GRAPHICS_H
+#define __WF_GRAPHICS_H
 
 #include "wfreerdp.h"
 
-LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+void wf_image_free(wfBitmap* image);
 
-#ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) DEBUG_CLASS(KBD, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+void wf_register_graphics(rdpGraphics* graphics);
 
-#endif /* __WF_EVENT_H */
+#endif /* WF_GRAPHICS */
