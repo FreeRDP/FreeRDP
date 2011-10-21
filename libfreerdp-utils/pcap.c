@@ -134,6 +134,13 @@ rdpPcap* pcap_open(char* name, boolean write)
 {
 	rdpPcap* pcap;
 
+	FILE *pcap_fp = fopen(name, write ? "w+" : "r");
+	if (pcap_fp == NULL)
+	{
+		perror("opening pcap dump");
+		return NULL;
+	}
+
 	pcap = (rdpPcap*) xzalloc(sizeof(rdpPcap));
 
 	if (pcap != NULL)
@@ -141,10 +148,10 @@ rdpPcap* pcap_open(char* name, boolean write)
 		pcap->name = name;
 		pcap->write = write;
 		pcap->record_count = 0;
+		pcap->fp = pcap_fp;
 
 		if (write)
 		{
-			pcap->fp = fopen(name, "w+");
 			pcap->header.magic_number = 0xA1B2C3D4;
 			pcap->header.version_major = 2;
 			pcap->header.version_minor = 4;
@@ -156,7 +163,6 @@ rdpPcap* pcap_open(char* name, boolean write)
 		}
 		else
 		{
-			pcap->fp = fopen(name, "r");
 			fseek(pcap->fp, 0, SEEK_END);
 			pcap->file_size = (int) ftell(pcap->fp);
 			fseek(pcap->fp, 0, SEEK_SET);
