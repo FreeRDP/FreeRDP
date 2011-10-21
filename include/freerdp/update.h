@@ -91,7 +91,7 @@ struct _BITMAP_UPDATE
 {
 	uint16 count;
 	uint16 number;
-	BITMAP_DATA* bitmaps;
+	BITMAP_DATA* rectangles;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 

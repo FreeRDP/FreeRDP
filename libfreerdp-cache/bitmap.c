@@ -59,6 +59,8 @@ void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bit
 
 	bitmap = Bitmap_Alloc(update->context);
 
+	Bitmap_SetDimensions(update->context, bitmap, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight);
+
 	bitmap->Decompress(update->context, bitmap,
 			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
 			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
@@ -81,13 +83,25 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 	rdpCache* cache = update->context->cache;
 
 	if (cache->bitmap->bitmap == NULL)
+	{
 		cache->bitmap->bitmap = Bitmap_Alloc(update->context);
+		cache->bitmap->bitmap->ephemeral = True;
+	}
 
 	bitmap = cache->bitmap->bitmap;
 
 	for (i = 0; i < bitmap_update->number; i++)
 	{
-		bitmap_data = &bitmap_update->bitmaps[i];
+		bitmap_data = &bitmap_update->rectangles[i];
+
+		bitmap->bpp = bitmap_data->bitsPerPixel;
+		bitmap->length = bitmap_data->bitmapLength;
+
+		Bitmap_SetRectangle(update->context, bitmap,
+				bitmap_data->destLeft, bitmap_data->destTop,
+				bitmap_data->destRight, bitmap_data->destBottom);
+
+		Bitmap_SetDimensions(update->context, bitmap, bitmap_data->width, bitmap_data->height);
 
 		bitmap->Decompress(update->context, bitmap,
 				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
@@ -95,7 +109,7 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 
 		bitmap->New(update->context, bitmap);
 
-		bitmap->Paint(update->context, bitmap, bitmap_data->destLeft, bitmap_data->destTop);
+		bitmap->Paint(update->context, bitmap);
 	}
 }
 

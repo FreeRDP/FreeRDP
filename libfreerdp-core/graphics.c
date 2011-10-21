@@ -34,6 +34,7 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	if (bitmap != NULL)
 	{
 		memcpy(bitmap, context->graphics->Bitmap_Prototype, sizeof(rdpBitmap));
+		bitmap->data = NULL;
 	}
 
 	return bitmap;
@@ -55,15 +56,18 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
-void Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap, int x, int y)
+void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, uint16 left, uint16 top, uint16 right, uint16 bottom)
 {
-	bitmap->Paint(context, bitmap, x, y);
+	bitmap->left = left;
+	bitmap->top = top;
+	bitmap->right = right;
+	bitmap->bottom = bottom;
 }
 
-void Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, uint16 width, uint16 height)
 {
-	bitmap->Decompress(context, bitmap, data, width, height, bpp, length, compressed);
+	bitmap->width = width;
+	bitmap->height = height;
 }
 
 /* static method */

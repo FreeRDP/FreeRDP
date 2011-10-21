@@ -46,8 +46,6 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 
 void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
-	uint16 bytesPerPixel;
-
 	stream_read_uint16(s, bitmap_data->destLeft);
 	stream_read_uint16(s, bitmap_data->destTop);
 	stream_read_uint16(s, bitmap_data->destRight);
@@ -57,8 +55,6 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	stream_read_uint16(s, bitmap_data->bitsPerPixel);
 	stream_read_uint16(s, bitmap_data->flags);
 	stream_read_uint16(s, bitmap_data->bitmapLength);
-
-	bytesPerPixel = (bitmap_data->bitsPerPixel + 7) / 8;
 
 	if (bitmap_data->flags & BITMAP_COMPRESSION)
 	{
@@ -96,10 +92,10 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 
 		count = bitmap_update->number * 2;
 
-		bitmap_update->bitmaps = (BITMAP_DATA*) xrealloc(bitmap_update->bitmaps,
+		bitmap_update->rectangles = (BITMAP_DATA*) xrealloc(bitmap_update->rectangles,
 				sizeof(BITMAP_DATA) * count);
 
-		memset(&bitmap_update->bitmaps[bitmap_update->count], 0,
+		memset(&bitmap_update->rectangles[bitmap_update->count], 0,
 				sizeof(BITMAP_DATA) * (count - bitmap_update->count));
 
 		bitmap_update->count = count;
@@ -108,7 +104,7 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 	/* rectangles */
 	for (i = 0; i < bitmap_update->number; i++)
 	{
-		update_read_bitmap_data(s, &bitmap_update->bitmaps[i]);
+		update_read_bitmap_data(s, &bitmap_update->rectangles[i]);
 	}
 }
 
@@ -406,7 +402,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (update != NULL)
 	{
 		update->bitmap_update.count = 64;
-		update->bitmap_update.bitmaps = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 	}
 
 	return update;
@@ -416,7 +412,7 @@ void update_free(rdpUpdate* update)
 {
 	if (update != NULL)
 	{
-		xfree(update->bitmap_update.bitmaps);
+		xfree(update->bitmap_update.rectangles);
 		xfree(update);
 	}
 }

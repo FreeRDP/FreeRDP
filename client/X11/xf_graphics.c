@@ -37,6 +37,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	XImage* image;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	pixmap = XCreatePixmap(xfi->display, xfi->drawable, bitmap->width, bitmap->height, xfi->depth);
 
 	if (bitmap->data != NULL)
@@ -44,17 +45,24 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		data = freerdp_image_convert(bitmap->data, NULL,
 				bitmap->width, bitmap->height, bitmap->bpp, xfi->bpp, xfi->clrconv);
 
-		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
+		if (bitmap->ephemeral != True)
+		{
+			image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfi->scanline_pad, 0);
 
-		XPutImage(xfi->display, pixmap, xfi->gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+			XPutImage(xfi->display, pixmap, xfi->gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+			XFree(image);
 
-		if (data != bitmap->data)
-			xfree(data);
+			if (data != bitmap->data)
+				xfree(data);
+		}
+		else
+		{
+			bitmap->data = data;
+		}
 	}
 
 	((xfBitmap*) bitmap)->pixmap = pixmap;
-	((xfBitmap*) bitmap)->image = image;
 }
 
 void xf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
@@ -65,17 +73,32 @@ void xf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		XFreePixmap(xfi->display, ((xfBitmap*) bitmap)->pixmap);
 }
 
-void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap, int x, int y)
+void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 {
+	XImage* image;
+	int width, height;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	width = bitmap->right - bitmap->left + 1;
+	height = bitmap->bottom - bitmap->top + 1;
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+
+	image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
+			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfi->scanline_pad, 0);
+
 	XPutImage(xfi->display, xfi->primary, xfi->gc,
-			((xfBitmap*) bitmap)->image, 0, 0, x, y, bitmap->width, bitmap->height);
+			image, 0, 0, bitmap->left, bitmap->top, width, height);
+
+	XFree(image);
 
 	if (xfi->remote_app != True)
-		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, bitmap->width, bitmap->height, x, y);
+	{
+		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+				bitmap->left, bitmap->top, width, height, bitmap->left, bitmap->top);
+	}
 
-	gdi_InvalidateRegion(xfi->hdc, x, y, bitmap->width, bitmap->height);
+	gdi_InvalidateRegion(xfi->hdc, bitmap->left, bitmap->top, width, height);
 }
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
@@ -94,8 +117,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		boolean status;
 
-		status = bitmap_decompress(data, bitmap->data,
-				width, height, length, bpp, bpp);
+		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
 		if (status != True)
 		{
@@ -104,11 +126,9 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	}
 	else
 	{
-		freerdp_image_flip(data, data, width, height, bpp);
+		freerdp_image_flip(data, bitmap->data, width, height, bpp);
 	}
 
-	bitmap->width = width;
-	bitmap->height = height;
 	bitmap->compressed = False;
 	bitmap->length = size;
 	bitmap->bpp = bpp;

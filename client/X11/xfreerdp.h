@@ -55,7 +55,6 @@ struct xf_bitmap
 {
 	rdpBitmap bitmap;
 	Pixmap pixmap;
-	XImage* image;
 };
 typedef struct xf_bitmap xfBitmap;
 

@@ -66,13 +66,16 @@ void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
-void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap, int x, int y)
+void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 {
+	int width, height;
 	gdiBitmap* gdi_bitmap = (gdiBitmap*) bitmap;
 
-	gdi_BitBlt(context->gdi->primary->hdc, x, y,
-			bitmap->width, bitmap->height,
-			gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY);
+	width = bitmap->right - bitmap->left + 1;
+	height = bitmap->bottom - bitmap->top + 1;
+
+	gdi_BitBlt(context->gdi->primary->hdc, bitmap->left, bitmap->top,
+			width, height, gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY);
 }
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,

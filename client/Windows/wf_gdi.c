@@ -170,7 +170,7 @@ void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
 
 	for (i = 0; i < bitmap->number; i++)
 	{
-		bmp = &bitmap->bitmaps[i];
+		bmp = &bitmap->rectangles[i];
 
 		wf_bmp = wf_image_new(wfi, bmp->width, bmp->height, wfi->srcBpp, bmp->dstData);
 
