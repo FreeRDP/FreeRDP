@@ -50,7 +50,6 @@ struct tf_context
 	rdpContext _p;
 
 	tfInfo* tfi;
-	rdpChannels* channels;
 };
 typedef struct tf_context tfContext;
 
@@ -65,17 +64,12 @@ struct thread_data
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 
-void tf_context_size(freerdp* instance, uint32* size)
-{
-	*size = sizeof(tfContext);
-}
-
-void tf_context_new(freerdp* instance, tfContext* context)
+void tf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
 }
 
-void tf_context_free(freerdp* instance, tfContext* context)
+void tf_context_free(freerdp* instance, rdpContext* context)
 {
 
 }
@@ -179,7 +173,7 @@ boolean tf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
 
-	freerdp_channels_pre_connect(context->channels, instance);
+	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -187,9 +181,6 @@ boolean tf_pre_connect(freerdp* instance)
 boolean tf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
-	tfContext* context;
-
-	context = (tfContext*) instance->context;
 
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
 	gdi = instance->context->gdi;
@@ -197,7 +188,7 @@ boolean tf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 
-	freerdp_channels_post_connect(context->channels, instance);
+	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	return True;
 }
@@ -213,14 +204,12 @@ int tfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
-	tfContext* context;
 	rdpChannels* channels;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	context = (tfContext*) instance->context;
-	channels = context->channels;
+	channels = instance->context->channels;
 
 	freerdp_connect(instance);
 
@@ -312,7 +301,6 @@ int main(int argc, char* argv[])
 {
 	pthread_t thread;
 	freerdp* instance;
-	tfContext* context;
 	struct thread_data* data;
 	rdpChannels* channels;
 
@@ -325,14 +313,12 @@ int main(int argc, char* argv[])
 	instance->PostConnect = tf_post_connect;
 	instance->ReceiveChannelData = tf_receive_channel_data;
 
-	instance->ContextSize = (pcContextSize) tf_context_size;
-	instance->ContextNew = (pcContextNew) tf_context_new;
-	instance->ContextFree = (pcContextFree) tf_context_free;
+	instance->context_size = sizeof(tfContext);
+	instance->ContextNew = tf_context_new;
+	instance->ContextFree = tf_context_free;
 	freerdp_context_new(instance);
 
-	context = (tfContext*) instance->context;
-	channels = context->channels;
-
+	channels = instance->context->channels;
 	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, channels, NULL, NULL);
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));

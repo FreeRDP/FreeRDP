@@ -39,18 +39,12 @@ struct thread_data
 	freerdp* instance;
 };
 
-void df_context_size(freerdp* instance, uint32* size)
+void df_context_new(freerdp* instance, rdpContext* context)
 {
-	*size = sizeof(dfContext);
+	context->channels = freerdp_channels_new();
 }
 
-void df_context_new(freerdp* instance, dfContext* context)
-{
-	rdpContext* _context = (rdpContext*) context;
-	_context->channels = freerdp_channels_new();
-}
-
-void df_context_free(freerdp* instance, dfContext* context)
+void df_context_free(freerdp* instance, rdpContext* context)
 {
 
 }
@@ -440,9 +434,9 @@ int main(int argc, char* argv[])
 	instance->VerifyCertificate = df_verify_certificate;
 	instance->ReceiveChannelData = df_receive_channel_data;
 
-	instance->ContextSize = (pcContextSize) df_context_size;
-	instance->ContextNew = (pcContextNew) df_context_new;
-	instance->ContextFree = (pcContextFree) df_context_free;
+	instance->context_size = sizeof(dfContext);
+	instance->ContextNew = df_context_new;
+	instance->ContextFree = df_context_free;
 	freerdp_context_new(instance);
 
 	context = (dfContext*) instance->context;

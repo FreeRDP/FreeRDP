@@ -29,6 +29,6 @@ FREERDP_API int gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints);
 FREERDP_API int gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, int cCount);
 FREERDP_API int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint);
 
-typedef int (*pLineTo)(HGDI_DC hdc, int nXEnd, int nYEnd);
+typedef int (*p_LineTo)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #endif /* __GDI_LINE_H */

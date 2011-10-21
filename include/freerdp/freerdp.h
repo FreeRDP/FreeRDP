@@ -43,17 +43,17 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 extern "C" {
 #endif
 
-typedef void (*pcContextSize)(freerdp* instance, uint32* size);
-typedef void (*pcContextNew)(freerdp* instance, rdpContext* context);
-typedef void (*pcContextFree)(freerdp* instance, rdpContext* context);
+typedef void (*pContextSize)(freerdp* instance, uint32* size);
+typedef void (*pContextNew)(freerdp* instance, rdpContext* context);
+typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
-typedef boolean (*pcPreConnect)(freerdp* instance);
-typedef boolean (*pcPostConnect)(freerdp* instance);
-typedef boolean (*pcAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
-typedef boolean (*pcVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
+typedef boolean (*pPreConnect)(freerdp* instance);
+typedef boolean (*pPostConnect)(freerdp* instance);
+typedef boolean (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
+typedef boolean (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 
-typedef int (*pcSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
-typedef int (*pcReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
+typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
+typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 
 struct rdp_context
 {
@@ -79,17 +79,17 @@ struct rdp_freerdp
 	rdpUpdate* update;
 	rdpSettings* settings;
 
-	pcContextSize ContextSize;
-	pcContextNew ContextNew;
-	pcContextFree ContextFree;
+	size_t context_size;
+	pContextNew ContextNew;
+	pContextFree ContextFree;
 
-	pcPreConnect PreConnect;
-	pcPostConnect PostConnect;
-	pcAuthenticate Authenticate;
-	pcVerifyCertificate VerifyCertificate;
+	pPreConnect PreConnect;
+	pPostConnect PostConnect;
+	pAuthenticate Authenticate;
+	pVerifyCertificate VerifyCertificate;
 
-	pcSendChannelData SendChannelData;
-	pcReceiveChannelData ReceiveChannelData;
+	pSendChannelData SendChannelData;
+	pReceiveChannelData ReceiveChannelData;
 };
 
 FREERDP_API void freerdp_context_new(freerdp* instance);

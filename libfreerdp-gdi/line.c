@@ -30,7 +30,7 @@
 
 #include <freerdp/gdi/line.h>
 
-pLineTo LineTo_[5] =
+p_LineTo LineTo_[5] =
 {
 	NULL,
 	LineTo_8bpp,
@@ -50,7 +50,7 @@ pLineTo LineTo_[5] =
 
 int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
 {
-	pLineTo _LineTo = LineTo_[IBPP(hdc->bitsPerPixel)];
+	p_LineTo _LineTo = LineTo_[IBPP(hdc->bitsPerPixel)];
 
 	if (_LineTo != NULL)
 		return _LineTo(hdc, nXEnd, nYEnd);
@@ -68,6 +68,7 @@ int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
 int gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, int cCount)
 {
 	int i;
+
 	for (i = 0; i < cCount; i++)
 	{
 		gdi_LineTo(hdc, lppt[i].x, lppt[i].y);

@@ -32,7 +32,7 @@
 
 #include <freerdp/gdi/brush.h>
 
-pPatBlt PatBlt_[5] =
+p_PatBlt PatBlt_[5] =
 {
 	NULL,
 	PatBlt_8bpp,
@@ -87,7 +87,7 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 
 int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop)
 {
-	pPatBlt _PatBlt = PatBlt_[IBPP(hdc->bitsPerPixel)];
+	p_PatBlt _PatBlt = PatBlt_[IBPP(hdc->bitsPerPixel)];
 
 	if (_PatBlt != NULL)
 		return _PatBlt(hdc, nXLeft, nYLeft, nWidth, nHeight, rop);

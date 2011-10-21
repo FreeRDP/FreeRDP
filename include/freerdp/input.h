@@ -52,21 +52,21 @@ typedef struct rdp_input rdpInput;
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
-typedef void (*pcSynchronizeEvent)(rdpInput* input, uint32 flags);
-typedef void (*pcKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
-typedef void (*pcUnicodeKeyboardEvent)(rdpInput* input, uint16 code);
-typedef void (*pcMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-typedef void (*pcExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+typedef void (*pSynchronizeEvent)(rdpInput* input, uint32 flags);
+typedef void (*pKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
+typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, uint16 code);
+typedef void (*pMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+typedef void (*pExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 
 struct rdp_input
 {
 	rdpContext* context;
 
-	pcSynchronizeEvent SynchronizeEvent;
-	pcKeyboardEvent KeyboardEvent;
-	pcUnicodeKeyboardEvent UnicodeKeyboardEvent;
-	pcMouseEvent MouseEvent;
-	pcExtendedMouseEvent ExtendedMouseEvent;
+	pSynchronizeEvent SynchronizeEvent;
+	pKeyboardEvent KeyboardEvent;
+	pUnicodeKeyboardEvent UnicodeKeyboardEvent;
+	pMouseEvent MouseEvent;
+	pExtendedMouseEvent ExtendedMouseEvent;
 
 	void* param1;
 };

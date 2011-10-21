@@ -30,7 +30,7 @@
 
 #include <freerdp/gdi/shape.h>
 
-pFillRect FillRect_[5] =
+p_FillRect FillRect_[5] =
 {
 	NULL,
 	FillRect_8bpp,
@@ -175,7 +175,7 @@ int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nB
 
 int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	pFillRect _FillRect = FillRect_[IBPP(hdc->bitsPerPixel)];
+	p_FillRect _FillRect = FillRect_[IBPP(hdc->bitsPerPixel)];
 
 	if (_FillRect != NULL)
 		return _FillRect(hdc, rect, hbr);

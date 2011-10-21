@@ -79,18 +79,12 @@ struct thread_data
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data);
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 
-void xf_context_size(freerdp* instance, uint32* size)
+void xf_context_new(freerdp* instance, rdpContext* context)
 {
-	*size = sizeof(xfContext);
+	context->channels = freerdp_channels_new();
 }
 
-void xf_context_new(freerdp* instance, xfContext* context)
-{
-	rdpContext* _context = &context->_p;
-	_context->channels = freerdp_channels_new();
-}
-
-void xf_context_free(freerdp* instance, xfContext* context)
+void xf_context_free(freerdp* instance, rdpContext* context)
 {
 
 }
@@ -622,6 +616,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	if (xfi->sw_gdi != True)
 	{
+		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
 	}
@@ -967,9 +962,9 @@ int main(int argc, char* argv[])
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->ReceiveChannelData = xf_receive_channel_data;
 
-	instance->ContextSize = (pcContextSize) xf_context_size;
-	instance->ContextNew = (pcContextNew) xf_context_new;
-	instance->ContextFree = (pcContextFree) xf_context_free;
+	instance->context_size = sizeof(xfContext);
+	instance->ContextNew = (pContextNew) xf_context_new;
+	instance->ContextFree = (pContextFree) xf_context_free;
 	freerdp_context_new(instance);
 
 	instance->context->argc = argc;

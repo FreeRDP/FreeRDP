@@ -217,29 +217,6 @@ Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 	return bitmap;
 }
 
-Pixmap xf_offscreen_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
-{
-	Pixmap bitmap;
-	uint8* cdata;
-	XImage* image;
-
-	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
-
-	if(data != NULL)
-	{
-		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
-		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
-						ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
-
-		XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
-		XFree(image);
-		if (cdata != data)
-			xfree(cdata);
-	}
-
-	return bitmap;
-}
-
 Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, uint8* data)
 {
 	int scanline;
@@ -336,7 +313,6 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	rdpBrush* brush;
 	uint32 foreColor;
 	uint32 backColor;
-	rdpCache* cache = update->context->cache;
 	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
 	brush = &patblt->brush;
@@ -344,12 +320,6 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 	foreColor = freerdp_color_convert(patblt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
 	backColor = freerdp_color_convert(patblt->backColor, xfi->srcBpp, 32, xfi->clrconv);
-
-	if (brush->style & CACHED_BRUSH)
-	{
-		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
-		brush->style = GDI_BS_PATTERN;
-	}
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -406,6 +376,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 
 		gdi_InvalidateRegion(xfi->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 	}
+
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
@@ -439,6 +410,7 @@ void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 
 		gdi_InvalidateRegion(xfi->hdc, scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight);
 	}
+
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
@@ -538,6 +510,7 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 			gdi_InvalidateRegion(xfi->hdc, line_to->nXStart, line_to->nYStart, width, height);
 		}
 	}
+
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
@@ -626,6 +599,7 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 
 		gdi_InvalidateRegion(xfi->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
+
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
@@ -790,12 +764,6 @@ void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_
 
 }
 
-void xf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
-{
-	rdpCache* cache = update->context->cache;
-	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
-}
-
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, tx, ty;
@@ -949,7 +917,6 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheColorTable = xf_gdi_cache_color_table;
 	update->CacheGlyph = xf_gdi_cache_glyph;
 	update->CacheGlyphV2 = xf_gdi_cache_glyph_v2;
-	update->CacheBrush = xf_gdi_cache_brush;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
 }

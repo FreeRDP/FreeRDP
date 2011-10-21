@@ -17,10 +17,32 @@
  * limitations under the License.
  */
 
+#include <freerdp/update.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/brush.h>
+
+void update_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+{
+	rdpBrush* brush = &patblt->brush;
+	rdpCache* cache = update->context->cache;
+
+	if (brush->style & CACHED_BRUSH)
+	{
+		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+		brush->style = 0x03;
+	}
+
+	IFCALL(cache->brush->PatBlt, update, patblt);
+}
+
+void update_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
+{
+	rdpCache* cache = update->context->cache;
+	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+}
 
 void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
 {
@@ -82,6 +104,16 @@ void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp)
 		brush->entries[index].bpp = bpp;
 		brush->entries[index].entry = entry;
 	}
+}
+
+void brush_cache_register_callbacks(rdpUpdate* update)
+{
+	rdpCache* cache = update->context->cache;
+
+	cache->brush->PatBlt = update->PatBlt;
+
+	update->PatBlt = update_gdi_patblt;
+	update->CacheBrush = update_gdi_cache_brush;
 }
 
 rdpBrushCache* brush_cache_new(rdpSettings* settings)

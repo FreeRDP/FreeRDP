@@ -29,6 +29,6 @@ FREERDP_API int gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount);
 FREERDP_API int gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount);
 FREERDP_API int gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
-typedef int (*pFillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
+typedef int (*p_FillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 
 #endif /* __GDI_SHAPE_H */

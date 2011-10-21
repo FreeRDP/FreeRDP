@@ -39,14 +39,14 @@ struct _BITMAP_V2_CELL
 
 struct rdp_bitmap_cache
 {
-	pcMemBlt MemBlt;
-	pcMem3Blt Mem3Blt;
+	pMemBlt MemBlt;
+	pMem3Blt Mem3Blt;
 
-	pcCacheBitmap CacheBitmap;
-	pcCacheBitmapV2 CacheBitmapV2;
-	pcCacheBitmapV3 CacheBitmapV3;
+	pCacheBitmap CacheBitmap;
+	pCacheBitmapV2 CacheBitmapV2;
+	pCacheBitmapV3 CacheBitmapV3;
 
-	pcBitmapUpdate BitmapUpdate;
+	pBitmapUpdate BitmapUpdate;
 
 	uint8 maxCells;
 	rdpBitmap* bitmap;

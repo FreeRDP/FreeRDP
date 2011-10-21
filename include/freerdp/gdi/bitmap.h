@@ -38,6 +38,6 @@ FREERDP_API HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPi
 FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight);
 FREERDP_API int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
-typedef int (*pBitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
+typedef int (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
 #endif /* __GDI_BITMAP_H */

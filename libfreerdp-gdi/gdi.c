@@ -464,15 +464,8 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	rdpBrush* brush;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = update->context->gdi;
-	rdpCache* cache = update->context->cache;
 
 	brush = &patblt->brush;
-
-	if (brush->style & CACHED_BRUSH)
-	{
-		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
-		brush->style = GDI_BS_PATTERN;
-	}
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -782,12 +775,6 @@ void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 	}
 }
 
-void gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
-{
-	rdpCache* cache = update->context->cache;
-	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
-}
-
 int tilenum = 0;
 
 void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -937,7 +924,6 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->CacheColorTable = gdi_cache_color_table;
 	update->CacheGlyph = gdi_cache_glyph;
 	update->CacheGlyphV2 = gdi_cache_glyph_v2;
-	update->CacheBrush = gdi_cache_brush;
 
 	update->SurfaceBits = gdi_surface_bits;
 }
@@ -1061,6 +1047,7 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 
 	gdi_register_update_callbacks(instance->update);
 
+	brush_cache_register_callbacks(instance->update);
 	bitmap_cache_register_callbacks(instance->update);
 	offscreen_cache_register_callbacks(instance->update);
 

@@ -128,16 +128,13 @@ boolean freerdp_disconnect(freerdp* instance)
 void freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
-	uint32 size = sizeof(rdpContext);
 
 	rdp = rdp_new(instance);
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
-	IFCALL(instance->ContextSize, instance, &size);
-
-	instance->context = (rdpContext*) xzalloc(size);
+	instance->context = (rdpContext*) xzalloc(instance->context_size);
 	instance->context->graphics = graphics_new(instance->context);
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
@@ -162,6 +159,7 @@ freerdp* freerdp_new()
 
 	if (instance != NULL)
 	{
+		instance->context_size = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}
 

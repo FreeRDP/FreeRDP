@@ -645,7 +645,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	instance->ContextSize = (pcContextSize) wf_context_size;
+	instance->ContextSize = (pContextSize) wf_context_size;
 	instance->ContextNew = (pcContextNew) wf_context_new;
 	instance->ContextFree = (pcContextFree) wf_context_free;
 	freerdp_context_new(instance);

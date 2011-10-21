@@ -31,7 +31,7 @@
 
 #include <freerdp/gdi/bitmap.h>
 
-pBitBlt BitBlt_[5] =
+p_BitBlt BitBlt_[5] =
 {
 	NULL,
 	BitBlt_8bpp,
@@ -180,7 +180,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 
 int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)
 {
-	pBitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bitsPerPixel)];
+	p_BitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bitsPerPixel)];
 
 	if (_BitBlt != NULL)
 		return _BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, rop);
