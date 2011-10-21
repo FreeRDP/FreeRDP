@@ -43,7 +43,6 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 extern "C" {
 #endif
 
-typedef void (*pContextSize)(freerdp* instance, uint32* size);
 typedef void (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 

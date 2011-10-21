@@ -79,7 +79,7 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 	rdpSettings* settings = credssp->transport->settings;
 	instance = (freerdp*) settings->instance;
 
-	if (settings->password == NULL || settings->username)
+	if ((settings->password == NULL) || (settings->username == NULL))
 	{
 		if(instance->Authenticate)
 		{
