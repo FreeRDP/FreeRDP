@@ -85,6 +85,8 @@ if(XV_FOUND)
 	target_link_libraries(xfreerdp ${XV_LIBRARIES})
 endif()
 
+include_directories(${CMAKE_SOURCE_DIR}/resources)
+
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
 target_link_libraries(xfreerdp freerdp-kbd)
