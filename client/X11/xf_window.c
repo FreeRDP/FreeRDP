@@ -28,6 +28,9 @@
 #include <X11/extensions/shape.h>
 #endif
 
+#include "FreeRDP_Icon_256px.h"
+#define xf_icon_prop FreeRDP_Icon_256px_prop
+
 #include "xf_window.h"
 
 /* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
@@ -237,6 +240,9 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		if (xfi->grab_keyboard)
 			input_mask |= EnterWindowMask | LeaveWindowMask;
+
+		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
+				PropModeReplace, (uint8*) xf_icon_prop, sizeof(xf_icon_prop) / sizeof(long));
 
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
