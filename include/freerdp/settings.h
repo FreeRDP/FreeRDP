@@ -90,6 +90,9 @@
 #define GLYPH_SUPPORT_FULL			0x0002
 #define GLYPH_SUPPORT_ENCODE			0x0003
 
+/* CPU Optimization flags */
+#define CPU_SSE2				0x1
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -325,6 +328,8 @@ struct rdp_settings
 	boolean rail_langbar_supported;
 
 	boolean mouse_motion;
+
+	uint32 cpu_opt;
 };
 typedef struct rdp_settings rdpSettings;
 

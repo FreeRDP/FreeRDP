@@ -85,6 +85,10 @@ if(XV_FOUND)
 	target_link_libraries(xfreerdp ${XV_LIBRARIES})
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	add_definitions(-DWITH_LINUX)
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
 target_link_libraries(xfreerdp freerdp-core)

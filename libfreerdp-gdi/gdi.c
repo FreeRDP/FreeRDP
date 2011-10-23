@@ -1054,7 +1054,7 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 
 	gdi_register_graphics(instance->context->graphics);
 
-	gdi->rfx_context = rfx_context_new();
+	gdi->rfx_context = rfx_context_new(instance->settings);
 	gdi->nsc_context = nsc_context_new();
 
 	return 0;
