@@ -287,8 +287,8 @@ char* crypto_print_name(X509_NAME* name)
 	if(X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0) 
 	{
 		unsigned long size = BIO_number_written(outBIO);
-		buffer = xzalloc(size);
-		memset(buffer, 0, size);
+		buffer = xzalloc(size + 1);
+		memset(buffer, 0, size + 1);
 		BIO_read(outBIO, buffer, size);
 	}
 
