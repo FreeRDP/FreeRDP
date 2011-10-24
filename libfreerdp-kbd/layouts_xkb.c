@@ -21,6 +21,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WITH_XKBFILE
+#include <X11/XKBlib.h>
+#include <X11/extensions/XKBfile.h>
+#include <X11/extensions/XKBrules.h>
+#endif
+
 #include "libkbd.h"
 #include <freerdp/kbd/vkcodes.h>
 #include "x_layout_id_table.h"
@@ -32,10 +38,6 @@
 #endif
 
 #ifdef WITH_XKBFILE
-
-#include <X11/XKBlib.h>
-#include <X11/extensions/XKBfile.h>
-#include <X11/extensions/XKBrules.h>
 
 int init_xkb(void *dpy)
 {
@@ -368,6 +370,7 @@ void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
 	xkbfileEnd = xkbfile + strlen(xkbfile);
 
 #ifdef __APPLE__
+	DEBUG_KBD("in apple keyboard hack");
 	/* Apple X11 breaks XKB detection */
 	keymapLoaded += load_xkb_keyboard(keycodeToVkcode, "macosx(macosx)");
 #else
