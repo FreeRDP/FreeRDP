@@ -97,7 +97,7 @@ uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 		case 32:
 			if (clrconv->alpha)
 			{
-				GetABGR32(alpha, red, green, blue, srcColor);
+				GetARGB32(alpha, red, green, blue, srcColor);
 			}
 			else
 			{
@@ -108,10 +108,10 @@ uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 			GetBGR24(red, green, blue, srcColor);
 			break;
 		case 16:
-			GetRGB16(red, green, blue, srcColor);
+			GetBGR16(red, green, blue, srcColor);
 			break;
 		case 15:
-			GetRGB15(red, green, blue, srcColor);
+			GetBGR15(red, green, blue, srcColor);
 			break;
 		case 8:
 			srcColor &= 0xFF;
@@ -133,7 +133,7 @@ uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	switch (dstBpp)
 	{
 		case 32:
-			dstColor = ARGB32(alpha, red, green, blue);
+			dstColor = ABGR32(alpha, red, green, blue);
 			break;
 		case 24:
 			dstColor = BGR24(red, green, blue);
@@ -372,7 +372,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 		{
 			pixel = *src16;
 			src16++;
-			GetBGR16(red, green, blue, pixel);
+			GetBGR15(red, green, blue, pixel);
 			pixel = BGR32(red, green, blue);
 			*dst32 = pixel;
 			dst32++;
