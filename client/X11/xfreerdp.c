@@ -570,7 +570,7 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
 
 		if (instance->settings->rfx_codec)
-			xfi->rfx_context = (void*) rfx_context_new();
+			xfi->rfx_context = (void*) rfx_context_new(instance->settings);
 
 		if (instance->settings->ns_codec)
 			xfi->nsc_context = (void*) nsc_context_new();
@@ -672,6 +672,35 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	}
 
 	return False;
+}
+
+
+void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
+{
+	*eax = info;
+	__asm volatile
+		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		 "cpuid;"
+		 "mov %%ebx, %%esi;"
+		 "mov %%edi, %%ebx;"
+		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		 : :"edi");
+}
+ 
+uint32 xf_detect_cpu()
+{
+	unsigned int eax, ebx, ecx, edx;
+	uint32 cpu_opt = 0;
+
+	cpuid(1, &eax, &ebx, &ecx, &edx);
+
+	if (edx & (1<<26)) 
+	{
+		DEBUG("SSE2 detected");
+		cpu_opt |= CPU_SSE2;
+	}
+
+	return cpu_opt;
 }
 
 
@@ -970,6 +999,11 @@ int main(int argc, char* argv[])
 	instance->context->argc = argc;
 	instance->context->argv = argv;
 	instance->settings->sw_gdi = False;
+
+#ifdef WITH_SSE2
+	/* detect only if needed */
+	instance->settings->cpu_opt = xf_detect_cpu();
+#endif
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

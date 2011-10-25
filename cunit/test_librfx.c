@@ -267,7 +267,7 @@ void test_dwt(void)
 {
 	RFX_CONTEXT* context;
 
-	context = rfx_context_new();
+	context = rfx_context_new(NULL);
 	rfx_dwt_2d_decode(buffer, context->priv->dwt_buffer);
 	//dump_buffer(buffer, 4096);
 	rfx_context_free(context);
@@ -304,7 +304,7 @@ void test_decode(void)
 	stream_write(s, cr_data, sizeof(cr_data));
 	stream_set_pos(s, 0);
 
-	context = rfx_context_new();
+	context = rfx_context_new(NULL);
 	context->mode = RLGR3;
 	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
 	rfx_decode_rgb(context, s,
@@ -334,7 +334,7 @@ void test_encode(void)
 	enc_stream = stream_new(65536);
 	stream_clear(enc_stream);
 
-	context = rfx_context_new();
+	context = rfx_context_new(NULL);
 	context->mode = RLGR3;
 	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
 
@@ -378,7 +378,7 @@ void test_message(void)
 	s = stream_new(65536);
 	stream_clear(s);
 
-	context = rfx_context_new();
+	context = rfx_context_new(NULL);
 	context->mode = RLGR3;
 	context->width = 800;
 	context->height = 600;

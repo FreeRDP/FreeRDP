@@ -121,7 +121,7 @@ void xf_peer_context_size(freerdp_peer* client, uint32* size)
 void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 {
 	context->info = xf_info_init();
-	context->rfx_context = rfx_context_new();
+	context->rfx_context = rfx_context_new(client->settings);
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->width;
 	context->rfx_context->height = client->settings->height;

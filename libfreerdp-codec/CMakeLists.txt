@@ -46,6 +46,7 @@ if(WITH_SSE2)
 	rfx_sse2.c
 	rfx_sse2.h
 )
+	set_property(SOURCE rfx_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
 endif()
 
 add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
