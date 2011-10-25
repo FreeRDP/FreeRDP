@@ -93,6 +93,6 @@ target_link_libraries(xfreerdp freerdp-kbd)
 target_link_libraries(xfreerdp freerdp-rail)
 target_link_libraries(xfreerdp freerdp-channels)
 target_link_libraries(xfreerdp freerdp-utils)
-target_link_libraries(xfreerdp ${X11_LIBRARIES} dl)
+target_link_libraries(xfreerdp ${X11_LIBRARIES} ${CMAKE_DL_LIBS})
 
 install(TARGETS xfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
