@@ -675,41 +675,30 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 }
 
 
+void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
+{
+	*eax = info;
+	__asm volatile
+		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		 "cpuid;"
+		 "mov %%ebx, %%esi;"
+		 "mov %%edi, %%ebx;"
+		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		 : :"edi");
+}
+ 
 uint32 xf_detect_cpu()
 {
+	unsigned int eax, ebx, ecx, edx;
 	uint32 cpu_opt = 0;
 
-#ifdef WITH_LINUX
-	/* for now, read /proc/cpuinfo */
-	FILE* f;
-	char* buf;
+	cpuid(1, &eax, &ebx, &ecx, &edx);
 
-	f = fopen("/proc/cpuinfo", "r");
-	if (!f)
-		return cpu_opt;
-
-	buf = xmalloc(1024);
-	while (1)
+	if (edx & (1<<26)) 
 	{
-		if (!fgets(buf, 1024, f))
-			break;
-
-		if (strncmp(buf, "flags", 5))
-			continue;
-
-		if (!strstr(buf, " sse2"))
-			continue;
-
+		DEBUG("SSE2 detected");
 		cpu_opt |= CPU_SSE2;
-		break;
 	}
-	xfree(buf);
-	fclose(f);
-
-#elif defined(WITH_SSE2)
-	/* no detect, assume sse2 available for now */
-	cpu_opt |= CPU_SSE2;
-#endif
 
 	return cpu_opt;
 }
@@ -1010,7 +999,11 @@ int main(int argc, char* argv[])
 	instance->context->argc = argc;
 	instance->context->argv = argv;
 	instance->settings->sw_gdi = False;
+
+#ifdef WITH_SSE2
+	/* detect only if needed */
 	instance->settings->cpu_opt = xf_detect_cpu();
+#endif
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
