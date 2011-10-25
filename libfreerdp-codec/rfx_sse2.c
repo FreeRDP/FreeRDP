@@ -249,7 +249,7 @@ static void rfx_quantization_decode_sse2(sint16* buffer, const uint32* quantizat
 	rfx_quantization_decode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
 	rfx_quantization_decode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
 	rfx_quantization_decode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
-	rfx_quantization_decode_block_sse2(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_decode_block_sse2(buffer + 3968, 64, quantization_values[3] - 6); /* HH3 */
 	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
