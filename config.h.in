@@ -31,9 +31,11 @@
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_SSE2
+#cmakedefine WITH_SSE2_TARGET
 #cmakedefine WITH_DEBUG_X11
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_SCARD
+#cmakedefine WITH_DEBUG_ORDERS
 
 #endif
