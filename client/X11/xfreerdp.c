@@ -677,6 +677,8 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
+#ifdef __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
 	*eax = info;
 	__asm volatile
 		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
@@ -685,11 +687,13 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 		 "mov %%edi, %%ebx;"
 		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
 		 : :"edi");
+#endif
+#endif
 }
  
 uint32 xf_detect_cpu()
 {
-	unsigned int eax, ebx, ecx, edx;
+	unsigned int eax, ebx, ecx, edx = 0;
 	uint32 cpu_opt = 0;
 
 	cpuid(1, &eax, &ebx, &ecx, &edx);
