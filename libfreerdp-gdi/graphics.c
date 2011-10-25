@@ -83,7 +83,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 {
 	uint16 size;
 
-	size = width * height * (bpp / 8);
+	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
 		bitmap->data = (uint8*) xmalloc(size);
