@@ -144,6 +144,7 @@ struct rdp_rdp
 	uint8 fips_sign_key[20];
 	uint8 fips_encrypt_key[24];
 	uint8 fips_decrypt_key[24];
+	uint32 errorInfo;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);

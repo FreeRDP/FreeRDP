@@ -425,14 +425,12 @@ boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 	return True;
 }
 
-void rdp_recv_set_error_info_data_pdu(STREAM* s)
+void rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, STREAM* s)
 {
-	uint32 errorInfo;
+	stream_read_uint32(s, rdp->errorInfo); /* errorInfo (4 bytes) */
 
-	stream_read_uint32(s, errorInfo); /* errorInfo (4 bytes) */
-
-	if (errorInfo != ERRINFO_SUCCESS)
-		rdp_print_errinfo(errorInfo);
+	if (rdp->errorInfo != ERRINFO_SUCCESS)
+		rdp_print_errinfo(rdp->errorInfo);
 }
 
 void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
@@ -514,7 +512,7 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
-			rdp_recv_set_error_info_data_pdu(s);
+			rdp_recv_set_error_info_data_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_DRAW_NINEGRID_ERROR:
