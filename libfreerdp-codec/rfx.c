@@ -128,7 +128,7 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
-RFX_CONTEXT* rfx_context_new(void)
+RFX_CONTEXT* rfx_context_new(rdpSettings* settings)
 {
 	RFX_CONTEXT* context;
 
@@ -157,8 +157,9 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 
-	/* detect and enable SIMD CPU acceleration */
-	RFX_INIT_SIMD(context);
+	/* enable SIMD CPU acceleration if detected */
+	if (settings && settings->cpu_opt & CPU_SSE2)
+		RFX_INIT_SIMD(context);
 
 	return context;
 }
