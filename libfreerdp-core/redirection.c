@@ -128,6 +128,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
+		int i;
 		uint32 count;
 		uint32 targetNetAddressesLength;
 
@@ -137,9 +138,6 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 		count = redirection->targetNetAddressesCount;
 
 		redirection->targetNetAddresses = (rdpString*) xzalloc(count * sizeof(rdpString));
-
-
-		int i;
 
 		for (i=0; i < count; i++)
 		{

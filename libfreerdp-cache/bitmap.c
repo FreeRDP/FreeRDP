@@ -98,6 +98,7 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 
 		bitmap->bpp = bitmap_data->bitsPerPixel;
 		bitmap->length = bitmap_data->bitmapLength;
+		bitmap->compressed = bitmap_data->compressed;
 
 		Bitmap_SetRectangle(update->context, bitmap,
 				bitmap_data->destLeft, bitmap_data->destTop,
