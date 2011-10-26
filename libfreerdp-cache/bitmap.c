@@ -81,11 +81,13 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 	rdpBitmap* bitmap;
 	BITMAP_DATA* bitmap_data;
 	rdpCache* cache = update->context->cache;
+	int reused = 1;
 
 	if (cache->bitmap->bitmap == NULL)
 	{
 		cache->bitmap->bitmap = Bitmap_Alloc(update->context);
 		cache->bitmap->bitmap->ephemeral = True;
+		reused = 0;
 	}
 
 	bitmap = cache->bitmap->bitmap;
@@ -106,6 +108,11 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 		bitmap->Decompress(update->context, bitmap,
 				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
 				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength, bitmap_data->compressed);
+
+		if (reused)
+			bitmap->Free(update->context, bitmap);
+		else
+			reused = 1;
 
 		bitmap->New(update->context, bitmap);
 
