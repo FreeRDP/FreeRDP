@@ -370,7 +370,6 @@ void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
 	xkbfileEnd = xkbfile + strlen(xkbfile);
 
 #ifdef __APPLE__
-	DEBUG_KBD("in apple keyboard hack");
 	/* Apple X11 breaks XKB detection */
 	keymapLoaded += load_xkb_keyboard(keycodeToVkcode, "macosx(macosx)");
 #else
