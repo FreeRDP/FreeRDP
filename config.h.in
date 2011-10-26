@@ -37,5 +37,6 @@
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_ORDERS
+#cmakedefine WITH_DEBUG_REDIR
 
 #endif
