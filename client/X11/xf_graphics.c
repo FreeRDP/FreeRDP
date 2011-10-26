@@ -58,6 +58,9 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		}
 		else
 		{
+			if (data != bitmap->data)
+				xfree(bitmap->data);
+			
 			bitmap->data = data;
 		}
 	}
