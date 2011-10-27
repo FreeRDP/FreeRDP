@@ -67,6 +67,7 @@
 
 freerdp_sem g_sem;
 static int g_thread_count = 0;
+static uint8 g_disconnect_reason = 0;
 
 static long xv_port = 0;
 const size_t password_size = 512;
@@ -424,7 +425,7 @@ boolean xf_pre_connect(freerdp* instance)
 			xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi) < 0)
 	{
 		printf("failed to parse arguments.\n");
-		exit(0);
+		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
 
 	settings = instance->settings;
@@ -570,7 +571,7 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
 
 		if (instance->settings->rfx_codec)
-			xfi->rfx_context = (void*) rfx_context_new();
+			xfi->rfx_context = (void*) rfx_context_new(instance->settings);
 
 		if (instance->settings->ns_codec)
 			xfi->nsc_context = (void*) nsc_context_new();
@@ -672,6 +673,39 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	}
 
 	return False;
+}
+
+
+void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
+{
+#ifdef __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
+	*eax = info;
+	__asm volatile
+		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		 "cpuid;"
+		 "mov %%ebx, %%esi;"
+		 "mov %%edi, %%ebx;"
+		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		 : :"edi");
+#endif
+#endif
+}
+ 
+uint32 xf_detect_cpu()
+{
+	unsigned int eax, ebx, ecx, edx = 0;
+	uint32 cpu_opt = 0;
+
+	cpuid(1, &eax, &ebx, &ecx, &edx);
+
+	if (edx & (1<<26)) 
+	{
+		DEBUG("SSE2 detected");
+		cpu_opt |= CPU_SSE2;
+	}
+
+	return cpu_opt;
 }
 
 
@@ -833,12 +867,13 @@ int xfreerdp_run(freerdp* instance)
 	fd_set rfds_set;
 	fd_set wfds_set;
 	rdpChannels* channels;
+	int ret = 0;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
 	if (!freerdp_connect(instance))
-		return 0;
+		return XF_EXIT_CONN_FAILED;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
@@ -851,16 +886,19 @@ int xfreerdp_run(freerdp* instance)
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
+			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get channel manager file descriptor\n");
+			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
 		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
 		{
 			printf("Failed to get xfreerdp file descriptor\n");
+			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
 
@@ -912,6 +950,9 @@ int xfreerdp_run(freerdp* instance)
 		xf_process_channel_event(channels, instance);
 	}
 
+	if (!ret)
+		ret = freerdp_error_info(instance);
+
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
@@ -919,7 +960,7 @@ int xfreerdp_run(freerdp* instance)
 	freerdp_free(instance);
 	xf_free(xfi);
 
-	return 0;
+	return ret;
 }
 
 void* thread_func(void* param)
@@ -927,7 +968,7 @@ void* thread_func(void* param)
 	struct thread_data* data;
 	data = (struct thread_data*) param;
 
-	xfreerdp_run(data->instance);
+	g_disconnect_reason = xfreerdp_run(data->instance);
 
 	xfree(data);
 
@@ -939,6 +980,27 @@ void* thread_func(void* param)
                 freerdp_sem_signal(g_sem);
 
 	return NULL;
+}
+
+static uint8 exit_code_from_disconnect_reason(uint32 reason)
+{
+	if (reason == 0 ||
+	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
+		 return reason;
+
+	/* Licence error set */
+	else if (reason >= 0x100 && reason <= 0x10A)
+		 reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
+
+	/* RDP protocol error set */
+	else if (reason >= 0x10c9 && reason <= 0x1193)
+		 reason = XF_EXIT_RDP;
+
+	/* There's no need to test protocol-independent codes: they match */
+	else if (!(reason <= 0xB))
+		 reason = XF_EXIT_UNKNOWN;
+
+	return reason;
 }
 
 int main(int argc, char* argv[])
@@ -971,6 +1033,11 @@ int main(int argc, char* argv[])
 	instance->context->argv = argv;
 	instance->settings->sw_gdi = False;
 
+#ifdef WITH_SSE2
+	/* detect only if needed */
+	instance->settings->cpu_opt = xf_detect_cpu();
+#endif
+
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
 
@@ -984,5 +1051,5 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_uninit();
 
-	return 0;
+	return exit_code_from_disconnect_reason(g_disconnect_reason);
 }

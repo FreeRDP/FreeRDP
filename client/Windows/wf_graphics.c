@@ -97,11 +97,9 @@ void wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	if (bitmap->ephemeral)
-		return;
+	wf_bitmap = (wfBitmap*) bitmap;
 
 	hdc = GetDC(NULL);
-	wf_bitmap = (wfBitmap*) bitmap;
 	wf_bitmap->hdc = CreateCompatibleDC(hdc);
 
 	if (bitmap->data == NULL)
@@ -152,7 +150,7 @@ void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (bitmap->compressed)
+	if (compressed)
 	{
 		boolean status;
 

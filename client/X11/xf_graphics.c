@@ -43,7 +43,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, bitmap->bpp, xfi->bpp, xfi->clrconv);
+				bitmap->width, bitmap->height, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
 		if (bitmap->ephemeral != True)
 		{
@@ -58,6 +58,9 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		}
 		else
 		{
+			if (data != bitmap->data)
+				xfree(bitmap->data);
+			
 			bitmap->data = data;
 		}
 	}
@@ -106,7 +109,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 {
 	uint16 size;
 
-	size = width * height * (bpp / 8);
+	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
 		bitmap->data = (uint8*) xmalloc(size);

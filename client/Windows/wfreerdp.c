@@ -224,8 +224,6 @@ boolean wf_post_connect(freerdp* instance)
 	width = settings->width;
 	height = settings->height;
 
-	wf_register_graphics(instance->context->graphics);
-
 	if (wfi->sw_gdi)
 	{
 		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
@@ -315,6 +313,8 @@ boolean wf_post_connect(freerdp* instance)
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
 	}
+
+	wf_register_graphics(instance->context->graphics);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
