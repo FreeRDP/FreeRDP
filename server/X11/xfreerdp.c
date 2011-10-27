@@ -17,9 +17,16 @@
  * limitations under the License.
  */
 
+
 #include <errno.h>
-#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <sys/select.h>
+#include <sys/signal.h>
+
 #include <freerdp/utils/memory.h>
 
 #include "xf_peer.h"

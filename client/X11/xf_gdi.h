@@ -20,8 +20,6 @@
 #ifndef __XF_GDI_H
 #define __XF_GDI_H
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <freerdp/gdi/gdi.h>
 
 #include "xfreerdp.h"

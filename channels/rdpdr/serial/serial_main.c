@@ -34,6 +34,9 @@
 #ifdef HAVE_SYS_STRTIO_H
 #include <sys/strtio.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "rdpdr_types.h"
 #include "rdpdr_constants.h"

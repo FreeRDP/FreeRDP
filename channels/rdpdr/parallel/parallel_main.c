@@ -28,8 +28,10 @@
 #include <errno.h>
 #include <strings.h>
 #include <sys/ioctl.h>
+#ifdef __LINUX__
 #include <linux/ppdev.h>
 #include <linux/parport.h>
+#endif
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
