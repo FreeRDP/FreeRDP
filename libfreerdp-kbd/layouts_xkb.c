@@ -21,6 +21,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WITH_XKBFILE
+#include <X11/XKBlib.h>
+#include <X11/extensions/XKBfile.h>
+#include <X11/extensions/XKBrules.h>
+#endif
+
 #include "libkbd.h"
 #include <freerdp/kbd/vkcodes.h>
 #include "x_layout_id_table.h"
@@ -32,10 +38,6 @@
 #endif
 
 #ifdef WITH_XKBFILE
-
-#include <X11/XKBlib.h>
-#include <X11/extensions/XKBfile.h>
-#include <X11/extensions/XKBrules.h>
 
 int init_xkb(void *dpy)
 {

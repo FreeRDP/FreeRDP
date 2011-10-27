@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
@@ -563,7 +566,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 			x = (x2 < x1) ? x2 : x1;
 			width = (x2 > x1) ? x2 - x1 : x1 - x2;
-		
+
 			y = (y2 < y1) ? y2 : y1;
 			height = (y2 > y1) ? y2 - y1 : y1 - y2;
 

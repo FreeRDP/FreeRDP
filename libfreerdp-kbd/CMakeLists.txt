@@ -29,6 +29,11 @@ set(FREERDP_KBD_SRCS
 
 add_library(freerdp-kbd ${FREERDP_KBD_SRCS})
 
+find_suggested_package(X11)
+if(X11_FOUND)
+	target_link_libraries(freerdp-kbd ${X11_LIBRARIES})
+endif()
+
 find_suggested_package(XKBFile)
 if(XKBFILE_FOUND)
 	add_definitions(-DWITH_XKBFILE)

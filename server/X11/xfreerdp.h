@@ -20,11 +20,6 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <freerdp/codec/color.h>
 
 struct xf_info
