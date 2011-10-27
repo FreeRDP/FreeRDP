@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <sys/select.h>
+
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>

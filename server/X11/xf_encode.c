@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <X11/Xlib.h>
+
 #include "xf_encode.h"
 
 XImage* xf_snapshot(xfInfo* xfi, int x, int y, int width, int height)
