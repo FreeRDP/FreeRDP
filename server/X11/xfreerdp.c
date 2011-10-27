@@ -25,6 +25,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
+#include <sys/signal.h>
 
 #include <freerdp/utils/memory.h>
 
