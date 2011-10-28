@@ -180,6 +180,9 @@ int cert_data_match(rdpCertStore* certstore)
 	fp = certstore->fp;
 	cert_data = certstore->certdata;
 
+	if (!fp)
+		return certstore->match;
+
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -223,6 +226,14 @@ int cert_data_match(rdpCertStore* certstore)
 
 void cert_data_print(rdpCertStore* certstore)
 {
-	fseek(certstore->fp, 0, SEEK_END);
+	FILE* fp;
+
+	/* reopen in append mode */
+	fp = fopen(certstore->file, "a");
+
+	if (!fp)
+		return;
+
 	fprintf(certstore->fp,"%s %s\n", certstore->certdata->hostname, certstore->certdata->fingerprint);
+	fclose(fp);
 }

@@ -277,6 +277,8 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 
 			if(!accept_certificate)
 				return 1;
+
+			cert_data_print(certstore);
 		}
 		else if (certstore->match == -1)
 		{
