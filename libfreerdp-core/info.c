@@ -635,7 +635,9 @@ void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 {
 	uint32 cbFieldData;
 	uint32 fieldsPresent;
+	uint16 Length;
 
+	stream_read_uint16(s, Length); /* The total size in bytes of this structure */
 	stream_read_uint32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
 	/* logonFields */
