@@ -515,12 +515,45 @@ boolean xf_pre_connect(freerdp* instance)
 	return True;
 }
 
+void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
+{
+#ifdef __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
+	*eax = info;
+	__asm volatile
+		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		 "cpuid;"
+		 "mov %%ebx, %%esi;"
+		 "mov %%edi, %%ebx;"
+		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		 : :"edi");
+#endif
+#endif
+}
+ 
+uint32 xf_detect_cpu()
+{
+	unsigned int eax, ebx, ecx, edx = 0;
+	uint32 cpu_opt = 0;
+
+	cpuid(1, &eax, &ebx, &ecx, &edx);
+
+	if (edx & (1<<26)) 
+	{
+		DEBUG("SSE2 detected");
+		cpu_opt |= CPU_SSE2;
+	}
+
+	return cpu_opt;
+}
+
 boolean xf_post_connect(freerdp* instance)
 {
 	xfInfo* xfi;
 	XGCValues gcv;
 	rdpCache* cache;
 	rdpChannels* channels;
+	RFX_CONTEXT* rfx_context = NULL;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	cache = instance->context->cache;
@@ -546,6 +579,8 @@ boolean xf_post_connect(freerdp* instance)
 		gdi_init(instance, flags, NULL);
 		gdi = instance->context->gdi;
 		xfi->primary_buffer = gdi->primary_buffer;
+
+		rfx_context = gdi->rfx_context;
 	}
 	else
 	{
@@ -571,10 +606,21 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
 
 		if (instance->settings->rfx_codec)
-			xfi->rfx_context = (void*) rfx_context_new(instance->settings);
+		{
+			rfx_context = (void*) rfx_context_new();
+			xfi->rfx_context = rfx_context;
+		}
 
 		if (instance->settings->ns_codec)
 			xfi->nsc_context = (void*) nsc_context_new();
+	}
+
+	if (rfx_context)
+	{
+#ifdef WITH_SSE2
+		/* detect only if needed */
+		rfx_context_set_cpu_opt(rfx_context, xf_detect_cpu());
+#endif
 	}
 
 	xfi->width = instance->settings->width;
@@ -674,40 +720,6 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 	return False;
 }
-
-
-void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
-{
-#ifdef __GNUC__
-#if defined(__i386__) || defined(__x86_64__)
-	*eax = info;
-	__asm volatile
-		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
-		 "cpuid;"
-		 "mov %%ebx, %%esi;"
-		 "mov %%edi, %%ebx;"
-		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
-		 : :"edi");
-#endif
-#endif
-}
- 
-uint32 xf_detect_cpu()
-{
-	unsigned int eax, ebx, ecx, edx = 0;
-	uint32 cpu_opt = 0;
-
-	cpuid(1, &eax, &ebx, &ecx, &edx);
-
-	if (edx & (1<<26)) 
-	{
-		DEBUG("SSE2 detected");
-		cpu_opt |= CPU_SSE2;
-	}
-
-	return cpu_opt;
-}
-
 
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
@@ -1032,11 +1044,6 @@ int main(int argc, char* argv[])
 	instance->context->argc = argc;
 	instance->context->argv = argv;
 	instance->settings->sw_gdi = False;
-
-#ifdef WITH_SSE2
-	/* detect only if needed */
-	instance->settings->cpu_opt = xf_detect_cpu();
-#endif
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

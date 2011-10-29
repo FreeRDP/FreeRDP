@@ -83,4 +83,9 @@ enum RDP_SVC_CHANNEL_EVENT
  */
 #define CHANNEL_CHUNK_LENGTH 1600
 
+/**
+ * CPU Optimization flags
+ */
+#define CPU_SSE2			0x1
+
 #endif

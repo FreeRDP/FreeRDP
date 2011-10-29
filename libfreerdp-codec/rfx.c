@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/constants.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -128,7 +129,7 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
-RFX_CONTEXT* rfx_context_new(rdpSettings* settings)
+RFX_CONTEXT* rfx_context_new(void)
 {
 	RFX_CONTEXT* context;
 
@@ -157,11 +158,14 @@ RFX_CONTEXT* rfx_context_new(rdpSettings* settings)
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 
-	/* enable SIMD CPU acceleration if detected */
-	if (settings && settings->cpu_opt & CPU_SSE2)
-		RFX_INIT_SIMD(context);
-
 	return context;
+}
+
+void rfx_context_set_cpu_opt(RFX_CONTEXT* context, uint32 cpu_opt)
+{
+	/* enable SIMD CPU acceleration if detected */
+	if (cpu_opt & CPU_SSE2)
+		RFX_INIT_SIMD(context);
 }
 
 void rfx_context_free(RFX_CONTEXT* context)
