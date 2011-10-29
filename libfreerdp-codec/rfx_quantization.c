@@ -74,7 +74,7 @@ void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values)
 	rfx_quantization_encode_block(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
 	rfx_quantization_encode_block(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
 	rfx_quantization_encode_block(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
-	rfx_quantization_encode_block(buffer + 3868, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_encode_block(buffer + 3968, 64, quantization_values[3] - 6); /* HH3 */
 	rfx_quantization_encode_block(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 
 	/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
