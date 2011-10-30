@@ -242,16 +242,13 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
-	uint32 size = sizeof(rdpContext);
 
 	rdp = rdp_new(NULL);
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 
-	IFCALL(client->ContextSize, client, &size);
-
-	client->context = (rdpContext*) xzalloc(size);
+	client->context = (rdpContext*) xzalloc(client->context_size);
 	client->context->rdp = rdp;
 	client->context->peer = client;
 
@@ -280,11 +277,15 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	client = xnew(freerdp_peer);
 
-	client->sockfd = sockfd;
-	client->Initialize = freerdp_peer_initialize;
-	client->GetFileDescriptor = freerdp_peer_get_fds;
-	client->CheckFileDescriptor = freerdp_peer_check_fds;
-	client->Disconnect = freerdp_peer_disconnect;
+	if (client != NULL)
+	{
+		client->sockfd = sockfd;
+		client->context_size = sizeof(rdpContext);
+		client->Initialize = freerdp_peer_initialize;
+		client->GetFileDescriptor = freerdp_peer_get_fds;
+		client->CheckFileDescriptor = freerdp_peer_check_fds;
+		client->Disconnect = freerdp_peer_disconnect;
+	}
 
 	return client;
 }

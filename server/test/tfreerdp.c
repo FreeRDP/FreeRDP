@@ -57,11 +57,6 @@ struct test_peer_context
 };
 typedef struct test_peer_context testPeerContext;
 
-void test_peer_context_size(freerdp_peer* client, uint32* size)
-{
-	*size = sizeof(testPeerContext);
-}
-
 void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
@@ -90,7 +85,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 
 static void test_peer_init(freerdp_peer* client)
 {
-	client->ContextSize = (psPeerContextSize) test_peer_context_size;
+	client->context_size = sizeof(testPeerContext);
 	client->ContextNew = (psPeerContextNew) test_peer_context_new;
 	client->ContextFree = (psPeerContextFree) test_peer_context_free;
 	freerdp_peer_context_new(client);

@@ -26,7 +26,6 @@
 #include <freerdp/input.h>
 #include <freerdp/update.h>
 
-typedef void (*psPeerContextSize)(freerdp_peer* client, uint32* size);
 typedef void (*psPeerContextNew)(freerdp_peer* client, rdpContext* context);
 typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
 
@@ -47,7 +46,7 @@ struct rdp_freerdp_peer
 	rdpUpdate* update;
 	rdpSettings* settings;
 
-	psPeerContextSize ContextSize;
+	size_t context_size;
 	psPeerContextNew ContextNew;
 	psPeerContextFree ContextFree;
 
