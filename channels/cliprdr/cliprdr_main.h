@@ -21,15 +21,26 @@
 #ifndef __CLIPRDR_MAIN_H
 #define __CLIPRDR_MAIN_H
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
 typedef struct cliprdr_plugin cliprdrPlugin;
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;
+	boolean use_long_format_names;
+	boolean stream_fileclip_enabled;
+	boolean fileclip_no_file_paths;
+	boolean can_lock_clipdata;
 };
 
 STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen);
 void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* data_out);
+
+#ifdef WITH_DEBUG_CLIPRDR
+#define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(CLIPRDR, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 #endif /* __CLIPRDR_MAIN_H */

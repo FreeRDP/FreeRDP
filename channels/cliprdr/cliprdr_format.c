@@ -85,18 +85,21 @@ static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
 
 void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen)
 {
-	RDP_CB_FORMAT_LIST_EVENT* cb_event;
+	int i;
 	uint32 format;
 	int num_formats;
-	int supported;
-	int i;
+	boolean supported;
+	RDP_CB_FORMAT_LIST_EVENT* cb_event;
 
-	cb_event = (RDP_CB_FORMAT_LIST_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+	cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
+	/* TODO: support long format names */
+
 	num_formats = dataLen / 36;
-	cb_event->formats = (uint32*)xmalloc(sizeof(uint32) * num_formats);
+	cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * num_formats);
 	cb_event->num_formats = 0;
+
 	if (dataLen > 0)
 	{
 		cb_event->raw_format_data = (uint8*) xmalloc(dataLen);
@@ -105,12 +108,13 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 	}
 
 	if (num_formats * 36 != dataLen)
-		DEBUG_WARN("dataLen %d not devided by 36!", dataLen);
+		DEBUG_WARN("dataLen %d not divided by 36!", dataLen);
 
 	for (i = 0; i < num_formats; i++)
 	{
+		supported = True;
 		stream_read_uint32(s, format);
-		supported = 1;
+
 		switch (format)
 		{
 			case CB_FORMAT_TEXT:
@@ -139,7 +143,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 					format = CB_FORMAT_GIF;
 					break;
 				}
-				supported = 0;
+
+				supported = False;
 				break;
 		}
 		stream_seek(s, 32);
@@ -148,7 +153,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 			cb_event->formats[cb_event->num_formats++] = format;
 	}
 
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
 	cliprdr_send_format_list_response(cliprdr);
 }
 
@@ -158,8 +163,8 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, uint16 msgFlag
 
 	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
 	{
-		event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_SYNC, NULL, NULL);
-		svc_plugin_send_event((rdpSvcPlugin*)cliprdr, event);
+		event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_MONITOR_READY, NULL, NULL);
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
 	}
 }
 
@@ -169,8 +174,9 @@ void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s)
 
 	cb_event = (RDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+
 	stream_read_uint32(s, cb_event->format);
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*)cb_event);
 }
 
 void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_RESPONSE_EVENT* cb_event)
@@ -186,6 +192,7 @@ void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_D
 	{
 		s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_FAIL, 0);
 	}
+
 	cliprdr_packet_send(cliprdr, s);
 }
 
@@ -202,7 +209,7 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 {
 	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
-	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
 
 	if (dataLen > 0)
@@ -212,5 +219,5 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 		memcpy(cb_event->data, stream_get_tail(s), dataLen);
 	}
 
-	svc_plugin_send_event((rdpSvcPlugin*)cliprdr, (RDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
 }

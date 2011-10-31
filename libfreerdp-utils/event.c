@@ -32,17 +32,17 @@ static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 
 	switch (event_type)
 	{
-		case RDP_EVENT_TYPE_CB_SYNC:
-			event = (RDP_EVENT*)xnew(RDP_CB_SYNC_EVENT);
+		case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			event = (RDP_EVENT*) xnew(RDP_CB_MONITOR_READY_EVENT);
 			break;
 		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
-			event = (RDP_EVENT*)xnew(RDP_CB_FORMAT_LIST_EVENT);
+			event = (RDP_EVENT*) xnew(RDP_CB_FORMAT_LIST_EVENT);
 			break;
 		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
-			event = (RDP_EVENT*)xnew(RDP_CB_DATA_REQUEST_EVENT);
+			event = (RDP_EVENT*) xnew(RDP_CB_DATA_REQUEST_EVENT);
 			break;
 		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			event = (RDP_EVENT*)xnew(RDP_CB_DATA_RESPONSE_EVENT);
+			event = (RDP_EVENT*) xnew(RDP_CB_DATA_RESPONSE_EVENT);
 			break;
 	}
 

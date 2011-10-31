@@ -103,14 +103,14 @@ int tf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 	return 1;
 }
 
-void tf_process_cb_sync_event(rdpChannels* channels, freerdp* instance)
+void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
 
 	freerdp_channels_send_event(channels, event);
@@ -126,8 +126,8 @@ void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 	{
 		switch (event->event_type)
 		{
-			case RDP_EVENT_TYPE_CB_SYNC:
-				tf_process_cb_sync_event(channels, instance);
+			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+				tf_process_cb_monitor_ready_event(channels, instance);
 				break;
 			default:
 				printf("tf_process_channel_event: unknown event type %d\n", event->event_type);

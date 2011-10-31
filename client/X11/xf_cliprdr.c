@@ -37,7 +37,7 @@ struct clipboard_format_mapping
 typedef struct clipboard_context clipboardContext;
 struct clipboard_context
 {
-	rdpChannels* chanman;
+	rdpChannels* channels;
 	Window root_window;
 	Atom clipboard_atom;
 	Atom property_atom;
@@ -78,21 +78,23 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	cb = xnew(clipboardContext);
 	xfi->clipboard_context = cb;
 
-	cb->chanman = chanman;
+	cb->channels = chanman;
 	cb->request_index = -1;
 
 	cb->root_window = DefaultRootWindow(xfi->display);
 	cb->clipboard_atom = XInternAtom(xfi->display, "CLIPBOARD", False);
+
 	if (cb->clipboard_atom == None)
 	{
 		DEBUG_WARN("unable to get CLIPBOARD atom");
 	}
 
+	id = 1;
 	cb->property_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR", False);
 	cb->identity_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR_ID", False);
-	id = 1;
-	XChangeProperty(xfi->display, xfi->window->handle, cb->identity_atom, XA_INTEGER,
-		32, PropModeReplace, (unsigned char *)&id, 1);
+
+	XChangeProperty(xfi->display, xfi->drawable, cb->identity_atom,
+			XA_INTEGER, 32, PropModeReplace, (uint8*) &id, 1);
 
 	XSelectInput(xfi->display, cb->root_window, PropertyChangeMask);
 
@@ -153,11 +155,11 @@ void xf_cliprdr_uninit(xfInfo* xfi)
 
 static uint8* lf2crlf(uint8* data, int* size)
 {
+	uint8 c;
 	uint8* outbuf;
 	uint8* out;
 	uint8* in_end;
 	uint8* in;
-	uint8 c;
 	int out_size;
 
 	out_size = (*size) * 2 + 1;
@@ -165,6 +167,7 @@ static uint8* lf2crlf(uint8* data, int* size)
 	out = outbuf;
 	in = data;
 	in_end = data + (*size);
+
 	while (in < in_end)
 	{
 		c = *in++;
@@ -178,29 +181,32 @@ static uint8* lf2crlf(uint8* data, int* size)
 			*out++ = c;
 		}
 	}
+
 	*out++ = 0;
 	*size = out - outbuf;
+
 	return outbuf;
 }
 
 static void crlf2lf(uint8* data, int* size)
 {
+	uint8 c;
 	uint8* out;
 	uint8* in;
 	uint8* in_end;
-	uint8 c;
 
 	out = data;
 	in = data;
 	in_end = data + (*size);
+
 	while (in < in_end)
 	{
 		c = *in++;
+
 		if (c != '\r')
-		{
 			*out++ = c;
-		}
 	}
+
 	*size = out - data;
 }
 
@@ -229,25 +235,26 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	cb->owner = XGetSelectionOwner(xfi->display, cb->clipboard_atom);
+
 	if (cb->owner != None)
 	{
 		result = XGetWindowProperty(xfi->display, cb->owner,
 			cb->identity_atom, 0, 4, 0, XA_INTEGER,
-			&type, &format, &len, &bytes_left, (unsigned char**) &pid);
+			&type, &format, &len, &bytes_left, (uint8**) &pid);
 	}
+
 	if (pid)
 	{
 		id = *pid;
 		XFree(pid);
 	}
+
 	if (cb->owner == None || cb->owner == xfi->window->handle)
-	{
 		return False;
-	}
+
 	if (result != Success)
-	{
 		return False;
-	}
+
 	return (id ? True : False);
 }
 
@@ -258,10 +265,9 @@ static int xf_cliprdr_select_format_by_id(clipboardContext* cb, uint32 format_id
 	for (i = 0; i < cb->num_format_mappings; i++)
 	{
 		if (cb->format_mappings[i].format_id == format_id)
-		{
 			return i;
-		}
 	}
+
 	return -1;
 }
 
@@ -287,6 +293,7 @@ static int xf_cliprdr_select_format_by_atom(clipboardContext* cb, Atom target)
 				return i;
 		}
 	}
+
 	return -1;
 }
 
@@ -301,7 +308,8 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 
 	result = XGetWindowProperty(xfi->display, cb->root_window,
 		cb->property_atom, 0, 3600, 0, XA_STRING,
-		&type, &format, &len, &bytes_left, (unsigned char**) &format_data);
+		&type, &format, &len, &bytes_left, (uint8**) &format_data);
+
 	if (result != Success)
 	{
 		DEBUG_WARN("XGetWindowProperty failed");
@@ -317,7 +325,7 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 	event->raw_format_data_size = len;
 	XFree(format_data);
 
-	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
@@ -330,7 +338,7 @@ static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
 
 	event->num_formats = 0;
 
-	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
@@ -339,19 +347,16 @@ static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11("");
-
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
 	event->formats = (uint32*) xmalloc(sizeof(uint32) * cb->num_format_mappings);
 	event->num_formats = cb->num_format_mappings;
-	for (i = 0; i < cb->num_format_mappings; i++)
-	{
-		event->formats[i] = cb->format_mappings[i].format_id;
-	}
 
-	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+	for (i = 0; i < cb->num_format_mappings; i++)
+		event->formats[i] = cb->format_mappings[i].format_id;
+
+	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_format_list(xfInfo* xfi)
@@ -370,8 +375,7 @@ static void xf_cliprdr_send_format_list(xfInfo* xfi)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
 		XConvertSelection(xfi->display, cb->clipboard_atom,
-			cb->targets[1], cb->property_atom,
-			xfi->window->handle, CurrentTime);
+			cb->targets[1], cb->property_atom, xfi->window->handle, CurrentTime);
 	}
 }
 
@@ -384,7 +388,7 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, uint32 format)
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 	event->format = format;
 
-	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_data_response(xfInfo* xfi, uint8* data, int size)
@@ -394,10 +398,11 @@ static void xf_cliprdr_send_data_response(xfInfo* xfi, uint8* data, int size)
 
 	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+
 	event->data = data;
 	event->size = size;
 
-	freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
 static void xf_cliprdr_send_null_data_response(xfInfo* xfi)
@@ -405,7 +410,7 @@ static void xf_cliprdr_send_null_data_response(xfInfo* xfi)
 	xf_cliprdr_send_data_response(xfi, NULL, 0);
 }
 
-static void xf_cliprdr_process_cb_sync_event(xfInfo* xfi)
+static void xf_cliprdr_process_cb_monitor_ready_event(xfInfo* xfi)
 {
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
@@ -424,9 +429,8 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 	{
 		/* CB_FORMAT_RAW */
 		i = 0;
-		XChangeProperty(xfi->display, xfi->window->handle, cb->property_atom,
-			XA_INTEGER, 32, PropModeReplace,
-			(unsigned char*) &event->format, 1);
+		XChangeProperty(xfi->display, xfi->drawing, cb->property_atom,
+			XA_INTEGER, 32, PropModeReplace, (uint8*) &event->format, 1);
 	}
 	else
 	{
@@ -467,7 +471,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		&atom, &format, &len, &bytes_left, &data);
 
 	DEBUG_X11("type=%d format=%d len=%d bytes_left=%d",
-		(int)atom, format, (int)len, (int)bytes_left);
+		(int) atom, format, (int) len, (int) bytes_left);
 
 	if (len > 0)
 	{
@@ -494,14 +498,13 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		event->num_formats = num;
 		XFree(data);
 
-		freerdp_channels_send_event(cb->chanman, (RDP_EVENT*) event);
+		freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 	}
 	else
 	{
 		if (data)
-		{
 			XFree(data);
-		}
+
 		xf_cliprdr_send_null_format_list(xfi);
 	}
 }
@@ -530,7 +533,7 @@ static uint8* xf_cliprdr_process_requested_unicodetext(uint8* data, int* size)
 
 	xfree(inbuf);
 
-	*size = (int)out_size + 2;
+	*size = (int) out_size + 2;
 
 	return outbuf;
 }
@@ -554,6 +557,7 @@ static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
 		DEBUG_X11("bmp length %d too short", *size);
 		return NULL;
 	}
+
 	*size -= 14;
 	outbuf = (uint8*) xzalloc(*size);
 	memcpy(outbuf, data + 14, *size);
@@ -572,12 +576,12 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 	inbuf = NULL;
 	if (*size > 2)
 	{
-		if ((unsigned char)data[0] == 0xfe && (unsigned char)data[1] == 0xff)
+		if ((uint8) data[0] == 0xFE && (uint8) data[1] == 0xFF)
 		{
 			be2le(data, *size);
 		}
 
-		if ((unsigned char)data[0] == 0xff && (unsigned char)data[1] == 0xfe)
+		if ((uint8) data[0] == 0xFF && (uint8) data[1] == 0xFE)
 		{
 			uniconv = freerdp_uniconv_new();
 			inbuf = (uint8*) freerdp_uniconv_in(uniconv, data + 2, *size - 2);
@@ -597,6 +601,7 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 		"EndHTML:0000000000\r\n"
 		"StartFragment:0000000000\r\n"
 		"EndFragment:0000000000\r\n");
+
 	in = (uint8*) strstr((char*) inbuf, "<body");
 	if (in == NULL)
 	{
@@ -677,13 +682,9 @@ static void xf_cliprdr_process_requested_data(xfInfo* xfi, boolean has_data, uin
 	}
 
 	if (outbuf)
-	{
 		xf_cliprdr_send_data_response(xfi, outbuf, size);
-	}
 	else
-	{
 		xf_cliprdr_send_null_data_response(xfi);
-	}
 
 	/* Resend the format list, otherwise the server won't request again for the next paste */
 	xf_cliprdr_send_format_list(xfi);
@@ -709,8 +710,10 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	XGetWindowProperty(xfi->display, xfi->window->handle,
 		cb->property_atom, 0, 0, 0, target,
 		&type, &format, &len, &bytes_left, &data);
+
 	DEBUG_X11("type=%d format=%d bytes=%d request_index=%d",
-		(int)type, format, (int)bytes_left, cb->request_index);
+		(int) type, format, (int) bytes_left, cb->request_index);
+
 	if (data)
 	{
 		XFree(data);
@@ -769,7 +772,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	}
 	XDeleteProperty(xfi->display, xfi->window->handle, cb->property_atom);
 
-	xf_cliprdr_process_requested_data(xfi, has_data, data, (int)bytes_left);
+	xf_cliprdr_process_requested_data(xfi, has_data, data, (int) bytes_left);
 
 	if (data)
 		XFree(data);
@@ -789,6 +792,7 @@ static void xf_cliprdr_append_target(clipboardContext* cb, Atom target)
 		if (cb->targets[i] == target)
 			return;
 	}
+
 	cb->targets[cb->num_targets++] = target;
 }
 
@@ -830,10 +834,9 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 		xfree(cb->data);
 		cb->data = NULL;
 	}
+
 	if (cb->formats)
-	{
 		xfree(cb->formats);
-	}
 
 	cb->formats = event->formats;
 	cb->num_formats = event->num_formats;
@@ -852,6 +855,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 			}
 		}
 	}
+
 	XSetSelectionOwner(xfi->display, cb->clipboard_atom, xfi->window->handle, CurrentTime);
 	if (event->raw_format_data)
 	{
@@ -859,6 +863,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 			XA_STRING, 8, PropModeReplace,
 			event->raw_format_data, event->raw_format_data_size);
 	}
+
 	XFlush(xfi->display);
 }
 
@@ -904,8 +909,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	stream_detach(s);
 	stream_free(s);
 
-	DEBUG_X11("offset=%d bpp=%d ncolors=%d",
-		offset, bpp, ncolors);
+	DEBUG_X11("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
 
 	s = stream_new(14 + size);
 	stream_write_uint8(s, 'B');
@@ -1018,8 +1022,8 @@ void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event)
 {
 	switch (event->event_type)
 	{
-		case RDP_EVENT_TYPE_CB_SYNC:
-			xf_cliprdr_process_cb_sync_event(xfi);
+		case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			xf_cliprdr_process_cb_monitor_ready_event(xfi);
 			break;
 
 		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
@@ -1094,6 +1098,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	respond->xselection.selection = xevent->xselectionrequest.selection;
 	respond->xselection.target = xevent->xselectionrequest.target;
 	respond->xselection.time = xevent->xselectionrequest.time;
+
 	if (xevent->xselectionrequest.target == cb->targets[0]) /* TIMESTAMP */
 	{
 		/* TODO */
@@ -1126,9 +1131,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 				}
 			}
 			DEBUG_X11("provide format 0x%04x alt_format 0x%04x", format, alt_format);
-			if (cb->data != 0 &&
-				format == cb->data_format &&
-				alt_format == cb->data_alt_format)
+			if (cb->data != 0 && format == cb->data_format && alt_format == cb->data_alt_format)
 			{
 				/* Cached clipboard data available. Send it now */
 				respond->xselection.property = xevent->xselectionrequest.property;
@@ -1149,6 +1152,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 					xfree(cb->data);
 					cb->data = NULL;
 				}
+
 				respond->xselection.property = xevent->xselectionrequest.property;
 				cb->respond = respond;
 				cb->data_format = format;
@@ -1196,8 +1200,7 @@ boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 	}
 	else if (xevent->xproperty.window == xfi->window->handle &&
 		xevent->xproperty.state == PropertyNewValue &&
-		cb->incr_starts &&
-		cb->request_index >= 0)
+		cb->incr_starts && cb->request_index >= 0)
 	{
 		DEBUG_X11("cliprdr window PropertyNotify");
 		xf_cliprdr_get_requested_data(xfi,
@@ -1215,6 +1218,7 @@ void xf_cliprdr_check_owner(xfInfo* xfi)
 	if (cb->sync)
 	{
 		owner = XGetSelectionOwner(xfi->display, cb->clipboard_atom);
+
 		if (cb->owner != owner)
 		{
 			cb->owner = owner;

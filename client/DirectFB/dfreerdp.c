@@ -248,7 +248,7 @@ df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size,
 }
 
 static void
-df_process_cb_sync_event(rdpChannels* channels, freerdp* instance)
+df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -272,8 +272,8 @@ df_process_channel_event(rdpChannels* channels, freerdp* instance)
 	{
 		switch (event->event_type)
 		{
-			case RDP_EVENT_TYPE_CB_SYNC:
-				df_process_cb_sync_event(channels, instance);
+			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+				df_process_cb_monitor_ready_event(channels, instance);
 				break;
 			default:
 				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
