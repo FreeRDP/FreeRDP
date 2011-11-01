@@ -21,9 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <freerdp/constants.h>
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/plugins/cliprdr.h>
 
@@ -77,6 +78,8 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* s)
 static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 {
 	DEBUG_CLIPRDR("connecting");
+
+	((cliprdrPlugin*) plugin)->uniconv = freerdp_uniconv_new();
 }
 
 void cliprdr_print_general_capability_flags(uint32 flags)
@@ -203,7 +206,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 			break;
 
 		case CB_FORMAT_LIST:
-			cliprdr_process_format_list(cliprdr, s, dataLen);
+			cliprdr_process_format_list(cliprdr, s, dataLen, msgFlags);
 			break;
 
 		case CB_FORMAT_LIST_RESPONSE:

@@ -249,7 +249,7 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 		XFree(pid);
 	}
 
-	if (cb->owner == None || cb->owner == xfi->window->handle)
+	if (cb->owner == None || cb->owner == xfi->drawable)
 		return False;
 
 	if (result != Success)
@@ -371,11 +371,11 @@ static void xf_cliprdr_send_format_list(xfInfo* xfi)
 	{
 		xf_cliprdr_send_null_format_list(xfi);
 	}
-	else if (cb->owner != xfi->window->handle)
+	else if (cb->owner != xfi->drawable)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
 		XConvertSelection(xfi->display, cb->clipboard_atom,
-			cb->targets[1], cb->property_atom, xfi->window->handle, CurrentTime);
+			cb->targets[1], cb->property_atom, xfi->drawable, CurrentTime);
 	}
 }
 
@@ -449,7 +449,7 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 
 		XConvertSelection(xfi->display, cb->clipboard_atom,
 			cb->format_mappings[i].target_format, cb->property_atom,
-			xfi->window->handle, CurrentTime);
+			xfi->drawable, CurrentTime);
 		XFlush(xfi->display);
 		/* After this point, we expect a SelectionNotify event from the clipboard owner. */
 	}
@@ -466,7 +466,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	XGetWindowProperty(xfi->display, xfi->window->handle, cb->property_atom,
+	XGetWindowProperty(xfi->display, xfi->drawable, cb->property_atom,
 		0, 200, 0, XA_ATOM,
 		&atom, &format, &len, &bytes_left, &data);
 
@@ -707,7 +707,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 		return False;
 	}
 
-	XGetWindowProperty(xfi->display, xfi->window->handle,
+	XGetWindowProperty(xfi->display, xfi->drawable,
 		cb->property_atom, 0, 0, 0, target,
 		&type, &format, &len, &bytes_left, &data);
 
@@ -749,7 +749,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 			DEBUG_X11("INCR finished");
 			has_data = True;
 		}
-		else if (XGetWindowProperty(xfi->display, xfi->window->handle,
+		else if (XGetWindowProperty(xfi->display, xfi->drawable,
 			cb->property_atom, 0, bytes_left, 0, target,
 			&type, &format, &len, &dummy, &data) == Success)
 		{
@@ -770,7 +770,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 			DEBUG_X11("XGetWindowProperty failed");
 		}
 	}
-	XDeleteProperty(xfi->display, xfi->window->handle, cb->property_atom);
+	XDeleteProperty(xfi->display, xfi->drawable, cb->property_atom);
 
 	xf_cliprdr_process_requested_data(xfi, has_data, data, (int) bytes_left);
 
@@ -856,7 +856,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 		}
 	}
 
-	XSetSelectionOwner(xfi->display, cb->clipboard_atom, xfi->window->handle, CurrentTime);
+	XSetSelectionOwner(xfi->display, cb->clipboard_atom, xfi->drawable, CurrentTime);
 	if (event->raw_format_data)
 	{
 		XChangeProperty(xfi->display, cb->root_window, cb->property_atom,
@@ -1083,7 +1083,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 
 	DEBUG_X11("target=%d", (int)xevent->xselectionrequest.target);
 
-	if (xevent->xselectionrequest.owner != xfi->window->handle)
+	if (xevent->xselectionrequest.owner != xfi->drawable)
 	{
 		DEBUG_X11("not owner");
 		return False;
@@ -1112,7 +1112,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	else
 	{
 		i = xf_cliprdr_select_format_by_atom(cb, xevent->xselectionrequest.target);
-		if (i >= 0 && xevent->xselectionrequest.requestor != xfi->window->handle)
+		if (i >= 0 && xevent->xselectionrequest.requestor != xfi->drawable)
 		{
 			format = cb->format_mappings[i].format_id;
 			alt_format = format;
@@ -1198,7 +1198,7 @@ boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 		DEBUG_X11("root window PropertyNotify");
 		xf_cliprdr_send_format_list(xfi);
 	}
-	else if (xevent->xproperty.window == xfi->window->handle &&
+	else if (xevent->xproperty.window == xfi->drawable &&
 		xevent->xproperty.state == PropertyNewValue &&
 		cb->incr_starts && cb->request_index >= 0)
 	{

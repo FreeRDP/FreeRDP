@@ -21,9 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <freerdp/constants.h>
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/plugins/cliprdr.h>
 
@@ -38,8 +39,8 @@
 
 void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIST_EVENT* cb_event)
 {
-	STREAM* s;
 	int i;
+	STREAM* s;
 
 	if (cb_event->raw_format_data)
 	{
@@ -78,27 +79,106 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
 {
 	STREAM* s;
-
 	s = cliprdr_packet_new(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK, 0);
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen)
+void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, uint16 flags)
+{
+	boolean ascii;
+	int num_formats;
+	uint8* end_mark;
+	CLIPRDR_FORMAT_NAME* format_name;
+
+	num_formats = length / 36;
+
+	if (num_formats * 36 != length)
+		DEBUG_WARN("dataLen %d not divided by 36!", length);
+
+	ascii = (flags & CB_ASCII_NAMES) ? True : False;
+
+	stream_get_mark(s, end_mark);
+	end_mark += length;
+
+	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
+	cliprdr->num_format_names = num_formats;
+	format_name = cliprdr->format_names;
+
+	while (s->p < end_mark)
+	{
+		stream_read_uint32(s, format_name->id);
+
+		if (ascii)
+		{
+			format_name->name = xstrdup((char*) s->p);
+			format_name->length = strlen(format_name->name);
+		}
+		else
+		{
+			format_name->name = freerdp_uniconv_in(cliprdr->uniconv, s->p, 32);
+			format_name->length = strlen(format_name->name);
+		}
+
+		stream_seek(s, 32);
+
+		format_name++;
+	}
+}
+
+void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, uint16 flags)
+{
+	int num_formats;
+	uint8* start_mark;
+	uint8* end_mark;
+	uint16 terminator;
+	CLIPRDR_FORMAT_NAME* format_name;
+
+	num_formats = 0;
+	stream_get_mark(s, start_mark);
+	stream_get_mark(s, end_mark);
+	end_mark += length;
+
+	while (s->p < end_mark)
+	{
+		stream_seek_uint32(s);
+
+		do
+		{
+			stream_read_uint16(s, terminator);
+		}
+		while (terminator != 0x0000);
+
+		num_formats++;
+	}
+
+	stream_set_mark(s, start_mark);
+
+	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
+	cliprdr->num_format_names = num_formats;
+	format_name = cliprdr->format_names;
+
+	while (s->p < end_mark)
+	{
+		stream_read_uint32(s, format_name->id);
+
+		format_name->name = freerdp_uniconv_in(cliprdr->uniconv, s->p, 32);
+		format_name->length = strlen(format_name->name);
+		stream_seek(s, format_name->length);
+
+		format_name++;
+	}
+}
+
+void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
 {
 	int i;
 	uint32 format;
-	int num_formats;
 	boolean supported;
+	CLIPRDR_FORMAT_NAME* format_name;
 	RDP_CB_FORMAT_LIST_EVENT* cb_event;
 
 	cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
-
-	/* TODO: support long format names */
-
-	num_formats = dataLen / 36;
-	cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * num_formats);
-	cb_event->num_formats = 0;
 
 	if (dataLen > 0)
 	{
@@ -107,13 +187,19 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 		cb_event->raw_format_data_size = dataLen;
 	}
 
-	if (num_formats * 36 != dataLen)
-		DEBUG_WARN("dataLen %d not divided by 36!", dataLen);
+	if (cliprdr->use_long_format_names)
+		cliprdr_process_long_format_names(cliprdr, s, dataLen, msgFlags);
+	else
+		cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
 
-	for (i = 0; i < num_formats; i++)
+	format_name = cliprdr->format_names;
+	cb_event->num_formats = cliprdr->num_format_names;
+	cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * cb_event->num_formats);
+
+	for (i = 0; i < cliprdr->num_format_names; i++)
 	{
 		supported = True;
-		stream_read_uint32(s, format);
+		format = format_name->id;
 
 		switch (format)
 		{
@@ -123,22 +209,22 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 				break;
 
 			default:
-				if (memcmp(stream_get_tail(s), CFSTR_HTML, sizeof(CFSTR_HTML)) == 0)
+				if (strcmp(format_name->name, "HTML Format") == 0)
 				{
 					format = CB_FORMAT_HTML;
 					break;
 				}
-				if (memcmp(stream_get_tail(s), CFSTR_PNG, sizeof(CFSTR_PNG)) == 0)
+				if (strcmp(format_name->name, "PNG") == 0)
 				{
 					format = CB_FORMAT_PNG;
 					break;
 				}
-				if (memcmp(stream_get_tail(s), CFSTR_JPEG, sizeof(CFSTR_JPEG)) == 0)
+				if (strcmp(format_name->name, "JFIF") == 0)
 				{
 					format = CB_FORMAT_JPEG;
 					break;
 				}
-				if (memcmp(stream_get_tail(s), CFSTR_GIF, sizeof(CFSTR_GIF)) == 0)
+				if (strcmp(format_name->name, "GIF") == 0)
 				{
 					format = CB_FORMAT_GIF;
 					break;
@@ -147,10 +233,11 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 				supported = False;
 				break;
 		}
-		stream_seek(s, 32);
 
 		if (supported)
 			cb_event->formats[cb_event->num_formats++] = format;
+
+		format_name++;
 	}
 
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
@@ -172,11 +259,11 @@ void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s)
 {
 	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
-	cb_event = (RDP_CB_DATA_REQUEST_EVENT*)freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
+	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 
 	stream_read_uint32(s, cb_event->format);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*)cb_event);
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
 }
 
 void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_RESPONSE_EVENT* cb_event)
@@ -199,7 +286,6 @@ void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_D
 void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_REQUEST_EVENT* cb_event)
 {
 	STREAM* s;
-
 	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 	stream_write_uint32(s, cb_event->format);
 	cliprdr_packet_send(cliprdr, s);
@@ -215,7 +301,7 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 	if (dataLen > 0)
 	{
 		cb_event->size = dataLen;
-		cb_event->data = (uint8*)xmalloc(dataLen);
+		cb_event->data = (uint8*) xmalloc(dataLen);
 		memcpy(cb_event->data, stream_get_tail(s), dataLen);
 	}
 

@@ -25,7 +25,7 @@
 
 /* Convert pin/in_len from WINDOWS_CODEPAGE - return like xstrdup, 0-terminated */
 
-char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len)
+char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
 {
 	unsigned char *conv_pin = pin;
 	size_t conv_in_len = in_len;

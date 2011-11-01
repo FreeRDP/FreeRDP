@@ -24,15 +24,26 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
-typedef struct cliprdr_plugin cliprdrPlugin;
+struct _CLIPRDR_FORMAT_NAME
+{
+	uint32 id;
+	char* name;
+	int length;
+};
+typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
+
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;
+	UNICONV* uniconv;
 	boolean use_long_format_names;
 	boolean stream_fileclip_enabled;
 	boolean fileclip_no_file_paths;
 	boolean can_lock_clipdata;
+	CLIPRDR_FORMAT_NAME* format_names;
+	int num_format_names;
 };
+typedef struct cliprdr_plugin cliprdrPlugin;
 
 STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen);
 void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* data_out);

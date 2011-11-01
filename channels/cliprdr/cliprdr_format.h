@@ -22,7 +22,7 @@
 #define __CLIPRDR_FORMAT_H
 
 void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIST_EVENT* cb_event);
-void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* data_in, uint32 dataLen);
+void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags);
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, uint16 msgFlags);
 
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* data_in);
