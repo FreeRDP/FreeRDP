@@ -118,8 +118,9 @@ boolean xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != True)
+	if (status != True) {
 		return False;
+	}
 
 	xfi->current_desktop = (int) *prop;
 	xfree(prop);
@@ -135,16 +136,21 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	unsigned long bytes;
 	unsigned char* prop;
 
+	status = xf_GetCurrentDesktop(xfi);
+
+	if (status != True)
+		return False;
+
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_WORKAREA, 32 * 4, &nitems, &bytes, &prop);
 
 	if (status != True)
 		return False;
 
-	status = xf_GetCurrentDesktop(xfi);
-
-	if (status != True)
+	if ((xfi->current_desktop * 4 + 3) >= nitems) {
+		xfree(prop);
 		return False;
+	}
 
 	plong = (long*) prop;
 
