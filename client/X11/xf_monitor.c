@@ -56,6 +56,11 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		settings->width = xfi->workArea.width;
 		settings->height = xfi->workArea.height;
 	}
+	else if (settings->percent_screen)
+	{
+		settings->width = (xfi->workArea.width * settings->percent_screen) / 100;
+		settings->height = (xfi->workArea.height * settings->percent_screen) / 100;
+	}
 
 	if (settings->fullscreen != True && settings->workarea != True)
 		return True;
