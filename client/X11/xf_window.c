@@ -278,6 +278,14 @@ void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* heigh
 	vscreen_width = xfi->vscreen.area.right - xfi->vscreen.area.left + 1;
 	vscreen_height = xfi->vscreen.area.bottom - xfi->vscreen.area.top + 1;
 
+	if (*width < 1) 
+	{
+		*width = 1;
+	}
+	if (*height < 1)
+	{
+		*height = 1;
+	}
 	if (*x < xfi->vscreen.area.left)
 	{
 		*width += *x;
@@ -306,9 +314,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	window = (xfWindow*) xzalloc(sizeof(xfWindow));
 
-	if ((width * height) < 1)
-		return NULL;
-
 	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 
 	window->left = x;
@@ -318,54 +323,51 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->width = width;
 	window->height = height;
 
-	if (window != NULL)
+	XGCValues gcv;
+	int input_mask;
+	XClassHint* class_hints;
+
+	window->decorations = False;
+	window->fullscreen = False;
+	window->window = wnd;
+	window->localMoveSize = False;
+
+	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
+		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
+		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+		CWBorderPixel, &xfi->attribs);
+
+	xf_SetWindowDecorations(xfi, window, window->decorations);
+
+	class_hints = XAllocClassHint();
+
+	if (class_hints != NULL)
 	{
-		XGCValues gcv;
-		int input_mask;
-		XClassHint* class_hints;
-
-		window->decorations = False;
-		window->fullscreen = False;
-		window->window = wnd;
-		window->localMoveSize = False;
-
-		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-			x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
-			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-			CWBorderPixel, &xfi->attribs);
-
-		xf_SetWindowDecorations(xfi, window, window->decorations);
-
-		class_hints = XAllocClassHint();
-
-		if (class_hints != NULL)
-		{
-			char* class;
-			class = xmalloc(sizeof(rail_window_class));
-			snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
-			class_hints->res_name = "RAIL";
-			class_hints->res_class = class;
-			XSetClassHint(xfi->display, window->handle, class_hints);
-			XFree(class_hints);
-			xfree(class);
-		}
-
-		XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
-
-		input_mask =
-			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
-			VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
-			PointerMotionMask | ExposureMask;
-
-		XSelectInput(xfi->display, window->handle, input_mask);
-		XMapWindow(xfi->display, window->handle);
-
-		memset(&gcv, 0, sizeof(gcv));
-		window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
-		window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
-
-		xf_MoveWindow(xfi, window, x, y, width, height);
+		char* class;
+		class = xmalloc(sizeof(rail_window_class));
+		snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
+		class_hints->res_name = "RAIL";
+		class_hints->res_class = class;
+		XSetClassHint(xfi->display, window->handle, class_hints);
+		XFree(class_hints);
+		xfree(class);
 	}
+
+	XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
+
+	input_mask =
+		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
+		VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
+		PointerMotionMask | ExposureMask;
+
+	XSelectInput(xfi->display, window->handle, input_mask);
+	XMapWindow(xfi->display, window->handle);
+
+	memset(&gcv, 0, sizeof(gcv));
+	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
+	window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
+
+	xf_MoveWindow(xfi, window, x, y, width, height);
 
 	return window;
 }
