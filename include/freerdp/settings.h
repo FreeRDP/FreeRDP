@@ -186,6 +186,7 @@ struct rdp_settings
 
 	uint16 width;
 	uint16 height;
+	uint16 percent_screen;
 	boolean sw_gdi;
 	boolean workarea;
 	boolean fullscreen;
