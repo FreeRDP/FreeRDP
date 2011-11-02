@@ -106,31 +106,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	int x, y;
-	int w, h;
-
-	x = event->xexpose.x;
-	y = event->xexpose.y;
-	w = event->xexpose.width;
-	h = event->xexpose.height;
-
 	xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
-
-	if (app)
-	{
-		xfWindow* xfw;
-		rdpWindow* window;
-		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xvisibility.window);
-
-		if (window != NULL)
-		{
-			xfw = (xfWindow*) window->extra;
-			xf_UpdateWindowArea(xfi, xfw, x, y, w, h);
-		}
-	}
-
 	return True;
 }
 
