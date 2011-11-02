@@ -184,6 +184,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				{
 					settings->height = (uint16) strtol(p + 1, &p, 10);
 				}
+				if (*p == '%')
+				{
+					settings->percent_screen = settings->width;
+					if (settings->percent_screen <= 0 || settings->percent_screen > 100)
+					{
+						printf("invalid geometry percentage\n");
+						return -1;
+					}
+				}
 				else
 				{
 					if (ui_callback != NULL)
