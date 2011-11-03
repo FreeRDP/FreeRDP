@@ -118,8 +118,9 @@ boolean xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != True)
+	if (status != True) {
 		return False;
+	}
 
 	xfi->current_desktop = (int) *prop;
 	xfree(prop);
@@ -135,16 +136,21 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	unsigned long bytes;
 	unsigned char* prop;
 
+	status = xf_GetCurrentDesktop(xfi);
+
+	if (status != True)
+		return False;
+
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_WORKAREA, 32 * 4, &nitems, &bytes, &prop);
 
 	if (status != True)
 		return False;
 
-	status = xf_GetCurrentDesktop(xfi);
-
-	if (status != True)
+	if ((xfi->current_desktop * 4 + 3) >= nitems) {
+		xfree(prop);
 		return False;
+	}
 
 	plong = (long*) prop;
 
@@ -365,7 +371,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	memset(&gcv, 0, sizeof(gcv));
 	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
-	window->surface = XCreatePixmap(xfi->display, window->handle, window->width, window->height, xfi->depth);
 
 	xf_MoveWindow(xfi, window, x, y, width, height);
 
@@ -463,8 +468,6 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 
 	if (resize)
 	{
-		XFreePixmap(xfi->display, window->surface);
-		window->surface = XCreatePixmap(xfi->display, window->handle, width, height, xfi->depth);
 		xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
 	}
 }
@@ -625,9 +628,6 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 
 	if (window->gc)
 		XFreeGC(xfi->display, window->gc);
-
-	if (window->surface)
-		XFreePixmap(xfi->display, window->surface);
 
 	if (window->handle)
 	{
