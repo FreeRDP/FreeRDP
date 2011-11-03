@@ -66,23 +66,12 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32
 	}
 }
 
-void xf_rail_FilterWindowInfo(rdpRail* rail, rdpWindow* window)
-{
-	if (window->windowOffsetX < 0)
-	{
-		window->windowWidth += (window->windowOffsetX * 2);
-		window->windowOffsetX = 0;
-	}
-}
-
 void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
 
 	xfi = (xfInfo*) rail->extra;
-
-	xf_rail_FilterWindowInfo(rail, window);
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra, window,
 			window->windowOffsetX, window->windowOffsetY,
@@ -104,8 +93,6 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
-
-	xf_rail_FilterWindowInfo(rail, window);
 
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
 			window->windowOffsetX, window->windowOffsetY,
