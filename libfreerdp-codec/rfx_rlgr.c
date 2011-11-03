@@ -93,42 +93,27 @@
 }
 
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
-#define GetGRCode(krp, kr) rfx_rlgr_get_gr_code(bs, krp, kr)
-
-static uint16 rfx_rlgr_get_gr_code(RFX_BITSTREAM* bs, int* krp, int* kr)
-{
-	int vk;
-	uint16 mag;
-	uint16 r;
-
-	/* chew up/count leading 1s and escape 0 */
-	vk = 0;
-	do
-	{
-		GetBits(1, r);
-		if (r == 1)
-			vk++;
-		else
-			break;
-	} while (1);
-
-	/* get next *kr bits, and combine with leading 1s */
-	GetBits(*kr, mag);
-	mag |= (vk << *kr);
-
-	/* adjust krp and kr based on vk */
-	if (!vk)
-	{
-		UpdateParam(*krp, -2, *kr);
+#define GetGRCode(krp, kr, vk, _mag) \
+	vk = 0; \
+	_mag = 0; \
+	/* chew up/count leading 1s and escape 0 */ \
+	do { \
+		GetBits(1, r); \
+		if (r == 1) \
+			vk++; \
+		else \
+			break; \
+	} while (1); \
+	/* get next *kr bits, and combine with leading 1s */ \
+	GetBits(*kr, _mag); \
+	_mag |= (vk << *kr); \
+	/* adjust krp and kr based on vk */ \
+	if (!vk) { \
+		UpdateParam(*krp, -2, *kr); \
+	} \
+	else if (vk != 1) { \
+		UpdateParam(*krp, vk, *kr); /* at 1, no change! */ \
 	}
-	else if (vk != 1)
-	{
-		/* at 1, no change! */
-		UpdateParam(*krp, vk, *kr);
-	}
-
-	return mag;
-}
 
 int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* buffer, int buffer_size)
 {
@@ -139,6 +124,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 	uint16 r;
 	sint16* dst;
 	RFX_BITSTREAM* bs;
+
+	int vk;
+	uint16 mag16;
 
 	bs = xnew(RFX_BITSTREAM);
 	rfx_bitstream_attach(bs, data, data_size);
@@ -177,7 +165,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 			GetBits(1, sign);
 
 			/* magnitude - 1 was coded (because it was nonzero) */
-			mag = (int) GetGRCode(&krp, &kr) + 1;
+			GetGRCode(&krp, &kr, vk, mag16)
+			mag = (int) (mag16 + 1);
 
 			WriteValue(sign ? -mag : mag);
 			UpdateParam(kp, -DN_GR, k); /* lower k and kp because of nonzero term */
@@ -190,7 +179,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 			uint32 val2;
 
 			/* GR (GOLOMB-RICE) MODE */
-			mag = GetGRCode(&krp, &kr); /* values coded are 2 * magnitude - sign */
+			GetGRCode(&krp, &kr, vk, mag16) /* values coded are 2 * magnitude - sign */
+			mag = (uint32) mag16;
 
 			if (mode == RLGR1)
 			{
