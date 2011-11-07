@@ -38,7 +38,6 @@ struct xf_window
 	int width;
 	int height;
 	Window handle;
-	Pixmap surface;
 	boolean fullscreen;
 	boolean decorations;
 	rdpWindow* window;
