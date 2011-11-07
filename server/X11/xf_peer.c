@@ -25,6 +25,10 @@
 #include <X11/Xutil.h>
 #include <sys/select.h>
 
+#ifdef WITH_XDAMAGE
+#include <X11/extensions/Xdamage.h>
+#endif
+
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
@@ -43,6 +47,8 @@ xfInfo* xf_info_init()
 	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
+	int damage_event;
+	int damage_error;
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -114,6 +120,9 @@ xfInfo* xf_info_init()
 	xfi->clrconv->invert = 1;
 	xfi->clrconv->alpha = 1;
 
+	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+	XDamageQueryExtension(xfi->display, &damage_event, &damage_error);
+
 	return xfi;
 }
 
@@ -122,8 +131,8 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	context->info = xf_info_init();
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->width;
-	context->rfx_context->height = client->settings->height;
+	context->rfx_context->width = context->info->width;
+	context->rfx_context->height = context->info->height;
 	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
 
 	context->s = stream_new(65536);
@@ -156,17 +165,13 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 
 void xf_peer_live_rfx(freerdp_peer* client)
 {
-	int x, y;
 	STREAM* s;
 	int width;
 	int height;
-	int wrects;
-	int hrects;
-	int nrects;
 	uint8* data;
 	xfInfo* xfi;
 	XImage* image;
-	RFX_RECT* rects;
+	RFX_RECT rect;
 	uint32 seconds;
 	uint32 useconds;
 	rdpUpdate* update;
@@ -180,26 +185,8 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	xfi = (xfInfo*) xfp->info;
 	cmd = &update->surface_bits_command;
 
-	wrects = 16;
-	hrects = 12;
-
-	nrects = wrects * hrects;
-	rects = xmalloc(sizeof(RFX_RECT) * nrects);
-
-	for (y = 0; y < hrects; y++)
-	{
-		for (x = 0; x < wrects; x++)
-		{
-			rects[(y * wrects) + x].x = x * 64;
-			rects[(y * wrects) + x].y = y * 64;
-			rects[(y * wrects) + x].width = 64;
-			rects[(y * wrects) + x].height = 64;
-		}
-	}
-
-	width = wrects * 64;
-	height = hrects * 64;
-
+	width = xfi->width;
+	height = xfi->height;
 	data = (uint8*) xmalloc(width * height * 3);
 
 	while (1)
@@ -214,7 +201,12 @@ void xf_peer_live_rfx(freerdp_peer* client)
 
 		image = xf_snapshot(xfi, 0, 0, width, height);
 		freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
-		rfx_compose_message(xfp->rfx_context, s, rects, nrects, data, width, height, 64 * wrects * 3);
+
+		rect.x = 0;
+		rect.y = 0;
+		rect.width = width;
+		rect.height = height;
+		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data, width, height, width * 3);
 
 		cmd->destLeft = 0;
 		cmd->destTop = 0;
@@ -234,7 +226,7 @@ static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 ne
 {
 	sint32 sec, usec;
 
-	if (*old_sec==0 && *old_usec==0)
+	if (*old_sec == 0 && *old_usec == 0)
 	{
 		*old_sec = new_sec;
 		*old_usec = new_usec;
@@ -244,7 +236,7 @@ static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 ne
 	sec = new_sec - *old_sec;
 	usec = new_usec - *old_usec;
 
-	if (sec<0 || (sec==0 && usec<0))
+	if (sec < 0 || (sec == 0 && usec < 0))
 	{
 		printf("Invalid time stamp detected.\n");
 		return False;
@@ -307,6 +299,12 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 
 boolean xf_peer_post_connect(freerdp_peer* client)
 {
+	xfInfo* xfi;
+	xfPeerContext* xfp;
+
+	xfp = (xfPeerContext*) client->context;
+	xfi = (xfInfo*) xfp->info;
+
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
 	 * Font List PDU from the client and sent out the Font Map PDU.
@@ -328,6 +326,11 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
+
+	client->settings->width = xfi->width;
+	client->settings->height = xfi->height;
+	client->update->DesktopResize(client->update);
+	xfp->activated = False;
 
 	/* Return False here would stop the execution of the peer mainloop. */
 	return True;
