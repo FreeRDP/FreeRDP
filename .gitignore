@@ -1,11 +1,16 @@
 # CMake
-*.cmake
 CMakeFiles/
 CMakeCache.txt
 config.h
 install_manifest.txt
 CTestTestfile.cmake
 freerdp.pc
+
+*.cmake
+/**/*.cmake
+/**/**/*.cmake
+/**/**/**/*.cmake
+/**/**/**/**/*.cmake
 
 # Make
 Makefile
