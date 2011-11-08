@@ -264,7 +264,8 @@ void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz)
 void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
 	STREAM* rles;
-	uint16 i, origsize;
+	uint16 i;
+	uint32 origsize;
 	rles = stream_new(0);
 	rles->p = rles->data = context->nsc_stream->pdata->p;
 	rles->size = context->nsc_stream->pdata->size;
