@@ -232,6 +232,8 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	desktopResizeFlag = settings->desktop_resize;
 
+	printf("desktop width:%d height:%d\n", settings->width, settings->height);
+
 	stream_write_uint16(s, preferredBitsPerPixel); /* preferredBitsPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive1BitPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive4BitsPerPixel (2 bytes) */
@@ -1779,7 +1781,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
 	{
-		printf("rdp_read_capability_sets failes\n");
+		printf("rdp_read_capability_sets failed\n");
 		return False;
 	}
 

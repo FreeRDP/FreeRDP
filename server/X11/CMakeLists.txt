@@ -31,6 +31,13 @@ if(XEXT_FOUND)
 	target_link_libraries(xfreerdp-server ${XEXT_LIBRARIES})
 endif()
 
+find_suggested_package(Xdamage)
+if(XDAMAGE_FOUND)
+        add_definitions(-DWITH_XDAMAGE)
+        include_directories(${XDAMAGE_INCLUDE_DIRS})
+        target_link_libraries(xfreerdp-server ${XDAMAGE_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp-server freerdp-core)
 target_link_libraries(xfreerdp-server freerdp-codec)
 target_link_libraries(xfreerdp-server freerdp-utils)
