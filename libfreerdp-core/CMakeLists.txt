@@ -24,6 +24,8 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 set(LIBFREERDP_CORE_SRCS
 	activation.c
 	activation.h
+	extension.c
+	extension.h
 	ber.c
 	ber.h
 	gcc.c

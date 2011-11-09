@@ -20,14 +20,14 @@
 #ifndef __RDP_EXTENSION_H
 #define __RDP_EXTENSION_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 
 /* Extensions ought to check for it to ensure compatibility */
-#define RDPEXT_API 1
+#define FREERDP_EXT_API			1
 
-#define RDPEXT_EXPORT_FUNC_NAME "FreeRDPExtensionEntry"
+#define FREERDP_EXT_EXPORT_FUNC_NAME	"FreeRDPExtensionEntry"
 
 typedef struct rdp_ext_plugin rdpExtPlugin;
 
@@ -52,6 +52,7 @@ struct _FREERDP_EXTENSION_ENTRY_POINTS
 	PREGISTERPOSTCONNECTHOOK pRegisterPostConnectHook;
 	void* data;
 };
+
 typedef struct _FREERDP_EXTENSION_ENTRY_POINTS FREERDP_EXTENSION_ENTRY_POINTS;
 typedef FREERDP_EXTENSION_ENTRY_POINTS* PFREERDP_EXTENSION_ENTRY_POINTS;
 
