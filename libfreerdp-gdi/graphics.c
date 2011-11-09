@@ -129,7 +129,7 @@ void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean prima
 		gdi->drawing = (gdiBitmap*) bitmap;
 }
 
-void gdi_GlyphNew(rdpContext* context, rdpGlyph* glyph)
+void gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	uint8* data;
 	gdiGlyph* gdi_glyph;
@@ -149,7 +149,7 @@ void gdi_GlyphNew(rdpContext* context, rdpGlyph* glyph)
 	gdi_glyph->org_bitmap = NULL;
 }
 
-void gdi_GlyphFree(rdpContext* context, rdpGlyph* glyph)
+void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 {
 	gdiGlyph* gdi_glyph;
 
@@ -164,7 +164,7 @@ void gdi_GlyphFree(rdpContext* context, rdpGlyph* glyph)
 	}
 }
 
-void gdi_DrawGlyph(rdpContext* context, rdpGlyph* glyph, int x, int y)
+void gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 {
 	gdiGlyph* gdi_glyph;
 	rdpGdi* gdi = context->gdi;
@@ -175,14 +175,11 @@ void gdi_DrawGlyph(rdpContext* context, rdpGlyph* glyph, int x, int y)
 			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax);
 }
 
-void gdi_BeginDrawText(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
-
-	printf("BeginDrawText x:%d y:%d width:%d height:%d bgcolor: 0x%04X fgcolor: 0x%04X\n",
-			x, y, width, height, bgcolor, fgcolor);
 
 	fgcolor = freerdp_color_convert(fgcolor, gdi->srcBpp, 32, gdi->clrconv);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
@@ -193,22 +190,18 @@ void gdi_BeginDrawText(rdpContext* context, int x, int y, int width, int height,
 	gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 }
 
-void gdi_EndDrawText(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
 	rdpGdi* gdi = context->gdi;
-
-	printf("EndDrawText x:%d y:%d width:%d height:%d bgcolor: 0x%04X fgcolor: 0x%04X\n",
-			x, y, width, height, bgcolor, fgcolor);
 
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 
 void gdi_register_graphics(rdpGraphics* graphics)
 {
-	rdpCache* cache;
 	rdpBitmap bitmap;
+	rdpGlyph glyph;
 
-	memset(&bitmap, 0, sizeof(rdpBitmap));
 	bitmap.size = sizeof(gdiBitmap);
 
 	bitmap.New = gdi_Bitmap_New;
@@ -219,13 +212,14 @@ void gdi_register_graphics(rdpGraphics* graphics)
 
 	graphics_register_bitmap(graphics, &bitmap);
 
-	cache = graphics->context->cache;
+	glyph.size = sizeof(gdiGlyph);
 
-	cache->glyph->glyph_size = sizeof(gdiGlyph);
-	cache->glyph->GlyphNew = gdi_GlyphNew;
-	cache->glyph->GlyphFree = gdi_GlyphFree;
-	cache->glyph->DrawGlyph = gdi_DrawGlyph;
-	cache->glyph->BeginDrawText = gdi_BeginDrawText;
-	cache->glyph->EndDrawText = gdi_EndDrawText;
+	glyph.New = gdi_Glyph_New;
+	glyph.Free = gdi_Glyph_Free;
+	glyph.Draw = gdi_Glyph_Draw;
+	glyph.BeginDraw = gdi_Glyph_BeginDraw;
+	glyph.EndDraw = gdi_Glyph_EndDraw;
+
+	graphics_register_glyph(graphics, &glyph);
 }
 

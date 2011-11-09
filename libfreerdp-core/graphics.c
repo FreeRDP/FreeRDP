@@ -122,6 +122,54 @@ void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 	memcpy(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
 }
 
+/* Glyph Class */
+
+rdpGlyph* Glyph_Alloc(rdpContext* context)
+{
+	rdpGlyph* glyph;
+	rdpGraphics* graphics;
+
+	graphics = context->graphics;
+	glyph = (rdpGlyph*) xmalloc(graphics->Glyph_Prototype->size);
+
+	if (glyph != NULL)
+	{
+		memcpy(glyph, context->graphics->Glyph_Prototype, sizeof(rdpGlyph));
+	}
+
+	return glyph;
+}
+
+void Glyph_New(rdpContext* context, rdpGlyph* glyph)
+{
+	context->graphics->Glyph_Prototype->New(context, glyph);
+}
+
+void Glyph_Free(rdpContext* context, rdpGlyph* glyph)
+{
+	context->graphics->Glyph_Prototype->Free(context, glyph);
+}
+
+void Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
+{
+	context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
+}
+
+void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+{
+	context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width, height, bgcolor, fgcolor);
+}
+
+void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+{
+	context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height, bgcolor, fgcolor);
+}
+
+void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
+{
+	memcpy(graphics->Glyph_Prototype, glyph, sizeof(rdpGlyph));
+}
+
 /* Graphics Module */
 
 rdpGraphics* graphics_new(rdpContext* context)
@@ -134,15 +182,20 @@ rdpGraphics* graphics_new(rdpContext* context)
 	{
 		graphics->context = context;
 
-		graphics->Bitmap_Prototype = (rdpBitmap*) xmalloc(sizeof(rdpBitmap));
+		graphics->Bitmap_Prototype = (rdpBitmap*) xzalloc(sizeof(rdpBitmap));
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
 		graphics->Bitmap_Prototype->Free = Bitmap_Free;
 
-		graphics->Pointer_Prototype = (rdpPointer*) xmalloc(sizeof(rdpPointer));
+		graphics->Pointer_Prototype = (rdpPointer*) xzalloc(sizeof(rdpPointer));
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
 		graphics->Pointer_Prototype->Free = Pointer_Free;
+
+		graphics->Glyph_Prototype = (rdpGlyph*) xzalloc(sizeof(rdpGlyph));
+		graphics->Glyph_Prototype->size = sizeof(rdpGlyph);
+		graphics->Glyph_Prototype->New = Glyph_New;
+		graphics->Glyph_Prototype->Free = Glyph_Free;
 	}
 
 	return graphics;

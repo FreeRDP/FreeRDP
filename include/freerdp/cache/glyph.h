@@ -30,12 +30,6 @@ typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
 typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
 typedef struct rdp_glyph_cache rdpGlyphCache;
 
-typedef void (*pGlyphNew)(rdpContext* context, rdpGlyph* glyph);
-typedef void (*pGlyphFree)(rdpContext* context, rdpGlyph* glyph);
-typedef void (*pDrawGlyph)(rdpContext* context, rdpGlyph* glyph, int x, int y);
-typedef void (*pBeginDrawText)(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor);
-typedef void (*pEndDrawText)(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor);
-
 #include <freerdp/cache/cache.h>
 
 struct _GLYPH_CACHE
@@ -58,13 +52,7 @@ struct _FRAGMENT_CACHE
 
 struct rdp_glyph_cache
 {
-	int glyph_size;
-	pGlyphNew GlyphNew;
-	pGlyphFree GlyphFree;
-	pDrawGlyph DrawGlyph;
-	pBeginDrawText BeginDrawText;
-	pEndDrawText EndDrawText;
-
+	rdpContext* context;
 	rdpSettings* settings;
 	GLYPH_CACHE glyphCache[10];
 	FRAGMENT_CACHE fragCache;

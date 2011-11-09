@@ -57,17 +57,6 @@ struct rdp_brush
 };
 typedef struct rdp_brush rdpBrush;
 
-struct rdp_glyph
-{
-	sint16 x;
-	sint16 y;
-	uint16 cx;
-	uint16 cy;
-	uint16 cb;
-	uint8* aj;
-};
-typedef struct rdp_glyph rdpGlyph;
-
 /* Bitmap Updates */
 
 struct _BITMAP_DATA
