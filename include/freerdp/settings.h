@@ -276,6 +276,8 @@ struct rdp_settings
 	boolean smooth_fonts;
 	uint16 pointer_cache_size;
 
+	boolean glyph_cache;
+
 	boolean fastpath_input;
 	boolean fastpath_output;
 

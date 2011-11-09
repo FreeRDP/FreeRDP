@@ -255,6 +255,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->compression = True;
 		}
+		else if (strcmp("--glyph-cache", argv[index]) == 0)
+		{
+			settings->glyph_cache = True;
+		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
 			settings->offscreen_bitmap_cache = False;
