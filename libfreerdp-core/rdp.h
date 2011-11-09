@@ -29,6 +29,7 @@
 #include "update.h"
 #include "license.h"
 #include "errinfo.h"
+#include "extension.h"
 #include "security.h"
 #include "transport.h"
 #include "connection.h"
@@ -125,6 +126,7 @@ struct rdp_rdp
 	struct rdp_redirection* redirection;
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
+	struct rdp_extension* extension;
 	struct rdp_mppc* mppc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;

@@ -24,11 +24,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/extension.h>
 
-#include "rdp.h"
-
 #define FREERDP_EXT_MAX_COUNT 16
 
-struct rdp_ext
+struct rdp_extension
 {
 	freerdp* instance;
 	rdpExtPlugin* plugins[FREERDP_EXT_MAX_COUNT];
@@ -40,13 +38,13 @@ struct rdp_ext
 	rdpExtPlugin* post_connect_hooks_instances[FREERDP_EXT_MAX_COUNT];
 	int num_post_connect_hooks;
 };
-typedef struct rdp_ext rdpExt;
+typedef struct rdp_extension rdpExtension;
 
-int freerdp_ext_pre_connect(rdpExt* ext);
-int freerdp_ext_post_connect(rdpExt* ext);
+int extension_pre_connect(rdpExtension* extension);
+int extension_post_connect(rdpExtension* extension);
 
-rdpExt* freerdp_ext_new(rdpRdp* rdp);
-void freerdp_ext_free(rdpExt* ext);
+rdpExtension* extension_new(freerdp* instance);
+void extension_free(rdpExtension* extension);
 
 #endif /* __EXTENSION_H */
 

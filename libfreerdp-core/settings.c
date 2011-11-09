@@ -38,6 +38,7 @@ rdpSettings* settings_new(void* instance)
 	if (settings != NULL)
 	{
 		settings->instance = instance;
+		((freerdp*) instance)->settings = settings;
 
 		settings->width = 1024;
 		settings->height = 768;

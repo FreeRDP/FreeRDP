@@ -247,12 +247,12 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 
 void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 {
-	enum DomainMCSPDU MCSPDU;
 	int body_length;
+	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
 
-	if (rdp->sec_flags & SEC_ENCRYPT && rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	if ((rdp->sec_flags & SEC_ENCRYPT) && (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS))
 	{
 		int pad;
 
@@ -807,6 +807,7 @@ rdpRdp* rdp_new(freerdp* instance)
 	{
 		rdp->instance = instance;
 		rdp->settings = settings_new((void*) instance);
+		rdp->extension = extension_new(instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
@@ -830,6 +831,7 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp != NULL)
 	{
+		extension_free(rdp->extension);
 		settings_free(rdp->settings);
 		transport_free(rdp->transport);
 		license_free(rdp->license);

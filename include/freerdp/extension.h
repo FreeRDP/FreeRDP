@@ -24,9 +24,6 @@
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
 
-/* Extensions ought to check for it to ensure compatibility */
-#define FREERDP_EXT_API			1
-
 #define FREERDP_EXT_EXPORT_FUNC_NAME	"FreeRDPExtensionEntry"
 
 typedef struct rdp_ext_plugin rdpExtPlugin;

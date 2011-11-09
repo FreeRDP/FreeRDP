@@ -24,7 +24,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
 
-#include "rdp.h"
 #include "extension.h"
 
 #ifdef _WIN32
@@ -42,13 +41,13 @@
 #define PLUGIN_EXT "so"
 #endif
 
-static uint32 FREERDP_CC freerdp_ext_register_extension(rdpExtPlugin* plugin)
+static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 {
-	rdpExt* ext = (rdpExt*) plugin->ext;
+	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
 	if (ext->num_plugins >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("freerdp_ext_register_extension: maximum number of plugins reached.\n");
+		printf("extension_register_extension: maximum number of plugins reached.\n");
 		return 1;
 	}
 
@@ -56,13 +55,13 @@ static uint32 FREERDP_CC freerdp_ext_register_extension(rdpExtPlugin* plugin)
 	return 0;
 }
 
-static uint32 FREERDP_CC freerdp_ext_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
-	rdpExt* ext = (rdpExt*) plugin->ext;
+	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
 	if (ext->num_pre_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("freerdp_ext_register_pre_connect_hook: maximum plugin reached.\n");
+		printf("extension_register_pre_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -72,13 +71,13 @@ static uint32 FREERDP_CC freerdp_ext_register_pre_connect_hook(rdpExtPlugin* plu
 	return 0;
 }
 
-static uint32 FREERDP_CC freerdp_ext_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static uint32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
-	rdpExt* ext = (rdpExt*) plugin->ext;
+	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
 	if (ext->num_post_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("freerdp_ext_register_post_connect_hook: maximum plugin reached.\n");
+		printf("extension_register_post_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -89,7 +88,7 @@ static uint32 FREERDP_CC freerdp_ext_register_post_connect_hook(rdpExtPlugin* pl
 	return 0;
 }
 
-static int freerdp_ext_load_plugins(rdpExt* ext)
+static int extension_load_plugins(rdpExtension* extension)
 {
 	int i;
 	void* han;
@@ -98,12 +97,12 @@ static int freerdp_ext_load_plugins(rdpExt* ext)
 	PFREERDP_EXTENSION_ENTRY entry;
 	FREERDP_EXTENSION_ENTRY_POINTS entryPoints;
 
-	settings = ext->instance->settings;
+	settings = extension->instance->settings;
 
-	entryPoints.ext = ext;
-	entryPoints.pRegisterExtension = freerdp_ext_register_extension;
-	entryPoints.pRegisterPreConnectHook = freerdp_ext_register_pre_connect_hook;
-	entryPoints.pRegisterPostConnectHook = freerdp_ext_register_post_connect_hook;
+	entryPoints.ext = extension;
+	entryPoints.pRegisterExtension = extension_register_plugin;
+	entryPoints.pRegisterPreConnectHook = extension_register_pre_connect_hook;
+	entryPoints.pRegisterPostConnectHook = extension_register_post_connect_hook;
 
 	for (i = 0; settings->extensions[i].name[0]; i++)
 	{
@@ -113,10 +112,10 @@ static int freerdp_ext_load_plugins(rdpExt* ext)
 			snprintf(path, sizeof(path), "%s", settings->extensions[i].name);
 
 		han = DLOPEN(path);
-		printf("freerdp_ext_load_plugins: %s\n", path);
+		printf("extension_load_plugins: %s\n", path);
 		if (han == NULL)
 		{
-			printf("freerdp_ext_load_plugins: failed to load %s\n", path);
+			printf("extension_load_plugins: failed to load %s\n", path);
 			continue;
 		}
 
@@ -124,15 +123,15 @@ static int freerdp_ext_load_plugins(rdpExt* ext)
 		if (entry == NULL)
 		{
 			DLCLOSE(han);
-			printf("freerdp_ext_load_plugins: failed to find export function in %s\n", path);
+			printf("extension_load_plugins: failed to find export function in %s\n", path);
 			continue;
 		}
 
-		entryPoints.data = ext->instance->settings->extensions[i].data;
+		entryPoints.data = extension->instance->settings->extensions[i].data;
 		if (entry(&entryPoints) != 0)
 		{
 			DLCLOSE(han);
-			printf("freerdp_ext_load_plugins: %s entry returns error.\n", path);
+			printf("extension_load_plugins: %s entry returns error.\n", path);
 			continue;
 		}
 	}
@@ -140,38 +139,38 @@ static int freerdp_ext_load_plugins(rdpExt* ext)
 	return 0;
 }
 
-static int freerdp_ext_call_init(rdpExt* ext)
+static int extension_init_plugins(rdpExtension* extension)
 {
 	int i;
 
-	for (i = 0; i < ext->num_plugins; i++)
-		ext->plugins[i]->init(ext->plugins[i], ext->instance);
+	for (i = 0; i < extension->num_plugins; i++)
+		extension->plugins[i]->init(extension->plugins[i], extension->instance);
 
 	return 0;
 }
 
-static int freerdp_ext_call_uninit(rdpExt* ext)
+static int extension_uninit_plugins(rdpExtension* extension)
 {
 	int i;
 
-	for (i = 0; i < ext->num_plugins; i++)
-		ext->plugins[i]->uninit(ext->plugins[i], ext->instance);
+	for (i = 0; i < extension->num_plugins; i++)
+		extension->plugins[i]->uninit(extension->plugins[i], extension->instance);
 
 	return 0;
 }
 
 
-int freerdp_ext_pre_connect(rdpExt* ext)
+int extension_pre_connect(rdpExtension* extension)
 {
 	int i;
 
-	for (i = 0; i < ext->num_pre_connect_hooks; i++)
-		ext->pre_connect_hooks[i](ext->pre_connect_hooks_instances[i], ext->instance);
+	for (i = 0; i < extension->num_pre_connect_hooks; i++)
+		extension->pre_connect_hooks[i](extension->pre_connect_hooks_instances[i], extension->instance);
 
 	return 0;
 }
 
-int freerdp_ext_post_connect(rdpExt* ext)
+int extension_post_connect(rdpExtension* ext)
 {
 	int i;
 
@@ -181,22 +180,22 @@ int freerdp_ext_post_connect(rdpExt* ext)
 	return 0;
 }
 
-rdpExt* freerdp_ext_new(rdpRdp* rdp)
+rdpExtension* extension_new(freerdp* instance)
 {
-	rdpExt* ext;
+	rdpExtension* extension;
 
-	ext = xnew(rdpExt);
+	extension = xnew(rdpExtension);
 
-	ext->instance = rdp->instance;
+	extension->instance = instance;
 
-	freerdp_ext_load_plugins(ext);
-	freerdp_ext_call_init(ext);
+	extension_load_plugins(extension);
+	extension_init_plugins(extension);
 
-	return ext;
+	return extension;
 }
 
-void freerdp_ext_free(rdpExt* ext)
+void extension_free(rdpExtension* extension)
 {
-	freerdp_ext_call_uninit(ext);
-	xfree(ext);
+	extension_uninit_plugins(extension);
+	xfree(extension);
 }

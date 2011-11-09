@@ -23,6 +23,7 @@
 #include "surface.h"
 #include "transport.h"
 #include "connection.h"
+#include "extension.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
@@ -33,6 +34,8 @@ boolean freerdp_connect(freerdp* instance)
 	boolean status;
 
 	rdp = instance->context->rdp;
+
+	extension_pre_connect(rdp->extension);
 
 	IFCALL(instance->PreConnect, instance);
 
@@ -46,6 +49,8 @@ boolean freerdp_connect(freerdp* instance)
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = True;
 		}
+
+		extension_post_connect(rdp->extension);
 
 		IFCALL(instance->PostConnect, instance);
 
