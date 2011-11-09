@@ -195,28 +195,92 @@ void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		XDefineCursor(xfi->display, xfi->window->handle, ((xfPointer*) pointer)->cursor);
 }
 
+/* Glyph Class */
+
+void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
+{
+	xfInfo* xfi;
+	int scanline;
+	XImage* image;
+	xfGlyph* xf_glyph;
+
+	xf_glyph = (xfGlyph*) glyph;
+	xfi = ((xfContext*) context)->xfi;
+
+	scanline = (glyph->cx + 7) / 8;
+
+	xf_glyph->pixmap = XCreatePixmap(xfi->display, xfi->drawable, glyph->cx, glyph->cy, 1);
+
+	image = XCreateImage(xfi->display, xfi->visual, 1,
+			ZPixmap, 0, (char*) glyph->aj, glyph->cx, glyph->cy, 8, scanline);
+
+	image->byte_order = MSBFirst;
+	image->bitmap_bit_order = MSBFirst;
+
+	XInitImage(image);
+	XPutImage(xfi->display, xf_glyph->pixmap, xfi->gc_mono, image, 0, 0, 0, 0, glyph->cx, glyph->cy);
+	XFree(image);
+}
+
+void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
+{
+
+}
+
+void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
+{
+
+}
+
+void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+{
+
+}
+
+void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+{
+
+}
+
 /* Graphics Module */
 
 void xf_register_graphics(rdpGraphics* graphics)
 {
-	rdpBitmap bitmap;
-	rdpPointer pointer;
+	rdpBitmap* bitmap;
+	rdpPointer* pointer;
+	rdpGlyph* glyph;
 
-	memset(&bitmap, 0, sizeof(rdpBitmap));
-	bitmap.size = sizeof(xfBitmap);
+	bitmap = xnew(rdpBitmap);
+	bitmap->size = sizeof(xfBitmap);
 
-	bitmap.New = xf_Bitmap_New;
-	bitmap.Free = xf_Bitmap_Free;
-	bitmap.Paint = xf_Bitmap_Paint;
-	bitmap.Decompress = xf_Bitmap_Decompress;
-	bitmap.SetSurface = xf_Bitmap_SetSurface;
+	bitmap->New = xf_Bitmap_New;
+	bitmap->Free = xf_Bitmap_Free;
+	bitmap->Paint = xf_Bitmap_Paint;
+	bitmap->Decompress = xf_Bitmap_Decompress;
+	bitmap->SetSurface = xf_Bitmap_SetSurface;
 
-	memset(&pointer, 0, sizeof(rdpPointer));
-	pointer.size = sizeof(xfPointer);
-	pointer.New = xf_Pointer_New;
-	pointer.Free = xf_Pointer_Free;
-	pointer.Set = xf_Pointer_Set;
+	graphics_register_bitmap(graphics, bitmap);
+	xfree(bitmap);
 
-	graphics_register_bitmap(graphics, &bitmap);
-	graphics_register_pointer(graphics, &pointer);
+	pointer = xnew(rdpPointer);
+	pointer->size = sizeof(xfPointer);
+
+	pointer->New = xf_Pointer_New;
+	pointer->Free = xf_Pointer_Free;
+	pointer->Set = xf_Pointer_Set;
+
+	graphics_register_pointer(graphics, pointer);
+	xfree(pointer);
+
+	glyph = xnew(rdpGlyph);
+	glyph->size = sizeof(xfGlyph);
+
+	glyph->New = xf_Glyph_New;
+	glyph->Free = xf_Glyph_Free;
+	glyph->Draw = xf_Glyph_Draw;
+	glyph->BeginDraw = xf_Glyph_BeginDraw;
+	glyph->EndDraw = xf_Glyph_EndDraw;
+
+	graphics_register_glyph(graphics, glyph);
+	xfree(glyph);
 }

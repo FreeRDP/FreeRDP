@@ -41,7 +41,7 @@ struct _GLYPH_CACHE
 
 struct _FRAGMENT_CACHE_ENTRY
 {
-	void* entry;
+	void* fragment;
 	uint16 size;
 };
 

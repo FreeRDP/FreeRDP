@@ -625,160 +625,11 @@ void gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
-{
-#if 0
-	int i, j;
-	int x, y;
-	GDI_RECT rect;
-	uint32 bgcolor;
-	uint32 fgcolor;
-	HGDI_BRUSH brush;
-	gdiBitmap* bmp;
-	gdiBitmap** bmps;
-	GLYPH_DATA* glyph;
-	GLYPH_DATA** glyphs;
-	GLYPH_FRAGMENT* fragment;
-	rdpGdi* gdi = update->context->gdi;
-	rdpCache* cache = update->context->cache;
-
-	x = fast_index->bkLeft;
-	y = fast_index->y;
-
-	bgcolor = freerdp_color_convert(fast_index->backColor, gdi->srcBpp, 32, gdi->clrconv);
-	fgcolor = freerdp_color_convert(fast_index->foreColor, gdi->srcBpp, 32, gdi->clrconv);
-	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
-	gdi_SetNullClipRgn(gdi->drawing->hdc);
-	brush = gdi_CreateSolidBrush(fgcolor);
-
-	if (fast_index->opaqueRect)
-	{
-		gdi_SetRect(&rect, fast_index->opLeft, fast_index->opTop, fast_index->opRight, fast_index->opBottom);
-		gdi_FillRect(gdi->drawing->hdc, &rect, brush);
-	}
-
-	for (i = 0; i < fast_index->nfragments; i++)
-	{
-		fragment = &fast_index->fragments[i];
-
-		if (fragment->operation == GLYPH_FRAGMENT_USE)
-		{
-			fragment->indices = (GLYPH_FRAGMENT_INDEX*) glyph_fragment_get(cache->glyph,
-							fragment->index, &fragment->nindices, (void**) &bmps);
-
-			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
-
-			for (j = 0; j < fragment->nindices; j++)
-			{
-				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
-			}
-		}
-		else
-		{
-			bmps = (gdiBitmap**) xmalloc(sizeof(gdiBitmap*) * fragment->nindices);
-			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
-
-			for (j = 0; j < fragment->nindices; j++)
-			{
-				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
-			}
-		}
-
-		for (j = 0; j < fragment->nindices; j++)
-		{
-			bmp = bmps[j];
-			glyph = glyphs[j];
-
-			if (bmp == NULL || glyph == NULL)
-				continue;
-
-			gdi_BitBlt(gdi->drawing->hdc, glyph->x + x, glyph->y + y, bmp->bitmap->width,
-					bmp->bitmap->height, bmp->hdc, 0, 0, GDI_DSPDxax);
-
-			if ((j + 1) < fragment->nindices)
-			{
-				if (!(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
-				{
-					if (fast_index->flAccel & SO_VERTICAL)
-					{
-						y += fragment->indices[j + 1].delta;
-					}
-					else
-					{
-						x += fragment->indices[j + 1].delta;
-					}
-				}
-				else
-				{
-					x += glyph->cx;
-				}
-			}
-		}
-
-		if (fragment->operation == GLYPH_FRAGMENT_ADD)
-		{
-			glyph_fragment_put(cache->glyph, fragment->index,
-					fragment->nindices, (void*) fragment->indices, (void*) bmps);
-		}
-	}
-
-	gdi_SetTextColor(gdi->drawing->hdc, gdi->textColor);
-	gdi_DeleteObject((HGDIOBJECT) brush);
-#endif
-}
-
 void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 	rdpCache* cache = update->context->cache;
 	color_table_put(cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
-
-#if 0
-void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
-{
-	int i;
-	GLYPH_DATA* glyph;
-	gdiBitmap* gdi_bmp;
-	rdpGdi* gdi = update->context->gdi;
-	rdpCache* cache = update->context->cache;
-
-	for (i = 0; i < cache_glyph->cGlyphs; i++)
-	{
-		glyph = cache_glyph->glyphData[i];
-		gdi_bmp = gdi_glyph_new(gdi, glyph);
-		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
-	}
-}
-
-void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
-{
-	int i;
-	uint8* extra;
-	GLYPH_DATA_V2* glyph;
-	gdiBitmap* gdi_bmp;
-	rdpCache* cache = update->context->cache;
-
-	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
-	{
-		glyph = cache_glyph_v2->glyphData[i];
-		gdi_bmp = (gdiBitmap*) malloc(sizeof(gdiBitmap));
-
-		gdi_bmp->hdc = gdi_GetDC();
-		gdi_bmp->hdc->bytesPerPixel = 1;
-		gdi_bmp->hdc->bitsPerPixel = 1;
-
-		extra = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
-		gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
-		gdi_bmp->bitmap->bytesPerPixel = 1;
-		gdi_bmp->bitmap->bitsPerPixel = 1;
-
-		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
-		gdi_bmp->org_bitmap = NULL;
-
-		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
-	}
-}
-#endif
 
 int tilenum = 0;
 
@@ -919,7 +770,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->Mem3Blt = gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
-	update->FastIndex = gdi_fast_index;
+	update->FastIndex = NULL;
 	update->FastGlyph = NULL;
 	update->PolygonSC = NULL;
 	update->PolygonCB = NULL;
@@ -927,8 +778,6 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseCB = NULL;
 
 	update->CacheColorTable = gdi_cache_color_table;
-	//update->CacheGlyph = gdi_cache_glyph;
-	//update->CacheGlyphV2 = gdi_cache_glyph_v2;
 
 	update->SurfaceBits = gdi_surface_bits;
 }

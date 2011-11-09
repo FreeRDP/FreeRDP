@@ -232,8 +232,6 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	desktopResizeFlag = settings->desktop_resize;
 
-	printf("desktop width:%d height:%d\n", settings->width, settings->height);
-
 	stream_write_uint16(s, preferredBitsPerPixel); /* preferredBitsPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive1BitPerPixel (2 bytes) */
 	stream_write_uint16(s, 1); /* receive4BitsPerPixel (2 bytes) */

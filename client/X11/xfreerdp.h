@@ -56,6 +56,13 @@ struct xf_bitmap
 };
 typedef struct xf_bitmap xfBitmap;
 
+struct xf_glyph
+{
+	rdpGlyph glyph;
+	Pixmap pixmap;
+};
+typedef struct xf_glyph xfGlyph;
+
 struct xf_context
 {
 	rdpContext _p;

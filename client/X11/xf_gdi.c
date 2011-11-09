@@ -613,165 +613,10 @@ void xf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
-{
-#if 0
-	int i, j;
-	int x, y;
-	int w, h;
-	Pixmap bmp;
-	Pixmap* bmps;
-	uint32 fgcolor;
-	uint32 bgcolor;
-	GLYPH_DATA* glyph;
-	GLYPH_DATA** glyphs;
-	GLYPH_FRAGMENT* fragment;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-	rdpCache* cache = update->context->cache;
-
-	fgcolor = freerdp_color_convert(fast_index->foreColor, xfi->srcBpp, 32, xfi->clrconv);
-	bgcolor = freerdp_color_convert(fast_index->backColor, xfi->srcBpp, 32, xfi->clrconv);
-
-	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	XSetForeground(xfi->display, xfi->gc, bgcolor);
-	XSetBackground(xfi->display, xfi->gc, fgcolor);
-
-	if (fast_index->opaqueRect)
-	{
-		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
-
-		x = fast_index->opLeft;
-		y = fast_index->opTop;
-		w = fast_index->opRight - fast_index->opLeft + 1;
-		h = fast_index->opBottom - fast_index->opTop + 1;
-
-		XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, w, h);
-
-		if (xfi->drawing == xfi->primary)
-		{
-			if (xfi->remote_app != True)
-			{
-				XFillRectangle(xfi->display, xfi->drawable, xfi->gc, x, y, w, h);
-			}
-
-			gdi_InvalidateRegion(xfi->hdc, x, y, w, h);
-		}
-	}
-
-	x = fast_index->bkLeft;
-	y = fast_index->y;
-
-	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
-
-	for (i = 0; i < fast_index->nfragments; i++)
-	{
-		fragment = &fast_index->fragments[i];
-
-		if (fragment->operation == GLYPH_FRAGMENT_USE)
-		{
-			fragment->indices = (GLYPH_FRAGMENT_INDEX*) glyph_fragment_get(cache->glyph,
-							fragment->index, &fragment->nindices, (void**) &bmps);
-
-			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
-
-			for (j = 0; j < fragment->nindices; j++)
-			{
-				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
-			}
-		}
-		else
-		{
-			bmps = (Pixmap*) xmalloc(sizeof(Pixmap*) * fragment->nindices);
-			glyphs = (GLYPH_DATA**) xmalloc(sizeof(GLYPH_DATA*) * fragment->nindices);
-
-			for (j = 0; j < fragment->nindices; j++)
-			{
-				glyphs[j] = glyph_get(cache->glyph, fast_index->cacheId, fragment->indices[j].index, (void**) &bmps[j]);
-			}
-		}
-
-		for (j = 0; j < fragment->nindices; j++)
-		{
-			bmp = bmps[j];
-			glyph = glyphs[j];
-
-			XSetStipple(xfi->display, xfi->gc, bmp);
-			XSetTSOrigin(xfi->display, xfi->gc, glyph->x + x, glyph->y + y);
-			XFillRectangle(xfi->display, xfi->drawing, xfi->gc, glyph->x + x, glyph->y + y, glyph->cx, glyph->cy);
-			XSetStipple(xfi->display, xfi->gc, xfi->bitmap_mono);
-
-			if ((j + 1) < fragment->nindices)
-			{
-				if (!(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
-				{
-					if (fast_index->flAccel & SO_VERTICAL)
-					{
-						y += fragment->indices[j + 1].delta;
-					}
-					else
-					{
-						x += fragment->indices[j + 1].delta;
-					}
-				}
-				else
-				{
-					x += glyph->cx;
-				}
-			}
-		}
-
-		if (fragment->operation == GLYPH_FRAGMENT_ADD)
-		{
-			glyph_fragment_put(cache->glyph, fragment->index,
-					fragment->nindices, (void*) fragment->indices, (void*) bmps);
-		}
-	}
-
-	if (xfi->drawing == xfi->primary)
-	{
-		if (xfi->remote_app != True)
-		{
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-				fast_index->bkLeft, fast_index->bkTop,
-				fast_index->bkRight - fast_index->bkLeft + 1,
-				fast_index->bkBottom - fast_index->bkTop + 1,
-				fast_index->bkLeft, fast_index->bkTop);
-		}
-
-		gdi_InvalidateRegion(xfi->hdc, fast_index->bkLeft, fast_index->bkTop,
-				fast_index->bkRight - fast_index->bkLeft + 1,
-				fast_index->bkBottom - fast_index->bkTop + 1);
-	}
-#endif
-}
-
 void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 
 }
-
-#if 0
-void xf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
-{
-	int i;
-	Pixmap bitmap;
-	GLYPH_DATA* glyph;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-	rdpCache* cache = update->context->cache;
-
-	for (i = 0; i < cache_glyph->cGlyphs; i++)
-	{
-		glyph = cache_glyph->glyphData[i];
-		bitmap = xf_glyph_new(xfi, glyph->cx, glyph->cy, glyph->aj);
-		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
-	}
-}
-
-void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
-{
-
-}
-#endif
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
@@ -916,7 +761,7 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->Mem3Blt = xf_gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
-	update->FastIndex = xf_gdi_fast_index;
+	update->FastIndex = NULL;
 	update->FastGlyph = NULL;
 	update->PolygonSC = NULL;
 	update->PolygonCB = NULL;
@@ -924,8 +769,6 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseCB = NULL;
 
 	update->CacheColorTable = xf_gdi_cache_color_table;
-	//update->CacheGlyph = xf_gdi_cache_glyph;
-	//update->CacheGlyphV2 = xf_gdi_cache_glyph_v2;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
 }

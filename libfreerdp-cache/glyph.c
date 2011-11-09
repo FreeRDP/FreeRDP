@@ -24,46 +24,55 @@
 #include <freerdp/cache/glyph.h>
 
 void update_process_glyph(rdpUpdate* update, uint8* data, int* index,
-		int* x, int* y, uint8 cacheId, boolean delta, boolean vertical)
+		int* x, int* y, uint8 cacheId, uint8 ulCharInc, uint8 flAccel)
 {
 	int offset;
 	rdpGlyph* glyph;
+	uint8 cacheIndex;
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
 	graphics = update->context->graphics;
 	glyph_cache = update->context->cache->glyph;
 
-	glyph = glyph_cache_get(glyph_cache, cacheId, data[(*index)++]);
+	cacheIndex = data[(*index)++];
 
-	if (glyph != NULL)
+	if (cacheIndex == 0xFF)
 	{
-		Glyph_Draw(update->context, glyph, *x, *y);
+		(*index)++;
+		return;
 	}
 
-	offset = data[(*index)++];
+	glyph = glyph_cache_get(glyph_cache, cacheId, cacheIndex);
 
-	if (offset & 0x80)
+	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 	{
-		offset = data[*index + 1] | (data[*index + 2] << 8);
-		*index += 2;
-	}
+		offset = data[*index];
 
-	if (delta)
-	{
-		if (vertical)
+		if (offset & 0x80)
+		{
+			offset = data[*index + 1] | (data[*index + 2] << 8);
+			(*index)++;
+			(*index)++;
+		}
+
+		if (flAccel & SO_VERTICAL)
 			*y += offset;
 		else
 			*x += offset;
 	}
-	else
+
+	if (glyph != NULL)
 	{
-		*x += glyph->cx;
+		Glyph_Draw(update->context, glyph, glyph->x + *x, glyph->y + *y);
+
+		if (flAccel & SO_CHAR_INC_EQUAL_BM_BASE)
+			*x += glyph->cx;
 	}
 }
 
 void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length,
-		uint8 cacheId, boolean delta, boolean vertical, uint32 bgcolor, uint32 fgcolor, int x, int y,
+		uint8 cacheId, uint8 ulCharInc, uint8 flAccel, uint32 bgcolor, uint32 fgcolor, int x, int y,
 		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight)
 {
 	int n;
@@ -86,9 +95,11 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 		{
 			case GLYPH_FRAGMENT_USE:
 
+				printf("GLYPH_FRAGMENT_USE\n");
+
 				if (index + 2 > length)
 				{
-					/* at least two bytes need to follow */
+					/* at least one byte need to follow */
 					index = length = 0;
 					break;
 				}
@@ -96,13 +107,24 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 				id = data[index + 1];
 				fragments = (uint8*) glyph_cache_fragment_get(glyph_cache, id, &size);
 
-				n = 0;
-
-				do
+				if (fragments != NULL)
 				{
-					update_process_glyph(update, fragments, &n, &x, &y, cacheId, delta, vertical);
+					n = 0;
+
+					if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
+					{
+						if (flAccel & SO_VERTICAL)
+							y += data[index + 2];
+						else
+							x += data[index + 2];
+					}
+
+					do
+					{
+						update_process_glyph(update, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
+					}
+					while (n < size);
 				}
-				while (n < size);
 
 				index += (index + 2 < length) ? 3 : 2;
 				length -= index;
@@ -113,16 +135,21 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 
 			case GLYPH_FRAGMENT_ADD:
 
+				printf("GLYPH_FRAGMENT_ADD\n");
+
 				if (index + 3 > length)
 				{
-					/* at least three bytes need to follow */
+					/* at least two bytes need to follow */
 					index = length = 0;
 					break;
 				}
 
 				id = data[index + 1];
 				size = data[index + 2];
-				glyph_cache_fragment_put(glyph_cache, id, size, data);
+
+				fragments = (uint8*) xmalloc(size);
+				memcpy(fragments, data, size);
+				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
 
 				index += 3;
 				length -= index;
@@ -132,7 +159,10 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 				break;
 
 			default:
-				update_process_glyph(update, data, &index, &x, &y, cacheId, delta, vertical);
+				printf("GLYPH_FRAGMENT_NOP\n");
+
+				update_process_glyph(update, data, &index, &x, &y, cacheId, ulCharInc, flAccel);
+				index++;
 				break;
 		}
 	}
@@ -150,20 +180,14 @@ void update_gdi_glyph_index(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index)
 
 void update_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
-	boolean delta = False;
-	boolean vertical = False;
 	rdpGlyphCache* glyph_cache;
 
 	glyph_cache = update->context->cache->glyph;
 
-	if ((fast_index->ulCharInc == 0) && !(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
-		delta = True;
-
-	if (fast_index->flAccel & SO_VERTICAL)
-		vertical = True;
+	fast_index->x = fast_index->bkLeft;
 
 	update_process_glyph_fragments(update, fast_index->data, fast_index->cbData,
-			fast_index->cacheId, delta, vertical,
+			fast_index->cacheId, fast_index->ulCharInc, fast_index->flAccel,
 			fast_index->backColor, fast_index->foreColor, fast_index->x, fast_index->y,
 			fast_index->bkLeft, fast_index->bkTop,
 			fast_index->bkRight - fast_index->bkLeft, fast_index->bkBottom - fast_index->bkTop,
@@ -252,17 +276,17 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, uint8 id, uint16 index, rdpGlyp
 
 void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint8 index, uint8* size)
 {
-	void* entry;
+	void* fragment;
 
-	entry = glyph_cache->fragCache.entries[index].entry;
+	fragment = glyph_cache->fragCache.entries[index].fragment;
 	*size = glyph_cache->fragCache.entries[index].size;
 
-	return entry;
+	return fragment;
 }
 
-void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint8 index, uint8 size, void* entry)
+void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint8 index, uint8 size, void* fragment)
 {
-	glyph_cache->fragCache.entries[index].entry = entry;
+	glyph_cache->fragCache.entries[index].fragment = fragment;
 	glyph_cache->fragCache.entries[index].size = size;
 }
 
