@@ -286,16 +286,6 @@ INLINE int gdi_SetRectRgn(HGDI_RGN hRgn, int nLeftRect, int nTopRect, int nRight
 }
 
 /**
- * Set the current clipping region coordinates.
- * @param hdc device context
- * @param nXLeft x1
- * @param nYLeft y1
- * @param nWidth width
- * @param nHeight height
- * @return
- */
-
-/**
  * Compare two regions for equality.\n
  * @msdn{dd162700}
  * @param hSrcRgn1 first region

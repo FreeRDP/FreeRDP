@@ -288,7 +288,7 @@ void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 	{
 		glyph = cache_glyph->glyphData[i];
 		wf_bmp = wf_glyph_new(wfi, glyph);
-		glyph_put(update->context->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) wf_bmp);
+		glyph_cache_put(update->context->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) wf_bmp);
 	}
 }
 

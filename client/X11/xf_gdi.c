@@ -615,6 +615,7 @@ void xf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
+#if 0
 	int i, j;
 	int x, y;
 	int w, h;
@@ -741,6 +742,7 @@ void xf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 				fast_index->bkRight - fast_index->bkLeft + 1,
 				fast_index->bkBottom - fast_index->bkTop + 1);
 	}
+#endif
 }
 
 void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -748,6 +750,7 @@ void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_
 
 }
 
+#if 0
 void xf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	int i;
@@ -760,7 +763,7 @@ void xf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 	{
 		glyph = cache_glyph->glyphData[i];
 		bitmap = xf_glyph_new(xfi, glyph->cx, glyph->cy, glyph->aj);
-		glyph_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
+		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) bitmap);
 	}
 }
 
@@ -768,6 +771,7 @@ void xf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_
 {
 
 }
+#endif
 
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
@@ -920,8 +924,8 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseCB = NULL;
 
 	update->CacheColorTable = xf_gdi_cache_color_table;
-	update->CacheGlyph = xf_gdi_cache_glyph;
-	update->CacheGlyphV2 = xf_gdi_cache_glyph_v2;
+	//update->CacheGlyph = xf_gdi_cache_glyph;
+	//update->CacheGlyphV2 = xf_gdi_cache_glyph_v2;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
 }

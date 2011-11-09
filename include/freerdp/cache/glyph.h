@@ -22,50 +22,61 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
 #include <freerdp/utils/stream.h>
 
-struct _GLYPH_CACHE_ENTRY
-{
-	void* entry;
-	void* extra;
-};
-typedef struct _GLYPH_CACHE_ENTRY GLYPH_CACHE_ENTRY;
+typedef struct _GLYPH_CACHE GLYPH_CACHE;
+typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
+typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
+typedef struct rdp_glyph_cache rdpGlyphCache;
+
+typedef void (*pGlyphNew)(rdpContext* context, rdpGlyph* glyph);
+typedef void (*pGlyphFree)(rdpContext* context, rdpGlyph* glyph);
+typedef void (*pDrawGlyph)(rdpContext* context, rdpGlyph* glyph, int x, int y);
+typedef void (*pBeginDrawText)(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor);
+typedef void (*pEndDrawText)(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor);
+
+#include <freerdp/cache/cache.h>
 
 struct _GLYPH_CACHE
 {
 	uint16 number;
 	uint16 maxCellSize;
-	GLYPH_CACHE_ENTRY* entries;
+	rdpGlyph** entries;
 };
-typedef struct _GLYPH_CACHE GLYPH_CACHE;
 
 struct _FRAGMENT_CACHE_ENTRY
 {
 	void* entry;
-	void* extra;
-	uint16 count;
+	uint16 size;
 };
-typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;
 
 struct _FRAGMENT_CACHE
 {
 	FRAGMENT_CACHE_ENTRY* entries;
 };
-typedef struct _FRAGMENT_CACHE FRAGMENT_CACHE;
 
 struct rdp_glyph_cache
 {
+	int glyph_size;
+	pGlyphNew GlyphNew;
+	pGlyphFree GlyphFree;
+	pDrawGlyph DrawGlyph;
+	pBeginDrawText BeginDrawText;
+	pEndDrawText EndDrawText;
+
 	rdpSettings* settings;
 	GLYPH_CACHE glyphCache[10];
 	FRAGMENT_CACHE fragCache;
 };
-typedef struct rdp_glyph_cache rdpGlyphCache;
 
-FREERDP_API void* glyph_get(rdpGlyphCache* glyph, uint8 id, uint16 index, void** extra);
-FREERDP_API void glyph_put(rdpGlyphCache* glyph, uint8 id, uint16 index, void* entry, void* extra);
+FREERDP_API rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint8 id, uint16 index);
+FREERDP_API void glyph_cache_put(rdpGlyphCache* glyph_cache, uint8 id, uint16 index, rdpGlyph* entry);
 
-FREERDP_API void* glyph_fragment_get(rdpGlyphCache* glyph, uint8 index, uint8* count, void** extra);
-FREERDP_API void glyph_fragment_put(rdpGlyphCache* glyph, uint8 index, uint8 count, void* entry, void* extra);
+FREERDP_API void* glyph_cache_fragment_get(rdpGlyphCache* glyph, uint8 index, uint8* count);
+FREERDP_API void glyph_cache_fragment_put(rdpGlyphCache* glyph, uint8 index, uint8 count, void* entry);
+
+FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
 FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);

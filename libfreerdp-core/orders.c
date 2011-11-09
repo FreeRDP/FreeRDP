@@ -1098,8 +1098,9 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_22)
 	{
-		stream_read_uint8(s, glyph_index->cbFragments);
-		stream_seek(s, glyph_index->cbFragments);
+		stream_read_uint8(s, glyph_index->cbData);
+		stream_get_mark(s, glyph_index->data);
+		stream_seek(s, glyph_index->cbData);
 	}
 }
 
@@ -1183,20 +1184,9 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
-		uint8* mark;
-		uint8 cbData;
-		boolean delta = False;
-
-		stream_read_uint8(s, cbData);
-		stream_get_mark(s, mark);
-		mark += cbData;
-
-		if ((fast_index->ulCharInc == 0) && !(fast_index->flAccel & SO_CHAR_INC_EQUAL_BM_BASE))
-			delta = True;
-
-		fast_index->nfragments = update_read_glyph_fragments(s, &fast_index->fragments, delta, cbData);
-
-		stream_set_mark(s, mark);
+		stream_read_uint8(s, fast_index->cbData);
+		stream_get_mark(s, fast_index->data);
+		stream_seek(s, fast_index->cbData);
 	}
 }
 

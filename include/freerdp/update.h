@@ -437,8 +437,8 @@ struct _GLYPH_INDEX_ORDER
 	rdpBrush brush;
 	sint16 x;
 	sint16 y;
-	uint8 cbFragments;
-	uint8* fragments;
+	uint8 cbData;
+	uint8* data;
 };
 typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 
@@ -460,8 +460,8 @@ struct _FAST_INDEX_ORDER
 	boolean opaqueRect;
 	sint16 x;
 	sint16 y;
-	uint16 nfragments;
-	GLYPH_FRAGMENT* fragments;
+	uint8 cbData;
+	uint8* data;
 };
 typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 

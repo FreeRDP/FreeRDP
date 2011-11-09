@@ -627,6 +627,7 @@ void gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 {
+#if 0
 	int i, j;
 	int x, y;
 	GDI_RECT rect;
@@ -723,6 +724,7 @@ void gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 	gdi_SetTextColor(gdi->drawing->hdc, gdi->textColor);
 	gdi_DeleteObject((HGDIOBJECT) brush);
+#endif
 }
 
 void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -731,6 +733,7 @@ void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_col
 	color_table_put(cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
+#if 0
 void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	int i;
@@ -743,7 +746,7 @@ void gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 	{
 		glyph = cache_glyph->glyphData[i];
 		gdi_bmp = gdi_glyph_new(gdi, glyph);
-		glyph_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
+		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
 	}
 }
 
@@ -772,9 +775,10 @@ void gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
 		gdi_bmp->org_bitmap = NULL;
 
-		glyph_put(cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
+		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph->cacheIndex, glyph, (void*) gdi_bmp);
 	}
 }
+#endif
 
 int tilenum = 0;
 
@@ -923,8 +927,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseCB = NULL;
 
 	update->CacheColorTable = gdi_cache_color_table;
-	update->CacheGlyph = gdi_cache_glyph;
-	update->CacheGlyphV2 = gdi_cache_glyph_v2;
+	//update->CacheGlyph = gdi_cache_glyph;
+	//update->CacheGlyphV2 = gdi_cache_glyph_v2;
 
 	update->SurfaceBits = gdi_surface_bits;
 }
@@ -1049,6 +1053,7 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	gdi_register_update_callbacks(instance->update);
 
 	brush_cache_register_callbacks(instance->update);
+	glyph_cache_register_callbacks(instance->update);
 	bitmap_cache_register_callbacks(instance->update);
 	offscreen_cache_register_callbacks(instance->update);
 

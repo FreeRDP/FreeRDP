@@ -132,6 +132,8 @@ rdpGraphics* graphics_new(rdpContext* context)
 
 	if (graphics != NULL)
 	{
+		graphics->context = context;
+
 		graphics->Bitmap_Prototype = (rdpBitmap*) xmalloc(sizeof(rdpBitmap));
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;

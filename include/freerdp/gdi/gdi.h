@@ -231,6 +231,16 @@ struct gdi_bitmap
 };
 typedef struct gdi_bitmap gdiBitmap;
 
+struct gdi_glyph
+{
+	rdpBitmap _p;
+
+	HGDI_DC hdc;
+	HGDI_BITMAP bitmap;
+	HGDI_BITMAP org_bitmap;
+};
+typedef struct gdi_glyph gdiGlyph;
+
 struct rdp_gdi
 {
 	rdpContext* context;
