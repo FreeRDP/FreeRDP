@@ -90,8 +90,12 @@ static boolean tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_
 
 #ifdef AV_CPU_FLAG_SSE2
 	mdecoder->codec_context->dsp_mask = AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2;
-#else 
+#else
+#if LIBAVCODEC_VERSION_MAJOR < 53
+	mdecoder->codec_context->dsp_mask = FF_MM_SSE2 | FF_MM_MMXEXT;
+#else
 	mdecoder->codec_context->dsp_mask = FF_MM_SSE2 | FF_MM_MMX2;
+#endif
 #endif
 
 	return True;
