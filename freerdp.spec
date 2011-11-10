@@ -4,7 +4,7 @@
 
 Summary: Remote Desktop Protocol functionality
 Name: freerdp
-Version: 0.0.0
+Version: 1.0.0
 Release: 1%{?dist}
 License: Apache License 2.0
 Group: Applications/Communications
