@@ -249,15 +249,15 @@ void rail_write_client_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 			break;
 
 		case SPI_SET_WORK_AREA:
-			rail_write_rectangle_16(s, &sysparam->workArea);
+			freerdp_write_rectangle_16(s, &sysparam->workArea);
 			break;
 
 		case SPI_DISPLAY_CHANGE:
-			rail_write_rectangle_16(s, &sysparam->displayChange);
+			freerdp_write_rectangle_16(s, &sysparam->displayChange);
 			break;
 
 		case SPI_TASKBAR_POS:
-			rail_write_rectangle_16(s, &sysparam->taskbarPos);
+			freerdp_write_rectangle_16(s, &sysparam->taskbarPos);
 			break;
 
 		case SPI_SET_HIGH_CONTRAST:

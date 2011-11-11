@@ -107,6 +107,9 @@ rdpSettings* settings_new(void* instance)
 		settings->bitmap_cache = True;
 		settings->persistent_bitmap_cache = False;
 
+		settings->refresh_rect = True;
+		settings->suppress_output = True;
+
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 		settings->glyphCache[0].cacheEntries = 254;
 		settings->glyphCache[0].cacheMaximumCellSize = 4;

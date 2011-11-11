@@ -146,6 +146,13 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->fastpath_output)
 		extraFlags |= FASTPATH_OUTPUT_SUPPORTED;
 
+	if (settings->server_mode)
+	{
+		/* not yet supported server-side */
+		settings->refresh_rect = False;
+		settings->suppress_output = False;
+	}
+
 	stream_write_uint16(s, 0); /* osMajorType (2 bytes) */
 	stream_write_uint16(s, 0); /* osMinorType (2 bytes) */
 	stream_write_uint16(s, CAPS_PROTOCOL_VERSION); /* protocolVersion (2 bytes) */

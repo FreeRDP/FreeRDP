@@ -22,17 +22,16 @@
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
+#include <freerdp/utils/rect.h>
 #include <freerdp/utils/stream.h>
 
-#define RAIL_ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))
+#define RAIL_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 FREERDP_API void rail_unicode_string_alloc(UNICODE_STRING* unicode_string, uint16 cbString);
 FREERDP_API void rail_unicode_string_free(UNICODE_STRING* unicode_string);
 FREERDP_API void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string);
-FREERDP_API void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
-FREERDP_API void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16);
 FREERDP_API void* rail_clone_order(uint32 event_type, void* order);
 FREERDP_API void  rail_free_cloned_order(uint32 event_type, void* order);
 

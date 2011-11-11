@@ -1132,6 +1132,9 @@ typedef void (*pNotifyIconDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInf
 typedef void (*pMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
 typedef void (*pNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
+typedef void (*pRefreshRect)(rdpUpdate* update, uint8 count, RECTANGLE_16* areas);
+typedef void (*pSuppressOutput)(rdpUpdate* update, uint8 allow, RECTANGLE_16* area);
+
 typedef void (*pSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
@@ -1207,6 +1210,9 @@ struct rdp_update
 	pNotifyIconDelete NotifyIconDelete;
 	pMonitoredDesktop MonitoredDesktop;
 	pNonMonitoredDesktop NonMonitoredDesktop;
+
+	pRefreshRect RefreshRect;
+	pSuppressOutput SuppressOutput;
 
 	pSurfaceBits SurfaceBits;
 	pSurfaceCommand SurfaceCommand;

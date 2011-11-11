@@ -81,6 +81,15 @@ struct _RDP_RECT
 };
 typedef struct _RDP_RECT RDP_RECT;
 
+struct _RECTANGLE_16
+{
+	uint16 left;
+	uint16 top;
+	uint16 right;
+	uint16 bottom;
+};
+typedef struct _RECTANGLE_16 RECTANGLE_16;
+
 /* Plugin events */
 typedef struct _RDP_EVENT RDP_EVENT;
 

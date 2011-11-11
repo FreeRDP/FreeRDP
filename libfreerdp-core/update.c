@@ -19,6 +19,7 @@
 
 #include "update.h"
 #include "surface.h"
+#include <freerdp/utils/rect.h>
 #include <freerdp/codec/bitmap.h>
 
 uint8 UPDATE_TYPE_STRINGS[][32] =
@@ -332,6 +333,49 @@ static void update_begin_paint(rdpUpdate* update)
 
 static void update_end_paint(rdpUpdate* update)
 {
+
+}
+
+static void update_write_refresh_rect(STREAM* s, uint8 count, RECTANGLE_16* areas)
+{
+	int i;
+
+	stream_write_uint8(s, count); /* numberOfAreas (1 byte) */
+	stream_seek(s, 3); /* pad3Octets (3 bytes) */
+
+	for (i = 0; i < count; i++)
+		freerdp_write_rectangle_16(s, &areas[i]);
+}
+
+static void update_send_refresh_rect(rdpUpdate* update, uint8 count, RECTANGLE_16* areas)
+{
+	STREAM* s;
+	rdpRdp* rdp = update->context->rdp;
+
+	s = rdp_data_pdu_init(rdp);
+	update_write_refresh_rect(s, count, areas);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+}
+
+static void update_write_suppress_output(STREAM* s, uint8 allow, RECTANGLE_16* area)
+{
+	stream_write_uint8(s, allow); /* allowDisplayUpdates (1 byte) */
+	stream_seek(s, 3); /* pad3Octets (3 bytes) */
+
+	if (allow > 0)
+		freerdp_write_rectangle_16(s, area);
+}
+
+static void update_send_suppress_output(rdpUpdate* update, uint8 allow, RECTANGLE_16* area)
+{
+	STREAM* s;
+	rdpRdp* rdp = update->context->rdp;
+
+	s = rdp_data_pdu_init(rdp);
+	update_write_suppress_output(s, allow, area);
+
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
 }
 
 static void update_send_surface_command(rdpUpdate* update, STREAM* s)
@@ -386,6 +430,8 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
 	update->PointerSystem = update_send_pointer_system;
+	update->RefreshRect = update_send_refresh_rect;
+	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceCommand = update_send_surface_command;
 }

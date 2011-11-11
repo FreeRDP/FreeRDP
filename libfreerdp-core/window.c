@@ -142,7 +142,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* windowRects */
 		for (i = 0; i < window_state->numWindowRects; i++)
 		{
-			rail_read_rectangle_16(s, &window_state->windowRects[i]);
+			freerdp_read_rectangle_16(s, &window_state->windowRects[i]);
 		}
 	}
 
@@ -162,7 +162,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* visibilityRects */
 		for (i = 0; i < window_state->numVisibilityRects; i++)
 		{
-			rail_read_rectangle_16(s, &window_state->visibilityRects[i]);
+			freerdp_read_rectangle_16(s, &window_state->visibilityRects[i]);
 		}
 	}
 }

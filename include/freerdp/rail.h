@@ -157,15 +157,6 @@ struct _UNICODE_STRING
 };
 typedef struct _UNICODE_STRING UNICODE_STRING;
 
-struct _RECTANGLE_16
-{
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
-};
-typedef struct _RECTANGLE_16 RECTANGLE_16;
-
 struct _HIGH_CONTRAST
 {
 	uint32 flags;
