@@ -28,6 +28,7 @@
 #include <freerdp/plugins/cliprdr.h>
 
 #include "df_event.h"
+#include "df_graphics.h"
 
 #include "dfreerdp.h"
 
@@ -143,6 +144,12 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
 
+	dfi->clrconv = xnew(CLRCONV);
+	dfi->clrconv->alpha = 1;
+	dfi->clrconv->invert = 0;
+	dfi->clrconv->rgb555 = 0;
+	dfi->clrconv->palette = xnew(rdpPalette);
+
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return True;
@@ -195,6 +202,9 @@ boolean df_post_connect(freerdp* instance)
 	instance->update->EndPaint = df_end_paint;
 
 	df_keyboard_init();
+
+	pointer_cache_register_callbacks(instance->update);
+	df_register_graphics(instance->context->graphics);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 

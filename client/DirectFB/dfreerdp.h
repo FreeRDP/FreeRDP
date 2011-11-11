@@ -25,8 +25,10 @@
 #include <string.h>
 #include <directfb.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/graphics.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/codec/color.h>
 
 typedef struct df_info dfInfo;
 
@@ -39,12 +41,22 @@ struct df_context
 };
 typedef struct df_context dfContext;
 
+struct df_pointer
+{
+	rdpPointer pointer;
+	IDirectFBSurface* surface;
+	uint32 xhot;
+	uint32 yhot;
+};
+typedef struct df_pointer dfPointer;
+
 struct df_info
 {
 	int read_fds;
 	DFBResult err;
 	IDirectFB* dfb;
 	DFBEvent event;
+	HCLRCONV clrconv;
 	DFBRectangle update_rect;
 	DFBSurfaceDescription dsc;
 	IDirectFBSurface* primary;
