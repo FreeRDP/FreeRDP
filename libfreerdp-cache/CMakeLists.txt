@@ -22,7 +22,7 @@ set(FREERDP_CACHE_SRCS
 	pointer.c
 	bitmap.c
 	offscreen.c
-	color_table.c
+	palette.c
 	glyph.c
 	cache.c)
 

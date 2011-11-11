@@ -625,12 +625,6 @@ void gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
-{
-	rdpCache* cache = update->context->cache;
-	color_table_put(cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
-}
-
 int tilenum = 0;
 
 void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -777,8 +771,6 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
 
-	update->CacheColorTable = gdi_cache_color_table;
-
 	update->SurfaceBits = gdi_surface_bits;
 }
 
@@ -905,6 +897,7 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	glyph_cache_register_callbacks(instance->update);
 	bitmap_cache_register_callbacks(instance->update);
 	offscreen_cache_register_callbacks(instance->update);
+	palette_cache_register_callbacks(instance->update);
 
 	gdi_register_graphics(instance->context->graphics);
 

@@ -274,7 +274,7 @@ void wf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
 
 void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
-	color_table_put(update->context->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
+	palette_cache_put(update->context->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
 void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)

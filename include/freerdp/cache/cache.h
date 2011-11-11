@@ -30,7 +30,7 @@
 #include <freerdp/cache/pointer.h>
 #include <freerdp/cache/bitmap.h>
 #include <freerdp/cache/offscreen.h>
-#include <freerdp/cache/color_table.h>
+#include <freerdp/cache/palette.h>
 
 struct rdp_cache
 {
@@ -41,7 +41,7 @@ struct rdp_cache
 	rdpPointerCache* pointer;
 	rdpBitmapCache* bitmap;
 	rdpOffscreenCache* offscreen;
-	rdpColorTableCache* color_table;
+	rdpPaletteCache* palette;
 };
 
 FREERDP_API rdpCache* cache_new(rdpSettings* settings);

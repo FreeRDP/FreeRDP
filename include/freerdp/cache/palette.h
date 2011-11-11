@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Color Table Cache
+ * Palette (Color Table) Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,31 +17,38 @@
  * limitations under the License.
  */
 
-#ifndef __COLOR_TABLE_CACHE_H
-#define __COLOR_TABLE_CACHE_H
+#ifndef __PALETTE_CACHE_H
+#define __PALETTE_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/update.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-struct _COLOR_TABLE_ENTRY
+typedef struct _PALETTE_TABLE_ENTRY PALETTE_TABLE_ENTRY;
+typedef struct rdp_palette_cache rdpPaletteCache;
+
+#include <freerdp/cache/cache.h>
+
+struct _PALETTE_TABLE_ENTRY
 {
 	void* entry;
 };
-typedef struct _COLOR_TABLE_ENTRY COLOR_TABLE_ENTRY;
 
-struct rdp_color_table_cache
+struct rdp_palette_cache
 {
 	uint8 maxEntries;
 	rdpSettings* settings;
-	COLOR_TABLE_ENTRY* entries;
+	PALETTE_TABLE_ENTRY* entries;
 };
-typedef struct rdp_color_table_cache rdpColorTableCache;
 
-FREERDP_API void* color_table_get(rdpColorTableCache* color_table, uint8 index);
-FREERDP_API void color_table_put(rdpColorTableCache* color_table, uint8 index, void* entry);
+FREERDP_API void* palette_cache_get(rdpPaletteCache* palette, uint8 index);
+FREERDP_API void palette_cache_put(rdpPaletteCache* palette, uint8 index, void* entry);
 
-FREERDP_API rdpColorTableCache* color_table_cache_new(rdpSettings* settings);
-FREERDP_API void color_table_cache_free(rdpColorTableCache* color_table);
+FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 
-#endif /* __COLOR_TABLE_CACHE_H */
+FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);
+FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
+
+#endif /* __PALETTE_CACHE_H */

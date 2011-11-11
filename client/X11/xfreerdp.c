@@ -666,6 +666,7 @@ boolean xf_post_connect(freerdp* instance)
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
+		palette_cache_register_callbacks(instance->update);
 	}
 
 	instance->context->rail = rail_new(instance->settings);

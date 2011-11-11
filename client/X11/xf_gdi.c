@@ -613,11 +613,6 @@ void xf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void xf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
-{
-
-}
-
 void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, tx, ty;
@@ -767,8 +762,6 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
-
-	update->CacheColorTable = xf_gdi_cache_color_table;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
 }
