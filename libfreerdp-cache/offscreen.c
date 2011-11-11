@@ -24,8 +24,9 @@
 
 void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
+	int i;
+	uint16 index;
 	rdpBitmap* bitmap;
-	rdpBitmap* prevBitmap;
 	rdpCache* cache = update->context->cache;
 
 	bitmap = Bitmap_Alloc(update->context);
@@ -35,15 +36,17 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 
 	bitmap->New(update->context, bitmap);
 
-	prevBitmap = offscreen_cache_get(cache->offscreen, create_offscreen_bitmap->id);
-
-	if (prevBitmap != NULL)
-		Bitmap_Free(update->context, prevBitmap);
-
+	offscreen_cache_delete(cache->offscreen, create_offscreen_bitmap->id);
 	offscreen_cache_put(cache->offscreen, create_offscreen_bitmap->id, bitmap);
 
 	if(cache->offscreen->currentSurface == create_offscreen_bitmap->id)
 		Bitmap_SetSurface(update->context, bitmap, False);
+
+	for (i = 0; i < create_offscreen_bitmap->deleteList.cIndices; i++)
+	{
+		index = create_offscreen_bitmap->deleteList.indices[i];
+		offscreen_cache_delete(cache->offscreen, index);
+	}
 }
 
 void update_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
@@ -93,7 +96,26 @@ void offscreen_cache_put(rdpOffscreenCache* offscreen, uint16 index, rdpBitmap* 
 		return;
 	}
 
+	offscreen_cache_delete(offscreen, index);
 	offscreen->entries[index] = bitmap;
+}
+
+void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint16 index)
+{
+	rdpBitmap* prevBitmap;
+
+	if (index > offscreen->maxEntries)
+	{
+		printf("invalid offscreen bitmap index (delete): 0x%04X\n", index);
+		return;
+	}
+
+	prevBitmap = offscreen->entries[index];
+
+	if (prevBitmap != NULL)
+		Bitmap_Free(offscreen->update->context, prevBitmap);
+
+	offscreen->entries[index] = NULL;
 }
 
 void offscreen_cache_register_callbacks(rdpUpdate* update)

@@ -51,7 +51,12 @@ void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 	IFCALL(cache->bitmap->Mem3Blt, update, mem3blt);
 }
 
-void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap)
+void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_ORDER* cache_bitmap)
+{
+	printf("Warning: CacheBitmapV1 Unimplemented\n");
+}
+
+void update_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
@@ -59,20 +64,20 @@ void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bit
 
 	bitmap = Bitmap_Alloc(update->context);
 
-	Bitmap_SetDimensions(update->context, bitmap, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight);
+	Bitmap_SetDimensions(update->context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
 
 	bitmap->Decompress(update->context, bitmap,
-			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
-			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
+			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
+			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
 
 	bitmap->New(update->context, bitmap);
 
-	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex);
+	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex);
 
 	if (prevBitmap != NULL)
 		Bitmap_Free(update->context, prevBitmap);
 
-	bitmap_cache_put(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex, bitmap);
+	bitmap_cache_put(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex, bitmap);
 }
 
 void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
@@ -174,7 +179,8 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 
 	update->MemBlt = update_gdi_memblt;
 	update->Mem3Blt = update_gdi_mem3blt;
-	update->CacheBitmapV2 = update_gdi_cache_bitmap;
+	update->CacheBitmap = update_gdi_cache_bitmap;
+	update->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
 	update->BitmapUpdate = update_gdi_bitmap_update;
 }
 
