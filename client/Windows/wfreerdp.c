@@ -149,7 +149,7 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
 	settings->order_support[NEG_LINETO_INDEX] = True;
-	settings->order_support[NEG_POLYLINE_INDEX] = False;
+	settings->order_support[NEG_POLYLINE_INDEX] = True;
 	settings->order_support[NEG_MEMBLT_INDEX] = True;
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;

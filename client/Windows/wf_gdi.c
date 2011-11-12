@@ -77,6 +77,89 @@ void wf_glyph_free(wfBitmap* glyph)
 	wf_image_free(glyph);
 }
 
+uint8* wf_glyph_convert(wfInfo* wfi, int width, int height, uint8* data)
+{
+	int indexx;
+	int indexy;
+	uint8* src;
+	uint8* dst;
+	uint8* cdata;
+	int src_bytes_per_row;
+	int dst_bytes_per_row;
+
+	src_bytes_per_row = (width + 7) / 8;
+	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
+	cdata = (uint8 *) malloc(dst_bytes_per_row * height);
+
+	src = data;
+	for (indexy = 0; indexy < height; indexy++)
+	{
+		dst = cdata + indexy * dst_bytes_per_row;
+
+		for (indexx = 0; indexx < dst_bytes_per_row; indexx++)
+		{
+			if (indexx < src_bytes_per_row)
+				*dst++ = *src++;
+			else
+				*dst++ = 0;
+		}
+	}
+
+	return cdata;
+}
+
+HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, uint32 color, int bpp)
+{
+	int i;
+	HBRUSH br;
+	LOGBRUSH lbr;
+	uint8* cdata;
+	uint8 ipattern[8];
+	HBITMAP pattern = NULL;
+
+	lbr.lbStyle = brush->style;
+
+	if (lbr.lbStyle == BS_DIBPATTERN || lbr.lbStyle == BS_DIBPATTERN8X8 || lbr.lbStyle == BS_DIBPATTERNPT)
+		lbr.lbColor = DIB_RGB_COLORS;
+	else
+		lbr.lbColor = color;
+
+	if (lbr.lbStyle == BS_PATTERN || lbr.lbStyle == BS_PATTERN8X8)
+	{
+		if (brush->bpp > 1)
+		{
+			pattern = wf_create_dib(wfi, 8, 8, bpp, brush->data);
+			lbr.lbHatch = (ULONG_PTR) pattern;
+		}
+		else
+		{
+			for (i = 0; i != 8; i++)
+				ipattern[7 - i] = brush->data[i];
+	
+			cdata = wf_glyph_convert(wfi, 8, 8, ipattern);
+			pattern = CreateBitmap(8, 8, 1, 1, cdata);
+			lbr.lbHatch = (ULONG_PTR) pattern;
+			free(cdata);
+		}
+	}
+	else if (lbr.lbStyle == BS_HATCHED)
+	{
+		lbr.lbHatch = brush->hatch;
+	}
+	else
+	{
+		lbr.lbHatch = 0;
+	}
+
+	br = CreateBrushIndirect(&lbr);
+	SetBrushOrgEx(wfi->drawing->hdc, brush->x, brush->y, NULL);
+
+	if (pattern != NULL)
+		DeleteObject(pattern);
+
+	return br;
+}
+
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
 {
 	RECT update_rect;
@@ -131,7 +214,36 @@ void wf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 void wf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 {
+	HBRUSH brush;
+	HBRUSH org_brush;
+	int org_bkmode;
+	uint32 fgcolor;
+	uint32 bgcolor;
+	COLORREF org_bkcolor;
+	COLORREF org_textcolor;
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
+	fgcolor = freerdp_color_convert(patblt->foreColor, wfi->srcBpp, 24, wfi->clrconv);
+	bgcolor = freerdp_color_convert(patblt->backColor, wfi->srcBpp, 24, wfi->clrconv);
+
+	brush = wf_create_brush(wfi, &patblt->brush, fgcolor, wfi->srcBpp);
+	org_bkmode = SetBkMode(wfi->drawing->hdc, OPAQUE);
+	org_bkcolor = SetBkColor(wfi->drawing->hdc, bgcolor);
+	org_textcolor = SetTextColor(wfi->drawing->hdc, fgcolor);
+	org_brush = (HBRUSH)SelectObject(wfi->drawing->hdc, brush);
+
+	PatBlt(wfi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+
+	SelectObject(wfi->drawing->hdc, org_brush);
+	DeleteObject(brush);
+
+	SetBkMode(wfi->drawing->hdc, org_bkmode);
+	SetBkColor(wfi->drawing->hdc, org_bkcolor);
+	SetTextColor(wfi->drawing->hdc, org_textcolor);
+
+	if (wfi->drawing == wfi->primary)
+		wf_invalidate_region(wfi, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 }
 
 void wf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
@@ -191,6 +303,9 @@ void wf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 		brush = CreateSolidBrush(brush_color);
 		FillRect(wfi->drawing->hdc, &rect, brush);
 
+		if (wfi->drawing == wfi->primary)
+			wf_invalidate_region(wfi, rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1);
+
 		DeleteObject(brush);
 	}
 }
@@ -199,6 +314,7 @@ void wf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 {
 	HPEN pen;
 	HPEN org_pen;
+	int x, y, w, h;
 	uint32 pen_color;
 	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
@@ -211,14 +327,55 @@ void wf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	
 	MoveToEx(wfi->drawing->hdc, line_to->nXStart, line_to->nYStart, NULL);
 	LineTo(wfi->drawing->hdc, line_to->nXEnd, line_to->nYEnd);
-	SelectObject(wfi->drawing->hdc, org_pen);
 
+	x = (line_to->nXStart < line_to->nXEnd) ? line_to->nXStart : line_to->nXEnd;
+	y = (line_to->nYStart < line_to->nYEnd) ? line_to->nYStart : line_to->nYEnd;
+	w = (line_to->nXStart < line_to->nXEnd) ? (line_to->nXEnd - line_to->nXStart) : (line_to->nXStart - line_to->nXEnd);
+	h = (line_to->nYStart < line_to->nYEnd) ? (line_to->nYEnd - line_to->nYStart) : (line_to->nYStart - line_to->nYEnd);
+
+	if (wfi->drawing == wfi->primary)
+		wf_invalidate_region(wfi, x, y, w, h);
+
+	SelectObject(wfi->drawing->hdc, org_pen);
 	DeleteObject(pen);
 }
 
 void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 {
+	int i;
+	POINT* pts;
+	int org_rop2;
+	HPEN hpen;
+	HPEN org_hpen;
+	uint32 pen_color;
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
+	pen_color = freerdp_color_convert(polyline->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
+
+	hpen = CreatePen(0, 1, pen_color);
+	org_rop2 = wf_set_rop2(wfi->drawing->hdc, polyline->bRop2);
+	org_hpen = (HPEN) SelectObject(wfi->drawing->hdc, hpen);
+
+	if (polyline->numPoints > 0)
+	{
+		pts = (POINT*) xmalloc(sizeof(POINT) * polyline->numPoints);
+
+		for (i = 0; i < polyline->numPoints; i++)
+		{
+			pts[i].x = polyline->points[i].x;
+			pts[i].y = polyline->points[i].y;
+
+			if (wfi->drawing == wfi->primary)
+				wf_invalidate_region(wfi, pts[i].x, pts[i].y, pts[i].x + 1, pts[i].y + 1);
+		}
+
+		Polyline(wfi->drawing->hdc, pts, polyline->numPoints);
+		xfree(pts);
+	}
+
+	SelectObject(wfi->drawing->hdc, org_hpen);
+	wf_set_rop2(wfi->drawing->hdc, org_rop2);
+	DeleteObject(hpen);
 }
 
 void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
@@ -256,7 +413,7 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->MultiOpaqueRect = wf_gdi_multi_opaque_rect;
 	update->MultiDrawNineGrid = NULL;
 	update->LineTo = wf_gdi_line_to;
-	update->Polyline = NULL;
+	update->Polyline = wf_gdi_polyline;
 	update->MemBlt = wf_gdi_memblt;
 	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
