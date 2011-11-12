@@ -96,32 +96,6 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 	SetForegroundWindow(wfi->hwnd);
 }
 
-#if 0
-void wf_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap)
-{
-	int i;
-	rdpBitmap* bmp;
-	wfBitmap* wf_bmp;
-
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
-
-	for (i = 0; i < bitmap->number; i++)
-	{
-		bmp = &bitmap->rectangles[i];
-
-		wf_bmp = wf_image_new(wfi, bmp->width, bmp->height, wfi->srcBpp, bmp->dstData);
-
-		BitBlt(wfi->primary->hdc,
-				bmp->left, bmp->top, bmp->right - bmp->left + 1,
-				bmp->bottom - bmp->top + 1, wf_bmp->hdc, 0, 0, GDI_SRCCOPY);
-
-		wf_invalidate_region(wfi, bmp->left, bmp->top, bmp->right - bmp->left + 1, bmp->bottom - bmp->top + 1);
-
-		wf_image_free(wf_bmp);
-	}
-}
-#endif
-
 void wf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
 
@@ -134,7 +108,7 @@ void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 
 	if (bounds != NULL)
 	{
-		hrgn = CreateRectRgn(bounds->left, bounds->top, bounds->right, bounds->bottom);
+		hrgn = CreateRectRgn(bounds->left, bounds->top, bounds->right + 1, bounds->bottom + 1);
 		SelectClipRgn(wfi->drawing->hdc, hrgn);
 		DeleteObject(hrgn);
 	}
@@ -262,11 +236,6 @@ void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 		wf_invalidate_region(wfi, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 }
 
-void wf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
-{
-
-}
-
 void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 
@@ -289,7 +258,7 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->LineTo = wf_gdi_line_to;
 	update->Polyline = NULL;
 	update->MemBlt = wf_gdi_memblt;
-	update->Mem3Blt = wf_gdi_mem3blt;
+	update->Mem3Blt = NULL;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
 	update->FastIndex = NULL;

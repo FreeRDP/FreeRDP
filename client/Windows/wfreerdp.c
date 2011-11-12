@@ -149,13 +149,13 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
 	settings->order_support[NEG_LINETO_INDEX] = True;
-	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = False;
+	settings->order_support[NEG_POLYLINE_INDEX] = False;
+	settings->order_support[NEG_MEMBLT_INDEX] = True;
 	settings->order_support[NEG_MEM3BLT_INDEX] = False;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = False;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = False;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = False;
 	settings->order_support[NEG_POLYGON_SC_INDEX] = False;
 	settings->order_support[NEG_POLYGON_CB_INDEX] = False;
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
@@ -371,10 +371,10 @@ int wfreerdp_run(freerdp* instance)
 {
 	MSG msg;
 	int index;
-	int gmcode;
-	int alldone;
 	int rcount;
 	int wcount;
+	BOOL msg_ret;
+	int quit_msg;
 	void* rfds[32];
 	void* wfds[32];
 	int fds_count;
@@ -389,7 +389,6 @@ int wfreerdp_run(freerdp* instance)
 
 	channels = instance->context->channels;
 
-	/* program main loop */
 	while (1)
 	{
 		rcount = 0;
@@ -428,8 +427,9 @@ int wfreerdp_run(freerdp* instance)
 			printf("wfreerdp_run: fds_count is zero\n");
 			break;
 		}
+
 		/* do the wait */
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, INFINITE, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
@@ -452,22 +452,23 @@ int wfreerdp_run(freerdp* instance)
 		}
 		wf_process_channel_event(channels, instance);
 
-		alldone = FALSE;
-		while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
+		quit_msg = FALSE;
+		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		{
-			gmcode = GetMessage(&msg, 0, 0, 0);
-			if (gmcode == 0 || gmcode == -1)
+			msg_ret = GetMessage(&msg, NULL, 0, 0);
+
+			if (msg_ret == 0 || msg_ret == -1)
 			{
-				alldone = TRUE;
+				quit_msg = TRUE;
 				break;
 			}
+
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		if (alldone)
-		{
+
+		if (quit_msg)
 			break;
-		}
 	}
 
 	/* cleanup */
