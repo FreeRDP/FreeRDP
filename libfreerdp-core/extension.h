@@ -21,6 +21,7 @@
 #ifndef __EXTENSION_H
 #define __EXTENSION_H
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/extension.h>
 
@@ -40,11 +41,11 @@ struct rdp_extension
 };
 typedef struct rdp_extension rdpExtension;
 
-int extension_pre_connect(rdpExtension* extension);
-int extension_post_connect(rdpExtension* extension);
+FREERDP_API int extension_pre_connect(rdpExtension* extension);
+FREERDP_API int extension_post_connect(rdpExtension* extension);
 
-rdpExtension* extension_new(freerdp* instance);
-void extension_free(rdpExtension* extension);
+FREERDP_API rdpExtension* extension_new(freerdp* instance);
+FREERDP_API void extension_free(rdpExtension* extension);
 
 #endif /* __EXTENSION_H */
 

@@ -31,7 +31,7 @@ void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, memblt->cacheId, memblt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (uint8) memblt->cacheId, memblt->cacheIndex);
 
 	memblt->bitmap = bitmap;
 	IFCALL(cache->bitmap->MemBlt, update, memblt);
@@ -45,7 +45,7 @@ void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, mem3blt->cacheId, mem3blt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (uint8) mem3blt->cacheId, mem3blt->cacheIndex);
 
 	mem3blt->bitmap = bitmap;
 	IFCALL(cache->bitmap->Mem3Blt, update, mem3blt);

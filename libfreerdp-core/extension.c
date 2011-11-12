@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 
 #include "extension.h"

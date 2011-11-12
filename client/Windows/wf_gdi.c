@@ -267,41 +267,6 @@ void wf_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void wf_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
-{
-
-}
-
-void wf_gdi_cache_color_table(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table)
-{
-	palette_cache_put(update->context->cache->color_table, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
-}
-
-void wf_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
-{
-	int i;
-	wfBitmap* wf_bmp;
-	GLYPH_DATA* glyph;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
-
-	for (i = 0; i < cache_glyph->cGlyphs; i++)
-	{
-		glyph = cache_glyph->glyphData[i];
-		wf_bmp = wf_glyph_new(wfi, glyph);
-		glyph_cache_put(update->context->cache->glyph, cache_glyph->cacheId, glyph->cacheIndex, glyph, (void*) wf_bmp);
-	}
-}
-
-void wf_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
-{
-
-}
-
-void wf_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
-{
-
-}
-
 void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 
@@ -327,17 +292,12 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->Mem3Blt = wf_gdi_mem3blt;
 	update->SaveBitmap = NULL;
 	update->GlyphIndex = NULL;
-	update->FastIndex = wf_gdi_fast_index;
+	update->FastIndex = NULL;
 	update->FastGlyph = NULL;
 	update->PolygonSC = NULL;
 	update->PolygonCB = NULL;
 	update->EllipseSC = NULL;
 	update->EllipseCB = NULL;
-
-	update->CacheColorTable = wf_gdi_cache_color_table;
-	update->CacheGlyph = wf_gdi_cache_glyph;
-	update->CacheGlyphV2 = wf_gdi_cache_glyph_v2;
-	update->CacheBrush = wf_gdi_cache_brush;
 
 	update->SurfaceBits = wf_gdi_surface_bits;
 }

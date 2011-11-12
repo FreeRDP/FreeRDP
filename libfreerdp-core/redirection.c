@@ -139,7 +139,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 		redirection->targetNetAddresses = (rdpString*) xzalloc(count * sizeof(rdpString));
 
-		for (i=0; i < count; i++)
+		for (i = 0; i < (int) count; i++)
 		{
 			freerdp_string_read_length32(s, &redirection->targetNetAddresses[i], rdp->settings->uniconv);
 			DEBUG_REDIR("targetNetAddresses: %s", (&redirection->targetNetAddresses[i])->ascii);

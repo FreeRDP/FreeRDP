@@ -42,7 +42,7 @@ void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)
 		bitoff = bitno % 0x8; 
 		(*temptr) |= (sign >> bitoff);
 	}
-	while(stream->p - stream->data < origsz);
+	while(((uint32)(stream->p - stream->data)) < origsz);
 
 	stream->p = stream->data;
 }
@@ -81,7 +81,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 		if(i == 1)
 			pw >>= 1;
 
-		while ((temp->p - temp->data) < context->OrgByteCount[i])
+		while (((uint32)(temp->p - temp->data)) < context->OrgByteCount[i])
 		{
 			bytno = temp->p - temp->data;
 			bitoff = bytno % 0x8; 

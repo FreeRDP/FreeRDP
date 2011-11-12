@@ -269,7 +269,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	fp_buffer = (char*) xzalloc(3 * fp_len);
 	p = fp_buffer;
 
-	for (i = 0; i < fp_len - 1; i++)
+	for (i = 0; i < (int) (fp_len - 1); i++)
 	{
 		sprintf(p, "%02x:", fp[i]);
 		p = &fp_buffer[i * 3];

@@ -78,10 +78,9 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 		}
 
 		option_value = 1;
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value)) == -1)
-		{
+
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*) &option_value, sizeof(option_value)) == -1)
 			perror("setsockopt");
-		}
 
 #ifndef _WIN32
 		fcntl(sockfd, F_SETFL, O_NONBLOCK);

@@ -277,7 +277,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint8 index, uint8* s
 	void* fragment;
 
 	fragment = glyph_cache->fragCache.entries[index].fragment;
-	*size = glyph_cache->fragCache.entries[index].size;
+	*size = (uint8) glyph_cache->fragCache.entries[index].size;
 
 	if (fragment == NULL)
 	{

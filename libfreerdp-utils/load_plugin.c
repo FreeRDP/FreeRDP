@@ -26,7 +26,7 @@
 #ifdef _WIN32
 
 #include <windows.h>
-#define DLOPEN(f) LoadLibrary(f)
+#define DLOPEN(f) LoadLibraryA(f)
 #define DLSYM(f, n) GetProcAddress(f, n)
 #define DLCLOSE(f) FreeLibrary(f)
 #define PATH_SEPARATOR '\\'
@@ -51,13 +51,9 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	void* entry;
 
 	if (strchr(name, PATH_SEPARATOR) == NULL)
-	{
 		snprintf(path, sizeof(path), PLUGIN_PATH "%c%s." PLUGIN_EXT, PATH_SEPARATOR, name);
-	}
 	else
-	{
 		strncpy(path, name, sizeof(path));
-	}
 
 	module = DLOPEN(path);
 	if (module == NULL)
