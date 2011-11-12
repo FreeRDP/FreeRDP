@@ -25,9 +25,12 @@
 #include <conio.h>
 
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 
 #include "wfreerdp.h"
 #include "wf_graphics.h"
@@ -182,6 +185,19 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 void wf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
 {
 
+}
+
+void wf_set_null_clip_rgn(wfInfo* wfi)
+{
+	SelectClipRgn(wfi->drawing->hdc, NULL);
+}
+
+void wf_set_clip_rgn(wfInfo* wfi, int x, int y, int width, int height)
+{
+	HRGN clip;
+	clip = CreateRectRgn(x, y, width, height);
+	SelectClipRgn(wfi->drawing->hdc, clip);
+	DeleteObject(clip);
 }
 
 void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
@@ -395,7 +411,97 @@ void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 
 void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
 {
+	int i, j;
+	int tx, ty;
+	char* tile_bitmap;
+	RFX_MESSAGE* message;
+	wfInfo* wfi = ((wfContext*) update->context)->wfi;
 
+	RFX_CONTEXT* context = (RFX_CONTEXT*) wfi->rfx_context;
+	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) wfi->nsc_context;
+
+	tile_bitmap = (char*) xzalloc(32);
+
+	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	{
+		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+
+		/* blit each tile */
+		for (i = 0; i < message->num_tiles; i++)
+		{
+			tx = message->tiles[i]->x + surface_bits_command->destLeft;
+			ty = message->tiles[i]->y + surface_bits_command->destTop;
+
+			freerdp_image_convert(message->tiles[i]->data, wfi->tile->_bitmap.data, 64, 64, 32, 32, wfi->clrconv);
+
+			for (j = 0; j < message->num_rects; j++)
+			{
+				wf_set_clip_rgn(wfi,
+					surface_bits_command->destLeft + message->rects[j].x,
+					surface_bits_command->destTop + message->rects[j].y,
+					message->rects[j].width, message->rects[j].height);
+
+				BitBlt(wfi->primary->hdc, tx, ty, 64, 64, wfi->tile->hdc, 0, 0, GDI_SRCCOPY);
+			}
+		}
+
+		wf_set_null_clip_rgn(wfi);
+		rfx_message_free(context, message);
+	}
+	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	{
+		ncontext->width = surface_bits_command->width;
+		ncontext->height = surface_bits_command->height;
+		nsc_process_message(ncontext, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		wfi->image->_bitmap.width = surface_bits_command->width;
+		wfi->image->_bitmap.height = surface_bits_command->height;
+		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
+		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+		freerdp_image_flip(ncontext->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
+		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
+		nsc_context_destroy(ncontext);
+	} 
+	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	{
+		wfi->image->_bitmap.width = surface_bits_command->width;
+		wfi->image->_bitmap.height = surface_bits_command->height;
+		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
+
+		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data,
+				wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+
+		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == True))
+		{
+			uint8* temp_image;
+
+			freerdp_image_convert(surface_bits_command->bitmapData, wfi->image->_bitmap.data,
+				wfi->image->_bitmap.width, wfi->image->_bitmap.height,
+				wfi->image->_bitmap.bpp, 32, wfi->clrconv);
+
+			surface_bits_command->bpp = 32;
+			surface_bits_command->bitmapData = wfi->image->_bitmap.data;
+
+			temp_image = (uint8*) xmalloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+			freerdp_image_flip(wfi->image->_bitmap.data, temp_image, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
+			xfree(wfi->image->_bitmap.data);
+			wfi->image->_bitmap.data = temp_image;
+		}
+		else
+		{
+			freerdp_image_flip(surface_bits_command->bitmapData, wfi->image->_bitmap.data,
+					wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
+		}
+
+		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
+	}
+	else
+	{
+		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+	}
+
+	if (tile_bitmap != NULL)
+		xfree(tile_bitmap);
 }
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)

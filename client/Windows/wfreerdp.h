@@ -37,6 +37,8 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 
 #include "wf_event.h"
 
@@ -83,6 +85,11 @@ struct wf_info
 	HCURSOR cursor;
 	HBRUSH brush;
 	HBRUSH org_brush;
+
+	wfBitmap* tile;
+	wfBitmap* image;
+	RFX_CONTEXT* rfx_context;
+	NSC_CONTEXT* nsc_context;
 
 	boolean sw_gdi;
 };
