@@ -12,33 +12,33 @@ URL: http://www.freerdp.com/
 Source: http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  openssl-devel
-BuildRequires:	libX11-devel, libXcursor-devel, libXext-devel, libXinerama-devel, libXv-devel, libxkbfile-devel
+BuildRequires:	libX11-devel, libXcursor-devel, libXext-devel, libXinerama-devel, libXdamage-devel, libXv-devel, libxkbfile-devel
 BuildRequires:	cups-devel
 BuildRequires:	alsa-lib-devel
 BuildRequires:	pcsc-lite-devel
 
 %description
-freerdp implements Remote Desktop Protocol (RDP), used in a number of Microsoft
-products.
+FreeRDP is a free implementation of the Remote Desktop Protocol (RDP)
+according to the Microsoft Open Specifications.
 
 %package -n xfreerdp
 Summary: Remote Desktop Protocol client
 Group: Applications/Communications
 Requires: %{name}-libs = %{version}-%{release}, %{name}-plugins-standard = %{version}-%{release}
 %description -n xfreerdp
-xfreerdp is a client for Remote Desktop Protocol (RDP), used in a number of
-Microsoft products.
+FreeRDP is a free implementation of the Remote Desktop Protocol (RDP)
+according to the Microsoft Open Specifications.
 
 %package libs
 Summary: Core libraries implementing the RDP protocol
 Group: Applications/Communications
 %description libs
-libfreerdp can be embedded in applications.
+libfreerdp-core can be embedded in applications.
 
-libfreerdpchanman and libfreerdpkbd might be convenient to use in X
-applications together with libfreerdp.
+libfreerdp-channels and libfreerdp-kbd might be convenient to use in X
+applications together with libfreerdp-core.
 
-libfreerdp can be extended with plugins handling RDP channels.
+libfreerdp-core can be extended with plugins handling RDP channels.
 
 %package plugins-standard
 Summary: Plugins for handling the standard RDP channels
@@ -46,7 +46,7 @@ Group: Applications/Communications
 Requires: %{name}-libs = %{version}-%{release}
 %description plugins-standard
 A set of plugins to the channel manager implementing the standard virtual
-channels extending RDP core functionality.  For example, sounds, clipboard
+channels extending RDP core functionality. For instance, sounds, clipboard
 sync, disk/printer redirection, etc.
 
 %package devel
@@ -55,8 +55,9 @@ Group: Applications/Communications
 Requires: %{name}-libs = %{version}-%{release}
 Requires: pkgconfig
 %description devel
-Header files and unversioned libraries for libfreerdp, libfreerdpchanman and
-libfreerdpkbd.
+Header files and unversioned libraries for libfreerdp-core, libfreerdp-channels,
+libfreerdp-kbd, libfreerdp-cache, libfreerdp-codec, libfreerdp-rail,
+libfreerdp-gdi and libfreerdp-utils.
 
 %prep
 %setup -q
