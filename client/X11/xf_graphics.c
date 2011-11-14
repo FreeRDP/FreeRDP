@@ -191,10 +191,12 @@ void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	if (xfi->remote_app != True)
+	// In remote app mode, window can be null if none has had focus
+	if (xfi->window != NULL)
+	{
 		XDefineCursor(xfi->display, xfi->window->handle, ((xfPointer*) pointer)->cursor);
+	}
 }
-
 /* Glyph Class */
 
 void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
