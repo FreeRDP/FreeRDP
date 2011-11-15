@@ -970,8 +970,9 @@ int xfreerdp_run(freerdp* instance)
 	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
-	freerdp_free(instance);
 	xf_free(xfi);
+
+	freerdp_free(instance);
 
 	return ret;
 }
