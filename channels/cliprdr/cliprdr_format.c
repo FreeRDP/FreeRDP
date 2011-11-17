@@ -23,6 +23,7 @@
 #include <string.h>
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
+#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -130,7 +131,6 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 	int num_formats;
 	uint8* start_mark;
 	uint8* end_mark;
-	uint16 terminator;
 	CLIPRDR_FORMAT_NAME* format_name;
 
 	num_formats = 0;
@@ -141,13 +141,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 	while (s->p < end_mark)
 	{
 		stream_seek_uint32(s);
-
-		do
-		{
-			stream_read_uint16(s, terminator);
-		}
-		while (terminator != 0x0000);
-
+		stream_seek(s, 32);
 		num_formats++;
 	}
 
@@ -163,7 +157,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 
 		format_name->name = freerdp_uniconv_in(cliprdr->uniconv, s->p, 32);
 		format_name->length = strlen(format_name->name);
-		stream_seek(s, format_name->length);
+		stream_seek(s, 32);
 
 		format_name++;
 	}
@@ -193,8 +187,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 		cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
 
 	format_name = cliprdr->format_names;
-	cb_event->num_formats = cliprdr->num_format_names;
-	cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * cb_event->num_formats);
+	cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * cliprdr->num_format_names);
+	cb_event->num_formats = 0;
 
 	for (i = 0; i < cliprdr->num_format_names; i++)
 	{
@@ -209,25 +203,29 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 				break;
 
 			default:
-				if (strcmp(format_name->name, "HTML Format") == 0)
+
+				if (format_name->length > 0)
 				{
-					format = CB_FORMAT_HTML;
-					break;
-				}
-				if (strcmp(format_name->name, "PNG") == 0)
-				{
-					format = CB_FORMAT_PNG;
-					break;
-				}
-				if (strcmp(format_name->name, "JFIF") == 0)
-				{
-					format = CB_FORMAT_JPEG;
-					break;
-				}
-				if (strcmp(format_name->name, "GIF") == 0)
-				{
-					format = CB_FORMAT_GIF;
-					break;
+					if (strcmp(format_name->name, "HTML Format") == 0)
+					{
+						format = CB_FORMAT_HTML;
+						break;
+					}
+					if (strcmp(format_name->name, "PNG") == 0)
+					{
+						format = CB_FORMAT_PNG;
+						break;
+					}
+					if (strcmp(format_name->name, "JFIF") == 0)
+					{
+						format = CB_FORMAT_JPEG;
+						break;
+					}
+					if (strcmp(format_name->name, "GIF") == 0)
+					{
+						format = CB_FORMAT_GIF;
+						break;
+					}
 				}
 
 				supported = False;
@@ -237,8 +235,13 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 		if (supported)
 			cb_event->formats[cb_event->num_formats++] = format;
 
+		if (format_name->name != NULL)
+			xfree(format_name->name);
+
 		format_name++;
 	}
+
+	xfree(cliprdr->format_names);
 
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
 	cliprdr_send_format_list_response(cliprdr);

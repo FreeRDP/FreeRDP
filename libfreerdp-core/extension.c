@@ -183,20 +183,26 @@ int extension_post_connect(rdpExtension* ext)
 
 rdpExtension* extension_new(freerdp* instance)
 {
-	rdpExtension* extension;
+	rdpExtension* extension = NULL;
 
-	extension = xnew(rdpExtension);
+	if (instance != NULL)
+	{
+		extension = xnew(rdpExtension);
 
-	extension->instance = instance;
+		extension->instance = instance;
 
-	extension_load_plugins(extension);
-	extension_init_plugins(extension);
+		extension_load_plugins(extension);
+		extension_init_plugins(extension);
+	}
 
 	return extension;
 }
 
 void extension_free(rdpExtension* extension)
 {
-	extension_uninit_plugins(extension);
-	xfree(extension);
+	if (extension != NULL)
+	{
+		extension_uninit_plugins(extension);
+		xfree(extension);
+	}
 }

@@ -246,7 +246,8 @@ void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 			xfree(bitmap_cache->cells[i].entries);
 		}
 
-		bitmap_cache->bitmap->Free(bitmap_cache->context, bitmap_cache->bitmap);
+		if (bitmap_cache->bitmap != NULL)
+			bitmap_cache->bitmap->Free(bitmap_cache->context, bitmap_cache->bitmap);
 
 		xfree(bitmap_cache->cells);
 		xfree(bitmap_cache);

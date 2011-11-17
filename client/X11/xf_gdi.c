@@ -424,7 +424,7 @@ void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 color;
 	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
-	color = freerdp_color_convert(opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert(opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -453,7 +453,7 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 	DELTA_RECT* rectangle;
 	xfInfo* xfi = ((xfContext*) update->context)->xfi;
 
-	color = freerdp_color_convert(multi_opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert(multi_opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
