@@ -329,7 +329,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	if (brush->style == GDI_BS_SOLID)
 	{
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
-		XSetForeground(xfi->display, xfi->gc, patblt->foreColor);
+		XSetForeground(xfi->display, xfi->gc, foreColor);
 
 		XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
 				patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
