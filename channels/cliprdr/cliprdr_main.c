@@ -123,6 +123,8 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s
 
 	if (generalFlags & CB_CAN_LOCK_CLIPDATA)
 		cliprdr->can_lock_clipdata = True;
+
+	cliprdr->received_caps = True;
 }
 
 static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s)
@@ -158,15 +160,20 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s)
 static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 {
 	STREAM* s;
+	uint32 flags;
 
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+
+	DEBUG_CLIPRDR("Sending Capabilities");
+
+	flags = CB_USE_LONG_FORMAT_NAMES;
 
 	stream_write_uint16(s, 1); /* cCapabilitiesSets */
 	stream_write_uint16(s, 0); /* pad1 */
 	stream_write_uint16(s, CB_CAPSTYPE_GENERAL); /* capabilitySetType */
 	stream_write_uint16(s, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability */
 	stream_write_uint32(s, CB_CAPS_VERSION_2); /* version */
-	stream_write_uint32(s, 0); /* generalFlags */
+	stream_write_uint32(s, flags); /* generalFlags */
 
 	cliprdr_packet_send(cliprdr, s);
 }
@@ -175,7 +182,8 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr)
 {
 	RDP_EVENT* event;
 
-	cliprdr_send_clip_caps(cliprdr);
+	if (cliprdr->received_caps)
+		cliprdr_send_clip_caps(cliprdr);
 
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_MONITOR_READY, NULL, NULL);
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
@@ -193,7 +201,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	stream_read_uint32(s, dataLen);
 
 	DEBUG_CLIPRDR("msgType: %s (%d), msgFlags: %d dataLen: %d",
-			CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
+		CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
 
 	switch (msgType)
 	{
@@ -234,21 +242,22 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	switch (event->event_type)
 	{
 		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
-			cliprdr_process_format_list_event((cliprdrPlugin*)plugin, (RDP_CB_FORMAT_LIST_EVENT*)event);
+			cliprdr_process_format_list_event((cliprdrPlugin*) plugin, (RDP_CB_FORMAT_LIST_EVENT*) event);
 			break;
 
 		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
-			cliprdr_process_format_data_request_event((cliprdrPlugin*)plugin, (RDP_CB_DATA_REQUEST_EVENT*)event);
+			cliprdr_process_format_data_request_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_REQUEST_EVENT*) event);
 			break;
 
 		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			cliprdr_process_format_data_response_event((cliprdrPlugin*)plugin, (RDP_CB_DATA_RESPONSE_EVENT*)event);
+			cliprdr_process_format_data_response_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 			break;
 
 		default:
 			DEBUG_WARN("unknown event type %d", event->event_type);
 			break;
 	}
+
 	freerdp_event_free(event);
 }
 

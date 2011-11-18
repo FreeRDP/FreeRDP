@@ -231,7 +231,7 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 	uint32 id = 0;
 	uint32* pid = NULL;
 	int format, result = 0;
-	unsigned long len, bytes_left;
+	unsigned long length, bytes_left;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	cb->owner = XGetSelectionOwner(xfi->display, cb->clipboard_atom);
@@ -240,7 +240,7 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 	{
 		result = XGetWindowProperty(xfi->display, cb->owner,
 			cb->identity_atom, 0, 4, 0, XA_INTEGER,
-			&type, &format, &len, &bytes_left, (uint8**) &pid);
+			&type, &format, &length, &bytes_left, (uint8**) &pid);
 	}
 
 	if (pid)
@@ -249,7 +249,7 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 		XFree(pid);
 	}
 
-	if (cb->owner == None || cb->owner == xfi->drawable)
+	if ((cb->owner == None) || (cb->owner == xfi->drawable))
 		return False;
 
 	if (result != Success)
@@ -302,27 +302,27 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 	Atom type;
 	uint8* format_data;
 	int format, result;
-	unsigned long len, bytes_left;
+	unsigned long length, bytes_left;
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	result = XGetWindowProperty(xfi->display, cb->root_window,
 		cb->property_atom, 0, 3600, 0, XA_STRING,
-		&type, &format, &len, &bytes_left, (uint8**) &format_data);
+		&type, &format, &length, &bytes_left, (uint8**) &format_data);
 
 	if (result != Success)
 	{
 		DEBUG_WARN("XGetWindowProperty failed");
 		return;
 	}
-	DEBUG_X11("format=%d len=%d bytes_left=%d", format, (int)len, (int)bytes_left);
+	DEBUG_X11("format=%d len=%d bytes_left=%d", format, (int) length, (int) bytes_left);
 
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	event->raw_format_data = (uint8*) xmalloc(len);
-	memcpy(event->raw_format_data, format_data, len);
-	event->raw_format_data_size = len;
+	event->raw_format_data = (uint8*) xmalloc(length);
+	memcpy(event->raw_format_data, format_data, length);
+	event->raw_format_data_size = length;
 	XFree(format_data);
 
 	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
@@ -386,6 +386,7 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, uint32 format)
 
 	event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+
 	event->format = format;
 
 	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
@@ -429,13 +430,14 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 	{
 		/* CB_FORMAT_RAW */
 		i = 0;
-		XChangeProperty(xfi->display, xfi->drawing, cb->property_atom,
+		XChangeProperty(xfi->display, xfi->drawable, cb->property_atom,
 			XA_INTEGER, 32, PropModeReplace, (uint8*) &event->format, 1);
 	}
 	else
 	{
 		i = xf_cliprdr_select_format_by_id(cb, event->format);
 	}
+
 	if (i < 0)
 	{
 		DEBUG_X11("unsupported format requested");
@@ -445,7 +447,7 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 	{
 		cb->request_index = i;
 
-		DEBUG_X11("target=%d", (int)cb->format_mappings[i].target_format);
+		DEBUG_X11("target=%d", (int) cb->format_mappings[i].target_format);
 
 		XConvertSelection(xfi->display, cb->clipboard_atom,
 			cb->format_mappings[i].target_format, cb->property_atom,
@@ -462,28 +464,28 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 	Atom atom;
 	int format;
 	uint8* data = NULL;
-	unsigned long len, bytes_left;
+	unsigned long length, bytes_left;
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	XGetWindowProperty(xfi->display, xfi->drawable, cb->property_atom,
 		0, 200, 0, XA_ATOM,
-		&atom, &format, &len, &bytes_left, &data);
+		&atom, &format, &length, &bytes_left, &data);
 
-	DEBUG_X11("type=%d format=%d len=%d bytes_left=%d",
-		(int) atom, format, (int) len, (int) bytes_left);
+	DEBUG_X11("type=%d format=%d length=%d bytes_left=%d",
+		(int) atom, format, (int) length, (int) bytes_left);
 
-	if (len > 0)
+	if (length > 0)
 	{
 		event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 			RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
 		event->formats = (uint32*) xmalloc(sizeof(uint32) * cb->num_format_mappings);
 		num = 0;
-		for (i = 0; i < len; i++)
+		for (i = 0; i < length; i++)
 		{
-			atom = ((Atom*)data)[i];
-			DEBUG_X11("atom %d", (int)atom);
+			atom = ((Atom*) data)[i];
+			DEBUG_X11("atom %d", (int) atom);
 			for (j = 0; j < cb->num_format_mappings; j++)
 			{
 				if (cb->format_mappings[j].target_format == atom)
@@ -687,7 +689,7 @@ static void xf_cliprdr_process_requested_data(xfInfo* xfi, boolean has_data, uin
 		xf_cliprdr_send_null_data_response(xfi);
 
 	/* Resend the format list, otherwise the server won't request again for the next paste */
-	xf_cliprdr_send_format_list(xfi);
+	//xf_cliprdr_send_format_list(xfi);
 }
 
 static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
@@ -696,11 +698,11 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	int format;
 	uint8* data = NULL;
 	boolean has_data = False;
-	unsigned long len, bytes_left, dummy;
+	unsigned long length, bytes_left, dummy;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	if (cb->request_index < 0 ||
-		cb->format_mappings[cb->request_index].target_format != target)
+	if ((cb->request_index < 0) ||
+		(cb->format_mappings[cb->request_index].target_format != target))
 	{
 		DEBUG_X11("invalid target");
 		xf_cliprdr_send_null_data_response(xfi);
@@ -709,7 +711,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 
 	XGetWindowProperty(xfi->display, xfi->drawable,
 		cb->property_atom, 0, 0, 0, target,
-		&type, &format, &len, &bytes_left, &data);
+		&type, &format, &length, &bytes_left, &data);
 
 	DEBUG_X11("type=%d format=%d bytes=%d request_index=%d",
 		(int) type, format, (int) bytes_left, cb->request_index);
@@ -751,11 +753,11 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 		}
 		else if (XGetWindowProperty(xfi->display, xfi->drawable,
 			cb->property_atom, 0, bytes_left, 0, target,
-			&type, &format, &len, &dummy, &data) == Success)
+			&type, &format, &length, &dummy, &data) == Success)
 		{
 			if (cb->incr_starts)
 			{
-				bytes_left = len * format / 8;
+				bytes_left = length * format / 8;
 				DEBUG_X11("%d bytes", (int)bytes_left);
 				cb->incr_data = (uint8*) xrealloc(cb->incr_data, cb->incr_data_length + bytes_left);
 				memcpy(cb->incr_data + cb->incr_data_length, data, bytes_left);
@@ -1078,10 +1080,10 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	uint32 alt_format;
 	uint8* data = NULL;
 	boolean delay_respond;
-	unsigned long len, bytes_left;
+	unsigned long length, bytes_left;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11("target=%d", (int)xevent->xselectionrequest.target);
+	DEBUG_X11("target=%d", (int) xevent->xselectionrequest.target);
 
 	if (xevent->xselectionrequest.owner != xfi->drawable)
 	{
@@ -1120,7 +1122,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 			{
 				if (XGetWindowProperty(xfi->display, xevent->xselectionrequest.requestor,
 					cb->property_atom, 0, 4, 0, XA_INTEGER,
-					&type, &fmt, &len, &bytes_left, &data) != Success)
+					&type, &fmt, &length, &bytes_left, &data) != Success)
 				{
 					DEBUG_X11("XGetWindowProperty failed");
 				}
@@ -1131,7 +1133,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 				}
 			}
 			DEBUG_X11("provide format 0x%04x alt_format 0x%04x", format, alt_format);
-			if (cb->data != 0 && format == cb->data_format && alt_format == cb->data_alt_format)
+			if ((cb->data != 0) && (format == cb->data_format) && (alt_format == cb->data_alt_format))
 			{
 				/* Cached clipboard data available. Send it now */
 				respond->xselection.property = xevent->xselectionrequest.property;
@@ -1164,7 +1166,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 		}
 	}
 
-	if (!delay_respond)
+	if (delay_respond != False)
 	{
 		XSendEvent(xfi->display, xevent->xselectionrequest.requestor, 0, 0, respond);
 		XFlush(xfi->display);
