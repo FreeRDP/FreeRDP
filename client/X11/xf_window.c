@@ -626,6 +626,9 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 	if (window == NULL)
 		return;
 
+	if (xfi->window == window)
+		xfi->window = NULL;
+
 	if (window->gc)
 		XFreeGC(xfi->display, window->gc);
 
