@@ -440,37 +440,52 @@ boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	rdpWindow* window;
-	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+        rdpWindow* window;
+        rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-	window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
+        window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
-	if (window != NULL)
-	{
-		xfWindow* xfw;
-		uint32 left, top;
-		uint32 right, bottom;
-		uint32 width, height;
-		xfw = (xfWindow*) window->extra;
+        if (window != NULL)
+        {
+                xfWindow* xfw;
+                xfw = (xfWindow*) window->extra;
 
-		left = event->xconfigure.x;
-		top = event->xconfigure.y;
-		width = event->xconfigure.width;
-		height = event->xconfigure.height;
-		right = left + width - 1;
-		bottom = top + height - 1;
+                // ConfigureNotify coordinates are expressed relative to the window parent.
+                // Translate these to root window coordinates.
+                Window childWindow;
+                XTranslateCoordinates(xfi->display, xfw->handle, DefaultRootWindow(xfi->display),
+                        0, 0, &xfw->left, &xfw->top, &childWindow);
 
-		DEBUG_X11_LMS("ConfigureNotify: send_event=%d eventWindow=0x%X window=0x%X above=0x%X rc={l=%d t=%d r=%d b=%d} "
-			"w=%d h=%d override_redirect=%d",
-			event->xconfigure.send_event,
-			(uint32) event->xconfigure.event,
-			(uint32) event->xconfigure.window,
-			(uint32) event->xconfigure.above,
-			left, top, right, bottom, width, height,
-			event->xconfigure.override_redirect);
-	}
+                xfw->width = event->xconfigure.width;
+                xfw->height = event->xconfigure.height;
+                xfw->right = xfw->left + xfw->width - 1;
+                xfw->bottom = xfw->top + xfw->height - 1;
 
-	return true;
+                if (app)
+                {
+                        // If current window position disagrees with RDP window position, send
+                        // update to RDP server
+                        if ( xfw->left != window->windowOffsetX ||
+                                xfw->top != window->windowOffsetY ||
+                                xfw->width != window->windowWidth ||
+                                xfw->height != window->windowHeight)
+                        {
+                                xf_rail_send_windowmove(xfi, window->windowId,
+                                        xfw->left, xfw->top, xfw->right, xfw->bottom);
+                        }
+                }
+
+                DEBUG_X11_LMS("ConfigureNotify: send_event=%d eventWindow=0x%X window=0x%X above=0x%X rc={l=%d t=%d r=%d b=%d} "
+                        "w=%d h=%d override_redirect=%d",
+                        event->xconfigure.send_event,
+                        (uint32) event->xconfigure.event,
+                        (uint32) event->xconfigure.window,
+                        (uint32) event->xconfigure.above,
+                        xfw->left, xfw->top, xfw->right, xfw->bottom, xfw->width, xfw->height,
+                        event->xconfigure.override_redirect);
+        }
+
+        return True;
 }
 
 boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)

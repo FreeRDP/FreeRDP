@@ -94,6 +94,15 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
+	// Do nothing if window is already in the correct position
+        if ( xfw->left == window->windowOffsetX && 
+        	xfw->top == window->windowOffsetY && 
+                xfw->width == window->windowWidth && 
+                xfw->height == window->windowHeight)
+        {
+		return;
+	}
+
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
 			window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight);
