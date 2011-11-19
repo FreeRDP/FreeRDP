@@ -140,14 +140,14 @@ struct rdp_channel
 	int options; /* ui sets */
 	int channel_id; /* core sets */
 	boolean joined; /* client has joined the channel */
-	void * handle; /* just for ui */
+	void* handle; /* just for ui */
 };
 typedef struct rdp_channel rdpChannel;
 
 struct rdp_ext_set
 {
 	char name[256]; /* plugin name or path */
-	void * data; /* plugin data */
+	void* data; /* plugin data */
 };
 
 struct _BITMAP_CACHE_CELL_INFO
@@ -183,17 +183,13 @@ struct rdp_monitor
 struct rdp_settings
 {
 	void* instance;
+	uint32 paddingA[16 - 1];
 
-	uint16 width;
-	uint16 height;
-	uint16 percent_screen;
-	boolean sw_gdi;
-	boolean workarea;
-	boolean fullscreen;
-	boolean grab_keyboard;
-	boolean decorations;
+	/* Core Protocol Parameters */
+	uint32 width;
+	uint32 height;
 	uint32 rdp_version;
-	uint16 color_depth;
+	uint32 color_depth;
 	uint32 kbd_layout;
 	uint32 kbd_type;
 	uint32 kbd_subtype;
@@ -204,130 +200,153 @@ struct rdp_settings
 	uint32 encryption_method;
 	uint32 encryption_level;
 	boolean authentication;
+	uint32 paddingB[32 - 14];
 
-	char* home_path;
-	boolean server_mode;
-
-	rdpBlob server_random;
-	rdpBlob server_certificate;
-	struct rdp_certificate* server_cert;
-
-	boolean console_audio;
-	boolean console_session;
-	uint32 redirected_session_id;
-
-	int num_channels;
-	rdpChannel channels[16];
-
-	int num_monitors;
-	struct rdp_monitor monitors[16];
-
-	struct rdp_ext_set extensions[16];
-
-	UNICONV* uniconv;
-	char client_hostname[32];
-	char client_product_id[32];
-
-	uint16 port;
+	/* Connection Settings */
+	uint32 port;
+	boolean ipv6;
 	char* hostname;
 	char* username;
 	char* password;
 	char* domain;
 	char* shell;
 	char* directory;
-	uint32 performance_flags;
-
-	char* cert_file;
-	char* privatekey_file;
-
-	boolean autologon;
-	boolean ignore_certificate;
-	boolean compression;
-
-	boolean ipv6;
 	char* ip_address;
 	char* client_dir;
-	TIME_ZONE_INFO client_time_zone;
+	boolean autologon;
+	boolean compression;
+	uint32 performance_flags;
+	uint32 paddingC[32 - 13];
 
-	boolean auto_reconnection;
-	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;
-	ARC_SC_PRIVATE_PACKET server_auto_reconnect_cookie;
+	/* User Interface Parameters */
+	boolean sw_gdi;
+	boolean workarea;
+	boolean fullscreen;
+	boolean grab_keyboard;
+	boolean decorations;
+	uint32 percent_screen;
+	boolean mouse_motion;
+	uint32 paddingD[32 - 7];
 
+	/* Internal Parameters */
+	char* home_path;
+	uint32 share_id;
+	uint32 pdu_source;
+	UNICONV* uniconv;
+	boolean server_mode;
+	uint32 paddingE[32 - 5];
+
+	/* Session */
+	boolean console_audio;
+	boolean console_session;
+	uint32 redirected_session_id;
+
+	/* Security */
 	boolean encryption;
 	boolean tls_security;
 	boolean nla_security;
 	boolean rdp_security;
 
-	uint32 share_id;
-	uint16 pdu_source;
+	/* Reconnection */
+	boolean auto_reconnection;
+	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;
+	ARC_SC_PRIVATE_PACKET server_auto_reconnect_cookie;
 
+	/* Output Control */
 	boolean refresh_rect;
 	boolean suppress_output;
 	boolean desktop_resize;
 
-	boolean frame_marker;
-	boolean bitmap_cache_v3;
+	/* Time Zone */
+	TIME_ZONE_INFO client_time_zone;
 
-	uint8 received_caps[32];
-	uint8 order_support[32];
-
+	/* Capabilities */
+	uint32 vc_chunk_size;
 	boolean sound_beeps;
-	boolean color_pointer;
 	boolean smooth_fonts;
-	uint16 pointer_cache_size;
-
-	boolean glyph_cache;
-
+	boolean frame_marker;
 	boolean fastpath_input;
 	boolean fastpath_output;
-
-	boolean offscreen_bitmap_cache;
-	uint16 offscreen_bitmap_cache_size;
-	uint16 offscreen_bitmap_cache_entries;
-
-	boolean bitmap_cache;
-	boolean persistent_bitmap_cache;
-
-	uint8 bitmapCacheV2NumCells;
-	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[6];
-
-	uint16 glyphSupportLevel;
-	GLYPH_CACHE_DEFINITION glyphCache[10];
-	GLYPH_CACHE_DEFINITION fragCache;
-
-	uint32 vc_chunk_size;
-
-	boolean draw_nine_grid;
-	uint16 draw_nine_grid_cache_size;
-	uint16 draw_nine_grid_cache_entries;
-
-	boolean draw_gdi_plus;
-	boolean draw_gdi_plus_cache;
-
-	boolean large_pointer;
-
+	uint8 received_caps[32];
+	uint8 order_support[32];
 	boolean surface_commands;
 	uint32 multifrag_max_request_size;
 
-	boolean desktop_composition;
+	/* Certificate */
+	char* cert_file;
+	char* privatekey_file;
+	char client_hostname[32];
+	char client_product_id[32];
+	rdpBlob server_random;
+	rdpBlob server_certificate;
+	boolean ignore_certificate;
+	struct rdp_certificate* server_cert;
 
+	/* Codecs */
 	boolean rfx_codec;
 	boolean ns_codec;
-	uint8 rfx_codec_id;
-	uint8 ns_codec_id;
+	uint32 rfx_codec_id;
+	uint32 ns_codec_id;
 	boolean frame_acknowledge;
 
+	/* Recording */
 	boolean dump_rfx;
 	boolean play_rfx;
 	char* dump_rfx_file;
 	char* play_rfx_file;
 
+	/* RemoteApp */
 	boolean remote_app;
-	uint8 num_icon_caches;
-	uint16 num_icon_cache_entries;
+	uint32 num_icon_caches;
+	uint32 num_icon_cache_entries;
 	boolean rail_langbar_supported;
 
-	boolean mouse_motion;
+	/* Pointer */
+	boolean large_pointer;
+	boolean color_pointer;
+	uint32 pointer_cache_size;
+
+	/* Bitmap Cache */
+	boolean bitmap_cache;
+	boolean bitmap_cache_v3;
+	boolean persistent_bitmap_cache;
+	uint32 bitmapCacheV2NumCells;
+	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[6];
+
+	/* Offscreen Bitmap Cache */
+	boolean offscreen_bitmap_cache;
+	uint32 offscreen_bitmap_cache_size;
+	uint32 offscreen_bitmap_cache_entries;
+
+	/* Glyph Cache */
+	boolean glyph_cache;
+	uint32 glyphSupportLevel;
+	GLYPH_CACHE_DEFINITION glyphCache[10];
+	GLYPH_CACHE_DEFINITION fragCache;
+
+	/* Draw Nine Grid */
+	boolean draw_nine_grid;
+	uint32 draw_nine_grid_cache_size;
+	uint32 draw_nine_grid_cache_entries;
+
+	/* Draw GDI+ */
+	boolean draw_gdi_plus;
+	boolean draw_gdi_plus_cache;
+
+	/* Desktop Composition */
+	boolean desktop_composition;
+
+	/* Channels */
+	int num_channels;
+	rdpChannel channels[16];
+
+	/* Monitors */
+	int num_monitors;
+	struct rdp_monitor monitors[16];
+
+	/* Extensions */
+	int num_extensions;
+	struct rdp_ext_set extensions[16];
 };
 typedef struct rdp_settings rdpSettings;
 
