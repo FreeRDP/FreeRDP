@@ -62,14 +62,14 @@ struct rdp_input
 {
 	rdpContext* context;
 	void* param1;
-	uint32 paddingA[16 - 2]; /* offset 16 */
+	uint32 paddingA[16 - 2]; /* offset 64 */
 
 	pSynchronizeEvent SynchronizeEvent;
 	pKeyboardEvent KeyboardEvent;
 	pUnicodeKeyboardEvent UnicodeKeyboardEvent;
 	pMouseEvent MouseEvent;
 	pExtendedMouseEvent ExtendedMouseEvent;
-	uint32 paddingB[16 - 5]; /* offset 32 */
+	uint32 paddingB[16 - 5]; /* offset 128 */
 };
 
 #endif /* __INPUT_API_H */

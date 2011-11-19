@@ -1141,7 +1141,7 @@ typedef void (*pSurfaceCommand)(rdpUpdate* update, STREAM* s);
 struct rdp_update
 {
 	rdpContext* context;
-	uint32 paddingA[16 - 1];
+	uint32 paddingA[16 - 1]; /* offset 64 */
 
 	pBeginPaint BeginPaint;
 	pEndPaint EndPaint;
@@ -1151,14 +1151,14 @@ struct rdp_update
 	pBitmapUpdate BitmapUpdate;
 	pPalette Palette;
 	pPlaySound PlaySound;
-	uint32 paddingB[16 - 8];
+	uint32 paddingB[16 - 8]; /* offset 128 */
 
 	pPointerPosition PointerPosition;
 	pPointerSystem PointerSystem;
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
-	uint32 paddingC[16 - 5];
+	uint32 paddingC[16 - 5]; /* offset 192 */
 
 	pDstBlt DstBlt;
 	pPatBlt PatBlt;
@@ -1182,7 +1182,7 @@ struct rdp_update
 	pPolygonCB PolygonCB;
 	pEllipseSC EllipseSC;
 	pEllipseCB EllipseCB;
-	uint32 paddingD[32 - 22];
+	uint32 paddingD[32 - 22]; /* offset 320 */
 
 	pCacheBitmap CacheBitmap;
 	pCacheBitmapV2 CacheBitmapV2;
@@ -1191,7 +1191,7 @@ struct rdp_update
 	pCacheGlyph CacheGlyph;
 	pCacheGlyphV2 CacheGlyphV2;
 	pCacheBrush CacheBrush;
-	uint32 paddingE[32 - 7];
+	uint32 paddingE[32 - 7]; /* offset 448 */
 
 	pCreateOffscreenBitmap CreateOffscreenBitmap;
 	pSwitchSurface SwitchSurface;
@@ -1205,7 +1205,7 @@ struct rdp_update
 	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst;
 	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
 	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
-	uint32 paddingF[32 - 12];
+	uint32 paddingF[32 - 12]; /* offset 576 */
 
 	pWindowCreate WindowCreate;
 	pWindowUpdate WindowUpdate;
@@ -1217,15 +1217,15 @@ struct rdp_update
 	pNotifyIconDelete NotifyIconDelete;
 	pMonitoredDesktop MonitoredDesktop;
 	pNonMonitoredDesktop NonMonitoredDesktop;
-	uint32 paddingG[32 - 10];
+	uint32 paddingG[32 - 10]; /* offset 704 */
 
 	pRefreshRect RefreshRect;
 	pSuppressOutput SuppressOutput;
-	uint32 paddingH[16 - 2];
+	uint32 paddingH[16 - 2]; /* offset 768 */
 
 	pSurfaceBits SurfaceBits;
 	pSurfaceCommand SurfaceCommand;
-	uint32 paddingI[16 - 2];
+	uint32 paddingI[16 - 2]; /* offset 832 */
 
 	/* everything below is internal, and should not be directly accessed */
 
