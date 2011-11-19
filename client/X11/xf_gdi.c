@@ -56,11 +56,11 @@ boolean xf_set_rop2(xfInfo* xfi, int rop2)
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
 		printf("Unsupported ROP2: %d\n", rop2);
-		return False;
+		return false;
 	}
 
 	XSetFunction(xfi->display, xfi->gc, xf_rop2_table[rop2]);
-	return True;
+	return true;
 }
 
 boolean xf_set_rop3(xfInfo* xfi, int rop3)
@@ -189,12 +189,12 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 	{
 		printf("Unsupported ROP3: 0x%08X\n", rop3);
 		XSetFunction(xfi->display, xfi->gc, GXclear);
-		return False;
+		return false;
 	}
 
 	XSetFunction(xfi->display, xfi->gc, function);
 
-	return True;
+	return true;
 }
 
 Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
@@ -301,7 +301,7 @@ void xf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
@@ -373,7 +373,7 @@ void xf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	{
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
@@ -396,7 +396,7 @@ void xf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			if (xfi->unobscured)
 			{
@@ -435,7 +435,7 @@ void xf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				opaque_rect->nLeftRect, opaque_rect->nTopRect, opaque_rect->nWidth, opaque_rect->nHeight);
@@ -469,7 +469,7 @@ void xf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 
 		if (xfi->drawing == xfi->primary)
 		{
-			if (xfi->remote_app != True)
+			if (xfi->remote_app != true)
 			{
 				XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 					rectangle->left, rectangle->top, rectangle->width, rectangle->height);
@@ -496,7 +496,7 @@ void xf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			int width, height;
 
@@ -553,7 +553,7 @@ void xf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, npoints, CoordModePrevious);
 
 		x1 = points[0].x;
@@ -595,7 +595,7 @@ void xf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
 				memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
@@ -652,7 +652,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 			tx = message->rects[i].x + surface_bits_command->destLeft;
 			ty = message->rects[i].y + surface_bits_command->destTop;
 
-			if (xfi->remote_app != True)
+			if (xfi->remote_app != true)
 			{
 				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
 						tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
@@ -685,7 +685,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
 
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,
@@ -717,7 +717,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
 
-		if (xfi->remote_app != True)
+		if (xfi->remote_app != true)
 		{
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,

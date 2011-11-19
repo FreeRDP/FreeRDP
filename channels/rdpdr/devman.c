@@ -76,7 +76,7 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	entry = freerdp_load_plugin((char*)plugin_data->data[0], "DeviceServiceEntry");
 	if (entry == NULL)
-		return False;
+		return false;
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
@@ -85,7 +85,7 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	entry(&ep);
 
-	return True;
+	return true;
 }
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)

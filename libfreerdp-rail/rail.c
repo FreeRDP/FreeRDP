@@ -58,7 +58,7 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 
 	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
 	icon->entry = window_icon->iconInfo;
-	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? True : False;
+	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? true : false;
 
 	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
 			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,

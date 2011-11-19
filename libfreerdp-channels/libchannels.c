@@ -859,7 +859,7 @@ boolean freerdp_channels_get_fds(rdpChannels* chan_man, freerdp* instance, void*
 	int* read_count, void** write_fds, int* write_count)
 {
 	wait_obj_get_fds(chan_man->signal, read_fds, read_count);
-	return True;
+	return true;
 }
 
 /**
@@ -873,7 +873,7 @@ boolean freerdp_channels_check_fds(rdpChannels * chan_man, freerdp* instance)
 		freerdp_channels_process_sync(chan_man, instance);
 	}
 
-	return True;
+	return true;
 }
 
 RDP_EVENT* freerdp_channels_pop_event(rdpChannels* chan_man)

@@ -67,13 +67,13 @@ static boolean tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 	pa_context_state_t state;
 
 	if (!pulse->context)
-		return False;
+		return false;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
 		DEBUG_WARN("pa_context_connect failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
@@ -81,7 +81,7 @@ static boolean tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_threaded_mainloop_start failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	for (;;)
 	{
@@ -100,12 +100,12 @@ static boolean tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 	if (state == PA_CONTEXT_READY)
 	{
 		DEBUG_DVC("connected");
-		return True;
+		return true;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return False;
+		return false;
 	}
 }
 
@@ -122,23 +122,23 @@ static boolean tsmf_pulse_open(ITSMFAudioDevice* audio, const char* device)
 	if (!pulse->mainloop)
 	{
 		DEBUG_WARN("pa_threaded_mainloop_new failed");
-		return False;
+		return false;
 	}
 	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
 	if (!pulse->context)
 	{
 		DEBUG_WARN("pa_context_new failed");
-		return False;
+		return false;
 	}
 	pa_context_set_state_callback(pulse->context, tsmf_pulse_context_state_callback, pulse);
 	if (tsmf_pulse_connect(pulse))
 	{
 		DEBUG_WARN("tsmf_pulse_connect failed");
-		return False;
+		return false;
 	}
 
 	DEBUG_DVC("open device %s", pulse->device);
-	return True;
+	return true;
 }
 
 static void tsmf_pulse_stream_success_callback(pa_stream* stream, int success, void* userdata)
@@ -196,7 +196,7 @@ static void tsmf_pulse_stream_request_callback(pa_stream* stream, size_t length,
 static boolean tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 {
 	if (!pulse->context || !pulse->stream)
-		return False;
+		return false;
 
 	DEBUG_DVC("");
 
@@ -209,7 +209,7 @@ static boolean tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 	pulse->stream = NULL;
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 
-	return True;
+	return true;
 }
 
 static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
@@ -218,7 +218,7 @@ static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 	pa_buffer_attr buffer_attr = { 0 };
 
 	if (!pulse->context)
-		return False;
+		return false;
 
 	DEBUG_DVC("");
 
@@ -230,7 +230,7 @@ static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_stream_new failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	pa_stream_set_state_callback(pulse->stream,
 		tsmf_pulse_stream_state_callback, pulse);
@@ -249,7 +249,7 @@ static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_stream_connect_playback failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 
 	for (;;)
@@ -269,12 +269,12 @@ static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 	if (state == PA_STREAM_READY)
 	{
 		DEBUG_DVC("connected");
-		return True;
+		return true;
 	}
 	else
 	{
 		tsmf_pulse_close_stream(pulse);
-		return False;
+		return false;
 	}
 }
 
@@ -333,7 +333,7 @@ static boolean tsmf_pulse_play(ITSMFAudioDevice* audio, uint8* data, uint32 data
 	}
 	xfree(data);
 
-	return True;
+	return true;
 }
 
 static uint64 tsmf_pulse_get_latency(ITSMFAudioDevice* audio)

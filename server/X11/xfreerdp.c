@@ -32,7 +32,7 @@
 #include "xfreerdp.h"
 
 char* xf_pcap_file = NULL;
-boolean xf_pcap_dump_realtime = True;
+boolean xf_pcap_dump_realtime = true;
 
 void xf_server_main_loop(freerdp_listener* instance)
 {
@@ -49,7 +49,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != True)
+		if (instance->GetFileDescriptor(instance, rfds, &rcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -84,7 +84,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (instance->CheckFileDescriptor(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 		xf_pcap_file = argv[1];
 
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		xf_pcap_dump_realtime = False;
+		xf_pcap_dump_realtime = false;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))

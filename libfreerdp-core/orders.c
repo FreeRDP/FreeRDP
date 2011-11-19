@@ -212,7 +212,7 @@ INLINE void update_read_2byte_signed(STREAM* s, sint16* value)
 
 	stream_read_uint8(s, byte);
 
-	negative = (byte & 0x40) ? True : False;
+	negative = (byte & 0x40) ? true : false;
 
 	*value = (byte & 0x3F);
 
@@ -934,7 +934,7 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
-	fast_index->opaqueRect = False;
+	fast_index->opaqueRect = false;
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_index->cacheId);
@@ -1008,7 +1008,7 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 		fast_index->y = fast_index->bkTop;
 
 	if ((fast_index->opRight > fast_index->opLeft) && (fast_index->opBottom > fast_index->opTop))
-		fast_index->opaqueRect = True;
+		fast_index->opaqueRect = true;
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
@@ -1256,13 +1256,13 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = True;
+		cache_bitmap_v2_order->compressed = true;
 	}
 	else
 	{
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = False;
+		cache_bitmap_v2_order->compressed = false;
 	}
 }
 
@@ -1475,7 +1475,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 
 	stream_read_uint16(s, flags); /* flags (2 bytes) */
 	create_offscreen_bitmap->id = flags & 0x7FFF;
-	deleteListPresent = (flags & 0x8000) ? True : False;
+	deleteListPresent = (flags & 0x8000) ? true : false;
 
 	stream_read_uint16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
 	stream_read_uint16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
@@ -1637,24 +1637,24 @@ void update_read_bounds(STREAM* s, BOUNDS* bounds)
 	stream_read_uint8(s, flags); /* field flags */
 
 	if (flags & BOUND_LEFT)
-		update_read_coord(s, &bounds->left, False);
+		update_read_coord(s, &bounds->left, false);
 	else if (flags & BOUND_DELTA_LEFT)
-		update_read_coord(s, &bounds->left, True);
+		update_read_coord(s, &bounds->left, true);
 
 	if (flags & BOUND_TOP)
-		update_read_coord(s, &bounds->top, False);
+		update_read_coord(s, &bounds->top, false);
 	else if (flags & BOUND_DELTA_TOP)
-		update_read_coord(s, &bounds->top, True);
+		update_read_coord(s, &bounds->top, true);
 
 	if (flags & BOUND_RIGHT)
-		update_read_coord(s, &bounds->right, False);
+		update_read_coord(s, &bounds->right, false);
 	else if (flags & BOUND_DELTA_RIGHT)
-		update_read_coord(s, &bounds->right, True);
+		update_read_coord(s, &bounds->right, true);
 
 	if (flags & BOUND_BOTTOM)
-		update_read_coord(s, &bounds->bottom, False);
+		update_read_coord(s, &bounds->bottom, false);
 	else if (flags & BOUND_DELTA_BOTTOM)
-		update_read_coord(s, &bounds->bottom, True);
+		update_read_coord(s, &bounds->bottom, true);
 }
 
 void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
@@ -1675,7 +1675,7 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		IFCALL(update->SetBounds, update, &orderInfo->bounds);
 	}
 
-	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? True : False;
+	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? true : false;
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderInfo->orderType < PRIMARY_DRAWING_ORDER_COUNT)
@@ -1829,29 +1829,29 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
-			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), False, extraFlags);
+			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), false, extraFlags);
 			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), True, extraFlags);
+			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), true, extraFlags);
 			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), False, extraFlags);
+			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), false, extraFlags);
 			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
 			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), True, extraFlags);
+			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), true, extraFlags);
 			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
 			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			update_read_cache_bitmap_v3_order(s, &(update->cache_bitmap_v3_order), True, extraFlags);
+			update_read_cache_bitmap_v3_order(s, &(update->cache_bitmap_v3_order), true, extraFlags);
 			IFCALL(update->CacheBitmapV3, update, &(update->cache_bitmap_v3_order));
 			break;
 

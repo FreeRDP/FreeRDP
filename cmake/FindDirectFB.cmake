@@ -2,7 +2,7 @@
 # Find the DirectFB libraries
 #
 #  This module defines the following variables:
-#     DIRECTFB_FOUND        - True if DIRECTFB_INCLUDE_DIR & DIRECTFB_LIBRARY are found
+#     DIRECTFB_FOUND        - true if DIRECTFB_INCLUDE_DIR & DIRECTFB_LIBRARY are found
 #     DIRECTFB_LIBRARIES    - Set when DIRECTFB_LIBRARY is found
 #     DIRECTFB_INCLUDE_DIRS - Set when DIRECTFB_INCLUDE_DIR is found
 #

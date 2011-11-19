@@ -215,19 +215,19 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 				break;
 
 			case DIET_BUTTONPRESS:
-				df_send_mouse_button_event(instance->input, True, input_event->button, pointer_x, pointer_y);
+				df_send_mouse_button_event(instance->input, true, input_event->button, pointer_x, pointer_y);
 				break;
 
 			case DIET_BUTTONRELEASE:
-				df_send_mouse_button_event(instance->input, False, input_event->button, pointer_x, pointer_y);
+				df_send_mouse_button_event(instance->input, false, input_event->button, pointer_x, pointer_y);
 				break;
 
 			case DIET_KEYPRESS:
-				df_send_keyboard_event(instance->input, True, input_event->key_id - DIKI_UNKNOWN);
+				df_send_keyboard_event(instance->input, true, input_event->key_id - DIKI_UNKNOWN);
 				break;
 
 			case DIET_KEYRELEASE:
-				df_send_keyboard_event(instance->input, False, input_event->key_id - DIKI_UNKNOWN);
+				df_send_keyboard_event(instance->input, false, input_event->key_id - DIKI_UNKNOWN);
 				break;
 
 			case DIET_UNKNOWN:
@@ -235,5 +235,5 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 		}
 	}
 
-	return True;
+	return true;
 }

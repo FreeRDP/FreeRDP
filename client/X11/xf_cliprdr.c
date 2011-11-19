@@ -82,7 +82,7 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	cb->request_index = -1;
 
 	cb->root_window = DefaultRootWindow(xfi->display);
-	cb->clipboard_atom = XInternAtom(xfi->display, "CLIPBOARD", False);
+	cb->clipboard_atom = XInternAtom(xfi->display, "CLIPBOARD", false);
 
 	if (cb->clipboard_atom == None)
 	{
@@ -90,8 +90,8 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	}
 
 	id = 1;
-	cb->property_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR", False);
-	cb->identity_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR_ID", False);
+	cb->property_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR", false);
+	cb->identity_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR_ID", false);
 
 	XChangeProperty(xfi->display, xfi->drawable, cb->identity_atom,
 			XA_INTEGER, 32, PropModeReplace, (uint8*) &id, 1);
@@ -99,11 +99,11 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	XSelectInput(xfi->display, cb->root_window, PropertyChangeMask);
 
 	n = 0;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "_FREERDP_RAW", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "_FREERDP_RAW", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_RAW;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "UTF8_STRING", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "UTF8_STRING", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_UNICODETEXT;
 
 	n++;
@@ -111,31 +111,31 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	cb->format_mappings[n].format_id = CB_FORMAT_TEXT;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/png", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/png", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_PNG;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/jpeg", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/jpeg", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_JPEG;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/gif", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/gif", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_GIF;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/bmp", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "image/bmp", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_DIB;
 
 	n++;
-	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "text/html", False);
+	cb->format_mappings[n].target_format = XInternAtom(xfi->display, "text/html", false);
 	cb->format_mappings[n].format_id = CB_FORMAT_HTML;
 
 	cb->num_format_mappings = n + 1;
-	cb->targets[0] = XInternAtom(xfi->display, "TIMESTAMP", False);
-	cb->targets[1] = XInternAtom(xfi->display, "TARGETS", False);
+	cb->targets[0] = XInternAtom(xfi->display, "TIMESTAMP", false);
+	cb->targets[1] = XInternAtom(xfi->display, "TARGETS", false);
 	cb->num_targets = 2;
 
-	cb->incr_atom = XInternAtom(xfi->display, "INCR", False);
+	cb->incr_atom = XInternAtom(xfi->display, "INCR", false);
 }
 
 void xf_cliprdr_uninit(xfInfo* xfi)
@@ -250,12 +250,12 @@ static boolean xf_cliprdr_is_self_owned(xfInfo* xfi)
 	}
 
 	if ((cb->owner == None) || (cb->owner == xfi->drawable))
-		return False;
+		return false;
 
 	if (result != Success)
-		return False;
+		return false;
 
-	return (id ? True : False);
+	return (id ? true : false);
 }
 
 static int xf_cliprdr_select_format_by_id(clipboardContext* cb, uint32 format_id)
@@ -416,7 +416,7 @@ static void xf_cliprdr_process_cb_monitor_ready_event(xfInfo* xfi)
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	xf_cliprdr_send_format_list(xfi);
-	cb->sync = True;
+	cb->sync = true;
 }
 
 static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_REQUEST_EVENT* event)
@@ -697,7 +697,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	Atom type;
 	int format;
 	uint8* data = NULL;
-	boolean has_data = False;
+	boolean has_data = false;
 	unsigned long length, bytes_left, dummy;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
@@ -706,7 +706,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	{
 		DEBUG_X11("invalid target");
 		xf_cliprdr_send_null_data_response(xfi);
-		return False;
+		return false;
 	}
 
 	XGetWindowProperty(xfi->display, xfi->drawable,
@@ -728,7 +728,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	else if (type == cb->incr_atom)
 	{
 		DEBUG_X11("INCR started");
-		cb->incr_starts = True;
+		cb->incr_starts = true;
 		if (cb->incr_data)
 		{
 			xfree(cb->incr_data);
@@ -736,7 +736,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 		}
 		cb->incr_data_length = 0;
 		/* Data will be followed in PropertyNotify event */
-		has_data = True;
+		has_data = true;
 	}
 	else
 	{
@@ -749,7 +749,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 			cb->incr_data_length = 0;
 			cb->incr_starts = 0;
 			DEBUG_X11("INCR finished");
-			has_data = True;
+			has_data = true;
 		}
 		else if (XGetWindowProperty(xfi->display, xfi->drawable,
 			cb->property_atom, 0, bytes_left, 0, target,
@@ -765,7 +765,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 				XFree(data);
 				data = NULL;
 			}
-			has_data = True;
+			has_data = true;
 		}
 		else
 		{
@@ -779,7 +779,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	if (data)
 		XFree(data);
 
-	return True;
+	return true;
 }
 
 static void xf_cliprdr_append_target(clipboardContext* cb, Atom target)
@@ -1062,7 +1062,7 @@ boolean xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent)
 			xf_cliprdr_get_requested_targets(xfi);
 		}
 
-		return True;
+		return true;
 	}
 	else
 	{
@@ -1088,10 +1088,10 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	if (xevent->xselectionrequest.owner != xfi->drawable)
 	{
 		DEBUG_X11("not owner");
-		return False;
+		return false;
 	}
 
-	delay_respond = False;
+	delay_respond = false;
 	respond = xnew(XEvent);
 	respond->xselection.property = None;
 	respond->xselection.type = SelectionNotify;
@@ -1159,21 +1159,21 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 				cb->respond = respond;
 				cb->data_format = format;
 				cb->data_alt_format = alt_format;
-				delay_respond = True;
+				delay_respond = true;
 
 				xf_cliprdr_send_data_request(xfi, alt_format);
 			}
 		}
 	}
 
-	if (delay_respond != False)
+	if (delay_respond != false)
 	{
 		XSendEvent(xfi->display, xevent->xselectionrequest.requestor, 0, 0, respond);
 		XFlush(xfi->display);
 		xfree(respond);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent)
@@ -1181,11 +1181,11 @@ boolean xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent)
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	if (xf_cliprdr_is_self_owned(xfi))
-		return False;
+		return false;
 
 	XDeleteProperty(xfi->display, cb->root_window, cb->property_atom);
 
-	return True;
+	return true;
 }
 
 boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
@@ -1193,7 +1193,7 @@ boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	if (xevent->xproperty.atom != cb->property_atom)
-		return False; /* Not cliprdr-related */
+		return false; /* Not cliprdr-related */
 
 	if (xevent->xproperty.window == cb->root_window)
 	{
@@ -1209,7 +1209,7 @@ boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 			cb->format_mappings[cb->request_index].target_format);
 	}
 
-	return True;
+	return true;
 }
 
 void xf_cliprdr_check_owner(xfInfo* xfi)

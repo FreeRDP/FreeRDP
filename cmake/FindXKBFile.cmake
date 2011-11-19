@@ -2,7 +2,7 @@
 # Find the XKBFILE libraries
 #
 #  This module defines the following variables:
-#     XKBFILE_FOUND        - True if XKBFILE_INCLUDE_DIR & XKBFILE_LIBRARY are found
+#     XKBFILE_FOUND        - true if XKBFILE_INCLUDE_DIR & XKBFILE_LIBRARY are found
 #     XKBFILE_LIBRARIES    - Set when XKBFILE_LIBRARY is found
 #     XKBFILE_INCLUDE_DIRS - Set when XKBFILE_INCLUDE_DIR is found
 #

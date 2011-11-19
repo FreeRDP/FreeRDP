@@ -104,7 +104,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		if (status != True)
+		if (status != true)
 		{
 			printf("Bitmap Decompression Failed\n");
 		}
@@ -117,7 +117,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	bitmap->width = width;
 	bitmap->height = height;
-	bitmap->compressed = False;
+	bitmap->compressed = false;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }

@@ -349,15 +349,15 @@ void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_write_sequence_tag(s, length);
 
 	/* [0] domainName (OCTET STRING) */
-	ber_write_contextual_tag(s, 0, credssp->ntlmssp->domain.length + 2, True);
+	ber_write_contextual_tag(s, 0, credssp->ntlmssp->domain.length + 2, true);
 	ber_write_octet_string(s, credssp->ntlmssp->domain.data, credssp->ntlmssp->domain.length);
 
 	/* [1] userName (OCTET STRING) */
-	ber_write_contextual_tag(s, 1, credssp->ntlmssp->username.length + 2, True);
+	ber_write_contextual_tag(s, 1, credssp->ntlmssp->username.length + 2, true);
 	ber_write_octet_string(s, credssp->ntlmssp->username.data, credssp->ntlmssp->username.length);
 
 	/* [2] password (OCTET STRING) */
-	ber_write_contextual_tag(s, 2, credssp->ntlmssp->password.length + 2, True);
+	ber_write_contextual_tag(s, 2, credssp->ntlmssp->password.length + 2, true);
 	ber_write_octet_string(s, credssp->ntlmssp->password.data, credssp->ntlmssp->password.length);
 }
 
@@ -394,12 +394,12 @@ void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
 	length -= ber_write_sequence_tag(s, length);
 
 	/* [0] credType (INTEGER) */
-	length -= ber_write_contextual_tag(s, 0, 3, True);
+	length -= ber_write_contextual_tag(s, 0, 3, true);
 	length -= ber_write_integer(s, 1);
 
 	/* [1] credentials (OCTET STRING) */
 	length -= 1;
-	length -= ber_write_contextual_tag(s, 1, length, True);
+	length -= ber_write_contextual_tag(s, 1, length, true);
 	length -= ber_write_octet_string_tag(s, ts_password_creds_length);
 
 	credssp_write_ts_password_creds(credssp, s);
@@ -491,17 +491,17 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 	/* TSRequest */
 	length = ber_get_content_length(ts_request_length);
 	ber_write_sequence_tag(s, length); /* SEQUENCE */
-	ber_write_contextual_tag(s, 0, 3, True); /* [0] version */
+	ber_write_contextual_tag(s, 0, 3, true); /* [0] version */
 	ber_write_integer(s, 2); /* INTEGER */
 
 	/* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0)
 	{
 		length = ber_get_content_length(nego_tokens_length);
-		length -= ber_write_contextual_tag(s, 1, length, True); /* NegoData */
+		length -= ber_write_contextual_tag(s, 1, length, true); /* NegoData */
 		length -= ber_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
 		length -= ber_write_sequence_tag(s, length); /* NegoDataItem */
-		length -= ber_write_contextual_tag(s, 0, length, True); /* [0] negoToken */
+		length -= ber_write_contextual_tag(s, 0, length, true); /* [0] negoToken */
 		ber_write_octet_string(s, negoToken->data, length); /* OCTET STRING */
 	}
 
@@ -509,7 +509,7 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 	if (auth_info_length > 0)
 	{
 		length = ber_get_content_length(auth_info_length);
-		length -= ber_write_contextual_tag(s, 2, length, True);
+		length -= ber_write_contextual_tag(s, 2, length, true);
 		ber_write_octet_string(s, authInfo->data, authInfo->length);
 	}
 
@@ -517,7 +517,7 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 	if (pub_key_auth_length > 0)
 	{
 		length = ber_get_content_length(pub_key_auth_length);
-		length -= ber_write_contextual_tag(s, 3, length, True);
+		length -= ber_write_contextual_tag(s, 3, length, true);
 		ber_write_octet_string(s, pubKeyAuth->data, length);
 	}
 
@@ -548,22 +548,22 @@ int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdp
 
 	/* TSRequest */
 	ber_read_sequence_tag(s, &length);
-	ber_read_contextual_tag(s, 0, &length, True);
+	ber_read_contextual_tag(s, 0, &length, true);
 	ber_read_integer(s, &version);
 
 	/* [1] negoTokens (NegoData) */
-	if (ber_read_contextual_tag(s, 1, &length, True) != False)
+	if (ber_read_contextual_tag(s, 1, &length, true) != false)
 	{
 		ber_read_sequence_tag(s, &length); /* SEQUENCE OF NegoDataItem */
 		ber_read_sequence_tag(s, &length); /* NegoDataItem */
-		ber_read_contextual_tag(s, 0, &length, True); /* [0] negoToken */
+		ber_read_contextual_tag(s, 0, &length, true); /* [0] negoToken */
 		ber_read_octet_string(s, &length); /* OCTET STRING */
 		freerdp_blob_alloc(negoToken, length);
 		stream_read(s, negoToken->data, length);
 	}
 
 	/* [2] authInfo (OCTET STRING) */
-	if (ber_read_contextual_tag(s, 2, &length, True) != False)
+	if (ber_read_contextual_tag(s, 2, &length, true) != false)
 	{
 		ber_read_octet_string(s, &length); /* OCTET STRING */
 		freerdp_blob_alloc(authInfo, length);
@@ -571,7 +571,7 @@ int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdp
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
-	if (ber_read_contextual_tag(s, 3, &length, True) != False)
+	if (ber_read_contextual_tag(s, 3, &length, true) != false)
 	{
 		ber_read_octet_string(s, &length); /* OCTET STRING */
 		freerdp_blob_alloc(pubKeyAuth, length);

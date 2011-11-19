@@ -88,11 +88,11 @@ static boolean disk_file_remove_dir(const char* path)
 	struct dirent* pdirent;
 	struct stat st;
 	char* p;
-	boolean ret = True;
+	boolean ret = true;
 
 	dir = opendir(path);
 	if (dir == NULL)
-		return False;
+		return false;
 
 	pdirent = readdir(dir);
 	while (pdirent)
@@ -108,7 +108,7 @@ static boolean disk_file_remove_dir(const char* path)
 		if (stat(p, &st) != 0)
 		{
 			DEBUG_WARN("stat %s failed.", p);
-			ret = False;
+			ret = false;
 		}
 		else if (S_ISDIR(st.st_mode))
 		{
@@ -117,10 +117,10 @@ static boolean disk_file_remove_dir(const char* path)
 		else if (unlink(p) < 0)
 		{
 			DEBUG_WARN("unlink %s failed.", p);
-			ret = False;
+			ret = false;
 		}
 		else
-			ret = True;
+			ret = true;
 		xfree(p);
 
 		if (!ret)
@@ -135,7 +135,7 @@ static boolean disk_file_remove_dir(const char* path)
 		if (rmdir(path) < 0)
 		{
 			DEBUG_WARN("rmdir %s failed.", path);
-			ret = False;
+			ret = false;
 		}
 	}
 
@@ -162,21 +162,21 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 
 	if (stat(file->fullpath, &st) == 0)
 	{
-		file->is_dir = (S_ISDIR(st.st_mode) ? True : False);
-		exists = True;
+		file->is_dir = (S_ISDIR(st.st_mode) ? true : false);
+		exists = true;
 	}
 	else
 	{
-		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? True : False);
+		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? true : false);
 		if (file->is_dir)
 		{
 			if (mkdir(file->fullpath, mode) != 0)
 			{
 				file->err = errno;
-				return True;
+				return true;
 			}
 		}
-		exists = False;
+		exists = false;
 	}
 	if (file->is_dir)
 	{
@@ -184,7 +184,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		if (file->dir == NULL)
 		{
 			file->err = errno;
-			return True;
+			return true;
 		}
 	}
 	else
@@ -212,7 +212,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 				break;
 		}
 		if (!exists && (CreateOptions & FILE_DELETE_ON_CLOSE))
-			file->delete_pending = True;
+			file->delete_pending = true;
 
 		if ((DesiredAccess & GENERIC_ALL)
 			|| (DesiredAccess & GENERIC_WRITE)
@@ -230,11 +230,11 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		if (file->fd == -1)
 		{
 			file->err = errno;
-			return True;
+			return true;
 		}
 	}
 
-	return True;
+	return true;
 }
 
 DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
@@ -278,12 +278,12 @@ void disk_file_free(DISK_FILE* file)
 boolean disk_file_seek(DISK_FILE* file, uint64 Offset)
 {
 	if (file->is_dir || file->fd == -1)
-		return False;
+		return false;
 
 	if (lseek(file->fd, Offset, SEEK_SET) == (off_t)-1)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
@@ -291,14 +291,14 @@ boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
 	ssize_t r;
 
 	if (file->is_dir || file->fd == -1)
-		return False;
+		return false;
 
 	r = read(file->fd, buffer, *Length);
 	if (r < 0)
-		return False;
+		return false;
 	*Length = (uint32)r;
 
-	return True;
+	return true;
 }
 
 boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
@@ -306,18 +306,18 @@ boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
 	ssize_t r;
 
 	if (file->is_dir || file->fd == -1)
-		return False;
+		return false;
 
 	while (Length > 0)
 	{
 		r = write(file->fd, buffer, Length);
 		if (r == -1)
-			return False;
+			return false;
 		Length -= r;
 		buffer += r;
 	}
 
-	return True;
+	return true;
 }
 
 boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output)
@@ -327,7 +327,7 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 	if (stat(file->fullpath, &st) != 0)
 	{
 		stream_write_uint32(output, 0); /* Length */
-		return False;
+		return false;
 	}
 	switch (FsInformationClass)
 	{
@@ -366,9 +366,9 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 		default:
 			stream_write_uint32(output, 0); /* Length */
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			return False;
+			return false;
 	}
-	return True;
+	return true;
 }
 
 boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input)
@@ -396,7 +396,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_read_uint32(input, FileAttributes);
 
 			if (fstat(file->fd, &st) != 0)
-				return False;
+				return false;
 			tv[0].tv_sec = st.st_atime;
 			tv[0].tv_usec = 0;
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
@@ -421,7 +421,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
 			stream_read_uint64(input, size);
 			if (ftruncate(file->fd, size) != 0)
-				return False;
+				return false;
 			break;
 
 		case FileDispositionInformation:
@@ -457,16 +457,16 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			{
 				DEBUG_WARN("rename %s to %s failed", file->fullpath, fullpath);
 				free(fullpath);
-				return False;
+				return false;
 			}
 
 			break;
 
 		default:
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			return False;
+			return false;
 	}
-	return True;
+	return true;
 }
 
 boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
@@ -491,7 +491,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	{
 		stream_write_uint32(output, 0); /* Length */
 		stream_write_uint8(output, 0); /* Padding */
-		return False;
+		return false;
 	}
 
 	memset(&st, 0, sizeof(struct stat));
@@ -507,7 +507,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);
 	freerdp_uniconv_free(uniconv);
 
-	ret = True;
+	ret = true;
 	switch (FsInformationClass)
 	{
 		case FileDirectoryInformation:
@@ -580,7 +580,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_write_uint32(output, 0); /* Length */
 			stream_write_uint8(output, 0); /* Padding */
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			ret = False;
+			ret = false;
 			break;
 	}
 

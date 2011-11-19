@@ -222,7 +222,7 @@ static boolean audin_receive_wave_data(uint8* data, int size, void* user_data)
 
 	error = audin_send_incoming_data_pdu((IWTSVirtualChannelCallback*) callback);
 	if (error != 0)
-		return False;
+		return false;
 
 	out = stream_new(size + 1);
 	stream_write_uint8(out, MSG_SNDIN_DATA);
@@ -230,7 +230,7 @@ static boolean audin_receive_wave_data(uint8* data, int size, void* user_data)
 	error = callback->channel->Write(callback->channel, stream_get_length(out), stream_get_head(out), NULL);
 	stream_free(out);
 
-	return (error == 0 ? True : False);
+	return (error == 0 ? true : false);
 }
 
 static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, STREAM* s)
@@ -450,7 +450,7 @@ static boolean audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, R
 	}
 	if (entry == NULL)
 	{
-		return False;
+		return false;
 	}
 
 	entryPoints.plugin = pPlugin;
@@ -459,10 +459,10 @@ static boolean audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, R
 	if (entry(&entryPoints) != 0)
 	{
 		DEBUG_WARN("%s entry returns error.", name);
-		return False;
+		return false;
 	}
 
-	return True;
+	return true;
 }
 
 static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
@@ -476,17 +476,17 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 		if (data->data[1] && strcmp((char*)data->data[1], "format") == 0)
 		{
 			audin->fixed_format = atoi(data->data[2]);
-			return True;
+			return true;
 		}
 		else if (data->data[1] && strcmp((char*)data->data[1], "rate") == 0)
 		{
 			audin->fixed_rate = atoi(data->data[2]);
-			return True;
+			return true;
 		}
 		else if (data->data[1] && strcmp((char*)data->data[1], "channel") == 0)
 		{
 			audin->fixed_channel = atoi(data->data[2]);
-			return True;
+			return true;
 		}
 		else if (data->data[1] && ((char*)data->data[1])[0])
 		{
@@ -511,7 +511,7 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 		}
 	}
 
-	return True;
+	return true;
 }
 
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)

@@ -2,7 +2,7 @@
 # Find the XINERAMA libraries
 #
 #  This module defines the following variables:
-#     XINERAMA_FOUND        - True if XINERAMA_INCLUDE_DIR & XINERAMA_LIBRARY are found
+#     XINERAMA_FOUND        - true if XINERAMA_INCLUDE_DIR & XINERAMA_LIBRARY are found
 #     XINERAMA_LIBRARIES    - Set when XINERAMA_LIBRARY is found
 #     XINERAMA_INCLUDE_DIRS - Set when XINERAMA_INCLUDE_DIR is found
 #

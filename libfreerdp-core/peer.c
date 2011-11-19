@@ -21,10 +21,10 @@
 
 static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
-	client->context->rdp->settings->server_mode = True;
+	client->context->rdp->settings->server_mode = true;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
 
-	return True;
+	return true;
 }
 
 static boolean freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
@@ -32,7 +32,7 @@ static boolean freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcou
 	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->tcp->sockfd);
 	(*rcount)++;
 
-	return True;
+	return true;
 }
 
 static boolean freerdp_peer_check_fds(freerdp_peer* client)
@@ -44,9 +44,9 @@ static boolean freerdp_peer_check_fds(freerdp_peer* client)
 
 	status = rdp_check_fds(rdp);
 	if (status < 0)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
@@ -59,18 +59,18 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
-		return False;
+		return false;
 
 	switch (type)
 	{
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_client_synchronize_pdu(s))
-				return False;
+				return false;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
 			if (!rdp_server_accept_client_control_pdu(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
@@ -79,11 +79,11 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 
 		case DATA_PDU_TYPE_FONT_LIST:
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
-				return False;
+				return false;
 			if (client->PostConnect)
 			{
 				if (!client->PostConnect(client))
-					return False;
+					return false;
 				/**
 				 * PostConnect should only be called once and should not be called
 				 * after a reactivation sequence.
@@ -94,20 +94,20 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			{
 				/* Activate will be called everytime after the client is activated/reactivated. */
 				if (!client->Activate(client))
-					return False;
+					return false;
 			}
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
 			mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
-			return False;
+			return false;
 
 		default:
 			printf("Data PDU type %d\n", type);
 			break;
 	}
 
-	return True;
+	return true;
 }
 
 static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
@@ -121,7 +121,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	if (!rdp_read_header(client->context->rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
-		return False;
+		return false;
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
@@ -131,7 +131,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	else
 	{
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
-			return False;
+			return false;
 
 		client->settings->pdu_source = pduSource;
 
@@ -139,16 +139,16 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		{
 			case PDU_TYPE_DATA:
 				if (!peer_recv_data_pdu(client, s))
-					return False;
+					return false;
 				break;
 
 			default:
 				printf("Client sent pduType %d\n", pduType);
-				return False;
+				return false;
 		}
 	}
 
-	return True;
+	return true;
 }
 
 static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
@@ -164,7 +164,7 @@ static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 	if (length == 0 || length > stream_get_left(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
-		return False;
+		return false;
 	}
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
@@ -191,50 +191,50 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 	{
 		case CONNECTION_STATE_INITIAL:
 			if (!rdp_server_accept_nego(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_mcs_connect_initial(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
 			if (!rdp_server_accept_mcs_erect_domain_request(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_attach_user_request(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_server_accept_mcs_channel_join_request(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_server_accept_client_info(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_LICENSE:
 			if (!rdp_server_accept_confirm_active(client->context->rdp, s))
-				return False;
+				return false;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			if (!peer_recv_pdu(client, s))
-				return False;
+				return false;
 			break;
 
 		default:
 			printf("Invalid state %d\n", client->context->rdp->state);
-			return False;
+			return false;
 	}
 
-	return True;
+	return true;
 }
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
@@ -264,7 +264,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	rdp->transport->recv_callback = peer_recv_callback;
 	rdp->transport->recv_extra = client;
-	transport_set_blocking_mode(rdp->transport, False);
+	transport_set_blocking_mode(rdp->transport, false);
 
 	IFCALL(client->ContextNew, client, client->context);
 }

@@ -655,7 +655,7 @@ void test_mppc(void)
 
     /* uncompress data */
     CU_ASSERT(decompress_rdp_5(&rdp, compressed_rd5, sizeof(compressed_rd5), 
-        PACKET_COMPRESSED, &roff, &rlen) == True);
+        PACKET_COMPRESSED, &roff, &rlen) == true);
 
     /* get end time */
     gettimeofday(&end_time, NULL);

@@ -82,7 +82,7 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 	w = event->xexpose.width;
 	h = event->xexpose.height;
 
-	if (app != True)
+	if (app != true)
 	{
 		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 	}
@@ -101,13 +101,13 @@ boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 		}
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
-	return True;
+	return true;
 }
 
 boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
@@ -116,12 +116,12 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 	input = xfi->instance->input;
 
-	if (app != True)
+	if (app != true)
 	{
-		if (xfi->mouse_motion != True)
+		if (xfi->mouse_motion != true)
 		{
 			if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
-				return True;
+				return true;
 		}
 
 		input->MouseEvent(input, PTR_FLAGS_MOVE, event->xmotion.x, event->xmotion.y);
@@ -129,7 +129,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 	}
-	else if (xfi->mouse_motion == True)
+	else if (xfi->mouse_motion == true)
 	{
 		rdpWindow* window;
 		int x = event->xmotion.x;
@@ -146,7 +146,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		}
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
@@ -161,7 +161,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 	x = 0;
 	y = 0;
 	flags = 0;
-	wheel = False;
+	wheel = false;
 
 	switch (event->xbutton.button)
 	{
@@ -184,12 +184,12 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 			break;
 
 		case 4:
-			wheel = True;
+			wheel = true;
 			flags = PTR_FLAGS_WHEEL | 0x0078;
 			break;
 
 		case 5:
-			wheel = True;
+			wheel = true;
 			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 			break;
 
@@ -226,7 +226,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		}
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
@@ -285,7 +285,7 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 		input->MouseEvent(input, flags, x, y);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event, boolean app)
@@ -298,11 +298,11 @@ boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event, boolean app)
 	xf_kbd_set_keypress(xfi, event->xkey.keycode, keysym);
 
 	if (xfi->fullscreen_toggle && xf_kbd_handle_special_keys(xfi, keysym))
-		return True;
+		return true;
 
-	xf_kbd_send_key(xfi, True, event->xkey.keycode);
+	xf_kbd_send_key(xfi, true, event->xkey.keycode);
 
-	return True;
+	return true;
 }
 
 boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event, boolean app)
@@ -317,48 +317,48 @@ boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event, boolean app)
 		if (next_event.type == KeyPress)
 		{
 			if (next_event.xkey.keycode == event->xkey.keycode)
-				return True;
+				return true;
 		}
 	}
 
 	xf_kbd_unset_keypress(xfi, event->xkey.keycode);
-	xf_kbd_send_key(xfi, False, event->xkey.keycode);
+	xf_kbd_send_key(xfi, false, event->xkey.keycode);
 
-	return True;
+	return true;
 }
 
 boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xfocus.mode == NotifyGrab)
-		return True;
+		return true;
 
-	xfi->focused = True;
+	xfi->focused = true;
 
-	if (xfi->mouse_active && (app != True))
-		XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+	if (xfi->mouse_active && (app != true))
+		XGrabKeyboard(xfi->display, xfi->window->handle, true, GrabModeAsync, GrabModeAsync, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, True);
+	xf_rail_send_activate(xfi, event->xany.window, true);
 	xf_kbd_focus_in(xfi);
 
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 		xf_cliprdr_check_owner(xfi);
 
-	return True;
+	return true;
 }
 
 boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 {
 	if (event->xfocus.mode == NotifyUngrab)
-		return True;
+		return true;
 
-	xfi->focused = False;
+	xfi->focused = false;
 
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, False);
+	xf_rail_send_activate(xfi, event->xany.window, false);
 
-	return True;
+	return true;
 }
 
 boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
@@ -369,7 +369,7 @@ boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
 		xfi->modifier_map = XGetModifierMapping(xfi->display);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
@@ -389,28 +389,28 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 				xf_rail_send_client_system_command(xfi, window->windowId, SC_CLOSE);
 			}
 
-			return True;
+			return true;
 		}
 		else
 		{
-			return False;
+			return false;
 		}
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (app != True)
+	if (app != true)
 	{
-		xfi->mouse_active = True;
+		xfi->mouse_active = true;
 
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 
 		if (xfi->focused)
-			XGrabKeyboard(xfi->display, xfi->window->handle, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+			XGrabKeyboard(xfi->display, xfi->window->handle, true, GrabModeAsync, GrabModeAsync, CurrentTime);
 	} else {
 		// Keep track of which window has focus so that we can apply pointer updates
 		xfWindow* xfw;
@@ -424,18 +424,18 @@ boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 		}
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (app != True)
+	if (app != true)
 	{
-		xfi->mouse_active = False;
+		xfi->mouse_active = false;
 		XUngrabKeyboard(xfi->display, CurrentTime);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
@@ -470,7 +470,7 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			event->xconfigure.override_redirect);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
@@ -478,8 +478,8 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	rdpWindow* window;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-	if (app != True)
-		return True;
+	if (app != true)
+		return true;
 
 	window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
 
@@ -489,67 +489,67 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		if (xf_cliprdr_process_selection_notify(xfi, event))
-			return True;
+			return true;
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		if (xf_cliprdr_process_selection_request(xfi, event))
-			return True;
+			return true;
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		if (xf_cliprdr_process_selection_clear(xfi, event))
-			return True;
+			return true;
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		if (xf_cliprdr_process_property_notify(xfi, event))
-			return True;
+			return true;
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
-	boolean app = False;
-	boolean status = True;
+	boolean app = false;
+	boolean status = true;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
-	if (xfi->remote_app == True)
+	if (xfi->remote_app == true)
 	{
-		app = True;
+		app = true;
 	}
 	else
 	{
 		if (event->xany.window != xfi->window->handle)
-			app = True;
+			app = true;
 	}
 
 

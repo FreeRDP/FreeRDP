@@ -91,7 +91,7 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 	if (cache->bitmap->bitmap == NULL)
 	{
 		cache->bitmap->bitmap = Bitmap_Alloc(update->context);
-		cache->bitmap->bitmap->ephemeral = True;
+		cache->bitmap->bitmap->ephemeral = true;
 		reused = 0;
 	}
 
@@ -199,18 +199,18 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 
 		bitmap_cache->maxCells = 5;
 
-		settings->bitmap_cache = False;
+		settings->bitmap_cache = false;
 		settings->bitmapCacheV2NumCells = 5;
 		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[0].persistent = False;
+		settings->bitmapCacheV2CellInfo[0].persistent = false;
 		settings->bitmapCacheV2CellInfo[1].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[1].persistent = False;
+		settings->bitmapCacheV2CellInfo[1].persistent = false;
 		settings->bitmapCacheV2CellInfo[2].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[2].persistent = False;
+		settings->bitmapCacheV2CellInfo[2].persistent = false;
 		settings->bitmapCacheV2CellInfo[3].numEntries = 4096;
-		settings->bitmapCacheV2CellInfo[3].persistent = False;
+		settings->bitmapCacheV2CellInfo[3].persistent = false;
 		settings->bitmapCacheV2CellInfo[4].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[4].persistent = False;
+		settings->bitmapCacheV2CellInfo[4].persistent = false;
 
 		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 

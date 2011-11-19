@@ -1342,7 +1342,7 @@ scard_async_op(IRP* irp)
 		case SCARD_IOCTL_RELEASE_CONTEXT:
 		case SCARD_IOCTL_IS_VALID_CONTEXT:
 
-			return False;
+			return false;
 			break;
 
 		/* async events */
@@ -1353,7 +1353,7 @@ scard_async_op(IRP* irp)
 
 		case SCARD_IOCTL_STATUS:
 		case SCARD_IOCTL_STATUS + 4:
-			return True;
+			return true;
 			break;
 
 		default:
@@ -1361,7 +1361,7 @@ scard_async_op(IRP* irp)
 	}	
 
 	/* default to async */
-	return True;
+	return true;
 }
 
 

@@ -74,7 +74,7 @@ void test_pcap(void)
 	packets[2].data = test_packet_3;
 	packets[2].length = sizeof(test_packet_3);
 
-	pcap = pcap_open("/tmp/test.pcap", True);
+	pcap = pcap_open("/tmp/test.pcap", true);
 	pcap_add_record(pcap, test_packet_1, sizeof(test_packet_1));
 	pcap_flush(pcap);
 	pcap_add_record(pcap, test_packet_2, sizeof(test_packet_2));
@@ -82,7 +82,7 @@ void test_pcap(void)
 	pcap_add_record(pcap, test_packet_3, sizeof(test_packet_3));
 	pcap_close(pcap);
 
-	pcap = pcap_open("/tmp/test.pcap", False);
+	pcap = pcap_open("/tmp/test.pcap", false);
 
 	int i = 0;
 	while (pcap_has_next_record(pcap))

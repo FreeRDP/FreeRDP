@@ -118,37 +118,37 @@ void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 boolean pcap_has_next_record(rdpPcap* pcap)
 {
 	if (pcap->file_size - (ftell(pcap->fp)) <= 16)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 boolean pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != True)
-		return False;
+	if (pcap_has_next_record(pcap) != true)
+		return false;
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
 	record->data = xmalloc(record->length);
 
-	return True;
+	return true;
 }
 
 boolean pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
 {
 	fread(record->data, record->length, 1, pcap->fp);
-	return True;
+	return true;
 }
 
 boolean pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != True)
-		return False;
+	if (pcap_has_next_record(pcap) != true)
+		return false;
 
 	pcap_read_record(pcap, record);
 
-	return True;
+	return true;
 }
 
 rdpPcap* pcap_open(char* name, boolean write)

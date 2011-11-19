@@ -118,7 +118,7 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	if (status != 0)
 	{
 		printf("transport_connect: getaddrinfo (%s)\n", gai_strerror(status));
-		return False;
+		return false;
 	}
 
 	tcp->sockfd = -1;
@@ -143,13 +143,13 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	if (tcp->sockfd == -1)
 	{
 		printf("unable to connect to %s:%s\n", hostname, servname);
-		return False;
+		return false;
 	}
 
 	tcp_get_ip_address(tcp);
 	tcp_get_mac_address(tcp);
 
-	return True;
+	return true;
 }
 
 int tcp_read(rdpTcp* tcp, uint8* data, int length)
@@ -211,7 +211,7 @@ boolean tcp_disconnect(rdpTcp * tcp)
 		tcp->sockfd = -1;
 	}
 
-	return True;
+	return true;
 }
 
 boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
@@ -223,10 +223,10 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	if (flags == -1)
 	{
 		printf("transport_configure_sockfd: fcntl failed.\n");
-		return False;
+		return false;
 	}
 
-	if (blocking == True)
+	if (blocking == true)
 		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
 	else
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
@@ -237,7 +237,7 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
 #endif
 
-	return True;
+	return true;
 }
 
 rdpTcp* tcp_new(rdpSettings* settings)

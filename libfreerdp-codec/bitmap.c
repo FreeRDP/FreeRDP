@@ -372,7 +372,7 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 	code = IN_UINT8_MV(srcData);
 	RLE = code & 0x10;
 	if (RLE == 0)
-		return False;
+		return false;
 	total_pro = 1;
 	NA = code & 0x20;
 	if (NA == 0)
@@ -389,7 +389,7 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 	srcData += bytes_pro;
 	bytes_pro = process_plane(srcData, width, height, dstData + 0, size - total_pro);
 	total_pro += bytes_pro;
-	return (size == total_pro) ? True : False;
+	return (size == total_pro) ? true : false;
 }
 
 /**
@@ -426,7 +426,7 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
 		if (!bitmap_decompress4(srcData, dstData, width, height, size))
-			return False;
+			return false;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
@@ -451,8 +451,8 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	}
 	else
 	{
-		return False;
+		return false;
 	}
 
-	return True;
+	return true;
 }

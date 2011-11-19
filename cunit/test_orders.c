@@ -188,7 +188,7 @@ void test_read_draw_nine_grid_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x1C;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&draw_nine_grid, 0, sizeof(DRAW_NINE_GRID_ORDER));
 	draw_nine_grid.srcRight = 38;
@@ -268,7 +268,7 @@ void test_read_line_to_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x021E;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&line_to, 0, sizeof(LINE_TO_ORDER));
 	line_to.nXStart = 826;
@@ -410,7 +410,7 @@ void test_read_glyph_index_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x200100;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
@@ -424,7 +424,7 @@ void test_read_glyph_index_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x383FE8;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
@@ -567,7 +567,7 @@ void test_read_cache_bitmap_order(void)
 
 	memset(&cache_bitmap, 0, sizeof(CACHE_BITMAP_ORDER));
 
-	update_read_cache_bitmap_order(s, &cache_bitmap, True, extraFlags);
+	update_read_cache_bitmap_order(s, &cache_bitmap, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap.cacheId == 0);
 	CU_ASSERT(cache_bitmap.bitmapWidth == 16);
@@ -608,7 +608,7 @@ void test_read_cache_bitmap_v2_order(void)
 
 	memset(&cache_bitmap_v2, 0, sizeof(CACHE_BITMAP_V2_ORDER));
 
-	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, True, extraFlags);
+	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap_v2.cacheId == 1);
 	CU_ASSERT(cache_bitmap_v2.bitmapBpp == 16);
@@ -639,7 +639,7 @@ void test_read_cache_bitmap_v3_order(void)
 
 	memset(&cache_bitmap_v3, 0, sizeof(CACHE_BITMAP_V3_ORDER));
 
-	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, True, extraFlags);
+	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap_v3.cacheIndex == 32767);
 	CU_ASSERT(cache_bitmap_v3.key1 == 0xBCEC5035);

@@ -45,9 +45,9 @@ boolean freerdp_connect(freerdp* instance)
 	{
 		if (instance->settings->dump_rfx)
 		{
-			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, True);
+			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, true);
 			if (instance->update->pcap_rfx)
-				instance->update->dump_rfx = True;
+				instance->update->dump_rfx = true;
 		}
 
 		extension_post_connect(rdp->extension);
@@ -61,9 +61,9 @@ boolean freerdp_connect(freerdp* instance)
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, False);
+			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, false);
 			if (instance->update->pcap_rfx)
-				instance->update->play_rfx = True;
+				instance->update->play_rfx = true;
 			update = instance->update;
 
 			while (instance->update->play_rfx && pcap_has_next_record(update->pcap_rfx))
@@ -83,7 +83,7 @@ boolean freerdp_connect(freerdp* instance)
 			}
 
 			xfree(s->data);
-			return True;
+			return true;
 		}
 	}
 
@@ -97,7 +97,7 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 	rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
 
-	return True;
+	return true;
 }
 
 boolean freerdp_check_fds(freerdp* instance)
@@ -110,9 +110,9 @@ boolean freerdp_check_fds(freerdp* instance)
 	status = rdp_check_fds(rdp);
 
 	if (status < 0)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
@@ -127,7 +127,7 @@ boolean freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
 
-	return True;
+	return true;
 }
 
 void freerdp_context_new(freerdp* instance)

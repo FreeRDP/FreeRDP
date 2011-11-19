@@ -2,7 +2,7 @@
 # Find the XDAMAGE libraries
 #
 #  This module defines the following variables:
-#     XDAMAGE_FOUND        - True if XDAMAGE_INCLUDE_DIR & XDAMAGE_LIBRARY are found
+#     XDAMAGE_FOUND        - true if XDAMAGE_INCLUDE_DIR & XDAMAGE_LIBRARY are found
 #     XDAMAGE_LIBRARIES    - Set when XDAMAGE_LIBRARY is found
 #     XDAMAGE_INCLUDE_DIRS - Set when XDAMAGE_INCLUDE_DIR is found
 #

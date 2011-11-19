@@ -122,7 +122,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	{
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
-			xv->xv_colorkey_atom = XInternAtom(xfi->display, "XV_COLORKEY", False);
+			xv->xv_colorkey_atom = XInternAtom(xfi->display, "XV_COLORKEY", false);
 			XvSetPortAttribute(xfi->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
 			break;
 		}
@@ -179,15 +179,15 @@ xf_tsmf_is_format_supported(xfXvContext* xv, uint32 pixfmt)
 	int i;
 
 	if (!xv->xv_pixfmts)
-		return False;
+		return false;
 
 	for (i = 0; xv->xv_pixfmts[i]; i++)
 	{
 		if (xv->xv_pixfmts[i] == pixfmt)
-			return True;
+			return true;
 	}
 
-	return False;
+	return false;
 }
 
 static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT* vevent)
@@ -240,7 +240,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	}
 	shminfo.shmid = xv->xv_shmid;
 	shminfo.shmaddr = image->data = xv->xv_shmaddr;
-	shminfo.readOnly = False;
+	shminfo.readOnly = false;
 
 	if (!XShmAttach(xfi->display, &shminfo))
 	{
@@ -323,8 +323,8 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 
 	XvShmPutImage(xfi->display, xv->xv_port, xfi->window->handle, xfi->gc, image,
 		0, 0, image->width, image->height,
-		vevent->x, vevent->y, vevent->width, vevent->height, False);
-	XSync(xfi->display, False);
+		vevent->x, vevent->y, vevent->width, vevent->height, false);
+	XSync(xfi->display, false);
 
 	XShmDetach(xfi->display, &shminfo);
 	XFree(image);

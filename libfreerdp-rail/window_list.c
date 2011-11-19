@@ -34,10 +34,10 @@ boolean window_list_has_next(rdpWindowList* list)
 	if (list->iterator != NULL)
 	{
 		if (list->iterator != NULL)
-			return True;
+			return true;
 	}
 
-	return False;
+	return false;
 }
 
 rdpWindow* window_list_get_next(rdpWindowList* list)

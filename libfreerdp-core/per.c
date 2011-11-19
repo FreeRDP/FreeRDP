@@ -44,7 +44,7 @@ boolean per_read_length(STREAM* s, uint16* length)
 		*length = byte;
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -71,7 +71,7 @@ void per_write_length(STREAM* s, int length)
 boolean per_read_choice(STREAM* s, uint8* choice)
 {
 	stream_read_uint8(s, *choice);
-	return True;
+	return true;
 }
 
 /**
@@ -95,7 +95,7 @@ void per_write_choice(STREAM* s, uint8 choice)
 boolean per_read_selection(STREAM* s, uint8* selection)
 {
 	stream_read_uint8(s, *selection);
-	return True;
+	return true;
 }
 
 /**
@@ -119,7 +119,7 @@ void per_write_selection(STREAM* s, uint8 selection)
 boolean per_read_number_of_sets(STREAM* s, uint8* number)
 {
 	stream_read_uint8(s, *number);
-	return True;
+	return true;
 }
 
 /**
@@ -143,7 +143,7 @@ boolean per_read_padding(STREAM* s, int length)
 {
 	stream_seek(s, length);
 
-	return True;
+	return true;
 }
 
 /**
@@ -178,9 +178,9 @@ boolean per_read_integer(STREAM* s, uint32* integer)
 	else if (length == 2)
 		stream_read_uint16_be(s, *integer);
 	else
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 /**
@@ -221,11 +221,11 @@ boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
 	stream_read_uint16_be(s, *integer);
 
 	if (*integer + min > 0xFFFF)
-		return False;
+		return false;
 
 	*integer += min;
 
-	return True;
+	return true;
 }
 
 /**
@@ -254,9 +254,9 @@ boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 /**
@@ -289,7 +289,7 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 	per_read_length(s, &length); /* length */
 
 	if (length != 5)
-		return False;
+		return false;
 
 	stream_read_uint8(s, t12); /* first two tuples */
 	a_oid[0] = (t12 >> 4);
@@ -304,11 +304,11 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
 		(a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
 	{
-		return True;
+		return true;
 	}
 	else
 	{
-		return False;
+		return false;
 	}
 }
 
@@ -362,7 +362,7 @@ boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	per_read_length(s, &mlength);
 
 	if (mlength + min != length)
-		return False;
+		return false;
 
 	a_oct_str = s->p;
 	stream_seek(s, length);
@@ -370,10 +370,10 @@ boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	for (i = 0; i < length; i++)
 	{
 		if (a_oct_str[i] != oct_str[i])
-			return False;
+			return false;
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -420,7 +420,7 @@ boolean per_read_numeric_string(STREAM* s, int min)
 		stream_seek(s, 1);
 	}
 
-	return True;
+	return true;
 }
 
 /**

@@ -41,73 +41,73 @@ rdpSettings* settings_new(void* instance)
 
 		settings->width = 1024;
 		settings->height = 768;
-		settings->workarea = False;
-		settings->fullscreen = False;
-		settings->grab_keyboard = True;
-		settings->decorations = True;
+		settings->workarea = false;
+		settings->fullscreen = false;
+		settings->grab_keyboard = true;
+		settings->decorations = true;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;
-		settings->nla_security = True;
-		settings->tls_security = True;
-		settings->rdp_security = True;
+		settings->nla_security = true;
+		settings->tls_security = true;
+		settings->rdp_security = true;
 		settings->client_build = 2600;
 		settings->kbd_type = 0;
 		settings->kbd_subtype = 0;
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0x409;
-		settings->encryption = False;
+		settings->encryption = false;
 		settings->port = 3389;
-		settings->desktop_resize = True;
+		settings->desktop_resize = true;
 
 		settings->performance_flags =
 				PERF_DISABLE_FULLWINDOWDRAG |
 				PERF_DISABLE_MENUANIMATIONS |
 				PERF_DISABLE_WALLPAPER;
 
-		settings->auto_reconnection = True;
+		settings->auto_reconnection = true;
 
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
-		settings->authentication = True;
+		settings->authentication = true;
 
-		settings->order_support[NEG_DSTBLT_INDEX] = True;
-		settings->order_support[NEG_PATBLT_INDEX] = True;
-		settings->order_support[NEG_SCRBLT_INDEX] = True;
-		settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
-		settings->order_support[NEG_DRAWNINEGRID_INDEX] = True;
-		settings->order_support[NEG_MULTIDSTBLT_INDEX] = True;
-		settings->order_support[NEG_MULTIPATBLT_INDEX] = True;
-		settings->order_support[NEG_MULTISCRBLT_INDEX] = True;
-		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
-		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = True;
-		settings->order_support[NEG_LINETO_INDEX] = True;
-		settings->order_support[NEG_POLYLINE_INDEX] = True;
-		settings->order_support[NEG_MEMBLT_INDEX] = True;
-		settings->order_support[NEG_MEM3BLT_INDEX] = True;
-		settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
-		settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
-		settings->order_support[NEG_FAST_INDEX_INDEX] = True;
-		settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
-		settings->order_support[NEG_POLYGON_SC_INDEX] = True;
-		settings->order_support[NEG_POLYGON_CB_INDEX] = True;
-		settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
-		settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
+		settings->order_support[NEG_DSTBLT_INDEX] = true;
+		settings->order_support[NEG_PATBLT_INDEX] = true;
+		settings->order_support[NEG_SCRBLT_INDEX] = true;
+		settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
+		settings->order_support[NEG_DRAWNINEGRID_INDEX] = true;
+		settings->order_support[NEG_MULTIDSTBLT_INDEX] = true;
+		settings->order_support[NEG_MULTIPATBLT_INDEX] = true;
+		settings->order_support[NEG_MULTISCRBLT_INDEX] = true;
+		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
+		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = true;
+		settings->order_support[NEG_LINETO_INDEX] = true;
+		settings->order_support[NEG_POLYLINE_INDEX] = true;
+		settings->order_support[NEG_MEMBLT_INDEX] = true;
+		settings->order_support[NEG_MEM3BLT_INDEX] = true;
+		settings->order_support[NEG_SAVEBITMAP_INDEX] = true;
+		settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
+		settings->order_support[NEG_FAST_INDEX_INDEX] = true;
+		settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
+		settings->order_support[NEG_POLYGON_SC_INDEX] = true;
+		settings->order_support[NEG_POLYGON_CB_INDEX] = true;
+		settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
+		settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
 
-		settings->color_pointer = True;
-		settings->large_pointer = True;
+		settings->color_pointer = true;
+		settings->large_pointer = true;
 		settings->pointer_cache_size = 32;
 
-		settings->draw_gdi_plus = False;
+		settings->draw_gdi_plus = false;
 
-		settings->frame_marker = False;
-		settings->bitmap_cache_v3 = False;
+		settings->frame_marker = false;
+		settings->bitmap_cache_v3 = false;
 
-		settings->bitmap_cache = True;
-		settings->persistent_bitmap_cache = False;
+		settings->bitmap_cache = true;
+		settings->persistent_bitmap_cache = false;
 
-		settings->refresh_rect = True;
-		settings->suppress_output = True;
+		settings->refresh_rect = true;
+		settings->suppress_output = true;
 
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 		settings->glyphCache[0].cacheEntries = 254;
@@ -133,7 +133,7 @@ rdpSettings* settings_new(void* instance)
 		settings->fragCache.cacheEntries = 64;
 		settings->fragCache.cacheMaximumCellSize = 248;
 
-		settings->offscreen_bitmap_cache = True;
+		settings->offscreen_bitmap_cache = true;
 		settings->offscreen_bitmap_cache_size = 7680;
 		settings->offscreen_bitmap_cache_entries = 100;
 
@@ -149,12 +149,12 @@ rdpSettings* settings_new(void* instance)
 
 		settings->multifrag_max_request_size = 0x200000;
 
-		settings->fastpath_input = True;
-		settings->fastpath_output = True;
+		settings->fastpath_input = true;
+		settings->fastpath_output = true;
 
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
-		settings->mouse_motion = True;
+		settings->mouse_motion = true;
 	}
 
 	return settings;

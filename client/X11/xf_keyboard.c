@@ -89,7 +89,7 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 
 		input->KeyboardEvent(input, flags, scancode);
 
-		if ((scancode == 0x3A) && (down == False)) /* caps lock was released */
+		if ((scancode == 0x3A) && (down == false)) /* caps lock was released */
 		{
 			uint32 syncFlags;
 			syncFlags = xf_kbd_get_toggle_keys_state(xfi);
@@ -104,7 +104,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 	Window wdummy;
 	uint32 state = 0;
 
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
@@ -120,7 +120,7 @@ boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 	KeyCode keycode = XKeysymToKeycode(xfi->display, keysym);
 
 	if (keycode == NoSymbol)
-		return False;
+		return false;
 
 	for (modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
@@ -134,7 +134,7 @@ boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 		}
 	}
 
-	return (state & keysymMask) ? True : False;
+	return (state & keysymMask) ? true : false;
 }
 
 int xf_kbd_get_toggle_keys_state(xfInfo* xfi)
@@ -179,10 +179,10 @@ boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		{
 			/* Ctrl-Alt-Enter: toggle full screen */
 			xf_toggle_fullscreen(xfi);
-			return True;
+			return true;
 		}
 	}
 
-	return False;
+	return false;
 }
 

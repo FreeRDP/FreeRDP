@@ -99,6 +99,10 @@ check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
 check_include_files(netdb.h HAVE_NETDB_H)
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(limits.h HAVE_LIMITS_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(stdbool.h HAVE_STDBOOL_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
 
 # Libraries that we have a hard dependency on
 find_required_package(OpenSSL)

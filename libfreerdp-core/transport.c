@@ -79,7 +79,7 @@ boolean transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
-	return True;
+	return true;
 }
 
 boolean transport_connect_tls(rdpTransport* transport)
@@ -90,10 +90,10 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != True)
-		return False;
+	if (tls_connect(transport->tls) != true)
+		return false;
 
-	return True;
+	return true;
 }
 
 boolean transport_connect_nla(rdpTransport* transport)
@@ -104,13 +104,13 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != True)
-		return False;
+	if (tls_connect(transport->tls) != true)
+		return false;
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != True)
-		return True;
+	if (transport->settings->authentication != true)
+		return true;
 
 	if (transport->credssp == NULL)
 		transport->credssp = credssp_new(transport);
@@ -121,19 +121,19 @@ boolean transport_connect_nla(rdpTransport* transport)
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
-		return False;
+		return false;
 	}
 
 	credssp_free(transport->credssp);
 
-	return True;
+	return true;
 }
 
 boolean transport_accept_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
-	return True;
+	return true;
 }
 
 boolean transport_accept_tls(rdpTransport* transport)
@@ -144,10 +144,10 @@ boolean transport_accept_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
-		return False;
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != true)
+		return false;
 
-	return True;
+	return true;
 }
 
 boolean transport_accept_nla(rdpTransport* transport)
@@ -158,24 +158,24 @@ boolean transport_accept_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != True)
-		return False;
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != true)
+		return false;
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != True)
-		return True;
+	if (transport->settings->authentication != true)
+		return true;
 
 	/* Blocking here until NLA is complete */
 
-	return True;
+	return true;
 }
 
 int transport_read(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
 
-	while (True)
+	while (true)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
 			status = tls_read(transport->tls, stream_get_tail(s), stream_get_left(s));
@@ -347,7 +347,7 @@ int transport_check_fds(rdpTransport* transport)
 		stream_seal(received);
 		stream_set_pos(received, 0);
 		
-		if (transport->recv_callback(transport, received, transport->recv_extra) == False)
+		if (transport->recv_callback(transport, received, transport->recv_extra) == false)
 			status = -1;
 	
 		stream_free(received);
@@ -387,7 +387,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->recv_stream = stream_new(BUFFER_SIZE);
 		transport->send_stream = stream_new(BUFFER_SIZE);
 
-		transport->blocking = True;
+		transport->blocking = true;
 
 		transport->layer = TRANSPORT_LAYER_TCP;
 	}

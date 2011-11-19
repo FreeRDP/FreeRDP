@@ -2,7 +2,7 @@
 # Find the Xext libraries
 #
 #  This module defines the following variables:
-#     Xext_FOUND        - True if Xext_INCLUDE_DIR & Xext_LIBRARY are found
+#     Xext_FOUND        - true if Xext_INCLUDE_DIR & Xext_LIBRARY are found
 #     Xext_LIBRARIES    - Set when Xext_LIBRARY is found
 #     Xext_INCLUDE_DIRS - Set when Xext_INCLUDE_DIR is found
 #

@@ -84,7 +84,7 @@ boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
 
 			default:
 				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
-				return False;
+				return false;
 		}
 
 		size -= cmdLength;
@@ -95,7 +95,7 @@ boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
 			pcap_flush(update->pcap_rfx);
 		}
 	}
-	return True;
+	return true;
 }
 
 void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd)

@@ -230,7 +230,7 @@ static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 ne
 	{
 		*old_sec = new_sec;
 		*old_usec = new_usec;
-		return True;
+		return true;
 	}
 
 	sec = new_sec - *old_sec;
@@ -239,7 +239,7 @@ static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 ne
 	if (sec < 0 || (sec == 0 && usec < 0))
 	{
 		printf("Invalid time stamp detected.\n");
-		return False;
+		return false;
 	}
 
 	*old_sec = new_sec;
@@ -257,7 +257,7 @@ static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 ne
 	if (usec > 0)
 		freerdp_usleep(usec);
 
-	return True;
+	return true;
 }
 
 void xf_peer_dump_rfx(freerdp_peer* client)
@@ -271,7 +271,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 
 	s = stream_new(512);
 	update = client->update;
-	client->update->pcap_rfx = pcap_open(xf_pcap_file, False);
+	client->update->pcap_rfx = pcap_open(xf_pcap_file, false);
 	pcap_rfx = client->update->pcap_rfx;
 
 	if (pcap_rfx == NULL)
@@ -290,7 +290,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 		pcap_get_next_record_content(pcap_rfx, &record);
 		s->p = s->data + s->size;
 
-		if (xf_pcap_dump_realtime && xf_peer_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == False)
+		if (xf_pcap_dump_realtime && xf_peer_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == false)
                         break;
 
 		update->SurfaceCommand(update, s);
@@ -330,10 +330,10 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 	client->settings->width = xfi->width;
 	client->settings->height = xfi->height;
 	client->update->DesktopResize(client->update);
-	xfp->activated = False;
+	xfp->activated = false;
 
-	/* Return False here would stop the execution of the peer mainloop. */
-	return True;
+	/* Return false here would stop the execution of the peer mainloop. */
+	return true;
 }
 
 boolean xf_peer_activate(freerdp_peer* client)
@@ -341,11 +341,11 @@ boolean xf_peer_activate(freerdp_peer* client)
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
 	rfx_context_reset(xfp->rfx_context);
-	xfp->activated = True;
+	xfp->activated = true;
 
 	if (xf_pcap_file != NULL)
 	{
-		client->update->dump_rfx = True;
+		client->update->dump_rfx = true;
 		xf_peer_dump_rfx(client);
 	}
 	else
@@ -353,7 +353,7 @@ boolean xf_peer_activate(freerdp_peer* client)
 		xf_peer_live_rfx(client);
 	}
 
-	return True;
+	return true;
 }
 
 void xf_peer_synchronize_event(rdpInput* input, uint32 flags)
@@ -382,7 +382,7 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->height = 480;
 		}
 		update->DesktopResize(update);
-		xfp->activated = False;
+		xfp->activated = false;
 	}
 }
 
@@ -420,8 +420,8 @@ void* xf_peer_main_loop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
-	client->settings->nla_security = False;
-	client->settings->rfx_codec = True;
+	client->settings->nla_security = false;
+	client->settings->rfx_codec = true;
 
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
@@ -438,7 +438,7 @@ void* xf_peer_main_loop(void* arg)
 	{
 		rcount = 0;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != True)
+		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -473,7 +473,7 @@ void* xf_peer_main_loop(void* arg)
 			}
 		}
 
-		if (client->CheckFileDescriptor(client) != True)
+		if (client->CheckFileDescriptor(client) != true)
 			break;
 	}
 

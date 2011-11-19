@@ -69,13 +69,13 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 		bitmap_data->bitmapLength = cbCompMainBodySize;
 
-		bitmap_data->compressed = True;
+		bitmap_data->compressed = true;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
 		stream_seek(s, bitmap_data->bitmapLength);
 	}
 	else
 	{
-		bitmap_data->compressed = False;
+		bitmap_data->compressed = false;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
 		stream_seek(s, bitmap_data->bitmapLength);
 	}

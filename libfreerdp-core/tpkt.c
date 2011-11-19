@@ -65,9 +65,9 @@ boolean tpkt_verify_header(STREAM* s)
 
 	stream_peek_uint8(s, version);
 	if (version == 3)
-		return True;
+		return true;
 	else
-		return False;
+		return false;
 }
 
 /**
