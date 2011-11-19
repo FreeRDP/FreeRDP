@@ -619,6 +619,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
+	uint16 pduSource;
 	uint16 channelId;
 	uint32 securityHeader;
 
@@ -652,7 +653,9 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source);
+		rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource);
+
+		rdp->settings->pdu_source = pduSource;
 
 		switch (pduType)
 		{

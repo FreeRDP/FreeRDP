@@ -183,7 +183,7 @@ struct rdp_monitor
 struct rdp_settings
 {
 	void* instance;
-	uint32 paddingA[16 - 1];
+	uint32 paddingA[16 - 1]; /* offset 16 */
 
 	/* Core Protocol Parameters */
 	uint32 width;
@@ -200,7 +200,7 @@ struct rdp_settings
 	uint32 encryption_method;
 	uint32 encryption_level;
 	boolean authentication;
-	uint32 paddingB[32 - 14];
+	uint32 paddingB[32 - 14]; /* offset 48 */
 
 	/* Connection Settings */
 	uint32 port;
@@ -216,7 +216,7 @@ struct rdp_settings
 	boolean autologon;
 	boolean compression;
 	uint32 performance_flags;
-	uint32 paddingC[32 - 13];
+	uint32 paddingC[32 - 13]; /* offset 80 */
 
 	/* User Interface Parameters */
 	boolean sw_gdi;
@@ -226,7 +226,7 @@ struct rdp_settings
 	boolean decorations;
 	uint32 percent_screen;
 	boolean mouse_motion;
-	uint32 paddingD[32 - 7];
+	uint32 paddingD[32 - 7]; /* offset 112 */
 
 	/* Internal Parameters */
 	char* home_path;
@@ -234,7 +234,7 @@ struct rdp_settings
 	uint32 pdu_source;
 	UNICONV* uniconv;
 	boolean server_mode;
-	uint32 paddingE[32 - 5];
+	uint32 paddingE[32 - 5]; /* offset 144 */
 
 	/* Session */
 	boolean console_audio;

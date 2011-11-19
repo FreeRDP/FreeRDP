@@ -115,6 +115,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
+	uint16 pduSource;
 	uint16 channelId;
 
 	if (!rdp_read_header(client->context->rdp, s, &length, &channelId))
@@ -129,8 +130,10 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	}
 	else
 	{
-		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &client->settings->pdu_source))
+		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			return False;
+
+		client->settings->pdu_source = pduSource;
 
 		switch (pduType)
 		{

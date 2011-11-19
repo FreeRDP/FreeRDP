@@ -58,9 +58,11 @@ struct rdp_context
 {
 	freerdp* instance;
 	freerdp_peer* peer;
+	uint32 paddingA[16 - 2]; /* offset 16 */
 
 	int argc;
 	char** argv;
+	uint32 paddingB[16 - 2]; /* offset 32 */
 
 	rdpRdp* rdp;
 	rdpGdi* gdi;
@@ -68,27 +70,33 @@ struct rdp_context
 	rdpCache* cache;
 	rdpChannels* channels;
 	rdpGraphics* graphics;
+	uint32 paddingC[32 - 6]; /* offset 64 */
 };
 
 struct rdp_freerdp
 {
 	rdpContext* context;
+	uint32 paddingA[16 - 1]; /* offset 16 */
 
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
+	uint32 paddingB[16 - 3]; /* offset 32 */
 
 	size_t context_size;
 	pContextNew ContextNew;
 	pContextFree ContextFree;
+	uint32 paddingC[16 - 3]; /* offset 48 */
 
 	pPreConnect PreConnect;
 	pPostConnect PostConnect;
 	pAuthenticate Authenticate;
 	pVerifyCertificate VerifyCertificate;
+	uint32 paddingD[16 - 4]; /* offset 64 */
 
 	pSendChannelData SendChannelData;
 	pReceiveChannelData ReceiveChannelData;
+	uint32 paddingE[16 - 2]; /* offset 80 */
 };
 
 FREERDP_API void freerdp_context_new(freerdp* instance);

@@ -1739,6 +1739,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	uint16 channelId;
 	uint16 pduType;
 	uint16 pduLength;
+	uint16 pduSource;
 	uint16 numberCapabilities;
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
@@ -1771,11 +1772,13 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 		return False;
 	}
 
-	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 	{
 		printf("rdp_read_share_control_header failed\n");
 		return False;
 	}
+
+	rdp->settings->pdu_source = pduSource;
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
@@ -1870,6 +1873,7 @@ boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 	uint16 channelId;
 	uint16 pduType;
 	uint16 pduLength;
+	uint16 pduSource;
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
 	uint16 numberCapabilities;
@@ -1879,8 +1883,11 @@ boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 		return False;
 
-	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &rdp->settings->pdu_source))
+	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 		return False;
+
+	rdp->settings->pdu_source = pduSource;
+
 	if (pduType != PDU_TYPE_CONFIRM_ACTIVE)
 		return False;
 
