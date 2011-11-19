@@ -46,7 +46,7 @@ struct rdp_bitmap
 	pBitmap_Paint Paint;
 	pBitmap_Decompress Decompress;
 	pBitmap_SetSurface SetSurface;
-	uint32 paddingA[16 - 6]; /* offset 64 */
+	uint32 paddingA[16 - 12]; /* offset 64 */
 
 	uint32 left;
 	uint32 top;
@@ -58,7 +58,7 @@ struct rdp_bitmap
 	uint32 flags;
 	uint32 length;
 	uint8* data;
-	uint32 paddingB[16 - 10]; /* offset 128 */
+	uint32 paddingB[16 - 12]; /* offset 128 */
 
 	boolean compressed;
 	boolean ephemeral;
@@ -88,7 +88,7 @@ struct rdp_pointer
 	pPointer_New New;
 	pPointer_Free Free;
 	pPointer_Set Set;
-	uint32 paddingA[16 - 4]; /* offset 64 */
+	uint32 paddingA[16 - 8]; /* offset 64 */
 
 	uint32 xPos;
 	uint32 yPos;
@@ -99,7 +99,7 @@ struct rdp_pointer
 	uint32 lengthXorMask;
 	uint8* xorMaskData;
 	uint8* andMaskData;
-	uint32 paddingB[16 - 9]; /* offset 128 */
+	uint32 paddingB[16 - 11]; /* offset 128 */
 };
 
 FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
@@ -123,7 +123,7 @@ struct rdp_glyph
 	pGlyph_Draw Draw;
 	pGlyph_BeginDraw BeginDraw;
 	pGlyph_EndDraw EndDraw;
-	uint32 paddingA[16 - 6]; /* offset 64 */
+	uint32 paddingA[16 - 12]; /* offset 64 */
 
 	sint32 x;
 	sint32 y;
@@ -131,7 +131,7 @@ struct rdp_glyph
 	uint32 cy;
 	uint32 cb;
 	uint8* aj;
-	uint32 paddingB[16 - 6]; /* offset 128 */
+	uint32 paddingB[16 - 7]; /* offset 128 */
 };
 
 FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
@@ -149,7 +149,7 @@ struct rdp_graphics
 	rdpBitmap* Bitmap_Prototype;
 	rdpPointer* Pointer_Prototype;
 	rdpGlyph* Glyph_Prototype;
-	uint32 paddingA[16 - 4]; /* offset 64 */
+	uint32 paddingA[16 - 8]; /* offset 64 */
 };
 
 FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap);
