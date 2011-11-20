@@ -1140,92 +1140,92 @@ typedef void (*pSurfaceCommand)(rdpUpdate* update, STREAM* s);
 
 struct rdp_update
 {
-	rdpContext* context;
-	uint32 paddingA[16 - 1]; /* offset 64 */
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
 
-	pBeginPaint BeginPaint;
-	pEndPaint EndPaint;
-	pSetBounds SetBounds;
-	pSynchronize Synchronize;
-	pDesktopResize DesktopResize;
-	pBitmapUpdate BitmapUpdate;
-	pPalette Palette;
-	pPlaySound PlaySound;
-	uint32 paddingB[16 - 8]; /* offset 128 */
+	pBeginPaint BeginPaint; /* 16 */
+	pEndPaint EndPaint; /* 17 */
+	pSetBounds SetBounds; /* 18 */
+	pSynchronize Synchronize; /* 19 */
+	pDesktopResize DesktopResize; /* 20 */
+	pBitmapUpdate BitmapUpdate; /* 21 */
+	pPalette Palette; /* 22 */
+	pPlaySound PlaySound; /* 23 */
+	uint32 paddingB[32 - 24]; /* 24 */
 
-	pPointerPosition PointerPosition;
-	pPointerSystem PointerSystem;
-	pPointerColor PointerColor;
-	pPointerNew PointerNew;
-	pPointerCached PointerCached;
-	uint32 paddingC[16 - 5]; /* offset 192 */
+	pPointerPosition PointerPosition; /* 32 */
+	pPointerSystem PointerSystem; /* 33 */
+	pPointerColor PointerColor; /* 34 */
+	pPointerNew PointerNew; /* 35 */
+	pPointerCached PointerCached; /* 36 */
+	uint32 paddingC[48 - 37]; /* 37 */
 
-	pDstBlt DstBlt;
-	pPatBlt PatBlt;
-	pScrBlt ScrBlt;
-	pOpaqueRect OpaqueRect;
-	pDrawNineGrid DrawNineGrid;
-	pMultiDstBlt MultiDstBlt;
-	pMultiPatBlt MultiPatBlt;
-	pMultiScrBlt MultiScrBlt;
-	pMultiOpaqueRect MultiOpaqueRect;
-	pMultiDrawNineGrid MultiDrawNineGrid;
-	pLineTo LineTo;
-	pPolyline Polyline;
-	pMemBlt MemBlt;
-	pMem3Blt Mem3Blt;
-	pSaveBitmap SaveBitmap;
-	pGlyphIndex GlyphIndex;
-	pFastIndex FastIndex;
-	pFastGlyph FastGlyph;
-	pPolygonSC PolygonSC;
-	pPolygonCB PolygonCB;
-	pEllipseSC EllipseSC;
-	pEllipseCB EllipseCB;
-	uint32 paddingD[32 - 22]; /* offset 320 */
+	pDstBlt DstBlt; /* 48 */
+	pPatBlt PatBlt; /* 49 */
+	pScrBlt ScrBlt; /* 50 */
+	pOpaqueRect OpaqueRect; /* 51 */
+	pDrawNineGrid DrawNineGrid; /* 52 */
+	pMultiDstBlt MultiDstBlt; /* 53 */
+	pMultiPatBlt MultiPatBlt; /* 54 */
+	pMultiScrBlt MultiScrBlt; /* 55 */
+	pMultiOpaqueRect MultiOpaqueRect; /* 56 */
+	pMultiDrawNineGrid MultiDrawNineGrid; /* 57 */
+	pLineTo LineTo; /* 58 */
+	pPolyline Polyline; /* 59 */
+	pMemBlt MemBlt; /* 60 */
+	pMem3Blt Mem3Blt; /* 61 */
+	pSaveBitmap SaveBitmap; /* 62 */
+	pGlyphIndex GlyphIndex; /* 63 */
+	pFastIndex FastIndex; /* 64 */
+	pFastGlyph FastGlyph; /* 65 */
+	pPolygonSC PolygonSC; /* 66 */
+	pPolygonCB PolygonCB; /* 67 */
+	pEllipseSC EllipseSC; /* 68 */
+	pEllipseCB EllipseCB; /* 69 */
+	uint32 paddingD[80 - 70]; /* 70 */
 
-	pCacheBitmap CacheBitmap;
-	pCacheBitmapV2 CacheBitmapV2;
-	pCacheBitmapV3 CacheBitmapV3;
-	pCacheColorTable CacheColorTable;
-	pCacheGlyph CacheGlyph;
-	pCacheGlyphV2 CacheGlyphV2;
-	pCacheBrush CacheBrush;
-	uint32 paddingE[32 - 7]; /* offset 448 */
+	pCacheBitmap CacheBitmap; /* 80 */
+	pCacheBitmapV2 CacheBitmapV2; /* 81 */
+	pCacheBitmapV3 CacheBitmapV3; /* 82 */
+	pCacheColorTable CacheColorTable; /* 83 */
+	pCacheGlyph CacheGlyph; /* 84 */
+	pCacheGlyphV2 CacheGlyphV2; /* 85 */
+	pCacheBrush CacheBrush; /* 86 */
+	uint32 paddingE[112 - 87]; /* 87 */
 
-	pCreateOffscreenBitmap CreateOffscreenBitmap;
-	pSwitchSurface SwitchSurface;
-	pCreateNineGridBitmap CreateNineGridBitmap;
-	pFrameMarker FrameMarker;
-	pStreamBitmapFirst StreamBitmapFirst;
-	pStreamBitmapNext StreamBitmapNext;
-	pDrawGdiPlusFirst DrawGdiPlusFirst;
-	pDrawGdiPlusNext DrawGdiPlusNext;
-	pDrawGdiPlusEnd DrawGdiPlusEnd;
-	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst;
-	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
-	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
-	uint32 paddingF[32 - 12]; /* offset 576 */
+	pCreateOffscreenBitmap CreateOffscreenBitmap; /* 112 */
+	pSwitchSurface SwitchSurface; /* 113 */
+	pCreateNineGridBitmap CreateNineGridBitmap; /* 114 */
+	pFrameMarker FrameMarker; /* 115 */
+	pStreamBitmapFirst StreamBitmapFirst; /* 116 */
+	pStreamBitmapNext StreamBitmapNext; /* 117 */
+	pDrawGdiPlusFirst DrawGdiPlusFirst; /* 118 */
+	pDrawGdiPlusNext DrawGdiPlusNext; /* 119 */
+	pDrawGdiPlusEnd DrawGdiPlusEnd; /* 120 */
+	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 121 */
+	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext; /* 122 */
+	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd; /* 123 */
+	uint32 paddingF[144 - 124]; /* 124 */
 
-	pWindowCreate WindowCreate;
-	pWindowUpdate WindowUpdate;
-	pWindowIcon WindowIcon;
-	pWindowCachedIcon WindowCachedIcon;
-	pWindowDelete WindowDelete;
-	pNotifyIconCreate NotifyIconCreate;
-	pNotifyIconUpdate NotifyIconUpdate;
-	pNotifyIconDelete NotifyIconDelete;
-	pMonitoredDesktop MonitoredDesktop;
-	pNonMonitoredDesktop NonMonitoredDesktop;
-	uint32 paddingG[32 - 10]; /* offset 704 */
+	pWindowCreate WindowCreate; /* 144 */
+	pWindowUpdate WindowUpdate; /* 145 */
+	pWindowIcon WindowIcon; /* 146 */
+	pWindowCachedIcon WindowCachedIcon; /* 147 */
+	pWindowDelete WindowDelete; /* 148 */
+	pNotifyIconCreate NotifyIconCreate; /* 149 */
+	pNotifyIconUpdate NotifyIconUpdate; /* 150 */
+	pNotifyIconDelete NotifyIconDelete; /* 151 */
+	pMonitoredDesktop MonitoredDesktop; /* 152 */
+	pNonMonitoredDesktop NonMonitoredDesktop; /* 153 */
+	uint32 paddingG[176 - 154]; /* 154 */
 
-	pRefreshRect RefreshRect;
-	pSuppressOutput SuppressOutput;
-	uint32 paddingH[16 - 2]; /* offset 768 */
+	pRefreshRect RefreshRect; /* 176 */
+	pSuppressOutput SuppressOutput; /* 177 */
+	uint32 paddingH[192 - 178]; /* 178 */
 
-	pSurfaceBits SurfaceBits;
-	pSurfaceCommand SurfaceCommand;
-	uint32 paddingI[16 - 2]; /* offset 832 */
+	pSurfaceBits SurfaceBits; /* 192 */
+	pSurfaceCommand SurfaceCommand; /* 193 */
+	uint32 paddingI[208 - 194]; /* 194 */
 
 	/* everything below is internal, and should not be directly accessed */
 

@@ -56,47 +56,47 @@ typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data
 
 struct rdp_context
 {
-	freerdp* instance;
-	freerdp_peer* peer;
-	uint32 paddingA[16 - 4]; /* offset 64 */
+	freerdp* instance; /* 0 */
+	freerdp_peer* peer; /* 1 */
+	uint32 paddingA[16 - 2]; /* 2 */
 
-	int argc;
-	char** argv;
-	uint32 paddingB[16 - 3]; /* offset 128 */
+	int argc; /* 16 */
+	char** argv; /* 17 */
+	uint32 paddingB[32 - 18]; /* 18 */
 
-	rdpRdp* rdp;
-	rdpGdi* gdi;
-	rdpRail* rail;
-	rdpCache* cache;
-	rdpChannels* channels;
-	rdpGraphics* graphics;
-	uint32 paddingC[32 - 12]; /* offset 256 */
+	rdpRdp* rdp; /* 32 */
+	rdpGdi* gdi; /* 33 */
+	rdpRail* rail; /* 34 */
+	rdpCache* cache; /* 35 */
+	rdpChannels* channels; /* 36 */
+	rdpGraphics* graphics; /* 37 */
+	uint32 paddingC[64 - 38]; /* 38 */
 };
 
 struct rdp_freerdp
 {
-	rdpContext* context;
-	uint32 paddingA[16 - 2]; /* offset 64 */
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
 
-	rdpInput* input;
-	rdpUpdate* update;
-	rdpSettings* settings;
-	uint32 paddingB[16 - 6]; /* offset 128 */
+	rdpInput* input; /* 16 */
+	rdpUpdate* update; /* 17 */
+	rdpSettings* settings; /* 18 */
+	uint32 paddingB[32 - 19]; /* 19 */
 
-	size_t context_size;
-	pContextNew ContextNew;
-	pContextFree ContextFree;
-	uint32 paddingC[16 - 6]; /* offset 192 */
+	size_t context_size; /* 32 */
+	pContextNew ContextNew; /* 33 */
+	pContextFree ContextFree; /* 34 */
+	uint32 paddingC[48 - 35]; /* 35 */
 
-	pPreConnect PreConnect;
-	pPostConnect PostConnect;
-	pAuthenticate Authenticate;
-	pVerifyCertificate VerifyCertificate;
-	uint32 paddingD[16 - 8]; /* offset 256 */
+	pPreConnect PreConnect; /* 48 */
+	pPostConnect PostConnect; /* 49 */
+	pAuthenticate Authenticate; /* 50 */
+	pVerifyCertificate VerifyCertificate; /* 51 */
+	uint32 paddingD[64 - 52]; /* 52 */
 
-	pSendChannelData SendChannelData;
-	pReceiveChannelData ReceiveChannelData;
-	uint32 paddingE[16 - 4]; /* offset 320 */
+	pSendChannelData SendChannelData; /* 64 */
+	pReceiveChannelData ReceiveChannelData; /* 65 */
+	uint32 paddingE[80 - 66]; /* 66 */
 };
 
 FREERDP_API void freerdp_context_new(freerdp* instance);

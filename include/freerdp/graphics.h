@@ -40,29 +40,29 @@ typedef void (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap, boole
 
 struct rdp_bitmap
 {
-	size_t size;
-	pBitmap_New New;
-	pBitmap_Free Free;
-	pBitmap_Paint Paint;
-	pBitmap_Decompress Decompress;
-	pBitmap_SetSurface SetSurface;
-	uint32 paddingA[16 - 12]; /* offset 64 */
+	size_t size; /* 0 */
+	pBitmap_New New; /* 1 */
+	pBitmap_Free Free; /* 2 */
+	pBitmap_Paint Paint; /* 3 */
+	pBitmap_Decompress Decompress; /* 4 */
+	pBitmap_SetSurface SetSurface; /* 5 */
+	uint32 paddingA[16 - 6];  /* 6 */
 
-	uint32 left;
-	uint32 top;
-	uint32 right;
-	uint32 bottom;
-	uint32 width;
-	uint32 height;
-	uint32 bpp;
-	uint32 flags;
-	uint32 length;
-	uint8* data;
-	uint32 paddingB[16 - 12]; /* offset 128 */
+	uint32 left; /* 16 */
+	uint32 top; /* 17 */
+	uint32 right; /* 18 */
+	uint32 bottom; /* 19 */
+	uint32 width; /* 20 */
+	uint32 height; /* 21 */
+	uint32 bpp; /* 22 */
+	uint32 flags; /* 23 */
+	uint32 length; /* 24 */
+	uint8* data; /* 25 */
+	uint32 paddingB[32 - 26]; /* 26 */
 
-	boolean compressed;
-	boolean ephemeral;
-	uint32 paddingC[16 - 2]; /* offset 192 */
+	boolean compressed; /* 32 */
+	boolean ephemeral; /* 33 */
+	uint32 paddingC[64 - 34]; /* 34 */
 };
 
 FREERDP_API rdpBitmap* Bitmap_Alloc(rdpContext* context);
@@ -84,22 +84,22 @@ typedef void (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
 
 struct rdp_pointer
 {
-	size_t size;
-	pPointer_New New;
-	pPointer_Free Free;
-	pPointer_Set Set;
-	uint32 paddingA[16 - 8]; /* offset 64 */
+	size_t size; /* 0 */
+	pPointer_New New; /* 1 */
+	pPointer_Free Free; /* 2 */
+	pPointer_Set Set; /* 3 */
+	uint32 paddingA[16 - 4]; /* 4 */
 
-	uint32 xPos;
-	uint32 yPos;
-	uint32 width;
-	uint32 height;
-	uint32 xorBpp;
-	uint32 lengthAndMask;
-	uint32 lengthXorMask;
-	uint8* xorMaskData;
-	uint8* andMaskData;
-	uint32 paddingB[16 - 11]; /* offset 128 */
+	uint32 xPos; /* 16 */
+	uint32 yPos; /* 17 */
+	uint32 width; /* 18 */
+	uint32 height; /* 19 */
+	uint32 xorBpp; /* 20 */
+	uint32 lengthAndMask; /* 21 */
+	uint32 lengthXorMask; /* 22 */
+	uint8* xorMaskData; /* 23 */
+	uint8* andMaskData; /* 24 */
+	uint32 paddingB[32 - 25]; /* 25 */
 };
 
 FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
@@ -117,21 +117,21 @@ typedef void (*pGlyph_EndDraw)(rdpContext* context, int x, int y, int width, int
 
 struct rdp_glyph
 {
-	size_t size;
-	pGlyph_New New;
-	pGlyph_Free Free;
-	pGlyph_Draw Draw;
-	pGlyph_BeginDraw BeginDraw;
-	pGlyph_EndDraw EndDraw;
-	uint32 paddingA[16 - 12]; /* offset 64 */
+	size_t size; /* 0 */
+	pGlyph_New New; /* 1 */
+	pGlyph_Free Free; /* 2 */
+	pGlyph_Draw Draw; /* 3 */
+	pGlyph_BeginDraw BeginDraw; /* 4 */
+	pGlyph_EndDraw EndDraw; /* 5 */
+	uint32 paddingA[16 - 6]; /* 6 */
 
-	sint32 x;
-	sint32 y;
-	uint32 cx;
-	uint32 cy;
-	uint32 cb;
-	uint8* aj;
-	uint32 paddingB[16 - 7]; /* offset 128 */
+	sint32 x; /* 16 */
+	sint32 y; /* 17 */
+	uint32 cx; /* 18 */
+	uint32 cy; /* 19 */
+	uint32 cb; /* 20 */
+	uint8* aj; /* 21 */
+	uint32 paddingB[32 - 22]; /* 22 */
 };
 
 FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
@@ -145,11 +145,11 @@ FREERDP_API void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int
 
 struct rdp_graphics
 {
-	rdpContext* context;
-	rdpBitmap* Bitmap_Prototype;
-	rdpPointer* Pointer_Prototype;
-	rdpGlyph* Glyph_Prototype;
-	uint32 paddingA[16 - 8]; /* offset 64 */
+	rdpContext* context; /* 0 */
+	rdpBitmap* Bitmap_Prototype; /* 1 */
+	rdpPointer* Pointer_Prototype; /* 2 */
+	rdpGlyph* Glyph_Prototype; /* 3 */
+	uint32 paddingA[16 - 4]; /* 4 */
 };
 
 FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap);

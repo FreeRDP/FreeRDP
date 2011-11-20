@@ -182,80 +182,82 @@ struct rdp_monitor
 
 struct rdp_settings
 {
-	void* instance;
-	uint32 paddingA[16 - 2]; /* offset 64 */
+	void* instance; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
 
 	/* Core Protocol Parameters */
-	uint32 width;
-	uint32 height;
-	uint32 rdp_version;
-	uint32 color_depth;
-	uint32 kbd_layout;
-	uint32 kbd_type;
-	uint32 kbd_subtype;
-	uint32 kbd_fn_keys;
-	uint32 client_build;
-	uint32 requested_protocols;
-	uint32 selected_protocol;
-	uint32 encryption_method;
-	uint32 encryption_level;
-	boolean authentication;
-	uint32 paddingB[32 - 14]; /* offset 192 */
+	uint32 width; /* 16 */
+	uint32 height; /* 17 */
+	uint32 rdp_version; /* 18 */
+	uint32 color_depth; /* 19 */
+	uint32 kbd_layout; /* 20 */
+	uint32 kbd_type; /* 21 */
+	uint32 kbd_subtype; /* 22 */
+	uint32 kbd_fn_keys; /* 23 */
+	uint32 client_build; /* 24 */
+	uint32 requested_protocols; /* 25 */
+	uint32 selected_protocol; /* 26 */
+	uint32 encryption_method; /* 27 */
+	uint32 encryption_level; /* 28 */
+	boolean authentication; /* 29 */
+	uint32 paddingB[48 - 30]; /* 30 */
 
 	/* Connection Settings */
-	uint32 port;
-	boolean ipv6;
-	char* hostname;
-	char* username;
-	char* password;
-	char* domain;
-	char* shell;
-	char* directory;
-	char* ip_address;
-	char* client_dir;
-	boolean autologon;
-	boolean compression;
-	uint32 performance_flags;
-	uint32 paddingC[32 - 21]; /* offset 320 */
+	uint32 port; /* 48 */
+	boolean ipv6; /* 49 */
+	char* hostname; /* 50 */
+	char* username; /* 51 */
+	char* password; /* 52 */
+	char* domain; /* 53 */
+	char* shell; /* 54 */
+	char* directory; /* 55 */
+	char* ip_address; /* 56 */
+	char* client_dir; /* 57 */
+	boolean autologon; /* 58 */
+	boolean compression; /* 59 */
+	uint32 performance_flags; /* 60 */
+	uint32 paddingC[80 - 61]; /* 61 */
 
 	/* User Interface Parameters */
-	boolean sw_gdi;
-	boolean workarea;
-	boolean fullscreen;
-	boolean grab_keyboard;
-	boolean decorations;
-	uint32 percent_screen;
-	boolean mouse_motion;
-	uint32 paddingD[32 - 7]; /* offset 448 */
+	boolean sw_gdi; /* 80 */
+	boolean workarea; /* 81 */
+	boolean fullscreen; /* 82 */
+	boolean grab_keyboard; /* 83 */
+	boolean decorations; /* 84 */
+	uint32 percent_screen; /* 85 */
+	boolean mouse_motion; /* 86 */
+	uint32 paddingD[112 - 87]; /* 87 */
 
 	/* Internal Parameters */
-	char* home_path;
-	uint32 share_id;
-	uint32 pdu_source;
-	UNICONV* uniconv;
-	boolean server_mode;
-	uint32 paddingE[32 - 7]; /* offset 576 */
-
-	/* Session */
-	boolean console_audio;
-	boolean console_session;
-	uint32 redirected_session_id;
+	char* home_path; /* 112 */
+	uint32 share_id; /* 113 */
+	uint32 pdu_source; /* 114 */
+	UNICONV* uniconv; /* 115 */
+	boolean server_mode; /* 116 */
+	uint32 paddingE[144 - 117]; /* 117 */
 
 	/* Security */
-	boolean encryption;
-	boolean tls_security;
-	boolean nla_security;
-	boolean rdp_security;
+	boolean encryption; /* 144 */
+	boolean tls_security; /* 145 */
+	boolean nla_security; /* 146 */
+	boolean rdp_security; /* 147 */
+	uint32 paddingF[160 - 148]; /* 148 */
 
-	/* Reconnection */
+	/* Session */
+	boolean console_audio; /* 160 */
+	boolean console_session; /* 161 */
+	uint32 redirected_session_id; /* 162 */
+	uint32 paddingG[176 - 163]; /* 163 */
+
+	/* Output Control */
+	boolean refresh_rect; /* 176 */
+	boolean suppress_output; /* 177 */
+	boolean desktop_resize; /* 178 */
+	uint32 paddingH[192 - 179]; /* 179 */
+
 	boolean auto_reconnection;
 	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;
 	ARC_SC_PRIVATE_PACKET server_auto_reconnect_cookie;
-
-	/* Output Control */
-	boolean refresh_rect;
-	boolean suppress_output;
-	boolean desktop_resize;
 
 	/* Time Zone */
 	TIME_ZONE_INFO client_time_zone;
