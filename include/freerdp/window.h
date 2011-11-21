@@ -230,4 +230,32 @@ typedef void (*pNotifyIconDelete)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInf
 typedef void (*pMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop);
 typedef void (*pNonMonitoredDesktop)(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo);
 
+struct rdp_window_update
+{
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
+
+	pWindowCreate WindowCreate; /* 16 */
+	pWindowUpdate WindowUpdate; /* 17 */
+	pWindowIcon WindowIcon; /* 18 */
+	pWindowCachedIcon WindowCachedIcon; /* 19 */
+	pWindowDelete WindowDelete; /* 20 */
+	pNotifyIconCreate NotifyIconCreate; /* 21 */
+	pNotifyIconUpdate NotifyIconUpdate; /* 22 */
+	pNotifyIconDelete NotifyIconDelete; /* 23 */
+	pMonitoredDesktop MonitoredDesktop; /* 24 */
+	pNonMonitoredDesktop NonMonitoredDesktop; /* 25 */
+	uint32 paddingB[32 - 26]; /* 26 */
+
+	/* internal */
+
+	WINDOW_ORDER_INFO orderInfo;
+	WINDOW_STATE_ORDER window_state;
+	WINDOW_ICON_ORDER window_icon;
+	WINDOW_CACHED_ICON_ORDER window_cached_icon;
+	NOTIFY_ICON_STATE_ORDER notify_icon_state;
+	MONITORED_DESKTOP_ORDER monitored_desktop;
+};
+typedef struct rdp_window_update rdpWindowUpdate;
+
 #endif /* __UPDATE_WINDOW_H */

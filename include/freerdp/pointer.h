@@ -71,10 +71,32 @@ struct _POINTER_CACHED_UPDATE
 };
 typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
 
-typedef void (*pPointerPosition)(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position);
-typedef void (*pPointerSystem)(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system);
-typedef void (*pPointerColor)(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color);
-typedef void (*pPointerNew)(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new);
-typedef void (*pPointerCached)(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached);
+typedef void (*pPointerPosition)(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position);
+typedef void (*pPointerSystem)(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system);
+typedef void (*pPointerColor)(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color);
+typedef void (*pPointerNew)(rdpContext* context, POINTER_NEW_UPDATE* pointer_new);
+typedef void (*pPointerCached)(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached);
+
+struct rdp_pointer_update
+{
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
+
+	pPointerPosition PointerPosition; /* 16 */
+	pPointerSystem PointerSystem; /* 17 */
+	pPointerColor PointerColor; /* 18 */
+	pPointerNew PointerNew; /* 19 */
+	pPointerCached PointerCached; /* 20 */
+	uint32 paddingB[32 - 21]; /* 21 */
+
+	/* internal */
+
+	POINTER_POSITION_UPDATE pointer_position;
+	POINTER_SYSTEM_UPDATE pointer_system;
+	POINTER_COLOR_UPDATE pointer_color;
+	POINTER_NEW_UPDATE pointer_new;
+	POINTER_CACHED_UPDATE pointer_cached;
+};
+typedef struct rdp_pointer_update rdpPointerUpdate;
 
 #endif /* __UPDATE_POINTER_H */

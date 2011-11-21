@@ -163,6 +163,8 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
+	rdpContext* context = fastpath->rdp->update->context;
+	rdpPointerUpdate* pointer = update->pointer;
 
 	switch (updateCode)
 	{
@@ -176,41 +178,41 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
-			IFCALL(fastpath->rdp->update->Synchronize, fastpath->rdp->update);
+			IFCALL(update->Synchronize, update);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			update_recv_surfcmds(fastpath->rdp->update, size, s);
+			update_recv_surfcmds(update, size, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
-			update->pointer_system.type = SYSPTR_NULL;
-			IFCALL(update->PointerSystem, update, &update->pointer_system);
+			pointer->pointer_system.type = SYSPTR_NULL;
+			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
-			update->pointer_system.type = SYSPTR_DEFAULT;
-			IFCALL(update->PointerSystem, update, &update->pointer_system);
+			update->pointer->pointer_system.type = SYSPTR_DEFAULT;
+			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			update_read_pointer_position(s, &update->pointer_position);
-			IFCALL(update->PointerPosition, update, &update->pointer_position);
+			update_read_pointer_position(s, &pointer->pointer_position);
+			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			update_read_pointer_color(s, &update->pointer_color);
-			IFCALL(update->PointerColor, update, &update->pointer_color);
+			update_read_pointer_color(s, &pointer->pointer_color);
+			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			update_read_pointer_cached(s, &update->pointer_cached);
-			IFCALL(update->PointerCached, update, &update->pointer_cached);
+			update_read_pointer_cached(s, &pointer->pointer_cached);
+			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			update_read_pointer_new(s, &update->pointer_new);
-			IFCALL(update->PointerNew, update, &update->pointer_new);
+			update_read_pointer_new(s, &pointer->pointer_new);
+			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
 		default:

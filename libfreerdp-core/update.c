@@ -203,6 +203,8 @@ void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached
 void update_recv_pointer(rdpUpdate* update, STREAM* s)
 {
 	uint16 messageType;
+	rdpContext* context = update->context;
+	rdpPointerUpdate* pointer = update->pointer;
 
 	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
@@ -210,28 +212,28 @@ void update_recv_pointer(rdpUpdate* update, STREAM* s)
 	switch (messageType)
 	{
 		case PTR_MSG_TYPE_POSITION:
-			update_read_pointer_position(s, &update->pointer_position);
-			IFCALL(update->PointerPosition, update, &update->pointer_position);
+			update_read_pointer_position(s, &pointer->pointer_position);
+			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case PTR_MSG_TYPE_SYSTEM:
-			update_read_pointer_system(s, &update->pointer_system);
-			IFCALL(update->PointerSystem, update, &update->pointer_system);
+			update_read_pointer_system(s, &pointer->pointer_system);
+			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
 			break;
 
 		case PTR_MSG_TYPE_COLOR:
-			update_read_pointer_color(s, &update->pointer_color);
-			IFCALL(update->PointerColor, update, &update->pointer_color);
+			update_read_pointer_color(s, &pointer->pointer_color);
+			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case PTR_MSG_TYPE_POINTER:
-			update_read_pointer_new(s, &update->pointer_new);
-			IFCALL(update->PointerNew, update, &update->pointer_new);
+			update_read_pointer_new(s, &pointer->pointer_new);
+			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
 		case PTR_MSG_TYPE_CACHED:
-			update_read_pointer_cached(s, &update->pointer_cached);
-			IFCALL(update->PointerCached, update, &update->pointer_cached);
+			update_read_pointer_cached(s, &pointer->pointer_cached);
+			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 
 		default:
@@ -429,11 +431,11 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->EndPaint = update_end_paint;
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
-	update->PointerSystem = update_send_pointer_system;
 	update->RefreshRect = update_send_refresh_rect;
 	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceCommand = update_send_surface_command;
+	update->pointer->PointerSystem = update_send_pointer_system;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)
@@ -446,6 +448,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	{
 		update->bitmap_update.count = 64;
 		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+
+		update->pointer = xnew(rdpPointerUpdate);
 	}
 
 	return update;

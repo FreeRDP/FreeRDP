@@ -177,4 +177,40 @@ typedef void (*pDrawGdiPlusCacheFirst)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_FIR
 typedef void (*pDrawGdiPlusCacheNext)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next);
 typedef void (*pDrawGdiPlusCacheEnd)(rdpUpdate* update, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end);
 
+struct rdp_altsec_update
+{
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
+
+	pCreateOffscreenBitmap CreateOffscreenBitmap; /* 16 */
+	pSwitchSurface SwitchSurface; /* 17 */
+	pCreateNineGridBitmap CreateNineGridBitmap; /* 18 */
+	pFrameMarker FrameMarker; /* 19 */
+	pStreamBitmapFirst StreamBitmapFirst; /* 20 */
+	pStreamBitmapNext StreamBitmapNext; /* 21 */
+	pDrawGdiPlusFirst DrawGdiPlusFirst; /* 22 */
+	pDrawGdiPlusNext DrawGdiPlusNext; /* 23 */
+	pDrawGdiPlusEnd DrawGdiPlusEnd; /* 24 */
+	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
+	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext; /* 26 */
+	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd; /* 27 */
+	uint32 paddingB[32 - 28]; /* 28 */
+
+	/* internal */
+
+	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
+	SWITCH_SURFACE_ORDER switch_surface;
+	CREATE_NINE_GRID_BITMAP_ORDER create_nine_grid_bitmap;
+	FRAME_MARKER_ORDER frame_marker;
+	STREAM_BITMAP_FIRST_ORDER stream_bitmap_first;
+	STREAM_BITMAP_FIRST_ORDER stream_bitmap_next;
+	DRAW_GDIPLUS_CACHE_FIRST_ORDER draw_gdiplus_cache_first;
+	DRAW_GDIPLUS_CACHE_NEXT_ORDER draw_gdiplus_cache_next;
+	DRAW_GDIPLUS_CACHE_END_ORDER draw_gdiplus_cache_end;
+	DRAW_GDIPLUS_FIRST_ORDER draw_gdiplus_first;
+	DRAW_GDIPLUS_NEXT_ORDER draw_gdiplus_next;
+	DRAW_GDIPLUS_END_ORDER draw_gdiplus_end;
+};
+typedef struct rdp_altsec_update rdpAltSecUpdate;
+
 #endif /* __UPDATE_ALTSEC_H */

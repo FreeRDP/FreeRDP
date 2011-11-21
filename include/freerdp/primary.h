@@ -434,10 +434,61 @@ typedef void (*pPolygonCB)(rdpUpdate* update, POLYGON_CB_ORDER* polygon_cb);
 typedef void (*pEllipseSC)(rdpUpdate* update, ELLIPSE_SC_ORDER* ellipse_sc);
 typedef void (*pEllipseCB)(rdpUpdate* update, ELLIPSE_CB_ORDER* ellipse_cb);
 
-struct rdp_primary
+struct rdp_primary_update
 {
 	rdpContext* context; /* 0 */
 	uint32 paddingA[16 - 1]; /* 1 */
+
+	pDstBlt DstBlt; /* 16 */
+	pPatBlt PatBlt; /* 17 */
+	pScrBlt ScrBlt; /* 18 */
+	pOpaqueRect OpaqueRect; /* 19 */
+	pDrawNineGrid DrawNineGrid; /* 20 */
+	pMultiDstBlt MultiDstBlt; /* 21 */
+	pMultiPatBlt MultiPatBlt; /* 22 */
+	pMultiScrBlt MultiScrBlt; /* 23 */
+	pMultiOpaqueRect MultiOpaqueRect; /* 24 */
+	pMultiDrawNineGrid MultiDrawNineGrid; /* 25 */
+	pLineTo LineTo; /* 26 */
+	pPolyline Polyline; /* 27 */
+	pMemBlt MemBlt; /* 28 */
+	pMem3Blt Mem3Blt; /* 29 */
+	pSaveBitmap SaveBitmap; /* 30 */
+	pGlyphIndex GlyphIndex; /* 31 */
+	pFastIndex FastIndex; /* 32 */
+	pFastGlyph FastGlyph; /* 33 */
+	pPolygonSC PolygonSC; /* 34 */
+	pPolygonCB PolygonCB; /* 35 */
+	pEllipseSC EllipseSC; /* 36 */
+	pEllipseCB EllipseCB; /* 37 */
+	uint32 paddingB[48 - 38]; /* 38 */
+
+	/* internal */
+
+	ORDER_INFO order_info;
+	DSTBLT_ORDER dstblt;
+	PATBLT_ORDER patblt;
+	SCRBLT_ORDER scrblt;
+	OPAQUE_RECT_ORDER opaque_rect;
+	DRAW_NINE_GRID_ORDER draw_nine_grid;
+	MULTI_DSTBLT_ORDER multi_dstblt;
+	MULTI_PATBLT_ORDER multi_patblt;
+	MULTI_SCRBLT_ORDER multi_scrblt;
+	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
+	MULTI_DRAW_NINE_GRID_ORDER multi_draw_nine_grid;
+	LINE_TO_ORDER line_to;
+	POLYLINE_ORDER polyline;
+	MEMBLT_ORDER memblt;
+	MEM3BLT_ORDER mem3blt;
+	SAVE_BITMAP_ORDER save_bitmap;
+	GLYPH_INDEX_ORDER glyph_index;
+	FAST_INDEX_ORDER fast_index;
+	FAST_GLYPH_ORDER fast_glyph;
+	POLYGON_SC_ORDER polygon_sc;
+	POLYGON_CB_ORDER polygon_cb;
+	ELLIPSE_SC_ORDER ellipse_sc;
+	ELLIPSE_CB_ORDER ellipse_cb;
 };
+typedef struct rdp_primary_update rdpPrimaryUpdate;
 
 #endif /* __UPDATE_PRIMARY_H */

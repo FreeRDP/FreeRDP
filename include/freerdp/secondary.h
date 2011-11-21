@@ -188,4 +188,30 @@ typedef void (*pCacheGlyph)(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph_or
 typedef void (*pCacheGlyphV2)(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
 typedef void (*pCacheBrush)(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush_order);
 
+struct rdp_secondary_update
+{
+	rdpContext* context; /* 0 */
+	uint32 paddingA[16 - 1]; /* 1 */
+
+	pCacheBitmap CacheBitmap; /* 16 */
+	pCacheBitmapV2 CacheBitmapV2; /* 17 */
+	pCacheBitmapV3 CacheBitmapV3; /* 18 */
+	pCacheColorTable CacheColorTable; /* 19 */
+	pCacheGlyph CacheGlyph; /* 20 */
+	pCacheGlyphV2 CacheGlyphV2; /* 21 */
+	pCacheBrush CacheBrush; /* 22 */
+	uint32 paddingE[32 - 23]; /* 23 */
+
+	/* internal */
+
+	CACHE_BITMAP_ORDER cache_bitmap_order;
+	CACHE_BITMAP_V2_ORDER cache_bitmap_v2_order;
+	CACHE_BITMAP_V3_ORDER cache_bitmap_v3_order;
+	CACHE_COLOR_TABLE_ORDER cache_color_table_order;
+	CACHE_GLYPH_ORDER cache_glyph_order;
+	CACHE_GLYPH_V2_ORDER cache_glyph_v2_order;
+	CACHE_BRUSH_ORDER cache_brush_order;
+};
+typedef struct rdp_secondary_update rdpSecondaryUpdate;
+
 #endif /* __UPDATE_SECONDARY_H */

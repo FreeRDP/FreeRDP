@@ -145,12 +145,8 @@ struct rdp_update
 	pPlaySound PlaySound; /* 23 */
 	uint32 paddingB[32 - 24]; /* 24 */
 
-	pPointerPosition PointerPosition; /* 32 */
-	pPointerSystem PointerSystem; /* 33 */
-	pPointerColor PointerColor; /* 34 */
-	pPointerNew PointerNew; /* 35 */
-	pPointerCached PointerCached; /* 36 */
-	uint32 paddingC[48 - 37]; /* 37 */
+	rdpPointerUpdate* pointer; /* 32 */
+	uint32 paddingC[48 - 33]; /* 33 */
 
 	pDstBlt DstBlt; /* 48 */
 	pPatBlt PatBlt; /* 49 */
@@ -230,12 +226,6 @@ struct rdp_update
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
-
-	POINTER_POSITION_UPDATE pointer_position;
-	POINTER_SYSTEM_UPDATE pointer_system;
-	POINTER_COLOR_UPDATE pointer_color;
-	POINTER_NEW_UPDATE pointer_new;
-	POINTER_CACHED_UPDATE pointer_cached;
 
 	ORDER_INFO order_info;
 	DSTBLT_ORDER dstblt;
