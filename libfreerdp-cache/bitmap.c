@@ -23,10 +23,10 @@
 
 #include <freerdp/cache/bitmap.h>
 
-void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
@@ -34,13 +34,13 @@ void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 		bitmap = bitmap_cache_get(cache->bitmap, (uint8) memblt->cacheId, memblt->cacheIndex);
 
 	memblt->bitmap = bitmap;
-	IFCALL(cache->bitmap->MemBlt, update, memblt);
+	IFCALL(cache->bitmap->MemBlt, context, memblt);
 }
 
-void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
@@ -48,7 +48,7 @@ void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 		bitmap = bitmap_cache_get(cache->bitmap, (uint8) mem3blt->cacheId, mem3blt->cacheIndex);
 
 	mem3blt->bitmap = bitmap;
-	IFCALL(cache->bitmap->Mem3Blt, update, mem3blt);
+	IFCALL(cache->bitmap->Mem3Blt, context, mem3blt);
 }
 
 void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_ORDER* cache_bitmap)
@@ -174,11 +174,11 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
 
-	cache->bitmap->MemBlt = update->MemBlt;
-	cache->bitmap->Mem3Blt = update->Mem3Blt;
+	cache->bitmap->MemBlt = update->primary->MemBlt;
+	cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
 
-	update->MemBlt = update_gdi_memblt;
-	update->Mem3Blt = update_gdi_mem3blt;
+	update->primary->MemBlt = update_gdi_memblt;
+	update->primary->Mem3Blt = update_gdi_mem3blt;
 	update->CacheBitmap = update_gdi_cache_bitmap;
 	update->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
 	update->BitmapUpdate = update_gdi_bitmap_update;

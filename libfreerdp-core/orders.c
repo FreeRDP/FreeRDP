@@ -1659,7 +1659,11 @@ void update_read_bounds(STREAM* s, BOUNDS* bounds)
 
 void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
-	ORDER_INFO* orderInfo = &(update->order_info);
+	ORDER_INFO* orderInfo;
+	rdpContext* context = update->context;
+	rdpPrimaryUpdate* primary = update->primary;
+
+	orderInfo = &(primary->order_info);
 
 	if (flags & ORDER_TYPE_CHANGE)
 		stream_read_uint8(s, orderInfo->orderType); /* orderType (1 byte) */
@@ -1687,113 +1691,113 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	switch (orderInfo->orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
-			update_read_dstblt_order(s, orderInfo, &(update->dstblt));
-			IFCALL(update->DstBlt, update, &update->dstblt);
+			update_read_dstblt_order(s, orderInfo, &(primary->dstblt));
+			IFCALL(primary->DstBlt, context, &primary->dstblt);
 			break;
 
 		case ORDER_TYPE_PATBLT:
-			update_read_patblt_order(s, orderInfo, &(update->patblt));
-			IFCALL(update->PatBlt, update, &update->patblt);
+			update_read_patblt_order(s, orderInfo, &(primary->patblt));
+			IFCALL(primary->PatBlt, context, &primary->patblt);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
-			update_read_scrblt_order(s, orderInfo, &(update->scrblt));
-			IFCALL(update->ScrBlt, update, &update->scrblt);
+			update_read_scrblt_order(s, orderInfo, &(primary->scrblt));
+			IFCALL(primary->ScrBlt, context, &primary->scrblt);
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
-			update_read_opaque_rect_order(s, orderInfo, &(update->opaque_rect));
-			IFCALL(update->OpaqueRect, update, &update->opaque_rect);
+			update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect));
+			IFCALL(primary->OpaqueRect, context, &primary->opaque_rect);
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
-			update_read_draw_nine_grid_order(s, orderInfo, &(update->draw_nine_grid));
-			IFCALL(update->DrawNineGrid, update, &update->draw_nine_grid);
+			update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid));
+			IFCALL(primary->DrawNineGrid, context, &primary->draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
-			update_read_multi_dstblt_order(s, orderInfo, &(update->multi_dstblt));
-			IFCALL(update->MultiDstBlt, update, &update->multi_dstblt);
+			update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt));
+			IFCALL(primary->MultiDstBlt, context, &primary->multi_dstblt);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
-			update_read_multi_patblt_order(s, orderInfo, &(update->multi_patblt));
-			IFCALL(update->MultiPatBlt, update, &update->multi_patblt);
+			update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt));
+			IFCALL(primary->MultiPatBlt, context, &primary->multi_patblt);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
-			update_read_multi_scrblt_order(s, orderInfo, &(update->multi_scrblt));
-			IFCALL(update->MultiScrBlt, update, &update->multi_scrblt);
+			update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt));
+			IFCALL(primary->MultiScrBlt, context, &primary->multi_scrblt);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
-			update_read_multi_opaque_rect_order(s, orderInfo, &(update->multi_opaque_rect));
-			IFCALL(update->MultiOpaqueRect, update, &update->multi_opaque_rect);
+			update_read_multi_opaque_rect_order(s, orderInfo, &(primary->multi_opaque_rect));
+			IFCALL(primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			update_read_multi_draw_nine_grid_order(s, orderInfo, &(update->multi_draw_nine_grid));
-			IFCALL(update->MultiDrawNineGrid, update, &update->multi_draw_nine_grid);
+			update_read_multi_draw_nine_grid_order(s, orderInfo, &(primary->multi_draw_nine_grid));
+			IFCALL(primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_LINE_TO:
-			update_read_line_to_order(s, orderInfo, &(update->line_to));
-			IFCALL(update->LineTo, update, &update->line_to);
+			update_read_line_to_order(s, orderInfo, &(primary->line_to));
+			IFCALL(primary->LineTo, context, &primary->line_to);
 			break;
 
 		case ORDER_TYPE_POLYLINE:
-			update_read_polyline_order(s, orderInfo, &(update->polyline));
-			IFCALL(update->Polyline, update, &update->polyline);
+			update_read_polyline_order(s, orderInfo, &(primary->polyline));
+			IFCALL(primary->Polyline, context, &primary->polyline);
 			break;
 
 		case ORDER_TYPE_MEMBLT:
-			update_read_memblt_order(s, orderInfo, &(update->memblt));
-			IFCALL(update->MemBlt, update, &update->memblt);
+			update_read_memblt_order(s, orderInfo, &(primary->memblt));
+			IFCALL(primary->MemBlt, context, &primary->memblt);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
-			update_read_mem3blt_order(s, orderInfo, &(update->mem3blt));
-			IFCALL(update->Mem3Blt, update, &update->mem3blt);
+			update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt));
+			IFCALL(primary->Mem3Blt, context, &primary->mem3blt);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
-			update_read_save_bitmap_order(s, orderInfo, &(update->save_bitmap));
-			IFCALL(update->SaveBitmap, update, &update->save_bitmap);
+			update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap));
+			IFCALL(primary->SaveBitmap, context, &primary->save_bitmap);
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
-			update_read_glyph_index_order(s, orderInfo, &(update->glyph_index));
-			IFCALL(update->GlyphIndex, update, &update->glyph_index);
+			update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index));
+			IFCALL(primary->GlyphIndex, context, &primary->glyph_index);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
-			update_read_fast_index_order(s, orderInfo, &(update->fast_index));
-			IFCALL(update->FastIndex, update, &update->fast_index);
+			update_read_fast_index_order(s, orderInfo, &(primary->fast_index));
+			IFCALL(primary->FastIndex, context, &primary->fast_index);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
-			update_read_fast_glyph_order(s, orderInfo, &(update->fast_glyph));
-			IFCALL(update->FastGlyph, update, &update->fast_glyph);
+			update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph));
+			IFCALL(primary->FastGlyph, context, &primary->fast_glyph);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
-			update_read_polygon_sc_order(s, orderInfo, &(update->polygon_sc));
-			IFCALL(update->PolygonSC, update, &update->polygon_sc);
+			update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc));
+			IFCALL(primary->PolygonSC, context, &primary->polygon_sc);
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
-			update_read_polygon_cb_order(s, orderInfo, &(update->polygon_cb));
-			IFCALL(update->PolygonCB, update, &update->polygon_cb);
+			update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb));
+			IFCALL(primary->PolygonCB, context, &primary->polygon_cb);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
-			update_read_ellipse_sc_order(s, orderInfo, &(update->ellipse_sc));
-			IFCALL(update->EllipseSC, update, &update->ellipse_sc);
+			update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc));
+			IFCALL(primary->EllipseSC, context, &primary->ellipse_sc);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
-			update_read_ellipse_cb_order(s, orderInfo, &(update->ellipse_cb));
-			IFCALL(update->EllipseCB, update, &update->ellipse_cb);
+			update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb));
+			IFCALL(primary->EllipseCB, context, &primary->ellipse_cb);
 			break;
 
 		default:

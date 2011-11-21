@@ -24,10 +24,10 @@
 
 #include <freerdp/cache/brush.h>
 
-void update_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	rdpBrush* brush = &patblt->brush;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -35,7 +35,7 @@ void update_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		brush->style = 0x03;
 	}
 
-	IFCALL(cache->brush->PatBlt, update, patblt);
+	IFCALL(cache->brush->PatBlt, context, patblt);
 }
 
 void update_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
@@ -110,9 +110,9 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
 
-	cache->brush->PatBlt = update->PatBlt;
+	cache->brush->PatBlt = update->primary->PatBlt;
 
-	update->PatBlt = update_gdi_patblt;
+	update->primary->PatBlt = update_gdi_patblt;
 	update->CacheBrush = update_gdi_cache_brush;
 }
 

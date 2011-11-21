@@ -148,29 +148,8 @@ struct rdp_update
 	rdpPointerUpdate* pointer; /* 32 */
 	uint32 paddingC[48 - 33]; /* 33 */
 
-	pDstBlt DstBlt; /* 48 */
-	pPatBlt PatBlt; /* 49 */
-	pScrBlt ScrBlt; /* 50 */
-	pOpaqueRect OpaqueRect; /* 51 */
-	pDrawNineGrid DrawNineGrid; /* 52 */
-	pMultiDstBlt MultiDstBlt; /* 53 */
-	pMultiPatBlt MultiPatBlt; /* 54 */
-	pMultiScrBlt MultiScrBlt; /* 55 */
-	pMultiOpaqueRect MultiOpaqueRect; /* 56 */
-	pMultiDrawNineGrid MultiDrawNineGrid; /* 57 */
-	pLineTo LineTo; /* 58 */
-	pPolyline Polyline; /* 59 */
-	pMemBlt MemBlt; /* 60 */
-	pMem3Blt Mem3Blt; /* 61 */
-	pSaveBitmap SaveBitmap; /* 62 */
-	pGlyphIndex GlyphIndex; /* 63 */
-	pFastIndex FastIndex; /* 64 */
-	pFastGlyph FastGlyph; /* 65 */
-	pPolygonSC PolygonSC; /* 66 */
-	pPolygonCB PolygonCB; /* 67 */
-	pEllipseSC EllipseSC; /* 68 */
-	pEllipseCB EllipseCB; /* 69 */
-	uint32 paddingD[80 - 70]; /* 70 */
+	rdpPrimaryUpdate* primary; /* 48 */
+	uint32 paddingD[80 - 49]; /* 49 */
 
 	pCacheBitmap CacheBitmap; /* 80 */
 	pCacheBitmapV2 CacheBitmapV2; /* 81 */
@@ -226,30 +205,6 @@ struct rdp_update
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
-
-	ORDER_INFO order_info;
-	DSTBLT_ORDER dstblt;
-	PATBLT_ORDER patblt;
-	SCRBLT_ORDER scrblt;
-	OPAQUE_RECT_ORDER opaque_rect;
-	DRAW_NINE_GRID_ORDER draw_nine_grid;
-	MULTI_DSTBLT_ORDER multi_dstblt;
-	MULTI_PATBLT_ORDER multi_patblt;
-	MULTI_SCRBLT_ORDER multi_scrblt;
-	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
-	MULTI_DRAW_NINE_GRID_ORDER multi_draw_nine_grid;
-	LINE_TO_ORDER line_to;
-	POLYLINE_ORDER polyline;
-	MEMBLT_ORDER memblt;
-	MEM3BLT_ORDER mem3blt;
-	SAVE_BITMAP_ORDER save_bitmap;
-	GLYPH_INDEX_ORDER glyph_index;
-	FAST_INDEX_ORDER fast_index;
-	FAST_GLYPH_ORDER fast_glyph;
-	POLYGON_SC_ORDER polygon_sc;
-	POLYGON_CB_ORDER polygon_cb;
-	ELLIPSE_SC_ORDER ellipse_sc;
-	ELLIPSE_CB_ORDER ellipse_cb;
 
 	CACHE_BITMAP_ORDER cache_bitmap_order;
 	CACHE_BITMAP_V2_ORDER cache_bitmap_v2_order;

@@ -452,20 +452,20 @@ void gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 	}
 }
 
-void gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
+void gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
 			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop));
 }
 
-void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	uint8* data;
 	rdpBrush* brush;
 	HGDI_BRUSH originalBrush;
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	brush = &patblt->brush;
 
@@ -514,21 +514,21 @@ void gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	}
 }
 
-void gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
+void gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
 			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop));
 }
 
-void gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
 	uint32 brush_color;
-	rdpGdi *gdi = update->context->gdi;
+	rdpGdi *gdi = context->gdi;
 
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
@@ -541,14 +541,14 @@ void gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
 }
 
-void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	int i;
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
 	uint32 brush_color;
 	DELTA_RECT* rectangle;
-	rdpGdi *gdi = update->context->gdi;
+	rdpGdi *gdi = context->gdi;
 
 	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
 	{
@@ -566,11 +566,11 @@ void gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opa
 	}
 }
 
-void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
+void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
 	uint32 color;
 	HGDI_PEN hPen;
-	rdpGdi *gdi = update->context->gdi;
+	rdpGdi *gdi = context->gdi;
 
 	color = freerdp_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);
@@ -583,13 +583,13 @@ void gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	gdi_DeleteObject((HGDIOBJECT) hPen);
 }
 
-void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	int i;
 	uint32 color;
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	color = freerdp_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(0, 1, (GDI_COLOR) color);
@@ -608,10 +608,10 @@ void gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	gdi_DeleteObject((HGDIOBJECT) hPen);
 }
 
-void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	gdiBitmap* bitmap;
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	bitmap = (gdiBitmap*) memblt->bitmap;
 
@@ -620,7 +620,7 @@ void gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
 }
 
-void gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 
 }
@@ -746,30 +746,33 @@ void gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_comm
 
 void gdi_register_update_callbacks(rdpUpdate* update)
 {
+	rdpPrimaryUpdate* primary = update->primary;
+
 	update->Palette = gdi_palette_update;
 	update->SetBounds = gdi_set_bounds;
-	update->DstBlt = gdi_dstblt;
-	update->PatBlt = gdi_patblt;
-	update->ScrBlt = gdi_scrblt;
-	update->OpaqueRect = gdi_opaque_rect;
-	update->DrawNineGrid = NULL;
-	update->MultiDstBlt = NULL;
-	update->MultiPatBlt = NULL;
-	update->MultiScrBlt = NULL;
-	update->MultiOpaqueRect = gdi_multi_opaque_rect;
-	update->MultiDrawNineGrid = NULL;
-	update->LineTo = gdi_line_to;
-	update->Polyline = NULL;
-	update->MemBlt = gdi_memblt;
-	update->Mem3Blt = gdi_mem3blt;
-	update->SaveBitmap = NULL;
-	update->GlyphIndex = NULL;
-	update->FastIndex = NULL;
-	update->FastGlyph = NULL;
-	update->PolygonSC = NULL;
-	update->PolygonCB = NULL;
-	update->EllipseSC = NULL;
-	update->EllipseCB = NULL;
+
+	primary->DstBlt = gdi_dstblt;
+	primary->PatBlt = gdi_patblt;
+	primary->ScrBlt = gdi_scrblt;
+	primary->OpaqueRect = gdi_opaque_rect;
+	primary->DrawNineGrid = NULL;
+	primary->MultiDstBlt = NULL;
+	primary->MultiPatBlt = NULL;
+	primary->MultiScrBlt = NULL;
+	primary->MultiOpaqueRect = gdi_multi_opaque_rect;
+	primary->MultiDrawNineGrid = NULL;
+	primary->LineTo = gdi_line_to;
+	primary->Polyline = NULL;
+	primary->MemBlt = gdi_memblt;
+	primary->Mem3Blt = gdi_mem3blt;
+	primary->SaveBitmap = NULL;
+	primary->GlyphIndex = NULL;
+	primary->FastIndex = NULL;
+	primary->FastGlyph = NULL;
+	primary->PolygonSC = NULL;
+	primary->PolygonCB = NULL;
+	primary->EllipseSC = NULL;
+	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = gdi_surface_bits;
 }

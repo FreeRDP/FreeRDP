@@ -23,7 +23,7 @@
 
 #include <freerdp/cache/glyph.h>
 
-void update_process_glyph(rdpUpdate* update, uint8* data, int* index,
+void update_process_glyph(rdpContext* context, uint8* data, int* index,
 		int* x, int* y, uint8 cacheId, uint8 ulCharInc, uint8 flAccel)
 {
 	int offset;
@@ -32,8 +32,8 @@ void update_process_glyph(rdpUpdate* update, uint8* data, int* index,
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
-	graphics = update->context->graphics;
-	glyph_cache = update->context->cache->glyph;
+	graphics = context->graphics;
+	glyph_cache = context->cache->glyph;
 
 	cacheIndex = data[(*index)++];
 
@@ -58,14 +58,14 @@ void update_process_glyph(rdpUpdate* update, uint8* data, int* index,
 
 	if (glyph != NULL)
 	{
-		Glyph_Draw(update->context, glyph, glyph->x + *x, glyph->y + *y);
+		Glyph_Draw(context, glyph, glyph->x + *x, glyph->y + *y);
 
 		if (flAccel & SO_CHAR_INC_EQUAL_BM_BASE)
 			*x += glyph->cx;
 	}
 }
 
-void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length,
+void update_process_glyph_fragments(rdpContext* context, uint8* data, uint8 length,
 		uint8 cacheId, uint8 ulCharInc, uint8 flAccel, uint32 bgcolor, uint32 fgcolor, int x, int y,
 		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight)
 {
@@ -77,13 +77,13 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
-	graphics = update->context->graphics;
-	glyph_cache = update->context->cache->glyph;
+	graphics = context->graphics;
+	glyph_cache = context->cache->glyph;
 
 	if (opWidth > 1)
-		Glyph_BeginDraw(update->context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
+		Glyph_BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
 	else
-		Glyph_BeginDraw(update->context, 0, 0, 0, 0, bgcolor, fgcolor);
+		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor);
 
 	while (index < length)
 	{
@@ -115,7 +115,7 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 
 					for (n = 0; n < size; n++)
 					{
-						update_process_glyph(update, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
+						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
 					}
 				}
 
@@ -154,32 +154,32 @@ void update_process_glyph_fragments(rdpUpdate* update, uint8* data, uint8 length
 			default:
 				printf("GLYPH_FRAGMENT_NOP\n");
 
-				update_process_glyph(update, data, &index, &x, &y, cacheId, ulCharInc, flAccel);
+				update_process_glyph(context, data, &index, &x, &y, cacheId, ulCharInc, flAccel);
 				index++;
 				break;
 		}
 	}
 
 	if (opWidth > 1)
-		Glyph_EndDraw(update->context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
+		Glyph_EndDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
 	else
-		Glyph_EndDraw(update->context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor);
+		Glyph_EndDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor);
 }
 
-void update_gdi_glyph_index(rdpUpdate* update, GLYPH_INDEX_ORDER* glyph_index)
+void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
 
 }
 
-void update_gdi_fast_index(rdpUpdate* update, FAST_INDEX_ORDER* fast_index)
+void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 {
 	rdpGlyphCache* glyph_cache;
 
-	glyph_cache = update->context->cache->glyph;
+	glyph_cache = context->cache->glyph;
 
 	fast_index->x = fast_index->bkLeft;
 
-	update_process_glyph_fragments(update, fast_index->data, fast_index->cbData,
+	update_process_glyph_fragments(context, fast_index->data, fast_index->cbData,
 			fast_index->cacheId, fast_index->ulCharInc, fast_index->flAccel,
 			fast_index->backColor, fast_index->foreColor, fast_index->x, fast_index->y,
 			fast_index->bkLeft, fast_index->bkTop,
@@ -304,8 +304,8 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint8 index, uint8 siz
 
 void glyph_cache_register_callbacks(rdpUpdate* update)
 {
-	update->GlyphIndex = update_gdi_glyph_index;
-	update->FastIndex = update_gdi_fast_index;
+	update->primary->GlyphIndex = update_gdi_glyph_index;
+	update->primary->FastIndex = update_gdi_fast_index;
 	update->CacheGlyph = update_gdi_cache_glyph;
 	update->CacheGlyphV2 = update_gdi_cache_glyph_v2;
 }

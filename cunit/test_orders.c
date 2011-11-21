@@ -739,17 +739,17 @@ uint8 orders_update_2[] =
 	"\x50\x01\x01\x01\x55\x01\x50\xff\xff\xff\x16\x00\x17\x00\xea\x03"
 	"\xea\x03\x02\x00\x85\x02\x16\x00\x02\x00\x00\x00\x03\x00\x14\xb2";
 
-void test_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+void test_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	opaque_rect_count++;
 }
 
-void test_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+void test_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	polyline_count++;
 }
 
-void test_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void test_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	patblt_count++;
 }
@@ -766,9 +766,9 @@ void test_update_recv_orders(void)
 	polyline_count = 0;
 	patblt_count = 0;
 
-	update->OpaqueRect = test_opaque_rect;
-	update->Polyline = test_polyline;
-	update->PatBlt = test_patblt;
+	update->primary->OpaqueRect = test_opaque_rect;
+	update->primary->Polyline = test_polyline;
+	update->primary->PatBlt = test_patblt;
 
 	s->p = s->data = orders_update_1;
 
@@ -777,7 +777,7 @@ void test_update_recv_orders(void)
 	CU_ASSERT(opaque_rect_count == 5);
 	CU_ASSERT(polyline_count == 2);
 
-	update->order_info.orderType = ORDER_TYPE_PATBLT;
+	update->primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	s->p = s->data = orders_update_2;
 
 	update_recv(update, s);
