@@ -76,6 +76,7 @@ typedef int boolean;
 
 #ifndef __bool_true_false_are_defined
 #define __bool_true_false_are_defined	1
+
 #define true	1
 #define false	0
 
@@ -85,7 +86,19 @@ typedef int boolean;
 typedef int boolean;
 #endif
 
+#endif /* __bool_true_false_are_defined */
+
+#else
+
+#ifndef true
+#define true	1
 #endif
+
+#ifndef false
+#define false 	0
+#endif
+
+typedef int boolean;
 
 #endif /* __cplusplus */
 
