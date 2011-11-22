@@ -52,10 +52,11 @@ struct _FRAGMENT_CACHE
 
 struct rdp_glyph_cache
 {
+	FRAGMENT_CACHE fragCache;
+	GLYPH_CACHE glyphCache[10];
+
 	rdpContext* context;
 	rdpSettings* settings;
-	GLYPH_CACHE glyphCache[10];
-	FRAGMENT_CACHE fragCache;
 };
 
 FREERDP_API rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint32 id, uint32 index);

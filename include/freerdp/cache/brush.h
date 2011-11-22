@@ -39,15 +39,19 @@ struct _BRUSH_ENTRY
 
 struct rdp_brush_cache
 {
-	pPatBlt PatBlt;
+	pPatBlt PatBlt; /* 0 */
+	pCacheBrush CacheBrush; /* 1 */
+	uint32 paddingA[16 - 2]; /* 2 */
 
-	pCacheBrush CacheBrush;
+	uint32 maxEntries; /* 16 */
+	uint32 maxMonoEntries; /* 17 */
+	BRUSH_ENTRY* entries; /* 18 */
+	BRUSH_ENTRY* monoEntries; /* 19 */
+	uint32 paddingB[32 - 20]; /* 20 */
+
+	/* internal */
 
 	rdpSettings* settings;
-	uint8 maxEntries;
-	uint8 maxMonoEntries;
-	BRUSH_ENTRY* entries;
-	BRUSH_ENTRY* monoEntries;
 };
 
 FREERDP_API void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp);

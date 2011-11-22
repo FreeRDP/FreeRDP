@@ -32,12 +32,15 @@ typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
 struct rdp_offscreen_cache
 {
-	uint32 currentSurface;
-	uint32 maxSize;
-	uint32 maxEntries;
+	uint32 maxSize; /* 0 */
+	uint32 maxEntries; /* 1 */
+	rdpBitmap** entries; /* 2 */
+	uint32 currentSurface; /* 3 */
+
+	/* internal */
+
 	rdpUpdate* update;
 	rdpSettings* settings;
-	rdpBitmap** entries;
 };
 
 FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index);

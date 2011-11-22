@@ -39,24 +39,25 @@ struct _BITMAP_V2_CELL
 
 struct rdp_bitmap_cache
 {
-	pMemBlt MemBlt;
-	pMem3Blt Mem3Blt;
+	pMemBlt MemBlt; /* 0 */
+	pMem3Blt Mem3Blt; /* 1 */
+	pCacheBitmap CacheBitmap; /* 2 */
+	pCacheBitmapV2 CacheBitmapV2; /* 3 */
+	pCacheBitmapV3 CacheBitmapV3; /* 4 */
+	pBitmapUpdate BitmapUpdate; /* 5 */
+	uint32 paddingA[16 - 6]; /* 6 */
 
-	pCacheBitmap CacheBitmap;
-	pCacheBitmapV2 CacheBitmapV2;
-	pCacheBitmapV3 CacheBitmapV3;
+	uint32 maxCells; /* 16 */
+	BITMAP_V2_CELL* cells; /* 17 */
+	uint32 paddingB[32 - 18]; /* 18 */
 
-	pBitmapUpdate BitmapUpdate;
+	/* internal */
 
-	uint32 maxCells;
 	rdpBitmap* bitmap;
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
-	BITMAP_V2_CELL* cells;
 };
-
-FREERDP_API void bitmap_free(rdpBitmap* bitmap);
 
 FREERDP_API rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index);
 FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdpBitmap* bitmap);
