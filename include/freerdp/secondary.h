@@ -66,12 +66,12 @@
 
 struct _CACHE_BITMAP_ORDER
 {
-	uint8 cacheId;
-	uint8 bitmapBpp;
-	uint8 bitmapWidth;
-	uint8 bitmapHeight;
-	uint16 bitmapLength;
-	uint16 cacheIndex;
+	uint32 cacheId;
+	uint32 bitmapBpp;
+	uint32 bitmapWidth;
+	uint32 bitmapHeight;
+	uint32 bitmapLength;
+	uint32 cacheIndex;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 };
@@ -79,15 +79,15 @@ typedef struct _CACHE_BITMAP_ORDER CACHE_BITMAP_ORDER;
 
 struct _CACHE_BITMAP_V2_ORDER
 {
-	uint8 cacheId;
-	uint16 flags;
+	uint32 cacheId;
+	uint32 flags;
 	uint32 key1;
 	uint32 key2;
-	uint8 bitmapBpp;
-	uint16 bitmapWidth;
-	uint16 bitmapHeight;
+	uint32 bitmapBpp;
+	uint32 bitmapWidth;
+	uint32 bitmapHeight;
 	uint32 bitmapLength;
-	uint16 cacheIndex;
+	uint32 cacheIndex;
 	boolean compressed;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
@@ -96,10 +96,10 @@ typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
 struct _BITMAP_DATA_EX
 {
-	uint8 bpp;
-	uint8 codecID;
-	uint16 width;
-	uint16 height;
+	uint32 bpp;
+	uint32 codecID;
+	uint32 width;
+	uint32 height;
 	uint32 length;
 	uint8* data;
 };
@@ -107,10 +107,10 @@ typedef struct _BITMAP_DATA_EX BITMAP_DATA_EX;
 
 struct _CACHE_BITMAP_V3_ORDER
 {
-	uint8 cacheId;
-	uint8 bpp;
-	uint16 flags;
-	uint16 cacheIndex;
+	uint32 cacheId;
+	uint32 bpp;
+	uint32 flags;
+	uint32 cacheIndex;
 	uint32 key1;
 	uint32 key2;
 	BITMAP_DATA_EX bitmapData;
@@ -119,28 +119,28 @@ typedef struct _CACHE_BITMAP_V3_ORDER CACHE_BITMAP_V3_ORDER;
 
 struct _CACHE_COLOR_TABLE_ORDER
 {
-	uint8 cacheIndex;
-	uint16 numberColors;
+	uint32 cacheIndex;
+	uint32 numberColors;
 	uint32* colorTable;
 };
 typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
 
 struct _GLYPH_DATA
 {
-	uint16 cacheIndex;
-	sint16 x;
-	sint16 y;
-	uint16 cx;
-	uint16 cy;
-	uint16 cb;
+	uint32 cacheIndex;
+	sint32 x;
+	sint32 y;
+	uint32 cx;
+	uint32 cy;
+	uint32 cb;
 	uint8* aj;
 };
 typedef struct _GLYPH_DATA GLYPH_DATA;
 
 struct _CACHE_GLYPH_ORDER
 {
-	uint8 cacheId;
-	uint8 cGlyphs;
+	uint32 cacheId;
+	uint32 cGlyphs;
 	GLYPH_DATA* glyphData[255];
 	uint8* unicodeCharacters;
 };
@@ -148,21 +148,21 @@ typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
 
 struct _GLYPH_DATA_V2
 {
-	uint8 cacheIndex;
-	sint16 x;
-	sint16 y;
-	uint16 cx;
-	uint16 cy;
-	uint16 cb;
+	uint32 cacheIndex;
+	sint32 x;
+	sint32 y;
+	uint32 cx;
+	uint32 cy;
+	uint32 cb;
 	uint8* aj;
 };
 typedef struct _GLYPH_DATA_V2 GLYPH_DATA_V2;
 
 struct _CACHE_GLYPH_V2_ORDER
 {
-	uint8 cacheId;
-	uint8 flags;
-	uint8 cGlyphs;
+	uint32 cacheId;
+	uint32 flags;
+	uint32 cGlyphs;
 	GLYPH_DATA_V2* glyphData[255];
 	uint8* unicodeCharacters;
 };
@@ -170,12 +170,12 @@ typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
 
 struct _CACHE_BRUSH_ORDER
 {
-	uint8 index;
-	uint8 bpp;
-	uint8 cx;
-	uint8 cy;
-	uint8 style;
-	uint8 length;
+	uint32 index;
+	uint32 bpp;
+	uint32 cx;
+	uint32 cy;
+	uint32 style;
+	uint32 length;
 	uint8* data;
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;

@@ -33,8 +33,8 @@
 
 struct _POINTER_POSITION_UPDATE
 {
-	uint16 xPos;
-	uint16 yPos;
+	uint32 xPos;
+	uint32 yPos;
 };
 typedef struct _POINTER_POSITION_UPDATE POINTER_POSITION_UPDATE;
 
@@ -46,13 +46,13 @@ typedef struct _POINTER_SYSTEM_UPDATE POINTER_SYSTEM_UPDATE;
 
 struct _POINTER_COLOR_UPDATE
 {
-	uint16 cacheIndex;
-	uint16 xPos;
-	uint16 yPos;
-	uint16 width;
-	uint16 height;
-	uint16 lengthAndMask;
-	uint16 lengthXorMask;
+	uint32 cacheIndex;
+	uint32 xPos;
+	uint32 yPos;
+	uint32 width;
+	uint32 height;
+	uint32 lengthAndMask;
+	uint32 lengthXorMask;
 	uint8* xorMaskData;
 	uint8* andMaskData;
 };
@@ -60,14 +60,14 @@ typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
 
 struct _POINTER_NEW_UPDATE
 {
-	uint16 xorBpp;
+	uint32 xorBpp;
 	POINTER_COLOR_UPDATE colorPtrAttr;
 };
 typedef struct _POINTER_NEW_UPDATE POINTER_NEW_UPDATE;
 
 struct _POINTER_CACHED_UPDATE
 {
-	uint16 cacheIndex;
+	uint32 cacheIndex;
 };
 typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
 

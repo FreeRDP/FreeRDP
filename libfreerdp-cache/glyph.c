@@ -24,11 +24,11 @@
 #include <freerdp/cache/glyph.h>
 
 void update_process_glyph(rdpContext* context, uint8* data, int* index,
-		int* x, int* y, uint8 cacheId, uint8 ulCharInc, uint8 flAccel)
+		int* x, int* y, uint32 cacheId, uint32 ulCharInc, uint32 flAccel)
 {
 	int offset;
 	rdpGlyph* glyph;
-	uint8 cacheIndex;
+	uint32 cacheIndex;
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
@@ -65,13 +65,13 @@ void update_process_glyph(rdpContext* context, uint8* data, int* index,
 	}
 }
 
-void update_process_glyph_fragments(rdpContext* context, uint8* data, uint8 length,
-		uint8 cacheId, uint8 ulCharInc, uint8 flAccel, uint32 bgcolor, uint32 fgcolor, int x, int y,
+void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 length,
+		uint32 cacheId, uint32 ulCharInc, uint32 flAccel, uint32 bgcolor, uint32 fgcolor, int x, int y,
 		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight)
 {
 	int n;
-	uint8 id;
-	uint8 size;
+	uint32 id;
+	uint32 size;
 	int index = 0;
 	uint8* fragments;
 	rdpGraphics* graphics;
@@ -218,7 +218,7 @@ void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_
 
 }
 
-rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint8 id, uint16 index)
+rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint32 id, uint32 index)
 {
 	rdpGlyph* glyph;
 
@@ -244,7 +244,7 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint8 id, uint16 index)
 	return glyph;
 }
 
-void glyph_cache_put(rdpGlyphCache* glyph_cache, uint8 id, uint16 index, rdpGlyph* glyph)
+void glyph_cache_put(rdpGlyphCache* glyph_cache, uint32 id, uint32 index, rdpGlyph* glyph)
 {
 	rdpGlyph* prevGlyph;
 
@@ -272,7 +272,7 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, uint8 id, uint16 index, rdpGlyp
 	glyph_cache->glyphCache[id].entries[index] = glyph;
 }
 
-void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint8 index, uint8* size)
+void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint32 index, uint32* size)
 {
 	void* fragment;
 
@@ -287,7 +287,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint8 index, uint8* s
 	return fragment;
 }
 
-void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint8 index, uint8 size, void* fragment)
+void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint32 index, uint32 size, void* fragment)
 {
 	void* prevFragment;
 

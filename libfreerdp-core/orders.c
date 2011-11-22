@@ -134,7 +134,7 @@ uint8 BMF_BPP[] =
 		0, 1, 0, 8, 16, 24, 32
 };
 
-INLINE void update_read_coord(STREAM* s, sint16* coord, boolean delta)
+INLINE void update_read_coord(STREAM* s, sint32* coord, boolean delta)
 {
 	sint8 byte;
 
@@ -187,7 +187,7 @@ INLINE void update_read_color_quad(STREAM* s, uint32* color)
 	stream_seek_uint8(s);
 }
 
-INLINE void update_read_2byte_unsigned(STREAM* s, uint16* value)
+INLINE void update_read_2byte_unsigned(STREAM* s, uint32* value)
 {
 	uint8 byte;
 
@@ -205,7 +205,7 @@ INLINE void update_read_2byte_unsigned(STREAM* s, uint16* value)
 	}
 }
 
-INLINE void update_read_2byte_signed(STREAM* s, sint16* value)
+INLINE void update_read_2byte_signed(STREAM* s, sint32* value)
 {
 	uint8 byte;
 	boolean negative;
@@ -270,7 +270,7 @@ INLINE void update_read_4byte_unsigned(STREAM* s, uint32* value)
 	}
 }
 
-INLINE void update_read_delta(STREAM* s, sint16* value)
+INLINE void update_read_delta(STREAM* s, sint32* value)
 {
 	uint8 byte;
 

@@ -33,14 +33,14 @@ typedef struct rdp_pointer_cache rdpPointerCache;
 
 struct rdp_pointer_cache
 {
-	uint16 cacheSize;
+	uint32 cacheSize;
 	rdpUpdate* update;
 	rdpSettings* settings;
 	rdpPointer** entries;
 };
 
-FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index);
-FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, uint16 index, rdpPointer* pointer);
+FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index);
+FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer);
 
 FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
 

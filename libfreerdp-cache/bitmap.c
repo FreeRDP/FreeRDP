@@ -126,7 +126,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 	}
 }
 
-rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index)
+rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -150,7 +150,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index
 	return bitmap;
 }
 
-void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, rdpBitmap* bitmap)
+void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdpBitmap* bitmap)
 {
 	if (id > bitmap_cache->maxCells)
 	{

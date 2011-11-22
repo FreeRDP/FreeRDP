@@ -67,7 +67,7 @@ void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switch
 	cache->offscreen->currentSurface = switch_surface->bitmapId;
 }
 
-rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index)
+rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -88,7 +88,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index)
 	return bitmap;
 }
 
-void offscreen_cache_put(rdpOffscreenCache* offscreen, uint16 index, rdpBitmap* bitmap)
+void offscreen_cache_put(rdpOffscreenCache* offscreen, uint32 index, rdpBitmap* bitmap)
 {
 	if (index > offscreen->maxEntries)
 	{
@@ -100,7 +100,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreen, uint16 index, rdpBitmap* 
 	offscreen->entries[index] = bitmap;
 }
 
-void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint16 index)
+void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint32 index)
 {
 	rdpBitmap* prevBitmap;
 

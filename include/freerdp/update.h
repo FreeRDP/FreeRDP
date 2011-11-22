@@ -39,15 +39,15 @@ typedef struct rdp_update rdpUpdate;
 
 struct _BITMAP_DATA
 {
-	uint16 destLeft;
-	uint16 destTop;
-	uint16 destRight;
-	uint16 destBottom;
-	uint16 width;
-	uint16 height;
-	uint16 bitsPerPixel;
-	uint16 flags;
-	uint16 bitmapLength;
+	uint32 destLeft;
+	uint32 destTop;
+	uint32 destRight;
+	uint32 destBottom;
+	uint32 width;
+	uint32 height;
+	uint32 bitsPerPixel;
+	uint32 flags;
+	uint32 bitmapLength;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 	boolean compressed;
@@ -56,8 +56,8 @@ typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
-	uint16 count;
-	uint16 number;
+	uint32 count;
+	uint32 number;
 	BITMAP_DATA* rectangles;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
@@ -81,7 +81,7 @@ typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 
 struct rdp_palette
 {
-	uint16 count;
+	uint32 count;
 	PALETTE_ENTRY* entries;
 };
 typedef struct rdp_palette rdpPalette;
@@ -99,15 +99,15 @@ typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
 
 struct _SURFACE_BITS_COMMAND
 {
-	uint16 cmdType;
-	uint16 destLeft;
-	uint16 destTop;
-	uint16 destRight;
-	uint16 destBottom;
-	uint8 bpp;
-	uint8 codecID;
-	uint16 width;
-	uint16 height;
+	uint32 cmdType;
+	uint32 destLeft;
+	uint32 destTop;
+	uint32 destRight;
+	uint32 destBottom;
+	uint32 bpp;
+	uint32 codecID;
+	uint32 width;
+	uint32 height;
 	uint32 bitmapDataLength;
 	uint8* bitmapData;
 };
@@ -159,7 +159,7 @@ struct rdp_update
 
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */
-	uint32 paddingF[80 - 66]; /* 66 */
+	uint32 paddingE[80 - 66]; /* 66 */
 
 	/* internal */
 

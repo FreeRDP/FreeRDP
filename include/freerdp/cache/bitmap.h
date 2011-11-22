@@ -48,7 +48,7 @@ struct rdp_bitmap_cache
 
 	pBitmapUpdate BitmapUpdate;
 
-	uint8 maxCells;
+	uint32 maxCells;
 	rdpBitmap* bitmap;
 	rdpUpdate* update;
 	rdpContext* context;
@@ -58,8 +58,8 @@ struct rdp_bitmap_cache
 
 FREERDP_API void bitmap_free(rdpBitmap* bitmap);
 
-FREERDP_API rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index);
-FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, rdpBitmap* bitmap);
+FREERDP_API rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index);
+FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdpBitmap* bitmap);
 
 FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 

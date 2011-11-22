@@ -24,21 +24,21 @@
 
 struct rdp_bounds
 {
-	sint16 left;
-	sint16 top;
-	sint16 right;
-	sint16 bottom;
+	sint32 left;
+	sint32 top;
+	sint32 right;
+	sint32 bottom;
 };
 typedef struct rdp_bounds rdpBounds;
 
 struct rdp_brush
 {
-	uint8 x;
-	uint8 y;
-	uint8 bpp;
-	uint8 style;
-	uint8 hatch;
-	uint8 index;
+	uint32 x;
+	uint32 y;
+	uint32 bpp;
+	uint32 style;
+	uint32 hatch;
+	uint32 index;
 	uint8* data;
 	uint8 p8x8[8];
 };
@@ -46,34 +46,34 @@ typedef struct rdp_brush rdpBrush;
 
 struct _ORDER_INFO
 {
-	uint8 orderType;
+	uint32 orderType;
 	uint32 fieldFlags;
 	rdpBounds bounds;
-	sint8 deltaBoundLeft;
-	sint8 deltaBoundTop;
-	sint8 deltaBoundRight;
-	sint8 deltaBoundBottom;
+	sint32 deltaBoundLeft;
+	sint32 deltaBoundTop;
+	sint32 deltaBoundRight;
+	sint32 deltaBoundBottom;
 	boolean deltaCoordinates;
 };
 typedef struct _ORDER_INFO ORDER_INFO;
 
 struct _DSTBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
 };
 typedef struct _DSTBLT_ORDER DSTBLT_ORDER;
 
 struct _PATBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;
@@ -82,180 +82,180 @@ typedef struct _PATBLT_ORDER PATBLT_ORDER;
 
 struct _SCRBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
+	sint32 nXSrc;
+	sint32 nYSrc;
 };
 typedef struct _SCRBLT_ORDER SCRBLT_ORDER;
 
 struct _OPAQUE_RECT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
 	uint32 color;
 };
 typedef struct _OPAQUE_RECT_ORDER OPAQUE_RECT_ORDER;
 
 struct _DRAW_NINE_GRID_ORDER
 {
-	sint16 srcLeft;
-	sint16 srcTop;
-	sint16 srcRight;
-	sint16 srcBottom;
-	uint16 bitmapId;
+	sint32 srcLeft;
+	sint32 srcTop;
+	sint32 srcRight;
+	sint32 srcBottom;
+	uint32 bitmapId;
 };
 typedef struct _DRAW_NINE_GRID_ORDER DRAW_NINE_GRID_ORDER;
 
 struct _DELTA_RECT
 {
-	sint16 left;
-	sint16 top;
-	sint16 width;
-	sint16 height;
+	sint32 left;
+	sint32 top;
+	sint32 width;
+	sint32 height;
 };
 typedef struct _DELTA_RECT DELTA_RECT;
 
 struct _MULTI_DSTBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	uint8 numRectangles;
-	uint16 cbData;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
+	uint32 numRectangles;
+	uint32 cbData;
 	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_DSTBLT_ORDER MULTI_DSTBLT_ORDER;
 
 struct _MULTI_PATBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;
-	uint8 numRectangles;
-	uint16 cbData;
+	uint32 numRectangles;
+	uint32 cbData;
 	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_PATBLT_ORDER MULTI_PATBLT_ORDER;
 
 struct _MULTI_SCRBLT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
-	uint8 numRectangles;
-	uint16 cbData;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
+	sint32 nXSrc;
+	sint32 nYSrc;
+	uint32 numRectangles;
+	uint32 cbData;
 	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_SCRBLT_ORDER MULTI_SCRBLT_ORDER;
 
 struct _MULTI_OPAQUE_RECT_ORDER
 {
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
 	uint32 color;
-	uint8 numRectangles;
-	uint16 cbData;
+	uint32 numRectangles;
+	uint32 cbData;
 	DELTA_RECT rectangles[45];
 };
 typedef struct _MULTI_OPAQUE_RECT_ORDER MULTI_OPAQUE_RECT_ORDER;
 
 struct _MULTI_DRAW_NINE_GRID_ORDER
 {
-	sint16 srcLeft;
-	sint16 srcTop;
-	sint16 srcRight;
-	sint16 srcBottom;
-	uint16 bitmapId;
-	uint8 nDeltaEntries;
-	uint16 cbData;
+	sint32 srcLeft;
+	sint32 srcTop;
+	sint32 srcRight;
+	sint32 srcBottom;
+	uint32 bitmapId;
+	uint32 nDeltaEntries;
+	uint32 cbData;
 	uint8* codeDeltaList;
 };
 typedef struct _MULTI_DRAW_NINE_GRID_ORDER MULTI_DRAW_NINE_GRID_ORDER;
 
 struct _LINE_TO_ORDER
 {
-	uint16 backMode;
-	sint16 nXStart;
-	sint16 nYStart;
-	sint16 nXEnd;
-	sint16 nYEnd;
+	uint32 backMode;
+	sint32 nXStart;
+	sint32 nYStart;
+	sint32 nXEnd;
+	sint32 nYEnd;
 	uint32 backColor;
-	uint8 bRop2;
-	uint8 penStyle;
-	uint8 penWidth;
+	uint32 bRop2;
+	uint32 penStyle;
+	uint32 penWidth;
 	uint32 penColor;
 };
 typedef struct _LINE_TO_ORDER LINE_TO_ORDER;
 
 struct _DELTA_POINT
 {
-	sint16 x;
-	sint16 y;
+	sint32 x;
+	sint32 y;
 };
 typedef struct _DELTA_POINT DELTA_POINT;
 
 struct _POLYLINE_ORDER
 {
-	sint16 xStart;
-	sint16 yStart;
-	uint8 bRop2;
+	sint32 xStart;
+	sint32 yStart;
+	uint32 bRop2;
 	uint32 penColor;
-	uint8 numPoints;
-	uint8 cbData;
+	uint32 numPoints;
+	uint32 cbData;
 	DELTA_POINT* points;
 };
 typedef struct _POLYLINE_ORDER POLYLINE_ORDER;
 
 struct _MEMBLT_ORDER
 {
-	uint16 cacheId;
-	uint8 colorIndex;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
-	uint16 cacheIndex;
+	uint32 cacheId;
+	uint32 colorIndex;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
+	sint32 nXSrc;
+	sint32 nYSrc;
+	uint32 cacheIndex;
 	rdpBitmap* bitmap;
 };
 typedef struct _MEMBLT_ORDER MEMBLT_ORDER;
 
 struct _MEM3BLT_ORDER
 {
-	uint16 cacheId;
-	uint8 colorIndex;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nWidth;
-	sint16 nHeight;
-	uint8 bRop;
-	sint16 nXSrc;
-	sint16 nYSrc;
+	uint32 cacheId;
+	uint32 colorIndex;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nWidth;
+	sint32 nHeight;
+	uint32 bRop;
+	sint32 nXSrc;
+	sint32 nYSrc;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;
-	uint16 cacheIndex;
+	uint32 cacheIndex;
 	rdpBitmap* bitmap;
 };
 typedef struct _MEM3BLT_ORDER MEM3BLT_ORDER;
@@ -263,148 +263,148 @@ typedef struct _MEM3BLT_ORDER MEM3BLT_ORDER;
 struct _SAVE_BITMAP_ORDER
 {
 	uint32 savedBitmapPosition;
-	sint16 nLeftRect;
-	sint16 nTopRect;
-	sint16 nRightRect;
-	sint16 nBottomRect;
-	uint8 operation;
+	sint32 nLeftRect;
+	sint32 nTopRect;
+	sint32 nRightRect;
+	sint32 nBottomRect;
+	uint32 operation;
 };
 typedef struct _SAVE_BITMAP_ORDER SAVE_BITMAP_ORDER;
 
 struct _GLYPH_FRAGMENT_INDEX
 {
-	uint8 index;
-	uint16 delta;
+	uint32 index;
+	uint32 delta;
 };
 typedef struct _GLYPH_FRAGMENT_INDEX GLYPH_FRAGMENT_INDEX;
 
 struct _GLYPH_FRAGMENT
 {
-	uint8 operation;
-	uint8 index;
-	uint8 size;
-	uint8 nindices;
+	uint32 operation;
+	uint32 index;
+	uint32 size;
+	uint32 nindices;
 	GLYPH_FRAGMENT_INDEX* indices;
 };
 typedef struct _GLYPH_FRAGMENT GLYPH_FRAGMENT;
 
 struct _GLYPH_INDEX_ORDER
 {
-	uint8 cacheId;
-	uint8 flAccel;
-	uint8 ulCharInc;
-	uint8 fOpRedundant;
+	uint32 cacheId;
+	uint32 flAccel;
+	uint32 ulCharInc;
+	uint32 fOpRedundant;
 	uint32 backColor;
 	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
+	sint32 bkLeft;
+	sint32 bkTop;
+	sint32 bkRight;
+	sint32 bkBottom;
+	sint32 opLeft;
+	sint32 opTop;
+	sint32 opRight;
+	sint32 opBottom;
 	rdpBrush brush;
-	sint16 x;
-	sint16 y;
-	uint8 cbData;
+	sint32 x;
+	sint32 y;
+	uint32 cbData;
 	uint8* data;
 };
 typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 
 struct _FAST_INDEX_ORDER
 {
-	uint8 cacheId;
-	uint8 flAccel;
-	uint8 ulCharInc;
+	uint32 cacheId;
+	uint32 flAccel;
+	uint32 ulCharInc;
 	uint32 backColor;
 	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
+	sint32 bkLeft;
+	sint32 bkTop;
+	sint32 bkRight;
+	sint32 bkBottom;
+	sint32 opLeft;
+	sint32 opTop;
+	sint32 opRight;
+	sint32 opBottom;
 	boolean opaqueRect;
-	sint16 x;
-	sint16 y;
-	uint8 cbData;
+	sint32 x;
+	sint32 y;
+	uint32 cbData;
 	uint8* data;
 };
 typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 
 struct _FAST_GLYPH_ORDER
 {
-	uint8 cacheId;
-	uint8 flAccel;
-	uint8 ulCharInc;
+	uint32 cacheId;
+	uint32 flAccel;
+	uint32 ulCharInc;
 	uint32 backColor;
 	uint32 foreColor;
-	sint16 bkLeft;
-	sint16 bkTop;
-	sint16 bkRight;
-	sint16 bkBottom;
-	sint16 opLeft;
-	sint16 opTop;
-	sint16 opRight;
-	sint16 opBottom;
-	sint16 x;
-	sint16 y;
-	uint8 cbData;
+	sint32 bkLeft;
+	sint32 bkTop;
+	sint32 bkRight;
+	sint32 bkBottom;
+	sint32 opLeft;
+	sint32 opTop;
+	sint32 opRight;
+	sint32 opBottom;
+	sint32 x;
+	sint32 y;
+	uint32 cbData;
 	uint8* data;
 };
 typedef struct _FAST_GLYPH_ORDER FAST_GLYPH_ORDER;
 
 struct _POLYGON_SC_ORDER
 {
-	sint16 xStart;
-	sint16 yStart;
-	uint8 bRop2;
-	uint8 fillMode;
+	sint32 xStart;
+	sint32 yStart;
+	uint32 bRop2;
+	uint32 fillMode;
 	uint32 brushColor;
-	uint8 nDeltaEntries;
-	uint8 cbData;
+	uint32 nDeltaEntries;
+	uint32 cbData;
 	uint8* codeDeltaList;
 };
 typedef struct _POLYGON_SC_ORDER POLYGON_SC_ORDER;
 
 struct _POLYGON_CB_ORDER
 {
-	sint16 xStart;
-	sint16 yStart;
-	uint8 bRop2;
-	uint8 fillMode;
+	sint32 xStart;
+	sint32 yStart;
+	uint32 bRop2;
+	uint32 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;
-	uint8 nDeltaEntries;
-	uint8 cbData;
+	uint32 nDeltaEntries;
+	uint32 cbData;
 	uint8* codeDeltaList;
 };
 typedef struct _POLYGON_CB_ORDER POLYGON_CB_ORDER;
 
 struct _ELLIPSE_SC_ORDER
 {
-	sint16 leftRect;
-	sint16 topRect;
-	sint16 rightRect;
-	sint16 bottomRect;
-	uint8 bRop2;
-	uint8 fillMode;
+	sint32 leftRect;
+	sint32 topRect;
+	sint32 rightRect;
+	sint32 bottomRect;
+	uint32 bRop2;
+	uint32 fillMode;
 	uint32 color;
 };
 typedef struct _ELLIPSE_SC_ORDER ELLIPSE_SC_ORDER;
 
 struct _ELLIPSE_CB_ORDER
 {
-	sint16 leftRect;
-	sint16 topRect;
-	sint16 rightRect;
-	sint16 bottomRect;
-	uint8 bRop2;
-	uint8 fillMode;
+	sint32 leftRect;
+	sint32 topRect;
+	sint32 rightRect;
+	sint32 bottomRect;
+	uint32 bRop2;
+	uint32 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;

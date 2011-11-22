@@ -130,14 +130,14 @@ typedef struct _WINDOW_ORDER_INFO WINDOW_ORDER_INFO;
 
 struct _ICON_INFO
 {
-	uint16 cacheEntry;
-	uint8 cacheId;
-	uint8 bpp;
-	uint16 width;
-	uint16 height;
-	uint16 cbColorTable;
-	uint16 cbBitsMask;
-	uint16 cbBitsColor;
+	uint32 cacheEntry;
+	uint32 cacheId;
+	uint32 bpp;
+	uint32 width;
+	uint32 height;
+	uint32 cbColorTable;
+	uint32 cbBitsMask;
+	uint32 cbBitsColor;
 	uint8* bitsMask;
 	uint8* colorTable;
 	uint8* bitsColor;
@@ -146,8 +146,8 @@ typedef struct _ICON_INFO ICON_INFO;
 
 struct _CACHED_ICON_INFO
 {
-	uint16 cacheEntry;
-	uint8 cacheId;
+	uint32 cacheEntry;
+	uint32 cacheId;
 };
 typedef struct _CACHED_ICON_INFO CACHED_ICON_INFO;
 
@@ -165,13 +165,13 @@ struct _WINDOW_STATE_ORDER
 	uint32 ownerWindowId;
 	uint32 style;
 	uint32 extendedStyle;
-	uint8 showState;
+	uint32 showState;
 	UNICODE_STRING titleInfo;
 	uint32 clientOffsetX;
 	uint32 clientOffsetY;
 	uint32 clientAreaWidth;
 	uint32 clientAreaHeight;
-	uint8 RPContent;
+	uint32 RPContent;
 	uint32 rootParentHandle;
 	uint32 windowOffsetX;
 	uint32 windowOffsetY;
@@ -179,11 +179,11 @@ struct _WINDOW_STATE_ORDER
 	uint32 windowClientDeltaY;
 	uint32 windowWidth;
 	uint32 windowHeight;
-	uint16 numWindowRects;
+	uint32 numWindowRects;
 	RECTANGLE_16* windowRects;
 	uint32 visibleOffsetX;
 	uint32 visibleOffsetY;
-	uint16 numVisibilityRects;
+	uint32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 };
 typedef struct _WINDOW_STATE_ORDER WINDOW_STATE_ORDER;
@@ -214,7 +214,7 @@ typedef struct _NOTIFY_ICON_STATE_ORDER NOTIFY_ICON_STATE_ORDER;
 struct _MONITORED_DESKTOP_ORDER
 {
 	uint32 activeWindowId;
-	uint8 numWindowIds;
+	uint32 numWindowIds;
 	uint32* windowIds;
 };
 typedef struct _MONITORED_DESKTOP_ORDER MONITORED_DESKTOP_ORDER;

@@ -38,43 +38,43 @@
 
 struct _OFFSCREEN_DELETE_LIST
 {
-	uint16 cIndices;
+	uint32 cIndices;
 	uint16* indices;
 };
 typedef struct _OFFSCREEN_DELETE_LIST OFFSCREEN_DELETE_LIST;
 
 struct _CREATE_OFFSCREEN_BITMAP_ORDER
 {
-	uint16 id;
-	uint16 cx;
-	uint16 cy;
+	uint32 id;
+	uint32 cx;
+	uint32 cy;
 	OFFSCREEN_DELETE_LIST deleteList;
 };
 typedef struct _CREATE_OFFSCREEN_BITMAP_ORDER CREATE_OFFSCREEN_BITMAP_ORDER;
 
 struct _SWITCH_SURFACE_ORDER
 {
-	uint16 bitmapId;
+	uint32 bitmapId;
 };
 typedef struct _SWITCH_SURFACE_ORDER SWITCH_SURFACE_ORDER;
 
 struct _NINE_GRID_BITMAP_INFO
 {
 	uint32 flFlags;
-	uint16 ulLeftWidth;
-	uint16 ulRightWidth;
-	uint16 ulTopHeight;
-	uint16 ulBottomHeight;
+	uint32 ulLeftWidth;
+	uint32 ulRightWidth;
+	uint32 ulTopHeight;
+	uint32 ulBottomHeight;
 	uint32 crTransparent;
 };
 typedef struct _NINE_GRID_BITMAP_INFO NINE_GRID_BITMAP_INFO;
 
 struct _CREATE_NINE_GRID_BITMAP_ORDER
 {
-	uint8 bitmapBpp;
-	uint16 bitmapId;
-	uint16 cx;
-	uint16 cy;
+	uint32 bitmapBpp;
+	uint32 bitmapId;
+	uint32 cx;
+	uint32 cy;
 	NINE_GRID_BITMAP_INFO nineGridInfo;
 };
 typedef struct _CREATE_NINE_GRID_BITMAP_ORDER CREATE_NINE_GRID_BITMAP_ORDER;
@@ -87,29 +87,29 @@ typedef struct _FRAME_MARKER_ORDER FRAME_MARKER_ORDER;
 
 struct _STREAM_BITMAP_FIRST_ORDER
 {
-	uint8 bitmapFlags;
-	uint8 bitmapBpp;
-	uint16 bitmapType;
-	uint16 bitmapWidth;
-	uint16 bitmapHeight;
+	uint32 bitmapFlags;
+	uint32 bitmapBpp;
+	uint32 bitmapType;
+	uint32 bitmapWidth;
+	uint32 bitmapHeight;
 	uint32 bitmapSize;
-	uint16 bitmapBlockSize;
+	uint32 bitmapBlockSize;
 	uint8* bitmapBlock;
 };
 typedef struct _STREAM_BITMAP_FIRST_ORDER STREAM_BITMAP_FIRST_ORDER;
 
 struct _STREAM_BITMAP_NEXT_ORDER
 {
-	uint8 bitmapFlags;
-	uint16 bitmapType;
-	uint16 bitmapBlockSize;
+	uint32 bitmapFlags;
+	uint32 bitmapType;
+	uint32 bitmapBlockSize;
 	uint8* bitmapBlock;
 };
 typedef struct _STREAM_BITMAP_NEXT_ORDER STREAM_BITMAP_NEXT_ORDER;
 
 struct _DRAW_GDIPLUS_FIRST_ORDER
 {
-	uint16 cbSize;
+	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
 	uint8* emfRecords;
@@ -118,14 +118,14 @@ typedef struct _DRAW_GDIPLUS_FIRST_ORDER DRAW_GDIPLUS_FIRST_ORDER;
 
 struct _DRAW_GDIPLUS_NEXT_ORDER
 {
-	uint16 cbSize;
+	uint32 cbSize;
 	uint8* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_NEXT_ORDER DRAW_GDIPLUS_NEXT_ORDER;
 
 struct _DRAW_GDIPLUS_END_ORDER
 {
-	uint16 cbSize;
+	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
 	uint8* emfRecords;
@@ -134,10 +134,10 @@ typedef struct _DRAW_GDIPLUS_END_ORDER DRAW_GDIPLUS_END_ORDER;
 
 struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER
 {
-	uint8 flags;
-	uint16 cacheType;
-	uint16 cacheIndex;
-	uint16 cbSize;
+	uint32 flags;
+	uint32 cacheType;
+	uint32 cacheIndex;
+	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint8* emfRecords;
 };
@@ -145,20 +145,20 @@ typedef struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER DRAW_GDIPLUS_CACHE_FIRST_ORDER;
 
 struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER
 {
-	uint8 flags;
-	uint16 cacheType;
-	uint16 cacheIndex;
-	uint16 cbSize;
+	uint32 flags;
+	uint32 cacheType;
+	uint32 cacheIndex;
+	uint32 cbSize;
 	uint8* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER DRAW_GDIPLUS_CACHE_NEXT_ORDER;
 
 struct _DRAW_GDIPLUS_CACHE_END_ORDER
 {
-	uint8 flags;
-	uint16 cacheType;
-	uint16 cacheIndex;
-	uint16 cbSize;
+	uint32 flags;
+	uint32 cacheType;
+	uint32 cacheIndex;
+	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint8* emfRecords;
 };
