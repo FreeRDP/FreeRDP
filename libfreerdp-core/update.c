@@ -455,6 +455,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->primary = xnew(rdpPrimaryUpdate);
 		update->secondary = xnew(rdpSecondaryUpdate);
 		update->altsec = xnew(rdpAltSecUpdate);
+		update->window = xnew(rdpWindowUpdate);
 	}
 
 	return update;
@@ -465,6 +466,11 @@ void update_free(rdpUpdate* update)
 	if (update != NULL)
 	{
 		xfree(update->bitmap_update.rectangles);
+		xfree(update->pointer);
+		xfree(update->primary);
+		xfree(update->secondary);
+		xfree(update->altsec);
+		xfree(update->window);
 		xfree(update);
 	}
 }

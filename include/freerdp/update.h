@@ -150,23 +150,16 @@ struct rdp_update
 	rdpPrimaryUpdate* primary; /* 33 */
 	rdpSecondaryUpdate* secondary; /* 34 */
 	rdpAltSecUpdate* altsec; /* 35 */
+	rdpWindowUpdate* window; /* 36 */
+	uint32 paddingC[48 - 37]; /* 37 */
 
-	pWindowCreate WindowCreate;
-	pWindowUpdate WindowUpdate;
-	pWindowIcon WindowIcon;
-	pWindowCachedIcon WindowCachedIcon;
-	pWindowDelete WindowDelete;
-	pNotifyIconCreate NotifyIconCreate;
-	pNotifyIconUpdate NotifyIconUpdate;
-	pNotifyIconDelete NotifyIconDelete;
-	pMonitoredDesktop MonitoredDesktop;
-	pNonMonitoredDesktop NonMonitoredDesktop;
+	pRefreshRect RefreshRect; /* 48 */
+	pSuppressOutput SuppressOutput; /* 49 */
+	uint32 paddingD[64 - 50]; /* 50 */
 
-	pRefreshRect RefreshRect;
-	pSuppressOutput SuppressOutput;
-
-	pSurfaceCommand SurfaceCommand;
-	pSurfaceBits SurfaceBits;
+	pSurfaceCommand SurfaceCommand; /* 64 */
+	pSurfaceBits SurfaceBits; /* 65 */
+	uint32 paddingF[80 - 66]; /* 66 */
 
 	/* internal */
 
@@ -177,13 +170,6 @@ struct rdp_update
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
-
-	WINDOW_ORDER_INFO orderInfo;
-	WINDOW_STATE_ORDER window_state;
-	WINDOW_ICON_ORDER window_icon;
-	WINDOW_CACHED_ICON_ORDER window_cached_icon;
-	NOTIFY_ICON_STATE_ORDER notify_icon_state;
-	MONITORED_DESKTOP_ORDER monitored_desktop;
 
 	SURFACE_BITS_COMMAND surface_bits_command;
 };
