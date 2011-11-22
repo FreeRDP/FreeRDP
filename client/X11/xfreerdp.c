@@ -90,24 +90,22 @@ void xf_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void xf_sw_begin_paint(rdpUpdate* update)
+void xf_sw_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
-void xf_sw_end_paint(rdpUpdate* update)
+void xf_sw_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	xfInfo* xfi;
 	sint32 x, y;
 	uint32 w, h;
-	xfContext* context;
 
-	context = (xfContext*) update->context;
-	gdi = update->context->gdi;
-	xfi = context->xfi;
+	xfi = ((xfContext*) context)->xfi;
+	gdi = context->gdi;
 
 	if (xfi->remote_app != true)
 	{
@@ -160,21 +158,21 @@ void xf_sw_end_paint(rdpUpdate* update)
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
 
-		xf_rail_paint(xfi, update->context->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 	}
 }
 
-void xf_sw_desktop_resize(rdpUpdate* update)
+void xf_sw_desktop_resize(rdpContext* context)
 {
 	xfInfo* xfi;
 	rdpSettings* settings;
 
-	xfi = ((xfContext*) update->context)->xfi;
+	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
 	if (xfi->fullscreen != true)
 	{
-		rdpGdi* gdi = update->context->gdi;
+		rdpGdi* gdi = context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
 
 		if (xfi->image)
@@ -187,21 +185,21 @@ void xf_sw_desktop_resize(rdpUpdate* update)
 	}
 }
 
-void xf_hw_begin_paint(rdpUpdate* update)
+void xf_hw_begin_paint(rdpContext* context)
 {
 	xfInfo* xfi;
-	xfi = ((xfContext*) update->context)->xfi;
+	xfi = ((xfContext*) context)->xfi;
 	xfi->hdc->hwnd->invalid->null = 1;
 	xfi->hdc->hwnd->ninvalid = 0;
 }
 
-void xf_hw_end_paint(rdpUpdate* update)
+void xf_hw_end_paint(rdpContext* context)
 {
 	xfInfo* xfi;
 	sint32 x, y;
 	uint32 w, h;
 
-	xfi = ((xfContext*) update->context)->xfi;
+	xfi = ((xfContext*) context)->xfi;
 
 	if (xfi->remote_app)
 	{
@@ -213,17 +211,17 @@ void xf_hw_end_paint(rdpUpdate* update)
 		w = xfi->hdc->hwnd->invalid->w;
 		h = xfi->hdc->hwnd->invalid->h;
 
-		xf_rail_paint(xfi, update->context->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 	}
 }
 
-void xf_hw_desktop_resize(rdpUpdate* update)
+void xf_hw_desktop_resize(rdpContext* context)
 {
 	xfInfo* xfi;
 	boolean same;
 	rdpSettings* settings;
 
-	xfi = ((xfContext*) update->context)->xfi;
+	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
 	if (xfi->fullscreen != true)

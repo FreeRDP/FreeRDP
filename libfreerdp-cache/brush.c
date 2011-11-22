@@ -38,9 +38,9 @@ void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	IFCALL(cache->brush->PatBlt, context, patblt);
 }
 
-void update_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
+void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
@@ -113,7 +113,7 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 	cache->brush->PatBlt = update->primary->PatBlt;
 
 	update->primary->PatBlt = update_gdi_patblt;
-	update->CacheBrush = update_gdi_cache_brush;
+	update->secondary->CacheBrush = update_gdi_cache_brush;
 }
 
 rdpBrushCache* brush_cache_new(rdpSettings* settings)

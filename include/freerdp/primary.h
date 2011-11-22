@@ -22,14 +22,14 @@
 
 #include <freerdp/types.h>
 
-struct _BOUNDS
+struct rdp_bounds
 {
 	sint16 left;
 	sint16 top;
 	sint16 right;
 	sint16 bottom;
 };
-typedef struct _BOUNDS BOUNDS;
+typedef struct rdp_bounds rdpBounds;
 
 struct rdp_brush
 {
@@ -48,7 +48,7 @@ struct _ORDER_INFO
 {
 	uint8 orderType;
 	uint32 fieldFlags;
-	BOUNDS bounds;
+	rdpBounds bounds;
 	sint8 deltaBoundLeft;
 	sint8 deltaBoundTop;
 	sint8 deltaBoundRight;

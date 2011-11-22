@@ -362,7 +362,7 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	 */
 	if (width != rdp->settings->width || height != rdp->settings->height)
 	{
-		IFCALL(rdp->update->DesktopResize, rdp->update);
+		IFCALL(rdp->update->DesktopResize, rdp->update->context);
 	}
 
 	/**

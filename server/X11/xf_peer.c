@@ -218,7 +218,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 		cmd->height = height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
-		update->SurfaceBits(update, cmd);
+		update->SurfaceBits(update->context, cmd);
 	}
 }
 
@@ -293,7 +293,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 		if (xf_pcap_dump_realtime && xf_peer_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == false)
                         break;
 
-		update->SurfaceCommand(update, s);
+		update->SurfaceCommand(update->context, s);
 	}
 }
 
@@ -329,7 +329,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 
 	client->settings->width = xfi->width;
 	client->settings->height = xfi->height;
-	client->update->DesktopResize(client->update);
+	client->update->DesktopResize(client->update->context);
 	xfp->activated = false;
 
 	/* Return false here would stop the execution of the peer mainloop. */
@@ -381,7 +381,7 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->width = 640;
 			client->settings->height = 480;
 		}
-		update->DesktopResize(update);
+		update->DesktopResize(update->context);
 		xfp->activated = false;
 	}
 }

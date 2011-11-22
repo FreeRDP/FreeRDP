@@ -150,7 +150,7 @@ void update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
 void update_recv_play_sound(rdpUpdate* update, STREAM* s)
 {
 	update_read_play_sound(s, &update->play_sound);
-	IFCALL(update->PlaySound, update, &update->play_sound);
+	IFCALL(update->PlaySound, update->context, &update->play_sound);
 }
 
 void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
@@ -244,12 +244,13 @@ void update_recv_pointer(rdpUpdate* update, STREAM* s)
 void update_recv(rdpUpdate* update, STREAM* s)
 {
 	uint16 updateType;
+	rdpContext* context = update->context;
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
 	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
-	IFCALL(update->BeginPaint, update);
+	IFCALL(update->BeginPaint, context);
 
 	switch (updateType)
 	{
@@ -259,21 +260,21 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 		case UPDATE_TYPE_BITMAP:
 			update_read_bitmap(update, s, &update->bitmap_update);
-			IFCALL(update->BitmapUpdate, update, &update->bitmap_update);
+			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
 			update_read_palette(update, s, &update->palette_update);
-			IFCALL(update->Palette, update, &update->palette_update);
+			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 
 		case UPDATE_TYPE_SYNCHRONIZE:
 			update_read_synchronize(update, s);
-			IFCALL(update->Synchronize, update);
+			IFCALL(update->Synchronize, context);
 			break;
 	}
 
-	IFCALL(update->EndPaint, update);
+	IFCALL(update->EndPaint, context);
 
 	if (stream_get_left(s) > RDP_SHARE_DATA_HEADER_LENGTH)
 	{
@@ -330,12 +331,12 @@ void update_reset_state(rdpUpdate* update)
 	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
 }
 
-static void update_begin_paint(rdpUpdate* update)
+static void update_begin_paint(rdpContext* context)
 {
 
 }
 
-static void update_end_paint(rdpUpdate* update)
+static void update_end_paint(rdpContext* context)
 {
 
 }
@@ -351,10 +352,10 @@ static void update_write_refresh_rect(STREAM* s, uint8 count, RECTANGLE_16* area
 		freerdp_write_rectangle_16(s, &areas[i]);
 }
 
-static void update_send_refresh_rect(rdpUpdate* update, uint8 count, RECTANGLE_16* areas)
+static void update_send_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
 {
 	STREAM* s;
-	rdpRdp* rdp = update->context->rdp;
+	rdpRdp* rdp = context->rdp;
 
 	s = rdp_data_pdu_init(rdp);
 	update_write_refresh_rect(s, count, areas);
@@ -371,10 +372,10 @@ static void update_write_suppress_output(STREAM* s, uint8 allow, RECTANGLE_16* a
 		freerdp_write_rectangle_16(s, area);
 }
 
-static void update_send_suppress_output(rdpUpdate* update, uint8 allow, RECTANGLE_16* area)
+static void update_send_suppress_output(rdpContext* context, uint8 allow, RECTANGLE_16* area)
 {
 	STREAM* s;
-	rdpRdp* rdp = update->context->rdp;
+	rdpRdp* rdp = context->rdp;
 
 	s = rdp_data_pdu_init(rdp);
 	update_write_suppress_output(s, allow, area);
@@ -382,22 +383,22 @@ static void update_send_suppress_output(rdpUpdate* update, uint8 allow, RECTANGL
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
 }
 
-static void update_send_surface_command(rdpUpdate* update, STREAM* s)
+static void update_send_surface_command(rdpContext* context, STREAM* s)
 {
-	rdpRdp* rdp = update->context->rdp;
+	rdpRdp* rdp = context->rdp;
 	fastpath_send_fragmented_update_pdu(rdp->fastpath, s);
 }
 
-static void update_send_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	rdpRdp* rdp = update->context->rdp;
+	rdpRdp* rdp = context->rdp;
 	fastpath_send_surfcmd_surface_bits(rdp->fastpath, surface_bits_command);
 }
 
-static void update_send_synchronize(rdpUpdate* update)
+static void update_send_synchronize(rdpContext* context)
 {
 	STREAM* s;
-	rdpRdp* rdp = update->context->rdp;
+	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	stream_write_uint8(s, FASTPATH_UPDATETYPE_SYNCHRONIZE); /* updateHeader (1 byte) */
@@ -405,11 +406,9 @@ static void update_send_synchronize(rdpUpdate* update)
 	fastpath_send_update_pdu(rdp->fastpath, s);
 }
 
-static void update_send_desktop_resize(rdpUpdate* update)
+static void update_send_desktop_resize(rdpContext* context)
 {
-	rdpRdp* rdp = update->context->rdp;
-
-	rdp_server_reactivate(rdp);
+	rdp_server_reactivate(context->rdp);
 }
 
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
@@ -453,6 +452,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		update->pointer = xnew(rdpPointerUpdate);
 		update->primary = xnew(rdpPrimaryUpdate);
+		update->secondary = xnew(rdpSecondaryUpdate);
 	}
 
 	return update;

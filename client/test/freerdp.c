@@ -74,15 +74,15 @@ void tf_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void tf_begin_paint(rdpUpdate* update)
+void tf_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
-void tf_end_paint(rdpUpdate* update)
+void tf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;

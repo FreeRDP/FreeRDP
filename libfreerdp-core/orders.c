@@ -1630,7 +1630,7 @@ void update_read_field_flags(STREAM* s, uint32* fieldFlags, uint8 flags, uint8 f
 	}
 }
 
-void update_read_bounds(STREAM* s, BOUNDS* bounds)
+void update_read_bounds(STREAM* s, rdpBounds* bounds)
 {
 	uint8 flags;
 
@@ -1676,7 +1676,7 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		if (!(flags & ORDER_ZERO_BOUNDS_DELTAS))
 			update_read_bounds(s, &orderInfo->bounds);
 
-		IFCALL(update->SetBounds, update, &orderInfo->bounds);
+		IFCALL(update->SetBounds, context, &orderInfo->bounds);
 	}
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? true : false;
@@ -1806,7 +1806,7 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	if (flags & ORDER_BOUNDS)
 	{
-		IFCALL(update->SetBounds, update, NULL);
+		IFCALL(update->SetBounds, context, NULL);
 	}
 }
 
@@ -1816,6 +1816,8 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	uint8 orderType;
 	uint16 extraFlags;
 	uint16 orderLength;
+	rdpContext* context = update->context;
+	rdpSecondaryUpdate* secondary = update->secondary;
 
 	stream_read_uint16(s, orderLength); /* orderLength (2 bytes) */
 	stream_read_uint16(s, extraFlags); /* extraFlags (2 bytes) */
@@ -1833,53 +1835,51 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
-			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), false, extraFlags);
-			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
+			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), false, extraFlags);
+			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			update_read_cache_bitmap_order(s, &(update->cache_bitmap_order), true, extraFlags);
-			IFCALL(update->CacheBitmap, update, &(update->cache_bitmap_order));
+			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), true, extraFlags);
+			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), false, extraFlags);
-			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
-			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
+			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), false, extraFlags);
+			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(update->cache_bitmap_v2_order), true, extraFlags);
-			//IFCALL(update->BitmapDecompress, update, update->cache_bitmap_v2_order.bitmap);
-			IFCALL(update->CacheBitmapV2, update, &(update->cache_bitmap_v2_order));
+			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), true, extraFlags);
+			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			update_read_cache_bitmap_v3_order(s, &(update->cache_bitmap_v3_order), true, extraFlags);
-			IFCALL(update->CacheBitmapV3, update, &(update->cache_bitmap_v3_order));
+			update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), true, extraFlags);
+			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
-			update_read_cache_color_table_order(s, &(update->cache_color_table_order), extraFlags);
-			IFCALL(update->CacheColorTable, update, &(update->cache_color_table_order));
+			update_read_cache_color_table_order(s, &(secondary->cache_color_table_order), extraFlags);
+			IFCALL(secondary->CacheColorTable, context, &(secondary->cache_color_table_order));
 			break;
 
 		case ORDER_TYPE_CACHE_GLYPH:
-			if (update->glyph_v2)
+			if (secondary->glyph_v2)
 			{
-				update_read_cache_glyph_v2_order(s, &(update->cache_glyph_v2_order), extraFlags);
-				IFCALL(update->CacheGlyphV2, update, &(update->cache_glyph_v2_order));
+				update_read_cache_glyph_v2_order(s, &(secondary->cache_glyph_v2_order), extraFlags);
+				IFCALL(secondary->CacheGlyphV2, context, &(secondary->cache_glyph_v2_order));
 			}
 			else
 			{
-				update_read_cache_glyph_order(s, &(update->cache_glyph_order), extraFlags);
-				IFCALL(update->CacheGlyph, update, &(update->cache_glyph_order));
+				update_read_cache_glyph_order(s, &(secondary->cache_glyph_order), extraFlags);
+				IFCALL(secondary->CacheGlyph, context, &(secondary->cache_glyph_order));
 			}
 			break;
 
 		case ORDER_TYPE_CACHE_BRUSH:
-			update_read_cache_brush_order(s, &(update->cache_brush_order), extraFlags);
-			IFCALL(update->CacheBrush, update, &(update->cache_brush_order));
+			update_read_cache_brush_order(s, &(secondary->cache_brush_order), extraFlags);
+			IFCALL(secondary->CacheBrush, context, &(secondary->cache_brush_order));
 			break;
 
 		default:

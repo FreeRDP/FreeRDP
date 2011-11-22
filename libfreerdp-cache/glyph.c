@@ -188,18 +188,18 @@ void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 			fast_index->opRight - fast_index->opLeft, fast_index->opBottom - fast_index->opTop);
 }
 
-void update_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
+void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	int i;
 	rdpGlyph* glyph;
 	GLYPH_DATA* glyph_data;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	for (i = 0; i < cache_glyph->cGlyphs; i++)
 	{
 		glyph_data = cache_glyph->glyphData[i];
 
-		glyph = Glyph_Alloc(update->context);
+		glyph = Glyph_Alloc(context);
 
 		glyph->x = glyph_data->x;
 		glyph->y = glyph_data->y;
@@ -207,13 +207,13 @@ void update_gdi_cache_glyph(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph)
 		glyph->cy = glyph_data->cy;
 		glyph->aj = glyph_data->aj;
 		glyph->cb = glyph_data->cb;
-		Glyph_New(update->context, glyph);
+		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph_data->cacheIndex, glyph);
 	}
 }
 
-void update_gdi_cache_glyph_v2(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
+void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
 
 }
@@ -306,8 +306,8 @@ void glyph_cache_register_callbacks(rdpUpdate* update)
 {
 	update->primary->GlyphIndex = update_gdi_glyph_index;
 	update->primary->FastIndex = update_gdi_fast_index;
-	update->CacheGlyph = update_gdi_cache_glyph;
-	update->CacheGlyphV2 = update_gdi_cache_glyph_v2;
+	update->secondary->CacheGlyph = update_gdi_cache_glyph;
+	update->secondary->CacheGlyphV2 = update_gdi_cache_glyph_v2;
 }
 
 rdpGlyphCache* glyph_cache_new(rdpSettings* settings)

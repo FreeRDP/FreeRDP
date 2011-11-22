@@ -1800,7 +1800,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 		return false;
 	}
 
-	rdp->update->glyph_v2 = (rdp->settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? true : false;
+	rdp->update->secondary->glyph_v2 = (rdp->settings->glyphSupportLevel > GLYPH_SUPPORT_FULL) ? true : false;
 
 	return true;
 }

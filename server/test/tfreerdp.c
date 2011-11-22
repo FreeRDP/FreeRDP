@@ -135,7 +135,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
-	update->SurfaceBits(update, cmd);
+	update->SurfaceBits(update->context, cmd);
 
 	xfree(rgb_data);
 }
@@ -219,7 +219,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd->height = context->icon_height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
-		update->SurfaceBits(update, cmd);
+		update->SurfaceBits(update->context, cmd);
 	}
 
 	s = test_peer_stream_init(context);
@@ -236,7 +236,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd->height = context->icon_height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
-	update->SurfaceBits(update, cmd);
+	update->SurfaceBits(update->context, cmd);
 
 	context->icon_x = x;
 	context->icon_y = y;
@@ -313,7 +313,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == false)
 			break;
 
-		update->SurfaceCommand(update, s);
+		update->SurfaceCommand(update->context, s);
 	}
 }
 
@@ -391,7 +391,7 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->width = 640;
 			client->settings->height = 480;
 		}
-		update->DesktopResize(update);
+		update->DesktopResize(update->context);
 		context->activated = false;
 	}
 }

@@ -141,8 +141,9 @@ static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 
 static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 {
-	rdpUpdate* update = fastpath->rdp->update;
 	uint16 updateType;
+	rdpUpdate* update = fastpath->rdp->update;
+	rdpContext* context = update->context;
 
 	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
 
@@ -150,12 +151,12 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 	{
 		case UPDATE_TYPE_BITMAP:
 			update_read_bitmap(update, s, &update->bitmap_update);
-			IFCALL(update->BitmapUpdate, update, &update->bitmap_update);
+			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
 			update_read_palette(update, s, &update->palette_update);
-			IFCALL(update->Palette, update, &update->palette_update);
+			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 	}
 }
@@ -178,7 +179,7 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
-			IFCALL(update->Synchronize, update);
+			IFCALL(update->Synchronize, context);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
@@ -301,14 +302,14 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 
-	IFCALL(update->BeginPaint, update);
+	IFCALL(update->BeginPaint, update->context);
 
 	while (stream_get_left(s) > 3)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
 
-	IFCALL(update->EndPaint, update);
+	IFCALL(update->EndPaint, update->context);
 
 	return true;
 }

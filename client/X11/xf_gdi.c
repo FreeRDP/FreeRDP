@@ -262,17 +262,17 @@ Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
 	return bitmap;
 }
 
-void xf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
+void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 	xfi->clrconv->palette->count = palette->number;
 	xfi->clrconv->palette->entries = palette->entries;
 }
 
-void xf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
+void xf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	XRectangle clip;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	if (bounds != NULL)
 	{
@@ -613,18 +613,19 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, tx, ty;
 	XImage* image;
 	RFX_MESSAGE* message;
-	xfInfo* xfi = ((xfContext*) update->context)->xfi;
-	RFX_CONTEXT* context = (RFX_CONTEXT*) xfi->rfx_context;
-	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) xfi->nsc_context;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) xfi->rfx_context;
+	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) xfi->nsc_context;
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		message = rfx_process_message(rfx_context,
+				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -662,20 +663,20 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 		}
 
 		XSetClipMask(xfi->display, xfi->gc, None);
-		rfx_message_free(context, message);
+		rfx_message_free(rfx_context, message);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
 	{
-		ncontext->width = surface_bits_command->width;
-		ncontext->height = surface_bits_command->height;
-		nsc_process_message(ncontext, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		nsc_context->width = surface_bits_command->width;
+		nsc_context->height = surface_bits_command->height;
+		nsc_process_message(nsc_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
 		xfi->bmp_codec_nsc = (uint8*) xrealloc(xfi->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_flip(ncontext->bmpdata, xfi->bmp_codec_nsc,
+		freerdp_image_flip(nsc_context->bmpdata, xfi->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
@@ -697,7 +698,7 @@ void xf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 				surface_bits_command->width, surface_bits_command->height);
 
 		XSetClipMask(xfi->display, xfi->gc, None);
-		nsc_context_destroy(ncontext);
+		nsc_context_destroy(nsc_context);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{

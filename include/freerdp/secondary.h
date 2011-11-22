@@ -180,13 +180,13 @@ struct _CACHE_BRUSH_ORDER
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 
-typedef void (*pCacheBitmap)(rdpUpdate* update, CACHE_BITMAP_ORDER* cache_bitmap_order);
-typedef void (*pCacheBitmapV2)(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
-typedef void (*pCacheBitmapV3)(rdpUpdate* update, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
-typedef void (*pCacheColorTable)(rdpUpdate* update, CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
-typedef void (*pCacheGlyph)(rdpUpdate* update, CACHE_GLYPH_ORDER* cache_glyph_order);
-typedef void (*pCacheGlyphV2)(rdpUpdate* update, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
-typedef void (*pCacheBrush)(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush_order);
+typedef void (*pCacheBitmap)(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap_order);
+typedef void (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
+typedef void (*pCacheBitmapV3)(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
+typedef void (*pCacheColorTable)(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
+typedef void (*pCacheGlyph)(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph_order);
+typedef void (*pCacheGlyphV2)(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
+typedef void (*pCacheBrush)(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush_order);
 
 struct rdp_secondary_update
 {
@@ -204,6 +204,7 @@ struct rdp_secondary_update
 
 	/* internal */
 
+	boolean glyph_v2;
 	CACHE_BITMAP_ORDER cache_bitmap_order;
 	CACHE_BITMAP_V2_ORDER cache_bitmap_v2_order;
 	CACHE_BITMAP_V3_ORDER cache_bitmap_v3_order;

@@ -115,20 +115,21 @@ typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
 /* Update Interface */
 
-typedef void (*pBeginPaint)(rdpUpdate* update);
-typedef void (*pEndPaint)(rdpUpdate* update);
-typedef void (*pSetBounds)(rdpUpdate* update, BOUNDS* bounds);
-typedef void (*pSynchronize)(rdpUpdate* update);
-typedef void (*pDesktopResize)(rdpUpdate* update);
-typedef void (*pBitmapUpdate)(rdpUpdate* update, BITMAP_UPDATE* bitmap);
-typedef void (*pPalette)(rdpUpdate* update, PALETTE_UPDATE* palette);
-typedef void (*pPlaySound)(rdpUpdate* update, PLAY_SOUND_UPDATE* play_sound);
+typedef void (*pBeginPaint)(rdpContext* context);
+typedef void (*pEndPaint)(rdpContext* context);
+typedef void (*pSetBounds)(rdpContext* context, rdpBounds* bounds);
 
-typedef void (*pRefreshRect)(rdpUpdate* update, uint8 count, RECTANGLE_16* areas);
-typedef void (*pSuppressOutput)(rdpUpdate* update, uint8 allow, RECTANGLE_16* area);
+typedef void (*pSynchronize)(rdpContext* context);
+typedef void (*pDesktopResize)(rdpContext* context);
+typedef void (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
+typedef void (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
+typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
 
-typedef void (*pSurfaceCommand)(rdpUpdate* update, STREAM* s);
-typedef void (*pSurfaceBits)(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command);
+typedef void (*pRefreshRect)(rdpContext* context, uint8 count, RECTANGLE_16* areas);
+typedef void (*pSuppressOutput)(rdpContext* context, uint8 allow, RECTANGLE_16* area);
+
+typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
+typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
 
 struct rdp_update
 {
@@ -146,57 +147,40 @@ struct rdp_update
 	uint32 paddingB[32 - 24]; /* 24 */
 
 	rdpPointerUpdate* pointer; /* 32 */
-	uint32 paddingC[48 - 33]; /* 33 */
+	rdpPrimaryUpdate* primary; /* 33 */
+	rdpSecondaryUpdate* secondary; /* 34 */
 
-	rdpPrimaryUpdate* primary; /* 48 */
-	uint32 paddingD[80 - 49]; /* 49 */
+	pCreateOffscreenBitmap CreateOffscreenBitmap;
+	pSwitchSurface SwitchSurface;
+	pCreateNineGridBitmap CreateNineGridBitmap;
+	pFrameMarker FrameMarker;
+	pStreamBitmapFirst StreamBitmapFirst;
+	pStreamBitmapNext StreamBitmapNext;
+	pDrawGdiPlusFirst DrawGdiPlusFirst;
+	pDrawGdiPlusNext DrawGdiPlusNext;
+	pDrawGdiPlusEnd DrawGdiPlusEnd;
+	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst;
+	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;
+	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;
 
-	pCacheBitmap CacheBitmap; /* 80 */
-	pCacheBitmapV2 CacheBitmapV2; /* 81 */
-	pCacheBitmapV3 CacheBitmapV3; /* 82 */
-	pCacheColorTable CacheColorTable; /* 83 */
-	pCacheGlyph CacheGlyph; /* 84 */
-	pCacheGlyphV2 CacheGlyphV2; /* 85 */
-	pCacheBrush CacheBrush; /* 86 */
-	uint32 paddingE[112 - 87]; /* 87 */
+	pWindowCreate WindowCreate;
+	pWindowUpdate WindowUpdate;
+	pWindowIcon WindowIcon;
+	pWindowCachedIcon WindowCachedIcon;
+	pWindowDelete WindowDelete;
+	pNotifyIconCreate NotifyIconCreate;
+	pNotifyIconUpdate NotifyIconUpdate;
+	pNotifyIconDelete NotifyIconDelete;
+	pMonitoredDesktop MonitoredDesktop;
+	pNonMonitoredDesktop NonMonitoredDesktop;
 
-	pCreateOffscreenBitmap CreateOffscreenBitmap; /* 112 */
-	pSwitchSurface SwitchSurface; /* 113 */
-	pCreateNineGridBitmap CreateNineGridBitmap; /* 114 */
-	pFrameMarker FrameMarker; /* 115 */
-	pStreamBitmapFirst StreamBitmapFirst; /* 116 */
-	pStreamBitmapNext StreamBitmapNext; /* 117 */
-	pDrawGdiPlusFirst DrawGdiPlusFirst; /* 118 */
-	pDrawGdiPlusNext DrawGdiPlusNext; /* 119 */
-	pDrawGdiPlusEnd DrawGdiPlusEnd; /* 120 */
-	pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 121 */
-	pDrawGdiPlusCacheNext DrawGdiPlusCacheNext; /* 122 */
-	pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd; /* 123 */
-	uint32 paddingF[144 - 124]; /* 124 */
+	pRefreshRect RefreshRect;
+	pSuppressOutput SuppressOutput;
 
-	pWindowCreate WindowCreate; /* 144 */
-	pWindowUpdate WindowUpdate; /* 145 */
-	pWindowIcon WindowIcon; /* 146 */
-	pWindowCachedIcon WindowCachedIcon; /* 147 */
-	pWindowDelete WindowDelete; /* 148 */
-	pNotifyIconCreate NotifyIconCreate; /* 149 */
-	pNotifyIconUpdate NotifyIconUpdate; /* 150 */
-	pNotifyIconDelete NotifyIconDelete; /* 151 */
-	pMonitoredDesktop MonitoredDesktop; /* 152 */
-	pNonMonitoredDesktop NonMonitoredDesktop; /* 153 */
-	uint32 paddingG[176 - 154]; /* 154 */
+	pSurfaceCommand SurfaceCommand;
+	pSurfaceBits SurfaceBits;
 
-	pRefreshRect RefreshRect; /* 176 */
-	pSuppressOutput SuppressOutput; /* 177 */
-	uint32 paddingH[192 - 178]; /* 178 */
-
-	pSurfaceCommand SurfaceCommand; /* 192 */
-	pSurfaceBits SurfaceBits; /* 193 */
-	uint32 paddingI[208 - 194]; /* 194 */
-
-	/* everything below is internal, and should not be directly accessed */
-
-	boolean glyph_v2;
+	/* internal */
 
 	boolean dump_rfx;
 	boolean play_rfx;
@@ -205,14 +189,6 @@ struct rdp_update
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
 	PLAY_SOUND_UPDATE play_sound;
-
-	CACHE_BITMAP_ORDER cache_bitmap_order;
-	CACHE_BITMAP_V2_ORDER cache_bitmap_v2_order;
-	CACHE_BITMAP_V3_ORDER cache_bitmap_v3_order;
-	CACHE_COLOR_TABLE_ORDER cache_color_table_order;
-	CACHE_GLYPH_ORDER cache_glyph_order;
-	CACHE_GLYPH_V2_ORDER cache_glyph_v2_order;
-	CACHE_BRUSH_ORDER cache_brush_order;
 
 	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
 	SWITCH_SURFACE_ORDER switch_surface;

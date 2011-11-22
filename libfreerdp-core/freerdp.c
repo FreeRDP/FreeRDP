@@ -77,9 +77,9 @@ boolean freerdp_connect(freerdp* instance)
 				pcap_get_next_record_content(update->pcap_rfx, &record);
 				stream_set_pos(s, 0);
 
-				update->BeginPaint(update);
+				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, s->size, s);
-				update->EndPaint(update);
+				update->EndPaint(update->context);
 			}
 
 			xfree(s->data);
@@ -147,6 +147,7 @@ void freerdp_context_new(freerdp* instance)
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;
+	instance->update->secondary->context = instance->context;
 
 	instance->input->context = instance->context;
 	input_register_client_callbacks(rdp->input);

@@ -50,19 +50,19 @@ void df_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void df_begin_paint(rdpUpdate* update)
+void df_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
-void df_end_paint(rdpUpdate* update)
+void df_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
 
-	gdi = update->context->gdi;
-	dfi = ((dfContext*) update->context)->dfi;
+	gdi = context->gdi;
+	dfi = ((dfContext*) context)->dfi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
