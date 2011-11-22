@@ -148,6 +148,7 @@ void freerdp_context_new(freerdp* instance)
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;
 	instance->update->secondary->context = instance->context;
+	instance->update->altsec->context = instance->context;
 
 	instance->input->context = instance->context;
 	input_register_client_callbacks(rdp->input);

@@ -22,25 +22,25 @@
 
 #include <freerdp/cache/offscreen.h>
 
-void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
+void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	int i;
 	uint16 index;
 	rdpBitmap* bitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
-	bitmap = Bitmap_Alloc(update->context);
+	bitmap = Bitmap_Alloc(context);
 
 	bitmap->width = create_offscreen_bitmap->cx;
 	bitmap->height = create_offscreen_bitmap->cy;
 
-	bitmap->New(update->context, bitmap);
+	bitmap->New(context, bitmap);
 
 	offscreen_cache_delete(cache->offscreen, create_offscreen_bitmap->id);
 	offscreen_cache_put(cache->offscreen, create_offscreen_bitmap->id, bitmap);
 
 	if(cache->offscreen->currentSurface == create_offscreen_bitmap->id)
-		Bitmap_SetSurface(update->context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, false);
 
 	for (i = 0; i < create_offscreen_bitmap->deleteList.cIndices; i++)
 	{
@@ -49,19 +49,19 @@ void update_gdi_create_offscreen_bitmap(rdpUpdate* update, CREATE_OFFSCREEN_BITM
 	}
 }
 
-void update_gdi_switch_surface(rdpUpdate* update, SWITCH_SURFACE_ORDER* switch_surface)
+void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switch_surface)
 {
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
-		Bitmap_SetSurface(update->context, NULL, true);
+		Bitmap_SetSurface(context, NULL, true);
 	}
 	else
 	{
 		rdpBitmap* bitmap;
 		bitmap = offscreen_cache_get(cache->offscreen, switch_surface->bitmapId);
-		Bitmap_SetSurface(update->context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, false);
 	}
 
 	cache->offscreen->currentSurface = switch_surface->bitmapId;
@@ -120,8 +120,8 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint16 index)
 
 void offscreen_cache_register_callbacks(rdpUpdate* update)
 {
-	update->CreateOffscreenBitmap = update_gdi_create_offscreen_bitmap;
-	update->SwitchSurface = update_gdi_switch_surface;
+	update->altsec->CreateOffscreenBitmap = update_gdi_create_offscreen_bitmap;
+	update->altsec->SwitchSurface = update_gdi_switch_surface;
 }
 
 rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)

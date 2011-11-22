@@ -1892,6 +1892,8 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
 	uint8 orderType;
+	rdpContext* context = update->context;
+	rdpAltSecUpdate* altsec = update->altsec;
 
 	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
 
@@ -1905,63 +1907,63 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
-			update_read_create_offscreen_bitmap_order(s, &(update->create_offscreen_bitmap));
-			IFCALL(update->CreateOffscreenBitmap, update, &(update->create_offscreen_bitmap));
+			update_read_create_offscreen_bitmap_order(s, &(altsec->create_offscreen_bitmap));
+			IFCALL(altsec->CreateOffscreenBitmap, context, &(altsec->create_offscreen_bitmap));
 			break;
 
 		case ORDER_TYPE_SWITCH_SURFACE:
-			update_read_switch_surface_order(s, &(update->switch_surface));
-			IFCALL(update->SwitchSurface, update, &(update->switch_surface));
+			update_read_switch_surface_order(s, &(altsec->switch_surface));
+			IFCALL(altsec->SwitchSurface, context, &(altsec->switch_surface));
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
-			update_read_create_nine_grid_bitmap_order(s, &(update->create_nine_grid_bitmap));
-			IFCALL(update->CreateNineGridBitmap, update, &(update->create_nine_grid_bitmap));
+			update_read_create_nine_grid_bitmap_order(s, &(altsec->create_nine_grid_bitmap));
+			IFCALL(altsec->CreateNineGridBitmap, context, &(altsec->create_nine_grid_bitmap));
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
-			update_read_frame_marker_order(s, &(update->frame_marker));
-			IFCALL(update->FrameMarker, update, &(update->frame_marker));
+			update_read_frame_marker_order(s, &(altsec->frame_marker));
+			IFCALL(altsec->FrameMarker, context, &(altsec->frame_marker));
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
-			update_read_stream_bitmap_first_order(s, &(update->stream_bitmap_first));
-			IFCALL(update->StreamBitmapFirst, update, &(update->stream_bitmap_first));
+			update_read_stream_bitmap_first_order(s, &(altsec->stream_bitmap_first));
+			IFCALL(altsec->StreamBitmapFirst, context, &(altsec->stream_bitmap_first));
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
-			update_read_stream_bitmap_next_order(s, &(update->stream_bitmap_next));
-			IFCALL(update->StreamBitmapNext, update, &(update->stream_bitmap_next));
+			update_read_stream_bitmap_next_order(s, &(altsec->stream_bitmap_next));
+			IFCALL(altsec->StreamBitmapNext, context, &(altsec->stream_bitmap_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
-			update_read_draw_gdiplus_first_order(s, &(update->draw_gdiplus_first));
-			IFCALL(update->DrawGdiPlusFirst, update, &(update->draw_gdiplus_first));
+			update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first));
+			IFCALL(altsec->DrawGdiPlusFirst, context, &(altsec->draw_gdiplus_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_NEXT:
-			update_read_draw_gdiplus_next_order(s, &(update->draw_gdiplus_next));
-			IFCALL(update->DrawGdiPlusNext, update, &(update->draw_gdiplus_next));
+			update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next));
+			IFCALL(altsec->DrawGdiPlusNext, context, &(altsec->draw_gdiplus_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
-			update_read_draw_gdiplus_end_order(s, &(update->draw_gdiplus_end));
-			IFCALL(update->DrawGdiPlusEnd, update, &(update->draw_gdiplus_end));
+			update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end));
+			IFCALL(altsec->DrawGdiPlusEnd, context, &(altsec->draw_gdiplus_end));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
-			update_read_draw_gdiplus_cache_first_order(s, &(update->draw_gdiplus_cache_first));
-			IFCALL(update->DrawGdiPlusCacheFirst, update, &(update->draw_gdiplus_cache_first));
+			update_read_draw_gdiplus_cache_first_order(s, &(altsec->draw_gdiplus_cache_first));
+			IFCALL(altsec->DrawGdiPlusCacheFirst, context, &(altsec->draw_gdiplus_cache_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
-			update_read_draw_gdiplus_cache_next_order(s, &(update->draw_gdiplus_cache_next));
-			IFCALL(update->DrawGdiPlusCacheNext, update, &(update->draw_gdiplus_cache_next));
+			update_read_draw_gdiplus_cache_next_order(s, &(altsec->draw_gdiplus_cache_next));
+			IFCALL(altsec->DrawGdiPlusCacheNext, context, &(altsec->draw_gdiplus_cache_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
-			update_read_draw_gdiplus_cache_end_order(s, &(update->draw_gdiplus_cache_end));
-			IFCALL(update->DrawGdiPlusCacheEnd, update, &(update->draw_gdiplus_cache_end));
+			update_read_draw_gdiplus_cache_end_order(s, &(altsec->draw_gdiplus_cache_end));
+			IFCALL(altsec->DrawGdiPlusCacheEnd, context, &(altsec->draw_gdiplus_cache_end));
 			break;
 
 		case ORDER_TYPE_WINDOW:

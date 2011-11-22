@@ -301,6 +301,7 @@ void update_recv(rdpUpdate* update, STREAM* s)
 void update_reset_state(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
+	rdpAltSecUpdate* altsec = update->altsec;
 
 	memset(&primary->order_info, 0, sizeof(ORDER_INFO));
 	memset(&primary->dstblt, 0, sizeof(DSTBLT_ORDER));
@@ -327,8 +328,8 @@ void update_reset_state(rdpUpdate* update)
 	memset(&primary->ellipse_cb, 0, sizeof(ELLIPSE_CB_ORDER));
 
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
-	update->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-	IFCALL(update->SwitchSurface, update, &(update->switch_surface));
+	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+	IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
 }
 
 static void update_begin_paint(rdpContext* context)
@@ -453,6 +454,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->pointer = xnew(rdpPointerUpdate);
 		update->primary = xnew(rdpPrimaryUpdate);
 		update->secondary = xnew(rdpSecondaryUpdate);
+		update->altsec = xnew(rdpAltSecUpdate);
 	}
 
 	return update;
