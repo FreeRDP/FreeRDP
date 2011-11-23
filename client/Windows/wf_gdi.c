@@ -60,12 +60,12 @@ boolean wf_set_rop2(HDC hdc, int rop2)
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
 		printf("Unsupported ROP2: %d\n", rop2);
-		return False;
+		return false;
 	}
 
 	SetROP2(hdc, wf_rop2_table[rop2 - 1]);
 
-	return True;
+	return true;
 }
 
 wfBitmap* wf_glyph_new(wfInfo* wfi, GLYPH_DATA* glyph)
@@ -470,7 +470,7 @@ void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data,
 				wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 
-		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == True))
+		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == true))
 		{
 			uint8* temp_image;
 

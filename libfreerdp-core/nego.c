@@ -74,7 +74,7 @@ boolean nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("Protocol Security Negotiation Failure");
 			nego->state = NEGO_STATE_FINAL;
-			return False;
+			return false;
 		}
 	}
 	while (nego->state != NEGO_STATE_FINAL);
@@ -87,12 +87,12 @@ boolean nego_connect(rdpNego* nego)
 
 	if(nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->encryption = True;
+		nego->transport->settings->encryption = true;
 		nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 		nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -105,19 +105,19 @@ boolean nego_tcp_connect(rdpNego* nego)
 {
 	if (nego->tcp_connected == 0)
 	{
-		if (transport_connect(nego->transport, nego->hostname, nego->port) == False)
+		if (transport_connect(nego->transport, nego->hostname, nego->port) == false)
 		{
 			nego->tcp_connected = 0;
-			return False;
+			return false;
 		}
 		else
 		{
 			nego->tcp_connected = 1;
-			return True;
+			return true;
 		}
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -256,7 +256,7 @@ boolean nego_recv_response(rdpNego* nego)
 {
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
 	if (transport_read(nego->transport, s) < 0)
-		return False;
+		return false;
 	return nego_recv(nego->transport, s, nego->transport->recv_extra);
 }
 
@@ -275,7 +275,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	rdpNego* nego = (rdpNego*) extra;
 
 	if (tpkt_read_header(s) == 0)
-		return False;
+		return false;
 
 	li = tpdu_read_connection_confirm(s);
 
@@ -301,7 +301,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		nego->state = NEGO_STATE_FINAL;
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -321,7 +321,7 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 	if (li != stream_get_left(s) + 6)
 	{
 		printf("Incorrect TPDU length indicator.\n");
-		return False;
+		return false;
 	}
 
 	if (stream_get_left(s) > 8)
@@ -349,13 +349,13 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 		if (type != TYPE_RDP_NEG_REQ)
 		{
 			printf("Incorrect negotiation request type %d\n", type);
-			return False;
+			return false;
 		}
 
 		nego_process_negotiation_request(nego, s);
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -425,9 +425,9 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	stream_set_mark(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 /**
@@ -546,13 +546,13 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 	stream_set_mark(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
-		return False;
+		return false;
 
 	/* update settings with negotiated protocol security */
 	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
 
-	return True;
+	return true;
 }
 
 /**
@@ -613,23 +613,23 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
 /**
  * Enable RDP security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_rdp whether to enable normal RDP protocol (True for enabled, False for disabled)
+ * @param enable_rdp whether to enable normal RDP protocol (true for enabled, false for disabled)
  */
 
 void nego_enable_rdp(rdpNego* nego, boolean enable_rdp)
 {
-	DEBUG_NEGO("Enabling RDP security: %s", enable_rdp ? "True" : "False");
+	DEBUG_NEGO("Enabling RDP security: %s", enable_rdp ? "true" : "false");
 	nego->enabled_protocols[PROTOCOL_RDP] = enable_rdp;
 }
 
 /**
  * Enable TLS security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_tls whether to enable TLS + RDP protocol (True for enabled, False for disabled)
+ * @param enable_tls whether to enable TLS + RDP protocol (true for enabled, false for disabled)
  */
 void nego_enable_tls(rdpNego* nego, boolean enable_tls)
 {
-	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "True" : "False");
+	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "true" : "false");
 	nego->enabled_protocols[PROTOCOL_TLS] = enable_tls;
 }
 
@@ -637,12 +637,12 @@ void nego_enable_tls(rdpNego* nego, boolean enable_tls)
 /**
  * Enable NLA security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_nla whether to enable network level authentication protocol (True for enabled, False for disabled)
+ * @param enable_nla whether to enable network level authentication protocol (true for enabled, false for disabled)
  */
 
 void nego_enable_nla(rdpNego* nego, boolean enable_nla)
 {
-	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "True" : "False");
+	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "true" : "false");
 	nego->enabled_protocols[PROTOCOL_NLA] = enable_nla;
 }
 

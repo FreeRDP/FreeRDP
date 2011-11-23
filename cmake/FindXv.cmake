@@ -2,7 +2,7 @@
 # Find the Xv libraries
 #
 #  This module defines the following variables:
-#     XV_FOUND        - True if XV_INCLUDE_DIR & XV_LIBRARY are found
+#     XV_FOUND        - true if XV_INCLUDE_DIR & XV_LIBRARY are found
 #     XV_LIBRARIES    - Set when XV_LIBRARY is found
 #     XV_INCLUDE_DIRS - Set when XV_INCLUDE_DIR is found
 #

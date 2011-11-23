@@ -80,13 +80,13 @@ static boolean audin_pulse_connect(IAudinDevice* device)
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
 	if (!pulse->context)
-		return False;
+		return false;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
 		DEBUG_WARN("pa_context_connect failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
@@ -94,7 +94,7 @@ static boolean audin_pulse_connect(IAudinDevice* device)
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_threaded_mainloop_start failed (%d)",
 			pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	for (;;)
 	{
@@ -113,12 +113,12 @@ static boolean audin_pulse_connect(IAudinDevice* device)
 	if (state == PA_CONTEXT_READY)
 	{
 		DEBUG_DVC("connected");
-		return True;
+		return true;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return False;
+		return false;
 	}
 }
 
@@ -163,7 +163,7 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return True;
+				return true;
 			}
 			break;
 
@@ -174,7 +174,7 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 8) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return True;
+				return true;
 			}
 			break;
 
@@ -183,11 +183,11 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return True;
+				return true;
 			}
 			break;
 	}
-	return False;
+	return false;
 }
 
 static void audin_pulse_set_format(IAudinDevice* device, audinFormat* format, uint32 FramesPerPacket)

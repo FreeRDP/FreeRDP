@@ -717,16 +717,16 @@ void test_rail_plugin(void)
 	param.out_rail_orders.sysparam.taskbarPos.bottom = 0x03c2;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
-	param.out_rail_orders.sysparam.mouseButtonSwap = False;
+	param.out_rail_orders.sysparam.mouseButtonSwap = false;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
-	param.out_rail_orders.sysparam.keyboardPref = False;
+	param.out_rail_orders.sysparam.keyboardPref = false;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	param.out_rail_orders.sysparam.dragFullWindows = True;
+	param.out_rail_orders.sysparam.dragFullWindows = true;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
-	param.out_rail_orders.sysparam.keyboardCues = False;
+	param.out_rail_orders.sysparam.keyboardCues = false;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	param.out_rail_orders.sysparam.workArea.left = 0;
@@ -744,7 +744,7 @@ void test_rail_plugin(void)
 	send_ui_event2plugin(chan_man, RDP_EVENT_TYPE_RAIL_CLIENT_EXEC_REMOTE_APP,
 		&param.plugin_data);
 
-	param.out_rail_orders.activate.enabled = True;
+	param.out_rail_orders.activate.enabled = true;
 	param.out_rail_orders.activate.windowId = 0x0007008e;
 	send_ui_event2plugin(chan_man, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE,
 		&param.out_rail_orders.activate);
@@ -829,18 +829,18 @@ void test_rail_plugin(void)
 		);
 	CU_ASSERT(en >  2 &&
 		ee[ 2].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM &&
-		ee[ 2].order_info.sysparam.setScreenSaveSecure == False
+		ee[ 2].order_info.sysparam.setScreenSaveSecure == false
 		);
 
 	CU_ASSERT(en >  3 &&
 		ee[ 3].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM &&
-		ee[ 3].order_info.sysparam.setScreenSaveActive == False
+		ee[ 3].order_info.sysparam.setScreenSaveActive == false
 		);
 
 	CU_ASSERT(en >  4 &&
 		ee[ 4].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE &&
 		ee[ 4].order_info.localmovesize.windowId == 0x0007008e &&
-		ee[ 4].order_info.localmovesize.isMoveSizeStart == True &&
+		ee[ 4].order_info.localmovesize.isMoveSizeStart == true &&
 		ee[ 4].order_info.localmovesize.moveSizeType == RAIL_WMSZ_MOVE &&
 		ee[ 4].order_info.localmovesize.posX == 0x017e &&
 		ee[ 4].order_info.localmovesize.posY == 0x000a
@@ -849,7 +849,7 @@ void test_rail_plugin(void)
 	CU_ASSERT(en >  5 &&
 		ee[ 5].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE &&
 		ee[ 5].order_info.localmovesize.windowId == 0x0007008e &&
-		ee[ 5].order_info.localmovesize.isMoveSizeStart == False &&
+		ee[ 5].order_info.localmovesize.isMoveSizeStart == false &&
 		ee[ 5].order_info.localmovesize.moveSizeType == RAIL_WMSZ_MOVE &&
 		ee[ 5].order_info.localmovesize.posX == 0x00a6 &&
 		ee[ 5].order_info.localmovesize.posY == 0x0044

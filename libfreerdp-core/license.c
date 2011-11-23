@@ -151,9 +151,9 @@ boolean license_send(rdpLicense* license, STREAM* s, uint8 type)
 
 	stream_set_pos(s, length);
 	if (transport_write(license->rdp->transport, s) < 0)
-		return False;
+		return false;
 
-	return True;
+	return true;
 }
 
 /**
@@ -175,19 +175,19 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
-		return False;
+		return false;
 	}
 
 	rdp_read_security_header(s, &sec_flags);
 	if (!(sec_flags & SEC_LICENSE_PKT))
 	{
 		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
-		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != True)
+		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != true)
 		{
 			printf("Unexpected license packet.\n");
-			return False;
+			return false;
 		}
-		return True;
+		return true;
 	}
 
 	license_read_preamble(s, &bMsgType, &flags, &wMsgSize); /* preamble (4 bytes) */
@@ -220,10 +220,10 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 
 		default:
 			printf("invalid bMsgType:%d\n", bMsgType);
-			return False;
+			return false;
 	}
 
-	return True;
+	return true;
 }
 
 void license_generate_randoms(rdpLicense* license)
@@ -870,7 +870,7 @@ boolean license_send_valid_client_error_packet(rdpLicense* license)
 
 	license_send(license, s, ERROR_ALERT);
 
-	return True;
+	return true;
 }
 
 /**

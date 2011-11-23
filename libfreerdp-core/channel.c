@@ -48,7 +48,7 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 	if (channel == NULL)
 	{
 		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
-		return False;
+		return false;
 	}
 
 	flags = CHANNEL_FLAG_FIRST;
@@ -83,7 +83,7 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 		flags = 0;
 	}
 
-	return True;
+	return true;
 }
 
 void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id)

@@ -74,15 +74,15 @@ void tf_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void tf_begin_paint(rdpUpdate* update)
+void tf_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
-void tf_end_paint(rdpUpdate* update)
+void tf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
@@ -150,32 +150,32 @@ boolean tf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = True;
-	settings->order_support[NEG_PATBLT_INDEX] = True;
-	settings->order_support[NEG_SCRBLT_INDEX] = True;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = True;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = True;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = True;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = True;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = True;
-	settings->order_support[NEG_LINETO_INDEX] = True;
-	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = True;
-	settings->order_support[NEG_MEM3BLT_INDEX] = True;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = True;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = True;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = True;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = True;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = True;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = True;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = True;
+	settings->order_support[NEG_DSTBLT_INDEX] = true;
+	settings->order_support[NEG_PATBLT_INDEX] = true;
+	settings->order_support[NEG_SCRBLT_INDEX] = true;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = true;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = true;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = true;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = true;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = true;
+	settings->order_support[NEG_LINETO_INDEX] = true;
+	settings->order_support[NEG_POLYLINE_INDEX] = true;
+	settings->order_support[NEG_MEMBLT_INDEX] = true;
+	settings->order_support[NEG_MEM3BLT_INDEX] = true;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = true;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = true;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = true;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	return True;
+	return true;
 }
 
 boolean tf_post_connect(freerdp* instance)
@@ -190,7 +190,7 @@ boolean tf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return True;
+	return true;
 }
 
 int tfreerdp_run(freerdp* instance)
@@ -218,12 +218,12 @@ int tfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -258,12 +258,12 @@ int tfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != True)
+		if (freerdp_check_fds(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;

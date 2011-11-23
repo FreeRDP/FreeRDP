@@ -2,7 +2,7 @@
 # Find the X11 libraries
 #
 #  This module defines the following variables:
-#     X11_FOUND        - True if X11_INCLUDE_DIR & X11_LIBRARY are found
+#     X11_FOUND        - true if X11_INCLUDE_DIR & X11_LIBRARY are found
 #     X11_LIBRARIES    - Set when X11_LIBRARY is found
 #     X11_INCLUDE_DIRS - Set when X11_INCLUDE_DIR is found
 #

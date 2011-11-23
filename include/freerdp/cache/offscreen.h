@@ -32,17 +32,20 @@ typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
 struct rdp_offscreen_cache
 {
-	uint16 currentSurface;
-	uint16 maxSize;
-	uint16 maxEntries;
+	uint32 maxSize; /* 0 */
+	uint32 maxEntries; /* 1 */
+	rdpBitmap** entries; /* 2 */
+	uint32 currentSurface; /* 3 */
+
+	/* internal */
+
 	rdpUpdate* update;
 	rdpSettings* settings;
-	rdpBitmap** entries;
 };
 
-FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint16 index);
-FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, uint16 index, rdpBitmap* bitmap);
-FREERDP_API void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint16 index);
+FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index);
+FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, uint32 index, rdpBitmap* bitmap);
+FREERDP_API void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint32 index);
 
 FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 

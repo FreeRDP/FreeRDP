@@ -138,28 +138,28 @@ boolean wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = True;
-	settings->order_support[NEG_PATBLT_INDEX] = True;
-	settings->order_support[NEG_SCRBLT_INDEX] = True;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = True;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = False;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = False;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = False;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = False;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = True;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = False;
-	settings->order_support[NEG_LINETO_INDEX] = True;
-	settings->order_support[NEG_POLYLINE_INDEX] = True;
-	settings->order_support[NEG_MEMBLT_INDEX] = True;
-	settings->order_support[NEG_MEM3BLT_INDEX] = False;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = False;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = False;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = False;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = False;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = False;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = False;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = False;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = False;
+	settings->order_support[NEG_DSTBLT_INDEX] = true;
+	settings->order_support[NEG_PATBLT_INDEX] = true;
+	settings->order_support[NEG_SCRBLT_INDEX] = true;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
+	settings->order_support[NEG_LINETO_INDEX] = true;
+	settings->order_support[NEG_POLYLINE_INDEX] = true;
+	settings->order_support[NEG_MEMBLT_INDEX] = true;
+	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
 
 	wfi->cursor = g_default_cursor;
 
@@ -202,7 +202,7 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	return True;
+	return true;
 }
 
 boolean wf_post_connect(freerdp* instance)
@@ -307,7 +307,7 @@ boolean wf_post_connect(freerdp* instance)
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (wfi->sw_gdi != True)
+	if (wfi->sw_gdi != true)
 	{
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
@@ -318,12 +318,12 @@ boolean wf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return True;
+	return true;
 }
 
 boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
-	return True;
+	return true;
 }
 
 
@@ -344,12 +344,12 @@ void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 boolean wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	return True;
+	return true;
 }
 
 boolean wf_check_fds(freerdp* instance)
 {
-	return True;
+	return true;
 }
 
 int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
@@ -384,7 +384,7 @@ int wfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (freerdp_connect(instance) != True)
+	if (freerdp_connect(instance) != true)
 		return 0;
 
 	channels = instance->context->channels;
@@ -394,17 +394,17 @@ int wfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != True)
+		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != True)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -435,17 +435,17 @@ int wfreerdp_run(freerdp* instance)
 			break;
 		}
 
-		if (freerdp_check_fds(instance) != True)
+		if (freerdp_check_fds(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (wf_check_fds(instance) != True)
+		if (wf_check_fds(instance) != true)
 		{
 			printf("Failed to check wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != True)
+		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;

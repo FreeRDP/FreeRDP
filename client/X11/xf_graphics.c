@@ -45,7 +45,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		data = freerdp_image_convert(bitmap->data, NULL,
 				bitmap->width, bitmap->height, xfi->srcBpp, xfi->bpp, xfi->clrconv);
 
-		if (bitmap->ephemeral != True)
+		if (bitmap->ephemeral != true)
 		{
 			image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfi->scanline_pad, 0);
@@ -95,7 +95,7 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XFree(image);
 
-	if (xfi->remote_app != True)
+	if (xfi->remote_app != true)
 	{
 		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
 				bitmap->left, bitmap->top, width, height, bitmap->left, bitmap->top);
@@ -122,7 +122,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		if (status != True)
+		if (status != true)
 		{
 			printf("Bitmap Decompression Failed\n");
 		}
@@ -132,7 +132,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		freerdp_image_flip(data, bitmap->data, width, height, bpp);
 	}
 
-	bitmap->compressed = False;
+	bitmap->compressed = false;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }

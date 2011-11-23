@@ -365,7 +365,7 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
 	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
 
-	return True;
+	return true;
 }
 
 boolean security_key_update(uint8* key, uint8* update_key, int key_len)
@@ -395,7 +395,7 @@ boolean security_key_update(uint8* key, uint8* update_key, int key_len)
 	if (key_len == 8)
 		memcpy(key, salt40, 3); /* TODO 56 bit */
 
-	return True;
+	return true;
 }
 
 boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
@@ -409,7 +409,7 @@ boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
 	}
 	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
 	rdp->encrypt_use_count += 1;
-	return True;
+	return true;
 }
 
 boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
@@ -423,7 +423,7 @@ boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
 	}
 	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);
 	rdp->decrypt_use_count += 1;
-	return True;
+	return true;
 }
 
 void security_hmac_signature(uint8* data, int length, uint8* output, rdpRdp* rdp)
@@ -445,13 +445,13 @@ boolean security_fips_encrypt(uint8* data, int length, rdpRdp* rdp)
 {
 	crypto_des3_encrypt(rdp->fips_encrypt, length, data, data);
 	rdp->encrypt_use_count++;
-	return True;
+	return true;
 }
 
 boolean security_fips_decrypt(uint8* data, int length, rdpRdp* rdp)
 {
 	crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
-	return True;
+	return true;
 }
 
 boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRdp* rdp)
@@ -469,7 +469,7 @@ boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRd
 	rdp->decrypt_use_count++;
 
 	if (memcmp(sig, buf, 8))
-		return False;
+		return false;
 
-	return True;
+	return true;
 }

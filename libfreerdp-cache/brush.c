@@ -24,10 +24,10 @@
 
 #include <freerdp/cache/brush.h>
 
-void update_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	rdpBrush* brush = &patblt->brush;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -35,16 +35,16 @@ void update_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		brush->style = 0x03;
 	}
 
-	IFCALL(cache->brush->PatBlt, update, patblt);
+	IFCALL(cache->brush->PatBlt, context, patblt);
 }
 
-void update_gdi_cache_brush(rdpUpdate* update, CACHE_BRUSH_ORDER* cache_brush)
+void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
-void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
+void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 {
 	void* entry;
 
@@ -80,7 +80,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp)
 	return entry;
 }
 
-void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp)
+void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp)
 {
 	if (bpp == 1)
 	{
@@ -110,10 +110,10 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
 
-	cache->brush->PatBlt = update->PatBlt;
+	cache->brush->PatBlt = update->primary->PatBlt;
 
-	update->PatBlt = update_gdi_patblt;
-	update->CacheBrush = update_gdi_cache_brush;
+	update->primary->PatBlt = update_gdi_patblt;
+	update->secondary->CacheBrush = update_gdi_cache_brush;
 }
 
 rdpBrushCache* brush_cache_new(rdpSettings* settings)

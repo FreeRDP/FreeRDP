@@ -131,7 +131,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	rdpInput* input;
 	boolean processed;
 
-	processed = True;
+	processed = true;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
 
@@ -181,13 +181,13 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			default:
-				processed = False;
+				processed = false;
 				break;
 		}
 	}
 	else
 	{
-		processed = False;
+		processed = false;
 	}
 
 	if (processed)

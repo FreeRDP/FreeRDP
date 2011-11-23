@@ -20,15 +20,16 @@
 #ifndef __DFREERDP_H
 #define __DFREERDP_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <directfb.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/graphics.h>
-#include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/channels/channels.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <directfb.h>
 
 typedef struct df_info dfInfo;
 

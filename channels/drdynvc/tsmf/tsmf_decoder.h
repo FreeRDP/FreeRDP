@@ -27,7 +27,7 @@ typedef struct _ITSMFDecoder ITSMFDecoder;
 
 struct _ITSMFDecoder
 {
-	/* Set the decoder format. Return True if supported. */
+	/* Set the decoder format. Return true if supported. */
 	boolean (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
 	/* Decode a sample. */
 	boolean (*Decode) (ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions);

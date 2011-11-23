@@ -22,27 +22,27 @@
 
 #include <freerdp/cache/pointer.h>
 
-void update_pointer_position(rdpUpdate* update, POINTER_POSITION_UPDATE* pointer_position)
+void update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
 {
 
 }
 
-void update_pointer_system(rdpUpdate* update, POINTER_SYSTEM_UPDATE* pointer_system)
+void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 
 }
 
-void update_pointer_color(rdpUpdate* update, POINTER_COLOR_UPDATE* pointer_color)
+void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
 {
 
 }
 
-void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
+void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
-	rdpCache* cache = (rdpCache*) update->context->cache;
+	rdpCache* cache = context->cache;
 
-	pointer = Pointer_Alloc(update->context);
+	pointer = Pointer_Alloc(context);
 
 	if (pointer != NULL)
 	{
@@ -56,22 +56,22 @@ void update_pointer_new(rdpUpdate* update, POINTER_NEW_UPDATE* pointer_new)
 		pointer->xorMaskData = pointer_new->colorPtrAttr.xorMaskData;
 		pointer->andMaskData = pointer_new->colorPtrAttr.andMaskData;
 
-		pointer->New(update->context, pointer);
+		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
-		Pointer_Set(update->context, pointer);
+		Pointer_Set(context, pointer);
 	}
 }
 
-void update_pointer_cached(rdpUpdate* update, POINTER_CACHED_UPDATE* pointer_cached)
+void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
 {
 	rdpPointer* pointer;
-	rdpCache* cache = (rdpCache*) update->context->cache;
+	rdpCache* cache = context->cache;
 
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
-	Pointer_Set(update->context, pointer);
+	Pointer_Set(context, pointer);
 }
 
-rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 {
 	rdpPointer* pointer;
 
@@ -86,7 +86,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint16 index)
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, uint16 index, rdpPointer* pointer)
+void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer)
 {
 	if (index >= pointer_cache->cacheSize)
 	{
@@ -99,11 +99,13 @@ void pointer_cache_put(rdpPointerCache* pointer_cache, uint16 index, rdpPointer*
 
 void pointer_cache_register_callbacks(rdpUpdate* update)
 {
-	update->PointerPosition = update_pointer_position;
-	update->PointerSystem = update_pointer_system;
-	update->PointerColor = update_pointer_color;
-	update->PointerNew = update_pointer_new;
-	update->PointerCached = update_pointer_cached;
+	rdpPointerUpdate* pointer = update->pointer;
+
+	pointer->PointerPosition = update_pointer_position;
+	pointer->PointerSystem = update_pointer_system;
+	pointer->PointerColor = update_pointer_color;
+	pointer->PointerNew = update_pointer_new;
+	pointer->PointerCached = update_pointer_cached;
 }
 
 rdpPointerCache* pointer_cache_new(rdpSettings* settings)

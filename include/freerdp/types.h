@@ -27,6 +27,28 @@
 
 /* Base Types */
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+#ifdef HAVE_INTTYPES_H
+
+#include <inttypes.h>
+typedef uint8_t uint8;
+typedef int8_t sint8;
+typedef uint16_t uint16;
+typedef int16_t sint16;
+typedef uint32_t uint32;
+typedef int32_t sint32;
+typedef uint64_t uint64;
+typedef int64_t sint64;
+
+#else
+
 typedef unsigned char uint8;
 typedef signed char sint8;
 typedef unsigned short uint16;
@@ -41,19 +63,46 @@ typedef unsigned long long uint64;
 typedef signed long long sint64;
 #endif
 
-#ifndef True
-#define True  (1)
-#endif
+#endif /* HAVE_INTTYPES_H */
 
-#ifndef False
-#define False (0)
-#endif
+#ifdef HAVE_STDBOOL_H
 
-#ifndef _WIN32
+#include <stdbool.h>
 typedef int boolean;
+
 #else
+
+#ifndef __cplusplus
+
+#ifndef __bool_true_false_are_defined
+#define __bool_true_false_are_defined	1
+
+#define true	1
+#define false	0
+
+#ifdef _WIN32
 #define boolean BOOLEAN
+#else
+typedef int boolean;
 #endif
+
+#endif /* __bool_true_false_are_defined */
+
+#else
+
+#ifndef true
+#define true	1
+#endif
+
+#ifndef false
+#define false 	0
+#endif
+
+typedef int boolean;
+
+#endif /* __cplusplus */
+
+#endif /* HAVE_STDBOOL_H */
 
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))

@@ -57,7 +57,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32
 		iwidth = iright - ileft + 1;
 		iheight = ibottom - itop + 1;
 
-		intersect = ((iright > ileft) && (ibottom > itop)) ? True : False;
+		intersect = ((iright > ileft) && (ibottom > itop)) ? true : false;
 
 		if (intersect)
 		{
@@ -265,7 +265,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP
 	sysparam->taskbarPos.right = 0;
 	sysparam->taskbarPos.bottom = 0;
 
-	sysparam->dragFullWindows = False;
+	sysparam->dragFullWindows = false;
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }

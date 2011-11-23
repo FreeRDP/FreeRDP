@@ -2,7 +2,7 @@
 # Find the xmlto docbook xslt frontend
 #
 #  This module defines the following variables:
-#     XMLTO_FOUND        - True if xmlto was found
+#     XMLTO_FOUND        - true if xmlto was found
 #     XMLTO_EXECUTABLE   - Path to xmlto, if xmlto was found
 #
 

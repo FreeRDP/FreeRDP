@@ -50,11 +50,11 @@ static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
 	if (error < 0)
 	{
 		DEBUG_WARN("failed to open device %s", alsa->device);
-		return False;
+		return false;
 	}
 
 	DEBUG_DVC("open device %s", alsa->device);
-	return True;
+	return true;
 }
 
 static boolean tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
@@ -84,7 +84,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
 	if (!alsa->out_handle)
-		return False;
+		return false;
 
 	snd_pcm_drop(alsa->out_handle);
 
@@ -96,7 +96,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	if (error < 0)
 	{
 		DEBUG_WARN("snd_pcm_hw_params_malloc failed");
-		return False;
+		return false;
 	}
 	snd_pcm_hw_params_any(alsa->out_handle, hw_params);
 	snd_pcm_hw_params_set_access(alsa->out_handle, hw_params,
@@ -117,7 +117,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	if (error < 0)
 	{
 		DEBUG_WARN("snd_pcm_sw_params_malloc");
-		return False;
+		return false;
 	}
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params,
@@ -138,7 +138,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 			alsa->actual_rate, alsa->actual_channels,
 			alsa->source_rate, alsa->source_channels);
 	}
-	return True;
+	return true;
 }
 
 static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
@@ -166,7 +166,6 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 		{
 			resampled_data = NULL;
 			src = data;
-			data_size = data_size;
 		}
 		else
 		{
@@ -210,7 +209,7 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 	}
 	xfree(data);
 
-	return True;
+	return true;
 }
 
 static uint64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)

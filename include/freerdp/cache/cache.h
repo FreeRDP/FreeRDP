@@ -34,14 +34,16 @@
 
 struct rdp_cache
 {
-	rdpSettings* settings;
+	rdpGlyphCache* glyph; /* 0 */
+	rdpBrushCache* brush; /* 1 */
+	rdpPointerCache* pointer; /* 2 */
+	rdpBitmapCache* bitmap; /* 3 */
+	rdpOffscreenCache* offscreen; /* 4 */
+	rdpPaletteCache* palette; /* 5 */
 
-	rdpGlyphCache* glyph;
-	rdpBrushCache* brush;
-	rdpPointerCache* pointer;
-	rdpBitmapCache* bitmap;
-	rdpOffscreenCache* offscreen;
-	rdpPaletteCache* palette;
+	/* internal */
+
+	rdpSettings* settings;
 };
 
 FREERDP_API rdpCache* cache_new(rdpSettings* settings);

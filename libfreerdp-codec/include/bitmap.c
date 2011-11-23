@@ -260,8 +260,8 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 
 	PIXEL temp;
 	PIXEL fgPel = WHITE_PIXEL;
-	boolean fInsertFgPel = False;
-	boolean fFirstLine = True;
+	boolean fInsertFgPel = false;
+	boolean fFirstLine = true;
 
 	uint8 bitmask;
 	PIXEL pixelA, pixelB;
@@ -280,8 +280,8 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 		{
 			if ((uint32)(pbDest - pbDestBuffer) >= rowDelta)
 			{
-				fFirstLine = False;
-				fInsertFgPel = False;
+				fFirstLine = false;
+				fInsertFgPel = false;
 			}
 		}
 
@@ -344,13 +344,13 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				}
 			}
 			/* A follow-on background run order will need a foreground pel inserted. */
-			fInsertFgPel = True;
+			fInsertFgPel = true;
 			continue;
 		}
 
 		/* For any of the other run-types a follow-on background run
 			order does not need a foreground pel inserted. */
-		fInsertFgPel = False;
+		fInsertFgPel = false;
 
 		switch (code)
 		{

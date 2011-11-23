@@ -129,7 +129,7 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 	if (presentation == NULL)
 		error = 1;
 	tsmf_presentation_set_audio_device(presentation, ifman->audio_name, ifman->audio_device);
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return error;
 }
 
@@ -155,7 +155,7 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 		if (stream)
 			tsmf_stream_set_format(stream, ifman->decoder_name, ifman->input);
 	}
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return error;
 }
 
@@ -193,7 +193,7 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 		else
 			error = 1;
 	}
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return error;
 }
 
@@ -216,21 +216,21 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 int tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
 int tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
 int tsmf_ifman_set_video_window(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
@@ -294,21 +294,21 @@ int tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 		}
 		tsmf_presentation_set_geometry_info(presentation, Left, Top, Width, Height, num_rects, rects);
 	}
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return error;
 }
 
 int tsmf_ifman_set_allocator(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
 int tsmf_ifman_notify_preroll(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
@@ -354,7 +354,7 @@ int tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 		ifman->message_id, SampleStartTime, SampleEndTime, ThrottleDuration, SampleExtensions,
 		cbData, stream_get_tail(ifman->input));
 
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
@@ -376,7 +376,7 @@ int tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 
 	tsmf_presentation_flush(presentation);
 
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
@@ -429,14 +429,14 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 int tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 
 int tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
-	ifman->output_pending = True;
+	ifman->output_pending = true;
 	return 0;
 }
 

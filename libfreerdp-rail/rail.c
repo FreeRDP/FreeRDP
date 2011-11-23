@@ -25,29 +25,29 @@
 #include <freerdp/rail/rail.h>
 #include <freerdp/rail/window_list.h>
 
-static void rail_WindowCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+static void rail_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
-	rdpRail* rail = update->context->rail;
+	rdpRail* rail = context->rail;
 	window_list_create(rail->list, orderInfo, window_state);
 }
 
-static void rail_WindowUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+static void rail_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
-	rdpRail* rail = update->context->rail;
+	rdpRail* rail = context->rail;
 	window_list_update(rail->list, orderInfo, window_state);
 }
 
-static void rail_WindowDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+static void rail_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
-	rdpRail* rail = update->context->rail;
+	rdpRail* rail = context->rail;
 	window_list_delete(rail->list, orderInfo);
 }
 
-static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
+static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
 	rdpIcon* icon;
 	rdpWindow* window;
-	rdpRail* rail = update->context->rail;
+	rdpRail* rail = context->rail;
 
 	if (window_icon->iconInfo->cacheEntry != 0xFFFF)
 	{
@@ -58,7 +58,7 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 
 	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
 	icon->entry = window_icon->iconInfo;
-	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? True : False;
+	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? true : false;
 
 	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
 			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
@@ -72,48 +72,50 @@ static void rail_WindowIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WIN
 	IFCALL(rail->rail_SetWindowIcon, rail, window, icon);
 }
 
-static void rail_WindowCachedIcon(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
+static void rail_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
 
 }
 
-static void rail_NotifyIconCreate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+static void rail_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 
 }
 
-static void rail_NotifyIconUpdate(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+static void rail_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 
 }
 
-static void rail_NotifyIconDelete(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+static void rail_NotifyIconDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 
 }
 
-static void rail_MonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
+static void rail_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
 
 }
 
-static void rail_NonMonitoredDesktop(rdpUpdate* update, WINDOW_ORDER_INFO* orderInfo)
+static void rail_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 
 }
 
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {
-	update->WindowCreate = rail_WindowCreate;
-	update->WindowUpdate = rail_WindowUpdate;
-	update->WindowDelete = rail_WindowDelete;
-	update->WindowIcon = rail_WindowIcon;
-	update->WindowCachedIcon = rail_WindowCachedIcon;
-	update->NotifyIconCreate = rail_NotifyIconCreate;
-	update->NotifyIconUpdate = rail_NotifyIconUpdate;
-	update->NotifyIconDelete = rail_NotifyIconDelete;
-	update->MonitoredDesktop = rail_MonitoredDesktop;
-	update->NonMonitoredDesktop = rail_NonMonitoredDesktop;
+	rdpWindowUpdate* window = update->window;
+
+	window->WindowCreate = rail_WindowCreate;
+	window->WindowUpdate = rail_WindowUpdate;
+	window->WindowDelete = rail_WindowDelete;
+	window->WindowIcon = rail_WindowIcon;
+	window->WindowCachedIcon = rail_WindowCachedIcon;
+	window->NotifyIconCreate = rail_NotifyIconCreate;
+	window->NotifyIconUpdate = rail_NotifyIconUpdate;
+	window->NotifyIconDelete = rail_NotifyIconDelete;
+	window->MonitoredDesktop = rail_MonitoredDesktop;
+	window->NonMonitoredDesktop = rail_NonMonitoredDesktop;
 }
 
 rdpRail* rail_new(rdpSettings* settings)

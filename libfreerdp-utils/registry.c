@@ -134,16 +134,16 @@ void registry_init(rdpRegistry* registry)
 	if (home_path == NULL)
 	{
 		printf("could not get home path\n");
-		registry->available = False;
+		registry->available = false;
 		return;
 	}
 
-	registry->available = True;
+	registry->available = true;
 
 	if (home_path == NULL)
 	{
 		printf("could not get home path\n");
-		registry->available = False;
+		registry->available = false;
 		return;
 	}
 

@@ -63,20 +63,20 @@ void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, lo
 	xevent.xclient.data.l[3] = d2;
 	xevent.xclient.data.l[4] = d3;
 
-	XSendEvent(xfi->display, window->handle, False, NoEventMask, &xevent);
-	XSync(xfi->display, False);
+	XSendEvent(xfi->display, window->handle, false, NoEventMask, &xevent);
+	XSync(xfi->display, false);
 }
 
 void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 {
 	if (fullscreen)
 	{
-		xf_SetWindowDecorations(xfi, window, False);
+		xf_SetWindowDecorations(xfi, window, false);
 
                 XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
 
-		window->fullscreen = True;
+		window->fullscreen = true;
 	}
 }
 
@@ -90,22 +90,22 @@ boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int leng
 	int actual_format;
 
 	if (property == None)
-		return False;
+		return false;
 
 	status = XGetWindowProperty(xfi->display, window,
-			property, 0, length, False, AnyPropertyType,
+			property, 0, length, false, AnyPropertyType,
 			&actual_type, &actual_format, nitems, bytes, prop);
 
 	if (status != Success)
-		return False;
+		return false;
 
 	if (actual_type == None)
 	{
 		DEBUG_WARN("Property %lu does not exist", property);
-		return False;
+		return false;
 	}
 
-	return True;
+	return true;
 }
 
 boolean xf_GetCurrentDesktop(xfInfo* xfi)
@@ -118,14 +118,14 @@ boolean xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != True) {
-		return False;
+	if (status != true) {
+		return false;
 	}
 
 	xfi->current_desktop = (int) *prop;
 	xfree(prop);
 
-	return True;
+	return true;
 }
 
 boolean xf_GetWorkArea(xfInfo* xfi)
@@ -138,18 +138,18 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 
 	status = xf_GetCurrentDesktop(xfi);
 
-	if (status != True)
-		return False;
+	if (status != true)
+		return false;
 
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_WORKAREA, 32 * 4, &nitems, &bytes, &prop);
 
-	if (status != True)
-		return False;
+	if (status != true)
+		return false;
 
 	if ((xfi->current_desktop * 4 + 3) >= nitems) {
 		xfree(prop);
-		return False;
+		return false;
 	}
 
 	plong = (long*) prop;
@@ -160,7 +160,7 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	xfi->workArea.height = plong[xfi->current_desktop * 4 + 3];
 	xfree(prop);
 
-	return True;
+	return true;
 }
 
 void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
@@ -219,7 +219,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		window->width = width;
 		window->height = height;
-		window->fullscreen = False;
+		window->fullscreen = false;
 		window->decorations = decorations;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
@@ -333,10 +333,10 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	int input_mask;
 	XClassHint* class_hints;
 
-	window->decorations = False;
-	window->fullscreen = False;
+	window->decorations = false;
+	window->fullscreen = false;
 	window->window = wnd;
-	window->localMoveSize = False;
+	window->localMoveSize = false;
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -418,7 +418,7 @@ void xf_SendMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_
 	event.xclient.message_type = xfi->_NET_WM_MOVERESIZE;
 	event.xclient.serial = 0;
 	event.xclient.display = xfi->display;
-	event.xclient.send_event = True;
+	event.xclient.send_event = true;
 	event.xclient.format = 32;
 	event.xclient.data.l[0] = x_root;
 	event.xclient.data.l[1] = y_root;
@@ -427,28 +427,28 @@ void xf_SendMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_
 	event.xclient.data.l[4] = 0;
 
 	XUngrabPointer(xfi->display, CurrentTime);
-	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, SubstructureNotifyMask, &event);
+	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), false, SubstructureNotifyMask, &event);
 }
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
 {
-	window->localMoveSize = True;
+	window->localMoveSize = true;
 }
 
 void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
 {
-	window->localMoveSize = False;
+	window->localMoveSize = false;
 }
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
-	boolean resize = False;
+	boolean resize = false;
 
 	if ((width * height) < 1)
 		return;
 
 	if ((window->width != width) || (window->height != height))
-		resize = True;
+		resize = true;
 
 	if (resize)
 		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
@@ -505,7 +505,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	long* dstp;
 	uint32* srcp;
 
-	if (icon->big != True)
+	if (icon->big != true)
 		return;
 
 	pixels = icon->entry->width * icon->entry->height;
@@ -605,18 +605,18 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y)
 {
 	rdpWindow* wnd;
-	boolean clientArea = False;
-	boolean windowArea = False;
+	boolean clientArea = false;
+	boolean windowArea = false;
 
 	wnd = xfw->window;
 
 	if (((x > wnd->clientOffsetX) && (x < wnd->clientOffsetX + wnd->clientAreaWidth)) &&
 		((y > wnd->clientOffsetY) && (y < wnd->clientOffsetY + wnd->clientAreaHeight)))
-		clientArea = True;
+		clientArea = true;
 
 	if (((x > wnd->windowOffsetX) && (x < wnd->windowOffsetX + wnd->windowWidth)) &&
 		((y > wnd->windowOffsetY) && (y < wnd->windowOffsetY + wnd->windowHeight)))
-		windowArea = True;
+		windowArea = true;
 
 	return (windowArea && !(clientArea));
 }
@@ -625,6 +625,9 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 {
 	if (window == NULL)
 		return;
+
+	if (xfi->window == window)
+		xfi->window = NULL;
 
 	if (window->gc)
 		XFreeGC(xfi->display, window->gc);

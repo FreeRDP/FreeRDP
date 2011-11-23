@@ -206,7 +206,7 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return True;
+				return true;
 			}
 			break;
 
@@ -215,11 +215,11 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 				format->wBitsPerSample == 4 &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return True;
+				return true;
 			}
 			break;
 	}
-	return False;
+	return false;
 }
 
 static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)

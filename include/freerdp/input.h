@@ -60,15 +60,16 @@ typedef void (*pExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uin
 
 struct rdp_input
 {
-	rdpContext* context;
+	rdpContext* context; /* 0 */
+	void* param1; /* 1 */
+	uint32 paddingA[16 - 2]; /* 2 */
 
-	pSynchronizeEvent SynchronizeEvent;
-	pKeyboardEvent KeyboardEvent;
-	pUnicodeKeyboardEvent UnicodeKeyboardEvent;
-	pMouseEvent MouseEvent;
-	pExtendedMouseEvent ExtendedMouseEvent;
-
-	void* param1;
+	pSynchronizeEvent SynchronizeEvent; /* 16 */
+	pKeyboardEvent KeyboardEvent; /* 17 */
+	pUnicodeKeyboardEvent UnicodeKeyboardEvent; /* 18 */
+	pMouseEvent MouseEvent; /* 19 */
+	pExtendedMouseEvent ExtendedMouseEvent; /* 20 */
+	uint32 paddingB[32 - 21]; /* 21 */
 };
 
 #endif /* __INPUT_API_H */

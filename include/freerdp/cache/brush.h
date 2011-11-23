@@ -33,25 +33,29 @@ typedef struct rdp_brush_cache rdpBrushCache;
 
 struct _BRUSH_ENTRY
 {
-	uint8 bpp;
+	uint32 bpp;
 	void* entry;
 };
 
 struct rdp_brush_cache
 {
-	pPatBlt PatBlt;
+	pPatBlt PatBlt; /* 0 */
+	pCacheBrush CacheBrush; /* 1 */
+	uint32 paddingA[16 - 2]; /* 2 */
 
-	pCacheBrush CacheBrush;
+	uint32 maxEntries; /* 16 */
+	uint32 maxMonoEntries; /* 17 */
+	BRUSH_ENTRY* entries; /* 18 */
+	BRUSH_ENTRY* monoEntries; /* 19 */
+	uint32 paddingB[32 - 20]; /* 20 */
+
+	/* internal */
 
 	rdpSettings* settings;
-	uint8 maxEntries;
-	uint8 maxMonoEntries;
-	BRUSH_ENTRY* entries;
-	BRUSH_ENTRY* monoEntries;
 };
 
-FREERDP_API void* brush_cache_get(rdpBrushCache* brush, uint8 index, uint8* bpp);
-FREERDP_API void brush_cache_put(rdpBrushCache* brush, uint8 index, void* entry, uint8 bpp);
+FREERDP_API void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp);
+FREERDP_API void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp);
 
 FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 

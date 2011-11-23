@@ -2,7 +2,7 @@
 # Find the CUnit libraries
 #
 #  This module defines the following variables:
-#     CUNIT_FOUND        - True if CUNIT_INCLUDE_DIR & CUNIT_LIBRARY are found
+#     CUNIT_FOUND        - true if CUNIT_INCLUDE_DIR & CUNIT_LIBRARY are found
 #     CUNIT_LIBRARIES    - Set when CUNIT_LIBRARY is found
 #     CUNIT_INCLUDE_DIRS - Set when CUNIT_INCLUDE_DIR is found
 #

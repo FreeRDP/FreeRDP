@@ -33,7 +33,7 @@
 #include <freerdp/listener.h>
 
 static char* test_pcap_file = NULL;
-static boolean test_dump_rfx_realtime = True;
+static boolean test_dump_rfx_realtime = true;
 
 /* HL1, LH1, HH1, HL2, LH2, HH2, HL3, LH3, HH3, LL3 */
 static const unsigned int test_quantization_values[] =
@@ -135,7 +135,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
-	update->SurfaceBits(update, cmd);
+	update->SurfaceBits(update->context, cmd);
 
 	xfree(rgb_data);
 }
@@ -219,7 +219,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd->height = context->icon_height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
-		update->SurfaceBits(update, cmd);
+		update->SurfaceBits(update->context, cmd);
 	}
 
 	s = test_peer_stream_init(context);
@@ -236,7 +236,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd->height = context->icon_height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
-	update->SurfaceBits(update, cmd);
+	update->SurfaceBits(update->context, cmd);
 
 	context->icon_x = x;
 	context->icon_y = y;
@@ -250,7 +250,7 @@ static boolean test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_s
 	{
 		*old_sec = new_sec;
 		*old_usec = new_usec;
-		return True;
+		return true;
 	}
 
 	sec = new_sec - *old_sec;
@@ -259,7 +259,7 @@ static boolean test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_s
 	if (sec<0 || (sec==0 && usec<0))
 	{
 		printf("Invalid time stamp detected.\n");
-		return False;
+		return false;
 	}
 
 	*old_sec = new_sec;
@@ -277,7 +277,7 @@ static boolean test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_s
 	if (usec > 0)
 		freerdp_usleep(usec);
 	
-	return True;
+	return true;
 }
 
 void tf_peer_dump_rfx(freerdp_peer* client)
@@ -291,7 +291,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 
 	s = stream_new(512);
 	update = client->update;
-	client->update->pcap_rfx = pcap_open(test_pcap_file, False);
+	client->update->pcap_rfx = pcap_open(test_pcap_file, false);
 	pcap_rfx = client->update->pcap_rfx;
 
 	if (pcap_rfx == NULL)
@@ -310,10 +310,10 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 		pcap_get_next_record_content(pcap_rfx, &record);
 		s->p = s->data + s->size;
 
-		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == False)
+		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == false)
 			break;
 
-		update->SurfaceCommand(update, s);
+		update->SurfaceCommand(update->context, s);
 	}
 }
 
@@ -342,8 +342,8 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 	test_peer_load_icon(client);
 
-	/* Return False here would stop the execution of the peer mainloop. */
-	return True;
+	/* Return false here would stop the execution of the peer mainloop. */
+	return true;
 }
 
 boolean tf_peer_activate(freerdp_peer* client)
@@ -351,11 +351,11 @@ boolean tf_peer_activate(freerdp_peer* client)
 	testPeerContext* context = (testPeerContext*) client->context;
 
 	rfx_context_reset(context->rfx_context);
-	context->activated = True;
+	context->activated = true;
 
 	if (test_pcap_file != NULL)
 	{
-		client->update->dump_rfx = True;
+		client->update->dump_rfx = true;
 		tf_peer_dump_rfx(client);
 	}
 	else
@@ -363,7 +363,7 @@ boolean tf_peer_activate(freerdp_peer* client)
 		test_peer_draw_background(client);
 	}
 
-	return True;
+	return true;
 }
 
 void tf_peer_synchronize_event(rdpInput* input, uint32 flags)
@@ -391,8 +391,8 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			client->settings->width = 640;
 			client->settings->height = 480;
 		}
-		update->DesktopResize(update);
-		context->activated = False;
+		update->DesktopResize(update->context);
+		context->activated = false;
 	}
 }
 
@@ -430,8 +430,8 @@ static void* test_peer_mainloop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
-	client->settings->nla_security = False;
-	client->settings->rfx_codec = True;
+	client->settings->nla_security = false;
+	client->settings->rfx_codec = true;
 
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
@@ -450,7 +450,7 @@ static void* test_peer_mainloop(void* arg)
 	{
 		rcount = 0;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != True)
+		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -485,7 +485,7 @@ static void* test_peer_mainloop(void* arg)
 			}
 		}
 
-		if (client->CheckFileDescriptor(client) != True)
+		if (client->CheckFileDescriptor(client) != true)
 			break;
 	}
 
@@ -521,7 +521,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != True)
+		if (instance->GetFileDescriptor(instance, rfds, &rcount) != true)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -556,7 +556,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != True)
+		if (instance->CheckFileDescriptor(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -581,7 +581,7 @@ int main(int argc, char* argv[])
 		test_pcap_file = argv[1];
 	
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		test_dump_rfx_realtime = False;
+		test_dump_rfx_realtime = false;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))

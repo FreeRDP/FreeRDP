@@ -261,7 +261,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 {
 	int i;
 	uint32 cbFormat;
-	boolean ret = True;
+	boolean ret = true;
 
 	memset(mediatype, 0, sizeof(TS_AM_MEDIA_TYPE));
 
@@ -275,7 +275,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	}
 	mediatype->MajorType = tsmf_major_type_map[i].type;
 	if (mediatype->MajorType == TSMF_MAJOR_TYPE_UNKNOWN)
-		ret = False;
+		ret = false;
 	DEBUG_DVC("MajorType %s", tsmf_major_type_map[i].name);
 	stream_seek(s, 16);
 
@@ -289,7 +289,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	}
 	mediatype->SubType = tsmf_sub_type_map[i].type;
 	if (mediatype->SubType == TSMF_SUB_TYPE_UNKNOWN)
-		ret = False;
+		ret = false;
 	DEBUG_DVC("SubType %s", tsmf_sub_type_map[i].name);
 	stream_seek(s, 16);
 
@@ -306,7 +306,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	}
 	mediatype->FormatType = tsmf_format_type_map[i].type;
 	if (mediatype->FormatType == TSMF_FORMAT_TYPE_UNKNOWN)
-		ret = False;
+		ret = false;
 	DEBUG_DVC("FormatType %s", tsmf_format_type_map[i].name);
 	stream_seek(s, 16);
 
@@ -362,7 +362,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 			/* http://msdn.microsoft.com/en-us/library/dd390707.aspx */
 
 			i = tsmf_codec_parse_VIDEOINFOHEADER2(mediatype, s);
-			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, True);
+			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, true);
 			if (cbFormat > i)
 			{
 				mediatype->ExtraDataSize = cbFormat - i;
@@ -372,7 +372,7 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 
 		case TSMF_FORMAT_TYPE_VIDEOINFO2:
 			i = tsmf_codec_parse_VIDEOINFOHEADER2(mediatype, s);
-			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, False);
+			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, false);
 			if (cbFormat > i)
 			{
 				mediatype->ExtraDataSize = cbFormat - i;

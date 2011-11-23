@@ -130,7 +130,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	ber_read_sequence_tag(s, &length); /* TBSCertificate (SEQUENCE) */
 
 	/* Explicit Contextual Tag [0] */
-	ber_read_contextual_tag(s, 0, &length, True);
+	ber_read_contextual_tag(s, 0, &length, true);
 	ber_read_integer(s, &version); /* version (INTEGER) */
 	version++;
 
@@ -242,7 +242,7 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
 		printf("gcc_process_server_public_key: magic error\n");
-		return False;
+		return false;
 	}
 
 	stream_seek(s, 4);
@@ -256,13 +256,13 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	memcpy(certificate->cert_info.modulus.data, s->p, modlen);
 	stream_seek(s, keylen);
 
-	return True;
+	return true;
 }
 
 static boolean certificate_process_server_public_signature(rdpCertificate* certificate, STREAM* s, uint32 length)
 {
 	stream_seek(s, length);
-	return True;
+	return true;
 }
 
 /**
@@ -285,34 +285,34 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 	if (!(dwSigAlgId == 1 && dwKeyAlgId == 1))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 1\n");
-		return False;
+		return false;
 	}
 	stream_read_uint16(s, wPublicKeyBlobType);
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 2\n");
-		return False;
+		return false;
 	}
 	stream_read_uint16(s, wPublicKeyBlobLen);
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
-		return False;
+		return false;
 	}
 	stream_read_uint16(s, wSignatureBlobType);
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 4\n");
-		return False;
+		return false;
 	}
 	stream_read_uint16(s, wSignatureBlobLen);
 	if (!certificate_process_server_public_signature(certificate, s, wSignatureBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 5\n");
-		return False;
+		return false;
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -358,7 +358,7 @@ boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certifica
 		}
 	}
 
-	return True;
+	return true;
 }
 
 /**
@@ -379,7 +379,7 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 	if (length < 1)
 	{
 		printf("null server certificate\n");
-		return False;
+		return false;
 	}
 
 	stream_read_uint32(s, dwVersion); /* dwVersion (4 bytes) */
@@ -400,7 +400,7 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 	}
 
 	xfree(s);
-	return True;
+	return true;
 }
 
 /**

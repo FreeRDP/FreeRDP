@@ -31,7 +31,7 @@ boolean tls_connect(rdpTls* tls)
 	if (tls->ctx == NULL)
 	{
 		printf("SSL_CTX_new failed\n");
-		return False;
+		return false;
 	}
 
 	/*
@@ -49,13 +49,13 @@ boolean tls_connect(rdpTls* tls)
 	if (tls->ssl == NULL)
 	{
 		printf("SSL_new failed\n");
-		return False;
+		return false;
 	}
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
-		return False;
+		return false;
 	}
 
 	connection_status = SSL_connect(tls->ssl);
@@ -63,10 +63,10 @@ boolean tls_connect(rdpTls* tls)
 	if (connection_status <= 0)
 	{
 		if (tls_print_error("SSL_connect", tls->ssl, connection_status))
-			return False;
+			return false;
 	}
 
-	return True;
+	return true;
 }
 
 boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
@@ -78,13 +78,13 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (tls->ctx == NULL)
 	{
 		printf("SSL_CTX_new failed\n");
-		return False;
+		return false;
 	}
 
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
-		return False;
+		return false;
 	}
 
 	tls->ssl = SSL_new(tls->ctx);
@@ -92,19 +92,19 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (tls->ssl == NULL)
 	{
 		printf("SSL_new failed\n");
-		return False;
+		return false;
 	}
 
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_use_certificate_file failed\n");
-		return False;
+		return false;
 	}
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
-		return False;
+		return false;
 	}
 
 	connection_status = SSL_accept(tls->ssl);
@@ -112,18 +112,18 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (connection_status <= 0)
 	{
 		if (tls_print_error("SSL_accept", tls->ssl, connection_status))
-			return False;
+			return false;
 	}
 
 	printf("TLS connection accepted\n");
 
-	return True;
+	return true;
 }
 
 boolean tls_disconnect(rdpTls* tls)
 {
 	SSL_shutdown(tls->ssl);
-	return True;
+	return true;
 }
 
 int tls_read(rdpTls* tls, uint8* data, int length)
@@ -182,27 +182,27 @@ boolean tls_print_error(char *func, SSL *connection, int value)
 	{
 		case SSL_ERROR_ZERO_RETURN:
 			printf("%s: Server closed TLS connection\n", func);
-			return True;
+			return true;
 
 		case SSL_ERROR_WANT_READ:
 			printf("SSL_ERROR_WANT_READ\n");
-			return False;
+			return false;
 
 		case SSL_ERROR_WANT_WRITE:
 			printf("SSL_ERROR_WANT_WRITE\n");
-			return False;
+			return false;
 
 		case SSL_ERROR_SYSCALL:
 			printf("%s: I/O error\n", func);
-			return True;
+			return true;
 
 		case SSL_ERROR_SSL:
 			printf("%s: Failure in SSL library (protocol error?)\n", func);
-			return True;
+			return true;
 
 		default:
 			printf("%s: Unknown error\n", func);
-			return True;
+			return true;
 	}
 }
 
@@ -248,7 +248,7 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 	rdpCertStore* certstore;
 	status = x509_verify_cert(cert, settings);
 
-	if (status != True)
+	if (status != true)
 	{
 		rdpCertData* certdata;
 		certdata = crypto_get_cert_data(cert->px509, hostname);

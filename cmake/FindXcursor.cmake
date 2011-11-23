@@ -2,7 +2,7 @@
 # Find the Xcursor libraries
 #
 #  This module defines the following variables:
-#     XCURSOR_FOUND        - True if XCURSOR_INCLUDE_DIR & XCURSOR_LIBRARY are found
+#     XCURSOR_FOUND        - true if XCURSOR_INCLUDE_DIR & XCURSOR_LIBRARY are found
 #     XCURSOR_LIBRARIES    - Set when XCURSOR_LIBRARY is found
 #     XCURSOR_INCLUDE_DIRS - Set when XCURSOR_INCLUDE_DIR is found
 #

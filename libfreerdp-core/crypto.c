@@ -154,14 +154,14 @@ void crypto_cert_free(CryptoCert cert)
 
 boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert)
 {
-	return True; /* FIXME: do the actual verification */
+	return true; /* FIXME: do the actual verification */
 }
 
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 {
 	uint8* p;
 	int length;
-	boolean status = True;
+	boolean status = true;
 	EVP_PKEY* pkey = NULL;
 
 	pkey = X509_get_pubkey(cert->px509);
@@ -169,7 +169,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 	if (!pkey)
 	{
 		printf("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
-		status = False;
+		status = false;
 		goto exit;
 	}
 
@@ -178,7 +178,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 	if (length < 1)
 	{
 		printf("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
-		status = False;
+		status = false;
 		goto exit;
 	}
 
@@ -311,7 +311,7 @@ boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 {
 	char* cert_loc;
 	X509_STORE_CTX* csc;
-	boolean status = False;
+	boolean status = false;
 	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
 	X509* xcert = cert->px509;
@@ -352,7 +352,7 @@ boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 		goto end;
 
 	if (X509_verify_cert(csc) == 1)
-		status = True;
+		status = true;
 
 	X509_STORE_CTX_free(csc);
 	X509_STORE_free(cert_ctx);

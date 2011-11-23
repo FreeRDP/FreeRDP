@@ -43,7 +43,7 @@ int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, u
 
 		default:
 			printf("mppc.c: invalid RDP compression code 0x%2.2x\n", type);
-			return False;
+			return false;
 	}
 }
 
@@ -57,7 +57,7 @@ int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, u
  * @param roff    starting offset of uncompressed data
  * @param rlen    length of uncompressed data
  *
- * @return        True on success, False on failure
+ * @return        true on success, false on failure
  */
 
 int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
@@ -80,7 +80,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	if ((rdp->mppc == NULL) || (rdp->mppc->history_buf == NULL))
 	{
 		printf("decompress_rdp_4: null\n");
-		return False;
+		return false;
 	}
 
 	src_ptr = 0;
@@ -123,7 +123,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		history_ptr += len;
 		*rlen = history_ptr - rdp->mppc->history_ptr;
 		rdp->mppc->history_ptr = history_ptr;
-		return True;
+		return true;
 	}
 
 	/* load initial data */
@@ -474,7 +474,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 
 	rdp->mppc->history_ptr = history_ptr;
 
-	return True;
+	return true;
 }
 
 /**
@@ -487,7 +487,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @param roff    starting offset of uncompressed data
  * @param rlen    length of uncompressed data
  *
- * @return        True on success, False on failure
+ * @return        true on success, false on failure
  */
 
 int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
@@ -508,7 +508,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	if ((rdp->mppc == NULL) || (rdp->mppc->history_buf == NULL))
 	{
 		printf("decompress_rdp_5: null\n");
-		return False;
+		return false;
 	}
 
 	src_ptr = 0;
@@ -551,7 +551,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		history_ptr += len;
 		*rlen = history_ptr - rdp->mppc->history_ptr;
 		rdp->mppc->history_ptr = history_ptr;
-		return True;
+		return true;
 	}
 
 	/* load initial data */
@@ -938,7 +938,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 
 	rdp->mppc->history_ptr = history_ptr;
 
-	return True;
+	return true;
 }
 
 /**
@@ -951,12 +951,12 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @param roff    starting offset of uncompressed data
  * @param rlen    length of uncompressed data
  *
- * @return        True on success, False on failure
+ * @return        true on success, false on failure
  */
 
 int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
-	return False;
+	return false;
 }
 
 /**
@@ -969,12 +969,12 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @param roff    starting offset of uncompressed data
  * @param rlen    length of uncompressed data
  *
- * @return        True on success, False on failure
+ * @return        true on success, false on failure
  */
 
 int decompress_rdp_61(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
-	return False;
+	return false;
 }
 
 /**

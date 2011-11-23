@@ -137,7 +137,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	TSMF_STREAM* s;
 	LIST_ITEM* item;
 	TSMF_SAMPLE* sample;
-	boolean pending = False;
+	boolean pending = false;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
 	if (!stream->sample_list->head)
@@ -157,7 +157,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 					if (s != stream && !s->eos && s->last_end_time &&
 						s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
 					{
-							pending = True;
+							pending = true;
 							break;
 					}
 				}
@@ -168,7 +168,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 		{
 			if (stream->last_end_time > presentation->audio_end_time)
 			{
-				pending = True;
+				pending = true;
 			}
 		}
 	}
@@ -416,7 +416,7 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 
 static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 {
-	boolean ret = False;
+	boolean ret = false;
 	uint32 width;
 	uint32 height;
 	uint32 pixfmt = 0;

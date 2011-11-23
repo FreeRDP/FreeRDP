@@ -188,7 +188,7 @@ void test_read_draw_nine_grid_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x1C;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&draw_nine_grid, 0, sizeof(DRAW_NINE_GRID_ORDER));
 	draw_nine_grid.srcRight = 38;
@@ -268,7 +268,7 @@ void test_read_line_to_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x021E;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&line_to, 0, sizeof(LINE_TO_ORDER));
 	line_to.nXStart = 826;
@@ -410,7 +410,7 @@ void test_read_glyph_index_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x200100;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
@@ -424,7 +424,7 @@ void test_read_glyph_index_order(void)
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x383FE8;
-	orderInfo->deltaCoordinates = True;
+	orderInfo->deltaCoordinates = true;
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
@@ -567,7 +567,7 @@ void test_read_cache_bitmap_order(void)
 
 	memset(&cache_bitmap, 0, sizeof(CACHE_BITMAP_ORDER));
 
-	update_read_cache_bitmap_order(s, &cache_bitmap, True, extraFlags);
+	update_read_cache_bitmap_order(s, &cache_bitmap, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap.cacheId == 0);
 	CU_ASSERT(cache_bitmap.bitmapWidth == 16);
@@ -608,7 +608,7 @@ void test_read_cache_bitmap_v2_order(void)
 
 	memset(&cache_bitmap_v2, 0, sizeof(CACHE_BITMAP_V2_ORDER));
 
-	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, True, extraFlags);
+	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap_v2.cacheId == 1);
 	CU_ASSERT(cache_bitmap_v2.bitmapBpp == 16);
@@ -639,7 +639,7 @@ void test_read_cache_bitmap_v3_order(void)
 
 	memset(&cache_bitmap_v3, 0, sizeof(CACHE_BITMAP_V3_ORDER));
 
-	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, True, extraFlags);
+	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, true, extraFlags);
 
 	CU_ASSERT(cache_bitmap_v3.cacheIndex == 32767);
 	CU_ASSERT(cache_bitmap_v3.key1 == 0xBCEC5035);
@@ -739,17 +739,17 @@ uint8 orders_update_2[] =
 	"\x50\x01\x01\x01\x55\x01\x50\xff\xff\xff\x16\x00\x17\x00\xea\x03"
 	"\xea\x03\x02\x00\x85\x02\x16\x00\x02\x00\x00\x00\x03\x00\x14\xb2";
 
-void test_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+void test_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	opaque_rect_count++;
 }
 
-void test_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+void test_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	polyline_count++;
 }
 
-void test_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void test_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	patblt_count++;
 }
@@ -766,9 +766,9 @@ void test_update_recv_orders(void)
 	polyline_count = 0;
 	patblt_count = 0;
 
-	update->OpaqueRect = test_opaque_rect;
-	update->Polyline = test_polyline;
-	update->PatBlt = test_patblt;
+	update->primary->OpaqueRect = test_opaque_rect;
+	update->primary->Polyline = test_polyline;
+	update->primary->PatBlt = test_patblt;
 
 	s->p = s->data = orders_update_1;
 
@@ -777,7 +777,7 @@ void test_update_recv_orders(void)
 	CU_ASSERT(opaque_rect_count == 5);
 	CU_ASSERT(polyline_count == 2);
 
-	update->order_info.orderType = ORDER_TYPE_PATBLT;
+	update->primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	s->p = s->data = orders_update_2;
 
 	update_recv(update, s);

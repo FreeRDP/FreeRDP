@@ -75,19 +75,19 @@ static boolean rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	pa_context_state_t state;
 
 	if (!pulse->context)
-		return False;
+		return false;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
 		DEBUG_WARN("pa_context_connect failed (%d)", pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_threaded_mainloop_start failed (%d)", pa_context_errno(pulse->context));
-		return False;
+		return false;
 	}
 	for (;;)
 	{
@@ -105,12 +105,12 @@ static boolean rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	if (state == PA_CONTEXT_READY)
 	{
 		DEBUG_SVC("connected");
-		return True;
+		return true;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return False;
+		return false;
 	}
 }
 
@@ -337,7 +337,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!pulse->context)
-		return False;
+		return false;
 
 	switch (format->wFormatTag)
 	{
@@ -347,7 +347,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return True;
+				return true;
 			}
 			break;
 
@@ -358,7 +358,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 8) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return True;
+				return true;
 			}
 			break;
 
@@ -367,11 +367,11 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return True;
+				return true;
 			}
 			break;
 	}
-	return False;
+	return false;
 }
 
 static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)

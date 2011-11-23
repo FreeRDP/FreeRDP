@@ -23,10 +23,10 @@
 
 #include <freerdp/cache/bitmap.h>
 
-void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
@@ -34,13 +34,13 @@ void update_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 		bitmap = bitmap_cache_get(cache->bitmap, (uint8) memblt->cacheId, memblt->cacheIndex);
 
 	memblt->bitmap = bitmap;
-	IFCALL(cache->bitmap->MemBlt, update, memblt);
+	IFCALL(cache->bitmap->MemBlt, context, memblt);
 }
 
-void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
+void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	rdpBitmap* bitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
@@ -48,51 +48,51 @@ void update_gdi_mem3blt(rdpUpdate* update, MEM3BLT_ORDER* mem3blt)
 		bitmap = bitmap_cache_get(cache->bitmap, (uint8) mem3blt->cacheId, mem3blt->cacheIndex);
 
 	mem3blt->bitmap = bitmap;
-	IFCALL(cache->bitmap->Mem3Blt, update, mem3blt);
+	IFCALL(cache->bitmap->Mem3Blt, context, mem3blt);
 }
 
-void update_gdi_cache_bitmap(rdpUpdate* update, CACHE_BITMAP_ORDER* cache_bitmap)
+void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
 {
 	printf("Warning: CacheBitmapV1 Unimplemented\n");
 }
 
-void update_gdi_cache_bitmap_v2(rdpUpdate* update, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
+void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
-	rdpCache* cache = update->context->cache;
+	rdpCache* cache = context->cache;
 
-	bitmap = Bitmap_Alloc(update->context);
+	bitmap = Bitmap_Alloc(context);
 
-	Bitmap_SetDimensions(update->context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
+	Bitmap_SetDimensions(context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
 
-	bitmap->Decompress(update->context, bitmap,
+	bitmap->Decompress(context, bitmap,
 			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
 			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
 
-	bitmap->New(update->context, bitmap);
+	bitmap->New(context, bitmap);
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex);
 
 	if (prevBitmap != NULL)
-		Bitmap_Free(update->context, prevBitmap);
+		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex, bitmap);
 }
 
-void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
+void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
 	rdpBitmap* bitmap;
 	BITMAP_DATA* bitmap_data;
-	rdpCache* cache = update->context->cache;
-	int reused = 1;
+	boolean reused = true;
+	rdpCache* cache = context->cache;
 
 	if (cache->bitmap->bitmap == NULL)
 	{
-		cache->bitmap->bitmap = Bitmap_Alloc(update->context);
-		cache->bitmap->bitmap->ephemeral = True;
-		reused = 0;
+		cache->bitmap->bitmap = Bitmap_Alloc(context);
+		cache->bitmap->bitmap->ephemeral = true;
+		reused = false;
 	}
 
 	bitmap = cache->bitmap->bitmap;
@@ -105,28 +105,28 @@ void update_gdi_bitmap_update(rdpUpdate* update, BITMAP_UPDATE* bitmap_update)
 		bitmap->length = bitmap_data->bitmapLength;
 		bitmap->compressed = bitmap_data->compressed;
 
-		Bitmap_SetRectangle(update->context, bitmap,
+		Bitmap_SetRectangle(context, bitmap,
 				bitmap_data->destLeft, bitmap_data->destTop,
 				bitmap_data->destRight, bitmap_data->destBottom);
 
-		Bitmap_SetDimensions(update->context, bitmap, bitmap_data->width, bitmap_data->height);
+		Bitmap_SetDimensions(context, bitmap, bitmap_data->width, bitmap_data->height);
 
-		bitmap->Decompress(update->context, bitmap,
+		bitmap->Decompress(context, bitmap,
 				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
 				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength, bitmap_data->compressed);
 
 		if (reused)
-			bitmap->Free(update->context, bitmap);
+			bitmap->Free(context, bitmap);
 		else
-			reused = 1;
+			reused = true;
 
-		bitmap->New(update->context, bitmap);
+		bitmap->New(context, bitmap);
 
-		bitmap->Paint(update->context, bitmap);
+		bitmap->Paint(context, bitmap);
 	}
 }
 
-rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index)
+rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -150,7 +150,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index
 	return bitmap;
 }
 
-void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint8 id, uint16 index, rdpBitmap* bitmap)
+void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdpBitmap* bitmap)
 {
 	if (id > bitmap_cache->maxCells)
 	{
@@ -174,13 +174,15 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
 
-	cache->bitmap->MemBlt = update->MemBlt;
-	cache->bitmap->Mem3Blt = update->Mem3Blt;
+	cache->bitmap->MemBlt = update->primary->MemBlt;
+	cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
 
-	update->MemBlt = update_gdi_memblt;
-	update->Mem3Blt = update_gdi_mem3blt;
-	update->CacheBitmap = update_gdi_cache_bitmap;
-	update->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
+	update->primary->MemBlt = update_gdi_memblt;
+	update->primary->Mem3Blt = update_gdi_mem3blt;
+
+	update->secondary->CacheBitmap = update_gdi_cache_bitmap;
+	update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
+
 	update->BitmapUpdate = update_gdi_bitmap_update;
 }
 
@@ -199,18 +201,18 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 
 		bitmap_cache->maxCells = 5;
 
-		settings->bitmap_cache = False;
+		settings->bitmap_cache = false;
 		settings->bitmapCacheV2NumCells = 5;
 		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[0].persistent = False;
+		settings->bitmapCacheV2CellInfo[0].persistent = false;
 		settings->bitmapCacheV2CellInfo[1].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[1].persistent = False;
+		settings->bitmapCacheV2CellInfo[1].persistent = false;
 		settings->bitmapCacheV2CellInfo[2].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[2].persistent = False;
+		settings->bitmapCacheV2CellInfo[2].persistent = false;
 		settings->bitmapCacheV2CellInfo[3].numEntries = 4096;
-		settings->bitmapCacheV2CellInfo[3].persistent = False;
+		settings->bitmapCacheV2CellInfo[3].persistent = false;
 		settings->bitmapCacheV2CellInfo[4].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[4].persistent = False;
+		settings->bitmapCacheV2CellInfo[4].persistent = false;
 
 		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
