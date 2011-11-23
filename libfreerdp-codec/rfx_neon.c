@@ -127,14 +127,6 @@ rfx_dwt_2d_decode_block_horiz_NEON(sint16 * l, sint16 * h, sint16 * dst, int sub
 	sint16 * h_ptr = h;
 	sint16 * dst_ptr = dst;
 
-	__asm__ __volatile__ (
-		"mov r10, #1; "
-		"vdup.16 q8, r10; "
-		: 
-		: 
-		: "r10"
-	);
-
 	for (y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
