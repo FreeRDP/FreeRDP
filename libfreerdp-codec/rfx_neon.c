@@ -113,7 +113,7 @@ rfx_quantization_decode_NEON(sint16 * buffer, const uint32 * quantization_values
 	rfx_quantization_decode_block_NEON(buffer + 3584, 256, quantization_values[6]); /* HH2 */
 	rfx_quantization_decode_block_NEON(buffer + 3840, 64, quantization_values[2]); /* HL3 */
 	rfx_quantization_decode_block_NEON(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_decode_block_NEON(buffer + 3868, 64, quantization_values[3]); /* HH3 */
+	rfx_quantization_decode_block_NEON(buffer + 3968, 64, quantization_values[3]); /* HH3 */
 	rfx_quantization_decode_block_NEON(buffer + 4032, 64, quantization_values[0]); /* LL3 */
 }
 
@@ -126,14 +126,6 @@ rfx_dwt_2d_decode_block_horiz_NEON(sint16 * l, sint16 * h, sint16 * dst, int sub
 	sint16 * l_ptr = l;
 	sint16 * h_ptr = h;
 	sint16 * dst_ptr = dst;
-
-	__asm__ __volatile__ (
-		"mov r10, #1; "
-		"vdup.16 q8, r10; "
-		: 
-		: 
-		: "r10"
-	);
 
 	for (y = 0; y < subband_width; y++)
 	{
