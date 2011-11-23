@@ -1086,7 +1086,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 
 	if (xevent->xselectionrequest.owner != xfi->drawable)
 	{
-		DEBUG_X11("not owner");
+		DEBUG_X11_CLIPRDR("not owner");
 		return false;
 	}
 
@@ -1103,16 +1103,21 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	if (xevent->xselectionrequest.target == cb->targets[0]) /* TIMESTAMP */
 	{
 		/* TODO */
+		DEBUG_X11_CLIPRDR("target: TIMESTAMP (unimplemented)");
 	}
 	else if (xevent->xselectionrequest.target == cb->targets[1]) /* TARGETS */
 	{
 		/* Someone else requests our available formats */
+		DEBUG_X11_CLIPRDR("target: TARGETS");
 		respond->xselection.property = xevent->xselectionrequest.property;
 		xf_cliprdr_provide_targets(xfi, respond);
 	}
 	else
 	{
+		DEBUG_X11_CLIPRDR("target: other");
+
 		i = xf_cliprdr_select_format_by_atom(cb, xevent->xselectionrequest.target);
+
 		if (i >= 0 && xevent->xselectionrequest.requestor != xfi->drawable)
 		{
 			format = cb->format_mappings[i].format_id;
@@ -1123,7 +1128,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 					cb->property_atom, 0, 4, 0, XA_INTEGER,
 					&type, &fmt, &length, &bytes_left, &data) != Success)
 				{
-					DEBUG_X11("XGetWindowProperty failed");
+					DEBUG_X11_CLIPRDR("XGetWindowProperty failed");
 				}
 				if (data)
 				{
@@ -1140,7 +1145,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 			}
 			else if (cb->respond)
 			{
-				DEBUG_X11("duplicated request");
+				DEBUG_X11_CLIPRDR("duplicated request");
 			}
 			else
 			{
