@@ -76,6 +76,13 @@
 
 #define SCARD_INPUT_LINKED                   0xFFFFFFFF
 
+/* Decode Win CTL_CODE values */
+#define WIN_CTL_FUNCTION(ctl_code)	((ctl_code & 0x3FFC) >> 2)
+#define WIN_CTL_DEVICE_TYPE(ctl_code)	(ctl_code >> 16)
+
+#define WIN_FILE_DEVICE_SMARTCARD	0x00000031
+
+
 static uint32 sc_output_string(IRP* irp, char *src, boolean wide)
 {
 	uint8* p;
@@ -352,7 +359,7 @@ static uint32 handle_ListReaders(IRP* irp, boolean wide)
 		return rv;
 	}
 
-	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));
+/*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
 
 	poslen1 = stream_get_pos(irp->output);
 	stream_seek_uint32(irp->output);
@@ -967,6 +974,7 @@ static uint32 handle_Control(IRP* irp)
 	SCARDHANDLE hCard;
 	uint32 map[3];
 	uint32 controlCode;
+	uint32 controlFunction;
 	BYTE *recvBuffer = NULL, *sendBuffer = NULL;
 	uint32 recvLength;
 	DWORD nBytesReturned;
@@ -985,6 +993,14 @@ static uint32 handle_Control(IRP* irp)
 	stream_read_uint32(irp->input, hContext);
 	stream_seek(irp->input, 0x4);
 	stream_read_uint32(irp->input, hCard);
+
+	/* Translate Windows SCARD_CTL_CODE's to corresponding local code */
+	if (WIN_CTL_DEVICE_TYPE(controlCode) == WIN_FILE_DEVICE_SMARTCARD)
+	{
+		controlFunction = WIN_CTL_FUNCTION(controlCode);
+		controlCode = SCARD_CTL_CODE(controlFunction);
+	}
+	DEBUG_SCARD("controlCode: 0x%08x", (unsigned) controlCode);
 
 	if (map[2] & SCARD_INPUT_LINKED)
 	{
