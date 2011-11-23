@@ -168,7 +168,16 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 
 void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
+	rdpGlyphCache* glyph_cache;
 
+	glyph_cache = context->cache->glyph;
+	update_process_glyph_fragments(context, glyph_index->data, glyph_index->cbData,
+			glyph_index->cacheId, glyph_index->ulCharInc, glyph_index->flAccel,
+			glyph_index->backColor, glyph_index->foreColor, glyph_index->x, glyph_index->y,
+			glyph_index->bkLeft, glyph_index->bkTop,
+			glyph_index->bkRight - glyph_index->bkLeft, glyph_index->bkBottom - glyph_index->bkTop,
+			glyph_index->opLeft, glyph_index->opTop,
+			glyph_index->opRight - glyph_index->opLeft, glyph_index->opBottom - glyph_index->opTop);
 }
 
 void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
@@ -265,7 +274,8 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, uint32 id, uint32 index, rdpGly
 	if (prevGlyph != NULL)
 	{
 		xfree(prevGlyph->aj);
-		Glyph_Free(glyph_cache->context, prevGlyph);
+		/* hack jsorg71 */
+		//Glyph_Free(glyph_cache->context, prevGlyph);
 		xfree(prevGlyph);
 	}
 
