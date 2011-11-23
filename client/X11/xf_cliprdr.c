@@ -315,7 +315,7 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 		DEBUG_WARN("XGetWindowProperty failed");
 		return;
 	}
-	DEBUG_X11("format=%d len=%d bytes_left=%d", format, (int) length, (int) bytes_left);
+	DEBUG_X11_CLIPRDR("format=%d len=%d bytes_left=%d", format, (int) length, (int) bytes_left);
 
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
@@ -424,7 +424,7 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 	int i;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11("format %d", event->format);
+	DEBUG_X11_CLIPRDR("format %d", event->format);
 
 	if (xf_cliprdr_is_self_owned(xfi))
 	{
@@ -440,14 +440,14 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 
 	if (i < 0)
 	{
-		DEBUG_X11("unsupported format requested");
+		DEBUG_X11_CLIPRDR("unsupported format requested");
 		xf_cliprdr_send_null_data_response(xfi);
 	}
 	else
 	{
 		cb->request_index = i;
 
-		DEBUG_X11("target=%d", (int) cb->format_mappings[i].target_format);
+		DEBUG_X11_CLIPRDR("target=%d", (int) cb->format_mappings[i].target_format);
 
 		XConvertSelection(xfi->display, cb->clipboard_atom,
 			cb->format_mappings[i].target_format, cb->property_atom,
@@ -472,7 +472,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		0, 200, 0, XA_ATOM,
 		&atom, &format, &length, &bytes_left, &data);
 
-	DEBUG_X11("type=%d format=%d length=%d bytes_left=%d",
+	DEBUG_X11_CLIPRDR("type=%d format=%d length=%d bytes_left=%d",
 		(int) atom, format, (int) length, (int) bytes_left);
 
 	if (length > 0)
@@ -556,7 +556,7 @@ static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
 	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
 	if (*size < 54)
 	{
-		DEBUG_X11("bmp length %d too short", *size);
+		DEBUG_X11_CLIPRDR("bmp length %d too short", *size);
 		return NULL;
 	}
 
@@ -704,7 +704,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	if ((cb->request_index < 0) ||
 		(cb->format_mappings[cb->request_index].target_format != target))
 	{
-		DEBUG_X11("invalid target");
+		DEBUG_X11_CLIPRDR("invalid target");
 		xf_cliprdr_send_null_data_response(xfi);
 		return false;
 	}
@@ -713,7 +713,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 		cb->property_atom, 0, 0, 0, target,
 		&type, &format, &length, &bytes_left, &data);
 
-	DEBUG_X11("type=%d format=%d bytes=%d request_index=%d",
+	DEBUG_X11_CLIPRDR("type=%d format=%d bytes=%d request_index=%d",
 		(int) type, format, (int) bytes_left, cb->request_index);
 
 	if (data)
@@ -769,7 +769,7 @@ static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 		}
 		else
 		{
-			DEBUG_X11("XGetWindowProperty failed");
+			DEBUG_X11_CLIPRDR("XGetWindowProperty failed");
 		}
 	}
 	XDeleteProperty(xfi->display, xfi->drawable, cb->property_atom);
@@ -898,7 +898,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	/* size should be at least sizeof(BITMAPINFOHEADER) */
 	if (size < 40)
 	{
-		DEBUG_X11("dib size %d too short", size);
+		DEBUG_X11_CLIPRDR("dib size %d too short", size);
 		return;
 	}
 
@@ -911,7 +911,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	stream_detach(s);
 	stream_free(s);
 
-	DEBUG_X11("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
+	DEBUG_X11_CLIPRDR("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
 
 	s = stream_new(14 + size);
 	stream_write_uint8(s, 'B');
@@ -938,14 +938,14 @@ static void xf_cliprdr_process_html(clipboardContext* cb, uint8* data, int size)
 	end_str = strstr((char*) data, "EndHTML:");
 	if (start_str == NULL || end_str == NULL)
 	{
-		DEBUG_X11("invalid HTML clipboard format");
+		DEBUG_X11_CLIPRDR("invalid HTML clipboard format");
 		return;
 	}
 	start = atoi(start_str + 10);
 	end = atoi(end_str + 8);
 	if (start > size || end > size || start >= end)
 	{
-		DEBUG_X11("invalid HTML offset");
+		DEBUG_X11_CLIPRDR("invalid HTML offset");
 		return;
 	}
 
@@ -959,11 +959,11 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 {
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11("size=%d", event->size);
+	DEBUG_X11_CLIPRDR("size=%d", event->size);
 
 	if (cb->respond == NULL)
 	{
-		DEBUG_X11("unexpected data");
+		DEBUG_X11_CLIPRDR("unexpected data");
 		return;
 	}
 
@@ -1013,8 +1013,7 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 		xf_cliprdr_provide_data(xfi, cb->respond);
 	}
 
-	XSendEvent(xfi->display, cb->respond->xselection.requestor,
-		0, 0, cb->respond);
+	XSendEvent(xfi->display, cb->respond->xselection.requestor, 0, 0, cb->respond);
 	XFlush(xfi->display);
 	xfree(cb->respond);
 	cb->respond = NULL;
@@ -1041,7 +1040,7 @@ void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event)
 			break;
 
 		default:
-			DEBUG_X11("unknown event type %d", event->event_type);
+			DEBUG_X11_CLIPRDR("unknown event type %d", event->event_type);
 			break;
 	}
 }
@@ -1054,7 +1053,7 @@ boolean xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent)
 	{
 		if (xevent->xselection.property == None)
 		{
-			DEBUG_X11("owner not support TARGETS. sending all format.");
+			DEBUG_X11_CLIPRDR("owner not support TARGETS. sending all format.");
 			xf_cliprdr_send_supported_format_list(xfi);
 		}
 		else
@@ -1083,7 +1082,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	unsigned long length, bytes_left;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11("target=%d", (int) xevent->xselectionrequest.target);
+	DEBUG_X11_CLIPRDR("target=%d", (int) xevent->xselectionrequest.target);
 
 	if (xevent->xselectionrequest.owner != xfi->drawable)
 	{
@@ -1132,7 +1131,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 					XFree(data);
 				}
 			}
-			DEBUG_X11("provide format 0x%04x alt_format 0x%04x", format, alt_format);
+			DEBUG_X11_CLIPRDR("provide format 0x%04x alt_format 0x%04x", format, alt_format);
 			if ((cb->data != 0) && (format == cb->data_format) && (alt_format == cb->data_alt_format))
 			{
 				/* Cached clipboard data available. Send it now */
@@ -1197,14 +1196,14 @@ boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 
 	if (xevent->xproperty.window == cb->root_window)
 	{
-		DEBUG_X11("root window PropertyNotify");
+		DEBUG_X11_CLIPRDR("root window PropertyNotify");
 		xf_cliprdr_send_format_list(xfi);
 	}
 	else if (xevent->xproperty.window == xfi->drawable &&
 		xevent->xproperty.state == PropertyNewValue &&
 		cb->incr_starts && cb->request_index >= 0)
 	{
-		DEBUG_X11("cliprdr window PropertyNotify");
+		DEBUG_X11_CLIPRDR("cliprdr window PropertyNotify");
 		xf_cliprdr_get_requested_data(xfi,
 			cb->format_mappings[cb->request_index].target_format);
 	}

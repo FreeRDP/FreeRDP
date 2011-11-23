@@ -37,11 +37,13 @@
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_SSE2_TARGET
 #cmakedefine WITH_DEBUG_X11
+#cmakedefine WITH_DEBUG_X11_CLIPRDR
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_ORDERS
 #cmakedefine WITH_DEBUG_REDIR
+#cmakedefine WITH_DEBUG_CLIPRDR
 
 #endif

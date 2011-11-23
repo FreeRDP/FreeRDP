@@ -257,7 +257,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 	cliprdr_send_format_list_response(cliprdr);
 }
 
-void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, uint16 msgFlags)
+void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
 {
 	/* where is this documented? */
 #if 0
@@ -271,7 +271,7 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, uint16 msgFlag
 #endif
 }
 
-void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s)
+void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
 {
 	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
@@ -312,7 +312,7 @@ void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DA
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen)
+void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
 {
 	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
