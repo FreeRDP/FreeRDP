@@ -308,7 +308,7 @@ struct _GLYPH_INDEX_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8* data;
+	uint8 data[256];
 };
 typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 

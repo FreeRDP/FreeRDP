@@ -136,16 +136,18 @@ uint8 BMF_BPP[] =
 
 INLINE void update_read_coord(STREAM* s, sint32* coord, boolean delta)
 {
-	sint8 byte;
+	sint8 lsi8;
+	sint16 lsi16;
 
 	if (delta)
 	{
-		stream_read_uint8(s, byte);
-		*coord += byte;
+		stream_read_uint8(s, lsi8);
+		*coord += lsi8;
 	}
 	else
 	{
-		stream_read_uint16(s, *coord);
+		stream_read_uint16(s, lsi16);
+		*coord = lsi16;
 	}
 }
 
@@ -927,7 +929,7 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 	if (orderInfo->fieldFlags & ORDER_FIELD_22)
 	{
 		stream_read_uint8(s, glyph_index->cbData);
-		stream_get_mark(s, glyph_index->data);
+		memcpy(glyph_index->data, s->p, glyph_index->cbData);
 		stream_seek(s, glyph_index->cbData);
 	}
 }
@@ -1325,6 +1327,7 @@ void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_order, uint16 flags)
 {
 	int i;
+	sint16 lsi16;
 	GLYPH_DATA* glyph;
 
 	stream_read_uint8(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
@@ -1336,8 +1339,10 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 		cache_glyph_order->glyphData[i] = glyph;
 
 		stream_read_uint16(s, glyph->cacheIndex);
-		stream_read_uint16(s, glyph->x);
-		stream_read_uint16(s, glyph->y);
+		stream_read_uint16(s, lsi16);
+		glyph->x = lsi16;
+		stream_read_uint16(s, lsi16);
+		glyph->y = lsi16;
 		stream_read_uint16(s, glyph->cx);
 		stream_read_uint16(s, glyph->cy);
 
