@@ -25,8 +25,6 @@
 #include <WinDef.h>
 #endif
 
-#include "config.h"
-
 /* Base Types */
 
 #ifdef HAVE_LIMITS_H
