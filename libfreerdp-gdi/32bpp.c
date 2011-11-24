@@ -47,7 +47,7 @@ uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	}
 	else
 	{
-		color32 = ARGB32(a, r, g, b);
+		color32 = ARGB32(a, b, g, r);
 	}
 
 	return color32;
