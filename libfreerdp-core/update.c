@@ -412,6 +412,31 @@ static void update_send_desktop_resize(rdpContext* context)
 	rdp_server_reactivate(context->rdp);
 }
 
+static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
+{
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_ORDERS); /* updateHeader (1 byte) */
+	stream_write_uint16(s, 18); /* size (2 bytes) */
+	stream_write_uint16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_uint8(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_uint8(s, ORDER_TYPE_SCRBLT); /* orderType (1 byte) */
+	stream_write_uint8(s, 0x7F); /* fieldFlags (variable) */
+
+	stream_write_uint16(s, scrblt->nLeftRect);
+	stream_write_uint16(s, scrblt->nTopRect);
+	stream_write_uint16(s, scrblt->nWidth);
+	stream_write_uint16(s, scrblt->nHeight);
+	stream_write_uint8(s, scrblt->bRop);
+	stream_write_uint16(s, scrblt->nXSrc);
+	stream_write_uint16(s, scrblt->nYSrc);
+
+	fastpath_send_update_pdu(rdp->fastpath, s);
+}
+
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	STREAM* s;
@@ -437,6 +462,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceCommand = update_send_surface_command;
+	update->primary->ScrBlt = update_send_scrblt;
 	update->pointer->PointerSystem = update_send_pointer_system;
 }
 
