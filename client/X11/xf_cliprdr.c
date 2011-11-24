@@ -689,7 +689,7 @@ static void xf_cliprdr_process_requested_data(xfInfo* xfi, boolean has_data, uin
 		xf_cliprdr_send_null_data_response(xfi);
 
 	/* Resend the format list, otherwise the server won't request again for the next paste */
-	//xf_cliprdr_send_format_list(xfi);
+	xf_cliprdr_send_format_list(xfi);
 }
 
 static boolean xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
@@ -1170,7 +1170,7 @@ boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 		}
 	}
 
-	if (delay_respond != false)
+	if (delay_respond == false)
 	{
 		XSendEvent(xfi->display, xevent->xselectionrequest.requestor, 0, 0, respond);
 		XFlush(xfi->display);
