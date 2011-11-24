@@ -244,6 +244,7 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 
 	file = xnew(DISK_FILE);
 	file->id = id;
+	file->basepath = base_path;
 	disk_file_set_fullpath(file, disk_file_combine_fullpath(base_path, path));
 	file->fd = -1;
 
@@ -437,16 +438,9 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			uniconv = freerdp_uniconv_new();
 			s = freerdp_uniconv_in(uniconv, stream_get_tail(input), FileNameLength);
 			freerdp_uniconv_free(uniconv);
-			fullpath = xmalloc(strlen(file->fullpath) + strlen(s) + 2);
-			strcpy(fullpath, file->fullpath);
-			p = strrchr(fullpath, '/');
-			if (p == NULL)
-				p = fullpath;
-			else
-				p++;
-			strcpy(p, s[0] == '\\' || s[0] == '/' ? s + 1 : s);
+
+			fullpath = disk_file_combine_fullpath(file->basepath, s);
 			xfree(s);
-			disk_file_fix_path(fullpath);
 
 			if (rename(file->fullpath, fullpath) == 0)
 			{
