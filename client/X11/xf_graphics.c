@@ -191,11 +191,10 @@ void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	// In remote app mode, window can be null if none has had focus
+	/* in RemoteApp mode, window can be null if none has had focus */
+
 	if (xfi->window != NULL)
-	{
 		XDefineCursor(xfi->display, xfi->window->handle, ((xfPointer*) pointer)->cursor);
-	}
 }
 /* Glyph Class */
 
@@ -226,22 +225,50 @@ void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 
 void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 {
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	if (((xfGlyph*) glyph)->pixmap != 0)
+		XFreePixmap(xfi->display, ((xfGlyph*) glyph)->pixmap);
 }
 
 void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 {
+	xfGlyph* xf_glyph;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	xf_glyph = (xfGlyph*) glyph;
+
+	printf("Glyph_Draw: x:%d y:%d w:%d h:%d\n", x, y, glyph->cx, glyph->cy);
+
+	XSetStipple(xfi->display, xfi->gc, xf_glyph->pixmap);
+	XSetTSOrigin(xfi->display, xfi->gc, x, y);
+	XFillRectangle(xfi->display, xfi->drawable, xfi->gc, x, y, glyph->cx, glyph->cy);
+	XSetStipple(xfi->display, xfi->gc, xfi->bitmap_mono);
 }
 
 void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	bgcolor = freerdp_color_convert(bgcolor, xfi->srcBpp, 32, xfi->clrconv);
+	fgcolor = freerdp_color_convert(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetForeground(xfi->display, xfi->gc, fgcolor);
+	XSetBackground(xfi->display, xfi->gc, bgcolor);
+	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
 }
 
 void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	if (xfi->remote_app != true)
+	{
+		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, width, height, x, y);
+	}
+
+	gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
 }
 
 /* Graphics Module */

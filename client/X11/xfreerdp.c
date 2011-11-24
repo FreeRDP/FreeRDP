@@ -661,6 +661,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	if (xfi->sw_gdi != true)
 	{
+		glyph_cache_register_callbacks(instance->update);
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
