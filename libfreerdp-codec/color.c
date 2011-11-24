@@ -501,15 +501,17 @@ uint8* freerdp_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, in
 
 	if (dstBpp == 32)
 	{
+		uint8 *dstp;
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
 		
+		dstp = dstData;
 		for (i = width * height; i > 0; i--)
 		{
-			*(dstData++) = *(srcData++);
-			*(dstData++) = *(srcData++);
-			*(dstData++) = *(srcData++);
-			*(dstData++) = 0xFF;
+			*(dstp++) = *(srcData++);
+			*(dstp++) = *(srcData++);
+			*(dstp++) = *(srcData++);
+			*(dstp++) = 0xFF;
 		}
 		return dstData;
 	}
@@ -543,12 +545,14 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 	}
 	else if (dstBpp == 24)
 	{
+		uint8 *dstp;
 		int index;
 		uint8 red, green, blue;
 
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 3);
 
+		dstp = dstData;
 		for (index = 0; index < width * height; index++)
 		{
 			red = *(srcData++);
@@ -557,15 +561,15 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 
 			if (clrconv->invert)
 			{
-				*dstData++ = blue;
-				*dstData++ = green;
-				*dstData++ = red;
+				*dstp++ = blue;
+				*dstp++ = green;
+				*dstp++ = red;
 			}
 			else
 			{
-				*dstData++ = red;
-				*dstData++ = green;
-				*dstData++ = blue;
+				*dstp++ = red;
+				*dstp++ = green;
+				*dstp++ = blue;
 			}
 
 			srcData++;
