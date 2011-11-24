@@ -330,11 +330,6 @@ void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 1); /* maximumOrderLevel (2 bytes) */
 	stream_write_uint16(s, 0); /* numberFonts (2 bytes) */
 	stream_write_uint16(s, orderFlags); /* orderFlags (2 bytes) */
-
-	/* hack jsorg71 */
-	settings->order_support[NEG_FAST_INDEX_INDEX] = 0;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = 0;
-
 	stream_write(s, settings->order_support, 32); /* orderSupport (32 bytes) */
 	stream_write_uint16(s, 0); /* textFlags (2 bytes) */
 	stream_write_uint16(s, orderSupportExFlags); /* orderSupportExFlags (2 bytes) */

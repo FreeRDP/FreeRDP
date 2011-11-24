@@ -936,8 +936,6 @@ void update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
-	fast_index->opaqueRect = false;
-
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_index->cacheId);
 
@@ -983,45 +981,19 @@ void update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 	if (orderInfo->fieldFlags & ORDER_FIELD_14)
 		update_read_coord(s, &fast_index->y, orderInfo->deltaCoordinates);
 
-	if (fast_index->opBottom == -32768)
-	{
-		uint8 flags = (uint8) (fast_index->opTop & 0x0F);
-
-		if (flags & 0x01)
-			fast_index->opBottom = fast_index->bkBottom;
-		if (flags & 0x02)
-			fast_index->opRight = fast_index->bkRight;
-		if (flags & 0x04)
-			fast_index->opTop = fast_index->bkTop;
-		if (flags & 0x08)
-			fast_index->opLeft = fast_index->bkLeft;
-	}
-
-	if (fast_index->opLeft == 0)
-		fast_index->opLeft = fast_index->bkLeft;
-
-	if (fast_index->opRight == 0)
-		fast_index->opRight = fast_index->bkRight;
-
-	if (fast_index->x == -32768)
-		fast_index->x = fast_index->bkLeft;
-
-	if (fast_index->y == -32768)
-		fast_index->y = fast_index->bkTop;
-
-	if ((fast_index->opRight > fast_index->opLeft) && (fast_index->opBottom > fast_index->opTop))
-		fast_index->opaqueRect = true;
-
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
 		stream_read_uint8(s, fast_index->cbData);
-		stream_get_mark(s, fast_index->data);
+		memcpy(fast_index->data, s->p, fast_index->cbData);
 		stream_seek(s, fast_index->cbData);
 	}
 }
 
 void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
 {
+	GLYPH_DATA_V2* glyph;
+	uint8* phold;
+
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
 		stream_read_uint8(s, fast_glyph->cacheId);
 
@@ -1070,7 +1042,25 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
 		stream_read_uint8(s, fast_glyph->cbData);
-		stream_seek(s, fast_glyph->cbData);
+		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
+		phold = s->p;
+		stream_seek(s, 1);
+		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
+		{
+			/* parse optional glyph data */
+			glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
+			glyph->cacheIndex = fast_glyph->data[0];
+			update_read_2byte_signed(s, &glyph->x);
+			update_read_2byte_signed(s, &glyph->y);
+			update_read_2byte_unsigned(s, &glyph->cx);
+			update_read_2byte_unsigned(s, &glyph->cy);
+			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
+			glyph->cb += glyph->cb % 4;
+			glyph->aj = (uint8*) xmalloc(glyph->cb);
+			stream_read(s, glyph->aj, glyph->cb);
+			fast_glyph->glyph_data = glyph;
+		}
+		s->p = phold + fast_glyph->cbData;
 	}
 }
 

@@ -182,19 +182,123 @@ void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 
 void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 {
+	sint32 opLeft, opTop, opRight, opBottom;
+	sint32 x, y;
 	rdpGlyphCache* glyph_cache;
 
 	glyph_cache = context->cache->glyph;
 
-	fast_index->x = fast_index->bkLeft;
+	opLeft = fast_index->opLeft;
+	opTop = fast_index->opTop;
+	opRight = fast_index->opRight;
+	opBottom = fast_index->opBottom;
+	x = fast_index->x;
+	y = fast_index->y;
+
+	if (opBottom == -32768)
+	{
+		uint8 flags = (uint8) (opTop & 0x0F);
+
+		if (flags & 0x01)
+			opBottom = fast_index->bkBottom;
+		if (flags & 0x02)
+			opRight = fast_index->bkRight;
+		if (flags & 0x04)
+			opTop = fast_index->bkTop;
+		if (flags & 0x08)
+			opLeft = fast_index->bkLeft;
+	}
+
+	if (opLeft == 0)
+		opLeft = fast_index->bkLeft;
+
+	if (opRight == 0)
+		opRight = fast_index->bkRight;
+
+	if (x == -32768)
+		x = fast_index->bkLeft;
+
+	if (y == -32768)
+		y = fast_index->bkTop;
 
 	update_process_glyph_fragments(context, fast_index->data, fast_index->cbData,
 			fast_index->cacheId, fast_index->ulCharInc, fast_index->flAccel,
-			fast_index->backColor, fast_index->foreColor, fast_index->x, fast_index->y,
+			fast_index->backColor, fast_index->foreColor, x, y,
 			fast_index->bkLeft, fast_index->bkTop,
 			fast_index->bkRight - fast_index->bkLeft, fast_index->bkBottom - fast_index->bkTop,
-			fast_index->opLeft, fast_index->opTop,
-			fast_index->opRight - fast_index->opLeft, fast_index->opBottom - fast_index->opTop);
+			opLeft, opTop,
+			opRight - opLeft, opBottom - opTop);
+}
+
+void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
+{
+	sint32 opLeft, opTop, opRight, opBottom;
+	sint32 x, y;
+	GLYPH_DATA_V2* glyph_data;
+	rdpGlyph* glyph;
+	rdpCache* cache = context->cache;
+	uint8 text_data[2];
+
+	opLeft = fast_glyph->opLeft;
+	opTop = fast_glyph->opTop;
+	opRight = fast_glyph->opRight;
+	opBottom = fast_glyph->opBottom;
+	x = fast_glyph->x;
+	y = fast_glyph->y;
+
+	if (opBottom == -32768)
+	{
+		uint8 flags = (uint8) (opTop & 0x0F);
+
+		if (flags & 0x01)
+			opBottom = fast_glyph->bkBottom;
+		if (flags & 0x02)
+			opRight = fast_glyph->bkRight;
+		if (flags & 0x04)
+			opTop = fast_glyph->bkTop;
+		if (flags & 0x08)
+			opLeft = fast_glyph->bkLeft;
+	}
+
+	if (opLeft == 0)
+		opLeft = fast_glyph->bkLeft;
+
+	if (opRight == 0)
+		opRight = fast_glyph->bkRight;
+
+	if (x == -32768)
+		x = fast_glyph->bkLeft;
+
+	if (y == -32768)
+		y = fast_glyph->bkTop;
+
+	if (fast_glyph->glyph_data != NULL)
+	{
+		/* got option font that needs to go into cache */
+		glyph_data = (GLYPH_DATA_V2*) (fast_glyph->glyph_data);
+		glyph = Glyph_Alloc(context);
+		glyph->x = glyph_data->x;
+		glyph->y = glyph_data->y;
+		glyph->cx = glyph_data->cx;
+		glyph->cy = glyph_data->cy;
+		glyph->aj = glyph_data->aj;
+		glyph->cb = glyph_data->cb;
+		Glyph_New(context, glyph);
+		glyph_cache_put(cache->glyph, fast_glyph->cacheId, fast_glyph->data[0], glyph);
+		xfree(fast_glyph->glyph_data);
+		fast_glyph->glyph_data = NULL;
+	}
+
+	text_data[0] = fast_glyph->data[0];
+	text_data[1] = 0;
+
+	update_process_glyph_fragments(context, text_data, 2,
+			fast_glyph->cacheId, fast_glyph->ulCharInc, fast_glyph->flAccel,
+			fast_glyph->backColor, fast_glyph->foreColor, x, y,
+			fast_glyph->bkLeft, fast_glyph->bkTop,
+			fast_glyph->bkRight - fast_glyph->bkLeft, fast_glyph->bkBottom - fast_glyph->bkTop,
+			opLeft, opTop,
+			opRight - opLeft, opBottom - opTop);
 }
 
 void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
@@ -316,6 +420,7 @@ void glyph_cache_register_callbacks(rdpUpdate* update)
 {
 	update->primary->GlyphIndex = update_gdi_glyph_index;
 	update->primary->FastIndex = update_gdi_fast_index;
+	update->primary->FastGlyph = update_gdi_fast_glyph;
 	update->secondary->CacheGlyph = update_gdi_cache_glyph;
 	update->secondary->CacheGlyphV2 = update_gdi_cache_glyph_v2;
 }
