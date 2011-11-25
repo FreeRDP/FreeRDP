@@ -1420,8 +1420,10 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, uint16 length, rdpSettings
 void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 {
 	uint16 captureFlags;
+	uint8 codecMode;
 
 	captureFlags = settings->dump_rfx ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
+	codecMode = settings->rfx_codec_mode;
 
 	stream_write_uint16(s, 49); /* codecPropertiesLength */
 
@@ -1446,7 +1448,7 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 	/* TS_RFX_ICAP (RLGR1) */
 	stream_write_uint16(s, CLW_VERSION_1_0); /* version */
 	stream_write_uint16(s, CT_TILE_64x64); /* tileSize */
-	stream_write_uint8(s, 0); /* flags */
+	stream_write_uint8(s, codecMode); /* flags */
 	stream_write_uint8(s, CLW_COL_CONV_ICT); /* colConvBits */
 	stream_write_uint8(s, CLW_XFORM_DWT_53_A); /* transformBits */
 	stream_write_uint8(s, CLW_ENTROPY_RLGR1); /* entropyBits */
@@ -1454,7 +1456,7 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 	/* TS_RFX_ICAP (RLGR3) */
 	stream_write_uint16(s, CLW_VERSION_1_0); /* version */
 	stream_write_uint16(s, CT_TILE_64x64); /* tileSize */
-	stream_write_uint8(s, 0); /* flags */
+	stream_write_uint8(s, codecMode); /* flags */
 	stream_write_uint8(s, CLW_COL_CONV_ICT); /* colConvBits */
 	stream_write_uint8(s, CLW_XFORM_DWT_53_A); /* transformBits */
 	stream_write_uint8(s, CLW_ENTROPY_RLGR3); /* entropyBits */
