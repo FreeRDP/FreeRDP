@@ -613,7 +613,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 }
 
-void xf_gdi_surface_frame_marker(rdpContext* context, uint16 frame_action, uint32 frame_id)
+void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
 
 }

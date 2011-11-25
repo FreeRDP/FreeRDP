@@ -113,6 +113,13 @@ struct _SURFACE_BITS_COMMAND
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
+struct _SURFACE_FRAME_MARKER
+{
+	uint32 frameAction;
+	uint32 frameId;
+};
+typedef struct _SURFACE_FRAME_MARKER SURFACE_FRAME_MARKER;
+
 /* Update Interface */
 
 typedef void (*pBeginPaint)(rdpContext* context);
@@ -130,7 +137,7 @@ typedef void (*pSuppressOutput)(rdpContext* context, uint8 allow, RECTANGLE_16* 
 
 typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
 typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
-typedef void (*pSurfaceFrameMarker)(rdpContext* context, uint16 frameAction, uint32 frameId);
+typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker);
 
 struct rdp_update
 {
@@ -174,6 +181,7 @@ struct rdp_update
 	PLAY_SOUND_UPDATE play_sound;
 
 	SURFACE_BITS_COMMAND surface_bits_command;
+	SURFACE_FRAME_MARKER surface_frame_marker;
 };
 
 #endif /* __UPDATE_API_H */

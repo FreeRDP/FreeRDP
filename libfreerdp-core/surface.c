@@ -48,13 +48,12 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
 
 static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 {
-	uint16 frameAction;
-	uint32 frameId;
+	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
-	stream_read_uint16(s, frameAction);
-	stream_read_uint32(s, frameId);
+	stream_read_uint16(s, marker->frameAction);
+	stream_read_uint32(s, marker->frameId);
 
-	IFCALL(update->SurfaceFrameMarker, update->context, frameAction, frameId);
+	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 
 	return 6;
 }
