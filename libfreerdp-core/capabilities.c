@@ -1429,7 +1429,7 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 
 	/* TS_RFX_CLNT_CAPS_CONTAINER */
 	stream_write_uint32(s, 49); /* length */
-	stream_write_uint32(s, CARDP_CAPS_CAPTURE_NON_CAC); /* captureFlags */
+	stream_write_uint32(s, captureFlags); /* captureFlags */
 	stream_write_uint32(s, 37); /* capsLength */
 
 	/* TS_RFX_CAPS */
