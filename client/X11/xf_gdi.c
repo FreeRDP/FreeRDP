@@ -613,6 +613,11 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 }
 
+void xf_gdi_surface_frame_marker(rdpContext* context, uint16 frame_action, uint32 frame_id)
+{
+
+}
+
 void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, tx, ty;
@@ -768,5 +773,6 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
+	update->SurfaceFrameMarker = xf_gdi_surface_frame_marker;
 }
 

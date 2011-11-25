@@ -130,6 +130,7 @@ typedef void (*pSuppressOutput)(rdpContext* context, uint8 allow, RECTANGLE_16* 
 
 typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
 typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
+typedef void (*pSurfaceFrameMarker)(rdpContext* context, uint16 frameAction, uint32 frameId);
 
 struct rdp_update
 {
@@ -159,7 +160,8 @@ struct rdp_update
 
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */
-	uint32 paddingE[80 - 66]; /* 66 */
+	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
+	uint32 paddingE[80 - 67]; /* 67 */
 
 	/* internal */
 
