@@ -289,6 +289,7 @@ struct rdp_settings
 	boolean ns_codec;
 	uint32 rfx_codec_id;
 	uint32 ns_codec_id;
+	uint8 rfx_codec_mode;
 	boolean frame_acknowledge;
 
 	/* Recording */

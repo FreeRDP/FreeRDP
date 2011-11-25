@@ -85,6 +85,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-bmp-cache: disable bitmap cache\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
+				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
@@ -310,6 +311,28 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->frame_acknowledge = false;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = true;
+		}
+		else if (strcmp("--rfx-mode", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing RemoteFX mode flag\n");
+				return -1;
+			}
+			if (argv[index][0] == 'v') /* video */
+			{
+				settings->rfx_codec_mode = 0x00;
+			}
+			else if (argv[index][0] == 'i') /* image */
+			{
+				settings->rfx_codec_mode = 0x02;
+			}
+			else
+			{
+				printf("unknown RemoteFX mode flag\n");
+				return -1;
+			}
 		}
         else if (strcmp("--nsc", argv[index]) == 0)
 		{
