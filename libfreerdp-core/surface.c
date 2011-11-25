@@ -54,6 +54,8 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 	stream_read_uint16(s, frameAction);
 	stream_read_uint32(s, frameId);
 
+	IFCALL(update->SurfaceFrameMarker, update->context, frameAction, frameId);
+
 	return 6;
 }
 
