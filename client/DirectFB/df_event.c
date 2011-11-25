@@ -23,6 +23,7 @@
 #include "df_event.h"
 
 uint8 keymap[256];
+uint8 functionmap[128];
 
 void df_keyboard_init()
 {
@@ -145,6 +146,13 @@ void df_keyboard_init()
 	keymap[DIKI_META_L - DIKI_UNKNOWN] = VK_LWIN;
 	keymap[DIKI_META_R - DIKI_UNKNOWN] = VK_RWIN;
 	keymap[DIKI_SUPER_L - DIKI_UNKNOWN] = VK_APPS;
+	
+	
+	memset(functionmap, 0, sizeof(functionmap));
+	
+	functionmap[DFB_FUNCTION_KEY(23) - DFB_FUNCTION_KEY(0)] = VK_HANGUL;
+	functionmap[DFB_FUNCTION_KEY(24) - DFB_FUNCTION_KEY(0)] = VK_HANJA;
+
 }
 
 void df_send_mouse_button_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
@@ -169,13 +177,28 @@ void df_send_mouse_motion_event(rdpInput* input, uint16 x, uint16 y)
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
-void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode)
+void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 function)
 {
 	uint16 flags;
+	uint8 vkcode;
 	uint8 scancode;
 	boolean extended;
+	
+	if (keycode)
+	{
+		vkcode = keymap[keycode];
+	}
+	else if (function)
+	{
+		vkcode = functionmap[function];
+	}
 
-	scancode = freerdp_kbd_get_scancode_by_virtualkey(keymap[keycode], &extended);
+	if (!vkcode)
+	{
+		return;	
+	}
+	
+	scancode = freerdp_kbd_get_scancode_by_virtualkey(vkcode, &extended);
 
 	flags = (extended) ? KBD_FLAGS_EXTENDED : 0;
 	flags |= (down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE;
@@ -224,11 +247,11 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 				break;
 
 			case DIET_KEYPRESS:
-				df_send_keyboard_event(instance->input, true, input_event->key_id - DIKI_UNKNOWN);
+				df_send_keyboard_event(instance->input, true, input_event->key_id - DIKI_UNKNOWN, input_event->key_symbol - DFB_FUNCTION_KEY(0));
 				break;
 
 			case DIET_KEYRELEASE:
-				df_send_keyboard_event(instance->input, false, input_event->key_id - DIKI_UNKNOWN);
+				df_send_keyboard_event(instance->input, false, input_event->key_id - DIKI_UNKNOWN, input_event->key_symbol - DFB_FUNCTION_KEY(0));
 				break;
 
 			case DIET_UNKNOWN:
