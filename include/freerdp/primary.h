@@ -331,7 +331,7 @@ struct _FAST_INDEX_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8* data;
+	uint8 data[256];
 };
 typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 
@@ -353,7 +353,8 @@ struct _FAST_GLYPH_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8* data;
+	uint8 data[256];
+	void* glyph_data;
 };
 typedef struct _FAST_GLYPH_ORDER FAST_GLYPH_ORDER;
 
