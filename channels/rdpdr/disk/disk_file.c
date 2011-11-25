@@ -244,7 +244,7 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 
 	file = xnew(DISK_FILE);
 	file->id = id;
-	file->basepath = base_path;
+	file->basepath = (char*) base_path;
 	disk_file_set_fullpath(file, disk_file_combine_fullpath(base_path, path));
 	file->fd = -1;
 
@@ -374,17 +374,16 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 
 boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input)
 {
+	char* s;
+	mode_t m;
+	uint64 size;
+	char* fullpath;
 	struct stat st;
+	UNICONV* uniconv;
 	struct timeval tv[2];
 	uint64 LastWriteTime;
 	uint32 FileAttributes;
-	mode_t m;
-	uint64 size;
 	uint32 FileNameLength;
-	UNICONV* uniconv;
-	char* s;
-	char* p;
-	char* fullpath;
 
 	switch (FsInformationClass)
 	{
@@ -398,6 +397,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 
 			if (fstat(file->fd, &st) != 0)
 				return false;
+
 			tv[0].tv_sec = st.st_atime;
 			tv[0].tv_usec = 0;
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
@@ -460,6 +460,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			return false;
 	}
+
 	return true;
 }
 

@@ -185,18 +185,11 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 	boolean extended;
 	
 	if (keycode)
-	{
 		vkcode = keymap[keycode];
-	}
 	else if (function)
-	{
 		vkcode = functionmap[function];
-	}
-
-	if (!vkcode)
-	{
-		return;	
-	}
+	else
+		return;
 	
 	scancode = freerdp_kbd_get_scancode_by_virtualkey(vkcode, &extended);
 
@@ -208,11 +201,11 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 
 boolean df_event_process(freerdp* instance, DFBEvent* event)
 {
+	int flags;
 	rdpGdi* gdi;
 	dfInfo* dfi;
 	int pointer_x;
 	int pointer_y;
-	int flags;
 	DFBInputEvent* input_event;
 
 	gdi = instance->context->gdi;
@@ -223,7 +216,7 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 	if (event->clazz == DFEC_INPUT)
 	{
 		flags = 0;
-		input_event = (DFBInputEvent *) event;
+		input_event = (DFBInputEvent*) event;
 
 		switch (input_event->type)
 		{
