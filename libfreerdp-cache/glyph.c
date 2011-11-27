@@ -35,12 +35,13 @@ void update_process_glyph(rdpContext* context, uint8* data, int* index,
 	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
 
-	cacheIndex = data[(*index)++];
+	cacheIndex = data[*index];
 
 	glyph = glyph_cache_get(glyph_cache, cacheId, cacheIndex);
 
 	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 	{
+		(*index)++;
 		offset = data[*index];
 
 		if (offset & 0x80)
@@ -292,7 +293,7 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 	text_data[0] = fast_glyph->data[0];
 	text_data[1] = 0;
 
-	update_process_glyph_fragments(context, text_data, 2,
+	update_process_glyph_fragments(context, text_data, 1,
 			fast_glyph->cacheId, fast_glyph->ulCharInc, fast_glyph->flAccel,
 			fast_glyph->backColor, fast_glyph->foreColor, x, y,
 			fast_glyph->bkLeft, fast_glyph->bkTop,
