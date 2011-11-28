@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <stdarg.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -49,22 +50,35 @@ struct _PropMotifWmHints
 };
 typedef struct _PropMotifWmHints PropMotifWmHints;
 
-void xf_SendClientMessage(xfInfo* xfi, xfWindow* window, Atom atom, long msg, long d1, long d2, long d3)
+/**
+ * Post an event from the client to the X server
+ */
+void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...)
 {
-	XEvent xevent;
+       XEvent xevent;
+       unsigned int i;
+       va_list argp;
 
-	xevent.xclient.type = ClientMessage;
-	xevent.xclient.message_type = atom;
-	xevent.xclient.window = window->handle;
-	xevent.xclient.format = 32;
-	xevent.xclient.data.l[0] = CurrentTime;
-	xevent.xclient.data.l[1] = msg;
-	xevent.xclient.data.l[2] = d1;
-	xevent.xclient.data.l[3] = d2;
-	xevent.xclient.data.l[4] = d3;
+       va_start(argp, numArgs);
 
-	XSendEvent(xfi->display, window->handle, false, NoEventMask, &xevent);
-	XSync(xfi->display, false);
+       xevent.xclient.type = ClientMessage;
+       xevent.xclient.serial = 0;
+       xevent.xclient.send_event = True;
+       xevent.xclient.display = xfi->display;
+       xevent.xclient.window = window->handle;
+       xevent.xclient.message_type = atom;
+       xevent.xclient.format = 32;
+
+       for (i=0; i<numArgs; i++)
+       {
+               xevent.xclient.data.l[i] = va_arg(argp, int);
+       }
+
+       DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
+       XSendEvent(xfi->display, window->handle, False, NoEventMask, &xevent);
+       XSync(xfi->display, False);
+
+       va_end(argp);
 }
 
 void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
@@ -221,6 +235,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		window->height = height;
 		window->fullscreen = false;
 		window->decorations = decorations;
+		window->isMapped = false;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -336,7 +351,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->decorations = false;
 	window->fullscreen = false;
 	window->window = wnd;
-	window->localMoveSize = false;
+	window->localMove.inProgress = false;
+	window->isMapped = false;
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -403,41 +419,75 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 	}
 }
 
-
-void xf_SendMoveResizeEvent(xfInfo* xfi, xfWindow* window, int direction, int x_root, int y_root)
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int windowRelativeX, int windowRelativeY)
 {
-	// TODO:
-	// - how to receive movesize canceling event?
-	// - how to produce correct RAIL movesize finish?
-	// - how to receive move/size window coordinates in process of local move/size?
+	window->localMove.windowRelativeX = windowRelativeX;
+	window->localMove.windowRelativeY = windowRelativeY;
 
-	XEvent event;
+	DEBUG_X11_LMS("direction=%d coords=%d,%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+			direction, windowRelativeX, windowRelativeY,
+			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+			window->width, window->height);
 
-	event.xclient.type = ClientMessage;
-	event.xclient.window = window->handle;
-	event.xclient.message_type = xfi->_NET_WM_MOVERESIZE;
-	event.xclient.serial = 0;
-	event.xclient.display = xfi->display;
-	event.xclient.send_event = true;
-	event.xclient.format = 32;
-	event.xclient.data.l[0] = x_root;
-	event.xclient.data.l[1] = y_root;
-	event.xclient.data.l[2] = direction;
-	event.xclient.data.l[3] = 1; /* button 1 */
-	event.xclient.data.l[4] = 0;
+	// FIXME: There does not appear a way to tell when the local window manager completes
+	// a window move or resize.  The client will receive a number of ConfigureNotify events
+	// but nothing indicates when the user has completed the move gesture (keyboard or mouse).
+	// 
+	return;
+
+	// X Server _WM_MOVERESIZE coordinates are expressed relative to the root window.
+	// RDP coordinates are expressed relative to the local window.
+	// Translate these to root window coordinates.
+
+	window->localMove.inProgress = True;
+	Window childWindow;
+	int x,y;
+
+	XTranslateCoordinates(xfi->display, window->handle, DefaultRootWindow(xfi->display), 
+		windowRelativeX, windowRelativeY, &x, &y, &childWindow);
 
 	XUngrabPointer(xfi->display, CurrentTime);
-	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), false, SubstructureNotifyMask, &event);
+	xf_SendClientEvent(xfi, window, 
+			xfi->_NET_WM_MOVERESIZE, // Request X window manager to initate a local move
+			5, // 5 arguments to follow 
+			x, // x relative to root window
+			y, // y relative to root window
+			direction, // extended ICCM direction flag
+			1, // simulated mouse button 1
+		       	1);// 1 == application request per extended ICCM
 }
 
-void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
+void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 {
-	window->localMoveSize = true;
-}
+	DEBUG_X11_LMS("inProcess=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+			window->localMove.inProgress, cancel, 
+			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+			window->width, window->height);
 
-void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY)
-{
-	window->localMoveSize = false;
+	if (!window->localMove.inProgress)
+		return;
+
+	if (cancel)
+	{
+		// Per ICCM, the X client can ask to cancel an active move.  Do this if we 
+		// receive a local move stop from RDP while a local move is in progress
+		Window childWindow;
+		int x,y;
+
+		XTranslateCoordinates(xfi->display, window->handle, DefaultRootWindow(xfi->display), 
+			window->localMove.windowRelativeX, window->localMove.windowRelativeY, &x, &y, &childWindow);
+	
+		xf_SendClientEvent(xfi, window, 
+			xfi->_NET_WM_MOVERESIZE, // Request X window manager to initate a local move
+			5, // 5 arguments to follow 
+			x, // x relative to root window
+			y, // y relative to root window
+			_NET_WM_MOVERESIZE_CANCEL, // extended ICCM direction flag
+			1, // simulated mouse button 1
+		       	1);// 1 == application request per extended ICCM
+	}
+
+	window->localMove.inProgress = False;
 }
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
@@ -450,11 +500,6 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	if ((window->width != width) || (window->height != height))
 		resize = true;
 
-	if (resize)
-		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
-	else
-		XMoveWindow(xfi->display, window->handle, x, y);
-
 	window->left = x;
 	window->top = y;
 	window->right = x + width - 1;
@@ -462,14 +507,20 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->width = width;
 	window->height = height;
 
-	DEBUG_X11_LMS("xf_MoveWindow: window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-			window->width, window->height);
+	if (resize)
+		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	else
+		XMoveWindow(xfi->display, window->handle, x, y);
+
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+		window->width, window->height);
 
 	if (resize)
 	{
 		xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
 	}
+
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)

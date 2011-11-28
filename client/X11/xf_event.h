@@ -25,5 +25,6 @@
 #include "xfreerdp.h"
 
 boolean xf_event_process(freerdp* instance, XEvent* event);
+void xf_event_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_EVENT_H */

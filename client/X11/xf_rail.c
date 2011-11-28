@@ -108,6 +108,39 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 			window->windowWidth, window->windowHeight);
 }
 
+/**
+ * The position of the X window can become out of sync with the RDP window
+ * if the X window is moved locally by the window manager.  In this event
+ * send an update to the RDP server informing it of the new window position
+ * and size.
+ */
+void xf_rail_local_movesize(xfInfo* xfi, xfWindow* window)
+{
+	rdpWindow* wnd = window->window;
+
+	if (window->isMapped)
+	{
+		// If current window position disagrees with RDP window position, send
+		// update to RDP server
+		if ( window->left != wnd->windowOffsetX ||
+                	window->top != wnd->windowOffsetY ||
+                        window->width != wnd->windowWidth ||
+                        window->height != wnd->windowHeight)
+                {
+			xf_rail_send_windowmove(xfi, wnd->windowId,
+				window->left, window->top, window->right+1, window->bottom+1);
+                }
+
+		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
+			"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
+			(uint32) window->handle, window->left, window->top, 
+			window->right, window->bottom, window->width, window->height,
+			wnd->windowId,
+			wnd->windowOffsetX, wnd->windowOffsetY, 
+			wnd->windowWidth, wnd->windowHeight);
+	}
+}
+
 void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, uint8 state)
 {
 	xfInfo* xfi;
@@ -364,6 +397,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
 	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
+	int direction = 0;
 
 	rail = ((rdpContext*) xfi->context)->rail;
 	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
@@ -377,12 +411,50 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 			movesize->windowId, movesize->isMoveSizeStart,
 			movetype_names[movesize->moveSizeType], (sint16) movesize->posX, (sint16) movesize->posY);
 
-		if (movesize->isMoveSizeStart)
-			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
-		else
-			xf_StopLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
-	}
+		switch (movesize->moveSizeType)
+		{
+			case RAIL_WMSZ_LEFT: //0x1
+				direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
+				break;
+			case RAIL_WMSZ_RIGHT: //0x2
+				direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
+				break;
+			case RAIL_WMSZ_TOP: //0x3
+				direction = _NET_WM_MOVERESIZE_SIZE_TOP;
+				break;
+			case RAIL_WMSZ_TOPLEFT: //0x4
+				direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
+				break;
+			case RAIL_WMSZ_TOPRIGHT: //0x5
+				direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
+				break;
+			case RAIL_WMSZ_BOTTOM: //0x6
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
+				break;
+			case RAIL_WMSZ_BOTTOMLEFT: //0x7
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
+				break;
+			case RAIL_WMSZ_BOTTOMRIGHT: //0x8
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
+				break;
+			case RAIL_WMSZ_MOVE: //0x9
+				direction = _NET_WM_MOVERESIZE_MOVE;
+				break;
+			case RAIL_WMSZ_KEYMOVE: //0xA
+				direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+				break;
+			case RAIL_WMSZ_KEYSIZE: //0xB
+				direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+				break;
+		}
 
+		if (movesize->isMoveSizeStart)
+		{
+			xf_StartLocalMoveSize(xfi, window, direction, movesize->posX, movesize->posY);
+		} else {
+			xf_EndLocalMoveSize(xfi, window, True);
+		}
+	}
 }
 
 void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)

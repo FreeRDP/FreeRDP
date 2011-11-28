@@ -461,28 +461,9 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
                 xfw->right = xfw->left + xfw->width - 1;
                 xfw->bottom = xfw->top + xfw->height - 1;
 
-                if (app)
-                {
-                        // If current window position disagrees with RDP window position, send
-                        // update to RDP server
-                        if ( xfw->left != window->windowOffsetX ||
-                                xfw->top != window->windowOffsetY ||
-                                xfw->width != window->windowWidth ||
-                                xfw->height != window->windowHeight)
-                        {
-                                xf_rail_send_windowmove(xfi, window->windowId,
-                                        xfw->left, xfw->top, xfw->right, xfw->bottom);
-                        }
-                }
+		if (app)
+			xf_rail_local_movesize(xfi, xfw);
 
-                DEBUG_X11_LMS("ConfigureNotify: send_event=%d eventWindow=0x%X window=0x%X above=0x%X rc={l=%d t=%d r=%d b=%d} "
-                        "w=%d h=%d override_redirect=%d",
-                        event->xconfigure.send_event,
-                        (uint32) event->xconfigure.event,
-                        (uint32) event->xconfigure.window,
-                        (uint32) event->xconfigure.above,
-                        xfw->left, xfw->top, xfw->right, xfw->bottom, xfw->width, xfw->height,
-                        event->xconfigure.override_redirect);
         }
 
         return True;
@@ -502,6 +483,27 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		/* local restore event */
 		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+		xfWindow *xfw = (xfWindow*) window->extra;
+		xfw->isMapped = true;
+	}
+
+	return true;
+}
+
+boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
+{
+	rdpWindow* window;
+	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+	if (app != true)
+		return true;
+
+	window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+
+	if (window != NULL)
+	{
+		xfWindow *xfw = (xfWindow*) window->extra;
+		xfw->isMapped = false;
 	}
 
 	return true;
@@ -629,6 +631,10 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 
 		case MapNotify:
 			status = xf_event_MapNotify(xfi, event, app);
+			break;
+
+		case UnmapNotify:
+			status = xf_event_UnmapNotify(xfi, event, app);
 			break;
 
 		case ReparentNotify:
