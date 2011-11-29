@@ -27,55 +27,6 @@
 
 #include "ntlmssp.h"
 
-//#define ALTERNATE_NTLMSSP	1
-
-#ifdef ALTERNATE_NTLMSSP
-#define NTLMSSP_INDEX_NEGOTIATE_56				31
-#define NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH			30
-#define NTLMSSP_INDEX_NEGOTIATE_128				29
-#define NTLMSSP_INDEX_NEGOTIATE_VERSION				25
-#define NTLMSSP_INDEX_NEGOTIATE_TARGET_INFO			23
-#define NTLMSSP_INDEX_REQUEST_NON_NT_SESSION_KEY		22
-#define NTLMSSP_INDEX_NEGOTIATE_IDENTIFY			20
-#define NTLMSSP_INDEX_NEGOTIATE_EXTENDED_SESSION_SECURITY	19
-#define NTLMSSP_INDEX_TARGET_TYPE_SERVER			17
-#define NTLMSSP_INDEX_TARGET_TYPE_DOMAIN			16
-#define NTLMSSP_INDEX_NEGOTIATE_ALWAYS_SIGN			15
-#define NTLMSSP_INDEX_NEGOTIATE_WORKSTATION_SUPPLIED		13
-#define NTLMSSP_INDEX_NEGOTIATE_DOMAIN_SUPPLIED			12
-#define NTLMSSP_INDEX_NEGOTIATE_NTLM				9
-#define NTLMSSP_INDEX_NEGOTIATE_LM_KEY				7
-#define NTLMSSP_INDEX_NEGOTIATE_DATAGRAM			6
-#define NTLMSSP_INDEX_NEGOTIATE_SEAL				5
-#define NTLMSSP_INDEX_NEGOTIATE_SIGN				4
-#define NTLMSSP_INDEX_REQUEST_TARGET				2
-#define NTLMSSP_INDEX_NEGOTIATE_OEM				1
-#define NTLMSSP_INDEX_NEGOTIATE_UNICODE				0
-#else
-#define NTLMSSP_INDEX_NEGOTIATE_56				0
-#define NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH			1
-#define NTLMSSP_INDEX_NEGOTIATE_128				2
-#define NTLMSSP_INDEX_NEGOTIATE_VERSION				6
-#define NTLMSSP_INDEX_NEGOTIATE_TARGET_INFO			8
-#define NTLMSSP_INDEX_REQUEST_NON_NT_SESSION_KEY		9
-#define NTLMSSP_INDEX_NEGOTIATE_IDENTIFY			11
-#define NTLMSSP_INDEX_NEGOTIATE_EXTENDED_SESSION_SECURITY	12
-#define NTLMSSP_INDEX_TARGET_TYPE_SERVER			14
-#define NTLMSSP_INDEX_TARGET_TYPE_DOMAIN			15
-#define NTLMSSP_INDEX_NEGOTIATE_ALWAYS_SIGN			16
-#define NTLMSSP_INDEX_NEGOTIATE_WORKSTATION_SUPPLIED		18
-#define NTLMSSP_INDEX_NEGOTIATE_DOMAIN_SUPPLIED			19
-#define NTLMSSP_INDEX_NEGOTIATE_NTLM				22
-#define NTLMSSP_INDEX_NEGOTIATE_LM_KEY				24
-#define NTLMSSP_INDEX_NEGOTIATE_DATAGRAM			25
-#define NTLMSSP_INDEX_NEGOTIATE_SEAL				26
-#define NTLMSSP_INDEX_NEGOTIATE_SIGN				27
-#define NTLMSSP_INDEX_REQUEST_TARGET				29
-#define NTLMSSP_INDEX_NEGOTIATE_OEM				30
-#define NTLMSSP_INDEX_NEGOTIATE_UNICODE				31
-#endif
-
-#ifdef ALTERNATE_NTLMSSP
 #define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
 #define NTLMSSP_NEGOTIATE_128					0x20000000 /* U   (2) */
@@ -108,29 +59,6 @@
 #define NTLMSSP_REQUEST_TARGET					0x00000004 /* C   (29) */
 #define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B   (30) */
 #define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A   (31) */
-#else
-#define NTLMSSP_NEGOTIATE_56					(1 << NTLMSSP_INDEX_NEGOTIATE_56)
-#define NTLMSSP_NEGOTIATE_KEY_EXCH				(1 << NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH)
-#define NTLMSSP_NEGOTIATE_128					(1 << NTLMSSP_INDEX_NEGOTIATE_128)
-#define NTLMSSP_NEGOTIATE_VERSION				(1 << NTLMSSP_INDEX_NEGOTIATE_VERSION)
-#define NTLMSSP_NEGOTIATE_TARGET_INFO				(1 << NTLMSSP_INDEX_NEGOTIATE_TARGET_INFO)
-#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY			(1 << NTLMSSP_INDEX_REQUEST_NON_NT_SESSION_KEY)
-#define NTLMSSP_NEGOTIATE_IDENTIFY				(1 << NTLMSSP_INDEX_NEGOTIATE_IDENTIFY)
-#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY		(1 << NTLMSSP_INDEX_NEGOTIATE_EXTENDED_SESSION_SECURITY)
-#define NTLMSSP_TARGET_TYPE_SERVER				(1 << NTLMSSP_INDEX_TARGET_TYPE_SERVER)
-#define NTLMSSP_TARGET_TYPE_DOMAIN				(1 << NTLMSSP_INDEX_TARGET_TYPE_DOMAIN)
-#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN				(1 << NTLMSSP_INDEX_NEGOTIATE_ALWAYS_SIGN)
-#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED			(1 << NTLMSSP_INDEX_NEGOTIATE_WORKSTATION_SUPPLIED)
-#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED			(1 << NTLMSSP_INDEX_NEGOTIATE_DOMAIN_SUPPLIED)
-#define NTLMSSP_NEGOTIATE_NTLM					(1 << NTLMSSP_INDEX_NEGOTIATE_NTLM)
-#define NTLMSSP_NEGOTIATE_LM_KEY				(1 << NTLMSSP_INDEX_NEGOTIATE_LM_KEY)
-#define NTLMSSP_NEGOTIATE_DATAGRAM				(1 << NTLMSSP_INDEX_NEGOTIATE_DATAGRAM)
-#define NTLMSSP_NEGOTIATE_SEAL					(1 << NTLMSSP_INDEX_NEGOTIATE_SEAL)
-#define NTLMSSP_NEGOTIATE_SIGN					(1 << NTLMSSP_INDEX_NEGOTIATE_SIGN)
-#define NTLMSSP_REQUEST_TARGET					(1 << NTLMSSP_INDEX_REQUEST_TARGET)
-#define NTLMSSP_NEGOTIATE_OEM					(1 << NTLMSSP_INDEX_NEGOTIATE_OEM)
-#define NTLMSSP_NEGOTIATE_UNICODE				(1 << NTLMSSP_INDEX_NEGOTIATE_UNICODE)
-#endif
 
 #define WINDOWS_MAJOR_VERSION_5		0x05
 #define WINDOWS_MAJOR_VERSION_6		0x06
@@ -695,42 +623,8 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
 
 void ntlmssp_input_negotiate_flags(STREAM* s, uint32* flags)
 {
-	uint8* p;
-	uint8 tmp;
-	uint32 negotiateFlags;
-
-	/*
-	 * NegotiateFlags is a 4-byte bit map
-	 * Reverse order and then input in Big Endian
-	 */
-
-#ifdef ALTERNATE_NTLMSSP
 	*flags = 0;
 	stream_read_uint32(s, *flags);
-/*
-	stream_read_uint8(s, tmp);
-	*flags |= (tmp << 24);
-	stream_read_uint8(s, tmp);
-	*flags |= (tmp << 16);
-	stream_read_uint8(s, tmp);
-	*flags |= (tmp << 8);
-	stream_read_uint8(s, tmp);
-	*flags |= tmp;
-*/
-#else
-	stream_read_uint32_be(s, negotiateFlags);
-
-	p = (uint8*) &negotiateFlags;
-	tmp = p[0];
-	p[0] = p[3];
-	p[3] = tmp;
-
-	tmp = p[1];
-	p[1] = p[2];
-	p[2] = tmp;
-
-	*flags = negotiateFlags;
-#endif
 }
 
 /**
@@ -741,38 +635,7 @@ void ntlmssp_input_negotiate_flags(STREAM* s, uint32* flags)
 
 void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 {
-	uint8* p;
-	uint8 tmp;
-
-	/*
-	 * NegotiateFlags is a 4-byte bit map
-	 * Output in Big Endian and then reverse order
-	 */
-
-#ifdef ALTERNATE_NTLMSSP
-
 	stream_write_uint32(s, flags);
-	/*
-	tmp = ((flags & 0xFF000000) >> 24);
-	stream_write_uint8(s, tmp);
-	tmp = ((flags & 0x00FF0000) >> 16);
-	stream_write_uint8(s, tmp);
-	tmp = ((flags & 0x0000FF00) >> 8);
-	stream_write_uint8(s, tmp);
-	tmp = (flags & 0x000000FF);
-	stream_write_uint8(s, tmp);*/
-#else
-	p = s->p;
-	stream_write_uint32_be(s, flags);
-
-	tmp = p[0];
-	p[0] = p[3];
-	p[3] = tmp;
-
-	tmp = p[1];
-	p[1] = p[2];
-	p[2] = tmp;
-#endif
 }
 
 #ifdef WITH_DEBUG_NLA
@@ -1249,14 +1112,15 @@ void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 	}
 	else
 	{
-		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
 		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_OEM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_TARGET_TYPE_DOMAIN;
-		negotiateFlags |= NTLMSSP_REQUEST_NON_NT_SESSION_KEY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-		negotiateFlags |= 0x00000030;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 
 	ntlmssp_output_negotiate_flags(s, negotiateFlags); /* NegotiateFlags (4 bytes) */
@@ -1541,14 +1405,15 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 	}
 	else
 	{
-		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
 		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_OEM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_TARGET_TYPE_DOMAIN;
-		negotiateFlags |= NTLMSSP_REQUEST_NON_NT_SESSION_KEY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-		negotiateFlags |= 0x00000030;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 
 	if (ntlmssp->ntlm_v2)
