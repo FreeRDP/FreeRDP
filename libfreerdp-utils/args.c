@@ -256,6 +256,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->compression = true;
 		}
+		else if (strcmp("--ntlm", argv[index]) == 0)
+		{
+			index++;
+
+			settings->ntlm_version = atoi(argv[index]);
+
+			if (settings->ntlm_version != 2)
+				settings->ntlm_version = 1;
+		}
 		else if (strcmp("--glyph-cache", argv[index]) == 0)
 		{
 			settings->glyph_cache = true;

@@ -241,7 +241,8 @@ struct rdp_settings
 	boolean tls_security; /* 145 */
 	boolean nla_security; /* 146 */
 	boolean rdp_security; /* 147 */
-	uint32 paddingF[160 - 148]; /* 148 */
+	uint32 ntlm_version; /* 148 */
+	uint32 paddingF[160 - 149]; /* 149 */
 
 	/* Session */
 	boolean console_audio; /* 160 */

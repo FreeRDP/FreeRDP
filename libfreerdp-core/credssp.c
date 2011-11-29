@@ -85,7 +85,7 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 		{
 			boolean proceed = instance->Authenticate(instance,
 					&settings->username, &settings->password, &settings->domain);
-			if(!proceed)
+			if (!proceed)
 				return 0;
 		}
 	}
@@ -107,7 +107,8 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 	ntlmssp_generate_random_session_key(ntlmssp);
 	ntlmssp_generate_exported_session_key(ntlmssp);
 	
-	ntlmssp->ntlm_v2 = 0;
+	if (settings->ntlm_version == 2)
+		ntlmssp->ntlm_v2 = 1;
 
 	return 1;
 }
