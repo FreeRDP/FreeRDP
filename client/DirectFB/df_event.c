@@ -177,6 +177,18 @@ void df_send_mouse_motion_event(rdpInput* input, uint16 x, uint16 y)
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
+void df_send_mouse_wheel_event(rdpInput* input, sint16 axisrel, uint16 x, uint16 y)
+{
+	uint16 flags = PTR_FLAGS_WHEEL;
+
+	if (axisrel < 0)
+		flags |= 0x0078;
+	else
+		flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
+
+	input->MouseEvent(input, flags, x, y);
+}
+
 void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 function)
 {
 	uint16 flags;
@@ -228,7 +240,14 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 				if (pointer_y > (gdi->height - 1))
 					pointer_y = gdi->height - 1;
 
-				df_send_mouse_motion_event(instance->input, pointer_x, pointer_y);
+				if (input_event->axis == DIAI_Z)
+				{
+					df_send_mouse_wheel_event(instance->input, input_event->axisrel, pointer_x, pointer_y);
+				}
+				else
+				{
+					df_send_mouse_motion_event(instance->input, pointer_x, pointer_y);
+				}
 				break;
 
 			case DIET_BUTTONPRESS:
