@@ -67,15 +67,15 @@
 #define WINDOWS_MINOR_VERSION_2		0x02
 #define NTLMSSP_REVISION_W2K3		0x0F
 
-const char ntlm_signature[] = "NTLMSSP";
-const char lm_magic[] = "KGS!@#$%";
+static const char ntlm_signature[] = "NTLMSSP";
+static const char lm_magic[] = "KGS!@#$%";
 
-const char client_sign_magic[] = "session key to client-to-server signing key magic constant";
-const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
-const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
-const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
+static const char client_sign_magic[] = "session key to client-to-server signing key magic constant";
+static const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
+static const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
+static const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
 
-char NTLMSSP_NEGOTIATE_STRINGS[32][64] =
+static const char* const NTLMSSP_NEGOTIATE_STRINGS[] =
 {
 	"NTLMSSP_NEGOTIATE_56",
 	"NTLMSSP_NEGOTIATE_KEY_EXCH",
@@ -111,7 +111,7 @@ char NTLMSSP_NEGOTIATE_STRINGS[32][64] =
 	"NTLMSSP_NEGOTIATE_UNICODE"
 };
 
-char AV_PAIRS_STRINGS[12][32] =
+static const char* const AV_PAIRS_STRINGS[] =
 {
 	"MsvAvEOL",
 	"MsvAvNbComputerName",
@@ -656,7 +656,7 @@ void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 void ntlmssp_print_negotiate_flags(uint32 flags)
 {
 	int i;
-	char* str;
+	const char* str;
 
 	printf("negotiateFlags \"0x%08X\"{\n", flags);
 
