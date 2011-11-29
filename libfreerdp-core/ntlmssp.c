@@ -27,6 +27,31 @@
 
 #include "ntlmssp.h"
 
+//#define ALTERNATE_NTLMSSP	1
+
+#ifdef ALTERNATE_NTLMSSP
+#define NTLMSSP_INDEX_NEGOTIATE_56				31
+#define NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH			30
+#define NTLMSSP_INDEX_NEGOTIATE_128				29
+#define NTLMSSP_INDEX_NEGOTIATE_VERSION				25
+#define NTLMSSP_INDEX_NEGOTIATE_TARGET_INFO			23
+#define NTLMSSP_INDEX_REQUEST_NON_NT_SESSION_KEY		22
+#define NTLMSSP_INDEX_NEGOTIATE_IDENTIFY			20
+#define NTLMSSP_INDEX_NEGOTIATE_EXTENDED_SESSION_SECURITY	19
+#define NTLMSSP_INDEX_TARGET_TYPE_SERVER			17
+#define NTLMSSP_INDEX_TARGET_TYPE_DOMAIN			16
+#define NTLMSSP_INDEX_NEGOTIATE_ALWAYS_SIGN			15
+#define NTLMSSP_INDEX_NEGOTIATE_WORKSTATION_SUPPLIED		13
+#define NTLMSSP_INDEX_NEGOTIATE_DOMAIN_SUPPLIED			12
+#define NTLMSSP_INDEX_NEGOTIATE_NTLM				9
+#define NTLMSSP_INDEX_NEGOTIATE_LM_KEY				7
+#define NTLMSSP_INDEX_NEGOTIATE_DATAGRAM			6
+#define NTLMSSP_INDEX_NEGOTIATE_SEAL				5
+#define NTLMSSP_INDEX_NEGOTIATE_SIGN				4
+#define NTLMSSP_INDEX_REQUEST_TARGET				2
+#define NTLMSSP_INDEX_NEGOTIATE_OEM				1
+#define NTLMSSP_INDEX_NEGOTIATE_UNICODE				0
+#else
 #define NTLMSSP_INDEX_NEGOTIATE_56				0
 #define NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH			1
 #define NTLMSSP_INDEX_NEGOTIATE_128				2
@@ -48,7 +73,31 @@
 #define NTLMSSP_INDEX_REQUEST_TARGET				29
 #define NTLMSSP_INDEX_NEGOTIATE_OEM				30
 #define NTLMSSP_INDEX_NEGOTIATE_UNICODE				31
+#endif
 
+#ifdef ALTERNATE_NTLMSSP
+#define NTLMSSP_NEGOTIATE_56					0x80000000 /* W (0) */
+#define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V (1) */
+#define NTLMSSP_NEGOTIATE_128					0x20000000 /* U (2) */
+#define NTLMSSP_NEGOTIATE_VERSION				0x02000000 /* T (6) */
+#define NTLMSSP_NEGOTIATE_TARGET_INFO				0x00800000 /* S (8) */
+#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY			0x00400000 /* R (9) */
+#define NTLMSSP_NEGOTIATE_IDENTIFY				0x00100000 /* Q (11) */
+#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY		0x00080000 /* P (12) */
+#define NTLMSSP_TARGET_TYPE_SERVER				0x00020000 /* O (14) */
+#define NTLMSSP_TARGET_TYPE_DOMAIN				0x00010000 /* N (15) */
+#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN				0x00008000 /* M (16) */
+#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED			0x00002000 /* L (18) */
+#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED			0x00001000 /* K (19) */
+#define NTLMSSP_NEGOTIATE_NTLM					0x00000200 /* H (22) */
+#define NTLMSSP_NEGOTIATE_LM_KEY				0x00000080 /* G (24) */
+#define NTLMSSP_NEGOTIATE_DATAGRAM				0x00000040 /* F (25) */
+#define NTLMSSP_NEGOTIATE_SEAL					0x00000020 /* E (26) */
+#define NTLMSSP_NEGOTIATE_SIGN					0x00000010 /* D (27) */
+#define NTLMSSP_REQUEST_TARGET					0x00000004 /* C (29) */
+#define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B (30) */
+#define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A (31) */
+#else
 #define NTLMSSP_NEGOTIATE_56					(1 << NTLMSSP_INDEX_NEGOTIATE_56)
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				(1 << NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH)
 #define NTLMSSP_NEGOTIATE_128					(1 << NTLMSSP_INDEX_NEGOTIATE_128)
@@ -70,6 +119,7 @@
 #define NTLMSSP_REQUEST_TARGET					(1 << NTLMSSP_INDEX_REQUEST_TARGET)
 #define NTLMSSP_NEGOTIATE_OEM					(1 << NTLMSSP_INDEX_NEGOTIATE_OEM)
 #define NTLMSSP_NEGOTIATE_UNICODE				(1 << NTLMSSP_INDEX_NEGOTIATE_UNICODE)
+#endif
 
 #define WINDOWS_MAJOR_VERSION_5		0x05
 #define WINDOWS_MAJOR_VERSION_6		0x06
@@ -596,7 +646,7 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
  * @param flags
  */
 
-void ntlmssp_input_negotiate_flags(STREAM* s, uint32 *flags)
+void ntlmssp_input_negotiate_flags(STREAM* s, uint32* flags)
 {
 	uint8* p;
 	uint8 tmp;
@@ -607,6 +657,20 @@ void ntlmssp_input_negotiate_flags(STREAM* s, uint32 *flags)
 	 * Reverse order and then input in Big Endian
 	 */
 
+#ifdef ALTERNATE_NTLMSSP
+	*flags = 0;
+	stream_read_uint32(s, *flags);
+/*
+	stream_read_uint8(s, tmp);
+	*flags |= (tmp << 24);
+	stream_read_uint8(s, tmp);
+	*flags |= (tmp << 16);
+	stream_read_uint8(s, tmp);
+	*flags |= (tmp << 8);
+	stream_read_uint8(s, tmp);
+	*flags |= tmp;
+*/
+#else
 	stream_read_uint32_be(s, negotiateFlags);
 
 	p = (uint8*) &negotiateFlags;
@@ -619,6 +683,7 @@ void ntlmssp_input_negotiate_flags(STREAM* s, uint32 *flags)
 	p[2] = tmp;
 
 	*flags = negotiateFlags;
+#endif
 }
 
 /**
@@ -637,6 +702,19 @@ void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 	 * Output in Big Endian and then reverse order
 	 */
 
+#ifdef ALTERNATE_NTLMSSP
+
+	stream_write_uint32(s, flags);
+	/*
+	tmp = ((flags & 0xFF000000) >> 24);
+	stream_write_uint8(s, tmp);
+	tmp = ((flags & 0x00FF0000) >> 16);
+	stream_write_uint8(s, tmp);
+	tmp = ((flags & 0x0000FF00) >> 8);
+	stream_write_uint8(s, tmp);
+	tmp = (flags & 0x000000FF);
+	stream_write_uint8(s, tmp);*/
+#else
 	p = s->p;
 	stream_write_uint32_be(s, flags);
 
@@ -647,12 +725,28 @@ void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 	tmp = p[1];
 	p[1] = p[2];
 	p[2] = tmp;
+#endif
 }
 
 #ifdef WITH_DEBUG_NLA
 static void ntlmssp_print_negotiate_flags(uint32 flags)
 {
-	printf("negotiateFlags \"0x%08X\"{\n", flags);
+	uint8 tmp;
+	//printf("negotiateFlags \"0x%08X\"{\n", flags);
+
+	//flags = 0x338202E2;
+	//flags = 0x8233E202;
+
+	printf("negotiateFlags \"0x");
+
+	tmp = ((flags & 0xFF000000) >> 24);
+	printf("%02X", tmp);
+	tmp = ((flags & 0x00FF0000) >> 16);
+	printf("%02X", tmp);
+	tmp = ((flags & 0x0000FF00) >> 8);
+	printf("%02X", tmp);
+	tmp = ((flags & 0x000000FF));
+	printf("%02X\"{\n", tmp);
 
 	if (flags & NTLMSSP_NEGOTIATE_56)
 		printf("\tNTLMSSP_NEGOTIATE_56\n");
