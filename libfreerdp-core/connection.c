@@ -135,6 +135,9 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	if (redirection->flags & LB_TARGET_NET_ADDRESS) {
 		xfree(settings->hostname);
 		settings->hostname = redirection->targetNetAddress.ascii;
+        } else if (redirection->flags & LB_TARGET_FQDN) {
+                xfree(settings->hostname);
+                settings->hostname = redirection->targetFQDN.ascii;
 	} else if (redirection->flags & LB_TARGET_NETBIOS_NAME) {
 		xfree(settings->hostname);
 		settings->hostname = redirection->targetNetBiosName.ascii;
