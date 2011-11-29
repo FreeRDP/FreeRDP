@@ -76,27 +76,38 @@
 #endif
 
 #ifdef ALTERNATE_NTLMSSP
-#define NTLMSSP_NEGOTIATE_56					0x80000000 /* W (0) */
-#define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V (1) */
-#define NTLMSSP_NEGOTIATE_128					0x20000000 /* U (2) */
-#define NTLMSSP_NEGOTIATE_VERSION				0x02000000 /* T (6) */
-#define NTLMSSP_NEGOTIATE_TARGET_INFO				0x00800000 /* S (8) */
-#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY			0x00400000 /* R (9) */
-#define NTLMSSP_NEGOTIATE_IDENTIFY				0x00100000 /* Q (11) */
-#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY		0x00080000 /* P (12) */
-#define NTLMSSP_TARGET_TYPE_SERVER				0x00020000 /* O (14) */
-#define NTLMSSP_TARGET_TYPE_DOMAIN				0x00010000 /* N (15) */
-#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN				0x00008000 /* M (16) */
-#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED			0x00002000 /* L (18) */
-#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED			0x00001000 /* K (19) */
-#define NTLMSSP_NEGOTIATE_NTLM					0x00000200 /* H (22) */
-#define NTLMSSP_NEGOTIATE_LM_KEY				0x00000080 /* G (24) */
-#define NTLMSSP_NEGOTIATE_DATAGRAM				0x00000040 /* F (25) */
-#define NTLMSSP_NEGOTIATE_SEAL					0x00000020 /* E (26) */
-#define NTLMSSP_NEGOTIATE_SIGN					0x00000010 /* D (27) */
-#define NTLMSSP_REQUEST_TARGET					0x00000004 /* C (29) */
-#define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B (30) */
-#define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A (31) */
+#define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
+#define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
+#define NTLMSSP_NEGOTIATE_128					0x20000000 /* U   (2) */
+#define NTLMSSP_R1						0x00000000 /* r1  (3) */
+#define NTLMSSP_R2						0x00000000 /* r2  (4) */
+#define NTLMSSP_R3						0x00000000 /* r3  (5) */
+#define NTLMSSP_NEGOTIATE_VERSION				0x02000000 /* T   (6) */
+#define NTLMSSP_R4						0x00000000 /* r4  (7) */
+#define NTLMSSP_NEGOTIATE_TARGET_INFO				0x00800000 /* S   (8) */
+#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY			0x00400000 /* R   (9) */
+#define NTLMSSP_R5						0x00000000 /* r5  (10) */
+#define NTLMSSP_NEGOTIATE_IDENTIFY				0x00100000 /* Q   (11) */
+#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY		0x00080000 /* P   (12) */
+#define NTLMSSP_R6						0x00000000 /* r6  (13) */
+#define NTLMSSP_TARGET_TYPE_SERVER				0x00020000 /* O   (14) */
+#define NTLMSSP_TARGET_TYPE_DOMAIN				0x00010000 /* N   (15) */
+#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN				0x00008000 /* M   (16) */
+#define NTLMSSP_R7						0x00000000 /* r7  (17) */
+#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED			0x00002000 /* L   (18) */
+#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED			0x00001000 /* K   (19) */
+#define NTLMSSP_J						0x00000000 /* J   (20) */
+#define NTLMSSP_R8						0x00000000 /* r8  (21) */
+#define NTLMSSP_NEGOTIATE_NTLM					0x00000200 /* H   (22) */
+#define NTLMSSP_R9						0x00000000 /* r9  (23) */
+#define NTLMSSP_NEGOTIATE_LM_KEY				0x00000080 /* G   (24) */
+#define NTLMSSP_NEGOTIATE_DATAGRAM				0x00000040 /* F   (25) */
+#define NTLMSSP_NEGOTIATE_SEAL					0x00000020 /* E   (26) */
+#define NTLMSSP_NEGOTIATE_SIGN					0x00000010 /* D   (27) */
+#define NTLMSSP_R10						0x00000000 /* r10 (28) */
+#define NTLMSSP_REQUEST_TARGET					0x00000004 /* C   (29) */
+#define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B   (30) */
+#define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A   (31) */
 #else
 #define NTLMSSP_NEGOTIATE_56					(1 << NTLMSSP_INDEX_NEGOTIATE_56)
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				(1 << NTLMSSP_INDEX_NEGOTIATE_KEY_EXCH)
@@ -135,6 +146,42 @@ const char client_sign_magic[] = "session key to client-to-server signing key ma
 const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
 const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
 const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
+
+char NTLMSSP_NEGOTIATE_STRINGS[32][64] =
+{
+		"NTLMSSP_NEGOTIATE_56",
+		"NTLMSSP_NEGOTIATE_KEY_EXCH",
+		"NTLMSSP_NEGOTIATE_128",
+		"NTLMSSP_R1",
+		"NTLMSSP_R2",
+		"NTLMSSP_R3",
+		"NTLMSSP_NEGOTIATE_VERSION",
+		"NTLMSSP_R4",
+		"NTLMSSP_NEGOTIATE_TARGET_INFO",
+		"NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
+		"NTLMSSP_R5",
+		"NTLMSSP_NEGOTIATE_IDENTIFY",
+		"NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
+		"NTLMSSP_R6",
+		"NTLMSSP_TARGET_TYPE_SERVER",
+		"NTLMSSP_TARGET_TYPE_DOMAIN",
+		"NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+		"NTLMSSP_R7",
+		"NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
+		"NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
+		"NTLMSSP_J",
+		"NTLMSSP_R8",
+		"NTLMSSP_NEGOTIATE_NTLM",
+		"NTLMSSP_R9",
+		"NTLMSSP_NEGOTIATE_LM_KEY",
+		"NTLMSSP_NEGOTIATE_DATAGRAM",
+		"NTLMSSP_NEGOTIATE_SEAL",
+		"NTLMSSP_NEGOTIATE_SIGN",
+		"NTLMSSP_R10",
+		"NTLMSSP_REQUEST_TARGET",
+		"NTLMSSP_NEGOTIATE_OEM",
+		"NTLMSSP_NEGOTIATE_UNICODE"
+};
 
 /**
  * Set NTLMSSP username.
@@ -731,65 +778,20 @@ void ntlmssp_output_negotiate_flags(STREAM* s, uint32 flags)
 #ifdef WITH_DEBUG_NLA
 static void ntlmssp_print_negotiate_flags(uint32 flags)
 {
-	uint8 tmp;
-	//printf("negotiateFlags \"0x%08X\"{\n", flags);
+	int i;
+	char* str;
 
-	//flags = 0x338202E2;
-	//flags = 0x8233E202;
+	printf("negotiateFlags \"0x%08X\"{\n", flags);
 
-	printf("negotiateFlags \"0x");
+	for (i = 31; i >= 0; i--)
+	{
+		if ((flags >> i) & 1)
+		{
+			str = NTLMSSP_NEGOTIATE_STRINGS[(31 - i)];
+			printf("\t%s (%d),\n", str, (31 - i));
+		}
+	}
 
-	tmp = ((flags & 0xFF000000) >> 24);
-	printf("%02X", tmp);
-	tmp = ((flags & 0x00FF0000) >> 16);
-	printf("%02X", tmp);
-	tmp = ((flags & 0x0000FF00) >> 8);
-	printf("%02X", tmp);
-	tmp = ((flags & 0x000000FF));
-	printf("%02X\"{\n", tmp);
-
-	if (flags & NTLMSSP_NEGOTIATE_56)
-		printf("\tNTLMSSP_NEGOTIATE_56\n");
-	if (flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
-		printf("\tNTLMSSP_NEGOTIATE_KEY_EXCH\n");
-	if (flags & NTLMSSP_NEGOTIATE_128)
-		printf("\tNTLMSSP_NEGOTIATE_128\n");
-	if (flags & NTLMSSP_NEGOTIATE_VERSION)
-		printf("\tNTLMSSP_NEGOTIATE_VERSION\n");
-	if (flags & NTLMSSP_NEGOTIATE_TARGET_INFO)
-		printf("\tNTLMSSP_NEGOTIATE_TARGET_INFO\n");
-	if (flags & NTLMSSP_REQUEST_NON_NT_SESSION_KEY)
-		printf("\tNTLMSSP_REQUEST_NON_NT_SESSION_KEY\n");
-	if (flags & NTLMSSP_NEGOTIATE_IDENTIFY)
-		printf("\tNTLMSSP_NEGOTIATE_IDENTIFY\n");
-	if (flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
-		printf("\tNTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY\n");
-	if (flags & NTLMSSP_TARGET_TYPE_SERVER)
-		printf("\tNTLMSSP_TARGET_TYPE_SERVER\n");
-	if (flags & NTLMSSP_TARGET_TYPE_DOMAIN)
-		printf("\tNTLMSSP_TARGET_TYPE_DOMAIN\n");
-	if (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN)
-		printf("\tNTLMSSP_NEGOTIATE_ALWAYS_SIGN\n");
-	if (flags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
-		printf("\tNTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED\n");
-	if (flags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
-		printf("\tNTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED\n");
-	if (flags & NTLMSSP_NEGOTIATE_NTLM)
-		printf("\tNTLMSSP_NEGOTIATE_NTLM\n");
-	if (flags & NTLMSSP_NEGOTIATE_LM_KEY)
-		printf("\tNTLMSSP_NEGOTIATE_LM_KEY\n");
-	if (flags & NTLMSSP_NEGOTIATE_DATAGRAM)
-		printf("\tNTLMSSP_NEGOTIATE_DATAGRAM\n");
-	if (flags & NTLMSSP_NEGOTIATE_SEAL)
-		printf("\tNTLMSSP_NEGOTIATE_SEAL\n");
-	if (flags & NTLMSSP_NEGOTIATE_SIGN)
-		printf("\tNTLMSSP_NEGOTIATE_SIGN\n");
-	if (flags & NTLMSSP_REQUEST_TARGET)
-		printf("\tNTLMSSP_REQUEST_TARGET\n");
-	if (flags & NTLMSSP_NEGOTIATE_OEM)
-		printf("\tNTLMSSP_NEGOTIATE_OEM\n");
-	if (flags & NTLMSSP_NEGOTIATE_UNICODE)
-		printf("\tNTLMSSP_NEGOTIATE_UNICODE\n");
 	printf("}\n");
 }
 #endif
