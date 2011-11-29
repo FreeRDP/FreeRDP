@@ -77,38 +77,53 @@ const char server_seal_magic[] = "session key to server-to-client sealing key ma
 
 char NTLMSSP_NEGOTIATE_STRINGS[32][64] =
 {
-		"NTLMSSP_NEGOTIATE_56",
-		"NTLMSSP_NEGOTIATE_KEY_EXCH",
-		"NTLMSSP_NEGOTIATE_128",
-		"NTLMSSP_RESERVED1",
-		"NTLMSSP_RESERVED2",
-		"NTLMSSP_RESERVED3",
-		"NTLMSSP_NEGOTIATE_VERSION",
-		"NTLMSSP_RESERVED4",
-		"NTLMSSP_NEGOTIATE_TARGET_INFO",
-		"NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
-		"NTLMSSP_RESERVED5",
-		"NTLMSSP_NEGOTIATE_IDENTIFY",
-		"NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
-		"NTLMSSP_RESERVED6",
-		"NTLMSSP_TARGET_TYPE_SERVER",
-		"NTLMSSP_TARGET_TYPE_DOMAIN",
-		"NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
-		"NTLMSSP_RESERVED7",
-		"NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
-		"NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
-		"NTLMSSP_NEGOTIATE_ANONYMOUS",
-		"NTLMSSP_RESERVED8",
-		"NTLMSSP_NEGOTIATE_NTLM",
-		"NTLMSSP_RESERVED9",
-		"NTLMSSP_NEGOTIATE_LM_KEY",
-		"NTLMSSP_NEGOTIATE_DATAGRAM",
-		"NTLMSSP_NEGOTIATE_SEAL",
-		"NTLMSSP_NEGOTIATE_SIGN",
-		"NTLMSSP_RESERVED10",
-		"NTLMSSP_REQUEST_TARGET",
-		"NTLMSSP_NEGOTIATE_OEM",
-		"NTLMSSP_NEGOTIATE_UNICODE"
+	"NTLMSSP_NEGOTIATE_56",
+	"NTLMSSP_NEGOTIATE_KEY_EXCH",
+	"NTLMSSP_NEGOTIATE_128",
+	"NTLMSSP_RESERVED1",
+	"NTLMSSP_RESERVED2",
+	"NTLMSSP_RESERVED3",
+	"NTLMSSP_NEGOTIATE_VERSION",
+	"NTLMSSP_RESERVED4",
+	"NTLMSSP_NEGOTIATE_TARGET_INFO",
+	"NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
+	"NTLMSSP_RESERVED5",
+	"NTLMSSP_NEGOTIATE_IDENTIFY",
+	"NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
+	"NTLMSSP_RESERVED6",
+	"NTLMSSP_TARGET_TYPE_SERVER",
+	"NTLMSSP_TARGET_TYPE_DOMAIN",
+	"NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+	"NTLMSSP_RESERVED7",
+	"NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
+	"NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
+	"NTLMSSP_NEGOTIATE_ANONYMOUS",
+	"NTLMSSP_RESERVED8",
+	"NTLMSSP_NEGOTIATE_NTLM",
+	"NTLMSSP_RESERVED9",
+	"NTLMSSP_NEGOTIATE_LM_KEY",
+	"NTLMSSP_NEGOTIATE_DATAGRAM",
+	"NTLMSSP_NEGOTIATE_SEAL",
+	"NTLMSSP_NEGOTIATE_SIGN",
+	"NTLMSSP_RESERVED10",
+	"NTLMSSP_REQUEST_TARGET",
+	"NTLMSSP_NEGOTIATE_OEM",
+	"NTLMSSP_NEGOTIATE_UNICODE"
+};
+
+char AV_PAIRS_STRINGS[12][32] =
+{
+	"MsvAvEOL",
+	"MsvAvNbComputerName",
+	"MsvAvNbDomainName",
+	"MsvAvDnsComputerName",
+	"MsvAvDnsDomainName",
+	"MsvAvDnsTreeName",
+	"MsvAvFlags",
+	"MsvAvTimestamp",
+	"MsvAvRestrictions",
+	"MsvAvTargetName",
+	"MsvChannelBindings"
 };
 
 /**
@@ -736,6 +751,10 @@ void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 	uint8* value;
 	AV_PAIRS* av_pairs = ntlmssp->av_pairs;
 
+#ifdef WITH_DEBUG_NLA
+	printf("AV_PAIRS = {\n");
+#endif
+
 	do
 	{
 		value = NULL;
@@ -758,55 +777,46 @@ void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 		switch (AvId)
 		{
 			case MsvAvNbComputerName:
-				//printf("AvId: MsvAvNbComputerName, AvLen: %d\n", AvLen);
 				av_pairs->NbComputerName.length = AvLen;
 				av_pairs->NbComputerName.value = value;
 				break;
 
 			case MsvAvNbDomainName:
-				//printf("AvId: MsvAvNbDomainName, AvLen: %d\n", AvLen);
 				av_pairs->NbDomainName.length = AvLen;
 				av_pairs->NbDomainName.value = value;
 				break;
 
 			case MsvAvDnsComputerName:
-				//printf("AvId: MsvAvDnsComputerName, AvLen: %d\n", AvLen);
 				av_pairs->DnsComputerName.length = AvLen;
 				av_pairs->DnsComputerName.value = value;
 				break;
 
 			case MsvAvDnsDomainName:
-				//printf("AvId: MsvAvDnsDomainName, AvLen: %d\n", AvLen);
 				av_pairs->DnsDomainName.length = AvLen;
 				av_pairs->DnsDomainName.value = value;
 				break;
 
 			case MsvAvDnsTreeName:
-				//printf("AvId: MsvAvDnsTreeName, AvLen: %d\n", AvLen);
 				av_pairs->DnsTreeName.length = AvLen;
 				av_pairs->DnsTreeName.value = value;
 				break;
 
 			case MsvAvTimestamp:
-				//printf("AvId: MsvAvTimestamp, AvLen: %d\n", AvLen);
 				av_pairs->Timestamp.length = AvLen;
 				av_pairs->Timestamp.value = value;
 				break;
 
 			case MsvAvRestrictions:
-				//printf("AvId: MsvAvRestrictions, AvLen: %d\n", AvLen);
 				av_pairs->Restrictions.length = AvLen;
 				av_pairs->Restrictions.value = value;
 				break;
 
 			case MsvAvTargetName:
-				//printf("AvId: MsvAvTargetName, AvLen: %d\n", AvLen);
 				av_pairs->TargetName.length = AvLen;
 				av_pairs->TargetName.value = value;
 				break;
 
 			case MsvChannelBindings:
-				//printf("AvId: MsvAvChannelBindings, AvLen: %d\n", AvLen);
 				av_pairs->ChannelBindings.length = AvLen;
 				av_pairs->ChannelBindings.value = value;
 				break;
@@ -816,8 +826,21 @@ void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 					xfree(value);
 				break;
 		}
+
+#ifdef WITH_DEBUG_NLA
+		if (AvId < 10)
+			printf("\tAvId: %s, AvLen: %d\n", AV_PAIRS_STRINGS[AvId], AvLen);
+		else
+			printf("\tAvId: %s, AvLen: %d\n", "Unknown", AvLen);
+
+		freerdp_hexdump(value, AvLen);
+#endif
 	}
 	while(AvId != MsvAvEOL);
+
+#ifdef WITH_DEBUG_NLA
+	printf("}\n");
+#endif
 }
 
 /**
