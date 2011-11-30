@@ -55,20 +55,20 @@
 
 typedef uint32 PIXEL;
 
-static uint8 g_MaskBit0 = 0x01; /* Least significant bit */
-static uint8 g_MaskBit1 = 0x02;
-static uint8 g_MaskBit2 = 0x04;
-static uint8 g_MaskBit3 = 0x08;
-static uint8 g_MaskBit4 = 0x10;
-static uint8 g_MaskBit5 = 0x20;
-static uint8 g_MaskBit6 = 0x40;
-static uint8 g_MaskBit7 = 0x80; /* Most significant bit */
+static const uint8 g_MaskBit0 = 0x01; /* Least significant bit */
+static const uint8 g_MaskBit1 = 0x02;
+static const uint8 g_MaskBit2 = 0x04;
+static const uint8 g_MaskBit3 = 0x08;
+static const uint8 g_MaskBit4 = 0x10;
+static const uint8 g_MaskBit5 = 0x20;
+static const uint8 g_MaskBit6 = 0x40;
+static const uint8 g_MaskBit7 = 0x80; /* Most significant bit */
 
-static uint8 g_MaskSpecialFgBg1 = 0x03;
-static uint8 g_MaskSpecialFgBg2 = 0x05;
+static const uint8 g_MaskSpecialFgBg1 = 0x03;
+static const uint8 g_MaskSpecialFgBg2 = 0x05;
 
-static uint8 g_MaskRegularRunLength = 0x1F;
-static uint8 g_MaskLiteRunLength = 0x0F;
+static const uint8 g_MaskRegularRunLength = 0x1F;
+static const uint8 g_MaskLiteRunLength = 0x0F;
 
 /**
  * Reads the supplied order header and extracts the compression
