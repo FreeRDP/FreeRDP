@@ -111,6 +111,7 @@ find_required_package(OpenSSL)
 if(APPLE)
 	include_directories(/opt/local/include)
 	link_directories(/opt/local/lib)
+	set(CMAKE_SHARED_LINKER_FLAGS "-mmacosx-version-min=10.4")
 endif()
 
 if(NOT WIN32)
