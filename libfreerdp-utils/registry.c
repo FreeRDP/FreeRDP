@@ -21,8 +21,8 @@
 
 #include <freerdp/utils/registry.h>
 
-static char registry_dir[] = "freerdp";
-static char registry_file[] = "config.txt";
+static const char registry_dir[] = "freerdp";
+static const char registry_file[] = "config.txt";
 
 static REG_SECTION global[] =
 {

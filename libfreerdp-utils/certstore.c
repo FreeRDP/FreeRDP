@@ -20,9 +20,9 @@
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/certstore.h>
 
-static char cert_dir[] = "freerdp";
-static char cert_loc[] = "cacert";
-static char certstore_file[] = "known_hosts";
+static const char cert_dir[] = "freerdp";
+static const char cert_loc[] = "cacert";
+static const char certstore_file[] = "known_hosts";
 
 void certstore_create(rdpCertStore* certstore)
 {
