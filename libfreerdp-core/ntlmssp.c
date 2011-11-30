@@ -75,6 +75,7 @@ static const char server_sign_magic[] = "session key to server-to-client signing
 static const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
 static const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
 
+#ifdef WITH_DEBUG_NLA
 static const char* const NTLMSSP_NEGOTIATE_STRINGS[] =
 {
 	"NTLMSSP_NEGOTIATE_56",
@@ -125,6 +126,7 @@ static const char* const AV_PAIRS_STRINGS[] =
 	"MsvAvTargetName",
 	"MsvChannelBindings"
 };
+#endif
 
 /**
  * Set NTLMSSP username.

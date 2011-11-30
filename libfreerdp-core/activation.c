@@ -19,7 +19,8 @@
 
 #include "activation.h"
 
-uint8 CTRLACTION_STRINGS[][32] =
+/*
+static const char* const CTRLACTION_STRINGS[] =
 {
 		"",
 		"CTRLACTION_REQUEST_CONTROL",
@@ -27,6 +28,7 @@ uint8 CTRLACTION_STRINGS[][32] =
 		"CTRLACTION_DETACH",
 		"CTRLACTION_COOPERATE"
 };
+*/
 
 void rdp_write_synchronize_pdu(STREAM* s, rdpSettings* settings)
 {
