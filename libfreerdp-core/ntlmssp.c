@@ -852,7 +852,7 @@ void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 
 void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 {
-	AV_PAIRS *av_pairs = ntlmssp->av_pairs;
+	AV_PAIRS* av_pairs = ntlmssp->av_pairs;
 	
 	if (av_pairs->NbDomainName.length > 0)
 	{
@@ -924,7 +924,7 @@ void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 		stream_write(s, av_pairs->TargetName.value, av_pairs->TargetName.length); /* Value */
 	}
 
-	/* This endicates the end of the AV_PAIR array */
+	/* This indicates the end of the AV_PAIR array */
 	stream_write_uint16(s, MsvAvEOL); /* AvId */
 	stream_write_uint16(s, 0); /* AvLen */
 
@@ -932,6 +932,82 @@ void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 	{
 		stream_write_zero(s, 8);
 	}
+}
+
+/**
+ * Print array of AV_PAIRs.\n
+ * AV_PAIR @msdn{cc236646}
+ * @param ntlmssp
+ * @param s
+ */
+
+void ntlmssp_print_av_pairs(NTLMSSP* ntlmssp)
+{
+	AV_PAIRS* av_pairs = ntlmssp->av_pairs;
+
+	printf("AV_PAIRS = {\n");
+
+	if (av_pairs->NbDomainName.length > 0)
+	{
+		printf("\tAvId: MsvAvNbDomainName AvLen: %d\n", av_pairs->NbDomainName.length);
+		freerdp_hexdump(av_pairs->NbDomainName.value, av_pairs->NbDomainName.length);
+	}
+
+	if (av_pairs->NbComputerName.length > 0)
+	{
+		printf("\tAvId: MsvAvNbComputerName AvLen: %d\n", av_pairs->NbComputerName.length);
+		freerdp_hexdump(av_pairs->NbComputerName.value, av_pairs->NbComputerName.length);
+	}
+
+	if (av_pairs->DnsDomainName.length > 0)
+	{
+		printf("\tAvId: MsvAvDnsDomainName AvLen: %d\n", av_pairs->DnsDomainName.length);
+		freerdp_hexdump(av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length);
+	}
+
+	if (av_pairs->DnsComputerName.length > 0)
+	{
+		printf("\tAvId: MsvAvDnsComputerName AvLen: %d\n", av_pairs->DnsComputerName.length);
+		freerdp_hexdump(av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length);
+	}
+
+	if (av_pairs->DnsTreeName.length > 0)
+	{
+		printf("\tAvId: MsvAvDnsTreeName AvLen: %d\n", av_pairs->DnsTreeName.length);
+		freerdp_hexdump(av_pairs->DnsTreeName.value, av_pairs->DnsTreeName.length);
+	}
+
+	if (av_pairs->Timestamp.length > 0)
+	{
+		printf("\tAvId: MsvAvTimestamp AvLen: %d\n", av_pairs->Timestamp.length);
+		freerdp_hexdump(av_pairs->Timestamp.value, av_pairs->Timestamp.length);
+	}
+
+	if (av_pairs->Flags > 0)
+	{
+		printf("\tAvId: MsvAvFlags AvLen: %d\n", 4);
+		printf("0x%08X\n", av_pairs->Flags);
+	}
+
+	if (av_pairs->Restrictions.length > 0)
+	{
+		printf("\tAvId: MsvAvRestrictions AvLen: %d\n", av_pairs->Restrictions.length);
+		freerdp_hexdump(av_pairs->Restrictions.value, av_pairs->Restrictions.length);
+	}
+
+	if (av_pairs->ChannelBindings.length > 0)
+	{
+		printf("\tAvId: MsvChannelBindings AvLen: %d\n", av_pairs->ChannelBindings.length);
+		freerdp_hexdump(av_pairs->ChannelBindings.value, av_pairs->ChannelBindings.length);
+	}
+
+	if (av_pairs->TargetName.length > 0)
+	{
+		printf("\tAvId: MsvAvTargetName AvLen: %d\n", av_pairs->TargetName.length);
+		freerdp_hexdump(av_pairs->TargetName.value, av_pairs->TargetName.length);
+	}
+
+	printf("}\n");
 }
 
 /**
@@ -1289,12 +1365,6 @@ void ntlmssp_recv_challenge_message(NTLMSSP* ntlmssp, STREAM* s)
 	if (ntlmssp->ntlm_v2)
 		ntlmssp_populate_av_pairs(ntlmssp);
 
-#ifdef WITH_DEBUG_NLA
-			printf("targetInfo (populated) (length = %d)\n", ntlmssp->target_info.length);
-			freerdp_hexdump(ntlmssp->target_info.data, ntlmssp->target_info.length);
-			printf("\n");
-#endif
-
 	/* Timestamp */
 	ntlmssp_generate_timestamp(ntlmssp);
 
@@ -1563,6 +1633,17 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 	stream_write(s, ntlmssp->nt_challenge_response.data, NtChallengeResponseLen);
 
 #ifdef WITH_DEBUG_NLA
+	if (ntlmssp->ntlm_v2)
+	{
+		ntlmssp_print_av_pairs(ntlmssp);
+
+		printf("targetInfo (length = %d)\n", ntlmssp->target_info.length);
+		freerdp_hexdump(ntlmssp->target_info.data, ntlmssp->target_info.length);
+		printf("\n");
+	}
+#endif
+
+#ifdef WITH_DEBUG_NLA
 	printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
 	freerdp_hexdump(ntlmssp->nt_challenge_response.data, NtChallengeResponseLen);
 	printf("\n");
@@ -1658,7 +1739,7 @@ NTLMSSP* ntlmssp_new()
 	if (ntlmssp != NULL)
 	{
 		memset(ntlmssp, '\0', sizeof(NTLMSSP));
-		ntlmssp->av_pairs = (AV_PAIRS*)xmalloc(sizeof(AV_PAIRS));
+		ntlmssp->av_pairs = (AV_PAIRS*) xmalloc(sizeof(AV_PAIRS));
 		memset(ntlmssp->av_pairs, 0, sizeof(AV_PAIRS));
 		ntlmssp_init(ntlmssp);
 	}
