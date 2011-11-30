@@ -19,7 +19,8 @@
 
 #include "capabilities.h"
 
-uint8 CAPSET_TYPE_STRINGS[][32] =
+/*
+static const char* const CAPSET_TYPE_STRINGS[] =
 {
 		"Unknown",
 		"General",
@@ -53,6 +54,7 @@ uint8 CAPSET_TYPE_STRINGS[][32] =
 		"Bitmap Codecs",
 		"Frame Acknowledge"
 };
+*/
 
 /* CODEC_GUID_REMOTEFX 0x76772F12BD724463AFB3B73C9C6F7886 */
 #define CODEC_GUID_REMOTEFX "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86"

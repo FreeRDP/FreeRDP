@@ -21,7 +21,8 @@
 
 #include "license.h"
 
-uint8 LICENSE_MESSAGE_STRINGS[][32] =
+#ifdef WITH_DEBUG_LICENSE
+static const char* const LICENSE_MESSAGE_STRINGS[] =
 {
 		"",
 		"License Request",
@@ -39,7 +40,7 @@ uint8 LICENSE_MESSAGE_STRINGS[][32] =
 		"Error Alert"
 };
 
-uint8 error_codes[][32] =
+static const char* const error_codes[] =
 {
 	"ERR_UNKNOWN",
 	"ERR_INVALID_SERVER_CERTIFICATE",
@@ -56,7 +57,7 @@ uint8 error_codes[][32] =
 	"ERR_INVALID_MESSAGE_LENGTH"
 };
 
-uint8 state_transitions[][32] =
+static const char* const  state_transitions[] =
 {
 	"ST_UNKNOWN",
 	"ST_TOTAL_ABORT",
@@ -64,6 +65,7 @@ uint8 state_transitions[][32] =
 	"ST_RESET_PHASE_TO_START",
 	"ST_RESEND_LAST_MESSAGE"
 };
+#endif
 
 /**
  * Read a licensing preamble.\n

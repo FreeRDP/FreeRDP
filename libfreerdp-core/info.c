@@ -24,13 +24,15 @@
 #define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
 #define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
 
-uint8 INFO_TYPE_LOGON_STRINGS[][32] =
+/*
+static const char* const INFO_TYPE_LOGON_STRINGS[] =
 {
 	"Logon Info V1",
 	"Logon Info V2",
 	"Logon Plain Notify",
 	"Logon Extended Info"
 };
+*/
 
 /**
  * Read SYSTEM_TIME structure (TS_SYSTEMTIME).\n
