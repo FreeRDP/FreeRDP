@@ -24,7 +24,9 @@
 
 #include "orders.h"
 
-uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
+#ifdef WITH_DEBUG_ORDERS
+
+static const char* const PRIMARY_DRAWING_ORDER_STRINGS[] =
 {
 	"DstBlt",
 	"PatBlt",
@@ -55,7 +57,7 @@ uint8 PRIMARY_DRAWING_ORDER_STRINGS[][20] =
 
 #define PRIMARY_DRAWING_ORDER_COUNT	(sizeof(PRIMARY_DRAWING_ORDER_STRINGS) / sizeof(PRIMARY_DRAWING_ORDER_STRINGS[0]))
 
-uint8 SECONDARY_DRAWING_ORDER_STRINGS[][32] =
+static const char* const SECONDARY_DRAWING_ORDER_STRINGS[] =
 {
 	"Cache Bitmap",
 	"Cache Color Table",
@@ -70,7 +72,7 @@ uint8 SECONDARY_DRAWING_ORDER_STRINGS[][32] =
 
 #define SECONDARY_DRAWING_ORDER_COUNT	(sizeof(SECONDARY_DRAWING_ORDER_STRINGS) / sizeof(SECONDARY_DRAWING_ORDER_STRINGS[0]))
 
-uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
+static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
 {
 	"Switch Surface",
 	"Create Offscreen Bitmap",
@@ -90,7 +92,9 @@ uint8 ALTSEC_DRAWING_ORDER_STRINGS[][32] =
 
 #define ALTSEC_DRAWING_ORDER_COUNT	(sizeof(ALTSEC_DRAWING_ORDER_STRINGS) / sizeof(ALTSEC_DRAWING_ORDER_STRINGS[0]))
 
-uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
+#endif /* WITH_DEBUG_ORDERS */
+
+static const uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 {
 	DSTBLT_ORDER_FIELD_BYTES,
 	PATBLT_ORDER_FIELD_BYTES,
@@ -119,17 +123,17 @@ uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	GLYPH_INDEX_ORDER_FIELD_BYTES
 };
 
-uint8 CBR2_BPP[] =
+static const uint8 CBR2_BPP[] =
 {
 		0, 0, 0, 8, 16, 24, 32
 };
 
-uint8 CBR23_BPP[] =
+static const uint8 CBR23_BPP[] =
 {
 		0, 0, 0, 8, 16, 24, 32
 };
 
-uint8 BMF_BPP[] =
+static const uint8 BMF_BPP[] =
 {
 		0, 1, 0, 8, 16, 24, 32
 };
