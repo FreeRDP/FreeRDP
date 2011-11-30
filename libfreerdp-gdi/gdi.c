@@ -46,7 +46,7 @@
 #include "gdi.h"
 
 /* Ternary Raster Operation Table */
-const uint32 rop3_code_table[] =
+static const uint32 rop3_code_table[] =
 {
 	0x00000042, /* 0 */
 	0x00010289, /* DPSoon */
