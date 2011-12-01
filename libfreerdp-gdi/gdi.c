@@ -625,6 +625,11 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 }
 
+void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+
+}
+
 int tilenum = 0;
 
 void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -763,7 +768,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->MultiOpaqueRect = gdi_multi_opaque_rect;
 	primary->MultiDrawNineGrid = NULL;
 	primary->LineTo = gdi_line_to;
-	primary->Polyline = NULL;
+	primary->Polyline = gdi_polyline;
 	primary->MemBlt = gdi_memblt;
 	primary->Mem3Blt = gdi_mem3blt;
 	primary->SaveBitmap = NULL;
@@ -776,6 +781,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = gdi_surface_bits;
+	update->SurfaceFrameMarker = gdi_surface_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)
