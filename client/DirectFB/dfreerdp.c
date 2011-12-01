@@ -112,6 +112,7 @@ boolean df_check_fds(freerdp* instance, fd_set* set)
 boolean df_pre_connect(freerdp* instance)
 {
 	dfInfo* dfi;
+	boolean bitmap_cache;
 	dfContext* context;
 	rdpSettings* settings;
 
@@ -120,6 +121,7 @@ boolean df_pre_connect(freerdp* instance)
 	context->dfi = dfi;
 
 	settings = instance->settings;
+	bitmap_cache = settings->bitmap_cache;
 
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
@@ -133,8 +135,10 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
 	settings->order_support[NEG_LINETO_INDEX] = true;
 	settings->order_support[NEG_POLYLINE_INDEX] = false;
-	settings->order_support[NEG_MEMBLT_INDEX] = true;
+	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
 	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
