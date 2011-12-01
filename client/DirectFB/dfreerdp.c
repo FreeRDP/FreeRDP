@@ -132,7 +132,7 @@ boolean df_pre_connect(freerdp* instance)
 	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
 	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
 	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = false;
+	settings->order_support[NEG_POLYLINE_INDEX] = true;
 	settings->order_support[NEG_MEMBLT_INDEX] = true;
 	settings->order_support[NEG_MEM3BLT_INDEX] = false;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
