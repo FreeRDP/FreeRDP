@@ -590,19 +590,25 @@ void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
+	sint32 x;
+	sint32 y;
 
 	color = freerdp_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
-	hPen = gdi_CreatePen(0, 1, (GDI_COLOR) color);
+	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 
-	gdi_MoveToEx(gdi->drawing->hdc, polyline->xStart, polyline->yStart, NULL);
+	x = polyline->xStart;
+	y = polyline->yStart;
+	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 
 	points = polyline->points;
 	for (i = 0; i < polyline->numPoints; i++)
 	{
-		gdi_LineTo(gdi->drawing->hdc, points[i].x, points[i].y);
-		gdi_MoveToEx(gdi->drawing->hdc, points[i].x, points[i].y, NULL);
+		x += points[i].x;
+		y += points[i].y;
+		gdi_LineTo(gdi->drawing->hdc, x, y);
+		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
@@ -621,6 +627,11 @@ void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 }
 
 void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
+{
+
+}
+
+void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
 
 }
@@ -763,7 +774,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->MultiOpaqueRect = gdi_multi_opaque_rect;
 	primary->MultiDrawNineGrid = NULL;
 	primary->LineTo = gdi_line_to;
-	primary->Polyline = NULL;
+	primary->Polyline = gdi_polyline;
 	primary->MemBlt = gdi_memblt;
 	primary->Mem3Blt = gdi_mem3blt;
 	primary->SaveBitmap = NULL;
@@ -776,6 +787,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = gdi_surface_bits;
+	update->SurfaceFrameMarker = gdi_surface_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)
