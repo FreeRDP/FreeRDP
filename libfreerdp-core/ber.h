@@ -70,7 +70,7 @@ int ber_skip_sequence(int length);
 int ber_skip_sequence_tag(int length);
 boolean ber_read_bit_string(STREAM* s, int* length, uint8* padding);
 boolean ber_read_octet_string(STREAM* s, int* length);
-void ber_write_octet_string(STREAM* s, uint8* oct_str, int length);
+void ber_write_octet_string(STREAM* s, const uint8* oct_str, int length);
 int ber_write_octet_string_tag(STREAM* s, int length);
 int ber_skip_octet_string(int length);
 boolean ber_read_boolean(STREAM* s, boolean* value);

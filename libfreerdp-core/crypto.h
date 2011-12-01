@@ -80,30 +80,30 @@ struct crypto_cert_struct
 
 typedef struct crypto_sha1_struct* CryptoSha1;
 CryptoSha1 crypto_sha1_init(void);
-void crypto_sha1_update(CryptoSha1 sha1, uint8* data, uint32 length);
+void crypto_sha1_update(CryptoSha1 sha1, const uint8* data, uint32 length);
 void crypto_sha1_final(CryptoSha1 sha1, uint8* out_data);
 
 typedef struct crypto_md5_struct* CryptoMd5;
 CryptoMd5 crypto_md5_init(void);
-void crypto_md5_update(CryptoMd5 md5, uint8* data, uint32 length);
+void crypto_md5_update(CryptoMd5 md5, const uint8* data, uint32 length);
 void crypto_md5_final(CryptoMd5 md5, uint8* out_data);
 
 typedef struct crypto_rc4_struct* CryptoRc4;
-CryptoRc4 crypto_rc4_init(uint8* key, uint32 length);
-void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8* in_data, uint8* out_data);
+CryptoRc4 crypto_rc4_init(const uint8* key, uint32 length);
+void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_data);
 void crypto_rc4_free(CryptoRc4 rc4);
 
 typedef struct crypto_des3_struct* CryptoDes3;
-CryptoDes3 crypto_des3_encrypt_init(uint8* key, uint8* ivec);
-CryptoDes3 crypto_des3_decrypt_init(uint8* key, uint8* ivec);
-void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8 *out_data);
-void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8 *in_data, uint8* out_data);
+CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec);
+CryptoDes3 crypto_des3_decrypt_init(const uint8* key, const uint8* ivec);
+void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, const uint8 *in_data, uint8 *out_data);
+void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const uint8 *in_data, uint8* out_data);
 void crypto_des3_free(CryptoDes3 des3);
 
 typedef struct crypto_hmac_struct* CryptoHmac;
 CryptoHmac crypto_hmac_new(void);
-void crypto_hmac_sha1_init(CryptoHmac hmac, uint8 *data, uint32 length);
-void crypto_hmac_update(CryptoHmac hmac, uint8 *data, uint32 length);
+void crypto_hmac_sha1_init(CryptoHmac hmac, const uint8 *data, uint32 length);
+void crypto_hmac_update(CryptoHmac hmac, const uint8 *data, uint32 length);
 void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length);
 void crypto_hmac_free(CryptoHmac hmac);
 
@@ -119,7 +119,7 @@ boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert);
 rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 
-void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output);
+void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output);
 void crypto_reverse(uint8* data, int length);
 void crypto_nonce(uint8* nonce, int size);
 

@@ -65,12 +65,12 @@
 
 #include "xfreerdp.h"
 
-freerdp_sem g_sem;
+static freerdp_sem g_sem;
 static int g_thread_count = 0;
 static uint8 g_disconnect_reason = 0;
 
 static long xv_port = 0;
-const size_t password_size = 512;
+static const size_t password_size = 512;
 
 struct thread_data
 {

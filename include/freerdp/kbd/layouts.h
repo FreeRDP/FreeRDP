@@ -179,6 +179,6 @@
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
 FREERDP_API rdpKeyboardLayout* get_keyboard_layouts(int types);
-FREERDP_API char* get_layout_name(uint32 keyboardLayoutID);
+FREERDP_API const char* get_layout_name(uint32 keyboardLayoutID);
 
 #endif

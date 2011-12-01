@@ -282,7 +282,7 @@ boolean ber_read_octet_string(STREAM* s, int* length)
  * @param length string length
  */
 
-void ber_write_octet_string(STREAM* s, uint8* oct_str, int length)
+void ber_write_octet_string(STREAM* s, const uint8* oct_str, int length)
 {
 	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, false);
 	ber_write_length(s, length);

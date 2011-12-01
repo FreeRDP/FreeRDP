@@ -20,7 +20,7 @@
 #include "security.h"
 
 /* 0x36 repeated 40 times */
-static uint8 pad1[40] =
+static const uint8 pad1[40] =
 {
 	"\x36\x36\x36\x36\x36\x36\x36\x36"
 	"\x36\x36\x36\x36\x36\x36\x36\x36"
@@ -30,7 +30,7 @@ static uint8 pad1[40] =
 };
 
 /* 0x5C repeated 48 times */
-static uint8 pad2[48] =
+static const uint8 pad2[48] =
 {
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
@@ -40,7 +40,7 @@ static uint8 pad2[48] =
 	"\x5C\x5C\x5C\x5C\x5C\x5C\x5C\x5C"
 };
 
-static uint8
+static const uint8
 fips_reverse_table[256] =
 {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
@@ -77,7 +77,7 @@ fips_reverse_table[256] =
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff
 };
 
-static uint8
+static const uint8
 fips_oddparity_table[256] =
 {
 	0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x07, 0x07,

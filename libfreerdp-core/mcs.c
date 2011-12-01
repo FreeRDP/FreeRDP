@@ -152,10 +152,11 @@
  *
  */
 
-uint8 callingDomainSelector[1] = "\x01";
-uint8 calledDomainSelector[1] = "\x01";
+static const uint8 callingDomainSelector[1] = "\x01";
+static const uint8 calledDomainSelector[1] = "\x01";
 
-uint8 mcs_result_enumerated[16][32] =
+/*
+static const char* const mcs_result_enumerated[] =
 {
 		"rt-successful",
 		"rt-domain-merging",
@@ -174,6 +175,7 @@ uint8 mcs_result_enumerated[16][32] =
 		"rt-unspecified-failure",
 		"rt-user-rejected"
 };
+*/
 
 /**
  * Read a DomainMCSPDU header.

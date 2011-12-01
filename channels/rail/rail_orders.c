@@ -39,7 +39,7 @@
 #define RAIL_ORDER_TYPE_GET_APPID_REQ		0x000E
 #define RAIL_ORDER_TYPE_GET_APPID_RESP		0x000F
 
-uint8 RAIL_ORDER_TYPE_STRINGS[][32] =
+static const char* const RAIL_ORDER_TYPE_STRINGS[] =
 {
 	"",
 	"Execute",
