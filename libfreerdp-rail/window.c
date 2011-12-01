@@ -29,12 +29,12 @@
 struct _WINDOW_STYLE
 {
 	uint32 style;
-	char* name;
+	const char* name;
 	boolean multi;
 };
 typedef struct _WINDOW_STYLE WINDOW_STYLE;
 
-WINDOW_STYLE WINDOW_STYLES[] =
+static const WINDOW_STYLE WINDOW_STYLES[] =
 {
 	{ WS_BORDER, "WS_BORDER", false },
 	{ WS_CAPTION, "WS_CAPTION", false },
@@ -61,7 +61,7 @@ WINDOW_STYLE WINDOW_STYLES[] =
 	{ WS_VISIBLE, "WS_VISIBLE", false }
 };
 
-WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
+static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 {
 	{ WS_EX_ACCEPTFILES, "WS_EX_ACCEPTFILES", false },
 	{ WS_EX_APPWINDOW, "WS_EX_APPWINDOW", false },

@@ -32,7 +32,7 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
-char CB_MSG_TYPE_STRINGS[12][50] =
+static const char* const CB_MSG_TYPE_STRINGS[] =
 {
 	"",
 	"CB_MONITOR_READY",

@@ -27,7 +27,7 @@
 
 #include "nego.h"
 
-char NEGO_STATE_STRINGS[6][25] =
+static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
 	"NEGO_STATE_NLA",
@@ -37,7 +37,7 @@ char NEGO_STATE_STRINGS[6][25] =
 	"NEGO_STATE_FINAL"
 };
 
-char PROTOCOL_SECURITY_STRINGS[3][4] =
+static const char PROTOCOL_SECURITY_STRINGS[3][4] =
 {
 	"RDP",
 	"TLS",

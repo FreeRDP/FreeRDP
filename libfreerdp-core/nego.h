@@ -68,9 +68,6 @@ enum RDP_NEG_MSG
 
 #define EXTENDED_CLIENT_DATA_SUPPORTED 0x01
 
-extern char NEGO_STATE_STRINGS[6][25];
-extern char PROTOCOL_SECURITY_STRINGS[3][4];
-
 struct rdp_nego
 {
 	int port;

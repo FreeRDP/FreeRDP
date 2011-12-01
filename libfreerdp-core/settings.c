@@ -27,7 +27,7 @@
 
 #include <freerdp/settings.h>
 
-static char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
+static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
 rdpSettings* settings_new(void* instance)
 {

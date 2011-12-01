@@ -26,7 +26,7 @@ CryptoSha1 crypto_sha1_init(void)
 	return sha1;
 }
 
-void crypto_sha1_update(CryptoSha1 sha1, uint8* data, uint32 length)
+void crypto_sha1_update(CryptoSha1 sha1, const uint8* data, uint32 length)
 {
 	SHA1_Update(&sha1->sha_ctx, data, length);
 }
@@ -44,7 +44,7 @@ CryptoMd5 crypto_md5_init(void)
 	return md5;
 }
 
-void crypto_md5_update(CryptoMd5 md5, uint8* data, uint32 length)
+void crypto_md5_update(CryptoMd5 md5, const uint8* data, uint32 length)
 {
 	MD5_Update(&md5->md5_ctx, data, length);
 }
@@ -55,14 +55,14 @@ void crypto_md5_final(CryptoMd5 md5, uint8* out_data)
 	xfree(md5);
 }
 
-CryptoRc4 crypto_rc4_init(uint8* key, uint32 length)
+CryptoRc4 crypto_rc4_init(const uint8* key, uint32 length)
 {
 	CryptoRc4 rc4 = xmalloc(sizeof(*rc4));
 	RC4_set_key(&rc4->rc4_key, length, key);
 	return rc4;
 }
 
-void crypto_rc4(CryptoRc4 rc4, uint32 length, uint8* in_data, uint8* out_data)
+void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_data)
 {
 	RC4(&rc4->rc4_key, length, in_data, out_data);
 }
@@ -72,7 +72,7 @@ void crypto_rc4_free(CryptoRc4 rc4)
 	xfree(rc4);
 }
 
-CryptoDes3 crypto_des3_encrypt_init(uint8* key, uint8* ivec)
+CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec)
 {
 	CryptoDes3 des3 = xmalloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
@@ -81,7 +81,7 @@ CryptoDes3 crypto_des3_encrypt_init(uint8* key, uint8* ivec)
 	return des3;
 }
 
-CryptoDes3 crypto_des3_decrypt_init(uint8* key, uint8* ivec)
+CryptoDes3 crypto_des3_decrypt_init(const uint8* key, const uint8* ivec)
 {
 	CryptoDes3 des3 = xmalloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
@@ -90,13 +90,13 @@ CryptoDes3 crypto_des3_decrypt_init(uint8* key, uint8* ivec)
 	return des3;
 }
 
-void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, uint8* in_data, uint8* out_data)
+void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, const uint8* in_data, uint8* out_data)
 {
 	int len;
 	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
 }
 
-void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, uint8* in_data, uint8* out_data)
+void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const uint8* in_data, uint8* out_data)
 {
 	int len;
 	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
@@ -117,12 +117,12 @@ CryptoHmac crypto_hmac_new(void)
 	return hmac;
 }
 
-void crypto_hmac_sha1_init(CryptoHmac hmac, uint8* data, uint32 length)
+void crypto_hmac_sha1_init(CryptoHmac hmac, const uint8* data, uint32 length)
 {
 	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
 }
 
-void crypto_hmac_update(CryptoHmac hmac, uint8* data, uint32 length)
+void crypto_hmac_update(CryptoHmac hmac, const uint8* data, uint32 length)
 {
 	HMAC_Update(&hmac->hmac_ctx, data, length);
 }
@@ -193,7 +193,7 @@ exit:
 	return status;
 }
 
-void crypto_rsa_encrypt(uint8* input, int length, uint32 key_length, uint8* modulus, uint8* exponent, uint8* output)
+void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
 {
 	BN_CTX* ctx;
 	int output_length;

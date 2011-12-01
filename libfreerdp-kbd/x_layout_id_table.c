@@ -29,7 +29,7 @@
 typedef struct
 {
 	/* XKB Keyboard layout variant */
-	char* variant;
+	const char* variant;
 
 	/* Keyboard Layout ID */
 	unsigned int keyboardLayoutID;
@@ -39,19 +39,19 @@ typedef struct
 typedef struct
 {
 	/* XKB Keyboard layout */
-	char* layout;
+	const char* layout;
 
 	/* Keyboard Layout ID */
 	unsigned int keyboardLayoutID;
 
-	xkbVariant* variants;
+	const xkbVariant* variants;
 
 } xkbLayout;
 
 /* Those have been generated automatically and are waiting to be filled by hand */
 
 /* USA */
-xkbVariant us_variants[] =
+static const xkbVariant us_variants[] =
 {
 	{ "chr",		0 }, /* Cherokee */
 	{ "euro",		0 }, /* With EuroSign on 5 */
@@ -72,7 +72,7 @@ xkbVariant us_variants[] =
 };
 
 /* Afghanistan */
-xkbVariant af_variants[] =
+static const xkbVariant af_variants[] =
 {
 	{ "ps",			KBD_PASHTO }, /* Pashto */
 	{ "uz",			KBD_UZBEK_CYRILLIC }, /* Southern Uzbek */
@@ -83,7 +83,7 @@ xkbVariant af_variants[] =
 };
 
 /* Arabic */
-xkbVariant ara_variants[] =
+static const xkbVariant ara_variants[] =
 {
 	{ "azerty",		KBD_ARABIC_102_AZERTY }, /* azerty */
 	{ "azerty_digits",	KBD_ARABIC_102_AZERTY }, /* azerty/digits */
@@ -95,7 +95,7 @@ xkbVariant ara_variants[] =
 };
 
 /* Armenia */
-xkbVariant am_variants[] =
+static const xkbVariant am_variants[] =
 {
 	{ "phonetic",		0 }, /* Phonetic */
 	{ "phonetic-alt",	0 }, /* Alternative Phonetic */
@@ -106,14 +106,14 @@ xkbVariant am_variants[] =
 };
 
 /* Azerbaijan */
-xkbVariant az_variants[] =
+static const xkbVariant az_variants[] =
 {
 	{ "cyrillic",		KBD_AZERI_CYRILLIC }, /* Cyrillic */
 	{ "",			0 },
 };
 
 /* Belarus */
-xkbVariant by_variants[] =
+static const xkbVariant by_variants[] =
 {
 	{ "winkeys",		KBD_BELARUSIAN }, /* Winkeys */
 	{ "latin",		KBD_BELARUSIAN }, /* Latin */
@@ -121,7 +121,7 @@ xkbVariant by_variants[] =
 };
 
 /* Belgium */
-xkbVariant be_variants[] =
+static const xkbVariant be_variants[] =
 {
 	{ "oss",		KBD_BELGIAN_FRENCH }, /* Alternative */
 	{ "oss_latin9",		KBD_BELGIAN_FRENCH }, /* Alternative, latin-9 only */
@@ -134,14 +134,14 @@ xkbVariant be_variants[] =
 };
 
 /* Bangladesh */
-xkbVariant bd_variants[] =
+static const xkbVariant bd_variants[] =
 {
 	{ "probhat",		KBD_BENGALI_INSCRIPT }, /* Probhat */
 	{ "",			0 },
 };
 
 /* India */
-xkbVariant in_variants[] =
+static const xkbVariant in_variants[] =
 {
 	{ "ben",		KBD_BENGALI }, /* Bengali */
 	{ "ben_probhat",	KBD_BENGALI_INSCRIPT }, /* Bengali Probhat */
@@ -166,7 +166,7 @@ xkbVariant in_variants[] =
 };
 
 /* Bosnia and Herzegovina */
-xkbVariant ba_variants[] =
+static const xkbVariant ba_variants[] =
 {
 	{ "alternatequotes",	KBD_BOSNIAN }, /* Use guillemets for quotes */
 	{ "unicode",		KBD_BOSNIAN }, /* Use Bosnian digraphs */
@@ -176,7 +176,7 @@ xkbVariant ba_variants[] =
 };
 
 /* Brazil */
-xkbVariant br_variants[] =
+static const xkbVariant br_variants[] =
 {
 	{ "nodeadkeys",		KBD_PORTUGUESE_BRAZILIAN_ABNT2 }, /* Eliminate dead keys */
 	{ "dvorak",		KBD_UNITED_STATES_DVORAK }, /* Dvorak */
@@ -187,7 +187,7 @@ xkbVariant br_variants[] =
 };
 
 /* Bulgaria */
-xkbVariant bg_variants[] =
+static const xkbVariant bg_variants[] =
 {
 	{ "phonetic",		KBD_BULGARIAN_LATIN }, /* Traditional Phonetic */
 	{ "bas_phonetic",	KBD_BULGARIAN_LATIN }, /* Standard Phonetic */
@@ -195,7 +195,7 @@ xkbVariant bg_variants[] =
 };
 
 /* Morocco */
-xkbVariant ma_variants[] =
+static const xkbVariant ma_variants[] =
 {
 	{ "french",			KBD_FRENCH }, /* French */
 	{ "tifinagh",			0 }, /* Tifinagh */
@@ -208,7 +208,7 @@ xkbVariant ma_variants[] =
 };
 
 /* Canada */
-xkbVariant ca_variants[] =
+static const xkbVariant ca_variants[] =
 {
 	{ "fr-dvorak",		KBD_UNITED_STATES_DVORAK }, /* French Dvorak */
 	{ "fr-legacy",		KBD_CANADIAN_FRENCH }, /* French (legacy) */
@@ -223,7 +223,7 @@ xkbVariant ca_variants[] =
 };
 
 /* China */
-xkbVariant cn_variants[] =
+static const xkbVariant cn_variants[] =
 {
 	{ "tib",		0 }, /* Tibetan */
 	{ "tib_asciinum",	0 }, /* Tibetan (with ASCII numerals) */
@@ -231,7 +231,7 @@ xkbVariant cn_variants[] =
 };
 
 /* Croatia */
-xkbVariant hr_variants[] =
+static const xkbVariant hr_variants[] =
 {
 	{ "alternatequotes",	KBD_CROATIAN }, /* Use guillemets for quotes */
 	{ "unicode",		KBD_CROATIAN }, /* Use Croatian digraphs */
@@ -241,7 +241,7 @@ xkbVariant hr_variants[] =
 };
 
 /* Czechia */
-xkbVariant cz_variants[] =
+static const xkbVariant cz_variants[] =
 {
 	{ "bksl",		KBD_CZECH_PROGRAMMERS }, /* With &lt;\|&gt; key */
 	{ "qwerty",		KBD_CZECH_QWERTY }, /* qwerty */
@@ -251,7 +251,7 @@ xkbVariant cz_variants[] =
 };
 
 /* Denmark */
-xkbVariant dk_variants[] =
+static const xkbVariant dk_variants[] =
 {
 	{ "nodeadkeys",		KBD_DANISH }, /* Eliminate dead keys */
 	{ "mac",		KBD_DANISH }, /* Macintosh */
@@ -261,7 +261,7 @@ xkbVariant dk_variants[] =
 };
 
 /* Netherlands */
-xkbVariant nl_variants[] =
+static const xkbVariant nl_variants[] =
 {
 	{ "sundeadkeys",	KBD_SWISS_FRENCH }, /* Sun dead keys */
 	{ "mac",		KBD_SWISS_FRENCH }, /* Macintosh */
@@ -270,7 +270,7 @@ xkbVariant nl_variants[] =
 };
 
 /* Estonia */
-xkbVariant ee_variants[] =
+static const xkbVariant ee_variants[] =
 {
 	{ "nodeadkeys",		KBD_US }, /* Eliminate dead keys */
 	{ "dvorak",		KBD_UNITED_STATES_DVORAK }, /* Dvorak */
@@ -279,7 +279,7 @@ xkbVariant ee_variants[] =
 };
 
 /* Iran */
-xkbVariant ir_variants[] =
+static const xkbVariant ir_variants[] =
 {
 	{ "pro",		0 }, /* Pro */
 	{ "keypad",		0 }, /* Keypad */
@@ -292,7 +292,7 @@ xkbVariant ir_variants[] =
 };
 
 /* Iraq */
-xkbVariant iq_variants[] =
+static const xkbVariant iq_variants[] =
 {
 	{ "ku",			0 }, /* Kurdish, Latin Q */
 	{ "ku_f",		0 }, /* Kurdish, (F) */
@@ -302,14 +302,14 @@ xkbVariant iq_variants[] =
 };
 
 /* Faroe Islands */
-xkbVariant fo_variants[] =
+static const xkbVariant fo_variants[] =
 {
 	{ "nodeadkeys",		0 }, /* Eliminate dead keys */
 	{ "",			0 },
 };
 
 /* Finland */
-xkbVariant fi_variants[] =
+static const xkbVariant fi_variants[] =
 {
 	{ "nodeadkeys",		0 }, /* Eliminate dead keys */
 	{ "smi",		0 }, /* Northern Saami */
@@ -319,7 +319,7 @@ xkbVariant fi_variants[] =
 };
 
 /* France */
-xkbVariant fr_variants[] =
+static const xkbVariant fr_variants[] =
 {
 	{ "nodeadkeys",		0 }, /* Eliminate dead keys */
 	{ "sundeadkeys",	0 }, /* Sun dead keys */
@@ -341,7 +341,7 @@ xkbVariant fr_variants[] =
 };
 
 /* Ghana */
-xkbVariant gh_variants[] =
+static const xkbVariant gh_variants[] =
 {
 	{ "generic",		0 }, /* Multilingual */
 	{ "akan",		0 }, /* Akan */
@@ -353,7 +353,7 @@ xkbVariant gh_variants[] =
 };
 
 /* Georgia */
-xkbVariant ge_variants[] =
+static const xkbVariant ge_variants[] =
 {
 	{ "ergonomic",		0 }, /* Ergonomic */
 	{ "mess",		0 }, /* MESS */
@@ -363,7 +363,7 @@ xkbVariant ge_variants[] =
 };
 
 /* Germany */
-xkbVariant de_variants[] =
+static const xkbVariant de_variants[] =
 {
 	{ "deadacute",		KBD_GERMAN }, /* Dead acute */
 	{ "deadgraveacute",	KBD_GERMAN }, /* Dead grave acute */
@@ -382,7 +382,7 @@ xkbVariant de_variants[] =
 };
 
 /* Greece */
-xkbVariant gr_variants[] =
+static const xkbVariant gr_variants[] =
 {
 	{ "simple",		KBD_GREEK_220 }, /* Simple */
 	{ "extended",		KBD_GREEK_319 }, /* Extended */
@@ -392,7 +392,7 @@ xkbVariant gr_variants[] =
 };
 
 /* Hungary */
-xkbVariant hu_variants[] =
+static const xkbVariant hu_variants[] =
 {
 	{ "standard",				KBD_HUNGARIAN_101_KEY }, /* Standard */
 	{ "nodeadkeys",				KBD_HUNGARIAN_101_KEY }, /* Eliminate dead keys */
@@ -417,7 +417,7 @@ xkbVariant hu_variants[] =
 };
 
 /* Iceland */
-xkbVariant is_variants[] =
+static const xkbVariant is_variants[] =
 {
 	{ "Sundeadkeys",	KBD_ICELANDIC }, /* Sun dead keys */
 	{ "nodeadkeys",		KBD_ICELANDIC }, /* Eliminate dead keys */
@@ -427,7 +427,7 @@ xkbVariant is_variants[] =
 };
 
 /* Israel */
-xkbVariant il_variants[] =
+static const xkbVariant il_variants[] =
 {
 	{ "lyx",		KBD_HEBREW }, /* lyx */
 	{ "phonetic",		KBD_HEBREW }, /* Phonetic */
@@ -436,7 +436,7 @@ xkbVariant il_variants[] =
 };
 
 /* Italy */
-xkbVariant it_variants[] =
+static const xkbVariant it_variants[] =
 {
 	{ "nodeadkeys",		KBD_ITALIAN_142 }, /* Eliminate dead keys */
 	{ "mac",		KBD_ITALIAN }, /* Macintosh */
@@ -445,7 +445,7 @@ xkbVariant it_variants[] =
 };
 
 /* Japan */
-xkbVariant jp_variants[] =
+static const xkbVariant jp_variants[] =
 {
 	{ "kana",		KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002 }, /* Kana */
 	{ "OADG109A",		KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002 }, /* OADG 109A */
@@ -453,14 +453,14 @@ xkbVariant jp_variants[] =
 };
 
 /* Kyrgyzstan */
-xkbVariant kg_variants[] =
+static const xkbVariant kg_variants[] =
 {
 	{ "phonetic",		KBD_KYRGYZ_CYRILLIC }, /* Phonetic */
 	{ "",			0 },
 };
 
 /* Kazakhstan */
-xkbVariant kz_variants[] =
+static const xkbVariant kz_variants[] =
 {
 	{ "ruskaz",		KBD_KAZAKH }, /* Russian with Kazakh */
 	{ "kazrus",		KBD_KAZAKH }, /* Kazakh with Russian */
@@ -468,7 +468,7 @@ xkbVariant kz_variants[] =
 };
 
 /* Latin America */
-xkbVariant latam_variants[] =
+static const xkbVariant latam_variants[] =
 {
 	{ "nodeadkeys",		KBD_LATIN_AMERICAN }, /* Eliminate dead keys */
 	{ "deadtilde",		KBD_LATIN_AMERICAN }, /* Include dead tilde */
@@ -477,7 +477,7 @@ xkbVariant latam_variants[] =
 };
 
 /* Lithuania */
-xkbVariant lt_variants[] =
+static const xkbVariant lt_variants[] =
 {
 	{ "std",		KBD_LITHUANIAN }, /* Standard */
 	{ "us",			KBD_LITHUANIAN_IBM }, /* US keyboard with Lithuanian letters */
@@ -489,7 +489,7 @@ xkbVariant lt_variants[] =
 };
 
 /* Latvia */
-xkbVariant lv_variants[] =
+static const xkbVariant lv_variants[] =
 {
 	{ "apostrophe",		KBD_LATVIAN }, /* Apostrophe (') variant */
 	{ "tilde",		KBD_LATVIAN }, /* Tilde (~) variant */
@@ -498,7 +498,7 @@ xkbVariant lv_variants[] =
 };
 
 /* Montenegro */
-xkbVariant me_variants[] =
+static const xkbVariant me_variants[] =
 {
 	{ "cyrillic",			0 }, /* Cyrillic */
 	{ "cyrillicyz",			0 }, /* Cyrillic, Z and ZHE swapped */
@@ -511,21 +511,21 @@ xkbVariant me_variants[] =
 };
 
 /* Macedonia */
-xkbVariant mk_variants[] =
+static const xkbVariant mk_variants[] =
 {
 	{ "nodeadkeys",		KBD_FYRO_MACEDONIAN }, /* Eliminate dead keys */
 	{ "",			0 },
 };
 
 /* Malta */
-xkbVariant mt_variants[] =
+static const xkbVariant mt_variants[] =
 {
 	{ "us",			KBD_MALTESE_48_KEY }, /* Maltese keyboard with US layout */
 	{ "",			0 },
 };
 
 /* Norway */
-xkbVariant no_variants[] =
+static const xkbVariant no_variants[] =
 {
 	{ "nodeadkeys",		KBD_NORWEGIAN }, /* Eliminate dead keys */
 	{ "dvorak",		KBD_UNITED_STATES_DVORAK }, /* Dvorak */
@@ -537,7 +537,7 @@ xkbVariant no_variants[] =
 };
 
 /* Poland */
-xkbVariant pl_variants[] =
+static const xkbVariant pl_variants[] =
 {
 	{ "qwertz",		KBD_POLISH_214 }, /* qwertz */
 	{ "dvorak",		KBD_UNITED_STATES_DVORAK }, /* Dvorak */
@@ -549,7 +549,7 @@ xkbVariant pl_variants[] =
 };
 
 /* Portugal */
-xkbVariant pt_variants[] =
+static const xkbVariant pt_variants[] =
 {
 	{ "nodeadkeys",		KBD_PORTUGUESE }, /* Eliminate dead keys */
 	{ "sundeadkeys",	KBD_PORTUGUESE }, /* Sun dead keys */
@@ -563,7 +563,7 @@ xkbVariant pt_variants[] =
 };
 
 /* Romania */
-xkbVariant ro_variants[] =
+static const xkbVariant ro_variants[] =
 {
 	{ "cedilla",		KBD_ROMANIAN }, /* Cedilla */
 	{ "std",		KBD_ROMANIAN }, /* Standard */
@@ -577,7 +577,7 @@ xkbVariant ro_variants[] =
 };
 
 /* Russia */
-xkbVariant ru_variants[] =
+static const xkbVariant ru_variants[] =
 {
 	{ "phonetic",		KBD_RUSSIAN }, /* Phonetic */
 	{ "phonetic_winkeys",	KBD_RUSSIAN }, /* Phonetic Winkeys */
@@ -597,7 +597,7 @@ xkbVariant ru_variants[] =
 };
 
 /* Serbia */
-xkbVariant rs_variants[] =
+static const xkbVariant rs_variants[] =
 {
 	{ "yz",				KBD_SERBIAN_CYRILLIC }, /* Z and ZHE swapped */
 	{ "latin",			KBD_SERBIAN_LATIN }, /* Latin */
@@ -610,7 +610,7 @@ xkbVariant rs_variants[] =
 };
 
 /* Slovenia */
-xkbVariant si_variants[] =
+static const xkbVariant si_variants[] =
 {
 	{ "alternatequotes",	KBD_SLOVENIAN }, /* Use guillemets for quotes */
 	{ "us",			KBD_UNITED_STATES_INTERNATIONAL }, /* US keyboard with Slovenian letters */
@@ -618,7 +618,7 @@ xkbVariant si_variants[] =
 };
 
 /* Slovakia */
-xkbVariant sk_variants[] =
+static const xkbVariant sk_variants[] =
 {
 	{ "bksl",		KBD_SLOVAK }, /* Extended Backslash */
 	{ "qwerty",		KBD_SLOVAK_QWERTY }, /* qwerty */
@@ -627,7 +627,7 @@ xkbVariant sk_variants[] =
 };
 
 /* Spain */
-xkbVariant es_variants[] =
+static const xkbVariant es_variants[] =
 {
 	{ "nodeadkeys",		KBD_SPANISH_VARIATION }, /* Eliminate dead keys */
 	{ "deadtilde",		KBD_SPANISH_VARIATION }, /* Include dead tilde */
@@ -640,7 +640,7 @@ xkbVariant es_variants[] =
 };
 
 /* Sweden */
-xkbVariant se_variants[] =
+static const xkbVariant se_variants[] =
 {
 	{ "nodeadkeys",		KBD_SWEDISH }, /* Eliminate dead keys */
 	{ "dvorak",		KBD_UNITED_STATES_DVORAK }, /* Dvorak */
@@ -653,7 +653,7 @@ xkbVariant se_variants[] =
 };
 
 /* Switzerland */
-xkbVariant ch_variants[] =
+static const xkbVariant ch_variants[] =
 {
 	{ "de_nodeadkeys",	KBD_SWISS_GERMAN }, /* German, eliminate dead keys */
 	{ "de_sundeadkeys",	KBD_SWISS_GERMAN }, /* German, Sun dead keys */
@@ -666,7 +666,7 @@ xkbVariant ch_variants[] =
 };
 
 /* Syria */
-xkbVariant sy_variants[] =
+static const xkbVariant sy_variants[] =
 {
 	{ "syc",		KBD_SYRIAC }, /* Syriac */
 	{ "syc_phonetic",	KBD_SYRIAC_PHONETIC }, /* Syriac phonetic */
@@ -677,14 +677,14 @@ xkbVariant sy_variants[] =
 };
 
 /* Tajikistan */
-xkbVariant tj_variants[] =
+static const xkbVariant tj_variants[] =
 {
 	{ "legacy",		0 }, /* Legacy */
 	{ "",			0 },
 };
 
 /* Sri Lanka */
-xkbVariant lk_variants[] =
+static const xkbVariant lk_variants[] =
 {
 	{ "tam_unicode",	KBD_TAMIL }, /* Tamil Unicode */
 	{ "tam_TAB",		KBD_TAMIL }, /* Tamil TAB Typewriter */
@@ -692,7 +692,7 @@ xkbVariant lk_variants[] =
 };
 
 /* Thailand */
-xkbVariant th_variants[] =
+static const xkbVariant th_variants[] =
 {
 	{ "tis",		KBD_THAI_KEDMANEE_NON_SHIFTLOCK }, /* TIS-820.2538 */
 	{ "pat",		KBD_THAI_PATTACHOTE }, /* Pattachote */
@@ -700,7 +700,7 @@ xkbVariant th_variants[] =
 };
 
 /* Turkey */
-xkbVariant tr_variants[] =
+static const xkbVariant tr_variants[] =
 {
 	{ "f",			KBD_TURKISH_F }, /* (F) */
 	{ "alt",		KBD_TURKISH_Q }, /* Alt-Q */
@@ -716,7 +716,7 @@ xkbVariant tr_variants[] =
 };
 
 /* Ukraine */
-xkbVariant ua_variants[] =
+static const xkbVariant ua_variants[] =
 {
 	{ "phonetic",		KBD_UKRAINIAN }, /* Phonetic */
 	{ "typewriter",		KBD_UKRAINIAN }, /* Typewriter */
@@ -732,7 +732,7 @@ xkbVariant ua_variants[] =
 };
 
 /* United Kingdom */
-xkbVariant gb_variants[] =
+static const xkbVariant gb_variants[] =
 {
 	{ "extd",		KBD_UNITED_KINGDOM_EXTENDED }, /* Extended - Winkeys */
 	{ "intl",		KBD_UNITED_KINGDOM_EXTENDED }, /* International (with dead keys) */
@@ -744,7 +744,7 @@ xkbVariant gb_variants[] =
 };
 
 /* Uzbekistan */
-xkbVariant uz_variants[] =
+static const xkbVariant uz_variants[] =
 {
 	{ "latin",		0 }, /* Latin */
 	{ "crh",		KBD_TATAR }, /* Crimean Tatar (Turkish Q) */
@@ -754,14 +754,14 @@ xkbVariant uz_variants[] =
 };
 
 /* Korea, Republic of */
-xkbVariant kr_variants[] =
+static const xkbVariant kr_variants[] =
 {
 	{ "kr104",		KBD_KOREAN_INPUT_SYSTEM_IME_2000 }, /* 101/104 key Compatible */
 	{ "",			0 },
 };
 
 /* Ireland */
-xkbVariant ie_variants[] =
+static const xkbVariant ie_variants[] =
 {
 	{ "CloGaelach",		KBD_GAELIC }, /* CloGaelach */
 	{ "UnicodeExpert",	KBD_GAELIC }, /* UnicodeExpert */
@@ -771,7 +771,7 @@ xkbVariant ie_variants[] =
 };
 
 /* Pakistan */
-xkbVariant pk_variants[] =
+static const xkbVariant pk_variants[] =
 {
 	{ "urd-crulp",		0 }, /* CRULP */
 	{ "urd-nla",		0 }, /* NLA */
@@ -780,14 +780,14 @@ xkbVariant pk_variants[] =
 };
 
 /* Esperanto */
-xkbVariant epo_variants[] =
+static const xkbVariant epo_variants[] =
 {
 	{ "legacy",		0 }, /* displaced semicolon and quote (obsolete) */
 	{ "",			0 },
 };
 
 /* Nigeria */
-xkbVariant ng_variants[] =
+static const xkbVariant ng_variants[] =
 {
 	{ "igbo",		0 }, /* Igbo */
 	{ "yoruba",		0 }, /* Yoruba */
@@ -796,7 +796,7 @@ xkbVariant ng_variants[] =
 };
 
 /* Braille */
-xkbVariant brai_variants[] =
+static const xkbVariant brai_variants[] =
 {
 	{ "left_hand",		0 }, /* Left hand */
 	{ "right_hand",		0 }, /* Right hand */
@@ -804,13 +804,13 @@ xkbVariant brai_variants[] =
 };
 
 /* Turkmenistan */
-xkbVariant tm_variants[] =
+static const xkbVariant tm_variants[] =
 {
 	{ "alt",		KBD_TURKISH_Q }, /* Alt-Q */
 	{ "",			0 },
 };
 
-xkbLayout xkbLayouts[] =
+static const xkbLayout xkbLayouts[] =
 {
 	{ "us",		 KBD_US, us_variants }, /* USA */
 	{ "ad",		 0, NULL }, /* Andorra */
@@ -934,7 +934,7 @@ typedef struct _SunOSKeyboard
 } SunOSKeyboard;
 
 
-SunOSKeyboard SunOSKeyboards[] =
+static const SunOSKeyboard SunOSKeyboards[] =
 {
 	{ 4,   0,    "sun(type4)",               KBD_US					}, /*  US4 */
 	{ 4,   1,    "sun(type4)",               KBD_US					}, /*  US4 */

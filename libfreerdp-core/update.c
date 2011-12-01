@@ -22,13 +22,15 @@
 #include <freerdp/utils/rect.h>
 #include <freerdp/codec/bitmap.h>
 
-uint8 UPDATE_TYPE_STRINGS[][32] =
+/*
+static const char* const UPDATE_TYPE_STRINGS[] =
 {
 	"Orders",
 	"Bitmap",
 	"Palette",
 	"Synchronize"
 };
+*/
 
 void update_recv_orders(rdpUpdate* update, STREAM* s)
 {

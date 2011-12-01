@@ -39,7 +39,7 @@ typedef struct
  * HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet001/Control/Keyboard Layouts/
  */
 
-keyboardLayout keyboardLayouts[] =
+static const keyboardLayout keyboardLayouts[] =
 {
 	{ KBD_ARABIC_101,		"Arabic (101)" },
 	{ KBD_BULGARIAN,		"Bulgarian" },
@@ -142,7 +142,7 @@ typedef struct
 } keyboardLayoutVariant;
 
 
-keyboardLayoutVariant keyboardLayoutVariants[] =
+static const keyboardLayoutVariant keyboardLayoutVariants[] =
 {
 	{ KBD_ARABIC_102,				0x0028, "Arabic (102)" },
 	{ KBD_BULGARIAN_LATIN,				0x0004, "Bulgarian (Latin)" },
@@ -207,7 +207,7 @@ typedef struct
 
 /* Global Input Method Editors (IME) */
 
-keyboardIME keyboardIMEs[] =
+static const keyboardIME keyboardIMEs[] =
 {
 	{ KBD_CHINESE_TRADITIONAL_PHONETIC,			"phon.ime", "Chinese (Traditional) - Phonetic" },
 	{ KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002,			"imjp81.ime", "Japanese Input System (MS-IME2002)" },
@@ -275,7 +275,7 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 	return layouts;
 }
 
-char* get_layout_name(unsigned int keyboardLayoutID)
+const char* get_layout_name(unsigned int keyboardLayoutID)
 {
 	int i;
 	for(i = 0; i < sizeof(keyboardLayouts) / sizeof(keyboardLayout); i++)

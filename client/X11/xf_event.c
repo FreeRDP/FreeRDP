@@ -28,7 +28,7 @@
 
 #include "xf_event.h"
 
-uint8 X11_EVENT_STRINGS[][20] =
+static const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
 	"KeyPress",
