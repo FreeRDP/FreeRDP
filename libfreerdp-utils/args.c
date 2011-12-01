@@ -86,7 +86,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
-				"  --nsc: enable NSCodec\n"
+				"  --nsc: enable NSCodec (experimental)\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
