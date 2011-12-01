@@ -22,8 +22,8 @@
 
 #include "df_event.h"
 
-uint8 keymap[256];
-uint8 functionmap[128];
+static uint8 keymap[256];
+static uint8 functionmap[128];
 
 void df_keyboard_init()
 {

@@ -32,7 +32,7 @@
 
 #include "dfreerdp.h"
 
-freerdp_sem g_sem;
+static freerdp_sem g_sem;
 static int g_thread_count = 0;
 
 struct thread_data
