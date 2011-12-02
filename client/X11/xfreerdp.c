@@ -288,6 +288,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
+	xfi->attribs.bit_gravity = ForgetGravity;
+	xfi->attribs.win_gravity = StaticGravity;
 
 	if (xfi->remote_app != true)
 	{
@@ -470,24 +472,26 @@ boolean xf_pre_connect(freerdp* instance)
 		return false;
 	}
 
-	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", false);
-	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", false);
-	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", false);
-	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", false);
-	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", false);
-	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", false);
-	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", false);
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
+	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
+	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", True);
+	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", True);
+	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", True);
+	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", True);
+	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", True);
 
-	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", false);
-	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", false);
-	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", false);
-	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", false);
-	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", false);
+	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", True);
+	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", True);
+	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", True);
+	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", True);
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", True);
+	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", True);
 
-	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", false);
-
-	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", false);
-	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", false);
+	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
+	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
 
 	xf_kbd_init(xfi);
 

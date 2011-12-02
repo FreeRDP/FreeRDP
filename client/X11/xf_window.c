@@ -37,7 +37,29 @@
 
 /* Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-1.3.html */
 
-#define MWM_HINTS_DECORATIONS		(1L << 1)
+/* bit definitions for MwmHints.flags */
+#define MWM_HINTS_FUNCTIONS     (1L << 0)
+#define MWM_HINTS_DECORATIONS   (1L << 1)
+#define MWM_HINTS_INPUT_MODE    (1L << 2)
+#define MWM_HINTS_STATUS        (1L << 3)
+
+/* bit definitions for MwmHints.functions */
+#define MWM_FUNC_ALL            (1L << 0)
+#define MWM_FUNC_RESIZE         (1L << 1)
+#define MWM_FUNC_MOVE           (1L << 2)
+#define MWM_FUNC_MINIMIZE       (1L << 3)
+#define MWM_FUNC_MAXIMIZE       (1L << 4)
+#define MWM_FUNC_CLOSE          (1L << 5)
+
+/* bit definitions for MwmHints.decorations */
+#define MWM_DECOR_ALL           (1L << 0)
+#define MWM_DECOR_BORDER        (1L << 1)
+#define MWM_DECOR_RESIZEH       (1L << 2)
+#define MWM_DECOR_TITLE         (1L << 3)
+#define MWM_DECOR_MENU          (1L << 4)
+#define MWM_DECOR_MINIMIZE      (1L << 5)
+#define MWM_DECOR_MAXIMIZE      (1L << 6)
+
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
 
 struct _PropMotifWmHints
@@ -75,7 +97,8 @@ void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int n
        }
 
        DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
-       XSendEvent(xfi->display, window->handle, False, NoEventMask, &xevent);
+       XSendEvent(xfi->display, DefaultRootWindow(xfi->display), False, 
+		SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
        XSync(xfi->display, False);
 
        va_end(argp);
@@ -181,8 +204,9 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 {
 	PropMotifWmHints hints;
 
-	hints.decorations = show;
-	hints.flags = MWM_HINTS_DECORATIONS;
+	hints.decorations = (show) ? MWM_DECOR_ALL : 0;
+	hints.functions = MWM_FUNC_ALL ; 
+	hints.flags = MWM_HINTS_DECORATIONS | MWM_HINTS_FUNCTIONS;
 
 	XChangeProperty(xfi->display, window->handle, xfi->_MOTIF_WM_HINTS, xfi->_MOTIF_WM_HINTS, 32,
 		PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
@@ -203,21 +227,27 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 {
 	Atom window_type;
 
-	window_type = xfi->_NET_WM_WINDOW_TYPE_NORMAL;
-
-	if ((style & WS_POPUP) || (style & WS_DLGFRAME) || (ex_style & WS_EX_DLGMODALFRAME))
+	if (style & WS_POPUP)
 	{
-		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
+		// WS_POPUP includes tool tips, dropdown menus, etc.  These won't work
+		// correctly if the local window manager resizes or moves them.  Set
+		// override redirect to prevent this from occurring.
+ 
+		XSetWindowAttributes attrs;
+		attrs.override_redirect = True;
+		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
+		window->is_transient = true;
+
+		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
-
-	if (ex_style & WS_EX_TOOLWINDOW)
+	else
 	{
-		xf_SetWindowUnlisted(xfi, window);
-		window_type = xfi->_NET_WM_WINDOW_TYPE_UTILITY;
+		window_type = xfi->_NET_WM_WINDOW_TYPE_NORMAL;
 	}
 
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_WINDOW_TYPE,
 		XA_ATOM, 32, PropModeReplace, (uint8*) &window_type, 1);
+
 }
 
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
@@ -235,12 +265,14 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		window->height = height;
 		window->fullscreen = false;
 		window->decorations = decorations;
-		window->isMapped = false;
+		window->local_move.state = LMS_NOT_ACTIVE;
+		window->is_mapped = false;
+		window->is_transient = false;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
-			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-			CWBorderPixel, &xfi->attribs);
+			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
+			CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
 
 		class_hints = XAllocClassHint();
 
@@ -345,21 +377,32 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->height = height;
 
 	XGCValues gcv;
-	int input_mask;
 	XClassHint* class_hints;
+	int input_mask;
 
 	window->decorations = false;
 	window->fullscreen = false;
 	window->window = wnd;
-	window->localMove.inProgress = false;
-	window->isMapped = false;
+	window->local_move.state = LMS_NOT_ACTIVE;
+	window->is_mapped = false;
+	window->is_transient = false;
+
+	// Proper behavior of tooltips, dropdown menus, etc, depend on the local window
+	// manager not modify them.  Set override_redirect on these windows.  RDP window
+	// styles don't map 1 to 1 to X window styles, but the presence of WM_POPUP 
+	// appears to be sufficient for setting override_redirect.
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
-		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-		CWBorderPixel, &xfi->attribs);
+		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
+		CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
+
+	DEBUG_X11_LMS("Create  window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  rdp=0x%X",
+			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+			window->width, window->height, wnd->windowId);
 
 	xf_SetWindowDecorations(xfi, window, window->decorations);
+	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
 
 	class_hints = XAllocClassHint();
 
@@ -377,10 +420,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 
-	input_mask =
-		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
-		VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
-		PointerMotionMask | ExposureMask | EnterWindowMask;
+	input_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask |
+        	ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | 
+		PointerMotionMask | Button1MotionMask | Button2MotionMask | 
+		Button3MotionMask | Button4MotionMask | Button5MotionMask |
+                ButtonMotionMask | KeymapStateMask | ExposureMask | 
+		VisibilityChangeMask | StructureNotifyMask | SubstructureNotifyMask | 
+		SubstructureRedirectMask | FocusChangeMask | PropertyChangeMask |
+                ColormapChangeMask | OwnerGrabButtonMask;
 
 	XSelectInput(xfi->display, window->handle, input_mask);
 	XMapWindow(xfi->display, window->handle);
@@ -419,32 +466,31 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 	}
 }
 
-void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int windowRelativeX, int windowRelativeY)
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y)
 {
-	window->localMove.windowRelativeX = windowRelativeX;
-	window->localMove.windowRelativeY = windowRelativeY;
+	rdpWindow* wnd = window->window;
+	Window child_window;
 
-	DEBUG_X11_LMS("direction=%d coords=%d,%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-			direction, windowRelativeX, windowRelativeY,
-			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-			window->width, window->height);
+	DEBUG_X11_LMS("direction=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d   "
+		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d  mouse_x=%d mouse_y=%d",
+		direction, (uint32) window->handle, 
+		window->left, window->top, window->right, window->bottom,
+		window->width, window->height,
+		wnd->windowId,
+		wnd->windowOffsetX, wnd->windowOffsetY, 
+		wnd->windowWidth, wnd->windowHeight,
+		x, y);
 
-	// FIXME: There does not appear a way to tell when the local window manager completes
-	// a window move or resize.  The client will receive a number of ConfigureNotify events
-	// but nothing indicates when the user has completed the move gesture (keyboard or mouse).
-	// 
-	return;
+	window->local_move.root_x = x; 
+	window->local_move.root_y = y;
+	window->local_move.state = LMS_ACTIVE;
 
-	// X Server _WM_MOVERESIZE coordinates are expressed relative to the root window.
-	// RDP coordinates are expressed relative to the local window.
-	// Translate these to root window coordinates.
-
-	window->localMove.inProgress = True;
-	Window childWindow;
-	int x,y;
-
-	XTranslateCoordinates(xfi->display, window->handle, DefaultRootWindow(xfi->display), 
-		windowRelativeX, windowRelativeY, &x, &y, &childWindow);
+	XTranslateCoordinates(xfi->display, DefaultRootWindow(xfi->display), window->handle, 
+		window->local_move.root_x, 
+		window->local_move.root_y,
+		&window->local_move.window_x, 
+		&window->local_move.window_y, 
+		&child_window);
 
 	XUngrabPointer(xfi->display, CurrentTime);
 	xf_SendClientEvent(xfi, window, 
@@ -459,46 +505,58 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int win
 
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 {
-	DEBUG_X11_LMS("inProcess=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-			window->localMove.inProgress, cancel, 
-			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-			window->width, window->height);
+	rdpWindow* wnd = window->window;
 
-	if (!window->localMove.inProgress)
+	DEBUG_X11_LMS("inProcess=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
+		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
+		window->local_move.state, cancel, 
+		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+		window->width, window->height,
+		wnd->windowId,
+		wnd->windowOffsetX, wnd->windowOffsetY, 
+		wnd->windowWidth, wnd->windowHeight);
+
+	if (window->local_move.state == LMS_NOT_ACTIVE)
 		return;
 
 	if (cancel)
 	{
 		// Per ICCM, the X client can ask to cancel an active move.  Do this if we 
 		// receive a local move stop from RDP while a local move is in progress
-		Window childWindow;
-		int x,y;
-
-		XTranslateCoordinates(xfi->display, window->handle, DefaultRootWindow(xfi->display), 
-			window->localMove.windowRelativeX, window->localMove.windowRelativeY, &x, &y, &childWindow);
 	
 		xf_SendClientEvent(xfi, window, 
-			xfi->_NET_WM_MOVERESIZE, // Request X window manager to initate a local move
+			xfi->_NET_WM_MOVERESIZE, // Request X window manager to abort a local move
 			5, // 5 arguments to follow 
-			x, // x relative to root window
-			y, // y relative to root window
+			window->local_move.root_x, // x relative to root window
+			window->local_move.root_y, // y relative to root window
 			_NET_WM_MOVERESIZE_CANCEL, // extended ICCM direction flag
 			1, // simulated mouse button 1
 		       	1);// 1 == application request per extended ICCM
 	}
 
-	window->localMove.inProgress = False;
+	window->local_move.state = LMS_NOT_ACTIVE;
 }
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
 	boolean resize = false;
+	rdpWindow* wnd = window->window;
 
 	if ((width * height) < 1)
 		return;
 
 	if ((window->width != width) || (window->height != height))
 		resize = true;
+
+	DEBUG_X11_LMS("window=0x%X current rc={l=%d t=%d r=%d b=%d} w=%u h=%u  "
+		"new rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
+		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
+		(uint32) window->handle, window->left, window->top, 
+		window->right, window->bottom, window->width, window->height,
+		x, y, x + width -1, y + height -1, width, height,
+		wnd->windowId,
+		wnd->windowOffsetX, wnd->windowOffsetY, 
+		wnd->windowWidth, wnd->windowHeight);
 
 	window->left = x;
 	window->top = y;
@@ -507,20 +565,24 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->width = width;
 	window->height = height;
 
-	if (resize)
-		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
-	else
-		XMoveWindow(xfi->display, window->handle, x, y);
-
-	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-		window->width, window->height);
-
-	if (resize)
+	if (window->is_transient) 
 	{
-		xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
+		if (resize)
+			XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+		else
+			XMoveWindow(xfi->display, window->handle, x, y);
+	} else {
+		// Sending a client event preserves
+		// window gravity
+		xf_SendClientEvent(xfi, window, 
+			xfi->_NET_MOVERESIZE_WINDOW, // Request X window manager to move window
+			5, // 5 arguments to follow 
+			0x1F0A, // STATIC gravity
+			x, // x relative to root window
+			y, // y relative to root window
+			width, 
+			height);
 	}
-
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
@@ -630,8 +692,8 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 {
 	int ax, ay;
 	rdpWindow* wnd;
-
 	wnd = window->window;
+
 	ax = x + wnd->windowOffsetX;
 	ay = y + wnd->windowOffsetY;
 

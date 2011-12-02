@@ -43,11 +43,20 @@ typedef struct xf_window xfWindow;
 #define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
 #define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
 
+enum xf_localmove_state
+{
+	LMS_NOT_ACTIVE,
+	LMS_ACTIVE,
+	LMS_TERMINATING
+};
+
 struct xf_localmove
 {
-	int windowRelativeX;
-	int windowRelativeY;
-	boolean inProgress;
+	int root_x;  // relative to root
+	int root_y;
+	int window_x; // relative to window
+	int window_y;
+	enum xf_localmove_state state;
 };
 
 struct xf_window
@@ -63,8 +72,9 @@ struct xf_window
 	boolean fullscreen;
 	boolean decorations;
 	rdpWindow* window;
-	boolean isMapped;
-	xfLocalMove localMove;
+	boolean is_mapped;
+	boolean is_transient;
+	xfLocalMove local_move;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);
@@ -94,7 +104,7 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int max
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
 
 
-void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int windowRelativeX, int windowRelativeY);
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel);
 void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 

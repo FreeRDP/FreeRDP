@@ -24,6 +24,7 @@
 #include <freerdp/kbd/vkcodes.h>
 
 #include "xf_rail.h"
+#include "xf_window.h"
 #include "xf_cliprdr.h"
 
 #include "xf_event.h"
@@ -340,7 +341,7 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	xf_rail_send_activate(xfi, event->xany.window, true);
 	xf_kbd_focus_in(xfi);
 
-	if (xfi->remote_app != true)
+	if (app != true)
 		xf_cliprdr_check_owner(xfi);
 
 	return true;
@@ -462,7 +463,7 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
                 xfw->bottom = xfw->top + xfw->height - 1;
 
 		if (app)
-			xf_rail_local_movesize(xfi, xfw);
+			xf_rail_adjust_position(xfi, window);
 
         }
 
@@ -484,7 +485,7 @@ boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 		/* local restore event */
 		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
 		xfWindow *xfw = (xfWindow*) window->extra;
-		xfw->isMapped = true;
+		xfw->is_mapped = true;
 	}
 
 	return true;
@@ -503,7 +504,7 @@ boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	if (window != NULL)
 	{
 		xfWindow *xfw = (xfWindow*) window->extra;
-		xfw->isMapped = false;
+		xfw->is_mapped = false;
 	}
 
 	return true;
@@ -511,7 +512,7 @@ boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != true)
+	if (app != true)
 	{
 		if (xf_cliprdr_process_selection_notify(xfi, event))
 			return true;
@@ -522,7 +523,7 @@ boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != true)
+	if (app != true)
 	{
 		if (xf_cliprdr_process_selection_request(xfi, event))
 			return true;
@@ -533,7 +534,7 @@ boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != true)
+	if (app != true)
 	{
 		if (xf_cliprdr_process_selection_clear(xfi, event))
 			return true;
@@ -544,7 +545,7 @@ boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-	if (xfi->remote_app != true)
+	if (app != true)
 	{
 		if (xf_cliprdr_process_property_notify(xfi, event))
 			return true;
@@ -555,20 +556,71 @@ boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_process(freerdp* instance, XEvent* event)
 {
-	boolean app = false;
 	boolean status = true;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
-	if (xfi->remote_app == true)
+	if (xfi->window && xfi->window->local_move.state == LMS_ACTIVE)
 	{
-		app = true;
-	}
-	else
-	{
-		if (event->xany.window != xfi->window->handle)
-			app = true;
-	}
+		xfWindow* xfw;
+		rdpWindow* window;
+		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+		if (window != NULL)
+		{
+			xfw = (xfWindow*) window->extra;
+			xfi->window = xfw;
+			switch (event->type)
+			{
+				case ButtonPress:
+				case ButtonRelease:
+				case KeyPress:
+				case KeyRelease:
+				case UnmapNotify:
+				{
+                                	// A button release event means the X window server did not grab the
+                                	// mouse before the user released it.  In this case we must cancel
+                                	// the local move. The event will be processed below as normal, below.
+                                	xf_EndLocalMoveSize(xfi, xfw, true);
+				}
+                                break;
 
+				case FocusIn:
+				case FocusOut:
+				{
+					XFocusChangeEvent *focusEvent = (XFocusChangeEvent *)event;
+					if (focusEvent->mode == NotifyUngrab)
+						xf_rail_end_local_move(xfi, window);
+					else
+						return true;
+				}
+				break;
+
+				case EnterNotify:
+				case LeaveNotify:
+				{
+					XCrossingEvent *crossingEvent = (XCrossingEvent *)event;
+					if(crossingEvent->mode == NotifyUngrab)
+						xf_rail_end_local_move(xfi, window);
+					else
+						return true;
+				}
+				break;
+
+				case VisibilityNotify:
+				case ConfigureNotify:
+				case Expose:
+				case PropertyNotify:
+					// Allow these events to be processed during move to keep
+					// our state up to date.
+					break;
+				default:
+					// Any other event should signify the root no longer
+					// has the grap, so the move has finished.
+					xf_rail_end_local_move(xfi, window);
+			}
+
+		}
+	}
 
 	if (event->type != MotionNotify)
 		DEBUG_X11("%s Event: wnd=0x%04X", X11_EVENT_STRINGS[event->type], (uint32) event->xany.window);
@@ -576,47 +628,47 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 	switch (event->type)
 	{
 		case Expose:
-			status = xf_event_Expose(xfi, event, app);
+			status = xf_event_Expose(xfi, event, xfi->remote_app);
 			break;
 
 		case VisibilityNotify:
-			status = xf_event_VisibilityNotify(xfi, event, app);
+			status = xf_event_VisibilityNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case MotionNotify:
-			status = xf_event_MotionNotify(xfi, event, app);
+			status = xf_event_MotionNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case ButtonPress:
-			status = xf_event_ButtonPress(xfi, event, app);
+			status = xf_event_ButtonPress(xfi, event, xfi->remote_app);
 			break;
 
 		case ButtonRelease:
-			status = xf_event_ButtonRelease(xfi, event, app);
+			status = xf_event_ButtonRelease(xfi, event, xfi->remote_app);
 			break;
 
 		case KeyPress:
-			status = xf_event_KeyPress(xfi, event, app);
+			status = xf_event_KeyPress(xfi, event, xfi->remote_app);
 			break;
 
 		case KeyRelease:
-			status = xf_event_KeyRelease(xfi, event, app);
+			status = xf_event_KeyRelease(xfi, event, xfi->remote_app);
 			break;
 
 		case FocusIn:
-			status = xf_event_FocusIn(xfi, event, app);
+			status = xf_event_FocusIn(xfi, event, xfi->remote_app);
 			break;
 
 		case FocusOut:
-			status = xf_event_FocusOut(xfi, event, app);
+			status = xf_event_FocusOut(xfi, event, xfi->remote_app);
 			break;
 
 		case EnterNotify:
-			status = xf_event_EnterNotify(xfi, event, app);
+			status = xf_event_EnterNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case LeaveNotify:
-			status = xf_event_LeaveNotify(xfi, event, app);
+			status = xf_event_LeaveNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case NoExpose:
@@ -626,42 +678,42 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 			break;
 
 		case ConfigureNotify:
-			status = xf_event_ConfigureNotify(xfi, event, app);
+			status = xf_event_ConfigureNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case MapNotify:
-			status = xf_event_MapNotify(xfi, event, app);
+			status = xf_event_MapNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case UnmapNotify:
-			status = xf_event_UnmapNotify(xfi, event, app);
+			status = xf_event_UnmapNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case ReparentNotify:
 			break;
 
 		case MappingNotify:
-			status = xf_event_MappingNotify(xfi, event, app);
+			status = xf_event_MappingNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case ClientMessage:
-			status = xf_event_ClientMessage(xfi, event, app);
+			status = xf_event_ClientMessage(xfi, event, xfi->remote_app);
 			break;
 
 		case SelectionNotify:
-			status = xf_event_SelectionNotify(xfi, event, app);
+			status = xf_event_SelectionNotify(xfi, event, xfi->remote_app);
 			break;
 
 		case SelectionRequest:
-			status = xf_event_SelectionRequest(xfi, event, app);
+			status = xf_event_SelectionRequest(xfi, event, xfi->remote_app);
 			break;
 
 		case SelectionClear:
-			status = xf_event_SelectionClear(xfi, event, app);
+			status = xf_event_SelectionClear(xfi, event, xfi->remote_app);
 			break;
 
 		case PropertyNotify:
-			status = xf_event_PropertyNotify(xfi, event, app);
+			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
 			break;
 
 		default:
