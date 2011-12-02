@@ -62,6 +62,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -a: set color depth in bit, default is 16\n"
 				"  -c: initial working directory\n"
 				"  -D: hide window decorations\n"
+				"  -T: window title\n"
 				"  -d: domain\n"
 				"  -f: fullscreen mode\n"
 				"  -g: set geometry, using format WxH or X%% or 'workarea', default is 1024x768\n"
@@ -208,6 +209,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("-D", argv[index]) == 0)
 		{
 			settings->decorations = false;
+		}
+		else if (strcmp("-T", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing window title\n");
+				return -1;
+			}
+			strncpy(settings->window_title, argv[index], sizeof(settings->window_title) - 1);
+			settings->window_title[sizeof(settings->window_title) - 1] = 0;
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{

@@ -277,8 +277,7 @@ boolean xf_check_fds(freerdp* instance, fd_set* set)
 void xf_create_window(xfInfo* xfi)
 {
 	XEvent xevent;
-	char* title;
-	char* hostname;
+	char* win_title;
 	int width, height;
 
 	width = xfi->width;
@@ -298,12 +297,19 @@ void xf_create_window(xfInfo* xfi)
 			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
 		}
 
-		hostname = xfi->instance->settings->hostname;
-		title = xmalloc(sizeof("FreeRDP: ") + strlen(hostname));
-		sprintf(title, "FreeRDP: %s", hostname);
+		if (strlen(xfi->instance->settings->window_title) > 0) {
+			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
+			sprintf(win_title, "%s", xfi->instance->settings->window_title);
+		} else if (xfi->instance->settings->port == 3389) {
+			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
+			sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
+		} else {
+			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
+			sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
+		}
 
-		xfi->window = xf_CreateDesktopWindow(xfi, title, width, height, xfi->decorations);
-		xfree(title);
+		xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
+		xfree(win_title);
 
 		if (xfi->fullscreen)
 			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
