@@ -92,6 +92,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>-T <replaceable class="parameter">text</replaceable></term>
+        <listitem>
+          <para>
+            Sets the window title to <replaceable class="parameter">text</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-g <replaceable class="parameter">geometry</replaceable></term>
         <listitem>
           <para>
