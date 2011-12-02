@@ -227,6 +227,7 @@ struct rdp_settings
 	uint32 percent_screen; /* 85 */
 	boolean mouse_motion; /* 86 */
 	uint32 paddingD[112 - 87]; /* 87 */
+	char window_title[64];
 
 	/* Internal Parameters */
 	char* home_path; /* 112 */
