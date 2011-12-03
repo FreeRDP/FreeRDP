@@ -1421,7 +1421,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, uint16 length, rdpSettings
  */
 void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 {
-	uint16 captureFlags;
+	uint32 captureFlags;
 	uint8 codecMode;
 
 	captureFlags = settings->dump_rfx ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;

@@ -239,7 +239,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->windowRects = window_state->windowRects;
 		window->numWindowRects = window_state->numWindowRects;
 
-		for (i = 0; i < window_state->numWindowRects; i++)
+		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
 			DEBUG_RAIL("Window Rect #%d: left:%d top:%d right:%d bottom:%d", i,
 					window_state->windowRects[i].left, window_state->windowRects[i].top,
@@ -266,7 +266,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->visibilityRects = window_state->visibilityRects;
 		window->numVisibilityRects = window_state->numVisibilityRects;
 
-		for (i = 0; i < window_state->numVisibilityRects; i++)
+		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
 			DEBUG_RAIL("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d", i,
 					window_state->visibilityRects[i].left, window_state->visibilityRects[i].top,

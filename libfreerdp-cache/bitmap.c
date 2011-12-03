@@ -97,7 +97,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 
 	bitmap = cache->bitmap->bitmap;
 
-	for (i = 0; i < bitmap_update->number; i++)
+	for (i = 0; i < (int) bitmap_update->number; i++)
 	{
 		bitmap_data = &bitmap_update->rectangles[i];
 
@@ -216,7 +216,7 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 
 		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
-		for (i = 0; i < bitmap_cache->maxCells; i++)
+		for (i = 0; i < (int) bitmap_cache->maxCells; i++)
 		{
 			bitmap_cache->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
 			bitmap_cache->cells[i].entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * bitmap_cache->cells[i].number);
@@ -233,7 +233,7 @@ void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 
 	if (bitmap_cache != NULL)
 	{
-		for (i = 0; i < bitmap_cache->maxCells; i++)
+		for (i = 0; i < (int) bitmap_cache->maxCells; i++)
 		{
 			for (j = 0; j < (int) bitmap_cache->cells[i].number; j++)
 			{

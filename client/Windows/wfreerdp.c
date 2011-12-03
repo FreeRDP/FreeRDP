@@ -69,14 +69,14 @@ int wf_create_console(void)
 	return 0;
 }
 
-void wf_sw_begin_paint(rdpUpdate* update)
+void wf_sw_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = update->context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
-void wf_sw_end_paint(rdpUpdate* update)
+void wf_sw_end_paint(rdpContext* context)
 {
 	int i;
 	rdpGdi* gdi;
@@ -87,8 +87,8 @@ void wf_sw_end_paint(rdpUpdate* update)
 	RECT update_rect;
 	HGDI_RGN cinvalid;
 
-	gdi = update->context->gdi;
-	wfi = ((wfContext*) update->context)->wfi;
+	gdi = context->gdi;
+	wfi = ((wfContext*) context)->wfi;
 
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return;
@@ -112,14 +112,14 @@ void wf_sw_end_paint(rdpUpdate* update)
 	}
 }
 
-void wf_hw_begin_paint(rdpUpdate* update)
+void wf_hw_begin_paint(rdpContext* context)
 {
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 	wfi->hdc->hwnd->invalid->null = 1;
 	wfi->hdc->hwnd->ninvalid = 0;
 }
 
-void wf_hw_end_paint(rdpUpdate* update)
+void wf_hw_end_paint(rdpContext* context)
 {
 
 }

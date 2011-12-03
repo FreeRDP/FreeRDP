@@ -132,7 +132,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		int i;
 		rdpPointer* pointer;
 
-		for (i = 0; i < pointer_cache->cacheSize; i++)
+		for (i = 0; i < (int) pointer_cache->cacheSize; i++)
 		{
 			pointer = pointer_cache->entries[i];
 

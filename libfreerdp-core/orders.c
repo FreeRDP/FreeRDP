@@ -1310,7 +1310,7 @@ void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 	else
 		colorTable = (uint32*) xrealloc(colorTable, cache_color_table_order->numberColors * 4);
 
-	for (i = 0; i < cache_color_table_order->numberColors; i++)
+	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
 	{
 		update_read_color_quad(s, &colorTable[i]);
 	}
@@ -1327,7 +1327,7 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 	stream_read_uint8(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
 	stream_read_uint8(s, cache_glyph_order->cGlyphs); /* cGlyphs (1 byte) */
 
-	for (i = 0; i < cache_glyph_order->cGlyphs; i++)
+	for (i = 0; i < (int) cache_glyph_order->cGlyphs; i++)
 	{
 		glyph = (GLYPH_DATA*) xmalloc(sizeof(GLYPH_DATA));
 		cache_glyph_order->glyphData[i] = glyph;
@@ -1361,7 +1361,7 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 	cache_glyph_v2_order->flags = (flags & 0x00F0) >> 4;
 	cache_glyph_v2_order->cGlyphs = (flags & 0xFF00) >> 8;
 
-	for (i = 0; i < cache_glyph_v2_order->cGlyphs; i++)
+	for (i = 0; i < (int) cache_glyph_v2_order->cGlyphs; i++)
 	{
 		glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
 		cache_glyph_v2_order->glyphData[i] = glyph;
@@ -1493,7 +1493,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 		else
 			deleteList->indices = xrealloc(deleteList->indices, deleteList->cIndices * 2);
 
-		for (i = 0; i < deleteList->cIndices; i++)
+		for (i = 0; i < (int) deleteList->cIndices; i++)
 		{
 			stream_read_uint16(s, deleteList->indices[i]);
 		}

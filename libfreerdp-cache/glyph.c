@@ -86,7 +86,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 	else
 		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor);
 
-	while (index < length)
+	while (index < (int) length)
 	{
 		switch (data[index])
 		{
@@ -94,7 +94,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 
 				printf("GLYPH_FRAGMENT_USE\n");
 
-				if (index + 2 > length)
+				if (index + 2 > (int) length)
 				{
 					/* at least one byte need to follow */
 					index = length = 0;
@@ -114,13 +114,13 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 							x += data[index + 2];
 					}
 
-					for (n = 0; n < size; n++)
+					for (n = 0; n < (int) size; n++)
 					{
 						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
 					}
 				}
 
-				index += (index + 2 < length) ? 3 : 2;
+				index += (index + 2 < (int) length) ? 3 : 2;
 				length -= index;
 				data = &(data[index]);
 				index = 0;
@@ -131,7 +131,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 
 				printf("GLYPH_FRAGMENT_ADD\n");
 
-				if (index + 3 > length)
+				if (index + 3 > (int) length)
 				{
 					/* at least two bytes need to follow */
 					index = length = 0;
@@ -309,7 +309,7 @@ void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 	GLYPH_DATA* glyph_data;
 	rdpCache* cache = context->cache;
 
-	for (i = 0; i < cache_glyph->cGlyphs; i++)
+	for (i = 0; i < (int) cache_glyph->cGlyphs; i++)
 	{
 		glyph_data = cache_glyph->glyphData[i];
 

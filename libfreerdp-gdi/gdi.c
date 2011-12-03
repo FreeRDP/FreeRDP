@@ -550,7 +550,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 	DELTA_RECT* rectangle;
 	rdpGdi *gdi = context->gdi;
 
-	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
+	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
@@ -603,7 +603,7 @@ void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 
 	points = polyline->points;
-	for (i = 0; i < polyline->numPoints; i++)
+	for (i = 0; i < (int) polyline->numPoints; i++)
 	{
 		x += points[i].x;
 		y += points[i].y;

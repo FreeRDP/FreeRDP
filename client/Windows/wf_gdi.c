@@ -182,7 +182,7 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 	SetForegroundWindow(wfi->hwnd);
 }
 
-void wf_gdi_palette_update(rdpUpdate* update, PALETTE_UPDATE* palette)
+void wf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 
 }
@@ -200,10 +200,10 @@ void wf_set_clip_rgn(wfInfo* wfi, int x, int y, int width, int height)
 	DeleteObject(clip);
 }
 
-void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
+void wf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	HRGN hrgn;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	if (bounds != NULL)
 	{
@@ -217,9 +217,9 @@ void wf_gdi_set_bounds(rdpUpdate* update, BOUNDS* bounds)
 	}
 }
 
-void wf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
+void wf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	BitBlt(wfi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
 			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop));
@@ -228,7 +228,7 @@ void wf_gdi_dstblt(rdpUpdate* update, DSTBLT_ORDER* dstblt)
 			dstblt->nWidth, dstblt->nHeight);
 }
 
-void wf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
+void wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	HBRUSH brush;
 	HBRUSH org_brush;
@@ -237,7 +237,7 @@ void wf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 	uint32 bgcolor;
 	COLORREF org_bkcolor;
 	COLORREF org_textcolor;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	fgcolor = freerdp_color_convert(patblt->foreColor, wfi->srcBpp, 24, wfi->clrconv);
 	bgcolor = freerdp_color_convert(patblt->backColor, wfi->srcBpp, 24, wfi->clrconv);
@@ -262,9 +262,9 @@ void wf_gdi_patblt(rdpUpdate* update, PATBLT_ORDER* patblt)
 		wf_invalidate_region(wfi, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 }
 
-void wf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
+void wf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	BitBlt(wfi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, wfi->primary->hdc,
@@ -274,12 +274,12 @@ void wf_gdi_scrblt(rdpUpdate* update, SCRBLT_ORDER* scrblt)
 			scrblt->nWidth, scrblt->nHeight);
 }
 
-void wf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
+void wf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	RECT rect;
 	HBRUSH brush;
 	uint32 brush_color;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	brush_color = freerdp_color_convert(opaque_rect->color, wfi->srcBpp, 24, wfi->clrconv);
 
@@ -295,16 +295,16 @@ void wf_gdi_opaque_rect(rdpUpdate* update, OPAQUE_RECT_ORDER* opaque_rect)
 		wf_invalidate_region(wfi, rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1);
 }
 
-void wf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+void wf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	int i;
 	RECT rect;
 	HBRUSH brush;
 	uint32 brush_color;
 	DELTA_RECT* rectangle;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
+	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
@@ -326,13 +326,13 @@ void wf_gdi_multi_opaque_rect(rdpUpdate* update, MULTI_OPAQUE_RECT_ORDER* multi_
 	}
 }
 
-void wf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
+void wf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
 	HPEN pen;
 	HPEN org_pen;
 	int x, y, w, h;
 	uint32 pen_color;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	pen_color = freerdp_color_convert(line_to->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
@@ -356,7 +356,7 @@ void wf_gdi_line_to(rdpUpdate* update, LINE_TO_ORDER* line_to)
 	DeleteObject(pen);
 }
 
-void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
+void wf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	int i;
 	POINT* pts;
@@ -364,7 +364,7 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	HPEN hpen;
 	HPEN org_hpen;
 	uint32 pen_color;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	pen_color = freerdp_color_convert(polyline->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
@@ -376,7 +376,7 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	{
 		pts = (POINT*) xmalloc(sizeof(POINT) * polyline->numPoints);
 
-		for (i = 0; i < polyline->numPoints; i++)
+		for (i = 0; i < (int) polyline->numPoints; i++)
 		{
 			pts[i].x = polyline->points[i].x;
 			pts[i].y = polyline->points[i].y;
@@ -394,10 +394,10 @@ void wf_gdi_polyline(rdpUpdate* update, POLYLINE_ORDER* polyline)
 	DeleteObject(hpen);
 }
 
-void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
+void wf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	wfBitmap* bitmap;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	bitmap = (wfBitmap*) memblt->bitmap;
 
@@ -409,22 +409,22 @@ void wf_gdi_memblt(rdpUpdate* update, MEMBLT_ORDER* memblt)
 		wf_invalidate_region(wfi, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 }
 
-void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_command)
+void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
 {
 	int i, j;
 	int tx, ty;
 	char* tile_bitmap;
 	RFX_MESSAGE* message;
-	wfInfo* wfi = ((wfContext*) update->context)->wfi;
+	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	RFX_CONTEXT* context = (RFX_CONTEXT*) wfi->rfx_context;
-	NSC_CONTEXT* ncontext = (NSC_CONTEXT*) wfi->nsc_context;
+	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) wfi->rfx_context;
+	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) wfi->nsc_context;
 
 	tile_bitmap = (char*) xzalloc(32);
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		message = rfx_process_message(rfx_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		/* blit each tile */
 		for (i = 0; i < message->num_tiles; i++)
@@ -446,20 +446,20 @@ void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 		}
 
 		wf_set_null_clip_rgn(wfi);
-		rfx_message_free(context, message);
+		rfx_message_free(rfx_context, message);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
 	{
-		ncontext->width = surface_bits_command->width;
-		ncontext->height = surface_bits_command->height;
-		nsc_process_message(ncontext, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		nsc_context->width = surface_bits_command->width;
+		nsc_context->height = surface_bits_command->height;
+		nsc_process_message(nsc_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		wfi->image->_bitmap.width = surface_bits_command->width;
 		wfi->image->_bitmap.height = surface_bits_command->height;
 		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
 		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
-		freerdp_image_flip(ncontext->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
+		freerdp_image_flip(nsc_context->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
 		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
-		nsc_context_destroy(ncontext);
+		nsc_context_destroy(nsc_context);
 	} 
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
@@ -506,30 +506,33 @@ void wf_gdi_surface_bits(rdpUpdate* update, SURFACE_BITS_COMMAND* surface_bits_c
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
+	rdpPrimaryUpdate* primary = update->primary;
+
 	update->Palette = wf_gdi_palette_update;
 	update->SetBounds = wf_gdi_set_bounds;
-	update->DstBlt = wf_gdi_dstblt;
-	update->PatBlt = wf_gdi_patblt;
-	update->ScrBlt = wf_gdi_scrblt;
-	update->OpaqueRect = wf_gdi_opaque_rect;
-	update->DrawNineGrid = NULL;
-	update->MultiDstBlt = NULL;
-	update->MultiPatBlt = NULL;
-	update->MultiScrBlt = NULL;
-	update->MultiOpaqueRect = wf_gdi_multi_opaque_rect;
-	update->MultiDrawNineGrid = NULL;
-	update->LineTo = wf_gdi_line_to;
-	update->Polyline = wf_gdi_polyline;
-	update->MemBlt = wf_gdi_memblt;
-	update->Mem3Blt = NULL;
-	update->SaveBitmap = NULL;
-	update->GlyphIndex = NULL;
-	update->FastIndex = NULL;
-	update->FastGlyph = NULL;
-	update->PolygonSC = NULL;
-	update->PolygonCB = NULL;
-	update->EllipseSC = NULL;
-	update->EllipseCB = NULL;
+
+	primary->DstBlt = wf_gdi_dstblt;
+	primary->PatBlt = wf_gdi_patblt;
+	primary->ScrBlt = wf_gdi_scrblt;
+	primary->OpaqueRect = wf_gdi_opaque_rect;
+	primary->DrawNineGrid = NULL;
+	primary->MultiDstBlt = NULL;
+	primary->MultiPatBlt = NULL;
+	primary->MultiScrBlt = NULL;
+	primary->MultiOpaqueRect = wf_gdi_multi_opaque_rect;
+	primary->MultiDrawNineGrid = NULL;
+	primary->LineTo = wf_gdi_line_to;
+	primary->Polyline = wf_gdi_polyline;
+	primary->MemBlt = wf_gdi_memblt;
+	primary->Mem3Blt = NULL;
+	primary->SaveBitmap = NULL;
+	primary->GlyphIndex = NULL;
+	primary->FastIndex = NULL;
+	primary->FastGlyph = NULL;
+	primary->PolygonSC = NULL;
+	primary->PolygonCB = NULL;
+	primary->EllipseSC = NULL;
+	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = wf_gdi_surface_bits;
 }

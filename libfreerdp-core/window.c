@@ -140,7 +140,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		window_state->windowRects = (RECTANGLE_16*) xmalloc(size);
 
 		/* windowRects */
-		for (i = 0; i < window_state->numWindowRects; i++)
+		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
 			freerdp_read_rectangle_16(s, &window_state->windowRects[i]);
 		}
@@ -160,7 +160,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		window_state->visibilityRects = (RECTANGLE_16*) xmalloc(size);
 
 		/* visibilityRects */
-		for (i = 0; i < window_state->numVisibilityRects; i++)
+		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
 			freerdp_read_rectangle_16(s, &window_state->visibilityRects[i]);
 		}
@@ -292,7 +292,7 @@ void update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* 
 			monitored_desktop->windowIds = (uint32*) xrealloc(monitored_desktop->windowIds, size);
 
 		/* windowIds */
-		for (i = 0; i < monitored_desktop->numWindowIds; i++)
+		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
 		{
 			stream_read_uint32(s, monitored_desktop->windowIds[i]);
 		}
