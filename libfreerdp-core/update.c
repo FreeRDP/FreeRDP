@@ -454,6 +454,65 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 	fastpath_send_update_pdu(rdp->fastpath, s);
 }
 
+static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
+{
+	stream_write_uint16(s, pointer_color->cacheIndex);
+	stream_write_uint16(s, pointer_color->xPos);
+	stream_write_uint16(s, pointer_color->yPos);
+	stream_write_uint16(s, pointer_color->width);
+	stream_write_uint16(s, pointer_color->height);
+	stream_write_uint16(s, pointer_color->lengthAndMask);
+	stream_write_uint16(s, pointer_color->lengthXorMask);
+	if (pointer_color->lengthXorMask > 0)
+		stream_write(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
+	if (pointer_color->lengthAndMask > 0)
+		stream_write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
+	stream_write_uint8(s, 0); /* pad (1 byte) */
+}
+
+static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
+{
+	uint32 size;
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_COLOR); /* updateHeader (1 byte) */
+	size = 15 + pointer_color->lengthAndMask + pointer_color->lengthXorMask;
+	stream_write_uint16(s, size); /* size (2 bytes) */
+	stream_check_size(s, size);
+        update_write_pointer_color(s, pointer_color);
+	fastpath_send_update_pdu(rdp->fastpath, s);
+}
+
+static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
+{
+	uint32 size;
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_POINTER); /* updateHeader (1 byte) */
+	size = 17 + pointer_new->colorPtrAttr.lengthAndMask + pointer_new->colorPtrAttr.lengthXorMask;
+	stream_write_uint16(s, size); /* size (2 bytes) */
+	stream_check_size(s, size);
+	stream_write_uint16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
+        update_write_pointer_color(s, &pointer_new->colorPtrAttr);
+	fastpath_send_update_pdu(rdp->fastpath, s);
+}
+
+static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
+{
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	stream_write_uint8(s, FASTPATH_UPDATETYPE_CACHED); /* updateHeader (1 byte) */
+	stream_write_uint16(s, 2); /* size (2 bytes) */
+	stream_write_uint16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
+	fastpath_send_update_pdu(rdp->fastpath, s);
+}
+
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
@@ -466,6 +525,9 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceCommand = update_send_surface_command;
 	update->primary->ScrBlt = update_send_scrblt;
 	update->pointer->PointerSystem = update_send_pointer_system;
+	update->pointer->PointerColor = update_send_pointer_color;
+	update->pointer->PointerNew = update_send_pointer_new;
+	update->pointer->PointerCached = update_send_pointer_cached;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)
