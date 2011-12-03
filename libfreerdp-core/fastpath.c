@@ -516,66 +516,64 @@ STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
 	STREAM* s;
 	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
 	stream_seek(s, 3); /* fpOutputHeader, length1 and length2 */
+	stream_seek(s, 3); /* updateHeader, size */
 	return s;
 }
 
-boolean fastpath_send_update_pdu(rdpFastPath* fastpath, STREAM* s)
+boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s)
 {
-	uint16 length;
-
-	length = stream_get_length(s);
-
-	if (length > FASTPATH_MAX_PACKET_SIZE)
-	{
-		printf("Maximum FastPath Update PDU length is %d (actual:%d)\n", FASTPATH_MAX_PACKET_SIZE, length);
-		return false;
-	}
-
-	stream_set_pos(s, 0);
-	stream_write_uint8(s, 0); /* fpOutputHeader (1 byte) */
-	stream_write_uint8(s, 0x80 | (length >> 8)); /* length1 */
-	stream_write_uint8(s, length & 0xFF); /* length2 */
-
-	stream_set_pos(s, length);
-	if (transport_write(fastpath->rdp->transport, s) < 0)
-		return false;
-
-	return true;
-}
-
-boolean fastpath_send_fragmented_update_pdu(rdpFastPath* fastpath, STREAM* s)
-{
+	uint8* bm;
 	int fragment;
 	uint16 length;
+	boolean result;
+	uint16 pduLength;
 	uint16 maxLength;
 	uint32 totalLength;
 	uint8 fragmentation;
 	STREAM* update;
 
+	result = true;
+
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 6;
-	totalLength = stream_get_length(s);
+	totalLength = stream_get_length(s) - 6;
 	stream_set_pos(s, 0);
+	update = stream_new(0);
 
 	for (fragment = 0; totalLength > 0; fragment++)
 	{
-		update = fastpath_update_pdu_init(fastpath);
 		length = MIN(maxLength, totalLength);
 		totalLength -= length;
+		pduLength = length + 6;
 
 		if (totalLength == 0)
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
 		else
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
-		fastpath_write_update_header(update, FASTPATH_UPDATETYPE_SURFCMDS, fragmentation, 0);
-		stream_write_uint16(update, length);
-		stream_write(update, s->p, length);
-		stream_seek(s, length);
+		stream_get_mark(s, bm);
+		stream_write_uint8(s, 0); /* fpOutputHeader (1 byte) */
+		stream_write_uint8(s, 0x80 | (pduLength >> 8)); /* length1 */
+		stream_write_uint8(s, pduLength & 0xFF); /* length2 */
+		fastpath_write_update_header(s, updateCode, fragmentation, 0);
+		stream_write_uint16(s, length);
 
-		fastpath_send_update_pdu(fastpath, update);
+		stream_attach(update, bm, pduLength);
+		stream_seek(update, pduLength);
+		if (transport_write(fastpath->rdp->transport, update) < 0)
+		{
+			stream_detach(update);
+			result = false;
+			break;
+		}
+		stream_detach(update);
+
+		/* Reserve 6 bytes for the next fragment header, if any. */
+		stream_seek(s, length - 6);
 	}
 
-	return true;
+	stream_free(update);
+
+	return result;
 }
 
 boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId)
@@ -590,60 +588,6 @@ boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAc
 
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return false;
-
-	return true;
-}
-
-boolean fastpath_send_surfcmd_surface_bits(rdpFastPath* fastpath, SURFACE_BITS_COMMAND* cmd)
-{
-	STREAM* s;
-	uint16 size;
-	uint8* bitmapData;
-	uint32 bitmapDataLength;
-	uint16 fragment_size;
-	uint8 fragmentation;
-	int i;
-	int bp, ep;
-
-	bitmapData = cmd->bitmapData;
-	bitmapDataLength = cmd->bitmapDataLength;
-	for (i = 0; bitmapDataLength > 0; i++)
-	{
-		s = fastpath_update_pdu_init(fastpath);
-
-		bp = stream_get_pos(s);
-		stream_seek_uint8(s); /* updateHeader (1 byte) */
-		stream_seek_uint16(s); /* size (2 bytes) */
-		size = 0;
-
-		if (i == 0)
-		{
-			update_write_surfcmd_surface_bits_header(s, cmd);
-			size += SURFCMD_SURFACE_BITS_HEADER_LENGTH;
-		}
-
-		fragment_size = MIN((uint32)(FASTPATH_MAX_PACKET_SIZE - stream_get_length(s)), bitmapDataLength);
-
-		if (fragment_size == bitmapDataLength)
-			fragmentation = (i == 0 ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST);
-		else
-			fragmentation = (i == 0 ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT);
-
-		size += fragment_size;
-
-		ep = stream_get_pos(s);
-		stream_set_pos(s, bp);
-		fastpath_write_update_header(s, FASTPATH_UPDATETYPE_SURFCMDS, fragmentation, 0);
-		stream_write_uint16(s, size);
-		stream_set_pos(s, ep);
-
-		stream_write(s, bitmapData, fragment_size);
-		bitmapData += fragment_size;
-		bitmapDataLength -= fragment_size;
-
-		if (!fastpath_send_update_pdu(fastpath, s))
-			return false;
-	}
 
 	return true;
 }
