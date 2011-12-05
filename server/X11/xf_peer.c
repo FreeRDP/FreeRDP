@@ -47,8 +47,10 @@ xfInfo* xf_info_init()
 	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
+#ifdef WITH_XDAMAGE
 	int damage_event;
 	int damage_error;
+#endif
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -121,7 +123,9 @@ xfInfo* xf_info_init()
 	xfi->clrconv->alpha = 1;
 
 	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+#ifdef WITH_XDAMAGE
 	XDamageQueryExtension(xfi->display, &damage_event, &damage_error);
+#endif 
 
 	return xfi;
 }
