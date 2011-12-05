@@ -28,14 +28,16 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32 uright, uint32 ubottom)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
 	boolean intersect;
 	uint32 iwidth, iheight;
-	uint32 ileft, itop, iright, ibottom;
-	uint32 wleft, wtop, wright, wbottom;
+	sint32 ileft, itop;
+	uint32 iright, ibottom;
+	sint32 wleft, wtop; 
+	uint32 wright, wbottom;
 
 	window_list_rewind(rail->list);
 
