@@ -544,6 +544,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 
 	if (ent == NULL)
 	{
+		DEBUG_SVC("  pattern %s not found.\n", file->pattern);
 		stream_write_uint32(output, 0); /* Length */
 		stream_write_uint8(output, 0); /* Padding */
 		return false;
@@ -557,6 +558,8 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		DEBUG_WARN("stat %s failed.", ent_path);
 	}
 	xfree(ent_path);
+
+	DEBUG_SVC("  pattern %s matched %s\n", file->pattern, ent_path);
 
 	uniconv = freerdp_uniconv_new();
 	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);
