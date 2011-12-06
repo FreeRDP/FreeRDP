@@ -55,6 +55,36 @@
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
 
+
+static boolean disk_file_wildcard_match(const char* pattern, const char* filename)
+{
+	const char *p = pattern, *f = filename;
+	char c;
+
+	/*
+	 * TODO: proper wildcard rules per msft's File System Behavior Overview
+	 * Simple cases for now.
+	 */
+	f = filename;
+	while ((c = *p++))
+	{
+		if (c == '*')
+		{
+			c = *p++;
+			if (!c)	/* shortcut */
+				return true;
+			/* TODO: skip to tail comparison */
+		}
+		if (c != *f++)
+			return false;
+	}
+
+	if (!*f)
+		return true;
+
+	return false;
+}
+
 static void disk_file_fix_path(char* path)
 {
 	int len;
@@ -272,6 +302,7 @@ void disk_file_free(DISK_FILE* file)
 			unlink(file->fullpath);
 	}
 
+	xfree(file->pattern);
 	xfree(file->fullpath);
 	xfree(file);
 }
@@ -474,14 +505,43 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	size_t len;
 	boolean ret;
 
-	DEBUG_SVC("path %s FsInformationClass %d", path, FsInformationClass);
+	DEBUG_SVC("path %s FsInformationClass %d InitialQuery %d", path, FsInformationClass, InitialQuery);
+
+	if (!file->dir)
+	{
+		stream_write_uint32(output, 0); /* Length */
+		stream_write_uint8(output, 0); /* Padding */
+		return false;
+	}
 
 	if (InitialQuery != 0)
 	{
 		rewinddir(file->dir);
+		xfree(file->pattern);
+
+		if (path[0])
+			file->pattern = strdup(strrchr(path, '\\') + 1);
+		else
+			file->pattern = NULL;
 	}
 
-	ent = readdir(file->dir);
+	if (file->pattern)
+	{
+		do
+		{
+			ent = readdir(file->dir);
+			if (ent == NULL)
+				continue;
+
+			if (disk_file_wildcard_match(file->pattern, ent->d_name))
+				break;
+		} while (ent);
+	}
+	else
+	{
+		ent = readdir(file->dir);
+	}
+
 	if (ent == NULL)
 	{
 		stream_write_uint32(output, 0); /* Length */
