@@ -554,71 +554,99 @@ boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return true;
 }
 
-boolean xf_event_process(freerdp* instance, XEvent* event)
+boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 {
-	boolean status = true;
-	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
+	if (! xfi->remote_app)
+		return false;
 
-	if (xfi->window && xfi->window->local_move.state == LMS_ACTIVE)
+	switch (xfi->window->local_move.state)
 	{
-		xfWindow* xfw;
-		rdpWindow* window;
-		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
-		if (window != NULL)
-		{
-			xfw = (xfWindow*) window->extra;
-			xfi->window = xfw;
-			switch (event->type)
+		case LMS_NOT_ACTIVE:
+			// No local move in progress, nothing to do
+			break;
+		case LMS_STARTING:
+			// Local move initiated by RDP server, but we
+			// have not yet seen any updates from the X server
+			switch(event->type)
 			{
+				case ConfigureNotify:
+					// Starting to see move events 
+					// from the X server. Local 
+					// move is now in progress.
+					xfi->window->local_move.state = LMS_ACTIVE;
+
+					// Allow these events to be processed during move to keep
+					// our state up to date.
+					break;
 				case ButtonPress:
 				case ButtonRelease:
 				case KeyPress:
 				case KeyRelease:
 				case UnmapNotify:
-				{
-                                	// A button release event means the X window server did not grab the
-                                	// mouse before the user released it.  In this case we must cancel
-                                	// the local move. The event will be processed below as normal, below.
-                                	xf_EndLocalMoveSize(xfi, xfw, true);
-				}
-                                break;
-
-				case FocusIn:
-				case FocusOut:
-				{
-					XFocusChangeEvent *focusEvent = (XFocusChangeEvent *)event;
-					if (focusEvent->mode == NotifyUngrab)
-						xf_rail_end_local_move(xfi, window);
-					else
-						return true;
-				}
-				break;
-
-				case EnterNotify:
-				case LeaveNotify:
-				{
-					XCrossingEvent *crossingEvent = (XCrossingEvent *)event;
-					if(crossingEvent->mode == NotifyUngrab)
-						xf_rail_end_local_move(xfi, window);
-					else
-						return true;
-				}
-				break;
-
-				case VisibilityNotify:
-				case ConfigureNotify:
-				case Expose:
-				case PropertyNotify:
-					// Allow these events to be processed during move to keep
-					// our state up to date.
-					break;
-				default:
-					// Any other event should signify the root no longer
-					// has the grap, so the move has finished.
+                	        	// A button release event means the X 
+					// window server did not grab the
+                        		// mouse before the user released it.  
+					// In this case we must cancel the 
+					// local move. The event will be 
+					// processed below as normal, below.
 					xf_rail_end_local_move(xfi, window);
+	                        	break;
+				case VisibilityNotify:
+				case PropertyNotify:
+					// Allow these events to pass
+					return false;
+				default:
+					// Eat any other events 
+					return true;
 			}
+			break;
 
+		case LMS_ACTIVE:
+			// Local move is in progress
+			switch(event->type)
+			{
+				case ConfigureNotify:
+				case VisibilityNotify:
+				case PropertyNotify:
+					// Keep us up to date on position
+					break;
+				case Expose:
+					return true;
+				default:
+					// Any other event terminates move
+					xf_rail_end_local_move(xfi, window);
+					break;
+			}
+			break;
+
+		case LMS_TERMINATING:
+			// Already sent RDP end move to sever
+			// Allow events to pass.
+			break;
+	}	
+
+	return false;
+}
+
+
+boolean xf_event_process(freerdp* instance, XEvent* event)
+{
+	boolean status = true;
+	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
+	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+	rdpWindow* window;
+
+	if (xfi->remote_app)
+	{
+		window = window_list_get_by_extra_id(
+			rail->list, (void*) event->xexpose.window);
+		if (window) 
+		{
+			// Update "current" window for cursor change orders
+			xfi->window = (xfWindow *) window->extra;
+
+			if (xf_event_suppress_events(xfi, window, event))
+				return true;
 		}
 	}
 
@@ -714,10 +742,6 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 
 		case PropertyNotify:
 			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
-			break;
-
-		default:
-			DEBUG_X11("xf_event_process unknown event %d", event->type);
 			break;
 	}
 

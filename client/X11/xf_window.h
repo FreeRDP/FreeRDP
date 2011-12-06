@@ -46,6 +46,7 @@ typedef struct xf_window xfWindow;
 enum xf_localmove_state
 {
 	LMS_NOT_ACTIVE,
+	LMS_STARTING,
 	LMS_ACTIVE,
 	LMS_TERMINATING
 };

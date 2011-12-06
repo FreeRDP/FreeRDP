@@ -85,7 +85,7 @@ void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int n
 
        xevent.xclient.type = ClientMessage;
        xevent.xclient.serial = 0;
-       xevent.xclient.send_event = True;
+       xevent.xclient.send_event = False;
        xevent.xclient.display = xfi->display;
        xevent.xclient.window = window->handle;
        xevent.xclient.message_type = atom;
@@ -483,7 +483,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 
 	window->local_move.root_x = x; 
 	window->local_move.root_y = y;
-	window->local_move.state = LMS_ACTIVE;
+	window->local_move.state = LMS_STARTING;
 
 	XTranslateCoordinates(xfi->display, DefaultRootWindow(xfi->display), window->handle, 
 		window->local_move.root_x, 
@@ -507,7 +507,7 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 {
 	rdpWindow* wnd = window->window;
 
-	DEBUG_X11_LMS("inProcess=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
+	DEBUG_X11_LMS("state=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		window->local_move.state, cancel, 
 		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
@@ -565,24 +565,10 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	window->width = width;
 	window->height = height;
 
-	if (window->is_transient) 
-	{
-		if (resize)
-			XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
-		else
-			XMoveWindow(xfi->display, window->handle, x, y);
-	} else {
-		// Sending a client event preserves
-		// window gravity
-		xf_SendClientEvent(xfi, window, 
-			xfi->_NET_MOVERESIZE_WINDOW, // Request X window manager to move window
-			5, // 5 arguments to follow 
-			0x1F0A, // STATIC gravity
-			x, // x relative to root window
-			y, // y relative to root window
-			width, 
-			height);
-	}
+	if (resize)
+		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
+	else
+		XMoveWindow(xfi->display, window->handle, x, y);
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)

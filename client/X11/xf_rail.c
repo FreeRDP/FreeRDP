@@ -263,13 +263,12 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 		return;
 
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
-		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d lms_state=%d mapped=%d",
+		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		(uint32) xfw->handle, xfw->left, xfw->top, 
 		xfw->right, xfw->bottom, xfw->width, xfw->height,
 		window->windowId,
 		window->windowOffsetX, window->windowOffsetY, 
-		window->windowWidth, window->windowHeight,
-		xfw->local_move.state, xfw->is_mapped);
+		window->windowWidth, window->windowHeight);
 
 	// If current window position disagrees with RDP window position, send
 	// update to RDP server
