@@ -27,6 +27,19 @@ include(CheckLibraryExists)
 include(FindPkgConfig)
 include(TestBigEndian)
 
+# GNUInstallDirs is a relatively new cmake module
+include(GNUInstallDirs OPTIONAL RESULT_VARIABLE GID_PATH)
+if(GID_PATH EQUAL NOTFOUND)
+	# Set default libdir
+	if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+		set(CMAKE_INSTALL_LIBDIR "lib" CACHE PATH "object code libraries (lib)")
+	endif()
+	# Set default bindir
+	if(NOT DEFINED CMAKE_INSTALL_BINDIR)
+		set(CMAKE_INSTALL_BINDIR "bin" CACHE PATH "user executables (bin)")
+	endif()
+endif()
+
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
@@ -45,16 +58,6 @@ set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_PATCH}")
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-# Set default libdir
-if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-	set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-
-# Set default bindir
-if(NOT DEFINED CMAKE_INSTALL_BINDIR)
-	set(CMAKE_INSTALL_BINDIR "bin")
 endif()
 
 # build shared libs
