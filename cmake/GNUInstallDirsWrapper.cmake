@@ -6,7 +6,7 @@ if(GID_PATH STREQUAL "NOTFOUND")
 	endif()
 
 	if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-		set(CMAKE_INSTALL_LIBDIR "lib" CACHE PATH "object code libraries (lib)")
+		set(CMAKE_INSTALL_LIBDIR "lib${LIB_SUFFIX}" CACHE PATH "object code libraries (lib)")
 	endif()
 
 	mark_as_advanced(CMAKE_INSTALL_BINDIR CMAKE_INSTALL_LIBDIR)
