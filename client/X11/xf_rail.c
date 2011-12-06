@@ -28,14 +28,16 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, uint32 uleft, uint32 utop, uint32 uright, uint32 ubottom)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
 	boolean intersect;
 	uint32 iwidth, iheight;
-	uint32 ileft, itop, iright, ibottom;
-	uint32 wleft, wtop, wright, wbottom;
+	sint32 ileft, itop;
+	uint32 iright, ibottom;
+	sint32 wleft, wtop; 
+	uint32 wright, wbottom;
 
 	window_list_rewind(rail->list);
 
@@ -93,6 +95,15 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
+
+	// Do nothing if window is already in the correct position
+        if ( xfw->left == window->windowOffsetX && 
+        	xfw->top == window->windowOffsetY && 
+                xfw->width == window->windowWidth && 
+                xfw->height == window->windowHeight)
+        {
+		return;
+	}
 
 	xf_MoveWindow((xfInfo*) rail->extra, xfw,
 			window->windowOffsetX, window->windowOffsetY,
@@ -199,22 +210,6 @@ static void xf_send_rail_client_event(rdpChannels* channels, uint16 event_type, 
 	}
 }
 
-void xf_rail_send_windowmove(xfInfo* xfi, uint32 windowId, uint32 left, uint32 top, uint32 right, uint32 bottom)
-{
-	rdpChannels* channels;
-	RAIL_WINDOW_MOVE_ORDER window_move;
-
-	channels = xfi->_context->channels;
-
-	window_move.windowId = windowId;
-	window_move.left = left;
-	window_move.top = top;
-	window_move.right = right;
-	window_move.bottom = bottom;
-
-	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
-}
-
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
 {
 	rdpRail* rail;
@@ -247,6 +242,83 @@ void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 com
 	syscommand.command = command;
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, &syscommand);
+}
+
+/**
+ * The position of the X window can become out of sync with the RDP window
+ * if the X window is moved locally by the window manager.  In this event
+ * send an update to the RDP server informing it of the new window position
+ * and size.
+ */
+void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
+{
+	xfWindow* xfw;
+	rdpChannels* channels;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+
+	xfw = (xfWindow*) window->extra;
+	channels = xfi->_context->channels;
+
+	if (! xfw->is_mapped || xfw->local_move.state != LMS_NOT_ACTIVE)
+		return;
+
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
+		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
+		(uint32) xfw->handle, xfw->left, xfw->top, 
+		xfw->right, xfw->bottom, xfw->width, xfw->height,
+		window->windowId,
+		window->windowOffsetX, window->windowOffsetY, 
+		window->windowWidth, window->windowHeight);
+
+	// If current window position disagrees with RDP window position, send
+	// update to RDP server
+	if ( xfw->left != window->windowOffsetX ||
+        	xfw->top != window->windowOffsetY ||
+                xfw->width != window->windowWidth ||
+                xfw->height != window->windowHeight)
+        {
+		window_move.windowId = window->windowId;
+		window_move.left = xfw->left;
+		window_move.top = xfw->top;
+		window_move.right = xfw->right;
+		window_move.bottom = xfw->bottom;
+
+		xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+        }
+}
+
+void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
+{
+	xfWindow* xfw;
+	rdpChannels* channels;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+	int x,y;
+	rdpInput* input = xfi->instance->input;
+
+	xfw = (xfWindow*) window->extra;
+	channels = xfi->_context->channels;
+
+	// Send RDP client event to inform RDP server
+
+	window_move.windowId = window->windowId;
+	window_move.left = xfw->left;
+	window_move.top = xfw->top;
+	window_move.right = xfw->right + 1;   // In the update to RDP the position is one past the window
+	window_move.bottom = xfw->bottom + 1;
+
+	DEBUG_X11_LMS("ClientWindowMove: window=0x%X rc={l=%d t=%d r=%d b=%d}",
+        	(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom);
+
+	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+
+	// Send synthetic button up event to the RDP server.  This is per the RDP spec to
+	// indicate a local move has finished.
+
+	x = xfw->left + xfw->local_move.window_x;
+	y = xfw->top + xfw->local_move.window_y;
+        input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
+
+	xfw->local_move.state = LMS_TERMINATING;
 }
 
 void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
@@ -355,25 +427,90 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
 	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
+	int direction = 0;
+	Window child_window;
+	int x,y;
 
 	rail = ((rdpContext*) xfi->context)->rail;
 	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
 
 	if (rail_window != NULL)
 	{
-		xfWindow* window = NULL;
-		window = (xfWindow*) rail_window->extra;
+		xfWindow* xfw = NULL;
+		xfw = (xfWindow*) rail_window->extra;
 
 		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
 			movetype_names[movesize->moveSizeType], (sint16) movesize->posX, (sint16) movesize->posY);
 
-		if (movesize->isMoveSizeStart)
-			xf_StartLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
-		else
-			xf_StopLocalMoveSize(xfi, window, movesize->moveSizeType, (int) movesize->posX, (int) movesize->posY);
-	}
+		switch (movesize->moveSizeType)
+		{
+			case RAIL_WMSZ_LEFT: //0x1
+				direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_RIGHT: //0x2
+				direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_TOP: //0x3
+				direction = _NET_WM_MOVERESIZE_SIZE_TOP;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_TOPLEFT: //0x4
+				direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_TOPRIGHT: //0x5
+				direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_BOTTOM: //0x6
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_BOTTOMLEFT: //0x7
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_BOTTOMRIGHT: //0x8
+				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_MOVE: //0x9
+				direction = _NET_WM_MOVERESIZE_MOVE;
+				XTranslateCoordinates(xfi->display, xfw->handle, DefaultRootWindow(xfi->display), 
+					movesize->posX, movesize->posY, &x, &y, &child_window);
+				break;
+			case RAIL_WMSZ_KEYMOVE: //0xA
+				direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+			case RAIL_WMSZ_KEYSIZE: //0xB
+				direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+				x = movesize->posX;
+				y = movesize->posY;
+				break;
+		}
 
+		if (movesize->isMoveSizeStart)
+		{
+			xf_StartLocalMoveSize(xfi, xfw, direction, x, y);
+		} else {
+			xf_MoveWindow(xfi, xfw, movesize->posX, movesize->posY, 
+				xfw->width, xfw->height);
+			xf_EndLocalMoveSize(xfi, xfw, false);
+		}
+	}
 }
 
 void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)

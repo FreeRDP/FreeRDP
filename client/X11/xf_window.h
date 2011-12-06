@@ -24,9 +24,41 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
 
+typedef struct xf_localmove xfLocalMove;
 typedef struct xf_window xfWindow;
 
 #include "xfreerdp.h"
+
+// Extended ICCM flags http://standards.freedesktop.org/wm-spec/wm-spec-latest.html
+#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
+#define _NET_WM_MOVERESIZE_SIZE_TOP          1
+#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
+#define _NET_WM_MOVERESIZE_SIZE_RIGHT        3
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOM       5
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
+#define _NET_WM_MOVERESIZE_SIZE_LEFT         7
+#define _NET_WM_MOVERESIZE_MOVE              8   /* movement only */
+#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
+#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
+#define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
+
+enum xf_localmove_state
+{
+	LMS_NOT_ACTIVE,
+	LMS_STARTING,
+	LMS_ACTIVE,
+	LMS_TERMINATING
+};
+
+struct xf_localmove
+{
+	int root_x;  // relative to root
+	int root_y;
+	int window_x; // relative to window
+	int window_y;
+	enum xf_localmove_state state;
+};
 
 struct xf_window
 {
@@ -41,7 +73,9 @@ struct xf_window
 	boolean fullscreen;
 	boolean decorations;
 	rdpWindow* window;
-	boolean localMoveSize;
+	boolean is_mapped;
+	boolean is_transient;
+	xfLocalMove local_move;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);
@@ -71,7 +105,8 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int max
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
 
 
-void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int posX, int posY);
-void xf_StopLocalMoveSize(xfInfo* xfi, xfWindow* window, uint16 moveSizeType, int topLeftX, int topLeftY);
+void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y);
+void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel);
+void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_WINDOW_H */

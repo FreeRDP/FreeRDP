@@ -45,5 +45,6 @@
 #cmakedefine WITH_DEBUG_ORDERS
 #cmakedefine WITH_DEBUG_REDIR
 #cmakedefine WITH_DEBUG_CLIPRDR
+#cmakedefine WITH_DEBUG_WND
 
 #endif
