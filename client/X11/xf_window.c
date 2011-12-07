@@ -227,9 +227,9 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 {
 	Atom window_type;
 
-	if (style & WS_POPUP)
+	if (ex_style & WS_EX_TOPMOST || ex_style & WS_EX_TOOLWINDOW)
 	{
-		// WS_POPUP includes tool tips, dropdown menus, etc.  These won't work
+		// These include tool tips, dropdown menus, etc.  These won't work
 		// correctly if the local window manager resizes or moves them.  Set
 		// override redirect to prevent this from occurring.
  
@@ -239,6 +239,12 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		window->is_transient = true;
 
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
+	}
+	else if (style & WS_POPUP)
+	{
+		// This includes dialogs, popups, etc, that need to be 
+		// full-fledged windows
+		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 	}
 	else
 	{
