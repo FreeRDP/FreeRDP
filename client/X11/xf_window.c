@@ -97,7 +97,7 @@ void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int n
        }
 
        DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
-       XSendEvent(xfi->display, DefaultRootWindow(xfi->display), False, 
+       XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, 
 		SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
        XSync(xfi->display, False);
 
@@ -237,6 +237,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		attrs.override_redirect = True;
 		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
 		window->is_transient = true;
+		xf_SetWindowUnlisted(xfi, window);
 
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
@@ -245,6 +246,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		// This includes dialogs, popups, etc, that need to be 
 		// full-fledged windows
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
+		xf_SetWindowUnlisted(xfi, window);
 	}
 	else
 	{
@@ -393,11 +395,6 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->is_mapped = false;
 	window->is_transient = false;
 
-	// Proper behavior of tooltips, dropdown menus, etc, depend on the local window
-	// manager not modify them.  Set override_redirect on these windows.  RDP window
-	// styles don't map 1 to 1 to X window styles, but the presence of WM_POPUP 
-	// appears to be sufficient for setting override_redirect.
-
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
 		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
@@ -491,7 +488,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 	window->local_move.root_y = y;
 	window->local_move.state = LMS_STARTING;
 
-	XTranslateCoordinates(xfi->display, DefaultRootWindow(xfi->display), window->handle, 
+	XTranslateCoordinates(xfi->display, RootWindowOfScreen(xfi->screen), window->handle, 
 		window->local_move.root_x, 
 		window->local_move.root_y,
 		&window->local_move.window_x, 
@@ -549,6 +546,9 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	rdpWindow* wnd = window->window;
 
 	if ((width * height) < 1)
+		return;
+
+	if (window->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
 	if ((window->width != width) || (window->height != height))
@@ -686,14 +686,14 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	rdpWindow* wnd;
 	wnd = window->window;
 
-	ax = x + wnd->windowOffsetX;
-	ay = y + wnd->windowOffsetY;
+	ax = x + window->left;
+	ay = y + window->top;
 
-	if (ax + width > wnd->windowOffsetX + wnd->windowWidth)
-		width = (wnd->windowOffsetX + wnd->windowWidth - 1) - ax;
+	if (ax + width >= window->right)
+		width = window->right - ax + 1;
 
-	if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
-		height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
+	if (ay + height >= window->bottom)
+		height = window->bottom - ay + 1; 
 
 	if (xfi->sw_gdi)
 	{

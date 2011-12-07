@@ -454,7 +454,8 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
                 // ConfigureNotify coordinates are expressed relative to the window parent.
                 // Translate these to root window coordinates.
                 Window childWindow;
-                XTranslateCoordinates(xfi->display, xfw->handle, DefaultRootWindow(xfi->display),
+                XTranslateCoordinates(xfi->display, xfw->handle, 
+			RootWindowOfScreen(xfi->screen),
                         0, 0, &xfw->left, &xfw->top, &childWindow);
 
                 xfw->width = event->xconfigure.width;
