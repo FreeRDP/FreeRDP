@@ -262,14 +262,6 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 	if (! xfw->is_mapped || xfw->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
-	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
-		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-		(uint32) xfw->handle, xfw->left, xfw->top, 
-		xfw->right, xfw->bottom, xfw->width, xfw->height,
-		window->windowId,
-		window->windowOffsetX, window->windowOffsetY, 
-		window->windowWidth, window->windowHeight);
-
 	// If current window position disagrees with RDP window position, send
 	// update to RDP server
 	if ( xfw->left != window->windowOffsetX ||
@@ -282,6 +274,14 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 		window_move.top = xfw->top;
 		window_move.right = xfw->right;
 		window_move.bottom = xfw->bottom;
+
+		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
+			"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
+			(uint32) xfw->handle, xfw->left, xfw->top, 
+			xfw->right, xfw->bottom, xfw->width, xfw->height,
+			window->windowId,
+			window->windowOffsetX, window->windowOffsetY, 
+			window->windowWidth, window->windowHeight);
 
 		xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
         }
@@ -306,7 +306,7 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	window_move.right = xfw->right + 1;   // In the update to RDP the position is one past the window
 	window_move.bottom = xfw->bottom + 1;
 
-	DEBUG_X11_LMS("ClientWindowMove: window=0x%X rc={l=%d t=%d r=%d b=%d}",
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d}",
         	(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom);
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
@@ -487,7 +487,8 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 				break;
 			case RAIL_WMSZ_MOVE: //0x9
 				direction = _NET_WM_MOVERESIZE_MOVE;
-				XTranslateCoordinates(xfi->display, xfw->handle, DefaultRootWindow(xfi->display), 
+				XTranslateCoordinates(xfi->display, xfw->handle, 
+					RootWindowOfScreen(xfi->screen), 
 					movesize->posX, movesize->posY, &x, &y, &child_window);
 				break;
 			case RAIL_WMSZ_KEYMOVE: //0xA
@@ -506,8 +507,6 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 		{
 			xf_StartLocalMoveSize(xfi, xfw, direction, x, y);
 		} else {
-			xf_MoveWindow(xfi, xfw, movesize->posX, movesize->posY, 
-				xfw->width, xfw->height);
 			xf_EndLocalMoveSize(xfi, xfw, false);
 		}
 	}
