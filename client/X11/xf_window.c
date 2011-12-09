@@ -25,7 +25,6 @@
 #include <freerdp/rail.h>
 #include <freerdp/utils/rail.h>
 
-
 #ifdef WITH_XEXT
 #include <X11/extensions/shape.h>
 #endif
@@ -227,11 +226,13 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 {
 	Atom window_type;
 
-	if (ex_style & WS_EX_TOPMOST || ex_style & WS_EX_TOOLWINDOW)
+	if ((ex_style & WS_EX_TOPMOST) || (ex_style & WS_EX_TOOLWINDOW))
 	{
-		// These include tool tips, dropdown menus, etc.  These won't work
-		// correctly if the local window manager resizes or moves them.  Set
-		// override redirect to prevent this from occurring.
+		/*
+		 * These include tool tips, dropdown menus, etc.  These won't work
+		 * correctly if the local window manager resizes or moves them.
+		 * Set override redirect to prevent this from occurring.
+		 */
  
 		XSetWindowAttributes attrs;
 		attrs.override_redirect = True;
@@ -243,8 +244,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	}
 	else if (style & WS_POPUP)
 	{
-		// This includes dialogs, popups, etc, that need to be 
-		// full-fledged windows
+		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 		xf_SetWindowUnlisted(xfi, window);
 	}
@@ -471,18 +471,19 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y)
 {
-	rdpWindow* wnd = window->window;
 	Window child_window;
+
+#ifdef WITH_DEBUG_X11_LMS
+	rdpWindow* wnd = window->window;
+#endif
 
 	DEBUG_X11_LMS("direction=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d   "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d  mouse_x=%d mouse_y=%d",
 		direction, (uint32) window->handle, 
 		window->left, window->top, window->right, window->bottom,
-		window->width, window->height,
-		wnd->windowId,
+		window->width, window->height, wnd->windowId,
 		wnd->windowOffsetX, wnd->windowOffsetY, 
-		wnd->windowWidth, wnd->windowHeight,
-		x, y);
+		wnd->windowWidth, wnd->windowHeight, x, y);
 
 	window->local_move.root_x = x; 
 	window->local_move.root_y = y;
@@ -496,26 +497,28 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 		&child_window);
 
 	XUngrabPointer(xfi->display, CurrentTime);
+
 	xf_SendClientEvent(xfi, window, 
-			xfi->_NET_WM_MOVERESIZE, // Request X window manager to initate a local move
-			5, // 5 arguments to follow 
-			x, // x relative to root window
-			y, // y relative to root window
-			direction, // extended ICCM direction flag
-			1, // simulated mouse button 1
-		       	1);// 1 == application request per extended ICCM
+			xfi->_NET_WM_MOVERESIZE, /* request X window manager to initiate a local move */
+			5, /* 5 arguments to follow */
+			x, /* x relative to root window */
+			y, /* y relative to root window */
+			direction, /* extended ICCM direction flag */
+			1, /* simulated mouse button 1 */
+		       	1); /* 1 == application request per extended ICCM */
 }
 
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 {
+#ifdef WITH_DEBUG_X11_LMS
 	rdpWindow* wnd = window->window;
+#endif
 
 	DEBUG_X11_LMS("state=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		window->local_move.state, cancel, 
 		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-		window->width, window->height,
-		wnd->windowId,
+		window->width, window->height, wnd->windowId,
 		wnd->windowOffsetX, wnd->windowOffsetY, 
 		wnd->windowWidth, wnd->windowHeight);
 
@@ -524,17 +527,19 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 
 	if (cancel)
 	{
-		// Per ICCM, the X client can ask to cancel an active move.  Do this if we 
-		// receive a local move stop from RDP while a local move is in progress
+		/*
+		 * Per ICCM, the X client can ask to cancel an active move.  Do this if we
+		 * receive a local move stop from RDP while a local move is in progress
+		 */
 	
 		xf_SendClientEvent(xfi, window, 
-			xfi->_NET_WM_MOVERESIZE, // Request X window manager to abort a local move
-			5, // 5 arguments to follow 
-			window->local_move.root_x, // x relative to root window
-			window->local_move.root_y, // y relative to root window
-			_NET_WM_MOVERESIZE_CANCEL, // extended ICCM direction flag
-			1, // simulated mouse button 1
-		       	1);// 1 == application request per extended ICCM
+			xfi->_NET_WM_MOVERESIZE, /* request X window manager to abort a local move */
+			5, /* 5 arguments to follow */
+			window->local_move.root_x, /* x relative to root window */
+			window->local_move.root_y, /* y relative to root window */
+			_NET_WM_MOVERESIZE_CANCEL, /* extended ICCM direction flag */
+			1, /* simulated mouse button 1 */
+		       	1); /* 1 == application request per extended ICCM */
 	}
 
 	window->local_move.state = LMS_NOT_ACTIVE;
@@ -543,7 +548,10 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
 	boolean resize = false;
+
+#ifdef WITH_DEBUG_X11_LMS
 	rdpWindow* wnd = window->window;
+#endif
 
 	if ((width * height) < 1)
 		return;
@@ -559,8 +567,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		(uint32) window->handle, window->left, window->top, 
 		window->right, window->bottom, window->width, window->height,
-		x, y, x + width -1, y + height -1, width, height,
-		wnd->windowId,
+		x, y, x + width -1, y + height -1, width, height, wnd->windowId,
 		wnd->windowOffsetX, wnd->windowOffsetY, 
 		wnd->windowWidth, wnd->windowHeight);
 
