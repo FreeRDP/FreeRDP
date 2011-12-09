@@ -31,13 +31,19 @@
 boolean freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
-	boolean status;
+	boolean status = false;
 
 	rdp = instance->context->rdp;
 
 	extension_pre_connect(rdp->extension);
 
-	IFCALL(instance->PreConnect, instance);
+	IFCALLRET(instance->PreConnect, status, instance);
+
+	if (status != true)
+	{
+		printf("freerdp_pre_connect failed\n");
+		return false;
+	}
 
 	status = rdp_client_connect(rdp);
 
@@ -52,7 +58,13 @@ boolean freerdp_connect(freerdp* instance)
 
 		extension_post_connect(rdp->extension);
 
-		IFCALL(instance->PostConnect, instance);
+		IFCALLRET(instance->PostConnect, status, instance);
+
+		if (status != true)
+		{
+			printf("freerdp_post_connect failed\n");
+			return false;
+		}
 
 		if (instance->settings->play_rfx)
 		{

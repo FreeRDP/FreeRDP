@@ -107,6 +107,7 @@ struct xf_info
 	int current_desktop;
 	boolean remote_app;
 	HCLRCONV clrconv;
+	Window parent_window;
 
 	HGDI_DC hdc;
 	boolean sw_gdi;
@@ -128,6 +129,7 @@ struct xf_info
 	void* nsc_context;
 	void* xv_context;
 	void* clipboard_context;
+
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;

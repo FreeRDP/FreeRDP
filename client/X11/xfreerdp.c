@@ -299,19 +299,27 @@ void xf_create_window(xfInfo* xfi)
 			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
 		}
 
-		if (strlen(xfi->instance->settings->window_title) > 0) {
+		if (xfi->instance->settings->window_title != NULL)
+		{
 			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
 			sprintf(win_title, "%s", xfi->instance->settings->window_title);
-		} else if (xfi->instance->settings->port == 3389) {
+		}
+		else if (xfi->instance->settings->port == 3389)
+		{
 			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
 			sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
-		} else {
+		}
+		else
+		{
 			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
 			sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 		}
 
 		xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
 		xfree(win_title);
+
+		if (xfi->parent_window)
+			XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
 
 		if (xfi->fullscreen)
 			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
@@ -469,6 +477,7 @@ boolean xf_pre_connect(freerdp* instance)
 	if (xfi->display == NULL)
 	{
 		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		printf("Please check that the $DISPLAY environment variable is properly set.\n");
 		return false;
 	}
 
@@ -517,6 +526,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->grab_keyboard = settings->grab_keyboard;
 	xfi->fullscreen_toggle = true;
 	xfi->sw_gdi = settings->sw_gdi;
+	xfi->parent_window = (Window) settings->parent_window_xid;
 
 	xf_detect_monitors(xfi, settings);
 

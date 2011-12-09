@@ -77,6 +77,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -t: alternative port number, default is 3389\n"
 				"  -u: username\n"
 				"  -x: performance flags (m[odem], b[roadband] or l[an])\n"
+				"  -X: embed into another window with a given XID.\n"
 				"  -z: enable compression\n"
 				"  --app: RemoteApp connection. This implies -g workarea\n"
 				"  --ext: load an extension\n"
@@ -218,8 +219,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing window title\n");
 				return -1;
 			}
-			strncpy(settings->window_title, argv[index], sizeof(settings->window_title) - 1);
-			settings->window_title[sizeof(settings->window_title) - 1] = 0;
+
+			settings->window_title = xstrdup(argv[index]);
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{
@@ -421,6 +422,24 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			else
 			{
 				settings->performance_flags = strtol(argv[index], 0, 16);
+			}
+		}
+		else if (strcmp("-X", argv[index]) == 0)
+		{
+			index++;
+
+			if (index == argc)
+			{
+				printf("missing parent window XID\n");
+				return -1;
+			}
+
+			settings->parent_window_xid = strtoul(argv[index], NULL, 16);
+
+			if (settings->parent_window_xid == 0)
+			{
+				printf("invalid parent window XID\n");
+				return -1;
 			}
 		}
 		else if (strcmp("--no-rdp", argv[index]) == 0)

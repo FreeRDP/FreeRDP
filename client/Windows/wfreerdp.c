@@ -253,7 +253,7 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->hdc->hwnd->ninvalid = 0;
 	}
 
-	if (strlen(settings->window_title) > 0)
+	if (settings->window_title != NULL)
 		_snwprintf(win_title, sizeof(win_title), L"%S", settings->window_title);
 	else if (settings->port == 3389)
 		_snwprintf(win_title, sizeof(win_title) / sizeof(win_title[0]), L"FreeRDP: %S", settings->hostname);

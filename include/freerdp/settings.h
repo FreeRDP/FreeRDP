@@ -226,8 +226,9 @@ struct rdp_settings
 	boolean decorations; /* 84 */
 	uint32 percent_screen; /* 85 */
 	boolean mouse_motion; /* 86 */
-	uint32 paddingD[112 - 87]; /* 87 */
-	char window_title[64];
+	char* window_title; /* 87 */
+	uint64 parent_window_xid; /* 88 */
+	uint32 paddingD[112 - 89]; /* 89 */
 
 	/* Internal Parameters */
 	char* home_path; /* 112 */
