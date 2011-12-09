@@ -594,8 +594,9 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 	                        	break;
 				case VisibilityNotify:
 				case PropertyNotify:
+				case Expose:
 					// Allow these events to pass
-					return false;
+					break;
 				default:
 					// Eat any other events 
 					return true;
@@ -609,10 +610,9 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 				case ConfigureNotify:
 				case VisibilityNotify:
 				case PropertyNotify:
+				case Expose:
 					// Keep us up to date on position
 					break;
-				case Expose:
-					return true;
 				default:
 					// Any other event terminates move
 					xf_rail_end_local_move(xfi, window);

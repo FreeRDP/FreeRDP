@@ -686,14 +686,14 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	rdpWindow* wnd;
 	wnd = window->window;
 
-	ax = x + window->left;
-	ay = y + window->top;
+	ax = x + wnd->windowOffsetX;
+	ay = y + wnd->windowOffsetY;
 
-	if (ax + width >= window->right)
-		width = window->right - ax + 1;
+	if (ax + width > wnd->windowOffsetX + wnd->windowWidth)
+		width = (wnd->windowOffsetX + wnd->windowWidth - 1) - ax;
 
-	if (ay + height >= window->bottom)
-		height = window->bottom - ay + 1; 
+	if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
+		height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
 
 	if (xfi->sw_gdi)
 	{

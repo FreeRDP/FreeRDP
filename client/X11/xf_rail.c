@@ -63,17 +63,6 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 
 		if (intersect)
 		{
-			// Sometimes the RDP server and the local server
-			// are not synchronized for window position and size.
-			// This happens after a local move.  In this case
-			// ignore the update because it will result in copying
-			// invalid data.  Wait for the next update.
-			if ( xfw->left != window->windowOffsetX ||
-        			xfw->top != window->windowOffsetY ||
-                		xfw->width != window->windowWidth ||
-                		xfw->height != window->windowHeight)
-				continue;
-
 			xf_UpdateWindowArea(xfi, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
