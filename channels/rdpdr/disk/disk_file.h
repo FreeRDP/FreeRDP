@@ -36,6 +36,7 @@ struct _DISK_FILE
 	char* basepath;
 	char* fullpath;
 	char* filename;
+	char* pattern;
 	boolean delete_pending;
 };
 
