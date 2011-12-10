@@ -28,7 +28,7 @@
 #include "rdp.h"
 #include "channel.h"
 
-boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, int size)
+boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int size)
 {
 	STREAM* s;
 	uint32 flags;
@@ -36,11 +36,11 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 	int chunk_size;
 	rdpChannel* channel = NULL;
 
-	for (i = 0; i < instance->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->num_channels; i++)
 	{
-		if (instance->settings->channels[i].channel_id == channel_id)
+		if (rdp->settings->channels[i].channel_id == channel_id)
 		{
-			channel = &instance->settings->channels[i];
+			channel = &rdp->settings->channels[i];
 			break;
 		}
 	}
@@ -55,11 +55,11 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 	left = size;
 	while (left > 0)
 	{
-		s = rdp_send_stream_init(instance->context->rdp);
+		s = rdp_send_stream_init(rdp);
 
-		if (left > (int) instance->settings->vc_chunk_size)
+		if (left > (int) rdp->settings->vc_chunk_size)
 		{
-			chunk_size = instance->settings->vc_chunk_size;
+			chunk_size = rdp->settings->vc_chunk_size;
 		}
 		else
 		{
@@ -76,7 +76,7 @@ boolean freerdp_channel_send(freerdp* instance, uint16 channel_id, uint8* data, 
 		stream_check_size(s, chunk_size);
 		stream_write(s, data, chunk_size);
 
-		rdp_send(instance->context->rdp, s, channel_id);
+		rdp_send(rdp, s, channel_id);
 
 		data += chunk_size;
 		left -= chunk_size;
