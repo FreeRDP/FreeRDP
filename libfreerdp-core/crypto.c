@@ -388,7 +388,7 @@ void crypto_cert_print_info(X509* xcert)
 	printf("\tIssuer: %s\n", issuer);
 	printf("\tThumbprint: %s\n", fp);
 	printf("The above X.509 certificate could not be verified, possibly because you do not have "
-			"the CA certificate in your certificate store, or the certificate has expired."
+			"the CA certificate in your certificate store, or the certificate has expired. "
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
 	xfree(subject);

@@ -250,24 +250,30 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 
 	if (status != true)
 	{
+		char* issuer;
+		char* subject;
+		char* fingerprint;
 		rdpCertData* certdata;
+
 		certdata = crypto_get_cert_data(cert->px509, hostname);
 		certstore = certstore_new(certdata, settings->home_path);
 
 		if (cert_data_match(certstore) == 0)
 			goto end;
 
+		issuer = crypto_cert_issuer(cert->px509);
+		subject = crypto_cert_subject(cert->px509);
+		fingerprint = crypto_cert_fingerprint(cert->px509);
+
 		if (certstore->match == 1)
 		{
-			boolean accept_certificate = settings->ignore_certificate;		
-			if(!accept_certificate)
-			{
-				char* issuer = crypto_cert_issuer(cert->px509);
-				char* subject = crypto_cert_subject(cert->px509);
-				char* fingerprint = crypto_cert_fingerprint(cert->px509);
+			boolean accept_certificate = settings->ignore_certificate;
 
-				freerdp* instance = (freerdp*)settings->instance;			
-				if(instance->VerifyCertificate)
+			if (!accept_certificate)
+			{
+				freerdp* instance = (freerdp*) settings->instance;
+
+				if (instance->VerifyCertificate)
 					accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
 
 				xfree(issuer);
@@ -275,14 +281,14 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 				xfree(fingerprint);
 			}
 
-			if(!accept_certificate)
+			if (!accept_certificate)
 				return 1;
 
 			cert_data_print(certstore);
 		}
 		else if (certstore->match == -1)
 		{
-			tls_print_cert_error();
+			tls_print_cert_error(hostname, fingerprint);
 			certstore_free(certstore);
 			return 1;
 		}
@@ -294,17 +300,20 @@ end:
 	return 0;
 }
 
-void tls_print_cert_error()
+void tls_print_cert_error(char* hostname, char* fingerprint)
 {
-	printf("#####################################\n");
-	printf("##############WARNING################\n");
-	printf("#####################################\n");
-	printf("The thumbprint of certificate received\n");
-	printf("did not match the stored thumbprint.You\n");
-	printf("might be a victim of MAN in the MIDDLE\n");
-	printf("ATTACK.It is also possible that server's\n");
-	printf("certificate have been changed.In that case\n");
-	printf("contact your server administrator\n");
+	printf("The host key for %s has changed\n", hostname);
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n");
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n");
+	printf("Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n");
+	printf("It is also possible that a host key has just been changed.\n");
+	printf("The fingerprint for the host key sent by the remote host is\n%s\n", fingerprint);
+	printf("Please contact your system administrator.\n");
+	printf("Add correct host key in ~/.freerdp/known_hosts to get rid of this message.\n");
+	printf("Host key for %s has changed and you have requested strict checking.\n", hostname);
+	printf("Host key verification failed.\n");
 }
 
 void tls_free(rdpTls* tls)

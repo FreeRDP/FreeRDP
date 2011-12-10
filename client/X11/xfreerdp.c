@@ -719,7 +719,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	printf("\tIssuer: %s\n", issuer);
 	printf("\tThumbprint: %s\n", fingerprint);
 	printf("The above X.509 certificate could not be verified, possibly because you do not have "
-		"the CA certificate in your certificate store, or the certificate has expired."
+		"the CA certificate in your certificate store, or the certificate has expired. "
 		"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
 	char answer;
