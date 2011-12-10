@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/peer.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -100,3 +101,16 @@ void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id)
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
 }
 
+void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, uint16 channel_id)
+{
+	uint32 length;
+	uint32 flags;
+	int chunk_length;
+
+	stream_read_uint32(s, length);
+	stream_read_uint32(s, flags);
+	chunk_length = stream_get_left(s);
+
+	IFCALL(client->ReceiveChannelData, client,
+		channel_id, stream_get_tail(s), chunk_length, flags, length);
+}
