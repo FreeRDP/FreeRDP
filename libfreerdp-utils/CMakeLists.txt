@@ -56,7 +56,7 @@ add_library(freerdp-utils ${FREERDP_UTILS_SRCS})
 
 set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(freerdp-utils ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
 if(WIN32)
 	target_link_libraries(freerdp-utils ws2_32)
