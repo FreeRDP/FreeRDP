@@ -60,15 +60,15 @@
 boolean rdp_client_connect(rdpRdp* rdp)
 {
 	boolean status;
-
-	rdp->settings->autologon = 1;
+	uint32 selectedProtocol;
+	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, rdp->settings->hostname, rdp->settings->port);
-	nego_set_cookie(rdp->nego, rdp->settings->username);
-	nego_enable_rdp(rdp->nego, rdp->settings->rdp_security);
-	nego_enable_nla(rdp->nego, rdp->settings->nla_security);
-	nego_enable_tls(rdp->nego, rdp->settings->tls_security);
+	nego_set_target(rdp->nego, settings->hostname, settings->port);
+	nego_set_cookie(rdp->nego, settings->username);
+	nego_enable_rdp(rdp->nego, settings->rdp_security);
+	nego_enable_nla(rdp->nego, settings->nla_security);
+	nego_enable_tls(rdp->nego, settings->tls_security);
 
 	if (nego_connect(rdp->nego) != true)
 	{
@@ -76,12 +76,20 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		return false;
 	}
 
+	selectedProtocol = rdp->nego->selected_protocol;
+
+	if ((selectedProtocol & PROTOCOL_TLS) || (selectedProtocol == PROTOCOL_RDP))
+	{
+		if ((settings->username != NULL) && (settings->password != NULL))
+			settings->autologon = true;
+	}
+
 	status = false;
-	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+	if (selectedProtocol & PROTOCOL_NLA)
 		status = transport_connect_nla(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+	else if (selectedProtocol & PROTOCOL_TLS)
 		status = transport_connect_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
+	else if (selectedProtocol == PROTOCOL_RDP) /* 0 */
 		status = transport_connect_rdp(rdp->transport);
 
 	if (status != true)
@@ -132,23 +140,30 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 		nego_set_routing_token(rdp->nego, &redirection->loadBalanceInfo);
 
-	if (redirection->flags & LB_TARGET_NET_ADDRESS) {
+	if (redirection->flags & LB_TARGET_NET_ADDRESS)
+	{
 		xfree(settings->hostname);
 		settings->hostname = redirection->targetNetAddress.ascii;
-        } else if (redirection->flags & LB_TARGET_FQDN) {
-                xfree(settings->hostname);
-                settings->hostname = redirection->targetFQDN.ascii;
-	} else if (redirection->flags & LB_TARGET_NETBIOS_NAME) {
+        }
+	else if (redirection->flags & LB_TARGET_FQDN)
+	{
+		xfree(settings->hostname);
+		settings->hostname = redirection->targetFQDN.ascii;
+	}
+	else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+	{
 		xfree(settings->hostname);
 		settings->hostname = redirection->targetNetBiosName.ascii;
 	}
 
-	if (redirection->flags & LB_USERNAME) {
+	if (redirection->flags & LB_USERNAME)
+	{
 		xfree(settings->username);
 		settings->username = redirection->username.ascii;
 	}
 
-	if (redirection->flags & LB_DOMAIN) {
+	if (redirection->flags & LB_DOMAIN)
+	{
 		xfree(settings->domain);
 		settings->domain = redirection->domain.ascii;
 	}
