@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #else
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
@@ -105,6 +106,8 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
 	int status;
 	char servname[10];
+	uint32 option_value;
+	socklen_t option_len;
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
 
@@ -148,6 +151,21 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 
 	tcp_get_ip_address(tcp);
 	tcp_get_mac_address(tcp);
+
+	option_value = 1;
+	option_len = sizeof(option_value);
+	setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
+
+	/* receive buffer must be a least 32 K */
+	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+	{
+		if (option_value < (1024 * 32))
+		{
+			option_value = 1024 * 32;
+			option_len = sizeof(option_value);
+			setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len);
+		}
+	}
 
 	return true;
 }
