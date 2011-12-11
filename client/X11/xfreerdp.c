@@ -894,15 +894,18 @@ int xfreerdp_run(freerdp* instance)
 	int max_fds;
 	int rcount;
 	int wcount;
+	int ret = 0;
 	void* rfds[32];
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int select_status;
 	rdpChannels* channels;
-	int ret = 0;
+	struct timeval timeout;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
+	memset(&timeout, 0, sizeof(struct timeval));
 
 	if (!freerdp_connect(instance))
 		return XF_EXIT_CONN_FAILED;
@@ -951,7 +954,15 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		timeout.tv_sec = 5;
+		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
+
+		if (select_status == 0)
+		{
+			//freerdp_send_keep_alive(instance);
+			continue;
+		}
+		else if (select_status == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||

@@ -222,7 +222,7 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 
 	if (flags == -1)
 	{
-		printf("transport_configure_sockfd: fcntl failed.\n");
+		printf("tcp_set_blocking_mode: fcntl failed.\n");
 		return false;
 	}
 

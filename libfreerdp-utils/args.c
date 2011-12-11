@@ -357,7 +357,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return -1;
 			}
 		}
-        else if (strcmp("--nsc", argv[index]) == 0)
+		else if (strcmp("--nsc", argv[index]) == 0)
 		{
 			settings->ns_codec = true;
 		}

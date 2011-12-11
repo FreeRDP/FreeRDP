@@ -108,6 +108,7 @@ FREERDP_API boolean freerdp_disconnect(freerdp* instance);
 FREERDP_API boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API boolean freerdp_check_fds(freerdp* instance);
 
+FREERDP_API void freerdp_send_keep_alive(freerdp* instance);
 FREERDP_API uint32 freerdp_error_info(freerdp* instance);
 
 FREERDP_API freerdp* freerdp_new();

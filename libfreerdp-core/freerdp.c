@@ -127,6 +127,11 @@ boolean freerdp_check_fds(freerdp* instance)
 	return true;
 }
 
+void freerdp_send_keep_alive(freerdp* instance)
+{
+	input_send_synchronize_event(instance->context->rdp->input, 0);
+}
+
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
