@@ -92,6 +92,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
+				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
 				"  --version: print version information\n"

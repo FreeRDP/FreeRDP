@@ -175,6 +175,22 @@ void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password)
 }
 
 /**
+ * Set NTLMSSP workstation.
+ * @param ntlmssp
+ * @param workstation workstation
+ */
+
+void ntlmssp_set_workstation(NTLMSSP* ntlmssp, char* workstation)
+{
+	freerdp_blob_free(&ntlmssp->workstation);
+
+	if (workstation != NULL)
+	{
+		ntlmssp->workstation.data = freerdp_uniconv_out(ntlmssp->uniconv, workstation, (size_t*) &(ntlmssp->workstation.length));
+	}
+}
+
+/**
  * Generate client challenge (8-byte nonce).
  * @param ntlmssp
  */
@@ -244,6 +260,15 @@ void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp)
 			memcpy(ntlmssp->av_pairs->Timestamp.value, ntlmssp->timestamp, 8);
 			return;
 		}
+	}
+	else
+	{
+		if (ntlmssp->av_pairs->Timestamp.length != 8)
+		{
+			ntlmssp->av_pairs->Timestamp.length = 8;
+			ntlmssp->av_pairs->Timestamp.value = xmalloc(ntlmssp->av_pairs->Timestamp.length);
+		}
+		memcpy(ntlmssp->av_pairs->Timestamp.value, ntlmssp->timestamp, 8);
 	}
 }
 
@@ -586,6 +611,10 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
 	freerdp_hexdump(ntlmssp->domain.data, ntlmssp->domain.length);
 	printf("\n");
 
+	printf("Workstation (length = %d)\n", ntlmssp->workstation.length);
+	freerdp_hexdump(ntlmssp->workstation.data, ntlmssp->workstation.length);
+	printf("\n");
+
 	printf("NTOWFv2, NTLMv2 Hash\n");
 	freerdp_hexdump(ntlm_v2_hash, 16);
 	printf("\n");
@@ -596,7 +625,7 @@ void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp)
 	blob[1] = 1; /* HighRespType (1 byte) */
 	/* Reserved1 (2 bytes) */
 	/* Reserved2 (4 bytes) */
-	memcpy(&blob[8], ntlmssp->timestamp, 8); /* Timestamp (8 bytes) */
+	memcpy(&blob[8], ntlmssp->av_pairs->Timestamp.value, 8); /* Timestamp (8 bytes) */
 	memcpy(&blob[16], ntlmssp->client_challenge, 8); /* ClientChallenge (8 bytes) */
 	/* Reserved3 (4 bytes) */
 	memcpy(&blob[28], ntlmssp->target_info.data, ntlmssp->target_info.length);
@@ -701,8 +730,61 @@ static void ntlmssp_output_restriction_encoding(NTLMSSP* ntlmssp)
 	stream_write_uint8(s, 1);
 	stream_write_zero(s, 3);
 
-	stream_write_uint32(s, 0x20000000); /* SubjectIntegrityLevel */
+	stream_write_uint32(s, 0x00002000); /* SubjectIntegrityLevel */
 	stream_write(s, machineID, 32); /* MachineID */
+
+	xfree(s);
+}
+
+/**
+ * Output TargetName.\n
+ * @param ntlmssp
+ */
+
+void ntlmssp_output_target_name(NTLMSSP* ntlmssp)
+{
+	STREAM* s = stream_new(0);
+	AV_PAIR* target_name = &ntlmssp->av_pairs->TargetName;
+
+	/*
+	 * TODO: No idea what should be set here (observed MsvAvTargetName = MsvAvDnsComputerName or
+	 * MsvAvTargetName should be the name of the service be accessed after authentication)
+	 * here used: "TERMSRV/192.168.0.123" in unicode (Dmitrij Jasnov)
+	 */
+	uint8 name[42] =
+			"\x54\x00\x45\x00\x52\x00\x4d\x00\x53\x00\x52\x00\x56\x00\x2f\x00\x31\x00\x39\x00\x32"
+			"\x00\x2e\x00\x31\x00\x36\x00\x38\x00\x2e\x00\x30\x00\x2e\x00\x31\x00\x32\x00\x33\x00";
+
+	target_name->length = 42;
+	target_name->value = (uint8*) xmalloc(target_name->length);
+
+	s->data = target_name->value;
+	s->size = target_name->length;
+	s->p = s->data;
+
+	stream_write(s, name, target_name->length);
+
+	xfree(s);
+}
+
+/**
+ * Output ChannelBindings.\n
+ * @param ntlmssp
+ */
+
+void ntlmssp_output_channel_bindings(NTLMSSP* ntlmssp)
+{
+	STREAM* s = stream_new(0);
+	AV_PAIR* channel_bindings = &ntlmssp->av_pairs->ChannelBindings;
+
+	channel_bindings->value = (uint8*) xmalloc(48);
+	channel_bindings->length = 16;
+
+	s->data = channel_bindings->value;
+	s->size = channel_bindings->length;
+	s->p = s->data;
+
+	stream_write_zero(s, 16); /* an all-zero value of the hash is used to indicate absence of channel bindings */
 
 	xfree(s);
 }
@@ -724,6 +806,12 @@ void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp)
 
 	/* Restriction_Encoding */
 	ntlmssp_output_restriction_encoding(ntlmssp);
+
+	/* TargetName */
+	ntlmssp_output_target_name(ntlmssp);
+
+	/* ChannelBindings */
+	ntlmssp_output_channel_bindings(ntlmssp);
 
 	s = stream_new(0);
 	s->data = xmalloc(ntlmssp->target_info.length + 512);
@@ -1194,7 +1282,8 @@ void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 
 	if (ntlmssp->ntlm_v2)
 	{
-		/* observed: B7 82 08 E2 (0xE20882B7) */
+		DEBUG_NLA("Negotiating NTLMv2");
+		/* observed: B7 82 08 E2 (0xE20882B7) (Dmitrij Jasnov) */
 		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
 		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
 		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
@@ -1516,9 +1605,12 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 	}
 
 	if (ntlmssp->ntlm_v2)
-		PayloadBufferOffset = 88; /* starting buffer offset */
+		PayloadBufferOffset = 80; /* starting buffer offset */
 	else
 		PayloadBufferOffset = 64; /* starting buffer offset */
+
+	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		PayloadBufferOffset += 8;
 
 	DomainNameBufferOffset = PayloadBufferOffset;
 	UserNameBufferOffset = DomainNameBufferOffset + DomainNameLen;
@@ -1669,6 +1761,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 		
 		s->p = mic_offset;
 		stream_write(s, ntlmssp->message_integrity_check, 16);
+		s->p = s->data + length;
 
 #ifdef WITH_DEBUG_NLA
 		printf("MessageIntegrityCheck (length = 16)\n");
