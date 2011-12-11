@@ -19,7 +19,8 @@
 
 set(FREERDP_CHANNELS_SRCS
 	libchannels.c
-	libchannels.h)
+	libchannels.h
+	wtsvc.c)
 
 add_library(freerdp-channels ${FREERDP_CHANNELS_SRCS})
 
