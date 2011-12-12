@@ -23,3 +23,4 @@ add_executable(tfreerdp-server
 target_link_libraries(tfreerdp-server freerdp-core)
 target_link_libraries(tfreerdp-server freerdp-utils)
 target_link_libraries(tfreerdp-server freerdp-codec)
+target_link_libraries(tfreerdp-server freerdp-channels)

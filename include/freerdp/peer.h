@@ -36,6 +36,9 @@ typedef void (*psPeerDisconnect)(freerdp_peer* client);
 typedef boolean (*psPeerPostConnect)(freerdp_peer* client);
 typedef boolean (*psPeerActivate)(freerdp_peer* client);
 
+typedef int (*psPeerSendChannelData)(freerdp_peer* client, int channelId, uint8* data, int size);
+typedef int (*psPeerReceiveChannelData)(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size);
+
 struct rdp_freerdp_peer
 {
 	rdpContext* context;
@@ -57,6 +60,9 @@ struct rdp_freerdp_peer
 
 	psPeerPostConnect PostConnect;
 	psPeerActivate Activate;
+
+	psPeerSendChannelData SendChannelData;
+	psPeerReceiveChannelData ReceiveChannelData;
 };
 
 FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);
