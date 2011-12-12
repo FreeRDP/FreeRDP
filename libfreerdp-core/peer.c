@@ -126,7 +126,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		/* TODO: process channel data from client */
+		freerdp_channel_peer_process(client, s, channelId);
 	}
 	else
 	{
@@ -242,6 +242,11 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	transport_disconnect(client->context->rdp->transport);
 }
 
+static int freerdp_peer_send_channel_data(freerdp_peer* client, int channelId, uint8* data, int size)
+{
+	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
+}
+
 void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
@@ -288,6 +293,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->GetFileDescriptor = freerdp_peer_get_fds;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
 		client->Disconnect = freerdp_peer_disconnect;
+		client->SendChannelData = freerdp_peer_send_channel_data;
 	}
 
 	return client;

@@ -41,6 +41,7 @@ struct wait_obj
 #else
 	int pipe_fd[2];
 #endif
+	int attached;
 };
 
 struct wait_obj*
@@ -50,6 +51,7 @@ wait_obj_new(void)
 
 	obj = xnew(struct wait_obj);
 
+	obj->attached = 0;
 #ifdef _WIN32
 	obj->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 #else
@@ -66,30 +68,50 @@ wait_obj_new(void)
 	return obj;
 }
 
+struct wait_obj* wait_obj_new_with_fd(void* fd)
+{
+	struct wait_obj* obj;
+
+	obj = xnew(struct wait_obj);
+
+	obj->attached = 1;
+#ifdef _WIN32
+	obj->event = fd;
+#else
+	obj->pipe_fd[0] = (int)(long)fd;
+	obj->pipe_fd[1] = -1;
+#endif
+
+	return obj;
+}
+
 void
 wait_obj_free(struct wait_obj* obj)
 {
 	if (obj)
 	{
 
+		if (obj->attached == 0)
+		{
 #ifdef _WIN32
-		if (obj->event)
-		{
-			CloseHandle(obj->event);
-			obj->event = NULL;
-		}
+			if (obj->event)
+			{
+				CloseHandle(obj->event);
+				obj->event = NULL;
+			}
 #else
-		if (obj->pipe_fd[0] != -1)
-		{
-			close(obj->pipe_fd[0]);
-			obj->pipe_fd[0] = -1;
-		}
-		if (obj->pipe_fd[1] != -1)
-		{
-			close(obj->pipe_fd[1]);
-			obj->pipe_fd[1] = -1;
-		}
+			if (obj->pipe_fd[0] != -1)
+			{
+				close(obj->pipe_fd[0]);
+				obj->pipe_fd[0] = -1;
+			}
+			if (obj->pipe_fd[1] != -1)
+			{
+				close(obj->pipe_fd[1]);
+				obj->pipe_fd[1] = -1;
+			}
 #endif
+		}
 
 		xfree(obj);
 	}

@@ -31,6 +31,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
+#include <freerdp/channels/wtsvc.h>
 
 static char* test_pcap_file = NULL;
 static boolean test_dump_rfx_realtime = true;
@@ -54,6 +55,9 @@ struct test_peer_context
 	int icon_x;
 	int icon_y;
 	boolean activated;
+	WTSVirtualChannelManager* vcm;
+	void* debug_channel;
+	freerdp_thread* debug_channel_thread;
 };
 typedef struct test_peer_context testPeerContext;
 
@@ -69,16 +73,28 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 
 	context->icon_x = -1;
 	context->icon_y = -1;
+
+	context->vcm = WTSCreateVirtualChannelManager(client);
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 {
 	if (context)
 	{
+		if (context->debug_channel_thread)
+		{
+			freerdp_thread_stop(context->debug_channel_thread);
+			freerdp_thread_free(context->debug_channel_thread);
+		}
 		stream_free(context->s);
 		xfree(context->icon_data);
 		xfree(context->bg_data);
 		rfx_context_free(context->rfx_context);
+		if (context->debug_channel)
+		{
+			WTSVirtualChannelClose(context->debug_channel);
+		}
+		WTSDestroyVirtualChannelManager(context->vcm);
 		xfree(context);
 	}
 }
@@ -317,8 +333,62 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
+static void* tf_debug_channel_thread_func(void* arg)
+{
+	void* fd;
+	STREAM* s;
+	void* buffer;
+	uint32 bytes_returned = 0;
+	testPeerContext* context = (testPeerContext*) arg;
+	freerdp_thread* thread = context->debug_channel_thread;
+
+	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == true)
+	{
+		fd = *((void**)buffer);
+		WTSFreeMemory(buffer);
+		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+	}
+
+	s = stream_new(4096);
+
+	WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test1", 5, NULL);
+
+	while (1)
+	{
+		freerdp_thread_wait(thread);
+		if (freerdp_thread_is_stopped(thread))
+			break;
+
+		stream_set_pos(s, 0);
+		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+			stream_get_size(s), &bytes_returned) == false)
+		{
+			if (bytes_returned == 0)
+				break;
+			stream_check_size(s, bytes_returned);
+			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+				stream_get_size(s), &bytes_returned) == false)
+			{
+				/* should not happen */
+				break;
+			}
+		}
+		stream_set_pos(s, bytes_returned);
+
+		printf("got %d bytes\n", bytes_returned);
+	}
+
+	stream_free(s);
+	freerdp_thread_quit(thread);
+
+	return 0;
+}
+
 boolean tf_peer_post_connect(freerdp_peer* client)
 {
+	int i;
+	testPeerContext* context = (testPeerContext*) client->context;
+
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
 	 * Font List PDU from the client and sent out the Font Map PDU.
@@ -341,6 +411,25 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 	test_peer_load_icon(client);
+
+	/* Iterate all channel names requested by the client and activate those supported by the server */
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].joined)
+		{
+			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
+			{
+				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
+				if (context->debug_channel != NULL)
+				{
+					printf("Open channel rdpdbg.\n");
+					context->debug_channel_thread = freerdp_thread_new();
+					freerdp_thread_start(context->debug_channel_thread,
+						tf_debug_channel_thread_func, context);
+				}
+			}
+		}
+	}
 
 	/* Return false here would stop the execution of the peer mainloop. */
 	return true;
@@ -394,6 +483,13 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 		update->DesktopResize(update->context);
 		context->activated = false;
 	}
+	else if ((flags & 0x4000) && code == 0x2E) /* 'c' key */
+	{
+		if (context->debug_channel)
+		{
+			WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test2", 5, NULL);
+		}
+	}
 }
 
 void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
@@ -421,6 +517,7 @@ static void* test_peer_mainloop(void* arg)
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
 	memset(rfds, 0, sizeof(rfds));
@@ -443,6 +540,7 @@ static void* test_peer_mainloop(void* arg)
 	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 
 	client->Initialize(client);
+	context = (testPeerContext*) client->context;
 
 	printf("We've got a client %s\n", client->hostname);
 
@@ -455,6 +553,7 @@ static void* test_peer_mainloop(void* arg)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -486,6 +585,8 @@ static void* test_peer_mainloop(void* arg)
 		}
 
 		if (client->CheckFileDescriptor(client) != true)
+			break;
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != true)
 			break;
 	}
 
