@@ -31,6 +31,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
+#include <freerdp/channels/wtsvc.h>
 
 static char* test_pcap_file = NULL;
 static boolean test_dump_rfx_realtime = true;
@@ -54,6 +55,7 @@ struct test_peer_context
 	int icon_x;
 	int icon_y;
 	boolean activated;
+	void* debug_channel;
 };
 typedef struct test_peer_context testPeerContext;
 
@@ -319,6 +321,9 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 
 boolean tf_peer_post_connect(freerdp_peer* client)
 {
+	int i;
+	testPeerContext* context = (testPeerContext*) client->context;
+
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
 	 * Font List PDU from the client and sent out the Font Map PDU.
@@ -341,6 +346,22 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 	test_peer_load_icon(client);
+
+	/* Iterate all channel names requested by the client and activate those supported by the server */
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].joined)
+		{
+			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
+			{
+				context->debug_channel = WTSVirtualChannelOpenEx(client, "rdpdbg", 0);
+				if (context->debug_channel != NULL)
+				{
+					printf("Open channel rdpdbg.\n");
+				}
+			}
+		}
+	}
 
 	/* Return false here would stop the execution of the peer mainloop. */
 	return true;

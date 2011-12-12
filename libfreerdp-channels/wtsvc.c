@@ -21,16 +21,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/channels/wtsvc.h>
+
+#include "wtsvc.h"
 
 void* WTSVirtualChannelOpenEx(
 	/* __in */ freerdp_peer* client,
 	/* __in */ const char* pVirtualName,
 	/* __in */ uint32 flags)
 {
-	return NULL;
+	int i;
+	int len;
+	rdpPeerChannel* channel;
+	const char* channel_name;
+
+	channel_name = ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0 ? "drdynvc" : pVirtualName);
+
+	len = strlen(channel_name);
+	if (len > 8)
+		return NULL;
+
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].joined &&
+			strncmp(client->settings->channels[i].name, channel_name, len) == 0)
+		{
+			break;
+		}
+	}
+	if (i >= client->settings->num_channels)
+		return NULL;
+
+	channel = xnew(rdpPeerChannel);
+	channel->client = client;
+	channel->channel_id = client->settings->channels[i].channel_id;
+	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
+	{
+		channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
+
+		/* TODO: do DVC channel initialization here using pVirtualName */
+	}
+	else
+	{
+		channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
+	}
+
+	return channel;
 }
 
 boolean WTSVirtualChannelQuery(
@@ -69,5 +105,10 @@ boolean WTSVirtualChannelWrite(
 boolean WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle)
 {
-	return false;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+
+	if (channel != NULL)
+		xfree(channel);
+
+	return true;
 }
