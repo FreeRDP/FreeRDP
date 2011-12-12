@@ -21,21 +21,85 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 
 #include "wtsvc.h"
 
-struct send_item
+typedef struct wts_data_item
 {
 	uint16 channel_id;
 	uint8* buffer;
 	uint32 length;
-};
+} wts_data_item;
 
-static void send_item_free(struct send_item* item)
+static void wts_data_item_free(wts_data_item* item)
 {
 	xfree(item->buffer);
 	xfree(item);
+}
+
+static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8* data, int size, int flags, int total_size)
+{
+	wts_data_item* item;
+
+	if (flags & CHANNEL_FLAG_FIRST)
+	{
+		stream_set_pos(channel->receive_data, 0);
+	}
+
+	stream_check_size(channel->receive_data, size);
+	stream_write(channel->receive_data, data, size);
+
+	if (flags & CHANNEL_FLAG_LAST)
+	{
+		if (stream_get_length(channel->receive_data) != total_size)
+		{
+			printf("WTSProcessChannelData: read error\n");
+		}
+		if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC)
+		{
+			/* TODO: Receive DVC channel data */
+		}
+		else
+		{
+			item = xnew(wts_data_item);
+			item->length = stream_get_length(channel->receive_data);
+			item->buffer = xmalloc(item->length);
+			memcpy(item->buffer, stream_get_head(channel->receive_data), item->length);
+
+			freerdp_mutex_lock(channel->mutex);
+			list_enqueue(channel->receive_queue, item);
+			freerdp_mutex_unlock(channel->mutex);
+
+			wait_obj_set(channel->receive_event);
+		}
+		stream_set_pos(channel->receive_data, 0);
+	}
+}
+
+static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size)
+{
+	int i;
+	boolean result = false;
+	rdpPeerChannel* channel;
+
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].channel_id == channelId)
+			break;
+	}
+	if (i < client->settings->num_channels)
+	{
+		channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+		if (channel != NULL)
+		{
+			WTSProcessChannelData(channel, channelId, data, size, flags, total_size);
+			result = true;
+		}
+	}
+
+	return result;
 }
 
 WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
@@ -49,6 +113,8 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 		vcm->send_event = wait_obj_new();
 		vcm->send_queue = list_new();
 		vcm->mutex = freerdp_mutex_new();
+
+		client->ReceiveChannelData = WTSReceiveChannelData;
 	}
 
 	return vcm;
@@ -56,14 +122,20 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 
 void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 {
-	struct send_item* item;
+	wts_data_item* item;
 
 	if (vcm != NULL)
 	{
-		wait_obj_free(vcm->send_event);
-		while ((item = (struct send_item*) list_dequeue(vcm->send_queue)) != NULL)
+		if (vcm->drdynvc_channel != NULL)
 		{
-			send_item_free(item);
+			WTSVirtualChannelClose(vcm->drdynvc_channel);
+			vcm->drdynvc_channel = NULL;
+		}
+
+		wait_obj_free(vcm->send_event);
+		while ((item = (wts_data_item*) list_dequeue(vcm->send_queue)) != NULL)
+		{
+			wts_data_item_free(item);
 		}
 		list_free(vcm->send_queue);
 		freerdp_mutex_free(vcm->mutex);
@@ -80,18 +152,18 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 {
 	boolean result = true;
-	struct send_item* item;
+	wts_data_item* item;
 
 	wait_obj_clear(vcm->send_event);
 
 	freerdp_mutex_lock(vcm->mutex);
-	while ((item = (struct send_item*) list_dequeue(vcm->send_queue)) != NULL)
+	while ((item = (wts_data_item*) list_dequeue(vcm->send_queue)) != NULL)
 	{
 		if (vcm->client->SendChannelData(vcm->client, item->channel_id, item->buffer, item->length) == false)
 		{
 			result = false;
 		}
-		send_item_free(item);
+		wts_data_item_free(item);
 		if (result == false)
 			break;
 	}
@@ -128,19 +200,35 @@ void* WTSVirtualChannelOpenEx(
 	if (i >= client->settings->num_channels)
 		return NULL;
 
-	channel = xnew(rdpPeerChannel);
-	channel->vcm = vcm;
-	channel->client = client;
-	channel->channel_id = client->settings->channels[i].channel_id;
-	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
+	channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+	if (channel == NULL)
 	{
-		channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
+		channel = xnew(rdpPeerChannel);
+		channel->vcm = vcm;
+		channel->client = client;
+		channel->channel_id = client->settings->channels[i].channel_id;
+		channel->index = i;
+		channel->receive_data = stream_new(client->settings->vc_chunk_size);
+		if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
+		{
+			channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
+			vcm->drdynvc_channel = channel;
+		}
+		else
+		{
+			channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
+			channel->receive_event = wait_obj_new();
+			channel->receive_queue = list_new();
+			channel->mutex = freerdp_mutex_new();
+		}
 
-		/* TODO: do DVC channel initialization here using pVirtualName */
+		client->settings->channels[i].handle = channel;
 	}
-	else
+	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC)
 	{
-		channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
+		/* TODO: do DVC channel initialization here using pVirtualName */
+		/* A sub-channel should be created and returned, instead of using the main drdynvc channel */
+		/* Set channel->index to num_channels */
 	}
 
 	return channel;
@@ -152,12 +240,31 @@ boolean WTSVirtualChannelQuery(
 	/* __out */ void** ppBuffer,
 	/* __out */ uint32* pBytesReturned)
 {
-	return false;
+	void* fds[10];
+	int fds_count = 0;
+	boolean result = false;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+
+	switch (WtsVirtualClass)
+	{
+		case WTSVirtualFileHandle:
+			wait_obj_get_fds(channel->receive_event, fds, &fds_count);
+			*ppBuffer = xmalloc(sizeof(void*));
+			memcpy(*ppBuffer, &fds[0], sizeof(void*));
+			*pBytesReturned = sizeof(void*);
+			result = true;
+			break;
+
+		default:
+			break;
+	}
+	return result;
 }
 
 void WTSFreeMemory(
 	/* __in */ void* pMemory)
 {
+	xfree(pMemory);
 }
 
 boolean WTSVirtualChannelRead(
@@ -167,7 +274,30 @@ boolean WTSVirtualChannelRead(
 	/* __in */  uint32 BufferSize,
 	/* __out */ uint32* pBytesRead)
 {
-	return false;
+	wts_data_item* item;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+
+	item = (wts_data_item*) list_peek(channel->receive_queue);
+	if (item == NULL)
+	{
+		wait_obj_clear(channel->receive_event);
+		*pBytesRead = 0;
+		return true;
+	}
+	*pBytesRead = item->length;
+	if (item->length > BufferSize)
+		return false;
+
+	/* remove the first element (same as what we just peek) */
+	freerdp_mutex_lock(channel->mutex);
+	list_dequeue(channel->receive_queue);
+	if (channel->receive_queue->head == NULL)
+		wait_obj_clear(channel->receive_event);
+	freerdp_mutex_unlock(channel->mutex);
+
+	memcpy(Buffer, item->buffer, item->length);
+
+	return true;
 }
 
 boolean WTSVirtualChannelWrite(
@@ -177,8 +307,8 @@ boolean WTSVirtualChannelWrite(
 	/* __out */ uint32* pBytesWritten)
 {
 	uint32 written = 0;
+	wts_data_item* item;
 	boolean result = false;
-	struct send_item* item;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	WTSVirtualChannelManager* vcm = channel->vcm;
 
@@ -187,7 +317,7 @@ boolean WTSVirtualChannelWrite(
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
-		item = xnew(struct send_item);
+		item = xnew(wts_data_item);
 		item->channel_id = channel->channel_id;
 		item->buffer = xmalloc(Length);
 		item->length = Length;
@@ -215,10 +345,28 @@ boolean WTSVirtualChannelWrite(
 boolean WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle)
 {
+	wts_data_item* item;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
 	if (channel != NULL)
+	{
+		if (channel->index < channel->client->settings->num_channels)
+			channel->client->settings->channels[channel->index].handle = NULL;
+		stream_free(channel->receive_data);
+		if (channel->receive_event)
+			wait_obj_free(channel->receive_event);
+		if (channel->receive_queue)
+		{
+			while ((item = (wts_data_item*) list_dequeue(channel->receive_queue)) != NULL)
+			{
+				wts_data_item_free(item);
+			}
+			list_free(channel->receive_queue);
+		}
+		if (channel->mutex)
+			freerdp_mutex_free(channel->mutex);
 		xfree(channel);
+	}
 
 	return true;
 }

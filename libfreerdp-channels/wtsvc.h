@@ -21,6 +21,7 @@
 #define __WTSVC_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/wait_obj.h>
@@ -29,7 +30,8 @@
 enum
 {
 	RDP_PEER_CHANNEL_TYPE_SVC = 0,
-	RDP_PEER_CHANNEL_TYPE_DVC = 1
+	RDP_PEER_CHANNEL_TYPE_DVC = 1,
+	RDP_PEER_CHANNEL_TYPE_DVC_SUB = 2
 };
 
 typedef struct rdp_peer_channel
@@ -38,6 +40,12 @@ typedef struct rdp_peer_channel
 	freerdp_peer* client;
 	uint16 channel_id;
 	uint16 channel_type;
+	uint16 index;
+
+	STREAM* receive_data;
+	struct wait_obj* receive_event;
+	LIST* receive_queue;
+	freerdp_mutex mutex;
 } rdpPeerChannel;
 
 struct WTSVirtualChannelManager
@@ -46,6 +54,8 @@ struct WTSVirtualChannelManager
 	struct wait_obj* send_event;
 	LIST* send_queue;
 	freerdp_mutex mutex;
+
+	rdpPeerChannel* drdynvc_channel;
 };
 
 #endif /* __WTSVC_H */
