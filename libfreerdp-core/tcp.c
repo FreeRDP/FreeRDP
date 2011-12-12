@@ -167,6 +167,8 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 		}
 	}
 
+	tcp_set_keep_alive_mode(tcp);
+
 	return true;
 }
 
@@ -253,6 +255,34 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	ioctlsocket(tcp->sockfd, FIONBIO, &arg);
 	tcp->wsa_event = WSACreateEvent();
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
+#endif
+
+	return true;
+}
+
+boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
+{
+#ifndef _WIN32
+	uint32 option_value;
+	socklen_t option_len;
+
+	option_value = 1;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
+		return false;
+	}
+
+	option_value = 5;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_TCP, SO_KEEPIDLE:");
+		return false;
+	}
 #endif
 
 	return true;

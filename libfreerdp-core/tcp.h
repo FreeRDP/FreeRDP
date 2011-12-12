@@ -53,6 +53,7 @@ boolean tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, uint8* data, int length);
 int tcp_write(rdpTcp* tcp, uint8* data, int length);
 boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking);
+boolean tcp_set_keep_alive_mode(rdpTcp* tcp);
 
 rdpTcp* tcp_new(rdpSettings* settings);
 void tcp_free(rdpTcp* tcp);
