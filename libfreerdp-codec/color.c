@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/utils/memory.h>
 
 int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp)
 {
@@ -632,28 +633,68 @@ uint8* freerdp_image_convert(uint8* srcData, uint8* dstData, int width, int heig
 		return 0;
 }
 
+void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
+{
+	int i;
+
+	uint8 * bottomLine = dst + (scanLineSz * (height - 1));
+	uint8 * topLine = src;
+
+	/* Special processing if called for flip-in-place. */
+	if (src == dst)
+	{
+		/* Allocate a scanline buffer.
+		 * (FIXME: xmalloc / xfree below should be replaced by "get/put
+		 * scanline buffer from a pool/Q of fixed buffers" to reuse
+		 * fixed size buffers (of max scanline size (or adaptative?) )
+		 * -- would be much faster).
+		 */
+		uint8 * tmpBfr = xmalloc(scanLineSz);
+		int half = height / 2;
+		/* Flip buffer in place by line permutations through the temp
+		 * scan line buffer.
+		 * Not that if height has an odd number of line, we don't need
+		 * to move the center scanline anyway.
+		 * Also note that in place flipping takes three memcpy() calls
+		 * to process two scanlines while src to distinct dest would
+		 * only requires two memcpy() calls for two scanlines.
+		 */
+		height--;
+		for (i = 0; i < half ; i++)
+		{
+			memcpy(tmpBfr, topLine, scanLineSz);
+			memcpy(topLine, bottomLine, scanLineSz);
+			memcpy(bottomLine, tmpBfr, scanLineSz);
+			topLine += scanLineSz;
+			bottomLine -= scanLineSz;
+			height--;
+		}
+		xfree(tmpBfr);
+	}
+	/* Flip from source buffer to destination buffer. */
+	else
+	{
+
+		for (i = 0; i < height; i++)
+		{
+			memcpy(bottomLine, topLine, scanLineSz);
+			topLine += scanLineSz;
+			bottomLine -= scanLineSz;
+		}
+	}
+
+}
+
 uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height, int bpp)
 {
-	int y;
-	uint8* srcp;
-	uint8* dstp;
 	int scanline;
 
 	scanline = width * (bpp / 8);
 
 	if (dstData == NULL)
-		dstData = (uint8*) malloc(width * height * (bpp / 8));
+		dstData = (uint8*) xmalloc(width * height * (bpp / 8));
 
-	dstp = dstData;
-	srcp = &srcData[scanline * (height - 1)];
-
-	for (y = height - 1; y >= 0; y--)
-	{
-		memcpy(dstp, srcp, scanline);
-		dstp += scanline;
-		srcp -= scanline;
-	}
-
+	freerdp_bitmap_flip(srcData, dstData, scanline, height);
 	return dstData;
 }
 
