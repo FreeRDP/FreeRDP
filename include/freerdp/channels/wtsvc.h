@@ -25,9 +25,8 @@
  * Difference between the MS API are documented in this header. All functions
  * are implemented in and integrated with libfreerdp-channels.
  *
- * Thread-safety: the API is designed to be safe to use one thread per channel.
- * To access a virtual channel from multiple threads, one must provide his own
- * machanism to protect the virtual channel handle.
+ * Unlike MS API, all functions except WTSVirtualChannelOpenEx in this
+ * implementation are thread-safe.
  */
 
 #ifndef __FREERDP_WTSVC_H
@@ -35,6 +34,8 @@
 
 #include <freerdp/types.h>
 #include <freerdp/peer.h>
+
+typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 
 #define WTS_CHANNEL_OPTION_DYNAMIC 0x00000001
 
@@ -45,14 +46,25 @@ typedef enum _WTS_VIRTUAL_CLASS
 } WTS_VIRTUAL_CLASS;
 
 /**
+ * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
+ */
+FREERDP_API WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client);
+FREERDP_API void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm);
+FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
+	void** fds, int* fds_count);
+FREERDP_API boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
+
+/**
  * Opens a static or dynamic virtual channel and return the handle. If the
  * operation fails, a NULL handle is returned.
  * 
  * The original MS API has 'DWORD SessionId' as the first argument, while we
- * just use the server peer instance (representing the session) instead.
+ * use our WTSVirtualChannelManager object instead.
+ *
+ * This functions should be called only from the main thread.
  */
 FREERDP_API void* WTSVirtualChannelOpenEx(
-	/* __in */ freerdp_peer* client,
+	/* __in */ WTSVirtualChannelManager* vcm,
 	/* __in */ const char* pVirtualName,
 	/* __in */ uint32 flags);
 

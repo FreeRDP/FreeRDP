@@ -23,6 +23,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/mutex.h>
+#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 
 enum
@@ -33,9 +34,18 @@ enum
 
 typedef struct rdp_peer_channel
 {
+	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
 	uint16 channel_id;
 	uint16 channel_type;
 } rdpPeerChannel;
+
+struct WTSVirtualChannelManager
+{
+	freerdp_peer* client;
+	struct wait_obj* send_event;
+	LIST* send_queue;
+	freerdp_mutex mutex;
+};
 
 #endif /* __WTSVC_H */

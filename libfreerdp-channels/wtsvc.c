@@ -25,8 +25,83 @@
 
 #include "wtsvc.h"
 
+struct send_item
+{
+	uint16 channel_id;
+	uint8* buffer;
+	uint32 length;
+};
+
+static void send_item_free(struct send_item* item)
+{
+	xfree(item->buffer);
+	xfree(item);
+}
+
+WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
+{
+	WTSVirtualChannelManager* vcm;
+
+	vcm = xnew(WTSVirtualChannelManager);
+	if (vcm != NULL)
+	{
+		vcm->client = client;
+		vcm->send_event = wait_obj_new();
+		vcm->send_queue = list_new();
+		vcm->mutex = freerdp_mutex_new();
+	}
+
+	return vcm;
+}
+
+void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
+{
+	struct send_item* item;
+
+	if (vcm != NULL)
+	{
+		wait_obj_free(vcm->send_event);
+		while ((item = (struct send_item*) list_dequeue(vcm->send_queue)) != NULL)
+		{
+			send_item_free(item);
+		}
+		list_free(vcm->send_queue);
+		freerdp_mutex_free(vcm->mutex);
+		xfree(vcm);
+	}
+}
+
+void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
+	void** fds, int* fds_count)
+{
+	wait_obj_get_fds(vcm->send_event, fds, fds_count);
+}
+
+boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
+{
+	boolean result = true;
+	struct send_item* item;
+
+	wait_obj_clear(vcm->send_event);
+
+	freerdp_mutex_lock(vcm->mutex);
+	while ((item = (struct send_item*) list_dequeue(vcm->send_queue)) != NULL)
+	{
+		if (vcm->client->SendChannelData(vcm->client, item->channel_id, item->buffer, item->length) == false)
+		{
+			result = false;
+		}
+		send_item_free(item);
+		if (result == false)
+			break;
+	}
+	freerdp_mutex_unlock(vcm->mutex);
+
+	return result;
+}
+
 void* WTSVirtualChannelOpenEx(
-	/* __in */ freerdp_peer* client,
+	/* __in */ WTSVirtualChannelManager* vcm,
 	/* __in */ const char* pVirtualName,
 	/* __in */ uint32 flags)
 {
@@ -34,6 +109,7 @@ void* WTSVirtualChannelOpenEx(
 	int len;
 	rdpPeerChannel* channel;
 	const char* channel_name;
+	freerdp_peer* client = vcm->client;
 
 	channel_name = ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0 ? "drdynvc" : pVirtualName);
 
@@ -53,6 +129,7 @@ void* WTSVirtualChannelOpenEx(
 		return NULL;
 
 	channel = xnew(rdpPeerChannel);
+	channel->vcm = vcm;
 	channel->client = client;
 	channel->channel_id = client->settings->channels[i].channel_id;
 	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
@@ -99,7 +176,40 @@ boolean WTSVirtualChannelWrite(
 	/* __in */  uint32 Length,
 	/* __out */ uint32* pBytesWritten)
 {
-	return false;
+	uint32 written = 0;
+	boolean result = false;
+	struct send_item* item;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+	WTSVirtualChannelManager* vcm = channel->vcm;
+
+	if (channel == NULL)
+		return false;
+
+	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
+	{
+		item = xnew(struct send_item);
+		item->channel_id = channel->channel_id;
+		item->buffer = xmalloc(Length);
+		item->length = Length;
+		memcpy(item->buffer, Buffer, Length);
+
+		freerdp_mutex_lock(vcm->mutex);
+		list_enqueue(vcm->send_queue, item);
+		freerdp_mutex_unlock(vcm->mutex);
+
+		wait_obj_set(vcm->send_event);
+
+		written = Length;
+		result = true;
+	}
+	else
+	{
+		/* TODO: Send to DVC channel */
+	}
+
+	if (pBytesWritten != NULL)
+		*pBytesWritten = written;
+	return result;
 }
 
 boolean WTSVirtualChannelClose(

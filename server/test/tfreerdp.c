@@ -55,6 +55,7 @@ struct test_peer_context
 	int icon_x;
 	int icon_y;
 	boolean activated;
+	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
 };
 typedef struct test_peer_context testPeerContext;
@@ -71,6 +72,8 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 
 	context->icon_x = -1;
 	context->icon_y = -1;
+
+	context->vcm = WTSCreateVirtualChannelManager(client);
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
@@ -81,6 +84,11 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		xfree(context->icon_data);
 		xfree(context->bg_data);
 		rfx_context_free(context->rfx_context);
+		if (context->debug_channel)
+		{
+			WTSVirtualChannelClose(context->debug_channel);
+		}
+		WTSDestroyVirtualChannelManager(context->vcm);
 		xfree(context);
 	}
 }
@@ -354,10 +362,11 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 		{
 			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
 			{
-				context->debug_channel = WTSVirtualChannelOpenEx(client, "rdpdbg", 0);
+				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
 				if (context->debug_channel != NULL)
 				{
 					printf("Open channel rdpdbg.\n");
+					WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test1", 5, NULL);
 				}
 			}
 		}
@@ -442,6 +451,7 @@ static void* test_peer_mainloop(void* arg)
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
 	memset(rfds, 0, sizeof(rfds));
@@ -464,6 +474,7 @@ static void* test_peer_mainloop(void* arg)
 	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 
 	client->Initialize(client);
+	context = (testPeerContext*) client->context;
 
 	printf("We've got a client %s\n", client->hostname);
 
@@ -476,6 +487,7 @@ static void* test_peer_mainloop(void* arg)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -507,6 +519,8 @@ static void* test_peer_mainloop(void* arg)
 		}
 
 		if (client->CheckFileDescriptor(client) != true)
+			break;
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != true)
 			break;
 	}
 
