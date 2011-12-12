@@ -57,6 +57,7 @@ struct test_peer_context
 	boolean activated;
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
+	freerdp_thread* debug_channel_thread;
 };
 typedef struct test_peer_context testPeerContext;
 
@@ -80,6 +81,11 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 {
 	if (context)
 	{
+		if (context->debug_channel_thread)
+		{
+			freerdp_thread_stop(context->debug_channel_thread);
+			freerdp_thread_free(context->debug_channel_thread);
+		}
 		stream_free(context->s);
 		xfree(context->icon_data);
 		xfree(context->bg_data);
@@ -327,6 +333,57 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
+static void* tf_debug_channel_thread_func(void* arg)
+{
+	void* fd;
+	STREAM* s;
+	void* buffer;
+	uint32 bytes_returned = 0;
+	testPeerContext* context = (testPeerContext*) arg;
+	freerdp_thread* thread = context->debug_channel_thread;
+
+	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == true)
+	{
+		fd = *((void**)buffer);
+		WTSFreeMemory(buffer);
+		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+	}
+
+	s = stream_new(4096);
+
+	WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test1", 5, NULL);
+
+	while (1)
+	{
+		freerdp_thread_wait(thread);
+		if (freerdp_thread_is_stopped(thread))
+			break;
+
+		stream_set_pos(s, 0);
+		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+			stream_get_size(s), &bytes_returned) == false)
+		{
+			if (bytes_returned == 0)
+				break;
+			stream_check_size(s, bytes_returned);
+			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+				stream_get_size(s), &bytes_returned) == false)
+			{
+				/* should not happen */
+				break;
+			}
+		}
+		stream_set_pos(s, bytes_returned);
+
+		printf("got %d bytes\n", bytes_returned);
+	}
+
+	stream_free(s);
+	freerdp_thread_quit(thread);
+
+	return 0;
+}
+
 boolean tf_peer_post_connect(freerdp_peer* client)
 {
 	int i;
@@ -366,7 +423,9 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 				if (context->debug_channel != NULL)
 				{
 					printf("Open channel rdpdbg.\n");
-					WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test1", 5, NULL);
+					context->debug_channel_thread = freerdp_thread_new();
+					freerdp_thread_start(context->debug_channel_thread,
+						tf_debug_channel_thread_func, context);
 				}
 			}
 		}
@@ -423,6 +482,13 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 		}
 		update->DesktopResize(update->context);
 		context->activated = false;
+	}
+	else if ((flags & 0x4000) && code == 0x2E) /* 'c' key */
+	{
+		if (context->debug_channel)
+		{
+			WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test2", 5, NULL);
+		}
 	}
 }
 
