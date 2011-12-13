@@ -54,7 +54,6 @@ rdpSettings* settings_new(void* instance)
 		settings->kbd_type = 0;
 		settings->kbd_subtype = 0;
 		settings->kbd_fn_keys = 0;
-		settings->kbd_layout = 0x409;
 		settings->encryption = false;
 		settings->port = 3389;
 		settings->desktop_resize = true;

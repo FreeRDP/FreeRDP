@@ -40,28 +40,34 @@
 
 #ifdef WITH_XKBFILE
 
-int init_xkb(void *dpy)
+int init_xkb(void* dpy)
 {
 	return XkbQueryExtension(dpy, NULL, NULL, NULL, NULL, NULL);
 }
 
 /* return substring starting after nth comma, ending at following comma */
-static char* comma_substring(char *s, int n)
+static char* comma_substring(char* s, int n)
 {
 	char *p;
+
 	if (!s)
 		return "";
-	while (n-- > 0) {
+
+	while (n-- > 0)
+	{
 		if (!(p = strchr(s, ',')))
 			break;
+
 		s = p + 1;
 	}
+
 	if ((p = strchr(s, ',')))
 		*p = 0;
+
 	return s;
 }
 
-unsigned int detect_keyboard_layout_from_xkb(void *dpy)
+unsigned int detect_keyboard_layout_from_xkb(void* dpy)
 {
 	char *layout, *variant;
 	unsigned int keyboard_layout = 0, group = 0;
@@ -70,14 +76,17 @@ unsigned int detect_keyboard_layout_from_xkb(void *dpy)
 	XkbStateRec state;
 
 	DEBUG_KBD("display: %p", dpy);
+
 	if (dpy && XkbRF_GetNamesProp(dpy, NULL, &rules_names))
 	{
 		DEBUG_KBD("layouts: %s", rules_names.layout);
 		DEBUG_KBD("variants: %s", rules_names.variant);
 
 		XGetKeyboardControl(dpy, &coreKbdState);
+
 		if (XkbGetState(dpy, XkbUseCoreKbd, &state) == Success)
 			group = state.group;
+
 		DEBUG_KBD("group: %d", state.group);
 
 		layout = comma_substring(rules_names.layout, group);
@@ -189,7 +198,7 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 
 
 	/* Extract file name and keymap name */
-	if((end = strrchr(kbd, '(')) != NULL)
+	if ((end = strrchr(kbd, '(')) != NULL)
 	{
 		strncpy(xkbfile, &kbd[beg - kbd], end - beg);
 
@@ -272,11 +281,11 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 		if(kbdFound)
 		{
 			/* Closing curly bracket and semicolon */
-			if((pch = strstr(buffer, "};")) != NULL)
+			if ((pch = strstr(buffer, "};")) != NULL)
 			{
 				break;
 			}
-			else if((pch = strstr(buffer, "VK_")) != NULL)
+			else if ((pch = strstr(buffer, "VK_")) != NULL)
 			{
 				/* The end is delimited by the first white space */
 				end = strcspn(pch, " \t\n\0") + pch;
@@ -315,18 +324,18 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 					}
 				}
 			}
-			else if((pch = strstr(buffer, ": extends")) != NULL)
+			else if ((pch = strstr(buffer, ": extends")) != NULL)
 			{
 				/*
 				 * This map extends another keymap We extract its name
 				 * and we recursively load the keymap we need to include.
 				 */
 
-				if((beg = strchr(pch + sizeof(": extends"), '"')) == NULL)
+				if ((beg = strchr(pch + sizeof(": extends"), '"')) == NULL)
 					break;
 				beg++;
 
-				if((end = strchr(beg, '"')) == NULL)
+				if ((end = strchr(beg, '"')) == NULL)
 					break;
 
 				strncpy(xkbinc, beg, end - beg);
@@ -335,10 +344,10 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 				load_xkb_keyboard(map, xkbinc); /* Load included keymap */
 			}
 		}
-		else if((pch = strstr(buffer, "keyboard")) != NULL)
+		else if ((pch = strstr(buffer, "keyboard")) != NULL)
 		{
 			/* Keyboard map identifier */
-			if((beg = strchr(pch + sizeof("keyboard"), '"')) == NULL)
+			if ((beg = strchr(pch + sizeof("keyboard"), '"')) == NULL)
 				break;
 			beg++;
 
@@ -389,7 +398,7 @@ void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile)
 #endif
 
 	DEBUG_KBD("loaded %d keymaps", keymapLoaded);
-	if(keymapLoaded <= 0)
+	if (keymapLoaded <= 0)
 	{
 		/* No keymap was loaded, load default hard-coded keymap */
 		DEBUG_KBD("using default keymap");
