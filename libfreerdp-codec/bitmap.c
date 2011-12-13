@@ -399,8 +399,6 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
  */
 boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-	uint8* data;
-
 	if (srcBpp == 16 && dstBpp == 16)
 	{
 		RleDecompress16to16(srcData, size, dstData, width * 2, width, height);

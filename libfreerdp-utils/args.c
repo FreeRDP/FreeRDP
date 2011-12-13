@@ -89,6 +89,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+				"  --composition: enable desktop composition\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
@@ -387,6 +388,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->smooth_fonts = true;
 		}
+		else if (strcmp("--composition", argv[index]) == 0)
+		{
+			settings->desktop_composition = true;
+		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
 			settings->mouse_motion = false;
@@ -605,6 +610,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (settings->smooth_fonts)
 				settings->performance_flags |= PERF_ENABLE_FONT_SMOOTHING;
+
+			if (settings->desktop_composition)
+				settings->performance_flags |= PERF_ENABLE_DESKTOP_COMPOSITION;
 
 			return index;
 		}

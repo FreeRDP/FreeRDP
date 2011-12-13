@@ -40,8 +40,7 @@ RdpKeycodes x_keycode_to_rdp_keycode;
 
 #ifndef WITH_XKBFILE
 
-static unsigned int
-detect_keyboard(void *dpy, unsigned int keyboardLayoutID, char *xkbfile, size_t xkbfilelength)
+static unsigned int detect_keyboard(void* dpy, unsigned int keyboardLayoutID, char* xkbfile, size_t xkbfilelength)
 {
 	xkbfile[0] = '\0';
 
@@ -84,8 +83,7 @@ detect_keyboard(void *dpy, unsigned int keyboardLayoutID, char *xkbfile, size_t 
  * dpy must be a X Display* or NULL.
  */
 
-unsigned int
-freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id)
+unsigned int freerdp_kbd_init(void* dpy, unsigned int keyboard_layout_id)
 {
 #ifdef WITH_XKBFILE
 	if (!init_xkb(dpy))
@@ -93,7 +91,7 @@ freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id)
 		DEBUG_KBD("Error initializing xkb");
 		return 0;
 	}
-	if (!keyboard_layout_id)
+	if (keyboard_layout_id == 0)
 	{
 		keyboard_layout_id = detect_keyboard_layout_from_xkb(dpy);
 		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboard_layout_id);
@@ -128,14 +126,12 @@ freerdp_kbd_init(void *dpy, unsigned int keyboard_layout_id)
 	return keyboard_layout_id;
 }
 
-rdpKeyboardLayout *
-freerdp_kbd_get_layouts(int types)
+rdpKeyboardLayout* freerdp_kbd_get_layouts(int types)
 {
 	return get_keyboard_layouts(types);
 }
 
-uint8
-freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean * extended)
+uint8 freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean* extended)
 {
 	DEBUG_KBD("%2x %4s -> %d/%d", keycode, x_keycode_to_rdp_keycode[keycode].keyname,
 			x_keycode_to_rdp_keycode[keycode].extended, x_keycode_to_rdp_keycode[keycode].keycode);
@@ -143,8 +139,7 @@ freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean * extended)
 	return x_keycode_to_rdp_keycode[keycode].keycode;
 }
 
-uint8
-freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean * extended)
+uint8 freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean* extended)
 {
 	*extended = virtualKeyboard[vkcode].extended;
 	return virtualKeyboard[vkcode].scancode;

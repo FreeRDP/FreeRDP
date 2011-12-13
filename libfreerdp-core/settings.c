@@ -54,7 +54,6 @@ rdpSettings* settings_new(void* instance)
 		settings->kbd_type = 0;
 		settings->kbd_subtype = 0;
 		settings->kbd_fn_keys = 0;
-		settings->kbd_layout = 0x409;
 		settings->encryption = false;
 		settings->port = 3389;
 		settings->desktop_resize = true;
@@ -97,6 +96,7 @@ rdpSettings* settings_new(void* instance)
 		settings->color_pointer = true;
 		settings->large_pointer = true;
 		settings->pointer_cache_size = 32;
+		settings->sound_beeps = true;
 
 		settings->draw_gdi_plus = false;
 
@@ -129,9 +129,9 @@ rdpSettings* settings_new(void* instance)
 		settings->glyphCache[8].cacheEntries = 254;
 		settings->glyphCache[8].cacheMaximumCellSize = 256;
 		settings->glyphCache[9].cacheEntries = 64;
-		settings->glyphCache[9].cacheMaximumCellSize = 248;
-		settings->fragCache.cacheEntries = 64;
-		settings->fragCache.cacheMaximumCellSize = 248;
+		settings->glyphCache[9].cacheMaximumCellSize = 256;
+		settings->fragCache.cacheEntries = 256;
+		settings->fragCache.cacheMaximumCellSize = 256;
 
 		settings->offscreen_bitmap_cache = true;
 		settings->offscreen_bitmap_cache_size = 7680;

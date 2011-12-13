@@ -421,8 +421,7 @@ static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
 	{ XHOSA,				{ 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 };
 
-unsigned int
-detect_keyboard_layout_from_locale()
+unsigned int detect_keyboard_layout_from_locale()
 {
 	int i;
 	int j;
