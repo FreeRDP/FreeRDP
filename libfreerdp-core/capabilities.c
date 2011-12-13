@@ -874,7 +874,7 @@ void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* set
 	if (settings->offscreen_bitmap_cache)
 		offscreenSupportLevel = true;
 
-	stream_read_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
+	stream_write_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_size); /* offscreenCacheSize (2 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_entries); /* offscreenCacheEntries (2 bytes) */
 
