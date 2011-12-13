@@ -928,7 +928,7 @@ void rdp_write_bitmap_cache_cell_info(STREAM* s, BITMAP_CACHE_V2_CELL_INFO* cell
 	 * is used to indicate a persistent bitmap cache.
 	 */
 
-	info = cellInfo->numEntries || (cellInfo->persistent << 31);
+	info = (cellInfo->numEntries | (cellInfo->persistent << 31));
 	stream_write_uint32(s, info);
 }
 
@@ -1930,7 +1930,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	/* Capability Sets */
-	numberCapabilities = 14;
+	numberCapabilities = 15;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
@@ -1947,6 +1947,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_virtual_channel_capability_set(s, settings);
 	rdp_write_sound_capability_set(s, settings);
 	rdp_write_share_capability_set(s, settings);
+	rdp_write_font_capability_set(s, settings);
 	rdp_write_control_capability_set(s, settings);
 	rdp_write_color_cache_capability_set(s, settings);
 	rdp_write_window_activation_capability_set(s, settings);
