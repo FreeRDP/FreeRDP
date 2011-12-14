@@ -473,7 +473,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 {
 	Window child_window;
 
-#ifdef WITH_DEBUG_X11_LMS
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
 	rdpWindow* wnd = window->window;
 #endif
 
@@ -510,7 +510,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
 {
-#ifdef WITH_DEBUG_X11_LMS
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
 	rdpWindow* wnd = window->window;
 #endif
 
@@ -549,7 +549,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 {
 	boolean resize = false;
 
-#ifdef WITH_DEBUG_X11_LMS
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
 	rdpWindow* wnd = window->window;
 #endif
 
