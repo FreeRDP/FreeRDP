@@ -561,9 +561,6 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 
 	rdp->state = CONNECTION_STATE_LICENSE;
 
-	if (!rdp_send_demand_active(rdp))
-		return false;
-
 	return true;
 }
 

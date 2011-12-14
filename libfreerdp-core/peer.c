@@ -217,6 +217,9 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_server_accept_client_info(client->context->rdp, s))
 				return false;
+			IFCALL(client->Capabilities, client);
+			if (!rdp_send_demand_active(client->context->rdp))
+				return false;
 			break;
 
 		case CONNECTION_STATE_LICENSE:

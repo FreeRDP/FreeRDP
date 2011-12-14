@@ -301,6 +301,11 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
+boolean xf_peer_capabilities(freerdp_peer* client)
+{
+	return true;
+}
+
 boolean xf_peer_post_connect(freerdp_peer* client)
 {
 	xfInfo* xfi;
@@ -427,6 +432,7 @@ void* xf_peer_main_loop(void* arg)
 	client->settings->nla_security = false;
 	client->settings->rfx_codec = true;
 
+	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
 
