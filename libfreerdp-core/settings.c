@@ -109,6 +109,7 @@ rdpSettings* settings_new(void* instance)
 		settings->refresh_rect = true;
 		settings->suppress_output = true;
 
+		settings->glyph_cache = true;
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 		settings->glyphCache[0].cacheEntries = 254;
 		settings->glyphCache[0].cacheMaximumCellSize = 4;

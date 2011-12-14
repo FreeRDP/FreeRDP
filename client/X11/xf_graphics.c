@@ -238,8 +238,6 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 	xf_glyph = (xfGlyph*) glyph;
 
-	printf("Glyph_Draw: x:%d y:%d w:%d h:%d\n", x, y, glyph->cx, glyph->cy);
-
 	XSetStipple(xfi->display, xfi->gc, xf_glyph->pixmap);
 	XSetTSOrigin(xfi->display, xfi->gc, x, y);
 	XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, glyph->cx, glyph->cy);
