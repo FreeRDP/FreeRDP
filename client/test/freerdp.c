@@ -182,7 +182,7 @@ boolean tf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
 	gdi = instance->context->gdi;
 
 	instance->update->BeginPaint = tf_begin_paint;

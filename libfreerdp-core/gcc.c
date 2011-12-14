@@ -663,7 +663,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 	connectionType = 0;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->performance_flags == PERF_FLAG_NONE)
+	if ((settings->performance_flags & ~PERF_ENABLE_DESKTOP_COMPOSITION) == PERF_FLAG_NONE)
 	{
 		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 		connectionType = CONNECTION_TYPE_LAN;

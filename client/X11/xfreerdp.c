@@ -587,7 +587,7 @@ boolean xf_post_connect(freerdp* instance)
 		rdpGdi* gdi;
 		uint32 flags;
 
-		flags = CLRCONV_ALPHA;
+		flags = CLRCONV_ALPHA | CLRCONV_INVERT;
 
 		if (xfi->bpp > 16)
 			flags |= CLRBUF_32BPP;

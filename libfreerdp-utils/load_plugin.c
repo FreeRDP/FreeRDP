@@ -40,7 +40,12 @@
 #define DLSYM(f, n) dlsym(f, n)
 #define DLCLOSE(f) dlclose(f)
 #define PATH_SEPARATOR '/'
+
+#ifdef __APPLE__
+#define PLUGIN_EXT "dylib"
+#else
 #define PLUGIN_EXT "so"
+#endif 
 
 #endif
 

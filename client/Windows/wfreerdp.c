@@ -226,7 +226,7 @@ boolean wf_post_connect(freerdp* instance)
 
 	if (wfi->sw_gdi)
 	{
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
+		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
