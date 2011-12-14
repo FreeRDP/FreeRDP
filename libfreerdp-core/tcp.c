@@ -33,6 +33,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+
+#ifdef __APPLE__
+#ifndef TCP_KEEPIDLE
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
+#endif
+
 #else
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
@@ -278,9 +285,9 @@ boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
 	option_value = 5;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
+	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() SOL_TCP, SO_KEEPIDLE:");
+		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
 		return false;
 	}
 #endif
