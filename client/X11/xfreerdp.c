@@ -293,12 +293,6 @@ void xf_create_window(xfInfo* xfi)
 
 	if (xfi->remote_app != true)
 	{
-		if (xfi->fullscreen)
-		{
-			width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : xfi->width;
-			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
-		}
-
 		if (xfi->instance->settings->window_title != NULL)
 		{
 			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
