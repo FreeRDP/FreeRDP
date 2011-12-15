@@ -498,6 +498,11 @@ void rdp_read_pointer_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 
 	if (colorPointerFlag == false)
 		settings->color_pointer = false;
+
+	if (settings->server_mode)
+	{
+		settings->pointer_cache_size = pointerCacheSize;
+	}
 }
 
 /**
