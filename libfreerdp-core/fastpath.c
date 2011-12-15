@@ -576,22 +576,6 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	return result;
 }
 
-boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId)
-{
-	STREAM* s;
-	s = transport_send_stream_init(fastpath->rdp->transport, 127);
-	stream_write_uint8(s, 0); /* fpOutputHeader (1 byte) */
-	stream_write_uint8(s, 5 + SURFCMD_FRAME_MARKER_LENGTH); /* length1 */
-	stream_write_uint8(s, FASTPATH_UPDATETYPE_SURFCMDS); /* updateHeader (1 byte) */
-	stream_write_uint16(s, SURFCMD_FRAME_MARKER_LENGTH); /* size (2 bytes) */
-	update_write_surfcmd_frame_marker(s, frameAction, frameId);
-
-	if (transport_write(fastpath->rdp->transport, s) < 0)
-		return false;
-
-	return true;
-}
-
 rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
 	rdpFastPath* fastpath;
