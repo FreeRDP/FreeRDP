@@ -660,14 +660,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;
 
-	connectionType = 0;
+	connectionType = settings->connection_type;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
 	if (settings->rfx_codec)
-	{
-		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 		connectionType = CONNECTION_TYPE_LAN;
-	}
+
+	if (connectionType != 0)
+		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 
 	if (settings->color_depth == 32)
 	{

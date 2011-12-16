@@ -24,6 +24,7 @@
 #include "mcs.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 
 /* Client to Server (CS) data blocks */
@@ -65,26 +66,6 @@
 #define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS	0x0008
 #define RNS_UD_CS_VALID_CONNECTION_TYPE		0x0020
 #define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU	0x0040
-
-/* Performance Flags */
-#define PERF_FLAG_NONE                  	0x00000000
-#define PERF_DISABLE_WALLPAPER          	0x00000001
-#define PERF_DISABLE_FULLWINDOWDRAG     	0x00000002
-#define PERF_DISABLE_MENUANIMATIONS     	0x00000004
-#define PERF_DISABLE_THEMING            	0x00000008
-#define PERF_RESERVED1                  	0x00000010
-#define PERF_DISABLE_CURSOR_SHADOW      	0x00000020
-#define PERF_DISABLE_CURSORSETTINGS     	0x00000040
-#define PERF_ENABLE_FONT_SMOOTHING      	0x00000080
-#define PERF_ENABLE_DESKTOP_COMPOSITION 	0x00000100
-
-/* Connection Types */
-#define CONNECTION_TYPE_MODEM			0x01
-#define CONNECTION_TYPE_BROADBAND_LOW		0x02
-#define CONNECTION_TYPE_SATELLITE		0x03
-#define CONNECTION_TYPE_BROADBAND_HIGH		0x04
-#define CONNECTION_TYPE_WAN			0x05
-#define CONNECTION_TYPE_LAN			0x06
 
 /* Cluster Information Flags */
 #define REDIRECTION_SUPPORTED			0x00000001

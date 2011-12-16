@@ -436,14 +436,18 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				settings->performance_flags = PERF_DISABLE_WALLPAPER |
 					PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS |
 					PERF_DISABLE_THEMING;
+
+				settings->connection_type = CONNECTION_TYPE_MODEM;
 			}
 			else if (argv[index][0] == 'b') /* broadband */
 			{
 				settings->performance_flags = PERF_DISABLE_WALLPAPER;
+				settings->connection_type = CONNECTION_TYPE_BROADBAND_HIGH;
 			}
 			else if (argv[index][0] == 'l') /* lan */
 			{
 				settings->performance_flags = PERF_FLAG_NONE;
+				settings->connection_type = CONNECTION_TYPE_LAN;
 			}
 			else
 			{

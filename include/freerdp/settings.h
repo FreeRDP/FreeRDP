@@ -35,6 +35,14 @@
 #define PERF_ENABLE_FONT_SMOOTHING      	0x00000080
 #define PERF_ENABLE_DESKTOP_COMPOSITION 	0x00000100
 
+/* Connection Types */
+#define CONNECTION_TYPE_MODEM			0x01
+#define CONNECTION_TYPE_BROADBAND_LOW		0x02
+#define CONNECTION_TYPE_SATELLITE		0x03
+#define CONNECTION_TYPE_BROADBAND_HIGH		0x04
+#define CONNECTION_TYPE_WAN			0x05
+#define CONNECTION_TYPE_LAN			0x06
+
 /* Encryption Methods */
 #define ENCRYPTION_METHOD_NONE			0x00000000
 #define ENCRYPTION_METHOD_40BIT			0x00000001
@@ -279,6 +287,7 @@ struct rdp_settings
 	boolean disable_full_window_drag;
 	boolean disable_menu_animations;
 	boolean disable_theming;
+	uint32 connection_type;
 	uint32 multifrag_max_request_size;
 
 	/* Certificate */

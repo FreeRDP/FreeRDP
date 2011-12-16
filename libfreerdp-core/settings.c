@@ -101,6 +101,7 @@ rdpSettings* settings_new(void* instance)
 		settings->disable_full_window_drag = false;
 		settings->disable_menu_animations = false;
 		settings->disable_theming = false;
+		settings->connection_type = 0;
 
 		settings->draw_gdi_plus = false;
 
