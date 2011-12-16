@@ -210,7 +210,7 @@ void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 
 	scanline = (glyph->cx + 7) / 8;
 
-	xf_glyph->pixmap = XCreatePixmap(xfi->display, xfi->drawable, glyph->cx, glyph->cy, 1);
+	xf_glyph->pixmap = XCreatePixmap(xfi->display, xfi->drawing, glyph->cx, glyph->cy, 1);
 
 	image = XCreateImage(xfi->display, xfi->visual, 1,
 			ZPixmap, 0, (char*) glyph->aj, glyph->cx, glyph->cy, 8, scanline);
@@ -238,11 +238,9 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 	xf_glyph = (xfGlyph*) glyph;
 
-	printf("Glyph_Draw: x:%d y:%d w:%d h:%d\n", x, y, glyph->cx, glyph->cy);
-
 	XSetStipple(xfi->display, xfi->gc, xf_glyph->pixmap);
 	XSetTSOrigin(xfi->display, xfi->gc, x, y);
-	XFillRectangle(xfi->display, xfi->drawable, xfi->gc, x, y, glyph->cx, glyph->cy);
+	XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, glyph->cx, glyph->cy);
 	XSetStipple(xfi->display, xfi->gc, xfi->bitmap_mono);
 }
 
@@ -254,8 +252,12 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	fgcolor = freerdp_color_convert(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, fgcolor);
-	XSetBackground(xfi->display, xfi->gc, bgcolor);
+	XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, width, height);
+
+	XSetForeground(xfi->display, xfi->gc, bgcolor);
+	XSetBackground(xfi->display, xfi->gc, fgcolor);
 	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
 }
 
@@ -263,12 +265,15 @@ void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, 
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	if (xfi->remote_app != true)
+	if (xfi->drawing == xfi->primary)
 	{
-		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, width, height, x, y);
-	}
+		if (xfi->remote_app != true)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, width, height, x, y);
+		}
 
-	gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
+		gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
+	}
 }
 
 /* Graphics Module */

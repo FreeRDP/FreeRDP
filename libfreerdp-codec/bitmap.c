@@ -19,6 +19,7 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/codec/color.h>
 
 #include <freerdp/codec/bitmap.h>
 
@@ -392,36 +393,16 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 	return (size == total_pro) ? true : false;
 }
 
-/**
- * bitmap flip
- */
-static int bitmap_flip(uint8* src, uint8* dst, int delta, int height)
-{
-	int index;
-
-	dst = (dst + delta * height) - delta;
-	for (index = 0; index < height; index++)
-	{
-		memcpy(dst, src, delta);
-		src += delta;
-		dst -= delta;
-	}
-	return 0;
-}
 
 /**
  * bitmap decompression routine
  */
 boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-	uint8* data;
-
 	if (srcBpp == 16 && dstBpp == 16)
 	{
-		data = (uint8*) xmalloc(width * height * 2);
-		RleDecompress16to16(srcData, size, data, width * 2, width, height);
-		bitmap_flip(data, dstData, width * 2, height);
-		xfree(data);
+		RleDecompress16to16(srcData, size, dstData, width * 2, width, height);
+		freerdp_bitmap_flip(dstData, dstData, width * 2, height);
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
@@ -430,24 +411,18 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
-		data = (uint8*) xmalloc(width * height * 2);
-		RleDecompress16to16(srcData, size, data, width * 2, width, height);
-		bitmap_flip(data, dstData, width * 2, height);
-		xfree(data);
+		RleDecompress16to16(srcData, size, dstData, width * 2, width, height);
+		freerdp_bitmap_flip(dstData, dstData, width * 2, height);
 	}
 	else if (srcBpp == 8 && dstBpp == 8)
 	{
-		data = (uint8*) xmalloc(width * height);
-		RleDecompress8to8(srcData, size, data, width, width, height);
-		bitmap_flip(data, dstData, width, height);
-		xfree(data);
+		RleDecompress8to8(srcData, size, dstData, width, width, height);
+		freerdp_bitmap_flip(dstData, dstData, width, height);
 	}
 	else if (srcBpp == 24 && dstBpp == 24)
 	{
-		data = (uint8*) xmalloc(width * height * 3);
-		RleDecompress24to24(srcData, size, data, width * 3, width, height);
-		bitmap_flip(data, dstData, width * 3, height);
-		xfree(data);
+		RleDecompress24to24(srcData, size, dstData, width * 3, width, height);
+		freerdp_bitmap_flip(dstData, dstData, width * 3, height);
 	}
 	else
 	{

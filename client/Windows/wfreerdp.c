@@ -258,7 +258,7 @@ boolean wf_post_connect(freerdp* instance)
 
 	if (wfi->sw_gdi)
 	{
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
+		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
@@ -295,7 +295,7 @@ boolean wf_post_connect(freerdp* instance)
 			wfi->nsc_context = nsc_context_new();
 	}
 
-	if (strlen(settings->window_title) > 0)
+	if (settings->window_title != NULL)
 		_snwprintf(win_title, sizeof(win_title), L"%S", settings->window_title);
 	else if (settings->port == 3389)
 		_snwprintf(win_title, sizeof(win_title) / sizeof(win_title[0]), L"FreeRDP: %S", settings->hostname);

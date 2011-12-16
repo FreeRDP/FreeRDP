@@ -288,28 +288,32 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
+	xfi->attribs.bit_gravity = ForgetGravity;
+	xfi->attribs.win_gravity = StaticGravity;
 
 	if (xfi->remote_app != true)
 	{
-		if (xfi->fullscreen)
+		if (xfi->instance->settings->window_title != NULL)
 		{
-			width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : xfi->width;
-			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
-		}
-
-		if (strlen(xfi->instance->settings->window_title) > 0) {
 			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
 			sprintf(win_title, "%s", xfi->instance->settings->window_title);
-		} else if (xfi->instance->settings->port == 3389) {
+		}
+		else if (xfi->instance->settings->port == 3389)
+		{
 			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
 			sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
-		} else {
+		}
+		else
+		{
 			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
 			sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 		}
 
 		xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
 		xfree(win_title);
+
+		if (xfi->parent_window)
+			XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
 
 		if (xfi->fullscreen)
 			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
@@ -467,27 +471,30 @@ boolean xf_pre_connect(freerdp* instance)
 	if (xfi->display == NULL)
 	{
 		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		printf("Please check that the $DISPLAY environment variable is properly set.\n");
 		return false;
 	}
 
-	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", false);
-	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", false);
-	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", false);
-	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", false);
-	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", false);
-	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", false);
-	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", false);
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
+	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
+	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", True);
+	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", True);
+	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", True);
+	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", True);
+	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", True);
 
-	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", false);
-	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", false);
-	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", false);
-	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", false);
-	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", false);
+	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", True);
+	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", True);
+	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", True);
+	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", True);
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", True);
+	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", True);
 
-	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", false);
-
-	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", false);
-	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", false);
+	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
+	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
 
 	xf_kbd_init(xfi);
 
@@ -513,6 +520,7 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->grab_keyboard = settings->grab_keyboard;
 	xfi->fullscreen_toggle = true;
 	xfi->sw_gdi = settings->sw_gdi;
+	xfi->parent_window = (Window) settings->parent_window_xid;
 
 	xf_detect_monitors(xfi, settings);
 
@@ -573,7 +581,7 @@ boolean xf_post_connect(freerdp* instance)
 		rdpGdi* gdi;
 		uint32 flags;
 
-		flags = CLRCONV_ALPHA;
+		flags = CLRCONV_ALPHA | CLRCONV_INVERT;
 
 		if (xfi->bpp > 16)
 			flags |= CLRBUF_32BPP;
@@ -705,7 +713,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	printf("\tIssuer: %s\n", issuer);
 	printf("\tThumbprint: %s\n", fingerprint);
 	printf("The above X.509 certificate could not be verified, possibly because you do not have "
-		"the CA certificate in your certificate store, or the certificate has expired."
+		"the CA certificate in your certificate store, or the certificate has expired. "
 		"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
 	char answer;
@@ -880,15 +888,18 @@ int xfreerdp_run(freerdp* instance)
 	int max_fds;
 	int rcount;
 	int wcount;
+	int ret = 0;
 	void* rfds[32];
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int select_status;
 	rdpChannels* channels;
-	int ret = 0;
+	struct timeval timeout;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
+	memset(&timeout, 0, sizeof(struct timeval));
 
 	if (!freerdp_connect(instance))
 		return XF_EXIT_CONN_FAILED;
@@ -937,7 +948,15 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		timeout.tv_sec = 5;
+		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
+
+		if (select_status == 0)
+		{
+			//freerdp_send_keep_alive(instance);
+			continue;
+		}
+		else if (select_status == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||

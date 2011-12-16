@@ -498,6 +498,11 @@ void rdp_read_pointer_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 
 	if (colorPointerFlag == false)
 		settings->color_pointer = false;
+
+	if (settings->server_mode)
+	{
+		settings->pointer_cache_size = pointerCacheSize;
+	}
 }
 
 /**
@@ -817,19 +822,18 @@ void rdp_write_glyph_cache_capability_set(STREAM* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	/* glyphCache (40 bytes) */
-	rdp_write_cache_definition(s, &settings->glyphCache[0]);
-	rdp_write_cache_definition(s, &settings->glyphCache[1]);
-	rdp_write_cache_definition(s, &settings->glyphCache[2]);
-	rdp_write_cache_definition(s, &settings->glyphCache[3]);
-	rdp_write_cache_definition(s, &settings->glyphCache[4]);
-	rdp_write_cache_definition(s, &settings->glyphCache[5]);
-	rdp_write_cache_definition(s, &settings->glyphCache[6]);
-	rdp_write_cache_definition(s, &settings->glyphCache[7]);
-	rdp_write_cache_definition(s, &settings->glyphCache[8]);
-	rdp_write_cache_definition(s, &settings->glyphCache[9]);
+	rdp_write_cache_definition(s, &settings->glyphCache[0]); /* glyphCache0 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[1]); /* glyphCache1 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[2]); /* glyphCache2 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[3]); /* glyphCache3 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[4]); /* glyphCache4 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[5]); /* glyphCache5 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[6]); /* glyphCache6 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[7]); /* glyphCache7 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[8]); /* glyphCache8 (4 bytes) */
+	rdp_write_cache_definition(s, &settings->glyphCache[9]); /* glyphCache9 (4 bytes) */
 
-	/* fragCache */
-	rdp_write_cache_definition(s, &settings->fragCache);
+	rdp_write_cache_definition(s, &settings->fragCache);  /* fragCache (4 bytes) */
 
 	stream_write_uint16(s, settings->glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 
@@ -867,14 +871,14 @@ void rdp_read_offscreen_bitmap_cache_capability_set(STREAM* s, uint16 length, rd
 void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
-	uint32 offscreenSupportLevel;
+	uint32 offscreenSupportLevel = false;
 
 	header = rdp_capability_set_start(s);
 
 	if (settings->offscreen_bitmap_cache)
 		offscreenSupportLevel = true;
 
-	stream_read_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
+	stream_write_uint32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_size); /* offscreenCacheSize (2 bytes) */
 	stream_write_uint16(s, settings->offscreen_bitmap_cache_entries); /* offscreenCacheEntries (2 bytes) */
 
@@ -929,7 +933,7 @@ void rdp_write_bitmap_cache_cell_info(STREAM* s, BITMAP_CACHE_V2_CELL_INFO* cell
 	 * is used to indicate a persistent bitmap cache.
 	 */
 
-	info = cellInfo->numEntries || (cellInfo->persistent << 31);
+	info = (cellInfo->numEntries | (cellInfo->persistent << 31));
 	stream_write_uint32(s, info);
 }
 
@@ -1931,7 +1935,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	/* Capability Sets */
-	numberCapabilities = 14;
+	numberCapabilities = 15;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
@@ -1948,6 +1952,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_virtual_channel_capability_set(s, settings);
 	rdp_write_sound_capability_set(s, settings);
 	rdp_write_share_capability_set(s, settings);
+	rdp_write_font_capability_set(s, settings);
 	rdp_write_control_capability_set(s, settings);
 	rdp_write_color_cache_capability_set(s, settings);
 	rdp_write_window_activation_capability_set(s, settings);

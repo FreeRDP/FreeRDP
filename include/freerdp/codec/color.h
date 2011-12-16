@@ -30,7 +30,7 @@ extern "C" {
 /* Color Space Conversions: http://msdn.microsoft.com/en-us/library/ff566496/ */
 
 /* Color Space Conversion */
- 
+
 #define RGB_555_565(_r, _g, _b) \
 	_r = _r; \
 	_g = (_g << 1 & ~0x1) | (_g >> 4); \
@@ -124,7 +124,7 @@ extern "C" {
 	_b = (_p & 0xF800) >> 11; \
 	_g = (_p & 0x7E0) >> 5; \
 	_r = (_p & 0x1F);
- 
+
 #define GetBGR16(_r, _g, _b, _p) \
 	GetBGR_565(_r, _g, _b, _p); \
 	RGB_565_888(_r, _g, _b);
@@ -240,6 +240,7 @@ typedef uint8* (*p_freerdp_image_convert)(uint8* srcData, uint8* dstData, int wi
 FREERDP_API uint32 freerdp_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* freerdp_image_convert(uint8* srcData, uint8 *dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* freerdp_glyph_convert(int width, int height, uint8* data);
+FREERDP_API void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height);
 FREERDP_API uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height, int bpp);
 FREERDP_API uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv);
 FREERDP_API uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv);

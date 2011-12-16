@@ -34,6 +34,7 @@ include(AutoVersioning)
 include(ConfigOptions)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
+include(GNUInstallDirsWrapper)
 
 # Soname versioning - 0.0.0 since it is not being managed yet
 set(FREERDP_VERSION_MAJOR "1")
@@ -45,16 +46,6 @@ set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_PATCH}")
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-# Set default libdir
-if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-	set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-
-# Set default bindir
-if(NOT DEFINED CMAKE_INSTALL_BINDIR)
-	set(CMAKE_INSTALL_BINDIR "bin")
 endif()
 
 # build shared libs

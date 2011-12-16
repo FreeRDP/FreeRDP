@@ -117,6 +117,7 @@ typedef struct _NTLMSSP NTLMSSP;
 void ntlmssp_set_username(NTLMSSP* ntlmssp, char* username);
 void ntlmssp_set_domain(NTLMSSP* ntlmssp, char* domain);
 void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password);
+void ntlmssp_set_workstation(NTLMSSP* ntlmssp, char* workstation);
 
 void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp);
 void ntlmssp_generate_key_exchange_key(NTLMSSP* ntlmssp);

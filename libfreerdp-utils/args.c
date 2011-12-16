@@ -77,6 +77,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -t: alternative port number, default is 3389\n"
 				"  -u: username\n"
 				"  -x: performance flags (m[odem], b[roadband] or l[an])\n"
+				"  -X: embed into another window with a given XID.\n"
 				"  -z: enable compression\n"
 				"  --app: RemoteApp connection. This implies -g workarea\n"
 				"  --ext: load an extension\n"
@@ -88,9 +89,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+				"  --disable-wallpaper: disables wallpaper\n"
+				"  --composition: enable desktop composition\n"
+				"  --disable-full-window-drag: disables full window drag\n"
+				"  --disable-menu-animations: disables menu animations\n"
+				"  --disable-theming: disables theming\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
+				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
 				"  --version: print version information\n"
@@ -218,8 +225,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing window title\n");
 				return -1;
 			}
-			strncpy(settings->window_title, argv[index], sizeof(settings->window_title) - 1);
-			settings->window_title[sizeof(settings->window_title) - 1] = 0;
+
+			settings->window_title = xstrdup(argv[index]);
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{
@@ -277,9 +284,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (settings->ntlm_version != 2)
 				settings->ntlm_version = 1;
 		}
-		else if (strcmp("--glyph-cache", argv[index]) == 0)
+		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
-			settings->glyph_cache = true;
+			settings->glyph_cache = false;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
@@ -355,7 +362,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return -1;
 			}
 		}
-        else if (strcmp("--nsc", argv[index]) == 0)
+		else if (strcmp("--nsc", argv[index]) == 0)
 		{
 			settings->ns_codec = true;
 		}
@@ -385,6 +392,26 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->smooth_fonts = true;
 		}
+		else if (strcmp("--disable-wallpaper", argv[index]) == 0)
+		{
+			settings->disable_wallpaper = true;
+		}
+		else if (strcmp("--disable-full-window-drag", argv[index]) == 0)
+		{
+			settings->disable_full_window_drag = true;
+		}
+		else if (strcmp("--disable-menu-animations", argv[index]) == 0)
+		{
+			settings->disable_menu_animations = true;
+		}
+		else if (strcmp("--disable-theming", argv[index]) == 0)
+		{
+			settings->disable_theming = true;
+		}
+		else if (strcmp("--composition", argv[index]) == 0)
+		{
+			settings->desktop_composition = true;
+		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
 			settings->mouse_motion = false;
@@ -409,18 +436,40 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				settings->performance_flags = PERF_DISABLE_WALLPAPER |
 					PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS |
 					PERF_DISABLE_THEMING;
+
+				settings->connection_type = CONNECTION_TYPE_MODEM;
 			}
 			else if (argv[index][0] == 'b') /* broadband */
 			{
 				settings->performance_flags = PERF_DISABLE_WALLPAPER;
+				settings->connection_type = CONNECTION_TYPE_BROADBAND_HIGH;
 			}
 			else if (argv[index][0] == 'l') /* lan */
 			{
 				settings->performance_flags = PERF_FLAG_NONE;
+				settings->connection_type = CONNECTION_TYPE_LAN;
 			}
 			else
 			{
 				settings->performance_flags = strtol(argv[index], 0, 16);
+			}
+		}
+		else if (strcmp("-X", argv[index]) == 0)
+		{
+			index++;
+
+			if (index == argc)
+			{
+				printf("missing parent window XID\n");
+				return -1;
+			}
+
+			settings->parent_window_xid = strtoul(argv[index], NULL, 16);
+
+			if (settings->parent_window_xid == 0)
+			{
+				printf("invalid parent window XID\n");
+				return -1;
 			}
 		}
 		else if (strcmp("--no-rdp", argv[index]) == 0)
@@ -585,6 +634,21 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (settings->smooth_fonts)
 				settings->performance_flags |= PERF_ENABLE_FONT_SMOOTHING;
+
+			if (settings->desktop_composition)
+				settings->performance_flags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+
+			if (settings->disable_wallpaper)
+				settings->performance_flags |= PERF_DISABLE_WALLPAPER;
+
+			if (settings->disable_full_window_drag)
+				settings->performance_flags |= PERF_DISABLE_FULLWINDOWDRAG;
+
+			if (settings->disable_menu_animations)
+				settings->performance_flags |= PERF_DISABLE_MENUANIMATIONS;
+
+			if (settings->disable_theming)
+				settings->performance_flags |= PERF_DISABLE_THEMING;
 
 			return index;
 		}

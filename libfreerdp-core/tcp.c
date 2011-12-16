@@ -32,6 +32,14 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+
+#ifdef __APPLE__
+#ifndef TCP_KEEPIDLE
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
+#endif
+
 #else
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
@@ -105,6 +113,8 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
 	int status;
 	char servname[10];
+	uint32 option_value;
+	socklen_t option_len;
 	struct addrinfo hints = { 0 };
 	struct addrinfo * res, * ai;
 
@@ -148,6 +158,23 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 
 	tcp_get_ip_address(tcp);
 	tcp_get_mac_address(tcp);
+
+	option_value = 1;
+	option_len = sizeof(option_value);
+	setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
+
+	/* receive buffer must be a least 32 K */
+	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+	{
+		if (option_value < (1024 * 32))
+		{
+			option_value = 1024 * 32;
+			option_len = sizeof(option_value);
+			setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len);
+		}
+	}
+
+	tcp_set_keep_alive_mode(tcp);
 
 	return true;
 }
@@ -222,7 +249,7 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 
 	if (flags == -1)
 	{
-		printf("transport_configure_sockfd: fcntl failed.\n");
+		printf("tcp_set_blocking_mode: fcntl failed.\n");
 		return false;
 	}
 
@@ -235,6 +262,34 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	ioctlsocket(tcp->sockfd, FIONBIO, &arg);
 	tcp->wsa_event = WSACreateEvent();
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
+#endif
+
+	return true;
+}
+
+boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
+{
+#ifndef _WIN32
+	uint32 option_value;
+	socklen_t option_len;
+
+	option_value = 1;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
+		return false;
+	}
+
+	option_value = 5;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
+		return false;
+	}
 #endif
 
 	return true;

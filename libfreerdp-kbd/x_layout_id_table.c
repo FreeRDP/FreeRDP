@@ -1075,13 +1075,12 @@ static const SunOSKeyboard SunOSKeyboards[] =
 	{ 6,   272,  "sun(type6)",               KBD_PORTUGUESE_BRAZILIAN_ABNT		}  /*  Brazil6_usb */
 };
 
-unsigned int
-find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
+unsigned int find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
 	int i;
 	int j;
 
-	if((layout == NULL) || (variant == NULL))
+	if ((layout == NULL) || (variant == NULL))
 		return 0;
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s\n", layout, variant);
@@ -1107,8 +1106,7 @@ find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 
 #if defined(sun)
 
-unsigned int
-detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
+unsigned int detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
 {
 	FILE* kbd;
 

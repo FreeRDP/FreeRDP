@@ -47,8 +47,10 @@ xfInfo* xf_info_init()
 	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
+#ifdef WITH_XDAMAGE
 	int damage_event;
 	int damage_error;
+#endif
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -121,7 +123,9 @@ xfInfo* xf_info_init()
 	xfi->clrconv->alpha = 1;
 
 	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+#ifdef WITH_XDAMAGE
 	XDamageQueryExtension(xfi->display, &damage_event, &damage_error);
+#endif 
 
 	return xfi;
 }
@@ -297,6 +301,11 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
+boolean xf_peer_capabilities(freerdp_peer* client)
+{
+	return true;
+}
+
 boolean xf_peer_post_connect(freerdp_peer* client)
 {
 	xfInfo* xfi;
@@ -423,6 +432,7 @@ void* xf_peer_main_loop(void* arg)
 	client->settings->nla_security = false;
 	client->settings->rfx_codec = true;
 
+	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
 

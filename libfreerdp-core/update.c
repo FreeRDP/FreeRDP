@@ -409,6 +409,16 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 }
 
+static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	update_write_surfcmd_frame_marker(s, surface_frame_marker->frameAction, surface_frame_marker->frameId);
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
+}
+
 static void update_send_synchronize(rdpContext* context)
 {
 	STREAM* s;
@@ -517,6 +527,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->RefreshRect = update_send_refresh_rect;
 	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
+	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
 	update->primary->ScrBlt = update_send_scrblt;
 	update->pointer->PointerSystem = update_send_pointer_system;

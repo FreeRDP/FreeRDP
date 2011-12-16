@@ -68,7 +68,9 @@ void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 	rdpCache* cache = context->cache;
 
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
-	Pointer_Set(context, pointer);
+
+	if (pointer != NULL)
+		Pointer_Set(context, pointer);
 }
 
 rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)

@@ -90,8 +90,16 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 		}
 	}
 
+	if (settings->ntlm_version == 2)
+		ntlmssp->ntlm_v2 = 1;
+
 	ntlmssp_set_password(ntlmssp, settings->password);
 	ntlmssp_set_username(ntlmssp, settings->username);
+
+	if (ntlmssp->ntlm_v2)
+	{
+		ntlmssp_set_workstation(ntlmssp, "WORKSTATION");
+	}
 
 	if (settings->domain != NULL)
 	{
@@ -106,9 +114,6 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 	ntlmssp_generate_client_challenge(ntlmssp);
 	ntlmssp_generate_random_session_key(ntlmssp);
 	ntlmssp_generate_exported_session_key(ntlmssp);
-	
-	if (settings->ntlm_version == 2)
-		ntlmssp->ntlm_v2 = 1;
 
 	return 1;
 }
