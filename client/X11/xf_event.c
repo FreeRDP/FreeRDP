@@ -463,9 +463,13 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
                 xfw->right = xfw->left + xfw->width - 1;
                 xfw->bottom = xfw->top + xfw->height - 1;
 
-		if (app)
-			xf_rail_adjust_position(xfi, window);
+		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u send_event=%d",
+			(uint32) xfw->handle, 
+			xfw->left, xfw->top, xfw->right, xfw->bottom, 
+			xfw->width, xfw->height, event->xconfigure.send_event);
 
+		if (app && ! event->xconfigure.send_event)
+			xf_rail_adjust_position(xfi, window);
         }
 
         return True;
@@ -590,7 +594,6 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 					// In this case we must cancel the 
 					// local move. The event will be 
 					// processed below as normal, below.
-					xf_rail_end_local_move(xfi, window);
 	                        	break;
 				case VisibilityNotify:
 				case PropertyNotify:

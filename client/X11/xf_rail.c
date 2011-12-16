@@ -306,8 +306,10 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	window_move.right = xfw->right + 1;   // In the update to RDP the position is one past the window
 	window_move.bottom = xfw->bottom + 1;
 
-	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d}",
-        	(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom);
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+        	(uint32) xfw->handle, 
+		xfw->left, xfw->top, xfw->right, xfw->bottom,
+		xfw->width, xfw->height);
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
 
@@ -507,7 +509,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 		{
 			xf_StartLocalMoveSize(xfi, xfw, direction, x, y);
 		} else {
-			xf_EndLocalMoveSize(xfi, xfw, false);
+			xf_EndLocalMoveSize(xfi, xfw);
 		}
 	}
 }
