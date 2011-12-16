@@ -473,17 +473,16 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 {
 	Window child_window;
 
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-	rdpWindow* wnd = window->window;
-#endif
+	if (window->local_move.state != LMS_NOT_ACTIVE)
+		return;
 
 	DEBUG_X11_LMS("direction=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d   "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d  mouse_x=%d mouse_y=%d",
 		direction, (uint32) window->handle, 
 		window->left, window->top, window->right, window->bottom,
-		window->width, window->height, wnd->windowId,
-		wnd->windowOffsetX, wnd->windowOffsetY, 
-		wnd->windowWidth, wnd->windowHeight, x, y);
+		window->width, window->height, window->window->windowId,
+		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowWidth, window->window->windowHeight, x, y);
 
 	window->local_move.root_x = x; 
 	window->local_move.root_y = y;
@@ -508,30 +507,28 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 		       	1); /* 1 == application request per extended ICCM */
 }
 
-void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel)
+void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window)
 {
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-	rdpWindow* wnd = window->window;
-#endif
 
-	DEBUG_X11_LMS("state=%d cancel=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
+	DEBUG_X11_LMS("state=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-		window->local_move.state, cancel, 
+		window->local_move.state, 
 		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
-		window->width, window->height, wnd->windowId,
-		wnd->windowOffsetX, wnd->windowOffsetY, 
-		wnd->windowWidth, wnd->windowHeight);
+		window->width, window->height, window->window->windowId,
+		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowWidth, window->window->windowHeight);
 
 	if (window->local_move.state == LMS_NOT_ACTIVE)
 		return;
 
-	if (cancel)
+	if (window->local_move.state == LMS_STARTING)
 	{
 		/*
-		 * Per ICCM, the X client can ask to cancel an active move.  Do this if we
-		 * receive a local move stop from RDP while a local move is in progress
+		 * The move never was property started. This can happen due to race
+		 * conditions between the mouse button up and the communications to the
+		 * RDP server for local moves. We must cancel the X window manager move.
+		 * Per ICCM, the X client can ask to cancel an active move. 
 		 */
-	
 		xf_SendClientEvent(xfi, window, 
 			xfi->_NET_WM_MOVERESIZE, /* request X window manager to abort a local move */
 			5, /* 5 arguments to follow */
@@ -549,27 +546,25 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 {
 	boolean resize = false;
 
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-	rdpWindow* wnd = window->window;
-#endif
-
 	if ((width * height) < 1)
-		return;
-
-	if (window->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
 	if ((window->width != width) || (window->height != height))
 		resize = true;
 
-	DEBUG_X11_LMS("window=0x%X current rc={l=%d t=%d r=%d b=%d} w=%u h=%u  "
+	if (window->local_move.state == LMS_STARTING ||
+		window->local_move.state == LMS_ACTIVE)
+		return;
+
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u  "
 		"new rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		(uint32) window->handle, window->left, window->top, 
 		window->right, window->bottom, window->width, window->height,
-		x, y, x + width -1, y + height -1, width, height, wnd->windowId,
-		wnd->windowOffsetX, wnd->windowOffsetY, 
-		wnd->windowWidth, wnd->windowHeight);
+		x, y, x + width -1, y + height -1, width, height, 
+		window->window->windowId,
+		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowWidth, window->window->windowHeight);
 
 	window->left = x;
 	window->top = y;
@@ -582,6 +577,8 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 		XMoveResizeWindow(xfi->display, window->handle, x, y, width, height);
 	else
 		XMoveWindow(xfi->display, window->handle, x, y);
+
+	xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
 }
 
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
