@@ -275,6 +275,10 @@ struct rdp_settings
 	uint8 received_caps[32];
 	uint8 order_support[32];
 	boolean surface_commands;
+	boolean disable_wallpaper;
+	boolean disable_full_window_drag;
+	boolean disable_menu_animations;
+	boolean disable_theming;
 	uint32 multifrag_max_request_size;
 
 	/* Certificate */
