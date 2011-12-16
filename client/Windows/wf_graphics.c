@@ -23,7 +23,7 @@
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata)
 {
 	HDC hdc;
 	int negHeight;
@@ -52,6 +52,9 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	if (data != NULL)
 		freerdp_image_convert(data, cdata, width, height, bpp, 24, wfi->clrconv);
 
+	if (pdata != NULL)
+		*pdata = cdata;
+
 	ReleaseDC(NULL, hdc);
 	GdiFlush();
 
@@ -70,12 +73,27 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	if (data == NULL)
 		image->bitmap = CreateCompatibleBitmap(hdc, width, height);
 	else
-		image->bitmap = wf_create_dib(wfi, width, height, bpp, data);
+		image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
 	
 	return image;
+}
+
+wfBitmap* wf_bitmap_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+{
+	HDC hdc;
+	wfBitmap* bitmap;
+
+	hdc = GetDC(NULL);
+	bitmap = (wfBitmap*) malloc(sizeof(wfBitmap));
+	bitmap->hdc = CreateCompatibleDC(hdc);
+	bitmap->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(bitmap->pdata));
+	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
+	ReleaseDC(NULL, hdc);
+	
+	return bitmap;
 }
 
 void wf_image_free(wfBitmap* image)
@@ -105,7 +123,7 @@ void wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data == NULL)
 		wf_bitmap->bitmap = CreateCompatibleBitmap(hdc, bitmap->width, bitmap->height);
 	else
-		wf_bitmap->bitmap = wf_create_dib(wfi, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data);
+		wf_bitmap->bitmap = wf_create_dib(wfi, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data, NULL);
 
 	wf_bitmap->org_bitmap = (HBITMAP) SelectObject(wf_bitmap->hdc, wf_bitmap->bitmap);
 	ReleaseDC(NULL, hdc);
@@ -133,7 +151,7 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	height = bitmap->bottom - bitmap->top + 1;
 
 	BitBlt(wfi->primary->hdc, bitmap->left, bitmap->top,
-		width, height, wf_bitmap->hdc, 0, 0, GDI_SRCCOPY);
+		width, height, wf_bitmap->hdc, 0, 0, SRCCOPY);
 
 	wf_invalidate_region(wfi, bitmap->left, bitmap->top, width, height);
 }

@@ -131,7 +131,7 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, uint32 color, int bpp)
 	{
 		if (brush->bpp > 1)
 		{
-			pattern = wf_create_dib(wfi, 8, 8, bpp, brush->data);
+			pattern = wf_create_dib(wfi, 8, 8, bpp, brush->data, NULL);
 			lbr.lbHatch = (ULONG_PTR) pattern;
 		}
 		else
@@ -165,13 +165,11 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, uint32 color, int bpp)
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
 {
-	RECT update_rect;
-	update_rect.left = x;
-	update_rect.top = y;
-	update_rect.right = x + width;
-	update_rect.bottom = y + height;
-	InvalidateRect(wfi->hwnd, &update_rect, FALSE);
-
+	wfi->update_rect.left = x;
+	wfi->update_rect.top = y;
+	wfi->update_rect.right = x + width;
+	wfi->update_rect.bottom = y + height;
+	InvalidateRect(wfi->hwnd, &(wfi->update_rect), FALSE);
 	gdi_InvalidateRegion(wfi->hdc, x, y, width, height);
 }
 
@@ -195,7 +193,7 @@ void wf_set_null_clip_rgn(wfInfo* wfi)
 void wf_set_clip_rgn(wfInfo* wfi, int x, int y, int width, int height)
 {
 	HRGN clip;
-	clip = CreateRectRgn(x, y, width, height);
+	clip = CreateRectRgn(x, y, x + width, y + height);
 	SelectClipRgn(wfi->drawing->hdc, clip);
 	DeleteObject(clip);
 }
@@ -432,7 +430,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			tx = message->tiles[i]->x + surface_bits_command->destLeft;
 			ty = message->tiles[i]->y + surface_bits_command->destTop;
 
-			freerdp_image_convert(message->tiles[i]->data, wfi->tile->_bitmap.data, 64, 64, 32, 32, wfi->clrconv);
+			freerdp_image_convert(message->tiles[i]->data, wfi->tile->pdata, 64, 64, 32, 24, wfi->clrconv);
 
 			for (j = 0; j < message->num_rects; j++)
 			{
@@ -441,11 +439,20 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 					surface_bits_command->destTop + message->rects[j].y,
 					message->rects[j].width, message->rects[j].height);
 
-				BitBlt(wfi->primary->hdc, tx, ty, 64, 64, wfi->tile->hdc, 0, 0, GDI_SRCCOPY);
+				BitBlt(wfi->primary->hdc, tx, ty, 64, 64, wfi->tile->hdc, 0, 0, SRCCOPY);
 			}
 		}
 
 		wf_set_null_clip_rgn(wfi);
+
+		/* invalidate regions */
+		for (i = 0; i < message->num_rects; i++)
+		{
+			tx = surface_bits_command->destLeft + message->rects[i].x;
+			ty = surface_bits_command->destTop + message->rects[i].y;
+			wf_invalidate_region(wfi, tx, ty, message->rects[i].width, message->rects[i].height);
+		}
+
 		rfx_message_free(rfx_context, message);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
@@ -493,7 +500,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		}
 
 		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
+				surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, SRCCOPY);
 	}
 	else
 	{
