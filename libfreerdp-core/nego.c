@@ -84,6 +84,7 @@ boolean nego_connect(rdpNego* nego)
 	/* update settings with negotiated protocol security */
 	nego->transport->settings->requested_protocols = nego->requested_protocols;
 	nego->transport->settings->selected_protocol = nego->selected_protocol;
+	nego->transport->settings->negotiationFlags = nego->flags;
 
 	if(nego->selected_protocol == PROTOCOL_RDP)
 	{
@@ -458,12 +459,11 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 
 void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 {
-	uint8 flags;
 	uint16 length;
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
-	stream_read_uint8(s, flags);
+	stream_read_uint8(s, nego->flags);
 	stream_read_uint16(s, length);
 	stream_read_uint32(s, nego->selected_protocol);
 
@@ -566,6 +566,7 @@ void nego_init(rdpNego* nego)
 	nego->requested_protocols = PROTOCOL_RDP;
 	nego->transport->recv_callback = nego_recv;
 	nego->transport->recv_extra = (void*) nego;
+	nego->flags = 0;
 }
 
 /**

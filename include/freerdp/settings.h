@@ -208,7 +208,8 @@ struct rdp_settings
 	uint32 encryption_method; /* 27 */
 	uint32 encryption_level; /* 28 */
 	boolean authentication; /* 29 */
-	uint32 paddingB[48 - 30]; /* 30 */
+	uint32 negotiationFlags; /* 30 */
+	uint32 paddingB[48 - 31]; /* 31 */
 
 	/* Connection Settings */
 	uint32 port; /* 48 */

@@ -71,6 +71,7 @@ enum RDP_NEG_MSG
 struct rdp_nego
 {
 	int port;
+	uint32 flags;
 	char* hostname;
 	char* cookie;
 	NEGO_STATE state;

@@ -350,16 +350,20 @@ boolean gcc_read_client_data_blocks(STREAM* s, rdpSettings *settings, int length
 	return true;
 }
 
-void gcc_write_client_data_blocks(STREAM* s, rdpSettings *settings)
+void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 {
 	gcc_write_client_core_data(s, settings);
 	gcc_write_client_cluster_data(s, settings);
 	gcc_write_client_security_data(s, settings);
 	gcc_write_client_network_data(s, settings);
-	gcc_write_client_monitor_data(s, settings);
+
+	/* extended client data supported */
+
+	if (settings->negotiationFlags)
+		gcc_write_client_monitor_data(s, settings);
 }
 
-boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)
+boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 {
 	uint16 type;
 	uint16 offset = 0;
