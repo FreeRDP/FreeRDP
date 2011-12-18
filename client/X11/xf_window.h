@@ -106,7 +106,7 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int max
 
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y);
-void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window, boolean cancel);
+void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window);
 void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_WINDOW_H */

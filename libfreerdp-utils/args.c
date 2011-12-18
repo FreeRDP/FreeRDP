@@ -83,6 +83,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
 				"  --no-fastpath: disable fast-path\n"
+				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
 				"  --no-bmp-cache: disable bitmap cache\n"
 				"  --plugin: load a virtual channel plugin\n"

@@ -282,6 +282,7 @@ boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
 		return false;
 	}
 
+#ifdef TCP_KEEPIDLE
 	option_value = 5;
 	option_len = sizeof(option_value);
 
@@ -290,6 +291,7 @@ boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
 		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
 		return false;
 	}
+#endif
 #endif
 
 	return true;
