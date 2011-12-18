@@ -566,12 +566,8 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 {
-	/**
-	 * During reactivation sequence the client might sent some input before receiving
-	 * the Deactivate All PDU. We need to ignore those noises here.
-	 */
 	if (!rdp_recv_confirm_active(rdp, s))
-		return true;
+		return false;
 
 	rdp->state = CONNECTION_STATE_ACTIVE;
 	update_reset_state(rdp->update);

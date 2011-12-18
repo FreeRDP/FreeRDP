@@ -224,7 +224,14 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 
 		case CONNECTION_STATE_LICENSE:
 			if (!rdp_server_accept_confirm_active(client->context->rdp, s))
-				return false;
+			{
+				/**
+				 * During reactivation sequence the client might sent some input or channel data
+				 * before receiving the Deactivate All PDU. We need to process them as usual.
+				 */
+				stream_set_pos(s, 0);
+				return peer_recv_pdu(client, s);
+			}
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
