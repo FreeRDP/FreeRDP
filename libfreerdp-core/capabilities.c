@@ -1963,10 +1963,13 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	}
 
-	if (settings->large_pointer)
+	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
 	{
-		numberCapabilities++;
-		rdp_write_large_pointer_capability_set(s, settings);
+		if (settings->large_pointer)
+		{
+			numberCapabilities++;
+			rdp_write_large_pointer_capability_set(s, settings);
+		}
 	}
 
 	if (settings->remote_app)
@@ -1980,12 +1983,6 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	{
 		numberCapabilities++;
 		rdp_write_multifragment_update_capability_set(s, settings);
-	}
-
-	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
-	{
-		numberCapabilities++;
-		rdp_write_large_pointer_capability_set(s, settings);
 	}
 
 	if (settings->received_caps[CAPSET_TYPE_SURFACE_COMMANDS])
