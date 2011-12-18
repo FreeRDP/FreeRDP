@@ -760,6 +760,13 @@ static boolean rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra
 			}
 			break;
 
+		case CONNECTION_STATE_FINALIZATION:
+			if (!rdp_recv_pdu(rdp, s))
+				return false;
+			if (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE)
+				rdp->state = CONNECTION_STATE_ACTIVE;
+			break;
+
 		case CONNECTION_STATE_ACTIVE:
 			if (!rdp_recv_pdu(rdp, s))
 				return false;

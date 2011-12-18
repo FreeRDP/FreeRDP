@@ -71,6 +71,12 @@
 #define PDU_TYPE_DATA			0x7
 #define PDU_TYPE_SERVER_REDIRECTION	0xA
 
+#define FINALIZE_SC_SYNCHRONIZE_PDU		0x01
+#define FINALIZE_SC_CONTROL_COOPERATE_PDU	0x02
+#define FINALIZE_SC_CONTROL_GRANTED_PDU		0x04
+#define FINALIZE_SC_FONT_MAP_PDU		0x08
+#define FINALIZE_SC_COMPLETE			0x0F
+
 /* Data PDU Types */
 #define DATA_PDU_TYPE_UPDATE					0x02
 #define DATA_PDU_TYPE_CONTROL					0x14
@@ -147,6 +153,7 @@ struct rdp_rdp
 	uint8 fips_encrypt_key[24];
 	uint8 fips_decrypt_key[24];
 	uint32 errorInfo;
+	uint32 finalize_sc_pdus;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
