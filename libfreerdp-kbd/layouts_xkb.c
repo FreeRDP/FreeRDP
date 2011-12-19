@@ -79,8 +79,8 @@ unsigned int detect_keyboard_layout_from_xkb(void* dpy)
 
 	if (dpy && XkbRF_GetNamesProp(dpy, NULL, &rules_names))
 	{
-		DEBUG_KBD("layouts: %s", rules_names.layout);
-		DEBUG_KBD("variants: %s", rules_names.variant);
+		DEBUG_KBD("layouts: %s", rules_names.layout ? rules_names.layout : "");
+		DEBUG_KBD("variants: %s", rules_names.variant ? rules_names.variant : "");
 
 		XGetKeyboardControl(dpy, &coreKbdState);
 
@@ -92,8 +92,8 @@ unsigned int detect_keyboard_layout_from_xkb(void* dpy)
 		layout = comma_substring(rules_names.layout, group);
 		variant = comma_substring(rules_names.variant, group);
 
-		DEBUG_KBD("layout: %s", layout);
-		DEBUG_KBD("variant: %s", variant);
+		DEBUG_KBD("layout: %s", layout ? layout : "");
+		DEBUG_KBD("variant: %s", variant ? variant : "");
 
 		keyboard_layout = find_keyboard_layout_in_xorg_rules(layout, variant);
 

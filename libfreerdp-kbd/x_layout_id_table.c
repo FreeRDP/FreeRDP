@@ -1132,6 +1132,9 @@ unsigned int detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
 
 	kbd = popen("kbd -t -l", "r");
 
+	if (kbd < 0)
+		return 0;
+
 	while(fgets(buffer, sizeof(buffer), kbd) != NULL)
 	{
 		if((pch = strstr(buffer, "type=")) != NULL)
