@@ -61,15 +61,14 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 	if (bitmap_data->flags & BITMAP_COMPRESSION)
 	{
-		uint16 cbCompMainBodySize;
-		uint16 cbUncompressedSize;
-
-		stream_seek_uint16(s); /* cbCompFirstRowSize (2 bytes) */
-		stream_read_uint16(s, cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
-		stream_seek_uint16(s); /* cbScanWidth (2 bytes) */
-		stream_read_uint16(s, cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
-
-		bitmap_data->bitmapLength = cbCompMainBodySize;
+		if (!(bitmap_data->flags & NO_BITMAP_COMPRESSION_HDR))
+		{
+			stream_read_uint16(s, bitmap_data->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			bitmap_data->bitmapLength = bitmap_data->cbCompMainBodySize;
+		}
 
 		bitmap_data->compressed = true;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);

@@ -140,7 +140,7 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	extraFlags = LONG_CREDENTIALS_SUPPORTED; /* | NO_BITMAP_COMPRESSION_HDR; */
+	extraFlags = LONG_CREDENTIALS_SUPPORTED | NO_BITMAP_COMPRESSION_HDR;
 
 	if (settings->auto_reconnection)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
@@ -155,8 +155,8 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 		settings->suppress_output = false;
 	}
 
-	stream_write_uint16(s, 0); /* osMajorType (2 bytes) */
-	stream_write_uint16(s, 0); /* osMinorType (2 bytes) */
+	stream_write_uint16(s, OSMAJORTYPE_WINDOWS); /* osMajorType (2 bytes) */
+	stream_write_uint16(s, OSMINORTYPE_WINDOWS_NT); /* osMinorType (2 bytes) */
 	stream_write_uint16(s, CAPS_PROTOCOL_VERSION); /* protocolVersion (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2OctetsA (2 bytes) */
 	stream_write_uint16(s, 0); /* generalCompressionTypes (2 bytes) */
