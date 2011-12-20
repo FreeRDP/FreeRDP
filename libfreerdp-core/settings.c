@@ -95,7 +95,7 @@ rdpSettings* settings_new(void* instance)
 
 		settings->color_pointer = true;
 		settings->large_pointer = true;
-		settings->pointer_cache_size = 32;
+		settings->pointer_cache_size = 20;
 		settings->sound_beeps = true;
 		settings->disable_wallpaper = false;
 		settings->disable_full_window_drag = false;
