@@ -338,7 +338,9 @@ boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	if (xfi->mouse_active && (app != true))
 		XGrabKeyboard(xfi->display, xfi->window->handle, true, GrabModeAsync, GrabModeAsync, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, true);
+	if (app)
+		xf_rail_send_activate(xfi, event->xany.window, true);
+
 	xf_kbd_focus_in(xfi);
 
 	if (app != true)
@@ -357,7 +359,8 @@ boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
 
-	xf_rail_send_activate(xfi, event->xany.window, false);
+	if (app)
+		xf_rail_send_activate(xfi, event->xany.window, false);
 
 	return true;
 }
@@ -453,11 +456,14 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
         if (window != NULL)
         {
                 xfWindow* xfw;
+                Window childWindow;
                 xfw = (xfWindow*) window->extra;
 
-                // ConfigureNotify coordinates are expressed relative to the window parent.
-                // Translate these to root window coordinates.
-                Window childWindow;
+                /*
+                 * ConfigureNotify coordinates are expressed relative to the window parent.
+                 * Translate these to root window coordinates.
+                 */
+
                 XTranslateCoordinates(xfi->display, xfw->handle, 
 			RootWindowOfScreen(xfi->screen),
                         0, 0, &xfw->left, &xfw->top, &childWindow);
@@ -468,8 +474,7 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
                 xfw->bottom = xfw->top + xfw->height - 1;
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u send_event=%d",
-			(uint32) xfw->handle, 
-			xfw->left, xfw->top, xfw->right, xfw->bottom, 
+			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
 		if (app && ! event->xconfigure.send_event)
