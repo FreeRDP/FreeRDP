@@ -309,20 +309,27 @@ void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings)
 	uint8* header;
 	uint16 orderFlags;
 	uint16 orderSupportExFlags;
+	uint16 textANSICodePage;
 
 	header = rdp_capability_set_start(s);
 
-	orderFlags =	NEGOTIATE_ORDER_SUPPORT |
-			ZERO_BOUNDS_DELTA_SUPPORT |
-			COLOR_INDEX_SUPPORT;
+	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
+	textANSICodePage = 65001; /* Unicode (UTF-8) */
 
 	orderSupportExFlags = 0;
-
-	if (settings->frame_marker)
-		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
+	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
 
 	if (settings->bitmap_cache_v3)
+	{
+		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
+		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
+
+	if (settings->frame_marker)
+	{
 		orderSupportExFlags |= ALTSEC_FRAME_MARKER_SUPPORT;
+		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
 
 	stream_write_zero(s, 16); /* terminalDescriptor (16 bytes) */
 	stream_write_uint32(s, 0); /* pad4OctetsA (4 bytes) */
