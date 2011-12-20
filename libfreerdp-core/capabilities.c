@@ -119,6 +119,9 @@ void rdp_read_general_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 	stream_read_uint8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	stream_read_uint8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
 
+	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
+		settings->fastpath_output = false;
+
 	if (refreshRectSupport == false)
 		settings->refresh_rect = false;
 

@@ -412,12 +412,16 @@ boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 		if (xfi->focused)
 			XGrabKeyboard(xfi->display, xfi->window->handle, true, GrabModeAsync, GrabModeAsync, CurrentTime);
-	} else {
-		// Keep track of which window has focus so that we can apply pointer updates
+	}
+	else
+	{
+		/* keep track of which window has focus so that we can apply pointer updates */
+
 		xfWindow* xfw;
 		rdpWindow* window;
 		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+
 		if (window != NULL)
 		{
 			xfw = (xfWindow*) window->extra;
