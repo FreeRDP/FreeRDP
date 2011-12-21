@@ -293,7 +293,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 			red = clrconv->palette->entries[pixel].red;
 			green = clrconv->palette->entries[pixel].green;
 			blue = clrconv->palette->entries[pixel].blue;
-			pixel = RGB15(red, green, blue);
+			pixel = (clrconv->invert) ? BGR15(red, green, blue) : RGB15(red, green, blue);
 			*dst16 = pixel;
 			dst16++;
 		}
@@ -312,7 +312,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 			red = clrconv->palette->entries[pixel].red;
 			green = clrconv->palette->entries[pixel].green;
 			blue = clrconv->palette->entries[pixel].blue;
-			pixel = RGB16(red, green, blue);
+			pixel = (clrconv->invert) ? BGR16(red, green, blue) : RGB16(red, green, blue);
 			*dst16 = pixel;
 			dst16++;
 		}
@@ -332,7 +332,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 			red = clrconv->palette->entries[pixel].red;
 			green = clrconv->palette->entries[pixel].green;
 			blue = clrconv->palette->entries[pixel].blue;
-			pixel = BGR32(red, green, blue);
+			pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
 			*dst32 = pixel;
 			dst32++;
 		}
@@ -374,7 +374,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 			pixel = *src16;
 			src16++;
 			GetBGR15(red, green, blue, pixel);
-			pixel = BGR32(red, green, blue);
+			pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
 			*dst32 = pixel;
 			dst32++;
 		}
@@ -393,7 +393,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 			src16++;
 			GetRGB_555(red, green, blue, pixel);
 			RGB_555_565(red, green, blue);
-			pixel = RGB565(red, green, blue);
+			pixel = (clrconv->invert) ? BGR565(red, green, blue) : RGB565(red, green, blue);
 			*dst16 = pixel;
 			dst16++;
 		}
@@ -424,7 +424,7 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 			{
 				GetRGB_565(red, green, blue, (*src16));
 				RGB_565_555(red, green, blue);
-				(*dst16) = RGB555(red, green, blue);
+				(*dst16) = (clrconv->invert) ? BGR555(red, green, blue) : RGB555(red, green, blue);
 				src16++;
 				dst16++;
 			}
@@ -486,7 +486,7 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 			pixel = *src16;
 			src16++;
 			GetBGR16(red, green, blue, pixel);
-			pixel = BGR32(red, green, blue);
+			pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
 			*dst32 = pixel;
 			dst32++;
 		}
@@ -538,7 +538,7 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 		for (index = 0; index < width * height; index++)
 		{
 			GetBGR32(blue, green, red, *src32);
-			*dst16 = RGB16(red, green, blue);
+			*dst16 = (clrconv->invert) ? BGR16(red, green, blue) : RGB16(red, green, blue);
 			src32++;
 			dst16++;
 		}
@@ -870,11 +870,11 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 			{
 				if((bitMask >> bitIndex) & 0x01)
 				{
-					*dst32 = RGB32(redBg, greenBg, blueBg);
+					*dst32 = (clrconv->invert) ? BGR32(redBg, greenBg, blueBg) : RGB32(redBg, greenBg, blueBg);
 				}
 				else
 				{
-					*dst32 = RGB32(redFg, greenFg, blueFg);
+					*dst32 = (clrconv->invert) ? BGR32(redFg, greenFg, blueFg) : RGB32(redFg, greenFg, blueFg);
 				}
 				dst32++;
 			}
