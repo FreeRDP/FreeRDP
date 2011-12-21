@@ -26,6 +26,10 @@
 #include "rfx_types.h"
 #include "rfx_sse2.h"
 
+#ifdef _MSC_VER
+#define	__attribute__(...)
+#endif
+
 #define CACHE_LINE_BYTES	64
 
 #define _mm_between_epi16(_val, _min, _max) \
