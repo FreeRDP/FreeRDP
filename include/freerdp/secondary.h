@@ -49,12 +49,14 @@
 #define BS_PATTERN			0x03
 #endif
 
-#define HS_HORIZONTAL			0x00
+#ifndef _WIN32
+#define HS_HORIZONTAL		0x00
 #define HS_VERTICAL			0x01
-#define HS_FDIAGONAL			0x02
-#define HS_BDIAGONAL			0x03
+#define HS_FDIAGONAL		0x02
+#define HS_BDIAGONAL		0x03
 #define HS_CROSS			0x04
-#define HS_DIAGCROSS			0x05
+#define HS_DIAGCROSS		0x05
+#endif
 
 #define SO_FLAG_DEFAULT_PLACEMENT	0x01
 #define SO_HORIZONTAL			0x02
