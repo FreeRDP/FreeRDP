@@ -415,6 +415,34 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	return true;
 }
 
+static int (*_def_error_handler)(Display*, XErrorEvent*);
+int xf_error_handler(Display* d, XErrorEvent* ev)
+{
+	char buf[256];
+	int do_abort = true;
+
+	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
+	printf(buf);
+
+	if (do_abort)
+		abort();
+
+	_def_error_handler(d, ev);
+
+	return false;
+}
+
+int _xf_error_handler(Display* d, XErrorEvent* ev)
+{
+	/*
+ 	 * ungrab the keyboard, in case a debugger is running in
+ 	 * another window. This make xf_error_handler() a potential
+ 	 * debugger breakpoint.
+ 	 */
+	XUngrabKeyboard(d, CurrentTime);
+	return xf_error_handler(d, ev);
+}
+
 boolean xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
@@ -473,6 +501,13 @@ boolean xf_pre_connect(freerdp* instance)
 		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
 		printf("Please check that the $DISPLAY environment variable is properly set.\n");
 		return false;
+	}
+
+	if (xfi->debug)
+	{
+		printf("Enabling X11 debug mode.\n");
+		XSynchronize(xfi->display, true);
+		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
 	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
@@ -738,6 +773,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
+	xfInfo* xfi = (xfInfo*) user_data;
 
 	if (strcmp("--kbd-list", opt) == 0)
 	{
@@ -768,6 +804,11 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	{
 		xv_port = atoi(val);
 		argc = 2;
+	}
+	else if (strcmp("--dbg-x11", opt) == 0)
+	{
+		xfi->debug = true;
+		argc = 1;
 	}
 
 	return argc;
