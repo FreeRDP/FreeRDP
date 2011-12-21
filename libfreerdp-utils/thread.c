@@ -24,6 +24,9 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#ifdef _MSC_VER
+#include <process.h>
+#endif
 #endif
 
 #include <freerdp/utils/sleep.h>
@@ -49,8 +52,11 @@ void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg)
 
 #ifdef _WIN32
 	{
-		DWORD th;
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, &th);
+#	ifdef _MSC_VER
+		CloseHandle((HANDLE)_beginthreadex(NULL, 0, func, arg, 0, NULL));
+#else
+		CloseHandle(CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, NULL));
+#endif
 	}
 #else
 	{
