@@ -25,6 +25,10 @@
 #include <string.h>
 #include <sys/types.h>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/args.h>
@@ -208,7 +212,7 @@ boolean wf_pre_connect(freerdp* instance)
 
 void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #if defined(__i386__) || defined(__x86_64__)
 	*eax = info;
 	__asm volatile
@@ -219,6 +223,13 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
 		 : :"edi");
 #endif
+#elif defined(_MSC_VER)
+	int a[4];
+	__cpuid(a, info);
+	*eax = a[0];
+	*ebx = a[1];
+	*ecx = a[2];
+	*edx = a[3];
 #endif
 }
  
@@ -262,6 +273,8 @@ boolean wf_post_connect(freerdp* instance)
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
+
+		rfx_context_set_cpu_opt(gdi->rfx_context, wfi_detect_cpu());
 	}
 	else
 	{
@@ -283,6 +296,9 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->hdc->hwnd->count = 32;
 		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
 		wfi->hdc->hwnd->ninvalid = 0;
+
+		wfi->image = wf_bitmap_new(wfi, 64, 64, 32, NULL);
+		wfi->image->_bitmap.data = NULL;
 
 		if (settings->rfx_codec)
 		{
