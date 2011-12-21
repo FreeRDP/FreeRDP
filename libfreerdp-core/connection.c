@@ -169,6 +169,12 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 		settings->domain = redirection->domain.ascii;
 	}
 
+	if (redirection->flags & LB_PASSWORD)
+	{
+		xfree(settings->password);
+		settings->password = redirection->password.ascii;
+	}
+
 	return rdp_client_connect(rdp);
 }
 
