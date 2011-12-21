@@ -405,6 +405,17 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 			break;
 		}
 	}
+
+	if (vi)
+	{
+		// Detect if the server visual has an inverted colormap
+		// (BGR vs RGB, or red being the least significant byte)
+		if (vi->red_mask & 0xFF) 
+		{
+			xfi->clrconv->invert = true;
+		}
+	}
+
 	XFree(vis);
 
 	if ((xfi->visual == NULL) || (xfi->scanline_pad == 0))

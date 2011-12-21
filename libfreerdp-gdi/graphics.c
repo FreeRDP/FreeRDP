@@ -176,9 +176,6 @@ void gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 	gdi_glyph = (gdiGlyph*) glyph;
 
-	/*printf("Glyph_Draw: x:%d y:%d w:%d h:%d\n", x, y,
-			gdi_glyph->bitmap->width, gdi_glyph->bitmap->height);*/
-
 	gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
 			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax);
 }
