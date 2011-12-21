@@ -102,6 +102,7 @@ struct xf_info
 	boolean grab_keyboard;
 	boolean unobscured;
 	boolean decorations;
+	boolean debug;
 	xfWindow* window;
 	xfWorkArea workArea;
 	int current_desktop;
