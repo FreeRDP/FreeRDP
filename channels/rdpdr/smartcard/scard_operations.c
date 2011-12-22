@@ -1077,16 +1077,52 @@ static uint32 handle_GetAttrib(IRP* irp)
 #endif
 
 	rv = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+	if( rv != SCARD_S_SUCCESS ) {
+#ifdef SCARD_AUTOALLOCATE
+		if(dwAttrLen == 0)
+		{
+			attrLen = 0;
+		}
+		else
+		{
+			attrLen = SCARD_AUTOALLOCATE;
+		}
+#endif
+	}
 
 	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A && rv == SCARD_E_UNSUPPORTED_FEATURE)
 	{
 		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
 			attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+		if( rv != SCARD_S_SUCCESS ) {
+#ifdef SCARD_AUTOALLOCATE
+			if(dwAttrLen == 0)
+			{
+				attrLen = 0;
+			}
+			else
+			{
+				attrLen = SCARD_AUTOALLOCATE;
+			}
+#endif
+		}
 	}
 	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && rv == SCARD_E_UNSUPPORTED_FEATURE)
 	{
 		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
 			attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+		if( rv != SCARD_S_SUCCESS ) {
+#ifdef SCARD_AUTOALLOCATE
+			if(dwAttrLen == 0)
+			{
+				attrLen = 0;
+			}
+			else
+			{
+				attrLen = SCARD_AUTOALLOCATE;
+			}
+#endif
+		}
 	}
 	if(attrLen > dwAttrLen && pbAttr != NULL)
 	{
