@@ -356,12 +356,11 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			XSetForeground(xfi->display, xfi->gc, backColor);
 			XSetBackground(xfi->display, xfi->gc, foreColor);
 			XSetFillStyle(xfi->display, xfi->gc, FillOpaqueStippled);
+			XSetStipple(xfi->display, xfi->gc, pattern);
 			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
 
 			XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
 					patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
-
-			XSetStipple(xfi->display, xfi->gc_mono, pattern);
 		}
 	}
 	else
