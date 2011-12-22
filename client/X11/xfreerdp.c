@@ -521,7 +521,7 @@ boolean xf_pre_connect(freerdp* instance)
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
-	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", False);
 	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
 	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", True);
 	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", True);
