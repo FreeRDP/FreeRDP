@@ -87,18 +87,26 @@ typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
 typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
+struct _RFX_CHANNEL
+{
+	uint8  channelId;
+	uint16 width;
+	uint16 height;
+};
+typedef struct _RFX_CHANNEL RFX_CHANNEL;
+
 struct _RFX_CONTEXT
 {
 	uint16 flags;
 	uint16 properties;
-	uint16 width;
-	uint16 height;
 	RLGR_MODE mode;
 	uint32 version;
 	uint32 codec_id;
 	uint32 codec_version;
 	RFX_PIXEL_FORMAT pixel_format;
 	uint8 bits_per_pixel;
+	uint8 numChannels;
+	RFX_CHANNEL channels[4];
 
 	/* color palette allocated by the application */
 	const uint8* palette;
