@@ -478,6 +478,8 @@ boolean xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
+	settings->os_major_type = OSMAJORTYPE_UNIX;
+	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;

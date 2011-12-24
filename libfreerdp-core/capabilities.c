@@ -107,8 +107,16 @@ void rdp_read_general_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 	uint8 refreshRectSupport;
 	uint8 suppressOutputSupport;
 
-	stream_seek_uint16(s); /* osMajorType (2 bytes) */
-	stream_seek_uint16(s); /* osMinorType (2 bytes) */
+	if (settings->server_mode)
+	{
+		stream_read_uint16(s, settings->os_major_type); /* osMajorType (2 bytes) */
+		stream_read_uint16(s, settings->os_minor_type); /* osMinorType (2 bytes) */
+	}
+	else
+	{
+		stream_seek_uint16(s); /* osMajorType (2 bytes) */
+		stream_seek_uint16(s); /* osMinorType (2 bytes) */
+	}
 	stream_seek_uint16(s); /* protocolVersion (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
 	stream_seek_uint16(s); /* generalCompressionTypes (2 bytes) */
@@ -158,8 +166,8 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 		settings->suppress_output = false;
 	}
 
-	stream_write_uint16(s, OSMAJORTYPE_WINDOWS); /* osMajorType (2 bytes) */
-	stream_write_uint16(s, OSMINORTYPE_WINDOWS_NT); /* osMinorType (2 bytes) */
+	stream_write_uint16(s, settings->os_major_type); /* osMajorType (2 bytes) */
+	stream_write_uint16(s, settings->os_minor_type); /* osMinorType (2 bytes) */
 	stream_write_uint16(s, CAPS_PROTOCOL_VERSION); /* protocolVersion (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2OctetsA (2 bytes) */
 	stream_write_uint16(s, 0); /* generalCompressionTypes (2 bytes) */
