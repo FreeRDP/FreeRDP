@@ -143,6 +143,8 @@ boolean wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
+	settings->os_major_type = OSMAJORTYPE_WINDOWS;
+	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;
