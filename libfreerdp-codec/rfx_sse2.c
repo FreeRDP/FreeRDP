@@ -3,6 +3,7 @@
  * RemoteFX Codec Library - SSE2 Optimizations
  *
  * Copyright 2011 Stephen Erisman
+ * Copyright 2011 Norbert Federa <nfedera@thinstuff.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +65,12 @@ static void rfx_decode_ycbcr_to_rgb_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 
 	int i;
 
+	__m128i r_cr = _mm_set1_epi16(22986);	//  1.403 << 14
+	__m128i g_cb = _mm_set1_epi16(-5636);	// -0.344 << 14
+	__m128i g_cr = _mm_set1_epi16(-11698);	// -0.714 << 14
+	__m128i b_cb = _mm_set1_epi16(28999);	//  1.770 << 14
+	__m128i c4096 = _mm_set1_epi16(4096);
+
 	for (i = 0; i < (4096 * sizeof(sint16) / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
 		_mm_prefetch((char*)(&y_r_buf[i]), _MM_HINT_NTA);
@@ -72,49 +79,51 @@ static void rfx_decode_ycbcr_to_rgb_sse2(sint16* y_r_buffer, sint16* cb_g_buffer
 	}
 	for (i = 0; i < (4096 * sizeof(sint16) / sizeof(__m128i)); i++)
 	{
-		/* y = (y_r_buf[i] >> 5) + 128; */
-		y = _mm_load_si128(&y_r_buf[i]);
-		y = _mm_add_epi16(_mm_srai_epi16(y, 5), _mm_set1_epi16(128));
+		/*
+		In order to use SSE2 signed 16-bit integer multiplication we need to convert
+		the floating point factors to signed int without loosing information.
+		The result of this multiplication is 32 bit and we have two SSE instructions
+		that return either the hi or lo word.
+		Thus we will multiply the factors by the highest possible 2^n, take the 
+		upper 16 bits of the signed 32-bit result (_mm_mulhi_epi16) and correct	this
+		result by multiplying it by 2^(16-n).
+		For the given factors in the conversion matrix the best possible n is 14.
 
+		Example for calculating r:
+		r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
+		r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
+		r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
+		r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
+		*/
+
+		/* y = (y_r_buf[i] + 4096) >> 2 */
+		y = _mm_load_si128(&y_r_buf[i]);
+		y = _mm_add_epi16(y, c4096);
+		y = _mm_srai_epi16(y, 2);
+		/* cb = cb_g_buf[i]; */
+		cb = _mm_load_si128(&cb_g_buf[i]);
 		/* cr = cr_b_buf[i]; */
 		cr = _mm_load_si128(&cr_b_buf[i]);
 
-		/* r = y + ((cr >> 5) + (cr >> 7) + (cr >> 8) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* (y + HIWORD(cr*22986)) >> 3 */
+		r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
+		r = _mm_srai_epi16(r, 3);
 		/* y_r_buf[i] = MINMAX(r, 0, 255); */
-		r = _mm_add_epi16(y, _mm_srai_epi16(cr, 5));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 7));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 8));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 11));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 12));
-		r = _mm_add_epi16(r, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(r, zero, max);
 		_mm_store_si128(&y_r_buf[i], r);
 
-		/* cb = cb_g_buf[i]; */
-		cb = _mm_load_si128(&cb_g_buf[i]);
-
-		/* g = y - ((cb >> 7) + (cb >> 9) + (cb >> 10)) -
-			((cr >> 6) + (cr >> 8) + (cr >> 9) + (cr >> 11) + (cr >> 12) + (cr >> 13)); */
+		/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
+		g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
+		g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
+		g = _mm_srai_epi16(g, 3);
 		/* cb_g_buf[i] = MINMAX(g, 0, 255); */
-		g = _mm_sub_epi16(y, _mm_srai_epi16(cb, 7));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 9));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cb, 10));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 6));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 8));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 9));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 11));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 12));
-		g = _mm_sub_epi16(g, _mm_srai_epi16(cr, 13));
 		_mm_between_epi16(g, zero, max);
 		_mm_store_si128(&cb_g_buf[i], g);
 
-		/* b = y + ((cb >> 5) + (cb >> 6) + (cb >> 7) + (cb >> 11) + (cb >> 13)); */
+		/* (y + HIWORD(cb*28999)) >> 3 */
+		b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
+		b = _mm_srai_epi16(b, 3);
 		/* cr_b_buf[i] = MINMAX(b, 0, 255); */
-		b = _mm_add_epi16(y, _mm_srai_epi16(cb, 5));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 6));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 7));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 11));
-		b = _mm_add_epi16(b, _mm_srai_epi16(cb, 13));
 		_mm_between_epi16(b, zero, max);
 		_mm_store_si128(&cr_b_buf[i], b);
 	}

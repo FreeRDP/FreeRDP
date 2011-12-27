@@ -98,19 +98,17 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	 */
 	for (i = 0; i < 4096; i++)
 	{
-		y = (y_r_buf[i] >> 5) + 128;
+		y = y_r_buf[i] + 4096; // 128<<5 = 4096 so that we can >> 5 over the sum
 		cb = cb_g_buf[i];
 		cr = cr_b_buf[i];
-		/* 1.403 >> 5 = 0.000010110011100(b) */
-		r = y + ((cr >> 5) + (cr >> 7) + (cr >> 8) + (cr >> 11) + (cr >> 12) + (cr >> 13));
-		y_r_buf[i] = MINMAX(r, 0, 255);
-		/* 0.344 >> 5 = 0.000000101100000(b), 0.714 >> 5 = 0.000001011011011(b) */
-		g = y - ((cb >> 7) + (cb >> 9) + (cb >> 10)) -
-			((cr >> 6) + (cr >> 8) + (cr >> 9) + (cr >> 11) + (cr >> 12) + (cr >> 13));
-		cb_g_buf[i] = MINMAX(g, 0, 255);
-		/* 1.77 >> 5 = 0.000011100010100(b) */
-		b = y + ((cb >> 5) + (cb >> 6) + (cb >> 7) + (cb >> 11) + (cb >> 13));
-		cr_b_buf[i] = MINMAX(b, 0, 255);
+
+		r = y + cr*1.403f;
+		g = y - cb*0.344f - cr*0.714f;
+		b = y + cb*1.770f;
+
+		y_r_buf[i]  = MINMAX(r>>5, 0, 255);
+		cb_g_buf[i] = MINMAX(g>>5, 0, 255);
+		cr_b_buf[i] = MINMAX(b>>5, 0, 255);
 	}
 }
 
