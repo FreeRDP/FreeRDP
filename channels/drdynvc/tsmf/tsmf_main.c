@@ -401,7 +401,7 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 {
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
-	if (data->data[0] && strcmp((char*)data->data[0], "tsmf") == 0)
+	if (data->data[0] && ( strcmp((char*)data->data[0], "tsmf") == 0 || strstr((char*)data->data[0], "/tsmf.") != NULL) )
 	{
 		if (data->data[1] && strcmp((char*)data->data[1], "decoder") == 0)
 		{

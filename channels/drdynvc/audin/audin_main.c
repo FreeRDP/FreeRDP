@@ -471,7 +471,7 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
-	if (data->data[0] && strcmp((char*)data->data[0], "audin") == 0)
+	if (data->data[0] && (strcmp((char*)data->data[0], "audin") == 0 || strstr((char*)data->data[0], "/audin.") != NULL) )
 	{
 		if (data->data[1] && strcmp((char*)data->data[1], "format") == 0)
 		{
