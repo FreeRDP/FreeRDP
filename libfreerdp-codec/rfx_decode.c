@@ -3,6 +3,7 @@
  * RemoteFX Codec Library - Decode
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2011 Norbert Federa <nfedera@thinstuff.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,8 +84,9 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 
 void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf)
 {
-	sint16 y, cb, cr;
-	sint16 r, g, b;
+	/* sint32 is used intentionally because we calculate with shifted factors! */
+	sint32 y, cb, cr;
+	sint32 r, g, b;
 	int i;
 
 	/**
@@ -98,9 +100,16 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	 */
 	for (i = 0; i < 4096; i++)
 	{
-		y = y_r_buf[i] + 4096; // 128<<5 = 4096 so that we can >> 5 over the sum
+		y = y_r_buf[i];
 		cb = cb_g_buf[i];
 		cr = cr_b_buf[i];
+
+#if 0
+		/**
+		 * This is the slow floating point version kept here for reference
+		 */
+
+		y = y + 4096; /* 128<<5=4096 so that we can scale the sum by >> 5 */
 
 		r = y + cr*1.403f;
 		g = y - cb*0.344f - cr*0.714f;
@@ -109,6 +118,28 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 		y_r_buf[i]  = MINMAX(r>>5, 0, 255);
 		cb_g_buf[i] = MINMAX(g>>5, 0, 255);
 		cr_b_buf[i] = MINMAX(b>>5, 0, 255);
+#else
+		/**
+		 * We scale the factors by << 16 into 32-bit integers in order to avoid slower
+		 * floating point multiplications. Since the final result needs to be scaled
+		 * by >> 5 we will extract only the upper 11 bits (>> 21) from the final sum.
+		 * Hence we also have to scale the other terms of the sum by << 16.
+		 *
+		 * R: 1.403 << 16 = 91947
+		 * G: 0.344 << 16 = 22544, 0.714 << 16 = 46792
+		 * B: 1.770 << 16 = 115998
+		 */
+
+		y = (y+4096)<<16;
+
+		r = y + cr*91947;
+		g = y - cb*22544 - cr*46792;
+		b = y + cb*115998;
+
+		y_r_buf[i]  = MINMAX(r>>21, 0, 255);
+		cb_g_buf[i] = MINMAX(g>>21, 0, 255);
+		cr_b_buf[i] = MINMAX(b>>21, 0, 255);
+#endif
 	}
 }
 
