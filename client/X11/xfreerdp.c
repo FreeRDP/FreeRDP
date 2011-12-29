@@ -395,6 +395,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 		return false;
 	}
 
+	vi = NULL;
 	for (i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
@@ -433,7 +434,7 @@ int xf_error_handler(Display* d, XErrorEvent* ev)
 	int do_abort = true;
 
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
-	printf(buf);
+	printf("%s", buf);
 
 	if (do_abort)
 		abort();
