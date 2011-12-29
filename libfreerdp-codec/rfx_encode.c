@@ -3,6 +3,7 @@
  * RemoteFX Codec Library - Encode
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2011 Norbert Federa <nfedera@thinstuff.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,8 +174,9 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 
 void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf)
 {
-	sint16 y, cb, cr;
-	sint16 r, g, b;
+	// sint32 is used intentionally because we calculate with shifted factors!
+	sint32 y, cb, cr;
+	sint32 r, g, b;
 	int i;
 
 	/**
@@ -191,20 +193,23 @@ void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 		r = y_r_buf[i];
 		g = cb_g_buf[i];
 		b = cr_b_buf[i];
-		/* 0.299 << 5 = 1001.10010001(b), 0.587 << 5 = 10010.11001000(b), 0.114 << 5 = 11.10100101(b) */
-		y = ((r << 3) + (r) + (r >> 1) + (r >> 4) + (r >> 7)) +
-			((g << 4) + (g << 1) + (g >> 1) + (g >> 2) + (g >> 5)) +
-			((b << 1) + (b) + (b >> 1) + (b >> 3) + (b >> 6) + (b >> 7));
+
+		/*
+		 * We scale the factors by << 15 into 32-bit integers in order to avoid slower
+		 * floating point multiplications. Since the terms need to be scaled by << 5 we
+		 * simply scale the final sum by >> 10
+		 *
+		 * Y:  0.299000 << 15 = 9798,  0.587000 << 15 = 19235, 0.114000 << 15 = 3735
+		 * Cb: 0.168935 << 15 = 5535,  0.331665 << 15 = 10868, 0.500590 << 15 = 16403
+		 * Cr: 0.499813 << 15 = 16377, 0.418531 << 15 = 13714, 0.081282 << 15 = 2663
+		 */
+
+		y  = (r*9798 + g*19235 + b*3735)>>10;
+		cb = (r*-5535 + g*-10868 + b*16403)>>10;
+		cr = (r*16377 + g*-13714 + b*-2663)>>10;
+
 		y_r_buf[i] = MINMAX(y - 4096, -4096, 4095);
-		/* 0.168935 << 5 = 101.01100111(b), 0.331665 << 5 = 1010.10011100(b), 0.50059 << 5 = 10000.00000100(b) */
-		cb = 0 - ((r << 2) + (r) + (r >> 2) + (r >> 3) + (r >> 5)) -
-			((g << 3) + (g << 1) + (g >> 1) + (g >> 4) + (g >> 5) + (g >> 6)) +
-			((b << 4) + (b >> 6));
 		cb_g_buf[i] = MINMAX(cb, -4096, 4095);
-		/* 0.499813 << 5 = 1111.11111110(b), 0.418531 << 5 = 1101.01100100(b), 0.081282 << 5 = 10.10011001(b) */
-		cr = ((r << 4) - (r >> 7)) -
-			((g << 3) + (g << 2) + (g) + (g >> 2) + (g >> 3) + (g >> 6)) -
-			((b << 1) + (b >> 1) + (b >> 4) + (b >> 5) + (b >> 7));
 		cr_b_buf[i] = MINMAX(cr, -4096, 4095);
 	}
 }
