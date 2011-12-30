@@ -237,7 +237,6 @@ typedef CLRCONV* HCLRCONV;
 
 typedef uint8* (*p_freerdp_image_convert)(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
-FREERDP_API uint32 freerdp_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* freerdp_image_convert(uint8* srcData, uint8 *dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint8* freerdp_glyph_convert(int width, int height, uint8* data);
 FREERDP_API void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height);
@@ -246,6 +245,13 @@ FREERDP_API uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* m
 FREERDP_API uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv);
 FREERDP_API void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMask, int width, int height, int bpp, HCLRCONV clrconv);
 FREERDP_API void freerdp_image_swap_color_order(uint8* data, int width, int height);
+
+FREERDP_API uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
 #ifdef __cplusplus
 }

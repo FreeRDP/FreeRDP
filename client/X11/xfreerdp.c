@@ -409,8 +409,11 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if (vi)
 	{
-		// Detect if the server visual has an inverted colormap
-		// (BGR vs RGB, or red being the least significant byte)
+		/*
+		 * Detect if the server visual has an inverted colormap
+		 * (BGR vs RGB, or red being the least significant byte)
+		 */
+
 		if (vi->red_mask & 0xFF) 
 		{
 			xfi->clrconv->invert = true;
@@ -548,9 +551,9 @@ boolean xf_pre_connect(freerdp* instance)
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = xnew(CLRCONV);
-	xfi->clrconv->alpha = 1;
-	xfi->clrconv->invert = 0;
-	xfi->clrconv->rgb555 = 0;
+	xfi->clrconv->alpha = true;
+	xfi->clrconv->invert = false;
+	xfi->clrconv->rgb555 = false;
 	xfi->clrconv->palette = xnew(rdpPalette);
 
 	instance->context->cache = cache_new(instance->settings);
@@ -630,7 +633,7 @@ boolean xf_post_connect(freerdp* instance)
 		rdpGdi* gdi;
 		uint32 flags;
 
-		flags = CLRCONV_ALPHA | CLRCONV_INVERT;
+		flags = CLRCONV_ALPHA;
 
 		if (xfi->bpp > 16)
 			flags |= CLRBUF_32BPP;

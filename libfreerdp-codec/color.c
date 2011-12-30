@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/memory.h>
@@ -85,86 +86,200 @@ void freerdp_set_pixel(uint8* data, int x, int y, int width, int height, int bpp
 	}
 }
 
+INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+{
+	*alpha = 0xFF;
+	*red = *green = *blue = 0;
+
+	switch (bpp)
+	{
+		case 32:
+			if (clrconv->alpha)
+			{
+				GetARGB32(*alpha, *red, *green, *blue, *color);
+			}
+			else
+			{
+				GetRGB32(*red, *green, *blue, *color);
+			}
+			break;
+
+		case 24:
+			GetRGB24(*red, *green, *blue, *color);
+			break;
+
+		case 16:
+			GetRGB16(*red, *green, *blue, *color);
+			break;
+
+		case 15:
+			GetRGB15(*red, *green, *blue, *color);
+			break;
+
+		case 8:
+			*color &= 0xFF;
+			*red = clrconv->palette->entries[*color].red;
+			*green = clrconv->palette->entries[*color].green;
+			*blue = clrconv->palette->entries[*color].blue;
+			break;
+
+		case 1:
+			if (*color != 0)
+			{
+				*red = 0xFF;
+				*green = 0xFF;
+				*blue = 0xFF;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+{
+	*alpha = 0xFF;
+	*red = *green = *blue = 0;
+
+	switch (bpp)
+	{
+		case 32:
+			if (clrconv->alpha)
+			{
+				GetABGR32(*alpha, *red, *green, *blue, *color);
+			}
+			else
+			{
+				GetBGR32(*red, *green, *blue, *color);
+			}
+			break;
+
+		case 24:
+			GetBGR24(*red, *green, *blue, *color);
+			break;
+
+		case 16:
+			GetBGR16(*red, *green, *blue, *color);
+			break;
+
+		case 15:
+			GetBGR15(*red, *green, *blue, *color);
+			break;
+
+		case 8:
+			*color &= 0xFF;
+			*red = clrconv->palette->entries[*color].red;
+			*green = clrconv->palette->entries[*color].green;
+			*blue = clrconv->palette->entries[*color].blue;
+			break;
+
+		case 1:
+			if (*color != 0)
+			{
+				*red = 0xFF;
+				*green = 0xFF;
+				*blue = 0xFF;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+{
+	switch (bpp)
+	{
+		case 32:
+			*color = ARGB32(*alpha, *red, *green, *blue);
+			break;
+
+		case 24:
+			*color = RGB24(*red, *green, *blue);
+			break;
+
+		case 16:
+			if (clrconv->rgb555)
+			{
+				*color = RGB15(*red, *green, *blue);
+			}
+			else
+			{
+				*color = RGB16(*red, *green, *blue);
+			}
+			break;
+
+		case 15:
+			*color = RGB15(*red, *green, *blue);
+			break;
+
+		case 8:
+			*color = RGB24(*red, *green, *blue);
+			break;
+
+		case 1:
+			if ((*red != 0) || (*green != 0) || (*blue != 0))
+				*color = 1;
+			break;
+
+		default:
+			break;
+	}
+}
+
+INLINE void freerdp_color_make_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+{
+	switch (bpp)
+	{
+		case 32:
+			*color = ABGR32(*alpha, *red, *green, *blue);
+			break;
+
+		case 24:
+			*color = BGR24(*red, *green, *blue);
+			break;
+
+		case 16:
+			if (clrconv->rgb555)
+			{
+				*color = BGR15(*red, *green, *blue);
+			}
+			else
+			{
+				*color = BGR16(*red, *green, *blue);
+			}
+			break;
+
+		case 15:
+			*color = BGR15(*red, *green, *blue);
+			break;
+
+		case 8:
+			*color = BGR24(*red, *green, *blue);
+			break;
+
+		case 1:
+			if ((*red != 0) || (*green != 0) || (*blue != 0))
+				*color = 1;
+			break;
+
+		default:
+			break;
+	}
+}
+
 uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	uint8 red = 0;
 	uint8 green = 0;
 	uint8 blue = 0;
 	uint8 alpha = 0xFF;
-	int dstColor = 0;
+	uint32 dstColor = 0;
 
-	switch (srcBpp)
-	{
-		case 32:
-			if (clrconv->alpha)
-			{
-				GetARGB32(alpha, red, green, blue, srcColor);
-			}
-			else
-			{
-				GetBGR32(red, green, blue, srcColor);
-			}
-			break;
-		case 24:
-			GetBGR24(red, green, blue, srcColor);
-			break;
-		case 16:
-			GetBGR16(red, green, blue, srcColor);
-			break;
-		case 15:
-			GetBGR15(red, green, blue, srcColor);
-			break;
-		case 8:
-			srcColor &= 0xFF;
-			red = clrconv->palette->entries[srcColor].red;
-			green = clrconv->palette->entries[srcColor].green;
-			blue = clrconv->palette->entries[srcColor].blue;
-			break;
-		case 1:
-			if (srcColor != 0)
-			{
-				red = 0xFF;
-				green = 0xFF;
-				blue = 0xFF;
-			}
-			break;
-		default:
-			break;
-	}
-	switch (dstBpp)
-	{
-		case 32:
-			dstColor = ABGR32(alpha, red, green, blue);
-			break;
-		case 24:
-			dstColor = BGR24(red, green, blue);
-			break;
-		case 16:
-			if(clrconv->rgb555)
-			{
-				dstColor = RGB15(red, green, blue);
-			}
-			else
-			{
-				dstColor = RGB16(red, green, blue);
-			}
-			break;
-		case 15:
-			dstColor = RGB15(red, green, blue);
-			break;
-		case 8:
-			srcColor &= 0xFF;
-			red = clrconv->palette->entries[srcColor].red;
-			green = clrconv->palette->entries[srcColor].green;
-			blue = clrconv->palette->entries[srcColor].blue;
-			break;
-		case 1:
-			if ((red != 0) || (green != 0) || (blue != 0))
-				dstColor = 1;
-			break;
-		default:
-			break;
-	}
+	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
+	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
 	return dstColor;
 }
@@ -175,90 +290,56 @@ uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	uint8 green = 0;
 	uint8 blue = 0;
 	uint8 alpha = 0xFF;
-	int dstColor = 0;
+	uint32 dstColor = 0;
 
-	switch (srcBpp)
-	{
-		case 32:
-			if (clrconv->alpha)
-			{
-				GetABGR32(alpha, red, green, blue, srcColor);
-			}
-			else
-			{
-				GetBGR32(red, green, blue, srcColor);
-			}
-			break;
-		case 24:
-			GetBGR24(red, green, blue, srcColor);
-			break;
-		case 16:
-			GetRGB16(red, green, blue, srcColor);
-			break;
-		case 15:
-			GetRGB15(red, green, blue, srcColor);
-			break;
-		case 8:
-			srcColor &= 0xFF;
-			red = clrconv->palette->entries[srcColor].red;
-			green = clrconv->palette->entries[srcColor].green;
-			blue = clrconv->palette->entries[srcColor].blue;
-			break;
-		case 1:
-			if (srcColor != 0)
-			{
-				red = 0xFF;
-				green = 0xFF;
-				blue = 0xFF;
-			}
-			break;
-		default:
-			break;
-	}
-	switch (dstBpp)
-	{
-		case 32:
-			dstColor = ABGR32(alpha, red, green, blue);
-			break;
-		case 24:
-			dstColor = BGR24(red, green, blue);
-			break;
-		case 16:
-			if(clrconv->rgb555)
-			{
-				dstColor = BGR15(red, green, blue);
-			}
-			else
-			{
-				dstColor = BGR16(red, green, blue);
-			}
-			break;
-		case 15:
-			dstColor = BGR15(red, green, blue);
-			break;
-		case 8:
-			srcColor &= 0xFF;
-			red = clrconv->palette->entries[srcColor].red;
-			green = clrconv->palette->entries[srcColor].green;
-			blue = clrconv->palette->entries[srcColor].blue;
-			break;
-		case 1:
-			if ((red != 0) || (green != 0) || (blue != 0))
-				dstColor = 1;
-			break;
-		default:
-			break;
-	}
+	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
+	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
 	return dstColor;
 }
 
-uint32 freerdp_color_convert(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	if (clrconv->invert)
-		return freerdp_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
+	uint8 red = 0;
+	uint8 green = 0;
+	uint8 blue = 0;
+	uint8 alpha = 0xFF;
+	uint32 dstColor = 0;
+
+	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
+	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
+
+	return dstColor;
+}
+
+uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+{
+	uint8 red = 0;
+	uint8 green = 0;
+	uint8 blue = 0;
+	uint8 alpha = 0xFF;
+	uint32 dstColor = 0;
+
+	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
+	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
+
+	return dstColor;
+}
+
+uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+{
+	if (srcBpp > 16)
+		return freerdp_color_convert_bgr_rgb(srcColor, srcBpp, 32, clrconv);
 	else
-		return freerdp_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
+		return freerdp_color_convert_rgb(srcColor, srcBpp, 32, clrconv);
+}
+
+uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+{
+	if (srcBpp > 16)
+		return freerdp_color_convert_bgr(srcColor, srcBpp, 32, clrconv);
+	else
+		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, 32, clrconv);
 }
 
 uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
@@ -898,7 +979,7 @@ void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMa
 		for (i = 0; i < width; i++)
 		{
 			xpixel = freerdp_get_pixel(xorMask, i, jj, width, height, bpp);
-			xpixel = freerdp_color_convert(xpixel, bpp, 32, clrconv);
+			xpixel = freerdp_color_convert_rgb(xpixel, bpp, 32, clrconv);
 			apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
 
 			if (apixel != 0)

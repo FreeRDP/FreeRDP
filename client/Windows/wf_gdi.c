@@ -237,8 +237,8 @@ void wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	COLORREF org_textcolor;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	fgcolor = freerdp_color_convert(patblt->foreColor, wfi->srcBpp, 24, wfi->clrconv);
-	bgcolor = freerdp_color_convert(patblt->backColor, wfi->srcBpp, 24, wfi->clrconv);
+	fgcolor = freerdp_color_convert_rgb(patblt->foreColor, wfi->srcBpp, 24, wfi->clrconv);
+	bgcolor = freerdp_color_convert_rgb(patblt->backColor, wfi->srcBpp, 24, wfi->clrconv);
 
 	brush = wf_create_brush(wfi, &patblt->brush, fgcolor, wfi->srcBpp);
 	org_bkmode = SetBkMode(wfi->drawing->hdc, OPAQUE);
@@ -279,7 +279,7 @@ void wf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 brush_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	brush_color = freerdp_color_convert(opaque_rect->color, wfi->srcBpp, 24, wfi->clrconv);
+	brush_color = freerdp_color_convert_var_rgb(opaque_rect->color, wfi->srcBpp, 32, wfi->clrconv);
 
 	rect.left = opaque_rect->nLeftRect;
 	rect.top = opaque_rect->nTopRect;
@@ -306,7 +306,7 @@ void wf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
-		brush_color = freerdp_color_convert(multi_opaque_rect->color, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
+		brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, wfi->srcBpp, 32, wfi->clrconv);
 
 		rect.left = rectangle->left;
 		rect.top = rectangle->top;
@@ -332,7 +332,7 @@ void wf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	uint32 pen_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	pen_color = freerdp_color_convert(line_to->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
+	pen_color = freerdp_color_convert_rgb(line_to->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
 	pen = CreatePen(line_to->penStyle, line_to->penWidth, pen_color);
 
@@ -364,7 +364,7 @@ void wf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	uint32 pen_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	pen_color = freerdp_color_convert(polyline->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
+	pen_color = freerdp_color_convert_rgb(polyline->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
 	hpen = CreatePen(0, 1, pen_color);
 	org_rop2 = wf_set_rop2(wfi->drawing->hdc, polyline->bRop2);

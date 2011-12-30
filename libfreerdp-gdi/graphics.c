@@ -186,8 +186,8 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
-	fgcolor = freerdp_color_convert(fgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_color_convert_rgb(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	fgcolor = freerdp_color_convert_rgb(fgcolor, gdi->srcBpp, 32, gdi->clrconv);
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 	brush = gdi_CreateSolidBrush(fgcolor);
@@ -201,7 +201,7 @@ void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
 {
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_color_convert_rgb(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 
