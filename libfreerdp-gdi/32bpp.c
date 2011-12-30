@@ -572,7 +572,7 @@ static int BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	uint32* patp;
 	uint32 color32;
 
-	if(hdcDest->brush->style == GDI_BS_SOLID)
+	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		color32 = gdi_get_color_32bpp(hdcDest, hdcDest->brush->color);
 
@@ -618,7 +618,7 @@ static int BitBlt_PATINVERT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	uint32* patp;
 	uint32 color32;
 		
-	if(hdcDest->brush->style == GDI_BS_SOLID)
+	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		color32 = gdi_get_color_32bpp(hdcDest, hdcDest->brush->color);
 

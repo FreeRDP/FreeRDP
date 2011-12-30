@@ -494,7 +494,7 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 2);
 
-		if(clrconv->rgb555)
+		if (clrconv->rgb555)
 		{
 			int i;
 			uint8 red, green, blue;
@@ -527,8 +527,9 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 3);
 
-		dst8 = (uint8 *) dstData;
-		src16 = (uint16 *) srcData;
+		dst8 = (uint8*) dstData;
+		src16 = (uint16*) srcData;
+
 		for (i = width * height; i > 0; i--)
 		{
 			GetBGR16(red, green, blue, *src16);
@@ -553,15 +554,16 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 	{
 		int i;
 		uint32 pixel;
-		uint16 *src16;
-		uint32 *dst32;
+		uint16* src16;
+		uint32* dst32;
 		uint8 red, green, blue;
 
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
 
-		src16 = (uint16 *) srcData;
-		dst32 = (uint32 *) dstData;
+		src16 = (uint16*) srcData;
+		dst32 = (uint32*) dstData;
+
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *src16;
@@ -882,23 +884,26 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 			greenFg = clrconv->palette->entries[fgcolor].green;
 			blueFg = clrconv->palette->entries[fgcolor].blue;
 			break;
+
 		case 16:
 			GetRGB16(redBg, greenBg, blueBg, bgcolor);
 			GetRGB16(redFg, greenFg, blueFg, fgcolor);
 			break;
+
 		case 15:
 			GetRGB15(redBg, greenBg, blueBg, bgcolor);
 			GetRGB15(redFg, greenFg, blueFg, fgcolor);
 			break;
+
 		default:
 			GetRGB32(redBg, greenBg, blueBg, bgcolor);
 			GetRGB32(redFg, greenFg, blueFg, fgcolor);
 			break;
 	}
 
-	if(dstBpp == 16)
+	if (dstBpp == 16)
 	{
-		if(clrconv->rgb555)
+		if (clrconv->rgb555)
 		{
 			if(srcBpp == 16)
 			{
@@ -919,13 +924,14 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 
 		dstData = (uint8*) malloc(width * height * 2);
 		dst16 = (uint16*) dstData;
+
 		for(index = height; index > 0; index--)
 		{
 			/* each bit encodes a pixel */
 			bitMask = *srcData;
-			for(bitIndex = 7; bitIndex >= 0; bitIndex--)
+			for (bitIndex = 7; bitIndex >= 0; bitIndex--)
 			{
-				if((bitMask >> bitIndex) & 0x01)
+				if ((bitMask >> bitIndex) & 0x01)
 				{
 					*dst16 = bgcolor;
 				}
@@ -939,15 +945,17 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 		}
 		return dstData;
 	}
-	else if(dstBpp == 32)
+	else if (dstBpp == 32)
 	{
 		dstData = (uint8*) malloc(width * height * 4);
 		dst32 = (uint32*) dstData;
-		for(index = height; index > 0; index--)
+
+		for (index = height; index > 0; index--)
 		{
 			/* each bit encodes a pixel */
 			bitMask = *srcData;
-			for(bitIndex = 7; bitIndex >= 0; bitIndex--)
+
+			for (bitIndex = 7; bitIndex >= 0; bitIndex--)
 			{
 				if((bitMask >> bitIndex) & 0x01)
 				{

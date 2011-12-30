@@ -84,8 +84,6 @@
 #define CBR3_IGNORABLE_FLAG		0x08
 #define CBR3_DO_NOT_CACHE		0x10
 
-#define COMPRESSED_BRUSH_LENGTH		20
-
 /* Primary Drawing Orders */
 #define ORDER_TYPE_DSTBLT			0x00
 #define ORDER_TYPE_PATBLT			0x01

@@ -40,7 +40,7 @@ uint16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 
 	GetRGB32(r, g, b, color);
 
-	if(hdc->rgb555)
+	if (hdc->rgb555)
 	{
 		if (hdc->invert)
 		{
@@ -544,7 +544,7 @@ static int BitBlt_PATCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	uint16* patp;
 	uint16 color16;
 
-	if(hdcDest->brush->style == GDI_BS_SOLID)
+	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		color16 = gdi_get_color_16bpp(hdcDest, hdcDest->brush->color);
 
@@ -590,7 +590,7 @@ static int BitBlt_PATINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	uint16* patp;
 	uint16 color16;
 
-	if(hdcDest->brush->style == GDI_BS_SOLID)
+	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		color16 = gdi_get_color_16bpp(hdcDest, hdcDest->brush->color);
 
