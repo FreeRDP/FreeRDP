@@ -207,14 +207,19 @@ Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 
 	if(data != NULL)
 	{
+		GC gc;	// FIXME, should cache
+
 		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
 		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 						ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
 
-		XPutImage(xfi->display, bitmap, xfi->gc, image, 0, 0, 0, 0, width, height);
+		gc = XCreateGC(xfi->display, xfi->drawable, 0, NULL);
+		XPutImage(xfi->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
 		XFree(image);
 		if (cdata != data)
 			xfree(cdata);
+
+		XFreeGC(xfi->display, gc);
 	}
 
 	return bitmap;
@@ -348,6 +353,8 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 					patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 
 			XSetTile(xfi->display, xfi->gc, xfi->primary);
+
+			XFreePixmap(xfi->display, pattern);
 		}
 		else
 		{
@@ -361,6 +368,8 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 			XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
 					patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
+
+			XFreePixmap(xfi->display, pattern);
 		}
 	}
 	else
