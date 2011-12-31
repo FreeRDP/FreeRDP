@@ -241,8 +241,11 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 			default:
 				break;
 		}
-		if (!exists && (CreateOptions & FILE_DELETE_ON_CLOSE))
+
+		if (CreateOptions & FILE_DELETE_ON_CLOSE && DesiredAccess & DELETE)
+		{
 			file->delete_pending = true;
+		}
 
 		if ((DesiredAccess & GENERIC_ALL)
 			|| (DesiredAccess & GENERIC_WRITE)
@@ -458,7 +461,11 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 
 		case FileDispositionInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
-			stream_read_uint8(input, file->delete_pending);
+			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
+			if (Length)
+				stream_read_uint8(input, file->delete_pending);
+			else
+				file->delete_pending = 1;
 			break;
 
 		case FileRenameInformation:
@@ -544,7 +551,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 
 	if (ent == NULL)
 	{
-		DEBUG_SVC("  pattern %s not found.\n", file->pattern);
+		DEBUG_SVC("  pattern %s not found.", file->pattern);
 		stream_write_uint32(output, 0); /* Length */
 		stream_write_uint8(output, 0); /* Padding */
 		return false;
