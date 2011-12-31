@@ -46,6 +46,7 @@
 #include <freerdp/utils/mutex.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/event.h>
 
 #include "libchannels.h"
 
@@ -802,6 +803,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* chan_man, RDP_EVENT* ev
 	if (name == NULL)
 	{
 		DEBUG_CHANNELS("unknown event_class %d", event->event_class);
+		freerdp_event_free(event);
 		return 1;
 	}
 
@@ -809,6 +811,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* chan_man, RDP_EVENT* ev
 	if (lchan_data == NULL)
 	{
 		DEBUG_CHANNELS("could not find channel name %s", name);
+		freerdp_event_free(event);
 		return 1;
 	}
 	if (lchan_data->open_event_proc != NULL)

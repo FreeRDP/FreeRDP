@@ -195,11 +195,11 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
 
-	if (data != NULL)
+	while (data && data->size > 0)
 	{
 		pDVCPluginEntry = freerdp_load_plugin((char*)data->data[0], "DVCPluginEntry");
 
-		if(pDVCPluginEntry != NULL)
+		if (pDVCPluginEntry != NULL)
 		{
 			entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 			entryPoints.iface.GetPlugin = dvcman_get_plugin;
@@ -208,6 +208,8 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 			entryPoints.plugin_data = data;
 			pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*)&entryPoints);
 		}
+		
+		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
 	}
 
 	return 0;

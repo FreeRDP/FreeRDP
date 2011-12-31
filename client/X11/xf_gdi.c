@@ -323,8 +323,8 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
 
-	foreColor = freerdp_color_convert(patblt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
-	backColor = freerdp_color_convert(patblt->backColor, xfi->srcBpp, 32, xfi->clrconv);
+	foreColor = freerdp_color_convert_rgb(patblt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(patblt->backColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -356,12 +356,11 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			XSetForeground(xfi->display, xfi->gc, backColor);
 			XSetBackground(xfi->display, xfi->gc, foreColor);
 			XSetFillStyle(xfi->display, xfi->gc, FillOpaqueStippled);
+			XSetStipple(xfi->display, xfi->gc, pattern);
 			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
 
 			XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
 					patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
-
-			XSetStipple(xfi->display, xfi->gc_mono, pattern);
 		}
 	}
 	else
@@ -424,7 +423,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 color;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	color = freerdp_color_convert(opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert_var_rgb(opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -453,7 +452,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	DELTA_RECT* rectangle;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	color = freerdp_color_convert(multi_opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -486,7 +485,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	xf_set_rop2(xfi, line_to->bRop2);
-	color = freerdp_color_convert(line_to->penColor, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert_rgb(line_to->penColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);
@@ -532,7 +531,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	xf_set_rop2(xfi, polyline->bRop2);
-	color = freerdp_color_convert(polyline->penColor, xfi->srcBpp, 32, xfi->clrconv);
+	color = freerdp_color_convert_rgb(polyline->penColor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);

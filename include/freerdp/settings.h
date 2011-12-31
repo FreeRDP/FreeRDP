@@ -275,6 +275,8 @@ struct rdp_settings
 	TIME_ZONE_INFO client_time_zone;
 
 	/* Capabilities */
+	uint16 os_major_type;
+	uint16 os_minor_type;
 	uint32 vc_chunk_size;
 	boolean sound_beeps;
 	boolean smooth_fonts;

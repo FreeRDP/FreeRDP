@@ -395,6 +395,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 		return false;
 	}
 
+	vi = NULL;
 	for (i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
@@ -408,8 +409,11 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if (vi)
 	{
-		// Detect if the server visual has an inverted colormap
-		// (BGR vs RGB, or red being the least significant byte)
+		/*
+		 * Detect if the server visual has an inverted colormap
+		 * (BGR vs RGB, or red being the least significant byte)
+		 */
+
 		if (vi->red_mask & 0xFF) 
 		{
 			xfi->clrconv->invert = true;
@@ -433,7 +437,7 @@ int xf_error_handler(Display* d, XErrorEvent* ev)
 	int do_abort = true;
 
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
-	printf(buf);
+	printf("%s", buf);
 
 	if (do_abort)
 		abort();
@@ -478,6 +482,8 @@ boolean xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
+	settings->os_major_type = OSMAJORTYPE_UNIX;
+	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;
@@ -521,33 +527,33 @@ boolean xf_pre_connect(freerdp* instance)
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
-	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
-	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
-	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", True);
-	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", True);
-	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", True);
-	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", True);
-	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", True);
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
+	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", False);
+	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", False);
+	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", False);
+	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", False);
 
-	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
-	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", True);
-	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", True);
-	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
-	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", True);
-	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", True);
-	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", True);
-	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", True);
+	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
+	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
+	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
+	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
+	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", False);
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", False);
+	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", False);
 
-	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
-	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
+	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
+	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
 
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = xnew(CLRCONV);
-	xfi->clrconv->alpha = 1;
-	xfi->clrconv->invert = 0;
-	xfi->clrconv->rgb555 = 0;
+	xfi->clrconv->alpha = true;
+	xfi->clrconv->invert = false;
+	xfi->clrconv->rgb555 = false;
 	xfi->clrconv->palette = xnew(rdpPalette);
 
 	instance->context->cache = cache_new(instance->settings);
@@ -627,7 +633,7 @@ boolean xf_post_connect(freerdp* instance)
 		rdpGdi* gdi;
 		uint32 flags;
 
-		flags = CLRCONV_ALPHA | CLRCONV_INVERT;
+		flags = CLRCONV_ALPHA;
 
 		if (xfi->bpp > 16)
 			flags |= CLRBUF_32BPP;

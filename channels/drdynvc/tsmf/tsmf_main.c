@@ -401,17 +401,22 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 {
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
-	if (data->data[0] && strcmp((char*)data->data[0], "tsmf") == 0)
+	while (data && data->size > 0)
 	{
-		if (data->data[1] && strcmp((char*)data->data[1], "decoder") == 0)
+		if (data->data[0] && ( strcmp((char*)data->data[0], "tsmf") == 0 || strstr((char*)data->data[0], "/tsmf.") != NULL) )
 		{
-			tsmf->decoder_name = data->data[2];
+			if (data->data[1] && strcmp((char*)data->data[1], "decoder") == 0)
+			{
+				tsmf->decoder_name = data->data[2];
+			}
+			else if (data->data[1] && strcmp((char*)data->data[1], "audio") == 0)
+			{
+				tsmf->audio_name = data->data[2];
+				tsmf->audio_device = data->data[3];
+			}
 		}
-		else if (data->data[1] && strcmp((char*)data->data[1], "audio") == 0)
-		{
-			tsmf->audio_name = data->data[2];
-			tsmf->audio_device = data->data[3];
-		}
+		
+		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
 	}
 }
 

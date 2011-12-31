@@ -396,7 +396,8 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	printf("Client %s is activated", client->hostname);
+	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->hostname,
+		client->settings->os_major_type, client->settings->os_minor_type);
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
