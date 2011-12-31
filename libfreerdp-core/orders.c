@@ -1498,10 +1498,11 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 
 		stream_read_uint16(s, deleteList->cIndices);
 
-		if (deleteList->indices == NULL)
-			deleteList->indices = xmalloc(deleteList->cIndices * 2);
-		else
-			deleteList->indices = xrealloc(deleteList->indices, deleteList->cIndices * 2);
+		if (deleteList->cIndices > deleteList->sIndices)
+		{
+			deleteList->sIndices = deleteList->cIndices;
+			deleteList->indices = xrealloc(deleteList->indices, deleteList->sIndices * 2);
+		}
 
 		for (i = 0; i < (int) deleteList->cIndices; i++)
 		{

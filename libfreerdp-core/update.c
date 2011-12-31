@@ -543,6 +543,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (update != NULL)
 	{
+		OFFSCREEN_DELETE_LIST* deleteList;
+
 		update->bitmap_update.count = 64;
 		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 
@@ -551,6 +553,11 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->secondary = xnew(rdpSecondaryUpdate);
 		update->altsec = xnew(rdpAltSecUpdate);
 		update->window = xnew(rdpWindowUpdate);
+
+		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+		deleteList->sIndices = 64;
+		deleteList->indices = xmalloc(deleteList->sIndices * 2);
+		deleteList->cIndices = 0;
 	}
 
 	return update;
@@ -560,6 +567,10 @@ void update_free(rdpUpdate* update)
 {
 	if (update != NULL)
 	{
+		OFFSCREEN_DELETE_LIST* deleteList;
+		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+		xfree(deleteList->indices);
+
 		xfree(update->bitmap_update.rectangles);
 		xfree(update->pointer);
 		xfree(update->primary);

@@ -38,6 +38,7 @@
 
 struct _OFFSCREEN_DELETE_LIST
 {
+	uint32 sIndices;
 	uint32 cIndices;
 	uint16* indices;
 };
