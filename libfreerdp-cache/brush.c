@@ -26,8 +26,11 @@
 
 void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
+	uint8 style;
 	rdpBrush* brush = &patblt->brush;
 	rdpCache* cache = context->cache;
+
+	style = brush->style;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -36,6 +39,7 @@ void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 
 	IFCALL(cache->brush->PatBlt, context, patblt);
+	brush->style = style;
 }
 
 void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
