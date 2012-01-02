@@ -170,11 +170,6 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 				pointer->width, pointer->height, pointer->xorBpp, xfi->clrconv);
 	}
 
-	if (pointer->xorBpp > 24)
-	{
-		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
-	}
-
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfi->display, &ci);
 	xfree(ci.pixels);
 }
