@@ -149,7 +149,8 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 void nsc_ycocg_rgb(NSC_CONTEXT* context)
 {
 	uint8* sbitstream[2];
-	uint8 bitoff, sign[2], ycocg[3], rgb[3], i;
+	uint8 bitoff, sign[2], i, val;
+	sint16 rgb[3], ycocg[3];
 	uint32 bytno, size;
 	size = context->OrgByteCount[0];
 
@@ -166,37 +167,21 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 			bytno = context->OrgByteCount[i] - size;
 			bitoff = bytno % 8;
 			sign[i-1] = (*(sbitstream[i-1] + (bytno >> 3)) >> (7 - bitoff)) & 0x1;
-			if(sign[i-1])
-				ycocg[i] = ~(ycocg[i]) + 0x1;
+			ycocg[i] = (((sint16)(0 - sign[i-1])) << 8) | ycocg[i];
 		}
 
-		if (sign[0] && sign[1])
-		{
-			rgb[0] = ycocg[0] - (ycocg[1] >> 1) + (ycocg[2] >> 1);
-			rgb[1] = ycocg[0] - (ycocg[2] >> 1);
-			rgb[2] = ycocg[0] + (ycocg[1] >> 1) + (ycocg[2] >> 1);
-		}
-		else if (sign[0])
-		{
-			rgb[0] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
-			rgb[1] = ycocg[0] + (ycocg[2] >> 1);
-			rgb[2] = ycocg[0] + (ycocg[1] >> 1) - (ycocg[2] >> 1);
-		}
-		else if (sign[1])
-		{
-			rgb[0] = ycocg[0] + (ycocg[1] >> 1) + (ycocg[2] >> 1);
-			rgb[1] = ycocg[0] - (ycocg[2] >> 1);
-			rgb[2] = ycocg[0] - (ycocg[1] >> 1) + (ycocg[2] >> 1);
-		}
-		else
-		{
-			rgb[0] = ycocg[0] + (ycocg[1] >> 1) - (ycocg[2] >> 1);
-			rgb[1] = ycocg[0] + (ycocg[2] >> 1);
-			rgb[2] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
-		}
+		rgb[0] = ycocg[0] + (ycocg[1] >> 1) - (ycocg[2] >> 1);
+		rgb[1] = ycocg[0] + (ycocg[2] >> 1);
+		rgb[2] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
 
 		for(i = 0; i < 3; i++)
-			stream_write_uint8(context->org_buf[i], rgb[i]);
+		{
+			if(((rgb[i] >> 8) & 0x1) == 0x1)
+				val = ~((uint8)rgb[i]) + 0x1;
+			else
+				val = rgb[i];
+			stream_write_uint8(context->org_buf[i], val);
+		}
 
 		size--;
 	}
