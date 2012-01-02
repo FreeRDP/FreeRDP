@@ -291,49 +291,42 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.bit_gravity = ForgetGravity;
 	xfi->attribs.win_gravity = StaticGravity;
 
-	if (xfi->remote_app != true)
+	if (xfi->instance->settings->window_title != NULL)
 	{
-		if (xfi->instance->settings->window_title != NULL)
-		{
-			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
-			sprintf(win_title, "%s", xfi->instance->settings->window_title);
-		}
-		else if (xfi->instance->settings->port == 3389)
-		{
-			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
-			sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
-		}
-		else
-		{
-			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
-			sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
-		}
-
-		xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
-		xfree(win_title);
-
-		if (xfi->parent_window)
-			XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
-
-		if (xfi->fullscreen)
-			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
-
-		/* wait for VisibilityNotify */
-		do
-		{
-			XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
-		}
-		while (xevent.type != VisibilityNotify);
-
-		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
-
-		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
-		xfi->drawable = xfi->window->handle;
+		win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
+		sprintf(win_title, "%s", xfi->instance->settings->window_title);
+	}
+	else if (xfi->instance->settings->port == 3389)
+	{
+		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
+		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
 	}
 	else
 	{
-		xfi->drawable = DefaultRootWindow(xfi->display);
+		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
+		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 	}
+
+	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
+	xfree(win_title);
+
+	if (xfi->parent_window)
+		XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
+
+	if (xfi->fullscreen)
+		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
+
+	/* wait for VisibilityNotify */
+	do
+	{
+		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+	}
+	while (xevent.type != VisibilityNotify);
+
+	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+
+	XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
+	xfi->drawable = xfi->window->handle;
 }
 
 void xf_toggle_fullscreen(xfInfo* xfi)
@@ -567,7 +560,6 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->mouse_motion = settings->mouse_motion;
 	xfi->complex_regions = true;
 	xfi->decorations = settings->decorations;
-	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
 	xfi->grab_keyboard = settings->grab_keyboard;
 	xfi->fullscreen_toggle = true;
@@ -742,8 +734,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xf_tsmf_init(xfi, xv_port);
 
-	if (xfi->remote_app != true)
-		xf_cliprdr_init(xfi, channels);
+	xf_cliprdr_init(xfi, channels);
 
 	return true;
 }
@@ -889,8 +880,11 @@ void xf_window_free(xfInfo* xfi)
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;
 
-	xf_DestroyWindow(xfi, xfi->window);
-	xfi->window = NULL;
+	if (xfi->window != NULL)
+	{
+		xf_DestroyWindow(xfi, xfi->window);
+		xfi->window = NULL;
+	}
 
 	if (xfi->primary)
 	{
@@ -965,7 +959,7 @@ int xfreerdp_run(freerdp* instance)
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 
-	while (1)
+	while (!xfi->disconnect)
 	{
 		rcount = 0;
 		wcount = 0;
