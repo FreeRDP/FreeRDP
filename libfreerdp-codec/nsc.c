@@ -183,9 +183,6 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 			stream_write_uint8(context->org_buf[i], val);
 		}
 
-		for(i = 0; i < 3; i++)
-			stream_write_uint8(context->org_buf[i], rgb[i]);
-
 		size--;
 	}
 	while(size);
