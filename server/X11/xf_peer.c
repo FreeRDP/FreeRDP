@@ -214,99 +214,78 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 	return context->s;
 }
 
-boolean xf_peer_event_process(xfPeerContext* xfp, XEvent* event)
-{
-	xfInfo* xfi = xfp->info;
-
-	if (event->type == xfi->xdamage_notify_event)
-	{
-		int x, y, width, height;
-		XDamageNotifyEvent* notify;
-
-		notify = (XDamageNotifyEvent*) event;
-
-		x = notify->area.x;
-		y = notify->area.y;
-		width = notify->area.width;
-		height = notify->area.height;
-
-		printf("XDamageNotify: x:%d y:%d width:%d height:%d\n", x, y, width, height);
-	}
-
-	return true;
-}
-
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	int width;
-	int height;
 	uint8* data;
 	xfInfo* xfi;
 	XImage* image;
 	XEvent xevent;
 	RFX_RECT rect;
-	uint32 seconds;
-	uint32 useconds;
 	rdpUpdate* update;
 	xfPeerContext* xfp;
 	SURFACE_BITS_COMMAND* cmd;
 
-	seconds = 1;
-	useconds = 0;
 	update = client->update;
 	xfp = (xfPeerContext*) client->context;
 	xfi = (xfInfo*) xfp->info;
 	cmd = &update->surface_bits_command;
+	data = (uint8*) xmalloc(xfi->width * xfi->height * 3);
 
-	width = xfi->width;
-	height = xfi->height;
-	data = (uint8*) xmalloc(width * height * 3);
-
-	memset(&xevent, 0, sizeof(xevent));
-
-#if 0
 	while (XPending(xfi->display))
 	{
 		memset(&xevent, 0, sizeof(xevent));
 		XNextEvent(xfi->display, &xevent);
 
-		if (xf_peer_event_process(xfp, &xevent) != true)
-			return;
-	}
-#else
-	while (1)
-	{
-		if (seconds > 0)
-			freerdp_sleep(seconds);
+		if (xevent.type == xfi->xdamage_notify_event)
+		{
+			XRectangle region;
+			int x, y, width, height;
+			XDamageNotifyEvent* notify;
+	
+			notify = (XDamageNotifyEvent*) &xevent;
+	
+			x = notify->area.x;
+			y = notify->area.y;
+			width = notify->area.width;
+			height = notify->area.height;
 
-		if (useconds > 0)
-			freerdp_usleep(useconds);
+			region.x = x;
+			region.y = y;
+			region.width = width;
+			region.height = height;
 
-		s = xf_peer_stream_init(xfp);
-
-		image = xf_snapshot(xfi, 0, 0, width, height);
-		freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
-
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data, width, height, width * 3);
-
-		cmd->destLeft = 0;
-		cmd->destTop = 0;
-		cmd->destRight = width;
-		cmd->destBottom = height;
-		cmd->bpp = 32;
-		cmd->codecID = client->settings->rfx_codec_id;
-		cmd->width = width;
-		cmd->height = height;
-		cmd->bitmapDataLength = stream_get_length(s);
-		cmd->bitmapData = stream_get_head(s);
-		update->SurfaceBits(update->context, cmd);
-	}
+#ifdef WITH_XFIXES
+			XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
+			XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
 #endif
+	
+			printf("XDamageNotify: x:%d y:%d width:%d height:%d\n", x, y, width, height);
+
+			s = xf_peer_stream_init(xfp);
+	
+			image = xf_snapshot(xfi, x, y, width, height);
+			freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
+	
+			rect.x = 0;
+			rect.y = 0;
+			rect.width = width;
+			rect.height = height;
+			rfx_compose_message(xfp->rfx_context, s, &rect, 1, data, width, height, width * 3);
+	
+			cmd->destLeft = x;
+			cmd->destTop = y;
+			cmd->destRight = width;
+			cmd->destBottom = height;
+			cmd->bpp = 32;
+			cmd->codecID = client->settings->rfx_codec_id;
+			cmd->width = width;
+			cmd->height = height;
+			cmd->bitmapDataLength = stream_get_length(s);
+			cmd->bitmapData = stream_get_head(s);
+			update->SurfaceBits(update->context, cmd);
+		}
+	}
 }
 
 static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
