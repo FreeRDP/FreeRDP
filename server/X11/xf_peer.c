@@ -214,6 +214,28 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 	return context->s;
 }
 
+boolean xf_peer_event_process(xfPeerContext* xfp, XEvent* event)
+{
+	xfInfo* xfi = xfp->info;
+
+	if (event->type == xfi->xdamage_notify_event)
+	{
+		int x, y, width, height;
+		XDamageNotifyEvent* notify;
+
+		notify = (XDamageNotifyEvent*) event;
+
+		x = notify->area.x;
+		y = notify->area.y;
+		width = notify->area.width;
+		height = notify->area.height;
+
+		printf("XDamageNotify: x:%d y:%d width:%d height:%d\n", x, y, width, height);
+	}
+
+	return true;
+}
+
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	STREAM* s;
@@ -222,6 +244,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	uint8* data;
 	xfInfo* xfi;
 	XImage* image;
+	XEvent xevent;
 	RFX_RECT rect;
 	uint32 seconds;
 	uint32 useconds;
@@ -240,6 +263,18 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	height = xfi->height;
 	data = (uint8*) xmalloc(width * height * 3);
 
+	memset(&xevent, 0, sizeof(xevent));
+
+#if 0
+	while (XPending(xfi->display))
+	{
+		memset(&xevent, 0, sizeof(xevent));
+		XNextEvent(xfi->display, &xevent);
+
+		if (xf_peer_event_process(xfp, &xevent) != true)
+			return;
+	}
+#else
 	while (1)
 	{
 		if (seconds > 0)
@@ -271,6 +306,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 		cmd->bitmapData = stream_get_head(s);
 		update->SurfaceBits(update->context, cmd);
 	}
+#endif
 }
 
 static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
@@ -385,6 +421,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 
 	client->settings->width = xfi->width;
 	client->settings->height = xfi->height;
+
 	client->update->DesktopResize(client->update->context);
 	xfp->activated = false;
 
