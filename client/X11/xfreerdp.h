@@ -107,6 +107,7 @@ struct xf_info
 	xfWorkArea workArea;
 	int current_desktop;
 	boolean remote_app;
+	boolean disconnect;
 	HCLRCONV clrconv;
 	Window parent_window;
 

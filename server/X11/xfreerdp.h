@@ -22,6 +22,14 @@
 
 #include <freerdp/codec/color.h>
 
+#ifdef WITH_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
+
+#ifdef WITH_XDAMAGE
+#include <X11/extensions/Xdamage.h>
+#endif
+
 struct xf_info
 {
 	int bpp;
@@ -35,6 +43,13 @@ struct xf_info
 	Display* display;
 	int scanline_pad;
 	HCLRCONV clrconv;
+
+#ifdef WITH_XDAMAGE
+	GC xdamage_gc;
+	Damage xdamage;
+	int xdamage_notify_event;
+	XserverRegion xdamage_region;
+#endif
 };
 typedef struct xf_info xfInfo;
 

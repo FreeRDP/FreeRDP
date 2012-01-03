@@ -28,6 +28,17 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
+void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
+{
+	if (xfi->remote_app == false)
+	{
+		xfi->remote_app = true;
+		xfi->drawable = DefaultRootWindow(xfi->display);
+		xf_DestroyWindow(xfi, xfi->window);
+		xfi->window = NULL;
+	}
+}
+
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
 	xfWindow* xfw;
@@ -74,6 +85,8 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	xfWindow* xfw;
 
 	xfi = (xfInfo*) rail->extra;
+
+	xf_rail_enable_remoteapp_mode(xfi);
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra, window,
 			window->windowOffsetX, window->windowOffsetY,
@@ -365,6 +378,11 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 	{
 		printf("RAIL exec error: execResult=%s NtError=0x%X\n",
 			error_code_names[exec_result->execResult], exec_result->rawResult);
+		xfi->disconnect = True;
+	}
+	else
+	{
+		xf_rail_enable_remoteapp_mode(xfi);
 	}
 }
 
