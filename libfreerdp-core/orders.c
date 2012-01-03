@@ -1241,13 +1241,18 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 	update_read_4byte_unsigned(s, &cache_bitmap_v2_order->bitmapLength); /* bitmapLength */
 	update_read_2byte_unsigned(s, &cache_bitmap_v2_order->cacheIndex); /* cacheIndex */
 
+	if (cache_bitmap_v2_order->flags & CBR2_DO_NOT_CACHE)
+		cache_bitmap_v2_order->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
+
 	if (compressed)
 	{
-		if ((cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR) == 0)
+		if (!(cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
 		{
-			uint8* bitmapComprHdr = (uint8*) &cache_bitmap_v2_order->bitmapComprHdr;
-			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			cache_bitmap_v2_order->bitmapLength -= 8;
+			stream_read_uint16(s, cache_bitmap_v2_order->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			cache_bitmap_v2_order->bitmapLength = cache_bitmap_v2_order->cbCompMainBodySize;
 		}
 
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);

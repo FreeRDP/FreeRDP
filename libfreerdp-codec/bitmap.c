@@ -364,32 +364,42 @@ static int process_plane(uint8* in, int width, int height, uint8* out, int size)
  */
 static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
 {
+	int RLE;
 	int code;
+	int NoAlpha;
 	int bytes_pro;
 	int total_pro;
-	int RLE;
-	int NA; /* no alpha */
 
 	code = IN_UINT8_MV(srcData);
 	RLE = code & 0x10;
+
 	if (RLE == 0)
+	{
+		/* FIXME: sometimes sent by windows 8 */
 		return false;
+	}
+
 	total_pro = 1;
-	NA = code & 0x20;
-	if (NA == 0)
+	NoAlpha = code & 0x20;
+
+	if (NoAlpha == 0)
 	{
 		bytes_pro = process_plane(srcData, width, height, dstData + 3, size - total_pro);
 		total_pro += bytes_pro;
 		srcData += bytes_pro;
 	}
+
 	bytes_pro = process_plane(srcData, width, height, dstData + 2, size - total_pro);
 	total_pro += bytes_pro;
 	srcData += bytes_pro;
+
 	bytes_pro = process_plane(srcData, width, height, dstData + 1, size - total_pro);
 	total_pro += bytes_pro;
 	srcData += bytes_pro;
+
 	bytes_pro = process_plane(srcData, width, height, dstData + 0, size - total_pro);
 	total_pro += bytes_pro;
+
 	return (size == total_pro) ? true : false;
 }
 

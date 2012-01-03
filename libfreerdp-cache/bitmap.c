@@ -142,7 +142,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 		return NULL;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)
@@ -164,7 +164,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdp
 		return;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)
