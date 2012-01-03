@@ -38,6 +38,13 @@ if(XDAMAGE_FOUND)
         target_link_libraries(xfreerdp-server ${XDAMAGE_LIBRARIES})
 endif()
 
+find_suggested_package(Xfixes)
+if(XFIXES_FOUND)
+        add_definitions(-DWITH_XFIXES)
+        include_directories(${XFIXES_INCLUDE_DIRS})
+        target_link_libraries(xfreerdp-server ${XFIXES_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp-server freerdp-core)
 target_link_libraries(xfreerdp-server freerdp-codec)
 target_link_libraries(xfreerdp-server freerdp-utils)

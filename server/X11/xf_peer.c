@@ -24,11 +24,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
-
-#ifdef WITH_XDAMAGE
-#include <X11/extensions/Xdamage.h>
-#endif
-
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
@@ -41,16 +36,67 @@ extern boolean xf_pcap_dump_realtime;
 
 #include "xf_peer.h"
 
+#ifdef WITH_XDAMAGE
+
+void xf_xdamage_init(xfInfo* xfi)
+{
+	int damage_event;
+	int damage_error;
+	int major, minor;
+	XGCValues values;
+
+	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
+	{
+		printf("XDamageQueryExtension failed\n");
+		return;
+	}
+
+	XDamageQueryVersion(xfi->display, &major, &minor);
+
+	if (XDamageQueryVersion(xfi->display, &major, &minor) == 0)
+	{
+		printf("XDamageQueryVersion failed\n");
+		return;
+	}
+	else if (major < 1)
+	{
+		printf("XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
+		return;
+	}
+
+	xfi->xdamage_notify_event = damage_event + XDamageNotify;
+	xfi->xdamage = XDamageCreate(xfi->display, DefaultRootWindow(xfi->display), XDamageReportDeltaRectangles);
+
+	if (xfi->xdamage == None)
+	{
+		printf("XDamageCreate failed\n");
+		return;
+	}
+
+#ifdef WITH_XFIXES
+	xfi->xdamage_region = XFixesCreateRegion(xfi->display, NULL, 0);
+
+	if (xfi->xdamage_region == None)
+	{
+		printf("XFixesCreateRegion failed\n");
+		XDamageDestroy(xfi->display, xfi->xdamage);
+		xfi->xdamage = None;
+		return;
+	}
+#endif
+
+	values.subwindow_mode = IncludeInferiors;
+	xfi->xdamage_gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCSubwindowMode, &values);
+}
+
+#endif
+
 xfInfo* xf_info_init()
 {
 	int i;
 	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
-#ifdef WITH_XDAMAGE
-	int damage_event;
-	int damage_error;
-#endif
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -123,8 +169,9 @@ xfInfo* xf_info_init()
 	xfi->clrconv->alpha = 1;
 
 	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+
 #ifdef WITH_XDAMAGE
-	XDamageQueryExtension(xfi->display, &damage_event, &damage_error);
+	xf_xdamage_init(xfi);
 #endif 
 
 	return xfi;
