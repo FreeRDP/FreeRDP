@@ -637,13 +637,23 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 			printf("Error: TODO\n");
 			return false;
 		}
-		if (securityHeader & SEC_ENCRYPT)
+		if (securityHeader & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
 		{
 			if (!rdp_decrypt(rdp, s, length - 4))
 			{
 				printf("rdp_decrypt failed\n");
 				return false;
 			}
+		}
+		if (securityHeader & SEC_REDIRECTION_PKT)
+		{
+			/*
+			 * [MS-RDPBCGR] 2.2.13.2.1
+			 *  - no share control header, nor the 2 byte pad
+			 */
+			s->p -= 2;
+			rdp_recv_enhanced_security_redirection_packet(rdp, s);
+			return true;
 		}
 	}
 
@@ -758,6 +768,13 @@ static boolean rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra
 				printf("rdp_client_connect_demand_active failed\n");
 				return false;
 			}
+			break;
+
+		case CONNECTION_STATE_FINALIZATION:
+			if (!rdp_recv_pdu(rdp, s))
+				return false;
+			if (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE)
+				rdp->state = CONNECTION_STATE_ACTIVE;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:

@@ -83,13 +83,18 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
 				"  --no-fastpath: disable fast-path\n"
+				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
 				"  --no-bmp-cache: disable bitmap cache\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+				"  --disable-wallpaper: disables wallpaper\n"
 				"  --composition: enable desktop composition\n"
+				"  --disable-full-window-drag: disables full window drag\n"
+				"  --disable-menu-animations: disables menu animations\n"
+				"  --disable-theming: disables theming\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
@@ -280,9 +285,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (settings->ntlm_version != 2)
 				settings->ntlm_version = 1;
 		}
-		else if (strcmp("--glyph-cache", argv[index]) == 0)
+		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
-			settings->glyph_cache = true;
+			settings->glyph_cache = false;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
@@ -388,6 +393,22 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->smooth_fonts = true;
 		}
+		else if (strcmp("--disable-wallpaper", argv[index]) == 0)
+		{
+			settings->disable_wallpaper = true;
+		}
+		else if (strcmp("--disable-full-window-drag", argv[index]) == 0)
+		{
+			settings->disable_full_window_drag = true;
+		}
+		else if (strcmp("--disable-menu-animations", argv[index]) == 0)
+		{
+			settings->disable_menu_animations = true;
+		}
+		else if (strcmp("--disable-theming", argv[index]) == 0)
+		{
+			settings->disable_theming = true;
+		}
 		else if (strcmp("--composition", argv[index]) == 0)
 		{
 			settings->desktop_composition = true;
@@ -416,14 +437,18 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				settings->performance_flags = PERF_DISABLE_WALLPAPER |
 					PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS |
 					PERF_DISABLE_THEMING;
+
+				settings->connection_type = CONNECTION_TYPE_MODEM;
 			}
 			else if (argv[index][0] == 'b') /* broadband */
 			{
 				settings->performance_flags = PERF_DISABLE_WALLPAPER;
+				settings->connection_type = CONNECTION_TYPE_BROADBAND_HIGH;
 			}
 			else if (argv[index][0] == 'l') /* lan */
 			{
 				settings->performance_flags = PERF_FLAG_NONE;
+				settings->connection_type = CONNECTION_TYPE_LAN;
 			}
 			else
 			{
@@ -613,6 +638,18 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (settings->desktop_composition)
 				settings->performance_flags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+
+			if (settings->disable_wallpaper)
+				settings->performance_flags |= PERF_DISABLE_WALLPAPER;
+
+			if (settings->disable_full_window_drag)
+				settings->performance_flags |= PERF_DISABLE_FULLWINDOWDRAG;
+
+			if (settings->disable_menu_animations)
+				settings->performance_flags |= PERF_DISABLE_MENUANIMATIONS;
+
+			if (settings->disable_theming)
+				settings->performance_flags |= PERF_DISABLE_THEMING;
 
 			return index;
 		}

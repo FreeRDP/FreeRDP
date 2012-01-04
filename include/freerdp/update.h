@@ -48,7 +48,10 @@ struct _BITMAP_DATA
 	uint32 bitsPerPixel;
 	uint32 flags;
 	uint32 bitmapLength;
-	uint8 bitmapComprHdr[8];
+	uint32 cbCompFirstRowSize;
+	uint32 cbCompMainBodySize;
+	uint32 cbScanWidth;
+	uint32 cbUncompressedSize;
 	uint8* bitmapDataStream;
 	boolean compressed;
 };

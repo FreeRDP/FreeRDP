@@ -92,8 +92,6 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 		{
 			case GLYPH_FRAGMENT_USE:
 
-				printf("GLYPH_FRAGMENT_USE\n");
-
 				if (index + 2 > (int) length)
 				{
 					/* at least one byte need to follow */
@@ -129,8 +127,6 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 
 			case GLYPH_FRAGMENT_ADD:
 
-				printf("GLYPH_FRAGMENT_ADD\n");
-
 				if (index + 3 > (int) length)
 				{
 					/* at least two bytes need to follow */
@@ -153,15 +149,13 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 				break;
 
 			default:
-				printf("GLYPH_FRAGMENT_NOP\n");
-
 				update_process_glyph(context, data, &index, &x, &y, cacheId, ulCharInc, flAccel);
 				index++;
 				break;
 		}
 	}
 
-	if (opWidth > 1)
+	if (opWidth > 0 && opHeight > 0)
 		Glyph_EndDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
 	else
 		Glyph_EndDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor);

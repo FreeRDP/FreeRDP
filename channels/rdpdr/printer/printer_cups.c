@@ -175,7 +175,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
 		}
 		cupsStartDocument((http_t*)cups_printjob->printjob_object,
 			printer->name, cups_printjob->printjob_id, buf,
-			CUPS_FORMAT_POSTSCRIPT, 1);
+			CUPS_FORMAT_AUTO, 1);
 	}
 
 #endif

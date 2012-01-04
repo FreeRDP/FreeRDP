@@ -61,15 +61,14 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 
 	if (bitmap_data->flags & BITMAP_COMPRESSION)
 	{
-		uint16 cbCompMainBodySize;
-		uint16 cbUncompressedSize;
-
-		stream_seek_uint16(s); /* cbCompFirstRowSize (2 bytes) */
-		stream_read_uint16(s, cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
-		stream_seek_uint16(s); /* cbScanWidth (2 bytes) */
-		stream_read_uint16(s, cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
-
-		bitmap_data->bitmapLength = cbCompMainBodySize;
+		if (!(bitmap_data->flags & NO_BITMAP_COMPRESSION_HDR))
+		{
+			stream_read_uint16(s, bitmap_data->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_uint16(s, bitmap_data->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			bitmap_data->bitmapLength = bitmap_data->cbCompMainBodySize;
+		}
 
 		bitmap_data->compressed = true;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
@@ -409,6 +408,16 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 }
 
+static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	update_write_surfcmd_frame_marker(s, surface_frame_marker->frameAction, surface_frame_marker->frameId);
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
+}
+
 static void update_send_synchronize(rdpContext* context)
 {
 	STREAM* s;
@@ -517,6 +526,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->RefreshRect = update_send_refresh_rect;
 	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
+	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
 	update->primary->ScrBlt = update_send_scrblt;
 	update->pointer->PointerSystem = update_send_pointer_system;
@@ -533,6 +543,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	if (update != NULL)
 	{
+		OFFSCREEN_DELETE_LIST* deleteList;
+
 		update->bitmap_update.count = 64;
 		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 
@@ -541,6 +553,11 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->secondary = xnew(rdpSecondaryUpdate);
 		update->altsec = xnew(rdpAltSecUpdate);
 		update->window = xnew(rdpWindowUpdate);
+
+		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+		deleteList->sIndices = 64;
+		deleteList->indices = xmalloc(deleteList->sIndices * 2);
+		deleteList->cIndices = 0;
 	}
 
 	return update;
@@ -550,6 +567,10 @@ void update_free(rdpUpdate* update)
 {
 	if (update != NULL)
 	{
+		OFFSCREEN_DELETE_LIST* deleteList;
+		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
+		xfree(deleteList->indices);
+
 		xfree(update->bitmap_update.rectangles);
 		xfree(update->pointer);
 		xfree(update->primary);

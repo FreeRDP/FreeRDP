@@ -102,7 +102,9 @@ unsigned int freerdp_kbd_init(void* dpy, unsigned int keyboard_layout_id)
 	KeycodeToVkcode keycodeToVkcode;
 	int keycode;
 
-	keyboard_layout_id = detect_keyboard(dpy, keyboard_layout_id, xkbfile, sizeof(xkbfile));
+	if (keyboard_layout_id == 0)
+		keyboard_layout_id = detect_keyboard(dpy, keyboard_layout_id, xkbfile, sizeof(xkbfile));
+
 	DEBUG_KBD("Using keyboard layout 0x%X with xkb name %s and xkbfile %s",
 			keyboard_layout_id, get_layout_name(keyboard_layout_id), xkbfile);
 

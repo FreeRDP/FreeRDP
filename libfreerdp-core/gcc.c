@@ -350,16 +350,20 @@ boolean gcc_read_client_data_blocks(STREAM* s, rdpSettings *settings, int length
 	return true;
 }
 
-void gcc_write_client_data_blocks(STREAM* s, rdpSettings *settings)
+void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 {
 	gcc_write_client_core_data(s, settings);
 	gcc_write_client_cluster_data(s, settings);
 	gcc_write_client_security_data(s, settings);
 	gcc_write_client_network_data(s, settings);
-	gcc_write_client_monitor_data(s, settings);
+
+	/* extended client data supported */
+
+	if (settings->negotiationFlags)
+		gcc_write_client_monitor_data(s, settings);
 }
 
-boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings *settings, int length)
+boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 {
 	uint16 type;
 	uint16 offset = 0;
@@ -660,14 +664,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings *settings)
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;
 
-	connectionType = 0;
+	connectionType = settings->connection_type;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if ((settings->performance_flags & ~PERF_ENABLE_DESKTOP_COMPOSITION) == PERF_FLAG_NONE)
-	{
-		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
+	if (settings->rfx_codec)
 		connectionType = CONNECTION_TYPE_LAN;
-	}
+
+	if (connectionType != 0)
+		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 
 	if (settings->color_depth == 32)
 	{

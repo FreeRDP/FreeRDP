@@ -51,7 +51,12 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		xfi->workArea.height = HeightOfScreen(xfi->screen);
 	}
 
-	if (settings->workarea)
+	if (settings->fullscreen)
+	{
+		settings->width = WidthOfScreen(xfi->screen);
+		settings->height = HeightOfScreen(xfi->screen);	
+	}
+	else if (settings->workarea)
 	{
 		settings->width = xfi->workArea.width;
 		settings->height = xfi->workArea.height;
@@ -112,8 +117,11 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		vscreen->area.bottom = MAX(vscreen->monitors[i].area.bottom, vscreen->area.bottom);
 	}
 
-	settings->width = vscreen->area.right - vscreen->area.left + 1;
-	settings->height = vscreen->area.bottom - vscreen->area.top + 1;
+	if (settings->num_monitors)
+	{
+		settings->width = vscreen->area.right - vscreen->area.left + 1;
+		settings->height = vscreen->area.bottom - vscreen->area.top + 1;
+	}
 
 	return true;
 }

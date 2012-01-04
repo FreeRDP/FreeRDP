@@ -170,11 +170,6 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 				pointer->width, pointer->height, pointer->xorBpp, xfi->clrconv);
 	}
 
-	if (pointer->xorBpp > 24)
-	{
-		freerdp_image_swap_color_order((uint8*) ci.pixels, ci.width, ci.height);
-	}
-
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfi->display, &ci);
 	xfree(ci.pixels);
 }
@@ -238,8 +233,6 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 	xf_glyph = (xfGlyph*) glyph;
 
-	printf("Glyph_Draw: x:%d y:%d w:%d h:%d\n", x, y, glyph->cx, glyph->cy);
-
 	XSetStipple(xfi->display, xfi->gc, xf_glyph->pixmap);
 	XSetTSOrigin(xfi->display, xfi->gc, x, y);
 	XFillRectangle(xfi->display, xfi->drawing, xfi->gc, x, y, glyph->cx, glyph->cy);
@@ -250,8 +243,8 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	bgcolor = freerdp_color_convert(bgcolor, xfi->srcBpp, 32, xfi->clrconv);
-	fgcolor = freerdp_color_convert(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
+	bgcolor = freerdp_color_convert_rgb(bgcolor, xfi->srcBpp, 32, xfi->clrconv);
+	fgcolor = freerdp_color_convert_rgb(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);

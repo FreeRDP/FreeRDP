@@ -25,7 +25,12 @@
 #include <string.h>
 #include <sys/types.h>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
@@ -138,6 +143,8 @@ boolean wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
+	settings->os_major_type = OSMAJORTYPE_WINDOWS;
+	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;
@@ -205,6 +212,44 @@ boolean wf_pre_connect(freerdp* instance)
 	return true;
 }
 
+void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
+{
+#if defined(__GNUC__)
+#if defined(__i386__) || defined(__x86_64__)
+	*eax = info;
+	__asm volatile
+		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		 "cpuid;"
+		 "mov %%ebx, %%esi;"
+		 "mov %%edi, %%ebx;"
+		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		 : :"edi");
+#endif
+#elif defined(_MSC_VER)
+	int a[4];
+	__cpuid(a, info);
+	*eax = a[0];
+	*ebx = a[1];
+	*ecx = a[2];
+	*edx = a[3];
+#endif
+}
+ 
+uint32 wfi_detect_cpu()
+{
+	uint32 cpu_opt = 0;
+	unsigned int eax, ebx, ecx, edx = 0;
+
+	cpuid(1, &eax, &ebx, &ecx, &edx);
+
+	if (edx & (1<<26))
+	{
+		cpu_opt |= CPU_SSE2;
+	}
+
+	return cpu_opt;
+}
+
 boolean wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -230,6 +275,8 @@ boolean wf_post_connect(freerdp* instance)
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
+
+		rfx_context_set_cpu_opt(gdi->rfx_context, wfi_detect_cpu());
 	}
 	else
 	{
@@ -251,6 +298,19 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->hdc->hwnd->count = 32;
 		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
 		wfi->hdc->hwnd->ninvalid = 0;
+
+		wfi->image = wf_bitmap_new(wfi, 64, 64, 32, NULL);
+		wfi->image->_bitmap.data = NULL;
+
+		if (settings->rfx_codec)
+		{
+			wfi->tile = wf_bitmap_new(wfi, 64, 64, 24, NULL);
+			wfi->rfx_context = rfx_context_new();
+			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
+		}
+
+		if (settings->ns_codec)
+			wfi->nsc_context = nsc_context_new();
 	}
 
 	if (settings->window_title != NULL)
@@ -325,7 +385,6 @@ boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 {
 	return true;
 }
-
 
 int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
 {

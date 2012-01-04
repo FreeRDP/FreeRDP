@@ -291,55 +291,42 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.bit_gravity = ForgetGravity;
 	xfi->attribs.win_gravity = StaticGravity;
 
-	if (xfi->remote_app != true)
+	if (xfi->instance->settings->window_title != NULL)
 	{
-		if (xfi->fullscreen)
-		{
-			width = xfi->fullscreen ? WidthOfScreen(xfi->screen) : xfi->width;
-			height = xfi->fullscreen ? HeightOfScreen(xfi->screen) : xfi->height;
-		}
-
-		if (xfi->instance->settings->window_title != NULL)
-		{
-			win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
-			sprintf(win_title, "%s", xfi->instance->settings->window_title);
-		}
-		else if (xfi->instance->settings->port == 3389)
-		{
-			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
-			sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
-		}
-		else
-		{
-			win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
-			sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
-		}
-
-		xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
-		xfree(win_title);
-
-		if (xfi->parent_window)
-			XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
-
-		if (xfi->fullscreen)
-			xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
-
-		/* wait for VisibilityNotify */
-		do
-		{
-			XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
-		}
-		while (xevent.type != VisibilityNotify);
-
-		xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
-
-		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
-		xfi->drawable = xfi->window->handle;
+		win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
+		sprintf(win_title, "%s", xfi->instance->settings->window_title);
+	}
+	else if (xfi->instance->settings->port == 3389)
+	{
+		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
+		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
 	}
 	else
 	{
-		xfi->drawable = DefaultRootWindow(xfi->display);
+		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
+		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 	}
+
+	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
+	xfree(win_title);
+
+	if (xfi->parent_window)
+		XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
+
+	if (xfi->fullscreen)
+		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
+
+	/* wait for VisibilityNotify */
+	do
+	{
+		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+	}
+	while (xevent.type != VisibilityNotify);
+
+	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+
+	XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
+	xfi->drawable = xfi->window->handle;
 }
 
 void xf_toggle_fullscreen(xfInfo* xfi)
@@ -401,6 +388,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 		return false;
 	}
 
+	vi = NULL;
 	for (i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
@@ -411,6 +399,20 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 			break;
 		}
 	}
+
+	if (vi)
+	{
+		/*
+		 * Detect if the server visual has an inverted colormap
+		 * (BGR vs RGB, or red being the least significant byte)
+		 */
+
+		if (vi->red_mask & 0xFF) 
+		{
+			xfi->clrconv->invert = true;
+		}
+	}
+
 	XFree(vis);
 
 	if ((xfi->visual == NULL) || (xfi->scanline_pad == 0))
@@ -419,6 +421,34 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	}
 
 	return true;
+}
+
+static int (*_def_error_handler)(Display*, XErrorEvent*);
+int xf_error_handler(Display* d, XErrorEvent* ev)
+{
+	char buf[256];
+	int do_abort = true;
+
+	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
+	printf("%s", buf);
+
+	if (do_abort)
+		abort();
+
+	_def_error_handler(d, ev);
+
+	return false;
+}
+
+int _xf_error_handler(Display* d, XErrorEvent* ev)
+{
+	/*
+ 	 * ungrab the keyboard, in case a debugger is running in
+ 	 * another window. This make xf_error_handler() a potential
+ 	 * debugger breakpoint.
+ 	 */
+	XUngrabKeyboard(d, CurrentTime);
+	return xf_error_handler(d, ev);
 }
 
 boolean xf_pre_connect(freerdp* instance)
@@ -445,6 +475,8 @@ boolean xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
+	settings->os_major_type = OSMAJORTYPE_UNIX;
+	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;
@@ -481,33 +513,40 @@ boolean xf_pre_connect(freerdp* instance)
 		return false;
 	}
 
-	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", True);
-	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", True);
-	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", True);
-	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", True);
-	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", True);
-	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", True);
-	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", True);
+	if (xfi->debug)
+	{
+		printf("Enabling X11 debug mode.\n");
+		XSynchronize(xfi->display, true);
+		_def_error_handler = XSetErrorHandler(_xf_error_handler);
+	}
 
-	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
-	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", True);
-	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", True);
-	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
-	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", True);
-	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", True);
-	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", True);
-	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", True);
+	xfi->_NET_WM_ICON = XInternAtom(xfi->display, "_NET_WM_ICON", False);
+	xfi->_MOTIF_WM_HINTS = XInternAtom(xfi->display, "_MOTIF_WM_HINTS", False);
+	xfi->_NET_CURRENT_DESKTOP = XInternAtom(xfi->display, "_NET_CURRENT_DESKTOP", False);
+	xfi->_NET_WORKAREA = XInternAtom(xfi->display, "_NET_WORKAREA", False);
+	xfi->_NET_WM_STATE = XInternAtom(xfi->display, "_NET_WM_STATE", False);
+	xfi->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfi->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfi->_NET_WM_WINDOW_TYPE = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE", False);
 
-	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", True);
-	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", True);
+	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
+	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
+	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
+	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
+	xfi->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_PAGER", False);
+	xfi->_NET_WM_MOVERESIZE = XInternAtom(xfi->display, "_NET_WM_MOVERESIZE", False);
+	xfi->_NET_MOVERESIZE_WINDOW = XInternAtom(xfi->display, "_NET_MOVERESIZE_WINDOW", False);
+
+	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
+	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
 
 	xf_kbd_init(xfi);
 
 	xfi->clrconv = xnew(CLRCONV);
-	xfi->clrconv->alpha = 1;
-	xfi->clrconv->invert = 0;
-	xfi->clrconv->rgb555 = 0;
+	xfi->clrconv->alpha = true;
+	xfi->clrconv->invert = false;
+	xfi->clrconv->rgb555 = false;
 	xfi->clrconv->palette = xnew(rdpPalette);
 
 	instance->context->cache = cache_new(instance->settings);
@@ -521,7 +560,6 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->mouse_motion = settings->mouse_motion;
 	xfi->complex_regions = true;
 	xfi->decorations = settings->decorations;
-	xfi->remote_app = settings->remote_app;
 	xfi->fullscreen = settings->fullscreen;
 	xfi->grab_keyboard = settings->grab_keyboard;
 	xfi->fullscreen_toggle = true;
@@ -587,7 +625,7 @@ boolean xf_post_connect(freerdp* instance)
 		rdpGdi* gdi;
 		uint32 flags;
 
-		flags = CLRCONV_ALPHA | CLRCONV_INVERT;
+		flags = CLRCONV_ALPHA;
 
 		if (xfi->bpp > 16)
 			flags |= CLRBUF_32BPP;
@@ -696,8 +734,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xf_tsmf_init(xfi, xv_port);
 
-	if (xfi->remote_app != true)
-		xf_cliprdr_init(xfi, channels);
+	xf_cliprdr_init(xfi, channels);
 
 	return true;
 }
@@ -744,6 +781,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
+	xfInfo* xfi = (xfInfo*) user_data;
 
 	if (strcmp("--kbd-list", opt) == 0)
 	{
@@ -774,6 +812,11 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	{
 		xv_port = atoi(val);
 		argc = 2;
+	}
+	else if (strcmp("--dbg-x11", opt) == 0)
+	{
+		xfi->debug = true;
+		argc = 1;
 	}
 
 	return argc;
@@ -837,8 +880,11 @@ void xf_window_free(xfInfo* xfi)
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;
 
-	xf_DestroyWindow(xfi, xfi->window);
-	xfi->window = NULL;
+	if (xfi->window != NULL)
+	{
+		xf_DestroyWindow(xfi, xfi->window);
+		xfi->window = NULL;
+	}
 
 	if (xfi->primary)
 	{
@@ -913,7 +959,7 @@ int xfreerdp_run(freerdp* instance)
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 
-	while (1)
+	while (!xfi->disconnect)
 	{
 		rcount = 0;
 		wcount = 0;

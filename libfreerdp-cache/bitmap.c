@@ -66,6 +66,12 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 
 	Bitmap_SetDimensions(context, bitmap, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight);
 
+	if (cache_bitmap_v2->bitmapBpp == 0)
+	{
+		/* Workaround for Windows 8 bug where bitmapBpp is not set */
+		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
+	}
+
 	bitmap->Decompress(context, bitmap,
 			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
 			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
@@ -136,7 +142,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 		return NULL;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)
@@ -158,7 +164,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdp
 		return;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)

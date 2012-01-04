@@ -102,10 +102,12 @@ struct xf_info
 	boolean grab_keyboard;
 	boolean unobscured;
 	boolean decorations;
+	boolean debug;
 	xfWindow* window;
 	xfWorkArea workArea;
 	int current_desktop;
 	boolean remote_app;
+	boolean disconnect;
 	HCLRCONV clrconv;
 	Window parent_window;
 

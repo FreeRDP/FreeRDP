@@ -222,8 +222,8 @@
               </listitem>
               <listitem>
                 <para>
-                  <replaceable class="parameter">num</replaceable> - A number that represents a
-                  bit-mask, were numbers mean the following
+                  <replaceable class="parameter">num</replaceable> - A hexadecimal number that
+                  represents a bit-mask, were numbers mean the following
                   <footnote><para>Taken from <ulink url="http://msdn.microsoft.com/en-us/library/cc240476%28v=prot.10%29.aspx">
                   MS-RDPBCGR Scetion 2.2.1.11.1.1.1 - Extended Info Packet</ulink></para></footnote>:
                   <itemizedlist>
@@ -240,16 +240,16 @@
                       <para>8: Disable user interface themes.</para>
                     </listitem>
                     <listitem>
-                      <para>32: Disable mouse cursor shadows.</para>
+                      <para>20: Disable mouse cursor shadows.</para>
                     </listitem>
                     <listitem>
-                      <para>64: Disable cursor blinking.</para>
+                      <para>40: Disable cursor blinking.</para>
                     </listitem>
                     <listitem>
-                      <para>128: Enable font smoothing.</para>
+                      <para>80: Enable font smoothing.</para>
                     </listitem>
                     <listitem>
-                      <para>256: Enable Desktop Composition.</para>
+                      <para>100: Enable Desktop Composition.</para>
                     </listitem>
                   </itemizedlist>
                 </para>

@@ -97,6 +97,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_set_blocking_mode(rdp, false);
 	rdp->state = CONNECTION_STATE_NEGO;
+	rdp->finalize_sc_pdus = 0;
 
 	if (mcs_send_connect_initial(rdp->mcs) != true)
 	{
@@ -166,6 +167,12 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	{
 		xfree(settings->domain);
 		settings->domain = redirection->domain.ascii;
+	}
+
+	if (redirection->flags & LB_PASSWORD)
+	{
+		xfree(settings->password);
+		settings->password = redirection->password.ascii;
 	}
 
 	return rdp_client_connect(rdp);
@@ -390,6 +397,16 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 		IFCALL(rdp->update->DesktopResize, rdp->update->context);
 	}
 
+	rdp->state = CONNECTION_STATE_FINALIZATION;
+	update_reset_state(rdp->update);
+
+	rdp_client_connect_finalize(rdp);
+
+	return true;
+}
+
+boolean rdp_client_connect_finalize(rdpRdp* rdp)
+{
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the server-to-
@@ -406,9 +423,6 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 		return false;
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
 		return false;
-
-	rdp->state = CONNECTION_STATE_ACTIVE;
-	update_reset_state(rdp->update);
 
 	return true;
 }
@@ -561,20 +575,13 @@ boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 
 	rdp->state = CONNECTION_STATE_LICENSE;
 
-	if (!rdp_send_demand_active(rdp))
-		return false;
-
 	return true;
 }
 
 boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
 {
-	/**
-	 * During reactivation sequence the client might sent some input before receiving
-	 * the Deactivate All PDU. We need to ignore those noises here.
-	 */
 	if (!rdp_recv_confirm_active(rdp, s))
-		return true;
+		return false;
 
 	rdp->state = CONNECTION_STATE_ACTIVE;
 	update_reset_state(rdp->update);

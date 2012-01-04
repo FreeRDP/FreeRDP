@@ -107,8 +107,16 @@ void rdp_read_general_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 	uint8 refreshRectSupport;
 	uint8 suppressOutputSupport;
 
-	stream_seek_uint16(s); /* osMajorType (2 bytes) */
-	stream_seek_uint16(s); /* osMinorType (2 bytes) */
+	if (settings->server_mode)
+	{
+		stream_read_uint16(s, settings->os_major_type); /* osMajorType (2 bytes) */
+		stream_read_uint16(s, settings->os_minor_type); /* osMinorType (2 bytes) */
+	}
+	else
+	{
+		stream_seek_uint16(s); /* osMajorType (2 bytes) */
+		stream_seek_uint16(s); /* osMinorType (2 bytes) */
+	}
 	stream_seek_uint16(s); /* protocolVersion (2 bytes) */
 	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
 	stream_seek_uint16(s); /* generalCompressionTypes (2 bytes) */
@@ -118,6 +126,9 @@ void rdp_read_general_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 	stream_seek_uint16(s); /* generalCompressionLevel (2 bytes) */
 	stream_read_uint8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	stream_read_uint8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
+
+	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
+		settings->fastpath_output = false;
 
 	if (refreshRectSupport == false)
 		settings->refresh_rect = false;
@@ -140,7 +151,7 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	extraFlags = LONG_CREDENTIALS_SUPPORTED; /* | NO_BITMAP_COMPRESSION_HDR; */
+	extraFlags = LONG_CREDENTIALS_SUPPORTED | NO_BITMAP_COMPRESSION_HDR;
 
 	if (settings->auto_reconnection)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
@@ -155,8 +166,8 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 		settings->suppress_output = false;
 	}
 
-	stream_write_uint16(s, 0); /* osMajorType (2 bytes) */
-	stream_write_uint16(s, 0); /* osMinorType (2 bytes) */
+	stream_write_uint16(s, settings->os_major_type); /* osMajorType (2 bytes) */
+	stream_write_uint16(s, settings->os_minor_type); /* osMinorType (2 bytes) */
 	stream_write_uint16(s, CAPS_PROTOCOL_VERSION); /* protocolVersion (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2OctetsA (2 bytes) */
 	stream_write_uint16(s, 0); /* generalCompressionTypes (2 bytes) */
@@ -309,20 +320,27 @@ void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings)
 	uint8* header;
 	uint16 orderFlags;
 	uint16 orderSupportExFlags;
+	uint16 textANSICodePage;
 
 	header = rdp_capability_set_start(s);
 
-	orderFlags =	NEGOTIATE_ORDER_SUPPORT |
-			ZERO_BOUNDS_DELTA_SUPPORT |
-			COLOR_INDEX_SUPPORT;
+	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
+	textANSICodePage = 65001; /* Unicode (UTF-8) */
 
 	orderSupportExFlags = 0;
-
-	if (settings->frame_marker)
-		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
+	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
 
 	if (settings->bitmap_cache_v3)
+	{
+		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
+		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
+
+	if (settings->frame_marker)
+	{
 		orderSupportExFlags |= ALTSEC_FRAME_MARKER_SUPPORT;
+		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
 
 	stream_write_zero(s, 16); /* terminalDescriptor (16 bytes) */
 	stream_write_uint32(s, 0); /* pad4OctetsA (4 bytes) */
@@ -498,6 +516,11 @@ void rdp_read_pointer_capability_set(STREAM* s, uint16 length, rdpSettings* sett
 
 	if (colorPointerFlag == false)
 		settings->color_pointer = false;
+
+	if (settings->server_mode)
+	{
+		settings->pointer_cache_size = pointerCacheSize;
+	}
 }
 
 /**
@@ -514,7 +537,7 @@ void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	colorPointerFlag = (settings->color_pointer) ? true : false;
+	colorPointerFlag = (settings->color_pointer) ? 1 : 0;
 
 	stream_write_uint16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	stream_write_uint16(s, settings->pointer_cache_size); /* colorPointerCacheSize (2 bytes) */
@@ -550,10 +573,13 @@ void rdp_read_share_capability_set(STREAM* s, uint16 length, rdpSettings* settin
 void rdp_write_share_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
+	uint16 nodeId;
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint16(s, settings->server_mode ? 0x03EA : 0); /* nodeId (2 bytes) */
+	nodeId = (settings->server_mode) ? 0x03EA : 0;
+
+	stream_write_uint16(s, nodeId); /* nodeId (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_SHARE);
@@ -661,10 +687,21 @@ void rdp_read_input_capability_set(STREAM* s, uint16 length, rdpSettings* settin
 
 	stream_seek(s, 64); /* imeFileName (64 bytes) */
 
-	if (!settings->server_mode &&
-		(inputFlags & INPUT_FLAG_FASTPATH_INPUT) == 0 && (inputFlags & INPUT_FLAG_FASTPATH_INPUT2) == 0)
+	if (settings->server_mode != true)
 	{
-		settings->fastpath_input = false;
+		if (inputFlags & INPUT_FLAG_FASTPATH_INPUT)
+		{
+			/* advertised by RDP 5.0 and 5.1 servers */
+		}
+		else if (inputFlags & INPUT_FLAG_FASTPATH_INPUT2)
+		{
+			/* avertised by RDP 5.2, 6.0, 6.1 and 7.0 servers */
+		}
+		else
+		{
+			/* server does not support fastpath input */
+			settings->fastpath_input = false;
+		}
 	}
 }
 
@@ -1017,10 +1054,13 @@ void rdp_read_virtual_channel_capability_set(STREAM* s, uint16 length, rdpSettin
 void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
+	uint32 flags;
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint32(s, settings->server_mode ? VCCAPS_COMPR_CS_8K : VCCAPS_NO_COMPR); /* flags (4 bytes) */
+	flags = (settings->server_mode) ? VCCAPS_COMPR_CS_8K : VCCAPS_NO_COMPR;
+
+	stream_write_uint32(s, flags); /* flags (4 bytes) */
 	stream_write_uint32(s, settings->vc_chunk_size); /* VCChunkSize (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
@@ -1958,10 +1998,13 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	}
 
-	if (settings->large_pointer)
+	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
 	{
-		numberCapabilities++;
-		rdp_write_large_pointer_capability_set(s, settings);
+		if (settings->large_pointer)
+		{
+			numberCapabilities++;
+			rdp_write_large_pointer_capability_set(s, settings);
+		}
 	}
 
 	if (settings->remote_app)
@@ -1975,12 +2018,6 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	{
 		numberCapabilities++;
 		rdp_write_multifragment_update_capability_set(s, settings);
-	}
-
-	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
-	{
-		numberCapabilities++;
-		rdp_write_large_pointer_capability_set(s, settings);
 	}
 
 	if (settings->received_caps[CAPSET_TYPE_SURFACE_COMMANDS])

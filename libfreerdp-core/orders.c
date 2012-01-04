@@ -1241,13 +1241,18 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 	update_read_4byte_unsigned(s, &cache_bitmap_v2_order->bitmapLength); /* bitmapLength */
 	update_read_2byte_unsigned(s, &cache_bitmap_v2_order->cacheIndex); /* cacheIndex */
 
+	if (cache_bitmap_v2_order->flags & CBR2_DO_NOT_CACHE)
+		cache_bitmap_v2_order->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
+
 	if (compressed)
 	{
-		if ((cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR) == 0)
+		if (!(cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
 		{
-			uint8* bitmapComprHdr = (uint8*) &cache_bitmap_v2_order->bitmapComprHdr;
-			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			cache_bitmap_v2_order->bitmapLength -= 8;
+			stream_read_uint16(s, cache_bitmap_v2_order->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_uint16(s, cache_bitmap_v2_order->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			cache_bitmap_v2_order->bitmapLength = cache_bitmap_v2_order->cbCompMainBodySize;
 		}
 
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
@@ -1387,21 +1392,23 @@ void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)
 	int x, y, k;
 	uint8 byte = 0;
 	uint8* palette;
+	int bytesPerPixel;
 
 	palette = s->p + 16;
+	bytesPerPixel = ((bpp + 1) / 8);
 
 	for (y = 7; y >= 0; y--)
 	{
 		for (x = 0; x < 8; x++)
 		{
-			if (x % 4 == 0)
+			if ((x % 4) == 0)
 				stream_read_uint8(s, byte);
 
-			index = (byte >> ((3 - (x % 4)) * 2));
+			index = ((byte >> ((3 - (x % 4)) * 2)) & 0x03);
 
-			for (k = 0; k < bpp; k++)
+			for (k = 0; k < bytesPerPixel; k++)
 			{
-				output[(y * 8 + x) * (bpp / 8) + k] = palette[index * (bpp / 8) + k];
+				output[((y * 8 + x) * bytesPerPixel) + k] = palette[(index * bytesPerPixel) + k];
 			}
 		}
 	}
@@ -1412,6 +1419,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	int i;
 	int size;
 	uint8 iBitmapFormat;
+	boolean compressed = false;
 
 	stream_read_uint8(s, cache_brush_order->index); /* cacheEntry (1 byte) */
 
@@ -1446,7 +1454,14 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 		}
 		else
 		{
-			if (cache_brush_order->length == COMPRESSED_BRUSH_LENGTH * cache_brush_order->bpp)
+			if ((iBitmapFormat == BMF_8BPP) && (cache_brush_order->length == 20))
+				compressed = true;
+			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush_order->length == 24))
+				compressed = true;
+			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush_order->length == 32))
+				compressed = true;
+
+			if (compressed != false)
 			{
 				/* compressed brush */
 				update_decompress_brush(s, cache_brush_order->data, cache_brush_order->bpp);
@@ -1488,10 +1503,11 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 
 		stream_read_uint16(s, deleteList->cIndices);
 
-		if (deleteList->indices == NULL)
-			deleteList->indices = xmalloc(deleteList->cIndices * 2);
-		else
-			deleteList->indices = xrealloc(deleteList->indices, deleteList->cIndices * 2);
+		if (deleteList->cIndices > deleteList->sIndices)
+		{
+			deleteList->sIndices = deleteList->cIndices;
+			deleteList->indices = xrealloc(deleteList->indices, deleteList->sIndices * 2);
+		}
 
 		for (i = 0; i < (int) deleteList->cIndices; i++)
 		{

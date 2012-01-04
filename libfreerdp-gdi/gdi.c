@@ -474,7 +474,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		uint32 color;
 		originalBrush = gdi->drawing->hdc->brush;
 
-		color = freerdp_color_convert(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+		color = freerdp_color_convert_rgb(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
 		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(color);
 
 		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
@@ -533,7 +533,7 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	brush_color = freerdp_color_convert(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
 	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -557,7 +557,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				rectangle->width, rectangle->height, &rect);
 
-		brush_color = freerdp_color_convert(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -572,7 +572,7 @@ void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	HGDI_PEN hPen;
 	rdpGdi *gdi = context->gdi;
 
-	color = freerdp_color_convert(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert_rgb(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, line_to->bRop2);
@@ -593,7 +593,7 @@ void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	sint32 x;
 	sint32 y;
 
-	color = freerdp_color_convert(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert_rgb(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);

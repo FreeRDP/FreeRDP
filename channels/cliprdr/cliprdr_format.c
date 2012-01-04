@@ -52,28 +52,42 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 	}
 	else
 	{
-		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, 36 * cb_event->num_formats);
-
+		STREAM* body;
+		body = stream_new(0);
+		
 		for (i = 0; i < cb_event->num_formats; i++)
 		{
-			stream_write_uint32(s, cb_event->formats[i]);
+			const char* name;
+			int name_length;
+
 			switch (cb_event->formats[i])
 			{
 				case CB_FORMAT_HTML:
-					memcpy(stream_get_tail(s), CFSTR_HTML, sizeof(CFSTR_HTML));
+					name = CFSTR_HTML; name_length = sizeof(CFSTR_HTML);
 					break;
 				case CB_FORMAT_PNG:
-					memcpy(stream_get_tail(s), CFSTR_PNG, sizeof(CFSTR_PNG));
+					name = CFSTR_PNG; name_length = sizeof(CFSTR_PNG);
 					break;
 				case CB_FORMAT_JPEG:
-					memcpy(stream_get_tail(s), CFSTR_JPEG, sizeof(CFSTR_JPEG));
+					name = CFSTR_JPEG; name_length = sizeof(CFSTR_JPEG);
 					break;
 				case CB_FORMAT_GIF:
-					memcpy(stream_get_tail(s), CFSTR_GIF, sizeof(CFSTR_GIF));
+					name = CFSTR_GIF; name_length = sizeof(CFSTR_GIF);
 					break;
+				default:
+					name = "\0\0"; name_length = 2;
 			}
-			stream_seek(s, 32);
+			
+			if (!cliprdr->use_long_format_names)
+				name_length = 32;
+			
+			stream_extend(body, stream_get_size(body) + 4 + name_length);
+			stream_write_uint32(body, cb_event->formats[i]);
+			stream_write(body, name, name_length);
 		}
+				
+		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, stream_get_size(body));
+		stream_write(s, stream_get_head(body), stream_get_size(body));
 	}
 
 	cliprdr_packet_send(cliprdr, s);
@@ -134,37 +148,39 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 
 void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, uint16 flags)
 {
-	int num_formats;
-	uint8* start_mark;
+	int allocated_formats = 8;
 	uint8* end_mark;
 	CLIPRDR_FORMAT_NAME* format_name;
-
-	num_formats = 0;
-	stream_get_mark(s, start_mark);
+	
 	stream_get_mark(s, end_mark);
 	end_mark += length;
+		
+	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
+	cliprdr->num_format_names = 0;
 
-	while (s->p < end_mark)
+	while (stream_get_left(s) >= 6)
 	{
-		stream_seek_uint32(s);
-		stream_seek(s, 32);
-		num_formats++;
-	}
-
-	stream_set_mark(s, start_mark);
-
-	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
-	cliprdr->num_format_names = num_formats;
-	num_formats = 0;
-
-	while (s->p < end_mark)
-	{
-		format_name = &cliprdr->format_names[num_formats++];
+		uint8* p;
+		int name_len;
+		
+		if (cliprdr->num_format_names >= allocated_formats)
+		{
+			allocated_formats *= 2;
+			cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xrealloc(cliprdr->format_names, sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
+		}
+		
+		format_name = &cliprdr->format_names[cliprdr->num_format_names++];
 		stream_read_uint32(s, format_name->id);
-
-		format_name->name = freerdp_uniconv_in(cliprdr->uniconv, s->p, 32);
+		
+		for (p = stream_get_tail(s), name_len = 0; p+1 < end_mark; p += 2, name_len += 2)
+		{
+			if (*((unsigned short*)p) == 0)
+				break;
+		}
+		
+		format_name->name = freerdp_uniconv_in(cliprdr->uniconv, stream_get_tail(s), name_len);
 		format_name->length = strlen(format_name->name);
-		stream_seek(s, 32);
+		stream_seek(s, name_len + 2);
 	}
 }
 
@@ -236,8 +252,11 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 						break;
 					}
 				}
-
-				supported = false;
+				else
+				{
+					supported = false;
+				}
+				
 				break;
 		}
 

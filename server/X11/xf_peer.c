@@ -24,11 +24,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
-
-#ifdef WITH_XDAMAGE
-#include <X11/extensions/Xdamage.h>
-#endif
-
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
@@ -41,16 +36,67 @@ extern boolean xf_pcap_dump_realtime;
 
 #include "xf_peer.h"
 
+#ifdef WITH_XDAMAGE
+
+void xf_xdamage_init(xfInfo* xfi)
+{
+	int damage_event;
+	int damage_error;
+	int major, minor;
+	XGCValues values;
+
+	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
+	{
+		printf("XDamageQueryExtension failed\n");
+		return;
+	}
+
+	XDamageQueryVersion(xfi->display, &major, &minor);
+
+	if (XDamageQueryVersion(xfi->display, &major, &minor) == 0)
+	{
+		printf("XDamageQueryVersion failed\n");
+		return;
+	}
+	else if (major < 1)
+	{
+		printf("XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
+		return;
+	}
+
+	xfi->xdamage_notify_event = damage_event + XDamageNotify;
+	xfi->xdamage = XDamageCreate(xfi->display, DefaultRootWindow(xfi->display), XDamageReportDeltaRectangles);
+
+	if (xfi->xdamage == None)
+	{
+		printf("XDamageCreate failed\n");
+		return;
+	}
+
+#ifdef WITH_XFIXES
+	xfi->xdamage_region = XFixesCreateRegion(xfi->display, NULL, 0);
+
+	if (xfi->xdamage_region == None)
+	{
+		printf("XFixesCreateRegion failed\n");
+		XDamageDestroy(xfi->display, xfi->xdamage);
+		xfi->xdamage = None;
+		return;
+	}
+#endif
+
+	values.subwindow_mode = IncludeInferiors;
+	xfi->xdamage_gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCSubwindowMode, &values);
+}
+
+#endif
+
 xfInfo* xf_info_init()
 {
 	int i;
 	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
-#ifdef WITH_XDAMAGE
-	int damage_event;
-	int damage_error;
-#endif
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -123,8 +169,9 @@ xfInfo* xf_info_init()
 	xfi->clrconv->alpha = 1;
 
 	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+
 #ifdef WITH_XDAMAGE
-	XDamageQueryExtension(xfi->display, &damage_event, &damage_error);
+	xf_xdamage_init(xfi);
 #endif 
 
 	return xfi;
@@ -170,59 +217,74 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	int width;
-	int height;
 	uint8* data;
 	xfInfo* xfi;
 	XImage* image;
+	XEvent xevent;
 	RFX_RECT rect;
-	uint32 seconds;
-	uint32 useconds;
 	rdpUpdate* update;
 	xfPeerContext* xfp;
 	SURFACE_BITS_COMMAND* cmd;
 
-	seconds = 1;
-	useconds = 0;
 	update = client->update;
 	xfp = (xfPeerContext*) client->context;
 	xfi = (xfInfo*) xfp->info;
 	cmd = &update->surface_bits_command;
+	data = (uint8*) xmalloc(xfi->width * xfi->height * 3);
 
-	width = xfi->width;
-	height = xfi->height;
-	data = (uint8*) xmalloc(width * height * 3);
-
-	while (1)
+	while (XPending(xfi->display))
 	{
-		if (seconds > 0)
-			freerdp_sleep(seconds);
+		memset(&xevent, 0, sizeof(xevent));
+		XNextEvent(xfi->display, &xevent);
 
-		if (useconds > 0)
-			freerdp_usleep(useconds);
+		if (xevent.type == xfi->xdamage_notify_event)
+		{
+			XRectangle region;
+			int x, y, width, height;
+			XDamageNotifyEvent* notify;
+	
+			notify = (XDamageNotifyEvent*) &xevent;
+	
+			x = notify->area.x;
+			y = notify->area.y;
+			width = notify->area.width;
+			height = notify->area.height;
 
-		s = xf_peer_stream_init(xfp);
+			region.x = x;
+			region.y = y;
+			region.width = width;
+			region.height = height;
 
-		image = xf_snapshot(xfi, 0, 0, width, height);
-		freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
+#ifdef WITH_XFIXES
+			XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
+			XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
+#endif
+	
+			printf("XDamageNotify: x:%d y:%d width:%d height:%d\n", x, y, width, height);
 
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data, width, height, width * 3);
-
-		cmd->destLeft = 0;
-		cmd->destTop = 0;
-		cmd->destRight = width;
-		cmd->destBottom = height;
-		cmd->bpp = 32;
-		cmd->codecID = client->settings->rfx_codec_id;
-		cmd->width = width;
-		cmd->height = height;
-		cmd->bitmapDataLength = stream_get_length(s);
-		cmd->bitmapData = stream_get_head(s);
-		update->SurfaceBits(update->context, cmd);
+			s = xf_peer_stream_init(xfp);
+	
+			image = xf_snapshot(xfi, x, y, width, height);
+			freerdp_image_convert((uint8*) image->data, data, width, height, 32, 24, xfi->clrconv);
+	
+			rect.x = 0;
+			rect.y = 0;
+			rect.width = width;
+			rect.height = height;
+			rfx_compose_message(xfp->rfx_context, s, &rect, 1, data, width, height, width * 3);
+	
+			cmd->destLeft = x;
+			cmd->destTop = y;
+			cmd->destRight = width;
+			cmd->destBottom = height;
+			cmd->bpp = 32;
+			cmd->codecID = client->settings->rfx_codec_id;
+			cmd->width = width;
+			cmd->height = height;
+			cmd->bitmapDataLength = stream_get_length(s);
+			cmd->bitmapData = stream_get_head(s);
+			update->SurfaceBits(update->context, cmd);
+		}
 	}
 }
 
@@ -301,6 +363,11 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	}
 }
 
+boolean xf_peer_capabilities(freerdp_peer* client)
+{
+	return true;
+}
+
 boolean xf_peer_post_connect(freerdp_peer* client)
 {
 	xfInfo* xfi;
@@ -333,6 +400,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 
 	client->settings->width = xfi->width;
 	client->settings->height = xfi->height;
+
 	client->update->DesktopResize(client->update->context);
 	xfp->activated = false;
 
@@ -427,6 +495,7 @@ void* xf_peer_main_loop(void* arg)
 	client->settings->nla_security = false;
 	client->settings->rfx_codec = true;
 
+	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
 

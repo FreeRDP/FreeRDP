@@ -48,6 +48,7 @@ struct wf_bitmap
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
+	uint8* pdata;
 };
 typedef struct wf_bitmap wfBitmap;
 
@@ -85,6 +86,7 @@ struct wf_info
 	HCURSOR cursor;
 	HBRUSH brush;
 	HBRUSH org_brush;
+	RECT update_rect;
 
 	wfBitmap* tile;
 	wfBitmap* image;

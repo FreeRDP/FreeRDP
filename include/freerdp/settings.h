@@ -35,6 +35,14 @@
 #define PERF_ENABLE_FONT_SMOOTHING      	0x00000080
 #define PERF_ENABLE_DESKTOP_COMPOSITION 	0x00000100
 
+/* Connection Types */
+#define CONNECTION_TYPE_MODEM			0x01
+#define CONNECTION_TYPE_BROADBAND_LOW		0x02
+#define CONNECTION_TYPE_SATELLITE		0x03
+#define CONNECTION_TYPE_BROADBAND_HIGH		0x04
+#define CONNECTION_TYPE_WAN			0x05
+#define CONNECTION_TYPE_LAN			0x06
+
 /* Encryption Methods */
 #define ENCRYPTION_METHOD_NONE			0x00000000
 #define ENCRYPTION_METHOD_40BIT			0x00000001
@@ -200,7 +208,8 @@ struct rdp_settings
 	uint32 encryption_method; /* 27 */
 	uint32 encryption_level; /* 28 */
 	boolean authentication; /* 29 */
-	uint32 paddingB[48 - 30]; /* 30 */
+	uint32 negotiationFlags; /* 30 */
+	uint32 paddingB[48 - 31]; /* 31 */
 
 	/* Connection Settings */
 	uint32 port; /* 48 */
@@ -266,6 +275,8 @@ struct rdp_settings
 	TIME_ZONE_INFO client_time_zone;
 
 	/* Capabilities */
+	uint16 os_major_type;
+	uint16 os_minor_type;
 	uint32 vc_chunk_size;
 	boolean sound_beeps;
 	boolean smooth_fonts;
@@ -275,6 +286,11 @@ struct rdp_settings
 	uint8 received_caps[32];
 	uint8 order_support[32];
 	boolean surface_commands;
+	boolean disable_wallpaper;
+	boolean disable_full_window_drag;
+	boolean disable_menu_animations;
+	boolean disable_theming;
+	uint32 connection_type;
 	uint32 multifrag_max_request_size;
 
 	/* Certificate */

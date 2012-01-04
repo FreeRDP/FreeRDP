@@ -28,6 +28,17 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
+void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
+{
+	if (xfi->remote_app == false)
+	{
+		xfi->remote_app = true;
+		xfi->drawable = DefaultRootWindow(xfi->display);
+		xf_DestroyWindow(xfi, xfi->window);
+		xfi->window = NULL;
+	}
+}
+
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
 	xfWindow* xfw;
@@ -74,6 +85,8 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	xfWindow* xfw;
 
 	xfi = (xfInfo*) rail->extra;
+
+	xf_rail_enable_remoteapp_mode(xfi);
 
 	xfw = xf_CreateWindow((xfInfo*) rail->extra, window,
 			window->windowOffsetX, window->windowOffsetY,
@@ -306,8 +319,10 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	window_move.right = xfw->right + 1;   // In the update to RDP the position is one past the window
 	window_move.bottom = xfw->bottom + 1;
 
-	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d}",
-        	(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom);
+	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
+        	(uint32) xfw->handle, 
+		xfw->left, xfw->top, xfw->right, xfw->bottom,
+		xfw->width, xfw->height);
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
 
@@ -363,6 +378,11 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 	{
 		printf("RAIL exec error: execResult=%s NtError=0x%X\n",
 			error_code_names[exec_result->execResult], exec_result->rawResult);
+		xfi->disconnect = True;
+	}
+	else
+	{
+		xf_rail_enable_remoteapp_mode(xfi);
 	}
 }
 
@@ -507,7 +527,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 		{
 			xf_StartLocalMoveSize(xfi, xfw, direction, x, y);
 		} else {
-			xf_EndLocalMoveSize(xfi, xfw, false);
+			xf_EndLocalMoveSize(xfi, xfw);
 		}
 	}
 }
