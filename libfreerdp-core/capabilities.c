@@ -834,10 +834,14 @@ void rdp_write_cache_definition(STREAM* s, GLYPH_CACHE_DEFINITION* cache_definit
 
 void rdp_read_glyph_cache_capability_set(STREAM* s, uint16 length, rdpSettings* settings)
 {
+	uint16 glyphSupportLevel;
+
 	stream_seek(s, 40); /* glyphCache (40 bytes) */
 	stream_seek_uint32(s); /* fragCache (4 bytes) */
-	stream_seek_uint16(s); /* glyphSupportLevel (2 bytes) */
+	stream_read_uint16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+
+	settings->glyphSupportLevel = glyphSupportLevel;
 }
 
 /**

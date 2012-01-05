@@ -1059,7 +1059,7 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 			update_read_2byte_unsigned(s, &glyph->cx);
 			update_read_2byte_unsigned(s, &glyph->cy);
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-			glyph->cb += glyph->cb % 4;
+			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 			glyph->aj = (uint8*) xmalloc(glyph->cb);
 			stream_read(s, glyph->aj, glyph->cb);
 			fast_glyph->glyph_data = glyph;
@@ -1370,19 +1370,22 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 		glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
 		cache_glyph_v2_order->glyphData[i] = glyph;
 
-		stream_read_uint16(s, glyph->cacheIndex);
+		stream_read_uint8(s, glyph->cacheIndex);
 		update_read_2byte_signed(s, &glyph->x);
 		update_read_2byte_signed(s, &glyph->y);
 		update_read_2byte_unsigned(s, &glyph->cx);
 		update_read_2byte_unsigned(s, &glyph->cy);
 
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-		glyph->cb += glyph->cb % 4;
+		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
 		glyph->aj = (uint8*) xmalloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
+
+	if (flags & CG_GLYPH_UNICODE_PRESENT)
+		stream_seek(s, cache_glyph_v2_order->cGlyphs * 2);
 }
 
 void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)
