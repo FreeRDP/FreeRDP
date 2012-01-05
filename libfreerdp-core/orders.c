@@ -1194,21 +1194,21 @@ void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_
 
 	if (compressed)
 	{
-		if (flags & NO_BITMAP_COMPRESSION_HDR)
-		{
-			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
-		}
-		else
+		if ((flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
 			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_order->bitmapComprHdr);
 			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+			cache_bitmap_order->bitmapLength -= 8;
 		}
+		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
+		stream_seek(s, cache_bitmap_order->bitmapLength);
 	}
 	else
 	{
+		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
 	}
+	cache_bitmap_order->compressed = compressed;
 }
 
 void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
@@ -1257,14 +1257,13 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = true;
 	}
 	else
 	{
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = false;
 	}
+	cache_bitmap_v2_order->compressed = compressed;
 }
 
 void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, boolean compressed, uint16 flags)
