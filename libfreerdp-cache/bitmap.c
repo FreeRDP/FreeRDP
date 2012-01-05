@@ -53,7 +53,26 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
 {
-	printf("Warning: CacheBitmapV1 Unimplemented\n");
+	rdpBitmap* bitmap;
+	rdpBitmap* prevBitmap;
+	rdpCache* cache = context->cache;
+
+	bitmap = Bitmap_Alloc(context);
+
+	Bitmap_SetDimensions(context, bitmap, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight);
+
+	bitmap->Decompress(context, bitmap,
+			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
+			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
+
+	bitmap->New(context, bitmap);
+
+	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex);
+
+	if (prevBitmap != NULL)
+		Bitmap_Free(context, prevBitmap);
+
+	bitmap_cache_put(cache->bitmap, cache_bitmap->cacheId, cache_bitmap->cacheIndex, bitmap);
 }
 
 void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
@@ -142,7 +161,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 		return NULL;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)
@@ -164,7 +183,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdp
 		return;
 	}
 
-	if (index == 0x7FFF)
+	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
 		index = bitmap_cache->cells[id].number - 1;
 
 	if (index > bitmap_cache->cells[id].number)

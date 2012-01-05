@@ -323,7 +323,27 @@ void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 
 void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
+	int i;
+	rdpGlyph* glyph;
+	GLYPH_DATA_V2* glyph_data;
+	rdpCache* cache = context->cache;
 
+	for (i = 0; i < (int) cache_glyph_v2->cGlyphs; i++)
+	{
+		glyph_data = cache_glyph_v2->glyphData[i];
+
+		glyph = Glyph_Alloc(context);
+
+		glyph->x = glyph_data->x;
+		glyph->y = glyph_data->y;
+		glyph->cx = glyph_data->cx;
+		glyph->cy = glyph_data->cy;
+		glyph->aj = glyph_data->aj;
+		glyph->cb = glyph_data->cb;
+		Glyph_New(context, glyph);
+
+		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph_data->cacheIndex, glyph);
+	}
 }
 
 rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint32 id, uint32 index)
