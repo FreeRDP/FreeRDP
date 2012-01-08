@@ -612,6 +612,7 @@ void rdp_recv_logon_info_v2(rdpRdp* rdp, STREAM* s)
 
 	stream_seek_uint16(s); /* version (2 bytes) */
 	stream_seek_uint32(s); /* size (4 bytes) */
+	stream_seek_uint32(s); /* sessionId (4 bytes) */
 	stream_read_uint32(s, cbDomain); /* cbDomain (4 bytes) */
 	stream_read_uint32(s, cbUserName); /* cbUserName (4 bytes) */
 	stream_seek(s, 558); /* pad */
