@@ -44,6 +44,7 @@ struct xf_peer_context
 	pthread_t thread;
 	int activations;
 	STOPWATCH* stopwatch;
+	pthread_mutex_t mutex;
 };
 typedef struct xf_peer_context xfPeerContext;
 

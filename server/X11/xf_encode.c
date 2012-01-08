@@ -21,9 +21,14 @@
 
 #include "xf_encode.h"
 
-XImage* xf_snapshot(xfInfo* xfi, int x, int y, int width, int height)
+XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XImage* image;
+	xfInfo* xfi = xfp->info;
+
+	pthread_mutex_lock(&(xfp->mutex));
 	image = XGetImage(xfi->display, RootWindow(xfi->display, xfi->number), x, y, width, height, AllPlanes, ZPixmap);
+	pthread_mutex_unlock(&(xfp->mutex));
+
 	return image;
 }

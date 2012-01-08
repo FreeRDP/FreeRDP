@@ -233,6 +233,8 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->hdc->hwnd->count = 32;
 	xfp->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * xfp->hdc->hwnd->count);
 	xfp->hdc->hwnd->ninvalid = 0;
+
+	pthread_mutex_init(&(xfp->mutex), NULL);
 }
 
 STREAM* xf_peer_stream_init(xfPeerContext* context)
@@ -302,6 +304,8 @@ void* xf_monitor_graphics(void* param)
 
 	while (1)
 	{
+		pthread_mutex_lock(&(xfp->mutex));
+
 		while (XPending(xfi->display))
 		{
 			memset(&xevent, 0, sizeof(xevent));
@@ -347,6 +351,7 @@ void* xf_monitor_graphics(void* param)
 			stopwatch_start(xfp->stopwatch);
 
 			region = xfp->hdc->hwnd->invalid;
+			pthread_mutex_unlock(&(xfp->mutex));
 
 			xf_signal_event(xfp);
 
@@ -355,8 +360,11 @@ void* xf_monitor_graphics(void* param)
 				freerdp_usleep(33);
 			}
 		}
-
-		freerdp_usleep(33);
+		else
+		{
+			pthread_mutex_unlock(&(xfp->mutex));
+			freerdp_usleep(33);
+		}
 	}
 
 	return NULL;
@@ -465,7 +473,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	s = xf_peer_stream_init(xfp);
 
-	image = xf_snapshot(xfi, x, y, width, height);
+	image = xf_snapshot(xfp, x, y, width, height);
 
 	freerdp_image_convert((uint8*) image->data, xfp->capture_buffer, width, height, 32, 24, xfi->clrconv);
 
@@ -638,20 +646,45 @@ void xf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
 
 void xf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
+	int button = 0;
+	boolean down = false;
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	xfInfo* xfi = xfp->info;
+
+	pthread_mutex_lock(&(xfp->mutex));
 #ifdef WITH_XTEST
-	//xfInfo* xfi = ((xfPeerContext*) input->context)->info;
-	//XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+
+	if (flags & PTR_FLAGS_MOVE)
+		XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+
+	if (flags & PTR_FLAGS_BUTTON1)
+		button = 1;
+	else if (flags & PTR_FLAGS_BUTTON2)
+		button = 2;
+	else if (flags & PTR_FLAGS_BUTTON3)
+		button = 3;
+
+	if (flags & PTR_FLAGS_DOWN)
+		down = true;
+
+	if (button != 0)
+		XTestFakeButtonEvent(xfi->display, button, down, CurrentTime);
 #endif
+	pthread_mutex_unlock(&(xfp->mutex));
 
 	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
 void xf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	xfInfo* xfi = xfp->info;
+
+	pthread_mutex_lock(&(xfp->mutex));
 #ifdef WITH_XTEST
-	//xfInfo* xfi = ((xfPeerContext*) input->context)->info;
-	//XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
 #endif
+	pthread_mutex_unlock(&(xfp->mutex));
 
 	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
