@@ -5,15 +5,10 @@ config.h
 install_manifest.txt
 CTestTestfile.cmake
 freerdp.pc
-
-*.cmake
-/**/*.cmake
-/**/**/*.cmake
-/**/**/**/*.cmake
-/**/**/**/**/*.cmake
-
-# Make
 Makefile
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
 
 # Eclipse
 *.project
@@ -48,3 +43,7 @@ client/test/freerdp-test
 client/DirectFB/dfreerdp
 server/test/tfreerdp-server
 server/X11/xfreerdp-server
+
+# Other
+*~
+

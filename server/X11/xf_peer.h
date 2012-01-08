@@ -20,9 +20,13 @@
 #ifndef __XF_PEER_H
 #define __XF_PEER_H
 
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/stopwatch.h>
 
 #include "xfreerdp.h"
 
@@ -30,10 +34,16 @@ struct xf_peer_context
 {
 	rdpContext _p;
 
+	HGDI_DC hdc;
 	STREAM* s;
 	xfInfo* info;
+	int pipe_fd[2];
 	boolean activated;
 	RFX_CONTEXT* rfx_context;
+	uint8* capture_buffer;
+	pthread_t thread;
+	int activations;
+	STOPWATCH* stopwatch;
 };
 typedef struct xf_peer_context xfPeerContext;
 

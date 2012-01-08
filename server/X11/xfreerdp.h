@@ -26,6 +26,10 @@
 #include <X11/extensions/Xfixes.h>
 #endif
 
+#ifdef WITH_XTEST
+#include <X11/extensions/XTest.h>
+#endif
+
 #ifdef WITH_XDAMAGE
 #include <X11/extensions/Xdamage.h>
 #endif
