@@ -187,7 +187,8 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
-	stream_seek_uint8(s); /* pad (1 byte) */
+	if (stream_get_left(s) > 0)
+		stream_seek_uint8(s); /* pad (1 byte) */
 }
 
 void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
