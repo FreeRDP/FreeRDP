@@ -598,6 +598,14 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WSADATA wsa_data;
 	WNDCLASSEX wnd_cls;
 
+	if (NULL == getenv("HOME"))
+	{
+		char home[MAX_PATH * 2] = "HOME=";
+		strcat(home, getenv("HOMEDRIVE"));
+		strcat(home, getenv("HOMEPATH"));
+		_putenv(home);
+	}
+
 	if (WSAStartup(0x101, &wsa_data) != 0)
 		return 1;
 
