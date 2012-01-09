@@ -240,8 +240,12 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 
 		if ((fp = fopen(xkbfilepath, "r")) == NULL)
 		{
-			/* If ran from the source tree, the keymaps will be in the parent directory */
-			snprintf(xkbfilepath, sizeof(xkbfilepath), "../keymaps/%s", xkbfile);
+			/* If ran from the root of the source tree */
+			snprintf(xkbfilepath, sizeof(xkbfilepath), "./keymaps/%s", xkbfile);
+
+			/* If ran from the client directory */
+			if((fp = fopen(xkbfilepath, "r")) == NULL)
+				snprintf(xkbfilepath, sizeof(xkbfilepath), "../../keymaps/%s", xkbfile);
 
 			if ((fp = fopen(xkbfilepath, "r")) == NULL)
 			{

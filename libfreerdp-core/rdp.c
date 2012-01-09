@@ -466,7 +466,7 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			rdp_recv_server_synchronize_pdu(rdp, s);
+			rdp_recv_synchronize_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -493,7 +493,7 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
-			rdp_recv_server_font_map_pdu(rdp, s);
+			rdp_recv_font_map_pdu(rdp, s);
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:

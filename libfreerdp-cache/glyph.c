@@ -81,7 +81,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
 
-	if (opWidth > 1)
+	if (opWidth > 0 && opHeight > 0)
 		Glyph_BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
 	else
 		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor);

@@ -187,7 +187,8 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
-	stream_seek_uint8(s); /* pad (1 byte) */
+	if (stream_get_left(s) > 0)
+		stream_seek_uint8(s); /* pad (1 byte) */
 }
 
 void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
@@ -279,23 +280,16 @@ void update_recv(rdpUpdate* update, STREAM* s)
 
 	if (stream_get_left(s) > RDP_SHARE_DATA_HEADER_LENGTH)
 	{
-		uint8 type;
 		uint16 pduType;
 		uint16 length;
 		uint16 source;
-		uint32 shareId;
-		uint8 compressed_type;
-		uint16 compressed_len;
 
 		rdp_read_share_control_header(s, &length, &pduType, &source);
 
 		if (pduType != PDU_TYPE_DATA)
 			return;
 
-		rdp_read_share_data_header(s, &length, &type, &shareId, &compressed_type, &compressed_len);
-
-		if (type == DATA_PDU_TYPE_UPDATE)
-			update_recv(update, s);
+		rdp_recv_data_pdu(update->context->rdp, s);
 	}
 }
 
