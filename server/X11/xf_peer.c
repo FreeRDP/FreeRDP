@@ -338,7 +338,7 @@ void* xf_monitor_graphics(void* param)
 				stopwatch_stop(xfp->stopwatch);
 				stopwatch_get_elapsed_time_in_useconds(xfp->stopwatch, &sec, &usec);
 
-				if ((sec > 0) || (usec > 100))
+				if ((sec > 0) || (usec > 30))
 					break;
 			}
 		}
@@ -346,7 +346,7 @@ void* xf_monitor_graphics(void* param)
 		stopwatch_stop(xfp->stopwatch);
 		stopwatch_get_elapsed_time_in_useconds(xfp->stopwatch, &sec, &usec);
 
-		if ((sec > 0) || (usec > 100))
+		if ((sec > 0) || (usec > 30))
 		{
 			HGDI_RGN region;
 
@@ -357,17 +357,13 @@ void* xf_monitor_graphics(void* param)
 			pthread_mutex_unlock(&(xfp->mutex));
 
 			xf_signal_event(xfp);
-
-			while (region->null == 0)
-			{
-				freerdp_usleep(33);
-			}
 		}
 		else
 		{
 			pthread_mutex_unlock(&(xfp->mutex));
-			freerdp_usleep(33);
 		}
+
+		freerdp_usleep(30);
 	}
 
 	return NULL;
@@ -624,14 +620,10 @@ void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
-	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
-
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = true;
 
 	keycode = freerdp_kbd_get_keycode_by_scancode(code, extended);
-
-	printf("keycode: %d\n", keycode);
 
 	if (keycode != 0)
 	{
@@ -663,25 +655,38 @@ void xf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 	pthread_mutex_lock(&(xfp->mutex));
 #ifdef WITH_XTEST
 
-	if (flags & PTR_FLAGS_MOVE)
-		XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+	if (flags & PTR_FLAGS_WHEEL)
+	{
+		boolean negative = false;
 
-	if (flags & PTR_FLAGS_BUTTON1)
-		button = 1;
-	else if (flags & PTR_FLAGS_BUTTON2)
-		button = 2;
-	else if (flags & PTR_FLAGS_BUTTON3)
-		button = 3;
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+			negative = true;
 
-	if (flags & PTR_FLAGS_DOWN)
-		down = true;
+		button = (negative) ? 5 : 4;
 
-	if (button != 0)
-		XTestFakeButtonEvent(xfi->display, button, down, CurrentTime);
+		XTestFakeButtonEvent(xfi->display, button, True, 0);
+		XTestFakeButtonEvent(xfi->display, button, False, 0);
+	}
+	else
+	{
+		if (flags & PTR_FLAGS_MOVE)
+			XTestFakeMotionEvent(xfi->display, 0, x, y, 0);
+
+		if (flags & PTR_FLAGS_BUTTON1)
+			button = 1;
+		else if (flags & PTR_FLAGS_BUTTON2)
+			button = 3;
+		else if (flags & PTR_FLAGS_BUTTON3)
+			button = 2;
+
+		if (flags & PTR_FLAGS_DOWN)
+			down = true;
+
+		if (button != 0)
+			XTestFakeButtonEvent(xfi->display, button, down, 0);
+	}
 #endif
 	pthread_mutex_unlock(&(xfp->mutex));
-
-	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
 void xf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
@@ -694,8 +699,6 @@ void xf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint1
 	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
 #endif
 	pthread_mutex_unlock(&(xfp->mutex));
-
-	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
 void* xf_peer_main_loop(void* arg)
