@@ -261,30 +261,30 @@ static void rfx_process_message_codec_versions(RFX_CONTEXT* context, STREAM* s)
 
 static void rfx_process_message_channels(RFX_CONTEXT* context, STREAM* s)
 {
-	/*
-	   Though [MS-RDPRFX] said that the field 'numChannels' in TS_RFX_CHANNELS must be set to 0x01 and
-	   the field 'channelId' in TS_RFX_CHANNELT, it is not always true for a virtual machine configured
-	   with multiple monitors. In fact, the filed 'numChannels' represents the number of monitors 
-	   configured for the virtual machine, and the filed 'channelId' is a zero-based index of the monitors.
-	   As in Windows Server 2008 R2 SP1 each virtual machine can be configured up to four monitors, thus
-	   the filed 'numChannels' may vary from 0x01 to 0x04, and the 'channelId' will be set from 0x00 to 0x03.
-	*/
-	uint8 i;
+	uint8 channelId;
+	uint8 numChannels;
 
-	stream_read_uint8(s, context->numChannels); /* numChannels (1 byte), may be set from 0x01 to 0x04 */
+	stream_read_uint8(s, numChannels); /* numChannels (1 byte), must bet set to 0x01 */
 
-	DEBUG_RFX("numChannels %d:", context->numChannels);
+	/* In RDVH sessions, numChannels will represent the number of virtual monitors 
+	 * configured and does not always be set to 0x01 as [MS-RDPRFX] said.
+	 */
+	if (numChannels < 1)
+	{
+		DEBUG_WARN("numChannels:%d, expected:1", numChannels);
+		return;
+	}
 
 	/* RFX_CHANNELT */
-	for(i = 0; i < context->numChannels; i++)
-	{
-		stream_read_uint8(s, context->channels[i].channelId); /* channelId (1 byte) */
-		stream_read_uint16(s, context->channels[i].width);    /* width (2 bytes) */
-		stream_read_uint16(s, context->channels[i].height);   /* height (2 bytes) */
+	stream_read_uint8(s, channelId); /* channelId (1 byte) */
+	stream_read_uint16(s, context->width); /* width (2 bytes) */
+	stream_read_uint16(s, context->height); /* height (2 bytes) */
 
-		DEBUG_RFX("  Channel id %d, %dx%d.",
-			context->channels[i].channelId, context->channels[i].width, context->channels[i].height);
-	}
+	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
+	stream_seek(s, 5 * (numChannels - 1));
+
+	DEBUG_RFX("numChannels %d id %d, %dx%d.",
+		numChannels, channelId, context->width, context->height);
 }
 
 static void rfx_process_message_context(RFX_CONTEXT* context, STREAM* s)
@@ -641,16 +641,12 @@ static void rfx_compose_message_codec_versions(RFX_CONTEXT* context, STREAM* s)
 
 static void rfx_compose_message_channels(RFX_CONTEXT* context, STREAM* s)
 {
-	int i;
 	stream_write_uint16(s, WBT_CHANNELS); /* BlockT.blockType */
-	stream_write_uint32(s, 7 + 5 * context->numChannels); /* BlockT.blockLen */
+	stream_write_uint32(s, 12); /* BlockT.blockLen */
 	stream_write_uint8(s, 1); /* numChannels */
-	for(i = 0; i < context->numChannels; i++)
-	{
-		stream_write_uint8(s, context->channels[i].channelId); /* Channel.channelId */
-		stream_write_uint16(s, context->channels[i].width); /* Channel.width */
-		stream_write_uint16(s, context->channels[i].height); /* Channel.height */
-	}
+	stream_write_uint8(s, 0); /* Channel.channelId */
+	stream_write_uint16(s, context->width); /* Channel.width */
+	stream_write_uint16(s, context->height); /* Channel.height */
 }
 
 static void rfx_compose_message_context(RFX_CONTEXT* context, STREAM* s)
@@ -684,7 +680,7 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, STREAM* s)
 
 void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* s)
 {
-	stream_check_size(s, 7 + context->numChannels * 5 + 10 + 12 + 13);
+	stream_check_size(s, 12 + 10 + 12 + 13);
 
 	rfx_compose_message_sync(context, s);
 	rfx_compose_message_context(context, s);
