@@ -64,7 +64,7 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if (!rdp_recv_client_synchronize_pdu(s))
+			if (!rdp_recv_client_synchronize_pdu(client->context->rdp, s))
 				return false;
 			break;
 

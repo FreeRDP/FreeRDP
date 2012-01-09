@@ -36,6 +36,14 @@ void rdp_write_synchronize_pdu(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, settings->pdu_source); /* targetUser (2 bytes) */
 }
 
+boolean rdp_recv_synchronize_pdu(rdpRdp* rdp, STREAM* s)
+{
+	if (rdp->settings->server_mode)
+		return rdp_recv_server_synchronize_pdu(rdp, s);
+	else
+		return rdp_recv_client_synchronize_pdu(rdp, s);
+}
+
 boolean rdp_recv_server_synchronize_pdu(rdpRdp* rdp, STREAM* s)
 {
 	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
@@ -54,17 +62,22 @@ boolean rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 	return true;
 }
 
-boolean rdp_recv_client_synchronize_pdu(STREAM* s)
+boolean rdp_recv_client_synchronize_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint16 messageType;
+
+	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
 
 	if (stream_get_left(s) < 4)
 		return false;
 
 	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
+
 	if (messageType != SYNCMSGTYPE_SYNC)
 		return false;
+
 	/* targetUser (2 bytes) */
+	stream_seek_uint16(s);
 
 	return true;
 }
@@ -220,9 +233,29 @@ boolean rdp_send_client_font_list_pdu(rdpRdp* rdp, uint16 flags)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST, rdp->mcs->user_id);
 }
 
+boolean rdp_recv_font_map_pdu(rdpRdp* rdp, STREAM* s)
+{
+	if (rdp->settings->server_mode)
+		return rdp_recv_server_font_map_pdu(rdp, s);
+	else
+		return rdp_recv_client_font_map_pdu(rdp, s);
+}
+
 boolean rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s)
 {
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
+	return true;
+}
+
+boolean rdp_recv_client_font_map_pdu(rdpRdp* rdp, STREAM* s)
+{
+	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
+
+	stream_seek_uint16(s); /* numberEntries (2 bytes) */
+	stream_seek_uint16(s); /* totalNumEntries (2 bytes) */
+	stream_seek_uint16(s); /* mapFlags (2 bytes) */
+	stream_seek_uint16(s); /* entrySize (2 bytes) */
+
 	return true;
 }
 
