@@ -25,6 +25,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
+#include <freerdp/kbd/kbd.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
@@ -176,6 +177,8 @@ xfInfo* xf_info_init()
 #ifdef WITH_XDAMAGE
 	xf_xdamage_init(xfi);
 #endif 
+
+	freerdp_kbd_init(xfi->display, 0);
 
 	return xfi;
 }
@@ -616,26 +619,32 @@ void xf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	freerdp_peer* client = (freerdp_peer*) input->context->peer;
-	rdpUpdate* update = client->update;
+	unsigned int keycode;
+	boolean extended = false;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	xfInfo* xfi = xfp->info;
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
-	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+	if (flags & KBD_FLAGS_EXTENDED)
+		extended = true;
+
+	keycode = freerdp_kbd_get_keycode_by_scancode(code, extended);
+
+	printf("keycode: %d\n", keycode);
+
+	if (keycode != 0)
 	{
-		if (client->settings->width != 800)
-		{
-			client->settings->width = 800;
-			client->settings->height = 600;
-		}
-		else
-		{
-			client->settings->width = 640;
-			client->settings->height = 480;
-		}
-		update->DesktopResize(update->context);
-		xfp->activated = false;
+#ifdef WITH_XTEST
+		pthread_mutex_lock(&(xfp->mutex));
+
+		if (flags & KBD_FLAGS_DOWN)
+			XTestFakeKeyEvent(xfi->display, keycode, True, 0);
+		else if (flags & KBD_FLAGS_RELEASE)
+			XTestFakeKeyEvent(xfi->display, keycode, False, 0);
+
+		pthread_mutex_unlock(&(xfp->mutex));
+#endif
 	}
 }
 

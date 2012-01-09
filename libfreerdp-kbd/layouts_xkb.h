@@ -26,26 +26,18 @@ typedef struct
 {
 	unsigned char extended;
 	unsigned char keycode;
-#ifdef WITH_DEBUG_KBD
-	char *keyname;
-#endif
-} RdpKeycodeRec, RdpKeycodes[256];
+	char* keyname;
+} RdpKeycodeRec, RdpScancodes[256];
 
 #ifdef WITH_XKBFILE
 
-int
-init_xkb(void *dpy);
-
-unsigned int
-detect_keyboard_layout_from_xkb(void *dpy);
-
-int
-init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode);
+int init_xkb(void *dpy);
+unsigned int detect_keyboard_layout_from_xkb(void *dpy);
+int init_keycodes_from_xkb(void* dpy, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2]);
 
 #else
 
-void
-load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile);
+void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile);
 
 #endif
 

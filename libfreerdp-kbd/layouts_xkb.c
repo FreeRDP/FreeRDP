@@ -106,7 +106,7 @@ unsigned int detect_keyboard_layout_from_xkb(void* dpy)
 	return keyboard_layout;
 }
 
-int init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode)
+int init_keycodes_from_xkb(void* dpy, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2])
 {
 	int ret = 0;
 	XkbDescPtr xkb;
@@ -115,35 +115,41 @@ int init_keycodes_from_xkb(void *dpy, RdpKeycodes x_keycode_to_rdp_keycode)
 	{
 		if (XkbGetNames(dpy, XkbKeyNamesMask, xkb) == Success)
 		{
-			char buf[5] = {42, 42, 42, 42, 0}; /* end-of-string at pos 5 */
 			int i, j;
+			char buf[5] = {42, 42, 42, 42, 0}; /* end-of-string at pos 5 */
 
-			memset(x_keycode_to_rdp_keycode, 0, sizeof(x_keycode_to_rdp_keycode));
 			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
 			{
 				memcpy(buf, xkb->names->keys[i].name, 4);
 
 				/* TODO: Use more efficient search ... but it is so fast that it doesn't matter */
 				j = sizeof(virtualKeyboard) / sizeof(virtualKeyboard[0]) - 1;
+
 				while (j >= 0)
 				{
-					if (virtualKeyboard[j].x_keyname &&
-							!strcmp(buf, virtualKeyboard[j].x_keyname))
+					if (virtualKeyboard[j].x_keyname && !strcmp(buf, virtualKeyboard[j].x_keyname))
 						break;
 					j--;
 				}
+
 				if (j >= 0)
 				{
-					DEBUG_KBD("X key code %3d has keyname %-4s -> RDP keycode %d/%d",
+					DEBUG_KBD("X keycode %3d has keyname %-4s -> RDP scancode %d/%d",
 							i, buf, virtualKeyboard[j].extended, virtualKeyboard[j].scancode);
-					x_keycode_to_rdp_keycode[i].extended = virtualKeyboard[j].extended;
-					x_keycode_to_rdp_keycode[i].keycode = virtualKeyboard[j].scancode;
-#ifdef WITH_DEBUG_KBD
-					x_keycode_to_rdp_keycode[i].keyname = virtualKeyboard[j].x_keyname;
-#endif
+
+					x_keycode_to_rdp_scancode[i].extended = virtualKeyboard[j].extended;
+					x_keycode_to_rdp_scancode[i].keycode = virtualKeyboard[j].scancode;
+					x_keycode_to_rdp_scancode[i].keyname = virtualKeyboard[j].x_keyname;
+
+					if (x_keycode_to_rdp_scancode[i].extended)
+						rdp_scancode_to_x_keycode[virtualKeyboard[j].scancode][1] = i;
+					else
+						rdp_scancode_to_x_keycode[virtualKeyboard[j].scancode][0] = i;
 				}
 				else
+				{
 					DEBUG_KBD("X key code %3d has keyname %-4s -> ??? - not found", i, buf);
+				}
 			}
 			ret = 1;
 		}
@@ -196,14 +202,13 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 
 	beg = kbd;
 
-
 	/* Extract file name and keymap name */
 	if ((end = strrchr(kbd, '(')) != NULL)
 	{
 		strncpy(xkbfile, &kbd[beg - kbd], end - beg);
 
 		beg = end + 1;
-		if((end = strrchr(kbd, ')')) != NULL)
+		if ((end = strrchr(kbd, ')')) != NULL)
 		{
 			strncpy(xkbmap, &kbd[beg - kbd], end - beg);
 			xkbmap[end - beg] = '\0';
@@ -228,36 +233,36 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 	 * when it is for reading only.
 	 */
 
-	if((fp = fopen(xkbfilepath, "r")) == NULL)
+	if ((fp = fopen(xkbfilepath, "r")) == NULL)
 	{
 		/* Look first in path given at compile time (install path) */
 		snprintf(xkbfilepath, sizeof(xkbfilepath), "%s/%s", KEYMAP_PATH, xkbfile);
 
-		if((fp = fopen(xkbfilepath, "r")) == NULL)
+		if ((fp = fopen(xkbfilepath, "r")) == NULL)
 		{
 			/* If ran from the source tree, the keymaps will be in the parent directory */
 			snprintf(xkbfilepath, sizeof(xkbfilepath), "../keymaps/%s", xkbfile);
 
-			if((fp = fopen(xkbfilepath, "r")) == NULL)
+			if ((fp = fopen(xkbfilepath, "r")) == NULL)
 			{
 				/* File wasn't found in the source tree, try ~/.freerdp/ folder */
-				if((home = getenv("HOME")) == NULL)
+				if ((home = getenv("HOME")) == NULL)
 					return 0;
 
 				/* Get path to file in ~/.freerdp/ folder */
 				snprintf(xkbfilepath, sizeof(xkbfilepath), "%s/.freerdp/keymaps/%s", home, xkbfile);
 
-				if((fp = fopen(xkbfilepath, "r")) == NULL)
+				if ((fp = fopen(xkbfilepath, "r")) == NULL)
 				{
 					/* Try /usr/share/freerdp folder */
 					snprintf(xkbfilepath, sizeof(xkbfilepath), "/usr/share/freerdp/keymaps/%s", xkbfile);
 
-					if((fp = fopen(xkbfilepath, "r")) == NULL)
+					if ((fp = fopen(xkbfilepath, "r")) == NULL)
 					{
 						/* Try /usr/local/share/freerdp folder */
 						snprintf(xkbfilepath, sizeof(xkbfilepath), "/usr/local/share/freerdp/keymaps/%s", xkbfile);
 
-						if((fp = fopen(xkbfilepath, "r")) == NULL)
+						if ((fp = fopen(xkbfilepath, "r")) == NULL)
 						{
 							/* Error: Could not find keymap */
 							DEBUG_KBD("keymaps for %s not found", xkbfile);
@@ -273,12 +278,12 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 
 	while(fgets(buffer, sizeof(buffer), fp) != NULL)
 	{
-		if(buffer[0] == '#')
+		if (buffer[0] == '#')
 		{
 			continue; /* Skip comments */
 		}
 
-		if(kbdFound)
+		if (kbdFound)
 		{
 			/* Closing curly bracket and semicolon */
 			if ((pch = strstr(buffer, "};")) != NULL)
@@ -296,12 +301,12 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 				vkcodeName[end - beg] = '\0';
 
 				/* Now we want to extract the virtual key code itself which is in between '<' and '>' */
-				if((beg = strchr(pch + 3, '<')) == NULL)
+				if ((beg = strchr(pch + 3, '<')) == NULL)
 					break;
 				else
 					beg++;
 
-				if((end = strchr(beg, '>')) == NULL)
+				if ((end = strchr(beg, '>')) == NULL)
 					break;
 
 				/* We copy the string representing the number in a string */
@@ -312,13 +317,13 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 				keycode = atoi(keycodeString);
 
 				/* Make sure it is a valid keycode */
-				if(keycode < 0 || keycode > 255)
+				if (keycode < 0 || keycode > 255)
 					break;
 
 				/* Load this key mapping in the keyboard mapping */
 				for(i = 0; i < sizeof(virtualKeyboard) / sizeof(virtualKey); i++)
 				{
-					if(strcmp(vkcodeName, virtualKeyboard[i].name) == 0)
+					if (strcmp(vkcodeName, virtualKeyboard[i].name) == 0)
 					{
 						map[keycode] = i;
 					}
@@ -351,14 +356,14 @@ static int load_xkb_keyboard(KeycodeToVkcode map, char* kbd)
 				break;
 			beg++;
 
-			if((end = strchr(beg, '"')) == NULL)
+			if ((end = strchr(beg, '"')) == NULL)
 				break;
 
 			pch = beg;
 			buffer[end - beg] = '\0';
 
 			/* Does it match our keymap name? */
-			if(strncmp(xkbmap, pch, strlen(xkbmap)) == 0)
+			if (strncmp(xkbmap, pch, strlen(xkbmap)) == 0)
 				kbdFound = 1;
 		}
 	}
