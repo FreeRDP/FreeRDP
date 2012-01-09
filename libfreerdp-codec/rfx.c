@@ -266,7 +266,10 @@ static void rfx_process_message_channels(RFX_CONTEXT* context, STREAM* s)
 
 	stream_read_uint8(s, numChannels); /* numChannels (1 byte), must bet set to 0x01 */
 
-	if (numChannels != 1)
+	/* In RDVH sessions, numChannels will represent the number of virtual monitors 
+	 * configured and does not always be set to 0x01 as [MS-RDPRFX] said.
+	 */
+	if (numChannels < 1)
 	{
 		DEBUG_WARN("numChannels:%d, expected:1", numChannels);
 		return;
@@ -276,6 +279,9 @@ static void rfx_process_message_channels(RFX_CONTEXT* context, STREAM* s)
 	stream_read_uint8(s, channelId); /* channelId (1 byte) */
 	stream_read_uint16(s, context->width); /* width (2 bytes) */
 	stream_read_uint16(s, context->height); /* height (2 bytes) */
+
+	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
+	stream_seek(s, 5 * (numChannels - 1));
 
 	DEBUG_RFX("numChannels %d id %d, %dx%d.",
 		numChannels, channelId, context->width, context->height);
