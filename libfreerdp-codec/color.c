@@ -326,6 +326,14 @@ uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HC
 	return dstColor;
 }
 
+uint32 freerdp_color_convert_var(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+{
+	if (clrconv->invert)
+		return freerdp_color_convert_var_bgr(srcColor, srcBpp, dstBpp, clrconv);
+	else
+		return freerdp_color_convert_var_rgb(srcColor, srcBpp, dstBpp, clrconv);
+}
+
 uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (srcBpp > 16)

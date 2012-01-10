@@ -38,7 +38,7 @@ uint16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 	uint8 r, g, b;
 	uint16 color16;
 
-	GetRGB32(r, g, b, color);
+	GetBGR32(r, g, b, color);
 
 	if (hdc->rgb555)
 	{
