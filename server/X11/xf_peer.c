@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
@@ -42,10 +44,27 @@ extern boolean xf_pcap_dump_realtime;
 
 void xf_xdamage_init(xfInfo* xfi)
 {
+	Bool pixmaps;
 	int damage_event;
 	int damage_error;
 	int major, minor;
 	XGCValues values;
+
+	if (XShmQueryExtension(xfi->display) != False)
+	{
+		XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
+
+		if (pixmaps != True)
+		{
+			printf("XShmQueryVersion failed\n");
+			return;
+		}
+	}
+	else
+	{
+		printf("XShmQueryExtension failed\n");
+		return;
+	}
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
 	{
@@ -67,7 +86,7 @@ void xf_xdamage_init(xfInfo* xfi)
 	}
 
 	xfi->xdamage_notify_event = damage_event + XDamageNotify;
-	xfi->xdamage = XDamageCreate(xfi->display, DefaultRootWindow(xfi->display), XDamageReportDeltaRectangles);
+	xfi->xdamage = XDamageCreate(xfi->display, xfi->root_window, XDamageReportDeltaRectangles);
 
 	if (xfi->xdamage == None)
 	{
@@ -88,10 +107,56 @@ void xf_xdamage_init(xfInfo* xfi)
 #endif
 
 	values.subwindow_mode = IncludeInferiors;
-	xfi->xdamage_gc = XCreateGC(xfi->display, DefaultRootWindow(xfi->display), GCSubwindowMode, &values);
+	xfi->xdamage_gc = XCreateGC(xfi->display, xfi->root_window, GCSubwindowMode, &values);
 }
 
 #endif
+
+void xf_xshm_init(xfInfo* xfi)
+{
+	xfi->use_xshm = false;
+	xfi->fb_shm_info.shmid = -1;
+	xfi->fb_shm_info.shmaddr = (char*) -1;
+
+	xfi->fb_image = XShmCreateImage(xfi->display, xfi->visual, xfi->depth,
+			ZPixmap, NULL, &(xfi->fb_shm_info), xfi->width, xfi->height);
+
+	if (xfi->fb_image == NULL)
+	{
+		printf("XShmCreateImage failed\n");
+		return;
+	}
+
+	xfi->fb_shm_info.shmid = shmget(IPC_PRIVATE,
+			xfi->fb_image->bytes_per_line * xfi->fb_image->height, IPC_CREAT | 0600);
+
+	if (xfi->fb_shm_info.shmid == -1)
+	{
+		printf("shmget failed\n");
+		return;
+	}
+
+	xfi->fb_shm_info.readOnly = False;
+	xfi->fb_shm_info.shmaddr = shmat(xfi->fb_shm_info.shmid, 0, 0);
+	xfi->fb_image->data = xfi->fb_shm_info.shmaddr;
+
+	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
+	{
+		printf("shmat failed\n");
+		return;
+	}
+
+	XShmAttach(xfi->display, &(xfi->fb_shm_info));
+	XSync(xfi->display, False);
+
+	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
+
+	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
+			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
+			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+
+	//xfi->use_xshm = true;
+}
 
 xfInfo* xf_info_init()
 {
@@ -122,6 +187,7 @@ xfInfo* xf_info_init()
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->width = WidthOfScreen(xfi->screen);
 	xfi->height = HeightOfScreen(xfi->screen);
+	xfi->root_window = DefaultRootWindow(xfi->display);
 
 	pfs = XListPixmapFormats(xfi->display, &pf_count);
 
@@ -172,11 +238,15 @@ xfInfo* xf_info_init()
 	xfi->clrconv->invert = 1;
 	xfi->clrconv->alpha = 1;
 
-	XSelectInput(xfi->display, DefaultRootWindow(xfi->display), SubstructureNotifyMask);
+	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
 
 #ifdef WITH_XDAMAGE
 	xf_xdamage_init(xfi);
-#endif 
+#endif
+
+	xf_xshm_init(xfi);
+
+	xfi->bytesPerPixel = (xfi->use_xshm) ? 4 : 3;
 
 	freerdp_kbd_init(xfi->display, 0);
 
@@ -190,7 +260,11 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = context->info->width;
 	context->rfx_context->height = context->info->height;
-	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
+
+	if (context->info->use_xshm)
+		rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_BGRA);
+	else
+		rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
 
 	context->s = stream_new(65536);
 }
@@ -299,7 +373,7 @@ void* xf_monitor_graphics(void* param)
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	xfp->capture_buffer = (uint8*) xmalloc(xfi->width * xfi->height * 3);
+	xfp->capture_buffer = (uint8*) xmalloc(xfi->width * xfi->height * xfi->bytesPerPixel);
 
 	pthread_detach(pthread_self());
 
@@ -474,19 +548,40 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	image = xf_snapshot(xfp, x, y, width, height);
 
-	freerdp_image_convert((uint8*) image->data, xfp->capture_buffer, width, height, 32, 24, xfi->clrconv);
+	if (xfi->use_xshm)
+	{
+		rect.x = 0;
+		rect.y = 0;
+		rect.width = width;
+		rect.height = height;
 
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = width;
-	rect.height = height;
+		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
+				(uint8*) image->data, width, height, image->bytes_per_line);
 
-	rfx_compose_message(xfp->rfx_context, s, &rect, 1, xfp->capture_buffer, width, height, width * 3);
+		cmd->destLeft = x;
+		cmd->destTop = y;
+		cmd->destRight = x + width;
+		cmd->destBottom = y + height;
+	}
+	else
+	{
+		rect.x = 0;
+		rect.y = 0;
+		rect.width = width;
+		rect.height = height;
 
-	cmd->destLeft = x;
-	cmd->destTop = y;
-	cmd->destRight = width;
-	cmd->destBottom = height;
+		freerdp_image_convert((uint8*) image->data, xfp->capture_buffer,
+				width, height, 32, 24, xfi->clrconv);
+
+		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
+				xfp->capture_buffer, width, height, width * xfi->bytesPerPixel);
+
+		cmd->destLeft = x;
+		cmd->destTop = y;
+		cmd->destRight = x + width;
+		cmd->destBottom = y + height;
+	}
+
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
 	cmd->width = width;

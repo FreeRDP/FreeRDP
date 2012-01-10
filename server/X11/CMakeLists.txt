@@ -24,6 +24,12 @@ add_executable(xfreerdp-server
 	xf_encode.c
 	xfreerdp.c)
 
+find_suggested_package(XShm)
+if(XSHM_FOUND)
+	add_definitions(-DWITH_XSHM)
+	include_directories(${XSHM_INCLUDE_DIRS})
+endif()
+
 find_suggested_package(Xext)
 if(XEXT_FOUND)
 	add_definitions(-DWITH_XEXT)
