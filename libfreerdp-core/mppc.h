@@ -22,11 +22,13 @@
 
 #include <stdint.h>
 
-#define RDP5_HISTORY_BUF_SIZE     65536
+#define RDP6_HISTORY_BUF_SIZE     65536
+#define RDP6_OFFSET_CACHE_SIZE     4
 
 struct rdp_mppc
 {
 	uint8 *history_buf;
+	uint16 *offset_cache;
 	uint8 *history_buf_end;
 	uint8 *history_ptr;
 };
