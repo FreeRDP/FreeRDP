@@ -29,6 +29,7 @@
 #define DLOPEN(f) LoadLibraryA(f)
 #define DLSYM(f, n) GetProcAddress(f, n)
 #define DLCLOSE(f) FreeLibrary(f)
+#define DLERROR() ""
 #define PATH_SEPARATOR '\\'
 #define PLUGIN_EXT "dll"
 
@@ -39,6 +40,7 @@
 #define DLOPEN(f) dlopen(f, RTLD_LOCAL | RTLD_LAZY)
 #define DLSYM(f, n) dlsym(f, n)
 #define DLCLOSE(f) dlclose(f)
+#define DLERROR() dlerror()
 #define PATH_SEPARATOR '/'
 
 #ifdef __APPLE__
@@ -63,13 +65,13 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	module = DLOPEN(path);
 	if (module == NULL)
 	{
-		printf("freerdp_load_plugin: failed to open %s.\n", path);
+		printf("freerdp_load_plugin: failed to open %s: %s\n", path, DLERROR());
 		return NULL;
 	}
 	entry = DLSYM(module, entry_name);
 	if (entry == NULL)
 	{
-		printf("freerdp_load_plugin: failed to load %s.\n", path);
+		printf("freerdp_load_plugin: failed to load %s: %s\n", path, DLERROR());
 		return NULL;
 	}
 	return entry;
