@@ -161,6 +161,11 @@ static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 	}
 }
 
+static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
+{
+	stream_seek_uint16(s); /* size (2 bytes), must be set to zero */
+}
+
 static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
@@ -179,6 +184,7 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
+			fastpath_recv_update_synchronize(fastpath, s);
 			IFCALL(update->Synchronize, context);
 			break;
 
@@ -304,7 +310,7 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 
 	IFCALL(update->BeginPaint, update->context);
 
-	while (stream_get_left(s) > 3)
+	while (stream_get_left(s) >= 3)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
