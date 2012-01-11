@@ -79,7 +79,7 @@ uint8* rdp_capability_set_start(STREAM* s)
 	uint8* header;
 
 	stream_get_mark(s, header);
-	stream_seek(s, CAPSET_HEADER_LENGTH);
+	stream_write_zero(s, CAPSET_HEADER_LENGTH);
 
 	return header;
 }
@@ -87,11 +87,14 @@ uint8* rdp_capability_set_start(STREAM* s)
 void rdp_capability_set_finish(STREAM* s, uint8* header, uint16 type)
 {
 	uint16 length;
+	uint8* footer;
 
-	length = s->p - header;
+	footer = s->p;
+	length = footer - header;
 	stream_set_mark(s, header);
+
 	rdp_write_capability_set_header(s, length, type);
-	stream_set_mark(s, header + length);
+	stream_set_mark(s, footer);
 }
 
 /**
