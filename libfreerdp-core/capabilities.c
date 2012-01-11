@@ -1106,9 +1106,9 @@ void rdp_write_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* setti
 
 	drawNineGridSupportLevel = (settings->draw_nine_grid) ? DRAW_NINEGRID_SUPPORTED : DRAW_NINEGRID_NO_SUPPORT;
 
-	stream_read_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
-	stream_read_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */
-	stream_read_uint16(s, settings->draw_nine_grid_cache_entries); /* drawNineGridCacheEntries (2 bytes) */
+	stream_write_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
+	stream_write_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */
+	stream_write_uint16(s, settings->draw_nine_grid_cache_entries); /* drawNineGridCacheEntries (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
 }
