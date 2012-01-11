@@ -22,8 +22,16 @@
 
 #include <freerdp/codec/color.h>
 
+#ifdef WITH_XSHM
+#include <X11/extensions/XShm.h>
+#endif
+
 #ifdef WITH_XFIXES
 #include <X11/extensions/Xfixes.h>
+#endif
+
+#ifdef WITH_XTEST
+#include <X11/extensions/XTest.h>
 #endif
 
 #ifdef WITH_XDAMAGE
@@ -42,7 +50,14 @@ struct xf_info
 	Visual* visual;
 	Display* display;
 	int scanline_pad;
+	int bytesPerPixel;
 	HCLRCONV clrconv;
+	boolean use_xshm;
+
+	XImage* fb_image;
+	Pixmap fb_pixmap;
+	Window root_window;
+	XShmSegmentInfo fb_shm_info;
 
 #ifdef WITH_XDAMAGE
 	GC xdamage_gc;

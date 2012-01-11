@@ -21,9 +21,29 @@
 
 #include "xf_encode.h"
 
-XImage* xf_snapshot(xfInfo* xfi, int x, int y, int width, int height)
+XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XImage* image;
-	image = XGetImage(xfi->display, RootWindow(xfi->display, xfi->number), x, y, width, height, AllPlanes, ZPixmap);
+	xfInfo* xfi = xfp->info;
+
+	pthread_mutex_lock(&(xfp->mutex));
+
+	if (xfi->use_xshm)
+	{
+		XCopyArea(xfi->display, xfi->root_window, xfi->fb_pixmap,
+				xfi->xdamage_gc, x, y, width, height, x, y);
+
+		XSync(xfi->display, False);
+
+		image = xfi->fb_image;
+	}
+	else
+	{
+		image = XGetImage(xfi->display, xfi->root_window,
+				x, y, width, height, AllPlanes, ZPixmap);
+	}
+
+	pthread_mutex_unlock(&(xfp->mutex));
+
 	return image;
 }

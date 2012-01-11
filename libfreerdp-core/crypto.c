@@ -152,11 +152,6 @@ void crypto_cert_free(CryptoCert cert)
 	xfree(cert);
 }
 
-boolean crypto_cert_verify(CryptoCert server_cert, CryptoCert cacert)
-{
-	return true; /* FIXME: do the actual verification */
-}
-
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 {
 	uint8* p;

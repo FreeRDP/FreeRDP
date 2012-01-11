@@ -24,6 +24,12 @@ add_executable(xfreerdp-server
 	xf_encode.c
 	xfreerdp.c)
 
+find_suggested_package(XShm)
+if(XSHM_FOUND)
+	add_definitions(-DWITH_XSHM)
+	include_directories(${XSHM_INCLUDE_DIRS})
+endif()
+
 find_suggested_package(Xext)
 if(XEXT_FOUND)
 	add_definitions(-DWITH_XEXT)
@@ -45,7 +51,16 @@ if(XFIXES_FOUND)
         target_link_libraries(xfreerdp-server ${XFIXES_LIBRARIES})
 endif()
 
+find_suggested_package(XTest)
+if(XTEST_FOUND)
+        add_definitions(-DWITH_XTEST)
+        include_directories(${XTEST_INCLUDE_DIRS})
+        target_link_libraries(xfreerdp-server ${XTEST_LIBRARIES})
+endif()
+
 target_link_libraries(xfreerdp-server freerdp-core)
 target_link_libraries(xfreerdp-server freerdp-codec)
 target_link_libraries(xfreerdp-server freerdp-utils)
+target_link_libraries(xfreerdp-server freerdp-gdi)
+target_link_libraries(xfreerdp-server freerdp-kbd)
 target_link_libraries(xfreerdp-server ${X11_LIBRARIES})

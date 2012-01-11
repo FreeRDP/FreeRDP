@@ -1059,7 +1059,7 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 			update_read_2byte_unsigned(s, &glyph->cx);
 			update_read_2byte_unsigned(s, &glyph->cy);
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-			glyph->cb += glyph->cb % 4;
+			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 			glyph->aj = (uint8*) xmalloc(glyph->cb);
 			stream_read(s, glyph->aj, glyph->cb);
 			fast_glyph->glyph_data = glyph;
@@ -1194,21 +1194,21 @@ void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_
 
 	if (compressed)
 	{
-		if (flags & NO_BITMAP_COMPRESSION_HDR)
-		{
-			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
-		}
-		else
+		if ((flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
 			uint8* bitmapComprHdr = (uint8*) &(cache_bitmap_order->bitmapComprHdr);
 			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+			cache_bitmap_order->bitmapLength -= 8;
 		}
+		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
+		stream_seek(s, cache_bitmap_order->bitmapLength);
 	}
 	else
 	{
+		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
 	}
+	cache_bitmap_order->compressed = compressed;
 }
 
 void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
@@ -1257,14 +1257,13 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = true;
 	}
 	else
 	{
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		stream_seek(s, cache_bitmap_v2_order->bitmapLength);
-		cache_bitmap_v2_order->compressed = false;
 	}
+	cache_bitmap_v2_order->compressed = compressed;
 }
 
 void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, boolean compressed, uint16 flags)
@@ -1371,19 +1370,22 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 		glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
 		cache_glyph_v2_order->glyphData[i] = glyph;
 
-		stream_read_uint16(s, glyph->cacheIndex);
+		stream_read_uint8(s, glyph->cacheIndex);
 		update_read_2byte_signed(s, &glyph->x);
 		update_read_2byte_signed(s, &glyph->y);
 		update_read_2byte_unsigned(s, &glyph->cx);
 		update_read_2byte_unsigned(s, &glyph->cy);
 
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
-		glyph->cb += glyph->cb % 4;
+		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
 		glyph->aj = (uint8*) xmalloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
+
+	if (flags & CG_GLYPH_UNICODE_PRESENT)
+		stream_seek(s, cache_glyph_v2_order->cGlyphs * 2);
 }
 
 void update_decompress_brush(STREAM* s, uint8* output, uint8 bpp)

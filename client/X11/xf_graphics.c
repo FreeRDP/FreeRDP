@@ -243,8 +243,13 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	bgcolor = freerdp_color_convert_rgb(bgcolor, xfi->srcBpp, 32, xfi->clrconv);
-	fgcolor = freerdp_color_convert_rgb(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
+	bgcolor = (xfi->clrconv->invert)?
+		freerdp_color_convert_var_bgr(bgcolor, xfi->srcBpp, 32, xfi->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, xfi->srcBpp, 32, xfi->clrconv);
+
+	fgcolor = (xfi->clrconv->invert)?
+		freerdp_color_convert_var_bgr(fgcolor, xfi->srcBpp, 32, xfi->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, xfi->srcBpp, 32, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);

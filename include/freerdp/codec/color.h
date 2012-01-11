@@ -246,6 +246,7 @@ FREERDP_API uint8* freerdp_mono_image_convert(uint8* srcData, int width, int hei
 FREERDP_API void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMask, int width, int height, int bpp, HCLRCONV clrconv);
 FREERDP_API void freerdp_image_swap_color_order(uint8* data, int width, int height);
 
+FREERDP_API uint32 freerdp_color_convert_var(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);

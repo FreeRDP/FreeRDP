@@ -423,24 +423,21 @@ static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
 
 unsigned int detect_keyboard_layout_from_locale()
 {
-	int i;
-	int j;
-	int k;
 	int dot;
+	int i, j, k;
 	int underscore;
-
 	char language[4];
 	char country[10];
 
 	/* LANG = <language>_<country>.<encoding> */
 	char* envLang = getenv("LANG"); /* Get locale from environment variable LANG */
 
-	if(envLang == NULL)
+	if (envLang == NULL)
 		return 0; /* LANG environment variable was not set */
 
 	underscore = strcspn(envLang, "_");
 
-	if(underscore > 3)
+	if (underscore > 3)
 		return 0; /* The language name should not be more than 3 letters long */
 	else
 	{
@@ -454,13 +451,13 @@ unsigned int detect_keyboard_layout_from_locale()
 	 * In this case, use a U.S. keyboard and a U.S. keyboard layout
 	 */
 
-	if((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
+	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
 		return ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
 
 	dot = strcspn(envLang, ".");
 
 	/* Get country code */
-	if(dot > underscore)
+	if (dot > underscore)
 	{
 		strncpy(country, &envLang[underscore + 1], dot - underscore - 1);
 		country[dot - underscore - 1] = '\0';
@@ -468,26 +465,26 @@ unsigned int detect_keyboard_layout_from_locale()
 	else
 		return 0; /* Invalid locale */
 
-	for(i = 0; i < sizeof(locales) / sizeof(locale); i++)
+	for (i = 0; i < sizeof(locales) / sizeof(locale); i++)
 	{
-		if((strcmp(language, locales[i].language) == 0) && (strcmp(country, locales[i].country) == 0))
+		if ((strcmp(language, locales[i].language) == 0) && (strcmp(country, locales[i].country) == 0))
 			break;
 	}
 
 	DEBUG_KBD("Found locale : %s_%s", locales[i].language, locales[i].country);
 
-	for(j = 0; j < sizeof(defaultKeyboardLayouts) / sizeof(localeAndKeyboardLayout); j++)
+	for (j = 0; j < sizeof(defaultKeyboardLayouts) / sizeof(localeAndKeyboardLayout); j++)
 	{
-		if(defaultKeyboardLayouts[j].locale == locales[i].code)
+		if (defaultKeyboardLayouts[j].locale == locales[i].code)
 		{
 			/* Locale found in list of default keyboard layouts */
-			for(k = 0; k < 5; k++)
+			for (k = 0; k < 5; k++)
 			{
-				if(defaultKeyboardLayouts[j].keyboardLayouts[k] == ENGLISH_UNITED_STATES)
+				if (defaultKeyboardLayouts[j].keyboardLayouts[k] == ENGLISH_UNITED_STATES)
 				{
 					continue; /* Skip, try to get a more localized keyboard layout */
 				}
-				else if(defaultKeyboardLayouts[j].keyboardLayouts[k] == 0)
+				else if (defaultKeyboardLayouts[j].keyboardLayouts[k] == 0)
 				{
 					break; /* No more keyboard layouts */
 				}
@@ -502,7 +499,7 @@ unsigned int detect_keyboard_layout_from_locale()
 			 * other possible keyboard layout for the locale, we end up here with k > 1
 			 */
 
-			if(k >= 1)
+			if (k >= 1)
 				return ENGLISH_UNITED_STATES;
 			else
 				return 0;

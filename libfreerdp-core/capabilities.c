@@ -79,7 +79,7 @@ uint8* rdp_capability_set_start(STREAM* s)
 	uint8* header;
 
 	stream_get_mark(s, header);
-	stream_seek(s, CAPSET_HEADER_LENGTH);
+	stream_write_zero(s, CAPSET_HEADER_LENGTH);
 
 	return header;
 }
@@ -87,11 +87,14 @@ uint8* rdp_capability_set_start(STREAM* s)
 void rdp_capability_set_finish(STREAM* s, uint8* header, uint16 type)
 {
 	uint16 length;
+	uint8* footer;
 
-	length = s->p - header;
+	footer = s->p;
+	length = footer - header;
 	stream_set_mark(s, header);
+
 	rdp_write_capability_set_header(s, length, type);
-	stream_set_mark(s, header + length);
+	stream_set_mark(s, footer);
 }
 
 /**
@@ -834,10 +837,14 @@ void rdp_write_cache_definition(STREAM* s, GLYPH_CACHE_DEFINITION* cache_definit
 
 void rdp_read_glyph_cache_capability_set(STREAM* s, uint16 length, rdpSettings* settings)
 {
+	uint16 glyphSupportLevel;
+
 	stream_seek(s, 40); /* glyphCache (40 bytes) */
 	stream_seek_uint32(s); /* fragCache (4 bytes) */
-	stream_seek_uint16(s); /* glyphSupportLevel (2 bytes) */
+	stream_read_uint16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+
+	settings->glyphSupportLevel = glyphSupportLevel;
 }
 
 /**
@@ -1102,9 +1109,9 @@ void rdp_write_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* setti
 
 	drawNineGridSupportLevel = (settings->draw_nine_grid) ? DRAW_NINEGRID_SUPPORTED : DRAW_NINEGRID_NO_SUPPORT;
 
-	stream_read_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
-	stream_read_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */
-	stream_read_uint16(s, settings->draw_nine_grid_cache_entries); /* drawNineGridCacheEntries (2 bytes) */
+	stream_write_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
+	stream_write_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */
+	stream_write_uint16(s, settings->draw_nine_grid_cache_entries); /* drawNineGridCacheEntries (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
 }

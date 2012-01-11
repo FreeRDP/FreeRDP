@@ -251,10 +251,10 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define IN_UINT8_MV(_p) (*((_p)++))
 
 /**
- * decompress a color plane
+ * decompress an RLE color plane
  * RDP6_BITMAP_STREAM
  */
-static int process_plane(uint8* in, int width, int height, uint8* out, int size)
+static int process_rle_plane(uint8* in, int width, int height, uint8* out, int size)
 {
 	int indexw;
 	int indexh;
@@ -359,6 +359,24 @@ static int process_plane(uint8* in, int width, int height, uint8* out, int size)
 }
 
 /**
+ * process a raw color plane
+ */
+static int process_raw_plane(uint8* srcData, int width, int height, uint8* dstData, int size)
+{
+	int x, y;
+
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			dstData[(((height - y - 1) * width) + x) * 4] = srcData[((y * width) + x)];
+		}
+	}
+
+	return (width * height);
+}
+
+/**
  * 4 byte bitmap decompress
  * RDP6_BITMAP_STREAM
  */
@@ -367,40 +385,50 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 	int RLE;
 	int code;
 	int NoAlpha;
-	int bytes_pro;
-	int total_pro;
+	int bytes_processed;
+	int total_processed;
 
 	code = IN_UINT8_MV(srcData);
 	RLE = code & 0x10;
 
-	if (RLE == 0)
-	{
-		/* FIXME: sometimes sent by windows 8 */
-		return false;
-	}
-
-	total_pro = 1;
+	total_processed = 1;
 	NoAlpha = code & 0x20;
 
 	if (NoAlpha == 0)
 	{
-		bytes_pro = process_plane(srcData, width, height, dstData + 3, size - total_pro);
-		total_pro += bytes_pro;
-		srcData += bytes_pro;
+		bytes_processed = process_rle_plane(srcData, width, height, dstData + 3, size - total_processed);
+		total_processed += bytes_processed;
+		srcData += bytes_processed;
 	}
 
-	bytes_pro = process_plane(srcData, width, height, dstData + 2, size - total_pro);
-	total_pro += bytes_pro;
-	srcData += bytes_pro;
+	if (RLE != 0)
+	{
+		bytes_processed = process_rle_plane(srcData, width, height, dstData + 2, size - total_processed);
+		total_processed += bytes_processed;
+		srcData += bytes_processed;
 
-	bytes_pro = process_plane(srcData, width, height, dstData + 1, size - total_pro);
-	total_pro += bytes_pro;
-	srcData += bytes_pro;
+		bytes_processed = process_rle_plane(srcData, width, height, dstData + 1, size - total_processed);
+		total_processed += bytes_processed;
+		srcData += bytes_processed;
 
-	bytes_pro = process_plane(srcData, width, height, dstData + 0, size - total_pro);
-	total_pro += bytes_pro;
+		bytes_processed = process_rle_plane(srcData, width, height, dstData + 0, size - total_processed);
+		total_processed += bytes_processed;
+	}
+	else
+	{
+		bytes_processed = process_raw_plane(srcData, width, height, dstData + 2, size - total_processed);
+		total_processed += bytes_processed;
+		srcData += bytes_processed;
 
-	return (size == total_pro) ? true : false;
+		bytes_processed = process_raw_plane(srcData, width, height, dstData + 1, size - total_processed);
+		total_processed += bytes_processed;
+		srcData += bytes_processed;
+
+		bytes_processed = process_raw_plane(srcData, width, height, dstData + 0, size - total_processed);
+		total_processed += bytes_processed + 1;
+	}
+
+	return (size == total_processed) ? true : false;
 }
 
 

@@ -74,6 +74,7 @@ struct _CACHE_BITMAP_ORDER
 	uint32 bitmapHeight;
 	uint32 bitmapLength;
 	uint32 cacheIndex;
+	boolean compressed;
 	uint8 bitmapComprHdr[8];
 	uint8* bitmapDataStream;
 };

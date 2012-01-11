@@ -231,10 +231,8 @@ static const keyboardIME keyboardIMEs[] =
 
 rdpKeyboardLayout* get_keyboard_layouts(int types)
 {
+	int num, len, i;
 	rdpKeyboardLayout * layouts;
-	int num;
-	int len;
-	int i;
 
 	num = 0;
 	layouts = (rdpKeyboardLayout *) malloc((num + 1) * sizeof(rdpKeyboardLayout));
@@ -263,6 +261,7 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 	{
 		len = sizeof(keyboardIMEs) / sizeof(keyboardIME);
 		layouts = (rdpKeyboardLayout *) realloc(layouts, (num + len + 1) * sizeof(rdpKeyboardLayout));
+
 		for (i = 0; i < len; i++, num++)
 		{
 			layouts[num].code = keyboardIMEs[i].code;
@@ -278,22 +277,24 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 const char* get_layout_name(unsigned int keyboardLayoutID)
 {
 	int i;
-	for(i = 0; i < sizeof(keyboardLayouts) / sizeof(keyboardLayout); i++)
-		if(keyboardLayouts[i].code == keyboardLayoutID)
-		{
+
+	for (i = 0; i < sizeof(keyboardLayouts) / sizeof(keyboardLayout); i++)
+	{
+		if (keyboardLayouts[i].code == keyboardLayoutID)
 			return keyboardLayouts[i].name;
-		}
+	}
 
-	for(i = 0; i < sizeof(keyboardLayoutVariants) / sizeof(keyboardLayoutVariant); i++)
-		if(keyboardLayoutVariants[i].code == keyboardLayoutID)
-		{
+	for (i = 0; i < sizeof(keyboardLayoutVariants) / sizeof(keyboardLayoutVariant); i++)
+	{
+		if (keyboardLayoutVariants[i].code == keyboardLayoutID)
 			return keyboardLayoutVariants[i].name;
-		}
+	}
 
-	for(i = 0; i < sizeof(keyboardIMEs) / sizeof(keyboardIME); i++)
-		if(keyboardIMEs[i].code == keyboardLayoutID)
-		{
+	for (i = 0; i < sizeof(keyboardIMEs) / sizeof(keyboardIME); i++)
+	{
+		if (keyboardIMEs[i].code == keyboardLayoutID)
 			return keyboardIMEs[i].name;
-		}
+	}
+
 	return "unknown";
 }
