@@ -323,70 +323,39 @@ void test_read_polyline_order(void)
 	CU_ASSERT(polyline.numPoints == 32);
 	CU_ASSERT(polyline.cbData == 108);
 
-	CU_ASSERT(polyline.points[1].x == 374);
-	CU_ASSERT(polyline.points[1].y == 686);
-	CU_ASSERT(polyline.points[2].x == 183);
-	CU_ASSERT(polyline.points[2].y == 666);
-	CU_ASSERT(polyline.points[3].x == -37);
-	CU_ASSERT(polyline.points[3].y == 636);
-	CU_ASSERT(polyline.points[4].x == -250);
-	CU_ASSERT(polyline.points[4].y == 597);
-	CU_ASSERT(polyline.points[5].x == -421);
-	CU_ASSERT(polyline.points[5].y == 550);
-	CU_ASSERT(polyline.points[6].x == -521);
-	CU_ASSERT(polyline.points[6].y == 495);
-	CU_ASSERT(polyline.points[7].x == -534);
-	CU_ASSERT(polyline.points[7].y == 434);
-	CU_ASSERT(polyline.points[8].x == -457);
-	CU_ASSERT(polyline.points[8].y == 368);
-	CU_ASSERT(polyline.points[9].x == -304);
-	CU_ASSERT(polyline.points[9].y == 298);
-	CU_ASSERT(polyline.points[10].x == -99);
-	CU_ASSERT(polyline.points[10].y == 225);
-	CU_ASSERT(polyline.points[11].x == 123);
-	CU_ASSERT(polyline.points[11].y == 151);
-	CU_ASSERT(polyline.points[12].x == 325);
-	CU_ASSERT(polyline.points[12].y == 77);
-	CU_ASSERT(polyline.points[13].x == 475);
-	CU_ASSERT(polyline.points[13].y == 4);
-	CU_ASSERT(polyline.points[14].x == 547);
-	CU_ASSERT(polyline.points[14].y == -66);
-	CU_ASSERT(polyline.points[15].x == 530);
-	CU_ASSERT(polyline.points[15].y == -132);
-	CU_ASSERT(polyline.points[16].x == 425);
-	CU_ASSERT(polyline.points[16].y == -193);
-	CU_ASSERT(polyline.points[17].x == 251);
-	CU_ASSERT(polyline.points[17].y == -247);
-	CU_ASSERT(polyline.points[18].x == 38);
-	CU_ASSERT(polyline.points[18].y == -294);
-	CU_ASSERT(polyline.points[19].x == -182);
-	CU_ASSERT(polyline.points[19].y == -333);
-	CU_ASSERT(polyline.points[20].x == -370);
-	CU_ASSERT(polyline.points[20].y == -362);
-	CU_ASSERT(polyline.points[21].x == -497);
-	CU_ASSERT(polyline.points[21].y == -382);
-	CU_ASSERT(polyline.points[22].x == -539);
-	CU_ASSERT(polyline.points[22].y == -392);
-	CU_ASSERT(polyline.points[23].x == -492);
-	CU_ASSERT(polyline.points[23].y == -392);
-	CU_ASSERT(polyline.points[24].x == -362);
-	CU_ASSERT(polyline.points[24].y == -382);
-	CU_ASSERT(polyline.points[25].x == -171);
-	CU_ASSERT(polyline.points[25].y == -362);
-	CU_ASSERT(polyline.points[26].x == 50);
-	CU_ASSERT(polyline.points[26].y == -332);
-	CU_ASSERT(polyline.points[27].x == 262);
-	CU_ASSERT(polyline.points[27].y == -293);
-	CU_ASSERT(polyline.points[28].x == 433);
-	CU_ASSERT(polyline.points[28].y == -246);
-	CU_ASSERT(polyline.points[29].x == 533);
-	CU_ASSERT(polyline.points[29].y == -191);
-	CU_ASSERT(polyline.points[30].x == 546);
-	CU_ASSERT(polyline.points[30].y == -130);
-	CU_ASSERT(polyline.points[31].x == 469);
-	CU_ASSERT(polyline.points[31].y == -64);
-	CU_ASSERT(polyline.points[32].x == 316);
-	CU_ASSERT(polyline.points[32].y == 6);
+	CU_ASSERT(polyline.points[0].x == -130);
+	CU_ASSERT(polyline.points[1].x == -191);
+	CU_ASSERT(polyline.points[2].x == -220);
+	CU_ASSERT(polyline.points[3].x == -213);
+	CU_ASSERT(polyline.points[4].x == -171);
+	CU_ASSERT(polyline.points[5].x == -100);
+	CU_ASSERT(polyline.points[6].x == -13);
+	CU_ASSERT(polyline.points[7].x == 77);
+	CU_ASSERT(polyline.points[8].x == 153);
+	CU_ASSERT(polyline.points[9].x == 205);
+	CU_ASSERT(polyline.points[10].x == 222);
+	CU_ASSERT(polyline.points[11].x == 202);
+	CU_ASSERT(polyline.points[12].x == 150);
+	CU_ASSERT(polyline.points[13].x == 72);
+	CU_ASSERT(polyline.points[14].x == -17);
+	CU_ASSERT(polyline.points[15].x == -105);
+	CU_ASSERT(polyline.points[16].x == -174);
+	CU_ASSERT(polyline.points[17].x == -213);
+	CU_ASSERT(polyline.points[18].x == -220);
+	CU_ASSERT(polyline.points[19].x == -188);
+	CU_ASSERT(polyline.points[20].x == -127);
+	CU_ASSERT(polyline.points[21].x == -42);
+	CU_ASSERT(polyline.points[22].x == 47);
+	CU_ASSERT(polyline.points[23].x == 130);
+	CU_ASSERT(polyline.points[24].x == 191);
+	CU_ASSERT(polyline.points[25].x == 221);
+	CU_ASSERT(polyline.points[26].x == 212);
+	CU_ASSERT(polyline.points[27].x == 171);
+	CU_ASSERT(polyline.points[28].x == 100);
+	CU_ASSERT(polyline.points[29].x == 13);
+	CU_ASSERT(polyline.points[30].x == -77);
+	CU_ASSERT(polyline.points[31].x == -153);
+	CU_ASSERT(polyline.points[32].x == 0);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(polyline_order) - 1));
 }
@@ -473,9 +442,9 @@ void test_read_fast_index_order(void)
 	CU_ASSERT(fast_index.bkTop == 113);
 	CU_ASSERT(fast_index.bkRight == 66);
 	CU_ASSERT(fast_index.bkBottom == 126);
-	CU_ASSERT(fast_index.opLeft == 0);
-	CU_ASSERT(fast_index.opTop == 0);
-	CU_ASSERT(fast_index.opRight == 0);
+	CU_ASSERT(fast_index.opLeft == 377);
+	CU_ASSERT(fast_index.opTop == 3);
+	CU_ASSERT(fast_index.opRight == 1278);
 	CU_ASSERT(fast_index.opBottom == 0);
 	CU_ASSERT(fast_index.x == -32768);
 	CU_ASSERT(fast_index.y == 124);
@@ -684,12 +653,18 @@ uint8 create_offscreen_bitmap_order[] = "\x00\x80\x60\x01\x10\x00\x01\x00\x02\x0
 void test_read_create_offscreen_bitmap_order(void)
 {
 	STREAM* s;
+	OFFSCREEN_DELETE_LIST* deleteList;
 	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
 
 	s = stream_new(0);
 	s->p = s->data = create_offscreen_bitmap_order;
 
 	memset(&create_offscreen_bitmap, 0, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
+
+	deleteList = &(create_offscreen_bitmap.deleteList);
+	deleteList->cIndices = 0;
+	deleteList->sIndices = 16;
+	deleteList->indices = malloc(sizeof(uint16) * deleteList->sIndices);
 
 	update_read_create_offscreen_bitmap_order(s, &create_offscreen_bitmap);
 
