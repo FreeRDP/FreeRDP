@@ -665,6 +665,6 @@ void test_mppc(void)
 
     /* print time taken */
     dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
-    printf("test_mppc: decompressed data in %ld micro seconds\n", dur);
+    //printf("test_mppc: decompressed data in %ld micro seconds\n", dur);
 }
 

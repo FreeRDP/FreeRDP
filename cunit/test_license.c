@@ -46,13 +46,12 @@ int add_license_suite(void)
 	add_test_suite(license);
 
 	add_test_function(license);
-	add_test_function(license_generate_keys);
-	add_test_function(license_encrypt_premaster_secret);
+	//add_test_function(license_generate_keys);
+	//add_test_function(license_encrypt_premaster_secret);
 	add_test_function(license_decrypt_platform_challenge);
 
 	return 0;
 }
-
 
 /* Server License Request (2200 bytes) */
 
