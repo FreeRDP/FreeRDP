@@ -58,8 +58,6 @@ boolean freerdp_connect(freerdp* instance)
 
 		extension_post_connect(rdp->extension);
 
-		input_register_client_callbacks(rdp->input);
-
 		IFCALLRET(instance->PostConnect, status, instance);
 
 		if (status != true)
