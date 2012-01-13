@@ -98,11 +98,11 @@ void test_mcs_write_connect_initial(void)
 {
 	STREAM* s;
 	rdpMcs* mcs;
-	STREAM* user_data;
+	STREAM _user_data, *user_data;
 
 	mcs = mcs_new((rdpTransport*) NULL);
 
-	user_data = stream_new(0);
+	user_data = &_user_data;
 	user_data->data = gcc_CCrq;
 	user_data->p = user_data->data + sizeof(gcc_CCrq);
 
@@ -110,4 +110,6 @@ void test_mcs_write_connect_initial(void)
 	mcs_write_connect_initial(s, mcs, user_data);
 
 	ASSERT_STREAM(s, (uint8*) mcs_connect_initial_expected, sizeof(mcs_connect_initial_expected));
+
+	stream_free(s);
 }

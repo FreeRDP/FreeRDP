@@ -29,7 +29,7 @@ ORDER_INFO* orderInfo;
 
 int init_orders_suite(void)
 {
-	orderInfo = (ORDER_INFO*) malloc(sizeof(orderInfo));
+	orderInfo = (ORDER_INFO*) malloc(sizeof(ORDER_INFO));
 	return 0;
 }
 
@@ -73,10 +73,10 @@ uint8 dstblt_order[] = "\x48\x00\x37\x01";
 
 void test_read_dstblt_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	DSTBLT_ORDER dstblt;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = dstblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -98,10 +98,10 @@ uint8 patblt_order[] = "\x1a\x00\xc3\x01\x0d\x00\x0d\x00\xf0\xff\xff\x00\x5b\xef
 
 void test_read_patblt_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	PATBLT_ORDER patblt;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = patblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -128,10 +128,10 @@ uint8 scrblt_order[] = "\x07\x00\xa1\x01\xf1\x00\xcc\x2f\x01\x8e\x00";
 
 void test_read_scrblt_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	SCRBLT_ORDER scrblt;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = scrblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -155,10 +155,10 @@ uint8 opaque_rect_order[] = "\x00\x04\x00\x03\x73\x02\x06";
 
 void test_read_opaque_rect_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	OPAQUE_RECT_ORDER opaque_rect;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = opaque_rect_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -180,10 +180,10 @@ uint8 draw_nine_grid_order[] = "\xfb\xf9\x0d\x00";
 
 void test_read_draw_nine_grid_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	DRAW_NINE_GRID_ORDER draw_nine_grid;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = draw_nine_grid_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -213,10 +213,10 @@ uint8 multi_opaque_rect_order[] =
 
 void test_read_multi_opaque_rect_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = multi_opaque_rect_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -260,10 +260,10 @@ uint8 line_to_order[] = "\x03\xb1\x0e\xa6\x5b\xef\x00";
 
 void test_read_line_to_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	LINE_TO_ORDER line_to;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = line_to_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -303,10 +303,10 @@ uint8 polyline_order[] =
 
 void test_read_polyline_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	POLYLINE_ORDER polyline;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = polyline_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -371,10 +371,10 @@ uint8 glyph_index_order_2[] =
 
 void test_read_glyph_index_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	GLYPH_INDEX_ORDER glyph_index;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = glyph_index_order_1;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -422,10 +422,10 @@ uint8 fast_index_order[] =
 
 void test_read_fast_index_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	FAST_INDEX_ORDER fast_index;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = fast_index_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -442,10 +442,10 @@ void test_read_fast_index_order(void)
 	CU_ASSERT(fast_index.bkTop == 113);
 	CU_ASSERT(fast_index.bkRight == 66);
 	CU_ASSERT(fast_index.bkBottom == 126);
-	CU_ASSERT(fast_index.opLeft == 377);
-	CU_ASSERT(fast_index.opTop == 3);
-	CU_ASSERT(fast_index.opRight == 1278);
-	CU_ASSERT(fast_index.opBottom == 0);
+	CU_ASSERT(fast_index.opLeft == 0);
+	CU_ASSERT(fast_index.opTop == 0);
+	CU_ASSERT(fast_index.opRight == 0);
+	CU_ASSERT(fast_index.opBottom == 524);
 	CU_ASSERT(fast_index.x == -32768);
 	CU_ASSERT(fast_index.y == 124);
 
@@ -459,10 +459,10 @@ uint8 fast_glyph_order[] =
 
 void test_read_fast_glyph_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	FAST_GLYPH_ORDER fast_glyph;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = fast_glyph_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -494,10 +494,10 @@ uint8 polygon_cb_order[] =
 
 void test_read_polygon_cb_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	POLYGON_CB_ORDER polygon_cb;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = polygon_cb_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
@@ -526,11 +526,11 @@ uint8 cache_bitmap_order[] = "\x00\x00\x10\x01\x08\x01\x00\x00\x00\x10";
 
 void test_read_cache_bitmap_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	uint16 extraFlags;
 	CACHE_BITMAP_ORDER cache_bitmap;
 
-	s = stream_new(0);
+	s = &_s;
 	extraFlags = 0x0400;
 	s->p = s->data = cache_bitmap_order;
 
@@ -567,11 +567,11 @@ uint8 cache_bitmap_v2_order[] =
 
 void test_read_cache_bitmap_v2_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	uint16 extraFlags;
 	CACHE_BITMAP_V2_ORDER cache_bitmap_v2;
 
-	s = stream_new(0);
+	s = &_s;
 	extraFlags = 0x0CA1;
 	s->p = s->data = cache_bitmap_v2_order;
 
@@ -598,11 +598,11 @@ uint8 cache_bitmap_v3_order[] =
 
 void test_read_cache_bitmap_v3_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	uint16 extraFlags;
 	CACHE_BITMAP_V3_ORDER cache_bitmap_v3;
 
-	s = stream_new(0);
+	s = &_s;
 	extraFlags = 0x0C30;
 	s->p = s->data = cache_bitmap_v3_order;
 
@@ -628,10 +628,10 @@ uint8 cache_brush_order[] = "\x00\x01\x08\x08\x81\x08\xaa\x55\xaa\x55\xaa\x55\xa
 
 void test_read_cache_brush_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	CACHE_BRUSH_ORDER cache_brush;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = cache_brush_order;
 
 	memset(&cache_brush, 0, sizeof(CACHE_BRUSH_ORDER));
@@ -652,11 +652,11 @@ uint8 create_offscreen_bitmap_order[] = "\x00\x80\x60\x01\x10\x00\x01\x00\x02\x0
 
 void test_read_create_offscreen_bitmap_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	OFFSCREEN_DELETE_LIST* deleteList;
 	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = create_offscreen_bitmap_order;
 
 	memset(&create_offscreen_bitmap, 0, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
@@ -680,10 +680,10 @@ uint8 switch_surface_order[] = "\xff\xff";
 
 void test_read_switch_surface_order(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 	SWITCH_SURFACE_ORDER switch_surface;
 
-	s = stream_new(0);
+	s = &_s;
 	s->p = s->data = switch_surface_order;
 
 	memset(&switch_surface, 0, sizeof(SWITCH_SURFACE_ORDER));
@@ -731,11 +731,16 @@ void test_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 void test_update_recv_orders(void)
 {
-	STREAM* s;
+	rdpRdp* rdp;
+	STREAM _s, *s;
 	rdpUpdate* update;
 
-	s = stream_new(0);
-	update = update_new(NULL);
+	s = &_s;
+	rdp = rdp_new(NULL);
+	update = update_new(rdp);
+
+	update->context = malloc(sizeof(rdpContext));
+	update->context->rdp = rdp;
 
 	opaque_rect_count = 0;
 	polyline_count = 0;
@@ -746,6 +751,7 @@ void test_update_recv_orders(void)
 	update->primary->PatBlt = test_patblt;
 
 	s->p = s->data = orders_update_1;
+	s->size = sizeof(orders_update_1);
 
 	update_recv(update, s);
 
@@ -754,9 +760,12 @@ void test_update_recv_orders(void)
 
 	update->primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	s->p = s->data = orders_update_2;
+	s->size = sizeof(orders_update_2);
 
 	update_recv(update, s);
 
 	CU_ASSERT(patblt_count == 3);
+
+	free(update->context);
 }
 

@@ -314,10 +314,9 @@ uint8 platform_challenge[10] = "\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00";
 
 void test_license(void)
 {
-	STREAM* s;
+	STREAM _s, *s;
 
-	s = stream_new(0);
-
+	s = &_s;
 	memcpy(license->client_random, client_random, sizeof(client_random));
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
 
@@ -421,9 +420,9 @@ uint8 test_encrypted_premaster_secret[64] =
 
 void test_license_generate_keys(void)
 {
-	STREAM* s;
-	s = stream_new(0);
+	STREAM _s, *s;
 
+	s = &_s;
 	memcpy(license->client_random, client_random, sizeof(client_random));
 	memcpy(license->server_random, test_server_random, sizeof(test_server_random));
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
@@ -457,9 +456,9 @@ void test_license_generate_keys(void)
 
 void test_license_encrypt_premaster_secret(void)
 {
-	STREAM* s;
-	s = stream_new(0);
+	STREAM _s, *s;
 
+	s = &_s;
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
 	memcpy(license->certificate->cert_info.exponent, test_exponent, sizeof(test_exponent));
 	memcpy(license->certificate->cert_info.modulus.data, test_modulus, sizeof(test_modulus));
@@ -478,9 +477,9 @@ uint8 test_platform_challenge[10] =
 
 void test_license_decrypt_platform_challenge(void)
 {
-	STREAM* s;
-	s = stream_new(0);
+	STREAM _s, *s;
 
+	s = &_s;
 	memcpy(license->licensing_encryption_key, test_licensing_encryption_key,
 			sizeof(test_licensing_encryption_key));
 
@@ -496,5 +495,6 @@ void test_license_decrypt_platform_challenge(void)
 
 	s->data = license->platform_challenge->data;
 	s->p = s->data + sizeof(test_platform_challenge);
+
 	ASSERT_STREAM(s, test_platform_challenge, sizeof(test_platform_challenge));
 }
