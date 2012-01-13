@@ -293,17 +293,16 @@ void xf_create_window(xfInfo* xfi)
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
-		win_title = xmalloc(sizeof(xfi->instance->settings->window_title));
-		sprintf(win_title, "%s", xfi->instance->settings->window_title);
+		win_title = xstrdup(xfi->instance->settings->window_title);
 	}
 	else if (xfi->instance->settings->port == 3389)
 	{
-		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
+		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
 		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
 	}
 	else
 	{
-		win_title = xmalloc(sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
+		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
 		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 	}
 
