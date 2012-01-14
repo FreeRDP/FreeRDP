@@ -36,12 +36,12 @@ include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
-# Soname versioning - 0.0.0 since it is not being managed yet
+# Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "0")
-set(FREERDP_VERSION_PATCH "0")
+set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
-set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_PATCH}")
+set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)

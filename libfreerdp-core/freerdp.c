@@ -147,6 +147,18 @@ boolean freerdp_disconnect(freerdp* instance)
 	return true;
 }
 
+void freerdp_get_version(int* major, int* minor, int* revision)
+{
+	if (major != NULL)
+		*major = FREERDP_VERSION_MAJOR;
+
+	if (minor != NULL)
+		*minor = FREERDP_VERSION_MINOR;
+
+	if (revision != NULL)
+		*revision = FREERDP_VERSION_REVISION;
+}
+
 void freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
