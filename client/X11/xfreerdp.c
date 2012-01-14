@@ -455,7 +455,8 @@ boolean xf_pre_connect(freerdp* instance)
 	xfInfo* xfi;
 	boolean bitmap_cache;
 	rdpSettings* settings;
-
+	int arg_parse_result;
+	
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
 	((xfContext*) instance->context)->xfi = xfi;
 
@@ -463,11 +464,15 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->context = (xfContext*) instance->context;
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
-
-	if (freerdp_parse_args(instance->settings, instance->context->argc, instance->context->argv,
-			xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi) < 0)
+	
+	arg_parse_result = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
+				xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi);
+	
+	if (arg_parse_result < 0)
 	{
-		printf("failed to parse arguments.\n");
+		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
+			printf("failed to parse arguments.\n");
+		
 		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
 
