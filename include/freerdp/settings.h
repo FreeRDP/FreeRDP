@@ -142,6 +142,39 @@ typedef struct
 	uint8 arcRandomBits[16];
 } ARC_SC_PRIVATE_PACKET;
 
+/* Certificates */
+
+typedef struct rdp_certificate rdpCertificate;
+
+struct rdp_CertBlob
+{
+	uint32 length;
+	uint8* data;
+};
+typedef struct rdp_CertBlob rdpCertBlob;
+
+struct rdp_X509CertChain
+{
+	uint32 count;
+	rdpCertBlob* array;
+};
+typedef struct rdp_X509CertChain rdpX509CertChain;
+
+struct rdp_CertInfo
+{
+	rdpBlob modulus;
+	uint8 exponent[4];
+};
+typedef struct rdp_CertInfo rdpCertInfo;
+
+struct rdp_certificate
+{
+	rdpCertInfo cert_info;
+	rdpX509CertChain* x509_cert_chain;
+};
+
+/* Channels */
+
 struct rdp_channel
 {
 	char name[8]; /* ui sets */
@@ -152,11 +185,15 @@ struct rdp_channel
 };
 typedef struct rdp_channel rdpChannel;
 
+/* Extensions */
+
 struct rdp_ext_set
 {
 	char name[256]; /* plugin name or path */
 	void* data; /* plugin data */
 };
+
+/* Bitmap Cache */
 
 struct _BITMAP_CACHE_CELL_INFO
 {
@@ -172,12 +209,16 @@ struct _BITMAP_CACHE_V2_CELL_INFO
 };
 typedef struct _BITMAP_CACHE_V2_CELL_INFO BITMAP_CACHE_V2_CELL_INFO;
 
+/* Glyph Cache */
+
 struct _GLYPH_CACHE_DEFINITION
 {
 	uint16 cacheEntries;
 	uint16 cacheMaximumCellSize;
 };
 typedef struct _GLYPH_CACHE_DEFINITION GLYPH_CACHE_DEFINITION;
+
+/* Monitors */
 
 struct rdp_monitor
 {
@@ -187,6 +228,8 @@ struct rdp_monitor
 	int height;
 	int is_primary;
 };
+
+/* Settings */
 
 struct rdp_settings
 {
@@ -267,96 +310,111 @@ struct rdp_settings
 	boolean desktop_resize; /* 178 */
 	uint32 paddingH[192 - 179]; /* 179 */
 
-	boolean auto_reconnection;
-	ARC_CS_PRIVATE_PACKET client_auto_reconnect_cookie;
-	ARC_SC_PRIVATE_PACKET server_auto_reconnect_cookie;
+	/* Reconnection */
+	boolean auto_reconnection; /* 192 */
+	ARC_CS_PRIVATE_PACKET* client_auto_reconnect_cookie; /* 193 */
+	ARC_SC_PRIVATE_PACKET* server_auto_reconnect_cookie; /* 194 */
+	uint32 paddingI[208 - 195]; /* 195 */
 
 	/* Time Zone */
-	TIME_ZONE_INFO client_time_zone;
+	TIME_ZONE_INFO* client_time_zone; /* 208 */
+	uint32 paddingJ[216 - 209]; /* 209 */
 
 	/* Capabilities */
-	uint16 os_major_type;
-	uint16 os_minor_type;
-	uint32 vc_chunk_size;
-	boolean sound_beeps;
-	boolean smooth_fonts;
-	boolean frame_marker;
-	boolean fastpath_input;
-	boolean fastpath_output;
-	uint8 received_caps[32];
-	uint8 order_support[32];
-	boolean surface_commands;
-	boolean disable_wallpaper;
-	boolean disable_full_window_drag;
-	boolean disable_menu_animations;
-	boolean disable_theming;
-	uint32 connection_type;
-	uint32 multifrag_max_request_size;
+	uint32 os_major_type; /* 216 */
+	uint32 os_minor_type; /* 217 */
+	uint32 vc_chunk_size; /* 218 */
+	boolean sound_beeps; /* 219 */
+	boolean smooth_fonts; /* 220 */
+	boolean frame_marker; /* 221 */
+	boolean fastpath_input; /* 222 */
+	boolean fastpath_output; /* 223 */
+	uint8 received_caps[32]; /* 224 (8) */
+	uint8 order_support[32]; /* 232 (8) */
+	boolean surface_commands; /* 240 */
+	boolean disable_wallpaper; /* 241 */
+	boolean disable_full_window_drag; /* 242 */
+	boolean disable_menu_animations; /* 243 */
+	boolean disable_theming; /* 244 */
+	uint32 connection_type; /* 245 */
+	uint32 multifrag_max_request_size; /* 246 */
+	uint32 paddingK[248 - 247]; /* 247 */
 
 	/* Certificate */
-	char* cert_file;
-	char* privatekey_file;
-	char client_hostname[32];
-	char client_product_id[32];
-	rdpBlob server_random;
-	rdpBlob server_certificate;
-	boolean ignore_certificate;
-	struct rdp_certificate* server_cert;
+	char* cert_file; /* 248 */
+	char* privatekey_file; /* 249 */
+	char client_hostname[32]; /* 250 (8) */
+	char client_product_id[32]; /* 258 (8) */
+	rdpBlob* server_random; /* 266 */
+	rdpBlob* server_certificate; /* 267 */
+	boolean ignore_certificate; /* 268 */
+	rdpCertificate* server_cert; /* 269 */
+	uint32 paddingL[280 - 270]; /* 270 */
 
 	/* Codecs */
-	boolean rfx_codec;
-	boolean ns_codec;
-	uint32 rfx_codec_id;
-	uint32 ns_codec_id;
-	uint8 rfx_codec_mode;
-	boolean frame_acknowledge;
+	boolean rfx_codec; /* 280 */
+	boolean ns_codec; /* 281 */
+	uint32 rfx_codec_id; /* 282 */
+	uint32 ns_codec_id; /* 283 */
+	uint32 rfx_codec_mode; /* 284 */
+	boolean frame_acknowledge; /* 285 */
+	uint32 paddingM[296 - 286]; /* 286 */
 
 	/* Recording */
-	boolean dump_rfx;
-	boolean play_rfx;
-	char* dump_rfx_file;
-	char* play_rfx_file;
+	boolean dump_rfx; /* 296 */
+	boolean play_rfx; /* 297 */
+	char* dump_rfx_file; /* 298 */
+	char* play_rfx_file; /* 299 */
+	uint32 paddingN[312 - 300]; /* 300 */
 
 	/* RemoteApp */
-	boolean remote_app;
-	uint32 num_icon_caches;
-	uint32 num_icon_cache_entries;
-	boolean rail_langbar_supported;
+	boolean remote_app; /* 312 */
+	uint32 num_icon_caches; /* 313 */
+	uint32 num_icon_cache_entries; /* 314 */
+	boolean rail_langbar_supported; /* 315 */
+	uint32 paddingO[320 - 316]; /* 316 */
 
 	/* Pointer */
-	boolean large_pointer;
-	boolean color_pointer;
-	uint32 pointer_cache_size;
+	boolean large_pointer; /* 320 */
+	boolean color_pointer; /* 321 */
+	uint32 pointer_cache_size; /* 322 */
+	uint32 paddingP[328 - 323]; /* 323 */
 
 	/* Bitmap Cache */
-	boolean bitmap_cache;
-	boolean bitmap_cache_v3;
-	boolean persistent_bitmap_cache;
-	uint32 bitmapCacheV2NumCells;
-	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[6];
+	boolean bitmap_cache; /* 328 */
+	boolean bitmap_cache_v3; /* 329 */
+	boolean persistent_bitmap_cache; /* 330 */
+	uint32 bitmapCacheV2NumCells; /* 331 */
+	BITMAP_CACHE_V2_CELL_INFO* bitmapCacheV2CellInfo; /* 332 */
+	uint32 paddingQ[344 - 333]; /* 333 */
 
 	/* Offscreen Bitmap Cache */
-	boolean offscreen_bitmap_cache;
-	uint32 offscreen_bitmap_cache_size;
-	uint32 offscreen_bitmap_cache_entries;
+	boolean offscreen_bitmap_cache; /* 344 */
+	uint32 offscreen_bitmap_cache_size; /* 345 */
+	uint32 offscreen_bitmap_cache_entries; /* 346 */
+	uint32 paddingR[352 - 347]; /* 347 */
 
 	/* Glyph Cache */
-	boolean glyph_cache;
-	uint32 glyphSupportLevel;
-	GLYPH_CACHE_DEFINITION glyphCache[10];
-	GLYPH_CACHE_DEFINITION fragCache;
+	boolean glyph_cache; /* 352 */
+	uint32 glyphSupportLevel; /* 353 */
+	GLYPH_CACHE_DEFINITION* glyphCache; /* 354 */
+	GLYPH_CACHE_DEFINITION* fragCache; /* 355 */
+	uint32 paddingS[360 - 356]; /* 356 */
 
 	/* Draw Nine Grid */
-	boolean draw_nine_grid;
-	uint32 draw_nine_grid_cache_size;
-	uint32 draw_nine_grid_cache_entries;
+	boolean draw_nine_grid; /* 360 */
+	uint32 draw_nine_grid_cache_size; /* 361 */
+	uint32 draw_nine_grid_cache_entries; /* 362 */
+	uint32 paddingT[368 - 363]; /* 363 */
 
 	/* Draw GDI+ */
-	boolean draw_gdi_plus;
-	boolean draw_gdi_plus_cache;
+	boolean draw_gdi_plus; /* 368 */
+	boolean draw_gdi_plus_cache; /* 369 */
+	uint32 paddingU[376 - 370]; /* 370 */
 
 	/* Desktop Composition */
-	boolean desktop_composition;
+	boolean desktop_composition; /* 376 */
+	uint32 paddingV[384 - 377]; /* 377 */
 
 	/* Channels */
 	int num_channels;

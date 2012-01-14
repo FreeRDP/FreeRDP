@@ -308,7 +308,7 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 	rdpSettings* settings;
 
 	settings = rdp->settings;
-	server_random = settings->server_random.data;
+	server_random = settings->server_random->data;
 
 	if (settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{

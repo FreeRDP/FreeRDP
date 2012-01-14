@@ -20,12 +20,11 @@
 #ifndef __CERTIFICATE_H
 #define __CERTIFICATE_H
 
-typedef struct rdp_certificate rdpCertificate;
-
 #include "rdp.h"
 #include "ber.h"
 #include "crypto.h"
 
+#include <freerdp/settings.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
@@ -37,35 +36,8 @@ typedef struct rdp_certificate rdpCertificate;
 #define CERT_PERMANENTLY_ISSUED		0x00000000
 #define CERT_TEMPORARILY_ISSUED		0x80000000
 
-#define BB_RSA_KEY_BLOB        6
-#define BB_RSA_SIGNATURE_BLOB  8
-
-struct rdp_CertBlob
-{
-	uint32 length;
-	uint8* data;
-};
-typedef struct rdp_CertBlob rdpCertBlob;
-
-struct rdp_X509CertChain
-{
-	uint32 count;
-	rdpCertBlob* array;
-};
-typedef struct rdp_X509CertChain rdpX509CertChain;
-
-struct rdp_CertInfo
-{
-	rdpBlob modulus;
-	uint8 exponent[4];
-};
-typedef struct rdp_CertInfo rdpCertInfo;
-
-struct rdp_certificate
-{
-	rdpCertInfo cert_info;
-	rdpX509CertChain* x509_cert_chain;
-};
+#define BB_RSA_KEY_BLOB        		6
+#define BB_RSA_SIGNATURE_BLOB  		8
 
 void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
