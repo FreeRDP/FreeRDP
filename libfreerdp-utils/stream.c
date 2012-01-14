@@ -48,7 +48,9 @@ void stream_free(STREAM* stream)
 {
 	if (stream != NULL)
 	{
-		xfree(stream->data);
+		if (stream->data != NULL)
+			xfree(stream->data);
+
 		xfree(stream);
 	}
 }

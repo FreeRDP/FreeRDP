@@ -105,7 +105,7 @@ boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, u
 
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)
 {
-	length -= RDP_PACKET_HEADER_LENGTH;
+	length -= (s->p - s->data);
 
 	/* Share Control Header */
 	stream_write_uint16(s, length); /* totalLength */
@@ -280,9 +280,11 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 	uint32 pad = 0;
 
 	sec_flags = rdp->sec_flags;
+
 	if (sec_flags != 0)
 	{
 		rdp_write_security_header(s, sec_flags);
+
 		if (sec_flags & SEC_ENCRYPT)
 		{
 			if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
@@ -292,12 +294,15 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 				length = length - (data - s->data);
 				stream_write_uint16(s, 0x10); /* length */
 				stream_write_uint8(s, 0x1); /* TSFIPS_VERSION 1*/
+
 				/* handle padding */
 				pad = 8 - (length % 8);
+
 				if (pad == 8)
 					pad = 0;
 				if (pad)
 					memset(data+length, 0, pad);
+
 				stream_write_uint8(s, pad);
 
 				security_hmac_signature(data, length, s->p, rdp);
@@ -316,8 +321,10 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 				security_encrypt(s->p, length, rdp);
 			}
 		}
+
 		rdp->sec_flags = 0;
 	}
+
 	return pad;
 }
 
@@ -328,13 +335,19 @@ static uint32 rdp_get_sec_bytes(rdpRdp* rdp)
 	if (rdp->sec_flags & SEC_ENCRYPT)
 	{
 		sec_bytes = 12;
+
 		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else if (rdp->sec_flags != 0)
+	{
 		sec_bytes = 4;
+	}
 	else
+	{
 		sec_bytes = 0;
+	}
+
 	return sec_bytes;
 }
 

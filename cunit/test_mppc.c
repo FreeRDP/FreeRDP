@@ -645,7 +645,7 @@ void test_mppc(void)
     struct timeval end_time;
 
     rdp.mppc = &rmppc;
-    rdp.mppc->history_buf = calloc(1, RDP5_HISTORY_BUF_SIZE);
+    rdp.mppc->history_buf = calloc(1, RDP6_HISTORY_BUF_SIZE);
     CU_ASSERT(rdp.mppc->history_buf != NULL)
     rdp.mppc->history_ptr = rdp.mppc->history_buf;
 
@@ -665,6 +665,6 @@ void test_mppc(void)
 
     /* print time taken */
     dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
-    printf("test_mppc: decompressed data in %ld micro seconds\n", dur);
+    //printf("test_mppc: decompressed data in %ld micro seconds\n", dur);
 }
 

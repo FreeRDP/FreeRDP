@@ -1488,6 +1488,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 {
 	uint16 flags;
 	boolean deleteListPresent;
+	OFFSCREEN_DELETE_LIST* deleteList;
 
 	stream_read_uint16(s, flags); /* flags (2 bytes) */
 	create_offscreen_bitmap->id = flags & 0x7FFF;
@@ -1496,12 +1497,10 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 	stream_read_uint16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
 	stream_read_uint16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
 
+	deleteList = &(create_offscreen_bitmap->deleteList);
 	if (deleteListPresent)
 	{
 		int i;
-		OFFSCREEN_DELETE_LIST* deleteList;
-
-		deleteList = &(create_offscreen_bitmap->deleteList);
 
 		stream_read_uint16(s, deleteList->cIndices);
 
@@ -1515,6 +1514,10 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 		{
 			stream_read_uint16(s, deleteList->indices[i]);
 		}
+	}
+	else
+	{
+		deleteList->cIndices = 0;
 	}
 }
 
