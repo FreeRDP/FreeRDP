@@ -57,6 +57,13 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 		window = window_list_get_next(rail->list);
 		xfw = (xfWindow*) window->extra;
 
+                // RDP can have zero width or height windows.  X cannot, so we ignore these.
+
+                if (window->windowWidth == 0 || window->windowHeight == 0)
+                {
+                        continue;
+                }
+
 		wleft = window->windowOffsetX;
 		wtop = window->windowOffsetY;
 		wright = window->windowOffsetX + window->windowWidth - 1;
@@ -332,6 +339,15 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	x = xfw->left + xfw->local_move.window_x;
 	y = xfw->top + xfw->local_move.window_y;
         input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
+
+	// Proactively update the RAIL window dimensions.  There is a race condition where
+	// we can start to receive GDI orders for the new window dimensions before we 
+	// receive the RAIL ORDER for the new window size.  This avoids that race condition.
+
+	window->windowOffsetX = xfw->left;
+	window->windowOffsetY = xfw->top;
+	window->windowWidth = xfw->width;
+	window->windowHeight = xfw->height;
 
 	xfw->local_move.state = LMS_TERMINATING;
 }

@@ -421,7 +421,7 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 			}
 		}
 
-		gdi_InvalidateRegion(xfi->hdc, scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight);
+		gdi_InvalidateRegion(xfi->hdc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight);
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
@@ -505,24 +505,25 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 
 	if (xfi->drawing == xfi->primary)
 	{
+		int width, height;
+
 		if (xfi->remote_app != true)
 		{
-			int width, height;
-
 			XDrawLine(xfi->display, xfi->drawable, xfi->gc,
 				line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
-
-			width = line_to->nXStart - line_to->nXEnd;
-			height = line_to->nYStart - line_to->nYEnd;
-
-			if (width < 0)
-				width *= (-1);
-
-			if (height < 0)
-				height *= (-1);
-
-			gdi_InvalidateRegion(xfi->hdc, line_to->nXStart, line_to->nYStart, width, height);
 		}
+
+		width = line_to->nXStart - line_to->nXEnd;
+		height = line_to->nYStart - line_to->nYEnd;
+
+		if (width < 0)
+			width *= (-1);
+
+		if (height < 0)
+			height *= (-1);
+
+		gdi_InvalidateRegion(xfi->hdc, line_to->nXStart, line_to->nYStart, width, height);
+
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
