@@ -392,9 +392,8 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, uint32 id, uint32 index, rdpGly
 
 	if (prevGlyph != NULL)
 	{
+		Glyph_Free(glyph_cache->context, prevGlyph);
 		xfree(prevGlyph->aj);
-		/* hack jsorg71 */
-		//Glyph_Free(glyph_cache->context, prevGlyph);
 		xfree(prevGlyph);
 	}
 
@@ -469,19 +468,39 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 	return glyph;
 }
 
-void glyph_cache_free(rdpGlyphCache* glyph)
+void glyph_cache_free(rdpGlyphCache* glyph_cache)
 {
-	if (glyph != NULL)
+	if (glyph_cache != NULL)
 	{
 		int i;
+		void* fragment;
 
 		for (i = 0; i < 10; i++)
 		{
-			xfree(glyph->glyphCache[i].entries);
+			int j;
+
+			for (j = 0; j < glyph_cache->glyphCache[i].number; j++)
+			{
+				rdpGlyph* glyph;
+
+				glyph = glyph_cache->glyphCache[i].entries[j];
+				if (glyph != NULL)
+				{
+					Glyph_Free(glyph_cache->context, glyph);
+					xfree(glyph->aj);
+					xfree(glyph);
+				}
+			}
+			xfree(glyph_cache->glyphCache[i].entries);
 		}
 
-		xfree(glyph->fragCache.entries);
+		for (i = 0; i < 255; i++)
+		{
+			fragment = glyph_cache->fragCache.entries[i].fragment;
+			xfree(fragment);
+		}
 
-		xfree(glyph);
+		xfree(glyph_cache->fragCache.entries);
+		xfree(glyph_cache);
 	}
 }

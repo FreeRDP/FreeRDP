@@ -1333,8 +1333,11 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 
 	for (i = 0; i < (int) cache_glyph_order->cGlyphs; i++)
 	{
-		glyph = (GLYPH_DATA*) xmalloc(sizeof(GLYPH_DATA));
-		cache_glyph_order->glyphData[i] = glyph;
+		if (cache_glyph_order->glyphData[i] == NULL)
+		{
+			cache_glyph_order->glyphData[i] = (GLYPH_DATA*) xmalloc(sizeof(GLYPH_DATA));
+		}
+		glyph = cache_glyph_order->glyphData[i];
 
 		stream_read_uint16(s, glyph->cacheIndex);
 		stream_read_uint16(s, lsi16);
@@ -1367,8 +1370,11 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 
 	for (i = 0; i < (int) cache_glyph_v2_order->cGlyphs; i++)
 	{
-		glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
-		cache_glyph_v2_order->glyphData[i] = glyph;
+		if (cache_glyph_v2_order->glyphData[i] == NULL)
+		{
+			cache_glyph_v2_order->glyphData[i] = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
+		}
+		glyph = cache_glyph_v2_order->glyphData[i];
 
 		stream_read_uint8(s, glyph->cacheIndex);
 		update_read_2byte_signed(s, &glyph->x);
