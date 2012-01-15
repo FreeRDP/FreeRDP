@@ -105,7 +105,7 @@ boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, u
 
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)
 {
-	length -= (s->p - s->data);
+	length -= RDP_PACKET_HEADER_LENGTH;
 
 	/* Share Control Header */
 	stream_write_uint16(s, length); /* totalLength */
@@ -125,6 +125,7 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_seek_uint8(s); /* streamId (1 byte) */
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
+
 	if (*type & 0x80) 
 	{
 		stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
@@ -398,7 +399,7 @@ boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id)
 	sec_hold = s->p;
 	stream_seek(s, sec_bytes);
 
-	rdp_write_share_control_header(s, length, type, channel_id);
+	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 
 	s->p = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
@@ -425,8 +426,8 @@ boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id)
 	sec_hold = s->p;
 	stream_seek(s, sec_bytes);
 
-	rdp_write_share_control_header(s, length, PDU_TYPE_DATA, channel_id);
-	rdp_write_share_data_header(s, length, type, rdp->settings->share_id);
+	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
+	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->share_id);
 
 	s->p = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
