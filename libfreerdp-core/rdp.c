@@ -581,7 +581,9 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 
 boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 {
-	int cryptlen;
+	uint8 cmac[8], wmac[8];
+	uint32 ml;
+	uint8* mk;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
@@ -596,15 +598,15 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 		sig = s->p;
 		stream_seek(s, 8);	/* signature */
 
-		cryptlen = length - 12;
+		length -= 12;
 
-		if (!security_fips_decrypt(s->p, cryptlen, rdp))
+		if (!security_fips_decrypt(s->p, length, rdp))
 		{
 			printf("FATAL: cannot decrypt\n");
 			return false; /* TODO */
 		}
 
-		if (!security_fips_check_signature(s->p, cryptlen-pad, sig, rdp))
+		if (!security_fips_check_signature(s->p, length - pad, sig, rdp))
 		{
 			printf("FATAL: invalid packet signature\n");
 			return false; /* TODO */
@@ -615,9 +617,16 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 		return true;
 	}
 
-	stream_seek(s, 8); /* signature */
-	cryptlen = length - 8;
-	security_decrypt(s->p, cryptlen, rdp);
+	stream_read(s, wmac, sizeof(wmac));
+	length -= sizeof(wmac);
+	security_decrypt(s->p, length, rdp);
+	mk = rdp->sign_key;
+	ml = rdp->rc4_key_len;
+	security_mac_signature(mk, ml, s->p, length, cmac);
+	if (memcmp(wmac, cmac, sizeof(wmac)) != 0) {
+		printf("FATAL: invalid packet signature\n");
+		return false;
+	}
 	return true;
 }
 
