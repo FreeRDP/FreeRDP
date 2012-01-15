@@ -428,6 +428,9 @@ boolean gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
 	stream_read_uint16(s, *type); /* type */
 	stream_read_uint16(s, *length); /* length */
 
+	if (*length < 4)
+		return false;
+
 	if (stream_get_left(s) < *length - 4)
 		return false;
 
