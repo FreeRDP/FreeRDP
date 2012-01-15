@@ -21,6 +21,7 @@
 #ifndef __STREAM_UTILS_H
 #define __STREAM_UTILS_H
 
+#include <assert.h>
 #include <string.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -62,19 +63,27 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 #define stream_get_size(_s) (_s->size)
 #define stream_get_left(_s) (_s->size - (_s->p - _s->data))
 
-#define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
-#define stream_read_uint16(_s, _v) do { _v = \
-	(uint16)(*_s->p) + \
+#define stream_read_uint8(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint8)); \
+	_v = *_s->p++; \
+	} while (0)
+#define stream_read_uint16(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint16)); \
+	_v = (uint16)(*_s->p) + \
 	(((uint16)(*(_s->p + 1))) << 8); \
-	_s->p += 2; } while (0)
-#define stream_read_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->p) + \
+	_s->p += 2; \
+	} while (0)
+#define stream_read_uint32(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint32)); \
+	_v = (uint32)(*_s->p) + \
 	(((uint32)(*(_s->p + 1))) << 8) + \
 	(((uint32)(*(_s->p + 2))) << 16) + \
 	(((uint32)(*(_s->p + 3))) << 24); \
-	_s->p += 4; } while (0)
-#define stream_read_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->p) + \
+	_s->p += 4; \
+	} while (0)
+#define stream_read_uint64(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint64)); \
+	_v = (uint64)(*_s->p) + \
 	(((uint64)(*(_s->p + 1))) << 8) + \
 	(((uint64)(*(_s->p + 2))) << 16) + \
 	(((uint64)(*(_s->p + 3))) << 24) + \
@@ -82,23 +91,32 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	(((uint64)(*(_s->p + 5))) << 40) + \
 	(((uint64)(*(_s->p + 6))) << 48) + \
 	(((uint64)(*(_s->p + 7))) << 56); \
-	_s->p += 8; } while (0)
+	_s->p += 8; \
+	} while (0)
 #define stream_read(_s, _b, _n) do { \
+	assert(stream_get_left(_s) >= (_n)); \
 	memcpy(_b, (_s->p), (_n)); \
 	_s->p += (_n); \
 	} while (0)
 
 #define stream_write_uint8(_s, _v) do { \
-	*_s->p++ = (uint8)(_v); } while (0)
+	assert(stream_get_left(_s) >= sizeof(uint8)); \
+	*_s->p++ = (uint8)(_v); \
+	} while (0)
 #define stream_write_uint16(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint16)); \
 	*_s->p++ = (_v) & 0xFF; \
-	*_s->p++ = ((_v) >> 8) & 0xFF; } while (0)
+	*_s->p++ = ((_v) >> 8) & 0xFF; \
+	} while (0)
 #define stream_write_uint32(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint32)); \
 	*_s->p++ = (_v) & 0xFF; \
 	*_s->p++ = ((_v) >> 8) & 0xFF; \
 	*_s->p++ = ((_v) >> 16) & 0xFF; \
-	*_s->p++ = ((_v) >> 24) & 0xFF; } while (0)
+	*_s->p++ = ((_v) >> 24) & 0xFF; \
+	} while (0)
 #define stream_write_uint64(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint64)); \
 	*_s->p++ = (uint64)(_v) & 0xFF; \
 	*_s->p++ = ((uint64)(_v) >> 8) & 0xFF; \
 	*_s->p++ = ((uint64)(_v) >> 16) & 0xFF; \
@@ -106,33 +124,43 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	*_s->p++ = ((uint64)(_v) >> 32) & 0xFF; \
 	*_s->p++ = ((uint64)(_v) >> 40) & 0xFF; \
 	*_s->p++ = ((uint64)(_v) >> 48) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 56) & 0xFF; } while (0)
+	*_s->p++ = ((uint64)(_v) >> 56) & 0xFF; \
+	} while (0)
 #define stream_write(_s, _b, _n) do { \
+	assert(stream_get_left(_s) >= (_n)); \
 	memcpy(_s->p, (_b), (_n)); \
 	_s->p += (_n); \
 	} while (0)
 #define stream_write_zero(_s, _n) do { \
+	assert(stream_get_left(_s) >= (_n)); \
 	memset(_s->p, '\0', (_n)); \
 	_s->p += (_n); \
 	} while (0)
 #define stream_set_byte(_s, _v, _n) do { \
+	assert(stream_get_left(_s) >= (_n)); \
 	memset(_s->p, _v, (_n)); \
 	_s->p += (_n); \
 	} while (0)
 
-#define stream_peek_uint8(_s, _v) do { _v = *_s->p; } while (0)
-#define stream_peek_uint16(_s, _v) do { _v = \
-	(uint16)(*_s->p) + \
+#define stream_peek_uint8(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint8)); \
+	_v = *_s->p; \
+	} while (0)
+#define stream_peek_uint16(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint16)); \
+	_v = (uint16)(*_s->p) + \
 	(((uint16)(*(_s->p + 1))) << 8); \
 	} while (0)
-#define stream_peek_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->p) + \
+#define stream_peek_uint32(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint32)); \
+	_v = (uint32)(*_s->p) + \
 	(((uint32)(*(_s->p + 1))) << 8) + \
 	(((uint32)(*(_s->p + 2))) << 16) + \
 	(((uint32)(*(_s->p + 3))) << 24); \
 	} while (0)
-#define stream_peek_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->p) + \
+#define stream_peek_uint64(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint64)); \
+	_v = (uint64)(*_s->p) + \
 	(((uint64)(*(_s->p + 1))) << 8) + \
 	(((uint64)(*(_s->p + 2))) << 16) + \
 	(((uint64)(*(_s->p + 3))) << 24) + \
@@ -147,30 +175,38 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 #define stream_seek_uint32(_s)	stream_seek(_s, 4)
 #define stream_seek_uint64(_s)	stream_seek(_s, 8)
 
-#define stream_read_uint16_be(_s, _v) do { _v = \
-	(((uint16)(*_s->p)) << 8) + \
+#define stream_read_uint16_be(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint16)); \
+	_v = (((uint16)(*_s->p)) << 8) + \
 	(uint16)(*(_s->p + 1)); \
-	_s->p += 2; } while (0)
-#define stream_read_uint32_be(_s, _v) do { _v = \
-	(((uint32)(*(_s->p))) << 8) + \
+	_s->p += 2; \
+	} while (0)
+#define stream_read_uint32_be(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint32)); \
+	_v = (((uint32)(*(_s->p))) << 8) + \
 	(((uint32)(*(_s->p + 1)))) + \
 	(((uint32)(*(_s->p + 2))) << 24) + \
 	(((uint32)(*(_s->p + 3))) << 16); \
-	_s->p += 4; } while (0)
+	_s->p += 4; \
+	} while (0)
 
 #define stream_write_uint16_be(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint16)); \
 	*_s->p++ = ((_v) >> 8) & 0xFF; \
-	*_s->p++ = (_v) & 0xFF; } while (0)
+	*_s->p++ = (_v) & 0xFF; \
+	} while (0)
 #define stream_write_uint32_be(_s, _v) do { \
+	assert(stream_get_left(_s) >= sizeof(uint32)); \
 	stream_write_uint16_be(_s, ((_v) >> 16 & 0xFFFF)); \
 	stream_write_uint16_be(_s, ((_v) & 0xFFFF)); \
 	} while (0)
 
 #define stream_copy(_dst, _src, _n) do { \
+	assert(stream_get_left(_dst) >= (_n)); \
+	assert(stream_get_left(_src) >= (_n)); \
 	memcpy(_dst->p, _src->p, _n); \
 	_dst->p += _n; \
 	_src->p += _n; \
 	} while (0)
 
 #endif /* __STREAM_UTILS_H */
-
