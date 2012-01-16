@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * Audio Input Reirection Virtual Channel
+ * Audio Input Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
  *
