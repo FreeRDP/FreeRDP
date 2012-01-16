@@ -237,24 +237,21 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	uint32 datalen;
 	uint32 modlen;
 
-	memcpy(magic, s->p, 4);
-
+	stream_read(s, magic, 4);
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
 		printf("gcc_process_server_public_key: magic error\n");
 		return false;
 	}
 
-	stream_seek(s, 4);
 	stream_read_uint32(s, keylen);
 	stream_read_uint32(s, bitlen);
 	stream_read_uint32(s, datalen);
-	memcpy(certificate->cert_info.exponent, s->p, 4);
-	stream_seek(s, 4);
+	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 	freerdp_blob_alloc(&(certificate->cert_info.modulus), modlen);
-	memcpy(certificate->cert_info.modulus.data, s->p, modlen);
-	stream_seek(s, keylen);
+	stream_read(s, certificate->cert_info.modulus.data, modlen);
+	stream_seek(s, 8);
 
 	return true;
 }
