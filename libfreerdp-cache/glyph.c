@@ -479,7 +479,7 @@ void glyph_cache_free(rdpGlyphCache* glyph_cache)
 		{
 			int j;
 
-			for (j = 0; j < glyph_cache->glyphCache[i].number; j++)
+			for (j = 0; j < (int) glyph_cache->glyphCache[i].number; j++)
 			{
 				rdpGlyph* glyph;
 

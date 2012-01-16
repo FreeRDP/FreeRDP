@@ -924,7 +924,7 @@ void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s)
 		freerdp_hexdump(value, AvLen);
 #endif
 	}
-	while(AvId != MsvAvEOL);
+	while (AvId != MsvAvEOL);
 
 #ifdef WITH_DEBUG_NLA
 	printf("}\n");
