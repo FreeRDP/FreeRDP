@@ -27,12 +27,12 @@
 
 #ifndef _WIN32
 #include <netdb.h>
-#include <net/if.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <net/if.h>
 
 #ifdef __APPLE__
 #ifndef TCP_KEEPIDLE

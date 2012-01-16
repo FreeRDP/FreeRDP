@@ -25,11 +25,12 @@
 
 #ifndef _WIN32
 #include <netdb.h>
-#include <net/if.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <net/if.h>
 #else
 #define close(_fd) closesocket(_fd)
 #endif
