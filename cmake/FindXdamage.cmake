@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XDAMAGE_INCLUDE_DIR NAMES Xdamage.h
+find_path(XDAMAGE_INCLUDE_DIR NAMES X11/extensions/Xdamage.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xdamage include directory"
 )

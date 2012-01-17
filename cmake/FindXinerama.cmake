@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XINERAMA_INCLUDE_DIR NAMES Xinerama.h
+find_path(XINERAMA_INCLUDE_DIR NAMES X11/extensions/Xinerama.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xinerama include directory"
 )

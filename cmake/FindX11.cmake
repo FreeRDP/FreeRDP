@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(X11_INCLUDE_DIR NAMES Xlib.h
+find_path(X11_INCLUDE_DIR NAMES X11/Xlib.h
           PATH_SUFFIXES X11
           DOC "The X11 include directory"
 )
