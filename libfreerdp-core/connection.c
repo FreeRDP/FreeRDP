@@ -480,7 +480,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		ret = transport_accept_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
 		ret = transport_accept_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
 		ret = transport_accept_rdp(rdp->transport);
 
 	if (!ret)
