@@ -279,7 +279,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	stream_read_uint32(s, dwSigAlgId);
 	stream_read_uint32(s, dwKeyAlgId);
-	if (!(dwSigAlgId == 1 && dwKeyAlgId == 1))
+	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 1\n");
 		return false;
