@@ -273,26 +273,22 @@ boolean mcs_read_domain_parameters(STREAM* s, DomainParameters* domainParameters
 void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 {
 	int length;
-	uint8 *bm, *em;
+	STREAM* tmps;
 
-	stream_get_mark(s, bm);
-	stream_seek(s, 2);
+	tmps = stream_new(stream_get_size(s));
+	ber_write_integer(tmps, domainParameters->maxChannelIds);
+	ber_write_integer(tmps, domainParameters->maxUserIds);
+	ber_write_integer(tmps, domainParameters->maxTokenIds);
+	ber_write_integer(tmps, domainParameters->numPriorities);
+	ber_write_integer(tmps, domainParameters->minThroughput);
+	ber_write_integer(tmps, domainParameters->maxHeight);
+	ber_write_integer(tmps, domainParameters->maxMCSPDUsize);
+	ber_write_integer(tmps, domainParameters->protocolVersion);
 
-	ber_write_integer(s, domainParameters->maxChannelIds);
-	ber_write_integer(s, domainParameters->maxUserIds);
-	ber_write_integer(s, domainParameters->maxTokenIds);
-	ber_write_integer(s, domainParameters->numPriorities);
-	ber_write_integer(s, domainParameters->minThroughput);
-	ber_write_integer(s, domainParameters->maxHeight);
-	ber_write_integer(s, domainParameters->maxMCSPDUsize);
-	ber_write_integer(s, domainParameters->protocolVersion);
-
-	stream_get_mark(s, em);
-	length = (em - bm) - 2;
-	stream_set_mark(s, bm);
-
+	length = stream_get_length(tmps);
 	ber_write_sequence_tag(s, length);
-	stream_set_mark(s, em);
+	stream_write(s, stream_get_head(tmps), length);
+	stream_free(tmps);
 }
 
 /**
@@ -377,41 +373,36 @@ boolean mcs_recv_connect_initial(rdpMcs* mcs, STREAM* s)
 void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 {
 	int length;
-	uint8 *bm, *em;
+	STREAM* tmps;
 
-	int gcc_CCrq_length = stream_get_length(user_data);
-
-	stream_get_mark(s, bm);
-	stream_seek(s, 5);
+	tmps = stream_new(stream_get_size(s));
 
 	/* callingDomainSelector (OCTET_STRING) */
-	ber_write_octet_string(s, callingDomainSelector, sizeof(callingDomainSelector));
+	ber_write_octet_string(tmps, callingDomainSelector, sizeof(callingDomainSelector));
 
 	/* calledDomainSelector (OCTET_STRING) */
-	ber_write_octet_string(s, calledDomainSelector, sizeof(calledDomainSelector));
+	ber_write_octet_string(tmps, calledDomainSelector, sizeof(calledDomainSelector));
 
 	/* upwardFlag (BOOLEAN) */
-	ber_write_boolean(s, true);
+	ber_write_boolean(tmps, true);
 
 	/* targetParameters (DomainParameters) */
-	mcs_write_domain_parameters(s, &mcs->targetParameters);
+	mcs_write_domain_parameters(tmps, &mcs->targetParameters);
 
 	/* minimumParameters (DomainParameters) */
-	mcs_write_domain_parameters(s, &mcs->minimumParameters);
+	mcs_write_domain_parameters(tmps, &mcs->minimumParameters);
 
 	/* maximumParameters (DomainParameters) */
-	mcs_write_domain_parameters(s, &mcs->maximumParameters);
+	mcs_write_domain_parameters(tmps, &mcs->maximumParameters);
 
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(s, user_data->data, gcc_CCrq_length);
+	ber_write_octet_string(tmps, user_data->data, stream_get_length(user_data));
 
-	stream_get_mark(s, em);
-	length = (em - bm) - 5;
-	stream_set_mark(s, bm);
-
+	length = stream_get_length(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
-	stream_set_mark(s, em);
+	stream_write(s, stream_get_head(tmps), length);
+	stream_free(tmps);
 }
 
 /**
@@ -425,28 +416,20 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 void mcs_write_connect_response(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 {
 	int length;
-	uint8 *bm, *em;
+	STREAM* tmps;
 
-	int gcc_CCrsp_length = stream_get_length(user_data);
-
-	stream_get_mark(s, bm);
-	stream_seek(s, 3);
-
-	ber_write_enumerated(s, 0, MCS_Result_enum_length);
-	ber_write_integer(s, 0); /* calledConnectId */
-
+	tmps = stream_new(stream_get_size(s));
+	ber_write_enumerated(tmps, 0, MCS_Result_enum_length);
+	ber_write_integer(tmps, 0); /* calledConnectId */
 	mcs->domainParameters = mcs->targetParameters;
-	mcs_write_domain_parameters(s, &(mcs->domainParameters));
-
+	mcs_write_domain_parameters(tmps, &(mcs->domainParameters));
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(s, user_data->data, gcc_CCrsp_length);
+	ber_write_octet_string(tmps, user_data->data, stream_get_length(user_data));
 
-	stream_get_mark(s, em);
-	length = (em - bm) - 3;
-	stream_set_mark(s, bm);
-
+	length = stream_get_length(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
-	stream_set_mark(s, em);
+	stream_write(s, stream_get_head(tmps), length);
+	stream_free(tmps);
 }
 
 /**
