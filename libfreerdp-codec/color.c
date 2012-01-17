@@ -88,8 +88,8 @@ void freerdp_set_pixel(uint8* data, int x, int y, int width, int height, int bpp
 
 INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
-	*alpha = 0xFF;
 	*red = *green = *blue = 0;
+	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
 
 	switch (bpp)
 	{
@@ -139,8 +139,8 @@ INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* g
 
 INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
-	*alpha = 0xFF;
 	*red = *green = *blue = 0;
+	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
 
 	switch (bpp)
 	{
@@ -913,7 +913,7 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 	{
 		if (clrconv->rgb555)
 		{
-			if(srcBpp == 16)
+			if (srcBpp == 16)
 			{
 				/* convert 15-bit colors to 16-bit colors */
 				RGB16_RGB15(redBg, greenBg, blueBg, bgcolor);
@@ -922,7 +922,7 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 		}
 		else
 		{
-			if(srcBpp == 15)
+			if (srcBpp == 15)
 			{
 				/* convert 15-bit colors to 16-bit colors */
 				RGB15_RGB16(redBg, greenBg, blueBg, bgcolor);
@@ -933,7 +933,7 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 		dstData = (uint8*) malloc(width * height * 2);
 		dst16 = (uint16*) dstData;
 
-		for(index = height; index > 0; index--)
+		for (index = height; index > 0; index--)
 		{
 			/* each bit encodes a pixel */
 			bitMask = *srcData;
@@ -965,7 +965,7 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 
 			for (bitIndex = 7; bitIndex >= 0; bitIndex--)
 			{
-				if((bitMask >> bitIndex) & 0x01)
+				if ((bitMask >> bitIndex) & 0x01)
 				{
 					*dst32 = (clrconv->invert) ? BGR32(redBg, greenBg, blueBg) : RGB32(redBg, greenBg, blueBg);
 				}

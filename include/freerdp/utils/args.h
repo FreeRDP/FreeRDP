@@ -24,6 +24,15 @@
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
+
+typedef enum _FREERDP_ARGS_PARSE_RESULT
+{
+	FREERDP_ARGS_PARSE_FAILURE = -1,
+	FREERDP_ARGS_PARSE_HELP = -2,
+	FREERDP_ARGS_PARSE_VERSION = -3,
+} FREERDP_ARGS_PARSE_RESULT;
+
+
 /* Returns 1 if succeed, otherwise returns zero */
 typedef int (*ProcessPluginArgs) (rdpSettings* settings, const char* name,
 	RDP_PLUGIN_DATA* plugin_data, void* user_data);

@@ -4,7 +4,7 @@
   <refentryinfo>
     <date>2011-08-27</date>
     <author>
-      <authorblurb><para>The FreeRDP-Team</para></authorblurb>
+      <authorblurb><para>The FreeRDP Team</para></authorblurb>
     </author>
   </refentryinfo>
   <refmeta>
@@ -15,7 +15,7 @@
   </refmeta>
   <refnamediv>
     <refname><application>xfreerdp</application></refname>
-    <refpurpose>X11 frontend to libFreeRDP</refpurpose>
+    <refpurpose>FreeRDP X11 client</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <refsynopsisdivinfo>
@@ -31,10 +31,9 @@
     </refsect1info>
     <title>DESCRIPTION</title>
     <para>
-      <command>xfreerdp</command> is a frontend to libFreeRDP,
-      which implements a client to the Remote Desktop Protocol (RDP).
-      RDP is used in a number of Microsoft products including Microsoft Windows
-      versions starting from NT Terminal Server. RDP is also implemented by xrdp and VirtualBox.
+      <command>xfreerdp</command> is an X11 Remote Desktop Protocol (RDP)
+      client which is part of the FreeRDP project. An RDP server is built-in
+      to many editions of Windows. Alternative servers included xrdp and VRDP (VirtualBox).
     </para>
   </refsect1>
   <refsect1>
@@ -103,7 +102,7 @@
         <term>-g <replaceable class="parameter">geometry</replaceable></term>
         <listitem>
           <para>
-            Sets the size of the FreeRDP-window (and of the remote desktop, when establishing a new connection).
+            Sets the size of the FreeRDP window (and of the remote desktop, when establishing a new connection).
             <replaceable class="parameter">geometry</replaceable> can have one of the following forms:
             <itemizedlist>
               <listitem>
@@ -143,7 +142,6 @@
         <listitem>
           <para>
             Don't send mouse motion events.
-            <!-- TODO: what is this good for? -->
           </para>
         </listitem>
       </varlistentry>
@@ -225,7 +223,7 @@
                   <replaceable class="parameter">num</replaceable> - A hexadecimal number that
                   represents a bit-mask, were numbers mean the following
                   <footnote><para>Taken from <ulink url="http://msdn.microsoft.com/en-us/library/cc240476%28v=prot.10%29.aspx">
-                  MS-RDPBCGR Scetion 2.2.1.11.1.1.1 - Extended Info Packet</ulink></para></footnote>:
+                  MS-RDPBCGR Section 2.2.1.11.1.1.1 - Extended Info Packet</ulink></para></footnote>:
                   <itemizedlist>
                     <listitem>
                       <para>1: Disable desktop wallpaper.</para>
@@ -271,7 +269,6 @@
         <listitem>
           <para>
             initialize a RemoteApp connection. This implies -g workarea.
-            FIXME: How to do RemoteApp
           </para>
         </listitem>
       </varlistentry>
@@ -280,7 +277,6 @@
         <listitem>
           <para>
             load an extension
-            FIXME: How to do this
           </para>
         </listitem>
       </varlistentry>
@@ -303,6 +299,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--gdi</term>
+        <listitem>
+          <para>
+            GDI rendering backend. <replaceable class="parameter">backend</replaceable> can be either sw (software) or hw (hardware).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--no-osb</term>
         <listitem>
           <para>
@@ -311,11 +315,18 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--no-bmp-cache</term>
+        <listitem>
+          <para>
+            Disable bitmap cache.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--plugin</term>
         <listitem>
           <para>
             load a plugin
-            FIXME: How to do this
           </para>
         </listitem>
       </varlistentry>
@@ -324,6 +335,62 @@
         <listitem>
           <para>
             Enable RemoteFX.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--rfx-mode</term>
+        <listitem>
+          <para>
+            RemoteFX operational flags. <replaceable class="parameter">flags</replaceable> can be either v[ideo], i[mage]), default is video.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--nsc</term>
+        <listitem>
+          <para>
+            Enable NSCodec.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-wallpaper</term>
+        <listitem>
+          <para>
+            Disable wallpaper.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--composition</term>
+        <listitem>
+          <para>
+            Enable composition (RDVH only, not to be confused with remote composition).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-full-window-drag</term>
+        <listitem>
+          <para>
+            Disable full window drag.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-menu-animations</term>
+        <listitem>
+          <para>
+            Disable menu animations.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-theming</term>
+        <listitem>
+          <para>
+            Disable theming.
           </para>
         </listitem>
       </varlistentry>
@@ -360,6 +427,22 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--ntlm</term>
+        <listitem>
+          <para>
+            force NTLM protocol version. <replaceable class="parameter">version</replaceable> can be one of 1 or 2.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--ignore-certificate</term>
+        <listitem>
+          <para>
+            ignore verification of logon certificate.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--version</term>
         <listitem>
           <para>
@@ -369,25 +452,6 @@
       </varlistentry>
     </variablelist>
   </refsect1>
-  <!-- refsect1>
-    <title>USAGE</title>
-    <para>
-      <command>foo</command> -f foo.conf -d2 foodata.foo
-    </para>
-  </refsect1 -->
-  <!-- refsect1>
-    <title>CAVEATS</title>
-    <para>
-      Other programs named <command>foo</command> may exist and actually
-      do something!
-    </para>
-  </refsect1 -->
-  <!-- refsect1>
-    <title>BUGS</title>
-    <para>
-      None.  Program does nothing.
-    </para>
-  </refsect1 -->
   <refsect1>
     <title>LINKS</title>
     <para>

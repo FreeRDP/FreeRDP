@@ -1,0 +1,92 @@
+2012-01-16	Version 1.0.0
+
+License:
+
+FreeRDP 1.0 is the first release of FreeRDP under the Apache License 2.0.
+The FreeRDP 1.x series is a rewrite, meaning there is no continuity with
+the previous FreeRDP 0.x series which were released under GPLv2.
+
+New Features:
+
+* RemoteFX
+	* Both encoder and decoder
+	* SSE2 and NEON optimization
+* NSCodec
+* RemoteApp
+	* Working, minor glitches
+* Multimedia Redirection
+	* ffmpeg support
+* Network Level Authentication (NLA)
+	* NTLMv2
+* Certificate validation
+* FIPS-compliant RDP security
+* new build system (cmake)
+* added official logo and icon
+
+New Architecture:
+
+* libfreerdp-core
+	* core protocol
+	* highly portable
+	* both client and server
+* libfreerdp-cache
+	* caching operations
+* libfreerdp-codec
+	* bitmap decompression
+	* codec encoding/decoding
+* libfreerdp-kbd
+	* keyboard mapping
+* libfreerdp-channels
+	* virtual channel management
+	* client and server side support
+* libfreerdp-gdi
+	* extensively unit tested
+	* portable software GDI implementation
+* libfreerdp-rail
+	* RemoteApp library
+* libfreerdp-utils
+	* shared utility library
+
+FreeRDP Clients:
+
+* client/X11 (xfreerdp)
+	* official client
+	* RemoteApp support
+	* X11 GDI implementation
+* client/DirectFB (dfreerdp)
+	* DirectFB support
+	* software-based GDI (libfreerdp-gdi)
+* client/Windows (wfreerdp)
+	* Native Win32 support
+
+FreeRDP Servers (experimental):
+
+* server/X11 (xfreerdp-server)
+	* RemoteFX-only
+	* no authentication
+	* highly experimental
+	* keyboard and mouse input supported
+
+Virtual Channels:
+
+* cliprdr (Clipboard Redirection)
+* rail (RemoteApp)
+* drdynvc (Dynamic Virtual Channels)
+	* audin (Audio Input Redirection)
+		* alsa support
+		* pulse support
+	* tsmf (Multimedia Redirection)
+		* alsa support
+		* pulse support
+		* ffmpeg support
+* rdpdr (Device Redirection)
+	* disk (Disk Redirection)
+	* parallel (Parallel Port Redirection)
+	* serial (Serial Port Redirection)
+	* printer (Printer Redirection)
+		* CUPS support
+	* smartcard (Smartcard Redirection)
+* rdpsnd (Sound Redirection)
+	* alsa support
+	* pulse support
+

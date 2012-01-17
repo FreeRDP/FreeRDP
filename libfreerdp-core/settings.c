@@ -111,12 +111,15 @@ rdpSettings* settings_new(void* instance)
 
 		settings->bitmap_cache = true;
 		settings->persistent_bitmap_cache = false;
+		settings->bitmapCacheV2CellInfo = xzalloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 
 		settings->refresh_rect = true;
 		settings->suppress_output = true;
 
 		settings->glyph_cache = true;
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+		settings->glyphCache = xzalloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+		settings->fragCache = xnew(GLYPH_CACHE_DEFINITION);
 		settings->glyphCache[0].cacheEntries = 254;
 		settings->glyphCache[0].cacheMaximumCellSize = 4;
 		settings->glyphCache[1].cacheEntries = 254;
@@ -137,8 +140,8 @@ rdpSettings* settings_new(void* instance)
 		settings->glyphCache[8].cacheMaximumCellSize = 256;
 		settings->glyphCache[9].cacheEntries = 64;
 		settings->glyphCache[9].cacheMaximumCellSize = 256;
-		settings->fragCache.cacheEntries = 256;
-		settings->fragCache.cacheMaximumCellSize = 256;
+		settings->fragCache->cacheEntries = 256;
+		settings->fragCache->cacheMaximumCellSize = 256;
 
 		settings->offscreen_bitmap_cache = true;
 		settings->offscreen_bitmap_cache_size = 7680;
@@ -162,6 +165,14 @@ rdpSettings* settings_new(void* instance)
 		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
 		settings->mouse_motion = true;
+
+		settings->client_auto_reconnect_cookie = xnew(ARC_CS_PRIVATE_PACKET);
+		settings->server_auto_reconnect_cookie = xnew(ARC_SC_PRIVATE_PACKET);
+
+		settings->client_time_zone = xnew(TIME_ZONE_INFO);
+
+		settings->server_random = xnew(rdpBlob);
+		settings->server_certificate = xnew(rdpBlob);
 	}
 
 	return settings;
@@ -182,8 +193,17 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->client_dir);
 		xfree(settings->cert_file);
 		xfree(settings->privatekey_file);
-		freerdp_blob_free(&(settings->server_certificate));
+		freerdp_blob_free(settings->server_random);
+		freerdp_blob_free(settings->server_certificate);
+		xfree(settings->server_random);
+		xfree(settings->server_certificate);
 		certificate_free(settings->server_cert);
+		xfree(settings->client_auto_reconnect_cookie);
+		xfree(settings->server_auto_reconnect_cookie);
+		xfree(settings->client_time_zone);
+		xfree(settings->bitmapCacheV2CellInfo);
+		xfree(settings->glyphCache);
+		xfree(settings->fragCache);
 		xfree(settings);
 	}
 }

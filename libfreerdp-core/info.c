@@ -86,7 +86,7 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 
 	time(&t);
 	local_time = localtime(&t);
-	clientTimeZone = &settings->client_time_zone;
+	clientTimeZone = settings->client_time_zone;
 
 #if defined(sun)
 	if(local_time->tm_isdst > 0)
@@ -134,7 +134,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	if (stream_get_left(s) < 172)
 		return false;
 
-	clientTimeZone = &settings->client_time_zone;
+	clientTimeZone = settings->client_time_zone;
 
 	stream_read_uint32(s, clientTimeZone->bias); /* Bias */
 
@@ -176,12 +176,12 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	TIME_ZONE_INFO* clientTimeZone;
 
 	rdp_get_client_time_zone(s, settings);
-	clientTimeZone = &settings->client_time_zone;
+	clientTimeZone = settings->client_time_zone;
 
-	standardName = (uint8*)freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
+	standardName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
 	standardNameLength = length;
 
-	daylightName = (uint8*)freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
+	daylightName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
 	daylightNameLength = length;
 
 	if (standardNameLength > 62)
@@ -220,7 +220,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 {
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
-	autoReconnectCookie = &settings->server_auto_reconnect_cookie;
+	autoReconnectCookie = settings->server_auto_reconnect_cookie;
 
 	stream_read_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	stream_read_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
@@ -238,7 +238,7 @@ void rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 boolean rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	autoReconnectCookie = &settings->client_auto_reconnect_cookie;
+	autoReconnectCookie = settings->client_auto_reconnect_cookie;
 
 	if (stream_get_left(s) < 28)
 		return false;
@@ -261,7 +261,7 @@ boolean rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	autoReconnectCookie = &settings->client_auto_reconnect_cookie;
+	autoReconnectCookie = settings->client_auto_reconnect_cookie;
 
 	stream_write_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	stream_write_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
@@ -336,13 +336,13 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	clientAddressFamily = settings->ipv6 ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
-	clientAddress = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->ip_address, &length);
+	clientAddress = (uint8*) freerdp_uniconv_out(settings->uniconv, settings->ip_address, &length);
 	cbClientAddress = length;
 
-	clientDir = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
+	clientDir = (uint8*) freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
 	cbClientDir = length;
 
-	cbAutoReconnectLen = settings->client_auto_reconnect_cookie.cbLen;
+	cbAutoReconnectLen = settings->client_auto_reconnect_cookie->cbLen;
 
 	stream_write_uint16(s, clientAddressFamily); /* clientAddressFamily */
 

@@ -428,6 +428,9 @@ boolean gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
 	stream_read_uint16(s, *type); /* type */
 	stream_read_uint16(s, *length); /* length */
 
+	if (*length < 4)
+		return false;
+
 	if (stream_get_left(s) < *length - 4)
 		return false;
 
@@ -770,10 +773,10 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings *settings)
 
 boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 {
+	uint8* data;
+	uint32 length;
 	uint32 serverRandomLen;
 	uint32 serverCertLen;
-	uint8* data;
-	uint32 len;
 
 	stream_read_uint32(s, settings->encryption_method); /* encryptionMethod */
 	stream_read_uint32(s, settings->encryption_level); /* encryptionLevel */
@@ -793,9 +796,8 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 	if (serverRandomLen > 0)
 	{
 		/* serverRandom */
-		freerdp_blob_alloc(&settings->server_random, serverRandomLen);
-		memcpy(settings->server_random.data, s->p, serverRandomLen);
-		stream_seek(s, serverRandomLen);
+		freerdp_blob_alloc(settings->server_random, serverRandomLen);
+		stream_read(s, settings->server_random->data, serverRandomLen);
 	}
 	else
 	{
@@ -805,17 +807,15 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 	if (serverCertLen > 0)
 	{
 		/* serverCertificate */
-		freerdp_blob_alloc(&settings->server_certificate, serverCertLen);
-		memcpy(settings->server_certificate.data, s->p, serverCertLen);
-		stream_seek(s, serverCertLen);
+		freerdp_blob_alloc(settings->server_certificate, serverCertLen);
+		stream_read(s, settings->server_certificate->data, serverCertLen);
 		certificate_free(settings->server_cert);
 		settings->server_cert = certificate_new();
-		data = settings->server_certificate.data;
-		len = settings->server_certificate.length;
-		if (!certificate_read_server_certificate(settings->server_cert, data, len))
-		{
+		data = settings->server_certificate->data;
+		length = settings->server_certificate->length;
+
+		if (!certificate_read_server_certificate(settings->server_cert, data, length))
 			return false;
-		}
 	}
 	else
 	{

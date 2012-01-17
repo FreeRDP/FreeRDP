@@ -42,7 +42,7 @@ void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)
 		bitoff = bitno % 0x8; 
 		(*temptr) |= (sign >> bitoff);
 	}
-	while(((uint32)(stream->p - stream->data)) < origsz);
+	while (((uint32)(stream->p - stream->data)) < origsz);
 
 	stream->p = stream->data;
 }
@@ -68,7 +68,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 
 	for (i = 0; i < 3; i++)
 	{
-		if(i != 0)
+		if (i != 0)
 			alloclen = orglen + ((orglen & 0x7) ? (orglen >> 3) + 0x1 : (orglen >> 3));
 
 		new_s = stream_new(alloclen);
@@ -78,7 +78,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 		nbitstream = new_s->data + orglen;
 		cur  = new_s->p;
 
-		if(i == 1)
+		if (i == 1)
 			pw >>= 1;
 
 		while (((uint32)(temp->p - temp->data)) < context->OrgByteCount[i])
@@ -89,10 +89,10 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 			*cur = val;
 			row = (temp->p - temp->data) % pw;
 
-			if(i == 0)
+			if (i == 0)
 			{
 				cur++;
-				if(row >= w)
+				if (row >= w)
 					stream_seek(temp, pw-row);
 			}
 			else
@@ -115,7 +115,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 					*(cur+1) = val;
 					bitoff = (bytno + 1) % 8;
 					*(nbitstream + ((bytno + 1) >> 3)) |= (sign >> bitoff);
-					if((bytno+w) < orglen)
+					if ((bytno+w) < orglen)
 					{
 						*(cur+w+1) = val;
 						bitoff = (bytno + w + 1) % 8;
@@ -128,7 +128,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 
 				if (((bytno/w) < h) && ((bytno) % w) < 2 )
 				{
-					if(w % 2)
+					if (w % 2)
 						cur += w-1;
 					else
 						cur += w;
@@ -162,7 +162,7 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 		for (i = 0; i < 3; i++)
 			ycocg[i] = *(context->org_buf[i]->p);
 
-		for(i = 1; i < 3; i++)
+		for (i = 1; i < 3; i++)
 		{
 			bytno = context->OrgByteCount[i] - size;
 			bitoff = bytno % 8;
@@ -174,20 +174,21 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 		rgb[1] = ycocg[0] + (ycocg[2] >> 1);
 		rgb[2] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
 
-		for(i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++)
 		{
-			if(((rgb[i] >> 8) & 0x1) == 0x1)
-				val = ~((uint8)rgb[i]) + 0x1;
+			if (((rgb[i] >> 8) & 0x1) == 0x1)
+				val = ~((uint8) rgb[i]) + 0x1;
 			else
-				val = rgb[i];
+				val = (uint8) rgb[i];
+
 			stream_write_uint8(context->org_buf[i], val);
 		}
 
 		size--;
 	}
-	while(size);
+	while (size);
 
-	for(i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		context->org_buf[i]->p = context->org_buf[i]->data;
 }
 
@@ -197,7 +198,7 @@ void nsc_colorloss_recover(NSC_CONTEXT* context)
 	uint8 cllvl;
 	cllvl = context->nsc_stream->colorLossLevel;
 
-	for(i = 1; i < 3; i++)
+	for (i = 1; i < 3; i++)
 		nsc_cl_expand(context->org_buf[i], cllvl, context->OrgByteCount[i]);
 }
 
@@ -336,7 +337,7 @@ void nsc_context_destroy(NSC_CONTEXT* context)
 {
 	int i;
 
-	for(i = 0;i < 4; i++)
+	for (i = 0;i < 4; i++)
 		stream_free(context->org_buf[i]);
 
 	stream_detach(context->nsc_stream->pdata);
@@ -365,7 +366,7 @@ void nsc_process_message(NSC_CONTEXT* context, uint8* data, uint32 length)
 	nsc_colorloss_recover(context);
 
 	/* Chroma supersample */
-	if(context->nsc_stream->ChromaSubSamplingLevel > 0)
+	if (context->nsc_stream->ChromaSubSamplingLevel > 0)
 		nsc_chroma_supersample(context);
 	
 	/* YCoCg to RGB Convert */

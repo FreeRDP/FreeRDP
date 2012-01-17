@@ -219,8 +219,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	stream_write_uint32(s, 1); /* SEC_CLIENT_RANDOM */
 	length = key_len + 8;
 	stream_write_uint32(s, length);
-	memcpy(s->p, crypt_client_random, length);
-	stream_seek(s, length);
+	stream_write(s, crypt_client_random, length);
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
 		return false;

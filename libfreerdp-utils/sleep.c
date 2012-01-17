@@ -53,6 +53,6 @@ void freerdp_usleep(uint32 useconds)
 	{
 		QueryPerformanceCounter((LARGE_INTEGER*) &t2);
 	}
-	while((t2 - t1) < useconds);
+	while ((t2 - t1) < useconds);
 #endif
 }
