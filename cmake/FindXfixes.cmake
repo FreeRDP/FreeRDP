@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XFIXES_INCLUDE_DIR NAMES Xfixes.h
+find_path(XFIXES_INCLUDE_DIR NAMES X11/extensions/Xfixes.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xfixes include directory"
 )

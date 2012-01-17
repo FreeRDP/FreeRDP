@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XV_INCLUDE_DIR NAMES Xv.h
+find_path(XV_INCLUDE_DIR NAMES X11/extensions/Xv.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xv include directory"
 )

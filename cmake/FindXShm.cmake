@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XSHM_INCLUDE_DIR NAMES XShm.h
+find_path(XSHM_INCLUDE_DIR NAMES X11/extensions/XShm.h
           PATH_SUFFIXES X11/extensions
           DOC "The XShm include directory"
 )
