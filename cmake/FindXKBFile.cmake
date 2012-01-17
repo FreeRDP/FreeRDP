@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XKBFILE_INCLUDE_DIR NAMES XKBfile.h
+find_path(XKBFILE_INCLUDE_DIR NAMES X11/extensions/XKBfile.h
           PATH_SUFFIXES X11/extensions
           DOC "The XKBFile include directory"
 )

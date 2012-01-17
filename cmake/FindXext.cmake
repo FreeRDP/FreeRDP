@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XEXT_INCLUDE_DIR NAMES Xext.h
+find_path(XEXT_INCLUDE_DIR NAMES X11/extensions/Xext.h
           PATH_SUFFIXES X11/extensions
           DOC "The Xext include directory"
 )
