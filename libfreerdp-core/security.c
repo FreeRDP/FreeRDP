@@ -223,7 +223,7 @@ void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* o
 	crypto_md5_final(md5, output);
 }
 
-void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uint32 length, uint8* output)
+void security_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, uint8* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -235,7 +235,7 @@ void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uin
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
-	crypto_sha1_update(sha1, mac_key, mac_key_length); /* MacKeyN */
+	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
 	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
 	crypto_sha1_update(sha1, data, length); /* data */
@@ -243,7 +243,41 @@ void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uin
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	md5 = crypto_md5_init();
-	crypto_md5_update(md5, mac_key, mac_key_length); /* MacKeyN */
+	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
+	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
+	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
+	crypto_md5_final(md5, md5_digest);
+
+	memcpy(output, md5_digest, 8);
+}
+
+void security_salted_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, boolean encryption, uint8* output)
+{
+	CryptoMd5 md5;
+	CryptoSha1 sha1;
+	uint8 length_le[4];
+	uint8 use_count_le[4];
+	uint8 md5_digest[CRYPTO_MD5_DIGEST_LENGTH];
+	uint8 sha1_digest[CRYPTO_SHA1_DIGEST_LENGTH];
+
+	security_uint32_le(length_le, length); /* length must be little-endian */
+	if (encryption)
+		security_uint32_le(use_count_le, rdp->encrypt_use_count);
+	else
+		security_uint32_le(use_count_le, rdp->decrypt_use_count);
+
+	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
+	sha1 = crypto_sha1_init();
+	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
+	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
+	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
+	crypto_sha1_update(sha1, data, length); /* data */
+	crypto_sha1_update(sha1, use_count_le, sizeof(use_count_le)); /* encryptionCount */
+	crypto_sha1_final(sha1, sha1_digest);
+
+	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
 	crypto_md5_final(md5, md5_digest);
