@@ -256,9 +256,48 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	return true;
 }
 
-static boolean certificate_process_server_public_signature(rdpCertificate* certificate, STREAM* s, uint32 length)
+static boolean certificate_process_server_public_signature(rdpCertificate* certificate, uint8* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
 {
-	stream_seek(s, length);
+	uint8 md5hash[CRYPTO_MD5_DIGEST_LENGTH];
+	uint8 encsig[TSSK_KEY_LENGTH + 8];
+	uint8 sig[TSSK_KEY_LENGTH];
+	CryptoMd5 md5ctx;
+	int i, sum;
+
+	md5ctx = crypto_md5_init();
+	crypto_md5_update(md5ctx, sigdata, sigdatalen);
+	crypto_md5_final(md5ctx, md5hash);
+
+	stream_read(s, encsig, siglen);
+	/* Last 8 bytes shall be all zero. */
+	for (sum = 0, i = sizeof(encsig) - 8; i < sizeof(encsig); i++)
+		sum += encsig[i];
+	if (sum != 0) {
+		printf("certificate_process_server_public_signature: invalid signature\n");
+		//return false;
+	}
+	siglen -= 8;
+
+	crypto_rsa_public_decrypt(encsig, siglen, TSSK_KEY_LENGTH, tssk_modulus, tssk_exponent, sig);
+
+	/* Verify signature. */
+	if (memcmp(md5hash, sig, sizeof(md5hash)) != 0) {
+		printf("certificate_process_server_public_signature: invalid signature\n");
+		//return false;
+	}
+	/*
+	 * Verify rest of decrypted data:
+	 * The 17th byte is 0x00.
+	 * The 18th through 62nd bytes are each 0xFF.
+	 * The 63rd byte is 0x01.
+	 */
+	for (sum = 0, i = 17; i < 62; i++)
+		sum += sig[i];
+	if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01) {
+		printf("certificate_process_server_public_signature: invalid signature\n");
+		//return false;
+	}
+
 	return true;
 }
 
@@ -276,7 +315,11 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 	uint32 wPublicKeyBlobLen;
 	uint32 wSignatureBlobType;
 	uint32 wSignatureBlobLen;
+	uint8* sigdata;
+	int sigdatalen;
 
+	/* -4, because we need to include dwVersion */
+	sigdata = stream_get_tail(s) - 4;
 	stream_read_uint32(s, dwSigAlgId);
 	stream_read_uint32(s, dwKeyAlgId);
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
@@ -296,6 +339,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
 		return false;
 	}
+	sigdatalen = stream_get_tail(s) - sigdata;
 	stream_read_uint16(s, wSignatureBlobType);
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
@@ -303,7 +347,11 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 		return false;
 	}
 	stream_read_uint16(s, wSignatureBlobLen);
-	if (!certificate_process_server_public_signature(certificate, s, wSignatureBlobLen))
+	if (wSignatureBlobLen != 72) {
+		printf("certificate_process_server_public_signature: invalid signature length (got %d, expected %d)\n", wSignatureBlobLen, 64);
+		return false;
+	}
+	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s, wSignatureBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 5\n");
 		return false;

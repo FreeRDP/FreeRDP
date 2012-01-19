@@ -32,7 +32,8 @@ void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8*
 void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
 void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* output);
 
-void security_mac_signature(uint8* mac_key, int mac_key_length, uint8* data, uint32 length, uint8* output);
+void security_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, uint8* output);
+void security_salted_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, boolean encryption, uint8* output);
 boolean security_establish_keys(uint8* client_random, rdpRdp* rdp);
 
 boolean security_encrypt(uint8* data, int length, rdpRdp* rdp);
