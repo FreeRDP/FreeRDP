@@ -120,6 +120,11 @@ boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings);
 rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 
+#define	TSSK_KEY_LENGTH	64
+extern const uint8 tssk_modulus[];
+extern const uint8 tssk_privateExponent[];
+extern const uint8 tssk_exponent[];
+
 void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output);
 void crypto_reverse(uint8* data, int length);
 void crypto_nonce(uint8* nonce, int size);
