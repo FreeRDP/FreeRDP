@@ -203,7 +203,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	key_len = rdp->settings->server_cert->cert_info.modulus.length;
 	mod = rdp->settings->server_cert->cert_info.modulus.data;
 	exp = rdp->settings->server_cert->cert_info.exponent;
-	crypto_rsa_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = 7 + 8 + 4 + 4 + key_len + 8;
