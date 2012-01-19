@@ -188,7 +188,35 @@ exit:
 	return status;
 }
 
-void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
+/*
+ * Terminal Services Signing Keys.
+ * Yes, Terminal Services Private Key is publically available.
+ */
+const uint8 tssk_modulus[] = {
+	0x3d, 0x3a, 0x5e, 0xbd, 0x72, 0x43, 0x3e, 0xc9,
+	0x4d, 0xbb, 0xc1, 0x1e, 0x4a, 0xba, 0x5f, 0xcb,
+	0x3e, 0x88, 0x20, 0x87, 0xef, 0xf5, 0xc1, 0xe2,
+	0xd7, 0xb7, 0x6b, 0x9a, 0xf2, 0x52, 0x45, 0x95,
+	0xce, 0x63, 0x65, 0x6b, 0x58, 0x3a, 0xfe, 0xef,
+	0x7c, 0xe7, 0xbf, 0xfe, 0x3d, 0xf6, 0x5c, 0x7d,
+	0x6c, 0x5e, 0x06, 0x09, 0x1a, 0xf5, 0x61, 0xbb,
+	0x20, 0x93, 0x09, 0x5f, 0x05, 0x6d, 0xea, 0x87
+};
+const uint8 tssk_privateExponent[] = {
+	0x87, 0xa7, 0x19, 0x32, 0xda, 0x11, 0x87, 0x55,
+	0x58, 0x00, 0x16, 0x16, 0x25, 0x65, 0x68, 0xf8,
+	0x24, 0x3e, 0xe6, 0xfa, 0xe9, 0x67, 0x49, 0x94,
+	0xcf, 0x92, 0xcc, 0x33, 0x99, 0xe8, 0x08, 0x60,
+	0x17, 0x9a, 0x12, 0x9f, 0x24, 0xdd, 0xb1, 0x24,
+	0x99, 0xc7, 0x3a, 0xb8, 0x0a, 0x7b, 0x0d, 0xdd,
+	0x35, 0x07, 0x79, 0x17, 0x0b, 0x51, 0x9b, 0xb3,
+	0xc7, 0x10, 0x01, 0x13, 0xe7, 0x3f, 0xf3, 0x5f
+};
+const uint8 tssk_exponent[] = {
+	0x5b, 0x7b, 0x88, 0xc0
+};
+
+static void crypto_rsa_common(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, int exponent_size, uint8* output)
 {
 	BN_CTX* ctx;
 	int output_length;
@@ -197,14 +225,14 @@ void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const
 	uint8* exponent_reverse;
 	BIGNUM mod, exp, x, y;
 
-	input_reverse = (uint8*) xmalloc(2 * MODULUS_MAX_SIZE + EXPONENT_MAX_SIZE);
-	modulus_reverse = input_reverse + MODULUS_MAX_SIZE;
-	exponent_reverse = modulus_reverse + MODULUS_MAX_SIZE;
+	input_reverse = (uint8*) xmalloc(2 * key_length + exponent_size);
+	modulus_reverse = input_reverse + key_length;
+	exponent_reverse = modulus_reverse + key_length;
 
 	memcpy(modulus_reverse, modulus, key_length);
 	crypto_reverse(modulus_reverse, key_length);
-	memcpy(exponent_reverse, exponent, EXPONENT_MAX_SIZE);
-	crypto_reverse(exponent_reverse, EXPONENT_MAX_SIZE);
+	memcpy(exponent_reverse, exponent, exponent_size);
+	crypto_reverse(exponent_reverse, exponent_size);
 	memcpy(input_reverse, input, length);
 	crypto_reverse(input_reverse, length);
 
@@ -215,7 +243,7 @@ void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const
 	BN_init(&y);
 
 	BN_bin2bn(modulus_reverse, key_length, &mod);
-	BN_bin2bn(exponent_reverse, EXPONENT_MAX_SIZE, &exp);
+	BN_bin2bn(exponent_reverse, exponent_size, &exp);
 	BN_bin2bn(input_reverse, length, &x);
 	BN_mod_exp(&y, &x, &exp, &mod, ctx);
 
@@ -231,6 +259,48 @@ void crypto_rsa_encrypt(const uint8* input, int length, uint32 key_length, const
 	BN_free(&mod);
 	BN_CTX_free(ctx);
 	xfree(input_reverse);
+}
+
+static void crypto_rsa_public(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
+{
+
+	crypto_rsa_common(input, length, key_length, modulus, exponent, EXPONENT_MAX_SIZE, output);
+}
+
+static void crypto_rsa_private(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output)
+{
+
+	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
+}
+
+void crypto_rsa_public_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
+{
+
+	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
+}
+
+void crypto_rsa_public_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
+{
+
+	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
+}
+
+void crypto_rsa_private_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output)
+{
+
+	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
+}
+
+void crypto_rsa_private_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output)
+{
+
+	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
+}
+
+void crypto_rsa_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output)
+{
+
+	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
 }
 
 void crypto_reverse(uint8* data, int length)

@@ -329,7 +329,7 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	encrypted_premaster_secret = (uint8*) xmalloc(MODULUS_MAX_SIZE);
 	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
 
-	crypto_rsa_encrypt(license->premaster_secret, PREMASTER_SECRET_LENGTH,
+	crypto_rsa_public_encrypt(license->premaster_secret, PREMASTER_SECRET_LENGTH,
 			key_length, modulus, exponent, encrypted_premaster_secret);
 
 	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
