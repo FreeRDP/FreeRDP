@@ -78,11 +78,13 @@ struct crypto_cert_struct
 	X509 * px509;
 };
 
+#define	CRYPTO_SHA1_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 typedef struct crypto_sha1_struct* CryptoSha1;
 CryptoSha1 crypto_sha1_init(void);
 void crypto_sha1_update(CryptoSha1 sha1, const uint8* data, uint32 length);
 void crypto_sha1_final(CryptoSha1 sha1, uint8* out_data);
 
+#define	CRYPTO_MD5_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 typedef struct crypto_md5_struct* CryptoMd5;
 CryptoMd5 crypto_md5_init(void);
 void crypto_md5_update(CryptoMd5 md5, const uint8* data, uint32 length);
