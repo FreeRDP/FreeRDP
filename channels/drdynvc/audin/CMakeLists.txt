@@ -35,7 +35,7 @@ if(ALSA_FOUND)
 	add_subdirectory(alsa)
 endif()
 
-if(PULSE_FOUND)
+if(PULSEAUDIO_FOUND)
 	add_subdirectory(pulse)
 endif()
 
