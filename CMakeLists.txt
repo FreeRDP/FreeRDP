@@ -163,13 +163,13 @@ if(NOT WIN32)
 	add_subdirectory(channels)
 endif()
 
-option(ENABLE_CLIENT "Build client binaries" ON)
-if(ENABLE_CLIENT)
+option(WITH_CLIENT "Build client binaries" ON)
+if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
 
-option(ENABLE_SERVER "Build server binaries" OFF)
-if(ENABLE_SERVER)
+option(WITH_SERVER "Build server binaries" OFF)
+if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
