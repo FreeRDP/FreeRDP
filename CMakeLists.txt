@@ -163,8 +163,16 @@ if(NOT WIN32)
 	add_subdirectory(channels)
 endif()
 
-add_subdirectory(client)
-add_subdirectory(server)
+option(ENABLE_CLIENT "Build client binaries" ON)
+if(ENABLE_CLIENT)
+	add_subdirectory(client)
+endif()
+
+option(ENABLE_SERVER "Build server binaries" OFF)
+if(ENABLE_SERVER)
+	add_subdirectory(server)
+endif()
+
 add_subdirectory(keymaps)
 
 # Source package
