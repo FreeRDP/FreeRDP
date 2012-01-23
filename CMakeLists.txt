@@ -140,7 +140,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL
 
 # Build CUnit
 find_optional_package(CUnit)
-if(CUNIT_FOUND)
+if(WITH_CUNIT)
    enable_testing()
    add_subdirectory(cunit)
 endif()
