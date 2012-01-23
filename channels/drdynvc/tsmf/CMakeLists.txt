@@ -43,15 +43,15 @@ target_link_libraries(tsmf freerdp-utils)
 
 install(TARGETS tsmf DESTINATION ${FREERDP_PLUGIN_PATH})
 
-if(FFMPEG_FOUND)
+if(WITH_FFMPEG)
 	add_subdirectory(ffmpeg)
 endif()
 
-if(ALSA_FOUND)
+if(WITH_ALSA)
 	add_subdirectory(alsa)
 endif()
 
-if(PULSE_FOUND)
+if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
 endif()
 

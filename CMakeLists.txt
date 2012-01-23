@@ -65,6 +65,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-but-set-variable")
 	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+		set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	endif()
 	if(WITH_SSE2_TARGET)
@@ -139,7 +140,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL
 
 # Build CUnit
 find_optional_package(CUnit)
-if(CUNIT_FOUND)
+if(WITH_CUNIT)
    enable_testing()
    add_subdirectory(cunit)
 endif()

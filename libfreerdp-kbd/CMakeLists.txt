@@ -30,16 +30,18 @@ set(FREERDP_KBD_SRCS
 add_library(freerdp-kbd ${FREERDP_KBD_SRCS})
 
 find_suggested_package(X11)
-if(X11_FOUND)
+if(WITH_X11)
 	target_link_libraries(freerdp-kbd ${X11_LIBRARIES})
 endif()
 
 if(NOT APPLE)
 	find_suggested_package(XKBFile)
-	if(XKBFILE_FOUND)
-		add_definitions(-DWITH_XKBFILE)
-		include_directories(${XKBFILE_INCLUDE_DIRS})
-		target_link_libraries(freerdp-kbd ${XKBFILE_LIBRARIES})
+	if(WITH_X11)
+		if(WITH_XKBFILE)
+			add_definitions(-DWITH_XKBFILE)
+			include_directories(${XKBFILE_INCLUDE_DIRS})
+			target_link_libraries(freerdp-kbd ${XKBFILE_LIBRARIES})
+		endif()
 	endif()
 endif()
 
