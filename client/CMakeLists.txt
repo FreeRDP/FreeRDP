@@ -25,13 +25,13 @@ if(NOT WIN32)
 
 	# Build X11 Client
 	find_suggested_package(X11)
-	if(X11_FOUND)
+	if(WITH_X11)
 		add_subdirectory(X11)
 	endif()
 
 	# Build DirectFB Client
 	find_optional_package(DirectFB)
-	if(DIRECTFB_FOUND)
+	if(WITH_DIRECTFB)
 		add_subdirectory(DirectFB)
 	endif()
 else()

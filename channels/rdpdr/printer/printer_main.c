@@ -30,7 +30,7 @@
 #include "rdpdr_constants.h"
 #include "rdpdr_types.h"
 
-#ifdef CUPS_FOUND
+#ifdef WITH_CUPS
 #include "printer_cups.h"
 #endif
 
@@ -300,7 +300,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* name;
 	char* driver_name;
 
-#ifdef CUPS_FOUND
+#ifdef WITH_CUPS
 	driver = printer_cups_get_driver();
 #endif
 	if (driver == NULL)
