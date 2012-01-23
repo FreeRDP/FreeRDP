@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XTEST_INCLUDE_DIR NAMES XTest.h
+find_path(XTEST_INCLUDE_DIR NAMES X11/extensions/XTest.h
           PATH_SUFFIXES X11/extensions
           DOC "The XTest include directory"
 )

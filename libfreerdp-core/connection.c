@@ -203,7 +203,7 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	key_len = rdp->settings->server_cert->cert_info.modulus.length;
 	mod = rdp->settings->server_cert->cert_info.modulus.data;
 	exp = rdp->settings->server_cert->cert_info.exponent;
-	crypto_rsa_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = 7 + 8 + 4 + 4 + key_len + 8;
@@ -480,7 +480,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		ret = transport_accept_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
 		ret = transport_accept_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_RDP)
+	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
 		ret = transport_accept_rdp(rdp->transport);
 
 	if (!ret)

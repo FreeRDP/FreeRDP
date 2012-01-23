@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(XCURSOR_INCLUDE_DIR NAMES Xcursor.h
+find_path(XCURSOR_INCLUDE_DIR NAMES X11/Xcursor/Xcursor.h
           PATH_SUFFIXES X11/Xcursor
           DOC "The Xcursor include directory"
 )
