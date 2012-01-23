@@ -180,7 +180,7 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	return rdp_client_connect(rdp);
 }
 
-static boolean rdp_establish_keys(rdpRdp* rdp)
+static boolean rdp_client_establish_keys(rdpRdp* rdp)
 {
 	uint8 client_random[32];
 	uint8 crypt_client_random[256 + 8];
@@ -206,17 +206,10 @@ static boolean rdp_establish_keys(rdpRdp* rdp)
 	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
-	length = 7 + 8 + 4 + 4 + key_len + 8;
+	length = RDP_PACKET_HEADER_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = transport_send_stream_init(rdp->mcs->transport, length);
-	tpkt_write_header(s, length);
-	tpdu_write_header(s, 2, 0xf0);
-	per_write_choice(s, DomainMCSPDU_SendDataRequest << 2);
-	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID);
-	per_write_integer16(s, MCS_GLOBAL_CHANNEL_ID, 0);
-	stream_write_uint8(s, 0x70);
-	length = (4 + 4 + key_len + 8) | 0x8000;
-	stream_write_uint16_be(s, length);
-	stream_write_uint32(s, 1); /* SEC_CLIENT_RANDOM */
+	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
+	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
 	stream_write_uint32(s, length);
 	stream_write(s, crypt_client_random, length);
@@ -335,7 +328,7 @@ boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
 	{
-		if (!rdp_establish_keys(rdp))
+		if (!rdp_client_establish_keys(rdp))
 			return false;
 		if (!rdp_send_client_info(rdp))
 			return false;
