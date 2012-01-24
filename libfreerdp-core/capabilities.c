@@ -1793,20 +1793,20 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	uint16 numberCapabilities;
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
-	uint32 securityHeader;
+	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return false;
 
 	if (rdp->settings->encryption)
 	{
-		stream_read_uint32(s, securityHeader);
-		if (securityHeader & SEC_SECURE_CHECKSUM)
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & SEC_SECURE_CHECKSUM)
 		{
 			printf("Error: TODO\n");
 			return false;
 		}
-		if (securityHeader & SEC_ENCRYPT)
+		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4))
 			{

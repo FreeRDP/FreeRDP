@@ -635,7 +635,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 pduLength;
 	uint16 pduSource;
 	uint16 channelId;
-	uint32 securityHeader;
+	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -645,13 +645,13 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->settings->encryption)
 	{
-		stream_read_uint32(s, securityHeader);
-		if (securityHeader & SEC_SECURE_CHECKSUM)
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & SEC_SECURE_CHECKSUM)
 		{
 			printf("Error: TODO\n");
 			return false;
 		}
-		if (securityHeader & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
+		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
 		{
 			if (!rdp_decrypt(rdp, s, length - 4))
 			{
@@ -659,7 +659,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 				return false;
 			}
 		}
-		if (securityHeader & SEC_REDIRECTION_PKT)
+		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
 			/*
 			 * [MS-RDPBCGR] 2.2.13.2.1
