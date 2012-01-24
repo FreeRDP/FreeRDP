@@ -42,6 +42,6 @@ add_subdirectory(printer)
 add_subdirectory(parallel)
 add_subdirectory(serial)
 
-if(PCSC_FOUND)
+if(WITH_PCSC)
 	add_subdirectory(smartcard)
 endif()

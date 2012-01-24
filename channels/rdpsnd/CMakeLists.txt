@@ -29,11 +29,11 @@ target_link_libraries(rdpsnd freerdp-utils)
 
 install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
 
-if(ALSA_FOUND)
+if(WITH_ALSA)
 	add_subdirectory(alsa)
 endif()
 
-if(PULSE_FOUND)
+if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
 endif()
 

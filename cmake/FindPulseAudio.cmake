@@ -1,1 +1,1 @@
-pkg_check_modules(PULSE libpulse)
+pkg_check_modules(PULSEAUDIO libpulse)

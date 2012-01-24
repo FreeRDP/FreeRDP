@@ -18,9 +18,6 @@
 #cmakedefine HAVE_STDBOOL_H
 #cmakedefine HAVE_INTTYPES_H
 
-/* Found packages */
-#cmakedefine CUPS_FOUND
-
 /* Endian */
 #cmakedefine BIG_ENDIAN
 
@@ -50,5 +47,4 @@
 #cmakedefine WITH_DEBUG_REDIR
 #cmakedefine WITH_DEBUG_CLIPRDR
 #cmakedefine WITH_DEBUG_WND
-
 #endif

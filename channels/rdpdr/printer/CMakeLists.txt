@@ -22,13 +22,14 @@ set(PRINTER_SRCS
 	printer_main.h
 )
 
-if(CUPS_FOUND)
+if(WITH_CUPS)
 	set(PRINTER_SRCS
 		${PRINTER_SRCS}
 		printer_cups.c
 		printer_cups.h
 	)
 	include_directories(${CUPS_INCLUDE_DIR})
+	add_definitions(-DWITH_CUPS)
 endif()
 
 include_directories(..)
@@ -38,7 +39,7 @@ set_target_properties(printer PROPERTIES PREFIX "")
 
 target_link_libraries(printer freerdp-utils)
 
-if(CUPS_FOUND)
+if(WITH_CUPS)
 	target_link_libraries(printer ${CUPS_LIBRARIES})
 endif()
 
