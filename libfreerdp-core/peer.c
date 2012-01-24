@@ -169,7 +169,7 @@ static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length);
+		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
 	}
 
 	return fastpath_recv_inputs(fastpath, s);

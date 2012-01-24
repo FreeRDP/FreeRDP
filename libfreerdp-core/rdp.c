@@ -312,7 +312,10 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 			{
 				data = s->p + 8;
 				length = length - (data - s->data);
-				security_mac_signature(rdp, data, length, s->p);
+				if (sec_flags & SEC_SECURE_CHECKSUM)
+					security_salted_mac_signature(rdp, data, length, true, s->p);
+				else
+					security_mac_signature(rdp, data, length, s->p);
 				stream_seek(s, 8);
 				security_encrypt(s->p, length, rdp);
 			}
@@ -575,7 +578,7 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
  * @param length int
  */
 
-boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags)
 {
 	uint8 cmac[8], wmac[8];
 
@@ -614,10 +617,20 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
 	security_decrypt(s->p, length, rdp);
-	security_mac_signature(rdp, s->p, length, cmac);
+	if (securityFlags & SEC_SECURE_CHECKSUM)
+		security_salted_mac_signature(rdp, s->p, length, false, cmac);
+	else
+		security_mac_signature(rdp, s->p, length, cmac);
 	if (memcmp(wmac, cmac, sizeof(wmac)) != 0) {
-		printf("FATAL: invalid packet signature\n");
-		return false;
+		printf("WARNING: invalid packet signature\n");
+		/*
+		 * Because Standard RDP Security is totally broken,
+		 * and cannot protect against MITM, don't treat signature
+		 * verification failure as critical. This at least enables
+		 * us to work with broken RDP clients and servers that
+		 * generate invalid signatures.
+		 */
+		//return false;
 	}
 	return true;
 }
@@ -646,14 +659,9 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	if (rdp->settings->encryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
-		if (securityFlags & SEC_SECURE_CHECKSUM)
-		{
-			printf("Error: TODO\n");
-			return false;
-		}
 		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
 		{
-			if (!rdp_decrypt(rdp, s, length - 4))
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
 				printf("rdp_decrypt failed\n");
 				return false;
@@ -721,7 +729,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length);
+		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
 	}
 
 	return fastpath_recv_updates(rdp->fastpath, s);

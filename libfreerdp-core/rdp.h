@@ -198,6 +198,6 @@ void rdp_free(rdpRdp* rdp);
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length);
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags);
 
 #endif /* __RDP_H */

@@ -1801,14 +1801,9 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	if (rdp->settings->encryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
-		if (securityFlags & SEC_SECURE_CHECKSUM)
-		{
-			printf("Error: TODO\n");
-			return false;
-		}
 		if (securityFlags & SEC_ENCRYPT)
 		{
-			if (!rdp_decrypt(rdp, s, length - 4))
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
 				printf("rdp_decrypt failed\n");
 				return false;
