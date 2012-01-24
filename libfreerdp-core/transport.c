@@ -221,7 +221,6 @@ int transport_write(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
 	int length;
-	int sent = 0;
 
 	length = stream_get_length(s);
 	stream_set_pos(s, 0);
@@ -234,7 +233,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 	}
 #endif
 
-	while (sent < length)
+	while (length > 0)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
 			status = tls_write(transport->tls, stream_get_tail(s), length);
@@ -258,7 +257,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 			}
 		}
 
-		sent += status;
+		length -= status;
 		stream_seek(s, status);
 	}
 
