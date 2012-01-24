@@ -49,6 +49,14 @@ if(WITH_SSE2)
 	set_property(SOURCE rfx_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
 endif()
 
+if(WITH_NEON)
+	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS}
+	rfx_neon.c
+	rfx_neon.h
+)
+	set_property(SOURCE rfx_neon.c PROPERTY COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp")
+endif()
+
 add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
 
 set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
