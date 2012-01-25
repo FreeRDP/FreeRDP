@@ -182,7 +182,7 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 static boolean rdp_client_establish_keys(rdpRdp* rdp)
 {
-	uint8 client_random[32];
+	uint8 client_random[CLIENT_RANDOM_LENGTH];
 	uint8 crypt_client_random[256 + 8];
 	uint32 key_len;
 	uint8* mod;
@@ -198,12 +198,11 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
-	memset(client_random, 0x5e, 32);
-	crypto_nonce(client_random, 32);
+	crypto_nonce(client_random, sizeof(client_random));
 	key_len = rdp->settings->server_cert->cert_info.modulus.length;
 	mod = rdp->settings->server_cert->cert_info.modulus.data;
 	exp = rdp->settings->server_cert->cert_info.exponent;
-	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
