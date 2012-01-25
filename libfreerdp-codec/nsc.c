@@ -149,7 +149,7 @@ void nsc_chroma_supersample(NSC_CONTEXT* context)
 void nsc_ycocg_rgb(NSC_CONTEXT* context)
 {
 	uint8* sbitstream[2];
-	uint8 bitoff, sign[2], i, val;
+	uint8 bitoff, sign[2], i, val, tmp;
 	sint16 rgb[3], ycocg[3];
 	uint32 bytno, size;
 	size = context->OrgByteCount[0];
@@ -176,8 +176,11 @@ void nsc_ycocg_rgb(NSC_CONTEXT* context)
 
 		for (i = 0; i < 3; i++)
 		{
-			if (((rgb[i] >> 8) & 0x1) == 0x1)
-				val = ~((uint8) rgb[i]) + 0x1;
+			tmp = (rgb[i] >> 8) & 0xff;
+			if (tmp == 0xff)
+				val = 0x00;
+			else if (tmp == 0x1)
+				val = 0xff;
 			else
 				val = (uint8) rgb[i];
 
