@@ -258,6 +258,7 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	modlen = keylen - 8;
 	freerdp_blob_alloc(&(certificate->cert_info.modulus), modlen);
 	stream_read(s, certificate->cert_info.modulus.data, modlen);
+	/* 8 bytes of zero padding */
 	stream_seek(s, 8);
 
 	return true;
