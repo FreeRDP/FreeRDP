@@ -628,7 +628,8 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags)
 		security_salted_mac_signature(rdp, s->p, length, false, cmac);
 	else
 		security_mac_signature(rdp, s->p, length, cmac);
-	if (memcmp(wmac, cmac, sizeof(wmac)) != 0) {
+	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
+	{
 		printf("WARNING: invalid packet signature\n");
 		/*
 		 * Because Standard RDP Security is totally broken,
