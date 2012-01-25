@@ -145,6 +145,7 @@ typedef struct
 /* Certificates */
 
 typedef struct rdp_certificate rdpCertificate;
+typedef struct rdp_key rdpKey;
 
 struct rdp_CertBlob
 {
@@ -296,7 +297,8 @@ struct rdp_settings
 	boolean nla_security; /* 146 */
 	boolean rdp_security; /* 147 */
 	uint32 ntlm_version; /* 148 */
-	uint32 paddingF[160 - 149]; /* 149 */
+	boolean secure_checksum; /* 149 */
+	uint32 paddingF[160 - 150]; /* 150 */
 
 	/* Session */
 	boolean console_audio; /* 160 */
@@ -349,7 +351,9 @@ struct rdp_settings
 	rdpBlob* server_certificate; /* 267 */
 	boolean ignore_certificate; /* 268 */
 	rdpCertificate* server_cert; /* 269 */
-	uint32 paddingL[280 - 270]; /* 270 */
+	char* rdp_key_file; /* 270 */
+	rdpKey* server_key; /* 271 */
+	uint32 paddingL[280 - 272]; /* 272 */
 
 	/* Codecs */
 	boolean rfx_codec; /* 280 */

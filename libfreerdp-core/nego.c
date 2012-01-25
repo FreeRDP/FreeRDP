@@ -521,8 +521,13 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 boolean nego_send_negotiation_response(rdpNego* nego)
 {
 	STREAM* s;
+	rdpSettings* settings;
 	int length;
 	uint8 *bm, *em;
+	boolean ret;
+
+	ret = true;
+	settings = nego->transport->settings;
 
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
@@ -538,6 +543,20 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 		stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
+	else if (!settings->rdp_security)
+	{
+		stream_write_uint8(s, TYPE_RDP_NEG_FAILURE);
+		stream_write_uint8(s, 0); /* flags */
+		stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+		/*
+		 * TODO: Check for other possibilities,
+		 *       like SSL_NOT_ALLOWED_BY_SERVER.
+		 */
+		printf("nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
+		length += 8;
+		ret = false;
+	}
 
 	stream_get_mark(s, em);
 	stream_set_mark(s, bm);
@@ -548,11 +567,42 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 	if (transport_write(nego->transport, s) < 0)
 		return false;
 
-	/* update settings with negotiated protocol security */
-	nego->transport->settings->requested_protocols = nego->requested_protocols;
-	nego->transport->settings->selected_protocol = nego->selected_protocol;
+	if (ret)
+	{
+		/* update settings with negotiated protocol security */
+		settings->requested_protocols = nego->requested_protocols;
+		settings->selected_protocol = nego->selected_protocol;
 
-	return true;
+		if (settings->selected_protocol == PROTOCOL_RDP)
+		{
+			settings->tls_security = false;
+			settings->nla_security = false;
+			settings->rdp_security = true;
+			settings->encryption = true;
+			settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+			settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		}
+		else if (settings->selected_protocol == PROTOCOL_TLS)
+		{
+			settings->tls_security = true;
+			settings->nla_security = false;
+			settings->rdp_security = false;
+			settings->encryption = false;
+			settings->encryption_method = ENCRYPTION_METHOD_NONE;
+			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+		}
+		else if (settings->selected_protocol == PROTOCOL_NLA)
+		{
+			settings->tls_security = true;
+			settings->nla_security = true;
+			settings->rdp_security = false;
+			settings->encryption = false;
+			settings->encryption_method = ENCRYPTION_METHOD_NONE;
+			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+		}
+	}
+
+	return ret;
 }
 
 /**

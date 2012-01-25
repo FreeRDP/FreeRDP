@@ -63,7 +63,7 @@
 #define RDP_SECURITY_HEADER_LENGTH	4
 #define RDP_SHARE_CONTROL_HEADER_LENGTH	6
 #define RDP_SHARE_DATA_HEADER_LENGTH	12
-#define RDP_PACKET_HEADER_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_LENGTH)
+#define RDP_PACKET_HEADER_MAX_LENGTH	(TPDU_DATA_LENGTH + MCS_SEND_DATA_HEADER_MAX_LENGTH)
 
 #define PDU_TYPE_DEMAND_ACTIVE		0x1
 #define PDU_TYPE_CONFIRM_ACTIVE		0x3
@@ -143,6 +143,7 @@ struct rdp_rdp
 	struct crypto_hmac_struct* fips_hmac;
 	uint32 sec_flags;
 	boolean do_crypt;
+	boolean do_secure_checksum;
 	uint8 sign_key[16];
 	uint8 decrypt_key[16];
 	uint8 encrypt_key[16];
@@ -198,6 +199,6 @@ void rdp_free(rdpRdp* rdp);
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length);
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags);
 
 #endif /* __RDP_H */

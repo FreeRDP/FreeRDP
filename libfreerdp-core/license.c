@@ -111,7 +111,7 @@ STREAM* license_send_stream_init(rdpLicense* license)
 {
 	STREAM* s;
 	s = transport_send_stream_init(license->rdp->transport, 4096);
-	stream_seek(s, LICENSE_PACKET_HEADER_LENGTH);
+	stream_seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
 	return s;
 }
 
@@ -135,7 +135,7 @@ boolean license_send(rdpLicense* license, STREAM* s, uint8 type)
 	stream_set_pos(s, 0);
 
 	sec_flags = SEC_LICENSE_PKT;
-	wMsgSize = length - LICENSE_PACKET_HEADER_LENGTH + 4;
+	wMsgSize = length - LICENSE_PACKET_HEADER_MAX_LENGTH + 4;
 	/**
 	 * Using EXTENDED_ERROR_MSG_SUPPORTED here would cause mstsc to crash when
 	 * running in server mode! This flag seems to be incorrectly documented.

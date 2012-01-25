@@ -105,7 +105,7 @@ boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, u
 
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id)
 {
-	length -= RDP_PACKET_HEADER_LENGTH;
+	length -= RDP_PACKET_HEADER_MAX_LENGTH;
 
 	/* Share Control Header */
 	stream_write_uint16(s, length); /* totalLength */
@@ -113,7 +113,7 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
-boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id,
 					uint8 *compressed_type, uint16 *compressed_len)
 {
 	if (stream_get_left(s) < 12)
@@ -126,7 +126,7 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 
-	if (*type & 0x80) 
+	if (*type & 0x80)
 	{
 		stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
 		stream_read_uint16(s, *compressed_len); /* compressedLength (2 bytes) */
@@ -143,7 +143,7 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id)
 {
-	length -= RDP_PACKET_HEADER_LENGTH;
+	length -= RDP_PACKET_HEADER_MAX_LENGTH;
 	length -= RDP_SHARE_CONTROL_HEADER_LENGTH;
 	length -= RDP_SHARE_DATA_HEADER_LENGTH;
 
@@ -165,6 +165,8 @@ static int rdp_security_stream_init(rdpRdp* rdp, STREAM* s)
 		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 			stream_seek(s, 4);
 		rdp->sec_flags |= SEC_ENCRYPT;
+		if (rdp->do_secure_checksum)
+			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
 	else if (rdp->sec_flags != 0)
 	{
@@ -184,7 +186,7 @@ STREAM* rdp_send_stream_init(rdpRdp* rdp)
 	STREAM* s;
 
 	s = transport_send_stream_init(rdp->transport, 2048);
-	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 	rdp_security_stream_init(rdp, s);
 
 	return s;
@@ -194,7 +196,7 @@ STREAM* rdp_pdu_init(rdpRdp* rdp)
 {
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
-	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 	rdp_security_stream_init(rdp, s);
 	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	return s;
@@ -204,7 +206,7 @@ STREAM* rdp_data_pdu_init(rdpRdp* rdp)
 {
 	STREAM* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
-	stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+	stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 	rdp_security_stream_init(rdp, s);
 	stream_seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	stream_seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
@@ -257,7 +259,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 	{
 		int pad;
 
-		body_length = length - RDP_PACKET_HEADER_LENGTH - 16;
+		body_length = length - RDP_PACKET_HEADER_MAX_LENGTH - 16;
 		pad = 8 - (body_length % 8);
 		if (pad != 8)
 			length += pad;
@@ -267,8 +269,13 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, channel_id, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
-
-	length = (length - RDP_PACKET_HEADER_LENGTH) | 0x8000;
+	/*
+	 * We always encode length in two bytes, eventhough we could use
+	 * only one byte if length <= 0x7F. It is just easier that way,
+	 * because we can leave room for fixed-length header, store all
+	 * the data first and then store the header.
+	 */
+	length = (length - RDP_PACKET_HEADER_MAX_LENGTH) | 0x8000;
 	stream_write_uint16_be(s, length); /* userData (OCTET_STRING) */
 }
 
@@ -312,7 +319,10 @@ static uint32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 			{
 				data = s->p + 8;
 				length = length - (data - s->data);
-				security_mac_signature(rdp, data, length, s->p);
+				if (sec_flags & SEC_SECURE_CHECKSUM)
+					security_salted_mac_signature(rdp, data, length, true, s->p);
+				else
+					security_mac_signature(rdp, data, length, s->p);
 				stream_seek(s, 8);
 				security_encrypt(s->p, length, rdp);
 			}
@@ -371,7 +381,7 @@ boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 
 	s->p = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
-	
+
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
 		return false;
@@ -575,7 +585,7 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
  * @param length int
  */
 
-boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
+boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags)
 {
 	uint8 cmac[8], wmac[8];
 
@@ -614,10 +624,21 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length)
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
 	security_decrypt(s->p, length, rdp);
-	security_mac_signature(rdp, s->p, length, cmac);
-	if (memcmp(wmac, cmac, sizeof(wmac)) != 0) {
-		printf("FATAL: invalid packet signature\n");
-		return false;
+	if (securityFlags & SEC_SECURE_CHECKSUM)
+		security_salted_mac_signature(rdp, s->p, length, false, cmac);
+	else
+		security_mac_signature(rdp, s->p, length, cmac);
+	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
+	{
+		printf("WARNING: invalid packet signature\n");
+		/*
+		 * Because Standard RDP Security is totally broken,
+		 * and cannot protect against MITM, don't treat signature
+		 * verification failure as critical. This at least enables
+		 * us to work with broken RDP clients and servers that
+		 * generate invalid signatures.
+		 */
+		//return false;
 	}
 	return true;
 }
@@ -635,7 +656,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 pduLength;
 	uint16 pduSource;
 	uint16 channelId;
-	uint32 securityHeader;
+	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -645,21 +666,16 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->settings->encryption)
 	{
-		stream_read_uint32(s, securityHeader);
-		if (securityHeader & SEC_SECURE_CHECKSUM)
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
 		{
-			printf("Error: TODO\n");
-			return false;
-		}
-		if (securityHeader & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
-		{
-			if (!rdp_decrypt(rdp, s, length - 4))
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
 				printf("rdp_decrypt failed\n");
 				return false;
 			}
 		}
-		if (securityHeader & SEC_REDIRECTION_PKT)
+		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
 			/*
 			 * [MS-RDPBCGR] 2.2.13.2.1
@@ -712,7 +728,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 
 	fastpath = rdp->fastpath;
 	length = fastpath_read_header_rdp(fastpath, s);
-	
+
 	if (length == 0 || length > stream_get_left(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
@@ -721,7 +737,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length);
+		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
 	}
 
 	return fastpath_recv_updates(rdp->fastpath, s);

@@ -182,7 +182,7 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 static boolean rdp_client_establish_keys(rdpRdp* rdp)
 {
-	uint8 client_random[32];
+	uint8 client_random[CLIENT_RANDOM_LENGTH];
 	uint8 crypt_client_random[256 + 8];
 	uint32 key_len;
 	uint8* mod;
@@ -198,15 +198,14 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
-	memset(client_random, 0x5e, 32);
-	crypto_nonce(client_random, 32);
+	crypto_nonce(client_random, sizeof(client_random));
 	key_len = rdp->settings->server_cert->cert_info.modulus.length;
 	mod = rdp->settings->server_cert->cert_info.modulus.data;
 	exp = rdp->settings->server_cert->cert_info.exponent;
-	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
+	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
-	length = RDP_PACKET_HEADER_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
+	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = transport_send_stream_init(rdp->mcs->transport, length);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
@@ -225,6 +224,75 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = true;
+	if (rdp->settings->secure_checksum)
+		rdp->do_secure_checksum = true;
+
+	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	{
+		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+
+		rdp->fips_hmac = crypto_hmac_new();
+		return true;
+	}
+
+	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+
+	return true;
+}
+
+static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
+{
+	uint8 client_random[64]; /* Should be only 32 after successfull decryption, but on failure might take up to 64 bytes. */
+	uint8 crypt_client_random[256 + 8];
+	uint32 rand_len, key_len;
+	uint16 channel_id, length, sec_flags;
+	uint8* mod;
+	uint8* priv_exp;
+
+	if (rdp->settings->encryption == false)
+	{
+		/* No RDP Security. */
+		return true;
+	}
+
+	if (!rdp_read_header(rdp, s, &length, &channel_id))
+	{
+		printf("rdp_server_establish_keys: invalid RDP header\n");
+		return false;
+	}
+	rdp_read_security_header(s, &sec_flags);
+	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
+	{
+		printf("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		return false;
+	}
+	stream_read_uint32(s, rand_len);
+	key_len = rdp->settings->server_key->modulus.length;
+	if (rand_len != key_len + 8)
+	{
+		printf("rdp_server_establish_keys: invalid encrypted client random length\n");
+		return false;
+	}
+	memset(crypt_client_random, 0, sizeof(crypt_client_random));
+	stream_read(s, crypt_client_random, rand_len);
+	/* 8 zero bytes of padding */
+	stream_seek(s, 8);
+	mod = rdp->settings->server_key->modulus.data;
+	priv_exp = rdp->settings->server_key->private_exponent.data;
+	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
+
+	/* now calculate encrypt / decrypt and update keys */
+	if (!security_establish_keys(client_random, rdp))
+	{
+		return false;
+	}
+
+	rdp->do_crypt = true;
+	if (rdp->settings->secure_checksum)
+		rdp->do_secure_checksum = true;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
@@ -371,7 +439,7 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		stream_set_mark(s, mark);
-		stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+		stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 
 		if (rdp_recv_out_of_sequence_pdu(rdp, s) != true)
 			return false;
@@ -434,14 +502,11 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 
 	if (!nego_read_request(rdp->nego, s))
 		return false;
-	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
-	{
-		printf("Standard RDP encryption is not supported.\n");
-		return false;
-	}
+
+	rdp->nego->selected_protocol = 0;
 
 	printf("Requested protocols:");
-	if ((rdp->nego->requested_protocols | PROTOCOL_TLS))
+	if ((rdp->nego->requested_protocols & PROTOCOL_TLS))
 	{
 		printf(" TLS");
 		if (rdp->settings->tls_security)
@@ -452,7 +517,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		else
 			printf("(n)");
 	}
-	if ((rdp->nego->requested_protocols | PROTOCOL_NLA))
+	if ((rdp->nego->requested_protocols & PROTOCOL_NLA))
 	{
 		printf(" NLA");
 		if (rdp->settings->nla_security)
@@ -463,6 +528,14 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		else
 			printf("(n)");
 	}
+	printf(" RDP");
+	if (rdp->settings->rdp_security && rdp->nego->selected_protocol == 0)
+	{
+		printf("(Y)");
+		rdp->nego->selected_protocol = PROTOCOL_RDP;
+	}
+	else
+		printf("(n)");
 	printf("\n");
 
 	if (!nego_send_negotiation_response(rdp->nego))
@@ -564,8 +637,20 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	return true;
 }
 
+boolean rdp_server_accept_client_keys(rdpRdp* rdp, STREAM* s)
+{
+
+	if (!rdp_server_establish_keys(rdp, s))
+		return false;
+
+	rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
+
+	return true;
+}
+
 boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 {
+
 	if (!rdp_recv_client_info(rdp, s))
 		return false;
 
