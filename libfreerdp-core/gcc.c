@@ -825,16 +825,129 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings *settings)
 	return true;
 }
 
+static const uint8 initial_signature[] = {
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01
+};
+
 void gcc_write_server_security_data(STREAM* s, rdpSettings *settings)
 {
-	gcc_write_user_data_header(s, SC_SECURITY, 12);
+	uint32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
+	uint8 signature[sizeof(initial_signature)];
+	uint8 encryptedSignature[TSSK_KEY_LENGTH];
+	uint8* sigData;
+	int expLen, keyLen, sigDataLen;
 
-	stream_write_uint32(s, ENCRYPTION_METHOD_NONE); /* encryptionMethod */
-	stream_write_uint32(s, ENCRYPTION_LEVEL_NONE); /* encryptionLevel */
-#if 0
-	stream_write_uint32(s, 0); /* serverRandomLen */
-	stream_write_uint32(s, 0); /* serverCertLen */
-#endif
+	if (!settings->encryption) {
+		settings->encryption_method = ENCRYPTION_METHOD_NONE;
+		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+	}
+	else if ((settings->encryption_method & ENCRYPTION_METHOD_FIPS) != 0)
+	{
+		settings->encryption_method = ENCRYPTION_METHOD_FIPS;
+	}
+	else if ((settings->encryption_method & ENCRYPTION_METHOD_128BIT) != 0)
+	{
+		settings->encryption_method = ENCRYPTION_METHOD_128BIT;
+	}
+	else if ((settings->encryption_method & ENCRYPTION_METHOD_40BIT) != 0)
+	{
+		settings->encryption_method = ENCRYPTION_METHOD_40BIT;
+	}
+
+	if (settings->encryption_method != ENCRYPTION_METHOD_NONE)
+		settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+
+	headerLen = 12;
+	keyLen = 0;
+	wPublicKeyBlobLen = 0;
+	serverRandomLen = 0;
+	serverCertLen = 0;
+
+	if (settings->encryption_method != ENCRYPTION_METHOD_NONE ||
+	    settings->encryption_level != ENCRYPTION_LEVEL_NONE) {
+		serverRandomLen = 32;
+
+		keyLen = settings->server_key->modulus.length;
+		expLen = sizeof(settings->server_key->exponent);
+		wPublicKeyBlobLen = 4; /* magic (RSA1) */
+		wPublicKeyBlobLen += 4; /* keylen */
+		wPublicKeyBlobLen += 4; /* bitlen */
+		wPublicKeyBlobLen += 4; /* datalen */
+		wPublicKeyBlobLen += expLen;
+		wPublicKeyBlobLen += keyLen;
+		wPublicKeyBlobLen += 8; /* 8 bytes of zero padding */
+
+		serverCertLen = 4; /* dwVersion */
+		serverCertLen += 4; /* dwSigAlgId */
+		serverCertLen += 4; /* dwKeyAlgId */
+		serverCertLen += 2; /* wPublicKeyBlobType */
+		serverCertLen += 2; /* wPublicKeyBlobLen */
+		serverCertLen += wPublicKeyBlobLen;
+		serverCertLen += 2; /* wSignatureBlobType */
+		serverCertLen += 2; /* wSignatureBlobLen */
+		serverCertLen += sizeof(encryptedSignature); /* SignatureBlob */
+		serverCertLen += 8; /* 8 bytes of zero padding */
+
+		headerLen += sizeof(serverRandomLen);
+		headerLen += sizeof(serverCertLen);
+		headerLen += serverRandomLen;
+		headerLen += serverCertLen;
+	}
+
+	gcc_write_user_data_header(s, SC_SECURITY, headerLen);
+
+	stream_write_uint32(s, settings->encryption_method); /* encryptionMethod */
+	stream_write_uint32(s, settings->encryption_level); /* encryptionLevel */
+	if (settings->encryption_method == ENCRYPTION_METHOD_NONE &&
+	    settings->encryption_level == ENCRYPTION_LEVEL_NONE) {
+		return;
+	}
+
+	stream_write_uint32(s, serverRandomLen); /* serverRandomLen */
+	stream_write_uint32(s, serverCertLen); /* serverCertLen */
+
+	freerdp_blob_alloc(settings->server_random, serverRandomLen);
+	crypto_nonce(settings->server_random->data, serverRandomLen);
+	stream_write(s, settings->server_random->data, serverRandomLen);
+
+	sigData = stream_get_tail(s);
+
+	stream_write_uint32(s, CERT_CHAIN_VERSION_1); /* dwVersion (4 bytes) */
+	stream_write_uint32(s, SIGNATURE_ALG_RSA); /* dwSigAlgId */
+	stream_write_uint32(s, KEY_EXCHANGE_ALG_RSA); /* dwKeyAlgId */
+	stream_write_uint16(s, BB_RSA_KEY_BLOB); /* wPublicKeyBlobType */
+
+	stream_write_uint16(s, wPublicKeyBlobLen); /* wPublicKeyBlobLen */
+	stream_write(s, "RSA1", 4); /* magic */
+	stream_write_uint32(s, keyLen + 8); /* keylen */
+	stream_write_uint32(s, keyLen * 8); /* bitlen */
+	stream_write_uint32(s, keyLen - 1); /* datalen */
+
+	stream_write(s, settings->server_key->exponent, expLen);
+	stream_write(s, settings->server_key->modulus.data, keyLen);
+	stream_write_zero(s, 8);
+
+	sigDataLen = stream_get_tail(s) - sigData;
+
+	stream_write_uint16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
+	stream_write_uint16(s, keyLen + 8); /* wSignatureBlobLen */
+
+	memcpy(signature, initial_signature, sizeof(initial_signature));
+	CryptoMd5 md5Ctx;
+	md5Ctx = crypto_md5_init();
+	crypto_md5_update(md5Ctx, sigData, sigDataLen);
+	crypto_md5_final(md5Ctx, signature);
+
+	crypto_rsa_private_encrypt(signature, sizeof(signature), TSSK_KEY_LENGTH, tssk_modulus, tssk_privateExponent, encryptedSignature);
+	stream_write(s, encryptedSignature, sizeof(encryptedSignature));
+	stream_write_zero(s, 8);
 }
 
 /**
