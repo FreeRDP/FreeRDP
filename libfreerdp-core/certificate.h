@@ -42,6 +42,13 @@
 #define BB_RSA_KEY_BLOB        		6
 #define BB_RSA_SIGNATURE_BLOB  		8
 
+struct rdp_key
+{
+	rdpBlob modulus;
+	rdpBlob private_exponent;
+	uint8 exponent[4];
+};
+
 void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
 rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count);
@@ -53,6 +60,9 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 
 rdpCertificate* certificate_new(void);
 void certificate_free(rdpCertificate* certificate);
+
+rdpKey* key_new(const char *keyfile);
+void key_free(rdpKey* key);
 
 #ifdef WITH_DEBUG_CERTIFICATE
 #define DEBUG_CERTIFICATE(fmt, ...) DEBUG_CLASS(CERTIFICATE, fmt, ## __VA_ARGS__)

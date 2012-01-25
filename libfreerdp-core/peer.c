@@ -23,6 +23,10 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	client->context->rdp->settings->server_mode = true;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
+	if (client->context->rdp->settings->rdp_key_file != NULL) {
+		client->context->rdp->settings->server_key =
+		    key_new(client->context->rdp->settings->rdp_key_file);
+	}
 
 	return true;
 }
@@ -112,16 +116,33 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 
 static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
+	rdpRdp *rdp;
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
 	uint16 pduSource;
 	uint16 channelId;
+	uint16 securityFlags;
 
-	if (!rdp_read_header(client->context->rdp, s, &length, &channelId))
+	rdp = client->context->rdp;
+
+	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
 		return false;
+	}
+
+	if (rdp->settings->encryption)
+	{
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			{
+				printf("rdp_decrypt failed\n");
+				return false;
+			}
+		}
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
@@ -169,7 +190,7 @@ static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length);
+		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
 	}
 
 	return fastpath_recv_inputs(fastpath, s);
@@ -215,6 +236,15 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+			if (client->context->rdp->settings->encryption) {
+				if (!rdp_server_accept_client_keys(client->context->rdp, s))
+					return false;
+				break;
+			}
+			client->context->rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
+			/* FALLTHROUGH */
+
+		case CONNECTION_STATE_ESTABLISH_KEYS:
 			if (!rdp_server_accept_client_info(client->context->rdp, s))
 				return false;
 			IFCALL(client->Capabilities, client);

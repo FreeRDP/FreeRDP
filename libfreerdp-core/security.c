@@ -264,7 +264,13 @@ void security_salted_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, bool
 	if (encryption)
 		security_uint32_le(use_count_le, rdp->encrypt_use_count);
 	else
-		security_uint32_le(use_count_le, rdp->decrypt_use_count);
+	{
+		/*
+		 * We calculate checksum on plain text, so we must have already
+		 * decrypt it, which means decrypt_use_count is off by one.
+		 */
+		security_uint32_le(use_count_le, rdp->decrypt_use_count - 1);
+	}
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	sha1 = crypto_sha1_init();

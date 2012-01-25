@@ -564,14 +564,31 @@ boolean rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
-	uint16 sec_flags;
+	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return false;
 
-	rdp_read_security_header(s, &sec_flags);
-	if ((sec_flags & SEC_INFO_PKT) == 0)
+	rdp_read_security_header(s, &securityFlags);
+	if ((securityFlags & SEC_INFO_PKT) == 0)
 		return false;
+
+	if (rdp->settings->encryption)
+	{
+		if (securityFlags & SEC_REDIRECTION_PKT)
+		{
+			printf("Error: SEC_REDIRECTION_PKT unsupported\n");
+			return false;
+		}
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			{
+				printf("rdp_decrypt failed\n");
+				return false;
+			}
+		}
+	}
 
 	return rdp_read_info_packet(s, rdp->settings);
 }
