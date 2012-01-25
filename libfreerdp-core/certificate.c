@@ -17,6 +17,13 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+
 #include "certificate.h"
 
 /**
@@ -482,3 +489,71 @@ void certificate_free(rdpCertificate* certificate)
 	}
 }
 
+rdpKey* key_new(const char *keyfile)
+{
+	rdpKey* key;
+	RSA *rsa;
+	FILE *fp;
+
+	key = (rdpKey*) xzalloc(sizeof(rdpKey));
+	if (key == NULL)
+		return NULL;
+
+	fp = fopen(keyfile, "r");
+	if (fp == NULL) {
+		printf("unable to load RSA key from %s: %s.", keyfile,
+		    strerror(errno));
+		return NULL;
+	}
+	rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+	if (rsa == NULL) {
+		ERR_print_errors_fp(stdout);
+		fclose(fp);
+		return NULL;
+	}
+	fclose(fp);
+
+	switch (RSA_check_key(rsa)) {
+	case 0:
+		RSA_free(rsa);
+		printf("invalid RSA key in %s", keyfile);
+		return NULL;
+	case 1:
+		/* Valid key. */
+		break;
+	default:
+		ERR_print_errors_fp(stdout);
+		RSA_free(rsa);
+		return NULL;
+	}
+
+	if (BN_num_bytes(rsa->e) > 4) {
+		RSA_free(rsa);
+		printf("RSA public exponent too large in %s", keyfile);
+		return NULL;
+	}
+
+	freerdp_blob_alloc(&key->modulus, BN_num_bytes(rsa->n));
+	BN_bn2bin(rsa->n, key->modulus.data);
+	crypto_reverse(key->modulus.data, key->modulus.length);
+	freerdp_blob_alloc(&key->private_exponent, BN_num_bytes(rsa->d));
+	BN_bn2bin(rsa->d, key->private_exponent.data);
+	crypto_reverse(key->private_exponent.data, key->private_exponent.length);
+	memset(key->exponent, 0, sizeof(key->exponent));
+	BN_bn2bin(rsa->e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa->e));
+	crypto_reverse(key->exponent, sizeof(key->exponent));
+
+	RSA_free(rsa);
+
+	return key;
+}
+
+void key_free(rdpKey* key)
+{
+	if (key != NULL)
+	{
+		freerdp_blob_free(&key->modulus);
+		freerdp_blob_free(&key->private_exponent);
+		xfree(key);
+	}
+}

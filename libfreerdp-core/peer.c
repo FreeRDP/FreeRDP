@@ -23,6 +23,10 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	client->context->rdp->settings->server_mode = true;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
+	if (client->context->rdp->settings->rdp_key_file != NULL) {
+		client->context->rdp->settings->server_key =
+		    key_new(client->context->rdp->settings->rdp_key_file);
+	}
 
 	return true;
 }
