@@ -474,19 +474,48 @@ boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	return true;
 }
 
+static uint32 fastpath_get_sec_bytes(rdpRdp* rdp)
+{
+	uint32 sec_bytes;
+
+	if (rdp->do_crypt)
+	{
+		sec_bytes = 8;
+		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+			sec_bytes += 4;
+	}
+	else
+		sec_bytes = 0;
+	return sec_bytes;
+}
+
 STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 eventCode)
 {
+	rdpRdp *rdp;
 	STREAM* s;
-	s = transport_send_stream_init(fastpath->rdp->transport, 127);
-	stream_seek(s, 2); /* fpInputHeader and length1 */
-	/* length2 is not necessary since input PDU should not exceed 127 bytes */
+
+	rdp = fastpath->rdp;
+
+	s = transport_send_stream_init(rdp->transport, 256);
+	stream_seek(s, 3); /* fpInputHeader, length1 and length2 */
+	if (rdp->do_crypt) {
+		rdp->sec_flags |= SEC_ENCRYPT;
+		if (rdp->do_secure_checksum)
+			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
+	}
+	stream_seek(s, fastpath_get_sec_bytes(rdp));
 	stream_write_uint8(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
 	return s;
 }
 
 boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 {
+	rdpRdp *rdp;
 	uint16 length;
+	uint8 eventHeader;
+	int sec_bytes;
+
+	rdp = fastpath->rdp;
 
 	length = stream_get_length(s);
 	if (length > 127)
@@ -495,11 +524,39 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 		return false;
 	}
 
-	stream_set_pos(s, 0);
-	stream_write_uint8(s, (1 << 2));
-	stream_write_uint8(s, length);
+	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
+	eventHeader |= (1 << 2); /* numberEvents */
+	if (rdp->sec_flags & SEC_ENCRYPT)
+		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
+	if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+		eventHeader |= (FASTPATH_INPUT_SECURE_CHECKSUM << 6);
 
-	stream_set_pos(s, length);
+	stream_set_pos(s, 0);
+	stream_write_uint8(s, eventHeader);
+	sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+	/*
+	 * We always encode length in two bytes, eventhough we could use
+	 * only one byte if length <= 0x7F. It is just easier that way,
+	 * because we can leave room for fixed-length header, store all
+	 * the data first and then store the header.
+	 */
+	stream_write_uint16_be(s, 0x8000 | (length + sec_bytes));
+
+	if (sec_bytes > 0)
+	{
+		uint8* ptr;
+
+		ptr = stream_get_tail(s) + sec_bytes;
+		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+			security_salted_mac_signature(rdp, ptr, length - 3, true, stream_get_tail(s));
+		else
+			security_mac_signature(rdp, ptr, length - 3, stream_get_tail(s));
+		security_encrypt(ptr, length - 3, rdp);
+	}
+
+	rdp->sec_flags = 0;
+
+	stream_set_pos(s, length + sec_bytes);
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return false;
 
@@ -511,26 +568,33 @@ STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
 	STREAM* s;
 	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
 	stream_seek(s, 3); /* fpOutputHeader, length1 and length2 */
+	stream_seek(s, fastpath_get_sec_bytes(fastpath->rdp));
 	stream_seek(s, 3); /* updateHeader, size */
 	return s;
 }
 
 boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s)
 {
+	rdpRdp *rdp;
 	uint8* bm;
+	uint8* ptr;
 	int fragment;
+	int sec_bytes;
 	uint16 length;
 	boolean result;
 	uint16 pduLength;
 	uint16 maxLength;
 	uint32 totalLength;
 	uint8 fragmentation;
+	uint8 header;
 	STREAM* update;
 
 	result = true;
 
-	maxLength = FASTPATH_MAX_PACKET_SIZE - 6;
-	totalLength = stream_get_length(s) - 6;
+	rdp = fastpath->rdp;
+	sec_bytes = fastpath_get_sec_bytes(rdp);
+	maxLength = FASTPATH_MAX_PACKET_SIZE - 6 - sec_bytes;
+	totalLength = stream_get_length(s) - 6 - sec_bytes;
 	stream_set_pos(s, 0);
 	update = stream_new(0);
 
@@ -538,7 +602,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	{
 		length = MIN(maxLength, totalLength);
 		totalLength -= length;
-		pduLength = length + 6;
+		pduLength = length + 6 + sec_bytes;
 
 		if (totalLength == 0)
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
@@ -546,14 +610,28 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
 		stream_get_mark(s, bm);
-		stream_write_uint8(s, 0); /* fpOutputHeader (1 byte) */
+		header = 0;
+		if (sec_bytes > 0)
+			header |= (FASTPATH_OUTPUT_ENCRYPTED << 6);
+		stream_write_uint8(s, header); /* fpOutputHeader (1 byte) */
 		stream_write_uint8(s, 0x80 | (pduLength >> 8)); /* length1 */
 		stream_write_uint8(s, pduLength & 0xFF); /* length2 */
+		if (sec_bytes > 0)
+			stream_seek(s, sec_bytes);
 		fastpath_write_update_header(s, updateCode, fragmentation, 0);
 		stream_write_uint16(s, length);
 
 		stream_attach(update, bm, pduLength);
 		stream_seek(update, pduLength);
+		if (sec_bytes > 0)
+		{
+			ptr = bm + 3 + sec_bytes;
+			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+				security_salted_mac_signature(rdp, ptr, length + 3, true, bm + 3);
+			else
+				security_mac_signature(rdp, ptr, length + 3, bm + 3);
+			security_encrypt(ptr, length + 3, rdp);
+		}
 		if (transport_write(fastpath->rdp->transport, update) < 0)
 		{
 			stream_detach(update);
@@ -562,8 +640,8 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 		}
 		stream_detach(update);
 
-		/* Reserve 6 bytes for the next fragment header, if any. */
-		stream_seek(s, length - 6);
+		/* Reserve 6+sec_bytes bytes for the next fragment header, if any. */
+		stream_seek(s, length - 6 - sec_bytes);
 	}
 
 	stream_free(update);
