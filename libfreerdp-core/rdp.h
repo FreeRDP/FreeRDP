@@ -143,6 +143,7 @@ struct rdp_rdp
 	struct crypto_hmac_struct* fips_hmac;
 	uint32 sec_flags;
 	boolean do_crypt;
+	boolean do_secure_checksum;
 	uint8 sign_key[16];
 	uint8 decrypt_key[16];
 	uint8 encrypt_key[16];

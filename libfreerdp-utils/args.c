@@ -101,6 +101,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
+				"  --secure-checksum: use salted checksums with Standard RDP encryption\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; //TODO: What is the correct return
@@ -599,6 +600,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				}
 			}
 			num_extensions++;
+		}
+		else if (strcmp("--secure-checksum", argv[index]) == 0)
+		{
+			settings->secure_checksum = true;
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
