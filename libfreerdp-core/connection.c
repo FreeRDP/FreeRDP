@@ -206,7 +206,7 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	crypto_rsa_public_encrypt(client_random, 32, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
-	length = RDP_PACKET_HEADER_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
+	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = transport_send_stream_init(rdp->mcs->transport, length);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
@@ -371,7 +371,7 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		stream_set_mark(s, mark);
-		stream_seek(s, RDP_PACKET_HEADER_LENGTH);
+		stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 
 		if (rdp_recv_out_of_sequence_pdu(rdp, s) != true)
 			return false;
