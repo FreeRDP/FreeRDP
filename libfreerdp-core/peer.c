@@ -112,16 +112,33 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 
 static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
+	rdpRdp *rdp;
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
 	uint16 pduSource;
 	uint16 channelId;
+	uint16 securityFlags;
 
-	if (!rdp_read_header(client->context->rdp, s, &length, &channelId))
+	rdp = client->context->rdp;
+
+	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
 		return false;
+	}
+
+	if (rdp->settings->encryption)
+	{
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			{
+				printf("rdp_decrypt failed\n");
+				return false;
+			}
+		}
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)

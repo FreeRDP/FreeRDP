@@ -1922,9 +1922,24 @@ boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 	uint16 lengthSourceDescriptor;
 	uint16 lengthCombinedCapabilities;
 	uint16 numberCapabilities;
+	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return false;
+
+	if (rdp->settings->encryption)
+	{
+		rdp_read_security_header(s, &securityFlags);
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
+			{
+				printf("rdp_decrypt failed\n");
+				return false;
+			}
+		}
+	}
+
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 		return false;
 
