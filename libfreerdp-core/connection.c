@@ -243,6 +243,73 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	return true;
 }
 
+static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
+{
+	uint8 client_random[64]; /* Should be only 32 after successfull decryption, but on failure might take up to 64 bytes. */
+	uint8 crypt_client_random[256 + 8];
+	uint32 rand_len, key_len;
+	uint16 channel_id, length, sec_flags;
+	uint8* mod;
+	uint8* priv_exp;
+
+	if (rdp->settings->encryption == false)
+	{
+		/* No RDP Security. */
+		return true;
+	}
+
+	if (!rdp_read_header(rdp, s, &length, &channel_id))
+	{
+		printf("rdp_server_establish_keys: invalid RDP header\n");
+		return false;
+	}
+	rdp_read_security_header(s, &sec_flags);
+	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
+	{
+		printf("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		return false;
+	}
+	stream_read_uint32(s, rand_len);
+	key_len = rdp->settings->server_key->modulus.length;
+	if (rand_len != key_len + 8)
+	{
+		printf("rdp_server_establish_keys: invalid encrypted client random length\n");
+		return false;
+	}
+	memset(crypt_client_random, 0, sizeof(crypt_client_random));
+	stream_read(s, crypt_client_random, rand_len);
+	/* 8 zero bytes of padding */
+	stream_seek(s, 8);
+	mod = rdp->settings->server_key->modulus.data;
+	priv_exp = rdp->settings->server_key->private_exponent.data;
+	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
+
+	/* now calculate encrypt / decrypt and update keys */
+	if (!security_establish_keys(client_random, rdp))
+	{
+		return false;
+	}
+
+	rdp->do_crypt = true;
+	if (rdp->settings->secure_checksum)
+		rdp->do_secure_checksum = true;
+
+	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	{
+		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+
+		rdp->fips_hmac = crypto_hmac_new();
+		return true;
+	}
+
+	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+
+	return true;
+}
+
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
