@@ -236,6 +236,15 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+			if (client->context->rdp->settings->encryption) {
+				if (!rdp_server_accept_client_keys(client->context->rdp, s))
+					return false;
+				break;
+			}
+			client->context->rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
+			/* FALLTHROUGH */
+
+		case CONNECTION_STATE_ESTABLISH_KEYS:
 			if (!rdp_server_accept_client_info(client->context->rdp, s))
 				return false;
 			IFCALL(client->Capabilities, client);

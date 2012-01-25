@@ -502,11 +502,8 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 
 	if (!nego_read_request(rdp->nego, s))
 		return false;
-	if (rdp->nego->requested_protocols == PROTOCOL_RDP)
-	{
-		printf("Standard RDP encryption is not supported.\n");
-		return false;
-	}
+
+	rdp->nego->selected_protocol = 0;
 
 	printf("Requested protocols:");
 	if ((rdp->nego->requested_protocols & PROTOCOL_TLS))
@@ -531,6 +528,14 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		else
 			printf("(n)");
 	}
+	printf(" RDP");
+	if (rdp->settings->rdp_security && rdp->nego->selected_protocol == 0)
+	{
+		printf("(Y)");
+		rdp->nego->selected_protocol = PROTOCOL_RDP;
+	}
+	else
+		printf("(n)");
 	printf("\n");
 
 	if (!nego_send_negotiation_response(rdp->nego))
@@ -632,8 +637,20 @@ boolean rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	return true;
 }
 
+boolean rdp_server_accept_client_keys(rdpRdp* rdp, STREAM* s)
+{
+
+	if (!rdp_server_establish_keys(rdp, s))
+		return false;
+
+	rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
+
+	return true;
+}
+
 boolean rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 {
+
 	if (!rdp_recv_client_info(rdp, s))
 		return false;
 
