@@ -407,6 +407,7 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length
 				break;
 
 			default:
+				printf("gcc_read_server_data_blocks: ignoring type=%hu\n", type);
 				break;
 		}
 		offset += blockLength;
@@ -740,10 +741,16 @@ boolean gcc_read_client_security_data(STREAM* s, rdpSettings *settings, uint16 b
 	if (blockLength < 8)
 		return false;
 
-	stream_read_uint32(s, settings->encryption_method); /* encryptionMethods */
-	if (settings->encryption_method == 0)
-		stream_read_uint32(s, settings->encryption_method); /* extEncryptionMethods */
-
+	if (settings->encryption)
+	{
+		stream_read_uint32(s, settings->encryption_method); /* encryptionMethods */
+		if (settings->encryption_method == 0)
+			stream_read_uint32(s, settings->encryption_method); /* extEncryptionMethods */
+	}
+	else
+	{
+		stream_seek(s, 8);
+	}
 	return true;
 }
 
