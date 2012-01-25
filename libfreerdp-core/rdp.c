@@ -113,7 +113,7 @@ void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint1
 	stream_write_uint16(s, channel_id); /* pduSource */
 }
 
-boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
+boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id,
 					uint8 *compressed_type, uint16 *compressed_len)
 {
 	if (stream_get_left(s) < 12)
@@ -126,7 +126,7 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 
-	if (*type & 0x80) 
+	if (*type & 0x80)
 	{
 		stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
 		stream_read_uint16(s, *compressed_len); /* compressedLength (2 bytes) */
@@ -381,7 +381,7 @@ boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id)
 
 	s->p = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
-	
+
 	stream_set_pos(s, length);
 	if (transport_write(rdp->transport, s) < 0)
 		return false;
@@ -728,7 +728,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 
 	fastpath = rdp->fastpath;
 	length = fastpath_read_header_rdp(fastpath, s);
-	
+
 	if (length == 0 || length > stream_get_left(s))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
