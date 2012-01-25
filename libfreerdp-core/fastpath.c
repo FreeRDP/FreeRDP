@@ -24,6 +24,7 @@
 #include <freerdp/utils/stream.h>
 
 #include "orders.h"
+#include "per.h"
 #include "update.h"
 #include "surface.h"
 
@@ -99,10 +100,7 @@ uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 header;
 	uint16 length;
-	uint8 t;
-	uint16 hs;
 
-	hs = 2;
 	stream_read_uint8(s, header);
 
 	if (fastpath != NULL)
@@ -111,18 +109,9 @@ uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 		fastpath->numberEvents = (header & 0x3C) >> 2;
 	}
 
-	stream_read_uint8(s, length); /* length1 */
-	/* If most significant bit is not set, length2 is not presented. */
-	if ((length & 0x80))
-	{
-		hs++;
-		length &= 0x7F;
-		length <<= 8;
-		stream_read_uint8(s, t);
-		length += t;
-	}
+	per_read_length(s, &length);
 
-	return length - hs;
+	return length - stream_get_length(s);
 }
 
 static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
