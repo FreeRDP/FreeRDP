@@ -269,7 +269,12 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id)
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, channel_id, 0); /* channelId */
 	stream_write_uint8(s, 0x70); /* dataPriority + segmentation */
-
+	/*
+	 * We always encode length in two bytes, eventhough we could use
+	 * only one byte if length <= 0x7F. It is just easier that way,
+	 * because we can leave room for fixed-length header, store all
+	 * the data first and then store the header.
+	 */
 	length = (length - RDP_PACKET_HEADER_MAX_LENGTH) | 0x8000;
 	stream_write_uint16_be(s, length); /* userData (OCTET_STRING) */
 }
