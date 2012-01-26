@@ -56,6 +56,7 @@ rdpSettings* settings_new(void* instance)
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0;
 		settings->encryption = false;
+		settings->secure_checksum = false;
 		settings->port = 3389;
 		settings->desktop_resize = true;
 
@@ -197,6 +198,7 @@ void settings_free(rdpSettings* settings)
 		freerdp_blob_free(settings->server_certificate);
 		xfree(settings->server_random);
 		xfree(settings->server_certificate);
+		xfree(settings->rdp_key_file);
 		certificate_free(settings->server_cert);
 		xfree(settings->client_auto_reconnect_cookie);
 		xfree(settings->server_auto_reconnect_cookie);
@@ -204,6 +206,7 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->bitmapCacheV2CellInfo);
 		xfree(settings->glyphCache);
 		xfree(settings->fragCache);
+		key_free(settings->server_key);
 		xfree(settings);
 	}
 }
