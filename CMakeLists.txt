@@ -111,10 +111,12 @@ if(NOT WIN32)
 	find_optional_package(PulseAudio)
 	find_optional_package(PCSC)
 	find_suggested_package(Cups)
-	find_suggested_package(FFmpeg)
 
 	if(NOT APPLE)
+		find_suggested_package(FFmpeg)
 		find_suggested_package(ALSA)
+	else(NOT APPLE)
+		find_optional_package(FFmpeg)
 	endif()
 endif()
 
