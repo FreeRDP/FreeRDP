@@ -141,22 +141,26 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	settings->redirected_session_id = redirection->sessionID;
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	{
 		nego_set_routing_token(rdp->nego, &redirection->loadBalanceInfo);
-
-	if (redirection->flags & LB_TARGET_NET_ADDRESS)
-	{
-		xfree(settings->hostname);
-		settings->hostname = redirection->targetNetAddress.ascii;
-        }
-	else if (redirection->flags & LB_TARGET_FQDN)
-	{
-		xfree(settings->hostname);
-		settings->hostname = redirection->targetFQDN.ascii;
 	}
-	else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+	else
 	{
-		xfree(settings->hostname);
-		settings->hostname = redirection->targetNetBiosName.ascii;
+		if (redirection->flags & LB_TARGET_NET_ADDRESS)
+		{
+			xfree(settings->hostname);
+			settings->hostname = redirection->targetNetAddress.ascii;
+		}
+		else if (redirection->flags & LB_TARGET_FQDN)
+		{
+			xfree(settings->hostname);
+			settings->hostname = redirection->targetFQDN.ascii;
+		}
+		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+		{
+			xfree(settings->hostname);
+			settings->hostname = redirection->targetNetBiosName.ascii;
+		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
