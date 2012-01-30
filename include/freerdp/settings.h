@@ -289,7 +289,11 @@ struct rdp_settings
 	uint32 pdu_source; /* 114 */
 	UNICONV* uniconv; /* 115 */
 	boolean server_mode; /* 116 */
-	uint32 paddingE[144 - 117]; /* 117 */
+	char* config_path; /* 117 */
+	char* current_path; /* 118 */
+	char* development_path; /* 119 */
+	boolean development_mode; /* 120 */
+	uint32 paddingE[144 - 121]; /* 121 */
 
 	/* Security */
 	boolean encryption; /* 144 */
