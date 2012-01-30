@@ -68,13 +68,8 @@ typedef signed long long sint64;
 #ifdef HAVE_STDBOOL_H
 
 #include <stdbool.h>
-#ifndef _WIN32
+
 typedef int boolean;
-#else
-typedef unsigned char boolean;
-#endif
-
-
 
 #else
 
