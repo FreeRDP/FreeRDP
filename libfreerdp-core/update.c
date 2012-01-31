@@ -552,6 +552,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		deleteList->sIndices = 64;
 		deleteList->indices = xmalloc(deleteList->sIndices * 2);
 		deleteList->cIndices = 0;
+
+		update->SuppressOutput = update_send_suppress_output;
 	}
 
 	return update;
