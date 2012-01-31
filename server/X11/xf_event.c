@@ -76,7 +76,6 @@ void xf_clear_event(xfEventQueue* event_queue)
 
 void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 {
-	printf("xf_event_push lock\n");
 	pthread_mutex_lock(&(event_queue->mutex));
 
 	if (event_queue->count >= event_queue->size)
@@ -90,14 +89,12 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 	xf_set_event(event_queue);
 
 	pthread_mutex_unlock(&(event_queue->mutex));
-	printf("xf_event_push unlock\n");
 }
 
 xfEvent* xf_event_peek(xfEventQueue* event_queue)
 {
 	xfEvent* event;
 
-	printf("xf_event_peek lock\n");
 	pthread_mutex_lock(&(event_queue->mutex));
 
 	if (event_queue->count < 1)
@@ -106,7 +103,6 @@ xfEvent* xf_event_peek(xfEventQueue* event_queue)
 		event = event_queue->events[0];
 
 	pthread_mutex_unlock(&(event_queue->mutex));
-	printf("xf_event_peek unlock\n");
 
 	return event;
 }
@@ -116,7 +112,6 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue)
 	int i;
 	xfEvent* event;
 
-	printf("xf_event_pop lock\n");
 	pthread_mutex_lock(&(event_queue->mutex));
 
 	if (event_queue->count < 1)
@@ -129,7 +124,6 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue)
 		event_queue->events[i] = event_queue->events[i + 1];
 
 	pthread_mutex_unlock(&(event_queue->mutex));
-	printf("xf_event_pop unlock\n");
 
 	return event;
 }

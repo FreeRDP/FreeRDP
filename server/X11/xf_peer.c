@@ -507,6 +507,8 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		cmd->destBottom = y + height;
 	}
 
+	XDestroyImage(image);
+
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
 	cmd->width = width;
