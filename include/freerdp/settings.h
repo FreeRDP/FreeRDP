@@ -269,7 +269,8 @@ struct rdp_settings
 	boolean autologon; /* 58 */
 	boolean compression; /* 59 */
 	uint32 performance_flags; /* 60 */
-	uint32 paddingC[80 - 61]; /* 61 */
+	rdpBlob* password_cookie; /* 61 */
+	uint32 paddingC[80 - 62]; /* 62 */
 
 	/* User Interface Parameters */
 	boolean sw_gdi; /* 80 */
@@ -289,7 +290,11 @@ struct rdp_settings
 	uint32 pdu_source; /* 114 */
 	UNICONV* uniconv; /* 115 */
 	boolean server_mode; /* 116 */
-	uint32 paddingE[144 - 117]; /* 117 */
+	char* config_path; /* 117 */
+	char* current_path; /* 118 */
+	char* development_path; /* 119 */
+	boolean development_mode; /* 120 */
+	uint32 paddingE[144 - 121]; /* 121 */
 
 	/* Security */
 	boolean encryption; /* 144 */

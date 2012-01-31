@@ -168,11 +168,19 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 	{
 		peer_addr_size = sizeof(peer_addr);
 		peer_sockfd = accept(listener->sockfds[i], (struct sockaddr *)&peer_addr, &peer_addr_size);
+
 		if (peer_sockfd == -1)
 		{
+#ifdef _WIN32
+			int wsa_error = WSAGetLastError();
+
+			/* No data available */
+			if (wsa_error == WSAEWOULDBLOCK)
+				continue;
+#else
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				continue;
-
+#endif
 			perror("accept");
 			return false;
 		}

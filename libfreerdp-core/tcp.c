@@ -220,10 +220,20 @@ int tcp_write(rdpTcp* tcp, uint8* data, int length)
 
 	if (status < 0)
 	{
+#ifdef _WIN32
+		int wsa_error = WSAGetLastError();
+
+		/* No data available */
+		if (wsa_error == WSAEWOULDBLOCK)
+			status = 0;
+                else 
+                        perror("send");
+#else
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			status = 0;
 		else
 			perror("send");
+#endif
 	}
 
 	return status;

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * X11 Peer
+ * X11 Server Input
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,38 +17,18 @@
  * limitations under the License.
  */
 
-#ifndef __XF_PEER_H
-#define __XF_PEER_H
+#ifndef __XF_INPUT_H
+#define __XF_INPUT_H
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/region.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/listener.h>
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/stopwatch.h>
-
-typedef struct xf_peer_context xfPeerContext;
+#include <pthread.h>
 
 #include "xfreerdp.h"
 
-struct xf_peer_context
-{
-	rdpContext _p;
+void xf_input_synchronize_event(rdpInput* input, uint32 flags);
+void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+void xf_input_unicode_keyboard_event(rdpInput* input, uint16 code);
+void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+void xf_input_register_callbacks(rdpInput* input);
 
-	HGDI_DC hdc;
-	STREAM* s;
-	xfInfo* info;
-	boolean activated;
-	RFX_CONTEXT* rfx_context;
-	uint8* capture_buffer;
-	pthread_t thread;
-	int activations;
-	STOPWATCH* stopwatch;
-	pthread_mutex_t mutex;
-	xfEventQueue* event_queue;
-};
-
-void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
-
-#endif /* __XF_PEER_H */
+#endif /* __XF_INPUT_H */

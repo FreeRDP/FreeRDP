@@ -26,11 +26,13 @@
 #include <time.h>
 #include <sys/timeb.h>
 
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 struct timeval
 {
 	long tv_sec;
 	long tv_usec;
 };
+#endif
 
 int gettimeofday(struct timeval* tp, void* tz)
 {
