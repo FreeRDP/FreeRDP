@@ -82,7 +82,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	if ((selectedProtocol & PROTOCOL_TLS) || (selectedProtocol == PROTOCOL_RDP))
 	{
-		if ((settings->username != NULL) && (settings->password != NULL))
+		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie->length > 0)))
 			settings->autologon = true;
 	}
 
@@ -177,8 +177,8 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		xfree(settings->password);
-		settings->password = redirection->password.ascii;
+		freerdp_blob_free(settings->password_cookie);
+		settings->password_cookie = redirection->password_cookie;
 	}
 
 	return rdp_client_connect(rdp);

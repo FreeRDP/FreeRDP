@@ -50,7 +50,7 @@ struct rdp_redirection
 	rdpString tsvUrl;
 	rdpString username;
 	rdpString domain;
-	rdpString password;
+	rdpBlob* password_cookie;
 	rdpString targetFQDN;
 	rdpBlob loadBalanceInfo;
 	rdpString targetNetBiosName;
