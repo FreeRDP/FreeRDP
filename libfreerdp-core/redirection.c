@@ -106,12 +106,14 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	{
 		uint32 passwordLength;
 		stream_read_uint32(s, passwordLength);
+		redirection->password_cookie = xnew(rdpBlob);
 		freerdp_blob_alloc(redirection->password_cookie, passwordLength);
 		stream_read(s, redirection->password_cookie->data, passwordLength);
-#ifdef WITH_DEBUG_REDIR
-		DEBUG_REDIR("password_cookie:");
+
+//#ifdef WITH_DEBUG_REDIR
+	//	DEBUG_REDIR("password_cookie:");
 		freerdp_hexdump(redirection->password_cookie->data, redirection->password_cookie->length);
-#endif
+//#endif
 	}
 
 	if (redirection->flags & LB_TARGET_FQDN)

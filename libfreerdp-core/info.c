@@ -505,10 +505,11 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	userName = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->username, &length);
 	cbUserName = length;
 
-	if (settings->password_cookie != NULL)
+	if (settings->password_cookie->length > 0)
 	{
 		password = (uint8*)settings->password_cookie->data;
 		cbPassword = settings->password_cookie->length - 2;
+		freerdp_hexdump(password, cbPassword);
 	}
 	else
 	{
@@ -540,7 +541,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0);
 
 	if (cbPassword > 0)
-		stream_write(s, password, cbPassword);
+		stream_write(s, password, cbPassword + 2);
 	stream_write_uint16(s, 0);
 
 	if (cbAlternateShell > 0)
