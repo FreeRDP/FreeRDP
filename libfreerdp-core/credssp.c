@@ -164,28 +164,28 @@ int credssp_authenticate(rdpCredssp* credssp)
 		return 0;
 
 	/* NTLMSSP NEGOTIATE MESSAGE */
-	s->p = s->data = negoTokenBuffer;
+	stream_attach(s, negoTokenBuffer, 2048);
 	ntlmssp_send(ntlmssp, s);
-	credssp->negoToken.data = s->data;
-	credssp->negoToken.length = s->p - s->data;
+	credssp->negoToken.data = stream_get_head(s);
+	credssp->negoToken.length = stream_get_length(s);
 	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
 
 	/* NTLMSSP CHALLENGE MESSAGE */
 	if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
 		return -1;
 
-	s->p = s->data = credssp->negoToken.data;
+	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
 	ntlmssp_recv(ntlmssp, s);
 
 	freerdp_blob_free(&credssp->negoToken);
 
 	/* NTLMSSP AUTHENTICATE MESSAGE */
-	s->p = s->data = negoTokenBuffer;
+	stream_attach(s, negoTokenBuffer, 2048);
 	ntlmssp_send(ntlmssp, s);
 
 	/* The last NTLMSSP message is sent with the encrypted public key */
-	credssp->negoToken.data = s->data;
-	credssp->negoToken.length = s->p - s->data;
+	credssp->negoToken.data = stream_get_head(s);
+	credssp->negoToken.length = stream_get_length(s);
 	credssp_encrypt_public_key(credssp, &credssp->pubKeyAuth);
 	credssp_send(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth);
 
