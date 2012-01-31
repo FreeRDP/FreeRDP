@@ -45,6 +45,7 @@ struct xf_event_queue
 	int count;
 	int pipe_fd[2];
 	xfEvent** events;
+	pthread_mutex_t mutex;
 };
 
 struct xf_event_region
@@ -57,9 +58,12 @@ struct xf_event_region
 	int height;
 };
 
-int xf_is_event_set(xfEventQueue* event_queue);
-void xf_signal_event(xfEventQueue* event_queue);
-void xf_clear_event(xfEventQueue* event_queue);
+void xf_event_push(xfEventQueue* event_queue, xfEvent* event);
+xfEvent* xf_event_peek(xfEventQueue* event_queue);
+xfEvent* xf_event_pop(xfEventQueue* event_queue);
+
+xfEventRegion* xf_event_region_new(int x, int y, int width, int height);
+void xf_event_region_free(xfEventRegion* event_region);
 
 xfEventQueue* xf_event_queue_new();
 void xf_event_queue_free(xfEventQueue* event_queue);

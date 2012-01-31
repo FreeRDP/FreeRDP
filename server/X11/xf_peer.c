@@ -298,18 +298,6 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->thread = 0;
 	xfp->activations = 0;
 
-	xfp->stopwatch = stopwatch_create();
-
-	xfp->hdc = gdi_GetDC();
-
-	xfp->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-	xfp->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-	xfp->hdc->hwnd->invalid->null = 1;
-
-	xfp->hdc->hwnd->count = 32;
-	xfp->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * xfp->hdc->hwnd->count);
-	xfp->hdc->hwnd->ninvalid = 0;
-
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
 
@@ -324,12 +312,12 @@ void* xf_monitor_graphics(void* param)
 {
 	xfInfo* xfi;
 	XEvent xevent;
-	uint32 sec, usec;
 	XRectangle region;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
+	xfEventRegion* event_region;
 
 	client = (freerdp_peer*) param;
 	xfp = (xfPeerContext*) client->context;
@@ -338,8 +326,6 @@ void* xf_monitor_graphics(void* param)
 	xfp->capture_buffer = (uint8*) xmalloc(xfi->width * xfi->height * xfi->bytesPerPixel);
 
 	pthread_detach(pthread_self());
-
-	stopwatch_start(xfp->stopwatch);
 
 	while (1)
 	{
@@ -369,35 +355,12 @@ void* xf_monitor_graphics(void* param)
 				XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
 #endif
 
-				gdi_InvalidateRegion(xfp->hdc, x, y, width, height);
-
-				stopwatch_stop(xfp->stopwatch);
-				stopwatch_get_elapsed_time_in_useconds(xfp->stopwatch, &sec, &usec);
-
-				if ((sec > 0) || (usec > 30))
-					break;
+				event_region = xf_event_region_new(x, y, width, height);
+				xf_event_push(xfp->event_queue, (xfEvent*) event_region);
 			}
 		}
 
-		stopwatch_stop(xfp->stopwatch);
-		stopwatch_get_elapsed_time_in_useconds(xfp->stopwatch, &sec, &usec);
-
-		if ((sec > 0) || (usec > 30))
-		{
-			HGDI_RGN region;
-
-			stopwatch_reset(xfp->stopwatch);
-			stopwatch_start(xfp->stopwatch);
-
-			region = xfp->hdc->hwnd->invalid;
-			pthread_mutex_unlock(&(xfp->mutex));
-
-			xf_signal_event(xfp->event_queue);
-		}
-		else
-		{
-			pthread_mutex_unlock(&(xfp->mutex));
-		}
+		pthread_mutex_unlock(&(xfp->mutex));
 
 		freerdp_usleep(30);
 	}
@@ -570,6 +533,7 @@ boolean xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 boolean xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
+	xfEvent* event;
 	xfPeerContext* xfp;
 
 	xfp = (xfPeerContext*) client->context;
@@ -578,19 +542,16 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 	if (xfp->activated == false)
 		return true;
 
-	if (xf_is_event_set(xfp->event_queue))
+	event = xf_event_peek(xfp->event_queue);
+
+	if (event != NULL)
 	{
-		HGDI_RGN region;
-
-		xf_clear_event(xfp->event_queue);
-
-		region = xfp->hdc->hwnd->invalid;
-
-		if (region->null)
-			return true;
-
-		xf_peer_rfx_update(client, region->x, region->y, region->w, region->h);
-		region->null = true;
+		if (event->type == XF_EVENT_TYPE_REGION)
+		{
+			xfEventRegion* region = (xfEventRegion*) xf_event_pop(xfp->event_queue);
+			xf_peer_rfx_update(client, region->x, region->y, region->width, region->height);
+			xf_event_region_free(region);
+		}
 	}
 
 	return true;
