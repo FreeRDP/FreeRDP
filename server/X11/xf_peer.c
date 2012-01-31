@@ -237,7 +237,7 @@ xfInfo* xf_info_init()
 	}
 	XFree(vis);
 
-	xfi->clrconv = (HCLRCONV) xnew(HCLRCONV);
+	xfi->clrconv = (HCLRCONV) xnew(CLRCONV);
 	xfi->clrconv->invert = 1;
 	xfi->clrconv->alpha = 1;
 
@@ -315,6 +315,7 @@ void* xf_monitor_graphics(void* param)
 	XRectangle region;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
+	int pending_events = 0;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 	xfEventRegion* event_region;
@@ -330,11 +331,15 @@ void* xf_monitor_graphics(void* param)
 	while (1)
 	{
 		pthread_mutex_lock(&(xfp->mutex));
+		pending_events = XPending(xfi->display);
+		pthread_mutex_unlock(&(xfp->mutex));
 
-		while (XPending(xfi->display))
+		if (pending_events > 0)
 		{
+			pthread_mutex_lock(&(xfp->mutex));
 			memset(&xevent, 0, sizeof(xevent));
 			XNextEvent(xfi->display, &xevent);
+			pthread_mutex_unlock(&(xfp->mutex));
 
 			if (xevent.type == xfi->xdamage_notify_event)
 			{
@@ -351,8 +356,10 @@ void* xf_monitor_graphics(void* param)
 				region.height = height;
 
 #ifdef WITH_XFIXES
+				pthread_mutex_lock(&(xfp->mutex));
 				XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
 				XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
+				pthread_mutex_unlock(&(xfp->mutex));
 #endif
 
 				event_region = xf_event_region_new(x, y, width, height);
@@ -360,9 +367,7 @@ void* xf_monitor_graphics(void* param)
 			}
 		}
 
-		pthread_mutex_unlock(&(xfp->mutex));
-
-		freerdp_usleep(30);
+		freerdp_usleep(10);
 	}
 
 	return NULL;

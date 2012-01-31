@@ -80,8 +80,8 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 
 	if (event_queue->count >= event_queue->size)
 	{
-		event_queue->size = event_queue->size * 2;
-		event_queue->events = xrealloc((void*) event_queue->events, event_queue->size);
+		event_queue->size *= 2;
+		event_queue->events = (xfEvent**) xrealloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
 	}
 
 	event_queue->events[(event_queue->count)++] = event;
@@ -109,7 +109,6 @@ xfEvent* xf_event_peek(xfEventQueue* event_queue)
 
 xfEvent* xf_event_pop(xfEventQueue* event_queue)
 {
-	int i;
 	xfEvent* event;
 
 	pthread_mutex_lock(&(event_queue->mutex));
@@ -120,8 +119,7 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue)
 	event = event_queue->events[0];
 	(event_queue->count)--;
 
-	for (i = 0; i < event_queue->count; i++)
-		event_queue->events[i] = event_queue->events[i + 1];
+	memmove(&event_queue->events[0], &event_queue->events[1], event_queue->count * sizeof(void*));
 
 	pthread_mutex_unlock(&(event_queue->mutex));
 
