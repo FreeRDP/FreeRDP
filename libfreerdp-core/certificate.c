@@ -427,7 +427,7 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 	uint32 dwVersion;
 
 	s = stream_new(0);
-	s->p = s->data = server_cert;
+	stream_attach(s, server_cert, length);
 
 	if (length < 1)
 	{
