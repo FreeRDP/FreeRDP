@@ -509,7 +509,6 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	{
 		password = (uint8*)settings->password_cookie->data;
 		cbPassword = settings->password_cookie->length - 2;
-		freerdp_hexdump(password, cbPassword);
 	}
 	else
 	{
