@@ -177,8 +177,8 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		xfree(settings->password);
-		settings->password = redirection->password.ascii;
+		freerdp_blob_free(&settings->password_cookie);
+		settings->password_cookie = redirection->password_cookie;
 	}
 
 	return rdp_client_connect(rdp);

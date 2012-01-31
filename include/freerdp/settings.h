@@ -269,7 +269,8 @@ struct rdp_settings
 	boolean autologon; /* 58 */
 	boolean compression; /* 59 */
 	uint32 performance_flags; /* 60 */
-	uint32 paddingC[80 - 61]; /* 61 */
+	rdpBlob* password_cookie; /* 61 */
+	uint32 paddingC[80 - 62]; /* 62 */
 
 	/* User Interface Parameters */
 	boolean sw_gdi; /* 80 */

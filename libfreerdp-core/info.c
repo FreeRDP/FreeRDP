@@ -505,8 +505,16 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	userName = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->username, &length);
 	cbUserName = length;
 
-	password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &length);
-	cbPassword = length;
+	if (settings->password_cookie != NULL)
+	{
+		password = (uint8*)settings->password_cookie->data;
+		cbPassword = settings->password_cookie->length - 2;
+	}
+	else
+	{
+		password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &length);
+		cbPassword = length;
+	}
 
 	alternateShell = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->shell, &length);
 	cbAlternateShell = length;

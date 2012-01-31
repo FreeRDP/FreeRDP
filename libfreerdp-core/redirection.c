@@ -104,8 +104,13 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		freerdp_string_read_length32(s, &redirection->password, rdp->settings->uniconv);
-		DEBUG_REDIR("password: %s", redirection->password.ascii);
+		uint32 passwordLength;
+		stream_read_uint32(s, passwordLength);
+		freerdp_blob_alloc(redirection->password_cookie, passwordLength);
+#ifdef WITH_DEBUG_REDIR
+		DEBUG_REDIR("password_cookie:");
+		freerdp_hexdump(redirection->password_cookie.data, redirection->password_cookie.length);
+#endif
 	}
 
 	if (redirection->flags & LB_TARGET_FQDN)
@@ -195,7 +200,7 @@ void redirection_free(rdpRedirection* redirection)
 		freerdp_string_free(&redirection->tsvUrl);
 		freerdp_string_free(&redirection->username);
 		freerdp_string_free(&redirection->domain);
-		freerdp_string_free(&redirection->password);
+		freerdp_blob_free(&redirection->password_cookie);
 		freerdp_string_free(&redirection->targetFQDN);
 		freerdp_string_free(&redirection->targetNetBiosName);
 		freerdp_string_free(&redirection->targetNetAddress);
