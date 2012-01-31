@@ -21,6 +21,8 @@ include_directories(${X11_INCLUDE_DIRS})
 
 add_executable(xfreerdp-server
 	xf_peer.c
+	xf_event.c
+	xf_input.c
 	xf_encode.c
 	xfreerdp.c)
 
@@ -64,3 +66,4 @@ target_link_libraries(xfreerdp-server freerdp-utils)
 target_link_libraries(xfreerdp-server freerdp-gdi)
 target_link_libraries(xfreerdp-server freerdp-kbd)
 target_link_libraries(xfreerdp-server ${X11_LIBRARIES})
+

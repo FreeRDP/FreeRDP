@@ -38,6 +38,10 @@
 #include <X11/extensions/Xdamage.h>
 #endif
 
+typedef struct xf_info xfInfo;
+
+#include "xf_event.h"
+
 struct xf_info
 {
 	int bpp;
@@ -66,6 +70,5 @@ struct xf_info
 	XserverRegion xdamage_region;
 #endif
 };
-typedef struct xf_info xfInfo;
 
 #endif /* __XFREERDP_H */

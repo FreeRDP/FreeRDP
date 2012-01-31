@@ -37,6 +37,8 @@
 extern char* xf_pcap_file;
 extern boolean xf_pcap_dump_realtime;
 
+#include "xf_event.h"
+#include "xf_input.h"
 #include "xf_encode.h"
 
 #include "xf_peer.h"
@@ -291,11 +293,7 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->pipe_fd[0] = -1;
-	xfp->pipe_fd[1] = -1;
-
-	if (pipe(xfp->pipe_fd) < 0)
-		printf("xf_peer_init: pipe failed\n");
+	xfp->event_queue = xf_event_queue_new();
 
 	xfp->thread = 0;
 	xfp->activations = 0;
@@ -320,43 +318,6 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
 	return context->s;
-}
-
-int xf_is_event_set(xfPeerContext* xfp)
-{
-	fd_set rfds;
-	int num_set;
-	struct timeval time;
-
-	FD_ZERO(&rfds);
-	FD_SET(xfp->pipe_fd[0], &rfds);
-	memset(&time, 0, sizeof(time));
-	num_set = select(xfp->pipe_fd[0] + 1, &rfds, 0, 0, &time);
-
-	return (num_set == 1);
-}
-
-void xf_signal_event(xfPeerContext* xfp)
-{
-	int length;
-
-	length = write(xfp->pipe_fd[1], "sig", 4);
-
-	if (length != 4)
-		printf("xf_signal_event: error\n");
-}
-
-void xf_clear_event(xfPeerContext* xfp)
-{
-	int length;
-
-	while (xf_is_event_set(xfp))
-	{
-		length = read(xfp->pipe_fd[0], &length, 4);
-
-		if (length != 4)
-			printf("xf_clear_event: error\n");
-	}
 }
 
 void* xf_monitor_graphics(void* param)
@@ -431,7 +392,7 @@ void* xf_monitor_graphics(void* param)
 			region = xfp->hdc->hwnd->invalid;
 			pthread_mutex_unlock(&(xfp->mutex));
 
-			xf_signal_event(xfp);
+			xf_signal_event(xfp->event_queue);
 		}
 		else
 		{
@@ -597,10 +558,10 @@ boolean xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	if (xfp->pipe_fd[0] == -1)
+	if (xfp->event_queue->pipe_fd[0] == -1)
 		return true;
 
-	rfds[*rcount] = (void *)(long) xfp->pipe_fd[0];
+	rfds[*rcount] = (void *)(long) xfp->event_queue->pipe_fd[0];
 	(*rcount)++;
 
 	return true;
@@ -614,17 +575,14 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	if (xfp->pipe_fd[0] == -1)
-		return true;
-
 	if (xfp->activated == false)
 		return true;
 
-	if (xf_is_event_set(xfp))
+	if (xf_is_event_set(xfp->event_queue))
 	{
 		HGDI_RGN region;
 
-		xf_clear_event(xfp);
+		xf_clear_event(xfp->event_queue);
 
 		region = xfp->hdc->hwnd->invalid;
 
@@ -704,99 +662,6 @@ boolean xf_peer_activate(freerdp_peer* client)
 	return true;
 }
 
-void xf_peer_synchronize_event(rdpInput* input, uint32 flags)
-{
-	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
-}
-
-void xf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
-{
-	unsigned int keycode;
-	boolean extended = false;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	xfInfo* xfi = xfp->info;
-
-	if (flags & KBD_FLAGS_EXTENDED)
-		extended = true;
-
-	keycode = freerdp_kbd_get_keycode_by_scancode(code, extended);
-
-	if (keycode != 0)
-	{
-#ifdef WITH_XTEST
-		pthread_mutex_lock(&(xfp->mutex));
-
-		if (flags & KBD_FLAGS_DOWN)
-			XTestFakeKeyEvent(xfi->display, keycode, True, 0);
-		else if (flags & KBD_FLAGS_RELEASE)
-			XTestFakeKeyEvent(xfi->display, keycode, False, 0);
-
-		pthread_mutex_unlock(&(xfp->mutex));
-#endif
-	}
-}
-
-void xf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
-{
-	printf("Client sent a unicode keyboard event (code:0x%X)\n", code);
-}
-
-void xf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
-{
-	int button = 0;
-	boolean down = false;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	xfInfo* xfi = xfp->info;
-
-	pthread_mutex_lock(&(xfp->mutex));
-#ifdef WITH_XTEST
-
-	if (flags & PTR_FLAGS_WHEEL)
-	{
-		boolean negative = false;
-
-		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-			negative = true;
-
-		button = (negative) ? 5 : 4;
-
-		XTestFakeButtonEvent(xfi->display, button, True, 0);
-		XTestFakeButtonEvent(xfi->display, button, False, 0);
-	}
-	else
-	{
-		if (flags & PTR_FLAGS_MOVE)
-			XTestFakeMotionEvent(xfi->display, 0, x, y, 0);
-
-		if (flags & PTR_FLAGS_BUTTON1)
-			button = 1;
-		else if (flags & PTR_FLAGS_BUTTON2)
-			button = 3;
-		else if (flags & PTR_FLAGS_BUTTON3)
-			button = 2;
-
-		if (flags & PTR_FLAGS_DOWN)
-			down = true;
-
-		if (button != 0)
-			XTestFakeButtonEvent(xfi->display, button, down, 0);
-	}
-#endif
-	pthread_mutex_unlock(&(xfp->mutex));
-}
-
-void xf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
-{
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	xfInfo* xfi = xfp->info;
-
-	pthread_mutex_lock(&(xfp->mutex));
-#ifdef WITH_XTEST
-	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
-#endif
-	pthread_mutex_unlock(&(xfp->mutex));
-}
-
 void* xf_peer_main_loop(void* arg)
 {
 	int i;
@@ -840,11 +705,7 @@ void* xf_peer_main_loop(void* arg)
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;
 
-	client->input->SynchronizeEvent = xf_peer_synchronize_event;
-	client->input->KeyboardEvent = xf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = xf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = xf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = xf_peer_extended_mouse_event;
+	xf_input_register_callbacks(client->input);
 
 	client->Initialize(client);
 
