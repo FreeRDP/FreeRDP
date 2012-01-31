@@ -95,6 +95,23 @@ char* freerdp_get_current_path(rdpSettings* settings)
 	return settings->current_path;
 }
 
+char* freerdp_construct_path(char* base_path, char* relative_path)
+{
+	char* path;
+	int length;
+	int base_path_length;
+	int relative_path_length;
+
+	base_path_length = strlen(base_path);
+	relative_path_length = strlen(relative_path);
+	length = base_path_length + relative_path_length + 1;
+
+	path = xmalloc(length + 1);
+	sprintf(path, "%s" PATH_SEPARATOR_STR "%s", base_path, relative_path);
+
+	return path;
+}
+
 char* freerdp_get_parent_path(char* base_path, int depth)
 {
 	int i;

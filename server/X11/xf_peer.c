@@ -29,6 +29,7 @@
 #include <sys/select.h>
 #include <freerdp/kbd/kbd.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/utils/file.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
@@ -804,6 +805,8 @@ void* xf_peer_main_loop(void* arg)
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	rdpSettings* settings;
+	char* server_file_path;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
 	memset(rfds, 0, sizeof(rfds));
@@ -811,12 +814,27 @@ void* xf_peer_main_loop(void* arg)
 	printf("We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
+	settings = client->settings;
 
 	/* Initialize the real server settings here */
-	client->settings->cert_file = xstrdup("server.crt");
-	client->settings->privatekey_file = xstrdup("server.key");
-	client->settings->nla_security = false;
-	client->settings->rfx_codec = true;
+
+	if (settings->development_mode)
+	{
+		server_file_path = freerdp_construct_path(settings->development_path, "server/X11");
+	}
+	else
+	{
+		server_file_path = freerdp_construct_path(settings->config_path, "server");
+
+		if (!freerdp_check_file_exists(server_file_path))
+			freerdp_mkdir(server_file_path);
+	}
+
+	settings->cert_file = freerdp_construct_path(server_file_path, "server.crt");
+	settings->privatekey_file = freerdp_construct_path(server_file_path, "server.key");
+
+	settings->nla_security = false;
+	settings->rfx_codec = true;
 
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;
