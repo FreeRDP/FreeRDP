@@ -249,7 +249,7 @@ xfInfo* xf_info_init()
 
 	xf_xshm_init(xfi);
 
-	xfi->bytesPerPixel = (xfi->use_xshm) ? 4 : 3;
+	xfi->bytesPerPixel = 4;
 
 	freerdp_kbd_init(xfi->display, 0);
 
@@ -264,10 +264,7 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	context->rfx_context->width = context->info->width;
 	context->rfx_context->height = context->info->height;
 
-	if (context->info->use_xshm)
-		rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_BGRA);
-	else
-		rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
+	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_BGRA);
 
 	context->s = stream_new(65536);
 }
@@ -308,11 +305,28 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 	return context->s;
 }
 
+void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
+{
+	XRectangle region;
+	xfInfo* xfi = xfp->info;
+
+	region.x = x;
+	region.y = y;
+	region.width = width;
+	region.height = height;
+
+#ifdef WITH_XFIXES
+	pthread_mutex_lock(&(xfp->mutex));
+	XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
+	XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
+	pthread_mutex_unlock(&(xfp->mutex));
+#endif
+}
+
 void* xf_monitor_graphics(void* param)
 {
 	xfInfo* xfi;
 	XEvent xevent;
-	XRectangle region;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	int pending_events = 0;
@@ -350,17 +364,7 @@ void* xf_monitor_graphics(void* param)
 				width = notify->area.width;
 				height = notify->area.height;
 
-				region.x = x;
-				region.y = y;
-				region.width = width;
-				region.height = height;
-
-#ifdef WITH_XFIXES
-				pthread_mutex_lock(&(xfp->mutex));
-				XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
-				XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
-				pthread_mutex_unlock(&(xfp->mutex));
-#endif
+				xf_xdamage_subtract_region(xfp, x, y, width, height);
 
 				event_region = xf_event_region_new(x, y, width, height);
 				xf_event_push(xfp->event_queue, (xfEvent*) event_region);
@@ -476,17 +480,17 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	s = xf_peer_stream_init(xfp);
 
-	image = xf_snapshot(xfp, x, y, width, height);
-
 	if (xfi->use_xshm)
 	{
-		rect.x = 0;
-		rect.y = 0;
+		rect.x = x;
+		rect.y = y;
 		rect.width = width;
 		rect.height = height;
 
+		image = xf_snapshot(xfp, x, y, width, height);
+
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
-				(uint8*) image->data, width, height, image->bytes_per_line);
+				(uint8*) image->data, xfi->width, xfi->height, image->bytes_per_line);
 
 		cmd->destLeft = x;
 		cmd->destTop = y;
@@ -500,19 +504,18 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		rect.width = width;
 		rect.height = height;
 
-		freerdp_image_convert((uint8*) image->data, xfp->capture_buffer,
-				width, height, 32, 24, xfi->clrconv);
+		image = xf_snapshot(xfp, x, y, width, height);
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
-				xfp->capture_buffer, width, height, width * xfi->bytesPerPixel);
+				(uint8*) image->data, width, height, width * xfi->bytesPerPixel);
 
 		cmd->destLeft = x;
 		cmd->destTop = y;
 		cmd->destRight = x + width;
 		cmd->destBottom = y + height;
-	}
 
-	XDestroyImage(image);
+		XDestroyImage(image);
+	}
 
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
