@@ -36,7 +36,6 @@ struct xf_peer_context
 {
 	rdpContext _p;
 
-	HGDI_DC hdc;
 	STREAM* s;
 	xfInfo* info;
 	boolean activated;
@@ -44,7 +43,6 @@ struct xf_peer_context
 	uint8* capture_buffer;
 	pthread_t thread;
 	int activations;
-	STOPWATCH* stopwatch;
 	pthread_mutex_t mutex;
 	xfEventQueue* event_queue;
 };

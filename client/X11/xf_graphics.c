@@ -43,7 +43,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+				bitmap->width, bitmap->height, bitmap->bpp, xfi->bpp, xfi->clrconv);
 
 		if (bitmap->ephemeral != true)
 		{

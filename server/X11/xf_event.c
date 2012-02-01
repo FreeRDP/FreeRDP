@@ -51,6 +51,16 @@ void xf_signal_event(xfEventQueue* event_queue)
 		printf("xf_signal_event: error\n");
 }
 
+void xf_set_event(xfEventQueue* event_queue)
+{
+	int length;
+
+	length = write(event_queue->pipe_fd[1], "sig", 4);
+
+	if (length != 4)
+		printf("xf_set_event: error\n");
+}
+
 void xf_clear_event(xfEventQueue* event_queue)
 {
 	int length;
@@ -62,6 +72,78 @@ void xf_clear_event(xfEventQueue* event_queue)
 		if (length != 4)
 			printf("xf_clear_event: error\n");
 	}
+}
+
+void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
+{
+	pthread_mutex_lock(&(event_queue->mutex));
+
+	if (event_queue->count >= event_queue->size)
+	{
+		event_queue->size *= 2;
+		event_queue->events = (xfEvent**) xrealloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
+	}
+
+	event_queue->events[(event_queue->count)++] = event;
+
+	xf_set_event(event_queue);
+
+	pthread_mutex_unlock(&(event_queue->mutex));
+}
+
+xfEvent* xf_event_peek(xfEventQueue* event_queue)
+{
+	xfEvent* event;
+
+	pthread_mutex_lock(&(event_queue->mutex));
+
+	if (event_queue->count < 1)
+		event = NULL;
+	else
+		event = event_queue->events[0];
+
+	pthread_mutex_unlock(&(event_queue->mutex));
+
+	return event;
+}
+
+xfEvent* xf_event_pop(xfEventQueue* event_queue)
+{
+	xfEvent* event;
+
+	pthread_mutex_lock(&(event_queue->mutex));
+
+	if (event_queue->count < 1)
+		return NULL;
+
+	event = event_queue->events[0];
+	(event_queue->count)--;
+
+	memmove(&event_queue->events[0], &event_queue->events[1], event_queue->count * sizeof(void*));
+
+	pthread_mutex_unlock(&(event_queue->mutex));
+
+	return event;
+}
+
+xfEventRegion* xf_event_region_new(int x, int y, int width, int height)
+{
+	xfEventRegion* event_region = xnew(xfEventRegion);
+
+	if (event_region != NULL)
+	{
+		event_region->x = x;
+		event_region->y = y;
+		event_region->width = width;
+		event_region->height = height;
+	}
+
+	return event_region;
+}
+
+void xf_event_region_free(xfEventRegion* event_region)
+{
+	xfree(event_region);
 }
 
 xfEventQueue* xf_event_queue_new()
@@ -79,6 +161,8 @@ xfEventQueue* xf_event_queue_new()
 
 		if (pipe(event_queue->pipe_fd) < 0)
 			printf("xf_event_queue_new: pipe failed\n");
+
+		pthread_mutex_init(&(event_queue->mutex), NULL);
 	}
 
 	return event_queue;
@@ -97,4 +181,6 @@ void xf_event_queue_free(xfEventQueue* event_queue)
 		close(event_queue->pipe_fd[1]);
 		event_queue->pipe_fd[1] = -1;
 	}
+
+	pthread_mutex_destroy(&(event_queue->mutex));
 }
