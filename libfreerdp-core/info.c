@@ -477,6 +477,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	uint16 cbAlternateShell;
 	uint8* workingDir;
 	uint16 cbWorkingDir;
+	boolean usedPasswordCookie = false;
 
 	flags = INFO_MOUSE |
 		INFO_UNICODE |
@@ -505,8 +506,9 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	userName = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->username, &length);
 	cbUserName = length;
 
-	if (settings->password_cookie->length > 0)
+	if (settings->password_cookie && settings->password_cookie->length > 0)
 	{
+		usedPasswordCookie = true;
 		password = (uint8*)settings->password_cookie->data;
 		cbPassword = settings->password_cookie->length - 2;
 	}
@@ -553,9 +555,11 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 	xfree(domain);
 	xfree(userName);
-	xfree(password);
 	xfree(alternateShell);
 	xfree(workingDir);
+
+	if (!usedPasswordCookie)
+		xfree(password);
 
 	if (settings->rdp_version >= 5)
 		rdp_write_extended_info_packet(s, settings); /* extraInfo */

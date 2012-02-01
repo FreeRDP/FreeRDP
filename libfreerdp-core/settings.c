@@ -172,7 +172,6 @@ rdpSettings* settings_new(void* instance)
 		settings->server_auto_reconnect_cookie = xnew(ARC_SC_PRIVATE_PACKET);
 
 		settings->client_time_zone = xnew(TIME_ZONE_INFO);
-		settings->password_cookie = xnew(rdpBlob);
 		settings->server_random = xnew(rdpBlob);
 		settings->server_certificate = xnew(rdpBlob);
 
@@ -190,8 +189,6 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->hostname);
 		xfree(settings->username);
 		xfree(settings->password);
-		freerdp_blob_free(settings->password_cookie);
-		xfree(settings->password_cookie);
 		xfree(settings->domain);
 		xfree(settings->shell);
 		xfree(settings->directory);
