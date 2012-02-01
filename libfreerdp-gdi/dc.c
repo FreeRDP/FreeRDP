@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/codec/color.h>
 
 #include <freerdp/gdi/region.h>
 
@@ -44,6 +45,39 @@ HGDI_DC gdi_GetDC()
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
+	return hDC;
+}
+
+/**
+ * Create a device context.\n
+ * @msdn{dd144871}
+ * @return new device context
+ */
+
+HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
+{
+	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+
+	hDC->drawMode = GDI_R2_BLACK;
+	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
+	hDC->clip->null = 1;
+	hDC->hwnd = NULL;
+
+	hDC->bitsPerPixel = bpp;
+	hDC->bytesPerPixel = bpp / 8;
+
+	hDC->alpha = clrconv->alpha;
+	hDC->invert = clrconv->invert;
+	hDC->rgb555 = clrconv->rgb555;
+
+	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+	hDC->hwnd->invalid->null = 1;
+
+	hDC->hwnd->count = 32;
+	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
+	hDC->hwnd->ninvalid = 0;
+
 	return hDC;
 }
 
@@ -182,8 +216,12 @@ int gdi_DeleteDC(HGDI_DC hdc)
 {
 	if (hdc->hwnd)
 	{
-		free(hdc->hwnd->cinvalid);
-		free(hdc->hwnd->invalid);
+		if (hdc->hwnd->cinvalid != NULL)
+			free(hdc->hwnd->cinvalid);
+
+		if (hdc->hwnd->invalid != NULL)
+			free(hdc->hwnd->invalid);
+
 		free(hdc->hwnd);
 	}
 

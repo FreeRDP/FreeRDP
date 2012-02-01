@@ -91,6 +91,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 				
 		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, stream_get_size(body));
 		stream_write(s, stream_get_head(body), stream_get_size(body));
+		stream_free(body);
 	}
 
 	cliprdr_packet_send(cliprdr, s);

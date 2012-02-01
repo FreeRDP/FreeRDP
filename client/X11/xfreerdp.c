@@ -547,11 +547,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xf_kbd_init(xfi);
 
-	xfi->clrconv = xnew(CLRCONV);
-	xfi->clrconv->alpha = true;
-	xfi->clrconv->invert = false;
-	xfi->clrconv->rgb555 = false;
-	xfi->clrconv->palette = xnew(rdpPalette);
+	xfi->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA);
 
 	instance->context->cache = cache_new(instance->settings);
 
@@ -647,21 +643,7 @@ boolean xf_post_connect(freerdp* instance)
 		xfi->srcBpp = instance->settings->color_depth;
 		xf_gdi_register_update_callbacks(instance->update);
 
-		xfi->hdc = gdi_GetDC();
-		xfi->hdc->bitsPerPixel = xfi->bpp;
-		xfi->hdc->bytesPerPixel = xfi->bpp / 8;
-
-		xfi->hdc->alpha = xfi->clrconv->alpha;
-		xfi->hdc->invert = xfi->clrconv->invert;
-		xfi->hdc->rgb555 = xfi->clrconv->rgb555;
-
-		xfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-		xfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-		xfi->hdc->hwnd->invalid->null = 1;
-
-		xfi->hdc->hwnd->count = 32;
-		xfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * xfi->hdc->hwnd->count);
-		xfi->hdc->hwnd->ninvalid = 0;
+		xfi->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
 		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
 
@@ -922,8 +904,9 @@ void xf_window_free(xfInfo* xfi)
 		rfx_context_free(xfi->rfx_context);
 		xfi->rfx_context = NULL;
 	}
-	
-	xfree(xfi->clrconv);
+
+	freerdp_clrconv_free(xfi->clrconv);
+	gdi_DeleteDC(xfi->hdc);
 
 	xf_tsmf_uninit(xfi);
 	xf_cliprdr_uninit(xfi);
@@ -932,6 +915,10 @@ void xf_window_free(xfInfo* xfi)
 void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
+
+	if (xfi->bmp_codec_none != NULL)
+		xfree(xfi->bmp_codec_none);
+
 	XCloseDisplay(xfi->display);
 	xfree(xfi);
 }

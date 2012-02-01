@@ -1239,15 +1239,17 @@ struct rdp_mppc* mppc_new(rdpRdp* rdp)
 {
 	struct rdp_mppc* ptr;
 
-	ptr = (struct rdp_mppc *) xmalloc(sizeof (struct rdp_mppc));
+	ptr = (struct rdp_mppc*) xmalloc(sizeof(struct rdp_mppc));
+
 	if (!ptr)
 	{
 		printf("mppc_new(): system out of memory\n");
 		return NULL;
 	}
 
-	ptr->history_buf = (uint8 *) xmalloc(RDP6_HISTORY_BUF_SIZE);
-	ptr->offset_cache = (uint16 *) xzalloc(RDP6_OFFSET_CACHE_SIZE);
+	ptr->history_buf = (uint8*) xmalloc(RDP6_HISTORY_BUF_SIZE);
+	ptr->offset_cache = (uint16*) xzalloc(RDP6_OFFSET_CACHE_SIZE);
+
 	if (!ptr->history_buf)
 	{
 		printf("mppc_new(): system out of memory\n");
@@ -1257,6 +1259,7 @@ struct rdp_mppc* mppc_new(rdpRdp* rdp)
 
 	ptr->history_ptr = ptr->history_buf;
 	ptr->history_buf_end = ptr->history_buf + RDP6_HISTORY_BUF_SIZE - 1;
+
 	return ptr;
 }
 
@@ -1279,5 +1282,11 @@ void mppc_free(rdpRdp* rdp)
 		rdp->mppc->history_buf = NULL;
 		rdp->mppc->history_ptr = NULL;
 	}
+
+	if (rdp->mppc->offset_cache)
+	{
+		xfree(rdp->mppc->offset_cache);
+	}
+
 	xfree(rdp->mppc);
 }

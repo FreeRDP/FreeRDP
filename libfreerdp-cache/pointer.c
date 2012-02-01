@@ -139,17 +139,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 			pointer = pointer_cache->entries[i];
 
 			if (pointer != NULL)
-			{
-				pointer->Free(pointer_cache->update->context, pointer);
-
-				if (pointer->xorMaskData != NULL)
-					xfree(pointer->xorMaskData);
-
-				if (pointer->andMaskData != NULL)
-					xfree(pointer->andMaskData);
-
-				xfree(pointer);
-			}
+				Pointer_Free(pointer_cache->update->context, pointer);
 		}
 
 		xfree(pointer_cache->entries);

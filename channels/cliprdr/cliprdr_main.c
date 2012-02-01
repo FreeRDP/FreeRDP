@@ -263,6 +263,11 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 {
+	cliprdrPlugin* cliprdr_plugin = (cliprdrPlugin*) plugin;
+
+	if (cliprdr_plugin->uniconv != NULL)
+		freerdp_uniconv_free(cliprdr_plugin->uniconv);
+
 	xfree(plugin);
 }
 

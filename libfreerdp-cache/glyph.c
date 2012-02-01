@@ -318,6 +318,9 @@ void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph_data->cacheIndex, glyph);
+
+		cache_glyph->glyphData[i] = NULL;
+		xfree(glyph_data);
 	}
 }
 
@@ -343,6 +346,9 @@ void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_
 		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph_data->cacheIndex, glyph);
+
+		cache_glyph_v2->glyphData[i] = NULL;
+		xfree(glyph_data);
 	}
 }
 
@@ -484,6 +490,7 @@ void glyph_cache_free(rdpGlyphCache* glyph_cache)
 				rdpGlyph* glyph;
 
 				glyph = glyph_cache->glyphCache[i].entries[j];
+
 				if (glyph != NULL)
 				{
 					Glyph_Free(glyph_cache->context, glyph);

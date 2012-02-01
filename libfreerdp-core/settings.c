@@ -209,6 +209,9 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->glyphCache);
 		xfree(settings->fragCache);
 		key_free(settings->server_key);
+		xfree(settings->config_path);
+		xfree(settings->current_path);
+		xfree(settings->development_path);
 		xfree(settings);
 	}
 }
