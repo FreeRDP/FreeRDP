@@ -52,8 +52,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 	}
 	else
 	{
-		STREAM* body;
-		body = stream_new(0);
+		STREAM* body = NULL;
 		
 		for (i = 0; i < cb_event->num_formats; i++)
 		{
@@ -81,7 +80,11 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 			if (!cliprdr->use_long_format_names)
 				name_length = 32;
 			
-			stream_extend(body, stream_get_size(body) + 4 + name_length);
+			if (body == NULL)
+				body = stream_new(4 + name_length);
+			else
+				stream_extend(body, stream_get_size(body) + 4 + name_length);
+
 			stream_write_uint32(body, cb_event->formats[i]);
 			stream_write(body, name, name_length);
 		}
