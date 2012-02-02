@@ -383,11 +383,18 @@ int ber_write_integer(STREAM* s, uint32 value)
 		stream_write_uint8(s, value);
 		return 2;
 	}
-	else if (value <= 0xFFFF)
+	else if (value < 0xFF80)
 	{
 		ber_write_length(s, 2);
 		stream_write_uint16_be(s, value);
 		return 3;
+	}
+	else if (value < 0xFF8000)
+	{
+		ber_write_length(s, 3);
+		stream_write_uint8(s, (value >> 16));
+		stream_write_uint16_be(s, (value & 0xFFFF));
+		return 4;
 	}
 	else if (value <= 0xFFFFFFFF)
 	{
