@@ -85,7 +85,7 @@ boolean transport_connect_rdp(rdpTransport* transport)
 boolean transport_connect_tls(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
-		transport->tls = tls_new();
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
@@ -99,7 +99,7 @@ boolean transport_connect_tls(rdpTransport* transport)
 boolean transport_connect_nla(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
-		transport->tls = tls_new();
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
@@ -139,7 +139,7 @@ boolean transport_accept_rdp(rdpTransport* transport)
 boolean transport_accept_tls(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
-		transport->tls = tls_new();
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
@@ -153,7 +153,7 @@ boolean transport_accept_tls(rdpTransport* transport)
 boolean transport_accept_nla(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
-		transport->tls = tls_new();
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;

@@ -20,6 +20,9 @@
 #ifndef __CERTIFICATE_H
 #define __CERTIFICATE_H
 
+typedef struct rdp_certificate_data rdpCertificateData;
+typedef struct rdp_certificate_store rdpCertificateStore;
+
 #include "rdp.h"
 #include "ber.h"
 #include "crypto.h"
@@ -36,8 +39,8 @@
 #define CERT_PERMANENTLY_ISSUED		0x00000000
 #define CERT_TEMPORARILY_ISSUED		0x80000000
 
-#define SIGNATURE_ALG_RSA	0x00000001
-#define KEY_EXCHANGE_ALG_RSA	0x00000001
+#define SIGNATURE_ALG_RSA		0x00000001
+#define KEY_EXCHANGE_ALG_RSA		0x00000001
 
 #define BB_RSA_KEY_BLOB        		6
 #define BB_RSA_SIGNATURE_BLOB  		8
@@ -49,6 +52,28 @@ struct rdp_key
 	uint8 exponent[4];
 };
 
+struct rdp_certificate_data
+{
+	char* hostname;
+	char* fingerprint;
+};
+
+struct rdp_certificate_store
+{
+	FILE* fp;
+	char* path;
+	char* file;
+	rdpSettings* settings;
+	rdpCertificateData* certificate_data;
+};
+
+rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
+void certificate_data_free(rdpCertificateData* certificate_data);
+rdpCertificateStore* certificate_store_new(rdpSettings* settings);
+void certificate_store_free(rdpCertificateStore* certificate_store);
+int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
+void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
+
 void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
 rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count);
@@ -58,7 +83,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
 boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length);
 
-rdpCertificate* certificate_new(void);
+rdpCertificate* certificate_new();
 void certificate_free(rdpCertificate* certificate);
 
 rdpKey* key_new(const char *keyfile);

@@ -2,6 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Client
  * Certificate Handling
  *
+ * Copyright 2011 Jiten Pathy
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +24,11 @@
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+
+#include <freerdp/utils/file.h>
+
+static const char certificate_store_dir[] = "cacert";
+static const char certificate_known_hosts_file[] = "known_hosts";
 
 #include "certificate.h"
 
@@ -550,13 +556,171 @@ void key_free(rdpKey* key)
 	}
 }
 
+void certificate_store_init(rdpCertificateStore* certificate_store)
+{
+	char* config_path;
+	rdpSettings* settings;
+
+	settings = certificate_store->settings;
+
+	config_path = freerdp_get_config_path(settings);
+	certificate_store->path = freerdp_construct_path(config_path, (char*) certificate_store_dir);
+
+	if (freerdp_check_file_exists(certificate_store->path) == false)
+	{
+		freerdp_mkdir(certificate_store->path);
+		printf("creating directory %s\n", certificate_store->path);
+	}
+
+	certificate_store->file = freerdp_construct_path(config_path, (char*) certificate_known_hosts_file);
+
+	if (freerdp_check_file_exists(certificate_store->file) == false)
+	{
+		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
+
+		if (certificate_store->fp == NULL)
+		{
+			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			return;
+		}
+
+		fflush(certificate_store->fp);
+	}
+	else
+	{
+		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
+	}
+}
+
+int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+{
+	FILE* fp;
+	int length;
+	char* data;
+	char* pline;
+	int match = 1;
+	long int size;
+
+	fp = certificate_store->fp;
+
+	if (!fp)
+		return match;
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data = (char*) xmalloc(size + 1);
+	length = fread(data, size, 1, fp);
+
+	if (size < 1)
+		return match;
+
+	data[size] = '\n';
+	pline = strtok(data, "\n");
+
+	while (pline != NULL)
+	{
+		length = strlen(pline);
+
+		if (length > 0)
+		{
+			length = strcspn(pline, " \t");
+			pline[length] = '\0';
+
+			if (strcmp(pline, certificate_data->hostname) == 0)
+			{
+				pline = &pline[length + 1];
+
+				if (strcmp(pline, certificate_data->fingerprint) == 0)
+					match = 0;
+				else
+					match = -1;
+				break;
+			}
+		}
+
+		pline = strtok(NULL, "\n");
+	}
+	xfree(data);
+
+	return match;
+}
+
+void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+{
+	FILE* fp;
+
+	/* reopen in append mode */
+	fp = fopen(certificate_store->file, "a");
+
+	if (!fp)
+		return;
+
+	fprintf(certificate_store->fp,"%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
+	fclose(fp);
+}
+
+rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
+{
+	rdpCertificateData* certdata;
+
+	certdata = (rdpCertificateData*) xzalloc(sizeof(rdpCertificateData));
+
+	if (certdata != NULL)
+	{
+		certdata->hostname = xstrdup(hostname);
+		certdata->fingerprint = xstrdup(fingerprint);
+	}
+
+	return certdata;
+}
+
+void certificate_data_free(rdpCertificateData* certificate_data)
+{
+	if (certificate_data != NULL)
+	{
+		xfree(certificate_data->hostname);
+		xfree(certificate_data->fingerprint);
+		xfree(certificate_data);
+	}
+}
+
+rdpCertificateStore* certificate_store_new(rdpSettings* settings)
+{
+	rdpCertificateStore* certificate_store;
+
+	certificate_store = (rdpCertificateStore*) xzalloc(sizeof(rdpCertificateStore));
+
+	if (certificate_store != NULL)
+	{
+		certificate_store->settings = settings;
+		certificate_store_init(certificate_store);
+	}
+
+	return certificate_store;
+}
+
+void certificate_store_free(rdpCertificateStore* certstore)
+{
+	if (certstore != NULL)
+	{
+		if (certstore->fp != NULL)
+			fclose(certstore->fp);
+
+		xfree(certstore->path);
+		xfree(certstore->file);
+		xfree(certstore);
+	}
+}
+
 /**
  * Instantiate new certificate module.\n
  * @param rdp RDP module
  * @return new certificate module
  */
 
-rdpCertificate* certificate_new(void)
+rdpCertificate* certificate_new()
 {
 	rdpCertificate* certificate;
 
