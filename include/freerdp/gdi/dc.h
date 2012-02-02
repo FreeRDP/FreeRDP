@@ -24,6 +24,7 @@
 #include <freerdp/gdi/gdi.h>
 
 FREERDP_API HGDI_DC gdi_GetDC();
+FREERDP_API HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp);
 FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
 FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
 FREERDP_API int gdi_DeleteObject(HGDIOBJECT hgdiobject);

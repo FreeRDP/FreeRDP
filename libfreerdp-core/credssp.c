@@ -188,6 +188,7 @@ int credssp_authenticate(rdpCredssp* credssp)
 	credssp->negoToken.length = stream_get_length(s);
 	credssp_encrypt_public_key(credssp, &credssp->pubKeyAuth);
 	credssp_send(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth);
+	freerdp_blob_free(&credssp->pubKeyAuth);
 
 	/* Encrypted Public Key +1 */
 	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
@@ -206,6 +207,7 @@ int credssp_authenticate(rdpCredssp* credssp)
 	credssp_encode_ts_credentials(credssp);
 	credssp_encrypt_ts_credentials(credssp, &credssp->authInfo);
 	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
+	freerdp_blob_free(&credssp->authInfo);
 
 	xfree(s);
 
@@ -424,10 +426,11 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	s = stream_new(0);
 	length = credssp_skip_ts_credentials(credssp);
 	freerdp_blob_alloc(&credssp->ts_credentials, length);
-	s->p = s->data = credssp->ts_credentials.data;
-	s->size = length;
+	stream_attach(s, credssp->ts_credentials.data, length);
 
 	credssp_write_ts_credentials(credssp, s);
+	stream_detach(s);
+	stream_free(s);
 }
 
 int credssp_skip_nego_token(int length)
@@ -528,6 +531,7 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 	}
 
 	transport_write(credssp->transport, s);
+	stream_free(s);
 }
 
 /**

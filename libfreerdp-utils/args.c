@@ -537,13 +537,18 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				i = 0;
 				while (index < argc && strcmp("--", argv[index]) != 0)
 				{
-					plugin_data = (RDP_PLUGIN_DATA*)xrealloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
+					if (plugin_data == NULL)
+						plugin_data = (RDP_PLUGIN_DATA*) xmalloc(sizeof(RDP_PLUGIN_DATA) * (i + 2));
+					else
+						plugin_data = (RDP_PLUGIN_DATA*) xrealloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
+
 					plugin_data[i].size = sizeof(RDP_PLUGIN_DATA);
 					plugin_data[i].data[0] = NULL;
 					plugin_data[i].data[1] = NULL;
 					plugin_data[i].data[2] = NULL;
 					plugin_data[i].data[3] = NULL;
 					plugin_data[i + 1].size = 0;
+
 					for (j = 0, p = argv[index]; j < 4 && p != NULL; j++)
 					{
 						if (*p == '\'')

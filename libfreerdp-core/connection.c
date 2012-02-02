@@ -82,7 +82,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	if ((selectedProtocol & PROTOCOL_TLS) || (selectedProtocol == PROTOCOL_RDP))
 	{
-		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie->length > 0)))
+		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie != NULL && settings->password_cookie->length > 0)))
 			settings->autologon = true;
 	}
 
@@ -149,36 +149,35 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
 			xfree(settings->hostname);
-			settings->hostname = redirection->targetNetAddress.ascii;
+			settings->hostname = xstrdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
 			xfree(settings->hostname);
-			settings->hostname = redirection->targetFQDN.ascii;
+			settings->hostname = xstrdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
 			xfree(settings->hostname);
-			settings->hostname = redirection->targetNetBiosName.ascii;
+			settings->hostname = xstrdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
 		xfree(settings->username);
-		settings->username = redirection->username.ascii;
+		settings->username = xstrdup(redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
 		xfree(settings->domain);
-		settings->domain = redirection->domain.ascii;
+		settings->domain = xstrdup(redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		freerdp_blob_free(settings->password_cookie);
-		settings->password_cookie = redirection->password_cookie;
+		settings->password_cookie = &redirection->password_cookie;
 	}
 
 	return rdp_client_connect(rdp);

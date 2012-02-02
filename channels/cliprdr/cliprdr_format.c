@@ -52,8 +52,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 	}
 	else
 	{
-		STREAM* body;
-		body = stream_new(0);
+		STREAM* body = stream_new(0);
 		
 		for (i = 0; i < cb_event->num_formats; i++)
 		{
@@ -82,12 +81,14 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 				name_length = 32;
 			
 			stream_extend(body, stream_get_size(body) + 4 + name_length);
+
 			stream_write_uint32(body, cb_event->formats[i]);
 			stream_write(body, name, name_length);
 		}
 				
 		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, stream_get_size(body));
 		stream_write(s, stream_get_head(body), stream_get_size(body));
+		stream_free(body);
 	}
 
 	cliprdr_packet_send(cliprdr, s);
@@ -166,15 +167,19 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 		if (cliprdr->num_format_names >= allocated_formats)
 		{
 			allocated_formats *= 2;
-			cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xrealloc(cliprdr->format_names, sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
+			cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xrealloc(cliprdr->format_names,
+					sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
 		}
 		
 		format_name = &cliprdr->format_names[cliprdr->num_format_names++];
 		stream_read_uint32(s, format_name->id);
 		
-		for (p = stream_get_tail(s), name_len = 0; p+1 < end_mark; p += 2, name_len += 2)
+		format_name->name = NULL;
+		format_name->length = 0;
+
+		for (p = stream_get_tail(s), name_len = 0; p + 1 < end_mark; p += 2, name_len += 2)
 		{
-			if (*((unsigned short*)p) == 0)
+			if (*((unsigned short*) p) == 0)
 				break;
 		}
 		
@@ -262,10 +267,21 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 
 		if (supported)
 			cb_event->formats[cb_event->num_formats++] = format;
+
+		if (format_name->length > 0)
+			xfree(format_name->name);
 	}
 
 	if (cliprdr->format_names != NULL)
 	{
+		for (i = 0; i < cliprdr->num_format_names; i++)
+		{
+			format_name = &cliprdr->format_names[i];
+
+			if (format_name->length > 0)
+				xfree(format_name->name);
+		}
+
 		xfree(cliprdr->format_names);
 		cliprdr->format_names = NULL;
 	}

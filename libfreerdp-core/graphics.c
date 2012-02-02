@@ -108,7 +108,18 @@ void Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+	if (pointer != NULL)
+	{
+		pointer->Free(context, pointer);
 
+		if (pointer->xorMaskData)
+			xfree(pointer->xorMaskData);
+
+		if (pointer->andMaskData)
+			xfree(pointer->andMaskData);
+
+		xfree(pointer);
+	}
 }
 
 /* static method */
@@ -207,6 +218,7 @@ void graphics_free(rdpGraphics* graphics)
 	{
 		xfree(graphics->Bitmap_Prototype);
 		xfree(graphics->Pointer_Prototype);
+		xfree(graphics->Glyph_Prototype);
 		xfree(graphics);
 	}
 }

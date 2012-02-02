@@ -90,11 +90,18 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 
 void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer)
 {
+	rdpPointer* prevPointer;
+
 	if (index >= pointer_cache->cacheSize)
 	{
 		printf("invalid pointer index:%d\n", index);
 		return;
 	}
+
+	prevPointer = pointer_cache->entries[index];
+
+	if (prevPointer != NULL)
+		Pointer_Free(pointer_cache->update->context, prevPointer);
 
 	pointer_cache->entries[index] = pointer;
 }
@@ -121,7 +128,7 @@ rdpPointerCache* pointer_cache_new(rdpSettings* settings)
 		pointer_cache->settings = settings;
 		pointer_cache->cacheSize = settings->pointer_cache_size;
 		pointer_cache->update = ((freerdp*) settings->instance)->update;
-		pointer_cache->entries = xzalloc(sizeof(rdpPointer**) * pointer_cache->cacheSize);
+		pointer_cache->entries = (rdpPointer**) xzalloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
 	}
 
 	return pointer_cache;
@@ -139,17 +146,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 			pointer = pointer_cache->entries[i];
 
 			if (pointer != NULL)
-			{
-				pointer->Free(pointer_cache->update->context, pointer);
-
-				if (pointer->xorMaskData != NULL)
-					xfree(pointer->xorMaskData);
-
-				if (pointer->andMaskData != NULL)
-					xfree(pointer->andMaskData);
-
-				xfree(pointer);
-			}
+				Pointer_Free(pointer_cache->update->context, pointer);
 		}
 
 		xfree(pointer_cache->entries);

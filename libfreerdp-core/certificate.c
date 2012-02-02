@@ -130,7 +130,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	int exponent_length;
 
 	s = stream_new(0);
-	s->p = s->data = cert->data;
+	stream_attach(s, cert->data, cert->length);
 
 	ber_read_sequence_tag(s, &length); /* Certificate (SEQUENCE) */
 
@@ -195,6 +195,9 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
 	crypto_reverse(info->modulus.data, modulus_length);
 	crypto_reverse(info->exponent, 4);
+
+	stream_detach(s);
+	stream_free(s);
 }
 
 /**
@@ -224,16 +227,17 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
 	int i;
 
-	if (x509_cert_chain == NULL)
-		return;
-
-	for (i = 0; i < (int) x509_cert_chain->count; i++)
+	if (x509_cert_chain != NULL)
 	{
-		if (x509_cert_chain->array[i].data != NULL)
-			xfree(x509_cert_chain->array[i].data);
-	}
+		for (i = 0; i < (int) x509_cert_chain->count; i++)
+		{
+			if (x509_cert_chain->array[i].data != NULL)
+				xfree(x509_cert_chain->array[i].data);
+		}
 
-	xfree(x509_cert_chain);
+		xfree(x509_cert_chain->array);
+		xfree(x509_cert_chain);
+	}
 }
 
 static boolean certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
@@ -402,6 +406,7 @@ boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certifica
 			DEBUG_CERTIFICATE("License Server Certificate");
 			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			DEBUG_LICENSE("modulus length:%d", cert_info.modulus.length);
+			freerdp_blob_free(&cert_info.modulus);
 		}
 		else if (numCertBlobs - i == 1)
 		{
@@ -486,6 +491,10 @@ void certificate_free(rdpCertificate* certificate)
 	if (certificate != NULL)
 	{
 		certificate_free_x509_certificate_chain(certificate->x509_cert_chain);
+
+		if (certificate->cert_info.modulus.data != NULL)
+			freerdp_blob_free(&(certificate->cert_info.modulus));
+
 		xfree(certificate);
 	}
 }
