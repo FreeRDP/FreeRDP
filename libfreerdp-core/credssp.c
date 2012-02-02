@@ -426,10 +426,11 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	s = stream_new(0);
 	length = credssp_skip_ts_credentials(credssp);
 	freerdp_blob_alloc(&credssp->ts_credentials, length);
-	s->p = s->data = credssp->ts_credentials.data;
-	s->size = length;
+	stream_attach(s, credssp->ts_credentials.data, length);
 
 	credssp_write_ts_credentials(credssp, s);
+	stream_detach(s);
+	stream_free(s);
 }
 
 int credssp_skip_nego_token(int length)

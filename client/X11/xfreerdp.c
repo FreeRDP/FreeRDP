@@ -645,8 +645,6 @@ boolean xf_post_connect(freerdp* instance)
 
 		xfi->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
-		xfi->primary_buffer = (uint8*) xzalloc(xfi->width * xfi->height * xfi->bpp);
-
 		if (instance->settings->rfx_codec)
 		{
 			rfx_context = (void*) rfx_context_new();
@@ -866,6 +864,9 @@ void xf_window_free(xfInfo* xfi)
 	XFreeGC(xfi->display, xfi->gc);
 	xfi->gc = 0;
 
+	XFreeGC(xfi->display, xfi->gc_mono);
+	xfi->gc_mono = 0;
+
 	if (xfi->window != NULL)
 	{
 		xf_DestroyWindow(xfi, xfi->window);
@@ -920,6 +921,7 @@ void xf_free(xfInfo* xfi)
 		xfree(xfi->bmp_codec_none);
 
 	XCloseDisplay(xfi->display);
+
 	xfree(xfi);
 }
 
@@ -1060,7 +1062,7 @@ void* thread_func(void* param)
         if (g_thread_count < 1)
                 freerdp_sem_signal(g_sem);
 
-	return NULL;
+	pthread_exit(NULL);
 }
 
 static uint8 exit_code_from_disconnect_reason(uint32 reason)
