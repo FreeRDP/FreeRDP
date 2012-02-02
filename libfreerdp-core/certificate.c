@@ -27,7 +27,7 @@
 
 #include <freerdp/utils/file.h>
 
-static const char certificate_store_dir[] = "cacert";
+static const char certificate_store_dir[] = "certs";
 static const char certificate_known_hosts_file[] = "known_hosts";
 
 #include "certificate.h"
