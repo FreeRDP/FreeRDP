@@ -245,27 +245,29 @@ rdpTls* tls_new()
 int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostname)
 {
 	boolean status;
-	rdpCertStore* certstore;
-	status = x509_verify_cert(cert, settings);
+	rdpCertificateStore* certificate_store;
+
+	certificate_store = certificate_store_new(settings);
+
+	status = x509_verify_certificate(cert, certificate_store->path);
 
 	if (status != true)
 	{
 		char* issuer;
 		char* subject;
 		char* fingerprint;
-		rdpCertData* certdata;
+		rdpCertificateData* certificate_data;
 
-		certdata = crypto_get_cert_data(cert->px509, hostname);
-		certstore = certstore_new(certdata, settings->home_path);
+		certificate_data = crypto_get_certificate_data(cert->px509, hostname);
 
-		if (cert_data_match(certstore) == 0)
-			goto end;
+		if (certificate_data_match(certificate_store, certificate_data) == 0)
+			return 0;
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);
 		fingerprint = crypto_cert_fingerprint(cert->px509);
 
-		if (certstore->match == 1)
+		if (certificate_store->match == 1)
 		{
 			boolean accept_certificate = settings->ignore_certificate;
 
@@ -284,18 +286,17 @@ int tls_verify_certificate(CryptoCert cert, rdpSettings* settings, char* hostnam
 			if (!accept_certificate)
 				return 1;
 
-			cert_data_print(certstore);
+			certificate_data_print(certificate_store, certificate_data);
 		}
-		else if (certstore->match == -1)
+		else if (certificate_store->match == -1)
 		{
 			tls_print_cert_error(hostname, fingerprint);
-			certstore_free(certstore);
+			certificate_store_free(certificate_store);
 			return 1;
 		}
-
-end:
-		certstore_free(certstore);
 	}
+
+	certificate_store_free(certificate_store);
 
 	return 0;
 }

@@ -100,8 +100,9 @@ void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const uint8* in_data, u
 {
 	int len;
 	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
+
 	if (length != len)
-		abort();	// TODO
+		abort(); /* TODO */
 }
 
 void crypto_des3_free(CryptoDes3 des3)
@@ -190,9 +191,11 @@ exit:
 
 /*
  * Terminal Services Signing Keys.
- * Yes, Terminal Services Private Key is publically available.
+ * Yes, Terminal Services Private Key is publicly available.
  */
-const uint8 tssk_modulus[] = {
+
+const uint8 tssk_modulus[] =
+{
 	0x3d, 0x3a, 0x5e, 0xbd, 0x72, 0x43, 0x3e, 0xc9,
 	0x4d, 0xbb, 0xc1, 0x1e, 0x4a, 0xba, 0x5f, 0xcb,
 	0x3e, 0x88, 0x20, 0x87, 0xef, 0xf5, 0xc1, 0xe2,
@@ -202,7 +205,9 @@ const uint8 tssk_modulus[] = {
 	0x6c, 0x5e, 0x06, 0x09, 0x1a, 0xf5, 0x61, 0xbb,
 	0x20, 0x93, 0x09, 0x5f, 0x05, 0x6d, 0xea, 0x87
 };
-const uint8 tssk_privateExponent[] = {
+
+const uint8 tssk_privateExponent[] =
+{
 	0x87, 0xa7, 0x19, 0x32, 0xda, 0x11, 0x87, 0x55,
 	0x58, 0x00, 0x16, 0x16, 0x25, 0x65, 0x68, 0xf8,
 	0x24, 0x3e, 0xe6, 0xfa, 0xe9, 0x67, 0x49, 0x94,
@@ -212,7 +217,9 @@ const uint8 tssk_privateExponent[] = {
 	0x35, 0x07, 0x79, 0x17, 0x0b, 0x51, 0x9b, 0xb3,
 	0xc7, 0x10, 0x01, 0x13, 0xe7, 0x3f, 0xf3, 0x5f
 };
-const uint8 tssk_exponent[] = {
+
+const uint8 tssk_exponent[] =
+{
 	0x5b, 0x7b, 0x88, 0xc0
 };
 
@@ -263,7 +270,6 @@ static void crypto_rsa_common(const uint8* input, int length, uint32 key_length,
 
 static void crypto_rsa_public(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
 {
-
 	crypto_rsa_common(input, length, key_length, modulus, exponent, EXPONENT_MAX_SIZE, output);
 }
 
@@ -372,9 +378,8 @@ char* crypto_cert_issuer(X509* xcert)
 	return crypto_print_name(X509_get_issuer_name(xcert));
 }
 
-boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
+boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 {
-	char* cert_loc;
 	X509_STORE_CTX* csc;
 	boolean status = false;
 	X509_STORE* cert_ctx = NULL;
@@ -398,12 +403,10 @@ boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 		goto end;
 
 	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-	cert_loc = get_local_certloc(settings->home_path);
 
-	if(cert_loc != NULL)
+	if (certificate_store_path != NULL)
 	{
-		X509_LOOKUP_add_dir(lookup, cert_loc, X509_FILETYPE_ASN1);
-		xfree(cert_loc);
+		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
 	}
 
 	csc = X509_STORE_CTX_new();
@@ -413,7 +416,7 @@ boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings)
 
 	X509_STORE_set_flags(cert_ctx, 0);
 
-	if(!X509_STORE_CTX_init(csc, cert_ctx, xcert, 0))
+	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, 0))
 		goto end;
 
 	if (X509_verify_cert(csc) == 1)
@@ -426,13 +429,13 @@ end:
 	return status;
 }
 
-rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname)
+rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
 {
 	char* fp;
-	rdpCertData* certdata;
+	rdpCertificateData* certdata;
 
 	fp = crypto_cert_fingerprint(xcert);
-	certdata = certdata_new(hostname, fp);
+	certdata = certificate_data_new(hostname, fp);
 	xfree(fp);
 
 	return certdata;

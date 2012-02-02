@@ -20,168 +20,74 @@
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/certstore.h>
 
-static const char cert_dir[] = "freerdp";
-static const char cert_loc[] = "cacert";
-static const char certstore_file[] = "known_hosts";
+static const char certificate_store_subdir[] = "cacert";
+static const char certificate_store_file[] = "known_hosts";
 
-void certstore_create(rdpCertStore* certstore)
+void certificate_store_open(rdpCertificateStore* certificate_store)
 {
-	certstore->fp = fopen((char*) certstore->file, "w+");
-
-	if (certstore->fp == NULL)
+	if (freerdp_check_file_exists(certificate_store->file) == false)
 	{
-		printf("certstore_create: error opening [%s] for writing\n", certstore->file);
-		return;
+		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
+
+		if (certificate_store->fp == NULL)
+		{
+			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			return;
+		}
+
+		fflush(certificate_store->fp);
 	}
-
-	fflush(certstore->fp);
-}
-
-void certstore_load(rdpCertStore* certstore)
-{
-	certstore->fp = fopen((char*) certstore->file, "r+");
-}
-
-void certstore_open(rdpCertStore* certstore)
-{
-	struct stat stat_info;
-
-	if (stat((char*) certstore->file, &stat_info) != 0)
-		certstore_create(certstore);
 	else
-		certstore_load(certstore);
+	{
+		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
+	}
 }
 
-void certstore_close(rdpCertStore* certstore)
+void certificate_store_close(rdpCertificateStore* certstore)
 {
 	if (certstore->fp != NULL)
 		fclose(certstore->fp);
 }
 
-char* get_local_certloc(char* home_path)
+char* certificate_store_get_path(rdpCertificateStore* certificate_store)
 {
-	char* certloc;
-	struct stat stat_info;
+	return certificate_store->path;
+}
 
-	if (home_path == NULL)
-		home_path = getenv("HOME");
-
-	certloc = (char*) xmalloc(strlen(home_path) + 2 + strlen(cert_dir) + 1 + strlen(cert_loc) + 1);
-	sprintf(certloc, "%s/.%s/%s", home_path, cert_dir, cert_loc);
-
-	if(stat((char*) certloc, &stat_info) != 0)
-		freerdp_mkdir(certloc);
+void certificate_store_init(rdpCertificateStore* certificate_store)
+{
+	char* config_path;
+	rdpSettings* settings;
 	
-	return certloc;
-}
+	certificate_store->match = 1;
+	settings = certificate_store->settings;
 
-void certstore_init(rdpCertStore* certstore)
-{
-	int length;
-	char* home_path;
-	struct stat stat_info;
-	
-	certstore->match = 1;
+	config_path = freerdp_get_config_path(settings);
+	certificate_store->path = freerdp_construct_path(config_path, (char*) certificate_store_subdir);
 
-	if (certstore->home_path == NULL)
-		home_path = getenv("HOME");
-	else
-		home_path = certstore->home_path;
-
-	if (home_path == NULL)
+	if (freerdp_check_file_exists(certificate_store->path) == false)
 	{
-		printf("could not get home path\n");
-		return;
+		freerdp_mkdir(certificate_store->path);
+		printf("creating directory %s\n", certificate_store->path);
 	}
 
-	certstore->home_path = (char*) xstrdup(home_path);
+	certificate_store->file = freerdp_construct_path(certificate_store->path, (char*) certificate_store_file);
 
-	certstore->path = (char*) xmalloc(strlen(certstore->home_path) + 2 + strlen(cert_dir) + 1);
-	sprintf(certstore->path, "%s/.%s", certstore->home_path, cert_dir);
-
-	if (stat(certstore->path, &stat_info) != 0)
-	{
-		freerdp_mkdir(certstore->path);
-		printf("creating directory %s\n", certstore->path);
-	}
-
-	length = strlen(certstore->path);
-	certstore->file = (char*) xmalloc(strlen(certstore->path) + 1 + strlen(certstore_file) + 1);
-	sprintf(certstore->file, "%s/%s", certstore->path, certstore_file);
-
-	certstore_open(certstore);
+	certificate_store_open(certificate_store);
 }
 
-rdpCertData* certdata_new(char* hostname, char* fingerprint)
-{
-	rdpCertData* certdata;
-
-	certdata = (rdpCertData*) xzalloc(sizeof(rdpCertData));
-
-	if (certdata != NULL)
-	{
-		certdata->hostname = xzalloc(strlen(hostname) + 1);
-		certdata->fingerprint = xzalloc(strlen(fingerprint) + 1);
-		sprintf(certdata->hostname, "%s", hostname);
-		sprintf(certdata->fingerprint, "%s", fingerprint);
-	}
-
-	return certdata;
-}
-
-void certdata_free(rdpCertData* certdata)
-{
-	if(certdata != NULL)
-	{
-		xfree(certdata->hostname);
-		xfree(certdata->fingerprint);
-		xfree(certdata);
-	}
-}
-
-rdpCertStore* certstore_new(rdpCertData* certdata, char* home_path)
-{
-	rdpCertStore* certstore;
-
-	certstore = (rdpCertStore*) xzalloc(sizeof(rdpCertStore));
-
-	if (certstore != NULL)
-	{
-		certstore->home_path = home_path;
-		certstore->certdata = certdata;
-		certstore_init(certstore);
-	}
-
-	return certstore;
-}
-
-void certstore_free(rdpCertStore* certstore)
-{
-	if (certstore != NULL)
-	{
-		certstore_close(certstore);
-		xfree(certstore->path);
-		xfree(certstore->file);
-		xfree(certstore->home_path);
-		certdata_free(certstore->certdata);
-		xfree(certstore);
-	}
-}
-
-int cert_data_match(rdpCertStore* certstore)
+int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 	int length;
 	char* data;
 	char* pline;
 	long int size;
-	rdpCertData* cert_data;
 
-	fp = certstore->fp;
-	cert_data = certstore->certdata;
+	fp = certificate_store->fp;
 
 	if (!fp)
-		return certstore->match;
+		return certificate_store->match;
 
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
@@ -191,7 +97,7 @@ int cert_data_match(rdpCertStore* certstore)
 	length = fread(data, size, 1, fp);
 
 	if (size < 1)
-		return certstore->match;
+		return certificate_store->match;
 
 	data[size] = '\n';
 	pline = strtok(data, "\n");
@@ -205,14 +111,14 @@ int cert_data_match(rdpCertStore* certstore)
 			length = strcspn(pline, " \t");
 			pline[length] = '\0';
 
-			if (strcmp(pline, cert_data->hostname) == 0)
+			if (strcmp(pline, certificate_data->hostname) == 0)
 			{
 				pline = &pline[length + 1];
 
-				if (strcmp(pline, cert_data->fingerprint) == 0)
-					certstore->match = 0;
+				if (strcmp(pline, certificate_data->fingerprint) == 0)
+					certificate_store->match = 0;
 				else
-					certstore->match = -1;
+					certificate_store->match = -1;
 				break;
 			}
 		}
@@ -221,19 +127,70 @@ int cert_data_match(rdpCertStore* certstore)
 	}
 	xfree(data);
 
-	return certstore->match;
+	return certificate_store->match;
 }
 
-void cert_data_print(rdpCertStore* certstore)
+void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 
 	/* reopen in append mode */
-	fp = fopen(certstore->file, "a");
+	fp = fopen(certificate_store->file, "a");
 
 	if (!fp)
 		return;
 
-	fprintf(certstore->fp,"%s %s\n", certstore->certdata->hostname, certstore->certdata->fingerprint);
+	fprintf(certificate_store->fp,"%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
 	fclose(fp);
+}
+
+rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
+{
+	rdpCertificateData* certdata;
+
+	certdata = (rdpCertificateData*) xzalloc(sizeof(rdpCertificateData));
+
+	if (certdata != NULL)
+	{
+		certdata->hostname = xstrdup(hostname);
+		certdata->fingerprint = xstrdup(fingerprint);
+	}
+
+	return certdata;
+}
+
+void certificate_data_free(rdpCertificateData* certificate_data)
+{
+	if (certificate_data != NULL)
+	{
+		xfree(certificate_data->hostname);
+		xfree(certificate_data->fingerprint);
+		xfree(certificate_data);
+	}
+}
+
+rdpCertificateStore* certificate_store_new(rdpSettings* settings)
+{
+	rdpCertificateStore* certificate_store;
+
+	certificate_store = (rdpCertificateStore*) xzalloc(sizeof(rdpCertificateStore));
+
+	if (certificate_store != NULL)
+	{
+		certificate_store->settings = settings;
+		certificate_store_init(certificate_store);
+	}
+
+	return certificate_store;
+}
+
+void certificate_store_free(rdpCertificateStore* certstore)
+{
+	if (certstore != NULL)
+	{
+		certificate_store_close(certstore);
+		xfree(certstore->path);
+		xfree(certstore->file);
+		xfree(certstore);
+	}
 }

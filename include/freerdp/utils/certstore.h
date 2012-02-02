@@ -1,8 +1,9 @@
+
 #ifndef __CERTSTORE_UTILS_H
 #define __CERTSTORE_UTILS_H
 
-typedef struct rdp_cert_store rdpCertStore;
-typedef struct rdp_cert_data rdpCertData;
+typedef struct rdp_certificate_data rdpCertificateData;
+typedef struct rdp_certificate_store rdpCertificateStore;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,33 +12,28 @@ typedef struct rdp_cert_data rdpCertData;
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
 
-struct rdp_cert_data
+struct rdp_certificate_data
 {
 	char* hostname;
 	char* fingerprint;
 };
 
-struct rdp_cert_store
+struct rdp_certificate_store
 {
 	FILE* fp;
 	int match;
 	char* path;
 	char* file;
-	char* home_path;
-	rdpCertData* certdata;
+	rdpSettings* settings;
+	rdpCertificateData* certificate_data;
 };
 
-FREERDP_API void certstore_create(rdpCertStore* certstore);
-FREERDP_API void certstore_open(rdpCertStore* certstore);
-FREERDP_API void certstore_load(rdpCertStore* certstore);
-FREERDP_API void certstore_close(rdpCertStore* certstore);
-FREERDP_API char* get_local_certloc();
-FREERDP_API rdpCertData* certdata_new(char* hostname, char* fingerprint);
-FREERDP_API void certdata_free(rdpCertData* certdata);
-FREERDP_API void certstore_init(rdpCertStore* certstore);
-FREERDP_API rdpCertStore* certstore_new(rdpCertData* certdata, char* home_path);
-FREERDP_API void certstore_free(rdpCertStore* certstore);
-FREERDP_API int cert_data_match(rdpCertStore* certstore);
-FREERDP_API void cert_data_print(rdpCertStore* certstore);
+FREERDP_API char* certificate_store_get_path(rdpCertificateStore* certificate_store);
+FREERDP_API rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
+FREERDP_API void certificate_data_free(rdpCertificateData* certificate_data);
+FREERDP_API rdpCertificateStore* certificate_store_new(rdpSettings* settings);
+FREERDP_API void certificate_store_free(rdpCertificateStore* certificate_store);
+FREERDP_API int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
+FREERDP_API void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
 
 #endif /* __CERTSTORE_UTILS_H */
