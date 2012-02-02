@@ -237,9 +237,7 @@ xfInfo* xf_info_init()
 	}
 	XFree(vis);
 
-	xfi->clrconv = (HCLRCONV) xnew(CLRCONV);
-	xfi->clrconv->invert = 1;
-	xfi->clrconv->alpha = 1;
+	xfi->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA | CLRCONV_INVERT);
 
 	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
 
@@ -281,6 +279,7 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 
 void xf_peer_init(freerdp_peer* client)
 {
+	xfInfo* xfi;
 	xfPeerContext* xfp;
 
 	client->context_size = sizeof(xfPeerContext);
@@ -290,10 +289,13 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->event_queue = xf_event_queue_new();
-
+	xfp->fps = 48;
 	xfp->thread = 0;
 	xfp->activations = 0;
+	xfp->event_queue = xf_event_queue_new();
+
+	xfi = xfp->info;
+	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
@@ -473,6 +475,7 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 	xfInfo* xfi;
 	xfEvent* event;
 	xfPeerContext* xfp;
+	HGDI_RGN invalid_region;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
@@ -487,12 +490,24 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 		if (event->type == XF_EVENT_TYPE_REGION)
 		{
 			xfEventRegion* region = (xfEventRegion*) xf_event_pop(xfp->event_queue);
-			xf_peer_rfx_update(client, region->x, region->y, region->width, region->height);
+			gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
 			xf_event_region_free(region);
 		}
 		else if (event->type == XF_EVENT_TYPE_FRAME_TICK)
 		{
 			event = xf_event_pop(xfp->event_queue);
+			invalid_region = xfp->hdc->hwnd->invalid;
+
+			if (invalid_region->null == false)
+			{
+				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
+					invalid_region->w, invalid_region->h);
+			}
+
+			invalid_region->null = 1;
+			xfp->hdc->hwnd->ninvalid = 0;
+
+			xf_event_free(event);
 		}
 	}
 

@@ -73,18 +73,19 @@ void* xf_frame_rate_thread(void* param)
 	xfEvent* event;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
+	uint32 wait_interval;
 
 	client = (freerdp_peer*) param;
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
+	wait_interval = 1000000 / xfp->fps;
+
 	while (1)
 	{
 		event = xf_event_new(XF_EVENT_TYPE_FRAME_TICK);
-
 		xf_event_push(xfp->event_queue, (xfEvent*) event);
-
-		freerdp_sleep(1);
+		freerdp_usleep(wait_interval);
 	}
 }
 
@@ -94,6 +95,7 @@ void* xf_monitor_updates(void* param)
 	XEvent xevent;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
+	uint32 wait_interval;
 	int pending_events = 0;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
@@ -106,6 +108,8 @@ void* xf_monitor_updates(void* param)
 	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
 
 	pthread_detach(pthread_self());
+
+	wait_interval = (1000000 / xfp->fps) / 16;
 
 	while (1)
 	{
@@ -136,7 +140,7 @@ void* xf_monitor_updates(void* param)
 			}
 		}
 
-		freerdp_usleep(10);
+		freerdp_usleep(wait_interval);
 	}
 
 	return NULL;

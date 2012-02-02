@@ -36,6 +36,7 @@ struct xf_peer_context
 {
 	rdpContext _p;
 
+	int fps;
 	STREAM* s;
 	HGDI_DC hdc;
 	xfInfo* info;
