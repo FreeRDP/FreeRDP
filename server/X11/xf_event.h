@@ -31,7 +31,8 @@ typedef struct xf_event_region xfEventRegion;
 
 enum xf_event_type
 {
-	XF_EVENT_TYPE_REGION
+	XF_EVENT_TYPE_REGION,
+	XF_EVENT_TYPE_FRAME_TICK
 };
 
 struct xf_event
@@ -64,6 +65,9 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue);
 
 xfEventRegion* xf_event_region_new(int x, int y, int width, int height);
 void xf_event_region_free(xfEventRegion* event_region);
+
+xfEvent* xf_event_new(int type);
+void xf_event_free(xfEvent* event);
 
 xfEventQueue* xf_event_queue_new();
 void xf_event_queue_free(xfEventQueue* event_queue);

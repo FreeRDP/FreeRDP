@@ -37,14 +37,15 @@ struct xf_peer_context
 	rdpContext _p;
 
 	STREAM* s;
+	HGDI_DC hdc;
 	xfInfo* info;
-	boolean activated;
-	RFX_CONTEXT* rfx_context;
-	uint8* capture_buffer;
-	pthread_t thread;
 	int activations;
+	pthread_t thread;
+	boolean activated;
 	pthread_mutex_t mutex;
+	RFX_CONTEXT* rfx_context;
 	xfEventQueue* event_queue;
+	pthread_t frame_rate_thread;
 };
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
