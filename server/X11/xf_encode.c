@@ -109,7 +109,7 @@ void* xf_monitor_updates(void* param)
 
 	pthread_detach(pthread_self());
 
-	wait_interval = (1000000 / xfp->fps) / 16;
+	wait_interval = (1000000 / 2500);
 
 	while (1)
 	{

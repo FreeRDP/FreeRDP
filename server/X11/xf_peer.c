@@ -289,7 +289,7 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->fps = 48;
+	xfp->fps = 24;
 	xfp->thread = 0;
 	xfp->activations = 0;
 	xfp->event_queue = xf_event_queue_new();
