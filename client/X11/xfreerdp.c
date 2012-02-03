@@ -888,16 +888,11 @@ void xf_window_free(xfInfo* xfi)
 
 	if (context != NULL)
 	{
-		if (context->cache != NULL)
-		{
 			cache_free(context->cache);
 			context->cache = NULL;
-		}
-		if (context->rail != NULL)
-		{
+
 			rail_free(context->rail);
 			context->rail = NULL;
-		}
 	}
 
 	if (xfi->rfx_context) 
@@ -917,8 +912,7 @@ void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
 
-	if (xfi->bmp_codec_none != NULL)
-		xfree(xfi->bmp_codec_none);
+	xfree(xfi->bmp_codec_none);
 
 	XCloseDisplay(xfi->display);
 
