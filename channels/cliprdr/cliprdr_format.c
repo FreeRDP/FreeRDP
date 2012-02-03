@@ -272,19 +272,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 			xfree(format_name->name);
 	}
 
-	if (cliprdr->format_names != NULL)
-	{
-		for (i = 0; i < cliprdr->num_format_names; i++)
-		{
-			format_name = &cliprdr->format_names[i];
-
-			if (format_name->length > 0)
-				xfree(format_name->name);
-		}
-
-		xfree(cliprdr->format_names);
-		cliprdr->format_names = NULL;
-	}
+	xfree(cliprdr->format_names);
+	cliprdr->format_names = NULL;
 
 	cliprdr->num_format_names = 0;
 
