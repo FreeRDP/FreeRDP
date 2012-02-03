@@ -103,7 +103,6 @@ void* xrealloc(void* ptr, size_t size)
 
 void xfree(void* ptr)
 {
-	if (ptr != NULL)
 		free(ptr);
 }
 
