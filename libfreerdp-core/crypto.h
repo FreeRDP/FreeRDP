@@ -46,7 +46,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/certstore.h>
 
 struct crypto_sha1_struct
 {
@@ -110,14 +109,18 @@ void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length);
 void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
+
+#include "certificate.h"
+
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
 char* crypto_cert_fingerprint(X509* xcert);
 char* crypto_cert_subject(X509* xcert);
 char* crypto_cert_issuer(X509* xcert);
 void crypto_cert_print_info(X509* xcert);
 void crypto_cert_free(CryptoCert cert);
-boolean x509_verify_cert(CryptoCert cert, rdpSettings* settings);
-rdpCertData* crypto_get_cert_data(X509* xcert, char* hostname);
+
+boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
+rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname);
 boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
 
 #define	TSSK_KEY_LENGTH	64

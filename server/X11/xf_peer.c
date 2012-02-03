@@ -237,9 +237,7 @@ xfInfo* xf_info_init()
 	}
 	XFree(vis);
 
-	xfi->clrconv = (HCLRCONV) xnew(CLRCONV);
-	xfi->clrconv->invert = 1;
-	xfi->clrconv->alpha = 1;
+	xfi->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA | CLRCONV_INVERT);
 
 	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
 
@@ -281,6 +279,7 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 
 void xf_peer_init(freerdp_peer* client)
 {
+	xfInfo* xfi;
 	xfPeerContext* xfp;
 
 	client->context_size = sizeof(xfPeerContext);
@@ -290,10 +289,13 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->event_queue = xf_event_queue_new();
-
+	xfp->fps = 24;
 	xfp->thread = 0;
 	xfp->activations = 0;
+	xfp->event_queue = xf_event_queue_new();
+
+	xfi = xfp->info;
+	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
@@ -305,84 +307,12 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 	return context->s;
 }
 
-void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
-{
-	XRectangle region;
-	xfInfo* xfi = xfp->info;
-
-	region.x = x;
-	region.y = y;
-	region.width = width;
-	region.height = height;
-
-#ifdef WITH_XFIXES
-	pthread_mutex_lock(&(xfp->mutex));
-	XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
-	XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
-	pthread_mutex_unlock(&(xfp->mutex));
-#endif
-}
-
-void* xf_monitor_graphics(void* param)
-{
-	xfInfo* xfi;
-	XEvent xevent;
-	xfPeerContext* xfp;
-	freerdp_peer* client;
-	int pending_events = 0;
-	int x, y, width, height;
-	XDamageNotifyEvent* notify;
-	xfEventRegion* event_region;
-
-	client = (freerdp_peer*) param;
-	xfp = (xfPeerContext*) client->context;
-	xfi = xfp->info;
-
-	xfp->capture_buffer = (uint8*) xmalloc(xfi->width * xfi->height * xfi->bytesPerPixel);
-
-	pthread_detach(pthread_self());
-
-	while (1)
-	{
-		pthread_mutex_lock(&(xfp->mutex));
-		pending_events = XPending(xfi->display);
-		pthread_mutex_unlock(&(xfp->mutex));
-
-		if (pending_events > 0)
-		{
-			pthread_mutex_lock(&(xfp->mutex));
-			memset(&xevent, 0, sizeof(xevent));
-			XNextEvent(xfi->display, &xevent);
-			pthread_mutex_unlock(&(xfp->mutex));
-
-			if (xevent.type == xfi->xdamage_notify_event)
-			{
-				notify = (XDamageNotifyEvent*) &xevent;
-
-				x = notify->area.x;
-				y = notify->area.y;
-				width = notify->area.width;
-				height = notify->area.height;
-
-				xf_xdamage_subtract_region(xfp, x, y, width, height);
-
-				event_region = xf_event_region_new(x, y, width, height);
-				xf_event_push(xfp->event_queue, (xfEvent*) event_region);
-			}
-		}
-
-		freerdp_usleep(10);
-	}
-
-	return NULL;
-}
-
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
 	if (xfp->activations == 1)
-		pthread_create(&(xfp->thread), 0, xf_monitor_graphics, (void*) client);
+		pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
 }
 
 static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
@@ -545,6 +475,7 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 	xfInfo* xfi;
 	xfEvent* event;
 	xfPeerContext* xfp;
+	HGDI_RGN invalid_region;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
@@ -559,8 +490,24 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 		if (event->type == XF_EVENT_TYPE_REGION)
 		{
 			xfEventRegion* region = (xfEventRegion*) xf_event_pop(xfp->event_queue);
-			xf_peer_rfx_update(client, region->x, region->y, region->width, region->height);
+			gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
 			xf_event_region_free(region);
+		}
+		else if (event->type == XF_EVENT_TYPE_FRAME_TICK)
+		{
+			event = xf_event_pop(xfp->event_queue);
+			invalid_region = xfp->hdc->hwnd->invalid;
+
+			if (invalid_region->null == false)
+			{
+				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
+					invalid_region->w, invalid_region->h);
+			}
+
+			invalid_region->null = 1;
+			xfp->hdc->hwnd->ninvalid = 0;
+
+			xf_event_free(event);
 		}
 	}
 

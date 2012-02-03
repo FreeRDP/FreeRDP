@@ -1036,3 +1036,26 @@ void freerdp_image_swap_color_order(uint8* data, int width, int height)
 		}
 	}
 }
+
+HCLRCONV freerdp_clrconv_new(uint32 flags)
+{
+	HCLRCONV clrconv = xnew(CLRCONV);
+
+	clrconv->alpha = (flags & CLRCONV_ALPHA) ? true : false;
+	clrconv->invert = (flags & CLRCONV_INVERT) ? true : false;
+	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? true : false;
+	clrconv->palette = xnew(rdpPalette);
+
+	return clrconv;
+}
+
+void freerdp_clrconv_free(HCLRCONV clrconv)
+{
+	if (clrconv != NULL)
+	{
+		if (clrconv->palette != NULL)
+			xfree(clrconv->palette);
+
+		xfree(clrconv);
+	}
+}

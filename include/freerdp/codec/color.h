@@ -254,6 +254,9 @@ FREERDP_API uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, in
 FREERDP_API uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
+FREERDP_API HCLRCONV freerdp_clrconv_new(uint32 flags);
+FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
+
 #ifdef __cplusplus
 }
 #endif

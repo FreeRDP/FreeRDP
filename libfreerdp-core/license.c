@@ -832,6 +832,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	buffer = (uint8*) xmalloc(HWID_LENGTH);
 	rc4 = crypto_rc4_init(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
 	crypto_rc4(rc4, HWID_LENGTH, license->hwid, buffer);
+	crypto_rc4_free(rc4);
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("Licensing Encryption Key:\n");

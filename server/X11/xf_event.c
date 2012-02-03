@@ -146,6 +146,18 @@ void xf_event_region_free(xfEventRegion* event_region)
 	xfree(event_region);
 }
 
+xfEvent* xf_event_new(int type)
+{
+	xfEvent* event = xnew(xfEvent);
+	event->type = type;
+	return event;
+}
+
+void xf_event_free(xfEvent* event)
+{
+	xfree(event);
+}
+
 xfEventQueue* xf_event_queue_new()
 {
 	xfEventQueue* event_queue = xnew(xfEventQueue);
