@@ -136,7 +136,7 @@ int credssp_get_public_key(rdpCredssp* credssp)
 		return 0;
 	}
 
-	if (tls_verify_certificate(credssp->transport->tls, cert, credssp->transport->settings->hostname))
+	if (!tls_verify_certificate(credssp->transport->tls, cert, credssp->transport->settings->hostname))
 		tls_disconnect(credssp->transport->tls);
 
 	status = crypto_cert_get_public_key(cert, &credssp->public_key);
