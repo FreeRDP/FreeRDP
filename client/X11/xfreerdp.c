@@ -735,6 +735,8 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 
 boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
+	char answer;
+
 	printf("Certificate details:\n");
 	printf("\tSubject: %s\n", subject);
 	printf("\tIssuer: %s\n", issuer);
@@ -743,7 +745,6 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		"the CA certificate in your certificate store, or the certificate has expired. "
 		"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	char answer;
 	while (1)
 	{
 		printf("Do you trust the above certificate? (Y/N) ");
@@ -757,6 +758,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		{
 			break;
 		}
+		printf("\n");
 	}
 
 	return false;
@@ -888,16 +890,11 @@ void xf_window_free(xfInfo* xfi)
 
 	if (context != NULL)
 	{
-		if (context->cache != NULL)
-		{
 			cache_free(context->cache);
 			context->cache = NULL;
-		}
-		if (context->rail != NULL)
-		{
+
 			rail_free(context->rail);
 			context->rail = NULL;
-		}
 	}
 
 	if (xfi->rfx_context) 
@@ -917,8 +914,7 @@ void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
 
-	if (xfi->bmp_codec_none != NULL)
-		xfree(xfi->bmp_codec_none);
+	xfree(xfi->bmp_codec_none);
 
 	XCloseDisplay(xfi->display);
 

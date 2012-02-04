@@ -306,6 +306,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->ignore_certificate = true;
 		}
+		else if (strcmp("--certificate-name", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing certificate name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+
+			settings->certificate_name = xstrdup(argv[index]);
+		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
 			settings->fastpath_input = false;

@@ -227,60 +227,114 @@ CryptoCert tls_get_certificate(rdpTls* tls)
 	return cert;
 }
 
-int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
+boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 {
 	int match;
-	boolean status;
+	int index;
+	char* common_name;
+	char** alt_names;
+	int alt_names_count;
+	boolean certificate_status;
+	boolean hostname_match = false;
+	rdpCertificateData* certificate_data;
 
-	status = x509_verify_certificate(cert, tls->certificate_store->path);
+	/* ignore certificate verification if user explicitly required it (discouraged) */
+	if (tls->settings->ignore_certificate)
+		return true;  /* success! */
 
-	if (status != true)
+	/* if user explicitly specified a certificate name, use it instead of the hostname */
+	if (tls->settings->certificate_name)
+		hostname = tls->settings->certificate_name;
+
+	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
+	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
+
+	/* verify certificate name match */
+	certificate_data = crypto_get_certificate_data(cert->px509, hostname);
+
+	/* extra common name and alternative names */
+	common_name = crypto_cert_subject_common_name(cert->px509);
+	alt_names = crypto_cert_subject_alt_name(cert->px509, &alt_names_count);
+
+	/* compare against common name */
+	if (strcmp(hostname, common_name) == 0)
+		hostname_match = true;
+
+	/* compare against alternative names */
+	for (index = 0; index < alt_names_count; index++)
+	{
+		if (strcmp(hostname, alt_names[index]) == 0)
+			hostname_match = true;
+	}
+
+	/* if the certificate is valid and the certificate name matches, verification succeeds */
+	if (certificate_status && hostname_match)
+		return true; /* success! */
+
+	/* if the certificate is valid but the certificate name does not match, warn user, do not accept */
+	if (certificate_status && !hostname_match)
+		tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
+
+	/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
+
+	if (!certificate_status)
 	{
 		char* issuer;
 		char* subject;
 		char* fingerprint;
-		rdpCertificateData* certificate_data;
-
-		certificate_data = crypto_get_certificate_data(cert->px509, hostname);
-
-		match = certificate_data_match(tls->certificate_store, certificate_data);
-
-		if (match == 0)
-			return 0;
+		boolean accept_certificate = false;
+		boolean verification_status = false;
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);
 		fingerprint = crypto_cert_fingerprint(cert->px509);
 
+		/* search for matching entry in known_hosts file */
+		match = certificate_data_match(tls->certificate_store, certificate_data);
+
 		if (match == 1)
 		{
-			boolean accept_certificate = tls->settings->ignore_certificate;
+			/* no entry was found in known_hosts file, prompt user for manual verification */
+
+			freerdp* instance = (freerdp*) tls->settings->instance;
+
+			if (!hostname_match)
+				tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
+
+			if (instance->VerifyCertificate)
+				accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
 
 			if (!accept_certificate)
 			{
-				freerdp* instance = (freerdp*) tls->settings->instance;
-
-				if (instance->VerifyCertificate)
-					accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
-
-				xfree(issuer);
-				xfree(subject);
-				xfree(fingerprint);
+				/* user did not accept, abort and do not add entry in known_hosts file */
+				verification_status = false;  /* failure! */
 			}
-
-			if (!accept_certificate)
-				return 1;
-
-			certificate_data_print(tls->certificate_store, certificate_data);
+			else
+			{
+				/* user accepted certificate, add entry in known_hosts file */
+				certificate_data_print(tls->certificate_store, certificate_data);
+				verification_status = true; /* success! */
+			}
 		}
 		else if (match == -1)
 		{
+			/* entry was found in known_hosts file, but fingerprint does not match */
 			tls_print_certificate_error(hostname, fingerprint);
-			return 1;
+			verification_status = false; /* failure! */
 		}
+		else if (match == 0)
+		{
+			verification_status = true; /* success! */
+		}
+
+		xfree(issuer);
+		xfree(subject);
+		xfree(fingerprint);
+
+		return verification_status;
 	}
 
-	return 0;
+	return false;
 }
 
 void tls_print_certificate_error(char* hostname, char* fingerprint)
@@ -297,6 +351,36 @@ void tls_print_certificate_error(char* hostname, char* fingerprint)
 	printf("Add correct host key in ~/.freerdp/known_hosts to get rid of this message.\n");
 	printf("Host key for %s has changed and you have requested strict checking.\n", hostname);
 	printf("Host key verification failed.\n");
+}
+
+void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count)
+{
+	int index;
+
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("The hostname used for this connection (%s) \n", hostname);
+
+	if (alt_names_count < 1)
+	{
+		printf("does not match the name given in the certificate:\n");
+		printf("%s\n", common_name);
+	}
+	else
+	{
+		printf("does not match the names given in the certificate:\n");
+		printf("%s", common_name);
+
+		for (index = 0; index < alt_names_count; index++)
+		{
+			printf(", %s", alt_names[index]);
+		}
+
+		printf("\n");
+	}
+
+	printf("A valid certificate for the wrong name should NOT be trusted!\n");
 }
 
 rdpTls* tls_new(rdpSettings* settings)
