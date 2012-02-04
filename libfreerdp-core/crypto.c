@@ -355,7 +355,7 @@ char* crypto_print_name(X509_NAME* name)
 	char* buffer = NULL;
 	BIO* outBIO = BIO_new(BIO_s_mem());
 	
-	if(X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0) 
+	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
 	{
 		unsigned long size = BIO_number_written(outBIO);
 		buffer = xzalloc(size + 1);
@@ -371,6 +371,58 @@ char* crypto_print_name(X509_NAME* name)
 char* crypto_cert_subject(X509* xcert)
 {
 	return crypto_print_name(X509_get_subject_name(xcert));
+}
+
+char* crypto_cert_subject_common_name(X509* xcert)
+{
+	int index;
+	int length;
+	uint8* common_name;
+	X509_NAME* subject_name;
+	X509_NAME_ENTRY* entry;
+	ASN1_STRING* entry_data;
+
+	subject_name = X509_get_subject_name(xcert);
+	index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+
+	entry = X509_NAME_get_entry(subject_name, index);
+	entry_data = X509_NAME_ENTRY_get_data(entry);
+
+	length = ASN1_STRING_to_UTF8(&common_name, entry_data);
+
+	return (char*) common_name;
+}
+
+char** crypto_cert_subject_alt_name(X509* xcert, int* count)
+{
+	int index;
+	char** strings;
+	uint8* string;
+	int num_subject_alt_names;
+	GENERAL_NAMES* subject_alt_names;
+	GENERAL_NAME* subject_alt_name;
+
+	*count = 0;
+	subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
+
+	if (!subject_alt_names)
+		return NULL;
+
+	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
+	strings = malloc(sizeof(char*) * num_subject_alt_names);
+
+	for (index = 0; index < num_subject_alt_names; ++index)
+	{
+		subject_alt_name = sk_GENERAL_NAME_value(subject_alt_names, index);
+
+		if (subject_alt_name->type == GEN_DNS)
+		{
+			ASN1_STRING_to_UTF8(&string, subject_alt_name->d.dNSName);
+			strings[(*count)++] = (char*) string;
+		}
+	}
+
+	return strings;
 }
 
 char* crypto_cert_issuer(X509* xcert)

@@ -230,7 +230,12 @@ CryptoCert tls_get_certificate(rdpTls* tls)
 int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 {
 	int match;
+	int index;
 	boolean status;
+	char* common_name;
+	char** alt_names;
+	int alt_names_count;
+	boolean hostname_match = false;
 
 	status = x509_verify_certificate(cert, tls->certificate_store->path);
 
@@ -245,8 +250,22 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 
 		match = certificate_data_match(tls->certificate_store, certificate_data);
 
-		if (match == 0)
+		common_name = crypto_cert_subject_common_name(cert->px509);
+		alt_names = crypto_cert_subject_alt_name(cert->px509, &alt_names_count);
+
+		if (strcmp(hostname, common_name) == 0)
+			hostname_match = true;
+
+		for (index = 0; index < alt_names_count; index++)
+		{
+			if (strcmp(hostname, alt_names[index]) == 0)
+				hostname_match = true;
+		}
+
+		if ((match == 0) && hostname_match)
 			return 0;
+		else
+			tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);
@@ -297,6 +316,36 @@ void tls_print_certificate_error(char* hostname, char* fingerprint)
 	printf("Add correct host key in ~/.freerdp/known_hosts to get rid of this message.\n");
 	printf("Host key for %s has changed and you have requested strict checking.\n", hostname);
 	printf("Host key verification failed.\n");
+}
+
+void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count)
+{
+	int index;
+
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
+	printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	printf("The hostname used for this connection (%s) \n", hostname);
+
+	if (alt_names_count < 1)
+	{
+		printf("does not match the name given in the certificate:\n");
+		printf("%s\n", common_name);
+	}
+	else
+	{
+		printf("does not match the names given in the certificate:\n");
+		printf("%s", common_name);
+
+		for (index = 0; index < alt_names_count; index++)
+		{
+			printf(", %s", alt_names[index]);
+		}
+
+		printf("\n");
+	}
+
+	printf("A valid certificate for the wrong name should NOT be trusted!\n");
 }
 
 rdpTls* tls_new(rdpSettings* settings)
