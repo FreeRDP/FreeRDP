@@ -111,13 +111,13 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	values.subwindow_mode = IncludeInferiors;
 	xfi->xdamage_gc = XCreateGC(xfi->display, xfi->root_window, GCSubwindowMode, &values);
+	XSetFunction(xfi->display, xfi->xdamage_gc, GXcopy);
 }
 
 #endif
 
 void xf_xshm_init(xfInfo* xfi)
 {
-	xfi->use_xshm = false;
 	xfi->fb_shm_info.shmid = -1;
 	xfi->fb_shm_info.shmaddr = (char*) -1;
 
@@ -157,8 +157,6 @@ void xf_xshm_init(xfInfo* xfi)
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
 			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
 			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
-
-	//xfi->use_xshm = true;
 }
 
 xfInfo* xf_info_init()
@@ -175,6 +173,7 @@ xfInfo* xf_info_init()
 
 	xfi = xnew(xfInfo);
 
+	//xfi->use_xshm = true;
 	xfi->display = XOpenDisplay(NULL);
 
 	XInitThreads();
@@ -185,6 +184,7 @@ xfInfo* xf_info_init()
 		exit(1);
 	}
 
+	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->number = DefaultScreen(xfi->display);
 	xfi->screen = ScreenOfDisplay(xfi->display, xfi->number);
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
@@ -393,6 +393,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
 	STREAM* s;
+	uint8* data;
 	xfInfo* xfi;
 	RFX_RECT rect;
 	XImage* image;
@@ -412,6 +413,11 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	if (xfi->use_xshm)
 	{
+		width = x + width;
+		height = y + height;
+		x = 0;
+		y = 0;
+
 		rect.x = x;
 		rect.y = y;
 		rect.width = width;
@@ -419,8 +425,11 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 		image = xf_snapshot(xfp, x, y, width, height);
 
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
-				(uint8*) image->data, xfi->width, xfi->height, image->bytes_per_line);
+		data = (uint8*) image->data;
+		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel)];
+
+		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
+				width, height, image->bytes_per_line);
 
 		cmd->destLeft = x;
 		cmd->destTop = y;

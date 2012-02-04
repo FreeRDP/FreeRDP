@@ -45,6 +45,7 @@ typedef struct xf_info xfInfo;
 struct xf_info
 {
 	int bpp;
+	int xfds;
 	int depth;
 	int width;
 	int height;

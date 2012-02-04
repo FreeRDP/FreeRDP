@@ -27,24 +27,28 @@ XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 	XImage* image;
 	xfInfo* xfi = xfp->info;
 
-	pthread_mutex_lock(&(xfp->mutex));
-
 	if (xfi->use_xshm)
 	{
+		pthread_mutex_lock(&(xfp->mutex));
+
 		XCopyArea(xfi->display, xfi->root_window, xfi->fb_pixmap,
 				xfi->xdamage_gc, x, y, width, height, x, y);
 
 		XSync(xfi->display, False);
 
 		image = xfi->fb_image;
+
+		pthread_mutex_unlock(&(xfp->mutex));
 	}
 	else
 	{
+		pthread_mutex_lock(&(xfp->mutex));
+
 		image = XGetImage(xfi->display, xfi->root_window,
 				x, y, width, height, AllPlanes, ZPixmap);
-	}
 
-	pthread_mutex_unlock(&(xfp->mutex));
+		pthread_mutex_unlock(&(xfp->mutex));
+	}
 
 	return image;
 }
@@ -91,12 +95,16 @@ void* xf_frame_rate_thread(void* param)
 
 void* xf_monitor_updates(void* param)
 {
+	int fds;
 	xfInfo* xfi;
 	XEvent xevent;
+	fd_set rfds_set;
+	int select_status;
+	int pending_events;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	uint32 wait_interval;
-	int pending_events = 0;
+	struct timeval timeout;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 	xfEventRegion* event_region;
@@ -105,14 +113,32 @@ void* xf_monitor_updates(void* param)
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
+	fds = xfi->xfds;
+	wait_interval = (1000000 / 2500);
+	memset(&timeout, 0, sizeof(struct timeval));
+
 	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
 
 	pthread_detach(pthread_self());
 
-	wait_interval = (1000000 / 2500);
-
 	while (1)
 	{
+		FD_ZERO(&rfds_set);
+		FD_SET(fds, &rfds_set);
+
+		timeout.tv_sec = 0;
+		timeout.tv_usec = wait_interval;
+		select_status = select(fds + 1, &rfds_set, NULL, NULL, &timeout);
+
+		if (select_status == -1)
+		{
+			printf("select failed\n");
+		}
+		else if (select_status == 0)
+		{
+			//printf("select timeout\n");
+		}
+
 		pthread_mutex_lock(&(xfp->mutex));
 		pending_events = XPending(xfi->display);
 		pthread_mutex_unlock(&(xfp->mutex));
@@ -139,8 +165,6 @@ void* xf_monitor_updates(void* param)
 				xf_event_push(xfp->event_queue, (xfEvent*) event_region);
 			}
 		}
-
-		freerdp_usleep(wait_interval);
 	}
 
 	return NULL;
