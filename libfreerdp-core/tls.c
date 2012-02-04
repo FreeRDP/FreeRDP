@@ -242,6 +242,10 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	if (tls->settings->ignore_certificate)
 		return true;  /* success! */
 
+	/* if user explicitly specified a certificate name, use it instead of the hostname */
+	if (tls->settings->certificate_name)
+		hostname = tls->settings->certificate_name;
+
 	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
 
