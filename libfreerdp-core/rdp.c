@@ -93,12 +93,13 @@ boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, u
 {
 	/* Share Control Header */
 	stream_read_uint16(s, *length); /* totalLength */
+
+	if (*length - 2 > stream_get_left(s))
+		return false;
+
 	stream_read_uint16(s, *type); /* pduType */
 	stream_read_uint16(s, *channel_id); /* pduSource */
 	*type &= 0x0F; /* type is in the 4 least significant bits */
-
-	if (*length - 6 > stream_get_left(s))
-		return false;
 
 	return true;
 }
@@ -228,6 +229,9 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 
 	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
 	mcs_read_domain_mcspdu_header(s, &MCSPDU, length);
+
+	if (*length - 8 > stream_get_left(s))
+		return false;
 
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, channel_id, 0); /* channelId */
