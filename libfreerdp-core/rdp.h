@@ -155,6 +155,7 @@ struct rdp_rdp
 	uint8 fips_decrypt_key[24];
 	uint32 errorInfo;
 	uint32 finalize_sc_pdus;
+	boolean disconnect;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
