@@ -98,8 +98,12 @@ boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, u
 		return false;
 
 	stream_read_uint16(s, *type); /* pduType */
-	stream_read_uint16(s, *channel_id); /* pduSource */
 	*type &= 0x0F; /* type is in the 4 least significant bits */
+
+	if (*length > 4)
+		stream_read_uint16(s, *channel_id); /* pduSource */
+	else /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
+		*channel_id = 0;
 
 	return true;
 }
