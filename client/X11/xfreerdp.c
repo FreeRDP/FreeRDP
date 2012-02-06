@@ -948,7 +948,7 @@ int xfreerdp_run(freerdp* instance)
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 
-	while (!xfi->disconnect)
+	while (!xfi->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
 		wcount = 0;
