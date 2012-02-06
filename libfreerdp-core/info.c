@@ -473,6 +473,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	uint16 cbUserName;
 	uint8* password;
 	uint16 cbPassword;
+	size_t passwordLength;
 	uint8* alternateShell;
 	uint16 cbAlternateShell;
 	uint8* workingDir;
@@ -510,12 +511,13 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	{
 		usedPasswordCookie = true;
 		password = (uint8*)settings->password_cookie->data;
-		cbPassword = settings->password_cookie->length - 2;
+		passwordLength = settings->password_cookie->length;
+		cbPassword = passwordLength - 2;
 	}
 	else
 	{
-		password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &length);
-		cbPassword = length;
+		password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &passwordLength);
+		cbPassword = passwordLength;
 	}
 
 	alternateShell = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->shell, &length);
@@ -542,7 +544,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	stream_write_uint16(s, 0);
 
 	if (cbPassword > 0)
-		stream_write(s, password, cbPassword + 2);
+		stream_write(s, password, passwordLength);
 	stream_write_uint16(s, 0);
 
 	if (cbAlternateShell > 0)
