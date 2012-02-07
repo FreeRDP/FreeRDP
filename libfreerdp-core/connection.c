@@ -450,6 +450,9 @@ boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 		return true;
 	}
 
+	if (rdp->disconnect)
+		return true;
+
 	if (!rdp_send_confirm_active(rdp))
 		return false;
 

@@ -237,6 +237,17 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 	if (*length - 8 > stream_get_left(s))
 		return false;
 
+	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
+	{
+		uint8 reason;
+
+		(void) per_read_enumerated(s, &reason, 0);
+
+		rdp->disconnect = true;
+
+		return true;
+	}
+
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, channel_id, 0); /* channelId */
 	stream_seek(s, 1); /* dataPriority + Segmentation (0x70) */

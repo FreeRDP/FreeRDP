@@ -294,6 +294,8 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return false;
+		if (rdp->disconnect)
+			break;
 	}
 
 	return true;
