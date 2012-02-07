@@ -54,9 +54,9 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	}
 }
 
-void xf_input_unicode_keyboard_event(rdpInput* input, uint16 code)
+void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	printf("Client sent a unicode keyboard event (code:0x%X)\n", code);
+	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
 void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)

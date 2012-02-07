@@ -1798,6 +1798,9 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return false;
 
+	if (rdp->disconnect)
+		return true;
+
 	if (rdp->settings->encryption)
 	{
 		rdp_read_security_header(s, &securityFlags);

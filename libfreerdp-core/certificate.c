@@ -375,7 +375,8 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 		return false;
 	}
 	stream_read_uint16(s, wSignatureBlobLen);
-	if (wSignatureBlobLen != 72) {
+	if (wSignatureBlobLen != 72)
+	{
 		printf("certificate_process_server_public_signature: invalid signature length (got %d, expected %d)\n", wSignatureBlobLen, 64);
 		return false;
 	}
@@ -610,13 +611,19 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	data = (char*) xmalloc(size + 1);
-	length = fread(data, size, 1, fp);
-
 	if (size < 1)
 		return match;
 
+	data = (char*) xmalloc(size + 2);
+
+	if (fread(data, size, 1, fp) != 1)
+	{
+		xfree(data);
+		return match;
+	}
+
 	data[size] = '\n';
+	data[size + 1] = '\0';
 	pline = strtok(data, "\n");
 
 	while (pline != NULL)

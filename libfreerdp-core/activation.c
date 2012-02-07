@@ -277,9 +277,16 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 {
 	uint16 lengthSourceDescriptor;
 
-	stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
-	stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
+	/*
+	 * Windows XP can send short DEACTIVATE_ALL PDU that doesn't contain
+	 * the following fields.
+	 */
+	if (stream_get_left(s) > 0)
+	{
+		stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+		stream_read_uint16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
+		stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
+	}
 
 	rdp->state = CONNECTION_STATE_CAPABILITY;
 
@@ -287,6 +294,8 @@ boolean rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return false;
+		if (rdp->disconnect)
+			break;
 	}
 
 	return true;

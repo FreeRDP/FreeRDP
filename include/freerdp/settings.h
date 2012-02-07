@@ -358,7 +358,8 @@ struct rdp_settings
 	rdpCertificate* server_cert; /* 269 */
 	char* rdp_key_file; /* 270 */
 	rdpKey* server_key; /* 271 */
-	uint32 paddingL[280 - 272]; /* 272 */
+	char* certificate_name; /* 272 */
+	uint32 paddingL[280 - 273]; /* 273 */
 
 	/* Codecs */
 	boolean rfx_codec; /* 280 */

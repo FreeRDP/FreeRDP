@@ -78,20 +78,32 @@ void input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	rdp_send_client_input_pdu(rdp, s);
 }
 
-void input_write_unicode_keyboard_event(STREAM* s, uint16 code)
+void input_write_unicode_keyboard_event(STREAM* s, uint16 flags, uint16 code)
 {
-	stream_write_uint16(s, 0); /* pad2OctetsA (2 bytes) */
+	stream_write_uint16(s, flags); /* keyboardFlags (2 bytes) */
 	stream_write_uint16(s, code); /* unicodeCode (2 bytes) */
-	stream_write_uint16(s, 0); /* pad2OctetsB (2 bytes) */
+	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 }
 
-void input_send_unicode_keyboard_event(rdpInput* input, uint16 code)
+void input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
+	uint16 keyboardFlags = 0;
 	rdpRdp* rdp = input->context->rdp;
 
+	/*
+	 * According to the specification, the slow path Unicode Keyboard Event
+	 * (TS_UNICODE_KEYBOARD_EVENT) contains KBD_FLAGS_RELEASE flag when key
+	 * is released, but contains no flags when it is pressed.
+	 * This is different from the slow path Keyboard Event
+	 * (TS_KEYBOARD_EVENT) which does contain KBD_FLAGS_DOWN flag when the
+	 * key is pressed.
+	 * There is no KBD_FLAGS_EXTENDED flag in TS_UNICODE_KEYBOARD_EVENT.
+	 */
+	keyboardFlags |= (flags & KBD_FLAGS_RELEASE) ? KBD_FLAGS_RELEASE : 0;
+
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
-	input_write_unicode_keyboard_event(s, code);
+	input_write_unicode_keyboard_event(s, flags, code);
 	rdp_send_client_input_pdu(rdp, s);
 }
 
@@ -152,12 +164,14 @@ void input_send_fastpath_keyboard_event(rdpInput* input, uint16 flags, uint16 co
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code)
+void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
+	uint8 eventFlags = 0;
 	rdpRdp* rdp = input->context->rdp;
 
-	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_UNICODE);
+	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
+	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_UNICODE);
 	stream_write_uint16(s, code); /* unicodeCode (2 bytes) */
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
@@ -180,6 +194,168 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uin
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSEX);
 	input_write_extended_mouse_event(s, flags, x, y);
 	fastpath_send_input_pdu(rdp->fastpath, s);
+}
+
+static boolean input_recv_sync_event(rdpInput* input, STREAM* s)
+{
+	uint32 toggleFlags;
+
+	if (stream_get_left(s) < 6)
+		return false;
+
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	stream_read_uint32(s, toggleFlags); /* toggleFlags (4 bytes) */
+
+	IFCALL(input->SynchronizeEvent, input, toggleFlags);
+
+	return true;
+}
+
+static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
+{
+	uint16 keyboardFlags, keyCode;
+
+	if (stream_get_left(s) < 6)
+		return false;
+
+	stream_read_uint16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
+	stream_read_uint16(s, keyCode); /* keyCode (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	IFCALL(input->KeyboardEvent, input, keyboardFlags, keyCode);
+
+	return true;
+}
+
+static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
+{
+	uint16 keyboardFlags, unicodeCode;
+
+	if (stream_get_left(s) < 6)
+		return false;
+
+	stream_read_uint16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
+	stream_read_uint16(s, unicodeCode); /* unicodeCode (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	/*
+	 * According to the specification, the slow path Unicode Keyboard Event
+	 * (TS_UNICODE_KEYBOARD_EVENT) contains KBD_FLAGS_RELEASE flag when key
+	 * is released, but contains no flags when it is pressed.
+	 * This is different from the slow path Keyboard Event
+	 * (TS_KEYBOARD_EVENT) which does contain KBD_FLAGS_DOWN flag when the
+	 * key is pressed.
+	 * Set the KBD_FLAGS_DOWN flag if the KBD_FLAGS_RELEASE flag is missing.
+	 */
+
+	if ((keyboardFlags & KBD_FLAGS_RELEASE) == 0)
+		keyboardFlags |= KBD_FLAGS_DOWN;
+
+	IFCALL(input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
+
+	return true;
+}
+
+static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
+{
+	uint16 pointerFlags, xPos, yPos;
+
+	if (stream_get_left(s) < 6)
+		return false;
+
+	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, yPos); /* yPos (2 bytes) */
+
+	IFCALL(input->MouseEvent, input, pointerFlags, xPos, yPos);
+
+	return true;
+}
+
+static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
+{
+	uint16 pointerFlags, xPos, yPos;
+
+	if (stream_get_left(s) < 6)
+		return false;
+
+	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
+	stream_read_uint16(s, yPos); /* yPos (2 bytes) */
+
+	IFCALL(input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
+
+	return true;
+}
+
+static boolean input_recv_event(rdpInput* input, STREAM* s)
+{
+	uint16 messageType;
+
+	if (stream_get_left(s) < 4)
+		return false;
+
+	stream_seek(s, 4); /* eventTime (4 bytes), ignored by the server */
+	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
+
+	switch (messageType)
+	{
+		case INPUT_EVENT_SYNC:
+			if (!input_recv_sync_event(input, s))
+				return false;
+			break;
+
+		case INPUT_EVENT_SCANCODE:
+			if (!input_recv_keyboard_event(input, s))
+				return false;
+			break;
+
+		case INPUT_EVENT_UNICODE:
+			if (!input_recv_unicode_keyboard_event(input, s))
+				return false;
+			break;
+
+		case INPUT_EVENT_MOUSE:
+			if (!input_recv_mouse_event(input, s))
+				return false;
+			break;
+
+		case INPUT_EVENT_MOUSEX:
+			if (!input_recv_extended_mouse_event(input, s))
+				return false;
+			break;
+
+		default:
+			printf("Unknown messageType %u\n", messageType);
+			/* Each input event uses 6 bytes. */
+			stream_seek(s, 6);
+			break;
+	}
+
+	return true;
+}
+
+boolean input_recv(rdpInput* input, STREAM* s)
+{
+	uint16 i, numberEvents;
+
+	if (stream_get_left(s) < 4)
+		return false;
+
+	stream_read_uint16(s, numberEvents); /* numberEvents (2 bytes) */
+	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+
+	/* Each input event uses 6 exactly bytes. */
+	if (stream_get_left(s) < 6 * numberEvents)
+		return false;
+
+	for (i = 0; i < numberEvents; i++)
+	{
+		if (!input_recv_event(input, s))
+			return false;
+	}
+
+	return true;
 }
 
 void input_register_client_callbacks(rdpInput* input)
@@ -225,4 +401,3 @@ void input_free(rdpInput* input)
 		xfree(input);
 	}
 }
-

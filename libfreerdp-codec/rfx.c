@@ -846,8 +846,8 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, STREAM* s,
 		{
 			rfx_compose_message_tile(context, s,
 				image_data + yIdx * 64 * rowstride + xIdx * 8 * context->bits_per_pixel,
-				xIdx < numTilesX - 1 ? 64 : width - xIdx * 64,
-				yIdx < numTilesY - 1 ? 64 : height - yIdx * 64,
+				(xIdx < numTilesX - 1) ? 64 : width - xIdx * 64,
+				(yIdx < numTilesY - 1) ? 64 : height - yIdx * 64,
 				rowstride, quantVals, quantIdxY, quantIdxCb, quantIdxCr, xIdx, yIdx);
 		}
 	}
