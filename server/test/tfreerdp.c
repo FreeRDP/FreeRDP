@@ -493,9 +493,9 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	}
 }
 
-void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 code)
+void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
-	printf("Client sent a unicode keyboard event (code:0x%X)\n", code);
+	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
 void tf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)

@@ -385,13 +385,20 @@ static boolean fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, 
 static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	uint16 unicodeCode;
+	uint16 flags;
 
 	if (stream_get_left(s) < 2)
 		return false;
 
 	stream_read_uint16(s, unicodeCode); /* unicodeCode (2 bytes) */
 
-	IFCALL(fastpath->rdp->input->UnicodeKeyboardEvent, fastpath->rdp->input, unicodeCode);
+	flags = 0;
+	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
+		flags |= KBD_FLAGS_RELEASE;
+	else
+		flags |= KBD_FLAGS_DOWN;
+
+	IFCALL(fastpath->rdp->input->UnicodeKeyboardEvent, fastpath->rdp->input, flags, unicodeCode);
 
 	return true;
 }
