@@ -77,6 +77,11 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 				return false;
 			break;
 
+		case DATA_PDU_TYPE_INPUT:
+			if (!input_recv(client->context->rdp->input, s))
+				return false;
+			break;
+
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
 			/* TODO: notify server bitmap cache data */
 			break;
