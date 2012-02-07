@@ -78,20 +78,32 @@ void input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	rdp_send_client_input_pdu(rdp, s);
 }
 
-void input_write_unicode_keyboard_event(STREAM* s, uint16 code)
+void input_write_unicode_keyboard_event(STREAM* s, uint16 flags, uint16 code)
 {
-	stream_write_uint16(s, 0); /* pad2OctetsA (2 bytes) */
+	stream_write_uint16(s, flags); /* keyboardFlags (2 bytes) */
 	stream_write_uint16(s, code); /* unicodeCode (2 bytes) */
-	stream_write_uint16(s, 0); /* pad2OctetsB (2 bytes) */
+	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 }
 
-void input_send_unicode_keyboard_event(rdpInput* input, uint16 code)
+void input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
+	uint16 keyboardFlags = 0;
 	rdpRdp* rdp = input->context->rdp;
 
+	/*
+	 * According to the specification, the slow path Unicode Keyboard Event
+	 * (TS_UNICODE_KEYBOARD_EVENT) contains KBD_FLAGS_RELEASE flag when key
+	 * is released, but contains no flags when it is pressed.
+	 * This is different from the slow path Keyboard Event
+	 * (TS_KEYBOARD_EVENT) which does contain KBD_FLAGS_DOWN flag when the
+	 * key is pressed.
+	 * There is no KBD_FLAGS_EXTENDED flag in TS_UNICODE_KEYBOARD_EVENT.
+	 */
+	keyboardFlags |= (flags & KBD_FLAGS_RELEASE) ? KBD_FLAGS_RELEASE : 0;
+
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
-	input_write_unicode_keyboard_event(s, code);
+	input_write_unicode_keyboard_event(s, flags, code);
 	rdp_send_client_input_pdu(rdp, s);
 }
 
@@ -152,12 +164,14 @@ void input_send_fastpath_keyboard_event(rdpInput* input, uint16 flags, uint16 co
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 code)
+void input_send_fastpath_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	STREAM* s;
+	uint8 eventFlags = 0;
 	rdpRdp* rdp = input->context->rdp;
 
-	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_UNICODE);
+	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
+	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_UNICODE);
 	stream_write_uint16(s, code); /* unicodeCode (2 bytes) */
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }

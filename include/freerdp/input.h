@@ -54,7 +54,7 @@ typedef struct rdp_input rdpInput;
 
 typedef void (*pSynchronizeEvent)(rdpInput* input, uint32 flags);
 typedef void (*pKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
-typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, uint16 code);
+typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
 typedef void (*pMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 typedef void (*pExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 
