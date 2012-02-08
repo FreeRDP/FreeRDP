@@ -49,6 +49,22 @@
  * @return length
  */
 
+/*
+ * The fastpath header may be two or three bytes long.
+ * This function assumes that at least two bytes are available in the stream
+ * and doesn't touch third byte.
+ */
+uint16 fastpath_header_length(STREAM* s)
+{
+	uint8 length1;
+
+	stream_seek_uint8(s);
+	stream_read_uint8(s, length1);
+	stream_rewind(s, 2);
+
+	return ((length1 & 0x80) != 0 ? 3 : 2);
+}
+
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 header;
