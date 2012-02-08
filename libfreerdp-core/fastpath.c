@@ -42,13 +42,6 @@
 
 #define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
-/**
- * Read a Fast-Path packet header.\n
- * @param s stream
- * @param encryptionFlags
- * @return length
- */
-
 /*
  * The fastpath header may be two or three bytes long.
  * This function assumes that at least two bytes are available in the stream
@@ -65,6 +58,12 @@ uint16 fastpath_header_length(STREAM* s)
 	return ((length1 & 0x80) != 0 ? 3 : 2);
 }
 
+/**
+ * Read a Fast-Path packet header.\n
+ * @param s stream
+ * @param encryptionFlags
+ * @return length
+ */
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 header;
