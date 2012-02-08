@@ -232,8 +232,10 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	int match;
 	int index;
 	char* common_name;
+	int common_name_length;
 	char** alt_names;
 	int alt_names_count;
+	int* alt_names_lengths;
 	boolean certificate_status;
 	boolean hostname_match = false;
 	rdpCertificateData* certificate_data;
@@ -253,18 +255,32 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	certificate_data = crypto_get_certificate_data(cert->px509, hostname);
 
 	/* extra common name and alternative names */
-	common_name = crypto_cert_subject_common_name(cert->px509);
-	alt_names = crypto_cert_subject_alt_name(cert->px509, &alt_names_count);
+	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
+	alt_names = crypto_cert_subject_alt_name(cert->px509, &alt_names_count, &alt_names_lengths);
 
 	/* compare against common name */
-	if (strcmp(hostname, common_name) == 0)
-		hostname_match = true;
+
+	if (common_name != NULL)
+	{
+		if (strlen(hostname) == common_name_length)
+		{
+			if (memcmp((void*) hostname, (void*) common_name, common_name_length) == 0)
+				hostname_match = true;
+		}
+	}
 
 	/* compare against alternative names */
-	for (index = 0; index < alt_names_count; index++)
+
+	if (alt_names != NULL)
 	{
-		if (strcmp(hostname, alt_names[index]) == 0)
-			hostname_match = true;
+		for (index = 0; index < alt_names_count; index++)
+		{
+			if (strlen(hostname) == alt_names_lengths[index])
+			{
+				if (memcmp((void*) hostname, (void*) alt_names[index], alt_names_lengths[index]) == 0)
+					hostname_match = true;
+			}
+		}
 	}
 
 	/* if the certificate is valid and the certificate name matches, verification succeeds */
