@@ -160,7 +160,7 @@ void brush_cache_free(rdpBrushCache* brush)
 	{
 		if (brush->entries != NULL)
 		{
-			for (i = 0; i < brush->maxEntries; i++)
+			for (i = 0; i < (int) brush->maxEntries; i++)
 			{
 				if (brush->entries[i].entry != NULL)
 					xfree(brush->entries[i].entry);
@@ -171,7 +171,7 @@ void brush_cache_free(rdpBrushCache* brush)
 
 		if (brush->monoEntries != NULL)
 		{
-			for (i = 0; i < brush->maxMonoEntries; i++)
+			for (i = 0; i < (int) brush->maxMonoEntries; i++)
 			{
 				if (brush->monoEntries[i].entry != NULL)
 					xfree(brush->monoEntries[i].entry);

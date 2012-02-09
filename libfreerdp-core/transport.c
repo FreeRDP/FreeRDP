@@ -312,6 +312,13 @@ int transport_check_fds(rdpTransport* transport)
 				stream_set_pos(transport->recv_buffer, pos);
 				return 0;
 			}
+			/* Fastpath header can be two or three bytes long. */
+			length = fastpath_header_length(transport->recv_buffer);
+			if (pos < length)
+			{
+				stream_set_pos(transport->recv_buffer, pos);
+				return 0;
+			}
 			length = fastpath_read_header(NULL, transport->recv_buffer);
 		}
 

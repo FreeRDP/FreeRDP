@@ -306,7 +306,7 @@ boolean wf_post_connect(freerdp* instance)
 
 		if (settings->rfx_codec)
 		{
-			wfi->tile = wf_bitmap_new(wfi, 64, 64, 24, NULL);
+			wfi->tile = wf_bitmap_new(wfi, 64, 64, 32, NULL);
 			wfi->rfx_context = rfx_context_new();
 			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
 		}

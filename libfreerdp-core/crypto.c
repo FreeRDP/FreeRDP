@@ -373,29 +373,46 @@ char* crypto_cert_subject(X509* xcert)
 	return crypto_print_name(X509_get_subject_name(xcert));
 }
 
-char* crypto_cert_subject_common_name(X509* xcert)
+char* crypto_cert_subject_common_name(X509* xcert, int* length)
 {
 	int index;
-	int length;
 	uint8* common_name;
 	X509_NAME* subject_name;
 	X509_NAME_ENTRY* entry;
 	ASN1_STRING* entry_data;
 
 	subject_name = X509_get_subject_name(xcert);
+
+	if (subject_name == NULL)
+		return NULL;
+
 	index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
 
+	if (index < 0)
+		return NULL;
+
 	entry = X509_NAME_get_entry(subject_name, index);
+
+	if (entry == NULL)
+		return NULL;
+
 	entry_data = X509_NAME_ENTRY_get_data(entry);
 
-	length = ASN1_STRING_to_UTF8(&common_name, entry_data);
+	if (entry_data == NULL)
+		return NULL;
+
+	*length = ASN1_STRING_to_UTF8(&common_name, entry_data);
+
+	if (*length < 0)
+		return NULL;
 
 	return (char*) common_name;
 }
 
-char** crypto_cert_subject_alt_name(X509* xcert, int* count)
+char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 {
 	int index;
+	int length;
 	char** strings;
 	uint8* string;
 	int num_subject_alt_names;
@@ -409,7 +426,8 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count)
 		return NULL;
 
 	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
-	strings = malloc(sizeof(char*) * num_subject_alt_names);
+	strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+	*lengths = (int*) malloc(sizeof(int*) * num_subject_alt_names);
 
 	for (index = 0; index < num_subject_alt_names; ++index)
 	{
@@ -417,10 +435,15 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count)
 
 		if (subject_alt_name->type == GEN_DNS)
 		{
-			ASN1_STRING_to_UTF8(&string, subject_alt_name->d.dNSName);
-			strings[(*count)++] = (char*) string;
+			length = ASN1_STRING_to_UTF8(&string, subject_alt_name->d.dNSName);
+			strings[*count] = (char*) string;
+			*lengths[*count] = length;
+			(*count)++;
 		}
 	}
+
+	if (*count < 1)
+		return NULL;
 
 	return strings;
 }

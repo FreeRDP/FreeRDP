@@ -20,13 +20,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/string.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#include <direct.h>
+#define getcwd			_getcwd
+#endif
 
 #include <freerdp/utils/file.h>
 

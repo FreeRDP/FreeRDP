@@ -21,7 +21,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-typedef void (*pSetPixel32_ROP2)(uint32 *pixel, uint32 *pen);
+typedef int (*pLineTo_32bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 FREERDP_API uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color);
 
