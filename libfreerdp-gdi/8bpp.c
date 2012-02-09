@@ -795,107 +795,139 @@ INLINE void SetPixel_WHITE_8bpp(uint8* pixel, uint8* pen)
 	*pixel = 0xFF;
 }
 
-pSetPixel8_ROP2 SetPixel8_ROP2_[16] =
+#define PIXEL_TYPE		uint8
+#define GDI_GET_POINTER		gdi_GetPointer_8bpp
+#define GDI_GET_PEN_COLOR	gdi_GetPenColor_8bpp
+
+#define LINE_TO			LineTo_BLACK_8bpp
+#define SET_PIXEL_ROP2		SetPixel_BLACK_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOTMERGEPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOTMERGEPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MASKNOTPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MASKNOTPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOTCOPYPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOTCOPYPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MASKPENNOT_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MASKPENNOT_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOT_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOT_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_XORPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_XORPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOTMASKPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOTMASKPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MASKPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MASKPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOTXORPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOTXORPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_NOP_8bpp
+#define SET_PIXEL_ROP2		SetPixel_NOP_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MERGENOTPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MERGENOTPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_COPYPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_COPYPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MERGEPENNOT_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MERGEPENNOT_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_MERGEPEN_8bpp
+#define SET_PIXEL_ROP2		SetPixel_MERGEPEN_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#define LINE_TO			LineTo_WHITE_8bpp
+#define SET_PIXEL_ROP2		SetPixel_WHITE_8bpp
+#include "include/line.c"
+#undef LINE_TO
+#undef SET_PIXEL_ROP2
+
+#undef PIXEL_TYPE
+#undef GDI_GET_POINTER
+#undef GDI_GET_PEN_COLOR
+
+pLineTo_8bpp LineTo_ROP2_8bpp[32] =
 {
-	SetPixel_BLACK_8bpp,
-	SetPixel_NOTMERGEPEN_8bpp,
-	SetPixel_MASKNOTPEN_8bpp,
-	SetPixel_NOTCOPYPEN_8bpp,
-	SetPixel_MASKPENNOT_8bpp,
-	SetPixel_NOT_8bpp,
-	SetPixel_XORPEN_8bpp,
-	SetPixel_NOTMASKPEN_8bpp,
-	SetPixel_MASKPEN_8bpp,
-	SetPixel_NOTXORPEN_8bpp,
-	SetPixel_NOP_8bpp,
-	SetPixel_MERGENOTPEN_8bpp,
-	SetPixel_COPYPEN_8bpp,
-	SetPixel_MERGEPENNOT_8bpp,
-	SetPixel_MERGEPEN_8bpp,
-	SetPixel_WHITE_8bpp
+	LineTo_BLACK_8bpp,
+	LineTo_NOTMERGEPEN_8bpp,
+	LineTo_MASKNOTPEN_8bpp,
+	LineTo_NOTCOPYPEN_8bpp,
+	LineTo_MASKPENNOT_8bpp,
+	LineTo_NOT_8bpp,
+	LineTo_XORPEN_8bpp,
+	LineTo_NOTMASKPEN_8bpp,
+	LineTo_MASKPEN_8bpp,
+	LineTo_NOTXORPEN_8bpp,
+	LineTo_NOP_8bpp,
+	LineTo_MERGENOTPEN_8bpp,
+	LineTo_COPYPEN_8bpp,
+	LineTo_MERGEPENNOT_8bpp,
+	LineTo_MERGEPEN_8bpp,
+	LineTo_WHITE_8bpp
 };
 
 int LineTo_8bpp(HGDI_DC hdc, int nXEnd, int nYEnd)
 {
-	int x, y;
-	int x1, y1;
-	int x2, y2;
-	int e, e2;
-	int dx, dy;
-	int sx, sy;
-	HGDI_BITMAP bmp;
-	int bx1, by1;
-	int bx2, by2;
+	pLineTo_8bpp _LineTo;
+	int rop2 = gdi_GetROP2(hdc) - 1;
 
-	int irop2;
-	uint8 pen;
-	uint8* pixel;
+	_LineTo = LineTo_ROP2_8bpp[rop2];
 
-	x1 = hdc->pen->posX;
-	y1 = hdc->pen->posY;
-	x2 = nXEnd;
-	y2 = nYEnd;
-
-	dx = (x1 > x2) ? x1 - x2 : x2 - x1;
-	dy = (y1 > y2) ? y1 - y2 : y2 - y1;
-
-	sx = (x1 < x2) ? 1 : -1;
-	sy = (y1 < y2) ? 1 : -1;
-
-	e = dx - dy;
-
-	x = x1;
-	y = y1;
-
-	irop2 = gdi_GetROP2(hdc) - 1;
-	bmp = (HGDI_BITMAP) hdc->selectedObject;
-
-	if (hdc->clip->null)
-	{
-		bx1 = (x1 < x2) ? x1 : x2;
-		by1 = (y1 < y2) ? y1 : y2;
-		bx2 = (x1 > x2) ? x1 : x2;
-		by2 = (y1 > y2) ? y1 : y2;
-	}
+	if (_LineTo != NULL)
+		return _LineTo(hdc, nXEnd, nYEnd);
 	else
-	{
-		bx1 = hdc->clip->x;
-		by1 = hdc->clip->y;
-		bx2 = bx1 + hdc->clip->w - 1;
-		by2 = by1 + hdc->clip->h - 1;
-	}
-
-	pen = gdi_GetPenColor_8bpp(hdc->pen);
-
-	while (1)
-	{
-		if (!(x == x2 && y == y2))
-		{
-			if ((x >= bx1 && x <= bx2) && (y >= by1 && y <= by2))
-			{
-				pixel = gdi_GetPointer_8bpp(bmp, x, y);
-				SetPixel8_ROP2_[irop2](pixel, &pen);
-			}
-		}
-		else
-		{
-			break;
-		}
-
-		e2 = 2 * e;
-
-		if (e2 > -dy)
-		{
-			e -= dy;
-			x += sx;
-		}
-
-		if (e2 < dx)
-		{
-			e += dx;
-			y += sy;
-		}
-	}
-
-	return 1;
+		return 0;
 }
