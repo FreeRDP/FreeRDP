@@ -22,16 +22,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/string.h>
 
-#ifdef _WIN32
+#ifndef _WIN32
+#include <unistd.h>
+#else
 #include <direct.h>
 #define getcwd			_getcwd
 #endif
