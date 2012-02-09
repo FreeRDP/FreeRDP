@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <freerdp/utils/file.h>
 #include <freerdp/utils/print.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
 
 #ifdef _WIN32
@@ -30,8 +32,6 @@
 #define DLSYM(f, n) GetProcAddress(f, n)
 #define DLCLOSE(f) FreeLibrary(f)
 #define DLERROR() ""
-#define PATH_SEPARATOR '\\'
-#define PLUGIN_EXT "dll"
 
 #else
 
@@ -41,38 +41,51 @@
 #define DLSYM(f, n) dlsym(f, n)
 #define DLCLOSE(f) dlclose(f)
 #define DLERROR() dlerror()
-#define PATH_SEPARATOR '/'
-
-#ifdef __APPLE__
-#define PLUGIN_EXT "dylib"
-#else
-#define PLUGIN_EXT "so"
-#endif 
 
 #endif
 
 void* freerdp_load_plugin(const char* name, const char* entry_name)
 {
-	char path[255];
+	char* path;
 	void* module;
 	void* entry;
+	char* suffixed_name;
 
-	if (strchr(name, PATH_SEPARATOR) == NULL)
-		snprintf(path, sizeof(path), PLUGIN_PATH "%c%s." PLUGIN_EXT, PATH_SEPARATOR, name);
+	suffixed_name = freerdp_append_shared_library_suffix((char*) name);
+
+	if (!freerdp_path_contains_separator(suffixed_name))
+	{
+		/* no explicit path given, use default path */
+		path = freerdp_construct_path(PLUGIN_PATH, suffixed_name);
+	}
 	else
-		strncpy(path, name, sizeof(path));
+	{
+		/* explicit path given, use it instead of default path */
+		path = xstrdup(suffixed_name);
+	}
 
 	module = DLOPEN(path);
+
 	if (module == NULL)
 	{
 		printf("freerdp_load_plugin: failed to open %s: %s\n", path, DLERROR());
+		xfree(suffixed_name);
+		xfree(path);
 		return NULL;
 	}
+
 	entry = DLSYM(module, entry_name);
+
 	if (entry == NULL)
 	{
 		printf("freerdp_load_plugin: failed to load %s: %s\n", path, DLERROR());
+		xfree(suffixed_name);
+		xfree(path);
 		return NULL;
 	}
+
+	xfree(suffixed_name);
+	xfree(path);
+
 	return entry;
 }

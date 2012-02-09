@@ -23,7 +23,7 @@
 
 /* Options */
 #cmakedefine WITH_DEBUG_TRANSPORT
-#cmakedefine WITH_DEBUG_CHANMAN
+#cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_DVC
 #cmakedefine WITH_DEBUG_KBD

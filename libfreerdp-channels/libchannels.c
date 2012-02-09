@@ -683,7 +683,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	}
 
 	lib = channels->libs_data + channels->num_libs_data;
-	lib->entry = (PVIRTUALCHANNELENTRY)freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
+	lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
 
 	if (lib->entry == NULL)
 	{
@@ -705,9 +705,11 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	channels->settings = settings;
 
 	freerdp_mutex_lock(g_mutex_init);
+
 	g_init_channels = channels;
-	ok = lib->entry((PCHANNEL_ENTRY_POINTS)&ep);
+	ok = lib->entry((PCHANNEL_ENTRY_POINTS) &ep);
 	g_init_channels = NULL;
+
 	freerdp_mutex_unlock(g_mutex_init);
 
 	/* disable MyVirtualChannelInit */
