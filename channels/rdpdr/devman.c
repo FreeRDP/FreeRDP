@@ -48,9 +48,11 @@ void devman_free(DEVMAN* devman)
 {
 	DEVICE* device;
 
-	while ((device = (DEVICE*)list_dequeue(devman->devices)) != NULL)
+	while ((device = (DEVICE*) list_dequeue(devman->devices)) != NULL)
 		IFCALL(device->Free, device);
+
 	list_free(devman->devices);
+
 	xfree(devman);
 }
 
@@ -74,7 +76,8 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry;
 
-	entry = freerdp_load_plugin((char*)plugin_data->data[0], "DeviceServiceEntry");
+	entry = freerdp_load_plugin((char*) plugin_data->data[0], "DeviceServiceEntry");
+
 	if (entry == NULL)
 		return false;
 
@@ -95,9 +98,11 @@ DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)
 
 	for (item = devman->devices->head; item; item = item->next)
 	{
-		device = (DEVICE*)item->data;
+		device = (DEVICE*) item->data;
+
 		if (device->id == id)
 			return device;
 	}
+
 	return NULL;
 }
