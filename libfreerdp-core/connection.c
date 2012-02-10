@@ -227,7 +227,7 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = true;
-	if (rdp->settings->secure_checksum)
+	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = true;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
@@ -294,7 +294,7 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	rdp->do_crypt = true;
-	if (rdp->settings->secure_checksum)
+	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = true;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
