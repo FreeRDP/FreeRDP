@@ -3,7 +3,6 @@
  * Implements Microsoft Point to Point Compression (MPPC) protocol
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
- * Copyright Jiten Pathy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
