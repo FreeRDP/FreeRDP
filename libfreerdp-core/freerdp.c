@@ -194,9 +194,12 @@ void freerdp_context_free(freerdp* instance)
 {
 	if (instance->context == NULL)
 		return;
+
 	IFCALL(instance->ContextFree, instance, instance->context);
+
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
+
 	xfree(instance->context);
 	instance->context = NULL;
 }
@@ -221,11 +224,10 @@ freerdp* freerdp_new()
 	return instance;
 }
 
-void freerdp_free(freerdp* freerdp)
+void freerdp_free(freerdp* instance)
 {
-	if (freerdp)
+	if (instance)
 	{
-		freerdp_context_free(freerdp);
-		xfree(freerdp);
+		xfree(instance);
 	}
 }
