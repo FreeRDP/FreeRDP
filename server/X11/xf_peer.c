@@ -600,12 +600,15 @@ void* xf_peer_main_loop(void* arg)
 	rdpSettings* settings;
 	char* server_file_path;
 	freerdp_peer* client = (freerdp_peer*) arg;
+	xfPeerContext* xfp;
 
 	memset(rfds, 0, sizeof(rfds));
 
 	printf("We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
+	xfp = (xfPeerContext*) client->context;
+
 	settings = client->settings;
 
 	/* Initialize the real server settings here */
@@ -695,6 +698,13 @@ void* xf_peer_main_loop(void* arg)
 	printf("Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
+	
+	pthread_cancel(xfp->thread);
+	pthread_cancel(xfp->frame_rate_thread);
+	
+	pthread_join(xfp->thread, NULL);
+	pthread_join(xfp->frame_rate_thread, NULL);
+	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 
