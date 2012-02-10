@@ -87,6 +87,9 @@ void* xf_frame_rate_thread(void* param)
 
 	while (1)
 	{
+		// check if we should terminate
+		pthread_testcancel();
+		
 		event = xf_event_new(XF_EVENT_TYPE_FRAME_TICK);
 		xf_event_push(xfp->event_queue, (xfEvent*) event);
 		freerdp_usleep(wait_interval);
@@ -119,10 +122,11 @@ void* xf_monitor_updates(void* param)
 
 	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
 
-	pthread_detach(pthread_self());
-
 	while (1)
 	{
+		// check if we should terminate
+		pthread_testcancel();
+
 		FD_ZERO(&rfds_set);
 		FD_SET(fds, &rfds_set);
 
