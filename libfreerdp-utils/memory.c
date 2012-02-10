@@ -40,7 +40,7 @@ void* xmalloc(size_t size)
 	if (mem == NULL)
 	{
 		perror("xmalloc");
-		printf("xmalloc: failed to allocate memory of size: %d\n", size);
+		printf("xmalloc: failed to allocate memory of size: %d\n", (int) size);
 	}
 
 	return mem;
@@ -63,7 +63,7 @@ void* xzalloc(size_t size)
 	if (mem == NULL)
 	{
 		perror("xzalloc");
-		printf("xzalloc: failed to allocate memory of size: %d\n", size);
+		printf("xzalloc: failed to allocate memory of size: %d\n", (int) size);
 	}
 
 	return mem;
@@ -103,6 +103,7 @@ void* xrealloc(void* ptr, size_t size)
 
 void xfree(void* ptr)
 {
+	if (ptr != NULL)
 		free(ptr);
 }
 
