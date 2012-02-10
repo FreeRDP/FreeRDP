@@ -221,6 +221,7 @@ static boolean audin_receive_wave_data(uint8* data, int size, void* user_data)
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) user_data;
 
 	error = audin_send_incoming_data_pdu((IWTSVirtualChannelCallback*) callback);
+
 	if (error != 0)
 		return false;
 
@@ -270,7 +271,7 @@ static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, STRE
 static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallback, STREAM* s)
 {
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
-	AUDIN_PLUGIN * audin = (AUDIN_PLUGIN *) callback->plugin;
+	AUDIN_PLUGIN * audin = (AUDIN_PLUGIN*) callback->plugin;
 	uint32 NewFormat;
 	audinFormat* format;
 
@@ -299,9 +300,7 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 	return 0;
 }
 
-static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 cbSize,
-	uint8* pBuffer)
+static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, uint32 cbSize, uint8* pBuffer)
 {
 	int error;
 	STREAM* s;
@@ -361,9 +360,7 @@ static int audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 }
 
 static int audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel,
-	uint8* Data,
-	int* pbAccept,
+	IWTSVirtualChannel* pChannel, uint8* Data, int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
 	AUDIN_CHANNEL_CALLBACK* callback;
@@ -395,6 +392,7 @@ static int audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 	audin->listener_callback->iface.OnNewChannelConnection = audin_on_new_channel_connection;
 	audin->listener_callback->plugin = pPlugin;
 	audin->listener_callback->channel_mgr = pChannelMgr;
+
 	return pChannelMgr->CreateListener(pChannelMgr, "AUDIO_INPUT", 0,
 		(IWTSListenerCallback*) audin->listener_callback, NULL);
 }
@@ -411,6 +409,7 @@ static int audin_plugin_terminated(IWTSPlugin* pPlugin)
 		IFCALL(audin->device->Free, audin->device);
 		audin->device = NULL;
 	}
+
 	xfree(audin->listener_callback);
 	xfree(audin);
 
@@ -439,23 +438,25 @@ static boolean audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, R
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
 
 	if (strrchr(name, '.') != NULL)
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_plugin(name, AUDIN_DEVICE_EXPORT_FUNC_NAME);
+	{
+		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(name, AUDIN_DEVICE_EXPORT_FUNC_NAME);
+	}
 	else
 	{
 		fullname = xzalloc(strlen(name) + 8);
 		strcpy(fullname, "audin_");
 		strcat(fullname, name);
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_plugin(fullname, AUDIN_DEVICE_EXPORT_FUNC_NAME);
+		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(fullname, AUDIN_DEVICE_EXPORT_FUNC_NAME);
 		xfree(fullname);
 	}
+
 	if (entry == NULL)
-	{
 		return false;
-	}
 
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterAudinDevice = audin_register_device_plugin;
 	entryPoints.plugin_data = data;
+
 	if (entry(&entryPoints) != 0)
 	{
 		DEBUG_WARN("%s entry returns error.", name);
@@ -471,7 +472,7 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
-	if (data->data[0] && (strcmp((char*)data->data[0], "audin") == 0 || strstr((char*)data->data[0], "/audin.") != NULL) )
+	if (data->data[0] && (strcmp((char*)data->data[0], "audin") == 0 || strstr((char*) data->data[0], "/audin.") != NULL))
 	{
 		if (data->data[1] && strcmp((char*)data->data[1], "format") == 0)
 		{
@@ -490,7 +491,7 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 		}
 		else if (data->data[1] && ((char*)data->data[1])[0])
 		{
-			return audin_load_device_plugin(pPlugin, (char*)data->data[1], data);
+			return audin_load_device_plugin(pPlugin, (char*) data->data[1], data);
 		}
 		else
 		{
@@ -498,7 +499,9 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 			default_data[0].data[0] = "audin";
 			default_data[0].data[1] = "pulse";
 			default_data[0].data[2] = "";
+
 			ret = audin_load_device_plugin(pPlugin, "pulse", default_data);
+
 			if (!ret)
 			{
 				default_data[0].size = sizeof(RDP_PLUGIN_DATA);
@@ -507,6 +510,7 @@ static boolean audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* d
 				default_data[0].data[2] = "default";
 				ret = audin_load_device_plugin(pPlugin, "alsa", default_data);
 			}
+
 			return ret;
 		}
 	}
@@ -520,6 +524,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	AUDIN_PLUGIN* audin;
 
 	audin = (AUDIN_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "audin");
+
 	if (audin == NULL)
 	{
 		audin = xnew(AUDIN_PLUGIN);
@@ -532,10 +537,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	if (error == 0)
-	{
-		audin_process_plugin_data((IWTSPlugin*) audin,
-			pEntryPoints->GetPluginData(pEntryPoints));
-	}
+		audin_process_plugin_data((IWTSPlugin*) audin, pEntryPoints->GetPluginData(pEntryPoints));
 
 	return error;
 }

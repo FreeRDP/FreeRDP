@@ -47,6 +47,14 @@
 #define HOME_ENV_VARIABLE	"HOMEPATH"
 #endif
 
+#ifdef _WIN32
+#define SHARED_LIB_SUFFIX	".dll"
+#elif __APPLE__
+#define SHARED_LIB_SUFFIX	".dylib"
+#else
+#define SHARED_LIB_SUFFIX	".so"
+#endif
+
 #define FREERDP_CONFIG_DIR	".freerdp"
 
 #define PARENT_PATH		".." PATH_SEPARATOR_STR
@@ -118,6 +126,41 @@ char* freerdp_construct_path(char* base_path, char* relative_path)
 	return path;
 }
 
+char* freerdp_append_shared_library_suffix(char* file_path)
+{
+	char* p;
+	char* path = NULL;
+	int file_path_length;
+	int shared_lib_suffix_length;
+
+	if (file_path == NULL)
+		return NULL;
+
+	file_path_length = strlen(file_path);
+	shared_lib_suffix_length = strlen(SHARED_LIB_SUFFIX);
+
+	if (file_path_length >= shared_lib_suffix_length)
+	{
+		p = &file_path[file_path_length - shared_lib_suffix_length];
+
+		if (strcmp(p, SHARED_LIB_SUFFIX) != 0)
+		{
+			path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+			sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);
+		}
+		else
+		{
+			path = xstrdup(file_path);
+		}
+	}
+	else
+	{
+		path = xstrdup(file_path);
+	}
+
+	return path;
+}
+
 char* freerdp_get_parent_path(char* base_path, int depth)
 {
 	int i;
@@ -152,6 +195,17 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 	path[length] = '\0';
 
 	return path;
+}
+
+boolean freerdp_path_contains_separator(char* path)
+{
+	if (path == NULL)
+		return false;
+
+	if (strchr(path, PATH_SEPARATOR_CHR) == NULL)
+		return false;
+
+	return true;
 }
 
 /* detects if we are running from the source tree */

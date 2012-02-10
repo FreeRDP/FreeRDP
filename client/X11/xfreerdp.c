@@ -904,7 +904,9 @@ void xf_window_free(xfInfo* xfi)
 	}
 
 	freerdp_clrconv_free(xfi->clrconv);
-	gdi_DeleteDC(xfi->hdc);
+
+	if (xfi->hdc)
+		gdi_DeleteDC(xfi->hdc);
 
 	xf_tsmf_uninit(xfi);
 	xf_cliprdr_uninit(xfi);

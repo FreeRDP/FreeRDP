@@ -21,7 +21,13 @@
 #define __LOAD_PLUGIN_UTILS_H
 
 #include <freerdp/api.h>
+#include <freerdp/settings.h>
 
+FREERDP_API void* freerdp_open_library(const char* file);
+FREERDP_API void* freerdp_get_library_symbol(void* library, const char* name);
+FREERDP_API boolean freerdp_close_library(void* library);
+FREERDP_API void* freerdp_load_library_symbol(const char* file, const char* name);
 FREERDP_API void* freerdp_load_plugin(const char* name, const char* entry_name);
+FREERDP_API void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const char* entry_name);
 
 #endif /* __LOAD_PLUGIN_UTILS_H */
