@@ -902,6 +902,11 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp != NULL)
 	{
+		crypto_rc4_free(rdp->rc4_decrypt_key);
+		crypto_rc4_free(rdp->rc4_encrypt_key);
+		crypto_des3_free(rdp->fips_encrypt);
+		crypto_des3_free(rdp->fips_decrypt);
+		crypto_hmac_free(rdp->fips_hmac);
 		extension_free(rdp->extension);
 		settings_free(rdp->settings);
 		transport_free(rdp->transport);

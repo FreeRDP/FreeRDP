@@ -192,11 +192,13 @@ void freerdp_context_new(freerdp* instance)
 
 void freerdp_context_free(freerdp* instance)
 {
+	if (instance->context == NULL)
+		return;
 	IFCALL(instance->ContextFree, instance, instance->context);
-
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
 	xfree(instance->context);
+	instance->context = NULL;
 }
 
 uint32 freerdp_error_info(freerdp* instance)
