@@ -107,6 +107,8 @@ void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const uint8* in_data, u
 
 void crypto_des3_free(CryptoDes3 des3)
 {
+	if (des3 == NULL)
+		return;
 	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
 	xfree(des3);
 }
@@ -135,6 +137,8 @@ void crypto_hmac_final(CryptoHmac hmac, uint8* out_data, uint32 length)
 
 void crypto_hmac_free(CryptoHmac hmac)
 {
+	if (hmac == NULL)
+		return;
 	HMAC_CTX_cleanup(&hmac->hmac_ctx);
 	xfree(hmac);
 }
@@ -149,6 +153,8 @@ CryptoCert crypto_cert_read(uint8* data, uint32 length)
 
 void crypto_cert_free(CryptoCert cert)
 {
+	if (cert == NULL)
+		return;
 	X509_free(cert->px509);
 	xfree(cert);
 }
