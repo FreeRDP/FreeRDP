@@ -302,7 +302,7 @@ struct rdp_settings
 	boolean nla_security; /* 146 */
 	boolean rdp_security; /* 147 */
 	uint32 ntlm_version; /* 148 */
-	boolean secure_checksum; /* 149 */
+	boolean salted_checksum; /* 149 */
 	uint32 paddingF[160 - 150]; /* 150 */
 
 	/* Session */
