@@ -468,6 +468,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	uint16 supportedColorDepths = 0;
 	uint16 earlyCapabilityFlags = 0;
 	uint32 serverSelectedProtocol = 0;
+	int color_depth;
 	char* str;
 
 	/* Length of all required fields, until imeFileName */
@@ -483,7 +484,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	stream_seek_uint16(s); /* SASSequence (Secure Access Sequence) */
 	stream_read_uint32(s, settings->kbd_layout); /* keyboardLayout */
 	stream_read_uint32(s, settings->client_build); /* clientBuild */
-	
+
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 32);
 	stream_seek(s, 32);
@@ -565,25 +566,25 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	} while (0);
 
 	if (highColorDepth > 0)
-		settings->color_depth = highColorDepth;
+		color_depth = highColorDepth;
 	else if (postBeta2ColorDepth > 0)
 	{
 		switch (postBeta2ColorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				settings->color_depth = 4;
+				color_depth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				settings->color_depth = 8;
+				color_depth = 8;
 				break;
 			case RNS_UD_COLOR_16BPP_555:
-				settings->color_depth = 15;
+				color_depth = 15;
 				break;
 			case RNS_UD_COLOR_16BPP_565:
-				settings->color_depth = 16;
+				color_depth = 16;
 				break;
 			case RNS_UD_COLOR_24BPP:
-				settings->color_depth = 24;
+				color_depth = 24;
 				break;
 			default:
 				return false;
@@ -594,15 +595,22 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 		switch (colorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				settings->color_depth = 4;
+				color_depth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				settings->color_depth = 8;
+				color_depth = 8;
 				break;
 			default:
 				return false;
 		}
 	}
+
+	/*
+	 * If we are in server mode, accepth client's color depth only if
+	 * it is smaller than ours. This is what Windows server does.
+	 */
+	if (color_depth < settings->color_depth || !settings->server_mode)
+		settings->color_depth = color_depth;
 
 	return true;
 }

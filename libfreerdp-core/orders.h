@@ -184,7 +184,7 @@
 
 #define CG_GLYPH_UNICODE_PRESENT		0x0010
 
-void update_recv_order(rdpUpdate* update, STREAM* s);
+boolean update_recv_order(rdpUpdate* update, STREAM* s);
 
 void update_read_dstblt_order(STREAM* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt);
 void update_read_patblt_order(STREAM* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);

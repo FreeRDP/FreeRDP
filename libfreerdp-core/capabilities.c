@@ -1873,14 +1873,13 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
-	numberCapabilities = 14;
+	numberCapabilities = 13;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
 	rdp_write_pointer_capability_set(s, settings);
 	rdp_write_input_capability_set(s, settings);
 	rdp_write_virtual_channel_capability_set(s, settings);
-	rdp_write_bitmap_cache_host_support_capability_set(s, settings);
 	rdp_write_share_capability_set(s, settings);
 	rdp_write_font_capability_set(s, settings);
 	rdp_write_multifragment_update_capability_set(s, settings);
@@ -1888,6 +1887,12 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	rdp_write_desktop_composition_capability_set(s, settings);
 	rdp_write_surface_commands_capability_set(s, settings);
 	rdp_write_bitmap_codecs_capability_set(s, settings);
+
+	if (settings->persistent_bitmap_cache)
+	{
+		numberCapabilities++;
+		rdp_write_bitmap_cache_host_support_capability_set(s, settings);
+	}
 
 	stream_get_mark(s, em);
 
