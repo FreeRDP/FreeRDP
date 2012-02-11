@@ -120,7 +120,7 @@ uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 	return length - stream_get_length(s);
 }
 
-static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
+static boolean fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	uint16 numberOrders;
@@ -129,9 +129,12 @@ static void fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 
 	while (numberOrders > 0)
 	{
-		update_recv_order(update, s);
+		if (!update_recv_order(update, s))
+			return false;
 		numberOrders--;
 	}
+
+	return true;
 }
 
 static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
@@ -161,7 +164,7 @@ static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 	stream_seek_uint16(s); /* size (2 bytes), must be set to zero */
 }
 
-static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
+static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = fastpath->rdp->update->context;
@@ -170,7 +173,8 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
-			fastpath_recv_orders(fastpath, s);
+			if (!fastpath_recv_orders(fastpath, s))
+				return false;
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
@@ -221,9 +225,11 @@ static void fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32
 			DEBUG_WARN("unknown updateCode 0x%X", updateCode);
 			break;
 	}
+
+	return true;
 }
 
-static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
+static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
 	uint16 size;
 	int next_pos;
@@ -291,12 +297,17 @@ static void fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	}
 
 	if (update_stream)
-		fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
+	{
+		if (!fastpath_recv_update(fastpath, updateCode, totalSize, update_stream))
+			return false;
+	}
 
 	stream_set_pos(s, next_pos);
 
 	if (comp_stream != s)
 		xfree(comp_stream);
+
+	return true;
 }
 
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
@@ -307,7 +318,11 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 
 	while (stream_get_left(s) >= 3)
 	{
-		fastpath_recv_update_data(fastpath, s);
+		if (!fastpath_recv_update_data(fastpath, s))
+		{
+			/* XXX: Do we need to call EndPaint? */
+			return false;
+		}
 	}
 
 	IFCALL(update->EndPaint, update->context);

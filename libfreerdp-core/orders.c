@@ -55,8 +55,6 @@ static const char* const PRIMARY_DRAWING_ORDER_STRINGS[] =
 	"GlyphIndex"
 };
 
-#define PRIMARY_DRAWING_ORDER_COUNT	(sizeof(PRIMARY_DRAWING_ORDER_STRINGS) / sizeof(PRIMARY_DRAWING_ORDER_STRINGS[0]))
-
 static const char* const SECONDARY_DRAWING_ORDER_STRINGS[] =
 {
 	"Cache Bitmap",
@@ -122,6 +120,8 @@ static const uint8 PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	ELLIPSE_CB_ORDER_FIELD_BYTES,
 	GLYPH_INDEX_ORDER_FIELD_BYTES
 };
+
+#define PRIMARY_DRAWING_ORDER_COUNT	(sizeof(PRIMARY_DRAWING_ORDER_FIELD_BYTES) / sizeof(PRIMARY_DRAWING_ORDER_FIELD_BYTES[0]))
 
 static const uint8 CBR2_BPP[] =
 {
@@ -1683,7 +1683,7 @@ void update_read_bounds(STREAM* s, rdpBounds* bounds)
 		update_read_coord(s, &bounds->bottom, true);
 }
 
-void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
+boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
 	ORDER_INFO* orderInfo;
 	rdpContext* context = update->context;
@@ -1693,6 +1693,12 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	if (flags & ORDER_TYPE_CHANGE)
 		stream_read_uint8(s, orderInfo->orderType); /* orderType (1 byte) */
+
+	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
+	{
+		printf("Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+		return false;
+	}
 
 	update_read_field_flags(s, &(orderInfo->fieldFlags), flags,
 			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]);
@@ -1708,10 +1714,7 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? true : false;
 
 #ifdef WITH_DEBUG_ORDERS
-	if (orderInfo->orderType < PRIMARY_DRAWING_ORDER_COUNT)
-		printf("%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
-	else
-		printf("Unknown Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+	printf("%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
 #endif
 
 	switch (orderInfo->orderType)
@@ -1834,6 +1837,8 @@ void update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	{
 		IFCALL(update->SetBounds, context, NULL);
 	}
+
+	return true;
 }
 
 void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
@@ -2004,7 +2009,7 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	}
 }
 
-void update_recv_order(rdpUpdate* update, STREAM* s)
+boolean update_recv_order(rdpUpdate* update, STREAM* s)
 {
 	uint8 controlFlags;
 
@@ -2015,6 +2020,10 @@ void update_recv_order(rdpUpdate* update, STREAM* s)
 	else if (controlFlags & ORDER_SECONDARY)
 		update_recv_secondary_order(update, s, controlFlags);
 	else
-		update_recv_primary_order(update, s, controlFlags);
-}
+	{
+		if (!update_recv_primary_order(update, s, controlFlags))
+			return false;
+	}
 
+	return true;
+}
