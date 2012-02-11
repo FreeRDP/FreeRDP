@@ -471,7 +471,7 @@ void rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, STREAM* s)
 		rdp_print_errinfo(rdp->errorInfo);
 }
 
-void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint8 type;
 	uint16 length;
@@ -489,7 +489,8 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_UPDATE:
-			update_recv(rdp->update, s);
+			if (!update_recv(rdp->update, s))
+				return false;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
@@ -571,6 +572,8 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 		default:
 			break;
 	}
+
+	return true;
 }
 
 boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
@@ -583,8 +586,7 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (type == PDU_TYPE_DATA)
 	{
-		rdp_recv_data_pdu(rdp, s);
-		return true;
+		return rdp_recv_data_pdu(rdp, s);
 	}
 	else if (type == PDU_TYPE_SERVER_REDIRECTION)
 	{
@@ -719,7 +721,8 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
-				rdp_recv_data_pdu(rdp, s);
+				if (!rdp_recv_data_pdu(rdp, s))
+					return false;
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:
