@@ -620,7 +620,175 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
+	printf("Mem3Blt\n");
+}
 
+void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
+{
+	int i, npoints;
+	XPoint* points;
+	uint32 brush_color;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	printf("PolygonSC\n");
+
+	xf_set_rop2(xfi, polygon_sc->bRop2);
+	brush_color = freerdp_color_convert_rgb(polygon_sc->brushColor, xfi->srcBpp, 32, xfi->clrconv);
+
+	npoints = polygon_sc->numPoints + 1;
+	points = xmalloc(sizeof(XPoint) * npoints);
+
+	points[0].x = polygon_sc->xStart;
+	points[0].y = polygon_sc->yStart;
+
+	for (i = 0; i < polygon_sc->numPoints; i++)
+	{
+		points[i + 1].x = polygon_sc->points[i].x;
+		points[i + 1].y = polygon_sc->points[i].y;
+	}
+
+	switch (polygon_sc->fillMode)
+	{
+		case 1: /* alternate */
+			XSetFillRule(xfi->display, xfi->gc, EvenOddRule);
+			break;
+
+		case 2: /* winding */
+			XSetFillRule(xfi->display, xfi->gc, WindingRule);
+			break;
+
+		default:
+			printf("PolygonSC unknown fillMode: %d\n", polygon_sc->fillMode);
+			break;
+	}
+
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+	XSetForeground(xfi->display, xfi->gc, brush_color);
+
+	XFillPolygon(xfi->display, xfi->drawing, xfi->gc,
+			points, npoints, Complex, CoordModePrevious);
+
+	if (xfi->drawing == xfi->primary)
+	{
+		XFillPolygon(xfi->display, xfi->drawable, xfi->gc,
+				points, npoints, Complex, CoordModePrevious);
+	}
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	xfree(points);
+}
+
+void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
+{
+	int i, npoints;
+	XPoint* points;
+	Pixmap pattern;
+	rdpBrush* brush;
+	uint32 foreColor;
+	uint32 backColor;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	brush = &(polygon_cb->brush);
+	xf_set_rop2(xfi, polygon_cb->bRop2);
+	foreColor = freerdp_color_convert_rgb(polygon_cb->foreColor, xfi->srcBpp, 32, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(polygon_cb->backColor, xfi->srcBpp, 32, xfi->clrconv);
+
+	npoints = polygon_cb->numPoints + 1;
+	points = xmalloc(sizeof(XPoint) * npoints);
+
+	points[0].x = polygon_cb->xStart;
+	points[0].y = polygon_cb->yStart;
+
+	for (i = 0; i < polygon_cb->numPoints; i++)
+	{
+		points[i + 1].x = polygon_cb->points[i].x;
+		points[i + 1].y = polygon_cb->points[i].y;
+	}
+
+	switch (polygon_cb->fillMode)
+	{
+		case 1: /* alternate */
+			XSetFillRule(xfi->display, xfi->gc, EvenOddRule);
+			break;
+
+		case 2: /* winding */
+			XSetFillRule(xfi->display, xfi->gc, WindingRule);
+			break;
+
+		default:
+			printf("PolygonCB unknown fillMode: %d\n", polygon_cb->fillMode);
+			break;
+	}
+
+	if (brush->style == GDI_BS_PATTERN)
+	{
+		if (brush->bpp > 1)
+		{
+			pattern = xf_brush_new(xfi, 8, 8, brush->bpp, brush->data);
+
+			XSetFillStyle(xfi->display, xfi->gc, FillTiled);
+			XSetTile(xfi->display, xfi->gc, pattern);
+			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
+
+			XFillPolygon(xfi->display, xfi->drawing, xfi->gc,
+					points, npoints, Complex, CoordModePrevious);
+
+			if (xfi->drawing == xfi->primary)
+			{
+				XFillPolygon(xfi->display, xfi->drawable, xfi->gc,
+						points, npoints, Complex, CoordModePrevious);
+			}
+
+			XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+			XSetTSOrigin(xfi->display, xfi->gc, 0, 0);
+			XFreePixmap(xfi->display, pattern);
+		}
+		else
+		{
+			pattern = xf_mono_bitmap_new(xfi, 8, 8, brush->data);
+
+			XSetForeground(xfi->display, xfi->gc, backColor);
+			XSetBackground(xfi->display, xfi->gc, foreColor);
+
+			if (polygon_cb->backMode == BACKMODE_TRANSPARENT)
+				XSetFillStyle(xfi->display, xfi->gc, FillStippled);
+			else if (polygon_cb->backMode == BACKMODE_OPAQUE)
+				XSetFillStyle(xfi->display, xfi->gc, FillOpaqueStippled);
+
+			XSetStipple(xfi->display, xfi->gc, pattern);
+			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
+
+			XFillPolygon(xfi->display, xfi->drawing, xfi->gc,
+					points, npoints, Complex, CoordModePrevious);
+
+			if (xfi->drawing == xfi->primary)
+			{
+				XFillPolygon(xfi->display, xfi->drawable, xfi->gc,
+						points, npoints, Complex, CoordModePrevious);
+			}
+
+			XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+			XSetTSOrigin(xfi->display, xfi->gc, 0, 0);
+			XFreePixmap(xfi->display, pattern);
+		}
+	}
+	else
+	{
+		printf("unimplemented brush style:%d\n", brush->style);
+	}
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	xfree(points);
+}
+
+void xf_gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
+{
+	printf("EllipseSC\n");
+}
+
+void xf_gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
+{
+	printf("EllipseCB\n");
 }
 
 void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -777,10 +945,10 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->GlyphIndex = NULL;
 	primary->FastIndex = NULL;
 	primary->FastGlyph = NULL;
-	primary->PolygonSC = NULL;
-	primary->PolygonCB = NULL;
-	primary->EllipseSC = NULL;
-	primary->EllipseCB = NULL;
+	primary->PolygonSC = xf_gdi_polygon_sc;
+	primary->PolygonCB = xf_gdi_polygon_cb;
+	primary->EllipseSC = xf_gdi_ellipse_sc;
+	primary->EllipseCB = xf_gdi_ellipse_cb;
 
 	update->SurfaceBits = xf_gdi_surface_bits;
 	update->SurfaceFrameMarker = xf_gdi_surface_frame_marker;
