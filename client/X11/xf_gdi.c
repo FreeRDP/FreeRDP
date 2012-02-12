@@ -73,15 +73,15 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXclear;
 			break;
 
-		case 0x000500A9:
+		case GDI_DPon:
 			function = GXnor;
 			break;
 
-		case 0x000A0329:
+		case GDI_DPna:
 			function = GXandInverted;
 			break;
 
-		case 0x000F0001:
+		case GDI_Pn:
 			function = GXcopyInverted;
 			break;
 
@@ -101,7 +101,7 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXandReverse;
 			break;
 
-		case 0x00500325:
+		case GDI_PDna:
 			function = GXandReverse;
 			break;
 
@@ -113,7 +113,7 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXxor;
 			break;
 
-		case 0x005F00E9:
+		case GDI_DPan:
 			function = GXnand;
 			break;
 
@@ -121,7 +121,7 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXxor;
 			break;
 
-		case 0x007700E6:
+		case GDI_DSan:
 			function = GXnand;
 			break;
 
@@ -129,11 +129,11 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXand;
 			break;
 
-		case 0x00990066:
+		case GDI_DSxn:
 			function = GXequiv;
 			break;
 
-		case 0x00A000C9:
+		case GDI_DPa:
 			function = GXand;
 			break;
 
@@ -141,11 +141,11 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXequiv;
 			break;
 
-		case 0x00AA0029:
+		case GDI_D:
 			function = GXnoop;
 			break;
 
-		case 0x00AF0229:
+		case GDI_DPno:
 			function = GXorInverted;
 			break;
 
@@ -157,7 +157,7 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXcopy;
 			break;
 
-		case 0x00DD0228:
+		case GDI_SDno:
 			function = GXorReverse;
 			break;
 
@@ -169,16 +169,20 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 			function = GXcopy;
 			break;
 
-		case 0x00F50225:
+		case GDI_PDno:
 			function = GXorReverse;
 			break;
 
-		case 0x00FA0089:
+		case GDI_DPo:
 			function = GXor;
 			break;
 
 		case GDI_WHITENESS:
 			function = GXset;
+			break;
+
+		case GDI_PSDPxax:
+			function = GXand;
 			break;
 
 		default:
@@ -205,17 +209,19 @@ Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 
 	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
 
-	if(data != NULL)
+	if (data != NULL)
 	{
-		GC gc;	// FIXME, should cache
+		GC gc;
 
 		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfi->bpp, xfi->clrconv);
+
 		image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 						ZPixmap, 0, (char*) cdata, width, height, xfi->scanline_pad, 0);
 
 		gc = XCreateGC(xfi->display, xfi->drawable, 0, NULL);
 		XPutImage(xfi->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
 		XFree(image);
+
 		if (cdata != data)
 			xfree(cdata);
 
@@ -620,7 +626,74 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
-	printf("Mem3Blt\n");
+	rdpBrush* brush;
+	xfBitmap* bitmap;
+	uint32 foreColor;
+	uint32 backColor;
+	Pixmap pattern = 0;
+	xfInfo* xfi = ((xfContext*) context)->xfi;
+
+	brush = &mem3blt->brush;
+	bitmap = (xfBitmap*) mem3blt->bitmap;
+	xf_set_rop3(xfi, gdi_rop3_code(mem3blt->bRop));
+	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, xfi->srcBpp, 32, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(mem3blt->backColor, xfi->srcBpp, 32, xfi->clrconv);
+
+	if (brush->style == GDI_BS_PATTERN)
+	{
+		if (brush->bpp > 1)
+		{
+			pattern = xf_brush_new(xfi, 8, 8, brush->bpp, brush->data);
+
+			XSetFillStyle(xfi->display, xfi->gc, FillTiled);
+			XSetTile(xfi->display, xfi->gc, pattern);
+			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
+		}
+		else
+		{
+			pattern = xf_mono_bitmap_new(xfi, 8, 8, brush->data);
+
+			XSetForeground(xfi->display, xfi->gc, backColor);
+			XSetBackground(xfi->display, xfi->gc, foreColor);
+			XSetFillStyle(xfi->display, xfi->gc, FillOpaqueStippled);
+			XSetStipple(xfi->display, xfi->gc, pattern);
+			XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
+		}
+	}
+	else if (brush->style == GDI_BS_SOLID)
+	{
+		XSetForeground(xfi->display, xfi->gc, backColor);
+		XSetBackground(xfi->display, xfi->gc, foreColor);
+		XSetFillStyle(xfi->display, xfi->gc, FillStippled);
+	}
+	else
+	{
+		printf("Mem3Blt unimplemented brush style:%d\n", brush->style);
+	}
+
+	XCopyArea(xfi->display, bitmap->pixmap, xfi->drawing, xfi->gc,
+			mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
+			mem3blt->nLeftRect, mem3blt->nTopRect);
+
+	if (xfi->drawing == xfi->primary)
+	{
+		if (xfi->remote_app != true)
+		{
+			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
+				mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
+				mem3blt->nLeftRect, mem3blt->nTopRect);
+		}
+
+		gdi_InvalidateRegion(xfi->hdc, mem3blt->nLeftRect, mem3blt->nTopRect, mem3blt->nWidth, mem3blt->nHeight);
+	}
+
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+	XSetTSOrigin(xfi->display, xfi->gc, 0, 0);
+
+	if (pattern != 0)
+		XFreePixmap(xfi->display, pattern);
+
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
 }
 
 void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
@@ -629,8 +702,6 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	XPoint* points;
 	uint32 brush_color;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
-
-	printf("PolygonSC\n");
 
 	xf_set_rop2(xfi, polygon_sc->bRop2);
 	brush_color = freerdp_color_convert_rgb(polygon_sc->brushColor, xfi->srcBpp, 32, xfi->clrconv);
@@ -774,7 +845,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	}
 	else
 	{
-		printf("unimplemented brush style:%d\n", brush->style);
+		printf("PolygonCB unimplemented brush style:%d\n", brush->style);
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);

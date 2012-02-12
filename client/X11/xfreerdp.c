@@ -495,7 +495,9 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_LINETO_INDEX] = true;
 	settings->order_support[NEG_POLYLINE_INDEX] = true;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+
+	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? false : true;
+
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
 	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
