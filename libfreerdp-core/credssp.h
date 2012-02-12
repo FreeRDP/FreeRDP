@@ -40,7 +40,6 @@ struct rdp_credssp
 	rdpBlob pubKeyAuth;
 	rdpBlob authInfo;
 	int send_seq_num;
-	rdpBlob public_key;
 	rdpBlob ts_credentials;
 	rdpSettings* settings;
 	CryptoRc4 rc4_seal_state;

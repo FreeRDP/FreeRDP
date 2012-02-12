@@ -72,6 +72,7 @@ boolean transport_disconnect(rdpTransport* transport)
 {
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		tls_disconnect(transport->tls);
+
 	return tcp_disconnect(transport->tcp);
 }
 

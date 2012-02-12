@@ -119,33 +119,6 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 }
 
 /**
- * Get TLS public key.
- * @param credssp
- */
-
-int credssp_get_public_key(rdpCredssp* credssp)
-{
-	int status;
-	CryptoCert cert;
-	
-	cert = tls_get_certificate(credssp->transport->tls);
-
-	if (cert == NULL)
-	{
-		printf("credssp_get_public_key: tls_get_certificate failed to return the server certificate.\n");
-		return 0;
-	}
-
-	if (!tls_verify_certificate(credssp->transport->tls, cert, credssp->transport->settings->hostname))
-		tls_disconnect(credssp->transport->tls);
-
-	status = crypto_cert_get_public_key(cert, &credssp->public_key);
-	crypto_cert_free(cert);
-
-	return status;
-}
-
-/**
  * Authenticate with server using CredSSP.
  * @param credssp
  * @return 1 if authentication is successful
@@ -158,9 +131,6 @@ int credssp_authenticate(rdpCredssp* credssp)
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
 	if (credssp_ntlmssp_init(credssp) == 0)
-		return 0;
-
-	if (credssp_get_public_key(credssp) == 0)
 		return 0;
 
 	/* NTLMSSP NEGOTIATE MESSAGE */
@@ -223,16 +193,18 @@ int credssp_authenticate(rdpCredssp* credssp)
 void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
 {
 	uint8* p;
+	rdpTls* tls;
 	uint8 signature[16];
 	rdpBlob encrypted_public_key;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
+	tls = credssp->transport->tls;
 
-	freerdp_blob_alloc(d, credssp->public_key.length + 16);
-	ntlmssp_encrypt_message(ntlmssp, &credssp->public_key, &encrypted_public_key, signature);
+	freerdp_blob_alloc(d, tls->public_key.length + 16);
+	ntlmssp_encrypt_message(ntlmssp, &tls->public_key, &encrypted_public_key, signature);
 
 #ifdef WITH_DEBUG_NLA
-	printf("Public Key (length = %d)\n", credssp->public_key.length);
-	freerdp_hexdump(credssp->public_key.data, credssp->public_key.length);
+	printf("Public Key (length = %d)\n", tls->public_key.length);
+	freerdp_hexdump(tls->public_key.data, tls->public_key.length);
 	printf("\n");
 
 	printf("Encrypted Public Key (length = %d)\n", encrypted_public_key.length);
@@ -264,6 +236,7 @@ int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 	uint8* signature;
 	rdpBlob public_key;
 	rdpBlob encrypted_public_key;
+	rdpTls* tls = credssp->transport->tls;
 
 	signature = d->data;
 	encrypted_public_key.data = (void*) (signature + 16);
@@ -271,7 +244,7 @@ int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 
 	ntlmssp_decrypt_message(credssp->ntlmssp, &encrypted_public_key, &public_key, signature);
 
-	p1 = (uint8*) credssp->public_key.data;
+	p1 = (uint8*) tls->public_key.data;
 	p2 = (uint8*) public_key.data;
 
 	p2[0]--;
@@ -661,7 +634,6 @@ void credssp_free(rdpCredssp* credssp)
 {
 	if (credssp != NULL)
 	{
-		freerdp_blob_free(&credssp->public_key);
 		freerdp_blob_free(&credssp->ts_credentials);
 
 		ntlmssp_free(credssp->ntlmssp);

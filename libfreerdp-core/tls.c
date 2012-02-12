@@ -73,6 +73,23 @@ boolean tls_connect(rdpTls* tls)
 		}
 	}
 
+	tls->cert = tls_get_certificate(tls);
+
+	if (tls->cert == NULL)
+	{
+		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		return false;
+	}
+
+	if (!crypto_cert_get_public_key(tls->cert, &tls->public_key))
+	{
+		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
+		return false;
+	}
+
+	if (!tls_verify_certificate(tls, tls->cert, tls->settings->hostname))
+		tls_disconnect(tls);
+
 	return true;
 }
 
@@ -433,6 +450,8 @@ void tls_free(rdpTls* tls)
 
 		if (tls->ctx)
 			SSL_CTX_free(tls->ctx);
+
+		freerdp_blob_free(&tls->public_key);
 
 		certificate_store_free(tls->certificate_store);
 
