@@ -339,6 +339,31 @@ static int BitBlt_SPna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 	return 0;
 }
 
+static int BitBlt_DPa_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
+{
+	int x, y;
+	uint8* dstp;
+	uint8* patp;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+		if (dstp != 0)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				patp = gdi_get_brush_pointer(hdcDest, x, y);
+
+				*dstp = *dstp & *patp;
+				dstp++;
+			}
+		}
+	}
+
+	return 0;
+}
+
 static int BitBlt_PDxn_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
@@ -686,6 +711,10 @@ int PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, in
 
 		case GDI_WHITENESS:
 			return BitBlt_WHITENESS_8bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
+			break;
+
+		case GDI_DPa:
+			return BitBlt_DPa_8bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
 			break;
 
 		case GDI_PDxn:

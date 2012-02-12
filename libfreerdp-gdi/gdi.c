@@ -628,7 +628,27 @@ void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
+	printf("Mem3Blt\n");
+}
 
+void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
+{
+	printf("PolygonSC\n");
+}
+
+void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
+{
+	printf("PolygonCB\n");
+}
+
+void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
+{
+	printf("EllipseSC\n");
+}
+
+void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
+{
+	printf("EllipseCB\n");
 }
 
 int tilenum = 0;
@@ -776,10 +796,10 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->GlyphIndex = NULL;
 	primary->FastIndex = NULL;
 	primary->FastGlyph = NULL;
-	primary->PolygonSC = NULL;
-	primary->PolygonCB = NULL;
-	primary->EllipseSC = NULL;
-	primary->EllipseCB = NULL;
+	primary->PolygonSC = gdi_polygon_sc;
+	primary->PolygonCB = gdi_polygon_cb;
+	primary->EllipseSC = gdi_ellipse_sc;
+	primary->EllipseCB = gdi_ellipse_cb;
 
 	update->SurfaceBits = gdi_surface_bits;
 }
