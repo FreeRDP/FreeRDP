@@ -22,8 +22,37 @@
 
 #include "tls.h"
 
+static CryptoCert tls_get_certificate(rdpTls* tls)
+{
+	CryptoCert cert;
+	X509* server_cert;
+
+	server_cert = SSL_get_peer_certificate(tls->ssl);
+
+	if (!server_cert)
+	{
+		printf("ssl_verify: failed to get the server SSL certificate\n");
+		cert = NULL;
+	}
+	else
+	{
+		cert = xmalloc(sizeof(*cert));
+		cert->px509 = server_cert;
+	}
+
+	return cert;
+}
+
+static void tls_free_certificate(CryptoCert cert)
+{
+
+	X509_free(cert->px509);
+	xfree(cert);
+}
+
 boolean tls_connect(rdpTls* tls)
 {
+	CryptoCert cert;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
@@ -73,22 +102,24 @@ boolean tls_connect(rdpTls* tls)
 		}
 	}
 
-	tls->cert = tls_get_certificate(tls);
+	cert = tls_get_certificate(tls);
 
-	if (tls->cert == NULL)
+	if (cert == NULL)
 	{
 		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return false;
 	}
 
-	if (!crypto_cert_get_public_key(tls->cert, &tls->public_key))
+	if (!crypto_cert_get_public_key(cert, &tls->public_key))
 	{
 		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		return false;
 	}
 
-	if (!tls_verify_certificate(tls, tls->cert, tls->settings->hostname))
+	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
 		tls_disconnect(tls);
+
+	tls_free_certificate(cert);
 
 	return true;
 }
@@ -228,27 +259,6 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 			printf("%s: Unknown error\n", func);
 			return true;
 	}
-}
-
-CryptoCert tls_get_certificate(rdpTls* tls)
-{
-	CryptoCert cert;
-	X509* server_cert;
-
-	server_cert = SSL_get_peer_certificate(tls->ssl);
-
-	if (!server_cert)
-	{
-		printf("ssl_verify: failed to get the server SSL certificate\n");
-		cert = NULL;
-	}
-	else
-	{
-		cert = xmalloc(sizeof(*cert));
-		cert->px509 = server_cert;
-	}
-
-	return cert;
 }
 
 boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
