@@ -138,14 +138,6 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>-m</term>
-        <listitem>
-          <para>
-            Don't send mouse motion events.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term>-n <replaceable class="parameter">hostname</replaceable></term>
         <listitem>
           <para>
@@ -295,6 +287,14 @@
             Disables fast-path. Use slow-path packets instead, which have larger headers.
             It might be good for debugging certain issues when you suspect it might be
             linked to the parsing of one of the two header types.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-motion</term>
+        <listitem>
+          <para>
+            Don't send mouse motion events.
           </para>
         </listitem>
       </varlistentry>
