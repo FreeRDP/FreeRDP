@@ -664,7 +664,7 @@ void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 	if (!fp)
 		return;
 
-	fprintf(certificate_store->fp,"%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
+	fprintf(fp, "%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
 	fclose(fp);
 }
 
