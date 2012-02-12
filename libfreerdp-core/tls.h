@@ -36,7 +36,6 @@ struct rdp_tls
 	SSL* ssl;
 	int sockfd;
 	SSL_CTX* ctx;
-	CryptoCert cert;
 	rdpBlob public_key;
 	rdpSettings* settings;
 	rdpCertificateStore* certificate_store;
@@ -49,7 +48,6 @@ boolean tls_disconnect(rdpTls* tls);
 int tls_read(rdpTls* tls, uint8* data, int length);
 int tls_write(rdpTls* tls, uint8* data, int length);
 
-CryptoCert tls_get_certificate(rdpTls* tls);
 boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
 void tls_print_certificate_error(char* hostname, char* fingerprint);
 void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
