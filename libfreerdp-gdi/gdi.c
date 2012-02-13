@@ -628,7 +628,35 @@ void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
-	printf("Mem3Blt\n");
+	rdpBrush* brush;
+	uint32 foreColor;
+	uint32 backColor;
+	gdiBitmap* bitmap;
+	HGDI_BRUSH originalBrush;
+	rdpGdi* gdi = context->gdi;
+
+	brush = &mem3blt->brush;
+	bitmap = (gdiBitmap*) mem3blt->bitmap;
+
+	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
+	backColor = freerdp_color_convert_rgb(mem3blt->backColor, gdi->srcBpp, 32, gdi->clrconv);
+
+	if (brush->style == GDI_BS_SOLID)
+	{
+		originalBrush = gdi->drawing->hdc->brush;
+		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
+
+		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
+				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+				mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop));
+
+		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
+		gdi->drawing->hdc->brush = originalBrush;
+	}
+	else
+	{
+		printf("Mem3Blt unimplemented brush style:%d\n", brush->style);
+	}
 }
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)

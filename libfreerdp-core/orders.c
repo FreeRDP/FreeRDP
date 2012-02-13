@@ -1086,12 +1086,18 @@ void update_read_polygon_sc_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_SC_O
 		update_read_color(s, &polygon_sc->brushColor);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
-		stream_read_uint8(s, polygon_sc->nDeltaEntries);
+		stream_read_uint8(s, polygon_sc->numPoints);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
 		stream_read_uint8(s, polygon_sc->cbData);
-		stream_seek(s, polygon_sc->cbData);
+
+		if (polygon_sc->points == NULL)
+			polygon_sc->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polygon_sc->numPoints);
+		else
+			polygon_sc->points = (DELTA_POINT*) xrealloc(polygon_sc->points, sizeof(DELTA_POINT) * polygon_sc->numPoints);
+
+		update_read_delta_points(s, polygon_sc->points, polygon_sc->numPoints, polygon_sc->xStart, polygon_sc->yStart);
 	}
 }
 
@@ -1118,13 +1124,22 @@ void update_read_polygon_cb_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_CB_O
 	update_read_brush(s, &polygon_cb->brush, orderInfo->fieldFlags >> 6);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_12)
-		stream_read_uint8(s, polygon_cb->nDeltaEntries);
+		stream_read_uint8(s, polygon_cb->numPoints);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_13)
 	{
 		stream_read_uint8(s, polygon_cb->cbData);
-		stream_seek(s, polygon_cb->cbData);
+
+		if (polygon_cb->points == NULL)
+			polygon_cb->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polygon_cb->numPoints);
+		else
+			polygon_cb->points = (DELTA_POINT*) xrealloc(polygon_cb->points, sizeof(DELTA_POINT) * polygon_cb->numPoints);
+
+		update_read_delta_points(s, polygon_cb->points, polygon_cb->numPoints, polygon_cb->xStart, polygon_cb->yStart);
 	}
+
+	polygon_cb->backMode = (polygon_cb->bRop2 & 0x80) ? BACKMODE_TRANSPARENT : BACKMODE_OPAQUE;
+	polygon_cb->bRop2 = (polygon_cb->bRop2 & 0x1F);
 }
 
 void update_read_ellipse_sc_order(STREAM* s, ORDER_INFO* orderInfo, ELLIPSE_SC_ORDER* ellipse_sc)

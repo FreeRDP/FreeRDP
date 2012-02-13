@@ -495,15 +495,19 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_LINETO_INDEX] = true;
 	settings->order_support[NEG_POLYLINE_INDEX] = true;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+
+	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? true : false;
+
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
 	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
 	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
+
+	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? false : true;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? false : true;
+
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
 

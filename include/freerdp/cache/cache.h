@@ -29,6 +29,7 @@
 #include <freerdp/cache/brush.h>
 #include <freerdp/cache/pointer.h>
 #include <freerdp/cache/bitmap.h>
+#include <freerdp/cache/nine_grid.h>
 #include <freerdp/cache/offscreen.h>
 #include <freerdp/cache/palette.h>
 
@@ -40,6 +41,7 @@ struct rdp_cache
 	rdpBitmapCache* bitmap; /* 3 */
 	rdpOffscreenCache* offscreen; /* 4 */
 	rdpPaletteCache* palette; /* 5 */
+	rdpNineGridCache* nine_grid; /* 6 */
 
 	/* internal */
 

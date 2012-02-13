@@ -39,16 +39,27 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
+	uint8 style;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
+	rdpBrush* brush = &mem3blt->brush;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (uint8) mem3blt->cacheId, mem3blt->cacheIndex);
 
+	style = brush->style;
+
+	if (brush->style & CACHED_BRUSH)
+	{
+		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+		brush->style = 0x03;
+	}
+
 	mem3blt->bitmap = bitmap;
 	IFCALL(cache->bitmap->Mem3Blt, context, mem3blt);
+	brush->style = style;
 }
 
 void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)

@@ -22,6 +22,9 @@
 
 #include <freerdp/types.h>
 
+#define BACKMODE_TRANSPARENT	0x0001
+#define BACKMODE_OPAQUE		0x0002
+
 struct rdp_bounds
 {
 	sint32 left;
@@ -365,9 +368,9 @@ struct _POLYGON_SC_ORDER
 	uint32 bRop2;
 	uint32 fillMode;
 	uint32 brushColor;
-	uint32 nDeltaEntries;
+	uint32 numPoints;
 	uint32 cbData;
-	uint8* codeDeltaList;
+	DELTA_POINT* points;
 };
 typedef struct _POLYGON_SC_ORDER POLYGON_SC_ORDER;
 
@@ -376,13 +379,14 @@ struct _POLYGON_CB_ORDER
 	sint32 xStart;
 	sint32 yStart;
 	uint32 bRop2;
+	uint32 backMode;
 	uint32 fillMode;
 	uint32 backColor;
 	uint32 foreColor;
 	rdpBrush brush;
-	uint32 nDeltaEntries;
+	uint32 numPoints;
 	uint32 cbData;
-	uint8* codeDeltaList;
+	DELTA_POINT* points;
 };
 typedef struct _POLYGON_CB_ORDER POLYGON_CB_ORDER;
 

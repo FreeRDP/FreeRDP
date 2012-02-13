@@ -33,6 +33,12 @@
 
 #include <freerdp/gdi/8bpp.h>
 
+uint8 gdi_get_color_8bpp(HGDI_DC hdc, GDI_COLOR color)
+{
+	/* TODO: Implement 8bpp gdi_get_color_8bpp() */
+	return 0;
+}
+
 int FillRect_8bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
 	/* TODO: Implement 8bpp FillRect() */
@@ -307,6 +313,60 @@ static int BitBlt_SRCPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_DSPDxax_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	/* TODO: Implement 8bpp DSPDxax BitBlt */
+	return 0;
+}
+
+static int BitBlt_PSDPxax_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
+{
+	int x, y;
+	uint8* srcp;
+	uint8* dstp;
+	uint8* patp;
+	uint8 color8;
+
+	/* D = (S & D) | (~S & P) */
+
+	if (hdcDest->brush->style == GDI_BS_SOLID)
+	{
+		color8 = gdi_get_color_8bpp(hdcDest, hdcDest->brush->color);
+		patp = (uint8*) &color8;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = (uint8*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint8*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (dstp != 0)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
+					srcp++;
+					dstp++;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = (uint8*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint8*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (dstp != 0)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					patp = (uint8*) gdi_get_brush_pointer(hdcDest, x, y);
+					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
+					srcp++;
+					dstp++;
+				}
+			}
+		}
+	}
+
 	return 0;
 }
 
@@ -631,6 +691,10 @@ int BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight
 			return BitBlt_DSPDxax_8bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 			break;
 			
+		case GDI_PSDPxax:
+			return BitBlt_PSDPxax_8bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+			break;
+
 		case GDI_NOTSRCCOPY:
 			return BitBlt_NOTSRCCOPY_8bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 			break;
