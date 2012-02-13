@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/input.h>
+
 #include "input.h"
 
 void rdp_write_client_input_pdu_header(STREAM* s, uint16 number)
@@ -378,6 +380,31 @@ void input_register_client_callbacks(rdpInput* input)
 		input->MouseEvent = input_send_mouse_event;
 		input->ExtendedMouseEvent = input_send_extended_mouse_event;
 	}
+}
+
+void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags)
+{
+	IFCALL(input->SynchronizeEvent, input, flags);
+}
+
+void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+{
+	IFCALL(input->KeyboardEvent, input, flags, code);
+}
+
+void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+{
+	IFCALL(input->UnicodeKeyboardEvent, input, flags, code);
+}
+
+void freerdp_input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+{
+	IFCALL(input->MouseEvent, input, flags, x, y);
+}
+
+void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+{
+	IFCALL(input->ExtendedMouseEvent, input, flags, x, y);
 }
 
 rdpInput* input_new(rdpRdp* rdp)
