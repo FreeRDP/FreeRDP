@@ -495,6 +495,11 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	}
 }
 
+void xf_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
+{
+	printf("DrawNineGrid\n");
+}
+
 void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
 	uint32 color;
@@ -662,9 +667,11 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else if (brush->style == GDI_BS_SOLID)
 	{
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 		XSetForeground(xfi->display, xfi->gc, backColor);
 		XSetBackground(xfi->display, xfi->gc, foreColor);
-		XSetFillStyle(xfi->display, xfi->gc, FillStippled);
+
+		XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
 	}
 	else
 	{

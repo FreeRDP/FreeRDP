@@ -2026,6 +2026,12 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
 	}
 
+	if (settings->draw_nine_grid)
+	{
+		numberCapabilities++;
+		rdp_write_draw_nine_grid_cache_capability_set(s, settings);
+	}
+
 	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])
 	{
 		if (settings->large_pointer)
