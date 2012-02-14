@@ -1968,7 +1968,7 @@ NTLMSSP* ntlmssp_new()
 NTLMSSP* ntlmssp_client_new()
 {
 	NTLMSSP* ntlmssp = ntlmssp_new();
-	ntlmssp->server = true;
+	ntlmssp->server = false;
 	return ntlmssp;
 }
 
