@@ -30,6 +30,7 @@
 #include "test_stream.h"
 #include "test_utils.h"
 #include "test_orders.h"
+#include "test_ntlmssp.h"
 #include "test_license.h"
 #include "test_channels.h"
 #include "test_cliprdr.h"
@@ -130,6 +131,7 @@ static test_suite suites[] =
 	{ "list", add_list_suite },
 	{ "mcs", add_mcs_suite },
 	{ "mppc", add_mppc_suite },
+	{ "ntlmssp", add_ntlmssp_suite },
 	{ "orders", add_orders_suite },
 	{ "pcap", add_pcap_suite },
 	{ "per", add_per_suite },
