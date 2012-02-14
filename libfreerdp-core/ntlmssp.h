@@ -78,6 +78,7 @@ typedef enum _NTLMSSP_STATE NTLMSSP_STATE;
 struct _NTLMSSP
 {
 	NTLMSSP_STATE state;
+	boolean server;
 	rdpBlob password;
 	rdpBlob username;
 	rdpBlob domain;

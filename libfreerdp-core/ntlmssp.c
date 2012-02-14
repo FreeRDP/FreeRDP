@@ -67,6 +67,10 @@
 #define WINDOWS_MINOR_VERSION_2		0x02
 #define NTLMSSP_REVISION_W2K3		0x0F
 
+#define MESSAGE_TYPE_NEGOTIATE		1
+#define MESSAGE_TYPE_CHALLENGE		2
+#define MESSAGE_TYPE_AUTHENTICATE	3
+
 static const char ntlm_signature[] = "NTLMSSP";
 static const char lm_magic[] = "KGS!@#$%";
 
@@ -1278,7 +1282,7 @@ void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 	uint32 negotiateFlags = 0;
 
 	stream_write(s, ntlm_signature, 8); /* Signature (8 bytes) */
-	stream_write_uint32(s, 1); /* MessageType */
+	stream_write_uint32(s, MESSAGE_TYPE_NEGOTIATE); /* MessageType */
 
 	if (ntlmssp->ntlm_v2)
 	{
@@ -1354,6 +1358,30 @@ void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 #endif
 
 	ntlmssp->state = NTLMSSP_STATE_CHALLENGE;
+}
+
+/**
+ * Receive NTLMSSP NEGOTIATE_MESSAGE.\n
+ * NEGOTIATE_MESSAGE @msdn{cc236641}
+ * @param ntlmssp
+ * @param s
+ */
+
+void ntlmssp_recv_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
+{
+	ntlmssp->state = NTLMSSP_STATE_CHALLENGE;
+}
+
+/**
+ * Send NTLMSSP CHALLENGE_MESSAGE.\n
+ * CHALLENGE_MESSAGE @msdn{cc236642}
+ * @param ntlmssp
+ * @param s
+ */
+
+void ntlmssp_send_challenge_message(NTLMSSP* ntlmssp, STREAM* s)
+{
+	ntlmssp->state = NTLMSSP_STATE_AUTHENTICATE;
 }
 
 /**
@@ -1620,7 +1648,7 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 	EncryptedRandomSessionKeyBufferOffset = NtChallengeResponseBufferOffset + NtChallengeResponseLen;
 
 	stream_write(s, ntlm_signature, 8); /* Signature (8 bytes) */
-	stream_write_uint32(s, 3); /* MessageType */
+	stream_write_uint32(s, MESSAGE_TYPE_AUTHENTICATE); /* MessageType */
 
 	/* LmChallengeResponseFields (8 bytes) */
 	stream_write_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
@@ -1780,13 +1808,25 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 }
 
 /**
- * Send NTLMSSP message.
+ * Receive NTLMSSP AUTHENTICATE_MESSAGE.\n
+ * AUTHENTICATE_MESSAGE @msdn{cc236643}
+ * @param ntlmssp
+ * @param s
+ */
+
+void ntlmssp_recv_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
+{
+	ntlmssp->state = NTLMSSP_STATE_FINAL;
+}
+
+/**
+ * Send NTLMSSP message (client).
  * @param ntlmssp
  * @param s
  * @return
  */
 
-int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s)
+int ntlmssp_client_send(NTLMSSP* ntlmssp, STREAM* s)
 {
 	if (ntlmssp->state == NTLMSSP_STATE_INITIAL)
 		ntlmssp->state = NTLMSSP_STATE_NEGOTIATE;
@@ -1800,6 +1840,92 @@ int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s)
 }
 
 /**
+ * Send NTLMSSP message (server).
+ * @param ntlmssp
+ * @param s
+ * @return
+ */
+
+int ntlmssp_server_send(NTLMSSP* ntlmssp, STREAM* s)
+{
+	if (ntlmssp->state == NTLMSSP_STATE_CHALLENGE)
+		ntlmssp_send_challenge_message(ntlmssp, s);
+
+	return (ntlmssp->state == NTLMSSP_STATE_FINAL) ? 0 : 1;
+}
+
+/**
+ * Send NTLMSSP message.
+ * @param ntlmssp
+ * @param s
+ * @return
+ */
+
+int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s)
+{
+	if (ntlmssp->server)
+		return ntlmssp_server_send(ntlmssp, s);
+	else
+		return ntlmssp_client_send(ntlmssp, s);
+}
+
+/**
+ * Receive NTLMSSP message (client).
+ * @param ntlmssp
+ * @param s
+ * @return
+ */
+
+int ntlmssp_client_recv(NTLMSSP* ntlmssp, STREAM* s)
+{
+	char signature[8]; /* Signature, "NTLMSSP" */
+	uint32 messageType; /* MessageType */
+
+	stream_read(s, signature, 8);
+	stream_read_uint32(s, messageType);
+
+	if (memcmp(signature, ntlm_signature, 8) != 0)
+	{
+		printf("Unexpected NTLM signature: %s, expected:%s\n", signature, ntlm_signature);
+		return -1;
+	}
+
+	if (messageType == MESSAGE_TYPE_CHALLENGE && ntlmssp->state == NTLMSSP_STATE_CHALLENGE)
+		ntlmssp_recv_challenge_message(ntlmssp, s);
+
+	return 1;
+}
+
+/**
+ * Receive NTLMSSP message (server).
+ * @param ntlmssp
+ * @param s
+ * @return
+ */
+
+int ntlmssp_server_recv(NTLMSSP* ntlmssp, STREAM* s)
+{
+	char signature[8]; /* Signature, "NTLMSSP" */
+	uint32 messageType; /* MessageType */
+
+	stream_read(s, signature, 8);
+	stream_read_uint32(s, messageType);
+
+	if (memcmp(signature, ntlm_signature, 8) != 0)
+	{
+		printf("Unexpected NTLM signature: %s, expected:%s\n", signature, ntlm_signature);
+		return -1;
+	}
+
+	if (messageType == MESSAGE_TYPE_NEGOTIATE && ntlmssp->state == NTLMSSP_STATE_INITIAL)
+		ntlmssp_recv_negotiate_message(ntlmssp, s);
+	else if (messageType == MESSAGE_TYPE_AUTHENTICATE && ntlmssp->state == NTLMSSP_STATE_AUTHENTICATE)
+		ntlmssp_recv_authenticate_message(ntlmssp, s);
+
+	return 1;
+}
+
+/**
  * Receive NTLMSSP message.
  * @param ntlmssp
  * @param s
@@ -1808,16 +1934,34 @@ int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s)
 
 int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s)
 {
-	char signature[8]; /* Signature, "NTLMSSP" */
-	uint32 messageType; /* MessageType */
+	if (ntlmssp->server)
+		return ntlmssp_server_recv(ntlmssp, s);
+	else
+		return ntlmssp_client_recv(ntlmssp, s);
+}
 
-	stream_read(s, signature, 8);
-	stream_read_uint32(s, messageType);
+/**
+ * Create new NTLMSSP client state machine instance.
+ * @return
+ */
 
-	if (messageType == 2 && ntlmssp->state == NTLMSSP_STATE_CHALLENGE)
-		ntlmssp_recv_challenge_message(ntlmssp, s);
+NTLMSSP* ntlmssp_client_new()
+{
+	NTLMSSP* ntlmssp = ntlmssp_new();
+	ntlmssp->server = true;
+	return ntlmssp;
+}
 
-	return 1;
+/**
+ * Create new NTLMSSP client state machine instance.
+ * @return
+ */
+
+NTLMSSP* ntlmssp_server_new()
+{
+	NTLMSSP* ntlmssp = ntlmssp_new();
+	ntlmssp->server = true;
+	return ntlmssp;
 }
 
 /**
