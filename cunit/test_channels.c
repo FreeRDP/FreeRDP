@@ -27,23 +27,23 @@
 
 #include "test_channels.h"
 
-int init_chanman_suite(void)
+int init_channels_suite(void)
 {
 	freerdp_channels_global_init();
 	return 0;
 }
 
-int clean_chanman_suite(void)
+int clean_channels_suite(void)
 {
 	freerdp_channels_global_uninit();
 	return 0;
 }
 
-int add_chanman_suite(void)
+int add_channels_suite(void)
 {
-	add_test_suite(chanman);
+	add_test_suite(channels);
 
-	add_test_function(chanman);
+	add_test_function(channels);
 
 	return 0;
 }
@@ -54,7 +54,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, in
 	return 0;
 }
 
-void test_chanman(void)
+void test_channels(void)
 {
 	rdpChannels* chan_man;
 	rdpSettings settings = { 0 };

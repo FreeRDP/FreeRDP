@@ -19,9 +19,9 @@
 
 #include "test_freerdp.h"
 
-int init_librfx_suite(void);
-int clean_librfx_suite(void);
-int add_librfx_suite(void);
+int init_rfx_suite(void);
+int clean_rfx_suite(void);
+int add_rfx_suite(void);
 
 void test_bitstream(void);
 void test_bitstream_enc(void);

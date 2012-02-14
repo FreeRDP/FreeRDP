@@ -19,8 +19,8 @@
 
 #include "test_freerdp.h"
 
-int init_chanman_suite(void);
-int clean_chanman_suite(void);
-int add_chanman_suite(void);
+int init_channels_suite(void);
+int clean_channels_suite(void);
+int add_channels_suite(void);
 
-void test_chanman(void);
+void test_channels(void);

@@ -36,21 +36,21 @@
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/gdi/32bpp.h>
 
-#include "test_libgdi.h"
+#include "test_gdi.h"
 
-int init_libgdi_suite(void)
+int init_gdi_suite(void)
 {
 	return 0;
 }
 
-int clean_libgdi_suite(void)
+int clean_gdi_suite(void)
 {
 	return 0;
 }
 
-int add_libgdi_suite(void)
+int add_gdi_suite(void)
 {
-	add_test_suite(libgdi);
+	add_test_suite(gdi);
 
 	add_test_function(gdi_GetDC);
 	add_test_function(gdi_CreateCompatibleDC);

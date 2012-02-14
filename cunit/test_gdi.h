@@ -19,9 +19,9 @@
 
 #include "test_freerdp.h"
 
-int init_libgdi_suite(void);
-int clean_libgdi_suite(void);
-int add_libgdi_suite(void);
+int init_gdi_suite(void);
+int clean_gdi_suite(void);
+int add_gdi_suite(void);
 
 void test_gdi_GetDC(void);
 void test_gdi_CreateCompatibleDC(void);

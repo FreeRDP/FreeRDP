@@ -39,7 +39,7 @@
 #include "rfx_decode.h"
 #include "rfx_encode.h"
 
-#include "test_librfx.h"
+#include "test_rfx.h"
 
 static const uint8 y_data[] =
 {
@@ -159,19 +159,19 @@ static const uint8 rgb_scanline_data[] =
 
 static uint8* rgb_data;
 
-int init_librfx_suite(void)
+int init_rfx_suite(void)
 {
 	return 0;
 }
 
-int clean_librfx_suite(void)
+int clean_rfx_suite(void)
 {
 	return 0;
 }
 
-int add_librfx_suite(void)
+int add_rfx_suite(void)
 {
-	add_test_suite(librfx);
+	add_test_suite(rfx);
 
 	add_test_function(bitstream);
 	add_test_function(bitstream_enc);
