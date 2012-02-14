@@ -28,7 +28,7 @@ add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
 set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
 
 target_link_libraries(tsmf_pulse freerdp-utils)
-target_link_libraries(tsmf_pulse ${PULSE_LIBRARIES})
+target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY})
 
 install(TARGETS tsmf_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 
