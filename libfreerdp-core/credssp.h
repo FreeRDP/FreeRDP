@@ -36,6 +36,7 @@ typedef struct rdp_credssp rdpCredssp;
 
 struct rdp_credssp
 {
+	boolean server;
 	rdpBlob negoToken;
 	rdpBlob pubKeyAuth;
 	rdpBlob authInfo;

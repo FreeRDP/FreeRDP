@@ -1941,6 +1941,26 @@ int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s)
 }
 
 /**
+ * Create new NTLMSSP state machine instance.
+ * @return
+ */
+
+NTLMSSP* ntlmssp_new()
+{
+	NTLMSSP* ntlmssp = (NTLMSSP*) xmalloc(sizeof(NTLMSSP));
+
+	if (ntlmssp != NULL)
+	{
+		memset(ntlmssp, '\0', sizeof(NTLMSSP));
+		ntlmssp->av_pairs = (AV_PAIRS*) xmalloc(sizeof(AV_PAIRS));
+		memset(ntlmssp->av_pairs, 0, sizeof(AV_PAIRS));
+		ntlmssp_init(ntlmssp);
+	}
+
+	return ntlmssp;
+}
+
+/**
  * Create new NTLMSSP client state machine instance.
  * @return
  */
@@ -1961,26 +1981,6 @@ NTLMSSP* ntlmssp_server_new()
 {
 	NTLMSSP* ntlmssp = ntlmssp_new();
 	ntlmssp->server = true;
-	return ntlmssp;
-}
-
-/**
- * Create new NTLMSSP state machine instance.
- * @return
- */
-
-NTLMSSP* ntlmssp_new()
-{
-	NTLMSSP* ntlmssp = (NTLMSSP*) xmalloc(sizeof(NTLMSSP));
-
-	if (ntlmssp != NULL)
-	{
-		memset(ntlmssp, '\0', sizeof(NTLMSSP));
-		ntlmssp->av_pairs = (AV_PAIRS*) xmalloc(sizeof(AV_PAIRS));
-		memset(ntlmssp->av_pairs, 0, sizeof(AV_PAIRS));
-		ntlmssp_init(ntlmssp);
-	}
-
 	return ntlmssp;
 }
 

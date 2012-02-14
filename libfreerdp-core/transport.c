@@ -167,7 +167,17 @@ boolean transport_accept_nla(rdpTransport* transport)
 	if (transport->settings->authentication != true)
 		return true;
 
-	/* Blocking here until NLA is complete */
+	if (transport->credssp == NULL)
+		transport->credssp = credssp_new(transport);
+
+	if (credssp_authenticate(transport->credssp) < 0)
+	{
+		printf("client authentication failure\n");
+		credssp_free(transport->credssp);
+		return false;
+	}
+
+	credssp_free(transport->credssp);
 
 	return true;
 }

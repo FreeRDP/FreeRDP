@@ -68,11 +68,11 @@
  */
 
 /**
- * Initialize NTLMSSP authentication module.
+ * Initialize NTLMSSP authentication module (client).
  * @param credssp
  */
 
-int credssp_ntlmssp_init(rdpCredssp* credssp)
+int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
 	NTLMSSP* ntlmssp = credssp->ntlmssp;
@@ -81,7 +81,7 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 
 	if ((settings->password == NULL) || (settings->username == NULL))
 	{
-		if(instance->Authenticate)
+		if (instance->Authenticate)
 		{
 			boolean proceed = instance->Authenticate(instance,
 					&settings->username, &settings->password, &settings->domain);
@@ -119,18 +119,28 @@ int credssp_ntlmssp_init(rdpCredssp* credssp)
 }
 
 /**
- * Authenticate with server using CredSSP.
+ * Initialize NTLMSSP authentication module (server).
+ * @param credssp
+ */
+
+int credssp_ntlmssp_server_init(rdpCredssp* credssp)
+{
+	return 1;
+}
+
+/**
+ * Authenticate with server using CredSSP (client).
  * @param credssp
  * @return 1 if authentication is successful
  */
 
-int credssp_authenticate(rdpCredssp* credssp)
+int credssp_client_authenticate(rdpCredssp* credssp)
 {
 	NTLMSSP* ntlmssp = credssp->ntlmssp;
 	STREAM* s = stream_new(0);
 	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
 
-	if (credssp_ntlmssp_init(credssp) == 0)
+	if (credssp_ntlmssp_client_init(credssp) == 0)
 		return 0;
 
 	/* NTLMSSP NEGOTIATE MESSAGE */
@@ -182,6 +192,34 @@ int credssp_authenticate(rdpCredssp* credssp)
 	xfree(s);
 
 	return 1;
+}
+
+/**
+ * Authenticate with client using CredSSP (server).
+ * @param credssp
+ * @return 1 if authentication is successful
+ */
+
+int credssp_server_authenticate(rdpCredssp* credssp)
+{
+	if (credssp_ntlmssp_server_init(credssp) == 0)
+		return 0;
+
+	return 1;
+}
+
+/**
+ * Authenticate using CredSSP.
+ * @param credssp
+ * @return 1 if authentication is successful
+ */
+
+int credssp_authenticate(rdpCredssp* credssp)
+{
+	if (credssp->server)
+		return credssp_server_authenticate(credssp);
+	else
+		return credssp_client_authenticate(credssp);
 }
 
 /**
@@ -610,19 +648,25 @@ void credssp_current_time(uint8* timestamp)
 
 rdpCredssp* credssp_new(rdpTransport* transport)
 {
-	rdpCredssp* self;
+	rdpCredssp* credssp;
 
-	self = (rdpCredssp*) xzalloc(sizeof(rdpCredssp));
+	credssp = (rdpCredssp*) xzalloc(sizeof(rdpCredssp));
 
-	if (self != NULL)
+	if (credssp != NULL)
 	{
-		self->transport = transport;
-		self->send_seq_num = 0;
-		self->ntlmssp = ntlmssp_new();
-		self->settings = transport->settings;
+		credssp->transport = transport;
+		credssp->send_seq_num = 0;
+		credssp->settings = transport->settings;
+
+		credssp->server = credssp->settings->server_mode;
+
+		if (credssp->server)
+			credssp->ntlmssp = ntlmssp_server_new();
+		else
+			credssp->ntlmssp = ntlmssp_client_new();
 	}
 
-	return self;
+	return credssp;
 }
 
 /**

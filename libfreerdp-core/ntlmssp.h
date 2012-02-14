@@ -154,7 +154,8 @@ int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, rdpBlob* encrypted_msg, rdpBlob* m
 int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s);
 int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s);
 
-NTLMSSP* ntlmssp_new();
+NTLMSSP* ntlmssp_client_new();
+NTLMSSP* ntlmssp_server_new();
 void ntlmssp_init(NTLMSSP* ntlmssp);
 void ntlmssp_free(NTLMSSP* ntlmssp);
 

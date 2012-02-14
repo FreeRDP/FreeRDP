@@ -85,7 +85,7 @@ void test_ntlmssp_compute_ntlm_hash(void)
 	char password[] = "Password";
 	char expected_ntlm_hash[16] = "\xa4\xf4\x9c\x40\x65\x10\xbd\xca\xb6\x82\x4e\xe7\xc3\x0f\xd8\x52";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	ntlmssp_set_password(ntlmssp, password);
 
 	ntlmssp_compute_ntlm_hash(&ntlmssp->password, ntlm_hash);
@@ -113,7 +113,7 @@ void test_ntlmssp_compute_ntlm_v2_hash(void)
 	char domain[] = "Domain";
 	char expected_ntlm_v2_hash[16] = "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	ntlmssp_set_password(ntlmssp, password);
 	ntlmssp_set_username(ntlmssp, username);
 	ntlmssp_set_domain(ntlmssp, domain);
@@ -166,7 +166,7 @@ void test_ntlmssp_compute_lm_v2_response(void)
 	char lm_client_challenge[8] = "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
 	char expected_lm_v2_response[24] = "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	ntlmssp_set_password(ntlmssp, password);
 	ntlmssp_set_username(ntlmssp, username);
 	ntlmssp_set_domain(ntlmssp, domain);
@@ -228,7 +228,7 @@ void test_ntlmssp_compute_ntlm_v2_response(void)
 	char expected_session_base_key[16] =
 		"\x6e\xf1\x6b\x79\x88\xf2\x3d\x7e\x54\x2a\x1a\x38\x4e\xa0\x6b\x52";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	ntlmssp_set_password(ntlmssp, password);
 	ntlmssp_set_username(ntlmssp, username);
 	ntlmssp_set_domain(ntlmssp, domain);
@@ -288,7 +288,7 @@ void test_ntlmssp_generate_client_signing_key(void)
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_client_signing_key[16] = "\xbf\x5e\x42\x76\x55\x68\x38\x97\x45\xd3\xb4\x9f\x5e\x2f\xbc\x89";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
 	ntlmssp_generate_client_signing_key(ntlmssp);
@@ -312,7 +312,7 @@ void test_ntlmssp_generate_server_signing_key(void)
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_server_signing_key[16] = "\x9b\x3b\x64\x89\xda\x84\x52\x17\xd5\xc2\x6e\x90\x16\x3b\x42\x11";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
 	ntlmssp_generate_server_signing_key(ntlmssp);
@@ -336,7 +336,7 @@ void test_ntlmssp_generate_client_sealing_key(void)
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_client_sealing_key[16] = "\xca\x41\xcd\x08\x48\x07\x22\x6e\x0d\x84\xc3\x88\xa5\x07\xa9\x73";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
 	ntlmssp_generate_client_sealing_key(ntlmssp);
@@ -360,7 +360,7 @@ void test_ntlmssp_generate_server_sealing_key(void)
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_server_sealing_key[16] = "\x14\xb7\x1d\x06\x2c\x68\x2e\xad\x4b\x0e\x95\x23\x70\x91\x98\x90";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
 	ntlmssp_generate_server_sealing_key(ntlmssp);
@@ -385,7 +385,7 @@ void test_ntlmssp_encrypt_random_session_key(void)
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_encrypted_random_session_key[16] = "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->key_exchange_key, key_exchange_key, 16);
 	memcpy(ntlmssp->exported_session_key, exported_session_key, 16);
 	memcpy(ntlmssp->random_session_key, exported_session_key, 16);
@@ -470,7 +470,7 @@ void test_ntlmssp_compute_message_integrity_check(void)
 		"\x00\x00\x00\x00\x00\x00\x00\x00\xd5\x82\xff\x1e\xb6\xf8\x4a\x1c"
 		"\x08\x78\x69\x9f\xa8\x84\x32\xaa";
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->exported_session_key, exported_session_key, 16);
 
 	ntlmssp->negotiate_message.data = (void*) negotiate_message_data;
@@ -574,7 +574,7 @@ void test_ntlmssp_encrypt_message(void)
 	public_key.data = public_key_data;
 	public_key.length = sizeof(public_key_data);
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->client_signing_key, client_signing_key, 16);
 	memcpy(ntlmssp->client_sealing_key, client_sealing_key, 16);
 	ntlmssp_init_rc4_seal_states(ntlmssp);
@@ -684,7 +684,7 @@ void test_ntlmssp_decrypt_message(void)
 	encrypted_public_key.data = encrypted_public_key_data;
 	encrypted_public_key.length = sizeof(encrypted_public_key_data);
 
-	ntlmssp = ntlmssp_new();
+	ntlmssp = ntlmssp_client_new();
 	memcpy(ntlmssp->server_signing_key, server_signing_key, 16);
 	memcpy(ntlmssp->server_sealing_key, server_sealing_key, 16);
 	ntlmssp_init_rc4_seal_states(ntlmssp);
