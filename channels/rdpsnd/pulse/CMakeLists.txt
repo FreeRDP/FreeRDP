@@ -28,6 +28,6 @@ add_library(rdpsnd_pulse ${RDPSND_PULSE_SRCS})
 set_target_properties(rdpsnd_pulse PROPERTIES PREFIX "")
 
 target_link_libraries(rdpsnd_pulse freerdp-utils)
-target_link_libraries(rdpsnd_pulse ${PULSE_LIBRARIES})
+target_link_libraries(rdpsnd_pulse ${PULSEAUDIO_LIBRARY})
 
 install(TARGETS rdpsnd_pulse DESTINATION ${FREERDP_PLUGIN_PATH})

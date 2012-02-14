@@ -28,7 +28,7 @@ add_library(audin_pulse ${AUDIN_PULSE_SRCS})
 set_target_properties(audin_pulse PROPERTIES PREFIX "")
 
 target_link_libraries(audin_pulse freerdp-utils)
-target_link_libraries(audin_pulse ${PULSE_LIBRARIES})
+target_link_libraries(audin_pulse ${PULSEAUDIO_LIBRARY})
 
 install(TARGETS audin_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 
