@@ -88,21 +88,21 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 	local_time = localtime(&t);
 	clientTimeZone = settings->client_time_zone;
 
-#if defined(sun)
-	if(local_time->tm_isdst > 0)
-		clientTimeZone->bias = (uint32) (altzone / 3600);
-	else
-		clientTimeZone->bias = (uint32) (timezone / 3600);
-#elif defined(HAVE_TM_GMTOFF)
-	if(local_time->tm_gmtoff >= 0)
+#ifdef HAVE_TM_GMTOFF
+	if (local_time->tm_gmtoff >= 0)
 		clientTimeZone->bias = (uint32) (local_time->tm_gmtoff / 60);
 	else
 		clientTimeZone->bias = (uint32) ((-1 * local_time->tm_gmtoff) / 60 + 720);
+#elif sun
+	if (local_time->tm_isdst > 0)
+		clientTimeZone->bias = (uint32) (altzone / 3600);
+	else
+		clientTimeZone->bias = (uint32) (timezone / 3600);
 #else
 	clientTimeZone->bias = 0;
 #endif
 
-	if(local_time->tm_isdst > 0)
+	if (local_time->tm_isdst > 0)
 	{
 		clientTimeZone->standardBias = clientTimeZone->bias - 60;
 		clientTimeZone->daylightBias = clientTimeZone->bias;
@@ -177,6 +177,19 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 
 	rdp_get_client_time_zone(s, settings);
 	clientTimeZone = settings->client_time_zone;
+
+	/*
+	 * temporary fix: to be valid the time zone names need to match
+	 * the data that can be found at the following registry location:
+	 * HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones
+	 *
+	 * We should extract the data out of the registry and hardcode it
+	 * within FreeRDP. We should then be able to figure out the proper
+	 * names to use from the standardBias and daylightBias numerical
+	 * values which we detect.
+	 */
+	sprintf(clientTimeZone->standardName, "%s", "GMT Standard Time");
+	sprintf(clientTimeZone->daylightName, "%s", "GMT Daylight Time");
 
 	standardName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
 	standardNameLength = length;
