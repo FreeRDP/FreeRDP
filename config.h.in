@@ -18,6 +18,8 @@
 #cmakedefine HAVE_STDBOOL_H
 #cmakedefine HAVE_INTTYPES_H
 
+#cmakedefine HAVE_TM_GMTOFF
+
 /* Endian */
 #cmakedefine BIG_ENDIAN
 
