@@ -96,9 +96,9 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 
 	event_queue->events[(event_queue->count)++] = event;
 
-	xf_set_event(event_queue);
-
 	pthread_mutex_unlock(&(event_queue->mutex));
+
+	xf_set_event(event_queue);
 }
 
 xfEvent* xf_event_peek(xfEventQueue* event_queue)
