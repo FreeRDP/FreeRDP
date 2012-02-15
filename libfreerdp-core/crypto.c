@@ -443,7 +443,7 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		{
 			length = ASN1_STRING_to_UTF8(&string, subject_alt_name->d.dNSName);
 			strings[*count] = (char*) string;
-			*lengths[*count] = length;
+			(*lengths)[*count] = length;
 			(*count)++;
 		}
 	}
