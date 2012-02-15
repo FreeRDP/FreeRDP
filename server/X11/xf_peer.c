@@ -413,20 +413,19 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	if (xfi->use_xshm)
 	{
-		width = x + width;
-		height = y + height;
-		x = 0;
-		y = 0;
-
-		rect.x = x;
-		rect.y = y;
+		/**
+		 * Passing an offset source rectangle to rfx_compose_message()
+		 * leads to protocol errors, so offset the data pointer instead.
+		 */
+		rect.x = 0;
+		rect.y = 0;
 		rect.width = width;
 		rect.height = height;
 
 		image = xf_snapshot(xfp, x, y, width, height);
 
 		data = (uint8*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel)];
+		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
 				width, height, image->bytes_per_line);
