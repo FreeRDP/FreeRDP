@@ -70,7 +70,7 @@ namespace TimeZones
 
 			stream.WriteLine();
 
-			stream.WriteLine("struct _SYTEM_TIME_ENTRY");
+			stream.WriteLine("struct _SYSTEM_TIME_ENTRY");
 			stream.WriteLine("{");
 			stream.WriteLine("\tuint16 wYear;");
 			stream.WriteLine("\tuint16 wMonth;");
@@ -81,7 +81,7 @@ namespace TimeZones
 			stream.WriteLine("\tuint16 wSecond;");
 			stream.WriteLine("\tuint16 wMilliseconds;");
 			stream.WriteLine("};");
-			stream.WriteLine("typedef struct _SYTEM_TIME_ENTRY SYTEM_TIME_ENTRY;");
+			stream.WriteLine("typedef struct _SYSTEM_TIME_ENTRY SYSTEM_TIME_ENTRY;");
 			stream.WriteLine();
 
 			stream.WriteLine("struct _TIME_ZONE_RULE_ENTRY");
@@ -97,13 +97,13 @@ namespace TimeZones
 
 			stream.WriteLine("struct _TIME_ZONE_ENTRY");
 			stream.WriteLine("{");
-			stream.WriteLine("\tchar Id[32];");
+			stream.WriteLine("\tconst char* Id;");
 			stream.WriteLine("\tuint32 Bias;");
 			stream.WriteLine("\tboolean SupportsDST;");
-			stream.WriteLine("\tchar DisplayName[32];");
-			stream.WriteLine("\tchar StandardName[32];");
-			stream.WriteLine("\tchar DaylightName[32];");
-			stream.WriteLine("\tTIME_ZONE_RULE* RuleTable;");
+			stream.WriteLine("\tconst char* DisplayName;");
+			stream.WriteLine("\tconst char* StandardName;");
+			stream.WriteLine("\tconst char* DaylightName;");
+			stream.WriteLine("\tTIME_ZONE_RULE_ENTRY* RuleTable;");
 			stream.WriteLine("\tuint32 RuleTableCount;");
 			stream.WriteLine("};");
 			stream.WriteLine("typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;");
@@ -121,7 +121,7 @@ namespace TimeZones
 					continue;
 				}
 
-				stream.WriteLine("static const TIME_ZONE_RULE TimeZoneRuleTable_{0}[] =", index);
+				stream.WriteLine("static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_{0}[] =", index);
 				stream.WriteLine("{");
 
 				i = 0;
@@ -214,11 +214,12 @@ namespace TimeZones
 				if ((!tz.SupportsDST) || (rules.Length < 1))
 				{
 					tz.RuleTableCount = 0;
-					tz.RuleTable = "(TIME_ZONE_RULE_ENTRY*) NULL";
+					tz.RuleTable = "NULL";
 				}
 				else
 				{
 					tz.RuleTableCount = (UInt32)rules.Length;
+					tz.RuleTable = "&TimeZoneRuleTable_" + index;
 					tz.RuleTable = "(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_" + index;
 				}
 
@@ -227,7 +228,7 @@ namespace TimeZones
 				stream.WriteLine("\t\t\"{0}\", {1}, {2}, \"{0}\",",
 					tz.Id, tz.Bias, tz.SupportsDST ? "true" : "false", tz.DisplayName);
 
-				stream.WriteLine("\t\t\"{0}\", \"{0}\"", tz.StandardName, tz.DaylightName);
+				stream.WriteLine("\t\t\"{0}\", \"{0}\",", tz.StandardName, tz.DaylightName);
 				stream.WriteLine("\t\t{0}, {1}", tz.RuleTable, tz.RuleTableCount);
 
 				index++;
