@@ -1123,6 +1123,43 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 	stream_write_uint16(s, system_time->wMilliseconds); /* wMilliseconds */
 }
 
+char* rdp_get_unix_timezone_identifier()
+{
+	FILE* fp;
+	char* tz_env;
+	size_t length;
+	char* tzid = NULL;
+
+	tz_env = getenv("TZ");
+
+	if (tz_env != NULL)
+	{
+		tzid = xstrdup(tz_env);
+		return tzid;
+	}
+
+	fp = fopen("/etc/timezone", "r");
+
+	if (fp != NULL)
+	{
+		fseek(fp, 0, SEEK_END);
+		length = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+
+		if (length < 2)
+			return NULL;
+
+		tzid = (char*) xmalloc(length + 1);
+		fread(tzid, length, 1, fp);
+		tzid[length] = '\0';
+
+		if (tzid[length - 1] == '\n')
+			tzid[length - 1] = '\0';
+	}
+
+	return tzid;
+}
+
 /**
  * Get client time zone information.\n
  * @param s stream
@@ -1132,6 +1169,7 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 {
 	time_t t;
+	char* tzid;
 	struct tm* local_time;
 	TIME_ZONE_INFO* clientTimeZone;
 
@@ -1163,6 +1201,8 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 		clientTimeZone->standardBias = clientTimeZone->bias;
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
+
+	tzid = rdp_get_unix_timezone_identifier();
 
 	strftime(clientTimeZone->standardName, 32, "%Z, Standard Time", local_time);
 	clientTimeZone->standardName[31] = 0;
