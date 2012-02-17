@@ -20,7 +20,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
-#include "tls.h"
+#include <freerdp/crypto/tls.h>
 
 static CryptoCert tls_get_certificate(rdpTls* tls)
 {

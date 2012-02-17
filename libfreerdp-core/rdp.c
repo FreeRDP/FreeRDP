@@ -20,8 +20,9 @@
 #include "rdp.h"
 
 #include "info.h"
-#include "per.h"
 #include "redirection.h"
+
+#include <freerdp/crypto/per.h>
 
 static const char* const DATA_PDU_TYPE_STRINGS[] =
 {

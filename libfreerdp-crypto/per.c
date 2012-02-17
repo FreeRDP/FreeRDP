@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include "per.h"
+#include <freerdp/crypto/per.h>
 
 /**
  * Read PER length.

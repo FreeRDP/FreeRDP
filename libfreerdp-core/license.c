@@ -18,6 +18,7 @@
  */
 
 #include "redirection.h"
+#include "certificate.h"
 
 #include "license.h"
 

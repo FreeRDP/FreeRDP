@@ -26,8 +26,6 @@ set(LIBFREERDP_CORE_SRCS
 	activation.h
 	extension.c
 	extension.h
-	ber.c
-	ber.h
 	gcc.c
 	gcc.h
 	mcs.c
@@ -38,8 +36,6 @@ set(LIBFREERDP_CORE_SRCS
 	info.h
 	input.c
 	input.h
-	crypto.c
-	crypto.h
 	credssp.c
 	credssp.h
 	ntlmssp.c
@@ -67,12 +63,8 @@ set(LIBFREERDP_CORE_SRCS
 	timezone.h
 	rdp.c
 	rdp.h
-	per.c
-	per.h
 	tcp.c
 	tcp.h
-	tls.c
-	tls.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
@@ -106,8 +98,9 @@ else()
 	target_link_libraries(freerdp-core ${ZLIB_LIBRARIES})	
 endif()
 
-target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 target_link_libraries(freerdp-core freerdp-utils)
 target_link_libraries(freerdp-core freerdp-codec)
+target_link_libraries(freerdp-core freerdp-crypto)
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
+

@@ -144,9 +144,6 @@ typedef struct
 
 /* Certificates */
 
-typedef struct rdp_certificate rdpCertificate;
-typedef struct rdp_key rdpKey;
-
 struct rdp_CertBlob
 {
 	uint32 length;
@@ -173,6 +170,15 @@ struct rdp_certificate
 	rdpCertInfo cert_info;
 	rdpX509CertChain* x509_cert_chain;
 };
+typedef struct rdp_certificate rdpCertificate;
+
+struct rdp_key
+{
+	rdpBlob modulus;
+	rdpBlob private_exponent;
+	uint8 exponent[4];
+};
+typedef struct rdp_key rdpKey;
 
 /* Channels */
 

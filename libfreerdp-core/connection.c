@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-#include "per.h"
 #include "info.h"
 #include "input.h"
 

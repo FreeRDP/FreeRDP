@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __BER_H
-#define __BER_H
+#ifndef __CRYPTO_BER_H
+#define __CRYPTO_BER_H
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
@@ -80,4 +80,4 @@ int ber_write_integer(STREAM* s, uint32 value);
 boolean ber_read_integer_length(STREAM* s, int* length);
 int ber_skip_integer(uint32 value);
 
-#endif /* __BER_H */
+#endif /* __CRYPTO_BER_H */

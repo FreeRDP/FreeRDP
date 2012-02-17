@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/api.h>
+#include <freerdp/crypto/per.h>
 #include <freerdp/utils/stream.h>
 
 #include "orders.h"
-#include "per.h"
 #include "update.h"
 #include "surface.h"
 

@@ -25,6 +25,8 @@
 #include <openssl/engine.h>
 #include <freerdp/utils/memory.h>
 
+#include "credssp.h"
+
 #include "ntlmssp.h"
 
 #define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */

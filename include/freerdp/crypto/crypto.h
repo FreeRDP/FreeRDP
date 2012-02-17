@@ -20,10 +20,6 @@
 #ifndef __CRYPTO_H
 #define __CRYPTO_H
 
-#ifdef _WIN32
-#include "tcp.h"
-#endif
-
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rc4.h>
@@ -110,7 +106,7 @@ void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
 
-#include "certificate.h"
+#include <freerdp/crypto/certificate.h>
 
 CryptoCert crypto_cert_read(uint8* data, uint32 length);
 char* crypto_cert_fingerprint(X509* xcert);

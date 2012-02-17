@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include "certificate.h"
+
 #include "peer.h"
 
 static boolean freerdp_peer_initialize(freerdp_peer* client)

@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include "crypto.h"
+#include <freerdp/crypto/crypto.h>
 
 CryptoSha1 crypto_sha1_init(void)
 {

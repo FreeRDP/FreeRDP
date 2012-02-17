@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __PER_H
-#define __PER_H
+#ifndef __CRYPTO_PER_H
+#define __CRYTPO_PER_H
 
 #include <freerdp/utils/stream.h>
 
@@ -45,4 +45,4 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
 boolean per_read_numeric_string(STREAM* s, int min);
 void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
 
-#endif /* __PER_H */
+#endif /* __CRYTPO_PER_H */

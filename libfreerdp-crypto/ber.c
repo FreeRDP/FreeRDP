@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include "ber.h"
+#include <freerdp/crypto/ber.h>
 
 void ber_read_length(STREAM* s, int* length)
 {

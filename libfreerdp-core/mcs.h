@@ -20,8 +20,8 @@
 #ifndef __MCS_H
 #define __MCS_H
 
-#include "ber.h"
 #include "transport.h"
+#include <freerdp/crypto/ber.h>
 
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>

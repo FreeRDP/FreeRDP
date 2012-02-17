@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TLS_H
-#define __TLS_H
+#ifndef __CRYPTO_TLS_H
+#define __CRYPTO_TLS_H
 
 #include "crypto.h"
 #include "certificate.h"
@@ -57,4 +57,4 @@ boolean tls_print_error(char* func, SSL* connection, int value);
 rdpTls* tls_new(rdpSettings* settings);
 void tls_free(rdpTls* tls);
 
-#endif /* __TLS_H */
+#endif /* __CRYPTO_TLS_H */

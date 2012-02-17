@@ -20,7 +20,7 @@
 #ifndef __NTLMSSP_H
 #define __NTLMSSP_H
 
-#include "credssp.h"
+#include <freerdp/crypto/crypto.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
