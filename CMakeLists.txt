@@ -163,6 +163,7 @@ add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-codec)
 add_subdirectory(libfreerdp-crypto)
+add_subdirectory(libfreerdp-auth)
 add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-core)
 
@@ -189,3 +190,4 @@ string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}")
 
 include(CPack)
+

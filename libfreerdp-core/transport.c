@@ -26,6 +26,8 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
+#include <freerdp/auth/credssp.h>
+
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -37,7 +39,6 @@
 
 #include "tpkt.h"
 #include "fastpath.h"
-#include "credssp.h"
 #include "transport.h"
 
 #define BUFFER_SIZE 16384
@@ -99,6 +100,9 @@ boolean transport_connect_tls(rdpTransport* transport)
 
 boolean transport_connect_nla(rdpTransport* transport)
 {
+	freerdp* instance;
+	rdpSettings* settings;
+
 	if (transport->tls == NULL)
 		transport->tls = tls_new(transport->settings);
 
@@ -113,8 +117,11 @@ boolean transport_connect_nla(rdpTransport* transport)
 	if (transport->settings->authentication != true)
 		return true;
 
+	settings = transport->settings;
+	instance = (freerdp*) settings->instance;
+
 	if (transport->credssp == NULL)
-		transport->credssp = credssp_new(transport);
+		transport->credssp = credssp_new(instance, transport->tls, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
@@ -153,6 +160,9 @@ boolean transport_accept_tls(rdpTransport* transport)
 
 boolean transport_accept_nla(rdpTransport* transport)
 {
+	freerdp* instance;
+	rdpSettings* settings;
+
 	if (transport->tls == NULL)
 		transport->tls = tls_new(transport->settings);
 
@@ -167,8 +177,11 @@ boolean transport_accept_nla(rdpTransport* transport)
 	if (transport->settings->authentication != true)
 		return true;
 
+	settings = transport->settings;
+	instance = (freerdp*) settings->instance;
+
 	if (transport->credssp == NULL)
-		transport->credssp = credssp_new(transport);
+		transport->credssp = credssp_new(instance, transport->tls, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{

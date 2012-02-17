@@ -22,9 +22,10 @@
 #endif
 
 #include <time.h>
-#include "ntlmssp.h"
+#include <freerdp/auth/ntlmssp.h>
 
-#include "credssp.h"
+#include <freerdp/auth/credssp.h>
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -76,7 +77,7 @@ int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
 	NTLMSSP* ntlmssp = credssp->ntlmssp;
-	rdpSettings* settings = credssp->transport->settings;
+	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
 	if ((settings->password == NULL) || (settings->username == NULL))
@@ -266,7 +267,7 @@ void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
 	uint8 signature[16];
 	rdpBlob encrypted_public_key;
 	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	tls = credssp->transport->tls;
+	tls = credssp->tls;
 
 	freerdp_blob_alloc(d, tls->public_key.length + 16);
 	ntlmssp_encrypt_message(ntlmssp, &tls->public_key, &encrypted_public_key, signature);
@@ -305,7 +306,7 @@ int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
 	uint8* signature;
 	rdpBlob public_key;
 	rdpBlob encrypted_public_key;
-	rdpTls* tls = credssp->transport->tls;
+	rdpTls* tls = credssp->tls;
 
 	signature = d->data;
 	encrypted_public_key.data = (void*) (signature + 16);
@@ -572,7 +573,7 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 		ber_write_octet_string(s, pubKeyAuth->data, length);
 	}
 
-	transport_write(credssp->transport, s);
+	freerdp_transport_write(credssp->instance, s);
 	stream_free(s);
 }
 
@@ -592,8 +593,8 @@ int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdp
 	int status;
 	uint32 version;
 
-	s = transport_recv_stream_init(credssp->transport, 2048);
-	status = transport_read(credssp->transport, s);
+	s = freerdp_transport_recv_stream_init(credssp->instance, 2048);
+	status = freerdp_transport_read(credssp->instance, s);
 
 	if (status < 0)
 		return -1;
@@ -677,7 +678,7 @@ void credssp_current_time(uint8* timestamp)
  * @return new CredSSP state machine.
  */
 
-rdpCredssp* credssp_new(rdpTransport* transport)
+rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 {
 	rdpCredssp* credssp;
 
@@ -685,11 +686,12 @@ rdpCredssp* credssp_new(rdpTransport* transport)
 
 	if (credssp != NULL)
 	{
-		credssp->transport = transport;
-		credssp->send_seq_num = 0;
-		credssp->settings = transport->settings;
+		credssp->instance = instance;
+		credssp->settings = settings;
+		credssp->server = settings->server_mode;
+		credssp->tls = tls;
 
-		credssp->server = credssp->settings->server_mode;
+		credssp->send_seq_num = 0;
 
 		if (credssp->server)
 			credssp->ntlmssp = ntlmssp_server_new();

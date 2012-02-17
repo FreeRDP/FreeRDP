@@ -36,10 +36,6 @@ set(LIBFREERDP_CORE_SRCS
 	info.h
 	input.c
 	input.h
-	credssp.c
-	credssp.h
-	ntlmssp.c
-	ntlmssp.h
 	license.c
 	license.h
 	errinfo.c
@@ -101,6 +97,7 @@ endif()
 target_link_libraries(freerdp-core freerdp-utils)
 target_link_libraries(freerdp-core freerdp-codec)
 target_link_libraries(freerdp-core freerdp-crypto)
+target_link_libraries(freerdp-core freerdp-auth)
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

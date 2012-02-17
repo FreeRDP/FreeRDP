@@ -26,8 +26,7 @@ typedef struct rdp_credssp rdpCredssp;
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/crypto.h>
 
-#include "transport.h"
-#include <freerdp/settings.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -37,16 +36,17 @@ typedef struct rdp_credssp rdpCredssp;
 
 struct rdp_credssp
 {
+	rdpTls* tls;
+	freerdp* instance;
 	boolean server;
 	rdpBlob negoToken;
 	rdpBlob pubKeyAuth;
 	rdpBlob authInfo;
 	int send_seq_num;
 	rdpBlob ts_credentials;
-	rdpSettings* settings;
 	CryptoRc4 rc4_seal_state;
 	struct _NTLMSSP *ntlmssp;
-	struct rdp_transport* transport;
+	rdpSettings* settings;
 };
 
 int credssp_authenticate(rdpCredssp* credssp);
@@ -62,7 +62,7 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp);
 void credssp_current_time(uint8* timestamp);
 void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
 
-rdpCredssp* credssp_new(rdpTransport* transport);
+rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
 void credssp_free(rdpCredssp* credssp);
 
 #endif /* __CREDSSP_H */

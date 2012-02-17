@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-crypto cmake build script
+# libfreerdp-auth cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,19 +17,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_CRYPTO_SRCS
-	ber.c
-	per.c
-	certificate.c
-	crypto.c
-	tls.c)
+set(FREERDP_AUTH_SRCS
+	credssp.c
+	ntlmssp.c)
 
-add_library(freerdp-crypto ${FREERDP_CRYPTO_SRCS})
+add_library(freerdp-auth ${FREERDP_AUTH_SRCS})
 
-set_target_properties(freerdp-crypto PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(freerdp-auth PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-crypto freerdp-utils)
-target_link_libraries(freerdp-crypto ${OPENSSL_LIBRARIES})
+target_link_libraries(freerdp-auth freerdp-utils)
+target_link_libraries(freerdp-auth freerdp-crypto)
 
-install(TARGETS freerdp-crypto DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS freerdp-auth DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

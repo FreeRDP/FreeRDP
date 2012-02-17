@@ -25,9 +25,9 @@
 #include <openssl/engine.h>
 #include <freerdp/utils/memory.h>
 
-#include "credssp.h"
+#include <freerdp/auth/credssp.h>
 
-#include "ntlmssp.h"
+#include <freerdp/auth/ntlmssp.h>
 
 #define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
