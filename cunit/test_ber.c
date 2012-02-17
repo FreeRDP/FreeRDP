@@ -22,7 +22,7 @@
 #include <freerdp/utils/stream.h>
 
 #include "test_ber.h"
-#include "libfreerdp-core/ber.h"
+#include <freerdp/crypto/ber.h>
 
 int init_ber_suite(void)
 {

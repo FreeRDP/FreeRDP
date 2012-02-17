@@ -23,7 +23,7 @@
 #define __LAYOUT_IDS_H
 
 #include <freerdp/api.h>
-#include <freerdp/kbd/kbd.h>
+#include <freerdp/locale/keyboard.h>
 
 /* Keyboard layout IDs */
 

@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-kbd cmake build script
+# libfreerdp-locale cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_KBD_SRCS
+set(FREERDP_LOCALE_SRCS
 	locales.c
 	layouts.c
 	layouts_xkb.c
@@ -27,11 +27,11 @@ set(FREERDP_KBD_SRCS
 	libkbd.c
 	libkbd.h)
 
-add_library(freerdp-kbd ${FREERDP_KBD_SRCS})
+add_library(freerdp-locale ${FREERDP_LOCALE_SRCS})
 
 find_suggested_package(X11)
 if(WITH_X11)
-	target_link_libraries(freerdp-kbd ${X11_LIBRARIES})
+	target_link_libraries(freerdp-locale ${X11_LIBRARIES})
 endif()
 
 if(NOT APPLE)
@@ -40,14 +40,16 @@ if(NOT APPLE)
 		if(WITH_XKBFILE)
 			add_definitions(-DWITH_XKBFILE)
 			include_directories(${XKBFILE_INCLUDE_DIRS})
-			target_link_libraries(freerdp-kbd ${XKBFILE_LIBRARIES})
+			target_link_libraries(freerdp-locale ${XKBFILE_LIBRARIES})
 		endif()
 	endif()
 endif()
 
 add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
 
-set_target_properties(freerdp-kbd PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS freerdp-kbd DESTINATION ${CMAKE_INSTALL_LIBDIR})
+target_link_libraries(freerdp-locale freerdp-utils)
+
+install(TARGETS freerdp-locale DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

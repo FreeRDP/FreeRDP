@@ -153,11 +153,7 @@ endif()
 # Sub-directories
 add_subdirectory(include)
 add_subdirectory(libfreerdp-utils)
-
-if(NOT WIN32)
-	add_subdirectory(libfreerdp-kbd)
-endif()
-
+add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)

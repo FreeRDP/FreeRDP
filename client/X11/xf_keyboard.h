@@ -20,8 +20,8 @@
 #ifndef __XF_KEYBOARD_H
 #define __XF_KEYBOARD_H
 
-#include <freerdp/kbd/kbd.h>
-#include <freerdp/kbd/vkcodes.h>
+#include <freerdp/locale/keyboard.h>
+#include <freerdp/locale/vkcodes.h>
 
 #include "xfreerdp.h"
 

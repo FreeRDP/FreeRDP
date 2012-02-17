@@ -24,7 +24,7 @@
 
 #include <stddef.h>
 #include <freerdp/api.h>
-#include <freerdp/kbd/layouts.h>
+#include <freerdp/locale/layouts.h>
 
 /* Mouse buttons */
 

@@ -22,7 +22,7 @@
 #include <string.h>
 #include "libkbd.h"
 
-#include <freerdp/kbd/locales.h>
+#include <freerdp/locale/locales.h>
 
 typedef struct
 {

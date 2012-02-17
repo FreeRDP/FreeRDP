@@ -81,7 +81,7 @@ set(LIBFREERDP_CORE_SRCS
 	listener.h
 	peer.c
 	peer.h
-    mppc.c
+	mppc.c
 )
 
 add_library(freerdp-core ${LIBFREERDP_CORE_SRCS})
@@ -98,6 +98,7 @@ target_link_libraries(freerdp-core freerdp-utils)
 target_link_libraries(freerdp-core freerdp-codec)
 target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core freerdp-auth)
+target_link_libraries(freerdp-core freerdp-locale)
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

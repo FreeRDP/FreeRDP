@@ -20,8 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-
-#include "ntlmssp.h"
+#include <freerdp/auth/ntlmssp.h>
 
 #include "test_ntlmssp.h"
 

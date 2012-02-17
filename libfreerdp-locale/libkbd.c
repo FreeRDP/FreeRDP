@@ -21,13 +21,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/types.h>
-#include <freerdp/kbd/kbd.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "libkbd.h"
 
-#include <freerdp/kbd/locales.h>
-#include <freerdp/kbd/vkcodes.h>
-#include <freerdp/kbd/layouts.h>
+#include <freerdp/locale/locales.h>
+#include <freerdp/locale/vkcodes.h>
+#include <freerdp/locale/layouts.h>
 #include "layouts_xkb.h"
 
 /*

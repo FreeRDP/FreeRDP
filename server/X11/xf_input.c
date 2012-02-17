@@ -18,7 +18,7 @@
  */
 
 #include <X11/Xlib.h>
-#include <freerdp/kbd/kbd.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
 

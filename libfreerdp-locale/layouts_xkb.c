@@ -29,7 +29,7 @@
 #endif
 
 #include "libkbd.h"
-#include <freerdp/kbd/vkcodes.h>
+#include <freerdp/locale/vkcodes.h>
 #include "x_layout_id_table.h"
 
 #include "layouts_xkb.h"
