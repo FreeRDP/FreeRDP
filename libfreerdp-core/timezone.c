@@ -1085,6 +1085,390 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	}
 };
 
+struct _WINDOWS_TZID_ENTRY
+{
+	const char* windows;
+	const char* tzid;
+};
+typedef struct _WINDOWS_TZID_ENTRY WINDOWS_TZID_ENTRY;
+
+const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
+{
+	{ "Afghanistan Standard Time", "Asia/Kabul" },
+	{ "Alaskan Standard Time", "America/Anchorage America/"
+			"Juneau America/Nome America/Sitka America/Yakutat" },
+	{ "Alaskan Standard Time", "America/Anchorage" },
+	{ "Arab Standard Time", "Asia/Aden" },
+	{ "Arab Standard Time", "Asia/Bahrain" },
+	{ "Arab Standard Time", "Asia/Kuwait" },
+	{ "Arab Standard Time", "Asia/Qatar" },
+	{ "Arab Standard Time", "Asia/Riyadh" },
+	{ "Arabian Standard Time", "Asia/Dubai" },
+	{ "Arabian Standard Time", "Asia/Muscat" },
+	{ "Arabian Standard Time", "Etc/GMT-4" },
+	{ "Arabic Standard Time", "Asia/Baghdad" },
+	{ "Argentina Standard Time", "America/Buenos_Aires America/"
+			"Argentina/La_Rioja America/Argentina/Rio_Gallegos America/"
+			"Argentina/Salta America/Argentina/San_Juan America/Argentina/"
+			"San_Luis America/Argentina/Tucuman America/Argentina/Ushuaia America/"
+			"Catamarca America/Cordoba America/Jujuy America/Mendoza" },
+	{ "Argentina Standard Time", "America/Buenos_Aires" },
+	{ "Atlantic Standard Time", "America/Halifax America/"
+			"Glace_Bay America/Goose_Bay America/Moncton" },
+	{ "Atlantic Standard Time", "America/Halifax" },
+	{ "Atlantic Standard Time", "America/Thule" },
+	{ "Atlantic Standard Time", "Atlantic/Bermuda" },
+	{ "AUS Central Standard Time", "Australia/Darwin" },
+	{ "AUS Eastern Standard Time", "Australia/Sydney Australia/Melbourne" },
+	{ "AUS Eastern Standard Time", "Australia/Sydney" },
+	{ "Azerbaijan Standard Time", "Asia/Baku" },
+	{ "Azores Standard Time", "America/Scoresbysund" },
+	{ "Azores Standard Time", "Atlantic/Azores" },
+	{ "Bahia Standard Time", "America/Bahia" },
+	{ "Bangladesh Standard Time", "Asia/Dhaka" },
+	{ "Bangladesh Standard Time", "Asia/Thimphu" },
+	{ "Canada Central Standard Time", "America/Regina America/Swift_Current" },
+	{ "Canada Central Standard Time", "America/Regina" },
+	{ "Cape Verde Standard Time", "Atlantic/Cape_Verde" },
+	{ "Cape Verde Standard Time", "Etc/GMT+1" },
+	{ "Caucasus Standard Time", "Asia/Yerevan" },
+	{ "Cen. Australia Standard Time", "Australia/Adelaide Australia/Broken_Hill" },
+	{ "Cen. Australia Standard Time", "Australia/Adelaide" },
+	{ "Central America Standard Time", "America/Belize" },
+	{ "Central America Standard Time", "America/Costa_Rica" },
+	{ "Central America Standard Time", "America/El_Salvador" },
+	{ "Central America Standard Time", "America/Guatemala" },
+	{ "Central America Standard Time", "America/Managua" },
+	{ "Central America Standard Time", "America/Tegucigalpa" },
+	{ "Central America Standard Time", "Etc/GMT+6" },
+	{ "Central America Standard Time", "Pacific/Galapagos" },
+	{ "Central Asia Standard Time", "Antarctica/Vostok" },
+	{ "Central Asia Standard Time", "Asia/Almaty Asia/Qyzylorda" },
+	{ "Central Asia Standard Time", "Asia/Almaty" },
+	{ "Central Asia Standard Time", "Asia/Bishkek" },
+	{ "Central Asia Standard Time", "Etc/GMT-6" },
+	{ "Central Asia Standard Time", "Indian/Chagos" },
+	{ "Central Brazilian Standard Time", "America/Cuiaba America/Campo_Grande" },
+	{ "Central Brazilian Standard Time", "America/Cuiaba" },
+	{ "Central Europe Standard Time", "Europe/Belgrade" },
+	{ "Central Europe Standard Time", "Europe/Bratislava" },
+	{ "Central Europe Standard Time", "Europe/Budapest" },
+	{ "Central Europe Standard Time", "Europe/Ljubljana" },
+	{ "Central Europe Standard Time", "Europe/Podgorica" },
+	{ "Central Europe Standard Time", "Europe/Prague" },
+	{ "Central Europe Standard Time", "Europe/Tirane" },
+	{ "Central European Standard Time", "Europe/Sarajevo" },
+	{ "Central European Standard Time", "Europe/Skopje" },
+	{ "Central European Standard Time", "Europe/Warsaw" },
+	{ "Central European Standard Time", "Europe/Zagreb" },
+	{ "Central Pacific Standard Time", "Antarctica/Macquarie" },
+	{ "Central Pacific Standard Time", "Etc/GMT-11" },
+	{ "Central Pacific Standard Time", "Pacific/Efate" },
+	{ "Central Pacific Standard Time", "Pacific/Guadalcanal" },
+	{ "Central Pacific Standard Time", "Pacific/Noumea" },
+	{ "Central Pacific Standard Time", "Pacific/Ponape Pacific/Kosrae" },
+	{ "Central Standard Time (Mexico)", "America/Mexico_City America/"
+			"Bahia_Banderas America/Cancun America/Merida America/Monterrey" },
+	{ "Central Standard Time (Mexico)", "America/Mexico_City" },
+	{ "Central Standard Time", "America/Chicago America/Indiana/"
+			"Knox America/Indiana/Tell_City America/Menominee America/"
+			"North_Dakota/Beulah America/North_Dakota/Center America/North_Dakota/New_Salem" },
+	{ "Central Standard Time", "America/Chicago" },
+	{ "Central Standard Time", "America/Matamoros" },
+	{ "Central Standard Time", "America/Winnipeg America/"
+			"Rainy_River America/Rankin_Inlet America/Resolute" },
+	{ "Central Standard Time", "CST6CDT" },
+	{ "China Standard Time", "Asia/Hong_Kong" },
+	{ "China Standard Time", "Asia/Macau" },
+	{ "China Standard Time", "Asia/Shanghai Asia/Chongqing Asia/Harbin Asia/Kashgar Asia/Urumqi" },
+	{ "China Standard Time", "Asia/Shanghai" },
+	{ "Dateline Standard Time", "Etc/GMT+12" },
+	{ "E. Africa Standard Time", "Africa/Addis_Ababa" },
+	{ "E. Africa Standard Time", "Africa/Asmera" },
+	{ "E. Africa Standard Time", "Africa/Dar_es_Salaam" },
+	{ "E. Africa Standard Time", "Africa/Djibouti" },
+	{ "E. Africa Standard Time", "Africa/Juba" },
+	{ "E. Africa Standard Time", "Africa/Kampala" },
+	{ "E. Africa Standard Time", "Africa/Khartoum" },
+	{ "E. Africa Standard Time", "Africa/Mogadishu" },
+	{ "E. Africa Standard Time", "Africa/Nairobi" },
+	{ "E. Africa Standard Time", "Antarctica/Syowa" },
+	{ "E. Africa Standard Time", "Etc/GMT-3" },
+	{ "E. Africa Standard Time", "Indian/Antananarivo" },
+	{ "E. Africa Standard Time", "Indian/Comoro" },
+	{ "E. Africa Standard Time", "Indian/Mayotte" },
+	{ "E. Australia Standard Time", "Australia/Brisbane Australia/Lindeman" },
+	{ "E. Australia Standard Time", "Australia/Brisbane" },
+	{ "E. Europe Standard Time", "Asia/Nicosia" },
+	{ "E. South America Standard Time", "America/Sao_Paulo" },
+	{ "Eastern Standard Time", "America/Grand_Turk" },
+	{ "Eastern Standard Time", "America/Nassau" },
+	{ "Eastern Standard Time", "America/New_York America/Detroit America/"
+			"Indiana/Petersburg America/Indiana/Vincennes America/"
+			"Indiana/Winamac America/Kentucky/Monticello America/Louisville" },
+	{ "Eastern Standard Time", "America/New_York" },
+	{ "Eastern Standard Time", "America/Toronto America/Iqaluit America/"
+			"Montreal America/Nipigon America/Pangnirtung America/Thunder_Bay" },
+	{ "Eastern Standard Time", "EST5EDT" },
+	{ "Egypt Standard Time", "Africa/Cairo" },
+	{ "Egypt Standard Time", "Asia/Gaza Asia/Hebron" },
+	{ "Ekaterinburg Standard Time", "Asia/Yekaterinburg" },
+	{ "Fiji Standard Time", "Pacific/Fiji" },
+	{ "FLE Standard Time", "Europe/Helsinki" },
+	{ "FLE Standard Time", "Europe/Kiev Europe/Simferopol Europe/Uzhgorod Europe/Zaporozhye" },
+	{ "FLE Standard Time", "Europe/Kiev" },
+	{ "FLE Standard Time", "Europe/Mariehamn" },
+	{ "FLE Standard Time", "Europe/Riga" },
+	{ "FLE Standard Time", "Europe/Sofia" },
+	{ "FLE Standard Time", "Europe/Tallinn" },
+	{ "FLE Standard Time", "Europe/Vilnius" },
+	{ "Georgian Standard Time", "Asia/Tbilisi" },
+	{ "GMT Standard Time", "Atlantic/Canary" },
+	{ "GMT Standard Time", "Atlantic/Faeroe" },
+	{ "GMT Standard Time", "Europe/Dublin" },
+	{ "GMT Standard Time", "Europe/Guernsey" },
+	{ "GMT Standard Time", "Europe/Isle_of_Man" },
+	{ "GMT Standard Time", "Europe/Jersey" },
+	{ "GMT Standard Time", "Europe/Lisbon Atlantic/Madeira" },
+	{ "GMT Standard Time", "Europe/London" },
+	{ "Greenland Standard Time", "America/Godthab" },
+	{ "Greenwich Standard Time", "Africa/Abidjan" },
+	{ "Greenwich Standard Time", "Africa/Accra" },
+	{ "Greenwich Standard Time", "Africa/Bamako" },
+	{ "Greenwich Standard Time", "Africa/Banjul" },
+	{ "Greenwich Standard Time", "Africa/Bissau" },
+	{ "Greenwich Standard Time", "Africa/Conakry" },
+	{ "Greenwich Standard Time", "Africa/Dakar" },
+	{ "Greenwich Standard Time", "Africa/El_Aaiun" },
+	{ "Greenwich Standard Time", "Africa/Freetown" },
+	{ "Greenwich Standard Time", "Africa/Lome" },
+	{ "Greenwich Standard Time", "Africa/Monrovia" },
+	{ "Greenwich Standard Time", "Africa/Nouakchott" },
+	{ "Greenwich Standard Time", "Africa/Ouagadougou" },
+	{ "Greenwich Standard Time", "Africa/Sao_Tome" },
+	{ "Greenwich Standard Time", "Atlantic/Reykjavik" },
+	{ "Greenwich Standard Time", "Atlantic/St_Helena" },
+	{ "GTB Standard Time", "Europe/Athens" },
+	{ "GTB Standard Time", "Europe/Bucharest" },
+	{ "GTB Standard Time", "Europe/Chisinau" },
+	{ "Hawaiian Standard Time", "Etc/GMT+10" },
+	{ "Hawaiian Standard Time", "Pacific/Fakaofo" },
+	{ "Hawaiian Standard Time", "Pacific/Honolulu" },
+	{ "Hawaiian Standard Time", "Pacific/Johnston" },
+	{ "Hawaiian Standard Time", "Pacific/Rarotonga" },
+	{ "Hawaiian Standard Time", "Pacific/Tahiti" },
+	{ "India Standard Time", "Asia/Calcutta" },
+	{ "Iran Standard Time", "Asia/Tehran" },
+	{ "Israel Standard Time", "Asia/Jerusalem" },
+	{ "Jordan Standard Time", "Asia/Amman" },
+	{ "Kaliningrad Standard Time", "Europe/Kaliningrad" },
+	{ "Kaliningrad Standard Time", "Europe/Minsk" },
+	{ "Korea Standard Time", "Asia/Pyongyang" },
+	{ "Korea Standard Time", "Asia/Seoul" },
+	{ "Magadan Standard Time", "Asia/Magadan Asia/Anadyr Asia/Kamchatka" },
+	{ "Magadan Standard Time", "Asia/Magadan" },
+	{ "Mauritius Standard Time", "Indian/Mahe" },
+	{ "Mauritius Standard Time", "Indian/Mauritius" },
+	{ "Mauritius Standard Time", "Indian/Reunion" },
+	{ "Middle East Standard Time", "Asia/Beirut" },
+	{ "Montevideo Standard Time", "America/Montevideo" },
+	{ "Morocco Standard Time", "Africa/Casablanca" },
+	{ "Mountain Standard Time (Mexico)", "America/Chihuahua America/Mazatlan" },
+	{ "Mountain Standard Time (Mexico)", "America/Chihuahua" },
+	{ "Mountain Standard Time", "America/Denver America/Boise America/Shiprock" },
+	{ "Mountain Standard Time", "America/Denver" },
+	{ "Mountain Standard Time", "America/Edmonton America/"
+			"Cambridge_Bay America/Inuvik America/Yellowknife" },
+	{ "Mountain Standard Time", "America/Ojinaga" },
+	{ "Mountain Standard Time", "MST7MDT" },
+	{ "Myanmar Standard Time", "Asia/Rangoon" },
+	{ "Myanmar Standard Time", "Indian/Cocos" },
+	{ "N. Central Asia Standard Time", "Asia/Novosibirsk Asia/Novokuznetsk Asia/Omsk" },
+	{ "N. Central Asia Standard Time", "Asia/Novosibirsk" },
+	{ "Namibia Standard Time", "Africa/Windhoek" },
+	{ "Nepal Standard Time", "Asia/Katmandu" },
+	{ "New Zealand Standard Time", "Antarctica/South_Pole Antarctica/McMurdo" },
+	{ "New Zealand Standard Time", "Pacific/Auckland" },
+	{ "Newfoundland Standard Time", "America/St_Johns" },
+	{ "North Asia East Standard Time", "Asia/Irkutsk" },
+	{ "North Asia Standard Time", "Asia/Krasnoyarsk" },
+	{ "Pacific SA Standard Time", "America/Santiago" },
+	{ "Pacific SA Standard Time", "Antarctica/Palmer" },
+	{ "Pacific Standard Time (Mexico)", "America/Santa_Isabel" },
+	{ "Pacific Standard Time", "America/Los_Angeles" },
+	{ "Pacific Standard Time", "America/Tijuana" },
+	{ "Pacific Standard Time", "America/Vancouver America/Dawson America/Whitehorse" },
+	{ "Pacific Standard Time", "PST8PDT" },
+	{ "Pakistan Standard Time", "Asia/Karachi" },
+	{ "Paraguay Standard Time", "America/Asuncion" },
+	{ "Romance Standard Time", "Europe/Brussels" },
+	{ "Romance Standard Time", "Europe/Copenhagen" },
+	{ "Romance Standard Time", "Europe/Madrid Africa/Ceuta" },
+	{ "Romance Standard Time", "Europe/Paris" },
+	{ "Russian Standard Time", "Europe/Moscow Europe/Samara Europe/Volgograd" },
+	{ "Russian Standard Time", "Europe/Moscow" },
+	{ "SA Eastern Standard Time", "America/Cayenne" },
+	{ "SA Eastern Standard Time", "America/Fortaleza America/"
+			"Araguaina America/Belem America/Maceio America/Recife America/Santarem" },
+	{ "SA Eastern Standard Time", "America/Paramaribo" },
+	{ "SA Eastern Standard Time", "Antarctica/Rothera" },
+	{ "SA Eastern Standard Time", "Etc/GMT+3" },
+	{ "SA Pacific Standard Time", "America/Bogota" },
+	{ "SA Pacific Standard Time", "America/Cayman" },
+	{ "SA Pacific Standard Time", "America/Coral_Harbour" },
+	{ "SA Pacific Standard Time", "America/Guayaquil" },
+	{ "SA Pacific Standard Time", "America/Jamaica" },
+	{ "SA Pacific Standard Time", "America/Lima" },
+	{ "SA Pacific Standard Time", "America/Panama" },
+	{ "SA Pacific Standard Time", "America/Port-au-Prince" },
+	{ "SA Pacific Standard Time", "Etc/GMT+5" },
+	{ "SA Western Standard Time", "America/Anguilla" },
+	{ "SA Western Standard Time", "America/Antigua" },
+	{ "SA Western Standard Time", "America/Aruba" },
+	{ "SA Western Standard Time", "America/Barbados" },
+	{ "SA Western Standard Time", "America/Blanc-Sablon" },
+	{ "SA Western Standard Time", "America/Curacao" },
+	{ "SA Western Standard Time", "America/Dominica" },
+	{ "SA Western Standard Time", "America/Grenada" },
+	{ "SA Western Standard Time", "America/Guadeloupe" },
+	{ "SA Western Standard Time", "America/Guyana" },
+	{ "SA Western Standard Time", "America/La_Paz" },
+	{ "SA Western Standard Time", "America/Manaus America/"
+			"Boa_Vista America/Eirunepe America/Porto_Velho America/Rio_Branco" },
+	{ "SA Western Standard Time", "America/Marigot" },
+	{ "SA Western Standard Time", "America/Martinique" },
+	{ "SA Western Standard Time", "America/Montserrat" },
+	{ "SA Western Standard Time", "America/Port_of_Spain" },
+	{ "SA Western Standard Time", "America/Puerto_Rico" },
+	{ "SA Western Standard Time", "America/Santo_Domingo" },
+	{ "SA Western Standard Time", "America/St_Barthelemy" },
+	{ "SA Western Standard Time", "America/St_Kitts" },
+	{ "SA Western Standard Time", "America/St_Lucia" },
+	{ "SA Western Standard Time", "America/St_Thomas" },
+	{ "SA Western Standard Time", "America/St_Vincent" },
+	{ "SA Western Standard Time", "America/Tortola" },
+	{ "SA Western Standard Time", "Etc/GMT+4" },
+	{ "Samoa Standard Time", "Pacific/Apia" },
+	{ "SE Asia Standard Time", "Antarctica/Davis" },
+	{ "SE Asia Standard Time", "Asia/Bangkok" },
+	{ "SE Asia Standard Time", "Asia/Hovd" },
+	{ "SE Asia Standard Time", "Asia/Jakarta Asia/Pontianak" },
+	{ "SE Asia Standard Time", "Asia/Phnom_Penh" },
+	{ "SE Asia Standard Time", "Asia/Saigon" },
+	{ "SE Asia Standard Time", "Asia/Vientiane" },
+	{ "SE Asia Standard Time", "Etc/GMT-7" },
+	{ "SE Asia Standard Time", "Indian/Christmas" },
+	{ "Singapore Standard Time", "Asia/Brunei" },
+	{ "Singapore Standard Time", "Asia/Kuala_Lumpur Asia/Kuching" },
+	{ "Singapore Standard Time", "Asia/Makassar" },
+	{ "Singapore Standard Time", "Asia/Manila" },
+	{ "Singapore Standard Time", "Asia/Singapore" },
+	{ "Singapore Standard Time", "Etc/GMT-8" },
+	{ "South Africa Standard Time", "Africa/Blantyre" },
+	{ "South Africa Standard Time", "Africa/Bujumbura" },
+	{ "South Africa Standard Time", "Africa/Gaborone" },
+	{ "South Africa Standard Time", "Africa/Harare" },
+	{ "South Africa Standard Time", "Africa/Johannesburg" },
+	{ "South Africa Standard Time", "Africa/Kigali" },
+	{ "South Africa Standard Time", "Africa/Lubumbashi" },
+	{ "South Africa Standard Time", "Africa/Lusaka" },
+	{ "South Africa Standard Time", "Africa/Maputo" },
+	{ "South Africa Standard Time", "Africa/Maseru" },
+	{ "South Africa Standard Time", "Africa/Mbabane" },
+	{ "South Africa Standard Time", "Africa/Tripoli" },
+	{ "South Africa Standard Time", "Etc/GMT-2" },
+	{ "Sri Lanka Standard Time", "Asia/Colombo" },
+	{ "Syria Standard Time", "Asia/Damascus" },
+	{ "Taipei Standard Time", "Asia/Taipei" },
+	{ "Tasmania Standard Time", "Australia/Hobart Australia/Currie" },
+	{ "Tasmania Standard Time", "Australia/Hobart" },
+	{ "Tokyo Standard Time", "Asia/Dili" },
+	{ "Tokyo Standard Time", "Asia/Jayapura" },
+	{ "Tokyo Standard Time", "Asia/Tokyo" },
+	{ "Tokyo Standard Time", "Etc/GMT-9" },
+	{ "Tokyo Standard Time", "Pacific/Palau" },
+	{ "Tonga Standard Time", "Etc/GMT-13" },
+	{ "Tonga Standard Time", "Pacific/Enderbury" },
+	{ "Tonga Standard Time", "Pacific/Tongatapu" },
+	{ "Turkey Standard Time", "Europe/Istanbul" },
+	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar Asia/Choibalsan" },
+	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar" },
+	{ "US Eastern Standard Time", "America/Indianapolis America/"
+			"Indiana/Marengo America/Indiana/Vevay" },
+	{ "US Eastern Standard Time", "America/Indianapolis" },
+	{ "US Mountain Standard Time", "America/Dawson_Creek" },
+	{ "US Mountain Standard Time", "America/Hermosillo" },
+	{ "US Mountain Standard Time", "America/Phoenix" },
+	{ "US Mountain Standard Time", "Etc/GMT+7" },
+	{ "UTC", "America/Danmarkshavn" },
+	{ "UTC", "Etc/GMT" },
+	{ "UTC+12", "Etc/GMT-12" },
+	{ "UTC+12", "Pacific/Funafuti" },
+	{ "UTC+12", "Pacific/Majuro Pacific/Kwajalein" },
+	{ "UTC+12", "Pacific/Nauru" },
+	{ "UTC+12", "Pacific/Tarawa" },
+	{ "UTC+12", "Pacific/Wake" },
+	{ "UTC+12", "Pacific/Wallis" },
+	{ "UTC-02", "America/Noronha" },
+	{ "UTC-02", "Atlantic/South_Georgia" },
+	{ "UTC-02", "Etc/GMT+2" },
+	{ "UTC-11", "Etc/GMT+11" },
+	{ "UTC-11", "Pacific/Midway" },
+	{ "UTC-11", "Pacific/Niue" },
+	{ "UTC-11", "Pacific/Pago_Pago" },
+	{ "Venezuela Standard Time", "America/Caracas" },
+	{ "Vladivostok Standard Time", "Asia/Vladivostok Asia/Sakhalin" },
+	{ "Vladivostok Standard Time", "Asia/Vladivostok" },
+	{ "W. Australia Standard Time", "Antarctica/Casey" },
+	{ "W. Australia Standard Time", "Australia/Perth" },
+	{ "W. Central Africa Standard Time", "Africa/Algiers" },
+	{ "W. Central Africa Standard Time", "Africa/Bangui" },
+	{ "W. Central Africa Standard Time", "Africa/Brazzaville" },
+	{ "W. Central Africa Standard Time", "Africa/Douala" },
+	{ "W. Central Africa Standard Time", "Africa/Kinshasa" },
+	{ "W. Central Africa Standard Time", "Africa/Lagos" },
+	{ "W. Central Africa Standard Time", "Africa/Libreville" },
+	{ "W. Central Africa Standard Time", "Africa/Luanda" },
+	{ "W. Central Africa Standard Time", "Africa/Malabo" },
+	{ "W. Central Africa Standard Time", "Africa/Ndjamena" },
+	{ "W. Central Africa Standard Time", "Africa/Niamey" },
+	{ "W. Central Africa Standard Time", "Africa/Porto-Novo" },
+	{ "W. Central Africa Standard Time", "Africa/Tunis" },
+	{ "W. Central Africa Standard Time", "Etc/GMT-1" },
+	{ "W. Europe Standard Time", "Arctic/Longyearbyen" },
+	{ "W. Europe Standard Time", "Europe/Amsterdam" },
+	{ "W. Europe Standard Time", "Europe/Andorra" },
+	{ "W. Europe Standard Time", "Europe/Berlin" },
+	{ "W. Europe Standard Time", "Europe/Gibraltar" },
+	{ "W. Europe Standard Time", "Europe/Luxembourg" },
+	{ "W. Europe Standard Time", "Europe/Malta" },
+	{ "W. Europe Standard Time", "Europe/Monaco" },
+	{ "W. Europe Standard Time", "Europe/Oslo" },
+	{ "W. Europe Standard Time", "Europe/Rome" },
+	{ "W. Europe Standard Time", "Europe/San_Marino" },
+	{ "W. Europe Standard Time", "Europe/Stockholm" },
+	{ "W. Europe Standard Time", "Europe/Vaduz" },
+	{ "W. Europe Standard Time", "Europe/Vatican" },
+	{ "W. Europe Standard Time", "Europe/Vienna" },
+	{ "W. Europe Standard Time", "Europe/Zurich" },
+	{ "West Asia Standard Time", "Antarctica/Mawson" },
+	{ "West Asia Standard Time", "Asia/Ashgabat" },
+	{ "West Asia Standard Time", "Asia/Dushanbe" },
+	{ "West Asia Standard Time", "Asia/Oral Asia/Aqtau Asia/Aqtobe" },
+	{ "West Asia Standard Time", "Asia/Tashkent Asia/Samarkand" },
+	{ "West Asia Standard Time", "Asia/Tashkent" },
+	{ "West Asia Standard Time", "Etc/GMT-5" },
+	{ "West Asia Standard Time", "Indian/Kerguelen" },
+	{ "West Asia Standard Time", "Indian/Maldives" },
+	{ "West Pacific Standard Time", "Antarctica/DumontDUrville" },
+	{ "West Pacific Standard Time", "Etc/GMT-10" },
+	{ "West Pacific Standard Time", "Pacific/Guam" },
+	{ "West Pacific Standard Time", "Pacific/Port_Moresby" },
+	{ "West Pacific Standard Time", "Pacific/Saipan" },
+	{ "West Pacific Standard Time", "Pacific/Truk" },
+	{ "Yakutsk Standard Time", "Asia/Yakutsk" },
+};
+
 /**
  * Read SYSTEM_TIME structure (TS_SYSTEMTIME).\n
  * @msdn{cc240478}
@@ -1160,6 +1544,109 @@ char* rdp_get_unix_timezone_identifier()
 	return tzid;
 }
 
+boolean match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
+{
+	char* p;
+	char* list_copy;
+
+	list_copy = xstrdup(list);
+
+	p = strtok(list_copy, " ");
+
+	while (p != NULL)
+	{
+		if (strcmp(p, tzid) == 0)
+		{
+			xfree(list_copy);
+			return true;
+		}
+
+		p = strtok(NULL, " ");
+	}
+
+	xfree(list_copy);
+
+	return false;
+}
+
+uint64 rdp_get_windows_time_from_unix_time(time_t unix_time)
+{
+	uint64 windows_time;
+	windows_time = (unix_time * 10000000) + 621355968000000000;
+	return windows_time;
+}
+
+time_t rdp_get_unix_time_from_windows_time(uint64 windows_time)
+{
+	time_t unix_time;
+	unix_time = (windows_time - 621355968000000000) / 10000000;
+	return unix_time;
+}
+
+uint64 rdp_windows_gmtime()
+{
+	time_t unix_time;
+	uint64 windows_time;
+
+	gmtime(&unix_time);
+	windows_time = rdp_get_windows_time_from_unix_time(unix_time);
+
+	return windows_time;
+}
+
+TIME_ZONE_ENTRY* rdp_detect_windows_time_zone(uint32 bias)
+{
+	int i, j;
+	char* tzid;
+	TIME_ZONE_ENTRY* timezone;
+
+	tzid = rdp_get_unix_timezone_identifier();
+
+	if (tzid == NULL)
+		return NULL;
+
+	for (i = 0; i < sizeof(TimeZoneTable) / sizeof(TIME_ZONE_ENTRY); i++)
+	{
+		if (bias == TimeZoneTable[i].Bias)
+		{
+			for (j = 0; j < sizeof(WindowsTimeZoneIdTable) / sizeof(WINDOWS_TZID_ENTRY); j++)
+			{
+				if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
+					continue;
+
+				if (match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
+				{
+					timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
+					memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
+					xfree(tzid);
+					return timezone;
+				}
+			}
+		}
+	}
+
+	xfree(tzid);
+	return NULL;
+}
+
+TIME_ZONE_RULE_ENTRY* rdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, uint32 count)
+{
+	int i;
+	uint64 windows_time;
+
+	windows_time = rdp_windows_gmtime();
+
+	for (i = 0; i < (int) count; i++)
+	{
+		if ((rules[i].TicksStart <= windows_time) && (windows_time >= rules[i].TicksEnd))
+		{
+			return &rules[i];
+		}
+	}
+
+	return NULL;
+}
+
 /**
  * Get client time zone information.\n
  * @param s stream
@@ -1169,8 +1656,8 @@ char* rdp_get_unix_timezone_identifier()
 void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 {
 	time_t t;
-	char* tzid;
 	struct tm* local_time;
+	TIME_ZONE_ENTRY* timezone;
 	TIME_ZONE_INFO* clientTimeZone;
 
 	time(&t);
@@ -1202,12 +1689,52 @@ void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings)
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
 
-	tzid = rdp_get_unix_timezone_identifier();
+	timezone = rdp_detect_windows_time_zone(clientTimeZone->bias);
 
-	strftime(clientTimeZone->standardName, 32, "%Z, Standard Time", local_time);
-	clientTimeZone->standardName[31] = 0;
-	strftime(clientTimeZone->daylightName, 32, "%Z, Summer Time", local_time);
-	clientTimeZone->daylightName[31] = 0;
+	if (timezone != NULL)
+	{
+		clientTimeZone->bias = timezone->Bias;
+		sprintf(clientTimeZone->standardName, "%s", timezone->StandardName);
+		sprintf(clientTimeZone->daylightName, "%s", timezone->DaylightName);
+
+		if ((timezone->SupportsDST) && (timezone->RuleTableCount > 0))
+		{
+			TIME_ZONE_RULE_ENTRY* rule;
+			rule = rdp_get_current_time_zone_rule(timezone->RuleTable, timezone->RuleTableCount);
+
+			if (rule != NULL)
+			{
+				clientTimeZone->standardBias = 0;
+				clientTimeZone->daylightBias = rule->DaylightDelta;
+
+				clientTimeZone->standardDate.wYear = rule->StandardDate.wYear;
+				clientTimeZone->standardDate.wMonth = rule->StandardDate.wMonth;
+				clientTimeZone->standardDate.wDayOfWeek = rule->StandardDate.wDayOfWeek;
+				clientTimeZone->standardDate.wDay = rule->StandardDate.wDay;
+				clientTimeZone->standardDate.wHour = rule->StandardDate.wHour;
+				clientTimeZone->standardDate.wMinute = rule->StandardDate.wMinute;
+				clientTimeZone->standardDate.wSecond = rule->StandardDate.wSecond;
+				clientTimeZone->standardDate.wMilliseconds = rule->StandardDate.wMilliseconds;
+
+				clientTimeZone->daylightDate.wYear = rule->DaylightDate.wYear;
+				clientTimeZone->daylightDate.wMonth = rule->DaylightDate.wMonth;
+				clientTimeZone->daylightDate.wDayOfWeek = rule->DaylightDate.wDayOfWeek;
+				clientTimeZone->daylightDate.wDay = rule->DaylightDate.wDay;
+				clientTimeZone->daylightDate.wHour = rule->DaylightDate.wHour;
+				clientTimeZone->daylightDate.wMinute = rule->DaylightDate.wMinute;
+				clientTimeZone->daylightDate.wSecond = rule->DaylightDate.wSecond;
+				clientTimeZone->daylightDate.wMilliseconds = rule->DaylightDate.wMilliseconds;
+			}
+		}
+
+		xfree(timezone);
+	}
+	else
+	{
+		/* could not detect timezone, fallback to using GMT */
+		sprintf(clientTimeZone->standardName, "%s", "GMT Standard Time");
+		sprintf(clientTimeZone->daylightName, "%s", "GMT Daylight Time");
+	}
 }
 
 /**
@@ -1268,19 +1795,6 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 
 	rdp_get_client_time_zone(s, settings);
 	clientTimeZone = settings->client_time_zone;
-
-	/*
-	 * temporary fix: to be valid the time zone names need to match
-	 * the data that can be found at the following registry location:
-	 * HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones
-	 *
-	 * We should extract the data out of the registry and hardcode it
-	 * within FreeRDP. We should then be able to figure out the proper
-	 * names to use from the standardBias and daylightBias numerical
-	 * values which we detect.
-	 */
-	sprintf(clientTimeZone->standardName, "%s", "GMT Standard Time");
-	sprintf(clientTimeZone->daylightName, "%s", "GMT Daylight Time");
 
 	standardName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
 	standardNameLength = length;
