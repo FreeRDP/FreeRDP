@@ -82,6 +82,8 @@ char* freerdp_get_home_path(rdpSettings* settings)
 {
 	if (settings->home_path == NULL)
 		settings->home_path = getenv(HOME_ENV_VARIABLE);
+	if (settings->home_path == NULL)
+		settings->home_path = xstrdup("/");
 
 	return settings->home_path;
 }
