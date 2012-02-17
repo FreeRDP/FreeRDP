@@ -125,6 +125,10 @@ int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 
 int credssp_ntlmssp_server_init(rdpCredssp* credssp)
 {
+	NTLMSSP* ntlmssp = credssp->ntlmssp;
+
+	ntlmssp_generate_server_challenge(ntlmssp);
+
 	return 1;
 }
 
@@ -202,8 +206,35 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 int credssp_server_authenticate(rdpCredssp* credssp)
 {
+	STREAM* s = stream_new(0);
+	NTLMSSP* ntlmssp = credssp->ntlmssp;
+	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
+
 	if (credssp_ntlmssp_server_init(credssp) == 0)
 		return 0;
+
+	/* NTLMSSP NEGOTIATE MESSAGE */
+	if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
+		return -1;
+
+	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
+	ntlmssp_recv(ntlmssp, s);
+
+	freerdp_blob_free(&credssp->negoToken);
+
+	/* NTLMSSP CHALLENGE MESSAGE */
+	stream_attach(s, negoTokenBuffer, 2048);
+	ntlmssp_send(ntlmssp, s);
+	credssp->negoToken.data = stream_get_head(s);
+	credssp->negoToken.length = stream_get_length(s);
+	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
+
+	/* NTLMSSP AUTHENTICATE MESSAGE */
+	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
+		return -1;
+
+	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
+	ntlmssp_recv(ntlmssp, s);
 
 	return 1;
 }

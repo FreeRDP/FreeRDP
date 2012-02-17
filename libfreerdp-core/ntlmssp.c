@@ -195,14 +195,40 @@ void ntlmssp_set_workstation(NTLMSSP* ntlmssp, char* workstation)
 }
 
 /**
+ * Set NTLMSSP target name.
+ * @param ntlmssp
+ * @param target_name target name
+ */
+
+void ntlmssp_set_target_name(NTLMSSP* ntlmssp, char* target_name)
+{
+	freerdp_blob_free(&ntlmssp->target_name);
+
+	if (target_name != NULL)
+	{
+		ntlmssp->target_name.data = freerdp_uniconv_out(ntlmssp->uniconv, target_name, (size_t*) &(ntlmssp->target_name.length));
+	}
+}
+
+/**
  * Generate client challenge (8-byte nonce).
  * @param ntlmssp
  */
 
 void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp)
 {
-	/* ClientChallenge in computation of LMv2 and NTLMv2 responses */
+	/* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
 	crypto_nonce(ntlmssp->client_challenge, 8);
+}
+
+/**
+ * Generate server challenge (8-byte nonce).
+ * @param ntlmssp
+ */
+
+void ntlmssp_generate_server_challenge(NTLMSSP* ntlmssp)
+{
+	crypto_nonce(ntlmssp->server_challenge, 8);
 }
 
 /**
@@ -1369,6 +1395,37 @@ void ntlmssp_send_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 
 void ntlmssp_recv_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 {
+	uint32 negotiateFlags;
+	uint16 domainNameLen;
+	uint16 domainNameMaxLen;
+	uint32 domainNameBufferOffset;
+	uint16 workstationLen;
+	uint16 workstationMaxLen;
+	uint32 workstationBufferOffset;
+
+	ntlmssp_input_negotiate_flags(s, &negotiateFlags); /* NegotiateFlags (4 bytes) */
+	ntlmssp->negotiate_flags = negotiateFlags;
+
+	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	/* DomainNameFields (8 bytes) */
+	stream_read_uint16(s, domainNameLen); /* DomainNameLen */
+	stream_read_uint16(s, domainNameMaxLen); /* DomainNameMaxLen */
+	stream_read_uint32(s, domainNameBufferOffset); /* DomainNameBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	/* WorkstationFields (8 bytes) */
+	stream_read_uint16(s, workstationLen); /* WorkstationLen */
+	stream_read_uint16(s, workstationMaxLen); /* WorkstationMaxLen */
+	stream_read_uint32(s, workstationBufferOffset); /* WorkstationBufferOffset */
+
+	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+		stream_seek(s, 8); /* Version (8 bytes) */
+	}
+
 	ntlmssp->state = NTLMSSP_STATE_CHALLENGE;
 }
 
@@ -1381,6 +1438,69 @@ void ntlmssp_recv_negotiate_message(NTLMSSP* ntlmssp, STREAM* s)
 
 void ntlmssp_send_challenge_message(NTLMSSP* ntlmssp, STREAM* s)
 {
+	uint16 targetNameLen;
+	uint8* targetNameBuffer;
+	uint32 targetNameBufferOffset;
+	uint16 targetInfoLen;
+	uint8* targetInfoBuffer;
+	uint32 targetInfoBufferOffset;
+
+	stream_write(s, ntlm_signature, 8); /* Signature (8 bytes) */
+	stream_write_uint32(s, MESSAGE_TYPE_CHALLENGE); /* MessageType */
+
+	targetNameLen = ntlmssp->target_name.length;
+	targetNameBuffer = ntlmssp->target_name.data;
+
+	targetInfoLen = ntlmssp->target_info.length;
+	targetInfoBuffer = ntlmssp->target_info.data;
+
+	targetNameBufferOffset = 56;
+	targetInfoBufferOffset = targetNameBufferOffset + targetNameLen;
+
+	/* TargetNameFields (8 bytes) */
+	stream_write_uint16(s, targetNameLen); /* TargetNameLen (2 bytes) */
+	stream_write_uint16(s, targetNameLen); /* TargetNameMaxLen (2 bytes) */
+	stream_write_uint32(s, targetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+
+	ntlmssp_output_negotiate_flags(s, ntlmssp->negotiate_flags); /* NegotiateFlags (4 bytes) */
+
+	stream_write(s, ntlmssp->server_challenge, 8); /* ServerChallenge (8 bytes) */
+	stream_write_zero(s, 8); /* Reserved (8 bytes), should be ignored */
+
+	/* TargetInfoFields (8 bytes) */
+	stream_write_uint16(s, targetInfoLen); /* TargetInfoLen (2 bytes) */
+	stream_write_uint16(s, targetInfoLen); /* TargetInfoMaxLen (2 bytes) */
+	stream_write_uint32(s, targetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+
+	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
+
+	if (ntlmssp->negotiate_flags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		ntlmssp_output_version(s); /* Version (8 bytes), can be ignored */
+	}
+
+	/* Payload (variable) */
+
+	if (targetNameLen > 0)
+	{
+		stream_write(s, targetNameBuffer, targetNameLen);
+#ifdef WITH_DEBUG_NLA
+		printf("TargetName (length = %d, offset = %d)\n", targetNameLen, targetNameBufferOffset);
+		freerdp_hexdump(targetNameBuffer, targetNameLen);
+		printf("\n");
+#endif
+	}
+
+	if (targetInfoLen > 0)
+	{
+		stream_write(s, targetInfoBuffer, targetInfoLen);
+#ifdef WITH_DEBUG_NLA
+		printf("TargetInfo (length = %d, offset = %d)\n", targetInfoLen, targetInfoBufferOffset);
+		freerdp_hexdump(targetInfoBuffer, targetInfoLen);
+		printf("\n");
+#endif
+	}
+
 	ntlmssp->state = NTLMSSP_STATE_AUTHENTICATE;
 }
 
@@ -1816,6 +1936,8 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 
 void ntlmssp_recv_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 {
+
+
 	ntlmssp->state = NTLMSSP_STATE_FINAL;
 }
 
