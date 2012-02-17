@@ -1936,7 +1936,67 @@ void ntlmssp_send_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 
 void ntlmssp_recv_authenticate_message(NTLMSSP* ntlmssp, STREAM* s)
 {
+	uint32 negotiateFlags;
+	uint16 DomainNameLen;
+	uint16 DomainNameMaxLen;
+	uint32 DomainNameBufferOffset;
+	uint16 UserNameLen;
+	uint16 UserNameMaxLen;
+	uint32 UserNameBufferOffset;
+	uint16 WorkstationLen;
+	uint16 WorkstationMaxLen;
+	uint32 WorkstationBufferOffset;
+	uint16 LmChallengeResponseLen;
+	uint16 LmChallengeResponseMaxLen;
+	uint32 LmChallengeResponseBufferOffset;
+	uint16 NtChallengeResponseLen;
+	uint16 NtChallengeResponseMaxLen;
+	uint32 NtChallengeResponseBufferOffset;
+	uint16 EncryptedRandomSessionKeyLen;
+	uint16 EncryptedRandomSessionKeyMaxLen;
+	uint32 EncryptedRandomSessionKeyBufferOffset;
 
+	/* LmChallengeResponseFields (8 bytes) */
+	stream_read_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
+	stream_read_uint16(s, LmChallengeResponseMaxLen); /* LmChallengeResponseMaxLen */
+	stream_read_uint32(s, LmChallengeResponseBufferOffset); /* LmChallengeResponseBufferOffset */
+
+	/* NtChallengeResponseFields (8 bytes) */
+	stream_read_uint16(s, NtChallengeResponseLen); /* NtChallengeResponseLen */
+	stream_read_uint16(s, NtChallengeResponseMaxLen); /* NtChallengeResponseMaxLen */
+	stream_read_uint32(s, NtChallengeResponseBufferOffset); /* NtChallengeResponseBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	/* DomainNameFields (8 bytes) */
+	stream_read_uint16(s, DomainNameLen); /* DomainNameLen */
+	stream_read_uint16(s, DomainNameMaxLen); /* DomainNameMaxLen */
+	stream_read_uint32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+
+	/* UserNameFields (8 bytes) */
+	stream_read_uint16(s, UserNameLen); /* UserNameLen */
+	stream_read_uint16(s, UserNameMaxLen); /* UserNameMaxLen */
+	stream_read_uint32(s, UserNameBufferOffset); /* UserNameBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	/* WorkstationFields (8 bytes) */
+	stream_read_uint16(s, WorkstationLen); /* WorkstationLen */
+	stream_read_uint16(s, WorkstationMaxLen); /* WorkstationMaxLen */
+	stream_read_uint32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+
+	/* EncryptedRandomSessionKeyFields (8 bytes) */
+	stream_read_uint16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyLen */
+	stream_read_uint16(s, EncryptedRandomSessionKeyMaxLen); /* EncryptedRandomSessionKeyMaxLen */
+	stream_read_uint32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
+
+	ntlmssp_input_negotiate_flags(s, &negotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+		stream_seek(s, 8); /* Version (8 bytes) */
+	}
 
 	ntlmssp->state = NTLMSSP_STATE_FINAL;
 }
