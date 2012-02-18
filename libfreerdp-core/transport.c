@@ -26,8 +26,6 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
-#include <freerdp/auth/credssp.h>
-
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -40,6 +38,8 @@
 #include "tpkt.h"
 #include "fastpath.h"
 #include "transport.h"
+
+#include <freerdp/auth/credssp.h>
 
 #define BUFFER_SIZE 16384
 
