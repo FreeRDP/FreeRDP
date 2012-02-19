@@ -22,7 +22,9 @@
 #endif
 
 #include <time.h>
+#include <freerdp/crypto/tls.h>
 #include <freerdp/auth/ntlmssp.h>
+#include <freerdp/utils/stream.h>
 
 #include <freerdp/auth/credssp.h>
 
@@ -573,7 +575,7 @@ void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rd
 		ber_write_octet_string(s, pubKeyAuth->data, length);
 	}
 
-	freerdp_transport_write(credssp->instance, s);
+	tls_write(credssp->tls, s->data, stream_get_length(s));
 	stream_free(s);
 }
 
@@ -593,8 +595,8 @@ int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdp
 	int status;
 	uint32 version;
 
-	s = freerdp_transport_recv_stream_init(credssp->instance, 2048);
-	status = freerdp_transport_read(credssp->instance, s);
+	s = stream_new(2048);
+	status = tls_read(credssp->tls, s->data, stream_get_left(s));
 
 	if (status < 0)
 		return -1;

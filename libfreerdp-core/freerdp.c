@@ -127,31 +127,6 @@ boolean freerdp_check_fds(freerdp* instance)
 	return true;
 }
 
-int freerdp_transport_read(freerdp* instance, STREAM* s)
-{
-	return transport_read(instance->context->rdp->transport, s);
-}
-
-int freerdp_transport_write(freerdp* instance, STREAM* s)
-{
-	return transport_write(instance->context->rdp->transport, s);
-}
-
-STREAM* freerdp_transport_recv_stream_init(freerdp* instance, int size)
-{
-	return transport_recv_stream_init(instance->context->rdp->transport, size);
-}
-
-STREAM* freerdp_transport_send_stream_init(freerdp* instance, int size)
-{
-	return transport_send_stream_init(instance->context->rdp->transport, size);
-}
-
-void freerdp_send_keep_alive(freerdp* instance)
-{
-	input_send_synchronize_event(instance->context->rdp->input, 0);
-}
-
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
