@@ -18,34 +18,43 @@
 # limitations under the License.
 
 set(FREERDP_LOCALE_SRCS
-	locales.c
+	locale.c
 	layouts.c
-	layouts_xkb.c
-	layouts_xkb.h
-	x_layout_id_table.c
-	x_layout_id_table.h
-	libkbd.c
-	libkbd.h)
+	keyboard.c
+	keyboard.h
+	keyboard_x11.c
+	keyboard_x11.h
+	liblocale.h)
 
-add_library(freerdp-locale ${FREERDP_LOCALE_SRCS})
+set(FREERDP_LOCALE_XKB_SRCS
+	keyboard_xkb.c
+	keyboard_xkb.h)
 
-find_suggested_package(X11)
-if(WITH_X11)
-	target_link_libraries(freerdp-locale ${X11_LIBRARIES})
-endif()
-
-if(NOT APPLE)
-	find_suggested_package(XKBFile)
-	if(WITH_X11)
-		if(WITH_XKBFILE)
-			add_definitions(-DWITH_XKBFILE)
-			include_directories(${XKBFILE_INCLUDE_DIRS})
-			target_link_libraries(freerdp-locale ${XKBFILE_LIBRARIES})
+if(NOT WIN32)
+	find_suggested_package(X11)
+	if(NOT APPLE)
+		find_suggested_package(XKBFile)
+		if (WITH_X11)
+			add_definitions(-DWITH_X11)
+			if(WITH_XKBFILE)
+				add_definitions(-DWITH_XKB)
+				include_directories(${XKBFILE_INCLUDE_DIRS})
+				set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKB_SRCS})
+			endif()
 		endif()
 	endif()
 endif()
 
-add_definitions(-DKEYMAP_PATH="${FREERDP_KEYMAP_PATH}")
+add_library(freerdp-locale ${FREERDP_LOCALE_SRCS})
+
+if(NOT WIN32)
+	if(WITH_X11)
+		target_link_libraries(freerdp-locale ${X11_LIBRARIES})
+		if(WITH_XKBFILE)
+			target_link_libraries(freerdp-locale ${XKBFILE_LIBRARIES})
+		endif()
+	endif()
+endif()
 
 set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 

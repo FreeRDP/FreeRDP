@@ -27,16 +27,17 @@
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME        4
 
-typedef struct rdp_keyboard_layout
+struct rdp_keyboard_layout
 {
 	uint32 code;
-	char name[50];
-} rdpKeyboardLayout;
+	char name[64];
+};
+typedef struct rdp_keyboard_layout rdpKeyboardLayout;
 
-FREERDP_API rdpKeyboardLayout* freerdp_kbd_get_layouts(int types);
-FREERDP_API uint32 freerdp_kbd_init(void *dpy, uint32 keyboard_layout_id);
-FREERDP_API uint8 freerdp_kbd_get_scancode_by_keycode(uint8 keycode, boolean* extended);
-FREERDP_API uint8 freerdp_kbd_get_keycode_by_scancode(uint8 scancode, boolean extended);
-FREERDP_API uint8 freerdp_kbd_get_scancode_by_virtualkey(int vkcode, boolean* extended);
+FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboard_layout_id);
+FREERDP_API rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types);
+FREERDP_API uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended);
+FREERDP_API uint32 freerdp_keyboard_get_keycode_from_scancode(uint32 scancode, boolean extended);
+FREERDP_API uint32 freerdp_keyboard_get_scancode_from_vkcode(uint32 vkcode, boolean* extended);
 
 #endif /* __FREERDP_KBD_H */

@@ -49,8 +49,6 @@ set(FREERDP_UTILS_SRCS
 	unicode.c
 	wait_obj.c)
 
-add_definitions(-DPLUGIN_PATH="${FREERDP_PLUGIN_PATH}")
-
 add_library(freerdp-utils ${FREERDP_UTILS_SRCS})
 
 set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")

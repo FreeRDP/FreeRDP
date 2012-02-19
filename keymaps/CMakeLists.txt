@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-install(FILES aliases amiga ataritt empty evdev fujitsu hp ibm macintosh macosx sony sun xfree86 xfree98 DESTINATION share/freerdp/keymaps)
-install(DIRECTORY digital_vndr DESTINATION share/freerdp/keymaps FILES_MATCHING PATTERN "*")
-install(DIRECTORY sgi_vndr DESTINATION share/freerdp/keymaps FILES_MATCHING PATTERN "*")
+install(FILES aliases amiga ataritt empty evdev fujitsu hp ibm macintosh macosx sony sun xfree86 xfree98 DESTINATION ${FREERDP_KEYMAP_PATH})
+install(DIRECTORY digital_vndr DESTINATION ${FREERDP_KEYMAP_PATH} FILES_MATCHING PATTERN "*")
+install(DIRECTORY sgi_vndr DESTINATION ${FREERDP_KEYMAP_PATH} FILES_MATCHING PATTERN "*")
 

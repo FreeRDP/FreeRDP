@@ -779,19 +779,19 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 		int i;
 		rdpKeyboardLayout* layouts;
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 		printf("\nKeyboard Layouts\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
 		free(layouts);
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 		printf("\nKeyboard Layout Variants\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
 		free(layouts);
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 		printf("\nKeyboard Input Method Editors (IMEs)\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);

@@ -20,22 +20,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libkbd.h"
+#include "liblocale.h"
 
 #include <freerdp/locale/locales.h>
 
-typedef struct
+struct _locale
 {
-	/* Two or three letter language code */
-	char language[4];
-
-	/* Two or three letter country code (Sometimes with Cyrl_ prefix) */
-	char country[10];
-
-	/* 32-bit unsigned integer corresponding to the locale */
-	unsigned int code;
-
-} locale;
+	char language[4]; /* Two or three letter language code */
+	char country[10]; /* Two or three letter country code (Sometimes with Cyrl_ prefix) */
+	uint32 code; /* 32-bit unsigned integer corresponding to the locale */
+};
+typedef struct _locale locale;
 
 /*
  * Refer to MSDN article "Locale Identifier Constants and Strings":
@@ -421,7 +416,7 @@ static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
 	{ XHOSA,				{ 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 };
 
-unsigned int detect_keyboard_layout_from_locale()
+uint32 detect_keyboard_layout_from_locale()
 {
 	int dot;
 	int i, j, k;

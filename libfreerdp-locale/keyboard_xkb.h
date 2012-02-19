@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Client
  * XKB-based Keyboard Mapping to Microsoft Keyboard System
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef __LAYOUTS_XKB_H
-#define __LAYOUTS_XKB_H
+#include <freerdp/types.h>
 
-typedef unsigned char KeycodeToVkcode[256];
+#include "keyboard.h"
 
-typedef struct
-{
-	unsigned char extended;
-	unsigned char keycode;
-	char* keyname;
-} RdpKeycodeRec, RdpScancodes[256];
-
-#ifdef WITH_XKBFILE
-
-int init_xkb(void *dpy);
-unsigned int detect_keyboard_layout_from_xkb(void *dpy);
-int init_keycodes_from_xkb(void* dpy, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2]);
-
-#else
-
-void load_keyboard_map(KeycodeToVkcode keycodeToVkcode, char *xkbfile);
-
-#endif
-
-#endif
+void* freerdp_keyboard_xkb_init();
+uint32 detect_keyboard_layout_from_xkb(void* display);
+int freerdp_keyboard_load_map_from_xkb(void* display, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2]);

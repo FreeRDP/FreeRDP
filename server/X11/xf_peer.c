@@ -249,7 +249,7 @@ xfInfo* xf_info_init()
 
 	xfi->bytesPerPixel = 4;
 
-	freerdp_kbd_init(xfi->display, 0);
+	freerdp_keyboard_init(0);
 
 	return xfi;
 }

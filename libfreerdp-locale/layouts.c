@@ -20,19 +20,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libkbd.h"
+#include "liblocale.h"
 
+#include <freerdp/types.h>
+#include <freerdp/utils/memory.h>
+#include <freerdp/locale/vkcodes.h>
 #include <freerdp/locale/layouts.h>
 
-typedef struct
+struct _keyboardLayout
 {
-	/* Keyboard layout code */
-	unsigned int code;
-
-	/* Keyboard layout name */
-	char name[50];
-
-} keyboardLayout;
+	uint32 code; /* Keyboard layout code */
+	const char* name; /* Keyboard layout name */
+};
+typedef struct _keyboardLayout keyboardLayout;
 
 /*
  * In Windows XP, this information is available in the system registry at
@@ -127,20 +127,13 @@ static const keyboardLayout keyboardLayouts[] =
 	{ KBD_BOSNIAN_CYRILLIC,		"Bosnian Cyrillic" }
 };
 
-
 typedef struct
 {
-	/* Keyboard layout code */
-	unsigned int code;
-
-	/* Keyboard variant ID */
-	unsigned short id;
-
-	/* Keyboard layout variant name */
-	char name[50];
+	uint32 code; /* Keyboard layout code */
+	uint16 id; /* Keyboard variant ID */
+	const char* name; /* Keyboard layout variant name */
 
 } keyboardLayoutVariant;
-
 
 static const keyboardLayoutVariant keyboardLayoutVariants[] =
 {
@@ -193,14 +186,9 @@ static const keyboardLayoutVariant keyboardLayoutVariants[] =
 
 typedef struct
 {
-	/* Keyboard layout code */
-	unsigned int code;
-
-	/* IME file name */
-	char fileName[32];
-
-	/* Keyboard layout name */
-	char name[50];
+	uint32 code; /* Keyboard layout code */
+	const char* fileName; /* IME file name */
+	const char* name; /* Keyboard layout name */
 
 } keyboardIME;
 
@@ -228,20 +216,284 @@ static const keyboardIME keyboardIMEs[] =
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC,			"romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
 
-
-rdpKeyboardLayout* get_keyboard_layouts(int types)
+const virtualKey virtualKeyboard[] =
 {
-	int num, len, i;
-	rdpKeyboardLayout * layouts;
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_LBUTTON"          , NULL   },
+	{ 0x00, 0, "VK_RBUTTON"          , NULL   },
+	{ 0x00, 0, "VK_CANCEL"           , NULL   },
+	{ 0x00, 0, "VK_MBUTTON"          , NULL   },
+	{ 0x00, 0, "VK_XBUTTON1"         , NULL   },
+	{ 0x00, 0, "VK_XBUTTON2"         , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x0E, 0, "VK_BACK"             , "BKSP" },
+	{ 0x0F, 0, "VK_TAB"              , "TAB"  },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_CLEAR"            , NULL   },
+	{ 0x1C, 0, "VK_RETURN"           , "RTRN" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x2A, 0, "VK_SHIFT"            , "LFSH" },
+	{ 0x00, 0, "VK_CONTROL"          , NULL   },
+	{ 0x38, 0, "VK_MENU"             , "LALT" },
+	{ 0x46, 1, "VK_PAUSE"            , "PAUS" },
+	{ 0x3A, 0, "VK_CAPITAL"          , "CAPS" },
+	{ 0x72, 0, "VK_KANA / VK_HANGUL" , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_JUNJA"            , NULL   },
+	{ 0x00, 0, "VK_FINAL"            , NULL   },
+	{ 0x71, 0, "VK_HANJA / VK_KANJI" , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x01, 0, "VK_ESCAPE"           , "ESC"  },
+	{ 0x00, 0, "VK_CONVERT"          , NULL   },
+	{ 0x00, 0, "VK_NONCONVERT"       , NULL   },
+	{ 0x00, 0, "VK_ACCEPT"           , NULL   },
+	{ 0x00, 0, "VK_MODECHANGE"       , NULL   },
+	{ 0x39, 0, "VK_SPACE"            , "SPCE" },
+	{ 0x49, 1, "VK_PRIOR"            , "PGUP" },
+	{ 0x51, 1, "VK_NEXT"             , "PGDN" },
+	{ 0x4F, 1, "VK_END"              , "END"  },
+	{ 0x47, 1, "VK_HOME"             , "HOME" },
+	{ 0x4B, 1, "VK_LEFT"             , "LEFT" },
+	{ 0x48, 1, "VK_UP"               , "UP"   },
+	{ 0x4D, 1, "VK_RIGHT"            , "RGHT" },
+	{ 0x50, 1, "VK_DOWN"             , "DOWN" },
+	{ 0x00, 0, "VK_SELECT"           , NULL   },
+	{ 0x37, 1, "VK_PRINT"            , "PRSC" },
+	{ 0x37, 1, "VK_EXECUTE"          , NULL   },
+	{ 0x37, 1, "VK_SNAPSHOT"         , NULL   },
+	{ 0x52, 1, "VK_INSERT"           , "INS"  },
+	{ 0x53, 1, "VK_DELETE"           , "DELE" },
+	{ 0x63, 0, "VK_HELP"             , NULL   },
+	{ 0x0B, 0, "VK_KEY_0"            , "AE10" },
+	{ 0x02, 0, "VK_KEY_1"            , "AE01" },
+	{ 0x03, 0, "VK_KEY_2"            , "AE02" },
+	{ 0x04, 0, "VK_KEY_3"            , "AE03" },
+	{ 0x05, 0, "VK_KEY_4"            , "AE04" },
+	{ 0x06, 0, "VK_KEY_5"            , "AE05" },
+	{ 0x07, 0, "VK_KEY_6"            , "AE06" },
+	{ 0x08, 0, "VK_KEY_7"            , "AE07" },
+	{ 0x09, 0, "VK_KEY_8"            , "AE08" },
+	{ 0x0A, 0, "VK_KEY_9"            , "AE09" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x1E, 0, "VK_KEY_A"            , "AC01" },
+	{ 0x30, 0, "VK_KEY_B"            , "AB05" },
+	{ 0x2E, 0, "VK_KEY_C"            , "AB03" },
+	{ 0x20, 0, "VK_KEY_D"            , "AC03" },
+	{ 0x12, 0, "VK_KEY_E"            , "AD03" },
+	{ 0x21, 0, "VK_KEY_F"            , "AC04" },
+	{ 0x22, 0, "VK_KEY_G"            , "AC05" },
+	{ 0x23, 0, "VK_KEY_H"            , "AC06" },
+	{ 0x17, 0, "VK_KEY_I"            , "AD08" },
+	{ 0x24, 0, "VK_KEY_J"            , "AC07" },
+	{ 0x25, 0, "VK_KEY_K"            , "AC08" },
+	{ 0x26, 0, "VK_KEY_L"            , "AC09" },
+	{ 0x32, 0, "VK_KEY_M"            , "AB07" },
+	{ 0x31, 0, "VK_KEY_N"            , "AB06" },
+	{ 0x18, 0, "VK_KEY_O"            , "AD09" },
+	{ 0x19, 0, "VK_KEY_P"            , "AD10" },
+	{ 0x10, 0, "VK_KEY_Q"            , "AD01" },
+	{ 0x13, 0, "VK_KEY_R"            , "AD04" },
+	{ 0x1F, 0, "VK_KEY_S"            , "AC02" },
+	{ 0x14, 0, "VK_KEY_T"            , "AD05" },
+	{ 0x16, 0, "VK_KEY_U"            , "AD07" },
+	{ 0x2F, 0, "VK_KEY_V"            , "AB04" },
+	{ 0x11, 0, "VK_KEY_W"            , "AD02" },
+	{ 0x2D, 0, "VK_KEY_X"            , "AB02" },
+	{ 0x15, 0, "VK_KEY_Y"            , "AD06" },
+	{ 0x2C, 0, "VK_KEY_Z"            , "AB01" },
+	{ 0x5B, 1, "VK_LWIN"             , "LWIN" },
+	{ 0x5C, 1, "VK_RWIN"             , "RWIN" },
+	{ 0x5D, 1, "VK_APPS"             , "COMP" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x5F, 0, "VK_SLEEP"            , NULL   },
+	{ 0x52, 0, "VK_NUMPAD0"          , "KP0"  },
+	{ 0x4F, 0, "VK_NUMPAD1"          , "KP1"  },
+	{ 0x50, 0, "VK_NUMPAD2"          , "KP2"  },
+	{ 0x51, 0, "VK_NUMPAD3"          , "KP3"  },
+	{ 0x4B, 0, "VK_NUMPAD4"          , "KP4"  },
+	{ 0x4C, 0, "VK_NUMPAD5"          , "KP5"  },
+	{ 0x4D, 0, "VK_NUMPAD6"          , "KP6"  },
+	{ 0x47, 0, "VK_NUMPAD7"          , "KP7"  },
+	{ 0x48, 0, "VK_NUMPAD8"          , "KP8"  },
+	{ 0x49, 0, "VK_NUMPAD9"          , "KP9"  },
+	{ 0x37, 0, "VK_MULTIPLY"         , "KPMU" },
+	{ 0x4E, 0, "VK_ADD"              , "KPAD" },
+	{ 0x00, 0, "VK_SEPARATOR"        , NULL   },
+	{ 0x4A, 0, "VK_SUBTRACT"         , "KPSU" },
+	{ 0x53, 0, "VK_DECIMAL"          , "KPDL" },
+	{ 0x35, 0, "VK_DIVIDE"           , "KPDV" },
+	{ 0x3B, 0, "VK_F1"               , "FK01" },
+	{ 0x3C, 0, "VK_F2"               , "FK02" },
+	{ 0x3D, 0, "VK_F3"               , "FK03" },
+	{ 0x3E, 0, "VK_F4"               , "FK04" },
+	{ 0x3F, 0, "VK_F5"               , "FK05" },
+	{ 0x40, 0, "VK_F6"               , "FK06" },
+	{ 0x41, 0, "VK_F7"               , "FK07" },
+	{ 0x42, 0, "VK_F8"               , "FK08" },
+	{ 0x43, 0, "VK_F9"               , "FK09" },
+	{ 0x44, 0, "VK_F10"              , "FK10" },
+	{ 0x57, 0, "VK_F11"              , "FK11" },
+	{ 0x58, 0, "VK_F12"              , "FK12" },
+	{ 0x64, 0, "VK_F13"              , NULL   },
+	{ 0x65, 0, "VK_F14"              , NULL   },
+	{ 0x66, 0, "VK_F15"              , NULL   },
+	{ 0x67, 0, "VK_F16"              , NULL   },
+	{ 0x68, 0, "VK_F17"              , NULL   },
+	{ 0x69, 0, "VK_F18"              , NULL   },
+	{ 0x6A, 0, "VK_F19"              , NULL   },
+	{ 0x6B, 0, "VK_F20"              , NULL   },
+	{ 0x6C, 0, "VK_F21"              , NULL   },
+	{ 0x6D, 0, "VK_F22"              , NULL   },
+	{ 0x6E, 0, "VK_F23"              , NULL   },
+	{ 0x6F, 0, "VK_F24"              , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x45, 0, "VK_NUMLOCK"          , "NMLK" },
+	{ 0x46, 0, "VK_SCROLL"           , "SCLK" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x2A, 0, "VK_LSHIFT"           , NULL   },
+	{ 0x36, 0, "VK_RSHIFT"           , "RTSH" },
+	{ 0x1D, 0, "VK_LCONTROL"         , "LCTL" },
+	{ 0x1D, 1, "VK_RCONTROL"         , "RCTL" },
+	{ 0x38, 0, "VK_LMENU"            , NULL   },
+	{ 0x38, 1, "VK_RMENU"            , "RALT" },
+	{ 0x00, 0, "VK_BROWSER_BACK"     , NULL   },
+	{ 0x00, 0, "VK_BROWSER_FORWARD"  , NULL   },
+	{ 0x00, 0, "VK_BROWSER_REFRESH"  , NULL   },
+	{ 0x00, 0, "VK_BROWSER_STOP"     , NULL   },
+	{ 0x00, 0, "VK_BROWSER_SEARCH"   , NULL   },
+	{ 0x00, 0, "VK_BROWSER_FAVORITES", NULL   },
+	{ 0x00, 0, "VK_BROWSER_HOME"     , NULL   },
+	{ 0x00, 0, "VK_VOLUME_MUTE"      , NULL   },
+	{ 0x00, 0, "VK_VOLUME_DOWN"      , NULL   },
+	{ 0x00, 0, "VK_VOLUME_UP"        , NULL   },
+	{ 0x00, 0, "VK_MEDIA_NEXT_TRACK" , NULL   },
+	{ 0x00, 0, "VK_MEDIA_PREV_TRACK" , NULL   },
+	{ 0x00, 0, "VK_MEDIA_STOP"       , NULL   },
+	{ 0x00, 0, "VK_MEDIA_PLAY_PAUSE" , NULL   },
+	{ 0x00, 0, "VK_LAUNCH_MAIL"      , NULL   },
+	{ 0x00, 0, "VK_MEDIA_SELECT"     , NULL   },
+	{ 0x00, 0, "VK_LAUNCH_APP1"      , NULL   },
+	{ 0x00, 0, "VK_LAUNCH_APP2"      , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x27, 0, "VK_OEM_1"            , "AC10" },
+	{ 0x0D, 0, "VK_OEM_PLUS"         , "AE12" },
+	{ 0x33, 0, "VK_OEM_COMMA"        , "AB08" },
+	{ 0x0C, 0, "VK_OEM_MINUS"        , "AE11" },
+	{ 0x34, 0, "VK_OEM_PERIOD"       , "AB09" },
+	{ 0x35, 0, "VK_OEM_2"            , "AB10" },
+	{ 0x29, 0, "VK_OEM_3"            , "TLDE" },
+	{ 0x73, 0, "VK_ABNT_C1"          , "AB11" },
+	{ 0x7E, 0, "VK_ABNT_C2"          , "I129" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x1A, 0, "VK_OEM_4"            , "AD11" },
+	{ 0x2B, 0, "VK_OEM_5"            , "BKSL" },
+	{ 0x1B, 0, "VK_OEM_6"            , "AD12" },
+	{ 0x28, 0, "VK_OEM_7"            , "AC11" },
+	{ 0x1D, 0, "VK_OEM_8"            , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x56, 0, "VK_OEM_102"          , "LSGT" },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_PROCESSKEY"       , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_PACKET"           , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	{ 0x00, 0, "VK_ATTN"             , NULL   },
+	{ 0x00, 0, "VK_CRSEL"            , NULL   },
+	{ 0x00, 0, "VK_EXSEL"            , NULL   },
+	{ 0x00, 0, "VK_EREOF"            , NULL   },
+	{ 0x00, 0, "VK_PLAY"             , NULL   },
+	{ 0x62, 0, "VK_ZOOM"             , NULL   },
+	{ 0x00, 0, "VK_NONAME"           , NULL   },
+	{ 0x00, 0, "VK_PA1"              , NULL   },
+	{ 0x00, 0, "VK_OEM_CLEAR"        , NULL   },
+	{ 0x00, 0, ""                    , NULL   },
+	/* end of 256 VK entries */
+	{ 0x54, 0, ""                    , "LVL3" },
+	{ 0x1C, 1, ""                    , "KPEN" }
+};
+
+rdpKeyboardLayout* get_keyboard_layouts(uint32 types)
+{
+	int num, length, i;
+	rdpKeyboardLayout* layouts;
 
 	num = 0;
-	layouts = (rdpKeyboardLayout *) malloc((num + 1) * sizeof(rdpKeyboardLayout));
+	layouts = (rdpKeyboardLayout*) xmalloc((num + 1) * sizeof(rdpKeyboardLayout));
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
-		len = sizeof(keyboardLayouts) / sizeof(keyboardLayout);
-		layouts = (rdpKeyboardLayout *) realloc(layouts, (num + len + 1) * sizeof(rdpKeyboardLayout));
-		for (i = 0; i < len; i++, num++)
+		length = sizeof(keyboardLayouts) / sizeof(keyboardLayout);
+
+		layouts = (rdpKeyboardLayout *) xrealloc(layouts, (num + length + 1) * sizeof(rdpKeyboardLayout));
+
+		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = keyboardLayouts[i].code;
 			strcpy(layouts[num].name, keyboardLayouts[i].name);
@@ -249,9 +501,10 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
-		len = sizeof(keyboardLayoutVariants) / sizeof(keyboardLayoutVariant);
-		layouts = (rdpKeyboardLayout *) realloc(layouts, (num + len + 1) * sizeof(rdpKeyboardLayout));
-		for (i = 0; i < len; i++, num++)
+		length = sizeof(keyboardLayoutVariants) / sizeof(keyboardLayoutVariant);
+		layouts = (rdpKeyboardLayout *) xrealloc(layouts, (num + length + 1) * sizeof(rdpKeyboardLayout));
+
+		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = keyboardLayoutVariants[i].code;
 			strcpy(layouts[num].name, keyboardLayoutVariants[i].name);
@@ -259,10 +512,10 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
 	{
-		len = sizeof(keyboardIMEs) / sizeof(keyboardIME);
-		layouts = (rdpKeyboardLayout *) realloc(layouts, (num + len + 1) * sizeof(rdpKeyboardLayout));
+		length = sizeof(keyboardIMEs) / sizeof(keyboardIME);
+		layouts = (rdpKeyboardLayout *) realloc(layouts, (num + length + 1) * sizeof(rdpKeyboardLayout));
 
-		for (i = 0; i < len; i++, num++)
+		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = keyboardIMEs[i].code;
 			strcpy(layouts[num].name, keyboardIMEs[i].name);
@@ -274,7 +527,7 @@ rdpKeyboardLayout* get_keyboard_layouts(int types)
 	return layouts;
 }
 
-const char* get_layout_name(unsigned int keyboardLayoutID)
+const char* get_layout_name(uint32 keyboardLayoutID)
 {
 	int i;
 

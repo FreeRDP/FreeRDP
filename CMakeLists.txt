@@ -126,8 +126,9 @@ endif()
 # Endian
 test_big_endian(BIG_ENDIAN)
 
-# Path to put keymaps
-set(FREERDP_KEYMAP_PATH "${CMAKE_INSTALL_PREFIX}/freerdp/keymaps")
+# Path to put FreeRDP data
+set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
+set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
 set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp")
@@ -153,7 +154,6 @@ endif()
 # Sub-directories
 add_subdirectory(include)
 add_subdirectory(libfreerdp-utils)
-add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-gdi)
 add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)
@@ -161,6 +161,7 @@ add_subdirectory(libfreerdp-codec)
 add_subdirectory(libfreerdp-crypto)
 add_subdirectory(libfreerdp-auth)
 add_subdirectory(libfreerdp-channels)
+add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
 if(NOT WIN32)

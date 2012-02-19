@@ -22,10 +22,10 @@
 #ifndef __LAYOUTS_X_H
 #define __LAYOUTS_X_H
 
-unsigned int find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
+uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
 
-#if defined(sun)
-unsigned int detect_keyboard_type_and_layout_sunos(char* xkbfile, int length);
+#ifdef sun
+uint32 detect_keyboard_type_and_layout_sunos(char* xkbfile, int length);
 #endif
 
 #endif

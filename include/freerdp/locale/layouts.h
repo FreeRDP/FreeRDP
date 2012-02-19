@@ -23,6 +23,7 @@
 #define __LAYOUT_IDS_H
 
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 #include <freerdp/locale/keyboard.h>
 
 /* Keyboard layout IDs */
@@ -178,7 +179,7 @@
 #define KBD_CHINESE_TRADITIONAL_MICROSOFT_PINYIN_IME_3		0xE00E0804
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
-FREERDP_API rdpKeyboardLayout* get_keyboard_layouts(int types);
+FREERDP_API rdpKeyboardLayout* get_keyboard_layouts(uint32 types);
 FREERDP_API const char* get_layout_name(uint32 keyboardLayoutID);
 
 #endif

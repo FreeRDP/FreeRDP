@@ -37,7 +37,7 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = true;
 
-	keycode = freerdp_kbd_get_keycode_by_scancode(code, extended);
+	keycode = freerdp_keyboard_get_keycode_from_scancode(code, extended);
 
 	if (keycode != 0)
 	{
