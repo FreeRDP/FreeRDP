@@ -24,20 +24,20 @@
 
 #include <freerdp/locale/locale.h>
 
-struct _locale
+struct _SYSTEM_LOCALE
 {
 	char language[4]; /* Two or three letter language code */
 	char country[10]; /* Two or three letter country code (Sometimes with Cyrl_ prefix) */
 	uint32 code; /* 32-bit unsigned integer corresponding to the locale */
 };
-typedef struct _locale locale;
+typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
 
 /*
  * Refer to MSDN article "Locale Identifier Constants and Strings":
  * http://msdn.microsoft.com/en-us/library/ms776260.aspx
  */
 
-static const locale locales[] =
+static const SYSTEM_LOCALE SystemLocaleTable[] =
 {
 	{  "af", "ZA", AFRIKAANS }, /* Afrikaans (South Africa) */
 	{  "sq", "AL", ALBANIAN }, /* Albanian (Albania) */
@@ -241,15 +241,13 @@ static const locale locales[] =
 };
 
 
-typedef struct
+struct _localeAndKeyboardLayout
 {
-	/* Locale ID */
-	unsigned int locale;
+	uint32 locale; /* Locale ID */
+	uint32 keyboardLayouts[5]; /* array of associated keyboard layouts */
 
-	/* Array of associated keyboard layouts */
-	unsigned int keyboardLayouts[5];
-
-} localeAndKeyboardLayout;
+};
+typedef struct _localeAndKeyboardLayout localeAndKeyboardLayout;
 
 /* TODO: Use KBD_* defines instead of hardcoded values */
 
@@ -416,76 +414,105 @@ static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
 	{ XHOSA,				{ 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 };
 
-uint32 detect_keyboard_layout_from_locale()
+boolean freerdp_get_system_language_and_country_codes(char* language, char* country)
 {
 	int dot;
-	int i, j, k;
 	int underscore;
-	char language[4];
-	char country[10];
+	char* env_lang;
 
 	/* LANG = <language>_<country>.<encoding> */
-	char* envLang = getenv("LANG"); /* Get locale from environment variable LANG */
+	env_lang = getenv("LANG"); /* Get locale from environment variable LANG */
 
-	if (envLang == NULL)
-		return 0; /* LANG environment variable was not set */
+	if (env_lang == NULL)
+		return false; /* LANG environment variable was not set */
 
-	underscore = strcspn(envLang, "_");
+	underscore = strcspn(env_lang, "_");
 
 	if (underscore > 3)
-		return 0; /* The language name should not be more than 3 letters long */
+	{
+		return false; /* The language name should not be more than 3 letters long */
+	}
 	else
 	{
 		/* Get language code */
-		strncpy(language, envLang, underscore);
+		strncpy(language, env_lang, underscore);
 		language[underscore] = '\0';
 	}
 
-	/*
-	 * There is always the special case of "C" or "POSIX" as locale name
-	 * In this case, use a U.S. keyboard and a U.S. keyboard layout
-	 */
-
-	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
-		return ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
-
-	dot = strcspn(envLang, ".");
+	dot = strcspn(env_lang, ".");
 
 	/* Get country code */
 	if (dot > underscore)
 	{
-		strncpy(country, &envLang[underscore + 1], dot - underscore - 1);
+		strncpy(country, &env_lang[underscore + 1], dot - underscore - 1);
 		country[dot - underscore - 1] = '\0';
 	}
 	else
-		return 0; /* Invalid locale */
-
-	for (i = 0; i < sizeof(locales) / sizeof(locale); i++)
 	{
-		if ((strcmp(language, locales[i].language) == 0) && (strcmp(country, locales[i].country) == 0))
-			break;
+		return false; /* Invalid locale */
 	}
 
-	DEBUG_KBD("Found locale : %s_%s", locales[i].language, locales[i].country);
+	return true;
+}
 
-	for (j = 0; j < sizeof(defaultKeyboardLayouts) / sizeof(localeAndKeyboardLayout); j++)
+SYSTEM_LOCALE* freerdp_detect_system_locale()
+{
+	int i;
+	char language[4];
+	char country[10];
+	SYSTEM_LOCALE* locale = NULL;
+
+	freerdp_get_system_language_and_country_codes(language, country);
+
+	for (i = 0; i < sizeof(SystemLocaleTable) / sizeof(SYSTEM_LOCALE); i++)
 	{
-		if (defaultKeyboardLayouts[j].locale == locales[i].code)
+		if ((strcmp(language, SystemLocaleTable[i].language) == 0) && (strcmp(country, SystemLocaleTable[i].country) == 0))
+		{
+			locale = (SYSTEM_LOCALE*) &SystemLocaleTable[i];
+			break;
+		}
+	}
+
+	return locale;
+}
+
+uint32 freerdp_detect_keyboard_layout_from_locale()
+{
+	int i, j;
+	char language[4];
+	char country[10];
+	SYSTEM_LOCALE* locale;
+
+	freerdp_get_system_language_and_country_codes(language, country);
+
+	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
+		return ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
+
+	locale = freerdp_detect_system_locale();
+
+	if (locale == NULL)
+		return 0;
+
+	DEBUG_KBD("Found locale : %s_%s", locale.language, locale.country);
+
+	for (i = 0; i < sizeof(defaultKeyboardLayouts) / sizeof(localeAndKeyboardLayout); i++)
+	{
+		if (defaultKeyboardLayouts[i].locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
-			for (k = 0; k < 5; k++)
+			for (j = 0; j < 5; j++)
 			{
-				if (defaultKeyboardLayouts[j].keyboardLayouts[k] == ENGLISH_UNITED_STATES)
+				if (defaultKeyboardLayouts[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
 				{
 					continue; /* Skip, try to get a more localized keyboard layout */
 				}
-				else if (defaultKeyboardLayouts[j].keyboardLayouts[k] == 0)
+				else if (defaultKeyboardLayouts[i].keyboardLayouts[j] == 0)
 				{
 					break; /* No more keyboard layouts */
 				}
 				else
 				{
-					return defaultKeyboardLayouts[j].keyboardLayouts[k];
+					return defaultKeyboardLayouts[i].keyboardLayouts[j];
 				}
 			}
 
@@ -494,7 +521,7 @@ uint32 detect_keyboard_layout_from_locale()
 			 * other possible keyboard layout for the locale, we end up here with k > 1
 			 */
 
-			if (k >= 1)
+			if (j >= 1)
 				return ENGLISH_UNITED_STATES;
 			else
 				return 0;

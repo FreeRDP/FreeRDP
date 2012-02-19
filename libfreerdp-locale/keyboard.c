@@ -45,7 +45,7 @@
 
 #include "keyboard.h"
 
-extern const virtualKey virtualKeyboard[258];
+extern const VIRTUAL_KEY virtualKeyboard[258];
 
 /*
  * The actual mapping from X keycodes to RDP keycodes, initialized from xkb keycodes or similar.
@@ -64,7 +64,7 @@ uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
 
 	if (keyboardLayoutID == 0)
 	{
-		keyboardLayoutID = detect_keyboard_layout_from_locale();
+		keyboardLayoutID = freerdp_detect_keyboard_layout_from_locale();
 		DEBUG_KBD("detect_keyboard_layout_from_locale: %X", keyboardLayoutID);
 	}
 
@@ -113,7 +113,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 
 	if (keyboardLayoutId == 0)
 	{
-		keyboardLayoutId = detect_keyboard_layout_from_locale();
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_locale();
 		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
 	}
 
@@ -258,7 +258,7 @@ static int freerdp_keyboard_load_map(KeycodeToVkcode map, char* name)
 					break;
 
 				/* Load this key mapping in the keyboard mapping */
-				for(i = 0; i < sizeof(virtualKeyboard) / sizeof(virtualKey); i++)
+				for(i = 0; i < sizeof(virtualKeyboard) / sizeof(VIRTUAL_KEY); i++)
 				{
 					if (strcmp(vkcodeName, virtualKeyboard[i].name) == 0)
 					{

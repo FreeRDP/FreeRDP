@@ -215,7 +215,7 @@ static const keyboardIME keyboardIMEs[] =
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC,			"romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
 
-const virtualKey virtualKeyboard[] =
+const VIRTUAL_KEY virtualKeyboard[] =
 {
 	{ 0x00, 0, ""                    , NULL   },
 	{ 0x00, 0, "VK_LBUTTON"          , NULL   },
@@ -526,7 +526,7 @@ rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types)
 	return layouts;
 }
 
-const char* get_layout_name(uint32 keyboardLayoutID)
+const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID)
 {
 	int i;
 

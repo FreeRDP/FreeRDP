@@ -230,6 +230,6 @@
 #define YORUBA					0x046A
 #define ZULU					0x0435
 
-FREERDP_API uint32 detect_keyboard_layout_from_locale();
+FREERDP_API uint32 freerdp_detect_keyboard_layout_from_locale();
 
 #endif /* __FREERDP_LOCALE_H */

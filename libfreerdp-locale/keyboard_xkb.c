@@ -23,7 +23,7 @@
 #include "keyboard_x11.h"
 #include <freerdp/locale/keyboard.h>
 
-extern const virtualKey virtualKeyboard[258];
+extern const VIRTUAL_KEY virtualKeyboard[258];
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>

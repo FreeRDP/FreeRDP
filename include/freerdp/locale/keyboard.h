@@ -34,14 +34,14 @@ struct rdp_keyboard_layout
 };
 typedef struct rdp_keyboard_layout rdpKeyboardLayout;
 
-struct _virtualKey
+struct _VIRTUAL_KEY
 {
 	uint32 scancode; /* Windows "scan code", aka keycode in RDP */
 	boolean extended; /* Windows "extended" flag, boolean */
 	const char* name; /* Windows virtual key name */
 	const char* x_keyname; /* XKB keyname */
 };
-typedef struct _virtualKey virtualKey;
+typedef struct _VIRTUAL_KEY VIRTUAL_KEY;
 
 /* Mouse buttons */
 
@@ -476,7 +476,7 @@ typedef struct _virtualKey virtualKey;
 
 FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboard_layout_id);
 FREERDP_API rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types);
-FREERDP_API const char* get_layout_name(uint32 keyboardLayoutID);
+FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID);
 FREERDP_API uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended);
 FREERDP_API uint32 freerdp_keyboard_get_keycode_from_scancode(uint32 scancode, boolean extended);
 FREERDP_API uint32 freerdp_keyboard_get_scancode_from_vkcode(uint32 vkcode, boolean* extended);
