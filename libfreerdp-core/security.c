@@ -358,6 +358,9 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 
 		printf("FIPS Compliant encryption level.\n");
 
+		/* disable fastpath input; it doesnt handle FIPS encryption yet */
+		rdp->settings->fastpath_input = false;
+
 		sha1 = crypto_sha1_init();
 		crypto_sha1_update(sha1, client_random + 16, 16);
 		crypto_sha1_update(sha1, server_random + 16, 16);
