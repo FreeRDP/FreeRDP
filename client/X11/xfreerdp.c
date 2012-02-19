@@ -777,7 +777,7 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	if (strcmp("--kbd-list", opt) == 0)
 	{
 		int i;
-		rdpKeyboardLayout* layouts;
+		RDP_KEYBOARD_LAYOUT* layouts;
 
 		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 		printf("\nKeyboard Layouts\n");

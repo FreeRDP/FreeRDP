@@ -27,17 +27,31 @@
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME        4
 
-struct rdp_keyboard_layout
+struct _RDP_KEYBOARD_LAYOUT
 {
-	uint32 code;
-	char name[64];
+	uint32 code; /* Keyboard layout code */
+	char* name; /* Keyboard layout name */
 };
-typedef struct rdp_keyboard_layout rdpKeyboardLayout;
+typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
+
+struct _RDP_SCANCODE
+{
+	uint32 code; /* Windows "scan code" */
+	boolean extended; /* extended key flag */
+};
+typedef struct _RDP_SCANCODE RDP_SCANCODE;
+
+struct _VIRTUAL_KEY_CODE
+{
+	uint32 code; /* Windows Virtual Key Code */
+	const char* name; /* Virtual Key Code Name */
+};
+typedef struct _VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE;
 
 struct _VIRTUAL_KEY
 {
-	uint32 scancode; /* Windows "scan code", aka keycode in RDP */
-	boolean extended; /* Windows "extended" flag, boolean */
+	uint32 scancode; /* Windows "scan code" */
+	boolean extended; /* extended key flag */
 	const char* name; /* Windows virtual key name */
 	const char* x_keyname; /* XKB keyname */
 };
@@ -249,7 +263,7 @@ typedef struct _VIRTUAL_KEY VIRTUAL_KEY;
 /* Application launcher keys */
 
 #define VK_LAUNCH_MAIL		0xB4 /* Windows 2000/XP: Start Mail key */
-#define VK_LAUNCH_MEDIA_SELECT	0xB5 /* Windows 2000/XP: Select Media key */
+#define VK_MEDIA_SELECT		0xB5 /* Windows 2000/XP: Select Media key */
 #define VK_LAUNCH_APP1		0xB6 /* Windows 2000/XP: Start Application 1 key */
 #define VK_LAUNCH_APP2		0xB7 /* Windows 2000/XP: Start Application 2 key */
 
@@ -475,7 +489,7 @@ typedef struct _VIRTUAL_KEY VIRTUAL_KEY;
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
 FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboard_layout_id);
-FREERDP_API rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types);
+FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);
 FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID);
 FREERDP_API uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended);
 FREERDP_API uint32 freerdp_keyboard_get_keycode_from_scancode(uint32 scancode, boolean extended);

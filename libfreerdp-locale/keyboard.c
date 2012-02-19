@@ -53,9 +53,9 @@ extern const VIRTUAL_KEY virtualKeyboard[258];
  * but it only depends on which keycodes the X servers keyboard driver uses and is thus very static.
  */
 
-RdpScancodes x_keycode_to_rdp_scancode;
+RDP_KEYCODE x11_keycode_to_rdp_scancode[256];
 
-uint8 rdp_scancode_to_x_keycode[256][2];
+uint32 rdp_scancode_to_x11_keycode[256][2];
 
 static int freerdp_keyboard_load_map(KeycodeToVkcode map, char* name)
 {
@@ -201,16 +201,16 @@ static int freerdp_keyboard_load_map(KeycodeToVkcode map, char* name)
 	return 1;
 }
 
-void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile)
+void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* names)
 {
 	char* kbd;
-	char* xkbfileEnd;
+	char* namesEnd;
 	int keymapLoaded = 0;
 
 	memset(keycodeToVkcode, 0, sizeof(keycodeToVkcode));
 
-	kbd = xkbfile;
-	xkbfileEnd = xkbfile + strlen(xkbfile);
+	kbd = names;
+	namesEnd = names + strlen(names);
 
 	do
 	{
@@ -223,7 +223,7 @@ void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile)
 
 		kbd += kbdlen + 1;
 	}
-	while (kbd < xkbfileEnd);
+	while (kbd < namesEnd);
 
 	DEBUG_KBD("loaded %d keymaps", keymapLoaded);
 
@@ -256,8 +256,8 @@ uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
 uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
 {
 	void* display;
-	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
-	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
+	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
+	memset(rdp_scancode_to_x11_keycode, '\0', sizeof(rdp_scancode_to_x11_keycode));
 
 	display = freerdp_keyboard_xkb_init();
 
@@ -273,7 +273,7 @@ uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
 		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
 	}
 
-	freerdp_keyboard_load_map_from_xkb(display, x_keycode_to_rdp_scancode, rdp_scancode_to_x_keycode);
+	freerdp_keyboard_load_map_from_xkb(display, x11_keycode_to_rdp_scancode, rdp_scancode_to_x11_keycode);
 
 	return keyboardLayoutId;
 }
@@ -286,8 +286,8 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 	uint32 keycode;
 	KeycodeToVkcode keycodeToVkcode;
 
-	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
-	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
+	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
+	memset(rdp_scancode_to_x11_keycode, '\0', sizeof(rdp_scancode_to_x11_keycode));
 
 	if (keyboardLayoutId == 0)
 	{
@@ -314,14 +314,14 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 				keycode, vkcode, virtualKeyboard[vkcode].name,
 				virtualKeyboard[vkcode].extended, virtualKeyboard[vkcode].scancode);
 
-		x_keycode_to_rdp_scancode[keycode].keycode = virtualKeyboard[vkcode].scancode;
-		x_keycode_to_rdp_scancode[keycode].extended = virtualKeyboard[vkcode].extended;
-		x_keycode_to_rdp_scancode[keycode].keyname = virtualKeyboard[vkcode].name;
+		x11_keycode_to_rdp_scancode[keycode].keycode = virtualKeyboard[vkcode].scancode;
+		x11_keycode_to_rdp_scancode[keycode].extended = virtualKeyboard[vkcode].extended;
+		x11_keycode_to_rdp_scancode[keycode].keyname = virtualKeyboard[vkcode].name;
 
-		if (x_keycode_to_rdp_scancode[keycode].extended)
-			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][1] = keycode;
+		if (x11_keycode_to_rdp_scancode[keycode].extended)
+			rdp_scancode_to_x11_keycode[virtualKeyboard[vkcode].scancode][1] = keycode;
 		else
-			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][0] = keycode;
+			rdp_scancode_to_x11_keycode[virtualKeyboard[vkcode].scancode][0] = keycode;
 	}
 
 	return keyboardLayoutId;
@@ -347,20 +347,20 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 
 uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended)
 {
-	DEBUG_KBD("%2x %4s -> %d/%d", keycode, x_keycode_to_rdp_scancode[keycode].keyname,
-			x_keycode_to_rdp_scancode[keycode].extended, x_keycode_to_rdp_scancode[keycode].keycode);
+	DEBUG_KBD("%2x %4s -> %d/%d", keycode, x11_keycode_to_rdp_scancode[keycode].keyname,
+			x11_keycode_to_rdp_scancode[keycode].extended, x11_keycode_to_rdp_scancode[keycode].keycode);
 
-	*extended = x_keycode_to_rdp_scancode[keycode].extended;
+	*extended = x11_keycode_to_rdp_scancode[keycode].extended;
 
-	return x_keycode_to_rdp_scancode[keycode].keycode;
+	return x11_keycode_to_rdp_scancode[keycode].keycode;
 }
 
 uint32 freerdp_keyboard_get_keycode_from_scancode(uint32 scancode, boolean extended)
 {
 	if (extended)
-		return rdp_scancode_to_x_keycode[scancode][1];
+		return rdp_scancode_to_x11_keycode[scancode][1];
 	else
-		return rdp_scancode_to_x_keycode[scancode][0];
+		return rdp_scancode_to_x11_keycode[scancode][0];
 }
 
 uint32 freerdp_keyboard_get_scancode_from_vkcode(uint32 vkcode, boolean* extended)

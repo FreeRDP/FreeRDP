@@ -23,7 +23,7 @@
 #include "keyboard_x11.h"
 #include <freerdp/locale/keyboard.h>
 
-extern const VIRTUAL_KEY virtualKeyboard[258];
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[];
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -31,6 +31,271 @@ extern const VIRTUAL_KEY virtualKeyboard[258];
 #include <X11/extensions/XKBrules.h>
 
 #include <freerdp/utils/memory.h>
+
+VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[] =
+{
+	{ 0, "" },
+	{ VK_LBUTTON, "" },
+	{ VK_RBUTTON, "" },
+	{ VK_CANCEL, "" },
+	{ VK_MBUTTON, "" },
+	{ VK_XBUTTON1, "" },
+	{ VK_XBUTTON2, "" },
+	{ 0, "" },
+	{ VK_BACK, "BKSP" },
+	{ VK_TAB, "TAB" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_CLEAR, "" },
+	{ VK_RETURN, "RTRN" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_SHIFT, "LFSH" },
+	{ VK_CONTROL, "" },
+	{ VK_MENU, "LALT" },
+	{ VK_PAUSE, "PAUS" },
+	{ VK_CAPITAL, "CAPS" },
+	{ VK_KANA / VK_HANGUL, "" },
+	{ 0, "" },
+	{ VK_JUNJA, "" },
+	{ VK_FINAL, "" },
+	{ VK_HANJA / VK_KANJI, "" },
+	{ 0, "" },
+	{ VK_ESCAPE, "ESC" },
+	{ VK_CONVERT, "" },
+	{ VK_NONCONVERT, "" },
+	{ VK_ACCEPT, "" },
+	{ VK_MODECHANGE, "" },
+	{ VK_SPACE, "SPCE" },
+	{ VK_PRIOR, "PGUP" },
+	{ VK_NEXT, "PGDN" },
+	{ VK_END, "END" },
+	{ VK_HOME, "HOME" },
+	{ VK_LEFT, "LEFT" },
+	{ VK_UP, "UP" },
+	{ VK_RIGHT, "RGHT" },
+	{ VK_DOWN, "DOWN" },
+	{ VK_SELECT, "" },
+	{ VK_PRINT, "PRSC" },
+	{ VK_EXECUTE, "" },
+	{ VK_SNAPSHOT, "" },
+	{ VK_INSERT, "INS" },
+	{ VK_DELETE, "DELE" },
+	{ VK_HELP, "" },
+	{ VK_KEY_0, "AE10" },
+	{ VK_KEY_1, "AE01" },
+	{ VK_KEY_2, "AE02" },
+	{ VK_KEY_3, "AE03" },
+	{ VK_KEY_4, "AE04" },
+	{ VK_KEY_5, "AE05" },
+	{ VK_KEY_6, "AE06" },
+	{ VK_KEY_7, "AE07" },
+	{ VK_KEY_8, "AE08" },
+	{ VK_KEY_9, "AE09" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_KEY_A, "AC01" },
+	{ VK_KEY_B, "AB05" },
+	{ VK_KEY_C, "AB03" },
+	{ VK_KEY_D, "AC03" },
+	{ VK_KEY_E, "AD03" },
+	{ VK_KEY_F, "AC04" },
+	{ VK_KEY_G, "AC05" },
+	{ VK_KEY_H, "AC06" },
+	{ VK_KEY_I, "AD08" },
+	{ VK_KEY_J, "AC07" },
+	{ VK_KEY_K, "AC08" },
+	{ VK_KEY_L, "AC09" },
+	{ VK_KEY_M, "AB07" },
+	{ VK_KEY_N, "AB06" },
+	{ VK_KEY_O, "AD09" },
+	{ VK_KEY_P, "AD10" },
+	{ VK_KEY_Q, "AD01" },
+	{ VK_KEY_R, "AD04" },
+	{ VK_KEY_S, "AC02" },
+	{ VK_KEY_T, "AD05" },
+	{ VK_KEY_U, "AD07" },
+	{ VK_KEY_V, "AB04" },
+	{ VK_KEY_W, "AD02" },
+	{ VK_KEY_X, "AB02" },
+	{ VK_KEY_Y, "AD06" },
+	{ VK_KEY_Z, "AB01" },
+	{ VK_LWIN, "LWIN" },
+	{ VK_RWIN, "RWIN" },
+	{ VK_APPS, "COMP" },
+	{ 0, "" },
+	{ VK_SLEEP, "" },
+	{ VK_NUMPAD0, "KP0" },
+	{ VK_NUMPAD1, "KP1" },
+	{ VK_NUMPAD2, "KP2" },
+	{ VK_NUMPAD3, "KP3" },
+	{ VK_NUMPAD4, "KP4" },
+	{ VK_NUMPAD5, "KP5" },
+	{ VK_NUMPAD6, "KP6" },
+	{ VK_NUMPAD7, "KP7" },
+	{ VK_NUMPAD8, "KP8" },
+	{ VK_NUMPAD9, "KP9" },
+	{ VK_MULTIPLY, "KPMU" },
+	{ VK_ADD, "KPAD" },
+	{ VK_SEPARATOR, "" },
+	{ VK_SUBTRACT, "KPSU" },
+	{ VK_DECIMAL, "KPDL" },
+	{ VK_DIVIDE, "KPDV" },
+	{ VK_F1, "FK01" },
+	{ VK_F2, "FK02" },
+	{ VK_F3, "FK03" },
+	{ VK_F4, "FK04" },
+	{ VK_F5, "FK05" },
+	{ VK_F6, "FK06" },
+	{ VK_F7, "FK07" },
+	{ VK_F8, "FK08" },
+	{ VK_F9, "FK09" },
+	{ VK_F10, "FK10" },
+	{ VK_F11, "FK11" },
+	{ VK_F12, "FK12" },
+	{ VK_F13, "" },
+	{ VK_F14, "" },
+	{ VK_F15, "" },
+	{ VK_F16, "" },
+	{ VK_F17, "" },
+	{ VK_F18, "" },
+	{ VK_F19, "" },
+	{ VK_F20, "" },
+	{ VK_F21, "" },
+	{ VK_F22, "" },
+	{ VK_F23, "" },
+	{ VK_F24, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_NUMLOCK, "NMLK" },
+	{ VK_SCROLL, "SCLK" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_LSHIFT, "" },
+	{ VK_RSHIFT, "RTSH" },
+	{ VK_LCONTROL, "LCTL" },
+	{ VK_RCONTROL, "RCTL" },
+	{ VK_LMENU, "" },
+	{ VK_RMENU, "RALT" },
+	{ VK_BROWSER_BACK, "" },
+	{ VK_BROWSER_FORWARD, "" },
+	{ VK_BROWSER_REFRESH, "" },
+	{ VK_BROWSER_STOP, "" },
+	{ VK_BROWSER_SEARCH, "" },
+	{ VK_BROWSER_FAVORITES, "" },
+	{ VK_BROWSER_HOME, "" },
+	{ VK_VOLUME_MUTE, "" },
+	{ VK_VOLUME_DOWN, "" },
+	{ VK_VOLUME_UP, "" },
+	{ VK_MEDIA_NEXT_TRACK, "" },
+	{ VK_MEDIA_PREV_TRACK, "" },
+	{ VK_MEDIA_STOP, "" },
+	{ VK_MEDIA_PLAY_PAUSE, "" },
+	{ VK_LAUNCH_MAIL, "" },
+	{ VK_MEDIA_SELECT, "" },
+	{ VK_LAUNCH_APP1, "" },
+	{ VK_LAUNCH_APP2, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_OEM_1, "AC10" },
+	{ VK_OEM_PLUS, "AE12" },
+	{ VK_OEM_COMMA, "AB08" },
+	{ VK_OEM_MINUS, "AE11" },
+	{ VK_OEM_PERIOD, "AB09" },
+	{ VK_OEM_2, "AB10" },
+	{ VK_OEM_3, "TLDE" },
+	{ VK_ABNT_C1, "AB11" },
+	{ VK_ABNT_C2, "I129" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_OEM_4, "AD11" },
+	{ VK_OEM_5, "BKSL" },
+	{ VK_OEM_6, "AD12" },
+	{ VK_OEM_7, "AC11" },
+	{ VK_OEM_8, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_OEM_102, "LSGT" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_PROCESSKEY, "" },
+	{ 0, "" },
+	{ VK_PACKET, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ VK_ATTN, "" },
+	{ VK_CRSEL, "" },
+	{ VK_EXSEL, "" },
+	{ VK_EREOF, "" },
+	{ VK_PLAY, "" },
+	{ VK_ZOOM, "" },
+	{ VK_NONAME, "" },
+	{ VK_PA1, "" },
+	{ VK_OEM_CLEAR, "" },
+	{ 0, "" }
+};
+
+/*
+{ 0x54, 0, ""                    , "LVL3" },
+{ 0x1C, 1, ""                    , "KPEN" }
+*/
 
 void* freerdp_keyboard_xkb_init()
 {
@@ -112,51 +377,52 @@ uint32 detect_keyboard_layout_from_xkb(void* display)
 	return keyboard_layout;
 }
 
-int freerdp_keyboard_load_map_from_xkb(void* display, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2])
+int freerdp_keyboard_load_map_from_xkb(void* display, RDP_KEYCODE x_keycode_to_rdp_scancode[256], uint32 rdp_scancode_to_x_keycode[256][2])
 {
-	int status = 0;
+	int i, j;
+	boolean found;
 	XkbDescPtr xkb;
+	boolean status = false;
 
 	if (display && (xkb = XkbGetMap(display, 0, XkbUseCoreKbd)))
 	{
 		if (XkbGetNames(display, XkbKeyNamesMask, xkb) == Success)
 		{
-			int i, j;
-			char buf[5] = {42, 42, 42, 42, 0}; /* end-of-string at pos 5 */
+			char xkb_keyname[5] = { 42, 42, 42, 42, 0 }; /* end-of-string at index 5 */
 
 			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
 			{
-				memcpy(buf, xkb->names->keys[i].name, 4);
+				found = false;
+				memcpy(xkb_keyname, xkb->names->keys[i].name, 4);
 
-				j = sizeof(virtualKeyboard) / sizeof(virtualKeyboard[0]) - 1;
-
-				while (j >= 0)
+				for (j = 0; j < 256; j++)
 				{
-					if (virtualKeyboard[j].x_keyname && !strcmp(buf, virtualKeyboard[j].x_keyname))
-						break;
-					j--;
+					if (VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname)
+					{
+						if (!strcmp(xkb_keyname, VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname))
+						{
+							found = true;
+							break;
+						}
+					}
 				}
 
-				if (j >= 0)
+				if (found)
 				{
-					DEBUG_KBD("X keycode %3d has keyname %-4s -> RDP scancode %d/%d",
-							i, buf, virtualKeyboard[j].extended, virtualKeyboard[j].scancode);
+					uint32 vkcode = VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].vkcode;
 
-					x_keycode_to_rdp_scancode[i].extended = virtualKeyboard[j].extended;
-					x_keycode_to_rdp_scancode[i].keycode = virtualKeyboard[j].scancode;
-					x_keycode_to_rdp_scancode[i].keyname = virtualKeyboard[j].x_keyname;
+					x_keycode_to_rdp_scancode[i].keycode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
+					x_keycode_to_rdp_scancode[i].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
+					x_keycode_to_rdp_scancode[i].keyname = VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname;
 
 					if (x_keycode_to_rdp_scancode[i].extended)
-						rdp_scancode_to_x_keycode[virtualKeyboard[j].scancode][1] = i;
+						rdp_scancode_to_x_keycode[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = i;
 					else
-						rdp_scancode_to_x_keycode[virtualKeyboard[j].scancode][0] = i;
-				}
-				else
-				{
-					DEBUG_KBD("X key code %3d has keyname %-4s -> ??? - not found", i, buf);
+						rdp_scancode_to_x_keycode[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = i;
 				}
 			}
-			status = 1;
+
+			status = true;
 		}
 
 		XkbFreeKeyboard(xkb, 0, 1);

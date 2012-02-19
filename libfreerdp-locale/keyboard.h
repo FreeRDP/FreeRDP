@@ -22,15 +22,16 @@
 
 #include <freerdp/types.h>
 
-typedef unsigned char KeycodeToVkcode[256];
+typedef uint32 KeycodeToVkcode[256];
 
-typedef struct
+struct _RDP_KEYCODE
 {
-	uint8 extended;
-	uint8 keycode;
+	uint32 extended;
+	uint32 keycode;
 	const char* keyname;
-} RdpKeycodeRec, RdpScancodes[256];
+};
+typedef struct _RDP_KEYCODE RDP_KEYCODE;
 
-void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile);
+void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* names);
 
 #endif /* __KEYBOARD_H */

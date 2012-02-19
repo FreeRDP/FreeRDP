@@ -21,6 +21,13 @@
 
 #include "keyboard.h"
 
+struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
+{
+	uint32 vkcode; /* virtual key code */
+	const char* xkb_keyname; /* XKB keyname */
+};
+typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
+
 void* freerdp_keyboard_xkb_init();
 uint32 detect_keyboard_layout_from_xkb(void* display);
-int freerdp_keyboard_load_map_from_xkb(void* display, RdpScancodes x_keycode_to_rdp_scancode, uint8 rdp_scancode_to_x_keycode[256][2]);
+int freerdp_keyboard_load_map_from_xkb(void* display, RDP_KEYCODE x11_keycode_to_rdp_scancode[256], uint32 rdp_scancode_to_x11_keycode[256][2]);
