@@ -21,7 +21,7 @@
 
 #include "keyboard_xkb.h"
 #include "keyboard_x11.h"
-#include <freerdp/locale/vkcodes.h>
+#include <freerdp/locale/keyboard.h>
 
 extern const virtualKey virtualKeyboard[258];
 

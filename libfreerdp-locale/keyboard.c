@@ -40,9 +40,8 @@
 #include "keyboard_sun.h"
 #endif
 
-#include <freerdp/locale/locales.h>
-#include <freerdp/locale/vkcodes.h>
-#include <freerdp/locale/layouts.h>
+#include <freerdp/locale/locale.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "keyboard.h"
 
@@ -339,11 +338,6 @@ void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile)
 
 	if (keymapLoaded <= 0)
 		printf("error: no keyboard mapping available!\n");
-}
-
-rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types)
-{
-	return get_keyboard_layouts(types);
 }
 
 uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended)

@@ -18,10 +18,10 @@
 # limitations under the License.
 
 set(FREERDP_LOCALE_SRCS
-	locale.c
-	layouts.c
+	keyboard_layout.c
 	keyboard.c
 	keyboard.h
+	locale.c
 	liblocale.h)
 
 set(FREERDP_LOCALE_X11_SRCS

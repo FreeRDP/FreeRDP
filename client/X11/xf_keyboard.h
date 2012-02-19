@@ -21,7 +21,6 @@
 #define __XF_KEYBOARD_H
 
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/locale/vkcodes.h>
 
 #include "xfreerdp.h"
 

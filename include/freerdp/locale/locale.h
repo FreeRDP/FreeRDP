@@ -24,8 +24,8 @@
  * http://www.microsoft.com/globaldev/reference/winxp/xp-lcid.mspx
  */
 
-#ifndef __LOCALES_H
-#define __LOCALES_H
+#ifndef __FREERDP_LOCALE_H
+#define __FREERDP_LOCALE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -232,4 +232,4 @@
 
 FREERDP_API uint32 detect_keyboard_layout_from_locale();
 
-#endif /* __LOCALES_H */
+#endif /* __FREERDP_LOCALE_H */

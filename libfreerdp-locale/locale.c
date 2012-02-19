@@ -22,7 +22,7 @@
 #include <string.h>
 #include "liblocale.h"
 
-#include <freerdp/locale/locales.h>
+#include <freerdp/locale/locale.h>
 
 struct _locale
 {

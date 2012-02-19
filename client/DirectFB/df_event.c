@@ -18,7 +18,6 @@
  */
 
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/locale/vkcodes.h>
 
 #include "df_event.h"
 

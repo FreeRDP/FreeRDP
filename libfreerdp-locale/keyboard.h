@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __LAYOUTS_XKB_H
-#define __LAYOUTS_XKB_H
+#ifndef __KEYBOARD_H
+#define __KEYBOARD_H
 
 #include <freerdp/types.h>
 
@@ -33,4 +33,4 @@ typedef struct
 
 void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile);
 
-#endif
+#endif /* __KEYBOARD_H */

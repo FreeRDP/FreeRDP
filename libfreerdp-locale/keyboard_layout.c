@@ -24,8 +24,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/locale/vkcodes.h>
-#include <freerdp/locale/layouts.h>
+#include <freerdp/locale/keyboard.h>
 
 struct _keyboardLayout
 {
@@ -479,7 +478,7 @@ const virtualKey virtualKeyboard[] =
 	{ 0x1C, 1, ""                    , "KPEN" }
 };
 
-rdpKeyboardLayout* get_keyboard_layouts(uint32 types)
+rdpKeyboardLayout* freerdp_keyboard_get_layouts(uint32 types)
 {
 	int num, length, i;
 	rdpKeyboardLayout* layouts;
