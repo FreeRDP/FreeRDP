@@ -57,115 +57,6 @@ RdpScancodes x_keycode_to_rdp_scancode;
 
 uint8 rdp_scancode_to_x_keycode[256][2];
 
-uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
-{
-	if (keyboardLayoutID != 0)
-		DEBUG_KBD("keyboard layout configuration: %X", keyboardLayoutID);
-
-	if (keyboardLayoutID == 0)
-	{
-		keyboardLayoutID = freerdp_detect_keyboard_layout_from_locale();
-		DEBUG_KBD("detect_keyboard_layout_from_locale: %X", keyboardLayoutID);
-	}
-
-	if (keyboardLayoutID == 0)
-	{
-		keyboardLayoutID = 0x0409;
-		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
-	}
-
-	return keyboardLayoutID;
-}
-
-uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
-{
-	void* display;
-	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
-	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
-
-	display = freerdp_keyboard_xkb_init();
-
-	if (!display)
-	{
-		DEBUG_KBD("Error initializing xkb");
-		return 0;
-	}
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = detect_keyboard_layout_from_xkb(display);
-		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
-	}
-
-	freerdp_keyboard_load_map_from_xkb(display, x_keycode_to_rdp_scancode, rdp_scancode_to_x_keycode);
-
-	return keyboardLayoutId;
-}
-
-uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
-{
-	uint32 vkcode;
-	uint32 keycode;
-	KeycodeToVkcode keycodeToVkcode;
-
-	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
-	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = freerdp_detect_keyboard_layout_from_locale();
-		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
-	}
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = 0x0409;
-		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
-	}
-
-#ifdef __APPLE__
-	/* Apple X11 breaks XKB detection */
-	freerdp_keyboard_load_map(keycodeToVkcode, "macosx(macosx)");
-#endif
-
-	for (keycode = 0; keycode < 256; keycode++)
-	{
-		vkcode = keycodeToVkcode[keycode];
-
-		DEBUG_KBD("X keycode %3d VK %3d %-19s-> RDP scancode %d/%d",
-				keycode, vkcode, virtualKeyboard[vkcode].name,
-				virtualKeyboard[vkcode].extended, virtualKeyboard[vkcode].scancode);
-
-		x_keycode_to_rdp_scancode[keycode].keycode = virtualKeyboard[vkcode].scancode;
-		x_keycode_to_rdp_scancode[keycode].extended = virtualKeyboard[vkcode].extended;
-		x_keycode_to_rdp_scancode[keycode].keyname = virtualKeyboard[vkcode].name;
-
-		if (x_keycode_to_rdp_scancode[keycode].extended)
-			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][1] = keycode;
-		else
-			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][0] = keycode;
-	}
-
-	return keyboardLayoutId;
-}
-
-uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
-{
-#ifdef WITH_XKB
-	keyboardLayoutId = freerdp_keyboard_init_xkb(keyboardLayoutId);
-
-	if (keyboardLayoutId == 0)
-		keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId);
-#else
-
-#ifdef WITH_X11
-	keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId);
-#endif
-
-#endif
-	return keyboardLayoutId;
-}
-
 static int freerdp_keyboard_load_map(KeycodeToVkcode map, char* name)
 {
 	FILE* fp;
@@ -338,6 +229,120 @@ void freerdp_keyboard_load_maps(KeycodeToVkcode keycodeToVkcode, char* xkbfile)
 
 	if (keymapLoaded <= 0)
 		printf("error: no keyboard mapping available!\n");
+}
+
+
+uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
+{
+	if (keyboardLayoutID != 0)
+		DEBUG_KBD("keyboard layout configuration: %X", keyboardLayoutID);
+
+	if (keyboardLayoutID == 0)
+	{
+		keyboardLayoutID = freerdp_detect_keyboard_layout_from_locale();
+		DEBUG_KBD("detect_keyboard_layout_from_locale: %X", keyboardLayoutID);
+	}
+
+	if (keyboardLayoutID == 0)
+	{
+		keyboardLayoutID = 0x0409;
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
+	}
+
+	return keyboardLayoutID;
+}
+
+#ifdef WITH_XKB
+uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
+{
+	void* display;
+	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
+	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
+
+	display = freerdp_keyboard_xkb_init();
+
+	if (!display)
+	{
+		DEBUG_KBD("Error initializing xkb");
+		return 0;
+	}
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = detect_keyboard_layout_from_xkb(display);
+		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
+	}
+
+	freerdp_keyboard_load_map_from_xkb(display, x_keycode_to_rdp_scancode, rdp_scancode_to_x_keycode);
+
+	return keyboardLayoutId;
+}
+#endif
+
+#ifdef WITH_X11
+uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
+{
+	uint32 vkcode;
+	uint32 keycode;
+	KeycodeToVkcode keycodeToVkcode;
+
+	memset(x_keycode_to_rdp_scancode, 0, sizeof(x_keycode_to_rdp_scancode));
+	memset(rdp_scancode_to_x_keycode, '\0', sizeof(rdp_scancode_to_x_keycode));
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_locale();
+		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
+	}
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = 0x0409;
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
+	}
+
+#ifdef __APPLE__
+	/* Apple X11 breaks XKB detection */
+	freerdp_keyboard_load_map(keycodeToVkcode, "macosx(macosx)");
+#endif
+
+	for (keycode = 0; keycode < 256; keycode++)
+	{
+		vkcode = keycodeToVkcode[keycode];
+
+		DEBUG_KBD("X keycode %3d VK %3d %-19s-> RDP scancode %d/%d",
+				keycode, vkcode, virtualKeyboard[vkcode].name,
+				virtualKeyboard[vkcode].extended, virtualKeyboard[vkcode].scancode);
+
+		x_keycode_to_rdp_scancode[keycode].keycode = virtualKeyboard[vkcode].scancode;
+		x_keycode_to_rdp_scancode[keycode].extended = virtualKeyboard[vkcode].extended;
+		x_keycode_to_rdp_scancode[keycode].keyname = virtualKeyboard[vkcode].name;
+
+		if (x_keycode_to_rdp_scancode[keycode].extended)
+			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][1] = keycode;
+		else
+			rdp_scancode_to_x_keycode[virtualKeyboard[vkcode].scancode][0] = keycode;
+	}
+
+	return keyboardLayoutId;
+}
+#endif
+
+uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
+{
+#ifdef WITH_XKB
+	keyboardLayoutId = freerdp_keyboard_init_xkb(keyboardLayoutId);
+
+	if (keyboardLayoutId == 0)
+		keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId);
+#else
+
+#ifdef WITH_X11
+	keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId);
+#endif
+
+#endif
+	return keyboardLayoutId;
 }
 
 uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended)

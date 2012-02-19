@@ -36,8 +36,9 @@ set(FREERDP_LOCALE_SUN_SRCS
 	keyboard_sun.c
 	keyboard_sun.h)
 
-# TODO: Detect Solaris
-#set(WITH_SUN true)
+if(CMAKE_SYSTEM_NAME MATCHES Solaris)
+	set(WITH_SUN true)
+endif()
 
 set(FREERDP_LOCALE_LINK_LIBRARIES freerdp-utils)
 
