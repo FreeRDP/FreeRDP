@@ -22,43 +22,53 @@ set(FREERDP_LOCALE_SRCS
 	layouts.c
 	keyboard.c
 	keyboard.h
-	keyboard_x11.c
-	keyboard_x11.h
 	liblocale.h)
+
+set(FREERDP_LOCALE_X11_SRCS
+	keyboard_x11.c
+	keyboard_x11.h)
 
 set(FREERDP_LOCALE_XKB_SRCS
 	keyboard_xkb.c
 	keyboard_xkb.h)
 
+set(FREERDP_LOCALE_SUN_SRCS
+	keyboard_sun.c
+	keyboard_sun.h)
+
+# TODO: Detect Solaris
+#set(WITH_SUN true)
+
+set(FREERDP_LOCALE_LINK_LIBRARIES freerdp-utils)
+
 if(NOT WIN32)
 	find_suggested_package(X11)
-	if(NOT APPLE)
-		find_suggested_package(XKBFile)
-		if (WITH_X11)
-			add_definitions(-DWITH_X11)
+	if(WITH_X11)
+		add_definitions(-DWITH_X11)
+		include_directories(${X11_INCLUDE_DIRS})
+		set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_SRCS})
+		set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${X11_LIBRARIES})
+		if(NOT APPLE)
+			find_suggested_package(XKBFile)
 			if(WITH_XKBFILE)
 				add_definitions(-DWITH_XKB)
 				include_directories(${XKBFILE_INCLUDE_DIRS})
 				set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKB_SRCS})
+				set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${XKBFILE_LIBRARIES})
 			endif()
+		endif()
+		if(WITH_SUN)
+			add_definitions(-DWITH_SUN)
+			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_SUN_SRCS})
 		endif()
 	endif()
 endif()
 
 add_library(freerdp-locale ${FREERDP_LOCALE_SRCS})
 
-if(NOT WIN32)
-	if(WITH_X11)
-		target_link_libraries(freerdp-locale ${X11_LIBRARIES})
-		if(WITH_XKBFILE)
-			target_link_libraries(freerdp-locale ${XKBFILE_LIBRARIES})
-		endif()
-	endif()
-endif()
-
 set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-locale freerdp-utils)
+target_link_libraries(freerdp-locale ${FREERDP_LOCALE_LINK_LIBRARIES})
 
 install(TARGETS freerdp-locale DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
