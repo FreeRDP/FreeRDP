@@ -21,6 +21,8 @@
 
 #include <freerdp/auth/sspi.h>
 
+/* Package Management */
+
 SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
 {
 	SECURITY_FUNCTION_TABLE* security_function_table;
@@ -101,10 +103,68 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 	return SEC_E_OK;
 }
 
+/* Credential Management */
+
+SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
+{
+	return SEC_E_OK;
+}
+
+/* Context Management */
+
+SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
+		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
+{
+	return SEC_E_OK;
+}
+
 SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer)
 {
 	if (pvContextBuffer != NULL)
 		xfree(pvContextBuffer);
 
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
+		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
+		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
+{
+	return SEC_E_OK;
+}
+
+/* Message Support */
+
+SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+{
 	return SEC_E_OK;
 }
