@@ -908,13 +908,13 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 	if (keyboardLayoutId == 0)
 	{
 		keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
-		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
+		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutId);
 	}
 
 	if (keyboardLayoutId == 0)
 	{
 		keyboardLayoutId = 0x0409;
-		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutId);
 	}
 
 #ifdef __APPLE__

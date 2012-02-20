@@ -727,7 +727,7 @@ uint32 freerdp_detect_keyboard_layout_from_system_locale()
 	if (locale == NULL)
 		return 0;
 
-	DEBUG_KBD("Found locale : %s_%s", locale.language, locale.country);
+	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
 
 	for (i = 0; i < sizeof(LOCALE_KEYBOARD_LAYOUTS_TABLE) / sizeof(LOCALE_KEYBOARD_LAYOUTS); i++)
 	{

@@ -49,7 +49,7 @@ RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
 extern const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256];
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
 
-static int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
+int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 {
 	FILE* fp;
 	char* pch;
