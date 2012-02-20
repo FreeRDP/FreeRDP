@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NT LAN Manager Security Support Provider (NTLMSSP)
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __NTLMSSP_H
-#define __NTLMSSP_H
+#ifndef FREERDP_AUTH_NTLMSSP_H
+#define FREERDP_AUTH_NTLMSSP_H
 
 #include <freerdp/crypto/crypto.h>
 
@@ -167,4 +167,4 @@ void ntlmssp_free(NTLMSSP* ntlmssp);
 #define DEBUG_NLA(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __NTLMSSP_H */
+#endif /* FREERDP_AUTH_NTLMSSP_H */

@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Credential Security Support Provider (CredSSP)
  *
- * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CREDSSP_H
-#define __CREDSSP_H
+#ifndef FREERDP_AUTH_CREDSSP_H
+#define FREERDP_AUTH_CREDSSP_H
 
 typedef struct rdp_credssp rdpCredssp;
 
@@ -65,4 +65,4 @@ void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
 rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
 void credssp_free(rdpCredssp* credssp);
 
-#endif /* __CREDSSP_H */
+#endif /* FREERDP_AUTH_CREDSSP_H */
