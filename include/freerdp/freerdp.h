@@ -35,6 +35,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
+#include <freerdp/utils/stream.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
@@ -109,7 +110,6 @@ FREERDP_API boolean freerdp_disconnect(freerdp* instance);
 FREERDP_API boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API boolean freerdp_check_fds(freerdp* instance);
 
-FREERDP_API void freerdp_send_keep_alive(freerdp* instance);
 FREERDP_API uint32 freerdp_error_info(freerdp* instance);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);

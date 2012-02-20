@@ -127,11 +127,6 @@ boolean freerdp_check_fds(freerdp* instance)
 	return true;
 }
 
-void freerdp_send_keep_alive(freerdp* instance)
-{
-	input_send_synchronize_event(instance->context->rdp->input, 0);
-}
-
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
@@ -192,11 +187,16 @@ void freerdp_context_new(freerdp* instance)
 
 void freerdp_context_free(freerdp* instance)
 {
+	if (instance->context == NULL)
+		return;
+
 	IFCALL(instance->ContextFree, instance, instance->context);
 
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
+
 	xfree(instance->context);
+	instance->context = NULL;
 }
 
 uint32 freerdp_error_info(freerdp* instance)
@@ -219,11 +219,10 @@ freerdp* freerdp_new()
 	return instance;
 }
 
-void freerdp_free(freerdp* freerdp)
+void freerdp_free(freerdp* instance)
 {
-	if (freerdp)
+	if (instance)
 	{
-		freerdp_context_free(freerdp);
-		xfree(freerdp);
+		xfree(instance);
 	}
 }

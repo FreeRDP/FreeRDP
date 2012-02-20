@@ -162,6 +162,9 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->fastpath_output)
 		extraFlags |= FASTPATH_OUTPUT_SUPPORTED;
 
+	if (settings->salted_checksum)
+		extraFlags |= ENC_SALTED_CHECKSUM;
+
 	if (settings->server_mode)
 	{
 		/* not yet supported server-side */
@@ -1107,7 +1110,7 @@ void rdp_write_draw_nine_grid_cache_capability_set(STREAM* s, rdpSettings* setti
 
 	header = rdp_capability_set_start(s);
 
-	drawNineGridSupportLevel = (settings->draw_nine_grid) ? DRAW_NINEGRID_SUPPORTED : DRAW_NINEGRID_NO_SUPPORT;
+	drawNineGridSupportLevel = (settings->draw_nine_grid) ? DRAW_NINEGRID_SUPPORTED_V2 : DRAW_NINEGRID_NO_SUPPORT;
 
 	stream_write_uint32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
 	stream_write_uint16(s, settings->draw_nine_grid_cache_size); /* drawNineGridCacheSize (2 bytes) */
@@ -1870,14 +1873,13 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
-	numberCapabilities = 14;
+	numberCapabilities = 13;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
 	rdp_write_pointer_capability_set(s, settings);
 	rdp_write_input_capability_set(s, settings);
 	rdp_write_virtual_channel_capability_set(s, settings);
-	rdp_write_bitmap_cache_host_support_capability_set(s, settings);
 	rdp_write_share_capability_set(s, settings);
 	rdp_write_font_capability_set(s, settings);
 	rdp_write_multifragment_update_capability_set(s, settings);
@@ -1885,6 +1887,12 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	rdp_write_desktop_composition_capability_set(s, settings);
 	rdp_write_surface_commands_capability_set(s, settings);
 	rdp_write_bitmap_codecs_capability_set(s, settings);
+
+	if (settings->persistent_bitmap_cache)
+	{
+		numberCapabilities++;
+		rdp_write_bitmap_cache_host_support_capability_set(s, settings);
+	}
 
 	stream_get_mark(s, em);
 
@@ -2016,6 +2024,12 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	{
 		numberCapabilities++;
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
+	}
+
+	if (settings->draw_nine_grid)
+	{
+		numberCapabilities++;
+		rdp_write_draw_nine_grid_cache_capability_set(s, settings);
 	}
 
 	if (settings->received_caps[CAPSET_TYPE_LARGE_POINTER])

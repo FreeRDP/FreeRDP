@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-#include "per.h"
 #include "info.h"
 #include "input.h"
 
@@ -227,7 +226,7 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = true;
-	if (rdp->settings->secure_checksum)
+	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = true;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
@@ -294,7 +293,7 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	rdp->do_crypt = true;
-	if (rdp->settings->secure_checksum)
+	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = true;
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
@@ -502,7 +501,7 @@ boolean rdp_client_connect_finalize(rdpRdp* rdp)
 
 boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 {
-	boolean ret;
+	boolean status;
 
 	transport_set_blocking_mode(rdp->transport, true);
 
@@ -547,15 +546,15 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	if (!nego_send_negotiation_response(rdp->nego))
 		return false;
 
-	ret = false;
+	status = false;
 	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
-		ret = transport_accept_nla(rdp->transport);
+		status = transport_accept_nla(rdp->transport);
 	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
-		ret = transport_accept_tls(rdp->transport);
+		status = transport_accept_tls(rdp->transport);
 	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
-		ret = transport_accept_rdp(rdp->transport);
+		status = transport_accept_rdp(rdp->transport);
 
-	if (!ret)
+	if (!status)
 		return false;
 
 	transport_set_blocking_mode(rdp->transport, false);

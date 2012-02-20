@@ -27,6 +27,13 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 add_library(tsmf_ffmpeg ${TSMF_FFMPEG_SRCS})
 set_target_properties(tsmf_ffmpeg PROPERTIES PREFIX "")
 
+if(CMAKE_COMPILER_IS_GNUCC)
+	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
+	if(Wno-deprecated-declarations)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+	endif()
+endif()
+
 target_link_libraries(tsmf_ffmpeg freerdp-utils)
 target_link_libraries(tsmf_ffmpeg ${FFMPEG_LIBRARIES})
 

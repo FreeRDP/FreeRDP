@@ -20,8 +20,8 @@
 #ifndef __GCC_H
 #define __GCC_H
 
-#include "per.h"
 #include "mcs.h"
+#include <freerdp/crypto/per.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>

@@ -38,14 +38,16 @@ add_executable(test_freerdp
 	test_color.h
 	test_bitmap.c
 	test_bitmap.h
-	test_libgdi.c
-	test_libgdi.h
+	test_gdi.c
+	test_gdi.h
 	test_list.c
 	test_list.h
 	test_orders.c
 	test_orders.h
 	test_pcap.c
 	test_pcap.h
+	test_ntlmssp.c
+	test_ntlmssp.h
 	test_license.c
 	test_license.h
 	test_stream.c
@@ -58,8 +60,8 @@ add_executable(test_freerdp
 	test_cliprdr.h
 	test_drdynvc.c
 	test_drdynvc.h
-	test_librfx.c
-	test_librfx.h
+	test_rfx.c
+	test_rfx.h
 	test_freerdp.c
 	test_freerdp.h
 	test_rail.c
@@ -73,5 +75,7 @@ target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-utils)
 target_link_libraries(test_freerdp freerdp-channels)
 target_link_libraries(test_freerdp freerdp-codec)
+target_link_libraries(test_freerdp freerdp-crypto)
+target_link_libraries(test_freerdp freerdp-auth)
 
 add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)

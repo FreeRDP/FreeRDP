@@ -29,7 +29,7 @@ add_executable(dfreerdp
 
 target_link_libraries(dfreerdp freerdp-core)
 target_link_libraries(dfreerdp freerdp-gdi)
-target_link_libraries(dfreerdp freerdp-kbd)
+target_link_libraries(dfreerdp freerdp-locale)
 target_link_libraries(dfreerdp freerdp-channels)
 target_link_libraries(dfreerdp freerdp-utils)
 target_link_libraries(dfreerdp ${DIRECTFB_LIBRARIES})

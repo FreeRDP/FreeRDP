@@ -61,7 +61,7 @@ void xf_set_event(xfEventQueue* event_queue)
 		printf("xf_set_event: error\n");
 }
 
-void xf_clear_event(xfEventQueue* event_queue)
+void xf_clear_events(xfEventQueue* event_queue)
 {
 	int length;
 
@@ -72,6 +72,16 @@ void xf_clear_event(xfEventQueue* event_queue)
 		if (length != 4)
 			printf("xf_clear_event: error\n");
 	}
+}
+
+void xf_clear_event(xfEventQueue* event_queue)
+{
+	int length;
+
+	length = read(event_queue->pipe_fd[0], &length, 4);
+
+	if (length != 4)
+		printf("xf_clear_event: error\n");
 }
 
 void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
@@ -86,9 +96,9 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 
 	event_queue->events[(event_queue->count)++] = event;
 
-	xf_set_event(event_queue);
-
 	pthread_mutex_unlock(&(event_queue->mutex));
+
+	xf_set_event(event_queue);
 }
 
 xfEvent* xf_event_peek(xfEventQueue* event_queue)
@@ -115,6 +125,9 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue)
 
 	if (event_queue->count < 1)
 		return NULL;
+
+	/* remove event signal */
+	xf_clear_event(event_queue);
 
 	event = event_queue->events[0];
 	(event_queue->count)--;

@@ -41,7 +41,9 @@ struct rdp_brush_cache
 {
 	pPatBlt PatBlt; /* 0 */
 	pCacheBrush CacheBrush; /* 1 */
-	uint32 paddingA[16 - 2]; /* 2 */
+	pPolygonSC PolygonSC; /* 2 */
+	pPolygonCB PolygonCB; /* 3 */
+	uint32 paddingA[16 - 4]; /* 4 */
 
 	uint32 maxEntries; /* 16 */
 	uint32 maxMonoEntries; /* 17 */

@@ -144,9 +144,6 @@ typedef struct
 
 /* Certificates */
 
-typedef struct rdp_certificate rdpCertificate;
-typedef struct rdp_key rdpKey;
-
 struct rdp_CertBlob
 {
 	uint32 length;
@@ -173,6 +170,15 @@ struct rdp_certificate
 	rdpCertInfo cert_info;
 	rdpX509CertChain* x509_cert_chain;
 };
+typedef struct rdp_certificate rdpCertificate;
+
+struct rdp_key
+{
+	rdpBlob modulus;
+	rdpBlob private_exponent;
+	uint8 exponent[4];
+};
+typedef struct rdp_key rdpKey;
 
 /* Channels */
 
@@ -302,7 +308,7 @@ struct rdp_settings
 	boolean nla_security; /* 146 */
 	boolean rdp_security; /* 147 */
 	uint32 ntlm_version; /* 148 */
-	boolean secure_checksum; /* 149 */
+	boolean salted_checksum; /* 149 */
 	uint32 paddingF[160 - 150]; /* 150 */
 
 	/* Session */

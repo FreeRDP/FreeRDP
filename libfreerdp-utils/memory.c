@@ -82,12 +82,6 @@ void* xrealloc(void* ptr, size_t size)
 	if (size < 1)
 		size = 1;
 
-	if (ptr == NULL)
-	{
-		printf("xrealloc: null pointer given\n");
-		return NULL;
-	}
-
 	mem = realloc(ptr, size);
 
 	if (mem == NULL)

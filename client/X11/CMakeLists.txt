@@ -89,7 +89,7 @@ include_directories(${CMAKE_SOURCE_DIR}/resources)
 
 target_link_libraries(xfreerdp freerdp-core)
 target_link_libraries(xfreerdp freerdp-gdi)
-target_link_libraries(xfreerdp freerdp-kbd)
+target_link_libraries(xfreerdp freerdp-locale)
 target_link_libraries(xfreerdp freerdp-rail)
 target_link_libraries(xfreerdp freerdp-channels)
 target_link_libraries(xfreerdp freerdp-utils)

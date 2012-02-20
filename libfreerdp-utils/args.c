@@ -69,7 +69,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -h: print this help\n"
 				"  -k: set keyboard layout ID\n"
 				"  -K: do not interfere with window manager bindings\n"
-				"  -m: don't send mouse motion events\n"
 				"  -n: hostname\n"
 				"  -o: console audio\n"
 				"  -p: password\n"
@@ -83,6 +82,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
 				"  --no-fastpath: disable fast-path\n"
+				"  --no-motion: don't send mouse motion events\n"
 				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
 				"  --no-bmp-cache: disable bitmap cache\n"
@@ -101,7 +101,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
-				"  --secure-checksum: use salted checksums with Standard RDP encryption\n"
+				"  --salted-checksum: use salted checksums with Standard RDP encryption\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; //TODO: What is the correct return
@@ -617,9 +617,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			num_extensions++;
 		}
-		else if (strcmp("--secure-checksum", argv[index]) == 0)
+		else if (strcmp("--salted-checksum", argv[index]) == 0)
 		{
-			settings->secure_checksum = true;
+			settings->salted_checksum = true;
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{

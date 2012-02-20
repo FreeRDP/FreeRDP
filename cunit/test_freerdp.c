@@ -25,16 +25,17 @@
 #include "test_mcs.h"
 #include "test_color.h"
 #include "test_bitmap.h"
-#include "test_libgdi.h"
+#include "test_gdi.h"
 #include "test_list.h"
 #include "test_stream.h"
 #include "test_utils.h"
 #include "test_orders.h"
+#include "test_ntlmssp.h"
 #include "test_license.h"
 #include "test_channels.h"
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
-#include "test_librfx.h"
+#include "test_rfx.h"
 #include "test_freerdp.h"
 #include "test_rail.h"
 #include "test_pcap.h"
@@ -107,109 +108,80 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 	}
 }
 
+typedef boolean (*pInitTestSuite)(void);
+
+struct _test_suite
+{
+	char name[32];
+	pInitTestSuite Init;
+};
+typedef struct _test_suite test_suite;
+
+static test_suite suites[] =
+{
+	{ "ber", add_ber_suite },
+	{ "bitmap", add_bitmap_suite },
+	{ "channels", add_channels_suite },
+	{ "cliprdr", add_cliprdr_suite },
+	{ "color", add_color_suite },
+	{ "drdynvc", add_drdynvc_suite },
+	{ "gcc", add_gcc_suite },
+	{ "gdi", add_gdi_suite },
+	{ "license", add_license_suite },
+	{ "list", add_list_suite },
+	{ "mcs", add_mcs_suite },
+	{ "mppc", add_mppc_suite },
+	{ "ntlmssp", add_ntlmssp_suite },
+	{ "orders", add_orders_suite },
+	{ "pcap", add_pcap_suite },
+	{ "per", add_per_suite },
+	{ "rail", add_rail_suite },
+	{ "rfx", add_rfx_suite },
+	{ "stream", add_stream_suite },
+	{ "utils", add_utils_suite },
+	{ "", NULL }
+};
+
 int main(int argc, char* argv[])
 {
+	int k;
 	int index = 1;
 	int *pindex = &index;
-	int ret = 0;
+	int status = 0;
 
 	if (CU_initialize_registry() != CUE_SUCCESS)
 		return CU_get_error();
 
 	if (argc < *pindex + 1)
 	{
-		add_per_suite();
-		add_ber_suite();
-		add_gcc_suite();
-		add_mcs_suite();
-		add_color_suite();
-		add_bitmap_suite();
-		add_libgdi_suite();
-		add_list_suite();
-		add_orders_suite();
-		add_license_suite();
-		add_stream_suite();
-		add_mppc_suite();
+		k = 0;
+
+		printf("\ntest suites:\n\n");
+		while (suites[k].Init != NULL)
+		{
+			printf("\t%s\n", suites[k].name);
+			k++;
+		}
+
+		printf("\nusage: ./test_freerdp <suite-1> <suite-2> ... <suite-n>\n");
+
+		return 0;
 	}
 	else
 	{
 		while (*pindex < argc)
 		{
-			if (strcmp("rail", argv[*pindex]) == 0)
+			k = 0;
+
+			while (suites[k].Init != NULL)
 			{
-				add_rail_suite();
-			}
-			if (strcmp("color", argv[*pindex]) == 0)
-			{
-				add_color_suite();
-			}
-			if (strcmp("bitmap", argv[*pindex]) == 0)
-			{
-				add_bitmap_suite();
-			}
-			else if (strcmp("libgdi", argv[*pindex]) == 0)
-			{
-				add_libgdi_suite();
-			}
-			else if (strcmp("list", argv[*pindex]) == 0)
-			{
-				add_list_suite();
-			}
-			else if (strcmp("orders", argv[*pindex]) == 0)
-			{
-				add_orders_suite();
-			}
-			else if (strcmp("license", argv[*pindex]) == 0)
-			{
-				add_license_suite();
-			}
-			else if (strcmp("stream", argv[*pindex]) == 0)
-			{
-				add_stream_suite();
-			}
-			else if (strcmp("utils", argv[*pindex]) == 0)
-			{
-				add_utils_suite();
-			}
-			else if (strcmp("chanman", argv[*pindex]) == 0)
-			{
-				add_chanman_suite();
-			}
-			else if (strcmp("cliprdr", argv[*pindex]) == 0)
-			{
-				add_cliprdr_suite();
-			}
-			else if (strcmp("drdynvc", argv[*pindex]) == 0)
-			{
-				add_drdynvc_suite();
-			}
-			else if (strcmp("librfx", argv[*pindex]) == 0)
-			{
-				add_librfx_suite();
-			}
-			else if (strcmp("per", argv[*pindex]) == 0)
-			{
-				add_per_suite();
-			}
-			else if (strcmp("pcap", argv[*pindex]) == 0)
-			{
-				add_pcap_suite();
-			}
-			else if (strcmp("ber", argv[*pindex]) == 0)
-			{
-				add_ber_suite();
-			}
-			else if (strcmp("gcc", argv[*pindex]) == 0)
-			{
-				add_gcc_suite();
-			}
-			else if (strcmp("mcs", argv[*pindex]) == 0)
-			{
-				add_mcs_suite();
-			}
-			else if (strcmp("mppc", argv[*pindex]) == 0)
-			{
-				add_mppc_suite();
+				if (strcmp(suites[k].name, argv[*pindex]) == 0)
+				{
+					suites[k].Init();
+					break;
+				}
+
+				k++;
 			}
 
 			*pindex = *pindex + 1;
@@ -218,9 +190,10 @@ int main(int argc, char* argv[])
 
 	CU_basic_set_mode(CU_BRM_VERBOSE);
 	CU_basic_run_tests();
-	ret = CU_get_number_of_failure_records();
+
+	status = CU_get_number_of_failure_records();
 	CU_cleanup_registry();
 
-	return ret;
+	return status;
 }
 

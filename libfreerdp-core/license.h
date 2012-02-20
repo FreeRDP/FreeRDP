@@ -23,8 +23,8 @@
 typedef struct rdp_license rdpLicense;
 
 #include "rdp.h"
-#include "crypto.h"
-#include "certificate.h"
+#include <freerdp/crypto/crypto.h>
+#include <freerdp/crypto/certificate.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>

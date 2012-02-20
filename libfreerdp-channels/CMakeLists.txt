@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-chanman cmake build script
+# libfreerdp-channels cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>

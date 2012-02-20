@@ -20,8 +20,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include <freerdp/kbd/kbd.h>
-#include <freerdp/kbd/vkcodes.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_rail.h"
 #include "xf_window.h"

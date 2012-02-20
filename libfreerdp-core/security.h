@@ -21,7 +21,7 @@
 #define __SECURITY_H
 
 #include "rdp.h"
-#include "crypto.h"
+#include <freerdp/crypto/crypto.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>

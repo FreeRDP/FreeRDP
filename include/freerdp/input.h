@@ -22,6 +22,7 @@
 
 typedef struct rdp_input rdpInput;
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
 /* keyboard Flags */
@@ -71,5 +72,11 @@ struct rdp_input
 	pExtendedMouseEvent ExtendedMouseEvent; /* 20 */
 	uint32 paddingB[32 - 21]; /* 21 */
 };
+
+FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags);
+FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 
 #endif /* __INPUT_API_H */

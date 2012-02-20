@@ -32,7 +32,7 @@ static const char* const UPDATE_TYPE_STRINGS[] =
 };
 */
 
-void update_recv_orders(rdpUpdate* update, STREAM* s)
+boolean update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	uint16 numberOrders;
 
@@ -42,9 +42,12 @@ void update_recv_orders(rdpUpdate* update, STREAM* s)
 
 	while (numberOrders > 0)
 	{
-		update_recv_order(update, s);
+		if (!update_recv_order(update, s))
+			return false;
 		numberOrders--;
 	}
+
+	return true;
 }
 
 void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
@@ -243,7 +246,7 @@ void update_recv_pointer(rdpUpdate* update, STREAM* s)
 	}
 }
 
-void update_recv(rdpUpdate* update, STREAM* s)
+boolean update_recv(rdpUpdate* update, STREAM* s)
 {
 	uint16 updateType;
 	rdpContext* context = update->context;
@@ -257,7 +260,11 @@ void update_recv(rdpUpdate* update, STREAM* s)
 	switch (updateType)
 	{
 		case UPDATE_TYPE_ORDERS:
-			update_recv_orders(update, s);
+			if (!update_recv_orders(update, s))
+			{
+				/* XXX: Do we have to call EndPaint? */
+				return false;
+			}
 			break;
 
 		case UPDATE_TYPE_BITMAP:
@@ -287,10 +294,13 @@ void update_recv(rdpUpdate* update, STREAM* s)
 		rdp_read_share_control_header(s, &length, &pduType, &source);
 
 		if (pduType != PDU_TYPE_DATA)
-			return;
+			return false;
 
-		rdp_recv_data_pdu(update->context->rdp, s);
+		if (!rdp_recv_data_pdu(update->context->rdp, s))
+			return false;
 	}
+
+	return true;
 }
 
 void update_reset_state(rdpUpdate* update)

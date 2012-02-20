@@ -385,48 +385,115 @@ static int BitBlt_SRCPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {	
 	int x, y;
-	uint8* srcp;
-	uint8* dstp;
-	uint8* patp;
+	uint32* srcp;
+	uint32* dstp;
+	uint32* patp;
+	uint8* srcp8;
+	uint32 src32;
 	uint32 color32;
 	HGDI_BITMAP hSrcBmp;
 
 	/* D = (S & P) | (~S & D) */
-	/* DSPDxax, used to draw glyphs */
 
 	color32 = gdi_get_color_32bpp(hdcDest, hdcDest->textColor);
 
+	patp = (uint32*) &color32;
 	hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
-	srcp = hSrcBmp->data;
 
-	if (hdcSrc->bytesPerPixel != 1)
+	if (hdcSrc->bytesPerPixel == 1)
 	{
-		printf("BitBlt_DSPDxax expects 1 bpp, unimplemented for %d\n", hdcSrc->bytesPerPixel);
-		return 0;
-	}
-	
-	for (y = 0; y < nHeight; y++)
-	{
-		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		/* DSPDxax, used to draw glyphs */
 
-		if (dstp != 0)
+		srcp = (uint32*) & src32;
+
+		for (y = 0; y < nHeight; y++)
 		{
-			for (x = 0; x < nWidth; x++)
+			srcp8 = (uint8*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (dstp != 0)
 			{
-				patp = (uint8*) &color32;
+				for (x = 0; x < nWidth; x++)
+				{
+					*srcp = ((*srcp8) | (*srcp8 << 8) | (*srcp8 << 16) | (*srcp8 << 24));
 
-				*dstp = (*srcp & *patp) | (~(*srcp) & *dstp);
-				dstp++;
-				patp++;
+					*dstp = (*srcp & *patp) | (~(*srcp) & *dstp);
+					dstp++;
 
-				*dstp = (*srcp & *patp) | (~(*srcp) & *dstp);
-				dstp++;
-				patp++;
+					srcp8++;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = (uint32*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
-				*dstp = (*srcp & *patp) | (~(*srcp) & *dstp);
-				dstp += 2;
-				srcp++;
+			if (dstp != 0)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					*dstp = (*srcp & *patp) | (~(*srcp) & *dstp);
+					srcp++;
+					dstp++;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int BitBlt_PSDPxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
+{
+	int x, y;
+	uint32* srcp;
+	uint32* dstp;
+	uint32* patp;
+	uint32 color32;
+
+	/* D = (S & D) | (~S & P) */
+
+	if (hdcDest->brush->style == GDI_BS_SOLID)
+	{
+		color32 = gdi_get_color_32bpp(hdcDest, hdcDest->brush->color);
+		patp = (uint32*) &color32;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = (uint32*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (dstp != 0)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
+					srcp++;
+					dstp++;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = (uint32*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (dstp != 0)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					patp = (uint32*) gdi_get_brush_pointer(hdcDest, x, y);
+					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
+					srcp++;
+					dstp++;
+				}
 			}
 		}
 	}
@@ -479,6 +546,31 @@ static int BitBlt_DSna_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 			{
 				*dstp = ~(*srcp) & (*dstp);
 				srcp++;
+				dstp++;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int BitBlt_DPa_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
+{
+	int x, y;
+	uint32* dstp;
+	uint32* patp;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+		if (dstp != 0)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				patp = (uint32*) gdi_get_brush_pointer(hdcDest, x, y);
+
+				*dstp = *dstp & *patp;
 				dstp++;
 			}
 		}
@@ -725,6 +817,10 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			return BitBlt_DSPDxax_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 			break;
 			
+		case GDI_PSDPxax:
+			return BitBlt_PSDPxax_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+			break;
+
 		case GDI_NOTSRCCOPY:
 			return BitBlt_NOTSRCCOPY_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 			break;
@@ -805,6 +901,10 @@ int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 
 		case GDI_WHITENESS:
 			return BitBlt_WHITENESS_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
+			break;
+
+		case GDI_DPa:
+			return BitBlt_DPa_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
 			break;
 
 		case GDI_PDxn:

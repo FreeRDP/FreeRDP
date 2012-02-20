@@ -30,7 +30,7 @@ void xf_kbd_init(xfInfo* xfi)
 {
 	memset(xfi->pressed_keys, 0, 256 * sizeof(boolean));
 	xfi->keyboard_layout_id = xfi->instance->settings->kbd_layout;
-	xfi->keyboard_layout_id = freerdp_kbd_init(xfi->display, xfi->keyboard_layout_id);
+	xfi->keyboard_layout_id = freerdp_keyboard_init(xfi->keyboard_layout_id);
 	xfi->instance->settings->kbd_layout = xfi->keyboard_layout_id;
 }
 
@@ -64,7 +64,7 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 	rdpInput* input;
 
 	input = xfi->instance->input;
-	scancode = freerdp_kbd_get_scancode_by_keycode(keycode, &extended);
+	scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode, &extended);
 
 	if (scancode == 0)
 	{

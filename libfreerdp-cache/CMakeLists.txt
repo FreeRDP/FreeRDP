@@ -21,6 +21,7 @@ set(FREERDP_CACHE_SRCS
 	brush.c
 	pointer.c
 	bitmap.c
+	nine_grid.c
 	offscreen.c
 	palette.c
 	glyph.c

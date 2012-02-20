@@ -481,6 +481,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	settings->os_major_type = OSMAJORTYPE_UNIX;
 	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
+
 	settings->order_support[NEG_DSTBLT_INDEX] = true;
 	settings->order_support[NEG_PATBLT_INDEX] = true;
 	settings->order_support[NEG_SCRBLT_INDEX] = true;
@@ -494,15 +495,19 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_LINETO_INDEX] = true;
 	settings->order_support[NEG_POLYLINE_INDEX] = true;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+
+	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? true : false;
+
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
 	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
 	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
 	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
 	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
 	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
+
+	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? false : true;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? false : true;
+
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
 
@@ -772,21 +777,21 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	if (strcmp("--kbd-list", opt) == 0)
 	{
 		int i;
-		rdpKeyboardLayout* layouts;
+		RDP_KEYBOARD_LAYOUT* layouts;
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 		printf("\nKeyboard Layouts\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
 		free(layouts);
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 		printf("\nKeyboard Layout Variants\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
 		free(layouts);
 
-		layouts = freerdp_kbd_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 		printf("\nKeyboard Input Method Editors (IMEs)\n");
 		for (i = 0; layouts[i].code; i++)
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);

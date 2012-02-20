@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include "certificate.h"
 #include "capabilities.h"
 #include <freerdp/utils/memory.h>
 
@@ -57,7 +58,7 @@ rdpSettings* settings_new(void* instance)
 		settings->kbd_fn_keys = 0;
 		settings->kbd_layout = 0;
 		settings->encryption = false;
-		settings->secure_checksum = false;
+		settings->salted_checksum = false;
 		settings->port = 3389;
 		settings->desktop_resize = true;
 

@@ -20,12 +20,10 @@
 #ifndef __CERTIFICATE_H
 #define __CERTIFICATE_H
 
-typedef struct rdp_certificate_data rdpCertificateData;
-typedef struct rdp_certificate_store rdpCertificateStore;
-
 #include "rdp.h"
-#include "ber.h"
-#include "crypto.h"
+
+#include <freerdp/crypto/ber.h>
+#include <freerdp/crypto/crypto.h>
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/blob.h>
@@ -44,35 +42,6 @@ typedef struct rdp_certificate_store rdpCertificateStore;
 
 #define BB_RSA_KEY_BLOB        		6
 #define BB_RSA_SIGNATURE_BLOB  		8
-
-struct rdp_key
-{
-	rdpBlob modulus;
-	rdpBlob private_exponent;
-	uint8 exponent[4];
-};
-
-struct rdp_certificate_data
-{
-	char* hostname;
-	char* fingerprint;
-};
-
-struct rdp_certificate_store
-{
-	FILE* fp;
-	char* path;
-	char* file;
-	rdpSettings* settings;
-	rdpCertificateData* certificate_data;
-};
-
-rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
-void certificate_data_free(rdpCertificateData* certificate_data);
-rdpCertificateStore* certificate_store_new(rdpSettings* settings);
-void certificate_store_free(rdpCertificateStore* certificate_store);
-int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
-void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
 
 void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 

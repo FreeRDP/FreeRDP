@@ -20,8 +20,9 @@
 #include "rdp.h"
 
 #include "info.h"
-#include "per.h"
 #include "redirection.h"
+
+#include <freerdp/crypto/per.h>
 
 static const char* const DATA_PDU_TYPE_STRINGS[] =
 {
@@ -471,7 +472,7 @@ void rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, STREAM* s)
 		rdp_print_errinfo(rdp->errorInfo);
 }
 
-void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
+boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 {
 	uint8 type;
 	uint16 length;
@@ -489,7 +490,8 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_UPDATE:
-			update_recv(rdp->update, s);
+			if (!update_recv(rdp->update, s))
+				return false;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
@@ -571,6 +573,8 @@ void rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 		default:
 			break;
 	}
+
+	return true;
 }
 
 boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
@@ -583,8 +587,7 @@ boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (type == PDU_TYPE_DATA)
 	{
-		rdp_recv_data_pdu(rdp, s);
-		return true;
+		return rdp_recv_data_pdu(rdp, s);
 	}
 	else if (type == PDU_TYPE_SERVER_REDIRECTION)
 	{
@@ -719,7 +722,8 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:
-				rdp_recv_data_pdu(rdp, s);
+				if (!rdp_recv_data_pdu(rdp, s))
+					return false;
 				break;
 
 			case PDU_TYPE_DEACTIVATE_ALL:
@@ -902,6 +906,11 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp != NULL)
 	{
+		crypto_rc4_free(rdp->rc4_decrypt_key);
+		crypto_rc4_free(rdp->rc4_encrypt_key);
+		crypto_des3_free(rdp->fips_encrypt);
+		crypto_des3_free(rdp->fips_decrypt);
+		crypto_hmac_free(rdp->fips_hmac);
 		extension_free(rdp->extension);
 		settings_free(rdp->settings);
 		transport_free(rdp->transport);

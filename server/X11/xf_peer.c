@@ -27,7 +27,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
-#include <freerdp/kbd/kbd.h>
+#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/sleep.h>
@@ -249,7 +249,7 @@ xfInfo* xf_info_init()
 
 	xfi->bytesPerPixel = 4;
 
-	freerdp_kbd_init(xfi->display, 0);
+	freerdp_keyboard_init(0);
 
 	return xfi;
 }
@@ -413,20 +413,19 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 	if (xfi->use_xshm)
 	{
-		width = x + width;
-		height = y + height;
-		x = 0;
-		y = 0;
-
-		rect.x = x;
-		rect.y = y;
+		/**
+		 * Passing an offset source rectangle to rfx_compose_message()
+		 * leads to protocol errors, so offset the data pointer instead.
+		 */
+		rect.x = 0;
+		rect.y = 0;
 		rect.width = width;
 		rect.height = height;
 
 		image = xf_snapshot(xfp, x, y, width, height);
 
 		data = (uint8*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel)];
+		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
 				width, height, image->bytes_per_line);
@@ -600,12 +599,15 @@ void* xf_peer_main_loop(void* arg)
 	rdpSettings* settings;
 	char* server_file_path;
 	freerdp_peer* client = (freerdp_peer*) arg;
+	xfPeerContext* xfp;
 
 	memset(rfds, 0, sizeof(rfds));
 
 	printf("We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
+	xfp = (xfPeerContext*) client->context;
+
 	settings = client->settings;
 
 	/* Initialize the real server settings here */
@@ -625,7 +627,9 @@ void* xf_peer_main_loop(void* arg)
 	settings->cert_file = freerdp_construct_path(server_file_path, "server.crt");
 	settings->privatekey_file = freerdp_construct_path(server_file_path, "server.key");
 
-	settings->nla_security = false;
+	//settings->nla_security = false;
+	settings->nla_security = true;
+
 	settings->rfx_codec = true;
 
 	client->Capabilities = xf_peer_capabilities;
@@ -695,6 +699,13 @@ void* xf_peer_main_loop(void* arg)
 	printf("Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
+	
+	pthread_cancel(xfp->thread);
+	pthread_cancel(xfp->frame_rate_thread);
+	
+	pthread_join(xfp->thread, NULL);
+	pthread_join(xfp->frame_rate_thread, NULL);
+	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 

@@ -37,6 +37,7 @@ rdpCache* cache_new(rdpSettings* settings)
 		cache->bitmap = bitmap_cache_new(settings);
 		cache->offscreen = offscreen_cache_new(settings);
 		cache->palette = palette_cache_new(settings);
+		cache->nine_grid = nine_grid_cache_new(settings);
 	}
 
 	return cache;
@@ -52,6 +53,7 @@ void cache_free(rdpCache* cache)
 		bitmap_cache_free(cache->bitmap);
 		offscreen_cache_free(cache->offscreen);
 		palette_cache_free(cache->palette);
+		nine_grid_cache_free(cache->nine_grid);
 		xfree(cache);
 	}
 }

@@ -63,9 +63,25 @@
 #define GDI_BLACKNESS			0x00000042 /* D = 0 */
 #define GDI_WHITENESS			0x00FF0062 /* D = 1 */
 #define GDI_DSPDxax			0x00E20746 /* D = (S & P) | (~S & D) */
+#define GDI_PSDPxax			0x00B8074A /* D = (S & D) | (~S & P) */
 #define GDI_SPna			0x000C0324 /* D = S & ~P */
 #define GDI_DSna			0x00220326 /* D = D & ~S */
+#define GDI_DPa				0x00A000C9 /* D = D & P */
 #define GDI_PDxn			0x00A50065 /* D = D ^ ~P */
+
+#define GDI_DPon			0x000500A9
+#define GDI_DPna			0x000A0329
+#define GDI_Pn				0x000F0001
+#define GDI_PDna			0x00500325
+#define GDI_DPan			0x005F00E9
+#define GDI_DSan			0x007700E6
+#define GDI_DSxn			0x00990066
+#define GDI_DPa				0x00A000C9
+#define GDI_D				0x00AA0029
+#define GDI_DPno			0x00AF0229
+#define GDI_SDno			0x00DD0228
+#define GDI_PDno			0x00F50225
+#define GDI_DPo				0x00FA0089
 
 /* Brush Styles */
 #define GDI_BS_SOLID			0x00

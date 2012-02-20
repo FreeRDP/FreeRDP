@@ -18,7 +18,7 @@
  */
 
 #include <X11/Xlib.h>
-#include <freerdp/kbd/kbd.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
 
@@ -37,7 +37,7 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = true;
 
-	keycode = freerdp_kbd_get_keycode_by_scancode(code, extended);
+	keycode = freerdp_keyboard_get_x11_keycode_from_rdp_scancode(code, extended);
 
 	if (keycode != 0)
 	{

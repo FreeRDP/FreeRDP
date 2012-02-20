@@ -517,7 +517,7 @@ void test_read_polygon_cb_order(void)
 	CU_ASSERT(polygon_cb.brush.x == 4);
 	CU_ASSERT(polygon_cb.brush.y == 3);
 	CU_ASSERT(polygon_cb.brush.style == 0x81);
-	CU_ASSERT(polygon_cb.nDeltaEntries == 3);
+	CU_ASSERT(polygon_cb.numPoints == 3);
 	CU_ASSERT(polygon_cb.cbData == 5);
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(polygon_cb_order) - 1));

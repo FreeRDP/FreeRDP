@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#include <freerdp/kbd/kbd.h>
-#include <freerdp/kbd/vkcodes.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "df_event.h"
 
@@ -203,7 +202,7 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 	else
 		return;
 	
-	scancode = freerdp_kbd_get_scancode_by_virtualkey(vkcode, &extended);
+	scancode = freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(vkcode, &extended);
 
 	flags = (extended) ? KBD_FLAGS_EXTENDED : 0;
 	flags |= (down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE;

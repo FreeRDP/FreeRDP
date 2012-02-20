@@ -256,8 +256,10 @@ void nego_attempt_rdp(rdpNego* nego)
 boolean nego_recv_response(rdpNego* nego)
 {
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
+
 	if (transport_read(nego->transport, s) < 0)
 		return false;
+
 	return nego_recv(nego->transport, s, nego->transport->recv_extra);
 }
 
@@ -319,6 +321,7 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 
 	tpkt_read_header(s);
 	li = tpdu_read_connection_request(s);
+
 	if (li != stream_get_left(s) + 6)
 	{
 		printf("Incorrect TPDU length indicator.\n");
@@ -403,7 +406,7 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	{
 		int cookie_length = strlen(nego->cookie);
 		stream_write(s, "Cookie: mstshash=", 17);
-		stream_write(s, (uint8*)nego->cookie, cookie_length);
+		stream_write(s, (uint8*) nego->cookie, cookie_length);
 		stream_write_uint8(s, 0x0D); /* CR */
 		stream_write_uint8(s, 0x0A); /* LF */
 		length += cookie_length + 19;
