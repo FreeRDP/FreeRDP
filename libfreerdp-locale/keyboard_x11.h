@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * X11 Keyboard Mapping
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,10 @@
  * limitations under the License.
  */
 
-/* Hardcoded mapping from xkb layout names and variants to RDP layout ids */
+#ifndef __LOCALE_KEYBOARD_X11_H
+#define __LOCALE_KEYBOARD_X11_H
 
-#ifndef __LAYOUTS_X_H
-#define __LAYOUTS_X_H
-
+uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId);
 uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
 
-#ifdef sun
-uint32 detect_keyboard_type_and_layout_sunos(char* xkbfile, int length);
-#endif
-
-#endif
+#endif /* __LOCALE_KEYBOARD_X11_H */

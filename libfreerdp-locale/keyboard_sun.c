@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Solaris Keyboard Mapping
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "liblocale.h"
-#include <freerdp/locale/layouts.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "keyboard_x11.h"
 
@@ -47,16 +47,16 @@
  * keyboard layout indicated by the index given (in this case, 33, or US-English).
  */
 
-struct _SunOSKeyboard
+struct _SOLARIS_KEYBOARD
 {
-	int type; /* Sun keyboard type */
-	int layout; /* Layout */
+	uint32 type; /* Solaris keyboard type */
+	uint32 layout; /* Layout */
 	char* xkbType; /* XKB keyboard */
-	uint32 keyboardLayoutID; /* XKB keyboard layout */
+	uint32 keyboardLayoutId; /* XKB keyboard layout */
 };
-typedef struct _SunOSKeyboard SunOSKeyboard;
+typedef struct _SOLARIS_KEYBOARD SOLARIS_KEYBOARD;
 
-static const SunOSKeyboard SunOSKeyboards[] =
+static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] =
 {
 	{ 4,   0,    "sun(type4)",               KBD_US					}, /*  US4 */
 	{ 4,   1,    "sun(type4)",               KBD_US					}, /*  US4 */
@@ -197,7 +197,7 @@ static const SunOSKeyboard SunOSKeyboards[] =
 	{ 6,   272,  "sun(type6)",               KBD_PORTUGUESE_BRAZILIAN_ABNT		}  /*  Brazil6_usb */
 };
 
-uint32 detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
+uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* xkbfile, int length)
 {
 	FILE* kbd;
 
@@ -245,18 +245,17 @@ uint32 detect_keyboard_type_and_layout_sunos(char* xkbfile, int length)
 	}
 	pclose(kbd);
 
-	for (i = 0; i < sizeof(SunOSKeyboards) / sizeof(SunOSKeyboard); i++)
+	for (i = 0; i < sizeof(SOLARIS_KEYBOARD_TABLE) / sizeof(SOLARIS_KEYBOARD); i++)
 	{
-		if (SunOSKeyboards[i].type == type)
+		if (SOLARIS_KEYBOARD_TABLE[i].type == type)
 		{
-			if (SunOSKeyboards[i].layout == layout)
+			if (SOLARIS_KEYBOARD_TABLE[i].layout == layout)
 			{
-				strncpy(xkbfile, SunOSKeyboards[i].xkbType, length);
-				return SunOSKeyboards[i].keyboardLayoutID;
+				strncpy(xkbfile, SOLARIS_KEYBOARD_TABLE[i].xkbType, length);
+				return SOLARIS_KEYBOARD_TABLE[i].keyboardLayoutId;
 			}
 		}
 	}
 
 	return 0;
 }
-

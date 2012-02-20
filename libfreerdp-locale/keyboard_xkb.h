@@ -1,6 +1,6 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * XKB Keyboard Mapping
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,9 +17,11 @@
  * limitations under the License.
  */
 
-#include <freerdp/types.h>
+#ifndef __LOCALE_KEYBOARD_XKB_H
+#define __LOCALE_KEYBOARD_XKB_H
 
-#include "keyboard.h"
+#include <freerdp/types.h>
+#include <freerdp/locale/keyboard.h>
 
 struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
 {
@@ -28,6 +30,8 @@ struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
 };
 typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
 
-void* freerdp_keyboard_xkb_init();
+uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId);
 uint32 detect_keyboard_layout_from_xkb(void* display);
-int freerdp_keyboard_load_map_from_xkb(void* display, RDP_KEYCODE x11_keycode_to_rdp_scancode[256], uint32 rdp_scancode_to_x11_keycode[256][2]);
+int freerdp_keyboard_load_map_from_xkb(void* display);
+
+#endif /* __LOCALE_KEYBOARD_XKB_H */

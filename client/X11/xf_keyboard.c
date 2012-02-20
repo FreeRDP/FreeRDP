@@ -64,7 +64,7 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 	rdpInput* input;
 
 	input = xfi->instance->input;
-	scancode = freerdp_keyboard_get_scancode_from_keycode(keycode, &extended);
+	scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode, &extended);
 
 	if (scancode == 0)
 	{

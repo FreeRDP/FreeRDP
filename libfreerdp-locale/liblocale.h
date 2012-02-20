@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * RDP Localization
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __LIBKBD_H
-#define __LIBKBD_H
+#ifndef __LIBLOCALE_H
+#define __LIBLOCALE_H
 
 #include <freerdp/utils/debug.h>
 
@@ -28,4 +28,4 @@
 #define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __LIBKBD_H */
+#endif /* __LIBLOCALE_H */

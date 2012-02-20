@@ -1,6 +1,6 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * XKB Keyboard Mapping
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -23,6 +23,8 @@
 #include "keyboard_x11.h"
 #include <freerdp/locale/keyboard.h>
 
+extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
+extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[];
 
 #include <X11/Xlib.h>
@@ -314,6 +316,31 @@ void* freerdp_keyboard_xkb_init()
 	return (void*) display;
 }
 
+uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
+{
+	void* display;
+	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
+	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+
+	display = freerdp_keyboard_xkb_init();
+
+	if (!display)
+	{
+		DEBUG_KBD("Error initializing xkb");
+		return 0;
+	}
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = detect_keyboard_layout_from_xkb(display);
+		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
+	}
+
+	freerdp_keyboard_load_map_from_xkb(display);
+
+	return keyboardLayoutId;
+}
+
 /* return substring starting after nth comma, ending at following comma */
 static char* comma_substring(char* s, int n)
 {
@@ -377,7 +404,7 @@ uint32 detect_keyboard_layout_from_xkb(void* display)
 	return keyboard_layout;
 }
 
-int freerdp_keyboard_load_map_from_xkb(void* display, RDP_KEYCODE x_keycode_to_rdp_scancode[256], uint32 rdp_scancode_to_x_keycode[256][2])
+int freerdp_keyboard_load_map_from_xkb(void* display)
 {
 	int i, j;
 	boolean found;
@@ -411,14 +438,13 @@ int freerdp_keyboard_load_map_from_xkb(void* display, RDP_KEYCODE x_keycode_to_r
 				{
 					uint32 vkcode = VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].vkcode;
 
-					x_keycode_to_rdp_scancode[i].keycode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
-					x_keycode_to_rdp_scancode[i].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
-					x_keycode_to_rdp_scancode[i].keyname = VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname;
+					X11_KEYCODE_TO_RDP_SCANCODE[i].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
+					X11_KEYCODE_TO_RDP_SCANCODE[i].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
 
-					if (x_keycode_to_rdp_scancode[i].extended)
-						rdp_scancode_to_x_keycode[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = i;
+					if (X11_KEYCODE_TO_RDP_SCANCODE[i].extended)
+						RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = i;
 					else
-						rdp_scancode_to_x_keycode[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = i;
+						RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = i;
 				}
 			}
 

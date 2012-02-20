@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Microsoft Locales
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
  * http://msdn.microsoft.com/en-us/library/ms776260.aspx
  */
 
-static const SYSTEM_LOCALE SystemLocaleTable[] =
+static const SYSTEM_LOCALE SYSTEM_LOCALE_TABLE[] =
 {
 	{  "af", "ZA", AFRIKAANS }, /* Afrikaans (South Africa) */
 	{  "sq", "AL", ALBANIAN }, /* Albanian (Albania) */
@@ -241,17 +241,17 @@ static const SYSTEM_LOCALE SystemLocaleTable[] =
 };
 
 
-struct _localeAndKeyboardLayout
+struct _LOCALE_KEYBOARD_LAYOUTS
 {
 	uint32 locale; /* Locale ID */
 	uint32 keyboardLayouts[5]; /* array of associated keyboard layouts */
 
 };
-typedef struct _localeAndKeyboardLayout localeAndKeyboardLayout;
+typedef struct _LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS;
 
 /* TODO: Use KBD_* defines instead of hardcoded values */
 
-static const localeAndKeyboardLayout defaultKeyboardLayouts[] =
+static const LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS_TABLE[] =
 {
 	{ AFRIKAANS,				{ 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 	{ ALBANIAN,				{ 0x0000041c, 0x00000409, 0x0, 0x0, 0x0 } },
@@ -464,11 +464,11 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 
 	freerdp_get_system_language_and_country_codes(language, country);
 
-	for (i = 0; i < sizeof(SystemLocaleTable) / sizeof(SYSTEM_LOCALE); i++)
+	for (i = 0; i < sizeof(SYSTEM_LOCALE_TABLE) / sizeof(SYSTEM_LOCALE); i++)
 	{
-		if ((strcmp(language, SystemLocaleTable[i].language) == 0) && (strcmp(country, SystemLocaleTable[i].country) == 0))
+		if ((strcmp(language, SYSTEM_LOCALE_TABLE[i].language) == 0) && (strcmp(country, SYSTEM_LOCALE_TABLE[i].country) == 0))
 		{
-			locale = (SYSTEM_LOCALE*) &SystemLocaleTable[i];
+			locale = (SYSTEM_LOCALE*) &SYSTEM_LOCALE_TABLE[i];
 			break;
 		}
 	}
@@ -495,24 +495,24 @@ uint32 freerdp_detect_keyboard_layout_from_locale()
 
 	DEBUG_KBD("Found locale : %s_%s", locale.language, locale.country);
 
-	for (i = 0; i < sizeof(defaultKeyboardLayouts) / sizeof(localeAndKeyboardLayout); i++)
+	for (i = 0; i < sizeof(LOCALE_KEYBOARD_LAYOUTS_TABLE) / sizeof(LOCALE_KEYBOARD_LAYOUTS); i++)
 	{
-		if (defaultKeyboardLayouts[i].locale == locale->code)
+		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
 			for (j = 0; j < 5; j++)
 			{
-				if (defaultKeyboardLayouts[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
+				if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
 				{
 					continue; /* Skip, try to get a more localized keyboard layout */
 				}
-				else if (defaultKeyboardLayouts[i].keyboardLayouts[j] == 0)
+				else if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == 0)
 				{
 					break; /* No more keyboard layouts */
 				}
 				else
 				{
-					return defaultKeyboardLayouts[i].keyboardLayouts[j];
+					return LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
 				}
 			}
 

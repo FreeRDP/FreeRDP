@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based keyboard mapping
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Keyboard Mapping
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,15 +47,6 @@ struct _VIRTUAL_KEY_CODE
 	const char* name; /* Virtual Key Code Name */
 };
 typedef struct _VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE;
-
-struct _VIRTUAL_KEY
-{
-	uint32 scancode; /* Windows "scan code" */
-	boolean extended; /* extended key flag */
-	const char* name; /* Windows virtual key name */
-	const char* x_keyname; /* XKB keyname */
-};
-typedef struct _VIRTUAL_KEY VIRTUAL_KEY;
 
 /* Mouse buttons */
 
@@ -488,11 +479,12 @@ typedef struct _VIRTUAL_KEY VIRTUAL_KEY;
 #define KBD_CHINESE_TRADITIONAL_MICROSOFT_PINYIN_IME_3		0xE00E0804
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
 
-FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboard_layout_id);
+FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboardLayoutId);
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);
-FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID);
-FREERDP_API uint32 freerdp_keyboard_get_scancode_from_keycode(uint32 keycode, boolean* extended);
-FREERDP_API uint32 freerdp_keyboard_get_keycode_from_scancode(uint32 scancode, boolean extended);
-FREERDP_API uint32 freerdp_keyboard_get_scancode_from_vkcode(uint32 vkcode, boolean* extended);
+FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutId);
+FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode, boolean* extended);
+FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended);
+FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode, boolean* extended);
+FREERDP_API char* freerdp_keyboard_get_virtual_key_code_name(uint32 vkcode);
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_H */

@@ -20,7 +20,6 @@
 set(FREERDP_LOCALE_SRCS
 	keyboard_layout.c
 	keyboard.c
-	keyboard.h
 	locale.c
 	liblocale.h)
 

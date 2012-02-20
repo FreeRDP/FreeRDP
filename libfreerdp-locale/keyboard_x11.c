@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * XKB-based Keyboard Mapping to Microsoft Keyboard System
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * X11 Keyboard Mapping
  *
- * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,14 @@
 #include <string.h>
 
 #include "liblocale.h"
+#include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
 
 #include "keyboard_x11.h"
+
+extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
+extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[];
 
 struct _XKB_VARIANT
 {
@@ -890,6 +895,48 @@ static const XKB_LAYOUT xkbLayouts[] =
 	{ "brai",	 0, brai_variants }, /* Braille */
 	{ "tm",		 KBD_TURKISH_Q, tm_variants }, /* Turkmenistan */
 };
+
+uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
+{
+	uint32 vkcode;
+	uint32 keycode;
+	uint32 keycode_to_vkcode[256];
+
+	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
+	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_locale();
+		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
+	}
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = 0x0409;
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
+	}
+
+#ifdef __APPLE__
+	/* Apple X11 breaks XKB detection */
+	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
+#endif
+
+	for (keycode = 0; keycode < 256; keycode++)
+	{
+		vkcode = keycode_to_vkcode[keycode];
+
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
+
+		if (X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended)
+			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = keycode;
+		else
+			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = keycode;
+	}
+
+	return keyboardLayoutId;
+}
 
 uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
