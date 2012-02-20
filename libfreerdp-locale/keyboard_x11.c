@@ -907,7 +907,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 
 	if (keyboardLayoutId == 0)
 	{
-		keyboardLayoutId = freerdp_detect_keyboard_layout_from_locale();
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
 		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutID);
 	}
 
