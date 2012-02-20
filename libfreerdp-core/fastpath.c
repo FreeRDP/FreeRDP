@@ -546,9 +546,9 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	rdp = fastpath->rdp;
 
 	length = stream_get_length(s);
-	if (length > 127)
+	if (length >= (2 << 14))
 	{
-		printf("Maximum FastPath PDU length is 127\n");
+		printf("Maximum FastPath PDU length is 32767\n");
 		return false;
 	}
 
