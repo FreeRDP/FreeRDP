@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Time Zone Redirection
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,19 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef __TIMEZONE_H
-#define __TIMEZONE_H
+#ifndef __LOCALE_TIMEZONE_H
+#define __LOCALE_TIMEZONE_H
 
-#include "rdp.h"
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+#include <freerdp/settings.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
-#include <freerdp/locale/timezone.h>
+FREERDP_API void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone);
 
-void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time);
-void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
-void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings);
-boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
-void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
-
-#endif /* __TIMEZONE_H */
+#endif /* __LOCALE_TIMEZONE_H */

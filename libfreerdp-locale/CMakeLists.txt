@@ -21,6 +21,7 @@ set(FREERDP_LOCALE_SRCS
 	keyboard_layout.c
 	keyboard.c
 	locale.c
+	timezone.c
 	liblocale.h)
 
 set(FREERDP_LOCALE_X11_SRCS
