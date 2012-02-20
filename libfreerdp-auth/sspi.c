@@ -21,14 +21,9 @@
 
 #include <freerdp/auth/sspi.h>
 
-/* Package Management */
+/* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
-{
-	SECURITY_FUNCTION_TABLE* security_function_table;
-	security_function_table = xnew(SECURITY_FUNCTION_TABLE);
-	return security_function_table;
-}
+/* Package Management */
 
 SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo)
 {
@@ -98,6 +93,13 @@ SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppP
 	return SEC_E_OK;
 }
 
+SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
+{
+	SECURITY_FUNCTION_TABLE* security_function_table;
+	security_function_table = xnew(SECURITY_FUNCTION_TABLE);
+	return security_function_table;
+}
+
 SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo)
 {
 	return SEC_E_OK;
@@ -112,7 +114,22 @@ SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 	return SEC_E_OK;
 }
 
+SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken)
+{
+	return SEC_E_OK;
+}
+
 SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	return SEC_E_OK;
 }
@@ -126,11 +143,31 @@ SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* ph
 	return SEC_E_OK;
 }
 
+SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS CompleteAuthToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext)
+{
+	return SEC_E_OK;
+}
+
 SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer)
 {
 	if (pvContextBuffer != NULL)
 		xfree(pvContextBuffer);
 
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS ImpersonateSecurityContext(CTXT_HANDLE* phContext)
+{
 	return SEC_E_OK;
 }
 
@@ -143,6 +180,21 @@ SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE
 }
 
 SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS QuerySecurityContextToken(CTXT_HANDLE* phContext, void* phToken)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SetContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext)
 {
 	return SEC_E_OK;
 }
