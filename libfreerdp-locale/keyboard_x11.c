@@ -902,6 +902,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 	uint32 keycode;
 	uint32 keycode_to_vkcode[256];
 
+	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
 	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
 	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
 
@@ -925,6 +926,9 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 	for (keycode = 0; keycode < 256; keycode++)
 	{
 		vkcode = keycode_to_vkcode[keycode];
+
+		if (!(vkcode > 0 && vkcode < 256))
+			continue;
 
 		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
 		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
