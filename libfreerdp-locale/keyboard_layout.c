@@ -582,7 +582,7 @@ const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256] =
 	{ 0x00, 0 }, /* VK_SEPARATOR */
 	{ 0x4A, 0 }, /* VK_SUBTRACT */
 	{ 0x53, 0 }, /* VK_DECIMAL */
-	{ 0x35, 0 }, /* VK_DIVIDE */
+	{ 0x35, 1 }, /* VK_DIVIDE */
 	{ 0x3B, 0 }, /* VK_F1 */
 	{ 0x3C, 0 }, /* VK_F2 */
 	{ 0x3D, 0 }, /* VK_F3 */
