@@ -717,6 +717,9 @@ int freerdp_keyboard_load_map_from_xkb(void* display)
 				{
 					uint32 vkcode = VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].vkcode;
 
+					DEBUG_KBD("%4s: key_code: %02X -> vkcode: %02X -> rdp scancode: %02X%s", xkb_keyname, i, vkcode,
+						VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code,
+						VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended ? " extended" : "");
 					X11_KEYCODE_TO_RDP_SCANCODE[i].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
 					X11_KEYCODE_TO_RDP_SCANCODE[i].extended = extended;
 
@@ -725,6 +728,8 @@ int freerdp_keyboard_load_map_from_xkb(void* display)
 					else
 						RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = i;
 				}
+				else
+					DEBUG_KBD("%4s: key_code: %02X -> no RDP scancode found", xkb_keyname, i);
 			}
 
 			status = true;
