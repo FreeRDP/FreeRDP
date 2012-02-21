@@ -65,6 +65,8 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	char keymap_filename[256] = "";
 	char keycode_string[32] = "";
 	char vkcode_name[128] = "";
+	boolean found = false;
+	boolean extended = false;
 	VIRTUAL_KEY_CODE* vkcode;
 
 	beg = name;
@@ -144,17 +146,41 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 				/* Load this key mapping in the keyboard mapping */
 
 				i = 0;
+				found = false;
+				extended = false;
 
 				do
 				{
 					vkcode = (VIRTUAL_KEY_CODE*) &VIRTUAL_KEY_CODE_TABLE[i];
 
 					if (strcmp(vkcode_name, vkcode->name) == 0)
+					{
+						found = true;
+						extended = false;
 						keycode_to_vkcode[keycode] = vkcode->code;
+					}
 
 					i++;
 				}
 				while (vkcode->code != 0);
+
+				if (!found)
+				{
+					do
+					{
+						vkcode = (VIRTUAL_KEY_CODE*) &VIRTUAL_KEY_CODE_TABLE[i];
+
+						if (strcmp(vkcode_name, vkcode->name) == 0)
+						{
+							found = true;
+							extended = true;
+							keycode_to_vkcode[keycode] = vkcode->code;
+						}
+
+						i++;
+					}
+					while (vkcode->code != 0);
+				}
 			}
 			else if ((pch = strstr(buffer, ": extends")) != NULL)
 			{
