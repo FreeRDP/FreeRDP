@@ -293,7 +293,7 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	}
 	else
 	{
-		DEBUG_WARN("RDPDR component: 0x%02X packetID: 0x%02X\n", component, packetID);
+		DEBUG_WARN("RDPDR component: 0x%02X packetID: 0x%02X", component, packetID);
 	}
 
 	stream_free(data_in);

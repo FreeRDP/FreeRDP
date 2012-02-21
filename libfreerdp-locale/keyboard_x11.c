@@ -949,7 +949,7 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	if ((layout == NULL) || (variant == NULL))
 		return 0;
 
-	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s\n", layout, variant);
+	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
 	for (i = 0; i < sizeof(xkbLayouts) / sizeof(XKB_LAYOUT); i++)
 	{
