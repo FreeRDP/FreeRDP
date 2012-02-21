@@ -24,10 +24,14 @@ set(FREERDP_AUTH_SRCS
 
 add_library(freerdp-auth ${FREERDP_AUTH_SRCS})
 
+include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIRS})
+
 set_target_properties(freerdp-auth PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 target_link_libraries(freerdp-auth freerdp-utils)
 target_link_libraries(freerdp-auth freerdp-crypto)
+target_link_libraries(freerdp-auth ${ZLIB_LIBRARIES})	
 
 install(TARGETS freerdp-auth DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

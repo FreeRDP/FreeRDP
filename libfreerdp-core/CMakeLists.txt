@@ -18,6 +18,7 @@
 # limitations under the License.
 
 add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
+
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
@@ -99,6 +100,7 @@ target_link_libraries(freerdp-core freerdp-codec)
 target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core freerdp-auth)
 target_link_libraries(freerdp-core freerdp-locale)
+target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
