@@ -295,6 +295,9 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 
 uint32 freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode, boolean* extended)
 {
+	DEBUG_KBD("x11 keycode: %02X -> rdp code: %02X%s", keycode,
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code,
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended ? " extended" : "");
 	*extended = X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended;
 	return X11_KEYCODE_TO_RDP_SCANCODE[keycode].code;
 }

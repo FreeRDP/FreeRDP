@@ -40,7 +40,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	uint16 kbdFlags;
 	PKBDLLHOOKSTRUCT p;
 
-	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X\n", g_focus_hWnd, nCode, wParam);
+	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
 
 	if (g_focus_hWnd && (nCode == HC_ACTION))
 	{
@@ -57,7 +57,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				flags = p->flags;
 				kbdFlags = 0;
 
-				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X\n",
+				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
 					(wParam == WM_KEYDOWN), scanCode, flags, p->vkCode);
 
 				if (wfi->fs_toggle &&
@@ -75,7 +75,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (flags & LLKHF_EXTENDED)
 					{
 						/* Windows sends NumLock as extended - rdp doesn't */
-						DEBUG_KBD("hack: NumLock (x45) should not be extended\n");
+						DEBUG_KBD("hack: NumLock (x45) should not be extended");
 						flags &= ~LLKHF_EXTENDED;
 					}
 					else
@@ -84,7 +84,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						 * It must however be sent as a one-shot Ctrl+NumLock */
 						if (wParam == WM_KEYDOWN)
 						{
-							DEBUG_KBD("Pause, sent as Ctrl+NumLock\n");
+							DEBUG_KBD("Pause, sent as Ctrl+NumLock");
 							input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x1D); /* Ctrl down */
 							input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x45); /* NumLock down */
 							input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x1D); /* Ctrl up */
@@ -92,7 +92,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						}
 						else
 						{
-							DEBUG_KBD("Pause up\n");
+							DEBUG_KBD("Pause up");
 						}
 
 						return 1;
@@ -101,7 +101,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				if ((scanCode == 0x36) && (flags & LLKHF_EXTENDED))
 				{
-					DEBUG_KBD("hack: right shift (x36) should not be extended\n");
+					DEBUG_KBD("hack: right shift (x36) should not be extended");
 					flags &= ~LLKHF_EXTENDED;
 				}
 
@@ -110,7 +110,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				input->KeyboardEvent(input, kbdFlags, scanCode);
 
 				if (p->vkCode == VK_CAPITAL)
-					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator\n");
+					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");
 				else
 					return 1;
 
@@ -204,12 +204,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_SETFOCUS:
-			DEBUG_KBD("getting focus %X\n", hWnd);
+			DEBUG_KBD("getting focus %X", hWnd);
 			g_focus_hWnd = hWnd;
 			break;
 
 		case WM_KILLFOCUS:
-			DEBUG_KBD("loosing focus %X\n", hWnd);
+			DEBUG_KBD("loosing focus %X", hWnd);
 			if (g_focus_hWnd == hWnd)
 				g_focus_hWnd = NULL;
 			break;
