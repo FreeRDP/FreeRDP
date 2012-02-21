@@ -297,6 +297,141 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[] =
 VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[] =
 {
 	{ 0, "" },
+	{ 0, "" }, /* VK_LBUTTON */
+	{ 0, "" }, /* VK_RBUTTON */
+	{ 0, "" }, /* VK_CANCEL */
+	{ 0, "" }, /* VK_MBUTTON */
+	{ 0, "" }, /* VK_XBUTTON1 */
+	{ 0, "" }, /* VK_XBUTTON2 */
+	{ 0, "" },
+	{ 0, "" }, /* VK_BACK */
+	{ 0, "" }, /* VK_TAB */
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" }, /* VK_CLEAR */
+	{ VK_RETURN, "KPEN" }, /* VK_RETURN */
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" }, /* VK_SHIFT */
+	{ 0, "" }, /* VK_CONTROL */
+	{ 0, "" }, /* VK_MENU */
+	{ VK_PAUSE, "PAUS" }, /* VK_PAUSE */
+	{ 0, "" }, /* VK_CAPITAL */
+	{ 0, "" }, /* VK_KANA / VK_HANGUL */
+	{ 0, "" },
+	{ 0, "" }, /* VK_JUNJA */
+	{ 0, "" }, /* VK_FINAL */
+	{ 0, "" }, /* VK_HANJA / VK_KANJI */
+	{ 0, "" },
+	{ 0, "" }, /* VK_ESCAPE */
+	{ 0, "" }, /* VK_CONVERT */
+	{ 0, "" }, /* VK_NONCONVERT */
+	{ 0, "" }, /* VK_ACCEPT */
+	{ 0, "" }, /* VK_MODECHANGE */
+	{ 0, "" }, /* VK_SPACE */
+	{ VK_PRIOR, "PGUP" }, /* VK_PRIOR */
+	{ VK_NEXT, "PGDN" }, /* VK_NEXT */
+	{ VK_END, "END" }, /* VK_END */
+	{ VK_HOME, "HOME" }, /* VK_HOME */
+	{ VK_LEFT, "LEFT" }, /* VK_LEFT */
+	{ VK_UP, "UP" }, /* VK_UP */
+	{ VK_RIGHT, "RGHT" }, /* VK_RIGHT */
+	{ VK_DOWN, "DOWN" }, /* VK_DOWN */
+	{ 0, "" }, /* VK_SELECT */
+	{ VK_PRINT, "PRSC" }, /* VK_PRINT */
+	{ VK_EXECUTE, "" }, /* VK_EXECUTE */
+	{ VK_SNAPSHOT, "" }, /* VK_SNAPSHOT */
+	{ VK_INSERT, "INS" }, /* VK_INSERT */
+	{ VK_DELETE, "DELE" }, /* VK_DELETE */
+	{ 0, "" }, /* VK_HELP */
+	{ 0, "" }, /* VK_KEY_0 */
+	{ 0, "" }, /* VK_KEY_1 */
+	{ 0, "" }, /* VK_KEY_2 */
+	{ 0, "" }, /* VK_KEY_3 */
+	{ 0, "" }, /* VK_KEY_4 */
+	{ 0, "" }, /* VK_KEY_5 */
+	{ 0, "" }, /* VK_KEY_6 */
+	{ 0, "" }, /* VK_KEY_7 */
+	{ 0, "" }, /* VK_KEY_8 */
+	{ 0, "" }, /* VK_KEY_9 */
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" },
+	{ 0, "" }, /* VK_KEY_A */
+	{ 0, "" }, /* VK_KEY_B */
+	{ 0, "" }, /* VK_KEY_C */
+	{ 0, "" }, /* VK_KEY_D */
+	{ 0, "" }, /* VK_KEY_E */
+	{ 0, "" }, /* VK_KEY_F */
+	{ 0, "" }, /* VK_KEY_G */
+	{ 0, "" }, /* VK_KEY_H */
+	{ 0, "" }, /* VK_KEY_I */
+	{ 0, "" }, /* VK_KEY_J */
+	{ 0, "" }, /* VK_KEY_K */
+	{ 0, "" }, /* VK_KEY_L */
+	{ 0, "" }, /* VK_KEY_M */
+	{ 0, "" }, /* VK_KEY_M */
+	{ 0, "" }, /* VK_KEY_O */
+	{ 0, "" }, /* VK_KEY_P */
+	{ 0, "" }, /* VK_KEY_Q */
+	{ 0, "" }, /* VK_KEY_R */
+	{ 0, "" }, /* VK_KEY_S */
+	{ 0, "" }, /* VK_KEY_T */
+	{ 0, "" }, /* VK_KEY_U */
+	{ 0, "" }, /* VK_KEY_V */
+	{ 0, "" }, /* VK_KEY_W */
+	{ 0, "" }, /* VK_KEY_X */
+	{ 0, "" }, /* VK_KEY_Y */
+	{ 0, "" }, /* VK_KEY_Z */
+	{ VK_LWIN, "LWIN" }, /* VK_LWIN */
+	{ VK_RWIN, "RWIN" }, /* VK_RWIN */
+	{ VK_APPS, "COMP" }, /* VK_APPS */
+	{ 0, "" },
+	{ 0, "" }, /* VK_SLEEP */
+	{ 0, "" }, /* VK_NUMPAD0 */
+	{ 0, "" }, /* VK_NUMPAD1 */
+	{ 0, "" }, /* VK_NUMPAD2 */
+	{ 0, "" }, /* VK_NUMPAD3 */
+	{ 0, "" }, /* VK_NUMPAD4 */
+	{ 0, "" }, /* VK_NUMPAD5 */
+	{ 0, "" }, /* VK_NUMPAD6 */
+	{ 0, "" }, /* VK_NUMPAD7 */
+	{ 0, "" }, /* VK_NUMPAD8 */
+	{ 0, "" }, /* VK_NUMPAD9 */
+	{ 0, "" }, /* VK_MULTIPLY */
+	{ 0, "" }, /* VK_ADD */
+	{ 0, "" }, /* VK_SEPARATOR */
+	{ 0, "" }, /* VK_SUBTRACT */
+	{ 0, "" }, /* VK_DECIMAL */
+	{ VK_DIVIDE, "KPDV" }, /* VK_DIVIDE */
+	{ 0, "" }, /* VK_F1 */
+	{ 0, "" }, /* VK_F2 */
+	{ 0, "" }, /* VK_F3 */
+	{ 0, "" }, /* VK_F4 */
+	{ 0, "" }, /* VK_F5 */
+	{ 0, "" }, /* VK_F6 */
+	{ 0, "" }, /* VK_F7 */
+	{ 0, "" }, /* VK_F8 */
+	{ 0, "" }, /* VK_F9 */
+	{ 0, "" }, /* VK_F10 */
+	{ 0, "" }, /* VK_F11 */
+	{ 0, "" }, /* VK_F12 */
+	{ 0, "" }, /* VK_F13 */
+	{ 0, "" }, /* VK_F14 */
+	{ 0, "" }, /* VK_F15 */
+	{ 0, "" }, /* VK_F16 */
+	{ 0, "" }, /* VK_F17 */
+	{ 0, "" }, /* VK_F18 */
+	{ 0, "" }, /* VK_F19 */
+	{ 0, "" }, /* VK_F20 */
+	{ 0, "" }, /* VK_F21 */
+	{ 0, "" }, /* VK_F22 */
+	{ 0, "" }, /* VK_F23 */
+	{ 0, "" }, /* VK_F24 */
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
@@ -305,6 +440,8 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
+	{ VK_NUMLOCK, "NMLK" }, /* VK_NUMLOCK */
+	{ VK_SCROLL, "SCLK" }, /* VK_SCROLL */
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
@@ -315,13 +452,45 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
-	{ VK_PAUSE, "PAUS" },
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
+	{ 0, "" }, /* VK_LSHIFT */
+	{ 0, "" }, /* VK_RSHIFT */
+	{ 0, "" }, /* VK_LCONTROL */
+	{ VK_RCONTROL, "RCTL" }, /* VK_RCONTROL */
+	{ 0, "" }, /* VK_LMENU */
+	{ VK_RMENU, "RALT" }, /* VK_RMENU */
+	{ 0, "" }, /* VK_BROWSER_BACK */
+	{ 0, "" }, /* VK_BROWSER_FORWARD */
+	{ 0, "" }, /* VK_BROWSER_REFRESH */
+	{ 0, "" }, /* VK_BROWSER_STOP */
+	{ 0, "" }, /* VK_BROWSER_SEARCH */
+	{ 0, "" }, /* VK_BROWSER_FAVORITES */
+	{ 0, "" }, /* VK_BROWSER_HOME */
+	{ 0, "" }, /* VK_VOLUME_MUTE */
+	{ 0, "" }, /* VK_VOLUME_DOWN */
+	{ 0, "" }, /* VK_VOLUME_UP */
+	{ 0, "" }, /* VK_MEDIA_NEXT_TRACK */
+	{ 0, "" }, /* VK_MEDIA_PREV_TRACK */
+	{ 0, "" }, /* VK_MEDIA_STOP */
+	{ 0, "" }, /* VK_MEDIA_PLAY_PAUSE */
+	{ 0, "" }, /* VK_LAUNCH_MAIL */
+	{ 0, "" }, /* VK_MEDIA_SELECT */
+	{ 0, "" }, /* VK_LAUNCH_APP1 */
+	{ 0, "" }, /* VK_LAUNCH_APP2 */
 	{ 0, "" },
 	{ 0, "" },
+	{ 0, "" }, /* VK_OEM_1 */
+	{ 0, "" }, /* VK_OEM_PLUS */
+	{ 0, "" }, /* VK_OEM_COMMA */
+	{ 0, "" }, /* VK_OEM_MINUS */
+	{ 0, "" }, /* VK_OEM_PERIOD */
+	{ 0, "" }, /* VK_OEM_2 */
+	{ 0, "" }, /* VK_OEM_3 */
+	{ 0, "" }, /* VK_ABNT_C1 */
+	{ 0, "" }, /* VK_ABNT_C2 */
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
@@ -329,20 +498,7 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
-	{ VK_PRIOR, "PGUP" },
-	{ VK_NEXT, "PGDN" },
-	{ VK_END, "END" },
-	{ VK_HOME, "HOME" },
-	{ VK_LEFT, "LEFT" },
-	{ VK_UP, "UP" },
-	{ VK_RIGHT, "RGHT" },
-	{ VK_DOWN, "DOWN" },
 	{ 0, "" },
-	{ VK_PRINT, "PRSC" },
-	{ VK_EXECUTE, "" },
-	{ VK_SNAPSHOT, "" },
-	{ VK_INSERT, "INS" },
-	{ VK_DELETE, "DELE" },
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
@@ -359,11 +515,19 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
+	{ 0, "" }, /* VK_OEM_4 */
+	{ 0, "" }, /* VK_OEM_5 */
+	{ 0, "" }, /* VK_OEM_6 */
+	{ 0, "" }, /* VK_OEM_7 */
+	{ 0, "" }, /* VK_OEM_8 */
 	{ 0, "" },
 	{ 0, "" },
+	{ 0, "" }, /* VK_OEM_102 */
 	{ 0, "" },
 	{ 0, "" },
+	{ 0, "" }, /* VK_PROCESSKEY */
 	{ 0, "" },
+	{ 0, "" }, /* VK_PACKET */
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
@@ -378,179 +542,15 @@ VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME EXTENDED_VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE
 	{ 0, "" },
 	{ 0, "" },
 	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ VK_LWIN, "LWIN" },
-	{ VK_RWIN, "RWIN" },
-	{ VK_APPS, "COMP" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ VK_DIVIDE, "KPDV" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ VK_NUMLOCK, "NMLK" },
-	{ VK_SCROLL, "SCLK" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ VK_RCONTROL, "RCTL" },
-	{ 0, "" },
-	{ VK_RMENU, "RALT" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
-	{ 0, "" },
+	{ 0, "" }, /* VK_ATTN */
+	{ 0, "" }, /* VK_CRSEL */
+	{ 0, "" }, /* VK_EXSEL */
+	{ 0, "" }, /* VK_EREOF */
+	{ 0, "" }, /* VK_PLAY */
+	{ 0, "" }, /* VK_ZOOM */
+	{ 0, "" }, /* VK_NONAME */
+	{ 0, "" }, /* VK_PA1 */
+	{ 0, "" }, /* VK_OEM_CLEAR */
 	{ 0, "" }
 };
 
