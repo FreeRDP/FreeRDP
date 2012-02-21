@@ -238,7 +238,7 @@ static uint32 sc_map_state(uint32 state)
 	if (state & SCARD_SPECIFIC)
 		state = 0x00000006;
 	else if (state & SCARD_NEGOTIABLE)
-		state = 0x00000005;
+		state = 0x00000006;
 	else if (state & SCARD_POWERED)
 		state = 0x00000004;
 	else if (state & SCARD_SWALLOWED)
