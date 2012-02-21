@@ -443,6 +443,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--kbd-list</term>
+        <listitem>
+          <para>
+            list all keyboard layout ids used by -k
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--version</term>
         <listitem>
           <para>
