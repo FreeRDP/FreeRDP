@@ -76,7 +76,7 @@ disk_map_posix_err(int fs_errno)
 			rc = STATUS_UNSUCCESSFUL;
 			break;
 	}
-	DEBUG_SVC("errno 0x%x mapped to 0x%x\n", fs_errno, rc);
+	DEBUG_SVC("errno 0x%x mapped to 0x%x", fs_errno, rc);
 	return rc;
 }
 
