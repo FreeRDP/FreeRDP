@@ -136,8 +136,10 @@ struct rdp_rdp
 	struct rdp_mppc* mppc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;
+	int decrypt_checksum_use_count;
 	struct crypto_rc4_struct* rc4_encrypt_key;
 	int encrypt_use_count;
+	int encrypt_checksum_use_count;
 	struct crypto_des3_struct* fips_encrypt;
 	struct crypto_des3_struct* fips_decrypt;
 	struct crypto_hmac_struct* fips_hmac;
