@@ -128,13 +128,19 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 {
 	int connection_status;
 
-	tls->ctx = SSL_CTX_new(TLSv1_server_method());
+	tls->ctx = SSL_CTX_new(SSLv23_server_method());
 
 	if (tls->ctx == NULL)
 	{
 		printf("SSL_CTX_new failed\n");
 		return false;
 	}
+
+	/*
+	 * We only want SSLv3 and TLSv1, so disable SSLv2.
+	 * SSLv3 is used by, eg. Microsoft RDC for Mac OS X.
+	 */
+	SSL_CTX_set_options(tls->ctx, SSL_OP_NO_SSLv2);
 
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
