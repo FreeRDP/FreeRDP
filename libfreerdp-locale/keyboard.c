@@ -57,6 +57,8 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	char* beg;
 	char* end;
 	int i = 0;
+	uint32 vkcode;
+	uint32 scancode;
 	int kbd_found = 0;
 	char* keymap_path;
 	uint32 keycode = 0;
@@ -68,7 +70,6 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	char vkcode_name[128] = "";
 	boolean found = false;
 	boolean extended = false;
-	VIRTUAL_KEY_CODE* vkcode;
 
 	beg = name;
 
@@ -150,37 +151,19 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 				found = false;
 				extended = false;
 
-				do
+				for (i = 0; i < 256; i++)
 				{
-					vkcode = (VIRTUAL_KEY_CODE*) &VIRTUAL_KEY_CODE_TABLE[i];
-
-					if (strcmp(vkcode_name, vkcode->name) == 0)
+					if (VIRTUAL_KEY_CODE_TABLE[i].name)
 					{
-						found = true;
-						extended = false;
-						keycode_to_vkcode[keycode] = vkcode->code;
-					}
-
-					i++;
-				}
-				while (vkcode->code != 0);
-
-				if (!found)
-				{
-					do
-					{
-						vkcode = (VIRTUAL_KEY_CODE*) &VIRTUAL_KEY_CODE_TABLE[i];
-
-						if (strcmp(vkcode_name, vkcode->name) == 0)
+						if (strcmp(vkcode_name, VIRTUAL_KEY_CODE_TABLE[i].name) == 0)
 						{
 							found = true;
-							extended = true;
-							keycode_to_vkcode[keycode] = vkcode->code;
+							vkcode = VIRTUAL_KEY_CODE_TABLE[i].code;
+							scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+							extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
+							keycode_to_vkcode[keycode] = vkcode;
 						}
-
-						i++;
 					}
-					while (vkcode->code != 0);
 				}
 			}
 			else if ((pch = strstr(buffer, ": extends")) != NULL)
