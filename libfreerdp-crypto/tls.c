@@ -231,6 +231,14 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 	return status;
 }
 
+static void tls_errors(const char *prefix)
+{
+	unsigned long error;
+
+	while ((error = ERR_get_error()) != 0)
+		printf("%s: %s\n", prefix, ERR_error_string(error, NULL));
+}
+
 boolean tls_print_error(char* func, SSL* connection, int value)
 {
 	switch (SSL_get_error(connection, value))
@@ -249,14 +257,17 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 
 		case SSL_ERROR_SYSCALL:
 			printf("%s: I/O error\n", func);
+			tls_errors(func);
 			return true;
 
 		case SSL_ERROR_SSL:
 			printf("%s: Failure in SSL library (protocol error?)\n", func);
+			tls_errors(func);
 			return true;
 
 		default:
 			printf("%s: Unknown error\n", func);
+			tls_errors(func);
 			return true;
 	}
 }
