@@ -469,7 +469,269 @@ const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] =
 
 /* the index in this table is the virtual key code */
 
-const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256] =
+const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256] =
+{
+	0x00,
+	0x00, /* VK_LBUTTON */
+	0x00, /* VK_RBUTTON */
+	0x00, /* VK_CANCEL */
+	0x00, /* VK_MBUTTON */
+	0x00, /* VK_XBUTTON1 */
+	0x00, /* VK_XBUTTON2 */
+	0x00,
+	0x0E, /* VK_BACK */
+	0x0F, /* VK_TAB */
+	0x00,
+	0x00,
+	0x00, /* VK_CLEAR */
+	0x1C, /* VK_RETURN */
+	0x00,
+	0x00,
+	0x2A, /* VK_SHIFT */
+	0x00, /* VK_CONTROL */
+	0x38, /* VK_MENU */
+	0x46, /* VK_PAUSE */
+	0x3A, /* VK_CAPITAL */
+	0x72, /* VK_KANA / VK_HANGUL */
+	0x00,
+	0x00, /* VK_JUNJA */
+	0x00, /* VK_FINAL */
+	0x71, /* VK_HANJA / VK_KANJI */
+	0x00,
+	0x01, /* VK_ESCAPE */
+	0x00, /* VK_CONVERT */
+	0x00, /* VK_NONCONVERT */
+	0x00, /* VK_ACCEPT */
+	0x00, /* VK_MODECHANGE */
+	0x39, /* VK_SPACE */
+	0x49, /* VK_PRIOR */
+	0x51, /* VK_NEXT */
+	0x4F, /* VK_END */
+	0x47, /* VK_HOME */
+	0x4B, /* VK_LEFT */
+	0x48, /* VK_UP */
+	0x4D, /* VK_RIGHT */
+	0x50, /* VK_DOWN */
+	0x00, /* VK_SELECT */
+	0x37, /* VK_PRINT */
+	0x37, /* VK_EXECUTE */
+	0x37, /* VK_SNAPSHOT */
+	0x52, /* VK_INSERT */
+	0x53, /* VK_DELETE */
+	0x63, /* VK_HELP */
+	0x0B, /* VK_KEY_0 */
+	0x02, /* VK_KEY_1 */
+	0x03, /* VK_KEY_2 */
+	0x04, /* VK_KEY_3 */
+	0x05, /* VK_KEY_4 */
+	0x06, /* VK_KEY_5 */
+	0x07, /* VK_KEY_6 */
+	0x08, /* VK_KEY_7 */
+	0x09, /* VK_KEY_8 */
+	0x0A, /* VK_KEY_9 */
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x1E, /* VK_KEY_A */
+	0x30, /* VK_KEY_B */
+	0x2E, /* VK_KEY_C */
+	0x20, /* VK_KEY_D */
+	0x12, /* VK_KEY_E */
+	0x21, /* VK_KEY_F */
+	0x22, /* VK_KEY_G */
+	0x23, /* VK_KEY_H */
+	0x17, /* VK_KEY_I */
+	0x24, /* VK_KEY_J */
+	0x25, /* VK_KEY_K */
+	0x26, /* VK_KEY_L */
+	0x32, /* VK_KEY_M */
+	0x31, /* VK_KEY_N */
+	0x18, /* VK_KEY_O */
+	0x19, /* VK_KEY_P */
+	0x10, /* VK_KEY_Q */
+	0x13, /* VK_KEY_R */
+	0x1F, /* VK_KEY_S */
+	0x14, /* VK_KEY_T */
+	0x16, /* VK_KEY_U */
+	0x2F, /* VK_KEY_V */
+	0x11, /* VK_KEY_W */
+	0x2D, /* VK_KEY_X */
+	0x15, /* VK_KEY_Y */
+	0x2C, /* VK_KEY_Z */
+	0x5B, /* VK_LWIN */
+	0x5C, /* VK_RWIN */
+	0x5D, /* VK_APPS */
+	0x00,
+	0x5F, /* VK_SLEEP */
+	0x52, /* VK_NUMPAD0 */
+	0x4F, /* VK_NUMPAD1 */
+	0x50, /* VK_NUMPAD2 */
+	0x51, /* VK_NUMPAD3 */
+	0x4B, /* VK_NUMPAD4 */
+	0x4C, /* VK_NUMPAD5 */
+	0x4D, /* VK_NUMPAD6 */
+	0x47, /* VK_NUMPAD7 */
+	0x48, /* VK_NUMPAD8 */
+	0x49, /* VK_NUMPAD9 */
+	0x37, /* VK_MULTIPLY */
+	0x4E, /* VK_ADD */
+	0x00, /* VK_SEPARATOR */
+	0x4A, /* VK_SUBTRACT */
+	0x53, /* VK_DECIMAL */
+	0x35, /* VK_DIVIDE */
+	0x3B, /* VK_F1 */
+	0x3C, /* VK_F2 */
+	0x3D, /* VK_F3 */
+	0x3E, /* VK_F4 */
+	0x3F, /* VK_F5 */
+	0x40, /* VK_F6 */
+	0x41, /* VK_F7 */
+	0x42, /* VK_F8 */
+	0x43, /* VK_F9 */
+	0x44, /* VK_F10 */
+	0x57, /* VK_F11 */
+	0x58, /* VK_F12 */
+	0x64, /* VK_F13 */
+	0x65, /* VK_F14 */
+	0x66, /* VK_F15 */
+	0x67, /* VK_F16 */
+	0x68, /* VK_F17 */
+	0x69, /* VK_F18 */
+	0x6A, /* VK_F19 */
+	0x6B, /* VK_F20 */
+	0x6C, /* VK_F21 */
+	0x6D, /* VK_F22 */
+	0x6E, /* VK_F23 */
+	0x6F, /* VK_F24 */
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x45, /* VK_NUMLOCK */
+	0x46, /* VK_SCROLL */
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x2A, /* VK_LSHIFT */
+	0x36, /* VK_RSHIFT */
+	0x1D, /* VK_LCONTROL */
+	0x1D, /* VK_RCONTROL */
+	0x38, /* VK_LMENU */
+	0x38, /* VK_RMENU */
+	0x00, /* VK_BROWSER_BACK */
+	0x00, /* VK_BROWSER_FORWARD */
+	0x00, /* VK_BROWSER_REFRESH */
+	0x00, /* VK_BROWSER_STOP */
+	0x00, /* VK_BROWSER_SEARCH */
+	0x00, /* VK_BROWSER_FAVORITES */
+	0x00, /* VK_BROWSER_HOME */
+	0x00, /* VK_VOLUME_MUTE */
+	0x00, /* VK_VOLUME_DOWN */
+	0x00, /* VK_VOLUME_UP */
+	0x00, /* VK_MEDIA_NEXT_TRACK */
+	0x00, /* VK_MEDIA_PREV_TRACK */
+	0x00, /* VK_MEDIA_STOP */
+	0x00, /* VK_MEDIA_PLAY_PAUSE */
+	0x00, /* VK_LAUNCH_MAIL */
+	0x00, /* VK_MEDIA_SELECT */
+	0x00, /* VK_LAUNCH_APP1 */
+	0x00, /* VK_LAUNCH_APP2 */
+	0x00,
+	0x00,
+	0x27, /* VK_OEM_1 */
+	0x0D, /* VK_OEM_PLUS */
+	0x33, /* VK_OEM_COMMA */
+	0x0C, /* VK_OEM_MINUS */
+	0x34, /* VK_OEM_PERIOD */
+	0x35, /* VK_OEM_2 */
+	0x29, /* VK_OEM_3 */
+	0x73, /* VK_ABNT_C1 */
+	0x7E, /* VK_ABNT_C2 */
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x1A, /* VK_OEM_4 */
+	0x2B, /* VK_OEM_5 */
+	0x1B, /* VK_OEM_6 */
+	0x28, /* VK_OEM_7 */
+	0x1D, /* VK_OEM_8 */
+	0x00,
+	0x00,
+	0x56, /* VK_OEM_102 */
+	0x00,
+	0x00,
+	0x00, /* VK_PROCESSKEY */
+	0x00,
+	0x00, /* VK_PACKET */
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00, /* VK_ATTN */
+	0x00, /* VK_CRSEL */
+	0x00, /* VK_EXSEL */
+	0x00, /* VK_EREOF */
+	0x00, /* VK_PLAY */
+	0x62, /* VK_ZOOM */
+	0x00, /* VK_NONAME */
+	0x00, /* VK_PA1 */
+	0x00, /* VK_OEM_CLEAR */
+	0x00
+};
+
+/* the index in this table is the virtual key code */
+
+const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256] =
 {
 	{ 0x00, 0 },
 	{ 0x00, 0 }, /* VK_LBUTTON */

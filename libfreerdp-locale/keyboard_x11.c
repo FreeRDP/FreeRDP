@@ -29,7 +29,8 @@
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
-extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[];
+extern const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 struct _XKB_VARIANT
 {
@@ -900,6 +901,8 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 {
 	uint32 vkcode;
 	uint32 keycode;
+	uint32 scancode;
+	boolean extended;
 	uint32 keycode_to_vkcode[256];
 
 	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
@@ -930,13 +933,16 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 		if (!(vkcode > 0 && vkcode < 256))
 			continue;
 
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
+		scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+		extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
 
-		if (X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended)
-			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = keycode;
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = scancode;
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = extended;
+
+		if (extended)
+			RDP_SCANCODE_TO_X11_KEYCODE[scancode][1] = keycode;
 		else
-			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = keycode;
+			RDP_SCANCODE_TO_X11_KEYCODE[scancode][0] = keycode;
 	}
 
 	return keyboardLayoutId;
