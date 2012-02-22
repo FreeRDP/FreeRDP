@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "liblocale.h"
+#include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
 
@@ -29,7 +30,8 @@
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
-extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[];
+extern const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 struct _XKB_VARIANT
 {
@@ -896,48 +898,6 @@ static const XKB_LAYOUT xkbLayouts[] =
 	{ "tm",		 KBD_TURKISH_Q, tm_variants }, /* Turkmenistan */
 };
 
-uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
-{
-	uint32 vkcode;
-	uint32 keycode;
-	uint32 keycode_to_vkcode[256];
-
-	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
-	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
-		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutId);
-	}
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = 0x0409;
-		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutId);
-	}
-
-#ifdef __APPLE__
-	/* Apple X11 breaks XKB detection */
-	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
-#endif
-
-	for (keycode = 0; keycode < 256; keycode++)
-	{
-		vkcode = keycode_to_vkcode[keycode];
-
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code;
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].extended;
-
-		if (X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended)
-			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][1] = keycode;
-		else
-			RDP_SCANCODE_TO_X11_KEYCODE[VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode].code][0] = keycode;
-	}
-
-	return keyboardLayoutId;
-}
-
 uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
 	int i, j;
@@ -945,7 +905,7 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	if ((layout == NULL) || (variant == NULL))
 		return 0;
 
-	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s\n", layout, variant);
+	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
 	for (i = 0; i < sizeof(xkbLayouts) / sizeof(XKB_LAYOUT); i++)
 	{
@@ -964,4 +924,230 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	}
 
 	return 0;
+}
+
+uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
+{
+	char* pch;
+	char* beg;
+	char* end;
+	FILE* xprop;
+	char buffer[1024];
+	char* layout = NULL;
+	char* variant = NULL;
+	uint32 keyboardLayoutId = 0;
+
+	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
+
+        xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r");
+
+	/* Sample output for "Canadian Multilingual Standard"
+	 *
+	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multix", ""
+	 * Where "xorg" is the set of rules
+	 * "pc105" the keyboard type
+	 * "ca" the keyboard layout
+	 * "multi" the keyboard layout variant
+	 */
+
+        while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+        {
+		if((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
+		{
+			/* "rules" */
+			pch = strchr(&buffer[34], ','); // We assume it is xorg
+			pch += 1;
+
+			/* "type" */
+			pch = strchr(pch, ',');
+
+			/* "layout" */
+			beg = strchr(pch + 1, '"');
+			beg += 1;
+
+			end = strchr(beg, '"');
+			*end = '\0';
+
+			layout = beg;
+
+			/* "variant" */
+			beg = strchr(end + 1, '"');
+			beg += 1;
+
+			end = strchr(beg, '"');
+			*end = '\0';
+
+			variant = beg;
+		}
+        }
+        pclose(xprop);
+
+	keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
+
+	if (keyboardLayoutId > 0)
+	{
+		*xkb_layout = xstrdup(layout);
+		*xkb_variant = xstrdup(variant);
+		return keyboardLayoutId;
+	}
+
+	/* Check _XKB_RULES_NAMES if _XKB_RULES_NAMES_BACKUP fails */
+
+        xprop = popen("xprop -root _XKB_RULES_NAMES", "r");
+
+        while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+        {
+		if((pch = strstr(buffer, "_XKB_RULES_NAMES(STRING) = ")) != NULL)
+		{
+			/* "rules" */
+			pch = strchr(&buffer[27], ','); // We assume it is xorg
+			pch += 1;
+
+			/* "type" */
+			pch = strchr(pch, ',');
+
+			/* "layout" */
+			beg = strchr(pch + 1, '"');
+			beg += 1;
+
+			end = strchr(beg, '"');
+			*end = '\0';
+
+			layout = beg;
+
+			/* "variant" */
+			beg = strchr(end + 1, '"');
+			beg += 1;
+
+			end = strchr(beg, '"');
+			*end = '\0';
+
+			variant = beg;
+		}
+        }
+        pclose(xprop);
+
+	keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
+
+	if (keyboardLayoutId > 0)
+	{
+		*xkb_layout = xstrdup(layout);
+		*xkb_variant = xstrdup(variant);
+		return keyboardLayoutId;
+	}
+
+	return 0;
+}
+
+char* freerdp_detect_keymap_from_xkb()
+{
+	char* pch;
+	char* beg;
+	char* end;
+	int length;
+	FILE* setxkbmap;
+	char buffer[1024];
+	char* keymap = NULL;
+
+	/* this tells us about the current XKB configuration, if XKB is available */
+	setxkbmap = popen("setxkbmap -print", "r");
+
+	while (fgets(buffer, sizeof(buffer), setxkbmap) != NULL)
+	{
+		/* the line with xkb_keycodes is what interests us */
+		pch = strstr(buffer, "xkb_keycodes");
+
+		if (pch != NULL)
+		{
+			pch = strstr(pch, "include");
+
+			if (pch != NULL)
+			{
+				/* check for " " delimiter presence */
+				if ((beg = strchr(pch, '"')) == NULL)
+					break;
+				else
+					beg++;
+
+				if ((pch = strchr(beg + 1, '"')) == NULL)
+					break;
+
+				end = strcspn(beg + 1, "\"") + beg + 1;
+				*end = '\0';
+
+				length = (end - beg);
+				keymap = (char*) xmalloc(length + 1);
+				strncpy(keymap, beg, length);
+				keymap[length] = '\0';
+
+				break;
+			}
+		}
+	}
+
+	pclose(setxkbmap);
+
+	return keymap;
+}
+
+uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
+{
+	char* keymap;
+	uint32 vkcode;
+	uint32 keycode;
+	uint32 scancode;
+	boolean extended;
+	char* xkb_layout;
+	char* xkb_variant;
+	uint32 keycode_to_vkcode[256];
+
+	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
+	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
+	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
+		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutId);
+	}
+
+	if (keyboardLayoutId == 0)
+	{
+		keyboardLayoutId = 0x0409;
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutId);
+	}
+
+#ifdef __APPLE__
+	/* Apple X11 breaks XKB detection */
+	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
+#else
+	if (keyboardLayoutId == 0)
+		keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
+
+	keymap = freerdp_detect_keymap_from_xkb();
+
+	if (keymap != NULL)
+		freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
+#endif
+
+	for (keycode = 0; keycode < 256; keycode++)
+	{
+		vkcode = keycode_to_vkcode[keycode];
+
+		if (!(vkcode > 0 && vkcode < 256))
+			continue;
+
+		scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+		extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
+
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = scancode;
+		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended = extended;
+
+		if (extended)
+			RDP_SCANCODE_TO_X11_KEYCODE[scancode][1] = keycode;
+		else
+			RDP_SCANCODE_TO_X11_KEYCODE[scancode][0] = keycode;
+	}
+
+	return keyboardLayoutId;
 }

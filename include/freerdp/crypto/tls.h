@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Transport Layer Security
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CRYPTO_TLS_H
-#define __CRYPTO_TLS_H
+#ifndef FREERDP_CRYPTO_TLS_H
+#define FREERDP_CRYPTO_TLS_H
 
 #include "crypto.h"
 #include "certificate.h"
@@ -26,6 +26,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -41,20 +42,20 @@ struct rdp_tls
 	rdpCertificateStore* certificate_store;
 };
 
-boolean tls_connect(rdpTls* tls);
-boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
-boolean tls_disconnect(rdpTls* tls);
+FREERDP_API boolean tls_connect(rdpTls* tls);
+FREERDP_API boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
+FREERDP_API boolean tls_disconnect(rdpTls* tls);
 
-int tls_read(rdpTls* tls, uint8* data, int length);
-int tls_write(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_read(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_write(rdpTls* tls, uint8* data, int length);
 
-boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
-void tls_print_certificate_error(char* hostname, char* fingerprint);
-void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
+FREERDP_API boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
+FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint);
+FREERDP_API void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
 
-boolean tls_print_error(char* func, SSL* connection, int value);
+FREERDP_API boolean tls_print_error(char* func, SSL* connection, int value);
 
-rdpTls* tls_new(rdpSettings* settings);
-void tls_free(rdpTls* tls);
+FREERDP_API rdpTls* tls_new(rdpSettings* settings);
+FREERDP_API void tls_free(rdpTls* tls);
 
-#endif /* __CRYPTO_TLS_H */
+#endif /* FREERDP_CRYPTO_TLS_H */

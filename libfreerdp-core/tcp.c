@@ -127,7 +127,7 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 
 	if (status != 0)
 	{
-		printf("transport_connect: getaddrinfo (%s)\n", gai_strerror(status));
+		printf("tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
 		return false;
 	}
 

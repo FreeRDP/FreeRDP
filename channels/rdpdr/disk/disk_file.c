@@ -566,7 +566,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	}
 	xfree(ent_path);
 
-	DEBUG_SVC("  pattern %s matched %s\n", file->pattern, ent_path);
+	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 
 	uniconv = freerdp_uniconv_new();
 	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);

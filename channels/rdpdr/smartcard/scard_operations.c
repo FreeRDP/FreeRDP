@@ -238,7 +238,7 @@ static uint32 sc_map_state(uint32 state)
 	if (state & SCARD_SPECIFIC)
 		state = 0x00000006;
 	else if (state & SCARD_NEGOTIABLE)
-		state = 0x00000005;
+		state = 0x00000006;
 	else if (state & SCARD_POWERED)
 		state = 0x00000004;
 	else if (state & SCARD_SWALLOWED)
@@ -497,7 +497,7 @@ static uint32 handle_GetStatusChange(IRP* irp, boolean wide)
 		cur = &readerStates[i];
 
 		DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
-		DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x\n",
+		DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
 			(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
 			(unsigned) cur->dwEventState);
 
@@ -529,9 +529,9 @@ static uint32 handle_Cancel(IRP *irp)
 	rv = SCardCancel(hContext);
 
 	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)\n", pcsc_stringify_error(rv), (unsigned) rv);
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
 	else
-		DEBUG_SCARD("Success context: 0x%08x %s\n", (unsigned) hContext, pcsc_stringify_error(rv));
+		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, pcsc_stringify_error(rv));
 
 	sc_output_alignment(irp, 8);
 
@@ -1062,7 +1062,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	stream_seek(irp->input, 0xC);
 	stream_read_uint32(irp->input, hCard);
 
-	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)\n",
+	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)",
 		(unsigned) hCard, (unsigned) dwAttrId, (int) dwAttrLen);
 
 #ifdef SCARD_AUTOALLOCATE
