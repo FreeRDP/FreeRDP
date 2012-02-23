@@ -450,6 +450,17 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
+/**
+ * Callback given to freerdp_connect() to process the pre-connect operations.
+ * It will parse the command line parameters given to xfreerdp (using freerdp_parse_args())
+ * and fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
+ *
+ * @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
+ * be filled with the appropriate informations.
+ *
+ * @return true if successful. false otherwise.
+ * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
+ */
 boolean xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
@@ -608,6 +619,11 @@ uint32 xf_detect_cpu()
 	return cpu_opt;
 }
 
+/**
+ * Callback given to freerdp_connect() to perform post-connection operations.
+ * It will be called only if the connection was initialized properly, and will continue the initialization based on the
+ * newly created connection.
+ */
 boolean xf_post_connect(freerdp* instance)
 {
 	xfInfo* xfi;
