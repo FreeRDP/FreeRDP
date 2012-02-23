@@ -18,7 +18,10 @@
 # limitations under the License.
 
 set(FREERDP_AUTH_SRCS
+	NTLM/ntlm.c
+	NTLM/ntlm.h
 	sspi.c
+	sspi.h
 	credssp.c
 	ntlmssp.c)
 

@@ -21,6 +21,8 @@
 
 #include <freerdp/auth/sspi.h>
 
+#include "sspi.h"
+
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
 extern const SEC_PKG_INFO NTLM_SEC_PKG_INFO;
@@ -51,6 +53,91 @@ const SECURITY_FUNCTION_TABLE_NAME SECURITY_FUNCTION_TABLE_NAME_LIST[] =
 
 #define SEC_HANDLE_LOWER_MAX	0xFFFFFFFF
 #define SEC_HANDLE_UPPER_MAX	0xFFFFFFFE
+
+CREDENTIALS* sspi_CredentialsNew()
+{
+	CREDENTIALS* credentials;
+
+	credentials = xnew(CREDENTIALS);
+
+	if (credentials != NULL)
+	{
+
+	}
+
+	return credentials;
+}
+
+void sspi_CredentialsFree(CREDENTIALS* credentials)
+{
+	if (!credentials)
+		return;
+
+	xfree(credentials);
+}
+
+SEC_HANDLE* sspi_SecureHandleAlloc()
+{
+	SEC_HANDLE* handle = xmalloc(sizeof(SEC_HANDLE));
+	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+	return handle;
+}
+
+void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+}
+
+void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle)
+{
+	void* pointer;
+
+	if (!handle)
+		return NULL;
+
+	pointer = (void*) ~((size_t) handle->dwLower);
+
+	return pointer;
+}
+
+void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer)
+{
+	if (!handle)
+		return;
+
+	handle->dwLower = (uint32*) (~((size_t) pointer));
+}
+
+void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle)
+{
+	void* pointer;
+
+	if (!handle)
+		return NULL;
+
+	pointer = (void*) ~((size_t) handle->dwUpper);
+
+	return pointer;
+}
+
+void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer)
+{
+	if (!handle)
+		return;
+
+	handle->dwUpper = (uint32*) (~((size_t) pointer));
+}
+
+void sspi_SecureHandleFree(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	xfree(handle);
+}
 
 SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
 {
@@ -228,6 +315,18 @@ SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC
 
 SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
 {
+	CREDENTIALS* credentials;
+
+	if (!phCredential)
+		return SEC_E_INVALID_HANDLE;
+
+	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+	if (!credentials)
+		return SEC_E_INVALID_HANDLE;
+
+	sspi_CredentialsFree(credentials);
+
 	return SEC_E_OK;
 }
 
@@ -238,7 +337,23 @@ SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedConte
 
 SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	status = table->QueryCredentialsAttributes(phCredential, ulAttribute, pBuffer);
+
+	return status;
 }
 
 /* Context Management */
@@ -283,7 +398,25 @@ SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE
 		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	status = table->InitializeSecurityContext(phCredential, phContext,
+			pszTargetName, fContextReq, Reserved1, TargetDataRep,
+			pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+	return status;
 }
 
 SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)

@@ -44,6 +44,7 @@ int add_sspi_suite(void)
 	add_test_function(EnumerateSecurityPackages);
 	add_test_function(QuerySecurityPackageInfo);
 	add_test_function(AcquireCredentialsHandle);
+	add_test_function(InitializeSecurityContext);
 
 	return 0;
 }
@@ -95,6 +96,7 @@ void test_AcquireCredentialsHandle(void)
 	SEC_TIMESTAMP expiration;
 	SEC_AUTH_IDENTITY identity;
 	SECURITY_FUNCTION_TABLE* table;
+	SEC_PKG_CREDENTIALS_NAMES credential_names;
 
 	table = InitSecurityInterface();
 
@@ -111,24 +113,45 @@ void test_AcquireCredentialsHandle(void)
 
 	if (status == SEC_E_OK)
 	{
+		status = table->QueryCredentialsAttributes(&credentials, SECPKG_CRED_ATTR_NAMES, &credential_names);
 
+		if (status == SEC_E_OK)
+		{
+			printf("\nQueryCredentialsAttributes: %s\n", credential_names.sUserName);
+		}
 	}
 }
 
+void test_InitializeSecurityContext(void)
+{
+	uint32 fContextReq;
+	CTXT_HANDLE context;
+	uint32 pfContextAttr;
+	SECURITY_STATUS status;
+	CRED_HANDLE credentials;
+	SEC_TIMESTAMP expiration;
+	SEC_AUTH_IDENTITY identity;
+	SECURITY_FUNCTION_TABLE* table;
+	SEC_BUFFER_DESC sec_output_buffer;
 
+	table = InitSecurityInterface();
 
+	identity.User = (uint16*) xstrdup(test_User);
+	identity.UserLength = sizeof(test_User);
+	identity.Domain = (uint16*) xstrdup(test_Domain);
+	identity.DomainLength = sizeof(test_Domain);
+	identity.Password = (uint16*) xstrdup(test_Password);
+	identity.PasswordLength = sizeof(test_Password);
+	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
 
+	status = table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
+			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
 
+	if (status == SEC_E_OK)
+	{
+		fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
 
-
-
-
-
-
-
-
-
-
-
-
-
+		table->InitializeSecurityContext(&credentials, NULL, NULL, fContextReq, 0, 0, NULL, 0,
+				&context, &sec_output_buffer, &pfContextAttr, &expiration);
+	}
+}
