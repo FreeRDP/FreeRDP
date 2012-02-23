@@ -25,6 +25,7 @@
 #include <openssl/engine.h>
 #include <freerdp/utils/memory.h>
 
+#include <freerdp/auth/sspi.h>
 #include <freerdp/auth/credssp.h>
 
 #include <freerdp/auth/ntlmssp.h>
@@ -2223,3 +2224,60 @@ void ntlmssp_free(NTLMSSP* ntlmssp)
 		crypto_rc4_free(ntlmssp->recv_rc4_seal);
 	xfree(ntlmssp);
 }
+
+/* SSPI */
+
+SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry)
+{
+	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	{
+
+	}
+
+	return SEC_E_OK;
+}
+
+const SEC_PKG_INFO NTLM_SEC_PKG_INFO =
+{
+	0x00082B37, /* fCapabilities */
+	1, /* wVersion */
+	0x000A, /* wRPCID */
+	0x00000B48, /* cbMaxToken */
+	"NTLM", /* Name */
+	"NTLM Security Package" /* Comment */
+};
+
+const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
+{
+	1, /* dwVersion */
+	NULL, /* EnumerateSecurityPackages */
+	NULL, /* Reserved1 */
+	NULL, /* QueryCredentialsAttributes */
+	ntlm_AcquireCredentialsHandle, /* AcquireCredentialsHandle */
+	NULL, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	NULL, /* InitializeSecurityContext */
+	NULL, /* AcceptSecurityContext */
+	NULL, /* CompleteAuthToken */
+	NULL, /* DeleteSecurityContext */
+	NULL, /* ApplyControlToken */
+	NULL, /* QueryContextAttributes */
+	NULL, /* ImpersonateSecurityContext */
+	NULL, /* RevertSecurityContext */
+	NULL, /* MakeSignature */
+	NULL, /* VerifySignature */
+	NULL, /* FreeContextBuffer */
+	NULL, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	NULL, /* ExportSecurityContext */
+	NULL, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	NULL, /* QuerySecurityContextToken */
+	NULL, /* EncryptMessage */
+	NULL, /* DecryptMessage */
+	NULL, /* SetContextAttributes */
+};

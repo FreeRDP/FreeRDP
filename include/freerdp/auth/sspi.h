@@ -53,7 +53,94 @@ typedef uint32 SECURITY_STATUS;
 #define SEC_E_OK				0x00000000
 #define SEC_E_INSUFFICIENT_MEMORY		0x80090300
 #define SEC_E_INVALID_HANDLE			0x80090301
+#define SEC_E_UNSUPPORTED_FUNCTION		0x80090302
+#define SEC_E_TARGET_UNKNOWN			0x80090303
+#define SEC_E_INTERNAL_ERROR			0x80090304
 #define SEC_E_SECPKG_NOT_FOUND			0x80090305
+#define SEC_E_NOT_OWNER				0x80090306
+#define SEC_E_CANNOT_INSTALL			0x80090307
+#define SEC_E_INVALID_TOKEN			0x80090308
+#define SEC_E_CANNOT_PACK			0x80090309
+#define SEC_E_QOP_NOT_SUPPORTED			0x8009030A
+#define SEC_E_NO_IMPERSONATION			0x8009030B
+#define SEC_E_LOGON_DENIED			0x8009030C
+#define SEC_E_UNKNOWN_CREDENTIALS		0x8009030D
+#define SEC_E_NO_CREDENTIALS			0x8009030E
+#define SEC_E_MESSAGE_ALTERED			0x8009030F
+#define SEC_E_OUT_OF_SEQUENCE			0x80090310
+#define SEC_E_NO_AUTHENTICATING_AUTHORITY	0x80090311
+#define SEC_E_BAD_PKGID				0x80090316
+#define SEC_E_CONTEXT_EXPIRED			0x80090317
+#define SEC_E_INCOMPLETE_MESSAGE		0x80090318
+#define SEC_E_INCOMPLETE_CREDENTIALS		0x80090320
+#define SEC_E_BUFFER_TOO_SMALL			0x80090321
+#define SEC_E_WRONG_PRINCIPAL			0x80090322
+#define SEC_E_TIME_SKEW				0x80090324
+#define SEC_E_UNTRUSTED_ROOT			0x80090325
+#define SEC_E_ILLEGAL_MESSAGE			0x80090326
+#define SEC_E_CERT_UNKNOWN			0x80090327
+#define SEC_E_CERT_EXPIRED			0x80090328
+#define SEC_E_ENCRYPT_FAILURE			0x80090329
+#define SEC_E_DECRYPT_FAILURE			0x80090330
+#define SEC_E_ALGORITHM_MISMATCH		0x80090331
+#define SEC_E_SECURITY_QOS_FAILED		0x80090332
+#define SEC_E_UNFINISHED_CONTEXT_DELETED	0x80090333
+#define SEC_E_NO_TGT_REPLY			0x80090334
+#define SEC_E_NO_IP_ADDRESSES			0x80090335
+#define SEC_E_WRONG_CREDENTIAL_HANDLE		0x80090336
+#define SEC_E_CRYPTO_SYSTEM_INVALID		0x80090337
+#define SEC_E_MAX_REFERRALS_EXCEEDED		0x80090338
+#define SEC_E_MUST_BE_KDC			0x80090339
+#define SEC_E_STRONG_CRYPTO_NOT_SUPPORTED	0x8009033A
+#define SEC_E_TOO_MANY_PRINCIPALS		0x8009033B
+#define SEC_E_NO_PA_DATA			0x8009033C
+#define SEC_E_PKINIT_NAME_MISMATCH		0x8009033D
+#define SEC_E_SMARTCARD_LOGON_REQUIRED		0x8009033E
+#define SEC_E_SHUTDOWN_IN_PROGRESS		0x8009033F
+#define SEC_E_KDC_INVALID_REQUEST		0x80090340
+#define SEC_E_KDC_UNABLE_TO_REFER		0x80090341
+#define SEC_E_KDC_UNKNOWN_ETYPE			0x80090342
+#define SEC_E_UNSUPPORTED_PREAUTH		0x80090343
+#define SEC_E_DELEGATION_REQUIRED		0x80090345
+#define SEC_E_BAD_BINDINGS			0x80090346
+#define SEC_E_MULTIPLE_ACCOUNTS			0x80090347
+#define SEC_E_NO_KERB_KEY			0x80090348
+#define SEC_E_CERT_WRONG_USAGE			0x80090349
+#define SEC_E_DOWNGRADE_DETECTED		0x80090350
+#define SEC_E_SMARTCARD_CERT_REVOKED		0x80090351
+#define SEC_E_ISSUING_CA_UNTRUSTED		0x80090352
+#define SEC_E_REVOCATION_OFFLINE_C		0x80090353
+#define SEC_E_PKINIT_CLIENT_FAILURE		0x80090354
+#define SEC_E_SMARTCARD_CERT_EXPIRED		0x80090355
+#define SEC_E_NO_S4U_PROT_SUPPORT		0x80090356
+#define SEC_E_CROSSREALM_DELEGATION_FAILURE	0x80090357
+#define SEC_E_REVOCATION_OFFLINE_KDC		0x80090358
+#define SEC_E_ISSUING_CA_UNTRUSTED_KDC		0x80090359
+#define SEC_E_KDC_CERT_EXPIRED			0x8009035A
+#define SEC_E_KDC_CERT_REVOKED			0x8009035B
+#define SEC_E_INVALID_PARAMETER			0x8009035D
+#define SEC_E_DELEGATION_POLICY			0x8009035E
+#define SEC_E_POLICY_NLTM_ONLY			0x8009035F
+#define SEC_E_NO_CONTEXT			0x80090361
+#define SEC_E_PKU2U_CERT_FAILURE		0x80090362
+#define SEC_E_MUTUAL_AUTH_FAILED		0x80090363
+
+#define SEC_I_CONTINUE_NEEDED			0x00090312
+#define SEC_I_COMPLETE_NEEDED			0x00090313
+#define SEC_I_COMPLETE_AND_CONTINUE		0x00090314
+#define SEC_I_LOCAL_LOGON			0x00090315
+#define SEC_I_CONTEXT_EXPIRED			0x00090317
+#define SEC_I_INCOMPLETE_CREDENTIALS		0x00090320
+#define SEC_I_RENEGOTIATE			0x00090321
+#define SEC_I_NO_LSA_CONTEXT			0x00090323
+#define SEC_I_SIGNATURE_NEEDED			0x0009035C
+#define SEC_I_NO_RENEGOTIATION			0x00090360
+
+#define SECPKG_CRED_INBOUND			0x00000001
+#define SECPKG_CRED_OUTBOUND			0x00000002
+#define SECPKG_CRED_BOTH			0x00000003
+#define SECPKG_CRED_AUTOLOGON_RESTRICTED	0x00000010
+#define SECPKG_CRED_PROCESS_POLICY_ONLY		0x00000020
 
 struct _SEC_PKG_INFO
 {
@@ -65,6 +152,21 @@ struct _SEC_PKG_INFO
 	char* Comment;
 };
 typedef struct _SEC_PKG_INFO SEC_PKG_INFO;
+
+#define SEC_AUTH_IDENTITY_ANSI			0x1
+#define SEC_AUTH_IDENTITY_UNICODE		0x2
+
+struct _SEC_AUTH_IDENTITY
+{
+	uint16* User;
+	uint32 UserLength;
+	uint16* Domain;
+	uint32 DomainLength;
+	uint16* Password;
+	uint32 PasswordLength;
+	uint32 Flags;
+};
+typedef struct _SEC_AUTH_IDENTITY SEC_AUTH_IDENTITY;
 
 struct _SEC_HANDLE
 {
@@ -190,48 +292,48 @@ typedef struct _SECURITY_FUNCTION_TABLE SECURITY_FUNCTION_TABLE;
 
 /* Package Management */
 
-SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo);
-SECURITY_FUNCTION_TABLE* InitSecurityInterface(void);
-SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo);
+FREERDP_API SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo);
+FREERDP_API SECURITY_FUNCTION_TABLE* InitSecurityInterface(void);
+FREERDP_API SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo);
 
 /* Credential Management */
 
-SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+FREERDP_API SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry);
 
-SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken);
-SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential);
-SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext);
-SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken);
+FREERDP_API SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential);
+FREERDP_API SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer);
 
 /* Context Management */
 
-SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+FREERDP_API SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
 		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
 
-SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput);
-SECURITY_STATUS CompleteAuthToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken);
-SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext);
-SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer);
-SECURITY_STATUS ImpersonateSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput);
+FREERDP_API SECURITY_STATUS CompleteAuthToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken);
+FREERDP_API SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer);
+FREERDP_API SECURITY_STATUS ImpersonateSecurityContext(CTXT_HANDLE* phContext);
 
-SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+FREERDP_API SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
 
-SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer);
-SECURITY_STATUS QuerySecurityContextToken(CTXT_HANDLE* phContext, void* phToken);
-SECURITY_STATUS SetContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
-SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS QuerySecurityContextToken(CTXT_HANDLE* phContext, void* phToken);
+FREERDP_API SECURITY_STATUS SetContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
+FREERDP_API SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext);
 
 /* Message Support */
 
-SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
-SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
-SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
-SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
 #endif /* FREERDP_AUTH_SSPI_H */
