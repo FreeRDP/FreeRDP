@@ -546,9 +546,9 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	rdp = fastpath->rdp;
 
 	length = stream_get_length(s);
-	if (length > 127)
+	if (length >= (2 << 14))
 	{
-		printf("Maximum FastPath PDU length is 127\n");
+		printf("Maximum FastPath PDU length is 32767\n");
 		return false;
 	}
 
@@ -568,23 +568,25 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.
 	 */
-	stream_write_uint16_be(s, 0x8000 | (length + sec_bytes));
+	stream_write_uint16_be(s, 0x8000 | length);
 
 	if (sec_bytes > 0)
 	{
-		uint8* ptr;
+		uint8* fpInputEvents;
+		uint16 fpInputEvents_length;
 
-		ptr = stream_get_tail(s) + sec_bytes;
+		fpInputEvents = stream_get_tail(s) + sec_bytes;
+		fpInputEvents_length = length - 3 - sec_bytes;
 		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-			security_salted_mac_signature(rdp, ptr, length - 3, true, stream_get_tail(s));
+			security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, true, stream_get_tail(s));
 		else
-			security_mac_signature(rdp, ptr, length - 3, stream_get_tail(s));
-		security_encrypt(ptr, length - 3, rdp);
+			security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, stream_get_tail(s));
+		security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
 	}
 
 	rdp->sec_flags = 0;
 
-	stream_set_pos(s, length + sec_bytes);
+	stream_set_pos(s, length);
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return false;
 

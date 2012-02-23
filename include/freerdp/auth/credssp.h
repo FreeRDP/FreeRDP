@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Credential Security Support Provider (CredSSP)
  *
- * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CREDSSP_H
-#define __CREDSSP_H
+#ifndef FREERDP_AUTH_CREDSSP_H
+#define FREERDP_AUTH_CREDSSP_H
 
 typedef struct rdp_credssp rdpCredssp;
 
@@ -26,6 +26,7 @@ typedef struct rdp_credssp rdpCredssp;
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/crypto.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
@@ -49,20 +50,20 @@ struct rdp_credssp
 	rdpSettings* settings;
 };
 
-int credssp_authenticate(rdpCredssp* credssp);
+FREERDP_API int credssp_authenticate(rdpCredssp* credssp);
 
-void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
-int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
+FREERDP_API void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
+FREERDP_API int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
 
-void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d);
-void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d);
-int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d);
-void credssp_encode_ts_credentials(rdpCredssp* credssp);
+FREERDP_API void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d);
+FREERDP_API void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d);
+FREERDP_API int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d);
+FREERDP_API void credssp_encode_ts_credentials(rdpCredssp* credssp);
 
-void credssp_current_time(uint8* timestamp);
-void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
+FREERDP_API void credssp_current_time(uint8* timestamp);
+FREERDP_API void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
 
-rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
-void credssp_free(rdpCredssp* credssp);
+FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
+FREERDP_API void credssp_free(rdpCredssp* credssp);
 
-#endif /* __CREDSSP_H */
+#endif /* FREERDP_AUTH_CREDSSP_H */

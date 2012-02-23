@@ -27,6 +27,7 @@ struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
 {
 	uint32 vkcode; /* virtual key code */
 	const char* xkb_keyname; /* XKB keyname */
+	const char* xkb_keyname_extended; /* XKB keyname (extended) */
 };
 typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
 

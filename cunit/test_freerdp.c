@@ -27,6 +27,7 @@
 #include "test_bitmap.h"
 #include "test_gdi.h"
 #include "test_list.h"
+#include "test_sspi.h"
 #include "test_stream.h"
 #include "test_utils.h"
 #include "test_orders.h"
@@ -137,6 +138,7 @@ static test_suite suites[] =
 	{ "per", add_per_suite },
 	{ "rail", add_rail_suite },
 	{ "rfx", add_rfx_suite },
+	{ "sspi", add_sspi_suite },
 	{ "stream", add_stream_suite },
 	{ "utils", add_utils_suite },
 	{ "", NULL }

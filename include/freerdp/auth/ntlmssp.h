@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NT LAN Manager Security Support Provider (NTLMSSP)
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __NTLMSSP_H
-#define __NTLMSSP_H
+#ifndef FREERDP_AUTH_NTLMSSP_H
+#define FREERDP_AUTH_NTLMSSP_H
 
 #include <freerdp/crypto/crypto.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/debug.h>
@@ -115,51 +116,51 @@ struct _NTLMSSP
 };
 typedef struct _NTLMSSP NTLMSSP;
 
-void ntlmssp_set_username(NTLMSSP* ntlmssp, char* username);
-void ntlmssp_set_domain(NTLMSSP* ntlmssp, char* domain);
-void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password);
-void ntlmssp_set_workstation(NTLMSSP* ntlmssp, char* workstation);
-void ntlmssp_set_target_name(NTLMSSP* ntlmssp, char* target_name);
+FREERDP_API void ntlmssp_set_username(NTLMSSP* ntlmssp, char* username);
+FREERDP_API void ntlmssp_set_domain(NTLMSSP* ntlmssp, char* domain);
+FREERDP_API void ntlmssp_set_password(NTLMSSP* ntlmssp, char* password);
+FREERDP_API void ntlmssp_set_workstation(NTLMSSP* ntlmssp, char* workstation);
+FREERDP_API void ntlmssp_set_target_name(NTLMSSP* ntlmssp, char* target_name);
 
-void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp);
-void ntlmssp_generate_server_challenge(NTLMSSP* ntlmssp);
-void ntlmssp_generate_key_exchange_key(NTLMSSP* ntlmssp);
-void ntlmssp_generate_random_session_key(NTLMSSP* ntlmssp);
-void ntlmssp_generate_exported_session_key(NTLMSSP* ntlmssp);
-void ntlmssp_encrypt_random_session_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_client_challenge(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_server_challenge(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_key_exchange_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_random_session_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_exported_session_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_encrypt_random_session_key(NTLMSSP* ntlmssp);
 
-void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp);
-void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp);
-void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp);
-void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp);
-void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp);
-void ntlmssp_init_rc4_seal_states(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_timestamp(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_client_signing_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_server_signing_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_client_sealing_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_generate_server_sealing_key(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_init_rc4_seal_states(NTLMSSP* ntlmssp);
 
-void ntlmssp_compute_lm_hash(char* password, char* hash);
-void ntlmssp_compute_ntlm_hash(rdpBlob* password, char* hash);
-void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash);
+FREERDP_API void ntlmssp_compute_lm_hash(char* password, char* hash);
+FREERDP_API void ntlmssp_compute_ntlm_hash(rdpBlob* password, char* hash);
+FREERDP_API void ntlmssp_compute_ntlm_v2_hash(NTLMSSP* ntlmssp, char* hash);
 
-void ntlmssp_compute_lm_response(char* password, char* challenge, char* response);
-void ntlmssp_compute_lm_v2_response(NTLMSSP* ntlmssp);
-void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_compute_lm_response(char* password, char* challenge, char* response);
+FREERDP_API void ntlmssp_compute_lm_v2_response(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_compute_ntlm_v2_response(NTLMSSP* ntlmssp);
 
-void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp);
-void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
-void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
-void ntlmssp_free_av_pairs(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_populate_av_pairs(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_input_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
+FREERDP_API void ntlmssp_output_av_pairs(NTLMSSP* ntlmssp, STREAM* s);
+FREERDP_API void ntlmssp_free_av_pairs(NTLMSSP* ntlmssp);
 
-void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_compute_message_integrity_check(NTLMSSP* ntlmssp);
 
-void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, rdpBlob* msg, rdpBlob* encrypted_msg, uint8* signature);
-int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, rdpBlob* encrypted_msg, rdpBlob* msg, uint8* signature);
+FREERDP_API void ntlmssp_encrypt_message(NTLMSSP* ntlmssp, rdpBlob* msg, rdpBlob* encrypted_msg, uint8* signature);
+FREERDP_API int ntlmssp_decrypt_message(NTLMSSP* ntlmssp, rdpBlob* encrypted_msg, rdpBlob* msg, uint8* signature);
 
-int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s);
-int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s);
+FREERDP_API int ntlmssp_recv(NTLMSSP* ntlmssp, STREAM* s);
+FREERDP_API int ntlmssp_send(NTLMSSP* ntlmssp, STREAM* s);
 
-NTLMSSP* ntlmssp_client_new();
-NTLMSSP* ntlmssp_server_new();
-void ntlmssp_init(NTLMSSP* ntlmssp);
-void ntlmssp_free(NTLMSSP* ntlmssp);
+FREERDP_API NTLMSSP* ntlmssp_client_new();
+FREERDP_API NTLMSSP* ntlmssp_server_new();
+FREERDP_API void ntlmssp_init(NTLMSSP* ntlmssp);
+FREERDP_API void ntlmssp_free(NTLMSSP* ntlmssp);
 
 #ifdef WITH_DEBUG_NLA
 #define DEBUG_NLA(fmt, ...) DEBUG_CLASS(NLA, fmt, ## __VA_ARGS__)
@@ -167,4 +168,4 @@ void ntlmssp_free(NTLMSSP* ntlmssp);
 #define DEBUG_NLA(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __NTLMSSP_H */
+#endif /* FREERDP_AUTH_NTLMSSP_H */

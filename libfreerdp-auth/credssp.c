@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Credential Security Support Provider (CredSSP)
  *
- * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include <freerdp/auth/ntlmssp.h>
 #include <freerdp/utils/stream.h>
 
+#include <freerdp/auth/sspi.h>
 #include <freerdp/auth/credssp.h>
 
 /**
@@ -719,3 +720,48 @@ void credssp_free(rdpCredssp* credssp)
 		xfree(credssp);
 	}
 }
+
+/* SSPI */
+
+const SECURITY_FUNCTION_TABLE CREDSSP_SECURITY_FUNCTION_TABLE =
+{
+	1, /* dwVersion */
+	NULL, /* EnumerateSecurityPackages */
+	NULL, /* Reserved1 */
+	NULL, /* QueryCredentialsAttributes */
+	NULL, /* AcquireCredentialsHandle */
+	NULL, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	NULL, /* InitializeSecurityContext */
+	NULL, /* AcceptSecurityContext */
+	NULL, /* CompleteAuthToken */
+	NULL, /* DeleteSecurityContext */
+	NULL, /* ApplyControlToken */
+	NULL, /* QueryContextAttributes */
+	NULL, /* ImpersonateSecurityContext */
+	NULL, /* RevertSecurityContext */
+	NULL, /* MakeSignature */
+	NULL, /* VerifySignature */
+	NULL, /* FreeContextBuffer */
+	NULL, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	NULL, /* ExportSecurityContext */
+	NULL, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	NULL, /* QuerySecurityContextToken */
+	NULL, /* EncryptMessage */
+	NULL, /* DecryptMessage */
+	NULL, /* SetContextAttributes */
+};
+
+const SEC_PKG_INFO CREDSSP_SEC_PKG_INFO =
+{
+	0x000110733, /* fCapabilities */
+	1, /* wVersion */
+	0xFFFF, /* wRPCID */
+	0x000090A8, /* cbMaxToken */
+	"CREDSSP", /* Name */
+	"Microsoft CredSSP Security Provider" /* Comment */
+};
