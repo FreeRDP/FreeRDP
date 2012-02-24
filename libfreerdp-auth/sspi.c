@@ -76,7 +76,7 @@ void sspi_ContextBufferAllocTableNew()
 	size_t size;
 
 	ContextBufferAllocTable.cEntries = 0;
-	ContextBufferAllocTable.cMaxEntries = 64;
+	ContextBufferAllocTable.cMaxEntries = 4;
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
@@ -104,14 +104,18 @@ void sspi_ContextBufferAllocTableFree()
 void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 {
 	int index;
+	void* contextBuffer;
 
 	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
 		{
+			contextBuffer = xzalloc(size);
 			ContextBufferAllocTable.cEntries++;
-			ContextBufferAllocTable.entries[index].contextBuffer = xzalloc(size);
+
+			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
 			ContextBufferAllocTable.entries[index].allocatorIndex = allocatorIndex;
+
 			return ContextBufferAllocTable.entries[index].contextBuffer;
 		}
 	}
@@ -125,8 +129,8 @@ void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 	return sspi_ContextBufferAlloc(allocatorIndex, size);
 }
 
-void FreeContextBuffer_EnumerateSecurityPackages(SEC_PKG_INFO* pPackageInfo);
-void FreeContextBuffer_QuerySecurityPackageInfo(SEC_PKG_INFO* pPackageInfo);
+void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
+void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
 
 void sspi_ContextBufferFree(void* contextBuffer)
 {
@@ -137,20 +141,22 @@ void sspi_ContextBufferFree(void* contextBuffer)
 	{
 		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
 		{
+			contextBuffer = ContextBufferAllocTable.entries[index].contextBuffer;
 			allocatorIndex = ContextBufferAllocTable.entries[index].allocatorIndex;
 
 			ContextBufferAllocTable.cEntries--;
+
 			ContextBufferAllocTable.entries[index].allocatorIndex = 0;
 			ContextBufferAllocTable.entries[index].contextBuffer = NULL;
 
 			switch (allocatorIndex)
 			{
 				case EnumerateSecurityPackagesIndex:
-					FreeContextBuffer_EnumerateSecurityPackages((SEC_PKG_INFO*) contextBuffer);
+					FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
 					break;
 
 				case QuerySecurityPackageInfoIndex:
-					FreeContextBuffer_QuerySecurityPackageInfo((SEC_PKG_INFO*) contextBuffer);
+					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
 					break;
 			}
 		}
@@ -308,10 +314,11 @@ SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppP
 	return SEC_E_OK;
 }
 
-void FreeContextBuffer_EnumerateSecurityPackages(SEC_PKG_INFO* pPackageInfo)
+void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 {
 	int index;
 	uint32 cPackages;
+	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
 
 	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
 
@@ -369,8 +376,10 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 	return SEC_E_SECPKG_NOT_FOUND;
 }
 
-void FreeContextBuffer_QuerySecurityPackageInfo(SEC_PKG_INFO* pPackageInfo)
+void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 {
+	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
+
 	if (pPackageInfo->Name)
 		xfree(pPackageInfo->Name);
 

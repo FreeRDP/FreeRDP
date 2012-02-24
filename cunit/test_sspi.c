@@ -71,6 +71,8 @@ void test_EnumerateSecurityPackages(void)
 					pPackageInfo[index].Name, pPackageInfo[index].Comment);
 		}
 	}
+
+	FreeContextBuffer(pPackageInfo);
 }
 
 void test_QuerySecurityPackageInfo(void)
@@ -145,6 +147,8 @@ void test_InitializeSecurityContext(void)
 
 	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &pPackageInfo);
 
+	printf("pPackageInfo: 0x%08X ppPackageInfo:0x%08X\n", pPackageInfo, &pPackageInfo);
+
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
@@ -200,6 +204,8 @@ void test_InitializeSecurityContext(void)
 	freerdp_hexdump((uint8*) p_sec_buffer->pvBuffer, p_sec_buffer->cbBuffer);
 
 	table->FreeCredentialsHandle(&credentials);
+
+	FreeContextBuffer(pPackageInfo);
 }
 
 
