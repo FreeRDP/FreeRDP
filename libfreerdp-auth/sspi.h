@@ -33,6 +33,7 @@ CREDENTIALS* sspi_CredentialsNew();
 void sspi_CredentialsFree(CREDENTIALS* credentials);
 
 SEC_HANDLE* sspi_SecureHandleAlloc();
+void sspi_SecureHandleInit(SEC_HANDLE* handle);
 void sspi_SecureHandleInvalidate(SEC_HANDLE* handle);
 void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle);
 void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer);

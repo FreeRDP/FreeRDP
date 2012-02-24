@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * NTLM Security Package
+ * NTLM Security Package (Message)
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,33 +17,6 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_NTLM_PRIVATE_H
-#define FREERDP_AUTH_NTLM_PRIVATE_H
+#include "ntlm.h"
 
-#include <freerdp/auth/sspi.h>
-#include <freerdp/auth/credssp.h>
-
-#include "../sspi.h"
-
-enum _NTLM_STATE
-{
-	NTLM_STATE_INITIAL,
-	NTLM_STATE_NEGOTIATE,
-	NTLM_STATE_CHALLENGE,
-	NTLM_STATE_AUTHENTICATE,
-	NTLM_STATE_FINAL
-};
-typedef enum _NTLM_STATE NTLM_STATE;
-
-struct _NTLM_CONTEXT
-{
-	boolean ntlm_v2;
-	NTLM_STATE state;
-	uint32 NegotiateFlags;
-	SEC_BUFFER NegotiateMessage;
-	SEC_BUFFER ChallengeMessage;
-	SEC_BUFFER AuthenticateMessage;
-};
-typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
-
-#endif /* FREERDP_AUTH_NTLM_PRIVATE_H */
+SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);

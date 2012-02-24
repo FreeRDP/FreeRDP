@@ -124,17 +124,32 @@ void test_AcquireCredentialsHandle(void)
 
 void test_InitializeSecurityContext(void)
 {
+	uint32 cbMaxLen;
 	uint32 fContextReq;
+	void* output_buffer;
 	CTXT_HANDLE context;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
 	CRED_HANDLE credentials;
 	SEC_TIMESTAMP expiration;
+	SEC_PKG_INFO* pPackageInfo;
 	SEC_AUTH_IDENTITY identity;
 	SECURITY_FUNCTION_TABLE* table;
-	SEC_BUFFER_DESC sec_output_buffer;
+	SEC_BUFFER* p_sec_buffer;
+	SEC_BUFFER output_sec_buffer;
+	SEC_BUFFER_DESC output_sec_buffer_desc;
 
 	table = InitSecurityInterface();
+
+	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &pPackageInfo);
+
+	if (status != SEC_E_OK)
+	{
+		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		return;
+	}
+
+	cbMaxLen = pPackageInfo->cbMaxToken;
 
 	identity.User = (uint16*) xstrdup(test_User);
 	identity.UserLength = sizeof(test_User);
@@ -147,11 +162,55 @@ void test_InitializeSecurityContext(void)
 	status = table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
 
-	if (status == SEC_E_OK)
+	if (status != SEC_E_OK)
 	{
-		fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
-
-		table->InitializeSecurityContext(&credentials, NULL, NULL, fContextReq, 0, 0, NULL, 0,
-				&context, &sec_output_buffer, &pfContextAttr, &expiration);
+		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		return;
 	}
+
+	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+
+	output_buffer = xmalloc(cbMaxLen);
+
+	output_sec_buffer_desc.ulVersion = 0;
+	output_sec_buffer_desc.cBuffers = 1;
+	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+
+	output_sec_buffer.cbBuffer = cbMaxLen;
+	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
+	output_sec_buffer.pvBuffer = output_buffer;
+
+	status = table->InitializeSecurityContext(&credentials, NULL, NULL, fContextReq, 0, 0, NULL, 0,
+			&context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+
+	if (status != SEC_I_CONTINUE_NEEDED)
+	{
+		printf("InitializeSecurityContext status: 0x%08X\n", status);
+		return;
+	}
+
+	printf("cBuffers: %d ulVersion: %d\n", output_sec_buffer_desc.cBuffers, output_sec_buffer_desc.ulVersion);
+
+	p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
+
+	printf("BufferType: 0x%04X cbBuffer:%d\n", p_sec_buffer->BufferType, p_sec_buffer->cbBuffer);
+
+	freerdp_hexdump((uint8*) p_sec_buffer->pvBuffer, p_sec_buffer->cbBuffer);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

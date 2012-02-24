@@ -31,6 +31,8 @@
 #include "ntlm.h"
 #include "../sspi.h"
 
+#include "ntlm_message.h"
+
 char* NTLM_PACKAGE_NAME = "NTLM";
 
 NTLM_CONTEXT* ntlm_ContextNew()
@@ -41,7 +43,9 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 	if (context != NULL)
 	{
-
+		context->ntlm_v2 = false;
+		context->NegotiateFlags = 0;
+		context->state = NTLM_STATE_INITIAL;
 	}
 
 	return context;
@@ -103,6 +107,30 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
+	NTLM_CONTEXT* context;
+	SEC_BUFFER* sec_buffer;
+
+	if (pInput == NULL)
+	{
+		context = ntlm_ContextNew();
+
+		if (!pOutput)
+			return SEC_E_INVALID_TOKEN;
+
+		if (pOutput->cBuffers < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		sec_buffer = &pOutput->pBuffers[0];
+
+		if (sec_buffer->BufferType != SECBUFFER_TOKEN)
+			return SEC_E_INVALID_TOKEN;
+
+		if (sec_buffer->cbBuffer < 1)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		return ntlm_write_NegotiateMessage(context, sec_buffer);
+	}
+
 	return SEC_E_OK;
 }
 

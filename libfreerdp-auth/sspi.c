@@ -79,8 +79,16 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 SEC_HANDLE* sspi_SecureHandleAlloc()
 {
 	SEC_HANDLE* handle = xmalloc(sizeof(SEC_HANDLE));
-	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+	sspi_SecureHandleInit(handle);
 	return handle;
+}
+
+void sspi_SecureHandleInit(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	memset(handle, 0xFF, sizeof(SEC_HANDLE));
 }
 
 void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
@@ -88,7 +96,7 @@ void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
 	if (!handle)
 		return;
 
-	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+	sspi_SecureHandleInit(handle);
 }
 
 void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle)
