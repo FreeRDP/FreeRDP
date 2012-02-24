@@ -81,6 +81,8 @@ FREERDP_API void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boole
 typedef void (*pPointer_New)(rdpContext* context, rdpPointer* pointer);
 typedef void (*pPointer_Free)(rdpContext* context, rdpPointer* pointer);
 typedef void (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
+typedef void (*pPointer_SetNull)(rdpContext* context);
+typedef void (*pPointer_SetDefault)(rdpContext* context);
 
 struct rdp_pointer
 {
@@ -88,7 +90,9 @@ struct rdp_pointer
 	pPointer_New New; /* 1 */
 	pPointer_Free Free; /* 2 */
 	pPointer_Set Set; /* 3 */
-	uint32 paddingA[16 - 4]; /* 4 */
+	pPointer_SetNull SetNull; /* 4*/
+	pPointer_SetDefault SetDefault; /* 5 */
+	uint32 paddingA[16 - 6]; /* 6 */
 
 	uint32 xPos; /* 16 */
 	uint32 yPos; /* 17 */
@@ -106,6 +110,8 @@ FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
 FREERDP_API void Pointer_New(rdpContext* context, rdpPointer* pointer);
 FREERDP_API void Pointer_Free(rdpContext* context, rdpPointer* pointer);
 FREERDP_API void Pointer_Set(rdpContext* context, rdpPointer* pointer);
+FREERDP_API void Pointer_SetNull(rdpContext* context);
+FREERDP_API void Pointer_SetDefault(rdpContext* context);
 
 /* Glyph Class */
 
