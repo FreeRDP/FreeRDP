@@ -21,8 +21,11 @@
 #include "../sspi.h"
 
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/hexdump.h>
 
 #include "ntlm_message.h"
+
+#define WITH_DEBUG_NTLM
 
 #define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
@@ -70,6 +73,42 @@
 
 static const char NTLM_SIGNATURE[] = "NTLMSSP";
 
+static const char* const NTLM_NEGOTIATE_STRINGS[] =
+{
+	"NTLMSSP_NEGOTIATE_56",
+	"NTLMSSP_NEGOTIATE_KEY_EXCH",
+	"NTLMSSP_NEGOTIATE_128",
+	"NTLMSSP_RESERVED1",
+	"NTLMSSP_RESERVED2",
+	"NTLMSSP_RESERVED3",
+	"NTLMSSP_NEGOTIATE_VERSION",
+	"NTLMSSP_RESERVED4",
+	"NTLMSSP_NEGOTIATE_TARGET_INFO",
+	"NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
+	"NTLMSSP_RESERVED5",
+	"NTLMSSP_NEGOTIATE_IDENTIFY",
+	"NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
+	"NTLMSSP_RESERVED6",
+	"NTLMSSP_TARGET_TYPE_SERVER",
+	"NTLMSSP_TARGET_TYPE_DOMAIN",
+	"NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+	"NTLMSSP_RESERVED7",
+	"NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
+	"NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
+	"NTLMSSP_NEGOTIATE_ANONYMOUS",
+	"NTLMSSP_RESERVED8",
+	"NTLMSSP_NEGOTIATE_NTLM",
+	"NTLMSSP_RESERVED9",
+	"NTLMSSP_NEGOTIATE_LM_KEY",
+	"NTLMSSP_NEGOTIATE_DATAGRAM",
+	"NTLMSSP_NEGOTIATE_SEAL",
+	"NTLMSSP_NEGOTIATE_SIGN",
+	"NTLMSSP_RESERVED10",
+	"NTLMSSP_REQUEST_TARGET",
+	"NTLMSSP_NEGOTIATE_OEM",
+	"NTLMSSP_NEGOTIATE_UNICODE"
+};
+
 /**
  * Output VERSION structure.\n
  * VERSION @msdn{cc236654}
@@ -85,6 +124,25 @@ void ntlm_output_version(STREAM* s)
 	stream_write_uint16(s, 7600); /* ProductBuild (2 bytes) */
 	stream_write_zero(s, 3); /* Reserved (3 bytes) */
 	stream_write_uint8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
+}
+
+void ntlm_print_negotiate_flags(uint32 flags)
+{
+	int i;
+	const char* str;
+
+	printf("negotiateFlags \"0x%08X\"{\n", flags);
+
+	for (i = 31; i >= 0; i--)
+	{
+		if ((flags >> i) & 1)
+		{
+			str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
+			printf("\t%s (%d),\n", str, (31 - i));
+		}
+	}
+
+	printf("}\n");
 }
 
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
@@ -150,15 +208,199 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 	{
 		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
 		ntlm_output_version(s);
+
+#ifdef WITH_DEBUG_NTLM
+		printf("Version (length = 8)\n");
+		freerdp_hexdump((s->p - 8), 8);
+		printf("\n");
+#endif
 	}
 
 	length = s->p - s->data;
 	buffer->cbBuffer = length;
 
-	//freerdp_blob_alloc(&context->negotiate_message, length);
-	//memcpy(context->negotiate_message.data, s->data, length);
+	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
+	memcpy(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
+	context->NegotiateMessage.BufferType = buffer->BufferType;
+
+#ifdef WITH_DEBUG_NTLM
+	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(s->data, length);
+	printf("\n");
+#endif
 
 	context->state = NTLM_STATE_CHALLENGE;
+
+	return SEC_I_CONTINUE_NEEDED;
+}
+
+SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+{
+	uint8* p;
+	STREAM* s;
+	int length;
+	uint8* start_offset;
+	uint8* payload_offset;
+	uint16 targetNameLen;
+	uint16 targetNameMaxLen;
+	uint32 targetNameBufferOffset;
+	uint16 targetInfoLen;
+	uint16 targetInfoMaxLen;
+	uint32 targetInfoBufferOffset;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	start_offset = s->p - 12;
+
+	/* TargetNameFields (8 bytes) */
+	stream_read_uint16(s, targetNameLen); /* TargetNameLen (2 bytes) */
+	stream_read_uint16(s, targetNameMaxLen); /* TargetNameMaxLen (2 bytes) */
+	stream_read_uint32(s, targetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+
+	stream_read_uint32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+#ifdef WITH_DEBUG_NTLM
+	ntlm_print_negotiate_flags(context->NegotiateFlags);
+#endif
+
+	stream_read(s, context->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
+	stream_seek(s, 8); /* Reserved (8 bytes), should be ignored */
+
+	/* TargetInfoFields (8 bytes) */
+	stream_read_uint16(s, targetInfoLen); /* TargetInfoLen (2 bytes) */
+	stream_read_uint16(s, targetInfoMaxLen); /* TargetInfoMaxLen (2 bytes) */
+	stream_read_uint32(s, targetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+
+	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
+
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		stream_seek(s, 8); /* Version (8 bytes), can be ignored */
+	}
+
+	/* Payload (variable) */
+	payload_offset = s->p;
+
+	if (targetNameLen > 0)
+	{
+		p = start_offset + targetNameBufferOffset;
+		sspi_SecBufferAlloc(&context->TargetName, targetNameLen);
+		memcpy(context->TargetName.pvBuffer, p, targetNameLen);
+
+#ifdef WITH_DEBUG_NTLM
+		printf("TargetName (length = %d, offset = %d)\n", targetNameLen, targetNameBufferOffset);
+		freerdp_hexdump(context->TargetName.pvBuffer, context->TargetName.cbBuffer);
+		printf("\n");
+#endif
+	}
+
+	if (targetInfoLen > 0)
+	{
+		p = start_offset + targetInfoBufferOffset;
+		sspi_SecBufferAlloc(&context->TargetInfo, targetInfoLen);
+		memcpy(context->TargetInfo.pvBuffer, p, targetInfoLen);
+
+#ifdef WITH_DEBUG_NTLM
+		printf("TargetInfo (length = %d, offset = %d)\n", targetInfoLen, targetInfoBufferOffset);
+		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+		printf("\n");
+#endif
+
+		if (context->ntlm_v2)
+		{
+			s->p = p;
+			//ntlm_input_av_pairs(context, s);
+		}
+	}
+
+	length = (payload_offset - start_offset) + targetNameLen + targetInfoLen;
+
+	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
+	memcpy(context->ChallengeMessage.pvBuffer, start_offset, length);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	printf("\n");
+#endif
+
+#if 0
+
+	/* AV_PAIRs */
+	if (context->ntlm_v2)
+		ntlmssp_populate_av_pairs(context);
+
+	/* Timestamp */
+	ntlm_generate_timestamp(context);
+
+	/* LmChallengeResponse */
+	ntlm_compute_lm_v2_response(context);
+
+	if ((context->ntlm_v2) && (context->LmChallengeResponse.cbBuffer > 0))
+		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+
+	/* NtChallengeResponse */
+	ntlm_compute_ntlm_v2_response(context);
+
+	/* KeyExchangeKey */
+	ntlm_generate_key_exchange_key(context);
+
+	/* EncryptedRandomSessionKey */
+	ntlm_encrypt_random_session_key(context);
+
+	/* Generate signing keys */
+	ntlm_generate_client_signing_key(context);
+	ntlm_generate_server_signing_key(context);
+
+	/* Generate sealing keys */
+	ntlm_generate_client_sealing_key(context);
+	ntlm_generate_server_sealing_key(context);
+
+	/* Initialize RC4 seal state using client sealing key */
+	ntlm_init_rc4_seal_states(context);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("ClientChallenge\n");
+	freerdp_hexdump(context->ClientChallenge, 8);
+	printf("\n");
+
+	printf("ServerChallenge\n");
+	freerdp_hexdump(context->ServerChallenge, 8);
+	printf("\n");
+
+	printf("SessionBaseKey\n");
+	freerdp_hexdump(context->SessionBaseKey, 16);
+	printf("\n");
+
+	printf("KeyExchangeKey\n");
+	freerdp_hexdump(context->KeyExchangeKey, 16);
+	printf("\n");
+
+	printf("ExportedSessionKey\n");
+	freerdp_hexdump(context->ExportedSessionKey, 16);
+	printf("\n");
+
+	printf("RandomSessionKey\n");
+	freerdp_hexdump(context->RandomSessionKey, 16);
+	printf("\n");
+
+	printf("ClientSignKey\n");
+	freerdp_hexdump(context->ClientSigningKey, 16);
+	printf("\n");
+
+	printf("ClientSealingKey\n");
+	freerdp_hexdump(context->ClientSealingKey, 16);
+	printf("\n");
+
+	printf("Timestamp\n");
+	freerdp_hexdump(context->Timestamp, 8);
+	printf("\n");
+#endif
+
+#endif
+
+	context->state = NTLMSSP_STATE_AUTHENTICATE;
 
 	return SEC_I_CONTINUE_NEEDED;
 }

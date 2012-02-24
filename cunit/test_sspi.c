@@ -147,8 +147,6 @@ void test_InitializeSecurityContext(void)
 
 	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &pPackageInfo);
 
-	printf("pPackageInfo: 0x%08X ppPackageInfo:0x%08X\n", pPackageInfo, &pPackageInfo);
-
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);

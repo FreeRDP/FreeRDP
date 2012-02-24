@@ -32,6 +32,9 @@ typedef struct _CREDENTIALS CREDENTIALS;
 CREDENTIALS* sspi_CredentialsNew();
 void sspi_CredentialsFree(CREDENTIALS* credentials);
 
+void sspi_SecBufferAlloc(SEC_BUFFER* sec_buffer, size_t size);
+void sspi_SecBufferFree(SEC_BUFFER* sec_buffer);
+
 SEC_HANDLE* sspi_SecureHandleAlloc();
 void sspi_SecureHandleInit(SEC_HANDLE* handle);
 void sspi_SecureHandleInvalidate(SEC_HANDLE* handle);

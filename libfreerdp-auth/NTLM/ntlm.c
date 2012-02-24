@@ -46,6 +46,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->ntlm_v2 = false;
 		context->NegotiateFlags = 0;
 		context->state = NTLM_STATE_INITIAL;
+		context->uniconv = freerdp_uniconv_new();
 	}
 
 	return context;
@@ -127,7 +128,7 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 	NTLM_CONTEXT* context;
 	SEC_BUFFER* sec_buffer;
 
-	if (pInput == NULL)
+	if (!pInput)
 	{
 		context = ntlm_ContextNew();
 
@@ -145,7 +146,30 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (sec_buffer->cbBuffer < 1)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+
 		return ntlm_write_NegotiateMessage(context, sec_buffer);
+	}
+	else
+	{
+		context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+		if (!context)
+			return SEC_E_INVALID_HANDLE;
+
+		if (!pInput)
+			return SEC_E_INVALID_TOKEN;
+
+		if (pInput->cBuffers < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		sec_buffer = &pInput->pBuffers[0];
+
+		if (sec_buffer->BufferType != SECBUFFER_TOKEN)
+			return SEC_E_INVALID_TOKEN;
+
+		if (sec_buffer->cbBuffer < 1)
+			return SEC_E_INVALID_TOKEN;
 	}
 
 	return SEC_E_OK;

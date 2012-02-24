@@ -23,6 +23,8 @@
 #include <freerdp/auth/sspi.h>
 #include <freerdp/auth/credssp.h>
 
+#include <freerdp/utils/unicode.h>
+
 #include "../sspi.h"
 
 enum _NTLM_STATE
@@ -39,10 +41,28 @@ struct _NTLM_CONTEXT
 {
 	boolean ntlm_v2;
 	NTLM_STATE state;
+	UNICONV* uniconv;
 	uint32 NegotiateFlags;
 	SEC_BUFFER NegotiateMessage;
 	SEC_BUFFER ChallengeMessage;
 	SEC_BUFFER AuthenticateMessage;
+	SEC_BUFFER TargetInfo;
+	SEC_BUFFER TargetName;
+	SEC_BUFFER NtChallengeResponse;
+	SEC_BUFFER LmChallengeResponse;
+	uint8 Timestamp[8];
+	uint8 ServerChallenge[8];
+	uint8 ClientChallenge[8];
+	uint8 SessionBaseKey[16];
+	uint8 KeyExchangeKey[16];
+	uint8 RandomSessionKey[16];
+	uint8 ExportedSessionKey[16];
+	uint8 EncryptedRandomSessionKey[16];
+	uint8 ClientSigningKey[16];
+	uint8 ClientSealingKey[16];
+	uint8 ServerSigningKey[16];
+	uint8 ServerSealingKey[16];
+	uint8 MessageIntegrityCheck[16];
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 

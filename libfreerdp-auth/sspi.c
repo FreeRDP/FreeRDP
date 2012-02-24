@@ -185,6 +185,18 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	xfree(credentials);
 }
 
+void sspi_SecBufferAlloc(SEC_BUFFER* sec_buffer, size_t size)
+{
+	sec_buffer->cbBuffer = size;
+	sec_buffer->pvBuffer = xzalloc(size);
+}
+
+void sspi_SecBufferFree(SEC_BUFFER* sec_buffer)
+{
+	sec_buffer->cbBuffer = 0;
+	xfree(sec_buffer->pvBuffer);
+}
+
 SEC_HANDLE* sspi_SecureHandleAlloc()
 {
 	SEC_HANDLE* handle = xmalloc(sizeof(SEC_HANDLE));
