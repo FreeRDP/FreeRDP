@@ -128,6 +128,16 @@ void Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	context->graphics->Pointer_Prototype->Set(context, pointer);
 }
 
+void Pointer_SetNull(rdpContext* context)
+{
+	context->graphics->Pointer_Prototype->SetNull(context);
+}
+
+void Pointer_SetDefault(rdpContext* context)
+{
+	context->graphics->Pointer_Prototype->SetDefault(context);
+}
+
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 {
 	memcpy(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
