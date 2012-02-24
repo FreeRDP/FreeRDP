@@ -82,6 +82,23 @@ SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPacka
 	return SEC_E_OK;
 }
 
+SECURITY_STATUS ntlm_FreeCredentialsHandle(CRED_HANDLE* phCredential)
+{
+	CREDENTIALS* credentials;
+
+	if (!phCredential)
+		return SEC_E_INVALID_HANDLE;
+
+	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+	if (!credentials)
+		return SEC_E_INVALID_HANDLE;
+
+	sspi_CredentialsFree(credentials);
+
+	return SEC_E_OK;
+}
+
 SECURITY_STATUS ntlm_QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
@@ -158,7 +175,7 @@ const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
 	NULL, /* Reserved1 */
 	ntlm_QueryCredentialsAttributes, /* QueryCredentialsAttributes */
 	ntlm_AcquireCredentialsHandle, /* AcquireCredentialsHandle */
-	NULL, /* FreeCredentialsHandle */
+	ntlm_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
 	ntlm_InitializeSecurityContext, /* InitializeSecurityContext */
 	NULL, /* AcceptSecurityContext */

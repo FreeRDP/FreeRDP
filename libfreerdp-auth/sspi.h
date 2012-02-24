@@ -41,4 +41,36 @@ void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle);
 void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer);
 void sspi_SecureHandleFree(SEC_HANDLE* handle);
 
+enum SecurityFunctionTableIndex
+{
+	EnumerateSecurityPackagesIndex = 1,
+	Reserved1Index = 2,
+	QueryCredentialsAttributesIndex = 3,
+	AcquireCredentialsHandleIndex = 4,
+	FreeCredentialsHandleIndex = 5,
+	Reserved2Index = 6,
+	InitializeSecurityContextIndex = 7,
+	AcceptSecurityContextIndex = 8,
+	CompleteAuthTokenIndex = 9,
+	DeleteSecurityContextIndex = 10,
+	ApplyControlTokenIndex = 11,
+	QueryContextAttributesIndex = 12,
+	ImpersonateSecurityContextIndex = 13,
+	RevertSecurityContextIndex = 14,
+	MakeSignatureIndex = 15,
+	VerifySignatureIndex = 16,
+	FreeContextBufferIndex = 17,
+	QuerySecurityPackageInfoIndex = 18,
+	Reserved3Index = 19,
+	Reserved4Index = 20,
+	ExportSecurityContextIndex = 21,
+	ImportSecurityContextIndex = 22,
+	AddCredentialsIndex = 23,
+	Reserved8Index = 24,
+	QuerySecurityContextTokenIndex = 25,
+	EncryptMessageIndex = 26,
+	DecryptMessageIndex = 27,
+	SetContextAttributesIndex = 28
+};
+
 #endif /* FREERDP_AUTH_SSPI_PRIVATE_H */

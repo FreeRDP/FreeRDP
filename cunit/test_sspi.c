@@ -29,11 +29,13 @@
 
 int init_sspi_suite(void)
 {
+	sspi_GlobalInit();
 	return 0;
 }
 
 int clean_sspi_suite(void)
 {
+	sspi_GlobalFinish();
 	return 0;
 }
 
@@ -196,6 +198,8 @@ void test_InitializeSecurityContext(void)
 	printf("BufferType: 0x%04X cbBuffer:%d\n", p_sec_buffer->BufferType, p_sec_buffer->cbBuffer);
 
 	freerdp_hexdump((uint8*) p_sec_buffer->pvBuffer, p_sec_buffer->cbBuffer);
+
+	table->FreeCredentialsHandle(&credentials);
 }
 
 

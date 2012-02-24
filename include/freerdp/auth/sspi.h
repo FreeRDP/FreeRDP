@@ -515,4 +515,9 @@ FREERDP_API SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, 
 FREERDP_API SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
 FREERDP_API SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
+/* Custom API */
+
+void sspi_GlobalInit();
+void sspi_GlobalFinish();
+
 #endif /* FREERDP_AUTH_SSPI_H */
