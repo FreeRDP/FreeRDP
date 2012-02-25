@@ -166,7 +166,10 @@ static int extension_uninit_plugins(rdpExtension* extension)
 	return 0;
 }
 
-
+/** Gets through all registered pre-connect hooks and executes them.
+ *  @param extension - pointer to a rdpExtension structure
+ *  @return 0 always
+ */
 int extension_pre_connect(rdpExtension* extension)
 {
 	int i;
