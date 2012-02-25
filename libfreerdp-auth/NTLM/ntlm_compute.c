@@ -26,6 +26,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
+#include <freerdp/crypto/crypto.h>
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
@@ -47,6 +48,13 @@ const char* const AV_PAIRS_STRINGS[] =
 	"MsvAvTargetName",
 	"MsvChannelBindings"
 };
+
+static const char lm_magic[] = "KGS!@#$%";
+
+static const char client_sign_magic[] = "session key to client-to-server signing key magic constant";
+static const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
+static const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
+static const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
 
 /**
  * Output Restriction_Encoding.\n
@@ -662,4 +670,213 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 	sspi_SecBufferFree(&ntlm_v2_temp);
 	sspi_SecBufferFree(&ntlm_v2_temp_chal);
+}
+
+/**
+ * Encrypt the given plain text using RC4 and the given key.
+ * @param key RC4 key
+ * @param length text length
+ * @param plaintext plain text
+ * @param ciphertext cipher text
+ */
+
+void ntlm_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext)
+{
+	CryptoRc4 rc4;
+
+	/* Initialize RC4 cipher with key */
+	rc4 = crypto_rc4_init((void*) key, 16);
+
+	/* Encrypt plaintext with key */
+	crypto_rc4(rc4, length, (void*) plaintext, (void*) ciphertext);
+
+	/* Free RC4 Cipher */
+	crypto_rc4_free(rc4);
+}
+
+/**
+ * Generate client challenge (8-byte nonce).
+ * @param NTLM context
+ */
+
+void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
+{
+	/* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+	crypto_nonce(context->ClientChallenge, 8);
+}
+
+/**
+ * Generate server challenge (8-byte nonce).
+ * @param NTLM context
+ */
+
+void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
+{
+	crypto_nonce(context->ServerChallenge, 8);
+}
+
+/**
+ * Generate KeyExchangeKey (the 128-bit SessionBaseKey).\n
+ * @msdn{cc236710}
+ * @param NTLM context
+ */
+
+void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
+{
+	/* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
+	memcpy(context->KeyExchangeKey, context->SessionBaseKey, 16);
+}
+
+/**
+ * Generate RandomSessionKey (16-byte nonce).
+ * @param NTLM context
+ */
+
+void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
+{
+	crypto_nonce(context->RandomSessionKey, 16);
+}
+
+/**
+ * Generate ExportedSessionKey (the RandomSessionKey, exported)
+ * @param NTLM context
+ */
+
+void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
+{
+	memcpy(context->ExportedSessionKey, context->RandomSessionKey, 16);
+}
+
+/**
+ * Encrypt RandomSessionKey (RC4-encrypted RandomSessionKey, using KeyExchangeKey as the key).
+ * @param NTLM context
+ */
+
+void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
+{
+	/* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the KeyExchangeKey */
+	ntlm_rc4k(context->KeyExchangeKey, 16, context->RandomSessionKey, context->EncryptedRandomSessionKey);
+}
+
+/**
+ * Generate signing key.\n
+ * @msdn{cc236711}
+ * @param exported_session_key ExportedSessionKey
+ * @param sign_magic Sign magic string
+ * @param signing_key Destination signing key
+ */
+
+void ntlm_generate_signing_key(uint8* exported_session_key, SEC_BUFFER* sign_magic, uint8* signing_key)
+{
+	int length;
+	uint8* value;
+	CryptoMd5 md5;
+
+	length = 16 + sign_magic->cbBuffer;
+	value = (uint8*) xmalloc(length);
+
+	/* Concatenate ExportedSessionKey with sign magic */
+	memcpy(value, exported_session_key, 16);
+	memcpy(&value[16], sign_magic->pvBuffer, sign_magic->cbBuffer);
+
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, value, length);
+	crypto_md5_final(md5, signing_key);
+
+	xfree(value);
+}
+
+/**
+ * Generate client signing key (ClientSigningKey).\n
+ * @msdn{cc236711}
+ * @param NTLM context
+ */
+
+void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
+{
+	SEC_BUFFER sign_magic;
+	sign_magic.pvBuffer = (void*) client_sign_magic;
+	sign_magic.cbBuffer = sizeof(client_sign_magic);
+	ntlm_generate_signing_key(context->ExportedSessionKey, &sign_magic, context->ClientSigningKey);
+}
+
+/**
+ * Generate server signing key (ServerSigningKey).\n
+ * @msdn{cc236711}
+ * @param NTLM context
+ */
+
+void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
+{
+	SEC_BUFFER sign_magic;
+	sign_magic.pvBuffer = (void*) server_sign_magic;
+	sign_magic.cbBuffer = sizeof(server_sign_magic);
+	ntlm_generate_signing_key(context->ExportedSessionKey, &sign_magic, context->ServerSigningKey);
+}
+
+/**
+ * Generate sealing key.\n
+ * @msdn{cc236712}
+ * @param exported_session_key ExportedSessionKey
+ * @param seal_magic Seal magic string
+ * @param sealing_key Destination sealing key
+ */
+
+void ntlm_generate_sealing_key(uint8* exported_session_key, SEC_BUFFER* seal_magic, uint8* sealing_key)
+{
+	uint8* p;
+	CryptoMd5 md5;
+	SEC_BUFFER buffer;
+
+	sspi_SecBufferAlloc(&buffer, 16 + seal_magic->cbBuffer);
+	p = (uint8*) buffer.pvBuffer;
+
+	/* Concatenate ExportedSessionKey with seal magic */
+	memcpy(p, exported_session_key, 16);
+	memcpy(&p[16], seal_magic->pvBuffer, seal_magic->cbBuffer);
+
+	md5 = crypto_md5_init();
+	crypto_md5_update(md5, buffer.pvBuffer, buffer.cbBuffer);
+	crypto_md5_final(md5, sealing_key);
+
+	sspi_SecBufferFree(&buffer);
+}
+
+/**
+ * Generate client sealing key (ClientSealingKey).\n
+ * @msdn{cc236712}
+ * @param NTLM context
+ */
+
+void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
+{
+	SEC_BUFFER seal_magic;
+	seal_magic.pvBuffer = (void*) client_seal_magic;
+	seal_magic.cbBuffer = sizeof(client_seal_magic);
+	ntlm_generate_signing_key(context->ExportedSessionKey, &seal_magic, context->ClientSealingKey);
+}
+
+/**
+ * Generate server sealing key (ServerSealingKey).\n
+ * @msdn{cc236712}
+ * @param NTLM context
+ */
+
+void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
+{
+	SEC_BUFFER seal_magic;
+	seal_magic.pvBuffer = (void*) server_seal_magic;
+	seal_magic.cbBuffer = sizeof(server_seal_magic);
+	ntlm_generate_signing_key(context->ExportedSessionKey, &seal_magic, context->ServerSealingKey);
+}
+
+/**
+ * Initialize RC4 stream cipher states for sealing.
+ * @param NTLM context
+ */
+
+void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
+{
+	context->send_rc4_seal = crypto_rc4_init(context->ClientSealingKey, 16);
+	context->recv_rc4_seal = crypto_rc4_init(context->ServerSealingKey, 16);
 }

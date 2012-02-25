@@ -352,7 +352,6 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
 
-#if 0
 	/* KeyExchangeKey */
 	ntlm_generate_key_exchange_key(context);
 
@@ -406,8 +405,6 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	printf("Timestamp\n");
 	freerdp_hexdump(context->Timestamp, 8);
 	printf("\n");
-#endif
-
 #endif
 
 	context->state = NTLM_STATE_AUTHENTICATE;

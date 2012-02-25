@@ -40,5 +40,19 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash);
 void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
 void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
+void ntlm_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
+void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
+void ntlm_generate_server_challenge(NTLM_CONTEXT* context);
+void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
+void ntlm_generate_random_session_key(NTLM_CONTEXT* context);
+void ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
+void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
+
+void ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
+void ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
+void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context);
+void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context);
+void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
+
 #endif /*  FREERDP_AUTH_NTLM_COMPUTE_H */
 

@@ -21,6 +21,7 @@
 #define FREERDP_AUTH_NTLM_PRIVATE_H
 
 #include <freerdp/auth/sspi.h>
+#include <freerdp/crypto/crypto.h>
 
 #include <freerdp/utils/unicode.h>
 
@@ -79,7 +80,11 @@ struct _NTLM_CONTEXT
 	boolean ntlm_v2;
 	NTLM_STATE state;
 	UNICONV* uniconv;
+	int send_seq_num;
+	int recv_seq_num;
 	AV_PAIRS* av_pairs;
+	CryptoRc4 send_rc4_seal;
+	CryptoRc4 recv_rc4_seal;
 	uint32 NegotiateFlags;
 	uint16* Workstation;
 	uint32 WorkstationLength;
