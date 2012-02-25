@@ -113,8 +113,12 @@ struct rdp_freerdp
 								   Can be set before calling freerdp_connect() to have it executed after the actual connection has succeeded.
 								   Must be set to NULL if not needed. */
 
-	pAuthenticate Authenticate; /* 50 */
-	pVerifyCertificate VerifyCertificate; /* 51 */
+	pAuthenticate Authenticate; /**< (offset 50)
+									 Callback for authentication.
+									 It is used to get the username/password when it was not provided at connection time. */
+	pVerifyCertificate VerifyCertificate; /**< (offset 51)
+											   Callback for certificate validation.
+											   Used to verify that an unknown certificate is trusted. */
 	uint32 paddingD[64 - 52]; /* 52 */
 
 	pSendChannelData SendChannelData; /* 64 */

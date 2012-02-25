@@ -744,8 +744,22 @@ boolean xf_post_connect(freerdp* instance)
 	return true;
 }
 
+/** Callback set in the rdp_freerdp structure, and used to get the user's password,
+ *  if required to establish the connection.
+ *  This function is actually called in credssp_ntlmssp_client_init()
+ *  @see rdp_server_accept_nego() and rdp_check_fds()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param username - unused
+ *  @param password - on return: pointer to a character string that will be filled by the password entered by the user.
+ *  				  Note that this character string will be allocated inside the function, and needs to be deallocated by the caller
+ *  				  using xfree(), even in case this function fails.
+ *  @param domain - unused
+ *  @return true if a password was successfully entered. See freerdp_passphrase_read() for more details.
+ */
 boolean xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
+	// FIXME: seems this callback may be called when 'username' is not known.
+	// But it doesn't do anything to fix it...
 	*password = xmalloc(password_size * sizeof(char));
 
 	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
@@ -754,6 +768,16 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	return true;
 }
 
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when the connection requires it.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param subject
+ *  @param issuer
+ *  @param fingerprint
+ *  @return true if the certificate is trusted. false otherwise.
+ */
 boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	char answer;
@@ -785,6 +809,19 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	return false;
 }
 
+/** Used to parse xfreerdp-specific commandline parameters.
+ *  This function is provided as a parameter to freerdp_parse_args(), that will call it
+ *  each time a parameter is not recognized by the library.
+ *  @see xf_pre_connect(), where freerdp_parse_args() is called.
+ *
+ *  @param settings
+ *  @param opt
+ *  @param val
+ *  @param user_data
+ *  @return the number of parameters that where taken into account.
+ *  0 means no options recognized.
+ *  freerdp_parse_args() will use this number to move forward in the parameters parsing.
+ */
 int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
 {
 	int argc = 0;
@@ -841,13 +878,28 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	return argc;
 }
 
+/** Used to load plugins based on the commandline parameters.
+ *  This function is provided as a parameter to freerdp_parse_args(), that will call it
+ *  each time a plugin name is found on the command line.
+ *  This function just calls freerdp_channels_load_plugin() for the given plugin, and always returns 1.
+ *  @see xf_pre_connect(), where freerdp_parse_args() is called.
+ *
+ *  @param settings
+ *  @param name
+ *  @param plugin_data
+ *  @param user_data
+ *  @return 1
+ */
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	rdpChannels* channels = (rdpChannels*) user_data;
 
 	printf("loading plugin %s\n", name);
 	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
+	// FIXME we should check the return code for freerdp_channels_load_plugin()
+	// and report any error to the caller. freerdp_parse_args() actually expect to get
+	// an error code when there is a loading error.
+	// Is it as easy as "return freerdp_channels_load_plugin()" ?
 	return 1;
 }
 
@@ -956,6 +1008,13 @@ void xf_free(xfInfo* xfi)
 	xfree(xfi);
 }
 
+/** Main loop for the rdp connection.
+ *  It will be run from the thread's entry point (thread_func()).
+ *  It initiates the connection, and will continue to run until the session ends,
+ *  processing events as they are received.
+ *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
+ *  @return A code from the enum XF_EXIT_CODE (0 if successfull)
+ */
 int xfreerdp_run(freerdp* instance)
 {
 	int i;
@@ -1077,6 +1136,10 @@ int xfreerdp_run(freerdp* instance)
 	return ret;
 }
 
+/** Entry point for the thread that will deal with the session.
+ *  It just calls xfreerdp_run() using the given instance as parameter.
+ *  @param - pointer to a thread_data structure that contains the initialized connection.
+ */
 void* thread_func(void* param)
 {
 	struct thread_data* data;
