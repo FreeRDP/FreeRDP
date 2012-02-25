@@ -21,6 +21,8 @@
 
 #include <freerdp/auth/sspi.h>
 
+#include "sspi.h"
+
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
 extern const SEC_PKG_INFO NTLM_SEC_PKG_INFO;
@@ -52,6 +54,220 @@ const SECURITY_FUNCTION_TABLE_NAME SECURITY_FUNCTION_TABLE_NAME_LIST[] =
 #define SEC_HANDLE_LOWER_MAX	0xFFFFFFFF
 #define SEC_HANDLE_UPPER_MAX	0xFFFFFFFE
 
+struct _CONTEXT_BUFFER_ALLOC_ENTRY
+{
+	void* contextBuffer;
+	uint32 allocatorIndex;
+};
+typedef struct _CONTEXT_BUFFER_ALLOC_ENTRY CONTEXT_BUFFER_ALLOC_ENTRY;
+
+struct _CONTEXT_BUFFER_ALLOC_TABLE
+{
+	uint32 cEntries;
+	uint32 cMaxEntries;
+	CONTEXT_BUFFER_ALLOC_ENTRY* entries;
+};
+typedef struct _CONTEXT_BUFFER_ALLOC_TABLE CONTEXT_BUFFER_ALLOC_TABLE;
+
+CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable;
+
+void sspi_ContextBufferAllocTableNew()
+{
+	size_t size;
+
+	ContextBufferAllocTable.cEntries = 0;
+	ContextBufferAllocTable.cMaxEntries = 4;
+
+	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
+
+	ContextBufferAllocTable.entries = xzalloc(size);
+}
+
+void sspi_ContextBufferAllocTableGrow()
+{
+	size_t size;
+	ContextBufferAllocTable.cEntries = 0;
+	ContextBufferAllocTable.cMaxEntries *= 2;
+
+	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
+
+	ContextBufferAllocTable.entries = xrealloc(ContextBufferAllocTable.entries, size);
+	memset((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], 0, size / 2);
+}
+
+void sspi_ContextBufferAllocTableFree()
+{
+	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
+	xfree(ContextBufferAllocTable.entries);
+}
+
+void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
+{
+	int index;
+	void* contextBuffer;
+
+	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	{
+		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
+		{
+			contextBuffer = xzalloc(size);
+			ContextBufferAllocTable.cEntries++;
+
+			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
+			ContextBufferAllocTable.entries[index].allocatorIndex = allocatorIndex;
+
+			return ContextBufferAllocTable.entries[index].contextBuffer;
+		}
+	}
+
+	/* no available entry was found, the table needs to be grown */
+
+	sspi_ContextBufferAllocTableGrow();
+
+	/* the next call to sspi_ContextBufferAlloc() should now succeed */
+
+	return sspi_ContextBufferAlloc(allocatorIndex, size);
+}
+
+void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
+void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
+
+void sspi_ContextBufferFree(void* contextBuffer)
+{
+	int index;
+	uint32 allocatorIndex;
+
+	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	{
+		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
+		{
+			contextBuffer = ContextBufferAllocTable.entries[index].contextBuffer;
+			allocatorIndex = ContextBufferAllocTable.entries[index].allocatorIndex;
+
+			ContextBufferAllocTable.cEntries--;
+
+			ContextBufferAllocTable.entries[index].allocatorIndex = 0;
+			ContextBufferAllocTable.entries[index].contextBuffer = NULL;
+
+			switch (allocatorIndex)
+			{
+				case EnumerateSecurityPackagesIndex:
+					FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
+					break;
+
+				case QuerySecurityPackageInfoIndex:
+					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
+					break;
+			}
+		}
+	}
+}
+
+CREDENTIALS* sspi_CredentialsNew()
+{
+	CREDENTIALS* credentials;
+
+	credentials = xnew(CREDENTIALS);
+
+	if (credentials != NULL)
+	{
+
+	}
+
+	return credentials;
+}
+
+void sspi_CredentialsFree(CREDENTIALS* credentials)
+{
+	if (!credentials)
+		return;
+
+	xfree(credentials);
+}
+
+void sspi_SecBufferAlloc(SEC_BUFFER* sec_buffer, size_t size)
+{
+	sec_buffer->cbBuffer = size;
+	sec_buffer->pvBuffer = xzalloc(size);
+}
+
+void sspi_SecBufferFree(SEC_BUFFER* sec_buffer)
+{
+	sec_buffer->cbBuffer = 0;
+	xfree(sec_buffer->pvBuffer);
+}
+
+SEC_HANDLE* sspi_SecureHandleAlloc()
+{
+	SEC_HANDLE* handle = xmalloc(sizeof(SEC_HANDLE));
+	sspi_SecureHandleInit(handle);
+	return handle;
+}
+
+void sspi_SecureHandleInit(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+}
+
+void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	sspi_SecureHandleInit(handle);
+}
+
+void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle)
+{
+	void* pointer;
+
+	if (!handle)
+		return NULL;
+
+	pointer = (void*) ~((size_t) handle->dwLower);
+
+	return pointer;
+}
+
+void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer)
+{
+	if (!handle)
+		return;
+
+	handle->dwLower = (uint32*) (~((size_t) pointer));
+}
+
+void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle)
+{
+	void* pointer;
+
+	if (!handle)
+		return NULL;
+
+	pointer = (void*) ~((size_t) handle->dwUpper);
+
+	return pointer;
+}
+
+void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer)
+{
+	if (!handle)
+		return;
+
+	handle->dwUpper = (uint32*) (~((size_t) pointer));
+}
+
+void sspi_SecureHandleFree(SEC_HANDLE* handle)
+{
+	if (!handle)
+		return;
+
+	xfree(handle);
+}
+
 SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
 {
 	int index;
@@ -70,79 +286,29 @@ SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
 	return NULL;
 }
 
+void sspi_GlobalInit()
+{
+	sspi_ContextBufferAllocTableNew();
+}
+
+void sspi_GlobalFinish()
+{
+	sspi_ContextBufferAllocTableFree();
+}
+
 /* Package Management */
 
 SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo)
 {
-	/*
-	 * Name: Negotiate
-	 * Comment: Microsoft Package Negotiator
-	 * fCapabilities: 0x00083BB3
-	 * wVersion: 1
-	 * wRPCID: 0x0009
-	 * cbMaxToken: 0x00002FE0
-	 */
-
-	/*
-	 * Name: NegoExtender
-	 * Comment: NegoExtender Security Package
-	 * fCapabilities: 0x00113913
-	 * wVersion: 1
-	 * wRPCID: 0x001E
-	 * cbMaxToken: 0x00002EE0
-	 */
-
-	/*
-	 * Name: Kerberos
-	 * Comment: Microsoft Kerberos V1.0
-	 * fCapabilities: 0x000F3BBF
-	 * wVersion: 1
-	 * wRPCID: 0x0010
-	 * cbMaxToken: 0x00002EE0
-	 */
-
-	/*
-	 * Name: NTLM
-	 * Comment: NTLM Security Package
-	 * fCapabilities: 0x00082B37
-	 * wVersion: 1
-	 * wRPCID: 0x000A
-	 * cbMaxToken: 0x00000B48
-	 */
-
-	/*
-	 * Name: Schannel
-	 * Comment: Schannel Security Package
-	 * fCapabilities: 0x000107B3
-	 * wVersion: 1
-	 * wRPCID: 0x000E
-	 * cbMaxToken: 0x00006000
-	 */
-
-	/*
-	 * Name: TSSSP
-	 * Comment: TS Service Security Package
-	 * fCapabilities: 0x00010230
-	 * wVersion: 1
-	 * wRPCID: 0x0016
-	 * cbMaxToken: 0x000032C8
-	 */
-
-	/*
-	 * Name: CREDSSP
-	 * Comment: Microsoft CredSSP Security Provider
-	 * fCapabilities: 0x000110733
-	 * wVersion: 1
-	 * wRPCID: 0xFFFF
-	 * cbMaxToken: 0x000090A8
-	 */
-
 	int index;
+	size_t size;
 	uint32 cPackages;
 	SEC_PKG_INFO* pPackageInfo;
 
 	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
-	pPackageInfo = (SEC_PKG_INFO*) xmalloc(sizeof(SEC_PKG_INFO) * cPackages);
+	size = sizeof(SEC_PKG_INFO) * cPackages;
+
+	pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
 	for (index = 0; index < cPackages; index++)
 	{
@@ -160,6 +326,26 @@ SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppP
 	return SEC_E_OK;
 }
 
+void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
+{
+	int index;
+	uint32 cPackages;
+	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
+
+	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
+
+	for (index = 0; index < cPackages; index++)
+	{
+		if (pPackageInfo[index].Name)
+			xfree(pPackageInfo[index].Name);
+
+		if (pPackageInfo[index].Comment)
+			xfree(pPackageInfo[index].Comment);
+	}
+
+	xfree(pPackageInfo);
+}
+
 SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
 {
 	SECURITY_FUNCTION_TABLE* security_function_table;
@@ -171,6 +357,7 @@ SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
 SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo)
 {
 	int index;
+	size_t size;
 	uint32 cPackages;
 	SEC_PKG_INFO* pPackageInfo;
 
@@ -180,7 +367,8 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 	{
 		if (strcmp(pszPackageName, SEC_PKG_INFO_LIST[index]->Name) == 0)
 		{
-			pPackageInfo = (SEC_PKG_INFO*) xmalloc(sizeof(SEC_PKG_INFO));
+			size = sizeof(SEC_PKG_INFO);
+			pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
 
 			pPackageInfo->fCapabilities = SEC_PKG_INFO_LIST[index]->fCapabilities;
 			pPackageInfo->wVersion = SEC_PKG_INFO_LIST[index]->wVersion;
@@ -198,6 +386,19 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 	*(ppPackageInfo) = NULL;
 
 	return SEC_E_SECPKG_NOT_FOUND;
+}
+
+void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
+{
+	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
+
+	if (pPackageInfo->Name)
+		xfree(pPackageInfo->Name);
+
+	if (pPackageInfo->Comment)
+		xfree(pPackageInfo->Comment);
+
+	xfree(pPackageInfo);
 }
 
 /* Credential Management */
@@ -228,7 +429,26 @@ SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC
 
 SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!(table->FreeCredentialsHandle))
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->FreeCredentialsHandle(phCredential);
+
+	return status;
 }
 
 SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext)
@@ -238,7 +458,23 @@ SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedConte
 
 SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	status = table->QueryCredentialsAttributes(phCredential, ulAttribute, pBuffer);
+
+	return status;
 }
 
 /* Context Management */
@@ -267,8 +503,10 @@ SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext)
 
 SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer)
 {
-	if (pvContextBuffer != NULL)
-		xfree(pvContextBuffer);
+	if (!pvContextBuffer)
+		return SEC_E_INVALID_HANDLE;
+
+	sspi_ContextBufferFree(pvContextBuffer);
 
 	return SEC_E_OK;
 }
@@ -283,7 +521,25 @@ SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE
 		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	status = table->InitializeSecurityContext(phCredential, phContext,
+			pszTargetName, fContextReq, Reserved1, TargetDataRep,
+			pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+	return status;
 }
 
 SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)

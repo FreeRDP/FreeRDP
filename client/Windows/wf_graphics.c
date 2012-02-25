@@ -216,6 +216,16 @@ void wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 }
 
+void wf_Pointer_SetNull(rdpContext* context)
+{
+
+}
+
+void wf_Pointer_SetDefault(rdpContext* context)
+{
+
+}
+
 /* Graphics Module */
 
 void wf_register_graphics(rdpGraphics* graphics)
@@ -236,6 +246,8 @@ void wf_register_graphics(rdpGraphics* graphics)
 	pointer.New = wf_Pointer_New;
 	pointer.Free = wf_Pointer_Free;
 	pointer.Set = wf_Pointer_Set;
+	pointer.SetNull = wf_Pointer_SetNull;
+	pointer.SetDefault = wf_Pointer_SetDefault;
 
 	graphics_register_bitmap(graphics, &bitmap);
 	graphics_register_pointer(graphics, &pointer);

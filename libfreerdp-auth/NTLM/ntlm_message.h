@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Security Support Provider Interface (SSPI) Tests
+ * NTLM Security Package (Message)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
  * limitations under the License.
  */
 
-#include "test_freerdp.h"
+#ifndef FREERDP_AUTH_NTLM_MESSAGE_H
+#define FREERDP_AUTH_NTLM_MESSAGE_H
 
-int init_sspi_suite(void);
-int clean_sspi_suite(void);
-int add_sspi_suite(void);
+#include "ntlm.h"
 
-void test_EnumerateSecurityPackages(void);
-void test_QuerySecurityPackageInfo(void);
-void test_AcquireCredentialsHandle(void);
-void test_InitializeSecurityContext(void);
+SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
+SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
+SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
+
+#endif /* FREERDP_AUTH_NTLM_MESSAGE_H */
