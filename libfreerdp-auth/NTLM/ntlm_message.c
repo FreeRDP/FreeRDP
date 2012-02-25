@@ -23,9 +23,9 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
-#include "ntlm_message.h"
+#include "ntlm_compute.h"
 
-#define WITH_DEBUG_NTLM
+#include "ntlm_message.h"
 
 #define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
 #define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
@@ -239,6 +239,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	uint8* p;
 	STREAM* s;
 	int length;
+	char signature[8];
+	uint32 messageType;
 	uint8* start_offset;
 	uint8* payload_offset;
 	uint16 targetNameLen;
@@ -250,6 +252,15 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	stream_read(s, signature, 8);
+	stream_read_uint32(s, messageType);
+
+	if (memcmp(signature, NTLM_SIGNATURE, 8) != 0)
+	{
+		printf("Unexpected NTLM signature: %s, expected:%s\n", signature, NTLM_SIGNATURE);
+		return SEC_E_INVALID_TOKEN;
+	}
 
 	start_offset = s->p - 12;
 
@@ -310,7 +321,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 		if (context->ntlm_v2)
 		{
 			s->p = p;
-			//ntlm_input_av_pairs(context, s);
+			ntlm_input_av_pairs(context, s);
 		}
 	}
 
@@ -325,11 +336,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	printf("\n");
 #endif
 
-#if 0
-
 	/* AV_PAIRs */
 	if (context->ntlm_v2)
-		ntlmssp_populate_av_pairs(context);
+		ntlm_populate_av_pairs(context);
 
 	/* Timestamp */
 	ntlm_generate_timestamp(context);
@@ -337,12 +346,13 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	/* LmChallengeResponse */
 	ntlm_compute_lm_v2_response(context);
 
-	if ((context->ntlm_v2) && (context->LmChallengeResponse.cbBuffer > 0))
+	if (context->ntlm_v2)
 		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
 
+#if 0
 	/* KeyExchangeKey */
 	ntlm_generate_key_exchange_key(context);
 
@@ -400,7 +410,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 
 #endif
 
-	context->state = NTLMSSP_STATE_AUTHENTICATE;
+	context->state = NTLM_STATE_AUTHENTICATE;
 
 	return SEC_I_CONTINUE_NEEDED;
 }

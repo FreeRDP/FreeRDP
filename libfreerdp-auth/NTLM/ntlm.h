@@ -21,7 +21,6 @@
 #define FREERDP_AUTH_NTLM_PRIVATE_H
 
 #include <freerdp/auth/sspi.h>
-#include <freerdp/auth/credssp.h>
 
 #include <freerdp/utils/unicode.h>
 
@@ -37,12 +36,54 @@ enum _NTLM_STATE
 };
 typedef enum _NTLM_STATE NTLM_STATE;
 
+struct _AV_PAIR
+{
+	uint16 length;
+	uint8* value;
+};
+typedef struct _AV_PAIR AV_PAIR;
+
+struct _AV_PAIRS
+{
+	AV_PAIR NbComputerName;
+	AV_PAIR NbDomainName;
+	AV_PAIR DnsComputerName;
+	AV_PAIR DnsDomainName;
+	AV_PAIR DnsTreeName;
+	AV_PAIR Timestamp;
+	AV_PAIR Restrictions;
+	AV_PAIR TargetName;
+	AV_PAIR ChannelBindings;
+	uint32 Flags;
+};
+typedef struct _AV_PAIRS AV_PAIRS;
+
+enum _AV_ID
+{
+	MsvAvEOL,
+	MsvAvNbComputerName,
+	MsvAvNbDomainName,
+	MsvAvDnsComputerName,
+	MsvAvDnsDomainName,
+	MsvAvDnsTreeName,
+	MsvAvFlags,
+	MsvAvTimestamp,
+	MsvAvRestrictions,
+	MsvAvTargetName,
+	MsvChannelBindings
+};
+typedef enum _AV_ID AV_ID;
+
 struct _NTLM_CONTEXT
 {
 	boolean ntlm_v2;
 	NTLM_STATE state;
 	UNICONV* uniconv;
+	AV_PAIRS* av_pairs;
 	uint32 NegotiateFlags;
+	uint16* Workstation;
+	uint32 WorkstationLength;
+	SEC_AUTH_IDENTITY identity;
 	SEC_BUFFER NegotiateMessage;
 	SEC_BUFFER ChallengeMessage;
 	SEC_BUFFER AuthenticateMessage;
@@ -65,5 +106,7 @@ struct _NTLM_CONTEXT
 	uint8 MessageIntegrityCheck[16];
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
+
+#define WITH_DEBUG_NTLM		1
 
 #endif /* FREERDP_AUTH_NTLM_PRIVATE_H */

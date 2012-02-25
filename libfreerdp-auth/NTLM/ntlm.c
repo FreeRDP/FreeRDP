@@ -26,7 +26,6 @@
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/auth/sspi.h>
-#include <freerdp/auth/credssp.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -34,6 +33,58 @@
 #include "ntlm_message.h"
 
 char* NTLM_PACKAGE_NAME = "NTLM";
+
+void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_AUTH_IDENTITY* identity)
+{
+	size_t size;
+	context->identity.Flags = SEC_AUTH_IDENTITY_UNICODE;
+
+	if (identity->Flags == SEC_AUTH_IDENTITY_ANSI)
+	{
+		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
+		context->identity.UserLength = (uint32) size;
+
+		if (identity->DomainLength > 0)
+		{
+			context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Domain, &size);
+			context->identity.DomainLength = (uint32) size;
+		}
+		else
+		{
+			context->identity.Domain = (uint16*) NULL;
+			context->identity.DomainLength = 0;
+		}
+
+		context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Password, &size);
+		context->identity.PasswordLength = (uint32) size;
+	}
+	else
+	{
+		context->identity.User = (uint16*) xmalloc(identity->UserLength);
+		memcpy(context->identity.User, identity->User, identity->UserLength);
+
+		if (identity->DomainLength > 0)
+		{
+			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
+			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
+		}
+		else
+		{
+			context->identity.Domain = (uint16*) NULL;
+			context->identity.DomainLength = 0;
+		}
+
+		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
+		memcpy(context->identity.Password, identity->User, identity->PasswordLength);
+	}
+}
+
+void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
+{
+	size_t size;
+	context->Workstation = (uint16*) freerdp_uniconv_out(context->uniconv, Workstation, &size);
+	context->WorkstationLength = (uint32) size;
+}
 
 NTLM_CONTEXT* ntlm_ContextNew()
 {
@@ -47,6 +98,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->NegotiateFlags = 0;
 		context->state = NTLM_STATE_INITIAL;
 		context->uniconv = freerdp_uniconv_new();
+		context->av_pairs = (AV_PAIRS*) xzalloc(sizeof(AV_PAIRS));
 	}
 
 	return context;
@@ -127,10 +179,16 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 {
 	NTLM_CONTEXT* context;
 	SEC_BUFFER* sec_buffer;
+	CREDENTIALS* credentials;
 
 	if (!pInput)
 	{
 		context = ntlm_ContextNew();
+
+		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+		ntlm_SetContextIdentity(context, &credentials->identity);
+		ntlm_SetContextWorkstation(context, "WORKSTATION");
 
 		if (!pOutput)
 			return SEC_E_INVALID_TOKEN;
@@ -170,6 +228,8 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 
 		if (sec_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
+
+		return ntlm_read_ChallengeMessage(context, sec_buffer);
 	}
 
 	return SEC_E_OK;

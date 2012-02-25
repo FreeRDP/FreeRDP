@@ -300,8 +300,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
 
-	freerdp_hexdump((uint8*) p_sec_buffer->pvBuffer, p_sec_buffer->cbBuffer);
-
 	credssp->negoToken.data = p_sec_buffer->pvBuffer;
 	credssp->negoToken.length = p_sec_buffer->cbBuffer;
 
