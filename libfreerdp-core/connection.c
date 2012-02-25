@@ -1,4 +1,4 @@
-/**
+/*
  * FreeRDP: A Remote Desktop Protocol Client
  * Connection Sequence
  *
@@ -23,39 +23,40 @@
 #include "connection.h"
 
 /**
- *                                      Connection Sequence
- *     client                                                                    server
- *        |                                                                         |
- *        |-----------------------X.224 Connection Request PDU--------------------->|
- *        |<----------------------X.224 Connection Confirm PDU----------------------|
- *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|
- *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|
- *        |------------------------MCS Erect Domain Request PDU-------------------->|
- *        |------------------------MCS Attach User Request PDU--------------------->|
- *        |<-----------------------MCS Attach User Confirm PDU----------------------|
- *        |------------------------MCS Channel Join Request PDU-------------------->|
- *        |<-----------------------MCS Channel Join Confirm PDU---------------------|
- *        |----------------------------Security Exchange PDU----------------------->|
- *        |-------------------------------Client Info PDU-------------------------->|
- *        |<---------------------License Error PDU - Valid Client-------------------|
- *        |<-----------------------------Demand Active PDU--------------------------|
- *        |------------------------------Confirm Active PDU------------------------>|
- *        |-------------------------------Synchronize PDU-------------------------->|
- *        |---------------------------Control PDU - Cooperate---------------------->|
- *        |------------------------Control PDU - Request Control------------------->|
- *        |--------------------------Persistent Key List PDU(s)-------------------->|
- *        |--------------------------------Font List PDU--------------------------->|
- *        |<------------------------------Synchronize PDU---------------------------|
- *        |<--------------------------Control PDU - Cooperate-----------------------|
- *        |<-----------------------Control PDU - Granted Control--------------------|
- *        |<-------------------------------Font Map PDU-----------------------------|
+ *                                      Connection Sequence\n
+ *     client                                                                    server\n
+ *        |                                                                         |\n
+ *        |-----------------------X.224 Connection Request PDU--------------------->|\n
+ *        |<----------------------X.224 Connection Confirm PDU----------------------|\n
+ *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|\n
+ *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|\n
+ *        |------------------------MCS Erect Domain Request PDU-------------------->|\n
+ *        |------------------------MCS Attach User Request PDU--------------------->|\n
+ *        |<-----------------------MCS Attach User Confirm PDU----------------------|\n
+ *        |------------------------MCS Channel Join Request PDU-------------------->|\n
+ *        |<-----------------------MCS Channel Join Confirm PDU---------------------|\n
+ *        |----------------------------Security Exchange PDU----------------------->|\n
+ *        |-------------------------------Client Info PDU-------------------------->|\n
+ *        |<---------------------License Error PDU - Valid Client-------------------|\n
+ *        |<-----------------------------Demand Active PDU--------------------------|\n
+ *        |------------------------------Confirm Active PDU------------------------>|\n
+ *        |-------------------------------Synchronize PDU-------------------------->|\n
+ *        |---------------------------Control PDU - Cooperate---------------------->|\n
+ *        |------------------------Control PDU - Request Control------------------->|\n
+ *        |--------------------------Persistent Key List PDU(s)-------------------->|\n
+ *        |--------------------------------Font List PDU--------------------------->|\n
+ *        |<------------------------------Synchronize PDU---------------------------|\n
+ *        |<--------------------------Control PDU - Cooperate-----------------------|\n
+ *        |<-----------------------Control PDU - Granted Control--------------------|\n
+ *        |<-------------------------------Font Map PDU-----------------------------|\n
  *
  */
 
 /**
- * Establish RDP Connection.\n
+ * Establish RDP Connection based on the settings given in the 'rdp' paremeter.
  * @msdn{cc240452}
  * @param rdp RDP module
+ * @return true if the connection succeeded. false otherwise.
  */
 
 boolean rdp_client_connect(rdpRdp* rdp)
