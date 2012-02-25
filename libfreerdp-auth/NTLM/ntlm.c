@@ -181,7 +181,9 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 	SEC_BUFFER* sec_buffer;
 	CREDENTIALS* credentials;
 
-	if (!pInput)
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
 	{
 		context = ntlm_ContextNew();
 
@@ -190,6 +192,11 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		ntlm_SetContextIdentity(context, &credentials->identity);
 		ntlm_SetContextWorkstation(context, "WORKSTATION");
 
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+	}
+
+	if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE))
+	{
 		if (!pOutput)
 			return SEC_E_INVALID_TOKEN;
 
@@ -204,9 +211,15 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (sec_buffer->cbBuffer < 1)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
-		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		if (context->state == NTLM_STATE_INITIAL)
+			context->state = NTLM_STATE_NEGOTIATE;
 
-		return ntlm_write_NegotiateMessage(context, sec_buffer);
+		if (context->state == NTLM_STATE_NEGOTIATE)
+			return ntlm_write_NegotiateMessage(context, sec_buffer);
+		else if (context->state == NTLM_STATE_AUTHENTICATE)
+			return ntlm_write_AuthenticateMessage(context, sec_buffer);
+
+		return SEC_E_OUT_OF_SEQUENCE;
 	}
 	else
 	{
@@ -229,7 +242,10 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (sec_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		return ntlm_read_ChallengeMessage(context, sec_buffer);
+		if (context->state == NTLM_STATE_CHALLENGE)
+			return ntlm_read_ChallengeMessage(context, sec_buffer);
+
+		return SEC_E_OUT_OF_SEQUENCE;
 	}
 
 	return SEC_E_OK;

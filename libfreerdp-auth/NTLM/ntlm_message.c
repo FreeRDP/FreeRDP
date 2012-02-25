@@ -411,3 +411,264 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 
 	return SEC_I_CONTINUE_NEEDED;
 }
+
+/**
+ * Send NTLMSSP AUTHENTICATE_MESSAGE.\n
+ * AUTHENTICATE_MESSAGE @msdn{cc236643}
+ * @param NTLM context
+ * @param buffer
+ */
+
+SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+{
+	STREAM* s;
+	int length;
+	uint8* mic_offset = NULL;
+	uint32 negotiateFlags = 0;
+
+	uint16 DomainNameLen;
+	uint16 UserNameLen;
+	uint16 WorkstationLen;
+	uint16 LmChallengeResponseLen;
+	uint16 NtChallengeResponseLen;
+	uint16 EncryptedRandomSessionKeyLen;
+
+	uint32 PayloadBufferOffset;
+	uint32 DomainNameBufferOffset;
+	uint32 UserNameBufferOffset;
+	uint32 WorkstationBufferOffset;
+	uint32 LmChallengeResponseBufferOffset;
+	uint32 NtChallengeResponseBufferOffset;
+	uint32 EncryptedRandomSessionKeyBufferOffset;
+
+	uint8* UserNameBuffer;
+	uint8* DomainNameBuffer;
+	uint8* WorkstationBuffer;
+	uint8* EncryptedRandomSessionKeyBuffer;
+
+	WorkstationLen = context->WorkstationLength;
+	WorkstationBuffer = (uint8*) context->Workstation;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	if (context->ntlm_v2 < 1)
+		WorkstationLen = 0;
+
+	DomainNameLen = context->identity.DomainLength;
+	DomainNameBuffer = (uint8*) context->identity.Domain;
+
+	UserNameLen = context->identity.UserLength;
+	UserNameBuffer = (uint8*) context->identity.User;
+
+	LmChallengeResponseLen = context->LmChallengeResponse.cbBuffer;
+	NtChallengeResponseLen = context->NtChallengeResponse.cbBuffer;
+
+	EncryptedRandomSessionKeyLen = 16;
+	EncryptedRandomSessionKeyBuffer = context->EncryptedRandomSessionKey;
+
+	if (context->ntlm_v2)
+	{
+		/* observed: 35 82 88 e2 (0xE2888235) */
+		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+	}
+	else
+	{
+		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+	}
+
+	if (context->ntlm_v2)
+		PayloadBufferOffset = 80; /* starting buffer offset */
+	else
+		PayloadBufferOffset = 64; /* starting buffer offset */
+
+	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		PayloadBufferOffset += 8;
+
+	DomainNameBufferOffset = PayloadBufferOffset;
+	UserNameBufferOffset = DomainNameBufferOffset + DomainNameLen;
+	WorkstationBufferOffset = UserNameBufferOffset + UserNameLen;
+	LmChallengeResponseBufferOffset = WorkstationBufferOffset + WorkstationLen;
+	NtChallengeResponseBufferOffset = LmChallengeResponseBufferOffset + LmChallengeResponseLen;
+	EncryptedRandomSessionKeyBufferOffset = NtChallengeResponseBufferOffset + NtChallengeResponseLen;
+
+	stream_write(s, NTLM_SIGNATURE, 8); /* Signature (8 bytes) */
+	stream_write_uint32(s, MESSAGE_TYPE_AUTHENTICATE); /* MessageType */
+
+	/* LmChallengeResponseFields (8 bytes) */
+	stream_write_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
+	stream_write_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseMaxLen */
+	stream_write_uint32(s, LmChallengeResponseBufferOffset); /* LmChallengeResponseBufferOffset */
+
+	/* NtChallengeResponseFields (8 bytes) */
+	stream_write_uint16(s, NtChallengeResponseLen); /* NtChallengeResponseLen */
+	stream_write_uint16(s, NtChallengeResponseLen); /* NtChallengeResponseMaxLen */
+	stream_write_uint32(s, NtChallengeResponseBufferOffset); /* NtChallengeResponseBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	/* DomainNameFields (8 bytes) */
+	stream_write_uint16(s, DomainNameLen); /* DomainNameLen */
+	stream_write_uint16(s, DomainNameLen); /* DomainNameMaxLen */
+	stream_write_uint32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+
+	/* UserNameFields (8 bytes) */
+	stream_write_uint16(s, UserNameLen); /* UserNameLen */
+	stream_write_uint16(s, UserNameLen); /* UserNameMaxLen */
+	stream_write_uint32(s, UserNameBufferOffset); /* UserNameBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	/* WorkstationFields (8 bytes) */
+	stream_write_uint16(s, WorkstationLen); /* WorkstationLen */
+	stream_write_uint16(s, WorkstationLen); /* WorkstationMaxLen */
+	stream_write_uint32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+
+	/* EncryptedRandomSessionKeyFields (8 bytes) */
+	stream_write_uint16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyLen */
+	stream_write_uint16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyMaxLen */
+	stream_write_uint32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
+
+	stream_write_uint32(s, negotiateFlags); /* NegotiateFlags (4 bytes) */
+
+#ifdef WITH_DEBUG_NTLM
+	ntlm_print_negotiate_flags(negotiateFlags);
+#endif
+
+	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+		ntlm_output_version(s);
+
+#ifdef WITH_DEBUG_NTLM
+		printf("Version (length = 8)\n");
+		freerdp_hexdump((s->p - 8), 8);
+		printf("\n");
+#endif
+	}
+
+	if (context->ntlm_v2)
+	{
+		/* Message Integrity Check */
+		mic_offset = s->p;
+		stream_write_zero(s, 16);
+	}
+
+	/* DomainName */
+	if (DomainNameLen > 0)
+	{
+		stream_write(s, DomainNameBuffer, DomainNameLen);
+#ifdef WITH_DEBUG_NTLM
+		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
+		freerdp_hexdump(DomainNameBuffer, DomainNameLen);
+		printf("\n");
+#endif
+	}
+
+	/* UserName */
+	stream_write(s, UserNameBuffer, UserNameLen);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
+	freerdp_hexdump(UserNameBuffer, UserNameLen);
+	printf("\n");
+#endif
+
+	/* Workstation */
+	if (WorkstationLen > 0)
+	{
+		stream_write(s, WorkstationBuffer, WorkstationLen);
+#ifdef WITH_DEBUG_NTLM
+		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
+		freerdp_hexdump(WorkstationBuffer, WorkstationLen);
+		printf("\n");
+#endif
+	}
+
+	/* LmChallengeResponse */
+	stream_write(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
+	freerdp_hexdump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+	printf("\n");
+#endif
+
+	/* NtChallengeResponse */
+	stream_write(s, context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
+
+#ifdef WITH_DEBUG_NTLM
+	if (context->ntlm_v2)
+	{
+		ntlm_print_av_pairs(context);
+
+		printf("targetInfo (length = %d)\n", context->TargetInfo.cbBuffer);
+		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+		printf("\n");
+	}
+#endif
+
+#ifdef WITH_DEBUG_NTLM
+	printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
+	freerdp_hexdump(context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
+	printf("\n");
+#endif
+
+	/* EncryptedRandomSessionKey */
+	stream_write(s, EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
+	freerdp_hexdump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+	printf("\n");
+#endif
+
+	length = s->p - s->data;
+	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
+	memcpy(context->AuthenticateMessage.pvBuffer, s->data, length);
+
+	if (context->ntlm_v2)
+	{
+		/* Message Integrity Check */
+		ntlm_compute_message_integrity_check(context);
+
+		s->p = mic_offset;
+		stream_write(s, context->MessageIntegrityCheck, 16);
+		s->p = s->data + length;
+
+#ifdef WITH_DEBUG_NTLM
+		printf("MessageIntegrityCheck (length = 16)\n");
+		freerdp_hexdump(mic_offset, 16);
+		printf("\n");
+#endif
+	}
+
+#ifdef WITH_DEBUG_NTLM
+	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(s->data, length);
+	printf("\n");
+#endif
+
+	context->state = NTLM_STATE_FINAL;
+
+	return SEC_I_COMPLETE_NEEDED;
+}

@@ -880,3 +880,20 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 	context->send_rc4_seal = crypto_rc4_init(context->ClientSealingKey, 16);
 	context->recv_rc4_seal = crypto_rc4_init(context->ServerSealingKey, 16);
 }
+
+void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
+{
+	HMAC_CTX hmac_ctx;
+
+	/*
+	 * Compute the HMAC-MD5 hash of ConcatenationOf(NEGOTIATE_MESSAGE,
+	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
+	 */
+
+	HMAC_CTX_init(&hmac_ctx);
+	HMAC_Init_ex(&hmac_ctx, context->ExportedSessionKey, 16, EVP_md5(), NULL);
+	HMAC_Update(&hmac_ctx, context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
+	HMAC_Update(&hmac_ctx, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	HMAC_Update(&hmac_ctx, context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
+	HMAC_Final(&hmac_ctx, context->MessageIntegrityCheck, NULL);
+}

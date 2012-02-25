@@ -318,8 +318,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	input_sec_buffer_desc.cBuffers = 1;
 	input_sec_buffer_desc.pBuffers = &input_sec_buffer;
 
-	input_sec_buffer.cbBuffer = credssp->negoToken.length;
 	input_sec_buffer.BufferType = SECBUFFER_TOKEN;
+	input_sec_buffer.cbBuffer = credssp->negoToken.length;
 	input_sec_buffer.pvBuffer = credssp->negoToken.data;
 
 	output_sec_buffer_desc.ulVersion = 0;
@@ -336,6 +336,33 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			&input_sec_buffer_desc, 0, &context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
 
 	if (status != SEC_I_CONTINUE_NEEDED)
+	{
+		printf("InitializeSecurityContext status: 0x%08X\n", status);
+		return 0;
+	}
+
+	input_sec_buffer_desc.ulVersion = 0;
+	input_sec_buffer_desc.cBuffers = 1;
+	input_sec_buffer_desc.pBuffers = &input_sec_buffer;
+
+	input_sec_buffer.BufferType = SECBUFFER_TOKEN;
+	input_sec_buffer.cbBuffer = output_sec_buffer_desc.pBuffers[0].cbBuffer;
+	input_sec_buffer.pvBuffer = output_sec_buffer_desc.pBuffers[0].pvBuffer;
+
+	output_sec_buffer_desc.ulVersion = 0;
+	output_sec_buffer_desc.cBuffers = 1;
+	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+
+	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
+	output_sec_buffer.cbBuffer = credssp->negoToken.length;
+	output_sec_buffer.pvBuffer = credssp->negoToken.data;
+
+	printf("Third Call to InitializeSecurityContext()\n");
+
+	status = table->InitializeSecurityContext(&credentials, &context, NULL, fContextReq, 0, 0,
+			&input_sec_buffer_desc, 0, &context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+
+	if (status != SEC_I_COMPLETE_NEEDED)
 	{
 		printf("InitializeSecurityContext status: 0x%08X\n", status);
 		return 0;
