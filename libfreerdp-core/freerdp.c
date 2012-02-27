@@ -39,7 +39,8 @@
  *  @return true if successful. false otherwise.
  *
  */
-boolean freerdp_connect(freerdp* instance) {
+boolean freerdp_connect(freerdp* instance)
+{
 	rdpRdp* rdp;
 	boolean status = false;
 
@@ -83,8 +84,7 @@ boolean freerdp_connect(freerdp* instance) {
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->pcap_rfx = pcap_open(
-					instance->settings->play_rfx_file, false);
+			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, false);
 			if (instance->update->pcap_rfx)
 				instance->update->play_rfx = true;
 			update = instance->update;
@@ -241,7 +241,8 @@ freerdp* freerdp_new()
 
 	instance = xzalloc(sizeof(freerdp));
 
-	if (instance != NULL) {
+	if (instance != NULL)
+	{
 		instance->context_size = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}
