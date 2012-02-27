@@ -395,6 +395,7 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	if (rdpsnd->expectingWave)
 	{
 		rdpsnd_process_message_wave(rdpsnd, data_in);
+		stream_free(data_in);
 		return;
 	}
 
@@ -425,6 +426,8 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
 	}
+
+	stream_free(data_in);
 }
 
 static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device)
