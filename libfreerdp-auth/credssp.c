@@ -230,6 +230,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	boolean have_input_buffer;
 	boolean have_pub_key_auth;
 	SECURITY_FUNCTION_TABLE* table;
+	SEC_PKG_CONTEXT_SIZES ContextSizes;
 	rdpSettings* settings = credssp->settings;
 
 	sspi_GlobalInit();
@@ -282,6 +283,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	have_pub_key_auth = false;
 	memset(&input_sec_buffer, 0, sizeof(SEC_BUFFER));
 	memset(&output_sec_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&ContextSizes, 0, sizeof(SEC_PKG_CONTEXT_SIZES));
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
 			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
@@ -314,6 +316,12 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 			have_pub_key_auth = true;
 
+			if (table->QueryContextAttributes(&context, SECPKG_ATTR_SIZES, &ContextSizes) != SEC_E_OK)
+			{
+				printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				return 0;
+			}
+
 			if (have_pub_key_auth)
 			{
 				uint8* p;
@@ -327,7 +335,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
 				memcpy(Buffers[0].pvBuffer, credssp->tls->public_key.data, Buffers[0].cbBuffer);
 
-				Buffers[1].cbBuffer = 16;
+				Buffers[1].cbBuffer = ContextSizes.cbMaxSignature;
 				Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
 
 				Message.cBuffers = 2;
@@ -421,7 +429,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		Buffers[0].BufferType = SECBUFFER_PADDING; /* Signature */
 		Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
 
-		Buffers[0].cbBuffer = 16;
+		Buffers[0].cbBuffer = ContextSizes.cbMaxSignature;
 		Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
 		memcpy(Buffers[0].pvBuffer, pub_key_auth, Buffers[0].cbBuffer);
 
