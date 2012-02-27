@@ -313,15 +313,27 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	data = xmalloc(length);
 	memcpy(data, data_buffer->pvBuffer, length);
 
-	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,msg) using the client signing key */
+	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac, context->ClientSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &context->send_seq_num, 4);
+	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
 	HMAC_Update(&hmac, data, length);
 	HMAC_Final(&hmac, digest, NULL);
+	HMAC_CTX_cleanup(&hmac);
 
 	/* Encrypt message using with RC4, result overwrites original buffer */
 	crypto_rc4(context->send_rc4_seal, length, data, data_buffer->pvBuffer);
+	xfree(data);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("Data Buffer (length = %d)\n", length);
+	freerdp_hexdump(data, length);
+	printf("\n");
+
+	printf("Encrypted Data Buffer (length = %d)\n", data_buffer->cbBuffer);
+	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
+	printf("\n");
+#endif
 
 	/* RC4-encrypt first 8 bytes of digest */
 	crypto_rc4(context->send_rc4_seal, 8, digest, checksum);
@@ -332,25 +344,13 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	memcpy(signature, (void*) &version, 4);
 	memcpy(&signature[4], (void*) checksum, 8);
 	memcpy(&signature[12], (void*) &(MessageSeqNo), 4);
+	context->send_seq_num++;
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Data Buffer (length = %d)\n", length);
-	freerdp_hexdump(data, length);
-	printf("\n");
-
-	printf("Encrypted Data Buffer (length = %d)\n", data_buffer->cbBuffer);
-	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
-	printf("\n");
-
 	printf("Signature (length = %d)\n", signature_buffer->cbBuffer);
 	freerdp_hexdump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
 	printf("\n");
 #endif
-
-	HMAC_CTX_cleanup(&hmac);
-	xfree(data);
-
-	context->send_seq_num++;
 
 	return SEC_E_OK;
 }
@@ -393,12 +393,14 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 	/* Decrypt message using with RC4 */
 	crypto_rc4(context->recv_rc4_seal, length, data, data_buffer->pvBuffer);
 
-	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,msg) using the client signing key */
+	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac, context->ServerSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &context->recv_seq_num, 4);
+	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
 	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 	HMAC_Final(&hmac, digest, NULL);
+	HMAC_CTX_cleanup(&hmac);
+	xfree(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
 	crypto_rc4(context->recv_rc4_seal, 8, digest, checksum);
@@ -406,7 +408,8 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	memcpy(expected_signature, (void*) &version, 4);
 	memcpy(&expected_signature[4], (void*) checksum, 8);
-	memcpy(&expected_signature[12], (void*) &(context->recv_seq_num), 4);
+	memcpy(&expected_signature[12], (void*) &(MessageSeqNo), 4);
+	context->recv_seq_num++;
 
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
 	{
@@ -415,11 +418,16 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 		return SEC_E_MESSAGE_ALTERED;
 	}
 
-	HMAC_CTX_cleanup(&hmac);
-	xfree(data);
+	return SEC_E_OK;
+}
 
-	context->recv_seq_num++;
+SECURITY_STATUS ntlm_MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+{
+	return SEC_E_OK;
+}
 
+SECURITY_STATUS ntlm_VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+{
 	return SEC_E_OK;
 }
 
@@ -450,8 +458,8 @@ const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
 	ntlm_QueryContextAttributes, /* QueryContextAttributes */
 	NULL, /* ImpersonateSecurityContext */
 	NULL, /* RevertSecurityContext */
-	NULL, /* MakeSignature */
-	NULL, /* VerifySignature */
+	ntlm_MakeSignature, /* MakeSignature */
+	ntlm_VerifySignature, /* VerifySignature */
 	NULL, /* FreeContextBuffer */
 	NULL, /* QuerySecurityPackageInfo */
 	NULL, /* Reserved3 */
