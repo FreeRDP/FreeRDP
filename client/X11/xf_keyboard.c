@@ -109,7 +109,11 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 		XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
 	}
-
+	else
+	{
+		XQueryPointer(xfi->display, DefaultRootWindow(xfi->display),
+			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
+  	}
 	return state;
 }
 
