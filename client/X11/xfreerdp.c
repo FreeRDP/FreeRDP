@@ -1131,6 +1131,8 @@ int xfreerdp_run(freerdp* instance)
 	gdi_free(instance);
 	xf_free(xfi);
 
+	freerdp_context_free(instance);
+
 	freerdp_free(instance);
 
 	return ret;

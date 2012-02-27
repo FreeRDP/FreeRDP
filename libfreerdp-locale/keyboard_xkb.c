@@ -338,6 +338,8 @@ uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
 
 	freerdp_keyboard_load_map_from_xkb(display);
 
+	XCloseDisplay(display);
+
 	return keyboardLayoutId;
 }
 
