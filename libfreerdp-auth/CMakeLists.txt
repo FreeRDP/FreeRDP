@@ -20,6 +20,8 @@
 set(FREERDP_AUTH_SRCS
 	NTLM/ntlm.c
 	NTLM/ntlm.h
+	NTLM/ntlm_compute.c
+	NTLM/ntlm_compute.h
 	NTLM/ntlm_message.c
 	NTLM/ntlm_message.h
 	sspi.c

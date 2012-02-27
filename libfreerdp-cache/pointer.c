@@ -29,7 +29,19 @@ void update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* point
 
 void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
+	switch (pointer_system->type)
+	{
+		case SYSPTR_NULL:
+			Pointer_SetNull(context);
+			break;
 
+		case SYSPTR_DEFAULT:
+			Pointer_SetDefault(context);
+			break;
+
+		default:
+			printf("Unknown system pointer type (0x%08X)\n", pointer_system->type);
+	}
 }
 
 void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
