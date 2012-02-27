@@ -353,6 +353,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	XVisualInfo template;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
+	XWindowAttributes window_attributes;
 
 	pfs = XListPixmapFormats(xfi->display, &pf_count);
 
@@ -379,6 +380,12 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	template.class = TrueColor;
 	template.screen = xfi->screen_number;
 
+	if (XGetWindowAttributes(xfi->display, RootWindowOfScreen(xfi->screen), &window_attributes) == 0)
+	{
+		printf("xf_get_pixmap_info: XGetWindowAttributes failed\n");
+		return false;
+	}
+
 	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
 
 	if (vis == NULL)
@@ -392,7 +399,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	{
 		vi = vis + i;
 
-		if (vi->depth == xfi->depth)
+		if (vi->visual == window_attributes.visual)
 		{
 			xfi->visual = vi->visual;
 			break;
