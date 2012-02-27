@@ -645,6 +645,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 	length = s->p - s->data;
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
 	memcpy(context->AuthenticateMessage.pvBuffer, s->data, length);
+	buffer->cbBuffer = length;
 
 	if (context->ntlm_v2)
 	{

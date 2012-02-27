@@ -23,6 +23,26 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+struct _SEC_INTEGER
+{
+	uint32 LowPart;
+	sint32 HighPart;
+};
+typedef struct _SEC_INTEGER SEC_INTEGER;
+
+typedef SEC_INTEGER SEC_TIMESTAMP;
+
+struct _SEC_PKG_INFO
+{
+	uint32 fCapabilities;
+	uint16 wVersion;
+	uint16 wRPCID;
+	uint32 cbMaxToken;
+	char* Name;
+	char* Comment;
+};
+typedef struct _SEC_PKG_INFO SEC_PKG_INFO;
+
 #define SECPKG_ID_NONE				0xFFFF
 
 #define SECPKG_FLAG_INTEGRITY			0x00000001
@@ -179,6 +199,196 @@ typedef uint32 SECURITY_STATUS;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
+struct _SEC_PKG_CONTEXT_ACCESS_TOKEN
+{
+	void* AccessToken;
+};
+typedef struct _SEC_PKG_CONTEXT_ACCESS_TOKEN SEC_PKG_CONTEXT_ACCESS_TOKEN;
+
+struct _SEC_PKG_CONTEXT_SESSION_APP_DATA
+{
+	uint32 dwFlags;
+	uint32 cbAppData;
+	uint8* pbAppData;
+};
+typedef struct _SEC_PKG_CONTEXT_SESSION_APP_DATA SEC_PKG_CONTEXT_SESSION_APP_DATA;
+
+struct _SEC_PKG_CONTEXT_AUTHORITY
+{
+	char* sAuthorityName;
+};
+typedef struct _SEC_PKG_CONTEXT_AUTHORITY SEC_PKG_CONTEXT_AUTHORITY;
+
+struct _SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET
+{
+	char* sTargetName;
+};
+typedef struct _SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET;
+
+typedef uint32 ALG_ID;
+
+struct _SEC_PKG_CONTEXT_CONNECTION_INFO
+{
+	uint32 dwProtocol;
+	ALG_ID aiCipher;
+	uint32 dwCipherStrength;
+	ALG_ID aiHash;
+	uint32 dwHashStrength;
+	ALG_ID aiExch;
+	uint32 dwExchStrength;
+};
+typedef struct _SEC_PKG_CONTEXT_CONNECTION_INFO SEC_PKG_CONTEXT_CONNECTION_INFO;
+
+struct _SEC_PKG_CONTEXT_CLIENT_CREDS
+{
+	uint32 AuthBufferLen;
+	uint8* AuthBuffer;
+};
+typedef struct _SEC_PKG_CONTEXT_CLIENT_CREDS SEC_PKG_CONTEXT_CLIENT_CREDS;
+
+struct _SEC_PKG_CONTEXT_DCE_INFO
+{
+	uint32 AuthzSvc;
+	void* pPac;
+};
+typedef struct _SEC_PKG_CONTEXT_DCE_INFO SEC_PKG_CONTEXT_DCE_INFO;
+
+struct _SEC_CHANNEL_BINDINGS
+{
+	uint32 dwInitiatorAddrType;
+	uint32 cbInitiatorLength;
+	uint32 dwInitiatorOffset;
+	uint32 dwAcceptorAddrType;
+	uint32 cbAcceptorLength;
+	uint32 dwAcceptorOffset;
+	uint32 cbApplicationDataLength;
+	uint32 dwApplicationDataOffset;
+};
+typedef struct _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
+
+struct _SEC_PKG_CONTEXT_BINDINGS
+{
+	uint32 BindingsLength;
+	SEC_CHANNEL_BINDINGS* Bindings;
+};
+typedef struct _SEC_PKG_CONTEXT_BINDINGS SEC_PKG_CONTEXT_BINDINGS;
+
+struct _SEC_PKG_CONTEXT_EAP_KEY_BLOCK
+{
+	uint8 rgbKeys[128];
+	uint8 rgbIVs[64];
+};
+typedef struct _SEC_PKG_CONTEXT_EAP_KEY_BLOCK SEC_PKG_CONTEXT_EAP_KEY_BLOCK;
+
+struct _SEC_PKG_CONTEXT_FLAGS
+{
+	uint32 Flags;
+};
+typedef struct _SEC_PKG_CONTEXT_FLAGS SEC_PKG_CONTEXT_FLAGS;
+
+struct _SEC_PKG_CONTEXT_KEY_INFO
+{
+	char* sSignatureAlgorithmName;
+	char* sEncryptAlgorithmName;
+	uint32 KeySize;
+	uint32 SignatureAlgorithm;
+	uint32 EncryptAlgorithm;
+};
+typedef struct _SEC_PKG_CONTEXT_KEY_INFO SEC_PKG_CONTEXT_KEY_INFO;
+
+struct _SEC_PKG_CONTEXT_LIFESPAN
+{
+	SEC_TIMESTAMP tsStart;
+	SEC_TIMESTAMP tsExpiry;
+};
+typedef struct _SEC_PKG_CONTEXT_LIFESPAN SEC_PKG_CONTEXT_LIFESPAN;
+
+struct _SEC_PKG_CONTEXT_NAMES
+{
+	char* sUserName;
+};
+typedef struct _SEC_PKG_CONTEXT_NAMES SEC_PKG_CONTEXT_NAMES;
+
+struct _SEC_PKG_CONTEXT_NATIVE_NAMES
+{
+	char* sClientName;
+	char* sServerName;
+};
+typedef struct _SEC_PKG_CONTEXT_NATIVE_NAMES SEC_PKG_CONTEXT_NATIVE_NAMES;
+
+struct _SEC_PKG_CONTEXT_NEGOTIATION_INFO
+{
+	SEC_PKG_INFO* PackageInfo;
+	uint32 NegotiationState;
+};
+typedef struct _SEC_PKG_CONTEXT_NEGOTIATION_INFO SEC_PKG_CONTEXT_NEGOTIATION_INFO;
+
+struct _SEC_PKG_CONTEXT_PACKAGE_INFO
+{
+	SEC_PKG_INFO* PackageInfo;
+};
+typedef struct _SEC_PKG_CONTEXT_PACKAGE_INFO SEC_PKG_CONTEXT_PACKAGE_INFO;
+
+struct _SEC_PKG_CONTEXT_PASSWORD_EXPIRY
+{
+	SEC_TIMESTAMP tsPasswordExpires;
+};
+typedef struct _SEC_PKG_CONTEXT_PASSWORD_EXPIRY SEC_PKG_CONTEXT_PASSWORD_EXPIRY;
+
+struct _SEC_PKG_CONTEXT_SESSION_KEY
+{
+	uint32 SessionKeyLength;
+	uint8* SessionKey;
+};
+typedef struct _SEC_PKG_CONTEXT_SESSION_KEY SEC_PKG_CONTEXT_SESSION_KEY;
+
+struct _SEC_PKG_CONTEXT_SESSION_INFO
+{
+	uint32 dwFlags;
+	uint32 cbSessionId;
+	uint8 rgbSessionId[32];
+};
+typedef struct _SEC_PKG_CONTEXT_SESSION_INFO SEC_PKG_CONTEXT_SESSION_INFO;
+
+struct _SEC_PKG_CONTEXT_SIZES
+{
+	uint32 cbMaxToken;
+	uint32 cbMaxSignature;
+	uint32 cbBlockSize;
+	uint32 cbSecurityTrailer;
+};
+typedef struct _SEC_PKG_CONTEXT_SIZES SEC_PKG_CONTEXT_SIZES;
+
+struct _SEC_PKG_CONTEXT_STREAM_SIZES
+{
+	uint32 cbHeader;
+	uint32 cbTrailer;
+	uint32 cbMaximumMessage;
+	uint32 cBuffers;
+	uint32 cbBlockSize;
+};
+typedef struct _SEC_PKG_CONTEXT_STREAM_SIZES SEC_PKG_CONTEXT_STREAM_SIZES;
+
+struct _SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES
+{
+	void *AttributeInfo;
+};
+typedef struct _SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES;
+
+struct _SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES
+{
+	uint16 cSignatureAndHashAlgorithms;
+	uint16* pSignatureAndHashAlgorithms;
+};
+typedef struct _SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES;
+
+struct _SEC_PKG_CONTEXT_TARGET_INFORMATION
+{
+	uint32 MarshalledTargetInfoLength;
+	uint8* MarshalledTargetInfo;
+};
+typedef struct _SEC_PKG_CONTEXT_TARGET_INFORMATION SEC_PKG_CONTEXT_TARGET_INFORMATION;
+
 /* Security Credentials Attributes */
 
 #define SECPKG_CRED_ATTR_NAMES				1
@@ -293,17 +503,6 @@ typedef struct _SEC_PKG_CREDENTIALS_NAMES SEC_PKG_CREDENTIALS_NAMES;
 #define ASC_RET_NO_PROXY_BINDINGS		0x04000000
 #define ASC_RET_MISSING_BINDINGS		0x10000000
 
-struct _SEC_PKG_INFO
-{
-	uint32 fCapabilities;
-	uint16 wVersion;
-	uint16 wRPCID;
-	uint32 cbMaxToken;
-	char* Name;
-	char* Comment;
-};
-typedef struct _SEC_PKG_INFO SEC_PKG_INFO;
-
 #define SEC_AUTH_IDENTITY_ANSI			0x1
 #define SEC_AUTH_IDENTITY_UNICODE		0x2
 
@@ -328,15 +527,6 @@ typedef struct _SEC_HANDLE SEC_HANDLE;
 
 typedef SEC_HANDLE CRED_HANDLE;
 typedef SEC_HANDLE CTXT_HANDLE;
-
-struct _SEC_INTEGER
-{
-	uint32 LowPart;
-	sint32 HighPart;
-};
-typedef struct _SEC_INTEGER SEC_INTEGER;
-
-typedef SEC_INTEGER SEC_TIMESTAMP;
 
 #define SECBUFFER_VERSION			0
 
