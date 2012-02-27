@@ -566,7 +566,23 @@ SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext)
 
 SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	status = table->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
+
+	return status;
 }
 
 SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)

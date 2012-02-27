@@ -316,7 +316,7 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,msg) using the client signing key */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac, context->ClientSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &MessageSeqNo, 4);
+	HMAC_Update(&hmac, (void*) &context->send_seq_num, 4);
 	HMAC_Update(&hmac, data, length);
 	HMAC_Final(&hmac, digest, NULL);
 
@@ -342,8 +342,8 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 
-	printf("Signature\n");
-	freerdp_hexdump(signature, 16);
+	printf("Signature (length = %d)\n", signature_buffer->cbBuffer);
+	freerdp_hexdump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
 	printf("\n");
 #endif
 
@@ -351,6 +351,74 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	xfree(data);
 
 	context->send_seq_num++;
+
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+{
+	int index;
+	int length;
+	void* data;
+	HMAC_CTX hmac;
+	uint8 digest[16];
+	uint8 checksum[8];
+	uint32 version = 1;
+	NTLM_CONTEXT* context;
+	uint8 expected_signature[16];
+	SEC_BUFFER* data_buffer = NULL;
+	SEC_BUFFER* signature_buffer = NULL;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	for (index = 0; index < pMessage->cBuffers; index++)
+	{
+		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
+			data_buffer = &pMessage->pBuffers[index];
+		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_PADDING)
+			signature_buffer = &pMessage->pBuffers[index];
+	}
+
+	if (!data_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	if (!signature_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	/* Copy original data buffer */
+	length = data_buffer->cbBuffer;
+	data = xmalloc(length);
+	memcpy(data, data_buffer->pvBuffer, length);
+
+	/* Decrypt message using with RC4 */
+	crypto_rc4(context->recv_rc4_seal, length, data, data_buffer->pvBuffer);
+
+	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,msg) using the client signing key */
+	HMAC_CTX_init(&hmac);
+	HMAC_Init_ex(&hmac, context->ServerSigningKey, 16, EVP_md5(), NULL);
+	HMAC_Update(&hmac, (void*) &context->recv_seq_num, 4);
+	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
+	HMAC_Final(&hmac, digest, NULL);
+
+	/* RC4-encrypt first 8 bytes of digest */
+	crypto_rc4(context->recv_rc4_seal, 8, digest, checksum);
+
+	/* Concatenate version, ciphertext and sequence number to build signature */
+	memcpy(expected_signature, (void*) &version, 4);
+	memcpy(&expected_signature[4], (void*) checksum, 8);
+	memcpy(&expected_signature[12], (void*) &(context->recv_seq_num), 4);
+
+	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
+	{
+		/* signature verification failed! */
+		printf("signature verification failed, something nasty is going on!\n");
+		return SEC_E_MESSAGE_ALTERED;
+	}
+
+	HMAC_CTX_cleanup(&hmac);
+	xfree(data);
+
+	context->recv_seq_num++;
 
 	return SEC_E_OK;
 }
@@ -394,6 +462,6 @@ const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
 	NULL, /* Reserved8 */
 	NULL, /* QuerySecurityContextToken */
 	ntlm_EncryptMessage, /* EncryptMessage */
-	NULL, /* DecryptMessage */
+	ntlm_DecryptMessage, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
 };

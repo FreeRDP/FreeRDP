@@ -317,35 +317,30 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			if (have_pub_key_auth)
 			{
 				uint8* p;
-				SEC_BUFFER* Buffers[2];
-				SEC_BUFFER data_buffer;
-				SEC_BUFFER signature_buffer;
+				SEC_BUFFER Buffers[2];
 				SEC_BUFFER_DESC Message;
 
-				data_buffer.BufferType = SECBUFFER_DATA;
-				signature_buffer.BufferType = SECBUFFER_PADDING;
+				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
+				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
 
-				data_buffer.cbBuffer = credssp->tls->public_key.length;
-				data_buffer.pvBuffer = xmalloc(data_buffer.cbBuffer);
-				memcpy(data_buffer.pvBuffer, credssp->tls->public_key.data, data_buffer.cbBuffer);
+				Buffers[0].cbBuffer = credssp->tls->public_key.length;
+				Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
+				memcpy(Buffers[0].pvBuffer, credssp->tls->public_key.data, Buffers[0].cbBuffer);
 
-				signature_buffer.cbBuffer = 16;
-				signature_buffer.pvBuffer = xzalloc(signature_buffer.cbBuffer);
-
-				Buffers[0] = &data_buffer;
-				Buffers[1] = &signature_buffer;
+				Buffers[1].cbBuffer = 16;
+				Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
 
 				Message.cBuffers = 2;
 				Message.ulVersion = SECBUFFER_VERSION;
-				Message.pBuffers = (SEC_BUFFER*) Buffers;
+				Message.pBuffers = (SEC_BUFFER*) &Buffers;
 
-				freerdp_blob_alloc(&credssp->pubKeyAuth, data_buffer.cbBuffer + signature_buffer.cbBuffer);
+				freerdp_blob_alloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
-				table->EncryptMessage(&context, 0, &Message, 1);
+				table->EncryptMessage(&context, 0, &Message, 0);
 
 				p = (uint8*) credssp->pubKeyAuth.data;
-				memcpy(p, signature_buffer.pvBuffer, signature_buffer.cbBuffer); /* Message Signature */
-				memcpy(&p[signature_buffer.cbBuffer], data_buffer.pvBuffer, data_buffer.cbBuffer); /* Encrypted Public Key */
+				memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
+				memcpy(&p[Buffers[1].cbBuffer], Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Encrypted Public Key */
 			}
 
 			if (status == SEC_I_COMPLETE_NEEDED)
@@ -402,6 +397,106 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		have_input_buffer = true;
 		have_context = true;
 	}
+
+	/* Encrypted Public Key +1 */
+	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
+		return -1;
+
+	/* Verify Server Public Key Echo */
+
+	{
+		int length;
+		uint32 pfQOP;
+		uint8* public_key1;
+		uint8* public_key2;
+		uint8* pub_key_auth;
+		int public_key_length;
+		SEC_BUFFER Buffers[2];
+		SEC_BUFFER_DESC Message;
+
+		length = credssp->pubKeyAuth.length;
+		pub_key_auth = (uint8*) credssp->pubKeyAuth.data;
+		public_key_length = credssp->tls->public_key.length;
+
+		Buffers[0].BufferType = SECBUFFER_PADDING; /* Signature */
+		Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
+
+		Buffers[0].cbBuffer = 16;
+		Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
+		memcpy(Buffers[0].pvBuffer, pub_key_auth, Buffers[0].cbBuffer);
+
+		Buffers[1].cbBuffer = length - Buffers[0].cbBuffer;
+		Buffers[1].pvBuffer = xmalloc(Buffers[1].cbBuffer);
+		memcpy(Buffers[1].pvBuffer, &pub_key_auth[Buffers[0].cbBuffer], Buffers[1].cbBuffer);
+
+		Message.cBuffers = 2;
+		Message.ulVersion = SECBUFFER_VERSION;
+		Message.pBuffers = (SEC_BUFFER*) &Buffers;
+
+		status = table->DecryptMessage(&context, &Message, 0, &pfQOP);
+
+		if (status != SEC_E_OK)
+			return 0;
+
+		public_key1 = (uint8*) credssp->tls->public_key.data;
+		public_key2 = (uint8*) Buffers[1].pvBuffer;
+
+		public_key2[0]--; /* server echos the public key +1 */
+
+		if (memcmp(public_key1, public_key2, public_key_length) != 0)
+		{
+			printf("Could not verify server's public key echo\n");
+
+			printf("Expected (length = %d):\n", public_key_length);
+			freerdp_hexdump(public_key1, public_key_length);
+
+			printf("Actual (length = %d):\n", public_key_length);
+			freerdp_hexdump(public_key2, public_key_length);
+
+			return 0; /* DO NOT SEND CREDENTIALS! */
+		}
+
+		public_key2[0]++;
+	}
+
+	/* Send encrypted credentials */
+	credssp_encode_ts_credentials(credssp);
+
+	/* Encrypt TSCredentials */
+
+	{
+		uint8* p;
+		SEC_BUFFER Buffers[2];
+		SEC_BUFFER_DESC Message;
+
+		Buffers[0].BufferType = SECBUFFER_DATA; /* TSCredentials */
+		Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
+
+		Buffers[0].cbBuffer = credssp->ts_credentials.length;
+		Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
+		memcpy(Buffers[0].pvBuffer, credssp->ts_credentials.data, Buffers[0].cbBuffer);
+
+		Buffers[1].cbBuffer = 16;
+		Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
+
+		Message.cBuffers = 2;
+		Message.ulVersion = SECBUFFER_VERSION;
+		Message.pBuffers = (SEC_BUFFER*) &Buffers;
+
+		freerdp_blob_alloc(&credssp->authInfo, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
+
+		table->EncryptMessage(&context, 0, &Message, 1);
+
+		p = (uint8*) credssp->authInfo.data;
+		memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
+		memcpy(&p[Buffers[1].cbBuffer], Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Encrypted TSCredentials */
+	}
+
+	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
+
+	freerdp_blob_free(&credssp->negoToken);
+	freerdp_blob_free(&credssp->pubKeyAuth);
+	freerdp_blob_free(&credssp->authInfo);
 
 	FreeCredentialsHandle(&credentials);
 	FreeContextBuffer(pPackageInfo);
