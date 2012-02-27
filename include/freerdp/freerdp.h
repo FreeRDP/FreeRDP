@@ -74,9 +74,15 @@ struct rdp_context
 	uint32 paddingC[64 - 38]; /* 38 */
 };
 
+/** Defines the options for a given instance of RDP connection.
+ *  This is built by the client and given to the FreeRDP library to create the connection
+ *  with the expected options.
+ */
 struct rdp_freerdp
 {
-	rdpContext* context; /* 0 */
+	rdpContext* context; /**< (offset 0)
+							  Pointer to a rdpContext structure.
+							  Can be initialized by a call to freerdp_context_new() */
 	uint32 paddingA[16 - 1]; /* 1 */
 
 	rdpInput* input; /* 16 */
@@ -85,14 +91,34 @@ struct rdp_freerdp
 	uint32 paddingB[32 - 19]; /* 19 */
 
 	size_t context_size; /* 32 */
-	pContextNew ContextNew; /* 33 */
-	pContextFree ContextFree; /* 34 */
+
+	pContextNew ContextNew; /**< (offset 33)
+								 Callback for context allocation
+								 Can be set before calling freerdp_context_new() to have it executed after allocation and initialization.
+								 Must be set to NULL if not needed. */
+
+	pContextFree ContextFree; /**< (offset 34)
+								   Callback for context deallocation
+								   Can be set before calling freerdp_context_free() to have it executed before deallocation.
+								   Must be set to NULL if not needed. */
 	uint32 paddingC[48 - 35]; /* 35 */
 
-	pPreConnect PreConnect; /* 48 */
-	pPostConnect PostConnect; /* 49 */
-	pAuthenticate Authenticate; /* 50 */
-	pVerifyCertificate VerifyCertificate; /* 51 */
+	pPreConnect PreConnect; /**< (offset 48)
+								 Callback for pre-connect operations.
+								 Can be set before calling freerdp_connect() to have it executed before the actual connection happens.
+								 Must be set to NULL if not needed. */
+
+	pPostConnect PostConnect; /**< (offset 49)
+								   Callback for post-connect operations.
+								   Can be set before calling freerdp_connect() to have it executed after the actual connection has succeeded.
+								   Must be set to NULL if not needed. */
+
+	pAuthenticate Authenticate; /**< (offset 50)
+									 Callback for authentication.
+									 It is used to get the username/password when it was not provided at connection time. */
+	pVerifyCertificate VerifyCertificate; /**< (offset 51)
+											   Callback for certificate validation.
+											   Used to verify that an unknown certificate is trusted. */
 	uint32 paddingD[64 - 52]; /* 52 */
 
 	pSendChannelData SendChannelData; /* 64 */
