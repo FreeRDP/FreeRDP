@@ -282,13 +282,14 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 {
 	int match;
 	int index;
-	char* common_name;
-	int common_name_length;
-	char** alt_names;
-	int alt_names_count;
-	int* alt_names_lengths;
+	char* common_name = NULL;
+	int common_name_length = 0;
+	char** alt_names = NULL;
+	int alt_names_count = 0;
+	int* alt_names_lengths = NULL;
 	boolean certificate_status;
 	boolean hostname_match = false;
+	boolean verification_status = false;
 	rdpCertificateData* certificate_data;
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
@@ -336,7 +337,12 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 
 	/* if the certificate is valid and the certificate name matches, verification succeeds */
 	if (certificate_status && hostname_match)
-		return true; /* success! */
+	{
+		if (common_name)
+			xfree(common_name);
+
+		verification_status = true; /* success! */
+	}
 
 	/* if the certificate is valid but the certificate name does not match, warn user, do not accept */
 	if (certificate_status && !hostname_match)
@@ -350,7 +356,6 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		char* subject;
 		char* fingerprint;
 		boolean accept_certificate = false;
-		boolean verification_status = false;
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);
@@ -397,11 +402,27 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		xfree(issuer);
 		xfree(subject);
 		xfree(fingerprint);
-
-		return verification_status;
 	}
 
-	return false;
+	if (common_name)
+		xfree(common_name);
+
+	if (alt_names)
+	{
+		for (index = 0; index < alt_names_count; index++)
+			xfree(alt_names[index]);
+
+		xfree(alt_names);
+	}
+
+	if (certificate_data)
+	{
+		xfree(certificate_data->fingerprint);
+		xfree(certificate_data->hostname);
+		xfree(certificate_data);
+	}
+
+	return verification_status;
 }
 
 void tls_print_certificate_error(char* hostname, char* fingerprint)
