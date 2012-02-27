@@ -214,7 +214,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 {
 	uint32 cbMaxLen;
 	uint32 fContextReq;
-	void* output_buffer;
 	CTXT_HANDLE context;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
@@ -222,12 +221,15 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	SEC_TIMESTAMP expiration;
 	SEC_PKG_INFO* pPackageInfo;
 	SEC_AUTH_IDENTITY identity;
-	SECURITY_FUNCTION_TABLE* table;
 	SEC_BUFFER* p_sec_buffer;
-	SEC_BUFFER output_sec_buffer;
-	SEC_BUFFER_DESC output_sec_buffer_desc;
 	SEC_BUFFER input_sec_buffer;
+	SEC_BUFFER output_sec_buffer;
 	SEC_BUFFER_DESC input_sec_buffer_desc;
+	SEC_BUFFER_DESC output_sec_buffer_desc;
+	boolean have_context;
+	boolean have_input_buffer;
+	boolean have_pub_key_auth;
+	SECURITY_FUNCTION_TABLE* table;
 	rdpSettings* settings = credssp->settings;
 
 	sspi_GlobalInit();
@@ -275,97 +277,130 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		return 0;
 	}
 
-	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+	have_context = false;
+	have_input_buffer = false;
+	have_pub_key_auth = false;
+	memset(&input_sec_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&output_sec_buffer, 0, sizeof(SEC_BUFFER));
 
-	output_buffer = xmalloc(cbMaxLen);
+	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
+			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
 
-	printf("First Call to InitializeSecurityContext()\n");
-
-	output_sec_buffer_desc.ulVersion = 0;
-	output_sec_buffer_desc.cBuffers = 1;
-	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
-
-	output_sec_buffer.cbBuffer = cbMaxLen;
-	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	output_sec_buffer.pvBuffer = output_buffer;
-
-	status = table->InitializeSecurityContext(&credentials, NULL, NULL, fContextReq, 0, 0, NULL, 0,
-			&context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
-
-	if (status != SEC_I_CONTINUE_NEEDED)
+	while (true)
 	{
-		printf("InitializeSecurityContext status: 0x%08X\n", status);
-		return 0;
-	}
+		output_sec_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		output_sec_buffer_desc.cBuffers = 1;
+		output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+		output_sec_buffer.BufferType = SECBUFFER_TOKEN;
+		output_sec_buffer.cbBuffer = cbMaxLen;
+		output_sec_buffer.pvBuffer = xmalloc(output_sec_buffer.cbBuffer);
 
-	p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
+		status = table->InitializeSecurityContext(&credentials,
+				(have_context) ? &context : NULL,
+				NULL, fContextReq, 0, SECURITY_NATIVE_DREP,
+				(have_input_buffer) ? &input_sec_buffer_desc : NULL,
+				0, &context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
 
-	credssp->negoToken.data = p_sec_buffer->pvBuffer;
-	credssp->negoToken.length = p_sec_buffer->cbBuffer;
+		if (input_sec_buffer.pvBuffer != NULL)
+		{
+			xfree(input_sec_buffer.pvBuffer);
+			input_sec_buffer.pvBuffer = NULL;
+		}
 
-	/* NTLMSSP NEGOTIATE MESSAGE */
-	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
+		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
+		{
+			if (table->CompleteAuthToken != NULL)
+				table->CompleteAuthToken(&context, &output_sec_buffer_desc);
 
-	printf("sent NTLMSSP_NEGOTIATE_MESSAGE\n");
+			have_pub_key_auth = true;
 
-	/* NTLMSSP CHALLENGE MESSAGE */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
-		return -1;
+			if (have_pub_key_auth)
+			{
+				uint8* p;
+				SEC_BUFFER* Buffers[2];
+				SEC_BUFFER data_buffer;
+				SEC_BUFFER signature_buffer;
+				SEC_BUFFER_DESC Message;
 
-	printf("received NTLM CHALLENGE MESSAGE\n");
+				data_buffer.BufferType = SECBUFFER_DATA;
+				signature_buffer.BufferType = SECBUFFER_PADDING;
 
-	input_sec_buffer_desc.ulVersion = 0;
-	input_sec_buffer_desc.cBuffers = 1;
-	input_sec_buffer_desc.pBuffers = &input_sec_buffer;
+				data_buffer.cbBuffer = credssp->tls->public_key.length;
+				data_buffer.pvBuffer = xmalloc(data_buffer.cbBuffer);
+				memcpy(data_buffer.pvBuffer, credssp->tls->public_key.data, data_buffer.cbBuffer);
 
-	input_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	input_sec_buffer.cbBuffer = credssp->negoToken.length;
-	input_sec_buffer.pvBuffer = credssp->negoToken.data;
+				signature_buffer.cbBuffer = 16;
+				signature_buffer.pvBuffer = xzalloc(signature_buffer.cbBuffer);
 
-	output_sec_buffer_desc.ulVersion = 0;
-	output_sec_buffer_desc.cBuffers = 1;
-	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+				Buffers[0] = &data_buffer;
+				Buffers[1] = &signature_buffer;
 
-	output_sec_buffer.cbBuffer = cbMaxLen;
-	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	output_sec_buffer.pvBuffer = output_buffer;
+				Message.cBuffers = 2;
+				Message.ulVersion = SECBUFFER_VERSION;
+				Message.pBuffers = (SEC_BUFFER*) Buffers;
 
-	printf("Second Call to InitializeSecurityContext()\n");
+				freerdp_blob_alloc(&credssp->pubKeyAuth, data_buffer.cbBuffer + signature_buffer.cbBuffer);
 
-	status = table->InitializeSecurityContext(&credentials, &context, NULL, fContextReq, 0, 0,
-			&input_sec_buffer_desc, 0, &context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+				table->EncryptMessage(&context, 0, &Message, 1);
 
-	if (status != SEC_I_CONTINUE_NEEDED)
-	{
-		printf("InitializeSecurityContext status: 0x%08X\n", status);
-		return 0;
-	}
+				p = (uint8*) credssp->pubKeyAuth.data;
+				memcpy(p, signature_buffer.pvBuffer, signature_buffer.cbBuffer); /* Message Signature */
+				memcpy(&p[signature_buffer.cbBuffer], data_buffer.pvBuffer, data_buffer.cbBuffer); /* Encrypted Public Key */
+			}
 
-	input_sec_buffer_desc.ulVersion = 0;
-	input_sec_buffer_desc.cBuffers = 1;
-	input_sec_buffer_desc.pBuffers = &input_sec_buffer;
+			if (status == SEC_I_COMPLETE_NEEDED)
+				status = SEC_E_OK;
+			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+				status = SEC_I_CONTINUE_NEEDED;
+		}
 
-	input_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	input_sec_buffer.cbBuffer = output_sec_buffer_desc.pBuffers[0].cbBuffer;
-	input_sec_buffer.pvBuffer = output_sec_buffer_desc.pBuffers[0].pvBuffer;
+		/* send authentication token to server */
 
-	output_sec_buffer_desc.ulVersion = 0;
-	output_sec_buffer_desc.cBuffers = 1;
-	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+		if (output_sec_buffer.cbBuffer > 0)
+		{
+			p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
 
-	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	output_sec_buffer.cbBuffer = credssp->negoToken.length;
-	output_sec_buffer.pvBuffer = credssp->negoToken.data;
+			credssp->negoToken.data = p_sec_buffer->pvBuffer;
+			credssp->negoToken.length = p_sec_buffer->cbBuffer;
 
-	printf("Third Call to InitializeSecurityContext()\n");
+			printf("Sending Authentication Token\n");
+			freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
 
-	status = table->InitializeSecurityContext(&credentials, &context, NULL, fContextReq, 0, 0,
-			&input_sec_buffer_desc, 0, &context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+			credssp_send(credssp, &credssp->negoToken, NULL,
+					(have_pub_key_auth) ? &credssp->pubKeyAuth : NULL);
 
-	if (status != SEC_I_COMPLETE_NEEDED)
-	{
-		printf("InitializeSecurityContext status: 0x%08X\n", status);
-		return 0;
+			if (have_pub_key_auth)
+			{
+				have_pub_key_auth = false;
+				freerdp_blob_free(&credssp->pubKeyAuth);
+			}
+
+			xfree(output_sec_buffer.pvBuffer);
+			output_sec_buffer.pvBuffer = NULL;
+		}
+
+		if (status != SEC_I_CONTINUE_NEEDED)
+			break;
+
+		/* receive server response and place in input buffer */
+
+		input_sec_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		input_sec_buffer_desc.cBuffers = 1;
+		input_sec_buffer_desc.pBuffers = &input_sec_buffer;
+		input_sec_buffer.BufferType = SECBUFFER_TOKEN;
+
+		if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
+			return -1;
+
+		printf("Receiving Authentication Token\n");
+		freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
+
+		p_sec_buffer = &input_sec_buffer_desc.pBuffers[0];
+		p_sec_buffer->pvBuffer = credssp->negoToken.data;
+		p_sec_buffer->cbBuffer = credssp->negoToken.length;
+
+		have_input_buffer = true;
+		have_context = true;
 	}
 
 	FreeCredentialsHandle(&credentials);

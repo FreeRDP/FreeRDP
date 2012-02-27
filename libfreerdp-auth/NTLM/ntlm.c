@@ -178,8 +178,10 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
 	NTLM_CONTEXT* context;
-	SEC_BUFFER* sec_buffer;
+	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
+	SEC_BUFFER* input_sec_buffer;
+	SEC_BUFFER* output_sec_buffer;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -193,6 +195,7 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		ntlm_SetContextWorkstation(context, "WORKSTATION");
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
 	}
 
 	if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE))
@@ -203,21 +206,19 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		sec_buffer = &pOutput->pBuffers[0];
+		output_sec_buffer = &pOutput->pBuffers[0];
 
-		if (sec_buffer->BufferType != SECBUFFER_TOKEN)
+		if (output_sec_buffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (sec_buffer->cbBuffer < 1)
+		if (output_sec_buffer->cbBuffer < 1)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
 		if (context->state == NTLM_STATE_INITIAL)
 			context->state = NTLM_STATE_NEGOTIATE;
 
 		if (context->state == NTLM_STATE_NEGOTIATE)
-			return ntlm_write_NegotiateMessage(context, sec_buffer);
-		else if (context->state == NTLM_STATE_AUTHENTICATE)
-			return ntlm_write_AuthenticateMessage(context, sec_buffer);
+			return ntlm_write_NegotiateMessage(context, output_sec_buffer);
 
 		return SEC_E_OUT_OF_SEQUENCE;
 	}
@@ -234,16 +235,35 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		sec_buffer = &pInput->pBuffers[0];
+		input_sec_buffer = &pInput->pBuffers[0];
 
-		if (sec_buffer->BufferType != SECBUFFER_TOKEN)
+		if (input_sec_buffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (sec_buffer->cbBuffer < 1)
+		if (input_sec_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
 
 		if (context->state == NTLM_STATE_CHALLENGE)
-			return ntlm_read_ChallengeMessage(context, sec_buffer);
+		{
+			status = ntlm_read_ChallengeMessage(context, input_sec_buffer);
+
+			if (!pOutput)
+				return SEC_E_INVALID_TOKEN;
+
+			if (pOutput->cBuffers < 1)
+				return SEC_E_INVALID_TOKEN;
+
+			output_sec_buffer = &pOutput->pBuffers[0];
+
+			if (output_sec_buffer->BufferType != SECBUFFER_TOKEN)
+				return SEC_E_INVALID_TOKEN;
+
+			if (output_sec_buffer->cbBuffer < 1)
+				return SEC_E_INSUFFICIENT_MEMORY;
+
+			if (context->state == NTLM_STATE_AUTHENTICATE)
+				return ntlm_write_AuthenticateMessage(context, output_sec_buffer);
+		}
 
 		return SEC_E_OUT_OF_SEQUENCE;
 	}
@@ -255,6 +275,83 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 
 SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
 {
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+{
+	int index;
+	int length;
+	void* data;
+	HMAC_CTX hmac;
+	uint8 digest[16];
+	uint8 checksum[8];
+	uint8* signature;
+	uint32 version = 1;
+	NTLM_CONTEXT* context;
+	SEC_BUFFER* data_buffer = NULL;
+	SEC_BUFFER* signature_buffer = NULL;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	for (index = 0; index < pMessage->cBuffers; index++)
+	{
+		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
+			data_buffer = &pMessage->pBuffers[index];
+		else if (pMessage->pBuffers[index].BufferType == SECBUFFER_PADDING)
+			signature_buffer = &pMessage->pBuffers[index];
+	}
+
+	if (!data_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	if (!signature_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	/* Copy original data buffer */
+	length = data_buffer->cbBuffer;
+	data = xmalloc(length);
+	memcpy(data, data_buffer->pvBuffer, length);
+
+	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,msg) using the client signing key */
+	HMAC_CTX_init(&hmac);
+	HMAC_Init_ex(&hmac, context->ClientSigningKey, 16, EVP_md5(), NULL);
+	HMAC_Update(&hmac, (void*) &MessageSeqNo, 4);
+	HMAC_Update(&hmac, data, length);
+	HMAC_Final(&hmac, digest, NULL);
+
+	/* Encrypt message using with RC4, result overwrites original buffer */
+	crypto_rc4(context->send_rc4_seal, length, data, data_buffer->pvBuffer);
+
+	/* RC4-encrypt first 8 bytes of digest */
+	crypto_rc4(context->send_rc4_seal, 8, digest, checksum);
+
+	signature = (uint8*) signature_buffer->pvBuffer;
+
+	/* Concatenate version, ciphertext and sequence number to build signature */
+	memcpy(signature, (void*) &version, 4);
+	memcpy(&signature[4], (void*) checksum, 8);
+	memcpy(&signature[12], (void*) &(MessageSeqNo), 4);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("Data Buffer (length = %d)\n", length);
+	freerdp_hexdump(data, length);
+	printf("\n");
+
+	printf("Encrypted Data Buffer (length = %d)\n", data_buffer->cbBuffer);
+	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
+	printf("\n");
+
+	printf("Signature\n");
+	freerdp_hexdump(signature, 16);
+	printf("\n");
+#endif
+
+	HMAC_CTX_cleanup(&hmac);
+	xfree(data);
+
+	context->send_seq_num++;
+
 	return SEC_E_OK;
 }
 
@@ -296,7 +393,7 @@ const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
 	NULL, /* AddCredentials */
 	NULL, /* Reserved8 */
 	NULL, /* QuerySecurityContextToken */
-	NULL, /* EncryptMessage */
+	ntlm_EncryptMessage, /* EncryptMessage */
 	NULL, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
 };
