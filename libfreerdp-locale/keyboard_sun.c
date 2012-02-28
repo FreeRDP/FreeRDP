@@ -245,7 +245,7 @@ uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* xkbfile, int length
 	}
 	pclose(kbd);
 
-	for (i = 0; i < sizeof(SOLARIS_KEYBOARD_TABLE) / sizeof(SOLARIS_KEYBOARD); i++)
+	for (i = 0; i < ARRAY_SIZE(SOLARIS_KEYBOARD_TABLE); i++)
 	{
 		if (SOLARIS_KEYBOARD_TABLE[i].type == type)
 		{

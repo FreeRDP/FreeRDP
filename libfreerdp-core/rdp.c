@@ -24,19 +24,20 @@
 
 #include <freerdp/crypto/per.h>
 
+#ifdef WITH_DEBUG_RDP
 static const char* const DATA_PDU_TYPE_STRINGS[] =
 {
-		"", "", /* 0x00 - 0x01 */
+		"?", "?", /* 0x00 - 0x01 */
 		"Update", /* 0x02 */
-		"", "", "", "", "", "", "", "", /* 0x03 - 0x0A */
-		"", "", "", "", "", "", "", "", "", /* 0x0B - 0x13 */
+		"?", "?", "?", "?", "?", "?", "?", "?", /* 0x03 - 0x0A */
+		"?", "?", "?", "?", "?", "?", "?", "?", "?", /* 0x0B - 0x13 */
 		"Control", /* 0x14 */
-		"", "", "", "", "", "", /* 0x15 - 0x1A */
+		"?", "?", "?", "?", "?", "?", /* 0x15 - 0x1A */
 		"Pointer", /* 0x1B */
 		"Input", /* 0x1C */
-		"", "", /* 0x1D - 0x1E */
+		"?", "?", /* 0x1D - 0x1E */
 		"Synchronize", /* 0x1F */
-		"", /* 0x20 */
+		"?", /* 0x20 */
 		"Refresh Rect", /* 0x21 */
 		"Play Sound", /* 0x22 */
 		"Suppress Output", /* 0x23 */
@@ -46,7 +47,7 @@ static const char* const DATA_PDU_TYPE_STRINGS[] =
 		"Font List", /* 0x27 */
 		"Font Map", /* 0x28 */
 		"Set Keyboard Indicators", /* 0x29 */
-		"", /* 0x2A */
+		"?", /* 0x2A */
 		"Bitmap Cache Persistent List", /* 0x2B */
 		"Bitmap Cache Error", /* 0x2C */
 		"Set Keyboard IME Status", /* 0x2D */
@@ -55,12 +56,13 @@ static const char* const DATA_PDU_TYPE_STRINGS[] =
 		"Draw Nine Grid Error", /* 0x30 */
 		"Draw GDI+ Error", /* 0x31 */
 		"ARC Status", /* 0x32 */
-		"", "", "", /* 0x33 - 0x35 */
+		"?", "?", "?", /* 0x33 - 0x35 */
 		"Status Info", /* 0x36 */
 		"Monitor Layout" /* 0x37 */
-		"", "", "", /* 0x38 - 0x40 */
-		"", "", "", "", "", "" /* 0x41 - 0x46 */
+		"?", "?", "?", /* 0x38 - 0x40 */
+		"?", "?", "?", "?", "?", "?" /* 0x41 - 0x46 */
 };
+#endif
 
 /**
  * Read RDP Security Header.\n
@@ -484,7 +486,8 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 #ifdef WITH_DEBUG_RDP
 	if (type != DATA_PDU_TYPE_UPDATE)
-		printf("recv %s Data PDU (0x%02X), length:%d\n", DATA_PDU_TYPE_STRINGS[type], type, length);
+		printf("recv %s Data PDU (0x%02X), length:%d\n",
+				type < ARRAY_SIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
 	switch (type)

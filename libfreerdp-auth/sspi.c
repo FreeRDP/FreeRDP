@@ -273,7 +273,7 @@ SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
 	int index;
 	uint32 cPackages;
 
-	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
+	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -305,7 +305,7 @@ SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppP
 	uint32 cPackages;
 	SEC_PKG_INFO* pPackageInfo;
 
-	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
+	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
 	size = sizeof(SEC_PKG_INFO) * cPackages;
 
 	pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
@@ -332,7 +332,7 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	uint32 cPackages;
 	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
 
-	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
+	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -361,7 +361,7 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 	uint32 cPackages;
 	SEC_PKG_INFO* pPackageInfo;
 
-	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
+	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
