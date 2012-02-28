@@ -106,7 +106,7 @@ void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 	int index;
 	void* contextBuffer;
 
-	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	for (index = 0; index < (int) ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
 		{
@@ -137,7 +137,7 @@ void sspi_ContextBufferFree(void* contextBuffer)
 	int index;
 	uint32 allocatorIndex;
 
-	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	for (index = 0; index < (int) ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
 		{
@@ -275,7 +275,7 @@ SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
 
 	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
 
-	for (index = 0; index < cPackages; index++)
+	for (index = 0; index < (int) cPackages; index++)
 	{
 		if (strcmp(Name, SECURITY_FUNCTION_TABLE_NAME_LIST[index].Name) == 0)
 		{
@@ -310,7 +310,7 @@ SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppP
 
 	pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
-	for (index = 0; index < cPackages; index++)
+	for (index = 0; index < (int) cPackages; index++)
 	{
 		pPackageInfo[index].fCapabilities = SEC_PKG_INFO_LIST[index]->fCapabilities;
 		pPackageInfo[index].wVersion = SEC_PKG_INFO_LIST[index]->wVersion;
@@ -334,7 +334,7 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 
 	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
 
-	for (index = 0; index < cPackages; index++)
+	for (index = 0; index < (int) cPackages; index++)
 	{
 		if (pPackageInfo[index].Name)
 			xfree(pPackageInfo[index].Name);
@@ -363,7 +363,7 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 
 	cPackages = sizeof(SEC_PKG_INFO_LIST) / sizeof(SEC_PKG_INFO*);
 
-	for (index = 0; index < cPackages; index++)
+	for (index = 0; index < (int) cPackages; index++)
 	{
 		if (strcmp(pszPackageName, SEC_PKG_INFO_LIST[index]->Name) == 0)
 		{

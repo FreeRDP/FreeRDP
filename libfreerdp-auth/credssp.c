@@ -29,7 +29,7 @@
 #include <freerdp/auth/sspi.h>
 #include <freerdp/auth/credssp.h>
 
-//#define WITH_SSPI		1
+#define WITH_SSPI		1
 
 /**
  * TSRequest ::= SEQUENCE {

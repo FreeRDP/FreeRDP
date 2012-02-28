@@ -312,7 +312,7 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
-	for (index = 0; index < pMessage->cBuffers; index++)
+	for (index = 0; index < (int) pMessage->cBuffers; index++)
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[index];
@@ -389,7 +389,7 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
-	for (index = 0; index < pMessage->cBuffers; index++)
+	for (index = 0; index < (int) pMessage->cBuffers; index++)
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[index];

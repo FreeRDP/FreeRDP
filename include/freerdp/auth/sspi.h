@@ -23,6 +23,19 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock.h>
+#include <winerror.h>
+
+#ifdef NATIVE_SSPI
+#define SECURITY_WIN32
+#include <sspi.h>
+#pragma comment(lib, "secur32.lib")
+#endif
+
+#endif
+
 struct _SEC_INTEGER
 {
 	uint32 LowPart;
@@ -69,6 +82,8 @@ typedef struct _SEC_PKG_INFO SEC_PKG_INFO;
 #define SECPKG_FLAG_NEGOTIABLE2			0x00200000
 
 typedef uint32 SECURITY_STATUS;
+
+#ifndef _WINERROR_
 
 #define SEC_E_OK				0x00000000
 #define SEC_E_INSUFFICIENT_MEMORY		0x80090300
@@ -155,6 +170,8 @@ typedef uint32 SECURITY_STATUS;
 #define SEC_I_NO_LSA_CONTEXT			0x00090323
 #define SEC_I_SIGNATURE_NEEDED			0x0009035C
 #define SEC_I_NO_RENEGOTIATION			0x00090360
+
+#endif
 
 #define SECURITY_NATIVE_DREP			0x00000010
 #define SECURITY_NETWORK_DREP			0x00000000
