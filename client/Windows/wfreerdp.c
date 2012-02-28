@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tchar.h>
 #include <sys/types.h>
 
 #ifdef _MSC_VER
@@ -178,7 +179,7 @@ boolean wf_pre_connect(freerdp* instance)
 
 	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
 	wfi->clrconv->palette = NULL;
-	wfi->clrconv->alpha = 0;
+	wfi->clrconv->alpha = false;
 
 	instance->context->cache = cache_new(settings);
 
@@ -385,6 +386,32 @@ boolean wf_post_connect(freerdp* instance)
 
 boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
+#if 0
+	DWORD mode;
+	int read_size;
+	DWORD read_count;
+	TCHAR answer[2];
+	TCHAR* read_buffer;
+	HANDLE input_handle;
+#endif
+
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+		"the CA certificate in your certificate store, or the certificate has expired. "
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+
+	/* TODO: ask for user validation */
+#if 0
+	input_handle = GetStdHandle(STD_INPUT_HANDLE);
+
+	GetConsoleMode(input_handle, &mode);
+	mode |= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT;
+	SetConsoleMode(input_handle, mode);
+#endif
+
 	return true;
 }
 
