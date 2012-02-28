@@ -36,6 +36,7 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/utils/memory.h>
 
 #include "test_utils.h"
 
@@ -142,7 +143,7 @@ void test_args(void)
 		"freerdp", "-a", "16", "-u", "testuser", "-d", "testdomain", "-g", "1280x960", "address2:3390"
 	};
 	char** argv = argv_c;
-	int argc = sizeof(argv_c) / sizeof(char*);
+	int argc = ARRAY_SIZE(argv_c);
 	int i;
 	int c;
 	rdpSettings* settings;

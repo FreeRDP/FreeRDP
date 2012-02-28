@@ -907,7 +907,7 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
-	for (i = 0; i < sizeof(xkbLayouts) / sizeof(XKB_LAYOUT); i++)
+	for (i = 0; i < ARRAY_SIZE(xkbLayouts); i++)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{
