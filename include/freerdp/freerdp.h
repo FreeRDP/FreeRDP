@@ -82,15 +82,32 @@ struct rdp_freerdp
 {
 	rdpContext* context; /**< (offset 0)
 							  Pointer to a rdpContext structure.
+							  Client applications can use the context_size field to register a context bigger than the rdpContext
+							  structure. This allow clients to use additional context information.
+							  When using this capability, client application should ALWAYS declare their structure with the
+							  rdpContext field first, and any additional content following it.
 							  Can be initialized by a call to freerdp_context_new() */
 	uint32 paddingA[16 - 1]; /* 1 */
 
-	rdpInput* input; /* 16 */
-	rdpUpdate* update; /* 17 */
-	rdpSettings* settings; /* 18 */
+	rdpInput* input; /* (offset 16)
+						Input handle for the connection.
+						Can be initialized by a call to freerdp_context_new() */
+	rdpUpdate* update; /* (offset 17)
+						  Update display parameters. Used to register display events callbacks and settings.
+						  Can be initialized by a call to freerdp_context_new() */
+	rdpSettings* settings; /**< (offset 18)
+								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
+								Can be initialized by a call to freerdp_context_new() */
 	uint32 paddingB[32 - 19]; /* 19 */
 
-	size_t context_size; /* 32 */
+	size_t context_size; /* (offset 32)
+							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
+							freerdp_new() sets it to sizeof(rdpContext).
+							If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
+							'context' field to set the required informations in it.
+							Clients will typically make it bigger, and use a context structure embedding the rdpContext, and
+							adding additional information after that.
+						 */
 
 	pContextNew ContextNew; /**< (offset 33)
 								 Callback for context allocation
@@ -121,8 +138,14 @@ struct rdp_freerdp
 											   Used to verify that an unknown certificate is trusted. */
 	uint32 paddingD[64 - 52]; /* 52 */
 
-	pSendChannelData SendChannelData; /* 64 */
-	pReceiveChannelData ReceiveChannelData; /* 65 */
+	pSendChannelData SendChannelData; /* (offset 64)
+										 Callback for sending data to a channel.
+										 By default, it is set by freerdp_new() to freerdp_send_channel_data(), which eventually calls
+										 freerdp_channel_send() */
+	pReceiveChannelData ReceiveChannelData; /* (offset 65)
+											   Callback for receiving data from a channel.
+											   This is called by freerdp_channel_process() (if not NULL).
+											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
 	uint32 paddingE[80 - 66]; /* 66 */
 };
 
