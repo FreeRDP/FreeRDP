@@ -275,7 +275,25 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 
 SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (ulAttribute == SECPKG_ATTR_SIZES)
+	{
+		SEC_PKG_CONTEXT_SIZES* ContextSizes = (SEC_PKG_CONTEXT_SIZES*) pBuffer;
+
+		ContextSizes->cbMaxToken = 2010;
+		ContextSizes->cbMaxSignature = 16;
+		ContextSizes->cbBlockSize = 0;
+		ContextSizes->cbSecurityTrailer = 16;
+
+		return SEC_E_OK;
+	}
+
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)

@@ -254,9 +254,13 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
  * @param s
  */
 
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, STREAM* s)
+void ntlm_output_av_pairs(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
 {
+	STREAM* s;
 	AV_PAIRS* av_pairs = context->av_pairs;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
 
 	if (av_pairs->NbDomainName.length > 0)
 	{
@@ -336,6 +340,57 @@ void ntlm_output_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 	{
 		stream_write_zero(s, 8);
 	}
+
+	xfree(s);
+}
+
+/**
+ * Compute AV_PAIRs length.\n
+ * AV_PAIR @msdn{cc236646}
+ * @param NTLM context
+ */
+
+int ntlm_compute_av_pairs_length(NTLM_CONTEXT* context)
+{
+	int length = 0;
+	AV_PAIRS* av_pairs = context->av_pairs;
+
+	if (av_pairs->NbDomainName.length > 0)
+		length += av_pairs->NbDomainName.length + 4;
+
+	if (av_pairs->NbComputerName.length > 0)
+		length += av_pairs->NbComputerName.length + 4;
+
+	if (av_pairs->DnsDomainName.length > 0)
+		length += av_pairs->DnsDomainName.length + 4;
+
+	if (av_pairs->DnsComputerName.length > 0)
+		length += av_pairs->DnsComputerName.length + 4;
+
+	if (av_pairs->DnsTreeName.length > 0)
+		length += av_pairs->DnsTreeName.length + 4;
+
+	if (av_pairs->Timestamp.length > 0)
+		length += av_pairs->Timestamp.length;
+
+	if (av_pairs->Flags > 0)
+		length += 4 + 4;
+
+	if (av_pairs->Restrictions.length > 0)
+		length += av_pairs->Restrictions.length + 4;
+
+	if (av_pairs->ChannelBindings.length > 0)
+		length += av_pairs->ChannelBindings.length + 4;
+
+	if (av_pairs->TargetName.length > 0)
+		length +=  av_pairs->TargetName.length + 4;
+
+	length += 4;
+
+	if (context->ntlm_v2)
+		length += 8;
+
+	return length;
 }
 
 /**
@@ -346,7 +401,7 @@ void ntlm_output_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 
 void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
 {
-	STREAM* s;
+	int length;
 	AV_PAIRS* av_pairs = context->av_pairs;
 
 	/* MsvAvFlags */
@@ -361,13 +416,9 @@ void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
 	/* ChannelBindings */
 	ntlm_output_channel_bindings(context);
 
-	s = stream_new(context->TargetInfo.cbBuffer);
-	ntlm_output_av_pairs(context, s);
-
-	sspi_SecBufferAlloc(&context->TargetInfo, s->p - s->data);
-	memcpy(context->TargetInfo.pvBuffer, s->data, context->TargetInfo.cbBuffer);
-
-	xfree(s);
+	length = ntlm_compute_av_pairs_length(context);
+	sspi_SecBufferAlloc(&context->TargetInfo, length);
+	ntlm_output_av_pairs(context, &context->TargetInfo);
 }
 
 /**

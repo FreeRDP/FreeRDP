@@ -27,7 +27,7 @@ void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 
 void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s);
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, STREAM* s);
+void ntlm_output_av_pairs(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
 void ntlm_populate_av_pairs(NTLM_CONTEXT* context);
 void ntlm_print_av_pairs(NTLM_CONTEXT* context);
 void ntlm_free_av_pairs(NTLM_CONTEXT* context);

@@ -160,7 +160,7 @@ namespace TimeZones
 					tzr.DaylightDate.wMilliseconds = (UInt16)time.Millisecond;
 
 					stream.Write("\t{");
-					stream.Write(" {0}, {1}, {2},", tzr.TicksStart, tzr.TicksEnd, tzr.DaylightDelta);
+					stream.Write(" {0}ULL, {1}ULL, {2},", tzr.TicksStart, tzr.TicksEnd, tzr.DaylightDelta);
 
 					stream.Write(" { ");
 					stream.Write("{0}, {1}, {2}, {3}, {4}, {5}",
