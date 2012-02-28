@@ -29,8 +29,6 @@
 #include <freerdp/auth/sspi.h>
 #include <freerdp/auth/credssp.h>
 
-#define WITH_SSPI		1
-
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -137,76 +135,6 @@ int credssp_ntlmssp_server_init(rdpCredssp* credssp)
 
 	return 1;
 }
-
-/**
- * Authenticate with server using CredSSP (client).
- * @param credssp
- * @return 1 if authentication is successful
- */
-
-#ifndef WITH_SSPI
-
-int credssp_client_authenticate(rdpCredssp* credssp)
-{
-	NTLMSSP* ntlmssp = credssp->ntlmssp;
-	STREAM* s = stream_new(0);
-	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
-
-	if (credssp_ntlmssp_client_init(credssp) == 0)
-		return 0;
-
-	/* NTLMSSP NEGOTIATE MESSAGE */
-	stream_attach(s, negoTokenBuffer, 2048);
-	ntlmssp_send(ntlmssp, s);
-	credssp->negoToken.data = stream_get_head(s);
-	credssp->negoToken.length = stream_get_length(s);
-	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
-
-	/* NTLMSSP CHALLENGE MESSAGE */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
-		return -1;
-
-	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
-	ntlmssp_recv(ntlmssp, s);
-
-	freerdp_blob_free(&credssp->negoToken);
-
-	/* NTLMSSP AUTHENTICATE MESSAGE */
-	stream_attach(s, negoTokenBuffer, 2048);
-	ntlmssp_send(ntlmssp, s);
-
-	/* The last NTLMSSP message is sent with the encrypted public key */
-	credssp->negoToken.data = stream_get_head(s);
-	credssp->negoToken.length = stream_get_length(s);
-	credssp_encrypt_public_key(credssp, &credssp->pubKeyAuth);
-	credssp_send(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth);
-	freerdp_blob_free(&credssp->pubKeyAuth);
-
-	/* Encrypted Public Key +1 */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
-		return -1;
-
-	if (credssp_verify_public_key(credssp, &credssp->pubKeyAuth) == 0)
-	{
-		/* Failed to verify server public key echo */
-		return 0; /* DO NOT SEND CREDENTIALS! */
-	}
-
-	freerdp_blob_free(&credssp->negoToken);
-	freerdp_blob_free(&credssp->pubKeyAuth);
-
-	/* Send encrypted credentials */
-	credssp_encode_ts_credentials(credssp);
-	credssp_encrypt_ts_credentials(credssp, &credssp->authInfo);
-	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
-	freerdp_blob_free(&credssp->authInfo);
-
-	xfree(s);
-
-	return 1;
-}
-
-#else
 
 #define NTLM_PACKAGE_NAME		"NTLM"
 
@@ -366,8 +294,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			credssp->negoToken.data = p_sec_buffer->pvBuffer;
 			credssp->negoToken.length = p_sec_buffer->cbBuffer;
 
+#ifdef WITH_DEBUG_CREDSSP
 			printf("Sending Authentication Token\n");
 			freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
+#endif
 
 			credssp_send(credssp, &credssp->negoToken, NULL,
 					(have_pub_key_auth) ? &credssp->pubKeyAuth : NULL);
@@ -395,8 +325,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
 			return -1;
 
+#ifdef WITH_DEBUG_CREDSSP
 		printf("Receiving Authentication Token\n");
 		freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
+#endif
 
 		p_sec_buffer = &input_sec_buffer_desc.pBuffers[0];
 		p_sec_buffer->pvBuffer = credssp->negoToken.data;
@@ -512,8 +444,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	return 1;
 }
 
-#endif
-
 /**
  * Authenticate with client using CredSSP (server).
  * @param credssp
@@ -567,119 +497,6 @@ int credssp_authenticate(rdpCredssp* credssp)
 		return credssp_server_authenticate(credssp);
 	else
 		return credssp_client_authenticate(credssp);
-}
-
-/**
- * Encrypt TLS public key using CredSSP.
- * @param credssp
- * @param s
- */
-
-void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d)
-{
-	uint8* p;
-	rdpTls* tls;
-	uint8 signature[16];
-	rdpBlob encrypted_public_key;
-	NTLMSSP *ntlmssp = credssp->ntlmssp;
-	tls = credssp->tls;
-
-	freerdp_blob_alloc(d, tls->public_key.length + 16);
-	ntlmssp_encrypt_message(ntlmssp, &tls->public_key, &encrypted_public_key, signature);
-
-#ifdef WITH_DEBUG_NLA
-	printf("Public Key (length = %d)\n", tls->public_key.length);
-	freerdp_hexdump(tls->public_key.data, tls->public_key.length);
-	printf("\n");
-
-	printf("Encrypted Public Key (length = %d)\n", encrypted_public_key.length);
-	freerdp_hexdump(encrypted_public_key.data, encrypted_public_key.length);
-	printf("\n");
-
-	printf("Signature\n");
-	freerdp_hexdump(signature, 16);
-	printf("\n");
-#endif
-
-	p = (uint8*) d->data;
-	memcpy(p, signature, 16); /* Message Signature */
-	memcpy(&p[16], encrypted_public_key.data, encrypted_public_key.length); /* Encrypted Public Key */
-
-	freerdp_blob_free(&encrypted_public_key);
-}
-
-/**
- * Verify TLS public key using CredSSP.
- * @param credssp
- * @param s
- * @return 1 if verification is successful, 0 otherwise
- */
-
-int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d)
-{
-	uint8 *p1, *p2;
-	uint8* signature;
-	rdpBlob public_key;
-	rdpBlob encrypted_public_key;
-	rdpTls* tls = credssp->tls;
-
-	signature = d->data;
-	encrypted_public_key.data = (void*) (signature + 16);
-	encrypted_public_key.length = d->length - 16;
-
-	ntlmssp_decrypt_message(credssp->ntlmssp, &encrypted_public_key, &public_key, signature);
-
-	p1 = (uint8*) tls->public_key.data;
-	p2 = (uint8*) public_key.data;
-
-	p2[0]--;
-
-	if (memcmp(p1, p2, public_key.length) != 0)
-	{
-		printf("Could not verify server's public key echo\n");
-		return 0;
-	}
-
-	p2[0]++;
-	freerdp_blob_free(&public_key);
-	return 1;
-}
-
-/**
- * Encrypt and sign TSCredentials structure.
- * @param credssp
- * @param s
- */
-
-void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d)
-{
-	uint8* p;
-	uint8 signature[16];
-	rdpBlob encrypted_ts_credentials;
-	NTLMSSP* ntlmssp = credssp->ntlmssp;
-
-	freerdp_blob_alloc(d, credssp->ts_credentials.length + 16);
-	ntlmssp_encrypt_message(ntlmssp, &credssp->ts_credentials, &encrypted_ts_credentials, signature);
-
-#ifdef WITH_DEBUG_NLA
-	printf("TSCredentials (length = %d)\n", credssp->ts_credentials.length);
-	freerdp_hexdump(credssp->ts_credentials.data, credssp->ts_credentials.length);
-	printf("\n");
-
-	printf("Encrypted TSCredentials (length = %d)\n", encrypted_ts_credentials.length);
-	freerdp_hexdump(encrypted_ts_credentials.data, encrypted_ts_credentials.length);
-	printf("\n");
-
-	printf("Signature\n");
-	freerdp_hexdump(signature, 16);
-	printf("\n");
-#endif
-
-	p = (uint8*) d->data;
-	memcpy(p, signature, 16); /* Message Signature */
-	memcpy(&p[16], encrypted_ts_credentials.data, encrypted_ts_credentials.length); /* Encrypted TSCredentials */
-
-	freerdp_blob_free(&encrypted_ts_credentials);
 }
 
 int credssp_skip_ts_password_creds(rdpCredssp* credssp)

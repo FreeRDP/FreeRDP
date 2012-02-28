@@ -112,6 +112,6 @@ struct _NTLM_CONTEXT
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 
-#define WITH_DEBUG_NTLM		1
+//#define WITH_DEBUG_NTLM		1
 
 #endif /* FREERDP_AUTH_NTLM_PRIVATE_H */
