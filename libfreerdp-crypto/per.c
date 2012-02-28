@@ -407,18 +407,14 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 
 boolean per_read_numeric_string(STREAM* s, int min)
 {
-	int i;
 	int length;
 	uint16 mlength;
 
 	per_read_length(s, &mlength);
 
-	length = mlength + min;
+	length = (mlength + min + 1) / 2;
 
-	for (i = 0; i < length; i += 2)
-	{
-		stream_seek(s, 1);
-	}
+	stream_seek(s, length);
 
 	return true;
 }
