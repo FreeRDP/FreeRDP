@@ -31,4 +31,6 @@ FREERDP_API char* xstrdup(const char* str);
 
 #define xnew(_type) (_type*)xzalloc(sizeof(_type))
 
+#define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
+
 #endif /* __MEMORY_UTILS_H */

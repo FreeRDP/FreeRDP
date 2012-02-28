@@ -110,7 +110,7 @@ void* rail_clone_order(uint32 event_type, void* order)
 	size_t order_size = 0;
 	void*  new_order = NULL;
 
-	for (i = 0; i < RAIL_ARRAY_SIZE(ordersize_table); i++)
+	for (i = 0; i < ARRAY_SIZE(ordersize_table); i++)
 	{
 		if (event_type == ordersize_table[i].type)
 		{

@@ -27,9 +27,6 @@
 
 #include <freerdp/utils/file.h>
 
-static const char certificate_store_dir[] = "certs";
-static const char certificate_known_hosts_file[] = "known_hosts";
-
 #include "certificate.h"
 
 /**
@@ -448,14 +445,15 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 	STREAM* s;
 	uint32 dwVersion;
 
-	s = stream_new(0);
-	stream_attach(s, server_cert, length);
-
+	printf("length %d\n", length);
 	if (length < 1)
 	{
-		printf("null server certificate\n");
+		DEBUG_CERTIFICATE("null server certificate\n");
 		return false;
 	}
+
+	s = stream_new(0);
+	stream_attach(s, server_cert, length);
 
 	stream_read_uint32(s, dwVersion); /* dwVersion (4 bytes) */
 
