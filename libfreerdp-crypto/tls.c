@@ -404,6 +404,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		xfree(fingerprint);
 	}
 
+#ifndef _WIN32
 	if (common_name)
 		xfree(common_name);
 
@@ -414,6 +415,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 
 		xfree(alt_names);
 	}
+#endif
 
 	if (certificate_data)
 	{

@@ -44,7 +44,7 @@
 #include <windows.h>
 #define PATH_SEPARATOR_STR	"\\"
 #define PATH_SEPARATOR_CHR	'\\'
-#define HOME_ENV_VARIABLE	"HOMEPATH"
+#define HOME_ENV_VARIABLE	"HOME"
 #endif
 
 #ifdef _WIN32
@@ -94,7 +94,7 @@ char* freerdp_get_config_path(rdpSettings* settings)
 		return settings->config_path;
 
 	settings->config_path = (char*) xmalloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
-	sprintf(settings->config_path, "%s/%s", settings->home_path, FREERDP_CONFIG_DIR);
+	sprintf(settings->config_path, "%s" PATH_SEPARATOR_STR "%s", settings->home_path, FREERDP_CONFIG_DIR);
 
 	if (!freerdp_check_file_exists(settings->config_path))
 		freerdp_mkdir(settings->config_path);

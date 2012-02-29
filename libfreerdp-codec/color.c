@@ -373,7 +373,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 2);
-		
+
 		dst16 = (uint16 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
@@ -392,7 +392,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 2);
-		
+
 		dst16 = (uint16 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
@@ -411,7 +411,7 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
-		
+
 		src8 = (uint8*) srcData;
 		dst32 = (uint32*) dstData;
 		for (i = width * height; i > 0; i--)
@@ -455,7 +455,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
-		
+
 		src16 = (uint16 *) srcData;
 		dst32 = (uint32 *) dstData;
 		for (i = width * height; i > 0; i--)
@@ -473,7 +473,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 	{
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 2);
-	
+
 		src16 = (uint16 *) srcData;
 		dst16 = (uint16 *) dstData;
 		for (i = width * height; i > 0; i--)
@@ -596,7 +596,7 @@ uint8* freerdp_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, in
 		uint8 *dstp;
 		if (dstData == NULL)
 			dstData = (uint8*) malloc(width * height * 4);
-		
+
 		dstp = dstData;
 		for (i = width * height; i > 0; i--)
 		{
@@ -698,7 +698,7 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 
 			memcpy(dstData, srcData, width * height * 4);
 		}
-		
+
 		return dstData;
 	}
 
@@ -744,7 +744,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 		int half = height / 2;
 		/* Flip buffer in place by line permutations through the temp
 		 * scan line buffer.
-		 * Not that if height has an odd number of line, we don't need
+		 * Note that if height has an odd number of line, we don't need
 		 * to move the center scanline anyway.
 		 * Also note that in place flipping takes three memcpy() calls
 		 * to process two scanlines while src to distinct dest would

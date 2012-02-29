@@ -304,7 +304,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 			input_mask |= EnterWindowMask | LeaveWindowMask;
 
 		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
-				PropModeReplace, (uint8*) xf_icon_prop, sizeof(xf_icon_prop) / sizeof(long));
+				PropModeReplace, (uint8*) xf_icon_prop, ARRAY_SIZE(xf_icon_prop));
 
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);

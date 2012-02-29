@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/utils/memory.h>
 #ifdef _WIN32
 #include <errno.h>
 int freerdp_handle_signals(void)
@@ -101,7 +102,7 @@ int freerdp_handle_signals(void)
 	fatal_sigaction.sa_flags  = 0;
 
 	for (signal_index = 0;
-		signal_index < (sizeof fatal_signals / sizeof fatal_signals[0]);
+		signal_index < ARRAY_SIZE(fatal_signals);
 		signal_index++)
 		if (sigaction(fatal_signals[signal_index],
 			NULL, &orig_sigaction) == 0)

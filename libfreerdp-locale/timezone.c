@@ -1576,11 +1576,11 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 	if (tzid == NULL)
 		return NULL;
 
-	for (i = 0; i < sizeof(TimeZoneTable) / sizeof(TIME_ZONE_ENTRY); i++)
+	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
 	{
 		if (bias == TimeZoneTable[i].Bias)
 		{
-			for (j = 0; j < sizeof(WindowsTimeZoneIdTable) / sizeof(WINDOWS_TZID_ENTRY); j++)
+			for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
 			{
 				if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
 					continue;
