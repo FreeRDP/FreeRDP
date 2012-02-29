@@ -598,18 +598,26 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 {
 #ifdef __GNUC__
 #if defined(__i386__) || defined(__x86_64__)
-	*eax = info;
 	__asm volatile
-		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
-		 "cpuid;"
-		 "mov %%ebx, %%esi;"
-		 "mov %%edi, %%ebx;"
-		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
-		 : :"edi");
+	(
+		/* The EBX (or RBX register on x86_64) is used for the PIC base address
+		   and must not be corrupted by our inline assembly. */
+#if defined(__i386__)
+		"mov %%ebx, %%esi;"
+		"cpuid;"
+		"xchg %%ebx, %%esi;"
+#else
+		"mov %%rbx, %%rsi;"
+		"cpuid;"
+		"xchg %%rbx, %%rsi;"
+#endif
+		: "=a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+		: "0" (info)
+	);
 #endif
 #endif
 }
- 
+
 uint32 xf_detect_cpu()
 {
 	unsigned int eax, ebx, ecx, edx = 0;
