@@ -24,7 +24,6 @@ typedef struct rdp_credssp rdpCredssp;
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
@@ -38,31 +37,25 @@ typedef struct rdp_credssp rdpCredssp;
 struct rdp_credssp
 {
 	rdpTls* tls;
-	freerdp* instance;
 	boolean server;
-	rdpBlob negoToken;
-	rdpBlob pubKeyAuth;
-	rdpBlob authInfo;
 	int send_seq_num;
 	UNICONV* uniconv;
-	rdpBlob ts_credentials;
+	freerdp* instance;
+	SEC_BUFFER negoToken;
+	SEC_BUFFER pubKeyAuth;
+	SEC_BUFFER authInfo;
+	SEC_BUFFER ts_credentials;
 	CryptoRc4 rc4_seal_state;
-	rdpSettings* settings;
 	SEC_AUTH_IDENTITY identity;
+	rdpSettings* settings;
 };
 
 FREERDP_API int credssp_authenticate(rdpCredssp* credssp);
 
-FREERDP_API void credssp_send(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
-FREERDP_API int credssp_recv(rdpCredssp* credssp, rdpBlob* negoToken, rdpBlob* authInfo, rdpBlob* pubKeyAuth);
+FREERDP_API void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authInfo, SEC_BUFFER* pubKeyAuth);
+FREERDP_API int credssp_recv(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authInfo, SEC_BUFFER* pubKeyAuth);
 
-FREERDP_API void credssp_encrypt_public_key(rdpCredssp* credssp, rdpBlob* d);
-FREERDP_API void credssp_encrypt_ts_credentials(rdpCredssp* credssp, rdpBlob* d);
-FREERDP_API int credssp_verify_public_key(rdpCredssp* credssp, rdpBlob* d);
 FREERDP_API void credssp_encode_ts_credentials(rdpCredssp* credssp);
-
-FREERDP_API void credssp_current_time(uint8* timestamp);
-FREERDP_API void credssp_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
 
 FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
 FREERDP_API void credssp_free(rdpCredssp* credssp);
