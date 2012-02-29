@@ -23,7 +23,6 @@
 
 #include <time.h>
 #include <freerdp/crypto/tls.h>
-#include <freerdp/auth/ntlmssp.h>
 #include <freerdp/utils/stream.h>
 
 #include <freerdp/auth/sspi.h>
@@ -71,6 +70,51 @@
  *
  */
 
+void credssp_SetContextIdentity(rdpCredssp* context, SEC_AUTH_IDENTITY* identity)
+{
+	size_t size;
+	context->identity.Flags = SEC_AUTH_IDENTITY_UNICODE;
+
+	if (identity->Flags == SEC_AUTH_IDENTITY_ANSI)
+	{
+		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
+		context->identity.UserLength = (uint32) size;
+
+		if (identity->DomainLength > 0)
+		{
+			context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Domain, &size);
+			context->identity.DomainLength = (uint32) size;
+		}
+		else
+		{
+			context->identity.Domain = (uint16*) NULL;
+			context->identity.DomainLength = 0;
+		}
+
+		context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Password, &size);
+		context->identity.PasswordLength = (uint32) size;
+	}
+	else
+	{
+		context->identity.User = (uint16*) xmalloc(identity->UserLength);
+		memcpy(context->identity.User, identity->User, identity->UserLength);
+
+		if (identity->DomainLength > 0)
+		{
+			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
+			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
+		}
+		else
+		{
+			context->identity.Domain = (uint16*) NULL;
+			context->identity.DomainLength = 0;
+		}
+
+		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
+		memcpy(context->identity.Password, identity->User, identity->PasswordLength);
+	}
+}
+
 /**
  * Initialize NTLMSSP authentication module (client).
  * @param credssp
@@ -79,7 +123,7 @@
 int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
-	NTLMSSP* ntlmssp = credssp->ntlmssp;
+	SEC_AUTH_IDENTITY identity;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
@@ -94,44 +138,26 @@ int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 		}
 	}
 
-	if (settings->ntlm_version == 2)
-		ntlmssp->ntlm_v2 = 1;
+	identity.User = (uint16*) xstrdup(settings->username);
+	identity.UserLength = strlen(settings->username);
 
-	ntlmssp_set_password(ntlmssp, settings->password);
-	ntlmssp_set_username(ntlmssp, settings->username);
-
-	if (ntlmssp->ntlm_v2)
+	if (settings->domain)
 	{
-		ntlmssp_set_workstation(ntlmssp, "WORKSTATION");
-	}
-
-	if (settings->domain != NULL)
-	{
-		if (strlen(settings->domain) > 0)
-			ntlmssp_set_domain(ntlmssp, settings->domain);
+		identity.Domain = (uint16*) xstrdup(settings->domain);
+		identity.DomainLength = strlen(settings->domain);
 	}
 	else
 	{
-		ntlmssp_set_domain(ntlmssp, NULL);
+		identity.Domain = (uint16*) NULL;
+		identity.DomainLength = 0;
 	}
 
-	ntlmssp_generate_client_challenge(ntlmssp);
-	ntlmssp_generate_random_session_key(ntlmssp);
-	ntlmssp_generate_exported_session_key(ntlmssp);
+	identity.Password = (uint16*) xstrdup(settings->password);
+	identity.PasswordLength = strlen(settings->password);
 
-	return 1;
-}
+	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
 
-/**
- * Initialize NTLMSSP authentication module (server).
- * @param credssp
- */
-
-int credssp_ntlmssp_server_init(rdpCredssp* credssp)
-{
-	NTLMSSP* ntlmssp = credssp->ntlmssp;
-
-	ntlmssp_generate_server_challenge(ntlmssp);
+	credssp_SetContextIdentity(credssp, &identity);
 
 	return 1;
 }
@@ -435,7 +461,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
 
 	freerdp_blob_free(&credssp->negoToken);
-	freerdp_blob_free(&credssp->pubKeyAuth);
 	freerdp_blob_free(&credssp->authInfo);
 
 	FreeCredentialsHandle(&credentials);
@@ -452,37 +477,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 int credssp_server_authenticate(rdpCredssp* credssp)
 {
-	STREAM* s = stream_new(0);
-	NTLMSSP* ntlmssp = credssp->ntlmssp;
-	uint8* negoTokenBuffer = (uint8*) xmalloc(2048);
-
-	if (credssp_ntlmssp_server_init(credssp) == 0)
-		return 0;
-
-	/* NTLMSSP NEGOTIATE MESSAGE */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
-		return -1;
-
-	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
-	ntlmssp_recv(ntlmssp, s);
-
-	freerdp_blob_free(&credssp->negoToken);
-
-	/* NTLMSSP CHALLENGE MESSAGE */
-	stream_attach(s, negoTokenBuffer, 2048);
-	ntlmssp_send(ntlmssp, s);
-	credssp->negoToken.data = stream_get_head(s);
-	credssp->negoToken.length = stream_get_length(s);
-	credssp_send(credssp, &credssp->negoToken, NULL, NULL);
-
-	/* NTLMSSP AUTHENTICATE MESSAGE */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
-		return -1;
-
-	stream_attach(s, credssp->negoToken.data, credssp->negoToken.length);
-	ntlmssp_recv(ntlmssp, s);
-
-	return 1;
+	return 0;
 }
 
 /**
@@ -504,15 +499,15 @@ int credssp_skip_ts_password_creds(rdpCredssp* credssp)
 	int length;
 	int ts_password_creds_length = 0;
 
-	length = ber_skip_octet_string(credssp->ntlmssp->domain.length);
+	length = ber_skip_octet_string(credssp->identity.DomainLength);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->ntlmssp->username.length);
+	length = ber_skip_octet_string(credssp->identity.UserLength);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->ntlmssp->password.length);
+	length = ber_skip_octet_string(credssp->identity.PasswordLength);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
@@ -532,16 +527,16 @@ void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_write_sequence_tag(s, length);
 
 	/* [0] domainName (OCTET STRING) */
-	ber_write_contextual_tag(s, 0, credssp->ntlmssp->domain.length + 2, true);
-	ber_write_octet_string(s, credssp->ntlmssp->domain.data, credssp->ntlmssp->domain.length);
+	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength + 2, true);
+	ber_write_octet_string(s, (uint8*) credssp->identity.Domain, credssp->identity.DomainLength);
 
 	/* [1] userName (OCTET STRING) */
-	ber_write_contextual_tag(s, 1, credssp->ntlmssp->username.length + 2, true);
-	ber_write_octet_string(s, credssp->ntlmssp->username.data, credssp->ntlmssp->username.length);
+	ber_write_contextual_tag(s, 1, credssp->identity.UserLength + 2, true);
+	ber_write_octet_string(s, (uint8*) credssp->identity.User, credssp->identity.UserLength);
 
 	/* [2] password (OCTET STRING) */
-	ber_write_contextual_tag(s, 2, credssp->ntlmssp->password.length + 2, true);
-	ber_write_octet_string(s, credssp->ntlmssp->password.data, credssp->ntlmssp->password.length);
+	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength + 2, true);
+	ber_write_octet_string(s, (uint8*) credssp->identity.Password, credssp->identity.PasswordLength);
 }
 
 int credssp_skip_ts_credentials(rdpCredssp* credssp)
@@ -822,13 +817,8 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		credssp->settings = settings;
 		credssp->server = settings->server_mode;
 		credssp->tls = tls;
-
 		credssp->send_seq_num = 0;
-
-		if (credssp->server)
-			credssp->ntlmssp = ntlmssp_server_new();
-		else
-			credssp->ntlmssp = ntlmssp_client_new();
+		credssp->uniconv = freerdp_uniconv_new();
 	}
 
 	return credssp;
@@ -844,8 +834,7 @@ void credssp_free(rdpCredssp* credssp)
 	if (credssp != NULL)
 	{
 		freerdp_blob_free(&credssp->ts_credentials);
-
-		ntlmssp_free(credssp->ntlmssp);
+		freerdp_uniconv_free(credssp->uniconv);
 		xfree(credssp);
 	}
 }
