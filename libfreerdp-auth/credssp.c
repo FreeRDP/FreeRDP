@@ -388,7 +388,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	/* Free resources */
 
-	sspi_SecBufferFree(&credssp->negoToken);
+	//sspi_SecBufferFree(&credssp->negoToken);
 	sspi_SecBufferFree(&credssp->authInfo);
 
 	FreeCredentialsHandle(&credentials);

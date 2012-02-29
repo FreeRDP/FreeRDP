@@ -195,6 +195,7 @@ void sspi_SecBufferFree(SEC_BUFFER* sec_buffer)
 {
 	sec_buffer->cbBuffer = 0;
 	xfree(sec_buffer->pvBuffer);
+	sec_buffer->pvBuffer = NULL;
 }
 
 SEC_HANDLE* sspi_SecureHandleAlloc()
