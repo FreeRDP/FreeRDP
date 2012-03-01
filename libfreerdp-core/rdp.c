@@ -133,19 +133,8 @@ boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint3
 	stream_seek_uint8(s); /* streamId (1 byte) */
 	stream_read_uint16(s, *length); /* uncompressedLength (2 bytes) */
 	stream_read_uint8(s, *type); /* pduType2, Data PDU Type (1 byte) */
-
-	if (*type & 0x80)
-	{
-		stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
-		stream_read_uint16(s, *compressed_len); /* compressedLength (2 bytes) */
-	}
-	else
-	{
-		stream_seek(s, 3);
-		*compressed_type = 0;
-		*compressed_len = 0;
-	}
-
+	stream_read_uint8(s, *compressed_type); /* compressedType (1 byte) */
+	stream_read_uint16(s, *compressed_len); /* compressedLength (2 bytes) */
 	return true;
 }
 
@@ -481,8 +470,29 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	uint32 share_id;
 	uint8 compressed_type;
 	uint16 compressed_len;
+	uint32 roff;
+	uint32 rlen;
+	STREAM* comp_stream;
 
 	rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len);
+
+	comp_stream = s;
+
+	if (compressed_type & PACKET_COMPRESSED)
+	{
+		if (decompress_rdp(rdp, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
+		{
+			comp_stream = stream_new(0);
+			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->p = comp_stream->data;
+			comp_stream->size = rlen;
+		}
+		else
+		{
+			printf("decompress_rdp() failed\n");
+			return false;
+		}
+	}
 
 #ifdef WITH_DEBUG_RDP
 	if (type != DATA_PDU_TYPE_UPDATE)
@@ -493,30 +503,30 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_UPDATE:
-			if (!update_recv(rdp->update, s))
+			if (!update_recv(rdp->update, comp_stream))
 				return false;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			rdp_recv_server_control_pdu(rdp, s);
+			rdp_recv_server_control_pdu(rdp, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
-			update_recv_pointer(rdp->update, s);
+			update_recv_pointer(rdp->update, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_INPUT:
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			rdp_recv_synchronize_pdu(rdp, s);
+			rdp_recv_synchronize_pdu(rdp, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
 			break;
 
 		case DATA_PDU_TYPE_PLAY_SOUND:
-			update_recv_play_sound(rdp->update, s);
+			update_recv_play_sound(rdp->update, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:
@@ -529,14 +539,14 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
-			rdp_recv_save_session_info(rdp, s);
+			rdp_recv_save_session_info(rdp, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
-			rdp_recv_font_map_pdu(rdp, s);
+			rdp_recv_font_map_pdu(rdp, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
@@ -555,7 +565,7 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
-			rdp_recv_set_error_info_data_pdu(rdp, s);
+			rdp_recv_set_error_info_data_pdu(rdp, comp_stream);
 			break;
 
 		case DATA_PDU_TYPE_DRAW_NINEGRID_ERROR:
@@ -576,6 +586,9 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 		default:
 			break;
 	}
+
+	if (comp_stream != s)
+		xfree(comp_stream);
 
 	return true;
 }
