@@ -62,31 +62,31 @@ typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data
  */
 struct rdp_context
 {
-	freerdp* instance; /* (offset 0)
+	freerdp* instance; /**< (offset 0)
 						  Pointer to a rdp_freerdp structure.
 						  This is a back-link to retrieve the freerdp instance from the context.
 						  It is set by the freerdp_context_new() function */
-	freerdp_peer* peer; /* (offset 1)
+	freerdp_peer* peer; /**< (offset 1)
 						   Pointer to the client peer.
 						   This is set by a call to freerdp_peer_context_new() during peer initialization.
 						   This field is used only on the server side. */
 	uint32 paddingA[16 - 2]; /* 2 */
 
-	int argc;	/* (offset 16)
+	int argc;	/**< (offset 16)
 				   Number of arguments given to the program at launch time.
 				   Used to keep this data available and used later on, typically just before connection initialization.
 				   @see freerdp_parse_args() */
-	char** argv; /* (offset 17)
+	char** argv; /**< (offset 17)
 					List of arguments given to the program at launch time.
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
 	uint32 paddingB[32 - 18]; /* 18 */
 
-	rdpRdp* rdp; /* (offset 32)
+	rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
 					It is allocated by freerdp_context_new() and deallocated by freerdp_context_free(), at the same
 					time that this rdp_context structure - there is no need to specifically allocate/deallocate this. */
-	rdpGdi* gdi; /* (offset 33)
+	rdpGdi* gdi; /**< (offset 33)
 					Pointer to a rdp_gdi structure used to keep the gdi settings.
 					It is allocated by gdi_init() and deallocated by gdi_free().
 					It must be deallocated before deallocating this rdp_context structure. */
