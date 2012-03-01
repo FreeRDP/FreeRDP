@@ -55,18 +55,41 @@ typedef boolean (*pVerifyCertificate)(freerdp* instance, char* subject, char* is
 typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
 typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 
+/**
+ * Defines the context for a given instance of RDP connection.
+ * It is embedded in the rdp_freerdp structure, and allocated by a call to freerdp_context_new().
+ * It is deallocated by a call to freerdp_context_free().
+ */
 struct rdp_context
 {
-	freerdp* instance; /* 0 */
-	freerdp_peer* peer; /* 1 */
+	freerdp* instance; /* (offset 0)
+						  Pointer to a rdp_freerdp structure.
+						  This is a back-link to retrieve the freerdp instance from the context.
+						  It is set by the freerdp_context_new() function */
+	freerdp_peer* peer; /* (offset 1)
+						   Pointer to the client peer.
+						   This is set by a call to freerdp_peer_context_new() during peer initialization.
+						   This field is used only on the server side. */
 	uint32 paddingA[16 - 2]; /* 2 */
 
-	int argc; /* 16 */
-	char** argv; /* 17 */
+	int argc;	/* (offset 16)
+				   Number of arguments given to the program at launch time.
+				   Used to keep this data available and used later on, typically just before connection initialization.
+				   @see freerdp_parse_args() */
+	char** argv; /* (offset 17)
+					List of arguments given to the program at launch time.
+					Used to keep this data available and used later on, typically just before connection initialization.
+					@see freerdp_parse_args() */
 	uint32 paddingB[32 - 18]; /* 18 */
 
-	rdpRdp* rdp; /* 32 */
-	rdpGdi* gdi; /* 33 */
+	rdpRdp* rdp; /* (offset 32)
+					Pointer to a rdp_rdp structure used to keep the connection's parameters.
+					It is allocated by freerdp_context_new() and deallocated by freerdp_context_free(), at the same
+					time that this rdp_context structure - there is no need to specifically allocate/deallocate this. */
+	rdpGdi* gdi; /* (offset 33)
+					Pointer to a rdp_gdi structure used to keep the gdi settings.
+					It is allocated by gdi_init() and deallocated by gdi_free().
+					It must be deallocated before deallocating this rdp_context structure. */
 	rdpRail* rail; /* 34 */
 	rdpCache* cache; /* 35 */
 	rdpChannels* channels; /* 36 */
@@ -77,6 +100,8 @@ struct rdp_context
 /** Defines the options for a given instance of RDP connection.
  *  This is built by the client and given to the FreeRDP library to create the connection
  *  with the expected options.
+ *  It is allocated by a call to freerdp_new() and deallocated by a call to freerdp_free().
+ *  Some of its content need specific allocation/deallocation - see field description for details.
  */
 struct rdp_freerdp
 {
@@ -86,18 +111,19 @@ struct rdp_freerdp
 							  structure. This allow clients to use additional context information.
 							  When using this capability, client application should ALWAYS declare their structure with the
 							  rdpContext field first, and any additional content following it.
-							  Can be initialized by a call to freerdp_context_new() */
+							  Can be allocated by a call to freerdp_context_new().
+							  Must be dealocated by a call to freerdp_context_free() before deallocating the current instance. */
 	uint32 paddingA[16 - 1]; /* 1 */
 
 	rdpInput* input; /* (offset 16)
 						Input handle for the connection.
-						Can be initialized by a call to freerdp_context_new() */
+						Will be initialized by a call to freerdp_context_new() */
 	rdpUpdate* update; /* (offset 17)
 						  Update display parameters. Used to register display events callbacks and settings.
-						  Can be initialized by a call to freerdp_context_new() */
+						  Will be initialized by a call to freerdp_context_new() */
 	rdpSettings* settings; /**< (offset 18)
 								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
-								Can be initialized by a call to freerdp_context_new() */
+								Will be initialized by a call to freerdp_context_new() */
 	uint32 paddingB[32 - 19]; /* 19 */
 
 	size_t context_size; /* (offset 32)
