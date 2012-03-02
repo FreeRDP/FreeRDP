@@ -145,11 +145,85 @@ void ntlm_print_negotiate_flags(uint32 flags)
 	printf("}\n");
 }
 
+SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+{
+	STREAM* s;
+	int length;
+	uint8 Signature[8];
+	uint32 MessageType;
+	uint32 NegotiateFlags;
+	uint16 DomainNameLen;
+	uint16 DomainNameMaxLen;
+	uint32 DomainNameBufferOffset;
+	uint16 WorkstationLen;
+	uint16 WorkstationMaxLen;
+	uint32 WorkstationBufferOffset;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	stream_read(s, Signature, 8);
+	stream_read_uint32(s, MessageType);
+
+	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
+	{
+		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
+		return SEC_E_INVALID_TOKEN;
+	}
+
+	if (MessageType != MESSAGE_TYPE_NEGOTIATE)
+		return SEC_E_INVALID_TOKEN;
+
+	stream_read_uint32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	context->NegotiateFlags = NegotiateFlags;
+
+	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	/* DomainNameFields (8 bytes) */
+	stream_read_uint16(s, DomainNameLen); /* DomainNameLen */
+	stream_read_uint16(s, DomainNameMaxLen); /* DomainNameMaxLen */
+	stream_read_uint32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	/* WorkstationFields (8 bytes) */
+	stream_read_uint16(s, WorkstationLen); /* WorkstationLen */
+	stream_read_uint16(s, WorkstationMaxLen); /* WorkstationMaxLen */
+	stream_read_uint32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+
+	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+		stream_seek(s, 8); /* Version (8 bytes) */
+	}
+
+	length = s->p - s->data;
+	buffer->cbBuffer = length;
+
+	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
+	memcpy(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
+	context->NegotiateMessage.BufferType = buffer->BufferType;
+
+#ifdef WITH_DEBUG_NTLM
+	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(s->data, length);
+	printf("\n");
+#endif
+
+	context->state = NTLM_STATE_CHALLENGE;
+
+	stream_detach(s);
+	stream_free(s);
+
+	return SEC_I_CONTINUE_NEEDED;
+}
+
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
 {
 	STREAM* s;
 	int length;
-	uint32 negotiateFlags = 0;
+	uint32 NegotiateFlags = 0;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
@@ -159,36 +233,36 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 
 	if (context->ntlm_v2)
 	{
-		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_LM_KEY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
-		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_OEM;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_LM_KEY;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_OEM;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 	else
 	{
-		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
-		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 
-	context->NegotiateFlags = negotiateFlags;
+	context->NegotiateFlags = NegotiateFlags;
 
-	stream_write_uint32(s, negotiateFlags); /* NegotiateFlags (4 bytes) */
+	stream_write_uint32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 
@@ -204,7 +278,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 	stream_write_uint16(s, 0); /* WorkstationMaxLen */
 	stream_write_uint32(s, 0); /* WorkstationBufferOffset */
 
-	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
 		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
 		ntlm_output_version(s);
@@ -231,6 +305,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 
 	context->state = NTLM_STATE_CHALLENGE;
 
+	stream_detach(s);
+	stream_free(s);
+
 	return SEC_I_CONTINUE_NEEDED;
 }
 
@@ -239,35 +316,38 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	uint8* p;
 	STREAM* s;
 	int length;
-	char signature[8];
-	uint32 messageType;
-	uint8* start_offset;
-	uint8* payload_offset;
-	uint16 targetNameLen;
-	uint16 targetNameMaxLen;
-	uint32 targetNameBufferOffset;
-	uint16 targetInfoLen;
-	uint16 targetInfoMaxLen;
-	uint32 targetInfoBufferOffset;
+	char Signature[8];
+	uint32 MessageType;
+	uint8* StartOffset;
+	uint8* PayloadOffset;
+	uint16 TargetNameLen;
+	uint16 TargetNameMaxLen;
+	uint32 TargetNameBufferOffset;
+	uint16 TargetInfoLen;
+	uint16 TargetInfoMaxLen;
+	uint32 TargetInfoBufferOffset;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
 
-	stream_read(s, signature, 8);
-	stream_read_uint32(s, messageType);
+	stream_read(s, Signature, 8);
+	stream_read_uint32(s, MessageType);
 
-	if (memcmp(signature, NTLM_SIGNATURE, 8) != 0)
+	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
 	{
-		printf("Unexpected NTLM signature: %s, expected:%s\n", signature, NTLM_SIGNATURE);
+		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
 		return SEC_E_INVALID_TOKEN;
 	}
 
-	start_offset = s->p - 12;
+	if (MessageType != MESSAGE_TYPE_CHALLENGE)
+		return SEC_E_INVALID_TOKEN;
+
+	StartOffset = s->p - 12;
 
 	/* TargetNameFields (8 bytes) */
-	stream_read_uint16(s, targetNameLen); /* TargetNameLen (2 bytes) */
-	stream_read_uint16(s, targetNameMaxLen); /* TargetNameMaxLen (2 bytes) */
-	stream_read_uint32(s, targetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+	stream_read_uint16(s, TargetNameLen); /* TargetNameLen (2 bytes) */
+	stream_read_uint16(s, TargetNameMaxLen); /* TargetNameMaxLen (2 bytes) */
+	stream_read_uint32(s, TargetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
 
 	stream_read_uint32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -279,9 +359,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	stream_seek(s, 8); /* Reserved (8 bytes), should be ignored */
 
 	/* TargetInfoFields (8 bytes) */
-	stream_read_uint16(s, targetInfoLen); /* TargetInfoLen (2 bytes) */
-	stream_read_uint16(s, targetInfoMaxLen); /* TargetInfoMaxLen (2 bytes) */
-	stream_read_uint32(s, targetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+	stream_read_uint16(s, TargetInfoLen); /* TargetInfoLen (2 bytes) */
+	stream_read_uint16(s, TargetInfoMaxLen); /* TargetInfoMaxLen (2 bytes) */
+	stream_read_uint32(s, TargetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
 
 	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
 
@@ -291,29 +371,29 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 	}
 
 	/* Payload (variable) */
-	payload_offset = s->p;
+	PayloadOffset = s->p;
 
-	if (targetNameLen > 0)
+	if (TargetNameLen > 0)
 	{
-		p = start_offset + targetNameBufferOffset;
-		sspi_SecBufferAlloc(&context->TargetName, targetNameLen);
-		memcpy(context->TargetName.pvBuffer, p, targetNameLen);
+		p = StartOffset + TargetNameBufferOffset;
+		sspi_SecBufferAlloc(&context->TargetName, TargetNameLen);
+		memcpy(context->TargetName.pvBuffer, p, TargetNameLen);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetName (length = %d, offset = %d)\n", targetNameLen, targetNameBufferOffset);
+		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
 		freerdp_hexdump(context->TargetName.pvBuffer, context->TargetName.cbBuffer);
 		printf("\n");
 #endif
 	}
 
-	if (targetInfoLen > 0)
+	if (TargetInfoLen > 0)
 	{
-		p = start_offset + targetInfoBufferOffset;
-		sspi_SecBufferAlloc(&context->TargetInfo, targetInfoLen);
-		memcpy(context->TargetInfo.pvBuffer, p, targetInfoLen);
+		p = StartOffset + TargetInfoBufferOffset;
+		sspi_SecBufferAlloc(&context->TargetInfo, TargetInfoLen);
+		memcpy(context->TargetInfo.pvBuffer, p, TargetInfoLen);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetInfo (length = %d, offset = %d)\n", targetInfoLen, targetInfoBufferOffset);
+		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
 		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 		printf("\n");
 #endif
@@ -325,10 +405,10 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 		}
 	}
 
-	length = (payload_offset - start_offset) + targetNameLen + targetInfoLen;
+	length = (PayloadOffset - StartOffset) + TargetNameLen + TargetInfoLen;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
-	memcpy(context->ChallengeMessage.pvBuffer, start_offset, length);
+	memcpy(context->ChallengeMessage.pvBuffer, StartOffset, length);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
@@ -409,7 +489,177 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 
 	context->state = NTLM_STATE_AUTHENTICATE;
 
+	stream_detach(s);
+	stream_free(s);
+
 	return SEC_I_CONTINUE_NEEDED;
+}
+
+SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+{
+	STREAM* s;
+	uint16 TargetNameLen;
+	uint8* TargetNameBuffer;
+	uint32 TargetNameBufferOffset;
+	uint16 TargetInfoLen;
+	uint8* TargetInfoBuffer;
+	uint32 TargetInfoBufferOffset;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	stream_write(s, NTLM_SIGNATURE, 8); /* Signature (8 bytes) */
+	stream_write_uint32(s, MESSAGE_TYPE_CHALLENGE); /* MessageType */
+
+	TargetNameLen = context->TargetName.cbBuffer;
+	TargetNameBuffer = context->TargetName.pvBuffer;
+
+	TargetInfoLen = context->TargetInfo.cbBuffer;
+	TargetInfoBuffer = context->TargetInfo.pvBuffer;
+
+	TargetNameBufferOffset = 56;
+	TargetInfoBufferOffset = TargetNameBufferOffset + TargetNameLen;
+
+	/* TargetNameFields (8 bytes) */
+	stream_write_uint16(s, TargetNameLen); /* TargetNameLen (2 bytes) */
+	stream_write_uint16(s, TargetNameLen); /* TargetNameMaxLen (2 bytes) */
+	stream_write_uint32(s, TargetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+
+	stream_write_uint32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	stream_write(s, context->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
+	stream_write_zero(s, 8); /* Reserved (8 bytes), should be ignored */
+
+	/* TargetInfoFields (8 bytes) */
+	stream_write_uint16(s, TargetInfoLen); /* TargetInfoLen (2 bytes) */
+	stream_write_uint16(s, TargetInfoLen); /* TargetInfoMaxLen (2 bytes) */
+	stream_write_uint32(s, TargetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+
+	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
+
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		ntlm_output_version(s); /* Version (8 bytes), can be ignored */
+	}
+
+	/* Payload (variable) */
+
+	if (TargetNameLen > 0)
+	{
+		stream_write(s, TargetNameBuffer, TargetNameLen);
+#ifdef WITH_DEBUG_NTLM
+		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
+		freerdp_hexdump(TargetNameBuffer, TargetNameLen);
+		printf("\n");
+#endif
+	}
+
+	if (TargetInfoLen > 0)
+	{
+		stream_write(s, TargetInfoBuffer, TargetInfoLen);
+#ifdef WITH_DEBUG_NTLM
+		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
+		freerdp_hexdump(TargetInfoBuffer, TargetInfoLen);
+		printf("\n");
+#endif
+	}
+
+	context->state = NTLM_STATE_AUTHENTICATE;
+
+	stream_detach(s);
+	stream_free(s);
+
+	return SEC_I_CONTINUE_NEEDED;
+}
+
+SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+{
+	STREAM* s;
+	uint8 Signature[8];
+	uint32 MessageType;
+	uint32 NegotiateFlags;
+	uint16 DomainNameLen;
+	uint16 DomainNameMaxLen;
+	uint32 DomainNameBufferOffset;
+	uint16 UserNameLen;
+	uint16 UserNameMaxLen;
+	uint32 UserNameBufferOffset;
+	uint16 WorkstationLen;
+	uint16 WorkstationMaxLen;
+	uint32 WorkstationBufferOffset;
+	uint16 LmChallengeResponseLen;
+	uint16 LmChallengeResponseMaxLen;
+	uint32 LmChallengeResponseBufferOffset;
+	uint16 NtChallengeResponseLen;
+	uint16 NtChallengeResponseMaxLen;
+	uint32 NtChallengeResponseBufferOffset;
+	uint16 EncryptedRandomSessionKeyLen;
+	uint16 EncryptedRandomSessionKeyMaxLen;
+	uint32 EncryptedRandomSessionKeyBufferOffset;
+
+	s = stream_new(0);
+	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+
+	stream_read(s, Signature, 8);
+	stream_read_uint32(s, MessageType);
+
+	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
+	{
+		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
+		return SEC_E_INVALID_TOKEN;
+	}
+
+	if (MessageType != MESSAGE_TYPE_AUTHENTICATE)
+		return SEC_E_INVALID_TOKEN;
+
+	/* LmChallengeResponseFields (8 bytes) */
+	stream_read_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
+	stream_read_uint16(s, LmChallengeResponseMaxLen); /* LmChallengeResponseMaxLen */
+	stream_read_uint32(s, LmChallengeResponseBufferOffset); /* LmChallengeResponseBufferOffset */
+
+	/* NtChallengeResponseFields (8 bytes) */
+	stream_read_uint16(s, NtChallengeResponseLen); /* NtChallengeResponseLen */
+	stream_read_uint16(s, NtChallengeResponseMaxLen); /* NtChallengeResponseMaxLen */
+	stream_read_uint32(s, NtChallengeResponseBufferOffset); /* NtChallengeResponseBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	/* DomainNameFields (8 bytes) */
+	stream_read_uint16(s, DomainNameLen); /* DomainNameLen */
+	stream_read_uint16(s, DomainNameMaxLen); /* DomainNameMaxLen */
+	stream_read_uint32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+
+	/* UserNameFields (8 bytes) */
+	stream_read_uint16(s, UserNameLen); /* UserNameLen */
+	stream_read_uint16(s, UserNameMaxLen); /* UserNameMaxLen */
+	stream_read_uint32(s, UserNameBufferOffset); /* UserNameBufferOffset */
+
+	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	/* WorkstationFields (8 bytes) */
+	stream_read_uint16(s, WorkstationLen); /* WorkstationLen */
+	stream_read_uint16(s, WorkstationMaxLen); /* WorkstationMaxLen */
+	stream_read_uint32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+
+	/* EncryptedRandomSessionKeyFields (8 bytes) */
+	stream_read_uint16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyLen */
+	stream_read_uint16(s, EncryptedRandomSessionKeyMaxLen); /* EncryptedRandomSessionKeyMaxLen */
+	stream_read_uint32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
+
+	stream_read_uint32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	{
+		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+		stream_seek(s, 8); /* Version (8 bytes) */
+	}
+
+	context->state = NTLM_STATE_FINAL;
+
+	stream_detach(s);
+	stream_free(s);
+
+	return SEC_I_COMPLETE_NEEDED;
 }
 
 /**
@@ -423,8 +673,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 {
 	STREAM* s;
 	int length;
-	uint8* mic_offset = NULL;
-	uint32 negotiateFlags = 0;
+	uint8* MicOffset = NULL;
+	uint32 NegotiateFlags = 0;
 
 	uint16 DomainNameLen;
 	uint16 UserNameLen;
@@ -470,30 +720,30 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 	if (context->ntlm_v2)
 	{
 		/* observed: 35 82 88 e2 (0xE2888235) */
-		negotiateFlags |= NTLMSSP_NEGOTIATE_56;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
-		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 	else
 	{
-		negotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_128;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
-		negotiateFlags |= NTLMSSP_REQUEST_TARGET;
-		negotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_128;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
+		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 
 	if (context->ntlm_v2)
@@ -501,7 +751,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 	else
 		PayloadBufferOffset = 64; /* starting buffer offset */
 
-	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		PayloadBufferOffset += 8;
 
 	DomainNameBufferOffset = PayloadBufferOffset;
@@ -548,13 +798,13 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 	stream_write_uint16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyMaxLen */
 	stream_write_uint32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
 
-	stream_write_uint32(s, negotiateFlags); /* NegotiateFlags (4 bytes) */
+	stream_write_uint32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 #ifdef WITH_DEBUG_NTLM
-	ntlm_print_negotiate_flags(negotiateFlags);
+	ntlm_print_negotiate_flags(NegotiateFlags);
 #endif
 
-	if (negotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
 		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
 		ntlm_output_version(s);
@@ -569,7 +819,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 	if (context->ntlm_v2)
 	{
 		/* Message Integrity Check */
-		mic_offset = s->p;
+		MicOffset = s->p;
 		stream_write_zero(s, 16);
 	}
 
@@ -652,13 +902,13 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 		/* Message Integrity Check */
 		ntlm_compute_message_integrity_check(context);
 
-		s->p = mic_offset;
+		s->p = MicOffset;
 		stream_write(s, context->MessageIntegrityCheck, 16);
 		s->p = s->data + length;
 
 #ifdef WITH_DEBUG_NTLM
 		printf("MessageIntegrityCheck (length = 16)\n");
-		freerdp_hexdump(mic_offset, 16);
+		freerdp_hexdump(MicOffset, 16);
 		printf("\n");
 #endif
 	}
@@ -670,6 +920,9 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER
 #endif
 
 	context->state = NTLM_STATE_FINAL;
+
+	stream_detach(s);
+	stream_free(s);
 
 	return SEC_I_COMPLETE_NEEDED;
 }

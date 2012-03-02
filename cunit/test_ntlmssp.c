@@ -38,6 +38,7 @@ int add_ntlmssp_suite(void)
 {
 	add_test_suite(ntlmssp);
 
+#if 0
 	add_test_function(ntlmssp_compute_lm_hash);
 	add_test_function(ntlmssp_compute_ntlm_hash);
 	add_test_function(ntlmssp_compute_ntlm_v2_hash);
@@ -52,10 +53,12 @@ int add_ntlmssp_suite(void)
 	add_test_function(ntlmssp_compute_message_integrity_check);
 	add_test_function(ntlmssp_encrypt_message);
 	add_test_function(ntlmssp_decrypt_message);
+#endif
 
 	return 0;
 }
 
+#if 0
 void test_ntlmssp_compute_lm_hash(void)
 {
 	int i;
@@ -701,3 +704,4 @@ void test_ntlmssp_decrypt_message(void)
 
 	CU_ASSERT(public_key_good == 1);
 }
+#endif

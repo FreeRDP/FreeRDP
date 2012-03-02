@@ -26,8 +26,7 @@ set(FREERDP_AUTH_SRCS
 	NTLM/ntlm_message.h
 	sspi.c
 	sspi.h
-	credssp.c
-	ntlmssp.c)
+	credssp.c)
 
 add_library(freerdp-auth ${FREERDP_AUTH_SRCS})
 
