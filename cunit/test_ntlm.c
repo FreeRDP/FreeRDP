@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * NT LAN Manager Security Support Provider (NTLMSSP) Unit Tests
+ * NTLM Security Package Unit Tests
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,77 +20,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/auth/ntlmssp.h>
+#include <freerdp/auth/sspi.h>
 
-#include "test_ntlmssp.h"
+#include "libfreerdp-auth/NTLM/ntlm.h"
+#include "libfreerdp-auth/NTLM/ntlm_compute.h"
+#include "libfreerdp-auth/NTLM/ntlm_message.h"
 
-int init_ntlmssp_suite(void)
+#include "test_ntlm.h"
+
+int init_ntlm_suite(void)
 {
 	return 0;
 }
 
-int clean_ntlmssp_suite(void)
+int clean_ntlm_suite(void)
 {
 	return 0;
 }
 
-int add_ntlmssp_suite(void)
+int add_ntlm_suite(void)
 {
-	add_test_suite(ntlmssp);
+	add_test_suite(ntlm);
 
 #if 0
-	add_test_function(ntlmssp_compute_lm_hash);
-	add_test_function(ntlmssp_compute_ntlm_hash);
-	add_test_function(ntlmssp_compute_ntlm_v2_hash);
-	add_test_function(ntlmssp_compute_lm_response);
-	add_test_function(ntlmssp_compute_lm_v2_response);
-	add_test_function(ntlmssp_compute_ntlm_v2_response);
-	add_test_function(ntlmssp_generate_client_signing_key);
-	add_test_function(ntlmssp_generate_server_signing_key);
-	add_test_function(ntlmssp_generate_client_sealing_key);
-	add_test_function(ntlmssp_generate_server_sealing_key);
-	add_test_function(ntlmssp_encrypt_random_session_key);
-	add_test_function(ntlmssp_compute_message_integrity_check);
-	add_test_function(ntlmssp_encrypt_message);
-	add_test_function(ntlmssp_decrypt_message);
+	add_test_function(ntlm_compute_ntlm_hash);
+	add_test_function(ntlm_compute_ntlm_v2_hash);
+	add_test_function(ntlm_compute_lm_response);
+	add_test_function(ntlm_compute_lm_v2_response);
+	add_test_function(ntlm_compute_ntlm_v2_response);
+	add_test_function(ntlm_generate_client_signing_key);
+	add_test_function(ntlm_generate_server_signing_key);
+	add_test_function(ntlm_generate_client_sealing_key);
+	add_test_function(ntlm_generate_server_sealing_key);
+	add_test_function(ntlm_encrypt_random_session_key);
+	add_test_function(ntlm_compute_message_integrity_check);
+	add_test_function(ntlm_encrypt_message);
+	add_test_function(ntlm_decrypt_message);
 #endif
 
 	return 0;
 }
 
 #if 0
-void test_ntlmssp_compute_lm_hash(void)
+void test_ntlm_compute_ntlm_hash(void)
 {
 	int i;
-	int lm_hash_good;
-	char lm_hash[16];
-	char password[] = "Password";
-	char expected_lm_hash[16] = "\xe5\x2c\xac\x67\x41\x9a\x9a\x22\x4a\x3b\x10\x8f\x3f\xa6\xcb\x6d";
-
-	ntlmssp_compute_lm_hash(password, lm_hash);
-
-	lm_hash_good = 1;
-	for (i = 0; i < 16; i++) {
-		if (lm_hash[i] != expected_lm_hash[i])
-			lm_hash_good = 0;
-	}
-
-	CU_ASSERT(lm_hash_good == 1);
-}
-
-void test_ntlmssp_compute_ntlm_hash(void)
-{
-	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* context;
 	int ntlm_hash_good;
 	char ntlm_hash[16];
 	char password[] = "Password";
 	char expected_ntlm_hash[16] = "\xa4\xf4\x9c\x40\x65\x10\xbd\xca\xb6\x82\x4e\xe7\xc3\x0f\xd8\x52";
 
-	ntlmssp = ntlmssp_client_new();
-	ntlmssp_set_password(ntlmssp, password);
+	context = ntlm_ContextNew();
+	ntlm_set_password(context, password);
 
-	ntlmssp_compute_ntlm_hash(&ntlmssp->password, ntlm_hash);
+	ntlm_compute_ntlm_hash((uint16*) &password, ntlm_hash);
 
 	ntlm_hash_good = 1;
 
@@ -103,10 +87,10 @@ void test_ntlmssp_compute_ntlm_hash(void)
 	CU_ASSERT(ntlm_hash_good == 1);
 }
 
-void test_ntlmssp_compute_ntlm_v2_hash(void)
+void test_ntlm_compute_ntlm_v2_hash(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int ntlm_v2_hash_good;
 	char ntlm_v2_hash[16];
 
@@ -115,12 +99,12 @@ void test_ntlmssp_compute_ntlm_v2_hash(void)
 	char domain[] = "Domain";
 	char expected_ntlm_v2_hash[16] = "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f";
 
-	ntlmssp = ntlmssp_client_new();
-	ntlmssp_set_password(ntlmssp, password);
-	ntlmssp_set_username(ntlmssp, username);
-	ntlmssp_set_domain(ntlmssp, domain);
+	ntlm = ntlm_client_new();
+	ntlm_set_password(ntlm, password);
+	ntlm_set_username(ntlm, username);
+	ntlm_set_domain(ntlm, domain);
 
-	ntlmssp_compute_ntlm_v2_hash(ntlmssp, ntlm_v2_hash);
+	ntlm_compute_ntlm_v2_hash(ntlm, ntlm_v2_hash);
 
 	ntlm_v2_hash_good = 1;
 
@@ -133,7 +117,7 @@ void test_ntlmssp_compute_ntlm_v2_hash(void)
 	CU_ASSERT(ntlm_v2_hash_good == 1);
 }
 
-void test_ntlmssp_compute_lm_response(void)
+void test_ntlm_compute_lm_response(void)
 {
 	int i;
 	int lm_response_good;
@@ -142,7 +126,7 @@ void test_ntlmssp_compute_lm_response(void)
 	char challenge[] = "\x01\x23\x45\x67\x89\xAB\xCD\xEF";
 	char expected_lm_response[24] = "\xC3\x37\xCD\x5C\xBD\x44\xFC\x97\x82\xA6\x67\xAF\x6D\x42\x7C\x6D\xE6\x7C\x20\xC2\xD3\xE7\x7C\x56";
 
-	ntlmssp_compute_lm_response(password, challenge, lm_response);
+	ntlm_compute_lm_response(password, challenge, lm_response);
 
 	lm_response_good = 1;
 
@@ -155,11 +139,11 @@ void test_ntlmssp_compute_lm_response(void)
 	CU_ASSERT(lm_response_good == 1);
 }
 
-void test_ntlmssp_compute_lm_v2_response(void)
+void test_ntlm_compute_lm_v2_response(void)
 {
 	int i;
 	char *p;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int lm_v2_response_good;
 	char password[] = "password";
 	char username[] = "username";
@@ -168,17 +152,17 @@ void test_ntlmssp_compute_lm_v2_response(void)
 	char lm_client_challenge[8] = "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
 	char expected_lm_v2_response[24] = "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
 
-	ntlmssp = ntlmssp_client_new();
-	ntlmssp_set_password(ntlmssp, password);
-	ntlmssp_set_username(ntlmssp, username);
-	ntlmssp_set_domain(ntlmssp, domain);
+	ntlm = ntlm_client_new();
+	ntlm_set_password(ntlm, password);
+	ntlm_set_username(ntlm, username);
+	ntlm_set_domain(ntlm, domain);
 
-	memcpy(ntlmssp->server_challenge, server_challenge, 8);
-	memcpy(ntlmssp->client_challenge, lm_client_challenge, 8);
+	memcpy(ntlm->server_challenge, server_challenge, 8);
+	memcpy(ntlm->client_challenge, lm_client_challenge, 8);
 
-	ntlmssp_compute_lm_v2_response(ntlmssp);
+	ntlm_compute_lm_v2_response(ntlm);
 
-	p = (char*) ntlmssp->lm_challenge_response.data;
+	p = (char*) ntlm->lm_challenge_response.data;
 
 	lm_v2_response_good = 1;
 
@@ -191,11 +175,11 @@ void test_ntlmssp_compute_lm_v2_response(void)
 	CU_ASSERT(lm_v2_response_good == 1);
 }
 
-void test_ntlmssp_compute_ntlm_v2_response(void)
+void test_ntlm_compute_ntlm_v2_response(void)
 {
 	int i;
 	char* p;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int session_base_key_good;
 	int lm_challenge_response_good;
 	int nt_challenge_response_good;
@@ -230,26 +214,26 @@ void test_ntlmssp_compute_ntlm_v2_response(void)
 	char expected_session_base_key[16] =
 		"\x6e\xf1\x6b\x79\x88\xf2\x3d\x7e\x54\x2a\x1a\x38\x4e\xa0\x6b\x52";
 
-	ntlmssp = ntlmssp_client_new();
-	ntlmssp_set_password(ntlmssp, password);
-	ntlmssp_set_username(ntlmssp, username);
-	ntlmssp_set_domain(ntlmssp, domain);
+	ntlm = ntlm_client_new();
+	ntlm_set_password(ntlm, password);
+	ntlm_set_username(ntlm, username);
+	ntlm_set_domain(ntlm, domain);
 
-	ntlmssp->av_pairs->Timestamp.value = xzalloc(8);
-	ntlmssp->av_pairs->Timestamp.length = 8;
+	ntlm->av_pairs->Timestamp.value = xzalloc(8);
+	ntlm->av_pairs->Timestamp.length = 8;
 
-	memcpy(ntlmssp->timestamp, timestamp, 8);
-	memcpy(ntlmssp->server_challenge, server_challenge, 8);
-	memcpy(ntlmssp->client_challenge, client_challenge, 8);
+	memcpy(ntlm->timestamp, timestamp, 8);
+	memcpy(ntlm->server_challenge, server_challenge, 8);
+	memcpy(ntlm->client_challenge, client_challenge, 8);
 
-	ntlmssp->target_info.data = target_info_data;
-	ntlmssp->target_info.length = sizeof(target_info_data);
+	ntlm->target_info.data = target_info_data;
+	ntlm->target_info.length = sizeof(target_info_data);
 
-	ntlmssp_compute_lm_v2_response(ntlmssp);
-	ntlmssp_compute_ntlm_v2_response(ntlmssp);
+	ntlm_compute_lm_v2_response(ntlm);
+	ntlm_compute_ntlm_v2_response(ntlm);
 
 	session_base_key_good = 1;
-	p = (char*) ntlmssp->session_base_key;
+	p = (char*) ntlm->session_base_key;
 
 	for (i = 0; i < 16; i++)
 	{
@@ -260,7 +244,7 @@ void test_ntlmssp_compute_ntlm_v2_response(void)
 	CU_ASSERT(session_base_key_good == 1);
 
 	lm_challenge_response_good = 1;
-	p = (char*) ntlmssp->lm_challenge_response.data;
+	p = (char*) ntlm->lm_challenge_response.data;
 
 	for (i = 0; i < 24; i++)
 	{
@@ -271,7 +255,7 @@ void test_ntlmssp_compute_ntlm_v2_response(void)
 	CU_ASSERT(lm_challenge_response_good == 1);
 
 	nt_challenge_response_good = 1;
-	p = (char*) ntlmssp->nt_challenge_response.data;
+	p = (char*) ntlm->nt_challenge_response.data;
 
 	for (i = 0; i < 84; i++)
 	{
@@ -282,133 +266,133 @@ void test_ntlmssp_compute_ntlm_v2_response(void)
 	CU_ASSERT(nt_challenge_response_good == 1);
 }
 
-void test_ntlmssp_generate_client_signing_key(void)
+void test_ntlm_generate_client_signing_key(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int client_signing_key_good;
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_client_signing_key[16] = "\xbf\x5e\x42\x76\x55\x68\x38\x97\x45\xd3\xb4\x9f\x5e\x2f\xbc\x89";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
-	ntlmssp_generate_client_signing_key(ntlmssp);
+	ntlm_generate_client_signing_key(ntlm);
 
 	client_signing_key_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->client_signing_key[i] != expected_client_signing_key[i])
+		if (ntlm->client_signing_key[i] != expected_client_signing_key[i])
 			client_signing_key_good = 0;
 	}
 
 	CU_ASSERT(client_signing_key_good == 1);
 }
 
-void test_ntlmssp_generate_server_signing_key(void)
+void test_ntlm_generate_server_signing_key(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int server_signing_key_good;
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_server_signing_key[16] = "\x9b\x3b\x64\x89\xda\x84\x52\x17\xd5\xc2\x6e\x90\x16\x3b\x42\x11";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
-	ntlmssp_generate_server_signing_key(ntlmssp);
+	ntlm_generate_server_signing_key(ntlm);
 
 	server_signing_key_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->server_signing_key[i] != expected_server_signing_key[i])
+		if (ntlm->server_signing_key[i] != expected_server_signing_key[i])
 			server_signing_key_good = 0;
 	}
 
 	CU_ASSERT(server_signing_key_good == 1);
 }
 
-void test_ntlmssp_generate_client_sealing_key(void)
+void test_ntlm_generate_client_sealing_key(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int client_sealing_key_good;
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_client_sealing_key[16] = "\xca\x41\xcd\x08\x48\x07\x22\x6e\x0d\x84\xc3\x88\xa5\x07\xa9\x73";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
-	ntlmssp_generate_client_sealing_key(ntlmssp);
+	ntlm_generate_client_sealing_key(ntlm);
 
 	client_sealing_key_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->client_sealing_key[i] != expected_client_sealing_key[i])
+		if (ntlm->client_sealing_key[i] != expected_client_sealing_key[i])
 			client_sealing_key_good = 0;
 	}
 
 	CU_ASSERT(client_sealing_key_good == 1);
 }
 
-void test_ntlmssp_generate_server_sealing_key(void)
+void test_ntlm_generate_server_sealing_key(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int server_sealing_key_good;
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_server_sealing_key[16] = "\x14\xb7\x1d\x06\x2c\x68\x2e\xad\x4b\x0e\x95\x23\x70\x91\x98\x90";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->exported_session_key, exported_session_key, sizeof(exported_session_key));
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->exported_session_key, exported_session_key, sizeof(exported_session_key));
 
-	ntlmssp_generate_server_sealing_key(ntlmssp);
+	ntlm_generate_server_sealing_key(ntlm);
 
 	server_sealing_key_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->server_sealing_key[i] != expected_server_sealing_key[i])
+		if (ntlm->server_sealing_key[i] != expected_server_sealing_key[i])
 			server_sealing_key_good = 0;
 	}
 
 	CU_ASSERT(server_sealing_key_good == 1);
 }
 
-void test_ntlmssp_encrypt_random_session_key(void)
+void test_ntlm_encrypt_random_session_key(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int encrypted_random_session_key_good;
 	uint8 key_exchange_key[16] = "\x6e\xf1\x6b\x79\x88\xf2\x3d\x7e\x54\x2a\x1a\x38\x4e\xa0\x6b\x52";
 	uint8 exported_session_key[16] = "\x89\x90\x0d\x5d\x2c\x53\x2b\x36\x31\xcc\x1a\x46\xce\xa9\x34\xf1";
 	uint8 expected_encrypted_random_session_key[16] = "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->key_exchange_key, key_exchange_key, 16);
-	memcpy(ntlmssp->exported_session_key, exported_session_key, 16);
-	memcpy(ntlmssp->random_session_key, exported_session_key, 16);
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->key_exchange_key, key_exchange_key, 16);
+	memcpy(ntlm->exported_session_key, exported_session_key, 16);
+	memcpy(ntlm->random_session_key, exported_session_key, 16);
 
-	ntlmssp_encrypt_random_session_key(ntlmssp);
+	ntlm_encrypt_random_session_key(ntlm);
 
 	encrypted_random_session_key_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->encrypted_random_session_key[i] != expected_encrypted_random_session_key[i])
+		if (ntlm->encrypted_random_session_key[i] != expected_encrypted_random_session_key[i])
 			encrypted_random_session_key_good = 0;
 	}
 
 	CU_ASSERT(encrypted_random_session_key_good == 1);
 }
 
-void test_ntlmssp_compute_message_integrity_check(void)
+void test_ntlm_compute_message_integrity_check(void)
 {
 	int i;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	int message_integrity_check_good;
 	uint8 exported_session_key[16] = "\xfd\x35\x59\x39\x23\x81\x29\xcd\xb8\x1c\x11\x04\xd7\x54\x4f\xd4";
 	uint8 expected_message_integrity_check[16] = "\x81\x37\x56\xcf\x19\x76\x71\xf2\xc0\x3f\x95\x87\xe3\x30\xe6\x9b";
@@ -472,36 +456,36 @@ void test_ntlmssp_compute_message_integrity_check(void)
 		"\x00\x00\x00\x00\x00\x00\x00\x00\xd5\x82\xff\x1e\xb6\xf8\x4a\x1c"
 		"\x08\x78\x69\x9f\xa8\x84\x32\xaa";
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->exported_session_key, exported_session_key, 16);
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->exported_session_key, exported_session_key, 16);
 
-	ntlmssp->negotiate_message.data = (void*) negotiate_message_data;
-	ntlmssp->negotiate_message.length = sizeof(negotiate_message_data);
+	ntlm->negotiate_message.data = (void*) negotiate_message_data;
+	ntlm->negotiate_message.length = sizeof(negotiate_message_data);
 
-	ntlmssp->challenge_message.data = (void*) challenge_message_data;
-	ntlmssp->challenge_message.length = sizeof(challenge_message_data);
+	ntlm->challenge_message.data = (void*) challenge_message_data;
+	ntlm->challenge_message.length = sizeof(challenge_message_data);
 
-	ntlmssp->authenticate_message.data = (void*) authenticate_message_data;
-	ntlmssp->authenticate_message.length = sizeof(authenticate_message_data);
+	ntlm->authenticate_message.data = (void*) authenticate_message_data;
+	ntlm->authenticate_message.length = sizeof(authenticate_message_data);
 
-	ntlmssp_compute_message_integrity_check(ntlmssp);
+	ntlm_compute_message_integrity_check(ntlm);
 
 	message_integrity_check_good = 1;
 
 	for (i = 0; i < 16; i++)
 	{
-		if (ntlmssp->message_integrity_check[i] != expected_message_integrity_check[i])
+		if (ntlm->message_integrity_check[i] != expected_message_integrity_check[i])
 			message_integrity_check_good = 0;
 	}
 
 	CU_ASSERT(message_integrity_check_good == 1);
 }
 
-void test_ntlmssp_encrypt_message(void)
+void test_ntlm_encrypt_message(void)
 {
 	int i;
 	uint8* p;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	rdpBlob public_key;
 	rdpBlob ts_credentials;
 	rdpBlob encrypted_public_key;
@@ -576,12 +560,12 @@ void test_ntlmssp_encrypt_message(void)
 	public_key.data = public_key_data;
 	public_key.length = sizeof(public_key_data);
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->client_signing_key, client_signing_key, 16);
-	memcpy(ntlmssp->client_sealing_key, client_sealing_key, 16);
-	ntlmssp_init_rc4_seal_states(ntlmssp);
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->client_signing_key, client_signing_key, 16);
+	memcpy(ntlm->client_sealing_key, client_sealing_key, 16);
+	ntlm_init_rc4_seal_states(ntlm);
 
-	ntlmssp_encrypt_message(ntlmssp, &public_key, &encrypted_public_key, public_key_signature);
+	ntlm_encrypt_message(ntlm, &public_key, &encrypted_public_key, public_key_signature);
 
 	p = (uint8*) encrypted_public_key.data;
 	encrypted_public_key_good = 1;
@@ -607,7 +591,7 @@ void test_ntlmssp_encrypt_message(void)
 	ts_credentials.data = ts_credentials_data;
 	ts_credentials.length = sizeof(ts_credentials_data);
 
-	ntlmssp_encrypt_message(ntlmssp, &ts_credentials, &encrypted_ts_credentials, ts_credentials_signature);
+	ntlm_encrypt_message(ntlm, &ts_credentials, &encrypted_ts_credentials, ts_credentials_signature);
 
 	p = (uint8*) encrypted_ts_credentials.data;
 	encrypted_ts_credentials_good = 1;
@@ -631,11 +615,11 @@ void test_ntlmssp_encrypt_message(void)
 	CU_ASSERT(ts_credentials_signature_good == 1);
 }
 
-void test_ntlmssp_decrypt_message(void)
+void test_ntlm_decrypt_message(void)
 {
 	int i;
 	uint8* p;
-	NTLMSSP* ntlmssp;
+	NTLM_CONTEXT* ntlm;
 	rdpBlob public_key;
 	rdpBlob encrypted_public_key;
 	int public_key_good;
@@ -686,12 +670,12 @@ void test_ntlmssp_decrypt_message(void)
 	encrypted_public_key.data = encrypted_public_key_data;
 	encrypted_public_key.length = sizeof(encrypted_public_key_data);
 
-	ntlmssp = ntlmssp_client_new();
-	memcpy(ntlmssp->server_signing_key, server_signing_key, 16);
-	memcpy(ntlmssp->server_sealing_key, server_sealing_key, 16);
-	ntlmssp_init_rc4_seal_states(ntlmssp);
+	ntlm = ntlm_client_new();
+	memcpy(ntlm->server_signing_key, server_signing_key, 16);
+	memcpy(ntlm->server_sealing_key, server_sealing_key, 16);
+	ntlm_init_rc4_seal_states(ntlm);
 
-	ntlmssp_decrypt_message(ntlmssp, &encrypted_public_key, &public_key, public_key_signature);
+	ntlm_decrypt_message(ntlm, &encrypted_public_key, &public_key, public_key_signature);
 
 	p = (uint8*) public_key.data;
 	public_key_good = 1;

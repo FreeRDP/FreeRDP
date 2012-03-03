@@ -75,7 +75,7 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_AUTH_IDENTITY* identity)
 		}
 
 		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
-		memcpy(context->identity.Password, identity->User, identity->PasswordLength);
+		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
 	}
 }
 

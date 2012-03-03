@@ -46,8 +46,8 @@ add_executable(test_freerdp
 	test_orders.h
 	test_pcap.c
 	test_pcap.h
-	test_ntlmssp.c
-	test_ntlmssp.h
+	test_ntlm.c
+	test_ntlm.h
 	test_license.c
 	test_license.h
 	test_stream.c
