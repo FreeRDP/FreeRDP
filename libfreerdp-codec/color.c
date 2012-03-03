@@ -339,7 +339,7 @@ uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HC
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr_rgb(srcColor, srcBpp, 32, clrconv);
 	else
-		return freerdp_color_convert_rgb(srcColor, srcBpp, 32, clrconv);
+		return freerdp_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
 }
 
 uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
@@ -347,7 +347,7 @@ uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HC
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr(srcColor, srcBpp, 32, clrconv);
 	else
-		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, 32, clrconv);
+		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, dstBpp, clrconv);
 }
 
 uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
