@@ -555,6 +555,12 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
+	if (!client->settings->rfx_codec)
+	{
+		printf("Client does not support RemoteFX\n");
+		return 0;
+	}
+
 	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
 
 	client->settings->width = xfi->width;

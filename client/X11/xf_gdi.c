@@ -966,31 +966,37 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
-		xfi->bmp_codec_none = (uint8*) xrealloc(xfi->bmp_codec_none,
-				surface_bits_command->width * surface_bits_command->height * 4);
-
-		freerdp_image_flip(surface_bits_command->bitmapData, xfi->bmp_codec_none,
-				surface_bits_command->width, surface_bits_command->height, 32);
-
-		image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
-			(char*) xfi->bmp_codec_none, surface_bits_command->width, surface_bits_command->height, 32, 0);
-
-		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
-				surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height);
-
-		if (xfi->remote_app != true)
+		/* Validate that the data received is large enough */
+		if( surface_bits_command->width * surface_bits_command->height * surface_bits_command->bpp / 8 <= surface_bits_command->bitmapDataLength )
 		{
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
-				surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height,
-				surface_bits_command->destLeft, surface_bits_command->destTop);
+			xfi->bmp_codec_none = (uint8*) xrealloc(xfi->bmp_codec_none,
+					surface_bits_command->width * surface_bits_command->height * 4);
+
+			freerdp_image_flip(surface_bits_command->bitmapData, xfi->bmp_codec_none,
+					surface_bits_command->width, surface_bits_command->height, 32);
+
+			image = XCreateImage(xfi->display, xfi->visual, 24, ZPixmap, 0,
+				(char*) xfi->bmp_codec_none, surface_bits_command->width, surface_bits_command->height, 32, 0);
+
+			XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
+					surface_bits_command->destLeft, surface_bits_command->destTop,
+					surface_bits_command->width, surface_bits_command->height);
+
+			if (xfi->remote_app != true)
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+					surface_bits_command->destLeft, surface_bits_command->destTop,
+					surface_bits_command->width, surface_bits_command->height,
+					surface_bits_command->destLeft, surface_bits_command->destTop);
+			}
+
+			gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+					surface_bits_command->width, surface_bits_command->height);
+
+			XSetClipMask(xfi->display, xfi->gc, None);
+		} else {
+			printf("Invalid bitmap size - data is %d bytes for %dx%d\n update", surface_bits_command->bitmapDataLength, surface_bits_command->width, surface_bits_command->height);
 		}
-
-		gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height);
-
-		XSetClipMask(xfi->display, xfi->gc, None);
 	}
 	else
 	{
