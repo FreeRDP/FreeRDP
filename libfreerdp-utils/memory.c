@@ -125,3 +125,23 @@ char* xstrdup(const char* str)
 
 	return mem;
 }
+
+char* xstrtoup(const char* str)
+{
+	char* out;
+	char* p;
+	int c;
+	out = xstrdup(str);
+	if(out != NULL)
+	{
+		p = out;
+		while(*p != '\0')
+		{
+			c = toupper((unsigned char)*p);
+			*p++ = (char)c;
+		}
+		return out;
+	}
+	else
+		return NULL;
+}

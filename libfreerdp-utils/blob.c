@@ -45,3 +45,9 @@ void freerdp_blob_free(rdpBlob* blob)
 	
 	blob->length = 0;
 }
+
+void freerdp_blob_copy(rdpBlob* dstblob, rdpBlob* srcblob)
+{
+	freerdp_blob_alloc(dstblob, srcblob->length);
+	memcpy(dstblob->data, srcblob->data, dstblob->length);
+}

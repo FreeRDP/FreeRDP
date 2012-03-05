@@ -17,13 +17,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_AUTH_SRCS
-	NTLM/ntlm.c
-	NTLM/ntlm.h
+set(FREERDP_SSPI_NTLM_SRCS
 	NTLM/ntlm_compute.c
 	NTLM/ntlm_compute.h
 	NTLM/ntlm_message.c
 	NTLM/ntlm_message.h
+	NTLM/ntlm.c
+	NTLM/ntlm.h)
+
+set(FREERDP_SSPI_KERBEROS_SRCS
+	Kerberos/kerberos_crypto.c
+	Kerberos/kerberos_crypto.h
+	Kerberos/kerberos_decode.c
+	Kerberos/kerberos_decode.h
+	Kerberos/kerberos_encode.c
+	Kerberos/kerberos_encode.h
+	Kerberos/kerberos.c
+	Kerberos/kerberos.h)
+
+set(FREERDP_AUTH_SRCS
+	${FREERDP_SSPI_NTLM_SRCS}
+	${FREERDP_SSPI_KERBEROS_SRCS}
 	sspi.c
 	sspi.h
 	credssp.c)
