@@ -18,6 +18,8 @@
 # limitations under the License.
 
 set(FREERDP_CRYPTO_SRCS
+	er.c
+	der.c
 	ber.c
 	per.c
 	certificate.c
