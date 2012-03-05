@@ -34,10 +34,15 @@ set(FREERDP_SSPI_KERBEROS_SRCS
 	Kerberos/kerberos_encode.h
 	Kerberos/kerberos.c
 	Kerberos/kerberos.h)
+	
+set(FREERDP_SSPI_NEGOTIATE_SRCS
+	Negotiate/negotiate.c
+	Negotiate/negotiate.h)
 
 set(FREERDP_AUTH_SRCS
 	${FREERDP_SSPI_NTLM_SRCS}
 	${FREERDP_SSPI_KERBEROS_SRCS}
+	${FREERDP_SSPI_NEGOTIATE_SRCS}
 	sspi.c
 	sspi.h
 	credssp.c)
