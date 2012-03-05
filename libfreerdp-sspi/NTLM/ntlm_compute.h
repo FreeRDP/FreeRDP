@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_NTLM_COMPUTE_H
-#define FREERDP_AUTH_NTLM_COMPUTE_H
+#ifndef FREERDP_SSPI_NTLM_COMPUTE_H
+#define FREERDP_SSPI_NTLM_COMPUTE_H
 
 #include "ntlm.h"
 

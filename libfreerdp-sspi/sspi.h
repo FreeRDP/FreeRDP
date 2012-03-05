@@ -21,7 +21,7 @@
 #define FREERDP_AUTH_SSPI_PRIVATE_H
 
 #include <freerdp/types.h>
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 
 struct _CREDENTIALS
 {

@@ -21,8 +21,8 @@
 
 #include "kerberos.h"
 
-#ifndef __KRB_ENCODE_H
-#define __KRB_ENCODE_H
+#ifndef FREERDP_SSPI_KERBEROS_ENCODE_H
+#define FREERDP_SSPI_KERBEROS_ENCODE_H
 
 int krb_encode_sequence_tag(STREAM* s, uint32 len);
 int krb_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len);
@@ -45,4 +45,4 @@ int krb_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype);
 int krb_encode_apreq(STREAM* s, KrbAPREQ* krb_apreq);
 int krb_encode_tgtreq(STREAM* s, KrbTGTREQ* krb_tgtreq);
 
-#endif /* __KRB_ENCODE_H */
+#endif /* FREERDP_SSPI_KERBEROS_ENCODE_H */

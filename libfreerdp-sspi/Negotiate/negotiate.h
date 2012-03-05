@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_NEGOTIATE_PRIVATE_H
-#define FREERDP_AUTH_NEGOTIATE_PRIVATE_H
+#ifndef FREERDP_SSPI_NEGOTIATE_PRIVATE_H
+#define FREERDP_SSPI_NEGOTIATE_PRIVATE_H
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 #include <freerdp/utils/unicode.h>
 
 #include "../Kerberos/kerberos.h"
@@ -52,5 +52,5 @@ typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 NEGOTIATE_CONTEXT* negotiate_ContextNew();
 void negotiate_ContextFree(NEGOTIATE_CONTEXT* context);
 
-#endif /* FREERDP_AUTH_NEGOTIATE_PRIVATE_H */
+#endif /* FREERDP_SSPI_NEGOTIATE_PRIVATE_H */
 

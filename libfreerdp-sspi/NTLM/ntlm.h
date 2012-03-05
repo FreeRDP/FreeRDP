@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_NTLM_PRIVATE_H
-#define FREERDP_AUTH_NTLM_PRIVATE_H
+#ifndef FREERDP_SSPI_NTLM_PRIVATE_H
+#define FREERDP_SSPI_NTLM_PRIVATE_H
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/utils/unicode.h>
@@ -117,4 +117,4 @@ void ntlm_ContextFree(NTLM_CONTEXT* context);
 
 //#define WITH_DEBUG_NTLM		1
 
-#endif /* FREERDP_AUTH_NTLM_PRIVATE_H */
+#endif /* FREERDP_SSPI_NTLM_PRIVATE_H */

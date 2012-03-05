@@ -19,7 +19,7 @@
 
 #include <freerdp/utils/memory.h>
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 
 #include "sspi.h"
 

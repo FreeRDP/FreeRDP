@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 
 #include "libfreerdp-sspi/NTLM/ntlm.h"
 #include "libfreerdp-sspi/NTLM/ntlm_compute.h"

@@ -23,7 +23,7 @@
 #include <freerdp/utils/hexdump.h>
 
 #include "test_sspi.h"
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 
 #define NTLM_PACKAGE_NAME		"NTLM"
 

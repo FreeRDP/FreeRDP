@@ -17,8 +17,8 @@
 * limitations under the License.
 */
 
-#ifndef __KRB_CRYPTO_H
-#define __KRB_CRYPTO_H
+#ifndef FREERDP_SSPI_KERBEROS_CRYPTO_H
+#define FREERDP_SSPI_KERBEROS_CRYPTO_H
 
 #include <openssl/err.h>
 #include <openssl/rc4.h>
@@ -53,4 +53,4 @@ rdpBlob* crypto_kdcmsg_decrypt(rdpBlob* msg, KrbENCKey* key, uint32 msgtype);
 rdpBlob* crypto_kdcmsg_cksum_hmacmd5(rdpBlob* msg, uint8* key, uint32 msgtype);
 rdpBlob* crypto_kdcmsg_cksum(rdpBlob* msg, KrbENCKey* key, uint32 msgtype);
 
-#endif /* __KRB_CRYPTO_H */
+#endif /* FREERDP_SSPI_KERBEROS_CRYPTO_H */

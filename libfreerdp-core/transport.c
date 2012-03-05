@@ -39,7 +39,7 @@
 #include "fastpath.h"
 #include "transport.h"
 
-#include <freerdp/auth/credssp.h>
+#include <freerdp/sspi/credssp.h>
 
 #define BUFFER_SIZE 16384
 

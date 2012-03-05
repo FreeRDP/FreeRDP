@@ -43,7 +43,7 @@
 #include "kerberos_encode.h"
 #include "kerberos_decode.h"
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>

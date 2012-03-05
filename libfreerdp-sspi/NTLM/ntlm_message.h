@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_NTLM_MESSAGE_H
-#define FREERDP_AUTH_NTLM_MESSAGE_H
+#ifndef FREERDP_SSPI_NTLM_MESSAGE_H
+#define FREERDP_SSPI_NTLM_MESSAGE_H
 
 #include "ntlm.h"
 
@@ -29,4 +29,4 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer);
 
-#endif /* FREERDP_AUTH_NTLM_MESSAGE_H */
+#endif /* FREERDP_SSPI_NTLM_MESSAGE_H */

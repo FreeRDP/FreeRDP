@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 #include <freerdp/utils/memory.h>
 
 #include "negotiate.h"

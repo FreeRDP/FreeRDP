@@ -21,8 +21,8 @@
 
 #include "kerberos.h"
 
-#ifndef __KRB_DECODE_H
-#define __KRB_DECODE_H
+#ifndef FREERDP_SSPI_KERBEROS_DECODE_H
+#define FREERDP_SSPI_KERBEROS_DECODE_H
 
 int krb_decode_application_tag(STREAM* s, uint8 tag, int *length);
 int krb_decode_sequence_tag(STREAM* s, int *length);
@@ -44,4 +44,4 @@ int krb_decode_krb_error(STREAM* s, KrbERROR* krb_err, sint32 maxlen);
 ENCKDCREPPart* krb_decode_enc_reppart(rdpBlob* msg, uint8 apptag);
 int krb_decode_tgtrep(STREAM* s, KrbTGTREP* krb_tgtrep);
 
-#endif /* __KRB_DECODE_H */
+#endif /* FREERDP_SSPI_KERBEROS_DECODE_H */

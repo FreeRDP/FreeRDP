@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_KRB_H
-#define __FREERDP_KRB_H
+#ifndef FREERDP_SSPI_KERBEROS_PRIVATE_H
+#define FREERDP_SSPI_KERBEROS_PRIVATE_H
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -31,7 +31,7 @@
 #include <ws2tcpip.h>
 #endif
 
-#include <freerdp/auth/sspi.h>
+#include <freerdp/sspi/sspi.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
@@ -344,4 +344,4 @@ void krb_free_tgsreq(KrbTGSREQ* krb_tgsreq);
 void krb_free_tgsrep(KrbTGSREP* krb_tgsrep);
 void krb_free_krb_error(KrbERROR* krb_err);
 
-#endif /* __FREERDP_KRB_H */
+#endif /* FREERDP_SSPI_KERBEROS_PRIVATE_H */
