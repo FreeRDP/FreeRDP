@@ -445,7 +445,6 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 	STREAM* s;
 	uint32 dwVersion;
 
-	printf("length %d\n", length);
 	if (length < 1)
 	{
 		DEBUG_CERTIFICATE("null server certificate\n");

@@ -290,7 +290,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 #endif
 	}
 
-	length = s->p - s->data;
+	length = stream_get_length(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
@@ -498,6 +498,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* bu
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
 {
 	STREAM* s;
+	int length;
 	uint16 TargetNameLen;
 	uint8* TargetNameBuffer;
 	uint32 TargetNameBufferOffset;
@@ -564,6 +565,18 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 #endif
 	}
 
+	length = stream_get_length(s);
+	buffer->cbBuffer = length;
+
+	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
+	memcpy(context->ChallengeMessage.pvBuffer, s->data, length);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	printf("\n");
+#endif
+
 	context->state = NTLM_STATE_AUTHENTICATE;
 
 	stream_detach(s);
@@ -575,6 +588,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SEC_BUFFER* b
 SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
 {
 	STREAM* s;
+	int length;
 	uint8 Signature[8];
 	uint32 MessageType;
 	uint32 NegotiateFlags;
@@ -653,6 +667,17 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SEC_BUFFER*
 		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
 		stream_seek(s, 8); /* Version (8 bytes) */
 	}
+
+	length = stream_get_length(s);
+	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
+	memcpy(context->AuthenticateMessage.pvBuffer, s->data, length);
+	buffer->cbBuffer = length;
+
+#ifdef WITH_DEBUG_NTLM
+	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
+	freerdp_hexdump(s->data, length);
+	printf("\n");
+#endif
 
 	context->state = NTLM_STATE_FINAL;
 

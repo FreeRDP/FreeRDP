@@ -487,7 +487,27 @@ SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* ph
 		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
 		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
 {
-	return SEC_E_OK;
+	char* Name;
+	SECURITY_STATUS status;
+	SECURITY_FUNCTION_TABLE* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableByName(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (table->AcceptSecurityContext == NULL)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
+			TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
+
+	return status;
 }
 
 SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput)

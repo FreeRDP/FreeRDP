@@ -131,6 +131,15 @@ SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPacka
 
 		return SEC_E_OK;
 	}
+	else if (fCredentialUse == SECPKG_CRED_INBOUND)
+	{
+		credentials = sspi_CredentialsNew();
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
 
 	return SEC_E_OK;
 }
@@ -172,6 +181,104 @@ SECURITY_STATUS ntlm_QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint3
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375512/ */
 
+SECURITY_STATUS ntlm_AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
+		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
+{
+	NTLM_CONTEXT* context;
+	SECURITY_STATUS status;
+	CREDENTIALS* credentials;
+	SEC_BUFFER* input_buffer;
+	SEC_BUFFER* output_buffer;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+	{
+		context = ntlm_ContextNew();
+
+		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
+	}
+
+	if (context->state == NTLM_STATE_INITIAL)
+	{
+		context->state = NTLM_STATE_NEGOTIATE;
+
+		if (!context)
+			return SEC_E_INVALID_HANDLE;
+
+		if (!pInput)
+			return SEC_E_INVALID_TOKEN;
+
+		if (pInput->cBuffers < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		input_buffer = &pInput->pBuffers[0];
+
+		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+			return SEC_E_INVALID_TOKEN;
+
+		if (input_buffer->cbBuffer < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		status = ntlm_read_NegotiateMessage(context, input_buffer);
+
+		if (context->state == NTLM_STATE_CHALLENGE)
+		{
+			if (!pOutput)
+				return SEC_E_INVALID_TOKEN;
+
+			if (pOutput->cBuffers < 1)
+				return SEC_E_INVALID_TOKEN;
+
+			output_buffer = &pOutput->pBuffers[0];
+
+			if (output_buffer->BufferType != SECBUFFER_TOKEN)
+				return SEC_E_INVALID_TOKEN;
+
+			if (output_buffer->cbBuffer < 1)
+				return SEC_E_INSUFFICIENT_MEMORY;
+
+			return ntlm_write_ChallengeMessage(context, output_buffer);
+		}
+
+		return SEC_E_OUT_OF_SEQUENCE;
+	}
+	else if (context->state == NTLM_STATE_AUTHENTICATE)
+	{
+		if (!context)
+			return SEC_E_INVALID_HANDLE;
+
+		if (!pInput)
+			return SEC_E_INVALID_TOKEN;
+
+		if (pInput->cBuffers < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		input_buffer = &pInput->pBuffers[0];
+
+		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+			return SEC_E_INVALID_TOKEN;
+
+		if (input_buffer->cbBuffer < 1)
+			return SEC_E_INVALID_TOKEN;
+
+		status = ntlm_read_AuthenticateMessage(context, input_buffer);
+
+		return status;
+	}
+
+	return SEC_E_OUT_OF_SEQUENCE;
+}
+
+SECURITY_STATUS ntlm_ImpersonateSecurityContext(CTXT_HANDLE* phContext)
+{
+	return SEC_E_OK;
+}
+
 SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
@@ -180,8 +287,8 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	SEC_BUFFER* input_sec_buffer;
-	SEC_BUFFER* output_sec_buffer;
+	SEC_BUFFER* input_buffer;
+	SEC_BUFFER* output_buffer;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -206,26 +313,24 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		output_sec_buffer = &pOutput->pBuffers[0];
+		output_buffer = &pOutput->pBuffers[0];
 
-		if (output_sec_buffer->BufferType != SECBUFFER_TOKEN)
+		if (output_buffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (output_sec_buffer->cbBuffer < 1)
+		if (output_buffer->cbBuffer < 1)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
 		if (context->state == NTLM_STATE_INITIAL)
 			context->state = NTLM_STATE_NEGOTIATE;
 
 		if (context->state == NTLM_STATE_NEGOTIATE)
-			return ntlm_write_NegotiateMessage(context, output_sec_buffer);
+			return ntlm_write_NegotiateMessage(context, output_buffer);
 
 		return SEC_E_OUT_OF_SEQUENCE;
 	}
 	else
 	{
-		context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
-
 		if (!context)
 			return SEC_E_INVALID_HANDLE;
 
@@ -235,17 +340,17 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_sec_buffer = &pInput->pBuffers[0];
+		input_buffer = &pInput->pBuffers[0];
 
-		if (input_sec_buffer->BufferType != SECBUFFER_TOKEN)
+		if (input_buffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (input_sec_buffer->cbBuffer < 1)
+		if (input_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
 
 		if (context->state == NTLM_STATE_CHALLENGE)
 		{
-			status = ntlm_read_ChallengeMessage(context, input_sec_buffer);
+			status = ntlm_read_ChallengeMessage(context, input_buffer);
 
 			if (!pOutput)
 				return SEC_E_INVALID_TOKEN;
@@ -253,22 +358,22 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 			if (pOutput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_sec_buffer = &pOutput->pBuffers[0];
+			output_buffer = &pOutput->pBuffers[0];
 
-			if (output_sec_buffer->BufferType != SECBUFFER_TOKEN)
+			if (output_buffer->BufferType != SECBUFFER_TOKEN)
 				return SEC_E_INVALID_TOKEN;
 
-			if (output_sec_buffer->cbBuffer < 1)
+			if (output_buffer->cbBuffer < 1)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
 			if (context->state == NTLM_STATE_AUTHENTICATE)
-				return ntlm_write_AuthenticateMessage(context, output_sec_buffer);
+				return ntlm_write_AuthenticateMessage(context, output_buffer);
 		}
 
 		return SEC_E_OUT_OF_SEQUENCE;
 	}
 
-	return SEC_E_OK;
+	return SEC_E_OUT_OF_SEQUENCE;
 }
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
@@ -294,6 +399,11 @@ SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAtt
 	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+SECURITY_STATUS ntlm_RevertSecurityContext(CTXT_HANDLE* phContext)
+{
+	return SEC_E_OK;
 }
 
 SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
@@ -469,13 +579,13 @@ const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
 	ntlm_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
 	ntlm_InitializeSecurityContext, /* InitializeSecurityContext */
-	NULL, /* AcceptSecurityContext */
+	ntlm_AcceptSecurityContext, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
 	NULL, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	ntlm_QueryContextAttributes, /* QueryContextAttributes */
-	NULL, /* ImpersonateSecurityContext */
-	NULL, /* RevertSecurityContext */
+	ntlm_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	ntlm_RevertSecurityContext, /* RevertSecurityContext */
 	ntlm_MakeSignature, /* MakeSignature */
 	ntlm_VerifySignature, /* VerifySignature */
 	NULL, /* FreeContextBuffer */

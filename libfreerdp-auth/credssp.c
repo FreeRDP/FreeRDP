@@ -72,6 +72,8 @@
  *
  */
 
+//#define WITH_DEBUG_CREDSSP	1
+
 void credssp_SetContextIdentity(rdpCredssp* context, SEC_AUTH_IDENTITY* identity)
 {
 	size_t size;
@@ -122,7 +124,7 @@ void credssp_SetContextIdentity(rdpCredssp* context, SEC_AUTH_IDENTITY* identity
  * @param credssp
  */
 
-int credssp_ntlmssp_client_init(rdpCredssp* credssp)
+int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
 	SEC_AUTH_IDENTITY identity;
@@ -167,11 +169,28 @@ int credssp_ntlmssp_client_init(rdpCredssp* credssp)
 	return 1;
 }
 
+/**
+ * Initialize NTLMSSP authentication module (client).
+ * @param credssp
+ */
+
+int credssp_ntlm_server_init(rdpCredssp* credssp)
+{
+	freerdp* instance;
+	rdpSettings* settings = credssp->settings;
+	instance = (freerdp*) settings->instance;
+
+	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
+	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
+
+	return 1;
+}
+
 #define NTLM_PACKAGE_NAME		"NTLM"
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
-	uint32 cbMaxLen;
+	uint32 cbMaxToken;
 	uint32 fContextReq;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
@@ -179,11 +198,11 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	SEC_TIMESTAMP expiration;
 	SEC_PKG_INFO* pPackageInfo;
 	SEC_AUTH_IDENTITY identity;
-	SEC_BUFFER* p_sec_buffer;
-	SEC_BUFFER input_sec_buffer;
-	SEC_BUFFER output_sec_buffer;
-	SEC_BUFFER_DESC input_sec_buffer_desc;
-	SEC_BUFFER_DESC output_sec_buffer_desc;
+	SEC_BUFFER* p_buffer;
+	SEC_BUFFER input_buffer;
+	SEC_BUFFER output_buffer;
+	SEC_BUFFER_DESC input_buffer_desc;
+	SEC_BUFFER_DESC output_buffer_desc;
 	boolean have_context;
 	boolean have_input_buffer;
 	boolean have_pub_key_auth;
@@ -191,7 +210,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	sspi_GlobalInit();
 
-	if (credssp_ntlmssp_client_init(credssp) == 0)
+	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
 	credssp->table = InitSecurityInterface();
@@ -204,7 +223,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		return 0;
 	}
 
-	cbMaxLen = pPackageInfo->cbMaxToken;
+	cbMaxToken = pPackageInfo->cbMaxToken;
 
 	identity.User = (uint16*) xstrdup(settings->username);
 	identity.UserLength = strlen(settings->username);
@@ -237,8 +256,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	have_context = false;
 	have_input_buffer = false;
 	have_pub_key_auth = false;
-	memset(&input_sec_buffer, 0, sizeof(SEC_BUFFER));
-	memset(&output_sec_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&input_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&output_buffer, 0, sizeof(SEC_BUFFER));
 	memset(&credssp->ContextSizes, 0, sizeof(SEC_PKG_CONTEXT_SIZES));
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
@@ -246,29 +265,29 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	while (true)
 	{
-		output_sec_buffer_desc.ulVersion = SECBUFFER_VERSION;
-		output_sec_buffer_desc.cBuffers = 1;
-		output_sec_buffer_desc.pBuffers = &output_sec_buffer;
-		output_sec_buffer.BufferType = SECBUFFER_TOKEN;
-		output_sec_buffer.cbBuffer = cbMaxLen;
-		output_sec_buffer.pvBuffer = xmalloc(output_sec_buffer.cbBuffer);
+		output_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		output_buffer_desc.cBuffers = 1;
+		output_buffer_desc.pBuffers = &output_buffer;
+		output_buffer.BufferType = SECBUFFER_TOKEN;
+		output_buffer.cbBuffer = cbMaxToken;
+		output_buffer.pvBuffer = xmalloc(output_buffer.cbBuffer);
 
 		status = credssp->table->InitializeSecurityContext(&credentials,
 				(have_context) ? &credssp->context : NULL,
 				NULL, fContextReq, 0, SECURITY_NATIVE_DREP,
-				(have_input_buffer) ? &input_sec_buffer_desc : NULL,
-				0, &credssp->context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+				(have_input_buffer) ? &input_buffer_desc : NULL,
+				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
-		if (input_sec_buffer.pvBuffer != NULL)
+		if (input_buffer.pvBuffer != NULL)
 		{
-			xfree(input_sec_buffer.pvBuffer);
-			input_sec_buffer.pvBuffer = NULL;
+			xfree(input_buffer.pvBuffer);
+			input_buffer.pvBuffer = NULL;
 		}
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
 			if (credssp->table->CompleteAuthToken != NULL)
-				credssp->table->CompleteAuthToken(&credssp->context, &output_sec_buffer_desc);
+				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
 			have_pub_key_auth = true;
 
@@ -315,29 +334,20 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		/* send authentication token to server */
 
-		if (output_sec_buffer.cbBuffer > 0)
+		if (output_buffer.cbBuffer > 0)
 		{
-			p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
+			p_buffer = &output_buffer_desc.pBuffers[0];
 
-			credssp->negoToken.pvBuffer = p_sec_buffer->pvBuffer;
-			credssp->negoToken.cbBuffer = p_sec_buffer->cbBuffer;
+			credssp->negoToken.pvBuffer = p_buffer->pvBuffer;
+			credssp->negoToken.cbBuffer = p_buffer->cbBuffer;
 
 #ifdef WITH_DEBUG_CREDSSP
 			printf("Sending Authentication Token\n");
-			freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
+			freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
-			credssp_send(credssp, &credssp->negoToken, NULL,
-					(have_pub_key_auth) ? &credssp->pubKeyAuth : NULL);
-
-			if (have_pub_key_auth)
-			{
-				have_pub_key_auth = false;
-				sspi_SecBufferFree(&credssp->pubKeyAuth);
-			}
-
-			xfree(output_sec_buffer.pvBuffer);
-			output_sec_buffer.pvBuffer = NULL;
+			credssp_send(credssp);
+			credssp_buffer_free(credssp);
 		}
 
 		if (status != SEC_I_CONTINUE_NEEDED)
@@ -345,34 +355,35 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		/* receive server response and place in input buffer */
 
-		input_sec_buffer_desc.ulVersion = SECBUFFER_VERSION;
-		input_sec_buffer_desc.cBuffers = 1;
-		input_sec_buffer_desc.pBuffers = &input_sec_buffer;
-		input_sec_buffer.BufferType = SECBUFFER_TOKEN;
+		input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		input_buffer_desc.cBuffers = 1;
+		input_buffer_desc.pBuffers = &input_buffer;
+		input_buffer.BufferType = SECBUFFER_TOKEN;
 
-		if (credssp_recv(credssp, &credssp->negoToken, NULL, NULL) < 0)
+		if (credssp_recv(credssp) < 0)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
 		printf("Receiving Authentication Token\n");
-		freerdp_hexdump(credssp->negoToken.data, credssp->negoToken.length);
+		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
-		p_sec_buffer = &input_sec_buffer_desc.pBuffers[0];
-		p_sec_buffer->pvBuffer = credssp->negoToken.pvBuffer;
-		p_sec_buffer->cbBuffer = credssp->negoToken.cbBuffer;
+		p_buffer = &input_buffer_desc.pBuffers[0];
+		p_buffer->pvBuffer = credssp->negoToken.pvBuffer;
+		p_buffer->cbBuffer = credssp->negoToken.cbBuffer;
 
 		have_input_buffer = true;
 		have_context = true;
 	}
 
 	/* Encrypted Public Key +1 */
-	if (credssp_recv(credssp, &credssp->negoToken, NULL, &credssp->pubKeyAuth) < 0)
+	if (credssp_recv(credssp) < 0)
 		return -1;
 
 	/* Verify Server Public Key Echo */
 
 	status = credssp_verify_public_key_echo(credssp);
+	credssp_buffer_free(credssp);
 
 	if (status != SEC_E_OK)
 		return 0;
@@ -384,12 +395,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (status != SEC_E_OK)
 		return 0;
 
-	credssp_send(credssp, NULL, &credssp->authInfo, NULL);
+	credssp_send(credssp);
+	credssp_buffer_free(credssp);
 
 	/* Free resources */
-
-	//sspi_SecBufferFree(&credssp->negoToken);
-	sspi_SecBufferFree(&credssp->authInfo);
 
 	FreeCredentialsHandle(&credentials);
 	FreeContextBuffer(pPackageInfo);
@@ -405,7 +414,201 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 int credssp_server_authenticate(rdpCredssp* credssp)
 {
-	return 0;
+	uint32 cbMaxToken;
+	uint32 fContextReq;
+	uint32 pfContextAttr;
+	SECURITY_STATUS status;
+	CRED_HANDLE credentials;
+	SEC_TIMESTAMP expiration;
+	SEC_PKG_INFO* pPackageInfo;
+	SEC_BUFFER* p_buffer;
+	SEC_BUFFER input_buffer;
+	SEC_BUFFER output_buffer;
+	SEC_BUFFER_DESC input_buffer_desc;
+	SEC_BUFFER_DESC output_buffer_desc;
+	boolean have_context;
+	boolean have_input_buffer;
+	boolean have_pub_key_auth;
+
+	sspi_GlobalInit();
+
+	if (credssp_ntlm_server_init(credssp) == 0)
+		return 0;
+
+	credssp->table = InitSecurityInterface();
+
+	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &pPackageInfo);
+
+	if (status != SEC_E_OK)
+	{
+		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		return 0;
+	}
+
+	cbMaxToken = pPackageInfo->cbMaxToken;
+
+	status = credssp->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
+			SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &credentials, &expiration);
+
+	if (status != SEC_E_OK)
+	{
+		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		return 0;
+	}
+
+	have_context = false;
+	have_input_buffer = false;
+	have_pub_key_auth = false;
+	memset(&input_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&output_buffer, 0, sizeof(SEC_BUFFER));
+	memset(&credssp->ContextSizes, 0, sizeof(SEC_PKG_CONTEXT_SIZES));
+
+	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
+			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+
+	while (true)
+	{
+		input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		input_buffer_desc.cBuffers = 1;
+		input_buffer_desc.pBuffers = &input_buffer;
+		input_buffer.BufferType = SECBUFFER_TOKEN;
+
+		/* receive authentication token */
+
+		input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		input_buffer_desc.cBuffers = 1;
+		input_buffer_desc.pBuffers = &input_buffer;
+		input_buffer.BufferType = SECBUFFER_TOKEN;
+
+		if (credssp_recv(credssp) < 0)
+			return -1;
+
+#ifdef WITH_DEBUG_CREDSSP
+		printf("Receiving Authentication Token\n");
+		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+#endif
+
+		p_buffer = &input_buffer_desc.pBuffers[0];
+		p_buffer->pvBuffer = credssp->negoToken.pvBuffer;
+		p_buffer->cbBuffer = credssp->negoToken.cbBuffer;
+
+		output_buffer_desc.ulVersion = SECBUFFER_VERSION;
+		output_buffer_desc.cBuffers = 1;
+		output_buffer_desc.pBuffers = &output_buffer;
+		output_buffer.BufferType = SECBUFFER_TOKEN;
+		output_buffer.cbBuffer = cbMaxToken;
+		output_buffer.pvBuffer = xmalloc(output_buffer.cbBuffer);
+
+		status = credssp->table->AcceptSecurityContext(&credentials,
+			have_context? &credssp->context: NULL,
+			&input_buffer_desc, 0, SECURITY_NATIVE_DREP, &credssp->context,
+			&output_buffer_desc, &pfContextAttr, &expiration);
+
+		if (input_buffer.pvBuffer != NULL)
+		{
+			xfree(input_buffer.pvBuffer);
+			input_buffer.pvBuffer = NULL;
+		}
+
+		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
+		{
+			if (credssp->table->CompleteAuthToken != NULL)
+				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
+
+			have_pub_key_auth = true;
+
+			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
+			{
+				printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				return 0;
+			}
+
+			if (have_pub_key_auth)
+			{
+				uint8* p;
+				SEC_BUFFER Buffers[2];
+				SEC_BUFFER_DESC Message;
+
+				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
+				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
+
+				Buffers[0].cbBuffer = credssp->PublicKey.cbBuffer;
+				Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
+				memcpy(Buffers[0].pvBuffer, credssp->PublicKey.pvBuffer, Buffers[0].cbBuffer);
+
+				Buffers[1].cbBuffer = credssp->ContextSizes.cbMaxSignature;
+				Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
+
+				Message.cBuffers = 2;
+				Message.ulVersion = SECBUFFER_VERSION;
+				Message.pBuffers = (SEC_BUFFER*) &Buffers;
+
+				p = (uint8*) Buffers[0].pvBuffer;
+				p[0]++; /* Public Key +1 */
+
+				sspi_SecBufferAlloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
+
+				credssp->table->EncryptMessage(&credssp->context, 0, &Message, 0);
+
+				p = (uint8*) credssp->pubKeyAuth.pvBuffer;
+				memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
+				memcpy(&p[Buffers[1].cbBuffer], Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Encrypted Public Key */
+			}
+
+			if (status == SEC_I_COMPLETE_NEEDED)
+				status = SEC_E_OK;
+			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+				status = SEC_I_CONTINUE_NEEDED;
+		}
+
+		/* send authentication token */
+
+		p_buffer = &output_buffer_desc.pBuffers[0];
+
+		credssp->negoToken.pvBuffer = p_buffer->pvBuffer;
+		credssp->negoToken.cbBuffer = p_buffer->cbBuffer;
+
+#ifdef WITH_DEBUG_CREDSSP
+		printf("Sending Authentication Token\n");
+		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+#endif
+
+		credssp_send(credssp);
+		credssp_buffer_free(credssp);
+
+		if (status != SEC_I_CONTINUE_NEEDED)
+			break;
+
+		have_context = true;
+	}
+
+	if (status != SEC_E_OK)
+	{
+		printf("AcceptSecurityContext status: 0x%08X\n", status);
+		return 0;
+	}
+
+	status = credssp->table->ImpersonateSecurityContext(&credssp->context);
+
+	if (status != SEC_E_OK)
+	{
+		printf("ImpersonateSecurityContext status: 0x%08X\n", status);
+		return 0;
+	}
+	else
+	{
+		status = credssp->table->RevertSecurityContext(&credssp->context);
+
+		if (status != SEC_E_OK)
+		{
+			printf("RevertSecurityContext status: 0x%08X\n", status);
+			return 0;
+		}
+	}
+
+	FreeContextBuffer(pPackageInfo);
+
+	return 1;
 }
 
 /**
@@ -668,12 +871,9 @@ int credssp_skip_ts_request(int length)
 /**
  * Send CredSSP message.
  * @param credssp
- * @param negoToken
- * @param authInfo
- * @param pubKeyAuth
  */
 
-void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authInfo, SEC_BUFFER* pubKeyAuth)
+void credssp_send(rdpCredssp* credssp)
 {
 	STREAM* s;
 	int length;
@@ -682,9 +882,9 @@ void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authIn
 	int pub_key_auth_length;
 	int auth_info_length;
 
-	nego_tokens_length = (negoToken != NULL) ? credssp_skip_nego_tokens(negoToken->cbBuffer) : 0;
-	pub_key_auth_length = (pubKeyAuth != NULL) ? credssp_skip_pub_key_auth(pubKeyAuth->cbBuffer) : 0;
-	auth_info_length = (authInfo != NULL) ? credssp_skip_auth_info(authInfo->cbBuffer) : 0;
+	nego_tokens_length = (credssp->negoToken.cbBuffer > 0) ? credssp_skip_nego_tokens(credssp->negoToken.cbBuffer) : 0;
+	pub_key_auth_length = (credssp->pubKeyAuth.cbBuffer > 0) ? credssp_skip_pub_key_auth(credssp->pubKeyAuth.cbBuffer) : 0;
+	auth_info_length = (credssp->authInfo.cbBuffer > 0) ? credssp_skip_auth_info(credssp->authInfo.cbBuffer) : 0;
 
 	length = nego_tokens_length + pub_key_auth_length + auth_info_length;
 	ts_request_length = credssp_skip_ts_request(length);
@@ -705,7 +905,7 @@ void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authIn
 		length -= ber_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
 		length -= ber_write_sequence_tag(s, length); /* NegoDataItem */
 		length -= ber_write_contextual_tag(s, 0, length, true); /* [0] negoToken */
-		ber_write_octet_string(s, negoToken->pvBuffer, length); /* OCTET STRING */
+		ber_write_octet_string(s, credssp->negoToken.pvBuffer, length); /* OCTET STRING */
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -713,7 +913,7 @@ void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authIn
 	{
 		length = ber_get_content_length(auth_info_length);
 		length -= ber_write_contextual_tag(s, 2, length, true);
-		ber_write_octet_string(s, authInfo->pvBuffer, authInfo->cbBuffer);
+		ber_write_octet_string(s, credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -721,7 +921,7 @@ void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authIn
 	{
 		length = ber_get_content_length(pub_key_auth_length);
 		length -= ber_write_contextual_tag(s, 3, length, true);
-		ber_write_octet_string(s, pubKeyAuth->pvBuffer, length);
+		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, length);
 	}
 
 	tls_write(credssp->tls, s->data, stream_get_length(s));
@@ -731,13 +931,10 @@ void credssp_send(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authIn
 /**
  * Receive CredSSP message.
  * @param credssp
- * @param negoToken
- * @param authInfo
- * @param pubKeyAuth
  * @return
  */
 
-int credssp_recv(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authInfo, SEC_BUFFER* pubKeyAuth)
+int credssp_recv(rdpCredssp* credssp)
 {
 	STREAM* s;
 	int length;
@@ -762,27 +959,44 @@ int credssp_recv(rdpCredssp* credssp, SEC_BUFFER* negoToken, SEC_BUFFER* authInf
 		ber_read_sequence_tag(s, &length); /* NegoDataItem */
 		ber_read_contextual_tag(s, 0, &length, true); /* [0] negoToken */
 		ber_read_octet_string(s, &length); /* OCTET STRING */
-		sspi_SecBufferAlloc(negoToken, length);
-		stream_read(s, negoToken->pvBuffer, length);
+		sspi_SecBufferAlloc(&credssp->negoToken, length);
+		stream_read(s, credssp->negoToken.pvBuffer, length);
+		credssp->negoToken.cbBuffer = length;
 	}
 
 	/* [2] authInfo (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 2, &length, true) != false)
 	{
 		ber_read_octet_string(s, &length); /* OCTET STRING */
-		sspi_SecBufferAlloc(authInfo, length);
-		stream_read(s, authInfo->pvBuffer, length);
+		sspi_SecBufferAlloc(&credssp->authInfo, length);
+		stream_read(s, credssp->authInfo.pvBuffer, length);
+		credssp->authInfo.cbBuffer = length;
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 3, &length, true) != false)
 	{
 		ber_read_octet_string(s, &length); /* OCTET STRING */
-		sspi_SecBufferAlloc(pubKeyAuth, length);
-		stream_read(s, pubKeyAuth->pvBuffer, length);
+		sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
+		stream_read(s, credssp->pubKeyAuth.pvBuffer, length);
+		credssp->pubKeyAuth.cbBuffer = length;
 	}
 
+	stream_free(s);
+
 	return 0;
+}
+
+void credssp_buffer_free(rdpCredssp* credssp)
+{
+	if (credssp->negoToken.cbBuffer > 0)
+		sspi_SecBufferFree(&credssp->negoToken);
+
+	if (credssp->pubKeyAuth.cbBuffer > 0)
+		sspi_SecBufferFree(&credssp->pubKeyAuth);
+
+	if (credssp->authInfo.cbBuffer > 0)
+		sspi_SecBufferFree(&credssp->authInfo);
 }
 
 /**
@@ -805,6 +1019,9 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		credssp->tls = tls;
 		credssp->send_seq_num = 0;
 		credssp->uniconv = freerdp_uniconv_new();
+		memset(&credssp->negoToken, 0, sizeof(SEC_BUFFER));
+		memset(&credssp->pubKeyAuth, 0, sizeof(SEC_BUFFER));
+		memset(&credssp->authInfo, 0, sizeof(SEC_BUFFER));
 	}
 
 	return credssp;
