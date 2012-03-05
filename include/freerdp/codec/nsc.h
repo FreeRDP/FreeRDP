@@ -35,17 +35,17 @@ extern "C" {
 struct _NSC_STREAM
 {
 	uint32 PlaneByteCount[4];
-	uint8 colorLossLevel;
+	uint8 ColorLossLevel;
 	uint8 ChromaSubSamplingLevel;
 	uint16 Reserved;
-	STREAM* pdata;
+	uint8* Planes;
 };
 typedef struct _NSC_STREAM NSC_STREAM;
 
 struct _NSC_CONTEXT
 {
 	uint32 OrgByteCount[4];	/* original byte length of luma, chroma orange, chroma green, alpha variable in order */
-	NSC_STREAM* nsc_stream;
+	NSC_STREAM nsc_stream;
 	uint16 bpp;
 	uint16 width;
 	uint16 height;
@@ -60,7 +60,6 @@ FREERDP_API void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	uint16 width, uint16 height, uint8* data, uint32 length);
 FREERDP_API void nsc_rle_decompress_data(NSC_CONTEXT* context);
 FREERDP_API void nsc_ycocg_rgb_convert(NSC_CONTEXT* context);
-FREERDP_API void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz);
 FREERDP_API void nsc_chroma_supersample(NSC_CONTEXT* context);
 FREERDP_API void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz);
 FREERDP_API void nsc_colorloss_recover(NSC_CONTEXT* context);
