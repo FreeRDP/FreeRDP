@@ -98,7 +98,7 @@ endif()
 target_link_libraries(freerdp-core freerdp-utils)
 target_link_libraries(freerdp-core freerdp-codec)
 target_link_libraries(freerdp-core freerdp-crypto)
-target_link_libraries(freerdp-core freerdp-auth)
+target_link_libraries(freerdp-core freerdp-sspi)
 target_link_libraries(freerdp-core freerdp-locale)
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 

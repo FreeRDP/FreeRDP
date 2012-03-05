@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# libfreerdp-auth cmake build script
+# libfreerdp-sspi cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -39,7 +39,7 @@ set(FREERDP_SSPI_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
 
-set(FREERDP_AUTH_SRCS
+set(FREERDP_SSPI_SRCS
 	${FREERDP_SSPI_NTLM_SRCS}
 	${FREERDP_SSPI_KERBEROS_SRCS}
 	${FREERDP_SSPI_NEGOTIATE_SRCS}
@@ -47,16 +47,16 @@ set(FREERDP_AUTH_SRCS
 	sspi.h
 	credssp.c)
 
-add_library(freerdp-auth ${FREERDP_AUTH_SRCS})
+add_library(freerdp-sspi ${FREERDP_SSPI_SRCS})
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-set_target_properties(freerdp-auth PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(freerdp-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-auth freerdp-utils)
-target_link_libraries(freerdp-auth freerdp-crypto)
-target_link_libraries(freerdp-auth ${ZLIB_LIBRARIES})	
+target_link_libraries(freerdp-sspi freerdp-utils)
+target_link_libraries(freerdp-sspi freerdp-crypto)
+target_link_libraries(freerdp-sspi ${ZLIB_LIBRARIES})	
 
-install(TARGETS freerdp-auth DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS freerdp-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

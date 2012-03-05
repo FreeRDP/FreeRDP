@@ -78,6 +78,6 @@ target_link_libraries(test_freerdp freerdp-utils)
 target_link_libraries(test_freerdp freerdp-channels)
 target_link_libraries(test_freerdp freerdp-codec)
 target_link_libraries(test_freerdp freerdp-crypto)
-target_link_libraries(test_freerdp freerdp-auth)
+target_link_libraries(test_freerdp freerdp-sspi)
 
 add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)
