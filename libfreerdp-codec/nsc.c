@@ -289,7 +289,7 @@ void nsc_combine_argb(NSC_CONTEXT* context)
 	}
 }
 
-void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
 
@@ -300,16 +300,29 @@ void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 	stream_read_uint8(s, context->nsc_stream->ChromaSubSamplingLevel);
 	stream_seek(s, 2);
 
-	context->nsc_stream->pdata = stream_new(0);
+	if (context->nsc_stream->pdata == NULL)
+		context->nsc_stream->pdata = stream_new(0);
 	stream_attach(context->nsc_stream->pdata, s->p, BYTESUM(context->nsc_stream->PlaneByteCount));
 }
 
-void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
+	uint32 length;
 	uint32 tempsz;
+
 	nsc_stream_initialize(context, s);
-	context->bmpdata = xzalloc(context->width * context->height * 4);
+	length = context->width * context->height * 4;
+	if (context->bmpdata == NULL)
+	{
+		context->bmpdata = xzalloc(length);
+		context->bmpdata_length = length;
+	}
+	else if (length > context->bmpdata_length)
+	{
+		context->bmpdata = xrealloc(context->bmpdata, length);
+		context->bmpdata_length = length;
+	}
 
 	for (i = 0; i < 4; i++)
 		context->OrgByteCount[i]=context->width * context->height;
@@ -336,15 +349,12 @@ void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	}
 }
 
-void nsc_context_destroy(NSC_CONTEXT* context)
+void nsc_context_free(NSC_CONTEXT* context)
 {
-	int i;
-
-	for (i = 0;i < 4; i++)
-		stream_free(context->org_buf[i]);
-
 	stream_detach(context->nsc_stream->pdata);
-	xfree(context->bmpdata);
+	if (context->bmpdata)
+		xfree(context->bmpdata);
+	xfree(context);
 }
 
 NSC_CONTEXT* nsc_context_new(void)
@@ -355,11 +365,17 @@ NSC_CONTEXT* nsc_context_new(void)
 	return nsc_context;
 }
 
-void nsc_process_message(NSC_CONTEXT* context, uint8* data, uint32 length)
+void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
+	uint16 width, uint16 height, uint8* data, uint32 length)
 {
+	int i;
 	STREAM* s;
+
 	s = stream_new(0);
 	stream_attach(s, data, length);
+	context->bpp = bpp;
+	context->width = width;
+	context->height = height;
 	nsc_context_initialize(context, s);
 
 	/* RLE decode */
@@ -377,4 +393,12 @@ void nsc_process_message(NSC_CONTEXT* context, uint8* data, uint32 length)
 
 	/* Combine ARGB planes */
 	nsc_combine_argb(context);
+
+	for (i = 0;i < 4; i++)
+	{
+		if (context->org_buf[i])
+			stream_free(context->org_buf[i]);
+	}
+	stream_detach(s);
+	stream_free(s);
 }

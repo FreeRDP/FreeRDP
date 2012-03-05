@@ -1003,6 +1003,12 @@ void xf_window_free(xfInfo* xfi)
 		xfi->rfx_context = NULL;
 	}
 
+	if (xfi->nsc_context)
+	{
+		nsc_context_free(xfi->nsc_context);
+		xfi->nsc_context = NULL;
+	}
+
 	freerdp_clrconv_free(xfi->clrconv);
 
 	if (xfi->hdc)
