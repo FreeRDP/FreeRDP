@@ -30,9 +30,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#else
-#define SHUT_RDWR SD_BOTH
-#define close(_fd) closesocket(_fd)
 #endif
 
 #define __USE_XOPEN
@@ -44,6 +41,8 @@
 #include "kerberos_decode.h"
 
 #include <freerdp/sspi/sspi.h>
+
+#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
@@ -240,31 +239,9 @@ KDCENTRY* krb_locate_kdc(rdpSettings* settings)
 
 int krb_tcp_connect(KRB_CONTEXT* krb_ctx, KDCENTRY* entry)
 {
-	int sockfd, status;
-	char service[10];
-	struct addrinfo hints = { 0 };
-	struct addrinfo * res, * ai;
-	sockfd = -1;
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
+	int sockfd;
 
-	snprintf(service, sizeof(service), "%d", entry->port);
-
-	if ((status = getaddrinfo(entry->kdchost, service, &hints, &res)) != 0)
-		return -1;
-
-	for (ai = res; ai; ai = ai->ai_next)
-	{
-		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (sockfd < 0)
-			continue;
-		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
-			break;
-		close(sockfd);
-		sockfd = -1;
-	}
-	freeaddrinfo(res);
+	sockfd = freerdp_tcp_connect(entry->kdchost, entry->port);
 
 	if (sockfd == -1)
 		return -1;
@@ -272,57 +249,18 @@ int krb_tcp_connect(KRB_CONTEXT* krb_ctx, KDCENTRY* entry)
 	krb_ctx->krbhost = xstrdup(entry->kdchost);
 	krb_ctx->krbport = entry->port;
 	krb_ctx->ksockfd = sockfd;
+
 	return 0;
 }
 
 int krb_tcp_recv(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length)
 {
-	int status;
-
-	status = recv(krb_ctx->ksockfd, data, length, 0);
-
-	if (status <= 0)
-	{
-#ifdef _WIN32
-		int wsa_error = WSAGetLastError();
-
-		/* No data available */
-		if (wsa_error == WSAEWOULDBLOCK)
-			return 0;
-
-		/* When peer disconnects we get status 0 with no error. */
-		if (status < 0)
-			printf("recv() error: %d\n", wsa_error);
-#else
-		/* No data available */
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return 0;
-
-		/* When peer disconnects we get status 0 with no error. */
-		if (status < 0)
-			perror("recv");
-#endif
-		return -1;
-	}
-
-	return status;
+	return freerdp_tcp_read(krb_ctx->ksockfd, data, length);
 }
 
 int krb_tcp_send(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length)
 {
-	int status;
-
-	status = send(krb_ctx->ksockfd, data, length, MSG_NOSIGNAL);
-
-	if (status < 0)
-	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			status = 0;
-		else
-			perror("send");
-	}
-
-	return status;
+	return freerdp_tcp_write(krb_ctx->ksockfd, data, length);
 }
 
 KRB_CONTEXT* krb_ContextNew()

@@ -45,6 +45,7 @@
 #define close(_fd) closesocket(_fd)
 #endif
 
+#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
@@ -111,50 +112,13 @@ void tcp_get_mac_address(rdpTcp * tcp)
 
 boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
-	int status;
-	char servname[10];
 	uint32 option_value;
 	socklen_t option_len;
-	struct addrinfo hints = { 0 };
-	struct addrinfo * res, * ai;
 
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
+	tcp->sockfd = freerdp_tcp_connect(hostname, port);
 
-	snprintf(servname, sizeof(servname), "%d", port);
-	status = getaddrinfo(hostname, servname, &hints, &res);
-
-	if (status != 0)
-	{
-		printf("tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
+	if (tcp->sockfd < 0)
 		return false;
-	}
-
-	tcp->sockfd = -1;
-	for (ai = res; ai; ai = ai->ai_next)
-	{
-		tcp->sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-
-		if (tcp->sockfd < 0)
-			continue;
-
-		if (connect(tcp->sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
-		{
-			printf("connected to %s:%s\n", hostname, servname);
-			break;
-		}
-
-		close(tcp->sockfd);
-		tcp->sockfd = -1;
-	}
-	freeaddrinfo(res);
-
-	if (tcp->sockfd == -1)
-	{
-		printf("unable to connect to %s:%s\n", hostname, servname);
-		return false;
-	}
 
 	tcp_get_ip_address(tcp);
 	tcp_get_mac_address(tcp);
@@ -181,73 +145,18 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 
 int tcp_read(rdpTcp* tcp, uint8* data, int length)
 {
-	int status;
-
-	status = recv(tcp->sockfd, data, length, 0);
-
-	if (status == 0)
-	{
-		/* Peer disconnected. */
-		return -1;
-	}
-	else if (status < 0)
-	{
-#ifdef _WIN32
-		int wsa_error = WSAGetLastError();
-
-		/* No data available */
-		if (wsa_error == WSAEWOULDBLOCK)
-			return 0;
-
-		printf("recv() error: %d\n", wsa_error);
-#else
-		/* No data available */
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return 0;
-
-		perror("recv");
-#endif
-		return -1;
-	}
-
-	return status;
+	return freerdp_tcp_read(tcp->sockfd, data, length);
 }
 
 int tcp_write(rdpTcp* tcp, uint8* data, int length)
 {
-	int status;
-
-	status = send(tcp->sockfd, data, length, MSG_NOSIGNAL);
-
-	if (status < 0)
-	{
-#ifdef _WIN32
-		int wsa_error = WSAGetLastError();
-
-		/* No data available */
-		if (wsa_error == WSAEWOULDBLOCK)
-			status = 0;
-                else 
-                        perror("send");
-#else
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			status = 0;
-		else
-			perror("send");
-#endif
-	}
-
-	return status;
+	return freerdp_tcp_write(tcp->sockfd, data, length);
 }
 
-boolean tcp_disconnect(rdpTcp * tcp)
+boolean tcp_disconnect(rdpTcp* tcp)
 {
-	if (tcp->sockfd != -1)
-	{
-		shutdown(tcp->sockfd, SHUT_RDWR);
-		close(tcp->sockfd);
-		tcp->sockfd = -1;
-	}
+	freerdp_tcp_disconnect(tcp->sockfd);
+	tcp->sockfd = -1;
 
 	return true;
 }
