@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include <freerdp/utils/time.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/locale/timezone.h>
@@ -1538,31 +1539,6 @@ boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const
 	xfree(list_copy);
 
 	return false;
-}
-
-uint64 freerdp_get_windows_time_from_unix_time(time_t unix_time)
-{
-	uint64 windows_time;
-	windows_time = (unix_time * 10000000) + 621355968000000000ULL;
-	return windows_time;
-}
-
-time_t freerdp_get_unix_time_from_windows_time(uint64 windows_time)
-{
-	time_t unix_time;
-	unix_time = (windows_time - 621355968000000000ULL) / 10000000;
-	return unix_time;
-}
-
-uint64 freerdp_windows_gmtime()
-{
-	time_t unix_time;
-	uint64 windows_time;
-
-	gmtime(&unix_time);
-	windows_time = freerdp_get_windows_time_from_unix_time(unix_time);
-
-	return windows_time;
 }
 
 TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
