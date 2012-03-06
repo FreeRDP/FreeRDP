@@ -37,6 +37,7 @@
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
 #include "test_rfx.h"
+#include "test_nsc.h"
 #include "test_freerdp.h"
 #include "test_rail.h"
 #include "test_pcap.h"
@@ -138,6 +139,7 @@ static test_suite suites[] =
 	{ "per", add_per_suite },
 	{ "rail", add_rail_suite },
 	{ "rfx", add_rfx_suite },
+	{ "nsc", add_nsc_suite },
 	{ "sspi", add_sspi_suite },
 	{ "stream", add_stream_suite },
 	{ "utils", add_utils_suite },

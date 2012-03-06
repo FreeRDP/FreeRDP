@@ -62,6 +62,8 @@ add_executable(test_freerdp
 	test_drdynvc.h
 	test_rfx.c
 	test_rfx.h
+	test_nsc.c
+	test_nsc.h
 	test_sspi.c
 	test_sspi.h
 	test_freerdp.c
