@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __PRINT_UTILS_H
-#define __PRINT_UTILS_H
+#ifndef FREERDP_PRINT_UTILS_H
+#define FREERDP_PRINT_UTILS_H
 
 #include <stdio.h>
 
 #ifdef _WIN32
 #define	snprintf	sprintf_s
+#define strcasecmp	_stricmp
 #endif
 
-#endif /* __PRINT_UTILS_H */
+#endif /* FREERDP_PRINT_UTILS_H */

@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/utils/tcp.h>
+#include <freerdp/utils/print.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +45,10 @@
 #else
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
+#endif
+
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
 #endif
 
 int freerdp_tcp_connect(const char* hostname, int port)
