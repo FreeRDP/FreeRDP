@@ -32,9 +32,6 @@
 #include <sys/socket.h>
 #endif
 
-#define __USE_XOPEN
-#include <time.h>
-
 #include "kerberos.h"
 #include "kerberos_crypto.h"
 #include "kerberos_encode.h"
@@ -43,6 +40,7 @@
 #include <freerdp/sspi/sspi.h>
 
 #include <freerdp/utils/tcp.h>
+#include <freerdp/utils/time.h>
 #include <freerdp/utils/blob.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
@@ -90,22 +88,20 @@ char* get_utc_time(time_t t)
 {
 	char* str;
 	struct tm* utc;
-	if(t == 0)
+
+	if (t == 0)
 		t = time(NULL);
+
 	utc = gmtime(&t);
-	str = (char*)xzalloc(16);
+	str = (char*) xzalloc(16);
 	strftime(str, 16, "%Y%m%d%H%M%SZ", utc);
+
 	return str;
 }
 
 time_t get_local_time(char* str)
 {
-	time_t t;
-	struct tm utc;
-	memset(&utc, 0, sizeof(struct tm));
-	strptime(str, "%Y%m%d%H%M%SZ", &utc);
-	t = timegm(&utc);
-	return t;
+	return freerdp_get_unix_time_from_generalized_time(str);
 }
 
 uint32 get_clock_skew(char* str)
