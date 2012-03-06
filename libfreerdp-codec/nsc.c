@@ -25,13 +25,14 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/utils/memory.h>
 
-#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+#include "nsc_types.h"
 
-struct _NSC_CONTEXT_PRIV
-{
-	uint8* plane_buf[4];		/* Decompressed Plane Buffers in the respective order */
-	uint32 plane_buf_length;	/* Lengths of each plane buffer */
-};
+#ifndef NSC_INIT_SIMD
+#define NSC_INIT_SIMD(_nsc_context) do { } while (0)
+#endif
+
+#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
+#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
 static void nsc_decode(NSC_CONTEXT* context)
 {
@@ -238,7 +239,15 @@ NSC_CONTEXT* nsc_context_new(void)
 	nsc_context = xnew(NSC_CONTEXT);
 	nsc_context->priv = xnew(NSC_CONTEXT_PRIV);
 
+	nsc_context->decode = nsc_decode;
+
 	return nsc_context;
+}
+
+void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt)
+{
+	if (cpu_opt)
+		NSC_INIT_SIMD(context);
 }
 
 void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
@@ -259,5 +268,5 @@ void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	nsc_rle_decompress_data(context);
 
 	/* Colorloss recover, Chroma supersample and AYCoCg to ARGB Conversion in one step */
-	nsc_decode(context);
+	context->decode(context);
 }
