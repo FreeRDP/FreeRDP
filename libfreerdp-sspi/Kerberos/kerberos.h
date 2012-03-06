@@ -20,22 +20,24 @@
 #ifndef FREERDP_SSPI_KERBEROS_PRIVATE_H
 #define FREERDP_SSPI_KERBEROS_PRIVATE_H
 
-#include <sys/types.h>
-#include <netinet/in.h>
+#ifndef _WIN32
 #include <netdb.h>
-#include <arpa/nameser.h>
 #include <resolv.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#include <Windows.h>
-#include <ws2tcpip.h>
+#include <netinet/in.h>
+#include <arpa/nameser.h>
 #endif
 
-#include <freerdp/sspi/sspi.h>
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
+#include <sys/types.h>
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/blob.h>
+#include <freerdp/sspi/sspi.h>
 
 #define MSKRB_OID               "1.2.840.48018.1.2.2"
 #define STDKRB_OID              "1.2.840.113554.1.2.2"

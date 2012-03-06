@@ -22,9 +22,9 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #ifndef _WIN32
+#include <unistd.h>
 #include <netdb.h>
 #include <net/if.h>
 #include <unistd.h>
@@ -45,6 +45,7 @@
 
 #include <freerdp/sspi/sspi.h>
 #include <freerdp/utils/blob.h>
+#include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 
@@ -598,7 +599,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	{
 		freerdp_blob_alloc(&msg, 21);
 		memcpy(msg.data, "\x30\x13\xa0\x11\x18\x0f", 6); // PA-ENC-TS-ENC without optional pausec
-		memcpy(msg.data + 6, krb_asreq->req_body.from, 15);
+		memcpy(((uint8*) msg.data) + 6, krb_asreq->req_body.from, 15);
 		enckey = string2key(&(krb_ctx->passwd), krb_ctx->enctype);
 		encmsg = crypto_kdcmsg_encrypt(&msg, enckey, 1); //RFC4757 section 3 for msgtype (T=1)
 		enc_data.enctype = enckey->enctype;

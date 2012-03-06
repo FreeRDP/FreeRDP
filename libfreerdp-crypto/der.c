@@ -80,11 +80,12 @@ char* der_read_general_string(STREAM* s, int *length)
 int der_write_principal_name(STREAM* s, uint8 ntype, char** name)
 {
 	uint8 len;
-	len = 0;
 	char** p;
+
+	len = 0;
 	p = name;
 
-	while(*p != NULL)
+	while (*p != NULL)
 	{	
 		len += strlen(*p) + 2;
 		p++;
@@ -97,7 +98,7 @@ int der_write_principal_name(STREAM* s, uint8 ntype, char** name)
 	der_write_contextual_tag(s, 1, len + 2, true);
 	der_write_sequence_tag(s, len);
 
-	while(*p != NULL)
+	while (*p != NULL)
 	{
 		der_write_general_string(s, *p);
 		p++;

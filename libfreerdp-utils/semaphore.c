@@ -19,6 +19,7 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
+#include <freerdp/utils/windows.h>
 
 #if defined __APPLE__
 
@@ -31,7 +32,6 @@
 
 #elif defined _WIN32
 
-#include <windows.h>
 #define freerdp_sem_t HANDLE
 
 #else

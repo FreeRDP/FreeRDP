@@ -22,12 +22,7 @@
 #ifndef __WFREERDP_H
 #define __WFREERDP_H
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#include <winsock2.h>
-#include <windows.h>
+#include <freerdp/utils/windows.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>

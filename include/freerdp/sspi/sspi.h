@@ -22,10 +22,9 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
-#include <windows.h>
-#include <winsock.h>
 #include <winerror.h>
 
 #ifdef NATIVE_SSPI

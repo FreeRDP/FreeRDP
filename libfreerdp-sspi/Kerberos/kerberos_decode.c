@@ -674,7 +674,7 @@ ENCKDCREPPart* krb_decode_enc_reppart(rdpBlob* msg, uint8 apptag)
 
 	reppart = xnew(ENCKDCREPPart);
 	s = stream_new(0);
-	stream_attach(s, msg->data + 24, msg->length);
+	stream_attach(s, ((uint8*) msg->data) + 24, msg->length);
 	verlen = msg->length - 24;
 
 	/* application tag */

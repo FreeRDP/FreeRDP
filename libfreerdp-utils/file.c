@@ -35,13 +35,13 @@
 #endif
 
 #include <freerdp/utils/file.h>
+#include <freerdp/utils/windows.h>
 
 #ifndef _WIN32
 #define PATH_SEPARATOR_STR	"/"
 #define PATH_SEPARATOR_CHR	'/'
 #define HOME_ENV_VARIABLE	"HOME"
 #else
-#include <windows.h>
 #define PATH_SEPARATOR_STR	"\\"
 #define PATH_SEPARATOR_CHR	'\\'
 #define HOME_ENV_VARIABLE	"HOME"

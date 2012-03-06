@@ -24,10 +24,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/extension.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include <freerdp/utils/windows.h>
 
 #define FREERDP_EXT_MAX_COUNT 16
 

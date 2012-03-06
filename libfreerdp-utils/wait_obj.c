@@ -23,11 +23,10 @@
 #include <string.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/windows.h>
 
 #ifndef _WIN32
 #include <sys/time.h>
-#else
-#include <winsock2.h>
 #endif
 
 #ifdef HAVE_UNISTD_H

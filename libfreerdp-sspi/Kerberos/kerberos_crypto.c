@@ -68,7 +68,7 @@ rdpBlob* crypto_kdcmsg_encrypt_rc4(rdpBlob* msg, uint8* key, uint32 msgtype)
 	HMAC(EVP_md5(), (void*) K1, 16, (uint8*)&(edata->Checksum), 16, (void*)K3, NULL);
 	memcpy(encmsg->data, &(edata->Checksum), 16);
 	rc4 = crypto_rc4_init(K3, 16);
-	crypto_rc4(rc4, len - 16, (uint8*)edata->Confounder, (uint8*)(encmsg->data + 16));
+	crypto_rc4(rc4, len - 16, (uint8*) edata->Confounder, (uint8*)(((uint8*) encmsg->data) + 16));
 	crypto_rc4_free(rc4);
 	xfree(K1);
 	xfree(K3);
@@ -100,10 +100,10 @@ rdpBlob* crypto_kdcmsg_decrypt_rc4(rdpBlob* msg, uint8* key, uint32 msgtype)
 	K3 = xzalloc(16);
 	len = msg->length;
 	edata = xzalloc(len);
-	HMAC(EVP_md5(), (void*) key, 16, (uint8*)&msgtype, 4, (void*) K1, NULL);
-	HMAC(EVP_md5(), (void*) K1, 16, msg->data , 16, (void*)K3, NULL);
+	HMAC(EVP_md5(), (void*) key, 16, (uint8*) &msgtype, 4, (void*) K1, NULL);
+	HMAC(EVP_md5(), (void*) K1, 16, (uint8*) msg->data , 16, (void*) K3, NULL);
 	rc4 = crypto_rc4_init(K3, 16);
-	crypto_rc4(rc4, len - 16, (uint8*)(msg->data + 16), (uint8*)edata->Confounder);
+	crypto_rc4(rc4, len - 16, (uint8*)(((uint8*) msg->data) + 16), (uint8*) edata->Confounder);
 	crypto_rc4_free(rc4);
 	HMAC(EVP_md5(), (void*) K1, 16, (uint8*)edata->Confounder, len - 16, (void*)&(edata->Checksum), NULL);
 	if(memcmp(msg->data, &edata->Checksum, 16))

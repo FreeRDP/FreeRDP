@@ -19,9 +19,9 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
+#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
-#include <windows.h>
 #define freerdp_mutex_t HANDLE
 #else
 #include <pthread.h>

@@ -69,12 +69,18 @@ int krb_encode_cname(STREAM* s, uint8 tag, char* cname)
 {
 	uint8* bm;
 	uint32 len;
+	char* names[2];
+
+	names[0] = cname;
+	names[1] = NULL;
+
 	len = strlen(cname) + 15;
 	stream_rewind(s, len);
 	stream_get_mark(s, bm);
 	der_write_contextual_tag(s, tag, len - 2, true);	
-	der_write_principal_name(s, NAME_TYPE_PRINCIPAL, (char*[]){ cname, NULL });
+	der_write_principal_name(s, NAME_TYPE_PRINCIPAL, names);
 	stream_set_mark(s, bm);
+
 	return len;
 }
 
@@ -82,17 +88,30 @@ int krb_encode_sname(STREAM* s, uint8 tag, char* sname)
 {
 	uint8* bm;
 	char* str;
+	char* names[3];
 	uint32 len, tmp;
+	
 	len = strlen(sname) - 1 + 17;
+	
 	stream_rewind(s, len);
 	stream_get_mark(s, bm);
+	
 	der_write_contextual_tag(s, tag, len - 2, true);
-	tmp = index(sname, '/') - sname;
-	str = (char*)xzalloc(tmp + 1);
+
+	tmp = strchr(sname, '/') - sname;
+
+	str = (char*) xzalloc(tmp + 1);
 	strncpy(str, sname, tmp);
-	der_write_principal_name(s, NAME_TYPE_SERVICE, (char*[]){ str, (sname + tmp + 1), NULL });
+	
+	names[0] = str;
+	names[1] = sname + tmp + 1;
+	names[2] = NULL;
+
+	der_write_principal_name(s, NAME_TYPE_SERVICE, names);
+	
 	xfree(str);
 	stream_set_mark(s, bm);
+	
 	return len;
 }
 
@@ -204,12 +223,14 @@ int krb_encode_checksum(STREAM* s, rdpBlob* cksum, int cktype)
 
 int krb_encode_padata(STREAM* s, PAData** pa_data)
 {
-	uint32 totlen, curlen;
-	totlen = 0;
+	uint32 totlen;
+	uint32 curlen;
 	PAData** lpa_data;
+
+	totlen = 0;
 	lpa_data = pa_data;
 
-	while(*lpa_data != NULL)
+	while (*lpa_data != NULL)
 	{
 		/* padata value */
 		curlen = krb_encode_octet_string(s, ((*lpa_data)->value).data, ((*lpa_data)->value).length);
@@ -221,6 +242,7 @@ int krb_encode_padata(STREAM* s, PAData** pa_data)
 		totlen += curlen;
 		lpa_data++;
 	}
+
 	totlen += krb_encode_sequence_tag(s, totlen);
 
 	return totlen;

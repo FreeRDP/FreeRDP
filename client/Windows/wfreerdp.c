@@ -19,6 +19,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/windows.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

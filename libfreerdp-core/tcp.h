@@ -21,11 +21,7 @@
 #ifndef __TCP_H
 #define __TCP_H
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
-#endif
+#include <freerdp/utils/windows.h>
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>

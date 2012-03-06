@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,12 +26,10 @@
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
-
-#include "config.h"
+#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
 
-#include <windows.h>
 #define DLOPEN(f) LoadLibraryA(f)
 #define DLSYM(f, n) GetProcAddress(f, n)
 #define DLCLOSE(f) FreeLibrary(f)

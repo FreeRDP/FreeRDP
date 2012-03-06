@@ -17,11 +17,12 @@
  * limitations under the License.
  */
 
+#include <time.h>
+
 #ifndef _WIN32
 #include <unistd.h>
 #endif
 
-#include <time.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/utils/stream.h>
 
