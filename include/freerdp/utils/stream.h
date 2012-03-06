@@ -152,10 +152,10 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	(uint16)(*(_s->p + 1)); \
 	_s->p += 2; } while (0)
 #define stream_read_uint32_be(_s, _v) do { _v = \
-	(((uint32)(*(_s->p))) << 8) + \
-	(((uint32)(*(_s->p + 1)))) + \
-	(((uint32)(*(_s->p + 2))) << 24) + \
-	(((uint32)(*(_s->p + 3))) << 16); \
+	(((uint32)(*(_s->p))) << 24) + \
+	(((uint32)(*(_s->p + 1))) << 16) + \
+	(((uint32)(*(_s->p + 2))) << 8) + \
+	(((uint32)(*(_s->p + 3)))); \
 	_s->p += 4; } while (0)
 
 #define stream_write_uint16_be(_s, _v) do { \
