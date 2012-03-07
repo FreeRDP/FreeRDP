@@ -641,11 +641,13 @@ uint32 xf_detect_cpu()
  */
 boolean xf_post_connect(freerdp* instance)
 {
+	uint32 cpu;
 	xfInfo* xfi;
 	XGCValues gcv;
 	rdpCache* cache;
 	rdpChannels* channels;
 	RFX_CONTEXT* rfx_context = NULL;
+	NSC_CONTEXT* nsc_context = NULL;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	cache = instance->context->cache;
@@ -688,16 +690,20 @@ boolean xf_post_connect(freerdp* instance)
 		}
 
 		if (instance->settings->ns_codec)
-			xfi->nsc_context = (void*) nsc_context_new();
+		{
+			nsc_context = (void*) nsc_context_new();
+			xfi->nsc_context = nsc_context;
+		}
 	}
 
-	if (rfx_context)
-	{
 #ifdef WITH_SSE2
-		/* detect only if needed */
-		rfx_context_set_cpu_opt(rfx_context, xf_detect_cpu());
+	/* detect only if needed */
+	cpu = xf_detect_cpu();
+	if (rfx_context)
+		rfx_context_set_cpu_opt(rfx_context, cpu);
+	if (nsc_context)
+		nsc_context_set_cpu_opt(nsc_context, cpu);
 #endif
-	}
 
 	xfi->width = instance->settings->width;
 	xfi->height = instance->settings->height;
@@ -1001,6 +1007,12 @@ void xf_window_free(xfInfo* xfi)
 	{
 		rfx_context_free(xfi->rfx_context);
 		xfi->rfx_context = NULL;
+	}
+
+	if (xfi->nsc_context)
+	{
+		nsc_context_free(xfi->nsc_context);
+		xfi->nsc_context = NULL;
 	}
 
 	freerdp_clrconv_free(xfi->clrconv);

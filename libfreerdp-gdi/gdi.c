@@ -737,9 +737,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
 	{
-		nsc_context->width = surface_bits_command->width;
-		nsc_context->height = surface_bits_command->height;
-		nsc_process_message(nsc_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
+			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		gdi->image->bitmap->width = surface_bits_command->width;
 		gdi->image->bitmap->height = surface_bits_command->height;
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
@@ -747,7 +746,6 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->data = (uint8*) xrealloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 		freerdp_image_flip(nsc_context->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
-		nsc_context_destroy(nsc_context);
 	} 
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{

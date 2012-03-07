@@ -3,6 +3,7 @@
  * NSCodec Codec
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
+ * Copyright 2012 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,357 +25,275 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/utils/memory.h>
 
-/* we store the 9th bits at the end of stream as bitstream */
-void nsc_cl_expand(STREAM* stream, uint8 shiftcount, uint32 origsz)
-{
-	uint8* sbitstream;
-	uint8* temptr;
-	uint8 sign,bitoff;
-	uint32 bitno;
-	sbitstream = stream->data + origsz;
+#include "nsc_types.h"
 
-	do
+#ifndef NSC_INIT_SIMD
+#define NSC_INIT_SIMD(_nsc_context) do { } while (0)
+#endif
+
+#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
+#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+
+static void nsc_decode(NSC_CONTEXT* context)
+{
+	uint16 x;
+	uint16 y;
+	uint16 rw;
+	uint8 shift;
+	uint8* yplane;
+	uint8* coplane;
+	uint8* cgplane;
+	uint8* aplane;
+	sint16 y_val;
+	sint16 co_val;
+	sint16 cg_val;
+	sint16 r_val;
+	sint16 g_val;
+	sint16 b_val;
+	uint8* bmpdata;
+
+	bmpdata = context->bmpdata;
+	rw = ROUND_UP_TO(context->width, 8);
+	shift = context->nsc_stream.ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */
+
+	for (y = 0; y < context->height; y++)
 	{
-		sign = (*(stream->p) << (shiftcount - 1)) & 0x80;
-		bitno = stream->p - stream->data;
-		*(stream->p++) <<= shiftcount;
-		temptr = sbitstream + ((bitno) >> 3);
-		bitoff = bitno % 0x8; 
-		(*temptr) |= (sign >> bitoff);
-	}
-	while (((uint32)(stream->p - stream->data)) < origsz);
-
-	stream->p = stream->data;
-}
-
-void nsc_chroma_supersample(NSC_CONTEXT* context)
-{
-	int i;
-	uint8* cur;
-	uint8* tptr;
-	uint8* nbitstream;
-	uint8* sbitstream;
-	uint8 val, bitoff, sign;
-	uint16 w, h, pw, row;
-	uint32 alloclen, orglen, bytno;
-	STREAM* new_s;
-	STREAM* temp;
-
-	w = context->width;
-	h = context->height;
-	alloclen = orglen = w * h;
-	pw = ROUND_UP_TO(context->width, 8);
-	temp = stream_new(0);
-
-	for (i = 0; i < 3; i++)
-	{
-		if (i != 0)
-			alloclen = orglen + ((orglen & 0x7) ? (orglen >> 3) + 0x1 : (orglen >> 3));
-
-		new_s = stream_new(alloclen);
-		stream_attach(temp, context->org_buf[i]->data, context->org_buf[i]->size);
-
-		sbitstream = temp->data + context->OrgByteCount[i];
-		nbitstream = new_s->data + orglen;
-		cur  = new_s->p;
-
-		if (i == 1)
-			pw >>= 1;
-
-		while (((uint32)(temp->p - temp->data)) < context->OrgByteCount[i])
+		if (context->nsc_stream.ChromaSubSamplingLevel > 0)
 		{
-			bytno = temp->p - temp->data;
-			bitoff = bytno % 0x8; 
-			stream_read_uint8(temp, val);
-			*cur = val;
-			row = (temp->p - temp->data) % pw;
-
-			if (i == 0)
-			{
-				cur++;
-				if (row >= w)
-					stream_seek(temp, pw-row);
-			}
-			else
-			{
-				tptr = sbitstream + ((bytno) >> 3);
-				sign = ((*tptr) << bitoff) & 0x80;
-				bytno = cur - new_s->data;
-				bitoff = bytno % 8;
-				*(nbitstream + (bytno >> 3)) |= (sign >> bitoff);
-
-				if ((bytno+w) < orglen)
-				{
-					*(cur + w) = val;
-					bitoff = (bytno + w) % 8;
-					*(nbitstream + ((bytno + w) >> 3)) |= (sign >> bitoff);
-				}
-
-				if ((bytno+1) % w)
-				{
-					*(cur+1) = val;
-					bitoff = (bytno + 1) % 8;
-					*(nbitstream + ((bytno + 1) >> 3)) |= (sign >> bitoff);
-					if ((bytno+w) < orglen)
-					{
-						*(cur+w+1) = val;
-						bitoff = (bytno + w + 1) % 8;
-						*(nbitstream + ((bytno + w + 1) >> 3)) |= (sign >> bitoff);
-					}
-				}
-
-				cur += 2;
-				bytno = cur - new_s->data;
-
-				if (((bytno/w) < h) && ((bytno) % w) < 2 )
-				{
-					if (w % 2)
-						cur += w-1;
-					else
-						cur += w;
-				}
-
-				if ((row*2) >= w)
-					stream_seek(temp, pw-row);
-			}
-		}
-
-		xfree(temp->data);
-		stream_detach(temp);
-		stream_attach(context->org_buf[i], new_s->data, new_s->size);
-		context->OrgByteCount[i] = orglen;
-	}
-}
-
-void nsc_ycocg_rgb(NSC_CONTEXT* context)
-{
-	uint8* sbitstream[2];
-	uint8 bitoff, sign[2], i, val, tmp;
-	sint16 rgb[3], ycocg[3];
-	uint32 bytno, size;
-	size = context->OrgByteCount[0];
-
-	for (i = 1; i < 3; i++)
-		sbitstream[i-1] = context->org_buf[i]->data + context->OrgByteCount[i];
-
-	do
-	{
-		for (i = 0; i < 3; i++)
-			ycocg[i] = *(context->org_buf[i]->p);
-
-		for (i = 1; i < 3; i++)
-		{
-			bytno = context->OrgByteCount[i] - size;
-			bitoff = bytno % 8;
-			sign[i-1] = (*(sbitstream[i-1] + (bytno >> 3)) >> (7 - bitoff)) & 0x1;
-			ycocg[i] = (((sint16)(0 - sign[i-1])) << 8) | ycocg[i];
-		}
-
-		rgb[0] = ycocg[0] + (ycocg[1] >> 1) - (ycocg[2] >> 1);
-		rgb[1] = ycocg[0] + (ycocg[2] >> 1);
-		rgb[2] = ycocg[0] - (ycocg[1] >> 1) - (ycocg[2] >> 1);
-
-		for (i = 0; i < 3; i++)
-		{
-			tmp = (rgb[i] >> 8) & 0xff;
-			if (tmp == 0xff)
-				val = 0x00;
-			else if (tmp == 0x1)
-				val = 0xff;
-			else
-				val = (uint8) rgb[i];
-
-			stream_write_uint8(context->org_buf[i], val);
-		}
-
-		size--;
-	}
-	while (size);
-
-	for (i = 0; i < 3; i++)
-		context->org_buf[i]->p = context->org_buf[i]->data;
-}
-
-void nsc_colorloss_recover(NSC_CONTEXT* context)
-{
-	int i;
-	uint8 cllvl;
-	cllvl = context->nsc_stream->colorLossLevel;
-
-	for (i = 1; i < 3; i++)
-		nsc_cl_expand(context->org_buf[i], cllvl, context->OrgByteCount[i]);
-}
-
-void nsc_rle_decode(STREAM* in, STREAM* out, uint32 origsz)
-{
-	uint32 i;
-	uint8 value;
-	i = origsz;
-
-	while (i > 4)
-	{
-		stream_read_uint8(in, value);
-
-		if (i == 5)
-		{
-			stream_write_uint8(out,value);
-			i-=1;
-		}
-		else if (value == *(in->p))
-		{
-			stream_seek(in, 1);
-
-			if (*(in->p) < 0xFF)
-			{
-				uint8 len;
-				stream_read_uint8(in, len);
-				stream_set_byte(out, value, len+2);
-				i -= (len+2);
-			}
-			else
-			{
-				uint32 len;
-				stream_seek(in, 1);
-				stream_read_uint32(in, len);
-				stream_set_byte(out, value, len);
-				i -= len;
-			}
+			yplane = context->priv->plane_buf[0] + y * rw; /* Y */
+			coplane = context->priv->plane_buf[1] + (y >> 1) * (rw >> 1); /* Co, supersampled */
+			cgplane = context->priv->plane_buf[2] + (y >> 1) * (rw >> 1); /* Cg, supersampled */
 		}
 		else
 		{
-			stream_write_uint8(out, value);
-			i -= 1;
+			yplane = context->priv->plane_buf[0] + y * context->width; /* Y */
+			coplane = context->priv->plane_buf[1] + y * context->width; /* Co */
+			cgplane = context->priv->plane_buf[2] + y * context->width; /* Cg */
+		}
+		aplane = context->priv->plane_buf[3] + y * context->width; /* A */
+		for (x = 0; x < context->width; x++)
+		{
+			y_val = (sint16) *yplane;
+			co_val = (sint16) (sint8) (*coplane << shift);
+			cg_val = (sint16) (sint8) (*cgplane << shift);
+			r_val = y_val + co_val - cg_val;
+			g_val = y_val + cg_val;
+			b_val = y_val - co_val - cg_val;
+			*bmpdata++ = MINMAX(b_val, 0, 0xFF);
+			*bmpdata++ = MINMAX(g_val, 0, 0xFF);
+			*bmpdata++ = MINMAX(r_val, 0, 0xFF);
+			*bmpdata++ = *aplane;
+			yplane++;
+			coplane += (context->nsc_stream.ChromaSubSamplingLevel > 0 ? x % 2 : 1);
+			cgplane += (context->nsc_stream.ChromaSubSamplingLevel > 0 ? x % 2 : 1);
+			aplane++;
+		}
+	}
+}
+
+static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
+{
+	uint32 len;
+	uint32 left;
+	uint8 value;
+
+	left = origsz;
+	while (left > 4)
+	{
+		value = *in++;
+
+		if (left == 5)
+		{
+			*out++ = value;
+			left--;
+		}
+		else if (value == *in)
+		{
+			in++;
+			if (*in < 0xFF)
+			{
+				len = (uint32) *in++;
+				len += 2;
+			}
+			else
+			{
+				in++;
+				len = *((uint32*) in);
+				in += 4;
+			}
+			memset(out, value, len);
+			out += len;
+			left -= len;
+		}
+		else
+		{
+			*out++ = value;
+			left--;
 		}
 	}
 
-	stream_copy(out, in, 4);
+	*((uint32*)out) = *((uint32*)in);
 }
 
-void nsc_rle_decompress_data(NSC_CONTEXT* context)
+static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
-	STREAM* rles;
 	uint16 i;
+	uint8* rle;
 	uint32 origsize;
-	rles = stream_new(0);
-	rles->p = rles->data = context->nsc_stream->pdata->p;
-	rles->size = context->nsc_stream->pdata->size;
+	uint32 planesize;
+
+	rle = context->nsc_stream.Planes;
 
 	for (i = 0; i < 4; i++)
 	{
 		origsize = context->OrgByteCount[i];
+		planesize = context->nsc_stream.PlaneByteCount[i];
 
-		if (i == 3 && context->nsc_stream->PlaneByteCount[i] == 0)
-			stream_set_byte(context->org_buf[i], 0xff, origsize);
-		else if (context->nsc_stream->PlaneByteCount[i] < origsize)
-			nsc_rle_decode(rles, context->org_buf[i], origsize);
+		if (planesize == 0)
+			memset(context->priv->plane_buf[i], 0xff, origsize);
+		else if (planesize < origsize)
+			nsc_rle_decode(rle, context->priv->plane_buf[i], origsize);
 		else
-			stream_copy(context->org_buf[i], rles, origsize);
+			memcpy(context->priv->plane_buf[i], rle, origsize);
 
-		context->org_buf[i]->p = context->org_buf[i]->data;
+		rle += planesize;
 	}
 }
 
-void nsc_combine_argb(NSC_CONTEXT* context)
-{
-	int i;
-	uint8* bmp;
-	bmp = context->bmpdata;
-
-	for (i = 0; i < (context->width * context->height); i++)
-	{
-		stream_read_uint8(context->org_buf[2], *bmp++);
-		stream_read_uint8(context->org_buf[1], *bmp++);
-		stream_read_uint8(context->org_buf[0], *bmp++);
-		stream_read_uint8(context->org_buf[3], *bmp++);
-	}
-}
-
-void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
 
 	for (i = 0; i < 4; i++)
-		stream_read_uint32(s, context->nsc_stream->PlaneByteCount[i]);
+		stream_read_uint32(s, context->nsc_stream.PlaneByteCount[i]);
 
-	stream_read_uint8(s, context->nsc_stream->colorLossLevel);
-	stream_read_uint8(s, context->nsc_stream->ChromaSubSamplingLevel);
+	stream_read_uint8(s, context->nsc_stream.ColorLossLevel);
+	stream_read_uint8(s, context->nsc_stream.ChromaSubSamplingLevel);
 	stream_seek(s, 2);
 
-	context->nsc_stream->pdata = stream_new(0);
-	stream_attach(context->nsc_stream->pdata, s->p, BYTESUM(context->nsc_stream->PlaneByteCount));
+	context->nsc_stream.Planes = stream_get_tail(s);
 }
 
-void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
-	uint32 tempsz;
+	uint32 length;
+	uint32 tempWidth;
+	uint32 tempHeight;
+
 	nsc_stream_initialize(context, s);
-	context->bmpdata = xzalloc(context->width * context->height * 4);
+	length = context->width * context->height * 4;
+	if (context->bmpdata == NULL)
+	{
+		context->bmpdata = xzalloc(length + 16);
+		context->bmpdata_length = length;
+	}
+	else if (length > context->bmpdata_length)
+	{
+		context->bmpdata = xrealloc(context->bmpdata, length + 16);
+		context->bmpdata_length = length;
+	}
+
+	tempWidth = ROUND_UP_TO(context->width, 8);
+	tempHeight = ROUND_UP_TO(context->height, 2);
+	/* The maximum length a decoded plane can reach in all cases */
+	length = tempWidth * tempHeight;
+	if (length > context->priv->plane_buf_length)
+	{
+		for (i = 0; i < 4; i++)
+			context->priv->plane_buf[i] = (uint8*) xrealloc(context->priv->plane_buf[i], length);
+		context->priv->plane_buf_length = length;
+	}
 
 	for (i = 0; i < 4; i++)
 		context->OrgByteCount[i]=context->width * context->height;
 
-	if (context->nsc_stream->ChromaSubSamplingLevel > 0)	/* [MS-RDPNSC] 2.2 */
+	if (context->nsc_stream.ChromaSubSamplingLevel > 0)	/* [MS-RDPNSC] 2.2 */
 	{
-		uint32 tempWidth,tempHeight;
-		tempWidth = ROUND_UP_TO(context->width, 8);
 		context->OrgByteCount[0] = tempWidth * context->height;
-		tempWidth = tempWidth >> 1 ;
-		tempHeight = ROUND_UP_TO(context->height, 2);
-		tempHeight = tempHeight >> 1;
-		context->OrgByteCount[1] = tempWidth * tempHeight;
-		context->OrgByteCount[2] = tempWidth * tempHeight;
-	}
-	for (i = 0; i < 4; i++)
-	{
-		tempsz = context->OrgByteCount[i];
-
-		if (i == 1 || i == 2)
-			tempsz += (tempsz & 0x7) ? (tempsz >> 3) + 0x1 : (tempsz >> 3); /* extra bytes/8 bytes for bitstream to store the 9th bit after colorloss recover */
-
-		context->org_buf[i] = stream_new(tempsz);
+		context->OrgByteCount[1] = (tempWidth >> 1) * (tempHeight >> 1);
+		context->OrgByteCount[2] = context->OrgByteCount[1];
 	}
 }
 
-void nsc_context_destroy(NSC_CONTEXT* context)
+static void nsc_profiler_print(NSC_CONTEXT* context)
+{
+	PROFILER_PRINT_HEADER;
+
+	PROFILER_PRINT(context->priv->prof_nsc_rle_decompress_data);
+	PROFILER_PRINT(context->priv->prof_nsc_decode);
+	PROFILER_PRINT(context->priv->prof_nsc_rle_compress_data);
+	PROFILER_PRINT(context->priv->prof_nsc_encode);
+
+	PROFILER_PRINT_FOOTER;
+}
+
+void nsc_context_free(NSC_CONTEXT* context)
 {
 	int i;
 
-	for (i = 0;i < 4; i++)
-		stream_free(context->org_buf[i]);
+	for (i = 0; i < 4; i++)
+	{
+		if (context->priv->plane_buf[i])
+			xfree(context->priv->plane_buf[i]);
+	}
+	if (context->bmpdata)
+		xfree(context->bmpdata);
 
-	stream_detach(context->nsc_stream->pdata);
-	xfree(context->bmpdata);
+	nsc_profiler_print(context);
+	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data);
+	PROFILER_FREE(context->priv->prof_nsc_decode);
+	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data);
+	PROFILER_FREE(context->priv->prof_nsc_encode);
+
+	xfree(context->priv);
+	xfree(context);
 }
 
 NSC_CONTEXT* nsc_context_new(void)
 {
 	NSC_CONTEXT* nsc_context;
+
 	nsc_context = xnew(NSC_CONTEXT);
-	nsc_context->nsc_stream = xnew(NSC_STREAM);
+	nsc_context->priv = xnew(NSC_CONTEXT_PRIV);
+
+	nsc_context->decode = nsc_decode;
+
+	PROFILER_CREATE(nsc_context->priv->prof_nsc_rle_decompress_data, "nsc_rle_decompress_data");
+	PROFILER_CREATE(nsc_context->priv->prof_nsc_decode, "nsc_decode");
+	PROFILER_CREATE(nsc_context->priv->prof_nsc_rle_compress_data, "nsc_rle_compress_data");
+	PROFILER_CREATE(nsc_context->priv->prof_nsc_encode, "nsc_encode");
+
 	return nsc_context;
 }
 
-void nsc_process_message(NSC_CONTEXT* context, uint8* data, uint32 length)
+void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt)
+{
+	if (cpu_opt)
+		NSC_INIT_SIMD(context);
+}
+
+void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
+	uint16 width, uint16 height, uint8* data, uint32 length)
 {
 	STREAM* s;
+
 	s = stream_new(0);
 	stream_attach(s, data, length);
+	context->bpp = bpp;
+	context->width = width;
+	context->height = height;
 	nsc_context_initialize(context, s);
+	stream_detach(s);
+	stream_free(s);
 
 	/* RLE decode */
+	PROFILER_ENTER(context->priv->prof_nsc_rle_decompress_data);
 	nsc_rle_decompress_data(context);
+	PROFILER_EXIT(context->priv->prof_nsc_rle_decompress_data);
 
-	/* colorloss recover */
-	nsc_colorloss_recover(context);
-
-	/* Chroma supersample */
-	if (context->nsc_stream->ChromaSubSamplingLevel > 0)
-		nsc_chroma_supersample(context);
-	
-	/* YCoCg to RGB Convert */
-	nsc_ycocg_rgb(context);
-
-	/* Combine ARGB planes */
-	nsc_combine_argb(context);
+	/* Colorloss recover, Chroma supersample and AYCoCg to ARGB Conversion in one step */
+	PROFILER_ENTER(context->priv->prof_nsc_decode);
+	context->decode(context);
+	PROFILER_EXIT(context->priv->prof_nsc_decode);
 }
