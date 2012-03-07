@@ -186,12 +186,12 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	length = context->width * context->height * 4;
 	if (context->bmpdata == NULL)
 	{
-		context->bmpdata = xzalloc(length);
+		context->bmpdata = xzalloc(length + 16);
 		context->bmpdata_length = length;
 	}
 	else if (length > context->bmpdata_length)
 	{
-		context->bmpdata = xrealloc(context->bmpdata, length);
+		context->bmpdata = xrealloc(context->bmpdata, length + 16);
 		context->bmpdata_length = length;
 	}
 
