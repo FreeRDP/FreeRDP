@@ -93,7 +93,6 @@ static void nsc_decode(NSC_CONTEXT* context)
 
 static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
 {
-	int i;
 	uint32 len;
 	uint32 left;
 	uint8 value;
@@ -122,8 +121,8 @@ static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
 				len = *((uint32*) in);
 				in += 4;
 			}
-			for (i = 0; i < len; i++)
-				*out++ = value;
+			memset(out, value, len);
+			out += len;
 			left -= len;
 		}
 		else
