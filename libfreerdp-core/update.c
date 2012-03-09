@@ -285,21 +285,6 @@ boolean update_recv(rdpUpdate* update, STREAM* s)
 
 	IFCALL(update->EndPaint, context);
 
-	if (stream_get_left(s) > RDP_SHARE_DATA_HEADER_LENGTH)
-	{
-		uint16 pduType;
-		uint16 length;
-		uint16 source;
-
-		rdp_read_share_control_header(s, &length, &pduType, &source);
-
-		if (pduType != PDU_TYPE_DATA)
-			return false;
-
-		if (!rdp_recv_data_pdu(update->context->rdp, s))
-			return false;
-	}
-
 	return true;
 }
 

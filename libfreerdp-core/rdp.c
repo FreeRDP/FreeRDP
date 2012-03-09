@@ -492,6 +492,7 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			printf("decompress_rdp() failed\n");
 			return false;
 		}
+		stream_seek(s, compressed_len - 18);
 	}
 
 #ifdef WITH_DEBUG_RDP
@@ -588,7 +589,10 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	}
 
 	if (comp_stream != s)
-		xfree(comp_stream);
+	{
+		stream_detach(comp_stream);
+		stream_free(comp_stream);
+	}
 
 	return true;
 }
@@ -695,6 +699,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	uint16 pduSource;
 	uint16 channelId;
 	uint16 securityFlags;
+	uint8* nextp;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -731,29 +736,38 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource);
-
-		rdp->settings->pdu_source = pduSource;
-
-		switch (pduType)
+		while (stream_get_left(s) > 3)
 		{
-			case PDU_TYPE_DATA:
-				if (!rdp_recv_data_pdu(rdp, s))
-					return false;
-				break;
+			stream_get_mark(s, nextp);
+			rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource);
+			nextp += pduLength;
 
-			case PDU_TYPE_DEACTIVATE_ALL:
-				if (!rdp_recv_deactivate_all(rdp, s))
-					return false;
-				break;
+			rdp->settings->pdu_source = pduSource;
 
-			case PDU_TYPE_SERVER_REDIRECTION:
-				rdp_recv_enhanced_security_redirection_packet(rdp, s);
-				break;
+			switch (pduType)
+			{
+				case PDU_TYPE_DATA:
+					if (!rdp_recv_data_pdu(rdp, s))
+					{
+						printf("rdp_recv_data_pdu failed\n");
+						return false;
+					}
+					break;
 
-			default:
-				printf("incorrect PDU type: 0x%04X\n", pduType);
-				break;
+				case PDU_TYPE_DEACTIVATE_ALL:
+					if (!rdp_recv_deactivate_all(rdp, s))
+						return false;
+					break;
+
+				case PDU_TYPE_SERVER_REDIRECTION:
+					rdp_recv_enhanced_security_redirection_packet(rdp, s);
+					break;
+
+				default:
+					printf("incorrect PDU type: 0x%04X\n", pduType);
+					break;
+			}
+			stream_set_mark(s, nextp);
 		}
 	}
 
