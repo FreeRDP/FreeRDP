@@ -190,14 +190,14 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions)
 {
 	const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
-	struct stat64 st;
+	struct STAT st;
 	boolean exists;
 #ifndef WIN32
 	boolean largeFile = false;
 #endif	
 	int oflag = 0;
 
-	if (stat64(file->fullpath, &st) == 0)
+	if (STAT(file->fullpath, &st) == 0)
 	{
 		file->is_dir = (S_ISDIR(st.st_mode) ? true : false);
 #ifndef WIN32
