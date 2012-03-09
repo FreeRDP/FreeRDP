@@ -19,6 +19,10 @@
  */
 
 #ifndef _WIN32
+#define __USE_LARGEFILE64
+#define _LARGEFILE_SOURCE
+#define _LARGEFILE64_SOURCE
+
 #include <sys/time.h>
 #endif
 
@@ -116,7 +120,7 @@ static boolean disk_file_remove_dir(const char* path)
 {
 	DIR* dir;
 	struct dirent* pdirent;
-	struct stat st;
+	struct STAT st;
 	char* p;
 	boolean ret = true;
 
@@ -135,7 +139,7 @@ static boolean disk_file_remove_dir(const char* path)
 
 		p = xmalloc(strlen(path) + strlen(pdirent->d_name) + 2);
 		sprintf(p, "%s/%s", path, pdirent->d_name);
-		if (stat(p, &st) != 0)
+		if (STAT(p, &st) != 0)
 		{
 			DEBUG_WARN("stat %s failed.", p);
 			ret = false;
@@ -186,13 +190,20 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions)
 {
 	const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
-	struct stat st;
+	struct stat64 st;
 	boolean exists;
+#ifndef WIN32
+	boolean largeFile = false;
+#endif	
 	int oflag = 0;
 
-	if (stat(file->fullpath, &st) == 0)
+	if (stat64(file->fullpath, &st) == 0)
 	{
 		file->is_dir = (S_ISDIR(st.st_mode) ? true : false);
+#ifndef WIN32
+		if (st.st_size > (unsigned long)0x07fffffff)
+		    largeFile = true;
+#endif		
 		exists = true;
 	}
 	else
@@ -208,6 +219,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		}
 		exists = false;
 	}
+
 	if (file->is_dir)
 	{
 		file->dir = opendir(file->fullpath);
@@ -258,8 +270,13 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		{
 			oflag |= O_RDONLY;
 		}
-
-		file->fd = open(file->fullpath, oflag, mode);
+#ifndef WIN32
+		if (largeFile)
+		{
+		    oflag |= O_LARGEFILE;
+		}
+#endif
+		file->fd = OPEN(file->fullpath, oflag, mode);
 		if (file->fd == -1)
 		{
 			file->err = errno;
@@ -315,7 +332,7 @@ boolean disk_file_seek(DISK_FILE* file, uint64 Offset)
 	if (file->is_dir || file->fd == -1)
 		return false;
 
-	if (lseek(file->fd, Offset, SEEK_SET) == (off_t)-1)
+	if (LSEEK(file->fd, Offset, SEEK_SET) == (off_t)-1)
 		return false;
 
 	return true;
@@ -357,9 +374,9 @@ boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
 
 boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output)
 {
-	struct stat st;
+	struct STAT st;
 
-	if (stat(file->fullpath, &st) != 0)
+	if (STAT(file->fullpath, &st) != 0)
 	{
 		stream_write_uint32(output, 0); /* Length */
 		return false;
@@ -412,7 +429,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 	mode_t m;
 	uint64 size;
 	char* fullpath;
-	struct stat st;
+	struct STAT st;
 	UNICONV* uniconv;
 	struct timeval tv[2];
 	uint64 LastWriteTime;
@@ -429,7 +446,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_seek_uint64(input); /* ChangeTime */
 			stream_read_uint32(input, FileAttributes);
 
-			if (fstat(file->fd, &st) != 0)
+			if (FSTAT(file->fd, &st) != 0)
 				return false;
 
 			tv[0].tv_sec = st.st_atime;
@@ -507,7 +524,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 {
 	struct dirent* ent;
 	char* ent_path;
-	struct stat st;
+	struct STAT st;
 	UNICONV* uniconv;
 	size_t len;
 	boolean ret;
@@ -557,13 +574,14 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		return false;
 	}
 
-	memset(&st, 0, sizeof(struct stat));
+	memset(&st, 0, sizeof(struct STAT));
 	ent_path = xmalloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
 	sprintf(ent_path, "%s/%s", file->fullpath, ent->d_name);
-	if (stat(ent_path, &st) != 0)
+	if (STAT(ent_path, &st) != 0)
 	{
-		DEBUG_WARN("stat %s failed.", ent_path);
+		DEBUG_WARN("stat %s failed. errno = %d", ent_path, errno);
 	}
+
 	xfree(ent_path);
 
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
