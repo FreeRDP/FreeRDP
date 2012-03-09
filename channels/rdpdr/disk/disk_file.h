@@ -25,6 +25,18 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#if defined WIN32
+#define STAT stat
+#define OPEN open
+#define LSEEK lseek
+#define FSTAT fstat
+#else
+#define STAT stat64
+#define OPEN open64
+#define LSEEK lseek64
+#define FSTAT fstat64
+#endif
+
 typedef struct _DISK_FILE DISK_FILE;
 struct _DISK_FILE
 {
