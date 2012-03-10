@@ -30,6 +30,12 @@
 #define OPEN open
 #define LSEEK lseek
 #define FSTAT fstat
+#elif defined __APPLE__
+#define STAT stat
+#define OPEN open
+#define LSEEK lseek
+#define FSTAT fstat
+#define O_LARGEFILE 0
 #else
 #define STAT stat64
 #define OPEN open64
