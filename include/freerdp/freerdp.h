@@ -55,18 +55,41 @@ typedef boolean (*pVerifyCertificate)(freerdp* instance, char* subject, char* is
 typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
 typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
 
+/**
+ * Defines the context for a given instance of RDP connection.
+ * It is embedded in the rdp_freerdp structure, and allocated by a call to freerdp_context_new().
+ * It is deallocated by a call to freerdp_context_free().
+ */
 struct rdp_context
 {
-	freerdp* instance; /* 0 */
-	freerdp_peer* peer; /* 1 */
+	freerdp* instance; /**< (offset 0)
+						  Pointer to a rdp_freerdp structure.
+						  This is a back-link to retrieve the freerdp instance from the context.
+						  It is set by the freerdp_context_new() function */
+	freerdp_peer* peer; /**< (offset 1)
+						   Pointer to the client peer.
+						   This is set by a call to freerdp_peer_context_new() during peer initialization.
+						   This field is used only on the server side. */
 	uint32 paddingA[16 - 2]; /* 2 */
 
-	int argc; /* 16 */
-	char** argv; /* 17 */
+	int argc;	/**< (offset 16)
+				   Number of arguments given to the program at launch time.
+				   Used to keep this data available and used later on, typically just before connection initialization.
+				   @see freerdp_parse_args() */
+	char** argv; /**< (offset 17)
+					List of arguments given to the program at launch time.
+					Used to keep this data available and used later on, typically just before connection initialization.
+					@see freerdp_parse_args() */
 	uint32 paddingB[32 - 18]; /* 18 */
 
-	rdpRdp* rdp; /* 32 */
-	rdpGdi* gdi; /* 33 */
+	rdpRdp* rdp; /**< (offset 32)
+					Pointer to a rdp_rdp structure used to keep the connection's parameters.
+					It is allocated by freerdp_context_new() and deallocated by freerdp_context_free(), at the same
+					time that this rdp_context structure - there is no need to specifically allocate/deallocate this. */
+	rdpGdi* gdi; /**< (offset 33)
+					Pointer to a rdp_gdi structure used to keep the gdi settings.
+					It is allocated by gdi_init() and deallocated by gdi_free().
+					It must be deallocated before deallocating this rdp_context structure. */
 	rdpRail* rail; /* 34 */
 	rdpCache* cache; /* 35 */
 	rdpChannels* channels; /* 36 */
@@ -77,20 +100,40 @@ struct rdp_context
 /** Defines the options for a given instance of RDP connection.
  *  This is built by the client and given to the FreeRDP library to create the connection
  *  with the expected options.
+ *  It is allocated by a call to freerdp_new() and deallocated by a call to freerdp_free().
+ *  Some of its content need specific allocation/deallocation - see field description for details.
  */
 struct rdp_freerdp
 {
 	rdpContext* context; /**< (offset 0)
 							  Pointer to a rdpContext structure.
-							  Can be initialized by a call to freerdp_context_new() */
+							  Client applications can use the context_size field to register a context bigger than the rdpContext
+							  structure. This allow clients to use additional context information.
+							  When using this capability, client application should ALWAYS declare their structure with the
+							  rdpContext field first, and any additional content following it.
+							  Can be allocated by a call to freerdp_context_new().
+							  Must be dealocated by a call to freerdp_context_free() before deallocating the current instance. */
 	uint32 paddingA[16 - 1]; /* 1 */
 
-	rdpInput* input; /* 16 */
-	rdpUpdate* update; /* 17 */
-	rdpSettings* settings; /* 18 */
+	rdpInput* input; /* (offset 16)
+						Input handle for the connection.
+						Will be initialized by a call to freerdp_context_new() */
+	rdpUpdate* update; /* (offset 17)
+						  Update display parameters. Used to register display events callbacks and settings.
+						  Will be initialized by a call to freerdp_context_new() */
+	rdpSettings* settings; /**< (offset 18)
+								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
+								Will be initialized by a call to freerdp_context_new() */
 	uint32 paddingB[32 - 19]; /* 19 */
 
-	size_t context_size; /* 32 */
+	size_t context_size; /* (offset 32)
+							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
+							freerdp_new() sets it to sizeof(rdpContext).
+							If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
+							'context' field to set the required informations in it.
+							Clients will typically make it bigger, and use a context structure embedding the rdpContext, and
+							adding additional information after that.
+						 */
 
 	pContextNew ContextNew; /**< (offset 33)
 								 Callback for context allocation
@@ -121,8 +164,14 @@ struct rdp_freerdp
 											   Used to verify that an unknown certificate is trusted. */
 	uint32 paddingD[64 - 52]; /* 52 */
 
-	pSendChannelData SendChannelData; /* 64 */
-	pReceiveChannelData ReceiveChannelData; /* 65 */
+	pSendChannelData SendChannelData; /* (offset 64)
+										 Callback for sending data to a channel.
+										 By default, it is set by freerdp_new() to freerdp_send_channel_data(), which eventually calls
+										 freerdp_channel_send() */
+	pReceiveChannelData ReceiveChannelData; /* (offset 65)
+											   Callback for receiving data from a channel.
+											   This is called by freerdp_channel_process() (if not NULL).
+											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
 	uint32 paddingE[80 - 66]; /* 66 */
 };
 
