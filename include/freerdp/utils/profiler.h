@@ -21,11 +21,6 @@
 #define __UTILS_PROFILER_H
 
 #include <freerdp/api.h>
-
-#include "config.h"
-
-#include <stdio.h>
-
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stopwatch.h>
 

@@ -20,6 +20,7 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+#include "config.h"
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>

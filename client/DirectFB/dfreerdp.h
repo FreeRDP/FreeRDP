@@ -20,6 +20,7 @@
 #ifndef __DFREERDP_H
 #define __DFREERDP_H
 
+#include "config.h"
 #include <freerdp/freerdp.h>
 #include <freerdp/graphics.h>
 #include <freerdp/gdi/gdi.h>

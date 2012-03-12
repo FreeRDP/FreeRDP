@@ -20,6 +20,7 @@
 #ifndef FREERDP_AUTH_SSPI_PRIVATE_H
 #define FREERDP_AUTH_SSPI_PRIVATE_H
 
+#include "config.h"
 #include <freerdp/types.h>
 #include <freerdp/sspi/sspi.h>
 

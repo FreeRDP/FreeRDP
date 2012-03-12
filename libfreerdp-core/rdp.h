@@ -20,6 +20,7 @@
 #ifndef __RDP_H
 #define __RDP_H
 
+#include "config.h"
 #include "mcs.h"
 #include "tpkt.h"
 #include "fastpath.h"

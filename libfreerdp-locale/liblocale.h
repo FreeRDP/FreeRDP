@@ -20,6 +20,7 @@
 #ifndef __LIBLOCALE_H
 #define __LIBLOCALE_H
 
+#include "config.h"
 #include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
 

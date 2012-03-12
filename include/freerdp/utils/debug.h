@@ -20,8 +20,6 @@
 #ifndef __UTILS_DEBUG_H
 #define __UTILS_DEBUG_H
 
-#include "config.h"
-
 #include <stdio.h>
 
 #define DEBUG_NULL(fmt, ...) do { } while (0)

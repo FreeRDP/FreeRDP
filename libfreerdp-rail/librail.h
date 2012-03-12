@@ -20,6 +20,7 @@
 #ifndef __LIBRAIL_H
 #define __LIBRAIL_H
 
+#include "config.h"
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_RAIL

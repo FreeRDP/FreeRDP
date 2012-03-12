@@ -20,6 +20,7 @@
 #ifndef __GDI_CORE_H
 #define __GDI_CORE_H
 
+#include "config.h"
 #include "graphics.h"
 
 gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data);
