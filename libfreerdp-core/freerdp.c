@@ -174,6 +174,7 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 /** Allocator function for a rdp context.
  *  The function will allocate a rdpRdp structure using rdp_new(), then copy
  *  its contents to the appropriate fields in the rdp_freerdp structure given in parameters.
+ *  It will also initialize the 'context' field in the rdp_freerdp structure as needed.
  *  If the caller has set the ContextNew callback in the 'instance' parameter, it will be called at the end of the function.
  *
  *  @param instance - Pointer to the rdp_freerdp structure that will be initialized with the new context.
