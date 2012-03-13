@@ -32,7 +32,7 @@
 #define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
 static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, int rowstride,
-	RFX_PIXEL_FORMAT pixel_format, const uint8* palette, sint16* r_buf, sint16* g_buf, sint16* b_buf)
+	RDP_PIXEL_FORMAT pixel_format, const uint8* palette, sint16* r_buf, sint16* g_buf, sint16* b_buf)
 {
 	int x, y;
 	int x_exceed;
@@ -50,7 +50,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 
 		switch (pixel_format)
 		{
-			case RFX_PIXEL_FORMAT_BGRA:
+			case RDP_PIXEL_FORMAT_B8G8R8A8:
 				for (x = 0; x < width; x++)
 				{
 					*b_buf++ = (sint16) (*src++);
@@ -59,7 +59,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					src++;
 				}
 				break;
-			case RFX_PIXEL_FORMAT_RGBA:
+			case RDP_PIXEL_FORMAT_R8G8B8A8:
 				for (x = 0; x < width; x++)
 				{
 					*r_buf++ = (sint16) (*src++);
@@ -68,7 +68,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					src++;
 				}
 				break;
-			case RFX_PIXEL_FORMAT_BGR:
+			case RDP_PIXEL_FORMAT_B8G8R8:
 				for (x = 0; x < width; x++)
 				{
 					*b_buf++ = (sint16) (*src++);
@@ -76,7 +76,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					*r_buf++ = (sint16) (*src++);
 				}
 				break;
-			case RFX_PIXEL_FORMAT_RGB:
+			case RDP_PIXEL_FORMAT_R8G8B8:
 				for (x = 0; x < width; x++)
 				{
 					*r_buf++ = (sint16) (*src++);
@@ -84,7 +84,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					*b_buf++ = (sint16) (*src++);
 				}
 				break;
-			case RFX_PIXEL_FORMAT_BGR565_LE:
+			case RDP_PIXEL_FORMAT_B5G6R5_LE:
 				for (x = 0; x < width; x++)
 				{
 					*b_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
@@ -93,7 +93,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					src += 2;
 				}
 				break;
-			case RFX_PIXEL_FORMAT_RGB565_LE:
+			case RDP_PIXEL_FORMAT_R5G6B5_LE:
 				for (x = 0; x < width; x++)
 				{
 					*r_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
@@ -102,7 +102,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					src += 2;
 				}
 				break;
-			case RFX_PIXEL_FORMAT_PALETTE4_PLANER:
+			case RDP_PIXEL_FORMAT_P4_PLANER:
 				if (!palette)
 					break;
 				for (x = 0; x < width; x++)
@@ -123,7 +123,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 						src += 4;
 				}
 				break;
-			case RFX_PIXEL_FORMAT_PALETTE8:
+			case RDP_PIXEL_FORMAT_P8:
 				if (!palette)
 					break;
 				for (x = 0; x < width; x++)

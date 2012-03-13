@@ -306,7 +306,7 @@ void test_decode(void)
 
 	context = rfx_context_new();
 	context->mode = RLGR3;
-	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
+	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_R8G8B8);
 	rfx_decode_rgb(context, s,
 		sizeof(y_data), test_quantization_values,
 		sizeof(cb_data), test_quantization_values,
@@ -336,7 +336,7 @@ void test_encode(void)
 
 	context = rfx_context_new();
 	context->mode = RLGR3;
-	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
+	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	rfx_encode_rgb(context, rgb_data, 64, 64, 64 * 3,
 		test_quantization_values, test_quantization_values, test_quantization_values,
@@ -382,7 +382,7 @@ void test_message(void)
 	context->mode = RLGR3;
 	context->width = 800;
 	context->height = 600;
-	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_RGB);
+	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	for (i = 0; i < 1000; i++)
 	{
