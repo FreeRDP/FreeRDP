@@ -486,8 +486,13 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 		INFO_LOGONNOTIFY |
 		INFO_MAXIMIZESHELL |
 		INFO_ENABLEWINDOWSKEY |
-		INFO_DISABLECTRLALTDEL |
-		RNS_INFO_AUDIOCAPTURE;
+		INFO_DISABLECTRLALTDEL;
+
+	if (settings->audio_capture)
+		flags |= RNS_INFO_AUDIOCAPTURE;
+
+	if (!settings->audio_playback)
+		flags |= INFO_NOAUDIOPLAYBACK;
 
 	if (settings->autologon)
 		flags |= INFO_AUTOLOGON;
