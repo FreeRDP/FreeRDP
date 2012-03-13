@@ -22,6 +22,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 
 #ifdef __cplusplus
@@ -34,19 +35,6 @@ enum _RLGR_MODE
 	RLGR3
 };
 typedef enum _RLGR_MODE RLGR_MODE;
-
-enum _RFX_PIXEL_FORMAT
-{
-	RFX_PIXEL_FORMAT_BGRA,
-	RFX_PIXEL_FORMAT_RGBA,
-	RFX_PIXEL_FORMAT_BGR,
-	RFX_PIXEL_FORMAT_RGB,
-	RFX_PIXEL_FORMAT_BGR565_LE,
-	RFX_PIXEL_FORMAT_RGB565_LE,
-	RFX_PIXEL_FORMAT_PALETTE4_PLANER,
-	RFX_PIXEL_FORMAT_PALETTE8
-};
-typedef enum _RFX_PIXEL_FORMAT RFX_PIXEL_FORMAT;
 
 struct _RFX_RECT
 {
@@ -97,7 +85,7 @@ struct _RFX_CONTEXT
 	uint32 version;
 	uint32 codec_id;
 	uint32 codec_version;
-	RFX_PIXEL_FORMAT pixel_format;
+	RDP_PIXEL_FORMAT pixel_format;
 	uint8 bits_per_pixel;
 
 	/* color palette allocated by the application */
@@ -128,7 +116,7 @@ typedef struct _RFX_CONTEXT RFX_CONTEXT;
 FREERDP_API RFX_CONTEXT* rfx_context_new(void);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 FREERDP_API void rfx_context_set_cpu_opt(RFX_CONTEXT* context, uint32 cpu_opt);
-FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format);
+FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
 
 FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, uint8* data, uint32 length);

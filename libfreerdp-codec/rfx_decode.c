@@ -31,7 +31,7 @@
 #include "rfx_decode.h"
 
 static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
-	RFX_PIXEL_FORMAT pixel_format, uint8* dst_buf)
+	RDP_PIXEL_FORMAT pixel_format, uint8* dst_buf)
 {
 	sint16* r = r_buf;
 	sint16* g = g_buf;
@@ -41,7 +41,7 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 	
 	switch (pixel_format)
 	{
-		case RFX_PIXEL_FORMAT_BGRA:
+		case RDP_PIXEL_FORMAT_B8G8R8A8:
 			for (i = 0; i < 4096; i++)
 			{
 				*dst++ = (uint8) (*b++);
@@ -50,7 +50,7 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 				*dst++ = 0xFF;
 			}
 			break;
-		case RFX_PIXEL_FORMAT_RGBA:
+		case RDP_PIXEL_FORMAT_R8G8B8A8:
 			for (i = 0; i < 4096; i++)
 			{
 				*dst++ = (uint8) (*r++);
@@ -59,7 +59,7 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 				*dst++ = 0xFF;
 			}
 			break;
-		case RFX_PIXEL_FORMAT_BGR:
+		case RDP_PIXEL_FORMAT_B8G8R8:
 			for (i = 0; i < 4096; i++)
 			{
 				*dst++ = (uint8) (*b++);
@@ -67,7 +67,7 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 				*dst++ = (uint8) (*r++);
 			}
 			break;
-		case RFX_PIXEL_FORMAT_RGB:
+		case RDP_PIXEL_FORMAT_R8G8B8:
 			for (i = 0; i < 4096; i++)
 			{
 				*dst++ = (uint8) (*r++);

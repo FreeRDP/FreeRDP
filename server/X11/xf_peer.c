@@ -262,7 +262,7 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	context->rfx_context->width = context->info->width;
 	context->rfx_context->height = context->info->height;
 
-	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_BGRA);
+	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
 	context->s = stream_new(65536);
 }
