@@ -223,6 +223,11 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 				vevent->visible_rects[i].height);
 		}
 	}
+	else
+	{
+		XSetClipRectangles(xfi->display, xfi->gc, vevent->x, vevent->y,
+			(XRectangle*) vevent->visible_rects, vevent->num_visible_rects, YXBanded);
+	}
 
 	pixfmt = vevent->frame_pixfmt;
 	image = XvShmCreateImage(xfi->display, xv->xv_port,
@@ -324,6 +329,8 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	XvShmPutImage(xfi->display, xv->xv_port, xfi->window->handle, xfi->gc, image,
 		0, 0, image->width, image->height,
 		vevent->x, vevent->y, vevent->width, vevent->height, false);
+	if (xv->xv_colorkey_atom == None)
+		XSetClipMask(xfi->display, xfi->gc, None);
 	XSync(xfi->display, false);
 
 	XShmDetach(xfi->display, &shminfo);
