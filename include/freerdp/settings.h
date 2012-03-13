@@ -317,7 +317,9 @@ struct rdp_settings
 	boolean console_audio; /* 160 */
 	boolean console_session; /* 161 */
 	uint32 redirected_session_id; /* 162 */
-	uint32 paddingG[176 - 163]; /* 163 */
+	boolean audio_playback; /* 163 */
+	boolean audio_capture; /* 164 */
+	uint32 paddingG[176 - 165]; /* 165 */
 
 	/* Output Control */
 	boolean refresh_rect; /* 176 */

@@ -543,6 +543,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 			plugin_data = NULL;
+			if (strstr(argv[t], "rdpsnd"))
+				settings->audio_playback = true;
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
 			{
 				index += 2;
@@ -553,6 +555,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 						plugin_data = (RDP_PLUGIN_DATA*) xmalloc(sizeof(RDP_PLUGIN_DATA) * (i + 2));
 					else
 						plugin_data = (RDP_PLUGIN_DATA*) xrealloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
+
+					if (strstr(argv[t], "drdynvc") && strstr(argv[index], "audin"))
+						settings->audio_capture = true;
 
 					plugin_data[i].size = sizeof(RDP_PLUGIN_DATA);
 					plugin_data[i].data[0] = NULL;
