@@ -67,7 +67,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->width;
 	context->rfx_context->height = client->settings->height;
-	rfx_context_set_pixel_format(context->rfx_context, RFX_PIXEL_FORMAT_RGB);
+	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->s = stream_new(65536);
 

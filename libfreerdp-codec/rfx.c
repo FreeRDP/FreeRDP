@@ -138,7 +138,7 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv->pool = rfx_pool_new();
 
 	/* initialize the default pixel format */
-	rfx_context_set_pixel_format(context, RFX_PIXEL_FORMAT_BGRA);
+	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
 	/* align buffers to 16 byte boundary (needed for SSE/SSE2 instructions) */
 	context->priv->y_r_buffer = (sint16*)(((uintptr_t)context->priv->y_r_mem + 16) & ~ 0x0F);
@@ -181,27 +181,27 @@ void rfx_context_free(RFX_CONTEXT* context)
 	xfree(context);
 }
 
-void rfx_context_set_pixel_format(RFX_CONTEXT* context, RFX_PIXEL_FORMAT pixel_format)
+void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
 {
 	context->pixel_format = pixel_format;
 	switch (pixel_format)
 	{
-		case RFX_PIXEL_FORMAT_BGRA:
-		case RFX_PIXEL_FORMAT_RGBA:
+		case RDP_PIXEL_FORMAT_B8G8R8A8:
+		case RDP_PIXEL_FORMAT_R8G8B8A8:
 			context->bits_per_pixel = 32;
 			break;
-		case RFX_PIXEL_FORMAT_BGR:
-		case RFX_PIXEL_FORMAT_RGB:
+		case RDP_PIXEL_FORMAT_B8G8R8:
+		case RDP_PIXEL_FORMAT_R8G8B8:
 			context->bits_per_pixel = 24;
 			break;
-		case RFX_PIXEL_FORMAT_BGR565_LE:
-		case RFX_PIXEL_FORMAT_RGB565_LE:
+		case RDP_PIXEL_FORMAT_B5G6R5_LE:
+		case RDP_PIXEL_FORMAT_R5G6B5_LE:
 			context->bits_per_pixel = 16;
 			break;
-		case RFX_PIXEL_FORMAT_PALETTE4_PLANER:
+		case RDP_PIXEL_FORMAT_P4_PLANER:
 			context->bits_per_pixel = 4;
 			break;
-		case RFX_PIXEL_FORMAT_PALETTE8:
+		case RDP_PIXEL_FORMAT_P8:
 			context->bits_per_pixel = 8;
 			break;
 		default:
