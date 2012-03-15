@@ -273,6 +273,35 @@ void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt)
 		NSC_INIT_SIMD(context);
 }
 
+void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
+{
+	context->pixel_format = pixel_format;
+	switch (pixel_format)
+	{
+		case RDP_PIXEL_FORMAT_B8G8R8A8:
+		case RDP_PIXEL_FORMAT_R8G8B8A8:
+			context->bits_per_pixel = 32;
+			break;
+		case RDP_PIXEL_FORMAT_B8G8R8:
+		case RDP_PIXEL_FORMAT_R8G8B8:
+			context->bits_per_pixel = 24;
+			break;
+		case RDP_PIXEL_FORMAT_B5G6R5_LE:
+		case RDP_PIXEL_FORMAT_R5G6B5_LE:
+			context->bits_per_pixel = 16;
+			break;
+		case RDP_PIXEL_FORMAT_P4_PLANER:
+			context->bits_per_pixel = 4;
+			break;
+		case RDP_PIXEL_FORMAT_P8:
+			context->bits_per_pixel = 8;
+			break;
+		default:
+			context->bits_per_pixel = 0;
+			break;
+	}
+}
+
 void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	uint16 width, uint16 height, uint8* data, uint32 length)
 {

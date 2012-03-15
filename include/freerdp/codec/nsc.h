@@ -3,6 +3,7 @@
  * NSCodec Codec
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
+ * Copyright 2012 Vic Lee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 
 #ifdef __cplusplus
@@ -51,6 +53,8 @@ struct _NSC_CONTEXT
 	uint16 height;
 	uint8* bmpdata;     /* final argb values in little endian order */
 	uint32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
+	RDP_PIXEL_FORMAT pixel_format;
+	uint8 bits_per_pixel;
 
 	void (*decode)(NSC_CONTEXT* context);
 
@@ -59,6 +63,7 @@ struct _NSC_CONTEXT
 
 FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 FREERDP_API void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt);
+FREERDP_API void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	uint16 width, uint16 height, uint8* data, uint32 length);
 FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
