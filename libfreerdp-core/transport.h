@@ -72,7 +72,7 @@ boolean transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
-int transport_check_fds(rdpTransport* transport);
+int transport_check_fds(rdpTransport** ptransport);
 boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking);
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
