@@ -892,7 +892,7 @@ void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking)
 
 int rdp_check_fds(rdpRdp* rdp)
 {
-	return transport_check_fds(rdp->transport);
+	return transport_check_fds(&(rdp->transport));
 }
 
 /**
