@@ -26,13 +26,11 @@
 #include <freerdp/utils/memory.h>
 
 #include "nsc_types.h"
+#include "nsc_encode.h"
 
 #ifndef NSC_INIT_SIMD
 #define NSC_INIT_SIMD(_nsc_context) do { } while (0)
 #endif
-
-#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
-#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
 static void nsc_decode(NSC_CONTEXT* context)
 {
@@ -258,11 +256,16 @@ NSC_CONTEXT* nsc_context_new(void)
 	nsc_context->priv = xnew(NSC_CONTEXT_PRIV);
 
 	nsc_context->decode = nsc_decode;
+	nsc_context->encode = nsc_encode;
 
 	PROFILER_CREATE(nsc_context->priv->prof_nsc_rle_decompress_data, "nsc_rle_decompress_data");
 	PROFILER_CREATE(nsc_context->priv->prof_nsc_decode, "nsc_decode");
 	PROFILER_CREATE(nsc_context->priv->prof_nsc_rle_compress_data, "nsc_rle_compress_data");
 	PROFILER_CREATE(nsc_context->priv->prof_nsc_encode, "nsc_encode");
+
+	/* Default encoding parameters */
+	nsc_context->nsc_stream.ColorLossLevel = 3;
+	nsc_context->nsc_stream.ChromaSubSamplingLevel = 1;
 
 	return nsc_context;
 }
@@ -280,24 +283,24 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	{
 		case RDP_PIXEL_FORMAT_B8G8R8A8:
 		case RDP_PIXEL_FORMAT_R8G8B8A8:
-			context->bits_per_pixel = 32;
+			context->bpp = 32;
 			break;
 		case RDP_PIXEL_FORMAT_B8G8R8:
 		case RDP_PIXEL_FORMAT_R8G8B8:
-			context->bits_per_pixel = 24;
+			context->bpp = 24;
 			break;
 		case RDP_PIXEL_FORMAT_B5G6R5_LE:
 		case RDP_PIXEL_FORMAT_R5G6B5_LE:
-			context->bits_per_pixel = 16;
+			context->bpp = 16;
 			break;
 		case RDP_PIXEL_FORMAT_P4_PLANER:
-			context->bits_per_pixel = 4;
+			context->bpp = 4;
 			break;
 		case RDP_PIXEL_FORMAT_P8:
-			context->bits_per_pixel = 8;
+			context->bpp = 8;
 			break;
 		default:
-			context->bits_per_pixel = 0;
+			context->bpp = 0;
 			break;
 	}
 }

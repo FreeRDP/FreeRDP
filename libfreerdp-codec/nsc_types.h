@@ -25,6 +25,9 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/profiler.h>
 
+#define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
+#define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+
 struct _NSC_CONTEXT_PRIV
 {
 	uint8* plane_buf[4];		/* Decompressed Plane Buffers in the respective order */

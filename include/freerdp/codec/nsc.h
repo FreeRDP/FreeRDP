@@ -54,9 +54,9 @@ struct _NSC_CONTEXT
 	uint8* bmpdata;     /* final argb values in little endian order */
 	uint32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
 	RDP_PIXEL_FORMAT pixel_format;
-	uint8 bits_per_pixel;
 
 	void (*decode)(NSC_CONTEXT* context);
+	void (*encode)(NSC_CONTEXT* context, uint8* bmpdata, int rowstride);
 
 	NSC_CONTEXT_PRIV* priv;
 };
@@ -66,6 +66,8 @@ FREERDP_API void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt);
 FREERDP_API void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	uint16 width, uint16 height, uint8* data, uint32 length);
+FREERDP_API void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
+	uint8* bmpdata, int width, int height, int rowstride);
 FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 
 #ifdef __cplusplus

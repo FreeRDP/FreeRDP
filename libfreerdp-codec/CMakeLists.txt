@@ -39,6 +39,8 @@ set(FREERDP_CODEC_SRCS
 	rfx_types.h
 	rfx.c
 	nsc.c
+	nsc_encode.c
+	nsc_encode.h
 	nsc_types.h
 )
 
