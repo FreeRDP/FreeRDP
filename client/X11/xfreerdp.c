@@ -969,11 +969,17 @@ void xf_window_free(xfInfo* xfi)
 	XFreeModifiermap(xfi->modifier_map);
 	xfi->modifier_map = 0;
 
-	XFreeGC(xfi->display, xfi->gc);
-	xfi->gc = 0;
+	if (xfi->gc != NULL)
+	{
+		XFreeGC(xfi->display, xfi->gc);
+		xfi->gc = 0;
+	}
 
-	XFreeGC(xfi->display, xfi->gc_mono);
-	xfi->gc_mono = 0;
+	if (xfi->gc_mono != NULL)
+	{
+		XFreeGC(xfi->display, xfi->gc_mono);
+		xfi->gc_mono = 0;
+	}
 
 	if (xfi->window != NULL)
 	{
@@ -1070,7 +1076,10 @@ int xfreerdp_run(freerdp* instance)
 	memset(&timeout, 0, sizeof(struct timeval));
 
 	if (!freerdp_connect(instance))
+	{
+		xf_free(((xfContext*) instance->context)->xfi);
 		return XF_EXIT_CONN_FAILED;
+	}
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
@@ -1164,10 +1173,6 @@ int xfreerdp_run(freerdp* instance)
 	gdi_free(instance);
 	xf_free(xfi);
 
-	freerdp_context_free(instance);
-
-	freerdp_free(instance);
-
 	return ret;
 }
 
@@ -1256,6 +1261,9 @@ int main(int argc, char* argv[])
 
 	pthread_join(thread, NULL);
 	pthread_detach(thread);
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
 
 	freerdp_channels_global_uninit();
 
