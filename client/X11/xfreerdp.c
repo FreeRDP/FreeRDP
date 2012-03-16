@@ -1184,12 +1184,10 @@ void* thread_func(void* param)
 
 	xfree(data);
 
-	pthread_detach(pthread_self());
-
 	g_thread_count--;
 
-        if (g_thread_count < 1)
-                freerdp_sem_signal(g_sem);
+	if (g_thread_count < 1)
+		freerdp_sem_signal(g_sem);
 
 	pthread_exit(NULL);
 }
@@ -1200,7 +1198,7 @@ static uint8 exit_code_from_disconnect_reason(uint32 reason)
 	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
 		 return reason;
 
-	/* Licence error set */
+	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
 		 reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
 
@@ -1253,8 +1251,11 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-                freerdp_sem_wait(g_sem);
+		freerdp_sem_wait(g_sem);
 	}
+
+	pthread_join(thread, NULL);
+	pthread_detach(thread);
 
 	freerdp_channels_global_uninit();
 
