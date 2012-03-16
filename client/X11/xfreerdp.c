@@ -987,6 +987,12 @@ void xf_window_free(xfInfo* xfi)
 		xfi->primary = 0;
 	}
 
+	if (xfi->bitmap_mono)
+	{
+		XFreePixmap(xfi->display, xfi->bitmap_mono);
+		xfi->bitmap_mono = 0;
+	}
+
 	if (xfi->image)
 	{
 		xfi->image->data = NULL;
