@@ -167,11 +167,14 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
 
+	xfree(identity.User);
+	xfree(identity.Domain);
+	xfree(identity.Password);
 	return 1;
 }
 
 /**
- * Initialize NTLMSSP authentication module (client).
+ * Initialize NTLMSSP authentication module (server).
  * @param credssp
  */
 
@@ -325,6 +328,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				p = (uint8*) credssp->pubKeyAuth.pvBuffer;
 				memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
 				memcpy(&p[Buffers[1].cbBuffer], Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Encrypted Public Key */
+				xfree(Buffers[0].pvBuffer);
+				xfree(Buffers[1].pvBuffer);
 			}
 
 			if (status == SEC_I_COMPLETE_NEEDED)
@@ -403,6 +408,9 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	FreeCredentialsHandle(&credentials);
 	FreeContextBuffer(pPackageInfo);
+	xfree(identity.User);
+	xfree(identity.Domain);
+	xfree(identity.Password);
 
 	return 1;
 }
@@ -682,6 +690,9 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 
 	public_key2[0]++;
 
+	xfree(Buffers[0].pvBuffer);
+	xfree(Buffers[1].pvBuffer);
+
 	return SEC_E_OK;
 }
 
@@ -718,6 +729,9 @@ SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 	p = (uint8*) credssp->authInfo.pvBuffer;
 	memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
 	memcpy(&p[Buffers[1].cbBuffer], Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Encrypted TSCredentials */
+
+	xfree(Buffers[0].pvBuffer);
+	xfree(Buffers[1].pvBuffer);
 
 	return SEC_E_OK;
 }
@@ -990,14 +1004,9 @@ int credssp_recv(rdpCredssp* credssp)
 
 void credssp_buffer_free(rdpCredssp* credssp)
 {
-	if (credssp->negoToken.cbBuffer > 0)
-		sspi_SecBufferFree(&credssp->negoToken);
-
-	if (credssp->pubKeyAuth.cbBuffer > 0)
-		sspi_SecBufferFree(&credssp->pubKeyAuth);
-
-	if (credssp->authInfo.cbBuffer > 0)
-		sspi_SecBufferFree(&credssp->authInfo);
+	sspi_SecBufferFree(&credssp->negoToken);
+	sspi_SecBufferFree(&credssp->pubKeyAuth);
+	sspi_SecBufferFree(&credssp->authInfo);
 }
 
 /**
@@ -1037,8 +1046,13 @@ void credssp_free(rdpCredssp* credssp)
 {
 	if (credssp != NULL)
 	{
+		sspi_SecBufferFree(&credssp->PublicKey);
 		sspi_SecBufferFree(&credssp->ts_credentials);
 		freerdp_uniconv_free(credssp->uniconv);
+		xfree(credssp->identity.User);
+		xfree(credssp->identity.Domain);
+		xfree(credssp->identity.Password);
+		xfree(credssp->table);
 		xfree(credssp);
 	}
 }
