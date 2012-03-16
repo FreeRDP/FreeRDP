@@ -892,7 +892,7 @@ void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking)
 
 int rdp_check_fds(rdpRdp* rdp)
 {
-	return transport_check_fds(rdp->transport);
+	return transport_check_fds(&(rdp->transport));
 }
 
 /**
@@ -941,8 +941,8 @@ void rdp_free(rdpRdp* rdp)
 		crypto_des3_free(rdp->fips_encrypt);
 		crypto_des3_free(rdp->fips_decrypt);
 		crypto_hmac_free(rdp->fips_hmac);
-		extension_free(rdp->extension);
 		settings_free(rdp->settings);
+		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);
 		input_free(rdp->input);

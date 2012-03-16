@@ -565,6 +565,8 @@ void update_free(rdpUpdate* update)
 
 		xfree(update->bitmap_update.rectangles);
 		xfree(update->pointer);
+		xfree(update->primary->polyline.points);
+		xfree(update->primary->polygon_sc.points);
 		xfree(update->primary);
 		xfree(update->secondary);
 		xfree(update->altsec);

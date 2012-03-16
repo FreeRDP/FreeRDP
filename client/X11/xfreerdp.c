@@ -969,11 +969,17 @@ void xf_window_free(xfInfo* xfi)
 	XFreeModifiermap(xfi->modifier_map);
 	xfi->modifier_map = 0;
 
-	XFreeGC(xfi->display, xfi->gc);
-	xfi->gc = 0;
+	if (xfi->gc != NULL)
+	{
+		XFreeGC(xfi->display, xfi->gc);
+		xfi->gc = 0;
+	}
 
-	XFreeGC(xfi->display, xfi->gc_mono);
-	xfi->gc_mono = 0;
+	if (xfi->gc_mono != NULL)
+	{
+		XFreeGC(xfi->display, xfi->gc_mono);
+		xfi->gc_mono = 0;
+	}
 
 	if (xfi->window != NULL)
 	{
@@ -985,6 +991,12 @@ void xf_window_free(xfInfo* xfi)
 	{
 		XFreePixmap(xfi->display, xfi->primary);
 		xfi->primary = 0;
+	}
+
+	if (xfi->bitmap_mono)
+	{
+		XFreePixmap(xfi->display, xfi->bitmap_mono);
+		xfi->bitmap_mono = 0;
 	}
 
 	if (xfi->image)
@@ -1064,7 +1076,10 @@ int xfreerdp_run(freerdp* instance)
 	memset(&timeout, 0, sizeof(struct timeval));
 
 	if (!freerdp_connect(instance))
+	{
+		xf_free(((xfContext*) instance->context)->xfi);
 		return XF_EXIT_CONN_FAILED;
+	}
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
@@ -1158,10 +1173,6 @@ int xfreerdp_run(freerdp* instance)
 	gdi_free(instance);
 	xf_free(xfi);
 
-	freerdp_context_free(instance);
-
-	freerdp_free(instance);
-
 	return ret;
 }
 
@@ -1178,12 +1189,10 @@ void* thread_func(void* param)
 
 	xfree(data);
 
-	pthread_detach(pthread_self());
-
 	g_thread_count--;
 
-        if (g_thread_count < 1)
-                freerdp_sem_signal(g_sem);
+	if (g_thread_count < 1)
+		freerdp_sem_signal(g_sem);
 
 	pthread_exit(NULL);
 }
@@ -1194,7 +1203,7 @@ static uint8 exit_code_from_disconnect_reason(uint32 reason)
 	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
 		 return reason;
 
-	/* Licence error set */
+	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
 		 reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
 
@@ -1247,8 +1256,14 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-                freerdp_sem_wait(g_sem);
+		freerdp_sem_wait(g_sem);
 	}
+
+	pthread_join(thread, NULL);
+	pthread_detach(thread);
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
 
 	freerdp_channels_global_uninit();
 
