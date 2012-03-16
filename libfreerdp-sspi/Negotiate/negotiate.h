@@ -43,9 +43,9 @@ struct _NEGOTIATE_CONTEXT
 	NEGOTIATE_STATE state;
 	UNICONV* uniconv;
 	uint32 NegotiateFlags;
-	CTXT_HANDLE* auth_ctx;
-	SEC_AUTH_IDENTITY identity;
-	SEC_BUFFER NegoInitMessage;
+	CtxtHandle* auth_ctx;
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SecBuffer NegoInitMessage;
 };
 typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 

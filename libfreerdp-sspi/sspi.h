@@ -26,24 +26,24 @@
 
 struct _CREDENTIALS
 {
-	SEC_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY identity;
 };
 typedef struct _CREDENTIALS CREDENTIALS;
 
 CREDENTIALS* sspi_CredentialsNew();
 void sspi_CredentialsFree(CREDENTIALS* credentials);
 
-void sspi_SecBufferAlloc(SEC_BUFFER* sec_buffer, size_t size);
-void sspi_SecBufferFree(SEC_BUFFER* sec_buffer);
+void sspi_SecBufferAlloc(SecBuffer* SecBuffer, size_t size);
+void sspi_SecBufferFree(SecBuffer* SecBuffer);
 
-SEC_HANDLE* sspi_SecureHandleAlloc();
-void sspi_SecureHandleInit(SEC_HANDLE* handle);
-void sspi_SecureHandleInvalidate(SEC_HANDLE* handle);
-void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle);
-void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer);
-void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle);
-void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer);
-void sspi_SecureHandleFree(SEC_HANDLE* handle);
+SecHandle* sspi_SecureHandleAlloc();
+void sspi_SecureHandleInit(SecHandle* handle);
+void sspi_SecureHandleInvalidate(SecHandle* handle);
+void* sspi_SecureHandleGetLowerPointer(SecHandle* handle);
+void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer);
+void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
+void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
+void sspi_SecureHandleFree(SecHandle* handle);
 
 enum SecurityFunctionTableIndex
 {

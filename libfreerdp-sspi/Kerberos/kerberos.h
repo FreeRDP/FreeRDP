@@ -292,7 +292,7 @@ struct _KRB_CONTEXT
 	char* realm;
 	char* sname;
 	char* hostname;
-	SEC_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpBlob passwd;
 	sint32 enctype;
 	sint32 clockskew;
@@ -303,11 +303,11 @@ struct _KRB_CONTEXT
 	Ticket tgsticket;
 	KrbENCKey* tgskey;
 	KRBCTX_STATE state;
-	CTXT_HANDLE context;
+	CtxtHandle context;
 };
 typedef struct _KRB_CONTEXT KRB_CONTEXT;
 
-CTXT_HANDLE* krbctx_client_init(rdpSettings* settings, SEC_AUTH_IDENTITY* identity);
+CtxtHandle* krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* identity);
 
 boolean tcp_is_ipaddr(const char* hostname);
 char* get_utc_time(time_t t);

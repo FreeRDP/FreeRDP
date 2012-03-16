@@ -44,7 +44,7 @@ typedef struct _SEC_INTEGER SEC_INTEGER;
 
 typedef SEC_INTEGER SEC_TIMESTAMP;
 
-struct _SEC_PKG_INFO
+struct _SecPkgInfo
 {
 	uint32 fCapabilities;
 	uint16 wVersion;
@@ -53,7 +53,7 @@ struct _SEC_PKG_INFO
 	char* Name;
 	char* Comment;
 };
-typedef struct _SEC_PKG_INFO SEC_PKG_INFO;
+typedef struct _SecPkgInfo SecPkgInfo;
 
 #define SECPKG_ID_NONE				0xFFFF
 
@@ -215,35 +215,35 @@ typedef uint32 SECURITY_STATUS;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-struct _SEC_PKG_CONTEXT_ACCESS_TOKEN
+struct _SecPkgContext_AccessToken
 {
 	void* AccessToken;
 };
-typedef struct _SEC_PKG_CONTEXT_ACCESS_TOKEN SEC_PKG_CONTEXT_ACCESS_TOKEN;
+typedef struct _SecPkgContext_AccessToken SecPkgContext_AccessToken;
 
-struct _SEC_PKG_CONTEXT_SESSION_APP_DATA
+struct _SecPkgContext_SessionAppData
 {
 	uint32 dwFlags;
 	uint32 cbAppData;
 	uint8* pbAppData;
 };
-typedef struct _SEC_PKG_CONTEXT_SESSION_APP_DATA SEC_PKG_CONTEXT_SESSION_APP_DATA;
+typedef struct _SecPkgContext_SessionAppData SecPkgContext_SessionAppData;
 
-struct _SEC_PKG_CONTEXT_AUTHORITY
+struct _SecPkgContext_Authority
 {
 	char* sAuthorityName;
 };
-typedef struct _SEC_PKG_CONTEXT_AUTHORITY SEC_PKG_CONTEXT_AUTHORITY;
+typedef struct _SecPkgContext_Authority SecPkgContext_Authority;
 
-struct _SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET
+struct _SecPkgContext_ClientSpecifiedTarget
 {
 	char* sTargetName;
 };
-typedef struct _SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET SEC_PKG_CONTEXT_CLIENT_SPECIFIED_TARGET;
+typedef struct _SecPkgContext_ClientSpecifiedTarget SecPkgContext_ClientSpecifiedTarget;
 
 typedef uint32 ALG_ID;
 
-struct _SEC_PKG_CONTEXT_CONNECTION_INFO
+struct _SecPkgContext_ConnectionInfo
 {
 	uint32 dwProtocol;
 	ALG_ID aiCipher;
@@ -253,21 +253,21 @@ struct _SEC_PKG_CONTEXT_CONNECTION_INFO
 	ALG_ID aiExch;
 	uint32 dwExchStrength;
 };
-typedef struct _SEC_PKG_CONTEXT_CONNECTION_INFO SEC_PKG_CONTEXT_CONNECTION_INFO;
+typedef struct _SecPkgContext_ConnectionInfo SecPkgContext_ConnectionInfo;
 
-struct _SEC_PKG_CONTEXT_CLIENT_CREDS
+struct _SecPkgContext_ClientCreds
 {
 	uint32 AuthBufferLen;
 	uint8* AuthBuffer;
 };
-typedef struct _SEC_PKG_CONTEXT_CLIENT_CREDS SEC_PKG_CONTEXT_CLIENT_CREDS;
+typedef struct _SecPkgContext_ClientCreds SecPkgContext_ClientCreds;
 
-struct _SEC_PKG_CONTEXT_DCE_INFO
+struct _SecPkgContex_DceInfo
 {
 	uint32 AuthzSvc;
 	void* pPac;
 };
-typedef struct _SEC_PKG_CONTEXT_DCE_INFO SEC_PKG_CONTEXT_DCE_INFO;
+typedef struct _SecPkgContex_DceInfo SecPkgContex_DceInfo;
 
 struct _SEC_CHANNEL_BINDINGS
 {
@@ -282,27 +282,27 @@ struct _SEC_CHANNEL_BINDINGS
 };
 typedef struct _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS;
 
-struct _SEC_PKG_CONTEXT_BINDINGS
+struct _SecPkgContext_Bindings
 {
 	uint32 BindingsLength;
 	SEC_CHANNEL_BINDINGS* Bindings;
 };
-typedef struct _SEC_PKG_CONTEXT_BINDINGS SEC_PKG_CONTEXT_BINDINGS;
+typedef struct _SecPkgContext_Bindings SecPkgContext_Bindings;
 
-struct _SEC_PKG_CONTEXT_EAP_KEY_BLOCK
+struct _SecPkgContext_EapKeyBlock
 {
 	uint8 rgbKeys[128];
 	uint8 rgbIVs[64];
 };
-typedef struct _SEC_PKG_CONTEXT_EAP_KEY_BLOCK SEC_PKG_CONTEXT_EAP_KEY_BLOCK;
+typedef struct _SecPkgContext_EapKeyBlock SecPkgContext_EapKeyBlock;
 
-struct _SEC_PKG_CONTEXT_FLAGS
+struct _SecPkgContext_Flags
 {
 	uint32 Flags;
 };
-typedef struct _SEC_PKG_CONTEXT_FLAGS SEC_PKG_CONTEXT_FLAGS;
+typedef struct _SecPkgContext_Flags SecPkgContext_Flags;
 
-struct _SEC_PKG_CONTEXT_KEY_INFO
+struct _SecPkgContext_KeyInfo
 {
 	char* sSignatureAlgorithmName;
 	char* sEncryptAlgorithmName;
@@ -310,72 +310,72 @@ struct _SEC_PKG_CONTEXT_KEY_INFO
 	uint32 SignatureAlgorithm;
 	uint32 EncryptAlgorithm;
 };
-typedef struct _SEC_PKG_CONTEXT_KEY_INFO SEC_PKG_CONTEXT_KEY_INFO;
+typedef struct _SecPkgContext_KeyInfo SecPkgContext_KeyInfo;
 
-struct _SEC_PKG_CONTEXT_LIFESPAN
+struct _SecPkgContext_Lifespan
 {
 	SEC_TIMESTAMP tsStart;
 	SEC_TIMESTAMP tsExpiry;
 };
-typedef struct _SEC_PKG_CONTEXT_LIFESPAN SEC_PKG_CONTEXT_LIFESPAN;
+typedef struct _SecPkgContext_Lifespan SecPkgContext_Lifespan;
 
-struct _SEC_PKG_CONTEXT_NAMES
+struct _SecPkgContext_Names
 {
 	char* sUserName;
 };
-typedef struct _SEC_PKG_CONTEXT_NAMES SEC_PKG_CONTEXT_NAMES;
+typedef struct _SecPkgContext_Names SecPkgContext_Names;
 
-struct _SEC_PKG_CONTEXT_NATIVE_NAMES
+struct _SecPkgContext_NativeNames
 {
 	char* sClientName;
 	char* sServerName;
 };
-typedef struct _SEC_PKG_CONTEXT_NATIVE_NAMES SEC_PKG_CONTEXT_NATIVE_NAMES;
+typedef struct _SecPkgContext_NativeNames SecPkgContext_NativeNames;
 
-struct _SEC_PKG_CONTEXT_NEGOTIATION_INFO
+struct _SecPkgContext_NegotiationInfo
 {
-	SEC_PKG_INFO* PackageInfo;
+	SecPkgInfo* PackageInfo;
 	uint32 NegotiationState;
 };
-typedef struct _SEC_PKG_CONTEXT_NEGOTIATION_INFO SEC_PKG_CONTEXT_NEGOTIATION_INFO;
+typedef struct _SecPkgContext_NegotiationInfo SecPkgContext_NegotiationInfo;
 
-struct _SEC_PKG_CONTEXT_PACKAGE_INFO
+struct _SecPkgContext_PackageInfo
 {
-	SEC_PKG_INFO* PackageInfo;
+	SecPkgInfo* PackageInfo;
 };
-typedef struct _SEC_PKG_CONTEXT_PACKAGE_INFO SEC_PKG_CONTEXT_PACKAGE_INFO;
+typedef struct _SecPkgContext_PackageInfo SecPkgContext_PackageInfo;
 
-struct _SEC_PKG_CONTEXT_PASSWORD_EXPIRY
+struct _SecPkgContext_PasswordExpiry
 {
 	SEC_TIMESTAMP tsPasswordExpires;
 };
-typedef struct _SEC_PKG_CONTEXT_PASSWORD_EXPIRY SEC_PKG_CONTEXT_PASSWORD_EXPIRY;
+typedef struct _SecPkgContext_PasswordExpiry SecPkgContext_PasswordExpiry;
 
-struct _SEC_PKG_CONTEXT_SESSION_KEY
+struct _SecPkgContext_SessionKey
 {
 	uint32 SessionKeyLength;
 	uint8* SessionKey;
 };
-typedef struct _SEC_PKG_CONTEXT_SESSION_KEY SEC_PKG_CONTEXT_SESSION_KEY;
+typedef struct _SecPkgContext_SessionKey SecPkgContext_SessionKey;
 
-struct _SEC_PKG_CONTEXT_SESSION_INFO
+struct _SecPkgContext_SessionInfo
 {
 	uint32 dwFlags;
 	uint32 cbSessionId;
 	uint8 rgbSessionId[32];
 };
-typedef struct _SEC_PKG_CONTEXT_SESSION_INFO SEC_PKG_CONTEXT_SESSION_INFO;
+typedef struct _SecPkgContext_SessionInfo SecPkgContext_SessionInfo;
 
-struct _SEC_PKG_CONTEXT_SIZES
+struct _SecPkgContext_Sizes
 {
 	uint32 cbMaxToken;
 	uint32 cbMaxSignature;
 	uint32 cbBlockSize;
 	uint32 cbSecurityTrailer;
 };
-typedef struct _SEC_PKG_CONTEXT_SIZES SEC_PKG_CONTEXT_SIZES;
+typedef struct _SecPkgContext_Sizes SecPkgContext_Sizes;
 
-struct _SEC_PKG_CONTEXT_STREAM_SIZES
+struct _SecPkgContext_StreamSizes
 {
 	uint32 cbHeader;
 	uint32 cbTrailer;
@@ -383,27 +383,27 @@ struct _SEC_PKG_CONTEXT_STREAM_SIZES
 	uint32 cBuffers;
 	uint32 cbBlockSize;
 };
-typedef struct _SEC_PKG_CONTEXT_STREAM_SIZES SEC_PKG_CONTEXT_STREAM_SIZES;
+typedef struct _SecPkgContext_StreamSizes SecPkgContext_StreamSizes;
 
-struct _SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES
+struct _SecPkgContext_SubjectAttributes
 {
-	void *AttributeInfo;
+	void* AttributeInfo;
 };
-typedef struct _SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES SEC_PKG_CONTEXT_SUBJECT_ATTRIBUTES;
+typedef struct _SecPkgContext_SubjectAttributes SecPkgContext_SubjectAttributes;
 
-struct _SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES
+struct _SecPkgContext_SupportedSignatures
 {
 	uint16 cSignatureAndHashAlgorithms;
 	uint16* pSignatureAndHashAlgorithms;
 };
-typedef struct _SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES SEC_PKG_CONTEXT_SUPPORTED_SIGNATURES;
+typedef struct _SecPkgContext_SupportedSignatures SecPkgContext_SupportedSignatures;
 
-struct _SEC_PKG_CONTEXT_TARGET_INFORMATION
+struct _SecPkgContext_TargetInformation
 {
 	uint32 MarshalledTargetInfoLength;
 	uint8* MarshalledTargetInfo;
 };
-typedef struct _SEC_PKG_CONTEXT_TARGET_INFORMATION SEC_PKG_CONTEXT_TARGET_INFORMATION;
+typedef struct _SecPkgContext_TargetInformation SecPkgContext_TargetInformation;
 
 /* Security Credentials Attributes */
 
@@ -519,10 +519,10 @@ typedef struct _SEC_PKG_CREDENTIALS_NAMES SEC_PKG_CREDENTIALS_NAMES;
 #define ASC_RET_NO_PROXY_BINDINGS		0x04000000
 #define ASC_RET_MISSING_BINDINGS		0x10000000
 
-#define SEC_AUTH_IDENTITY_ANSI			0x1
-#define SEC_AUTH_IDENTITY_UNICODE		0x2
+#define SEC_WINNT_AUTH_IDENTITY_ANSI			0x1
+#define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-struct _SEC_AUTH_IDENTITY
+struct _SEC_WINNT_AUTH_IDENTITY
 {
 	uint16* User;
 	uint32 UserLength;
@@ -532,17 +532,17 @@ struct _SEC_AUTH_IDENTITY
 	uint32 PasswordLength;
 	uint32 Flags;
 };
-typedef struct _SEC_AUTH_IDENTITY SEC_AUTH_IDENTITY;
+typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
-struct _SEC_HANDLE
+struct _SecHandle
 {
 	uint32* dwLower;
 	uint32* dwUpper;
 };
-typedef struct _SEC_HANDLE SEC_HANDLE;
+typedef struct _SecHandle SecHandle;
 
-typedef SEC_HANDLE CRED_HANDLE;
-typedef SEC_HANDLE CTXT_HANDLE;
+typedef SecHandle CredHandle;
+typedef SecHandle CtxtHandle;
 
 #define SECBUFFER_VERSION			0
 
@@ -572,76 +572,76 @@ typedef SEC_HANDLE CTXT_HANDLE;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-struct _SEC_BUFFER
+struct _SecBuffer
 {
 	uint32 cbBuffer;
 	uint32 BufferType;
 	void* pvBuffer;
 };
-typedef struct _SEC_BUFFER SEC_BUFFER;
+typedef struct _SecBuffer SecBuffer;
 
-struct _SEC_BUFFER_DESC
+struct _SecBufferDesc
 {
 	uint32 ulVersion;
 	uint32 cBuffers;
-	SEC_BUFFER* pBuffers;
+	SecBuffer* pBuffers;
 };
-typedef struct _SEC_BUFFER_DESC SEC_BUFFER_DESC;
+typedef struct _SecBufferDesc SecBufferDesc;
 
-typedef SECURITY_STATUS (*ENUMERATE_SECURITY_PACKAGES_FN)(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo);
+typedef SECURITY_STATUS (*ENUMERATE_SECURITY_PACKAGES_FN)(uint32* pcPackages, SecPkgInfo** ppPackageInfo);
 
-typedef SECURITY_STATUS (*QUERY_CREDENTIAL_ATTRIBUTES_FN)(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (*QUERY_CREDENTIAL_ATTRIBUTES_FN)(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer);
 
 typedef SECURITY_STATUS (*ACQUIRE_CREDENTIALS_HANDLE_FN)(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry);
+		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry);
 
-typedef SECURITY_STATUS (*FREE_CREDENTIALS_HANDLE_FN)(CRED_HANDLE* phCredential);
+typedef SECURITY_STATUS (*FREE_CREDENTIALS_HANDLE_FN)(CredHandle* phCredential);
 
-typedef SECURITY_STATUS (*INITIALIZE_SECURITY_CONTEXT_FN)(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+typedef SECURITY_STATUS (*INITIALIZE_SECURITY_CONTEXT_FN)(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
+		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
 
-typedef SECURITY_STATUS (*ACCEPT_SECURITY_CONTEXT_FN)(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
-		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
+typedef SECURITY_STATUS (*ACCEPT_SECURITY_CONTEXT_FN)(CredHandle* phCredential, CtxtHandle* phContext,
+		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
 
-typedef SECURITY_STATUS (*COMPLETE_AUTH_TOKEN_FN)(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken);
+typedef SECURITY_STATUS (*COMPLETE_AUTH_TOKEN_FN)(CtxtHandle* phContext, SecBufferDesc* pToken);
 
-typedef SECURITY_STATUS (*DELETE_SECURITY_CONTEXT_FN)(CTXT_HANDLE* phContext);
+typedef SECURITY_STATUS (*DELETE_SECURITY_CONTEXT_FN)(CtxtHandle* phContext);
 
-typedef SECURITY_STATUS (*APPLY_CONTROL_TOKEN_FN)(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput);
+typedef SECURITY_STATUS (*APPLY_CONTROL_TOKEN_FN)(CtxtHandle* phContext, SecBufferDesc* pInput);
 
-typedef SECURITY_STATUS (*QUERY_CONTEXT_ATTRIBUTES_FN)(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (*QUERY_CONTEXT_ATTRIBUTES_FN)(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer);
 
-typedef SECURITY_STATUS (*IMPERSONATE_SECURITY_CONTEXT_FN)(CTXT_HANDLE* phContext);
+typedef SECURITY_STATUS (*IMPERSONATE_SECURITY_CONTEXT_FN)(CtxtHandle* phContext);
 
-typedef SECURITY_STATUS (*REVERT_SECURITY_CONTEXT_FN)(CTXT_HANDLE* phContext);
+typedef SECURITY_STATUS (*REVERT_SECURITY_CONTEXT_FN)(CtxtHandle* phContext);
 
-typedef SECURITY_STATUS (*MAKE_SIGNATURE_FN)(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
+typedef SECURITY_STATUS (*MAKE_SIGNATURE_FN)(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
 
-typedef SECURITY_STATUS (*VERIFY_SIGNATURE_FN)(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+typedef SECURITY_STATUS (*VERIFY_SIGNATURE_FN)(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
 typedef SECURITY_STATUS (*FREE_CONTEXT_BUFFER_FN)(void* pvContextBuffer);
 
-typedef SECURITY_STATUS (*QUERY_SECURITY_PACKAGE_INFO_FN)(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo);
+typedef SECURITY_STATUS (*QUERY_SECURITY_PACKAGE_INFO_FN)(char* pszPackageName, SecPkgInfo** ppPackageInfo);
 
-typedef SECURITY_STATUS (*EXPORT_SECURITY_CONTEXT_FN)(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken);
+typedef SECURITY_STATUS (*EXPORT_SECURITY_CONTEXT_FN)(CtxtHandle* phContext, uint32 fFlags, SecBuffer* pPackedContext, void* pToken);
 
-typedef SECURITY_STATUS (*IMPORT_SECURITY_CONTEXT_FN)(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext);
+typedef SECURITY_STATUS (*IMPORT_SECURITY_CONTEXT_FN)(char* pszPackage, SecBuffer* pPackedContext, void* pToken, CtxtHandle* phContext);
 
 typedef SECURITY_STATUS (*ADD_CREDENTIALS_FN)(void);
 
-typedef SECURITY_STATUS (*QUERY_SECURITY_CONTEXT_TOKEN_FN)(CTXT_HANDLE* phContext, void* phToken);
+typedef SECURITY_STATUS (*QUERY_SECURITY_CONTEXT_TOKEN_FN)(CtxtHandle* phContext, void* phToken);
 
-typedef SECURITY_STATUS (*ENCRYPT_MESSAGE_FN)(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
+typedef SECURITY_STATUS (*ENCRYPT_MESSAGE_FN)(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
 
-typedef SECURITY_STATUS (*DECRYPT_MESSAGE_FN)(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+typedef SECURITY_STATUS (*DECRYPT_MESSAGE_FN)(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
-typedef SECURITY_STATUS (*SET_CONTEXT_ATTRIBUTES_FN)(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
+typedef SECURITY_STATUS (*SET_CONTEXT_ATTRIBUTES_FN)(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
 
-struct _SECURITY_FUNCTION_TABLE
+struct _SecurityFunctionTable
 {
 	uint32 dwVersion;
 	ENUMERATE_SECURITY_PACKAGES_FN EnumerateSecurityPackages;
@@ -673,53 +673,53 @@ struct _SECURITY_FUNCTION_TABLE
 	DECRYPT_MESSAGE_FN DecryptMessage;
 	SET_CONTEXT_ATTRIBUTES_FN SetContextAttributes;
 };
-typedef struct _SECURITY_FUNCTION_TABLE SECURITY_FUNCTION_TABLE;
+typedef struct _SecurityFunctionTable SecurityFunctionTable;
 
 /* Package Management */
 
-FREERDP_API SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo);
-FREERDP_API SECURITY_FUNCTION_TABLE* InitSecurityInterface(void);
-FREERDP_API SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo);
+FREERDP_API SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SecPkgInfo** ppPackageInfo);
+FREERDP_API SecurityFunctionTable* InitSecurityInterface(void);
+FREERDP_API SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SecPkgInfo** ppPackageInfo);
 
 /* Credential Management */
 
 FREERDP_API SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry);
+		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry);
 
-FREERDP_API SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken);
-FREERDP_API SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential);
-FREERDP_API SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext);
-FREERDP_API SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS ExportSecurityContext(CtxtHandle* phContext, uint32 fFlags, SecBuffer* pPackedContext, void* pToken);
+FREERDP_API SECURITY_STATUS FreeCredentialsHandle(CredHandle* phCredential);
+FREERDP_API SECURITY_STATUS ImportSecurityContext(char* pszPackage, SecBuffer* pPackedContext, void* pToken, CtxtHandle* phContext);
+FREERDP_API SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer);
 
 /* Context Management */
 
-FREERDP_API SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
-		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
+FREERDP_API SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
+		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
 
-FREERDP_API SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput);
-FREERDP_API SECURITY_STATUS CompleteAuthToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken);
-FREERDP_API SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS ApplyControlToken(CtxtHandle* phContext, SecBufferDesc* pInput);
+FREERDP_API SECURITY_STATUS CompleteAuthToken(CtxtHandle* phContext, SecBufferDesc* pToken);
+FREERDP_API SECURITY_STATUS DeleteSecurityContext(CtxtHandle* phContext);
 FREERDP_API SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer);
-FREERDP_API SECURITY_STATUS ImpersonateSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS ImpersonateSecurityContext(CtxtHandle* phContext);
 
-FREERDP_API SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+FREERDP_API SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
+		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
 
-FREERDP_API SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer);
-FREERDP_API SECURITY_STATUS QuerySecurityContextToken(CTXT_HANDLE* phContext, void* phToken);
-FREERDP_API SECURITY_STATUS SetContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
-FREERDP_API SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext);
+FREERDP_API SECURITY_STATUS QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS QuerySecurityContextToken(CtxtHandle* phContext, void* phToken);
+FREERDP_API SECURITY_STATUS SetContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
+FREERDP_API SECURITY_STATUS RevertSecurityContext(CtxtHandle* phContext);
 
 /* Message Support */
 
-FREERDP_API SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
-FREERDP_API SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
 /* Custom API */
 

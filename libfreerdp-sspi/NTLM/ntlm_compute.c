@@ -254,7 +254,7 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
  * @param s
  */
 
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, SEC_BUFFER* buffer)
+void ntlm_output_av_pairs(NTLM_CONTEXT* context, SecBuffer* buffer)
 {
 	STREAM* s;
 	AV_PAIRS* av_pairs = context->av_pairs;
@@ -596,7 +596,7 @@ void ntlm_compute_ntlm_hash(uint16* password, uint32 length, char* hash)
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	char* p;
-	SEC_BUFFER buffer;
+	SecBuffer buffer;
 	char ntlm_hash[16];
 
 	sspi_SecBufferAlloc(&buffer, context->identity.UserLength + context->identity.DomainLength);
@@ -652,8 +652,8 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	uint8* blob;
 	uint8 ntlm_v2_hash[16];
 	uint8 nt_proof_str[16];
-	SEC_BUFFER ntlm_v2_temp;
-	SEC_BUFFER ntlm_v2_temp_chal;
+	SecBuffer ntlm_v2_temp;
+	SecBuffer ntlm_v2_temp_chal;
 
 	sspi_SecBufferAlloc(&ntlm_v2_temp, context->TargetInfo.cbBuffer + 28);
 
@@ -817,7 +817,7 @@ void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
  * @param signing_key Destination signing key
  */
 
-void ntlm_generate_signing_key(uint8* exported_session_key, SEC_BUFFER* sign_magic, uint8* signing_key)
+void ntlm_generate_signing_key(uint8* exported_session_key, SecBuffer* sign_magic, uint8* signing_key)
 {
 	int length;
 	uint8* value;
@@ -845,7 +845,7 @@ void ntlm_generate_signing_key(uint8* exported_session_key, SEC_BUFFER* sign_mag
 
 void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 {
-	SEC_BUFFER sign_magic;
+	SecBuffer sign_magic;
 	sign_magic.pvBuffer = (void*) client_sign_magic;
 	sign_magic.cbBuffer = sizeof(client_sign_magic);
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sign_magic, context->ClientSigningKey);
@@ -859,7 +859,7 @@ void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 
 void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
 {
-	SEC_BUFFER sign_magic;
+	SecBuffer sign_magic;
 	sign_magic.pvBuffer = (void*) server_sign_magic;
 	sign_magic.cbBuffer = sizeof(server_sign_magic);
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sign_magic, context->ServerSigningKey);
@@ -873,11 +873,11 @@ void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
  * @param sealing_key Destination sealing key
  */
 
-void ntlm_generate_sealing_key(uint8* exported_session_key, SEC_BUFFER* seal_magic, uint8* sealing_key)
+void ntlm_generate_sealing_key(uint8* exported_session_key, SecBuffer* seal_magic, uint8* sealing_key)
 {
 	uint8* p;
 	CryptoMd5 md5;
-	SEC_BUFFER buffer;
+	SecBuffer buffer;
 
 	sspi_SecBufferAlloc(&buffer, 16 + seal_magic->cbBuffer);
 	p = (uint8*) buffer.pvBuffer;
@@ -901,7 +901,7 @@ void ntlm_generate_sealing_key(uint8* exported_session_key, SEC_BUFFER* seal_mag
 
 void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 {
-	SEC_BUFFER seal_magic;
+	SecBuffer seal_magic;
 	seal_magic.pvBuffer = (void*) client_seal_magic;
 	seal_magic.cbBuffer = sizeof(client_seal_magic);
 	ntlm_generate_signing_key(context->ExportedSessionKey, &seal_magic, context->ClientSealingKey);
@@ -915,7 +915,7 @@ void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 
 void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
 {
-	SEC_BUFFER seal_magic;
+	SecBuffer seal_magic;
 	seal_magic.pvBuffer = (void*) server_seal_magic;
 	seal_magic.cbBuffer = sizeof(server_seal_magic);
 	ntlm_generate_signing_key(context->ExportedSessionKey, &seal_magic, context->ServerSealingKey);

@@ -25,34 +25,34 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-extern const SEC_PKG_INFO NTLM_SEC_PKG_INFO;
-extern const SEC_PKG_INFO CREDSSP_SEC_PKG_INFO;
+extern const SecPkgInfo NTLM_SecPkgInfo;
+extern const SecPkgInfo CREDSSP_SecPkgInfo;
 
-const SECURITY_FUNCTION_TABLE SSPI_SECURITY_FUNCTION_TABLE;
-extern const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE;
-extern const SECURITY_FUNCTION_TABLE CREDSSP_SECURITY_FUNCTION_TABLE;
+const SecurityFunctionTable SSPI_SecurityFunctionTable;
+extern const SecurityFunctionTable NTLM_SecurityFunctionTable;
+extern const SecurityFunctionTable CREDSSP_SecurityFunctionTable;
 
-const SEC_PKG_INFO* SEC_PKG_INFO_LIST[] =
+const SecPkgInfo* SecPkgInfo_LIST[] =
 {
-	&NTLM_SEC_PKG_INFO,
-	&CREDSSP_SEC_PKG_INFO
+	&NTLM_SecPkgInfo,
+	&CREDSSP_SecPkgInfo
 };
 
-struct _SECURITY_FUNCTION_TABLE_NAME
+struct _SecurityFunctionTable_NAME
 {
 	char* Name;
-	const SECURITY_FUNCTION_TABLE* security_function_table;
+	const SecurityFunctionTable* SecurityFunctionTable;
 };
-typedef struct _SECURITY_FUNCTION_TABLE_NAME SECURITY_FUNCTION_TABLE_NAME;
+typedef struct _SecurityFunctionTable_NAME SecurityFunctionTable_NAME;
 
-const SECURITY_FUNCTION_TABLE_NAME SECURITY_FUNCTION_TABLE_NAME_LIST[] =
+const SecurityFunctionTable_NAME SecurityFunctionTable_NAME_LIST[] =
 {
-	{ "NTLM", &NTLM_SECURITY_FUNCTION_TABLE },
-	{ "CREDSSP", &CREDSSP_SECURITY_FUNCTION_TABLE }
+	{ "NTLM", &NTLM_SecurityFunctionTable },
+	{ "CREDSSP", &CREDSSP_SecurityFunctionTable }
 };
 
-#define SEC_HANDLE_LOWER_MAX	0xFFFFFFFF
-#define SEC_HANDLE_UPPER_MAX	0xFFFFFFFE
+#define SecHandle_LOWER_MAX	0xFFFFFFFF
+#define SecHandle_UPPER_MAX	0xFFFFFFFE
 
 struct _CONTEXT_BUFFER_ALLOC_ENTRY
 {
@@ -185,35 +185,35 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	xfree(credentials);
 }
 
-void sspi_SecBufferAlloc(SEC_BUFFER* sec_buffer, size_t size)
+void sspi_SecBufferAlloc(SecBuffer* SecBuffer, size_t size)
 {
-	sec_buffer->cbBuffer = size;
-	sec_buffer->pvBuffer = xzalloc(size);
+	SecBuffer->cbBuffer = size;
+	SecBuffer->pvBuffer = xzalloc(size);
 }
 
-void sspi_SecBufferFree(SEC_BUFFER* sec_buffer)
+void sspi_SecBufferFree(SecBuffer* SecBuffer)
 {
-	sec_buffer->cbBuffer = 0;
-	xfree(sec_buffer->pvBuffer);
-	sec_buffer->pvBuffer = NULL;
+	SecBuffer->cbBuffer = 0;
+	xfree(SecBuffer->pvBuffer);
+	SecBuffer->pvBuffer = NULL;
 }
 
-SEC_HANDLE* sspi_SecureHandleAlloc()
+SecHandle* sspi_SecureHandleAlloc()
 {
-	SEC_HANDLE* handle = xmalloc(sizeof(SEC_HANDLE));
+	SecHandle* handle = xmalloc(sizeof(SecHandle));
 	sspi_SecureHandleInit(handle);
 	return handle;
 }
 
-void sspi_SecureHandleInit(SEC_HANDLE* handle)
+void sspi_SecureHandleInit(SecHandle* handle)
 {
 	if (!handle)
 		return;
 
-	memset(handle, 0xFF, sizeof(SEC_HANDLE));
+	memset(handle, 0xFF, sizeof(SecHandle));
 }
 
-void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
+void sspi_SecureHandleInvalidate(SecHandle* handle)
 {
 	if (!handle)
 		return;
@@ -221,7 +221,7 @@ void sspi_SecureHandleInvalidate(SEC_HANDLE* handle)
 	sspi_SecureHandleInit(handle);
 }
 
-void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle)
+void* sspi_SecureHandleGetLowerPointer(SecHandle* handle)
 {
 	void* pointer;
 
@@ -233,7 +233,7 @@ void* sspi_SecureHandleGetLowerPointer(SEC_HANDLE* handle)
 	return pointer;
 }
 
-void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer)
+void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer)
 {
 	if (!handle)
 		return;
@@ -241,7 +241,7 @@ void sspi_SecureHandleSetLowerPointer(SEC_HANDLE* handle, void* pointer)
 	handle->dwLower = (uint32*) (~((size_t) pointer));
 }
 
-void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle)
+void* sspi_SecureHandleGetUpperPointer(SecHandle* handle)
 {
 	void* pointer;
 
@@ -253,7 +253,7 @@ void* sspi_SecureHandleGetUpperPointer(SEC_HANDLE* handle)
 	return pointer;
 }
 
-void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer)
+void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer)
 {
 	if (!handle)
 		return;
@@ -261,7 +261,7 @@ void sspi_SecureHandleSetUpperPointer(SEC_HANDLE* handle, void* pointer)
 	handle->dwUpper = (uint32*) (~((size_t) pointer));
 }
 
-void sspi_SecureHandleFree(SEC_HANDLE* handle)
+void sspi_SecureHandleFree(SecHandle* handle)
 {
 	if (!handle)
 		return;
@@ -269,18 +269,18 @@ void sspi_SecureHandleFree(SEC_HANDLE* handle)
 	xfree(handle);
 }
 
-SECURITY_FUNCTION_TABLE* sspi_GetSecurityFunctionTableByName(const char* Name)
+SecurityFunctionTable* sspi_GetSecurityFunctionTableByName(const char* Name)
 {
 	int index;
 	uint32 cPackages;
 
-	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
+	cPackages = ARRAY_SIZE(SecPkgInfo_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (strcmp(Name, SECURITY_FUNCTION_TABLE_NAME_LIST[index].Name) == 0)
+		if (strcmp(Name, SecurityFunctionTable_NAME_LIST[index].Name) == 0)
 		{
-			return (SECURITY_FUNCTION_TABLE*) SECURITY_FUNCTION_TABLE_NAME_LIST[index].security_function_table;
+			return (SecurityFunctionTable*) SecurityFunctionTable_NAME_LIST[index].SecurityFunctionTable;
 		}
 	}
 
@@ -299,26 +299,26 @@ void sspi_GlobalFinish()
 
 /* Package Management */
 
-SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SEC_PKG_INFO** ppPackageInfo)
+SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SecPkgInfo** ppPackageInfo)
 {
 	int index;
 	size_t size;
 	uint32 cPackages;
-	SEC_PKG_INFO* pPackageInfo;
+	SecPkgInfo* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
-	size = sizeof(SEC_PKG_INFO) * cPackages;
+	cPackages = ARRAY_SIZE(SecPkgInfo_LIST);
+	size = sizeof(SecPkgInfo) * cPackages;
 
-	pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+	pPackageInfo = (SecPkgInfo*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		pPackageInfo[index].fCapabilities = SEC_PKG_INFO_LIST[index]->fCapabilities;
-		pPackageInfo[index].wVersion = SEC_PKG_INFO_LIST[index]->wVersion;
-		pPackageInfo[index].wRPCID = SEC_PKG_INFO_LIST[index]->wRPCID;
-		pPackageInfo[index].cbMaxToken = SEC_PKG_INFO_LIST[index]->cbMaxToken;
-		pPackageInfo[index].Name = xstrdup(SEC_PKG_INFO_LIST[index]->Name);
-		pPackageInfo[index].Comment = xstrdup(SEC_PKG_INFO_LIST[index]->Comment);
+		pPackageInfo[index].fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+		pPackageInfo[index].wVersion = SecPkgInfo_LIST[index]->wVersion;
+		pPackageInfo[index].wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+		pPackageInfo[index].cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+		pPackageInfo[index].Name = xstrdup(SecPkgInfo_LIST[index]->Name);
+		pPackageInfo[index].Comment = xstrdup(SecPkgInfo_LIST[index]->Comment);
 	}
 
 	*(pcPackages) = cPackages;
@@ -331,9 +331,9 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 {
 	int index;
 	uint32 cPackages;
-	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
+	SecPkgInfo* pPackageInfo = (SecPkgInfo*) contextBuffer;
 
-	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
+	cPackages = ARRAY_SIZE(SecPkgInfo_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -347,36 +347,36 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	xfree(pPackageInfo);
 }
 
-SECURITY_FUNCTION_TABLE* InitSecurityInterface(void)
+SecurityFunctionTable* InitSecurityInterface(void)
 {
-	SECURITY_FUNCTION_TABLE* security_function_table;
-	security_function_table = xnew(SECURITY_FUNCTION_TABLE);
-	memcpy((void*) security_function_table, (void*) &SSPI_SECURITY_FUNCTION_TABLE, sizeof(SECURITY_FUNCTION_TABLE));
-	return security_function_table;
+	SecurityFunctionTable* table;
+	table = xnew(SecurityFunctionTable);
+	memcpy((void*) table, (void*) &SSPI_SecurityFunctionTable, sizeof(SecurityFunctionTable));
+	return table;
 }
 
-SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** ppPackageInfo)
+SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SecPkgInfo** ppPackageInfo)
 {
 	int index;
 	size_t size;
 	uint32 cPackages;
-	SEC_PKG_INFO* pPackageInfo;
+	SecPkgInfo* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SEC_PKG_INFO_LIST);
+	cPackages = ARRAY_SIZE(SecPkgInfo_LIST);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (strcmp(pszPackageName, SEC_PKG_INFO_LIST[index]->Name) == 0)
+		if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0)
 		{
-			size = sizeof(SEC_PKG_INFO);
-			pPackageInfo = (SEC_PKG_INFO*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+			size = sizeof(SecPkgInfo);
+			pPackageInfo = (SecPkgInfo*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
 
-			pPackageInfo->fCapabilities = SEC_PKG_INFO_LIST[index]->fCapabilities;
-			pPackageInfo->wVersion = SEC_PKG_INFO_LIST[index]->wVersion;
-			pPackageInfo->wRPCID = SEC_PKG_INFO_LIST[index]->wRPCID;
-			pPackageInfo->cbMaxToken = SEC_PKG_INFO_LIST[index]->cbMaxToken;
-			pPackageInfo->Name = xstrdup(SEC_PKG_INFO_LIST[index]->Name);
-			pPackageInfo->Comment = xstrdup(SEC_PKG_INFO_LIST[index]->Comment);
+			pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+			pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
+			pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+			pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+			pPackageInfo->Name = xstrdup(SecPkgInfo_LIST[index]->Name);
+			pPackageInfo->Comment = xstrdup(SecPkgInfo_LIST[index]->Comment);
 
 			*(ppPackageInfo) = pPackageInfo;
 
@@ -391,7 +391,7 @@ SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SEC_PKG_INFO** pp
 
 void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 {
-	SEC_PKG_INFO* pPackageInfo = (SEC_PKG_INFO*) contextBuffer;
+	SecPkgInfo* pPackageInfo = (SecPkgInfo*) contextBuffer;
 
 	if (pPackageInfo->Name)
 		xfree(pPackageInfo->Name);
@@ -406,10 +406,10 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 
 SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry)
+		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry)
 {
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table = sspi_GetSecurityFunctionTableByName(pszPackage);
+	SecurityFunctionTable* table = sspi_GetSecurityFunctionTableByName(pszPackage);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -423,16 +423,16 @@ SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 	return status;
 }
 
-SECURITY_STATUS ExportSecurityContext(CTXT_HANDLE* phContext, uint32 fFlags, SEC_BUFFER* pPackedContext, void* pToken)
+SECURITY_STATUS ExportSecurityContext(CtxtHandle* phContext, uint32 fFlags, SecBuffer* pPackedContext, void* pToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
+SECURITY_STATUS FreeCredentialsHandle(CredHandle* phCredential)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
 
@@ -452,16 +452,16 @@ SECURITY_STATUS FreeCredentialsHandle(CRED_HANDLE* phCredential)
 	return status;
 }
 
-SECURITY_STATUS ImportSecurityContext(char* pszPackage, SEC_BUFFER* pPackedContext, void* pToken, CTXT_HANDLE* phContext)
+SECURITY_STATUS ImportSecurityContext(char* pszPackage, SecBuffer* pPackedContext, void* pToken, CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
 
@@ -483,13 +483,13 @@ SECURITY_STATUS QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulA
 
 /* Context Management */
 
-SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
-		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
+SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
+		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
 
@@ -510,17 +510,17 @@ SECURITY_STATUS AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* ph
 	return status;
 }
 
-SECURITY_STATUS ApplyControlToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pInput)
+SECURITY_STATUS ApplyControlToken(CtxtHandle* phContext, SecBufferDesc* pInput)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS CompleteAuthToken(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pToken)
+SECURITY_STATUS CompleteAuthToken(CtxtHandle* phContext, SecBufferDesc* pToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS DeleteSecurityContext(CTXT_HANDLE* phContext)
+SECURITY_STATUS DeleteSecurityContext(CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
@@ -535,19 +535,19 @@ SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ImpersonateSecurityContext(CTXT_HANDLE* phContext)
+SECURITY_STATUS ImpersonateSecurityContext(CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phCredential);
 
@@ -569,11 +569,11 @@ SECURITY_STATUS InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE
 	return status;
 }
 
-SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
 
@@ -593,28 +593,28 @@ SECURITY_STATUS QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribut
 	return status;
 }
 
-SECURITY_STATUS QuerySecurityContextToken(CTXT_HANDLE* phContext, void* phToken)
+SECURITY_STATUS QuerySecurityContextToken(CtxtHandle* phContext, void* phToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SetContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer)
+SECURITY_STATUS SetContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS RevertSecurityContext(CTXT_HANDLE* phContext)
+SECURITY_STATUS RevertSecurityContext(CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
 
 /* Message Support */
 
-SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
 
@@ -634,11 +634,11 @@ SECURITY_STATUS DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage
 	return status;
 }
 
-SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
 
@@ -658,11 +658,11 @@ SECURITY_STATUS EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_D
 	return status;
 }
 
-SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
 
@@ -682,11 +682,11 @@ SECURITY_STATUS MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DE
 	return status;
 }
 
-SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	char* Name;
 	SECURITY_STATUS status;
-	SECURITY_FUNCTION_TABLE* table;
+	SecurityFunctionTable* table;
 
 	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
 
@@ -706,7 +706,7 @@ SECURITY_STATUS VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessag
 	return status;
 }
 
-const SECURITY_FUNCTION_TABLE SSPI_SECURITY_FUNCTION_TABLE =
+const SecurityFunctionTable SSPI_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	EnumerateSecurityPackages, /* EnumerateSecurityPackages */

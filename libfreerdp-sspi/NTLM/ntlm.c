@@ -34,12 +34,12 @@
 
 char* NTLM_PACKAGE_NAME = "NTLM";
 
-void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_AUTH_IDENTITY* identity)
+void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* identity)
 {
 	size_t size;
-	context->identity.Flags = SEC_AUTH_IDENTITY_UNICODE;
+	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	if (identity->Flags == SEC_AUTH_IDENTITY_ANSI)
+	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
 		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
 		context->identity.UserLength = (uint32) size;
@@ -114,17 +114,17 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 
 SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CRED_HANDLE* phCredential, SEC_TIMESTAMP* ptsExpiry)
+		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry)
 {
 	CREDENTIALS* credentials;
-	SEC_AUTH_IDENTITY* identity;
+	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
 		credentials = sspi_CredentialsNew();
-		identity = (SEC_AUTH_IDENTITY*) pAuthData;
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-		memcpy(&(credentials->identity), identity, sizeof(SEC_AUTH_IDENTITY));
+		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -144,7 +144,7 @@ SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPacka
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_FreeCredentialsHandle(CRED_HANDLE* phCredential)
+SECURITY_STATUS ntlm_FreeCredentialsHandle(CredHandle* phCredential)
 {
 	CREDENTIALS* credentials;
 
@@ -161,7 +161,7 @@ SECURITY_STATUS ntlm_FreeCredentialsHandle(CRED_HANDLE* phCredential)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS ntlm_QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -170,7 +170,7 @@ SECURITY_STATUS ntlm_QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint3
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
-		if (credentials->identity.Flags == SEC_AUTH_IDENTITY_ANSI)
+		if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 			credential_names->sUserName = xstrdup((char*) credentials->identity.User);
 
 		return SEC_E_OK;
@@ -181,15 +181,15 @@ SECURITY_STATUS ntlm_QueryCredentialsAttributes(CRED_HANDLE* phCredential, uint3
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375512/ */
 
-SECURITY_STATUS ntlm_AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
-		SEC_BUFFER_DESC* pInput, uint32 fContextReq, uint32 TargetDataRep, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
+SECURITY_STATUS ntlm_AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
+		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	SEC_BUFFER* input_buffer;
-	SEC_BUFFER* output_buffer;
+	SecBuffer* input_buffer;
+	SecBuffer* output_buffer;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -274,21 +274,21 @@ SECURITY_STATUS ntlm_AcceptSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDL
 	return SEC_E_OUT_OF_SEQUENCE;
 }
 
-SECURITY_STATUS ntlm_ImpersonateSecurityContext(CTXT_HANDLE* phContext)
+SECURITY_STATUS ntlm_ImpersonateSecurityContext(CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_HANDLE* phContext,
+SECURITY_STATUS ntlm_InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SEC_BUFFER_DESC* pInput, uint32 Reserved2, CTXT_HANDLE* phNewContext,
-		SEC_BUFFER_DESC* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
+		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	SEC_BUFFER* input_buffer;
-	SEC_BUFFER* output_buffer;
+	SecBuffer* input_buffer;
+	SecBuffer* output_buffer;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -378,7 +378,7 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CRED_HANDLE* phCredential, CTXT_H
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
 
-SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS ntlm_QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -388,7 +388,7 @@ SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAtt
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		SEC_PKG_CONTEXT_SIZES* ContextSizes = (SEC_PKG_CONTEXT_SIZES*) pBuffer;
+		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
 
 		ContextSizes->cbMaxToken = 2010;
 		ContextSizes->cbMaxSignature = 16;
@@ -401,12 +401,12 @@ SECURITY_STATUS ntlm_QueryContextAttributes(CTXT_HANDLE* phContext, uint32 ulAtt
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS ntlm_RevertSecurityContext(CTXT_HANDLE* phContext)
+SECURITY_STATUS ntlm_RevertSecurityContext(CtxtHandle* phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
 {
 	int index;
 	int length;
@@ -417,8 +417,8 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	uint8* signature;
 	uint32 version = 1;
 	NTLM_CONTEXT* context;
-	SEC_BUFFER* data_buffer = NULL;
-	SEC_BUFFER* signature_buffer = NULL;
+	SecBuffer* data_buffer = NULL;
+	SecBuffer* signature_buffer = NULL;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -483,7 +483,7 @@ SECURITY_STATUS ntlm_EncryptMessage(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUF
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS ntlm_DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	int index;
 	int length;
@@ -494,8 +494,8 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 	uint32 version = 1;
 	NTLM_CONTEXT* context;
 	uint8 expected_signature[16];
-	SEC_BUFFER* data_buffer = NULL;
-	SEC_BUFFER* signature_buffer = NULL;
+	SecBuffer* data_buffer = NULL;
+	SecBuffer* signature_buffer = NULL;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -549,17 +549,17 @@ SECURITY_STATUS ntlm_DecryptMessage(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMe
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_MakeSignature(CTXT_HANDLE* phContext, uint32 fQOP, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS ntlm_MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ntlm_VerifySignature(CTXT_HANDLE* phContext, SEC_BUFFER_DESC* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS ntlm_VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-const SEC_PKG_INFO NTLM_SEC_PKG_INFO =
+const SecPkgInfo NTLM_SecPkgInfo =
 {
 	0x00082B37, /* fCapabilities */
 	1, /* wVersion */
@@ -569,7 +569,7 @@ const SEC_PKG_INFO NTLM_SEC_PKG_INFO =
 	"NTLM Security Package" /* Comment */
 };
 
-const SECURITY_FUNCTION_TABLE NTLM_SECURITY_FUNCTION_TABLE =
+const SecurityFunctionTable NTLM_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */

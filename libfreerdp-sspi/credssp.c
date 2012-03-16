@@ -75,12 +75,12 @@
 
 //#define WITH_DEBUG_CREDSSP	1
 
-void credssp_SetContextIdentity(rdpCredssp* context, SEC_AUTH_IDENTITY* identity)
+void credssp_SetContextIdentity(rdpCredssp* context, SEC_WINNT_AUTH_IDENTITY* identity)
 {
 	size_t size;
-	context->identity.Flags = SEC_AUTH_IDENTITY_UNICODE;
+	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	if (identity->Flags == SEC_AUTH_IDENTITY_ANSI)
+	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
 		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
 		context->identity.UserLength = (uint32) size;
@@ -128,7 +128,7 @@ void credssp_SetContextIdentity(rdpCredssp* context, SEC_AUTH_IDENTITY* identity
 int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
-	SEC_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
@@ -160,7 +160,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	identity.Password = (uint16*) xstrdup(settings->password);
 	identity.PasswordLength = strlen(settings->password);
 
-	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	credssp_SetContextIdentity(credssp, &identity);
 
@@ -195,15 +195,15 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	uint32 fContextReq;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
-	CRED_HANDLE credentials;
+	CredHandle credentials;
 	SEC_TIMESTAMP expiration;
-	SEC_PKG_INFO* pPackageInfo;
-	SEC_AUTH_IDENTITY identity;
-	SEC_BUFFER* p_buffer;
-	SEC_BUFFER input_buffer;
-	SEC_BUFFER output_buffer;
-	SEC_BUFFER_DESC input_buffer_desc;
-	SEC_BUFFER_DESC output_buffer_desc;
+	SecPkgInfo* pPackageInfo;
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SecBuffer* p_buffer;
+	SecBuffer input_buffer;
+	SecBuffer output_buffer;
+	SecBufferDesc input_buffer_desc;
+	SecBufferDesc output_buffer_desc;
 	boolean have_context;
 	boolean have_input_buffer;
 	boolean have_pub_key_auth;
@@ -243,7 +243,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	identity.Password = (uint16*) xstrdup(settings->password);
 	identity.PasswordLength = strlen(settings->password);
 
-	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	status = credssp->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
@@ -257,9 +257,9 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	have_context = false;
 	have_input_buffer = false;
 	have_pub_key_auth = false;
-	memset(&input_buffer, 0, sizeof(SEC_BUFFER));
-	memset(&output_buffer, 0, sizeof(SEC_BUFFER));
-	memset(&credssp->ContextSizes, 0, sizeof(SEC_PKG_CONTEXT_SIZES));
+	memset(&input_buffer, 0, sizeof(SecBuffer));
+	memset(&output_buffer, 0, sizeof(SecBuffer));
+	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
 			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
@@ -301,8 +301,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			if (have_pub_key_auth)
 			{
 				uint8* p;
-				SEC_BUFFER Buffers[2];
-				SEC_BUFFER_DESC Message;
+				SecBuffer Buffers[2];
+				SecBufferDesc Message;
 
 				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
@@ -316,7 +316,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 				Message.cBuffers = 2;
 				Message.ulVersion = SECBUFFER_VERSION;
-				Message.pBuffers = (SEC_BUFFER*) &Buffers;
+				Message.pBuffers = (SecBuffer*) &Buffers;
 
 				sspi_SecBufferAlloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
@@ -419,14 +419,14 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	uint32 fContextReq;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
-	CRED_HANDLE credentials;
+	CredHandle credentials;
 	SEC_TIMESTAMP expiration;
-	SEC_PKG_INFO* pPackageInfo;
-	SEC_BUFFER* p_buffer;
-	SEC_BUFFER input_buffer;
-	SEC_BUFFER output_buffer;
-	SEC_BUFFER_DESC input_buffer_desc;
-	SEC_BUFFER_DESC output_buffer_desc;
+	SecPkgInfo* pPackageInfo;
+	SecBuffer* p_buffer;
+	SecBuffer input_buffer;
+	SecBuffer output_buffer;
+	SecBufferDesc input_buffer_desc;
+	SecBufferDesc output_buffer_desc;
 	boolean have_context;
 	boolean have_input_buffer;
 	boolean have_pub_key_auth;
@@ -460,9 +460,9 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	have_context = false;
 	have_input_buffer = false;
 	have_pub_key_auth = false;
-	memset(&input_buffer, 0, sizeof(SEC_BUFFER));
-	memset(&output_buffer, 0, sizeof(SEC_BUFFER));
-	memset(&credssp->ContextSizes, 0, sizeof(SEC_PKG_CONTEXT_SIZES));
+	memset(&input_buffer, 0, sizeof(SecBuffer));
+	memset(&output_buffer, 0, sizeof(SecBuffer));
+	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
 			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
@@ -527,8 +527,8 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			if (have_pub_key_auth)
 			{
 				uint8* p;
-				SEC_BUFFER Buffers[2];
-				SEC_BUFFER_DESC Message;
+				SecBuffer Buffers[2];
+				SecBufferDesc Message;
 
 				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
@@ -542,7 +542,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 				Message.cBuffers = 2;
 				Message.ulVersion = SECBUFFER_VERSION;
-				Message.pBuffers = (SEC_BUFFER*) &Buffers;
+				Message.pBuffers = (SecBuffer*) &Buffers;
 
 				p = (uint8*) Buffers[0].pvBuffer;
 				p[0]++; /* Public Key +1 */
@@ -634,8 +634,8 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 	uint8* public_key2;
 	uint8* pub_key_auth;
 	int public_key_length;
-	SEC_BUFFER Buffers[2];
-	SEC_BUFFER_DESC Message;
+	SecBuffer Buffers[2];
+	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
 	length = credssp->pubKeyAuth.cbBuffer;
@@ -655,7 +655,7 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
-	Message.pBuffers = (SEC_BUFFER*) &Buffers;
+	Message.pBuffers = (SecBuffer*) &Buffers;
 
 	status = credssp->table->DecryptMessage(&credssp->context, &Message, 0, &pfQOP);
 
@@ -688,8 +688,8 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 {
 	uint8* p;
-	SEC_BUFFER Buffers[2];
-	SEC_BUFFER_DESC Message;
+	SecBuffer Buffers[2];
+	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
 	credssp_encode_ts_credentials(credssp);
@@ -706,7 +706,7 @@ SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
-	Message.pBuffers = (SEC_BUFFER*) &Buffers;
+	Message.pBuffers = (SecBuffer*) &Buffers;
 
 	sspi_SecBufferAlloc(&credssp->authInfo, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
@@ -1020,9 +1020,9 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		credssp->tls = tls;
 		credssp->send_seq_num = 0;
 		credssp->uniconv = freerdp_uniconv_new();
-		memset(&credssp->negoToken, 0, sizeof(SEC_BUFFER));
-		memset(&credssp->pubKeyAuth, 0, sizeof(SEC_BUFFER));
-		memset(&credssp->authInfo, 0, sizeof(SEC_BUFFER));
+		memset(&credssp->negoToken, 0, sizeof(SecBuffer));
+		memset(&credssp->pubKeyAuth, 0, sizeof(SecBuffer));
+		memset(&credssp->authInfo, 0, sizeof(SecBuffer));
 	}
 
 	return credssp;
@@ -1045,7 +1045,7 @@ void credssp_free(rdpCredssp* credssp)
 
 /* SSPI */
 
-const SECURITY_FUNCTION_TABLE CREDSSP_SECURITY_FUNCTION_TABLE =
+const SecurityFunctionTable CREDSSP_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
@@ -1078,7 +1078,7 @@ const SECURITY_FUNCTION_TABLE CREDSSP_SECURITY_FUNCTION_TABLE =
 	NULL, /* SetContextAttributes */
 };
 
-const SEC_PKG_INFO CREDSSP_SEC_PKG_INFO =
+const SecPkgInfo CREDSSP_SecPkgInfo =
 {
 	0x000110733, /* fCapabilities */
 	1, /* wVersion */
