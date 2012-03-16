@@ -55,7 +55,7 @@ void test_EnumerateSecurityPackages(void)
 {
 	uint32 cPackages;
 	SECURITY_STATUS status;
-	SEC_PKG_INFO* pPackageInfo;
+	SecPkgInfo* pPackageInfo;
 
 	status = EnumerateSecurityPackages(&cPackages, &pPackageInfo);
 
@@ -78,7 +78,7 @@ void test_EnumerateSecurityPackages(void)
 void test_QuerySecurityPackageInfo(void)
 {
 	SECURITY_STATUS status;
-	SEC_PKG_INFO* pPackageInfo;
+	SecPkgInfo* pPackageInfo;
 
 	status = QuerySecurityPackageInfo("NTLM", &pPackageInfo);
 
@@ -96,11 +96,11 @@ const char* test_Password = "Password";
 void test_AcquireCredentialsHandle(void)
 {
 	SECURITY_STATUS status;
-	CRED_HANDLE credentials;
+	CredHandle credentials;
 	SEC_TIMESTAMP expiration;
-	SEC_AUTH_IDENTITY identity;
-	SECURITY_FUNCTION_TABLE* table;
-	SEC_PKG_CREDENTIALS_NAMES credential_names;
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SecurityFunctionTable* table;
+	SecPkgCredentials_Names credential_names;
 
 	table = InitSecurityInterface();
 
@@ -110,7 +110,7 @@ void test_AcquireCredentialsHandle(void)
 	identity.DomainLength = sizeof(test_Domain);
 	identity.Password = (uint16*) xstrdup(test_Password);
 	identity.PasswordLength = sizeof(test_Password);
-	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	status = table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
@@ -131,17 +131,17 @@ void test_InitializeSecurityContext(void)
 	uint32 cbMaxLen;
 	uint32 fContextReq;
 	void* output_buffer;
-	CTXT_HANDLE context;
+	CtxtHandle context;
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
-	CRED_HANDLE credentials;
+	CredHandle credentials;
 	SEC_TIMESTAMP expiration;
-	SEC_PKG_INFO* pPackageInfo;
-	SEC_AUTH_IDENTITY identity;
-	SECURITY_FUNCTION_TABLE* table;
-	SEC_BUFFER* p_sec_buffer;
-	SEC_BUFFER output_sec_buffer;
-	SEC_BUFFER_DESC output_sec_buffer_desc;
+	SecPkgInfo* pPackageInfo;
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SecurityFunctionTable* table;
+	SecBuffer* p_SecBuffer;
+	SecBuffer output_SecBuffer;
+	SecBufferDesc output_SecBuffer_desc;
 
 	table = InitSecurityInterface();
 
@@ -161,7 +161,7 @@ void test_InitializeSecurityContext(void)
 	identity.DomainLength = sizeof(test_Domain);
 	identity.Password = (uint16*) xstrdup(test_Password);
 	identity.PasswordLength = sizeof(test_Password);
-	identity.Flags = SEC_AUTH_IDENTITY_ANSI;
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	status = table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
@@ -176,16 +176,16 @@ void test_InitializeSecurityContext(void)
 
 	output_buffer = xmalloc(cbMaxLen);
 
-	output_sec_buffer_desc.ulVersion = 0;
-	output_sec_buffer_desc.cBuffers = 1;
-	output_sec_buffer_desc.pBuffers = &output_sec_buffer;
+	output_SecBuffer_desc.ulVersion = 0;
+	output_SecBuffer_desc.cBuffers = 1;
+	output_SecBuffer_desc.pBuffers = &output_SecBuffer;
 
-	output_sec_buffer.cbBuffer = cbMaxLen;
-	output_sec_buffer.BufferType = SECBUFFER_TOKEN;
-	output_sec_buffer.pvBuffer = output_buffer;
+	output_SecBuffer.cbBuffer = cbMaxLen;
+	output_SecBuffer.BufferType = SECBUFFER_TOKEN;
+	output_SecBuffer.pvBuffer = output_buffer;
 
 	status = table->InitializeSecurityContext(&credentials, NULL, NULL, fContextReq, 0, 0, NULL, 0,
-			&context, &output_sec_buffer_desc, &pfContextAttr, &expiration);
+			&context, &output_SecBuffer_desc, &pfContextAttr, &expiration);
 
 	if (status != SEC_I_CONTINUE_NEEDED)
 	{
@@ -193,13 +193,13 @@ void test_InitializeSecurityContext(void)
 		return;
 	}
 
-	printf("cBuffers: %d ulVersion: %d\n", output_sec_buffer_desc.cBuffers, output_sec_buffer_desc.ulVersion);
+	printf("cBuffers: %d ulVersion: %d\n", output_SecBuffer_desc.cBuffers, output_SecBuffer_desc.ulVersion);
 
-	p_sec_buffer = &output_sec_buffer_desc.pBuffers[0];
+	p_SecBuffer = &output_SecBuffer_desc.pBuffers[0];
 
-	printf("BufferType: 0x%04X cbBuffer:%d\n", p_sec_buffer->BufferType, p_sec_buffer->cbBuffer);
+	printf("BufferType: 0x%04X cbBuffer:%d\n", p_SecBuffer->BufferType, p_SecBuffer->cbBuffer);
 
-	freerdp_hexdump((uint8*) p_sec_buffer->pvBuffer, p_sec_buffer->cbBuffer);
+	freerdp_hexdump((uint8*) p_SecBuffer->pvBuffer, p_SecBuffer->cbBuffer);
 
 	table->FreeCredentialsHandle(&credentials);
 

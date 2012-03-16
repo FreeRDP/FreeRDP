@@ -199,7 +199,7 @@ SECURITY_STATUS negotiate_QueryCredentialsAttributes(CredHandle* phCredential, u
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
 		CREDENTIALS* credentials;
-		SEC_PKG_CREDENTIALS_NAMES* credential_names = (SEC_PKG_CREDENTIALS_NAMES*) pBuffer;
+		SecPkgCredentials_Names* credential_names = (SecPkgCredentials_Names*) pBuffer;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 

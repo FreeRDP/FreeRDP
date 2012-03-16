@@ -409,11 +409,11 @@ typedef struct _SecPkgContext_TargetInformation SecPkgContext_TargetInformation;
 
 #define SECPKG_CRED_ATTR_NAMES				1
 
-struct _SEC_PKG_CREDENTIALS_NAMES
+struct _SecPkgCredentials_Names
 {
 	char* sUserName;
 };
-typedef struct _SEC_PKG_CREDENTIALS_NAMES SEC_PKG_CREDENTIALS_NAMES;
+typedef struct _SecPkgCredentials_Names SecPkgCredentials_Names;
 
 /* InitializeSecurityContext Flags */
 
