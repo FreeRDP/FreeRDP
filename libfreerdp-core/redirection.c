@@ -193,12 +193,6 @@ void redirection_free(rdpRedirection* redirection)
 {
 	if (redirection != NULL)
 	{
-		//these four have already been freed in settings_free() and freerdp_string_free() checks for NULL
-		redirection->username.ascii = NULL;
-		redirection->domain.ascii = NULL;
-		redirection->targetNetAddress.ascii = NULL;
-		redirection->targetNetBiosName.ascii = NULL;
-
 		freerdp_string_free(&redirection->tsvUrl);
 		freerdp_string_free(&redirection->username);
 		freerdp_string_free(&redirection->domain);
