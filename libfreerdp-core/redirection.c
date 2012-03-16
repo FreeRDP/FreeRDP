@@ -105,7 +105,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		uint32 passwordLength;
-		stream_read_uint32(s, passwordLength);
+		stream_read_uint32(s, passwordLength);	/* Note: length (hopefully) includes double zero termination */
 		freerdp_blob_alloc(&redirection->password_cookie, passwordLength);
 		stream_read(s, redirection->password_cookie.data, passwordLength);
 
