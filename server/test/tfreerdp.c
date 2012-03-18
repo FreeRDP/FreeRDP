@@ -30,6 +30,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/listener.h>
 #include <freerdp/channels/wtsvc.h>
 
@@ -47,6 +48,7 @@ struct test_peer_context
 	rdpContext _p;
 
 	RFX_CONTEXT* rfx_context;
+	NSC_CONTEXT* nsc_context;
 	STREAM* s;
 	uint8* icon_data;
 	uint8* bg_data;
@@ -69,6 +71,9 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->rfx_context->height = client->settings->height;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
+	context->nsc_context = nsc_context_new();
+	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8);
+
 	context->s = stream_new(65536);
 
 	context->icon_x = -1;
@@ -90,6 +95,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		xfree(context->icon_data);
 		xfree(context->bg_data);
 		rfx_context_free(context->rfx_context);
+		nsc_context_free(context->nsc_context);
 		if (context->debug_channel)
 		{
 			WTSVirtualChannelClose(context->debug_channel);
@@ -124,7 +130,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	uint8* rgb_data;
 	int size;
 
-	if (!client->settings->rfx_codec)
+	if (!client->settings->rfx_codec && !client->settings->ns_codec)
 		return;
 
 	s = test_peer_stream_init(context);
@@ -138,15 +144,24 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rgb_data = xmalloc(size);
 	memset(rgb_data, 0xA0, size);
 
-	rfx_compose_message(context->rfx_context, s,
-		&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
+	if (client->settings->rfx_codec)
+	{
+		rfx_compose_message(context->rfx_context, s,
+			&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
+		cmd->codecID = client->settings->rfx_codec_id;
+	}
+	else
+	{
+		nsc_compose_message(context->nsc_context, s,
+			rgb_data, rect.width, rect.height, rect.width * 3);
+		cmd->codecID = client->settings->ns_codec_id;
+	}
 
 	cmd->destLeft = 0;
 	cmd->destTop = 0;
 	cmd->destRight = rect.width;
 	cmd->destBottom = rect.height;
 	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
 	cmd->width = rect.width;
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = stream_get_length(s);
@@ -165,7 +180,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 	uint8* rgb_data;
 	int c;
 
-	if (!client->settings->rfx_codec)
+	if (!client->settings->rfx_codec && !client->settings->ns_codec)
 		return;
 
 	if ((fp = fopen("test_icon.ppm", "r")) == NULL)
@@ -209,7 +224,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	if (client->update->dump_rfx)
 		return;
-	if (!client->settings->rfx_codec || !context)
+	if (!context)
 		return;
 	if (context->icon_width < 1 || !context->activated)
 		return;
@@ -222,15 +237,24 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	if (context->icon_x >= 0)
 	{
 		s = test_peer_stream_init(context);
-		rfx_compose_message(context->rfx_context, s,
-			&rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
+		if (client->settings->rfx_codec)
+		{
+			rfx_compose_message(context->rfx_context, s,
+				&rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
+			cmd->codecID = client->settings->rfx_codec_id;
+		}
+		else
+		{
+			nsc_compose_message(context->nsc_context, s,
+				context->bg_data, rect.width, rect.height, rect.width * 3);
+			cmd->codecID = client->settings->ns_codec_id;
+		}
 
 		cmd->destLeft = context->icon_x;
 		cmd->destTop = context->icon_y;
 		cmd->destRight = context->icon_x + context->icon_width;
 		cmd->destBottom = context->icon_y + context->icon_height;
 		cmd->bpp = 32;
-		cmd->codecID = client->settings->rfx_codec_id;
 		cmd->width = context->icon_width;
 		cmd->height = context->icon_height;
 		cmd->bitmapDataLength = stream_get_length(s);
@@ -239,15 +263,24 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	}
 
 	s = test_peer_stream_init(context);
-	rfx_compose_message(context->rfx_context, s,
-		&rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
+	if (client->settings->rfx_codec)
+	{
+		rfx_compose_message(context->rfx_context, s,
+			&rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
+		cmd->codecID = client->settings->rfx_codec_id;
+	}
+	else
+	{
+		nsc_compose_message(context->nsc_context, s,
+			context->icon_data, rect.width, rect.height, rect.width * 3);
+		cmd->codecID = client->settings->ns_codec_id;
+	}
 
 	cmd->destLeft = x;
 	cmd->destTop = y;
 	cmd->destRight = x + context->icon_width;
 	cmd->destBottom = y + context->icon_height;
 	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
 	cmd->width = context->icon_width;
 	cmd->height = context->icon_height;
 	cmd->bitmapDataLength = stream_get_length(s);
