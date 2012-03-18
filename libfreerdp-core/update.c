@@ -178,6 +178,17 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 	stream_read_uint16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
 	stream_read_uint16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
 
+	/**
+	 * There does not seem to be any documentation on why
+	 * xPos / yPos can be larger than width / height
+	 * so it is missing in documentation or a bug in implementation
+	 * 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
+	 */
+	if (pointer_color->xPos >= pointer_color->width)
+		pointer_color->xPos = 0;
+	if (pointer_color->yPos >= pointer_color->height)
+		pointer_color->yPos = 0;
+
 	if (pointer_color->lengthXorMask > 0)
 	{
 		pointer_color->xorMaskData = (uint8*) xmalloc(pointer_color->lengthXorMask);
