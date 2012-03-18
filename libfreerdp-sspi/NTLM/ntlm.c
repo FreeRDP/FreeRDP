@@ -86,6 +86,13 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	context->WorkstationLength = (uint32) size;
 }
 
+void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
+{
+	size_t size;
+	context->TargetName.pvBuffer = (uint16*) freerdp_uniconv_out(context->uniconv, TargetName, &size);
+	context->TargetName.cbBuffer = (uint32) size;
+}
+
 NTLM_CONTEXT* ntlm_ContextNew()
 {
 	NTLM_CONTEXT* context;
@@ -198,6 +205,8 @@ SECURITY_STATUS ntlm_AcceptSecurityContext(CredHandle* phCredential, CtxtHandle*
 		context = ntlm_ContextNew();
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+		ntlm_SetContextTargetName(context, "FreeRDP");
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);

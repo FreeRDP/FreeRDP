@@ -383,7 +383,7 @@ int ntlm_compute_av_pairs_length(NTLM_CONTEXT* context)
 		length += av_pairs->ChannelBindings.length + 4;
 
 	if (av_pairs->TargetName.length > 0)
-		length +=  av_pairs->TargetName.length + 4;
+		length += av_pairs->TargetName.length + 4;
 
 	length += 4;
 
@@ -417,6 +417,40 @@ void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
 	ntlm_output_channel_bindings(context);
 
 	length = ntlm_compute_av_pairs_length(context);
+	sspi_SecBufferAlloc(&context->TargetInfo, length);
+	ntlm_output_av_pairs(context, &context->TargetInfo);
+}
+
+/**
+ * Populate array of AV_PAIRs (server).\n
+ * AV_PAIR @msdn{cc236646}
+ * @param NTLM context
+ */
+
+char* test_NbDomainName = "FREERDP";
+char* test_NbComputerName = "FREERDP";
+char* test_DnsDomainName = "FreeRDP";
+char* test_DnsComputerName = "FreeRDP";
+
+void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context)
+{
+	int length;
+	size_t size;
+	AV_PAIRS* av_pairs = context->av_pairs;
+
+	av_pairs->NbDomainName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_NbDomainName, &size);
+	av_pairs->NbDomainName.length = (uint16) size;
+
+	av_pairs->NbComputerName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_NbComputerName, &size);
+	av_pairs->NbComputerName.length = (uint16) size;
+
+	av_pairs->DnsDomainName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_DnsDomainName, &size);
+	av_pairs->DnsDomainName.length = (uint16) size;
+
+	av_pairs->DnsComputerName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_DnsComputerName, &size);
+	av_pairs->DnsComputerName.length = (uint16) size;
+
+	length = ntlm_compute_av_pairs_length(context) + 4;
 	sspi_SecBufferAlloc(&context->TargetInfo, length);
 	ntlm_output_av_pairs(context, &context->TargetInfo);
 }

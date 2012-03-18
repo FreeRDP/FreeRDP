@@ -115,6 +115,8 @@ typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 NTLM_CONTEXT* ntlm_ContextNew();
 void ntlm_ContextFree(NTLM_CONTEXT* context);
 
-//#define WITH_DEBUG_NTLM		1
+#ifdef WITH_DEBUG_NLA
+#define WITH_DEBUG_NTLM
+#endif
 
 #endif /* FREERDP_SSPI_NTLM_PRIVATE_H */

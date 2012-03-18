@@ -327,6 +327,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buf
 	uint16 TargetInfoMaxLen;
 	uint32 TargetInfoBufferOffset;
 
+	ntlm_generate_client_challenge(context);
+
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -499,6 +501,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 {
 	STREAM* s;
 	int length;
+	uint32 PayloadOffset;
 	uint16 TargetNameLen;
 	uint8* TargetNameBuffer;
 	uint32 TargetNameBufferOffset;
@@ -506,19 +509,51 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	uint8* TargetInfoBuffer;
 	uint32 TargetInfoBufferOffset;
 
+	/* Server Challenge */
+	ntlm_generate_server_challenge(context);
+
+	/* Timestamp */
+	ntlm_generate_timestamp(context);
+
+	/* TargetInfo */
+	ntlm_populate_server_av_pairs(context);
+
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
 
 	stream_write(s, NTLM_SIGNATURE, 8); /* Signature (8 bytes) */
 	stream_write_uint32(s, MESSAGE_TYPE_CHALLENGE); /* MessageType */
 
-	TargetNameLen = context->TargetName.cbBuffer;
-	TargetNameBuffer = context->TargetName.pvBuffer;
+	if (context->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
+	{
+		TargetNameLen = context->TargetName.cbBuffer;
+		TargetNameBuffer = context->TargetName.pvBuffer;
+	}
+	else
+	{
+		TargetNameLen = 0;
+		TargetNameBuffer = NULL;
+	}
 
-	TargetInfoLen = context->TargetInfo.cbBuffer;
-	TargetInfoBuffer = context->TargetInfo.pvBuffer;
+	context->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
 
-	TargetNameBufferOffset = 56;
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
+	{
+		TargetInfoLen = context->TargetInfo.cbBuffer;
+		TargetInfoBuffer = context->TargetInfo.pvBuffer;
+	}
+	else
+	{
+		TargetInfoLen = 0;
+		TargetInfoBuffer = NULL;
+	}
+
+	PayloadOffset = 48;
+
+	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		PayloadOffset += 8;
+
+	TargetNameBufferOffset = PayloadOffset;
 	TargetInfoBufferOffset = TargetNameBufferOffset + TargetNameLen;
 
 	/* TargetNameFields (8 bytes) */
@@ -577,6 +612,15 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	printf("\n");
 #endif
 
+	/* Initialize RC4 seal state */
+	ntlm_init_rc4_seal_states(context);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("ServerChallenge\n");
+	freerdp_hexdump(context->ServerChallenge, 8);
+	printf("\n");
+#endif
+
 	context->state = NTLM_STATE_AUTHENTICATE;
 
 	stream_detach(s);
@@ -594,21 +638,27 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
 	uint32 NegotiateFlags;
 	uint16 DomainNameLen;
 	uint16 DomainNameMaxLen;
+	uint8* DomainNameBuffer;
 	uint32 DomainNameBufferOffset;
 	uint16 UserNameLen;
 	uint16 UserNameMaxLen;
+	uint8* UserNameBuffer;
 	uint32 UserNameBufferOffset;
 	uint16 WorkstationLen;
 	uint16 WorkstationMaxLen;
+	uint8* WorkstationBuffer;
 	uint32 WorkstationBufferOffset;
 	uint16 LmChallengeResponseLen;
 	uint16 LmChallengeResponseMaxLen;
+	uint8* LmChallengeResponseBuffer;
 	uint32 LmChallengeResponseBufferOffset;
 	uint16 NtChallengeResponseLen;
 	uint16 NtChallengeResponseMaxLen;
+	uint8* NtChallengeResponseBuffer;
 	uint32 NtChallengeResponseBufferOffset;
 	uint16 EncryptedRandomSessionKeyLen;
 	uint16 EncryptedRandomSessionKeyMaxLen;
+	uint8* EncryptedRandomSessionKeyBuffer;
 	uint32 EncryptedRandomSessionKeyBufferOffset;
 
 	s = stream_new(0);
@@ -665,6 +715,13 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
 	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
 		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
+
+#ifdef WITH_DEBUG_NTLM
+		printf("Version (length = 8)\n");
+		freerdp_hexdump(s->p, 8);
+		printf("\n");
+#endif
+
 		stream_seek(s, 8); /* Version (8 bytes) */
 	}
 
@@ -678,6 +735,72 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
 	freerdp_hexdump(s->data, length);
 	printf("\n");
 #endif
+
+	/* DomainName */
+	if (DomainNameLen > 0)
+	{
+		DomainNameBuffer = s->data + DomainNameBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
+		freerdp_hexdump(DomainNameBuffer, DomainNameLen);
+		printf("\n");
+#endif
+	}
+
+	/* UserName */
+	if (UserNameLen > 0)
+	{
+		UserNameBuffer = s->data + UserNameBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
+		freerdp_hexdump(UserNameBuffer, UserNameLen);
+		printf("\n");
+#endif
+	}
+
+	/* Workstation */
+	if (WorkstationLen > 0)
+	{
+		WorkstationBuffer = s->data + WorkstationBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
+		freerdp_hexdump(WorkstationBuffer, WorkstationLen);
+		printf("\n");
+#endif
+	}
+
+	/* LmChallengeResponse */
+	if (LmChallengeResponseLen > 0)
+	{
+		LmChallengeResponseBuffer = s->data + LmChallengeResponseBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
+		freerdp_hexdump(LmChallengeResponseBuffer, LmChallengeResponseLen);
+		printf("\n");
+#endif
+	}
+
+	/* NtChallengeResponse */
+	if (NtChallengeResponseLen > 0)
+	{
+		NtChallengeResponseBuffer = s->data + NtChallengeResponseBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
+		freerdp_hexdump(NtChallengeResponseBuffer, NtChallengeResponseLen);
+		printf("\n");
+#endif
+	}
+
+	/* EncryptedRandomSessionKey */
+	if (EncryptedRandomSessionKeyLen > 0)
+	{
+		EncryptedRandomSessionKeyBuffer = s->data + EncryptedRandomSessionKeyBufferOffset;
+#ifdef WITH_DEBUG_NTLM
+		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
+		freerdp_hexdump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+		printf("\n");
+#endif
+	}
 
 	context->state = NTLM_STATE_FINAL;
 
