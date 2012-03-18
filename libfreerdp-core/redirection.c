@@ -105,7 +105,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		uint32 passwordLength;
-		stream_read_uint32(s, passwordLength);
+		stream_read_uint32(s, passwordLength);	/* Note: length (hopefully) includes double zero termination */
 		freerdp_blob_alloc(&redirection->password_cookie, passwordLength);
 		stream_read(s, redirection->password_cookie.data, passwordLength);
 
@@ -193,12 +193,6 @@ void redirection_free(rdpRedirection* redirection)
 {
 	if (redirection != NULL)
 	{
-		//these four have already been freed in settings_free() and freerdp_string_free() checks for NULL
-		redirection->username.ascii = NULL;
-		redirection->domain.ascii = NULL;
-		redirection->targetNetAddress.ascii = NULL;
-		redirection->targetNetBiosName.ascii = NULL;
-
 		freerdp_string_free(&redirection->tsvUrl);
 		freerdp_string_free(&redirection->username);
 		freerdp_string_free(&redirection->domain);

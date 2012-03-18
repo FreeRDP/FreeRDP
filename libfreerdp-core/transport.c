@@ -301,12 +301,13 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	wait_obj_get_fds(transport->recv_event, rfds, rcount);
 }
 
-int transport_check_fds(rdpTransport* transport)
+int transport_check_fds(rdpTransport** ptransport)
 {
 	int pos;
 	int status;
 	uint16 length;
 	STREAM* received;
+	rdpTransport* transport = *ptransport;
 
 	wait_obj_clear(transport->recv_event);
 
@@ -384,6 +385,9 @@ int transport_check_fds(rdpTransport* transport)
 
 		if (status < 0)
 			return status;
+
+		/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
+		transport = *ptransport;
 	}
 
 	return 0;

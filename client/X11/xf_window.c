@@ -206,6 +206,8 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 	hints.decorations = (show) ? MWM_DECOR_ALL : 0;
 	hints.functions = MWM_FUNC_ALL ; 
 	hints.flags = MWM_HINTS_DECORATIONS | MWM_HINTS_FUNCTIONS;
+	hints.inputMode = 0;
+	hints.status = 0;
 
 	XChangeProperty(xfi->display, window->handle, xfi->_MOTIF_WM_HINTS, xfi->_MOTIF_WM_HINTS, 32,
 		PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);

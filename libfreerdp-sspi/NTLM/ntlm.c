@@ -116,6 +116,22 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	if (!context)
 		return;
 
+	freerdp_uniconv_free(context->uniconv);
+	crypto_rc4_free(context->send_rc4_seal);
+	crypto_rc4_free(context->recv_rc4_seal);
+	sspi_SecBufferFree(&context->NegotiateMessage);
+	sspi_SecBufferFree(&context->ChallengeMessage);
+	sspi_SecBufferFree(&context->AuthenticateMessage);
+	sspi_SecBufferFree(&context->TargetInfo);
+	sspi_SecBufferFree(&context->TargetName);
+	sspi_SecBufferFree(&context->NtChallengeResponse);
+	sspi_SecBufferFree(&context->LmChallengeResponse);
+	xfree(context->identity.User);
+	xfree(context->identity.Password);
+	xfree(context->identity.Domain);
+	xfree(context->Workstation);
+	xfree(context->av_pairs->Timestamp.value);
+	xfree(context->av_pairs);
 	xfree(context);
 }
 
@@ -385,6 +401,20 @@ SECURITY_STATUS ntlm_InitializeSecurityContext(CredHandle* phCredential, CtxtHan
 	return SEC_E_OUT_OF_SEQUENCE;
 }
 
+/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375354 */
+
+SECURITY_STATUS ntlm_DeleteSecurityContext(CtxtHandle* phContext)
+{
+	NTLM_CONTEXT* context;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	ntlm_ContextFree(context);
+	return SEC_E_OK;
+}
+
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
 
 SECURITY_STATUS ntlm_QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer)
@@ -590,7 +620,7 @@ const SecurityFunctionTable NTLM_SecurityFunctionTable =
 	ntlm_InitializeSecurityContext, /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
-	NULL, /* DeleteSecurityContext */
+	ntlm_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	ntlm_QueryContextAttributes, /* QueryContextAttributes */
 	ntlm_ImpersonateSecurityContext, /* ImpersonateSecurityContext */

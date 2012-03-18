@@ -128,10 +128,22 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	rdp_client_disconnect(rdp);
 
+	/* FIXME: this is a subset of rdp_free */
+	crypto_rc4_free(rdp->rc4_decrypt_key);
+	crypto_rc4_free(rdp->rc4_encrypt_key);
+	crypto_des3_free(rdp->fips_encrypt);
+	crypto_des3_free(rdp->fips_decrypt);
+	crypto_hmac_free(rdp->fips_hmac);
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
 	transport_free(rdp->transport);
+
+	/* FIXME: this is a subset of settings_free */
+	freerdp_blob_free(settings->server_random);
+	freerdp_blob_free(settings->server_certificate);
+	xfree(settings->ip_address);
+
 	rdp->transport = transport_new(settings);
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
