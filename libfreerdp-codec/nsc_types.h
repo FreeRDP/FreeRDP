@@ -30,7 +30,7 @@
 
 struct _NSC_CONTEXT_PRIV
 {
-	uint8* plane_buf[4];		/* Decompressed Plane Buffers in the respective order */
+	uint8* plane_buf[5];		/* Decompressed Plane Buffers in the respective order */
 	uint32 plane_buf_length;	/* Lengths of each plane buffer */
 
 	/* profilers */

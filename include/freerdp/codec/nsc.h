@@ -55,6 +55,9 @@ struct _NSC_CONTEXT
 	uint32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
 	RDP_PIXEL_FORMAT pixel_format;
 
+	/* color palette allocated by the application */
+	const uint8* palette;
+
 	void (*decode)(NSC_CONTEXT* context);
 	void (*encode)(NSC_CONTEXT* context, uint8* bmpdata, int rowstride);
 
