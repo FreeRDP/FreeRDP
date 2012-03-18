@@ -28,6 +28,10 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
+#ifdef WITH_SSE2
+#include "nsc_sse2.h"
+#endif
+
 #ifndef NSC_INIT_SIMD
 #define NSC_INIT_SIMD(_nsc_context) do { } while (0)
 #endif

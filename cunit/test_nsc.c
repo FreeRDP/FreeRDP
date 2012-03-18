@@ -363,7 +363,12 @@ void test_nsc_encode(void)
 
 	enc_stream = stream_new(65536);
 	stream_clear(enc_stream);
-	nsc_compose_message(context, enc_stream, rgb_data, 64, 64, 64 * 3);
+
+	for (i = 0; i < 30000; i++)
+	{
+		stream_set_pos(enc_stream, 0);
+		nsc_compose_message(context, enc_stream, rgb_data, 64, 64, 64 * 3);
+	}
 	/*freerdp_hexdump(stream_get_head(enc_stream), stream_get_length(enc_stream));*/
 	nsc_process_message(context, 32, 64, 64, stream_get_head(enc_stream), stream_get_length(enc_stream));
 	/*freerdp_hexdump(context->bmpdata, 64 * 64 * 4);*/
