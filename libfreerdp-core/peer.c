@@ -18,6 +18,7 @@
  */
 
 #include "certificate.h"
+#include <freerdp/utils/tcp.h>
 
 #include "peer.h"
 
@@ -25,7 +26,9 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 {
 	client->context->rdp->settings->server_mode = true;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
-	if (client->context->rdp->settings->rdp_key_file != NULL) {
+
+	if (client->context->rdp->settings->rdp_key_file != NULL)
+	{
 		client->context->rdp->settings->server_key =
 		    key_new(client->context->rdp->settings->rdp_key_file);
 	}
@@ -43,12 +46,13 @@ static boolean freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcou
 
 static boolean freerdp_peer_check_fds(freerdp_peer* client)
 {
-	rdpRdp* rdp;
 	int status;
+	rdpRdp* rdp;
 
 	rdp = client->context->rdp;
 
 	status = rdp_check_fds(rdp);
+
 	if (status < 0)
 		return false;
 
@@ -62,7 +66,6 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 	uint32 share_id;
 	uint8 compressed_type;
 	uint16 compressed_len;
-
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return false;
@@ -89,8 +92,10 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
+
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
 				return false;
+
 			if (client->PostConnect)
 			{
 				if (!client->PostConnect(client))
@@ -101,12 +106,14 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 				 */
 				client->PostConnect = NULL;
 			}
+
 			if (client->Activate)
 			{
 				/* Activate will be called everytime after the client is activated/reactivated. */
 				if (!client->Activate(client))
 					return false;
 			}
+
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
@@ -123,7 +130,7 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 
 static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
-	rdpRdp *rdp;
+	rdpRdp* rdp;
 	uint16 length;
 	uint16 pduType;
 	uint16 pduLength;
@@ -142,6 +149,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	if (rdp->settings->encryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
+
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
@@ -181,8 +189,8 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 {
-	uint16 length;
 	rdpRdp* rdp;
+	uint16 length;
 	rdpFastPath* fastpath;
 
 	rdp = client->context->rdp;
@@ -254,7 +262,9 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 		case CONNECTION_STATE_ESTABLISH_KEYS:
 			if (!rdp_server_accept_client_info(client->context->rdp, s))
 				return false;
+
 			IFCALL(client->Capabilities, client);
+
 			if (!rdp_send_demand_active(client->context->rdp))
 				return false;
 			break;
@@ -332,6 +342,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	client = xnew(freerdp_peer);
 
+	freerdp_tcp_set_no_delay(sockfd, true);
+
 	if (client != NULL)
 	{
 		client->sockfd = sockfd;
@@ -354,4 +366,3 @@ void freerdp_peer_free(freerdp_peer* client)
 		xfree(client);
 	}
 }
-

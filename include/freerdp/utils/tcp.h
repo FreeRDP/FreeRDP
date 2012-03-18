@@ -29,4 +29,6 @@ FREERDP_API int freerdp_tcp_read(int sockfd, uint8* data, int length);
 FREERDP_API int freerdp_tcp_write(int sockfd, uint8* data, int length);
 FREERDP_API int freerdp_tcp_disconnect(int sockfd);
 
+FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay);
+
 #endif /* FREERDP_TCP_UTILS_H */

@@ -171,3 +171,16 @@ int freerdp_tcp_disconnect(int sockfd)
 
 	return 0;
 }
+
+int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay)
+{
+	uint32 option_value;
+	socklen_t option_len;
+
+	option_value = no_delay;
+	option_len = sizeof(option_value);
+
+	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
+
+	return 0;
+}
