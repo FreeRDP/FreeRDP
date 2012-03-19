@@ -120,8 +120,8 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 		return;
 
 	freerdp_uniconv_free(context->uniconv);
-	crypto_rc4_free(context->send_rc4_seal);
-	crypto_rc4_free(context->recv_rc4_seal);
+	crypto_rc4_free(context->SendRc4Seal);
+	crypto_rc4_free(context->RecvRc4Seal);
 	sspi_SecBufferFree(&context->NegotiateMessage);
 	sspi_SecBufferFree(&context->ChallengeMessage);
 	sspi_SecBufferFree(&context->AuthenticateMessage);
@@ -225,6 +225,7 @@ SECURITY_STATUS ntlm_AcceptSecurityContext(CredHandle* phCredential, CtxtHandle*
 	if (!context)
 	{
 		context = ntlm_ContextNew();
+		context->server = true;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		ntlm_SetContextIdentity(context, &credentials->identity);
@@ -489,14 +490,14 @@ SECURITY_STATUS ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBuffe
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac, context->ClientSigningKey, 16, EVP_md5(), NULL);
+	HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
 	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
 	HMAC_Update(&hmac, data, length);
 	HMAC_Final(&hmac, digest, NULL);
 	HMAC_CTX_cleanup(&hmac);
 
 	/* Encrypt message using with RC4, result overwrites original buffer */
-	crypto_rc4(context->send_rc4_seal, length, data, data_buffer->pvBuffer);
+	crypto_rc4(context->SendRc4Seal, length, data, data_buffer->pvBuffer);
 	xfree(data);
 
 #ifdef WITH_DEBUG_NTLM
@@ -510,7 +511,7 @@ SECURITY_STATUS ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBuffe
 #endif
 
 	/* RC4-encrypt first 8 bytes of digest */
-	crypto_rc4(context->send_rc4_seal, 8, digest, checksum);
+	crypto_rc4(context->SendRc4Seal, 8, digest, checksum);
 
 	signature = (uint8*) signature_buffer->pvBuffer;
 
@@ -518,7 +519,7 @@ SECURITY_STATUS ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBuffe
 	memcpy(signature, (void*) &version, 4);
 	memcpy(&signature[4], (void*) checksum, 8);
 	memcpy(&signature[12], (void*) &(MessageSeqNo), 4);
-	context->send_seq_num++;
+	context->SendSeqNum++;
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Signature (length = %d)\n", signature_buffer->cbBuffer);
@@ -565,11 +566,11 @@ SECURITY_STATUS ntlm_DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessa
 	memcpy(data, data_buffer->pvBuffer, length);
 
 	/* Decrypt message using with RC4 */
-	crypto_rc4(context->recv_rc4_seal, length, data, data_buffer->pvBuffer);
+	crypto_rc4(context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac, context->ServerSigningKey, 16, EVP_md5(), NULL);
+	HMAC_Init_ex(&hmac, context->RecvSigningKey, 16, EVP_md5(), NULL);
 	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
 	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 	HMAC_Final(&hmac, digest, NULL);
@@ -577,13 +578,13 @@ SECURITY_STATUS ntlm_DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessa
 	xfree(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
-	crypto_rc4(context->recv_rc4_seal, 8, digest, checksum);
+	crypto_rc4(context->RecvRc4Seal, 8, digest, checksum);
 
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	memcpy(expected_signature, (void*) &version, 4);
 	memcpy(&expected_signature[4], (void*) checksum, 8);
 	memcpy(&expected_signature[12], (void*) &(MessageSeqNo), 4);
-	context->recv_seq_num++;
+	context->RecvSeqNum++;
 
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
 	{

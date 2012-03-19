@@ -532,8 +532,24 @@ void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
 
 void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 {
-	context->send_rc4_seal = crypto_rc4_init(context->ClientSealingKey, 16);
-	context->recv_rc4_seal = crypto_rc4_init(context->ServerSealingKey, 16);
+	if (context->server)
+	{
+		context->SendSigningKey = context->ServerSigningKey;
+		context->RecvSigningKey = context->ClientSigningKey;
+		context->SendSealingKey = context->ClientSealingKey;
+		context->RecvSealingKey = context->ServerSealingKey;
+		context->SendRc4Seal = crypto_rc4_init(context->ServerSealingKey, 16);
+		context->RecvRc4Seal = crypto_rc4_init(context->ClientSealingKey, 16);
+	}
+	else
+	{
+		context->SendSigningKey = context->ClientSigningKey;
+		context->RecvSigningKey = context->ServerSigningKey;
+		context->SendSealingKey = context->ServerSealingKey;
+		context->RecvSealingKey = context->ClientSealingKey;
+		context->SendRc4Seal = crypto_rc4_init(context->ClientSealingKey, 16);
+		context->RecvRc4Seal = crypto_rc4_init(context->ServerSealingKey, 16);
+	}
 }
 
 void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)

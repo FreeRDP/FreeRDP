@@ -77,14 +77,19 @@ typedef enum _AV_ID AV_ID;
 
 struct _NTLM_CONTEXT
 {
+	boolean server;
 	boolean ntlm_v2;
 	NTLM_STATE state;
 	UNICONV* uniconv;
-	int send_seq_num;
-	int recv_seq_num;
+	int SendSeqNum;
+	int RecvSeqNum;
+	CryptoRc4 SendRc4Seal;
+	CryptoRc4 RecvRc4Seal;
+	uint8* SendSigningKey;
+	uint8* RecvSigningKey;
+	uint8* SendSealingKey;
+	uint8* RecvSealingKey;
 	AV_PAIRS* av_pairs;
-	CryptoRc4 send_rc4_seal;
-	CryptoRc4 recv_rc4_seal;
 	uint32 NegotiateFlags;
 	uint16* Workstation;
 	uint32 WorkstationLength;
