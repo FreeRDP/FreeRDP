@@ -73,7 +73,9 @@
  *
  */
 
-//#define WITH_DEBUG_CREDSSP	1
+#ifdef WITH_DEBUG_NLA
+#define WITH_DEBUG_CREDSSP
+#endif
 
 void credssp_SetContextIdentity(rdpCredssp* context, SEC_WINNT_AUTH_IDENTITY* identity)
 {
@@ -170,6 +172,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	xfree(identity.User);
 	xfree(identity.Domain);
 	xfree(identity.Password);
+
 	return 1;
 }
 
@@ -178,14 +181,35 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
  * @param credssp
  */
 
+char* test_User = "username";
+char* test_Password = "password";
+
 int credssp_ntlm_server_init(rdpCredssp* credssp)
 {
+	size_t size;
 	freerdp* instance;
+	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
+	identity.User = (uint16*) freerdp_uniconv_out(credssp->uniconv, test_User, &size);
+	identity.UserLength = (uint32) size;
+
+	identity.Domain = (uint16*) NULL;
+	identity.DomainLength = 0;
+
+	identity.Password = (uint16*) freerdp_uniconv_out(credssp->uniconv, test_Password, &size);
+	identity.PasswordLength = (uint32) size;
+
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+	credssp_SetContextIdentity(credssp, &identity);
+
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
+
+	xfree(identity.User);
+	xfree(identity.Password);
 
 	return 1;
 }
@@ -494,7 +518,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 #ifdef WITH_DEBUG_CREDSSP
 		printf("Receiving Authentication Token\n");
-		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+		credssp_buffer_print(credssp);
 #endif
 
 		p_buffer = &input_buffer_desc.pBuffers[0];
@@ -519,12 +543,20 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			input_buffer.pvBuffer = NULL;
 		}
 
+		p_buffer = &output_buffer_desc.pBuffers[0];
+		credssp->negoToken.pvBuffer = p_buffer->pvBuffer;
+		credssp->negoToken.cbBuffer = p_buffer->cbBuffer;
+
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
 			if (credssp->table->CompleteAuthToken != NULL)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
 			have_pub_key_auth = true;
+
+			sspi_SecBufferFree(&credssp->negoToken);
+			credssp->negoToken.pvBuffer = NULL;
+			credssp->negoToken.cbBuffer = 0;
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
@@ -572,14 +604,9 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		/* send authentication token */
 
-		p_buffer = &output_buffer_desc.pBuffers[0];
-
-		credssp->negoToken.pvBuffer = p_buffer->pvBuffer;
-		credssp->negoToken.cbBuffer = p_buffer->cbBuffer;
-
 #ifdef WITH_DEBUG_CREDSSP
 		printf("Sending Authentication Token\n");
-		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+		credssp_buffer_print(credssp);
 #endif
 
 		credssp_send(credssp);
@@ -590,6 +617,16 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		have_context = true;
 	}
+
+	/* Send Encrypted Public Key +1 */
+
+	//credssp_send(credssp);
+	//credssp_buffer_free(credssp);
+
+	/* Receive encrypted credentials */
+
+	if (credssp_recv(credssp) < 0)
+		return -1;
 
 	if (status != SEC_E_OK)
 	{
@@ -1000,6 +1037,27 @@ int credssp_recv(rdpCredssp* credssp)
 	stream_free(s);
 
 	return 0;
+}
+
+void credssp_buffer_print(rdpCredssp* credssp)
+{
+	if (credssp->negoToken.cbBuffer > 0)
+	{
+		printf("CredSSP.negoToken (length = %d):\n", credssp->negoToken.cbBuffer);
+		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+	}
+
+	if (credssp->pubKeyAuth.cbBuffer > 0)
+	{
+		printf("CredSSP.pubKeyAuth (length = %d):\n", credssp->pubKeyAuth.cbBuffer);
+		freerdp_hexdump(credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
+	}
+
+	if (credssp->authInfo.cbBuffer > 0)
+	{
+		printf("CredSSP.authInfo (length = %d):\n", credssp->authInfo.cbBuffer);
+		freerdp_hexdump(credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
+	}
 }
 
 void credssp_buffer_free(rdpCredssp* credssp)

@@ -22,16 +22,19 @@
 
 #include <freerdp/crypto/tls.h>
 
-static CryptoCert tls_get_certificate(rdpTls* tls)
+static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
 {
 	CryptoCert cert;
 	X509* server_cert;
 
-	server_cert = SSL_get_peer_certificate(tls->ssl);
+	if (peer)
+		server_cert = SSL_get_peer_certificate(tls->ssl);
+	else
+		server_cert = SSL_get_certificate(tls->ssl);
 
 	if (!server_cert)
 	{
-		printf("ssl_verify: failed to get the server SSL certificate\n");
+		printf("tls_get_certificate: failed to get the server TLS certificate\n");
 		cert = NULL;
 	}
 	else
@@ -102,7 +105,7 @@ boolean tls_connect(rdpTls* tls)
 		}
 	}
 
-	cert = tls_get_certificate(tls);
+	cert = tls_get_certificate(tls, true);
 
 	if (cert == NULL)
 	{
@@ -126,6 +129,7 @@ boolean tls_connect(rdpTls* tls)
 
 boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 {
+	CryptoCert cert;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(SSLv23_server_method());
@@ -159,6 +163,20 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_use_certificate_file failed\n");
+		return false;
+	}
+
+	cert = tls_get_certificate(tls, false);
+
+	if (cert == NULL)
+	{
+		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		return false;
+	}
+
+	if (!crypto_cert_get_public_key(cert, &tls->public_key))
+	{
+		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		return false;
 	}
 
