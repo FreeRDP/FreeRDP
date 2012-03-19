@@ -18,6 +18,8 @@
 # limitations under the License.
 
 set(FREERDP_SSPI_NTLM_SRCS
+	NTLM/ntlm_av_pairs.c
+	NTLM/ntlm_av_pairs.h
 	NTLM/ntlm_compute.c
 	NTLM/ntlm_compute.h
 	NTLM/ntlm_message.c

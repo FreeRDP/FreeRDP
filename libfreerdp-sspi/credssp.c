@@ -618,11 +618,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		have_context = true;
 	}
 
-	/* Send Encrypted Public Key +1 */
-
-	//credssp_send(credssp);
-	//credssp_buffer_free(credssp);
-
 	/* Receive encrypted credentials */
 
 	if (credssp_recv(credssp) < 0)
