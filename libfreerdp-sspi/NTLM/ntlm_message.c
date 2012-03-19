@@ -437,6 +437,12 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buf
 	/* KeyExchangeKey */
 	ntlm_generate_key_exchange_key(context);
 
+	/* RandomSessionKey */
+	ntlm_generate_random_session_key(context);
+
+	/* ExportedSessionKey */
+	ntlm_generate_exported_session_key(context);
+
 	/* EncryptedRandomSessionKey */
 	ntlm_encrypt_random_session_key(context);
 
@@ -476,12 +482,20 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buf
 	freerdp_hexdump(context->RandomSessionKey, 16);
 	printf("\n");
 
-	printf("ClientSignKey\n");
+	printf("ClientSigningKey\n");
 	freerdp_hexdump(context->ClientSigningKey, 16);
 	printf("\n");
 
 	printf("ClientSealingKey\n");
 	freerdp_hexdump(context->ClientSealingKey, 16);
+	printf("\n");
+
+	printf("ServerSigningKey\n");
+	freerdp_hexdump(context->ServerSigningKey, 16);
+	printf("\n");
+
+	printf("ServerSealingKey\n");
+	freerdp_hexdump(context->ServerSealingKey, 16);
 	printf("\n");
 
 	printf("Timestamp\n");
@@ -609,15 +623,6 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 #ifdef WITH_DEBUG_NTLM
 	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
 	freerdp_hexdump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
-	printf("\n");
-#endif
-
-	/* Initialize RC4 seal state */
-	ntlm_init_rc4_seal_states(context);
-
-#ifdef WITH_DEBUG_NTLM
-	printf("ServerChallenge\n");
-	freerdp_hexdump(context->ServerChallenge, 8);
 	printf("\n");
 #endif
 
@@ -783,7 +788,13 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
 	/* NtChallengeResponse */
 	if (NtChallengeResponseLen > 0)
 	{
+		uint8* ClientChallengeBuffer;
+
 		NtChallengeResponseBuffer = s->data + NtChallengeResponseBufferOffset;
+
+		ClientChallengeBuffer = NtChallengeResponseBuffer + 32;
+		memcpy(context->ClientChallenge, ClientChallengeBuffer, 8);
+
 #ifdef WITH_DEBUG_NTLM
 		printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
 		freerdp_hexdump(NtChallengeResponseBuffer, NtChallengeResponseLen);
@@ -795,12 +806,89 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
 	if (EncryptedRandomSessionKeyLen > 0)
 	{
 		EncryptedRandomSessionKeyBuffer = s->data + EncryptedRandomSessionKeyBufferOffset;
+		memcpy(context->EncryptedRandomSessionKey, EncryptedRandomSessionKeyBuffer, 16);
+
 #ifdef WITH_DEBUG_NTLM
 		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
 		freerdp_hexdump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
 		printf("\n");
 #endif
 	}
+
+	/* LmChallengeResponse */
+	ntlm_compute_lm_v2_response(context);
+
+	if (context->ntlm_v2)
+		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+
+	/* NtChallengeResponse */
+	ntlm_compute_ntlm_v2_response(context);
+
+	/* KeyExchangeKey */
+	ntlm_generate_key_exchange_key(context);
+
+	/* EncryptedRandomSessionKey */
+	ntlm_decrypt_random_session_key(context);
+
+	/* ExportedSessionKey */
+	ntlm_generate_exported_session_key(context);
+
+	/* Generate signing keys */
+	ntlm_generate_client_signing_key(context);
+	ntlm_generate_server_signing_key(context);
+
+	/* Generate sealing keys */
+	ntlm_generate_client_sealing_key(context);
+	ntlm_generate_server_sealing_key(context);
+
+	/* Initialize RC4 seal state */
+	ntlm_init_rc4_seal_states(context);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("ClientChallenge\n");
+	freerdp_hexdump(context->ClientChallenge, 8);
+	printf("\n");
+
+	printf("ServerChallenge\n");
+	freerdp_hexdump(context->ServerChallenge, 8);
+	printf("\n");
+
+	printf("SessionBaseKey\n");
+	freerdp_hexdump(context->SessionBaseKey, 16);
+	printf("\n");
+
+	printf("KeyExchangeKey\n");
+	freerdp_hexdump(context->KeyExchangeKey, 16);
+	printf("\n");
+
+	printf("ExportedSessionKey\n");
+	freerdp_hexdump(context->ExportedSessionKey, 16);
+	printf("\n");
+
+	printf("RandomSessionKey\n");
+	freerdp_hexdump(context->RandomSessionKey, 16);
+	printf("\n");
+
+	printf("ClientSigningKey\n");
+	freerdp_hexdump(context->ClientSigningKey, 16);
+	printf("\n");
+
+	printf("ClientSealingKey\n");
+	freerdp_hexdump(context->ClientSealingKey, 16);
+	printf("\n");
+
+	printf("ServerSigningKey\n");
+	freerdp_hexdump(context->ServerSigningKey, 16);
+	printf("\n");
+
+	printf("ServerSealingKey\n");
+	freerdp_hexdump(context->ServerSealingKey, 16);
+	printf("\n");
+
+	printf("Timestamp\n");
+	freerdp_hexdump(context->Timestamp, 8);
+	printf("\n");
+#endif
 
 	context->state = NTLM_STATE_FINAL;
 

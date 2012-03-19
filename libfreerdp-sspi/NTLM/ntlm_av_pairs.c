@@ -23,6 +23,8 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
+#include "ntlm_compute.h"
+
 #include "ntlm_av_pairs.h"
 
 const char* const AV_PAIRS_STRINGS[] =

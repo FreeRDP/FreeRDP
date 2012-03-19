@@ -39,6 +39,7 @@ struct rdp_credssp
 	rdpTls* tls;
 	boolean server;
 	int send_seq_num;
+	int recv_seq_num;
 	UNICONV* uniconv;
 	freerdp* instance;
 	CtxtHandle context;

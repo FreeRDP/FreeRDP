@@ -77,49 +77,27 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
-void credssp_SetContextIdentity(rdpCredssp* context, SEC_WINNT_AUTH_IDENTITY* identity)
+void credssp_SetContextIdentity(rdpCredssp* context, char* user, char* domain, char* password)
 {
 	size_t size;
 	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+	context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, user, &size);
+	context->identity.UserLength = (uint32) size;
+
+	if (domain)
 	{
-		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
-		context->identity.UserLength = (uint32) size;
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Domain, &size);
-			context->identity.DomainLength = (uint32) size;
-		}
-		else
-		{
-			context->identity.Domain = (uint16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Password, &size);
-		context->identity.PasswordLength = (uint32) size;
+		context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, domain, &size);
+		context->identity.DomainLength = (uint32) size;
 	}
 	else
 	{
-		context->identity.User = (uint16*) xmalloc(identity->UserLength);
-		memcpy(context->identity.User, identity->User, identity->UserLength);
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
-			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
-		}
-		else
-		{
-			context->identity.Domain = (uint16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
-		memcpy(context->identity.Password, identity->User, identity->PasswordLength);
+		context->identity.Domain = (uint16*) NULL;
+		context->identity.DomainLength = 0;
 	}
+
+	context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) password, &size);
+	context->identity.PasswordLength = (uint32) size;
 }
 
 /**
@@ -130,7 +108,6 @@ void credssp_SetContextIdentity(rdpCredssp* context, SEC_WINNT_AUTH_IDENTITY* id
 int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
-	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
@@ -145,33 +122,10 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		}
 	}
 
-	identity.User = (uint16*) xstrdup(settings->username);
-	identity.UserLength = strlen(settings->username);
-
-	if (settings->domain)
-	{
-		identity.Domain = (uint16*) xstrdup(settings->domain);
-		identity.DomainLength = strlen(settings->domain);
-	}
-	else
-	{
-		identity.Domain = (uint16*) NULL;
-		identity.DomainLength = 0;
-	}
-
-	identity.Password = (uint16*) xstrdup(settings->password);
-	identity.PasswordLength = strlen(settings->password);
-
-	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
-	credssp_SetContextIdentity(credssp, &identity);
+	credssp_SetContextIdentity(credssp, settings->username, settings->domain, settings->password);
 
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
-
-	xfree(identity.User);
-	xfree(identity.Domain);
-	xfree(identity.Password);
 
 	return 1;
 }
@@ -186,30 +140,14 @@ char* test_Password = "password";
 
 int credssp_ntlm_server_init(rdpCredssp* credssp)
 {
-	size_t size;
 	freerdp* instance;
-	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	identity.User = (uint16*) freerdp_uniconv_out(credssp->uniconv, test_User, &size);
-	identity.UserLength = (uint32) size;
-
-	identity.Domain = (uint16*) NULL;
-	identity.DomainLength = 0;
-
-	identity.Password = (uint16*) freerdp_uniconv_out(credssp->uniconv, test_Password, &size);
-	identity.PasswordLength = (uint32) size;
-
-	identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-
-	credssp_SetContextIdentity(credssp, &identity);
+	credssp_SetContextIdentity(credssp, test_User, NULL, test_Password);
 
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
-
-	xfree(identity.User);
-	xfree(identity.Password);
 
 	return 1;
 }
@@ -225,7 +163,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	CredHandle credentials;
 	SEC_TIMESTAMP expiration;
 	SecPkgInfo* pPackageInfo;
-	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer* p_buffer;
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
@@ -234,7 +171,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	boolean have_context;
 	boolean have_input_buffer;
 	boolean have_pub_key_auth;
-	rdpSettings* settings = credssp->settings;
 
 	sspi_GlobalInit();
 
@@ -253,27 +189,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	cbMaxToken = pPackageInfo->cbMaxToken;
 
-	identity.User = (uint16*) xstrdup(settings->username);
-	identity.UserLength = strlen(settings->username);
-
-	if (settings->domain)
-	{
-		identity.Domain = (uint16*) xstrdup(settings->domain);
-		identity.DomainLength = strlen(settings->domain);
-	}
-	else
-	{
-		identity.Domain = (uint16*) NULL;
-		identity.DomainLength = 0;
-	}
-
-	identity.Password = (uint16*) xstrdup(settings->password);
-	identity.PasswordLength = strlen(settings->password);
-
-	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
 	status = credssp->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
-			SECPKG_CRED_OUTBOUND, NULL, &identity, NULL, NULL, &credentials, &expiration);
+			SECPKG_CRED_OUTBOUND, NULL, &credssp->identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
 	{
@@ -432,9 +349,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	FreeCredentialsHandle(&credentials);
 	FreeContextBuffer(pPackageInfo);
-	xfree(identity.User);
-	xfree(identity.Domain);
-	xfree(identity.Password);
 
 	return 1;
 }
@@ -481,7 +395,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	cbMaxToken = pPackageInfo->cbMaxToken;
 
 	status = credssp->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
-			SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &credentials, &expiration);
+			SECPKG_CRED_INBOUND, NULL, &credssp->identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
 	{
@@ -1081,6 +995,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		credssp->server = settings->server_mode;
 		credssp->tls = tls;
 		credssp->send_seq_num = 0;
+		credssp->recv_seq_num = 0;
 		credssp->uniconv = freerdp_uniconv_new();
 		memset(&credssp->negoToken, 0, sizeof(SecBuffer));
 		memset(&credssp->pubKeyAuth, 0, sizeof(SecBuffer));

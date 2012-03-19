@@ -62,11 +62,13 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ide
 	{
 		context->identity.User = (uint16*) xmalloc(identity->UserLength);
 		memcpy(context->identity.User, identity->User, identity->UserLength);
+		context->identity.UserLength = identity->UserLength;
 
 		if (identity->DomainLength > 0)
 		{
 			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
+			context->identity.DomainLength = identity->DomainLength;
 		}
 		else
 		{
@@ -76,6 +78,7 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ide
 
 		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
 		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
+		context->identity.PasswordLength = identity->PasswordLength;
 	}
 }
 
@@ -145,8 +148,8 @@ SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPacka
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
 		credentials = sspi_CredentialsNew();
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
@@ -157,6 +160,9 @@ SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPacka
 	else if (fCredentialUse == SECPKG_CRED_INBOUND)
 	{
 		credentials = sspi_CredentialsNew();
+
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -221,6 +227,7 @@ SECURITY_STATUS ntlm_AcceptSecurityContext(CredHandle* phCredential, CtxtHandle*
 		context = ntlm_ContextNew();
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		ntlm_SetContextIdentity(context, &credentials->identity);
 
 		ntlm_SetContextTargetName(context, "FreeRDP");
 

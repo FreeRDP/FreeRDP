@@ -43,6 +43,7 @@ void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
 void ntlm_generate_random_session_key(NTLM_CONTEXT* context);
 void ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
 void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
+void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context);
 
 void ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
 void ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
