@@ -42,6 +42,7 @@
 #include "test_rail.h"
 #include "test_pcap.h"
 #include "test_mppc.h"
+#include "test_mppc_enc.h"
 
 void dump_data(unsigned char * p, int len, int width, char* name)
 {
@@ -133,6 +134,7 @@ static test_suite suites[] =
 	{ "list", add_list_suite },
 	{ "mcs", add_mcs_suite },
 	{ "mppc", add_mppc_suite },
+	{ "mppc_enc", add_mppc_enc_suite },
 	{ "ntlm", add_ntlm_suite },
 	{ "orders", add_orders_suite },
 	{ "pcap", add_pcap_suite },
