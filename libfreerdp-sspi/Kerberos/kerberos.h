@@ -21,6 +21,7 @@
 #define FREERDP_SSPI_KERBEROS_PRIVATE_H
 
 #ifndef _WIN32
+#include <netinet/in.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <netinet/in.h>
