@@ -30,7 +30,7 @@
 #define OPEN open
 #define LSEEK lseek
 #define FSTAT fstat
-#elif defined __APPLE__
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 #define STAT stat
 #define OPEN open
 #define LSEEK lseek
