@@ -135,6 +135,7 @@ struct rdp_rdp
 	struct rdp_transport* transport;
 	struct rdp_extension* extension;
 	struct rdp_mppc* mppc;
+	struct rdp_mppc_enc* mppc_enc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;
 	int decrypt_checksum_use_count;

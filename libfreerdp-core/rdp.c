@@ -21,6 +21,7 @@
 
 #include "info.h"
 #include "redirection.h"
+#include "mppc_enc.h"
 
 #include <freerdp/crypto/per.h>
 
@@ -922,6 +923,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->redirection = redirection_new();
 		rdp->mppc = mppc_new(rdp);
+		rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	}
 
 	return rdp;
@@ -952,6 +954,7 @@ void rdp_free(rdpRdp* rdp)
 		mcs_free(rdp->mcs);
 		redirection_free(rdp->redirection);
 		mppc_free(rdp);
+		mppc_enc_free(rdp->mppc_enc);
 		xfree(rdp);
 	}
 }

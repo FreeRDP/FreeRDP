@@ -378,7 +378,7 @@ do \
  * @return  struct rdp_mppc_enc* or nil on failure
  */
 
-struct rdp_mppc_enc* rdp_mppc_enc_new(int protocol_type)
+struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 {
 	struct rdp_mppc_enc* enc;
 
@@ -423,7 +423,7 @@ struct rdp_mppc_enc* rdp_mppc_enc_new(int protocol_type)
  * @param   enc  struct to be deinited
  */
 
-void rdp_mppc_enc_free(struct rdp_mppc_enc* enc)
+void mppc_enc_free(struct rdp_mppc_enc* enc)
 {
 	if (enc == NULL)
 		return;
@@ -506,6 +506,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	uint32 x;
 	uint8 data;
 	uint16 data16;
+	uint32 historyOffset;
 
 	opb_index = 0;
 	bits_left = 8;
@@ -527,9 +528,11 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		enc->flagsHold |= PACKET_AT_FRONT;
 	}
 
+	historyOffset = enc->historyOffset;
+
 	/* add / append new data to historyBuffer */
-	memcpy(&enc->historyBuffer[enc->historyOffset], srcData, len);
-	historyPointer = &enc->historyBuffer[enc->historyOffset];
+	memcpy(&(enc->historyBuffer[enc->historyOffset]), srcData, len);
+	historyPointer = &(enc->historyBuffer[enc->historyOffset]);
 
 	/* if we are at start of history buffer, do not attempt to compress */
 	/* first 2 bytes,because minimum LoM is 3                           */
@@ -556,7 +559,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	enc->historyOffset += len;
 
 	/* point to last byte in new data */
-	hptr_end = &enc->historyBuffer[enc->historyOffset - 1];
+	hptr_end = &(enc->historyBuffer[enc->historyOffset - 1]);
 
 	while (historyPointer <= hptr_end)
 	{
@@ -566,292 +569,296 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		cptr1 = hbuf_start;
 		lom = 0;
 		saved_lom = 0;
-keep_looking:
-		/* look for first byte match */
-		while ((cptr1 <= index_ptr) && (*cptr1 != *historyPointer))
-		{
-			cptr1++;
-		}
 
-		if (cptr1 > index_ptr)
+		while (1)
 		{
-			/* no match found */
-			if (saved_lom)
+			/* look for first byte match */
+			while ((cptr1 <= index_ptr) && (*cptr1 != *historyPointer))
 			{
-				goto insert_tuple;
+				cptr1++;
 			}
-			goto insert_literal;
-		}
 
-		/* got a one byte match - continue looking */
-		lom = 1;
-		cptr1++;
-		cptr2 = cptr1;
-		cptr3 = historyPointer + 1;
-		while (*(cptr2++) == *(cptr3++))
-		{
-			lom++;
-			if (cptr3 > hptr_end)
+			if (cptr1 > index_ptr)
 			{
 				break;
 			}
-		}
-		if (lom < 3)
-		{
-			/* false alarm, keep looking */
-			lom = 0;
-			goto keep_looking;
-		}
 
-		/* we got a match */
-		if (lom < saved_lom)
-		{
-			/* too small, ignore this match */
-			goto keep_looking;
-		}
-		else if (lom >= saved_lom)
-		{
-			/* this is a longer match, or a match closer to historyPointer */
-			saved_lom = lom;
-			copy_offset = (historyPointer - cptr1) + 1;
-			goto keep_looking;
-		}
-insert_tuple:
-		DLOG(("<%d: %ld,%d> ",  (int) (historyPointer - enc->historyBuffer),
-				(long) copy_offset, saved_lom));
-		lom = saved_lom;
-		historyPointer += lom;
-
-		/*
-		** encode copy_offset and insert into output buffer
-		*/
-
-		if ((copy_offset >= 0) && (copy_offset <= 63))
-		{
-			/* insert binary header */
-			data = 0x1f;
-			insert_5_bits(data);
-
-			/* insert 6 bits of copy_offset */
-			data = (char) (copy_offset & 0x3f);
-			insert_6_bits(data);
-		}
-		else if ((copy_offset >= 64) && (copy_offset <= 319))
-		{
-			/* insert binary header */
-			data = 0x1e;
-			insert_5_bits(data);
-
-			/* insert 8 bits of copy offset */
-			data = (char) (copy_offset - 64);
-			insert_8_bits(data);
-		}
-		else if ((copy_offset >= 320) && (copy_offset <= 2367))
-		{
-			/* insert binary header */
-			data = 0x0e;
-			insert_4_bits(data);
-
-			/* insert 11 bits of copy offset */
-			data16 = copy_offset - 320;;
-			insert_11_bits(data16);
-		}
-		else
-		{
-			/* copy_offset is 2368+ */
-
-			/* insert binary header */
-			data = 0x06;
-			insert_3_bits(data);
-
-			/* insert 16 bits of copy offset */
-			data16 = copy_offset - 2368;;
-			insert_16_bits(data16);
-		}
-
-		/*
-		** encode length of match and insert into output buffer
-		*/
-
-		if (lom == 3)
-		{
-			/* binary header is 'zero'; since outputBuffer is zero */
-			/* filled, all we have to do is update bits_left */
-			bits_left--;
-			if (bits_left == 0)
+			/* got a one byte match - continue looking */
+			lom = 1;
+			cptr1++;
+			cptr2 = cptr1;
+			cptr3 = historyPointer + 1;
+			while (*(cptr2++) == *(cptr3++))
 			{
-				opb_index++;
-				bits_left = 8;
+				lom++;
+				if (cptr3 > hptr_end)
+				{
+					break;
+				}
+			}
+			if (lom < 3)
+			{
+				/* false alarm, keep looking */
+				lom = 0;
+			}
+			else
+			{
+				if (lom >= saved_lom)
+				{
+					/* this is a longer match, or a match closer to historyPointer */
+					saved_lom = lom;
+					copy_offset = (historyPointer - cptr1) + 1;
+				}
 			}
 		}
-		else if ((lom >= 4) && (lom <= 7))
-		{
-			/* insert binary header */
-			data = 0x02;
-			insert_2_bits(data);
 
-			/* insert lower 2 bits of LoM */
-			data = (char) (lom - 4);
-			insert_2_bits(data);
-		}
-		else if ((lom >= 8) && (lom <= 15))
+		if (saved_lom)
 		{
-			/* insert binary header */
-			data = 0x06;
-			insert_3_bits(data);
+			/* insert_tuple */
 
-			/* insert lower 3 bits of LoM */
-			data = (char) (lom - 8);
-			insert_3_bits(data);
-		}
-		else if ((lom >= 16) && (lom <= 31))
-		{
-			/* insert binary header */
-			data = 0x0e;
-			insert_4_bits(data);
+			DLOG(("<%d: %ld,%d> ",  (int) (historyPointer - enc->historyBuffer),
+					(long) copy_offset, saved_lom));
+			lom = saved_lom;
+			historyPointer += lom;
 
-			/* insert lower 4 bits of LoM */
-			data = (char) (lom - 16);
-			insert_4_bits(data);
-		}
-		else if ((lom >= 32) && (lom <= 63))
-		{
-			/* insert binary header */
-			data = 0x1e;
-			insert_5_bits(data);
+			/*
+			** encode copy_offset and insert into output buffer
+			*/
 
-			/* insert lower 5 bits of LoM */
-			data = (char) (lom - 32);
-			insert_5_bits(data);
-		}
-		else if ((lom >= 64) && (lom <= 127))
-		{
-			/* insert binary header */
-			data = 0x3e;
-			insert_6_bits(data);
+			if ((copy_offset >= 0) && (copy_offset <= 63))
+			{
+				/* insert binary header */
+				data = 0x1f;
+				insert_5_bits(data);
 
-			/* insert lower 6 bits of LoM */
-			data = (char) (lom - 64);
-			insert_6_bits(data);
-		}
-		else if ((lom >= 128) && (lom <= 255))
-		{
-			/* insert binary header */
-			data = 0x7e;
-			insert_7_bits(data);
+				/* insert 6 bits of copy_offset */
+				data = (char) (copy_offset & 0x3f);
+				insert_6_bits(data);
+			}
+			else if ((copy_offset >= 64) && (copy_offset <= 319))
+			{
+				/* insert binary header */
+				data = 0x1e;
+				insert_5_bits(data);
 
-			/* insert lower 7 bits of LoM */
-			data = (char) (lom - 128);
-			insert_7_bits(data);
-		}
-		else if ((lom >= 256) && (lom <= 511))
-		{
-			/* insert binary header */
-			data = 0xfe;
-			insert_8_bits(data);
+				/* insert 8 bits of copy offset */
+				data = (char) (copy_offset - 64);
+				insert_8_bits(data);
+			}
+			else if ((copy_offset >= 320) && (copy_offset <= 2367))
+			{
+				/* insert binary header */
+				data = 0x0e;
+				insert_4_bits(data);
 
-			/* insert lower 8 bits of LoM */
-			data = (char) (lom - 256);
-			insert_8_bits(data);
-		}
-		else if ((lom >= 512) && (lom <= 1023))
-		{
-			/* insert binary header */
-			data16 = 0x1fe;
-			insert_9_bits(data16);
+				/* insert 11 bits of copy offset */
+				data16 = copy_offset - 320;;
+				insert_11_bits(data16);
+			}
+			else
+			{
+				/* copy_offset is 2368+ */
 
-			/* insert lower 9 bits of LoM */
-			data16 = lom - 512;
-			insert_9_bits(data16);
-		}
-		else if ((lom >= 1024) && (lom <= 2047))
-		{
-			/* insert binary header */
-			data16 = 0x3fe;
-			insert_10_bits(data16);
+				/* insert binary header */
+				data = 0x06;
+				insert_3_bits(data);
 
-			/* insert 10 lower bits of LoM */
-			data16 = lom - 1024;
-			insert_10_bits(data16);
-		}
-		else if ((lom >= 2048) && (lom <= 4095))
-		{
-			/* insert binary header */
-			data16 = 0x7fe;
-			insert_11_bits(data16);
+				/* insert 16 bits of copy offset */
+				data16 = copy_offset - 2368;;
+				insert_16_bits(data16);
+			}
 
-			/* insert 11 lower bits of LoM */
-			data16 = lom - 2048;
-			insert_11_bits(data16);
-		}
-		else if ((lom >= 4096) && (lom <= 8191))
-		{
-			/* insert binary header */
-			data16 = 0xffe;
-			insert_12_bits(data16);
+			/*
+			** encode length of match and insert into output buffer
+			*/
 
-			/* insert 12 lower bits of LoM */
-			data16 = lom - 4096;
-			insert_12_bits(data16);
-		}
-		else if ((lom >= 8192) && (lom <= 16383))
-		{
-			/* insert binary header */
-			data16 = 0x1ffe;
-			insert_13_bits(data16);
+			if (lom == 3)
+			{
+				/* binary header is 'zero'; since outputBuffer is zero */
+				/* filled, all we have to do is update bits_left */
+				bits_left--;
+				if (bits_left == 0)
+				{
+					opb_index++;
+					bits_left = 8;
+				}
+			}
+			else if ((lom >= 4) && (lom <= 7))
+			{
+				/* insert binary header */
+				data = 0x02;
+				insert_2_bits(data);
 
-			/* insert 13 lower bits of LoM */
-			data16 = lom - 8192;
-			insert_13_bits(data16);
-		}
-		else if ((lom >= 16384) && (lom <= 32767))
-		{
-			/* insert binary header */
-			data16 = 0x3ffe;
-			insert_14_bits(data16);
+				/* insert lower 2 bits of LoM */
+				data = (char) (lom - 4);
+				insert_2_bits(data);
+			}
+			else if ((lom >= 8) && (lom <= 15))
+			{
+				/* insert binary header */
+				data = 0x06;
+				insert_3_bits(data);
 
-			/* insert 14 lower bits of LoM */
-			data16 = lom - 16384;
-			insert_14_bits(data16);
-		}
-		else if ((lom >= 32768) && (lom <= 65535))
-		{
-			/* insert binary header */
-			data16 = 0x7ffe;
-			insert_15_bits(data16);
+				/* insert lower 3 bits of LoM */
+				data = (char) (lom - 8);
+				insert_3_bits(data);
+			}
+			else if ((lom >= 16) && (lom <= 31))
+			{
+				/* insert binary header */
+				data = 0x0e;
+				insert_4_bits(data);
 
-			/* insert 15 lower bits of LoM */
-			data16 = lom - 32768;
-			insert_15_bits(data16);
-		}
-		goto check_len;
-insert_literal:
-		/* data not found in historyBuffer; encode and place data in output buffer */
-		data = *(historyPointer++);
-		DLOG(("%.2x ", (unsigned char) data));
-		if (data & 0x80)
-		{
-			/* insert encoded literal */
-			insert_2_bits(0x02);
-			data &= 0x7f;
-			insert_7_bits(data);
+				/* insert lower 4 bits of LoM */
+				data = (char) (lom - 16);
+				insert_4_bits(data);
+			}
+			else if ((lom >= 32) && (lom <= 63))
+			{
+				/* insert binary header */
+				data = 0x1e;
+				insert_5_bits(data);
+
+				/* insert lower 5 bits of LoM */
+				data = (char) (lom - 32);
+				insert_5_bits(data);
+			}
+			else if ((lom >= 64) && (lom <= 127))
+			{
+				/* insert binary header */
+				data = 0x3e;
+				insert_6_bits(data);
+
+				/* insert lower 6 bits of LoM */
+				data = (char) (lom - 64);
+				insert_6_bits(data);
+			}
+			else if ((lom >= 128) && (lom <= 255))
+			{
+				/* insert binary header */
+				data = 0x7e;
+				insert_7_bits(data);
+
+				/* insert lower 7 bits of LoM */
+				data = (char) (lom - 128);
+				insert_7_bits(data);
+			}
+			else if ((lom >= 256) && (lom <= 511))
+			{
+				/* insert binary header */
+				data = 0xfe;
+				insert_8_bits(data);
+
+				/* insert lower 8 bits of LoM */
+				data = (char) (lom - 256);
+				insert_8_bits(data);
+			}
+			else if ((lom >= 512) && (lom <= 1023))
+			{
+				/* insert binary header */
+				data16 = 0x1fe;
+				insert_9_bits(data16);
+
+				/* insert lower 9 bits of LoM */
+				data16 = lom - 512;
+				insert_9_bits(data16);
+			}
+			else if ((lom >= 1024) && (lom <= 2047))
+			{
+				/* insert binary header */
+				data16 = 0x3fe;
+				insert_10_bits(data16);
+
+				/* insert 10 lower bits of LoM */
+				data16 = lom - 1024;
+				insert_10_bits(data16);
+			}
+			else if ((lom >= 2048) && (lom <= 4095))
+			{
+				/* insert binary header */
+				data16 = 0x7fe;
+				insert_11_bits(data16);
+
+				/* insert 11 lower bits of LoM */
+				data16 = lom - 2048;
+				insert_11_bits(data16);
+			}
+			else if ((lom >= 4096) && (lom <= 8191))
+			{
+				/* insert binary header */
+				data16 = 0xffe;
+				insert_12_bits(data16);
+
+				/* insert 12 lower bits of LoM */
+				data16 = lom - 4096;
+				insert_12_bits(data16);
+			}
+			else if ((lom >= 8192) && (lom <= 16383))
+			{
+				/* insert binary header */
+				data16 = 0x1ffe;
+				insert_13_bits(data16);
+
+				/* insert 13 lower bits of LoM */
+				data16 = lom - 8192;
+				insert_13_bits(data16);
+			}
+			else if ((lom >= 16384) && (lom <= 32767))
+			{
+				/* insert binary header */
+				data16 = 0x3ffe;
+				insert_14_bits(data16);
+
+				/* insert 14 lower bits of LoM */
+				data16 = lom - 16384;
+				insert_14_bits(data16);
+			}
+			else if ((lom >= 32768) && (lom <= 65535))
+			{
+				/* insert binary header */
+				data16 = 0x7ffe;
+				insert_15_bits(data16);
+
+				/* insert 15 lower bits of LoM */
+				data16 = lom - 32768;
+				insert_15_bits(data16);
+			}
 		}
 		else
 		{
-			/* insert literal */
-			insert_8_bits(data);
+			/* insert_literal */
+
+			/* data not found in historyBuffer; encode and place data in output buffer */
+			data = *(historyPointer++);
+			DLOG(("%.2x ", (unsigned char) data));
+			if (data & 0x80)
+			{
+				/* insert encoded literal */
+				insert_2_bits(0x02);
+				data &= 0x7f;
+				insert_7_bits(data);
+			}
+			else
+			{
+				/* insert literal */
+				insert_8_bits(data);
+			}
 		}
-check_len:
+
 		/* if bits_left == 8, opb_index has already been incremented */
 		if ((bits_left == 8) && (opb_index > len))
 		{
 			/* compressed data longer than uncompressed data */
-			goto give_up;
+			/* give up */
+			enc->historyOffset = historyOffset;
+			return true;
 		}
 		else if (opb_index + 1 > len)
 		{
 			/* compressed data longer than uncompressed data */
-			goto give_up;
+			/* give up */
+			enc->historyOffset = historyOffset;
+			return true;
 		}
 	} /* end while (historyPointer < hptr_end) */
 
@@ -863,7 +870,9 @@ check_len:
 
 	if (opb_index > len)
 	{
-		goto give_up;
+		/* give up */
+		enc->historyOffset = historyOffset;
+		return true;
 	}
 	enc->flags |= PACKET_COMPRESSED;
 	enc->bytes_in_opb = opb_index;
@@ -871,16 +880,6 @@ check_len:
 	enc->flags |= enc->flagsHold;
 	enc->flagsHold = 0;
 	DLOG(("\n"));
-	return true;
 
-give_up:
-
-	enc->flagsHold |= PACKET_FLUSHED;
-	enc->bytes_in_opb = 0;
-
-	memset(enc->historyBuffer, 0, enc->buf_len);
-	memcpy(enc->historyBuffer, srcData, len);
-	enc->historyOffset = len;
-	DLOG(("\n"));
-	return true;
+  return true;
 }

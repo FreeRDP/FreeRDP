@@ -461,6 +461,16 @@ int add_mppc_enc_suite(void)
 	return 0;
 }
 
+int get_random(int in_bytes)
+{
+	int rv;
+
+	rv = rand() % in_bytes;
+	if (rv < 128)
+		rv = 128;
+	return rv;
+}
+
 #if DEBUG_MPPC_ENC_TEST
 #define DLOG(_args) printf _args
 #else
@@ -498,7 +508,9 @@ void test_mppc_enc(void)
 	rdp.mppc->history_ptr = rdp.mppc->history_buf;
 
 	/* setup encoder for RDP 5.0 */
-	CU_ASSERT((enc = rdp_mppc_enc_new(PROTO_RDP_50)) != NULL);
+	CU_ASSERT((enc = mppc_enc_new(PROTO_RDP_50)) != NULL);
+
+	srand(time(0));
 
 	/* open image file with pixel data */
 	fd = open("nature.bmp", O_RDONLY);
@@ -510,7 +522,7 @@ void test_mppc_enc(void)
 		gettimeofday(&start_time, NULL);
 
 		/* compress block, decompress it then compare with original data */
-		while ((bytes_read = read(fd, buf, BUF_SIZE)) > 0)
+		while ((bytes_read = read(fd, buf, get_random(BUF_SIZE))) > 0)
 		{
 			block_num++;
 			total += bytes_read;
@@ -577,6 +589,6 @@ void test_mppc_enc(void)
 		close(fd);
 	}
 
-	rdp_mppc_enc_free(enc);
+	mppc_enc_free(enc);
 	free(rdp.mppc->history_buf);
 }
