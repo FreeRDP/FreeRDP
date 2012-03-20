@@ -39,6 +39,8 @@ set(FREERDP_CODEC_SRCS
 	rfx_types.h
 	rfx.c
 	nsc.c
+	nsc_encode.c
+	nsc_encode.h
 	nsc_types.h
 )
 
@@ -46,6 +48,8 @@ if(WITH_SSE2)
 	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS}
 	rfx_sse2.c
 	rfx_sse2.h
+	nsc_sse2.c
+	nsc_sse2.h
 )
 	set_property(SOURCE rfx_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
 endif()
