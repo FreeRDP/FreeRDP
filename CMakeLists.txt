@@ -49,8 +49,8 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-# build shared libs
-if(NOT BUILD_SHARED_LIBS)
+# Default to build shared libs
+if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
 endif()
 
@@ -100,7 +100,9 @@ check_include_files(inttypes.h HAVE_INTTYPES_H)
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
 # Libraries that we have a hard dependency on
+if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
 find_required_package(OpenSSL)
+endif()
 
 # Mac OS X
 if(APPLE)

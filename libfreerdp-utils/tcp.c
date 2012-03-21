@@ -28,6 +28,7 @@
 #include <fcntl.h>
 
 #ifndef _WIN32
+
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -42,13 +43,16 @@
 #endif
 #endif
 
-#else
+#else /* ifdef _WIN32 */
+
+#include <freerdp/utils/windows.h>
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
 #endif
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
+
 #endif
 
 int freerdp_tcp_connect(const char* hostname, int port)
