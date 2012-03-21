@@ -22,10 +22,6 @@
 
 #include <freerdp/types.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 /* Window Order Header Flags */
 #define WINDOW_ORDER_TYPE_WINDOW			0x01000000
 #define WINDOW_ORDER_TYPE_NOTIFY			0x02000000
