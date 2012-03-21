@@ -641,7 +641,9 @@ uint32 xf_detect_cpu()
  */
 boolean xf_post_connect(freerdp* instance)
 {
+#ifdef WITH_SSE2
 	uint32 cpu;
+#endif
 	xfInfo* xfi;
 	XGCValues gcv;
 	rdpCache* cache;
