@@ -100,7 +100,9 @@ check_include_files(inttypes.h HAVE_INTTYPES_H)
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
 # Libraries that we have a hard dependency on
+if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
 find_required_package(OpenSSL)
+endif()
 
 # Mac OS X
 if(APPLE)
