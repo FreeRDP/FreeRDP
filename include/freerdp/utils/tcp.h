@@ -22,7 +22,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/windows.h>
 
 FREERDP_API int freerdp_tcp_connect(const char* hostname, int port);
 FREERDP_API int freerdp_tcp_read(int sockfd, uint8* data, int length);
