@@ -49,8 +49,8 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-# build shared libs
-if(NOT BUILD_SHARED_LIBS)
+# Default to build shared libs
+if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
 endif()
 
