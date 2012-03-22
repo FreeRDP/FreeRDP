@@ -12,9 +12,6 @@
 #define FREERDP_KEYMAP_PATH "${FREERDP_KEYMAP_PATH}"
 
 /* Include files */
-#cmakedefine HAVE_SYS_PARAM_H
-#cmakedefine HAVE_SYS_SOCKET_H
-#cmakedefine HAVE_NETDB_H
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_UNISTD_H
 #cmakedefine HAVE_LIMITS_H
@@ -24,17 +21,12 @@
 
 #cmakedefine HAVE_TM_GMTOFF
 
-/* Endian */
-#cmakedefine BIG_ENDIAN
-
 /* Options */
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_SSE2
-#cmakedefine WITH_SSE2_TARGET
 #cmakedefine WITH_NEON
 
 /* Debug */
-#cmakedefine WITH_DEBUG_ASSERT
 #cmakedefine WITH_DEBUG_CERTIFICATE
 #cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_CLIPRDR
