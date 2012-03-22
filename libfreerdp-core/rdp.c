@@ -497,8 +497,8 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	}
 
 #ifdef WITH_DEBUG_RDP
-	if (type != DATA_PDU_TYPE_UPDATE)
-		printf("recv %s Data PDU (0x%02X), length:%d\n",
+	/* if (type != DATA_PDU_TYPE_UPDATE) */
+		DEBUG_RDP("recv %s Data PDU (0x%02X), length:%d",
 				type < ARRAY_SIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
