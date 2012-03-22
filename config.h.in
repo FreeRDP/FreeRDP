@@ -12,9 +12,6 @@
 #define FREERDP_KEYMAP_PATH "${FREERDP_KEYMAP_PATH}"
 
 /* Include files */
-#cmakedefine HAVE_SYS_PARAM_H
-#cmakedefine HAVE_SYS_SOCKET_H
-#cmakedefine HAVE_NETDB_H
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_UNISTD_H
 #cmakedefine HAVE_LIMITS_H
@@ -24,34 +21,33 @@
 
 #cmakedefine HAVE_TM_GMTOFF
 
-/* Endian */
-#cmakedefine BIG_ENDIAN
-
 /* Options */
-#cmakedefine WITH_DEBUG_TRANSPORT
-#cmakedefine WITH_DEBUG_CHANNELS
-#cmakedefine WITH_DEBUG_SVC
-#cmakedefine WITH_DEBUG_DVC
-#cmakedefine WITH_DEBUG_KBD
-#cmakedefine WITH_DEBUG_NLA
-#cmakedefine WITH_DEBUG_NEGO
-#cmakedefine WITH_DEBUG_CERTIFICATE
-#cmakedefine WITH_DEBUG_LICENSE
-#cmakedefine WITH_DEBUG_GDI
-#cmakedefine WITH_DEBUG_ASSERT
-#cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_SSE2
-#cmakedefine WITH_SSE2_TARGET
 #cmakedefine WITH_NEON
+
+/* Debug */
+#cmakedefine WITH_DEBUG_CERTIFICATE
+#cmakedefine WITH_DEBUG_CHANNELS
+#cmakedefine WITH_DEBUG_CLIPRDR
+#cmakedefine WITH_DEBUG_DVC
+#cmakedefine WITH_DEBUG_GDI
+#cmakedefine WITH_DEBUG_KBD
+#cmakedefine WITH_DEBUG_LICENSE
+#cmakedefine WITH_DEBUG_NEGO
+#cmakedefine WITH_DEBUG_NLA
+#cmakedefine WITH_DEBUG_NTLM
+#cmakedefine WITH_DEBUG_ORDERS
+#cmakedefine WITH_DEBUG_RAIL
+#cmakedefine WITH_DEBUG_RDP
+#cmakedefine WITH_DEBUG_REDIR
+#cmakedefine WITH_DEBUG_RFX
+#cmakedefine WITH_DEBUG_SCARD
+#cmakedefine WITH_DEBUG_SVC
+#cmakedefine WITH_DEBUG_TRANSPORT
+#cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
 #cmakedefine WITH_DEBUG_X11_CLIPRDR
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
-#cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_XV
-#cmakedefine WITH_DEBUG_SCARD
-#cmakedefine WITH_DEBUG_ORDERS
-#cmakedefine WITH_DEBUG_REDIR
-#cmakedefine WITH_DEBUG_CLIPRDR
-#cmakedefine WITH_DEBUG_WND
 #endif

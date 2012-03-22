@@ -257,7 +257,7 @@ boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	return true;
 }
 
-boolean xf_check_fds(freerdp* instance, fd_set* set)
+boolean xf_process_x_events(freerdp* instance)
 {
 	XEvent xevent;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
@@ -1153,9 +1153,9 @@ int xfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (xf_check_fds(instance, &rfds_set) != true)
+		if (xf_process_x_events(instance) != true)
 		{
-			printf("Failed to check xfreerdp file descriptor\n");
+			printf("Closed from X\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != true)

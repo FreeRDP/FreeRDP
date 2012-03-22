@@ -1819,7 +1819,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		printf("channelId bad\n");
+		printf("expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, channelId);
 		return false;
 	}
 
@@ -1833,7 +1833,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
-		printf("pduType bad\n");
+		printf("expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
 		return false;
 	}
 
