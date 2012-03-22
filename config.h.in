@@ -44,8 +44,10 @@
 #cmakedefine WITH_DEBUG_LICENSE
 #cmakedefine WITH_DEBUG_NEGO
 #cmakedefine WITH_DEBUG_NLA
+#cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_ORDERS
 #cmakedefine WITH_DEBUG_RAIL
+#cmakedefine WITH_DEBUG_RDP
 #cmakedefine WITH_DEBUG_REDIR
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
