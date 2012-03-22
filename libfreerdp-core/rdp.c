@@ -235,6 +235,7 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 		uint8 reason;
 
 		(void) per_read_enumerated(s, &reason, 0);
+		DEBUG_RDP("DisconnectProviderUltimatum from server, reason code 0x%02x\n", reason);
 
 		rdp->disconnect = true;
 
