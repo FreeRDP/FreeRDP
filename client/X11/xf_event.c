@@ -28,6 +28,7 @@
 
 #include "xf_event.h"
 
+#ifdef WITH_DEBUG_X11
 static const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
@@ -66,6 +67,7 @@ static const char* const X11_EVENT_STRINGS[] =
 	"MappingNotify",
 	"GenericEvent",
 };
+#endif
 
 void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
 {
@@ -382,6 +384,7 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
+			DEBUG_X11("RAIL window closed");
 			rdpWindow* window;
 			rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
@@ -396,6 +399,7 @@ boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 		}
 		else
 		{
+			DEBUG_X11("Main window closed");
 			return false;
 		}
 	}
@@ -663,7 +667,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 	}
 
 	if (event->type != MotionNotify)
-		DEBUG_X11("%s Event: wnd=0x%04X", X11_EVENT_STRINGS[event->type], (uint32) event->xany.window);
+		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type], event->type, (uint32) event->xany.window);
 
 	switch (event->type)
 	{

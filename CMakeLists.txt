@@ -87,9 +87,6 @@ if(MSVC)
 endif()
 
 # Include files
-check_include_files(sys/param.h HAVE_SYS_PARAM_H)
-check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
-check_include_files(netdb.h HAVE_NETDB_H)
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(limits.h HAVE_LIMITS_H)
@@ -124,9 +121,6 @@ if(NOT WIN32)
 		find_optional_package(FFmpeg)
 	endif()
 endif()
-
-# Endian
-test_big_endian(BIG_ENDIAN)
 
 # Path to put FreeRDP data
 set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")

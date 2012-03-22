@@ -235,6 +235,7 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 		uint8 reason;
 
 		(void) per_read_enumerated(s, &reason, 0);
+		DEBUG_RDP("DisconnectProviderUltimatum from server, reason code 0x%02x\n", reason);
 
 		rdp->disconnect = true;
 
@@ -497,8 +498,8 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	}
 
 #ifdef WITH_DEBUG_RDP
-	if (type != DATA_PDU_TYPE_UPDATE)
-		printf("recv %s Data PDU (0x%02X), length:%d\n",
+	/* if (type != DATA_PDU_TYPE_UPDATE) */
+		DEBUG_RDP("recv %s Data PDU (0x%02X), length:%d",
 				type < ARRAY_SIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
