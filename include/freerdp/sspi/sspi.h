@@ -35,14 +35,22 @@
 
 #endif
 
-struct _SEC_INTEGER
+#ifndef NATIVE_SSPI
+
+typedef sint16 SEC_WCHAR;
+typedef sint8 SEC_CHAR;
+
+struct _SECURITY_INTEGER
 {
 	uint32 LowPart;
 	sint32 HighPart;
 };
-typedef struct _SEC_INTEGER SEC_INTEGER;
+typedef struct _SECURITY_INTEGER SECURITY_INTEGER;
 
-typedef SEC_INTEGER SEC_TIMESTAMP;
+typedef SECURITY_INTEGER TimeStamp;
+typedef SECURITY_INTEGER* PTimeStamp;
+
+typedef uint32 SECURITY_STATUS;
 
 struct _SecPkgInfo
 {
@@ -54,6 +62,8 @@ struct _SecPkgInfo
 	char* Comment;
 };
 typedef struct _SecPkgInfo SecPkgInfo;
+
+#endif
 
 #define SECPKG_ID_NONE				0xFFFF
 
@@ -79,8 +89,6 @@ typedef struct _SecPkgInfo SecPkgInfo;
 #define SECPKG_FLAG_RESTRICTED_TOKENS		0x00080000
 #define SECPKG_FLAG_NEGO_EXTENDER		0x00100000
 #define SECPKG_FLAG_NEGOTIABLE2			0x00200000
-
-typedef uint32 SECURITY_STATUS;
 
 #ifndef _WINERROR_
 
@@ -215,6 +223,8 @@ typedef uint32 SECURITY_STATUS;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
+#ifndef NATIVE_SSPI
+
 struct _SecPkgContext_AccessToken
 {
 	void* AccessToken;
@@ -314,8 +324,8 @@ typedef struct _SecPkgContext_KeyInfo SecPkgContext_KeyInfo;
 
 struct _SecPkgContext_Lifespan
 {
-	SEC_TIMESTAMP tsStart;
-	SEC_TIMESTAMP tsExpiry;
+	TimeStamp tsStart;
+	TimeStamp tsExpiry;
 };
 typedef struct _SecPkgContext_Lifespan SecPkgContext_Lifespan;
 
@@ -347,7 +357,7 @@ typedef struct _SecPkgContext_PackageInfo SecPkgContext_PackageInfo;
 
 struct _SecPkgContext_PasswordExpiry
 {
-	SEC_TIMESTAMP tsPasswordExpires;
+	TimeStamp tsPasswordExpires;
 };
 typedef struct _SecPkgContext_PasswordExpiry SecPkgContext_PasswordExpiry;
 
@@ -414,6 +424,8 @@ struct _SecPkgCredentials_Names
 	char* sUserName;
 };
 typedef struct _SecPkgCredentials_Names SecPkgCredentials_Names;
+
+#endif
 
 /* InitializeSecurityContext Flags */
 
@@ -522,6 +534,8 @@ typedef struct _SecPkgCredentials_Names SecPkgCredentials_Names;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI			0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
+#ifndef NATIVE_SSPI
+
 struct _SEC_WINNT_AUTH_IDENTITY
 {
 	uint16* User;
@@ -543,6 +557,8 @@ typedef struct _SecHandle SecHandle;
 
 typedef SecHandle CredHandle;
 typedef SecHandle CtxtHandle;
+
+#endif
 
 #define SECBUFFER_VERSION			0
 
@@ -572,6 +588,8 @@ typedef SecHandle CtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
+#ifndef NATIVE_SSPI
+
 struct _SecBuffer
 {
 	uint32 cbBuffer;
@@ -594,18 +612,18 @@ typedef SECURITY_STATUS (*QUERY_CREDENTIAL_ATTRIBUTES_FN)(CredHandle* phCredenti
 
 typedef SECURITY_STATUS (*ACQUIRE_CREDENTIALS_HANDLE_FN)(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry);
+		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry);
 
 typedef SECURITY_STATUS (*FREE_CREDENTIALS_HANDLE_FN)(CredHandle* phCredential);
 
 typedef SECURITY_STATUS (*INITIALIZE_SECURITY_CONTEXT_FN)(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry);
 
 typedef SECURITY_STATUS (*ACCEPT_SECURITY_CONTEXT_FN)(CredHandle* phCredential, CtxtHandle* phContext,
 		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp);
 
 typedef SECURITY_STATUS (*COMPLETE_AUTH_TOKEN_FN)(CtxtHandle* phContext, SecBufferDesc* pToken);
 
@@ -685,7 +703,7 @@ FREERDP_API SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SecPk
 
 FREERDP_API SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry);
+		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry);
 
 FREERDP_API SECURITY_STATUS ExportSecurityContext(CtxtHandle* phContext, uint32 fFlags, SecBuffer* pPackedContext, void* pToken);
 FREERDP_API SECURITY_STATUS FreeCredentialsHandle(CredHandle* phCredential);
@@ -696,7 +714,7 @@ FREERDP_API SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential,
 
 FREERDP_API SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp);
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp);
 
 FREERDP_API SECURITY_STATUS ApplyControlToken(CtxtHandle* phContext, SecBufferDesc* pInput);
 FREERDP_API SECURITY_STATUS CompleteAuthToken(CtxtHandle* phContext, SecBufferDesc* pToken);
@@ -707,7 +725,7 @@ FREERDP_API SECURITY_STATUS ImpersonateSecurityContext(CtxtHandle* phContext);
 FREERDP_API SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry);
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry);
 
 FREERDP_API SECURITY_STATUS QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer);
 FREERDP_API SECURITY_STATUS QuerySecurityContextToken(CtxtHandle* phContext, void* phToken);
@@ -720,6 +738,8 @@ FREERDP_API SECURITY_STATUS DecryptMessage(CtxtHandle* phContext, SecBufferDesc*
 FREERDP_API SECURITY_STATUS EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
 FREERDP_API SECURITY_STATUS MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo);
 FREERDP_API SECURITY_STATUS VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+
+#endif
 
 /* Custom API */
 

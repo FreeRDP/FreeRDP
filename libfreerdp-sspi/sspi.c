@@ -297,6 +297,8 @@ void sspi_GlobalFinish()
 	sspi_ContextBufferAllocTableFree();
 }
 
+#ifndef NATIVE_SSPI
+
 /* Package Management */
 
 SECURITY_STATUS EnumerateSecurityPackages(uint32* pcPackages, SecPkgInfo** ppPackageInfo)
@@ -406,7 +408,7 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 
 SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry)
+		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry)
 {
 	SECURITY_STATUS status;
 	SecurityFunctionTable* table = sspi_GetSecurityFunctionTableByName(pszPackage);
@@ -485,7 +487,7 @@ SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAt
 
 SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsTimeStamp)
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -562,7 +564,7 @@ SECURITY_STATUS ImpersonateSecurityContext(CtxtHandle* phContext)
 SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -757,3 +759,5 @@ const SecurityFunctionTable SSPI_SecurityFunctionTable =
 	DecryptMessage, /* DecryptMessage */
 	SetContextAttributes, /* SetContextAttributes */
 };
+
+#endif

@@ -84,7 +84,7 @@ void negotiate_SetContextIdentity(NEGOTIATE_CONTEXT* context, SEC_WINNT_AUTH_IDE
 SECURITY_STATUS negotiate_InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
 {
 	NEGOTIATE_CONTEXT* context;
 	//SECURITY_STATUS status;
@@ -173,7 +173,7 @@ SECURITY_STATUS negotiate_QueryContextAttributes(CtxtHandle* phContext, uint32 u
 
 SECURITY_STATUS negotiate_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry)
+		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry)
 {
 	CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;

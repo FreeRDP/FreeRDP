@@ -161,7 +161,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
-	SEC_TIMESTAMP expiration;
+	TimeStamp expiration;
 	SecPkgInfo* pPackageInfo;
 	SecBuffer* p_buffer;
 	SecBuffer input_buffer;
@@ -366,7 +366,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
-	SEC_TIMESTAMP expiration;
+	TimeStamp expiration;
 	SecPkgInfo* pPackageInfo;
 	SecBuffer* p_buffer;
 	SecBuffer input_buffer;

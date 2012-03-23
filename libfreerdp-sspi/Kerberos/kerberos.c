@@ -277,7 +277,7 @@ KRB_CONTEXT* krb_ContextNew()
 
 SECURITY_STATUS krb_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, SEC_TIMESTAMP* ptsExpiry)
+		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry)
 {
 	CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
@@ -384,7 +384,7 @@ void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ident
 SECURITY_STATUS krb_InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, SEC_TIMESTAMP* ptsExpiry)
+		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
 {
 	KRB_CONTEXT* krb_ctx;
 	//SECURITY_STATUS status;
@@ -440,7 +440,7 @@ CtxtHandle* krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	KRB_CONTEXT* krb_ctx;
 	uint32 fContextReq;
 	uint32 pfContextAttr;
-	SEC_TIMESTAMP expiration;
+	TimeStamp expiration;
 
 	if(tcp_is_ipaddr(settings->hostname))
 		return NULL;
