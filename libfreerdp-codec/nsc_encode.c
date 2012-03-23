@@ -351,11 +351,12 @@ void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
 	stream_write_uint8(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
 	stream_write_uint8(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	stream_write_uint16(s, 0); /* Reserved (2 bytes) */
+
 	for (i = 0; i < 4; i++)
 	{
 		if (context->nsc_stream.PlaneByteCount[i] > 0)
 		{
-			stream_check_size(s, context->nsc_stream.PlaneByteCount[i]);
+			stream_check_size(s, (int) context->nsc_stream.PlaneByteCount[i]);
 			stream_write(s, context->priv->plane_buf[i], context->nsc_stream.PlaneByteCount[i]);
 		}
 	}

@@ -104,7 +104,7 @@ time_t get_local_time(char* str)
 	return freerdp_get_unix_time_from_generalized_time(str);
 }
 
-uint32 get_clock_skew(char* str)
+time_t get_clock_skew(char* str)
 {
 	time_t ctime;
 	ctime = time(NULL);
@@ -893,44 +893,50 @@ void krb_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep)
 	dst = NULL;
 	src = &(kdc_rep->etgt);
 
-	if(kdc_rep->type == KRB_TAG_ASREP)
+	if (kdc_rep->type == KRB_TAG_ASREP)
 		dst = &(krb_ctx->asticket);
-	else if(kdc_rep->type == KRB_TAG_TGSREP)
+	else if (kdc_rep->type == KRB_TAG_TGSREP)
 		dst = &(krb_ctx->tgsticket);
+
 	dst->tktvno = src->tktvno;
 	dst->realm = xstrdup(src->realm);
 	dst->sname = xstrdup(src->sname);
 	dst->enc_part.enctype = src->enc_part.enctype;
 	dst->enc_part.kvno = src->enc_part.kvno;
+
 	freerdp_blob_copy(&(dst->enc_part.encblob), &(src->enc_part.encblob));
 }
 
 void krb_reqbody_init(KRB_CONTEXT* krb_ctx, KDCReqBody* req_body, uint8 reqtype)
 {
-	uint32 t;
+	time_t t;
+
 	req_body->cname = xstrdup(krb_ctx->cname);
 	req_body->realm = xstrdup(krb_ctx->realm);
-	if(reqtype == KRB_TAG_ASREQ)
+	
+	if (reqtype == KRB_TAG_ASREQ)
 	{
-		req_body->kdc_options = 0x40000000 | 0x00800000 | 0x00010000 | 0x00000010;  // forwardable , renewable, canonicalize, renewable OK 
-	req_body->sname = xzalloc((strlen(req_body->realm) + 8) * sizeof(char));
-	strcpy(req_body->sname, KRB_SERVER);
-	strcat(req_body->sname, req_body->realm);
+		req_body->kdc_options = 0x40000000 | 0x00800000 | 0x00010000 | 0x00000010;  /* forwardable , renewable, canonicalize, renewable OK */
+		req_body->sname = xzalloc((strlen(req_body->realm) + 8) * sizeof(char));
+		strcpy(req_body->sname, KRB_SERVER);
+		strcat(req_body->sname, req_body->realm);
 	}
-	else if(reqtype == KRB_TAG_TGSREQ)
+	else if (reqtype == KRB_TAG_TGSREQ)
 	{
-		req_body->kdc_options = 0x40000000 | 0x00800000 | 0x00010000;  // forwardable , renewable, canonicalize 
-	req_body->sname = xzalloc((strlen(krb_ctx->settings->hostname) + 10) * sizeof(char));
-	strcpy(req_body->sname, APP_SERVER);
-	strcat(req_body->sname, krb_ctx->settings->hostname);
+		req_body->kdc_options = 0x40000000 | 0x00800000 | 0x00010000;  /* forwardable , renewable, canonicalize */
+		req_body->sname = xzalloc((strlen(krb_ctx->settings->hostname) + 10) * sizeof(char));
+		strcpy(req_body->sname, APP_SERVER);
+		strcat(req_body->sname, krb_ctx->settings->hostname);
 	}
 
 	t = time(NULL);
-	t += krb_ctx->clockskew; // fix clockskew 
+	t += krb_ctx->clockskew; /* fix clockskew */
+
 	req_body->from = get_utc_time((time_t)(t));
 	req_body->till = get_utc_time((time_t)(t + 473040000));
 	req_body->rtime = get_utc_time((time_t)(t + 473040000));
-	crypto_nonce((uint8*)&(req_body->nonce), 4);
+	
+	crypto_nonce((uint8*) &(req_body->nonce), 4);
 }
 
 KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
@@ -939,15 +945,19 @@ KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	PAData** lpa_data;
 	uint8 pacntmax, i;
 	pacntmax = 2;
+
 	krb_asreq = xnew(KrbASREQ);
 	krb_asreq->pvno = KRB_VERSION;
 	krb_asreq->type = KRB_TAG_ASREQ;
 	krb_asreq->pa_pac_request = 0xff; //true
 	krb_asreq->padata = (PAData**)xzalloc((pacntmax + 1) * sizeof(PAData*));
 	lpa_data = krb_asreq->padata;
-	for(i = 0;i < pacntmax;i++)
+
+	for (i = 0; i < pacntmax; i++)
 		*(lpa_data + i) = (PAData*)xzalloc(sizeof(PAData));
+	
 	krb_reqbody_init(krb_ctx, &(krb_asreq->req_body), krb_asreq->type);
+	
 	return krb_asreq;
 }
 
@@ -965,21 +975,24 @@ KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb
 	krb_apreq = xnew(KrbAPREQ);
 	krb_apreq->pvno = KRB_VERSION;
 	krb_apreq->type = KRB_TAG_APREQ;
-	krb_apreq->ap_options = 0x00000000 | 0x00000000 | 0x00000000;  //Reserved (bit 31), Use session Key (bit 30), Mututal Required (bit 29)
+	krb_apreq->ap_options = 0x00000000 | 0x00000000 | 0x00000000; /* Reserved (bit 31), Use session Key (bit 30), Mututal Required (bit 29) */
 	krb_apreq->ticket = ticket;
-	if(krb_auth != NULL)
+
+	if (krb_auth != NULL)
 	{
 		len = krb_encode_authenticator(as, krb_auth);
 		msg.data = as->p;
 		msg.length = len;
-		encmsg = crypto_kdcmsg_encrypt(&msg, krb_ctx->askey, 7);   //RFC4757 section 3 for msgtype (T=7)
+		encmsg = crypto_kdcmsg_encrypt(&msg, krb_ctx->askey, 7); /* RFC4757 section 3 for msgtype (T=7) */
 		krb_apreq->enc_auth.enctype = krb_ctx->askey->enctype;
 		krb_apreq->enc_auth.kvno = -1;
 		krb_apreq->enc_auth.encblob.data = encmsg->data;
 		krb_apreq->enc_auth.encblob.length =  encmsg->length;
 		xfree(encmsg);
 	}
+	
 	stream_free(as);
+	
 	return krb_apreq;
 }
 
@@ -988,20 +1001,24 @@ KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	KrbTGSREQ* krb_tgsreq;
 	uint8 pacntmax;
 	pacntmax = 1;
+
 	krb_tgsreq = xnew(KrbTGSREQ);
 	krb_tgsreq->pvno = KRB_VERSION;
 	krb_tgsreq->type = KRB_TAG_TGSREQ;
-	krb_tgsreq->pa_pac_request = 0xff; //true
-	krb_tgsreq->padata = (PAData**)xzalloc((pacntmax + 1) * sizeof(PAData*));
+	krb_tgsreq->pa_pac_request = 0xFF; /* true */
+
+	krb_tgsreq->padata = (PAData**) xzalloc((pacntmax + 1) * sizeof(PAData*));
 	*(krb_tgsreq->padata) = xnew(PAData);
 	*(krb_tgsreq->padata + 1) = NULL;
+	
 	krb_reqbody_init(krb_ctx, &(krb_tgsreq->req_body), krb_tgsreq->type);
+	
 	return krb_tgsreq;
 }
 
 void krb_free_ticket(Ticket* ticket)
 {
-	if(ticket != NULL)
+	if (ticket != NULL)
 	{
 		xfree(ticket->realm);
 		xfree(ticket->sname);

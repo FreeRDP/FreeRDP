@@ -155,8 +155,8 @@ struct _ENC_KDC_REPPART
 	KrbENCKey key;
 	int nonce;
 	uint32 flags;
-	uint32 authtime;
-	uint32 endtime;
+	time_t authtime;
+	time_t endtime;
 	char *realm;
 	char *sname;
 };
@@ -296,8 +296,8 @@ struct _KRB_CONTEXT
 	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpBlob passwd;
 	sint32 enctype;
-	sint32 clockskew;
-	uint32 ctime;
+	time_t clockskew;
+	time_t ctime;
 	uint32 nonce;
 	Ticket asticket;
 	KrbENCKey* askey;
@@ -313,7 +313,7 @@ CtxtHandle* krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 boolean tcp_is_ipaddr(const char* hostname);
 char* get_utc_time(time_t t);
 time_t get_local_time(char* str);
-uint32 get_clock_skew(char* str);
+time_t get_clock_skew(char* str);
 char* get_dns_queryname(char *host, char* protocol);
 int krb_get_realm(rdpSettings* settings);
 KDCENTRY* krb_locate_kdc(rdpSettings* settings);

@@ -21,6 +21,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/windows.h>
 
 #include "librail.h"
 
