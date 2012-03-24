@@ -420,6 +420,10 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 
 	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
 	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
+	rdp->decrypt_use_count = 0;
+	rdp->decrypt_checksum_use_count = 0;
+	rdp->encrypt_use_count =0;
+	rdp->encrypt_checksum_use_count =0;
 
 	return true;
 }

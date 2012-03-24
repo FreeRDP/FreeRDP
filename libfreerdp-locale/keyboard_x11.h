@@ -20,7 +20,6 @@
 #ifndef __LOCALE_KEYBOARD_X11_H
 #define __LOCALE_KEYBOARD_X11_H
 
-uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId);
-uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
+uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256]);
 
 #endif /* __LOCALE_KEYBOARD_X11_H */

@@ -21,11 +21,7 @@
 #define __LIBLOCALE_H
 
 #include "config.h"
-#include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
-
-int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name);
-void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names);
 
 #ifdef WITH_DEBUG_KBD
 #define DEBUG_KBD(fmt, ...) DEBUG_CLASS(KBD, fmt, ## __VA_ARGS__)
