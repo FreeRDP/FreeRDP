@@ -25,7 +25,7 @@
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
-extern const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -464,7 +464,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display)
 
 				if (found)
 				{
-					scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+					scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
 
 					DEBUG_KBD("%4s: keycode: 0x%02X -> vkcode: 0x%02X -> rdp scancode: 0x%02X %s",
 							xkb_keyname, i, vkcode, scancode, extended ? " extended" : "");

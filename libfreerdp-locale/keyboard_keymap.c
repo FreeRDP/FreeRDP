@@ -29,7 +29,6 @@
 #include <stdlib.h>
 
 
-extern const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
@@ -127,7 +126,7 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 
 				/* Load this key mapping in the keyboard mapping */
 				vkcode = freerdp_keyboard_get_virtual_key_code_from_name(vkcode_name);
-				scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+				scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
 				extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
 				keycode_to_vkcode[keycode] = vkcode;
 			}

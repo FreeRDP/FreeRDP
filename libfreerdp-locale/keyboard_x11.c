@@ -31,7 +31,6 @@
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
-extern const uint32 VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[256];
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 struct _XKB_VARIANT
@@ -1138,7 +1137,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId)
 		if (!(vkcode > 0 && vkcode < 256))
 			continue;
 
-		scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+		scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
 		extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
 
 		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code = scancode;
