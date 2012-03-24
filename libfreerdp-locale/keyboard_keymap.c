@@ -20,6 +20,7 @@
 #include "keyboard_keymap.h"
 
 #include <freerdp/utils/file.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/locale/virtual_key_codes.h>
 #include <freerdp/locale/keyboard.h>
 
@@ -77,8 +78,10 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 
 	if ((fp = fopen(keymap_path, "r")) == NULL)
 	{
+		xfree(keymap_path);
 		return 0;
 	}
+	xfree(keymap_path);
 
 	while (fgets(buffer, sizeof(buffer), fp) != NULL)
 	{

@@ -216,12 +216,19 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
 #else
 	if (keyboardLayoutId == 0)
+	{
 		keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
+		xfree(xkb_layout);
+		xfree(xkb_variant);
+	}
 
 	keymap = freerdp_detect_keymap_from_xkb();
 
 	if (keymap != NULL)
+	{
 		freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
+		xfree(keymap);
+	}
 #endif
 
 	for (keycode = 0; keycode < 256; keycode++)
