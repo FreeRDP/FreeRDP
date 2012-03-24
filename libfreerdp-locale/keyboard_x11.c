@@ -30,6 +30,11 @@
 #include "keyboard_keymap.h"
 #include "xkb_layout_ids.h"
 
+#ifdef WITH_SUN
+#include "keyboard_sun.h"
+#endif
+
+
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 
@@ -214,20 +219,33 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 #ifdef __APPLE__
 	/* Apple X11 breaks XKB detection */
 	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
-#else
-	if (keyboardLayoutId == 0)
+#elif defined(WITH_SUN)
 	{
-		keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
-		xfree(xkb_layout);
-		xfree(xkb_variant);
+		char sunkeymap[32];
+
+		freerdp_detect_keyboard_type_and_layout_solaris(sunkeymap, sizeof(sunkeymap));
+		freerdp_keyboard_load_map(keycode_to_vkcode, sunkeymap);
 	}
-
-	keymap = freerdp_detect_keymap_from_xkb();
-
-	if (keymap != NULL)
+#else
 	{
-		freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
-		xfree(keymap);
+		char* keymap;
+		char* xkb_layout;
+		char* xkb_variant;
+
+		if (keyboardLayoutId == 0)
+		{
+			keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
+			xfree(xkb_layout);
+			xfree(xkb_variant);
+		}
+
+		keymap = freerdp_detect_keymap_from_xkb();
+
+		if (keymap != NULL)
+		{
+			freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
+			xfree(keymap);
+		}
 	}
 #endif
 

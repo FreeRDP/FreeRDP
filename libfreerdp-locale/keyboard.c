@@ -35,10 +35,6 @@
 #include "keyboard_xkbfile.h"
 #endif
 
-#ifdef WITH_SUN
-#include "keyboard_sun.h"
-#endif
-
 #endif
 
 uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];

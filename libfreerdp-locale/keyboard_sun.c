@@ -23,6 +23,7 @@
 
 #include "liblocale.h"
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/memory.h>
 
 #include "keyboard_x11.h"
 
