@@ -521,7 +521,19 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table = sspi_GetSecurityFunctionTableByNameW(pszPackage);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (table->AcquireCredentialsHandleW == NULL)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
+			pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
@@ -713,7 +725,28 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, P
 		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phCredential);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = (SecurityFunctionTableW*) sspi_GetSecurityFunctionTableByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (table->InitializeSecurityContextW == NULL)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->InitializeSecurityContextW(phCredential, phContext,
+			pszTargetName, fContextReq, Reserved1, TargetDataRep,
+			pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
@@ -747,16 +780,16 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, P
 
 SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
 {
-	SEC_WCHAR* Name;
+	SEC_CHAR* Name;
 	SECURITY_STATUS status;
 	SecurityFunctionTableW* table;
 
-	Name = (SEC_WCHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameW(Name);
+	table = (SecurityFunctionTableW*) sspi_GetSecurityFunctionTableByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;

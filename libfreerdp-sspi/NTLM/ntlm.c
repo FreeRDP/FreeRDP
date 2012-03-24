@@ -138,14 +138,42 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	xfree(context);
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(LPWSTR pszPrincipal, LPWSTR pszPackage,
+SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
+	CREDENTIALS* credentials;
+	SEC_WINNT_AUTH_IDENTITY* identity;
+
+	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	{
+		credentials = sspi_CredentialsNew();
+
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
+	else if (fCredentialUse == SECPKG_CRED_INBOUND)
+	{
+		credentials = sspi_CredentialsNew();
+
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
+
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(LPSTR pszPrincipal, LPSTR pszPackage,
+SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
