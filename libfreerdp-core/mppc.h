@@ -3,6 +3,7 @@
  * Implements Microsoft Point to Point Compression (MPPC) protocol
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
+ * Copyright Jiten Pathy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@
 #include <stdint.h>
 
 #define RDP6_HISTORY_BUF_SIZE     65536
-#define RDP6_OFFSET_CACHE_SIZE     4
+#define RDP6_OFFSET_CACHE_SIZE     8
 
 struct rdp_mppc
 {
