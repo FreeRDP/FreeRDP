@@ -81,6 +81,7 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 #endif
 
 #endif
+	keyboardLayoutId = freerdp_detect_keyboard(keyboardLayoutId);
 
 	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
 	for (keycode=0; keycode < ARRAY_SIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)

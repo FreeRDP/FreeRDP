@@ -211,18 +211,6 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
 	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
 
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
-		DEBUG_KBD("using keyboard layout: %X", keyboardLayoutId);
-	}
-
-	if (keyboardLayoutId == 0)
-	{
-		keyboardLayoutId = 0x0409;
-		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutId);
-	}
-
 #ifdef __APPLE__
 	/* Apple X11 breaks XKB detection */
 	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
