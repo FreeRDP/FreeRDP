@@ -25,10 +25,11 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
+#ifndef NATIVE_SSPI
+
 extern const SecPkgInfo NTLM_SecPkgInfo;
 extern const SecPkgInfo CREDSSP_SecPkgInfo;
 
-const SecurityFunctionTable SSPI_SecurityFunctionTable;
 extern const SecurityFunctionTable NTLM_SecurityFunctionTable;
 extern const SecurityFunctionTable CREDSSP_SecurityFunctionTable;
 
@@ -37,6 +38,8 @@ const SecPkgInfo* SecPkgInfo_LIST[] =
 	&NTLM_SecPkgInfo,
 	&CREDSSP_SecPkgInfo
 };
+
+const SecurityFunctionTable SSPI_SecurityFunctionTable;
 
 struct _SecurityFunctionTable_NAME
 {
@@ -50,6 +53,8 @@ const SecurityFunctionTable_NAME SecurityFunctionTable_NAME_LIST[] =
 	{ "NTLM", &NTLM_SecurityFunctionTable },
 	{ "CREDSSP", &CREDSSP_SecurityFunctionTable }
 };
+
+#endif
 
 #define SecHandle_LOWER_MAX	0xFFFFFFFF
 #define SecHandle_UPPER_MAX	0xFFFFFFFE
@@ -129,40 +134,6 @@ void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 	return sspi_ContextBufferAlloc(allocatorIndex, size);
 }
 
-void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
-void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
-
-void sspi_ContextBufferFree(void* contextBuffer)
-{
-	int index;
-	uint32 allocatorIndex;
-
-	for (index = 0; index < (int) ContextBufferAllocTable.cMaxEntries; index++)
-	{
-		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
-		{
-			contextBuffer = ContextBufferAllocTable.entries[index].contextBuffer;
-			allocatorIndex = ContextBufferAllocTable.entries[index].allocatorIndex;
-
-			ContextBufferAllocTable.cEntries--;
-
-			ContextBufferAllocTable.entries[index].allocatorIndex = 0;
-			ContextBufferAllocTable.entries[index].contextBuffer = NULL;
-
-			switch (allocatorIndex)
-			{
-				case EnumerateSecurityPackagesIndex:
-					FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
-					break;
-
-				case QuerySecurityPackageInfoIndex:
-					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
-					break;
-			}
-		}
-	}
-}
-
 CREDENTIALS* sspi_CredentialsNew()
 {
 	CREDENTIALS* credentials;
@@ -185,13 +156,13 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	xfree(credentials);
 }
 
-void sspi_SecBufferAlloc(SecBuffer* SecBuffer, size_t size)
+void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
 {
 	SecBuffer->cbBuffer = size;
 	SecBuffer->pvBuffer = xzalloc(size);
 }
 
-void sspi_SecBufferFree(SecBuffer* SecBuffer)
+void sspi_SecBufferFree(PSecBuffer SecBuffer)
 {
 	SecBuffer->cbBuffer = 0;
 	xfree(SecBuffer->pvBuffer);
@@ -238,7 +209,7 @@ void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer)
 	if (!handle)
 		return;
 
-	handle->dwLower = (uint32*) (~((size_t) pointer));
+	handle->dwLower = (ULONG_PTR) (~((size_t) pointer));
 }
 
 void* sspi_SecureHandleGetUpperPointer(SecHandle* handle)
@@ -258,7 +229,7 @@ void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer)
 	if (!handle)
 		return;
 
-	handle->dwUpper = (uint32*) (~((size_t) pointer));
+	handle->dwUpper = (ULONG_PTR) (~((size_t) pointer));
 }
 
 void sspi_SecureHandleFree(SecHandle* handle)
@@ -268,6 +239,18 @@ void sspi_SecureHandleFree(SecHandle* handle)
 
 	xfree(handle);
 }
+
+void sspi_GlobalInit()
+{
+	sspi_ContextBufferAllocTableNew();
+}
+
+void sspi_GlobalFinish()
+{
+	sspi_ContextBufferAllocTableFree();
+}
+
+#ifndef NATIVE_SSPI
 
 SecurityFunctionTable* sspi_GetSecurityFunctionTableByName(const char* Name)
 {
@@ -287,17 +270,39 @@ SecurityFunctionTable* sspi_GetSecurityFunctionTableByName(const char* Name)
 	return NULL;
 }
 
-void sspi_GlobalInit()
-{
-	sspi_ContextBufferAllocTableNew();
-}
+void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
+void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
 
-void sspi_GlobalFinish()
+void sspi_ContextBufferFree(void* contextBuffer)
 {
-	sspi_ContextBufferAllocTableFree();
-}
+	int index;
+	uint32 allocatorIndex;
 
-#ifndef NATIVE_SSPI
+	for (index = 0; index < (int) ContextBufferAllocTable.cMaxEntries; index++)
+	{
+		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
+		{
+			contextBuffer = ContextBufferAllocTable.entries[index].contextBuffer;
+			allocatorIndex = ContextBufferAllocTable.entries[index].allocatorIndex;
+
+			ContextBufferAllocTable.cEntries--;
+
+			ContextBufferAllocTable.entries[index].allocatorIndex = 0;
+			ContextBufferAllocTable.entries[index].contextBuffer = NULL;
+
+			switch (allocatorIndex)
+			{
+				case EnumerateSecurityPackagesIndex:
+					FreeContextBuffer_EnumerateSecurityPackages(contextBuffer);
+					break;
+
+				case QuerySecurityPackageInfoIndex:
+					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
+					break;
+			}
+		}
+	}
+}
 
 /* Package Management */
 
@@ -408,7 +413,7 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 
 SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry)
+		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
 {
 	SECURITY_STATUS status;
 	SecurityFunctionTable* table = sspi_GetSecurityFunctionTableByName(pszPackage);
@@ -425,12 +430,12 @@ SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 	return status;
 }
 
-SECURITY_STATUS ExportSecurityContext(CtxtHandle* phContext, uint32 fFlags, SecBuffer* pPackedContext, void* pToken)
+SECURITY_STATUS ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS FreeCredentialsHandle(CredHandle* phCredential)
+SECURITY_STATUS FreeCredentialsHandle(PCredHandle phCredential)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -454,12 +459,12 @@ SECURITY_STATUS FreeCredentialsHandle(CredHandle* phCredential)
 	return status;
 }
 
-SECURITY_STATUS ImportSecurityContext(char* pszPackage, SecBuffer* pPackedContext, void* pToken, CtxtHandle* phContext)
+SECURITY_STATUS ImportSecurityContext(char* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS QueryCredentialsAttributes(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -485,9 +490,9 @@ SECURITY_STATUS QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAt
 
 /* Context Management */
 
-SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
-		SecBufferDesc* pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp)
+SECURITY_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -512,17 +517,17 @@ SECURITY_STATUS AcceptSecurityContext(CredHandle* phCredential, CtxtHandle* phCo
 	return status;
 }
 
-SECURITY_STATUS ApplyControlToken(CtxtHandle* phContext, SecBufferDesc* pInput)
+SECURITY_STATUS ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS CompleteAuthToken(CtxtHandle* phContext, SecBufferDesc* pToken)
+SECURITY_STATUS CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS DeleteSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS DeleteSecurityContext(PCtxtHandle phContext)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -556,15 +561,15 @@ SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS ImpersonateSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS ImpersonateSecurityContext(PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
+SECURITY_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
+		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -590,7 +595,7 @@ SECURITY_STATUS InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* 
 	return status;
 }
 
-SECURITY_STATUS QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -614,24 +619,24 @@ SECURITY_STATUS QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute
 	return status;
 }
 
-SECURITY_STATUS QuerySecurityContextToken(CtxtHandle* phContext, void* phToken)
+SECURITY_STATUS QuerySecurityContextToken(PCtxtHandle phContext, void* phToken)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SetContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer)
+SECURITY_STATUS SetContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS RevertSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS RevertSecurityContext(PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
 /* Message Support */
 
-SECURITY_STATUS DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -655,7 +660,7 @@ SECURITY_STATUS DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, u
 	return status;
 }
 
-SECURITY_STATUS EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -679,7 +684,7 @@ SECURITY_STATUS EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc
 	return status;
 }
 
-SECURITY_STATUS MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -703,7 +708,7 @@ SECURITY_STATUS MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc*
 	return status;
 }
 
-SECURITY_STATUS VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	char* Name;
 	SECURITY_STATUS status;

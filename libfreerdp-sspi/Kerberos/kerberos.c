@@ -275,9 +275,9 @@ KRB_CONTEXT* krb_ContextNew()
 	return context;
 }
 
-SECURITY_STATUS krb_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+SECURITY_STATUS SEC_ENTRY krb_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, CredHandle* phCredential, TimeStamp* ptsExpiry)
+		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
 {
 	CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
@@ -298,7 +298,7 @@ SECURITY_STATUS krb_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackag
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_FreeCredentialsHandle(CredHandle* phCredential)
+SECURITY_STATUS SEC_ENTRY krb_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	CREDENTIALS* credentials;
 
@@ -315,7 +315,7 @@ SECURITY_STATUS krb_FreeCredentialsHandle(CredHandle* phCredential)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_QueryCredentialsAttributes(CredHandle* phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY krb_QueryCredentialsAttributes(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -381,16 +381,16 @@ void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ident
 	}
 }
 
-SECURITY_STATUS krb_InitializeSecurityContext(CredHandle* phCredential, CtxtHandle* phContext,
+SECURITY_STATUS SEC_ENTRY krb_InitializeSecurityContext(PCredHandle phCredential, CtxtHandle* phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		SecBufferDesc* pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		SecBufferDesc* pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
+		PSecBufferDesc pInput, uint32 Reserved2, CtxtHandle* phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
 {
 	KRB_CONTEXT* krb_ctx;
 	//SECURITY_STATUS status;
 	//CREDENTIALS* credentials;
-	//SecBuffer* input_SecBuffer;
-	//SecBuffer* output_SecBuffer;
+	//PSecBuffer input_SecBuffer;
+	//PSecBuffer output_SecBuffer;
 	int errcode;
 	errcode = 0;
 
@@ -1167,22 +1167,22 @@ SECURITY_STATUS krb_QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttri
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS krb_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY krb_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_DecryptMessage(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY krb_DecryptMessage(CtxtHandle* phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_MakeSignature(CtxtHandle* phContext, uint32 fQOP, SecBufferDesc* pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY krb_MakeSignature(CtxtHandle* phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_VerifySignature(CtxtHandle* phContext, SecBufferDesc* pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY krb_VerifySignature(CtxtHandle* phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }

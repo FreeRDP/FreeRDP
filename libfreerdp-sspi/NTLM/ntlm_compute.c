@@ -421,7 +421,7 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
  * @param signing_key Destination signing key
  */
 
-void ntlm_generate_signing_key(uint8* exported_session_key, SecBuffer* sign_magic, uint8* signing_key)
+void ntlm_generate_signing_key(uint8* exported_session_key, PSecBuffer sign_magic, uint8* signing_key)
 {
 	int length;
 	uint8* value;
@@ -477,7 +477,7 @@ void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
  * @param sealing_key Destination sealing key
  */
 
-void ntlm_generate_sealing_key(uint8* exported_session_key, SecBuffer* seal_magic, uint8* sealing_key)
+void ntlm_generate_sealing_key(uint8* exported_session_key, PSecBuffer seal_magic, uint8* sealing_key)
 {
 	uint8* p;
 	CryptoMd5 md5;

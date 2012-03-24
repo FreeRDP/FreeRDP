@@ -145,7 +145,7 @@ void ntlm_print_negotiate_flags(uint32 flags)
 	printf("}\n");
 }
 
-SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	int length;
@@ -219,7 +219,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buf
 	return SEC_I_CONTINUE_NEEDED;
 }
 
-SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	int length;
@@ -311,7 +311,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	return SEC_I_CONTINUE_NEEDED;
 }
 
-SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	uint8* p;
 	STREAM* s;
@@ -511,7 +511,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buf
 	return SEC_I_CONTINUE_NEEDED;
 }
 
-SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	int length;
@@ -634,7 +634,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	return SEC_I_CONTINUE_NEEDED;
 }
 
-SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	int length;
@@ -905,7 +905,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* 
  * @param buffer
  */
 
-SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
+SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	int length;

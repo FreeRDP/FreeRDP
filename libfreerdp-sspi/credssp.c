@@ -152,7 +152,7 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	return 1;
 }
 
-#define NTLM_PACKAGE_NAME		"NTLM"
+#define NTLM_PACKAGE_NAME		L"NTLM"
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
@@ -163,7 +163,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	CredHandle credentials;
 	TimeStamp expiration;
 	SecPkgInfo* pPackageInfo;
-	SecBuffer* p_buffer;
+	PSecBuffer p_buffer;
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
 	SecBufferDesc input_buffer_desc;
@@ -249,7 +249,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SecBufferDesc Message;
 
 				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
-				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
+				Buffers[1].BufferType = SECBUFFER_TOKEN; /* Signature */
 
 				Buffers[0].cbBuffer = credssp->PublicKey.cbBuffer;
 				Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
@@ -260,7 +260,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 				Message.cBuffers = 2;
 				Message.ulVersion = SECBUFFER_VERSION;
-				Message.pBuffers = (SecBuffer*) &Buffers;
+				Message.pBuffers = (PSecBuffer) &Buffers;
 
 				sspi_SecBufferAlloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
@@ -368,7 +368,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	CredHandle credentials;
 	TimeStamp expiration;
 	SecPkgInfo* pPackageInfo;
-	SecBuffer* p_buffer;
+	PSecBuffer p_buffer;
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
 	SecBufferDesc input_buffer_desc;
@@ -485,7 +485,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 				SecBufferDesc Message;
 
 				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
-				Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
+				Buffers[1].BufferType = SECBUFFER_TOKEN; /* Signature */
 
 				Buffers[0].cbBuffer = credssp->PublicKey.cbBuffer;
 				Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
@@ -496,7 +496,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 				Message.cBuffers = 2;
 				Message.ulVersion = SECBUFFER_VERSION;
-				Message.pBuffers = (SecBuffer*) &Buffers;
+				Message.pBuffers = (PSecBuffer) &Buffers;
 
 				p = (uint8*) Buffers[0].pvBuffer;
 				p[0]++; /* Public Key +1 */
@@ -596,7 +596,7 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 	pub_key_auth = (uint8*) credssp->pubKeyAuth.pvBuffer;
 	public_key_length = credssp->PublicKey.cbBuffer;
 
-	Buffers[0].BufferType = SECBUFFER_PADDING; /* Signature */
+	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
 
 	Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
@@ -609,7 +609,7 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
-	Message.pBuffers = (SecBuffer*) &Buffers;
+	Message.pBuffers = (PSecBuffer) &Buffers;
 
 	status = credssp->table->DecryptMessage(&credssp->context, &Message, 0, &pfQOP);
 
@@ -652,7 +652,7 @@ SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 	credssp_encode_ts_credentials(credssp);
 
 	Buffers[0].BufferType = SECBUFFER_DATA; /* TSCredentials */
-	Buffers[1].BufferType = SECBUFFER_PADDING; /* Signature */
+	Buffers[1].BufferType = SECBUFFER_TOKEN; /* Signature */
 
 	Buffers[0].cbBuffer = credssp->ts_credentials.cbBuffer;
 	Buffers[0].pvBuffer = xmalloc(Buffers[0].cbBuffer);
@@ -663,7 +663,7 @@ SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
-	Message.pBuffers = (SecBuffer*) &Buffers;
+	Message.pBuffers = (PSecBuffer) &Buffers;
 
 	sspi_SecBufferAlloc(&credssp->authInfo, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
@@ -1067,6 +1067,6 @@ const SecPkgInfo CREDSSP_SecPkgInfo =
 	1, /* wVersion */
 	0xFFFF, /* wRPCID */
 	0x000090A8, /* cbMaxToken */
-	"CREDSSP", /* Name */
-	"Microsoft CredSSP Security Provider" /* Comment */
+	L"CREDSSP", /* Name */
+	L"Microsoft CredSSP Security Provider" /* Comment */
 };

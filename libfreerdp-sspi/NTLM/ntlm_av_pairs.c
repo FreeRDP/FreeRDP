@@ -155,7 +155,7 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
  * @param s
  */
 
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, SecBuffer* buffer)
+void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	STREAM* s;
 	AV_PAIRS* av_pairs = context->av_pairs;
