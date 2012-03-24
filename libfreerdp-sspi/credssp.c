@@ -152,11 +152,7 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	return 1;
 }
 
-#ifdef UNICODE
-#define NTLM_PACKAGE_NAME		L"NTLM"
-#else
-#define NTLM_PACKAGE_NAME		"NTLM"
-#endif
+#define NTLM_PACKAGE_NAME	_T("NTLM")
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
@@ -233,7 +229,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			input_buffer.pvBuffer = NULL;
 		}
 
-		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
+		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 		{
 			if (credssp->table->CompleteAuthToken != NULL)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
@@ -251,6 +247,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				uint8* p;
 				SecBuffer Buffers[2];
 				SecBufferDesc Message;
+				SECURITY_STATUS encrypt_status;
 
 				Buffers[0].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 				Buffers[1].BufferType = SECBUFFER_TOKEN; /* Signature */
@@ -268,7 +265,13 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 				sspi_SecBufferAlloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
-				credssp->table->EncryptMessage(&credssp->context, 0, &Message, 0);
+				encrypt_status = credssp->table->EncryptMessage(&credssp->context, 0, &Message, 0);
+
+				if (encrypt_status != SEC_E_OK)
+				{
+					printf("EncryptMessage status: 0x%08X\n", encrypt_status);
+					return 0;
+				}
 
 				p = (uint8*) credssp->pubKeyAuth.pvBuffer;
 				memcpy(p, Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Message Signature */
@@ -344,7 +347,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	status = credssp_encrypt_ts_credentials(credssp);
 
 	if (status != SEC_E_OK)
+	{
+		printf("credssp_encrypt_ts_credentials status: 0x%08X\n", status);
 		return 0;
+	}
 
 	credssp_send(credssp);
 	credssp_buffer_free(credssp);
