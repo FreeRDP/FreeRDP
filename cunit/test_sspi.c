@@ -97,7 +97,7 @@ void test_AcquireCredentialsHandle(void)
 {
 	SECURITY_STATUS status;
 	CredHandle credentials;
-	SEC_TIMESTAMP expiration;
+	TimeStamp expiration;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecurityFunctionTable* table;
 	SecPkgCredentials_Names credential_names;
@@ -135,7 +135,7 @@ void test_InitializeSecurityContext(void)
 	uint32 pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
-	SEC_TIMESTAMP expiration;
+	TimeStamp expiration;
 	SecPkgInfo* pPackageInfo;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecurityFunctionTable* table;
