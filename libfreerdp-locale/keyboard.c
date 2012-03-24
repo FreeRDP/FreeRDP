@@ -56,7 +56,6 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	char* pch;
 	char* beg;
 	char* end;
-	int i = 0;
 	uint32 vkcode;
 	uint32 scancode;
 	int kbd_found = 0;
@@ -68,7 +67,6 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	char keymap_filename[256] = "";
 	char keycode_string[32] = "";
 	char vkcode_name[128] = "";
-	boolean found = false;
 	boolean extended = false;
 
 	beg = name;
@@ -146,25 +144,10 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 					break;
 
 				/* Load this key mapping in the keyboard mapping */
-
-				i = 0;
-				found = false;
-				extended = false;
-
-				for (i = 0; i < 256; i++)
-				{
-					if (VIRTUAL_KEY_CODE_TABLE[i].name)
-					{
-						if (strcmp(vkcode_name, VIRTUAL_KEY_CODE_TABLE[i].name) == 0)
-						{
-							found = true;
-							vkcode = VIRTUAL_KEY_CODE_TABLE[i].code;
-							scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
-							extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
-							keycode_to_vkcode[keycode] = vkcode;
-						}
-					}
-				}
+				vkcode = freerdp_keyboard_get_virtual_key_code_from_name(vkcode_name);
+				scancode = VIRTUAL_KEY_CODE_TO_RDP_SCANCODE_TABLE[vkcode];
+				extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
+				keycode_to_vkcode[keycode] = vkcode;
 			}
 			else if ((pch = strstr(buffer, ": extends")) != NULL)
 			{
@@ -305,4 +288,20 @@ uint32 freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode, bo
 char* freerdp_keyboard_get_virtual_key_code_name(uint32 vkcode)
 {
 	return (char*) VIRTUAL_KEY_CODE_TABLE[vkcode].name;
+}
+
+uint32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name)
+{
+	int i = 0;
+	for (i = 0; i < ARRAY_SIZE(VIRTUAL_KEY_CODE_TABLE); i++)
+	{
+		if (VIRTUAL_KEY_CODE_TABLE[i].name)
+		{
+			if (strcmp(vkcode_name, VIRTUAL_KEY_CODE_TABLE[i].name) == 0)
+			{
+				return VIRTUAL_KEY_CODE_TABLE[i].code;
+			}
+		}
+	}
+	return 0;
 }
