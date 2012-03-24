@@ -62,8 +62,8 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 	 * "multi" the keyboard layout variant
 	 */
 
-        while(fgets(buffer, sizeof(buffer), xprop) != NULL)
-        {
+	while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+	{
 		if((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
 		{
 			/* "rules" */
@@ -91,9 +91,10 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 			variant = beg;
 		}
-        }
-        pclose(xprop);
+	}
+	pclose(xprop);
 
+	DEBUG_KBD("_XKB_RULES_NAMES_BACKUP layout: %s, variant: %s", layout, variant);
 	keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
 
 	if (keyboardLayoutId > 0)
@@ -105,10 +106,10 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	/* Check _XKB_RULES_NAMES if _XKB_RULES_NAMES_BACKUP fails */
 
-        xprop = popen("xprop -root _XKB_RULES_NAMES", "r");
+	xprop = popen("xprop -root _XKB_RULES_NAMES", "r");
 
-        while(fgets(buffer, sizeof(buffer), xprop) != NULL)
-        {
+	while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+	{
 		if((pch = strstr(buffer, "_XKB_RULES_NAMES(STRING) = ")) != NULL)
 		{
 			/* "rules" */
@@ -136,9 +137,10 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 			variant = beg;
 		}
-        }
-        pclose(xprop);
+	}
+	pclose(xprop);
 
+	DEBUG_KBD("_XKB_RULES_NAMES layout: %s, variant: %s", layout, variant);
 	keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
 
 	if (keyboardLayoutId > 0)

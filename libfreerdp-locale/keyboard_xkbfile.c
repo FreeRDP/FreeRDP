@@ -464,8 +464,9 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 				{
 					scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
 
-					DEBUG_KBD("%4s: keycode: 0x%02X -> vkcode: 0x%02X -> rdp scancode: 0x%02X %s",
-							xkb_keyname, i, vkcode, scancode, extended ? " extended" : "");
+					DEBUG_KBD("%4s: keycode: 0x%02X -> vkcode: 0x%02X %-13s -> rdp scancode: 0x%02X %s",
+							xkb_keyname, i, vkcode, freerdp_keyboard_get_virtual_key_code_name(vkcode),
+							scancode, extended ? " extended" : "");
 
 					x11_keycode_to_rdp_scancode[i].code = scancode;
 					x11_keycode_to_rdp_scancode[i].extended = extended;
