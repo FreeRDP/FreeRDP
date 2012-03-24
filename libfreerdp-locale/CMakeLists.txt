@@ -18,6 +18,7 @@
 # limitations under the License.
 
 set(FREERDP_LOCALE_SRCS
+	virtual_key_codes.c
 	keyboard_layout.c
 	keyboard.c
 	locale.c
@@ -25,12 +26,18 @@ set(FREERDP_LOCALE_SRCS
 	liblocale.h)
 
 set(FREERDP_LOCALE_X11_SRCS
+	xkb_layout_ids.c
+	xkb_layout_ids.h)
+
+set(FREERDP_LOCALE_X11_KEYMAP_SRCS
+	keyboard_keymap.c
+	keyboard_keymap.h
 	keyboard_x11.c
 	keyboard_x11.h)
 
-set(FREERDP_LOCALE_XKB_SRCS
-	keyboard_xkb.c
-	keyboard_xkb.h)
+set(FREERDP_LOCALE_XKBFILE_SRCS
+	keyboard_xkbfile.c
+	keyboard_xkbfile.h)
 
 set(FREERDP_LOCALE_SUN_SRCS
 	keyboard_sun.c
@@ -49,18 +56,19 @@ if(NOT WIN32)
 		include_directories(${X11_INCLUDE_DIRS})
 		set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_SRCS})
 		set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${X11_LIBRARIES})
-		if(NOT APPLE)
-			find_suggested_package(XKBFile)
-			if(WITH_XKBFILE)
-				add_definitions(-DWITH_XKB)
-				include_directories(${XKBFILE_INCLUDE_DIRS})
-				set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKB_SRCS})
-				set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${XKBFILE_LIBRARIES})
-			endif()
-		endif()
 		if(WITH_SUN)
 			add_definitions(-DWITH_SUN)
 			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_SUN_SRCS})
+		elseif(NOT APPLE)
+			find_suggested_package(XKBFile)
+		endif()
+		if(WITH_XKBFILE)
+			add_definitions(-DWITH_XKBFILE)
+			include_directories(${XKBFILE_INCLUDE_DIRS})
+			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKBFILE_SRCS})
+			set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${XKBFILE_LIBRARIES})
+		else()
+			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_KEYMAP_SRCS})
 		endif()
 	endif()
 endif()
@@ -72,4 +80,3 @@ set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} 
 target_link_libraries(freerdp-locale ${FREERDP_LOCALE_LINK_LIBRARIES})
 
 install(TARGETS freerdp-locale DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

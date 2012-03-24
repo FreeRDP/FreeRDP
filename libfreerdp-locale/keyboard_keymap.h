@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * XKB Keyboard Mapping
+ * Keyboard Localization - loading of keymap files
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,22 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __LOCALE_KEYBOARD_XKB_H
-#define __LOCALE_KEYBOARD_XKB_H
+#ifndef __KEYBOARD_KEYMAP_H
+#define __KEYBOARD_KEYMAP_H
 
 #include <freerdp/types.h>
-#include <freerdp/locale/keyboard.h>
 
-struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
-{
-	uint32 vkcode; /* virtual key code */
-	const char* xkb_keyname; /* XKB keyname */
-	const char* xkb_keyname_extended; /* XKB keyname (extended) */
-};
-typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
+int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name);
+void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names);
 
-uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId);
-uint32 detect_keyboard_layout_from_xkb(void* display);
-int freerdp_keyboard_load_map_from_xkb(void* display);
-
-#endif /* __LOCALE_KEYBOARD_XKB_H */
+#endif /* __KEYBOARD_KEYMAP_H */
