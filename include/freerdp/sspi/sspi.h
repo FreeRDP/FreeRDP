@@ -31,13 +31,16 @@
 #define SECURITY_WIN32
 #include <sspi.h>
 #pragma comment(lib, "secur32.lib")
+#else
+#define FREERDP_SSPI
+#define SEC_ENTRY __stdcall
 #endif
 
 #else
 
-#define SEC_ENTRY
+#define FREERDP_SSPI
 
-typedef sint8 CHAR;
+typedef char CHAR;
 typedef uint16 WCHAR;
 
 typedef CHAR* LPSTR;
@@ -47,9 +50,11 @@ typedef uint64* ULONG_PTR;
 
 #endif
 
-#ifndef NATIVE_SSPI
+#ifdef FREERDP_SSPI
 
-#define SEC_ENTRY __stdcall
+#ifndef SEC_ENTRY
+#define SEC_ENTRY
+#endif
 
 typedef CHAR SEC_CHAR;
 typedef WCHAR SEC_WCHAR;
@@ -258,7 +263,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#ifndef NATIVE_SSPI
+#ifdef FREERDP_SSPI
 
 struct _SecPkgContext_AccessToken
 {
@@ -585,7 +590,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI			0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-#ifndef NATIVE_SSPI
+#ifdef FREERDP_SSPI
 
 struct _SEC_WINNT_AUTH_IDENTITY
 {
@@ -641,7 +646,7 @@ typedef CtxtHandle* PCtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-#ifndef NATIVE_SSPI
+#ifdef FREERDP_SSPI
 
 struct _SecBuffer
 {
@@ -840,33 +845,33 @@ typedef struct _SecurityFunctionTable SecurityFunctionTable;
 struct _SecurityFunctionTableA
 {
 	uint32 dwVersion;
-	ENUMERATE_SECURITY_PACKAGES_FN_A EnumerateSecurityPackagesW;
-	QUERY_CREDENTIALS_ATTRIBUTES_FN_A QueryCredentialsAttributesW;
-	ACQUIRE_CREDENTIALS_HANDLE_FN_A AcquireCredentialsHandleW;
+	ENUMERATE_SECURITY_PACKAGES_FN_A EnumerateSecurityPackagesA;
+	QUERY_CREDENTIALS_ATTRIBUTES_FN_A QueryCredentialsAttributesA;
+	ACQUIRE_CREDENTIALS_HANDLE_FN_A AcquireCredentialsHandleA;
 	FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
 	void* Reserved2;
-	INITIALIZE_SECURITY_CONTEXT_FN_A InitializeSecurityContextW;
+	INITIALIZE_SECURITY_CONTEXT_FN_A InitializeSecurityContextA;
 	ACCEPT_SECURITY_CONTEXT_FN AcceptSecurityContext;
 	COMPLETE_AUTH_TOKEN_FN CompleteAuthToken;
 	DELETE_SECURITY_CONTEXT_FN DeleteSecurityContext;
 	APPLY_CONTROL_TOKEN_FN ApplyControlToken;
-	QUERY_CONTEXT_ATTRIBUTES_FN_A QueryContextAttributesW;
+	QUERY_CONTEXT_ATTRIBUTES_FN_A QueryContextAttributesA;
 	IMPERSONATE_SECURITY_CONTEXT_FN ImpersonateSecurityContext;
 	REVERT_SECURITY_CONTEXT_FN RevertSecurityContext;
 	MAKE_SIGNATURE_FN MakeSignature;
 	VERIFY_SIGNATURE_FN VerifySignature;
 	FREE_CONTEXT_BUFFER_FN FreeContextBuffer;
-	QUERY_SECURITY_PACKAGE_INFO_FN_A QuerySecurityPackageInfoW;
+	QUERY_SECURITY_PACKAGE_INFO_FN_A QuerySecurityPackageInfoA;
 	void* Reserved3;
 	void* Reserved4;
 	EXPORT_SECURITY_CONTEXT_FN ExportSecurityContext;
-	IMPORT_SECURITY_CONTEXT_FN_A ImportSecurityContextW;
-	ADD_CREDENTIALS_FN_A AddCredentialsW;
+	IMPORT_SECURITY_CONTEXT_FN_A ImportSecurityContextA;
+	ADD_CREDENTIALS_FN_A AddCredentialsA;
 	void* Reserved8;
 	QUERY_SECURITY_CONTEXT_TOKEN_FN QuerySecurityContextToken;
 	ENCRYPT_MESSAGE_FN EncryptMessage;
 	DECRYPT_MESSAGE_FN DecryptMessage;
-	SET_CONTEXT_ATTRIBUTES_FN_A SetContextAttributesW;
+	SET_CONTEXT_ATTRIBUTES_FN_A SetContextAttributesA;
 };
 typedef struct _SecurityFunctionTableA SecurityFunctionTableA;
 typedef SecurityFunctionTableA* PSecurityFunctionTableA;
@@ -906,9 +911,11 @@ typedef struct _SecurityFunctionTableW SecurityFunctionTableW;
 typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
 #ifdef UNICODE
+#define InitSecurityInterface InitSecurityInterfaceW
 #define SecurityFunctionTable SecurityFunctionTableW
 #define PSecurityFunctionTable PSecurityFunctionTableW
 #else
+#define InitSecurityInterface InitSecurityInterfaceA
 #define SecurityFunctionTable SecurityFunctionTableA
 #define PSecurityFunctionTable PSecurityFunctionTableA
 #endif

@@ -194,7 +194,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandle(char* pszPrincipal,
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributes(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -253,8 +253,7 @@ const SecurityFunctionTable NEGOTIATE_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
-	NULL, /* Reserved1 */
-	negotiate_QueryCredentialsAttributes, /* QueryCredentialsAttributes */
+	negotiate_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	negotiate_AcquireCredentialsHandle, /* AcquireCredentialsHandle */
 	negotiate_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */

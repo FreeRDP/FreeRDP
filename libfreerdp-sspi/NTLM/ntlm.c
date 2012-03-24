@@ -138,9 +138,9 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	xfree(context);
 }
 
-SECURITY_STATUS ntlm_AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+SECURITY_STATUS ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
@@ -190,7 +190,7 @@ SECURITY_STATUS ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributes(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -210,9 +210,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributes(PCredHandle phCredenti
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375512/ */
 
-SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, CtxtHandle* phContext,
-		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, CtxtHandle* phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp)
+SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsTimeStamp)
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
@@ -307,15 +307,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, C
 	return SEC_E_OUT_OF_SEQUENCE;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_ImpersonateSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS SEC_ENTRY ntlm_ImpersonateSecurityContext(PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContext(PCredHandle phCredential, CtxtHandle* phContext,
+SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, CtxtHandle* phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
+		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
@@ -411,7 +411,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContext(PCredHandle phCredentia
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375354 */
 
-SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	NTLM_CONTEXT* context;
 
@@ -425,7 +425,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(CtxtHandle* phContext)
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
 
-SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributes(CtxtHandle* phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -448,12 +448,12 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributes(CtxtHandle* phContext, uin
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(CtxtHandle* phContext)
+SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	int index;
 	int length;
@@ -530,7 +530,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(CtxtHandle* phContext, uint32 fQOP
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(CtxtHandle* phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	int index;
 	int length;
@@ -596,12 +596,12 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(CtxtHandle* phContext, PSecBufferD
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(CtxtHandle* phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(CtxtHandle* phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }
@@ -620,17 +620,16 @@ const SecurityFunctionTable NTLM_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
-	NULL, /* Reserved1 */
-	ntlm_QueryCredentialsAttributes, /* QueryCredentialsAttributes */
-	ntlm_AcquireCredentialsHandle, /* AcquireCredentialsHandle */
+	ntlm_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
+	ntlm_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
 	ntlm_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
-	ntlm_InitializeSecurityContext, /* InitializeSecurityContext */
+	ntlm_InitializeSecurityContextA, /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
 	ntlm_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
-	ntlm_QueryContextAttributes, /* QueryContextAttributes */
+	ntlm_QueryContextAttributesA, /* QueryContextAttributes */
 	ntlm_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
 	ntlm_RevertSecurityContext, /* RevertSecurityContext */
 	ntlm_MakeSignature, /* MakeSignature */

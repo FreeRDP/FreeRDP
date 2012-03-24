@@ -152,7 +152,7 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	return 1;
 }
 
-#define NTLM_PACKAGE_NAME		L"NTLM"
+#define NTLM_PACKAGE_NAME		"NTLM"
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
@@ -1032,7 +1032,6 @@ const SecurityFunctionTable CREDSSP_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
-	NULL, /* Reserved1 */
 	NULL, /* QueryCredentialsAttributes */
 	NULL, /* AcquireCredentialsHandle */
 	NULL, /* FreeCredentialsHandle */
@@ -1058,7 +1057,7 @@ const SecurityFunctionTable CREDSSP_SecurityFunctionTable =
 	NULL, /* QuerySecurityContextToken */
 	NULL, /* EncryptMessage */
 	NULL, /* DecryptMessage */
-	NULL, /* SetContextAttributes */
+	NULL /* SetContextAttributes */
 };
 
 const SecPkgInfo CREDSSP_SecPkgInfo =
@@ -1067,6 +1066,6 @@ const SecPkgInfo CREDSSP_SecPkgInfo =
 	1, /* wVersion */
 	0xFFFF, /* wRPCID */
 	0x000090A8, /* cbMaxToken */
-	L"CREDSSP", /* Name */
-	L"Microsoft CredSSP Security Provider" /* Comment */
+	"CREDSSP", /* Name */
+	"Microsoft CredSSP Security Provider" /* Comment */
 };

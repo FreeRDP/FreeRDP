@@ -25,7 +25,7 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-#ifndef NATIVE_SSPI
+#ifdef FREERDP_SSPI
 
 extern const SecPkgInfo NTLM_SecPkgInfo;
 extern const SecPkgInfo CREDSSP_SecPkgInfo;
@@ -362,7 +362,7 @@ SecurityFunctionTable* InitSecurityInterface(void)
 	return table;
 }
 
-SECURITY_STATUS QuerySecurityPackageInfo(char* pszPackageName, SecPkgInfo** ppPackageInfo)
+SECURITY_STATUS QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo)
 {
 	int index;
 	size_t size;
@@ -411,9 +411,9 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 
 /* Credential Management */
 
-SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
+SECURITY_STATUS AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
 	SecurityFunctionTable* table = sspi_GetSecurityFunctionTableByName(pszPackage);
@@ -430,7 +430,7 @@ SECURITY_STATUS AcquireCredentialsHandle(char* pszPrincipal, char* pszPackage,
 	return status;
 }
 
-SECURITY_STATUS ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken)
+SECURITY_STATUS ExportSecurityContextA(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken)
 {
 	return SEC_E_OK;
 }
@@ -459,7 +459,7 @@ SECURITY_STATUS FreeCredentialsHandle(PCredHandle phCredential)
 	return status;
 }
 
-SECURITY_STATUS ImportSecurityContext(char* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext)
+SECURITY_STATUS ImportSecurityContextA(char* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
@@ -492,7 +492,7 @@ SECURITY_STATUS QueryCredentialsAttributes(PCredHandle phCredential, uint32 ulAt
 
 SECURITY_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
 		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp)
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsTimeStamp)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -566,10 +566,10 @@ SECURITY_STATUS ImpersonateSecurityContext(PCtxtHandle phContext)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+SECURITY_STATUS InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
 		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
 {
 	char* Name;
 	SECURITY_STATUS status;
@@ -736,12 +736,11 @@ const SecurityFunctionTable SSPI_SecurityFunctionTable =
 {
 	1, /* dwVersion */
 	EnumerateSecurityPackages, /* EnumerateSecurityPackages */
-	NULL, /* Reserved1 */
 	QueryCredentialsAttributes, /* QueryCredentialsAttributes */
 	AcquireCredentialsHandle, /* AcquireCredentialsHandle */
 	FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
-	InitializeSecurityContext, /* InitializeSecurityContext */
+	InitializeSecurityContextA, /* InitializeSecurityContext */
 	AcceptSecurityContext, /* AcceptSecurityContext */
 	CompleteAuthToken, /* CompleteAuthToken */
 	DeleteSecurityContext, /* DeleteSecurityContext */
@@ -752,10 +751,10 @@ const SecurityFunctionTable SSPI_SecurityFunctionTable =
 	MakeSignature, /* MakeSignature */
 	VerifySignature, /* VerifySignature */
 	FreeContextBuffer, /* FreeContextBuffer */
-	QuerySecurityPackageInfo, /* QuerySecurityPackageInfo */
+	QuerySecurityPackageInfoA, /* QuerySecurityPackageInfo */
 	NULL, /* Reserved3 */
 	NULL, /* Reserved4 */
-	ExportSecurityContext, /* ExportSecurityContext */
+	ExportSecurityContextA, /* ExportSecurityContext */
 	ImportSecurityContext, /* ImportSecurityContext */
 	NULL, /* AddCredentials */
 	NULL, /* Reserved8 */
