@@ -20,8 +20,6 @@
 #ifndef __LOCALE_KEYBOARD_SUN_H
 #define __LOCALE_KEYBOARD_SUN_H
 
-#include "keyboard_x11.h"
-
-uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* xkbfile, int length);
+uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length);
 
 #endif /* __LOCALE_KEYBOARD_SUN_H */

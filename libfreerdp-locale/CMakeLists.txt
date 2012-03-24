@@ -29,9 +29,9 @@ set(FREERDP_LOCALE_X11_SRCS
 	keyboard_x11.c
 	keyboard_x11.h)
 
-set(FREERDP_LOCALE_XKB_SRCS
-	keyboard_xkb.c
-	keyboard_xkb.h)
+set(FREERDP_LOCALE_XKBFILE_SRCS
+	keyboard_xkbfile.c
+	keyboard_xkbfile.h)
 
 set(FREERDP_LOCALE_SUN_SRCS
 	keyboard_sun.c
@@ -53,9 +53,9 @@ if(NOT WIN32)
 		if(NOT APPLE)
 			find_suggested_package(XKBFile)
 			if(WITH_XKBFILE)
-				add_definitions(-DWITH_XKB)
+				add_definitions(-DWITH_XKBFILE)
 				include_directories(${XKBFILE_INCLUDE_DIRS})
-				set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKB_SRCS})
+				set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKBFILE_SRCS})
 				set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${XKBFILE_LIBRARIES})
 			endif()
 		endif()
@@ -73,4 +73,3 @@ set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} 
 target_link_libraries(freerdp-locale ${FREERDP_LOCALE_LINK_LIBRARIES})
 
 install(TARGETS freerdp-locale DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

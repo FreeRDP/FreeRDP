@@ -31,8 +31,8 @@ struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
 };
 typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
 
-uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId);
-uint32 detect_keyboard_layout_from_xkb(void* display);
-int freerdp_keyboard_load_map_from_xkb(void* display);
+uint32 freerdp_keyboard_init_xkbfile(uint32 keyboardLayoutId);
+uint32 detect_keyboard_layout_from_xkbfile(void* display);
+int freerdp_keyboard_load_map_from_xkbfile(void* display);
 
 #endif /* __LOCALE_KEYBOARD_XKB_H */

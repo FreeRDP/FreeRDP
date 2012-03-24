@@ -197,7 +197,7 @@ static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] =
 	{ 6,   272,  "sun(type6)",               KBD_PORTUGUESE_BRAZILIAN_ABNT		}  /*  Brazil6_usb */
 };
 
-uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* xkbfile, int length)
+uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length)
 {
 	FILE* kbd;
 
@@ -251,7 +251,7 @@ uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* xkbfile, int length
 		{
 			if (SOLARIS_KEYBOARD_TABLE[i].layout == layout)
 			{
-				strncpy(xkbfile, SOLARIS_KEYBOARD_TABLE[i].xkbType, length);
+				strncpy(keyboard_type, SOLARIS_KEYBOARD_TABLE[i].xkbType, length);
 				return SOLARIS_KEYBOARD_TABLE[i].keyboardLayoutId;
 			}
 		}

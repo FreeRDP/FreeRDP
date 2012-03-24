@@ -19,7 +19,7 @@
 
 #include "liblocale.h"
 
-#include "keyboard_xkb.h"
+#include "keyboard_xkbfile.h"
 #include "keyboard_x11.h"
 #include <freerdp/locale/keyboard.h>
 
@@ -315,7 +315,7 @@ void* freerdp_keyboard_xkb_init()
 	return (void*) display;
 }
 
-uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
+uint32 freerdp_keyboard_init_xkbfile(uint32 keyboardLayoutId)
 {
 	void* display;
 	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
@@ -331,11 +331,11 @@ uint32 freerdp_keyboard_init_xkb(uint32 keyboardLayoutId)
 
 	if (keyboardLayoutId == 0)
 	{
-		keyboardLayoutId = detect_keyboard_layout_from_xkb(display);
+		keyboardLayoutId = detect_keyboard_layout_from_xkbfile(display);
 		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
 	}
 
-	freerdp_keyboard_load_map_from_xkb(display);
+	freerdp_keyboard_load_map_from_xkbfile(display);
 
 	XCloseDisplay(display);
 
@@ -364,7 +364,7 @@ static char* comma_substring(char* s, int n)
 	return s;
 }
 
-uint32 detect_keyboard_layout_from_xkb(void* display)
+uint32 detect_keyboard_layout_from_xkbfile(void* display)
 {
 	char* layout;
 	char* variant;
@@ -405,7 +405,7 @@ uint32 detect_keyboard_layout_from_xkb(void* display)
 	return keyboard_layout;
 }
 
-int freerdp_keyboard_load_map_from_xkb(void* display)
+int freerdp_keyboard_load_map_from_xkbfile(void* display)
 {
 	int i, j;
 	uint32 vkcode;

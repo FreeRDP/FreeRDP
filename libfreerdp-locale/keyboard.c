@@ -32,8 +32,8 @@
 #include "keyboard_x11.h"
 #endif
 
-#ifdef WITH_XKB
-#include "keyboard_xkb.h"
+#ifdef WITH_XKBFILE
+#include "keyboard_xkbfile.h"
 #endif
 
 #ifdef WITH_SUN
@@ -244,8 +244,8 @@ uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
 
 uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 {
-#ifdef WITH_XKB
-	keyboardLayoutId = freerdp_keyboard_init_xkb(keyboardLayoutId);
+#ifdef WITH_XKBFILE
+	keyboardLayoutId = freerdp_keyboard_init_xkbfile(keyboardLayoutId);
 
 	if (keyboardLayoutId == 0)
 		keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId);
