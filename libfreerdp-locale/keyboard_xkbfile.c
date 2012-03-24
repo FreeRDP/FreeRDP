@@ -26,7 +26,6 @@
 #include "xkb_layout_ids.h"
 #include "liblocale.h"
 
-extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
@@ -320,7 +319,6 @@ uint32 freerdp_keyboard_init_xkbfile(uint32 keyboardLayoutId)
 {
 	void* display;
 	memset(X11_KEYCODE_TO_RDP_SCANCODE, 0, sizeof(X11_KEYCODE_TO_RDP_SCANCODE));
-	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
 
 	display = freerdp_keyboard_xkb_init();
 
@@ -472,11 +470,6 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display)
 
 					X11_KEYCODE_TO_RDP_SCANCODE[i].code = scancode;
 					X11_KEYCODE_TO_RDP_SCANCODE[i].extended = extended;
-
-					if (extended)
-						RDP_SCANCODE_TO_X11_KEYCODE[scancode][1] = i;
-					else
-						RDP_SCANCODE_TO_X11_KEYCODE[scancode][0] = i;
 				}
 				else
 				{

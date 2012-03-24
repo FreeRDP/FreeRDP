@@ -68,6 +68,8 @@ uint32 freerdp_detect_keyboard(uint32 keyboardLayoutID)
 
 uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 {
+	uint32 keycode;
+
 #ifdef WITH_X11
 
 #ifdef WITH_XKBFILE
@@ -79,6 +81,13 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 #endif
 
 #endif
+
+	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+	for (keycode=0; keycode < ARRAY_SIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+		RDP_SCANCODE_TO_X11_KEYCODE
+			[X11_KEYCODE_TO_RDP_SCANCODE[keycode].code]
+			[X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended ? 1: 0] = keycode;
+
 	return keyboardLayoutId;
 }
 
