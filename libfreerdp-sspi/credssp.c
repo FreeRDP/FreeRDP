@@ -152,7 +152,11 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	return 1;
 }
 
+#ifdef UNICODE
+#define NTLM_PACKAGE_NAME		L"NTLM"
+#else
 #define NTLM_PACKAGE_NAME		"NTLM"
+#endif
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
@@ -1028,7 +1032,7 @@ void credssp_free(rdpCredssp* credssp)
 
 /* SSPI */
 
-const SecurityFunctionTable CREDSSP_SecurityFunctionTable =
+const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
@@ -1060,7 +1064,39 @@ const SecurityFunctionTable CREDSSP_SecurityFunctionTable =
 	NULL /* SetContextAttributes */
 };
 
-const SecPkgInfo CREDSSP_SecPkgInfo =
+const SecurityFunctionTableW CREDSSP_SecurityFunctionTableW =
+{
+	1, /* dwVersion */
+	NULL, /* EnumerateSecurityPackages */
+	NULL, /* QueryCredentialsAttributes */
+	NULL, /* AcquireCredentialsHandle */
+	NULL, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	NULL, /* InitializeSecurityContext */
+	NULL, /* AcceptSecurityContext */
+	NULL, /* CompleteAuthToken */
+	NULL, /* DeleteSecurityContext */
+	NULL, /* ApplyControlToken */
+	NULL, /* QueryContextAttributes */
+	NULL, /* ImpersonateSecurityContext */
+	NULL, /* RevertSecurityContext */
+	NULL, /* MakeSignature */
+	NULL, /* VerifySignature */
+	NULL, /* FreeContextBuffer */
+	NULL, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	NULL, /* ExportSecurityContext */
+	NULL, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	NULL, /* QuerySecurityContextToken */
+	NULL, /* EncryptMessage */
+	NULL, /* DecryptMessage */
+	NULL /* SetContextAttributes */
+};
+
+const SecPkgInfoA CREDSSP_SecPkgInfoA =
 {
 	0x000110733, /* fCapabilities */
 	1, /* wVersion */
@@ -1068,4 +1104,14 @@ const SecPkgInfo CREDSSP_SecPkgInfo =
 	0x000090A8, /* cbMaxToken */
 	"CREDSSP", /* Name */
 	"Microsoft CredSSP Security Provider" /* Comment */
+};
+
+const SecPkgInfoW CREDSSP_SecPkgInfoW =
+{
+	0x000110733, /* fCapabilities */
+	1, /* wVersion */
+	0xFFFF, /* wRPCID */
+	0x000090A8, /* cbMaxToken */
+	L"CREDSSP", /* Name */
+	L"Microsoft CredSSP Security Provider" /* Comment */
 };

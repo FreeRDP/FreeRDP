@@ -692,10 +692,10 @@ typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHan
 
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_A)(LPSTR pszPrincipal, LPSTR pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry);
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_W)(LPWSTR pszPrincipal, LPWSTR pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry);
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
 #ifdef UNICODE
 #define AcquireCredentialsHandle AcquireCredentialsHandleW
@@ -809,38 +809,10 @@ typedef SECURITY_STATUS (SEC_ENTRY * SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle ph
 #define SET_CONTEXT_ATTRIBUTES_FN SET_CONTEXT_ATTRIBUTES_FN_A
 #endif
 
-struct _SecurityFunctionTable
-{
-	uint32 dwVersion;
-	ENUMERATE_SECURITY_PACKAGES_FN EnumerateSecurityPackages;
-	QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
-	ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-	FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
-	void* Reserved2;
-	INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-	ACCEPT_SECURITY_CONTEXT_FN AcceptSecurityContext;
-	COMPLETE_AUTH_TOKEN_FN CompleteAuthToken;
-	DELETE_SECURITY_CONTEXT_FN DeleteSecurityContext;
-	APPLY_CONTROL_TOKEN_FN ApplyControlToken;
-	QUERY_CONTEXT_ATTRIBUTES_FN QueryContextAttributes;
-	IMPERSONATE_SECURITY_CONTEXT_FN ImpersonateSecurityContext;
-	REVERT_SECURITY_CONTEXT_FN RevertSecurityContext;
-	MAKE_SIGNATURE_FN MakeSignature;
-	VERIFY_SIGNATURE_FN VerifySignature;
-	FREE_CONTEXT_BUFFER_FN FreeContextBuffer;
-	QUERY_SECURITY_PACKAGE_INFO_FN QuerySecurityPackageInfo;
-	void* Reserved3;
-	void* Reserved4;
-	EXPORT_SECURITY_CONTEXT_FN ExportSecurityContext;
-	IMPORT_SECURITY_CONTEXT_FN ImportSecurityContext;
-	ADD_CREDENTIALS_FN AddCredentials;
-	void* Reserved8;
-	QUERY_SECURITY_CONTEXT_TOKEN_FN QuerySecurityContextToken;
-	ENCRYPT_MESSAGE_FN EncryptMessage;
-	DECRYPT_MESSAGE_FN DecryptMessage;
-	SET_CONTEXT_ATTRIBUTES_FN SetContextAttributes;
-};
-typedef struct _SecurityFunctionTable SecurityFunctionTable;
+#define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION	1 /* Interface has all routines through DecryptMessage */
+#define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_2	2 /* Interface has all routines through SetContextAttributes */
+#define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3	3 /* Interface has all routines through SetCredentialsAttributes */
+#define SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_4	4 /* Interface has all routines through ChangeAccountPassword */
 
 struct _SecurityFunctionTableA
 {
@@ -922,59 +894,63 @@ typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
 /* Package Management */
 
-FREERDP_API SECURITY_STATUS EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkgInfoA* ppPackageInfo);
-FREERDP_API SECURITY_STATUS EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkgInfoW* ppPackageInfo);
-FREERDP_API SecurityFunctionTableA* InitSecurityInterfaceA(void);
-FREERDP_API SecurityFunctionTableW* InitSecurityInterfaceW(void);
-FREERDP_API SECURITY_STATUS QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
-FREERDP_API SECURITY_STATUS QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
+FREERDP_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkgInfoA* ppPackageInfo);
+FREERDP_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkgInfoW* ppPackageInfo);
+FREERDP_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void);
+FREERDP_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
 
 /* Credential Management */
 
-FREERDP_API SECURITY_STATUS AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
+FREERDP_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
-FREERDP_API SECURITY_STATUS AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
+FREERDP_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
-FREERDP_API SECURITY_STATUS ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken);
-FREERDP_API SECURITY_STATUS FreeCredentialsHandle(PCredHandle phCredential);
+FREERDP_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken);
+FREERDP_API SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential);
 
-FREERDP_API SECURITY_STATUS ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
-FREERDP_API SECURITY_STATUS ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
+FREERDP_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
+FREERDP_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
 
-FREERDP_API SECURITY_STATUS QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
-FREERDP_API SECURITY_STATUS QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
 
 /* Context Management */
 
-FREERDP_API SECURITY_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+FREERDP_API SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
 		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp);
 
-FREERDP_API SECURITY_STATUS ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput);
-FREERDP_API SECURITY_STATUS CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken);
-FREERDP_API SECURITY_STATUS DeleteSecurityContext(PCtxtHandle phContext);
-FREERDP_API SECURITY_STATUS FreeContextBuffer(void* pvContextBuffer);
-FREERDP_API SECURITY_STATUS ImpersonateSecurityContext(PCtxtHandle phContext);
+FREERDP_API SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput);
+FREERDP_API SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken);
+FREERDP_API SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext);
+FREERDP_API SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer);
+FREERDP_API SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext);
 
-FREERDP_API SECURITY_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
+FREERDP_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry);
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry);
+FREERDP_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
+		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry);
 
-FREERDP_API SECURITY_STATUS QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer);
-FREERDP_API SECURITY_STATUS QuerySecurityContextToken(PCtxtHandle phContext, void* phToken);
-FREERDP_API SECURITY_STATUS SetContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
-FREERDP_API SECURITY_STATUS RevertSecurityContext(PCtxtHandle phContext);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer);
+FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, void* phToken);
+FREERDP_API SECURITY_STATUS SEC_ENTRY SetContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
+FREERDP_API SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext);
 
 /* Message Support */
 
-FREERDP_API SECURITY_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
-FREERDP_API SECURITY_STATUS EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+FREERDP_API SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
+FREERDP_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
 
 #endif
 

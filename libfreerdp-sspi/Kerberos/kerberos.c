@@ -116,14 +116,19 @@ char* get_dns_queryname(char *host, char* protocol)
 	char* qname;
 	uint32 buflen;
 	buflen = 0;
+	
 	if(protocol)
 		buflen = strlen(protocol);
+	
 	buflen += strlen(host)+strlen(SERVICE)+1;
 	qname = (char*)xzalloc(buflen);
 	strcat(qname, SERVICE);
+
 	if(protocol)
 		strcat(qname, protocol);
+	
 	strcat(qname, host);
+	
 	return qname;
 }
 
@@ -259,7 +264,7 @@ int krb_tcp_send(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length)
 	return freerdp_tcp_write(krb_ctx->ksockfd, data, length);
 }
 
-KRB_CONTEXT* krb_ContextNew()
+KRB_CONTEXT* kerberos_ContextNew()
 {
 	KRB_CONTEXT* context;
 
@@ -275,7 +280,41 @@ KRB_CONTEXT* krb_ContextNew()
 	return context;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
+void kerberos_ContextFree(KRB_CONTEXT* krb_ctx)
+{
+	if (krb_ctx != NULL)
+	{
+		xfree(krb_ctx->krbhost);
+		xfree(krb_ctx->cname);
+		xfree(krb_ctx->realm);
+		freerdp_blob_free(&(krb_ctx->passwd));
+
+		if(krb_ctx->askey != NULL)
+		{
+			freerdp_blob_free(&(krb_ctx->askey->skey));
+			xfree(krb_ctx->askey);
+		}
+		
+		if(krb_ctx->tgskey != NULL)
+		{
+			freerdp_blob_free(&(krb_ctx->tgskey->skey));
+			xfree(krb_ctx->tgskey);
+		}
+
+		krb_free_ticket(&(krb_ctx->asticket));
+		krb_free_ticket(&(krb_ctx->tgsticket));
+		krb_ctx->state = KRB_STATE_FINAL;
+	}
+}
+
+SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
+		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
 {
@@ -298,7 +337,7 @@ SECURITY_STATUS SEC_ENTRY krb_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, 
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_FreeCredentialsHandle(PCredHandle phCredential)
+SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	CREDENTIALS* credentials;
 
@@ -315,7 +354,12 @@ SECURITY_STATUS SEC_ENTRY krb_FreeCredentialsHandle(PCredHandle phCredential)
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -324,8 +368,8 @@ SECURITY_STATUS SEC_ENTRY krb_QueryCredentialsAttributesA(PCredHandle phCredenti
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
-		if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-			credential_names->sUserName = xstrdup((char*) credentials->identity.User);
+		//if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+		//	credential_names->sUserName = xstrdup((char*) credentials->identity.User);
 
 		return SEC_E_OK;
 	}
@@ -381,10 +425,18 @@ void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ident
 	}
 }
 
-SECURITY_STATUS SEC_ENTRY krb_InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-		char* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
+SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry)
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
+		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
 {
 	KRB_CONTEXT* krb_ctx;
 	//SECURITY_STATUS status;
@@ -405,7 +457,7 @@ SECURITY_STATUS SEC_ENTRY krb_InitializeSecurityContext(PCredHandle phCredential
 			switch(krb_ctx->state)
 			{
 				case KRB_PACKET_ERROR:
-					krb_ContextFree(krb_ctx);
+					kerberos_ContextFree(krb_ctx);
 					return SEC_E_INVALID_HANDLE;
 					break;
 				case KRB_STATE_INITIAL:
@@ -442,19 +494,21 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	uint32 pfContextAttr;
 	TimeStamp expiration;
 
-	if(tcp_is_ipaddr(settings->hostname))
+	if (tcp_is_ipaddr(settings->hostname))
 		return NULL;
+
 	kdclist = krb_locate_kdc(settings);
 
 	/* start the state machine with initialized to zero */
-	krb_ctx = krb_ContextNew();
+	krb_ctx = kerberos_ContextNew();
 
 	for (entry = kdclist;entry != NULL; entry = entry->next)
 	{
 		if(!krb_tcp_connect(krb_ctx, entry))
 			break;
 	}
-	if(entry == NULL)
+
+	if (entry == NULL)
 	{
 		xfree(krb_ctx);
 		return NULL;
@@ -464,19 +518,16 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	krb_ctx->realm = xstrtoup(settings->kerberos_realm);
 	krb_ctx->cname = xstrdup((char*)krb_ctx->identity.User);
 	krb_ctx->settings = settings;
-	krb_ctx->passwd.data = freerdp_uniconv_out(krb_ctx->uniconv, (char*)krb_ctx->identity.Password, (size_t*) &(krb_ctx->passwd.length));
+	krb_ctx->passwd.data = freerdp_uniconv_out(krb_ctx->uniconv, (char*) krb_ctx->identity.Password, (size_t*) &(krb_ctx->passwd.length));
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
 			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
 
 	sspi_SecureHandleSetLowerPointer(&krb_ctx->context, krb_ctx);
-	sspi_SecureHandleSetUpperPointer(&krb_ctx->context, (void*)KRB_PACKAGE_NAME);
+	sspi_SecureHandleSetUpperPointer(&krb_ctx->context, (void*) KRB_PACKAGE_NAME);
 
-	status = krb_InitializeSecurityContext(NULL,
-				&krb_ctx->context ,
-				NULL, fContextReq, 0, SECURITY_NATIVE_DREP,
-				 NULL,
-				0, &krb_ctx->context, NULL, &pfContextAttr, &expiration);
+	status = kerberos_InitializeSecurityContextA(NULL, &krb_ctx->context, NULL,
+		fContextReq, 0, SECURITY_NATIVE_DREP, NULL, 0, &krb_ctx->context, NULL, &pfContextAttr, &expiration);
 
 	if(status == SEC_E_INVALID_HANDLE)
 	{
@@ -1120,31 +1171,12 @@ void krb_free_krb_error(KrbERROR* krb_err)
 	}
 }
 
-void krb_ContextFree(KRB_CONTEXT* krb_ctx)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
 {
-	if(krb_ctx != NULL)
-	{
-		xfree(krb_ctx->krbhost);
-		xfree(krb_ctx->cname);
-		xfree(krb_ctx->realm);
-		freerdp_blob_free(&(krb_ctx->passwd));
-		if(krb_ctx->askey != NULL)
-		{
-			freerdp_blob_free(&(krb_ctx->askey->skey));
-			xfree(krb_ctx->askey);
-		}
-		if(krb_ctx->tgskey != NULL)
-		{
-			freerdp_blob_free(&(krb_ctx->tgskey->skey));
-			xfree(krb_ctx->tgskey);
-		}
-		krb_free_ticket(&(krb_ctx->asticket));
-		krb_free_ticket(&(krb_ctx->tgsticket));
-		krb_ctx->state = KRB_STATE_FINAL;
-	}
+	return SEC_E_OK;
 }
 
-SECURITY_STATUS krb_QueryContextAttributesA(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -1167,27 +1199,27 @@ SECURITY_STATUS krb_QueryContextAttributesA(PCtxtHandle phContext, uint32 ulAttr
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY krb_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-const SecPkgInfo KRB_SecPkgInfo =
+const SecPkgInfoA KERBEROS_SecPkgInfoA =
 {
 	0x000F3BBF, /* fCapabilities */
 	1, /* wVersion */
@@ -1197,24 +1229,34 @@ const SecPkgInfo KRB_SecPkgInfo =
 	"Microsoft Kerberos V1.0" /* Comment */
 };
 
-const SecurityFunctionTable KRB_SecurityFunctionTable =
+const SecPkgInfoW KERBEROS_SecPkgInfoW =
+{
+	0x000F3BBF, /* fCapabilities */
+	1, /* wVersion */
+	0x0010, /* wRPCID */
+	0x00002EE0, /* cbMaxToken */
+	L"Kerberos", /* Name */
+	L"Microsoft Kerberos V1.0" /* Comment */
+};
+
+const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA =
 {
 	1, /* dwVersion */
 	NULL, /* EnumerateSecurityPackages */
-	krb_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
-	krb_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
-	krb_FreeCredentialsHandle, /* FreeCredentialsHandle */
+	kerberos_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
+	kerberos_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
+	kerberos_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
-	krb_InitializeSecurityContext, /* InitializeSecurityContext */
+	kerberos_InitializeSecurityContextA, /* InitializeSecurityContext */
 	NULL, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
 	NULL, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
-	krb_QueryContextAttributesA, /* QueryContextAttributes */
+	kerberos_QueryContextAttributesA, /* QueryContextAttributes */
 	NULL, /* ImpersonateSecurityContext */
 	NULL, /* RevertSecurityContext */
-	krb_MakeSignature, /* MakeSignature */
-	krb_VerifySignature, /* VerifySignature */
+	kerberos_MakeSignature, /* MakeSignature */
+	kerberos_VerifySignature, /* VerifySignature */
 	NULL, /* FreeContextBuffer */
 	NULL, /* QuerySecurityPackageInfo */
 	NULL, /* Reserved3 */
@@ -1224,7 +1266,39 @@ const SecurityFunctionTable KRB_SecurityFunctionTable =
 	NULL, /* AddCredentials */
 	NULL, /* Reserved8 */
 	NULL, /* QuerySecurityContextToken */
-	krb_EncryptMessage, /* EncryptMessage */
-	krb_DecryptMessage, /* DecryptMessage */
+	kerberos_EncryptMessage, /* EncryptMessage */
+	kerberos_DecryptMessage, /* DecryptMessage */
+	NULL, /* SetContextAttributes */
+};
+
+const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW =
+{
+	1, /* dwVersion */
+	NULL, /* EnumerateSecurityPackages */
+	kerberos_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
+	kerberos_AcquireCredentialsHandleW, /* AcquireCredentialsHandle */
+	kerberos_FreeCredentialsHandle, /* FreeCredentialsHandle */
+	NULL, /* Reserved2 */
+	kerberos_InitializeSecurityContextW, /* InitializeSecurityContext */
+	NULL, /* AcceptSecurityContext */
+	NULL, /* CompleteAuthToken */
+	NULL, /* DeleteSecurityContext */
+	NULL, /* ApplyControlToken */
+	kerberos_QueryContextAttributesW, /* QueryContextAttributes */
+	NULL, /* ImpersonateSecurityContext */
+	NULL, /* RevertSecurityContext */
+	kerberos_MakeSignature, /* MakeSignature */
+	kerberos_VerifySignature, /* VerifySignature */
+	NULL, /* FreeContextBuffer */
+	NULL, /* QuerySecurityPackageInfo */
+	NULL, /* Reserved3 */
+	NULL, /* Reserved4 */
+	NULL, /* ExportSecurityContext */
+	NULL, /* ImportSecurityContext */
+	NULL, /* AddCredentials */
+	NULL, /* Reserved8 */
+	NULL, /* QuerySecurityContextToken */
+	kerberos_EncryptMessage, /* EncryptMessage */
+	kerberos_DecryptMessage, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
 };
