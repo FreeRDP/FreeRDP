@@ -74,8 +74,6 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 
 #ifdef WITH_XKBFILE
 	keyboardLayoutId = freerdp_keyboard_init_xkbfile(keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
-	if (keyboardLayoutId == 0)
-		keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
 #else
 	keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
 #endif

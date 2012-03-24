@@ -27,7 +27,9 @@ set(FREERDP_LOCALE_SRCS
 
 set(FREERDP_LOCALE_X11_SRCS
 	xkb_layout_ids.c
-	xkb_layout_ids.h
+	xkb_layout_ids.h)
+
+set(FREERDP_LOCALE_X11_KEYMAP_SRCS
 	keyboard_keymap.c
 	keyboard_keymap.h
 	keyboard_x11.c
@@ -65,6 +67,8 @@ if(NOT WIN32)
 			include_directories(${XKBFILE_INCLUDE_DIRS})
 			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKBFILE_SRCS})
 			set(FREERDP_LOCALE_LINK_LIBRARIES ${FREERDP_LOCALE_LINK_LIBRARIES} ${XKBFILE_LIBRARIES})
+		else()
+			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_KEYMAP_SRCS})
 		endif()
 	endif()
 endif()
