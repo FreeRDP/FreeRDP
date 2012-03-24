@@ -18,6 +18,7 @@
 # limitations under the License.
 
 set(FREERDP_LOCALE_SRCS
+	virtual_key_codes.c
 	keyboard_layout.c
 	keyboard.c
 	locale.c
