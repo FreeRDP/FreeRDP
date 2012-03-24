@@ -27,6 +27,7 @@
 #include <freerdp/locale/keyboard.h>
 
 #include "keyboard_x11.h"
+#include "keyboard_keymap.h"
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];

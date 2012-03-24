@@ -26,6 +26,8 @@ set(FREERDP_LOCALE_SRCS
 	liblocale.h)
 
 set(FREERDP_LOCALE_X11_SRCS
+	keyboard_keymap.c
+	keyboard_keymap.h
 	keyboard_x11.c
 	keyboard_x11.h)
 
