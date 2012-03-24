@@ -17,11 +17,14 @@
  * limitations under the License.
  */
 
-#include "liblocale.h"
-
 #include "keyboard_xkbfile.h"
-#include "keyboard_x11.h"
+
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/memory.h>
+
+#include "keyboard_x11.h"
+#include "xkb_layout_ids.h"
+#include "liblocale.h"
 
 extern uint32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 extern RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
@@ -31,8 +34,6 @@ extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
-
-#include <freerdp/utils/memory.h>
 
 VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[256] =
 {
