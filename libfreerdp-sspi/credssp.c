@@ -1025,7 +1025,6 @@ void credssp_free(rdpCredssp* credssp)
 		xfree(credssp->identity.User);
 		xfree(credssp->identity.Domain);
 		xfree(credssp->identity.Password);
-		xfree(credssp->table);
 		xfree(credssp);
 	}
 }

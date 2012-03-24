@@ -22,6 +22,7 @@
 
 #include <stddef.h>
 #include <ctype.h>
+#include <wchar.h>
 #include <freerdp/api.h>
 
 FREERDP_API void* xmalloc(size_t size);
@@ -30,6 +31,7 @@ FREERDP_API void* xrealloc(void* ptr, size_t size);
 FREERDP_API void xfree(void* ptr);
 FREERDP_API char* xstrdup(const char* str);
 FREERDP_API char* xstrtoup(const char* str);
+FREERDP_API wchar_t* xwcsdup(const wchar_t* wstr);
 
 #define xnew(_type) (_type*)xzalloc(sizeof(_type))
 

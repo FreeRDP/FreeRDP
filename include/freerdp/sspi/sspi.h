@@ -20,6 +20,8 @@
 #ifndef FREERDP_SSPI_H
 #define FREERDP_SSPI_H
 
+#include <wchar.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/windows.h>
@@ -41,7 +43,7 @@
 #define FREERDP_SSPI
 
 typedef char CHAR;
-typedef uint16 WCHAR;
+typedef wchar_t WCHAR;
 
 typedef CHAR* LPSTR;
 typedef WCHAR* LPWSTR;

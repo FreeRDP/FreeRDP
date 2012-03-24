@@ -366,8 +366,8 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkg
 		pPackageInfo[index].wVersion = SecPkgInfoW_LIST[index]->wVersion;
 		pPackageInfo[index].wRPCID = SecPkgInfoW_LIST[index]->wRPCID;
 		pPackageInfo[index].cbMaxToken = SecPkgInfoW_LIST[index]->cbMaxToken;
-		pPackageInfo[index].Name = _wcsdup(SecPkgInfoW_LIST[index]->Name);
-		pPackageInfo[index].Comment = _wcsdup(SecPkgInfoW_LIST[index]->Comment);
+		pPackageInfo[index].Name = xwcsdup(SecPkgInfoW_LIST[index]->Name);
+		pPackageInfo[index].Comment = xwcsdup(SecPkgInfoW_LIST[index]->Comment);
 	}
 
 	*(pcPackages) = cPackages;
@@ -454,8 +454,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 			pPackageInfo->wVersion = SecPkgInfoW_LIST[index]->wVersion;
 			pPackageInfo->wRPCID = SecPkgInfoW_LIST[index]->wRPCID;
 			pPackageInfo->cbMaxToken = SecPkgInfoW_LIST[index]->cbMaxToken;
-			pPackageInfo->Name = _wcsdup(SecPkgInfoW_LIST[index]->Name);
-			pPackageInfo->Comment = _wcsdup(SecPkgInfoW_LIST[index]->Comment);
+			pPackageInfo->Name = xwcsdup(SecPkgInfoW_LIST[index]->Name);
+			pPackageInfo->Comment = xwcsdup(SecPkgInfoW_LIST[index]->Comment);
 
 			*(ppPackageInfo) = pPackageInfo;
 
