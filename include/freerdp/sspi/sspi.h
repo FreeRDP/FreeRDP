@@ -27,6 +27,7 @@
 #include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
+
 #include <tchar.h>
 #include <winerror.h>
 
@@ -42,20 +43,7 @@
 #else
 
 #define FREERDP_SSPI
-
-typedef char CHAR;
-typedef wchar_t WCHAR;
-
-typedef CHAR* LPSTR;
-typedef WCHAR* LPWSTR;
-
-#ifdef UNICODE
-#define _T(x)	L ## x
-#else
-#define _T(x)	x
-#endif
-
-typedef uint64* ULONG_PTR;
+#include <freerdp/wintypes.h>
 
 #endif
 
