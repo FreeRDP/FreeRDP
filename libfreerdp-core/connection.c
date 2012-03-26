@@ -69,8 +69,12 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	nego_set_target(rdp->nego, settings->hostname, settings->port);
 	nego_set_cookie(rdp->nego, settings->username);
 	nego_enable_rdp(rdp->nego, settings->rdp_security);
-	nego_enable_nla(rdp->nego, settings->nla_security);
-	nego_enable_tls(rdp->nego, settings->tls_security);
+
+	if (!settings->ts_gateway)
+	{
+		nego_enable_nla(rdp->nego, settings->nla_security);
+		nego_enable_tls(rdp->nego, settings->tls_security);
+	}
 
 	if (nego_connect(rdp->nego) != true)
 	{

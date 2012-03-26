@@ -101,11 +101,12 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
+				"  --tsg: Terminal Server Gateway (<username> <password> <hostname>)\n"
 				"  --kbd-list: list all keyboard layout ids used by -k\n"
 				"  --salted-checksum: use salted checksums with Standard RDP encryption\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
-			return FREERDP_ARGS_PARSE_HELP; //TODO: What is the correct return
+			return FREERDP_ARGS_PARSE_HELP; /* TODO: What is the correct return? */
 		}
 		else if (strcmp("-a", argv[index]) == 0)
 		{
@@ -532,6 +533,31 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("unknown protocol security\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
+		}
+		else if (strcmp("--tsg", argv[index]) == 0)
+		{
+			settings->ts_gateway = true;
+			index++;
+			if (index == argc)
+			{
+				printf("missing TSG username\n");
+				return -1;
+			}
+			settings->tsg_username = xstrdup(argv[index]);
+			index++;
+			if (index == argc)
+			{
+				printf("missing TSG password\n");
+				return -1;
+			}
+			settings->tsg_password = xstrdup(argv[index]);
+			index++;
+			if (index == argc)
+			{
+				printf("missing TSG server\n");
+				return -1;
+			}
+			settings->tsg_hostname = xstrdup(argv[index]);
 		}
 		else if (strcmp("--plugin", argv[index]) == 0)
 		{
