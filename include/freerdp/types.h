@@ -119,6 +119,16 @@ typedef int boolean;
 
 #include <freerdp/settings.h>
 
+typedef struct
+{
+	uint32 time_low;
+	uint16 time_mid;
+	uint16 time_hi_and_version;
+	uint8 clock_seq_hi_and_reserved;
+	uint8 clock_seq_low;
+	uint8 node[6];
+} uuid;
+
 struct _RDP_PLUGIN_DATA
 {
 	uint16 size;

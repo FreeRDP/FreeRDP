@@ -278,7 +278,9 @@ struct rdp_settings
 	rdpBlob* password_cookie; /* 61 */
 	char* kerberos_kdc; /* 62 */
 	char* kerberos_realm; /* 63 */
-	uint32 paddingC[80 - 64]; /* 64 */
+	char* tsg_hostname; /* 64 */
+	char* tsg_password; /* 65 */
+	uint32 paddingC[80 - 66]; /* 66 */
 
 	/* User Interface Parameters */
 	boolean sw_gdi; /* 80 */

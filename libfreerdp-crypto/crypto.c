@@ -511,3 +511,39 @@ void crypto_cert_print_info(X509* xcert)
 	xfree(fp);
 }
 
+void crypto_base64_encode(uint8* data, int length, uint8** enc_data, int* res_length)
+{
+      BIO *bmem, *b64;
+      BUF_MEM *bptr;
+
+      b64 = BIO_new(BIO_f_base64());
+      BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+      bmem = BIO_new(BIO_s_mem());
+      b64 = BIO_push(b64, bmem);
+      BIO_write(b64, data, length);
+      BIO_flush(b64);
+      BIO_get_mem_ptr(b64, &bptr);
+
+      *res_length = bptr->length-1;
+      *enc_data = xmalloc(*res_length);
+      memcpy(*enc_data, bptr->data, *res_length);
+
+      BIO_free_all(b64);
+}
+
+void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* res_length)
+{
+      BIO *b64, *bmem;
+
+      *dec_data = xmalloc(length);
+      memset(*dec_data, 0, length);
+
+      b64 = BIO_new(BIO_f_base64());
+      BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+      bmem = BIO_new_mem_buf(enc_data, length);
+      bmem = BIO_push(b64, bmem);
+
+      *res_length = BIO_read(bmem, *dec_data, length);
+
+      BIO_free_all(bmem);
+}

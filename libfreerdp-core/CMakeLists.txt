@@ -35,6 +35,8 @@ set(LIBFREERDP_CORE_SRCS
 	nego.h
 	info.c
 	info.h
+	rpch.c
+	rpch.h
 	input.c
 	input.h
 	license.c
@@ -62,6 +64,8 @@ set(LIBFREERDP_CORE_SRCS
 	rdp.h
 	tcp.c
 	tcp.h
+	tsg.c
+	tsg.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
