@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Security
+ * RPC over HTTP
  *
- * Copyright 2012 Fujitsu Technology Solutions GmbH - Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2012 Fujitsu Technology Solutions GmbH
+ * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

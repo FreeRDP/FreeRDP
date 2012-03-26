@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Security
+ * Terminal Server Gateway (TSG)
  *
- * Copyright 2012 Fujitsu Technology Solutions GmbH - Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2012 Fujitsu Technology Solutions GmbH
+ * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSG_H_
-#define __TSG_H_
+#ifndef FREERDP_CORE_TSG_H
+#define FREERDP_CORE_TSG_H
 
 typedef struct rdp_tsg rdpTsg;
 
@@ -34,19 +35,20 @@ typedef struct rdp_tsg rdpTsg;
 
 struct rdp_tsg
 {
-	struct rdp_settings* settings;
-	struct rdp_transport* transport;
-	struct rdp_rpch* rpch;
-
+	rdpRpch* rpch;
 	uint8* tunnelContext;
 	uint8* channelContext;
+	rdpSettings* settings;
+	rdpTransport* transport;
 };
 
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
+
+int tsg_write(rdpTsg* tsg, uint8* data, uint32 length);
+int tsg_read(rdpTsg* tsg, uint8* data, uint32 length);
+
 rdpTsg* tsg_new(rdpSettings* settings);
 void tsg_free(rdpTsg* tsg);
-int tsg_write(rdpTsg* tsg, uint8* data, uint32 length);
-int tsg_read(rdpTsg* tsg, uint* data, uint32 length);
 
 #ifdef WITH_DEBUG_TSG
 #define DEBUG_TSG(fmt, ...) DEBUG_CLASS(TSG, fmt, ## __VA_ARGS__)
@@ -54,4 +56,4 @@ int tsg_read(rdpTsg* tsg, uint* data, uint32 length);
 #define DEBUG_TSG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __TSG_H_ */
+#endif /* FREERDP_CORE_TSG_H */

@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * RDP Security
+ * RPC over HTTP
  *
- * Copyright 2012 Fujitsu Technology Solutions GmbH - Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2012 Fujitsu Technology Solutions GmbH
+ * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +18,8 @@
  * limitations under the License.
  */
 
-
-#ifndef __RPCH_H_
-#define __RPCH_H_
+#ifndef FREERDP_CORE_RPCH_H
+#define FREERDP_CORE_RPCH_H
 
 typedef struct rdp_rpch rdpRpch;
 typedef struct rdp_rpch_http rdpRpchHTTP;
@@ -559,15 +559,17 @@ typedef struct {
 	/* end common fields */
 } rpcconn_shutdown_hdr_t;
 
-/* proprietary stuff from Dmitrij Jasnov */
-
-#define RPCH_HTTP_DISCONNECTED	0
-#define RPCH_HTTP_SENDING		1
-#define RPCH_HTTP_RECIEVING		2
+enum _RPCH_HTTP_STATE
+{
+	RPCH_HTTP_DISCONNECTED = 0,
+	RPCH_HTTP_SENDING = 1,
+	RPCH_HTTP_RECIEVING = 2
+};
+typedef enum _RPCH_HTTP_STATE RPCH_HTTP_STATE;
 
 struct rdp_rpch_http
 {
-	int state;
+	RPCH_HTTP_STATE state;
 	int contentLength;
 	int remContentLength;
 	//struct _NTLMSSP* ntht;
@@ -575,15 +577,15 @@ struct rdp_rpch_http
 
 struct rdp_rpch
 {
-	struct rdp_settings* settings;
-	struct rdp_tcp* tcp_in;
-	struct rdp_tcp* tcp_out;
-	struct rdp_tls* tls_in;
-	struct rdp_tls* tls_out;
+	rdpSettings* settings;
+	rdpTcp* tcp_in;
+	rdpTcp* tcp_out;
+	rdpTls* tls_in;
+	rdpTls* tls_out;
 	//struct _NTLMSSP* ntlmssp;
 
-	struct rdp_rpch_http* http_in;
-	struct rdp_rpch_http* http_out;
+	rdpRpchHTTP* http_in;
+	rdpRpchHTTP* http_out;
 
 	uint8* write_buffer;
 	uint32 write_buffer_len;
@@ -601,12 +603,17 @@ struct rdp_rpch
 	uint32 pipe_call_id;
 };
 
-
-rdpRpch* rpch_new(rdpSettings* settings);
 boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpch_connect(rdpRpch* rpch);
+
 int rpch_write(rdpRpch* rpch, uint8* data, int length, uint16 opnum);
 int rpch_read(rdpRpch* rpch, uint8* data, int length);
+
+rdpRpch* rpch_new(rdpSettings* settings);
+
+#ifdef WITH_DEBUG_TSG
+#define WITH_DEBUG_RPCH
+#endif
 
 #ifdef WITH_DEBUG_RPCH
 #define DEBUG_RPCH(fmt, ...) DEBUG_CLASS(RPCH, fmt, ## __VA_ARGS__)
@@ -614,4 +621,4 @@ int rpch_read(rdpRpch* rpch, uint8* data, int length);
 #define DEBUG_RPCH(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __RPCH_H_ */
+#endif /* FREERDP_CORE_RPCH_H */
