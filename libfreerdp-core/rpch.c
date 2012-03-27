@@ -29,37 +29,6 @@
 
 #define HTTP_STREAM_SIZE 0xFFFF
 
-rdpRpch* rpch_new(rdpSettings* settings)
-{
-	rdpRpch* rpch;
-	rpch = (rdpRpch*) xzalloc(sizeof(rdpRpch));
-
-	rpch->http_in = (rdpRpchHTTP*) xzalloc(sizeof(rdpRpchHTTP));
-	rpch->http_out = (rdpRpchHTTP*) xzalloc(sizeof(rdpRpchHTTP));
-
-	//rpch->http_in->ntht = ntlmssp_client_new();
-	//rpch->http_out->ntht = ntlmssp_client_new();
-	rpch->http_in->state = RPCH_HTTP_DISCONNECTED;
-	rpch->http_out->state = RPCH_HTTP_DISCONNECTED;
-
-	rpch->read_buffer = NULL;
-	rpch->write_buffer = NULL;
-	rpch->read_buffer_len = 0;
-	rpch->write_buffer_len = 0;
-
-	rpch->BytesReceived = 0;
-	rpch->AwailableWindow = 0;
-	rpch->BytesSent = 0;
-	rpch->RecAwailableWindow = 0;
-
-	rpch->settings = settings;
-
-	//rpch->ntlmssp = ntlmssp_client_new();
-
-	rpch->call_id = 0;
-	return rpch;
-}
-
 boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out)
 {
 	rpch->tcp_in = tcp_in;
@@ -70,39 +39,170 @@ boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_
 	return true;
 }
 
+#define NTLM_PACKAGE_NAME	_T("NTLM")
+
+boolean ntlm_client_init(rdpNtlm* ntlm, char* user, char* domain, char* password)
+{
+	size_t size;
+	SECURITY_STATUS status;
+
+	sspi_GlobalInit();
+
+	ntlm->table = InitSecurityInterface();
+
+	ntlm->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+	ntlm->identity.User = (uint16*) freerdp_uniconv_out(ntlm->uniconv, user, &size);
+	ntlm->identity.UserLength = (uint32) size;
+
+	if (domain)
+	{
+		ntlm->identity.Domain = (uint16*) freerdp_uniconv_out(ntlm->uniconv, domain, &size);
+		ntlm->identity.DomainLength = (uint32) size;
+	}
+	else
+	{
+		ntlm->identity.Domain = (uint16*) NULL;
+		ntlm->identity.DomainLength = 0;
+	}
+
+	ntlm->identity.Password = (uint16*) freerdp_uniconv_out(ntlm->uniconv, (char*) password, &size);
+	ntlm->identity.PasswordLength = (uint32) size;
+
+	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
+
+	if (status != SEC_E_OK)
+	{
+		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		return false;
+	}
+
+	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
+
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
+			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
+
+	if (status != SEC_E_OK)
+	{
+		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		return false;
+	}
+
+	ntlm->haveContext = false;
+	ntlm->haveInputBuffer = false;
+	memset(&ntlm->inputBuffer, 0, sizeof(SecBuffer));
+	memset(&ntlm->outputBuffer, 0, sizeof(SecBuffer));
+	memset(&ntlm->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
+
+	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
+			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+
+	return true;
+}
+
+boolean ntlm_authenticate(rdpNtlm* ntlm)
+{
+	SECURITY_STATUS status;
+
+	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
+	ntlm->outputBufferDesc.cBuffers = 1;
+	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
+	ntlm->outputBuffer.BufferType = SECBUFFER_TOKEN;
+	ntlm->outputBuffer.cbBuffer = ntlm->cbMaxToken;
+	ntlm->outputBuffer.pvBuffer = xmalloc(ntlm->outputBuffer.cbBuffer);
+
+	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
+			(ntlm->haveContext) ? &ntlm->context : NULL,
+			NULL, ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
+			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
+			0, &ntlm->context, &ntlm->outputBufferDesc,
+			&ntlm->pfContextAttr, &ntlm->expiration);
+
+	if (ntlm->inputBuffer.pvBuffer != NULL)
+	{
+		xfree(ntlm->inputBuffer.pvBuffer);
+		ntlm->inputBuffer.pvBuffer = NULL;
+	}
+
+	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
+	{
+		if (ntlm->table->CompleteAuthToken != NULL)
+			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+
+		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
+		{
+			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+			return 0;
+		}
+
+		if (status == SEC_I_COMPLETE_NEEDED)
+			status = SEC_E_OK;
+		else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+			status = SEC_I_CONTINUE_NEEDED;
+	}
+
+	ntlm->haveInputBuffer = true;
+	ntlm->haveContext = true;
+
+	return true;
+}
+
+void ntlm_client_uninit(rdpNtlm* ntlm)
+{
+	FreeCredentialsHandle(&ntlm->credentials);
+	FreeContextBuffer(ntlm->pPackageInfo);
+}
+
+rdpNtlm* ntlm_new()
+{
+	rdpNtlm* ntlm = xnew(rdpNtlm);
+
+	if (ntlm != NULL)
+	{
+		ntlm->uniconv = freerdp_uniconv_new();
+	}
+
+	return ntlm;
+}
+
+void ntlm_free(rdpNtlm* ntlm)
+{
+	if (ntlm != NULL)
+	{
+		freerdp_uniconv_free(ntlm->uniconv);
+	}
+}
+
 boolean rpch_out_connect_http(rdpRpch* rpch)
 {
+	STREAM* http_stream;
+	STREAM* ntlm_stream;
+	int decoded_ntht_length;
+	int encoded_ntht_length;
+	uint8* decoded_ntht_data = NULL;
+	uint8* encoded_ntht_data = NULL;
 	rdpTls* tls_out = rpch->tls_out;
 	rdpSettings* settings = rpch->settings;
 	rdpRpchHTTP* http_out = rpch->http_out;
-	//NTLMSSP* http_out_ntlmssp = http_out->ntht;
+	rdpNtlm* http_out_ntlm = http_out->ntlm;
 
-	STREAM* ntlmssp_stream;
-	STREAM* http_stream;
-
-	ntlmssp_stream = stream_new(0xFFFF);
 	http_stream = stream_new(0xFFFF);
+	ntlm_stream = stream_new(0xFFFF);
 
-	uint8* decoded_ntht_data = NULL;
-	int decoded_ntht_length;
-	uint8* encoded_ntht_data = NULL;
-	int encoded_ntht_length;
+	printf("rpch_out_connect_http\n");
 
-	//ntlmssp_set_username(http_out_ntlmssp, settings->username);
-	//ntlmssp_set_password(http_out_ntlmssp, settings->password);
-	//ntlmssp_set_domain(http_out_ntlmssp, settings->domain);
-	//ntlmssp_set_workstation(http_out_ntlmssp, "WORKSTATION"); /* TODO insert proper w.name */
+	ntlm_client_init(http_out_ntlm, settings->username, settings->password, settings->domain);
 
-	//ntlmssp_send(http_out_ntlmssp, ntlmssp_stream);
+	ntlm_authenticate(http_out_ntlm);
+	ntlm_stream->size = http_out_ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = http_out_ntlm->outputBuffer.pvBuffer;
 
-	decoded_ntht_length = ntlmssp_stream->p-ntlmssp_stream->data;
+	decoded_ntht_length = ntlm_stream->size;
 	decoded_ntht_data = xmalloc(decoded_ntht_length);
+	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
 
-	ntlmssp_stream->p = ntlmssp_stream->data;
-	stream_read(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
-
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_clear(ntlm_stream);
+	ntlm_stream->p = ntlm_stream->data;
 
 	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
 
@@ -205,25 +305,25 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 
 	crypto_base64_decode(encoded_ntht_data, encoded_ntht_length, &decoded_ntht_data, &decoded_ntht_length);
 
-	stream_write(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_write(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
+	ntlm_stream->p = ntlm_stream->data;
 
 	xfree(decoded_ntht_data);
 	xfree(encoded_ntht_data);
 
 	//ntlmssp_recv(http_out_ntlmssp, ntlmssp_stream);
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_clear(ntlm_stream);
+	ntlm_stream->p = ntlm_stream->data;
 
 	//ntlmssp_send(http_out_ntlmssp, ntlmssp_stream);
 
-	decoded_ntht_length = ntlmssp_stream->p-ntlmssp_stream->data;
+	decoded_ntht_length = ntlm_stream->p-ntlm_stream->data;
 	decoded_ntht_data = xmalloc(decoded_ntht_length);
-	ntlmssp_stream->p = ntlmssp_stream->data;
-	stream_read(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
+	ntlm_stream->p = ntlm_stream->data;
+	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
 
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_clear(ntlm_stream);
+	ntlm_stream->p = ntlm_stream->data;
 
 	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
 
@@ -1396,3 +1496,36 @@ boolean rpch_connect(rdpRpch* rpch)
 	return true;
 }
 
+rdpRpch* rpch_new(rdpSettings* settings)
+{
+	rdpRpch* rpch = (rdpRpch*) xnew(rdpRpch);
+
+	if (rpch != NULL)
+	{
+		rpch->http_in = (rdpRpchHTTP*) xnew(rdpRpchHTTP);
+		rpch->http_out = (rdpRpchHTTP*) xnew(rdpRpchHTTP);
+
+		rpch->http_in->ntlm = ntlm_new();
+		rpch->http_out->ntlm = ntlm_new();
+		rpch->http_in->state = RPCH_HTTP_DISCONNECTED;
+		rpch->http_out->state = RPCH_HTTP_DISCONNECTED;
+
+		rpch->read_buffer = NULL;
+		rpch->write_buffer = NULL;
+		rpch->read_buffer_len = 0;
+		rpch->write_buffer_len = 0;
+
+		rpch->BytesReceived = 0;
+		rpch->AwailableWindow = 0;
+		rpch->BytesSent = 0;
+		rpch->RecAwailableWindow = 0;
+
+		rpch->settings = settings;
+
+		rpch->ntlm = ntlm_new();
+
+		rpch->call_id = 0;
+	}
+
+	return rpch;
+}

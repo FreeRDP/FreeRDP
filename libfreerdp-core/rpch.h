@@ -559,6 +559,29 @@ typedef struct {
 	/* end common fields */
 } rpcconn_shutdown_hdr_t;
 
+struct rdp_ntlm
+{
+	UNICONV* uniconv;
+	CtxtHandle context;
+	uint32 cbMaxToken;
+	uint32 fContextReq;
+	uint32 pfContextAttr;
+	TimeStamp expiration;
+	PSecBuffer pBuffer;
+	SecBuffer inputBuffer;
+	SecBuffer outputBuffer;
+	boolean haveContext;
+	boolean haveInputBuffer;
+	SecBufferDesc inputBufferDesc;
+	SecBufferDesc outputBufferDesc;
+	CredHandle credentials;
+	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
+	SEC_WINNT_AUTH_IDENTITY identity;
+	SecPkgContext_Sizes ContextSizes;
+};
+typedef struct rdp_ntlm rdpNtlm;
+
 enum _RPCH_HTTP_STATE
 {
 	RPCH_HTTP_DISCONNECTED = 0,
@@ -572,20 +595,22 @@ struct rdp_rpch_http
 	RPCH_HTTP_STATE state;
 	int contentLength;
 	int remContentLength;
-	//struct _NTLMSSP* ntht;
+	rdpNtlm* ntlm;
 };
 
 struct rdp_rpch
 {
-	rdpSettings* settings;
 	rdpTcp* tcp_in;
 	rdpTcp* tcp_out;
 	rdpTls* tls_in;
 	rdpTls* tls_out;
-	//struct _NTLMSSP* ntlmssp;
 
+	rdpNtlm* ntlm;
 	rdpRpchHTTP* http_in;
 	rdpRpchHTTP* http_out;
+
+	UNICONV* uniconv;
+	rdpSettings* settings;
 
 	uint8* write_buffer;
 	uint32 write_buffer_len;
@@ -602,6 +627,14 @@ struct rdp_rpch
 	uint32 call_id;
 	uint32 pipe_call_id;
 };
+
+boolean ntlm_authenticate(rdpNtlm* ntlm);
+
+boolean ntlm_client_init(rdpNtlm* ntlm, char* user, char* domain, char* password);
+void ntlm_client_uninit(rdpNtlm* ntlm);
+
+rdpNtlm* ntlm_new();
+void ntlm_free(rdpNtlm* ntlm);
 
 boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpch_connect(rdpRpch* rpch);
