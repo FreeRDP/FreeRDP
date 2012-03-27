@@ -156,7 +156,8 @@ char* freerdp_append_shared_library_suffix(char* file_path)
 	}
 	else
 	{
-		path = xstrdup(file_path);
+		path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+		sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);	
 	}
 
 	return path;
