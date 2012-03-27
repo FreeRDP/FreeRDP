@@ -39,6 +39,7 @@ struct rdp_mppc_enc
 	int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
 	int   flagsHold;
 	int   first_pkt;        /* this is the first pkt passing through enc */
+	uint16* hash_table;
 };
 
 boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
