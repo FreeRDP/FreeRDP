@@ -26,284 +26,129 @@
 #include "xkb_layout_ids.h"
 #include "liblocale.h"
 
-extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
-
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
 
-struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
+struct _XKB_KEY_NAME_SCANCODE
 {
-	uint32 vkcode; /* virtual key code */
 	const char* xkb_keyname; /* XKB keyname */
-	const char* xkb_keyname_extended; /* XKB keyname (extended) */
+	RDP_SCANCODE rdp_scancode;
 };
-typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
+typedef struct _XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE;
 
-VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[256] =
+XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] =
 {
-	{ 0,			"",	""	},
-	{ VK_LBUTTON,		"",	""	}, /* VK_LBUTTON */
-	{ VK_RBUTTON,		"",	""	}, /* VK_RBUTTON */
-	{ VK_CANCEL,		"",	""	}, /* VK_CANCEL */
-	{ VK_MBUTTON,		"",	""	}, /* VK_MBUTTON */
-	{ VK_XBUTTON1,		"",	""	}, /* VK_XBUTTON1 */
-	{ VK_XBUTTON2,		"",	""	}, /* VK_XBUTTON2 */
-	{ 0,			"",	""	},
-	{ VK_BACK,		"BKSP",	""	}, /* VK_BACK */
-	{ VK_TAB,		"TAB",	""	}, /* VK_TAB */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	}, /* VK_CLEAR */
-	{ VK_RETURN,		"RTRN",	"KPEN"	}, /* VK_RETURN */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_SHIFT,		"LFSH",	""	}, /* VK_SHIFT */
-	{ VK_CONTROL,		"",	""	}, /* VK_CONTROL */
-	{ VK_MENU,		"LALT",	""	}, /* VK_MENU */
-	{ VK_PAUSE,		"",	"PAUS"	}, /* VK_PAUSE */
-	{ VK_CAPITAL,		"CAPS",	""	}, /* VK_CAPITAL */
-	{ VK_KANA,		"",	""	}, /* VK_KANA / VK_HANGUL */
-	{ 0,			"",	""	},
-	{ VK_JUNJA,		"",	""	}, /* VK_JUNJA */
-	{ VK_FINAL,		"",	""	}, /* VK_FINAL */
-	{ VK_KANJI,		"",	""	}, /* VK_HANJA / VK_KANJI */
-	{ 0,			"",	""	},
-	{ VK_ESCAPE,		"ESC",	""	}, /* VK_ESCAPE */
-	{ VK_CONVERT,		"",	""	}, /* VK_CONVERT */
-	{ VK_NONCONVERT,	"",	""	}, /* VK_NONCONVERT */
-	{ VK_ACCEPT,		"",	""	}, /* VK_ACCEPT */
-	{ VK_MODECHANGE,	"",	""	}, /* VK_MODECHANGE */
-	{ VK_SPACE,		"SPCE",	""	}, /* VK_SPACE */
-	{ VK_PRIOR,		"",	"PGUP"	}, /* VK_PRIOR */
-	{ VK_NEXT,		"",	"PGDN"	}, /* VK_NEXT */
-	{ VK_END,		"",	"END"	}, /* VK_END */
-	{ VK_HOME,		"",	"HOME"	}, /* VK_HOME */
-	{ VK_LEFT,		"",	"LEFT"	}, /* VK_LEFT */
-	{ VK_UP,		"",	"UP"	}, /* VK_UP */
-	{ VK_RIGHT,		"",	"RGHT"	}, /* VK_RIGHT */
-	{ VK_DOWN,		"",	"DOWN"	}, /* VK_DOWN */
-	{ VK_SELECT,		"",	""	}, /* VK_SELECT */
-	{ VK_PRINT,		"",	"PRSC"	}, /* VK_PRINT */
-	{ VK_EXECUTE,		"",	""	}, /* VK_EXECUTE */
-	{ VK_SNAPSHOT,		"",	""	}, /* VK_SNAPSHOT */
-	{ VK_INSERT,		"",	"INS"	}, /* VK_INSERT */
-	{ VK_DELETE,		"",	"DELE"	}, /* VK_DELETE */
-	{ VK_HELP,		"",	""	}, /* VK_HELP */
-	{ VK_KEY_0,		"AE10",	""	}, /* VK_KEY_0 */
-	{ VK_KEY_1,		"AE01",	""	}, /* VK_KEY_1 */
-	{ VK_KEY_2,		"AE02",	""	}, /* VK_KEY_2 */
-	{ VK_KEY_3,		"AE03",	""	}, /* VK_KEY_3 */
-	{ VK_KEY_4,		"AE04",	""	}, /* VK_KEY_4 */
-	{ VK_KEY_5,		"AE05",	""	}, /* VK_KEY_5 */
-	{ VK_KEY_6,		"AE06",	""	}, /* VK_KEY_6 */
-	{ VK_KEY_7,		"AE07",	""	}, /* VK_KEY_7 */
-	{ VK_KEY_8,		"AE08",	""	}, /* VK_KEY_8 */
-	{ VK_KEY_9,		"AE09",	""	}, /* VK_KEY_9 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_KEY_A,		"AC01",	""	}, /* VK_KEY_A */
-	{ VK_KEY_B,		"AB05",	""	}, /* VK_KEY_B */
-	{ VK_KEY_C,		"AB03",	""	}, /* VK_KEY_C */
-	{ VK_KEY_D,		"AC03",	""	}, /* VK_KEY_D */
-	{ VK_KEY_E,		"AD03",	""	}, /* VK_KEY_E */
-	{ VK_KEY_F,		"AC04",	""	}, /* VK_KEY_F */
-	{ VK_KEY_G,		"AC05",	""	}, /* VK_KEY_G */
-	{ VK_KEY_H,		"AC06",	""	}, /* VK_KEY_H */
-	{ VK_KEY_I,		"AD08",	""	}, /* VK_KEY_I */
-	{ VK_KEY_J,		"AC07",	""	}, /* VK_KEY_J */
-	{ VK_KEY_K,		"AC08",	""	}, /* VK_KEY_K */
-	{ VK_KEY_L,		"AC09",	""	}, /* VK_KEY_L */
-	{ VK_KEY_M,		"AB07",	""	}, /* VK_KEY_M */
-	{ VK_KEY_N,		"AB06",	""	}, /* VK_KEY_N */
-	{ VK_KEY_O,		"AD09",	""	}, /* VK_KEY_O */
-	{ VK_KEY_P,		"AD10",	""	}, /* VK_KEY_P */
-	{ VK_KEY_Q,		"AD01",	""	}, /* VK_KEY_Q */
-	{ VK_KEY_R,		"AD04",	""	}, /* VK_KEY_R */
-	{ VK_KEY_S,		"AC02",	""	}, /* VK_KEY_S */
-	{ VK_KEY_T,		"AD05",	""	}, /* VK_KEY_T */
-	{ VK_KEY_U,		"AD07",	""	}, /* VK_KEY_U */
-	{ VK_KEY_V,		"AB04",	""	}, /* VK_KEY_V */
-	{ VK_KEY_W,		"AD02",	""	}, /* VK_KEY_W */
-	{ VK_KEY_X,		"AB02",	""	}, /* VK_KEY_X */
-	{ VK_KEY_Y,		"AD06",	""	}, /* VK_KEY_Y */
-	{ VK_KEY_Z,		"AB01",	""	}, /* VK_KEY_Z */
-	{ VK_LWIN,		"",	"LWIN"	}, /* VK_LWIN */
-	{ VK_RWIN,		"",	"RWIN"	}, /* VK_RWIN */
-	{ VK_APPS,		"",	"COMP"	}, /* VK_APPS */
-	{ 0,			"",	""	},
-	{ VK_SLEEP,		"",	""	}, /* VK_SLEEP */
-	{ VK_NUMPAD0,		"KP0",	""	}, /* VK_NUMPAD0 */
-	{ VK_NUMPAD1,		"KP1",	""	}, /* VK_NUMPAD1 */
-	{ VK_NUMPAD2,		"KP2",	""	}, /* VK_NUMPAD2 */
-	{ VK_NUMPAD3,		"KP3",	""	}, /* VK_NUMPAD3 */
-	{ VK_NUMPAD4,		"KP4",	""	}, /* VK_NUMPAD4 */
-	{ VK_NUMPAD5,		"KP5",	""	}, /* VK_NUMPAD5 */
-	{ VK_NUMPAD6,		"KP6",	""	}, /* VK_NUMPAD6 */
-	{ VK_NUMPAD7,		"KP7",	""	}, /* VK_NUMPAD7 */
-	{ VK_NUMPAD8,		"KP8",	""	}, /* VK_NUMPAD8 */
-	{ VK_NUMPAD9,		"KP9",	""	}, /* VK_NUMPAD9 */
-	{ VK_MULTIPLY,		"KPMU",	""	}, /* VK_MULTIPLY */
-	{ VK_ADD,		"KPAD",	""	}, /* VK_ADD */
-	{ VK_SEPARATOR,		"",	""	}, /* VK_SEPARATOR */
-	{ VK_SUBTRACT,		"KPSU",	""	}, /* VK_SUBTRACT */
-	{ VK_DECIMAL,		"KPDL",	""	}, /* VK_DECIMAL */
-	{ VK_DIVIDE,		"AB10",	"KPDV"	}, /* VK_DIVIDE */
-	{ VK_F1,		"FK01",	""	}, /* VK_F1 */
-	{ VK_F2,		"FK02",	""	}, /* VK_F2 */
-	{ VK_F3,		"FK03",	""	}, /* VK_F3 */
-	{ VK_F4,		"FK04",	""	}, /* VK_F4 */
-	{ VK_F5,		"FK05",	""	}, /* VK_F5 */
-	{ VK_F6,		"FK06",	""	}, /* VK_F6 */
-	{ VK_F7,		"FK07",	""	}, /* VK_F7 */
-	{ VK_F8,		"FK08",	""	}, /* VK_F8 */
-	{ VK_F9,		"FK09",	""	}, /* VK_F9 */
-	{ VK_F10,		"FK10",	""	}, /* VK_F10 */
-	{ VK_F11,		"FK11",	""	}, /* VK_F11 */
-	{ VK_F12,		"FK12",	""	}, /* VK_F12 */
-	{ VK_F13,		"",	""	}, /* VK_F13 */
-	{ VK_F14,		"",	""	}, /* VK_F14 */
-	{ VK_F15,		"",	""	}, /* VK_F15 */
-	{ VK_F16,		"",	""	}, /* VK_F16 */
-	{ VK_F17,		"",	""	}, /* VK_F17 */
-	{ VK_F18,		"",	""	}, /* VK_F18 */
-	{ VK_F19,		"",	""	}, /* VK_F19 */
-	{ VK_F20,		"",	""	}, /* VK_F20 */
-	{ VK_F21,		"",	""	}, /* VK_F21 */
-	{ VK_F22,		"",	""	}, /* VK_F22 */
-	{ VK_F23,		"",	""	}, /* VK_F23 */
-	{ VK_F24,		"",	""	}, /* VK_F24 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_NUMLOCK,		"NMLK",	""	}, /* VK_NUMLOCK */
-	{ VK_SCROLL,		"SCLK",	""	}, /* VK_SCROLL */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_LSHIFT,		"",	""	}, /* VK_LSHIFT */
-	{ VK_RSHIFT,		"RTSH",	""	}, /* VK_RSHIFT */
-	{ VK_LCONTROL,		"LCTL",	""	}, /* VK_LCONTROL */
-	{ VK_RCONTROL,		"",	"RCTL"	}, /* VK_RCONTROL */
-	{ VK_LMENU,		"",	""	}, /* VK_LMENU */
-	{ VK_RMENU,		"",	"RALT"	}, /* VK_RMENU */
-	{ VK_BROWSER_BACK,	"",	""	}, /* VK_BROWSER_BACK */
-	{ VK_BROWSER_FORWARD,	"",	""	}, /* VK_BROWSER_FORWARD */
-	{ VK_BROWSER_REFRESH,	"",	""	}, /* VK_BROWSER_REFRESH */
-	{ VK_BROWSER_STOP,	"",	""	}, /* VK_BROWSER_STOP */
-	{ VK_BROWSER_SEARCH,	"",	""	}, /* VK_BROWSER_SEARCH */
-	{ VK_BROWSER_FAVORITES,	"",	""	}, /* VK_BROWSER_FAVORITES */
-	{ VK_BROWSER_HOME,	"",	""	}, /* VK_BROWSER_HOME */
-	{ VK_VOLUME_MUTE,	"",	""	}, /* VK_VOLUME_MUTE */
-	{ VK_VOLUME_DOWN,	"",	""	}, /* VK_VOLUME_DOWN */
-	{ VK_VOLUME_UP,		"",	""	}, /* VK_VOLUME_UP */
-	{ VK_MEDIA_NEXT_TRACK,	"",	""	}, /* VK_MEDIA_NEXT_TRACK */
-	{ VK_MEDIA_PREV_TRACK,	"",	""	}, /* VK_MEDIA_PREV_TRACK */
-	{ VK_MEDIA_STOP,	"",	""	}, /* VK_MEDIA_STOP */
-	{ VK_MEDIA_PLAY_PAUSE,	"",	""	}, /* VK_MEDIA_PLAY_PAUSE */
-	{ VK_LAUNCH_MAIL,	"",	""	}, /* VK_LAUNCH_MAIL */
-	{ VK_MEDIA_SELECT,	"",	""	}, /* VK_MEDIA_SELECT */
-	{ VK_LAUNCH_APP1,	"",	""	}, /* VK_LAUNCH_APP1 */
-	{ VK_LAUNCH_APP2,	"",	""	}, /* VK_LAUNCH_APP2 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_OEM_1,		"AC10",	""	}, /* VK_OEM_1 */
-	{ VK_OEM_PLUS,		"AE12",	""	}, /* VK_OEM_PLUS */
-	{ VK_OEM_COMMA,		"AB08",	""	}, /* VK_OEM_COMMA */
-	{ VK_OEM_MINUS,		"AE11",	""	}, /* VK_OEM_MINUS */
-	{ VK_OEM_PERIOD,	"AB09",	""	}, /* VK_OEM_PERIOD */
-	{ VK_OEM_2,		"AB10",	""	}, /* VK_OEM_2 */
-	{ VK_OEM_3,		"TLDE",	""	}, /* VK_OEM_3 */
-	{ VK_ABNT_C1,		"AB11",	""	}, /* VK_ABNT_C1 */
-	{ VK_ABNT_C2,		"I129",	""	}, /* VK_ABNT_C2 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_OEM_4,		"AD11",	""	}, /* VK_OEM_4 */
-	{ VK_OEM_5,		"BKSL",	""	}, /* VK_OEM_5 */
-	{ VK_OEM_6,		"AD12",	""	}, /* VK_OEM_6 */
-	{ VK_OEM_7,		"AC11",	""	}, /* VK_OEM_7 */
-	{ VK_OEM_8,		"",	""	}, /* VK_OEM_8 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_OEM_102,		"LSGT",	""	}, /* VK_OEM_102 */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_PROCESSKEY,	"",	""	}, /* VK_PROCESSKEY */
-	{ 0,			"",	""	},
-	{ VK_PACKET,		"",	""	}, /* VK_PACKET */
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ 0,			"",	""	},
-	{ VK_ATTN,		"",	""	}, /* VK_ATTN */
-	{ VK_CRSEL,		"",	""	}, /* VK_CRSEL */
-	{ VK_EXSEL,		"",	""	}, /* VK_EXSEL */
-	{ VK_EREOF,		"",	""	}, /* VK_EREOF */
-	{ VK_PLAY,		"",	""	}, /* VK_PLAY */
-	{ VK_ZOOM,		"",	""	}, /* VK_ZOOM */
-	{ VK_NONAME,		"",	""	}, /* VK_NONAME */
-	{ VK_PA1,		"",	""	}, /* VK_PA1 */
-	{ VK_OEM_CLEAR,		"",	""	}, /* VK_OEM_CLEAR */
-	{ 0,			"",	""	}
+	{ "BKSP",	RDP_SCANCODE_BACK},
+	{ "TAB",	RDP_SCANCODE_TAB},
+	{ "RTRN",	RDP_SCANCODE_RETURN}, // not KP
+	{ "LFSH",	RDP_SCANCODE_SHIFT},
+	{ "LALT",	RDP_SCANCODE_MENU},
+	{ "CAPS",	RDP_SCANCODE_CAPITAL},
+	{ "ESC",	RDP_SCANCODE_ESCAPE},
+	{ "SPCE",	RDP_SCANCODE_SPACE},
+	{ "AE10",	RDP_SCANCODE_KEY_0},
+	{ "AE01",	RDP_SCANCODE_KEY_1},
+	{ "AE02",	RDP_SCANCODE_KEY_2},
+	{ "AE03",	RDP_SCANCODE_KEY_3},
+	{ "AE04",	RDP_SCANCODE_KEY_4},
+	{ "AE05",	RDP_SCANCODE_KEY_5},
+	{ "AE06",	RDP_SCANCODE_KEY_6},
+	{ "AE07",	RDP_SCANCODE_KEY_7},
+	{ "AE08",	RDP_SCANCODE_KEY_8},
+	{ "AE09",	RDP_SCANCODE_KEY_9},
+	{ "AC01",	RDP_SCANCODE_KEY_A},
+	{ "AB05",	RDP_SCANCODE_KEY_B},
+	{ "AB03",	RDP_SCANCODE_KEY_C},
+	{ "AC03",	RDP_SCANCODE_KEY_D},
+	{ "AD03",	RDP_SCANCODE_KEY_E},
+	{ "AC04",	RDP_SCANCODE_KEY_F},
+	{ "AC05",	RDP_SCANCODE_KEY_G},
+	{ "AC06",	RDP_SCANCODE_KEY_H},
+	{ "AD08",	RDP_SCANCODE_KEY_I},
+	{ "AC07",	RDP_SCANCODE_KEY_J},
+	{ "AC08",	RDP_SCANCODE_KEY_K},
+	{ "AC09",	RDP_SCANCODE_KEY_L},
+	{ "AB07",	RDP_SCANCODE_KEY_M},
+	{ "AB06",	RDP_SCANCODE_KEY_N},
+	{ "AD09",	RDP_SCANCODE_KEY_O},
+	{ "AD10",	RDP_SCANCODE_KEY_P},
+	{ "AD01",	RDP_SCANCODE_KEY_Q},
+	{ "AD04",	RDP_SCANCODE_KEY_R},
+	{ "AC02",	RDP_SCANCODE_KEY_S},
+	{ "AD05",	RDP_SCANCODE_KEY_T},
+	{ "AD07",	RDP_SCANCODE_KEY_U},
+	{ "AB04",	RDP_SCANCODE_KEY_V},
+	{ "AD02",	RDP_SCANCODE_KEY_W},
+	{ "AB02",	RDP_SCANCODE_KEY_X},
+	{ "AD06",	RDP_SCANCODE_KEY_Y},
+	{ "AB01",	RDP_SCANCODE_KEY_Z},
+	{ "KP0",	RDP_SCANCODE_NUMPAD0},
+	{ "KP1",	RDP_SCANCODE_NUMPAD1},
+	{ "KP2",	RDP_SCANCODE_NUMPAD2},
+	{ "KP3",	RDP_SCANCODE_NUMPAD3},
+	{ "KP4",	RDP_SCANCODE_NUMPAD4},
+	{ "KP5",	RDP_SCANCODE_NUMPAD5},
+	{ "KP6",	RDP_SCANCODE_NUMPAD6},
+	{ "KP7",	RDP_SCANCODE_NUMPAD7},
+	{ "KP8",	RDP_SCANCODE_NUMPAD8},
+	{ "KP9",	RDP_SCANCODE_NUMPAD9},
+	{ "KPMU",	RDP_SCANCODE_MULTIPLY},
+	{ "KPAD",	RDP_SCANCODE_ADD},
+	{ "KPSU",	RDP_SCANCODE_SUBTRACT},
+	{ "KPDL",	RDP_SCANCODE_DECIMAL},
+	{ "AB10",	RDP_SCANCODE_OEM_2}, // not KP, not RDP_SCANCODE_DIVIDE
+	{ "FK01",	RDP_SCANCODE_F1},
+	{ "FK02",	RDP_SCANCODE_F2},
+	{ "FK03",	RDP_SCANCODE_F3},
+	{ "FK04",	RDP_SCANCODE_F4},
+	{ "FK05",	RDP_SCANCODE_F5},
+	{ "FK06",	RDP_SCANCODE_F6},
+	{ "FK07",	RDP_SCANCODE_F7},
+	{ "FK08",	RDP_SCANCODE_F8},
+	{ "FK09",	RDP_SCANCODE_F9},
+	{ "FK10",	RDP_SCANCODE_F10},
+	{ "FK11",	RDP_SCANCODE_F11},
+	{ "FK12",	RDP_SCANCODE_F12},
+	{ "NMLK",	RDP_SCANCODE_NUMLOCK},
+	{ "SCLK",	RDP_SCANCODE_SCROLL},
+	{ "RTSH",	RDP_SCANCODE_RSHIFT},
+	{ "LCTL",	RDP_SCANCODE_LCONTROL},
+	{ "AC10",	RDP_SCANCODE_OEM_1},
+	{ "AE12",	RDP_SCANCODE_OEM_PLUS},
+	{ "AB08",	RDP_SCANCODE_OEM_COMMA},
+	{ "AE11",	RDP_SCANCODE_OEM_MINUS},
+	{ "AB09",	RDP_SCANCODE_OEM_PERIOD},
+	{ "TLDE",	RDP_SCANCODE_OEM_3},
+	{ "AB11",	RDP_SCANCODE_ABNT_C1},
+	{ "I129",	RDP_SCANCODE_ABNT_C2},
+	{ "AD11",	RDP_SCANCODE_OEM_4},
+	{ "BKSL",	RDP_SCANCODE_OEM_5},
+	{ "AD12",	RDP_SCANCODE_OEM_6},
+	{ "AC11",	RDP_SCANCODE_OEM_7},
+	{ "LSGT",	RDP_SCANCODE_OEM_102},
+	{ "KPEN",	RDP_SCANCODE_RETURN_KP}, // KP!
+	{ "PAUS",	RDP_SCANCODE_PAUSE},
+	{ "PGUP",	RDP_SCANCODE_PRIOR},
+	{ "PGDN",	RDP_SCANCODE_NEXT},
+	{ "END",	RDP_SCANCODE_END},
+	{ "HOME",	RDP_SCANCODE_HOME},
+	{ "LEFT",	RDP_SCANCODE_LEFT},
+	{ "UP",		RDP_SCANCODE_UP},
+	{ "RGHT",	RDP_SCANCODE_RIGHT},
+	{ "DOWN",	RDP_SCANCODE_DOWN},
+	{ "PRSC",	RDP_SCANCODE_PRINT},
+	{ "INS",	RDP_SCANCODE_INSERT},
+	{ "DELE",	RDP_SCANCODE_DELETE},
+	{ "LWIN",	RDP_SCANCODE_LWIN},
+	{ "RWIN",	RDP_SCANCODE_RWIN},
+	{ "COMP",	RDP_SCANCODE_APPS},
+	{ "KPDV",	RDP_SCANCODE_DIVIDE}, // KP!
+	{ "RCTL",	RDP_SCANCODE_RCONTROL},
+	{ "RALT",	RDP_SCANCODE_RMENU}
+/*	{ "LVL3",	0x54} */
 };
-
-/*
-{ 0x54, 0, ""                    , "LVL3" },
-*/
 
 void* freerdp_keyboard_xkb_init()
 {
@@ -414,11 +259,8 @@ uint32 detect_keyboard_layout_from_xkbfile(void* display)
 int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
 	int i, j;
-	uint32 vkcode;
 	boolean found;
 	XkbDescPtr xkb;
-	uint32 scancode;
-	boolean extended;
 	boolean status = false;
 
 	if (display && (xkb = XkbGetMap(display, 0, XkbUseCoreKbd)))
@@ -430,55 +272,30 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
 			{
 				found = false;
-				extended = false;
 				memcpy(xkb_keyname, xkb->names->keys[i].name, 4);
 
-				for (j = 0; j < 256; j++)
+				if (strlen(xkb_keyname) < 1)
+					continue;
+
+				for (j = 0; j < ARRAY_SIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
 				{
-					if (strlen(xkb_keyname) < 1)
-						continue;
 
-					if (VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname)
+					if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
 					{
-						if (!strcmp(xkb_keyname, VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname))
+						DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%04X",
+								xkb_keyname, i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
+
+						if (found)
 						{
-							vkcode = j;
-							extended = false;
-							found = true;
-							break;
+							DEBUG_KBD("Internal error! duplicate key %s!", xkb_keyname);
 						}
-					}
 
-					if (VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname_extended)
-					{
-						if (!strcmp(xkb_keyname, VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].xkb_keyname_extended))
-						{
-							vkcode = j;
-
-							if (VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].vkcode != vkcode)
-							{
-								printf("error at vkcode %d vs vkcode %d", vkcode,
-										VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[j].vkcode);
-							}
-
-							extended = true;
-							found = true;
-							break;
-						}
+						x11_keycode_to_rdp_scancode[i] = XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode;
+						found = true;
 					}
 				}
 
-				if (found)
-				{
-					scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
-
-					DEBUG_KBD("%4s: keycode: 0x%02X -> vkcode: 0x%02X %-13s -> rdp scancode: 0x%02X %s",
-							xkb_keyname, i, vkcode, freerdp_keyboard_get_virtual_key_code_name(vkcode),
-							scancode, extended ? " extended" : "");
-
-					x11_keycode_to_rdp_scancode[i] = mk_rdp_scancode(scancode, extended);
-				}
-				else
+				if (!found)
 				{
 					DEBUG_KBD("%4s: keycode: 0x%02X -> no RDP scancode found", xkb_keyname, i);
 				}
