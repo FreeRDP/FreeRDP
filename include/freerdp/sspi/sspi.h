@@ -956,4 +956,7 @@ FREERDP_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSe
 void sspi_GlobalInit();
 void sspi_GlobalFinish();
 
+void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
+void sspi_SecBufferFree(PSecBuffer SecBuffer);
+
 #endif /* FREERDP_SSPI_H */

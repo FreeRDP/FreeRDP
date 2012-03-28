@@ -524,7 +524,7 @@ void crypto_base64_encode(uint8* data, int length, uint8** enc_data, int* res_le
       BIO_flush(b64);
       BIO_get_mem_ptr(b64, &bptr);
 
-      *res_length = bptr->length-1;
+      *res_length = bptr->length - 1;
       *enc_data = xmalloc(*res_length);
       memcpy(*enc_data, bptr->data, *res_length);
 
