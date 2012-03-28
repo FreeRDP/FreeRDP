@@ -33,6 +33,14 @@ extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
 
+struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
+{
+	uint32 vkcode; /* virtual key code */
+	const char* xkb_keyname; /* XKB keyname */
+	const char* xkb_keyname_extended; /* XKB keyname (extended) */
+};
+typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
+
 VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME_TABLE[256] =
 {
 	{ 0,			"",	""	},
@@ -462,14 +470,13 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 
 				if (found)
 				{
-					scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
+					scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
 
 					DEBUG_KBD("%4s: keycode: 0x%02X -> vkcode: 0x%02X %-13s -> rdp scancode: 0x%02X %s",
 							xkb_keyname, i, vkcode, freerdp_keyboard_get_virtual_key_code_name(vkcode),
 							scancode, extended ? " extended" : "");
 
-					x11_keycode_to_rdp_scancode[i].code = scancode;
-					x11_keycode_to_rdp_scancode[i].extended = extended;
+					x11_keycode_to_rdp_scancode[i] = mk_rdp_scancode(scancode, extended);
 				}
 				else
 				{

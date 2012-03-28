@@ -59,12 +59,15 @@ boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 {
 	uint16 flags;
+	RDP_SCANCODE rdp_scancode;
 	uint8 scancode;
 	boolean extended;
 	rdpInput* input;
 
 	input = xfi->instance->input;
-	scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode, &extended);
+	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+	scancode = rdp_scancode_code(rdp_scancode);
+	extended = rdp_scancode_extended(rdp_scancode);
 
 	if (scancode == 0)
 	{

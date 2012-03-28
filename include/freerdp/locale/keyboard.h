@@ -35,12 +35,10 @@ struct _RDP_KEYBOARD_LAYOUT
 };
 typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
 
-struct _RDP_SCANCODE
-{
-	uint32 code; /* Windows "scan code" */
-	boolean extended; /* extended key flag */
-};
-typedef struct _RDP_SCANCODE RDP_SCANCODE;
+typedef uint32 RDP_SCANCODE;
+#define rdp_scancode_code(_rdp_scancode) ((uint8)(_rdp_scancode))
+#define rdp_scancode_extended(_rdp_scancode) (((_rdp_scancode) & 0x100) ? true : false)
+#define mk_rdp_scancode(_code, _extended) (((_code) & 0xff) | ((_extended) ? 0x100 : 0))
 
 
 /* Keyboard layout IDs */
@@ -199,8 +197,8 @@ typedef struct _RDP_SCANCODE RDP_SCANCODE;
 FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboardLayoutId);
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);
 FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutId);
-FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode, boolean* extended);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode);
 FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended);
-FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode, boolean* extended);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode);
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_H */
