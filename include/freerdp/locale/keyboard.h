@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/locale/virtual_key_codes.h>
+#include <freerdp/keyboard_scancode.h>
 
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
@@ -34,12 +35,6 @@ struct _RDP_KEYBOARD_LAYOUT
 	char* name; /* Keyboard layout name */
 };
 typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
-
-typedef uint32 RDP_SCANCODE;
-#define rdp_scancode_code(_rdp_scancode) ((uint8)(_rdp_scancode))
-#define rdp_scancode_extended(_rdp_scancode) (((_rdp_scancode) & 0x100) ? true : false)
-#define mk_rdp_scancode(_code, _extended) (((_code) & 0xff) | ((_extended) ? 0x100 : 0))
-
 
 /* Keyboard layout IDs */
 

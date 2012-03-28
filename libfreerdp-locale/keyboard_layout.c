@@ -23,6 +23,7 @@
 #include "liblocale.h"
 
 #include <freerdp/types.h>
+#include <freerdp/keyboard_scancode.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 
@@ -212,262 +213,262 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] =
 
 const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256] =
 {
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_LBUTTON */
-	mk_rdp_scancode(0x00, false), /* VK_RBUTTON */
-	mk_rdp_scancode(0x00, false), /* VK_CANCEL */
-	mk_rdp_scancode(0x00, false), /* VK_MBUTTON */
-	mk_rdp_scancode(0x00, false), /* VK_XBUTTON1 */
-	mk_rdp_scancode(0x00, false), /* VK_XBUTTON2 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x0E, false), /* VK_BACK */
-	mk_rdp_scancode(0x0F, false), /* VK_TAB */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_CLEAR */
-	mk_rdp_scancode(0x1C, false), /* VK_RETURN */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x2A, false), /* VK_SHIFT */
-	mk_rdp_scancode(0x00, false), /* VK_CONTROL */
-	mk_rdp_scancode(0x38, false), /* VK_MENU */
-	mk_rdp_scancode(0x46, true),  /* VK_PAUSE */
-	mk_rdp_scancode(0x3A, false), /* VK_CAPITAL */
-	mk_rdp_scancode(0x72, false), /* VK_KANA / VK_HANGUL */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_JUNJA */
-	mk_rdp_scancode(0x00, false), /* VK_FINAL */
-	mk_rdp_scancode(0x71, false), /* VK_HANJA / VK_KANJI */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x01, false), /* VK_ESCAPE */
-	mk_rdp_scancode(0x00, false), /* VK_CONVERT */
-	mk_rdp_scancode(0x00, false), /* VK_NONCONVERT */
-	mk_rdp_scancode(0x00, false), /* VK_ACCEPT */
-	mk_rdp_scancode(0x00, false), /* VK_MODECHANGE */
-	mk_rdp_scancode(0x39, false), /* VK_SPACE */
-	mk_rdp_scancode(0x49, true),  /* VK_PRIOR */
-	mk_rdp_scancode(0x51, true),  /* VK_NEXT */
-	mk_rdp_scancode(0x4F, true),  /* VK_END */
-	mk_rdp_scancode(0x47, true),  /* VK_HOME */
-	mk_rdp_scancode(0x4B, true),  /* VK_LEFT */
-	mk_rdp_scancode(0x48, true),  /* VK_UP */
-	mk_rdp_scancode(0x4D, true),  /* VK_RIGHT */
-	mk_rdp_scancode(0x50, true),  /* VK_DOWN */
-	mk_rdp_scancode(0x00, false), /* VK_SELECT */
-	mk_rdp_scancode(0x37, true),  /* VK_PRINT */
-	mk_rdp_scancode(0x37, true),  /* VK_EXECUTE */
-	mk_rdp_scancode(0x37, true),  /* VK_SNAPSHOT */
-	mk_rdp_scancode(0x52, true),  /* VK_INSERT */
-	mk_rdp_scancode(0x53, true),  /* VK_DELETE */
-	mk_rdp_scancode(0x63, false), /* VK_HELP */
-	mk_rdp_scancode(0x0B, false), /* VK_KEY_0 */
-	mk_rdp_scancode(0x02, false), /* VK_KEY_1 */
-	mk_rdp_scancode(0x03, false), /* VK_KEY_2 */
-	mk_rdp_scancode(0x04, false), /* VK_KEY_3 */
-	mk_rdp_scancode(0x05, false), /* VK_KEY_4 */
-	mk_rdp_scancode(0x06, false), /* VK_KEY_5 */
-	mk_rdp_scancode(0x07, false), /* VK_KEY_6 */
-	mk_rdp_scancode(0x08, false), /* VK_KEY_7 */
-	mk_rdp_scancode(0x09, false), /* VK_KEY_8 */
-	mk_rdp_scancode(0x0A, false), /* VK_KEY_9 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x1E, false), /* VK_KEY_A */
-	mk_rdp_scancode(0x30, false), /* VK_KEY_B */
-	mk_rdp_scancode(0x2E, false), /* VK_KEY_C */
-	mk_rdp_scancode(0x20, false), /* VK_KEY_D */
-	mk_rdp_scancode(0x12, false), /* VK_KEY_E */
-	mk_rdp_scancode(0x21, false), /* VK_KEY_F */
-	mk_rdp_scancode(0x22, false), /* VK_KEY_G */
-	mk_rdp_scancode(0x23, false), /* VK_KEY_H */
-	mk_rdp_scancode(0x17, false), /* VK_KEY_I */
-	mk_rdp_scancode(0x24, false), /* VK_KEY_J */
-	mk_rdp_scancode(0x25, false), /* VK_KEY_K */
-	mk_rdp_scancode(0x26, false), /* VK_KEY_L */
-	mk_rdp_scancode(0x32, false), /* VK_KEY_M */
-	mk_rdp_scancode(0x31, false), /* VK_KEY_N */
-	mk_rdp_scancode(0x18, false), /* VK_KEY_O */
-	mk_rdp_scancode(0x19, false), /* VK_KEY_P */
-	mk_rdp_scancode(0x10, false), /* VK_KEY_Q */
-	mk_rdp_scancode(0x13, false), /* VK_KEY_R */
-	mk_rdp_scancode(0x1F, false), /* VK_KEY_S */
-	mk_rdp_scancode(0x14, false), /* VK_KEY_T */
-	mk_rdp_scancode(0x16, false), /* VK_KEY_U */
-	mk_rdp_scancode(0x2F, false), /* VK_KEY_V */
-	mk_rdp_scancode(0x11, false), /* VK_KEY_W */
-	mk_rdp_scancode(0x2D, false), /* VK_KEY_X */
-	mk_rdp_scancode(0x15, false), /* VK_KEY_Y */
-	mk_rdp_scancode(0x2C, false), /* VK_KEY_Z */
-	mk_rdp_scancode(0x5B, true),  /* VK_LWIN */
-	mk_rdp_scancode(0x5C, true),  /* VK_RWIN */
-	mk_rdp_scancode(0x5D, true),  /* VK_APPS */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x5F, false), /* VK_SLEEP */
-	mk_rdp_scancode(0x52, false), /* VK_NUMPAD0 */
-	mk_rdp_scancode(0x4F, false), /* VK_NUMPAD1 */
-	mk_rdp_scancode(0x50, false), /* VK_NUMPAD2 */
-	mk_rdp_scancode(0x51, false), /* VK_NUMPAD3 */
-	mk_rdp_scancode(0x4B, false), /* VK_NUMPAD4 */
-	mk_rdp_scancode(0x4C, false), /* VK_NUMPAD5 */
-	mk_rdp_scancode(0x4D, false), /* VK_NUMPAD6 */
-	mk_rdp_scancode(0x47, false), /* VK_NUMPAD7 */
-	mk_rdp_scancode(0x48, false), /* VK_NUMPAD8 */
-	mk_rdp_scancode(0x49, false), /* VK_NUMPAD9 */
-	mk_rdp_scancode(0x37, false), /* VK_MULTIPLY */
-	mk_rdp_scancode(0x4E, false), /* VK_ADD */
-	mk_rdp_scancode(0x00, false), /* VK_SEPARATOR */
-	mk_rdp_scancode(0x4A, false), /* VK_SUBTRACT */
-	mk_rdp_scancode(0x53, false), /* VK_DECIMAL */
-	mk_rdp_scancode(0x35, true),  /* VK_DIVIDE */
-	mk_rdp_scancode(0x3B, false), /* VK_F1 */
-	mk_rdp_scancode(0x3C, false), /* VK_F2 */
-	mk_rdp_scancode(0x3D, false), /* VK_F3 */
-	mk_rdp_scancode(0x3E, false), /* VK_F4 */
-	mk_rdp_scancode(0x3F, false), /* VK_F5 */
-	mk_rdp_scancode(0x40, false), /* VK_F6 */
-	mk_rdp_scancode(0x41, false), /* VK_F7 */
-	mk_rdp_scancode(0x42, false), /* VK_F8 */
-	mk_rdp_scancode(0x43, false), /* VK_F9 */
-	mk_rdp_scancode(0x44, false), /* VK_F10 */
-	mk_rdp_scancode(0x57, false), /* VK_F11 */
-	mk_rdp_scancode(0x58, false), /* VK_F12 */
-	mk_rdp_scancode(0x64, false), /* VK_F13 */
-	mk_rdp_scancode(0x65, false), /* VK_F14 */
-	mk_rdp_scancode(0x66, false), /* VK_F15 */
-	mk_rdp_scancode(0x67, false), /* VK_F16 */
-	mk_rdp_scancode(0x68, false), /* VK_F17 */
-	mk_rdp_scancode(0x69, false), /* VK_F18 */
-	mk_rdp_scancode(0x6A, false), /* VK_F19 */
-	mk_rdp_scancode(0x6B, false), /* VK_F20 */
-	mk_rdp_scancode(0x6C, false), /* VK_F21 */
-	mk_rdp_scancode(0x6D, false), /* VK_F22 */
-	mk_rdp_scancode(0x6E, false), /* VK_F23 */
-	mk_rdp_scancode(0x6F, false), /* VK_F24 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x45, false), /* VK_NUMLOCK */
-	mk_rdp_scancode(0x46, false), /* VK_SCROLL */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x2A, false), /* VK_LSHIFT */
-	mk_rdp_scancode(0x36, false), /* VK_RSHIFT */
-	mk_rdp_scancode(0x1D, false), /* VK_LCONTROL */
-	mk_rdp_scancode(0x1D, true),  /* VK_RCONTROL */
-	mk_rdp_scancode(0x38, false), /* VK_LMENU */
-	mk_rdp_scancode(0x38, true),  /* VK_RMENU */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_BACK */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_FORWARD */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_REFRESH */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_STOP */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_SEARCH */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_FAVORITES */
-	mk_rdp_scancode(0x00, false), /* VK_BROWSER_HOME */
-	mk_rdp_scancode(0x00, false), /* VK_VOLUME_MUTE */
-	mk_rdp_scancode(0x00, false), /* VK_VOLUME_DOWN */
-	mk_rdp_scancode(0x00, false), /* VK_VOLUME_UP */
-	mk_rdp_scancode(0x00, false), /* VK_MEDIA_NEXT_TRACK */
-	mk_rdp_scancode(0x00, false), /* VK_MEDIA_PREV_TRACK */
-	mk_rdp_scancode(0x00, false), /* VK_MEDIA_STOP */
-	mk_rdp_scancode(0x00, false), /* VK_MEDIA_PLAY_PAUSE */
-	mk_rdp_scancode(0x00, false), /* VK_LAUNCH_MAIL */
-	mk_rdp_scancode(0x00, false), /* VK_MEDIA_SELECT */
-	mk_rdp_scancode(0x00, false), /* VK_LAUNCH_APP1 */
-	mk_rdp_scancode(0x00, false), /* VK_LAUNCH_APP2 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x27, false), /* VK_OEM_1 */
-	mk_rdp_scancode(0x0D, false), /* VK_OEM_PLUS */
-	mk_rdp_scancode(0x33, false), /* VK_OEM_COMMA */
-	mk_rdp_scancode(0x0C, false), /* VK_OEM_MINUS */
-	mk_rdp_scancode(0x34, false), /* VK_OEM_PERIOD */
-	mk_rdp_scancode(0x35, false), /* VK_OEM_2 */
-	mk_rdp_scancode(0x29, false), /* VK_OEM_3 */
-	mk_rdp_scancode(0x73, false), /* VK_ABNT_C1 */
-	mk_rdp_scancode(0x7E, false), /* VK_ABNT_C2 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x1A, false), /* VK_OEM_4 */
-	mk_rdp_scancode(0x2B, false), /* VK_OEM_5 */
-	mk_rdp_scancode(0x1B, false), /* VK_OEM_6 */
-	mk_rdp_scancode(0x28, false), /* VK_OEM_7 */
-	mk_rdp_scancode(0x1D, false), /* VK_OEM_8 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x56, false), /* VK_OEM_102 */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_PROCESSKEY */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_PACKET */
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false),
-	mk_rdp_scancode(0x00, false), /* VK_ATTN */
-	mk_rdp_scancode(0x00, false), /* VK_CRSEL */
-	mk_rdp_scancode(0x00, false), /* VK_EXSEL */
-	mk_rdp_scancode(0x00, false), /* VK_EREOF */
-	mk_rdp_scancode(0x00, false), /* VK_PLAY */
-	mk_rdp_scancode(0x62, false), /* VK_ZOOM */
-	mk_rdp_scancode(0x00, false), /* VK_NONAME */
-	mk_rdp_scancode(0x00, false), /* VK_PA1 */
-	mk_rdp_scancode(0x00, false), /* VK_OEM_CLEAR */
-	mk_rdp_scancode(0x00, false)
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_LBUTTON */
+	RDP_SCANCODE_UNKNOWN,    /* VK_RBUTTON */
+	RDP_SCANCODE_UNKNOWN,    /* VK_CANCEL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MBUTTON */
+	RDP_SCANCODE_UNKNOWN,    /* VK_XBUTTON1 */
+	RDP_SCANCODE_UNKNOWN,    /* VK_XBUTTON2 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_BACK,       /* VK_BACK */
+	RDP_SCANCODE_TAB,        /* VK_TAB */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_CLEAR */
+	RDP_SCANCODE_RETURN,     /* VK_RETURN */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_SHIFT,      /* VK_SHIFT */
+	RDP_SCANCODE_UNKNOWN,    /* VK_CONTROL */
+	RDP_SCANCODE_MENU,       /* VK_MENU */
+	RDP_SCANCODE_PAUSE,      /* VK_PAUSE */
+	RDP_SCANCODE_CAPITAL,    /* VK_CAPITAL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_KANA / VK_HANGUL */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_JUNJA */
+	RDP_SCANCODE_UNKNOWN,    /* VK_FINAL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_HANJA / VK_KANJI */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_ESCAPE,     /* VK_ESCAPE */
+	RDP_SCANCODE_UNKNOWN,    /* VK_CONVERT */
+	RDP_SCANCODE_UNKNOWN,    /* VK_NONCONVERT */
+	RDP_SCANCODE_UNKNOWN,    /* VK_ACCEPT */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MODECHANGE */
+	RDP_SCANCODE_SPACE,      /* VK_SPACE */
+	RDP_SCANCODE_PRIOR,      /* VK_PRIOR */
+	RDP_SCANCODE_NEXT,       /* VK_NEXT */
+	RDP_SCANCODE_END,        /* VK_END */
+	RDP_SCANCODE_HOME,       /* VK_HOME */
+	RDP_SCANCODE_LEFT,       /* VK_LEFT */
+	RDP_SCANCODE_UP,         /* VK_UP */
+	RDP_SCANCODE_RIGHT,      /* VK_RIGHT */
+	RDP_SCANCODE_DOWN,       /* VK_DOWN */
+	RDP_SCANCODE_UNKNOWN,    /* VK_SELECT */
+	RDP_SCANCODE_PRINT,      /* VK_PRINT */
+	RDP_SCANCODE_EXECUTE,    /* VK_EXECUTE */
+	RDP_SCANCODE_SNAPSHOT,   /* VK_SNAPSHOT */
+	RDP_SCANCODE_INSERT,     /* VK_INSERT */
+	RDP_SCANCODE_DELETE,     /* VK_DELETE */
+	RDP_SCANCODE_HELP,       /* VK_HELP */
+	RDP_SCANCODE_KEY_0,      /* VK_KEY_0 */
+	RDP_SCANCODE_KEY_1,      /* VK_KEY_1 */
+	RDP_SCANCODE_KEY_2,      /* VK_KEY_2 */
+	RDP_SCANCODE_KEY_3,      /* VK_KEY_3 */
+	RDP_SCANCODE_KEY_4,      /* VK_KEY_4 */
+	RDP_SCANCODE_KEY_5,      /* VK_KEY_5 */
+	RDP_SCANCODE_KEY_6,      /* VK_KEY_6 */
+	RDP_SCANCODE_KEY_7,      /* VK_KEY_7 */
+	RDP_SCANCODE_KEY_8,      /* VK_KEY_8 */
+	RDP_SCANCODE_KEY_9,      /* VK_KEY_9 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_KEY_A,      /* VK_KEY_A */
+	RDP_SCANCODE_KEY_B,      /* VK_KEY_B */
+	RDP_SCANCODE_KEY_C,      /* VK_KEY_C */
+	RDP_SCANCODE_KEY_D,      /* VK_KEY_D */
+	RDP_SCANCODE_KEY_E,      /* VK_KEY_E */
+	RDP_SCANCODE_KEY_F,      /* VK_KEY_F */
+	RDP_SCANCODE_KEY_G,      /* VK_KEY_G */
+	RDP_SCANCODE_KEY_H,      /* VK_KEY_H */
+	RDP_SCANCODE_KEY_I,      /* VK_KEY_I */
+	RDP_SCANCODE_KEY_J,      /* VK_KEY_J */
+	RDP_SCANCODE_KEY_K,      /* VK_KEY_K */
+	RDP_SCANCODE_KEY_L,      /* VK_KEY_L */
+	RDP_SCANCODE_KEY_M,      /* VK_KEY_M */
+	RDP_SCANCODE_KEY_N,      /* VK_KEY_N */
+	RDP_SCANCODE_KEY_O,      /* VK_KEY_O */
+	RDP_SCANCODE_KEY_P,      /* VK_KEY_P */
+	RDP_SCANCODE_KEY_Q,      /* VK_KEY_Q */
+	RDP_SCANCODE_KEY_R,      /* VK_KEY_R */
+	RDP_SCANCODE_KEY_S,      /* VK_KEY_S */
+	RDP_SCANCODE_KEY_T,      /* VK_KEY_T */
+	RDP_SCANCODE_KEY_U,      /* VK_KEY_U */
+	RDP_SCANCODE_KEY_V,      /* VK_KEY_V */
+	RDP_SCANCODE_KEY_W,      /* VK_KEY_W */
+	RDP_SCANCODE_KEY_X,      /* VK_KEY_X */
+	RDP_SCANCODE_KEY_Y,      /* VK_KEY_Y */
+	RDP_SCANCODE_KEY_Z,      /* VK_KEY_Z */
+	RDP_SCANCODE_LWIN,       /* VK_LWIN */
+	RDP_SCANCODE_RWIN,       /* VK_RWIN */
+	RDP_SCANCODE_APPS,       /* VK_APPS */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_SLEEP,      /* VK_SLEEP */
+	RDP_SCANCODE_NUMPAD0,    /* VK_NUMPAD0 */
+	RDP_SCANCODE_NUMPAD1,    /* VK_NUMPAD1 */
+	RDP_SCANCODE_NUMPAD2,    /* VK_NUMPAD2 */
+	RDP_SCANCODE_NUMPAD3,    /* VK_NUMPAD3 */
+	RDP_SCANCODE_NUMPAD4,    /* VK_NUMPAD4 */
+	RDP_SCANCODE_NUMPAD5,    /* VK_NUMPAD5 */
+	RDP_SCANCODE_NUMPAD6,    /* VK_NUMPAD6 */
+	RDP_SCANCODE_NUMPAD7,    /* VK_NUMPAD7 */
+	RDP_SCANCODE_NUMPAD8,    /* VK_NUMPAD8 */
+	RDP_SCANCODE_NUMPAD9,    /* VK_NUMPAD9 */
+	RDP_SCANCODE_MULTIPLY,   /* VK_MULTIPLY */
+	RDP_SCANCODE_ADD,        /* VK_ADD */
+	RDP_SCANCODE_UNKNOWN,    /* VK_SEPARATOR */
+	RDP_SCANCODE_SUBTRACT,   /* VK_SUBTRACT */
+	RDP_SCANCODE_DECIMAL,    /* VK_DECIMAL */
+	RDP_SCANCODE_DIVIDE,     /* VK_DIVIDE */
+	RDP_SCANCODE_F1,         /* VK_F1 */
+	RDP_SCANCODE_F2,         /* VK_F2 */
+	RDP_SCANCODE_F3,         /* VK_F3 */
+	RDP_SCANCODE_F4,         /* VK_F4 */
+	RDP_SCANCODE_F5,         /* VK_F5 */
+	RDP_SCANCODE_F6,         /* VK_F6 */
+	RDP_SCANCODE_F7,         /* VK_F7 */
+	RDP_SCANCODE_F8,         /* VK_F8 */
+	RDP_SCANCODE_F9,         /* VK_F9 */
+	RDP_SCANCODE_F10,        /* VK_F10 */
+	RDP_SCANCODE_F11,        /* VK_F11 */
+	RDP_SCANCODE_F12,        /* VK_F12 */
+	RDP_SCANCODE_F13,        /* VK_F13 */
+	RDP_SCANCODE_F14,        /* VK_F14 */
+	RDP_SCANCODE_F15,        /* VK_F15 */
+	RDP_SCANCODE_F16,        /* VK_F16 */
+	RDP_SCANCODE_F17,        /* VK_F17 */
+	RDP_SCANCODE_F18,        /* VK_F18 */
+	RDP_SCANCODE_F19,        /* VK_F19 */
+	RDP_SCANCODE_F20,        /* VK_F20 */
+	RDP_SCANCODE_F21,        /* VK_F21 */
+	RDP_SCANCODE_F22,        /* VK_F22 */
+	RDP_SCANCODE_F23,        /* VK_F23 */
+	RDP_SCANCODE_F24,        /* VK_F24 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_NUMLOCK,    /* VK_NUMLOCK */
+	RDP_SCANCODE_SCROLL,     /* VK_SCROLL */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_LSHIFT,     /* VK_LSHIFT */
+	RDP_SCANCODE_RSHIFT,     /* VK_RSHIFT */
+	RDP_SCANCODE_LCONTROL,   /* VK_LCONTROL */
+	RDP_SCANCODE_RCONTROL,   /* VK_RCONTROL */
+	RDP_SCANCODE_LMENU,      /* VK_LMENU */
+	RDP_SCANCODE_RMENU,      /* VK_RMENU */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_BACK */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_FORWARD */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_REFRESH */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_STOP */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_SEARCH */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_FAVORITES */
+	RDP_SCANCODE_UNKNOWN,    /* VK_BROWSER_HOME */
+	RDP_SCANCODE_UNKNOWN,    /* VK_VOLUME_MUTE */
+	RDP_SCANCODE_UNKNOWN,    /* VK_VOLUME_DOWN */
+	RDP_SCANCODE_UNKNOWN,    /* VK_VOLUME_UP */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MEDIA_NEXT_TRACK */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MEDIA_PREV_TRACK */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MEDIA_STOP */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MEDIA_PLAY_PAUSE */
+	RDP_SCANCODE_UNKNOWN,    /* VK_LAUNCH_MAIL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_MEDIA_SELECT */
+	RDP_SCANCODE_UNKNOWN,    /* VK_LAUNCH_APP1 */
+	RDP_SCANCODE_UNKNOWN,    /* VK_LAUNCH_APP2 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_OEM_1,      /* VK_OEM_1 */
+	RDP_SCANCODE_OEM_PLUS,   /* VK_OEM_PLUS */
+	RDP_SCANCODE_OEM_COMMA,  /* VK_OEM_COMMA */
+	RDP_SCANCODE_OEM_MINUS,  /* VK_OEM_MINUS */
+	RDP_SCANCODE_OEM_PERIOD, /* VK_OEM_PERIOD */
+	RDP_SCANCODE_OEM_2,      /* VK_OEM_2 */
+	RDP_SCANCODE_OEM_3,      /* VK_OEM_3 */
+	RDP_SCANCODE_ABNT_C1,    /* VK_ABNT_C1 */
+	RDP_SCANCODE_ABNT_C2,    /* VK_ABNT_C2 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_OEM_4,      /* VK_OEM_4 */
+	RDP_SCANCODE_OEM_5,      /* VK_OEM_5 */
+	RDP_SCANCODE_OEM_6,      /* VK_OEM_6 */
+	RDP_SCANCODE_OEM_7,      /* VK_OEM_7 */
+	RDP_SCANCODE_OEM_8,      /* VK_OEM_8 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_OEM_102,    /* VK_OEM_102 */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_PROCESSKEY */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_PACKET */
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,
+	RDP_SCANCODE_UNKNOWN,    /* VK_ATTN */
+	RDP_SCANCODE_UNKNOWN,    /* VK_CRSEL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_EXSEL */
+	RDP_SCANCODE_UNKNOWN,    /* VK_EREOF */
+	RDP_SCANCODE_UNKNOWN,    /* VK_PLAY */
+	RDP_SCANCODE_ZOOM,       /* VK_ZOOM */
+	RDP_SCANCODE_UNKNOWN,    /* VK_NONAME */
+	RDP_SCANCODE_UNKNOWN,    /* VK_PA1 */
+	RDP_SCANCODE_UNKNOWN,    /* VK_OEM_CLEAR */
+	RDP_SCANCODE_UNKNOWN
 };
 
 RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
