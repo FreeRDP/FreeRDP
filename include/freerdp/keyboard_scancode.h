@@ -211,6 +211,7 @@ typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 /* #define RDP_SCANCODE_OEM_CLEAR                VK_OEM_CLEAR */
 
 #define RDP_SCANCODE_RETURN_KP         mk_rdp_scancode(0x1C, true) /* not RDP_SCANCODE_RETURN */
+#define RDP_SCANCODE_BACKSLASH_JP      mk_rdp_scancode(0x7D, false) /* JP OEM_5 ('\') */
 
 /* _not_ valid scancode, but this is what a windows PKBDLLHOOKSTRUCT for NumLock contains */
 #define RDP_SCANCODE_NUMLOCK_EXTENDED  mk_rdp_scancode(0x45, true)  /* should be RDP_SCANCODE_NUMLOCK */
