@@ -46,7 +46,27 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 
 void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
 {
+	rdpPointer* pointer;
+	rdpCache* cache = context->cache;
 
+	pointer = Pointer_Alloc(context);
+
+	if (pointer != NULL)
+	{
+		pointer->xorBpp = 24;
+		pointer->xPos = pointer_color->xPos;
+		pointer->yPos = pointer_color->yPos;
+		pointer->width = pointer_color->width;
+		pointer->height = pointer_color->height;
+		pointer->lengthAndMask = pointer_color->lengthAndMask;
+		pointer->lengthXorMask = pointer_color->lengthXorMask;
+		pointer->xorMaskData = pointer_color->xorMaskData;
+		pointer->andMaskData = pointer_color->andMaskData;
+
+		pointer->New(context, pointer);
+		pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer);
+		Pointer_Set(context, pointer);
+	}
 }
 
 void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
