@@ -84,7 +84,7 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 	{
 		freerdp_input_send_keyboard_event_2(input, down, rdp_scancode);
 
-		if ((rdp_scancode == RDP_SCANCODE_CAPITAL) && (down == false))
+		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == false))
 		{
 			uint32 syncFlags;
 			syncFlags = xf_kbd_get_toggle_keys_state(xfi);
