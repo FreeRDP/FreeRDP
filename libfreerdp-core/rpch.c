@@ -167,18 +167,22 @@ void ntlm_free(rdpNtlm* ntlm)
 	}
 }
 
-STREAM* rpch_ntlm_http_out_data(rdpRpch* rpch, SecBuffer* ntlm_token, uint8* content, int length)
+STREAM* rpch_ntlm_http_data(rdpRpch* rpch, char* command, SecBuffer* ntlm_token, uint8* content, int length)
 {
 	STREAM* s;
 	char* int_str;
 	int total_length;
 	int int_str_length;
+	int command_length;
 	rdpSettings* settings;
 	int tsg_hostname_length;
 	int ntlm_token_base64_length;
 	uint8* ntlm_token_base64_data;
 
 	settings = rpch->settings;
+
+	command_length = strlen(command);
+
 	int_str_length = snprintf(NULL, 0, "%d", length);
 	tsg_hostname_length = strlen(settings->tsg_hostname);
 
@@ -192,7 +196,8 @@ STREAM* rpch_ntlm_http_out_data(rdpRpch* rpch, SecBuffer* ntlm_token, uint8* con
 
 	s = stream_new(total_length);
 
-	stream_write(s, "RPC_OUT_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1\n", 55);
+	stream_write(s, command, command_length);
+	stream_write(s, " /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1\n", 43);
 	stream_write(s, "Accept: application/rpc\n", 24);
 	stream_write(s, "Cache-Control: no-cache\n", 24);
 	stream_write(s, "Connection: Keep-Alive\n", 23);
@@ -235,7 +240,7 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 
 	ntlm_authenticate(http_out_ntlm);
 
-	http_stream = rpch_ntlm_http_out_data(rpch, &http_out_ntlm->outputBuffer, NULL, 0);
+	http_stream = rpch_ntlm_http_data(rpch, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
 
 	DEBUG_RPCH("\nSend:\n%s\n", http_stream->data);
 	tls_write(tls_out, http_stream->data, http_stream->size);
@@ -329,7 +334,7 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 	http_out->contentLength = 76;
 	http_out->remContentLength = 76;
 
-	http_stream = rpch_ntlm_http_out_data(rpch, &http_out_ntlm->outputBuffer, NULL, http_out->contentLength);
+	http_stream = rpch_ntlm_http_data(rpch, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, http_out->contentLength);
 
 	DEBUG_RPCH("\nSend:\n%s\n", http_stream->data);
 	tls_write(tls_out, http_stream->data, http_stream->size);
@@ -348,61 +353,36 @@ boolean rpch_in_connect_http(rdpRpch* rpch)
 {
 	STREAM* ntlm_stream;
 	STREAM* http_stream;
-	int decoded_ntht_length;
-	int encoded_ntht_length;
-	uint8* decoded_ntht_data = NULL;
-	uint8* encoded_ntht_data = NULL;
+	int decoded_ntlm_http_length;
+	int encoded_ntlm_http_length;
+	uint8* decoded_ntlm_http_data = NULL;
+	uint8* encoded_ntlm_http_data = NULL;
 	rdpTls* tls_in = rpch->tls_in;
 	rdpSettings* settings = rpch->settings;
 	rdpRpchHTTP* http_in = rpch->http_in;
 	rdpNtlm* http_in_ntlm = http_in->ntlm;
 
-	ntlm_stream = stream_new(0xFFFF);
-	http_stream = stream_new(0xFFFF);
+	ntlm_stream = stream_new(0);
 
 	printf("rpch_in_connect_http\n");
 
 	ntlm_client_init(http_in_ntlm, settings->username, settings->password, settings->domain);
 
 	ntlm_authenticate(http_in_ntlm);
-	ntlm_stream->size = http_in_ntlm->outputBuffer.cbBuffer;
-	ntlm_stream->p = ntlm_stream->data = http_in_ntlm->outputBuffer.pvBuffer;
 
-	decoded_ntht_length = ntlm_stream->p - ntlm_stream->data;
-	decoded_ntht_data = xmalloc(decoded_ntht_length);
-
-	ntlm_stream->p = ntlm_stream->data;
-	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
-
-	stream_clear(ntlm_stream);
-	ntlm_stream->p = ntlm_stream->data;
-
-	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
-
-	stream_write(http_stream, "RPC_IN_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1\n", 54);
-	stream_write(http_stream, "Accept: application/rpc\n", 24);
-	stream_write(http_stream, "Cache-Control: no-cache\n", 24);
-	stream_write(http_stream, "Connection: Keep-Alive\n", 23);
-	stream_write(http_stream, "Content-Length: 0\n", 18);
-	stream_write(http_stream, "User-Agent: MSRPC\n", 18);
-	stream_write(http_stream, "Host: ", 6);
-	stream_write(http_stream, settings->tsg_hostname, strlen(settings->tsg_hostname));
-	stream_write(http_stream, "\n", 1);
-	stream_write(http_stream, "Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, SessionId=33ad20ac-7469-4f63-946d-113eac21a23c\n", 110);
-	stream_write(http_stream, "Authorization: NTLM ", 20);
-	stream_write(http_stream, encoded_ntht_data, encoded_ntht_length);
-	stream_write(http_stream, "\n\n", 2);
+	http_stream = rpch_ntlm_http_data(rpch, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0);
 
 	DEBUG_RPCH("\nSend:\n%s\n", http_stream->data);
-	tls_write(tls_in, http_stream->data, http_stream->p - http_stream->data);
+	tls_write(tls_in, http_stream->data, http_stream->size);
+	http_stream = stream_new(0xFFFF);
 	stream_clear(http_stream);
 	http_stream->p = http_stream->data;
 
-	xfree(decoded_ntht_data);
+	xfree(decoded_ntlm_http_data);
 
-	encoded_ntht_length = -1;
-	xfree(encoded_ntht_data);
-	encoded_ntht_data = NULL;
+	encoded_ntlm_http_length = -1;
+	xfree(encoded_ntlm_http_data);
+	encoded_ntlm_http_data = NULL;
 	uint8 buffer_byte;
 	http_in->contentLength = 0;
 
@@ -412,7 +392,7 @@ boolean rpch_in_connect_http(rdpRpch* rpch)
 		tls_read(tls_in, &buffer_byte, 1);
 		stream_write(http_stream, &buffer_byte, 1);
 
-		if (encoded_ntht_length == -1)
+		if (encoded_ntlm_http_length == -1)
 		{
 			uint8* start_of_ntht_data = (uint8*) strstr((char*) http_stream->data, "NTLM ");
 
@@ -420,20 +400,20 @@ boolean rpch_in_connect_http(rdpRpch* rpch)
 			{
 				start_of_ntht_data += 5;
 
-				for (encoded_ntht_length=0;;encoded_ntht_length++)
+				for (encoded_ntlm_http_length=0;;encoded_ntlm_http_length++)
 				{
 					tls_read(tls_in, &buffer_byte, 1);
 					stream_write(http_stream, &buffer_byte, 1);
 
-					if (start_of_ntht_data[encoded_ntht_length]=='\n')
+					if (start_of_ntht_data[encoded_ntlm_http_length]=='\n')
 					{
-						encoded_ntht_length--; /* \r */
+						encoded_ntlm_http_length--; /* \r */
 						break;
 					}
 				}
 
-				encoded_ntht_data = xmalloc(encoded_ntht_length);
-				memcpy(encoded_ntht_data, start_of_ntht_data, encoded_ntht_length);
+				encoded_ntlm_http_data = xmalloc(encoded_ntlm_http_length);
+				memcpy(encoded_ntlm_http_data, start_of_ntht_data, encoded_ntlm_http_length);
 			}
 		}
 
@@ -473,60 +453,30 @@ boolean rpch_in_connect_http(rdpRpch* rpch)
 	stream_clear(http_stream);
 	http_stream->p = http_stream->data;
 
-	if (encoded_ntht_length == 0) /* No NTLM data was found */
+	if (encoded_ntlm_http_length == 0) /* No NTLM data was found */
 		return false;
 
-	crypto_base64_decode(encoded_ntht_data, encoded_ntht_length, &decoded_ntht_data, &decoded_ntht_length);
+	crypto_base64_decode(encoded_ntlm_http_data, encoded_ntlm_http_length, &decoded_ntlm_http_data, &decoded_ntlm_http_length);
 
-	stream_write(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
-	ntlm_stream->p = ntlm_stream->data;
-
-	xfree(decoded_ntht_data);
-	xfree(encoded_ntht_data);
-
-	http_in_ntlm->inputBuffer.pvBuffer = ntlm_stream->data;
-	http_in_ntlm->inputBuffer.cbBuffer = ntlm_stream->size;
+	http_in_ntlm->inputBuffer.pvBuffer = decoded_ntlm_http_data;
+	http_in_ntlm->inputBuffer.cbBuffer = decoded_ntlm_http_length;
 
 	ntlm_authenticate(http_in_ntlm);
-	stream_clear(ntlm_stream);
-	ntlm_stream->size = http_in_ntlm->outputBuffer.cbBuffer;
-	ntlm_stream->p = ntlm_stream->data = http_in_ntlm->outputBuffer.pvBuffer;
-
-	decoded_ntht_length = ntlm_stream->size;
-	decoded_ntht_data = xmalloc(decoded_ntht_length);
-	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
-
-	stream_clear(ntlm_stream);
-	ntlm_stream->p = ntlm_stream->data;
-
-	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
-
-	stream_write(http_stream, "RPC_IN_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1\n", 54);
-	stream_write(http_stream, "Accept: application/rpc\n", 24);
-	stream_write(http_stream, "Cache-Control: no-cache\n", 24);
-	stream_write(http_stream, "Connection: Keep-Alive\n", 23);
-	stream_write(http_stream, "Content-Length: 1073741824\n", 27);
-	stream_write(http_stream, "User-Agent: MSRPC\n", 18);
-	stream_write(http_stream, "Host: ", 6);
-	stream_write(http_stream, settings->tsg_hostname, strlen(settings->tsg_hostname));
-	stream_write(http_stream, "\n", 1);
-	stream_write(http_stream, "Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, SessionId=33ad20ac-7469-4f63-946d-113eac21a23c\n", 110);
-	stream_write(http_stream, "Authorization: NTLM ", 20);
-	stream_write(http_stream, encoded_ntht_data, encoded_ntht_length);
-	stream_write(http_stream, "\n\n", 2);
 
 	http_in->contentLength = 1073741824;
 	http_in->remContentLength = 1073741824;
 
+	http_stream = rpch_ntlm_http_data(rpch, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, http_in->contentLength);
+
 	DEBUG_RPCH("\nSend:\n%s\n", http_stream->data);
 
-	tls_write(tls_in, http_stream->data, http_stream->p - http_stream->data);
+	tls_write(tls_in, http_stream->data, http_stream->size);
 
 	stream_clear(http_stream);
 	http_stream->p = http_stream->data;
 
-	xfree(decoded_ntht_data);
-	xfree(encoded_ntht_data);
+	xfree(decoded_ntlm_http_data);
+	xfree(encoded_ntlm_http_data);
 	/* At this point IN connection is ready to send CONN/B1 and start with sending data */
 
 	http_in->state = RPCH_HTTP_SENDING;
@@ -677,7 +627,7 @@ boolean rpch_out_send_CONN_A1(rdpRpch* rpch)
 
 boolean rpch_in_send_CONN_B1(rdpRpch* rpch)
 {
-	STREAM* pdu = stream_new(104);
+	STREAM* s = stream_new(104);
 
 	DEBUG_RPCH("Sending CONN_B1");
 
@@ -702,35 +652,36 @@ boolean rpch_in_send_CONN_B1(rdpRpch* rpch)
 	uint32 agidCommandType = 0x0000000c;
 	uint8* AssociationGroupId;
 
-	rpch->INChannelCookie = rpch_create_cookie(); /* 16bytes */
+	rpch->INChannelCookie = rpch_create_cookie(); /* 16 bytes */
 	AssociationGroupId = rpch_create_cookie(); /* 16 bytes */
 
-	stream_write_uint8(pdu, rpc_vers);
-	stream_write_uint8(pdu, rpc_vers_minor);
-	stream_write_uint8(pdu, ptype);
-	stream_write_uint8(pdu, pfc_flags);
-	stream_write_uint32(pdu, packet_drep);
-	stream_write_uint16(pdu, frag_length);
-	stream_write_uint16(pdu, auth_length);
-	stream_write_uint32(pdu, call_id);
-	stream_write_uint16(pdu, flags);
-	stream_write_uint16(pdu, num_commands);
-	stream_write_uint32(pdu, vCommandType);
-	stream_write_uint32(pdu, Version);
-	stream_write_uint32(pdu, vccCommandType);
-	stream_write(pdu, rpch->virtualConnectionCookie, 16);
-	stream_write_uint32(pdu, iccCommandType);
-	stream_write(pdu, rpch->INChannelCookie, 16);
-	stream_write_uint32(pdu, clCommandType);
-	stream_write_uint32(pdu, ChannelLifetime);
-	stream_write_uint32(pdu, ckCommandType);
-	stream_write_uint32(pdu, ClientKeepalive);
-	stream_write_uint32(pdu, agidCommandType);
-	stream_write(pdu, AssociationGroupId, 16);
+	stream_write_uint8(s, rpc_vers);
+	stream_write_uint8(s, rpc_vers_minor);
+	stream_write_uint8(s, ptype);
+	stream_write_uint8(s, pfc_flags);
+	stream_write_uint32(s, packet_drep);
+	stream_write_uint16(s, frag_length);
+	stream_write_uint16(s, auth_length);
+	stream_write_uint32(s, call_id);
+	stream_write_uint16(s, flags);
+	stream_write_uint16(s, num_commands);
+	stream_write_uint32(s, vCommandType);
+	stream_write_uint32(s, Version);
+	stream_write_uint32(s, vccCommandType);
+	stream_write(s, rpch->virtualConnectionCookie, 16);
+	stream_write_uint32(s, iccCommandType);
+	stream_write(s, rpch->INChannelCookie, 16);
+	stream_write_uint32(s, clCommandType);
+	stream_write_uint32(s, ChannelLifetime);
+	stream_write_uint32(s, ckCommandType);
+	stream_write_uint32(s, ClientKeepalive);
+	stream_write_uint32(s, agidCommandType);
+	stream_write(s, AssociationGroupId, 16);
+	stream_seal(s);
 
-	rpch_in_write(rpch, pdu->data, stream_get_length(pdu));
+	rpch_in_write(rpch, s->data, s->size);
 
-	stream_free(pdu);
+	stream_free(s);
 
 	return true;
 }
