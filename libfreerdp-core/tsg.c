@@ -95,6 +95,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
+	DEBUG_TSG("rpch_connect success");
+
 	status = rpch_write(rpch, tsg_packet1, sizeof(tsg_packet1), 1);
 
 	if (status <= 0)
