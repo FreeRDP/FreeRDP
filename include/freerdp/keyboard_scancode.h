@@ -157,7 +157,7 @@ typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 #define RDP_SCANCODE_F22               mk_rdp_scancode(0x6D, false) /* VK_F22 */
 #define RDP_SCANCODE_F23               mk_rdp_scancode(0x6E, false) /* VK_F23 */
 #define RDP_SCANCODE_F24               mk_rdp_scancode(0x6F, false) /* VK_F24 */
-#define RDP_SCANCODE_NUMLOCK           mk_rdp_scancode(0x45, false) /* VK_NUMLOCK */
+#define RDP_SCANCODE_NUMLOCK           mk_rdp_scancode(0x45, false) /* VK_NUMLOCK */ /* Note: when this seems to appear in PKBDLLHOOKSTRUCT it means Pause which must be sent as Ctrl + NumLock */
 #define RDP_SCANCODE_SCROLL            mk_rdp_scancode(0x46, false) /* VK_SCROLL */
 #define RDP_SCANCODE_LSHIFT            mk_rdp_scancode(0x2A, false) /* VK_LSHIFT */
 #define RDP_SCANCODE_RSHIFT            mk_rdp_scancode(0x36, false) /* VK_RSHIFT */
@@ -209,5 +209,9 @@ typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 /* #define RDP_SCANCODE_NONAME                   VK_NONAME */
 /* #define RDP_SCANCODE_PA1                      VK_PA1 */
 /* #define RDP_SCANCODE_OEM_CLEAR                VK_OEM_CLEAR */
+
+/* _not_ valid scancode, but this is what a windows PKBDLLHOOKSTRUCT for NumLock contains */
+#define RDP_SCANCODE_NUMLOCK_EXTENDED  mk_rdp_scancode(0x45, true)  /* should be RDP_SCANCODE_NUMLOCK */
+#define RDP_SCANCODE_RSHIFT_EXTENDED   mk_rdp_scancode(0x36, true)  /* should be RDP_SCANCODE_RSHIFT */
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H */

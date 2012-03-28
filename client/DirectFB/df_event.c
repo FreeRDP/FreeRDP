@@ -190,10 +190,7 @@ void df_send_mouse_wheel_event(rdpInput* input, sint16 axisrel, uint16 x, uint16
 
 void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 function)
 {
-	uint16 flags;
 	uint8 vkcode;
-	uint8 scancode;
-	boolean extended;
 	RDP_SCANCODE rdp_scancode;
 	
 	if (keycode)
@@ -204,13 +201,8 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 		return;
 
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(vkcode);
-	scancode = rdp_scancode_code(rdp_scancode);
-	extended = rdp_scancode_extended(rdp_scancode);
 
-	flags = (extended) ? KBD_FLAGS_EXTENDED : 0;
-	flags |= (down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE;
-
-	input->KeyboardEvent(input, flags, scancode);
+	freerdp_input_send_keyboard_event_2(input, down, rdp_scancode);
 }
 
 boolean df_event_process(freerdp* instance, DFBEvent* event)
