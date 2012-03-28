@@ -281,11 +281,11 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 			}
 		}
 
-		if (*(http_stream->p-1) == '\n' && *(http_stream->p-3) == '\n')
+		if (*(http_stream->p - 1) == '\n' && *(http_stream->p - 3) == '\n')
 		{
 			int i;
 
-			for(i = 0; i < http_out->contentLength; i++)
+			for (i = 0; i < http_out->contentLength; i++)
 			{
 				tls_read(tls_out, &buffer_byte, 1);
 				stream_write(http_stream, &buffer_byte, 1);
@@ -311,15 +311,16 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 	xfree(decoded_ntht_data);
 	xfree(encoded_ntht_data);
 
-	//ntlmssp_recv(http_out_ntlmssp, ntlmssp_stream);
+	http_out_ntlm->inputBuffer.pvBuffer = ntlm_stream->data;
+	http_out_ntlm->inputBuffer.cbBuffer = ntlm_stream->size;
+
+	ntlm_authenticate(http_out_ntlm);
 	stream_clear(ntlm_stream);
-	ntlm_stream->p = ntlm_stream->data;
+	ntlm_stream->size = http_out_ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = http_out_ntlm->outputBuffer.pvBuffer;
 
-	//ntlmssp_send(http_out_ntlmssp, ntlmssp_stream);
-
-	decoded_ntht_length = ntlm_stream->p-ntlm_stream->data;
+	decoded_ntht_length = ntlm_stream->size;
 	decoded_ntht_data = xmalloc(decoded_ntht_length);
-	ntlm_stream->p = ntlm_stream->data;
 	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
 
 	stream_clear(ntlm_stream);
@@ -362,37 +363,34 @@ boolean rpch_out_connect_http(rdpRpch* rpch)
 
 boolean rpch_in_connect_http(rdpRpch* rpch)
 {
+	STREAM* ntlm_stream;
+	STREAM* http_stream;
+	int decoded_ntht_length;
+	int encoded_ntht_length;
+	uint8* decoded_ntht_data = NULL;
+	uint8* encoded_ntht_data = NULL;
 	rdpTls* tls_in = rpch->tls_in;
 	rdpSettings* settings = rpch->settings;
 	rdpRpchHTTP* http_in = rpch->http_in;
-	//NTLMSSP* http_in_ntlmssp = http_in->ntht;
+	rdpNtlm* http_in_ntlm = http_in->ntlm;
 
-	STREAM* ntlmssp_stream;
-	STREAM* http_stream;
-
-	ntlmssp_stream = stream_new(0xFFFF);
+	ntlm_stream = stream_new(0xFFFF);
 	http_stream = stream_new(0xFFFF);
 
-	uint8* decoded_ntht_data = NULL;
-	int decoded_ntht_length;
-	uint8* encoded_ntht_data = NULL;
-	int encoded_ntht_length;
+	ntlm_client_init(http_in_ntlm, settings->username, settings->password, settings->domain);
 
-	//ntlmssp_set_username(http_in_ntlmssp, settings->username);
-	//ntlmssp_set_password(http_in_ntlmssp, settings->password);
-	//ntlmssp_set_domain(http_in_ntlmssp, settings->domain);
-	//ntlmssp_set_workstation(http_in_ntlmssp, "WORKSTATION"); /* TODO insert proper w.name */
+	ntlm_authenticate(http_in_ntlm);
+	ntlm_stream->size = http_in_ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = http_in_ntlm->outputBuffer.pvBuffer;
 
-	//ntlmssp_send(http_in_ntlmssp,ntlmssp_stream);
-
-	decoded_ntht_length = ntlmssp_stream->p-ntlmssp_stream->data;
+	decoded_ntht_length = ntlm_stream->p - ntlm_stream->data;
 	decoded_ntht_data = xmalloc(decoded_ntht_length);
 
-	ntlmssp_stream->p = ntlmssp_stream->data;
-	stream_read(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
+	ntlm_stream->p = ntlm_stream->data;
+	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
 
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_clear(ntlm_stream);
+	ntlm_stream->p = ntlm_stream->data;
 
 	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
 
@@ -495,25 +493,26 @@ boolean rpch_in_connect_http(rdpRpch* rpch)
 
 	crypto_base64_decode(encoded_ntht_data, encoded_ntht_length, &decoded_ntht_data, &decoded_ntht_length);
 
-	stream_write(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_write(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
+	ntlm_stream->p = ntlm_stream->data;
 
 	xfree(decoded_ntht_data);
 	xfree(encoded_ntht_data);
 
-	//ntlmssp_recv(http_in_ntlmssp, ntlmssp_stream);
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	http_in_ntlm->inputBuffer.pvBuffer = ntlm_stream->data;
+	http_in_ntlm->inputBuffer.cbBuffer = ntlm_stream->size;
 
-	//ntlmssp_send(http_in_ntlmssp, ntlmssp_stream);
+	ntlm_authenticate(http_in_ntlm);
+	stream_clear(ntlm_stream);
+	ntlm_stream->size = http_in_ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = http_in_ntlm->outputBuffer.pvBuffer;
 
-	decoded_ntht_length = ntlmssp_stream->p-ntlmssp_stream->data;
+	decoded_ntht_length = ntlm_stream->size;
 	decoded_ntht_data = xmalloc(decoded_ntht_length);
-	ntlmssp_stream->p = ntlmssp_stream->data;
-	stream_read(ntlmssp_stream, decoded_ntht_data, decoded_ntht_length);
+	stream_read(ntlm_stream, decoded_ntht_data, decoded_ntht_length);
 
-	stream_clear(ntlmssp_stream);
-	ntlmssp_stream->p = ntlmssp_stream->data;
+	stream_clear(ntlm_stream);
+	ntlm_stream->p = ntlm_stream->data;
 
 	crypto_base64_encode(decoded_ntht_data, decoded_ntht_length, &encoded_ntht_data, &encoded_ntht_length);
 
@@ -558,8 +557,10 @@ int rpch_out_write(rdpRpch* rpch, uint8* data, int length)
 	rdpTls* tls_out = rpch->tls_out;
 
 	if (http_out->state == RPCH_HTTP_DISCONNECTED)
+	{
 		if (!rpch_out_connect_http(rpch))
 			return false;
+	}
 
 	if (http_out->remContentLength < length)
 	{
@@ -596,8 +597,10 @@ int rpch_in_write(rdpRpch* rpch, uint8* data, int length)
 	rdpTls* tls_in = rpch->tls_in;
 
 	if (http_in->state == RPCH_HTTP_DISCONNECTED)
+	{
 		if (!rpch_in_connect_http(rpch))
 			return -1;
+	}
 
 	if (http_in->remContentLength < length)
 	{
@@ -629,7 +632,7 @@ int rpch_in_write(rdpRpch* rpch, uint8* data, int length)
 
 uint8* rpch_create_cookie()
 {
-	uint8 *ret = xmalloc(16);
+	uint8* ret = xmalloc(16);
 	RAND_pseudo_bytes(ret, 16);
 	return ret;
 }
@@ -801,25 +804,30 @@ boolean rpch_in_send_keep_alive(rdpRpch* rpch)
 
 boolean rpch_in_send_bind(rdpRpch* rpch)
 {
+	rdpSettings* settings = rpch->settings;
 	STREAM* ntlm_stream = stream_new(0xFFFF);
-	//rpch->ntlmssp = ntlmssp_client_new();
-	//rpch->ntlmssp->ntlm_v2 = true;
-	//rpch->ntlmssp->do_not_seal = true;
-	//ntlmssp_set_username(rpch->ntlmssp, "PanoGatewayUser49");
-	//ntlmssp_set_password(rpch->ntlmssp, rpch->settings->tsg_password);
-	//ntlmssp_set_domain(rpch->ntlmssp, "PANOGATEWAY");
-	//ntlmssp_set_workstation(rpch->ntlmssp, "WORKSTATION"); /* TODO insert proper w.name */
 
-	//ntlmssp_send(rpch->ntlmssp,ntlm_stream);
+	/* TODO: Set NTLMv2 + DO_NOT_SEAL, DomainName = GatewayName? */
+
+	rpch->ntlm = ntlm_new();
+
+	ntlm_client_init(rpch->ntlm, settings->username, settings->password, settings->domain);
+
+	ntlm_authenticate(rpch->ntlm);
+	ntlm_stream->size = rpch->ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = rpch->ntlm->outputBuffer.pvBuffer;
 
 	rpcconn_bind_hdr_t* bind_pdu = xmalloc(sizeof(rpcconn_bind_hdr_t));
 	bind_pdu->rpc_vers = 5;
 	bind_pdu->rpc_vers_minor = 0;
 	bind_pdu->PTYPE = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_PENDING_CANCEL | PFC_CONC_MPX;
-	bind_pdu->packed_drep[0] = 0x10;bind_pdu->packed_drep[1] = 0x00;bind_pdu->packed_drep[2] = 0x00;bind_pdu->packed_drep[3] = 0x00;
+	bind_pdu->packed_drep[0] = 0x10;
+	bind_pdu->packed_drep[1] = 0x00;
+	bind_pdu->packed_drep[2] = 0x00;
+	bind_pdu->packed_drep[3] = 0x00;
 	bind_pdu->frag_length = 124 + (ntlm_stream->p - ntlm_stream->data);
-	bind_pdu->auth_length = ntlm_stream->p - ntlm_stream->data;
+	bind_pdu->auth_length = ntlm_stream->size;
 	bind_pdu->call_id = 2;
 	bind_pdu->max_xmit_frag = 0x0FF8;
 	bind_pdu->max_recv_frag = 0x0FF8;
@@ -922,7 +930,9 @@ boolean rpch_in_send_rpc_auth_3(rdpRpch* rpch)
 {
 	STREAM* ntlm_stream = stream_new(0xFFFF);
 
-	//ntlmssp_send(rpch->ntlmssp,ntlm_stream);
+	ntlm_authenticate(rpch->ntlm);
+	ntlm_stream->size = rpch->ntlm->outputBuffer.cbBuffer;
+	ntlm_stream->p = ntlm_stream->data = rpch->ntlm->outputBuffer.pvBuffer;
 
 	rpcconn_rpc_auth_3_hdr_t* rpc_auth_3_pdu = xmalloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
 	rpc_auth_3_pdu->rpc_vers = 5;
@@ -934,7 +944,7 @@ boolean rpch_in_send_rpc_auth_3(rdpRpch* rpch)
 	rpc_auth_3_pdu->packed_drep[2] = 0x00;
 	rpc_auth_3_pdu->packed_drep[3] = 0x00;
 	rpc_auth_3_pdu->frag_length = 28 + (ntlm_stream->p - ntlm_stream->data);
-	rpc_auth_3_pdu->auth_length = ntlm_stream->p - ntlm_stream->data;
+	rpc_auth_3_pdu->auth_length = ntlm_stream->size;
 	rpc_auth_3_pdu->call_id = 2;
 	rpc_auth_3_pdu->max_xmit_frag = 0x0FF8;
 	rpc_auth_3_pdu->max_recv_frag = 0x0FF8;
