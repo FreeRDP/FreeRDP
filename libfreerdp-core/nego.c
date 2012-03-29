@@ -295,7 +295,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				nego_process_negotiation_response(nego, s);
 
 				DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
-				if ((nego->selected_protocol & nego->requested_protocols) == 0)
+				if (nego->selected_protocol != nego->requested_protocols)
 					nego->state = NEGO_STATE_FAIL;
 				break;
 
