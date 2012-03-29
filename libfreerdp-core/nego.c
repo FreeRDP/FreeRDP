@@ -165,6 +165,7 @@ void nego_attempt_nla(rdpNego* nego)
 		return;
 	}
 
+	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
 	if (nego->state != NEGO_STATE_FINAL)
 	{
 		nego_tcp_disconnect(nego);
@@ -292,6 +293,10 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		{
 			case TYPE_RDP_NEG_RSP:
 				nego_process_negotiation_response(nego, s);
+
+				DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
+				if ((nego->selected_protocol & nego->requested_protocols) == 0)
+					nego->state = NEGO_STATE_FAIL;
 				break;
 
 			case TYPE_RDP_NEG_FAILURE:
@@ -301,7 +306,10 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	}
 	else
 	{
-		nego->state = NEGO_STATE_FINAL;
+		if (nego->requested_protocols > PROTOCOL_RDP)
+			nego->state = NEGO_STATE_FAIL;
+		else
+			nego->state = NEGO_STATE_FINAL;
 	}
 
 	return true;
@@ -412,6 +420,7 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 		length += cookie_length + 19;
 	}
 
+	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 	if (nego->requested_protocols > PROTOCOL_RDP)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
