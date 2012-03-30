@@ -21,7 +21,6 @@
 
 #include "info.h"
 #include "redirection.h"
-#include "mppc_enc.h"
 
 #include <freerdp/crypto/per.h>
 
@@ -482,10 +481,10 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (compressed_type & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
-			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->data = rdp->mppc_dec->history_buf + roff;
 			comp_stream->p = comp_stream->data;
 			comp_stream->size = rlen;
 		}
@@ -923,7 +922,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->redirection = redirection_new();
-		rdp->mppc = mppc_new(rdp);
+		rdp->mppc_dec = mppc_dec_new();
 		rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	}
 
@@ -954,7 +953,7 @@ void rdp_free(rdpRdp* rdp)
 		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
 		redirection_free(rdp->redirection);
-		mppc_free(rdp);
+		mppc_dec_free(rdp->mppc_dec);
 		mppc_enc_free(rdp->mppc_enc);
 		xfree(rdp);
 	}

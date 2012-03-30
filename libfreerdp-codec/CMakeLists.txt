@@ -42,6 +42,8 @@ set(FREERDP_CODEC_SRCS
 	nsc_encode.c
 	nsc_encode.h
 	nsc_types.h
+	mppc_dec.c
+	mppc_enc.c
 )
 
 if(WITH_SSE2)

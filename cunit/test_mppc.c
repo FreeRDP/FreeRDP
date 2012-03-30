@@ -635,8 +635,7 @@ int add_mppc_suite(void)
 
 void test_mppc(void)
 {
-    rdpRdp rdp;
-    struct rdp_mppc rmppc;
+    struct rdp_mppc_dec* rmppc;
     uint32_t roff;
     uint32_t rlen;
     long int dur;
@@ -644,24 +643,20 @@ void test_mppc(void)
     struct timeval start_time;
     struct timeval end_time;
 
-    rdp.mppc = &rmppc;
-    rdp.mppc->history_buf = calloc(1, RDP6_HISTORY_BUF_SIZE);
-    CU_ASSERT(rdp.mppc->history_buf != NULL)
-    rdp.mppc->history_ptr = rdp.mppc->history_buf;
-
+    rmppc = mppc_dec_new();
 
     /* save starting time */
     gettimeofday(&start_time, NULL);
 
     /* uncompress data */
-    CU_ASSERT(decompress_rdp_5(&rdp, compressed_rd5, sizeof(compressed_rd5), 
+    CU_ASSERT(decompress_rdp_5(rmppc, compressed_rd5, sizeof(compressed_rd5),
         PACKET_COMPRESSED, &roff, &rlen) == true);
 
     /* get end time */
     gettimeofday(&end_time, NULL);
 
-    CU_ASSERT(memcmp(decompressed_rd5, rdp.mppc->history_buf, sizeof(decompressed_rd5)) == 0);
-    free(rdp.mppc->history_buf);
+    CU_ASSERT(memcmp(decompressed_rd5, rmppc->history_buf, sizeof(decompressed_rd5)) == 0);
+    mppc_dec_free(rmppc);
 
     /* print time taken */
     dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);

@@ -22,7 +22,6 @@
 #define __MPPC_ENC_H
 
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
 
 #define PROTO_RDP_40 1
 #define PROTO_RDP_50 2

@@ -18,7 +18,8 @@
  * limitations under the License.
  */
 
-#include "rdp.h"
+#include <freerdp/codec/mppc_dec.h>
+#include <freerdp/utils/memory.h>
 
 static uint8 HuffLenLEC[] = {
 0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x8, 0x9, 0x9, 0xa, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0x9, 0xa, 0x9, 0xa, 0x9, 0x9, 0x9, 0xa, 0xa, 0x9, 0xa, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x8, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x7, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xd, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xb, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0x8, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0x8, 0x7, 0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5, 0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x8, 0x5, 0x6, 0x7, 0x7 }; 
@@ -118,26 +119,26 @@ uint32 transposebits(uint32 x)
 		*(_s) = *((_s) + (_i)); \
 		*((_s) + (_i)) = t; } while(0)
 
-int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	int type = ctype & 0x0f;
 
 	switch (type)
 	{
 		case PACKET_COMPR_TYPE_8K:
-			return decompress_rdp_4(rdp, cbuf, len, ctype, roff, rlen);
+			return decompress_rdp_4(dec, cbuf, len, ctype, roff, rlen);
 			break;
 
 		case PACKET_COMPR_TYPE_64K:
-			return decompress_rdp_5(rdp, cbuf, len, ctype, roff, rlen);
+			return decompress_rdp_5(dec, cbuf, len, ctype, roff, rlen);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP6:
-			return decompress_rdp_6(rdp, cbuf, len, ctype, roff, rlen);
+			return decompress_rdp_6(dec, cbuf, len, ctype, roff, rlen);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP61:
-			return decompress_rdp_61(rdp, cbuf, len, ctype, roff, rlen);
+			return decompress_rdp_61(dec, cbuf, len, ctype, roff, rlen);
 			break;
 
 		default:
@@ -159,7 +160,7 @@ int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, u
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	uint8*    history_buf;    /* uncompressed data goes here */
 	uint8*    history_ptr;    /* points to next free slot in history_buf */
@@ -176,7 +177,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 
 	printf("decompress_rdp_4:\n");
 
-	if ((rdp->mppc == NULL) || (rdp->mppc->history_buf == NULL))
+	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_4: null\n");
 		return false;
@@ -193,24 +194,24 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	*rlen = 0;
 
 	/* get start of history buffer */
-	history_buf = rdp->mppc->history_buf;
+	history_buf = dec->history_buf;
 
 	/* get next free slot in history buffer */
-	history_ptr = rdp->mppc->history_ptr;
+	history_ptr = dec->history_ptr;
 	*roff = history_ptr - history_buf;
 
 	if (ctype & PACKET_AT_FRONT)
 	{
 		/* place compressed data at start of history buffer */
-		history_ptr = rdp->mppc->history_buf;
-		rdp->mppc->history_ptr = rdp->mppc->history_buf;
+		history_ptr = dec->history_buf;
+		dec->history_ptr = dec->history_buf;
 		*roff = 0;
 	}
 
 	if (ctype & PACKET_FLUSHED)
 	{
 		/* re-init history buffer */
-		history_ptr = rdp->mppc->history_buf;
+		history_ptr = dec->history_buf;
 		memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
 		*roff = 0;
 	}
@@ -220,8 +221,8 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* data in cbuf is not compressed - copy to history buf as is */
 		memcpy(history_ptr, cbuf, len);
 		history_ptr += len;
-		*rlen = history_ptr - rdp->mppc->history_ptr;
-		rdp->mppc->history_ptr = history_ptr;
+		*rlen = history_ptr - dec->history_ptr;
+		dec->history_ptr = history_ptr;
 		return true;
 	}
 
@@ -485,7 +486,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
-		if (src_ptr >= rdp->mppc->history_buf)
+		if (src_ptr >= dec->history_buf)
 		{
 			/* data does not wrap around */
 			while (lom > 0)
@@ -496,15 +497,15 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		}
 		else
 		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
+			src_ptr = dec->history_buf_end - (copy_offset - (history_ptr - dec->history_buf));
 			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			while (lom && (src_ptr <= dec->history_buf_end))
 			{
 				*history_ptr++ = *src_ptr++;
 				lom--;
 			}
 
-			src_ptr = rdp->mppc->history_buf;
+			src_ptr = dec->history_buf;
 			while (lom > 0)
 			{
 				*history_ptr++ = *src_ptr++;
@@ -569,9 +570,9 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		}
 	} /* end while (bits_left >= 8) */
 
-	*rlen = history_ptr - rdp->mppc->history_ptr;
+	*rlen = history_ptr - dec->history_ptr;
 
-	rdp->mppc->history_ptr = history_ptr;
+	dec->history_ptr = history_ptr;
 
 	return true;
 }
@@ -589,7 +590,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	uint8*    history_buf;    /* uncompressed data goes here */
 	uint8*    history_ptr;    /* points to next free slot in bistory_buf */
@@ -604,7 +605,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	int       tmp;
 	uint32    i32;
 
-	if ((rdp->mppc == NULL) || (rdp->mppc->history_buf == NULL))
+	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_5: null\n");
 		return false;
@@ -621,24 +622,24 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	*rlen = 0;
 
 	/* get start of history buffer */
-	history_buf = rdp->mppc->history_buf;
+	history_buf = dec->history_buf;
 
 	/* get next free slot in history buffer */
-	history_ptr = rdp->mppc->history_ptr;
+	history_ptr = dec->history_ptr;
 	*roff = history_ptr - history_buf;
 
 	if (ctype & PACKET_AT_FRONT)
 	{
 		/* place compressed data at start of history buffer */
-		history_ptr = rdp->mppc->history_buf;
-		rdp->mppc->history_ptr = rdp->mppc->history_buf;
+		history_ptr = dec->history_buf;
+		dec->history_ptr = dec->history_buf;
 		*roff = 0;
 	}
 
 	if (ctype & PACKET_FLUSHED)
 	{
 		/* re-init history buffer */
-		history_ptr = rdp->mppc->history_buf;
+		history_ptr = dec->history_buf;
 		memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
 		*roff = 0;
 	}
@@ -648,8 +649,8 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* data in cbuf is not compressed - copy to history buf as is */
 		memcpy(history_ptr, cbuf, len);
 		history_ptr += len;
-		*rlen = history_ptr - rdp->mppc->history_ptr;
-		rdp->mppc->history_ptr = history_ptr;
+		*rlen = history_ptr - dec->history_ptr;
+		dec->history_ptr = history_ptr;
 		return true;
 	}
 
@@ -948,7 +949,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
-		if (src_ptr >= rdp->mppc->history_buf)
+		if (src_ptr >= dec->history_buf)
 		{
 			/* data does not wrap around */
 			while (lom > 0)
@@ -959,15 +960,15 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		}
 		else
 		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
+			src_ptr = dec->history_buf_end - (copy_offset - (history_ptr - dec->history_buf));
 			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			while (lom && (src_ptr <= dec->history_buf_end))
 			{
 				*history_ptr++ = *src_ptr++;
 				lom--;
 			}
 
-			src_ptr = rdp->mppc->history_buf;
+			src_ptr = dec->history_buf;
 			while (lom > 0)
 			{
 				*history_ptr++ = *src_ptr++;
@@ -1033,9 +1034,9 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 
 	} /* end while (cptr < cbuf + len) */
 
-	*rlen = history_ptr - rdp->mppc->history_ptr;
+	*rlen = history_ptr - dec->history_ptr;
 
-	rdp->mppc->history_ptr = history_ptr;
+	dec->history_ptr = history_ptr;
 
 	return true;
 }
@@ -1053,7 +1054,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	uint8*    history_buf;    /* uncompressed data goes here */
 	uint16*   offset_cache;	  /* Copy Offset cache */
@@ -1070,7 +1071,7 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	int       tmp, i;
 	uint32    i32;
 
-	if ((rdp->mppc == NULL) || (rdp->mppc->history_buf == NULL))
+	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_6: null\n");
 		return false;
@@ -1087,13 +1088,13 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	*rlen = 0;
 
 	/* get start of history buffer */
-	history_buf = rdp->mppc->history_buf;
+	history_buf = dec->history_buf;
 
 	/* get start of offset_cache */
-	offset_cache = rdp->mppc->offset_cache;
+	offset_cache = dec->offset_cache;
 
 	/* get next free slot in history buffer */
-	history_ptr = rdp->mppc->history_ptr;
+	history_ptr = dec->history_ptr;
 	*roff = history_ptr - history_buf;
 
 	if (ctype & PACKET_AT_FRONT)
@@ -1101,14 +1102,14 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* slid history_buf and reset history_buf to middle */
 		memcpy(history_buf, (history_buf + (history_ptr - history_buf - 32768)), 32768);
 		history_ptr = history_buf + 32768;
-		rdp->mppc->history_ptr = history_ptr;
+		dec->history_ptr = history_ptr;
 		*roff = 32768;
 	}
 	
 	if (ctype & PACKET_FLUSHED)
 	{
 		/* re-init history buffer */
-		history_ptr = rdp->mppc->history_buf;
+		history_ptr = dec->history_buf;
 		memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
 		memset(offset_cache, 0, RDP6_OFFSET_CACHE_SIZE);
 		*roff = 0;
@@ -1119,8 +1120,8 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* data in cbuf is not compressed - copy to history buf as is */
 		memcpy(history_ptr, cbuf, len);
 		history_ptr += len;
-		*rlen = history_ptr - rdp->mppc->history_ptr;
-		rdp->mppc->history_ptr = history_ptr;
+		*rlen = history_ptr - dec->history_ptr;
+		dec->history_ptr = history_ptr;
 		return true;
 	}
 
@@ -1270,7 +1271,7 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		src_ptr = history_ptr - copy_offset;
 		tmp = (lom > copy_offset) ? copy_offset : lom;
 		i32 = 0;
-		if (src_ptr >= rdp->mppc->history_buf)
+		if (src_ptr >= dec->history_buf)
 		{
 			while(tmp > 0)
 			{
@@ -1286,20 +1287,20 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		}
 		else
 		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
+			src_ptr = dec->history_buf_end - (copy_offset - (history_ptr - dec->history_buf));
 			src_ptr++;
-			while (tmp && (src_ptr <= rdp->mppc->history_buf_end))
+			while (tmp && (src_ptr <= dec->history_buf_end))
 			{
 				*history_ptr++ = *src_ptr++;
 				tmp--;
 			}
-			src_ptr = rdp->mppc->history_buf;
+			src_ptr = dec->history_buf;
 			while (tmp > 0)
 			{
 				*history_ptr++ = *src_ptr++;
 				tmp--;
 			}
-			while(lom > copy_offset)
+			while (lom > copy_offset)
 			{
 				i32 = ((i32 > copy_offset)) ? 0 : i32;
 				*history_ptr++ = *(src_ptr + i32++);
@@ -1368,9 +1369,9 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 	if(ctype & PACKET_FLUSHED)
 		*rlen = history_ptr - history_buf;
 	else
-		*rlen = history_ptr - rdp->mppc->history_ptr;
+		*rlen = history_ptr - dec->history_ptr;
 
-	rdp->mppc->history_ptr = history_ptr;
+	dec->history_ptr = history_ptr;
 
 	return true;
 }
@@ -1388,7 +1389,7 @@ int decompress_rdp_6(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_61(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_61(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	return false;
 }
@@ -1400,11 +1401,11 @@ int decompress_rdp_61(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff
  * @return pointer to new struct, or NULL on failure
  */
 
-struct rdp_mppc* mppc_new(rdpRdp* rdp)
+struct rdp_mppc_dec* mppc_dec_new(void)
 {
-	struct rdp_mppc* ptr;
+	struct rdp_mppc_dec* ptr;
 
-	ptr = (struct rdp_mppc *) xmalloc(sizeof (struct rdp_mppc));
+	ptr = (struct rdp_mppc_dec*) xmalloc(sizeof(struct rdp_mppc_dec));
 	if (!ptr)
 	{
 		printf("mppc_new(): system out of memory\n");
@@ -1431,18 +1432,18 @@ struct rdp_mppc* mppc_new(rdpRdp* rdp)
  * @param rdp rdp struct that contains rdp_mppc struct
  */
 
-void mppc_free(rdpRdp* rdp)
+void mppc_dec_free(struct rdp_mppc_dec* dec)
 {
-	if (!rdp->mppc)
+	if (!dec)
 	{
 		return;
 	}
 
-	if (rdp->mppc->history_buf)
+	if (dec->history_buf)
 	{
-		xfree(rdp->mppc->history_buf);
-		rdp->mppc->history_buf = NULL;
-		rdp->mppc->history_ptr = NULL;
+		xfree(dec->history_buf);
+		dec->history_buf = NULL;
+		dec->history_ptr = NULL;
 	}
-	xfree(rdp->mppc);
+	xfree(dec);
 }
