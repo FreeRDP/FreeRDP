@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/locale/virtual_key_codes.h>
+#include <freerdp/keyboard_scancode.h>
 
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
@@ -34,14 +35,6 @@ struct _RDP_KEYBOARD_LAYOUT
 	char* name; /* Keyboard layout name */
 };
 typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
-
-struct _RDP_SCANCODE
-{
-	uint32 code; /* Windows "scan code" */
-	boolean extended; /* extended key flag */
-};
-typedef struct _RDP_SCANCODE RDP_SCANCODE;
-
 
 /* Keyboard layout IDs */
 
@@ -199,8 +192,8 @@ typedef struct _RDP_SCANCODE RDP_SCANCODE;
 FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboardLayoutId);
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);
 FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutId);
-FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode, boolean* extended);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode);
 FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended);
-FREERDP_API uint32 freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode, boolean* extended);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode);
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_H */

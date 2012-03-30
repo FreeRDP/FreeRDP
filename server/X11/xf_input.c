@@ -29,6 +29,7 @@ void xf_input_synchronize_event(rdpInput* input, uint32 flags)
 
 void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
+#ifdef WITH_XTEST
 	unsigned int keycode;
 	boolean extended = false;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
@@ -41,7 +42,6 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 
 	if (keycode != 0)
 	{
-#ifdef WITH_XTEST
 		pthread_mutex_lock(&(xfp->mutex));
 
 		XTestGrabControl(xfi->display, True);
@@ -54,8 +54,8 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 		XTestGrabControl(xfi->display, False);
 
 		pthread_mutex_unlock(&(xfp->mutex));
-#endif
 	}
+#endif
 }
 
 void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
@@ -65,13 +65,13 @@ void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 
 void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
+#ifdef WITH_XTEST
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
 	boolean down = false;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
 	pthread_mutex_lock(&(xfp->mutex));
-#ifdef WITH_XTEST
 	XTestGrabControl(xfi->display, True);
 
 	if (flags & PTR_FLAGS_WHEEL)
@@ -106,22 +106,22 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 	}
 
 	XTestGrabControl(xfi->display, False);
-#endif
 	pthread_mutex_unlock(&(xfp->mutex));
+#endif
 }
 
 void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
+#ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
 	pthread_mutex_lock(&(xfp->mutex));
-#ifdef WITH_XTEST
 	XTestGrabControl(xfi->display, True);
 	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
 	XTestGrabControl(xfi->display, False);
-#endif
 	pthread_mutex_unlock(&(xfp->mutex));
+#endif
 }
 
 void xf_input_register_callbacks(rdpInput* input)
