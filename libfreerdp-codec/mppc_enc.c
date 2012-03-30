@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#include "rdp.h"
-#include "mppc_enc.h"
+#include <freerdp/codec/mppc_dec.h>
+#include <freerdp/codec/mppc_enc.h>
 #include <freerdp/utils/memory.h>
 
 #define MPPC_ENC_DEBUG 0
@@ -556,10 +556,10 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	uint16 data16;
 	uint32 historyOffset;
 	uint16 crc;
-	uint   ctr;
-	uint   saved_ctr;
-	uint   data_end;
-	uint8  byte_val;
+	uint32 ctr;
+	uint32 saved_ctr;
+	uint32 data_end;
+	uint8 byte_val;
 
 	crc = 0;
 	opb_index = 0;

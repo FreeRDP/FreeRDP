@@ -28,7 +28,7 @@
 #include "update.h"
 #include "surface.h"
 #include "fastpath.h"
-#include "mppc_enc.h"
+#include "rdp.h"
 
 /**
  * Fast-Path packet format is defined in [MS-RDPBCGR] 2.2.9.1.2, which revises
@@ -259,10 +259,10 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp, s->p, size, compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, s->p, size, compressionFlags, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
-			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->data = rdp->mppc_dec->history_buf + roff;
 			comp_stream->p = comp_stream->data;
 			comp_stream->size = rlen;
 			size = comp_stream->size;
