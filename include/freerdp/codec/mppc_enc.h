@@ -41,10 +41,10 @@ struct rdp_mppc_enc
 	uint16* hash_table;
 };
 
-boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
-void mppc_enc_free(struct rdp_mppc_enc* enc);
+FREERDP_API boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
+FREERDP_API void mppc_enc_free(struct rdp_mppc_enc* enc);
 
 #endif

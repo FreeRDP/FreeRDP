@@ -97,7 +97,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					rdp_scancode = RDP_SCANCODE_RSHIFT;
 				}
 
-				freerdp_input_send_keyboard_event_2(input, !(flags & LLKHF_UP), rdp_scancode);
+				freerdp_input_send_keyboard_event_2(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
 				if (p->vkCode == VK_CAPITAL)
 					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");
