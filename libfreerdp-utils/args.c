@@ -102,7 +102,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --ignore-certificate: ignore verification of logon certificate\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
 				"  --kbd-list: list all keyboard layout ids used by -k\n"
-				"  --salted-checksum: use salted checksums with Standard RDP encryption\n"
+				"  --no-salted-checksum: disable salted checksums with Standard RDP encryption\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; //TODO: What is the correct return
@@ -623,9 +623,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			num_extensions++;
 		}
-		else if (strcmp("--salted-checksum", argv[index]) == 0)
+		else if (strcmp("--no-salted-checksum", argv[index]) == 0)
 		{
-			settings->salted_checksum = true;
+			settings->salted_checksum = false;
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
