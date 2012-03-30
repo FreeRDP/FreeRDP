@@ -247,7 +247,7 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		{
 			bitmap_cache->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
 			/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
-			bitmap_cache->cells[i].entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * bitmap_cache->cells[i].number + 1);
+			bitmap_cache->cells[i].entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * (bitmap_cache->cells[i].number + 1));
 		}
 	}
 
