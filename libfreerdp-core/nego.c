@@ -295,7 +295,16 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				nego_process_negotiation_response(nego, s);
 
 				DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
-				if ((nego->selected_protocol & nego->requested_protocols) == 0)
+
+				/* enhanced security selected ? */
+				if (nego->selected_protocol) {
+					if (nego->selected_protocol == PROTOCOL_NLA &&
+						!nego->enabled_protocols[PROTOCOL_NLA]) 
+						nego->state = NEGO_STATE_FAIL;
+					if (nego->selected_protocol == PROTOCOL_TLS &&
+						!nego->enabled_protocols[PROTOCOL_TLS]) 
+						nego->state = NEGO_STATE_FAIL;
+				} else if (!nego->enabled_protocols[PROTOCOL_RDP])
 					nego->state = NEGO_STATE_FAIL;
 				break;
 
@@ -306,7 +315,8 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	}
 	else
 	{
-		if (nego->requested_protocols > PROTOCOL_RDP)
+		DEBUG_NEGO("no rdpNegData");
+		if (!nego->enabled_protocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_FAIL;
 		else
 			nego->state = NEGO_STATE_FINAL;
