@@ -945,6 +945,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
+		XFree(image);
 
 		if (xfi->remote_app != true)
 		{
@@ -979,6 +980,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			XPutImage(xfi->display, xfi->primary, xfi->gc, image, 0, 0,
 					surface_bits_command->destLeft, surface_bits_command->destTop,
 					surface_bits_command->width, surface_bits_command->height);
+			XFree(image);
 
 			if (xfi->remote_app != true)
 			{

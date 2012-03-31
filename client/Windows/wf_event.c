@@ -33,11 +33,9 @@ extern HCURSOR g_default_cursor;
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	DWORD flags;
 	wfInfo* wfi;
-	uint8 scanCode;
+	RDP_SCANCODE rdp_scancode;
 	rdpInput* input;
-	uint16 kbdFlags;
 	PKBDLLHOOKSTRUCT p;
 
 	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
@@ -52,13 +50,11 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_SYSKEYUP:
 				wfi = (wfInfo*) GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
 				p = (PKBDLLHOOKSTRUCT) lParam;
-				scanCode = (uint8) p->scanCode;
 				input = wfi->instance->input;
-				flags = p->flags;
-				kbdFlags = 0;
+				rdp_scancode = mk_rdp_scancode((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
 
 				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
-					(wParam == WM_KEYDOWN), scanCode, flags, p->vkCode);
+					(wParam == WM_KEYDOWN), (uint8) p->scanCode, p->flags, p->vkCode);
 
 				if (wfi->fs_toggle &&
 					((p->vkCode == VK_RETURN) || (p->vkCode == VK_CANCEL)) &&
@@ -70,44 +66,38 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					return 1;
 				}
 
-				if (scanCode == 0x45) /* NumLock-ish */
+				if (rdp_scancode == RDP_SCANCODE_NUMLOCK_EXTENDED)
 				{
-					if (flags & LLKHF_EXTENDED)
+					/* Windows sends NumLock as extended - rdp doesn't */
+					DEBUG_KBD("hack: NumLock (x45) should not be extended");
+					rdp_scancode = RDP_SCANCODE_NUMLOCK;
+				}
+				else if (rdp_scancode == RDP_SCANCODE_NUMLOCK)
+				{
+					/* Windows sends Pause as if it was a RDP NumLock (handled above).
+					 * It must however be sent as a one-shot Ctrl+NumLock */
+					if (wParam == WM_KEYDOWN)
 					{
-						/* Windows sends NumLock as extended - rdp doesn't */
-						DEBUG_KBD("hack: NumLock (x45) should not be extended");
-						flags &= ~LLKHF_EXTENDED;
+						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
+						freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
-						/* Windows sends Pause as if it was a RDP NumLock (handled above).
-						 * It must however be sent as a one-shot Ctrl+NumLock */
-						if (wParam == WM_KEYDOWN)
-						{
-							DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-							input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x1D); /* Ctrl down */
-							input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x45); /* NumLock down */
-							input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x1D); /* Ctrl up */
-							input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x45); /* NumLock up */
-						}
-						else
-						{
-							DEBUG_KBD("Pause up");
-						}
-
-						return 1;
+						DEBUG_KBD("Pause up");
 					}
-				}
 
-				if ((scanCode == 0x36) && (flags & LLKHF_EXTENDED))
+					return 1;
+				}
+				else if (rdp_scancode == RDP_SCANCODE_RSHIFT_EXTENDED)
 				{
-					DEBUG_KBD("hack: right shift (x36) should not be extended");
-					flags &= ~LLKHF_EXTENDED;
+					DEBUG_KBD("right shift (x36) should not be extended");
+					rdp_scancode = RDP_SCANCODE_RSHIFT;
 				}
 
-				kbdFlags |= (flags & LLKHF_UP) ? KBD_FLAGS_RELEASE : KBD_FLAGS_DOWN;
-				kbdFlags |= (flags & LLKHF_EXTENDED) ? KBD_FLAGS_EXTENDED : 0;
-				input->KeyboardEvent(input, kbdFlags, scanCode);
+				freerdp_input_send_keyboard_event_2(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
 				if (p->vkCode == VK_CAPITAL)
 					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");

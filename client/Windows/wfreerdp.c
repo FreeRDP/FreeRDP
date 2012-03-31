@@ -684,11 +684,24 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//while (1)
 	{
+		int arg_parse_result;
+
 		data = (thread_data*) xzalloc(sizeof(thread_data)); 
 		data->instance = instance;
 
-		freerdp_parse_args(instance->settings, __argc, __argv,
+		arg_parse_result = freerdp_parse_args(instance->settings, __argc, __argv,
 			wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
+
+		if (arg_parse_result < 0)
+		{
+			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
+				printf("failed to parse arguments.\n");
+
+#ifdef _DEBUG
+			system("pause");
+#endif
+			exit(-1);
+		}
 
 		if (CreateThread(NULL, 0, thread_func, data, 0, NULL) != 0)
 			g_thread_count++;

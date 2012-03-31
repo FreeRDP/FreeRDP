@@ -53,9 +53,9 @@ rdpSettings* settings_new(void* instance)
 		settings->tls_security = true;
 		settings->rdp_security = true;
 		settings->client_build = 2600;
-		settings->kbd_type = 0;
+		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
 		settings->kbd_subtype = 0;
-		settings->kbd_fn_keys = 0;
+		settings->kbd_fn_keys = 12;
 		settings->kbd_layout = 0;
 		settings->encryption = false;
 		settings->salted_checksum = true;
