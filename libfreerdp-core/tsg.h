@@ -28,6 +28,7 @@ typedef struct rdp_tsg rdpTsg;
 
 #include <time.h>
 #include <freerdp/types.h>
+#include <freerdp/wintypes.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>
@@ -41,6 +42,223 @@ struct rdp_tsg
 	rdpSettings* settings;
 	rdpTransport* transport;
 };
+
+typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE;
+typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
+
+typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE;
+typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
+
+typedef wchar_t* RESOURCENAME;
+
+#define MAX_RESOURCE_NAMES			50
+
+typedef struct _tsendpointinfo
+{
+	RESOURCENAME* resourceName;
+	unsigned long numResourceNames;
+	RESOURCENAME* alternateResourceNames;
+	unsigned short numAlternateResourceNames;
+	unsigned long Port;
+} TSENDPOINTINFO, *PTSENDPOINTINFO;
+
+#define TSG_PACKET_TYPE_HEADER			0x00004844
+#define TSG_PACKET_TYPE_VERSIONCAPS		0x00005643
+#define TSG_PACKET_TYPE_QUARCONFIGREQUEST	0x00005143
+#define TSG_PACKET_TYPE_QUARREQUEST		0x00005152
+#define TSG_PACKET_TYPE_RESPONSE		0x00005052
+#define TSG_PACKET_TYPE_QUARENC_RESPONSE	0x00004552
+#define TSG_CAPABILITY_TYPE_NAP			0x00000001
+#define TSG_PACKET_TYPE_CAPS_RESPONSE		0x00004350
+#define TSG_PACKET_TYPE_MSGREQUEST_PACKET	0x00004752
+#define TSG_PACKET_TYPE_MESSAGE_PACKET		0x00004750
+#define TSG_PACKET_TYPE_AUTH			0x00004054
+#define TSG_PACKET_TYPE_REAUTH			0x00005250
+#define TSG_ASYNC_MESSAGE_CONSENT_MESSAGE	0x00000001
+#define TSG_ASYNC_MESSAGE_SERVICE_MESSAGE	0x00000002
+#define TSG_ASYNC_MESSAGE_REAUTH		0x00000003
+#define TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST	0x00000001
+#define TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST	0x00000002
+
+typedef struct _TSG_PACKET_HEADER
+{
+	unsigned short ComponentId;
+	unsigned short PacketId;
+} TSG_PACKET_HEADER, *PTSG_PACKET_HEADER;
+
+typedef struct _TSG_CAPABILITY_NAP
+{
+	unsigned long capabilities;
+} TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
+
+typedef union
+{
+	TSG_CAPABILITY_NAP tsgCapNap;
+} TSG_CAPABILITIES_UNION, *PTSG_CAPABILITIES_UNION;
+
+typedef struct _TSG_PACKET_CAPABILITIES
+{
+	unsigned long capabilityType;
+	TSG_CAPABILITIES_UNION tsgPacket;
+} TSG_PACKET_CAPABILITIES, *PTSG_PACKET_CAPABILITIES;
+
+typedef struct _TSG_PACKET_VERSIONCAPS
+{
+	TSG_PACKET_HEADER tsgHeader;
+	PTSG_PACKET_CAPABILITIES tsgCaps;
+	unsigned long numCapabilities;
+	unsigned short majorVersion;
+	unsigned short minorVersion;
+	unsigned short quarantineCapabilities;
+} TSG_PACKET_VERSIONCAPS, *PTSG_PACKET_VERSIONCAPS;
+
+typedef struct _TSG_PACKET_QUARCONFIGREQUEST
+{
+	unsigned long flags;
+} TSG_PACKET_QUARCONFIGREQUEST, *PTSG_PACKET_QUARCONFIGREQUEST;
+
+typedef struct _TSG_PACKET_QUARREQUEST
+{
+	unsigned long flags;
+	wchar_t* machineName;
+	unsigned long nameLength;
+	byte* data;
+	unsigned long dataLen;
+} TSG_PACKET_QUARREQUEST, *PTSG_PACKET_QUARREQUEST;
+
+typedef struct _TSG_REDIRECTION_FLAGS
+{
+	BOOL enableAllRedirections;
+	BOOL disableAllRedirections;
+	BOOL driveRedirectionDisabled;
+	BOOL printerRedirectionDisabled;
+	BOOL portRedirectionDisabled;
+	BOOL reserved;
+	BOOL clipboardRedirectionDisabled;
+	BOOL pnpRedirectionDisabled;
+} TSG_REDIRECTION_FLAGS, *PTSG_REDIRECTION_FLAGS;
+
+typedef struct _TSG_PACKET_RESPONSE
+{
+	unsigned long flags;
+	unsigned long reserved;
+	byte* responseData;
+	unsigned long responseDataLen;
+	TSG_REDIRECTION_FLAGS redirectionFlags;
+} TSG_PACKET_RESPONSE,	*PTSG_PACKET_RESPONSE;
+
+typedef struct _TSG_PACKET_QUARENC_RESPONSE
+{
+	unsigned long flags;
+	unsigned long certChainLen;
+	wchar_t* certChainData;
+	GUID nonce;
+	PTSG_PACKET_VERSIONCAPS versionCaps;
+} TSG_PACKET_QUARENC_RESPONSE, *PTSG_PACKET_QUARENC_RESPONSE;
+
+typedef struct TSG_PACKET_STRING_MESSAGE
+{
+	long isDisplayMandatory;
+	long isConsentMandatory;
+	unsigned long msgBytes;
+	wchar_t* msgBuffer;
+} TSG_PACKET_STRING_MESSAGE, *PTSG_PACKET_STRING_MESSAGE;
+
+typedef struct TSG_PACKET_REAUTH_MESSAGE
+{
+	unsigned __int64 tunnelContext;
+} TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
+
+typedef union
+{
+	PTSG_PACKET_STRING_MESSAGE consentMessage;
+	PTSG_PACKET_STRING_MESSAGE serviceMessage;
+	PTSG_PACKET_REAUTH_MESSAGE reauthMessage;
+} TSG_PACKET_TYPE_MESSAGE_UNION, *PTSG_PACKET_TYPE_MESSAGE_UNION;
+
+typedef struct _TSG_PACKET_MSG_RESPONSE
+{
+	unsigned long msgID;
+	unsigned long msgType;
+	long isMsgPresent;
+	TSG_PACKET_TYPE_MESSAGE_UNION messagePacket;
+} TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
+
+typedef struct TSG_PACKET_CAPS_RESPONSE
+{
+	TSG_PACKET_QUARENC_RESPONSE pktQuarEncResponse;
+	TSG_PACKET_MSG_RESPONSE pktConsentMessage;
+} TSG_PACKET_CAPS_RESPONSE, *PTSG_PACKET_CAPS_RESPONSE;
+
+typedef struct TSG_PACKET_MSG_REQUEST
+{
+	unsigned long maxMessagesPerBatch;
+} TSG_PACKET_MSG_REQUEST, *PTSG_PACKET_MSG_REQUEST;
+
+typedef struct _TSG_PACKET_AUTH
+{
+	TSG_PACKET_VERSIONCAPS tsgVersionCaps;
+	unsigned long cookieLen;
+	byte* cookie;
+} TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
+
+typedef union
+{
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+	PTSG_PACKET_AUTH packetAuth;
+} TSG_INITIAL_PACKET_TYPE_UNION, *PTSG_INITIAL_PACKET_TYPE_UNION;
+
+typedef struct TSG_PACKET_REAUTH
+{
+	unsigned __int64 tunnelContext;
+	unsigned long packetId;
+	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
+} TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
+
+typedef union
+{
+	PTSG_PACKET_HEADER packetHeader;
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+	PTSG_PACKET_QUARCONFIGREQUEST packetQuarConfigRequest;
+	PTSG_PACKET_QUARREQUEST packetQuarRequest;
+	PTSG_PACKET_RESPONSE packetResponse;
+	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
+	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
+	PTSG_PACKET_MSG_REQUEST packetMsgRequest;
+	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
+	PTSG_PACKET_AUTH packetAuth;
+	PTSG_PACKET_REAUTH packetReauth;
+} TSG_PACKET_TYPE_UNION;
+
+typedef struct _TSG_PACKET
+{
+	unsigned long packetId;
+	TSG_PACKET_TYPE_UNION tsgPacket;
+} TSG_PACKET, *PTSG_PACKET;
+
+void Opnum0NotUsedOnWire(void);
+
+HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
+		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId);
+
+HRESULT TsProxyAuthorizeTunnel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+		PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse);
+
+HRESULT TsProxyMakeTunnelCall(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+		unsigned long procId, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse);
+
+HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+		PTSENDPOINTINFO tsEndPointInfo, PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, unsigned long* channelId);
+
+void Opnum5NotUsedOnWire(void);
+
+HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context);
+
+HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context);
+
+DWORD TsProxySetupReceivePipe(byte pRpcMessage[]);
+
+DWORD TsProxySendToServer(byte pRpcMessage[]);
 
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
 

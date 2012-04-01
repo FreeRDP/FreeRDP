@@ -41,6 +41,7 @@
 
 typedef int BOOL, *PBOOL, *LPBOOL;
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
+typedef BYTE byte;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef wchar_t WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
@@ -99,6 +100,17 @@ typedef wchar_t UNICODE;
 typedef unsigned short USHORT;
 typedef void VOID, *PVOID, *LPVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
+
+typedef void* PCONTEXT_HANDLE;
+typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
+
+typedef struct _GUID
+{
+	unsigned long Data1;
+	unsigned short Data2;
+	unsigned short Data3;
+	byte Data4[8];
+} GUID, UUID, *PGUID;
 
 #ifdef UNICODE
 #define _T(x)	L ## x
