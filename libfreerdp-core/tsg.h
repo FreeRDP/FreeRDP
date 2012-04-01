@@ -80,6 +80,12 @@ typedef struct _tsendpointinfo
 #define TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST	0x00000001
 #define TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST	0x00000002
 
+#define TSG_NAP_CAPABILITY_QUAR_SOH		0x00000001
+#define TSG_NAP_CAPABILITY_IDLE_TIMEOUT		0x00000002
+#define TSG_MESSAGING_CAP_CONSENT_SIGN		0x00000004
+#define TSG_MESSAGING_CAP_SERVICE_MSG		0x00000008
+#define TSG_MESSAGING_CAP_REAUTH		0x00000010
+
 typedef struct _TSG_PACKET_HEADER
 {
 	unsigned short ComponentId;
@@ -236,8 +242,6 @@ typedef struct _TSG_PACKET
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
-void Opnum0NotUsedOnWire(void);
-
 HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
 		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId);
 
@@ -249,8 +253,6 @@ HRESULT TsProxyMakeTunnelCall(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
 
 HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
 		PTSENDPOINTINFO tsEndPointInfo, PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, unsigned long* channelId);
-
-void Opnum5NotUsedOnWire(void);
 
 HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context);
 
