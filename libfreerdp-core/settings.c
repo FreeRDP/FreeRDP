@@ -74,6 +74,9 @@ rdpSettings* settings_new(void* instance)
 
 		settings->authentication = true;
 
+		settings->received_caps = xzalloc(32);
+		settings->order_support = xzalloc(32);
+
 		settings->order_support[NEG_DSTBLT_INDEX] = true;
 		settings->order_support[NEG_PATBLT_INDEX] = true;
 		settings->order_support[NEG_SCRBLT_INDEX] = true;
@@ -96,6 +99,9 @@ rdpSettings* settings_new(void* instance)
 		settings->order_support[NEG_POLYGON_CB_INDEX] = true;
 		settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
 		settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
+
+		settings->client_hostname = xzalloc(32);
+		settings->client_product_id = xzalloc(32);
 
 		settings->color_pointer = true;
 		settings->large_pointer = true;
@@ -197,6 +203,10 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->client_dir);
 		xfree(settings->cert_file);
 		xfree(settings->privatekey_file);
+		xfree(settings->received_caps);
+		xfree(settings->order_support);
+		xfree(settings->client_hostname);
+		xfree(settings->client_product_id);
 		freerdp_blob_free(settings->server_random);
 		freerdp_blob_free(settings->server_certificate);
 		xfree(settings->server_random);
