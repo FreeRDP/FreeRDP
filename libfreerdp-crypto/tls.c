@@ -53,6 +53,7 @@ static void tls_free_certificate(CryptoCert cert)
 	xfree(cert);
 }
 
+
 boolean tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
@@ -80,15 +81,12 @@ boolean tls_connect(rdpTls* tls)
 
 	if (tls->ssl == NULL)
 	{
-		SSL_CTX_free(tls->ctx);
 		printf("SSL_new failed\n");
 		return false;
 	}
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
-		SSL_free(tls->ssl);
-		SSL_CTX_free(tls->ctx);
 		printf("SSL_set_fd failed\n");
 		return false;
 	}
@@ -99,8 +97,6 @@ boolean tls_connect(rdpTls* tls)
 	{
 		if (tls_print_error("SSL_connect", tls->ssl, connection_status))
 		{
-			SSL_free(tls->ssl);
-			SSL_CTX_free(tls->ctx);
 			return false;
 		}
 	}

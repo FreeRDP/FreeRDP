@@ -92,8 +92,11 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != true) {
+		tls_free(transport->tls);
+		transport->tls = NULL;
 		return false;
+	}
 
 	return true;
 }
@@ -109,8 +112,11 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != true) {
+		tls_free(transport->tls);
+		transport->tls = NULL;
 		return false;
+	}
 
 	/* Network Level Authentication */
 
