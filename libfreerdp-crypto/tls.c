@@ -115,8 +115,12 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
+	if (!tls_verify_certificate(tls, cert, tls->settings->hostname)) {
+		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
+		tls_free_certificate(cert);
+		return false;
+	}
 
 	tls_free_certificate(cert);
 
