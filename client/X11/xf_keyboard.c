@@ -50,6 +50,22 @@ void xf_kbd_unset_keypress(xfInfo* xfi, uint8 keycode)
 		return;
 }
 
+void xf_kbd_release_all_keypress(xfInfo* xfi)
+{
+	int keycode;
+	RDP_SCANCODE rdp_scancode;
+
+	for (keycode = 0; keycode < sizeof(xfi->pressed_keys) / sizeof(xfi->pressed_keys[0]); keycode++)
+	{
+		if (xfi->pressed_keys[keycode] != NoSymbol)
+		{
+			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+			freerdp_input_send_keyboard_event_2(xfi->instance->input, false, rdp_scancode);
+			xfi->pressed_keys[keycode] = NoSymbol;
+		}
+	}
+}
+
 boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfi->display, keysym);
