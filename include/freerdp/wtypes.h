@@ -20,6 +20,7 @@
 #ifndef FREERDP_WINDOWS_TYPES_H
 #define FREERDP_WINDOWS_TYPES_H
 
+/* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
 
 #include <wchar.h>
@@ -41,6 +42,7 @@
 
 typedef int BOOL, *PBOOL, *LPBOOL;
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
+typedef BYTE byte;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef wchar_t WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
@@ -98,13 +100,74 @@ typedef unsigned __int64 ULONG64;
 typedef wchar_t UNICODE;
 typedef unsigned short USHORT;
 typedef void VOID, *PVOID, *LPVOID;
+typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
+
+typedef void* PCONTEXT_HANDLE;
+typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
+
+typedef struct _GUID
+{
+	unsigned long Data1;
+	unsigned short Data2;
+	unsigned short Data3;
+	byte Data4[8];
+} GUID, UUID, *PGUID;
 
 #ifdef UNICODE
 #define _T(x)	L ## x
 #else
 #define _T(x)	x
 #endif
+
+#ifdef UNICODE
+typedef LPWSTR LPTSTR;
+typedef LPCWSTR LPCTSTR;
+#else
+typedef LPSTR LPTSTR;
+typedef LPCSTR LPCTSTR;
+#endif
+
+typedef struct _FILETIME
+{
+	DWORD dwLowDateTime;
+	DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct _RPC_SID_IDENTIFIER_AUTHORITY
+{
+	BYTE Value[6];
+} RPC_SID_IDENTIFIER_AUTHORITY;
+
+typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
+
+typedef struct _RPC_SID
+{
+	unsigned char Revision;
+	unsigned char SubAuthorityCount;
+	RPC_SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+	unsigned long SubAuthority[];
+} RPC_SID, *PRPC_SID, *PSID;
+
+typedef struct _ACL
+{
+	unsigned char AclRevision;
+	unsigned char Sbz1;
+	unsigned short AclSize;
+	unsigned short AceCount;
+	unsigned short Sbz2;
+} ACL, *PACL;
+
+typedef struct _SECURITY_DESCRIPTOR
+{
+	UCHAR Revision;
+	UCHAR Sbz1;
+	USHORT Control;
+	PSID Owner;
+	PSID Group;
+	PACL Sacl;
+	PACL Dacl;
+} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
 #endif
 
