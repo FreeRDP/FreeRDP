@@ -39,6 +39,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
+#include <freerdp/errorcodes.h>
 
 #ifdef __cplusplus
 extern "C" {
