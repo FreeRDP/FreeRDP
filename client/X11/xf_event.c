@@ -559,6 +559,8 @@ boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	rdpWindow* window;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
+	xf_kbd_release_all_keypress(xfi);
+
 	if (app != true)
 		return true;
 

@@ -27,6 +27,7 @@
 void xf_kbd_init(xfInfo* xfi);
 void xf_kbd_set_keypress(xfInfo* xfi, uint8 keycode, KeySym keysym);
 void xf_kbd_unset_keypress(xfInfo* xfi, uint8 keycode);
+void xf_kbd_release_all_keypress(xfInfo* xfi);
 boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym);
 void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode);
 int xf_kbd_read_keyboard_state(xfInfo* xfi);
