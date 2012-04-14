@@ -24,7 +24,7 @@
 typedef struct rdp_tsg rdpTsg;
 
 #include "transport.h"
-#include "rpch.h"
+#include "rpc.h"
 
 #include <time.h>
 #include <freerdp/types.h>

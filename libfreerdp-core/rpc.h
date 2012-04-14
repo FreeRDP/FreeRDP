@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RPCH_H
-#define FREERDP_CORE_RPCH_H
+#ifndef FREERDP_CORE_RPC_H
+#define FREERDP_CORE_RPC_H
 
 typedef struct rdp_rpch rdpRpch;
 typedef struct rdp_rpch_http rdpRpchHTTP;
@@ -595,6 +595,7 @@ struct rdp_rpch_http
 	RPCH_HTTP_STATE state;
 	int contentLength;
 	int remContentLength;
+	HttpContext* context;
 	rdpNtlm* ntlm;
 };
 
@@ -654,4 +655,4 @@ rdpRpch* rpch_new(rdpSettings* settings);
 #define DEBUG_RPCH(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* FREERDP_CORE_RPCH_H */
+#endif /* FREERDP_CORE_RPC_H */

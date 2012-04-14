@@ -35,8 +35,10 @@ set(LIBFREERDP_CORE_SRCS
 	nego.h
 	info.c
 	info.h
-	rpch.c
-	rpch.h
+	http.c
+	http.h
+	rpc.c
+	rpc.h
 	input.c
 	input.h
 	license.c

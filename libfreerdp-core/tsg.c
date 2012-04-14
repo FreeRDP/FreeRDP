@@ -228,6 +228,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 */
 
+	DEBUG_TSG("TsProxyCreateTunnel");
 	status = rpch_write(rpch, tsg_packet1, sizeof(tsg_packet1), 1);
 
 	if (status <= 0)
@@ -268,6 +269,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 *
 	 */
 
+	DEBUG_TSG("TsProxyAuthorizeTunnel");
 	status = rpch_write(rpch, tsg_packet2, sizeof(tsg_packet2), 2);
 
 	if (status <= 0)
@@ -285,7 +287,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	}
 
 	memcpy(tsg_packet3 + 4, tsg->tunnelContext, 16);
-	status = rpch_write(rpch, tsg_packet3, sizeof(tsg_packet3), 3);
 
 	/**
 	 * OpNum = 3
@@ -297,6 +298,9 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * [out, ref] PTSG_PACKET* tsgPacketResponse
 	 * );
 	 */
+
+	DEBUG_TSG("TsProxyMakeTunnelCall");
+	status = rpch_write(rpch, tsg_packet3, sizeof(tsg_packet3), 3);
 
 	if (status <= 0)
 	{
@@ -332,6 +336,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 */
 
+	DEBUG_TSG("TsProxyCreateChannel");
 	status = rpch_write(rpch, s_p4->data, s_p4->size, 4);
 
 	if (status <= 0)
@@ -368,6 +373,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 */
 
+	DEBUG_TSG("TsProxySetupReceivePipe");
 	status = rpch_write(rpch, tsg_packet5, sizeof(tsg_packet5), 8);
 
 	if (status <= 0)

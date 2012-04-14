@@ -25,7 +25,9 @@
 
 #include <openssl/rand.h>
 
-#include "rpch.h"
+#include "http.h"
+
+#include "rpc.h"
 
 #define HTTP_STREAM_SIZE 0xFFFF
 
@@ -544,7 +546,7 @@ int rpch_in_write(rdpRpch* rpch, uint8* data, int length)
 	}
 
 #ifdef WITH_DEBUG_RPCH
-	printf("\nrpch_in_send(): length: %d, remaining content length: %d\n", length, http_in->remContentLength);
+	printf("rpch_in_write() length: %d, remaining content length: %d\n", length, http_in->remContentLength);
 	freerdp_hexdump(data, length);
 	printf("\n");
 #endif
@@ -1455,6 +1457,30 @@ rdpRpch* rpch_new(rdpSettings* settings)
 		rpch->http_out->ntlm = ntlm_new();
 		rpch->http_in->state = RPCH_HTTP_DISCONNECTED;
 		rpch->http_out->state = RPCH_HTTP_DISCONNECTED;
+
+		rpch->http_in->context = http_context_new();
+		http_context_set_method(rpch->http_in->context, "RPC_IN_DATA");
+		http_context_set_uri(rpch->http_in->context, "/rpc/rpcproxy.dll?localhost:3388");
+		http_context_set_accept(rpch->http_in->context, "application/rpc");
+		http_context_set_cache_control(rpch->http_in->context, "no-cache");
+		http_context_set_connection(rpch->http_in->context, "Keep-Alive");
+		http_context_set_user_agent(rpch->http_in->context, "MSRPC");
+		http_context_set_host(rpch->http_in->context, settings->tsg_hostname);
+		http_context_set_pragma(rpch->http_in->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
+				"SessionId=33ad20ac-7469-4f63-946d-113eac21a23c");
+
+		rpch->http_out->context = http_context_new();
+		http_context_set_method(rpch->http_out->context, "RPC_OUT_DATA");
+		http_context_set_uri(rpch->http_out->context, "/rpc/rpcproxy.dll?localhost:3388");
+		http_context_set_accept(rpch->http_out->context, "application/rpc");
+		http_context_set_cache_control(rpch->http_out->context, "no-cache");
+		http_context_set_connection(rpch->http_out->context, "Keep-Alive");
+		http_context_set_user_agent(rpch->http_out->context, "MSRPC");
+		http_context_set_host(rpch->http_out->context, settings->tsg_hostname);
+		http_context_set_pragma(rpch->http_out->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
+				"SessionId=33ad20ac-7469-4f63-946d-113eac21a23c");
 
 		rpch->read_buffer = NULL;
 		rpch->write_buffer = NULL;
