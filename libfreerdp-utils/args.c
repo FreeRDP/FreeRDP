@@ -100,6 +100,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-nla: disable network level authentication\n"
 				"  --ntlm: force NTLM authentication protocol version (1 or 2)\n"
 				"  --ignore-certificate: ignore verification of logon certificate\n"
+				"  --certificate-name: what to call the host in the known_hosts file\n"
 				"  --sec: force protocol security (rdp, tls or nla)\n"
 				"  --kbd-list: list all keyboard layout ids used by -k\n"
 				"  --no-salted-checksum: disable salted checksums with Standard RDP encryption\n"
