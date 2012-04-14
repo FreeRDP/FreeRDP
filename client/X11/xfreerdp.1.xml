@@ -443,6 +443,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--certificate-name</term>
+        <listitem>
+          <para>
+            use this name for the logon certificate, instead of the server name
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--kbd-list</term>
         <listitem>
           <para>
