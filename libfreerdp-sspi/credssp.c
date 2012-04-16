@@ -1024,7 +1024,8 @@ void credssp_free(rdpCredssp* credssp)
 {
 	if (credssp != NULL)
 	{
-		credssp->table->DeleteSecurityContext(&credssp->context);
+		if (credssp->table)
+			credssp->table->DeleteSecurityContext(&credssp->context);
 		sspi_SecBufferFree(&credssp->PublicKey);
 		sspi_SecBufferFree(&credssp->ts_credentials);
 		freerdp_uniconv_free(credssp->uniconv);
