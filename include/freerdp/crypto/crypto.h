@@ -142,6 +142,7 @@ FREERDP_API void crypto_rsa_private_decrypt(const uint8* input, int length, uint
 FREERDP_API void crypto_reverse(uint8* data, int length);
 FREERDP_API void crypto_nonce(uint8* nonce, int size);
 
+FREERDP_API char* crypto_encode_base64(uint8* data, int length);
 FREERDP_API void crypto_base64_encode(uint8* data, int length, uint8** enc_data, int* res_length);
 FREERDP_API void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* res_length);
 

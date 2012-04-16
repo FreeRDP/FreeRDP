@@ -25,6 +25,7 @@ typedef struct rdp_rpch rdpRpch;
 typedef struct rdp_rpch_http rdpRpchHTTP;
 
 #include "tcp.h"
+#include "http.h"
 
 #include <time.h>
 #include <freerdp/types.h>
@@ -640,7 +641,7 @@ void ntlm_free(rdpNtlm* ntlm);
 boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpch_connect(rdpRpch* rpch);
 
-int rpch_write(rdpRpch* rpch, uint8* data, int length, uint16 opnum);
+int rpc_write(rdpRpch* rpch, uint8* data, int length, uint16 opnum);
 int rpch_read(rdpRpch* rpch, uint8* data, int length);
 
 rdpRpch* rpch_new(rdpSettings* settings);

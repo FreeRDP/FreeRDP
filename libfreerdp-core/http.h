@@ -20,7 +20,12 @@
 #ifndef FREERDP_CORE_HTTP_H
 #define FREERDP_CORE_HTTP_H
 
+typedef struct _http_context HttpContext;
+typedef struct _http_request HttpRequest;
+typedef struct _http_response HttpResponse;
+
 #include <freerdp/types.h>
+#include <freerdp/crypto/tls.h>
 #include <freerdp/utils/stream.h>
 
 struct _http_context
@@ -34,7 +39,6 @@ struct _http_context
 	char* Connection;
 	char* Pragma;
 };
-typedef struct _http_context HttpContext;
 
 void http_context_set_method(HttpContext* http_context, char* method);
 void http_context_set_uri(HttpContext* http_context, char* uri);
@@ -55,18 +59,41 @@ struct _http_request
 
 	char* Method;
 	char* URI;
+	char* AuthScheme;
+	char* AuthParam;
 	char* Authorization;
 	int ContentLength;
 	char* Content;
 };
-typedef struct _http_request HttpRequest;
 
 void http_request_set_method(HttpRequest* http_request, char* method);
 void http_request_set_uri(HttpRequest* http_request, char* uri);
+void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme);
+void http_request_set_auth_param(HttpRequest* http_request, char* auth_param);
 
 STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request);
 
 HttpRequest* http_request_new();
 void http_request_free(HttpRequest* http_request);
+
+struct _http_response
+{
+	int count;
+	char** lines;
+
+	int StatusCode;
+	char* ReasonPhrase;
+
+	char* AuthScheme;
+	char* AuthParam;
+	char* Authorization;
+	int ContentLength;
+	char* Content;
+};
+
+HttpResponse* http_response_recv(rdpTls* tls);
+
+HttpResponse* http_response_new();
+void http_response_free(HttpResponse* http_response);
 
 #endif /* FREERDP_CORE_HTTP_H */
