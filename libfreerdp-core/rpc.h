@@ -21,8 +21,8 @@
 #ifndef FREERDP_CORE_RPC_H
 #define FREERDP_CORE_RPC_H
 
-typedef struct rdp_rpch rdpRpch;
-typedef struct rdp_rpch_http rdpRpchHTTP;
+typedef struct rdp_rpc rdpRpc;
+typedef struct rdp_rpc_http rdpRpcHTTP;
 
 #include "tcp.h"
 #include "http.h"
@@ -583,24 +583,24 @@ struct rdp_ntlm
 };
 typedef struct rdp_ntlm rdpNtlm;
 
-enum _RPCH_HTTP_STATE
+enum _RPC_HTTP_STATE
 {
-	RPCH_HTTP_DISCONNECTED = 0,
-	RPCH_HTTP_SENDING = 1,
-	RPCH_HTTP_RECIEVING = 2
+	RPC_HTTP_DISCONNECTED = 0,
+	RPC_HTTP_SENDING = 1,
+	RPC_HTTP_RECEIVING = 2
 };
-typedef enum _RPCH_HTTP_STATE RPCH_HTTP_STATE;
+typedef enum _RPC_HTTP_STATE RPC_HTTP_STATE;
 
-struct rdp_rpch_http
+struct rdp_rpc_http
 {
-	RPCH_HTTP_STATE state;
+	RPC_HTTP_STATE state;
 	int contentLength;
 	int remContentLength;
 	HttpContext* context;
 	rdpNtlm* ntlm;
 };
 
-struct rdp_rpch
+struct rdp_rpc
 {
 	rdpTcp* tcp_in;
 	rdpTcp* tcp_out;
@@ -608,8 +608,8 @@ struct rdp_rpch
 	rdpTls* tls_out;
 
 	rdpNtlm* ntlm;
-	rdpRpchHTTP* http_in;
-	rdpRpchHTTP* http_out;
+	rdpRpcHTTP* http_in;
+	rdpRpcHTTP* http_out;
 
 	UNICONV* uniconv;
 	rdpSettings* settings;
@@ -638,22 +638,22 @@ void ntlm_client_uninit(rdpNtlm* ntlm);
 rdpNtlm* ntlm_new();
 void ntlm_free(rdpNtlm* ntlm);
 
-boolean rpch_attach(rdpRpch* rpch, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
-boolean rpch_connect(rdpRpch* rpch);
+boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
+boolean rpc_connect(rdpRpc* rpc);
 
-int rpc_write(rdpRpch* rpch, uint8* data, int length, uint16 opnum);
-int rpch_read(rdpRpch* rpch, uint8* data, int length);
+int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
+int rpc_read(rdpRpc* rpc, uint8* data, int length);
 
-rdpRpch* rpch_new(rdpSettings* settings);
+rdpRpc* rpc_new(rdpSettings* settings);
 
 #ifdef WITH_DEBUG_TSG
-#define WITH_DEBUG_RPCH
+#define WITH_DEBUG_RPC
 #endif
 
-#ifdef WITH_DEBUG_RPCH
-#define DEBUG_RPCH(fmt, ...) DEBUG_CLASS(RPCH, fmt, ## __VA_ARGS__)
+#ifdef WITH_DEBUG_RPC
+#define DEBUG_RPC(fmt, ...) DEBUG_CLASS(RPC, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RPCH(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RPC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* FREERDP_CORE_RPC_H */

@@ -197,19 +197,19 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 {
 	int status = -1;
 
-	rdpRpch* rpch = tsg->rpch;
+	rdpRpc* rpch = tsg->rpch;
 	rdpTransport* transport = tsg->transport;
 
 	uint32 length;
 	uint8* data;
 
-	if (!rpch_attach(rpch, transport->tcp_in, transport->tcp_out, transport->tls_in, transport->tls_out))
+	if (!rpc_attach(rpch, transport->tcp_in, transport->tcp_out, transport->tls_in, transport->tls_out))
 	{
 		printf("rpch_attach failed!\n");
 		return false;
 	}
 
-	if (!rpch_connect(rpch))
+	if (!rpc_connect(rpch))
 	{
 		printf("rpch_connect failed!\n");
 		return false;
@@ -239,7 +239,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	length = 0x8FFF;
 	data = xmalloc(length);
-	status = rpch_read(rpch, data, length);
+	status = rpc_read(rpch, data, length);
 
 	if (status <= 0)
 	{
@@ -278,7 +278,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	status = rpch_read(rpch, data, length);
+	status = rpc_read(rpch, data, length);
 
 	if (status <= 0)
 	{
@@ -346,7 +346,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	}
 	xfree(dest_addr_unic);
 
-	status = rpch_read(rpch, data, length);
+	status = rpc_read(rpch, data, length);
 
 	if (status < 0)
 	{
@@ -429,7 +429,7 @@ int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
 {
 	int status;
 
-	status = rpch_read(tsg->rpch, data, length);
+	status = rpc_read(tsg->rpch, data, length);
 
 	return status;
 }
@@ -440,7 +440,7 @@ rdpTsg* tsg_new(rdpSettings* settings)
 	tsg = (rdpTsg*) xzalloc(sizeof(rdpTsg));
 
 	tsg->settings = settings;
-	tsg->rpch = rpch_new(settings);
+	tsg->rpch = rpc_new(settings);
 
 	return tsg;
 }

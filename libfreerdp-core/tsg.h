@@ -36,7 +36,7 @@ typedef struct rdp_tsg rdpTsg;
 
 struct rdp_tsg
 {
-	rdpRpch* rpch;
+	rdpRpc* rpch;
 	uint8* tunnelContext;
 	uint8* channelContext;
 	rdpSettings* settings;
