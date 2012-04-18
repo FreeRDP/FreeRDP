@@ -280,8 +280,6 @@ void http_response_parse_header(HttpResponse* http_response)
 		name = line;
 		value = separator + 2;
 
-		printf("%s:%s\n", name, value);
-
 		http_response_parse_header_field(http_response, name, value);
 
 		separator[0] = ':';
@@ -301,7 +299,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	HttpResponse* http_response;
 
 	nbytes = 0;
-	length = 2048;
+	length = 0xFFFF;
 	buffer = xmalloc(length);
 	http_response = http_response_new();
 
@@ -364,9 +362,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			if (http_response->ContentLength > 0)
 			{
 				http_response->Content = xstrdup(content);
-
-				printf("Content: (%d)\n%s\n", http_response->ContentLength,
-						http_response->Content);
 			}
 
 			break;

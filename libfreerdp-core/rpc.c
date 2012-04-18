@@ -200,69 +200,39 @@ STREAM* rpc_ntlm_http_data(rdpRpc* rpc, char* command, SecBuffer* ntlm_token, ui
 
 boolean rpc_out_connect_http(rdpRpc* rpc)
 {
-	STREAM* http_stream;
-	STREAM* ntlm_stream;
+	STREAM* s;
 	HttpResponse* http_response;
-	int decoded_ntlm_http_length;
-	int encoded_ntlm_http_length;
-	uint8* decoded_ntlm_http_data = NULL;
-	uint8* encoded_ntlm_http_data = NULL;
+	int ntlm_token_length;
+	uint8* ntlm_token_data = NULL;
 	rdpTls* tls_out = rpc->tls_out;
 	rdpSettings* settings = rpc->settings;
 	rdpRpcHTTP* http_out = rpc->http_out;
 	rdpNtlm* http_out_ntlm = http_out->ntlm;
 
-	ntlm_stream = stream_new(0);
-
-	printf("rpc_out_connect_http\n");
-
 	ntlm_client_init(http_out_ntlm, settings->username, settings->password, settings->domain);
 
 	ntlm_authenticate(http_out_ntlm);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
+	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
 
-	DEBUG_RPC("\nSend:\n%s\n", http_stream->data);
-	tls_write(tls_out, http_stream->data, http_stream->size);
-	http_stream = stream_new(0xFFFF);
-	stream_clear(http_stream);
-	http_stream->p = http_stream->data;
-
-	encoded_ntlm_http_length = -1;
-	xfree(encoded_ntlm_http_data);
-	encoded_ntlm_http_data = NULL;
-	http_out->contentLength = 0;
+	DEBUG_RPC("%s", s->data);
+	tls_write_all(tls_out, s->data, s->size);
 
 	http_response = http_response_recv(tls_out);
 
-	DEBUG_RPC("\nRecv:\n%s\n", http_stream->data);
-	stream_clear(http_stream);
-	http_stream->p = http_stream->data;
+	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
+			&ntlm_token_data, &ntlm_token_length);
 
-	encoded_ntlm_http_data = (uint8*) http_response->AuthParam;
-	encoded_ntlm_http_length = strlen((char*) encoded_ntlm_http_data);
-
-	if (encoded_ntlm_http_length == 0) /* No NTLM data was found */
-		return false;
-
-	crypto_base64_decode(encoded_ntlm_http_data, encoded_ntlm_http_length, &decoded_ntlm_http_data, &decoded_ntlm_http_length);
-
-	http_out_ntlm->inputBuffer.pvBuffer = decoded_ntlm_http_data;
-	http_out_ntlm->inputBuffer.cbBuffer = decoded_ntlm_http_length;
+	http_out_ntlm->inputBuffer.pvBuffer = ntlm_token_data;
+	http_out_ntlm->inputBuffer.cbBuffer = ntlm_token_length;
 
 	ntlm_authenticate(http_out_ntlm);
 
-	http_out->contentLength = 76;
-	http_out->remContentLength = 76;
+	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 76);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, http_out->contentLength);
+	DEBUG_RPC("%s", s->data);
+	tls_write_all(tls_out, s->data, s->size);
 
-	DEBUG_RPC("\nSend:\n%s\n", http_stream->data);
-	tls_write(tls_out, http_stream->data, http_stream->size);
-	stream_clear(http_stream);
-
-	xfree(decoded_ntlm_http_data);
-	xfree(encoded_ntlm_http_data);
 	/* At this point OUT connection is ready to send CONN/A1 and start with receiving data */
 
 	http_out->state = RPC_HTTP_SENDING;
@@ -272,21 +242,14 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 
 boolean rpc_in_connect_http(rdpRpc* rpc)
 {
-	STREAM* ntlm_stream;
 	STREAM* http_stream;
 	HttpResponse* http_response;
-	int decoded_ntlm_http_length;
-	int encoded_ntlm_http_length;
-	uint8* decoded_ntlm_http_data = NULL;
-	uint8* encoded_ntlm_http_data = NULL;
+	int ntlm_token_length;
+	uint8* ntlm_token_data = NULL;
 	rdpTls* tls_in = rpc->tls_in;
 	rdpSettings* settings = rpc->settings;
 	rdpRpcHTTP* http_in = rpc->http_in;
 	rdpNtlm* http_in_ntlm = http_in->ntlm;
-
-	ntlm_stream = stream_new(0);
-
-	printf("rpc_in_connect_http\n");
 
 	ntlm_client_init(http_in_ntlm, settings->username, settings->password, settings->domain);
 
@@ -294,52 +257,24 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0);
 
-	DEBUG_RPC("Send:\n%s\n", http_stream->data);
-	tls_write(tls_in, http_stream->data, http_stream->size);
-	http_stream = stream_new(0xFFFF);
-	stream_clear(http_stream);
-	http_stream->p = http_stream->data;
-
-	xfree(decoded_ntlm_http_data);
-
-	encoded_ntlm_http_length = -1;
-	xfree(encoded_ntlm_http_data);
-	encoded_ntlm_http_data = NULL;
-	http_in->contentLength = 0;
+	DEBUG_RPC("%s", http_stream->data);
+	tls_write_all(tls_in, http_stream->data, http_stream->size);
 
 	http_response = http_response_recv(tls_in);
 
-	DEBUG_RPC("Recv:\n%s\n", http_stream->data);
-	stream_clear(http_stream);
-	http_stream->p = http_stream->data;
+	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
+			&ntlm_token_data, &ntlm_token_length);
 
-	encoded_ntlm_http_data = (uint8*) http_response->AuthParam;
-	encoded_ntlm_http_length = strlen((char*) encoded_ntlm_http_data);
-
-	if (encoded_ntlm_http_length == 0) /* No NTLM data was found */
-		return false;
-
-	crypto_base64_decode(encoded_ntlm_http_data, encoded_ntlm_http_length, &decoded_ntlm_http_data, &decoded_ntlm_http_length);
-
-	http_in_ntlm->inputBuffer.pvBuffer = decoded_ntlm_http_data;
-	http_in_ntlm->inputBuffer.cbBuffer = decoded_ntlm_http_length;
+	http_in_ntlm->inputBuffer.pvBuffer = ntlm_token_data;
+	http_in_ntlm->inputBuffer.cbBuffer = ntlm_token_length;
 
 	ntlm_authenticate(http_in_ntlm);
 
-	http_in->contentLength = 1073741824;
-	http_in->remContentLength = 1073741824;
+	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 1073741824);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, http_in->contentLength);
+	DEBUG_RPC("%s", http_stream->data);
+	tls_write_all(tls_in, http_stream->data, http_stream->size);
 
-	DEBUG_RPC("Send:\n%s\n", http_stream->data);
-
-	tls_write(tls_in, http_stream->data, http_stream->size);
-
-	stream_clear(http_stream);
-	http_stream->p = http_stream->data;
-
-	xfree(decoded_ntlm_http_data);
-	xfree(encoded_ntlm_http_data);
 	/* At this point IN connection is ready to send CONN/B1 and start with sending data */
 
 	http_in->state = RPC_HTTP_SENDING;
@@ -349,21 +284,14 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 {
-	int sent = 0;
-	int status = -1;
-	rdpRpcHTTP* http_out = rpc->http_out;
+	int status;
 	rdpTls* tls_out = rpc->tls_out;
+	rdpRpcHTTP* http_out = rpc->http_out;
 
 	if (http_out->state == RPC_HTTP_DISCONNECTED)
 	{
 		if (!rpc_out_connect_http(rpc))
 			return false;
-	}
-
-	if (http_out->remContentLength < length)
-	{
-		printf("RPC Error: HTTP frame is over.\n");
-		return -1; /* TODO ChannelRecycling */
 	}
 
 #ifdef WITH_DEBUG_RPC
@@ -372,27 +300,16 @@ int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 	printf("\n");
 #endif
 
-	while (sent < length)
-	{
-		status = tls_write(tls_out, data + sent, length - sent);
+	status = tls_write_all(tls_out, data, length);
 
-		if (status <= 0)
-			return status; /* TODO no idea how to handle errors */
-
-		sent += status;
-	}
-
-	http_out->remContentLength -= sent;
-
-	return sent;
+	return status;
 }
 
 int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 {
-	int sent = 0;
-	int status = -1;
-	rdpRpcHTTP* http_in = rpc->http_in;
+	int status;
 	rdpTls* tls_in = rpc->tls_in;
+	rdpRpcHTTP* http_in = rpc->http_in;
 
 	if (http_in->state == RPC_HTTP_DISCONNECTED)
 	{
@@ -400,32 +317,18 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 			return -1;
 	}
 
-	if (http_in->remContentLength < length)
-	{
-		printf("RPC Error: HTTP frame is over.\n");
-		return -1;/* TODO ChannelRecycling */
-	}
-
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_in_write() length: %d, remaining content length: %d\n", length, http_in->remContentLength);
+	printf("rpc_in_write() length: %d\n", length);
 	freerdp_hexdump(data, length);
 	printf("\n");
 #endif
 
-	while (sent < length)
-	{
-		status = tls_write(tls_in, data + sent, length - sent);
+	status = tls_write_all(tls_in, data, length);
 
-		if (status <= 0)
-			return status; /* TODO no idea how to handle errors */
+	if (status > 0)
+		rpc->BytesSent += status;
 
-		sent += status;
-	}
-
-	rpc->BytesSent += sent;
-	http_in->remContentLength -= sent;
-
-	return sent;
+	return status;
 }
 
 uint8* rpc_create_cookie()
@@ -716,6 +619,7 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 
 boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 {
+	STREAM* pdu;
 	rpcconn_rpc_auth_3_hdr_t* rpc_auth_3_pdu;
 	STREAM* ntlm_stream = stream_new(0xFFFF);
 
@@ -748,7 +652,7 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 
 	stream_free(ntlm_stream);
 
-	STREAM* pdu = stream_new(rpc_auth_3_pdu->frag_length);
+	pdu = stream_new(rpc_auth_3_pdu->frag_length);
 
 	stream_write(pdu, rpc_auth_3_pdu, 20);
 
@@ -952,16 +856,9 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	uint8 ptype;
 	uint16 frag_length;
 	rdpTls* tls_out = rpc->tls_out;
-	rdpRpcHTTP* http_out = rpc->http_out;
 
 	if (rpc->AwailableWindow < 0x00008FFF) /* Just a simple workaround */
 		rpc_in_send_flow_control(rpc);  /* Send FlowControlAck every time AW reaches the half */
-
-	if (http_out->remContentLength <= 0xFFFF) /* TODO make ChannelRecycling */
-	{
-		if (rpc_out_read_http_header(rpc) < 0)
-			return -1;
-	}
 
 	pdu = xmalloc(0xFFFF);
 
@@ -996,8 +893,6 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 		rpc->AwailableWindow -= frag_length;
 	}
 
-	http_out->remContentLength -= frag_length;
-
 	if (length < frag_length)
 	{
 		printf("rpc_out_read(): Error! Given buffer is to small. Received data fits not in.\n");
@@ -1008,7 +903,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	memcpy(data, pdu, frag_length);
 
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_out_recv(): length: %d, remaining content length: %d\n", frag_length, http_out->remContentLength);
+	printf("rpc_out_recv(): length: %d\n", frag_length);
 	freerdp_hexdump(data, frag_length);
 	printf("\n");
 #endif
@@ -1167,7 +1062,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		}
 		else if (status < 0)
 		{
-			printf("\nError! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
+			printf("Error! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
 					rpc->BytesSent, rpc->BytesReceived);
 
 			xfree(rpc_data);

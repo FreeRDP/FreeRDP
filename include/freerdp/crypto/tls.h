@@ -49,6 +49,8 @@ FREERDP_API boolean tls_disconnect(rdpTls* tls);
 FREERDP_API int tls_read(rdpTls* tls, uint8* data, int length);
 FREERDP_API int tls_write(rdpTls* tls, uint8* data, int length);
 
+FREERDP_API int tls_write_all(rdpTls* tls, uint8* data, int length);
+
 FREERDP_API boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
 FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint);
 FREERDP_API void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);

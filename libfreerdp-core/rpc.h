@@ -594,8 +594,6 @@ typedef enum _RPC_HTTP_STATE RPC_HTTP_STATE;
 struct rdp_rpc_http
 {
 	RPC_HTTP_STATE state;
-	int contentLength;
-	int remContentLength;
 	HttpContext* context;
 	rdpNtlm* ntlm;
 };
