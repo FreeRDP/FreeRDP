@@ -39,6 +39,8 @@ set(LIBFREERDP_CORE_SRCS
 	http.h
 	rpc.c
 	rpc.h
+	rts.c
+	rts.h
 	input.c
 	input.h
 	license.c

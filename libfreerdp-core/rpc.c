@@ -346,57 +346,6 @@ uint8* rpc_create_cookie()
 	return ret;
 }
 
-void rts_pdu_header_write(STREAM* s, uint8 pfc_flags, uint16 frag_length, uint16 auth_length,
-		uint32 call_id, uint16 flags, uint16 numberOfCommands)
-{
-	stream_write_uint8(s, 5); /* rpc_vers (1 byte) */
-	stream_write_uint8(s, 0); /* rpc_vers_minor (1 byte) */
-	stream_write_uint8(s, PTYPE_RTS); /* PTYPE (1 byte) */
-	stream_write_uint8(s, pfc_flags); /* pfc_flags (1 byte) */
-	stream_write_uint32(s, 0x00000010); /* packet_drep (4 bytes) */
-	stream_write_uint16(s, frag_length); /* frag_length (2 bytes) */
-	stream_write_uint16(s, auth_length); /* auth_length (2 bytes) */
-	stream_write_uint32(s, call_id); /* call_id (4 bytes) */
-	stream_write_uint16(s, flags); /* flags (2 bytes) */
-	stream_write_uint16(s, numberOfCommands); /* numberOfCommands (2 bytes) */
-}
-
-void rts_version_command_write(STREAM* s)
-{
-	stream_write_uint32(s, 6); /* CommandType (4 bytes) */
-	stream_write_uint32(s, 1); /* Version (4 bytes) */
-}
-
-void rts_cookie_command_write(STREAM* s, uint8* cookie)
-{
-	stream_write_uint32(s, 3); /* CommandType (4 bytes) */
-	stream_write(s, cookie, 16); /* Cookie (16 bytes) */
-}
-
-void rts_receive_window_size_command_write(STREAM* s, uint32 receiveWindowSize)
-{
-	stream_write_uint32(s, 0); /* CommandType (4 bytes) */
-	stream_write_uint32(s, receiveWindowSize); /* ReceiveWindowSize (4 bytes) */
-}
-
-void rts_channel_lifetime_command_write(STREAM* s, uint32 channelLifetime)
-{
-	stream_write_uint32(s, 4); /* CommandType (4 bytes) */
-	stream_write_uint32(s, channelLifetime); /* ChannelLifetime (4 bytes) */
-}
-
-void rts_client_keepalive_command_write(STREAM* s, uint32 clientKeepalive)
-{
-	stream_write_uint32(s, 5); /* CommandType (4 bytes) */
-	stream_write_uint32(s, clientKeepalive); /* ClientKeepalive (4 bytes) */
-}
-
-void rts_association_group_id_command_write(STREAM* s, uint8* associationGroupId)
-{
-	stream_write_uint32(s, 12); /* CommandType (4 bytes) */
-	stream_write(s, associationGroupId, 16); /* AssociationGroupId (16 bytes) */
-}
-
 boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 {
 	STREAM* s;
@@ -501,7 +450,7 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 
 	DEBUG_RPC("TODO: complete NTLM integration");
 
-	ntlm_client_init(rpc->ntlm, settings->username, settings->password, settings->domain);
+	ntlm_client_init(rpc->ntlm, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(rpc->ntlm);
 	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;

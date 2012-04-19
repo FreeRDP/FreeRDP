@@ -25,6 +25,7 @@ typedef struct rdp_rpc rdpRpc;
 typedef struct rdp_rpc_http rdpRpcHTTP;
 
 #include "tcp.h"
+#include "rts.h"
 #include "http.h"
 
 #include <time.h>
@@ -39,53 +40,6 @@ typedef struct rdp_rpc_http rdpRpcHTTP;
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
-
-#define PTYPE_REQUEST			0x00
-#define PTYPE_PING			0x01
-#define PTYPE_RESPONSE			0x02
-#define PTYPE_FAULT			0x03
-#define PTYPE_WORKING			0x04
-#define PTYPE_NOCALL			0x05
-#define PTYPE_REJECT			0x06
-#define PTYPE_ACK			0x07
-#define PTYPE_CL_CANCEL			0x08
-#define PTYPE_FACK			0x09
-#define PTYPE_CANCEL_ACK		0x0a
-#define PTYPE_BIND			0x0b
-#define PTYPE_BIND_ACK			0x0c
-#define PTYPE_BIND_NAK			0x0d
-#define PTYPE_ALTER_CONTEXT		0x0e
-#define PTYPE_ALTER_CONTEXT_RESP	0x0f
-#define PTYPE_RPC_AUTH_3		0x10
-#define PTYPE_SHUTDOWN			0x11
-#define PTYPE_CO_CANCEL			0x12
-#define PTYPE_ORPHANED			0x13
-#define PTYPE_RTS			0x14
-
-#define PFC_FIRST_FRAG           0x01/* First fragment */
-#define PFC_LAST_FRAG            0x02/* Last fragment */
-#define PFC_PENDING_CANCEL       0x04/* Cancel was pending at sender */
-#define PFC_RESERVED_1           0x08
-#define PFC_CONC_MPX             0x10/* supports concurrent multiplexing
-                                        * of a single connection. */
-#define PFC_DID_NOT_EXECUTE      0x20/* only meaningful on `fault' packet;
-                                        * if true, guaranteed call did not
-                                        * execute. */
-#define PFC_MAYBE                0x40/* `maybe' call semantics requested */
-#define PFC_OBJECT_UUID          0x80/* if true, a non-nil object UUID
-                                        * was specified in the handle, and
-                                        * is present in the optional object
-                                        * field. If false, the object field
-                                        * is omitted. */
-
-#define RTS_FLAG_NONE			0x0000	/*No special flags.*/
-#define RTS_FLAG_PING			0x0001	/*Proves that the sender is still active; can also be used to flush the pipeline by the other party.*/
-#define RTS_FLAG_OTHER_CMD		0x0002	/*Indicates that the PDU contains a command that cannot be defined by the other flags in this table.*/
-#define RTS_FLAG_RECYCLE_CHANNEL 0x0004	/*Indicates that the PDU is associated with recycling a channel.*/
-#define RTS_FLAG_IN_CHANNEL		0x0008	/*Indicates that the PDU is associated with IN channel communications.*/
-#define RTS_FLAG_OUT_CHANNEL	0x0010	/*Indicates that the PDU is associated with OUT channel communications.*/
-#define RTS_FLAG_EOF			0x0020	/*Indicates that this is the last PDU on an IN channel or OUT channel. Not all channels, however, use this to indicate the last PDU.*/
-#define RTS_FLAG_ECHO			0x0040	/*Signifies that this PDU is an echo request or response.*/
 
 typedef   uint16   p_context_id_t;
 
