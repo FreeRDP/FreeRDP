@@ -128,14 +128,6 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 			0, &ntlm->context, &ntlm->outputBufferDesc,
 			&ntlm->pfContextAttr, &ntlm->expiration);
 
-#ifdef WITH_DEBUG_RPC
-	if (ntlm->haveInputBuffer)
-	{
-		printf("NTLM Token (%d)\n", ntlm->inputBuffer.cbBuffer);
-		freerdp_hexdump(ntlm->inputBuffer.pvBuffer, ntlm->inputBuffer.cbBuffer);
-	}
-#endif
-
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 	{
 		if (ntlm->table->CompleteAuthToken != NULL)
@@ -192,11 +184,6 @@ STREAM* rpc_ntlm_http_data(rdpRpc* rpc, char* command, SecBuffer* ntlm_token, ui
 	HttpContext* http_context;
 	HttpRequest* http_request;
 
-#ifdef WITH_DEBUG_RPC
-	printf("NTLM Token (%d):\n", ntlm_token->cbBuffer);
-	freerdp_hexdump(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
-#endif
-
 	base64_ntlm_token = crypto_encode_base64(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
 
 	if (strcmp(command, "RPC_IN_DATA") == 0)
@@ -236,7 +223,7 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
 
-	DEBUG_RPC("%s", s->data);
+	DEBUG_RPC("\n%s", s->data);
 	tls_write_all(tls_out, s->data, s->size);
 
 	http_response = http_response_recv(tls_out);
@@ -251,7 +238,7 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 76);
 
-	DEBUG_RPC("%s", s->data);
+	DEBUG_RPC("\n%s", s->data);
 	tls_write_all(tls_out, s->data, s->size);
 
 	/* At this point OUT connection is ready to send CONN/A1 and start with receiving data */
@@ -278,7 +265,7 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0);
 
-	DEBUG_RPC("%s", http_stream->data);
+	DEBUG_RPC("\n%s", http_stream->data);
 	tls_write_all(tls_in, http_stream->data, http_stream->size);
 
 	http_response = http_response_recv(tls_in);
@@ -293,7 +280,7 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0x40000000);
 
-	DEBUG_RPC("%s", http_stream->data);
+	DEBUG_RPC("\n%s", http_stream->data);
 	tls_write_all(tls_in, http_stream->data, http_stream->size);
 
 	/* At this point IN connection is ready to send CONN/B1 and start with sending data */
@@ -359,111 +346,102 @@ uint8* rpc_create_cookie()
 	return ret;
 }
 
+void rts_pdu_header_write(STREAM* s, uint8 pfc_flags, uint16 frag_length, uint16 auth_length,
+		uint32 call_id, uint16 flags, uint16 numberOfCommands)
+{
+	stream_write_uint8(s, 5); /* rpc_vers (1 byte) */
+	stream_write_uint8(s, 0); /* rpc_vers_minor (1 byte) */
+	stream_write_uint8(s, PTYPE_RTS); /* PTYPE (1 byte) */
+	stream_write_uint8(s, pfc_flags); /* pfc_flags (1 byte) */
+	stream_write_uint32(s, 0x00000010); /* packet_drep (4 bytes) */
+	stream_write_uint16(s, frag_length); /* frag_length (2 bytes) */
+	stream_write_uint16(s, auth_length); /* auth_length (2 bytes) */
+	stream_write_uint32(s, call_id); /* call_id (4 bytes) */
+	stream_write_uint16(s, flags); /* flags (2 bytes) */
+	stream_write_uint16(s, numberOfCommands); /* numberOfCommands (2 bytes) */
+}
+
+void rts_version_command_write(STREAM* s)
+{
+	stream_write_uint32(s, 6); /* CommandType (4 bytes) */
+	stream_write_uint32(s, 1); /* Version (4 bytes) */
+}
+
+void rts_cookie_command_write(STREAM* s, uint8* cookie)
+{
+	stream_write_uint32(s, 3); /* CommandType (4 bytes) */
+	stream_write(s, cookie, 16); /* Cookie (16 bytes) */
+}
+
+void rts_receive_window_size_command_write(STREAM* s, uint32 receiveWindowSize)
+{
+	stream_write_uint32(s, 0); /* CommandType (4 bytes) */
+	stream_write_uint32(s, receiveWindowSize); /* ReceiveWindowSize (4 bytes) */
+}
+
+void rts_channel_lifetime_command_write(STREAM* s, uint32 channelLifetime)
+{
+	stream_write_uint32(s, 4); /* CommandType (4 bytes) */
+	stream_write_uint32(s, channelLifetime); /* ChannelLifetime (4 bytes) */
+}
+
+void rts_client_keepalive_command_write(STREAM* s, uint32 clientKeepalive)
+{
+	stream_write_uint32(s, 5); /* CommandType (4 bytes) */
+	stream_write_uint32(s, clientKeepalive); /* ClientKeepalive (4 bytes) */
+}
+
+void rts_association_group_id_command_write(STREAM* s, uint8* associationGroupId)
+{
+	stream_write_uint32(s, 12); /* CommandType (4 bytes) */
+	stream_write(s, associationGroupId, 16); /* AssociationGroupId (16 bytes) */
+}
+
 boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 {
-	STREAM* pdu = stream_new(76);
+	STREAM* s;
+	uint32 ReceiveWindowSize;
 
 	DEBUG_RPC("Sending CONN_A1");
 
-	uint8 rpc_vers = 0x05;
-	uint8 rpc_vers_minor = 0x00;
-	uint8 ptype = PTYPE_RTS;
-	uint8 pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	uint32 packet_drep = 0x00000010;
-	uint16 frag_length = 76;
-	uint16 auth_length = 0;
-	uint32 call_id = 0x00000000;
-	uint16 flags = 0x0000;
-	uint16 num_commands = 0x0004;
-	uint32 vCommandType = 0x00000006;
-	uint32 Version = 0x00000001;
-	uint32 vccCommandType = 0x00000003;
-	uint32 occCommandType = 0x00000003;
-	uint32 rwsCommandType = 0x00000000;
-	uint32 receiveWindowSize = 0x00010000;
-
+	s = stream_new(76);
+	ReceiveWindowSize = 0x00010000;
 	rpc->virtualConnectionCookie = rpc_create_cookie(); /* 16 bytes */
 	rpc->OUTChannelCookie = rpc_create_cookie(); /* 16 bytes */
-	rpc->AwailableWindow = receiveWindowSize;
+	rpc->AwailableWindow = ReceiveWindowSize;
 
-	stream_write_uint8(pdu, rpc_vers);
-	stream_write_uint8(pdu, rpc_vers_minor);
-	stream_write_uint8(pdu, ptype);
-	stream_write_uint8(pdu, pfc_flags);
-	stream_write_uint32(pdu, packet_drep);
-	stream_write_uint16(pdu, frag_length);
-	stream_write_uint16(pdu, auth_length);
-	stream_write_uint32(pdu, call_id);
-	stream_write_uint16(pdu, flags);
-	stream_write_uint16(pdu, num_commands);
-	stream_write_uint32(pdu, vCommandType);
-	stream_write_uint32(pdu, Version);
-	stream_write_uint32(pdu, vccCommandType);
-	stream_write(pdu, rpc->virtualConnectionCookie, 16);
-	stream_write_uint32(pdu, occCommandType);
-	stream_write(pdu, rpc->OUTChannelCookie, 16);
-	stream_write_uint32(pdu, rwsCommandType);
-	stream_write_uint32(pdu, receiveWindowSize);
+	rts_pdu_header_write(s, PFC_FIRST_FRAG | PFC_LAST_FRAG, 76, 0, 0, 0, 4); /* RTS Header (20 bytes) */
+	rts_version_command_write(s); /* Version (8 bytes) */
+	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(s, rpc->OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
+	rts_receive_window_size_command_write(s, ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
+	stream_seal(s);
 
-	rpc_out_write(rpc, pdu->data, stream_get_length(pdu));
+	rpc_out_write(rpc, s->data, stream_get_length(s));
 
-	stream_free(pdu);
+	stream_free(s);
 
 	return true;
 }
 
 boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
 {
-	STREAM* s = stream_new(104);
+	STREAM* s;
+	uint8* AssociationGroupId;
 
 	DEBUG_RPC("Sending CONN_B1");
 
-	uint8 rpc_vers = 0x05;
-	uint8 rpc_vers_minor = 0x00;
-	uint8 ptype = PTYPE_RTS;
-	uint8 pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	uint32 packet_drep = 0x00000010;
-	uint16 frag_length = 104;
-	uint16 auth_length = 0;
-	uint32 call_id = 0x00000000;
-	uint16 flags = 0x0000;
-	uint16 num_commands = 0x0006;
-	uint32 vCommandType = 0x00000006;
-	uint32 Version = 0x00000001;
-	uint32 vccCommandType = 0x00000003;
-	uint32 iccCommandType = 0x00000003;
-	uint32 clCommandType = 0x00000004;
-	uint32 ChannelLifetime = 0x40000000;
-	uint32 ckCommandType = 0x00000005;
-	uint32 ClientKeepalive = 0x000493e0;
-	uint32 agidCommandType = 0x0000000c;
-	uint8* AssociationGroupId;
-
+	s = stream_new(104);
 	rpc->INChannelCookie = rpc_create_cookie(); /* 16 bytes */
 	AssociationGroupId = rpc_create_cookie(); /* 16 bytes */
 
-	stream_write_uint8(s, rpc_vers);
-	stream_write_uint8(s, rpc_vers_minor);
-	stream_write_uint8(s, ptype);
-	stream_write_uint8(s, pfc_flags);
-	stream_write_uint32(s, packet_drep);
-	stream_write_uint16(s, frag_length);
-	stream_write_uint16(s, auth_length);
-	stream_write_uint32(s, call_id);
-	stream_write_uint16(s, flags);
-	stream_write_uint16(s, num_commands);
-	stream_write_uint32(s, vCommandType);
-	stream_write_uint32(s, Version);
-	stream_write_uint32(s, vccCommandType);
-	stream_write(s, rpc->virtualConnectionCookie, 16);
-	stream_write_uint32(s, iccCommandType);
-	stream_write(s, rpc->INChannelCookie, 16);
-	stream_write_uint32(s, clCommandType);
-	stream_write_uint32(s, ChannelLifetime);
-	stream_write_uint32(s, ckCommandType);
-	stream_write_uint32(s, ClientKeepalive);
-	stream_write_uint32(s, agidCommandType);
-	stream_write(s, AssociationGroupId, 16);
+	rts_pdu_header_write(s, PFC_FIRST_FRAG | PFC_LAST_FRAG, 104, 0, 0, 0, 6); /* RTS Header (20 bytes) */
+	rts_version_command_write(s); /* Version (8 bytes) */
+	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(s, rpc->INChannelCookie); /* INChannelCookie (20 bytes) */
+	rts_channel_lifetime_command_write(s, 0x40000000); /* ChannelLifetime (8 bytes) */
+	rts_client_keepalive_command_write(s, 0x000493e0); /* ClientKeepalive (8 bytes) */
+	rts_association_group_id_command_write(s, AssociationGroupId); /* AssociationGroupId (20 bytes) */
 	stream_seal(s);
 
 	rpc_in_write(rpc, s->data, s->size);
@@ -925,7 +903,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (strncmp((char*) pdu, "HTTP", 4) == 0)
 	{
-		printf("Unexpected HTTP response, likely caused by an NTLM HTTP authentication failure\n");
+		printf("\n%s", (char*) pdu);
 		return -1;
 	}
 
@@ -1217,7 +1195,8 @@ rdpRpc* rpc_new(rdpSettings* settings)
 		http_context_set_user_agent(rpc->http_out->context, "MSRPC");
 		http_context_set_host(rpc->http_out->context, settings->tsg_hostname);
 		http_context_set_pragma(rpc->http_out->context,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729" ", "
+				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
 
 		rpc->read_buffer = NULL;
 		rpc->write_buffer = NULL;
