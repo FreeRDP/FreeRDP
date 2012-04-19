@@ -548,7 +548,7 @@ char* crypto_encode_base64(uint8* data, int length)
 
 	base64_string = xmalloc(bptr->length);
 	memcpy(base64_string, bptr->data, bptr->length - 1);
-	base64_string[bptr->length] = '\0';
+	base64_string[bptr->length - 1] = '\0';
 
 	BIO_free_all(b64);
 

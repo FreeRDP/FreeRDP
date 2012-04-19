@@ -195,27 +195,25 @@ DWORD TsProxySendToServer(byte pRpcMessage[])
 
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 {
+	uint8* data;
+	uint32 length;
 	int status = -1;
-
-	rdpRpc* rpch = tsg->rpch;
+	rdpRpc* rpc = tsg->rpc;
 	rdpTransport* transport = tsg->transport;
 
-	uint32 length;
-	uint8* data;
-
-	if (!rpc_attach(rpch, transport->tcp_in, transport->tcp_out, transport->tls_in, transport->tls_out))
+	if (!rpc_attach(rpc, transport->tcp_in, transport->tcp_out, transport->tls_in, transport->tls_out))
 	{
-		printf("rpch_attach failed!\n");
+		printf("rpc_attach failed!\n");
 		return false;
 	}
 
-	if (!rpc_connect(rpch))
+	if (!rpc_connect(rpc))
 	{
-		printf("rpch_connect failed!\n");
+		printf("rpc_connect failed!\n");
 		return false;
 	}
 
-	DEBUG_TSG("rpch_connect success");
+	DEBUG_TSG("rpc_connect success");
 
 	/**
 	 * OpNum = 1
@@ -229,21 +227,21 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateTunnel");
-	status = rpc_write(rpch, tsg_packet1, sizeof(tsg_packet1), 1);
+	status = rpc_write(rpc, tsg_packet1, sizeof(tsg_packet1), 1);
 
 	if (status <= 0)
 	{
-		printf("rpch_write opnum=1 failed!\n");
+		printf("rpc_write opnum=1 failed!\n");
 		return false;
 	}
 
 	length = 0x8FFF;
 	data = xmalloc(length);
-	status = rpc_read(rpch, data, length);
+	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
-		printf("rpch_recv failed!\n");
+		printf("rpc_recv failed!\n");
 		return false;
 	}
 
@@ -270,19 +268,19 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 */
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
-	status = rpc_write(rpch, tsg_packet2, sizeof(tsg_packet2), 2);
+	status = rpc_write(rpc, tsg_packet2, sizeof(tsg_packet2), 2);
 
 	if (status <= 0)
 	{
-		printf("rpch_write opnum=2 failed!\n");
+		printf("rpc_write opnum=2 failed!\n");
 		return false;
 	}
 
-	status = rpc_read(rpch, data, length);
+	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
-		printf("rpch_recv failed!\n");
+		printf("rpc_recv failed!\n");
 		return false;
 	}
 
@@ -300,11 +298,11 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 */
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
-	status = rpc_write(rpch, tsg_packet3, sizeof(tsg_packet3), 3);
+	status = rpc_write(rpc, tsg_packet3, sizeof(tsg_packet3), 3);
 
 	if (status <= 0)
 	{
-		printf("rpch_write opnum=3 failed!\n");
+		printf("rpc_write opnum=3 failed!\n");
 		return false;
 	}
 	status = -1;
@@ -337,20 +335,20 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateChannel");
-	status = rpc_write(rpch, s_p4->data, s_p4->size, 4);
+	status = rpc_write(rpc, s_p4->data, s_p4->size, 4);
 
 	if (status <= 0)
 	{
-		printf("rpch_write opnum=4 failed!\n");
+		printf("rpc_write opnum=4 failed!\n");
 		return false;
 	}
 	xfree(dest_addr_unic);
 
-	status = rpc_read(rpch, data, length);
+	status = rpc_read(rpc, data, length);
 
 	if (status < 0)
 	{
-		printf("rpch_recv failed!\n");
+		printf("rpc_recv failed!\n");
 		return false;
 	}
 
@@ -374,51 +372,53 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 */
 
 	DEBUG_TSG("TsProxySetupReceivePipe");
-	status = rpc_write(rpch, tsg_packet5, sizeof(tsg_packet5), 8);
+	status = rpc_write(rpc, tsg_packet5, sizeof(tsg_packet5), 8);
 
 	if (status <= 0)
 	{
-		printf("rpch_write opnum=8 failed!\n");
+		printf("rpc_write opnum=8 failed!\n");
 		return false;
 	}
 
 	return true;
 }
 
+uint8 pp[8] =
+{
+	0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 int tsg_write(rdpTsg* tsg, uint8* data, uint32 length)
 {
+	STREAM* s;
+	uint8* tsg_pkg;
 	int status = -1;
 
 	uint16 opnum = 9;
 	uint32 tsg_length = length + 16 + 4 + 12 + 8;
 	uint32 totalDataBytes = length + 4;
 
-	STREAM* s = stream_new(12);
-	stream_write_uint32_be(s,totalDataBytes);
-	stream_write_uint32_be(s,0x01);
-	stream_write_uint32_be(s,length);
+	s = stream_new(12);
+	stream_write_uint32_be(s, totalDataBytes);
+	stream_write_uint32_be(s, 0x01);
+	stream_write_uint32_be(s, length);
 
-	uint8* tsg_pkg = xmalloc(tsg_length);
+	tsg_pkg = xmalloc(tsg_length);
 	memset(tsg_pkg, 0, 4);
 	memcpy(tsg_pkg + 4, tsg->channelContext, 16);
 	memcpy(tsg_pkg + 20, s->data, 12);
 	memcpy(tsg_pkg + 32, data, length);
 
-	uint8 pp[8] =
-	{
-		0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
-
 	memcpy(tsg_pkg + 32 + length, pp, 8);
 
-	status = rpc_write(tsg->rpch, tsg_pkg, tsg_length, opnum);
+	status = rpc_write(tsg->rpc, tsg_pkg, tsg_length, opnum);
 
 	xfree(tsg_pkg);
 	stream_free(s);
 
 	if (status <= 0)
 	{
-		printf("rpch_write failed!\n");
+		printf("rpc_write failed!\n");
 		return -1;
 	}
 
@@ -429,7 +429,7 @@ int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
 {
 	int status;
 
-	status = rpc_read(tsg->rpch, data, length);
+	status = rpc_read(tsg->rpc, data, length);
 
 	return status;
 }
@@ -440,7 +440,7 @@ rdpTsg* tsg_new(rdpSettings* settings)
 	tsg = (rdpTsg*) xzalloc(sizeof(rdpTsg));
 
 	tsg->settings = settings;
-	tsg->rpch = rpc_new(settings);
+	tsg->rpc = rpc_new(settings);
 
 	return tsg;
 }

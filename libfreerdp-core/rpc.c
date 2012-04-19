@@ -113,12 +113,28 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->outputBuffer.cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer.pvBuffer = xmalloc(ntlm->outputBuffer.cbBuffer);
 
+	if (ntlm->haveInputBuffer)
+	{
+		ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
+		ntlm->inputBufferDesc.cBuffers = 1;
+		ntlm->inputBufferDesc.pBuffers = &ntlm->inputBuffer;
+		ntlm->inputBuffer.BufferType = SECBUFFER_TOKEN;
+	}
+
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
 			(ntlm->haveContext) ? &ntlm->context : NULL,
 			NULL, ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
 			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
 			0, &ntlm->context, &ntlm->outputBufferDesc,
 			&ntlm->pfContextAttr, &ntlm->expiration);
+
+#ifdef WITH_DEBUG_RPC
+	if (ntlm->haveInputBuffer)
+	{
+		printf("NTLM Token (%d)\n", ntlm->inputBuffer.cbBuffer);
+		freerdp_hexdump(ntlm->inputBuffer.pvBuffer, ntlm->inputBuffer.cbBuffer);
+	}
+#endif
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 	{
@@ -176,6 +192,11 @@ STREAM* rpc_ntlm_http_data(rdpRpc* rpc, char* command, SecBuffer* ntlm_token, ui
 	HttpContext* http_context;
 	HttpRequest* http_request;
 
+#ifdef WITH_DEBUG_RPC
+	printf("NTLM Token (%d):\n", ntlm_token->cbBuffer);
+	freerdp_hexdump(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
+#endif
+
 	base64_ntlm_token = crypto_encode_base64(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
 
 	if (strcmp(command, "RPC_IN_DATA") == 0)
@@ -209,7 +230,7 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 	rdpRpcHTTP* http_out = rpc->http_out;
 	rdpNtlm* http_out_ntlm = http_out->ntlm;
 
-	ntlm_client_init(http_out_ntlm, settings->username, settings->password, settings->domain);
+	ntlm_client_init(http_out_ntlm, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(http_out_ntlm);
 
@@ -251,7 +272,7 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 	rdpRpcHTTP* http_in = rpc->http_in;
 	rdpNtlm* http_in_ntlm = http_in->ntlm;
 
-	ntlm_client_init(http_in_ntlm, settings->username, settings->password, settings->domain);
+	ntlm_client_init(http_in_ntlm, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(http_in_ntlm);
 
@@ -270,7 +291,7 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	ntlm_authenticate(http_in_ntlm);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 1073741824);
+	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0x40000000);
 
 	DEBUG_RPC("%s", http_stream->data);
 	tls_write_all(tls_in, http_stream->data, http_stream->size);
@@ -902,8 +923,14 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	memcpy(data, pdu, frag_length);
 
+	if (strncmp((char*) pdu, "HTTP", 4) == 0)
+	{
+		printf("Unexpected HTTP response, likely caused by an NTLM HTTP authentication failure\n");
+		return -1;
+	}
+
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_out_recv(): length: %d\n", frag_length);
+	printf("rpc_out_read(): length: %d\n", frag_length);
 	freerdp_hexdump(data, frag_length);
 	printf("\n");
 #endif
@@ -1040,8 +1067,8 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	{
 		if (rpc->read_buffer_len > length)
 		{
-			/*TODO fix read_buffer is too long problem */
-			printf("ERROR! RPCH Stores data in read_buffer fits not in data on rpc_read.\n");
+			/* TODO fix read_buffer is too long problem */
+			printf("ERROR! RPC Stores data in read_buffer fits not in data on rpc_read.\n");
 			return -1;
 		}
 
@@ -1179,8 +1206,7 @@ rdpRpc* rpc_new(rdpSettings* settings)
 		http_context_set_user_agent(rpc->http_in->context, "MSRPC");
 		http_context_set_host(rpc->http_in->context, settings->tsg_hostname);
 		http_context_set_pragma(rpc->http_in->context,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
-				"SessionId=33ad20ac-7469-4f63-946d-113eac21a23c");
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
 
 		rpc->http_out->context = http_context_new();
 		http_context_set_method(rpc->http_out->context, "RPC_OUT_DATA");
@@ -1191,8 +1217,7 @@ rdpRpc* rpc_new(rdpSettings* settings)
 		http_context_set_user_agent(rpc->http_out->context, "MSRPC");
 		http_context_set_host(rpc->http_out->context, settings->tsg_hostname);
 		http_context_set_pragma(rpc->http_out->context,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
-				"SessionId=33ad20ac-7469-4f63-946d-113eac21a23c");
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
 
 		rpc->read_buffer = NULL;
 		rpc->write_buffer = NULL;

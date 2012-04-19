@@ -121,13 +121,13 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	http_request->lines = (char**) xmalloc(sizeof(char*) * http_request->count);
 
 	http_encode_line(http_request->lines[0], "%s %s HTTP/1.1", http_request->Method, http_request->URI);
-	http_encode_line(http_request->lines[1], "Accept: %s", http_context->Accept);
-	http_encode_line(http_request->lines[2], "Cache-Control: %s", http_context->CacheControl);
-	http_encode_line(http_request->lines[3], "Connection: %s", http_context->Connection);
-	http_encode_line(http_request->lines[4], "Content-Length: %d", http_request->ContentLength);
+	http_encode_line(http_request->lines[1], "Cache-Control: %s", http_context->CacheControl);
+	http_encode_line(http_request->lines[2], "Connection: %s", http_context->Connection);
+	http_encode_line(http_request->lines[3], "Pragma: %s", http_context->Pragma);
+	http_encode_line(http_request->lines[4], "Accept: %s", http_context->Accept);
 	http_encode_line(http_request->lines[5], "User-Agent: %s", http_context->UserAgent);
-	http_encode_line(http_request->lines[6], "Host: %s", http_context->Host);
-	http_encode_line(http_request->lines[7], "Pragma: %s", http_context->Pragma);
+	http_encode_line(http_request->lines[6], "Content-Length: %d", http_request->ContentLength);
+	http_encode_line(http_request->lines[7], "Host: %s", http_context->Host);
 
 	if (http_request->Authorization != NULL)
 	{
@@ -365,6 +365,13 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 			break;
+		}
+
+		if ((length - nbytes) <= 0)
+		{
+			length *= 2;
+			buffer = xrealloc(buffer, length);
+			p = (uint8*) &buffer[nbytes];
 		}
 	}
 
