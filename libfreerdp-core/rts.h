@@ -20,6 +20,8 @@
 #ifndef FREERDP_CORE_RTS_H
 #define FREERDP_CORE_RTS_H
 
+#include "rpc.h"
+
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
 
@@ -79,14 +81,32 @@
 #define RTS_CMD_DESTINATION			0x0000000D
 #define RTS_CMD_PING_TRAFFIC_SENT_NOTIFY	0x0000000E
 
-void rts_pdu_header_write(STREAM* s, uint8 pfc_flags, uint16 frag_length,
-		uint16 auth_length, uint32 call_id, uint16 flags, uint16 numberOfCommands);
+struct _rts_pdu_header
+{
+	uint8 rpc_vers;
+	uint8 rpc_vers_minor;
+	uint8 ptype;
+	uint8 pfc_flags;
+	uint8 packed_drep[4];
+	uint16 frag_length;
+	uint16 auth_length;
+	uint32 call_id;
+	uint16 flags;
+	uint16 numberOfCommands;
+};
+typedef struct _rts_pdu_header RTS_PDU_HEADER;
+
+void rts_pdu_header_write(STREAM* s, RTS_PDU_HEADER* header);
 
 void rts_receive_window_size_command_write(STREAM* s, uint32 receiveWindowSize);
 void rts_cookie_command_write(STREAM* s, uint8* cookie);
 void rts_channel_lifetime_command_write(STREAM* s, uint32 channelLifetime);
 void rts_client_keepalive_command_write(STREAM* s, uint32 clientKeepalive);
 void rts_version_command_write(STREAM* s);
+void rts_padding_command_read(STREAM* s);
 void rts_association_group_id_command_write(STREAM* s, uint8* associationGroupId);
+void rts_client_address_command_read(STREAM* s);
+
+int rts_pdu_recv(rdpRpc* rpc, STREAM* s);
 
 #endif /* FREERDP_CORE_RTS_H */

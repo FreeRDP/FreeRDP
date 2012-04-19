@@ -184,7 +184,7 @@ STREAM* rpc_ntlm_http_data(rdpRpc* rpc, char* command, SecBuffer* ntlm_token, ui
 	HttpContext* http_context;
 	HttpRequest* http_request;
 
-	base64_ntlm_token = crypto_encode_base64(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
+	base64_ntlm_token = crypto_base64_encode(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
 
 	if (strcmp(command, "RPC_IN_DATA") == 0)
 		http_context = rpc->http_in->context;
@@ -349,24 +349,39 @@ uint8* rpc_create_cookie()
 boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 {
 	STREAM* s;
+	RTS_PDU_HEADER header;
 	uint32 ReceiveWindowSize;
+
+	header.rpc_vers = 5;
+	header.rpc_vers_minor = 0;
+	header.ptype = PTYPE_RTS;
+	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header.packed_drep[0] = 0x10;
+	header.packed_drep[1] = 0x00;
+	header.packed_drep[2] = 0x00;
+	header.packed_drep[3] = 0x00;
+	header.frag_length = 76;
+	header.auth_length = 0;
+	header.call_id = 0;
+	header.flags = 0;
+	header.numberOfCommands = 4;
 
 	DEBUG_RPC("Sending CONN_A1");
 
-	s = stream_new(76);
+	s = stream_new(header.frag_length);
 	ReceiveWindowSize = 0x00010000;
 	rpc->virtualConnectionCookie = rpc_create_cookie(); /* 16 bytes */
 	rpc->OUTChannelCookie = rpc_create_cookie(); /* 16 bytes */
 	rpc->AwailableWindow = ReceiveWindowSize;
 
-	rts_pdu_header_write(s, PFC_FIRST_FRAG | PFC_LAST_FRAG, 76, 0, 0, 0, 4); /* RTS Header (20 bytes) */
+	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_version_command_write(s); /* Version (8 bytes) */
 	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
 	rts_cookie_command_write(s, rpc->OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(s, ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 	stream_seal(s);
 
-	rpc_out_write(rpc, s->data, stream_get_length(s));
+	rpc_out_write(rpc, s->data, s->size);
 
 	stream_free(s);
 
@@ -376,15 +391,30 @@ boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
 {
 	STREAM* s;
+	RTS_PDU_HEADER header;
 	uint8* AssociationGroupId;
+
+	header.rpc_vers = 5;
+	header.rpc_vers_minor = 0;
+	header.ptype = PTYPE_RTS;
+	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header.packed_drep[0] = 0x10;
+	header.packed_drep[1] = 0x00;
+	header.packed_drep[2] = 0x00;
+	header.packed_drep[3] = 0x00;
+	header.frag_length = 104;
+	header.auth_length = 0;
+	header.call_id = 0;
+	header.flags = 0;
+	header.numberOfCommands = 6;
 
 	DEBUG_RPC("Sending CONN_B1");
 
-	s = stream_new(104);
+	s = stream_new(header.frag_length);
 	rpc->INChannelCookie = rpc_create_cookie(); /* 16 bytes */
 	AssociationGroupId = rpc_create_cookie(); /* 16 bytes */
 
-	rts_pdu_header_write(s, PFC_FIRST_FRAG | PFC_LAST_FRAG, 104, 0, 0, 0, 6); /* RTS Header (20 bytes) */
+	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_version_command_write(s); /* Version (8 bytes) */
 	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
 	rts_cookie_command_write(s, rpc->INChannelCookie); /* INChannelCookie (20 bytes) */
@@ -402,35 +432,29 @@ boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
 
 boolean rpc_in_send_keep_alive(rdpRpc* rpc)
 {
-	STREAM* s = stream_new(28);
+	STREAM* s;
+	RTS_PDU_HEADER header;
 
-	uint8 rpc_vers = 0x05;
-	uint8 rpc_vers_minor = 0x00;
-	uint8 ptype = PTYPE_RTS;
-	uint8 pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	uint32 packet_drep = 0x00000010;
-	uint16 frag_length = 28;
-	uint16 auth_length = 0;
-	uint32 call_id = 0x00000000;
-	uint16 flags = 0x0002;
-	uint16 num_commands = 0x0001;
-	uint32 ckCommandType = 0x00000005;
-	uint32 ClientKeepalive = 0x00007530;
+	header.rpc_vers = 5;
+	header.rpc_vers_minor = 0;
+	header.ptype = PTYPE_RTS;
+	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header.packed_drep[0] = 0x10;
+	header.packed_drep[1] = 0x00;
+	header.packed_drep[2] = 0x00;
+	header.packed_drep[3] = 0x00;
+	header.frag_length = 28;
+	header.auth_length = 0;
+	header.call_id = 0;
+	header.flags = 2;
+	header.numberOfCommands = 1;
 
-	stream_write_uint8(s, rpc_vers);
-	stream_write_uint8(s, rpc_vers_minor);
-	stream_write_uint8(s, ptype);
-	stream_write_uint8(s, pfc_flags);
-	stream_write_uint32(s, packet_drep);
-	stream_write_uint16(s, frag_length);
-	stream_write_uint16(s, auth_length);
-	stream_write_uint32(s, call_id);
-	stream_write_uint16(s, flags);
-	stream_write_uint16(s, num_commands);
-	stream_write_uint32(s, ckCommandType);
-	stream_write_uint32(s, ClientKeepalive);
+	s = stream_new(header.frag_length);
+	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
+	rts_client_keepalive_command_write(s, 0x00007530); /* ClientKeepalive (8 bytes) */
+	stream_seal(s);
 
-	rpc_in_write(rpc, s->data, stream_get_length(s));
+	rpc_in_write(rpc, s->data, s->size);
 
 	stream_free(s);
 
@@ -709,96 +733,9 @@ int rpc_out_read_http_header(rdpRpc* rpc)
 	return status;
 }
 
-int rpc_rts_recv(rdpRpc* rpc, uint8* pdu, int length)
-{
-	int i;
-	uint32 CommandType;
-	uint16 flags = *(uint16*)(pdu + 16);
-	uint16 num_commands = *(uint16*)(pdu + 18);
-	uint8* iterator = pdu + 20;
-
-	if (flags & RTS_FLAG_PING)
-	{
-		rpc_in_send_keep_alive(rpc);
-		return 0;
-	}
-
-	for (i = 0; i < num_commands; i++)
-	{
-		CommandType = *(uint32*) iterator;
-
-		switch (CommandType)
-		{
-			case 0x00000000: /* ReceiveWindowSize */
-				iterator += 8;
-				break;
-
-			case 0x00000001: /* FlowControlAck */
-				iterator += 28;
-				break;
-
-			case 0x00000002: /* ConnectionTimeout */
-				iterator += 8;
-				break;
-
-			case 0x00000003: /* Cookie */
-				iterator += 20;
-				break;
-
-			case 0x00000004: /* ChannelLifetime */
-				iterator += 8;
-				break;
-
-			case 0x00000005: /* ClientKeepalive */
-				iterator += 8;
-				break;
-
-			case 0x00000006: /* Version */
-				iterator += 8;
-				break;
-
-			case 0x00000007: /* Empty */
-				iterator += 4;
-				break;
-
-			case 0x00000008: /* Padding */
-				iterator += 8 + *(uint32*) (iterator + 4);
-				break;
-
-			case 0x00000009: /* NegativeANCE */
-				iterator += 4;
-				break;
-
-			case 0x0000000a: /* ANCE */
-				iterator += 4;
-				break;
-
-			case 0x0000000b: /* ClientAddress */
-				iterator += 4 + 4 + (12 * (*(uint32*) (iterator + 4))) + 12;
-				break;
-
-			case 0x0000000c: /* AssociationGroupId */
-				iterator += 20;
-				break;
-
-			case 0x0000000d: /* Destination */
-				iterator += 8;
-				break;
-
-			case 0x0000000e: /* PingTrafficSentNotify */
-				iterator += 8;
-				break;
-
-			default:
-				printf(" Error: Unknown RTS CommandType: 0x%x\n", CommandType);
-				return -1;
-		}
-	}
-	return 0;
-}
-
 int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 {
+	STREAM* s;
 	int status;
 	uint8* pdu;
 	uint8 ptype;
@@ -831,7 +768,9 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (ptype == 0x14) /* RTS PDU */
 	{
-		rpc_rts_recv(rpc, pdu, frag_length);
+		s = stream_new(0);
+		stream_attach(s, pdu, frag_length);
+		rts_pdu_recv(rpc, s);
 		xfree(pdu);
 		return 0;
 	}

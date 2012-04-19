@@ -593,6 +593,8 @@ void ntlm_free(rdpNtlm* ntlm);
 boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpc_connect(rdpRpc* rpc);
 
+boolean rpc_in_send_keep_alive(rdpRpc* rpc);
+
 int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
 int rpc_read(rdpRpc* rpc, uint8* data, int length);
 
