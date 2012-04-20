@@ -337,14 +337,20 @@ int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 	alsa->iface.SetFormat = audin_alsa_set_format;
 	alsa->iface.Close = audin_alsa_close;
 	alsa->iface.Free = audin_alsa_free;
+	alsa->device_name[0] = '\0';
 
 	data = pEntryPoints->plugin_data;
-	if (data && data->data[0] && strcmp(data->data[0], "audin") == 0 &&
-		data->data[1] && strcmp(data->data[1], "alsa") == 0)
+	if (data)
 	{
-		if (data[2].size)
-			strncpy(alsa->device_name, (char*)data->data[2], sizeof(alsa->device_name));
+		char *data2 = (char *) (data->data[2]);
+		if (data->data[0] && (strcmp(data->data[0], "audin") == 0) &&
+			data->data[1] && (strcmp(data->data[1], "alsa") == 0) &&
+			data2 && (*data2 != '\0'))
+		{
+			strncpy(alsa->device_name, data2, sizeof(alsa->device_name));
+		}
 	}
+
 	if (alsa->device_name[0] == '\0')
 	{
 		strcpy(alsa->device_name, "default");
