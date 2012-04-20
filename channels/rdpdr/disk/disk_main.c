@@ -18,6 +18,15 @@
  * limitations under the License.
  */
 
+#ifndef _WIN32
+#define __USE_LARGEFILE64
+#define _LARGEFILE_SOURCE
+#define _LARGEFILE64_SOURCE
+
+#include <sys/time.h>
+#endif
+
+
 #include "config.h"
 #include <errno.h>
 #include <stdio.h>
@@ -44,8 +53,10 @@ struct _DISK_DEVICE
 
 	LIST* irp_list;
 	freerdp_thread* thread;
-};
 
+	DEVMAN* devman;
+	pcRegisterDevice UnregisterDevice;
+};
 
 static uint32
 disk_map_posix_err(int fs_errno)
@@ -117,6 +128,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	freerdp_uniconv_free(uniconv);
 
 	FileId = irp->devman->id_sequence++;
+
 	file = disk_file_new(disk->path, path, FileId,
 		DesiredAccess, CreateDisposition, CreateOptions);
 
@@ -135,7 +147,6 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 
 		/* map errno to windows result*/
 		irp->IoStatus = disk_map_posix_err(file->err);
-
 		disk_file_free(file);
 	}
 	else
@@ -362,55 +373,74 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 {
 	uint32 FsInformationClass;
 	STREAM* output = irp->output;
+	struct STATVFS svfst;
+	struct STAT st;
+	UNICONV* uniconv;
+	char *volumeLabel = {"FREERDP"};  /* TODO:: Add sub routine to correctly pick up Volume Label name for each O/S supported*/
+	char *diskType = {"FAT32"};
+	char* outStr;
+	size_t len;
 
 	stream_read_uint32(irp->input, FsInformationClass);
+
+	STATVFS(disk->path, &svfst);
+	STAT(disk->path, &st);
 
 	switch (FsInformationClass)
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			stream_write_uint32(output, 34); /* Length */
-			stream_check_size(output, 34);
-			stream_write_uint64(output, 0); /* VolumeCreationTime */
-			stream_write_uint32(output, 0); /* VolumeSerialNumber */
-			stream_write_uint32(output, 16); /* VolumeLabelLength */
+			uniconv = freerdp_uniconv_new();
+			outStr = freerdp_uniconv_out(uniconv, volumeLabel, &len);
+			freerdp_uniconv_free(uniconv);
+			stream_write_uint32(output, 17 + len); /* Length */
+			stream_check_size(output, 17 + len);
+			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
+			stream_write_uint32(output, svfst.f_fsid); /* VolumeSerialNumber */
+			stream_write_uint32(output, len); /* VolumeLabelLength */
 			stream_write_uint8(output, 0); /* SupportsObjects */
-			stream_write_uint8(output, 0); /* Reserved */
-			stream_write(output, "F\0R\0E\0E\0R\0D\0P\0\0\0", 16); /* VolumeLabel (Unicode) */
+			/* Reserved(1), MUST NOT be added! */
+			stream_write(output, outStr, len); /* VolumeLabel (Unicode) */
+			xfree(outStr);
 			break;
 
 		case FileFsSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232107.aspx */
 			stream_write_uint32(output, 24); /* Length */
 			stream_check_size(output, 24);
-			stream_write_uint64(output, 0x1000000); /* TotalAllocationUnits */
-			stream_write_uint64(output, 0x800000); /* AvailableAllocationUnits */
+			stream_write_uint64(output, svfst.f_blocks); /* TotalAllocationUnits */
+			stream_write_uint64(output, svfst.f_bavail); /* AvailableAllocationUnits */
 			stream_write_uint32(output, 1); /* SectorsPerAllocationUnit */
-			stream_write_uint32(output, 0x400); /* BytesPerSector */
+			stream_write_uint32(output, svfst.f_bsize); /* BytesPerSector */
 			break;
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			stream_write_uint32(output, 22); /* Length */
-			stream_check_size(output, 22);
+			uniconv = freerdp_uniconv_new();
+			outStr = freerdp_uniconv_out(uniconv, diskType, &len);
+			freerdp_uniconv_free(uniconv);
+
+			stream_write_uint32(output, 12 + len); /* Length */
+			stream_check_size(output, 12 + len);
 			stream_write_uint32(output,
-				FILE_CASE_SENSITIVE_SEARCH | 
-				FILE_CASE_PRESERVED_NAMES | 
+				FILE_CASE_SENSITIVE_SEARCH |
+				FILE_CASE_PRESERVED_NAMES |
 				FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
-			stream_write_uint32(output, 510); /* MaximumComponentNameLength */
-			stream_write_uint32(output, 10); /* FileSystemNameLength */
-			stream_write(output, "F\0A\0T\03\02\0", 10); /* FileSystemName */
+			stream_write_uint32(output, svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
+			stream_write_uint32(output, len); /* FileSystemNameLength */
+			stream_write(output, outStr, len); /* FileSystemName (Unicode) */
+			xfree(outStr);
 			break;
 
 		case FileFsFullSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232104.aspx */
 			stream_write_uint32(output, 32); /* Length */
 			stream_check_size(output, 32);
-			stream_write_uint64(output, 0x1000000); /* TotalAllocationUnits */
-			stream_write_uint64(output, 0x800000); /* CallerAvailableAllocationUnits */
-			stream_write_uint64(output, 0x800000); /* ActualAvailableAllocationUnits */
+			stream_write_uint64(output, svfst.f_blocks); /* TotalAllocationUnits */
+			stream_write_uint64(output, svfst.f_bavail); /* CallerAvailableAllocationUnits */
+			stream_write_uint64(output, svfst.f_bfree); /* AvailableAllocationUnits */
 			stream_write_uint32(output, 1); /* SectorsPerAllocationUnit */
-			stream_write_uint32(output, 0x400); /* BytesPerSector */
+			stream_write_uint32(output, svfst.f_bsize); /* BytesPerSector */
 			break;
 
 		case FileFsDeviceInformation:
@@ -601,7 +631,7 @@ static void disk_free(DEVICE* device)
 
 	freerdp_thread_stop(disk->thread);
 	freerdp_thread_free(disk->thread);
-	
+
 	while ((irp = (IRP*)list_dequeue(disk->irp_list)) != NULL)
 		irp->Discard(irp);
 	list_free(disk->irp_list);

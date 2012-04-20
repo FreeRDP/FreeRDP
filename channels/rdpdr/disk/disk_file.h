@@ -22,6 +22,7 @@
 #define __DISK_FILE_H
 
 #include <sys/types.h>
+#include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -30,18 +31,38 @@
 #define OPEN open
 #define LSEEK lseek
 #define FSTAT fstat
+#define STATVFS statvfs
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 #define STAT stat
 #define OPEN open
 #define LSEEK lseek
 #define FSTAT fstat
+#define STATVFS statvfs
 #define O_LARGEFILE 0
 #else
 #define STAT stat64
 #define OPEN open64
 #define LSEEK lseek64
 #define FSTAT fstat64
+#define STATVFS statvfs64
 #endif
+
+#define EPOCH_DIFF 11644473600LL
+
+#define FILE_TIME_SYSTEM_TO_RDP(_t) \
+	(((uint64)(_t) + EPOCH_DIFF) * 10000000LL)
+#define FILE_TIME_RDP_TO_SYSTEM(_t) \
+	(((_t) == 0LL || (_t) == (uint64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
+
+#define FILE_ATTR_SYSTEM_TO_RDP(_f, _st) ( \
+	(S_ISDIR(_st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) | \
+	(_f->filename[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0) | \
+	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
+	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
+
+
+
+
 
 typedef struct _DISK_FILE DISK_FILE;
 struct _DISK_FILE
