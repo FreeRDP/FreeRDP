@@ -48,18 +48,6 @@
 #include "rdpdr_types.h"
 #include "disk_file.h"
 
-#define FILE_TIME_SYSTEM_TO_RDP(_t) \
-	(((uint64)(_t) + 11644473600LL) * 10000000LL)
-#define FILE_TIME_RDP_TO_SYSTEM(_t) \
-	(((_t) == 0LL || (_t) == (uint64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - 11644473600LL))
-
-#define FILE_ATTR_SYSTEM_TO_RDP(_f, _st) ( \
-	(S_ISDIR(_st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) | \
-	(_f->filename[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0) | \
-	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
-	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
-
-
 static boolean disk_file_wildcard_match(const char* pattern, const char* filename)
 {
 	const char *p = pattern, *f = filename;
@@ -194,7 +182,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 	boolean exists;
 #ifndef WIN32
 	boolean largeFile = false;
-#endif	
+#endif
 	int oflag = 0;
 
 	if (STAT(file->fullpath, &st) == 0)
@@ -203,7 +191,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 #ifndef WIN32
 		if (st.st_size > (unsigned long)0x07fffffff)
 		    largeFile = true;
-#endif		
+#endif
 		exists = true;
 	}
 	else
@@ -582,9 +570,8 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		DEBUG_WARN("stat %s failed. errno = %d", ent_path, errno);
 	}
 
-	xfree(ent_path);
-
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
+	xfree(ent_path);
 
 	uniconv = freerdp_uniconv_new();
 	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);
