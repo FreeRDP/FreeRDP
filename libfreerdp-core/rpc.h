@@ -530,6 +530,7 @@ struct rdp_ntlm
 	SecBufferDesc inputBufferDesc;
 	SecBufferDesc outputBufferDesc;
 	CredHandle credentials;
+	boolean confidentiality;
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
@@ -584,7 +585,7 @@ struct rdp_rpc
 
 boolean ntlm_authenticate(rdpNtlm* ntlm);
 
-boolean ntlm_client_init(rdpNtlm* ntlm, char* user, char* domain, char* password);
+boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password);
 void ntlm_client_uninit(rdpNtlm* ntlm);
 
 rdpNtlm* ntlm_new();

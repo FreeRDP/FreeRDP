@@ -83,6 +83,7 @@ struct _NTLM_CONTEXT
 	UNICONV* uniconv;
 	int SendSeqNum;
 	int RecvSeqNum;
+	boolean confidentiality;
 	CryptoRc4 SendRc4Seal;
 	CryptoRc4 RecvRc4Seal;
 	uint8* SendSigningKey;

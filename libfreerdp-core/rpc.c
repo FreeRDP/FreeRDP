@@ -43,12 +43,14 @@ boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in,
 
 #define NTLM_PACKAGE_NAME	_T("NTLM")
 
-boolean ntlm_client_init(rdpNtlm* ntlm, char* user, char* domain, char* password)
+boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
 {
 	size_t size;
 	SECURITY_STATUS status;
 
 	sspi_GlobalInit();
+
+	ntlm->confidentiality = confidentiality;
 
 	ntlm->table = InitSecurityInterface();
 
@@ -96,8 +98,10 @@ boolean ntlm_client_init(rdpNtlm* ntlm, char* user, char* domain, char* password
 	memset(&ntlm->outputBuffer, 0, sizeof(SecBuffer));
 	memset(&ntlm->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
-	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
-			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_DELEGATE;
+
+	if (ntlm->confidentiality)
+		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
 
 	return true;
 }
@@ -217,7 +221,7 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 	rdpRpcHTTP* http_out = rpc->http_out;
 	rdpNtlm* http_out_ntlm = http_out->ntlm;
 
-	ntlm_client_init(http_out_ntlm, settings->username, settings->domain, settings->password);
+	ntlm_client_init(http_out_ntlm, true, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(http_out_ntlm);
 
@@ -259,7 +263,7 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 	rdpRpcHTTP* http_in = rpc->http_in;
 	rdpNtlm* http_in_ntlm = http_in->ntlm;
 
-	ntlm_client_init(http_in_ntlm, settings->username, settings->domain, settings->password);
+	ntlm_client_init(http_in_ntlm, true, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(http_in_ntlm);
 
@@ -474,7 +478,7 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 
 	DEBUG_RPC("TODO: complete NTLM integration");
 
-	ntlm_client_init(rpc->ntlm, settings->username, settings->domain, settings->password);
+	ntlm_client_init(rpc->ntlm, false, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(rpc->ntlm);
 	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
@@ -580,8 +584,9 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 
 	stream_write(pdu, &bind_pdu->auth_verifier.auth_type, 8); /* assumed that uint8 pointer is 32bit long (4 bytes) */
 	stream_write(pdu, bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
+	stream_seal(pdu);
 
-	rpc_in_write(rpc, pdu->data, stream_get_length(pdu));
+	rpc_in_write(rpc, pdu->data, pdu->size);
 
 	/* TODO there is some allocated memory */
 	xfree(bind_pdu);
@@ -643,46 +648,35 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 
 boolean rpc_in_send_flow_control(rdpRpc* rpc)
 {
-	STREAM* s = stream_new(56);
+	STREAM* s;
+	RTS_PDU_HEADER header;
 
-	uint8* b;
-	uint8 rpc_vers = 0x05;
-	uint8 rpc_vers_minor = 0x00;
-	uint8 ptype = PTYPE_RTS;
-	uint8 pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	uint32 packet_drep = 0x00000010;
-	uint16 frag_length = 56;
-	uint16 auth_length = 0;
-	uint32 call_id = 0x00000000;
-	uint16 flags = 0x0002;
-	uint16 num_commands = 0x0002;
-	uint32 ckCommandType = 0x0000000d;
-	uint32 ClientKeepalive = 0x00000003;
-	uint32 a = 0x00000001;
-	uint32 aa = rpc->BytesReceived;
-	uint32 aaa = 0x00010000;
+	header.rpc_vers = 5;
+	header.rpc_vers_minor = 0;
+	header.ptype = PTYPE_RTS;
+	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header.packed_drep[0] = 0x10;
+	header.packed_drep[1] = 0x00;
+	header.packed_drep[2] = 0x00;
+	header.packed_drep[3] = 0x00;
+	header.frag_length = 56;
+	header.auth_length = 0;
+	header.call_id = 0;
+	header.flags = 2;
+	header.numberOfCommands = 2;
 
-	rpc->AwailableWindow = aaa;
-	b = rpc->OUTChannelCookie;
+	rpc->AwailableWindow = 0x00010000;
 
-	stream_write_uint8(s, rpc_vers);
-	stream_write_uint8(s, rpc_vers_minor);
-	stream_write_uint8(s, ptype);
-	stream_write_uint8(s, pfc_flags);
-	stream_write_uint32(s, packet_drep);
-	stream_write_uint16(s, frag_length);
-	stream_write_uint16(s, auth_length);
-	stream_write_uint32(s, call_id);
-	stream_write_uint16(s, flags);
-	stream_write_uint16(s, num_commands);
-	stream_write_uint32(s, ckCommandType);
-	stream_write_uint32(s, ClientKeepalive);
-	stream_write_uint32(s, a);
-	stream_write_uint32(s, aa);
-	stream_write_uint32(s, aaa);
-	stream_write(s, b, 16);
+	s = stream_new(header.frag_length);
+	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
+	rts_destination_command_write(s, FDOutProxy); /* Destination Command (8 bytes) */
 
-	rpc_in_write(rpc, s->data, stream_get_length(s));
+	/* FlowControlAck Command (28 bytes) */
+	rts_flow_control_ack_command_write(s, rpc->BytesReceived, rpc->AwailableWindow, rpc->OUTChannelCookie);
+
+	stream_seal(s);
+
+	rpc_in_write(rpc, s->data, s->size);
 
 	stream_free(s);
 
@@ -691,31 +685,28 @@ boolean rpc_in_send_flow_control(rdpRpc* rpc)
 
 boolean rpc_in_send_ping(rdpRpc* rpc)
 {
-	STREAM* s = stream_new(20);
+	STREAM* s;
+	RTS_PDU_HEADER header;
 
-	uint8 rpc_vers = 0x05;
-	uint8 rpc_vers_minor = 0x00;
-	uint8 ptype = PTYPE_RTS;
-	uint8 pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	uint32 packet_drep = 0x00000010;
-	uint16 frag_length = 56;
-	uint16 auth_length = 0;
-	uint32 call_id = 0x00000000;
-	uint16 flags = 0x0001;
-	uint16 num_commands = 0x0000;
+	header.rpc_vers = 5;
+	header.rpc_vers_minor = 0;
+	header.ptype = PTYPE_RTS;
+	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header.packed_drep[0] = 0x10;
+	header.packed_drep[1] = 0x00;
+	header.packed_drep[2] = 0x00;
+	header.packed_drep[3] = 0x00;
+	header.frag_length = 20;
+	header.auth_length = 0;
+	header.call_id = 0;
+	header.flags = 1;
+	header.numberOfCommands = 0;
 
-	stream_write_uint8(s, rpc_vers);
-	stream_write_uint8(s, rpc_vers_minor);
-	stream_write_uint8(s, ptype);
-	stream_write_uint8(s, pfc_flags);
-	stream_write_uint32(s, packet_drep);
-	stream_write_uint16(s, frag_length);
-	stream_write_uint16(s, auth_length);
-	stream_write_uint32(s, call_id);
-	stream_write_uint16(s, flags);
-	stream_write_uint16(s, num_commands);
+	s = stream_new(header.frag_length);
+	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
+	stream_seal(s);
 
-	rpc_in_write(rpc, s->data, stream_get_length(s));
+	rpc_in_write(rpc, s->data, s->size);
 
 	stream_free(s);
 
@@ -766,7 +757,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 		return status;
 	}
 
-	if (ptype == 0x14) /* RTS PDU */
+	if (ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		s = stream_new(0);
 		stream_attach(s, pdu, frag_length);

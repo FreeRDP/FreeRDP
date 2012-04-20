@@ -241,7 +241,6 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_LM_KEY;
-		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_OEM;
@@ -254,11 +253,13 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
+
+	if (context->confidentiality)
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	context->NegotiateFlags = NegotiateFlags;
 
@@ -964,7 +965,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
@@ -976,11 +976,13 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_NTLM;
-		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_SIGN;
 		NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
+
+	if (context->confidentiality)
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	if (context->ntlm_v2)
 		PayloadBufferOffset = 80; /* starting buffer offset */

@@ -390,6 +390,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	{
 		context = ntlm_ContextNew();
 
+		if (fContextReq & ISC_REQ_CONFIDENTIALITY)
+			context->confidentiality = true;
+
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		ntlm_SetContextIdentity(context, &credentials->identity);
@@ -565,7 +568,12 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP
 	HMAC_CTX_cleanup(&hmac);
 
 	/* Encrypt message using with RC4, result overwrites original buffer */
-	crypto_rc4(context->SendRc4Seal, length, data, data_buffer->pvBuffer);
+
+	if (context->confidentiality)
+		crypto_rc4(context->SendRc4Seal, length, data, data_buffer->pvBuffer);
+	else
+		memcpy(data_buffer->pvBuffer, data, length);
+
 	xfree(data);
 
 #ifdef WITH_DEBUG_NTLM
