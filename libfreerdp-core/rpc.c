@@ -227,8 +227,12 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
 
+	/* Send OUT Channel Request */
+
 	DEBUG_RPC("\n%s", s->data);
 	tls_write_all(tls_out, s->data, s->size);
+
+	/* Receive OUT Channel Response */
 
 	http_response = http_response_recv(tls_out);
 
@@ -241,6 +245,8 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 	ntlm_authenticate(http_out_ntlm);
 
 	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 76);
+
+	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
 	tls_write_all(tls_out, s->data, s->size);
@@ -267,8 +273,12 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0);
 
+	/* Send IN Channel Request */
+
 	DEBUG_RPC("\n%s", http_stream->data);
 	tls_write_all(tls_in, http_stream->data, http_stream->size);
+
+	/* Receive IN Channel Response */
 
 	http_response = http_response_recv(tls_in);
 
@@ -281,6 +291,8 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 	ntlm_authenticate(http_in_ntlm);
 
 	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0x40000000);
+
+	/* Send IN Channel Request */
 
 	DEBUG_RPC("\n%s", http_stream->data);
 	tls_write_all(tls_in, http_stream->data, http_stream->size);
@@ -1006,11 +1018,36 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	return read;
 }
 
+/**
+ *                                      Connection Establishment\n
+ *
+ *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
+ *        |                         |                         |                         |\n
+ *        |-----------------IN Channel Request--------------->|                         |\n
+ *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
+ *        |                         |<--------------Legacy Server Response--------------|\n
+ *        |                         |                         |                         |\n
+ *        |---------CONN_A1-------->|                         |                         |\n
+ *        |----------------------CONN_B1--------------------->|                         |\n
+ *        |                         |----------------------CONN_A2--------------------->|\n
+ *        |                         |                         |                         |\n
+ *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
+ *        |<--------CONN_A3---------|                         |                         |\n
+ *        |                         |<---------------------CONN_C1----------------------|\n
+ *        |                         |                         |<--------CONN_B3---------|\n
+ *        |<--------CONN_C2---------|                         |                         |\n
+ *        |                         |                         |                         |\n
+ *
+ */
+
 boolean rpc_connect(rdpRpc* rpc)
 {
 	int status;
 	uint8* pdu;
 	int pdu_length;
+
+	pdu_length = 0xFFFF;
+	pdu = xmalloc(pdu_length);
 
 	if (!rpc_out_connect_http(rpc))
 	{
@@ -1024,11 +1061,6 @@ boolean rpc_connect(rdpRpc* rpc)
 		return false;
 	}
 
-	pdu_length = 0xFFFF;
-	pdu = xmalloc(pdu_length);
-
-	status = rpc_out_read(rpc, pdu, pdu_length);
-
 	if (!rpc_in_connect_http(rpc))
 	{
 		printf("rpc_in_connect_http error!\n");
@@ -1041,6 +1073,13 @@ boolean rpc_connect(rdpRpc* rpc)
 		return false;
 	}
 
+	/* Receive OUT Channel Response */
+	status = rpc_out_read(rpc, pdu, pdu_length);
+
+	/* Receive CONN_A3 RTS PDU */
+	status = rpc_out_read(rpc, pdu, pdu_length);
+
+	/* Receive CONN_C2 RTS PDU */
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
 	/* [MS-RPCH] 3.2.1.5.3.1 Connection Establishment
