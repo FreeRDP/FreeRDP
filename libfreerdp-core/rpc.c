@@ -247,8 +247,6 @@ boolean rpc_out_connect_http(rdpRpc* rpc)
 
 	/* At this point OUT connection is ready to send CONN/A1 and start with receiving data */
 
-	http_out->state = RPC_HTTP_SENDING;
-
 	return true;
 }
 
@@ -289,8 +287,6 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 
 	/* At this point IN connection is ready to send CONN/B1 and start with sending data */
 
-	http_in->state = RPC_HTTP_SENDING;
-
 	return true;
 }
 
@@ -298,13 +294,6 @@ int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 {
 	int status;
 	rdpTls* tls_out = rpc->tls_out;
-	rdpRpcHTTP* http_out = rpc->http_out;
-
-	if (http_out->state == RPC_HTTP_DISCONNECTED)
-	{
-		if (!rpc_out_connect_http(rpc))
-			return false;
-	}
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_out_write(): length: %d\n", length);
@@ -321,13 +310,6 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 {
 	int status;
 	rdpTls* tls_in = rpc->tls_in;
-	rdpRpcHTTP* http_in = rpc->http_in;
-
-	if (http_in->state == RPC_HTTP_DISCONNECTED)
-	{
-		if (!rpc_in_connect_http(rpc))
-			return -1;
-	}
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_in_write() length: %d\n", length);
@@ -377,7 +359,7 @@ boolean rpc_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.flags = 0;
 	header.numberOfCommands = 4;
 
-	DEBUG_RPC("Sending CONN_A1");
+	DEBUG_RPC("Sending CONN_A1 RTS PDU");
 
 	s = stream_new(header.frag_length);
 
@@ -424,7 +406,7 @@ boolean rpc_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.flags = 0;
 	header.numberOfCommands = 6;
 
-	DEBUG_RPC("Sending CONN_B1");
+	DEBUG_RPC("Sending CONN_B1 RTS PDU");
 
 	s = stream_new(header.frag_length);
 
@@ -470,6 +452,8 @@ boolean rpc_send_keep_alive_pdu(rdpRpc* rpc)
 	header.flags = 2;
 	header.numberOfCommands = 1;
 
+	DEBUG_RPC("Sending Keep-Alive RTS PDU");
+
 	s = stream_new(header.frag_length);
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_client_keepalive_command_write(s, 0x00007530); /* ClientKeepalive (8 bytes) */
@@ -492,6 +476,8 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 	/* TODO: Set NTLMv2 + DO_NOT_SEAL, DomainName = GatewayName? */
 
 	rpc->ntlm = ntlm_new();
+
+	DEBUG_RPC("Sending bind PDU");
 
 	DEBUG_RPC("TODO: complete NTLM integration");
 
@@ -617,6 +603,8 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 	rpcconn_rpc_auth_3_hdr_t* rpc_auth_3_pdu;
 	STREAM* ntlm_stream = stream_new(0xFFFF);
 
+	DEBUG_RPC("Sending auth3 PDU");
+
 	ntlm_authenticate(rpc->ntlm);
 	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
 	ntlm_stream->p = ntlm_stream->data = rpc->ntlm->outputBuffer.pvBuffer;
@@ -685,6 +673,8 @@ boolean rpc_send_flow_control_ack_pdu(rdpRpc* rpc)
 	header.flags = 2;
 	header.numberOfCommands = 2;
 
+	DEBUG_RPC("Sending FlowControlAck RTS PDU");
+
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
 	ChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
@@ -723,6 +713,8 @@ boolean rpc_send_ping_pdu(rdpRpc* rpc)
 	header.call_id = 0;
 	header.flags = 1;
 	header.numberOfCommands = 0;
+
+	DEBUG_RPC("Sending Ping RTS PDU");
 
 	s = stream_new(header.frag_length);
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
@@ -924,7 +916,7 @@ int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (status < 0)
 	{
-		printf("rpc_write(): Error! rcph_in_write returned negative value.\n");
+		printf("rpc_write(): Error! rcp_in_write returned negative value.\n");
 		return status;
 	}
 
@@ -1020,9 +1012,15 @@ boolean rpc_connect(rdpRpc* rpc)
 	uint8* pdu;
 	int pdu_length;
 
+	if (!rpc_out_connect_http(rpc))
+	{
+		printf("rpc_out_connect_http error!\n");
+		return false;
+	}
+
 	if (!rpc_send_CONN_A1_pdu(rpc))
 	{
-		printf("rpc_out_send_CONN_A1 fault!\n");
+		printf("rpc_send_CONN_A1_pdu error!\n");
 		return false;
 	}
 
@@ -1031,9 +1029,15 @@ boolean rpc_connect(rdpRpc* rpc)
 
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
+	if (!rpc_in_connect_http(rpc))
+	{
+		printf("rpc_in_connect_http error!\n");
+		return false;
+	}
+
 	if (!rpc_send_CONN_B1_pdu(rpc))
 	{
-		printf("rpc_out_send_CONN_B1 fault!\n");
+		printf("rpc_send_CONN_B1_pdu error!\n");
 		return false;
 	}
 
@@ -1044,7 +1048,7 @@ boolean rpc_connect(rdpRpc* rpc)
 	 */
 	if (!rpc_in_send_bind(rpc))
 	{
-		printf("rpc_out_send_bind fault!\n");
+		printf("rpc_in_send_bind fault!\n");
 		return false;
 	}
 
@@ -1109,8 +1113,6 @@ rdpRpc* rpc_new(rdpSettings* settings)
 
 		rpc->http_in->ntlm = ntlm_new();
 		rpc->http_out->ntlm = ntlm_new();
-		rpc->http_in->state = RPC_HTTP_DISCONNECTED;
-		rpc->http_out->state = RPC_HTTP_DISCONNECTED;
 
 		rpc->http_in->context = http_context_new();
 		http_context_set_method(rpc->http_in->context, "RPC_IN_DATA");

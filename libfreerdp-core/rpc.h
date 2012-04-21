@@ -538,17 +538,8 @@ struct rdp_ntlm
 };
 typedef struct rdp_ntlm rdpNtlm;
 
-enum _RPC_HTTP_STATE
-{
-	RPC_HTTP_DISCONNECTED = 0,
-	RPC_HTTP_SENDING = 1,
-	RPC_HTTP_RECEIVING = 2
-};
-typedef enum _RPC_HTTP_STATE RPC_HTTP_STATE;
-
 struct rdp_rpc_http
 {
-	RPC_HTTP_STATE state;
 	HttpContext* context;
 	rdpNtlm* ntlm;
 };
