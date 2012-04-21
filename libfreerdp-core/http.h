@@ -91,6 +91,8 @@ struct _http_response
 	char* Content;
 };
 
+void http_response_print(HttpResponse* http_response);
+
 HttpResponse* http_response_recv(rdpTls* tls);
 
 HttpResponse* http_response_new();

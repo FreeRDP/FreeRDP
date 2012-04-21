@@ -41,6 +41,19 @@ typedef struct rdp_rpc_http rdpRpcHTTP;
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
+struct _rpc_pdu_header
+{
+	uint8 rpc_vers;
+	uint8 rpc_vers_minor;
+	uint8 ptype;
+	uint8 pfc_flags;
+	uint8 packed_drep[4];
+	uint16 frag_length;
+	uint16 auth_length;
+	uint32 call_id;
+};
+typedef struct _rpc_pdu_header RPC_PDU_HEADER;
+
 typedef   uint16   p_context_id_t;
 
 typedef struct   {
@@ -588,10 +601,21 @@ typedef struct rpc_out_channel RpcOutChannel;
 
 /* Client Virtual Connection */
 
+enum _VIRTUAL_CONNECTION_STATE
+{
+	VIRTUAL_CONNECTION_STATE_INITIAL,
+	VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT,
+	VIRTUAL_CONNECTION_STATE_WAIT_A3W,
+	VIRTUAL_CONNECTION_STATE_WAIT_C2,
+	VIRTUAL_CONNECTION_STATE_OPENED,
+	VIRTUAL_CONNECTION_STATE_FINAL
+};
+typedef enum _VIRTUAL_CONNECTION_STATE VIRTUAL_CONNECTION_STATE;
+
 struct rpc_virtual_connection
 {
 	uint8 Cookie[16]; /* Virtual Connection Cookie */
-	uint32 State; /* Virtual Connection State */
+	VIRTUAL_CONNECTION_STATE State; /* Virtual Connection State */
 	RpcInChannel* DefaultInChannel; /* Default IN Channel */
 	RpcInChannel* NonDefaultInChannel; /* Non-Default IN Channel */
 	uint8 DefaultInChannelCookie[16]; /* Default IN Channel Cookie */
@@ -642,7 +666,15 @@ void ntlm_free(rdpNtlm* ntlm);
 boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpc_connect(rdpRpc* rpc);
 
-boolean rpc_send_keep_alive_pdu(rdpRpc* rpc);
+boolean rpc_out_connect_http(rdpRpc* rpc);
+boolean rpc_in_connect_http(rdpRpc* rpc);
+
+void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header);
+
+int rpc_out_write(rdpRpc* rpc, uint8* data, int length);
+int rpc_in_write(rdpRpc* rpc, uint8* data, int length);
+
+int rpc_out_read(rdpRpc* rpc, uint8* data, int length);
 
 int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
 int rpc_read(rdpRpc* rpc, uint8* data, int length);

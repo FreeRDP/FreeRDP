@@ -287,6 +287,17 @@ void http_response_parse_header(HttpResponse* http_response)
 	}
 }
 
+void http_response_print(HttpResponse* http_response)
+{
+	int i;
+
+	for (i = 0; i < http_response->count; i++)
+	{
+		printf("%s\n", http_response->lines[i]);
+	}
+	printf("\n");
+}
+
 HttpResponse* http_response_recv(rdpTls* tls)
 {
 	uint8* p;

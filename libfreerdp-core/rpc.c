@@ -302,6 +302,21 @@ boolean rpc_in_connect_http(rdpRpc* rpc)
 	return true;
 }
 
+void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
+{
+	stream_read_uint8(s, header->rpc_vers); /* rpc_vers (1 byte) */
+	stream_read_uint8(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
+	stream_read_uint8(s, header->ptype); /* PTYPE (1 byte) */
+	stream_read_uint8(s, header->pfc_flags); /* pfc_flags (1 byte) */
+	stream_read_uint8(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
+	stream_read_uint8(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
+	stream_read_uint8(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
+	stream_read_uint8(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
+	stream_read_uint16(s, header->frag_length); /* frag_length (2 bytes) */
+	stream_read_uint16(s, header->auth_length); /* auth_length (2 bytes) */
+	stream_read_uint32(s, header->call_id); /* call_id (4 bytes) */
+}
+
 int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 {
 	int status;
@@ -337,148 +352,7 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 	return status;
 }
 
-uint8* rpc_create_cookie()
-{
-	uint8* ret = xmalloc(16);
-	RAND_pseudo_bytes(ret, 16);
-	return ret;
-}
-
-void rpc_generate_cookie(uint8* cookie)
-{
-	RAND_pseudo_bytes(cookie, 16);
-}
-
-boolean rpc_send_CONN_A1_pdu(rdpRpc* rpc)
-{
-	STREAM* s;
-	RTS_PDU_HEADER header;
-	uint32 ReceiveWindowSize;
-	uint8* OUTChannelCookie;
-	uint8* VirtualConnectionCookie;
-
-	header.rpc_vers = 5;
-	header.rpc_vers_minor = 0;
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	header.packed_drep[0] = 0x10;
-	header.packed_drep[1] = 0x00;
-	header.packed_drep[2] = 0x00;
-	header.packed_drep[3] = 0x00;
-	header.frag_length = 76;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 0;
-	header.numberOfCommands = 4;
-
-	DEBUG_RPC("Sending CONN_A1 RTS PDU");
-
-	s = stream_new(header.frag_length);
-
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->Cookie));
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
-
-	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
-	OUTChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
-	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
-
-	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
-	rts_version_command_write(s); /* Version (8 bytes) */
-	rts_cookie_command_write(s, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	rts_cookie_command_write(s, OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
-	rts_receive_window_size_command_write(s, ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
-	stream_seal(s);
-
-	rpc_out_write(rpc, s->data, s->size);
-
-	stream_free(s);
-
-	return true;
-}
-
-boolean rpc_send_CONN_B1_pdu(rdpRpc* rpc)
-{
-	STREAM* s;
-	RTS_PDU_HEADER header;
-	uint8* INChannelCookie;
-	uint8* AssociationGroupId;
-	uint8* VirtualConnectionCookie;
-
-	header.rpc_vers = 5;
-	header.rpc_vers_minor = 0;
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	header.packed_drep[0] = 0x10;
-	header.packed_drep[1] = 0x00;
-	header.packed_drep[2] = 0x00;
-	header.packed_drep[3] = 0x00;
-	header.frag_length = 104;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 0;
-	header.numberOfCommands = 6;
-
-	DEBUG_RPC("Sending CONN_B1 RTS PDU");
-
-	s = stream_new(header.frag_length);
-
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie));
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->AssociationGroupId));
-
-	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
-	INChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie);
-	AssociationGroupId = (uint8*) &(rpc->VirtualConnection->AssociationGroupId);
-
-	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
-	rts_version_command_write(s); /* Version (8 bytes) */
-	rts_cookie_command_write(s, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	rts_cookie_command_write(s, INChannelCookie); /* INChannelCookie (20 bytes) */
-	rts_channel_lifetime_command_write(s, 0x40000000); /* ChannelLifetime (8 bytes) */
-	rts_client_keepalive_command_write(s, 0x000493E0); /* ClientKeepalive (8 bytes) */
-	rts_association_group_id_command_write(s, AssociationGroupId); /* AssociationGroupId (20 bytes) */
-	stream_seal(s);
-
-	rpc_in_write(rpc, s->data, s->size);
-
-	stream_free(s);
-
-	return true;
-}
-
-boolean rpc_send_keep_alive_pdu(rdpRpc* rpc)
-{
-	STREAM* s;
-	RTS_PDU_HEADER header;
-
-	header.rpc_vers = 5;
-	header.rpc_vers_minor = 0;
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	header.packed_drep[0] = 0x10;
-	header.packed_drep[1] = 0x00;
-	header.packed_drep[2] = 0x00;
-	header.packed_drep[3] = 0x00;
-	header.frag_length = 28;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 2;
-	header.numberOfCommands = 1;
-
-	DEBUG_RPC("Sending Keep-Alive RTS PDU");
-
-	s = stream_new(header.frag_length);
-	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
-	rts_client_keepalive_command_write(s, 0x00007530); /* ClientKeepalive (8 bytes) */
-	stream_seal(s);
-
-	rpc_in_write(rpc, s->data, s->size);
-
-	stream_free(s);
-
-	return true;
-}
-
-boolean rpc_in_send_bind(rdpRpc* rpc)
+boolean rpc_send_bind_pdu(rdpRpc* rpc)
 {
 	STREAM* pdu;
 	rpcconn_bind_hdr_t* bind_pdu;
@@ -609,13 +483,50 @@ boolean rpc_in_send_bind(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
+int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
+{
+	STREAM* s;
+	uint16 frag_length;
+	uint16 auth_length;
+	STREAM* ntlmssp_stream;
+	RPC_PDU_HEADER header;
+	int pdu_length = 0x8FFF; /* 32KB buffer */
+	uint8* pdu = xmalloc(pdu_length);
+	int status = rpc_out_read(rpc, pdu, pdu_length);
+
+	DEBUG_RPC("TODO: complete NTLM integration");
+
+	if (status > 0)
+	{
+		s = stream_new(0);
+		stream_attach(s, pdu, pdu_length);
+		rpc_pdu_header_read(s, &header);
+
+		frag_length = header.frag_length;
+		auth_length = header.auth_length;
+
+		printf("frag_length:%d auth_length:%d\n", frag_length, auth_length);
+
+		ntlmssp_stream = stream_new(0xFFFF);
+		stream_write(ntlmssp_stream, (pdu + (frag_length - auth_length)), auth_length);
+		ntlmssp_stream->p = ntlmssp_stream->data;
+
+		//ntlmssp_recv(rpc->ntlmssp, ntlmssp_stream);
+
+		stream_free(ntlmssp_stream);
+	}
+
+	xfree(pdu);
+	return status;
+}
+
+boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
 	STREAM* pdu;
 	rpcconn_rpc_auth_3_hdr_t* rpc_auth_3_pdu;
 	STREAM* ntlm_stream = stream_new(0xFFFF);
 
-	DEBUG_RPC("Sending auth3 PDU");
+	DEBUG_RPC("Sending auth_3 PDU");
 
 	ntlm_authenticate(rpc->ntlm);
 	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
@@ -633,6 +544,7 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 	rpc_auth_3_pdu->frag_length = 28 + ntlm_stream->size;
 	rpc_auth_3_pdu->auth_length = ntlm_stream->size;
 	rpc_auth_3_pdu->call_id = 2;
+
 	rpc_auth_3_pdu->max_xmit_frag = 0x0FF8;
 	rpc_auth_3_pdu->max_recv_frag = 0x0FF8;
 	rpc_auth_3_pdu->auth_verifier.auth_pad = NULL; /* align(4); size_is(auth_pad_length) p */
@@ -663,82 +575,6 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_send_flow_control_ack_pdu(rdpRpc* rpc)
-{
-	STREAM* s;
-	RTS_PDU_HEADER header;
-	uint32 BytesReceived;
-	uint32 AvailableWindow;
-	uint8* ChannelCookie;
-
-	header.rpc_vers = 5;
-	header.rpc_vers_minor = 0;
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	header.packed_drep[0] = 0x10;
-	header.packed_drep[1] = 0x00;
-	header.packed_drep[2] = 0x00;
-	header.packed_drep[3] = 0x00;
-	header.frag_length = 56;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 2;
-	header.numberOfCommands = 2;
-
-	DEBUG_RPC("Sending FlowControlAck RTS PDU");
-
-	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived;
-	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
-	ChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
-
-	s = stream_new(header.frag_length);
-	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
-	rts_destination_command_write(s, FDOutProxy); /* Destination Command (8 bytes) */
-
-	/* FlowControlAck Command (28 bytes) */
-	rts_flow_control_ack_command_write(s, BytesReceived, AvailableWindow, ChannelCookie);
-
-	stream_seal(s);
-
-	rpc_in_write(rpc, s->data, s->size);
-
-	stream_free(s);
-
-	return true;
-}
-
-boolean rpc_send_ping_pdu(rdpRpc* rpc)
-{
-	STREAM* s;
-	RTS_PDU_HEADER header;
-
-	header.rpc_vers = 5;
-	header.rpc_vers_minor = 0;
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	header.packed_drep[0] = 0x10;
-	header.packed_drep[1] = 0x00;
-	header.packed_drep[2] = 0x00;
-	header.packed_drep[3] = 0x00;
-	header.frag_length = 20;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 1;
-	header.numberOfCommands = 0;
-
-	DEBUG_RPC("Sending Ping RTS PDU");
-
-	s = stream_new(header.frag_length);
-	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
-	stream_seal(s);
-
-	rpc_in_write(rpc, s->data, s->size);
-
-	stream_free(s);
-
-	return true;
-}
-
 int rpc_out_read_http_header(rdpRpc* rpc)
 {
 	int status = 0;
@@ -755,27 +591,33 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	STREAM* s;
 	int status;
 	uint8* pdu;
-	uint8 ptype;
-	uint16 frag_length;
+	int content_length;
+	RPC_PDU_HEADER header;
 	rdpTls* tls_out = rpc->tls_out;
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
-		rpc_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AW reaches the half */
+		rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	pdu = xmalloc(0xFFFF);
 
-	status = tls_read(tls_out, pdu, 10);
+	status = tls_read(tls_out, pdu, 16); /* read first 16 bytes to get RPC PDU Header */
 
-	if (status <= 0) /* read first 10 bytes to get the frag_length value */
+	if (status <= 0)
 	{
 		xfree(pdu);
 		return status;
 	}
 
-	ptype = *(pdu + 2);
-	frag_length = *((uint16*) (pdu + 8));
+	s = stream_new(0);
+	stream_attach(s, pdu, 16);
 
-	status = tls_read(tls_out, pdu + 10, frag_length - 10);
+	rpc_pdu_header_read(s, &header);
+
+	stream_detach(s);
+	stream_free(s);
+
+	content_length = header.frag_length - 16;
+	status = tls_read(tls_out, pdu + 16, content_length);
 
 	if (status < 0)
 	{
@@ -783,74 +625,35 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 		return status;
 	}
 
-	if (ptype == PTYPE_RTS) /* RTS PDU */
+	if (header.ptype == PTYPE_RTS) /* RTS PDU */
 	{
-		s = stream_new(0);
-		stream_attach(s, pdu, frag_length);
-		rts_pdu_recv(rpc, s);
-		xfree(pdu);
-		return 0;
+		printf("rpc_out_read error: Unexpected RTS PDU\n");
+		return -1;
 	}
 	else
 	{
 		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived += frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived += header.frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header.frag_length;
 	}
 
-	if (length < frag_length)
+	if (length < header.frag_length)
 	{
-		printf("rpc_out_read(): Error! Given buffer is to small. Received data fits not in.\n");
-		xfree(pdu);
-		return -1; /* TODO add buffer for storing remaining data for the next read in case destination buffer is too small */
-	}
-
-	memcpy(data, pdu, frag_length);
-
-	if (strncmp((char*) pdu, "HTTP", 4) == 0)
-	{
-		printf("\n%s", (char*) pdu);
+		printf("rpc_out_read error! receive buffer is not large enough\n");
 		return -1;
 	}
 
+	memcpy(data, pdu, header.frag_length);
+
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_out_read(): length: %d\n", frag_length);
-	freerdp_hexdump(data, frag_length);
+	printf("rpc_out_read(): length: %d\n", header.frag_length);
+	freerdp_hexdump(data, header.frag_length);
 	printf("\n");
 #endif
 
 	xfree(pdu);
 
-	return frag_length;
-}
-
-int rpc_out_recv_bind_ack(rdpRpc* rpc)
-{
-	uint16 frag_length;
-	uint16 auth_length;
-	STREAM* ntlmssp_stream;
-	int pdu_length = 0x8FFF; /* 32KB buffer */
-	uint8* pdu = xmalloc(pdu_length);
-	int status = rpc_out_read(rpc, pdu, pdu_length);
-
-	DEBUG_RPC("TODO: complete NTLM integration");
-
-	if (status > 0)
-	{
-		frag_length = *((uint16*)(pdu + 8));
-		auth_length = *((uint16*)(pdu + 10));
-
-		ntlmssp_stream = stream_new(0xFFFF);
-		stream_write(ntlmssp_stream, (pdu + (frag_length - auth_length)), auth_length);
-		ntlmssp_stream->p = ntlmssp_stream->data;
-
-		//ntlmssp_recv(rpc->ntlmssp, ntlmssp_stream);
-
-		stream_free(ntlmssp_stream);
-	}
-
-	xfree(pdu);
-	return status;
+	return header.frag_length;
 }
 
 int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
@@ -928,7 +731,7 @@ int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (status < 0)
 	{
-		printf("rpc_write(): Error! rcp_in_write returned negative value.\n");
+		printf("rpc_write(): Error! rpc_in_write returned negative value.\n");
 		return status;
 	}
 
@@ -1018,92 +821,32 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	return read;
 }
 
-/**
- *                                      Connection Establishment\n
- *
- *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
- *        |                         |                         |                         |\n
- *        |-----------------IN Channel Request--------------->|                         |\n
- *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
- *        |                         |<--------------Legacy Server Response--------------|\n
- *        |                         |                         |                         |\n
- *        |---------CONN_A1-------->|                         |                         |\n
- *        |----------------------CONN_B1--------------------->|                         |\n
- *        |                         |----------------------CONN_A2--------------------->|\n
- *        |                         |                         |                         |\n
- *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
- *        |<--------CONN_A3---------|                         |                         |\n
- *        |                         |<---------------------CONN_C1----------------------|\n
- *        |                         |                         |<--------CONN_B3---------|\n
- *        |<--------CONN_C2---------|                         |                         |\n
- *        |                         |                         |                         |\n
- *
- */
-
 boolean rpc_connect(rdpRpc* rpc)
 {
-	int status;
-	uint8* pdu;
-	int pdu_length;
-
-	pdu_length = 0xFFFF;
-	pdu = xmalloc(pdu_length);
-
-	if (!rpc_out_connect_http(rpc))
+	if (!rts_connect(rpc))
 	{
-		printf("rpc_out_connect_http error!\n");
+		printf("rts_connect error!\n");
 		return false;
 	}
 
-	if (!rpc_send_CONN_A1_pdu(rpc))
+	if (!rpc_send_bind_pdu(rpc))
 	{
-		printf("rpc_send_CONN_A1_pdu error!\n");
+		printf("rpc_send_bind_pdu error!\n");
 		return false;
 	}
 
-	if (!rpc_in_connect_http(rpc))
+	if (!rpc_recv_bind_ack_pdu(rpc))
 	{
-		printf("rpc_in_connect_http error!\n");
+		printf("rpc_recv_bind_ack_pdu error!\n");
 		return false;
 	}
 
-	if (!rpc_send_CONN_B1_pdu(rpc))
+	if (!rpc_send_rpc_auth_3_pdu(rpc))
 	{
-		printf("rpc_send_CONN_B1_pdu error!\n");
+		printf("rpc_send_rpc_auth_3 error!\n");
 		return false;
 	}
 
-	/* Receive OUT Channel Response */
-	status = rpc_out_read(rpc, pdu, pdu_length);
-
-	/* Receive CONN_A3 RTS PDU */
-	status = rpc_out_read(rpc, pdu, pdu_length);
-
-	/* Receive CONN_C2 RTS PDU */
-	status = rpc_out_read(rpc, pdu, pdu_length);
-
-	/* [MS-RPCH] 3.2.1.5.3.1 Connection Establishment
-	 * at this point VirtualChannel is created
-	 */
-	if (!rpc_in_send_bind(rpc))
-	{
-		printf("rpc_in_send_bind fault!\n");
-		return false;
-	}
-
-	if (!rpc_out_recv_bind_ack(rpc))
-	{
-		printf("rpc_out_recv_bind_ack fault!\n");
-		return false;
-	}
-
-	if (!rpc_in_send_rpc_auth_3(rpc))
-	{
-		printf("rpc_out_send_rpc_auth_3 fault!\n");
-		return false;
-	}
-
-	xfree(pdu);
 	return true;
 }
 
@@ -1125,6 +868,7 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 
 	if (virtual_connection != NULL)
 	{
+		virtual_connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 		virtual_connection->DefaultInChannel = xnew(RpcInChannel);
 		virtual_connection->DefaultOutChannel = xnew(RpcOutChannel);
 		rpc_client_virtual_connection_init(rpc, virtual_connection);

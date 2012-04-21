@@ -104,6 +104,15 @@ struct _rts_pdu_header
 };
 typedef struct _rts_pdu_header RTS_PDU_HEADER;
 
+struct _rts_pdu
+{
+	RTS_PDU_HEADER header;
+	uint8* content;
+};
+typedef struct _rts_pdu RTS_PDU;
+
+boolean rts_connect(rdpRpc* rpc);
+
 void rts_pdu_header_read(STREAM* s, RTS_PDU_HEADER* header);
 void rts_pdu_header_write(STREAM* s, RTS_PDU_HEADER* header);
 
@@ -138,7 +147,13 @@ void rts_destination_command_write(STREAM* s, uint32 Destination);
 void rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, STREAM* s);
 void rts_ping_traffic_sent_notify_command_write(STREAM* s, uint32 PingTrafficSent);
 
-int rts_pdu_recv(rdpRpc* rpc, STREAM* s);
+boolean rts_send_CONN_A1_pdu(rdpRpc* rpc);
+boolean rts_send_CONN_B1_pdu(rdpRpc* rpc);
+boolean rts_send_keep_alive_pdu(rdpRpc* rpc);
+boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc);
+boolean rts_send_ping_pdu(rdpRpc* rpc);
+
+int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu);
 
 #ifdef WITH_DEBUG_TSG
 #define WITH_DEBUG_RTS
