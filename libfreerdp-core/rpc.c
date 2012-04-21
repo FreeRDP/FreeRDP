@@ -485,14 +485,16 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 {
+	uint8* p;
 	STREAM* s;
-	uint16 frag_length;
-	uint16 auth_length;
-	STREAM* ntlmssp_stream;
+	int status;
+	uint8* pdu;
+	uint8* auth_data;
 	RPC_PDU_HEADER header;
-	int pdu_length = 0x8FFF; /* 32KB buffer */
-	uint8* pdu = xmalloc(pdu_length);
-	int status = rpc_out_read(rpc, pdu, pdu_length);
+	int pdu_length = 0x8FFF;
+
+	pdu = xmalloc(pdu_length);
+	status = rpc_out_read(rpc, pdu, pdu_length);
 
 	DEBUG_RPC("TODO: complete NTLM integration");
 
@@ -501,19 +503,22 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		s = stream_new(0);
 		stream_attach(s, pdu, pdu_length);
 		rpc_pdu_header_read(s, &header);
+		stream_detach(s);
+		stream_free(s);
 
-		frag_length = header.frag_length;
-		auth_length = header.auth_length;
+		printf("frag_length:%d auth_length:%d\n", header.frag_length, header.auth_length);
 
-		printf("frag_length:%d auth_length:%d\n", frag_length, auth_length);
+		auth_data = xmalloc(header.auth_length);
+		p = (pdu + (header.frag_length - header.auth_length));
+		memcpy(auth_data, p, header.auth_length);
 
-		ntlmssp_stream = stream_new(0xFFFF);
-		stream_write(ntlmssp_stream, (pdu + (frag_length - auth_length)), auth_length);
-		ntlmssp_stream->p = ntlmssp_stream->data;
+		printf("auth_data: (length = %d)\n", header.auth_length);
+		freerdp_hexdump(auth_data, header.auth_length);
 
-		//ntlmssp_recv(rpc->ntlmssp, ntlmssp_stream);
+		rpc->ntlm->inputBuffer.pvBuffer = auth_data;
+		rpc->ntlm->inputBuffer.cbBuffer = header.auth_length;
 
-		stream_free(ntlmssp_stream);
+		ntlm_authenticate(rpc->ntlm);
 	}
 
 	xfree(pdu);
@@ -523,14 +528,13 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
 	STREAM* pdu;
+	STREAM* s = stream_new(0);
 	rpcconn_rpc_auth_3_hdr_t* rpc_auth_3_pdu;
-	STREAM* ntlm_stream = stream_new(0xFFFF);
 
 	DEBUG_RPC("Sending auth_3 PDU");
 
-	ntlm_authenticate(rpc->ntlm);
-	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
-	ntlm_stream->p = ntlm_stream->data = rpc->ntlm->outputBuffer.pvBuffer;
+	s->size = rpc->ntlm->outputBuffer.cbBuffer;
+	s->p = s->data = rpc->ntlm->outputBuffer.pvBuffer;
 
 	rpc_auth_3_pdu = xnew(rpcconn_rpc_auth_3_hdr_t);
 	rpc_auth_3_pdu->rpc_vers = 5;
@@ -541,8 +545,8 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	rpc_auth_3_pdu->packed_drep[1] = 0x00;
 	rpc_auth_3_pdu->packed_drep[2] = 0x00;
 	rpc_auth_3_pdu->packed_drep[3] = 0x00;
-	rpc_auth_3_pdu->frag_length = 28 + ntlm_stream->size;
-	rpc_auth_3_pdu->auth_length = ntlm_stream->size;
+	rpc_auth_3_pdu->frag_length = 28 + s->size;
+	rpc_auth_3_pdu->auth_length = s->size;
 	rpc_auth_3_pdu->call_id = 2;
 
 	rpc_auth_3_pdu->max_xmit_frag = 0x0FF8;
@@ -554,9 +558,9 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	rpc_auth_3_pdu->auth_verifier.auth_reserved = 0x00;   /* :01 reserved, m.b.z. */
 	rpc_auth_3_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
 	rpc_auth_3_pdu->auth_verifier.auth_value = xmalloc(rpc_auth_3_pdu->auth_length); /* credentials; size_is(auth_length) p */
-	memcpy(rpc_auth_3_pdu->auth_verifier.auth_value, ntlm_stream->data, rpc_auth_3_pdu->auth_length);
+	memcpy(rpc_auth_3_pdu->auth_verifier.auth_value, s->data, rpc_auth_3_pdu->auth_length);
 
-	stream_free(ntlm_stream);
+	stream_free(s);
 
 	pdu = stream_new(rpc_auth_3_pdu->frag_length);
 
