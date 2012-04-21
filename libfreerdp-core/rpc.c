@@ -338,7 +338,7 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 	status = tls_write_all(tls_in, data, length);
 
 	if (status > 0)
-		rpc->BytesSent += status;
+		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
 
 	return status;
 }
@@ -350,11 +350,18 @@ uint8* rpc_create_cookie()
 	return ret;
 }
 
-boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
+void rpc_generate_cookie(uint8* cookie)
+{
+	RAND_pseudo_bytes(cookie, 16);
+}
+
+boolean rpc_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
 	uint32 ReceiveWindowSize;
+	uint8* OUTChannelCookie;
+	uint8* VirtualConnectionCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -373,15 +380,18 @@ boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 	DEBUG_RPC("Sending CONN_A1");
 
 	s = stream_new(header.frag_length);
-	ReceiveWindowSize = 0x00010000;
-	rpc->virtualConnectionCookie = rpc_create_cookie(); /* 16 bytes */
-	rpc->OUTChannelCookie = rpc_create_cookie(); /* 16 bytes */
-	rpc->AwailableWindow = ReceiveWindowSize;
+
+	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->Cookie));
+	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
+
+	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
+	OUTChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_version_command_write(s); /* Version (8 bytes) */
-	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	rts_cookie_command_write(s, rpc->OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
+	rts_cookie_command_write(s, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(s, OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(s, ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 	stream_seal(s);
 
@@ -392,11 +402,13 @@ boolean rpc_out_send_CONN_A1(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
+boolean rpc_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
+	uint8* INChannelCookie;
 	uint8* AssociationGroupId;
+	uint8* VirtualConnectionCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -415,15 +427,20 @@ boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
 	DEBUG_RPC("Sending CONN_B1");
 
 	s = stream_new(header.frag_length);
-	rpc->INChannelCookie = rpc_create_cookie(); /* 16 bytes */
-	AssociationGroupId = rpc_create_cookie(); /* 16 bytes */
+
+	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie));
+	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->AssociationGroupId));
+
+	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
+	INChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie);
+	AssociationGroupId = (uint8*) &(rpc->VirtualConnection->AssociationGroupId);
 
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_version_command_write(s); /* Version (8 bytes) */
-	rts_cookie_command_write(s, rpc->virtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	rts_cookie_command_write(s, rpc->INChannelCookie); /* INChannelCookie (20 bytes) */
+	rts_cookie_command_write(s, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(s, INChannelCookie); /* INChannelCookie (20 bytes) */
 	rts_channel_lifetime_command_write(s, 0x40000000); /* ChannelLifetime (8 bytes) */
-	rts_client_keepalive_command_write(s, 0x000493e0); /* ClientKeepalive (8 bytes) */
+	rts_client_keepalive_command_write(s, 0x000493E0); /* ClientKeepalive (8 bytes) */
 	rts_association_group_id_command_write(s, AssociationGroupId); /* AssociationGroupId (20 bytes) */
 	stream_seal(s);
 
@@ -434,7 +451,7 @@ boolean rpc_in_send_CONN_B1(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_in_send_keep_alive(rdpRpc* rpc)
+boolean rpc_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -646,10 +663,13 @@ boolean rpc_in_send_rpc_auth_3(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_in_send_flow_control(rdpRpc* rpc)
+boolean rpc_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
+	uint32 BytesReceived;
+	uint32 AvailableWindow;
+	uint8* ChannelCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -665,14 +685,16 @@ boolean rpc_in_send_flow_control(rdpRpc* rpc)
 	header.flags = 2;
 	header.numberOfCommands = 2;
 
-	rpc->AwailableWindow = 0x00010000;
+	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived;
+	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
+	ChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 
 	s = stream_new(header.frag_length);
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_destination_command_write(s, FDOutProxy); /* Destination Command (8 bytes) */
 
 	/* FlowControlAck Command (28 bytes) */
-	rts_flow_control_ack_command_write(s, rpc->BytesReceived, rpc->AwailableWindow, rpc->OUTChannelCookie);
+	rts_flow_control_ack_command_write(s, BytesReceived, AvailableWindow, ChannelCookie);
 
 	stream_seal(s);
 
@@ -683,7 +705,7 @@ boolean rpc_in_send_flow_control(rdpRpc* rpc)
 	return true;
 }
 
-boolean rpc_in_send_ping(rdpRpc* rpc)
+boolean rpc_send_ping_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -733,8 +755,8 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	uint16 frag_length;
 	rdpTls* tls_out = rpc->tls_out;
 
-	if (rpc->AwailableWindow < 0x00008FFF) /* Just a simple workaround */
-		rpc_in_send_flow_control(rpc);  /* Send FlowControlAck every time AW reaches the half */
+	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
+		rpc_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AW reaches the half */
 
 	pdu = xmalloc(0xFFFF);
 
@@ -767,8 +789,9 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	}
 	else
 	{
-		rpc->BytesReceived += frag_length; /* RTS PDUs are not subjects for FlowControl */
-		rpc->AwailableWindow -= frag_length;
+		/* RTS PDUs are not subject to flow control */
+		rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived += frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= frag_length;
 	}
 
 	if (length < frag_length)
@@ -829,6 +852,7 @@ int rpc_out_recv_bind_ack(rdpRpc* rpc)
 int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 {
 	int i;
+	rdpBlob rdpMsg;
 	int status = -1;
 	rpcconn_request_hdr_t* request_pdu;
 
@@ -883,7 +907,6 @@ int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	stream_write(pdu, &request_pdu->auth_verifier.auth_type, 8);
 
-	rdpBlob rdpMsg;
 	rdpMsg.data = pdu->data;
 	rdpMsg.length = stream_get_length(pdu);
 
@@ -947,7 +970,8 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		else if (status < 0)
 		{
 			printf("Error! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
-					rpc->BytesSent, rpc->BytesReceived);
+					rpc->VirtualConnection->DefaultInChannel->BytesSent,
+					rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived);
 
 			xfree(rpc_data);
 			return status;
@@ -996,7 +1020,7 @@ boolean rpc_connect(rdpRpc* rpc)
 	uint8* pdu;
 	int pdu_length;
 
-	if (!rpc_out_send_CONN_A1(rpc))
+	if (!rpc_send_CONN_A1_pdu(rpc))
 	{
 		printf("rpc_out_send_CONN_A1 fault!\n");
 		return false;
@@ -1007,9 +1031,9 @@ boolean rpc_connect(rdpRpc* rpc)
 
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
-	if (!rpc_in_send_CONN_B1(rpc))
+	if (!rpc_send_CONN_B1_pdu(rpc))
 	{
-		printf("rpc_out_send_CONN_A1 fault!\n");
+		printf("rpc_out_send_CONN_B1 fault!\n");
 		return false;
 	}
 
@@ -1038,6 +1062,40 @@ boolean rpc_connect(rdpRpc* rpc)
 
 	xfree(pdu);
 	return true;
+}
+
+void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtual_connection)
+{
+	virtual_connection->DefaultInChannel->BytesSent = 0;
+	virtual_connection->DefaultOutChannel->RecipientBytesReceived = 0;
+	virtual_connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
+	virtual_connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
+	virtual_connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
+	virtual_connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
+	virtual_connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
+	virtual_connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
+}
+
+RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
+{
+	RpcVirtualConnection* virtual_connection = xnew(RpcVirtualConnection);
+
+	if (virtual_connection != NULL)
+	{
+		virtual_connection->DefaultInChannel = xnew(RpcInChannel);
+		virtual_connection->DefaultOutChannel = xnew(RpcOutChannel);
+		rpc_client_virtual_connection_init(rpc, virtual_connection);
+	}
+
+	return virtual_connection;
+}
+
+void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection)
+{
+	if (virtual_connection != NULL)
+	{
+		xfree(virtual_connection);
+	}
 }
 
 rdpRpc* rpc_new(rdpSettings* settings)
@@ -1082,10 +1140,8 @@ rdpRpc* rpc_new(rdpSettings* settings)
 		rpc->read_buffer_len = 0;
 		rpc->write_buffer_len = 0;
 
-		rpc->BytesReceived = 0;
-		rpc->AwailableWindow = 0;
-		rpc->BytesSent = 0;
-		rpc->RecAwailableWindow = 0;
+		rpc->ReceiveWindow = 0x00010000;
+		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 
 		rpc->settings = settings;
 

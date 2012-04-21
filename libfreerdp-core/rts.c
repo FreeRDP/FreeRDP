@@ -284,7 +284,7 @@ int rts_pdu_recv(rdpRpc* rpc, STREAM* s)
 
 	if (header.flags & RTS_FLAG_PING)
 	{
-		rpc_in_send_keep_alive(rpc);
+		rpc_send_keep_alive_pdu(rpc);
 		return 0;
 	}
 

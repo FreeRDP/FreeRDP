@@ -553,6 +553,66 @@ struct rdp_rpc_http
 	rdpNtlm* ntlm;
 };
 
+/* Ping Originator */
+
+struct rpc_ping_originator
+{
+	uint32 ConnectionTimeout;
+	uint32 LastPacketSentTimestamp;
+	uint32 KeepAliveInterval;
+};
+typedef struct rpc_ping_originator RpcPingOriginator;
+
+/* Client In Channel */
+
+struct rpc_in_channel
+{
+	/* Sending Channel */
+
+	uint32 PlugState;
+	void* SendQueue;
+	uint32 BytesSent;
+	uint32 SenderAvailableWindow;
+	uint32 PeerReceiveWindow;
+
+	/* Ping Originator */
+
+	RpcPingOriginator PingOriginator;
+};
+typedef struct rpc_in_channel RpcInChannel;
+
+/* Client Out Channel */
+
+struct rpc_out_channel
+{
+	/* Receiving Channel */
+
+	uint32 ReceiveWindow;
+	uint32 ReceiveWindowSize;
+	uint32 ReceiverAvailableWindow;
+	uint32 RecipientBytesReceived;
+	uint32 AvailableWindowAdvertised;
+};
+typedef struct rpc_out_channel RpcOutChannel;
+
+/* Client Virtual Connection */
+
+struct rpc_virtual_connection
+{
+	uint8 Cookie[16]; /* Virtual Connection Cookie */
+	uint32 State; /* Virtual Connection State */
+	RpcInChannel* DefaultInChannel; /* Default IN Channel */
+	RpcInChannel* NonDefaultInChannel; /* Non-Default IN Channel */
+	uint8 DefaultInChannelCookie[16]; /* Default IN Channel Cookie */
+	uint8 NonDefaultInChannelCookie[16]; /* Non-Default Default IN Channel Cookie */
+	RpcOutChannel* DefaultOutChannel; /* Default OUT Channel */
+	RpcOutChannel* NonDefaultOutChannel; /* Non-Default OUT Channel */
+	uint8 DefaultOutChannelCookie[16]; /* Default OUT Channel Cookie */
+	uint8 NonDefaultOutChannelCookie[16]; /* Non-Default Default OUT Channel Cookie */
+	uint8 AssociationGroupId[16]; /* AssociationGroupId */
+};
+typedef struct rpc_virtual_connection RpcVirtualConnection;
+
 struct rdp_rpc
 {
 	rdpTcp* tcp_in;
@@ -572,13 +632,10 @@ struct rdp_rpc
 	uint8* read_buffer;
 	uint32 read_buffer_len;
 
-	uint32 BytesReceived;
-	uint32 AwailableWindow;
-	uint32 BytesSent;
-	uint32 RecAwailableWindow;
-	uint8* virtualConnectionCookie;
-	uint8* OUTChannelCookie;
-	uint8* INChannelCookie;
+	uint32 ReceiveWindow;
+
+	RpcVirtualConnection* VirtualConnection;
+
 	uint32 call_id;
 	uint32 pipe_call_id;
 };
@@ -594,7 +651,7 @@ void ntlm_free(rdpNtlm* ntlm);
 boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpc_connect(rdpRpc* rpc);
 
-boolean rpc_in_send_keep_alive(rdpRpc* rpc);
+boolean rpc_send_keep_alive_pdu(rdpRpc* rpc);
 
 int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
 int rpc_read(rdpRpc* rpc, uint8* data, int length);
