@@ -676,7 +676,7 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length);
 
 int rpc_out_read(rdpRpc* rpc, uint8* data, int length);
 
-int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
+int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
 int rpc_read(rdpRpc* rpc, uint8* data, int length);
 
 rdpRpc* rpc_new(rdpSettings* settings);

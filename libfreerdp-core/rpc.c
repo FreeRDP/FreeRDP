@@ -359,13 +359,9 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	rdpSettings* settings = rpc->settings;
 	STREAM* ntlm_stream = stream_new(0xFFFF);
 
-	/* TODO: Set NTLMv2 + DO_NOT_SEAL, DomainName = GatewayName? */
-
 	rpc->ntlm = ntlm_new();
 
 	DEBUG_RPC("Sending bind PDU");
-
-	DEBUG_RPC("TODO: complete NTLM integration");
 
 	ntlm_client_init(rpc->ntlm, false, settings->username, settings->domain, settings->password);
 
@@ -660,14 +656,19 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	return header.frag_length;
 }
 
-int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
+int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 {
 	int i;
-	rdpBlob rdpMsg;
-	int status = -1;
+	int status;
+	rdpNtlm* ntlm;
+	SecBuffer Buffers[2];
+	SecBufferDesc Message;
+	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu;
 
 	uint8 auth_pad_length = 16 - ((24 + length + 8 + 16) % 16);
+
+	ntlm = rpc->ntlm;
 
 	if (auth_pad_length == 16)
 		auth_pad_length = 0;
@@ -718,14 +719,34 @@ int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	stream_write(pdu, &request_pdu->auth_verifier.auth_type, 8);
 
-	rdpMsg.data = pdu->data;
-	rdpMsg.length = stream_get_length(pdu);
+	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
+	{
+		printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		return 0;
+	}
 
-	DEBUG_RPC("TODO: complete NTLM integration");
+	Buffers[0].BufferType = SECBUFFER_DATA; /* auth_data */
+	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
 
-	//ntlmssp_encrypt_message(rpc->ntlmssp, &rdpMsg, NULL, request_pdu->auth_verifier.auth_value);
+	Buffers[0].pvBuffer = pdu->data;
+	Buffers[0].cbBuffer = stream_get_length(pdu);
 
-	stream_write(pdu, request_pdu->auth_verifier.auth_value, request_pdu->auth_length);
+	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
+	Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
+
+	Message.cBuffers = 2;
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.pBuffers = (PSecBuffer) &Buffers;
+
+	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, 0);
+
+	if (encrypt_status != SEC_E_OK)
+	{
+		printf("EncryptMessage status: 0x%08X\n", encrypt_status);
+		return 0;
+	}
+
+	stream_write(pdu, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 
 	status = rpc_in_write(rpc, pdu->data, pdu->p - pdu->data);
 
@@ -736,7 +757,7 @@ int rpc_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	if (status < 0)
 	{
 		printf("rpc_write(): Error! rpc_in_write returned negative value.\n");
-		return status;
+		return -1;
 	}
 
 	return length;
