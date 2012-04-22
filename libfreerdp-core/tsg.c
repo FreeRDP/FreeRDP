@@ -245,16 +245,16 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	tsg->tunnelContext = xmalloc(16);
-	memcpy(tsg->tunnelContext, data + 0x91c, 16);
+	tsg->TunnelContext = xmalloc(16);
+	memcpy(tsg->TunnelContext, data + 2300, 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG tunnelContext:\n");
-	freerdp_hexdump(tsg->tunnelContext, 16);
+	freerdp_hexdump(tsg->TunnelContext, 16);
 	printf("\n");
 #endif
 
-	memcpy(tsg_packet2 + 4, tsg->tunnelContext, 16);
+	memcpy(tsg_packet2 + 4, tsg->TunnelContext, 16);
 
 	/**
 	 * OpNum = 2
@@ -284,7 +284,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	memcpy(tsg_packet3 + 4, tsg->tunnelContext, 16);
+	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
 
 	/**
 	 * OpNum = 3
@@ -312,7 +312,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	uint8* dest_addr_unic = (uint8*) freerdp_uniconv_out(tsg_uniconv, hostname, (size_t*) &dest_addr_unic_len);
 	freerdp_uniconv_free(tsg_uniconv);
 
-	memcpy(tsg_packet4 + 4, tsg->tunnelContext, 16);
+	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
 	memcpy(tsg_packet4 + 38, &port, 2);
 
 	STREAM* s_p4 = stream_new(60 + dest_addr_unic_len + 2);
@@ -321,7 +321,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	stream_write_uint32(s_p4, 0x00000000); /* Offset */
 	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1);/* ActualCount */
 	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
-	stream_write_uint16(s_p4,0x0000); /* unicode zero to terminate hostname string */
+	stream_write_uint16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
 
 	/**
 	 * OpNum = 4
@@ -352,16 +352,16 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	tsg->channelContext = xmalloc(16);
-	memcpy(tsg->channelContext, data + 4, 16);
+	tsg->ChannelContext = xmalloc(16);
+	memcpy(tsg->ChannelContext, data + 4, 16);
 
 #ifdef WITH_DEBUG_TSG
-	printf("TSG channelContext:\n");
-	freerdp_hexdump(tsg->channelContext, 16);
+	printf("TSG ChannelContext:\n");
+	freerdp_hexdump(tsg->ChannelContext, 16);
 	printf("\n");
 #endif
 
-	memcpy(tsg_packet5 + 4, tsg->channelContext, 16);
+	memcpy(tsg_packet5 + 4, tsg->ChannelContext, 16);
 
 	/**
 	 * OpNum = 8
@@ -405,7 +405,7 @@ int tsg_write(rdpTsg* tsg, uint8* data, uint32 length)
 
 	tsg_pkg = xmalloc(tsg_length);
 	memset(tsg_pkg, 0, 4);
-	memcpy(tsg_pkg + 4, tsg->channelContext, 16);
+	memcpy(tsg_pkg + 4, tsg->ChannelContext, 16);
 	memcpy(tsg_pkg + 20, s->data, 12);
 	memcpy(tsg_pkg + 32, data, length);
 

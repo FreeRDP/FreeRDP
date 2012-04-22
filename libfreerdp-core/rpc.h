@@ -594,7 +594,7 @@ struct rpc_out_channel
 	uint32 ReceiveWindow;
 	uint32 ReceiveWindowSize;
 	uint32 ReceiverAvailableWindow;
-	uint32 RecipientBytesReceived;
+	uint32 BytesReceived;
 	uint32 AvailableWindowAdvertised;
 };
 typedef struct rpc_out_channel RpcOutChannel;

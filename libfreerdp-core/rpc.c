@@ -633,7 +633,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	else
 	{
 		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived += header.frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header.frag_length;
 		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header.frag_length;
 	}
 
@@ -779,8 +779,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	{
 		if (rpc->read_buffer_len > length)
 		{
-			/* TODO fix read_buffer is too long problem */
-			printf("ERROR! RPC Stores data in read_buffer fits not in data on rpc_read.\n");
+			printf("rpc_read error: receiving buffer is not large enough\n");
 			return -1;
 		}
 
@@ -803,7 +802,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		{
 			printf("Error! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
 					rpc->VirtualConnection->DefaultInChannel->BytesSent,
-					rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived);
+					rpc->VirtualConnection->DefaultOutChannel->BytesReceived);
 
 			xfree(rpc_data);
 			return status;
@@ -878,7 +877,7 @@ boolean rpc_connect(rdpRpc* rpc)
 void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtual_connection)
 {
 	virtual_connection->DefaultInChannel->BytesSent = 0;
-	virtual_connection->DefaultOutChannel->RecipientBytesReceived = 0;
+	virtual_connection->DefaultOutChannel->BytesReceived = 0;
 	virtual_connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
 	virtual_connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
 	virtual_connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;

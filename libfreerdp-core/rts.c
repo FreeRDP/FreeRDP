@@ -505,7 +505,7 @@ boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending FlowControlAck RTS PDU");
 
-	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->RecipientBytesReceived;
+	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
 	ChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 
