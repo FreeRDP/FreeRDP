@@ -609,6 +609,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	uint8* bm;
 	uint8* ptr_to_crypt;
 	uint8* ptr_sig;
+	uint8* holdp;
 	int fragment;
 	int sec_bytes;
 	int try_comp;
@@ -631,19 +632,20 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	result = true;
 	rdp = fastpath->rdp;
 	sec_bytes = fastpath_get_sec_bytes(rdp);
-	maxLength = FASTPATH_MAX_PACKET_SIZE - 6 - sec_bytes;
-	totalLength = stream_get_length(s) - 6 - sec_bytes;
+	maxLength = FASTPATH_MAX_PACKET_SIZE - (6 + sec_bytes);
+	totalLength = stream_get_length(s) - (6 + sec_bytes);
 	stream_set_pos(s, 0);
 	update = stream_new(0);
 	try_comp = rdp->settings->compression;
-	comp_flags = 0;
 	comp_update = stream_new(0);
 
 	for (fragment = 0; totalLength > 0; fragment++)
 	{
+		stream_get_mark(s, holdp);
 		ls = s;
 		dlen = MIN(maxLength, totalLength);
 		cflags = 0;
+		comp_flags = 0;
 		header_bytes = 6 + sec_bytes;
 		pdu_data_bytes = dlen;
 		if (try_comp)
@@ -719,7 +721,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 		}
 
 		/* Reserve 6 + sec_bytes bytes for the next fragment header, if any. */
-		stream_seek(s, dlen - header_bytes);
+		stream_set_mark(s, holdp + dlen);
 	}
 
 	stream_detach(update);
