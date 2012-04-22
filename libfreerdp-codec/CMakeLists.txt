@@ -53,7 +53,7 @@ if(WITH_SSE2)
 	nsc_sse2.c
 	nsc_sse2.h
 )
-	set_property(SOURCE rfx_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
+	set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
 endif()
 
 if(WITH_NEON)
