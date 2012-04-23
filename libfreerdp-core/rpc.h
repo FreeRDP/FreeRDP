@@ -651,6 +651,8 @@ struct rdp_rpc
 
 	RpcVirtualConnection* VirtualConnection;
 
+	int send_seq_num;
+
 	uint32 call_id;
 	uint32 pipe_call_id;
 };

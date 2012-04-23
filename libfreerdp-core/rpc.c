@@ -738,7 +738,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, 0);
+	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->send_seq_num++);
 
 	if (encrypt_status != SEC_E_OK)
 	{
@@ -951,6 +951,8 @@ rdpRpc* rpc_new(rdpSettings* settings)
 
 		rpc->ReceiveWindow = 0x00010000;
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
+
+		rpc->send_seq_num = 0;
 
 		rpc->settings = settings;
 
