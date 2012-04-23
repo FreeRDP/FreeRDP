@@ -639,7 +639,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	try_comp = rdp->settings->compression;
 	comp_update = stream_new(0);
 
-	for (fragment = 0; totalLength > 0; fragment++)
+	for (fragment = 0; totalLength > 0 || fragment == 0; fragment++)
 	{
 		stream_get_mark(s, holdp);
 		ls = s;
