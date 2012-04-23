@@ -29,18 +29,6 @@
 
 #include "rpc.h"
 
-#define HTTP_STREAM_SIZE 0xFFFF
-
-boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out)
-{
-	rpc->tcp_in = tcp_in;
-	rpc->tcp_out = tcp_out;
-	rpc->tls_in = tls_in;
-	rpc->tls_out = tls_out;
-
-	return true;
-}
-
 #define NTLM_PACKAGE_NAME	_T("NTLM")
 
 boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
@@ -181,123 +169,135 @@ void ntlm_free(rdpNtlm* ntlm)
 	}
 }
 
-STREAM* rpc_ntlm_http_data(rdpRpc* rpc, char* command, SecBuffer* ntlm_token, uint8* content, int length)
+STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
 	STREAM* s;
 	char* base64_ntlm_token;
 	HttpContext* http_context;
 	HttpRequest* http_request;
 
+	http_request = http_request_new();
 	base64_ntlm_token = crypto_base64_encode(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
 
-	if (strcmp(command, "RPC_IN_DATA") == 0)
-		http_context = rpc->http_in->context;
-	else
-		http_context = rpc->http_out->context;
+	if (channel == TSG_CHANNEL_IN)
+	{
+		http_context = rpc->ntlm_http_in->context;
+		http_request_set_method(http_request, "RPC_IN_DATA");
+	}
+	else if (channel == TSG_CHANNEL_OUT)
+	{
+		http_context = rpc->ntlm_http_out->context;
+		http_request_set_method(http_request, "RPC_OUT_DATA");
+	}
 
-	http_request = http_request_new();
-
-	http_request->ContentLength = length;
-
-	http_request_set_method(http_request, http_context->Method);
+	http_request->ContentLength = content_length;
 	http_request_set_uri(http_request, http_context->URI);
 
 	http_request_set_auth_scheme(http_request, "NTLM");
 	http_request_set_auth_param(http_request, base64_ntlm_token);
 
 	s = http_request_write(http_context, http_request);
+	http_request_free(http_request);
 
 	return s;
 }
 
-boolean rpc_out_connect_http(rdpRpc* rpc)
+boolean rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	STREAM* s;
-	HttpResponse* http_response;
 	int ntlm_token_length;
-	uint8* ntlm_token_data = NULL;
-	rdpTls* tls_out = rpc->tls_out;
-	rdpSettings* settings = rpc->settings;
-	rdpRpcHTTP* http_out = rpc->http_out;
-	rdpNtlm* http_out_ntlm = http_out->ntlm;
+	uint8* ntlm_token_data;
+	HttpResponse* http_response;
+	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
 
-	ntlm_client_init(http_out_ntlm, true, settings->username, settings->domain, settings->password);
+	ntlm_client_init(ntlm, true, rpc->settings->username,
+			rpc->settings->domain, rpc->settings->password);
 
-	ntlm_authenticate(http_out_ntlm);
+	ntlm_authenticate(ntlm);
 
-	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 0);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, 0, TSG_CHANNEL_OUT);
 
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(tls_out, s->data, s->size);
+	tls_write_all(rpc->tls_out, s->data, s->size);
+	stream_free(s);
 
 	/* Receive OUT Channel Response */
 
-	http_response = http_response_recv(tls_out);
+	http_response = http_response_recv(rpc->tls_out);
 
+	ntlm_token_data = NULL;
 	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
-	http_out_ntlm->inputBuffer.pvBuffer = ntlm_token_data;
-	http_out_ntlm->inputBuffer.cbBuffer = ntlm_token_length;
+	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer.cbBuffer = ntlm_token_length;
 
-	ntlm_authenticate(http_out_ntlm);
+	ntlm_authenticate(ntlm);
 
-	s = rpc_ntlm_http_data(rpc, "RPC_OUT_DATA", &http_out_ntlm->outputBuffer, NULL, 76);
+	http_response_free(http_response);
+
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, 76, TSG_CHANNEL_OUT);
 
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(tls_out, s->data, s->size);
+	tls_write_all(rpc->tls_out, s->data, s->size);
+	stream_free(s);
 
-	/* At this point OUT connection is ready to send CONN/A1 and start with receiving data */
+	ntlm_client_uninit(ntlm);
+	ntlm_free(ntlm);
 
 	return true;
 }
 
-boolean rpc_in_connect_http(rdpRpc* rpc)
+boolean rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
-	STREAM* http_stream;
-	HttpResponse* http_response;
+	STREAM* s;
 	int ntlm_token_length;
-	uint8* ntlm_token_data = NULL;
-	rdpTls* tls_in = rpc->tls_in;
-	rdpSettings* settings = rpc->settings;
-	rdpRpcHTTP* http_in = rpc->http_in;
-	rdpNtlm* http_in_ntlm = http_in->ntlm;
+	uint8* ntlm_token_data;
+	HttpResponse* http_response;
+	rdpNtlm* ntlm = rpc->ntlm_http_in->ntlm;
 
-	ntlm_client_init(http_in_ntlm, true, settings->username, settings->domain, settings->password);
+	ntlm_client_init(ntlm, true, rpc->settings->username,
+			rpc->settings->domain, rpc->settings->password);
 
-	ntlm_authenticate(http_in_ntlm);
+	ntlm_authenticate(ntlm);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, 0, TSG_CHANNEL_IN);
 
 	/* Send IN Channel Request */
 
-	DEBUG_RPC("\n%s", http_stream->data);
-	tls_write_all(tls_in, http_stream->data, http_stream->size);
+	DEBUG_RPC("\n%s", s->data);
+	tls_write_all(rpc->tls_in, s->data, s->size);
+	stream_free(s);
 
 	/* Receive IN Channel Response */
 
-	http_response = http_response_recv(tls_in);
+	http_response = http_response_recv(rpc->tls_in);
 
+	ntlm_token_data = NULL;
 	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
-	http_in_ntlm->inputBuffer.pvBuffer = ntlm_token_data;
-	http_in_ntlm->inputBuffer.cbBuffer = ntlm_token_length;
+	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer.cbBuffer = ntlm_token_length;
 
-	ntlm_authenticate(http_in_ntlm);
+	ntlm_authenticate(ntlm);
 
-	http_stream = rpc_ntlm_http_data(rpc, "RPC_IN_DATA", &http_in_ntlm->outputBuffer, NULL, 0x40000000);
+	http_response_free(http_response);
+
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, 0x40000000, TSG_CHANNEL_IN);
 
 	/* Send IN Channel Request */
 
-	DEBUG_RPC("\n%s", http_stream->data);
-	tls_write_all(tls_in, http_stream->data, http_stream->size);
+	DEBUG_RPC("\n%s", s->data);
+	tls_write_all(rpc->tls_in, s->data, s->size);
+	stream_free(s);
 
-	/* At this point IN connection is ready to send CONN/B1 and start with sending data */
+	ntlm_client_uninit(ntlm);
+	ntlm_free(ntlm);
 
 	return true;
 }
@@ -320,7 +320,6 @@ void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
 int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 {
 	int status;
-	rdpTls* tls_out = rpc->tls_out;
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_out_write(): length: %d\n", length);
@@ -328,7 +327,7 @@ int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 	printf("\n");
 #endif
 
-	status = tls_write_all(tls_out, data, length);
+	status = tls_write_all(rpc->tls_out, data, length);
 
 	return status;
 }
@@ -336,7 +335,6 @@ int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 {
 	int status;
-	rdpTls* tls_in = rpc->tls_in;
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_in_write() length: %d\n", length);
@@ -344,7 +342,7 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 	printf("\n");
 #endif
 
-	status = tls_write_all(tls_in, data, length);
+	status = tls_write_all(rpc->tls_in, data, length);
 
 	if (status > 0)
 		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
@@ -473,7 +471,6 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, pdu->size);
 
-	/* TODO there is some allocated memory */
 	xfree(bind_pdu);
 
 	return true;
@@ -575,17 +572,6 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	return true;
 }
 
-int rpc_out_read_http_header(rdpRpc* rpc)
-{
-	int status = 0;
-	HttpResponse* http_response;
-	rdpTls* tls_out = rpc->tls_out;
-
-	http_response = http_response_recv(tls_out);
-
-	return status;
-}
-
 int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 {
 	STREAM* s;
@@ -593,14 +579,13 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	uint8* pdu;
 	int content_length;
 	RPC_PDU_HEADER header;
-	rdpTls* tls_out = rpc->tls_out;
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
 		rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	pdu = xmalloc(0xFFFF);
 
-	status = tls_read(tls_out, pdu, 16); /* read first 16 bytes to get RPC PDU Header */
+	status = tls_read(rpc->tls_out, pdu, 16); /* read first 16 bytes to get RPC PDU Header */
 
 	if (status <= 0)
 	{
@@ -617,7 +602,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	stream_free(s);
 
 	content_length = header.frag_length - 16;
-	status = tls_read(tls_out, pdu + 16, content_length);
+	status = tls_read(rpc->tls_out, pdu + 16, content_length);
 
 	if (status < 0)
 	{
@@ -756,7 +741,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (status < 0)
 	{
-		printf("rpc_write(): Error! rpc_in_write returned negative value.\n");
+		printf("rpc_write(): Error! rpc_tsg_write returned negative value.\n");
 		return -1;
 	}
 
@@ -847,6 +832,9 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 
 boolean rpc_connect(rdpRpc* rpc)
 {
+	rpc->tls_in = rpc->transport->tls_in;
+	rpc->tls_out = rpc->transport->tls_out;
+
 	if (!rts_connect(rpc))
 	{
 		printf("rts_connect error!\n");
@@ -909,40 +897,74 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 	}
 }
 
-rdpRpc* rpc_new(rdpSettings* settings)
+rdpNtlmHttp* ntlm_http_new()
+{
+	rdpNtlmHttp* ntlm_http;
+
+	ntlm_http = xnew(rdpNtlmHttp);
+
+	if (ntlm_http != NULL)
+	{
+		ntlm_http->ntlm = ntlm_new();
+		ntlm_http->context = http_context_new();
+	}
+
+	return ntlm_http;
+}
+
+void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel)
+{
+	if (channel == TSG_CHANNEL_IN)
+		http_context_set_method(ntlm_http->context, "RPC_IN_DATA");
+	else if (channel == TSG_CHANNEL_OUT)
+		http_context_set_method(ntlm_http->context, "RPC_OUT_DATA");
+
+	http_context_set_uri(ntlm_http->context, "/rpc/rpcproxy.dll?localhost:3388");
+	http_context_set_accept(ntlm_http->context, "application/rpc");
+	http_context_set_cache_control(ntlm_http->context, "no-cache");
+	http_context_set_connection(ntlm_http->context, "Keep-Alive");
+	http_context_set_user_agent(ntlm_http->context, "MSRPC");
+	http_context_set_host(ntlm_http->context, rpc->settings->tsg_hostname);
+
+	if (channel == TSG_CHANNEL_IN)
+	{
+		http_context_set_pragma(ntlm_http->context,
+			"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+	}
+	else if (channel == TSG_CHANNEL_OUT)
+	{
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729" ", "
+				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
+	}
+}
+
+void ntlm_http_free(rdpNtlmHttp* ntlm_http)
+{
+	if (ntlm_http != NULL)
+	{
+		ntlm_free(ntlm_http->ntlm);
+		http_context_free(ntlm_http->context);
+	}
+}
+
+rdpRpc* rpc_new(rdpTransport* transport)
 {
 	rdpRpc* rpc = (rdpRpc*) xnew(rdpRpc);
 
 	if (rpc != NULL)
 	{
-		rpc->http_in = (rdpRpcHTTP*) xnew(rdpRpcHTTP);
-		rpc->http_out = (rdpRpcHTTP*) xnew(rdpRpcHTTP);
+		rpc->transport = transport;
+		rpc->settings = transport->settings;
 
-		rpc->http_in->ntlm = ntlm_new();
-		rpc->http_out->ntlm = ntlm_new();
+		rpc->send_seq_num = 0;
+		rpc->ntlm = ntlm_new();
 
-		rpc->http_in->context = http_context_new();
-		http_context_set_method(rpc->http_in->context, "RPC_IN_DATA");
-		http_context_set_uri(rpc->http_in->context, "/rpc/rpcproxy.dll?localhost:3388");
-		http_context_set_accept(rpc->http_in->context, "application/rpc");
-		http_context_set_cache_control(rpc->http_in->context, "no-cache");
-		http_context_set_connection(rpc->http_in->context, "Keep-Alive");
-		http_context_set_user_agent(rpc->http_in->context, "MSRPC");
-		http_context_set_host(rpc->http_in->context, settings->tsg_hostname);
-		http_context_set_pragma(rpc->http_in->context,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+		rpc->ntlm_http_in = ntlm_http_new();
+		rpc->ntlm_http_out = ntlm_http_new();
 
-		rpc->http_out->context = http_context_new();
-		http_context_set_method(rpc->http_out->context, "RPC_OUT_DATA");
-		http_context_set_uri(rpc->http_out->context, "/rpc/rpcproxy.dll?localhost:3388");
-		http_context_set_accept(rpc->http_out->context, "application/rpc");
-		http_context_set_cache_control(rpc->http_out->context, "no-cache");
-		http_context_set_connection(rpc->http_out->context, "Keep-Alive");
-		http_context_set_user_agent(rpc->http_out->context, "MSRPC");
-		http_context_set_host(rpc->http_out->context, settings->tsg_hostname);
-		http_context_set_pragma(rpc->http_out->context,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729" ", "
-				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
+		rpc_ntlm_http_init_channel(rpc, rpc->ntlm_http_in, TSG_CHANNEL_IN);
+		rpc_ntlm_http_init_channel(rpc, rpc->ntlm_http_out, TSG_CHANNEL_OUT);
 
 		rpc->read_buffer = NULL;
 		rpc->write_buffer = NULL;
@@ -952,14 +974,19 @@ rdpRpc* rpc_new(rdpSettings* settings)
 		rpc->ReceiveWindow = 0x00010000;
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 
-		rpc->send_seq_num = 0;
-
-		rpc->settings = settings;
-
-		rpc->ntlm = ntlm_new();
-
 		rpc->call_id = 0;
 	}
 
 	return rpc;
+}
+
+void rpc_free(rdpRpc* rpc)
+{
+	if (rpc != NULL)
+	{
+		ntlm_http_free(rpc->ntlm_http_in);
+		ntlm_http_free(rpc->ntlm_http_out);
+		rpc_client_virtual_connection_free(rpc->VirtualConnection);
+		xfree(rpc);
+	}
 }

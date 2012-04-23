@@ -22,11 +22,12 @@
 #define FREERDP_CORE_RPC_H
 
 typedef struct rdp_rpc rdpRpc;
-typedef struct rdp_rpc_http rdpRpcHTTP;
+typedef struct rdp_ntlm_http rdpNtlmHttp;
 
 #include "tcp.h"
 #include "rts.h"
 #include "http.h"
+#include "transport.h"
 
 #include <time.h>
 #include <freerdp/types.h>
@@ -551,10 +552,17 @@ struct rdp_ntlm
 };
 typedef struct rdp_ntlm rdpNtlm;
 
-struct rdp_rpc_http
+enum _TSG_CHANNEL
 {
-	HttpContext* context;
+	TSG_CHANNEL_IN,
+	TSG_CHANNEL_OUT
+};
+typedef enum _TSG_CHANNEL TSG_CHANNEL;
+
+struct rdp_ntlm_http
+{
 	rdpNtlm* ntlm;
+	HttpContext* context;
 };
 
 /* Ping Originator */
@@ -630,31 +638,30 @@ typedef struct rpc_virtual_connection RpcVirtualConnection;
 
 struct rdp_rpc
 {
-	rdpTcp* tcp_in;
-	rdpTcp* tcp_out;
 	rdpTls* tls_in;
 	rdpTls* tls_out;
 
 	rdpNtlm* ntlm;
-	rdpRpcHTTP* http_in;
-	rdpRpcHTTP* http_out;
+	int send_seq_num;
+
+	rdpNtlmHttp* ntlm_http_in;
+	rdpNtlmHttp* ntlm_http_out;
 
 	UNICONV* uniconv;
 	rdpSettings* settings;
+	rdpTransport* transport;
 
 	uint8* write_buffer;
 	uint32 write_buffer_len;
 	uint8* read_buffer;
 	uint32 read_buffer_len;
 
+	uint32 call_id;
+	uint32 pipe_call_id;
+
 	uint32 ReceiveWindow;
 
 	RpcVirtualConnection* VirtualConnection;
-
-	int send_seq_num;
-
-	uint32 call_id;
-	uint32 pipe_call_id;
 };
 
 boolean ntlm_authenticate(rdpNtlm* ntlm);
@@ -665,11 +672,10 @@ void ntlm_client_uninit(rdpNtlm* ntlm);
 rdpNtlm* ntlm_new();
 void ntlm_free(rdpNtlm* ntlm);
 
-boolean rpc_attach(rdpRpc* rpc, rdpTcp* tcp_in, rdpTcp* tcp_out, rdpTls* tls_in, rdpTls* tls_out);
 boolean rpc_connect(rdpRpc* rpc);
 
-boolean rpc_out_connect_http(rdpRpc* rpc);
-boolean rpc_in_connect_http(rdpRpc* rpc);
+boolean rpc_ntlm_http_out_connect(rdpRpc* rpc);
+boolean rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header);
 
@@ -681,7 +687,8 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length);
 int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum);
 int rpc_read(rdpRpc* rpc, uint8* data, int length);
 
-rdpRpc* rpc_new(rdpSettings* settings);
+rdpRpc* rpc_new(rdpTransport* transport);
+void rpc_free(rdpRpc* rpc);
 
 #ifdef WITH_DEBUG_TSG
 #define WITH_DEBUG_RPC

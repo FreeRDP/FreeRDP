@@ -267,7 +267,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
 int tsg_write(rdpTsg* tsg, uint8* data, uint32 length);
 int tsg_read(rdpTsg* tsg, uint8* data, uint32 length);
 
-rdpTsg* tsg_new(rdpSettings* settings);
+rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);
 
 #ifdef WITH_DEBUG_TSG

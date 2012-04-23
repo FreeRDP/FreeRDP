@@ -134,7 +134,7 @@ boolean transport_connect_nla(rdpTransport* transport)
 
 boolean transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
-	rdpTsg* tsg = tsg_new(transport->settings);
+	rdpTsg* tsg = tsg_new(transport);
 
 	tsg->transport = transport;
 	transport->tsg = tsg;
@@ -498,6 +498,7 @@ void transport_free(rdpTransport* transport)
 			tls_free(transport->tls);
 
 		tcp_free(transport->tcp);
+		tsg_free(transport->tsg);
 
 		xfree(transport);
 	}

@@ -47,7 +47,7 @@ boolean rts_connect(rdpRpc* rpc)
 	RTS_PDU rts_pdu;
 	HttpResponse* http_response;
 
-	if (!rpc_out_connect_http(rpc))
+	if (!rpc_ntlm_http_out_connect(rpc))
 	{
 		printf("rpc_out_connect_http error!\n");
 		return false;
@@ -59,7 +59,7 @@ boolean rts_connect(rdpRpc* rpc)
 		return false;
 	}
 
-	if (!rpc_in_connect_http(rpc))
+	if (!rpc_ntlm_http_in_connect(rpc))
 	{
 		printf("rpc_in_connect_http error!\n");
 		return false;

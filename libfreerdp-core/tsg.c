@@ -199,13 +199,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	uint32 length;
 	int status = -1;
 	rdpRpc* rpc = tsg->rpc;
-	rdpTransport* transport = tsg->transport;
-
-	if (!rpc_attach(rpc, transport->tcp_in, transport->tcp_out, transport->tls_in, transport->tls_out))
-	{
-		printf("rpc_attach failed!\n");
-		return false;
-	}
 
 	if (!rpc_connect(rpc))
 	{
@@ -383,6 +376,15 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	return true;
 }
 
+int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
+{
+	int status;
+
+	status = rpc_read(tsg->rpc, data, length);
+
+	return status;
+}
+
 uint8 pp[8] =
 {
 	0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -425,27 +427,27 @@ int tsg_write(rdpTsg* tsg, uint8* data, uint32 length)
 	return length;
 }
 
-int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
-{
-	int status;
-
-	status = rpc_read(tsg->rpc, data, length);
-
-	return status;
-}
-
-rdpTsg* tsg_new(rdpSettings* settings)
+rdpTsg* tsg_new(rdpTransport* transport)
 {
 	rdpTsg* tsg;
-	tsg = (rdpTsg*) xzalloc(sizeof(rdpTsg));
 
-	tsg->settings = settings;
-	tsg->rpc = rpc_new(settings);
+	tsg = xnew(rdpTsg);
+
+	if (tsg != NULL)
+	{
+		tsg->transport = transport;
+		tsg->settings = transport->settings;
+		tsg->rpc = rpc_new(tsg->transport);
+	}
 
 	return tsg;
 }
 
 void tsg_free(rdpTsg* tsg)
 {
-
+	if (tsg != NULL)
+	{
+		rpc_free(tsg->rpc);
+		xfree(tsg);
+	}
 }
