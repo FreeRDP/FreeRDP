@@ -149,6 +149,11 @@ uint8 tsg_packet5[20] =
 	0x00, 0x00, 0x00, 0x00
 };
 
+void Opnum0NotUsedOnWire(handle_t IDL_handle)
+{
+
+}
+
 HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
 		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId)
 {
@@ -173,6 +178,11 @@ HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
 	return 0;
 }
 
+void Opnum5NotUsedOnWire(handle_t IDL_handle)
+{
+
+}
+
 HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
 {
 	return 0;
@@ -183,14 +193,90 @@ HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
 	return 0;
 }
 
-DWORD TsProxySetupReceivePipe(byte pRpcMessage[])
+DWORD TsProxySetupReceivePipe(handle_t IDL_handle, byte pRpcMessage[])
 {
 	return 0;
 }
 
-DWORD TsProxySendToServer(byte pRpcMessage[])
+DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths)
 {
-	return 0;
+	STREAM* s;
+	int status;
+	int length;
+	rdpTsg* tsg;
+	byte* buffer1;
+	byte* buffer2;
+	byte* buffer3;
+	uint32 buffer1Length;
+	uint32 buffer2Length;
+	uint32 buffer3Length;
+	uint32 numBuffers = 0;
+	uint32 totalDataBytes = 0;
+
+	tsg = (rdpTsg*) IDL_handle;
+	buffer1Length = buffer2Length = buffer3Length = 0;
+
+	if (count > 0)
+	{
+		numBuffers++;
+		buffer1 = &pRpcMessage[0];
+		buffer1Length = lengths[0];
+		totalDataBytes += lengths[0] + 4;
+	}
+
+	if (count > 1)
+	{
+		numBuffers++;
+		buffer2 = &pRpcMessage[1];
+		buffer2Length = lengths[1];
+		totalDataBytes += lengths[1] + 4;
+	}
+
+	if (count > 2)
+	{
+		numBuffers++;
+		buffer3 = &pRpcMessage[2];
+		buffer3Length = lengths[2];
+		totalDataBytes += lengths[2] + 4;
+	}
+
+	s = stream_new(28 + totalDataBytes);
+
+	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
+	stream_write_uint32(s, 0); /* ContextType (4 bytes) */
+	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (4 bytes) */
+
+	stream_write_uint32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
+	stream_write_uint32_be(s, numBuffers); /* numBuffers (4 bytes) */
+
+	if (buffer1Length > 0)
+		stream_write_uint32_be(s, buffer1Length); /* buffer1Length (4 bytes) */
+	if (buffer2Length > 0)
+		stream_write_uint32_be(s, buffer2Length); /* buffer2Length (4 bytes) */
+	if (buffer3Length > 0)
+		stream_write_uint32_be(s, buffer3Length); /* buffer3Length (4 bytes) */
+
+	if (buffer1Length > 0)
+		stream_write(s, buffer1, buffer1Length); /* buffer1 (variable) */
+	if (buffer2Length > 0)
+		stream_write(s, buffer2, buffer2Length); /* buffer2 (variable) */
+	if (buffer3Length > 0)
+		stream_write(s, buffer3, buffer3Length); /* buffer3 (variable) */
+
+	stream_seal(s);
+
+	length = s->size;
+	status = rpc_tsg_write(tsg->rpc, s->data, s->size, 9);
+
+	stream_free(s);
+
+	if (status <= 0)
+	{
+		printf("rpc_tsg_write failed!\n");
+		return -1;
+	}
+
+	return length;
 }
 
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
@@ -238,7 +324,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	tsg->TunnelContext = xmalloc(16);
 	memcpy(tsg->TunnelContext, data + 2300, 16);
 
 #ifdef WITH_DEBUG_TSG
@@ -345,7 +430,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	tsg->ChannelContext = xmalloc(16);
 	memcpy(tsg->ChannelContext, data + 4, 16);
 
 #ifdef WITH_DEBUG_TSG
@@ -385,46 +469,9 @@ int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
 	return status;
 }
 
-uint8 pp[8] =
-{
-	0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
 int tsg_write(rdpTsg* tsg, uint8* data, uint32 length)
 {
-	STREAM* s;
-	uint8* tsg_pkg;
-	int status = -1;
-
-	uint16 opnum = 9;
-	uint32 tsg_length = length + 16 + 4 + 12 + 8;
-	uint32 totalDataBytes = length + 4;
-
-	s = stream_new(12);
-	stream_write_uint32_be(s, totalDataBytes);
-	stream_write_uint32_be(s, 0x01);
-	stream_write_uint32_be(s, length);
-
-	tsg_pkg = xmalloc(tsg_length);
-	memset(tsg_pkg, 0, 4);
-	memcpy(tsg_pkg + 4, tsg->ChannelContext, 16);
-	memcpy(tsg_pkg + 20, s->data, 12);
-	memcpy(tsg_pkg + 32, data, length);
-
-	memcpy(tsg_pkg + 32 + length, pp, 8);
-
-	status = rpc_tsg_write(tsg->rpc, tsg_pkg, tsg_length, opnum);
-
-	xfree(tsg_pkg);
-	stream_free(s);
-
-	if (status <= 0)
-	{
-		printf("rpc_write failed!\n");
-		return -1;
-	}
-
-	return length;
+	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
 }
 
 rdpTsg* tsg_new(rdpTransport* transport)

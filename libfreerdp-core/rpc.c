@@ -645,6 +645,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 {
 	int i;
 	int status;
+	STREAM* pdu;
 	rdpNtlm* ntlm;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
@@ -671,7 +672,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	request_pdu->auth_length = 16;
 	request_pdu->call_id = ++rpc->call_id;
 
-	/* opnum=8 means [MS-TSGU] TsProxySetupRecievePipe, save call_id for checking pipe responses */
+	/* opnum=8 means [MS-TSGU] TsProxySetupReceivePipe, save call_id for checking pipe responses */
 
 	if (opnum == 8)
 		rpc->pipe_call_id = rpc->call_id;
@@ -680,7 +681,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
 	request_pdu->stub_data = data;
-	request_pdu->auth_verifier.auth_type = 0x0a; /* :01  which authentication service */
+	request_pdu->auth_verifier.auth_type = 0x0A; /* :01  which authentication service */
 	request_pdu->auth_verifier.auth_level = 0x05; /* :01  which level within service */
 	request_pdu->auth_verifier.auth_pad_length = auth_pad_length; /* :01 */
 	request_pdu->auth_verifier.auth_pad = xmalloc(auth_pad_length); /* align(4); size_is(auth_pad_length) p */
@@ -694,7 +695,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	request_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
 	request_pdu->auth_verifier.auth_value = xmalloc(request_pdu->auth_length); /* credentials; size_is(auth_length) p */
 
-	STREAM* pdu = stream_new(request_pdu->frag_length);
+	pdu = stream_new(request_pdu->frag_length);
 
 	stream_write(pdu, request_pdu, 24);
 	stream_write(pdu, request_pdu->stub_data, request_pdu->alloc_hint);

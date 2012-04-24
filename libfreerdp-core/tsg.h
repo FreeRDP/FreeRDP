@@ -37,11 +37,15 @@ typedef struct rdp_tsg rdpTsg;
 struct rdp_tsg
 {
 	rdpRpc* rpc;
-	uint8* TunnelContext;
-	uint8* ChannelContext;
 	rdpSettings* settings;
 	rdpTransport* transport;
+	uint8 TunnelContext[16];
+	uint8 ChannelContext[16];
 };
+
+typedef void* I_RPC_HANDLE;
+typedef I_RPC_HANDLE RPC_BINDING_HANDLE;
+typedef RPC_BINDING_HANDLE handle_t;
 
 typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE;
 typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
@@ -242,6 +246,8 @@ typedef struct _TSG_PACKET
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
+void Opnum0NotUsedOnWire(handle_t IDL_handle);
+
 HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
 		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId);
 
@@ -254,13 +260,15 @@ HRESULT TsProxyMakeTunnelCall(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
 HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
 		PTSENDPOINTINFO tsEndPointInfo, PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, unsigned long* channelId);
 
+void Opnum5NotUsedOnWire(handle_t IDL_handle);
+
 HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context);
 
 HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context);
 
-DWORD TsProxySetupReceivePipe(byte pRpcMessage[]);
+DWORD TsProxySetupReceivePipe(handle_t IDL_handle, byte pRpcMessage[]);
 
-DWORD TsProxySendToServer(byte pRpcMessage[]);
+DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths);
 
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
 
