@@ -284,7 +284,10 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	uint8* data;
 	uint32 length;
 	int status = -1;
+	UNICONV* tsg_uniconv;
 	rdpRpc* rpc = tsg->rpc;
+	uint8* dest_addr_unic;
+	uint32 dest_addr_unic_len;
 
 	if (!rpc_connect(rpc))
 	{
@@ -324,10 +327,10 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		return false;
 	}
 
-	memcpy(tsg->TunnelContext, data + 2300, 16);
+	memcpy(tsg->TunnelContext, data + (status - 24), 16);
 
 #ifdef WITH_DEBUG_TSG
-	printf("TSG tunnelContext:\n");
+	printf("TSG TunnelContext:\n");
 	freerdp_hexdump(tsg->TunnelContext, 16);
 	printf("\n");
 #endif
@@ -385,9 +388,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	}
 	status = -1;
 
-	UNICONV* tsg_uniconv = freerdp_uniconv_new();
-	uint32 dest_addr_unic_len;
-	uint8* dest_addr_unic = (uint8*) freerdp_uniconv_out(tsg_uniconv, hostname, (size_t*) &dest_addr_unic_len);
+	tsg_uniconv = freerdp_uniconv_new();
+	dest_addr_unic = (uint8*) freerdp_uniconv_out(tsg_uniconv, hostname, (size_t*) &dest_addr_unic_len);
 	freerdp_uniconv_free(tsg_uniconv);
 
 	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);

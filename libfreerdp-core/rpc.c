@@ -489,8 +489,6 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	pdu = xmalloc(pdu_length);
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
-	DEBUG_RPC("TODO: complete NTLM integration");
-
 	if (status > 0)
 	{
 		s = stream_new(0);
@@ -499,14 +497,9 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		stream_detach(s);
 		stream_free(s);
 
-		printf("frag_length:%d auth_length:%d\n", header.frag_length, header.auth_length);
-
 		auth_data = xmalloc(header.auth_length);
 		p = (pdu + (header.frag_length - header.auth_length));
 		memcpy(auth_data, p, header.auth_length);
-
-		printf("auth_data: (length = %d)\n", header.auth_length);
-		freerdp_hexdump(auth_data, header.auth_length);
 
 		rpc->ntlm->inputBuffer.pvBuffer = auth_data;
 		rpc->ntlm->inputBuffer.cbBuffer = header.auth_length;
