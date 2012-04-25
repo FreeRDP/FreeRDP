@@ -503,9 +503,6 @@ boolean rdp_client_connect_finalize(rdpRdp* rdp)
 		return false;
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
 		return false;
-
-	rdp->input->SynchronizeEvent(rdp->input, 0);
-
 	if (!rdp_send_client_persistent_key_list_pdu(rdp))
 		return false;
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
