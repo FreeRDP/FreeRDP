@@ -49,7 +49,8 @@ set(FREERDP_UTILS_SRCS
 	thread.c
 	time.c
 	unicode.c
-	wait_obj.c)
+	wait_obj.c
+	msusb.c)
 
 add_library(freerdp-utils ${FREERDP_UTILS_SRCS})
 

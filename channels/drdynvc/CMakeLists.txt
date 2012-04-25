@@ -34,4 +34,5 @@ install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
 
 add_subdirectory(tsmf)
 add_subdirectory(audin)
+add_subdirectory(urbdrc)
 

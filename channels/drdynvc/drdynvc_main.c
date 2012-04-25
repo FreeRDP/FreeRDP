@@ -86,7 +86,15 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	stream_set_pos(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
-	if (data_size <= CHANNEL_CHUNK_LENGTH - pos)
+	if(data_size == 0)
+	{
+		pos = stream_get_pos(data_out);
+		stream_set_pos(data_out, 0);
+		stream_write_uint8(data_out, 0x40 | cbChId);
+		stream_set_pos(data_out, pos);
+		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+	}
+	else if (data_size <= CHANNEL_CHUNK_LENGTH - pos)
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
