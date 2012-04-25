@@ -45,6 +45,7 @@ struct drdynvc_plugin
 	int PriorityCharge1;
 	int PriorityCharge2;
 	int PriorityCharge3;
+	int channel_error;
 
 	IWTSVirtualChannelManager* channel_mgr;
 };
@@ -65,7 +66,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
 	}
 	else
 	{
-		cb = 3;
+		cb = 2;
 		stream_write_uint32(stream, val);
 	}
 	return cb;
@@ -81,6 +82,9 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	int error;
 
 	DEBUG_DVC("ChannelId=%d size=%d", ChannelId, data_size);
+
+	if (drdynvc->channel_error != CHANNEL_RC_OK)
+		return 1;
 
 	data_out = stream_new(CHANNEL_CHUNK_LENGTH);
 	stream_set_pos(data_out, 1);
@@ -139,6 +143,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	}
 	if (error != CHANNEL_RC_OK)
 	{
+		drdynvc->channel_error = error;
 		DEBUG_WARN("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
@@ -182,6 +187,8 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 		DEBUG_WARN("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
+	drdynvc->channel_error = error;
+
 	return 0;
 }
 
@@ -329,6 +336,7 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	DEBUG_DVC("connecting");
 
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
+	drdynvc->channel_error = 0;
 	dvcman_load_plugin(drdynvc->channel_mgr, svc_plugin_get_data(plugin));
 	dvcman_init(drdynvc->channel_mgr);
 }
