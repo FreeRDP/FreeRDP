@@ -329,6 +329,7 @@ void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height
 		size_hints->min_width = size_hints->max_width = xfi->width;
 		size_hints->min_height = size_hints->max_height = xfi->height;
 		XSetWMNormalHints(xfi->display, window->handle, size_hints);
+		XResizeWindow(xfi->display, window->handle, xfi->width, xfi->height);
 		XFree(size_hints);
 	}
 }
