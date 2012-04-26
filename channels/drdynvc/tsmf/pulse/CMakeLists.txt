@@ -22,7 +22,7 @@ set(TSMF_PULSE_SRCS
 )
 
 include_directories(..)
-include_directories(${PULSE_INCLUDE_DIRS})
+include_directories(${PULSEAUDIO_INCLUDE_DIR})
 
 add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
 set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
