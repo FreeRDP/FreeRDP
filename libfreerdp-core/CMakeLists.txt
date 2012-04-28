@@ -41,6 +41,8 @@ set(LIBFREERDP_CORE_SRCS
 	rpc.h
 	rts.c
 	rts.h
+	ndr.c
+	ndr.h
 	input.c
 	input.h
 	license.c
