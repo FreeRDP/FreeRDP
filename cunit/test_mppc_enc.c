@@ -26,9 +26,10 @@
 #include <sys/types.h>
 #include <freerdp/freerdp.h>
 
-#include "rdp.h"
+#include <freerdp/codec/mppc_dec.h>
+#include <freerdp/codec/mppc_enc.h>
 #include "test_mppc_enc.h"
-#include "mppc_enc.h"
+
 
 #define BUF_SIZE (1024 * 1)
 
@@ -491,10 +492,9 @@ void test_mppc_enc(void)
 	char buf[BUF_SIZE];
 
 	/* needed by decoder */
-	rdpRdp rdp;
-	struct rdp_mppc rmppc;
-	uint32_t roff;
-	uint32_t rlen;
+	struct rdp_mppc_dec* rmppc;
+	uint32 roff;
+	uint32 rlen;
 
 	/* required for timing the test */
 	struct timeval start_time;
@@ -502,10 +502,7 @@ void test_mppc_enc(void)
 	long int dur;
 
 	/* setup decoder */
-	rdp.mppc = &rmppc;
-	rdp.mppc->history_buf = calloc(1, RDP6_HISTORY_BUF_SIZE);
-	CU_ASSERT(rdp.mppc->history_buf != NULL);
-	rdp.mppc->history_ptr = rdp.mppc->history_buf;
+	rmppc = mppc_dec_new();
 
 	/* setup encoder for RDP 5.0 */
 	CU_ASSERT((enc = mppc_enc_new(PROTO_RDP_50)) != NULL);
@@ -527,15 +524,15 @@ void test_mppc_enc(void)
 			block_num++;
 			total += bytes_read;
 			DLOG(("block_num=%d\n", block_num));
-			CU_ASSERT(compress_rdp(enc, (uint8*) buf, bytes_read) == true);
+			CU_ASSERT(compress_rdp(enc, (uint8*) buf, bytes_read) != false);
 			if (enc->flags & PACKET_COMPRESSED)
 			{
 				DLOG(("%d bytes compressed to %d\n", bytes_read, enc->bytes_in_opb));
 				clen += enc->bytes_in_opb;
-				CU_ASSERT(decompress_rdp_5(&rdp, (uint8 *) enc->outputBuffer,
-						enc->bytes_in_opb, enc->flags, &roff, &rlen) == true);
+				CU_ASSERT(decompress_rdp_5(rmppc, (uint8 *) enc->outputBuffer,
+						enc->bytes_in_opb, enc->flags, &roff, &rlen) != false);
 				CU_ASSERT(bytes_read == rlen);
-				CU_ASSERT(memcmp(buf, &rdp.mppc->history_buf[roff], rlen) == 0);
+				CU_ASSERT(memcmp(buf, &rmppc->history_buf[roff], rlen) == 0);
 			}
 			else
 			{
@@ -563,13 +560,13 @@ void test_mppc_enc(void)
 		/* save starting time */
 		gettimeofday(&start_time, NULL);
 
-		CU_ASSERT(compress_rdp(enc, (uint8*) decompressed_rd5_data, data_len) == true);
+		CU_ASSERT(compress_rdp(enc, (uint8*) decompressed_rd5_data, data_len) != false);
 		if (enc->flags & PACKET_COMPRESSED)
 		{
-			CU_ASSERT(decompress_rdp_5(&rdp, (uint8 *) enc->outputBuffer,
-					enc->bytes_in_opb, enc->flags, &roff, &rlen) == true);
+			CU_ASSERT(decompress_rdp_5(rmppc, (uint8 *) enc->outputBuffer,
+					enc->bytes_in_opb, enc->flags, &roff, &rlen) != false);
 			CU_ASSERT(data_len == rlen);
-			CU_ASSERT(memcmp(decompressed_rd5_data, &rdp.mppc->history_buf[roff], rlen) == 0);
+			CU_ASSERT(memcmp(decompressed_rd5_data, &rmppc->history_buf[roff], rlen) == 0);
 		}
 		else
 		{
@@ -590,5 +587,5 @@ void test_mppc_enc(void)
 	}
 
 	mppc_enc_free(enc);
-	free(rdp.mppc->history_buf);
+	mppc_dec_free(rmppc);
 }

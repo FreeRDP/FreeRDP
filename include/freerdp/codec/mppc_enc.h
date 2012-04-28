@@ -22,7 +22,6 @@
 #define __MPPC_ENC_H
 
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
 
 #define PROTO_RDP_40 1
 #define PROTO_RDP_50 2
@@ -39,12 +38,13 @@ struct rdp_mppc_enc
 	int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
 	int   flagsHold;
 	int   first_pkt;        /* this is the first pkt passing through enc */
+	uint16* hash_table;
 };
 
-boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
-void mppc_enc_free(struct rdp_mppc_enc* enc);
+FREERDP_API boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
+FREERDP_API void mppc_enc_free(struct rdp_mppc_enc* enc);
 
 #endif

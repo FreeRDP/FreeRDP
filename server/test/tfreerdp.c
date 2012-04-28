@@ -524,6 +524,10 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test2", 5, NULL);
 		}
 	}
+	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
+	{
+		client->Close(client);
+	}
 }
 
 void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)

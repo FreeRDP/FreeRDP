@@ -50,6 +50,22 @@ void xf_kbd_unset_keypress(xfInfo* xfi, uint8 keycode)
 		return;
 }
 
+void xf_kbd_release_all_keypress(xfInfo* xfi)
+{
+	int keycode;
+	RDP_SCANCODE rdp_scancode;
+
+	for (keycode = 0; keycode < ARRAY_SIZE(xfi->pressed_keys); keycode++)
+	{
+		if (xfi->pressed_keys[keycode] != NoSymbol)
+		{
+			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+			freerdp_input_send_keyboard_event_2(xfi->instance->input, false, rdp_scancode);
+			xfi->pressed_keys[keycode] = NoSymbol;
+		}
+	}
+}
+
 boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfi->display, keysym);
@@ -58,38 +74,33 @@ boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 
 void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 {
-	uint16 flags;
-	uint8 scancode;
-	boolean extended;
+	RDP_SCANCODE rdp_scancode;
 	rdpInput* input;
 
 	input = xfi->instance->input;
-	scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode, &extended);
+	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
-	if (scancode == 0)
+	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		/* unknown key */
+		printf("Unknown key with X keycode 0x%02x\n", keycode);
 	}
-	else if ((scancode == 0x46) && extended &&
+	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_kbd_key_pressed(xfi, XK_Control_L) && !xf_kbd_key_pressed(xfi, XK_Control_R))
 	{
 		/* Pause without Ctrl has to be sent as Ctrl + NumLock. */
 		if (down)
 		{
-			input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x1D); /* Ctrl down */
-			input->KeyboardEvent(input, KBD_FLAGS_DOWN, 0x45); /* NumLock down */
-			input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x1D); /* Ctrl up */
-			input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x45); /* NumLock up */
+			freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_NUMLOCK);
 		}
 	}
 	else
 	{
-		flags = (extended) ? KBD_FLAGS_EXTENDED : 0;
-		flags |= (down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE;
+		freerdp_input_send_keyboard_event_2(input, down, rdp_scancode);
 
-		input->KeyboardEvent(input, flags, scancode);
-
-		if ((scancode == 0x3A) && (down == false)) /* caps lock was released */
+		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == false))
 		{
 			uint32 syncFlags;
 			syncFlags = xf_kbd_get_toggle_keys_state(xfi);

@@ -87,8 +87,11 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != true) {
+		tls_free(transport->tls);
+		transport->tls = NULL;
 		return false;
+	}
 
 	return true;
 }
@@ -104,8 +107,11 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != true) {
+		tls_free(transport->tls);
+		transport->tls = NULL;
 		return false;
+	}
 
 	/* Network Level Authentication */
 
@@ -431,10 +437,10 @@ int transport_check_fds(rdpTransport** ptransport)
 		stream_set_pos(received, length);
 		stream_seal(received);
 		stream_set_pos(received, 0);
-		
+
 		if (transport->recv_callback(transport, received, transport->recv_extra) == false)
 			status = -1;
-	
+
 		stream_free(received);
 
 		if (status < 0)
@@ -442,6 +448,16 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
 		transport = *ptransport;
+
+		if (transport->process_single_pdu)
+		{
+			/* one at a time but set event if data buffered
+			 * so the main loop will call freerdp_check_fds asap */
+			if (stream_get_pos(transport->recv_buffer) > 0)
+				wait_obj_set(transport->recv_event);
+			break;
+		}
+
 	}
 
 	return 0;

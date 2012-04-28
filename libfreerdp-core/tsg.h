@@ -28,7 +28,7 @@ typedef struct rdp_tsg rdpTsg;
 
 #include <time.h>
 #include <freerdp/types.h>
-#include <freerdp/wintypes.h>
+#include <freerdp/wtypes.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>

@@ -37,12 +37,13 @@
 #include "redirection.h"
 #include "capabilities.h"
 #include "channel.h"
-#include "mppc.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/codec/mppc_dec.h>
+#include <freerdp/codec/mppc_enc.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT		0x0001
@@ -104,16 +105,6 @@
 #define DATA_PDU_TYPE_STATUS_INFO				0x36
 #define DATA_PDU_TYPE_MONITOR_LAYOUT				0x37
 
-/* Compression Types */
-#define PACKET_COMPRESSED		0x20
-#define PACKET_AT_FRONT			0x40
-#define PACKET_FLUSHED			0x80
-#define PACKET_COMPR_TYPE_8K		0x00
-#define PACKET_COMPR_TYPE_64K		0x01
-#define PACKET_COMPR_TYPE_RDP6		0x02
-#define PACKET_COMPR_TYPE_RDP61		0x03
-#define CompressionTypeMask		0x0F
-
 /* Stream Identifiers */
 #define STREAM_UNDEFINED		0x00
 #define STREAM_LOW			0x01
@@ -134,7 +125,7 @@ struct rdp_rdp
 	struct rdp_settings* settings;
 	struct rdp_transport* transport;
 	struct rdp_extension* extension;
-	struct rdp_mppc* mppc;
+	struct rdp_mppc_dec* mppc_dec;
 	struct rdp_mppc_enc* mppc_enc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;

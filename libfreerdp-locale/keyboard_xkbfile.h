@@ -23,14 +23,6 @@
 #include <freerdp/types.h>
 #include <freerdp/locale/keyboard.h>
 
-struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME
-{
-	uint32 vkcode; /* virtual key code */
-	const char* xkb_keyname; /* XKB keyname */
-	const char* xkb_keyname_extended; /* XKB keyname (extended) */
-};
-typedef struct _VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME VIRTUAL_KEY_CODE_TO_XKB_KEY_NAME;
-
 uint32 freerdp_keyboard_init_xkbfile(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256]);
 uint32 detect_keyboard_layout_from_xkbfile(void* display);
 int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keycode_to_rdp_scancode[256]);

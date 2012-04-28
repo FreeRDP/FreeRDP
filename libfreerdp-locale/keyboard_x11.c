@@ -206,13 +206,8 @@ char* freerdp_detect_keymap_from_xkb()
 
 uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
-	char* keymap;
 	uint32 vkcode;
 	uint32 keycode;
-	uint32 scancode;
-	boolean extended;
-	char* xkb_layout;
-	char* xkb_variant;
 	uint32 keycode_to_vkcode[256];
 
 	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
@@ -258,11 +253,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (!(vkcode > 0 && vkcode < 256))
 			continue;
 
-		scancode = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
-		extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
-
-		x11_keycode_to_rdp_scancode[keycode].code = scancode;
-		x11_keycode_to_rdp_scancode[keycode].extended = extended;
+		x11_keycode_to_rdp_scancode[keycode] = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
 	}
 
 	return keyboardLayoutId;

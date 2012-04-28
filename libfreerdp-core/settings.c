@@ -53,12 +53,12 @@ rdpSettings* settings_new(void* instance)
 		settings->tls_security = true;
 		settings->rdp_security = true;
 		settings->client_build = 2600;
-		settings->kbd_type = 0;
+		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
 		settings->kbd_subtype = 0;
-		settings->kbd_fn_keys = 0;
+		settings->kbd_fn_keys = 12;
 		settings->kbd_layout = 0;
 		settings->encryption = false;
-		settings->salted_checksum = false;
+		settings->salted_checksum = true;
 		settings->port = 3389;
 		settings->desktop_resize = true;
 
@@ -73,6 +73,9 @@ rdpSettings* settings_new(void* instance)
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
 		settings->authentication = true;
+
+		settings->received_caps = xzalloc(32);
+		settings->order_support = xzalloc(32);
 
 		settings->order_support[NEG_DSTBLT_INDEX] = true;
 		settings->order_support[NEG_PATBLT_INDEX] = true;
@@ -96,6 +99,9 @@ rdpSettings* settings_new(void* instance)
 		settings->order_support[NEG_POLYGON_CB_INDEX] = true;
 		settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
 		settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
+
+		settings->client_hostname = xzalloc(32);
+		settings->client_product_id = xzalloc(32);
 
 		settings->color_pointer = true;
 		settings->large_pointer = true;
@@ -197,6 +203,10 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->client_dir);
 		xfree(settings->cert_file);
 		xfree(settings->privatekey_file);
+		xfree(settings->received_caps);
+		xfree(settings->order_support);
+		xfree(settings->client_hostname);
+		xfree(settings->client_product_id);
 		freerdp_blob_free(settings->server_random);
 		freerdp_blob_free(settings->server_certificate);
 		xfree(settings->server_random);

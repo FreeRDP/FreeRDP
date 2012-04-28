@@ -156,6 +156,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 	uint16 x, y;
 	uint16 flags;
 	boolean wheel;
+	boolean extended;
 	rdpInput* input;
 
 	input = xfi->instance->input;
@@ -164,6 +165,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 	y = 0;
 	flags = 0;
 	wheel = false;
+	extended = false;
 
 	switch (event->xbutton.button)
 	{
@@ -195,6 +197,24 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 			break;
 
+		case 6:		// wheel left or back
+		case 8:		// back
+		case 97:	// Xming
+			extended = true;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
+			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON1;
+			break;
+
+		case 7:		// wheel right or forward
+		case 9:		// forward
+		case 112:	// Xming
+			extended = true;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
+			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON2;
+			break;
+
 		default:
 			x = 0;
 			y = 0;
@@ -224,7 +244,10 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 				}
 			}
 
-			input->MouseEvent(input, flags, x, y);
+			if (extended)
+				input->ExtendedMouseEvent(input, flags, x, y);
+			else
+				input->MouseEvent(input, flags, x, y);
 		}
 	}
 
@@ -235,6 +258,7 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 {
 	uint16 x, y;
 	uint16 flags;
+	boolean extended;
 	rdpInput* input;
 
 	input = xfi->instance->input;
@@ -242,6 +266,7 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	x = 0;
 	y = 0;
 	flags = 0;
+	extended = false;
 
 	switch (event->xbutton.button)
 	{
@@ -261,6 +286,24 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 			x = event->xbutton.x;
 			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON2;
+			break;
+
+		case 6:
+		case 8:
+		case 97:
+			extended = true;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
+			flags = PTR_XFLAGS_BUTTON1;
+			break;
+
+		case 7:
+		case 9:
+		case 112:
+			extended = true;
+			x = event->xbutton.x;
+			y = event->xbutton.y;
+			flags = PTR_XFLAGS_BUTTON2;
 			break;
 
 		default:
@@ -284,7 +327,10 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 			}
 		}
 
-		input->MouseEvent(input, flags, x, y);
+		if (extended)
+			input->ExtendedMouseEvent(input, flags, x, y);
+		else
+			input->MouseEvent(input, flags, x, y);
 	}
 
 	return true;
@@ -512,6 +558,8 @@ boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpWindow* window;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+	xf_kbd_release_all_keypress(xfi);
 
 	if (app != true)
 		return true;

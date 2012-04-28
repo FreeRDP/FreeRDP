@@ -671,7 +671,7 @@ boolean mcs_send_attach_user_confirm(rdpMcs* mcs)
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
 
 	per_write_enumerated(s, 0, MCS_Result_enum_length); /* result */
-	mcs->user_id = 1002;
+	mcs->user_id = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->transport->settings->num_channels;
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 
 	transport_write(mcs->transport, s);

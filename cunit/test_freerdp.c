@@ -120,7 +120,7 @@ struct _test_suite
 };
 typedef struct _test_suite test_suite;
 
-static test_suite suites[] =
+const static test_suite suites[] =
 {
 	{ "ber", add_ber_suite },
 	{ "bitmap", add_bitmap_suite },
@@ -144,53 +144,44 @@ static test_suite suites[] =
 	{ "nsc", add_nsc_suite },
 	{ "sspi", add_sspi_suite },
 	{ "stream", add_stream_suite },
-	{ "utils", add_utils_suite },
-	{ "", NULL }
+	{ "utils", add_utils_suite }
 };
+#define N_SUITES (sizeof suites / sizeof suites[0])
 
 int main(int argc, char* argv[])
 {
-	int k;
-	int index = 1;
-	int *pindex = &index;
+	int i, k;
 	int status = 0;
 
 	if (CU_initialize_registry() != CUE_SUCCESS)
 		return CU_get_error();
 
-	if (argc < *pindex + 1)
+	if (argc < 2)
 	{
-		k = 0;
-
-		printf("\ntest suites:\n\n");
-		while (suites[k].Init != NULL)
-		{
-			printf("\t%s\n", suites[k].name);
-			k++;
-		}
-
-		printf("\nusage: ./test_freerdp <suite-1> <suite-2> ... <suite-n>\n");
-
-		return 0;
+		for (k = 0; k < N_SUITES; k++)
+			suites[k].Init();
 	}
 	else
 	{
-		while (*pindex < argc)
+		if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
 		{
-			k = 0;
+			puts("Test suites:");
+			for (k = 0; k < N_SUITES; k++)
+				printf("\t%s\n", suites[k].name);
+			printf("\nUsage: %s [suite-1] [suite-2] ...\n", argv[0]);
+			return 0;
+		}
 
-			while (suites[k].Init != NULL)
+		for (i = 1; i < argc; i++)
+		{
+			for (k = 0; k < N_SUITES; k++)
 			{
-				if (strcmp(suites[k].name, argv[*pindex]) == 0)
+				if (!strcmp(suites[k].name, argv[i]))
 				{
 					suites[k].Init();
 					break;
 				}
-
-				k++;
 			}
-
-			*pindex = *pindex + 1;
 		}
 	}
 

@@ -80,21 +80,19 @@ uint32 freerdp_keyboard_init(uint32 keyboardLayoutId)
 	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
 	for (keycode=0; keycode < ARRAY_SIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
 		RDP_SCANCODE_TO_X11_KEYCODE
-			[X11_KEYCODE_TO_RDP_SCANCODE[keycode].code]
-			[X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended ? 1: 0] = keycode;
+			[rdp_scancode_code(X11_KEYCODE_TO_RDP_SCANCODE[keycode])]
+			[rdp_scancode_extended(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? 1 : 0] = keycode;
 
 	return keyboardLayoutId;
 }
 
-uint32 freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode, boolean* extended)
+RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode)
 {
 	DEBUG_KBD("x11 keycode: %02X -> rdp code: %02X%s", keycode,
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].code,
-		X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended ? " extended" : "");
+		rdp_scancode_code(X11_KEYCODE_TO_RDP_SCANCODE[keycode]),
+		rdp_scancode_extended(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? " extended" : "");
 
-	*extended = X11_KEYCODE_TO_RDP_SCANCODE[keycode].extended;
-
-	return X11_KEYCODE_TO_RDP_SCANCODE[keycode].code;
+	return X11_KEYCODE_TO_RDP_SCANCODE[keycode];
 }
 
 uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended)
@@ -105,8 +103,7 @@ uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boole
 		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][0];
 }
 
-uint32 freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode, boolean* extended)
+RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode)
 {
-	*extended = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].extended;
-	return VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode].code;
+	return VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
 }

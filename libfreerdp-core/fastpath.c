@@ -28,7 +28,7 @@
 #include "update.h"
 #include "surface.h"
 #include "fastpath.h"
-#include "mppc_enc.h"
+#include "rdp.h"
 
 /**
  * Fast-Path packet format is defined in [MS-RDPBCGR] 2.2.9.1.2, which revises
@@ -82,7 +82,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	return length;
 }
 
-INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
+static INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
 {
 	uint8 updateHeader;
 
@@ -92,7 +92,7 @@ INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fra
 	*compression = (updateHeader >> 6) & 0x03;
 }
 
-INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
+static INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
 {
 	uint8 updateHeader = 0;
 
@@ -259,10 +259,10 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp, s->p, size, compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, s->p, size, compressionFlags, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
-			comp_stream->data = rdp->mppc->history_buf + roff;
+			comp_stream->data = rdp->mppc_dec->history_buf + roff;
 			comp_stream->p = comp_stream->data;
 			comp_stream->size = rlen;
 			size = comp_stream->size;
@@ -609,6 +609,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	uint8* bm;
 	uint8* ptr_to_crypt;
 	uint8* ptr_sig;
+	uint8* holdp;
 	int fragment;
 	int sec_bytes;
 	int try_comp;
@@ -631,19 +632,20 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	result = true;
 	rdp = fastpath->rdp;
 	sec_bytes = fastpath_get_sec_bytes(rdp);
-	maxLength = FASTPATH_MAX_PACKET_SIZE - 6 - sec_bytes;
-	totalLength = stream_get_length(s) - 6 - sec_bytes;
+	maxLength = FASTPATH_MAX_PACKET_SIZE - (6 + sec_bytes);
+	totalLength = stream_get_length(s) - (6 + sec_bytes);
 	stream_set_pos(s, 0);
 	update = stream_new(0);
 	try_comp = rdp->settings->compression;
-	comp_flags = 0;
 	comp_update = stream_new(0);
 
-	for (fragment = 0; totalLength > 0; fragment++)
+	for (fragment = 0; totalLength > 0 || fragment == 0; fragment++)
 	{
+		stream_get_mark(s, holdp);
 		ls = s;
 		dlen = MIN(maxLength, totalLength);
 		cflags = 0;
+		comp_flags = 0;
 		header_bytes = 6 + sec_bytes;
 		pdu_data_bytes = dlen;
 		if (try_comp)
@@ -719,7 +721,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 		}
 
 		/* Reserve 6 + sec_bytes bytes for the next fragment header, if any. */
-		stream_seek(s, dlen - header_bytes);
+		stream_set_mark(s, holdp + dlen);
 	}
 
 	stream_detach(update);

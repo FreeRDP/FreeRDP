@@ -294,6 +294,18 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 	return true;
 }
 
+static boolean freerdp_peer_close(freerdp_peer* client)
+{
+	/**
+	 * [MS-RDPBCGR] 1.3.1.4.2 User-Initiated Disconnection Sequence on Server
+	 * The server first sends the client a Deactivate All PDU followed by an
+	 * optional MCS Disconnect Provider Ultimatum PDU.
+	 */
+	if (!rdp_send_deactivate_all(client->context->rdp))
+		return false;
+	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
+}
+
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
 	transport_disconnect(client->context->rdp->transport);
@@ -351,6 +363,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
+		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;
 		client->SendChannelData = freerdp_peer_send_channel_data;
 	}
