@@ -29,6 +29,199 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
+#define __RPC_WIN32__			1
+#define TARGET_IS_NT50_OR_LATER		1
+
+typedef union _CLIENT_CALL_RETURN
+{
+	void* Pointer;
+	LONG_PTR Simple;
+} CLIENT_CALL_RETURN;
+
+typedef void* RPC_IF_HANDLE;
+
+typedef struct _RPC_VERSION
+{
+	unsigned short MajorVersion;
+	unsigned short MinorVersion;
+} RPC_VERSION;
+
+typedef struct _RPC_SYNTAX_IDENTIFIER
+{
+	GUID SyntaxGUID;
+	RPC_VERSION SyntaxVersion;
+} RPC_SYNTAX_IDENTIFIER, PRPC_SYNTAX_IDENTIFIER;
+
+#define RPC_MGR_EPV	void
+
+typedef struct _RPC_MESSAGE
+{
+	RPC_BINDING_HANDLE Handle;
+	unsigned long DataRepresentation;
+	void* Buffer;
+	unsigned int BufferLength;
+	unsigned int ProcNum;
+	PRPC_SYNTAX_IDENTIFIER TransferSyntax;
+	void* RpcInterfaceInformation;
+	void* ReservedForRuntime;
+	RPC_MGR_EPV* ManagerEpv;
+	void* ImportContext;
+	unsigned long RpcFlags;
+} RPC_MESSAGE, *PRPC_MESSAGE;
+
+typedef void (*RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
+
+typedef struct
+{
+	unsigned int DispatchTableCount;
+	RPC_DISPATCH_FUNCTION* DispatchTable;
+	LONG_PTR Reserved;
+} RPC_DISPATCH_TABLE, *PRPC_DISPATCH_TABLE;
+
+typedef struct _RPC_PROTSEQ_ENDPOINT
+{
+	unsigned char* RpcProtocolSequence;
+	unsigned char* Endpoint;
+} RPC_PROTSEQ_ENDPOINT, * PRPC_PROTSEQ_ENDPOINT;
+
+typedef struct _RPC_SERVER_INTERFACE
+{
+	unsigned int Length;
+	RPC_SYNTAX_IDENTIFIER InterfaceId;
+	RPC_SYNTAX_IDENTIFIER TransferSyntax;
+	PRPC_DISPATCH_TABLE DispatchTable;
+	unsigned int RpcProtseqEndpointCount;
+	PRPC_PROTSEQ_ENDPOINT RpcProtseqEndpoint;
+	RPC_MGR_EPV* DefaultManagerEpv;
+	void const* InterpreterInfo;
+	unsigned int Flags;
+} RPC_SERVER_INTERFACE, *PRPC_SERVER_INTERFACE;
+
+typedef struct _RPC_CLIENT_INTERFACE
+{
+	unsigned int Length;
+	RPC_SYNTAX_IDENTIFIER InterfaceId;
+	RPC_SYNTAX_IDENTIFIER TransferSyntax;
+	PRPC_DISPATCH_TABLE DispatchTable;
+	unsigned int RpcProtseqEndpointCount;
+	PRPC_PROTSEQ_ENDPOINT RpcProtseqEndpoint;
+	ULONG_PTR Reserved;
+	void const* InterpreterInfo;
+	unsigned int Flags;
+} RPC_CLIENT_INTERFACE, *PRPC_CLIENT_INTERFACE;
+
+typedef void* (*GENERIC_BINDING_ROUTINE)(void*);
+typedef void (*GENERIC_UNBIND_ROUTINE)(void*, unsigned char*);
+
+typedef struct _GENERIC_BINDING_ROUTINE_PAIR
+{
+	GENERIC_BINDING_ROUTINE pfnBind;
+	GENERIC_UNBIND_ROUTINE pfnUnbind;
+} GENERIC_BINDING_ROUTINE_PAIR, *PGENERIC_BINDING_ROUTINE_PAIR;
+
+typedef struct __GENERIC_BINDING_INFO
+{
+	void* pObj;
+	unsigned int Size;
+	GENERIC_BINDING_ROUTINE pfnBind;
+	GENERIC_UNBIND_ROUTINE pfnUnbind;
+} GENERIC_BINDING_INFO, *PGENERIC_BINDING_INFO;
+
+typedef void (*NDR_RUNDOWN)(void* context);
+typedef void (*NDR_NOTIFY_ROUTINE)(void);
+
+typedef const unsigned char* PFORMAT_STRING;
+
+typedef struct _MIDL_STUB_MESSAGE
+{
+	PRPC_MESSAGE RpcMsg;
+	unsigned char* Buffer;
+	unsigned char* BufferStart;
+	unsigned char* BufferEnd;
+	unsigned char* BufferMark;
+	unsigned long BufferLength;
+	unsigned long MemorySize;
+	unsigned char* Memory;
+} MIDL_STUB_MESSAGE,  *PMIDL_STUB_MESSAGE;
+
+typedef struct _MIDL_STUB_MESSAGE MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
+
+typedef void (*EXPR_EVAL)(struct _MIDL_STUB_MESSAGE*);
+
+typedef void (*XMIT_HELPER_ROUTINE)(PMIDL_STUB_MESSAGE);
+
+typedef struct _XMIT_ROUTINE_QUINTUPLE
+{
+	XMIT_HELPER_ROUTINE pfnTranslateToXmit;
+	XMIT_HELPER_ROUTINE pfnTranslateFromXmit;
+	XMIT_HELPER_ROUTINE pfnFreeXmit;
+	XMIT_HELPER_ROUTINE pfnFreeInst;
+} XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
+
+typedef unsigned long (*USER_MARSHAL_SIZING_ROUTINE)(unsigned long*, unsigned long, void*);
+typedef unsigned char* (*USER_MARSHAL_MARSHALLING_ROUTINE)(unsigned long*, unsigned char*, void*);
+typedef unsigned char* (*USER_MARSHAL_UNMARSHALLING_ROUTINE)(unsigned long*, unsigned char*, void*);
+typedef void (*USER_MARSHAL_FREEING_ROUTINE)(unsigned long*, void*);
+
+typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
+{
+	USER_MARSHAL_SIZING_ROUTINE pfnBufferSize;
+	USER_MARSHAL_MARSHALLING_ROUTINE pfnMarshall;
+	USER_MARSHAL_UNMARSHALLING_ROUTINE pfnUnmarshall;
+	USER_MARSHAL_FREEING_ROUTINE pfnFree;
+} USER_MARSHAL_ROUTINE_QUADRUPLE;
+
+typedef struct _MALLOC_FREE_STRUCT
+{
+	void* (*pfnAllocate)(size_t);
+	void (*pfnFree)(void*);
+} MALLOC_FREE_STRUCT;
+
+typedef struct _COMM_FAULT_OFFSETS
+{
+	short CommOffset;
+	short FaultOffset;
+} COMM_FAULT_OFFSETS;
+
+typedef void* NDR_CS_ROUTINES;
+typedef void* NDR_EXPR_DESC;
+
+typedef struct _MIDL_STUB_DESC
+{
+	void* RpcInterfaceInformation;
+	void* (*pfnAllocate)(size_t);
+	void (*pfnFree)(void*);
+
+	union
+	{
+		handle_t* pAutoHandle;
+		handle_t* pPrimitiveHandle;
+		PGENERIC_BINDING_INFO pGenericBindingInfo;
+        } IMPLICIT_HANDLE_INFO;
+
+        const NDR_RUNDOWN* apfnNdrRundownRoutines;
+        const GENERIC_BINDING_ROUTINE_PAIR* aGenericBindingRoutinePairs;
+        const EXPR_EVAL* apfnExprEval;
+        const XMIT_ROUTINE_QUINTUPLE* aXmitQuintuple;
+        const unsigned char* pFormatTypes;
+
+        int fCheckBounds;
+        unsigned long Version;
+        MALLOC_FREE_STRUCT* pMallocFreeStruct;
+
+        long MIDLVersion;
+        const COMM_FAULT_OFFSETS* CommFaultOffsets;
+        const USER_MARSHAL_ROUTINE_QUADRUPLE* aUserMarshalQuadruple;
+
+        const NDR_NOTIFY_ROUTINE* NotifyRoutineTable;
+        ULONG_PTR mFlags;
+	const NDR_CS_ROUTINES* CsRoutineTables;
+	void* ProxyServerInfo;
+	const NDR_EXPR_DESC* pExprInfo;
+} MIDL_STUB_DESC;
+
+typedef const MIDL_STUB_DESC *PMIDL_STUB_DESC;
+
 /* Type Format Strings: http://msdn.microsoft.com/en-us/library/windows/desktop/aa379093/ */
 
 #define FC_BYTE				0x01
@@ -53,5 +246,10 @@
 
 #define NdrFcLong(s)	(byte)(s & 0xFF), (byte)((s & 0x0000FF00) >> 8), \
                         (byte)((s & 0x00FF0000) >> 16), (byte)(s >> 24)
+
+CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...);
+
+void* MIDL_user_allocate(size_t cBytes);
+void MIDL_user_free(void* p);
 
 #endif /* FREERDP_CORE_NDR_H */

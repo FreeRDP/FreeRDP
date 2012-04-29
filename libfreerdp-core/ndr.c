@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/utils/memory.h>
+
 #include "ndr.h"
 
 /**
@@ -24,63 +26,21 @@
  * http://dvlabs.tippingpoint.com/blog/2007/11/24/msrpc-ndr-types/
  */
 
-void ndr_byte()
+CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...)
 {
+	CLIENT_CALL_RETURN client_call_return;
 
+	client_call_return.Pointer = NULL;
+
+	return client_call_return;
 }
 
-void ndr_char()
+void* MIDL_user_allocate(size_t cBytes)
 {
-
+    return (xmalloc(cBytes));
 }
 
-void ndr_small()
+void MIDL_user_free(void* p)
 {
-
+	xfree(p);
 }
-
-void ndr_usmall()
-{
-
-}
-
-void ndr_wchar()
-{
-
-}
-
-void ndr_short()
-{
-
-}
-
-void ndr_ushort()
-{
-
-}
-
-void ndr_long()
-{
-
-}
-
-void ndr_ulong()
-{
-
-}
-
-void ndr_float()
-{
-
-}
-
-void ndr_hyper()
-{
-
-}
-
-void ndr_double()
-{
-
-}
-
