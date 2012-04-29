@@ -22,7 +22,7 @@ set(RDPSND_PULSE_SRCS
 )
 
 include_directories(..)
-include_directories(${PULSE_INCLUDE_DIRS})
+include_directories(${PULSEAUDIO_INCLUDE_DIR})
 
 add_library(rdpsnd_pulse ${RDPSND_PULSE_SRCS})
 set_target_properties(rdpsnd_pulse PROPERTIES PREFIX "")
