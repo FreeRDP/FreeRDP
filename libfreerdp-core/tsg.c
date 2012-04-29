@@ -1607,59 +1607,6 @@ uint8 tsg_packet5[20] =
 	0x00, 0x00, 0x00, 0x00
 };
 
-#if 0
-
-void Opnum0NotUsedOnWire(handle_t IDL_handle)
-{
-
-}
-
-HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
-		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId)
-{
-	return 0;
-}
-
-HRESULT TsProxyAuthorizeTunnel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
-{
-	return 0;
-}
-
-HRESULT TsProxyMakeTunnelCall(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		unsigned long procId, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
-{
-	return 0;
-}
-
-HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		PTSENDPOINTINFO tsEndPointInfo, PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, unsigned long* channelId)
-{
-	return 0;
-}
-
-void Opnum5NotUsedOnWire(handle_t IDL_handle)
-{
-
-}
-
-HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
-{
-	return 0;
-}
-
-HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
-{
-	return 0;
-}
-
-DWORD TsProxySetupReceivePipe(handle_t IDL_handle, byte pRpcMessage[])
-{
-	return 0;
-}
-
-#endif
-
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths)
 {
 	STREAM* s;
@@ -1770,6 +1717,15 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 */
 
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_SERIALIZE tunnelContext;
+		unsigned long tunnelId;
+
+		TsProxyCreateTunnel(&tsgPacket, &tsgPacketResponse, &tunnelContext, &tunnelId);
+	}
+
 	DEBUG_TSG("TsProxyCreateTunnel");
 	status = rpc_tsg_write(rpc, tsg_packet1, sizeof(tsg_packet1), 1);
 
@@ -1809,6 +1765,14 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 *
 	 */
+
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+
+		TsProxyAuthorizeTunnel(&tunnelContext, &tsgPacket, &tsgPacketResponse);
+	}
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
 	status = rpc_tsg_write(rpc, tsg_packet2, sizeof(tsg_packet2), 2);

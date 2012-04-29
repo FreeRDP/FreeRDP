@@ -222,6 +222,41 @@ typedef struct _MIDL_STUB_DESC
 
 typedef const MIDL_STUB_DESC *PMIDL_STUB_DESC;
 
+#define OI2_FLAG_SERVER_MUST_SIZE		0x01
+#define OI2_FLAG_CLIENT_MUST_SIZE		0x02
+#define OI2_FLAG_HAS_RETURN			0x04
+#define OI2_FLAG_HAS_PIPES			0x08
+#define OI2_FLAG_HAS_ASYNC_UUID			0x20
+#define OI2_FLAG_HAS_EXTENSIONS			0x40
+#define OI2_FLAG_HAS_ASYNC_HANDLE		0x80
+
+typedef struct
+{
+	unsigned char Size;
+	unsigned char Flags2;
+	unsigned short ClientCorrHint;
+	unsigned short ServerCorrHint;
+	unsigned short NotifyIndex;
+} NDR_PROC_HEADER_EXTS;
+
+typedef struct _NDR_PROC_HEADER
+{
+	unsigned char HandleType;
+	unsigned char OiFlags;
+	unsigned short RpcFlagsLow;
+	unsigned short RpcFlagsHi;
+	unsigned short ProcNum;
+	unsigned short StackSize;
+} NDR_PROC_HEADER;
+
+typedef struct _NDR_PROC_OI2_HEADER
+{
+	unsigned short ClientBufferSize;
+	unsigned short ServerBufferSize;
+	unsigned int Oi2Flags;
+	unsigned char NumberParams;
+} NDR_PROC_OI2_HEADER;
+
 /* Type Format Strings: http://msdn.microsoft.com/en-us/library/windows/desktop/aa379093/ */
 
 #define FC_BYTE				0x01
@@ -241,6 +276,12 @@ typedef const MIDL_STUB_DESC *PMIDL_STUB_DESC;
 #define FC_ERROR_STATUS_T		0x10
 #define FC_INT3264			0xB8
 #define FC_UINT3264			0xB9
+
+#define FC_BIND_CONTEXT			0x30
+#define FC_BIND_GENERIC			0x31
+#define FC_BIND_PRIMITIVE		0x32
+#define FC_AUTO_HANDLE			0x33
+#define FC_CALLBACK_HANDLE		0x34
 
 #define NdrFcShort(s)	(byte)(s & 0xFF), (byte)(s >> 8)
 

@@ -28,9 +28,40 @@
 
 CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...)
 {
+	unsigned char oiFlags;
+	unsigned short procNum;
+	unsigned short stackSize;
+	unsigned char numberParams;
+	NDR_PROC_HEADER* procHeader;
 	CLIENT_CALL_RETURN client_call_return;
 
+	procNum = stackSize = numberParams = 0;
+	procHeader = (NDR_PROC_HEADER*) &pFormat[0];
+
 	client_call_return.Pointer = NULL;
+
+	oiFlags = procHeader->OiFlags;
+	procNum = procHeader->ProcNum;
+	stackSize = procHeader->StackSize;
+	pFormat += sizeof(NDR_PROC_HEADER);
+
+	if (pStubDescriptor->Version >= 0x20000)
+	{
+		NDR_PROC_OI2_HEADER* procHeaderOi2 = (NDR_PROC_OI2_HEADER*) pFormat;
+
+		oiFlags = procHeaderOi2->Oi2Flags;
+		numberParams = procHeaderOi2->NumberParams;
+
+		if (oiFlags & OI2_FLAG_HAS_EXTENSIONS)
+		{
+			NDR_PROC_HEADER_EXTS* extensions = (NDR_PROC_HEADER_EXTS*) pFormat;
+
+			pFormat += extensions->Size;
+		}
+	}
+
+	printf("ProcHeader: ProcNum:%d OiFlags: 0x%02X, handleType: 0x%02X StackSize: %d NumberParams: %d\n",
+			procNum, oiFlags, procHeader->HandleType, stackSize, numberParams);
 
 	return client_call_return;
 }
