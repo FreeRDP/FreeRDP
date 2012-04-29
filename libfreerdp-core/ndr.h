@@ -132,6 +132,9 @@ typedef void (*NDR_NOTIFY_ROUTINE)(void);
 
 typedef const unsigned char* PFORMAT_STRING;
 
+typedef struct _MIDL_STUB_DESC MIDL_STUB_DESC;
+typedef MIDL_STUB_DESC* PMIDL_STUB_DESC;
+
 typedef struct _MIDL_STUB_MESSAGE
 {
 	PRPC_MESSAGE RpcMsg;
@@ -142,7 +145,9 @@ typedef struct _MIDL_STUB_MESSAGE
 	unsigned long BufferLength;
 	unsigned long MemorySize;
 	unsigned char* Memory;
-} MIDL_STUB_MESSAGE,  *PMIDL_STUB_MESSAGE;
+	unsigned char* StackTop;
+	PMIDL_STUB_DESC StubDesc;
+} MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
 
 typedef struct _MIDL_STUB_MESSAGE MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
 
@@ -186,7 +191,7 @@ typedef struct _COMM_FAULT_OFFSETS
 typedef void* NDR_CS_ROUTINES;
 typedef void* NDR_EXPR_DESC;
 
-typedef struct _MIDL_STUB_DESC
+struct _MIDL_STUB_DESC
 {
 	void* RpcInterfaceInformation;
 	void* (*pfnAllocate)(size_t);
@@ -218,17 +223,41 @@ typedef struct _MIDL_STUB_DESC
 	const NDR_CS_ROUTINES* CsRoutineTables;
 	void* ProxyServerInfo;
 	const NDR_EXPR_DESC* pExprInfo;
-} MIDL_STUB_DESC;
+};
 
-typedef const MIDL_STUB_DESC *PMIDL_STUB_DESC;
+#define OI2_FLAG_SERVER_MUST_SIZE			0x01
+#define OI2_FLAG_CLIENT_MUST_SIZE			0x02
+#define OI2_FLAG_HAS_RETURN				0x04
+#define OI2_FLAG_HAS_PIPES				0x08
+#define OI2_FLAG_HAS_ASYNC_UUID				0x20
+#define OI2_FLAG_HAS_EXTENSIONS				0x40
+#define OI2_FLAG_HAS_ASYNC_HANDLE			0x80
 
-#define OI2_FLAG_SERVER_MUST_SIZE		0x01
-#define OI2_FLAG_CLIENT_MUST_SIZE		0x02
-#define OI2_FLAG_HAS_RETURN			0x04
-#define OI2_FLAG_HAS_PIPES			0x08
-#define OI2_FLAG_HAS_ASYNC_UUID			0x20
-#define OI2_FLAG_HAS_EXTENSIONS			0x40
-#define OI2_FLAG_HAS_ASYNC_HANDLE		0x80
+#define PARAM_ATTRIBUTE_SERVER_ALLOC_SIZE		0xE000
+#define PARAM_ATTRIBUTE_SAVE_FOR_ASYNC_FINISH		0x0400
+#define PARAM_ATTRIBUTE_IS_DONT_CALL_FREE_INST		0x0200
+#define PARAM_ATTRIBUTE_IS_SIMPLE_REF			0x0100
+#define PARAM_ATTRIBUTE_IS_BY_VALUE			0x0080
+#define PARAM_ATTRIBUTE_IS_BASE_TYPE			0x0040
+#define PARAM_ATTRIBUTE_IS_RETURN			0x0020
+#define PARAM_ATTRIBUTE_IS_OUT				0x0010
+#define PARAM_ATTRIBUTE_IS_IN				0x0008
+#define PARAM_ATTRIBUTE_IS_PIPE				0x0004
+#define PARAM_ATTRIBUTE_MUST_FREE			0x0002
+#define PARAM_ATTRIBUTE_MUST_SIZE			0x0001
+
+typedef struct
+{
+	unsigned short Attributes;
+	unsigned short StackOffset;
+
+	union
+	{
+		unsigned char FormatChar;
+		unsigned short Offset;
+	} Type;
+
+} NDR_PARAM;
 
 typedef struct
 {

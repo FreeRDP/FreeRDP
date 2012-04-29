@@ -26,13 +26,92 @@
  * http://dvlabs.tippingpoint.com/blog/2007/11/24/msrpc-ndr-types/
  */
 
-CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...)
+void ndr_print_param_attributes(unsigned short attributes)
 {
+	if (attributes & PARAM_ATTRIBUTE_SERVER_ALLOC_SIZE)
+		printf("ServerAllocSize, ");
+	if (attributes & PARAM_ATTRIBUTE_SAVE_FOR_ASYNC_FINISH)
+		printf("SaveForAsyncFinish, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_DONT_CALL_FREE_INST)
+		printf("IsDontCallFreeInst, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_SIMPLE_REF)
+		printf("IsSimpleRef, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_BY_VALUE)
+		printf("IsByValue, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_BASE_TYPE)
+		printf("IsBaseType, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_RETURN)
+		printf("IsReturn, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_OUT)
+		printf("IsOut, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_IN)
+		printf("IsIn, ");
+	if (attributes & PARAM_ATTRIBUTE_IS_PIPE)
+		printf("IsPipe, ");
+	if (attributes & PARAM_ATTRIBUTE_MUST_FREE)
+		printf("MustFree, ");
+	if (attributes & PARAM_ATTRIBUTE_MUST_SIZE)
+		printf("MustSize, ");
+}
+
+void ndr_process_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void** fpuArgs, unsigned short numberParams)
+{
+	unsigned int i;
+	NDR_PARAM* params;
+	PFORMAT_STRING fmt;
+	unsigned char* arg;
+
+	params = (NDR_PARAM*) pFormat;
+
+	printf("Params = \n{\n");
+
+	for (i = 0; i < numberParams; i++)
+	{
+		arg = pStubMsg->StackTop + params[i].StackOffset;
+		fmt = (PFORMAT_STRING) &pStubMsg->StubDesc->pFormatTypes[params[i].Type.Offset];
+
+		printf("\t#%d\t", i);
+
+		ndr_print_param_attributes(params[i].Attributes);
+
+		if (params[i].Attributes & PARAM_ATTRIBUTE_IS_IN)
+		{
+
+		}
+
+		printf("\n");
+	}
+
+	printf("}\n");
+}
+
+void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg,
+		PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum)
+{
+	pRpcMessage->Handle = NULL;
+	pRpcMessage->RpcFlags = 0;
+	pRpcMessage->ProcNum = ProcNum;
+	pRpcMessage->DataRepresentation = 0;
+	pRpcMessage->ReservedForRuntime = NULL;
+	pRpcMessage->RpcInterfaceInformation = pStubDesc->RpcInterfaceInformation;
+
+	pStubMsg->RpcMsg = pRpcMessage;
+	pStubMsg->BufferStart = NULL;
+	pStubMsg->BufferEnd = NULL;
+	pStubMsg->BufferLength = 0;
+	pStubMsg->StackTop = NULL;
+	pStubMsg->StubDesc = pStubDesc;
+}
+
+CLIENT_CALL_RETURN ndr_client_call(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, void** stackTop, void** fpuStack)
+{
+	RPC_MESSAGE rpcMsg;
 	unsigned char oiFlags;
 	unsigned short procNum;
 	unsigned short stackSize;
 	unsigned char numberParams;
 	NDR_PROC_HEADER* procHeader;
+	MIDL_STUB_MESSAGE stubMsg;
 	CLIENT_CALL_RETURN client_call_return;
 
 	procNum = stackSize = numberParams = 0;
@@ -60,8 +139,25 @@ CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRIN
 		}
 	}
 
+	NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDescriptor, procNum);
+	stubMsg.StackTop = (unsigned char*) stackTop;
+
 	printf("ProcHeader: ProcNum:%d OiFlags: 0x%02X, handleType: 0x%02X StackSize: %d NumberParams: %d\n",
 			procNum, oiFlags, procHeader->HandleType, stackSize, numberParams);
+
+	ndr_process_args(&stubMsg, pFormat, fpuStack, numberParams);
+
+	return client_call_return;
+}
+
+CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...)
+{
+	va_list args;
+	CLIENT_CALL_RETURN client_call_return;
+
+	va_start(args, pFormat);
+	client_call_return = ndr_client_call(pStubDescriptor, pFormat, va_arg(args, void**), NULL);
+	va_end(args);
 
 	return client_call_return;
 }
