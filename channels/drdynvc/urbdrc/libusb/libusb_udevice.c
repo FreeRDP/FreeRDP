@@ -1287,8 +1287,7 @@ libusb_udev_isoch_transfer(IUDEVICE * idev, uint32 RequestId, uint32 EndpointAdd
 		*BufferSize, 
 		NumberOfPackets, 
 		func_iso_callback, 
-		&iso_user_data, 
-		TransferFlags,
+		&iso_user_data,
 		2000);
 
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
@@ -1448,8 +1447,7 @@ libusb_udev_bulk_or_interrupt_transfer(IUDEVICE * idev, uint32 RequestId,
 		Buffer, 
 		*BufferSize, 
 		func_bulk_transfer_cb, 
-		&completed, 
-		TransferFlags,
+		&completed,
 		Timeout);
 
 	transfer->type = (unsigned char)transfer_type;
