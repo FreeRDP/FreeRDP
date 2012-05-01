@@ -1804,6 +1804,14 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * );
 	 */
 
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+
+		TsProxyMakeTunnelCall(&tunnelContext, 0, &tsgPacket, &tsgPacketResponse);
+	}
+
 	DEBUG_TSG("TsProxyMakeTunnelCall");
 	status = rpc_tsg_write(rpc, tsg_packet3, sizeof(tsg_packet3), 3);
 
@@ -1839,6 +1847,15 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * [out] unsigned long* channelId
 	 * );
 	 */
+
+	{
+		unsigned long channelId;
+		TSENDPOINTINFO tsEndPointInfo;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+		PCHANNEL_CONTEXT_HANDLE_SERIALIZE channelContext;
+
+		TsProxyCreateChannel(&tunnelContext, &tsEndPointInfo, &channelContext, &channelId);
+	}
 
 	DEBUG_TSG("TsProxyCreateChannel");
 	status = rpc_tsg_write(rpc, s_p4->data, s_p4->size, 4);
