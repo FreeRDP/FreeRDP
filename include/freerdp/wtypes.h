@@ -106,6 +106,8 @@ typedef unsigned short WORD, *PWORD, *LPWORD;
 typedef void* PCONTEXT_HANDLE;
 typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 
+typedef unsigned long error_status_t;
+
 typedef struct _GUID
 {
 	unsigned long Data1;

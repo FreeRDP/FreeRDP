@@ -147,7 +147,562 @@ const char* FC_TYPE_STRINGS[] =
 	"FC_END_OF_UNIVERSE",
 };
 
-void ndr_print_param_attributes(PARAM_ATTRIBUTES attributes)
+typedef void (*NDR_TYPE_SIZE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+typedef void (*NDR_TYPE_MARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
+typedef void (*NDR_TYPE_UNMARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
+typedef void (*NDR_TYPE_FREE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
+void NdrSimpleTypeUnmarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
+void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+const NDR_TYPE_SIZE_ROUTINE pfnSizeRoutines[] =
+{
+	NULL, /* FC_ZERO */
+	NdrSimpleTypeBufferSize, /* FC_BYTE */
+	NdrSimpleTypeBufferSize, /* FC_CHAR */
+	NdrSimpleTypeBufferSize, /* FC_SMALL */
+	NdrSimpleTypeBufferSize, /* FC_USMALL */
+	NdrSimpleTypeBufferSize, /* FC_WCHAR */
+	NdrSimpleTypeBufferSize, /* FC_SHORT */
+	NdrSimpleTypeBufferSize, /* FC_USHORT */
+	NdrSimpleTypeBufferSize, /* FC_LONG */
+	NdrSimpleTypeBufferSize, /* FC_ULONG */
+	NdrSimpleTypeBufferSize, /* FC_FLOAT */
+	NdrSimpleTypeBufferSize, /* FC_HYPER */
+	NdrSimpleTypeBufferSize, /* FC_DOUBLE */
+	NdrSimpleTypeBufferSize, /* FC_ENUM16 */
+	NdrSimpleTypeBufferSize, /* FC_ENUM32 */
+	NdrSimpleTypeBufferSize, /* FC_IGNORE */
+	NdrSimpleTypeBufferSize, /* FC_ERROR_STATUS_T */
+	NdrPointerBufferSize, /* FC_RP */
+	NdrPointerBufferSize, /* FC_UP */
+	NdrPointerBufferSize, /* FC_OP */
+	NdrPointerBufferSize, /* FC_FP */
+	NdrSimpleStructBufferSize, /* FC_STRUCT */
+	NdrSimpleStructBufferSize, /* FC_PSTRUCT */
+	NdrConformantStructBufferSize, /* FC_CSTRUCT */
+	NdrConformantStructBufferSize, /* FC_CPSTRUCT */
+	NdrConformantVaryingStructBufferSize, /* FC_CVSTRUCT */
+	NdrComplexStructBufferSize, /* FC_BOGUS_STRUCT */
+	NULL, /* FC_CARRAY */
+	NULL, /* FC_CVARRAY */
+	NULL, /* FC_SMFARRAY */
+	NULL, /* FC_LGFARRAY */
+	NULL, /* FC_SMVARRAY */
+	NULL, /* FC_LGVARRAY */
+	NULL, /* FC_BOGUS_ARRAY */
+	NULL, /* FC_C_CSTRING */
+	NULL, /* FC_C_BSTRING */
+	NULL, /* FC_C_SSTRING */
+	NULL, /* FC_C_WSTRING */
+	NULL, /* FC_CSTRING */
+	NULL, /* FC_BSTRING */
+	NULL, /* FC_SSTRING */
+	NULL, /* FC_WSTRING */
+	NULL, /* FC_ENCAPSULATED_UNION */
+	NULL, /* FC_NON_ENCAPSULATED_UNION */
+	NULL, /* FC_BYTE_COUNT_POINTER */
+	NULL, /* FC_TRANSMIT_AS */
+	NULL, /* FC_REPRESENT_AS */
+	NULL, /* FC_IP */
+	NULL, /* FC_BIND_CONTEXT */
+	NULL, /* FC_BIND_GENERIC */
+	NULL, /* FC_BIND_PRIMITIVE */
+	NULL, /* FC_AUTO_HANDLE */
+	NULL, /* FC_CALLBACK_HANDLE */
+	NULL, /* FC_UNUSED1 */
+	NULL, /* FC_POINTER */
+	NULL, /* FC_ALIGNM2 */
+	NULL, /* FC_ALIGNM4 */
+	NULL, /* FC_ALIGNM8 */
+	NULL, /* FC_UNUSED2 */
+	NULL, /* FC_UNUSED3 */
+	NULL, /* FC_UNUSED4 */
+	NULL, /* FC_STRUCTPAD1 */
+	NULL, /* FC_STRUCTPAD2 */
+	NULL, /* FC_STRUCTPAD3 */
+	NULL, /* FC_STRUCTPAD4 */
+	NULL, /* FC_STRUCTPAD5 */
+	NULL, /* FC_STRUCTPAD6 */
+	NULL, /* FC_STRUCTPAD7 */
+	NULL, /* FC_STRING_SIZED */
+	NULL, /* FC_UNUSED5 */
+	NULL, /* FC_NO_REPEAT */
+	NULL, /* FC_FIXED_REPEAT */
+	NULL, /* FC_VARIABLE_REPEAT */
+	NULL, /* FC_FIXED_OFFSET */
+	NULL, /* FC_VARIABLE_OFFSET */
+	NULL, /* FC_PP */
+	NULL, /* FC_EMBEDDED_COMPLEX */
+	NULL, /* FC_IN_PARAM */
+	NULL, /* FC_IN_PARAM_BASETYPE */
+	NULL, /* FC_IN_PARAM_NO_FREE_INST */
+	NULL, /* FC_IN_OUT_PARAM */
+	NULL, /* FC_OUT_PARAM */
+	NULL, /* FC_RETURN_PARAM */
+	NULL, /* FC_RETURN_PARAM_BASETYPE */
+	NULL, /* FC_DEREFERENCE */
+	NULL, /* FC_DIV_2 */
+	NULL, /* FC_MULT_2 */
+	NULL, /* FC_ADD_1 */
+	NULL, /* FC_SUB_1 */
+	NULL, /* FC_CALLBACK */
+	NULL, /* FC_CONSTANT_IID */
+	NULL, /* FC_END */
+	NULL, /* FC_PAD */
+};
+
+const NDR_TYPE_MARSHALL_ROUTINE pfnMarshallRoutines[] =
+{
+	NULL, /* FC_ZERO */
+	NdrSimpleTypeMarshall, /* FC_BYTE */
+	NdrSimpleTypeMarshall, /* FC_CHAR */
+	NdrSimpleTypeMarshall, /* FC_SMALL */
+	NdrSimpleTypeMarshall, /* FC_USMALL */
+	NdrSimpleTypeMarshall, /* FC_WCHAR */
+	NdrSimpleTypeMarshall, /* FC_SHORT */
+	NdrSimpleTypeMarshall, /* FC_USHORT */
+	NdrSimpleTypeMarshall, /* FC_LONG */
+	NdrSimpleTypeMarshall, /* FC_ULONG */
+	NdrSimpleTypeMarshall, /* FC_FLOAT */
+	NdrSimpleTypeMarshall, /* FC_HYPER */
+	NdrSimpleTypeMarshall, /* FC_DOUBLE */
+	NdrSimpleTypeMarshall, /* FC_ENUM16 */
+	NdrSimpleTypeMarshall, /* FC_ENUM32 */
+	NdrSimpleTypeMarshall, /* FC_IGNORE */
+	NULL, /* FC_ERROR_STATUS_T */
+	NULL, /* FC_RP */
+	NULL, /* FC_UP */
+	NULL, /* FC_OP */
+	NULL, /* FC_FP */
+	NULL, /* FC_STRUCT */
+	NULL, /* FC_PSTRUCT */
+	NULL, /* FC_CSTRUCT */
+	NULL, /* FC_CPSTRUCT */
+	NULL, /* FC_CVSTRUCT */
+	NULL, /* FC_BOGUS_STRUCT */
+	NULL, /* FC_CARRAY */
+	NULL, /* FC_CVARRAY */
+	NULL, /* FC_SMFARRAY */
+	NULL, /* FC_LGFARRAY */
+	NULL, /* FC_SMVARRAY */
+	NULL, /* FC_LGVARRAY */
+	NULL, /* FC_BOGUS_ARRAY */
+	NULL, /* FC_C_CSTRING */
+	NULL, /* FC_C_BSTRING */
+	NULL, /* FC_C_SSTRING */
+	NULL, /* FC_C_WSTRING */
+	NULL, /* FC_CSTRING */
+	NULL, /* FC_BSTRING */
+	NULL, /* FC_SSTRING */
+	NULL, /* FC_WSTRING */
+	NULL, /* FC_ENCAPSULATED_UNION */
+	NULL, /* FC_NON_ENCAPSULATED_UNION */
+	NULL, /* FC_BYTE_COUNT_POINTER */
+	NULL, /* FC_TRANSMIT_AS */
+	NULL, /* FC_REPRESENT_AS */
+	NULL, /* FC_IP */
+	NULL, /* FC_BIND_CONTEXT */
+	NULL, /* FC_BIND_GENERIC */
+	NULL, /* FC_BIND_PRIMITIVE */
+	NULL, /* FC_AUTO_HANDLE */
+	NULL, /* FC_CALLBACK_HANDLE */
+	NULL, /* FC_UNUSED1 */
+	NULL, /* FC_POINTER */
+	NULL, /* FC_ALIGNM2 */
+	NULL, /* FC_ALIGNM4 */
+	NULL, /* FC_ALIGNM8 */
+	NULL, /* FC_UNUSED2 */
+	NULL, /* FC_UNUSED3 */
+	NULL, /* FC_UNUSED4 */
+	NULL, /* FC_STRUCTPAD1 */
+	NULL, /* FC_STRUCTPAD2 */
+	NULL, /* FC_STRUCTPAD3 */
+	NULL, /* FC_STRUCTPAD4 */
+	NULL, /* FC_STRUCTPAD5 */
+	NULL, /* FC_STRUCTPAD6 */
+	NULL, /* FC_STRUCTPAD7 */
+	NULL, /* FC_STRING_SIZED */
+	NULL, /* FC_UNUSED5 */
+	NULL, /* FC_NO_REPEAT */
+	NULL, /* FC_FIXED_REPEAT */
+	NULL, /* FC_VARIABLE_REPEAT */
+	NULL, /* FC_FIXED_OFFSET */
+	NULL, /* FC_VARIABLE_OFFSET */
+	NULL, /* FC_PP */
+	NULL, /* FC_EMBEDDED_COMPLEX */
+	NULL, /* FC_IN_PARAM */
+	NULL, /* FC_IN_PARAM_BASETYPE */
+	NULL, /* FC_IN_PARAM_NO_FREE_INST */
+	NULL, /* FC_IN_OUT_PARAM */
+	NULL, /* FC_OUT_PARAM */
+	NULL, /* FC_RETURN_PARAM */
+	NULL, /* FC_RETURN_PARAM_BASETYPE */
+	NULL, /* FC_DEREFERENCE */
+	NULL, /* FC_DIV_2 */
+	NULL, /* FC_MULT_2 */
+	NULL, /* FC_ADD_1 */
+	NULL, /* FC_SUB_1 */
+	NULL, /* FC_CALLBACK */
+	NULL, /* FC_CONSTANT_IID */
+	NULL, /* FC_END */
+	NULL, /* FC_PAD */
+};
+
+const NDR_TYPE_UNMARSHALL_ROUTINE pfnUnmarshallRoutines[] =
+{
+	NULL, /* FC_ZERO */
+	NdrSimpleTypeUnmarshall, /* FC_BYTE */
+	NdrSimpleTypeUnmarshall, /* FC_CHAR */
+	NdrSimpleTypeUnmarshall, /* FC_SMALL */
+	NdrSimpleTypeUnmarshall, /* FC_USMALL */
+	NdrSimpleTypeUnmarshall, /* FC_WCHAR */
+	NdrSimpleTypeUnmarshall, /* FC_SHORT */
+	NdrSimpleTypeUnmarshall, /* FC_USHORT */
+	NdrSimpleTypeUnmarshall, /* FC_LONG */
+	NdrSimpleTypeUnmarshall, /* FC_ULONG */
+	NdrSimpleTypeUnmarshall, /* FC_FLOAT */
+	NdrSimpleTypeUnmarshall, /* FC_HYPER */
+	NdrSimpleTypeUnmarshall, /* FC_DOUBLE */
+	NdrSimpleTypeUnmarshall, /* FC_ENUM16 */
+	NdrSimpleTypeUnmarshall, /* FC_ENUM32 */
+	NdrSimpleTypeUnmarshall, /* FC_IGNORE */
+	NULL, /* FC_ERROR_STATUS_T */
+	NULL, /* FC_RP */
+	NULL, /* FC_UP */
+	NULL, /* FC_OP */
+	NULL, /* FC_FP */
+	NULL, /* FC_STRUCT */
+	NULL, /* FC_PSTRUCT */
+	NULL, /* FC_CSTRUCT */
+	NULL, /* FC_CPSTRUCT */
+	NULL, /* FC_CVSTRUCT */
+	NULL, /* FC_BOGUS_STRUCT */
+	NULL, /* FC_CARRAY */
+	NULL, /* FC_CVARRAY */
+	NULL, /* FC_SMFARRAY */
+	NULL, /* FC_LGFARRAY */
+	NULL, /* FC_SMVARRAY */
+	NULL, /* FC_LGVARRAY */
+	NULL, /* FC_BOGUS_ARRAY */
+	NULL, /* FC_C_CSTRING */
+	NULL, /* FC_C_BSTRING */
+	NULL, /* FC_C_SSTRING */
+	NULL, /* FC_C_WSTRING */
+	NULL, /* FC_CSTRING */
+	NULL, /* FC_BSTRING */
+	NULL, /* FC_SSTRING */
+	NULL, /* FC_WSTRING */
+	NULL, /* FC_ENCAPSULATED_UNION */
+	NULL, /* FC_NON_ENCAPSULATED_UNION */
+	NULL, /* FC_BYTE_COUNT_POINTER */
+	NULL, /* FC_TRANSMIT_AS */
+	NULL, /* FC_REPRESENT_AS */
+	NULL, /* FC_IP */
+	NULL, /* FC_BIND_CONTEXT */
+	NULL, /* FC_BIND_GENERIC */
+	NULL, /* FC_BIND_PRIMITIVE */
+	NULL, /* FC_AUTO_HANDLE */
+	NULL, /* FC_CALLBACK_HANDLE */
+	NULL, /* FC_UNUSED1 */
+	NULL, /* FC_POINTER */
+	NULL, /* FC_ALIGNM2 */
+	NULL, /* FC_ALIGNM4 */
+	NULL, /* FC_ALIGNM8 */
+	NULL, /* FC_UNUSED2 */
+	NULL, /* FC_UNUSED3 */
+	NULL, /* FC_UNUSED4 */
+	NULL, /* FC_STRUCTPAD1 */
+	NULL, /* FC_STRUCTPAD2 */
+	NULL, /* FC_STRUCTPAD3 */
+	NULL, /* FC_STRUCTPAD4 */
+	NULL, /* FC_STRUCTPAD5 */
+	NULL, /* FC_STRUCTPAD6 */
+	NULL, /* FC_STRUCTPAD7 */
+	NULL, /* FC_STRING_SIZED */
+	NULL, /* FC_UNUSED5 */
+	NULL, /* FC_NO_REPEAT */
+	NULL, /* FC_FIXED_REPEAT */
+	NULL, /* FC_VARIABLE_REPEAT */
+	NULL, /* FC_FIXED_OFFSET */
+	NULL, /* FC_VARIABLE_OFFSET */
+	NULL, /* FC_PP */
+	NULL, /* FC_EMBEDDED_COMPLEX */
+	NULL, /* FC_IN_PARAM */
+	NULL, /* FC_IN_PARAM_BASETYPE */
+	NULL, /* FC_IN_PARAM_NO_FREE_INST */
+	NULL, /* FC_IN_OUT_PARAM */
+	NULL, /* FC_OUT_PARAM */
+	NULL, /* FC_RETURN_PARAM */
+	NULL, /* FC_RETURN_PARAM_BASETYPE */
+	NULL, /* FC_DEREFERENCE */
+	NULL, /* FC_DIV_2 */
+	NULL, /* FC_MULT_2 */
+	NULL, /* FC_ADD_1 */
+	NULL, /* FC_SUB_1 */
+	NULL, /* FC_CALLBACK */
+	NULL, /* FC_CONSTANT_IID */
+	NULL, /* FC_END */
+	NULL, /* FC_PAD */
+};
+
+const NDR_TYPE_FREE_ROUTINE pfnFreeRoutines[] =
+{
+	NULL, /* FC_ZERO */
+	NdrSimpleTypeFree, /* FC_BYTE */
+	NdrSimpleTypeFree, /* FC_CHAR */
+	NdrSimpleTypeFree, /* FC_SMALL */
+	NdrSimpleTypeFree, /* FC_USMALL */
+	NdrSimpleTypeFree, /* FC_WCHAR */
+	NdrSimpleTypeFree, /* FC_SHORT */
+	NdrSimpleTypeFree, /* FC_USHORT */
+	NdrSimpleTypeFree, /* FC_LONG */
+	NdrSimpleTypeFree, /* FC_ULONG */
+	NdrSimpleTypeFree, /* FC_FLOAT */
+	NdrSimpleTypeFree, /* FC_HYPER */
+	NdrSimpleTypeFree, /* FC_DOUBLE */
+	NdrSimpleTypeFree, /* FC_ENUM16 */
+	NdrSimpleTypeFree, /* FC_ENUM32 */
+	NdrSimpleTypeFree, /* FC_IGNORE */
+	NULL, /* FC_ERROR_STATUS_T */
+	NULL, /* FC_RP */
+	NULL, /* FC_UP */
+	NULL, /* FC_OP */
+	NULL, /* FC_FP */
+	NULL, /* FC_STRUCT */
+	NULL, /* FC_PSTRUCT */
+	NULL, /* FC_CSTRUCT */
+	NULL, /* FC_CPSTRUCT */
+	NULL, /* FC_CVSTRUCT */
+	NULL, /* FC_BOGUS_STRUCT */
+	NULL, /* FC_CARRAY */
+	NULL, /* FC_CVARRAY */
+	NULL, /* FC_SMFARRAY */
+	NULL, /* FC_LGFARRAY */
+	NULL, /* FC_SMVARRAY */
+	NULL, /* FC_LGVARRAY */
+	NULL, /* FC_BOGUS_ARRAY */
+	NULL, /* FC_C_CSTRING */
+	NULL, /* FC_C_BSTRING */
+	NULL, /* FC_C_SSTRING */
+	NULL, /* FC_C_WSTRING */
+	NULL, /* FC_CSTRING */
+	NULL, /* FC_BSTRING */
+	NULL, /* FC_SSTRING */
+	NULL, /* FC_WSTRING */
+	NULL, /* FC_ENCAPSULATED_UNION */
+	NULL, /* FC_NON_ENCAPSULATED_UNION */
+	NULL, /* FC_BYTE_COUNT_POINTER */
+	NULL, /* FC_TRANSMIT_AS */
+	NULL, /* FC_REPRESENT_AS */
+	NULL, /* FC_IP */
+	NULL, /* FC_BIND_CONTEXT */
+	NULL, /* FC_BIND_GENERIC */
+	NULL, /* FC_BIND_PRIMITIVE */
+	NULL, /* FC_AUTO_HANDLE */
+	NULL, /* FC_CALLBACK_HANDLE */
+	NULL, /* FC_UNUSED1 */
+	NULL, /* FC_POINTER */
+	NULL, /* FC_ALIGNM2 */
+	NULL, /* FC_ALIGNM4 */
+	NULL, /* FC_ALIGNM8 */
+	NULL, /* FC_UNUSED2 */
+	NULL, /* FC_UNUSED3 */
+	NULL, /* FC_UNUSED4 */
+	NULL, /* FC_STRUCTPAD1 */
+	NULL, /* FC_STRUCTPAD2 */
+	NULL, /* FC_STRUCTPAD3 */
+	NULL, /* FC_STRUCTPAD4 */
+	NULL, /* FC_STRUCTPAD5 */
+	NULL, /* FC_STRUCTPAD6 */
+	NULL, /* FC_STRUCTPAD7 */
+	NULL, /* FC_STRING_SIZED */
+	NULL, /* FC_UNUSED5 */
+	NULL, /* FC_NO_REPEAT */
+	NULL, /* FC_FIXED_REPEAT */
+	NULL, /* FC_VARIABLE_REPEAT */
+	NULL, /* FC_FIXED_OFFSET */
+	NULL, /* FC_VARIABLE_OFFSET */
+	NULL, /* FC_PP */
+	NULL, /* FC_EMBEDDED_COMPLEX */
+	NULL, /* FC_IN_PARAM */
+	NULL, /* FC_IN_PARAM_BASETYPE */
+	NULL, /* FC_IN_PARAM_NO_FREE_INST */
+	NULL, /* FC_IN_OUT_PARAM */
+	NULL, /* FC_OUT_PARAM */
+	NULL, /* FC_RETURN_PARAM */
+	NULL, /* FC_RETURN_PARAM_BASETYPE */
+	NULL, /* FC_DEREFERENCE */
+	NULL, /* FC_DIV_2 */
+	NULL, /* FC_MULT_2 */
+	NULL, /* FC_ADD_1 */
+	NULL, /* FC_SUB_1 */
+	NULL, /* FC_CALLBACK */
+	NULL, /* FC_CONSTANT_IID */
+	NULL, /* FC_END */
+	NULL, /* FC_PAD */
+};
+
+static void AlignLength(unsigned long* length, unsigned int alignment)
+{
+	*length = (*length + alignment - 1) & ~(alignment - 1);
+}
+
+static void IncrementLength(unsigned long* length, unsigned int size)
+{
+	*length += size;
+}
+
+void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	switch (*pFormat)
+	{
+		case FC_BYTE:
+		case FC_CHAR:
+		case FC_SMALL:
+		case FC_USMALL:
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(BYTE));
+			break;
+
+		case FC_WCHAR:
+		case FC_SHORT:
+		case FC_USHORT:
+		case FC_ENUM16:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(USHORT));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(USHORT));
+			break;
+
+		case FC_LONG:
+		case FC_ULONG:
+		case FC_ENUM32:
+		case FC_INT3264:
+		case FC_UINT3264:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(ULONG));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(ULONG));
+			break;
+
+		case FC_FLOAT:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(FLOAT));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(FLOAT));
+			break;
+
+		case FC_DOUBLE:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(DOUBLE));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(DOUBLE));
+			break;
+
+		case FC_HYPER:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(ULONGLONG));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(ULONGLONG));
+			break;
+
+		case FC_ERROR_STATUS_T:
+			AlignLength(&(pStubMsg->BufferLength), sizeof(error_status_t));
+			IncrementLength(&(pStubMsg->BufferLength), sizeof(error_status_t));
+			break;
+
+		case FC_IGNORE:
+			break;
+	}
+}
+
+void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	unsigned char type;
+	PFORMAT_STRING pNextFormat;
+	PARAM_ATTRIBUTES* attributes;
+	NDR_TYPE_SIZE_ROUTINE pfnSizeRoutine;
+
+	type = pFormat[0];
+	attributes = (PARAM_ATTRIBUTES*) &pFormat[1];
+	pFormat += 2;
+
+	if (type != FC_RP)
+	{
+		AlignLength((&pStubMsg->BufferLength), 4);
+		IncrementLength((&pStubMsg->BufferLength), 4);
+	}
+
+	if (attributes->IsBasetype)
+		pNextFormat = pFormat;
+	else
+		pNextFormat = pFormat + *(SHORT*) pFormat;
+
+	switch (type)
+	{
+		case FC_RP:
+			break;
+
+		case FC_OP:
+		case FC_UP:
+
+			if (!pMemory)
+				return;
+
+			break;
+
+		case FC_FP:
+			printf("warning: FC_FP unimplemented\n");
+			break;
+	}
+
+	if (attributes->IsSimpleRef)
+		pMemory = *(unsigned char**) pMemory;
+
+	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];
+
+	if (pfnSizeRoutine)
+		pfnSizeRoutine(pStubMsg, pMemory, pNextFormat);
+}
+
+void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrSimpleStructBufferSize unimplemented\n");
+}
+
+void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrConformantStructBufferSize unimplemented\n");
+}
+
+void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrConformantVaryingStructBufferSize unimplemented\n");
+}
+
+void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrComplexStructBufferSize unimplemented\n");
+}
+
+void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar)
+{
+
+}
+
+void NdrSimpleTypeUnmarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar)
+{
+
+}
+
+void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+
+}
+
+void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
 {
 	if (attributes.ServerAllocSize)
 		printf("ServerAllocSize, ");
@@ -175,9 +730,9 @@ void ndr_print_param_attributes(PARAM_ATTRIBUTES attributes)
 		printf("MustSize, ");
 }
 
-void ndr_process_param(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, NDR_PARAM* param)
+void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char* pMemory, NDR_PARAM* param)
 {
-	unsigned char id;
+	unsigned char type;
 	PFORMAT_STRING pFormat;
 
 	/* Parameter Descriptors: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374362/ */
@@ -197,10 +752,42 @@ void ndr_process_param(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, NDR_
 			pMemory = *(unsigned char**) pMemory;
 	}
 
-	id = (pFormat[0] & 0x7F);
+	type = (pFormat[0] & 0x7F);
+
+	if (type > FC_PAD)
+		return;
+
+	if (phase == NDR_PHASE_SIZE)
+	{
+		NDR_TYPE_SIZE_ROUTINE pfnSizeRoutine = pfnSizeRoutines[type];
+
+		if (pfnSizeRoutine)
+			pfnSizeRoutine(pStubMsg, pMemory, pFormat);
+	}
+	else if (phase == NDR_PHASE_MARSHALL)
+	{
+		NDR_TYPE_MARSHALL_ROUTINE pfnMarshallRoutine = pfnMarshallRoutines[type];
+
+		if (pfnMarshallRoutine)
+			pfnMarshallRoutine(pStubMsg, pMemory, *pFormat);
+	}
+	else if (phase == NDR_PHASE_UNMARSHALL)
+	{
+		NDR_TYPE_UNMARSHALL_ROUTINE pfnUnmarshallRoutine = pfnUnmarshallRoutines[type];
+
+		if (pfnUnmarshallRoutine)
+			pfnUnmarshallRoutine(pStubMsg, pMemory, *pFormat);
+	}
+	else if (phase == NDR_PHASE_FREE)
+	{
+		NDR_TYPE_FREE_ROUTINE pfnFreeRoutine = pfnFreeRoutines[type];
+
+		if (pfnFreeRoutine)
+			pfnFreeRoutine(pStubMsg, pMemory, pFormat);
+	}
 }
 
-void ndr_process_params(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void** fpuArgs, unsigned short numberParams)
+void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_PHASE phase, void** fpuArgs, unsigned short numberParams)
 {
 	unsigned int i;
 	NDR_PARAM* params;
@@ -232,13 +819,13 @@ void ndr_process_params(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, voi
 
 		type = (params[i].Attributes.IsBasetype) ? params[i].Type.FormatChar : *fmt;
 
-		printf(" type %s (0x%02X) ", FC_TYPE_STRINGS[type & 0xBA], type);
+		printf(" type %s (0x%02X) ", FC_TYPE_STRINGS[type], type);
 
-		ndr_print_param_attributes(params[i].Attributes);
+		NdrPrintParamAttributes(params[i].Attributes);
 
 		if (params[i].Attributes.IsIn)
 		{
-			ndr_process_param(pStubMsg, arg, &params[i]);
+			NdrProcessParam(pStubMsg, phase, arg, &params[i]);
 		}
 
 		printf("\n");
@@ -265,7 +852,39 @@ void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMs
 	pStubMsg->StubDesc = pStubDesc;
 }
 
-CLIENT_CALL_RETURN ndr_client_call(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, void** stackTop, void** fpuStack)
+void NdrPrintOptFlags(INTERPRETER_OPT_FLAGS optFlags)
+{
+	if (optFlags.ClientMustSize)
+		printf("ClientMustSize, ");
+	if (optFlags.ServerMustSize)
+		printf("ServerMustSize, ");
+	if (optFlags.HasAsyncUuid)
+		printf("HasAsyncUiid, ");
+	if (optFlags.HasAsyncHandle)
+		printf("HasAsyncHandle, ");
+	if (optFlags.HasReturn)
+		printf("HasReturn, ");
+	if (optFlags.HasPipes)
+		printf("HasPipes, ");
+	if (optFlags.HasExtensions)
+		printf("HasExtensions, ");
+}
+
+void NdrPrintExtFlags(INTERPRETER_OPT_FLAGS2 extFlags)
+{
+	if (extFlags.HasNewCorrDesc)
+		printf("HasNewCorrDesc, ");
+	if (extFlags.ClientCorrCheck)
+		printf("ClientCorrCheck, ");
+	if (extFlags.ServerCorrCheck)
+		printf("ServerCorrCheck, ");
+	if (extFlags.HasNotify)
+		printf("HasNotify, ");
+	if (extFlags.HasNotify2)
+		printf("HasNotify2, ");
+}
+
+CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, void** stackTop, void** fpuStack)
 {
 	RPC_MESSAGE rpcMsg;
 	unsigned short procNum;
@@ -317,9 +936,15 @@ CLIENT_CALL_RETURN ndr_client_call(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRI
 	optFlags = oi2ProcHeader->Oi2Flags;
 	numberParams = oi2ProcHeader->NumberParams;
 
-	printf("Oi2 Header: Oi2Flags: 0x%02X, NumberParams: %d\n",
+	printf("Oi2 Header: Oi2Flags: 0x%02X, NumberParams: %d ClientBufferSize: %d ServerBufferSize: %d\n",
 			*((unsigned char*) &optFlags),
-			(unsigned char) numberParams);
+			(unsigned char) numberParams,
+			oi2ProcHeader->ClientBufferSize,
+			oi2ProcHeader->ServerBufferSize);
+
+	printf("Oi2Flags: ");
+	NdrPrintOptFlags(optFlags);
+	printf("\n");
 
 	NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDescriptor, procNum);
 
@@ -356,12 +981,13 @@ CLIENT_CALL_RETURN ndr_client_call(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRI
 
 	stubMsg.StackTop = (unsigned char*) stackTop;
 
-	if (extFlags.HasNewCorrDesc)
-	{
-		printf("HasNewCorrDesc\n");
-	}
+	printf("ExtFlags: ");
+	NdrPrintExtFlags(extFlags);
+	printf("\n");
 
-	ndr_process_params(&stubMsg, pFormat, fpuStack, numberParams);
+	NdrProcessParams(&stubMsg, pFormat, NDR_PHASE_SIZE, fpuStack, numberParams);
+
+	printf("stubMsg BufferLength: %d\n", (int) stubMsg.BufferLength);
 
 	return client_call_return;
 }
@@ -372,7 +998,7 @@ CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRIN
 	CLIENT_CALL_RETURN client_call_return;
 
 	va_start(args, pFormat);
-	client_call_return = ndr_client_call(pStubDescriptor, pFormat, va_arg(args, void**), NULL);
+	client_call_return = NdrClientCall(pStubDescriptor, pFormat, va_arg(args, void**), NULL);
 	va_end(args);
 
 	return client_call_return;

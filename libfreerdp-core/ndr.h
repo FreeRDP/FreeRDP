@@ -330,9 +330,17 @@ typedef struct _NDR_OI2_PROC_HEADER
 	unsigned char NumberParams;
 } NDR_OI2_PROC_HEADER, *PNDR_OI2_PROC_HEADER;
 
+typedef enum _NDR_PHASE
+{
+	NDR_PHASE_SIZE,
+	NDR_PHASE_MARSHALL,
+	NDR_PHASE_UNMARSHALL,
+	NDR_PHASE_FREE
+} NDR_PHASE;
+
 /* Type Format Strings: http://msdn.microsoft.com/en-us/library/windows/desktop/aa379093/ */
 
-#define FC_ZERO				0x02
+#define FC_ZERO				0x00
 #define FC_BYTE				0x01
 #define FC_CHAR				0x02
 #define FC_SMALL			0x03
