@@ -167,6 +167,28 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 
 void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 
+void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
 const NDR_TYPE_SIZE_ROUTINE pfnSizeRoutines[] =
 {
 	NULL, /* FC_ZERO */
@@ -196,28 +218,28 @@ const NDR_TYPE_SIZE_ROUTINE pfnSizeRoutines[] =
 	NdrConformantStructBufferSize, /* FC_CPSTRUCT */
 	NdrConformantVaryingStructBufferSize, /* FC_CVSTRUCT */
 	NdrComplexStructBufferSize, /* FC_BOGUS_STRUCT */
-	NULL, /* FC_CARRAY */
-	NULL, /* FC_CVARRAY */
-	NULL, /* FC_SMFARRAY */
-	NULL, /* FC_LGFARRAY */
-	NULL, /* FC_SMVARRAY */
-	NULL, /* FC_LGVARRAY */
-	NULL, /* FC_BOGUS_ARRAY */
-	NULL, /* FC_C_CSTRING */
+	NdrConformantArrayBufferSize, /* FC_CARRAY */
+	NdrConformantVaryingArrayBufferSize, /* FC_CVARRAY */
+	NdrFixedArrayBufferSize, /* FC_SMFARRAY */
+	NdrFixedArrayBufferSize, /* FC_LGFARRAY */
+	NdrVaryingArrayBufferSize, /* FC_SMVARRAY */
+	NdrVaryingArrayBufferSize, /* FC_LGVARRAY */
+	NdrComplexArrayBufferSize, /* FC_BOGUS_ARRAY */
+	NdrConformantStringBufferSize, /* FC_C_CSTRING */
 	NULL, /* FC_C_BSTRING */
 	NULL, /* FC_C_SSTRING */
-	NULL, /* FC_C_WSTRING */
-	NULL, /* FC_CSTRING */
+	NdrConformantStringBufferSize, /* FC_C_WSTRING */
+	NdrNonConformantStringBufferSize, /* FC_CSTRING */
 	NULL, /* FC_BSTRING */
 	NULL, /* FC_SSTRING */
 	NULL, /* FC_WSTRING */
-	NULL, /* FC_ENCAPSULATED_UNION */
-	NULL, /* FC_NON_ENCAPSULATED_UNION */
-	NULL, /* FC_BYTE_COUNT_POINTER */
+	NdrEncapsulatedUnionBufferSize, /* FC_ENCAPSULATED_UNION */
+	NdrNonEncapsulatedUnionBufferSize, /* FC_NON_ENCAPSULATED_UNION */
+	NdrByteCountPointerBufferSize, /* FC_BYTE_COUNT_POINTER */
 	NULL, /* FC_TRANSMIT_AS */
 	NULL, /* FC_REPRESENT_AS */
 	NULL, /* FC_IP */
-	NULL, /* FC_BIND_CONTEXT */
+	NdrContextHandleBufferSize, /* FC_BIND_CONTEXT */
 	NULL, /* FC_BIND_GENERIC */
 	NULL, /* FC_BIND_PRIMITIVE */
 	NULL, /* FC_AUTO_HANDLE */
@@ -618,15 +640,30 @@ void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 	}
 }
 
+/* Pointers: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802750/ */
+
 void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
+	/**
+	 * pointer_type<1>
+	 * pointer_attributes<1>
+	 * simple_type<1>
+	 * FC_PAD
+	 */
+
+	/**
+	 * pointer_type<1>
+	 * pointer_attributes<1>
+	 * offset_to_complex_description<2>
+	 */
+
 	unsigned char type;
+	unsigned char attributes;
 	PFORMAT_STRING pNextFormat;
-	PARAM_ATTRIBUTES* attributes;
 	NDR_TYPE_SIZE_ROUTINE pfnSizeRoutine;
 
 	type = pFormat[0];
-	attributes = (PARAM_ATTRIBUTES*) &pFormat[1];
+	attributes = pFormat[1];
 	pFormat += 2;
 
 	if (type != FC_RP)
@@ -635,30 +672,30 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 		IncrementLength((&pStubMsg->BufferLength), 4);
 	}
 
-	if (attributes->IsBasetype)
+	if (attributes & FC_SIMPLE_POINTER)
 		pNextFormat = pFormat;
 	else
 		pNextFormat = pFormat + *(SHORT*) pFormat;
 
 	switch (type)
 	{
-		case FC_RP:
+		case FC_RP: /* Reference Pointer */
 			break;
 
-		case FC_OP:
-		case FC_UP:
+		case FC_UP: /* Unique Pointer */
+		case FC_OP: /* Unique Pointer in an object interface */
 
 			if (!pMemory)
 				return;
 
 			break;
 
-		case FC_FP:
+		case FC_FP: /* Full Pointer */
 			printf("warning: FC_FP unimplemented\n");
 			break;
 	}
 
-	if (attributes->IsSimpleRef)
+	if (attributes & FC_POINTER_DEREF)
 		pMemory = *(unsigned char**) pMemory;
 
 	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];
@@ -667,24 +704,255 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 		pfnSizeRoutine(pStubMsg, pMemory, pNextFormat);
 }
 
+/* Structures: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378695/ */
+
 void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
+	/**
+	 * FC_STRUCT alignment<1>
+	 * memory_size<2>
+	 * member_layout<>
+	 * FC_END
+	 */
+
+	/**
+	 * FC_PSTRUCT alignment<1>
+	 * memory_size<2>
+	 * pointer_layout<>
+	 * member_layout<>
+	 * FC_END
+	 */
+
 	printf("warning: NdrSimpleStructBufferSize unimplemented\n");
 }
 
 void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
+	/**
+	 * FC_CSTRUCT alignment<1>
+	 * memory_size<2>
+	 * offset_to_array_description<2>
+	 * member_layout<>
+	 * FC_END
+	 */
+
+	/**
+	 * FC_CPSTRUCT alignment<1>
+	 * memory_size<2>
+	 * offset_to_array_description<2>
+	 * pointer_layout<>
+	 * member_layout<> FC_END
+	 */
+
 	printf("warning: NdrConformantStructBufferSize unimplemented\n");
 }
 
 void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
+	/**
+	 * FC_CVSTRUCT alignment<1>
+	 * memory_size<2>
+	 * offset_to_array_description<2>
+	 * [pointer_layout<>]
+	 * layout<>
+	 * FC_END
+	 */
+
 	printf("warning: NdrConformantVaryingStructBufferSize unimplemented\n");
 }
 
 void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
+	/**
+	 * FC_BOGUS_STRUCT
+	 * alignment<1>
+	 * memory_size<2>
+	 * offset_to_conformant_array_description<2>
+	 * offset_to_pointer_layout<2>
+	 * member_layout<>
+	 * FC_END
+	 * [pointer_layout<>]
+	 */
+
+	unsigned char type;
+	unsigned char alignment;
+	unsigned short memory_size;
+
+	type = pFormat[0];
+
+	if (type != FC_BOGUS_STRUCT)
+	{
+		printf("error: expected FC_BOGUS_STRUCT, got 0x%02X\n", type);
+	}
+
+	alignment = pFormat[1] + 1;
+	memory_size = *(unsigned short*) &pFormat[2];
+
+	AlignLength(&(pStubMsg->BufferLength), alignment);
+
+	if (!pStubMsg->IgnoreEmbeddedPointers && !pStubMsg->PointerLength)
+	{
+
+	}
+
 	printf("warning: NdrComplexStructBufferSize unimplemented\n");
+}
+
+void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	/**
+	 * FC_CARRAY alignment<1>
+	 * element_size<2>
+	 * conformance_description<>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	printf("warning: NdrConformantArrayBufferSize unimplemented\n");
+}
+
+void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	/**
+	 * FC_CVARRAY alignment<1>
+	 * element_size<2>
+	 * conformance_description<>
+	 * variance_description<>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	printf("warning: NdrConformantVaryingArrayBufferSize unimplemented\n");
+}
+
+void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	/**
+	 * FC_SMFARRAY alignment<1>
+	 * total_size<2>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	/**
+	 * FC_LGFARRAY alignment<1>
+	 * total_size<4>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	printf("warning: NdrFixedArrayBufferSize unimplemented\n");
+}
+
+void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	/**
+	 * FC_SMVARRAY alignment<1>
+	 * total_size<2>
+	 * number_elements<2>
+	 * element_size<2>
+	 * variance_description<>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	/**
+	 * FC_LGVARRAY alignment<1>
+	 * total_size<4>
+	 * number_elements<4>
+	 * element_size<2>
+	 * variance_description<4>
+	 * [pointer_layout<>]
+	 * element_description<>
+	 * FC_END
+	 */
+
+	printf("warning: NdrVaryingArrayBufferSize unimplemented\n");
+}
+
+void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	/**
+	 * FC_BOGUS_ARRAY alignment<1>
+	 * number_of_elements<2>
+	 * conformance_description<>
+	 * variance_description<>
+	 * element_description<>
+	 * FC_END
+	 */
+
+	printf("warning: NdrComplexArrayBufferSize unimplemented\n");
+}
+
+void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrConformantStringBufferSize unimplemented\n");
+}
+
+void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrNonConformantStringBufferSize unimplemented\n");
+}
+
+void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrEncapsulatedUnionBufferSize unimplemented\n");
+}
+
+void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrNonEncapsulatedUnionBufferSize unimplemented\n");
+}
+
+void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	printf("warning: NdrByteCountPointerBufferSize unimplemented\n");
+}
+
+void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	unsigned char type = *pFormat;
+
+	if (type == FC_BIND_PRIMITIVE)
+	{
+		/**
+		 * FC_BIND_PRIMITIVE
+		 * flag<1>
+		 * offset<2>
+		 */
+
+		printf("warning: NdrContextHandleBufferSize FC_BIND_PRIMITIVE unimplemented\n");
+	}
+	else if (type == FC_BIND_GENERIC)
+	{
+		/**
+		 * FC_BIND_GENERIC
+		 * flag_and_size<1>
+		 * offset<2>
+		 * binding_routine_pair_index<1>
+		 * FC_PAD
+		 */
+
+		printf("warning: NdrContextHandleBufferSize FC_BIND_GENERIC unimplemented\n");
+	}
+	else if (type == FC_BIND_CONTEXT)
+	{
+		/**
+		 * FC_BIND_CONTEXT
+		 * flags<1>
+		 * offset<2>
+		 * context_rundown_routine_index<1>
+		 * param_num<1>
+		 */
+
+		AlignLength(&(pStubMsg->BufferLength), 4);
+		IncrementLength(&(pStubMsg->BufferLength), 20);
+	}
 }
 
 void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar)
@@ -850,6 +1118,8 @@ void NdrClientInitializeNew(PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMs
 	pStubMsg->BufferLength = 0;
 	pStubMsg->StackTop = NULL;
 	pStubMsg->StubDesc = pStubDesc;
+	pStubMsg->IgnoreEmbeddedPointers = 0;
+	pStubMsg->PointerLength = 0;
 }
 
 void NdrPrintOptFlags(INTERPRETER_OPT_FLAGS optFlags)
