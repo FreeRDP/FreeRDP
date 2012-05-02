@@ -761,6 +761,108 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 	printf("warning: NdrConformantVaryingStructBufferSize unimplemented\n");
 }
 
+ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
+{
+	ULONG size = 0;
+
+	while (*pFormat != FC_END)
+	{
+		switch (*pFormat)
+		{
+			case FC_BYTE:
+			case FC_CHAR:
+			case FC_SMALL:
+			case FC_USMALL:
+				size += sizeof(BYTE);
+				break;
+
+			case FC_WCHAR:
+			case FC_SHORT:
+			case FC_USHORT:
+			case FC_ENUM16:
+				size += sizeof(USHORT);
+				break;
+
+			case FC_LONG:
+			case FC_ULONG:
+			case FC_ENUM32:
+				size += sizeof(ULONG);
+				break;
+
+			case FC_INT3264:
+			case FC_UINT3264:
+				size += sizeof(INT_PTR);
+				break;
+
+			case FC_FLOAT:
+				size += sizeof(FLOAT);
+				break;
+
+			case FC_DOUBLE:
+				size += sizeof(DOUBLE);
+				break;
+
+			case FC_HYPER:
+				size += sizeof(ULONGLONG);
+				break;
+
+			case FC_ERROR_STATUS_T:
+				size += sizeof(error_status_t);
+				break;
+
+			case FC_IGNORE:
+				break;
+
+			case FC_RP:
+			case FC_UP:
+			case FC_OP:
+			case FC_FP:
+			case FC_POINTER:
+				size += sizeof(void*);
+				if (*pFormat != FC_POINTER)
+					pFormat += 4;
+				break;
+
+			case FC_ALIGNM2:
+				AlignLength(&size, 2);
+				break;
+
+			case FC_ALIGNM4:
+				AlignLength(&size, 4);
+				break;
+
+			case FC_ALIGNM8:
+				AlignLength(&size, 8);
+				break;
+
+			case FC_STRUCTPAD1:
+			case FC_STRUCTPAD2:
+			case FC_STRUCTPAD3:
+			case FC_STRUCTPAD4:
+			case FC_STRUCTPAD5:
+			case FC_STRUCTPAD6:
+			case FC_STRUCTPAD7:
+				size += *pFormat - FC_STRUCTPAD1 + 1;
+				break;
+
+			case FC_PAD:
+				break;
+
+			case FC_EMBEDDED_COMPLEX:
+				printf("warning: NdrComplexStructMemberSize FC_EMBEDDED_COMPLEX unimplemented\n");
+				break;
+
+			default:
+				printf("warning: NdrComplexStructMemberSize 0x%02X unimplemented\n", *pFormat);
+				break;
+		}
+
+		pFormat++;
+	}
+
+	return size;
+}
+
 void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
@@ -777,12 +879,18 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char type;
 	unsigned char alignment;
 	unsigned short memory_size;
+	unsigned char* pointer_layout;
+	unsigned char* conformant_array_description;
+	unsigned short offset_to_pointer_layout;
+	unsigned short offset_to_conformant_array_description;
 
 	type = pFormat[0];
+	pointer_layout = conformant_array_description = NULL;
 
 	if (type != FC_BOGUS_STRUCT)
 	{
 		printf("error: expected FC_BOGUS_STRUCT, got 0x%02X\n", type);
+		return;
 	}
 
 	alignment = pFormat[1] + 1;
@@ -792,16 +900,164 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 
 	if (!pStubMsg->IgnoreEmbeddedPointers && !pStubMsg->PointerLength)
 	{
+		unsigned long BufferLengthCopy = pStubMsg->BufferLength;
+		int IgnoreEmbeddedPointersCopy = pStubMsg->IgnoreEmbeddedPointers;
 
+		pStubMsg->IgnoreEmbeddedPointers = 1;
+		NdrComplexStructBufferSize(pStubMsg, pMemory, pFormat);
+		pStubMsg->IgnoreEmbeddedPointers = IgnoreEmbeddedPointersCopy;
+
+		pStubMsg->PointerLength = pStubMsg->BufferLength;
+		pStubMsg->BufferLength = BufferLengthCopy;
+	}
+
+	pFormat += 4;
+
+	offset_to_conformant_array_description = *(unsigned short*) &pFormat[0];
+
+	if (offset_to_conformant_array_description)
+		conformant_array_description = (unsigned char*) pFormat + offset_to_conformant_array_description;
+	pFormat += 2;
+
+	offset_to_pointer_layout = *(unsigned short*) &pFormat[0];
+
+	if (offset_to_pointer_layout)
+		pointer_layout = (unsigned char*) pFormat + offset_to_pointer_layout;
+	pFormat += 2;
+
+	pStubMsg->Memory = pMemory;
+
+	if (conformant_array_description)
+	{
+		ULONG size = NdrComplexStructMemberSize(pStubMsg, pFormat);
 	}
 
 	printf("warning: NdrComplexStructBufferSize unimplemented\n");
 }
 
+/*
+ * Correlation Descriptors: http://msdn.microsoft.com/en-us/library/windows/desktop/aa373607/
+ *
+ * correlation_type<1>
+ * correlation_operator<1>
+ * offset<2>
+ * [robust_flags<2>]
+ *
+ */
+
+void NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+	LPVOID ptr = NULL;
+	ULONG_PTR data = 0;
+	unsigned char type;
+	unsigned short offset;
+	unsigned char conformance;
+	unsigned char correlation_type;
+	unsigned char correlation_operator;
+
+	correlation_type = pFormat[0];
+	type = correlation_type & 0x0F;
+	conformance = correlation_type & 0xF0;
+
+	correlation_operator = pFormat[1];
+	offset = *(unsigned short*) & pFormat[2];
+
+	if (conformance == FC_NORMAL_CONFORMANCE)
+	{
+		ptr = pMemory;
+	}
+	else if (conformance == FC_POINTER_CONFORMANCE)
+	{
+		ptr = pStubMsg->Memory;
+	}
+	else if (conformance == FC_TOP_LEVEL_CONFORMANCE)
+	{
+		ptr = pStubMsg->StackTop;
+	}
+	else if (conformance == FC_CONSTANT_CONFORMANCE	)
+	{
+		data = offset | ((DWORD) pFormat[1] << 16);
+		pStubMsg->MaxCount = data;
+	}
+	else if (conformance == FC_TOP_LEVEL_MULTID_CONFORMANCE)
+	{
+		if (pStubMsg->StackTop)
+			ptr = pStubMsg->StackTop;
+	}
+
+	switch (correlation_operator)
+	{
+		case FC_DEREFERENCE:
+			ptr = *(LPVOID*)((char*) ptr + offset);
+			break;
+
+		case FC_DIV_2:
+			ptr = (char*) ptr + offset;
+			break;
+
+		case FC_MULT_2:
+			ptr = (char*) ptr + offset;
+			break;
+
+		case FC_SUB_1:
+			ptr = (char*) ptr + offset;
+			break;
+
+		case FC_ADD_1:
+			ptr = (char*) ptr + offset;
+			break;
+
+		case FC_CALLBACK:
+			{
+				printf("warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
+			}
+			break;
+	}
+
+	switch (type)
+	{
+		case FC_LONG:
+			data = *(LONG*) ptr;
+			break;
+
+		case FC_ULONG:
+			data = *(ULONG*) ptr;
+			break;
+
+		case FC_SHORT:
+			data = *(SHORT*) ptr;
+			break;
+
+		case FC_USHORT:
+			data = *(USHORT*) ptr;
+			break;
+
+		case FC_CHAR:
+		case FC_SMALL:
+			data = *(CHAR*) ptr;
+			break;
+
+		case FC_BYTE:
+		case FC_USMALL:
+			data = *(BYTE*) ptr;
+			break;
+
+		case FC_HYPER:
+			data = *(ULONGLONG*) ptr;
+			break;
+	}
+}
+
+void NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+
+}
+
 void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
-	 * FC_CARRAY alignment<1>
+	 * FC_CARRAY
+	 * alignment<1>
 	 * element_size<2>
 	 * conformance_description<>
 	 * [pointer_layout<>]
@@ -809,13 +1065,28 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pM
 	 * FC_END
 	 */
 
+	unsigned char type;
+	unsigned char alignment;
+	unsigned short element_size;
+
+	type = pFormat[0];
+	alignment = pFormat[1] + 1;
+	element_size = *(unsigned short*) &pFormat[2];
+
+	if (type != FC_CARRAY)
+	{
+		printf("error: expected FC_CARRAY, got 0x%02X\n", type);
+		return;
+	}
+
 	printf("warning: NdrConformantArrayBufferSize unimplemented\n");
 }
 
 void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
-	 * FC_CVARRAY alignment<1>
+	 * FC_CVARRAY
+	 * alignment<1>
 	 * element_size<2>
 	 * conformance_description<>
 	 * variance_description<>
@@ -830,7 +1101,8 @@ void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
 void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
-	 * FC_SMFARRAY alignment<1>
+	 * FC_SMFARRAY
+	 * alignment<1>
 	 * total_size<2>
 	 * [pointer_layout<>]
 	 * element_description<>
@@ -838,7 +1110,8 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 	 */
 
 	/**
-	 * FC_LGFARRAY alignment<1>
+	 * FC_LGFARRAY
+	 * alignment<1>
 	 * total_size<4>
 	 * [pointer_layout<>]
 	 * element_description<>
@@ -851,7 +1124,8 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
-	 * FC_SMVARRAY alignment<1>
+	 * FC_SMVARRAY
+	 * alignment<1>
 	 * total_size<2>
 	 * number_elements<2>
 	 * element_size<2>
@@ -862,7 +1136,8 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 */
 
 	/**
-	 * FC_LGVARRAY alignment<1>
+	 * FC_LGVARRAY
+	 * alignment<1>
 	 * total_size<4>
 	 * number_elements<4>
 	 * element_size<2>
@@ -878,7 +1153,8 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
-	 * FC_BOGUS_ARRAY alignment<1>
+	 * FC_BOGUS_ARRAY
+	 * alignment<1>
 	 * number_of_elements<2>
 	 * conformance_description<>
 	 * variance_description<>

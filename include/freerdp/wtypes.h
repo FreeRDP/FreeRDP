@@ -103,6 +103,14 @@ typedef void VOID, *PVOID, *LPVOID;
 typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 
+#if __x86_64__
+typedef __int64 INT_PTR;
+typedef unsigned __int64 UINT_PTR;
+#else
+typedef int INT_PTR;
+typedef unsigned int UINT_PTR;
+#endif
+
 typedef void* PCONTEXT_HANDLE;
 typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 

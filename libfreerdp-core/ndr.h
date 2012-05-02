@@ -145,10 +145,63 @@ typedef struct _MIDL_STUB_MESSAGE
 	unsigned long BufferLength;
 	unsigned long MemorySize;
 	unsigned char* Memory;
-	unsigned char* StackTop;
-	PMIDL_STUB_DESC StubDesc;
+	int IsClient;
+	int ReuseBuffer;
+	struct NDR_ALLOC_ALL_NODES_CONTEXT* pAllocAllNodesContext;
+	struct NDR_POINTER_QUEUE_STATE* pPointerQueueState;
 	int IgnoreEmbeddedPointers;
+	unsigned char* PointerBufferMark;
+	unsigned char fBufferValid;
+	unsigned char uFlags;
+	unsigned short Unused2;
+	ULONG_PTR MaxCount;
+	unsigned long Offset;
+	unsigned long ActualCount;
+	void *(*pfnAllocate)(size_t);
+	void (*pfnFree)(void*);
+	unsigned char* StackTop;
+	unsigned char* pPresentedType;
+	unsigned char* pTransmitType;
+	handle_t SavedHandle;
+	const struct _MIDL_STUB_DESC* StubDesc;
+	struct _FULL_PTR_XLAT_TABLES* FullPtrXlatTables;
+	unsigned long FullPtrRefId;
 	unsigned long PointerLength;
+	int fInDontFree : 1;
+	int fDontCallFreeInst : 1;
+	int fInOnlyParam : 1;
+	int fHasReturn : 1;
+	int fHasExtensions : 1;
+	int fHasNewCorrDesc : 1;
+	int fUnused : 10;
+	int fUnused2 : 16;
+	unsigned long dwDestContext;
+	void* pvDestContext;
+	//NDR_SCONTEXT* SavedContextHandles;
+	long ParamNumber;
+	struct IRpcChannelBuffer* pRpcChannelBuffer;
+	//PARRAY_INFO pArrayInfo;
+	unsigned long* SizePtrCountArray;
+	unsigned long* SizePtrOffsetArray;
+	unsigned long* SizePtrLengthArray;
+	void* pArgQueue;
+	unsigned long dwStubPhase;
+	void* LowStackMark;
+	//PNDR_ASYNC_MESSAGE pAsyncMsg;
+	//PNDR_CORRELATION_INFO pCorrInfo;
+	unsigned char* pCorrMemory;
+	void* pMemoryList;
+	//CS_STUB_INFO* pCSInfo;
+	unsigned char* ConformanceMark;
+	unsigned char* VarianceMark;
+	void* BackingStoreLowMark;
+	INT_PTR Unused;
+	struct _NDR_PROC_CONTEXT* pContext;
+	INT_PTR Reserved51_1;
+	INT_PTR Reserved51_2;
+	INT_PTR Reserved51_3;
+	INT_PTR Reserved51_4;
+	INT_PTR Reserved51_5;
 } MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
 
 typedef struct _MIDL_STUB_MESSAGE MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
@@ -278,6 +331,15 @@ typedef struct
 	unsigned char Unused : 3;
 } INTERPRETER_OPT_FLAGS2, *PINTERPRETER_OPT_FLAGS2;
 
+typedef struct  _NDR_CORRELATION_FLAGS
+{
+	unsigned char Early : 1;
+	unsigned char Split : 1;
+	unsigned char IsIidIs : 1;
+	unsigned char DontCheck : 1;
+	unsigned char Unused : 4;
+} NDR_CORRELATION_FLAGS;
+
 #define FC_ALLOCATE_ALL_NODES			0x01
 #define FC_DONT_FREE				0x02
 #define FC_ALLOCED_ON_STACK			0x03
@@ -341,117 +403,123 @@ typedef enum _NDR_PHASE
 	NDR_PHASE_FREE
 } NDR_PHASE;
 
+#define FC_NORMAL_CONFORMANCE			0x00
+#define FC_POINTER_CONFORMANCE			0x10
+#define FC_TOP_LEVEL_CONFORMANCE		0x20
+#define FC_CONSTANT_CONFORMANCE			0x40
+#define FC_TOP_LEVEL_MULTID_CONFORMANCE		0x80
+
 /* Type Format Strings: http://msdn.microsoft.com/en-us/library/windows/desktop/aa379093/ */
 
-#define FC_ZERO				0x00
-#define FC_BYTE				0x01
-#define FC_CHAR				0x02
-#define FC_SMALL			0x03
-#define FC_USMALL			0x04
-#define FC_WCHAR			0x05
-#define FC_SHORT			0x06
-#define FC_USHORT			0x07
-#define FC_LONG				0x08
-#define FC_ULONG			0x09
-#define FC_FLOAT			0x0A
-#define FC_HYPER			0x0B
-#define FC_DOUBLE			0x0C
-#define FC_ENUM16			0x0D
-#define FC_ENUM32			0x0E
-#define FC_IGNORE			0x0F
-#define FC_ERROR_STATUS_T		0x10
-#define FC_RP				0x11
-#define FC_UP				0x12
-#define FC_OP				0x13
-#define FC_FP				0x14
-#define FC_STRUCT			0x15
-#define FC_PSTRUCT			0x16
-#define FC_CSTRUCT			0x17
-#define FC_CPSTRUCT			0x18
-#define FC_CVSTRUCT			0x19
-#define FC_BOGUS_STRUCT			0x1A
-#define FC_CARRAY			0x1B
-#define FC_CVARRAY			0x1C
-#define FC_SMFARRAY			0x1D
-#define FC_LGFARRAY			0x1E
-#define FC_SMVARRAY			0x1F
-#define FC_LGVARRAY			0x20
-#define FC_BOGUS_ARRAY			0x21
-#define FC_C_CSTRING			0x22
-#define FC_C_BSTRING			0x23
-#define FC_C_SSTRING			0x24
-#define FC_C_WSTRING			0x25
-#define FC_CSTRING			0x26
-#define FC_BSTRING			0x27
-#define FC_SSTRING			0x28
-#define FC_WSTRING			0x29
-#define FC_ENCAPSULATED_UNION		0x2A
-#define FC_NON_ENCAPSULATED_UNION	0x2B
-#define FC_BYTE_COUNT_POINTER		0x2C
-#define FC_TRANSMIT_AS			0x2D
-#define FC_REPRESENT_AS			0x2E
-#define FC_IP				0x2F
-#define FC_BIND_CONTEXT			0x30
-#define FC_BIND_GENERIC			0x31
-#define FC_BIND_PRIMITIVE		0x32
-#define FC_AUTO_HANDLE			0x33
-#define FC_CALLBACK_HANDLE		0x34
-#define FC_UNUSED1			0x35
-#define FC_POINTER			0x36
-#define FC_ALIGNM2			0x37
-#define FC_ALIGNM4			0x38
-#define FC_ALIGNM8			0x39
-#define FC_UNUSED2			0x3A
-#define FC_UNUSED3			0x3B
-#define FC_UNUSED4			0x3C
-#define FC_STRUCTPAD1			0x3D
-#define FC_STRUCTPAD2			0x3E
-#define FC_STRUCTPAD3			0x3F
-#define FC_STRUCTPAD4			0x40
-#define FC_STRUCTPAD5			0x41
-#define FC_STRUCTPAD6			0x42
-#define FC_STRUCTPAD7			0x43
-#define FC_STRING_SIZED			0x44
-#define FC_UNUSED5			0x45
-#define FC_NO_REPEAT			0x46
-#define FC_FIXED_REPEAT			0x47
-#define FC_VARIABLE_REPEAT		0x48
-#define FC_FIXED_OFFSET			0x49
-#define FC_VARIABLE_OFFSET		0x4A
-#define FC_PP				0x4B
-#define FC_EMBEDDED_COMPLEX		0x4C
-#define FC_IN_PARAM			0x4D
-#define FC_IN_PARAM_BASETYPE		0x4E
-#define FC_IN_PARAM_NO_FREE_INST	0x4F
-#define FC_IN_OUT_PARAM			0x50
-#define FC_OUT_PARAM			0x51
-#define FC_RETURN_PARAM			0x52
-#define FC_RETURN_PARAM_BASETYPE	0x53
-#define FC_DEREFERENCE			0x54
-#define FC_DIV_2			0x55
-#define FC_MULT_2			0x56
-#define FC_ADD_1			0x57
-#define FC_SUB_1			0x58
-#define FC_CALLBACK			0x59
-#define FC_CONSTANT_IID			0x5A
-#define FC_END				0x5B
-#define FC_PAD				0x5C
-#define FC_SPLIT_DEREFERENCE		0x74
-#define FC_SPLIT_DIV_2			0x75
-#define FC_SPLIT_MULT_2			0x76
-#define FC_SPLIT_ADD_1			0x77
-#define FC_SPLIT_SUB_1			0x78
-#define FC_SPLIT_CALLBACK		0x79
-#define FC_HARD_STRUCT			0xB1
-#define FC_TRANSMIT_AS_PTR		0xB2
-#define FC_REPRESENT_AS_PTR		0xB3
-#define FC_USER_MARSHAL			0xB4
-#define FC_PIPE				0xB5
-#define FC_BLKHOLE			0xB6
-#define FC_RANGE			0xB7
-#define FC_INT3264			0xB8
-#define FC_UINT3264			0xB9
-#define FC_END_OF_UNIVERSE		0xBA
+#define FC_ZERO					0x00
+#define FC_BYTE					0x01
+#define FC_CHAR					0x02
+#define FC_SMALL				0x03
+#define FC_USMALL				0x04
+#define FC_WCHAR				0x05
+#define FC_SHORT				0x06
+#define FC_USHORT				0x07
+#define FC_LONG					0x08
+#define FC_ULONG				0x09
+#define FC_FLOAT				0x0A
+#define FC_HYPER				0x0B
+#define FC_DOUBLE				0x0C
+#define FC_ENUM16				0x0D
+#define FC_ENUM32				0x0E
+#define FC_IGNORE				0x0F
+#define FC_ERROR_STATUS_T			0x10
+#define FC_RP					0x11
+#define FC_UP					0x12
+#define FC_OP					0x13
+#define FC_FP					0x14
+#define FC_STRUCT				0x15
+#define FC_PSTRUCT				0x16
+#define FC_CSTRUCT				0x17
+#define FC_CPSTRUCT				0x18
+#define FC_CVSTRUCT				0x19
+#define FC_BOGUS_STRUCT				0x1A
+#define FC_CARRAY				0x1B
+#define FC_CVARRAY				0x1C
+#define FC_SMFARRAY				0x1D
+#define FC_LGFARRAY				0x1E
+#define FC_SMVARRAY				0x1F
+#define FC_LGVARRAY				0x20
+#define FC_BOGUS_ARRAY				0x21
+#define FC_C_CSTRING				0x22
+#define FC_C_BSTRING				0x23
+#define FC_C_SSTRING				0x24
+#define FC_C_WSTRING				0x25
+#define FC_CSTRING				0x26
+#define FC_BSTRING				0x27
+#define FC_SSTRING				0x28
+#define FC_WSTRING				0x29
+#define FC_ENCAPSULATED_UNION			0x2A
+#define FC_NON_ENCAPSULATED_UNION		0x2B
+#define FC_BYTE_COUNT_POINTER			0x2C
+#define FC_TRANSMIT_AS				0x2D
+#define FC_REPRESENT_AS				0x2E
+#define FC_IP					0x2F
+#define FC_BIND_CONTEXT				0x30
+#define FC_BIND_GENERIC				0x31
+#define FC_BIND_PRIMITIVE			0x32
+#define FC_AUTO_HANDLE				0x33
+#define FC_CALLBACK_HANDLE			0x34
+#define FC_UNUSED1				0x35
+#define FC_POINTER				0x36
+#define FC_ALIGNM2				0x37
+#define FC_ALIGNM4				0x38
+#define FC_ALIGNM8				0x39
+#define FC_UNUSED2				0x3A
+#define FC_UNUSED3				0x3B
+#define FC_UNUSED4				0x3C
+#define FC_STRUCTPAD1				0x3D
+#define FC_STRUCTPAD2				0x3E
+#define FC_STRUCTPAD3				0x3F
+#define FC_STRUCTPAD4				0x40
+#define FC_STRUCTPAD5				0x41
+#define FC_STRUCTPAD6				0x42
+#define FC_STRUCTPAD7				0x43
+#define FC_STRING_SIZED				0x44
+#define FC_UNUSED5				0x45
+#define FC_NO_REPEAT				0x46
+#define FC_FIXED_REPEAT				0x47
+#define FC_VARIABLE_REPEAT			0x48
+#define FC_FIXED_OFFSET				0x49
+#define FC_VARIABLE_OFFSET			0x4A
+#define FC_PP					0x4B
+#define FC_EMBEDDED_COMPLEX			0x4C
+#define FC_IN_PARAM				0x4D
+#define FC_IN_PARAM_BASETYPE			0x4E
+#define FC_IN_PARAM_NO_FREE_INST		0x4F
+#define FC_IN_OUT_PARAM				0x50
+#define FC_OUT_PARAM				0x51
+#define FC_RETURN_PARAM				0x52
+#define FC_RETURN_PARAM_BASETYPE		0x53
+#define FC_DEREFERENCE				0x54
+#define FC_DIV_2				0x55
+#define FC_MULT_2				0x56
+#define FC_ADD_1				0x57
+#define FC_SUB_1				0x58
+#define FC_CALLBACK				0x59
+#define FC_CONSTANT_IID				0x5A
+#define FC_END					0x5B
+#define FC_PAD					0x5C
+#define FC_SPLIT_DEREFERENCE			0x74
+#define FC_SPLIT_DIV_2				0x75
+#define FC_SPLIT_MULT_2				0x76
+#define FC_SPLIT_ADD_1				0x77
+#define FC_SPLIT_SUB_1				0x78
+#define FC_SPLIT_CALLBACK			0x79
+#define FC_HARD_STRUCT				0xB1
+#define FC_TRANSMIT_AS_PTR			0xB2
+#define FC_REPRESENT_AS_PTR			0xB3
+#define FC_USER_MARSHAL				0xB4
+#define FC_PIPE					0xB5
+#define FC_BLKHOLE				0xB6
+#define FC_RANGE				0xB7
+#define FC_INT3264				0xB8
+#define FC_UINT3264				0xB9
+#define FC_END_OF_UNIVERSE			0xBA
 
 #define NdrFcShort(s)	(byte)(s & 0xFF), (byte)(s >> 8)
 
