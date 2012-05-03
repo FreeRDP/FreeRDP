@@ -1,6 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
+# Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,27 +18,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_SRCS
-	rdpsnd_main.c
-	rdpsnd_main.h
+set(RDPSND_MACAUDIO_SRCS
+	rdpsnd_audio_q.c
 )
 
-add_library(rdpsnd ${RDPSND_SRCS})
-set_target_properties(rdpsnd PROPERTIES PREFIX "")
+include_directories(..)
+include_directories(${MACAUDIO_INCLUDE_DIRS})
 
-target_link_libraries(rdpsnd freerdp-utils)
+add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
+set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
 
-install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(rdpsnd_macaudio freerdp-utils)
+target_link_libraries(rdpsnd_macaudio ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
+target_link_libraries(rdpsnd_macaudio ${MAC_COREFOUNDATION_LIBRARY_PATH})
 
-if(WITH_ALSA)
-	add_subdirectory(alsa)
-endif()
-
-if(WITH_PULSEAUDIO)
-	add_subdirectory(pulse)
-endif()
-
-if(WITH_MACAUDIO)
-	add_subdirectory(mac_audio)
-endif()
+install(TARGETS rdpsnd_macaudio DESTINATION ${FREERDP_PLUGIN_PATH})
 
