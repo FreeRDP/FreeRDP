@@ -29,7 +29,7 @@
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 
-#include "ndr.h"
+#include <winpr/ndr.h>
 
 #include "tsg.h"
 

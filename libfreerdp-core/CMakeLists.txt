@@ -41,8 +41,6 @@ set(LIBFREERDP_CORE_SRCS
 	rpc.h
 	rts.c
 	rts.h
-	ndr.c
-	ndr.h
 	input.c
 	input.h
 	license.c
@@ -110,6 +108,8 @@ target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core freerdp-sspi)
 target_link_libraries(freerdp-core freerdp-locale)
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
+
+target_link_libraries(freerdp-core winpr-rpc)
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

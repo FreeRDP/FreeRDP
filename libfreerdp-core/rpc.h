@@ -42,8 +42,6 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
-typedef long RPC_STATUS;
-
 struct _rpc_pdu_header
 {
 	uint8 rpc_vers;
@@ -665,8 +663,6 @@ struct rdp_rpc
 
 	RpcVirtualConnection* VirtualConnection;
 };
-
-void RpcRaiseException(RPC_STATUS exception);
 
 boolean ntlm_authenticate(rdpNtlm* ntlm);
 

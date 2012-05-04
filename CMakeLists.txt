@@ -160,6 +160,8 @@ add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
+add_subdirectory(libwinpr-rpc)
+
 if(NOT WIN32)
 	add_subdirectory(channels)
 endif()

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Network Data Representation (NDR)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,17 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_NDR_H
-#define FREERDP_CORE_NDR_H
-
-#include "rpc.h"
+#ifndef WINPR_RPC_NDR_H
+#define WINPR_RPC_NDR_H
 
 #include "config.h"
 
-#include <freerdp/types.h>
+#include <winpr/rpc.h>
 #include <freerdp/wtypes.h>
-#include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 
 #define __RPC_WIN32__			1
 #define TARGET_IS_NT50_OR_LATER		1
@@ -526,9 +522,6 @@ typedef enum _NDR_PHASE
 #define NdrFcLong(s)	(byte)(s & 0xFF), (byte)((s & 0x0000FF00) >> 8), \
                         (byte)((s & 0x00FF0000) >> 16), (byte)(s >> 24)
 
-CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...);
+WINPR_API CLIENT_CALL_RETURN RPC_VAR_ENTRY NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...);
 
-void* MIDL_user_allocate(size_t cBytes);
-void MIDL_user_free(void* p);
-
-#endif /* FREERDP_CORE_NDR_H */
+#endif /* WINPR_RPC_NDR_H */

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Network Data Representation (NDR)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,9 +17,7 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/memory.h>
-
-#include "ndr.h"
+#include <winpr/ndr.h>
 
 /**
  * MSRPC NDR Types Technical Overview:
@@ -1975,14 +1973,4 @@ CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRIN
 	va_end(args);
 
 	return client_call_return;
-}
-
-void* MIDL_user_allocate(size_t cBytes)
-{
-    return (xmalloc(cBytes));
-}
-
-void MIDL_user_free(void* p)
-{
-	xfree(p);
 }

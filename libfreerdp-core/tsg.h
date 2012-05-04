@@ -23,8 +23,10 @@
 
 typedef struct rdp_tsg rdpTsg;
 
-#include "transport.h"
 #include "rpc.h"
+#include "transport.h"
+
+#include <winpr/rpc.h>
 
 #include <time.h>
 #include <freerdp/types.h>
@@ -42,16 +44,6 @@ struct rdp_tsg
 	uint8 TunnelContext[16];
 	uint8 ChannelContext[16];
 };
-
-typedef void* I_RPC_HANDLE;
-typedef I_RPC_HANDLE RPC_BINDING_HANDLE;
-typedef RPC_BINDING_HANDLE handle_t;
-
-typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE;
-typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
-
-typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE;
-typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 
 typedef wchar_t* RESOURCENAME;
 
