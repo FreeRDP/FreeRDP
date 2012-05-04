@@ -141,6 +141,8 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 
 #ifdef _WIN32
 	mem = _wcsdup(wstr);
+#elif sun
+	mem = wsdup(wstr);
 #else
 	mem = wcsdup(wstr);
 #endif
