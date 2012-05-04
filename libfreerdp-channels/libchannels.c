@@ -287,6 +287,12 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	PCHANNEL_DEF lchannel_def;
 	struct channel_data* lchannel_data;
 
+	if (ppInitHandle == NULL)
+	{
+		DEBUG_CHANNELS("error bad pphan");
+		return CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+
 	channels = g_init_channels;
 	channels->init_handles[channels->num_init_handles].channels = channels;
 	*ppInitHandle = &channels->init_handles[channels->num_init_handles];
@@ -298,12 +304,6 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	{
 		DEBUG_CHANNELS("error not in entry");
 		return CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY;
-	}
-
-	if (ppInitHandle == 0)
-	{
-		DEBUG_CHANNELS("error bad pphan");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
 	if (channels->num_channels_data + channelCount >= CHANNEL_MAX_COUNT)
