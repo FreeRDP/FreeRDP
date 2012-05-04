@@ -42,12 +42,10 @@
 
 typedef int BOOL, *PBOOL, *LPBOOL;
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
-typedef BYTE byte;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef wchar_t WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
-typedef double DOUBLE;
 typedef unsigned long DWORD, *PDWORD, *LPDWORD;
 typedef unsigned int DWORD32;
 typedef unsigned __int64 DWORD64;
@@ -110,11 +108,6 @@ typedef unsigned __int64 UINT_PTR;
 typedef int INT_PTR;
 typedef unsigned int UINT_PTR;
 #endif
-
-typedef void* PCONTEXT_HANDLE;
-typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
-
-typedef unsigned long error_status_t;
 
 typedef struct _GUID
 {
@@ -180,5 +173,13 @@ typedef struct _SECURITY_DESCRIPTOR
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
 #endif
+
+typedef BYTE byte;
+typedef double DOUBLE;
+
+typedef void* PCONTEXT_HANDLE;
+typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
+
+typedef unsigned long error_status_t;
 
 #endif /* FREERDP_WINDOWS_TYPES_H */

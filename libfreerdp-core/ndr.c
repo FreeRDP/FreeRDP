@@ -874,7 +874,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 			break;
 
 		case FC_HYPER:
-			data = *(ULONGLONG*) ptr;
+			data = (ULONG_PTR) *(ULONGLONG*) ptr;
 			break;
 	}
 
@@ -1773,7 +1773,6 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 
 	for (i = 0; i < numberParams; i++)
 	{
-		float tmp;
 		arg = pStubMsg->StackTop + params[i].StackOffset;
 		fmt = (PFORMAT_STRING) &pStubMsg->StubDesc->pFormatTypes[params[i].Type.Offset];
 
@@ -1782,7 +1781,7 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 				!(params[i].Attributes.IsSimpleRef) &&
 				((params[i].Type.FormatChar) == FC_FLOAT) && !fpuArgs)
 		{
-			tmp = *(double*) arg;
+			float tmp = *(double*) arg;
 			arg = (unsigned char*) &tmp;
 		}
 #endif

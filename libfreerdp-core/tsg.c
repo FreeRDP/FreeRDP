@@ -1692,6 +1692,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 {
 	uint8* data;
 	uint32 length;
+	STREAM* s_p4;
 	int status = -1;
 	UNICONV* tsg_uniconv;
 	rdpRpc* rpc = tsg->rpc;
@@ -1829,7 +1830,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
 	memcpy(tsg_packet4 + 38, &port, 2);
 
-	STREAM* s_p4 = stream_new(60 + dest_addr_unic_len + 2);
+	s_p4 = stream_new(60 + dest_addr_unic_len + 2);
 	stream_write(s_p4, tsg_packet4, 48);
 	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
 	stream_write_uint32(s_p4, 0x00000000); /* Offset */

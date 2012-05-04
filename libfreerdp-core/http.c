@@ -107,9 +107,15 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 	http_request->AuthParam = xstrdup(auth_param);
 }
 
+#ifdef _WIN32
+#define http_encode_line(_str, _fmt, ...) \
+	_str = xmalloc(sprintf_s(NULL, 0, _fmt, ## __VA_ARGS__) + 1); \
+	sprintf_s(_str, sprintf_s(NULL, 0, _fmt, ## __VA_ARGS__) + 1, _fmt, ## __VA_ARGS__);
+#else
 #define http_encode_line(_str, _fmt, ...) \
 	_str = xmalloc(snprintf(NULL, 0, _fmt, ## __VA_ARGS__) + 1); \
 	snprintf(_str, snprintf(NULL, 0, _fmt, ## __VA_ARGS__) + 1, _fmt, ## __VA_ARGS__);
+#endif
 
 STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 {
