@@ -261,7 +261,7 @@ int krb_decode_cname(STREAM* s, uint8 tag, char** str)
 
 	if(verlen != len)
 	{
-		xfree(str);
+		xfree(*str);
 		*str = NULL;
 		goto err;
 	}
