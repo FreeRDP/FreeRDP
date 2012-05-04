@@ -114,7 +114,7 @@ char* freerdp_uniconv_out(UNICONV* uniconv, const char *str, size_t* pout_len)
 
 	ibl = strlen(str);
 	obl = 2 * ibl;
-	pin = str;
+	pin = (char*) str;
 	pout0 = xmalloc(obl + 2);
 	pout = pout0;
 

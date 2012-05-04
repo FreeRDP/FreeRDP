@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Microsoft Remote Procedure Call (MSRPC)
+ * Windows Header Include Wrapper
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,29 +17,21 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_RPC_H
-#define WINPR_RPC_H
+#ifndef WINPR_WINDOWS_H
+#define WINPR_WINDOWS_H
 
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
+/* Windows header include order is important, use this instead of including windows.h directly */
 
-#define RPC_VAR_ENTRY	__cdecl
+#ifdef _WIN32
 
-typedef long RPC_STATUS;
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 
-typedef void* I_RPC_HANDLE;
-typedef I_RPC_HANDLE RPC_BINDING_HANDLE;
-typedef RPC_BINDING_HANDLE handle_t;
+#include <winsock2.h>
+#include <windows.h>
+#include <ws2tcpip.h>
 
-typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE;
-typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
+#endif
 
-typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE;
-typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
-
-void RpcRaiseException(RPC_STATUS exception);
-
-#include <winpr/ndr.h>
-#include <winpr/midl.h>
-
-#endif /* WINPR_RPC_H */
+#endif /* WINPR_WINDOWS_H */

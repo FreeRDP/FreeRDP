@@ -1,6 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Windows Header Utils
+ * WinPR: Windows Portable Runtime
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,21 +16,37 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_WINDOWS_UTILS_H
-#define FREERDP_WINDOWS_UTILS_H
+#ifndef WINPR_H
+#define WINPR_H
 
-/* Windows header include order is important, use this instead of including windows.h directly */
+#include "config.h"
+
+#if defined _WIN32 || defined __CYGWIN__
+	#ifdef WINPR_EXPORTS
+		#ifdef __GNUC__
+			#define WINPR_API __attribute__((dllexport))
+		#else
+			#define WINPR_API __declspec(dllexport)
+		#endif
+	#else
+		#ifdef __GNUC__
+			#define WINPR_API __attribute__((dllimport))
+		#else
+			#define WINPR_API __declspec(dllimport)
+		#endif
+	#endif
+#else
+	#if __GNUC__ >= 4
+		#define WINPR_API   __attribute__ ((visibility("default")))
+	#else
+		#define WINPR_API
+	#endif
+#endif
 
 #ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#define INLINE	__inline
+#else
+#define INLINE	inline
 #endif
 
-#include <winsock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
-
-#endif
-
-#endif /* FREERDP_WINDOWS_UTILS_H */
+#endif /* WINPR_H */

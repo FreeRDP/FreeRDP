@@ -22,7 +22,7 @@
 #ifndef __WFREERDP_H
 #define __WFREERDP_H
 
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>

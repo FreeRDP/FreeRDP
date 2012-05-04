@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/windows.h>
 #include <freerdp/utils/time.h>
-#include <freerdp/utils/windows.h>
 
 uint64 freerdp_windows_gmtime()
 {

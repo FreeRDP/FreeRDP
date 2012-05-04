@@ -21,10 +21,10 @@
 #define FREERDP_SSPI_H
 
 #include <wchar.h>
+#include <winpr/windows.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
 

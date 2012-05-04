@@ -27,10 +27,10 @@ typedef struct rdp_tsg rdpTsg;
 #include "transport.h"
 
 #include <winpr/rpc.h>
+#include <winpr/winpr.h>
 
 #include <time.h>
 #include <freerdp/types.h>
-#include <freerdp/wtypes.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>

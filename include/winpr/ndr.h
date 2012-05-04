@@ -20,10 +20,8 @@
 #ifndef WINPR_RPC_NDR_H
 #define WINPR_RPC_NDR_H
 
-#include "config.h"
-
 #include <winpr/rpc.h>
-#include <freerdp/wtypes.h>
+#include <winpr/wtypes.h>
 
 #define __RPC_WIN32__			1
 #define TARGET_IS_NT50_OR_LATER		1

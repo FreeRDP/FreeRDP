@@ -21,7 +21,7 @@
 #define FREERDP_CRYPTO_H
 
 /* OpenSSL includes windows.h */
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

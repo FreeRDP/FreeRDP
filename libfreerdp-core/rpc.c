@@ -756,7 +756,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (rpc->read_buffer_len > 0)
 	{
-		if (rpc->read_buffer_len > length)
+		if (rpc->read_buffer_len > (uint32) length)
 		{
 			printf("rpc_read error: receiving buffer is not large enough\n");
 			return -1;

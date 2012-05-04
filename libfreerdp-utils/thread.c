@@ -22,7 +22,7 @@
 #include <string.h>
 #include <time.h>
 
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #ifdef _WIN32
 #ifdef _MSC_VER

@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/windows.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/mutex.h>
-#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
 #define freerdp_mutex_t HANDLE

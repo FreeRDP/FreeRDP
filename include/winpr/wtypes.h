@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * WinPR: Windows Portable Runtime
  * Windows Data Types
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,15 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_WINDOWS_TYPES_H
-#define FREERDP_WINDOWS_TYPES_H
+#ifndef WINPR_WTYPES_H
+#define WINPR_WTYPES_H
 
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
 
 #include <wchar.h>
-#include <freerdp/types.h>
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #ifndef _WIN32
 
@@ -182,4 +181,4 @@ typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 
 typedef unsigned long error_status_t;
 
-#endif /* FREERDP_WINDOWS_TYPES_H */
+#endif /* WINPR_WTYPES_H */

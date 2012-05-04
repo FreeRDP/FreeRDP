@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include <winpr/ndr.h>
 
 /**
