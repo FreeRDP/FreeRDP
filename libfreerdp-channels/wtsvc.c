@@ -310,10 +310,12 @@ boolean WTSVirtualChannelWrite(
 	wts_data_item* item;
 	boolean result = false;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
-	WTSVirtualChannelManager* vcm = channel->vcm;
+	WTSVirtualChannelManager* vcm ;
 
 	if (channel == NULL)
 		return false;
+
+	vcm = channel->vcm ;
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
