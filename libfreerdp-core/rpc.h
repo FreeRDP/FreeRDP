@@ -30,9 +30,9 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include "transport.h"
 
 #include <time.h>
+#include <winpr/sspi.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/sspi/sspi.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/utils/wait_obj.h>

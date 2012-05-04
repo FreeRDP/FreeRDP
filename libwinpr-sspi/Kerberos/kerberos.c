@@ -37,7 +37,7 @@
 #include "kerberos_encode.h"
 #include "kerberos_decode.h"
 
-#include <freerdp/sspi/sspi.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/time.h>

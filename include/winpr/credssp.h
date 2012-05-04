@@ -28,7 +28,7 @@ typedef struct rdp_credssp rdpCredssp;
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
-#include <freerdp/sspi/sspi.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>

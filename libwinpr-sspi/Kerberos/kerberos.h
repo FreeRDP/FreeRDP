@@ -34,11 +34,11 @@
 
 #include <sys/types.h>
 
+#include <winpr/sspi.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/blob.h>
-#include <freerdp/sspi/sspi.h>
 
 #define MSKRB_OID               "1.2.840.48018.1.2.2"
 #define STDKRB_OID              "1.2.840.113554.1.2.2"

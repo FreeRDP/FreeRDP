@@ -26,8 +26,8 @@
 #include <freerdp/crypto/tls.h>
 #include <freerdp/utils/stream.h>
 
-#include <freerdp/sspi/sspi.h>
-#include <freerdp/sspi/credssp.h>
+#include <winpr/sspi.h>
+#include <winpr/credssp.h>
 
 #include "sspi.h"
 

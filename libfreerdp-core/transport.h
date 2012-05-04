@@ -32,8 +32,9 @@ typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
 #include "tsg.h"
+
+#include <winpr/sspi.h>
 #include <freerdp/crypto/tls.h>
-#include <freerdp/sspi/credssp.h>
 
 #include <time.h>
 #include <freerdp/types.h>

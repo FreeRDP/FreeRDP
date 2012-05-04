@@ -156,12 +156,12 @@ add_subdirectory(libfreerdp-rail)
 add_subdirectory(libfreerdp-cache)
 add_subdirectory(libfreerdp-codec)
 add_subdirectory(libfreerdp-crypto)
-add_subdirectory(libfreerdp-sspi)
 add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
 add_subdirectory(libwinpr-rpc)
+add_subdirectory(libwinpr-sspi)
 
 if(NOT WIN32)
 	add_subdirectory(channels)

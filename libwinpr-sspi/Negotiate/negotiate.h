@@ -20,7 +20,7 @@
 #ifndef FREERDP_SSPI_NEGOTIATE_PRIVATE_H
 #define FREERDP_SSPI_NEGOTIATE_PRIVATE_H
 
-#include <freerdp/sspi/sspi.h>
+#include <winpr/sspi.h>
 #include <freerdp/utils/unicode.h>
 
 #include "../Kerberos/kerberos.h"
