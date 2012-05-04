@@ -29,6 +29,11 @@
 
 #include "rpc.h"
 
+void RpcRaiseException(RPC_STATUS exception)
+{
+	printf("RpcRaiseException: 0x%08X\n", exception);
+}
+
 #define NTLM_PACKAGE_NAME	_T("NTLM")
 
 boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
