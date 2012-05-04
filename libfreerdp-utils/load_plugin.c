@@ -46,6 +46,20 @@
 
 #endif
 
+/**
+ * UNUSED
+ * This function opens a handle on the specified library in order to load symbols from it.
+ * It is just a wrapper over dlopen(), but provides some logs in case of error.
+ *
+ * The returned pointer can be used to load a symbol from the library, using the freerdp_get_library_symbol() call.
+ * The returned pointer should be closed using the freerdp_close_library() call.
+ *
+ * @see freerdp_get_library_symbol
+ * @see freerdp_close_library
+ *
+ * @param file [IN]		- library name
+ * @return Pointer to the loaded library. NULL if an error occurs.
+ */
 void* freerdp_open_library(const char* file)
 {
 	void* library;
@@ -61,6 +75,20 @@ void* freerdp_open_library(const char* file)
 	return library;
 }
 
+/**
+ * UNUSED
+ * This function retrieves a pointer to the specified symbol from the given (loaded) library.
+ * It is a wrapper over the dlsym() function, but provides some logs in case of error.
+ *
+ * @see freerdp_open_library
+ * @see freerdp_close_library
+ *
+ * @param library [IN]		- a valid pointer to the opened library.
+ * 							  This pointer should come from a successful call to freerdp_open_library()
+ * @param name [IN]			- name of the symbol that must be loaded
+ *
+ * @return A pointer to the loaded symbol. NULL if an error occured.
+ */
 void* freerdp_get_library_symbol(void* library, const char* name)
 {
 	void* symbol;
@@ -76,6 +104,16 @@ void* freerdp_get_library_symbol(void* library, const char* name)
 	return symbol;
 }
 
+/**
+ * UNUSED
+ * This function closes a library handle that was previously opened by freerdp_open_library().
+ * It is a wrapper over dlclose(), but provides logs in case of error.
+ *
+ * @see freerdp_open_library
+ * @see freerdp_get_library_symbol
+ *
+ * @return true if the close succeeded. false otherwise.
+ */
 boolean freerdp_close_library(void* library)
 {
 	int status;
@@ -95,6 +133,17 @@ boolean freerdp_close_library(void* library)
 	return true;
 }
 
+/**
+ * This function will load the specified library, retrieve the specified symbol in it, and return a pointer to it.
+ * It is used in freerdp_load_plugin() and freerdp_load_channel_plugin().
+ * It seems there is no way to unload the library once this call is made. Now since this is used for plugins,
+ * we probably don't need to take care of unloading them, as it will be done only at shutdown.
+ *
+ * @param file [IN]	- library name
+ * @param name [IN]	- symbol name to find in the library
+ *
+ * @return pointer to the referenced symbol. NULL if an error occured.
+ */
 void* freerdp_load_library_symbol(const char* file, const char* name)
 {
 	void* library;
@@ -119,6 +168,17 @@ void* freerdp_load_library_symbol(const char* file, const char* name)
 	return symbol;
 }
 
+/**
+ * This function is used to load plugins. It will load the specified library, retrieve the specified symbol,
+ * and return a pointer to it.
+ * There is no way to unload the library once it has been loaded this way - since it is used for plugins only,
+ * maybe it's not a must.
+ *
+ * @param name [IN]			- name of the library to load
+ * @param entry_name [IN]	- name of the symbol to find and load from the library
+ *
+ * @return Pointer to the loaded symbol. NULL if an error occurred.
+ */
 void* freerdp_load_plugin(const char* name, const char* entry_name)
 {
 	char* path;
@@ -152,6 +212,13 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	return entry;
 }
 
+/**
+ * UNUSED
+ * This function was meant to be used to load channel plugins.
+ * It was initially called from freerdp_channels_load_plugin() but now we use the freerdp_load_plugin() function
+ * which is more generic.
+ *
+ */
 void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const char* entry_name)
 {
 	char* path;
