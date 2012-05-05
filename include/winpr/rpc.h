@@ -37,9 +37,9 @@ typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
 typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE;
 typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 
-void RpcRaiseException(RPC_STATUS exception);
-
 #include <winpr/ndr.h>
 #include <winpr/midl.h>
+
+void RpcRaiseException(RPC_STATUS exception);
 
 #endif /* WINPR_RPC_H */

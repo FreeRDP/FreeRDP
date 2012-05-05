@@ -24,6 +24,13 @@
 
 PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat);
 
+void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL_STUB_MESSAGE pStubMsg);
+
+PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+		unsigned char* pMemory, PFORMAT_STRING pFormat, unsigned char** ppMemory);
+
+PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
 void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 

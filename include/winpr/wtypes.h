@@ -113,7 +113,7 @@ typedef struct _GUID
 	unsigned long Data1;
 	unsigned short Data2;
 	unsigned short Data3;
-	byte Data4[8];
+	BYTE Data4[8];
 } GUID, UUID, *PGUID;
 
 #ifdef UNICODE

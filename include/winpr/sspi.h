@@ -43,7 +43,7 @@
 #else
 
 #define FREERDP_SSPI
-#include <freerdp/wtypes.h>
+#include <winpr/wtypes.h>
 
 #endif
 

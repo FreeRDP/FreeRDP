@@ -189,6 +189,10 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 		http_context = rpc->ntlm_http_out->context;
 		http_request_set_method(http_request, "RPC_OUT_DATA");
 	}
+	else
+	{
+		return NULL;
+	}
 
 	http_request->ContentLength = content_length;
 	http_request_set_uri(http_request, http_context->URI);

@@ -23,5 +23,5 @@
 
 void RpcRaiseException(RPC_STATUS exception)
 {
-	printf("RpcRaiseException: 0x%08X\n", exception);
+	printf("RpcRaiseException: 0x%08luX\n", exception);
 }

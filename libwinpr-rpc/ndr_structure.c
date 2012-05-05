@@ -21,9 +21,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
-
+#include "ndr_private.h"
+#include "ndr_pointer.h"
 #include "ndr_structure.h"
-
 
 /* Structures: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378695/ */
 
