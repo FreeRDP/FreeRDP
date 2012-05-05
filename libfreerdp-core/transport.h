@@ -24,14 +24,17 @@ typedef enum
 {
 	TRANSPORT_LAYER_TCP,
 	TRANSPORT_LAYER_TLS,
+	TRANSPORT_LAYER_TSG,
 	TRANSPORT_LAYER_CLOSED
 } TRANSPORT_LAYER;
 
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
+#include "tsg.h"
+
+#include <winpr/sspi.h>
 #include <freerdp/crypto/tls.h>
-#include <freerdp/sspi/credssp.h>
 
 #include <time.h>
 #include <freerdp/types.h>
@@ -48,8 +51,13 @@ struct rdp_transport
 	TRANSPORT_LAYER layer;
 	struct rdp_tcp* tcp;
 	struct rdp_tls* tls;
-	struct rdp_settings* settings;
+	struct rdp_tsg* tsg;
+	struct rdp_tcp* tcp_in;
+	struct rdp_tcp* tcp_out;
+	struct rdp_tls* tls_in;
+	struct rdp_tls* tls_out;
 	struct rdp_credssp* credssp;
+	struct rdp_settings* settings;
 	uint32 usleep_interval;
 	void* recv_extra;
 	STREAM* recv_buffer;
@@ -67,6 +75,7 @@ boolean transport_disconnect(rdpTransport* transport);
 boolean transport_connect_rdp(rdpTransport* transport);
 boolean transport_connect_tls(rdpTransport* transport);
 boolean transport_connect_nla(rdpTransport* transport);
+boolean transport_connect_tsg(rdpTransport* transport);
 boolean transport_accept_rdp(rdpTransport* transport);
 boolean transport_accept_tls(rdpTransport* transport);
 boolean transport_accept_nla(rdpTransport* transport);

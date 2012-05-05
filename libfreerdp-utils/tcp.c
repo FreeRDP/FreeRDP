@@ -45,7 +45,7 @@
 
 #else /* ifdef _WIN32 */
 
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
 #endif

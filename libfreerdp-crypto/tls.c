@@ -255,6 +255,30 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 	return status;
 }
 
+
+int tls_write_all(rdpTls* tls, uint8* data, int length)
+{
+	int status;
+	int sent = 0;
+
+	do
+	{
+		status = tls_write(tls, &data[sent], length - sent);
+
+		if (status > 0)
+			sent += status;
+
+		if (sent >= length)
+			break;
+	}
+	while (status >= 0);
+
+	if (status > 0)
+		return length;
+	else
+		return status;
+}
+
 static void tls_errors(const char *prefix)
 {
 	unsigned long error;

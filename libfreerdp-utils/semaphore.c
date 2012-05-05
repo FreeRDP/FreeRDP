@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/windows.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
-#include <freerdp/utils/windows.h>
 
 #if defined __APPLE__
 

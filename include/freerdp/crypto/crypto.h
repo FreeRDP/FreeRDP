@@ -21,7 +21,7 @@
 #define FREERDP_CRYPTO_H
 
 /* OpenSSL includes windows.h */
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -141,5 +141,8 @@ FREERDP_API void crypto_rsa_private_encrypt(const uint8* input, int length, uint
 FREERDP_API void crypto_rsa_private_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output);
 FREERDP_API void crypto_reverse(uint8* data, int length);
 FREERDP_API void crypto_nonce(uint8* nonce, int size);
+
+FREERDP_API char* crypto_base64_encode(uint8* data, int length);
+FREERDP_API void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* res_length);
 
 #endif /* FREERDP_CRYPTO_H */

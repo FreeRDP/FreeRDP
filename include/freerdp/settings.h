@@ -288,7 +288,11 @@ struct rdp_settings
 	ALIGN64 rdpBlob* password_cookie; /* 61 */
 	ALIGN64 char* kerberos_kdc; /* 62 */
 	ALIGN64 char* kerberos_realm; /* 63 */
-	ALIGN64 uint64 paddingC[80 - 64]; /* 64 */
+	ALIGN64 boolean ts_gateway; /* 64 */
+	ALIGN64 char* tsg_hostname; /* 65 */
+	ALIGN64 char* tsg_username; /* 66 */
+	ALIGN64 char* tsg_password; /* 67 */
+	ALIGN64 uint64 paddingC[80 - 68]; /* 68 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */

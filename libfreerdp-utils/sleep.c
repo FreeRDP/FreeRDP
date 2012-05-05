@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/windows.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/windows.h>
 
 #include <time.h>
 
