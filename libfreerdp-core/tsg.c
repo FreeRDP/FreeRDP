@@ -1688,6 +1688,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	return length;
 }
 
+#ifndef WITH_MSRPC
 boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 {
 	uint8* data;
@@ -1717,15 +1718,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * [out] unsigned long* tunnelId
 	 * );
 	 */
-
-	{
-		TSG_PACKET tsgPacket;
-		PTSG_PACKET tsgPacketResponse;
-		PTUNNEL_CONTEXT_HANDLE_SERIALIZE tunnelContext;
-		unsigned long tunnelId;
-
-		TsProxyCreateTunnel(&tsgPacket, &tsgPacketResponse, &tunnelContext, &tunnelId);
-	}
 
 	DEBUG_TSG("TsProxyCreateTunnel");
 	status = rpc_tsg_write(rpc, tsg_packet1, sizeof(tsg_packet1), 1);
@@ -1767,14 +1759,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 *
 	 */
 
-	{
-		TSG_PACKET tsgPacket;
-		PTSG_PACKET tsgPacketResponse;
-		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
-
-		TsProxyAuthorizeTunnel(&tunnelContext, &tsgPacket, &tsgPacketResponse);
-	}
-
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
 	status = rpc_tsg_write(rpc, tsg_packet2, sizeof(tsg_packet2), 2);
 
@@ -1804,14 +1788,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * [out, ref] PTSG_PACKET* tsgPacketResponse
 	 * );
 	 */
-
-	{
-		TSG_PACKET tsgPacket;
-		PTSG_PACKET tsgPacketResponse;
-		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
-
-		TsProxyMakeTunnelCall(&tunnelContext, 0, &tsgPacket, &tsgPacketResponse);
-	}
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
 	status = rpc_tsg_write(rpc, tsg_packet3, sizeof(tsg_packet3), 3);
@@ -1848,15 +1824,6 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	 * [out] unsigned long* channelId
 	 * );
 	 */
-
-	{
-		unsigned long channelId;
-		TSENDPOINTINFO tsEndPointInfo;
-		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
-		PCHANNEL_CONTEXT_HANDLE_SERIALIZE channelContext;
-
-		TsProxyCreateChannel(&tunnelContext, &tsEndPointInfo, &channelContext, &channelId);
-	}
 
 	DEBUG_TSG("TsProxyCreateChannel");
 	status = rpc_tsg_write(rpc, s_p4->data, s_p4->size, 4);
@@ -1905,6 +1872,125 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	return true;
 }
+#else
+boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
+{
+	uint8* data;
+	uint32 length;
+	STREAM* s_p4;
+	int status = -1;
+	UNICONV* tsg_uniconv;
+	rdpRpc* rpc = tsg->rpc;
+	uint8* dest_addr_unic;
+	uint32 dest_addr_unic_len;
+
+	if (!rpc_connect(rpc))
+	{
+		printf("rpc_connect failed!\n");
+		return false;
+	}
+
+	DEBUG_TSG("rpc_connect success");
+
+	/**
+	 * OpNum = 1
+	 *
+	 * HRESULT TsProxyCreateTunnel(
+	 * [in, ref] PTSG_PACKET tsgPacket,
+	 * [out, ref] PTSG_PACKET* tsgPacketResponse,
+	 * [out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext,
+	 * [out] unsigned long* tunnelId
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxyCreateTunnel");
+
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_SERIALIZE tunnelContext;
+		unsigned long tunnelId;
+
+		TsProxyCreateTunnel(&tsgPacket, &tsgPacketResponse, &tunnelContext, &tunnelId);
+	}
+
+	/**
+	 * OpNum = 2
+	 *
+	 * HRESULT TsProxyAuthorizeTunnel(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in, ref] PTSG_PACKET tsgPacket,
+	 * [out, ref] PTSG_PACKET* tsgPacketResponse
+	 * );
+	 *
+	 */
+
+	DEBUG_TSG("TsProxyAuthorizeTunnel");
+
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+
+		TsProxyAuthorizeTunnel(&tunnelContext, &tsgPacket, &tsgPacketResponse);
+	}
+
+	/**
+	 * OpNum = 3
+	 *
+	 * HRESULT TsProxyMakeTunnelCall(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in] unsigned long procId,
+	 * [in, ref] PTSG_PACKET tsgPacket,
+	 * [out, ref] PTSG_PACKET* tsgPacketResponse
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxyMakeTunnelCall");
+
+	{
+		TSG_PACKET tsgPacket;
+		PTSG_PACKET tsgPacketResponse;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+
+		TsProxyMakeTunnelCall(&tunnelContext, 0, &tsgPacket, &tsgPacketResponse);
+	}
+
+	/**
+	 * OpNum = 4
+	 *
+	 * HRESULT TsProxyCreateChannel(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in, ref] PTSENDPOINTINFO tsEndPointInfo,
+	 * [out] PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext,
+	 * [out] unsigned long* channelId
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxyCreateChannel");
+
+	{
+		unsigned long channelId;
+		TSENDPOINTINFO tsEndPointInfo;
+		PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext;
+		PCHANNEL_CONTEXT_HANDLE_SERIALIZE channelContext;
+
+		TsProxyCreateChannel(&tunnelContext, &tsEndPointInfo, &channelContext, &channelId);
+	}
+
+	/**
+	 * OpNum = 8
+	 *
+	 * DWORD TsProxySetupReceivePipe(
+	 * [in, max_is(32767)] byte pRpcMessage[]
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxySetupReceivePipe");
+
+	return true;
+}
+#endif
 
 int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
 {
