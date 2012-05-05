@@ -480,7 +480,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->parent_window_xid = strtoul(argv[index], NULL, 16);
+			settings->parent_window_xid = strtol(argv[index], NULL, 0);
 
 			if (settings->parent_window_xid == 0)
 			{

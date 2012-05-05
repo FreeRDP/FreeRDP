@@ -309,18 +309,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
 	xfree(win_title);
 
-	if (xfi->parent_window)
-		XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
-
 	if (xfi->fullscreen)
 		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
-
-	/* wait for VisibilityNotify */
-	do
-	{
-		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
-	}
-	while (xevent.type != VisibilityNotify);
 
 	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
