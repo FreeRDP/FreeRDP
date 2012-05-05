@@ -1598,7 +1598,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 {
 	time_t t;
 	struct tm* local_time;
-	TIME_ZONE_ENTRY* timezone;
+	TIME_ZONE_ENTRY* tz;
 
 	time(&t);
 	local_time = localtime(&t);
@@ -1628,18 +1628,18 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
 
-	timezone = freerdp_detect_windows_time_zone(clientTimeZone->bias);
+	tz = freerdp_detect_windows_time_zone(clientTimeZone->bias);
 
-	if (timezone != NULL)
+	if (tz!= NULL)
 	{
-		clientTimeZone->bias = timezone->Bias;
-		sprintf(clientTimeZone->standardName, "%s", timezone->StandardName);
-		sprintf(clientTimeZone->daylightName, "%s", timezone->DaylightName);
+		clientTimeZone->bias = tz->Bias;
+		sprintf(clientTimeZone->standardName, "%s", tz->StandardName);
+		sprintf(clientTimeZone->daylightName, "%s", tz->DaylightName);
 
-		if ((timezone->SupportsDST) && (timezone->RuleTableCount > 0))
+		if ((tz->SupportsDST) && (tz->RuleTableCount > 0))
 		{
 			TIME_ZONE_RULE_ENTRY* rule;
-			rule = freerdp_get_current_time_zone_rule(timezone->RuleTable, timezone->RuleTableCount);
+			rule = freerdp_get_current_time_zone_rule(tz->RuleTable, tz->RuleTableCount);
 
 			if (rule != NULL)
 			{
@@ -1666,7 +1666,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 			}
 		}
 
-		xfree(timezone);
+		xfree(tz);
 	}
 	else
 	{

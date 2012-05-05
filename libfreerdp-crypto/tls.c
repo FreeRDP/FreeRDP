@@ -381,7 +381,10 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	if (certificate_status && hostname_match)
 	{
 		if (common_name)
+		{
 			xfree(common_name);
+			common_name=NULL ;
+		}
 
 		verification_status = true; /* success! */
 	}

@@ -1180,7 +1180,7 @@ int xfreerdp_run(freerdp* instance)
 
 /** Entry point for the thread that will deal with the session.
  *  It just calls xfreerdp_run() using the given instance as parameter.
- *  @param - pointer to a thread_data structure that contains the initialized connection.
+ *  @param param - pointer to a thread_data structure that contains the initialized connection.
  */
 void* thread_func(void* param)
 {

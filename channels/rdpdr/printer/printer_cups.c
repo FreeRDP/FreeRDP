@@ -125,9 +125,8 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 
 #endif
 
-	xfree(cups_printjob);
-
 	((rdpCupsPrinter*)printjob->printer)->printjob = NULL;
+	xfree(cups_printjob) ;
 }
 
 static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
