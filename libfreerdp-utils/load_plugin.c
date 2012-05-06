@@ -22,11 +22,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/windows.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
-#include <freerdp/utils/windows.h>
 
 #ifdef _WIN32
 

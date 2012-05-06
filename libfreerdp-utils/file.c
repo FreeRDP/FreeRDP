@@ -34,8 +34,8 @@
 #define getcwd			_getcwd
 #endif
 
+#include <winpr/windows.h>
 #include <freerdp/utils/file.h>
-#include <freerdp/utils/windows.h>
 
 #ifndef _WIN32
 #define PATH_SEPARATOR_STR	"/"

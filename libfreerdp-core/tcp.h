@@ -21,7 +21,7 @@
 #ifndef __TCP_H
 #define __TCP_H
 
-#include <freerdp/utils/windows.h>
+#include <winpr/windows.h>
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
