@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 
+#include <winpr/sspi.h>
 #include <freerdp/freerdp.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
 #include "test_sspi.h"
-#include <freerdp/sspi/sspi.h>
 
 #define NTLM_PACKAGE_NAME		"NTLM"
 
