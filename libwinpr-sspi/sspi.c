@@ -17,9 +17,11 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/memory.h>
+#include <stdlib.h>
 
 #include <winpr/sspi.h>
+
+#include <freerdp/utils/memory.h>
 
 #include "sspi.h"
 
@@ -109,7 +111,7 @@ void sspi_ContextBufferAllocTableNew()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = xzalloc(size);
+	ContextBufferAllocTable.entries = calloc(1, size);
 }
 
 void sspi_ContextBufferAllocTableGrow()
@@ -120,14 +122,14 @@ void sspi_ContextBufferAllocTableGrow()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = xrealloc(ContextBufferAllocTable.entries, size);
+	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
 	memset((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], 0, size / 2);
 }
 
 void sspi_ContextBufferAllocTableFree()
 {
 	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
-	xfree(ContextBufferAllocTable.entries);
+	free(ContextBufferAllocTable.entries);
 }
 
 void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
@@ -139,7 +141,7 @@ void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 	{
 		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
 		{
-			contextBuffer = xzalloc(size);
+			contextBuffer = calloc(1, size);
 			ContextBufferAllocTable.cEntries++;
 
 			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
@@ -162,7 +164,7 @@ CREDENTIALS* sspi_CredentialsNew()
 {
 	CREDENTIALS* credentials;
 
-	credentials = xnew(CREDENTIALS);
+	credentials = (CREDENTIALS*) calloc(1, sizeof(CREDENTIALS));
 
 	if (credentials != NULL)
 	{
@@ -177,25 +179,25 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	if (!credentials)
 		return;
 
-	xfree(credentials);
+	free(credentials);
 }
 
 void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
 {
 	SecBuffer->cbBuffer = size;
-	SecBuffer->pvBuffer = xzalloc(size);
+	SecBuffer->pvBuffer = calloc(1, size);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
 {
 	SecBuffer->cbBuffer = 0;
-	xfree(SecBuffer->pvBuffer);
+	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 }
 
 SecHandle* sspi_SecureHandleAlloc()
 {
-	SecHandle* handle = xmalloc(sizeof(SecHandle));
+	SecHandle* handle = malloc(sizeof(SecHandle));
 	sspi_SecureHandleInit(handle);
 	return handle;
 }
@@ -261,7 +263,7 @@ void sspi_SecureHandleFree(SecHandle* handle)
 	if (!handle)
 		return;
 
-	xfree(handle);
+	free(handle);
 }
 
 void sspi_GlobalInit()
@@ -281,7 +283,7 @@ SecurityFunctionTableA* sspi_GetSecurityFunctionTableByNameA(const SEC_CHAR* Nam
 	int index;
 	uint32 cPackages;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoA_LIST);
+	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -299,7 +301,7 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableByNameW(const SEC_WCHAR* Na
 	int index;
 	uint32 cPackages;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoW_LIST);
+	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -355,7 +357,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkg
 	uint32 cPackages;
 	SecPkgInfoW* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoW_LIST);
+	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
 	size = sizeof(SecPkgInfoW) * cPackages;
 
 	pPackageInfo = (SecPkgInfoW*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
@@ -383,7 +385,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkg
 	uint32 cPackages;
 	SecPkgInfoA* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoA_LIST);
+	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 	size = sizeof(SecPkgInfoA) * cPackages;
 
 	pPackageInfo = (SecPkgInfoA*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
@@ -415,13 +417,13 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	for (index = 0; index < (int) cPackages; index++)
 	{
 		if (pPackageInfo[index].Name)
-			xfree(pPackageInfo[index].Name);
+			free(pPackageInfo[index].Name);
 
 		if (pPackageInfo[index].Comment)
-			xfree(pPackageInfo[index].Comment);
+			free(pPackageInfo[index].Comment);
 	}
 
-	xfree(pPackageInfo);
+	free(pPackageInfo);
 }
 
 SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
@@ -507,12 +509,12 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 	SecPkgInfo* pPackageInfo = (SecPkgInfo*) contextBuffer;
 
 	if (pPackageInfo->Name)
-		xfree(pPackageInfo->Name);
+		free(pPackageInfo->Name);
 
 	if (pPackageInfo->Comment)
-		xfree(pPackageInfo->Comment);
+		free(pPackageInfo->Comment);
 
-	xfree(pPackageInfo);
+	free(pPackageInfo);
 }
 
 /* Credential Management */

@@ -23,7 +23,6 @@
 #include "config.h"
 
 #include <winpr/sspi.h>
-#include <freerdp/types.h>
 
 struct _CREDENTIALS
 {
