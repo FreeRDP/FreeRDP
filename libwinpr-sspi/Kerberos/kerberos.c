@@ -157,12 +157,12 @@ int get_krb_realm(rdpSettings* settings)
 				goto end;
 			else
 				settings->kerberos_realm = xstrdup(ns_realm);
-			xfree(queryname);
+			free(queryname);
 			return 0;
 		}
 
 		end:
-			xfree(queryname);
+			free(queryname);
 			for (;*s != '.' && *s != '\0';s++);
 			if (*s != '\0')
 				s++;
@@ -268,7 +268,7 @@ KRB_CONTEXT* kerberos_ContextNew()
 {
 	KRB_CONTEXT* context;
 
-	context = xnew(KRB_CONTEXT);
+	context = (KRB_CONTEXT*) calloc(1, sizeof(KRB_CONTEXT));
 
 	if (context != NULL)
 	{
@@ -284,21 +284,21 @@ void kerberos_ContextFree(KRB_CONTEXT* krb_ctx)
 {
 	if (krb_ctx != NULL)
 	{
-		xfree(krb_ctx->krbhost);
-		xfree(krb_ctx->cname);
-		xfree(krb_ctx->realm);
+		free(krb_ctx->krbhost);
+		free(krb_ctx->cname);
+		free(krb_ctx->realm);
 		freerdp_blob_free(&(krb_ctx->passwd));
 
-		if(krb_ctx->askey != NULL)
+		if (krb_ctx->askey != NULL)
 		{
 			freerdp_blob_free(&(krb_ctx->askey->skey));
-			xfree(krb_ctx->askey);
+			free(krb_ctx->askey);
 		}
 		
-		if(krb_ctx->tgskey != NULL)
+		if (krb_ctx->tgskey != NULL)
 		{
 			freerdp_blob_free(&(krb_ctx->tgskey->skey));
-			xfree(krb_ctx->tgskey);
+			free(krb_ctx->tgskey);
 		}
 
 		krb_free_ticket(&(krb_ctx->asticket));
@@ -410,7 +410,7 @@ void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ident
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
+			context->identity.Domain = (uint16*) malloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
 		}
 		else
@@ -510,7 +510,7 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 
 	if (entry == NULL)
 	{
-		xfree(krb_ctx);
+		free(krb_ctx);
 		return NULL;
 	}
 
@@ -601,7 +601,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 		(*(pa_data + pai))->value = msg;
 		pai++;
 		freerdp_blob_free(encmsg);
-		xfree(encmsg);
+		free(encmsg);
 	}
 	
 	freerdp_blob_alloc(&msg, 7);
@@ -634,7 +634,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	/* save stuff */
 	krb_ctx->askey = enckey;
 	krb_ctx->nonce = krb_asreq->req_body.nonce;
-	xfree(krb_ctx->sname);
+	free(krb_ctx->sname);
 	krb_ctx->sname = xstrdup(krb_asreq->req_body.sname);
 	krb_ctx->ctime = get_local_time(krb_asreq->req_body.from);
 	krb_ctx->state = KRB_ASREQ_OK;
@@ -644,7 +644,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	stream_free(s);
 	stream_free(paenc);
 	krb_free_asreq(krb_asreq);
-	xfree(krb_asreq);
+	free(krb_asreq);
 }
 
 int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
@@ -678,7 +678,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 			if((totlen <= 0) || ((len = krb_decode_krb_error(s, krb_err, totlen)) == 0))
 			{
 				krb_ctx->state = KRB_PACKET_ERROR;
-				xfree(krb_err);
+				free(krb_err);
 				goto finish;
 			}
 
@@ -708,7 +708,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 			}
 			errclean:
 				krb_free_krb_error(krb_err);
-				xfree(krb_err);
+				free(krb_err);
 				goto finish;
 		}
 	}
@@ -731,7 +731,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 
 		/* clean up */
 		krb_free_asrep(krb_asrep);
-		xfree(krb_asrep);
+		free(krb_asrep);
 		goto finish;
 	}
 	finish:
@@ -808,17 +808,17 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	
 	/* save stuff */
 	krb_ctx->nonce = krb_tgsreq->req_body.nonce;
-	xfree(krb_ctx->sname);
+	free(krb_ctx->sname);
 	krb_ctx->sname = xstrdup(krb_tgsreq->req_body.sname);
 	krb_ctx->ctime = get_local_time(krb_tgsreq->req_body.from);
 	krb_ctx->state = KRB_TGSREQ_OK;
 
 	/* clean up */
 	freerdp_blob_free(krb_auth->cksum);
-	xfree(krb_auth->cksum);
-	xfree(krb_auth);
+	free(krb_auth->cksum);
+	free(krb_auth);
 	krb_free_tgsreq(krb_tgsreq);
-	xfree(krb_tgsreq);
+	free(krb_tgsreq);
 	stream_free(sapreq);
 	stream_free(s);
 }
@@ -863,7 +863,7 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 
 		/* clean up */
 		krb_free_tgsrep(krb_tgsrep);
-		xfree(krb_tgsrep);
+		free(krb_tgsrep);
 		goto finish;
 	}
 	finish:
@@ -891,7 +891,7 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 	if(krb_ctx->askey->enctype != kdc_rep->enc_part.enctype && msgtype == KRB_TAG_ASREP)
 	{
 		freerdp_blob_free(&(krb_ctx->askey->skey));
-		xfree(krb_ctx->askey);
+		free(krb_ctx->askey);
 		krb_ctx->askey = string2key(&(krb_ctx->passwd), kdc_rep->enc_part.enctype);
 	}
 	krb_ctx->askey->enctype = kdc_rep->enc_part.enctype;
@@ -915,13 +915,13 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 		return -1;
 	}
 	freerdp_blob_free(decmsg);
-	xfree(decmsg);
+	free(decmsg);
 
 	/* Verify KDC-REP-PART */
 	if(reppart->nonce != krb_ctx->nonce || strcasecmp(reppart->realm, krb_ctx->realm) || strcasecmp(reppart->sname, krb_ctx->sname))
 	{
 		krb_free_reppart(reppart);
-		xfree(reppart);
+		free(reppart);
 		krb_ctx->state = KRB_PACKET_ERROR;
 		return -1;
 	}
@@ -932,7 +932,7 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 	freerdp_blob_copy(&(key->skey), &(reppart->key.skey));
 	key->enctype = reppart->key.enctype;
 	krb_free_reppart(reppart);
-	xfree(reppart);
+	free(reppart);
 	return 0;
 }
 
@@ -1039,7 +1039,7 @@ KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb
 		krb_apreq->enc_auth.kvno = -1;
 		krb_apreq->enc_auth.encblob.data = encmsg->data;
 		krb_apreq->enc_auth.encblob.length =  encmsg->length;
-		xfree(encmsg);
+		free(encmsg);
 	}
 	
 	stream_free(as);
@@ -1071,8 +1071,8 @@ void krb_free_ticket(Ticket* ticket)
 {
 	if (ticket != NULL)
 	{
-		xfree(ticket->realm);
-		xfree(ticket->sname);
+		free(ticket->realm);
+		free(ticket->sname);
 		freerdp_blob_free(&(ticket->enc_part.encblob));
 		ticket->enc_part.encblob.data = NULL;
 	}
@@ -1087,7 +1087,7 @@ void krb_free_padata(PAData** padata)
 		return;
 	while(*lpa_data != NULL)
 	{
-		xfree(*lpa_data);
+		free(*lpa_data);
 		lpa_data++;
 	}
 }
@@ -1097,8 +1097,8 @@ void krb_free_kdcrep(KrbKDCREP* kdc_rep)
 	if(kdc_rep != NULL)
 	{
 		krb_free_padata(kdc_rep->padata);
-		xfree(kdc_rep->cname);
-		xfree(kdc_rep->realm);
+		free(kdc_rep->cname);
+		free(kdc_rep->realm);
 		krb_free_ticket(&(kdc_rep->etgt));
 		freerdp_blob_free(&(kdc_rep->enc_part.encblob));
 		kdc_rep->enc_part.encblob.data = NULL;
@@ -1110,8 +1110,8 @@ void krb_free_reppart(ENCKDCREPPart* reppart)
 	if(reppart != NULL)
 	{
 		freerdp_blob_free(&(reppart->key.skey));
-		xfree(reppart->sname);
-		xfree(reppart->realm);
+		free(reppart->sname);
+		free(reppart->realm);
 	}
 }
 
@@ -1119,12 +1119,12 @@ void krb_free_req_body(KDCReqBody* req_body)
 {
 	if(req_body != NULL)
 	{
-		xfree(req_body->sname);
-		xfree(req_body->realm);
-		xfree(req_body->cname);
-		xfree(req_body->from);
-		xfree(req_body->till);
-		xfree(req_body->rtime);
+		free(req_body->sname);
+		free(req_body->realm);
+		free(req_body->cname);
+		free(req_body->from);
+		free(req_body->till);
+		free(req_body->rtime);
 	}
 }
 
@@ -1156,7 +1156,7 @@ void krb_free_tgsreq(KrbTGSREQ* krb_tgsreq)
 
 void krb_free_tgsrep(KrbTGSREP* krb_tgsrep)
 {
-	if(krb_tgsrep != NULL)
+	if (krb_tgsrep != NULL)
 	{
 		krb_free_kdcrep(&(krb_tgsrep->kdc_rep));
 	}
@@ -1164,9 +1164,9 @@ void krb_free_tgsrep(KrbTGSREP* krb_tgsrep)
 
 void krb_free_krb_error(KrbERROR* krb_err)
 {
-	if(krb_err != NULL)
+	if (krb_err != NULL)
 	{
-		xfree(krb_err->stime);
+		free(krb_err->stime);
 		freerdp_blob_free(&(krb_err->edata));
 	}
 }

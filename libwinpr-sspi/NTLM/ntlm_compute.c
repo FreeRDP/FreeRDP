@@ -29,7 +29,6 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
 #include "ntlm_compute.h"
@@ -56,7 +55,7 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 		"\x3A\x15\x8E\xA6\x75\x82\xD8\xF7\x3E\x06\xFA\x7A\xB4\xDF\xFD\x43"
 		"\x84\x6C\x02\x3A\xFD\x5A\x94\xFE\xCF\x97\x0F\x3D\x19\x2C\x38\x20";
 
-	restrictions->value = xmalloc(48);
+	restrictions->value = malloc(48);
 	restrictions->length = 48;
 
 	s = stream_new(0);
@@ -72,7 +71,7 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 	stream_write_uint32(s, 0x00002000); /* SubjectIntegrityLevel */
 	stream_write(s, machineID, 32); /* MachineID */
 
-	xfree(s);
+	free(s);
 }
 
 /**
@@ -95,14 +94,14 @@ void ntlm_output_target_name(NTLM_CONTEXT* context)
 			"\x00\x2e\x00\x31\x00\x36\x00\x38\x00\x2e\x00\x30\x00\x2e\x00\x31\x00\x32\x00\x33\x00";
 
 	TargetName->length = 42;
-	TargetName->value = (uint8*) xmalloc(TargetName->length);
+	TargetName->value = (uint8*) malloc(TargetName->length);
 
 	s = stream_new(0);
 	stream_attach(s, TargetName->value, TargetName->length);
 
 	stream_write(s, name, TargetName->length);
 
-	xfree(s);
+	free(s);
 }
 
 /**
@@ -115,7 +114,7 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
 	STREAM* s;
 	AV_PAIR* ChannelBindings = &context->av_pairs->ChannelBindings;
 
-	ChannelBindings->value = (uint8*) xmalloc(48);
+	ChannelBindings->value = (uint8*) malloc(48);
 	ChannelBindings->length = 16;
 
 	s = stream_new(0);
@@ -123,7 +122,7 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
 
 	stream_write_zero(s, 16); /* an all-zero value of the hash is used to indicate absence of channel bindings */
 
-	xfree(s);
+	free(s);
 }
 
 /**
@@ -164,7 +163,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 		if (context->av_pairs->Timestamp.length != 8)
 		{
 			context->av_pairs->Timestamp.length = 8;
-			context->av_pairs->Timestamp.value = xmalloc(context->av_pairs->Timestamp.length);
+			context->av_pairs->Timestamp.value = malloc(context->av_pairs->Timestamp.length);
 		}
 
 		memcpy(context->av_pairs->Timestamp.value, context->Timestamp, 8);
@@ -428,7 +427,7 @@ void ntlm_generate_signing_key(uint8* exported_session_key, PSecBuffer sign_magi
 	CryptoMd5 md5;
 
 	length = 16 + sign_magic->cbBuffer;
-	value = (uint8*) xmalloc(length);
+	value = (uint8*) malloc(length);
 
 	/* Concatenate ExportedSessionKey with sign magic */
 	memcpy(value, exported_session_key, 16);
@@ -438,7 +437,7 @@ void ntlm_generate_signing_key(uint8* exported_session_key, PSecBuffer sign_magi
 	crypto_md5_update(md5, value, length);
 	crypto_md5_final(md5, signing_key);
 
-	xfree(value);
+	free(value);
 }
 
 /**

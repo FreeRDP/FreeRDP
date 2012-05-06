@@ -19,9 +19,8 @@
 
 #include <stdlib.h>
 
+#include <winpr/crt.h>
 #include <winpr/sspi.h>
-
-#include <freerdp/utils/memory.h>
 
 #include "sspi.h"
 
@@ -368,8 +367,8 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkg
 		pPackageInfo[index].wVersion = SecPkgInfoW_LIST[index]->wVersion;
 		pPackageInfo[index].wRPCID = SecPkgInfoW_LIST[index]->wRPCID;
 		pPackageInfo[index].cbMaxToken = SecPkgInfoW_LIST[index]->cbMaxToken;
-		pPackageInfo[index].Name = xwcsdup(SecPkgInfoW_LIST[index]->Name);
-		pPackageInfo[index].Comment = xwcsdup(SecPkgInfoW_LIST[index]->Comment);
+		pPackageInfo[index].Name = _wcsdup(SecPkgInfoW_LIST[index]->Name);
+		pPackageInfo[index].Comment = _wcsdup(SecPkgInfoW_LIST[index]->Comment);
 	}
 
 	*(pcPackages) = cPackages;
@@ -396,8 +395,8 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkg
 		pPackageInfo[index].wVersion = SecPkgInfoA_LIST[index]->wVersion;
 		pPackageInfo[index].wRPCID = SecPkgInfoA_LIST[index]->wRPCID;
 		pPackageInfo[index].cbMaxToken = SecPkgInfoA_LIST[index]->cbMaxToken;
-		pPackageInfo[index].Name = xstrdup(SecPkgInfoA_LIST[index]->Name);
-		pPackageInfo[index].Comment = xstrdup(SecPkgInfoA_LIST[index]->Comment);
+		pPackageInfo[index].Name = _strdup(SecPkgInfoA_LIST[index]->Name);
+		pPackageInfo[index].Comment = _strdup(SecPkgInfoA_LIST[index]->Comment);
 	}
 
 	*(pcPackages) = cPackages;
@@ -412,7 +411,7 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	uint32 cPackages;
 	SecPkgInfoA* pPackageInfo = (SecPkgInfoA*) contextBuffer;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoA_LIST);
+	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -443,7 +442,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 	uint32 cPackages;
 	SecPkgInfoW* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoW_LIST);
+	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -456,8 +455,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 			pPackageInfo->wVersion = SecPkgInfoW_LIST[index]->wVersion;
 			pPackageInfo->wRPCID = SecPkgInfoW_LIST[index]->wRPCID;
 			pPackageInfo->cbMaxToken = SecPkgInfoW_LIST[index]->cbMaxToken;
-			pPackageInfo->Name = xwcsdup(SecPkgInfoW_LIST[index]->Name);
-			pPackageInfo->Comment = xwcsdup(SecPkgInfoW_LIST[index]->Comment);
+			pPackageInfo->Name = _wcsdup(SecPkgInfoW_LIST[index]->Name);
+			pPackageInfo->Comment = _wcsdup(SecPkgInfoW_LIST[index]->Comment);
 
 			*(ppPackageInfo) = pPackageInfo;
 
@@ -477,7 +476,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PS
 	uint32 cPackages;
 	SecPkgInfoA* pPackageInfo;
 
-	cPackages = ARRAY_SIZE(SecPkgInfoA_LIST);
+	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -490,8 +489,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PS
 			pPackageInfo->wVersion = SecPkgInfoA_LIST[index]->wVersion;
 			pPackageInfo->wRPCID = SecPkgInfoA_LIST[index]->wRPCID;
 			pPackageInfo->cbMaxToken = SecPkgInfoA_LIST[index]->cbMaxToken;
-			pPackageInfo->Name = xstrdup(SecPkgInfoA_LIST[index]->Name);
-			pPackageInfo->Comment = xstrdup(SecPkgInfoA_LIST[index]->Comment);
+			pPackageInfo->Name = _strdup(SecPkgInfoA_LIST[index]->Name);
+			pPackageInfo->Comment = _strdup(SecPkgInfoA_LIST[index]->Comment);
 
 			*(ppPackageInfo) = pPackageInfo;
 

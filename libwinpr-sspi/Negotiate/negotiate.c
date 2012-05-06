@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <winpr//sspi.h>
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+#include <winpr/sspi.h>
 
 #include "negotiate.h"
 
@@ -72,12 +72,12 @@ void negotiate_SetContextIdentity(NEGOTIATE_CONTEXT* context, SEC_WINNT_AUTH_IDE
 	}
 	else
 	{
-		context->identity.User = (uint16*) xmalloc(identity->UserLength);
+		context->identity.User = (uint16*) malloc(identity->UserLength);
 		memcpy(context->identity.User, identity->User, identity->UserLength);
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
+			context->identity.Domain = (uint16*) malloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
 		}
 		else
@@ -86,7 +86,7 @@ void negotiate_SetContextIdentity(NEGOTIATE_CONTEXT* context, SEC_WINNT_AUTH_IDE
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
+		context->identity.Password = (uint16*) malloc(identity->PasswordLength);
 		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
 	}
 }
@@ -146,7 +146,7 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 {
 	NEGOTIATE_CONTEXT* context;
 
-	context = xnew(NEGOTIATE_CONTEXT);
+	context = (NEGOTIATE_CONTEXT*) calloc(1, sizeof(NEGOTIATE_CONTEXT));
 
 	if (context != NULL)
 	{
@@ -163,7 +163,7 @@ void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	if (!context)
 		return;
 
-	xfree(context);
+	free(context);
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)

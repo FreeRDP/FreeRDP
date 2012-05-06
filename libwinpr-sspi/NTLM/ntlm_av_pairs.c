@@ -128,7 +128,7 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 
 			default:
 				if (value != NULL)
-					xfree(value);
+					free(value);
 				break;
 		}
 
@@ -242,7 +242,7 @@ void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer)
 		stream_write_zero(s, 8);
 	}
 
-	xfree(s);
+	free(s);
 }
 
 /**
@@ -444,25 +444,25 @@ void ntlm_free_av_pairs(NTLM_CONTEXT* context)
 	if (av_pairs != NULL)
 	{
 		if (av_pairs->NbComputerName.value != NULL)
-			xfree(av_pairs->NbComputerName.value);
+			free(av_pairs->NbComputerName.value);
 		if (av_pairs->NbDomainName.value != NULL)
-			xfree(av_pairs->NbDomainName.value);
+			free(av_pairs->NbDomainName.value);
 		if (av_pairs->DnsComputerName.value != NULL)
-			xfree(av_pairs->DnsComputerName.value);
+			free(av_pairs->DnsComputerName.value);
 		if (av_pairs->DnsDomainName.value != NULL)
-			xfree(av_pairs->DnsDomainName.value);
+			free(av_pairs->DnsDomainName.value);
 		if (av_pairs->DnsTreeName.value != NULL)
-			xfree(av_pairs->DnsTreeName.value);
+			free(av_pairs->DnsTreeName.value);
 		if (av_pairs->Timestamp.value != NULL)
-			xfree(av_pairs->Timestamp.value);
+			free(av_pairs->Timestamp.value);
 		if (av_pairs->Restrictions.value != NULL)
-			xfree(av_pairs->Restrictions.value);
+			free(av_pairs->Restrictions.value);
 		if (av_pairs->TargetName.value != NULL)
-			xfree(av_pairs->TargetName.value);
+			free(av_pairs->TargetName.value);
 		if (av_pairs->ChannelBindings.value != NULL)
-			xfree(av_pairs->ChannelBindings.value);
+			free(av_pairs->ChannelBindings.value);
 
-		xfree(av_pairs);
+		free(av_pairs);
 	}
 
 	context->av_pairs = NULL;

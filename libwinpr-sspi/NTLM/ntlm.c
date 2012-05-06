@@ -23,8 +23,8 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
-#include <freerdp/utils/memory.h>
 
+#include <winpr/crt.h>
 #include <winpr/sspi.h>
 
 #include "ntlm.h"
@@ -60,13 +60,13 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ide
 	}
 	else
 	{
-		context->identity.User = (uint16*) xmalloc(identity->UserLength);
+		context->identity.User = (uint16*) malloc(identity->UserLength);
 		memcpy(context->identity.User, identity->User, identity->UserLength);
 		context->identity.UserLength = identity->UserLength;
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) xmalloc(identity->DomainLength);
+			context->identity.Domain = (uint16*) malloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
 			context->identity.DomainLength = identity->DomainLength;
 		}
@@ -76,7 +76,7 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ide
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) xmalloc(identity->PasswordLength);
+		context->identity.Password = (uint16*) malloc(identity->PasswordLength);
 		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
 		context->identity.PasswordLength = identity->PasswordLength;
 	}
@@ -129,13 +129,13 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->TargetName);
 	sspi_SecBufferFree(&context->NtChallengeResponse);
 	sspi_SecBufferFree(&context->LmChallengeResponse);
-	xfree(context->identity.User);
-	xfree(context->identity.Password);
-	xfree(context->identity.Domain);
-	xfree(context->Workstation);
-	xfree(context->av_pairs->Timestamp.value);
-	xfree(context->av_pairs);
-	xfree(context);
+	free(context->identity.User);
+	free(context->identity.Password);
+	free(context->identity.Domain);
+	free(context->Workstation);
+	free(context->av_pairs->Timestamp.value);
+	free(context->av_pairs);
+	free(context);
 }
 
 SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
@@ -556,7 +556,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP
 
 	/* Copy original data buffer */
 	length = data_buffer->cbBuffer;
-	data = xmalloc(length);
+	data = malloc(length);
 	memcpy(data, data_buffer->pvBuffer, length);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
@@ -574,7 +574,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP
 	else
 		memcpy(data_buffer->pvBuffer, data, length);
 
-	xfree(data);
+	free(data);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Data Buffer (length = %d)\n", length);
@@ -638,7 +638,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 
 	/* Copy original data buffer */
 	length = data_buffer->cbBuffer;
-	data = xmalloc(length);
+	data = malloc(length);
 	memcpy(data, data_buffer->pvBuffer, length);
 
 	/* Decrypt message using with RC4 */
@@ -651,7 +651,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 	HMAC_Final(&hmac, digest, NULL);
 	HMAC_CTX_cleanup(&hmac);
-	xfree(data);
+	free(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
 	crypto_rc4(context->RecvRc4Seal, 8, digest, checksum);
