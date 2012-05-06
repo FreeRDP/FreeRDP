@@ -203,6 +203,8 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 	s = http_request_write(http_context, http_request);
 	http_request_free(http_request);
 
+	xfree(base64_ntlm_token);
+
 	return s;
 }
 
