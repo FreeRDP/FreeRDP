@@ -69,11 +69,6 @@ static const char* const X11_EVENT_STRINGS[] =
 };
 #endif
 
-void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
-{
-	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
-}
-
 boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 {
 	int x, y;
@@ -115,37 +110,32 @@ boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
 boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpInput* input;
+	int x, y;
+	Window childWindow;
 
 	input = xfi->instance->input;
+	x = event->xmotion.x;
+	y = event->xmotion.y;
 
-	if (app != true)
+	if (xfi->mouse_motion != true)
 	{
-		if (xfi->mouse_motion != true)
-		{
-			if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
-				return true;
-		}
+		if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
+			return true;
+	} 
 
-		input->MouseEvent(input, PTR_FLAGS_MOVE, event->xmotion.x, event->xmotion.y);
-
-		if (xfi->fullscreen)
-			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
+	if (app)
+	{
+		// Translate to desktop coordinates
+		XTranslateCoordinates(xfi->display, event->xmotion.window,
+			RootWindowOfScreen(xfi->screen),
+			x, y, &x, &y, &childWindow);
 	}
-	else if (xfi->mouse_motion == true)
+
+	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+
+	if (xfi->fullscreen)
 	{
-		rdpWindow* window;
-		int x = event->xmotion.x;
-		int y = event->xmotion.y;
-		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xmotion.window);
-
-		if (window != NULL)
-		{
-			x += window->windowOffsetX;
-			y += window->windowOffsetY;
-			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
-		}
+		XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
 	}
 
 	return true;
@@ -153,8 +143,9 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 {
-	uint16 x, y;
-	uint16 flags;
+	int x, y;
+	int flags;
+	Window childWindow;
 	boolean wheel;
 	boolean extended;
 	rdpInput* input;
@@ -232,16 +223,10 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			if (app)
 			{
-				rdpWindow* window;
-				rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-
-				window = window_list_get_by_extra_id(rail->list, (void*) event->xbutton.window);
-
-				if (window != NULL)
-				{
-					x += window->windowOffsetX;
-					y += window->windowOffsetY;
-				}
+				// Translate to desktop coordinates
+				XTranslateCoordinates(xfi->display, event->xmotion.window,
+					RootWindowOfScreen(xfi->screen),
+					x, y, &x, &y, &childWindow);
 			}
 
 			if (extended)
@@ -256,8 +241,9 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 {
-	uint16 x, y;
-	uint16 flags;
+	int x, y;
+	int flags;
+	Window childWindow;
 	boolean extended;
 	rdpInput* input;
 
@@ -315,16 +301,10 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
-			rdpWindow* window;
-			rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-
-			window = window_list_get_by_extra_id(rail->list, (void*) event->xbutton.window);
-
-			if (window != NULL)
-			{
-				x += window->windowOffsetX;
-				y += window->windowOffsetY;
-			}
+			// Translate to desktop coordinates
+			XTranslateCoordinates(xfi->display, event->xmotion.window,
+				RootWindowOfScreen(xfi->screen),
+				x, y, &x, &y, &childWindow);
 		}
 
 		if (extended)
