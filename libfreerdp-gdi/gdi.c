@@ -371,7 +371,7 @@ gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 	uint8* extra;
 	gdiBitmap* gdi_bmp;
 
-	gdi_bmp = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	gdi_bmp = (gdiBitmap*) xmalloc(sizeof(gdiBitmap));
 
 	gdi_bmp->hdc = gdi_GetDC();
 	gdi_bmp->hdc->bytesPerPixel = 1;
@@ -403,7 +403,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8*
 {
 	gdiBitmap* bitmap;
 
-	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	bitmap = (gdiBitmap*) xmalloc(sizeof(gdiBitmap));
 	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
 	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
@@ -838,12 +838,12 @@ void gdi_init_primary(rdpGdi* gdi)
 	if (gdi->drawing == NULL)
 		gdi->drawing = gdi->primary;
 
-	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+	gdi->primary->hdc->hwnd = (HGDI_WND) xmalloc(sizeof(GDI_WND));
 	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 
 	gdi->primary->hdc->hwnd->count = 32;
-	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
+	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) xmalloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
@@ -875,8 +875,7 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	rdpGdi* gdi;
 	rdpCache* cache;
 
-	gdi = (rdpGdi*) malloc(sizeof(rdpGdi));
-	memset(gdi, 0, sizeof(rdpGdi));
+	gdi = (rdpGdi*) xzalloc(sizeof(rdpGdi));
 
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;
@@ -926,11 +925,11 @@ int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
 	gdi->hdc->bitsPerPixel = gdi->dstBpp;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
-	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	gdi->clrconv = (HCLRCONV) xmalloc(sizeof(CLRCONV));
 	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
 	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
 	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
-	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	gdi->clrconv->palette = (rdpPalette*) xmalloc(sizeof(rdpPalette));
 
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;

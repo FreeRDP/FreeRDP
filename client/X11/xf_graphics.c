@@ -161,8 +161,7 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.height = pointer->height;
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
-	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
-	memset(ci.pixels, 0, ci.width * ci.height * 4);
+	ci.pixels = (XcursorPixel*) xzalloc(ci.width * ci.height * 4);
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{

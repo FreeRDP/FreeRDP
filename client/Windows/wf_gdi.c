@@ -92,7 +92,7 @@ uint8* wf_glyph_convert(wfInfo* wfi, int width, int height, uint8* data)
 
 	src_bytes_per_row = (width + 7) / 8;
 	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
-	cdata = (uint8 *) malloc(dst_bytes_per_row * height);
+	cdata = (uint8 *) xmalloc(dst_bytes_per_row * height);
 
 	src = data;
 	for (indexy = 0; indexy < height; indexy++)

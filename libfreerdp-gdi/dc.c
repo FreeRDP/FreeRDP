@@ -25,6 +25,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/region.h>
 
@@ -38,7 +39,7 @@
 
 HGDI_DC gdi_GetDC()
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC) xmalloc(sizeof(GDI_DC));
 	hDC->bytesPerPixel = 4;
 	hDC->bitsPerPixel = 32;
 	hDC->drawMode = GDI_R2_BLACK;
@@ -56,7 +57,7 @@ HGDI_DC gdi_GetDC()
 
 HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC) xmalloc(sizeof(GDI_DC));
 
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -70,12 +71,12 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 	hDC->invert = clrconv->invert;
 	hDC->rgb555 = clrconv->rgb555;
 
-	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+	hDC->hwnd = (HGDI_WND) xmalloc(sizeof(GDI_WND));
 	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	hDC->hwnd->invalid->null = 1;
 
 	hDC->hwnd->count = 32;
-	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
+	hDC->hwnd->cinvalid = (HGDI_RGN) xmalloc(sizeof(GDI_RGN) * hDC->hwnd->count);
 	hDC->hwnd->ninvalid = 0;
 
 	return hDC;
@@ -90,7 +91,7 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC) xmalloc(sizeof(GDI_DC));
 	hDC->bytesPerPixel = hdc->bytesPerPixel;
 	hDC->bitsPerPixel = hdc->bitsPerPixel;
 	hDC->drawMode = hdc->drawMode;
