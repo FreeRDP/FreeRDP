@@ -41,8 +41,8 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
-	xfWindow* xfw;
 	rdpWindow* window;
+	xfWindow* xfw;
 	boolean intersect;
 	uint32 iwidth, iheight;
 	sint32 ileft, itop;
@@ -81,7 +81,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 
 		if (intersect)
 		{
-			xf_UpdateWindowArea(xfi, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
+			xf_UpdateWindowArea(xfi, (xfWindow *) window->extra, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
 }
@@ -102,7 +102,7 @@ void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 
 	xf_SetWindowStyle(xfi, xfw, window->style, window->extendedStyle);
 
-	XStoreName(xfi->display, xfw->handle, window->title);
+	xf_SetWindowText(xfi, xfw, window->title);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;
@@ -116,18 +116,9 @@ void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	// Do nothing if window is already in the correct position
-        if ( xfw->left == window->windowOffsetX && 
-        	xfw->top == window->windowOffsetY && 
-                xfw->width == window->windowWidth && 
-                xfw->height == window->windowHeight)
-        {
-		return;
-	}
-
-	xf_MoveWindow((xfInfo*) rail->extra, xfw,
-			window->windowOffsetX, window->windowOffsetY,
-			window->windowWidth, window->windowHeight);
+	xf_MoveWindow(xfi, xfw,
+		window->windowOffsetX, window->windowOffsetY,
+		window->windowWidth, window->windowHeight);
 }
 
 void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, uint8 state)
@@ -138,7 +129,7 @@ void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, uint8 state)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_ShowWindow((xfInfo*) rail->extra, xfw, state);
+	xf_ShowWindow(xfi, xfw, state);
 }
 
 void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
@@ -149,7 +140,7 @@ void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	XStoreName(xfi->display, xfw->handle, window->title);
+	xf_SetWindowText(xfi, xfw, window->title);
 }
 
 void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)

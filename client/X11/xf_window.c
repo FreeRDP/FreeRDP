@@ -260,6 +260,11 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 
 }
 
+void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name)
+{
+	XStoreName(xfi->display, window->handle, name);
+}
+
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
 {
 	xfWindow* window;
@@ -324,7 +329,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
         	while (xevent.type != VisibilityNotify);
 	}
 
-	XStoreName(xfi->display, window->handle, name);
+	xf_SetWindowText(xfi, window, name);
+
 
 	return window;
 }
