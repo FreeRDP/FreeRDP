@@ -24,6 +24,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/region.h>
 
@@ -39,7 +40,7 @@
 
 HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
-	HGDI_RGN hRgn = (HGDI_RGN) malloc(sizeof(GDI_RGN));
+	HGDI_RGN hRgn = (HGDI_RGN) xmalloc(sizeof(GDI_RGN));
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;
@@ -60,7 +61,7 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
 
 HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom)
 {
-	HGDI_RECT hRect = (HGDI_RECT) malloc(sizeof(GDI_RECT));
+	HGDI_RECT hRect = (HGDI_RECT) xmalloc(sizeof(GDI_RECT));
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
 	hRect->top = yTop;
