@@ -26,6 +26,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/pen.h>
 
