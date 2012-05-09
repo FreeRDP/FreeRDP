@@ -39,7 +39,8 @@ typedef struct _AudinPulseDevice
 	pa_stream* stream;
 	int format;
 	int block_size;
-	ADPCM adpcm;
+
+	FREERDP_DSP_CONTEXT* dsp_context;
 
 	int bytes_per_frame;
 	uint8* buffer;
@@ -145,6 +146,7 @@ static void audin_pulse_free(IAudinDevice* device)
 		pa_threaded_mainloop_free(pulse->mainloop);
 		pulse->mainloop = NULL;
 	}
+	freerdp_dsp_context_free(pulse->dsp_context);
 	xfree(pulse);
 }
 
@@ -297,9 +299,11 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 		{
 			if (pulse->format == 0x11)
 			{
-				encoded_data = dsp_encode_ima_adpcm(&pulse->adpcm,
+				pulse->dsp_context->encode_ima_adpcm(pulse->dsp_context,
 					pulse->buffer, pulse->buffer_frames * pulse->bytes_per_frame,
-					pulse->sample_spec.channels, pulse->block_size, &encoded_size);
+					pulse->sample_spec.channels, pulse->block_size);
+				encoded_data = pulse->dsp_context->adpcm_buffer;
+				encoded_size = pulse->dsp_context->adpcm_size;
 				DEBUG_DVC("encoded %d to %d",
 					pulse->buffer_frames * pulse->bytes_per_frame, encoded_size);
 			}
@@ -311,8 +315,6 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 
 			ret = pulse->receive(encoded_data, encoded_size, pulse->user_data);
 			pulse->buffer_frames = 0;
-			if (encoded_data != pulse->buffer)
-				xfree(encoded_data);
 			if (!ret)
 				break;
 		}
@@ -412,7 +414,7 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 	if (state == PA_STREAM_READY)
 	{
-		memset(&pulse->adpcm, 0, sizeof(ADPCM));
+		freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
 		pulse->buffer = xzalloc(pulse->bytes_per_frame * pulse->frames_per_packet);
 		pulse->buffer_frames = 0;
 		DEBUG_DVC("connected");
@@ -442,6 +444,8 @@ int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 	{
 		strncpy(pulse->device_name, (char*)data->data[2], sizeof(pulse->device_name));
 	}
+
+	pulse->dsp_context = freerdp_dsp_context_new();
 
 	pulse->mainloop = pa_threaded_mainloop_new();
 	if (!pulse->mainloop)

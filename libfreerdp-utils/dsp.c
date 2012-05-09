@@ -24,9 +24,10 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 
-uint8* dsp_resample(uint8* src, int bytes_per_sample,
+static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
+	const uint8* src, int bytes_per_sample,
 	uint32 schan, uint32 srate, int sframes,
-	uint32 rchan, uint32 rrate, int * prframes)
+	uint32 rchan, uint32 rrate)
 {
 	uint8* dst;
 	uint8* p;
@@ -39,9 +40,13 @@ uint8* dsp_resample(uint8* src, int bytes_per_sample,
 	sbytes = bytes_per_sample * schan;
 	rbytes = bytes_per_sample * rchan;
 	rframes = sframes * rrate / srate;
-	*prframes = rframes;
 	rsize = rbytes * rframes;
-	dst = (uint8*) xzalloc(rsize);
+	if (rsize > context->resampled_maxlength)
+	{
+		context->resampled_maxlength = rsize + 1024;
+		context->resampled_buffer = xrealloc(context->resampled_buffer, context->resampled_maxlength);
+	}
+	dst = context->resampled_buffer;
 
 	p = dst;
 	for (i = 0; i < rframes; i++)
@@ -59,7 +64,8 @@ uint8* dsp_resample(uint8* src, int bytes_per_sample,
 		}
 	}
 
-	return dst;
+	context->resampled_frames = rframes;
+	context->resampled_size = rsize;
 }
 
 /**
@@ -122,35 +128,39 @@ static uint16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm,
 	return (uint16) d;
 }
 
-uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
-	uint8* src, int size, int channels, int block_size, int* out_size)
+static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
+	const uint8* src, int size, int channels, int block_size)
 {
-	uint8* out;
 	uint8* dst;
 	uint8 sample;
 	uint16 decoded;
+	uint32 out_size;
 	int channel;
 	int i;
 
-	*out_size = size * 4;
-	out = (uint8 *) xzalloc(*out_size);
-	dst = out;
+	out_size = size * 4;
+	if (out_size > context->adpcm_maxlength)
+	{
+		context->adpcm_maxlength = out_size + 1024;
+		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+	}
+	dst = context->adpcm_buffer;
 	while (size > 0)
 	{
 		if (size % block_size == 0)
 		{
-			adpcm->last_sample[0] = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
-			adpcm->last_step[0] = (sint16) (*(src + 2));
+			context->adpcm.last_sample[0] = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
+			context->adpcm.last_step[0] = (sint16) (*(src + 2));
 			src += 4;
 			size -= 4;
-			*out_size -= 16;
+			out_size -= 16;
 			if (channels > 1)
 			{
-				adpcm->last_sample[1] = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
-				adpcm->last_step[1] = (sint16) (*(src + 2));
+				context->adpcm.last_sample[1] = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
+				context->adpcm.last_step[1] = (sint16) (*(src + 2));
 				src += 4;
 				size -= 4;
-				*out_size -= 16;
+				out_size -= 16;
 			}
 		}
 
@@ -160,11 +170,11 @@ uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
 			{
 				channel = (i < 4 ? 0 : 1);
 				sample = ((*src) & 0x0f);
-				decoded = dsp_decode_ima_adpcm_sample(adpcm, channel, sample);
+				decoded = dsp_decode_ima_adpcm_sample(&context->adpcm, channel, sample);
 				dst[((i & 3) << 3) + (channel << 1)] = (decoded & 0xff);
 				dst[((i & 3) << 3) + (channel << 1) + 1] = (decoded >> 8);
 				sample = ((*src) >> 4);
-				decoded = dsp_decode_ima_adpcm_sample(adpcm, channel, sample);
+				decoded = dsp_decode_ima_adpcm_sample(&context->adpcm, channel, sample);
 				dst[((i & 3) << 3) + (channel << 1) + 4] = (decoded & 0xff);
 				dst[((i & 3) << 3) + (channel << 1) + 5] = (decoded >> 8);
 				src++;
@@ -175,18 +185,19 @@ uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
 		else
 		{
 			sample = ((*src) & 0x0f);
-			decoded = dsp_decode_ima_adpcm_sample(adpcm, 0, sample);
+			decoded = dsp_decode_ima_adpcm_sample(&context->adpcm, 0, sample);
 			*dst++ = (decoded & 0xff);
 			*dst++ = (decoded >> 8);
 			sample = ((*src) >> 4);
-			decoded = dsp_decode_ima_adpcm_sample(adpcm, 0, sample);
+			decoded = dsp_decode_ima_adpcm_sample(&context->adpcm, 0, sample);
 			*dst++ = (decoded & 0xff);
 			*dst++ = (decoded >> 8);
 			src++;
 			size--;
 		}
 	}
-	return out;
+
+	context->adpcm_size = out_size;
 }
 
 /**
@@ -277,30 +288,35 @@ static uint8 dsp_encode_ima_adpcm_sample(ADPCM* adpcm,
 	return enc;
 }
 
-uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
-	uint8* src, int size, int channels, int block_size, int* out_size)
+static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
+	const uint8* src, int size, int channels, int block_size)
 {
-	uint8* out;
 	uint8* dst;
 	sint16 sample;
 	uint8 encoded;
+	uint32 out_size;
 	int i;
 
-	out = (uint8*) xzalloc(size / 2);
-	dst = out;
+	out_size = size / 2;
+	if (out_size > context->adpcm_maxlength)
+	{
+		context->adpcm_maxlength = out_size + 1024;
+		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+	}
+	dst = context->adpcm_buffer;
 	while (size > 0)
 	{
-		if ((dst - out) % block_size == 0)
+		if ((dst - context->adpcm_buffer) % block_size == 0)
 		{
-			*dst++ = adpcm->last_sample[0] & 0xff;
-			*dst++ = (adpcm->last_sample[0] >> 8) & 0xff;
-			*dst++ = (uint8) adpcm->last_step[0];
+			*dst++ = context->adpcm.last_sample[0] & 0xff;
+			*dst++ = (context->adpcm.last_sample[0] >> 8) & 0xff;
+			*dst++ = (uint8) context->adpcm.last_step[0];
 			*dst++ = 0;
 			if (channels > 1)
 			{
-				*dst++ = adpcm->last_sample[1] & 0xff;
-				*dst++ = (adpcm->last_sample[1] >> 8) & 0xff;
-				*dst++ = (uint8) adpcm->last_step[1];
+				*dst++ = context->adpcm.last_sample[1] & 0xff;
+				*dst++ = (context->adpcm.last_sample[1] >> 8) & 0xff;
+				*dst++ = (uint8) context->adpcm.last_step[1];
 				*dst++ = 0;
 			}
 		}
@@ -312,7 +328,7 @@ uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
 			{
 				sample = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
 				src += 2;
-				encoded = dsp_encode_ima_adpcm_sample(adpcm, i % 2, sample);
+				encoded = dsp_encode_ima_adpcm_sample(&context->adpcm, i % 2, sample);
 				dst[ima_stereo_encode_map[i].byte_num] |= encoded << ima_stereo_encode_map[i].byte_shift;
 			}
 			dst += 8;
@@ -322,15 +338,39 @@ uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
 		{
 			sample = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
 			src += 2;
-			encoded = dsp_encode_ima_adpcm_sample(adpcm, 0, sample);
+			encoded = dsp_encode_ima_adpcm_sample(&context->adpcm, 0, sample);
 			sample = (sint16) (((uint16)(*src)) | (((uint16)(*(src + 1))) << 8));
 			src += 2;
-			encoded |= dsp_encode_ima_adpcm_sample(adpcm, 0, sample) << 4;
+			encoded |= dsp_encode_ima_adpcm_sample(&context->adpcm, 0, sample) << 4;
 			*dst++ = encoded;
 			size -= 4;
 		}
 	}
-	*out_size = dst - out;
-	return out;
+	
+	context->adpcm_size = dst - context->adpcm_buffer;
 }
 
+FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void)
+{
+	FREERDP_DSP_CONTEXT* context;
+
+	context = xnew(FREERDP_DSP_CONTEXT);
+
+	context->resample = freerdp_dsp_resample;
+	context->decode_ima_adpcm = freerdp_dsp_decode_ima_adpcm;
+	context->encode_ima_adpcm = freerdp_dsp_encode_ima_adpcm;
+
+	return context;
+}
+
+void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
+{
+	if (context)
+	{
+		if (context->resampled_buffer)
+			xfree(context->resampled_buffer);
+		if (context->adpcm_buffer)
+			xfree(context->adpcm_buffer);
+		xfree(context);
+	}
+}
