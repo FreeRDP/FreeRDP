@@ -40,6 +40,8 @@ typedef struct _TSMFALSAAudioDevice
 	uint32 source_channels;
 	uint32 actual_channels;
 	uint32 bytes_per_sample;
+
+	FREERDP_DSP_CONTEXT* dsp_context;
 } TSMFALSAAudioDevice;
 
 static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
@@ -151,7 +153,6 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 	uint8* pindex;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
-	uint8* resampled_data;
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
 	DEBUG_DVC("data_size %d", data_size);
@@ -164,18 +165,18 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 		if ((alsa->source_rate == alsa->actual_rate) &&
 			(alsa->source_channels == alsa->actual_channels))
 		{
-			resampled_data = NULL;
 			src = data;
 		}
 		else
 		{
-			resampled_data = dsp_resample(data, alsa->bytes_per_sample,
+			alsa->dsp_context->resample(alsa->dsp_context, data, alsa->bytes_per_sample,
 				alsa->source_channels, alsa->source_rate, data_size / sbytes_per_frame,
-				alsa->actual_channels, alsa->actual_rate, &frames);
+				alsa->actual_channels, alsa->actual_rate);
+			frames = alsa->dsp_context->resampled_frames;
 			DEBUG_DVC("resampled %d frames at %d to %d frames at %d",
 				data_size / sbytes_per_frame, alsa->source_rate, frames, alsa->actual_rate);
 			data_size = frames * rbytes_per_frame;
-			src = resampled_data;
+			src = alsa->dsp_context->resampled_buffer;
 		}
 
 		pindex = src;
@@ -203,9 +204,6 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 				break;
 			pindex += error * rbytes_per_frame;
 		}
-
-		if (resampled_data)
-			xfree(resampled_data);
 	}
 	xfree(data);
 
@@ -242,6 +240,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 		snd_pcm_drain(alsa->out_handle);
 		snd_pcm_close(alsa->out_handle);
 	}
+	freerdp_dsp_context_free(alsa->dsp_context);
 	xfree(alsa);
 }
 
@@ -257,6 +256,8 @@ ITSMFAudioDevice* TSMFAudioDeviceEntry(void)
 	alsa->iface.GetLatency = tsmf_alsa_get_latency;
 	alsa->iface.Flush = tsmf_alsa_flush;
 	alsa->iface.Free = tsmf_alsa_free;
+
+	alsa->dsp_context = freerdp_dsp_context_new();
 
 	return (ITSMFAudioDevice*) alsa;
 }
