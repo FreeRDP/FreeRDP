@@ -474,7 +474,7 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	data = pEntryPoints->plugin_data;
 	if (data && strcmp((char*)data->data[0], "pulse") == 0)
 	{
-		if(strlen((char*)data->data[1]) > 0) 
+		if(data->data[1] && strlen((char*)data->data[1]) > 0) 
 			pulse->device_name = xstrdup((char*)data->data[1]);
 		else
 			pulse->device_name = NULL;
