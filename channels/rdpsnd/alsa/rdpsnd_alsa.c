@@ -75,7 +75,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params,
 		&alsa->actual_channels);
 	if (alsa->latency < 0)
-		frames = alsa->actual_rate * 4; /* Default to 4-second buffer */
+		frames = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
 	else
 		frames = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
 	if (frames < alsa->actual_rate / 2)
