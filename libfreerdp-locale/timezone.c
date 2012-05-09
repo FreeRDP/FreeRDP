@@ -1503,7 +1503,10 @@ char* freerdp_get_unix_timezone_identifier()
 		fseek(fp, 0, SEEK_SET);
 
 		if (length < 2)
+		{
+			fclose(fp) ;
 			return NULL;
+		}
 
 		tzid = (char*) xmalloc(length + 1);
 		fread(tzid, length, 1, fp);
@@ -1511,6 +1514,8 @@ char* freerdp_get_unix_timezone_identifier()
 
 		if (tzid[length - 1] == '\n')
 			tzid[length - 1] = '\0';
+
+		fclose(fp) ;
 	}
 
 	return tzid;
