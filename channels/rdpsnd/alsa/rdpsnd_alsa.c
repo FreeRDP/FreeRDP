@@ -260,8 +260,6 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	if ((size % sbytes_per_frame) != 0)
 	{
 		DEBUG_WARN("error len mod");
-		if (decoded_data)
-			xfree(decoded_data);
 		return;
 	}
 
