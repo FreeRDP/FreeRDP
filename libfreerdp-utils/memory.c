@@ -1,4 +1,4 @@
-/**
+/*
  * FreeRDP: A Remote Desktop Protocol Client
  * Memory Utils
  *
@@ -25,7 +25,12 @@
 
 /**
  * Allocate memory.
- * @param size
+ * This function is used to secude a malloc call.
+ * It verifies its return value, and logs an error if the allocation failed.
+ *
+ * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
+ *
+ * @return a pointer to the allocated buffer. NULL if the allocation failed.
  */
 
 void* xmalloc(size_t size)
@@ -48,9 +53,13 @@ void* xmalloc(size_t size)
 
 /**
  * Allocate memory initialized to zero.
- * @param size
+ * This function is used to secure a calloc call.
+ * It verifies its return value, and logs an error if the allocation failed.
+ *
+ * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
+ *
+ * @return a pointer to the allocated and zeroed buffer. NULL if the allocation failed.
  */
-
 void* xzalloc(size_t size)
 {
 	void* mem;
@@ -71,8 +80,13 @@ void* xzalloc(size_t size)
 
 /**
  * Reallocate memory.
- * @param ptr
- * @param size
+ * This function is used to secure a realloc call.
+ * It verifies its return value, and logs an error if the allocation failed.
+ *
+ * @param ptr - pointer to the buffer that needs reallocation. This can be NULL, in which case a new buffer is allocated.
+ * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
+ *
+ * @return a pointer to the reallocated buffer. NULL if the allocation failed (in which case the 'ptr' argument is untouched).
  */
 
 void* xrealloc(void* ptr, size_t size)
@@ -92,7 +106,10 @@ void* xrealloc(void* ptr, size_t size)
 
 /**
  * Free memory.
- * @param mem
+ * This function is used to secure a free call.
+ * It verifies that the pointer is valid (non-NULL) before trying to deallocate it's buffer.
+ *
+ * @param ptr - pointer to a buffer that needs deallocation. If ptr is NULL, nothing will be done (no segfault).
  */
 
 void xfree(void* ptr)
@@ -103,8 +120,14 @@ void xfree(void* ptr)
 
 /**
  * Duplicate a string in memory.
- * @param str
- * @return
+ * This function is used to secure the strdup function.
+ * It will allocate a new memory buffer and copy the string content in it.
+ * If allocation fails, it will log an error.
+ *
+ * @param str - pointer to the character string to copy. If str is NULL, nothing is done.
+ *
+ * @return a pointer to a newly allocated character string containing the same bytes as str.
+ * NULL if an allocation error occurred, or if the str parameter was NULL.
  */
 
 char* xstrdup(const char* str)
@@ -127,9 +150,14 @@ char* xstrdup(const char* str)
 }
 
 /**
- * Duplicate a string in memory.
- * @param wstr
- * @return
+ * Duplicate a wide string in memory.
+ * This function is used to secure a call to wcsdup.
+ * It verifies the return value, and logs a message if an allocation error occurred.
+ *
+ * @param wstr - pointer to the wide-character string to duplicate. If wstr is NULL, nothing will be done.
+ *
+ * @return a pointer to the newly allocated string, containing the same data as wstr.
+ * NULL if an allocation error occurred (or if wstr was NULL).
  */
 
 wchar_t* xwcsdup(const wchar_t* wstr)
@@ -153,6 +181,16 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 	return mem;
 }
 
+/**
+ * Create a uppercase version of the given string.
+ * This function will duplicate the string (using xstrdup()) and change its content to all uppercase.
+ * The original string is untouched.
+ *
+ * @param str - pointer to the character string to convert. This content is untouched by the function.
+ *
+ * @return pointer to a newly allocated character string, containing the same content as str, converted to uppercase.
+ * NULL if an allocation error occured.
+ */
 char* xstrtoup(const char* str)
 {
 	char* out;
@@ -167,8 +205,6 @@ char* xstrtoup(const char* str)
 			c = toupper((unsigned char)*p);
 			*p++ = (char)c;
 		}
-		return out;
 	}
-	else
-		return NULL;
+	return out;
 }
