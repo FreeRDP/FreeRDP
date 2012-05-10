@@ -107,11 +107,11 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 	struct data_out_item* item;
 	uint32 cur_time;
 
-	while (rdpsnd->data_out_list->head)
+	while (list_size(rdpsnd->data_out_list) > 0)
 	{
-		item = (struct data_out_item*)rdpsnd->data_out_list->head->data;
+		item = (struct data_out_item*)list_peek(rdpsnd->data_out_list) ;
 		cur_time = get_mstime();
-		if (cur_time <= item->out_timestamp)
+		if (!item || cur_time <= item->out_timestamp)
 			break;
 
 		item = (struct data_out_item*)list_dequeue(rdpsnd->data_out_list);
@@ -135,7 +135,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		}
 	}
 
-	if (rdpsnd->data_out_list->head == NULL && !rdpsnd->is_open)
+	if (list_size(rdpsnd->data_out_list) == 0 && !rdpsnd->is_open)
 	{
 		rdpsnd->plugin.interval_ms = 0;
 	}

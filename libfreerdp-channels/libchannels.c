@@ -906,11 +906,14 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 	rdpChannel* lrdp_channel;
 	struct channel_data* lchannel_data;
 
-	while (channels->sync_data_list->head != NULL)
+	while (list_size(channels->sync_data_list) > 0)
 	{
 		freerdp_mutex_lock(channels->sync_data_mutex);
 		item = (struct sync_data*)list_dequeue(channels->sync_data_list);
 		freerdp_mutex_unlock(channels->sync_data_mutex);
+
+		if (!item)
+			break ;
 
 		lchannel_data = channels->channels_data + item->index;
 		lrdp_channel = freerdp_channels_find_channel_by_name(channels, instance->settings,

@@ -291,11 +291,12 @@ boolean WTSVirtualChannelRead(
 	/* remove the first element (same as what we just peek) */
 	freerdp_mutex_lock(channel->mutex);
 	list_dequeue(channel->receive_queue);
-	if (channel->receive_queue->head == NULL)
+	if (list_size(channel->receive_queue) == 0)
 		wait_obj_clear(channel->receive_event);
 	freerdp_mutex_unlock(channel->mutex);
 
 	memcpy(Buffer, item->buffer, item->length);
+	wts_data_item_free(item) ;
 
 	return true;
 }
