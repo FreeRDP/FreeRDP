@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 FreeRDP.org All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 #define boolean int
 
