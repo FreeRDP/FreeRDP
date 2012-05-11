@@ -1628,7 +1628,7 @@ void rdp_write_frame_acknowledge_capability_set(STREAM* s, rdpSettings* settings
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint32(s, 2); /* (4 bytes) */
+	stream_write_uint32(s, settings->frame_acknowledge); /* (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }
@@ -2068,7 +2068,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 
 	if (settings->received_caps[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
-		if (settings->frame_acknowledge)
+		if (settings->frame_acknowledge > 0)
 		{
 			numberCapabilities++;
 			rdp_write_frame_acknowledge_capability_set(s, settings);
