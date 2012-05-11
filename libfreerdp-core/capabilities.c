@@ -1613,7 +1613,14 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 
 void rdp_read_frame_acknowledge_capability_set(STREAM* s, uint16 length, rdpSettings* settings)
 {
-	stream_seek_uint32(s); /* (4 bytes) */
+	if (settings->server_mode)
+	{
+		stream_read_uint32(s, settings->frame_acknowledge); /* (4 bytes) */
+	}
+	else
+	{
+		stream_seek_uint32(s); /* (4 bytes) */
+	}
 }
 
 /**
@@ -1873,7 +1880,7 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	stream_seek_uint16(s); /* numberCapabilities (2 bytes) */
 	stream_write_uint16(s, 0); /* pad2Octets (2 bytes) */
 
-	numberCapabilities = 13;
+	numberCapabilities = 14;
 	rdp_write_general_capability_set(s, settings);
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
@@ -1887,6 +1894,7 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	rdp_write_desktop_composition_capability_set(s, settings);
 	rdp_write_surface_commands_capability_set(s, settings);
 	rdp_write_bitmap_codecs_capability_set(s, settings);
+	rdp_write_frame_acknowledge_capability_set(s, settings);
 
 	if (settings->persistent_bitmap_cache)
 	{
