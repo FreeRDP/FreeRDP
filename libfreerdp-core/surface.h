@@ -33,12 +33,6 @@ enum SURFCMD_CMDTYPE
 	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
 };
 
-enum SURFCMD_FRAMEACTION
-{
-	SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-	SURFACECMD_FRAMEACTION_END = 0x0001
-};
-
 boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s);
 
 void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd);
