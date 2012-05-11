@@ -391,7 +391,7 @@ struct rdp_settings
 	ALIGN64 uint32 rfx_codec_id; /* 282 */
 	ALIGN64 uint32 ns_codec_id; /* 283 */
 	ALIGN64 uint32 rfx_codec_mode; /* 284 */
-	ALIGN64 boolean frame_acknowledge; /* 285 */
+	ALIGN64 uint32 frame_acknowledge; /* 285 */
 	ALIGN64 uint64 paddingM[296 - 286]; /* 286 */
 
 	/* Recording */

@@ -123,6 +123,12 @@ struct _SURFACE_FRAME_MARKER
 };
 typedef struct _SURFACE_FRAME_MARKER SURFACE_FRAME_MARKER;
 
+enum SURFCMD_FRAMEACTION
+{
+	SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+	SURFACECMD_FRAMEACTION_END = 0x0001
+};
+
 /* Update Interface */
 
 typedef void (*pBeginPaint)(rdpContext* context);
