@@ -87,7 +87,7 @@ void stream_free(STREAM* stream)
  * stream position.
  * If the stream did not have a buffer attached, a new one will be allocated and attached.
  *
- * @param strem [in/out]	pointer to the STREAM structure that needs to be extended.
+ * @param stream [in/out]	pointer to the STREAM structure that needs to be extended.
  * @param request_size [in]	Number of bytes to add to the existing stream.
  * 							If the value is < the existing size, then the existing size is doubled.
  */
