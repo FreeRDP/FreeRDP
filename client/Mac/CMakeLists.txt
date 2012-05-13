@@ -18,7 +18,7 @@ include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
-# Default to release build type
+# Default to debug build type
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
@@ -41,7 +41,7 @@ endif()
 
 # Libraries that we have a hard dependency on
 if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
-find_required_package(OpenSSL)
+    find_required_package(OpenSSL)
 endif()
 
 # Mac OS X
@@ -51,10 +51,11 @@ if(APPLE)
 	set(FRAMEWORK_HEADERS_PATH /System/Library/Frameworks/Cocoa.framework/Versions/A/Headers/)
 	include_directories (${FREERDP_INCLUDE_PATH} ${FRAMEWORK_HEADERS_PATH} /System/Library/Frameworks) 
 	
-	# set(CMAKE_OSX_SYSROOT MacOSX10.7.sdk) uncomment to specify SDK version
+	# set(CMAKE_OSX_SYSROOT MacOSX10.7.sdk) # uncomment to specify SDK version
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
 	set(GUI_TYPE MACOSX_BUNDLE)
 	
+	# Import libraries
 	find_library(FOUNDATION_LIBRARY Foundation)
 	message("+ Using foundation library ${FOUNDATION_LIBRARY}")
 	find_library(COCOA_LIBRARY Cocoa)
@@ -74,10 +75,9 @@ if(APPLE)
 	set(MACOSX_BUNDLE_BUNDLE_VERSION 1.0.1)
 	set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2012. All Rights Reserved.")
 
-	# These variables are specific to our plist and are NOT standard CMake variables
+	# Specific plist and NOT standard CMake variables
 	set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "MainMenu")
 	set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
-
 	
 	mark_as_advanced(COCOA_LIBRARY
 						FOUNDATION_LIBRARY
@@ -86,21 +86,19 @@ if(APPLE)
 	set(APP_TYPE MACOSX_BUNDLE)
 endif()
 
-# Configure files
-# set(XCODE_ATTRIBUTE_REFCOUNT "Object-C Automatic Reference Counting")
-
-# these are the OS X Interface Builder Files
+# OS X Interface Builder files
 set (MacFreeRDP_XIBS
   	MainMenu.xib
 	Credits.rtf
 )
 
-# the headers
+# Headers
 set (MacFreeRDP_Headers
 	MRDPCursor.h
 	MRDPView.h 
 	AppDelegate.h)
 
+# Source
 set (MacFreeRDP_Source
 	MRDPCursor.m 
 	MRDPView.m
@@ -115,19 +113,33 @@ add_executable(MacFreeRDP
 
 # This is necessary for the xib file part below
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
+
 # This allows for automatic xib to nib ibitool
 set_target_properties(MacFreeRDP PROPERTIES RESOURCE "${MacFreeRDP_XIBS}")
+
+# Automatic ref counting
 set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
-set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_GCC_VERSION com.apple.compilers.llvmgcc42)
 
+# Support for automatic reference counting requires non-fragile abi.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
 
+# XCode project architecture to native architecture of build machine
+# -----------------------------------------------------------------------------------------------------
+# Issue: Had some issues with FreeRDP project building only 64 bit and
+# MacFreeRDP attempting to link to both 32 and 64 for dual target.
+# In the future the FreeRDP Xcode project should be pulled in for a couple of reasons:
+# 1) better step-into debugging 2) automatic dependency compilation and multi-arch compilation + linkage
+# If you know the solutions for 1 and 2, please add below.
+set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH_ACTUAL)")
+
+# Set the info plist to the custom instance
 set_target_properties(MacFreeRDP PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
 if(NOT WIN32)
 	find_optional_package(MacAudio)
 endif()
 
-
+# Add all libraries
 target_link_libraries(MacFreeRDP ${EXTRA_LIBS})
 target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-core/Debug/libfreerdp-core.dylib)
 target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-channels/Debug/libfreerdp-channels.dylib)
