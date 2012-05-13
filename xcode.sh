@@ -65,7 +65,7 @@ else
 	esac
 	done
 
-	echo -n "NOTE: Dragging FreeRDP project from finder 
-onto the MacFreeRDP project in Xcode will enable code stepping from MacFreeRDP into FreeRDP.
+	echo -n "NOTE: Dragging FreeRDP project from finder onto the MacFreeRDP project in Xcode
+      will enable code stepping from MacFreeRDP into FreeRDP.
 "
 fi
