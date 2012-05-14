@@ -64,7 +64,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 
 	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 
-	if (update->context->rdp->settings->frame_acknowledge > 0 && marker->frameAction == SURFACECMD_FRAMEACTION_END)
+	if (update->context->rdp->settings->received_caps[CAPSET_TYPE_FRAME_ACKNOWLEDGE] && update->context->rdp->settings->frame_acknowledge > 0 && marker->frameAction == SURFACECMD_FRAMEACTION_END)
 	{
 		update_send_frame_acknowledge(update->context->rdp, marker->frameId);
 	}
