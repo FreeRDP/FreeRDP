@@ -67,7 +67,7 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	wfBitmap* image;
 
 	hdc = GetDC(NULL);
-	image = (wfBitmap*) malloc(sizeof(wfBitmap));
+	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
 	if (data == NULL)
@@ -87,7 +87,7 @@ wfBitmap* wf_bitmap_new(wfInfo* wfi, int width, int height, int bpp, uint8* data
 	wfBitmap* bitmap;
 
 	hdc = GetDC(NULL);
-	bitmap = (wfBitmap*) malloc(sizeof(wfBitmap));
+	bitmap = (wfBitmap*) xmalloc(sizeof(wfBitmap));
 	bitmap->hdc = CreateCompatibleDC(hdc);
 	bitmap->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(bitmap->pdata));
 	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
