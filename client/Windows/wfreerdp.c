@@ -296,12 +296,12 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->hdc->alpha = wfi->clrconv->alpha;
 		wfi->hdc->invert = wfi->clrconv->invert;
 
-		wfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+		wfi->hdc->hwnd = (HGDI_WND) xmalloc(sizeof(GDI_WND));
 		wfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 		wfi->hdc->hwnd->invalid->null = 1;
 
 		wfi->hdc->hwnd->count = 32;
-		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
+		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) xmalloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
 		wfi->hdc->hwnd->ninvalid = 0;
 
 		wfi->image = wf_bitmap_new(wfi, 64, 64, 32, NULL);
