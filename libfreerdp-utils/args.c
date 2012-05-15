@@ -266,8 +266,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing client hostname\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			strncpy(settings->client_hostname, argv[index], sizeof(settings->client_hostname) - 1);
-			settings->client_hostname[sizeof(settings->client_hostname) - 1] = 0;
+			strncpy(settings->client_hostname, argv[index], 31);
+			settings->client_hostname[31] = 0;
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
