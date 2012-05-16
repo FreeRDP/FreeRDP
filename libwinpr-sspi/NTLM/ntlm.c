@@ -296,9 +296,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	{
 		context->state = NTLM_STATE_NEGOTIATE;
 
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
-
 		if (!pInput)
 			return SEC_E_INVALID_TOKEN;
 
@@ -338,9 +335,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	}
 	else if (context->state == NTLM_STATE_AUTHENTICATE)
 	{
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
-
 		if (!pInput)
 			return SEC_E_INVALID_TOKEN;
 
@@ -436,12 +430,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	}
 	else
 	{
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
-
-		if (!pInput)
-			return SEC_E_INVALID_TOKEN;
-
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 

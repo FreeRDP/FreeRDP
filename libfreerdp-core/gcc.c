@@ -1131,7 +1131,7 @@ boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, uint16 bl
 
 	stream_read_uint32(s, flags); /* flags */
 
-	if ((flags | REDIRECTED_SESSIONID_FIELD_VALID))
+	if ((flags & REDIRECTED_SESSIONID_FIELD_VALID))
 		stream_read_uint32(s, settings->redirected_session_id); /* redirectedSessionID */
 
 	return true;

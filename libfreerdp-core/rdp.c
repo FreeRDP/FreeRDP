@@ -224,7 +224,8 @@ boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_
 	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
-	mcs_read_domain_mcspdu_header(s, &MCSPDU, length);
+	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, length))
+		return false ;
 
 	if (*length - 8 > stream_get_left(s))
 		return false;

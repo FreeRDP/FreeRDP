@@ -128,7 +128,8 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 	presentation = tsmf_presentation_new(stream_get_tail(ifman->input), ifman->channel_callback);
 	if (presentation == NULL)
 		error = 1;
-	tsmf_presentation_set_audio_device(presentation, ifman->audio_name, ifman->audio_device);
+	else
+		tsmf_presentation_set_audio_device(presentation, ifman->audio_name, ifman->audio_device);
 	ifman->output_pending = true;
 	return error;
 }
@@ -389,9 +390,12 @@ int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
 	stream_seek(ifman->input, 16);
 	stream_read_uint32(ifman->input, StreamId);
-	stream = tsmf_stream_find_by_id(presentation, StreamId);
-	tsmf_stream_end(stream);
-
+	if (presentation)
+	{
+		stream = tsmf_stream_find_by_id(presentation, StreamId);
+		if (stream)
+			tsmf_stream_end(stream);
+	}
 	DEBUG_DVC("StreamId %d", StreamId);
 
 	stream_check_size(ifman->output, 16);
