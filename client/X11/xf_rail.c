@@ -41,8 +41,8 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {
-	rdpWindow* window;
 	xfWindow* xfw;
+	rdpWindow* window;
 	boolean intersect;
 	uint32 iwidth, iheight;
 	sint32 ileft, itop;
@@ -81,7 +81,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 
 		if (intersect)
 		{
-			xf_UpdateWindowArea(xfi, (xfWindow *) window->extra, ileft - wleft, itop - wtop, iwidth, iheight);
+			xf_UpdateWindowArea(xfi, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
 }
