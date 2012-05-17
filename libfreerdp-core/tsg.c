@@ -1730,11 +1730,17 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	length = 0x8FFF;
 	data = xmalloc(length);
+	if (data == NULL)
+	{
+		printf("rpc_recv - memory allocation error\n") ;
+		return false ;
+	}
 	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1765,6 +1771,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=2 failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1773,6 +1780,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1831,6 +1839,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=4 failed!\n");
+		xfree(data) ;
 		return false;
 	}
 	xfree(dest_addr_unic);
@@ -1840,6 +1849,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status < 0)
 	{
 		printf("rpc_recv failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1867,9 +1877,11 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=8 failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
+	xfree(data) ;
 	return true;
 }
 #else
