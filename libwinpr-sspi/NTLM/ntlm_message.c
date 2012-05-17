@@ -168,11 +168,17 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
 	{
 		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
 	}
 
 	if (MessageType != MESSAGE_TYPE_NEGOTIATE)
+	{
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
+	}
 
 	stream_read_uint32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -339,11 +345,17 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
 	{
 		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
 	}
 
 	if (MessageType != MESSAGE_TYPE_CHALLENGE)
+	{
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
+	}
 
 	StartOffset = s->p - 12;
 
@@ -676,11 +688,17 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
 	{
 		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
 	}
 
 	if (MessageType != MESSAGE_TYPE_AUTHENTICATE)
+	{
+		stream_detach(s) ;
+		stream_free(s) ;
 		return SEC_E_INVALID_TOKEN;
+	}
 
 	/* LmChallengeResponseFields (8 bytes) */
 	stream_read_uint16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */

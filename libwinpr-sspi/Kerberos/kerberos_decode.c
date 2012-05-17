@@ -782,10 +782,13 @@ ENCKDCREPPart* krb_decode_enc_reppart(rdpBlob* msg, uint8 apptag)
 		goto err;
 	
 	stream_detach(s);
+	stream_free(s) ;
 	return reppart;
 	err:
 		krb_free_reppart(reppart);
 		xfree(reppart);
+		stream_detach(s) ;
+		stream_free(s) ;
 		return NULL;
 }
 

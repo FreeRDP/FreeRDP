@@ -475,6 +475,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, pdu->size);
 
+	stream_free(pdu) ;
 	xfree(bind_pdu);
 
 	return true;
@@ -571,6 +572,7 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, stream_get_length(pdu));
 
+	stream_free(pdu) ;
 	xfree(rpc_auth_3_pdu);
 
 	return true;
@@ -715,9 +717,14 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	stream_write(pdu, &request_pdu->auth_verifier.auth_type, 8);
 
+	xfree(request_pdu->auth_verifier.auth_value);
+	xfree(request_pdu->auth_verifier.auth_pad);
+	xfree(request_pdu);
+
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
 		printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		stream_free(pdu) ;
 		return 0;
 	}
 
@@ -739,6 +746,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	if (encrypt_status != SEC_E_OK)
 	{
 		printf("EncryptMessage status: 0x%08X\n", encrypt_status);
+		stream_free(pdu) ;
 		return 0;
 	}
 
@@ -746,9 +754,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	status = rpc_in_write(rpc, pdu->data, pdu->p - pdu->data);
 
-	xfree(request_pdu->auth_verifier.auth_value);
-	xfree(request_pdu->auth_verifier.auth_pad);
-	xfree(request_pdu);
+	stream_free(pdu) ;
 
 	if (status < 0)
 	{

@@ -916,7 +916,10 @@ int credssp_recv(rdpCredssp* credssp)
 	status = tls_read(credssp->tls, s->data, stream_get_left(s));
 
 	if (status < 0)
+	{
+		stream_free(s) ;
 		return -1;
+	}
 
 	/* TSRequest */
 	ber_read_sequence_tag(s, &length);

@@ -491,6 +491,7 @@ rdpKey* key_new(const char* keyfile)
 	if (fp == NULL)
 	{
 		printf("unable to load RSA key from %s: %s.", keyfile, strerror(errno));
+		xfree(key) ;
 		return NULL;
 	}
 
@@ -500,6 +501,7 @@ rdpKey* key_new(const char* keyfile)
 	{
 		ERR_print_errors_fp(stdout);
 		fclose(fp);
+		xfree(key) ;
 		return NULL;
 	}
 
@@ -510,6 +512,7 @@ rdpKey* key_new(const char* keyfile)
 		case 0:
 			RSA_free(rsa);
 			printf("invalid RSA key in %s", keyfile);
+			xfree(key) ;
 			return NULL;
 
 		case 1:
@@ -519,6 +522,7 @@ rdpKey* key_new(const char* keyfile)
 		default:
 			ERR_print_errors_fp(stdout);
 			RSA_free(rsa);
+			xfree(key) ;
 			return NULL;
 	}
 
@@ -526,6 +530,7 @@ rdpKey* key_new(const char* keyfile)
 	{
 		RSA_free(rsa);
 		printf("RSA public exponent too large in %s", keyfile);
+		xfree(key) ;
 		return NULL;
 	}
 

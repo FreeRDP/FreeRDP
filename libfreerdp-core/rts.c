@@ -78,6 +78,7 @@ boolean rts_connect(rdpRpc* rpc)
 	{
 		printf("rts_connect error!\n");
 		http_response_print(http_response);
+		http_response_free(http_response) ;
 		return false;
 	}
 
@@ -563,9 +564,6 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	STREAM* s;
 	uint32 CommandType;
 
-	s = stream_new(0);
-	stream_attach(s, rts_pdu->content, rts_pdu->header.frag_length);
-
 	DEBUG_RTS("numberOfCommands:%d", rts_pdu->header.numberOfCommands);
 
 	if (rts_pdu->header.flags & RTS_FLAG_PING)
@@ -573,6 +571,9 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 		rts_send_keep_alive_pdu(rpc);
 		return 0;
 	}
+
+	s = stream_new(0);
+	stream_attach(s, rts_pdu->content, rts_pdu->header.frag_length);
 
 	for (i = 0; i < rts_pdu->header.numberOfCommands; i++)
 	{
@@ -644,6 +645,8 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 
 			default:
 				printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+				stream_detach(s) ;
+				stream_free(s) ;
 				return -1;
 				break;
 		}
