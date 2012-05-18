@@ -780,10 +780,10 @@ uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height,
 {
 	int scanline;
 
-	scanline = width * (bpp / 8);
+	scanline = width * ((bpp + 7) / 8);
 
 	if (dstData == NULL)
-		dstData = (uint8*) xmalloc(width * height * (bpp / 8));
+		dstData = (uint8*) xmalloc(width * height * ((bpp + 7) / 8));
 
 	freerdp_bitmap_flip(srcData, dstData, scanline, height);
 	return dstData;
@@ -791,38 +791,52 @@ uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height,
 
 uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
 {
-	int x, y;
-	int pixel;
+	int x, y, bit;
+	int maskIndex;
 	uint8* data;
 	uint8 bmask;
 	uint32 pmask;
 	uint32* icon;
-
-	pixel = 0;
+	
+	if (bpp == 16)
+	{
+		/* Server sends 16 bpp field, but data is usually 15-bit 555 */
+		bpp = 15;
+	}
+	
 	data = freerdp_image_flip(srcData, dstData, width, height, bpp);
 	dstData = freerdp_image_convert(data, NULL, width, height, bpp, 32, clrconv);
-
 	free(data);
-	bmask = mask[pixel];
-	icon = (uint32*) dstData;
 
+	/* Read the AND alpha plane */ 
 	if (bpp < 32)
 	{
+		maskIndex = 0;
+		icon = (uint32*) dstData;
+		
 		for (y = 0; y < height; y++)
 		{
-			for (x = 0; x < width; x++)
+			for (x = 0; x < width-7; x+=8)
 			{
-				if (pixel % 8 == 0)
-					bmask = mask[pixel / 8];
-				else
-					bmask <<= 1;
-
-				pmask = (bmask & 0x80) ? 0x00000000 : 0xFF000000;
-
-				*icon++ |= pmask;
-
-				pixel++;
+				bmask = mask[maskIndex++];
+				
+				for (bit = 0; bit < 8; bit++)
+					if ((bmask & (0x80 >> bit)) == 0)
+						*(icon + (height - y) * width + x + bit) |= 0xFF000000;
 			}
+			
+			if ((width % 8) != 0)
+			{
+				bmask = mask[maskIndex++];
+				
+				for (bit = 0; bit < width % 8; bit++)
+					if ((bmask & (0x80 >> bit)) == 0)
+						*(icon + (height - y) * width + x + bit) |= 0xFF000000;
+			}
+		
+			/* Skip padding */
+			if ((width % 32) != 0)
+				maskIndex += (32 - (width % 32)) / 8;
 		}
 	}
 
