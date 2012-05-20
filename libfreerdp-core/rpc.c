@@ -128,7 +128,7 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
 			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
-			return 0;
+			return false ;
 		}
 
 		if (status == SEC_I_COMPLETE_NEEDED)
@@ -477,6 +477,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, pdu->size);
 
+	stream_free(pdu) ;
 	xfree(bind_pdu);
 
 	return true;
@@ -493,6 +494,8 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	int pdu_length = 0x8FFF;
 
 	pdu = xmalloc(pdu_length);
+	if (pdu == NULL)
+		return -1 ;
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
 	if (status > 0)
@@ -504,6 +507,11 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		stream_free(s);
 
 		auth_data = xmalloc(header.auth_length);
+		if (auth_data == NULL)
+		{
+			xfree(pdu) ;
+			return -1 ;
+		}
 		p = (pdu + (header.frag_length - header.auth_length));
 		memcpy(auth_data, p, header.auth_length);
 
@@ -566,6 +574,7 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, stream_get_length(pdu));
 
+	stream_free(pdu) ;
 	xfree(rpc_auth_3_pdu);
 
 	return true;
@@ -583,6 +592,11 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 		rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	pdu = xmalloc(0xFFFF);
+	if (pdu == NULL)
+	{
+		printf("rpc_out_read error: memory allocation failed") ;
+		return -1 ;
+	}
 
 	status = tls_read(rpc->tls_out, pdu, 16); /* read first 16 bytes to get RPC PDU Header */
 
@@ -612,6 +626,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	if (header.ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		printf("rpc_out_read error: Unexpected RTS PDU\n");
+		xfree(pdu);
 		return -1;
 	}
 	else
@@ -624,6 +639,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	if (length < header.frag_length)
 	{
 		printf("rpc_out_read error! receive buffer is not large enough\n");
+		xfree(pdu);
 		return -1;
 	}
 
@@ -636,7 +652,6 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 #endif
 
 	xfree(pdu);
-
 	return header.frag_length;
 }
 
@@ -704,9 +719,14 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	stream_write(pdu, &request_pdu->auth_verifier.auth_type, 8);
 
+	xfree(request_pdu->auth_verifier.auth_value);
+	xfree(request_pdu->auth_verifier.auth_pad);
+	xfree(request_pdu);
+
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
 		printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		stream_free(pdu) ;
 		return 0;
 	}
 
@@ -728,6 +748,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	if (encrypt_status != SEC_E_OK)
 	{
 		printf("EncryptMessage status: 0x%08X\n", encrypt_status);
+		stream_free(pdu) ;
 		return 0;
 	}
 
@@ -735,9 +756,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	status = rpc_in_write(rpc, pdu->data, pdu->p - pdu->data);
 
-	xfree(request_pdu->auth_verifier.auth_value);
-	xfree(request_pdu->auth_verifier.auth_pad);
-	xfree(request_pdu);
+	stream_free(pdu) ;
 
 	if (status < 0)
 	{
@@ -760,11 +779,18 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	int rpc_length = length + 0xFF;
 	uint8* rpc_data = xmalloc(rpc_length);
 
+	if (rpc_data == NULL)
+	{
+		printf("rpc_read error: memory allocation failed\n") ;
+		return -1 ;
+	}
+
 	if (rpc->read_buffer_len > 0)
 	{
 		if (rpc->read_buffer_len > (uint32) length)
 		{
 			printf("rpc_read error: receiving buffer is not large enough\n");
+			xfree(rpc_data) ;
 			return -1;
 		}
 
@@ -826,7 +852,6 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	}
 
 	xfree(rpc_data);
-
 	return read;
 }
 
@@ -847,7 +872,7 @@ boolean rpc_connect(rdpRpc* rpc)
 		return false;
 	}
 
-	if (!rpc_recv_bind_ack_pdu(rpc))
+	if (rpc_recv_bind_ack_pdu(rpc) <= 0)
 	{
 		printf("rpc_recv_bind_ack_pdu error!\n");
 		return false;

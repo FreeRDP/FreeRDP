@@ -60,6 +60,7 @@ struct test_peer_context
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
 	freerdp_thread* debug_channel_thread;
+	uint32 frame_id;
 };
 typedef struct test_peer_context testPeerContext;
 
@@ -120,6 +121,30 @@ static STREAM* test_peer_stream_init(testPeerContext* context)
 	return context->s;
 }
 
+static void test_peer_begin_frame(freerdp_peer* client)
+{
+	rdpUpdate* update = client->update;
+	SURFACE_FRAME_MARKER* fm = &update->surface_frame_marker;
+	testPeerContext* context = (testPeerContext*) client->context;
+
+	fm->frameAction = SURFACECMD_FRAMEACTION_BEGIN;
+	fm->frameId = context->frame_id;
+	update->SurfaceFrameMarker(update->context, fm);
+}
+
+static void test_peer_end_frame(freerdp_peer* client)
+{
+	rdpUpdate* update = client->update;
+	SURFACE_FRAME_MARKER* fm = &update->surface_frame_marker;
+	testPeerContext* context = (testPeerContext*) client->context;
+
+	fm->frameAction = SURFACECMD_FRAMEACTION_END;
+	fm->frameId = context->frame_id;
+	update->SurfaceFrameMarker(update->context, fm);
+
+	context->frame_id++;
+}
+
 static void test_peer_draw_background(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*) client->context;
@@ -132,6 +157,8 @@ static void test_peer_draw_background(freerdp_peer* client)
 
 	if (!client->settings->rfx_codec && !client->settings->ns_codec)
 		return;
+
+	test_peer_begin_frame(client);
 
 	s = test_peer_stream_init(context);
 
@@ -169,6 +196,8 @@ static void test_peer_draw_background(freerdp_peer* client)
 	update->SurfaceBits(update->context, cmd);
 
 	xfree(rgb_data);
+
+	test_peer_end_frame(client);
 }
 
 static void test_peer_load_icon(freerdp_peer* client)
@@ -228,6 +257,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		return;
 	if (context->icon_width < 1 || !context->activated)
 		return;
+
+	test_peer_begin_frame(client);
 
 	rect.x = 0;
 	rect.y = 0;
@@ -289,6 +320,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	context->icon_x = x;
 	context->icon_y = y;
+
+	test_peer_end_frame(client);
 }
 
 static boolean test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)

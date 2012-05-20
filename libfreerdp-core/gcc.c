@@ -488,7 +488,8 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 32);
 	stream_seek(s, 32);
-	snprintf(settings->client_hostname, sizeof(settings->client_hostname), "%s", str);
+	snprintf(settings->client_hostname, 31, "%s", str);
+	settings->client_hostname[31] = 0;
 	xfree(str);
 
 	stream_read_uint32(s, settings->kbd_type); /* keyboardType */
@@ -1130,7 +1131,7 @@ boolean gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, uint16 bl
 
 	stream_read_uint32(s, flags); /* flags */
 
-	if ((flags | REDIRECTED_SESSIONID_FIELD_VALID))
+	if ((flags & REDIRECTED_SESSIONID_FIELD_VALID))
 		stream_read_uint32(s, settings->redirected_session_id); /* redirectedSessionID */
 
 	return true;
@@ -1208,4 +1209,3 @@ void gcc_write_client_monitor_data(STREAM* s, rdpSettings* settings)
 		}
 	}
 }
-

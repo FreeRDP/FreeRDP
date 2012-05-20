@@ -25,6 +25,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
+#include <freerdp/errorcodes.h>
 
 #include <time.h>
 #include <errno.h>
@@ -88,6 +89,9 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != true) {
+		if(!connectErrorCode){                    
+			connectErrorCode = TLSCONNECTERROR;                      
+		}
 		tls_free(transport->tls);
 		transport->tls = NULL;
 		return false;
@@ -108,6 +112,9 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->tls->sockfd = transport->tcp->sockfd;
 
 	if (tls_connect(transport->tls) != true) {
+		if(!connectErrorCode){                    
+			connectErrorCode = TLSCONNECTERROR;                      
+		}
 		tls_free(transport->tls);
 		transport->tls = NULL;
 		return false;
@@ -126,6 +133,9 @@ boolean transport_connect_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
+		if(!connectErrorCode){                    
+			connectErrorCode = AUTHENTICATIONERROR;                      
+		}
 		printf("Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 

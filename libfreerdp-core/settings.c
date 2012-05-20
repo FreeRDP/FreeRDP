@@ -171,8 +171,11 @@ rdpSettings* settings_new(void* instance)
 		settings->fastpath_input = true;
 		settings->fastpath_output = true;
 
+		settings->frame_acknowledge = 2;
+
 		settings->uniconv = freerdp_uniconv_new();
-		gethostname(settings->client_hostname, sizeof(settings->client_hostname) - 1);
+		gethostname(settings->client_hostname, 31);
+		settings->client_hostname[31] = 0;
 		settings->mouse_motion = true;
 
 		settings->client_auto_reconnect_cookie = xnew(ARC_CS_PRIVATE_PACKET);

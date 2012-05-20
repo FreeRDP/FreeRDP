@@ -1613,9 +1613,9 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	int status;
 	int length;
 	rdpTsg* tsg;
-	byte* buffer1;
-	byte* buffer2;
-	byte* buffer3;
+	byte* buffer1 = NULL ;
+	byte* buffer2 = NULL ;
+	byte* buffer3 = NULL ;
 	uint32 buffer1Length;
 	uint32 buffer2Length;
 	uint32 buffer3Length;
@@ -1730,11 +1730,17 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	length = 0x8FFF;
 	data = xmalloc(length);
+	if (data == NULL)
+	{
+		printf("rpc_recv - memory allocation error\n") ;
+		return false ;
+	}
 	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1765,6 +1771,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=2 failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1773,6 +1780,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
+		xfree(data) ;
 		return false;
 	}
 
@@ -1795,6 +1803,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=3 failed!\n");
+		xfree(data) ;
 		return false;
 	}
 	status = -1;
@@ -1814,6 +1823,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
 	stream_write_uint16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
 
+	xfree(dest_addr_unic);
+
 	/**
 	 * OpNum = 4
 	 *
@@ -1831,15 +1842,18 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=4 failed!\n");
+		stream_free(s_p4) ;
+		xfree(data) ;
 		return false;
 	}
-	xfree(dest_addr_unic);
 
 	status = rpc_read(rpc, data, length);
 
 	if (status < 0)
 	{
 		printf("rpc_recv failed!\n");
+		stream_free(s_p4) ;
+		xfree(data) ;
 		return false;
 	}
 
@@ -1867,9 +1881,13 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=8 failed!\n");
+		stream_free(s_p4) ;
+		xfree(data) ;
 		return false;
 	}
 
+	stream_free(s_p4) ;
+	xfree(data) ;
 	return true;
 }
 #else

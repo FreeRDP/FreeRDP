@@ -1503,7 +1503,10 @@ char* freerdp_get_unix_timezone_identifier()
 		fseek(fp, 0, SEEK_SET);
 
 		if (length < 2)
+		{
+			fclose(fp) ;
 			return NULL;
+		}
 
 		tzid = (char*) xmalloc(length + 1);
 		fread(tzid, length, 1, fp);
@@ -1511,6 +1514,8 @@ char* freerdp_get_unix_timezone_identifier()
 
 		if (tzid[length - 1] == '\n')
 			tzid[length - 1] = '\0';
+
+		fclose(fp) ;
 	}
 
 	return tzid;
@@ -1605,9 +1610,9 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 
 #ifdef HAVE_TM_GMTOFF
 	if (local_time->tm_gmtoff >= 0)
-		clientTimeZone->bias = (uint32) (local_time->tm_gmtoff / 60);
+		clientTimeZone->bias = (uint32) (-1 * local_time->tm_gmtoff / 60);
 	else
-		clientTimeZone->bias = (uint32) ((-1 * local_time->tm_gmtoff) / 60 + 720);
+		clientTimeZone->bias = (uint32) ((-1 * local_time->tm_gmtoff) / 60);
 #elif sun
 	if (local_time->tm_isdst > 0)
 		clientTimeZone->bias = (uint32) (altzone / 3600);

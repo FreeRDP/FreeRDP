@@ -89,6 +89,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
+				"  --frame-ack: number of frames pending to be acknowledged, default is 2 (disable with 0)\n"
 				"  --nsc: enable NSCodec (experimental)\n"
 				"  --disable-wallpaper: disables wallpaper\n"
 				"  --composition: enable desktop composition\n"
@@ -265,8 +266,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing client hostname\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			strncpy(settings->client_hostname, argv[index], sizeof(settings->client_hostname) - 1);
-			settings->client_hostname[sizeof(settings->client_hostname) - 1] = 0;
+			strncpy(settings->client_hostname, argv[index], 31);
+			settings->client_hostname[31] = 0;
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
@@ -352,7 +353,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->rfx_codec = true;
 			settings->fastpath_output = true;
 			settings->color_depth = 32;
-			settings->frame_acknowledge = false;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = true;
 		}
@@ -377,6 +377,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("unknown RemoteFX mode flag\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
+		}
+		else if (strcmp("--frame-ack", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing frame acknowledge number\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+			settings->frame_acknowledge = atoi(argv[index]);
 		}
 		else if (strcmp("--nsc", argv[index]) == 0)
 		{

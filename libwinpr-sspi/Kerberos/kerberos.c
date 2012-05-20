@@ -720,6 +720,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 		if(krb_decode_kdc_rep(s, &(krb_asrep->kdc_rep), totlen) == 0)
 		{
 			krb_ctx->state = KRB_PACKET_ERROR;
+			xfree(krb_asrep);
 			goto finish;
 		}
 		kdc_rep = &(krb_asrep->kdc_rep);
@@ -784,6 +785,8 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	/* PA-TGS-REQ */
 	krb_apreq = krb_apreq_new(krb_ctx, &(krb_ctx->asticket), krb_auth);
 	curlen = krb_encode_apreq(sapreq, krb_apreq);
+	xfree(krb_apreq) ;
+
 	msg.data = sapreq->p;
 	msg.length = curlen;
 	(*pa_data)->type = 1;
@@ -852,6 +855,7 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 		if(krb_decode_kdc_rep(s, &(krb_tgsrep->kdc_rep), totlen) == 0)
 		{
 			krb_ctx->state = KRB_PACKET_ERROR;
+			xfree(krb_tgsrep);
 			goto finish;
 		}
 		kdc_rep = &(krb_tgsrep->kdc_rep);
@@ -887,7 +891,6 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 		return -1;
 	}
 	/* decrypt enc-part */
-	decmsg = xnew(rdpBlob);
 	if(krb_ctx->askey->enctype != kdc_rep->enc_part.enctype && msgtype == KRB_TAG_ASREP)
 	{
 		freerdp_blob_free(&(krb_ctx->askey->skey));

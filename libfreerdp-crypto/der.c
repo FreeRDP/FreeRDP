@@ -52,6 +52,7 @@ boolean der_write_general_string(STREAM* s, char* str)
 
 	stream_copy(s, tmp_s, strlen(str));
 	stream_detach(tmp_s);
+	stream_free(tmp_s) ;
 
 	return true;
 }
@@ -121,6 +122,7 @@ int der_write_generalized_time(STREAM* s, char* tstr)
 
 	stream_copy(s, tmp_s, len);
 	stream_detach(tmp_s);
+	stream_free(tmp_s) ;
 
 	return len + 2;
 }

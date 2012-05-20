@@ -19,6 +19,7 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/print.h>
+#include <freerdp/errorcodes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +56,9 @@
 
 #endif
 
+/* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
+int connectErrorCode ;
+
 int freerdp_tcp_connect(const char* hostname, int port)
 {
 	int status;
@@ -73,6 +77,14 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (status != 0)
 	{
+		if(status==EAI_NONAME){
+		    if(!connectErrorCode){
+			connectErrorCode = DNSNAMENOTFOUND;
+		    }
+		}
+		if(!connectErrorCode){
+			connectErrorCode = DNSERROR;
+		}
 		printf("tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
 		return -1;
 	}
@@ -90,7 +102,14 @@ int freerdp_tcp_connect(const char* hostname, int port)
 			printf("connected to %s:%s\n", hostname, servname);
 			break;
 		}
-
+		if(!connectErrorCode){
+		    int tmperror = errno ;
+		    if(tmperror!=0){
+			    connectErrorCode = tmperror ;
+		    }else{
+			    connectErrorCode = CONNECTERROR;
+		    }
+		}
 		close(sockfd);
 		sockfd = -1;
 	}

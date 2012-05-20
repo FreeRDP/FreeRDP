@@ -23,15 +23,33 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/list.h>
 
+/**
+ * Allocates a new LIST_ITEM element. This will be used to store the data provided by the caller,
+ * and will be used as a new element in a list.
+ *
+ * @param data - pointer to the data that must be stored by the new item.
+ *
+ * @return An allocated LIST_ITEM element that contains the 'data' pointer.
+ */
 static LIST_ITEM* list_item_new(void* data)
 {
 	LIST_ITEM* item;
 
 	item = xnew(LIST_ITEM);
-	item->data = data;
+	if (item)
+		item->data = data;
 	return item;
 }
 
+/**
+ * Searches an element in the list.
+ * The element is verified by its pointer value - there is no way to verify the buffer's content.
+ *
+ * @param list - pointer to a valid LIST structure
+ * @param data - pointer to the data that must be found.
+ *
+ * @return the LIST_ITEM element that contains the 'data' pointer. NULL if 'data' was not found.
+ */
 static LIST_ITEM* list_item_find(LIST* list, void* data)
 {
 	LIST_ITEM* item;
@@ -44,6 +62,18 @@ static LIST_ITEM* list_item_find(LIST* list, void* data)
 	return NULL;
 }
 
+/**
+ * Allocates a new LIST structure.
+ * The list_*() API implements a chainlist and allows to store data of arbitrary type in FIFO mode.
+ * @see list_enqueue() to add elements to the list.
+ * @see list_dequeue() to remove the first element of the list and get a pointer to it.
+ * @see list_peek() to retrieve the first element of the list (and keep it there).
+ * @see list_free() to deallocate the list.
+ * @see list_size() to get the current number of elements in the list.
+ *
+ * @return A pointer to the allocated LIST structure. It must be deallocated by a call to list_free().
+ *
+ */
 LIST* list_new(void)
 {
 	LIST* list;
@@ -53,6 +83,12 @@ LIST* list_new(void)
 	return list;
 }
 
+/**
+ * Deallocates a LIST structure.
+ * All elements of the list will be removed (but not deallocated). Only the list-specific resources are freed.
+ *
+ * @param list - pointer to the LIST that must be deallocated.
+ */
 void list_free(LIST* list)
 {
 	while (list->head)
@@ -60,6 +96,12 @@ void list_free(LIST* list)
 	xfree(list);
 }
 
+/**
+ * Add an element at the end of an existing list.
+ *
+ * @param list - pointer to the LIST that will contain the new element
+ * @param data - pointer to the buffer that will be added to the list
+ */
 void list_enqueue(LIST* list, void* data)
 {
 	LIST_ITEM* item;
@@ -79,6 +121,14 @@ void list_enqueue(LIST* list, void* data)
 	list->count++;
 }
 
+/**
+ * Removes the first element of a list, and returns a pointer to it.
+ * The list-specific resources associated to this element are freed in the process.
+ *
+ * @param list - pointer to a valid LIST structure
+ *
+ * @return a pointer to the data of the first element of this list. NULL if the list is empty.
+ */
 void* list_dequeue(LIST* list)
 {
 	LIST_ITEM* item;
@@ -100,6 +150,14 @@ void* list_dequeue(LIST* list)
 	return data;
 }
 
+/**
+ * Returns a pointer to the data from the first element of the list.
+ * The element itself is not removed from the list by this call.
+ *
+ * @param list - pointerto a valid LIST structure
+ *
+ * @return a pointer to the data of the first element of this list. NULL if the list is empty.
+ */
 void* list_peek(LIST* list)
 {
 	LIST_ITEM* item;
@@ -108,6 +166,18 @@ void* list_peek(LIST* list)
 	return item ? item->data : NULL;
 }
 
+/**
+ * Searches for the data provided in parameter, and returns a pointer to the element next to it.
+ * If the item is not found, or if it is the last in the list, the function will return NULL.
+ *
+ * @param list - pointer to the list that must be searched.
+ * @param data - pointer to the buffer that must be found. The comparison is done on the pointer value - not the buffer's content.
+ *
+ * @return a pointer to the data of the element that resides after the 'data' parameter in the list.
+ * NULL if 'data' was not found in the list, or if it is the last element.
+ *
+ * @see list_item_find() for more information on list item searches.
+ */
 void* list_next(LIST* list, void* data)
 {
 	LIST_ITEM* item;
@@ -122,6 +192,15 @@ void* list_next(LIST* list, void* data)
 	return data;
 }
 
+/**
+ * Searches for the data provided in parameter, and removes it from the list if it is found.
+ *
+ * @param list - pointer to the list that must be searched.
+ * @param data - pointer to the buffer that must be found. The comparison is done on the pointer value - not the buffer's content.
+ *
+ * @return the 'data' pointer, if the element was found, and successfully removed from the list.
+ * NULL if the element was not found.
+ */
 void* list_remove(LIST* list, void* data)
 {
 	LIST_ITEM* item;
@@ -145,6 +224,14 @@ void* list_remove(LIST* list, void* data)
 	return data;
 }
 
+/**
+ * Returns the current size of the list (number of elements).
+ * This number is kept up to date by the list_enqueue and list_dequeue functions.
+ *
+ * @param list - pointer to a valide LIST structure.
+ *
+ * @return the number of elements in that list.
+ */
 int list_size(LIST* list)
 {
 	return list->count;

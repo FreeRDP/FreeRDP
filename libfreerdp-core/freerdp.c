@@ -28,6 +28,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
 
+/* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
+
 /** Creates a new connection based on the settings found in the "instance" parameter
  *  It will use the callbacks registered on the structure to process the pre/post connect operations
  *  that the caller requires.
@@ -43,6 +45,8 @@ boolean freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
 	boolean status = false;
+	/* We always set the return code to 0 before we start the connect sequence*/
+	connectErrorCode = 0 ;
 
 	rdp = instance->context->rdp;
 
@@ -52,6 +56,9 @@ boolean freerdp_connect(freerdp* instance)
 
 	if (status != true)
 	{
+		if(!connectErrorCode){
+			connectErrorCode = PREECONNECTERROR;
+		}
 		printf("freerdp_pre_connect failed\n");
 		return false;
 	}
@@ -74,6 +81,9 @@ boolean freerdp_connect(freerdp* instance)
 		if (status != true)
 		{
 			printf("freerdp_post_connect failed\n");
+			if(!connectErrorCode){
+				connectErrorCode = POSTCONNECTERROR;
+			}
 			return false;
 		}
 
@@ -109,7 +119,9 @@ boolean freerdp_connect(freerdp* instance)
 			return true;
 		}
 	}
-
+	if(!connectErrorCode){
+		connectErrorCode = UNDEFINEDCONNECTERROR;
+	}
 	return status;
 }
 

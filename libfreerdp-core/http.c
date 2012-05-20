@@ -373,6 +373,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 		else
 		{
+			http_response_free(http_response) ;
 			return NULL;
 			break;
 		}

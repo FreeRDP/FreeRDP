@@ -45,7 +45,8 @@ struct rdpsnd_alsa_plugin
 	int wformat;
 	int block_size;
 	int latency;
-	ADPCM adpcm;
+
+	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
 static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
@@ -74,7 +75,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params,
 		&alsa->actual_channels);
 	if (alsa->latency < 0)
-		frames = alsa->actual_rate * 4; /* Default to 4-second buffer */
+		frames = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
 	else
 		frames = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
 	if (frames < alsa->actual_rate / 2)
@@ -169,7 +170,7 @@ static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format, i
 	}
 	else
 	{
-		memset(&alsa->adpcm, 0, sizeof(ADPCM));
+		freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
 		rdpsnd_alsa_set_format(device, format, latency);
 	}
 }
@@ -193,6 +194,7 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 
 	rdpsnd_alsa_close(device);
 	xfree(alsa->device_name);
+	freerdp_dsp_context_free(alsa->dsp_context);
 	xfree(alsa);
 }
 
@@ -229,10 +231,7 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	uint8* decoded_data;
-	int decoded_size;
 	uint8* src;
-	uint8* resampled_data;
 	int len;
 	int error;
 	int frames;
@@ -246,14 +245,13 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 
 	if (alsa->wformat == 0x11)
 	{
-		decoded_data = dsp_decode_ima_adpcm(&alsa->adpcm,
-			data, size, alsa->source_channels, alsa->block_size, &decoded_size);
-		size = decoded_size;
-		src = decoded_data;
+		alsa->dsp_context->decode_ima_adpcm(alsa->dsp_context,
+			data, size, alsa->source_channels, alsa->block_size);
+		size = alsa->dsp_context->adpcm_size;
+		src = alsa->dsp_context->adpcm_buffer;
 	}
 	else
 	{
-		decoded_data = NULL;
 		src = data;
 	}
 
@@ -268,17 +266,17 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	if ((alsa->source_rate == alsa->actual_rate) &&
 		(alsa->source_channels == alsa->actual_channels))
 	{
-		resampled_data = NULL;
 	}
 	else
 	{
-		resampled_data = dsp_resample(src, alsa->bytes_per_channel,
+		alsa->dsp_context->resample(alsa->dsp_context, src, alsa->bytes_per_channel,
 			alsa->source_channels, alsa->source_rate, size / sbytes_per_frame,
-			alsa->actual_channels, alsa->actual_rate, &frames);
+			alsa->actual_channels, alsa->actual_rate);
+		frames = alsa->dsp_context->resampled_frames;
 		DEBUG_SVC("resampled %d frames at %d to %d frames at %d",
 			size / sbytes_per_frame, alsa->source_rate, frames, alsa->actual_rate);
 		size = frames * rbytes_per_frame;
-		src = resampled_data;
+		src = alsa->dsp_context->resampled_buffer;
 	}
 
 	pindex = src;
@@ -303,11 +301,6 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 		}
 		pindex += error * rbytes_per_frame;
 	}
-
-	if (resampled_data)
-		xfree(resampled_data);
-	if (decoded_data)
-		xfree(decoded_data);
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
@@ -352,6 +345,8 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	alsa->source_channels = 2;
 	alsa->actual_channels = 2;
 	alsa->bytes_per_channel = 2;
+
+	alsa->dsp_context = freerdp_dsp_context_new();
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)alsa);
 

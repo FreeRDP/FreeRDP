@@ -24,6 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/32bpp.h>
 #include <freerdp/gdi/16bpp.h>
@@ -130,7 +131,7 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel)
 
 HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* data)
 {
-	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
+	HGDI_BITMAP hBitmap = (HGDI_BITMAP) xmalloc(sizeof(GDI_BITMAP));
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->bitsPerPixel = cBitsPerPixel;
 	hBitmap->bytesPerPixel = (cBitsPerPixel + 1) / 8;
@@ -152,13 +153,13 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* 
 
 HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 {
-	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
+	HGDI_BITMAP hBitmap = (HGDI_BITMAP) xmalloc(sizeof(GDI_BITMAP));
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->bytesPerPixel = hdc->bytesPerPixel;
 	hBitmap->bitsPerPixel = hdc->bitsPerPixel;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = malloc(nWidth * nHeight * hBitmap->bytesPerPixel);
+	hBitmap->data = xmalloc(nWidth * nHeight * hBitmap->bytesPerPixel);
 	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
 	return hBitmap;
 }
