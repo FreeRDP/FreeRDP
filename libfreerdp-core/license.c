@@ -579,11 +579,19 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 {
 	uint32 i;
 
+	/*
+	 * We must NOT call license_free_binary_blob() on each scopelist->array[i] element,
+	 * because scopelist->array was allocated at once, by a single call to xmalloc. The elements
+	 * it contains cannot be deallocated separately then.
+	 * To make things clean, we must deallocate each scopelist->array[].data,
+	 * and finish by deallocating scopelist->array with a single call to xfree().
+	 */
 	for (i = 0; i < scopeList->count; i++)
 	{
-		license_free_binary_blob(&scopeList->array[i]);
+		xfree(scopeList->array[i].data);
 	}
 
+	xfree(scopeList->array) ;
 	xfree(scopeList);
 }
 

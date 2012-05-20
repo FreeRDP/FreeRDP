@@ -107,7 +107,12 @@ rdpBlob* crypto_kdcmsg_decrypt_rc4(rdpBlob* msg, uint8* key, uint32 msgtype)
 	crypto_rc4_free(rc4);
 	HMAC(EVP_md5(), (void*) K1, 16, (uint8*)edata->Confounder, len - 16, (void*)&(edata->Checksum), NULL);
 	if(memcmp(msg->data, &edata->Checksum, 16))
+	{
+		xfree(edata) ;
+		xfree(K1) ;
+		xfree(K3) ;
 		return NULL;
+	}
 	decmsg = xnew(rdpBlob);
 	freerdp_blob_alloc(decmsg, len);
 	memcpy(decmsg->data, edata, len);

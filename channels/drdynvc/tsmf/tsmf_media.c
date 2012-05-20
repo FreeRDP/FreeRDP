@@ -140,7 +140,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	boolean pending = false;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
-	if (!stream->sample_list->head)
+	if (list_size(stream->sample_list) == 0)
 		return NULL;
 
 	if (sync)
@@ -210,10 +210,10 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 	uint64 ack_time;
 
 	ack_time = get_current_time();
-	while (stream->sample_ack_list->head && !freerdp_thread_is_stopped(stream->thread))
+	while (list_size(stream->sample_ack_list) > 0 && !freerdp_thread_is_stopped(stream->thread))
 	{
 		sample = (TSMF_SAMPLE*) list_peek(stream->sample_ack_list);
-		if (sample->ack_time > ack_time)
+		if (!sample || sample->ack_time > ack_time)
 			break;
 
 		sample = list_dequeue(stream->sample_ack_list);
@@ -448,6 +448,7 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 			sample->pixfmt = pixfmt;
 		}
 
+		ret = false ;
 		if (stream->decoder->GetDecodedDimension)
 			ret = stream->decoder->GetDecodedDimension(stream->decoder, &width, &height);
 		if (ret && (width != stream->width || height != stream->height))
@@ -646,9 +647,9 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	tsmf_presentation_stop(presentation);
 	list_remove(presentation_list, presentation);
 
-	while (presentation->stream_list->head)
+	while (list_size(presentation->stream_list) > 0)
 	{
-		stream = (TSMF_STREAM*) list_peek(presentation->stream_list);
+		stream = (TSMF_STREAM*) list_dequeue(presentation->stream_list);
 		tsmf_stream_free(stream);
 	}
 	list_free(presentation->stream_list);

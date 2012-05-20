@@ -261,8 +261,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesA(PCredHandle phCredent
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375512/ */
-
+/**
+ * @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa374707
+ */
 SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
 		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsTimeStamp)
@@ -278,6 +279,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	if (!context)
 	{
 		context = ntlm_ContextNew();
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY ;
 		context->server = true;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
@@ -292,9 +295,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	if (context->state == NTLM_STATE_INITIAL)
 	{
 		context->state = NTLM_STATE_NEGOTIATE;
-
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
 
 		if (!pInput)
 			return SEC_E_INVALID_TOKEN;
@@ -335,9 +335,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	}
 	else if (context->state == NTLM_STATE_AUTHENTICATE)
 	{
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
-
 		if (!pInput)
 			return SEC_E_INVALID_TOKEN;
 
@@ -373,6 +370,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 	return SEC_E_OK;
 }
 
+/**
+ * @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa375512%28v=vs.85%29.aspx
+ */
 SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
 		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
@@ -389,6 +389,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	if (!context)
 	{
 		context = ntlm_ContextNew();
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY ;
 
 		if (fContextReq & ISC_REQ_CONFIDENTIALITY)
 			context->confidentiality = true;
@@ -416,7 +418,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 			return SEC_E_INVALID_TOKEN;
 
 		if (output_buffer->cbBuffer < 1)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			return SEC_E_INVALID_TOKEN;
 
 		if (context->state == NTLM_STATE_INITIAL)
 			context->state = NTLM_STATE_NEGOTIATE;
@@ -428,12 +430,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	}
 	else
 	{
-		if (!context)
-			return SEC_E_INVALID_HANDLE;
-
-		if (!pInput)
-			return SEC_E_INVALID_TOKEN;
-
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 

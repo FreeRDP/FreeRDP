@@ -254,7 +254,7 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 	char PointerLengthSet;
 	PFORMAT_STRING pFormatCopy;
 	unsigned long BufferLength;
-	unsigned long BufferLengthCopy;
+	unsigned long BufferLengthCopy = 0;
 	unsigned long PointerLength;
 	unsigned char* pMemoryPtr = NULL;
 
