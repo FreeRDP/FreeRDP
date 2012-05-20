@@ -420,8 +420,8 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	memset(&output_buffer, 0, sizeof(SecBuffer));
 	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
-	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
-			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+	fContextReq = ASC_REQ_REPLAY_DETECT | ASC_REQ_SEQUENCE_DETECT |
+			ASC_REQ_CONFIDENTIALITY | ASC_REQ_DELEGATE;
 
 	while (true)
 	{
@@ -458,7 +458,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		status = credssp->table->AcceptSecurityContext(&credentials,
 			have_context? &credssp->context: NULL,
-			&input_buffer_desc, 0, SECURITY_NATIVE_DREP, &credssp->context,
+			&input_buffer_desc, fContextReq, SECURITY_NATIVE_DREP, &credssp->context,
 			&output_buffer_desc, &pfContextAttr, &expiration);
 
 		if (input_buffer.pvBuffer != NULL)

@@ -279,9 +279,14 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	if (!context)
 	{
 		context = ntlm_ContextNew();
+
 		if (!context)
-			return SEC_E_INSUFFICIENT_MEMORY ;
+			return SEC_E_INSUFFICIENT_MEMORY;
+
 		context->server = true;
+
+		if (fContextReq & ASC_REQ_CONFIDENTIALITY)
+			context->confidentiality = true;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		ntlm_SetContextIdentity(context, &credentials->identity);
@@ -390,7 +395,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	{
 		context = ntlm_ContextNew();
 		if (!context)
-			return SEC_E_INSUFFICIENT_MEMORY ;
+			return SEC_E_INSUFFICIENT_MEMORY;
 
 		if (fContextReq & ISC_REQ_CONFIDENTIALITY)
 			context->confidentiality = true;
@@ -570,8 +575,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP
 	else
 		memcpy(data_buffer->pvBuffer, data, length);
 
-	free(data);
-
 #ifdef WITH_DEBUG_NTLM
 	printf("Data Buffer (length = %d)\n", length);
 	freerdp_hexdump(data, length);
@@ -581,6 +584,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, uint32 fQOP
 	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 #endif
+
+	free(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
 	crypto_rc4(context->SendRc4Seal, 8, digest, checksum);
@@ -647,6 +652,17 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 	HMAC_Final(&hmac, digest, NULL);
 	HMAC_CTX_cleanup(&hmac);
+
+#ifdef WITH_DEBUG_NTLM
+	printf("Encrypted Data Buffer (length = %d)\n", length);
+	freerdp_hexdump(data, length);
+	printf("\n");
+
+	printf("Data Buffer (length = %d)\n", data_buffer->cbBuffer);
+	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
+	printf("\n");
+#endif
+
 	free(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
