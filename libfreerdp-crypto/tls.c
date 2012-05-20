@@ -182,8 +182,6 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
-	tls_free_certificate(cert);
-
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
