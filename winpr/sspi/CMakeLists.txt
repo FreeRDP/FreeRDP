@@ -64,7 +64,10 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 
 set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(winpr-sspi winpr-crt)
+if (NOT WIN32)
+	target_link_libraries(winpr-sspi winpr-crt)
+endif()
+
 target_link_libraries(winpr-sspi freerdp-utils)
 target_link_libraries(winpr-sspi freerdp-crypto)
 target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})	

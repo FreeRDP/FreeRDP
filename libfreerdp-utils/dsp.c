@@ -41,10 +41,11 @@ static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	rbytes = bytes_per_sample * rchan;
 	rframes = sframes * rrate / srate;
 	rsize = rbytes * rframes;
-	if (rsize > context->resampled_maxlength)
+
+	if (rsize > (int) context->resampled_maxlength)
 	{
 		context->resampled_maxlength = rsize + 1024;
-		context->resampled_buffer = xrealloc(context->resampled_buffer, context->resampled_maxlength);
+		context->resampled_buffer = (uint8*) xrealloc(context->resampled_buffer, context->resampled_maxlength);
 	}
 	dst = context->resampled_buffer;
 
