@@ -25,7 +25,7 @@
 
 /**
  * Allocate memory.
- * This function is used to secude a malloc call.
+ * This function is used to secure a malloc call.
  * It verifies its return value, and logs an error if the allocation failed.
  *
  * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
@@ -182,7 +182,7 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 }
 
 /**
- * Create a uppercase version of the given string.
+ * Create an uppercase version of the given string.
  * This function will duplicate the string (using xstrdup()) and change its content to all uppercase.
  * The original string is untouched.
  *
