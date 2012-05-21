@@ -47,3 +47,4 @@ endif()
 target_link_libraries(winpr-rpc ${OPENSSL_LIBRARIES})
 
 install(TARGETS winpr-rpc DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
