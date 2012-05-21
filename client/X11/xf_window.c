@@ -232,12 +232,12 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	{
 		window->is_transient = true;
 		xf_SetWindowUnlisted(xfi, window);
-
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
 	else if (style & WS_POPUP)
 	{
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+		window->is_transient = true;
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 		xf_SetWindowUnlisted(xfi, window);
 	}
@@ -416,8 +416,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
 			window->width, window->height, wnd->windowId);
 
-	xf_SetWindowDecorations(xfi, window, window->decorations);
-	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	memset(&gcv, 0, sizeof(gcv));
+	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 
 	class_hints = XAllocClassHint();
 
@@ -445,11 +445,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
                 ColormapChangeMask | OwnerGrabButtonMask;
 
 	XSelectInput(xfi->display, window->handle, input_mask);
+
+	xf_SetWindowDecorations(xfi, window, window->decorations);
+	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	xf_ShowWindow(xfi, window, WINDOW_SHOW);
+
 	XMapWindow(xfi->display, window->handle);
 
-	memset(&gcv, 0, sizeof(gcv));
-	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
-
+	// Move doesn't seem to work until window is mapped.
 	xf_MoveWindow(xfi, window, x, y, width, height);
 
 	return window;
@@ -611,6 +614,10 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 
 		case WINDOW_SHOW:
 			XMapWindow(xfi->display, window->handle);
+			if (window->is_transient)
+			{
+				xf_SetWindowUnlisted(xfi, window);
+			}
 			break;
 	}
 
