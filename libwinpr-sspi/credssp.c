@@ -135,16 +135,13 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
  * @param credssp
  */
 
-char* test_User = "username";
-char* test_Password = "password";
-
 int credssp_ntlm_server_init(rdpCredssp* credssp)
 {
 	freerdp* instance;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	credssp_SetContextIdentity(credssp, test_User, NULL, test_Password);
+	credssp_SetContextIdentity(credssp, "username", NULL, NULL);
 
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	memcpy(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);

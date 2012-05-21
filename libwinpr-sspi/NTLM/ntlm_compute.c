@@ -185,17 +185,131 @@ void ntlm_compute_ntlm_hash(uint16* password, uint32 length, char* hash)
 	MD4_Final((void*) hash, &md4_ctx);
 }
 
+static void ascii_uppercase(char* str)
+{
+	int i;
+	int length;
+
+	length = strlen(str);
+
+	for (i = 0; i < length; i++)
+	{
+		if ((str[i] >= 'a') && (str[i] <= 'z'))
+			str[i] = str[i] - 32;
+	}
+}
+
+static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
+{
+	int i;
+	int length;
+
+	ascii_uppercase(str);
+
+	length = strlen(str);
+
+	for (i = 0; i < length / 2; i++)
+	{
+		hex[i] = 0;
+
+		if ((str[i * 2] >= '0') && (str[i * 2] <= '9'))
+			hex[i] |= (str[i * 2] - '0') << 4;
+
+		if ((str[i * 2] >= 'A') && (str[i * 2] <= 'F'))
+			hex[i] |= (str[i * 2] - 'A' + 10) << 4;
+
+		if ((str[i * 2 + 1] >= '0') && (str[i * 2 + 1] <= '9'))
+			hex[i] |= (str[i * 2 + 1] - '0');
+
+		if ((str[i * 2 + 1] >= 'A') && (str[i * 2 + 1] <= 'F'))
+			hex[i] |= (str[i * 2 + 1] - 'A' + 10);
+	}
+}
+
+void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
+{
+	FILE* fp;
+	char* data;
+	char* line;
+	int length;
+	size_t size;
+	char* db_user;
+	char* db_hash;
+	uint16* User;
+	uint32 UserLength;
+	long int file_size;
+	unsigned char db_hash_bin[16];
+
+	/* Fetch NTLMv2 hash from database */
+
+	fp = fopen("/etc/winpr/SAM.txt", "r");
+
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (file_size < 1)
+		return;
+
+	data = (char*) malloc(file_size + 2);
+
+	if (fread(data, file_size, 1, fp) != 1)
+	{
+		free(data);
+		return;
+	}
+
+	data[file_size] = '\n';
+	data[file_size + 1] = '\0';
+	line = strtok(data, "\n");
+
+	while (line != NULL)
+	{
+		length = strlen(line);
+
+		if (length > 0)
+		{
+			length = strcspn(line, ":");
+			line[length] = '\0';
+
+			db_user = line;
+			db_hash = &line[length + 1];
+
+			User = (uint16*) freerdp_uniconv_out(context->uniconv, db_user, &size);
+			UserLength = (uint32) size;
+
+			if (UserLength == context->identity.UserLength)
+			{
+				if (memcmp(User, context->identity.User, UserLength) == 0)
+				{
+					printf("%s:%s\n", db_user, db_hash);
+					ascii_hex_string_to_binary(db_hash, db_hash_bin);
+					memcpy(hash, db_hash_bin, 16);
+				}
+			}
+		}
+
+		line = strtok(NULL, "\n");
+	}
+
+	fclose(fp);
+	free(data);
+}
+
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	char* p;
 	SecBuffer buffer;
 	char ntlm_hash[16];
 
+	if (context->identity.PasswordLength > 0)
+	{
+		/* First, compute the NTLMv1 hash of the password */
+		ntlm_compute_ntlm_hash(context->identity.Password, context->identity.PasswordLength, ntlm_hash);
+	}
+
 	sspi_SecBufferAlloc(&buffer, context->identity.UserLength + context->identity.DomainLength);
 	p = (char*) buffer.pvBuffer;
-
-	/* First, compute the NTLMv1 hash of the password */
-	ntlm_compute_ntlm_hash(context->identity.Password, context->identity.PasswordLength, ntlm_hash);
 
 	/* Concatenate(Uppercase(username),domain)*/
 	memcpy(p, context->identity.User, context->identity.UserLength);
@@ -203,8 +317,15 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	memcpy(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
 
-	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-	HMAC(EVP_md5(), (void*) ntlm_hash, 16, buffer.pvBuffer, buffer.cbBuffer, (void*) hash, NULL);
+	if (context->identity.PasswordLength > 0)
+	{
+		/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
+		HMAC(EVP_md5(), (void*) ntlm_hash, 16, buffer.pvBuffer, buffer.cbBuffer, (void*) hash, NULL);
+	}
+	else
+	{
+		ntlm_fetch_ntlm_v2_hash(context, hash);
+	}
 
 	sspi_SecBufferFree(&buffer);
 }
