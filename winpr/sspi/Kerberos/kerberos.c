@@ -308,15 +308,15 @@ void kerberos_ContextFree(KRB_CONTEXT* krb_ctx)
 }
 
 SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, TimeStamp* ptsExpiry)
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
@@ -354,12 +354,12 @@ SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredentia
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -426,17 +426,17 @@ void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ident
 }
 
 SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
+		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
+		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	KRB_CONTEXT* krb_ctx;
 	//SECURITY_STATUS status;
@@ -490,7 +490,7 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	KDCENTRY* kdclist;
 	KDCENTRY* entry;
 	KRB_CONTEXT* krb_ctx;
-	uint32 fContextReq;
+	ULONG fContextReq;
 	uint32 pfContextAttr;
 	TimeStamp expiration;
 
@@ -1174,12 +1174,12 @@ void krb_free_krb_error(KrbERROR* krb_err)
 	}
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -1202,22 +1202,22 @@ SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
 	return SEC_E_OK;
 }

@@ -116,6 +116,12 @@ typedef struct _GUID
 	BYTE Data4[8];
 } GUID, UUID, *PGUID;
 
+typedef struct _LUID
+{
+	DWORD LowPart;
+	LONG  HighPart;
+} LUID, *PLUID;
+
 #ifdef UNICODE
 #define _T(x)	L ## x
 #else

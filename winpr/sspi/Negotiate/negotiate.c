@@ -92,24 +92,21 @@ void negotiate_SetContextIdentity(NEGOTIATE_CONTEXT* context, SEC_WINNT_AUTH_IDE
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
+		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry)
+		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	NEGOTIATE_CONTEXT* context;
-	//SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	//PSecBuffer input_SecBuffer;
 	PSecBuffer output_SecBuffer;
-	//KrbTGTREQ krb_tgtreq;
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -117,14 +114,14 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 	{
 		context = negotiate_ContextNew();
 
-		credentials = (CREDENTIALS*)     sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		negotiate_SetContextIdentity(context, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGOTIATE_PACKAGE_NAME);
 	}
 
-	if((!pInput) && (context->state == NEGOTIATE_STATE_INITIAL))
+	if ((!pInput) && (context->state == NEGOTIATE_STATE_INITIAL))
 	{
 		if (!pOutput)
 			return SEC_E_INVALID_TOKEN;
@@ -166,7 +163,7 @@ void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 	free(context);
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -190,14 +187,14 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	CREDENTIALS* credentials;
@@ -219,12 +216,12 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrinc
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
@@ -259,22 +256,22 @@ SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredenti
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY negotiate_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY negotiate_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY negotiate_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP)
+SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
 	return SEC_E_OK;
 }

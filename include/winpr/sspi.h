@@ -20,10 +20,14 @@
 #ifndef FREERDP_SSPI_H
 #define FREERDP_SSPI_H
 
+#include "config.h"
+
+//#define NATIVE_SSPI
+
 #include <wchar.h>
 #include <winpr/windows.h>
 
-#include <freerdp/api.h>
+#include <winpr/winpr.h>
 #include <freerdp/types.h>
 
 #ifdef _WIN32
@@ -34,7 +38,7 @@
 #ifdef NATIVE_SSPI
 #define SECURITY_WIN32
 #include <sspi.h>
-#pragma comment(lib, "secur32.lib")
+#include <security.h>
 #else
 #define FREERDP_SSPI
 #define SEC_ENTRY __stdcall
@@ -99,6 +103,8 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SecPkgInfo SecPkgInfoA
 #define PSecPkgInfo PSecPkgInfoA
 #endif
+
+#define NTLMSP_NAME	_T("NTLM")
 
 #endif
 
@@ -647,7 +653,7 @@ typedef CtxtHandle* PCtxtHandle;
 
 struct _SecBuffer
 {
-	uint32 cbBuffer;
+	ULONG cbBuffer;
 	uint32 BufferType;
 	void* pvBuffer;
 };
@@ -676,8 +682,8 @@ typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_W)(uint32* p
 #define ENUMERATE_SECURITY_PACKAGES_FN ENUMERATE_SECURITY_PACKAGES_FN_A
 #endif
 
-typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_A)(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
-typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_A)(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
 
 #ifdef UNICODE
 #define QueryCredentialsAttributes QueryCredentialsAttributesW
@@ -688,10 +694,10 @@ typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHan
 #endif
 
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_A)(LPSTR pszPrincipal, LPSTR pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_W)(LPWSTR pszPrincipal, LPWSTR pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
 #ifdef UNICODE
@@ -705,13 +711,13 @@ typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_W)(LPWSTR psz
 typedef SECURITY_STATUS (SEC_ENTRY * FREE_CREDENTIALS_HANDLE_FN)(PCredHandle phCredential);
 
 typedef SECURITY_STATUS (SEC_ENTRY * INITIALIZE_SECURITY_CONTEXT_FN_A)(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry);
+		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry);
 typedef SECURITY_STATUS (SEC_ENTRY * INITIALIZE_SECURITY_CONTEXT_FN_W)(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsExpiry);
+		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry);
 
 #ifdef UNICODE
 #define InitializeSecurityContext InitializeSecurityContextW
@@ -722,8 +728,8 @@ typedef SECURITY_STATUS (SEC_ENTRY * INITIALIZE_SECURITY_CONTEXT_FN_W)(PCredHand
 #endif
 
 typedef SECURITY_STATUS (SEC_ENTRY * ACCEPT_SECURITY_CONTEXT_FN)(PCredHandle phCredential, PCtxtHandle phContext,
-		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp);
+		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp);
 
 typedef SECURITY_STATUS (SEC_ENTRY * COMPLETE_AUTH_TOKEN_FN)(PCtxtHandle phContext, PSecBufferDesc pToken);
 
@@ -731,8 +737,8 @@ typedef SECURITY_STATUS (SEC_ENTRY * DELETE_SECURITY_CONTEXT_FN)(PCtxtHandle phC
 
 typedef SECURITY_STATUS (SEC_ENTRY * APPLY_CONTROL_TOKEN_FN)(PCtxtHandle phContext, PSecBufferDesc pInput);
 
-typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer);
-typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer);
 
 #ifdef UNICODE
 #define QueryContextAttributes QueryContextAttributesW
@@ -746,9 +752,9 @@ typedef SECURITY_STATUS (SEC_ENTRY * IMPERSONATE_SECURITY_CONTEXT_FN)(PCtxtHandl
 
 typedef SECURITY_STATUS (SEC_ENTRY * REVERT_SECURITY_CONTEXT_FN)(PCtxtHandle phContext);
 
-typedef SECURITY_STATUS (SEC_ENTRY * MAKE_SIGNATURE_FN)(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
+typedef SECURITY_STATUS (SEC_ENTRY * MAKE_SIGNATURE_FN)(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo);
 
-typedef SECURITY_STATUS (SEC_ENTRY * VERIFY_SIGNATURE_FN)(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+typedef SECURITY_STATUS (SEC_ENTRY * VERIFY_SIGNATURE_FN)(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
 
 typedef SECURITY_STATUS (SEC_ENTRY * FREE_CONTEXT_BUFFER_FN)(void* pvContextBuffer);
 
@@ -791,12 +797,12 @@ typedef SECURITY_STATUS (SEC_ENTRY * ADD_CREDENTIALS_FN_W)(PCredHandle hCredenti
 
 typedef SECURITY_STATUS (SEC_ENTRY * QUERY_SECURITY_CONTEXT_TOKEN_FN)(PCtxtHandle phContext, void* phToken);
 
-typedef SECURITY_STATUS (SEC_ENTRY * ENCRYPT_MESSAGE_FN)(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
+typedef SECURITY_STATUS (SEC_ENTRY * ENCRYPT_MESSAGE_FN)(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo);
 
-typedef SECURITY_STATUS (SEC_ENTRY * DECRYPT_MESSAGE_FN)(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+typedef SECURITY_STATUS (SEC_ENTRY * DECRYPT_MESSAGE_FN)(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
 
-typedef SECURITY_STATUS (SEC_ENTRY * SET_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
-typedef SECURITY_STATUS (SEC_ENTRY * SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * SET_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+typedef SECURITY_STATUS (SEC_ENTRY * SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
 
 #ifdef UNICODE
 #define SetContextAttributes SetContextAttributesW
@@ -891,72 +897,72 @@ typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
 /* Package Management */
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkgInfoA* ppPackageInfo);
-FREERDP_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkgInfoW* ppPackageInfo);
-FREERDP_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void);
-FREERDP_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void);
-FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
-FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
+WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(uint32* pcPackages, PSecPkgInfoA* ppPackageInfo);
+WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(uint32* pcPackages, PSecPkgInfoW* ppPackageInfo);
+WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void);
+WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void);
+WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
+WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
 
 /* Credential Management */
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
-FREERDP_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		uint32 fCredentialUse, void* pvLogonID, void* pAuthData, void* pGetKeyFn,
+WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken);
-FREERDP_API SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential);
+WINPR_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, uint32 fFlags, PSecBuffer pPackedContext, void* pToken);
+WINPR_API SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
-FREERDP_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
-FREERDP_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, uint32 ulAttribute, void* pBuffer);
+WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
+WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
 
 /* Context Management */
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-		PSecBufferDesc pInput, uint32 fContextReq, uint32 TargetDataRep, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, TimeStamp* ptsTimeStamp);
+WINPR_API SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput);
-FREERDP_API SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken);
-FREERDP_API SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext);
-FREERDP_API SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer);
-FREERDP_API SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput);
+WINPR_API SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken);
+WINPR_API SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer);
+WINPR_API SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry);
-FREERDP_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, uint32 fContextReq, uint32 Reserved1, uint32 TargetDataRep,
-		PSecBufferDesc pInput, uint32 Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, uint32* pfContextAttr, PTimeStamp ptsExpiry);
+WINPR_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry);
+WINPR_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry);
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY QueryContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer);
-FREERDP_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, void* phToken);
-FREERDP_API SECURITY_STATUS SEC_ENTRY SetContextAttributes(PCtxtHandle phContext, uint32 ulAttribute, void* pBuffer, uint32 cbBuffer);
-FREERDP_API SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer);
+WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, void* phToken);
+WINPR_API SECURITY_STATUS SEC_ENTRY SetContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+WINPR_API SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext);
 
 /* Message Support */
 
-FREERDP_API SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
-FREERDP_API SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, uint32 fQOP, PSecBufferDesc pMessage, uint32 MessageSeqNo);
-FREERDP_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, uint32 MessageSeqNo, uint32* pfQOP);
+WINPR_API SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
+WINPR_API SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo);
+WINPR_API SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo);
+WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
 
 #endif
 
 /* Custom API */
 
-FREERDP_API void sspi_GlobalInit();
-FREERDP_API void sspi_GlobalFinish();
+WINPR_API void sspi_GlobalInit();
+WINPR_API void sspi_GlobalFinish();
 
-FREERDP_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
-FREERDP_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
+WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
+WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 #endif /* FREERDP_SSPI_H */
