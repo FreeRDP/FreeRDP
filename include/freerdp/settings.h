@@ -292,7 +292,8 @@ struct rdp_settings
 	ALIGN64 char* tsg_hostname; /* 65 */
 	ALIGN64 char* tsg_username; /* 66 */
 	ALIGN64 char* tsg_password; /* 67 */
-	ALIGN64 uint64 paddingC[80 - 68]; /* 68 */
+	ALIGN64 boolean local; /* 68 */
+	ALIGN64 uint64 paddingC[80 - 69]; /* 69 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */
