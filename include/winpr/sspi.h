@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Security Support Provider Interface (SSPI)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_H
-#define FREERDP_SSPI_H
+#ifndef WINPR_SSPI_H
+#define WINPR_SSPI_H
 
 #include "config.h"
 
@@ -40,18 +40,18 @@
 #include <sspi.h>
 #include <security.h>
 #else
-#define FREERDP_SSPI
+#define WINPR_SSPI
 #define SEC_ENTRY __stdcall
 #endif
 
 #else
 
-#define FREERDP_SSPI
+#define WINPR_SSPI
 #include <winpr/wtypes.h>
 
 #endif
 
-#ifdef FREERDP_SSPI
+#ifdef WINPR_SSPI
 
 #ifndef SEC_ENTRY
 #define SEC_ENTRY
@@ -266,7 +266,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#ifdef FREERDP_SSPI
+#ifdef WINPR_SSPI
 
 struct _SecPkgContext_AccessToken
 {
@@ -593,7 +593,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI			0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-#ifdef FREERDP_SSPI
+#ifdef WINPR_SSPI
 
 struct _SEC_WINNT_AUTH_IDENTITY
 {
@@ -649,7 +649,7 @@ typedef CtxtHandle* PCtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-#ifdef FREERDP_SSPI
+#ifdef WINPR_SSPI
 
 struct _SecBuffer
 {
@@ -965,4 +965,4 @@ WINPR_API void sspi_GlobalFinish();
 WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
-#endif /* FREERDP_SSPI_H */
+#endif /* WINPR_SSPI_H */

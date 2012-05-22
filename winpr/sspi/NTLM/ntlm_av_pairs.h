@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * NTLM Security Package (AV_PAIRs)
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_NTLM_AV_PAIRS_H
-#define FREERDP_SSPI_NTLM_AV_PAIRS_H
+#ifndef WINPR_SSPI_NTLM_AV_PAIRS_H
+#define WINPR_SSPI_NTLM_AV_PAIRS_H
 
 #include "ntlm.h"
 
@@ -29,4 +29,4 @@ void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context);
 void ntlm_print_av_pairs(NTLM_CONTEXT* context);
 void ntlm_free_av_pairs(NTLM_CONTEXT* context);
 
-#endif /* FREERDP_SSPI_NTLM_AV_PAIRS_H */
+#endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */

@@ -1,5 +1,5 @@
 /**
-* FreeRDP: A Remote Desktop Protocol Client
+* WinPR: Windows Portable Runtime
 * kerberos Crypto Support
 *
 * Copyright 2011 Samsung, Author Jiten Pathy

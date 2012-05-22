@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Credential Security Support Provider (CredSSP)
  *
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -29,7 +29,7 @@
 #include <winpr/sspi.h>
 #include <winpr/credssp.h>
 
-#include "sspi.h"
+#include "../sspi.h"
 
 /**
  * TSRequest ::= SEQUENCE {

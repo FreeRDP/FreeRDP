@@ -26,7 +26,7 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-#ifdef FREERDP_SSPI
+#ifdef WINPR_SSPI
 
 extern const SecPkgInfoA NTLM_SecPkgInfoA;
 extern const SecPkgInfoW NTLM_SecPkgInfoW;

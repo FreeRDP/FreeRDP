@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * NTLM Security Package (Message)
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_NTLM_MESSAGE_H
-#define FREERDP_SSPI_NTLM_MESSAGE_H
+#ifndef WINPR_SSPI_NTLM_MESSAGE_H
+#define WINPR_SSPI_NTLM_MESSAGE_H
 
 #include "ntlm.h"
 
@@ -29,4 +29,4 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer);
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer);
 
-#endif /* FREERDP_SSPI_NTLM_MESSAGE_H */
+#endif /* WINPR_SSPI_NTLM_MESSAGE_H */

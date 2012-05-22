@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * WinPR: Windows Portable Runtime
  * Kerberos Auth Protocol
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_KERBEROS_PRIVATE_H
-#define FREERDP_SSPI_KERBEROS_PRIVATE_H
+#ifndef WINPR_SSPI_KERBEROS_PRIVATE_H
+#define WINPR_SSPI_KERBEROS_PRIVATE_H
 
 #ifndef _WIN32
 #include <netinet/in.h>

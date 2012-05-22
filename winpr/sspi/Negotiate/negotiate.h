@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Negotiate Security Package
  *
  * Copyright 2011-2012 Jiten Pathy
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_NEGOTIATE_PRIVATE_H
-#define FREERDP_SSPI_NEGOTIATE_PRIVATE_H
+#ifndef WINPR_SSPI_NEGOTIATE_PRIVATE_H
+#define WINPR_SSPI_NEGOTIATE_PRIVATE_H
 
 #include <winpr/sspi.h>
 #include <freerdp/utils/unicode.h>
@@ -52,5 +52,5 @@ typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 NEGOTIATE_CONTEXT* negotiate_ContextNew();
 void negotiate_ContextFree(NEGOTIATE_CONTEXT* context);
 
-#endif /* FREERDP_SSPI_NEGOTIATE_PRIVATE_H */
+#endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */
 

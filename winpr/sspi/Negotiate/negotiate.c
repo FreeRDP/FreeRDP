@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Negotiate Security Package
  *
  * Copyright 2011-2012 Jiten Pathy 

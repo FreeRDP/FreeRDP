@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * Security Support Provider Interface (SSPI)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_AUTH_SSPI_PRIVATE_H
-#define FREERDP_AUTH_SSPI_PRIVATE_H
+#ifndef WINPR_SSPI_PRIVATE_H
+#define WINPR_SSPI_PRIVATE_H
 
 #include "config.h"
 
@@ -74,4 +74,4 @@ enum SecurityFunctionTableIndex
 	SetContextAttributesIndex = 28
 };
 
-#endif /* FREERDP_AUTH_SSPI_PRIVATE_H */
+#endif /* WINPR_SSPI_PRIVATE_H */

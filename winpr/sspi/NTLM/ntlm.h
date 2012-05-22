@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
  * NTLM Security Package
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_NTLM_PRIVATE_H
-#define FREERDP_SSPI_NTLM_PRIVATE_H
+#ifndef WINPR_SSPI_NTLM_PRIVATE_H
+#define WINPR_SSPI_NTLM_PRIVATE_H
 
 #include <winpr/sspi.h>
 #include <freerdp/crypto/crypto.h>
