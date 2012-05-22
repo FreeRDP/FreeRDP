@@ -143,6 +143,10 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 	mem = _wcsdup(wstr);
 #elif sun
 	mem = wsdup(wstr);
+#elif defined(__APPLE__) && defined(__MACH__)
+	mem = xmalloc(wcslen(wstr));
+	if (mem != NULL)
+		wcscpy(mem, wstr);
 #else
 	mem = wcsdup(wstr);
 #endif
