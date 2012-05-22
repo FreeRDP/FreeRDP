@@ -461,7 +461,7 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->hostname,
+	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
 		client->settings->os_major_type, client->settings->os_minor_type);
 	if (client->settings->autologon)
 	{
@@ -613,7 +613,7 @@ static void* test_peer_mainloop(void* arg)
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
 
-	printf("We've got a client %s\n", client->hostname);
+	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	while (1)
 	{
@@ -661,7 +661,7 @@ static void* test_peer_mainloop(void* arg)
 			break;
 	}
 
-	printf("Client %s disconnected.\n", client->hostname);
+	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);

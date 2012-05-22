@@ -237,6 +237,10 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 			sin_addr = &(((struct sockaddr_in*) &peer_addr)->sin_addr);
 		else if (peer_addr.ss_family == AF_INET6)
 			sin_addr = &(((struct sockaddr_in6*) &peer_addr)->sin6_addr);
+#ifndef _WIN32
+		else if (peer_addr.ss_family == AF_UNIX)
+			client->local = true;
+#endif
 
 		if (sin_addr)
 			inet_ntop(peer_addr.ss_family, sin_addr, client->hostname, sizeof(client->hostname));
