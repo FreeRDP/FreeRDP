@@ -756,7 +756,8 @@ int main(int argc, char* argv[])
 		test_dump_rfx_realtime = false;
 
 	/* Open the server socket and start listening. */
-	if (instance->Open(instance, NULL, 3389))
+	if (instance->Open(instance, NULL, 3389) &&
+		instance->OpenLocal(instance, "/tmp/tfreerdp-server.0"))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
