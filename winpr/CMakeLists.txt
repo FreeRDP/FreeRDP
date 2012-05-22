@@ -20,4 +20,5 @@
 add_subdirectory(crt)
 add_subdirectory(rpc)
 add_subdirectory(sspi)
+add_subdirectory(registry)
 
