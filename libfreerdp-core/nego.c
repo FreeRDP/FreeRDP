@@ -600,9 +600,12 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 			settings->tls_security = false;
 			settings->nla_security = false;
 			settings->rdp_security = true;
-			settings->encryption = true;
-			settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-			settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+			if (!settings->local)
+			{
+				settings->encryption = true;
+				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+			}
 		}
 		else if (settings->selected_protocol == PROTOCOL_TLS)
 		{
