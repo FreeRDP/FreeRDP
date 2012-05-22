@@ -46,6 +46,7 @@
 #endif
 
 #include <freerdp/utils/tcp.h>
+#include <freerdp/utils/uds.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
@@ -115,30 +116,40 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	uint32 option_value;
 	socklen_t option_len;
 
-	tcp->sockfd = freerdp_tcp_connect(hostname, port);
-
-	if (tcp->sockfd < 0)
-		return false;
-
-	tcp_get_ip_address(tcp);
-	tcp_get_mac_address(tcp);
-
-	option_value = 1;
-	option_len = sizeof(option_value);
-	setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
-
-	/* receive buffer must be a least 32 K */
-	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+	if (hostname[0] == '/')
 	{
-		if (option_value < (1024 * 32))
-		{
-			option_value = 1024 * 32;
-			option_len = sizeof(option_value);
-			setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len);
-		}
-	}
+		tcp->sockfd = freerdp_uds_connect(hostname);
 
-	tcp_set_keep_alive_mode(tcp);
+		if (tcp->sockfd < 0)
+			return false;
+	}
+	else
+	{
+		tcp->sockfd = freerdp_tcp_connect(hostname, port);
+
+		if (tcp->sockfd < 0)
+			return false;
+
+		tcp_get_ip_address(tcp);
+		tcp_get_mac_address(tcp);
+
+		option_value = 1;
+		option_len = sizeof(option_value);
+		setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
+
+		/* receive buffer must be a least 32 K */
+		if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+		{
+			if (option_value < (1024 * 32))
+			{
+				option_value = 1024 * 32;
+				option_len = sizeof(option_value);
+				setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len);
+			}
+		}
+
+		tcp_set_keep_alive_mode(tcp);
+	}
 
 	return true;
 }
