@@ -28,6 +28,7 @@
 #include <openssl/engine.h>
 #include <freerdp/crypto/crypto.h>
 
+#include <winpr/crt.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
@@ -185,26 +186,12 @@ void ntlm_compute_ntlm_hash(uint16* password, uint32 length, char* hash)
 	MD4_Final((void*) hash, &md4_ctx);
 }
 
-static void ascii_uppercase(char* str)
-{
-	int i;
-	int length;
-
-	length = strlen(str);
-
-	for (i = 0; i < length; i++)
-	{
-		if ((str[i] >= 'a') && (str[i] <= 'z'))
-			str[i] = str[i] - 32;
-	}
-}
-
 static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
 {
 	int i;
 	int length;
 
-	ascii_uppercase(str);
+	CharUpperA(str);
 
 	length = strlen(str);
 
