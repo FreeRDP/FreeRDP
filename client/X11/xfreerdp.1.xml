@@ -138,6 +138,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>-K</term>
+        <listitem>
+          <para>
+            Do not interfere with window manager bindings. Normally, xfreerdp captures all keystrokes while its window is focused.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-n <replaceable class="parameter">hostname</replaceable></term>
         <listitem>
           <para>
