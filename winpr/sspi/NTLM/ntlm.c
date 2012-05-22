@@ -580,7 +580,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	freerdp_hexdump(data, length);
 	printf("\n");
 
-	printf("Encrypted Data Buffer (length = %d)\n", data_buffer->cbBuffer);
+	printf("Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
 	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 #endif
@@ -599,7 +599,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	context->SendSeqNum++;
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Signature (length = %d)\n", signature_buffer->cbBuffer);
+	printf("Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
 	freerdp_hexdump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
 	printf("\n");
 #endif
@@ -658,7 +658,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	freerdp_hexdump(data, length);
 	printf("\n");
 
-	printf("Data Buffer (length = %d)\n", data_buffer->cbBuffer);
+	printf("Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
 	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 #endif

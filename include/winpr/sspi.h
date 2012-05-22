@@ -654,7 +654,7 @@ typedef CtxtHandle* PCtxtHandle;
 struct _SecBuffer
 {
 	ULONG cbBuffer;
-	uint32 BufferType;
+	ULONG BufferType;
 	void* pvBuffer;
 };
 typedef struct _SecBuffer SecBuffer;
@@ -662,8 +662,8 @@ typedef SecBuffer* PSecBuffer;
 
 struct _SecBufferDesc
 {
-	uint32 ulVersion;
-	uint32 cBuffers;
+	ULONG ulVersion;
+	ULONG cBuffers;
 	PSecBuffer pBuffers;
 };
 typedef struct _SecBufferDesc SecBufferDesc;

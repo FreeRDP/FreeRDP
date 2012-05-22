@@ -1127,7 +1127,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	{
 		ntlm_print_av_pairs(context);
 
-		printf("targetInfo (length = %d)\n", context->TargetInfo.cbBuffer);
+		printf("targetInfo (length = %d)\n", (int) context->TargetInfo.cbBuffer);
 		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 		printf("\n");
 	}

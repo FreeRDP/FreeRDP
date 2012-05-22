@@ -37,7 +37,6 @@ set(FREERDP_UTILS_SRCS
 	profiler.c
 	rail.c
 	rect.c
-	registry.c
 	semaphore.c
 	signal.c
 	sleep.c

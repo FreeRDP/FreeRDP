@@ -151,9 +151,9 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 
 int credssp_client_authenticate(rdpCredssp* credssp)
 {
-	uint32 cbMaxToken;
+	ULONG cbMaxToken;
 	ULONG fContextReq;
-	uint32 pfContextAttr;
+	ULONG pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
 	TimeStamp expiration;
@@ -631,10 +631,10 @@ int credssp_authenticate(rdpCredssp* credssp)
 SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 {
 	int length;
-	uint32 pfQOP;
-	uint8* public_key1;
-	uint8* public_key2;
-	uint8* pub_key_auth;
+	ULONG pfQOP;
+	BYTE* public_key1;
+	BYTE* public_key2;
+	BYTE* pub_key_auth;
 	int public_key_length;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
@@ -1006,19 +1006,19 @@ void credssp_buffer_print(rdpCredssp* credssp)
 {
 	if (credssp->negoToken.cbBuffer > 0)
 	{
-		printf("CredSSP.negoToken (length = %d):\n", credssp->negoToken.cbBuffer);
+		printf("CredSSP.negoToken (length = %d):\n", (int) credssp->negoToken.cbBuffer);
 		freerdp_hexdump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 	}
 
 	if (credssp->pubKeyAuth.cbBuffer > 0)
 	{
-		printf("CredSSP.pubKeyAuth (length = %d):\n", credssp->pubKeyAuth.cbBuffer);
+		printf("CredSSP.pubKeyAuth (length = %d):\n", (int) credssp->pubKeyAuth.cbBuffer);
 		freerdp_hexdump(credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
 	}
 
 	if (credssp->authInfo.cbBuffer > 0)
 	{
-		printf("CredSSP.authInfo (length = %d):\n", credssp->authInfo.cbBuffer);
+		printf("CredSSP.authInfo (length = %d):\n", (int) credssp->authInfo.cbBuffer);
 		freerdp_hexdump(credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
 	}
 }

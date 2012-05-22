@@ -491,7 +491,7 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	KDCENTRY* entry;
 	KRB_CONTEXT* krb_ctx;
 	ULONG fContextReq;
-	uint32 pfContextAttr;
+	ULONG pfContextAttr;
 	TimeStamp expiration;
 
 	if (tcp_is_ipaddr(settings->hostname))
