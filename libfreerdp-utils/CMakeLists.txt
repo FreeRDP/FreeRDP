@@ -48,6 +48,7 @@ set(FREERDP_UTILS_SRCS
 	tcp.c
 	thread.c
 	time.c
+	uds.c
 	unicode.c
 	wait_obj.c)
 
