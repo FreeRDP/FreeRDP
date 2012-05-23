@@ -53,7 +53,7 @@ const char* const AV_PAIRS_STRINGS[] =
 void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 {
 	AV_ID AvId;
-	uint16 AvLen;
+	UINT16 AvLen;
 	uint8* value;
 	AV_PAIRS* av_pairs = context->av_pairs;
 

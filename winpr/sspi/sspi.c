@@ -110,7 +110,7 @@ void sspi_ContextBufferAllocTableNew()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = calloc(1, size);
+	ContextBufferAllocTable.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
 void sspi_ContextBufferAllocTableGrow()
@@ -121,14 +121,14 @@ void sspi_ContextBufferAllocTableGrow()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
+	ContextBufferAllocTable.entries = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ContextBufferAllocTable.entries, size);
 	memset((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], 0, size / 2);
 }
 
 void sspi_ContextBufferAllocTableFree()
 {
 	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
-	free(ContextBufferAllocTable.entries);
+	HeapFree(GetProcessHeap(), 0, ContextBufferAllocTable.entries);
 }
 
 void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
@@ -140,7 +140,7 @@ void* sspi_ContextBufferAlloc(uint32 allocatorIndex, size_t size)
 	{
 		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
 		{
-			contextBuffer = calloc(1, size);
+			contextBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 			ContextBufferAllocTable.cEntries++;
 
 			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
@@ -163,7 +163,7 @@ CREDENTIALS* sspi_CredentialsNew()
 {
 	CREDENTIALS* credentials;
 
-	credentials = (CREDENTIALS*) calloc(1, sizeof(CREDENTIALS));
+	credentials = (CREDENTIALS*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CREDENTIALS));
 
 	if (credentials != NULL)
 	{
@@ -178,19 +178,19 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	if (!credentials)
 		return;
 
-	free(credentials);
+	HeapFree(GetProcessHeap(), 0, credentials);
 }
 
 void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
 {
 	SecBuffer->cbBuffer = size;
-	SecBuffer->pvBuffer = calloc(1, size);
+	SecBuffer->pvBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
 {
 	SecBuffer->cbBuffer = 0;
-	free(SecBuffer->pvBuffer);
+	HeapFree(GetProcessHeap(), 0, SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 }
 

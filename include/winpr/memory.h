@@ -24,18 +24,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #ifndef _WIN32
 
-#define CopyMemory		RtlCopyMemory
-#define MoveMemory		RtlMoveMemory
-#define FillMemory		RtlFillMemory
-#define ZeroMemory		RtlZeroMemory
+#define CopyMemory			RtlCopyMemory
+#define MoveMemory			RtlMoveMemory
+#define FillMemory			RtlFillMemory
+#define ZeroMemory			RtlZeroMemory
 
 #define RtlCopyMemory(Destination, Source, Length)	memcpy((Destination), (Source), (Length))
 #define RtlMoveMemory(Destination, Source, Length)	memmove((Destination), (Source), (Length))
 #define RtlFillMemory(Destination, Length, Fill)	memset((Destination), (Fill), (Length))
 #define RtlZeroMemory(Destination, Length)		memset((Destination), 0, (Length))
+
+#define HEAP_GENERATE_EXCEPTIONS	0x00000004
+#define HEAP_NO_SERIALIZE		0x00000001
+#define HEAP_ZERO_MEMORY		0x00000008
+#define HEAP_REALLOC_IN_PLACE_ONLY	0x00000010
+
+WINPR_API HANDLE GetProcessHeap(void);
+WINPR_API LPVOID HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
+WINPR_API LPVOID HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
+WINPR_API BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 
 #endif
 

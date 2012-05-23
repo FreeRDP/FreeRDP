@@ -52,7 +52,7 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 	STREAM* s;
 	AV_PAIR* restrictions = &context->av_pairs->Restrictions;
 
-	uint8 machineID[32] =
+	BYTE machineID[32] =
 		"\x3A\x15\x8E\xA6\x75\x82\xD8\xF7\x3E\x06\xFA\x7A\xB4\xDF\xFD\x43"
 		"\x84\x6C\x02\x3A\xFD\x5A\x94\xFE\xCF\x97\x0F\x3D\x19\x2C\x38\x20";
 
@@ -90,12 +90,12 @@ void ntlm_output_target_name(NTLM_CONTEXT* context)
 	 * MsvAvTargetName should be the name of the service be accessed after authentication)
 	 * here used: "TERMSRV/192.168.0.123" in unicode (Dmitrij Jasnov)
 	 */
-	uint8 name[42] =
+	BYTE name[42] =
 			"\x54\x00\x45\x00\x52\x00\x4d\x00\x53\x00\x52\x00\x56\x00\x2f\x00\x31\x00\x39\x00\x32"
 			"\x00\x2e\x00\x31\x00\x36\x00\x38\x00\x2e\x00\x30\x00\x2e\x00\x31\x00\x32\x00\x33\x00";
 
 	TargetName->length = 42;
-	TargetName->value = (uint8*) malloc(TargetName->length);
+	TargetName->value = (BYTE*) malloc(TargetName->length);
 
 	s = stream_new(0);
 	stream_attach(s, TargetName->value, TargetName->length);
@@ -115,7 +115,7 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
 	STREAM* s;
 	AV_PAIR* ChannelBindings = &context->av_pairs->ChannelBindings;
 
-	ChannelBindings->value = (uint8*) malloc(48);
+	ChannelBindings->value = (BYTE*) malloc(48);
 	ChannelBindings->length = 16;
 
 	s = stream_new(0);
@@ -131,7 +131,7 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
  * @param[out] timestamp 64-bit little-endian timestamp
  */
 
-void ntlm_current_time(uint8* timestamp)
+void ntlm_current_time(BYTE* timestamp)
 {
 	uint64 time64;
 
@@ -221,10 +221,10 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	int length;
 	char* db_user;
 	char* db_hash;
-	uint16* User;
-	uint32 UserLength;
+	UINT16* User;
+	UINT32 UserLength;
 	long int file_size;
-	unsigned char db_hash_bin[16];
+	BYTE db_hash_bin[16];
 
 	/* Fetch NTLMv2 hash from database */
 
@@ -301,7 +301,7 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	/* Concatenate(Uppercase(username),domain)*/
 	memcpy(p, context->identity.User, context->identity.UserLength);
-	CharUpperBuffW(p, context->identity.UserLength / 2);
+	CharUpperBuffW((LPWSTR) p, context->identity.UserLength / 2);
 
 	memcpy(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
 
@@ -350,35 +350,35 @@ void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 
 void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
-	uint8* blob;
-	uint8 ntlm_v2_hash[16];
-	uint8 nt_proof_str[16];
+	BYTE* blob;
+	BYTE ntlm_v2_hash[16];
+	BYTE nt_proof_str[16];
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
 
 	sspi_SecBufferAlloc(&ntlm_v2_temp, context->TargetInfo.cbBuffer + 28);
 
 	memset(ntlm_v2_temp.pvBuffer, '\0', ntlm_v2_temp.cbBuffer);
-	blob = (uint8*) ntlm_v2_temp.pvBuffer;
+	blob = (BYTE*) ntlm_v2_temp.pvBuffer;
 
 	/* Compute the NTLMv2 hash */
 	ntlm_compute_ntlm_v2_hash(context, (char*) ntlm_v2_hash);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Password (length = %d)\n", context->identity.PasswordLength);
-	freerdp_hexdump((uint8*) context->identity.Password, context->identity.PasswordLength);
+	freerdp_hexdump((BYTE*) context->identity.Password, context->identity.PasswordLength);
 	printf("\n");
 
 	printf("Username (length = %d)\n", context->identity.UserLength);
-	freerdp_hexdump((uint8*) context->identity.User, context->identity.UserLength);
+	freerdp_hexdump((BYTE*) context->identity.User, context->identity.UserLength);
 	printf("\n");
 
 	printf("Domain (length = %d)\n", context->identity.DomainLength);
-	freerdp_hexdump((uint8*) context->identity.Domain, context->identity.DomainLength);
+	freerdp_hexdump((BYTE*) context->identity.Domain, context->identity.DomainLength);
 	printf("\n");
 
 	printf("Workstation (length = %d)\n", context->WorkstationLength);
-	freerdp_hexdump((uint8*) context->Workstation, context->WorkstationLength);
+	freerdp_hexdump((BYTE*) context->Workstation, context->WorkstationLength);
 	printf("\n");
 
 	printf("NTOWFv2, NTLMv2 Hash\n");
@@ -404,7 +404,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 	/* Concatenate server challenge with temp */
 	sspi_SecBufferAlloc(&ntlm_v2_temp_chal, ntlm_v2_temp.cbBuffer + 8);
-	blob = (uint8*) ntlm_v2_temp_chal.pvBuffer;
+	blob = (BYTE*) ntlm_v2_temp_chal.pvBuffer;
 	memcpy(blob, context->ServerChallenge, 8);
 	memcpy(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 
@@ -413,7 +413,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
 	sspi_SecBufferAlloc(&context->NtChallengeResponse, ntlm_v2_temp.cbBuffer + 16);
-	blob = (uint8*) context->NtChallengeResponse.pvBuffer;
+	blob = (BYTE*) context->NtChallengeResponse.pvBuffer;
 	memcpy(blob, nt_proof_str, 16);
 	memcpy(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 
@@ -432,7 +432,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
  * @param ciphertext cipher text
  */
 
-void ntlm_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext)
+void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 {
 	CryptoRc4 rc4;
 
@@ -529,14 +529,14 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
  * @param signing_key Destination signing key
  */
 
-void ntlm_generate_signing_key(uint8* exported_session_key, PSecBuffer sign_magic, uint8* signing_key)
+void ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic, BYTE* signing_key)
 {
 	int length;
-	uint8* value;
+	BYTE* value;
 	CryptoMd5 md5;
 
 	length = 16 + sign_magic->cbBuffer;
-	value = (uint8*) malloc(length);
+	value = (BYTE*) malloc(length);
 
 	/* Concatenate ExportedSessionKey with sign magic */
 	memcpy(value, exported_session_key, 16);
@@ -585,14 +585,14 @@ void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
  * @param sealing_key Destination sealing key
  */
 
-void ntlm_generate_sealing_key(uint8* exported_session_key, PSecBuffer seal_magic, uint8* sealing_key)
+void ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic, BYTE* sealing_key)
 {
-	uint8* p;
+	BYTE* p;
 	CryptoMd5 md5;
 	SecBuffer buffer;
 
 	sspi_SecBufferAlloc(&buffer, 16 + seal_magic->cbBuffer);
-	p = (uint8*) buffer.pvBuffer;
+	p = (BYTE*) buffer.pvBuffer;
 
 	/* Concatenate ExportedSessionKey with seal magic */
 	memcpy(p, exported_session_key, 16);

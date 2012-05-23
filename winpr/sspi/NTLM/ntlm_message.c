@@ -126,7 +126,7 @@ void ntlm_output_version(STREAM* s)
 	stream_write_uint8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
 }
 
-void ntlm_print_negotiate_flags(uint32 flags)
+void ntlm_print_negotiate_flags(UINT32 flags)
 {
 	int i;
 	const char* str;
@@ -149,15 +149,15 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 {
 	STREAM* s;
 	int length;
-	uint8 Signature[8];
-	uint32 MessageType;
-	uint32 NegotiateFlags;
-	uint16 DomainNameLen;
-	uint16 DomainNameMaxLen;
-	uint32 DomainNameBufferOffset;
-	uint16 WorkstationLen;
-	uint16 WorkstationMaxLen;
-	uint32 WorkstationBufferOffset;
+	BYTE Signature[8];
+	UINT32 MessageType;
+	UINT32 NegotiateFlags;
+	UINT16 DomainNameLen;
+	UINT16 DomainNameMaxLen;
+	UINT32 DomainNameBufferOffset;
+	UINT16 WorkstationLen;
+	UINT16 WorkstationMaxLen;
+	UINT32 WorkstationBufferOffset;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
@@ -229,7 +229,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 {
 	STREAM* s;
 	int length;
-	uint32 NegotiateFlags = 0;
+	UINT32 NegotiateFlags = 0;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
@@ -320,19 +320,19 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	uint8* p;
+	BYTE* p;
 	STREAM* s;
 	int length;
 	char Signature[8];
-	uint32 MessageType;
-	uint8* StartOffset;
-	uint8* PayloadOffset;
-	uint16 TargetNameLen;
-	uint16 TargetNameMaxLen;
-	uint32 TargetNameBufferOffset;
-	uint16 TargetInfoLen;
-	uint16 TargetInfoMaxLen;
-	uint32 TargetInfoBufferOffset;
+	UINT32 MessageType;
+	BYTE* StartOffset;
+	BYTE* PayloadOffset;
+	UINT16 TargetNameLen;
+	UINT16 TargetNameMaxLen;
+	UINT32 TargetNameBufferOffset;
+	UINT16 TargetInfoLen;
+	UINT16 TargetInfoMaxLen;
+	UINT32 TargetInfoBufferOffset;
 
 	ntlm_generate_client_challenge(context);
 
@@ -528,13 +528,13 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 {
 	STREAM* s;
 	int length;
-	uint32 PayloadOffset;
-	uint16 TargetNameLen;
-	uint8* TargetNameBuffer;
-	uint32 TargetNameBufferOffset;
-	uint16 TargetInfoLen;
-	uint8* TargetInfoBuffer;
-	uint32 TargetInfoBufferOffset;
+	UINT32 PayloadOffset;
+	UINT16 TargetNameLen;
+	BYTE* TargetNameBuffer;
+	UINT32 TargetNameBufferOffset;
+	UINT16 TargetInfoLen;
+	BYTE* TargetInfoBuffer;
+	UINT32 TargetInfoBufferOffset;
 
 	/* Server Challenge */
 	ntlm_generate_server_challenge(context);
@@ -553,7 +553,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	if (context->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
 	{
-		TargetNameLen = (uint16) context->TargetName.cbBuffer;
+		TargetNameLen = (UINT16) context->TargetName.cbBuffer;
 		TargetNameBuffer = context->TargetName.pvBuffer;
 	}
 	else
@@ -566,7 +566,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 	{
-		TargetInfoLen = (uint16) context->TargetInfo.cbBuffer;
+		TargetInfoLen = (UINT16) context->TargetInfo.cbBuffer;
 		TargetInfoBuffer = context->TargetInfo.pvBuffer;
 	}
 	else
@@ -651,33 +651,33 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 {
 	STREAM* s;
 	int length;
-	uint8 Signature[8];
-	uint32 MessageType;
-	uint32 NegotiateFlags;
-	uint16 DomainNameLen;
-	uint16 DomainNameMaxLen;
-	uint8* DomainNameBuffer;
-	uint32 DomainNameBufferOffset;
-	uint16 UserNameLen;
-	uint16 UserNameMaxLen;
-	uint8* UserNameBuffer;
-	uint32 UserNameBufferOffset;
-	uint16 WorkstationLen;
-	uint16 WorkstationMaxLen;
-	uint8* WorkstationBuffer;
-	uint32 WorkstationBufferOffset;
-	uint16 LmChallengeResponseLen;
-	uint16 LmChallengeResponseMaxLen;
-	uint8* LmChallengeResponseBuffer;
-	uint32 LmChallengeResponseBufferOffset;
-	uint16 NtChallengeResponseLen;
-	uint16 NtChallengeResponseMaxLen;
-	uint8* NtChallengeResponseBuffer;
-	uint32 NtChallengeResponseBufferOffset;
-	uint16 EncryptedRandomSessionKeyLen;
-	uint16 EncryptedRandomSessionKeyMaxLen;
-	uint8* EncryptedRandomSessionKeyBuffer;
-	uint32 EncryptedRandomSessionKeyBufferOffset;
+	BYTE Signature[8];
+	UINT32 MessageType;
+	UINT32 NegotiateFlags;
+	UINT16 DomainNameLen;
+	UINT16 DomainNameMaxLen;
+	BYTE* DomainNameBuffer;
+	UINT32 DomainNameBufferOffset;
+	UINT16 UserNameLen;
+	UINT16 UserNameMaxLen;
+	BYTE* UserNameBuffer;
+	UINT32 UserNameBufferOffset;
+	UINT16 WorkstationLen;
+	UINT16 WorkstationMaxLen;
+	BYTE* WorkstationBuffer;
+	UINT32 WorkstationBufferOffset;
+	UINT16 LmChallengeResponseLen;
+	UINT16 LmChallengeResponseMaxLen;
+	BYTE* LmChallengeResponseBuffer;
+	UINT32 LmChallengeResponseBufferOffset;
+	UINT16 NtChallengeResponseLen;
+	UINT16 NtChallengeResponseMaxLen;
+	BYTE* NtChallengeResponseBuffer;
+	UINT32 NtChallengeResponseBufferOffset;
+	UINT16 EncryptedRandomSessionKeyLen;
+	UINT16 EncryptedRandomSessionKeyMaxLen;
+	BYTE* EncryptedRandomSessionKeyBuffer;
+	UINT32 EncryptedRandomSessionKeyBufferOffset;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
@@ -807,7 +807,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	/* NtChallengeResponse */
 	if (NtChallengeResponseLen > 0)
 	{
-		uint8* ClientChallengeBuffer;
+		BYTE* ClientChallengeBuffer;
 
 		NtChallengeResponseBuffer = s->data + NtChallengeResponseBufferOffset;
 
@@ -928,31 +928,31 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 {
 	STREAM* s;
 	int length;
-	uint8* MicOffset = NULL;
-	uint32 NegotiateFlags = 0;
+	BYTE* MicOffset = NULL;
+	UINT32 NegotiateFlags = 0;
 
-	uint16 DomainNameLen;
-	uint16 UserNameLen;
-	uint16 WorkstationLen;
-	uint16 LmChallengeResponseLen;
-	uint16 NtChallengeResponseLen;
-	uint16 EncryptedRandomSessionKeyLen;
+	UINT16 DomainNameLen;
+	UINT16 UserNameLen;
+	UINT16 WorkstationLen;
+	UINT16 LmChallengeResponseLen;
+	UINT16 NtChallengeResponseLen;
+	UINT16 EncryptedRandomSessionKeyLen;
 
-	uint32 PayloadBufferOffset;
-	uint32 DomainNameBufferOffset;
-	uint32 UserNameBufferOffset;
-	uint32 WorkstationBufferOffset;
-	uint32 LmChallengeResponseBufferOffset;
-	uint32 NtChallengeResponseBufferOffset;
-	uint32 EncryptedRandomSessionKeyBufferOffset;
+	UINT32 PayloadBufferOffset;
+	UINT32 DomainNameBufferOffset;
+	UINT32 UserNameBufferOffset;
+	UINT32 WorkstationBufferOffset;
+	UINT32 LmChallengeResponseBufferOffset;
+	UINT32 NtChallengeResponseBufferOffset;
+	UINT32 EncryptedRandomSessionKeyBufferOffset;
 
-	uint8* UserNameBuffer;
-	uint8* DomainNameBuffer;
-	uint8* WorkstationBuffer;
-	uint8* EncryptedRandomSessionKeyBuffer;
+	BYTE* UserNameBuffer;
+	BYTE* DomainNameBuffer;
+	BYTE* WorkstationBuffer;
+	BYTE* EncryptedRandomSessionKeyBuffer;
 
 	WorkstationLen = context->WorkstationLength;
-	WorkstationBuffer = (uint8*) context->Workstation;
+	WorkstationBuffer = (BYTE*) context->Workstation;
 
 	s = stream_new(0);
 	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
@@ -960,14 +960,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->ntlm_v2 < 1)
 		WorkstationLen = 0;
 
-	DomainNameLen = (uint16) context->identity.DomainLength;
-	DomainNameBuffer = (uint8*) context->identity.Domain;
+	DomainNameLen = (UINT16) context->identity.DomainLength;
+	DomainNameBuffer = (BYTE*) context->identity.Domain;
 
-	UserNameLen = (uint16) context->identity.UserLength;
-	UserNameBuffer = (uint8*) context->identity.User;
+	UserNameLen = (UINT16) context->identity.UserLength;
+	UserNameBuffer = (BYTE*) context->identity.User;
 
-	LmChallengeResponseLen = (uint16) context->LmChallengeResponse.cbBuffer;
-	NtChallengeResponseLen = (uint16) context->NtChallengeResponse.cbBuffer;
+	LmChallengeResponseLen = (UINT16) context->LmChallengeResponse.cbBuffer;
+	NtChallengeResponseLen = (UINT16) context->NtChallengeResponse.cbBuffer;
 
 	EncryptedRandomSessionKeyLen = 16;
 	EncryptedRandomSessionKeyBuffer = context->EncryptedRandomSessionKey;

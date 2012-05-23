@@ -30,5 +30,6 @@
 #endif
 
 #include <winpr/string.h>
+#include <winpr/memory.h>
 
 #endif /* WINPR_CRT_H */
