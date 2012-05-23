@@ -137,6 +137,8 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 		return false;
 	}
 
+	fcntl(sockfd, F_SETFL, O_NONBLOCK);
+
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 	unlink(path);
