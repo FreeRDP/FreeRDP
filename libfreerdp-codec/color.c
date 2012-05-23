@@ -822,7 +822,7 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 				
 				for (bit = 0; bit < 8; bit++)
 					if ((bmask & (0x80 >> bit)) == 0)
-						*(icon + (height - y) * width + x + bit) |= 0xFF000000;
+						*(icon + (height - y - 1) * width + x + bit) |= 0xFF000000;
 			}
 			
 			if ((width % 8) != 0)
@@ -831,7 +831,7 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 				
 				for (bit = 0; bit < width % 8; bit++)
 					if ((bmask & (0x80 >> bit)) == 0)
-						*(icon + (height - y) * width + x + bit) |= 0xFF000000;
+						*(icon + (height - y - 1) * width + x + bit) |= 0xFF000000;
 			}
 		
 			/* Skip padding */
@@ -839,8 +839,6 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 				maskIndex += (32 - (width % 32)) / 8;
 		}
 	}
-
-	free(mask);
 
 	return dstData;
 }
