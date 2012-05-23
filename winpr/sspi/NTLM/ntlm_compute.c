@@ -219,7 +219,6 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	char* data;
 	char* line;
 	int length;
-	size_t size;
 	char* db_user;
 	char* db_hash;
 	uint16* User;
@@ -262,8 +261,10 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 			db_user = line;
 			db_hash = &line[length + 1];
 
-			User = (uint16*) freerdp_uniconv_out(context->uniconv, db_user, &size);
-			UserLength = (uint32) size;
+			UserLength = strlen(db_user) * 2;
+			User = (uint16*) malloc(UserLength);
+			MultiByteToWideChar(CP_ACP, 0, db_user, strlen(db_user),
+					(LPWSTR) User, UserLength / 2);
 
 			if (UserLength == context->identity.UserLength)
 			{
@@ -300,7 +301,7 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	/* Concatenate(Uppercase(username),domain)*/
 	memcpy(p, context->identity.User, context->identity.UserLength);
-	freerdp_uniconv_uppercase(context->uniconv, p, context->identity.UserLength / 2);
+	CharUpperBuffW(p, context->identity.UserLength / 2);
 
 	memcpy(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
 

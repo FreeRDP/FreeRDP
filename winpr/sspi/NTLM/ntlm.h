@@ -39,8 +39,8 @@ typedef enum _NTLM_STATE NTLM_STATE;
 
 struct _AV_PAIR
 {
-	uint16 length;
-	uint8* value;
+	UINT16 length;
+	BYTE* value;
 };
 typedef struct _AV_PAIR AV_PAIR;
 
@@ -55,7 +55,7 @@ struct _AV_PAIRS
 	AV_PAIR Restrictions;
 	AV_PAIR TargetName;
 	AV_PAIR ChannelBindings;
-	uint32 Flags;
+	UINT32 Flags;
 };
 typedef struct _AV_PAIRS AV_PAIRS;
 
@@ -80,20 +80,19 @@ struct _NTLM_CONTEXT
 	boolean server;
 	boolean ntlm_v2;
 	NTLM_STATE state;
-	UNICONV* uniconv;
 	int SendSeqNum;
 	int RecvSeqNum;
 	boolean confidentiality;
 	CryptoRc4 SendRc4Seal;
 	CryptoRc4 RecvRc4Seal;
-	uint8* SendSigningKey;
-	uint8* RecvSigningKey;
-	uint8* SendSealingKey;
-	uint8* RecvSealingKey;
+	BYTE* SendSigningKey;
+	BYTE* RecvSigningKey;
+	BYTE* SendSealingKey;
+	BYTE* RecvSealingKey;
 	AV_PAIRS* av_pairs;
-	uint32 NegotiateFlags;
-	uint16* Workstation;
-	uint32 WorkstationLength;
+	UINT32 NegotiateFlags;
+	UINT16* Workstation;
+	UINT32 WorkstationLength;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
@@ -102,19 +101,19 @@ struct _NTLM_CONTEXT
 	SecBuffer TargetName;
 	SecBuffer NtChallengeResponse;
 	SecBuffer LmChallengeResponse;
-	uint8 Timestamp[8];
-	uint8 ServerChallenge[8];
-	uint8 ClientChallenge[8];
-	uint8 SessionBaseKey[16];
-	uint8 KeyExchangeKey[16];
-	uint8 RandomSessionKey[16];
-	uint8 ExportedSessionKey[16];
-	uint8 EncryptedRandomSessionKey[16];
-	uint8 ClientSigningKey[16];
-	uint8 ClientSealingKey[16];
-	uint8 ServerSigningKey[16];
-	uint8 ServerSealingKey[16];
-	uint8 MessageIntegrityCheck[16];
+	BYTE Timestamp[8];
+	BYTE ServerChallenge[8];
+	BYTE ClientChallenge[8];
+	BYTE SessionBaseKey[16];
+	BYTE KeyExchangeKey[16];
+	BYTE RandomSessionKey[16];
+	BYTE ExportedSessionKey[16];
+	BYTE EncryptedRandomSessionKey[16];
+	BYTE ClientSigningKey[16];
+	BYTE ClientSealingKey[16];
+	BYTE ServerSigningKey[16];
+	BYTE ServerSealingKey[16];
+	BYTE MessageIntegrityCheck[16];
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 

@@ -40,13 +40,13 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/blob.h>
 
-#define MSKRB_OID               "1.2.840.48018.1.2.2"
-#define STDKRB_OID              "1.2.840.113554.1.2.2"
+#define MSKRB_OID               	"1.2.840.48018.1.2.2"
+#define STDKRB_OID              	"1.2.840.113554.1.2.2"
 
-#define SERVICE					"_kerberos."
-#define KRB_VERSION				5
-#define KRB_SERVER				"krbtgt/"
-#define APP_SERVER				"TERMSRV/"
+#define SERVICE				"_kerberos."
+#define KRB_VERSION			5
+#define KRB_SERVER			"krbtgt/"
+#define APP_SERVER			"TERMSRV/"
 
 #define KRB_NAME_PRINCIPAL 		1
 #define KRB_NAME_SERVICE		2
@@ -59,17 +59,17 @@
 #define KRB_TAG_APREQ			14
 #define KRB_TAG_APREP			15
 #define KRB_TAG_ERROR			30
-#define KRB_TAG_U2UTGTREQ       16
-#define KRB_TAG_U2UTGTREP       16
+#define KRB_TAG_U2UTGTREQ		16
+#define KRB_TAG_U2UTGTREP		16
 
 #define NAME_TYPE_PRINCIPAL		1
 #define NAME_TYPE_SERVICE		2
 
 /* KRB ERROR */
-#define KDC_ERR_PREAUTH_FAILED  24
+#define KDC_ERR_PREAUTH_FAILED		24
 #define KDC_ERR_PREAUTH_REQ		25
 #define KRB_AP_ERR_SKEW			37
-#define KDC_ERR_C_PRINCIPAL_UNKNOWN 6
+#define KDC_ERR_C_PRINCIPAL_UNKNOWN	6
 
 #define PA_ENCTYPE_INFO			11
 #define PA_ENCTYPE_INFO2		19
@@ -77,12 +77,12 @@
 /* ENCRYPTION TYPE */
 #define ETYPE_DES_CBC_CRC		1
 #define ETYPE_DES_CBC_MD5		3
-#define ETYPE_AES128_CTS_HMAC	17
-#define ETYPE_AES256_CTS_HMAC	18
+#define ETYPE_AES128_CTS_HMAC		17
+#define ETYPE_AES256_CTS_HMAC		18
 #define ETYPE_RC4_HMAC			23
 
 /* CHECKSUM TYPE */
-#define KRB_CKSUM_HMAC_MD5      -138
+#define KRB_CKSUM_HMAC_MD5		-138
 
 /* AD TYPE */
 #define AD_IF_RELEVANT          1
@@ -214,7 +214,7 @@ struct _KRB_AS_REQ
 {
 	int pvno;
 	int type;
-    boolean pa_pac_request;
+	boolean pa_pac_request;
 	PAData** padata;
 	KDCReqBody req_body;
 };
@@ -224,7 +224,7 @@ struct _KRB_TGS_REQ
 {
 	int pvno;
 	int type;
-    boolean pa_pac_request;
+	boolean pa_pac_request;
 	PAData** padata;
 	KDCReqBody req_body;
 };
@@ -293,7 +293,6 @@ struct _KRB_CONTEXT
 	char* realm;
 	char* sname;
 	char* hostname;
-	SEC_WINNT_AUTH_IDENTITY identity;
 	rdpBlob passwd;
 	sint32 enctype;
 	time_t clockskew;
@@ -305,6 +304,7 @@ struct _KRB_CONTEXT
 	KrbENCKey* tgskey;
 	KRBCTX_STATE state;
 	CtxtHandle context;
+	SEC_WINNT_AUTH_IDENTITY identity;
 };
 typedef struct _KRB_CONTEXT KRB_CONTEXT;
 
@@ -335,16 +335,16 @@ KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode);
 KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_Rss, uint8 errcode);
 KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb_auth);
 
-void krb_ContextFree(KRB_CONTEXT* krb_ctx);
-void krb_free_ticket(Ticket* ticket);
-void krb_free_padata(PAData** padata);
-void krb_free_req_body(KDCReqBody* req_body);
-void krb_free_kdcrep(KrbKDCREP* kdc_rep);
-void krb_free_reppart(ENCKDCREPPart* reppart);
-void krb_free_asreq(KrbASREQ* krb_asreq);
-void krb_free_asrep(KrbASREP* krb_asrep);
-void krb_free_tgsreq(KrbTGSREQ* krb_tgsreq);
-void krb_free_tgsrep(KrbTGSREP* krb_tgsrep);
+void kerberos_ContextFree(KRB_CONTEXT* krb_ctx);
+void kerberos_free_ticket(Ticket* ticket);
+void kerberos_free_padata(PAData** padata);
+void kerberos_free_req_body(KDCReqBody* req_body);
+void kerberos_free_kdcrep(KrbKDCREP* kdc_rep);
+void kerberos_free_reppart(ENCKDCREPPart* reppart);
+void kerberos_free_asreq(KrbASREQ* krb_asreq);
+void kerberos_free_asrep(KrbASREP* krb_asrep);
+void kerberos_free_tgsreq(KrbTGSREQ* krb_tgsreq);
+void kerberos_free_tgsrep(KrbTGSREP* krb_tgsrep);
 void krb_free_krb_error(KrbERROR* krb_err);
 
-#endif /* FREERDP_SSPI_KERBEROS_PRIVATE_H */
+#endif /* WINPR_SSPI_KERBEROS_PRIVATE_H */

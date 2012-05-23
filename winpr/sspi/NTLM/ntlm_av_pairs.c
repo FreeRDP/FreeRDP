@@ -20,6 +20,7 @@
 #include "ntlm.h"
 #include "../sspi.h"
 
+#include <winpr/crt.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/hexdump.h>
 
@@ -336,20 +337,27 @@ char* test_DnsComputerName = "FreeRDP";
 void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context)
 {
 	int length;
-	size_t size;
 	AV_PAIRS* av_pairs = context->av_pairs;
 
-	av_pairs->NbDomainName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_NbDomainName, &size);
-	av_pairs->NbDomainName.length = (uint16) size;
+	av_pairs->NbDomainName.length = strlen(test_NbDomainName) * 2;
+	av_pairs->NbDomainName.value = (uint8*) malloc(av_pairs->NbDomainName.length);
+	MultiByteToWideChar(CP_ACP, 0, test_NbDomainName, strlen(test_NbDomainName),
+			(LPWSTR) av_pairs->NbDomainName.value, av_pairs->NbDomainName.length / 2);
 
-	av_pairs->NbComputerName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_NbComputerName, &size);
-	av_pairs->NbComputerName.length = (uint16) size;
+	av_pairs->NbComputerName.length = strlen(test_NbDomainName) * 2;
+	av_pairs->NbComputerName.value = (uint8*) malloc(av_pairs->NbComputerName.length);
+	MultiByteToWideChar(CP_ACP, 0, test_NbComputerName, strlen(test_NbComputerName),
+			(LPWSTR) av_pairs->NbComputerName.value, av_pairs->NbComputerName.length / 2);
 
-	av_pairs->DnsDomainName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_DnsDomainName, &size);
-	av_pairs->DnsDomainName.length = (uint16) size;
+	av_pairs->DnsDomainName.length = strlen(test_DnsDomainName) * 2;
+	av_pairs->DnsDomainName.value = (uint8*) malloc(av_pairs->DnsDomainName.length);
+	MultiByteToWideChar(CP_ACP, 0, test_DnsDomainName, strlen(test_DnsDomainName),
+			(LPWSTR) av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length / 2);
 
-	av_pairs->DnsComputerName.value = (uint8*) freerdp_uniconv_out(context->uniconv, test_DnsComputerName, &size);
-	av_pairs->DnsComputerName.length = (uint16) size;
+	av_pairs->DnsComputerName.length = strlen(test_DnsComputerName) * 2;
+	av_pairs->DnsComputerName.value = (uint8*) malloc(av_pairs->DnsComputerName.length);
+	MultiByteToWideChar(CP_ACP, 0, test_DnsComputerName, strlen(test_DnsComputerName),
+			(LPWSTR) av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length / 2);
 
 	length = ntlm_compute_av_pairs_length(context) + 4;
 	sspi_SecBufferAlloc(&context->TargetInfo, length);

@@ -84,13 +84,15 @@ void credssp_SetContextIdentity(rdpCredssp* context, char* user, char* domain, c
 
 	context->identity.UserLength = strlen(user) * 2;
 	context->identity.User = (uint16*) malloc(context->identity.UserLength);
-	MultiByteToWideChar(CP_ACP, 0, user, strlen(user), (LPWSTR) context->identity.User, context->identity.UserLength / 2);
+	MultiByteToWideChar(CP_ACP, 0, user, strlen(user),
+			(LPWSTR) context->identity.User, context->identity.UserLength / 2);
 
 	if (domain)
 	{
-		context->identity.DomainLength = strlen(user) * 2;
+		context->identity.DomainLength = strlen(domain) * 2;
 		context->identity.Domain = (uint16*) malloc(context->identity.DomainLength);
-		MultiByteToWideChar(CP_ACP, 0, user, strlen(user), (LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
+		MultiByteToWideChar(CP_ACP, 0, domain, strlen(domain),
+				(LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
 	}
 	else
 	{
@@ -100,7 +102,8 @@ void credssp_SetContextIdentity(rdpCredssp* context, char* user, char* domain, c
 
 	context->identity.PasswordLength = strlen(password) * 2;
 	context->identity.Password = (uint16*) malloc(context->identity.PasswordLength);
-	MultiByteToWideChar(CP_ACP, 0, password, strlen(password), (LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
+	MultiByteToWideChar(CP_ACP, 0, password, strlen(password),
+			(LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
 }
 
 /**

@@ -493,7 +493,7 @@ int krb_decode_ticket(STREAM* s, uint8 tag, Ticket* ticket)
 
 	err:
 		stream_set_mark(s, bm);
-		krb_free_ticket(ticket);
+		kerberos_free_ticket(ticket);
 		return 0;
 }
 
@@ -571,7 +571,7 @@ int krb_decode_kdc_rep(STREAM* s, KrbKDCREP* kdc_rep, sint32 maxlen)
 	return totlen;
 
 	err:
-		krb_free_kdcrep(kdc_rep);
+		kerberos_free_kdcrep(kdc_rep);
 		return 0;
 }
 
@@ -785,7 +785,7 @@ ENCKDCREPPart* krb_decode_enc_reppart(rdpBlob* msg, uint8 apptag)
 	stream_free(s) ;
 	return reppart;
 	err:
-		krb_free_reppart(reppart);
+		kerberos_free_reppart(reppart);
 		xfree(reppart);
 		stream_detach(s) ;
 		stream_free(s) ;

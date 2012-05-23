@@ -37,6 +37,7 @@
 #include "kerberos_encode.h"
 #include "kerberos_decode.h"
 
+#include <winpr/crt.h>
 #include <winpr/sspi.h>
 
 #include <freerdp/utils/tcp.h>
@@ -301,8 +302,8 @@ void kerberos_ContextFree(KRB_CONTEXT* krb_ctx)
 			free(krb_ctx->tgskey);
 		}
 
-		krb_free_ticket(&(krb_ctx->asticket));
-		krb_free_ticket(&(krb_ctx->tgsticket));
+		kerberos_free_ticket(&(krb_ctx->asticket));
+		kerberos_free_ticket(&(krb_ctx->tgsticket));
 		krb_ctx->state = KRB_STATE_FINAL;
 	}
 }
@@ -379,49 +380,54 @@ SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandle phCre
 
 void krb_SetContextIdentity(KRB_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* identity)
 {
-	size_t size;
-	/* TEMPORARY workaround for utf8 TODO: UTF16 to utf8 */
-	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
-		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
-		context->identity.UserLength = (uint32) size;
+		context->identity.UserLength = strlen((char*) identity->User) * 2;
+		context->identity.User = (UINT16*) malloc(context->identity.UserLength);
+		MultiByteToWideChar(CP_ACP, 0, (char*) identity->User, strlen((char*) identity->User),
+				(LPWSTR) context->identity.User, context->identity.UserLength / 2);
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Domain, &size);
-			context->identity.DomainLength = (uint32) size;
+			context->identity.DomainLength = strlen((char*) identity->Domain) * 2;
+			context->identity.Domain = (UINT16*) malloc(context->identity.DomainLength);
+			MultiByteToWideChar(CP_ACP, 0, (char*) identity->Domain, strlen((char*) identity->Domain),
+					(LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
 		}
 		else
 		{
-			context->identity.Domain = (uint16*) NULL;
+			context->identity.Domain = (UINT16*) NULL;
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Password, &size);
-		context->identity.PasswordLength = (uint32) size;
+		context->identity.PasswordLength = strlen((char*) identity->Password) * 2;
+		context->identity.Password = (UINT16*) malloc(context->identity.PasswordLength);
+		MultiByteToWideChar(CP_ACP, 0, (char*) identity->Password, strlen((char*) identity->Password),
+				(LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
 	}
 	else
 	{
-		context->identity.User = (uint16*) xzalloc(identity->UserLength + 1);
+		context->identity.User = (UINT16*) malloc(identity->UserLength);
 		memcpy(context->identity.User, identity->User, identity->UserLength);
+		context->identity.UserLength = identity->UserLength;
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) malloc(identity->DomainLength);
+			context->identity.Domain = (UINT16*) malloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
+			context->identity.DomainLength = identity->DomainLength;
 		}
 		else
 		{
-			context->identity.Domain = (uint16*) NULL;
+			context->identity.Domain = (UINT16*) NULL;
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) xzalloc(identity->PasswordLength + 1);
+		context->identity.Password = (UINT16*) malloc(identity->PasswordLength);
 		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
-		identity->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+		context->identity.PasswordLength = identity->PasswordLength;
 	}
 }
 
@@ -518,7 +524,11 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	krb_ctx->realm = xstrtoup(settings->kerberos_realm);
 	krb_ctx->cname = xstrdup((char*)krb_ctx->identity.User);
 	krb_ctx->settings = settings;
-	krb_ctx->passwd.data = freerdp_uniconv_out(krb_ctx->uniconv, (char*) krb_ctx->identity.Password, (size_t*) &(krb_ctx->passwd.length));
+
+	krb_ctx->passwd.length = strlen((char*) krb_ctx->identity.Password) * 2;
+	krb_ctx->passwd.data = (uint16*) malloc(krb_ctx->passwd.length);
+	MultiByteToWideChar(CP_ACP, 0, (char*) krb_ctx->identity.Password, strlen((char*) krb_ctx->identity.Password),
+			(LPWSTR) krb_ctx->passwd.data, krb_ctx->passwd.length / 2);
 
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
 			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
@@ -643,7 +653,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	freerdp_blob_free(&msg);
 	stream_free(s);
 	stream_free(paenc);
-	krb_free_asreq(krb_asreq);
+	kerberos_free_asreq(krb_asreq);
 	free(krb_asreq);
 }
 
@@ -731,7 +741,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 			krb_ctx->state = KRB_PACKET_ERROR;
 
 		/* clean up */
-		krb_free_asrep(krb_asrep);
+		kerberos_free_asrep(krb_asrep);
 		free(krb_asrep);
 		goto finish;
 	}
@@ -820,7 +830,7 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	freerdp_blob_free(krb_auth->cksum);
 	free(krb_auth->cksum);
 	free(krb_auth);
-	krb_free_tgsreq(krb_tgsreq);
+	kerberos_free_tgsreq(krb_tgsreq);
 	free(krb_tgsreq);
 	stream_free(sapreq);
 	stream_free(s);
@@ -866,7 +876,7 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 			krb_ctx->state = KRB_PACKET_ERROR;
 
 		/* clean up */
-		krb_free_tgsrep(krb_tgsrep);
+		kerberos_free_tgsrep(krb_tgsrep);
 		free(krb_tgsrep);
 		goto finish;
 	}
@@ -923,7 +933,7 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 	/* Verify KDC-REP-PART */
 	if(reppart->nonce != krb_ctx->nonce || strcasecmp(reppart->realm, krb_ctx->realm) || strcasecmp(reppart->sname, krb_ctx->sname))
 	{
-		krb_free_reppart(reppart);
+		kerberos_free_reppart(reppart);
 		free(reppart);
 		krb_ctx->state = KRB_PACKET_ERROR;
 		return -1;
@@ -934,7 +944,7 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 	krb_save_ticket(krb_ctx, kdc_rep);
 	freerdp_blob_copy(&(key->skey), &(reppart->key.skey));
 	key->enctype = reppart->key.enctype;
-	krb_free_reppart(reppart);
+	kerberos_free_reppart(reppart);
 	free(reppart);
 	return 0;
 }
@@ -1070,7 +1080,7 @@ KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	return krb_tgsreq;
 }
 
-void krb_free_ticket(Ticket* ticket)
+void kerberos_free_ticket(Ticket* ticket)
 {
 	if (ticket != NULL)
 	{
@@ -1081,7 +1091,7 @@ void krb_free_ticket(Ticket* ticket)
 	}
 }
 
-void krb_free_padata(PAData** padata)
+void kerberos_free_padata(PAData** padata)
 {
 	PAData** lpa_data;
 	lpa_data = padata;
@@ -1095,20 +1105,20 @@ void krb_free_padata(PAData** padata)
 	}
 }
 
-void krb_free_kdcrep(KrbKDCREP* kdc_rep)
+void kerberos_free_kdcrep(KrbKDCREP* kdc_rep)
 {
 	if(kdc_rep != NULL)
 	{
-		krb_free_padata(kdc_rep->padata);
+		kerberos_free_padata(kdc_rep->padata);
 		free(kdc_rep->cname);
 		free(kdc_rep->realm);
-		krb_free_ticket(&(kdc_rep->etgt));
+		kerberos_free_ticket(&(kdc_rep->etgt));
 		freerdp_blob_free(&(kdc_rep->enc_part.encblob));
 		kdc_rep->enc_part.encblob.data = NULL;
 	}
 }
 
-void krb_free_reppart(ENCKDCREPPart* reppart)
+void kerberos_free_reppart(ENCKDCREPPart* reppart)
 {
 	if(reppart != NULL)
 	{
@@ -1118,7 +1128,7 @@ void krb_free_reppart(ENCKDCREPPart* reppart)
 	}
 }
 
-void krb_free_req_body(KDCReqBody* req_body)
+void kerberos_free_req_body(KDCReqBody* req_body)
 {
 	if(req_body != NULL)
 	{
@@ -1131,37 +1141,37 @@ void krb_free_req_body(KDCReqBody* req_body)
 	}
 }
 
-void krb_free_asreq(KrbASREQ* krb_asreq)
+void kerberos_free_asreq(KrbASREQ* krb_asreq)
 {
 	if(krb_asreq != NULL)
 	{
-		krb_free_padata(krb_asreq->padata);
-		krb_free_req_body(&(krb_asreq->req_body));
+		kerberos_free_padata(krb_asreq->padata);
+		kerberos_free_req_body(&(krb_asreq->req_body));
 	}
 }
 
-void krb_free_asrep(KrbASREP* krb_asrep)
+void kerberos_free_asrep(KrbASREP* krb_asrep)
 {
 	if(krb_asrep != NULL)
 	{
-		krb_free_kdcrep(&(krb_asrep->kdc_rep));
+		kerberos_free_kdcrep(&(krb_asrep->kdc_rep));
 	}
 }
 
-void krb_free_tgsreq(KrbTGSREQ* krb_tgsreq)
+void kerberos_free_tgsreq(KrbTGSREQ* krb_tgsreq)
 {
 	if(krb_tgsreq != NULL)
 	{
-		krb_free_padata(krb_tgsreq->padata);
-		krb_free_req_body(&(krb_tgsreq->req_body));
+		kerberos_free_padata(krb_tgsreq->padata);
+		kerberos_free_req_body(&(krb_tgsreq->req_body));
 	}
 }
 
-void krb_free_tgsrep(KrbTGSREP* krb_tgsrep)
+void kerberos_free_tgsrep(KrbTGSREP* krb_tgsrep)
 {
 	if (krb_tgsrep != NULL)
 	{
-		krb_free_kdcrep(&(krb_tgsrep->kdc_rep));
+		kerberos_free_kdcrep(&(krb_tgsrep->kdc_rep));
 	}
 }
 

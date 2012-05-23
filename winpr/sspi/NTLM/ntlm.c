@@ -36,47 +36,52 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 
 void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* identity)
 {
-	size_t size;
 	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
-		context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->User, &size);
-		context->identity.UserLength = (uint32) size;
+		context->identity.UserLength = strlen((char*) identity->User) * 2;
+		context->identity.User = (UINT16*) malloc(context->identity.UserLength);
+		MultiByteToWideChar(CP_ACP, 0, (char*) identity->User, strlen((char*) identity->User),
+				(LPWSTR) context->identity.User, context->identity.UserLength / 2);
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Domain, &size);
-			context->identity.DomainLength = (uint32) size;
+			context->identity.DomainLength = strlen((char*) identity->Domain) * 2;
+			context->identity.Domain = (UINT16*) malloc(context->identity.DomainLength);
+			MultiByteToWideChar(CP_ACP, 0, (char*) identity->Domain, strlen((char*) identity->Domain),
+					(LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
 		}
 		else
 		{
-			context->identity.Domain = (uint16*) NULL;
+			context->identity.Domain = (UINT16*) NULL;
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) identity->Password, &size);
-		context->identity.PasswordLength = (uint32) size;
+		context->identity.PasswordLength = strlen((char*) identity->Password) * 2;
+		context->identity.Password = (UINT16*) malloc(context->identity.PasswordLength);
+		MultiByteToWideChar(CP_ACP, 0, (char*) identity->Password, strlen((char*) identity->Password),
+				(LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
 	}
 	else
 	{
-		context->identity.User = (uint16*) malloc(identity->UserLength);
+		context->identity.User = (UINT16*) malloc(identity->UserLength);
 		memcpy(context->identity.User, identity->User, identity->UserLength);
 		context->identity.UserLength = identity->UserLength;
 
 		if (identity->DomainLength > 0)
 		{
-			context->identity.Domain = (uint16*) malloc(identity->DomainLength);
+			context->identity.Domain = (UINT16*) malloc(identity->DomainLength);
 			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
 			context->identity.DomainLength = identity->DomainLength;
 		}
 		else
 		{
-			context->identity.Domain = (uint16*) NULL;
+			context->identity.Domain = (UINT16*) NULL;
 			context->identity.DomainLength = 0;
 		}
 
-		context->identity.Password = (uint16*) malloc(identity->PasswordLength);
+		context->identity.Password = (UINT16*) malloc(identity->PasswordLength);
 		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
 		context->identity.PasswordLength = identity->PasswordLength;
 	}
@@ -84,16 +89,18 @@ void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* ide
 
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
-	size_t size;
-	context->Workstation = (uint16*) freerdp_uniconv_out(context->uniconv, Workstation, &size);
-	context->WorkstationLength = (uint32) size;
+	context->WorkstationLength = strlen(Workstation) * 2;
+	context->Workstation = (UINT16*) malloc(context->WorkstationLength);
+	MultiByteToWideChar(CP_ACP, 0, Workstation, strlen(Workstation),
+			(LPWSTR) context->Workstation, context->WorkstationLength / 2);
 }
 
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
-	size_t size;
-	context->TargetName.pvBuffer = (uint16*) freerdp_uniconv_out(context->uniconv, TargetName, &size);
-	context->TargetName.cbBuffer = (uint32) size;
+	context->TargetName.cbBuffer = strlen(TargetName) * 2;
+	context->TargetName.pvBuffer = (void*) malloc(context->TargetName.cbBuffer);
+	MultiByteToWideChar(CP_ACP, 0, TargetName, strlen(TargetName),
+			(LPWSTR) context->TargetName.pvBuffer, context->TargetName.cbBuffer / 2);
 }
 
 NTLM_CONTEXT* ntlm_ContextNew()
@@ -107,7 +114,6 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->ntlm_v2 = false;
 		context->NegotiateFlags = 0;
 		context->state = NTLM_STATE_INITIAL;
-		context->uniconv = freerdp_uniconv_new();
 		context->av_pairs = (AV_PAIRS*) xzalloc(sizeof(AV_PAIRS));
 	}
 
@@ -119,7 +125,6 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	if (!context)
 		return;
 
-	freerdp_uniconv_free(context->uniconv);
 	crypto_rc4_free(context->SendRc4Seal);
 	crypto_rc4_free(context->RecvRc4Seal);
 	sspi_SecBufferFree(&context->NegotiateMessage);
@@ -129,6 +134,7 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->TargetName);
 	sspi_SecBufferFree(&context->NtChallengeResponse);
 	sspi_SecBufferFree(&context->LmChallengeResponse);
+
 	free(context->identity.User);
 	free(context->identity.Password);
 	free(context->identity.Domain);
@@ -590,7 +596,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* RC4-encrypt first 8 bytes of digest */
 	crypto_rc4(context->SendRc4Seal, 8, digest, checksum);
 
-	signature = (uint8*) signature_buffer->pvBuffer;
+	signature = (BYTE*) signature_buffer->pvBuffer;
 
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	memcpy(signature, (void*) &version, 4);
@@ -613,11 +619,11 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	int length;
 	void* data;
 	HMAC_CTX hmac;
-	uint8 digest[16];
-	uint8 checksum[8];
-	uint32 version = 1;
+	BYTE digest[16];
+	BYTE checksum[8];
+	UINT32 version = 1;
 	NTLM_CONTEXT* context;
-	uint8 expected_signature[16];
+	BYTE expected_signature[16];
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 
