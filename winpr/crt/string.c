@@ -285,4 +285,219 @@ BOOL IsCharLowerW(WCHAR ch)
 	return 0;
 }
 
+/*
+ * Advanced String Techniques in C++ - Part I: Unicode
+ * http://www.flipcode.com/archives/Advanced_String_Techniques_in_C-Part_I_Unicode.shtml
+ */
+
+/*
+ * Conversion *to* Unicode
+ * MultiByteToWideChar: http://msdn.microsoft.com/en-us/library/windows/desktop/dd319072/
+ */
+
+int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
+{
+	size_t ibl;
+	size_t obl;
+	char* pin;
+	char* pout;
+	char* pout0;
+
+	if (lpMultiByteStr == NULL)
+		return 0;
+
+	if (cbMultiByte < 0)
+		cbMultiByte = strlen(lpMultiByteStr) + 1;
+
+	ibl = cbMultiByte;
+	obl = 2 * ibl;
+
+	if (cchWideChar < 1)
+		return (obl / 2);
+
+	pin = (char*) lpMultiByteStr;
+	pout0 = (char*) lpWideCharStr;
+	pout = pout0;
+
+#ifdef HAVE_ICONV
+	{
+		iconv_t* out_iconv_h;
+
+		out_iconv_h = iconv_open(WINDOWS_CODEPAGE, DEFAULT_CODEPAGE);
+
+		if (errno == EINVAL)
+		{
+			printf("Error opening iconv converter to %s from %s\n", WINDOWS_CODEPAGE, DEFAULT_CODEPAGE);
+			return 0;
+		}
+
+		if (iconv(out_iconv_h, (ICONV_CONST char **) &pin, &ibl, &pout, &obl) == (size_t) - 1)
+		{
+			printf("MultiByteToWideChar: iconv() error\n");
+			return NULL;
+		}
+
+		iconv_close(out_iconv_h);
+	}
+#else
+	while ((ibl > 0) && (obl > 0))
+	{
+		unsigned int wc;
+
+		wc = (unsigned int) (unsigned char) (*pin++);
+		ibl--;
+
+		if (wc >= 0xF0)
+		{
+			wc = (wc - 0xF0) << 18;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80) << 12;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80) << 6;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80);
+			ibl -= 3;
+		}
+		else if (wc >= 0xE0)
+		{
+			wc = (wc - 0xE0) << 12;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80) << 6;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80);
+			ibl -= 2;
+		}
+		else if (wc >= 0xC0)
+		{
+			wc = (wc - 0xC0) << 6;
+			wc += ((unsigned int) (unsigned char) (*pin++) - 0x80);
+			ibl -= 1;
+		}
+
+		if (wc <= 0xFFFF)
+		{
+			*pout++ = (char) (wc & 0xFF);
+			*pout++ = (char) (wc >> 8);
+			obl -= 2;
+		}
+		else
+		{
+			wc -= 0x10000;
+			*pout++ = (char) ((wc >> 10) & 0xFF);
+			*pout++ = (char) ((wc >> 18) + 0xD8);
+			*pout++ = (char) (wc & 0xFF);
+			*pout++ = (char) (((wc >> 8) & 0x03) + 0xDC);
+			obl -= 4;
+		}
+	}
+#endif
+
+	if (ibl > 0)
+	{
+		printf("MultiByteToWideChar: string not fully converted - %d chars left\n", (int) ibl);
+		return 0;
+	}
+
+	return (pout - pout0) / 2;
+}
+
+/*
+ * Conversion *from* Unicode
+ * WideCharToMultiByte: http://msdn.microsoft.com/en-us/library/windows/desktop/dd374130/
+ */
+
+int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)
+{
+	char* pout;
+	char* conv_pout;
+	size_t conv_in_len;
+	size_t conv_out_len;
+	unsigned char* conv_pin;
+
+	if (cchWideChar < 1)
+
+	if (cchWideChar == 0)
+		return 0;
+
+	conv_pin = (unsigned char*) lpWideCharStr;
+	conv_in_len = cchWideChar;
+	pout = lpMultiByteStr;
+	conv_pout = pout;
+	conv_out_len = cbMultiByte;
+
+#ifdef HAVE_ICONV
+	{
+		iconv_t* in_iconv_h;
+
+		in_iconv_h = iconv_open(DEFAULT_CODEPAGE, WINDOWS_CODEPAGE);
+
+		if (errno == EINVAL)
+		{
+			printf("Error opening iconv converter to %s from %s\n", DEFAULT_CODEPAGE, WINDOWS_CODEPAGE);
+			return 0;
+		}
+
+		if (iconv(in_iconv_h, (ICONV_CONST char **) &conv_pin, &conv_in_len, &conv_pout, &conv_out_len) == (size_t) - 1)
+		{
+			printf("WideCharToMultiByte: iconv failure\n");
+			return 0;
+		}
+
+		iconv_close(in_iconv_h);
+	}
+#else
+	while (conv_in_len >= 2)
+	{
+		unsigned int wc;
+
+		wc = (unsigned int) (unsigned char) (*conv_pin++);
+		wc += ((unsigned int) (unsigned char) (*conv_pin++)) << 8;
+		conv_in_len -= 2;
+
+		if (wc >= 0xD800 && wc <= 0xDFFF && conv_in_len >= 2)
+		{
+			/* Code points U+10000 to U+10FFFF using surrogate pair */
+			wc = ((wc - 0xD800) << 10) + 0x10000;
+			wc += (unsigned int) (unsigned char) (*conv_pin++);
+			wc += ((unsigned int) (unsigned char) (*conv_pin++) - 0xDC) << 8;
+			conv_in_len -= 2;
+		}
+
+		if (wc <= 0x7F)
+		{
+			*conv_pout++ = (char) wc;
+			conv_out_len--;
+		}
+		else if (wc <= 0x07FF)
+		{
+			*conv_pout++ = (char) (0xC0 + (wc >> 6));
+			*conv_pout++ = (char) (0x80 + (wc & 0x3F));
+			conv_out_len -= 2;
+		}
+		else if (wc <= 0xFFFF)
+		{
+			*conv_pout++ = (char) (0xE0 + (wc >> 12));
+			*conv_pout++ = (char) (0x80 + ((wc >> 6) & 0x3F));
+			*conv_pout++ = (char) (0x80 + (wc & 0x3F));
+			conv_out_len -= 3;
+		}
+		else
+		{
+			*conv_pout++ = (char) (0xF0 + (wc >> 18));
+			*conv_pout++ = (char) (0x80 + ((wc >> 12) & 0x3F));
+			*conv_pout++ = (char) (0x80 + ((wc >> 6) & 0x3F));
+			*conv_pout++ = (char) (0x80 + (wc & 0x3F));
+			conv_out_len -= 4;
+		}
+	}
+#endif
+
+	if (conv_in_len > 0)
+	{
+		printf("WideCharToMultiByte: conversion failure - %d chars left\n", (int) conv_in_len);
+		return 0;
+	}
+
+	*conv_pout = 0;
+
+	return conv_out_len;
+}
+
 #endif

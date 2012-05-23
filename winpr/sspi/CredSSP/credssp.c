@@ -26,6 +26,7 @@
 #include <freerdp/crypto/tls.h>
 #include <freerdp/utils/stream.h>
 
+#include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/credssp.h>
 
@@ -79,16 +80,17 @@
 
 void credssp_SetContextIdentity(rdpCredssp* context, char* user, char* domain, char* password)
 {
-	size_t size;
 	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	context->identity.User = (uint16*) freerdp_uniconv_out(context->uniconv, user, &size);
-	context->identity.UserLength = (uint32) size;
+	context->identity.UserLength = strlen(user) * 2;
+	context->identity.User = (uint16*) malloc(context->identity.UserLength);
+	MultiByteToWideChar(CP_ACP, 0, user, strlen(user), (LPWSTR) context->identity.User, context->identity.UserLength / 2);
 
 	if (domain)
 	{
-		context->identity.Domain = (uint16*) freerdp_uniconv_out(context->uniconv, domain, &size);
-		context->identity.DomainLength = (uint32) size;
+		context->identity.DomainLength = strlen(user) * 2;
+		context->identity.Domain = (uint16*) malloc(context->identity.DomainLength);
+		MultiByteToWideChar(CP_ACP, 0, user, strlen(user), (LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
 	}
 	else
 	{
@@ -96,8 +98,9 @@ void credssp_SetContextIdentity(rdpCredssp* context, char* user, char* domain, c
 		context->identity.DomainLength = 0;
 	}
 
-	context->identity.Password = (uint16*) freerdp_uniconv_out(context->uniconv, (char*) password, &size);
-	context->identity.PasswordLength = (uint32) size;
+	context->identity.PasswordLength = strlen(password) * 2;
+	context->identity.Password = (uint16*) malloc(context->identity.PasswordLength);
+	MultiByteToWideChar(CP_ACP, 0, password, strlen(password), (LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
 }
 
 /**

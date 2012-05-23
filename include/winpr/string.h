@@ -27,6 +27,23 @@
 
 #ifndef _WIN32
 
+#define CSTR_LESS_THAN			1
+#define CSTR_EQUAL			2
+#define CSTR_GREATER_THAN		3
+
+#define CP_ACP				0
+#define CP_OEMCP			1
+#define CP_MACCP			2
+#define CP_THREAD_ACP			3
+#define CP_SYMBOL			42
+#define CP_UTF7				65000
+#define CP_UTF8				65001
+
+#define MB_PRECOMPOSED			0x00000001
+#define MB_COMPOSITE			0x00000002
+#define MB_USEGLYPHCHARS		0x00000004
+#define MB_ERR_INVALID_CHARS		0x00000008
+
 WINPR_API char* _strdup(const char* strSource);
 WINPR_API wchar_t* _wcsdup(const wchar_t* strSource);
 
@@ -101,6 +118,12 @@ WINPR_API BOOL IsCharLowerW(WCHAR ch);
 #else
 #define IsCharLower	IsCharLowerA
 #endif
+
+WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+
+WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
 #endif
 
