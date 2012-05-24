@@ -255,6 +255,11 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 		bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
 		rdpsnd->out_frames = (format->nBlockAlign * 4 * format->nChannels * 2 / bs + 1) * bs / (format->nChannels * 2);
 	}
+	else if (format->wFormatTag == 0x02)
+	{
+		bs = (format->nBlockAlign - 7 * format->nChannels) * 2 / format->nChannels + 2;
+		rdpsnd->out_frames = bs * 4;
+	}
 	else
 	{
 		rdpsnd->out_frames = 0x4000 / rdpsnd->src_bytes_per_frame;
@@ -311,11 +316,19 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 		src = rdpsnd->dsp_context->adpcm_buffer;
 		size = rdpsnd->dsp_context->adpcm_size;
 	}
+	else if (format->wFormatTag == 0x02)
+	{
+		rdpsnd->dsp_context->encode_ms_adpcm(rdpsnd->dsp_context,
+			src, size, format->nChannels, format->nBlockAlign);
+		src = rdpsnd->dsp_context->adpcm_buffer;
+		size = rdpsnd->dsp_context->adpcm_size;
+	}
 
 	rdpsnd->context.block_no = (rdpsnd->context.block_no + 1) % 256;
 
 	/* Fill to nBlockAlign for the last audio packet */
-	if (format->wFormatTag == 0x11 && rdpsnd->out_pending_frames < rdpsnd->out_frames && (size % format->nBlockAlign) != 0)
+	if ((format->wFormatTag == 0x11 || format->wFormatTag == 0x02) &&
+		rdpsnd->out_pending_frames < rdpsnd->out_frames && (size % format->nBlockAlign) != 0)
 		fill_size = format->nBlockAlign - (size % format->nBlockAlign);
 	else
 		fill_size = 0;

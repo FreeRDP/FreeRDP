@@ -212,6 +212,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat*
 			sample_spec.format = PA_SAMPLE_ULAW;
 			break;
 
+		case 2: /* MS ADPCM */
 		case 0x11: /* IMA ADPCM */
 			sample_spec.format = PA_SAMPLE_S16LE;
 			break;
@@ -364,6 +365,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 			}
 			break;
 
+		case 2: /* MS ADPCM */
 		case 0x11: /* IMA ADPCM */
 			if ((format->nSamplesPerSec <= PA_RATE_MAX) &&
 				(format->wBitsPerSample == 4) &&
@@ -405,7 +407,14 @@ static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	if (!pulse->stream)
 		return;
 
-	if (pulse->format == 0x11)
+	if (pulse->format == 2)
+	{
+		pulse->dsp_context->decode_ms_adpcm(pulse->dsp_context,
+			data, size, pulse->sample_spec.channels, pulse->block_size);
+		size = pulse->dsp_context->adpcm_size;
+		src = pulse->dsp_context->adpcm_buffer;
+	}
+	else if (pulse->format == 0x11)
 	{
 		pulse->dsp_context->decode_ima_adpcm(pulse->dsp_context,
 			data, size, pulse->sample_spec.channels, pulse->block_size);
