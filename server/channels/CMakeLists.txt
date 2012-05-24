@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Servers
+# libfreerdp-server-channels cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,19 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Servers
+set(FREERDP_SERVER_CHANNELS_SRCS
+	rdpsnd.c
+)
 
-if(NOT WIN32)
+add_library(freerdp-server-channels ${FREERDP_SERVER_CHANNELS_SRCS})
 
-	# Build Test Server
-	add_subdirectory(test)
+set_target_properties(freerdp-server-channels PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+target_link_libraries(freerdp-server-channels freerdp-channels freerdp-utils)
 
-	# Build X11 Server
-	find_suggested_package(X11)
-	if(WITH_X11)
-		add_subdirectory(X11)
-	endif()
+install(TARGETS freerdp-server-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-	# Build Server Channels library
-	add_subdirectory(channels)
-endif()

@@ -30,6 +30,7 @@ install(DIRECTORY freerdp/plugins DESTINATION include/freerdp FILES_MATCHING PAT
 install(DIRECTORY freerdp/locale DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/crypto DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/auth DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 
 file(GLOB HEADERS "winpr/*.h")
 install_files(/include/winpr FILES ${HEADERS})
