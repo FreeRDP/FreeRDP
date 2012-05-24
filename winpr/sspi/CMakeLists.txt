@@ -41,6 +41,10 @@ set(WINPR_SSPI_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
 
+set(WINPR_SSPI_SCHANNEL_SRCS
+	Schannel/schannel.c
+	Schannel/schannel.h)
+
 set(WINPR_SSPI_CREDSSP_SRCS
 	CredSSP/credssp.c)
 
@@ -54,6 +58,7 @@ if(NOT WITH_NATIVE_SSPI)
 		${WINPR_SSPI_NTLM_SRCS}
 		${WINPR_SSPI_KERBEROS_SRCS}
 		${WINPR_SSPI_NEGOTIATE_SRCS}
+		${WINPR_SSPI_SCHANNEL_SRCS}
 		${WINPR_SSPI_SRCS})
 else()
 	add_definitions(-DNATIVE_SSPI)
