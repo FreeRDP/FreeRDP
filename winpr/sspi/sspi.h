@@ -42,6 +42,8 @@ void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
 void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
 void sspi_SecureHandleFree(SecHandle* handle);
 
+void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
+
 enum SecurityFunctionTableIndex
 {
 	EnumerateSecurityPackagesIndex = 1,

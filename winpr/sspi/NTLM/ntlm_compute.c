@@ -139,7 +139,7 @@ void ntlm_current_time(BYTE* timestamp)
 	time64 = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
 	time64 *= 10000000; /* Convert timestamp to tenths of a microsecond */
 
-	memcpy(timestamp, &time64, 8); /* Copy into timestamp in little-endian */
+	CopyMemory(timestamp, &time64, 8); /* Copy into timestamp in little-endian */
 }
 
 /**
@@ -155,7 +155,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 	{
 		if (context->av_pairs->Timestamp.length == 8)
 		{
-			memcpy(context->av_pairs->Timestamp.value, context->Timestamp, 8);
+			CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
 			return;
 		}
 	}
@@ -167,7 +167,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 			context->av_pairs->Timestamp.value = malloc(context->av_pairs->Timestamp.length);
 		}
 
-		memcpy(context->av_pairs->Timestamp.value, context->Timestamp, 8);
+		CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
 	}
 }
 
@@ -304,10 +304,10 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	p = (char*) buffer.pvBuffer;
 
 	/* Concatenate(Uppercase(username),domain)*/
-	memcpy(p, context->identity.User, context->identity.UserLength);
+	CopyMemory(p, context->identity.User, context->identity.UserLength);
 	CharUpperBuffW((LPWSTR) p, context->identity.UserLength / 2);
 
-	memcpy(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
+	CopyMemory(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
 
 	if (context->identity.PasswordLength > 0)
 	{
@@ -332,8 +332,8 @@ void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	ntlm_compute_ntlm_v2_hash(context, ntlm_v2_hash);
 
 	/* Concatenate the server and client challenges */
-	memcpy(value, context->ServerChallenge, 8);
-	memcpy(&value[8], context->ClientChallenge, 8);
+	CopyMemory(value, context->ServerChallenge, 8);
+	CopyMemory(&value[8], context->ClientChallenge, 8);
 
 	sspi_SecBufferAlloc(&context->LmChallengeResponse, 24);
 	response = (char*) context->LmChallengeResponse.pvBuffer;
@@ -342,7 +342,7 @@ void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	HMAC(EVP_md5(), (void*) ntlm_v2_hash, 16, (void*) value, 16, (void*) response, NULL);
 
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response (24 bytes) */
-	memcpy(&response[16], context->ClientChallenge, 8);
+	CopyMemory(&response[16], context->ClientChallenge, 8);
 }
 
 /**
@@ -395,10 +395,10 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	blob[1] = 1; /* HighRespType (1 byte) */
 	/* Reserved1 (2 bytes) */
 	/* Reserved2 (4 bytes) */
-	memcpy(&blob[8], context->av_pairs->Timestamp.value, 8); /* Timestamp (8 bytes) */
-	memcpy(&blob[16], context->ClientChallenge, 8); /* ClientChallenge (8 bytes) */
+	CopyMemory(&blob[8], context->av_pairs->Timestamp.value, 8); /* Timestamp (8 bytes) */
+	CopyMemory(&blob[16], context->ClientChallenge, 8); /* ClientChallenge (8 bytes) */
 	/* Reserved3 (4 bytes) */
-	memcpy(&blob[28], context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+	CopyMemory(&blob[28], context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NTLMv2 Response Temp Blob\n");
@@ -409,8 +409,8 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	/* Concatenate server challenge with temp */
 	sspi_SecBufferAlloc(&ntlm_v2_temp_chal, ntlm_v2_temp.cbBuffer + 8);
 	blob = (BYTE*) ntlm_v2_temp_chal.pvBuffer;
-	memcpy(blob, context->ServerChallenge, 8);
-	memcpy(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
+	CopyMemory(blob, context->ServerChallenge, 8);
+	CopyMemory(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 
 	HMAC(EVP_md5(), (void*) ntlm_v2_hash, 16, ntlm_v2_temp_chal.pvBuffer,
 		ntlm_v2_temp_chal.cbBuffer, (void*) nt_proof_str, NULL);
@@ -418,8 +418,8 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
 	sspi_SecBufferAlloc(&context->NtChallengeResponse, ntlm_v2_temp.cbBuffer + 16);
 	blob = (BYTE*) context->NtChallengeResponse.pvBuffer;
-	memcpy(blob, nt_proof_str, 16);
-	memcpy(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
+	CopyMemory(blob, nt_proof_str, 16);
+	CopyMemory(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 
 	/* Compute SessionBaseKey, the HMAC-MD5 hash of NTProofStr using the NTLMv2 hash as the key */
 	HMAC(EVP_md5(), (void*) ntlm_v2_hash, 16, (void*) nt_proof_str, 16, (void*) context->SessionBaseKey, NULL);
@@ -480,7 +480,7 @@ void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
 void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
 {
 	/* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
-	memcpy(context->KeyExchangeKey, context->SessionBaseKey, 16);
+	CopyMemory(context->KeyExchangeKey, context->SessionBaseKey, 16);
 }
 
 /**
@@ -500,7 +500,7 @@ void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
 
 void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
 {
-	memcpy(context->ExportedSessionKey, context->RandomSessionKey, 16);
+	CopyMemory(context->ExportedSessionKey, context->RandomSessionKey, 16);
 }
 
 /**
@@ -543,8 +543,8 @@ void ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic
 	value = (BYTE*) malloc(length);
 
 	/* Concatenate ExportedSessionKey with sign magic */
-	memcpy(value, exported_session_key, 16);
-	memcpy(&value[16], sign_magic->pvBuffer, sign_magic->cbBuffer);
+	CopyMemory(value, exported_session_key, 16);
+	CopyMemory(&value[16], sign_magic->pvBuffer, sign_magic->cbBuffer);
 
 	md5 = crypto_md5_init();
 	crypto_md5_update(md5, value, length);
@@ -599,8 +599,8 @@ void ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic
 	p = (BYTE*) buffer.pvBuffer;
 
 	/* Concatenate ExportedSessionKey with seal magic */
-	memcpy(p, exported_session_key, 16);
-	memcpy(&p[16], seal_magic->pvBuffer, seal_magic->cbBuffer);
+	CopyMemory(p, exported_session_key, 16);
+	CopyMemory(&p[16], seal_magic->pvBuffer, seal_magic->cbBuffer);
 
 	md5 = crypto_md5_init();
 	crypto_md5_update(md5, buffer.pvBuffer, buffer.cbBuffer);

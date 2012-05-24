@@ -20,8 +20,9 @@
 #include "ntlm.h"
 #include "../sspi.h"
 
+#include <winpr/crt.h>
+#include <winpr/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
 
 #include "ntlm_compute.h"
 
@@ -208,12 +209,12 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
-	memcpy(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
+	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(s->data, length);
+	winpr_HexDump(s->data, length);
 	printf("\n");
 #endif
 
@@ -292,7 +293,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 #ifdef WITH_DEBUG_NTLM
 		printf("Version (length = 8)\n");
-		freerdp_hexdump((s->p - 8), 8);
+		winpr_HexDump((s->p - 8), 8);
 		printf("\n");
 #endif
 	}
@@ -301,12 +302,12 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
-	memcpy(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
+	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(s->data, length);
+	winpr_HexDump(s->data, length);
 	printf("\n");
 #endif
 
@@ -392,11 +393,11 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	{
 		p = StartOffset + TargetNameBufferOffset;
 		sspi_SecBufferAlloc(&context->TargetName, TargetNameLen);
-		memcpy(context->TargetName.pvBuffer, p, TargetNameLen);
+		CopyMemory(context->TargetName.pvBuffer, p, TargetNameLen);
 
 #ifdef WITH_DEBUG_NTLM
 		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
-		freerdp_hexdump(context->TargetName.pvBuffer, context->TargetName.cbBuffer);
+		winpr_HexDump(context->TargetName.pvBuffer, context->TargetName.cbBuffer);
 		printf("\n");
 #endif
 	}
@@ -405,11 +406,11 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	{
 		p = StartOffset + TargetInfoBufferOffset;
 		sspi_SecBufferAlloc(&context->TargetInfo, TargetInfoLen);
-		memcpy(context->TargetInfo.pvBuffer, p, TargetInfoLen);
+		CopyMemory(context->TargetInfo.pvBuffer, p, TargetInfoLen);
 
 #ifdef WITH_DEBUG_NTLM
 		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
-		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+		winpr_HexDump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 		printf("\n");
 #endif
 
@@ -423,11 +424,11 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	length = (PayloadOffset - StartOffset) + TargetNameLen + TargetInfoLen;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
-	memcpy(context->ChallengeMessage.pvBuffer, StartOffset, length);
+	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	printf("\n");
 #endif
 
@@ -472,47 +473,47 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 #ifdef WITH_DEBUG_NTLM
 	printf("ClientChallenge\n");
-	freerdp_hexdump(context->ClientChallenge, 8);
+	winpr_HexDump(context->ClientChallenge, 8);
 	printf("\n");
 
 	printf("ServerChallenge\n");
-	freerdp_hexdump(context->ServerChallenge, 8);
+	winpr_HexDump(context->ServerChallenge, 8);
 	printf("\n");
 
 	printf("SessionBaseKey\n");
-	freerdp_hexdump(context->SessionBaseKey, 16);
+	winpr_HexDump(context->SessionBaseKey, 16);
 	printf("\n");
 
 	printf("KeyExchangeKey\n");
-	freerdp_hexdump(context->KeyExchangeKey, 16);
+	winpr_HexDump(context->KeyExchangeKey, 16);
 	printf("\n");
 
 	printf("ExportedSessionKey\n");
-	freerdp_hexdump(context->ExportedSessionKey, 16);
+	winpr_HexDump(context->ExportedSessionKey, 16);
 	printf("\n");
 
 	printf("RandomSessionKey\n");
-	freerdp_hexdump(context->RandomSessionKey, 16);
+	winpr_HexDump(context->RandomSessionKey, 16);
 	printf("\n");
 
 	printf("ClientSigningKey\n");
-	freerdp_hexdump(context->ClientSigningKey, 16);
+	winpr_HexDump(context->ClientSigningKey, 16);
 	printf("\n");
 
 	printf("ClientSealingKey\n");
-	freerdp_hexdump(context->ClientSealingKey, 16);
+	winpr_HexDump(context->ClientSealingKey, 16);
 	printf("\n");
 
 	printf("ServerSigningKey\n");
-	freerdp_hexdump(context->ServerSigningKey, 16);
+	winpr_HexDump(context->ServerSigningKey, 16);
 	printf("\n");
 
 	printf("ServerSealingKey\n");
-	freerdp_hexdump(context->ServerSealingKey, 16);
+	winpr_HexDump(context->ServerSealingKey, 16);
 	printf("\n");
 
 	printf("Timestamp\n");
-	freerdp_hexdump(context->Timestamp, 8);
+	winpr_HexDump(context->Timestamp, 8);
 	printf("\n");
 #endif
 
@@ -612,7 +613,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		stream_write(s, TargetNameBuffer, TargetNameLen);
 #ifdef WITH_DEBUG_NTLM
 		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
-		freerdp_hexdump(TargetNameBuffer, TargetNameLen);
+		winpr_HexDump(TargetNameBuffer, TargetNameLen);
 		printf("\n");
 #endif
 	}
@@ -622,7 +623,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		stream_write(s, TargetInfoBuffer, TargetInfoLen);
 #ifdef WITH_DEBUG_NTLM
 		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
-		freerdp_hexdump(TargetInfoBuffer, TargetInfoLen);
+		winpr_HexDump(TargetInfoBuffer, TargetInfoLen);
 		printf("\n");
 #endif
 	}
@@ -631,11 +632,11 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
-	memcpy(context->ChallengeMessage.pvBuffer, s->data, length);
+	CopyMemory(context->ChallengeMessage.pvBuffer, s->data, length);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	printf("\n");
 #endif
 
@@ -688,15 +689,15 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (memcmp(Signature, NTLM_SIGNATURE, 8) != 0)
 	{
 		printf("Unexpected NTLM signature: %s, expected:%s\n", Signature, NTLM_SIGNATURE);
-		stream_detach(s) ;
-		stream_free(s) ;
+		stream_detach(s);
+		stream_free(s);
 		return SEC_E_INVALID_TOKEN;
 	}
 
 	if (MessageType != MESSAGE_TYPE_AUTHENTICATE)
 	{
-		stream_detach(s) ;
-		stream_free(s) ;
+		stream_detach(s);
+		stream_free(s);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -742,7 +743,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 #ifdef WITH_DEBUG_NTLM
 		printf("Version (length = 8)\n");
-		freerdp_hexdump(s->p, 8);
+		winpr_HexDump(s->p, 8);
 		printf("\n");
 #endif
 
@@ -751,12 +752,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	length = stream_get_length(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	memcpy(context->AuthenticateMessage.pvBuffer, s->data, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
 	buffer->cbBuffer = length;
 
 #ifdef WITH_DEBUG_NTLM
 	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(s->data, length);
+	winpr_HexDump(s->data, length);
 	printf("\n");
 #endif
 
@@ -766,7 +767,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		DomainNameBuffer = s->data + DomainNameBufferOffset;
 #ifdef WITH_DEBUG_NTLM
 		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
-		freerdp_hexdump(DomainNameBuffer, DomainNameLen);
+		winpr_HexDump(DomainNameBuffer, DomainNameLen);
 		printf("\n");
 #endif
 	}
@@ -777,7 +778,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		UserNameBuffer = s->data + UserNameBufferOffset;
 #ifdef WITH_DEBUG_NTLM
 		printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
-		freerdp_hexdump(UserNameBuffer, UserNameLen);
+		winpr_HexDump(UserNameBuffer, UserNameLen);
 		printf("\n");
 #endif
 	}
@@ -788,7 +789,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		WorkstationBuffer = s->data + WorkstationBufferOffset;
 #ifdef WITH_DEBUG_NTLM
 		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
-		freerdp_hexdump(WorkstationBuffer, WorkstationLen);
+		winpr_HexDump(WorkstationBuffer, WorkstationLen);
 		printf("\n");
 #endif
 	}
@@ -799,7 +800,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		LmChallengeResponseBuffer = s->data + LmChallengeResponseBufferOffset;
 #ifdef WITH_DEBUG_NTLM
 		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-		freerdp_hexdump(LmChallengeResponseBuffer, LmChallengeResponseLen);
+		winpr_HexDump(LmChallengeResponseBuffer, LmChallengeResponseLen);
 		printf("\n");
 #endif
 	}
@@ -812,11 +813,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		NtChallengeResponseBuffer = s->data + NtChallengeResponseBufferOffset;
 
 		ClientChallengeBuffer = NtChallengeResponseBuffer + 32;
-		memcpy(context->ClientChallenge, ClientChallengeBuffer, 8);
+		CopyMemory(context->ClientChallenge, ClientChallengeBuffer, 8);
 
 #ifdef WITH_DEBUG_NTLM
 		printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
-		freerdp_hexdump(NtChallengeResponseBuffer, NtChallengeResponseLen);
+		winpr_HexDump(NtChallengeResponseBuffer, NtChallengeResponseLen);
 		printf("\n");
 #endif
 	}
@@ -825,11 +826,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (EncryptedRandomSessionKeyLen > 0)
 	{
 		EncryptedRandomSessionKeyBuffer = s->data + EncryptedRandomSessionKeyBufferOffset;
-		memcpy(context->EncryptedRandomSessionKey, EncryptedRandomSessionKeyBuffer, 16);
+		CopyMemory(context->EncryptedRandomSessionKey, EncryptedRandomSessionKeyBuffer, 16);
 
 #ifdef WITH_DEBUG_NTLM
 		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
-		freerdp_hexdump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+		winpr_HexDump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
 		printf("\n");
 #endif
 	}
@@ -865,47 +866,47 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 #ifdef WITH_DEBUG_NTLM
 	printf("ClientChallenge\n");
-	freerdp_hexdump(context->ClientChallenge, 8);
+	winpr_HexDump(context->ClientChallenge, 8);
 	printf("\n");
 
 	printf("ServerChallenge\n");
-	freerdp_hexdump(context->ServerChallenge, 8);
+	winpr_HexDump(context->ServerChallenge, 8);
 	printf("\n");
 
 	printf("SessionBaseKey\n");
-	freerdp_hexdump(context->SessionBaseKey, 16);
+	winpr_HexDump(context->SessionBaseKey, 16);
 	printf("\n");
 
 	printf("KeyExchangeKey\n");
-	freerdp_hexdump(context->KeyExchangeKey, 16);
+	winpr_HexDump(context->KeyExchangeKey, 16);
 	printf("\n");
 
 	printf("ExportedSessionKey\n");
-	freerdp_hexdump(context->ExportedSessionKey, 16);
+	winpr_HexDump(context->ExportedSessionKey, 16);
 	printf("\n");
 
 	printf("RandomSessionKey\n");
-	freerdp_hexdump(context->RandomSessionKey, 16);
+	winpr_HexDump(context->RandomSessionKey, 16);
 	printf("\n");
 
 	printf("ClientSigningKey\n");
-	freerdp_hexdump(context->ClientSigningKey, 16);
+	winpr_HexDump(context->ClientSigningKey, 16);
 	printf("\n");
 
 	printf("ClientSealingKey\n");
-	freerdp_hexdump(context->ClientSealingKey, 16);
+	winpr_HexDump(context->ClientSealingKey, 16);
 	printf("\n");
 
 	printf("ServerSigningKey\n");
-	freerdp_hexdump(context->ServerSigningKey, 16);
+	winpr_HexDump(context->ServerSigningKey, 16);
 	printf("\n");
 
 	printf("ServerSealingKey\n");
-	freerdp_hexdump(context->ServerSealingKey, 16);
+	winpr_HexDump(context->ServerSealingKey, 16);
 	printf("\n");
 
 	printf("Timestamp\n");
-	freerdp_hexdump(context->Timestamp, 8);
+	winpr_HexDump(context->Timestamp, 8);
 	printf("\n");
 #endif
 
@@ -1067,7 +1068,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 		printf("Version (length = 8)\n");
-		freerdp_hexdump((s->p - 8), 8);
+		winpr_HexDump((s->p - 8), 8);
 		printf("\n");
 #endif
 	}
@@ -1085,7 +1086,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		stream_write(s, DomainNameBuffer, DomainNameLen);
 #ifdef WITH_DEBUG_NTLM
 		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
-		freerdp_hexdump(DomainNameBuffer, DomainNameLen);
+		winpr_HexDump(DomainNameBuffer, DomainNameLen);
 		printf("\n");
 #endif
 	}
@@ -1095,7 +1096,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 	printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
-	freerdp_hexdump(UserNameBuffer, UserNameLen);
+	winpr_HexDump(UserNameBuffer, UserNameLen);
 	printf("\n");
 #endif
 
@@ -1105,7 +1106,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		stream_write(s, WorkstationBuffer, WorkstationLen);
 #ifdef WITH_DEBUG_NTLM
 		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
-		freerdp_hexdump(WorkstationBuffer, WorkstationLen);
+		winpr_HexDump(WorkstationBuffer, WorkstationLen);
 		printf("\n");
 #endif
 	}
@@ -1115,7 +1116,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 	printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-	freerdp_hexdump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+	winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
 	printf("\n");
 #endif
 
@@ -1128,14 +1129,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		ntlm_print_av_pairs(context);
 
 		printf("targetInfo (length = %d)\n", (int) context->TargetInfo.cbBuffer);
-		freerdp_hexdump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+		winpr_HexDump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 		printf("\n");
 	}
 #endif
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
-	freerdp_hexdump(context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
+	winpr_HexDump(context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
 	printf("\n");
 #endif
 
@@ -1144,13 +1145,13 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 	printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
-	freerdp_hexdump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+	winpr_HexDump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
 	printf("\n");
 #endif
 
 	length = s->p - s->data;
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	memcpy(context->AuthenticateMessage.pvBuffer, s->data, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
 	buffer->cbBuffer = length;
 
 	if (context->ntlm_v2)
@@ -1164,14 +1165,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 		printf("MessageIntegrityCheck (length = 16)\n");
-		freerdp_hexdump(MicOffset, 16);
+		winpr_HexDump(MicOffset, 16);
 		printf("\n");
 #endif
 	}
 
 #ifdef WITH_DEBUG_NTLM
 	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
-	freerdp_hexdump(s->data, length);
+	winpr_HexDump(s->data, length);
 	printf("\n");
 #endif
 

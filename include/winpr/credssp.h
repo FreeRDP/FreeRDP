@@ -24,9 +24,7 @@ typedef struct rdp_credssp rdpCredssp;
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
 
 #include <winpr/sspi.h>
 
@@ -40,7 +38,6 @@ struct rdp_credssp
 	boolean server;
 	int send_seq_num;
 	int recv_seq_num;
-	UNICONV* uniconv;
 	freerdp* instance;
 	CtxtHandle context;
 	rdpSettings* settings;
@@ -51,7 +48,7 @@ struct rdp_credssp
 	SecBuffer ts_credentials;
 	CryptoRc4 rc4_seal_state;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SecurityFunctionTable* table;
+	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
 };
 

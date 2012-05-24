@@ -28,20 +28,20 @@
 
 #ifndef _WIN32
 
-#define CopyMemory			RtlCopyMemory
-#define MoveMemory			RtlMoveMemory
-#define FillMemory			RtlFillMemory
-#define ZeroMemory			RtlZeroMemory
+#define CopyMemory					RtlCopyMemory
+#define MoveMemory					RtlMoveMemory
+#define FillMemory					RtlFillMemory
+#define ZeroMemory					RtlZeroMemory
 
 #define RtlCopyMemory(Destination, Source, Length)	memcpy((Destination), (Source), (Length))
 #define RtlMoveMemory(Destination, Source, Length)	memmove((Destination), (Source), (Length))
 #define RtlFillMemory(Destination, Length, Fill)	memset((Destination), (Fill), (Length))
 #define RtlZeroMemory(Destination, Length)		memset((Destination), 0, (Length))
 
-#define HEAP_GENERATE_EXCEPTIONS	0x00000004
-#define HEAP_NO_SERIALIZE		0x00000001
-#define HEAP_ZERO_MEMORY		0x00000008
-#define HEAP_REALLOC_IN_PLACE_ONLY	0x00000010
+#define HEAP_GENERATE_EXCEPTIONS			0x00000004
+#define HEAP_NO_SERIALIZE				0x00000001
+#define HEAP_ZERO_MEMORY				0x00000008
+#define HEAP_REALLOC_IN_PLACE_ONLY			0x00000010
 
 WINPR_API HANDLE GetProcessHeap(void);
 WINPR_API LPVOID HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);

@@ -70,6 +70,7 @@ if (NOT WIN32)
 	target_link_libraries(winpr-sspi winpr-crt)
 endif()
 
+target_link_libraries(winpr-sspi winpr-utils)
 target_link_libraries(winpr-sspi freerdp-utils)
 target_link_libraries(winpr-sspi freerdp-crypto)
 target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})	

@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# libwinpr-utils cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,10 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
+set(WINPR_UTILS_SRCS
+	print.c)
 
-add_subdirectory(rpc)
-add_subdirectory(sspi)
-add_subdirectory(registry)
+add_library(winpr-utils ${WINPR_UTILS_SRCS})
+
+set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+target_link_libraries(winpr-utils winpr-crt)
+
+install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
