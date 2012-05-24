@@ -213,6 +213,11 @@ static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
 	}
 }
 
+/*
+ * username // password
+ * username:661e58eb6743798326f388fc5edb0b3a
+ */
+
 void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	FILE* fp;
@@ -270,9 +275,8 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 			{
 				if (memcmp(User, context->identity.User, UserLength) == 0)
 				{
-					printf("%s:%s\n", db_user, db_hash);
 					ascii_hex_string_to_binary(db_hash, db_hash_bin);
-					memcpy(hash, db_hash_bin, 16);
+					CopyMemory(hash, db_hash_bin, 16);
 				}
 			}
 		}

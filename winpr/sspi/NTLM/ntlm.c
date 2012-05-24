@@ -564,7 +564,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Copy original data buffer */
 	length = data_buffer->cbBuffer;
 	data = malloc(length);
-	memcpy(data, data_buffer->pvBuffer, length);
+	CopyMemory(data, data_buffer->pvBuffer, length);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
@@ -599,9 +599,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	signature = (BYTE*) signature_buffer->pvBuffer;
 
 	/* Concatenate version, ciphertext and sequence number to build signature */
-	memcpy(signature, (void*) &version, 4);
-	memcpy(&signature[4], (void*) checksum, 8);
-	memcpy(&signature[12], (void*) &(MessageSeqNo), 4);
+	CopyMemory(signature, (void*) &version, 4);
+	CopyMemory(&signature[4], (void*) checksum, 8);
+	CopyMemory(&signature[12], (void*) &(MessageSeqNo), 4);
 	context->SendSeqNum++;
 
 #ifdef WITH_DEBUG_NTLM
@@ -646,10 +646,14 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Copy original data buffer */
 	length = data_buffer->cbBuffer;
 	data = malloc(length);
-	memcpy(data, data_buffer->pvBuffer, length);
+	CopyMemory(data, data_buffer->pvBuffer, length);
 
-	/* Decrypt message using with RC4 */
-	crypto_rc4(context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
+	/* Decrypt message using with RC4, result overwrites original buffer */
+
+	if (context->confidentiality)
+		crypto_rc4(context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
+	else
+		CopyMemory(data_buffer->pvBuffer, data, length);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
@@ -675,15 +679,21 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	crypto_rc4(context->RecvRc4Seal, 8, digest, checksum);
 
 	/* Concatenate version, ciphertext and sequence number to build signature */
-	memcpy(expected_signature, (void*) &version, 4);
-	memcpy(&expected_signature[4], (void*) checksum, 8);
-	memcpy(&expected_signature[12], (void*) &(MessageSeqNo), 4);
+	CopyMemory(expected_signature, (void*) &version, 4);
+	CopyMemory(&expected_signature[4], (void*) checksum, 8);
+	CopyMemory(&expected_signature[12], (void*) &(MessageSeqNo), 4);
 	context->RecvSeqNum++;
 
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
 	{
 		/* signature verification failed! */
 		printf("signature verification failed, something nasty is going on!\n");
+
+		printf("Expected Signature:\n");
+		freerdp_hexdump(expected_signature, 16);
+		printf("Actual Signature:\n");
+		freerdp_hexdump(signature_buffer->pvBuffer, 16);
+
 		return SEC_E_MESSAGE_ALTERED;
 	}
 
