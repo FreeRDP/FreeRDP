@@ -331,12 +331,12 @@ boolean mcs_recv_connect_initial(rdpMcs* mcs, STREAM* s)
 		return false;
 
 	/* callingDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string(s, &length))
+	if (!ber_read_octet_string_tag(s, &length))
 		return false;
 	stream_seek(s, length);
 
 	/* calledDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string(s, &length))
+	if (!ber_read_octet_string_tag(s, &length))
 		return false;
 	stream_seek(s, length);
 
@@ -353,7 +353,7 @@ boolean mcs_recv_connect_initial(rdpMcs* mcs, STREAM* s)
 	/* maximumParameters (DomainParameters) */
 	mcs_read_domain_parameters(s, &mcs->maximumParameters);
 
-	if (!ber_read_octet_string(s, &length))
+	if (!ber_read_octet_string_tag(s, &length))
 		return false;
 
 	if (!gcc_read_conference_create_request(s, mcs->transport->settings))
@@ -499,7 +499,7 @@ boolean mcs_recv_connect_response(rdpMcs* mcs, STREAM* s)
 	if (!mcs_read_domain_parameters(s, &(mcs->domainParameters)))
 		return false;
 
-	ber_read_octet_string(s, &length);
+	ber_read_octet_string_tag(s, &length);
 
 	if (!gcc_read_conference_create_response(s, mcs->transport->settings))
 	{

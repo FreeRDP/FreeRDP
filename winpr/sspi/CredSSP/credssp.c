@@ -712,6 +712,173 @@ SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp)
 	return SEC_E_OK;
 }
 
+int credssp_skip_ts_password_creds(rdpCredssp* credssp)
+{
+	int length;
+	int ts_password_creds_length = 0;
+
+	length = ber_skip_octet_string(credssp->identity.DomainLength);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_octet_string(credssp->identity.UserLength);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_octet_string(credssp->identity.PasswordLength);
+	length += ber_skip_contextual_tag(length);
+	ts_password_creds_length += length;
+
+	length = ber_skip_sequence(ts_password_creds_length);
+
+	return length;
+}
+
+void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+{
+	int length;
+
+	/* TSPasswordCreds (SEQUENCE) */
+	ber_read_sequence_tag(s, &length);
+
+	/* [0] domainName (OCTET STRING) */
+	ber_read_contextual_tag(s, 0, &length, true);
+	ber_read_octet_string_tag(s, &length);
+	credssp->identity.DomainLength = (uint32) length;
+	credssp->identity.Domain = (uint16*) malloc(length);
+	CopyMemory(credssp->identity.Domain, s->p, credssp->identity.DomainLength);
+	stream_seek(s, credssp->identity.DomainLength);
+
+	/* [1] userName (OCTET STRING) */
+	ber_read_contextual_tag(s, 1, &length, true);
+	ber_read_octet_string_tag(s, &length);
+	credssp->identity.UserLength = (uint32) length;
+	credssp->identity.User = (uint16*) malloc(length);
+	CopyMemory(credssp->identity.User, s->p, credssp->identity.UserLength);
+	stream_seek(s, credssp->identity.UserLength);
+
+	/* [2] password (OCTET STRING) */
+	ber_read_contextual_tag(s, 2, &length, true);
+	ber_read_octet_string_tag(s, &length);
+	credssp->identity.PasswordLength = (uint32) length;
+	credssp->identity.Password = (uint16*) malloc(length);
+	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
+	stream_seek(s, credssp->identity.PasswordLength);
+}
+
+void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+{
+	int length;
+
+	length = credssp_skip_ts_password_creds(credssp);
+
+	/* TSPasswordCreds (SEQUENCE) */
+	length = ber_get_content_length(length);
+	ber_write_sequence_tag(s, length);
+
+	/* [0] domainName (OCTET STRING) */
+	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength);
+
+	/* [1] userName (OCTET STRING) */
+	ber_write_contextual_tag(s, 1, credssp->identity.UserLength + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.User, credssp->identity.UserLength);
+
+	/* [2] password (OCTET STRING) */
+	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength);
+}
+
+int credssp_skip_ts_credentials(rdpCredssp* credssp)
+{
+	int length;
+	int ts_password_creds_length;
+	int ts_credentials_length = 0;
+
+	length = ber_skip_integer(0);
+	length += ber_skip_contextual_tag(length);
+	ts_credentials_length += length;
+
+	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
+	length = ber_skip_octet_string(ts_password_creds_length);
+	length += ber_skip_contextual_tag(length);
+	ts_credentials_length += length;
+
+	length = ber_skip_sequence(ts_credentials_length);
+
+	return length;
+}
+
+void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
+{
+	STREAM* s;
+	int length;
+	int ts_password_creds_length;
+
+	s = stream_new(0);
+	stream_attach(s, ts_credentials->pvBuffer, ts_credentials->cbBuffer);
+
+	/* TSCredentials (SEQUENCE) */
+	ber_read_sequence_tag(s, &length);
+
+	/* [0] credType (INTEGER) */
+	ber_read_contextual_tag(s, 0, &length, true);
+	ber_read_integer(s, NULL);
+
+	/* [1] credentials (OCTET STRING) */
+	ber_read_contextual_tag(s, 1, &length, true);
+	ber_read_octet_string_tag(s, &ts_password_creds_length);
+
+	credssp_read_ts_password_creds(credssp, s);
+
+	stream_detach(s);
+	stream_free(s);
+}
+
+void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
+{
+	int length;
+	int ts_password_creds_length;
+
+	length = credssp_skip_ts_credentials(credssp);
+	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
+
+	/* TSCredentials (SEQUENCE) */
+	length = ber_get_content_length(length);
+	length -= ber_write_sequence_tag(s, length);
+
+	/* [0] credType (INTEGER) */
+	length -= ber_write_contextual_tag(s, 0, 3, true);
+	length -= ber_write_integer(s, 1);
+
+	/* [1] credentials (OCTET STRING) */
+	length -= 1;
+	length -= ber_write_contextual_tag(s, 1, length, true);
+	length -= ber_write_octet_string_tag(s, ts_password_creds_length);
+
+	credssp_write_ts_password_creds(credssp, s);
+}
+
+/**
+ * Encode TSCredentials structure.
+ * @param credssp
+ */
+
+void credssp_encode_ts_credentials(rdpCredssp* credssp)
+{
+	STREAM* s;
+	int length;
+
+	s = stream_new(0);
+	length = credssp_skip_ts_credentials(credssp);
+	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
+	stream_attach(s, credssp->ts_credentials.pvBuffer, length);
+
+	credssp_write_ts_credentials(credssp, s);
+	stream_detach(s);
+	stream_free(s);
+}
+
 SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
 {
 	BYTE* p;
@@ -779,125 +946,15 @@ SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp)
 
 	status = credssp->table->DecryptMessage(&credssp->context, &Message, 1, 0);
 
-	freerdp_hexdump(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
-	freerdp_hexdump(Buffers[1].pvBuffer, Buffers[1].cbBuffer);
-
 	if (status != SEC_E_OK)
 		return status;
+
+	credssp_read_ts_credentials(credssp, &Buffers[1]);
 
 	free(Buffers[0].pvBuffer);
 	free(Buffers[1].pvBuffer);
 
 	return SEC_E_OK;
-}
-
-int credssp_skip_ts_password_creds(rdpCredssp* credssp)
-{
-	int length;
-	int ts_password_creds_length = 0;
-
-	length = ber_skip_octet_string(credssp->identity.DomainLength);
-	length += ber_skip_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_skip_octet_string(credssp->identity.UserLength);
-	length += ber_skip_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_skip_octet_string(credssp->identity.PasswordLength);
-	length += ber_skip_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_skip_sequence(ts_password_creds_length);
-
-	return length;
-}
-
-void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
-{
-	int length;
-
-	length = credssp_skip_ts_password_creds(credssp);
-
-	/* TSPasswordCreds (SEQUENCE) */
-	length = ber_get_content_length(length);
-	ber_write_sequence_tag(s, length);
-
-	/* [0] domainName (OCTET STRING) */
-	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength + 2, true);
-	ber_write_octet_string(s, (uint8*) credssp->identity.Domain, credssp->identity.DomainLength);
-
-	/* [1] userName (OCTET STRING) */
-	ber_write_contextual_tag(s, 1, credssp->identity.UserLength + 2, true);
-	ber_write_octet_string(s, (uint8*) credssp->identity.User, credssp->identity.UserLength);
-
-	/* [2] password (OCTET STRING) */
-	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength + 2, true);
-	ber_write_octet_string(s, (uint8*) credssp->identity.Password, credssp->identity.PasswordLength);
-}
-
-int credssp_skip_ts_credentials(rdpCredssp* credssp)
-{
-	int length;
-	int ts_password_creds_length;
-	int ts_credentials_length = 0;
-
-	length = ber_skip_integer(0);
-	length += ber_skip_contextual_tag(length);
-	ts_credentials_length += length;
-
-	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
-	length = ber_skip_octet_string(ts_password_creds_length);
-	length += ber_skip_contextual_tag(length);
-	ts_credentials_length += length;
-
-	length = ber_skip_sequence(ts_credentials_length);
-
-	return length;
-}
-
-void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
-{
-	int length;
-	int ts_password_creds_length;
-
-	length = credssp_skip_ts_credentials(credssp);
-	ts_password_creds_length = credssp_skip_ts_password_creds(credssp);
-
-	/* TSCredentials (SEQUENCE) */
-	length = ber_get_content_length(length);
-	length -= ber_write_sequence_tag(s, length);
-
-	/* [0] credType (INTEGER) */
-	length -= ber_write_contextual_tag(s, 0, 3, true);
-	length -= ber_write_integer(s, 1);
-
-	/* [1] credentials (OCTET STRING) */
-	length -= 1;
-	length -= ber_write_contextual_tag(s, 1, length, true);
-	length -= ber_write_octet_string_tag(s, ts_password_creds_length);
-
-	credssp_write_ts_password_creds(credssp, s);
-}
-
-/**
- * Encode TSCredentials structure.
- * @param credssp
- */
-
-void credssp_encode_ts_credentials(rdpCredssp* credssp)
-{
-	STREAM* s;
-	int length;
-
-	s = stream_new(0);
-	length = credssp_skip_ts_credentials(credssp);
-	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
-	stream_attach(s, credssp->ts_credentials.pvBuffer, length);
-
-	credssp_write_ts_credentials(credssp, s);
-	stream_detach(s);
-	stream_free(s);
 }
 
 int credssp_skip_nego_token(int length)
@@ -1031,7 +1088,7 @@ int credssp_recv(rdpCredssp* credssp)
 		ber_read_sequence_tag(s, &length); /* SEQUENCE OF NegoDataItem */
 		ber_read_sequence_tag(s, &length); /* NegoDataItem */
 		ber_read_contextual_tag(s, 0, &length, true); /* [0] negoToken */
-		ber_read_octet_string(s, &length); /* OCTET STRING */
+		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
 		sspi_SecBufferAlloc(&credssp->negoToken, length);
 		stream_read(s, credssp->negoToken.pvBuffer, length);
 		credssp->negoToken.cbBuffer = length;
@@ -1040,7 +1097,7 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [2] authInfo (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 2, &length, true) != false)
 	{
-		ber_read_octet_string(s, &length); /* OCTET STRING */
+		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
 		sspi_SecBufferAlloc(&credssp->authInfo, length);
 		stream_read(s, credssp->authInfo.pvBuffer, length);
 		credssp->authInfo.cbBuffer = length;
@@ -1049,7 +1106,7 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 3, &length, true) != false)
 	{
-		ber_read_octet_string(s, &length); /* OCTET STRING */
+		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
 		sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
 		stream_read(s, credssp->pubKeyAuth.pvBuffer, length);
 		credssp->pubKeyAuth.cbBuffer = length;
