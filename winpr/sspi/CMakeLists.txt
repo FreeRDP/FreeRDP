@@ -27,16 +27,6 @@ set(WINPR_SSPI_NTLM_SRCS
 	NTLM/ntlm.c
 	NTLM/ntlm.h)
 
-set(WINPR_SSPI_KERBEROS_SRCS
-	Kerberos/kerberos_crypto.c
-	Kerberos/kerberos_crypto.h
-	Kerberos/kerberos_decode.c
-	Kerberos/kerberos_decode.h
-	Kerberos/kerberos_encode.c
-	Kerberos/kerberos_encode.h
-	Kerberos/kerberos.c
-	Kerberos/kerberos.h)
-	
 set(WINPR_SSPI_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)

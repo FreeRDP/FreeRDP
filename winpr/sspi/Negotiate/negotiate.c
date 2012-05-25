@@ -180,12 +180,8 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHandle phCr
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
 		CREDENTIALS* credentials;
-		//SecPkgCredentials_Names* credential_names = (SecPkgCredentials_Names*) pBuffer;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-		//if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-		//	credential_names->sUserName = xstrdup((char*) credentials->identity.User);
 
 		return SEC_E_OK;
 	}
