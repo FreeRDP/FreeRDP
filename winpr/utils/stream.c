@@ -115,7 +115,7 @@ PStream PStreamAllocAttach(BYTE* data, size_t size)
 		s->size = size;
 	}
 
-	return 0;
+	return s;
 }
 
 void StreamAllocAttach(PStream s, BYTE* data, size_t size)

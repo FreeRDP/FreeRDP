@@ -19,21 +19,46 @@
 
 #include "registry_xml.h"
 
-#include <freerdp/utils/file.h>
-#include <freerdp/utils/memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <winpr/crt.h>
+
+#ifndef _WIN32
+#define PATH_SEPARATOR_STR	"/"
+#define PATH_SEPARATOR_CHR	'/'
+#define HOME_ENV_VARIABLE	"HOME"
+#else
+#define PATH_SEPARATOR_STR	"\\"
+#define PATH_SEPARATOR_CHR	'\\'
+#define HOME_ENV_VARIABLE	"HOME"
+#endif
+
+char* construct_path(char* base_path, char* relative_path)
+{
+	char* path;
+	int length;
+	int base_path_length;
+	int relative_path_length;
+
+	base_path_length = strlen(base_path);
+	relative_path_length = strlen(relative_path);
+	length = base_path_length + relative_path_length + 1;
+
+	path = malloc(length + 1);
+	sprintf(path, "%s" PATH_SEPARATOR_STR "%s", base_path, relative_path);
+
+	return path;
+}
 
 char* find_registry_path()
 {
 	char* path;
 	char* home_path;
-	char* config_path;
 
 	home_path = getenv("HOME");
-	config_path = freerdp_construct_path(home_path, ".freerdp");
-	path = freerdp_construct_path(config_path, "registry.xml");
-
-	xfree(home_path);
-	xfree(config_path);
+	path = construct_path(home_path, "registry.xml");
 
 	return path;
 }
@@ -43,7 +68,8 @@ RegistryXml* registry_xml_new()
 	char* filename;
 	RegistryXml* registry;
 
-	registry = xnew(RegistryXml);
+	registry = (RegistryXml*) malloc(sizeof(RegistryXml));
+	ZeroMemory(registry, sizeof(RegistryXml));
 
 	filename = find_registry_path();
 	registry->doc = xmlParseFile(filename);

@@ -90,7 +90,7 @@ WINPR_API void StreamDetach(PStream s);
 	} while (0)
 
 #define StreamWrite_UINT8(_s, _v) do { \
-	*_s->p++ = (uint8)(_v); } while (0)
+	*_s->p++ = (UINT8)(_v); } while (0)
 
 #define StreamWrite_UINT16(_s, _v) do { \
 	*_s->p++ = (_v) & 0xFF; \
@@ -195,6 +195,7 @@ WINPR_API void StreamDetach(PStream s);
 
 #define StreamGetData(_s)		_s->data
 #define StreamGetPointer(_s)		_s->p
+#define StreamSetPointer(_s, _m)	_s->p = _m
 #define StreamGetEnd(_s)		_s->end
 #define StreamGetSize(_s)		_s->size
 

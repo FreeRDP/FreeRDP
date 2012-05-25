@@ -22,7 +22,9 @@
 
 #include "ntlm.h"
 
-void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s);
+#include <winpr/stream.h>
+
+void ntlm_input_av_pairs(NTLM_CONTEXT* context, PStream s);
 void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer);
 void ntlm_populate_av_pairs(NTLM_CONTEXT* context);
 void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context);

@@ -26,6 +26,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/print.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -54,14 +55,16 @@ NTLM_CONTEXT* ntlm_ContextNew()
 {
 	NTLM_CONTEXT* context;
 
-	context = xnew(NTLM_CONTEXT);
+	context = (NTLM_CONTEXT*) malloc(sizeof(NTLM_CONTEXT));
+	ZeroMemory(context, sizeof(NTLM_CONTEXT));
 
 	if (context != NULL)
 	{
-		context->ntlm_v2 = false;
+		context->ntlm_v2 = 0;
 		context->NegotiateFlags = 0;
 		context->state = NTLM_STATE_INITIAL;
-		context->av_pairs = (AV_PAIRS*) xzalloc(sizeof(AV_PAIRS));
+		context->av_pairs = (AV_PAIRS*) malloc(sizeof(AV_PAIRS));
+		ZeroMemory(context->av_pairs, sizeof(AV_PAIRS));
 	}
 
 	return context;
@@ -72,8 +75,6 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	if (!context)
 		return;
 
-	crypto_rc4_free(context->SendRc4Seal);
-	crypto_rc4_free(context->RecvRc4Seal);
 	sspi_SecBufferFree(&context->NegotiateMessage);
 	sspi_SecBufferFree(&context->ChallengeMessage);
 	sspi_SecBufferFree(&context->AuthenticateMessage);
@@ -103,7 +104,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -115,7 +116,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -138,7 +139,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -150,7 +151,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -236,10 +237,10 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (!context)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
-		context->server = true;
+		context->server = 1;
 
 		if (fContextReq & ASC_REQ_CONFIDENTIALITY)
-			context->confidentiality = true;
+			context->confidentiality = 1;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
@@ -351,7 +352,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 			return SEC_E_INSUFFICIENT_MEMORY;
 
 		if (fContextReq & ISC_REQ_CONFIDENTIALITY)
-			context->confidentiality = true;
+			context->confidentiality = 1;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -524,24 +525,24 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Encrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		crypto_rc4(context->SendRc4Seal, length, data, data_buffer->pvBuffer);
+		RC4(&context->SendRc4Seal, length, data, data_buffer->pvBuffer);
 	else
-		memcpy(data_buffer->pvBuffer, data, length);
+		CopyMemory(data_buffer->pvBuffer, data, length);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Data Buffer (length = %d)\n", length);
-	freerdp_hexdump(data, length);
+	winpr_HexDump(data, length);
 	printf("\n");
 
 	printf("Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HexDump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 #endif
 
 	free(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
-	crypto_rc4(context->SendRc4Seal, 8, digest, checksum);
+	RC4(&context->SendRc4Seal, 8, digest, checksum);
 
 	signature = (BYTE*) signature_buffer->pvBuffer;
 
@@ -553,7 +554,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
-	freerdp_hexdump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
+	winpr_HexDump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
 	printf("\n");
 #endif
 
@@ -598,7 +599,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Decrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		crypto_rc4(context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
+		RC4(&context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
@@ -612,18 +613,18 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Encrypted Data Buffer (length = %d)\n", length);
-	freerdp_hexdump(data, length);
+	winpr_HexDump(data, length);
 	printf("\n");
 
 	printf("Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-	freerdp_hexdump(data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HexDump(data_buffer->pvBuffer, data_buffer->cbBuffer);
 	printf("\n");
 #endif
 
 	free(data);
 
 	/* RC4-encrypt first 8 bytes of digest */
-	crypto_rc4(context->RecvRc4Seal, 8, digest, checksum);
+	RC4(&context->RecvRc4Seal, 8, digest, checksum);
 
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(expected_signature, (void*) &version, 4);
@@ -637,9 +638,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 		printf("signature verification failed, something nasty is going on!\n");
 
 		printf("Expected Signature:\n");
-		freerdp_hexdump(expected_signature, 16);
+		winpr_HexDump(expected_signature, 16);
 		printf("Actual Signature:\n");
-		freerdp_hexdump(signature_buffer->pvBuffer, 16);
+		winpr_HexDump(signature_buffer->pvBuffer, 16);
 
 		return SEC_E_MESSAGE_ALTERED;
 	}

@@ -31,7 +31,7 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
-void ntlm_compute_ntlm_hash(uint16* password, UINT32 length, char* hash);
+void ntlm_compute_ntlm_hash(UINT16* password, UINT32 length, char* hash);
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash);
 void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
 void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);

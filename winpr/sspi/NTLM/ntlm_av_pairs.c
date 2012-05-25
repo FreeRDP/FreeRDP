@@ -22,7 +22,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <freerdp/utils/stream.h>
 
 #include "ntlm_compute.h"
 
@@ -50,7 +49,7 @@ const char* const AV_PAIRS_STRINGS[] =
  * @param s
  */
 
-void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
+void ntlm_input_av_pairs(NTLM_CONTEXT* context, PStream s)
 {
 	AV_ID AvId;
 	UINT16 AvLen;
@@ -64,19 +63,19 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 	do
 	{
 		value = NULL;
-		stream_read_uint16(s, AvId);
-		stream_read_uint16(s, AvLen);
+		StreamRead_UINT16(s, AvId);
+		StreamRead_UINT16(s, AvLen);
 
 		if (AvLen > 0)
 		{
 			if (AvId != MsvAvFlags)
 			{
-				value = xmalloc(AvLen);
-				stream_read(s, value, AvLen);
+				value = malloc(AvLen);
+				StreamRead(s, value, AvLen);
 			}
 			else
 			{
-				stream_read_uint32(s, av_pairs->Flags);
+				StreamRead_UINT32(s, av_pairs->Flags);
 			}
 		}
 
@@ -158,89 +157,88 @@ void ntlm_input_av_pairs(NTLM_CONTEXT* context, STREAM* s)
 
 void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	STREAM* s;
+	PStream s;
 	AV_PAIRS* av_pairs = context->av_pairs;
 
-	s = stream_new(0);
-	stream_attach(s, buffer->pvBuffer, buffer->cbBuffer);
+	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
 	if (av_pairs->NbDomainName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvNbDomainName); /* AvId */
-		stream_write_uint16(s, av_pairs->NbDomainName.length); /* AvLen */
-		stream_write(s, av_pairs->NbDomainName.value, av_pairs->NbDomainName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvNbDomainName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->NbDomainName.length); /* AvLen */
+		StreamWrite(s, av_pairs->NbDomainName.value, av_pairs->NbDomainName.length); /* Value */
 	}
 
 	if (av_pairs->NbComputerName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvNbComputerName); /* AvId */
-		stream_write_uint16(s, av_pairs->NbComputerName.length); /* AvLen */
-		stream_write(s, av_pairs->NbComputerName.value, av_pairs->NbComputerName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvNbComputerName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->NbComputerName.length); /* AvLen */
+		StreamWrite(s, av_pairs->NbComputerName.value, av_pairs->NbComputerName.length); /* Value */
 	}
 
 	if (av_pairs->DnsDomainName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvDnsDomainName); /* AvId */
-		stream_write_uint16(s, av_pairs->DnsDomainName.length); /* AvLen */
-		stream_write(s, av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvDnsDomainName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->DnsDomainName.length); /* AvLen */
+		StreamWrite(s, av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length); /* Value */
 	}
 
 	if (av_pairs->DnsComputerName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvDnsComputerName); /* AvId */
-		stream_write_uint16(s, av_pairs->DnsComputerName.length); /* AvLen */
-		stream_write(s, av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvDnsComputerName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->DnsComputerName.length); /* AvLen */
+		StreamWrite(s, av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length); /* Value */
 	}
 
 	if (av_pairs->DnsTreeName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvDnsTreeName); /* AvId */
-		stream_write_uint16(s, av_pairs->DnsTreeName.length); /* AvLen */
-		stream_write(s, av_pairs->DnsTreeName.value, av_pairs->DnsTreeName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvDnsTreeName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->DnsTreeName.length); /* AvLen */
+		StreamWrite(s, av_pairs->DnsTreeName.value, av_pairs->DnsTreeName.length); /* Value */
 	}
 
 	if (av_pairs->Timestamp.length > 0)
 	{
-		stream_write_uint16(s, MsvAvTimestamp); /* AvId */
-		stream_write_uint16(s, av_pairs->Timestamp.length); /* AvLen */
-		stream_write(s, av_pairs->Timestamp.value, av_pairs->Timestamp.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvTimestamp); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->Timestamp.length); /* AvLen */
+		StreamWrite(s, av_pairs->Timestamp.value, av_pairs->Timestamp.length); /* Value */
 	}
 
 	if (av_pairs->Flags > 0)
 	{
-		stream_write_uint16(s, MsvAvFlags); /* AvId */
-		stream_write_uint16(s, 4); /* AvLen */
-		stream_write_uint32(s, av_pairs->Flags); /* Value */
+		StreamWrite_UINT16(s, MsvAvFlags); /* AvId */
+		StreamWrite_UINT16(s, 4); /* AvLen */
+		StreamWrite_UINT32(s, av_pairs->Flags); /* Value */
 	}
 
 	if (av_pairs->Restrictions.length > 0)
 	{
-		stream_write_uint16(s, MsvAvRestrictions); /* AvId */
-		stream_write_uint16(s, av_pairs->Restrictions.length); /* AvLen */
-		stream_write(s, av_pairs->Restrictions.value, av_pairs->Restrictions.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvRestrictions); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->Restrictions.length); /* AvLen */
+		StreamWrite(s, av_pairs->Restrictions.value, av_pairs->Restrictions.length); /* Value */
 	}
 
 	if (av_pairs->ChannelBindings.length > 0)
 	{
-		stream_write_uint16(s, MsvChannelBindings); /* AvId */
-		stream_write_uint16(s, av_pairs->ChannelBindings.length); /* AvLen */
-		stream_write(s, av_pairs->ChannelBindings.value, av_pairs->ChannelBindings.length); /* Value */
+		StreamWrite_UINT16(s, MsvChannelBindings); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->ChannelBindings.length); /* AvLen */
+		StreamWrite(s, av_pairs->ChannelBindings.value, av_pairs->ChannelBindings.length); /* Value */
 	}
 
 	if (av_pairs->TargetName.length > 0)
 	{
-		stream_write_uint16(s, MsvAvTargetName); /* AvId */
-		stream_write_uint16(s, av_pairs->TargetName.length); /* AvLen */
-		stream_write(s, av_pairs->TargetName.value, av_pairs->TargetName.length); /* Value */
+		StreamWrite_UINT16(s, MsvAvTargetName); /* AvId */
+		StreamWrite_UINT16(s, av_pairs->TargetName.length); /* AvLen */
+		StreamWrite(s, av_pairs->TargetName.value, av_pairs->TargetName.length); /* Value */
 	}
 
 	/* This indicates the end of the AV_PAIR array */
-	stream_write_uint16(s, MsvAvEOL); /* AvId */
-	stream_write_uint16(s, 0); /* AvLen */
+	StreamWrite_UINT16(s, MsvAvEOL); /* AvId */
+	StreamWrite_UINT16(s, 0); /* AvLen */
 
 	if (context->ntlm_v2)
 	{
-		stream_write_zero(s, 8);
+		StreamZero(s, 8);
 	}
 
 	free(s);
