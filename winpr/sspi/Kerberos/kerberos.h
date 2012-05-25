@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 
+#include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -88,7 +89,7 @@
 #define AD_IF_RELEVANT          1
 
 #define GETUINT16( _s, _p) do{ \
-	*(_p) = (uint8)(_s)[0] << 8 | (uint8)(_s)[1]; \
+	*(_p) = (BYTE)(_s)[0] << 8 | (BYTE)(_s)[1]; \
 	(_s) += 2; } while (0)
 #define _GET_BYTE_LENGTH(_n) (((_n) > 0xFF) ? 3 :(((_n) > 0x7F) ? 2 : 1))
 
@@ -114,9 +115,9 @@ typedef enum _KRBCTX_STATE KRBCTX_STATE;
 struct _kdc_srv_entry
 {
 	struct _kdc_srv_entry* next;
-	uint16 priority;
-	uint16 weight;
-	uint16 port;
+	UINT16 priority;
+	UINT16 weight;
+	UINT16 port;
 	char* kdchost;
 };
 typedef struct _kdc_srv_entry KDCENTRY;
@@ -131,13 +132,13 @@ typedef struct _PA_DATA PAData;
 struct _AUTH_DATA
 {
 	int ad_type;
-	uint8* ad_data;
+	BYTE* ad_data;
 };
 typedef struct _AUTH_DATA AuthData;
 
 struct _Krb_ENCData
 {
-	sint32 enctype;
+	INT32 enctype;
 	int kvno;
 	rdpBlob encblob;
 };
@@ -145,7 +146,7 @@ typedef struct _Krb_ENCData KrbENCData;
 
 struct _Krb_ENCKey
 {
-	sint32 enctype;
+	INT32 enctype;
 	rdpBlob skey;
 };
 typedef struct _Krb_ENCKey KrbENCKey;
@@ -154,7 +155,7 @@ struct _ENC_KDC_REPPART
 {
 	KrbENCKey key;
 	int nonce;
-	uint32 flags;
+	UINT32 flags;
 	time_t authtime;
 	time_t endtime;
 	char *realm;
@@ -178,23 +179,23 @@ struct _Krb_Authenticator
 	char* cname;
 	int cksumtype;
 	rdpBlob* cksum;
-	uint32 cusec;
+	UINT32 cusec;
 	char* ctime;
-	uint32 seqno;
+	UINT32 seqno;
 	AuthData auth_data;
 };
 typedef struct _Krb_Authenticator Authenticator;
 
 struct _KDC_REQ_BODY
 {
-	uint32 kdc_options;
+	UINT32 kdc_options;
 	char* cname;
 	char* realm;
 	char* sname;
 	char* from;
 	char* till;
 	char* rtime;
-	uint32 nonce;
+	UINT32 nonce;
 };
 typedef struct _KDC_REQ_BODY KDCReqBody;
 
@@ -234,7 +235,7 @@ struct _KRB_APREQ
 {
 	int pvno;
 	int type;
-	uint32 ap_options;
+	UINT32 ap_options;
 	Ticket* ticket;
 	KrbENCData enc_auth;
 };
@@ -246,7 +247,7 @@ struct _KRB_ERROR
 	int type;
 	int errcode;
 	char* stime;
-	uint32 susec;
+	UINT32 susec;
 	char* realm;
 	char* sname;
 	rdpBlob edata;
@@ -284,20 +285,19 @@ typedef struct _KRB_TGTREP KrbTGTREP;
 
 struct _KRB_CONTEXT
 {
-	UNICONV* uniconv;
 	rdpSettings* settings;
 	int ksockfd;
-	uint16 krbport;
+	UINT16 krbport;
 	char* krbhost;
 	char* cname;
 	char* realm;
 	char* sname;
 	char* hostname;
 	rdpBlob passwd;
-	sint32 enctype;
+	INT32 enctype;
 	time_t clockskew;
 	time_t ctime;
-	uint32 nonce;
+	UINT32 nonce;
 	Ticket asticket;
 	KrbENCKey* askey;
 	Ticket tgsticket;
@@ -318,22 +318,22 @@ char* get_dns_queryname(char *host, char* protocol);
 int krb_get_realm(rdpSettings* settings);
 KDCENTRY* krb_locate_kdc(rdpSettings* settings);
 
-int krb_tcp_connect(KRB_CONTEXT* krb_ctx, KDCENTRY* entry);
-int krb_tcp_send(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length);
-int krb_tcp_recv(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length);
+int kerberos_tcp_connect(KRB_CONTEXT* krb_ctx, KDCENTRY* entry);
+int kerberos_tcp_send(KRB_CONTEXT* krb_ctx, BYTE* data, UINT32 length);
+int kerberos_tcp_recv(KRB_CONTEXT* krb_ctx, BYTE* data, UINT32 length);
 
-void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode);
-int krb_asrep_recv(KRB_CONTEXT* krb_ctx);
+void kerberos_asreq_send(KRB_CONTEXT* krb_ctx, BYTE errcode);
+int kerberos_asrep_recv(KRB_CONTEXT* krb_ctx);
 
-void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode);
-int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx);
+void kerberos_tgsreq_send(KRB_CONTEXT* krb_ctx, BYTE errcode);
+int kerberos_tgsrep_recv(KRB_CONTEXT* krb_ctx);
 
-int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype);
-void krb_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep);
+int kerberos_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype);
+void kerberos_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep);
 
-KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode);
-KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_Rss, uint8 errcode);
-KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb_auth);
+KrbASREQ* kerberos_asreq_new(KRB_CONTEXT* krb_ctx, BYTE errcode);
+KrbTGSREQ* kerberos_tgsreq_new(KRB_CONTEXT* krb_Rss, BYTE errcode);
+KrbAPREQ* kerberos_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb_auth);
 
 void kerberos_ContextFree(KRB_CONTEXT* krb_ctx);
 void kerberos_free_ticket(Ticket* ticket);

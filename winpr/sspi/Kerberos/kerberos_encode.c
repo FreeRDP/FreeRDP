@@ -19,7 +19,7 @@
 
 #include "kerberos_encode.h"
 
-int krb_encode_sequence_tag(STREAM* s, uint32 len)
+int kerberos_encode_sequence_tag(STREAM* s, uint32 len)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -31,7 +31,7 @@ int krb_encode_sequence_tag(STREAM* s, uint32 len)
 	return totlen;
 }
 
-int krb_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len)
+int kerberos_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -43,7 +43,7 @@ int krb_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len)
 	return totlen;
 }
 
-int krb_encode_application_tag(STREAM* s, uint8 tag, uint32 len)
+int kerberos_encode_application_tag(STREAM* s, uint8 tag, uint32 len)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -55,7 +55,7 @@ int krb_encode_application_tag(STREAM* s, uint8 tag, uint32 len)
 	return totlen;
 }
 
-int krb_encode_recordmark(STREAM* s, uint32 len)
+int kerberos_encode_recordmark(STREAM* s, uint32 len)
 {
 	uint8* bm;
 	stream_rewind(s, 4);
@@ -65,7 +65,7 @@ int krb_encode_recordmark(STREAM* s, uint32 len)
 	return 4;
 }
 
-int krb_encode_cname(STREAM* s, uint8 tag, char* cname)
+int kerberos_encode_cname(STREAM* s, uint8 tag, char* cname)
 {
 	uint8* bm;
 	uint32 len;
@@ -84,7 +84,7 @@ int krb_encode_cname(STREAM* s, uint8 tag, char* cname)
 	return len;
 }
 
-int krb_encode_sname(STREAM* s, uint8 tag, char* sname)
+int kerberos_encode_sname(STREAM* s, uint8 tag, char* sname)
 {
 	uint8* bm;
 	char* str;
@@ -115,7 +115,7 @@ int krb_encode_sname(STREAM* s, uint8 tag, char* sname)
 	return len;
 }
 
-int krb_encode_uint8(STREAM* s, uint8 tag, uint8 val)
+int kerberos_encode_uint8(STREAM* s, uint8 tag, uint8 val)
 {
 	uint8* bm;
 	stream_rewind(s, 5);
@@ -126,7 +126,7 @@ int krb_encode_uint8(STREAM* s, uint8 tag, uint8 val)
 	return 5;
 }
 
-int krb_encode_integer(STREAM* s, uint8 tag, int val)
+int kerberos_encode_integer(STREAM* s, uint8 tag, int val)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -139,7 +139,7 @@ int krb_encode_integer(STREAM* s, uint8 tag, int val)
 	return (totlen + 2);
 }
 
-int krb_encode_options(STREAM* s, uint8 tag, uint32 options)
+int kerberos_encode_options(STREAM* s, uint8 tag, uint32 options)
 {
 	uint8* bm;
 	stream_rewind(s, 9);
@@ -151,7 +151,7 @@ int krb_encode_options(STREAM* s, uint8 tag, uint32 options)
 	return 9;
 }
 
-int krb_encode_string(STREAM* s, uint8 tag, char* str)
+int kerberos_encode_string(STREAM* s, uint8 tag, char* str)
 {
 	uint8* bm;
 	uint32 len;
@@ -164,7 +164,7 @@ int krb_encode_string(STREAM* s, uint8 tag, char* str)
 	return (len + 4);
 }
 
-int krb_encode_time(STREAM* s, uint8 tag, char* strtime)
+int kerberos_encode_time(STREAM* s, uint8 tag, char* strtime)
 {
 	uint8* bm;
 	stream_rewind(s, 19);
@@ -175,7 +175,7 @@ int krb_encode_time(STREAM* s, uint8 tag, char* strtime)
 	return 19;
 }
 
-int krb_encode_octet_string(STREAM* s, uint8* string, uint32 len)
+int kerberos_encode_octet_string(STREAM* s, uint8* string, uint32 len)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -187,41 +187,41 @@ int krb_encode_octet_string(STREAM* s, uint8* string, uint32 len)
 	return totlen;
 }
 
-int krb_encode_encrypted_data(STREAM* s, KrbENCData* enc_data)
+int kerberos_encode_encrypted_data(STREAM* s, KrbENCData* enc_data)
 {
 	uint32 totlen;
 
 	/* Encrypted Data[2] */
-	totlen = krb_encode_octet_string(s, (enc_data->encblob).data, (enc_data->encblob).length);
-	totlen += krb_encode_contextual_tag(s, 2, totlen);
+	totlen = kerberos_encode_octet_string(s, (enc_data->encblob).data, (enc_data->encblob).length);
+	totlen += kerberos_encode_contextual_tag(s, 2, totlen);
 
 	/* Encrypted key version no[1] */
 	if(enc_data->kvno != -1)
-		totlen += krb_encode_uint8(s, 1, enc_data->kvno);
+		totlen += kerberos_encode_uint8(s, 1, enc_data->kvno);
 
 	/* Encrypted Type[0] */
-	totlen += krb_encode_integer(s, 0, enc_data->enctype);
+	totlen += kerberos_encode_integer(s, 0, enc_data->enctype);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
 	return totlen;
 }
 
-int krb_encode_checksum(STREAM* s, rdpBlob* cksum, int cktype)
+int kerberos_encode_checksum(STREAM* s, rdpBlob* cksum, int cktype)
 {
 	uint32 totlen;
 
 	/* Checksum Data[1] */
-	totlen = krb_encode_octet_string(s, cksum->data, cksum->length);
-	totlen += krb_encode_contextual_tag(s, 1, totlen);
+	totlen = kerberos_encode_octet_string(s, cksum->data, cksum->length);
+	totlen += kerberos_encode_contextual_tag(s, 1, totlen);
 
 	/* Checksum Type[0] */
-	totlen += krb_encode_integer(s, 0, cktype);
+	totlen += kerberos_encode_integer(s, 0, cktype);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
 	return totlen;
 }
 
-int krb_encode_padata(STREAM* s, PAData** pa_data)
+int kerberos_encode_padata(STREAM* s, PAData** pa_data)
 {
 	uint32 totlen;
 	uint32 curlen;
@@ -233,23 +233,22 @@ int krb_encode_padata(STREAM* s, PAData** pa_data)
 	while (*lpa_data != NULL)
 	{
 		/* padata value */
-		curlen = krb_encode_octet_string(s, ((*lpa_data)->value).data, ((*lpa_data)->value).length);
-		curlen += krb_encode_contextual_tag(s, 2, curlen);
+		curlen = kerberos_encode_octet_string(s, ((*lpa_data)->value).data, ((*lpa_data)->value).length);
+		curlen += kerberos_encode_contextual_tag(s, 2, curlen);
 
 		/* padata type */
-		curlen += krb_encode_integer(s, 1, ((*lpa_data)->type));
-		curlen += krb_encode_sequence_tag(s, curlen);
+		curlen += kerberos_encode_integer(s, 1, ((*lpa_data)->type));
+		curlen += kerberos_encode_sequence_tag(s, curlen);
 		totlen += curlen;
 		lpa_data++;
 	}
 
-	totlen += krb_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
 
 	return totlen;
 }
 
-
-int krb_encode_authenticator(STREAM* s, Authenticator *krb_auth)
+int kerberos_encode_authenticator(STREAM* s, Authenticator* krb_auth)
 {
 	uint8* bm;
 	uint32 totlen, curlen;
@@ -264,55 +263,55 @@ int krb_encode_authenticator(STREAM* s, Authenticator *krb_auth)
 	stream_set_mark(s, bm);
 	
 	/* ctime[5] */
-	totlen += krb_encode_time(s, 5, krb_auth->ctime);
+	totlen += kerberos_encode_time(s, 5, krb_auth->ctime);
 	
 	/* cusec[4] */
-	totlen += krb_encode_integer(s, 4, krb_auth->cusec);
+	totlen += kerberos_encode_integer(s, 4, krb_auth->cusec);
 
 	/* cksum[3] */
-	curlen = krb_encode_checksum(s, krb_auth->cksum, krb_auth->cksumtype);
-	totlen += krb_encode_contextual_tag(s, 3, curlen) + curlen;
+	curlen = kerberos_encode_checksum(s, krb_auth->cksum, krb_auth->cksumtype);
+	totlen += kerberos_encode_contextual_tag(s, 3, curlen) + curlen;
 
 	/* cname[2] */
-	totlen += krb_encode_cname(s, 2, krb_auth->cname);
+	totlen += kerberos_encode_cname(s, 2, krb_auth->cname);
 
 	/* crealm[1] */
-	totlen += krb_encode_string(s, 1, krb_auth->crealm);
+	totlen += kerberos_encode_string(s, 1, krb_auth->crealm);
 
 	/* avno[0] */
-	totlen += krb_encode_uint8(s, 0, krb_auth->avno);
+	totlen += kerberos_encode_uint8(s, 0, krb_auth->avno);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
-	totlen += krb_encode_application_tag(s, 2, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_application_tag(s, 2, totlen);
 
 	return totlen;
 }
 
-int krb_encode_ticket(STREAM* s, uint8 tag, Ticket* ticket)
+int kerberos_encode_ticket(STREAM* s, uint8 tag, Ticket* ticket)
 {
 	uint32 totlen;
 
 	/* Encrypted DATA[3] */
-	totlen = krb_encode_encrypted_data(s, &(ticket->enc_part));
-	totlen += krb_encode_contextual_tag(s, 3, totlen);
+	totlen = kerberos_encode_encrypted_data(s, &(ticket->enc_part));
+	totlen += kerberos_encode_contextual_tag(s, 3, totlen);
 
 	/* sname[2] */
-	totlen += krb_encode_sname(s, 2, ticket->sname);
+	totlen += kerberos_encode_sname(s, 2, ticket->sname);
 
 	/* realm[1] */
-	totlen += krb_encode_string(s, 1, ticket->realm);
+	totlen += kerberos_encode_string(s, 1, ticket->realm);
 
 	/* ticket vno[0] */
-	totlen += krb_encode_uint8(s, 0, ticket->tktvno);
+	totlen += kerberos_encode_uint8(s, 0, ticket->tktvno);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
-	totlen += krb_encode_application_tag(s, 1, totlen);
-	totlen += krb_encode_contextual_tag(s, tag, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_application_tag(s, 1, totlen);
+	totlen += kerberos_encode_contextual_tag(s, tag, totlen);
 
 	return totlen;
 }
 
-int krb_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype)
+int kerberos_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype)
 {
 	uint8* bm;
 	uint32 totlen;
@@ -339,73 +338,73 @@ int krb_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype)
 	stream_set_mark(s, bm);
 
 	/* till[5] and rtime (tag 6)*/
-	totlen += krb_encode_time(s, 6, req_body->rtime);
-	totlen += krb_encode_time(s, 5, req_body->till);
+	totlen += kerberos_encode_time(s, 6, req_body->rtime);
+	totlen += kerberos_encode_time(s, 5, req_body->till);
 
 	/* SNAME[3]*/
-	totlen += krb_encode_sname(s, 3, req_body->sname);
+	totlen += kerberos_encode_sname(s, 3, req_body->sname);
 
 	/* REALM[2] */
-	totlen += krb_encode_string(s, 2, req_body->realm);
+	totlen += kerberos_encode_string(s, 2, req_body->realm);
 
 	/* CNAME[1] */
-	totlen += krb_encode_cname(s, 1, req_body->cname);
+	totlen += kerberos_encode_cname(s, 1, req_body->cname);
 
 	/* KDCOptions[0]*/
-	totlen += krb_encode_options(s, 0, req_body->kdc_options);
+	totlen += kerberos_encode_options(s, 0, req_body->kdc_options);
 
 	/* KDC_BODY */
-	totlen += krb_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
 
 	return totlen;
 }
 
-int krb_encode_apreq(STREAM* s, KrbAPREQ* krb_apreq)
+int kerberos_encode_apreq(STREAM* s, KrbAPREQ* krb_apreq)
 {
 	uint32 totlen;
 
 	/* Encrypted Authenticator[4] */
- 	totlen = krb_encode_encrypted_data(s, &(krb_apreq->enc_auth));
-	totlen += krb_encode_contextual_tag(s, 4, totlen);
+ 	totlen = kerberos_encode_encrypted_data(s, &(krb_apreq->enc_auth));
+	totlen += kerberos_encode_contextual_tag(s, 4, totlen);
 
 	/* Ticket[3] */
-	totlen += krb_encode_ticket(s, 3, krb_apreq->ticket);
+	totlen += kerberos_encode_ticket(s, 3, krb_apreq->ticket);
 
 	/* APOPTIONS[2] */
-	totlen += krb_encode_options(s, 2, krb_apreq->ap_options);
+	totlen += kerberos_encode_options(s, 2, krb_apreq->ap_options);
 
 	/* MSGTYPE[1] */
-	totlen += krb_encode_uint8(s , 1, krb_apreq->type);
+	totlen += kerberos_encode_uint8(s , 1, krb_apreq->type);
 
 	/* VERSION NO[0] */
-	totlen += krb_encode_uint8(s, 0, krb_apreq->pvno);
+	totlen += kerberos_encode_uint8(s, 0, krb_apreq->pvno);
 	
-	totlen += krb_encode_sequence_tag(s, totlen);
-	totlen += krb_encode_application_tag(s, krb_apreq->type, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_application_tag(s, krb_apreq->type, totlen);
 
 	return totlen;
 }
 
-int krb_encode_tgtreq(STREAM* s, KrbTGTREQ* krb_tgtreq)
+int kerberos_encode_tgtreq(STREAM* s, KrbTGTREQ* krb_tgtreq)
 {
 	uint32 totlen;
 	totlen = 0;
 
 	/* realm[3] optional */
-	if(krb_tgtreq->realm != NULL)
-		totlen += krb_encode_string(s, 3, krb_tgtreq->realm);
+	if (krb_tgtreq->realm != NULL)
+		totlen += kerberos_encode_string(s, 3, krb_tgtreq->realm);
 
 	/* sname[2] optional */
-	if(krb_tgtreq->sname != NULL)
-		totlen += krb_encode_sname(s, 3, krb_tgtreq->sname);
+	if (krb_tgtreq->sname != NULL)
+		totlen += kerberos_encode_sname(s, 3, krb_tgtreq->sname);
 
 	/* msgtype[1] */
-	totlen += krb_encode_uint8(s , 1, krb_tgtreq->type);
+	totlen += kerberos_encode_uint8(s , 1, krb_tgtreq->type);
 
 	/* pvno[0] */
-	totlen += krb_encode_uint8(s, 0, krb_tgtreq->pvno);
+	totlen += kerberos_encode_uint8(s, 0, krb_tgtreq->pvno);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
 
 	return totlen;
 }

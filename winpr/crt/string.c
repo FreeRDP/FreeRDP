@@ -50,6 +50,11 @@ wchar_t* _wcsdup(const wchar_t* strSource)
 
 #if sun
 	strDestination = wsdup(strSource);
+#elif defined(__APPLE__) && defined(__MACH__)
+	strDestination = malloc(wcslen(strSource));
+
+	if (strDestination != NULL)
+		wcscpy(strDestination, strSource);
 #else
 	strDestination = wcsdup(strSource);
 #endif

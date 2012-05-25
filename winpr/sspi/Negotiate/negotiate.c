@@ -46,59 +46,6 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
 	L"Microsoft Package Negotiator" /* Comment */
 };
 
-void negotiate_SetContextIdentity(NEGOTIATE_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* identity)
-{
-	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-
-	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-	{
-		context->identity.UserLength = strlen((char*) identity->User) * 2;
-		context->identity.User = (UINT16*) malloc(context->identity.UserLength);
-		MultiByteToWideChar(CP_ACP, 0, (char*) identity->User, strlen((char*) identity->User),
-				(LPWSTR) context->identity.User, context->identity.UserLength / 2);
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.DomainLength = strlen((char*) identity->Domain) * 2;
-			context->identity.Domain = (UINT16*) malloc(context->identity.DomainLength);
-			MultiByteToWideChar(CP_ACP, 0, (char*) identity->Domain, strlen((char*) identity->Domain),
-					(LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
-		}
-		else
-		{
-			context->identity.Domain = (UINT16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.PasswordLength = strlen((char*) identity->Password) * 2;
-		context->identity.Password = (UINT16*) malloc(context->identity.PasswordLength);
-		MultiByteToWideChar(CP_ACP, 0, (char*) identity->Password, strlen((char*) identity->Password),
-				(LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
-	}
-	else
-	{
-		context->identity.User = (UINT16*) malloc(identity->UserLength);
-		memcpy(context->identity.User, identity->User, identity->UserLength);
-		context->identity.UserLength = identity->UserLength;
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.Domain = (UINT16*) malloc(identity->DomainLength);
-			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
-			context->identity.DomainLength = identity->DomainLength;
-		}
-		else
-		{
-			context->identity.Domain = (UINT16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.Password = (UINT16*) malloc(identity->PasswordLength);
-		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
-		context->identity.PasswordLength = identity->PasswordLength;
-	}
-}
-
 SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
@@ -123,7 +70,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 		context = negotiate_ContextNew();
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-		negotiate_SetContextIdentity(context, &credentials->identity);
+		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NEGOTIATE_PACKAGE_NAME);
@@ -157,7 +104,6 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 	{
 		context->NegotiateFlags = 0;
 		context->state = NEGOTIATE_STATE_INITIAL;
-		context->uniconv = freerdp_uniconv_new();
 	}
 
 	return context;

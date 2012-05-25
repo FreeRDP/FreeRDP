@@ -24,25 +24,25 @@
 #ifndef WINPR_SSPI_KERBEROS_ENCODE_H
 #define WINPR_SSPI_KERBEROS_ENCODE_H
 
-int krb_encode_sequence_tag(STREAM* s, uint32 len);
-int krb_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len);
-int krb_encode_application_tag(STREAM* s, uint8 tag, uint32 len);
-int krb_encode_recordmark(STREAM* s, uint32 len);
-int krb_encode_cname(STREAM* s, uint8 tag, char* cname);
-int krb_encode_sname(STREAM* s, uint8 tag, char* sname);
-int krb_encode_uint8(STREAM* s, uint8 tag, uint8 val);
-int krb_encode_integer(STREAM* s, uint8 tag, int val);
-int krb_encode_options(STREAM* s, uint8 tag, uint32 options);
-int krb_encode_string(STREAM* s, uint8 tag, char* str);
-int krb_encode_time(STREAM* s, uint8 tag, char* strtime);
-int krb_encode_octet_string(STREAM* s, uint8* string, uint32 len);
-int krb_encode_padata(STREAM* s, PAData** pa_data);
-int krb_encode_encrypted_data(STREAM* s, KrbENCData* enc_data);
-int krb_encode_checksum(STREAM* s, rdpBlob* cksum, int cktype);
-int krb_encode_authenticator(STREAM* s, Authenticator *krb_auth);
-int krb_encode_ticket(STREAM* s, uint8 tag, Ticket* ticket);
-int krb_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype);
-int krb_encode_apreq(STREAM* s, KrbAPREQ* krb_apreq);
-int krb_encode_tgtreq(STREAM* s, KrbTGTREQ* krb_tgtreq);
+int kerberos_encode_sequence_tag(STREAM* s, uint32 len);
+int kerberos_encode_contextual_tag(STREAM* s, uint8 tag, uint32 len);
+int kerberos_encode_application_tag(STREAM* s, uint8 tag, uint32 len);
+int kerberos_encode_recordmark(STREAM* s, uint32 len);
+int kerberos_encode_cname(STREAM* s, uint8 tag, char* cname);
+int kerberos_encode_sname(STREAM* s, uint8 tag, char* sname);
+int kerberos_encode_uint8(STREAM* s, uint8 tag, uint8 val);
+int kerberos_encode_integer(STREAM* s, uint8 tag, int val);
+int kerberos_encode_options(STREAM* s, uint8 tag, uint32 options);
+int kerberos_encode_string(STREAM* s, uint8 tag, char* str);
+int kerberos_encode_time(STREAM* s, uint8 tag, char* strtime);
+int kerberos_encode_octet_string(STREAM* s, uint8* string, uint32 len);
+int kerberos_encode_padata(STREAM* s, PAData** pa_data);
+int kerberos_encode_encrypted_data(STREAM* s, KrbENCData* enc_data);
+int kerberos_encode_checksum(STREAM* s, rdpBlob* cksum, int cktype);
+int kerberos_encode_authenticator(STREAM* s, Authenticator *krb_auth);
+int kerberos_encode_ticket(STREAM* s, uint8 tag, Ticket* ticket);
+int kerberos_encode_req_body(STREAM* s, KDCReqBody* req_body, int msgtype);
+int kerberos_encode_apreq(STREAM* s, KrbAPREQ* krb_apreq);
+int kerberos_encode_tgtreq(STREAM* s, KrbTGTREQ* krb_tgtreq);
 
 #endif /* WINPR_SSPI_KERBEROS_ENCODE_H */

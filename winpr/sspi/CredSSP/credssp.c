@@ -370,7 +370,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 int credssp_server_authenticate(rdpCredssp* credssp)
 {
-	uint32 cbMaxToken;
+	UINT32 cbMaxToken;
 	ULONG fContextReq;
 	ULONG pfContextAttr;
 	SECURITY_STATUS status;
@@ -708,24 +708,24 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	/* [0] domainName (OCTET STRING) */
 	ber_read_contextual_tag(s, 0, &length, true);
 	ber_read_octet_string_tag(s, &length);
-	credssp->identity.DomainLength = (uint32) length;
-	credssp->identity.Domain = (uint16*) malloc(length);
+	credssp->identity.DomainLength = (UINT32) length;
+	credssp->identity.Domain = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Domain, s->p, credssp->identity.DomainLength);
 	stream_seek(s, credssp->identity.DomainLength);
 
 	/* [1] userName (OCTET STRING) */
 	ber_read_contextual_tag(s, 1, &length, true);
 	ber_read_octet_string_tag(s, &length);
-	credssp->identity.UserLength = (uint32) length;
-	credssp->identity.User = (uint16*) malloc(length);
+	credssp->identity.UserLength = (UINT32) length;
+	credssp->identity.User = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.User, s->p, credssp->identity.UserLength);
 	stream_seek(s, credssp->identity.UserLength);
 
 	/* [2] password (OCTET STRING) */
 	ber_read_contextual_tag(s, 2, &length, true);
 	ber_read_octet_string_tag(s, &length);
-	credssp->identity.PasswordLength = (uint32) length;
-	credssp->identity.Password = (uint16*) malloc(length);
+	credssp->identity.PasswordLength = (UINT32) length;
+	credssp->identity.Password = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
 	stream_seek(s, credssp->identity.PasswordLength);
 }

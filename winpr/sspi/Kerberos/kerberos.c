@@ -54,7 +54,7 @@ char* KRB_PACKAGE_NAME = "Kerberos";
 boolean tcp_is_ipaddr(const char* hostname)
 {
 	char* s;
-	uint8 dotcnt, digcnt;
+	BYTE dotcnt, digcnt;
 	char val;
 	s = (char*)hostname;
 	dotcnt = digcnt = 0;
@@ -115,7 +115,7 @@ time_t get_clock_skew(char* str)
 char* get_dns_queryname(char *host, char* protocol)
 {
 	char* qname;
-	uint32 buflen;
+	UINT32 buflen;
 	buflen = 0;
 	
 	if(protocol)
@@ -255,12 +255,12 @@ int krb_tcp_connect(KRB_CONTEXT* krb_ctx, KDCENTRY* entry)
 	return 0;
 }
 
-int krb_tcp_recv(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length)
+int kerberos_tcp_recv(KRB_CONTEXT* krb_ctx, BYTE* data, UINT32 length)
 {
 	return freerdp_tcp_read(krb_ctx->ksockfd, data, length);
 }
 
-int krb_tcp_send(KRB_CONTEXT* krb_ctx, uint8* data, uint32 length)
+int krb_tcp_send(KRB_CONTEXT* krb_ctx, BYTE* data, UINT32 length)
 {
 	return freerdp_tcp_write(krb_ctx->ksockfd, data, length);
 }
@@ -273,9 +273,8 @@ KRB_CONTEXT* kerberos_ContextNew()
 
 	if (context != NULL)
 	{
-		context->enctype = ETYPE_RC4_HMAC; //choose enc type
+		context->enctype = ETYPE_RC4_HMAC;
 		context->state = KRB_STATE_INITIAL;
-		context->uniconv = freerdp_uniconv_new();
 	}
 
 	return context;
@@ -468,16 +467,16 @@ SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(PCredHandle phCred
 					break;
 				case KRB_STATE_INITIAL:
 				case KRB_ASREP_ERR:
-					krb_asreq_send(krb_ctx, errcode);
+					kerberos_asreq_send(krb_ctx, errcode);
 					break;
 				case KRB_ASREQ_OK:
-					errcode = krb_asrep_recv(krb_ctx);
+					errcode = kerberos_asrep_recv(krb_ctx);
 					break;
 				case KRB_ASREP_OK:
-					krb_tgsreq_send(krb_ctx, 0);
+					kerberos_tgsreq_send(krb_ctx, 0);
 					break;
 				case KRB_TGSREQ_OK:
-					krb_tgsrep_recv(krb_ctx);
+					kerberos_tgsrep_recv(krb_ctx);
 					break;
 				case KRB_TGSREP_OK:
 					return SEC_I_COMPLETE_AND_CONTINUE;
@@ -539,17 +538,17 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	status = kerberos_InitializeSecurityContextA(NULL, &krb_ctx->context, NULL,
 		fContextReq, 0, SECURITY_NATIVE_DREP, NULL, 0, &krb_ctx->context, NULL, &pfContextAttr, &expiration);
 
-	if(status == SEC_E_INVALID_HANDLE)
+	if (status == SEC_E_INVALID_HANDLE)
 	{
 		printf("failed to init kerberos\n");
 		return NULL;
 	}
-	else if(status == SEC_I_COMPLETE_AND_CONTINUE)
+	else if (status == SEC_I_COMPLETE_AND_CONTINUE)
 	{
 		printf("successfully obtained ticket for TERMSRV\n");
 		return &krb_ctx->context;
 	}
-	else if(status == -1)
+	else if (status == -1)
 	{
 		printf("deadend \n ");
 		return NULL;
@@ -561,7 +560,7 @@ PCtxtHandle krbctx_client_init(rdpSettings* settings, SEC_WINNT_AUTH_IDENTITY* i
 	}
 }
 
-void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
+void kerberos_asreq_send(KRB_CONTEXT* context, BYTE errcode)
 {
 	KrbASREQ* krb_asreq;
 	PAData** pa_data;
@@ -571,11 +570,11 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	STREAM* paenc;
 	rdpBlob msg;
 	rdpBlob* encmsg;
-	uint32 curlen, totlen, pai;
-	uint8 *bm;
+	UINT32 curlen, totlen, pai;
+	BYTE *bm;
 	bm = NULL;
 	totlen = pai = 0;
-	krb_asreq = krb_asreq_new(krb_ctx, errcode);
+	krb_asreq = kerberos_asreq_new(context, errcode);
 	pa_data = krb_asreq->padata;
 	enckey = NULL;
 	s = stream_new(2048);
@@ -586,22 +585,22 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	stream_seek(paenc, 99);
 	
 	/* KDC-REQ-BODY (TAG 4) */
-	totlen += krb_encode_req_body(s, &(krb_asreq->req_body), krb_asreq->type);
-	totlen += krb_encode_contextual_tag(s, 4, totlen);
+	totlen += kerberos_encode_req_body(s, &(krb_asreq->req_body), krb_asreq->type);
+	totlen += kerberos_encode_contextual_tag(s, 4, totlen);
 
 	/* padata = PA-ENC-TIMESTAMP */
-	if(errcode != 0)
+	if (errcode != 0)
 	{
 		freerdp_blob_alloc(&msg, 21);
 		memcpy(msg.data, "\x30\x13\xa0\x11\x18\x0f", 6); // PA-ENC-TS-ENC without optional pausec
-		memcpy(((uint8*) msg.data) + 6, krb_asreq->req_body.from, 15);
-		enckey = string2key(&(krb_ctx->passwd), krb_ctx->enctype);
+		memcpy(((BYTE*) msg.data) + 6, krb_asreq->req_body.from, 15);
+		enckey = string2key(&(context->passwd), context->enctype);
 		encmsg = crypto_kdcmsg_encrypt(&msg, enckey, 1); //RFC4757 section 3 for msgtype (T=1)
 		enc_data.enctype = enckey->enctype;
 		enc_data.kvno = -1;
 		enc_data.encblob.data = encmsg->data;
 		enc_data.encblob.length = encmsg->length;
-		curlen = krb_encode_encrypted_data(paenc, &enc_data);
+		curlen = kerberos_encode_encrypted_data(paenc, &enc_data);
 		freerdp_blob_free(&msg);
 		msg.data = paenc->p;
 		msg.length = curlen;
@@ -616,7 +615,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	
 	freerdp_blob_alloc(&msg, 7);
 	memcpy(msg.data, "\x30\x05\xa0\03\x01\x01", 6); // asn1 data
-	*((uint8*)msg.data + 6) = krb_asreq->pa_pac_request;
+	*((BYTE*)msg.data + 6) = krb_asreq->pa_pac_request;
 
 	/* padata = PA-PAC-REQUEST */
 	(*(pa_data + pai))->type = 128;
@@ -625,29 +624,29 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	*(pa_data + ++pai) = NULL;
 
 	/* padata (TAG 3) */
-	curlen = krb_encode_padata(s, pa_data);
-	totlen += curlen + krb_encode_contextual_tag(s, 3, curlen);
+	curlen = kerberos_encode_padata(s, pa_data);
+	totlen += curlen + kerberos_encode_contextual_tag(s, 3, curlen);
 
 	/* MSGTYPE = AS-REQ (TAG 2) */
-	totlen += krb_encode_uint8(s, 2, krb_asreq->type);
+	totlen += kerberos_encode_uint8(s, 2, krb_asreq->type);
 
 	/* KERBEROS PROTOCOL VERSION NO (TAG 1)*/
-	totlen += krb_encode_uint8(s, 1, krb_asreq->pvno);
+	totlen += kerberos_encode_uint8(s, 1, krb_asreq->pvno);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
-	totlen += krb_encode_application_tag(s, krb_asreq->type, totlen);
-	totlen += krb_encode_recordmark(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_application_tag(s, krb_asreq->type, totlen);
+	totlen += kerberos_encode_recordmark(s, totlen);
 
 	/* READY SEND */
-	krb_tcp_send(krb_ctx, s->p, totlen);
+	krb_tcp_send(context, s->p, totlen);
 
 	/* save stuff */
-	krb_ctx->askey = enckey;
-	krb_ctx->nonce = krb_asreq->req_body.nonce;
-	free(krb_ctx->sname);
-	krb_ctx->sname = xstrdup(krb_asreq->req_body.sname);
-	krb_ctx->ctime = get_local_time(krb_asreq->req_body.from);
-	krb_ctx->state = KRB_ASREQ_OK;
+	context->askey = enckey;
+	context->nonce = krb_asreq->req_body.nonce;
+	free(context->sname);
+	context->sname = xstrdup(krb_asreq->req_body.sname);
+	context->ctime = get_local_time(krb_asreq->req_body.from);
+	context->state = KRB_ASREQ_OK;
 
 	/* clean up */
 	freerdp_blob_free(&msg);
@@ -657,7 +656,7 @@ void krb_asreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	free(krb_asreq);
 }
 
-int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
+int kerberos_asrep_recv(KRB_CONTEXT* context)
 {
 	int totlen, tmp, len;
 	int errcode;
@@ -667,17 +666,18 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 	KrbKDCREP* kdc_rep;
 	errcode = -1;
 	s = stream_new(2048);
-	krb_tcp_recv(krb_ctx, s->data, s->size);
+	kerberos_tcp_recv(context, s->data, s->size);
 	
 	stream_read_uint32_be(s, totlen);
-	if(totlen >= 2044)  // MALFORMED PACKET
+
+	if (totlen >= 2044)  // MALFORMED PACKET
 		goto finish;
 	
-	if(((len = krb_decode_application_tag(s, KRB_TAG_ASREP, &tmp)) == 0) || (tmp != (totlen - len)))  //NOT AN AS-REP
+	if (((len = krb_decode_application_tag(s, KRB_TAG_ASREP, &tmp)) == 0) || (tmp != (totlen - len)))  //NOT AN AS-REP
 	{
-		if(((len = krb_decode_application_tag(s, KRB_TAG_ERROR, &tmp)) == 0) || (tmp != (totlen - len)))  // NOT AN KRB-ERROR
+		if (((len = krb_decode_application_tag(s, KRB_TAG_ERROR, &tmp)) == 0) || (tmp != (totlen - len)))  // NOT AN KRB-ERROR
 		{
-			krb_ctx->state = KRB_PACKET_ERROR;
+			context->state = KRB_PACKET_ERROR;
 			goto finish;
 		}
 		else
@@ -685,35 +685,35 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 			totlen -= len;
 			krb_err = xnew(KrbERROR);
 
-			if((totlen <= 0) || ((len = krb_decode_krb_error(s, krb_err, totlen)) == 0))
+			if ((totlen <= 0) || ((len = krb_decode_krb_error(s, krb_err, totlen)) == 0))
 			{
-				krb_ctx->state = KRB_PACKET_ERROR;
+				context->state = KRB_PACKET_ERROR;
 				free(krb_err);
 				goto finish;
 			}
 
 			/* ERROR CODE */
 			errcode = krb_err->errcode; 
-			if(errcode == KRB_AP_ERR_SKEW)
+			if (errcode == KRB_AP_ERR_SKEW)
 			{
-				krb_ctx->state = KRB_ASREP_ERR;
+				context->state = KRB_ASREP_ERR;
 				goto errclean;
 			}
-			else if(errcode == KDC_ERR_PREAUTH_REQ)
+			else if (errcode == KDC_ERR_PREAUTH_REQ)
 			{
 				/* should parse PA-ENC-TYPE-INFO2 */
-				krb_ctx->state = KRB_ASREP_ERR;
+				context->state = KRB_ASREP_ERR;
 				goto errclean;
 			}
-			else if(errcode == KDC_ERR_C_PRINCIPAL_UNKNOWN)
+			else if (errcode == KDC_ERR_C_PRINCIPAL_UNKNOWN)
 			{
 				printf("KDC_ERR_C_PRINCIPAL_UNKNOWN\n");
-				krb_ctx->state = KRB_ASREP_ERR;
+				context->state = KRB_ASREP_ERR;
 				goto errclean;
 			}
 			else
 			{
-				krb_ctx->state = KRB_PACKET_ERROR;
+				context->state = KRB_PACKET_ERROR;
 				goto errclean;
 			}
 			errclean:
@@ -727,18 +727,18 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 		totlen -= len;
 
 		krb_asrep = xnew(KrbASREP);
-		if(krb_decode_kdc_rep(s, &(krb_asrep->kdc_rep), totlen) == 0)
+		if (krb_decode_kdc_rep(s, &(krb_asrep->kdc_rep), totlen) == 0)
 		{
-			krb_ctx->state = KRB_PACKET_ERROR;
+			context->state = KRB_PACKET_ERROR;
 			xfree(krb_asrep);
 			goto finish;
 		}
 		kdc_rep = &(krb_asrep->kdc_rep);
 
-		if(krb_verify_kdcrep(krb_ctx, kdc_rep, KRB_TAG_ASREP) == 0)
-			krb_ctx->state = KRB_ASREP_OK;
+		if (kerberos_verify_kdcrep(context, kdc_rep, KRB_TAG_ASREP) == 0)
+			context->state = KRB_ASREP_OK;
 		else
-			krb_ctx->state = KRB_PACKET_ERROR;
+			context->state = KRB_PACKET_ERROR;
 
 		/* clean up */
 		kerberos_free_asrep(krb_asrep);
@@ -750,7 +750,7 @@ int krb_asrep_recv(KRB_CONTEXT* krb_ctx)
 		return errcode;
 }
 
-void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
+void kerberos_tgsreq_send(KRB_CONTEXT* context, BYTE errcode)
 {
 	KrbTGSREQ* krb_tgsreq;
 	KrbAPREQ* krb_apreq;
@@ -759,11 +759,11 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	STREAM* s;
 	STREAM* sapreq;
 	rdpBlob msg;
-	uint32 curlen, totlen, tmp;
-	uint8 *bm;
+	UINT32 curlen, totlen, tmp;
+	BYTE *bm;
 	bm = NULL;
 	totlen = tmp = 0;
-	krb_tgsreq = krb_tgsreq_new(krb_ctx, errcode);
+	krb_tgsreq = kerberos_tgsreq_new(context, errcode);
 	krb_auth = xnew(Authenticator);
 	pa_data = krb_tgsreq->padata;
 	s = stream_new(4096);
@@ -774,27 +774,27 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	stream_seek(sapreq, 2047);
 	
 	/* KDC-REQ-BODY (TAG 4) */
-	totlen += krb_encode_req_body(s, &(krb_tgsreq->req_body), krb_tgsreq->type);
+	totlen += kerberos_encode_req_body(s, &(krb_tgsreq->req_body), krb_tgsreq->type);
 	stream_get_mark(s, bm);
 	tmp = totlen;
-	totlen += krb_encode_contextual_tag(s, 4, totlen);
+	totlen += kerberos_encode_contextual_tag(s, 4, totlen);
 
 	msg.data = bm;
 	msg.length = tmp;
 
 	/* Authenticator */
 	krb_auth->avno = KRB_VERSION;
-	krb_auth->cname = krb_ctx->cname;
-	krb_auth->crealm = krb_ctx->realm;
-	krb_auth->cksumtype = get_cksum_type(krb_ctx->enctype);
-	krb_auth->cksum = crypto_kdcmsg_cksum(&msg, krb_ctx->askey, 6); //RFC4757 section 3 for msgtype (T=6)
+	krb_auth->cname = context->cname;
+	krb_auth->crealm = context->realm;
+	krb_auth->cksumtype = get_cksum_type(context->enctype);
+	krb_auth->cksum = crypto_kdcmsg_cksum(&msg, context->askey, 6); //RFC4757 section 3 for msgtype (T=6)
 	krb_auth->ctime = krb_tgsreq->req_body.from;
 	krb_auth->cusec = 0;
-	crypto_nonce((uint8*)&(krb_auth->seqno), 4);
+	crypto_nonce((BYTE*)&(krb_auth->seqno), 4);
 
 	/* PA-TGS-REQ */
-	krb_apreq = krb_apreq_new(krb_ctx, &(krb_ctx->asticket), krb_auth);
-	curlen = krb_encode_apreq(sapreq, krb_apreq);
+	krb_apreq = kerberos_apreq_new(context, &(context->asticket), krb_auth);
+	curlen = kerberos_encode_apreq(sapreq, krb_apreq);
 	xfree(krb_apreq) ;
 
 	msg.data = sapreq->p;
@@ -803,28 +803,28 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	(*pa_data)->value = msg;
 
 	/* PA-DATA (TAG 3) */
-	curlen = krb_encode_padata(s, pa_data);
-	totlen += curlen + krb_encode_contextual_tag(s, 3, curlen);
+	curlen = kerberos_encode_padata(s, pa_data);
+	totlen += curlen + kerberos_encode_contextual_tag(s, 3, curlen);
 
 	/* MSGTYPE (TAG 2) */
-	totlen += krb_encode_uint8(s, 2, krb_tgsreq->type);
+	totlen += kerberos_encode_uint8(s, 2, krb_tgsreq->type);
 
 	/* VERSION NO (TAG 1) */
-	totlen += krb_encode_uint8(s, 1, krb_tgsreq->pvno);
+	totlen += kerberos_encode_uint8(s, 1, krb_tgsreq->pvno);
 
-	totlen += krb_encode_sequence_tag(s, totlen);
-	totlen += krb_encode_application_tag(s, krb_tgsreq->type, totlen);
-	totlen += krb_encode_recordmark(s, totlen);
+	totlen += kerberos_encode_sequence_tag(s, totlen);
+	totlen += kerberos_encode_application_tag(s, krb_tgsreq->type, totlen);
+	totlen += kerberos_encode_recordmark(s, totlen);
 
 	/* READY SEND */
-	krb_tcp_send(krb_ctx, s->p, totlen);
+	krb_tcp_send(context, s->p, totlen);
 	
 	/* save stuff */
-	krb_ctx->nonce = krb_tgsreq->req_body.nonce;
-	free(krb_ctx->sname);
-	krb_ctx->sname = xstrdup(krb_tgsreq->req_body.sname);
-	krb_ctx->ctime = get_local_time(krb_tgsreq->req_body.from);
-	krb_ctx->state = KRB_TGSREQ_OK;
+	context->nonce = krb_tgsreq->req_body.nonce;
+	free(context->sname);
+	context->sname = xstrdup(krb_tgsreq->req_body.sname);
+	context->ctime = get_local_time(krb_tgsreq->req_body.from);
+	context->state = KRB_TGSREQ_OK;
 
 	/* clean up */
 	freerdp_blob_free(krb_auth->cksum);
@@ -836,7 +836,7 @@ void krb_tgsreq_send(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	stream_free(s);
 }
 
-int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
+int kerberos_tgsrep_recv(KRB_CONTEXT* context)
 {
 	int totlen, tmp, len;
 	int errcode;
@@ -845,15 +845,16 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 	KrbKDCREP* kdc_rep;
 	errcode = -1;
 	s = stream_new(2048);
-	krb_tcp_recv(krb_ctx, s->data, s->size);
+	kerberos_tcp_recv(context, s->data, s->size);
 	
 	stream_read_uint32_be(s, totlen);
-	if(totlen >= 2044)  // MALFORMED PACKET
+
+	if (totlen >= 2044)  // MALFORMED PACKET
 		goto finish;
 	
-	if(((len = krb_decode_application_tag(s, KRB_TAG_TGSREP, &tmp)) == 0) || (tmp != (totlen - len)))  //NOT AN TGS-REP
+	if (((len = krb_decode_application_tag(s, KRB_TAG_TGSREP, &tmp)) == 0) || (tmp != (totlen - len)))  //NOT AN TGS-REP
 	{
-		krb_ctx->state = KRB_PACKET_ERROR;
+		context->state = KRB_PACKET_ERROR;
 		goto finish;
 	}
 	else	/* TGS-REP process */
@@ -861,19 +862,19 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 		totlen -= len;
 
 		krb_tgsrep = xnew(KrbTGSREP);
-		krb_ctx->tgskey = xnew(KrbENCKey);
+		context->tgskey = xnew(KrbENCKey);
 		if(krb_decode_kdc_rep(s, &(krb_tgsrep->kdc_rep), totlen) == 0)
 		{
-			krb_ctx->state = KRB_PACKET_ERROR;
+			context->state = KRB_PACKET_ERROR;
 			xfree(krb_tgsrep);
 			goto finish;
 		}
 		kdc_rep = &(krb_tgsrep->kdc_rep);
 	
-		if(krb_verify_kdcrep(krb_ctx, kdc_rep, KRB_TAG_TGSREP) == 0)
-			krb_ctx->state = KRB_TGSREP_OK;
+		if(kerberos_verify_kdcrep(context, kdc_rep, KRB_TAG_TGSREP) == 0)
+			context->state = KRB_TGSREP_OK;
 		else
-			krb_ctx->state = KRB_PACKET_ERROR;
+			context->state = KRB_PACKET_ERROR;
 
 		/* clean up */
 		kerberos_free_tgsrep(krb_tgsrep);
@@ -885,63 +886,64 @@ int krb_tgsrep_recv(KRB_CONTEXT* krb_ctx)
 		return errcode;
 }
 
-int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
+int kerberos_verify_kdcrep(KRB_CONTEXT* context, KrbKDCREP* kdc_rep, int msgtype)
 {
 	ENCKDCREPPart* reppart;
 	KrbENCKey* key;
 	rdpBlob* decmsg;
-	uint8 tag;
+	BYTE tag;
 	tag = 0;
 	key = NULL;
 
 	/* Verify everything */
-	if((kdc_rep->pvno != KRB_VERSION) || (kdc_rep->type != msgtype) || strcasecmp(kdc_rep->cname, krb_ctx->cname) || strcasecmp(kdc_rep->realm, krb_ctx->realm))
+	if ((kdc_rep->pvno != KRB_VERSION) || (kdc_rep->type != msgtype) || strcasecmp(kdc_rep->cname, context->cname) || strcasecmp(kdc_rep->realm, context->realm))
 	{
-		krb_ctx->state = KRB_PACKET_ERROR;
+		context->state = KRB_PACKET_ERROR;
 		return -1;
 	}
-	/* decrypt enc-part */
-	if(krb_ctx->askey->enctype != kdc_rep->enc_part.enctype && msgtype == KRB_TAG_ASREP)
-	{
-		freerdp_blob_free(&(krb_ctx->askey->skey));
-		free(krb_ctx->askey);
-		krb_ctx->askey = string2key(&(krb_ctx->passwd), kdc_rep->enc_part.enctype);
-	}
-	krb_ctx->askey->enctype = kdc_rep->enc_part.enctype;
-	decmsg = crypto_kdcmsg_decrypt(&(kdc_rep->enc_part.encblob), krb_ctx->askey, 8); //RFC4757 section 3 for msgtype (T=8)
 
-	if(msgtype == KRB_TAG_ASREP)
+	/* decrypt enc-part */
+	if (context->askey->enctype != kdc_rep->enc_part.enctype && msgtype == KRB_TAG_ASREP)
 	{
-		key = krb_ctx->askey;
+		freerdp_blob_free(&(context->askey->skey));
+		free(context->askey);
+		context->askey = string2key(&(context->passwd), kdc_rep->enc_part.enctype);
+	}
+	context->askey->enctype = kdc_rep->enc_part.enctype;
+	decmsg = crypto_kdcmsg_decrypt(&(kdc_rep->enc_part.encblob), context->askey, 8); //RFC4757 section 3 for msgtype (T=8)
+
+	if (msgtype == KRB_TAG_ASREP)
+	{
+		key = context->askey;
 		tag = 25;
 	}
 	else if (msgtype == KRB_TAG_TGSREP)
 	{
-		key = krb_ctx->tgskey;
+		key = context->tgskey;
 		tag = 26;
 	}
 
 	/* KDC-REP-PART decode */
-	if(decmsg == NULL || ((reppart = krb_decode_enc_reppart(decmsg, tag)) == NULL))
+	if (decmsg == NULL || ((reppart = krb_decode_enc_reppart(decmsg, tag)) == NULL))
 	{
-		krb_ctx->state = KRB_PACKET_ERROR;
+		context->state = KRB_PACKET_ERROR;
 		return -1;
 	}
 	freerdp_blob_free(decmsg);
 	free(decmsg);
 
 	/* Verify KDC-REP-PART */
-	if(reppart->nonce != krb_ctx->nonce || strcasecmp(reppart->realm, krb_ctx->realm) || strcasecmp(reppart->sname, krb_ctx->sname))
+	if (reppart->nonce != context->nonce || strcasecmp(reppart->realm, context->realm) || strcasecmp(reppart->sname, context->sname))
 	{
 		kerberos_free_reppart(reppart);
 		free(reppart);
-		krb_ctx->state = KRB_PACKET_ERROR;
+		context->state = KRB_PACKET_ERROR;
 		return -1;
 	}
 
 	/* save stuff */
-	krb_ctx->clockskew = reppart->authtime - krb_ctx->ctime; //Used to synchronize clocks 
-	krb_save_ticket(krb_ctx, kdc_rep);
+	context->clockskew = reppart->authtime - context->ctime; //Used to synchronize clocks 
+	kerberos_save_ticket(context, kdc_rep);
 	freerdp_blob_copy(&(key->skey), &(reppart->key.skey));
 	key->enctype = reppart->key.enctype;
 	kerberos_free_reppart(reppart);
@@ -949,7 +951,7 @@ int krb_verify_kdcrep(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep, int msgtype)
 	return 0;
 }
 
-void krb_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep)
+void kerberos_save_ticket(KRB_CONTEXT* context, KrbKDCREP* kdc_rep)
 {
 	Ticket* src;
 	Ticket* dst;
@@ -958,9 +960,9 @@ void krb_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep)
 	src = &(kdc_rep->etgt);
 
 	if (kdc_rep->type == KRB_TAG_ASREP)
-		dst = &(krb_ctx->asticket);
+		dst = &(context->asticket);
 	else if (kdc_rep->type == KRB_TAG_TGSREP)
-		dst = &(krb_ctx->tgsticket);
+		dst = &(context->tgsticket);
 
 	dst->tktvno = src->tktvno;
 	dst->realm = xstrdup(src->realm);
@@ -971,12 +973,12 @@ void krb_save_ticket(KRB_CONTEXT* krb_ctx, KrbKDCREP* kdc_rep)
 	freerdp_blob_copy(&(dst->enc_part.encblob), &(src->enc_part.encblob));
 }
 
-void krb_reqbody_init(KRB_CONTEXT* krb_ctx, KDCReqBody* req_body, uint8 reqtype)
+void kerberos_reqbody_init(KRB_CONTEXT* context, KDCReqBody* req_body, BYTE reqtype)
 {
 	time_t t;
 
-	req_body->cname = xstrdup(krb_ctx->cname);
-	req_body->realm = xstrdup(krb_ctx->realm);
+	req_body->cname = xstrdup(context->cname);
+	req_body->realm = xstrdup(context->realm);
 	
 	if (reqtype == KRB_TAG_ASREQ)
 	{
@@ -988,26 +990,26 @@ void krb_reqbody_init(KRB_CONTEXT* krb_ctx, KDCReqBody* req_body, uint8 reqtype)
 	else if (reqtype == KRB_TAG_TGSREQ)
 	{
 		req_body->kdc_options = 0x40000000 | 0x00800000 | 0x00010000;  /* forwardable , renewable, canonicalize */
-		req_body->sname = xzalloc((strlen(krb_ctx->settings->hostname) + 10) * sizeof(char));
+		req_body->sname = xzalloc((strlen(context->settings->hostname) + 10) * sizeof(char));
 		strcpy(req_body->sname, APP_SERVER);
-		strcat(req_body->sname, krb_ctx->settings->hostname);
+		strcat(req_body->sname, context->settings->hostname);
 	}
 
 	t = time(NULL);
-	t += krb_ctx->clockskew; /* fix clockskew */
+	t += context->clockskew; /* fix clockskew */
 
 	req_body->from = get_utc_time((time_t)(t));
 	req_body->till = get_utc_time((time_t)(t + 473040000));
 	req_body->rtime = get_utc_time((time_t)(t + 473040000));
 	
-	crypto_nonce((uint8*) &(req_body->nonce), 4);
+	crypto_nonce((BYTE*) &(req_body->nonce), 4);
 }
 
-KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
+KrbASREQ* kerberos_asreq_new(KRB_CONTEXT* context, BYTE errcode)
 {
 	KrbASREQ* krb_asreq;
 	PAData** lpa_data;
-	uint8 pacntmax, i;
+	BYTE pacntmax, i;
 	pacntmax = 2;
 
 	krb_asreq = xnew(KrbASREQ);
@@ -1020,18 +1022,18 @@ KrbASREQ* krb_asreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	for (i = 0; i < pacntmax; i++)
 		*(lpa_data + i) = (PAData*)xzalloc(sizeof(PAData));
 	
-	krb_reqbody_init(krb_ctx, &(krb_asreq->req_body), krb_asreq->type);
+	kerberos_reqbody_init(context, &(krb_asreq->req_body), krb_asreq->type);
 	
 	return krb_asreq;
 }
 
-KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb_auth)
+KrbAPREQ* kerberos_apreq_new(KRB_CONTEXT* context, Ticket* ticket, Authenticator* krb_auth)
 {
 	KrbAPREQ* krb_apreq;
 	STREAM* as;
 	rdpBlob msg;
 	rdpBlob* encmsg;
-	uint32 len;
+	UINT32 len;
 
 	as = stream_new(1024);
 	stream_seek(as, 1023);
@@ -1044,11 +1046,11 @@ KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb
 
 	if (krb_auth != NULL)
 	{
-		len = krb_encode_authenticator(as, krb_auth);
+		len = kerberos_encode_authenticator(as, krb_auth);
 		msg.data = as->p;
 		msg.length = len;
-		encmsg = crypto_kdcmsg_encrypt(&msg, krb_ctx->askey, 7); /* RFC4757 section 3 for msgtype (T=7) */
-		krb_apreq->enc_auth.enctype = krb_ctx->askey->enctype;
+		encmsg = crypto_kdcmsg_encrypt(&msg, context->askey, 7); /* RFC4757 section 3 for msgtype (T=7) */
+		krb_apreq->enc_auth.enctype = context->askey->enctype;
 		krb_apreq->enc_auth.kvno = -1;
 		krb_apreq->enc_auth.encblob.data = encmsg->data;
 		krb_apreq->enc_auth.encblob.length =  encmsg->length;
@@ -1060,10 +1062,10 @@ KrbAPREQ* krb_apreq_new(KRB_CONTEXT* krb_ctx, Ticket* ticket, Authenticator* krb
 	return krb_apreq;
 }
 
-KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
+KrbTGSREQ* kerberos_tgsreq_new(KRB_CONTEXT* context, BYTE errcode)
 {
 	KrbTGSREQ* krb_tgsreq;
-	uint8 pacntmax;
+	BYTE pacntmax;
 	pacntmax = 1;
 
 	krb_tgsreq = xnew(KrbTGSREQ);
@@ -1075,7 +1077,7 @@ KrbTGSREQ* krb_tgsreq_new(KRB_CONTEXT* krb_ctx, uint8 errcode)
 	*(krb_tgsreq->padata) = xnew(PAData);
 	*(krb_tgsreq->padata + 1) = NULL;
 	
-	krb_reqbody_init(krb_ctx, &(krb_tgsreq->req_body), krb_tgsreq->type);
+	kerberos_reqbody_init(context, &(krb_tgsreq->req_body), krb_tgsreq->type);
 	
 	return krb_tgsreq;
 }
@@ -1096,9 +1098,10 @@ void kerberos_free_padata(PAData** padata)
 	PAData** lpa_data;
 	lpa_data = padata;
 
-	if(lpa_data == NULL)
+	if (lpa_data == NULL)
 		return;
-	while(*lpa_data != NULL)
+
+	while (*lpa_data != NULL)
 	{
 		free(*lpa_data);
 		lpa_data++;
@@ -1107,7 +1110,7 @@ void kerberos_free_padata(PAData** padata)
 
 void kerberos_free_kdcrep(KrbKDCREP* kdc_rep)
 {
-	if(kdc_rep != NULL)
+	if (kdc_rep != NULL)
 	{
 		kerberos_free_padata(kdc_rep->padata);
 		free(kdc_rep->cname);
@@ -1120,7 +1123,7 @@ void kerberos_free_kdcrep(KrbKDCREP* kdc_rep)
 
 void kerberos_free_reppart(ENCKDCREPPart* reppart)
 {
-	if(reppart != NULL)
+	if (reppart != NULL)
 	{
 		freerdp_blob_free(&(reppart->key.skey));
 		free(reppart->sname);
@@ -1130,7 +1133,7 @@ void kerberos_free_reppart(ENCKDCREPPart* reppart)
 
 void kerberos_free_req_body(KDCReqBody* req_body)
 {
-	if(req_body != NULL)
+	if (req_body != NULL)
 	{
 		free(req_body->sname);
 		free(req_body->realm);
@@ -1143,7 +1146,7 @@ void kerberos_free_req_body(KDCReqBody* req_body)
 
 void kerberos_free_asreq(KrbASREQ* krb_asreq)
 {
-	if(krb_asreq != NULL)
+	if (krb_asreq != NULL)
 	{
 		kerberos_free_padata(krb_asreq->padata);
 		kerberos_free_req_body(&(krb_asreq->req_body));
@@ -1152,7 +1155,7 @@ void kerberos_free_asreq(KrbASREQ* krb_asreq)
 
 void kerberos_free_asrep(KrbASREP* krb_asrep)
 {
-	if(krb_asrep != NULL)
+	if (krb_asrep != NULL)
 	{
 		kerberos_free_kdcrep(&(krb_asrep->kdc_rep));
 	}

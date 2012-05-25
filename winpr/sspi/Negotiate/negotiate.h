@@ -41,9 +41,8 @@ typedef enum _NEGOTIATE_STATE NEGOTIATE_STATE;
 struct _NEGOTIATE_CONTEXT
 {
 	NEGOTIATE_STATE state;
-	UNICONV* uniconv;
 	uint32 NegotiateFlags;
-	CtxtHandle* auth_ctx;
+	PCtxtHandle auth_ctx;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegoInitMessage;
 };

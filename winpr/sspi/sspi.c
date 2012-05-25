@@ -301,6 +301,33 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	}
 }
 
+void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity)
+{
+	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+	{
+		sspi_SetAuthIdentity(identity, (char*) srcIdentity->User,
+				(char*) srcIdentity->Domain, (char*) srcIdentity->Password);
+
+		identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+		return;
+	}
+
+	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+	identity->UserLength = srcIdentity->UserLength;
+	identity->User = malloc(identity->UserLength);
+	CopyMemory(identity->User, srcIdentity->User, identity->UserLength);
+
+	identity->DomainLength = srcIdentity->DomainLength;
+	identity->Domain = malloc(identity->DomainLength);
+	CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength);
+
+	identity->PasswordLength = srcIdentity->PasswordLength;
+	identity->Password = malloc(identity->PasswordLength);
+	CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength);
+}
+
 void sspi_GlobalInit()
 {
 	sspi_ContextBufferAllocTableNew();
