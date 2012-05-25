@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# libwinpr-bcrypt cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,10 +17,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(bcrypt)
-add_subdirectory(rpc)
-add_subdirectory(sspi)
-add_subdirectory(registry)
+set(WINPR_BCRYPT_SRCS
+	bcrypt.c)
+
+add_library(winpr-bcrypt ${WINPR_BCRYPT_SRCS})
+
+include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIRS})
+
+set_target_properties(winpr-bcrypt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+if (NOT WIN32)
+	target_link_libraries(winpr-bcrypt winpr-crt)
+endif()
+
+target_link_libraries(winpr-bcrypt winpr-utils)
+target_link_libraries(winpr-bcrypt ${ZLIB_LIBRARIES})	
+
+install(TARGETS winpr-bcrypt DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
