@@ -40,7 +40,7 @@
 #include "fastpath.h"
 #include "transport.h"
 
-#include <winpr/credssp.h>
+#include <freerdp/crypto/nla.h>
 
 #define BUFFER_SIZE 16384
 
@@ -88,10 +88,11 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true) {
-		if(!connectErrorCode){                    
+	if (tls_connect(transport->tls) != true)
+	{
+		if (!connectErrorCode)                    
 			connectErrorCode = TLSCONNECTERROR;                      
-		}
+
 		tls_free(transport->tls);
 		transport->tls = NULL;
 		return false;
@@ -111,10 +112,11 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true) {
-		if(!connectErrorCode){                    
+	if (tls_connect(transport->tls) != true)
+	{
+		if (!connectErrorCode)                    
 			connectErrorCode = TLSCONNECTERROR;                      
-		}
+
 		tls_free(transport->tls);
 		transport->tls = NULL;
 		return false;
@@ -133,9 +135,9 @@ boolean transport_connect_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		if(!connectErrorCode){                    
+		if (!connectErrorCode)                    
 			connectErrorCode = AUTHENTICATIONERROR;                      
-		}
+
 		printf("Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 

@@ -104,12 +104,14 @@ endif()
 
 target_link_libraries(freerdp-core freerdp-utils)
 target_link_libraries(freerdp-core freerdp-codec)
-target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core freerdp-locale)
-target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 
+target_link_libraries(freerdp-core winpr-utils)
 target_link_libraries(freerdp-core winpr-rpc)
 target_link_libraries(freerdp-core winpr-sspi)
+
+target_link_libraries(freerdp-core freerdp-crypto)
+target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

@@ -191,17 +191,21 @@ void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length)
 	unsigned char* p;
 	unsigned int wc, uwc;
 
-	p = (unsigned char*)wstr;
+	p = (unsigned char*) wstr;
+
 	for (i = 0; i < length; i++)
 	{
 		wc = (unsigned int)(*p);
 		wc += (unsigned int)(*(p + 1)) << 8;
+
 		uwc = towupper(wc);
+
 		if (uwc != wc)
 		{
 			*p = uwc & 0xFF;
 			*(p + 1) = (uwc >> 8) & 0xFF;
 		}
+
 		p += 2;
 	}
 }

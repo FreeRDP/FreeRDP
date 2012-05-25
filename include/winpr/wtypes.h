@@ -78,7 +78,6 @@ typedef const wchar_t* LPCWSTR;
 typedef char* PSTR, *LPSTR;
 
 typedef wchar_t* LPWSTR, *PWSTR;
-typedef long NTSTATUS;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
@@ -115,6 +114,12 @@ typedef struct _GUID
 	unsigned short Data3;
 	BYTE Data4[8];
 } GUID, UUID, *PGUID;
+
+typedef struct _LUID
+{
+	DWORD LowPart;
+	LONG  HighPart;
+} LUID, *PLUID;
 
 #ifdef UNICODE
 #define _T(x)	L ## x
@@ -180,5 +185,10 @@ typedef void* PCONTEXT_HANDLE;
 typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 
 typedef unsigned long error_status_t;
+
+#ifndef _NTDEF_
+typedef LONG NTSTATUS;
+typedef NTSTATUS *PNTSTATUS;
+#endif
 
 #endif /* WINPR_WTYPES_H */

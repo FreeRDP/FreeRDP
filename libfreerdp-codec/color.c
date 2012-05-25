@@ -791,13 +791,12 @@ uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height,
 
 uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
 {
-	int x, y, bit;
-	int maskIndex;
 	uint8* data;
 	uint8 bmask;
-	uint32 pmask;
 	uint32* icon;
-	
+	int x, y, bit;
+	int maskIndex;
+
 	if (bpp == 16)
 	{
 		/* Server sends 16 bpp field, but data is usually 15-bit 555 */

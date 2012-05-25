@@ -22,6 +22,7 @@ set(FREERDP_CRYPTO_SRCS
 	der.c
 	ber.c
 	per.c
+	nla.c
 	certificate.c
 	crypto.c
 	tls.c)
@@ -39,6 +40,7 @@ else()
 	target_link_libraries(freerdp-crypto ${ZLIB_LIBRARIES})	
 endif()
 
+target_link_libraries(freerdp-crypto winpr-sspi)
 target_link_libraries(freerdp-crypto freerdp-utils)
 target_link_libraries(freerdp-crypto ${OPENSSL_LIBRARIES})
 
