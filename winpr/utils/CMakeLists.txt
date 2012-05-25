@@ -18,7 +18,8 @@
 # limitations under the License.
 
 set(WINPR_UTILS_SRCS
-	print.c)
+	print.c
+	stream.c)
 
 add_library(winpr-utils ${WINPR_UTILS_SRCS})
 

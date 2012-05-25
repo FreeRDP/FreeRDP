@@ -43,7 +43,7 @@ if(WITH_REGISTRY_XML)
 	target_link_libraries(winpr-registry ${LIBXML2_LIBRARIES})
 endif()
 
-target_link_libraries(winpr-registry freerdp-utils)
+target_link_libraries(winpr-registry winpr-utils)
 
 install(TARGETS winpr-registry DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

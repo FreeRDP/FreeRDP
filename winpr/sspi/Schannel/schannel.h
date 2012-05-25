@@ -21,13 +21,12 @@
 #define WINPR_SSPI_SCHANNEL_PRIVATE_H
 
 #include <winpr/sspi.h>
-#include <freerdp/crypto/crypto.h>
 
 #include "../sspi.h"
 
 struct _SCHANNEL_CONTEXT
 {
-	boolean server;
+	BOOL server;
 };
 typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
 

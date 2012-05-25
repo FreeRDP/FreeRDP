@@ -23,8 +23,6 @@
 #include <winpr/sspi.h>
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/utils/unicode.h>
-
 #include "../sspi.h"
 
 enum _NTLM_STATE
@@ -77,12 +75,12 @@ typedef enum _AV_ID AV_ID;
 
 struct _NTLM_CONTEXT
 {
-	boolean server;
-	boolean ntlm_v2;
+	BOOL server;
+	BOOL ntlm_v2;
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
-	boolean confidentiality;
+	BOOL confidentiality;
 	CryptoRc4 SendRc4Seal;
 	CryptoRc4 RecvRc4Seal;
 	BYTE* SendSigningKey;
