@@ -28,15 +28,15 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context);
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 
-void ntlm_current_time(uint8* timestamp);
+void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
-void ntlm_compute_ntlm_hash(uint16* password, uint32 length, char* hash);
+void ntlm_compute_ntlm_hash(uint16* password, UINT32 length, char* hash);
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash);
 void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
 void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
-void ntlm_rc4k(uint8* key, int length, uint8* plaintext, uint8* ciphertext);
+void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext);
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
 void ntlm_generate_server_challenge(NTLM_CONTEXT* context);
 void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
@@ -54,4 +54,3 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
 void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context);
 
 #endif /* WINPR_AUTH_NTLM_COMPUTE_H */
-

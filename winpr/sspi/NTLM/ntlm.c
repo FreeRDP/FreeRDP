@@ -34,59 +34,6 @@
 
 char* NTLM_PACKAGE_NAME = "NTLM";
 
-void ntlm_SetContextIdentity(NTLM_CONTEXT* context, SEC_WINNT_AUTH_IDENTITY* identity)
-{
-	context->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-
-	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-	{
-		context->identity.UserLength = strlen((char*) identity->User) * 2;
-		context->identity.User = (UINT16*) malloc(context->identity.UserLength);
-		MultiByteToWideChar(CP_ACP, 0, (char*) identity->User, strlen((char*) identity->User),
-				(LPWSTR) context->identity.User, context->identity.UserLength / 2);
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.DomainLength = strlen((char*) identity->Domain) * 2;
-			context->identity.Domain = (UINT16*) malloc(context->identity.DomainLength);
-			MultiByteToWideChar(CP_ACP, 0, (char*) identity->Domain, strlen((char*) identity->Domain),
-					(LPWSTR) context->identity.Domain, context->identity.DomainLength / 2);
-		}
-		else
-		{
-			context->identity.Domain = (UINT16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.PasswordLength = strlen((char*) identity->Password) * 2;
-		context->identity.Password = (UINT16*) malloc(context->identity.PasswordLength);
-		MultiByteToWideChar(CP_ACP, 0, (char*) identity->Password, strlen((char*) identity->Password),
-				(LPWSTR) context->identity.Password, context->identity.PasswordLength / 2);
-	}
-	else
-	{
-		context->identity.User = (UINT16*) malloc(identity->UserLength);
-		memcpy(context->identity.User, identity->User, identity->UserLength);
-		context->identity.UserLength = identity->UserLength;
-
-		if (identity->DomainLength > 0)
-		{
-			context->identity.Domain = (UINT16*) malloc(identity->DomainLength);
-			memcpy(context->identity.Domain, identity->Domain, identity->DomainLength);
-			context->identity.DomainLength = identity->DomainLength;
-		}
-		else
-		{
-			context->identity.Domain = (UINT16*) NULL;
-			context->identity.DomainLength = 0;
-		}
-
-		context->identity.Password = (UINT16*) malloc(identity->PasswordLength);
-		memcpy(context->identity.Password, identity->Password, identity->PasswordLength);
-		context->identity.PasswordLength = identity->PasswordLength;
-	}
-}
-
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	context->WorkstationLength = strlen(Workstation) * 2;
@@ -295,7 +242,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 			context->confidentiality = true;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-		ntlm_SetContextIdentity(context, &credentials->identity);
+		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		ntlm_SetContextTargetName(context, "FreeRDP");
 
@@ -408,7 +355,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
-		ntlm_SetContextIdentity(context, &credentials->identity);
+		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 		ntlm_SetContextWorkstation(context, "WORKSTATION");
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);

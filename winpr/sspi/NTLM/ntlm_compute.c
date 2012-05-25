@@ -29,12 +29,12 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
 
 #include "ntlm_compute.h"
 
-static const char lm_magic[] = "KGS!@#$%";
+const char lm_magic[] = "KGS!@#$%";
 
 static const char client_sign_magic[] = "session key to client-to-server signing key magic constant";
 static const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
@@ -370,23 +370,23 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 #ifdef WITH_DEBUG_NTLM
 	printf("Password (length = %d)\n", context->identity.PasswordLength);
-	freerdp_hexdump((BYTE*) context->identity.Password, context->identity.PasswordLength);
+	winpr_HexDump((BYTE*) context->identity.Password, context->identity.PasswordLength);
 	printf("\n");
 
 	printf("Username (length = %d)\n", context->identity.UserLength);
-	freerdp_hexdump((BYTE*) context->identity.User, context->identity.UserLength);
+	winpr_HexDump((BYTE*) context->identity.User, context->identity.UserLength);
 	printf("\n");
 
 	printf("Domain (length = %d)\n", context->identity.DomainLength);
-	freerdp_hexdump((BYTE*) context->identity.Domain, context->identity.DomainLength);
+	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength);
 	printf("\n");
 
 	printf("Workstation (length = %d)\n", context->WorkstationLength);
-	freerdp_hexdump((BYTE*) context->Workstation, context->WorkstationLength);
+	winpr_HexDump((BYTE*) context->Workstation, context->WorkstationLength);
 	printf("\n");
 
 	printf("NTOWFv2, NTLMv2 Hash\n");
-	freerdp_hexdump(ntlm_v2_hash, 16);
+	winpr_HexDump(ntlm_v2_hash, 16);
 	printf("\n");
 #endif
 
@@ -402,7 +402,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NTLMv2 Response Temp Blob\n");
-	freerdp_hexdump(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
+	winpr_HexDump(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	printf("\n");
 #endif
 
