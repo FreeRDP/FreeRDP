@@ -20,19 +20,9 @@
 #ifndef __RDPSND_MAIN_H
 #define __RDPSND_MAIN_H
 
-typedef struct rdpsnd_plugin rdpsndPlugin;
+#include <freerdp/channels/rdpsnd.h>
 
-typedef struct rdpsnd_format rdpsndFormat;
-struct rdpsnd_format
-{
-	uint16 wFormatTag;
-	uint16 nChannels;
-	uint32 nSamplesPerSec;
-	uint16 nBlockAlign;
-	uint16 wBitsPerSample;
-	uint16 cbSize;
-	uint8* data;
-};
+typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 

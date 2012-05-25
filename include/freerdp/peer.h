@@ -69,6 +69,7 @@ struct rdp_freerdp_peer
 	psPeerReceiveChannelData ReceiveChannelData;
 
 	uint32 ack_frame_id;
+	boolean local;
 };
 
 FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);

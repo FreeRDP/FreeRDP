@@ -26,6 +26,7 @@
 #ifndef _WIN32
 #include <netdb.h>
 #include <unistd.h>
+#include <sys/un.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -121,6 +122,52 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 	return (listener->num_sockfds > 0 ? true : false);
 }
 
+static boolean freerdp_listener_open_local(freerdp_listener* instance, const char* path)
+{
+#ifndef _WIN32
+	rdpListener* listener = (rdpListener*)instance->listener;
+	int status;
+	int sockfd;
+	struct sockaddr_un addr;
+
+	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (sockfd == -1)
+	{
+		perror("socket");
+		return false;
+	}
+
+	fcntl(sockfd, F_SETFL, O_NONBLOCK);
+
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	unlink(path);
+	status = bind(sockfd, (struct sockaddr *) &addr, sizeof(addr));
+	if (status != 0)
+	{
+		perror("bind");
+		close(sockfd);
+		return false;
+	}
+
+	status = listen(sockfd, 10);
+	if (status != 0)
+	{
+		perror("listen");
+		close(sockfd);
+		return false;
+	}
+
+	listener->sockfds[listener->num_sockfds++] = sockfd;
+
+	printf("Listening on socket %s.\n", addr.sun_path);
+
+	return true;
+#else
+	return false;
+#endif
+}
+
 static void freerdp_listener_close(freerdp_listener* instance)
 {
 	int i;
@@ -187,12 +234,18 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 
 		client = freerdp_peer_new(peer_sockfd);
 
+		sin_addr = NULL;
 		if (peer_addr.ss_family == AF_INET)
 			sin_addr = &(((struct sockaddr_in*) &peer_addr)->sin_addr);
-		else
+		else if (peer_addr.ss_family == AF_INET6)
 			sin_addr = &(((struct sockaddr_in6*) &peer_addr)->sin6_addr);
+#ifndef _WIN32
+		else if (peer_addr.ss_family == AF_UNIX)
+			client->local = true;
+#endif
 
-		inet_ntop(peer_addr.ss_family, sin_addr, client->hostname, sizeof(client->hostname));
+		if (sin_addr)
+			inet_ntop(peer_addr.ss_family, sin_addr, client->hostname, sizeof(client->hostname));
 
 		IFCALL(instance->PeerAccepted, instance, client);
 	}
@@ -207,6 +260,7 @@ freerdp_listener* freerdp_listener_new(void)
 
 	instance = xnew(freerdp_listener);
 	instance->Open = freerdp_listener_open;
+	instance->OpenLocal = freerdp_listener_open_local;
 	instance->GetFileDescriptor = freerdp_listener_get_fds;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
 	instance->Close = freerdp_listener_close;

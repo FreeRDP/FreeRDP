@@ -22,12 +22,22 @@
 
 #include <freerdp/api.h>
 
-struct _ADPCM
+union _ADPCM
 {
-	sint16 last_sample[2];
-	sint16 last_step[2];
+	struct
+	{
+		sint16 last_sample[2];
+		sint16 last_step[2];
+	} ima;
+	struct
+	{
+		uint8 predictor[2];
+		sint32 delta[2];
+		sint32 sample1[2];
+		sint32 sample2[2];
+	} ms;
 };
-typedef struct _ADPCM ADPCM;
+typedef union _ADPCM ADPCM;
 
 typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 struct _FREERDP_DSP_CONTEXT
@@ -51,6 +61,11 @@ struct _FREERDP_DSP_CONTEXT
 	void (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const uint8* src, int size, int channels, int block_size);
 	void (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+
+	void (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+	void (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const uint8* src, int size, int channels, int block_size);
 };
 
