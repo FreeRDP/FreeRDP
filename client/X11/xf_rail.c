@@ -303,34 +303,43 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	xfWindow* xfw;
 	rdpChannels* channels;
 	RAIL_WINDOW_MOVE_ORDER window_move;
-	int x,y;
 	rdpInput* input = xfi->instance->input;
+	int x,y;
+	Window root_window;
+	Window child_window;
+	unsigned int mask;
+	int child_x;
+	int child_y;
 
 	xfw = (xfWindow*) window->extra;
 	channels = xfi->_context->channels;
-
-	// Send RDP client event to inform RDP server
-
-	window_move.windowId = window->windowId;
-	window_move.left = xfw->left;
-	window_move.top = xfw->top;
-	window_move.right = xfw->right + 1;   // In the update to RDP the position is one past the window
-	window_move.bottom = xfw->bottom + 1;
 
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
         	(uint32) xfw->handle, 
 		xfw->left, xfw->top, xfw->right, xfw->bottom,
 		xfw->width, xfw->height);
 
-	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+	/* 
+	 * For keyboard moves send and explicit update to RDP server 
+	 */ 
+	window_move.windowId = window->windowId;
+	window_move.left = xfw->left;
+	window_move.top = xfw->top;
+	window_move.right = xfw->right + 1;   // The update to RDP the position is one past the window
+	window_move.bottom = xfw->bottom + 1;
 
-	// Send synthetic button up event to the RDP server.  This is per the RDP spec to
-	// indicate a local move has finished.
+	xf_send_rail_client_event(channels, 
+		RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+	
+	/*
+	 * Simulate button up at new position to end the local move (per RDP spec)
+	 */
 
-	x = xfw->left + xfw->local_move.window_x;
-	y = xfw->top + xfw->local_move.window_y;
+	XQueryPointer(xfi->display, xfw->handle, 
+		&root_window, &child_window, 
+		&x, &y, &child_x, &child_y, &mask);
         input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
-
+	
 	// Proactively update the RAIL window dimensions.  There is a race condition where
 	// we can start to receive GDI orders for the new window dimensions before we 
 	// receive the RAIL ORDER for the new window size.  This avoids that race condition.
@@ -522,12 +531,14 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 				direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
 				x = movesize->posX;
 				y = movesize->posY;
-				break;
+				/* FIXME: local keyboard moves not working */
+				return;
 			case RAIL_WMSZ_KEYSIZE: //0xB
 				direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
 				x = movesize->posX;
 				y = movesize->posY;
-				break;
+				/* FIXME: local keyboard moves not working */
+				return;
 		}
 
 		if (movesize->isMoveSizeStart)
