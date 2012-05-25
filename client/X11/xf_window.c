@@ -230,14 +230,15 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 
 	if ((ex_style & WS_EX_TOPMOST) || (ex_style & WS_EX_TOOLWINDOW))
 	{
-		// Tooltips and menu items should be unmanaged windows
-		// (called "override redirect" in X windows parlance)
-		// If they are managed, there are issues with window focus that
-		// cause the windows to behave improperly.  For example, a mouse
-		// press will dismiss a drop-down menu because the RDP server
-		// sees that as a focus out event from the window owning the
-		// dropdown.
-
+		/*
+		 * Tooltips and menu items should be unmanaged windows
+		 * (called "override redirect" in X windows parlance)
+		 * If they are managed, there are issues with window focus that
+		 * cause the windows to behave improperly.  For example, a mouse
+		 * press will dismiss a drop-down menu because the RDP server
+		 * sees that as a focus out event from the window owning the
+		 * dropdown.
+		 */
 		XSetWindowAttributes attrs;
 		attrs.override_redirect = True;
 		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
@@ -323,8 +324,10 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
 
-		//NOTE: This must be done here to handle reparenting the window, so that we dont miss the event and hang waiting for the next one
-        	/* wait for VisibilityNotify */
+		/*
+		 * NOTE: This must be done here to handle reparenting the window, 
+		 * so that we dont miss the event and hang waiting for the next one
+		 */
         	do
         	{
         	      XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
@@ -464,7 +467,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	XMapWindow(xfi->display, window->handle);
 
-	// Move doesn't seem to work until window is mapped.
+	/* Move doesn't seem to work until window is mapped. */
 	xf_MoveWindow(xfi, window, x, y, width, height);
 
 	return window;
