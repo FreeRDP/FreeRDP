@@ -267,14 +267,6 @@ boolean ber_read_bit_string(STREAM* s, int* length, uint8* padding)
 	return true;
 }
 
-boolean ber_read_octet_string(STREAM* s, int* length)
-{
-	ber_read_universal_tag(s, BER_TAG_OCTET_STRING, false);
-	ber_read_length(s, length);
-
-	return true;
-}
-
 /**
  * Write a BER OCTET_STRING
  * @param s stream
@@ -287,6 +279,13 @@ void ber_write_octet_string(STREAM* s, const uint8* oct_str, int length)
 	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, false);
 	ber_write_length(s, length);
 	stream_write(s, oct_str, length);
+}
+
+boolean ber_read_octet_string_tag(STREAM* s, int* length)
+{
+	ber_read_universal_tag(s, BER_TAG_OCTET_STRING, false);
+	ber_read_length(s, length);
+	return true;
 }
 
 int ber_write_octet_string_tag(STREAM* s, int length)

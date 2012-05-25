@@ -23,9 +23,9 @@
 #include <winpr/sspi.h>
 #include <freerdp/freerdp.h>
 
-#include "libwinpr-sspi/NTLM/ntlm.h"
-#include "libwinpr-sspi/NTLM/ntlm_compute.h"
-#include "libwinpr-sspi/NTLM/ntlm_message.h"
+#include "winpr/sspi/NTLM/ntlm.h"
+#include "winpr/sspi/NTLM/ntlm_compute.h"
+#include "winpr/sspi/NTLM/ntlm_message.h"
 
 #include "test_ntlm.h"
 

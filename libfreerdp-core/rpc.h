@@ -532,9 +532,9 @@ struct rdp_ntlm
 {
 	UNICONV* uniconv;
 	CtxtHandle context;
-	uint32 cbMaxToken;
-	uint32 fContextReq;
-	uint32 pfContextAttr;
+	ULONG cbMaxToken;
+	ULONG fContextReq;
+	ULONG pfContextAttr;
 	TimeStamp expiration;
 	PSecBuffer pBuffer;
 	SecBuffer inputBuffer;

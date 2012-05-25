@@ -29,8 +29,6 @@
 
 #include "rpc.h"
 
-#define NTLM_PACKAGE_NAME	_T("NTLM")
-
 boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
 {
 	size_t size;
@@ -40,7 +38,24 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	ntlm->confidentiality = confidentiality;
 
+#ifdef NATIVE_SSPI
+	{
+		HMODULE hSSPI;
+		INIT_SECURITY_INTERFACE InitSecurityInterface;
+		PSecurityFunctionTable pSecurityInterface = NULL;
+
+		hSSPI = LoadLibrary(_T("secur32.dll"));
+
+#ifdef UNICODE
+		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
+#else
+		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+#endif
+		ntlm->table = (*InitSecurityInterface)();
+	}
+#else
 	ntlm->table = InitSecurityInterface();
+#endif
 
 	ntlm->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
@@ -61,7 +76,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	ntlm->identity.Password = (uint16*) freerdp_uniconv_out(ntlm->uniconv, (char*) password, &size);
 	ntlm->identity.PasswordLength = (uint32) size;
 
-	status = QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
+	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -71,7 +86,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
@@ -145,8 +160,8 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 
 void ntlm_client_uninit(rdpNtlm* ntlm)
 {
-	FreeCredentialsHandle(&ntlm->credentials);
-	FreeContextBuffer(ntlm->pPackageInfo);
+	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
 }
 
 rdpNtlm* ntlm_new()
@@ -202,6 +217,8 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 
 	s = http_request_write(http_context, http_request);
 	http_request_free(http_request);
+
+	xfree(base64_ntlm_token);
 
 	return s;
 }

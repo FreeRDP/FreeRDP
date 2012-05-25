@@ -19,6 +19,8 @@
 
 #include "errinfo.h"
 
+int connectErrorCode;
+
 /* Protocol-independent codes */
 
 #define ERRINFO_RPC_INITIATED_DISCONNECT_STRING \

@@ -26,6 +26,7 @@
 #include "extension.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/errorcodes.h>
 #include <freerdp/utils/memory.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
@@ -45,8 +46,9 @@ boolean freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
 	boolean status = false;
+
 	/* We always set the return code to 0 before we start the connect sequence*/
-	connectErrorCode = 0 ;
+	connectErrorCode = 0;
 
 	rdp = instance->context->rdp;
 
@@ -81,9 +83,12 @@ boolean freerdp_connect(freerdp* instance)
 		if (status != true)
 		{
 			printf("freerdp_post_connect failed\n");
-			if(!connectErrorCode){
+			
+			if (!connectErrorCode)
+			{
 				connectErrorCode = POSTCONNECTERROR;
 			}
+			
 			return false;
 		}
 
@@ -95,8 +100,10 @@ boolean freerdp_connect(freerdp* instance)
 
 			s = stream_new(1024);
 			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, false);
+
 			if (instance->update->pcap_rfx)
 				instance->update->play_rfx = true;
+			
 			update = instance->update;
 
 			while (instance->update->play_rfx && pcap_has_next_record(update->pcap_rfx))
@@ -119,9 +126,12 @@ boolean freerdp_connect(freerdp* instance)
 			return true;
 		}
 	}
-	if(!connectErrorCode){
+
+	if (!connectErrorCode)
+	{
 		connectErrorCode = UNDEFINEDCONNECTERROR;
 	}
+	
 	return status;
 }
 

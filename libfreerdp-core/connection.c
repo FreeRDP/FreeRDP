@@ -22,6 +22,8 @@
 
 #include "connection.h"
 
+#include <freerdp/errorcodes.h>
+
 /**
  *                                      Connection Sequence\n
  *     client                                                                    server\n
@@ -107,7 +109,8 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	if (mcs_send_connect_initial(rdp->mcs) != true)
 	{
-		if(!connectErrorCode){
+		if (!connectErrorCode)
+		{
 			connectErrorCode = MCSCONNECTINITIALERROR;                      
 		}
 		printf("Error: unable to send MCS Connect Initial\n");
