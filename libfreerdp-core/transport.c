@@ -40,7 +40,7 @@
 #include "fastpath.h"
 #include "transport.h"
 
-#include <winpr/credssp.h>
+#include <freerdp/crypto/nla.h>
 
 #define BUFFER_SIZE 16384
 

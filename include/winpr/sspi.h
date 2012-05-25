@@ -963,4 +963,7 @@ WINPR_API void sspi_GlobalFinish();
 WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
+WINPR_API void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
+WINPR_API void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+
 #endif /* WINPR_SSPI_H */

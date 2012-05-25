@@ -54,17 +54,6 @@ struct rdp_credssp
 
 FREERDP_API int credssp_authenticate(rdpCredssp* credssp);
 
-FREERDP_API void credssp_send(rdpCredssp* credssp);
-FREERDP_API int credssp_recv(rdpCredssp* credssp);
-
-FREERDP_API void credssp_buffer_print(rdpCredssp* credssp);
-FREERDP_API void credssp_buffer_free(rdpCredssp* credssp);
-
-SECURITY_STATUS credssp_verify_public_key_echo(rdpCredssp* credssp);
-FREERDP_API void credssp_encode_ts_credentials(rdpCredssp* credssp);
-SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp);
-SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp);
-
 FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
 FREERDP_API void credssp_free(rdpCredssp* credssp);
 

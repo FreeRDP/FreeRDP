@@ -657,26 +657,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext, PSecBuffer
 	return SEC_E_OK;
 }
 
-const SecPkgInfoA NTLM_SecPkgInfoA =
-{
-	0x00082B37, /* fCapabilities */
-	1, /* wVersion */
-	0x000A, /* wRPCID */
-	0x00000B48, /* cbMaxToken */
-	"NTLM", /* Name */
-	"NTLM Security Package" /* Comment */
-};
-
-const SecPkgInfoW NTLM_SecPkgInfoW =
-{
-	0x00082B37, /* fCapabilities */
-	1, /* wVersion */
-	0x000A, /* wRPCID */
-	0x00000B48, /* cbMaxToken */
-	L"NTLM", /* Name */
-	L"NTLM Security Package" /* Comment */
-};
-
 const SecurityFunctionTableA NTLM_SecurityFunctionTableA =
 {
 	1, /* dwVersion */
@@ -739,4 +719,24 @@ const SecurityFunctionTableW NTLM_SecurityFunctionTableW =
 	ntlm_EncryptMessage, /* EncryptMessage */
 	ntlm_DecryptMessage, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
+};
+
+const SecPkgInfoA NTLM_SecPkgInfoA =
+{
+	0x00082B37, /* fCapabilities */
+	1, /* wVersion */
+	0x000A, /* wRPCID */
+	0x00000B48, /* cbMaxToken */
+	"NTLM", /* Name */
+	"NTLM Security Package" /* Comment */
+};
+
+const SecPkgInfoW NTLM_SecPkgInfoW =
+{
+	0x00082B37, /* fCapabilities */
+	1, /* wVersion */
+	0x000A, /* wRPCID */
+	0x00000B48, /* cbMaxToken */
+	L"NTLM", /* Name */
+	L"NTLM Security Package" /* Comment */
 };

@@ -26,26 +26,6 @@
 
 char* SCHANNEL_PACKAGE_NAME = "Schannel";
 
-const SecPkgInfoA SCHANNEL_SecPkgInfoA =
-{
-	0x000107B3, /* fCapabilities */
-	1, /* wVersion */
-	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
-	"Schannel", /* Name */
-	"Schannel Security Package" /* Comment */
-};
-
-const SecPkgInfoW SCHANNEL_SecPkgInfoW =
-{
-	0x000107B3, /* fCapabilities */
-	1, /* wVersion */
-	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
-	L"Schannel", /* Name */
-	L"Schannel Security Package" /* Comment */
-};
-
 SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
@@ -260,3 +240,24 @@ const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW =
 	schannel_DecryptMessage, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
 };
+
+const SecPkgInfoA SCHANNEL_SecPkgInfoA =
+{
+	0x000107B3, /* fCapabilities */
+	1, /* wVersion */
+	0x000E, /* wRPCID */
+	0x00006000, /* cbMaxToken */
+	"Schannel", /* Name */
+	"Schannel Security Package" /* Comment */
+};
+
+const SecPkgInfoW SCHANNEL_SecPkgInfoW =
+{
+	0x000107B3, /* fCapabilities */
+	1, /* wVersion */
+	0x000E, /* wRPCID */
+	0x00006000, /* cbMaxToken */
+	L"Schannel", /* Name */
+	L"Schannel Security Package" /* Comment */
+};
+

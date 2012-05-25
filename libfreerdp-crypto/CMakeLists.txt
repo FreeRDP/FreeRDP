@@ -22,6 +22,7 @@ set(FREERDP_CRYPTO_SRCS
 	der.c
 	ber.c
 	per.c
+	nla.c
 	certificate.c
 	crypto.c
 	tls.c)

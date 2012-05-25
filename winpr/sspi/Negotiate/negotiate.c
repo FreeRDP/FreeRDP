@@ -125,18 +125,6 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext
 	if (!pBuffer)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (ulAttribute == SECPKG_ATTR_SIZES)
-	{
-		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
-
-		ContextSizes->cbMaxToken = 2010;
-		ContextSizes->cbMaxSignature = 16;
-		ContextSizes->cbBlockSize = 0;
-		ContextSizes->cbSecurityTrailer = 16;
-
-		return SEC_E_OK;
-	}
-
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
