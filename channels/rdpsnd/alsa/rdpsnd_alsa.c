@@ -138,6 +138,7 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 				}
 				break;
 
+			case 2: /* MS ADPCM */
 			case 0x11: /* IMA ADPCM */
 				alsa->format = SND_PCM_FORMAT_S16_LE;
 				alsa->bytes_per_channel = 2;
@@ -212,6 +213,7 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 			}
 			break;
 
+		case 2: /* MS ADPCM */
 		case 0x11: /* IMA ADPCM */
 			if (format->nSamplesPerSec <= 48000 &&
 				format->wBitsPerSample == 4 &&
@@ -243,7 +245,14 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	if (alsa->out_handle == 0)
 		return;
 
-	if (alsa->wformat == 0x11)
+	if (alsa->wformat == 2)
+	{
+		alsa->dsp_context->decode_ms_adpcm(alsa->dsp_context,
+			data, size, alsa->source_channels, alsa->block_size);
+		size = alsa->dsp_context->adpcm_size;
+		src = alsa->dsp_context->adpcm_buffer;
+	}
+	else if (alsa->wformat == 0x11)
 	{
 		alsa->dsp_context->decode_ima_adpcm(alsa->dsp_context,
 			data, size, alsa->source_channels, alsa->block_size);
