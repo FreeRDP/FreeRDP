@@ -110,7 +110,8 @@ void sspi_ContextBufferAllocTableNew()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+	ContextBufferAllocTable.entries = malloc(size);
+	ZeroMemory(ContextBufferAllocTable.entries, size);
 }
 
 void sspi_ContextBufferAllocTableGrow()
@@ -128,7 +129,7 @@ void sspi_ContextBufferAllocTableGrow()
 void sspi_ContextBufferAllocTableFree()
 {
 	ContextBufferAllocTable.cEntries = ContextBufferAllocTable.cMaxEntries = 0;
-	HeapFree(GetProcessHeap(), 0, ContextBufferAllocTable.entries);
+	free(ContextBufferAllocTable.entries);
 }
 
 void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
@@ -140,7 +141,8 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 	{
 		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
 		{
-			contextBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+			contextBuffer = malloc(size);
+			ZeroMemory(contextBuffer, size);
 			ContextBufferAllocTable.cEntries++;
 
 			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
@@ -163,7 +165,8 @@ CREDENTIALS* sspi_CredentialsNew()
 {
 	CREDENTIALS* credentials;
 
-	credentials = (CREDENTIALS*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CREDENTIALS));
+	credentials = (CREDENTIALS*) malloc(sizeof(CREDENTIALS));
+	ZeroMemory(credentials, sizeof(CREDENTIALS));
 
 	if (credentials != NULL)
 	{
@@ -178,25 +181,26 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	if (!credentials)
 		return;
 
-	HeapFree(GetProcessHeap(), 0, credentials);
+	free(credentials);
 }
 
 void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
 {
 	SecBuffer->cbBuffer = size;
-	SecBuffer->pvBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+	SecBuffer->pvBuffer = malloc(size);
+	ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
 {
-	SecBuffer->cbBuffer = 0;
-	HeapFree(GetProcessHeap(), 0, SecBuffer->pvBuffer);
+	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
+	SecBuffer->cbBuffer = 0;
 }
 
 SecHandle* sspi_SecureHandleAlloc()
 {
-	SecHandle* handle = malloc(sizeof(SecHandle));
+	SecHandle* handle = (SecHandle*) malloc(sizeof(SecHandle));
 	sspi_SecureHandleInit(handle);
 	return handle;
 }

@@ -25,10 +25,6 @@
 
 #include <winpr/winpr.h>
 
-#ifdef _WIN32
-#include <winnls.h>
-#endif
-
 #include <winpr/string.h>
 #include <winpr/memory.h>
 

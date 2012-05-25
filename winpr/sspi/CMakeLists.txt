@@ -56,8 +56,8 @@ endif()
 
 add_library(winpr-sspi ${WINPR_SSPI_SRCS})
 
-include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
@@ -66,7 +66,8 @@ if (NOT WIN32)
 endif()
 
 target_link_libraries(winpr-sspi winpr-utils)
-target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})	
+target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})
+target_link_libraries(winpr-sspi ${OPENSSL_LIBRARIES})
 
 install(TARGETS winpr-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

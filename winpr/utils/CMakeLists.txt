@@ -25,7 +25,9 @@ add_library(winpr-utils ${WINPR_UTILS_SRCS})
 
 set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(winpr-utils winpr-crt)
+if (NOT WIN32)
+	target_link_libraries(winpr-utils winpr-crt)
+endif()
 
 install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
