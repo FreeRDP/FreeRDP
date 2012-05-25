@@ -231,22 +231,26 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	if ((ex_style & WS_EX_TOPMOST) || (ex_style & WS_EX_TOOLWINDOW))
 	{
 		/*
-		 * These include tool tips, dropdown menus, etc.  These won't work
-		 * correctly if the local window manager resizes or moves them.
-		 * Set override redirect to prevent this from occurring.
+		 * Tooltips and menu items should be unmanaged windows
+		 * (called "override redirect" in X windows parlance)
+		 * If they are managed, there are issues with window focus that
+		 * cause the windows to behave improperly.  For example, a mouse
+		 * press will dismiss a drop-down menu because the RDP server
+		 * sees that as a focus out event from the window owning the
+		 * dropdown.
 		 */
- 
 		XSetWindowAttributes attrs;
 		attrs.override_redirect = True;
 		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
+
 		window->is_transient = true;
 		xf_SetWindowUnlisted(xfi, window);
-
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
 	else if (style & WS_POPUP)
 	{
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+		window->is_transient = true;
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 		xf_SetWindowUnlisted(xfi, window);
 	}
@@ -258,6 +262,11 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_WINDOW_TYPE,
 		XA_ATOM, 32, PropModeReplace, (uint8*) &window_type, 1);
 
+}
+
+void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name)
+{
+	XStoreName(xfi->display, window->handle, name);
 }
 
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
@@ -315,8 +324,10 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
 
-		//NOTE: This must be done here to handle reparenting the window, so that we dont miss the event and hang waiting for the next one
-        	/* wait for VisibilityNotify */
+		/*
+		 * NOTE: This must be done here to handle reparenting the window, 
+		 * so that we dont miss the event and hang waiting for the next one
+		 */
         	do
         	{
         	      XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
@@ -324,7 +335,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
         	while (xevent.type != VisibilityNotify);
 	}
 
-	XStoreName(xfi->display, window->handle, name);
+	xf_SetWindowText(xfi, window, name);
+
 
 	return window;
 }
@@ -419,8 +431,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
 			window->width, window->height, wnd->windowId);
 
-	xf_SetWindowDecorations(xfi, window, window->decorations);
-	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	memset(&gcv, 0, sizeof(gcv));
+	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 
 	class_hints = XAllocClassHint();
 
@@ -448,11 +460,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
                 ColormapChangeMask | OwnerGrabButtonMask;
 
 	XSelectInput(xfi->display, window->handle, input_mask);
+
+	xf_SetWindowDecorations(xfi, window, window->decorations);
+	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	xf_ShowWindow(xfi, window, WINDOW_SHOW);
+
 	XMapWindow(xfi->display, window->handle);
 
-	memset(&gcv, 0, sizeof(gcv));
-	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
-
+	/* Move doesn't seem to work until window is mapped. */
 	xf_MoveWindow(xfi, window, x, y, width, height);
 
 	return window;
@@ -486,8 +501,6 @@ void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window,
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y)
 {
-	Window child_window;
-
 	if (window->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
@@ -499,16 +512,13 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 		window->window->windowOffsetX, window->window->windowOffsetY, 
 		window->window->windowWidth, window->window->windowHeight, x, y);
 
+	/*
+	* Save original mouse location relative to root.  This will be needed
+	* to end local move to RDP server and/or X server
+	*/
 	window->local_move.root_x = x; 
 	window->local_move.root_y = y;
 	window->local_move.state = LMS_STARTING;
-
-	XTranslateCoordinates(xfi->display, RootWindowOfScreen(xfi->screen), window->handle, 
-		window->local_move.root_x, 
-		window->local_move.root_y,
-		&window->local_move.window_x, 
-		&window->local_move.window_y, 
-		&child_window);
 
 	XUngrabPointer(xfi->display, CurrentTime);
 
@@ -614,6 +624,10 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 
 		case WINDOW_SHOW:
 			XMapWindow(xfi->display, window->handle);
+			if (window->is_transient)
+			{
+				xf_SetWindowUnlisted(xfi, window);
+			}
 			break;
 	}
 
@@ -660,6 +674,9 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	int i;
 	XRectangle* xrects;
 
+	if (nrects == 0) 
+		return;
+
 	xrects = xmalloc(sizeof(XRectangle) * nrects);
 
 	for (i = 0; i < nrects; i++)
@@ -682,6 +699,9 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	int i;
 	XRectangle* xrects;
 
+	if (nrects == 0) 
+		return;
+
 	xrects = xmalloc(sizeof(XRectangle) * nrects);
 
 	for (i = 0; i < nrects; i++)
@@ -693,7 +713,7 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	}
 
 #ifdef WITH_XEXT
-	//XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	xfree(xrects);
