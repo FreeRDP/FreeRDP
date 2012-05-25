@@ -171,7 +171,7 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 	mem = _wcsdup(wstr);
 #elif sun
 	mem = wsdup(wstr);
-#elif defined(__APPLE__) && defined(__MACH__)
+#elif (defined(__APPLE__) && defined(__MACH__)) || defined(ANDROID)
 	mem = xmalloc(wcslen(wstr));
 	if (mem != NULL)
 		wcscpy(mem, wstr);
