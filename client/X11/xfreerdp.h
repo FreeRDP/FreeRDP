@@ -116,6 +116,12 @@ struct xf_info
 	boolean sw_gdi;
 	uint8* primary_buffer;
 
+	boolean frame_begin;
+	uint16 frame_x1;
+	uint16 frame_y1;
+	uint16 frame_x2;
+	uint16 frame_y2;
+
 	boolean focused;
 	boolean mouse_active;
 	boolean mouse_motion;
