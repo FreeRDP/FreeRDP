@@ -225,6 +225,8 @@ void freerdp_context_new(freerdp* instance)
 
 	instance->input->context = instance->context;
 
+	update_register_client_callbacks(rdp->update);
+
 	IFCALL(instance->ContextNew, instance, instance->context);
 }
 

@@ -52,6 +52,10 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color);
 void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new);
 void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached);
 
+boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s);
+boolean update_read_suppress_output(rdpUpdate* update, STREAM* s);
+
 void update_register_server_callbacks(rdpUpdate* update);
+void update_register_client_callbacks(rdpUpdate* update);
 
 #endif /* __UPDATE_H */

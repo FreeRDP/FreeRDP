@@ -518,14 +518,47 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s);
 }
 
+boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
+{
+	uint8 numberOfAreas;
+
+	if (stream_get_left(s) < 4)
+		return false;
+
+	stream_read_uint8(s, numberOfAreas);
+	stream_seek(s, 3); /* pad3Octects */
+	if (stream_get_left(s) < numberOfAreas * 8)
+		return false;
+
+	IFCALL(update->RefreshRect, update->context, numberOfAreas, (RECTANGLE_16*) stream_get_tail(s));
+
+	return true;
+}
+
+boolean update_read_suppress_output(rdpUpdate* update, STREAM* s)
+{
+	uint8 allowDisplayUpdates;
+
+	if (stream_get_left(s) < 4)
+		return false;
+
+	stream_read_uint8(s, allowDisplayUpdates);
+	stream_seek(s, 3); /* pad3Octects */
+	if (allowDisplayUpdates > 0 && stream_get_left(s) < 8)
+		return false;
+
+	IFCALL(update->SuppressOutput, update->context, allowDisplayUpdates,
+		allowDisplayUpdates > 0 ? (RECTANGLE_16*) stream_get_tail(s) : NULL);
+
+	return true;
+}
+
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
 	update->EndPaint = update_end_paint;
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
-	update->RefreshRect = update_send_refresh_rect;
-	update->SuppressOutput = update_send_suppress_output;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
@@ -534,6 +567,12 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->pointer->PointerColor = update_send_pointer_color;
 	update->pointer->PointerNew = update_send_pointer_new;
 	update->pointer->PointerCached = update_send_pointer_cached;
+}
+
+void update_register_client_callbacks(rdpUpdate* update)
+{
+	update->RefreshRect = update_send_refresh_rect;
+	update->SuppressOutput = update_send_suppress_output;
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)
