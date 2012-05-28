@@ -359,10 +359,13 @@ static void update_send_refresh_rect(rdpContext* context, uint8 count, RECTANGLE
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	s = rdp_data_pdu_init(rdp);
-	update_write_refresh_rect(s, count, areas);
+	if (rdp->settings->refresh_rect)
+	{
+		s = rdp_data_pdu_init(rdp);
+		update_write_refresh_rect(s, count, areas);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+	}
 }
 
 static void update_write_suppress_output(STREAM* s, uint8 allow, RECTANGLE_16* area)
@@ -379,10 +382,13 @@ static void update_send_suppress_output(rdpContext* context, uint8 allow, RECTAN
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	s = rdp_data_pdu_init(rdp);
-	update_write_suppress_output(s, allow, area);
+	if (rdp->settings->suppress_output)
+	{
+		s = rdp_data_pdu_init(rdp);
+		update_write_suppress_output(s, allow, area);
 
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
+	}
 }
 
 static void update_send_surface_command(rdpContext* context, STREAM* s)
