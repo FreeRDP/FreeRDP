@@ -515,20 +515,34 @@ static boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 static boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
+	RECTANGLE_16 rect;
 	rdpWindow* window;
+	rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	if (app != true)
-		return true;
-
-	window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
-
-	if (window != NULL)
 	{
-		/* local restore event */
-		xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
-		xfWindow *xfw = (xfWindow*) window->extra;
-		xfw->is_mapped = true;
+		if (xfi->suppress_output == true)
+		{
+			xfi->suppress_output = false;
+			rect.left = 0;
+			rect.top = 0;
+			rect.right = xfi->width;
+			rect.bottom = xfi->height;
+			update->SuppressOutput((rdpContext*) xfi->context, 1, &rect);
+		}
+	}
+	else
+	{
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+
+		if (window != NULL)
+		{
+			/* local restore event */
+			xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+			xfWindow *xfw = (xfWindow*) window->extra;
+			xfw->is_mapped = true;
+		}
 	}
 
 	return true;
@@ -537,19 +551,28 @@ static boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 static boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
 	rdpWindow* window;
+	rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	xf_kbd_release_all_keypress(xfi);
 
 	if (app != true)
-		return true;
-
-	window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
-
-	if (window != NULL)
 	{
-		xfWindow *xfw = (xfWindow*) window->extra;
-		xfw->is_mapped = false;
+		if (xfi->suppress_output == false)
+		{
+			xfi->suppress_output = true;
+			update->SuppressOutput((rdpContext*) xfi->context, 0, NULL);
+		}
+	}
+	else
+	{
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+
+		if (window != NULL)
+		{
+			xfWindow *xfw = (xfWindow*) window->extra;
+			xfw->is_mapped = false;
+		}
 	}
 
 	return true;

@@ -119,6 +119,7 @@ struct xf_info
 	boolean focused;
 	boolean mouse_active;
 	boolean mouse_motion;
+	boolean suppress_output;
 	boolean fullscreen_toggle;
 	uint32 keyboard_layout_id;
 	boolean pressed_keys[256];
