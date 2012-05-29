@@ -392,6 +392,19 @@ static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const 
 	return true;
 }
 
+static boolean rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
+{
+	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
+	STREAM* s = rdpsnd->rdpsnd_pdu;
+
+	RDPSND_PDU_INIT(s, SNDC_SETVOLUME);
+
+	stream_write_uint16(s, left);
+	stream_write_uint16(s, right);
+	
+	RDPSND_PDU_FINISH(s);
+}
+
 static boolean rdpsnd_server_close(rdpsnd_server_context* context)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
@@ -422,6 +435,7 @@ rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
 	rdpsnd->context.Initialize = rdpsnd_server_initialize;
 	rdpsnd->context.SelectFormat = rdpsnd_server_select_format;
 	rdpsnd->context.SendSamples = rdpsnd_server_send_samples;
+	rdpsnd->context.SetVolume = rdpsnd_server_set_volume;
 	rdpsnd->context.Close = rdpsnd_server_close;
 
 	rdpsnd->dsp_context = freerdp_dsp_context_new();
