@@ -172,8 +172,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 	stream_write_uint8(data_out, SNDC_FORMATS); /* msgType */
 	stream_write_uint8(data_out, 0); /* bPad */
 	stream_seek_uint16(data_out); /* BodySize */
-	stream_write_uint32(data_out, TSSNDCAPS_ALIVE); /* dwFlags */
-	stream_write_uint32(data_out, 0); /* dwVolume */
+	stream_write_uint32(data_out, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
+	stream_write_uint32(data_out, 0xFFFFFFFF); /* dwVolume */
 	stream_write_uint32(data_out, 0); /* dwPitch */
 	stream_write_uint16_be(data_out, 0); /* wDGramPort */
 	stream_seek_uint16(data_out); /* wNumberOfFormats */
