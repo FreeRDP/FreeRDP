@@ -122,8 +122,8 @@ void sspi_ContextBufferAllocTableGrow()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ContextBufferAllocTable.entries, size);
-	memset((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], 0, size / 2);
+	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
+	ZeroMemory((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], size / 2);
 }
 
 void sspi_ContextBufferAllocTableFree()

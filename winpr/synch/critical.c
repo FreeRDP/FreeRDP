@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Memory Allocation
+ * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,13 +17,7 @@
  * limitations under the License.
  */
 
-#include <winpr/crt.h>
-
-/* Memory Allocation: http://msdn.microsoft.com/en-us/library/hk1k7x6x.aspx */
-/* Memory Management Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa366781/ */
-
-#ifndef _WIN32
+#include <winpr/synch.h>
 
 
 
-#endif

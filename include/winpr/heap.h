@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Memory Allocation
+ * Heap Memory Allocation
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,13 +17,28 @@
  * limitations under the License.
  */
 
-#include <winpr/crt.h>
+#ifndef WINPR_HEAP_H
+#define WINPR_HEAP_H
 
-/* Memory Allocation: http://msdn.microsoft.com/en-us/library/hk1k7x6x.aspx */
-/* Memory Management Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa366781/ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #ifndef _WIN32
 
+#define HEAP_GENERATE_EXCEPTIONS			0x00000004
+#define HEAP_NO_SERIALIZE				0x00000001
+#define HEAP_ZERO_MEMORY				0x00000008
+#define HEAP_REALLOC_IN_PLACE_ONLY			0x00000010
 
+WINPR_API HANDLE GetProcessHeap(void);
+WINPR_API LPVOID HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
+WINPR_API LPVOID HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
+WINPR_API BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 
 #endif
+
+#endif /* WINPR_HEAP_H */
+

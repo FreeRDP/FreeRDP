@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# libwinpr-synch cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,13 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(bcrypt)
-add_subdirectory(rpc)
-add_subdirectory(sspi)
-add_subdirectory(registry)
+set(WINPR_SYNCH_SRCS
+	critical.c
+	event.c
+	mutex.c
+	semaphore.c
+	sleep.c)
+
+add_library(winpr-synch ${WINPR_SYNCH_SRCS})
+
+set_target_properties(winpr-synch PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+target_link_libraries(winpr-synch winpr-handle)
+
+install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

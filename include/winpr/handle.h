@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Memory Allocation
+ * Handle Management
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_CRT_MEMORY_H
-#define WINPR_CRT_MEMORY_H
+#ifndef WINPR_HANDLE_H
+#define WINPR_HANDLE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,19 +28,18 @@
 
 #ifndef _WIN32
 
-#define CopyMemory					RtlCopyMemory
-#define MoveMemory					RtlMoveMemory
-#define FillMemory					RtlFillMemory
-#define ZeroMemory					RtlZeroMemory
+#define HANDLE_FLAG_INHERIT			0x00000001
+#define HANDLE_FLAG_PROTECT_FROM_CLOSE		0x00000002
 
-#define RtlCopyMemory(Destination, Source, Length)	memcpy((Destination), (Source), (Length))
-#define RtlMoveMemory(Destination, Source, Length)	memmove((Destination), (Source), (Length))
-#define RtlFillMemory(Destination, Length, Fill)	memset((Destination), (Fill), (Length))
-#define RtlZeroMemory(Destination, Length)		memset((Destination), 0, (Length))
+WINPR_API BOOL CloseHandle(HANDLE hObject);
+
+WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
+	LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
+
+WINPR_API BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
+WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
 
 #endif
 
-#include <winpr/heap.h>
-
-#endif /* WINPR_CRT_MEMORY_H */
+#endif /* WINPR_HANDLE_H */
 

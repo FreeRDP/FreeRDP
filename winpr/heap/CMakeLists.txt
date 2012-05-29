@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# libwinpr-heap cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,13 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(bcrypt)
-add_subdirectory(rpc)
-add_subdirectory(sspi)
-add_subdirectory(registry)
+set(WINPR_HEAP_SRCS
+	heap.c)
+
+add_library(winpr-heap ${WINPR_HEAP_SRCS})
+
+set_target_properties(winpr-heap PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+install(TARGETS winpr-heap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

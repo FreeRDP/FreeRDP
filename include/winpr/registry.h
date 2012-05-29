@@ -148,13 +148,6 @@ typedef ACCESS_MASK REGSAM;
 #define RRF_NOEXPAND					0x10000000
 #define RRF_ZEROONFAILURE				0x20000000
 
-typedef struct _SECURITY_ATTRIBUTES
-{
-	DWORD nLength;
-	LPVOID lpSecurityDescriptor;
-	BOOL bInheritHandle;
-} SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
-
 struct val_context
 {
 	int valuelen;

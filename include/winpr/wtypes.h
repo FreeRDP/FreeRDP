@@ -54,7 +54,7 @@ typedef float FLOAT;
 typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
-typedef void* HANDLE;
+typedef void* HANDLE, *LPHANDLE;
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
 typedef signed char INT8;
@@ -175,6 +175,13 @@ typedef struct _SECURITY_DESCRIPTOR
 	PACL Sacl;
 	PACL Dacl;
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+
+typedef struct _SECURITY_ATTRIBUTES
+{
+	DWORD nLength;
+	LPVOID lpSecurityDescriptor;
+	BOOL bInheritHandle;
+} SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
 #endif
 
