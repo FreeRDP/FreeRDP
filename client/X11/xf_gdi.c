@@ -871,7 +871,68 @@ void xf_gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 
 void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
+	xfInfo* xfi = ((xfContext*) context)->xfi;
 
+	switch (surface_frame_marker->frameAction)
+	{
+		case SURFACECMD_FRAMEACTION_BEGIN:
+			xfi->frame_begin = true;
+			xfi->frame_x1 = 0;
+			xfi->frame_y1 = 0;
+			xfi->frame_x2 = 0;
+			xfi->frame_y2 = 0;
+			break;
+
+		case SURFACECMD_FRAMEACTION_END:
+			xfi->frame_begin = false;
+			if (xfi->frame_x2 > xfi->frame_x1 && xfi->frame_y2 > xfi->frame_y1)
+			{
+				XSetFunction(xfi->display, xfi->gc, GXcopy);
+				XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+					xfi->frame_x1, xfi->frame_y1,
+					xfi->frame_x2 - xfi->frame_x1, xfi->frame_y2 - xfi->frame_y1,
+					xfi->frame_x1, xfi->frame_y1);
+				gdi_InvalidateRegion(xfi->hdc, xfi->frame_x1, xfi->frame_y1,
+					xfi->frame_x2 - xfi->frame_x1, xfi->frame_y2 - xfi->frame_y1);
+			}
+			break;
+	}
+}
+
+static void xf_gdi_surface_update_frame(xfInfo* xfi, uint16 tx, uint16 ty, uint16 width, uint16 height)
+{
+	if (xfi->remote_app != true)
+	{
+		if (xfi->frame_begin)
+		{
+			if (xfi->frame_x2 > xfi->frame_x1 && xfi->frame_y2 > xfi->frame_y1)
+			{
+				xfi->frame_x1 = MIN(xfi->frame_x1, tx);
+				xfi->frame_y1 = MIN(xfi->frame_y1, ty);
+				xfi->frame_x2 = MAX(xfi->frame_x2, tx + width);
+				xfi->frame_y2 = MAX(xfi->frame_y2, ty + height);
+			}
+			else
+			{
+				xfi->frame_x1 = tx;
+				xfi->frame_y1 = ty;
+				xfi->frame_x2 = tx + width;
+				xfi->frame_y2 = ty + height;
+			}
+		}
+		else
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
+				tx, ty, width, height, tx, ty);
+			gdi_InvalidateRegion(xfi->hdc, tx, ty, width, height);
+		}
+	}
+	else
+	{
+		gdi_InvalidateRegion(xfi->hdc, tx, ty, width, height);
+	}
 }
 
 void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -914,13 +975,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			tx = message->rects[i].x + surface_bits_command->destLeft;
 			ty = message->rects[i].y + surface_bits_command->destTop;
 
-			if (xfi->remote_app != true)
-			{
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-						tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
-			}
-
-			gdi_InvalidateRegion(xfi->hdc, tx, ty, message->rects[i].width, message->rects[i].height);
+			xf_gdi_surface_update_frame(xfi, tx, ty, message->rects[i].width, message->rects[i].height);
 		}
 
 		XSetClipMask(xfi->display, xfi->gc, None);
@@ -947,16 +1002,9 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 				surface_bits_command->width, surface_bits_command->height);
 		XFree(image);
 
-		if (xfi->remote_app != true)
-		{
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
-				surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height,
-				surface_bits_command->destLeft, surface_bits_command->destTop);
-		}
-
-		gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height);
+		xf_gdi_surface_update_frame(xfi,
+			surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height);
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 	}
@@ -982,16 +1030,9 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 					surface_bits_command->width, surface_bits_command->height);
 			XFree(image);
 
-			if (xfi->remote_app != true)
-			{
-				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
-					surface_bits_command->destLeft, surface_bits_command->destTop,
-					surface_bits_command->width, surface_bits_command->height,
-					surface_bits_command->destLeft, surface_bits_command->destTop);
-			}
-
-			gdi_InvalidateRegion(xfi->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-					surface_bits_command->width, surface_bits_command->height);
+			xf_gdi_surface_update_frame(xfi,
+				surface_bits_command->destLeft, surface_bits_command->destTop,
+				surface_bits_command->width, surface_bits_command->height);
 
 			XSetClipMask(xfi->display, xfi->gc, None);
 		} else {
