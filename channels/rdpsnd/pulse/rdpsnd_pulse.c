@@ -411,9 +411,12 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	cv.channels = 2;
 	cv.values[0] = PA_VOLUME_MUTED + (left * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
 	cv.values[1] = PA_VOLUME_MUTED + (right * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
+
+	pa_threaded_mainloop_lock(pulse->mainloop);
 	operation = pa_context_set_sink_input_volume(pulse->context, pa_stream_get_index(pulse->stream), &cv, NULL, NULL);
 	if(operation)
 		pa_operation_unref(operation);
+	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
 static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, uint8* data, int size)
