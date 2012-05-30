@@ -606,6 +606,8 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
+			if (settings->encryption && settings->server_key == NULL && settings->rdp_key_file == NULL)
+				return false;
 		}
 		else if (settings->selected_protocol == PROTOCOL_TLS)
 		{
