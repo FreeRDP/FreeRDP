@@ -85,6 +85,7 @@ struct rdp_nego
 typedef struct rdp_nego rdpNego;
 
 boolean nego_connect(rdpNego* nego);
+boolean nego_tcp_connect(rdpNego* nego); // XXX: this is here for rdp_send_pcb. maybe there is a way around exporting it...
 
 void nego_attempt_nla(rdpNego* nego);
 void nego_attempt_tls(rdpNego* nego);

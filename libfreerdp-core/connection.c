@@ -54,6 +54,24 @@
  *
  */
 
+// XXX: Send a PCB (preconnection BLOB) as specified in MS-RDPEPS (RDP_PRECONNECTION_PDU_V2)
+boolean rdp_send_pcb(rdpNego* nego) {
+	STREAM* s;
+	// XXX: this is a fixed RDP_PRECONNECTION_PDU_V2, with Id=0 and a Hyper-V instance id as string
+	//      must be customizable in the final version.
+	uint8 buf[] = {0x5c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x25, 0x00, 0x32, 0x00, 0x37, 0x00, 0x41, 0x00, 0x41, 0x00, 0x39, 0x00, 0x30, 0x00, 0x46, 0x00, 0x42, 0x00, 0x2d, 0x00, 0x36, 0x00, 0x43, 0x00, 0x30, 0x00, 0x44, 0x00, 0x2d, 0x00, 0x34, 0x00, 0x42, 0x00, 0x34, 0x00, 0x33, 0x00, 0x2d, 0x00, 0x42, 0x00, 0x36, 0x00, 0x31, 0x00, 0x32, 0x00, 0x2d, 0x00, 0x36, 0x00, 0x41, 0x00, 0x37, 0x00, 0x37, 0x00, 0x45, 0x00, 0x34, 0x00, 0x38, 0x00, 0x45, 0x00, 0x46, 0x00, 0x44, 0x00, 0x36, 0x00, 0x46, 0x00, 0x00, 0x00};
+
+	if(!nego_tcp_connect(nego)) return false;
+
+	s = transport_send_stream_init(nego->transport, 93);
+	stream_write(s, buf, 92);
+
+	if (transport_write(nego->transport, s) < 0)
+		return false;
+
+	return true;
+}
+
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' paremeter.
  * @msdn{cc240452}
@@ -63,6 +81,8 @@
 
 boolean rdp_client_connect(rdpRdp* rdp)
 {
+	boolean negotiateSecurityLayer = false; // XXX: should be an option in the final version, with default value=true
+
 	boolean status;
 	uint32 selectedProtocol;
 	rdpSettings* settings = rdp->settings;
@@ -78,10 +98,24 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		nego_enable_tls(rdp->nego, settings->tls_security);
 	}
 
-	if (nego_connect(rdp->nego) != true)
+	rdp_send_pcb(rdp->nego); // XXX: different name?!
+
+	if(negotiateSecurityLayer)
 	{
-		printf("Error: protocol security negotiation failure\n");
-		return false;
+		if (nego_connect(rdp->nego) != true)
+		{
+			printf("Error: protocol security negotiation failure\n");
+			return false;
+		}
+	}
+	else
+	{
+		// set some predefined protocols if negotiateSecurityLayer is false
+		// XXX: should take settings->rdp_security into account. Right now we pretend NLA has been selected.
+		rdp->nego->state = NEGO_STATE_FINAL;
+		rdp->nego->transport->settings->requested_protocols = rdp->nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
+		rdp->nego->transport->settings->selected_protocol = rdp->nego->selected_protocol = PROTOCOL_NLA;
+		rdp->nego->transport->settings->negotiationFlags = rdp->nego->flags;
 	}
 
 	selectedProtocol = rdp->nego->selected_protocol;
