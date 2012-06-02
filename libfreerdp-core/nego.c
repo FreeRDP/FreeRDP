@@ -261,7 +261,7 @@ boolean nego_recv_response(rdpNego* nego)
 	if (transport_read(nego->transport, s) < 0)
 		return false;
 
-	return nego_recv(nego->transport, s, nego->transport->recv_extra);
+	return nego_recv(nego->transport, s, nego);
 }
 
 /**

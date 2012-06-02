@@ -137,6 +137,20 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	if (status != true)
 		return false;
 
+	if(!negotiateSecurityLayer)
+	{
+		// XXX: the whole negotioation thing should be called differently.
+		//      this is more like a hack in order to allow connection requests after establishing a secure connection.
+		rdp->nego->state = NEGO_STATE_INITIAL;
+		rdp->nego->transport = rdp->transport;
+		rdp->nego->transport->settings->requested_protocols = PROTOCOL_RDP; // removes requested_protocols section
+		if (nego_connect(rdp->nego) != true)
+		{
+			printf("Error: X.224 connection request failure\n");
+			return false;
+		}
+	}
+
 	rdp_set_blocking_mode(rdp, false);
 	rdp->state = CONNECTION_STATE_NEGO;
 	rdp->finalize_sc_pdus = 0;
