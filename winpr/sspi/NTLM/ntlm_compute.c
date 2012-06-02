@@ -21,6 +21,7 @@
 #include "../sspi.h"
 
 #include <winpr/crt.h>
+#include <winpr/ntlm.h>
 #include <winpr/print.h>
 
 #include "ntlm_compute.h"
@@ -159,21 +160,6 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 	}
 }
 
-void ntlm_compute_ntlm_hash(UINT16* password, UINT32 length, char* hash)
-{
-	/* NTLMv1("password") = 8846F7EAEE8FB117AD06BDD830B7586C */
-
-	MD4_CTX md4_ctx;
-
-	/* Password needs to be in unicode */
-
-	/* Apply the MD4 digest algorithm on the password in unicode, the result is the NTLM hash */
-
-	MD4_Init(&md4_ctx);
-	MD4_Update(&md4_ctx, password, length);
-	MD4_Final((void*) hash, &md4_ctx);
-}
-
 static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
 {
 	int i;
@@ -278,36 +264,16 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
-	char* p;
-	SecBuffer buffer;
-	char ntlm_hash[16];
-
 	if (context->identity.PasswordLength > 0)
 	{
-		/* First, compute the NTLMv1 hash of the password */
-		ntlm_compute_ntlm_hash(context->identity.Password, context->identity.PasswordLength, ntlm_hash);
-	}
-
-	sspi_SecBufferAlloc(&buffer, context->identity.UserLength + context->identity.DomainLength);
-	p = (char*) buffer.pvBuffer;
-
-	/* Concatenate(Uppercase(username),domain)*/
-	CopyMemory(p, context->identity.User, context->identity.UserLength);
-	CharUpperBuffW((LPWSTR) p, context->identity.UserLength / 2);
-
-	CopyMemory(&p[context->identity.UserLength], context->identity.Domain, context->identity.DomainLength);
-
-	if (context->identity.PasswordLength > 0)
-	{
-		/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-		HMAC(EVP_md5(), (void*) ntlm_hash, 16, buffer.pvBuffer, buffer.cbBuffer, (void*) hash, NULL);
+		NTOWFv2W((LPWSTR) context->identity.Password, context->identity.PasswordLength,
+				(LPWSTR) context->identity.User, context->identity.UserLength,
+				(LPWSTR) context->identity.Domain, context->identity.DomainLength, (BYTE*) hash);
 	}
 	else
 	{
 		ntlm_fetch_ntlm_v2_hash(context, hash);
 	}
-
-	sspi_SecBufferFree(&buffer);
 }
 
 void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)

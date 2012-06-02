@@ -17,15 +17,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(bcrypt)
-add_subdirectory(rpc)
-add_subdirectory(sspi)
-add_subdirectory(registry)
-
-add_subdirectory(tools)
+add_subdirectory(hash)
 

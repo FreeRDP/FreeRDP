@@ -18,6 +18,7 @@
 # limitations under the License.
 
 set(WINPR_UTILS_SRCS
+	ntlm.c
 	print.c
 	stream.c)
 
@@ -28,6 +29,9 @@ set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOV
 if (NOT WIN32)
 	target_link_libraries(winpr-utils winpr-crt)
 endif()
+
+target_link_libraries(winpr-utils ${ZLIB_LIBRARIES})
+target_link_libraries(winpr-utils ${OPENSSL_LIBRARIES})
 
 install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
