@@ -62,6 +62,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	{
 		context->ntlm_v2 = 0;
 		context->NegotiateFlags = 0;
+		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
 		context->av_pairs = (AV_PAIRS*) malloc(sizeof(AV_PAIRS));
 		ZeroMemory(context->av_pairs, sizeof(AV_PAIRS));

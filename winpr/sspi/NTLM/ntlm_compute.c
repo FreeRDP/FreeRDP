@@ -193,6 +193,8 @@ static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
  * username:661e58eb6743798326f388fc5edb0b3a
  */
 
+#if 0
+
 void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	FILE* fp;
@@ -262,6 +264,41 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	fclose(fp);
 	free(data);
 }
+
+#else
+
+void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
+{
+	WINPR_SAM* sam;
+	WINPR_SAM_ENTRY* entry;
+
+	sam = SamOpen(1);
+
+	winpr_HexDump(context->identity.User, context->identity.UserLength);
+
+	entry = SamLookupUserW(sam,
+			(LPWSTR) context->identity.User, context->identity.UserLength,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength);
+
+	if (entry != NULL)
+	{
+		winpr_HexDump(entry->NtHash, 16);
+		CopyMemory(hash, entry->NtHash, 16);
+		winpr_HexDump(hash, 16);
+	}
+	else
+	{
+		printf("User could not be found!\n");
+	}
+
+	SamFreeEntry(sam, entry);
+
+	SamClose(sam);
+
+	printf("SamClose returned\n");
+}
+
+#endif
 
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {

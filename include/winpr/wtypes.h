@@ -42,7 +42,7 @@
 typedef int BOOL, *PBOOL, *LPBOOL;
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
-typedef wchar_t WCHAR, *PWCHAR;
+typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
 typedef unsigned long DWORD, *PDWORD, *LPDWORD;
@@ -61,7 +61,7 @@ typedef signed char INT8;
 typedef signed short INT16;
 typedef signed int INT32;
 typedef signed __int64 INT64;
-typedef const wchar_t* LMCSTR;
+typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef long LONG, *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
@@ -74,10 +74,10 @@ typedef signed int LONG32;
 typedef signed __int64 LONG64;
 typedef const char* LPCSTR;
 
-typedef const wchar_t* LPCWSTR;
+typedef const WCHAR* LPCWSTR;
 typedef char* PSTR, *LPSTR;
 
-typedef wchar_t* LPWSTR, *PWSTR;
+typedef WCHAR* LPWSTR, *PWSTR;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;

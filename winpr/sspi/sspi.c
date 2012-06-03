@@ -274,14 +274,14 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	identity->UserLength = strlen(user) * 2;
-	identity->User = (UINT16*) malloc(identity->UserLength);
+	identity->User = (UINT16*) malloc(identity->UserLength + 2);
 	MultiByteToWideChar(CP_ACP, 0, user, strlen(user),
 			(LPWSTR) identity->User, identity->UserLength / 2);
 
 	if (domain)
 	{
 		identity->DomainLength = strlen(domain) * 2;
-		identity->Domain = (UINT16*) malloc(identity->DomainLength);
+		identity->Domain = (UINT16*) malloc(identity->DomainLength + 2);
 		MultiByteToWideChar(CP_ACP, 0, domain, strlen(domain),
 				(LPWSTR) identity->Domain, identity->DomainLength / 2);
 	}
@@ -294,7 +294,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	if (password != NULL)
 	{
 		identity->PasswordLength = strlen(password) * 2;
-		identity->Password = (UINT16*) malloc(identity->PasswordLength);
+		identity->Password = (UINT16*) malloc(identity->PasswordLength + 2);
 		MultiByteToWideChar(CP_ACP, 0, password, strlen(password),
 				(LPWSTR) identity->Password, identity->PasswordLength / 2);
 	}
@@ -320,15 +320,15 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	identity->UserLength = srcIdentity->UserLength;
-	identity->User = malloc(identity->UserLength);
+	identity->User = malloc(identity->UserLength + 2);
 	CopyMemory(identity->User, srcIdentity->User, identity->UserLength);
 
 	identity->DomainLength = srcIdentity->DomainLength;
-	identity->Domain = malloc(identity->DomainLength);
+	identity->Domain = malloc(identity->DomainLength + 2);
 	CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength);
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
-	identity->Password = malloc(identity->PasswordLength);
+	identity->Password = malloc(identity->PasswordLength + 2);
 	CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength);
 }
 
@@ -371,7 +371,7 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableByNameW(const SEC_WCHAR* Na
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
+		if (lstrcmpW(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
 			return (SecurityFunctionTableW*) SecurityFunctionTableW_NAME_LIST[index].SecurityFunctionTable;
 		}

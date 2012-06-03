@@ -43,8 +43,8 @@ struct winpr_sam_entry
 };
 typedef struct winpr_sam_entry WINPR_SAM_ENTRY;
 
-WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, char* user, char* domain);
-WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, LPWSTR Domain);
+WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength);
+WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength);
 
 WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
 

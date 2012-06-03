@@ -125,6 +125,24 @@ WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiBy
 WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
 		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
+WINPR_API int lstrlenA(LPCSTR lpString);
+WINPR_API int lstrlenW(LPCWSTR lpString);
+
+#ifdef UNICODE
+#define lstrlen		lstrlenW
+#else
+#define lstrlen		lstrlenA
+#endif
+
+WINPR_API int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2);
+WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
+
+#ifdef UNICODE
+#define lstrcmp		lstrcmpW
+#else
+#define lstrcmp		lstrcmpA
+#endif
+
 #endif
 
 #endif /* WINPR_CRT_STRING_H */

@@ -431,10 +431,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_timestamp(context);
 
 	/* LmChallengeResponse */
-	ntlm_compute_lm_v2_response(context);
 
-	if (context->ntlm_v2)
-		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+	if (context->LmCompatibilityLevel < 2)
+		ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -821,10 +820,9 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	}
 
 	/* LmChallengeResponse */
-	ntlm_compute_lm_v2_response(context);
 
-	if (context->ntlm_v2)
-		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+	if (context->LmCompatibilityLevel < 2)
+		ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -950,7 +948,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	UserNameLen = (UINT16) context->identity.UserLength;
 	UserNameBuffer = (BYTE*) context->identity.User;
 
-	LmChallengeResponseLen = (UINT16) context->LmChallengeResponse.cbBuffer;
+	LmChallengeResponseLen = (UINT16) 24;
 	NtChallengeResponseLen = (UINT16) context->NtChallengeResponse.cbBuffer;
 
 	EncryptedRandomSessionKeyLen = 16;
@@ -1095,7 +1093,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	}
 
 	/* LmChallengeResponse */
-	StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+	StreamZero(s, LmChallengeResponseLen);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);

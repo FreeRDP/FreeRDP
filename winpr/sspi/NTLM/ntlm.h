@@ -100,6 +100,7 @@ struct _NTLM_CONTEXT
 	UINT32 NegotiateFlags;
 	UINT16* Workstation;
 	UINT32 WorkstationLength;
+	int LmCompatibilityLevel;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;

@@ -505,4 +505,40 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	return conv_out_len;
 }
 
+int lstrlenA(LPCSTR lpString)
+{
+	return strlen(lpString);
+}
+
+int lstrlenW(LPCWSTR lpString)
+{
+	LPWSTR p;
+
+	if (!lpString)
+		return 0;
+
+	p = (LPWSTR) lpString;
+
+	while (*p)
+		p++;
+
+	return p - lpString;
+}
+
+int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
+{
+	return strcmp(lpString1, lpString2);
+}
+
+int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
+{
+	while (*lpString1 && (*lpString1 == *lpString2))
+	{
+		lpString1++;
+		lpString2++;
+	}
+
+	return *lpString1 - *lpString2;
+}
+
 #endif

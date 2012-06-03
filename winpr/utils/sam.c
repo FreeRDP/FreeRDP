@@ -110,7 +110,7 @@ void HexStrToBin(char* str, BYTE* bin, int length)
 	}
 }
 
-void SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
+WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
 	char* p[5];
 	int LmHashLength;
@@ -148,20 +148,25 @@ void SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	{
 		HexStrToBin(p[3], (BYTE*) entry->NtHash, 16);
 	}
+
+	return entry;
 }
 
 void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
-	if (entry->UserLength > 0)
-		free(entry->User);
+	if (entry)
+	{
+		if (entry->UserLength > 0)
+			free(entry->User);
 
-	if (entry->DomainLength > 0)
-		free(entry->Domain);
+		if (entry->DomainLength > 0)
+			free(entry->Domain);
 
-	free(entry);
+		free(entry);
+	}
 }
 
-WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, LPSTR Domain)
+WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength)
 {
 	int length;
 	BOOL found = 0;
@@ -203,7 +208,7 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, LPSTR Domain)
 	return entry;
 }
 
-WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, LPWSTR Domain)
+WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength)
 {
 	int length;
 	BOOL found = 0;
@@ -223,15 +228,16 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, LPWSTR Domain)
 		{
 			if (sam->line[0] != '#')
 			{
-				SamReadEntry(sam, entry);
+				entry = SamReadEntry(sam, entry);
 
 				EntryUserLength = strlen(entry->User) * 2;
-				EntryUser = (LPWSTR) malloc(EntryUserLength);
-				MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength,
+				EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
+				MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
 						(LPWSTR) EntryUser, EntryUserLength / 2);
 
-				if (memcmp(EntryUser, entry->User, EntryUserLength) == 0)
+				if (lstrcmpW(User, EntryUser) == 0)
 				{
+					printf("Found user\n");
 					found = 1;
 					break;
 				}
