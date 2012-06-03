@@ -21,6 +21,7 @@
 #include "../sspi.h"
 
 #include <winpr/crt.h>
+#include <winpr/sam.h>
 #include <winpr/ntlm.h>
 #include <winpr/print.h>
 

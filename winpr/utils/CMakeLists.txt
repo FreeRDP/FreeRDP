@@ -20,6 +20,7 @@
 set(WINPR_UTILS_SRCS
 	ntlm.c
 	print.c
+	sam.c
 	stream.c)
 
 add_library(winpr-utils ${WINPR_UTILS_SRCS})
