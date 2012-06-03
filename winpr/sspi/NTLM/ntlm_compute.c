@@ -161,112 +161,6 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 	}
 }
 
-static void ascii_hex_string_to_binary(char* str, unsigned char* hex)
-{
-	int i;
-	int length;
-
-	CharUpperA(str);
-
-	length = strlen(str);
-
-	for (i = 0; i < length / 2; i++)
-	{
-		hex[i] = 0;
-
-		if ((str[i * 2] >= '0') && (str[i * 2] <= '9'))
-			hex[i] |= (str[i * 2] - '0') << 4;
-
-		if ((str[i * 2] >= 'A') && (str[i * 2] <= 'F'))
-			hex[i] |= (str[i * 2] - 'A' + 10) << 4;
-
-		if ((str[i * 2 + 1] >= '0') && (str[i * 2 + 1] <= '9'))
-			hex[i] |= (str[i * 2 + 1] - '0');
-
-		if ((str[i * 2 + 1] >= 'A') && (str[i * 2 + 1] <= 'F'))
-			hex[i] |= (str[i * 2 + 1] - 'A' + 10);
-	}
-}
-
-/*
- * username // password
- * username:661e58eb6743798326f388fc5edb0b3a
- */
-
-#if 0
-
-void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
-{
-	FILE* fp;
-	char* data;
-	char* line;
-	int length;
-	char* db_user;
-	char* db_hash;
-	UINT16* User;
-	UINT32 UserLength;
-	long int file_size;
-	BYTE db_hash_bin[16];
-
-	/* Fetch NTLMv2 hash from database */
-
-	fp = fopen("/etc/winpr/SAM.txt", "r");
-
-	fseek(fp, 0, SEEK_END);
-	file_size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	if (file_size < 1)
-		return;
-
-	data = (char*) malloc(file_size + 2);
-
-	if (fread(data, file_size, 1, fp) != 1)
-	{
-		free(data);
-		return;
-	}
-
-	data[file_size] = '\n';
-	data[file_size + 1] = '\0';
-	line = strtok(data, "\n");
-
-	while (line != NULL)
-	{
-		length = strlen(line);
-
-		if (length > 0)
-		{
-			length = strcspn(line, ":");
-			line[length] = '\0';
-
-			db_user = line;
-			db_hash = &line[length + 1];
-
-			UserLength = strlen(db_user) * 2;
-			User = (UINT16*) malloc(UserLength);
-			MultiByteToWideChar(CP_ACP, 0, db_user, strlen(db_user),
-					(LPWSTR) User, UserLength / 2);
-
-			if (UserLength == context->identity.UserLength)
-			{
-				if (memcmp(User, context->identity.User, UserLength) == 0)
-				{
-					ascii_hex_string_to_binary(db_hash, db_hash_bin);
-					CopyMemory(hash, db_hash_bin, 16);
-				}
-			}
-		}
-
-		line = strtok(NULL, "\n");
-	}
-
-	fclose(fp);
-	free(data);
-}
-
-#else
-
 void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	WINPR_SAM* sam;
@@ -274,31 +168,19 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	sam = SamOpen(1);
 
-	winpr_HexDump(context->identity.User, context->identity.UserLength);
-
 	entry = SamLookupUserW(sam,
 			(LPWSTR) context->identity.User, context->identity.UserLength,
 			(LPWSTR) context->identity.Domain, context->identity.DomainLength);
 
 	if (entry != NULL)
 	{
-		winpr_HexDump(entry->NtHash, 16);
 		CopyMemory(hash, entry->NtHash, 16);
-		winpr_HexDump(hash, 16);
-	}
-	else
-	{
-		printf("User could not be found!\n");
 	}
 
 	SamFreeEntry(sam, entry);
 
 	SamClose(sam);
-
-	printf("SamClose returned\n");
 }
-
-#endif
 
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {

@@ -126,8 +126,6 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	sspi_SetAuthIdentity(&(credssp->identity), "username", NULL, NULL);
-
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
 

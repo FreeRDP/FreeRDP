@@ -45,7 +45,7 @@
 #define MB_ERR_INVALID_CHARS		0x00000008
 
 WINPR_API char* _strdup(const char* strSource);
-WINPR_API wchar_t* _wcsdup(const wchar_t* strSource);
+WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
 WINPR_API LPSTR CharUpperA(LPSTR lpsz);
 WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);

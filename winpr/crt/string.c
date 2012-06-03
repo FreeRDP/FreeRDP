@@ -41,9 +41,9 @@ char* _strdup(const char* strSource)
 	return strDestination;
 }
 
-wchar_t* _wcsdup(const wchar_t* strSource)
+WCHAR* _wcsdup(const WCHAR* strSource)
 {
-	wchar_t* strDestination;
+	WCHAR* strDestination;
 
 	if (strSource == NULL)
 		return NULL;
@@ -56,7 +56,7 @@ wchar_t* _wcsdup(const wchar_t* strSource)
 	if (strDestination != NULL)
 		wcscpy(strDestination, strSource);
 #else
-	strDestination = wcsdup(strSource);
+	strDestination = (WCHAR*) wcsdup((wchar_t*) strSource);
 #endif
 
 	if (strDestination == NULL)

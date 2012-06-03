@@ -819,6 +819,17 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 #endif
 	}
 
+	context->identity.User = (UINT16*) malloc(UserNameLen);
+	CopyMemory(context->identity.User, UserNameBuffer, UserNameLen);
+	context->identity.UserLength = UserNameLen;
+
+	if (DomainNameLen > 0)
+	{
+		context->identity.Domain = (UINT16*) malloc(DomainNameLen);
+		CopyMemory(context->identity.Domain, DomainNameBuffer, DomainNameLen);
+		context->identity.DomainLength = DomainNameLen;
+	}
+
 	/* LmChallengeResponse */
 
 	if (context->LmCompatibilityLevel < 2)
@@ -1093,13 +1104,21 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	}
 
 	/* LmChallengeResponse */
-	StreamZero(s, LmChallengeResponseLen);
+
+	if (context->LmCompatibilityLevel < 2)
+	{
+		StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-	winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
-	printf("\n");
+		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
+		winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+		printf("\n");
 #endif
+	}
+	else
+	{
+		StreamZero(s, LmChallengeResponseLen);
+	}
 
 	/* NtChallengeResponse */
 	StreamWrite(s, context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);

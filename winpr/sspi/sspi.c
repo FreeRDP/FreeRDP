@@ -73,10 +73,13 @@ const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] =
 	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA }
 };
 
+WCHAR NTLM_NAME_W[] = { 'N','T','L','M','\0' };
+WCHAR CREDSSP_NAME_W[] = { 'C','r','e','d','S','S','P','\0' };
+
 const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] =
 {
-	{ L"NTLM", &NTLM_SecurityFunctionTableW },
-	{ L"CREDSSP", &CREDSSP_SecurityFunctionTableW }
+	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
+	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW }
 };
 
 #endif
@@ -273,10 +276,18 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 {
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	identity->UserLength = strlen(user) * 2;
-	identity->User = (UINT16*) malloc(identity->UserLength + 2);
-	MultiByteToWideChar(CP_ACP, 0, user, strlen(user),
-			(LPWSTR) identity->User, identity->UserLength / 2);
+	if (user)
+	{
+		identity->UserLength = strlen(user) * 2;
+		identity->User = (UINT16*) malloc(identity->UserLength + 2);
+		MultiByteToWideChar(CP_ACP, 0, user, strlen(user),
+				(LPWSTR) identity->User, identity->UserLength / 2);
+	}
+	else
+	{
+		identity->User = (UINT16*) NULL;
+		identity->UserLength = 0;
+	}
 
 	if (domain)
 	{
@@ -513,7 +524,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (wcscmp(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
+		if (lstrcmpW(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
 		{
 			size = sizeof(SecPkgInfoW);
 			pPackageInfo = (SecPkgInfoW*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);

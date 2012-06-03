@@ -149,6 +149,8 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		HexStrToBin(p[3], (BYTE*) entry->NtHash, 16);
 	}
 
+	printf("SamReadEntry: %s\n", entry->User);
+
 	return entry;
 }
 
@@ -235,11 +237,13 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 				MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
 						(LPWSTR) EntryUser, EntryUserLength / 2);
 
-				if (lstrcmpW(User, EntryUser) == 0)
+				if (UserLength == EntryUserLength)
 				{
-					printf("Found user\n");
-					found = 1;
-					break;
+					if (memcmp(User, EntryUser, UserLength) == 0)
+					{
+						found = 1;
+						break;
+					}
 				}
 			}
 		}
