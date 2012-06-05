@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Windows Registry
+ * TCHAR
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,16 +17,25 @@
  * limitations under the License.
  */
 
-#include <libxml/parser.h>
-#include <libxml/xmlmemory.h>
+#ifndef WINPR_TCHAR_H
+#define WINPR_TCHAR_H
 
-struct _registry_xml
-{
-	xmlDocPtr doc;
-	xmlNodePtr node;
-};
-typedef struct _registry_xml RegistryXml;
+#include <winpr/wtypes.h>
 
-RegistryXml* registry_xml_new();
-RegistryXml* registry_xml_open();
-void registry_xml_close(RegistryXml* registry);
+#ifdef _WIN32
+
+#include <tchar.h>
+
+#else
+
+#ifdef UNICODE
+typedef WCHAR		TCHAR;
+#define tprintf		wprintf
+#else
+typedef CHAR		TCHAR;
+#define tprintf		printf
+#endif
+
+#endif
+
+#endif /* WINPR_TCHAR_H */

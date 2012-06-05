@@ -30,6 +30,8 @@
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 16383
 
+#define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
+
 void QueryKey(HKEY hKey)
 {
 	DWORD i;
@@ -429,7 +431,7 @@ Reg* reg_open(BOOL read_only)
 	if (reg)
 	{
 		reg->read_only = read_only;
-		reg->filename = "/home/awake/FreeRDP.reg";
+		reg->filename = WINPR_HKLM_HIVE;
 
 		if (reg->read_only)
 		{

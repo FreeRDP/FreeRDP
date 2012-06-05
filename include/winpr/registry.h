@@ -207,15 +207,6 @@ typedef PVALENTA PVALENT;
 
 WINPR_API LONG RegCloseKey(HKEY hKey);
 
-WINPR_API LONG RegConnectRegistryW(LPCWSTR lpMachineName, HKEY hKey, PHKEY phkResult);
-WINPR_API LONG RegConnectRegistryA(LPCSTR lpMachineName, HKEY hKey, PHKEY phkResult);
-
-#ifdef UNICODE
-#define RegConnectRegistry RegConnectRegistryW
-#else
-#define RegConnectRegistry RegConnectRegistryA
-#endif
-
 WINPR_API LONG RegCopyTreeW(HKEY hKeySrc, LPCWSTR lpSubKey, HKEY hKeyDest);
 WINPR_API LONG RegCopyTreeA(HKEY hKeySrc, LPCSTR lpSubKey, HKEY hKeyDest);
 
@@ -236,28 +227,6 @@ WINPR_API LONG RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR
 #define RegCreateKeyEx RegCreateKeyExA
 #endif
 
-WINPR_API LONG RegCreateKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
-		DWORD dwOptions, REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		PHKEY phkResult, LPDWORD lpdwDisposition, HANDLE hTransaction, PVOID pExtendedParemeter);
-WINPR_API LONG RegCreateKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
-		DWORD dwOptions, REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		PHKEY phkResult, LPDWORD lpdwDisposition, HANDLE hTransaction, PVOID pExtendedParemeter);
-
-#ifdef UNICODE
-#define RegCreateKeyTransacted RegCreateKeyTransactedW
-#else
-#define RegCreateKeyTransacted RegCreateKeyTransactedA
-#endif
-
-WINPR_API LONG RegDeleteKeyW(HKEY hKey, LPCWSTR lpSubKey);
-WINPR_API LONG RegDeleteKeyA(HKEY hKey, LPCSTR lpSubKey);
-
-#ifdef UNICODE
-#define RegDeleteKey RegDeleteKeyW
-#else
-#define RegDeleteKey RegDeleteKeyA
-#endif
-
 WINPR_API LONG RegDeleteKeyExW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
 WINPR_API LONG RegDeleteKeyExA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
 
@@ -265,26 +234,6 @@ WINPR_API LONG RegDeleteKeyExA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DW
 #define RegDeleteKeyEx RegDeleteKeyExW
 #else
 #define RegDeleteKeyEx RegDeleteKeyExA
-#endif
-
-WINPR_API LONG RegDeleteKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired,
-		DWORD Reserved, HANDLE hTransaction, PVOID pExtendedParameter);
-WINPR_API LONG RegDeleteKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired,
-		DWORD Reserved, HANDLE hTransaction, PVOID pExtendedParameter);
-
-#ifdef UNICODE
-#define RegDeleteKeyTransacted RegDeleteKeyTransactedW
-#else
-#define RegDeleteKeyTransacted RegDeleteKeyTransactedA
-#endif
-
-WINPR_API LONG RegDeleteKeyValueW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpValueName);
-WINPR_API LONG RegDeleteKeyValueA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpValueName);
-
-#ifdef UNICODE
-#define RegDeleteKeyValue RegDeleteKeyValueW
-#else
-#define RegDeleteKeyValue RegDeleteKeyValueA
 #endif
 
 WINPR_API LONG RegDeleteTreeW(HKEY hKey, LPCWSTR lpSubKey);
@@ -305,13 +254,7 @@ WINPR_API LONG RegDeleteValueA(HKEY hKey, LPCSTR lpValueName);
 #define RegDeleteValue RegDeleteValueA
 #endif
 
-WINPR_API LONG RegDisablePredefinedCache(void);
-
 WINPR_API LONG RegDisablePredefinedCacheEx(void);
-
-WINPR_API LONG RegDisableReflectionKey(HKEY hBase);
-
-WINPR_API LONG RegEnableReflectionKey(HKEY hBase);
 
 WINPR_API LONG RegEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName,
 		LPDWORD lpReserved, LPWSTR lpClass, LPDWORD lpcClass, PFILETIME lpftLastWriteTime);
@@ -351,6 +294,17 @@ WINPR_API LONG RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue,
 #define RegGetValue RegGetValueA
 #endif
 
+WINPR_API LONG RegLoadAppKeyW(LPCWSTR lpFile, PHKEY phkResult,
+		REGSAM samDesired, DWORD dwOptions, DWORD Reserved);
+WINPR_API LONG RegLoadAppKeyA(LPCSTR lpFile, PHKEY phkResult,
+		REGSAM samDesired, DWORD dwOptions, DWORD Reserved);
+
+#ifdef UNICODE
+#define RegLoadAppKey RegLoadAppKeyW
+#else
+#define RegLoadAppKey RegLoadAppKeyA
+#endif
+
 WINPR_API LONG RegLoadKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpFile);
 WINPR_API LONG RegLoadKeyA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpFile);
 
@@ -384,20 +338,7 @@ WINPR_API LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM
 #define RegOpenKeyEx RegOpenKeyExA
 #endif
 
-WINPR_API LONG RegOpenKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions,
-		REGSAM samDesired, PHKEY phkResult, HANDLE hTransaction, PVOID pExtendedParameter);
-WINPR_API LONG RegOpenKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions,
-		REGSAM samDesired, PHKEY phkResult, HANDLE hTransaction, PVOID pExtendedParameter);
-
-#ifdef UNICODE
-#define RegOpenKeyTransacted RegOpenKeyTransactedW
-#else
-#define RegOpenKeyTransacted RegOpenKeyTransactedA
-#endif
-
 WINPR_API LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired, PHKEY phkResult);
-
-WINPR_API LONG RegOverridePredefKey(HKEY hKey, HKEY hNewHKey);
 
 WINPR_API LONG RegQueryInfoKeyW(HKEY hKey, LPWSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
 		LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen, LPDWORD lpcMaxClassLen,
@@ -414,10 +355,6 @@ WINPR_API LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDW
 #define RegQueryInfoKey RegQueryInfoKeyA
 #endif
 
-WINPR_API LONG RegQueryMultipleValues(HKEY hKey, PVALENT val_list, DWORD num_vals, LPTSTR lpValueBuf, LPDWORD ldwTotsize);
-
-WINPR_API LONG RegQueryReflectionKey(HKEY hBase, BOOL* bIsReflectionDisabled);
-
 WINPR_API LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 WINPR_API LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
@@ -429,15 +366,6 @@ WINPR_API LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 #define RegQueryValueEx RegQueryValueExA
 #endif
 
-WINPR_API LONG RegReplaceKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpNewFile, LPCWSTR lpOldFile);
-WINPR_API LONG RegReplaceKeyA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpNewFile, LPCSTR lpOldFile);
-
-#ifdef UNICODE
-#define RegReplaceKey RegReplaceKeyW
-#else
-#define RegReplaceKey RegReplaceKeyA
-#endif
-
 WINPR_API LONG RegRestoreKeyW(HKEY hKey, LPCWSTR lpFile, DWORD dwFlags);
 WINPR_API LONG RegRestoreKeyA(HKEY hKey, LPCSTR lpFile, DWORD dwFlags);
 
@@ -447,15 +375,6 @@ WINPR_API LONG RegRestoreKeyA(HKEY hKey, LPCSTR lpFile, DWORD dwFlags);
 #define RegRestoreKey RegRestoreKeyA
 #endif
 
-WINPR_API LONG RegSaveKeyW(HKEY hKey, LPCWSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
-WINPR_API LONG RegSaveKeyA(HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
-
-#ifdef UNICODE
-#define RegSaveKey RegSaveKeyW
-#else
-#define RegSaveKey RegSaveKeyA
-#endif
-
 WINPR_API LONG RegSaveKeyExW(HKEY hKey, LPCWSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
 WINPR_API LONG RegSaveKeyExA(HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
 
@@ -463,15 +382,6 @@ WINPR_API LONG RegSaveKeyExA(HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpS
 #define RegSaveKeyEx RegSaveKeyExW
 #else
 #define RegSaveKeyEx RegSaveKeyExA
-#endif
-
-WINPR_API LONG RegSetKeyValueW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpValueName, DWORD dwType, LPCVOID lpData, DWORD cbData);
-WINPR_API LONG RegSetKeyValueA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpValueName, DWORD dwType, LPCVOID lpData, DWORD cbData);
-
-#ifdef UNICODE
-#define RegSetKeyValue RegSetKeyValueW
-#else
-#define RegSetKeyValue RegSetKeyValueA
 #endif
 
 WINPR_API LONG RegSetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation, PSECURITY_DESCRIPTOR pSecurityDescriptor);
