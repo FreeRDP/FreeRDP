@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# winpr-reg cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,6 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(reg)
-add_subdirectory(hash)
+add_executable(winpr-reg
+	reg.c)
+
+target_link_libraries(winpr-reg winpr-utils)
+target_link_libraries(winpr-reg winpr-registry)
 
