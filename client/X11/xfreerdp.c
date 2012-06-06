@@ -516,6 +516,21 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
+  if (settings->authentication_only) {
+		/* Check --authonly has a username and password. */
+		if (settings->username == NULL ) {
+			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
+			exit(1);
+		}
+		if (settings->password == NULL ) {
+			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
+			exit(1);
+		}
+		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		// Avoid XWindows initialization and configuration below.
+		return true;
+	}
+
 	xfi->display = XOpenDisplay(NULL);
 
 	if (xfi->display == NULL)
@@ -743,7 +758,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 {
 	*password = xmalloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
 		return false;
 
 	return true;
