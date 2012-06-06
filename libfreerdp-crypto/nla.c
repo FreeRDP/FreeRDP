@@ -1020,6 +1020,9 @@ void credssp_send(rdpCredssp* credssp)
 		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, length);
 	}
 
+	printf("Sending Token (%d)\n", stream_get_length(s));
+	freerdp_hexdump(s->data, stream_get_length(s));
+
 	tls_write(credssp->tls, s->data, stream_get_length(s));
 	stream_free(s);
 }
@@ -1039,12 +1042,16 @@ int credssp_recv(rdpCredssp* credssp)
 
 	s = stream_new(2048);
 	status = tls_read(credssp->tls, s->data, stream_get_left(s));
+	s->size = status;
 
 	if (status < 0)
 	{
-		stream_free(s) ;
+		stream_free(s);
 		return -1;
 	}
+
+	printf("Receiving Token (%d)\n", s->size);
+	freerdp_hexdump(s->data, s->size);
 
 	/* TSRequest */
 	ber_read_sequence_tag(s, &length);

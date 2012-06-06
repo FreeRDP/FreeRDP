@@ -89,6 +89,7 @@ struct _NTLM_CONTEXT
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
+	int SendVersionInfo;
 	BOOL confidentiality;
 	RC4_KEY SendRc4Seal;
 	RC4_KEY RecvRc4Seal;
@@ -101,6 +102,7 @@ struct _NTLM_CONTEXT
 	UINT16* Workstation;
 	UINT32 WorkstationLength;
 	int LmCompatibilityLevel;
+	int SuppressExtendedProtection;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
