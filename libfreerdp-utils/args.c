@@ -81,6 +81,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --app: RemoteApp connection. This implies -g workarea\n"
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
+				"  --authonly: authentication only, no UI\n"
 				"  --no-fastpath: disable fast-path\n"
 				"  --no-motion: don't send mouse motion events\n"
 				"  --gdi: graphics rendering (hw, sw)\n"
@@ -305,6 +306,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
 			settings->authentication = false;
+		}
+		else if (strcmp("--authonly", argv[index]) == 0)
+		{
+			settings->authentication_only = true;
 		}
 		else if (strcmp("--ignore-certificate", argv[index]) == 0)
 		{

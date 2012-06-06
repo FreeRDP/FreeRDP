@@ -479,7 +479,7 @@ boolean xf_pre_connect(freerdp* instance)
 	if (arg_parse_result < 0)
 	{
 		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			printf("failed to parse arguments.\n");
+			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 		
 		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
@@ -520,6 +520,22 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
+
+
+  if (settings->authentication_only) {
+		/* Check --authonly has a username and password. */
+		if (settings->username == NULL ) {
+			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
+			exit(1);
+		}
+		if (settings->password == NULL ) {
+			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
+			exit(1);
+		}
+		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		// Avoid XWindows initialization and configuration below.
+		return true;
+	}
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -1071,6 +1087,11 @@ int xfreerdp_run(freerdp* instance)
 	{
 		xf_free(((xfContext*) instance->context)->xfi);
 		return XF_EXIT_CONN_FAILED;
+	}
+	/* Connection succeeded. --authonly ? */
+	if (instance->settings->authentication_only) {
+		freerdp_disconnect(instance);
+    exit(0);
 	}
 
 	xfi = ((xfContext*) instance->context)->xfi;
