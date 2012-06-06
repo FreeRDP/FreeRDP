@@ -521,7 +521,6 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
-
   if (settings->authentication_only) {
 		/* Check --authonly has a username and password. */
 		if (settings->username == NULL ) {
@@ -791,7 +790,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	// But it doesn't do anything to fix it...
 	*password = xmalloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
 		return false;
 
 	return true;
