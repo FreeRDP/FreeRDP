@@ -69,7 +69,7 @@ boolean freerdp_connect(freerdp* instance)
 	// --authonly tests the connection without a UI
 	if (instance->settings->authentication_only) {
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
-		return true;
+		return status;
 	}
 
 	if (status)

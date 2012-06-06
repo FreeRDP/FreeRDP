@@ -1083,15 +1083,18 @@ int xfreerdp_run(freerdp* instance)
 	memset(wfds, 0, sizeof(wfds));
 	memset(&timeout, 0, sizeof(struct timeval));
 
-	if (!freerdp_connect(instance))
-	{
-		xf_free(((xfContext*) instance->context)->xfi);
-		return XF_EXIT_CONN_FAILED;
-	}
+	boolean status = freerdp_connect(instance);
 	/* Connection succeeded. --authonly ? */
 	if (instance->settings->authentication_only) {
 		freerdp_disconnect(instance);
-    exit(0);
+		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		exit(!status);
+	}
+
+	if (!status)
+	{
+		xf_free(((xfContext*) instance->context)->xfi);
+		return XF_EXIT_CONN_FAILED;
 	}
 
 	xfi = ((xfContext*) instance->context)->xfi;
