@@ -18,6 +18,8 @@
 # limitations under the License.
 
 set(WINPR_REGISTRY_SRCS
+	registry_reg.c
+	registry_reg.h
 	registry.c)
 
 add_library(winpr-registry ${WINPR_REGISTRY_SRCS})

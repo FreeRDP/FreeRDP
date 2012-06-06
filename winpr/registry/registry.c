@@ -27,6 +27,24 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "registry_reg.h"
+
+static Reg* instance = NULL;
+
+static Reg* RegGetInstance()
+{
+	if (!instance)
+	{
+		instance = reg_open(1);
+	}
+
+	return instance;
+}
+
 LONG RegCloseKey(HKEY hKey)
 {
 	return 0;
@@ -187,6 +205,25 @@ LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesir
 
 LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
+	Reg* reg;
+	RegKey* pKey;
+
+	reg = RegGetInstance();
+	pKey = reg->root_key->subkeys;
+
+	while (pKey != NULL)
+	{
+		if (strcmp(pKey->subname, lpSubKey) == 0)
+		{
+			*phkResult = pKey;
+			return ERROR_SUCCESS;
+		}
+
+		pKey = pKey->next;
+	}
+
+	*phkResult = NULL;
+
 	return 0;
 }
 
@@ -220,6 +257,52 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
+	Reg* reg;
+	RegKey* key;
+	RegVal* pValue;
+
+	key = (RegKey*) hKey;
+	reg = RegGetInstance();
+
+	pValue = key->values;
+
+	while (pValue != NULL)
+	{
+		if (strcmp(pValue->name, lpValueName) == 0)
+		{
+			if (pValue->type == REG_DWORD)
+			{
+				DWORD* pData = (DWORD*) lpData;
+
+				if (pData != NULL)
+				{
+					*pData = pValue->data.dword;
+				}
+
+				*lpcbData = sizeof(DWORD);
+
+				return ERROR_SUCCESS;
+			}
+			else if (pValue->type == REG_SZ)
+			{
+				int length;
+				char* pData = (char*) lpData;
+
+				length = strlen(pValue->data.string);
+
+				if (pData != NULL)
+				{
+					memcpy(pData, pValue->data.string, length);
+					pData[length] = '\0';
+				}
+
+				*lpcbData = length;
+			}
+		}
+
+		pValue = pValue->next;
+	}
+
 	return 0;
 }
 
