@@ -21,5 +21,7 @@ add_executable(winpr-reg
 	reg.c)
 
 target_link_libraries(winpr-reg winpr-utils)
-target_link_libraries(winpr-reg winpr-registry)
 
+if(NOT WIN32)
+	target_link_libraries(winpr-reg winpr-registry)
+endif()

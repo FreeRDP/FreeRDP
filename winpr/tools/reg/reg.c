@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
 	if (status != ERROR_SUCCESS)
 	{
-		tprintf(_T("RegOpenKeyEx error: 0x%08lX\n"), status);
+		_tprintf(_T("RegOpenKeyEx error: 0x%08lX\n"), status);
 		return 0;
 	}
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 
 	if (status != ERROR_SUCCESS)
 	{
-		tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
+		_tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
 		return 0;
 	}
 
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
 	if (status != ERROR_SUCCESS)
 	{
-		tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
+		_tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
 		return 0;
 	}
 
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
 	if (status != ERROR_SUCCESS)
 	{
-		tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
+		_tprintf(_T("RegQueryValueEx error: 0x%08lX\n"), status);
 		return 0;
 	}
 

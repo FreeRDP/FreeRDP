@@ -353,7 +353,7 @@ void sspi_GlobalFinish()
 	sspi_ContextBufferAllocTableFree();
 }
 
-#ifndef NATIVE_SSPI
+#ifndef WITH_NATIVE_SSPI
 
 SecurityFunctionTableA* sspi_GetSecurityFunctionTableByNameA(const SEC_CHAR* Name)
 {

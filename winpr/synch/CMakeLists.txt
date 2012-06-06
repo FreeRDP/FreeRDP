@@ -28,7 +28,9 @@ add_library(winpr-synch ${WINPR_SYNCH_SRCS})
 
 set_target_properties(winpr-synch PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(winpr-synch winpr-handle)
+if(NOT WIN32)
+	target_link_libraries(winpr-synch winpr-handle)
+endif()
 
 install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

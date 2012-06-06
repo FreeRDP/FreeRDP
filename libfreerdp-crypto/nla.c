@@ -155,7 +155,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE InitSecurityInterface;
@@ -396,7 +396,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_server_init(credssp) == 0)
 		return 0;
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE InitSecurityInterface;

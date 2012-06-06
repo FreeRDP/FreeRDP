@@ -30,10 +30,10 @@
 
 #ifdef UNICODE
 typedef WCHAR		TCHAR;
-#define tprintf		wprintf
+#define _tprintf	wprintf
 #else
 typedef CHAR		TCHAR;
-#define tprintf		printf
+#define _tprintf	printf
 #endif
 
 #endif

@@ -25,6 +25,9 @@ set(WINPR_UTILS_SRCS
 
 add_library(winpr-utils ${WINPR_UTILS_SRCS})
 
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 if (NOT WIN32)

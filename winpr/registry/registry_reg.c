@@ -147,7 +147,7 @@ RegVal* reg_load_value(Reg* reg, RegKey* key)
 	{
 		p[4] = strchr(data, '"');
 		p[4][0] = '\0';
-		value->data.string = strdup(data);
+		value->data.string = _strdup(data);
 	}
 	else
 	{
