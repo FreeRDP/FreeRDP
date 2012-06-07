@@ -220,7 +220,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	memset(&output_buffer, 0, sizeof(SecBuffer));
 	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
-	fContextReq = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_IDENTIFY;
+	fContextReq = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_IDENTIFY |
+			ISC_REQ_EXTENDED_ERROR | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT;
 
 	while (true)
 	{
