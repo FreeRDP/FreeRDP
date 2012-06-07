@@ -169,8 +169,8 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	sam = SamOpen(1);
 
 	entry = SamLookupUserW(sam,
-			(LPWSTR) context->identity.User, context->identity.UserLength,
-			(LPWSTR) context->identity.Domain, context->identity.DomainLength);
+			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2);
 
 	if (entry != NULL)
 	{
@@ -186,9 +186,9 @@ void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
 	if (context->identity.PasswordLength > 0)
 	{
-		NTOWFv2W((LPWSTR) context->identity.Password, context->identity.PasswordLength,
-				(LPWSTR) context->identity.User, context->identity.UserLength,
-				(LPWSTR) context->identity.Domain, context->identity.DomainLength, (BYTE*) hash);
+		NTOWFv2W((LPWSTR) context->identity.Password, context->identity.PasswordLength * 2,
+				(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+				(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2, (BYTE*) hash);
 	}
 	else
 	{

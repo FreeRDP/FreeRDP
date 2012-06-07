@@ -124,7 +124,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->hostname);
 
 #ifdef UNICODE
-	credssp->ServicePrincipalName = (LPCTSTR) malloc(length * 2 + 2);
+	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
 	MultiByteToWideChar(CP_ACP, 0, spn, length,
 		(LPWSTR) credssp->ServicePrincipalName, length);
 	free(spn);
@@ -237,8 +237,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				credssp->ServicePrincipalName, fContextReq, 0,
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
-
-		freerdp_hexdump(credssp->identity.User, credssp->identity.UserLength);
 
 		if (input_buffer.pvBuffer != NULL)
 		{
@@ -739,6 +737,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.Domain = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Domain, s->p, credssp->identity.DomainLength);
 	stream_seek(s, credssp->identity.DomainLength);
+	credssp->identity.DomainLength /= 2;
 
 	/* [1] userName (OCTET STRING) */
 	ber_read_contextual_tag(s, 1, &length, true);
@@ -747,6 +746,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.User = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.User, s->p, credssp->identity.UserLength);
 	stream_seek(s, credssp->identity.UserLength);
+	credssp->identity.UserLength /= 2;
 
 	/* [2] password (OCTET STRING) */
 	ber_read_contextual_tag(s, 2, &length, true);
@@ -755,6 +755,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.Password = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
 	stream_seek(s, credssp->identity.PasswordLength);
+	credssp->identity.PasswordLength /= 2;
 }
 
 void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
@@ -1042,9 +1043,6 @@ void credssp_send(rdpCredssp* credssp)
 		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, length);
 	}
 
-	printf("Sending Token (%d)\n", stream_get_length(s));
-	freerdp_hexdump(s->data, stream_get_length(s));
-
 	tls_write(credssp->tls, s->data, stream_get_length(s));
 	stream_free(s);
 }
@@ -1071,9 +1069,6 @@ int credssp_recv(rdpCredssp* credssp)
 		stream_free(s);
 		return -1;
 	}
-
-	printf("Receiving Token (%d)\n", s->size);
-	freerdp_hexdump(s->data, s->size);
 
 	/* TSRequest */
 	ber_read_sequence_tag(s, &length);

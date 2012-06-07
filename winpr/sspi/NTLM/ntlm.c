@@ -62,7 +62,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	{
 		context->ntlm_v2 = 0;
 		context->NegotiateFlags = 0;
-		context->SendVersionInfo = 1;
+		context->SendVersionInfo = 0;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
 		context->SuppressExtendedProtection = 1;
@@ -186,14 +186,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesW(PCredHandle phCredent
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
-		CREDENTIALS* credentials;
-		//SecPkgCredentials_Names* credential_names = (SecPkgCredentials_Names*) pBuffer;
-
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-		//if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-		//	credential_names->sUserName = xstrdup((char*) credentials->identity.User);
-
 		return SEC_E_OK;
 	}
 
@@ -204,14 +196,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesA(PCredHandle phCredent
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
-		CREDENTIALS* credentials;
-		//SecPkgCredentials_Names* credential_names = (SecPkgCredentials_Names*) pBuffer;
-
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-		//if (credentials->identity.Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-		//	credential_names->sUserName = xstrdup((char*) credentials->identity.User);
-
 		return SEC_E_OK;
 	}
 
@@ -231,7 +215,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 	PSecBuffer input_buffer;
 	PSecBuffer output_buffer;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 	{
@@ -346,7 +330,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	PSecBuffer input_buffer;
 	PSecBuffer output_buffer;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 	{
@@ -437,7 +421,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	NTLM_CONTEXT* context;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
@@ -496,7 +480,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	for (index = 0; index < (int) pMessage->cBuffers; index++)
 	{

@@ -956,10 +956,10 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->ntlm_v2 < 1)
 		WorkstationLen = 0;
 
-	DomainNameLen = (UINT16) context->identity.DomainLength;
+	DomainNameLen = (UINT16) context->identity.DomainLength * 2;
 	DomainNameBuffer = (BYTE*) context->identity.Domain;
 
-	UserNameLen = (UINT16) context->identity.UserLength;
+	UserNameLen = (UINT16) context->identity.UserLength * 2;
 	UserNameBuffer = (BYTE*) context->identity.User;
 
 	LmChallengeResponseLen = (UINT16) 24;
