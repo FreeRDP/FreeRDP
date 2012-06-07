@@ -53,7 +53,6 @@ static void tls_free_certificate(CryptoCert cert)
 	xfree(cert);
 }
 
-
 boolean tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
