@@ -238,6 +238,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
+		freerdp_hexdump(credssp->identity.User, credssp->identity.UserLength);
+
 		if (input_buffer.pvBuffer != NULL)
 		{
 			free(input_buffer.pvBuffer);
@@ -706,15 +708,15 @@ int credssp_skip_ts_password_creds(rdpCredssp* credssp)
 	int length;
 	int ts_password_creds_length = 0;
 
-	length = ber_skip_octet_string(credssp->identity.DomainLength);
+	length = ber_skip_octet_string(credssp->identity.DomainLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->identity.UserLength);
+	length = ber_skip_octet_string(credssp->identity.UserLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->identity.PasswordLength);
+	length = ber_skip_octet_string(credssp->identity.PasswordLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
@@ -766,16 +768,16 @@ void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_write_sequence_tag(s, length);
 
 	/* [0] domainName (OCTET STRING) */
-	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength);
+	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength * 2);
 
 	/* [1] userName (OCTET STRING) */
-	ber_write_contextual_tag(s, 1, credssp->identity.UserLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.User, credssp->identity.UserLength);
+	ber_write_contextual_tag(s, 1, credssp->identity.UserLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.User, credssp->identity.UserLength * 2);
 
 	/* [2] password (OCTET STRING) */
-	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength);
+	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength * 2);
 }
 
 int credssp_skip_ts_credentials(rdpCredssp* credssp)
