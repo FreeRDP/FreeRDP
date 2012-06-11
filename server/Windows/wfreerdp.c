@@ -263,7 +263,10 @@ static DWORD WINAPI test_peer_main_loop(LPVOID lpParam)
 		}
 
 		if (client->CheckFileDescriptor(client) != true)
+		{
+			printf("Failed to check FreeRDP file descriptor\n");
 			break;
+		}
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

@@ -543,7 +543,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 			break;
 		str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
 		stream_seek(s, 64);
-		snprintf(settings->client_product_id, sizeof(settings->client_product_id), "%s", str);
+		snprintf(settings->client_product_id, 32, "%s", str);
 		xfree(str);
 		blockLength -= 64;
 
