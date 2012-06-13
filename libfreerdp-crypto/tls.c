@@ -115,7 +115,8 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->hostname)) {
+	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
+	{
 		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
 		tls_free_certificate(cert);
@@ -187,12 +188,29 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
-	connection_status = SSL_accept(tls->ssl);
-
-	if (connection_status <= 0)
+	while (1)
 	{
-		if (tls_print_error("SSL_accept", tls->ssl, connection_status))
-			return false;
+		connection_status = SSL_accept(tls->ssl);
+
+		if (connection_status <= 0)
+		{
+			switch (SSL_get_error(tls->ssl, connection_status))
+			{
+				case SSL_ERROR_WANT_READ:
+				case SSL_ERROR_WANT_WRITE:
+					break;
+
+				default:
+					if (tls_print_error("SSL_accept", tls->ssl, connection_status))
+						return false;
+					break;
+
+			}
+		}
+		else
+		{
+			break;
+		}
 	}
 
 	printf("TLS connection accepted\n");
@@ -227,6 +245,19 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 			status = -1;
 			break;
 	}
+
+	return status;
+}
+
+int tls_read_all(rdpTls* tls, uint8* data, int length)
+{
+	int status;
+
+	do
+	{
+		status = tls_read(tls, data, length);
+	}
+	while (status == 0);
 
 	return status;
 }
@@ -297,11 +328,11 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 			return true;
 
 		case SSL_ERROR_WANT_READ:
-			printf("SSL_ERROR_WANT_READ\n");
+			printf("%s: SSL_ERROR_WANT_READ\n", func);
 			return false;
 
 		case SSL_ERROR_WANT_WRITE:
-			printf("SSL_ERROR_WANT_WRITE\n");
+			printf("%s: SSL_ERROR_WANT_WRITE\n", func);
 			return false;
 
 		case SSL_ERROR_SYSCALL:

@@ -167,7 +167,10 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	/* Initialize the real server settings here */
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
+
 	client->settings->nla_security = true;
+	client->settings->tls_security = false;
+	client->settings->rdp_security = false;
 
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
@@ -217,7 +220,7 @@ static void wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 		g_thread_count++;
 }
 
-static void test_server_main_loop(freerdp_listener* instance)
+static void wf_server_main_loop(freerdp_listener* instance)
 {
 	int rcount;
 	void* rfds[32];
@@ -267,7 +270,7 @@ int main(int argc, char* argv[])
 	if (instance->Open(instance, NULL, port))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
-		test_server_main_loop(instance);
+		wf_server_main_loop(instance);
 	}
 
 	if (g_thread_count > 0)

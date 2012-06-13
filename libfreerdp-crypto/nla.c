@@ -342,7 +342,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Receiving Authentication Token\n");
+		printf("Receiving Authentication Token (%d)\n", credssp->negoToken.cbBuffer);
 		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
@@ -457,9 +457,9 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	have_context = false;
 	have_input_buffer = false;
 	have_pub_key_auth = false;
-	memset(&input_buffer, 0, sizeof(SecBuffer));
-	memset(&output_buffer, 0, sizeof(SecBuffer));
-	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
+	ZeroMemory(&input_buffer, sizeof(SecBuffer));
+	ZeroMemory(&output_buffer, sizeof(SecBuffer));
+	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	fContextReq = ASC_REQ_REPLAY_DETECT | ASC_REQ_SEQUENCE_DETECT |
 			ASC_REQ_CONFIDENTIALITY | ASC_REQ_DELEGATE;
@@ -489,6 +489,12 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		p_buffer = &input_buffer_desc.pBuffers[0];
 		p_buffer->pvBuffer = credssp->negoToken.pvBuffer;
 		p_buffer->cbBuffer = credssp->negoToken.cbBuffer;
+
+		if (credssp->negoToken.cbBuffer < 1)
+		{
+			printf("CredSSP: invalid negoToken!\n");
+			return -1;
+		}
 
 		output_buffer_desc.ulVersion = SECBUFFER_VERSION;
 		output_buffer_desc.cBuffers = 1;
@@ -1060,12 +1066,13 @@ int credssp_recv(rdpCredssp* credssp)
 	int status;
 	UINT32 version;
 
-	s = stream_new(2048);
-	status = tls_read(credssp->tls, s->data, stream_get_left(s));
-	s->size = status;
+	s = stream_new(4096);
+
+	status = tls_read_all(credssp->tls, s->p, stream_get_left(s));
 
 	if (status < 0)
 	{
+		printf("credssp_recv() error: %d\n", status);
 		stream_free(s);
 		return -1;
 	}

@@ -189,8 +189,14 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	else
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
 #else
+	int status;
 	u_long arg = blocking;
-	ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+
+	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+
+	if (status != NO_ERROR)
+		printf("ioctlsocket() failed with error: %ld\n", status);
+
 	tcp->wsa_event = WSACreateEvent();
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
 #endif

@@ -190,12 +190,13 @@ static void freerdp_listener_close(freerdp_listener* instance)
 {
 	int i;
 
-	rdpListener* listener = (rdpListener*)instance->listener;
+	rdpListener* listener = (rdpListener*) instance->listener;
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
 		close(listener->sockfds[i]);
 	}
+
 	listener->num_sockfds = 0;
 }
 
