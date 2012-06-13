@@ -3,6 +3,7 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1154,6 +1155,31 @@ int xfreerdp_run(freerdp* instance)
 			break;
 		}
 		xf_process_channel_event(channels, instance);
+	}
+
+	FILE *fin = fopen("/tmp/tsmf.tid", "rt");
+	if(fin)
+	{
+		int thid = 0;
+		fscanf(fin, "%d", &thid);
+		fclose(fin);
+		pthread_kill((pthread_t) thid, SIGUSR1);
+
+		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
+		int timeout = 5;
+		while (fin1)
+		{
+			fclose(fin1);
+			sleep(1);
+			timeout--;
+			if (timeout <= 0)
+			{
+				unlink("/tmp/tsmf.tid");
+				pthread_kill((pthread_t) thid, SIGKILL);
+				break;
+			}
+			fin1 = fopen("/tmp/tsmf.tid", "rt");
+		}
 	}
 
 	if (!ret)

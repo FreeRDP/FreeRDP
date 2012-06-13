@@ -3,6 +3,7 @@
  * Video Redirection Virtual Channel - Constants
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +109,14 @@
 #define TSMF_SUB_TYPE_H264                  9
 #define TSMF_SUB_TYPE_AVC1                 10
 #define TSMF_SUB_TYPE_AC3                  11
+#define TSMF_SUB_TYPE_WMV2                 12
+#define TSMF_SUB_TYPE_WMV1                 13
+#define TSMF_SUB_TYPE_MP1V                 14
+#define TSMF_SUB_TYPE_MP1A                 15
+#define TSMF_SUB_TYPE_YUY2                 16
+#define TSMF_SUB_TYPE_MP43                 17
+#define TSMF_SUB_TYPE_MP4S                 18
+#define TSMF_SUB_TYPE_MP42                 19
 
 /* FormatType */
 #define TSMF_FORMAT_TYPE_UNKNOWN            0
@@ -115,6 +124,7 @@
 #define TSMF_FORMAT_TYPE_WAVEFORMATEX       2
 #define TSMF_FORMAT_TYPE_MPEG2VIDEOINFO     3
 #define TSMF_FORMAT_TYPE_VIDEOINFO2         4
+#define TSMF_FORMAT_TYPE_MPEG1VIDEOINFO     5
 
 #endif
 

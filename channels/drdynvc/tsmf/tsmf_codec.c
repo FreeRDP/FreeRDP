@@ -3,6 +3,7 @@
  * Video Redirection Virtual Channel - Codec
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +104,20 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		TSMF_SUB_TYPE_MP2V
 	},
 
+	/* 31564D57-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x57, 0x4D, 0x56, 0x31, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_WMV1",
+		TSMF_SUB_TYPE_WMV1
+	},
+
+	/* 32564D57-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x57, 0x4D, 0x56, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_WMV2",
+		TSMF_SUB_TYPE_WMV2
+	},
+
 	/* 33564D57-0000-0010-8000-00AA00389B71 */
 	{
 		{ 0x57, 0x4D, 0x56, 0x33, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
@@ -131,12 +146,62 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		TSMF_SUB_TYPE_AVC1
 	},
 
+	/* 3334504D-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x4D, 0x50, 0x34, 0x33, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP43",
+		TSMF_SUB_TYPE_MP43
+	},
+
+	/* 5634504D-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x4D, 0x50, 0x34, 0x56, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP4S",
+		TSMF_SUB_TYPE_MP4S
+	},
+
+	/* 3234504D-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x4D, 0x50, 0x34, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP42",
+		TSMF_SUB_TYPE_MP42
+	},
+
+	/* E436EB81-524F-11CE-9F53-0020AF0BA770 */
+	/*
+	{
+		{ 0x81, 0xEB, 0x36, 0xE4, 0x4F, 0x52, 0xCE, 0x11, 0x9F, 0x53, 0x00, 0x20, 0xAF, 0x0B, 0xA7, 0x70 },
+		"MEDIASUBTYPE_MP1V",
+		TSMF_SUB_TYPE_MP1V
+	},
+	*/
+
+	/* 00000050-0000-0010-8000-00AA00389B71 */
+	/*
+	{
+		{ 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP1A",
+		TSMF_SUB_TYPE_MP1A
+	},
+	*/
+
 	/* E06D802C-DB46-11CF-B4D1-00805F6CBBEA */
+	/*
 	{
 		{ 0x2C, 0x80, 0x6D, 0xE0, 0x46, 0xDB, 0xCF, 0x11, 0xB4, 0xD1, 0x00, 0x80, 0x5F, 0x6C, 0xBB, 0xEA },
 		"MEDIASUBTYPE_DOLBY_AC3",
 		TSMF_SUB_TYPE_AC3
 	},
+	*/
+
+	/* 32595559-0000-0010-8000-00AA00389B71 */
+	/*
+	{
+		{ 0x59, 0x55, 0x59, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_YUY2",
+		TSMF_SUB_TYPE_YUY2
+	},
+	*/
 
 	{
 		{ 0 },
@@ -174,6 +239,13 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] =
 		{ 0xA0, 0x76, 0x2A, 0xF7, 0x0A, 0xEB, 0xD0, 0x11, 0xAC, 0xE4, 0x00, 0x00, 0xC0, 0xCC, 0x16, 0xBA },
 		"FORMAT_VideoInfo2",
 		TSMF_FORMAT_TYPE_VIDEOINFO2
+	},
+
+	/* 05589F82-C356-11CE-BF01-00AA0055595A */
+	{
+		{ 0x82, 0x9F, 0x58, 0x05, 0x56, 0xC3, 0xCE, 0x11, 0xBF, 0x01, 0x00, 0xAA, 0x00, 0x55, 0x59, 0x5A },
+		"FORMAT_MPEG1_VIDEO",
+		TSMF_FORMAT_TYPE_MPEG1VIDEOINFO
 	},
 
 	{
@@ -255,6 +327,40 @@ static uint32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, STR
 	stream_seek(s, 24);
 
 	return 72;
+}
+
+/* http://msdn.microsoft.com/en-us/library/dd390700.aspx */
+static uint32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
+{
+/*
+typedef struct tagVIDEOINFOHEADER {
+  RECT             rcSource;			//16
+  RECT             rcTarget;			//16	32
+  DWORD            dwBitRate;			//4	36
+  DWORD            dwBitErrorRate;		//4	40
+  REFERENCE_TIME   AvgTimePerFrame;		//8	48
+  BITMAPINFOHEADER bmiHeader;
+} VIDEOINFOHEADER;
+*/
+	uint64 AvgTimePerFrame;
+
+	/* VIDEOINFOHEADER.rcSource, RECT(LONG left, LONG top, LONG right, LONG bottom) */
+	stream_seek_uint32(s);
+	stream_seek_uint32(s);
+	stream_read_uint32(s, mediatype->Width);
+	stream_read_uint32(s, mediatype->Height);
+	/* VIDEOINFOHEADER.rcTarget */
+	stream_seek(s, 16);
+	/* VIDEOINFOHEADER.dwBitRate */
+	stream_read_uint32(s, mediatype->BitRate);
+	/* VIDEOINFOHEADER.dwBitErrorRate */
+	stream_seek_uint32(s);
+	/* VIDEOINFOHEADER.AvgTimePerFrame */
+	stream_read_uint64(s, AvgTimePerFrame);
+	mediatype->SamplesPerSecond.Numerator = 1000000;
+	mediatype->SamplesPerSecond.Denominator = (int)(AvgTimePerFrame / 10LL);
+
+	return 48;
 }
 
 boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
@@ -356,6 +462,18 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 			if (mediatype->ExtraDataSize > 0)
 				mediatype->ExtraData = stream_get_tail(s);
 			
+			break;
+
+		case TSMF_FORMAT_TYPE_MPEG1VIDEOINFO:
+			/* http://msdn.microsoft.com/en-us/library/dd390700.aspx */
+
+			i = tsmf_codec_parse_VIDEOINFOHEADER(mediatype, s);
+			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, true);
+			if (cbFormat > i)
+			{
+				mediatype->ExtraDataSize = cbFormat - i;
+				mediatype->ExtraData = stream_get_tail(s);
+			}
 			break;
 
 		case TSMF_FORMAT_TYPE_MPEG2VIDEOINFO:

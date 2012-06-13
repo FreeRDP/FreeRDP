@@ -3,6 +3,7 @@
  * X11 Windows
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 #include <freerdp/rail.h>
 #include <freerdp/utils/rail.h>
@@ -60,6 +64,9 @@
 #define MWM_DECOR_MAXIMIZE      (1L << 6)
 
 #define PROP_MOTIF_WM_HINTS_ELEMENTS	5
+
+/*to be accessed by gstreamer plugin*/
+#define SHARED_MEM_KEY 7777
 
 struct _PropMotifWmHints
 {
@@ -293,6 +300,24 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
 			CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
+
+		int shmid = shmget(SHARED_MEM_KEY, sizeof(int), IPC_CREAT | 0666);
+		if (shmid < 0)
+		{
+			DEBUG_X11("xf_CreateDesktopWindow: failed to get access to shared memory - shmget()\n");
+		}
+		else
+		{
+			int *xfwin = shmat(shmid, NULL, 0);
+			if (xfwin == (int *) -1)
+			{
+				DEBUG_X11("xf_CreateDesktopWindow: failed to assign pointer to the memory address - shmat()\n");
+			}
+			else
+			{
+				*xfwin = (int)window->handle;
+			}
+		}
 
 		class_hints = XAllocClassHint();
 
