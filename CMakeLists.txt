@@ -118,6 +118,7 @@ if(NOT WIN32)
 
 	if(NOT APPLE)
 		find_suggested_package(FFmpeg)
+		find_suggested_package(XRandR)
 		find_suggested_package(Gstreamer)
 		find_suggested_package(ALSA)
 	else(NOT APPLE)

@@ -48,8 +48,10 @@ if(WITH_FFMPEG)
 	add_subdirectory(ffmpeg)
 endif()
 
+if(WITH_XRANDR)
 if(GSTREAMER_FOUND)
         add_subdirectory(gstreamer)
+endif()
 endif()
 
 if(WITH_ALSA)
