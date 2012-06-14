@@ -3,6 +3,7 @@
  * Video Redirection Virtual Channel - Media Container
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -123,6 +126,9 @@ struct _TSMF_SAMPLE
 };
 
 static LIST* presentation_list = NULL;
+static uint64 last_played_audio_time = 0;
+static pthread_mutex_t tsmf_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int TERMINATING = 0;
 
 static uint64 get_current_time(void)
 {
@@ -145,33 +151,41 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 
 	if (sync)
 	{
-		if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
+		if (stream->decoder)
 		{
-			/* Check if some other stream has earlier sample that needs to be played first */
-			if (stream->last_end_time > AUDIO_TOLERANCE)
+			if (stream->decoder->GetDecodedData)
 			{
-				freerdp_mutex_lock(presentation->mutex);
-				for (item = presentation->stream_list->head; item; item = item->next)
+				if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 				{
-					s = (TSMF_STREAM*) item->data;
-					if (s != stream && !s->eos && s->last_end_time &&
-						s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
+					/* Check if some other stream has earlier sample that needs to be played first */
+					if (stream->last_end_time > AUDIO_TOLERANCE)
 					{
-							pending = true;
-							break;
+						freerdp_mutex_lock(presentation->mutex);
+						for (item = presentation->stream_list->head; item; item = item->next)
+						{
+							s = (TSMF_STREAM*) item->data;
+							if (s != stream && !s->eos && s->last_end_time &&
+								s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
+							{
+									pending = true;
+									break;
+							}
+						}
+						freerdp_mutex_unlock(presentation->mutex);
 					}
 				}
-				freerdp_mutex_unlock(presentation->mutex);
-			}
-		}
-		else
-		{
-			if (stream->last_end_time > presentation->audio_end_time)
-			{
-				pending = true;
+				else
+				{
+					if (stream->last_end_time > presentation->audio_end_time)
+					{
+						pending = true;
+					}
+				}
+
 			}
 		}
 	}
+
 	if (pending)
 		return NULL;
 
@@ -224,6 +238,15 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 
 TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
+	pthread_t thid = pthread_self();
+	FILE* fout = NULL;
+	fout = fopen("/tmp/tsmf.tid", "wt");
+	if (fout)
+	{
+		fprintf(fout, "%d\n", (int) thid);
+		fclose(fout);
+	}
+
 	TSMF_PRESENTATION* presentation;
 
 	presentation = tsmf_presentation_find_by_id(guid);
@@ -423,7 +446,14 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 	TSMF_STREAM* stream = sample->stream;
 
 	if (stream->decoder)
-		ret = stream->decoder->Decode(stream->decoder, sample->data, sample->data_size, sample->extensions);
+	{
+		if (stream->decoder->DecodeEx)
+			ret = stream->decoder->DecodeEx(stream->decoder, sample->data, sample->data_size, sample->extensions,
+        			sample->start_time, sample->end_time, sample->duration);
+		else
+			ret = stream->decoder->Decode(stream->decoder, sample->data, sample->data_size, sample->extensions);
+	}
+
 	if (!ret)
 	{
 		tsmf_sample_ack(sample);
@@ -450,32 +480,139 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 		ret = false ;
 		if (stream->decoder->GetDecodedDimension)
-			ret = stream->decoder->GetDecodedDimension(stream->decoder, &width, &height);
-		if (ret && (width != stream->width || height != stream->height))
 		{
-			DEBUG_DVC("video dimension changed to %d x %d", width, height);
-			stream->width = width;
-			stream->height = height;
+			ret = stream->decoder->GetDecodedDimension(stream->decoder, &width, &height);
+			if (ret && (width != stream->width || height != stream->height))
+			{
+				DEBUG_DVC("video dimension changed to %d x %d", width, height);
+				stream->width = width;
+				stream->height = height;
+			}
 		}
 	}
 
 	if (stream->decoder->GetDecodedData)
 	{
 		sample->data = stream->decoder->GetDecodedData(stream->decoder, &sample->decoded_size);
+		switch (sample->stream->major_type)
+		{
+			case TSMF_MAJOR_TYPE_VIDEO:
+				tsmf_sample_playback_video(sample);
+				tsmf_sample_ack(sample);
+				tsmf_sample_free(sample);
+				break;
+			case TSMF_MAJOR_TYPE_AUDIO:
+				tsmf_sample_playback_audio(sample);
+				tsmf_sample_queue_ack(sample);
+				break;
+		}
 	}
-
-	switch (sample->stream->major_type)
+	else
 	{
-		case TSMF_MAJOR_TYPE_VIDEO:
-			tsmf_sample_playback_video(sample);
-			tsmf_sample_ack(sample);
-			tsmf_sample_free(sample);
-			break;
-		case TSMF_MAJOR_TYPE_AUDIO:
-			tsmf_sample_playback_audio(sample);
-			tsmf_sample_queue_ack(sample);
-			break;
-	}
+		TSMF_STREAM * stream = sample->stream;
+		uint64 ack_anticipation_time = get_current_time();
+		uint64 currentRunningTime = sample->start_time;
+		uint32 bufferLevel = 0;
+		if (stream->decoder->GetRunningTime)
+		{
+			currentRunningTime = stream->decoder->GetRunningTime(stream->decoder);
+		}
+		if (stream->decoder->BufferLevel)
+		{
+			bufferLevel = stream->decoder->BufferLevel(stream->decoder);
+		}
+		switch (sample->stream->major_type)
+		{
+			case TSMF_MAJOR_TYPE_VIDEO:
+			{
+				TSMF_PRESENTATION * presentation = sample->stream->presentation;
+				/*
+				 *	Tell gstreamer that presentation screen area has moved.
+				 *	So it can render on the new area.
+				*/
+				if (presentation->last_x != presentation->output_x || presentation->last_y != presentation->output_y ||
+					presentation->last_width != presentation->output_width || presentation->last_height != presentation->output_height)
+				{
+					presentation->last_x = presentation->output_x;
+					presentation->last_y = presentation->output_y;
+					presentation->last_width = presentation->output_width;
+					presentation->last_height = presentation->output_height;
+					if(stream->decoder->UpdateRenderingArea)
+					{
+						stream->decoder->UpdateRenderingArea(stream->decoder, presentation->output_x, presentation->output_y,
+						presentation->output_width, presentation->output_height, presentation->output_num_rects, presentation->output_rects);
+					}
+				}
+				if ( presentation->last_num_rects != presentation->output_num_rects || (presentation->last_rects && presentation->output_rects &&
+					memcmp(presentation->last_rects, presentation->output_rects, presentation->last_num_rects * sizeof(RDP_RECT)) != 0))
+				{
+					if (presentation->last_rects)
+					{
+						xfree(presentation->last_rects);
+						presentation->last_rects = NULL;
+					}
+					presentation->last_num_rects = presentation->output_num_rects;
+					if (presentation->last_num_rects > 0)
+					{
+						presentation->last_rects = xzalloc(presentation->last_num_rects * sizeof(RDP_RECT));
+						memcpy(presentation->last_rects, presentation->output_rects, presentation->last_num_rects * sizeof(RDP_RECT));
+					}
+					if(stream->decoder->UpdateRenderingArea)
+					{
+						stream->decoder->UpdateRenderingArea(stream->decoder, presentation->output_x, presentation->output_y,
+						presentation->output_width, presentation->output_height, presentation->output_num_rects, presentation->output_rects);
+					}
+				}
+
+				if (bufferLevel < 24)
+				{
+					ack_anticipation_time += sample->duration;
+				}
+				else
+				{
+					if (currentRunningTime > sample->start_time)
+					{
+						ack_anticipation_time += sample->duration;
+					}
+					else if(currentRunningTime == 0)
+					{
+						ack_anticipation_time += sample->duration;
+					}
+					else
+					{
+						ack_anticipation_time += (sample->start_time - currentRunningTime);
+					}
+				}
+				break;
+			}
+			case TSMF_MAJOR_TYPE_AUDIO:
+			{
+				last_played_audio_time = currentRunningTime;
+				if (bufferLevel < 2)
+				{
+					ack_anticipation_time += sample->duration;
+				}
+				else
+				{
+					if (currentRunningTime > sample->start_time)
+					{
+						ack_anticipation_time += sample->duration;
+					}
+					else if(currentRunningTime == 0)
+					{
+						ack_anticipation_time += sample->duration;
+					}
+					else
+					{
+						ack_anticipation_time += (sample->start_time - currentRunningTime);
+					}
+				}
+				break;
+			}
+		}
+		sample->ack_time = ack_anticipation_time;
+		tsmf_sample_queue_ack(sample);
+        }
 }
 
 static void* tsmf_stream_playback_func(void* arg)
@@ -489,13 +626,19 @@ static void* tsmf_stream_playback_func(void* arg)
 	if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO &&
 		stream->sample_rate && stream->channels && stream->bits_per_sample)
 	{
-		stream->audio = tsmf_load_audio_device(
-			presentation->audio_name && presentation->audio_name[0] ? presentation->audio_name : NULL,
-			presentation->audio_device && presentation->audio_device[0] ? presentation->audio_device : NULL);
-		if (stream->audio)
+		if (stream->decoder)
 		{
-			stream->audio->SetFormat(stream->audio,
-				stream->sample_rate, stream->channels, stream->bits_per_sample);
+			if (stream->decoder->GetDecodedData)
+			{
+				stream->audio = tsmf_load_audio_device(
+					presentation->audio_name && presentation->audio_name[0] ? presentation->audio_name : NULL,
+					presentation->audio_device && presentation->audio_device[0] ? presentation->audio_device : NULL);
+				if (stream->audio)
+				{
+					stream->audio->SetFormat(stream->audio,
+						stream->sample_rate, stream->channels, stream->bits_per_sample);
+				}
+			}
 		}
 	}
 	while (!freerdp_thread_is_stopped(stream->thread))
@@ -535,9 +678,98 @@ static void tsmf_stream_start(TSMF_STREAM* stream)
 
 static void tsmf_stream_stop(TSMF_STREAM* stream)
 {
+	if (!stream)
+		return;
+
+	if (!stream->decoder)
+		return;
+
 	if (freerdp_thread_is_running(stream->thread))
 	{
 		freerdp_thread_stop(stream->thread);
+	}
+	if (stream->decoder->Control)
+	{
+		stream->decoder->Control(stream->decoder, Control_Flush, NULL);
+	}
+}
+
+static void tsmf_stream_pause(TSMF_STREAM* stream)
+{
+	if (!stream)
+		return;
+
+	if (!stream->decoder)
+		return;
+
+	if (stream->decoder->Control)
+	{
+		stream->decoder->Control(stream->decoder, Control_Pause, NULL);
+	}
+}
+
+static void tsmf_stream_restart(TSMF_STREAM* stream)
+{
+	if (!stream)
+		return;
+
+	if (!stream->decoder)
+		return;
+
+	if (stream->decoder->Control)
+	{
+		stream->decoder->Control(stream->decoder, Control_Restart, NULL);
+	}
+}
+
+static void tsmf_stream_change_volume(TSMF_STREAM* stream, uint32 newVolume, uint32 muted)
+{
+	if (!stream)
+		return;
+
+	if (!stream->decoder)
+		return;
+
+	if (stream->decoder->ChangeVolume)
+	{
+		stream->decoder->ChangeVolume(stream->decoder, newVolume, muted);
+	}
+}
+
+void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, uint32 newVolume, uint32 muted)
+{
+	LIST_ITEM* item;
+	TSMF_STREAM* stream;
+
+	for (item = presentation->stream_list->head; item; item = item->next)
+	{
+		stream = (TSMF_STREAM*) item->data;
+		tsmf_stream_change_volume(stream, newVolume, muted);
+	}
+
+}
+
+void tsmf_presentation_paused(TSMF_PRESENTATION* presentation)
+{
+	LIST_ITEM* item;
+	TSMF_STREAM* stream;
+
+	for (item = presentation->stream_list->head; item; item = item->next)
+	{
+		stream = (TSMF_STREAM*) item->data;
+		tsmf_stream_pause(stream);
+	}
+}
+
+void tsmf_presentation_restarted(TSMF_PRESENTATION* presentation)
+{
+	LIST_ITEM* item;
+	TSMF_STREAM* stream;
+
+	for (item = presentation->stream_list->head; item; item = item->next)
+	{
+		stream = (TSMF_STREAM*) item->data;
+		tsmf_stream_restart(stream);
 	}
 }
 
@@ -645,7 +877,9 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	TSMF_STREAM* stream;
 
 	tsmf_presentation_stop(presentation);
+	freerdp_mutex_lock(presentation->mutex);
 	list_remove(presentation_list, presentation);
+	freerdp_mutex_unlock(presentation->mutex);
 
 	while (list_size(presentation->stream_list) > 0)
 	{
@@ -757,17 +991,28 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 	list_free(stream->sample_ack_list);
 
 	if (stream->decoder)
+	{
 		stream->decoder->Free(stream->decoder);
+		stream->decoder = 0;
+	}
 
 	freerdp_thread_free(stream->thread);
 
 	xfree(stream);
+	stream = 0;
 }
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
 	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
 	uint32 data_size, uint8* data)
 {
+	pthread_mutex_lock(&tsmf_mutex);
+	if (TERMINATING)
+	{
+		pthread_mutex_unlock(&tsmf_mutex);
+		return;
+	}
+	pthread_mutex_unlock(&tsmf_mutex);
 	TSMF_SAMPLE* sample;
 
 	sample = xnew(TSMF_SAMPLE);
@@ -788,8 +1033,51 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	freerdp_thread_unlock(stream->thread);
 }
 
+static void tsmf_signal_handler(int s)
+{
+	pthread_mutex_lock(&tsmf_mutex);
+	TERMINATING = 1;
+	pthread_mutex_unlock(&tsmf_mutex);
+	LIST_ITEM* p_item;
+	TSMF_PRESENTATION* presentation;
+	LIST_ITEM* s_item;
+	TSMF_STREAM* _stream;
+	if (presentation_list)
+	{
+		for (p_item = presentation_list->head; p_item; p_item = p_item->next)
+		{
+			presentation = (TSMF_PRESENTATION*) p_item->data;
+			for (s_item = presentation->stream_list->head; s_item; s_item = s_item->next)
+			{
+				_stream = (TSMF_STREAM*) s_item->data;
+				tsmf_stream_free(_stream);
+			}
+			tsmf_presentation_free(presentation);
+		}
+	}
+
+	unlink("/tmp/tsmf.tid");
+
+	if (s == SIGINT)
+	{
+		signal(s, SIG_DFL);
+		kill(getpid(), s);
+	}
+	else if (s == SIGUSR1)
+	{
+		signal(s, SIG_DFL);
+	}
+}
+
 void tsmf_media_init(void)
 {
+	struct sigaction sigtrap;
+	sigtrap.sa_handler = tsmf_signal_handler;
+	sigemptyset(&sigtrap.sa_mask);
+	sigtrap.sa_flags = 0;
+	sigaction(SIGINT, &sigtrap, 0);
+	sigaction(SIGUSR1, &sigtrap, 0);
+
 	if (presentation_list == NULL)
 		presentation_list = list_new();
 }

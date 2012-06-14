@@ -3,6 +3,7 @@
  * Video Redirection Virtual Channel - Decoder
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,14 @@
 #include "drdynvc_types.h"
 #include "tsmf_types.h"
 
+typedef enum _ITSMFControlMsg
+{
+	Control_Pause,
+	Control_Restart,
+	Control_Flush,
+	Control_EndOfStream
+} ITSMFControlMsg;
+
 typedef struct _ITSMFDecoder ITSMFDecoder;
 
 struct _ITSMFDecoder
@@ -38,7 +47,20 @@ struct _ITSMFDecoder
 	/* Get the width and height of decoded video frame */
 	boolean (*GetDecodedDimension) (ITSMFDecoder* decoder, uint32* width, uint32* height);
 	/* Free the decoder */
-	void (*Free) (ITSMFDecoder* decoder);
+	void (*Free) (ITSMFDecoder * decoder);
+	/* Optional Contol function */
+	void (*Control) (ITSMFDecoder * decoder, ITSMFControlMsg control_msg, uint32 *arg);
+	/* Decode a sample with extended interface. */
+	int (*DecodeEx) (ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
+        			uint64 start_time, uint64 end_time, uint64 duration);
+	/* Get current play time */
+	uint64 (*GetRunningTime) (ITSMFDecoder * decoder);
+	/* Update Gstreamer Rendering Area */
+	void (*UpdateRenderingArea) (ITSMFDecoder * decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
+	/* Change Gstreamer Audio Volume */
+	void (*ChangeVolume) (ITSMFDecoder * decoder, uint32 newVolume, uint32 muted);
+	/* Check buffer level */
+	uint32 (*BufferLevel) (ITSMFDecoder * decoder);
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"
