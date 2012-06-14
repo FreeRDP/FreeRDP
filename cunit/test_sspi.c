@@ -194,11 +194,11 @@ void test_InitializeSecurityContext(void)
 		return;
 	}
 
-	printf("cBuffers: %d ulVersion: %d\n", output_SecBuffer_desc.cBuffers, output_SecBuffer_desc.ulVersion);
+	printf("cBuffers: %ld ulVersion: %ld\n", output_SecBuffer_desc.cBuffers, output_SecBuffer_desc.ulVersion);
 
 	p_SecBuffer = &output_SecBuffer_desc.pBuffers[0];
 
-	printf("BufferType: 0x%04X cbBuffer:%d\n", p_SecBuffer->BufferType, p_SecBuffer->cbBuffer);
+	printf("BufferType: 0x%04lX cbBuffer:%ld\n", p_SecBuffer->BufferType, p_SecBuffer->cbBuffer);
 
 	freerdp_hexdump((uint8*) p_SecBuffer->pvBuffer, p_SecBuffer->cbBuffer);
 
