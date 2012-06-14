@@ -73,6 +73,8 @@ rdpSettings* settings_new(void* instance)
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
 		settings->authentication = true;
+		settings->authentication_only = false;
+		settings->from_stdin = false;
 
 		settings->received_caps = xzalloc(32);
 		settings->order_support = xzalloc(32);

@@ -61,11 +61,16 @@ boolean freerdp_connect(freerdp* instance)
 		if(!connectErrorCode){
 			connectErrorCode = PREECONNECTERROR;
 		}
-		printf("freerdp_pre_connect failed\n");
+		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
 		return false;
 	}
 
 	status = rdp_client_connect(rdp);
+	// --authonly tests the connection without a UI
+	if (instance->settings->authentication_only) {
+		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		return status;
+	}
 
 	if (status)
 	{
