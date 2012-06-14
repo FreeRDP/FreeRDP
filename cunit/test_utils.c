@@ -207,7 +207,7 @@ void passphrase_read_prompts_to_tty()
 			close(STDOUT_FILENO);
 			close(STDERR_FILENO);
 			close(masterfd);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			close(slavefd);
 			exit(EXIT_SUCCESS);
 		}
@@ -267,7 +267,7 @@ void passphrase_read_reads_from_tty()
 			close(STDERR_FILENO);
 			close(masterfd);
 			close(pipe_ends[0]);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			write(pipe_ends[1], buffer, password_size);
 			close(slavefd);
 			close(pipe_ends[1]);
@@ -343,7 +343,7 @@ void passphrase_read_turns_off_echo_during_read()
 			close(STDERR_FILENO);
 			close(masterfd);
 			close(slavefd);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			close(child_slavefd);
 			exit(EXIT_SUCCESS);
 		}
@@ -417,7 +417,7 @@ void passphrase_read_resets_terminal_after_read()
 			close(STDERR_FILENO);
 			close(masterfd);
 			close(slavefd);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			close(child_slavefd);
 			exit(EXIT_SUCCESS);
 		}
@@ -491,7 +491,7 @@ void passphrase_read_turns_on_newline_echo_during_read()
 			close(STDERR_FILENO);
 			close(masterfd);
 			close(slavefd);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			close(child_slavefd);
 			exit(EXIT_SUCCESS);
 		}
@@ -543,7 +543,7 @@ void passphrase_read_prompts_to_stderr_when_no_tty()
 
 			dup2(stdin_pipe[0], STDIN_FILENO);
 			dup2(stderr_pipe[1], STDERR_FILENO);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			exit(EXIT_SUCCESS);
 		}
 	}
@@ -595,7 +595,7 @@ void passphrase_read_reads_from_stdin_when_no_tty()
 
 			dup2(stdin_pipe[0], STDIN_FILENO);
 			dup2(stderr_pipe[1], STDERR_FILENO);
-			freerdp_passphrase_read("Password: ", buffer, password_size);
+			freerdp_passphrase_read("Password: ", buffer, password_size, 0);
 			write(result_pipe[1], buffer, strlen(buffer) + (size_t) 1);
 			exit(EXIT_SUCCESS);
 		}
