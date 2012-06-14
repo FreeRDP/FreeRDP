@@ -133,7 +133,7 @@ void test_InitializeSecurityContext(void)
 	uint32 fContextReq;
 	void* output_buffer;
 	CtxtHandle context;
-	uint32 pfContextAttr;
+	ULONG pfContextAttr;
 	SECURITY_STATUS status;
 	CredHandle credentials;
 	TimeStamp expiration;
