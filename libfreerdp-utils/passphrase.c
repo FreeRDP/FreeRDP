@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <freerdp/utils/passphrase.h>
 #ifdef _WIN32
-char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
+char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
 {
 	errno=ENOSYS;
 	return NULL;
@@ -34,7 +34,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 #include <unistd.h>
 #include <freerdp/utils/signal.h>
 
-char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
+char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
 {
 	char read_char;
 	char* buf_iter;
@@ -50,7 +50,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz)
 	}
 
 	ctermid(term_name);
-	if(strcmp(term_name, "") == 0
+	if(from_stdin || strcmp(term_name, "") == 0
 		|| (term_file = open(term_name, O_RDWR)) == -1)
 	{
 		write_file = STDERR_FILENO;
