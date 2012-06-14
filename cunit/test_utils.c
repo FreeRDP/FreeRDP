@@ -177,7 +177,7 @@ void passphrase_read_prompts_to_tty()
 {
 	static const int read_nbyte = 11;
 	int masterfd;
-	char* slavedevice;
+	char* slavedevice = NULL;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
 
@@ -233,7 +233,7 @@ void passphrase_read_reads_from_tty()
 	static const int read_nbyte = 11;
 	int masterfd;
 	int pipe_ends[2];
-	char* slavedevice;
+	char* slavedevice = NULL;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
 
@@ -298,7 +298,7 @@ void passphrase_read_turns_off_echo_during_read()
 {
 	static const int read_nbyte = 11;
 	int masterfd, slavefd;
-	char* slavedevice;
+	char* slavedevice = NULL;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
 	struct termios term_flags;
@@ -371,7 +371,7 @@ void passphrase_read_resets_terminal_after_read()
 {
 	static const int read_nbyte = 11;
 	int masterfd, slavefd, status;
-	char* slavedevice;
+	char* slavedevice = NULL;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
 	struct termios term_flags;
@@ -446,7 +446,7 @@ void passphrase_read_turns_on_newline_echo_during_read()
 {
 	static const int read_nbyte = 11;
 	int masterfd, slavefd;
-	char* slavedevice;
+	char* slavedevice = NULL;
 	char read_buf[read_nbyte];
 	fd_set fd_set_write;
 	struct termios term_flags;
@@ -636,7 +636,7 @@ void test_passphrase_read(void)
 void handle_signals_resets_terminal(void)
 {
 	int status, masterfd;
-	char* slavedevice;
+	char* slavedevice = NULL;
 	struct termios test_flags;
 	pid_t child_pid;
 
