@@ -822,9 +822,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 #endif
 	}
 
-	context->identity.User = (UINT16*) malloc(UserNameLen);
-	CopyMemory(context->identity.User, UserNameBuffer, UserNameLen);
-	context->identity.UserLength = UserNameLen;
+	if (UserNameLen > 0)
+	{
+		context->identity.User = (UINT16*) malloc(UserNameLen);
+		CopyMemory(context->identity.User, UserNameBuffer, UserNameLen);
+		context->identity.UserLength = UserNameLen;
+	}
 
 	if (DomainNameLen > 0)
 	{
