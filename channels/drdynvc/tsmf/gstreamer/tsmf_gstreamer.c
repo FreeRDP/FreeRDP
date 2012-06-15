@@ -113,6 +113,7 @@ static const char *tsmf_gstreamer_state_name(GstState state)
 	return name;
 }
 
+#if 0
 static void *tsmf_gstreamer_eventloop_thread_func(void * arg)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) arg;
@@ -211,6 +212,7 @@ static int tsmf_gstreamer_start_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 
 	return 0;
 }
+#endif
 
 static int tsmf_gstreamer_stop_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 {
@@ -787,8 +789,9 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 
 	/*
 	 * On Atlas without this printf, we'll see Illegal instruction only with optimization level set to -O2.
-	*/ 
-	printf("");
+	*/
+	const char *blank = ""; 
+	printf("%s", blank);
 
 	bool hwaccelflu = FALSE;
 	bool hwaccelomx = FALSE;

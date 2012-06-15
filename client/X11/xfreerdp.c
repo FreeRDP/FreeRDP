@@ -281,6 +281,8 @@ void xf_create_window(xfInfo* xfi)
 	char* win_title;
 	int width, height;
 
+	memset(&xevent, 0x00, sizeof(xevent));
+
 	width = xfi->width;
 	height = xfi->height;
 
