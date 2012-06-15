@@ -109,6 +109,7 @@ target_link_libraries(freerdp-core freerdp-locale)
 target_link_libraries(freerdp-core winpr-utils)
 target_link_libraries(freerdp-core winpr-rpc)
 target_link_libraries(freerdp-core winpr-sspi)
+target_link_libraries(freerdp-core winpr-registry)
 
 target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})

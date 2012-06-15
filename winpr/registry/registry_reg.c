@@ -141,7 +141,7 @@ RegVal* reg_load_value(Reg* reg, RegKey* key)
 
 	if (value->type == REG_DWORD)
 	{
-		value->data.dword = strtoul(data, NULL, 0);
+		value->data.dword = strtoul(data, NULL, 16);
 	}
 	else if (value->type == REG_SZ)
 	{
@@ -366,6 +366,12 @@ Reg* reg_open(BOOL read_only)
 
 			if (!reg->fp)
 				reg->fp = fopen(reg->filename, "w+");
+		}
+
+		if (!reg->fp)
+		{
+			free(reg);
+			return NULL;
 		}
 
 		reg->root_key = (RegKey*) malloc(sizeof(RegKey));
