@@ -21,6 +21,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/print.h>
 
 #include "sspi.h"
 
@@ -73,10 +74,13 @@ const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] =
 	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA }
 };
 
+WCHAR NTLM_NAME_W[] = { 'N','T','L','M','\0' };
+WCHAR CREDSSP_NAME_W[] = { 'C','r','e','d','S','S','P','\0' };
+
 const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] =
 {
-	{ L"NTLM", &NTLM_SecurityFunctionTableW },
-	{ L"CREDSSP", &CREDSSP_SecurityFunctionTableW }
+	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
+	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW }
 };
 
 #endif
@@ -122,8 +126,8 @@ void sspi_ContextBufferAllocTableGrow()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ContextBufferAllocTable.entries, size);
-	memset((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], 0, size / 2);
+	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
+	ZeroMemory((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], size / 2);
 }
 
 void sspi_ContextBufferAllocTableFree()
@@ -273,17 +277,23 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 {
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	identity->UserLength = strlen(user) * 2;
-	identity->User = (UINT16*) malloc(identity->UserLength);
-	MultiByteToWideChar(CP_ACP, 0, user, strlen(user),
-			(LPWSTR) identity->User, identity->UserLength / 2);
+	if (user)
+	{
+		identity->UserLength = MultiByteToWideChar(CP_UTF8, 0, user, strlen(user), NULL, 0);
+		identity->User = (UINT16*) malloc(identity->UserLength * sizeof(WCHAR));
+		MultiByteToWideChar(CP_UTF8, 0, user, identity->UserLength, (LPWSTR) identity->User, identity->UserLength * sizeof(WCHAR));
+	}
+	else
+	{
+		identity->User = (UINT16*) NULL;
+		identity->UserLength = 0;
+	}
 
 	if (domain)
 	{
-		identity->DomainLength = strlen(domain) * 2;
-		identity->Domain = (UINT16*) malloc(identity->DomainLength);
-		MultiByteToWideChar(CP_ACP, 0, domain, strlen(domain),
-				(LPWSTR) identity->Domain, identity->DomainLength / 2);
+		identity->DomainLength = MultiByteToWideChar(CP_UTF8, 0, domain, strlen(domain), NULL, 0);
+		identity->Domain = (UINT16*) malloc(identity->DomainLength * sizeof(WCHAR));
+		MultiByteToWideChar(CP_UTF8, 0, domain, identity->DomainLength, (LPWSTR) identity->Domain, identity->DomainLength * sizeof(WCHAR));
 	}
 	else
 	{
@@ -293,10 +303,9 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (password != NULL)
 	{
-		identity->PasswordLength = strlen(password) * 2;
-		identity->Password = (UINT16*) malloc(identity->PasswordLength);
-		MultiByteToWideChar(CP_ACP, 0, password, strlen(password),
-				(LPWSTR) identity->Password, identity->PasswordLength / 2);
+		identity->PasswordLength = MultiByteToWideChar(CP_UTF8, 0, password, strlen(password), NULL, 0);
+		identity->Password = (UINT16*) malloc(identity->PasswordLength * sizeof(WCHAR));
+		MultiByteToWideChar(CP_UTF8, 0, password, identity->PasswordLength, (LPWSTR) identity->Password, identity->PasswordLength * sizeof(WCHAR));
 	}
 	else
 	{
@@ -320,16 +329,16 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	identity->UserLength = srcIdentity->UserLength;
-	identity->User = malloc(identity->UserLength);
-	CopyMemory(identity->User, srcIdentity->User, identity->UserLength);
+	identity->User = (UINT16*) malloc(identity->UserLength * sizeof(WCHAR));
+	CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
 
 	identity->DomainLength = srcIdentity->DomainLength;
-	identity->Domain = malloc(identity->DomainLength);
-	CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength);
+	identity->Domain = (UINT16*) malloc(identity->DomainLength * sizeof(WCHAR));
+	CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
-	identity->Password = malloc(identity->PasswordLength);
-	CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength);
+	identity->Password = (UINT16*) malloc(identity->PasswordLength * sizeof(WCHAR));
+	CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
 }
 
 void sspi_GlobalInit()
@@ -342,7 +351,7 @@ void sspi_GlobalFinish()
 	sspi_ContextBufferAllocTableFree();
 }
 
-#ifndef NATIVE_SSPI
+#ifndef WITH_NATIVE_SSPI
 
 SecurityFunctionTableA* sspi_GetSecurityFunctionTableByNameA(const SEC_CHAR* Name)
 {
@@ -371,7 +380,7 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableByNameW(const SEC_WCHAR* Na
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
+		if (lstrcmpW(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
 			return (SecurityFunctionTableW*) SecurityFunctionTableW_NAME_LIST[index].SecurityFunctionTable;
 		}
@@ -513,7 +522,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (wcscmp(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
+		if (lstrcmpW(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
 		{
 			size = sizeof(SecPkgInfoW);
 			pPackageInfo = (SecPkgInfoW*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);

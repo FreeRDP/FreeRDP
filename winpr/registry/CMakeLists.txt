@@ -17,31 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(NOT WIN32)
-	set(WITH_REGISTRY_XML true)
-endif()
-
 set(WINPR_REGISTRY_SRCS
+	registry_reg.c
+	registry_reg.h
 	registry.c)
-
-set(WINPR_REGISTRY_XML_SRCS
-	registry_xml.c
-	registry_xml.h)
-
-if(WITH_REGISTRY_XML)
-	set(WINPR_REGISTRY_SRCS ${WINPR_REGISTRY_SRCS} ${WINPR_REGISTRY_XML_SRCS})
-endif()
 
 add_library(winpr-registry ${WINPR_REGISTRY_SRCS})
 
 set_target_properties(winpr-registry PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-
-if(WITH_REGISTRY_XML)
-	find_required_package(LibXml2)
-	add_definitions("${LIBXML2_DEFINITIONS}")
-	include_directories(SYSTEM ${LIBXML2_INCLUDE_DIR})
-	target_link_libraries(winpr-registry ${LIBXML2_LIBRARIES})
-endif()
 
 target_link_libraries(winpr-registry winpr-utils)
 

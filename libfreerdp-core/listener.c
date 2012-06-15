@@ -40,7 +40,7 @@
 
 static boolean freerdp_listener_open(freerdp_listener* instance, const char* bind_address, uint16 port)
 {
-	rdpListener* listener = (rdpListener*)instance->listener;
+	rdpListener* listener = (rdpListener*) instance->listener;
 	int status;
 	int sockfd;
 	char servname[10];
@@ -56,14 +56,20 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+
 	if (bind_address == NULL)
 		hints.ai_flags = AI_PASSIVE;
 
 	snprintf(servname, sizeof(servname), "%d", port);
 	status = getaddrinfo(bind_address, servname, &hints, &res);
+
 	if (status != 0)
 	{
+#ifdef _WIN32
+		_tprintf(_T("getaddrinfo error: %s\n"), gai_strerror(status));
+#else
 		perror("getaddrinfo");
+#endif
 		return false;
 	}
 
@@ -73,6 +79,7 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 			continue;
 
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
 		if (sockfd == -1)
 		{
 			perror("socket");
@@ -92,14 +99,21 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 #endif
 
 		status = bind(sockfd, ai->ai_addr, ai->ai_addrlen);
+
 		if (status != 0)
 		{
+#ifdef _WIN32
+			_tprintf(L"bind() failed with error: %u\n", WSAGetLastError());
+			WSACleanup();
+#else
 			perror("bind");
 			close(sockfd);
+#endif
 			continue;
 		}
 
 		status = listen(sockfd, 10);
+
 		if (status != 0)
 		{
 			perror("listen");
@@ -110,9 +124,9 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 		listener->sockfds[listener->num_sockfds++] = sockfd;
 
 		if (ai->ai_family == AF_INET)
-			sin_addr = &(((struct sockaddr_in*)ai->ai_addr)->sin_addr);
+			sin_addr = &(((struct sockaddr_in*) ai->ai_addr)->sin_addr);
 		else
-			sin_addr = &(((struct sockaddr_in6*)ai->ai_addr)->sin6_addr);
+			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
 
 		printf("Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
 	}
@@ -125,12 +139,13 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 static boolean freerdp_listener_open_local(freerdp_listener* instance, const char* path)
 {
 #ifndef _WIN32
-	rdpListener* listener = (rdpListener*)instance->listener;
 	int status;
 	int sockfd;
 	struct sockaddr_un addr;
+	rdpListener* listener = (rdpListener*) instance->listener;
 
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
 	if (sockfd == -1)
 	{
 		perror("socket");
@@ -142,7 +157,9 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 	unlink(path);
-	status = bind(sockfd, (struct sockaddr *) &addr, sizeof(addr));
+
+	status = bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
+
 	if (status != 0)
 	{
 		perror("bind");
@@ -151,6 +168,7 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 	}
 
 	status = listen(sockfd, 10);
+
 	if (status != 0)
 	{
 		perror("listen");
@@ -164,7 +182,7 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 
 	return true;
 #else
-	return false;
+	return true;
 #endif
 }
 
@@ -172,19 +190,20 @@ static void freerdp_listener_close(freerdp_listener* instance)
 {
 	int i;
 
-	rdpListener* listener = (rdpListener*)instance->listener;
+	rdpListener* listener = (rdpListener*) instance->listener;
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
 		close(listener->sockfds[i]);
 	}
+
 	listener->num_sockfds = 0;
 }
 
 static boolean freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
 {
-	rdpListener* listener = (rdpListener*)instance->listener;
 	int i;
+	rdpListener* listener = (rdpListener*) instance->listener;
 
 	if (listener->num_sockfds < 1)
 		return false;

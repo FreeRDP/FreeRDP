@@ -38,7 +38,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	ntlm->confidentiality = confidentiality;
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE InitSecurityInterface;

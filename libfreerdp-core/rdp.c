@@ -912,8 +912,10 @@ rdpRdp* rdp_new(freerdp* instance)
 	{
 		rdp->instance = instance;
 		rdp->settings = settings_new((void*) instance);
+
 		if (instance != NULL)
 			instance->settings = rdp->settings;
+		
 		rdp->extension = extension_new(instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
@@ -937,6 +939,8 @@ rdpRdp* rdp_new(freerdp* instance)
 
 void rdp_free(rdpRdp* rdp)
 {
+	return;
+
 	if (rdp != NULL)
 	{
 		crypto_rc4_free(rdp->rc4_decrypt_key);

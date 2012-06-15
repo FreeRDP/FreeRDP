@@ -26,26 +26,6 @@
 
 char* NEGOTIATE_PACKAGE_NAME = "Negotiate";
 
-const SecPkgInfoA NEGOTIATE_SecPkgInfoA =
-{
-	0x00083BB3, /* fCapabilities */
-	1, /* wVersion */
-	0x0009, /* wRPCID */
-	0x00002FE0, /* cbMaxToken */
-	"Negotiate", /* Name */
-	"Microsoft Package Negotiator" /* Comment */
-};
-
-const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
-{
-	0x00083BB3, /* fCapabilities */
-	1, /* wVersion */
-	0x0009, /* wRPCID */
-	0x00002FE0, /* cbMaxToken */
-	L"Negotiate", /* Name */
-	L"Microsoft Package Negotiator" /* Comment */
-};
-
 SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
@@ -276,4 +256,33 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
 	negotiate_EncryptMessage, /* EncryptMessage */
 	negotiate_DecryptMessage, /* DecryptMessage */
 	NULL, /* SetContextAttributes */
+};
+
+const SecPkgInfoA NEGOTIATE_SecPkgInfoA =
+{
+	0x00083BB3, /* fCapabilities */
+	1, /* wVersion */
+	0x0009, /* wRPCID */
+	0x00002FE0, /* cbMaxToken */
+	"Negotiate", /* Name */
+	"Microsoft Package Negotiator" /* Comment */
+};
+
+WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N','e','g','o','t','i','a','t','e','\0' };
+
+WCHAR NEGOTIATE_SecPkgInfoW_Comment[] =
+{
+	'M','i','c','r','o','s','o','f','t',' ',
+	'P','a','c','k','a','g','e',' ',
+	'N','e','g','o','t','i','a','t','o','r','\0'
+};
+
+const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
+{
+	0x00083BB3, /* fCapabilities */
+	1, /* wVersion */
+	0x0009, /* wRPCID */
+	0x00002FE0, /* cbMaxToken */
+	NEGOTIATE_SecPkgInfoW_Name, /* Name */
+	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
 };

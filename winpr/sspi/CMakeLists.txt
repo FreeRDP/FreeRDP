@@ -50,8 +50,6 @@ if(NOT WITH_NATIVE_SSPI)
 		${WINPR_SSPI_NEGOTIATE_SRCS}
 		${WINPR_SSPI_SCHANNEL_SRCS}
 		${WINPR_SSPI_SRCS})
-else()
-	add_definitions(-DNATIVE_SSPI)
 endif()
 
 add_library(winpr-sspi ${WINPR_SSPI_SRCS})
