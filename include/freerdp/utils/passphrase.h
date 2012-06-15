@@ -23,6 +23,6 @@
 #include <stdlib.h>
 #include <freerdp/api.h>
 
-FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz);
+FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin);
 
 #endif /* __UTILS_PASSPHRASE_H */

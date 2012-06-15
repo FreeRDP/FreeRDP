@@ -395,6 +395,28 @@ static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 
 static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
 {
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	pa_cvolume cv;
+	pa_volume_t left;
+	pa_volume_t right;
+	pa_operation* operation;
+
+	if (!pulse->context || !pulse->stream)
+		return;
+
+	left = (pa_volume_t) (value & 0xFFFF);
+	right = (pa_volume_t) ((value >> 16) & 0xFFFF);
+
+	pa_cvolume_init(&cv);
+	cv.channels = 2;
+	cv.values[0] = PA_VOLUME_MUTED + (left * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
+	cv.values[1] = PA_VOLUME_MUTED + (right * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / 0xFFFF;
+
+	pa_threaded_mainloop_lock(pulse->mainloop);
+	operation = pa_context_set_sink_input_volume(pulse->context, pa_stream_get_index(pulse->stream), &cv, NULL, NULL);
+	if(operation)
+		pa_operation_unref(operation);
+	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
 static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, uint8* data, int size)

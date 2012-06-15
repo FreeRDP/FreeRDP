@@ -4,6 +4,7 @@
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 HP Development Company, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,6 +118,8 @@ if(NOT WIN32)
 
 	if(NOT APPLE)
 		find_suggested_package(FFmpeg)
+		find_suggested_package(XRandR)
+		find_suggested_package(Gstreamer)
 		find_suggested_package(ALSA)
 	else(NOT APPLE)
 		find_optional_package(FFmpeg)

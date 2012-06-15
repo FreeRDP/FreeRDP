@@ -28,6 +28,7 @@ typedef struct _rdpsnd_server_context rdpsnd_server_context;
 typedef boolean (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
 typedef void (*psRdpsndServerSelectFormat)(rdpsnd_server_context* context, int client_format_index);
 typedef boolean (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
+typedef boolean (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
 typedef boolean (*psRdpsndServerClose)(rdpsnd_server_context* context);
 
 typedef void (*psRdpsndServerActivated)(rdpsnd_server_context* context);
@@ -71,6 +72,10 @@ struct _rdpsnd_server_context
 	 * nframes * src_format.nBitsPerSample * src_format.nChannels / 8
 	 */
 	psRdpsndServerSendSamples SendSamples;
+	/**
+	 * Set the volume level of the client. Valid range is between 0 and 0xFFFF.
+	 */
+	psRdpsndServerSetVolume SetVolume;
 	/**
 	 * Close the audio stream.
 	 */

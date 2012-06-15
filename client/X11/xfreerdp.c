@@ -3,6 +3,7 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,6 +281,8 @@ void xf_create_window(xfInfo* xfi)
 	char* win_title;
 	int width, height;
 
+	memset(&xevent, 0x00, sizeof(xevent));
+
 	width = xfi->width;
 	height = xfi->height;
 
@@ -479,7 +482,7 @@ boolean xf_pre_connect(freerdp* instance)
 	if (arg_parse_result < 0)
 	{
 		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			printf("failed to parse arguments.\n");
+			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 		
 		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
@@ -520,6 +523,21 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
+
+  if (settings->authentication_only) {
+		/* Check --authonly has a username and password. */
+		if (settings->username == NULL ) {
+			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
+			exit(1);
+		}
+		if (settings->password == NULL ) {
+			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
+			exit(1);
+		}
+		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		// Avoid XWindows initialization and configuration below.
+		return true;
+	}
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -775,7 +793,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	// But it doesn't do anything to fix it...
 	*password = xmalloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
 		return false;
 
 	return true;
@@ -1067,7 +1085,15 @@ int xfreerdp_run(freerdp* instance)
 	memset(wfds, 0, sizeof(wfds));
 	memset(&timeout, 0, sizeof(struct timeval));
 
-	if (!freerdp_connect(instance))
+	boolean status = freerdp_connect(instance);
+	/* Connection succeeded. --authonly ? */
+	if (instance->settings->authentication_only) {
+		freerdp_disconnect(instance);
+		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		exit(!status);
+	}
+
+	if (!status)
 	{
 		xf_free(((xfContext*) instance->context)->xfi);
 		return XF_EXIT_CONN_FAILED;
@@ -1154,6 +1180,31 @@ int xfreerdp_run(freerdp* instance)
 			break;
 		}
 		xf_process_channel_event(channels, instance);
+	}
+
+	FILE *fin = fopen("/tmp/tsmf.tid", "rt");
+	if(fin)
+	{
+		int thid = 0;
+		fscanf(fin, "%d", &thid);
+		fclose(fin);
+		pthread_kill((pthread_t) thid, SIGUSR1);
+
+		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
+		int timeout = 5;
+		while (fin1)
+		{
+			fclose(fin1);
+			sleep(1);
+			timeout--;
+			if (timeout <= 0)
+			{
+				unlink("/tmp/tsmf.tid");
+				pthread_kill((pthread_t) thid, SIGKILL);
+				break;
+			}
+			fin1 = fopen("/tmp/tsmf.tid", "rt");
+		}
 	}
 
 	if (!ret)

@@ -126,6 +126,16 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			stream_read_uint32(s, client->ack_frame_id);
 			break;
 
+		case DATA_PDU_TYPE_REFRESH_RECT:
+			if (!update_read_refresh_rect(client->update, s))
+				return false;
+			break;
+
+		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:
+			if (!update_read_suppress_output(client->update, s))
+				return false;
+			break;
+
 		default:
 			printf("Data PDU type %d\n", type);
 			break;

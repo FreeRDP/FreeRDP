@@ -580,6 +580,30 @@ void tf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint1
 	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
+static void tf_peer_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
+{
+	uint8 i;
+
+	printf("Client requested to refresh:\n");
+
+	for (i = 0; i < count; i++)
+	{
+		printf("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
+	}
+}
+
+static void tf_peer_suppress_output(rdpContext* context, uint8 allow, RECTANGLE_16* area)
+{
+	if (allow > 0)
+	{
+		printf("Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
+	}
+	else
+	{
+		printf("Client minimized and suppress output.\n");
+	}
+}
+
 static void* test_peer_mainloop(void* arg)
 {
 	int i;
@@ -600,6 +624,8 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->privatekey_file = xstrdup("server.key");
 	client->settings->nla_security = false;
 	client->settings->rfx_codec = true;
+	client->settings->suppress_output = true;
+	client->settings->refresh_rect = true;
 
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
@@ -609,6 +635,9 @@ static void* test_peer_mainloop(void* arg)
 	client->input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
 	client->input->MouseEvent = tf_peer_mouse_event;
 	client->input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
+
+	client->update->RefreshRect = tf_peer_refresh_rect;
+	client->update->SuppressOutput = tf_peer_suppress_output;
 
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;

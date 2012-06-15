@@ -3,6 +3,7 @@
  * Video Redirection Virtual Channel - Media Container
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +36,9 @@ TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCa
 TSMF_PRESENTATION* tsmf_presentation_find_by_id(const uint8* guid);
 void tsmf_presentation_start(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_stop(TSMF_PRESENTATION* presentation);
+void tsmf_presentation_paused(TSMF_PRESENTATION* presentation);
+void tsmf_presentation_restarted(TSMF_PRESENTATION* presentation);
+void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, uint32 newVolume, uint32 muted);
 void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	uint32 x, uint32 y, uint32 width, uint32 height,
 	int num_rects, RDP_RECT* rects);

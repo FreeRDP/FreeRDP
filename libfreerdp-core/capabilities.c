@@ -165,13 +165,6 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->salted_checksum)
 		extraFlags |= ENC_SALTED_CHECKSUM;
 
-	if (settings->server_mode)
-	{
-		/* not yet supported server-side */
-		settings->refresh_rect = false;
-		settings->suppress_output = false;
-	}
-
 	stream_write_uint16(s, settings->os_major_type); /* osMajorType (2 bytes) */
 	stream_write_uint16(s, settings->os_minor_type); /* osMinorType (2 bytes) */
 	stream_write_uint16(s, CAPS_PROTOCOL_VERSION); /* protocolVersion (2 bytes) */
