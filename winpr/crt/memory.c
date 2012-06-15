@@ -24,36 +24,6 @@
 
 #ifndef _WIN32
 
-HANDLE GetProcessHeap(void)
-{
-	return NULL;
-}
 
-LPVOID HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes)
-{
-	LPVOID lpMem = NULL;
-
-	if (dwFlags & HEAP_ZERO_MEMORY)
-		lpMem = calloc(1, dwBytes);
-	else
-		lpMem = malloc(dwBytes);
-
-	return lpMem;
-}
-
-LPVOID HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes)
-{
-	LPVOID lpNewMem;
-
-	lpNewMem = realloc(lpMem, dwBytes);
-
-	return lpNewMem;
-}
-
-BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
-{
-	free(lpMem);
-	return 1;
-}
 
 #endif

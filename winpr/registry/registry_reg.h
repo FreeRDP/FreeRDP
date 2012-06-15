@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Windows Registry
+ * Windows Registry (.reg file format)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,16 +17,48 @@
  * limitations under the License.
  */
 
-#include <libxml/parser.h>
-#include <libxml/xmlmemory.h>
+#include <winpr/registry.h>
 
-struct _registry_xml
+typedef struct _reg Reg;
+typedef struct _reg_key RegKey;
+typedef struct _reg_val RegVal;
+
+struct _reg
 {
-	xmlDocPtr doc;
-	xmlNodePtr node;
+	FILE* fp;
+	char* line;
+	char* next_line;
+	int line_length;
+	char* buffer;
+	char* filename;
+	BOOL read_only;
+	RegKey* root_key;
 };
-typedef struct _registry_xml RegistryXml;
 
-RegistryXml* registry_xml_new();
-RegistryXml* registry_xml_open();
-void registry_xml_close(RegistryXml* registry);
+struct _reg_val
+{
+	char* name;
+	DWORD type;
+	RegVal* prev;
+	RegVal* next;
+
+	union reg_data
+	{
+		DWORD dword;
+		char* string;
+	} data;
+};
+
+struct _reg_key
+{
+	char* name;
+	DWORD type;
+	RegKey* prev;
+	RegKey* next;
+
+	char* subname;
+	RegVal* values;
+	RegKey* subkeys;
+};
+
+Reg* reg_open(BOOL read_only);

@@ -32,4 +32,6 @@ if(NOT WIN32)
 
 	# Build Server Channels library
 	add_subdirectory(channels)
+else()
+	add_subdirectory(Windows)
 endif()

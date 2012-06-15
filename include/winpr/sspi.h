@@ -22,8 +22,6 @@
 
 #include "config.h"
 
-//#define NATIVE_SSPI
-
 #include <wchar.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
@@ -34,7 +32,7 @@
 #include <tchar.h>
 #include <winerror.h>
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 #define SECURITY_WIN32
 #include <sspi.h>
 #include <security.h>

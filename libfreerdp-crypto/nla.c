@@ -76,6 +76,8 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
+#define TERMSRV_SPN_PREFIX	"TERMSRV/"
+
 void credssp_send(rdpCredssp* credssp);
 int credssp_recv(rdpCredssp* credssp);
 void credssp_buffer_print(rdpCredssp* credssp);
@@ -92,8 +94,12 @@ SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp);
 
 int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
+	char* spn;
+	int length;
 	freerdp* instance;
-	rdpSettings* settings = credssp->settings;
+	rdpSettings* settings;
+	
+	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
 	if ((settings->password == NULL) || (settings->username == NULL))
@@ -112,6 +118,20 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
 
+	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->hostname);
+
+	spn = (SEC_CHAR*) malloc(length + 1);
+	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->hostname);
+
+#ifdef UNICODE
+	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
+	MultiByteToWideChar(CP_ACP, 0, spn, length,
+		(LPWSTR) credssp->ServicePrincipalName, length);
+	free(spn);
+#else
+	credssp->ServicePrincipalName = spn;
+#endif
+
 	return 1;
 }
 
@@ -125,8 +145,6 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	freerdp* instance;
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
-
-	sspi_SetAuthIdentity(&(credssp->identity), "username", NULL, NULL);
 
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->tls->public_key.data, credssp->tls->public_key.length);
@@ -157,13 +175,13 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE InitSecurityInterface;
 		PSecurityFunctionTable pSecurityInterface = NULL;
 
-		hSSPI = LoadLibrary(_T("secur32.dll"));
+		hSSPI = LoadLibrary(_T("security.dll"));
 
 #ifdef UNICODE
 		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
@@ -202,8 +220,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	memset(&output_buffer, 0, sizeof(SecBuffer));
 	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
 
-	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT |
-			ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
+	fContextReq = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_IDENTIFY |
+			ISC_REQ_EXTENDED_ERROR | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT;
 
 	while (true)
 	{
@@ -216,8 +234,8 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		status = credssp->table->InitializeSecurityContext(&credentials,
 				(have_context) ? &credssp->context : NULL,
-				NULL, fContextReq, 0, SECURITY_NETWORK_DREP,
-				(have_input_buffer) ? &input_buffer_desc : NULL,
+				credssp->ServicePrincipalName, fContextReq, 0,
+				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
 		if (input_buffer.pvBuffer != NULL)
@@ -324,7 +342,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Receiving Authentication Token\n");
+		printf("Receiving Authentication Token (%d)\n", credssp->negoToken.cbBuffer);
 		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
@@ -398,7 +416,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_server_init(credssp) == 0)
 		return 0;
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
 		INIT_SECURITY_INTERFACE InitSecurityInterface;
@@ -439,9 +457,9 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	have_context = false;
 	have_input_buffer = false;
 	have_pub_key_auth = false;
-	memset(&input_buffer, 0, sizeof(SecBuffer));
-	memset(&output_buffer, 0, sizeof(SecBuffer));
-	memset(&credssp->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
+	ZeroMemory(&input_buffer, sizeof(SecBuffer));
+	ZeroMemory(&output_buffer, sizeof(SecBuffer));
+	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	fContextReq = ASC_REQ_REPLAY_DETECT | ASC_REQ_SEQUENCE_DETECT |
 			ASC_REQ_CONFIDENTIALITY | ASC_REQ_DELEGATE;
@@ -471,6 +489,12 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		p_buffer = &input_buffer_desc.pBuffers[0];
 		p_buffer->pvBuffer = credssp->negoToken.pvBuffer;
 		p_buffer->cbBuffer = credssp->negoToken.cbBuffer;
+
+		if (credssp->negoToken.cbBuffer < 1)
+		{
+			printf("CredSSP: invalid negoToken!\n");
+			return -1;
+		}
 
 		output_buffer_desc.ulVersion = SECBUFFER_VERSION;
 		output_buffer_desc.cBuffers = 1;
@@ -688,15 +712,15 @@ int credssp_skip_ts_password_creds(rdpCredssp* credssp)
 	int length;
 	int ts_password_creds_length = 0;
 
-	length = ber_skip_octet_string(credssp->identity.DomainLength);
+	length = ber_skip_octet_string(credssp->identity.DomainLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->identity.UserLength);
+	length = ber_skip_octet_string(credssp->identity.UserLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
-	length = ber_skip_octet_string(credssp->identity.PasswordLength);
+	length = ber_skip_octet_string(credssp->identity.PasswordLength * 2);
 	length += ber_skip_contextual_tag(length);
 	ts_password_creds_length += length;
 
@@ -719,6 +743,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.Domain = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Domain, s->p, credssp->identity.DomainLength);
 	stream_seek(s, credssp->identity.DomainLength);
+	credssp->identity.DomainLength /= 2;
 
 	/* [1] userName (OCTET STRING) */
 	ber_read_contextual_tag(s, 1, &length, true);
@@ -727,6 +752,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.User = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.User, s->p, credssp->identity.UserLength);
 	stream_seek(s, credssp->identity.UserLength);
+	credssp->identity.UserLength /= 2;
 
 	/* [2] password (OCTET STRING) */
 	ber_read_contextual_tag(s, 2, &length, true);
@@ -735,6 +761,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.Password = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
 	stream_seek(s, credssp->identity.PasswordLength);
+	credssp->identity.PasswordLength /= 2;
 }
 
 void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
@@ -748,16 +775,16 @@ void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_write_sequence_tag(s, length);
 
 	/* [0] domainName (OCTET STRING) */
-	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength);
+	ber_write_contextual_tag(s, 0, credssp->identity.DomainLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength * 2);
 
 	/* [1] userName (OCTET STRING) */
-	ber_write_contextual_tag(s, 1, credssp->identity.UserLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.User, credssp->identity.UserLength);
+	ber_write_contextual_tag(s, 1, credssp->identity.UserLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.User, credssp->identity.UserLength * 2);
 
 	/* [2] password (OCTET STRING) */
-	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength + 2, true);
-	ber_write_octet_string(s, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength);
+	ber_write_contextual_tag(s, 2, credssp->identity.PasswordLength * 2 + 2, true);
+	ber_write_octet_string(s, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength * 2);
 }
 
 int credssp_skip_ts_credentials(rdpCredssp* credssp)
@@ -1039,12 +1066,14 @@ int credssp_recv(rdpCredssp* credssp)
 	int status;
 	UINT32 version;
 
-	s = stream_new(2048);
-	status = tls_read(credssp->tls, s->data, stream_get_left(s));
+	s = stream_new(4096);
+
+	status = tls_read_all(credssp->tls, s->p, stream_get_left(s));
 
 	if (status < 0)
 	{
-		stream_free(s) ;
+		printf("credssp_recv() error: %d\n", status);
+		stream_free(s);
 		return -1;
 	}
 

@@ -118,11 +118,11 @@ static const char* const NTLM_NEGOTIATE_STRINGS[] =
 
 void ntlm_output_version(PStream s)
 {
-	/* The following version information was observed with Windows 7 */
+	/* Version Info for Windows 7 SP1 */
 
 	StreamWrite_UINT8(s, WINDOWS_MAJOR_VERSION_6); /* ProductMajorVersion (1 byte) */
 	StreamWrite_UINT8(s, WINDOWS_MINOR_VERSION_1); /* ProductMinorVersion (1 byte) */
-	StreamWrite_UINT16(s, 7600); /* ProductBuild (2 bytes) */
+	StreamWrite_UINT16(s, 7601); /* ProductBuild (2 bytes) */
 	StreamZero(s, 3); /* Reserved (3 bytes) */
 	StreamWrite_UINT8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
 }
@@ -262,6 +262,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	if (context->confidentiality)
 		NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+
+	if (context->SendVersionInfo)
+		NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
 
 	context->NegotiateFlags = NegotiateFlags;
 
@@ -431,10 +434,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_timestamp(context);
 
 	/* LmChallengeResponse */
-	ntlm_compute_lm_v2_response(context);
 
-	if (context->ntlm_v2)
-		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+	if (context->LmCompatibilityLevel < 2)
+		ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -820,11 +822,24 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 #endif
 	}
 
-	/* LmChallengeResponse */
-	ntlm_compute_lm_v2_response(context);
+	if (UserNameLen > 0)
+	{
+		context->identity.User = (UINT16*) malloc(UserNameLen);
+		CopyMemory(context->identity.User, UserNameBuffer, UserNameLen);
+		context->identity.UserLength = UserNameLen;
+	}
 
-	if (context->ntlm_v2)
-		memset(context->LmChallengeResponse.pvBuffer, 0, context->LmChallengeResponse.cbBuffer);
+	if (DomainNameLen > 0)
+	{
+		context->identity.Domain = (UINT16*) malloc(DomainNameLen);
+		CopyMemory(context->identity.Domain, DomainNameBuffer, DomainNameLen);
+		context->identity.DomainLength = DomainNameLen;
+	}
+
+	/* LmChallengeResponse */
+
+	if (context->LmCompatibilityLevel < 2)
+		ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -944,13 +959,13 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->ntlm_v2 < 1)
 		WorkstationLen = 0;
 
-	DomainNameLen = (UINT16) context->identity.DomainLength;
+	DomainNameLen = (UINT16) context->identity.DomainLength * 2;
 	DomainNameBuffer = (BYTE*) context->identity.Domain;
 
-	UserNameLen = (UINT16) context->identity.UserLength;
+	UserNameLen = (UINT16) context->identity.UserLength * 2;
 	UserNameBuffer = (BYTE*) context->identity.User;
 
-	LmChallengeResponseLen = (UINT16) context->LmChallengeResponse.cbBuffer;
+	LmChallengeResponseLen = (UINT16) 24;
 	NtChallengeResponseLen = (UINT16) context->NtChallengeResponse.cbBuffer;
 
 	EncryptedRandomSessionKeyLen = 16;
@@ -1095,13 +1110,21 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	}
 
 	/* LmChallengeResponse */
-	StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+
+	if (context->LmCompatibilityLevel < 2)
+	{
+		StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-	winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
-	printf("\n");
+		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
+		winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+		printf("\n");
 #endif
+	}
+	else
+	{
+		StreamZero(s, LmChallengeResponseLen);
+	}
 
 	/* NtChallengeResponse */
 	StreamWrite(s, context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);

@@ -69,7 +69,8 @@ void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_d
 
 void crypto_rc4_free(CryptoRc4 rc4)
 {
-	xfree(rc4);
+	if (rc4)
+		xfree(rc4);
 }
 
 CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec)
