@@ -499,7 +499,6 @@ TSMFDecoderEntry(void)
 
 	if (!initialized)
 	{
-		avcodec_init();
 		avcodec_register_all();
 		initialized = true;
 	}
