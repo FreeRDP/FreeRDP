@@ -101,6 +101,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #endif
 
 #define NTLMSP_NAME	_T("NTLM")
+#define NEGOSSP_NAME	_T("Negotiate")
 
 #endif
 

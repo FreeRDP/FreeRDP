@@ -76,6 +76,12 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
+#ifdef WITH_NATIVE_SSPI
+#define NLA_PKG_NAME	NEGOSSP_NAME
+#else
+#define NLA_PKG_NAME	NTLMSP_NAME
+#endif
+
 #define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
 void credssp_send(rdpCredssp* credssp);
@@ -182,7 +188,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		INIT_SECURITY_INTERFACE InitSecurityInterface;
 		PSecurityFunctionTable pSecurityInterface = NULL;
 
-		hSSPI = LoadLibrary(_T("security.dll"));
+		hSSPI = LoadLibrary(_T("secur32.dll"));
 
 #ifdef UNICODE
 		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
@@ -195,7 +201,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	credssp->table = InitSecurityInterface();
 #endif
 
-	status = credssp->table->QuerySecurityPackageInfo(NTLMSP_NAME, &pPackageInfo);
+	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -205,7 +211,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	cbMaxToken = pPackageInfo->cbMaxToken;
 
-	status = credssp->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = credssp->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &credssp->identity, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
@@ -221,7 +227,15 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	ZeroMemory(&output_buffer, sizeof(SecBuffer));
 	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
 
-	fContextReq = ISC_REQ_CONFIDENTIALITY | ISC_REQ_REPLAY_DETECT | ISC_REQ_EXTENDED_ERROR;
+	/* 
+	 * from tspkg.dll: 0x00000132
+	 * ISC_REQ_MUTUAL_AUTH
+	 * ISC_REQ_CONFIDENTIALITY
+	 * ISC_REQ_USE_SESSION_KEY
+	 * ISC_REQ_ALLOCATE_MEMORY
+	 */
+
+	fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
 	while (true)
 	{
@@ -380,7 +394,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		INIT_SECURITY_INTERFACE InitSecurityInterface;
 		PSecurityFunctionTable pSecurityInterface = NULL;
 
-		hSSPI = LoadLibrary(_T("security.dll"));
+		hSSPI = LoadLibrary(_T("secur32.dll"));
 
 #ifdef UNICODE
 		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
@@ -393,7 +407,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	credssp->table = InitSecurityInterface();
 #endif
 
-	status = credssp->table->QuerySecurityPackageInfo(NTLMSP_NAME, &pPackageInfo);
+	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -403,7 +417,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	cbMaxToken = pPackageInfo->cbMaxToken;
 
-	status = credssp->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = credssp->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
 			SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
@@ -419,7 +433,14 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	ZeroMemory(&output_buffer, sizeof(SecBuffer));
 	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
 
-	fContextReq = ASC_REQ_CONFIDENTIALITY | ASC_REQ_INTEGRITY | ASC_REQ_EXTENDED_ERROR;
+	/* 
+	 * from tspkg.dll: 0x00000112
+	 * ASC_REQ_MUTUAL_AUTH
+	 * ASC_REQ_CONFIDENTIALITY
+	 * ASC_REQ_ALLOCATE_MEMORY
+	 */
+
+	fContextReq = ASC_REQ_MUTUAL_AUTH | ASC_REQ_CONFIDENTIALITY;
 
 	while (true)
 	{
@@ -572,7 +593,6 @@ int credssp_authenticate(rdpCredssp* credssp)
 
 SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 {
-	BYTE* p;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
@@ -580,25 +600,24 @@ SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 
+	sspi_SecBufferAlloc(&credssp->pubKeyAuth, credssp->ContextSizes.cbMaxSignature + credssp->PublicKey.cbBuffer);
+
 	Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-	Buffers[0].pvBuffer = malloc(Buffers[0].cbBuffer);
-	ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
+	Buffers[0].pvBuffer = credssp->pubKeyAuth.pvBuffer;
 
 	Buffers[1].cbBuffer = credssp->PublicKey.cbBuffer;
-	Buffers[1].pvBuffer = malloc(Buffers[1].cbBuffer);
+	Buffers[1].pvBuffer = ((BYTE*) credssp->pubKeyAuth.pvBuffer) + credssp->ContextSizes.cbMaxSignature;
 	CopyMemory(Buffers[1].pvBuffer, credssp->PublicKey.pvBuffer, Buffers[1].cbBuffer);
 
 	if (credssp->server)
 	{
-		p = (BYTE*) Buffers[1].pvBuffer;
-		p[0]++; /* server echos the public key +1 */
+		/* server echos the public key +1 */
+		((BYTE*) Buffers[1].pvBuffer)[0]++;
 	}
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
-
-	sspi_SecBufferAlloc(&credssp->pubKeyAuth, Buffers[0].cbBuffer + Buffers[1].cbBuffer);
 
 	status = credssp->table->EncryptMessage(&credssp->context, 0, &Message, credssp->send_seq_num++);
 
@@ -607,12 +626,6 @@ SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 		printf("EncryptMessage status: 0x%08X\n", status);
 		return status;
 	}
-
-	p = (BYTE*) credssp->pubKeyAuth.pvBuffer;
-	CopyMemory(p, Buffers[0].pvBuffer, Buffers[0].cbBuffer); /* Message Signature */
-	CopyMemory(&p[Buffers[0].cbBuffer], Buffers[1].pvBuffer, Buffers[1].cbBuffer); /* Encrypted Public Key */
-	free(Buffers[0].pvBuffer);
-	free(Buffers[1].pvBuffer);
 
 	return status;
 }
@@ -648,7 +661,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 
-	status = credssp->table->DecryptMessage(&credssp->context, &Message, credssp->recv_seq_num++, &pfQOP);
+	status = credssp->table->DecryptMessage(&credssp->context, &Message, 0, &pfQOP);
 
 	if (status != SEC_E_OK)
 	{
@@ -660,7 +673,10 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 	public_key2 = (BYTE*) Buffers[1].pvBuffer;
 
 	if (!credssp->server)
-		public_key2[0]--; /* server echos the public key +1 */
+	{
+		/* server echos the public key +1 */
+		public_key2[0]--;
+	}
 
 	if (memcmp(public_key1, public_key2, public_key_length) != 0)
 	{
