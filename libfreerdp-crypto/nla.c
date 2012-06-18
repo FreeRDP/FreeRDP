@@ -440,7 +440,18 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	 * ASC_REQ_ALLOCATE_MEMORY
 	 */
 
-	fContextReq = ASC_REQ_MUTUAL_AUTH | ASC_REQ_CONFIDENTIALITY;
+	fContextReq = 0;
+	fContextReq |= ASC_REQ_MUTUAL_AUTH;
+	fContextReq |= ASC_REQ_CONFIDENTIALITY;
+
+	fContextReq |= ASC_REQ_CONNECTION;
+	fContextReq |= ASC_REQ_USE_SESSION_KEY;
+	fContextReq |= ASC_REQ_CONFIDENTIALITY;
+
+	fContextReq |= ASC_REQ_REPLAY_DETECT;
+	fContextReq |= ASC_REQ_SEQUENCE_DETECT;
+
+	fContextReq |= ASC_REQ_EXTENDED_ERROR;
 
 	while (true)
 	{
@@ -633,29 +644,35 @@ SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 {
 	int length;
+	BYTE* buffer;
 	ULONG pfQOP;
 	BYTE* public_key1;
 	BYTE* public_key2;
-	BYTE* pub_key_auth;
 	int public_key_length;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
+	if (credssp->PublicKey.cbBuffer + credssp->ContextSizes.cbMaxSignature != credssp->pubKeyAuth.cbBuffer)
+	{
+		printf("credssp_decrypt_public_key_echo: unexpected pubKeyAuth buffer size:%d\n", credssp->pubKeyAuth.cbBuffer);
+		return SEC_E_INVALID_TOKEN;
+	}
+
 	length = credssp->pubKeyAuth.cbBuffer;
-	pub_key_auth = (BYTE*) credssp->pubKeyAuth.pvBuffer;
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, credssp->pubKeyAuth.pvBuffer, length);
+
 	public_key_length = credssp->PublicKey.cbBuffer;
 
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
 
 	Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-	Buffers[0].pvBuffer = malloc(Buffers[0].cbBuffer);
-	CopyMemory(Buffers[0].pvBuffer, pub_key_auth, Buffers[0].cbBuffer);
+	Buffers[0].pvBuffer = buffer;
 
-	Buffers[1].cbBuffer = length - Buffers[0].cbBuffer;
-	Buffers[1].pvBuffer = malloc(Buffers[1].cbBuffer);
-	CopyMemory(Buffers[1].pvBuffer, &pub_key_auth[Buffers[0].cbBuffer], Buffers[1].cbBuffer);
+	Buffers[1].cbBuffer = length - credssp->ContextSizes.cbMaxSignature;
+	Buffers[1].pvBuffer = buffer + credssp->ContextSizes.cbMaxSignature;
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
@@ -693,8 +710,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	public_key2[0]++;
 
-	free(Buffers[0].pvBuffer);
-	free(Buffers[1].pvBuffer);
+	free(buffer);
 
 	return SEC_E_OK;
 }
@@ -956,17 +972,17 @@ SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp)
 
 int credssp_skip_nego_token(int length)
 {
-	length = ber_skip_octet_string(length);
-	length += ber_skip_contextual_tag(length);
+	length = der_skip_octet_string(length);
+	length += der_skip_contextual_tag(length);
 	return length;
 }
 
 int credssp_skip_nego_tokens(int length)
 {
 	length = credssp_skip_nego_token(length);
-	length += ber_skip_sequence_tag(length);
-	length += ber_skip_sequence_tag(length);
-	length += ber_skip_contextual_tag(length);
+	length += der_skip_sequence_tag(length);
+	length += der_skip_sequence_tag(length);
+	length += der_skip_contextual_tag(length);
 	return length;
 }
 
@@ -988,7 +1004,7 @@ int credssp_skip_ts_request(int length)
 {
 	length += ber_skip_integer(2);
 	length += ber_skip_contextual_tag(3);
-	length += ber_skip_sequence_tag(length);
+	length += der_skip_sequence_tag(length);
 	return length;
 }
 
@@ -1016,20 +1032,22 @@ void credssp_send(rdpCredssp* credssp)
 	s = stream_new(ts_request_length);
 
 	/* TSRequest */
-	length = ber_get_content_length(ts_request_length);
-	ber_write_sequence_tag(s, length); /* SEQUENCE */
-	ber_write_contextual_tag(s, 0, 3, true); /* [0] version */
+	length = der_get_content_length(ts_request_length);
+	der_write_sequence_tag(s, length); /* SEQUENCE */
+
+	/* [0] version */
+	ber_write_contextual_tag(s, 0, 3, true);
 	ber_write_integer(s, 2); /* INTEGER */
 
 	/* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0)
 	{
-		length = ber_get_content_length(nego_tokens_length);
-		length -= ber_write_contextual_tag(s, 1, length, true); /* NegoData */
-		length -= ber_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
-		length -= ber_write_sequence_tag(s, length); /* NegoDataItem */
-		length -= ber_write_contextual_tag(s, 0, length, true); /* [0] negoToken */
-		ber_write_octet_string(s, credssp->negoToken.pvBuffer, length); /* OCTET STRING */
+		length = der_get_content_length(nego_tokens_length);
+		length -= der_write_contextual_tag(s, 1, length, true); /* NegoData */
+		length -= der_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
+		length -= der_write_sequence_tag(s, length); /* NegoDataItem */
+		length -= der_write_contextual_tag(s, 0, length, true); /* [0] negoToken */
+		der_write_octet_string(s, (uint8*) credssp->negoToken.pvBuffer, length); /* OCTET STRING */
 	}
 
 	/* [2] authInfo (OCTET STRING) */

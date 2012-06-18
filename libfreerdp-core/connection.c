@@ -533,6 +533,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	rdp->nego->selected_protocol = 0;
 
 	printf("Requested protocols:");
+
 	if ((rdp->nego->requested_protocols & PROTOCOL_TLS))
 	{
 		printf(" TLS");
@@ -544,6 +545,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		else
 			printf("(n)");
 	}
+
 	if ((rdp->nego->requested_protocols & PROTOCOL_NLA))
 	{
 		printf(" NLA");
@@ -555,6 +557,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 		else
 			printf("(n)");
 	}
+
 	printf(" RDP");
 	if (rdp->settings->rdp_security && rdp->nego->selected_protocol == 0)
 	{
