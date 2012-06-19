@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 
 #include "ntlm_compute.h"
 
@@ -327,39 +328,68 @@ void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
  * @param NTLM context
  */
 
-char* test_NbDomainName = "FREERDP";
-char* test_NbComputerName = "FREERDP";
-char* test_DnsDomainName = "FreeRDP";
-char* test_DnsComputerName = "FreeRDP";
-
 void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context)
 {
 	int length;
-	AV_PAIRS* av_pairs = context->av_pairs;
+	DWORD nSize;
+	AV_PAIRS* av_pairs;
+	char* NbDomainName;
+	char* NbComputerName;
+	char* DnsDomainName;
+	char* DnsComputerName;
 
-	av_pairs->NbDomainName.length = strlen(test_NbDomainName) * 2;
+	av_pairs = context->av_pairs;
+
+	nSize = 0;
+	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+	NbDomainName = malloc(nSize);
+	GetComputerNameExA(ComputerNameNetBIOS, NbDomainName, &nSize);
+	CharUpperA(NbDomainName);
+
+	nSize = 0;
+	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+	NbComputerName = malloc(nSize);
+	GetComputerNameExA(ComputerNameNetBIOS, NbComputerName, &nSize);
+	CharUpperA(NbComputerName);
+
+	nSize = 0;
+	GetComputerNameExA(ComputerNameDnsDomain, NULL, &nSize);
+	DnsDomainName = malloc(nSize);
+	GetComputerNameExA(ComputerNameDnsDomain, DnsDomainName, &nSize);
+
+	nSize = 0;
+	GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
+	DnsComputerName = malloc(nSize);
+	GetComputerNameExA(ComputerNameDnsHostname, DnsComputerName, &nSize);
+
+	av_pairs->NbDomainName.length = strlen(NbDomainName) * 2;
 	av_pairs->NbDomainName.value = (BYTE*) malloc(av_pairs->NbDomainName.length);
-	MultiByteToWideChar(CP_ACP, 0, test_NbDomainName, strlen(test_NbDomainName),
+	MultiByteToWideChar(CP_ACP, 0, NbDomainName, strlen(NbDomainName),
 			(LPWSTR) av_pairs->NbDomainName.value, av_pairs->NbDomainName.length / 2);
 
-	av_pairs->NbComputerName.length = strlen(test_NbDomainName) * 2;
+	av_pairs->NbComputerName.length = strlen(NbDomainName) * 2;
 	av_pairs->NbComputerName.value = (BYTE*) malloc(av_pairs->NbComputerName.length);
-	MultiByteToWideChar(CP_ACP, 0, test_NbComputerName, strlen(test_NbComputerName),
+	MultiByteToWideChar(CP_ACP, 0, NbComputerName, strlen(NbComputerName),
 			(LPWSTR) av_pairs->NbComputerName.value, av_pairs->NbComputerName.length / 2);
 
-	av_pairs->DnsDomainName.length = strlen(test_DnsDomainName) * 2;
+	av_pairs->DnsDomainName.length = strlen(DnsDomainName) * 2;
 	av_pairs->DnsDomainName.value = (BYTE*) malloc(av_pairs->DnsDomainName.length);
-	MultiByteToWideChar(CP_ACP, 0, test_DnsDomainName, strlen(test_DnsDomainName),
+	MultiByteToWideChar(CP_ACP, 0, DnsDomainName, strlen(DnsDomainName),
 			(LPWSTR) av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length / 2);
 
-	av_pairs->DnsComputerName.length = strlen(test_DnsComputerName) * 2;
+	av_pairs->DnsComputerName.length = strlen(DnsComputerName) * 2;
 	av_pairs->DnsComputerName.value = (BYTE*) malloc(av_pairs->DnsComputerName.length);
-	MultiByteToWideChar(CP_ACP, 0, test_DnsComputerName, strlen(test_DnsComputerName),
+	MultiByteToWideChar(CP_ACP, 0, DnsComputerName, strlen(DnsComputerName),
 			(LPWSTR) av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length / 2);
 
 	length = ntlm_compute_av_pairs_length(context) + 4;
 	sspi_SecBufferAlloc(&context->TargetInfo, length);
 	ntlm_output_av_pairs(context, &context->TargetInfo);
+
+	free(NbDomainName);
+	free(NbComputerName);
+	free(DnsDomainName);
+	free(DnsComputerName);
 }
 
 /**
