@@ -39,18 +39,17 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, 
 	 */
 
 	negHeight = (height < 0) ? height : height * (-1);
-
 	hdc = GetDC(NULL);
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
 	bmi.bmiHeader.biWidth = width;
 	bmi.bmiHeader.biHeight = negHeight;
 	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = bpp;
+	bmi.bmiHeader.biBitCount = 	wfi->dstBpp;
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**) &cdata, NULL, 0);
 
 	if (data != NULL)
-		freerdp_image_convert(data, cdata, width, height, bpp, bpp, wfi->clrconv);
+		freerdp_image_convert(data, cdata, width, height, bpp, 	wfi->dstBpp, wfi->clrconv);
 
 	if (pdata != NULL)
 		*pdata = cdata;
