@@ -169,8 +169,8 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	sam = SamOpen(1);
 
 	entry = SamLookupUserW(sam,
-			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
-			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2);
+			(LPWSTR) context->identity.User, context->identity.UserLength,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength);
 
 	if (entry != NULL)
 	{
