@@ -878,7 +878,7 @@ rdpRdp* rdp_new(freerdp* instance)
 		rdp->settings = settings_new((void*) instance);
 		if (instance != NULL)
 			instance->settings = rdp->settings;
-		rdp->extension = extension_new(instance);
+
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
