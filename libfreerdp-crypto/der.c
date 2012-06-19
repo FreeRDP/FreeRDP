@@ -60,6 +60,11 @@ int der_get_content_length(int length)
 		return length - 2;
 }
 
+int der_skip_contextual_tag(int length)
+{
+	return _der_skip_length(length) + 1;
+}
+
 int der_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
 {
 	stream_write_uint8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
@@ -94,7 +99,3 @@ int der_write_sequence_tag(STREAM* s, int length)
 	return der_write_length(s, length) + 1;
 }
 
-int der_skip_contextual_tag(int length)
-{
-	return _der_skip_length(length) + 1;
-}

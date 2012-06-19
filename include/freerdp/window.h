@@ -155,8 +155,8 @@ struct _NOTIFY_ICON_INFOTIP
 {
 	uint32 timeout;
 	uint32 flags;
-	UNICODE_STRING text;
-	UNICODE_STRING title;
+	RAIL_UNICODE_STRING text;
+	RAIL_UNICODE_STRING title;
 };
 typedef struct _NOTIFY_ICON_INFOTIP NOTIFY_ICON_INFOTIP;
 
@@ -166,7 +166,7 @@ struct _WINDOW_STATE_ORDER
 	uint32 style;
 	uint32 extendedStyle;
 	uint32 showState;
-	UNICODE_STRING titleInfo;
+	RAIL_UNICODE_STRING titleInfo;
 	uint32 clientOffsetX;
 	uint32 clientOffsetY;
 	uint32 clientAreaWidth;
@@ -203,7 +203,7 @@ typedef struct _WINDOW_CACHED_ICON_ORDER WINDOW_CACHED_ICON_ORDER;
 struct _NOTIFY_ICON_STATE_ORDER
 {
 	uint32 version;
-	UNICODE_STRING toolTip;
+	RAIL_UNICODE_STRING toolTip;
 	NOTIFY_ICON_INFOTIP infoTip;
 	uint32 state;
 	ICON_INFO icon;

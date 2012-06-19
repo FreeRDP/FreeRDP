@@ -311,7 +311,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Receiving Authentication Token (%d)\n", credssp->negoToken.cbBuffer);
+		printf("Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
 		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
@@ -655,7 +655,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (credssp->PublicKey.cbBuffer + credssp->ContextSizes.cbMaxSignature != credssp->pubKeyAuth.cbBuffer)
 	{
-		printf("credssp_decrypt_public_key_echo: unexpected pubKeyAuth buffer size:%d\n", credssp->pubKeyAuth.cbBuffer);
+		printf("unexpected pubKeyAuth buffer size:%d\n", (int) credssp->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 

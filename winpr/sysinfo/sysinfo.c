@@ -63,11 +63,17 @@
 
 #ifndef _WIN32
 
+#include <unistd.h>
 #include <winpr/crt.h>
-#include <sys/unistd.h>
 
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD nSize)
 {
+	char hostname[256];
+	int hostname_length;
+
+	gethostname(hostname, sizeof(hostname));
+	hostname_length = strlen(hostname);
+
 	switch (NameType)
 	{
 		case ComputerNameNetBIOS:
@@ -79,8 +85,16 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD n
 		case ComputerNamePhysicalDnsDomain:
 		case ComputerNamePhysicalDnsFullyQualified:
 
-			if (gethostname(lpBuffer, *nSize) < 0)
+			if (*nSize <= hostname_length)
+			{
+				*nSize = hostname_length + 1;
 				return 0;
+			}
+
+			if (!lpBuffer)
+				return 0;
+
+			CopyMemory(lpBuffer, hostname, hostname_length + 1);
 
 			break;
 
