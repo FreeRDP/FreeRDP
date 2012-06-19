@@ -27,7 +27,7 @@
 #include <mach/mach.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
-#define winpr_sem_t semaphore_td
+#define winpr_sem_t semaphore_t
 #else
 #include <pthread.h>
 #include <semaphore.h>
