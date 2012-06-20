@@ -62,7 +62,6 @@ const char* error_code_names[] =
     "RAIL_EXEC_E_SESSION_LOCKED"
 };
 
-
 struct kkey g_keys[256] =
 {
     { 0x1e, 0 }, // a           0
@@ -533,7 +532,7 @@ struct kkey g_keys[256] =
 - (void) keyUp:(NSEvent *) event
 {
     int key;
-    
+ 
     if (!is_connected) {
         return;
     }
@@ -1870,6 +1869,7 @@ void cliprdr_send_supported_format_list(freerdp *inst)
     freerdp_channels_send_event(inst->context->channels, (RDP_EVENT*) event);
 }
 
+<<<<<<< HEAD
 /****************************************************************************************
  *                                                                                      *
  *                                                                                      *

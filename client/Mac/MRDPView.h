@@ -63,7 +63,7 @@ typedef int boolean;
     int                kdlmeta;
     int                kdrmeta;
     int                kdcapslock;
-    
+
 @public
     NSWindow           *ourMainWindow;
     NSPasteboard       *pasteboard_rd; // for reading from clipboard
