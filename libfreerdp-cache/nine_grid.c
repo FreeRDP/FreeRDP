@@ -51,7 +51,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index)
 {
 	void* entry;
 
-	if (index > nine_grid->maxEntries)
+	if (index >= nine_grid->maxEntries)
 	{
 		printf("invalid NineGrid index: 0x%04X\n", index);
 		return NULL;
@@ -72,7 +72,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry)
 {
 	void* prevEntry;
 
-	if (index > nine_grid->maxEntries)
+	if (index >= nine_grid->maxEntries)
 	{
 		printf("invalid NineGrid index: 0x%04X\n", index);
 		return;
