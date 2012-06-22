@@ -17,11 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rdpdbg)
-add_subdirectory(rdpdr)
-add_subdirectory(rail)
-add_subdirectory(rdpsnd)
-add_subdirectory(skel)
+set(SKEL_SRCS
+	skel_main.c
+	skel_main.h
+)
 
+add_library(skel ${SKEL_SRCS})
+set_target_properties(skel PROPERTIES PREFIX "")
+
+target_link_libraries(skel freerdp-utils)
+
+install(TARGETS skel DESTINATION ${FREERDP_PLUGIN_PATH})
