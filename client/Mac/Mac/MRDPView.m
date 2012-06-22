@@ -18,14 +18,17 @@
  *  - all funcs same as above
  *  - PolygonSc seems to create a transparent rect
  *  - ensure mouse cursor changes are working ok after moving to NSTracking area
+ *  - when we move the window to a 2nd monitor, display stops working
  *  - RAIL: 
  *  -       
  *  -       
- *  -       tool tips to be correctly positioned
- *  -       dragging is slightly of
- *  -       resize after dragging not working
+ *  -       done - tool tips to be correctly positioned
+ *  -       done - dragging is slightly of
+ *  -       done - resize after dragging not working
  *  -       dragging app from macbook to monitor gives exec/access err
  *  -       unable to drag rect out of monitor boundaries
+ *  -       two finger scroll
+ *  -       moving scroll bar does a window resize instead of a scroll
  *  -       
  *  -       
  *  -        
@@ -266,7 +269,7 @@ struct kkey g_keys[256] =
     // setup a mouse tracking area
     NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
     
-    //[self addTrackingArea:trackingArea];
+    [self addTrackingArea:trackingArea];
 
     // windows in RemoteApp (RAIL) mode cannot have title bars
     NSArray * args = [[NSProcessInfo processInfo] arguments];
@@ -282,6 +285,8 @@ struct kkey g_keys[256] =
         [self addTrackingArea:trackingArea];
    
     mouseInClientArea = YES;
+
+    printScreenInfo();
 }
 
 /** *********************************************************************
@@ -486,7 +491,9 @@ struct kkey g_keys[256] =
     int x = (int) loc.x;
     int y = (int) loc.y;
     
-    // RAIL_TODO delete this if not reqd
+// RAIL_TODO delete this if not reqd
+#if 0
+    
     if ((isRemoteApp) && (isMoveSizeInProgress)) {
         if (saveInitialDragLoc) {
             saveInitialDragLoc = NO;
@@ -503,7 +510,8 @@ struct kkey g_keys[256] =
         r.origin.y += newY;
         [[g_mrdpview window] setFrame:r display:YES];
     }
-
+#endif
+    
     y = height - y;
 
     // send mouse motion event to RDP server
@@ -936,35 +944,6 @@ struct kkey g_keys[256] =
 // RAIL_TODO is this func required
 - (void) windowDidResize:(NSNotification *) notification
 {
-    RAIL_WINDOW_MOVE_ORDER windowMove;
-
-    printf("RAIL_TODO: MRDPView: windowDidResize() - not yet implemented\n");
-
-    return;
-    
-    // window resize valid only in RemoteApp mode
-    if (!g_mrdpview->isRemoteApp)
-        return;
-    
-    // window has resized, let server know
-
-    NSRect r = [[g_mrdpview window] frame];
-    printf("----- LK_TODO: MRDPView:windowDidResize (%d,%d %dx%d)\n", 
-           (int) r.origin.x, (int) r.origin.y, 
-           (int) r.size.width, (int) r.size.height);
-    
-
-    windowMove.windowId = [currentWindow windowID];
-    
-    windowMove.left = (uint16) r.origin.x;                           // x-cordinate of top left corner
-    windowMove.right = (uint16) (windowMove.left + r.size.width);    // x-cordinate of bottom right corner
-    windowMove.top = (uint16) r.origin.y;                            // y-cordinate of top left corner
-    windowMove.bottom = (uint16) (windowMove.top + r.size.height);   // y-cordinate of bottom right corner
-
-    printf("----- LK_TODO: MRDPView:windowDidResize windowID=%d left=%d top=%d right=%d bottom=x%d width=%f height=%f\n", 
-           [currentWindow windowID], windowMove.left, windowMove.top, windowMove.right, windowMove.bottom, r.size.width, r.size.height);
-
-    //mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
 }
 
 /************************************************************************
@@ -1122,7 +1101,7 @@ boolean mac_pre_connect(freerdp *inst)
     g_mrdpview->argv[i++] = cptr;
     
     cptr = (char *)malloc(80);
-    strcpy(cptr, "lk");
+    strcpy(cptr, "jay");
     g_mrdpview->argv[i++] = cptr;
 
     cptr = (char *)malloc(80);
@@ -1130,7 +1109,7 @@ boolean mac_pre_connect(freerdp *inst)
     g_mrdpview->argv[i++] = cptr;
 
     cptr = (char *)malloc(80);
-    strcpy(cptr, "abc@@@123");
+    strcpy(cptr, "tucker");
     g_mrdpview->argv[i++] = cptr;
  
 #if 1
@@ -1162,7 +1141,11 @@ boolean mac_pre_connect(freerdp *inst)
 #endif
     
     cptr = (char *)malloc(80);
-    strcpy(cptr, "192.168.1.69:45990");
+#if 0
+    strcpy(cptr, "mousey.homeip.net:45990");
+#else
+    strcpy(cptr, "192.168.168.227");
+#endif
     g_mrdpview->argv[i++] = cptr;
     
     g_mrdpview->argc = i;
@@ -1937,6 +1920,9 @@ void mac_rail_CreateWindow(rdpRail *rail, rdpWindow *window)
     if ((window->extendedStyle & WS_EX_TOPMOST) || (window->extendedStyle & WS_EX_TOOLWINDOW)) {
         [g_mrdpview->currentWindow view]->skipMoveWindowOnce = TRUE;
         moveWindow = YES;
+
+        // convert from windows to Mac cords
+        window->windowOffsetY = g_mrdpview->height - window->windowOffsetY - window->windowHeight;
     }
     else if (window->style & WS_POPUP) {
         centerWindow = YES;
@@ -2171,39 +2157,38 @@ void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, RDP_EVENT* 
 void mac_process_rail_server_localmovesize_event(freerdp *inst, RDP_EVENT *event)
 {
     RAIL_LOCALMOVESIZE_ORDER * moveSize = (RAIL_LOCALMOVESIZE_ORDER *) event->user_data;
-    RAIL_WINDOW_MOVE_ORDER windowMove;
  
     switch (moveSize->moveSizeType) {
         case RAIL_WMSZ_LEFT:
-            printf("!!!! RAIL_WMSZ_LEFT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_LEFT;
             break;
             
         case RAIL_WMSZ_RIGHT:
-            printf("!!!! RAIL_WMSZ_RIGHT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_RIGHT;
             break;
             
         case RAIL_WMSZ_TOP:
-            printf("!!!! RAIL_WMSZ_TOP\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_TOP;
             break;
             
         case RAIL_WMSZ_TOPLEFT:
-            printf("!!!! RAIL_WMSZ_TOPLEFT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_TOPLEFT;
             break;
             
         case RAIL_WMSZ_TOPRIGHT:
-            printf("!!!! RAIL_WMSZ_TOPRIGHT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_TOPRIGHT;
             break;
             
         case RAIL_WMSZ_BOTTOM:
-            printf("!!!! RAIL_WMSZ_BOTTOM\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_BOTTOM;
             break;
             
         case RAIL_WMSZ_BOTTOMLEFT:
-            printf("!!!! RAIL_WMSZ_BOTTOMLEFT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_BOTTOMLEFT;
             break;
             
         case RAIL_WMSZ_BOTTOMRIGHT:
-            printf("!!!! RAIL_WMSZ_BOTTOMRIGHT\n");
+            [g_mrdpview->currentWindow view]->localMoveType = RAIL_WMSZ_BOTTOMRIGHT;
             break;
             
         case RAIL_WMSZ_MOVE:
@@ -2220,13 +2205,12 @@ void mac_process_rail_server_localmovesize_event(freerdp *inst, RDP_EVENT *event
             [g_mrdpview->currentWindow view]->saveInitialDragLoc = NO;
 
             //NSRect rect = [[g_mrdpview->currentWindow view] frame];
-            NSRect rect = [[[g_mrdpview->currentWindow view] window] frame];
+            NSRect r = [[[g_mrdpview->currentWindow view] window] frame];
 
             // let RDP server know where this window is located
+            RAIL_WINDOW_MOVE_ORDER windowMove;
+            apple_to_windowMove(&r, &windowMove);
             mac_send_rail_client_event(inst->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
-
-            // the event we just sent will cause an extra MoveWindow() to be invoked which we need to ignore
-            [g_mrdpview->currentWindow view]->skipMoveWindowOnce = YES;
             
             break;
             
@@ -2309,6 +2293,22 @@ void apple_to_windowMove(NSRect * r, RAIL_WINDOW_MOVE_ORDER * windowMove)
     windowMove->top = (uint16) g_mrdpview->height - (r->origin.y + r->size.height);  // y-cord of top left corner
     windowMove->right = (uint16) (windowMove->left + r->size.width);                 // x-cord of bottom right corner
     windowMove->bottom = (uint16) (windowMove->top + r->size.height);                // y-cord of bottom right corner
+}
+
+void printScreenInfo()
+{
+
+    int count = [[NSScreen screens] count];
+
+    for (int i = 0; i< count; i++)
+    {
+        NSRect r = [[[NSScreen screens] objectAtIndex:i] frame];
+        
+        printf("screen %d: rect(%d,%d %dx%d)\n",
+               i, (int) r.origin.x, (int) r.origin.y,
+               (int) r.size.width, (int) r.size.height);
+    }
+    printf("\n");
 }
 
 @end

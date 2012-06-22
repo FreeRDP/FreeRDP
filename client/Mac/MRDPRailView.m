@@ -117,6 +117,7 @@ extern struct kkey g_keys[];
 - (void) drawRect:(NSRect)dirtyRect
 {
     [bmiRep drawInRect:dirtyRect fromRect:dirtyRect operation:NSCompositeCopy fraction:1.0 respectFlipped:NO hints:nil];
+    
     if (pixelData) {
         free(pixelData);
         pixelData = NULL;
@@ -152,6 +153,7 @@ extern struct kkey g_keys[];
     
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
+    
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     
@@ -173,7 +175,18 @@ extern struct kkey g_keys[];
     NSPoint loc = [event locationInWindow];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
+    int yPos = (int) (winFrame.size.height - loc.y);
+
     y = height - y;
+
+
+    if ((yPos >= 4) && (yPos <= 20))
+        titleBarClicked = YES;
+    else 
+        titleBarClicked = NO;
+    
+    savedDragLocation.x = loc.x;
+    savedDragLocation.y = loc.y;
     
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
@@ -191,8 +204,9 @@ extern struct kkey g_keys[];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON1, x, y);
+    titleBarClicked = NO;
 }
 
 /** *********************************************************************
@@ -291,8 +305,211 @@ extern struct kkey g_keys[];
  * called when mouse is moved with left button pressed
  * note: invocation order is: mouseDown, mouseDragged, mouseUp
  ***********************************************************************/
-
 - (void) mouseDragged:(NSEvent *)event
+{
+    [super mouseDragged:event];
+
+    NSRect winFrame = [[self window] frame];
+    NSPoint loc = [event locationInWindow];
+    int x = (int) loc.x;
+    int y = (int) loc.y;
+
+    if (titleBarClicked) {
+        // window is being dragged to a new location
+        int newX = x - savedDragLocation.x;
+        int newY = y - savedDragLocation.y;
+        
+        if ((newX == 0) && (newY == 0))
+            return;
+        
+        winFrame.origin.x += newX;
+        winFrame.origin.y += newY;
+
+        [[self window] setFrame:winFrame display:YES];
+        
+        return;
+    }
+
+    if (localMoveType == RAIL_WMSZ_LEFT) {
+        // left border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff == 0)
+            return;
+        
+        if (diff < 0) {
+            diff = abs(diff);
+            winFrame.origin.x -= diff;
+            winFrame.size.width += diff;
+        }
+        else {
+            winFrame.origin.x += diff;
+            winFrame.size.width -= diff;
+        }
+        
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+
+    if (localMoveType == RAIL_WMSZ_RIGHT) {
+        // right border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff == 0)
+            return;
+        
+        savedDragLocation.x = loc.x;
+        savedDragLocation.y = loc.y;
+        
+        winFrame.size.width += diff;
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+
+    if (localMoveType == RAIL_WMSZ_TOP) {
+        // top border resize taking place
+        int diff = (int) (loc.y - savedDragLocation.y);
+        if (diff == 0)
+            return;
+        
+        savedDragLocation.x = loc.x;
+        savedDragLocation.y = loc.y;
+        
+        winFrame.size.height += diff;
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+    
+    if (localMoveType == RAIL_WMSZ_BOTTOM) {
+        // bottom border resize taking place
+        int diff = (int) (loc.y - savedDragLocation.y);
+        if (diff == 0)
+            return;
+        
+        if (diff < 0) {
+            diff = abs(diff);
+            winFrame.origin.y -= diff;
+            winFrame.size.height += diff;
+        }
+        else {
+            winFrame.origin.y += diff;
+            winFrame.size.height -= diff;
+        }
+        
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+    
+    if (localMoveType == RAIL_WMSZ_TOPLEFT) {
+        // top left border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff != 0) {
+            if (diff < 0) {
+                diff = abs(diff);
+                winFrame.origin.x -= diff;
+                winFrame.size.width += diff;
+            }
+            else {
+                winFrame.origin.x += diff;
+                winFrame.size.width -= diff;
+            }
+        }
+
+        diff = (int) (loc.y - savedDragLocation.y);
+        if (diff != 0) {
+            savedDragLocation.y = loc.y;
+            winFrame.size.height += diff;
+        }
+        
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+
+    if (localMoveType == RAIL_WMSZ_TOPRIGHT) {
+        // top right border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff != 0) {
+            winFrame.size.width += diff;
+        }
+        
+        diff = (int) (loc.y - savedDragLocation.y);
+        if (diff != 0) {
+            winFrame.size.height += diff;
+        }
+
+        savedDragLocation.x = loc.x;
+        savedDragLocation.y = loc.y;
+
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+    
+    if (localMoveType == RAIL_WMSZ_BOTTOMLEFT) {
+        // bottom left border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff != 0) {
+            if (diff < 0) {
+                diff = abs(diff);
+                winFrame.origin.x -= diff;
+                winFrame.size.width += diff;
+            }
+            else {
+                winFrame.origin.x += diff;
+                winFrame.size.width -= diff;
+            }
+        }
+        
+        diff = (int) (loc.y - savedDragLocation.y);
+        if (diff != 0) {
+            if (diff < 0) {
+                diff = abs(diff);
+                winFrame.origin.y -= diff;
+                winFrame.size.height += diff;
+            }
+            else {
+                winFrame.origin.y += diff;
+                winFrame.size.height -= diff;
+            }
+        }
+        
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+    
+    if (localMoveType == RAIL_WMSZ_BOTTOMRIGHT) {
+        // bottom right border resize taking place
+        int diff = (int) (loc.x - savedDragLocation.x);
+        if (diff != 0) {
+            savedDragLocation.x = loc.x;
+            //savedDragLocation.y = loc.y;
+            winFrame.size.width += diff;
+        }
+        
+        diff = (int) (loc.y - savedDragLocation.y);
+        if (diff != 0) {
+            if (diff < 0) {
+                diff = abs(diff);
+                winFrame.origin.y -= diff;
+                winFrame.size.height += diff;
+            }
+            else {
+                winFrame.origin.y += diff;
+                winFrame.size.height -= diff;
+            }
+        }
+        
+        [[self window] setFrame:winFrame display:YES];
+        return;
+    }
+    
+    x = (int) (winFrame.origin.x + loc.x);
+    y = (int) (winFrame.origin.y + loc.y);
+    y = height - y;
+    
+    // send mouse motion event to RDP server
+    rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
+}
+
+// RAIL_TODO delete this
+- (void) __mouseDragged:(NSEvent *)event
 {
     [super mouseDragged:event];
 

@@ -13,6 +13,7 @@
     NSPoint             savedDragLocation;
     char *              pixelData;
     boolean             mouseInClientArea;
+    boolean             titleBarClicked;
     int                 width;
     int                 height;
     int                 savedWindowId;
@@ -32,6 +33,7 @@
     boolean             isMoveSizeInProgress;    
     boolean             saveInitialDragLoc;
     boolean             skipMoveWindowOnce;
+    int                 localMoveType;
 }
 
 - (void) updateDisplay;
