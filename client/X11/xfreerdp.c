@@ -246,6 +246,14 @@ void xf_hw_desktop_resize(rdpContext* context)
 				xfi->drawing = xfi->primary;
 		}
 	}
+	else
+	{
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+		XSetForeground(xfi->display, xfi->gc, 0);
+		XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
+			0, 0, xfi->width, xfi->height);
+	}
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
