@@ -32,7 +32,7 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
 {
 	void* entry;
 
-	if (index > palette_cache->maxEntries)
+	if (index >= palette_cache->maxEntries)
 	{
 		printf("invalid color table index: 0x%04X\n", index);
 		return NULL;
@@ -51,7 +51,7 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
 
 void palette_cache_put(rdpPaletteCache* palette_cache, uint32 index, void* entry)
 {
-	if (index > palette_cache->maxEntries)
+	if (index >= palette_cache->maxEntries)
 	{
 		printf("invalid color table index: 0x%04X\n", index);
 		return;
