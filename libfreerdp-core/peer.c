@@ -116,6 +116,8 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 					return false;
 			}
 
+			client->activated = true;
+
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:

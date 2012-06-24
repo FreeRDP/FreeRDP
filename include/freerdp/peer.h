@@ -70,6 +70,7 @@ struct rdp_freerdp_peer
 
 	uint32 ack_frame_id;
 	boolean local;
+	boolean activated;
 };
 
 FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);
