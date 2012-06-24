@@ -17,8 +17,6 @@ extern struct kkey g_keys[];
 - (void) updateDisplay
 {
     boolean   moveWindow = NO;
-    int       i;
-    NSRect    drawRect;
     NSRect    srcRectOuter;
     NSRect    destRectOuter;
     
@@ -37,7 +35,7 @@ extern struct kkey g_keys[];
     
     srcRectOuter = NSMakeRect(0, 0, self->width, self->height);
     destRectOuter = [[self window] frame];
-    
+
     // cannot be bigger than our current screen size
     NSRect screenSize = [[NSScreen mainScreen] frame];
     if (destRectOuter.size.width > screenSize.size.width) {
@@ -45,22 +43,13 @@ extern struct kkey g_keys[];
         moveWindow = YES;
     }
     
-    // RAIL_TODO do  not hardcode to 22
     if (destRectOuter.size.height > screenSize.size.height) {
         destRectOuter.size.height = screenSize.size.height;
         moveWindow = YES;        
     }
     
-    // cannot have negative cords
-    if (destRectOuter.origin.x < 0) {
-        destRectOuter.origin.x = 0;
-        moveWindow = YES;    
-    }
-    
-    if (destRectOuter.origin.y < 0) {
-        destRectOuter.origin.y = 0;
-        moveWindow = YES;
-    }
+    if (destRectOuter.origin.x + destRectOuter.size.width > width)
+        destRectOuter.size.width = width - destRectOuter.origin.x;
     
     [self setupBmiRep:destRectOuter.size.width :destRectOuter.size.height];
 
@@ -72,41 +61,16 @@ extern struct kkey g_keys[];
         //skipMoveWindowOnce = TRUE;
         //mac_send_rail_client_event(g_mrdpRailView->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &newWndLoc);
     }
-        
-    //printf("MRDPRailView : updateDisplay : drawing %d rectangles\n", gdi->primary->hdc->hwnd->ninvalid);
     
-    // if src and dest rect are not the same size, copy the entire
-    // rectangle in one go instead of in many small rectangles
+    destRectOuter.origin.y = height - destRectOuter.origin.y - destRectOuter.size.height;
+    rail_convert_color_space(pixelData, (char *) gdi->primary_buffer, 
+                        &destRectOuter, self->width, self->height);
     
-    //if (destRectOuter.size.width != self->width) {
-    if (1) {
-        destRectOuter.origin.y = height - destRectOuter.origin.y - destRectOuter.size.height;
-        rail_convert_color_space1(pixelData, (char *) gdi->primary_buffer, 
-                            &destRectOuter, self->width, self->height);
-        
-        if (moveWindow) 
-            [self setNeedsDisplayInRect:destRectOuter];
-        else
-            [self setNeedsDisplayInRect:[self frame]];
+    if (moveWindow) 
+        [self setNeedsDisplayInRect:destRectOuter];
+    else
+        [self setNeedsDisplayInRect:[self frame]];
 
-        gdi->primary->hdc->hwnd->ninvalid = 0;
-        
-        return;
-    }
-    
-    for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
-    {
-        drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
-        drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
-        drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
-        drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
-        
-        rail_convert_color_space(pixelData, (char *) gdi->primary_buffer, 
-                                 &drawRect, &destRectOuter, 
-                                 &drawRect, &srcRectOuter);
-        
-        [self setNeedsDisplayInRect:drawRect];
-    }
     gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
@@ -282,22 +246,23 @@ extern struct kkey g_keys[];
     uint16 flags;
     
     [super scrollWheel:event];
-
+    
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     flags = PTR_FLAGS_WHEEL;
-    if ([event deltaY] < 0) {
+    if ([event scrollingDeltaY] < 0) {
         flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
     }
     else {
         flags |= 0x0078;
     }
-    x += (int) [event deltaX];
-    y += (int) [event deltaY];
+    x += (int) [event scrollingDeltaX];
+    y += (int) [event scrollingDeltaY];
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, flags, x, y);
 }
 
@@ -308,7 +273,7 @@ extern struct kkey g_keys[];
 - (void) mouseDragged:(NSEvent *)event
 {
     [super mouseDragged:event];
-
+    
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
     int x = (int) loc.x;
@@ -324,9 +289,8 @@ extern struct kkey g_keys[];
         
         winFrame.origin.x += newX;
         winFrame.origin.y += newY;
-
-        [[self window] setFrame:winFrame display:YES];
         
+        [[self window] setFrame:winFrame display:YES];
         return;
     }
 
@@ -500,43 +464,6 @@ extern struct kkey g_keys[];
         return;
     }
     
-    x = (int) (winFrame.origin.x + loc.x);
-    y = (int) (winFrame.origin.y + loc.y);
-    y = height - y;
-    
-    // send mouse motion event to RDP server
-    rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
-}
-
-// RAIL_TODO delete this
-- (void) __mouseDragged:(NSEvent *)event
-{
-    [super mouseDragged:event];
-
-    NSPoint loc = [event locationInWindow];
-    int x = (int) loc.x;
-    int y = (int) loc.y;
-    
-    if (isMoveSizeInProgress) {
-        if (saveInitialDragLoc) {
-            saveInitialDragLoc = NO;
-            savedDragLocation.x = x;
-            savedDragLocation.y = y;
-            return;
-        }
-        
-        int newX = x - savedDragLocation.x;
-        int newY = y - savedDragLocation.y;
-        
-        NSRect r = [[self window] frame];
-        r.origin.x += newX;
-        r.origin.y += newY;
-        [[self window] setFrame:r display:YES];
-        
-        return;
-    }
-    
-    NSRect winFrame = [[self window] frame];
     x = (int) (winFrame.origin.x + loc.x);
     y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
@@ -738,71 +665,7 @@ void rail_cvt_from_rect(char *dest, char *src, NSRect destRect, int destWidth, i
 /** *********************************************************************
  * color space conversion used specifically in RAIL
  ***********************************************************************/
-
-int rail_convert_color_space(char * destBuf, char * srcBuf, 
-                             NSRect * destRect, NSRect * destRectOuter, 
-                             NSRect * srcRect, NSRect * srcRectOuter)
-{
-    int   i;
-    int   j;
-    int   numRows;
-    int   srcX;
-    int   srcY;
-    int   destX;
-    int   destY;
-    int   pixelsPerRow;
-    int   pixel;
-    int   pixel1;
-    int   pixel2;
-    int * src32;
-    int * dest32;
-    
-    int destWidth  = destRectOuter->size.width;
-    int destHeight = destRectOuter->size.height;
-    int srcWidth   = srcRectOuter->size.width;
-    int srcHeight  = srcRectOuter->size.height;
-    
-    if ((!destBuf) || (!srcBuf)) {
-        return 1;
-    }
-    
-    if ((destRect->size.width != srcRect->size.width) || (destRect->size.height != srcRect->size.height)) {
-        printf("##### RAIL_TODO: rail_convert_color_space : destRect & srcRect dimensions don't match\n");
-        return 1;
-    }
-    
-    numRows = srcRect->size.height;
-    srcX  = srcRect->origin.x;
-    srcY  = srcRect->origin.y;
-    destX = destRect->origin.x;
-    destY = destRect->origin.y;
-    pixelsPerRow = destRect->size.width;
-
-    for (i = 0; i < numRows; i++)
-    {
-        src32  = (int *) (srcBuf  + ((srcY  + i) * srcWidth  + srcX)  * 4);
-        dest32 = (int *) (destBuf + ((destY + i) * destWidth + destX) * 4);
-        
-        for (j = 0; j < pixelsPerRow; j++)
-        {
-            pixel = *src32;
-            pixel1 = (pixel & 0x00ff0000) >> 16;
-            pixel2 = (pixel & 0x000000ff) << 16;
-            pixel = (pixel & 0xff00ff00) | pixel1 | pixel2;
-            
-            *dest32 = pixel;
-            src32++;
-            dest32++;
-        }
-    }
-
-    destRect->origin.y = destHeight - destRect->origin.y - destRect->size.height;
-
-    return 0;
-} 
-
-// RAIL_TODO rename this func
-void rail_convert_color_space1(char *destBuf, char * srcBuf, 
+void rail_convert_color_space(char *destBuf, char * srcBuf, 
                                NSRect * destRect, int width, int height)
 {
     int     i;
@@ -825,13 +688,14 @@ void rail_convert_color_space1(char *destBuf, char * srcBuf,
     if ((!destBuf) || (!srcBuf)) {
         return;
     }
-    
-    numRows = destHeight;
+
+    numRows = (destRect->origin.y + destHeight > height) ? height - destRect->origin.y : destHeight;
+    pixelsPerRow = destWidth;
+
     srcX  = destRect->origin.x;
     srcY  = destRect->origin.y;
     destX = 0;
     destY = 0;
-    pixelsPerRow = destWidth;
     
     for (i = 0; i < numRows; i++)
     {
