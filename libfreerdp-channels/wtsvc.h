@@ -30,8 +30,14 @@
 enum
 {
 	RDP_PEER_CHANNEL_TYPE_SVC = 0,
-	RDP_PEER_CHANNEL_TYPE_DVC = 1,
-	RDP_PEER_CHANNEL_TYPE_DVC_SUB = 2
+	RDP_PEER_CHANNEL_TYPE_DVC = 1
+};
+
+enum
+{
+	DRDYNVC_STATE_NONE = 0,
+	DRDYNVC_STATE_INITIALIZED = 1,
+	DRDYNVC_STATE_READY = 2
 };
 
 typedef struct rdp_peer_channel
@@ -56,6 +62,7 @@ struct WTSVirtualChannelManager
 	freerdp_mutex mutex;
 
 	rdpPeerChannel* drdynvc_channel;
+	uint8 drdynvc_state;
 };
 
 #endif /* __WTSVC_H */

@@ -26,6 +26,12 @@
 
 #include "wtsvc.h"
 
+#define CREATE_REQUEST_PDU     0x01
+#define DATA_FIRST_PDU         0x02
+#define DATA_PDU               0x03
+#define CLOSE_REQUEST_PDU      0x04
+#define CAPABILITY_REQUEST_PDU 0x05
+
 typedef struct wts_data_item
 {
 	uint16 channel_id;
@@ -37,6 +43,51 @@ static void wts_data_item_free(wts_data_item* item)
 {
 	xfree(item->buffer);
 	xfree(item);
+}
+
+static void wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, uint32 length)
+{
+	uint16 Version;
+
+	if (length < 3)
+		return;
+	stream_seek_uint8(channel->receive_data); /* Pad (1 byte) */
+	stream_read_uint16(channel->receive_data, Version);
+
+	printf("version: %d\n", Version);
+	channel->vcm->drdynvc_state = DRDYNVC_STATE_READY;
+}
+
+static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
+{
+	uint32 length;
+	int value;
+	int Cmd;
+	int Sp;
+	int cbChId;
+
+	length = stream_get_pos(channel->receive_data);
+	if (length < 1)
+		return;
+	stream_set_pos(channel->receive_data, 0);
+	stream_read_uint8(channel->receive_data, value);
+	length--;
+	Cmd = (value & 0xf0) >> 4;
+	Sp = (value & 0x0c) >> 2;
+	cbChId = (value & 0x03) >> 0;
+
+	if (Cmd == CAPABILITY_REQUEST_PDU)
+	{
+		wts_read_drdynvc_capabilities_response(channel, length);
+	}
+	else if (channel->vcm->drdynvc_state == DRDYNVC_STATE_READY)
+	{
+		/* TODO: process other drdynvc commands */
+	}
+	else
+	{
+		printf("wts_read_drdynvc_pdu: received Cmd %d but channel is not ready.\n", Cmd);
+	}
 }
 
 static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8* data, int size, int flags, int total_size)
@@ -57,9 +108,9 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8*
 		{
 			printf("WTSProcessChannelData: read error\n");
 		}
-		if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC)
+		if (channel == channel->vcm->drdynvc_channel)
 		{
-			/* TODO: Receive DVC channel data */
+			wts_read_drdynvc_pdu(channel);
 		}
 		else
 		{
@@ -153,6 +204,22 @@ boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vc
 {
 	boolean result = true;
 	wts_data_item* item;
+	rdpPeerChannel* channel;
+	uint32 dynvc_caps;
+
+	if (vcm->drdynvc_state == DRDYNVC_STATE_NONE && vcm->client->activated)
+	{
+		/* Initialize drdynvc channel once and only once. */
+		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
+
+		channel = WTSVirtualChannelOpenEx(vcm, "drdynvc", 0);
+		if (channel)
+		{
+			vcm->drdynvc_channel = channel;
+			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
+			WTSVirtualChannelWrite(channel, (uint8*) &dynvc_caps, sizeof(dynvc_caps), NULL);
+		}
+	}
 
 	wait_obj_clear(vcm->send_event);
 
@@ -180,55 +247,49 @@ void* WTSVirtualChannelOpenEx(
 	int i;
 	int len;
 	rdpPeerChannel* channel;
-	const char* channel_name;
 	freerdp_peer* client = vcm->client;
 
-	channel_name = ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0 ? "drdynvc" : pVirtualName);
-
-	len = strlen(channel_name);
-	if (len > 8)
-		return NULL;
-
-	for (i = 0; i < client->settings->num_channels; i++)
+	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
 	{
-		if (client->settings->channels[i].joined &&
-			strncmp(client->settings->channels[i].name, channel_name, len) == 0)
-		{
-			break;
-		}
+		channel = vcm->drdynvc_channel;
+
+		/* TODO: do DVC channel initialization here using pVirtualName */
+		/* A sub-channel should be created and returned, instead of using the main drdynvc channel */
+		/* Set channel->index to num_channels */
 	}
-	if (i >= client->settings->num_channels)
-		return NULL;
-
-	channel = (rdpPeerChannel*) client->settings->channels[i].handle;
-	if (channel == NULL)
+	else
 	{
-		channel = xnew(rdpPeerChannel);
-		channel->vcm = vcm;
-		channel->client = client;
-		channel->channel_id = client->settings->channels[i].channel_id;
-		channel->index = i;
-		channel->receive_data = stream_new(client->settings->vc_chunk_size);
-		if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
+		len = strlen(pVirtualName);
+		if (len > 8)
+			return NULL;
+
+		for (i = 0; i < client->settings->num_channels; i++)
 		{
-			channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
-			vcm->drdynvc_channel = channel;
+			if (client->settings->channels[i].joined &&
+				strncmp(client->settings->channels[i].name, pVirtualName, len) == 0)
+			{
+				break;
+			}
 		}
-		else
+		if (i >= client->settings->num_channels)
+			return NULL;
+
+		channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+		if (channel == NULL)
 		{
+			channel = xnew(rdpPeerChannel);
+			channel->vcm = vcm;
+			channel->client = client;
+			channel->channel_id = client->settings->channels[i].channel_id;
+			channel->index = i;
+			channel->receive_data = stream_new(client->settings->vc_chunk_size);
 			channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
 			channel->receive_event = wait_obj_new();
 			channel->receive_queue = list_new();
 			channel->mutex = freerdp_mutex_new();
-		}
 
-		client->settings->channels[i].handle = channel;
-	}
-	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC)
-	{
-		/* TODO: do DVC channel initialization here using pVirtualName */
-		/* A sub-channel should be created and returned, instead of using the main drdynvc channel */
-		/* Set channel->index to num_channels */
+			client->settings->channels[i].handle = channel;
+		}
 	}
 
 	return channel;
