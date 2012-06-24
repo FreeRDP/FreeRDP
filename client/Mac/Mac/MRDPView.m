@@ -12,22 +12,6 @@
  *  + audio redirection is delayed considerably
  *  + caps lock key needs to be sent in func flagsChanged()
  *  + libfreerdp-utils.1.0.dylib needs to be installed to /usr/local/lib
- *
- *  - MRDPView implementation is incomplete
- *  - all variables should have consistent nameing scheme - camel case
- *  - all funcs same as above
- *  - PolygonSc seems to create a transparent rect
- *  - ensure mouse cursor changes are working ok after moving to NSTracking area
- *  - when we move the window to a 2nd monitor, display stops working
- *  - RAIL: 
- *  -       
- *  -       dragging app from macbook to monitor gives exec/access err
- *  -       unable to drag rect out of monitor boundaries
- *  -       two finger scroll
- *  -       done - moving scroll bar does a window resize instead of a scroll
- *  -       
- *  -       
- *  -        
  */
  
 #import "MRDPView.h"
@@ -1020,7 +1004,7 @@ boolean mac_pre_connect(freerdp *inst)
     g_mrdpview->argv[i++] = cptr;
 
     cptr = (char *)malloc(80);
-    strcpy(cptr, "abc@@@123");
+    strcpy(cptr, "lk");
     g_mrdpview->argv[i++] = cptr;
  
 #if 1
@@ -1052,11 +1036,8 @@ boolean mac_pre_connect(freerdp *inst)
 #endif
     
     cptr = (char *)malloc(80);
-#if 1
-    strcpy(cptr, "mousey.homeip.net:45990");
-#else
-    strcpy(cptr, "192.168.168.227");
-#endif
+    strcpy(cptr, "192.168.1.69:45990");
+
     g_mrdpview->argv[i++] = cptr;
     
     g_mrdpview->argc = i;
