@@ -56,6 +56,7 @@ static void tls_free_certificate(CryptoCert cert)
 boolean tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
+	long options = 0;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
@@ -66,15 +67,34 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	/*
-	 * This is necessary, because the Microsoft TLS implementation is not perfect.
-	 * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
-	 * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
-	 * As the size of the encrypted payload may give hints about its contents,
-	 * block padding is normally used, but the Microsoft TLS implementation
-	 * won't recognize it and will disconnect you after sending a TLS alert.
+	/**
+	 * SSL_OP_NO_COMPRESSION:
+	 *
+	 * The Microsoft RDP server does not advertise support
+	 * for TLS compression, but alternative servers may support it.
+	 * This was observed between early versions of the FreeRDP server
+	 * and the FreeRDP client, and caused major performance issues,
+	 * which is why we're disabling it.
 	 */
-	SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
+	options |= SSL_OP_NO_COMPRESSION;
+
+	/**
+	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
+	 *
+	 * The Microsoft RDP server does *not* support TLS padding.
+	 * It absolutely needs to be disabled otherwise it won't work.
+	 */
+	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
+
+	/**
+	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
+	 *
+	 * Just like TLS padding, the Microsoft RDP server does not
+	 * support empty fragments. This needs to be disabled.
+	 */
+	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	SSL_CTX_set_options(tls->ctx, options);
 
 	tls->ssl = SSL_new(tls->ctx);
 
@@ -131,6 +151,7 @@ boolean tls_connect(rdpTls* tls)
 boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 {
 	CryptoCert cert;
+	long options = 0;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(SSLv23_server_method());
@@ -142,10 +163,41 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	}
 
 	/*
+	 * SSL_OP_NO_SSLv2:
+	 *
 	 * We only want SSLv3 and TLSv1, so disable SSLv2.
 	 * SSLv3 is used by, eg. Microsoft RDC for Mac OS X.
 	 */
-	SSL_CTX_set_options(tls->ctx, SSL_OP_NO_SSLv2);
+	options |= SSL_OP_NO_SSLv2;
+
+	/**
+	 * SSL_OP_NO_COMPRESSION:
+	 *
+	 * The Microsoft RDP server does not advertise support
+	 * for TLS compression, but alternative servers may support it.
+	 * This was observed between early versions of the FreeRDP server
+	 * and the FreeRDP client, and caused major performance issues,
+	 * which is why we're disabling it.
+	 */
+	options |= SSL_OP_NO_COMPRESSION;
+
+	/**
+	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
+	 *
+	 * The Microsoft RDP server does *not* support TLS padding.
+	 * It absolutely needs to be disabled otherwise it won't work.
+	 */
+	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
+
+	/**
+	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
+	 *
+	 * Just like TLS padding, the Microsoft RDP server does not
+	 * support empty fragments. This needs to be disabled.
+	 */
+	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	SSL_CTX_set_options(tls->ctx, options);
 
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
