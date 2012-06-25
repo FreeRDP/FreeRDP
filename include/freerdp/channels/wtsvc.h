@@ -61,7 +61,8 @@ FREERDP_API boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChanne
  * The original MS API has 'DWORD SessionId' as the first argument, while we
  * use our WTSVirtualChannelManager object instead.
  *
- * This functions should be called only from the main thread.
+ * Static virtual channels must be opened from the main thread. Dynamic virtual channels
+ * can be opened from any thread.
  */
 FREERDP_API void* WTSVirtualChannelOpenEx(
 	/* __in */ WTSVirtualChannelManager* vcm,

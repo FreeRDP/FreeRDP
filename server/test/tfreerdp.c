@@ -60,6 +60,7 @@ struct test_peer_context
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
 	freerdp_thread* debug_channel_thread;
+	void* audin_channel;
 	uint32 frame_id;
 };
 typedef struct test_peer_context testPeerContext;
@@ -560,6 +561,18 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
 	{
 		client->Close(client);
+	}
+	else if ((flags & 0x4000) && code == 0x13) /* 'r' key */
+	{
+		if (context->audin_channel)
+		{
+			WTSVirtualChannelClose(context->audin_channel);
+			context->audin_channel = NULL;
+		}
+		else
+		{
+			context->audin_channel = WTSVirtualChannelOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
+		}
 	}
 }
 
