@@ -42,7 +42,8 @@ typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 typedef enum _WTS_VIRTUAL_CLASS
 {
 	WTSVirtualClientData,
-	WTSVirtualFileHandle 
+	WTSVirtualFileHandle,
+	WTSVirtualChannelReady
 } WTS_VIRTUAL_CLASS;
 
 /**

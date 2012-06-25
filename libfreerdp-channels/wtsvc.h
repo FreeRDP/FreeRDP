@@ -70,6 +70,7 @@ struct rdp_peer_channel
 	freerdp_mutex mutex;
 
 	uint8 dvc_open_state;
+	uint32 dvc_total_length;
 };
 
 struct WTSVirtualChannelManager
