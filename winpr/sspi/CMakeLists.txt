@@ -61,6 +61,7 @@ set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVE
 
 if (NOT WIN32)
 	target_link_libraries(winpr-sspi winpr-crt)
+	target_link_libraries(winpr-sspi winpr-sysinfo)
 endif()
 
 target_link_libraries(winpr-sspi winpr-utils)

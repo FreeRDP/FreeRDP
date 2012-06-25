@@ -27,6 +27,7 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -37,18 +38,42 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
+	DWORD nSize = 0;
+
+	if (!Workstation)
+	{
+		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+		Workstation = malloc(nSize);
+		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
+	}
+
 	context->WorkstationLength = strlen(Workstation) * 2;
 	context->Workstation = (UINT16*) malloc(context->WorkstationLength);
 	MultiByteToWideChar(CP_ACP, 0, Workstation, strlen(Workstation),
 			(LPWSTR) context->Workstation, context->WorkstationLength / 2);
+
+	if (nSize > 0)
+		free(Workstation);
 }
 
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
+	DWORD nSize = 0;
+
+	if (!TargetName)
+	{
+		GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
+		TargetName = malloc(nSize);
+		GetComputerNameExA(ComputerNameDnsHostname, TargetName, &nSize);
+	}
+
 	context->TargetName.cbBuffer = strlen(TargetName) * 2;
 	context->TargetName.pvBuffer = (void*) malloc(context->TargetName.cbBuffer);
 	MultiByteToWideChar(CP_ACP, 0, TargetName, strlen(TargetName),
 			(LPWSTR) context->TargetName.pvBuffer, context->TargetName.cbBuffer / 2);
+
+	if (nSize > 0)
+		free(TargetName);
 }
 
 NTLM_CONTEXT* ntlm_ContextNew()
@@ -142,7 +167,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		if (identity != NULL)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -154,7 +181,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		if (identity != NULL)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -232,7 +261,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
-		ntlm_SetContextTargetName(context, "FreeRDP");
+		ntlm_SetContextTargetName(context, NULL);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
@@ -344,7 +373,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
-		ntlm_SetContextWorkstation(context, "WORKSTATION");
+		ntlm_SetContextWorkstation(context, NULL);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);

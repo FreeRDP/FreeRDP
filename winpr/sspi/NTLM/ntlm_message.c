@@ -23,6 +23,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include "ntlm_compute.h"
 
@@ -118,11 +119,15 @@ static const char* const NTLM_NEGOTIATE_STRINGS[] =
 
 void ntlm_output_version(PStream s)
 {
-	/* Version Info for Windows 7 SP1 */
+	OSVERSIONINFOA osVersionInfo;
 
-	StreamWrite_UINT8(s, WINDOWS_MAJOR_VERSION_6); /* ProductMajorVersion (1 byte) */
-	StreamWrite_UINT8(s, WINDOWS_MINOR_VERSION_1); /* ProductMinorVersion (1 byte) */
-	StreamWrite_UINT16(s, 7601); /* ProductBuild (2 bytes) */
+	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+	GetVersionExA(&osVersionInfo);
+
+	StreamWrite_UINT8(s, osVersionInfo.dwMajorVersion); /* ProductMajorVersion (1 byte) */
+	StreamWrite_UINT8(s, osVersionInfo.dwMinorVersion); /* ProductMinorVersion (1 byte) */
+	StreamWrite_UINT16(s, osVersionInfo.dwBuildNumber); /* ProductBuild (2 bytes) */
 	StreamZero(s, 3); /* Reserved (3 bytes) */
 	StreamWrite_UINT8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
 }

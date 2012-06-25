@@ -23,13 +23,13 @@
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
-void rail_unicode_string_alloc(UNICODE_STRING* unicode_string, uint16 cbString)
+void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString)
 {
 	unicode_string->length = cbString;
 	unicode_string->string = xzalloc(cbString);
 }
 
-void rail_unicode_string_free(UNICODE_STRING* unicode_string)
+void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 {
 	unicode_string->length = 0;
 
@@ -37,7 +37,7 @@ void rail_unicode_string_free(UNICODE_STRING* unicode_string)
 		xfree(unicode_string->string);
 }
 
-void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
+void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	stream_read_uint16(s, unicode_string->length); /* cbString (2 bytes) */
 
@@ -49,14 +49,14 @@ void rail_read_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
 	stream_read(s, unicode_string->string, unicode_string->length);
 }
 
-void rail_write_unicode_string(STREAM* s, UNICODE_STRING* unicode_string)
+void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	stream_check_size(s, 2 + unicode_string->length);
 	stream_write_uint16(s, unicode_string->length); /* cbString (2 bytes) */
 	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
-void rail_write_unicode_string_value(STREAM* s, UNICODE_STRING* unicode_string)
+void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	if (unicode_string->length > 0)
 	{

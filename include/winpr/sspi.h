@@ -26,6 +26,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
+#include <winpr/security.h>
 
 #ifdef _WIN32
 
