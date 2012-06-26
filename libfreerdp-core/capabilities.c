@@ -1061,7 +1061,7 @@ void rdp_write_virtual_channel_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	flags = (settings->server_mode) ? VCCAPS_COMPR_CS_8K : VCCAPS_NO_COMPR;
+	flags = VCCAPS_NO_COMPR;
 
 	stream_write_uint32(s, flags); /* flags (4 bytes) */
 	stream_write_uint32(s, settings->vc_chunk_size); /* VCChunkSize (4 bytes) */

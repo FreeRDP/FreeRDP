@@ -18,6 +18,7 @@
 # limitations under the License.
 
 set(FREERDP_SERVER_CHANNELS_SRCS
+	audin.c
 	rdpsnd.c
 )
 
