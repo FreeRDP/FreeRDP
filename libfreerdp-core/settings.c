@@ -154,7 +154,7 @@ rdpSettings* settings_new(void* instance)
 
 		settings->offscreen_bitmap_cache = true;
 		settings->offscreen_bitmap_cache_size = 7680;
-		settings->offscreen_bitmap_cache_entries = 100;
+		settings->offscreen_bitmap_cache_entries = 2000;
 
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
