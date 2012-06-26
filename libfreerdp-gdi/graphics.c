@@ -22,6 +22,7 @@
 #include <freerdp/gdi/shape.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/codec/jpeg.h>
 #include <freerdp/gdi/drawing.h>
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
@@ -98,7 +99,14 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed)
+	if (compressed == 2)
+	{
+		if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
+		{
+			printf("jpeg Decompression Failed\n");
+		}
+	}
+	else if (compressed)
 	{
 		boolean status;
 

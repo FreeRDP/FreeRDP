@@ -44,6 +44,7 @@ set(FREERDP_CODEC_SRCS
 	nsc_types.h
 	mppc_dec.c
 	mppc_enc.c
+	jpeg.c
 )
 
 if(WITH_SSE2)
@@ -67,7 +68,7 @@ endif()
 add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
 
 set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-codec freerdp-utils)
+target_link_libraries(freerdp-codec freerdp-utils jpeg)
 
 install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

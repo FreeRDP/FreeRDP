@@ -102,9 +102,18 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
 	}
 
-	bitmap->Decompress(context, bitmap,
-			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
-			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
+	if (cache_bitmap_v2->compressed && (cache_bitmap_v2->flags & 0x80))
+	{
+		bitmap->Decompress(context, bitmap,
+				cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
+				cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, 2);
+	}
+	else
+	{
+		bitmap->Decompress(context, bitmap,
+				cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
+				cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
+	}
 
 	bitmap->New(context, bitmap);
 

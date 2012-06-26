@@ -1014,6 +1014,7 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
+	cacheFlags |= 0x80; /* jpeg hack */
 
 	if (settings->persistent_bitmap_cache)
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;

@@ -25,6 +25,7 @@
 #endif
 
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
 
@@ -116,7 +117,14 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed)
+	if (compressed == 2)
+	{
+		if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
+		{
+			printf("jpeg Decompression Failed\n");
+		}
+	}
+	else if (compressed)
 	{
 		boolean status;
 
