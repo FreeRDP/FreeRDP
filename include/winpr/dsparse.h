@@ -23,7 +23,6 @@
 #ifdef _WIN32
 
 #include <winpr/windows.h>
-#include <ntdsapi.h>
 
 #else
 
