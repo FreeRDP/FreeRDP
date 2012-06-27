@@ -519,7 +519,11 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 				return 0;
 			}
 
-			credssp_decrypt_public_key_echo(credssp);
+			if (credssp_decrypt_public_key_echo(credssp) != SEC_E_OK)
+			{
+				printf("Error: could not verify client's public key echo\n");
+				return -1;
+			}
 
 			sspi_SecBufferFree(&credssp->negoToken);
 			credssp->negoToken.pvBuffer = NULL;
@@ -599,28 +603,69 @@ int credssp_authenticate(rdpCredssp* credssp)
 		return credssp_client_authenticate(credssp);
 }
 
+void ap_integer_increment_le(BYTE* number, int size)
+{
+	int index;
+
+	for (index = 0; index < size; index++)
+	{
+		if (number[index] < 0xFF)
+		{
+			number[index]++;
+			break;
+		}
+		else
+		{
+			number[index] = 0;
+			continue;
+		}
+	}
+}
+
+void ap_integer_decrement_le(BYTE* number, int size)
+{
+	int index;
+
+	for (index = 0; index < size; index++)
+	{
+		if (number[index] > 0)
+		{
+			number[index]--;
+			break;
+		}
+		else
+		{
+			number[index] = 0xFF;
+			continue;
+		}
+	}
+}
+
 SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 {
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
+	int public_key_length;
+
+	public_key_length = credssp->PublicKey.cbBuffer;
 
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 
-	sspi_SecBufferAlloc(&credssp->pubKeyAuth, credssp->ContextSizes.cbMaxSignature + credssp->PublicKey.cbBuffer);
+	sspi_SecBufferAlloc(&credssp->pubKeyAuth, credssp->ContextSizes.cbMaxSignature + public_key_length);
 
 	Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
 	Buffers[0].pvBuffer = credssp->pubKeyAuth.pvBuffer;
 
-	Buffers[1].cbBuffer = credssp->PublicKey.cbBuffer;
+	Buffers[1].cbBuffer = public_key_length;
 	Buffers[1].pvBuffer = ((BYTE*) credssp->pubKeyAuth.pvBuffer) + credssp->ContextSizes.cbMaxSignature;
 	CopyMemory(Buffers[1].pvBuffer, credssp->PublicKey.pvBuffer, Buffers[1].cbBuffer);
 
 	if (credssp->server)
 	{
 		/* server echos the public key +1 */
-		((BYTE*) Buffers[1].pvBuffer)[0]++;
+		ap_integer_increment_le((BYTE*) Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	}
 
 	Message.cBuffers = 2;
@@ -689,7 +734,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 	if (!credssp->server)
 	{
 		/* server echos the public key +1 */
-		public_key2[0]--;
+		ap_integer_decrement_le(public_key2, public_key_length);
 	}
 
 	if (memcmp(public_key1, public_key2, public_key_length) != 0)
@@ -704,8 +749,6 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 		return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 	}
-
-	public_key2[0]++;
 
 	free(buffer);
 

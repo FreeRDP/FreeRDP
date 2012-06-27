@@ -467,7 +467,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		if (common_name)
 		{
 			xfree(common_name);
-			common_name=NULL ;
+			common_name = NULL;
 		}
 
 		verification_status = true; /* success! */
@@ -508,7 +508,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			if (!accept_certificate)
 			{
 				/* user did not accept, abort and do not add entry in known_hosts file */
-				verification_status = false;  /* failure! */
+				verification_status = false; /* failure! */
 			}
 			else
 			{
@@ -532,20 +532,6 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		xfree(subject);
 		xfree(fingerprint);
 	}
-
-#ifndef _WIN32
-	if (common_name)
-		xfree(common_name);
-
-	if (alt_names)
-	{
-		for (index = 0; index < alt_names_count; index++)
-			xfree(alt_names[index]);
-
-		xfree(alt_names);
-		xfree(alt_names_lengths) ;
-	}
-#endif
 
 	if (certificate_data)
 	{
