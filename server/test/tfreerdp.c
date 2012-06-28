@@ -123,7 +123,6 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 			audin_server_context_free(context->audin);
 		}
 		WTSDestroyVirtualChannelManager(context->vcm);
-		xfree(context);
 	}
 }
 
