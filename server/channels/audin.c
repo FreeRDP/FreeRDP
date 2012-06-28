@@ -201,10 +201,14 @@ static boolean audin_server_recv_open_reply(audin_server* audin, STREAM* s, uint
 static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 length)
 {
 	rdpsndFormat* format;
+	int sbytes_per_sample;
 	int sbytes_per_frame;
 	uint8* src;
 	int size;
 	int frames;
+
+	if (audin->context.selected_client_format < 0)
+		return false;
 
 	format = &audin->context.client_formats[audin->context.selected_client_format];
 
@@ -214,6 +218,7 @@ static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 len
 			stream_get_tail(s), length, format->nChannels, format->nBlockAlign);
 		size = audin->dsp_context->adpcm_size;
 		src = audin->dsp_context->adpcm_buffer;
+		sbytes_per_sample = 2;
 		sbytes_per_frame = format->nChannels * 2;
 	}
 	else if (format->wFormatTag == 0x11)
@@ -222,13 +227,15 @@ static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 len
 			stream_get_tail(s), length, format->nChannels, format->nBlockAlign);
 		size = audin->dsp_context->adpcm_size;
 		src = audin->dsp_context->adpcm_buffer;
+		sbytes_per_sample = 2;
 		sbytes_per_frame = format->nChannels * 2;
 	}
 	else
 	{
 		size = length;
 		src = stream_get_tail(s);
-		sbytes_per_frame = format->nChannels * format->wBitsPerSample / 8;
+		sbytes_per_sample = format->wBitsPerSample / 8;
+		sbytes_per_frame = format->nChannels * sbytes_per_sample;
 	}
 
 	if (format->nSamplesPerSec == audin->context.dst_format.nSamplesPerSec && format->nChannels == audin->context.dst_format.nChannels)
@@ -237,7 +244,7 @@ static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 len
 	}
 	else
 	{
-		audin->dsp_context->resample(audin->dsp_context, src, format->wBitsPerSample / 8,
+		audin->dsp_context->resample(audin->dsp_context, src, sbytes_per_sample,
 			format->nChannels, format->nSamplesPerSec, size / sbytes_per_frame,
 			audin->context.dst_format.nChannels, audin->context.dst_format.nSamplesPerSec);
 		frames = audin->dsp_context->resampled_frames;
