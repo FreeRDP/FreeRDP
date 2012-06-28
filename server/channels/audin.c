@@ -249,8 +249,6 @@ static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 len
 			audin->context.dst_format.nChannels, audin->context.dst_format.nSamplesPerSec);
 		frames = audin->dsp_context->resampled_frames;
 		src = audin->dsp_context->resampled_buffer;
-		printf("resampled %d frames at %d to %d frames at %d\n",
-			size / sbytes_per_frame, format->nSamplesPerSec, frames, audin->context.dst_format.nSamplesPerSec);
 	}
 
 	IFCALL(audin->context.ReceiveSamples, &audin->context, src, frames);
