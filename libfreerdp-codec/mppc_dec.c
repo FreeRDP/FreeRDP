@@ -1445,5 +1445,10 @@ void mppc_dec_free(struct rdp_mppc_dec* dec)
 		dec->history_buf = NULL;
 		dec->history_ptr = NULL;
 	}
+	if (dec->offset_cache)
+	{
+		xfree(dec->offset_cache);
+		dec->offset_cache = NULL;
+	}
 	xfree(dec);
 }
