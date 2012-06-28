@@ -33,6 +33,7 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/listener.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/server/audin.h>
 
 static char* test_pcap_file = NULL;
 static boolean test_dump_rfx_realtime = true;
@@ -41,6 +42,20 @@ static boolean test_dump_rfx_realtime = true;
 static const unsigned int test_quantization_values[] =
 {
 	6, 6, 6, 6, 7, 7, 8, 8, 8, 9
+};
+
+static const rdpsndFormat test_audio_formats[] =
+{
+	{ 0x11, 2, 22050, 1024, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 2 channels */
+	{ 0x11, 1, 22050, 512, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 1 channels */
+	{ 0x01, 2, 22050, 4, 16, 0, NULL }, /* PCM, 22050 Hz, 2 channels, 16 bits */
+	{ 0x01, 1, 22050, 2, 16, 0, NULL }, /* PCM, 22050 Hz, 1 channels, 16 bits */
+	{ 0x01, 2, 44100, 4, 16, 0, NULL }, /* PCM, 44100 Hz, 2 channels, 16 bits */
+	{ 0x01, 1, 44100, 2, 16, 0, NULL }, /* PCM, 44100 Hz, 1 channels, 16 bits */
+	{ 0x01, 2, 11025, 4, 16, 0, NULL }, /* PCM, 11025 Hz, 2 channels, 16 bits */
+	{ 0x01, 1, 11025, 2, 16, 0, NULL }, /* PCM, 11025 Hz, 1 channels, 16 bits */
+	{ 0x01, 2, 8000, 4, 16, 0, NULL }, /* PCM, 8000 Hz, 2 channels, 16 bits */
+	{ 0x01, 1, 8000, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
 };
 
 struct test_peer_context
@@ -60,6 +75,8 @@ struct test_peer_context
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
 	freerdp_thread* debug_channel_thread;
+	audin_server_context* audin;
+	boolean audin_open;
 	uint32 frame_id;
 };
 typedef struct test_peer_context testPeerContext;
@@ -100,6 +117,10 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		if (context->debug_channel)
 		{
 			WTSVirtualChannelClose(context->debug_channel);
+		}
+		if (context->audin)
+		{
+			audin_server_context_free(context->audin);
 		}
 		WTSDestroyVirtualChannelManager(context->vcm);
 		xfree(context);
@@ -450,6 +471,23 @@ static void* tf_debug_channel_thread_func(void* arg)
 	return 0;
 }
 
+static void tf_peer_audin_opening(audin_server_context* context)
+{
+	printf("AUDIN opening.\n");
+	/* Simply choose the first format supported by the client. */
+	context->SelectFormat(context, 0);
+}
+
+static void tf_peer_audin_open_result(audin_server_context* context, uint32 result)
+{
+	printf("AUDIN open result %d.\n", result);
+}
+
+static void tf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
+{
+	printf("AUDIN recieve %d frames.\n", nframes);
+}
+
 boolean tf_peer_post_connect(freerdp_peer* client)
 {
 	int i;
@@ -497,6 +535,20 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 			}
 		}
 	}
+
+	context->audin = audin_server_context_new(context->vcm);
+	context->audin->data = context;
+	context->audin->server_formats = test_audio_formats;
+	context->audin->num_server_formats = ARRAY_SIZE(test_audio_formats);
+
+	context->audin->dst_format.wFormatTag = 1; /* Final output format, PCM only */
+	context->audin->dst_format.nChannels = 2;
+	context->audin->dst_format.nSamplesPerSec = 44100;
+	context->audin->dst_format.wBitsPerSample = 16;
+
+	context->audin->Opening = tf_peer_audin_opening;
+	context->audin->OpenResult = tf_peer_audin_open_result;
+	context->audin->ReceiveSamples = tf_peer_audin_receive_samples;
 
 	/* Return false here would stop the execution of the peer mainloop. */
 	return true;
@@ -560,6 +612,19 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
 	{
 		client->Close(client);
+	}
+	else if ((flags & 0x4000) && code == 0x13) /* 'r' key */
+	{
+		if (!context->audin_open)
+		{
+			context->audin->Open(context->audin);
+			context->audin_open = true;
+		}
+		else
+		{
+			context->audin->Close(context->audin);
+			context->audin_open = false;
+		}
 	}
 }
 

@@ -24,21 +24,43 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/mutex.h>
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
+
+#ifdef WITH_DEBUG_DVC
+#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 enum
 {
 	RDP_PEER_CHANNEL_TYPE_SVC = 0,
-	RDP_PEER_CHANNEL_TYPE_DVC = 1,
-	RDP_PEER_CHANNEL_TYPE_DVC_SUB = 2
+	RDP_PEER_CHANNEL_TYPE_DVC = 1
 };
 
-typedef struct rdp_peer_channel
+enum
+{
+	DRDYNVC_STATE_NONE = 0,
+	DRDYNVC_STATE_INITIALIZED = 1,
+	DRDYNVC_STATE_READY = 2
+};
+
+enum
+{
+	DVC_OPEN_STATE_NONE = 0,
+	DVC_OPEN_STATE_SUCCEEDED = 1,
+	DVC_OPEN_STATE_FAILED = 2,
+	DVC_OPEN_STATE_CLOSED = 3
+};
+
+typedef struct rdp_peer_channel rdpPeerChannel;
+struct rdp_peer_channel
 {
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
-	uint16 channel_id;
+	uint32 channel_id;
 	uint16 channel_type;
 	uint16 index;
 
@@ -46,7 +68,10 @@ typedef struct rdp_peer_channel
 	struct wait_obj* receive_event;
 	LIST* receive_queue;
 	freerdp_mutex mutex;
-} rdpPeerChannel;
+
+	uint8 dvc_open_state;
+	uint32 dvc_total_length;
+};
 
 struct WTSVirtualChannelManager
 {
@@ -56,6 +81,9 @@ struct WTSVirtualChannelManager
 	freerdp_mutex mutex;
 
 	rdpPeerChannel* drdynvc_channel;
+	uint8 drdynvc_state;
+	uint32 dvc_channel_id_seq;
+	LIST* dvc_channel_list;
 };
 
 #endif /* __WTSVC_H */
