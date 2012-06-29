@@ -138,6 +138,36 @@ void ntlm_write_message_fields(PStream s, NTLM_MESSAGE_FIELDS* fields)
 	StreamWrite_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
 }
 
+void ntlm_read_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
+{
+	if (fields->Len > 0)
+	{
+		fields->Buffer = malloc(fields->Len);
+		StreamSetOffset(s, fields->BufferOffset);
+		StreamRead(s, fields->Buffer, fields->Len);
+	}
+}
+
+void ntlm_write_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
+{
+	if (fields->Len > 0)
+	{
+		StreamSetOffset(s, fields->BufferOffset);
+		StreamWrite(s, fields->Buffer, fields->Len);
+	}
+}
+
+void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
+{
+	printf("%s (Len: %d MaxLen: %d BufferOffset: %d)\n",
+			name, fields->Len, fields->MaxLen, fields->BufferOffset);
+
+	if (fields->Len > 0)
+		winpr_HexDump(fields->Buffer, fields->Len);
+
+	printf("\n");
+}
+
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	PStream s;
@@ -390,9 +420,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_timestamp(context);
 
 	/* LmChallengeResponse */
-
-	if (context->LmCompatibilityLevel < 2)
-		ntlm_compute_lm_v2_response(context);
+	ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -655,97 +683,71 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 #endif
 
 	/* DomainName */
-	if (message.DomainName.Len > 0)
-	{
-		message.DomainName.Buffer = s->data + message.DomainName.BufferOffset;
+	ntlm_read_message_fields_buffer(s, &(message.DomainName));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("DomainName (length = %d, offset = %d)\n", message.DomainName.Len, message.DomainName.BufferOffset);
-		winpr_HexDump(message.DomainName.Buffer, message.DomainName.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.DomainName), "DomainName");
 #endif
-	}
 
 	/* UserName */
-	if (message.UserName.Len > 0)
-	{
-		message.UserName.Buffer = s->data + message.UserName.BufferOffset;
+	ntlm_read_message_fields_buffer(s, &(message.UserName));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("UserName (length = %d, offset = %d)\n", message.UserName.Len, message.UserName.BufferOffset);
-		winpr_HexDump(message.UserName.Buffer, message.UserName.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.UserName), "UserName");
 #endif
-	}
 
 	/* Workstation */
-	if (message.Workstation.Len > 0)
-	{
-		message.Workstation.Buffer = s->data + message.Workstation.BufferOffset;
+	ntlm_read_message_fields_buffer(s, &(message.Workstation));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("Workstation (length = %d, offset = %d)\n", message.Workstation.Len, message.Workstation.BufferOffset);
-		winpr_HexDump(message.Workstation.Buffer, message.Workstation.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.Workstation), "Workstation");
 #endif
-	}
 
 	/* LmChallengeResponse */
-	if (message.LmChallengeResponse.Len > 0)
-	{
-		message.LmChallengeResponse.Buffer = s->data + message.LmChallengeResponse.BufferOffset;
+	ntlm_read_message_fields_buffer(s, &(message.LmChallengeResponse));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("LmChallengeResponse (length = %d, offset = %d)\n", message.LmChallengeResponse.Len, message.LmChallengeResponse.BufferOffset);
-		winpr_HexDump(message.LmChallengeResponse.Buffer, message.LmChallengeResponse.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.LmChallengeResponse), "LmChallengeResponse");
 #endif
-	}
 
 	/* NtChallengeResponse */
+	ntlm_read_message_fields_buffer(s, &(message.NtChallengeResponse));
+
 	if (message.NtChallengeResponse.Len > 0)
 	{
 		BYTE* ClientChallengeBuffer;
-
-		message.NtChallengeResponse.Buffer = s->data + message.NtChallengeResponse.BufferOffset;
-
 		ClientChallengeBuffer = message.NtChallengeResponse.Buffer + 32;
 		CopyMemory(context->ClientChallenge, ClientChallengeBuffer, 8);
+	}
 
 #ifdef WITH_DEBUG_NTLM
-		printf("NtChallengeResponse (length = %d, offset = %d)\n", message.NtChallengeResponse.Len, message.NtChallengeResponse.BufferOffset);
-		winpr_HexDump(message.NtChallengeResponse.Buffer, message.NtChallengeResponse.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.NtChallengeResponse), "NtChallengeResponse");
 #endif
-	}
 
 	/* EncryptedRandomSessionKey */
-	if (message.EncryptedRandomSessionKey.Len > 0)
-	{
-		message.EncryptedRandomSessionKey.Buffer = s->data + message.EncryptedRandomSessionKey.BufferOffset;
-		CopyMemory(context->EncryptedRandomSessionKey, message.EncryptedRandomSessionKey.Buffer, 16);
+	ntlm_read_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
+	CopyMemory(context->EncryptedRandomSessionKey, message.EncryptedRandomSessionKey.Buffer, 16);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", message.EncryptedRandomSessionKey.Len, message.EncryptedRandomSessionKey.BufferOffset);
-		winpr_HexDump(message.EncryptedRandomSessionKey.Buffer, message.EncryptedRandomSessionKey.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.EncryptedRandomSessionKey), "EncryptedRandomSessionKey");
 #endif
-	}
 
 	if (message.UserName.Len > 0)
 	{
 		context->identity.User = (UINT16*) malloc(message.UserName.Len);
 		CopyMemory(context->identity.User, message.UserName.Buffer, message.UserName.Len);
-		context->identity.UserLength = message.UserName.Len;
+		context->identity.UserLength = message.UserName.Len / 2;
 	}
 
 	if (message.DomainName.Len > 0)
 	{
 		context->identity.Domain = (UINT16*) malloc(message.DomainName.Len);
 		CopyMemory(context->identity.Domain, message.DomainName.Buffer, message.DomainName.Len);
-		context->identity.DomainLength = message.DomainName.Len;
+		context->identity.DomainLength = message.DomainName.Len / 2;
 	}
 
 	/* LmChallengeResponse */
-
-	if (context->LmCompatibilityLevel < 2)
-		ntlm_compute_lm_v2_response(context);
+	ntlm_compute_lm_v2_response(context);
 
 	/* NtChallengeResponse */
 	ntlm_compute_ntlm_v2_response(context);
@@ -841,24 +843,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	ZeroMemory(&message, sizeof(message));
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
-	message.Workstation.Len = context->WorkstationLength;
-	message.Workstation.Buffer = (BYTE*) context->Workstation;
-
-	if (context->ntlm_v2 < 1)
-		message.Workstation.Len = 0;
-
-	message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
-	message.DomainName.Buffer = (BYTE*) context->identity.Domain;
-
-	message.UserName.Len = (UINT16) context->identity.UserLength * 2;
-	message.UserName.Buffer = (BYTE*) context->identity.User;
-
-	message.LmChallengeResponse.Len = (UINT16) 24;
-	message.NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
-
-	message.EncryptedRandomSessionKey.Len = 16;
-	message.EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
-
 	if (context->ntlm_v2)
 	{
 		/* observed: 35 82 88 e2 (0xE2888235) */
@@ -885,6 +869,30 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		message.NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_get_version_info(&(message.Version));
+
+	message.Workstation.Len = context->WorkstationLength;
+	message.Workstation.Buffer = (BYTE*) context->Workstation;
+
+	if (context->ntlm_v2 < 1)
+		message.Workstation.Len = 0;
+
+	message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
+	message.DomainName.Buffer = (BYTE*) context->identity.Domain;
+
+	message.UserName.Len = (UINT16) context->identity.UserLength * 2;
+	message.UserName.Buffer = (BYTE*) context->identity.User;
+
+	message.LmChallengeResponse.Len = (UINT16) context->LmChallengeResponse.cbBuffer;
+	message.LmChallengeResponse.Buffer = (BYTE*) context->LmChallengeResponse.pvBuffer;
+
+	message.NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
+	message.NtChallengeResponse.Buffer = (BYTE*) context->NtChallengeResponse.pvBuffer;
+
+	message.EncryptedRandomSessionKey.Len = 16;
+	message.EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
 
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
@@ -939,9 +947,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
-		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
-
-		ntlm_get_version_info(&(message.Version));
 		ntlm_write_version_info(s, &(message.Version));
 
 #ifdef WITH_DEBUG_NTLM
@@ -959,55 +964,35 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	}
 
 	/* DomainName */
-	if (message.DomainName.Len > 0)
-	{
-		StreamWrite(s, message.DomainName.Buffer, message.DomainName.Len);
+	ntlm_write_message_fields_buffer(s, &(message.DomainName));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("DomainName (length = %d, offset = %d)\n", message.DomainName.Len, message.DomainName.BufferOffset);
-		winpr_HexDump(message.DomainName.Buffer, message.DomainName.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.DomainName), "DomainName");
 #endif
-	}
 
 	/* UserName */
-	StreamWrite(s, message.UserName.Buffer, message.UserName.Len);
+	ntlm_write_message_fields_buffer(s, &(message.UserName));
 
 #ifdef WITH_DEBUG_NTLM
-	printf("UserName (length = %d, offset = %d)\n", message.UserName.Len, message.UserName.BufferOffset);
-	winpr_HexDump(message.UserName.Buffer, message.UserName.Len);
-	printf("\n");
+	ntlm_print_message_fields(&(message.UserName), "UserName");
 #endif
 
 	/* Workstation */
-	if (message.Workstation.Len > 0)
-	{
-		StreamWrite(s, message.Workstation.Buffer, message.Workstation.Len);
+	ntlm_write_message_fields_buffer(s, &(message.Workstation));
+
 #ifdef WITH_DEBUG_NTLM
-		printf("Workstation (length = %d, offset = %d)\n", message.Workstation.Len, message.Workstation.BufferOffset);
-		winpr_HexDump(message.Workstation.Buffer, message.Workstation.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.Workstation), "Workstation");
 #endif
-	}
 
 	/* LmChallengeResponse */
-
-	if (context->LmCompatibilityLevel < 2)
-	{
-		StreamWrite(s, context->LmChallengeResponse.pvBuffer, message.LmChallengeResponse.Len);
+	ntlm_write_message_fields_buffer(s, &(message.LmChallengeResponse));
 
 #ifdef WITH_DEBUG_NTLM
-		printf("LmChallengeResponse (length = %d, offset = %d)\n", message.LmChallengeResponse.Len, message.LmChallengeResponse.BufferOffset);
-		winpr_HexDump(context->LmChallengeResponse.pvBuffer, message.LmChallengeResponse.Len);
-		printf("\n");
+	ntlm_print_message_fields(&(message.LmChallengeResponse), "LmChallengeResponse");
 #endif
-	}
-	else
-	{
-		StreamZero(s, message.LmChallengeResponse.Len);
-	}
 
 	/* NtChallengeResponse */
-	StreamWrite(s, context->NtChallengeResponse.pvBuffer, message.NtChallengeResponse.Len);
+	ntlm_write_message_fields_buffer(s, &(message.NtChallengeResponse));
 
 #ifdef WITH_DEBUG_NTLM
 	if (context->ntlm_v2)
@@ -1021,18 +1006,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 #endif
 
 #ifdef WITH_DEBUG_NTLM
-	printf("NtChallengeResponse (length = %d, offset = %d)\n", message.NtChallengeResponse.Len, message.NtChallengeResponse.BufferOffset);
-	winpr_HexDump(context->NtChallengeResponse.pvBuffer, message.NtChallengeResponse.Len);
-	printf("\n");
+	ntlm_print_message_fields(&(message.NtChallengeResponse), "NtChallengeResponse");
 #endif
 
 	/* EncryptedRandomSessionKey */
-	StreamWrite(s, message.EncryptedRandomSessionKey.Buffer, message.EncryptedRandomSessionKey.Len);
+	ntlm_write_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
 
 #ifdef WITH_DEBUG_NTLM
-	printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", message.EncryptedRandomSessionKey.Len, message.EncryptedRandomSessionKey.BufferOffset);
-	winpr_HexDump(message.EncryptedRandomSessionKey.Buffer, message.EncryptedRandomSessionKey.Len);
-	printf("\n");
+	ntlm_print_message_fields(&(message.EncryptedRandomSessionKey), "EncryptedRandomSessionKey");
 #endif
 
 	length = StreamSize(s);

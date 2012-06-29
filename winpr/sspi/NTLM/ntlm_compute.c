@@ -221,12 +221,16 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	sam = SamOpen(1);
 
 	entry = SamLookupUserW(sam,
-			(LPWSTR) context->identity.User, context->identity.UserLength,
-			(LPWSTR) context->identity.Domain, context->identity.DomainLength);
+			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2);
 
 	if (entry != NULL)
 	{
 		CopyMemory(hash, entry->NtHash, 16);
+	}
+	else
+	{
+		printf("Error: Could not find user in SAM database\n");
 	}
 
 	SamFreeEntry(sam, entry);
@@ -253,6 +257,13 @@ void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	char* response;
 	char value[16];
 	char ntlm_v2_hash[16];
+
+	if (context->LmCompatibilityLevel < 2)
+	{
+		sspi_SecBufferAlloc(&context->LmChallengeResponse, 24);
+		ZeroMemory(context->LmChallengeResponse.pvBuffer, 24);
+		return;
+	}
 
 	/* Compute the NTLMv2 hash */
 	ntlm_compute_ntlm_v2_hash(context, ntlm_v2_hash);
