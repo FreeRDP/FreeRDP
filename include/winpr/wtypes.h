@@ -143,6 +143,23 @@ typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
 #endif
 
+typedef union _ULARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	};
+
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	} u;
+
+	ULONGLONG QuadPart;
+} ULARGE_INTEGER, *PULARGE_INTEGER;
+
 typedef struct _FILETIME
 {
 	DWORD dwLowDateTime;

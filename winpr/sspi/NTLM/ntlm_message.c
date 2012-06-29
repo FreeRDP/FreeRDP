@@ -381,8 +381,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	printf("\n");
 #endif
-
 	/* AV_PAIRs */
+
 	if (context->ntlm_v2)
 		ntlm_populate_av_pairs(context);
 

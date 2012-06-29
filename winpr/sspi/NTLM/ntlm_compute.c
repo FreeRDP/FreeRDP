@@ -166,13 +166,15 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
 
 void ntlm_current_time(BYTE* timestamp)
 {
-	UINT64 time64;
+	FILETIME filetime;
+	ULARGE_INTEGER time64;
 
-	/* Timestamp (8 bytes), represented as the number of tenths of microseconds since midnight of January 1, 1601 */
-	time64 = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
-	time64 *= 10000000; /* Convert timestamp to tenths of a microsecond */
+	GetSystemTimeAsFileTime(&filetime);
 
-	CopyMemory(timestamp, &time64, 8); /* Copy into timestamp in little-endian */
+	time64.LowPart = filetime.dwLowDateTime;
+	time64.HighPart = filetime.dwHighDateTime;
+
+	CopyMemory(timestamp, &(time64.QuadPart), 8);
 }
 
 /**
@@ -190,6 +192,13 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 		{
 			CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
 			return;
+		}
+		else
+		{
+			context->ntlm_v2 = FALSE;
+			context->av_pairs->Timestamp.length = 8;
+			context->av_pairs->Timestamp.value = malloc(context->av_pairs->Timestamp.length);
+			CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
 		}
 	}
 	else
@@ -279,23 +288,23 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 	sspi_SecBufferAlloc(&ntlm_v2_temp, context->TargetInfo.cbBuffer + 28);
 
-	memset(ntlm_v2_temp.pvBuffer, '\0', ntlm_v2_temp.cbBuffer);
+	ZeroMemory(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	blob = (BYTE*) ntlm_v2_temp.pvBuffer;
 
 	/* Compute the NTLMv2 hash */
 	ntlm_compute_ntlm_v2_hash(context, (char*) ntlm_v2_hash);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Password (length = %d)\n", context->identity.PasswordLength);
-	winpr_HexDump((BYTE*) context->identity.Password, context->identity.PasswordLength);
+	printf("Password (length = %d)\n", context->identity.PasswordLength * 2);
+	winpr_HexDump((BYTE*) context->identity.Password, context->identity.PasswordLength * 2);
 	printf("\n");
 
-	printf("Username (length = %d)\n", context->identity.UserLength);
-	winpr_HexDump((BYTE*) context->identity.User, context->identity.UserLength);
+	printf("Username (length = %d)\n", context->identity.UserLength * 2);
+	winpr_HexDump((BYTE*) context->identity.User, context->identity.UserLength * 2);
 	printf("\n");
 
-	printf("Domain (length = %d)\n", context->identity.DomainLength);
-	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength);
+	printf("Domain (length = %d)\n", context->identity.DomainLength * 2);
+	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength * 2);
 	printf("\n");
 
 	printf("Workstation (length = %d)\n", context->WorkstationLength);
