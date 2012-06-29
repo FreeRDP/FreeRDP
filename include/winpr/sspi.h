@@ -26,6 +26,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
+#include <winpr/security.h>
 
 #ifdef _WIN32
 
@@ -101,6 +102,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #endif
 
 #define NTLMSP_NAME	_T("NTLM")
+#define NEGOSSP_NAME	_T("Negotiate")
 
 #endif
 

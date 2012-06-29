@@ -633,6 +633,8 @@ void* xf_peer_main_loop(void* arg)
 	settings->privatekey_file = freerdp_construct_path(server_file_path, "server.key");
 
 	settings->nla_security = true;
+	settings->tls_security = false;
+	settings->rdp_security = false;
 
 	settings->rfx_codec = true;
 

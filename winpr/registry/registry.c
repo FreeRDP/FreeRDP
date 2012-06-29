@@ -209,6 +209,10 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 	RegKey* pKey;
 
 	reg = RegGetInstance();
+
+	if (!reg)
+		return -1;
+
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
