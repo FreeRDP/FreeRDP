@@ -24,6 +24,7 @@
 #include <winpr/sam.h>
 #include <winpr/ntlm.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 
 #include "ntlm_compute.h"
 
@@ -33,6 +34,48 @@ static const char client_sign_magic[] = "session key to client-to-server signing
 static const char server_sign_magic[] = "session key to server-to-client signing key magic constant";
 static const char client_seal_magic[] = "session key to client-to-server sealing key magic constant";
 static const char server_seal_magic[] = "session key to server-to-client sealing key magic constant";
+
+/**
+ * Populate VERSION structure.\n
+ * VERSION @msdn{cc236654}
+ * @param s
+ */
+
+void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
+{
+	OSVERSIONINFOA osVersionInfo;
+
+	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+	GetVersionExA(&osVersionInfo);
+
+	versionInfo->ProductMajorVersion = osVersionInfo.dwMajorVersion;
+	versionInfo->ProductMinorVersion = osVersionInfo.dwMinorVersion;
+	versionInfo->ProductBuild = osVersionInfo.dwBuildNumber;
+	ZeroMemory(versionInfo->Reserved, sizeof(versionInfo->Reserved));
+	versionInfo->NTLMRevisionCurrent = NTLMSSP_REVISION_W2K3;
+}
+
+/**
+ * Write VERSION structure.\n
+ * VERSION @msdn{cc236654}
+ * @param s
+ */
+
+void ntlm_write_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
+{
+	OSVERSIONINFOA osVersionInfo;
+
+	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+	GetVersionExA(&osVersionInfo);
+
+	StreamWrite_UINT8(s, osVersionInfo.dwMajorVersion); /* ProductMajorVersion (1 byte) */
+	StreamWrite_UINT8(s, osVersionInfo.dwMinorVersion); /* ProductMinorVersion (1 byte) */
+	StreamWrite_UINT16(s, osVersionInfo.dwBuildNumber); /* ProductBuild (2 bytes) */
+	StreamZero(s, 3); /* Reserved (3 bytes) */
+	StreamWrite_UINT8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
+}
 
 /**
  * Output Restriction_Encoding.\n

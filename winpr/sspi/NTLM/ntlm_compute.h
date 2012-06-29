@@ -24,6 +24,9 @@
 
 #include "ntlm_av_pairs.h"
 
+void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
+void ntlm_write_version_info(PStream s, NTLM_VERSION_INFO* versionInfo);
+
 void ntlm_output_restriction_encoding(NTLM_CONTEXT* context);
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
