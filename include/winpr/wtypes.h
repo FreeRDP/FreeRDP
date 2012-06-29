@@ -54,6 +54,14 @@ typedef float FLOAT;
 typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
+#ifndef FALSE
+#define FALSE			0
+#endif
+
+#ifndef TRUE
+#define TRUE			1
+#endif
+
 typedef void* HANDLE, *LPHANDLE;
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
