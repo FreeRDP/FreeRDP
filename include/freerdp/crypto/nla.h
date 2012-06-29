@@ -30,6 +30,7 @@ typedef struct rdp_credssp rdpCredssp;
 
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>
+#include <freerdp/crypto/der.h>
 #include <freerdp/crypto/crypto.h>
 
 struct rdp_credssp

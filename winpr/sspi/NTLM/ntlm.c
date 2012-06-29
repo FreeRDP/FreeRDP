@@ -27,6 +27,7 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -37,18 +38,42 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
+	DWORD nSize = 0;
+
+	if (!Workstation)
+	{
+		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+		Workstation = malloc(nSize);
+		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
+	}
+
 	context->WorkstationLength = strlen(Workstation) * 2;
 	context->Workstation = (UINT16*) malloc(context->WorkstationLength);
 	MultiByteToWideChar(CP_ACP, 0, Workstation, strlen(Workstation),
 			(LPWSTR) context->Workstation, context->WorkstationLength / 2);
+
+	if (nSize > 0)
+		free(Workstation);
 }
 
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
+	DWORD nSize = 0;
+
+	if (!TargetName)
+	{
+		GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
+		TargetName = malloc(nSize);
+		GetComputerNameExA(ComputerNameDnsHostname, TargetName, &nSize);
+	}
+
 	context->TargetName.cbBuffer = strlen(TargetName) * 2;
 	context->TargetName.pvBuffer = (void*) malloc(context->TargetName.cbBuffer);
 	MultiByteToWideChar(CP_ACP, 0, TargetName, strlen(TargetName),
 			(LPWSTR) context->TargetName.pvBuffer, context->TargetName.cbBuffer / 2);
+
+	if (nSize > 0)
+		free(TargetName);
 }
 
 NTLM_CONTEXT* ntlm_ContextNew()
@@ -142,7 +167,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		if (identity != NULL)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -154,7 +181,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		if (identity != NULL)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
@@ -232,7 +261,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
-		ntlm_SetContextTargetName(context, "FreeRDP");
+		ntlm_SetContextTargetName(context, NULL);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
@@ -344,7 +373,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
-		ntlm_SetContextWorkstation(context, "WORKSTATION");
+		ntlm_SetContextWorkstation(context, NULL);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
@@ -471,6 +500,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	int index;
 	int length;
 	void* data;
+	UINT32 SeqNo;
 	HMAC_CTX hmac;
 	BYTE digest[16];
 	BYTE checksum[8];
@@ -480,6 +510,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 
+	SeqNo = MessageSeqNo;
 	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	for (index = 0; index < (int) pMessage->cBuffers; index++)
@@ -504,7 +535,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
+	HMAC_Update(&hmac, (void*) &(SeqNo), 4);
 	HMAC_Update(&hmac, data, length);
 	HMAC_Final(&hmac, digest, NULL);
 	HMAC_CTX_cleanup(&hmac);
@@ -536,7 +567,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(signature, (void*) &version, 4);
 	CopyMemory(&signature[4], (void*) checksum, 8);
-	CopyMemory(&signature[12], (void*) &(MessageSeqNo), 4);
+	CopyMemory(&signature[12], (void*) &(SeqNo), 4);
 	context->SendSeqNum++;
 
 #ifdef WITH_DEBUG_NTLM
@@ -553,6 +584,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	int index;
 	int length;
 	void* data;
+	UINT32 SeqNo;
 	HMAC_CTX hmac;
 	BYTE digest[16];
 	BYTE checksum[8];
@@ -562,6 +594,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 
+	SeqNo = (UINT32) MessageSeqNo;
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
 	for (index = 0; index < (int) pMessage->cBuffers; index++)
@@ -593,7 +626,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac, context->RecvSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &(MessageSeqNo), 4);
+	HMAC_Update(&hmac, (void*) &(SeqNo), 4);
 	HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 	HMAC_Final(&hmac, digest, NULL);
 	HMAC_CTX_cleanup(&hmac);
@@ -616,7 +649,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(expected_signature, (void*) &version, 4);
 	CopyMemory(&expected_signature[4], (void*) checksum, 8);
-	CopyMemory(&expected_signature[12], (void*) &(MessageSeqNo), 4);
+	CopyMemory(&expected_signature[12], (void*) &(SeqNo), 4);
 	context->RecvSeqNum++;
 
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)

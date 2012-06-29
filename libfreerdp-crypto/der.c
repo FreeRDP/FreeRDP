@@ -19,6 +19,16 @@
 
 #include <freerdp/crypto/der.h>
 
+int _der_skip_length(int length)
+{
+	if (length > 0x7F && length <= 0xFF)
+		return 2;
+	else if (length > 0xFF)
+		return 3;
+	else
+		return 1;
+}
+
 int der_write_length(STREAM* s, int length)
 {
 	if (length > 0x7F && length <= 0xFF)
@@ -40,114 +50,52 @@ int der_write_length(STREAM* s, int length)
 	}
 }
 
-boolean der_write_general_string(STREAM* s, char* str)
+int der_get_content_length(int length)
 {
-	STREAM* tmp_s;
-
-	tmp_s = stream_new(0);
-	stream_attach(tmp_s, (uint8*)str, strlen(str));
-
-	der_write_universal_tag(s, ER_TAG_GENERAL_STRING, false);
-	der_write_length(s, strlen(str));
-
-	stream_copy(s, tmp_s, strlen(str));
-	stream_detach(tmp_s);
-	stream_free(tmp_s) ;
-
-	return true;
+	if (length > 0x7F && length <= 0xFF)
+		return length - 3;
+	else if (length > 0xFF)
+		return length - 4;
+	else
+		return length - 2;
 }
 
-char* der_read_general_string(STREAM* s, int *length)
+int der_skip_contextual_tag(int length)
 {
-	char* str;
-	int len;
-
-	if(der_read_universal_tag(s, ER_TAG_GENERAL_STRING, false))
-	{
-		der_read_length(s, &len);
-		str = (char*)xzalloc((len + 1) * sizeof(char));
-		memcpy(str, s->p, len);
-		stream_seek(s, len);
-		*length = len + 2;
-		return str;
-	}
-
-	stream_rewind(s, 1);
-	*length = 0;
-
-	return NULL;
+	return _der_skip_length(length) + 1;
 }
 
-int der_write_principal_name(STREAM* s, uint8 ntype, char** name)
+int der_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
 {
-	uint8 len;
-	char** p;
-
-	len = 0;
-	p = name;
-
-	while (*p != NULL)
-	{	
-		len += strlen(*p) + 2;
-		p++;
-	}
-
-	p = name;
-	der_write_sequence_tag(s, len+9);
-	der_write_contextual_tag(s, 0, 3, true);
-	der_write_integer(s, ntype);
-	der_write_contextual_tag(s, 1, len + 2, true);
-	der_write_sequence_tag(s, len);
-
-	while (*p != NULL)
-	{
-		der_write_general_string(s, *p);
-		p++;
-	}
-
-	return len + 11;
+	stream_write_uint8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
+	return der_write_length(s, length) + 1;
 }
 
-int der_write_generalized_time(STREAM* s, char* tstr)
+void der_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
 {
-	uint8 len;
-	STREAM* tmp_s;
-
-	len = strlen(tstr);
-	tmp_s = stream_new(0);
-
-	stream_attach(tmp_s, (uint8*) tstr, strlen(tstr));
-	der_write_universal_tag(s, ER_TAG_GENERALIZED_TIME, false);
-	der_write_length(s, len);
-
-	stream_copy(s, tmp_s, len);
-	stream_detach(tmp_s);
-	stream_free(tmp_s) ;
-
-	return len + 2;
+	stream_write_uint8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
 }
 
-boolean der_read_generalized_time(STREAM* s, char** tstr)
+int der_skip_octet_string(int length)
 {
-	int length;
-	uint8* bm;
-	stream_get_mark(s, bm);
+	return 1 + _der_skip_length(length) + length;
+}
 
-	if (!der_read_universal_tag(s, ER_TAG_GENERALIZED_TIME, false))
-		goto err;
+void der_write_octet_string(STREAM* s, uint8* oct_str, int length)
+{
+	der_write_universal_tag(s, ER_TAG_OCTET_STRING, false);
+	der_write_length(s, length);
+	stream_write(s, oct_str, length);
+}
 
-	der_read_length(s, &length);
+int der_skip_sequence_tag(int length)
+{
+	return 1 + _der_skip_length(length);
+}
 
-	if (length != 15)
-		goto err;
-
-	*tstr = xzalloc(length + 1);
-	stream_read(s, *tstr, length);
-
-	return true;
-
-	err:
-		stream_set_mark(s, bm);
-		return false;
+int der_write_sequence_tag(STREAM* s, int length)
+{
+	stream_write_uint8(s, (ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_MASK & ER_TAG_SEQUENCE));
+	return der_write_length(s, length) + 1;
 }
 

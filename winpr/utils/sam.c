@@ -149,8 +149,6 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		HexStrToBin(p[3], (BYTE*) entry->NtHash, 16);
 	}
 
-	printf("SamReadEntry: %s\n", entry->User);
-
 	return entry;
 }
 

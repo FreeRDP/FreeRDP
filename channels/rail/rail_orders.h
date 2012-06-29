@@ -54,7 +54,7 @@
 #define RAIL_GET_APPID_REQ_ORDER_LENGTH		4 /* fixed */
 #define RAIL_LANGBAR_INFO_ORDER_LENGTH		4 /* fixed */
 
-void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, UNICODE_STRING* unicode_string);
+void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string);
 
 void rail_read_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_result);
