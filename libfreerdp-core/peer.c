@@ -116,6 +116,8 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 					return false;
 			}
 
+			client->activated = true;
+
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
@@ -392,6 +394,7 @@ void freerdp_peer_free(freerdp_peer* client)
 	if (client)
 	{
 		rdp_free(client->context->rdp);
+		xfree(client->context);
 		xfree(client);
 	}
 }

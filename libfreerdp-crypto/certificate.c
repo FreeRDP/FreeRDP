@@ -129,6 +129,68 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	return match;
 }
 
+void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+{
+	FILE* fp;
+	int length;
+	char* data;
+	char* pline;
+	long int size;
+
+	fp = certificate_store->fp;
+
+	if (!fp)
+		return;
+	
+	// Read the current contents of the file.
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (size < 1)
+		return;
+
+	data = (char*) xmalloc(size + 2);
+
+	if (fread(data, size, 1, fp) != 1)
+	{
+		xfree(data);
+		return;
+	}
+	
+	// Write the file back out, with appropriate fingerprint substitutions
+	fp = fopen(certificate_store->file, "w+");
+	data[size] = '\n';
+	data[size + 1] = '\0';
+	pline = strtok(data, "\n"); // xxx: use strsep
+
+	while (pline != NULL)
+	{
+		length = strlen(pline);
+
+		if (length > 0)
+		{
+			char* hostname = pline, *fingerprint;
+			
+			length = strcspn(pline, " \t");
+			hostname[length] = '\0';
+
+			/* If this is the replaced hostname, use the updated fingerprint. */
+			if (strcmp(hostname, certificate_data->hostname) == 0)
+				fingerprint = certificate_data->fingerprint;
+			else
+				fingerprint = &hostname[length + 1];
+			
+			fprintf(fp, "%s %s\n", hostname, fingerprint);
+		}
+
+		pline = strtok(NULL, "\n");
+	}
+	
+	fclose(fp);
+	xfree(data);	
+}
+
 void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;

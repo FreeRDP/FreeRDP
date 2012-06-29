@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Test Server cmake build script
+# FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,11 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(tfreerdp-server
-	tfreerdp.c)
+set(SKEL_SRCS
+	skel_main.c
+	skel_main.h
+)
 
-target_link_libraries(tfreerdp-server freerdp-core)
-target_link_libraries(tfreerdp-server freerdp-utils)
-target_link_libraries(tfreerdp-server freerdp-codec)
-target_link_libraries(tfreerdp-server freerdp-channels)
-target_link_libraries(tfreerdp-server freerdp-server-channels)
+add_library(skel ${SKEL_SRCS})
+set_target_properties(skel PROPERTIES PREFIX "")
+
+target_link_libraries(skel freerdp-utils)
+
+install(TARGETS skel DESTINATION ${FREERDP_PLUGIN_PATH})

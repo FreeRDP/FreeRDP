@@ -50,7 +50,6 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	if (context)
 	{
-		xfree(context);
 	}
 }
 

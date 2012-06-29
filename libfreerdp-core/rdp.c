@@ -938,8 +938,6 @@ rdpRdp* rdp_new(freerdp* instance)
 
 void rdp_free(rdpRdp* rdp)
 {
-	return;
-
 	if (rdp != NULL)
 	{
 		crypto_rc4_free(rdp->rc4_decrypt_key);

@@ -273,7 +273,6 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 	{
 		stream_free(context->s);
 		rfx_context_free(context->rfx_context);
-		xfree(context);
 	}
 }
 

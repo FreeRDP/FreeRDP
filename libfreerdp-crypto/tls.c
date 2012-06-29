@@ -234,6 +234,8 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
+	xfree(cert);
+
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
@@ -484,6 +486,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		char* issuer;
 		char* subject;
 		char* fingerprint;
+		freerdp* instance = (freerdp*) tls->settings->instance;
 		boolean accept_certificate = false;
 
 		issuer = crypto_cert_issuer(cert->px509);
@@ -496,9 +499,6 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		if (match == 1)
 		{
 			/* no entry was found in known_hosts file, prompt user for manual verification */
-
-			freerdp* instance = (freerdp*) tls->settings->instance;
-
 			if (!hostname_match)
 				tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
 
@@ -519,9 +519,23 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		}
 		else if (match == -1)
 		{
-			/* entry was found in known_hosts file, but fingerprint does not match */
+			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
 			tls_print_certificate_error(hostname, fingerprint);
-			verification_status = false; /* failure! */
+			
+			if (instance->VerifyChangedCertificate)
+				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
+
+			if (!accept_certificate)
+			{
+				/* user did not accept, abort and do not change known_hosts file */
+				verification_status = false;  /* failure! */
+			}
+			else
+			{
+				/* user accepted new certificate, add replace fingerprint for this host in known_hosts file */
+				certificate_data_replace(tls->certificate_store, certificate_data);
+				verification_status = true; /* success! */
+			}
 		}
 		else if (match == 0)
 		{
