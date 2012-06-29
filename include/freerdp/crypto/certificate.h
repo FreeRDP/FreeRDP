@@ -50,6 +50,7 @@ struct rdp_certificate_store
 FREERDP_API rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
 FREERDP_API void certificate_data_free(rdpCertificateData* certificate_data);
 FREERDP_API rdpCertificateStore* certificate_store_new(rdpSettings* settings);
+FREERDP_API void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
 FREERDP_API void certificate_store_free(rdpCertificateStore* certificate_store);
 FREERDP_API int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
 FREERDP_API void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
