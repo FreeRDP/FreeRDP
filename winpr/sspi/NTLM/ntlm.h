@@ -82,6 +82,15 @@ enum _AV_ID
 };
 typedef enum _AV_ID AV_ID;
 
+struct _NTLM_MESSAGE_FIELD
+{
+	UINT16 Len;
+	UINT16 MaxLen;
+	PBYTE Buffer;
+	UINT32 BufferOffset;
+};
+typedef struct _NTLM_MESSAGE_FIELD NTLM_MESSAGE_FIELD;
+
 struct _NTLM_CONTEXT
 {
 	BOOL server;

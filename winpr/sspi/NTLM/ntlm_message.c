@@ -158,12 +158,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	BYTE Signature[8];
 	UINT32 MessageType;
 	UINT32 NegotiateFlags;
-	UINT16 DomainNameLen;
-	UINT16 DomainNameMaxLen;
-	UINT32 DomainNameBufferOffset;
-	UINT16 WorkstationLen;
-	UINT16 WorkstationMaxLen;
-	UINT32 WorkstationBufferOffset;
+	NTLM_MESSAGE_FIELD DomainName;
+	NTLM_MESSAGE_FIELD Workstation;
 
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
@@ -190,16 +186,16 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 
 	/* DomainNameFields (8 bytes) */
-	StreamRead_UINT16(s, DomainNameLen); /* DomainNameLen */
-	StreamRead_UINT16(s, DomainNameMaxLen); /* DomainNameMaxLen */
-	StreamRead_UINT32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+	StreamRead_UINT16(s, DomainName.Len); /* DomainNameLen */
+	StreamRead_UINT16(s, DomainName.MaxLen); /* DomainNameMaxLen */
+	StreamRead_UINT32(s, DomainName.BufferOffset); /* DomainNameBufferOffset */
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 
 	/* WorkstationFields (8 bytes) */
-	StreamRead_UINT16(s, WorkstationLen); /* WorkstationLen */
-	StreamRead_UINT16(s, WorkstationMaxLen); /* WorkstationMaxLen */
-	StreamRead_UINT32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+	StreamRead_UINT16(s, Workstation.Len); /* WorkstationLen */
+	StreamRead_UINT16(s, Workstation.MaxLen); /* WorkstationMaxLen */
+	StreamRead_UINT32(s, Workstation.BufferOffset); /* WorkstationBufferOffset */
 
 	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
@@ -328,14 +324,10 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	int length;
 	char Signature[8];
 	UINT32 MessageType;
-	BYTE* StartOffset;
-	BYTE* PayloadOffset;
-	UINT16 TargetNameLen;
-	UINT16 TargetNameMaxLen;
-	UINT32 TargetNameBufferOffset;
-	UINT16 TargetInfoLen;
-	UINT16 TargetInfoMaxLen;
-	UINT32 TargetInfoBufferOffset;
+	PBYTE StartOffset;
+	PBYTE PayloadOffset;
+	NTLM_MESSAGE_FIELD TargetName;
+	NTLM_MESSAGE_FIELD TargetInfo;
 
 	ntlm_generate_client_challenge(context);
 
@@ -360,9 +352,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	StartOffset = StreamGetPointer(s) - 12;
 
 	/* TargetNameFields (8 bytes) */
-	StreamRead_UINT16(s, TargetNameLen); /* TargetNameLen (2 bytes) */
-	StreamRead_UINT16(s, TargetNameMaxLen); /* TargetNameMaxLen (2 bytes) */
-	StreamRead_UINT32(s, TargetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+	StreamRead_UINT16(s, TargetName.Len); /* TargetNameLen (2 bytes) */
+	StreamRead_UINT16(s, TargetName.MaxLen); /* TargetNameMaxLen (2 bytes) */
+	StreamRead_UINT32(s, TargetName.BufferOffset); /* TargetNameBufferOffset (4 bytes) */
 
 	StreamRead_UINT32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -374,9 +366,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	StreamSeek(s, 8); /* Reserved (8 bytes), should be ignored */
 
 	/* TargetInfoFields (8 bytes) */
-	StreamRead_UINT16(s, TargetInfoLen); /* TargetInfoLen (2 bytes) */
-	StreamRead_UINT16(s, TargetInfoMaxLen); /* TargetInfoMaxLen (2 bytes) */
-	StreamRead_UINT32(s, TargetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+	StreamRead_UINT16(s, TargetInfo.Len); /* TargetInfoLen (2 bytes) */
+	StreamRead_UINT16(s, TargetInfo.MaxLen); /* TargetInfoMaxLen (2 bytes) */
+	StreamRead_UINT32(s, TargetInfo.BufferOffset); /* TargetInfoBufferOffset (4 bytes) */
 
 	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
 
@@ -388,27 +380,27 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	/* Payload (variable) */
 	PayloadOffset = StreamGetPointer(s);
 
-	if (TargetNameLen > 0)
+	if (TargetName.Len > 0)
 	{
-		p = StartOffset + TargetNameBufferOffset;
-		sspi_SecBufferAlloc(&context->TargetName, TargetNameLen);
-		CopyMemory(context->TargetName.pvBuffer, p, TargetNameLen);
+		p = StartOffset + TargetName.BufferOffset;
+		sspi_SecBufferAlloc(&context->TargetName, TargetName.Len);
+		CopyMemory(context->TargetName.pvBuffer, p, TargetName.Len);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
+		printf("TargetName (length = %d, offset = %d)\n", TargetName.Len, TargetName.BufferOffset);
 		winpr_HexDump(context->TargetName.pvBuffer, context->TargetName.cbBuffer);
 		printf("\n");
 #endif
 	}
 
-	if (TargetInfoLen > 0)
+	if (TargetInfo.Len > 0)
 	{
-		p = StartOffset + TargetInfoBufferOffset;
-		sspi_SecBufferAlloc(&context->TargetInfo, TargetInfoLen);
-		CopyMemory(context->TargetInfo.pvBuffer, p, TargetInfoLen);
+		p = StartOffset + TargetInfo.BufferOffset;
+		sspi_SecBufferAlloc(&context->TargetInfo, TargetInfo.Len);
+		CopyMemory(context->TargetInfo.pvBuffer, p, TargetInfo.Len);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
+		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfo.Len, TargetInfo.BufferOffset);
 		winpr_HexDump(context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
 		printf("\n");
 #endif
@@ -420,7 +412,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		}
 	}
 
-	length = (PayloadOffset - StartOffset) + TargetNameLen + TargetInfoLen;
+	length = (PayloadOffset - StartOffset) + TargetName.Len + TargetInfo.Len;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
 	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
@@ -527,12 +519,8 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	PStream s;
 	int length;
 	UINT32 PayloadOffset;
-	UINT16 TargetNameLen;
-	BYTE* TargetNameBuffer;
-	UINT32 TargetNameBufferOffset;
-	UINT16 TargetInfoLen;
-	BYTE* TargetInfoBuffer;
-	UINT32 TargetInfoBufferOffset;
+	NTLM_MESSAGE_FIELD TargetName;
+	NTLM_MESSAGE_FIELD TargetInfo;
 
 	/* Server Challenge */
 	ntlm_generate_server_challenge(context);
@@ -550,26 +538,26 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	if (context->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
 	{
-		TargetNameLen = (UINT16) context->TargetName.cbBuffer;
-		TargetNameBuffer = context->TargetName.pvBuffer;
+		TargetName.Len = (UINT16) context->TargetName.cbBuffer;
+		TargetName.Buffer = context->TargetName.pvBuffer;
 	}
 	else
 	{
-		TargetNameLen = 0;
-		TargetNameBuffer = NULL;
+		TargetName.Len = 0;
+		TargetName.Buffer = NULL;
 	}
 
 	context->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 	{
-		TargetInfoLen = (UINT16) context->TargetInfo.cbBuffer;
-		TargetInfoBuffer = context->TargetInfo.pvBuffer;
+		TargetInfo.Len = (UINT16) context->TargetInfo.cbBuffer;
+		TargetInfo.Buffer = context->TargetInfo.pvBuffer;
 	}
 	else
 	{
-		TargetInfoLen = 0;
-		TargetInfoBuffer = NULL;
+		TargetInfo.Len = 0;
+		TargetInfo.Buffer = NULL;
 	}
 
 	PayloadOffset = 48;
@@ -577,13 +565,13 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		PayloadOffset += 8;
 
-	TargetNameBufferOffset = PayloadOffset;
-	TargetInfoBufferOffset = TargetNameBufferOffset + TargetNameLen;
+	TargetName.BufferOffset = PayloadOffset;
+	TargetInfo.BufferOffset = TargetName.BufferOffset + TargetName.Len;
 
 	/* TargetNameFields (8 bytes) */
-	StreamWrite_UINT16(s, TargetNameLen); /* TargetNameLen (2 bytes) */
-	StreamWrite_UINT16(s, TargetNameLen); /* TargetNameMaxLen (2 bytes) */
-	StreamWrite_UINT32(s, TargetNameBufferOffset); /* TargetNameBufferOffset (4 bytes) */
+	StreamWrite_UINT16(s, TargetName.Len); /* TargetNameLen (2 bytes) */
+	StreamWrite_UINT16(s, TargetName.Len); /* TargetNameMaxLen (2 bytes) */
+	StreamWrite_UINT32(s, TargetName.BufferOffset); /* TargetNameBufferOffset (4 bytes) */
 
 	StreamWrite_UINT32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -591,9 +579,9 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	StreamZero(s, 8); /* Reserved (8 bytes), should be ignored */
 
 	/* TargetInfoFields (8 bytes) */
-	StreamWrite_UINT16(s, TargetInfoLen); /* TargetInfoLen (2 bytes) */
-	StreamWrite_UINT16(s, TargetInfoLen); /* TargetInfoMaxLen (2 bytes) */
-	StreamWrite_UINT32(s, TargetInfoBufferOffset); /* TargetInfoBufferOffset (4 bytes) */
+	StreamWrite_UINT16(s, TargetInfo.Len); /* TargetInfoLen (2 bytes) */
+	StreamWrite_UINT16(s, TargetInfo.Len); /* TargetInfoMaxLen (2 bytes) */
+	StreamWrite_UINT32(s, TargetInfo.BufferOffset); /* TargetInfoBufferOffset (4 bytes) */
 
 	/* only present if NTLMSSP_NEGOTIATE_VERSION is set */
 
@@ -604,22 +592,22 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	/* Payload (variable) */
 
-	if (TargetNameLen > 0)
+	if (TargetName.Len > 0)
 	{
-		StreamWrite(s, TargetNameBuffer, TargetNameLen);
+		StreamWrite(s, TargetName.Buffer, TargetName.Len);
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetName (length = %d, offset = %d)\n", TargetNameLen, TargetNameBufferOffset);
-		winpr_HexDump(TargetNameBuffer, TargetNameLen);
+		printf("TargetName (length = %d, offset = %d)\n", TargetName.Len, TargetName.BufferOffset);
+		winpr_HexDump(TargetName.Buffer, TargetName.Len);
 		printf("\n");
 #endif
 	}
 
-	if (TargetInfoLen > 0)
+	if (TargetInfo.Len > 0)
 	{
-		StreamWrite(s, TargetInfoBuffer, TargetInfoLen);
+		StreamWrite(s, TargetInfo.Buffer, TargetInfo.Len);
 #ifdef WITH_DEBUG_NTLM
-		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfoLen, TargetInfoBufferOffset);
-		winpr_HexDump(TargetInfoBuffer, TargetInfoLen);
+		printf("TargetInfo (length = %d, offset = %d)\n", TargetInfo.Len, TargetInfo.BufferOffset);
+		winpr_HexDump(TargetInfo.Buffer, TargetInfo.Len);
 		printf("\n");
 #endif
 	}
@@ -650,30 +638,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	BYTE Signature[8];
 	UINT32 MessageType;
 	UINT32 NegotiateFlags;
-	UINT16 DomainNameLen;
-	UINT16 DomainNameMaxLen;
-	BYTE* DomainNameBuffer;
-	UINT32 DomainNameBufferOffset;
-	UINT16 UserNameLen;
-	UINT16 UserNameMaxLen;
-	BYTE* UserNameBuffer;
-	UINT32 UserNameBufferOffset;
-	UINT16 WorkstationLen;
-	UINT16 WorkstationMaxLen;
-	BYTE* WorkstationBuffer;
-	UINT32 WorkstationBufferOffset;
-	UINT16 LmChallengeResponseLen;
-	UINT16 LmChallengeResponseMaxLen;
-	BYTE* LmChallengeResponseBuffer;
-	UINT32 LmChallengeResponseBufferOffset;
-	UINT16 NtChallengeResponseLen;
-	UINT16 NtChallengeResponseMaxLen;
-	BYTE* NtChallengeResponseBuffer;
-	UINT32 NtChallengeResponseBufferOffset;
-	UINT16 EncryptedRandomSessionKeyLen;
-	UINT16 EncryptedRandomSessionKeyMaxLen;
-	BYTE* EncryptedRandomSessionKeyBuffer;
-	UINT32 EncryptedRandomSessionKeyBufferOffset;
+	NTLM_MESSAGE_FIELD DomainName;
+	NTLM_MESSAGE_FIELD UserName;
+	NTLM_MESSAGE_FIELD Workstation;
+	NTLM_MESSAGE_FIELD LmChallengeResponse;
+	NTLM_MESSAGE_FIELD NtChallengeResponse;
+	NTLM_MESSAGE_FIELD EncryptedRandomSessionKey;
 
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
@@ -694,38 +664,38 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	}
 
 	/* LmChallengeResponseFields (8 bytes) */
-	StreamRead_UINT16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
-	StreamRead_UINT16(s, LmChallengeResponseMaxLen); /* LmChallengeResponseMaxLen */
-	StreamRead_UINT32(s, LmChallengeResponseBufferOffset); /* LmChallengeResponseBufferOffset */
+	StreamRead_UINT16(s, LmChallengeResponse.Len); /* LmChallengeResponseLen */
+	StreamRead_UINT16(s, LmChallengeResponse.MaxLen); /* LmChallengeResponseMaxLen */
+	StreamRead_UINT32(s, LmChallengeResponse.BufferOffset); /* LmChallengeResponseBufferOffset */
 
 	/* NtChallengeResponseFields (8 bytes) */
-	StreamRead_UINT16(s, NtChallengeResponseLen); /* NtChallengeResponseLen */
-	StreamRead_UINT16(s, NtChallengeResponseMaxLen); /* NtChallengeResponseMaxLen */
-	StreamRead_UINT32(s, NtChallengeResponseBufferOffset); /* NtChallengeResponseBufferOffset */
+	StreamRead_UINT16(s, NtChallengeResponse.Len); /* NtChallengeResponseLen */
+	StreamRead_UINT16(s, NtChallengeResponse.MaxLen); /* NtChallengeResponseMaxLen */
+	StreamRead_UINT32(s, NtChallengeResponse.BufferOffset); /* NtChallengeResponseBufferOffset */
 
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 
 	/* DomainNameFields (8 bytes) */
-	StreamRead_UINT16(s, DomainNameLen); /* DomainNameLen */
-	StreamRead_UINT16(s, DomainNameMaxLen); /* DomainNameMaxLen */
-	StreamRead_UINT32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+	StreamRead_UINT16(s, DomainName.Len); /* DomainNameLen */
+	StreamRead_UINT16(s, DomainName.MaxLen); /* DomainNameMaxLen */
+	StreamRead_UINT32(s, DomainName.BufferOffset); /* DomainNameBufferOffset */
 
 	/* UserNameFields (8 bytes) */
-	StreamRead_UINT16(s, UserNameLen); /* UserNameLen */
-	StreamRead_UINT16(s, UserNameMaxLen); /* UserNameMaxLen */
-	StreamRead_UINT32(s, UserNameBufferOffset); /* UserNameBufferOffset */
+	StreamRead_UINT16(s, UserName.Len); /* UserNameLen */
+	StreamRead_UINT16(s, UserName.MaxLen); /* UserNameMaxLen */
+	StreamRead_UINT32(s, UserName.BufferOffset); /* UserNameBufferOffset */
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 
 	/* WorkstationFields (8 bytes) */
-	StreamRead_UINT16(s, WorkstationLen); /* WorkstationLen */
-	StreamRead_UINT16(s, WorkstationMaxLen); /* WorkstationMaxLen */
-	StreamRead_UINT32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+	StreamRead_UINT16(s, Workstation.Len); /* WorkstationLen */
+	StreamRead_UINT16(s, Workstation.MaxLen); /* WorkstationMaxLen */
+	StreamRead_UINT32(s, Workstation.BufferOffset); /* WorkstationBufferOffset */
 
 	/* EncryptedRandomSessionKeyFields (8 bytes) */
-	StreamRead_UINT16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyLen */
-	StreamRead_UINT16(s, EncryptedRandomSessionKeyMaxLen); /* EncryptedRandomSessionKeyMaxLen */
-	StreamRead_UINT32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
+	StreamRead_UINT16(s, EncryptedRandomSessionKey.Len); /* EncryptedRandomSessionKeyLen */
+	StreamRead_UINT16(s, EncryptedRandomSessionKey.MaxLen); /* EncryptedRandomSessionKeyMaxLen */
+	StreamRead_UINT32(s, EncryptedRandomSessionKey.BufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
 
 	StreamRead_UINT32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -754,91 +724,91 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 #endif
 
 	/* DomainName */
-	if (DomainNameLen > 0)
+	if (DomainName.Len > 0)
 	{
-		DomainNameBuffer = s->data + DomainNameBufferOffset;
+		DomainName.Buffer = s->data + DomainName.BufferOffset;
 #ifdef WITH_DEBUG_NTLM
-		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
-		winpr_HexDump(DomainNameBuffer, DomainNameLen);
+		printf("DomainName (length = %d, offset = %d)\n", DomainName.Len, DomainName.BufferOffset);
+		winpr_HexDump(DomainName.Buffer, DomainName.Len);
 		printf("\n");
 #endif
 	}
 
 	/* UserName */
-	if (UserNameLen > 0)
+	if (UserName.Len > 0)
 	{
-		UserNameBuffer = s->data + UserNameBufferOffset;
+		UserName.Buffer = s->data + UserName.BufferOffset;
 #ifdef WITH_DEBUG_NTLM
-		printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
-		winpr_HexDump(UserNameBuffer, UserNameLen);
+		printf("UserName (length = %d, offset = %d)\n", UserName.Len, UserName.BufferOffset);
+		winpr_HexDump(UserName.Buffer, UserName.Len);
 		printf("\n");
 #endif
 	}
 
 	/* Workstation */
-	if (WorkstationLen > 0)
+	if (Workstation.Len > 0)
 	{
-		WorkstationBuffer = s->data + WorkstationBufferOffset;
+		Workstation.Buffer = s->data + Workstation.BufferOffset;
 #ifdef WITH_DEBUG_NTLM
-		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
-		winpr_HexDump(WorkstationBuffer, WorkstationLen);
+		printf("Workstation (length = %d, offset = %d)\n", Workstation.Len, Workstation.BufferOffset);
+		winpr_HexDump(Workstation.Buffer, Workstation.Len);
 		printf("\n");
 #endif
 	}
 
 	/* LmChallengeResponse */
-	if (LmChallengeResponseLen > 0)
+	if (LmChallengeResponse.Len > 0)
 	{
-		LmChallengeResponseBuffer = s->data + LmChallengeResponseBufferOffset;
+		LmChallengeResponse.Buffer = s->data + LmChallengeResponse.BufferOffset;
 #ifdef WITH_DEBUG_NTLM
-		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-		winpr_HexDump(LmChallengeResponseBuffer, LmChallengeResponseLen);
+		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponse.Len, LmChallengeResponse.BufferOffset);
+		winpr_HexDump(LmChallengeResponse.Buffer, LmChallengeResponse.Len);
 		printf("\n");
 #endif
 	}
 
 	/* NtChallengeResponse */
-	if (NtChallengeResponseLen > 0)
+	if (NtChallengeResponse.Len > 0)
 	{
 		BYTE* ClientChallengeBuffer;
 
-		NtChallengeResponseBuffer = s->data + NtChallengeResponseBufferOffset;
+		NtChallengeResponse.Buffer = s->data + NtChallengeResponse.BufferOffset;
 
-		ClientChallengeBuffer = NtChallengeResponseBuffer + 32;
+		ClientChallengeBuffer = NtChallengeResponse.Buffer + 32;
 		CopyMemory(context->ClientChallenge, ClientChallengeBuffer, 8);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
-		winpr_HexDump(NtChallengeResponseBuffer, NtChallengeResponseLen);
+		printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponse.Len, NtChallengeResponse.BufferOffset);
+		winpr_HexDump(NtChallengeResponse.Buffer, NtChallengeResponse.Len);
 		printf("\n");
 #endif
 	}
 
 	/* EncryptedRandomSessionKey */
-	if (EncryptedRandomSessionKeyLen > 0)
+	if (EncryptedRandomSessionKey.Len > 0)
 	{
-		EncryptedRandomSessionKeyBuffer = s->data + EncryptedRandomSessionKeyBufferOffset;
-		CopyMemory(context->EncryptedRandomSessionKey, EncryptedRandomSessionKeyBuffer, 16);
+		EncryptedRandomSessionKey.Buffer = s->data + EncryptedRandomSessionKey.BufferOffset;
+		CopyMemory(context->EncryptedRandomSessionKey, EncryptedRandomSessionKey.Buffer, 16);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
-		winpr_HexDump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+		printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKey.Len, EncryptedRandomSessionKey.BufferOffset);
+		winpr_HexDump(EncryptedRandomSessionKey.Buffer, EncryptedRandomSessionKey.Len);
 		printf("\n");
 #endif
 	}
 
-	if (UserNameLen > 0)
+	if (UserName.Len > 0)
 	{
-		context->identity.User = (UINT16*) malloc(UserNameLen);
-		CopyMemory(context->identity.User, UserNameBuffer, UserNameLen);
-		context->identity.UserLength = UserNameLen;
+		context->identity.User = (UINT16*) malloc(UserName.Len);
+		CopyMemory(context->identity.User, UserName.Buffer, UserName.Len);
+		context->identity.UserLength = UserName.Len;
 	}
 
-	if (DomainNameLen > 0)
+	if (DomainName.Len > 0)
 	{
-		context->identity.Domain = (UINT16*) malloc(DomainNameLen);
-		CopyMemory(context->identity.Domain, DomainNameBuffer, DomainNameLen);
-		context->identity.DomainLength = DomainNameLen;
+		context->identity.Domain = (UINT16*) malloc(DomainName.Len);
+		CopyMemory(context->identity.Domain, DomainName.Buffer, DomainName.Len);
+		context->identity.DomainLength = DomainName.Len;
 	}
 
 	/* LmChallengeResponse */
@@ -935,46 +905,33 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	int length;
 	BYTE* MicOffset = NULL;
 	UINT32 NegotiateFlags = 0;
-
-	UINT16 DomainNameLen;
-	UINT16 UserNameLen;
-	UINT16 WorkstationLen;
-	UINT16 LmChallengeResponseLen;
-	UINT16 NtChallengeResponseLen;
-	UINT16 EncryptedRandomSessionKeyLen;
-
 	UINT32 PayloadBufferOffset;
-	UINT32 DomainNameBufferOffset;
-	UINT32 UserNameBufferOffset;
-	UINT32 WorkstationBufferOffset;
-	UINT32 LmChallengeResponseBufferOffset;
-	UINT32 NtChallengeResponseBufferOffset;
-	UINT32 EncryptedRandomSessionKeyBufferOffset;
+	NTLM_MESSAGE_FIELD DomainName;
+	NTLM_MESSAGE_FIELD UserName;
+	NTLM_MESSAGE_FIELD Workstation;
+	NTLM_MESSAGE_FIELD LmChallengeResponse;
+	NTLM_MESSAGE_FIELD NtChallengeResponse;
+	NTLM_MESSAGE_FIELD EncryptedRandomSessionKey;
 
-	BYTE* UserNameBuffer;
-	BYTE* DomainNameBuffer;
-	BYTE* WorkstationBuffer;
-	BYTE* EncryptedRandomSessionKeyBuffer;
-
-	WorkstationLen = context->WorkstationLength;
-	WorkstationBuffer = (BYTE*) context->Workstation;
+	Workstation.Len = context->WorkstationLength;
+	Workstation.Buffer = (BYTE*) context->Workstation;
 
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
 	if (context->ntlm_v2 < 1)
-		WorkstationLen = 0;
+		Workstation.Len = 0;
 
-	DomainNameLen = (UINT16) context->identity.DomainLength * 2;
-	DomainNameBuffer = (BYTE*) context->identity.Domain;
+	DomainName.Len = (UINT16) context->identity.DomainLength * 2;
+	DomainName.Buffer = (BYTE*) context->identity.Domain;
 
-	UserNameLen = (UINT16) context->identity.UserLength * 2;
-	UserNameBuffer = (BYTE*) context->identity.User;
+	UserName.Len = (UINT16) context->identity.UserLength * 2;
+	UserName.Buffer = (BYTE*) context->identity.User;
 
-	LmChallengeResponseLen = (UINT16) 24;
-	NtChallengeResponseLen = (UINT16) context->NtChallengeResponse.cbBuffer;
+	LmChallengeResponse.Len = (UINT16) 24;
+	NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
 
-	EncryptedRandomSessionKeyLen = 16;
-	EncryptedRandomSessionKeyBuffer = context->EncryptedRandomSessionKey;
+	EncryptedRandomSessionKey.Len = 16;
+	EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
 
 	if (context->ntlm_v2)
 	{
@@ -1014,49 +971,49 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		PayloadBufferOffset += 8;
 
-	DomainNameBufferOffset = PayloadBufferOffset;
-	UserNameBufferOffset = DomainNameBufferOffset + DomainNameLen;
-	WorkstationBufferOffset = UserNameBufferOffset + UserNameLen;
-	LmChallengeResponseBufferOffset = WorkstationBufferOffset + WorkstationLen;
-	NtChallengeResponseBufferOffset = LmChallengeResponseBufferOffset + LmChallengeResponseLen;
-	EncryptedRandomSessionKeyBufferOffset = NtChallengeResponseBufferOffset + NtChallengeResponseLen;
+	DomainName.BufferOffset = PayloadBufferOffset;
+	UserName.BufferOffset = DomainName.BufferOffset + DomainName.Len;
+	Workstation.BufferOffset = UserName.BufferOffset + UserName.Len;
+	LmChallengeResponse.BufferOffset = Workstation.BufferOffset + Workstation.Len;
+	NtChallengeResponse.BufferOffset = LmChallengeResponse.BufferOffset + LmChallengeResponse.Len;
+	EncryptedRandomSessionKey.BufferOffset = NtChallengeResponse.BufferOffset + NtChallengeResponse.Len;
 
 	StreamWrite(s, NTLM_SIGNATURE, 8); /* Signature (8 bytes) */
 	StreamWrite_UINT32(s, MESSAGE_TYPE_AUTHENTICATE); /* MessageType */
 
 	/* LmChallengeResponseFields (8 bytes) */
-	StreamWrite_UINT16(s, LmChallengeResponseLen); /* LmChallengeResponseLen */
-	StreamWrite_UINT16(s, LmChallengeResponseLen); /* LmChallengeResponseMaxLen */
-	StreamWrite_UINT32(s, LmChallengeResponseBufferOffset); /* LmChallengeResponseBufferOffset */
+	StreamWrite_UINT16(s, LmChallengeResponse.Len); /* LmChallengeResponseLen */
+	StreamWrite_UINT16(s, LmChallengeResponse.Len); /* LmChallengeResponseMaxLen */
+	StreamWrite_UINT32(s, LmChallengeResponse.BufferOffset); /* LmChallengeResponseBufferOffset */
 
 	/* NtChallengeResponseFields (8 bytes) */
-	StreamWrite_UINT16(s, NtChallengeResponseLen); /* NtChallengeResponseLen */
-	StreamWrite_UINT16(s, NtChallengeResponseLen); /* NtChallengeResponseMaxLen */
-	StreamWrite_UINT32(s, NtChallengeResponseBufferOffset); /* NtChallengeResponseBufferOffset */
+	StreamWrite_UINT16(s, NtChallengeResponse.Len); /* NtChallengeResponseLen */
+	StreamWrite_UINT16(s, NtChallengeResponse.Len); /* NtChallengeResponseMaxLen */
+	StreamWrite_UINT32(s, NtChallengeResponse.BufferOffset); /* NtChallengeResponseBufferOffset */
 
 	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
 
 	/* DomainNameFields (8 bytes) */
-	StreamWrite_UINT16(s, DomainNameLen); /* DomainNameLen */
-	StreamWrite_UINT16(s, DomainNameLen); /* DomainNameMaxLen */
-	StreamWrite_UINT32(s, DomainNameBufferOffset); /* DomainNameBufferOffset */
+	StreamWrite_UINT16(s, DomainName.Len); /* DomainNameLen */
+	StreamWrite_UINT16(s, DomainName.Len); /* DomainNameMaxLen */
+	StreamWrite_UINT32(s, DomainName.BufferOffset); /* DomainNameBufferOffset */
 
 	/* UserNameFields (8 bytes) */
-	StreamWrite_UINT16(s, UserNameLen); /* UserNameLen */
-	StreamWrite_UINT16(s, UserNameLen); /* UserNameMaxLen */
-	StreamWrite_UINT32(s, UserNameBufferOffset); /* UserNameBufferOffset */
+	StreamWrite_UINT16(s, UserName.Len); /* UserNameLen */
+	StreamWrite_UINT16(s, UserName.Len); /* UserNameMaxLen */
+	StreamWrite_UINT32(s, UserName.BufferOffset); /* UserNameBufferOffset */
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 
 	/* WorkstationFields (8 bytes) */
-	StreamWrite_UINT16(s, WorkstationLen); /* WorkstationLen */
-	StreamWrite_UINT16(s, WorkstationLen); /* WorkstationMaxLen */
-	StreamWrite_UINT32(s, WorkstationBufferOffset); /* WorkstationBufferOffset */
+	StreamWrite_UINT16(s, Workstation.Len); /* WorkstationLen */
+	StreamWrite_UINT16(s, Workstation.Len); /* WorkstationMaxLen */
+	StreamWrite_UINT32(s, Workstation.BufferOffset); /* WorkstationBufferOffset */
 
 	/* EncryptedRandomSessionKeyFields (8 bytes) */
-	StreamWrite_UINT16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyLen */
-	StreamWrite_UINT16(s, EncryptedRandomSessionKeyLen); /* EncryptedRandomSessionKeyMaxLen */
-	StreamWrite_UINT32(s, EncryptedRandomSessionKeyBufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
+	StreamWrite_UINT16(s, EncryptedRandomSessionKey.Len); /* EncryptedRandomSessionKeyLen */
+	StreamWrite_UINT16(s, EncryptedRandomSessionKey.Len); /* EncryptedRandomSessionKeyMaxLen */
+	StreamWrite_UINT32(s, EncryptedRandomSessionKey.BufferOffset); /* EncryptedRandomSessionKeyBufferOffset */
 
 	StreamWrite_UINT32(s, NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -1084,32 +1041,32 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	}
 
 	/* DomainName */
-	if (DomainNameLen > 0)
+	if (DomainName.Len > 0)
 	{
-		StreamWrite(s, DomainNameBuffer, DomainNameLen);
+		StreamWrite(s, DomainName.Buffer, DomainName.Len);
 #ifdef WITH_DEBUG_NTLM
-		printf("DomainName (length = %d, offset = %d)\n", DomainNameLen, DomainNameBufferOffset);
-		winpr_HexDump(DomainNameBuffer, DomainNameLen);
+		printf("DomainName (length = %d, offset = %d)\n", DomainName.Len, DomainName.BufferOffset);
+		winpr_HexDump(DomainName.Buffer, DomainName.Len);
 		printf("\n");
 #endif
 	}
 
 	/* UserName */
-	StreamWrite(s, UserNameBuffer, UserNameLen);
+	StreamWrite(s, UserName.Buffer, UserName.Len);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("UserName (length = %d, offset = %d)\n", UserNameLen, UserNameBufferOffset);
-	winpr_HexDump(UserNameBuffer, UserNameLen);
+	printf("UserName (length = %d, offset = %d)\n", UserName.Len, UserName.BufferOffset);
+	winpr_HexDump(UserName.Buffer, UserName.Len);
 	printf("\n");
 #endif
 
 	/* Workstation */
-	if (WorkstationLen > 0)
+	if (Workstation.Len > 0)
 	{
-		StreamWrite(s, WorkstationBuffer, WorkstationLen);
+		StreamWrite(s, Workstation.Buffer, Workstation.Len);
 #ifdef WITH_DEBUG_NTLM
-		printf("Workstation (length = %d, offset = %d)\n", WorkstationLen, WorkstationBufferOffset);
-		winpr_HexDump(WorkstationBuffer, WorkstationLen);
+		printf("Workstation (length = %d, offset = %d)\n", Workstation.Len, Workstation.BufferOffset);
+		winpr_HexDump(Workstation.Buffer, Workstation.Len);
 		printf("\n");
 #endif
 	}
@@ -1118,21 +1075,21 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->LmCompatibilityLevel < 2)
 	{
-		StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+		StreamWrite(s, context->LmChallengeResponse.pvBuffer, LmChallengeResponse.Len);
 
 #ifdef WITH_DEBUG_NTLM
-		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponseLen, LmChallengeResponseBufferOffset);
-		winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponseLen);
+		printf("LmChallengeResponse (length = %d, offset = %d)\n", LmChallengeResponse.Len, LmChallengeResponse.BufferOffset);
+		winpr_HexDump(context->LmChallengeResponse.pvBuffer, LmChallengeResponse.Len);
 		printf("\n");
 #endif
 	}
 	else
 	{
-		StreamZero(s, LmChallengeResponseLen);
+		StreamZero(s, LmChallengeResponse.Len);
 	}
 
 	/* NtChallengeResponse */
-	StreamWrite(s, context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
+	StreamWrite(s, context->NtChallengeResponse.pvBuffer, NtChallengeResponse.Len);
 
 #ifdef WITH_DEBUG_NTLM
 	if (context->ntlm_v2)
@@ -1146,17 +1103,17 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 #endif
 
 #ifdef WITH_DEBUG_NTLM
-	printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponseLen, NtChallengeResponseBufferOffset);
-	winpr_HexDump(context->NtChallengeResponse.pvBuffer, NtChallengeResponseLen);
+	printf("NtChallengeResponse (length = %d, offset = %d)\n", NtChallengeResponse.Len, NtChallengeResponse.BufferOffset);
+	winpr_HexDump(context->NtChallengeResponse.pvBuffer, NtChallengeResponse.Len);
 	printf("\n");
 #endif
 
 	/* EncryptedRandomSessionKey */
-	StreamWrite(s, EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+	StreamWrite(s, EncryptedRandomSessionKey.Buffer, EncryptedRandomSessionKey.Len);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyBufferOffset);
-	winpr_HexDump(EncryptedRandomSessionKeyBuffer, EncryptedRandomSessionKeyLen);
+	printf("EncryptedRandomSessionKey (length = %d, offset = %d)\n", EncryptedRandomSessionKey.Len, EncryptedRandomSessionKey.BufferOffset);
+	winpr_HexDump(EncryptedRandomSessionKey.Buffer, EncryptedRandomSessionKey.Len);
 	printf("\n");
 #endif
 
