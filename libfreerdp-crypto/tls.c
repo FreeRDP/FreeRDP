@@ -530,6 +530,9 @@ void tls_print_certificate_error(char* hostname, char* fingerprint)
 	printf("It is also possible that a host key has just been changed.\n");
 	printf("The fingerprint for the host key sent by the remote host is\n%s\n", fingerprint);
 	printf("Please contact your system administrator.\n");
+	printf("Add correct host key in ~/.freerdp/known_hosts to get rid of this message.\n");
+	printf("Host key for %s has changed and you have requested strict checking.\n", hostname);
+	printf("Host key verification failed.\n");
 }
 
 void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count)
