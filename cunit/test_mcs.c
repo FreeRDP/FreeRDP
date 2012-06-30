@@ -113,3 +113,5 @@ void test_mcs_write_connect_initial(void)
 
 	stream_free(s);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

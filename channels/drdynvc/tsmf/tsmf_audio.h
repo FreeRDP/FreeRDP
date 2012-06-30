@@ -47,3 +47,5 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
 
 #endif
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

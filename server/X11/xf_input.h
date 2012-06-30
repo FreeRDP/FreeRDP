@@ -32,3 +32,5 @@ void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint
 void xf_input_register_callbacks(rdpInput* input);
 
 #endif /* __XF_INPUT_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

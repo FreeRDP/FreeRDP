@@ -31,3 +31,5 @@ FREERDP_API void* freerdp_load_plugin(const char* name, const char* entry_name);
 FREERDP_API void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const char* entry_name);
 
 #endif /* __LOAD_PLUGIN_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

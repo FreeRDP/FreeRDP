@@ -32,3 +32,5 @@ void ntlm_print_av_pairs(NTLM_CONTEXT* context);
 void ntlm_free_av_pairs(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

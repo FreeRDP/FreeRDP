@@ -429,3 +429,5 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 
 	return processed_size;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -532,3 +532,5 @@ void transport_free(rdpTransport* transport)
 		xfree(transport);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

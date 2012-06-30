@@ -717,3 +717,5 @@ boolean rdp_server_reactivate(rdpRdp* rdp)
 	return true;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -349,3 +349,5 @@ void xf_register_graphics(rdpGraphics* graphics)
 	graphics_register_glyph(graphics, glyph);
 	xfree(glyph);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -77,3 +77,5 @@ struct rdp_print_job
 };
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

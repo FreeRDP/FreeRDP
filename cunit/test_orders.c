@@ -770,3 +770,5 @@ void test_update_recv_orders(void)
 	free(update->context);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

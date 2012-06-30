@@ -94,3 +94,5 @@ void freerdp_thread_free(freerdp_thread* thread)
 
 	xfree(thread);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

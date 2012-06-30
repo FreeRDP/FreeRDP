@@ -63,3 +63,5 @@ int tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman);
 
 #endif
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

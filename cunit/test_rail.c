@@ -889,3 +889,5 @@ void test_rail_plugin(void)
 
 
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

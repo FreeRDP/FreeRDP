@@ -350,3 +350,5 @@ void rfx_init_neon(RFX_CONTEXT * context)
 
 #endif // __ARM_NEON__
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

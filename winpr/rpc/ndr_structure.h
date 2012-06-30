@@ -28,3 +28,5 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 
 #endif /* WINPR_RPC_NDR_STRUCTURE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

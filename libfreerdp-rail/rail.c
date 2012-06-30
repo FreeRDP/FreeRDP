@@ -149,3 +149,5 @@ void rail_free(rdpRail* rail)
 		xfree(rail);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

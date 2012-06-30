@@ -262,3 +262,5 @@ ITSMFAudioDevice* TSMFAudioDeviceEntry(void)
 	return (ITSMFAudioDevice*) alsa;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

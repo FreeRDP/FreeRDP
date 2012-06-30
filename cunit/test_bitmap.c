@@ -1248,3 +1248,5 @@ void test_bitmap(void)
 
 	free(t);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

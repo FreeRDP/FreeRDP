@@ -989,3 +989,5 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 			llib->init_event_proc(llib->init_handle, CHANNEL_EVENT_TERMINATED, 0, 0);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

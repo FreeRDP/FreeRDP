@@ -35,3 +35,5 @@ void credssp_ContextFree(CREDSSP_CONTEXT* context);
 
 #endif /* WINPR_SSPI_CREDSSP_PRIVATE_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

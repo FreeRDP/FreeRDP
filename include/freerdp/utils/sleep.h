@@ -27,3 +27,5 @@ FREERDP_API void freerdp_sleep(uint32 seconds);
 FREERDP_API void freerdp_usleep(uint32 useconds);
 
 #endif /* __SLEEP_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

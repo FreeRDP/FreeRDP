@@ -65,3 +65,5 @@ void key_free(rdpKey* key);
 #endif
 
 #endif /* __CERTIFICATE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

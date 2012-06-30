@@ -213,3 +213,5 @@ void test_gcc_write_client_network_data(void)
 
 	ASSERT_STREAM(s, (uint8*) gcc_client_network_data_expected, sizeof(gcc_client_network_data_expected));
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

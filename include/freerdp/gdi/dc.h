@@ -31,3 +31,5 @@ FREERDP_API int gdi_DeleteObject(HGDIOBJECT hgdiobject);
 FREERDP_API int gdi_DeleteDC(HGDI_DC hdc);
 
 #endif /* __GDI_DC_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

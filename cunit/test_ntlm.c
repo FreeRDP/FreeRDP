@@ -690,3 +690,5 @@ void test_ntlm_decrypt_message(void)
 	CU_ASSERT(public_key_good == 1);
 }
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

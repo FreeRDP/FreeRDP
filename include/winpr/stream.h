@@ -204,3 +204,5 @@ WINPR_API void StreamDetach(PStream s);
 #define StreamRemainingSize(_s)		(_s->size - (_s->p - _s->data))
 
 #endif /* WINPR_UTILS_STREAM_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

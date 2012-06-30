@@ -333,3 +333,5 @@ void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
 	context->decode(context);
 	PROFILER_EXIT(context->priv->prof_nsc_decode);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

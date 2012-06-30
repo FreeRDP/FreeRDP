@@ -135,3 +135,5 @@ FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* s,
 #endif
 
 #endif /* __RFX_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

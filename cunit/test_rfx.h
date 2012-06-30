@@ -32,3 +32,5 @@ void test_dwt(void);
 void test_decode(void);
 void test_encode(void);
 void test_message(void);
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

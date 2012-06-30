@@ -892,3 +892,5 @@ FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, STREAM* s,
 	rfx_compose_message_data(context, s, rects, num_rects, image_data, width, height, rowstride);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

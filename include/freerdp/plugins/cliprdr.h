@@ -72,3 +72,5 @@ struct _RDP_CB_DATA_RESPONSE_EVENT
 typedef struct _RDP_CB_DATA_RESPONSE_EVENT RDP_CB_DATA_RESPONSE_EVENT;
 
 #endif /* __CLIPRDR_PLUGIN */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

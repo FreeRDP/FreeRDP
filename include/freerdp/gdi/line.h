@@ -32,3 +32,5 @@ FREERDP_API int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint);
 typedef int (*p_LineTo)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #endif /* __GDI_LINE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

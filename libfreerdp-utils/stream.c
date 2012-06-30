@@ -110,3 +110,5 @@ void stream_extend(STREAM* stream, int request_size)
 	memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

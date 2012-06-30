@@ -57,3 +57,5 @@ typedef int (FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POIN
 
 #endif /* __RDP_EXTENSION_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

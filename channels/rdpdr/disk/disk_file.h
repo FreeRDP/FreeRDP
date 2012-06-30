@@ -92,3 +92,5 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	const char* path, STREAM* output);
 
 #endif /* __DISK_FILE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

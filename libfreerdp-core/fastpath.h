@@ -120,3 +120,5 @@ rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

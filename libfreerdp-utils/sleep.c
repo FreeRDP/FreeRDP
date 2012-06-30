@@ -55,3 +55,5 @@ void freerdp_usleep(uint32 useconds)
 	while ((t2 - t1) < useconds);
 #endif
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

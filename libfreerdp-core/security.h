@@ -45,3 +45,5 @@ boolean security_fips_decrypt(uint8* data, int length, rdpRdp* rdp);
 boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRdp* rdp);
 
 #endif /* __SECURITY_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

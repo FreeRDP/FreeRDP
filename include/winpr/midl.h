@@ -26,3 +26,5 @@ WINPR_API void* MIDL_user_allocate(size_t cBytes);
 WINPR_API void MIDL_user_free(void* p);
 
 #endif /* WINPR_RPC_MIDL_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

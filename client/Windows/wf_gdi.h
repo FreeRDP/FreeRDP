@@ -32,3 +32,5 @@ void wf_toggle_fullscreen(wfInfo* wfi);
 void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
 #endif /* __WF_GDI_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -69,3 +69,5 @@ INLINE uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
 {
 	return pen->color;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

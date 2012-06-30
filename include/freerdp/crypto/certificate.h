@@ -56,3 +56,5 @@ FREERDP_API int certificate_data_match(rdpCertificateStore* certificate_store, r
 FREERDP_API void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
 
 #endif /* FREERDP_CRYPTO_CERTIFICATE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

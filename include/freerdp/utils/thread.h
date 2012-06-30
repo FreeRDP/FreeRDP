@@ -58,3 +58,5 @@ FREERDP_API void freerdp_thread_free(freerdp_thread* thread);
 #define freerdp_thread_unlock(_t) freerdp_mutex_unlock(_t->mutex)
 
 #endif /* __THREAD_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

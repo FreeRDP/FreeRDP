@@ -108,3 +108,5 @@ void freerdp_mutex_unlock(freerdp_mutex mutex)
 	pthread_mutex_unlock(mutex);
 #endif
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -277,3 +277,5 @@ void tsg_free(rdpTsg* tsg);
 #endif
 
 #endif /* FREERDP_CORE_TSG_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -1680,3 +1680,5 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		sprintf(clientTimeZone->daylightName, "%s", "GMT Daylight Time");
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

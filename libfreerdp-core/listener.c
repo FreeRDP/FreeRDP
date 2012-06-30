@@ -302,3 +302,5 @@ void freerdp_listener_free(freerdp_listener* instance)
 	xfree(instance);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

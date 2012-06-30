@@ -55,3 +55,5 @@ rdpTcp* tcp_new(rdpSettings* settings);
 void tcp_free(rdpTcp* tcp);
 
 #endif /* __TCP_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

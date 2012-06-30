@@ -31,3 +31,5 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 
 #endif /* __RFX_DECODE_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

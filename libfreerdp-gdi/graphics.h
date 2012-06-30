@@ -32,3 +32,5 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 void gdi_register_graphics(rdpGraphics* graphics);
 
 #endif /* __GDI_GRAPHICS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

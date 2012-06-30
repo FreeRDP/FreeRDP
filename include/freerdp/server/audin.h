@@ -93,3 +93,5 @@ FREERDP_API audin_server_context* audin_server_context_new(WTSVirtualChannelMana
 FREERDP_API void audin_server_context_free(audin_server_context* context);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

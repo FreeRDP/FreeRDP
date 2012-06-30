@@ -631,3 +631,5 @@ void update_free(rdpUpdate* update)
 	}
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

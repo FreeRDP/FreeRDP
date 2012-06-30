@@ -80,3 +80,5 @@ void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values)
 	/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
 	rfx_quantization_encode_block(buffer, 4096, 5);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

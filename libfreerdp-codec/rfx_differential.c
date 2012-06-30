@@ -45,3 +45,5 @@ void rfx_differential_encode(sint16* buffer, int buffer_size)
 		n1 = n2;
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

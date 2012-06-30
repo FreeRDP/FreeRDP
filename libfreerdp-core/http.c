@@ -469,3 +469,5 @@ void http_response_free(HttpResponse* http_response)
 		xfree(http_response);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

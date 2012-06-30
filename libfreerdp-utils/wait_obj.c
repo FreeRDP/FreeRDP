@@ -223,3 +223,5 @@ void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count)
 #endif
 	(*count)++;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

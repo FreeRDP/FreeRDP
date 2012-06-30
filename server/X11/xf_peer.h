@@ -52,3 +52,5 @@ struct xf_peer_context
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #endif /* __XF_PEER_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

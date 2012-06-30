@@ -192,3 +192,5 @@ void rfx_dwt_2d_encode(sint16* buffer, sint16* dwt_buffer)
 	rfx_dwt_2d_encode_block(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_encode_block(buffer + 3840, dwt_buffer, 8);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

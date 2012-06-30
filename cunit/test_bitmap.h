@@ -24,3 +24,5 @@ int clean_bitmap_suite(void);
 int add_bitmap_suite(void);
 
 void test_bitmap(void);
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

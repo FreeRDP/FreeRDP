@@ -29,3 +29,5 @@ FREERDP_API int gdi_SetNullClipRgn(HGDI_DC hdc);
 FREERDP_API int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy);
 
 #endif /* __GDI_CLIPPING_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

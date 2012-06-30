@@ -28,3 +28,5 @@ FREERDP_API RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
 FREERDP_API void freerdp_event_free(RDP_EVENT* event);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

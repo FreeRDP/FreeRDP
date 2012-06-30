@@ -523,3 +523,5 @@ boolean tsmf_codec_check_media_type(STREAM* s)
 	return ret;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

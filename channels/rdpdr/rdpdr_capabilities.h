@@ -27,3 +27,5 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, STREAM* data_in);
 void rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
 
 #endif /* __RDPDR_CAPABILITIES_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

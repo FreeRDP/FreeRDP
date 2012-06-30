@@ -26,3 +26,5 @@
 FREERDP_API int freerdp_uds_connect(const char* path);
 
 #endif /* FREERDP_UDS_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

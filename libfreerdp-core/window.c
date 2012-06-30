@@ -339,3 +339,5 @@ void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s)
 		update_recv_desktop_info_order(update, s, &window->orderInfo);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

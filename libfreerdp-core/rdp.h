@@ -199,3 +199,5 @@ void rdp_free(rdpRdp* rdp);
 boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags);
 
 #endif /* __RDP_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

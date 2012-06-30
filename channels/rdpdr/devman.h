@@ -27,3 +27,5 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id);
 
 #endif /* __DEVMAN_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

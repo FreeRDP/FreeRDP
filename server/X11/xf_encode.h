@@ -30,3 +30,5 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 void* xf_monitor_updates(void* param);
 
 #endif /* __XF_ENCODE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

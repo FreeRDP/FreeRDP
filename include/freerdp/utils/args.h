@@ -46,3 +46,5 @@ FREERDP_API int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	ProcessUIArgs ui_callback, void* ui_user_data);
 
 #endif /* __ARGS_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

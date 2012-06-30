@@ -541,3 +541,5 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->SurfaceBits = wf_gdi_surface_bits;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

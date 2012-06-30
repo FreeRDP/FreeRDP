@@ -235,3 +235,5 @@ FREERDP_API uint32 freerdp_detect_keyboard_layout_from_system_locale();
 FREERDP_API const char* freerdp_get_system_locale_name_from_id(uint32 localeId);
 
 #endif /* __FREERDP_LOCALE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

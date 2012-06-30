@@ -82,3 +82,5 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints) \
 }
 
 #endif /* __SVC_PLUGIN_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

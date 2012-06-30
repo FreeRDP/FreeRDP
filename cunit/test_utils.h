@@ -30,3 +30,5 @@ void test_wait_obj(void);
 void test_args(void);
 void test_passphrase_read(void);
 void test_handle_signals(void);
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

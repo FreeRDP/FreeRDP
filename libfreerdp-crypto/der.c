@@ -99,3 +99,5 @@ int der_write_sequence_tag(STREAM* s, int length)
 	return der_write_length(s, length) + 1;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

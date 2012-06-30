@@ -37,3 +37,5 @@ FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string, UNIC
 FREERDP_API void freerdp_string_free(rdpString* string);
 
 #endif /* __STRING_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

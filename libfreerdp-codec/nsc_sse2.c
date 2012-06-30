@@ -343,3 +343,5 @@ void nsc_init_sse2(NSC_CONTEXT* context)
 
 	context->encode = nsc_encode_sse2;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

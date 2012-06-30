@@ -54,3 +54,5 @@ void freerdp_hexdump(uint8* data, int length)
 	}
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

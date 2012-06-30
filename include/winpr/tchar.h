@@ -39,3 +39,5 @@ typedef CHAR		TCHAR;
 #endif
 
 #endif /* WINPR_TCHAR_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

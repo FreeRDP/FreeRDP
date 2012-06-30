@@ -27,3 +27,5 @@ void test_EnumerateSecurityPackages(void);
 void test_QuerySecurityPackageInfo(void);
 void test_AcquireCredentialsHandle(void);
 void test_InitializeSecurityContext(void);
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -43,3 +43,5 @@ FREERDP_API int gdi_PtInRect(HGDI_RECT rc, int x, int y);
 FREERDP_API int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h);
 
 #endif /* __GDI_REGION_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

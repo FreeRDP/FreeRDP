@@ -765,3 +765,5 @@ uint32 freerdp_detect_keyboard_layout_from_system_locale()
 
 	return 0; /* Could not detect the current keyboard layout from locale */
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

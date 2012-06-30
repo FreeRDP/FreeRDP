@@ -1452,3 +1452,5 @@ void mppc_dec_free(struct rdp_mppc_dec* dec)
 	}
 	xfree(dec);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

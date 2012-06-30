@@ -27,3 +27,5 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8*
 void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 #endif /* __GDI_CORE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

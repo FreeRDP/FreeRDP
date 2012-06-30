@@ -24,3 +24,5 @@ int clean_pcap_suite(void);
 int add_pcap_suite(void);
 
 void test_pcap(void);
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

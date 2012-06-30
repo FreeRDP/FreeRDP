@@ -132,3 +132,5 @@ void xf_input_register_callbacks(rdpInput* input)
 	input->MouseEvent = xf_input_mouse_event;
 	input->ExtendedMouseEvent = xf_input_extended_mouse_event;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -342,3 +342,5 @@ enum RDP_EVENT_TYPE_RAIL
 
 #endif /* __RAIL_GLOBAL_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

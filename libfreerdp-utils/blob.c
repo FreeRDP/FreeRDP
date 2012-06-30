@@ -51,3 +51,5 @@ void freerdp_blob_copy(rdpBlob* dstblob, rdpBlob* srcblob)
 	freerdp_blob_alloc(dstblob, srcblob->length);
 	memcpy(dstblob->data, srcblob->data, dstblob->length);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

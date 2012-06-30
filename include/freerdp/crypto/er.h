@@ -86,3 +86,5 @@ FREERDP_API boolean er_read_integer_length(STREAM* s, int* length);
 FREERDP_API int er_skip_integer(sint32 value);
 
 #endif /* FREERDP_CRYPTO_ER_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -199,3 +199,5 @@ typedef NTSTATUS *PNTSTATUS;
 #endif
 
 #endif /* WINPR_WTYPES_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

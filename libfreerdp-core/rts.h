@@ -166,3 +166,5 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu);
 #endif
 
 #endif /* FREERDP_CORE_RTS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

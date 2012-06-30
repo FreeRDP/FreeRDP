@@ -38,3 +38,5 @@ FREERDP_API wchar_t* xwcsdup(const wchar_t* wstr);
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
 
 #endif /* __MEMORY_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

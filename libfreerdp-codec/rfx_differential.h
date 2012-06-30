@@ -26,3 +26,5 @@ void rfx_differential_decode(sint16* buffer, int buffer_size);
 void rfx_differential_encode(sint16* buffer, int buffer_size);
 
 #endif /* __RFX_DIFFERENTIAL_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

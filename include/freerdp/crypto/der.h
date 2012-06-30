@@ -34,3 +34,5 @@ FREERDP_API int der_write_contextual_tag(STREAM* s, uint8 tag, int length, boole
 FREERDP_API void der_write_octet_string(STREAM* s, uint8* oct_str, int length);
 
 #endif /* FREERDP_CRYPTO_DER_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

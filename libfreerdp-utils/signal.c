@@ -114,3 +114,5 @@ int freerdp_handle_signals(void)
 	return 0;
 }
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

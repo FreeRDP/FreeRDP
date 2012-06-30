@@ -95,3 +95,5 @@ IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 
 	return irp;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

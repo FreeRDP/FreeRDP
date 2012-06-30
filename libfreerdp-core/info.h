@@ -88,3 +88,5 @@ boolean rdp_send_client_info(rdpRdp* rdp);
 boolean rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s);
 
 #endif /* __INFO_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -52,3 +52,5 @@ uint16 tpdu_read_data(STREAM* s);
 void tpdu_write_data(STREAM* s);
 
 #endif /* __TPDU_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

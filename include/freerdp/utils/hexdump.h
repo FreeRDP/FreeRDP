@@ -27,3 +27,5 @@
 FREERDP_API void freerdp_hexdump(uint8* data, int length);
 
 #endif /* __UTILS_HEXDUMP_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

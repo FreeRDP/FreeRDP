@@ -197,3 +197,5 @@ FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 sca
 FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode);
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -64,3 +64,5 @@ BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
 }
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

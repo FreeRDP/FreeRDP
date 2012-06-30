@@ -176,3 +176,5 @@ enum RDP_EVENT_CLASS
 };
 
 #endif /* __RDP_TYPES_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

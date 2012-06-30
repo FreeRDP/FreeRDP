@@ -712,3 +712,5 @@ static boolean serial_check_fds(SERIAL_DEVICE* serial)
 
 	return 1;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

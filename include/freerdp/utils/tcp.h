@@ -31,3 +31,5 @@ FREERDP_API int freerdp_tcp_disconnect(int sockfd);
 FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay);
 
 #endif /* FREERDP_TCP_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

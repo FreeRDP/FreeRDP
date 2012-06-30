@@ -49,3 +49,5 @@ void winpr_HexDump(BYTE* data, int length)
 		p += line;
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

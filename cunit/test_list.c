@@ -92,3 +92,5 @@ void test_list(void)
 		xfree(item);
 	list_free(list);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

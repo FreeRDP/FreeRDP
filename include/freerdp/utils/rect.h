@@ -31,3 +31,5 @@ FREERDP_API RECTANGLE_16* freerdp_rectangle_16_new(uint16 left, uint16 top, uint
 FREERDP_API void freerdp_rectangle_16_free(RECTANGLE_16* rectangle_16);
 
 #endif /* __RECT_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

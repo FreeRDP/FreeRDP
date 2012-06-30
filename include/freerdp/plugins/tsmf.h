@@ -62,3 +62,5 @@ typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
 #define RDP_PIXFMT_YV12		0x32315659
 
 #endif /* __TSMF_PLUGIN */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

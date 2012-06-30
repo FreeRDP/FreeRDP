@@ -307,3 +307,5 @@ FREERDP_API const char* freerdp_keyboard_get_virtual_key_code_name(uint32 vkcode
 FREERDP_API uint32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name);
 
 #endif /* __FREERDP_VIRTUAL_KEY_CODES_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

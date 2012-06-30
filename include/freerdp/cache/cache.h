@@ -52,3 +52,5 @@ FREERDP_API rdpCache* cache_new(rdpSettings* settings);
 FREERDP_API void cache_free(rdpCache* cache);
 
 #endif /* __CACHE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

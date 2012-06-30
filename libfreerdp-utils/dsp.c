@@ -612,3 +612,5 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 		xfree(context);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

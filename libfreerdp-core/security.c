@@ -535,3 +535,5 @@ boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRd
 
 	return true;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

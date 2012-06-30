@@ -259,3 +259,5 @@ struct rdp_window_update
 typedef struct rdp_window_update rdpWindowUpdate;
 
 #endif /* __UPDATE_WINDOW_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

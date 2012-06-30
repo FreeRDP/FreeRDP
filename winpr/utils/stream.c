@@ -193,3 +193,5 @@ void StreamDetach(PStream s)
 		s->size = 0;
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

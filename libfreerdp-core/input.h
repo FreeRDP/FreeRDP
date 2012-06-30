@@ -57,3 +57,5 @@ rdpInput* input_new(rdpRdp* rdp);
 void input_free(rdpInput* input);
 
 #endif /* __INPUT_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

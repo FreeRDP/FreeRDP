@@ -36,3 +36,5 @@ FREERDP_API time_t freerdp_get_unix_time_from_windows_time(uint64 windows_time);
 FREERDP_API time_t freerdp_get_unix_time_from_generalized_time(const char* generalized_time);
 
 #endif /* FREERDP_TIME_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

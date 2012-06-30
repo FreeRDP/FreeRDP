@@ -94,3 +94,5 @@ void freerdp_sem_wait(freerdp_sem sem)
 #endif
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

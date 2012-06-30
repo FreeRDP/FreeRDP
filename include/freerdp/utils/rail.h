@@ -34,3 +34,5 @@ FREERDP_API void* rail_clone_order(uint32 event_type, void* order);
 FREERDP_API void  rail_free_cloned_order(uint32 event_type, void* order);
 
 #endif /* __RAIL_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

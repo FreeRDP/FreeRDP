@@ -75,3 +75,5 @@ FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 
 #endif /* __DSP_UTILS_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

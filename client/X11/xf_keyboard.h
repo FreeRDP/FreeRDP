@@ -37,3 +37,5 @@ void xf_kbd_focus_in(xfInfo* xfi);
 boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym);
 
 #endif /* __XF_KEYBOARD_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

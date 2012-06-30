@@ -44,3 +44,5 @@ WINPR_API BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
 
 #endif /* WINPR_UTILS_NTLM_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

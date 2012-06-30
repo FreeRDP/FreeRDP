@@ -27,3 +27,5 @@ void xf_tsmf_uninit(xfInfo* xfi);
 void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event);
 
 #endif /* __XF_TSMF_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

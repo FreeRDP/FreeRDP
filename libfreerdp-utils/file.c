@@ -261,3 +261,5 @@ void freerdp_detect_paths(rdpSettings* settings)
 		printf("development path: %s\n", settings->development_path);
 #endif
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

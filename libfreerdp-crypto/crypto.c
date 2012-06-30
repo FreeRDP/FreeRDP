@@ -560,3 +560,5 @@ void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* re
 
       BIO_free_all(bmem);
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

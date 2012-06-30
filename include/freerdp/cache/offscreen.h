@@ -53,3 +53,5 @@ FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings);
 FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
 
 #endif /* __OFFSCREEN_CACHE_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

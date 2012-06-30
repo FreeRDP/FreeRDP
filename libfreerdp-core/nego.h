@@ -118,3 +118,5 @@ void nego_set_cookie(rdpNego* nego, char* cookie);
 #endif
 
 #endif /* __NEGO_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -171,3 +171,5 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
 boolean rdp_send_confirm_active(rdpRdp* rdp);
 
 #endif /* __CAPABILITIES_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

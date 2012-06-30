@@ -25,3 +25,5 @@ void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id);
 void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, uint16 channel_id);
 
 #endif /* __CHANNEL_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

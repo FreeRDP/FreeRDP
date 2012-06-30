@@ -90,3 +90,5 @@ main()
                         printf("Fail :( at %d : 0x%04x\n",i,HuffCodeLEC[i]);
         return 0;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

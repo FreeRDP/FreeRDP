@@ -66,3 +66,5 @@ boolean rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_reactivate(rdpRdp* rdp);
 
 #endif /* __CONNECTION_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

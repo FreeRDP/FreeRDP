@@ -63,3 +63,5 @@ boolean rdp_server_accept_client_control_pdu(rdpRdp* rdp, STREAM* s);
 boolean rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, STREAM* s);
 
 #endif /* __ACTIVATION_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -393,3 +393,5 @@ void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event)
 }
 
 #endif /* WITH_XV */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

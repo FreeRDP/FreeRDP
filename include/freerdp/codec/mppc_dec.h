@@ -53,3 +53,5 @@ FREERDP_API struct rdp_mppc_dec* mppc_dec_new(void);
 FREERDP_API void mppc_dec_free(struct rdp_mppc_dec* dec);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

@@ -26,3 +26,5 @@ void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values);
 void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values);
 
 #endif /* __RFX_QUANTIZATION_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

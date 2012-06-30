@@ -429,3 +429,5 @@ boolean ber_read_integer_length(STREAM* s, int* length)
 	ber_read_length(s, length);
 	return true;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

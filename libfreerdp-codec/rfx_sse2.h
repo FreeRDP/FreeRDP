@@ -29,3 +29,5 @@ void rfx_init_sse2(RFX_CONTEXT* context);
 #endif
 
 #endif /* __RFX_SSE2_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

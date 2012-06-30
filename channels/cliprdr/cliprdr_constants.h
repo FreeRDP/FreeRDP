@@ -56,3 +56,5 @@
 #define CB_CAN_LOCK_CLIPDATA		0x00000010
 
 #endif /* __CLIPRDR_CONSTANTS */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

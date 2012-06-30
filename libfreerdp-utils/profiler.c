@@ -71,3 +71,5 @@ void profiler_print_footer()
 {
 	printf("|--------------------------------------------------------------------|\n" );
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

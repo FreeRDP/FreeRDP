@@ -276,3 +276,5 @@ void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const
 
 	return entry;
 }
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */

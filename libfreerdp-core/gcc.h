@@ -109,3 +109,5 @@ boolean gcc_read_client_monitor_data(STREAM* s, rdpSettings *settings, uint16 bl
 void gcc_write_client_monitor_data(STREAM* s, rdpSettings *settings);
 
 #endif /* __GCC_H */
+/* Modeline for vim. Don't delete */
+/* vim: cindent:noet:sw=8:ts=8 */
