@@ -672,4 +672,4 @@ void test_handle_signals(void)
 	handle_signals_resets_terminal();
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

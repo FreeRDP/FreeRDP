@@ -2100,4 +2100,4 @@ boolean rdp_send_confirm_active(rdpRdp* rdp)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

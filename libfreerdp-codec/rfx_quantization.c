@@ -81,4 +81,4 @@ void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values)
 	rfx_quantization_encode_block(buffer, 4096, 5);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

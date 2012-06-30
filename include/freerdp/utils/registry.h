@@ -71,4 +71,4 @@ FREERDP_API void registry_free(rdpRegistry* registry);
 
 #endif /* __REGISTRY_UTILS_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

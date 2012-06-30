@@ -46,4 +46,4 @@ void test_gdi_BitBlt_8bpp(void);
 void test_gdi_ClipCoords(void);
 void test_gdi_InvalidateRegion(void);
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

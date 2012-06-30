@@ -91,4 +91,4 @@ void palette_cache_free(rdpPaletteCache* palette_cache)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

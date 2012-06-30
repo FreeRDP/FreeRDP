@@ -26,4 +26,4 @@ void xf_register_graphics(rdpGraphics* graphics);
 
 #endif /* __XF_GRAPHICS_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

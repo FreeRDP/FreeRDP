@@ -186,4 +186,4 @@ void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 	svc_plugin_send((rdpSvcPlugin*)rdpdr, data_out);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

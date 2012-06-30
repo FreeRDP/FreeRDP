@@ -85,4 +85,4 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 
 #endif /* __RFX_BITSTREAM_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

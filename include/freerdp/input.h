@@ -88,4 +88,4 @@ FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16
 
 #endif /* __INPUT_API_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -42,4 +42,4 @@ struct _NSC_CONTEXT_PRIV
 
 #endif /* __NSC_TYPES_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

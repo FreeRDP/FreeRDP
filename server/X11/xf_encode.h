@@ -31,4 +31,4 @@ void* xf_monitor_updates(void* param);
 
 #endif /* __XF_ENCODE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

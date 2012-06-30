@@ -309,4 +309,4 @@ uint32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name)
 	return 0;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

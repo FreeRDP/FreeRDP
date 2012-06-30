@@ -223,4 +223,4 @@ typedef struct rdp_secondary_update rdpSecondaryUpdate;
 
 #endif /* __UPDATE_SECONDARY_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

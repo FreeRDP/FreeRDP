@@ -202,4 +202,4 @@ boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

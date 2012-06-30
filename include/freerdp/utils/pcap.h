@@ -80,4 +80,4 @@ FREERDP_API void pcap_flush(rdpPcap* pcap);
 
 #endif /* __UTILS_PCAP_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

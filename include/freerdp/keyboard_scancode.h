@@ -185,4 +185,4 @@ typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

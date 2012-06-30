@@ -1025,4 +1025,4 @@ int LineTo_8bpp(HGDI_DC hdc, int nXEnd, int nYEnd)
 		return 0;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

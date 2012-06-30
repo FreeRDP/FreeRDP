@@ -339,4 +339,4 @@ boolean rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, STREAM* s)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

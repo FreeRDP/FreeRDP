@@ -36,4 +36,4 @@ FREERDP_API void freerdp_blob_copy(rdpBlob* dstblob, rdpBlob* srcblob);
 
 #endif /* __BLOB_UTILS_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -554,4 +554,4 @@ boolean rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

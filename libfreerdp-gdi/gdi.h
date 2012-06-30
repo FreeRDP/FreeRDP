@@ -28,4 +28,4 @@ void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 #endif /* __GDI_CORE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

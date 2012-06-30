@@ -711,4 +711,4 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	return rts_pdu->header.frag_length;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

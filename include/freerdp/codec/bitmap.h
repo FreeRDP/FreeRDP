@@ -26,4 +26,4 @@ FREERDP_API boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width,
 
 #endif /* __BITMAP_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

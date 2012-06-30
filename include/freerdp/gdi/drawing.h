@@ -33,4 +33,4 @@ FREERDP_API GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
 
 #endif /* __GDI_DRAWING_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

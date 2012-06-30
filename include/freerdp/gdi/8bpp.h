@@ -30,4 +30,4 @@ FREERDP_API int BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 FREERDP_API int PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 FREERDP_API int LineTo_8bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

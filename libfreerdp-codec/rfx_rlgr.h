@@ -27,4 +27,4 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 
 #endif /* __RFX_RLGR_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

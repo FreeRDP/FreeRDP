@@ -440,4 +440,4 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 C
 	return error;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -2990,4 +2990,4 @@ void test_gdi_InvalidateRegion(void)
 	CU_ASSERT(gdi_EqualRgn(invalid, rgn2) == 1);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

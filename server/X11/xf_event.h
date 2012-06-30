@@ -74,4 +74,4 @@ void xf_event_queue_free(xfEventQueue* event_queue);
 
 #endif /* __XF_EVENT_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

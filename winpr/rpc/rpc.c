@@ -26,4 +26,4 @@ void RpcRaiseException(RPC_STATUS exception)
 	printf("RpcRaiseException: 0x%08luX\n", exception);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

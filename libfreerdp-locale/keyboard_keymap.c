@@ -204,4 +204,4 @@ void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names)
 		printf("error: no keyboard mapping available!\n");
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

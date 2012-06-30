@@ -33,4 +33,4 @@ FREERDP_API void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
 
 #endif
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

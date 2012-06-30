@@ -94,4 +94,4 @@ FREERDP_API void audin_server_context_free(audin_server_context* context);
 
 #endif
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

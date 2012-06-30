@@ -51,4 +51,4 @@ void scard_device_control(SCARD_DEVICE*, IRP*);
 
 #endif
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

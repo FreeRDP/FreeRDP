@@ -608,4 +608,4 @@ void xf_process_rail_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
 	}
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

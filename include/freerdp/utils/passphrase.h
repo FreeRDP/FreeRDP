@@ -27,4 +27,4 @@ FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t 
 
 #endif /* __UTILS_PASSPHRASE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

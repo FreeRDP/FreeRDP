@@ -82,4 +82,4 @@ FREERDP_API void freerdp_peer_free(freerdp_peer* client);
 #endif /* __FREERDP_PEER_H */
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

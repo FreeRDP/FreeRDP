@@ -399,4 +399,4 @@ void freerdp_peer_free(freerdp_peer* client)
 	}
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

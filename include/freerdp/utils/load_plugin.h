@@ -32,4 +32,4 @@ FREERDP_API void* freerdp_load_channel_plugin(rdpSettings* settings, const char*
 
 #endif /* __LOAD_PLUGIN_UTILS_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

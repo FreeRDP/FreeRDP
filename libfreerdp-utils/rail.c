@@ -183,4 +183,4 @@ void rail_free_cloned_order(uint32 event_type, void* order)
 	xfree(order);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

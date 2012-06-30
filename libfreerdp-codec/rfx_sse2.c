@@ -668,4 +668,4 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	context->dwt_2d_encode = rfx_dwt_2d_encode_sse2;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

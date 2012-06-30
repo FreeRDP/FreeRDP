@@ -69,4 +69,4 @@ FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
 #endif /* __BITMAP_V2_CACHE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

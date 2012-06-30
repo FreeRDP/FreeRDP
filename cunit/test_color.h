@@ -30,4 +30,4 @@ void test_color_GetRGB16(void);
 void test_color_GetBGR_565(void);
 void test_color_GetBGR16(void);
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

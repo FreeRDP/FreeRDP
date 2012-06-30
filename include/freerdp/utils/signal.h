@@ -35,4 +35,4 @@ FREERDP_API int freerdp_handle_signals(void);
 
 #endif /* __UTILS_SIGNAL_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

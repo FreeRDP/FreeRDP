@@ -27,4 +27,4 @@ void rfx_dwt_2d_encode(sint16* buffer, sint16* dwt_buffer);
 
 #endif /* __RFX_DWT_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

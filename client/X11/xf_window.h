@@ -112,4 +112,4 @@ void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int n
 
 #endif /* __XF_WINDOW_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

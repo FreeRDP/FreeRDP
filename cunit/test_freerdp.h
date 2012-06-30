@@ -42,4 +42,4 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 
 #define ASSERT_STREAM(_s, _data, _length) assert_stream(_s, _data, _length, __FUNCTION__, __LINE__)
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

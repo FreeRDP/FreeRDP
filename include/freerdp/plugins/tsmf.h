@@ -63,4 +63,4 @@ typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
 
 #endif /* __TSMF_PLUGIN */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

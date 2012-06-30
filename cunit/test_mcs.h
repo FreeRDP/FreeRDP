@@ -25,4 +25,4 @@ int add_mcs_suite(void);
 
 void test_mcs_write_connect_initial(void);
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

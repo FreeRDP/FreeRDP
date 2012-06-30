@@ -1321,4 +1321,4 @@ int main(int argc, char* argv[])
 	return exit_code_from_disconnect_reason(g_disconnect_reason);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

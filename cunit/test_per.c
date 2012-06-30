@@ -63,4 +63,4 @@ void test_per_write_object_identifier(void)
 	ASSERT_STREAM(s, (uint8*) per_oid_expected, sizeof(per_oid_expected));
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

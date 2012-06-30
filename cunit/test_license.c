@@ -498,4 +498,4 @@ void test_license_decrypt_platform_challenge(void)
 	ASSERT_STREAM(s, test_platform_challenge, sizeof(test_platform_challenge));
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

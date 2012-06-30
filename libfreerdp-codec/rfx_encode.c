@@ -279,4 +279,4 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const uint8* rgb_data, int width, int 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -76,4 +76,4 @@ void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, u
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

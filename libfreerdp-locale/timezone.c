@@ -1681,4 +1681,4 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	}
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

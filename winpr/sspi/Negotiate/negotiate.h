@@ -51,4 +51,4 @@ void negotiate_ContextFree(NEGOTIATE_CONTEXT* context);
 #endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

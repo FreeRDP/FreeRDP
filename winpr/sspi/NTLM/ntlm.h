@@ -136,4 +136,4 @@ void ntlm_ContextFree(NTLM_CONTEXT* context);
 
 #endif /* FREERDP_SSPI_NTLM_PRIVATE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

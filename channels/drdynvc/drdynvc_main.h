@@ -29,4 +29,4 @@ int drdynvc_push_event(drdynvcPlugin* plugin, RDP_EVENT* event);
 
 #endif
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

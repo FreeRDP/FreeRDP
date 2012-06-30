@@ -222,4 +222,4 @@ enum XF_EXIT_CODE
 
 #endif /* __XFREERDP_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

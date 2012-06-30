@@ -591,4 +591,4 @@ void test_mppc_enc(void)
 	mppc_dec_free(rmppc);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -442,4 +442,4 @@ void reg_print(Reg* reg)
 	}
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -115,4 +115,4 @@ void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, uint16 channe
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

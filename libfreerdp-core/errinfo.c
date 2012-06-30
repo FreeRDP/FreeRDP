@@ -454,4 +454,4 @@ void rdp_print_errinfo(uint32 code)
 }
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -110,4 +110,4 @@ void tpkt_write_header(STREAM* s, uint16 length)
 	stream_write_uint16_be(s, length); /* length */
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

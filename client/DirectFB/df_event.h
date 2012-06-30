@@ -27,4 +27,4 @@ boolean df_event_process(freerdp* instance, DFBEvent* event);
 
 #endif /* __DF_EVENT_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -96,4 +96,4 @@ FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
 
 #endif
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -38,4 +38,4 @@ void test_ntlm_compute_message_integrity_check(void);
 void test_ntlm_encrypt_message(void);
 void test_ntlm_decrypt_message(void);
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -504,4 +504,4 @@ void ntlm_free_av_pairs(NTLM_CONTEXT* context)
 	context->av_pairs = NULL;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

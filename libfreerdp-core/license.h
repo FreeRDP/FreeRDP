@@ -204,4 +204,4 @@ void license_free(rdpLicense* license);
 
 #endif /* __LICENSE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

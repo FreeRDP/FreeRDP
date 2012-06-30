@@ -193,4 +193,4 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	PROFILER_EXIT(context->priv->prof_rfx_decode_rgb);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

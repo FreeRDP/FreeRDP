@@ -298,4 +298,4 @@ FREERDP_API void gdi_free(freerdp* instance);
 
 #endif /* __GDI_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

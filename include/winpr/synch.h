@@ -63,4 +63,4 @@ WINPR_API DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BO
 #endif /* WINPR_SYNCH_H */
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

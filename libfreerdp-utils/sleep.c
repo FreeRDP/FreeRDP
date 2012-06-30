@@ -56,4 +56,4 @@ void freerdp_usleep(uint32 useconds)
 #endif
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -55,4 +55,4 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context);
 
 #endif /* WINPR_AUTH_NTLM_COMPUTE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

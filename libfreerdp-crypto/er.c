@@ -429,4 +429,4 @@ boolean er_read_integer_length(STREAM* s, int* length)
 	return true;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

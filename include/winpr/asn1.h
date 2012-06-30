@@ -382,4 +382,4 @@ WINPR_API ASN1error_e ASN1_GetDecoderOption(ASN1decoding_t pDecoderInfo, ASN1opt
 #endif /* WINPR_ASN1_H */
 
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

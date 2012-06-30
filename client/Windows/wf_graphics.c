@@ -253,4 +253,4 @@ void wf_register_graphics(rdpGraphics* graphics)
 	graphics_register_pointer(graphics, &pointer);
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

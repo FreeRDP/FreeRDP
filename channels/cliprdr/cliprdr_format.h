@@ -33,4 +33,4 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 
 #endif /* __CLIPRDR_FORMAT_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

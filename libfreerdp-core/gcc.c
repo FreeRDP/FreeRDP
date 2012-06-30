@@ -1210,4 +1210,4 @@ void gcc_write_client_monitor_data(STREAM* s, rdpSettings* settings)
 	}
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

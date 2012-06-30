@@ -26,4 +26,4 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
 
 #endif /* __FREERDP_XKB_LAYOUT_IDS_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

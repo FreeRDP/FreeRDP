@@ -33,4 +33,4 @@ typedef int (*p_LineTo)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #endif /* __GDI_LINE_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

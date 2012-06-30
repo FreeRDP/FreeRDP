@@ -46,4 +46,4 @@ FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, ui
 
 #endif /* __UTILS_STOPWATCH_H */
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */

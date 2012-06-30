@@ -659,4 +659,4 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	return ret;
 }
 /* Modeline for vim. Don't delete */
-/* vim: cindent:noet:sw=8:ts=8 */
+/* vim: set cindent:noet:sw=8:ts=8 */
