@@ -147,6 +147,16 @@ struct _NTLM_VERSION_INFO
 };
 typedef struct _NTLM_VERSION_INFO NTLM_VERSION_INFO;
 
+struct _NTLM_RESTRICTION_ENCODING
+{
+	UINT32 Size;
+	UINT32 Z4;
+	UINT32 IntegrityLevel;
+	UINT32 SubjectIntegrityLevel;
+	BYTE MachineId[32];
+};
+typedef struct _NTLM_RESTRICTION_ENCODING NTLM_RESTRICTION_ENCODING;
+
 struct _NTLM_RESPONSE
 {
 	BYTE Response[24];
@@ -236,7 +246,7 @@ struct _NTLM_CONTEXT
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
-	int SendVersionInfo;
+	BOOL SendVersionInfo;
 	BOOL confidentiality;
 	RC4_KEY SendRc4Seal;
 	RC4_KEY RecvRc4Seal;

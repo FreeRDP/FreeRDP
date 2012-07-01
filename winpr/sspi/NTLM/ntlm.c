@@ -86,12 +86,12 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 	if (context != NULL)
 	{
-		context->ntlm_v2 = TRUE;
+		context->ntlm_v2 = FALSE;
 		context->NegotiateFlags = 0;
 		context->SendVersionInfo = TRUE;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
-		context->SuppressExtendedProtection = 1;
+		context->SuppressExtendedProtection = TRUE;
 		context->av_pairs = (AV_PAIRS*) malloc(sizeof(AV_PAIRS));
 		ZeroMemory(context->av_pairs, sizeof(AV_PAIRS));
 	}

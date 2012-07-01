@@ -219,8 +219,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 
 #ifdef WITH_DEBUG_NTLM
-	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->data, length);
+	printf("NEGOTIATE_MESSAGE (length = %d)\n", (int) context->NegotiateMessage.cbBuffer);
+	winpr_HexDump(context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
 	printf("\n");
 
 	ntlm_print_negotiate_flags(message.NegotiateFlags);
@@ -353,7 +353,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	/* TargetNameFields (8 bytes) */
 	ntlm_read_message_fields(s, &(message.TargetName));
 
-	StreamRead_UINT32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+	StreamRead_UINT32(s, message.NegotiateFlags); /* NegotiateFlags (4 bytes) */
+	context->NegotiateFlags = message.NegotiateFlags;
 
 	StreamRead(s, message.ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	CopyMemory(context->ServerChallenge, message.ServerChallenge, 8);
@@ -602,10 +603,16 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 {
 	PStream s;
 	int length;
-	UINT32 flags = 0;
+	UINT32 flags;
+	UINT32 MicOffset;
+	NTLM_AV_PAIR* AvFlags;
 	NTLMv2_RESPONSE response;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE message;
+
+	flags = 0;
+	MicOffset = 0;
+	AvFlags = NULL;
 
 	ZeroMemory(&message, sizeof(message));
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
@@ -664,11 +671,15 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message.NtChallengeResponse.Len > 0)
 	{
-		NTLM_AV_PAIR* AvFlags;
-
 		PStream s = PStreamAllocAttach(message.NtChallengeResponse.Buffer, message.NtChallengeResponse.Len);
 		ntlm_read_ntlm_v2_response(s, &response);
 		PStreamFreeDetach(s);
+
+		context->NtChallengeResponse.pvBuffer = message.NtChallengeResponse.Buffer;
+		context->NtChallengeResponse.cbBuffer = message.NtChallengeResponse.Len;
+
+		context->TargetInfo.pvBuffer = (void*) response.Challenge.AvPairs;
+		context->TargetInfo.cbBuffer = message.NtChallengeResponse.Len - (28 + 16);
 
 		CopyMemory(context->ClientChallenge, response.Challenge.ClientChallenge, 8);
 
@@ -682,25 +693,23 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_read_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
 	CopyMemory(context->EncryptedRandomSessionKey, message.EncryptedRandomSessionKey.Buffer, 16);
 
-	StreamSetOffset(s, PayloadBufferOffset);
-
-	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
-	{
-		StreamRead(s, message.MessageIntegrityCheck, 16);
-		PayloadBufferOffset += 16;
-	}
-
-	/* move to end of stream, incorrectly assumes the EncryptedRandomSessionKey buffer is last */
-	StreamSetOffset(s, message.EncryptedRandomSessionKey.BufferOffset + message.EncryptedRandomSessionKey.Len);
-
 	length = StreamSize(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
 	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
 	buffer->cbBuffer = length;
 
+	StreamSetOffset(s, PayloadBufferOffset);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		MicOffset = StreamGetOffset(s);
+		StreamRead(s, message.MessageIntegrityCheck, 16);
+		PayloadBufferOffset += 16;
+	}
+
 #ifdef WITH_DEBUG_NTLM
-	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->data, length);
+	printf("AUTHENTICATE_MESSAGE (length = %d)\n", (int) context->AuthenticateMessage.cbBuffer);
+	winpr_HexDump(context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
 	printf("\n");
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -750,6 +759,25 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	/* ExportedSessionKey */
 	ntlm_generate_exported_session_key(context);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[MicOffset], 16);
+		ntlm_compute_message_integrity_check(context);
+		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[MicOffset], message.MessageIntegrityCheck, 16);
+
+		if (memcmp(context->MessageIntegrityCheck, message.MessageIntegrityCheck, 16) != 0)
+		{
+			printf("Message Integrity Check (MIC) verification failed!\n");
+
+			printf("Expected MIC:\n");
+			winpr_HexDump(context->MessageIntegrityCheck, 16);
+			printf("Actual MIC:\n");
+			winpr_HexDump(message.MessageIntegrityCheck, 16);
+
+			//return SEC_E_MESSAGE_ALTERED;
+		}
+	}
 
 	/* Generate signing keys */
 	ntlm_generate_client_signing_key(context);
