@@ -209,10 +209,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_read_message_fields(s, &(message.Workstation));
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-	{
-		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
 		ntlm_read_version_info(s, &(message.Version)); /* Version (8 bytes) */
-	}
 
 	length = StreamSize(s);
 	buffer->cbBuffer = length;
@@ -225,6 +222,11 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
 	winpr_HexDump(s->data, length);
 	printf("\n");
+
+	ntlm_print_negotiate_flags(message.NegotiateFlags);
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_print_version_info(&(message.Version));
 #endif
 
 	context->state = NTLM_STATE_CHALLENGE;
@@ -244,9 +246,6 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_NEGOTIATE);
-
-	/* Message Header (12 bytes) */
-	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
 	if (context->ntlm_v2)
 	{
@@ -275,6 +274,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 	}
 
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_get_version_info(&(message.Version));
+
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
@@ -282,6 +284,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
 
 	context->NegotiateFlags = message.NegotiateFlags;
+
+	/* Message Header (12 bytes) */
+	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
 	StreamWrite_UINT32(s, message.NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -296,18 +301,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	ntlm_write_message_fields(s, &(message.Workstation));
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-	{
-		/* Only present if NTLMSSP_NEGOTIATE_VERSION is set */
-
-		ntlm_get_version_info(&(message.Version));
 		ntlm_write_version_info(s, &(message.Version));
-
-#ifdef WITH_DEBUG_NTLM
-		printf("Version (length = 8)\n");
-		winpr_HexDump((s->p - 8), 8);
-		printf("\n");
-#endif
-	}
 
 	length = StreamSize(s);
 	buffer->cbBuffer = length;
@@ -320,6 +314,9 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
 	winpr_HexDump(s->data, length);
 	printf("\n");
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_print_version_info(&(message.Version));
 #endif
 
 	context->state = NTLM_STATE_CHALLENGE;
@@ -523,20 +520,22 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	/* ServerChallenge */
 	CopyMemory(message.ServerChallenge, context->ServerChallenge, 8);
 
+	message.NegotiateFlags = context->NegotiateFlags;
+
 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_CHALLENGE);
 
 	/* Message Header (12 bytes) */
 	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
-	if (context->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
+	if (message.NegotiateFlags & NTLMSSP_REQUEST_TARGET)
 	{
 		message.TargetName.Len = (UINT16) context->TargetName.cbBuffer;
 		message.TargetName.Buffer = context->TargetName.pvBuffer;
 	}
 
-	context->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+	message.NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
 
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 	{
 		message.TargetInfo.Len = (UINT16) context->TargetInfo.cbBuffer;
 		message.TargetInfo.Buffer = context->TargetInfo.pvBuffer;
@@ -544,7 +543,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	PayloadOffset = 48;
 
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		PayloadOffset += 8;
 
 	message.TargetName.BufferOffset = PayloadOffset;
@@ -553,7 +552,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	/* TargetNameFields (8 bytes) */
 	ntlm_write_message_fields(s, &(message.TargetName));
 
-	StreamWrite_UINT32(s, context->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+	StreamWrite_UINT32(s, message.NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	StreamWrite(s, message.ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	StreamWrite(s, message.Reserved, 8); /* Reserved (8 bytes), should be ignored */
@@ -561,15 +560,15 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	/* TargetInfoFields (8 bytes) */
 	ntlm_write_message_fields(s, &(message.TargetInfo));
 
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_write_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
 	/* Payload (variable) */
 
-	if (context->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
+	if (message.NegotiateFlags & NTLMSSP_REQUEST_TARGET)
 		ntlm_write_message_fields_buffer(s, &(message.TargetName));
 
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 		ntlm_write_message_fields_buffer(s, &(message.TargetInfo));
 
 	length = StreamSize(s);
@@ -583,7 +582,9 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	printf("\n");
 
-	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+	ntlm_print_negotiate_flags(message.NegotiateFlags);
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_print_version_info(&(message.Version));
 
 	ntlm_print_message_fields(&(message.TargetName), "TargetName");
@@ -601,6 +602,9 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 {
 	PStream s;
 	int length;
+	UINT32 flags = 0;
+	NTLMv2_RESPONSE response;
+	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE message;
 
 	ZeroMemory(&message, sizeof(message));
@@ -641,10 +645,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_read_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
-	length = StreamSize(s);
-	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
-	buffer->cbBuffer = length;
+	PayloadBufferOffset = StreamGetOffset(s);
 
 	/* DomainName */
 	ntlm_read_message_fields_buffer(s, &(message.DomainName));
@@ -663,14 +664,39 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message.NtChallengeResponse.Len > 0)
 	{
-		BYTE* ClientChallengeBuffer;
-		ClientChallengeBuffer = message.NtChallengeResponse.Buffer + 32;
-		CopyMemory(context->ClientChallenge, ClientChallengeBuffer, 8);
+		NTLM_AV_PAIR* AvFlags;
+
+		PStream s = PStreamAllocAttach(message.NtChallengeResponse.Buffer, message.NtChallengeResponse.Len);
+		ntlm_read_ntlm_v2_response(s, &response);
+		PStreamFreeDetach(s);
+
+		CopyMemory(context->ClientChallenge, response.Challenge.ClientChallenge, 8);
+
+		AvFlags = ntlm_av_pair_get(response.Challenge.AvPairs, MsvAvFlags);
+
+		if (AvFlags != NULL)
+			flags = *((UINT32*) ntlm_av_pair_get_value_pointer(AvFlags));
 	}
 
 	/* EncryptedRandomSessionKey */
 	ntlm_read_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
 	CopyMemory(context->EncryptedRandomSessionKey, message.EncryptedRandomSessionKey.Buffer, 16);
+
+	StreamSetOffset(s, PayloadBufferOffset);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		StreamRead(s, message.MessageIntegrityCheck, 16);
+		PayloadBufferOffset += 16;
+	}
+
+	/* move to end of stream, incorrectly assumes the EncryptedRandomSessionKey buffer is last */
+	StreamSetOffset(s, message.EncryptedRandomSessionKey.BufferOffset + message.EncryptedRandomSessionKey.Len);
+
+	length = StreamSize(s);
+	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
+	buffer->cbBuffer = length;
 
 #ifdef WITH_DEBUG_NTLM
 	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
@@ -686,6 +712,14 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_print_message_fields(&(message.LmChallengeResponse), "LmChallengeResponse");
 	ntlm_print_message_fields(&(message.NtChallengeResponse), "NtChallengeResponse");
 	ntlm_print_message_fields(&(message.EncryptedRandomSessionKey), "EncryptedRandomSessionKey");
+
+	ntlm_print_av_pair_list(response.Challenge.AvPairs);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		printf("MessageIntegrityCheck:\n");
+		winpr_HexDump(message.MessageIntegrityCheck, 16);
+	}
 #endif
 
 	if (message.UserName.Len > 0)
@@ -835,8 +869,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->ntlm_v2 < 1)
 		message.Workstation.Len = 0;
 
+	if (message.Workstation.Len > 0)
+		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+
 	message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
 	message.DomainName.Buffer = (BYTE*) context->identity.Domain;
+
+	if (message.DomainName.Len > 0)
+		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
 
 	message.UserName.Len = (UINT16) context->identity.UserLength * 2;
 	message.UserName.Buffer = (BYTE*) context->identity.User;
@@ -853,10 +893,10 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
+	PayloadBufferOffset = 64;
+
 	if (context->ntlm_v2)
-		PayloadBufferOffset = 80; /* starting buffer offset */
-	else
-		PayloadBufferOffset = 64; /* starting buffer offset */
+		PayloadBufferOffset += 16; /* Message Integrity Check */
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		PayloadBufferOffset += 8;

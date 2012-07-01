@@ -86,9 +86,9 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 	if (context != NULL)
 	{
-		context->ntlm_v2 = FALSE;
+		context->ntlm_v2 = TRUE;
 		context->NegotiateFlags = 0;
-		context->SendVersionInfo = 0;
+		context->SendVersionInfo = TRUE;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
 		context->SuppressExtendedProtection = 1;

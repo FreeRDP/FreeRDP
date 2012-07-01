@@ -103,6 +103,51 @@ void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 	printf("\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
 }
 
+void ntlm_read_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* challenge)
+{
+	size_t size;
+
+	StreamRead_UINT8(s, challenge->RespType);
+	StreamRead_UINT8(s, challenge->HiRespType);
+	StreamRead_UINT16(s, challenge->Reserved1);
+	StreamRead_UINT32(s, challenge->Reserved2);
+	StreamRead(s, challenge->Timestamp, 8);
+	StreamRead(s, challenge->ClientChallenge, 8);
+	StreamRead_UINT32(s, challenge->Reserved3);
+
+	size = StreamRemainingSize(s);
+	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
+	StreamRead(s, challenge->AvPairs, size);
+}
+
+void ntlm_write_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* challenge)
+{
+	ULONG length;
+
+	StreamWrite_UINT8(s, challenge->RespType);
+	StreamWrite_UINT8(s, challenge->HiRespType);
+	StreamWrite_UINT16(s, challenge->Reserved1);
+	StreamWrite_UINT32(s, challenge->Reserved2);
+	StreamWrite(s, challenge->Timestamp, 8);
+	StreamWrite(s, challenge->ClientChallenge, 8);
+	StreamWrite_UINT32(s, challenge->Reserved3);
+
+	length = ntlm_av_pair_list_length(challenge->AvPairs);
+	StreamWrite(s, challenge->AvPairs, length);
+}
+
+void ntlm_read_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
+{
+	StreamRead(s, response->Response, 16);
+	ntlm_read_ntlm_v2_client_challenge(s, &(response->Challenge));
+}
+
+void ntlm_write_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
+{
+	StreamWrite(s, response->Response, 16);
+	ntlm_write_ntlm_v2_client_challenge(s, &(response->Challenge));
+}
+
 /**
  * Output Restriction_Encoding.\n
  * Restriction_Encoding @msdn{cc236647}
