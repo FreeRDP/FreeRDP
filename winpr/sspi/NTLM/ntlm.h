@@ -81,6 +81,13 @@ enum _NTLM_STATE
 };
 typedef enum _NTLM_STATE NTLM_STATE;
 
+struct _NTLM_AV_PAIR
+{
+	UINT16 AvId;
+	UINT16 AvLen;
+};
+typedef struct _NTLM_AV_PAIR NTLM_AV_PAIR;
+
 struct _AV_PAIR
 {
 	UINT16 length;
@@ -136,6 +143,32 @@ struct _NTLM_VERSION_INFO
 };
 typedef struct _NTLM_VERSION_INFO NTLM_VERSION_INFO;
 
+struct _NTLM_RESPONSE
+{
+	BYTE Response[24];
+};
+typedef struct _NTLM_RESPONSE NTLM_RESPONSE;
+
+struct _NTLMv2_CLIENT_CHALLENGE
+{
+	UINT8 RespType;
+	UINT8 HiRespType;
+	UINT16 Reserved1;
+	UINT32 Reserved2;
+	BYTE Timestamp[8];
+	BYTE ClientChallenge[8];
+	UINT32 Reserved3;
+	NTLM_AV_PAIR* AvPairs;
+};
+typedef struct _NTLMv2_CLIENT_CHALLENGE NTLMv2_CLIENT_CHALLENGE;
+
+struct _NTLMv2_RESPONSE
+{
+	BYTE Response[16];
+	NTLMv2_CLIENT_CHALLENGE Challenge;
+};
+typedef struct _NTLMv2_RESPONSE NTLMv2_RESPONSE;
+
 struct _NTLM_MESSAGE_FIELDS
 {
 	UINT16 Len;
@@ -169,6 +202,7 @@ struct _NTLM_CHALLENGE_MESSAGE
 	UINT32 MessageType;
 	UINT32 NegotiateFlags;
 	BYTE ServerChallenge[8];
+	BYTE Reserved[8];
 	NTLM_VERSION_INFO Version;
 	NTLM_MESSAGE_FIELDS TargetName;
 	NTLM_MESSAGE_FIELDS TargetInfo;

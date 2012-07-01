@@ -65,6 +65,7 @@ void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 		GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
 		TargetName = malloc(nSize);
 		GetComputerNameExA(ComputerNameDnsHostname, TargetName, &nSize);
+		CharUpperA(TargetName);
 	}
 
 	context->TargetName.cbBuffer = strlen(TargetName) * 2;

@@ -24,6 +24,16 @@
 
 #include <winpr/stream.h>
 
+void ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList);
+ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength);
+PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair);
+int ntlm_av_pair_get_next_offset(NTLM_AV_PAIR* pAvPair);
+NTLM_AV_PAIR* ntlm_av_pair_get_next_pointer(NTLM_AV_PAIR* pAvPair);
+NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, LONG AvPairListSize);
+NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, PUNICODE_STRING pValue, LONG AvPairListSize);
+
+void ntlm_construct_server_target_info(NTLM_CONTEXT* context);
+
 void ntlm_input_av_pairs(NTLM_CONTEXT* context, PStream s);
 void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer);
 void ntlm_populate_av_pairs(NTLM_CONTEXT* context);

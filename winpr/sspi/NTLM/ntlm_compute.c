@@ -57,6 +57,21 @@ void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
+ * Read VERSION structure.\n
+ * VERSION @msdn{cc236654}
+ * @param s
+ */
+
+void ntlm_read_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
+{
+	StreamRead_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
+	StreamRead_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
+	StreamRead_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
+	StreamRead(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
+	StreamRead_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
+}
+
+/**
  * Write VERSION structure.\n
  * VERSION @msdn{cc236654}
  * @param s
@@ -64,17 +79,28 @@ void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 
 void ntlm_write_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
 {
-	OSVERSIONINFOA osVersionInfo;
+	StreamWrite_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
+	StreamWrite_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
+	StreamWrite_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
+	StreamWrite(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
+	StreamWrite_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
+}
 
-	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+/**
+ * Print VERSION structure.\n
+ * VERSION @msdn{cc236654}
+ * @param s
+ */
 
-	GetVersionExA(&osVersionInfo);
-
-	StreamWrite_UINT8(s, osVersionInfo.dwMajorVersion); /* ProductMajorVersion (1 byte) */
-	StreamWrite_UINT8(s, osVersionInfo.dwMinorVersion); /* ProductMinorVersion (1 byte) */
-	StreamWrite_UINT16(s, osVersionInfo.dwBuildNumber); /* ProductBuild (2 bytes) */
-	StreamZero(s, 3); /* Reserved (3 bytes) */
-	StreamWrite_UINT8(s, NTLMSSP_REVISION_W2K3); /* NTLMRevisionCurrent (1 byte) */
+void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
+{
+	printf("VERSION =\n{\n");
+	printf("\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
+	printf("\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
+	printf("\tProductBuild: %d\n", versionInfo->ProductBuild);
+	printf("\tReserved: 0x%02X%02X%02X\n", versionInfo->Reserved[0],
+			versionInfo->Reserved[1], versionInfo->Reserved[2]);
+	printf("\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
 }
 
 /**

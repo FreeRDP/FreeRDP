@@ -43,6 +43,78 @@ const char* const AV_PAIRS_STRINGS[] =
 	"MsvChannelBindings"
 };
 
+void ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList)
+{
+	NTLM_AV_PAIR* pAvPair = pAvPairList;
+
+	pAvPair->AvId = MsvAvEOL;
+	pAvPair->AvLen = 0;
+}
+
+ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength)
+{
+	/* size of headers + value lengths + terminating MsvAvEOL AV_PAIR */
+	return (AvPairsCount + 1) * sizeof(NTLM_AV_PAIR) + AvPairsValueLength;
+}
+
+PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair)
+{
+	return &((PBYTE) pAvPair)[sizeof(NTLM_AV_PAIR)];
+}
+
+int ntlm_av_pair_get_next_offset(NTLM_AV_PAIR* pAvPair)
+{
+	return pAvPair->AvLen + sizeof(NTLM_AV_PAIR);
+}
+
+NTLM_AV_PAIR* ntlm_av_pair_get_next_pointer(NTLM_AV_PAIR* pAvPair)
+{
+	return (NTLM_AV_PAIR*) ((PBYTE) pAvPair + ntlm_av_pair_get_next_offset(pAvPair));
+}
+
+NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, LONG AvPairListSize)
+{
+	NTLM_AV_PAIR* pAvPair = pAvPairList;
+
+	if (!pAvPair)
+		return NULL;
+
+	while (1)
+	{
+		if (pAvPair->AvId == AvId)
+			return pAvPair;
+
+		if (pAvPair->AvId == MsvAvEOL)
+			return NULL;
+
+		AvPairListSize -= ntlm_av_pair_get_next_offset(pAvPair);
+
+		if (AvPairListSize <= 0)
+			return NULL;
+
+		pAvPair = ntlm_av_pair_get_next_pointer(pAvPair);
+	}
+
+	return NULL;
+}
+
+NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, PUNICODE_STRING pValue, LONG AvPairListSize)
+{
+	NTLM_AV_PAIR* pAvPair;
+
+	pAvPair = ntlm_av_pair_get(pAvPairList, MsvAvEOL, AvPairListSize);
+
+	if (!pAvPair)
+		return NULL;
+
+	pAvPair->AvId = AvId;
+	pAvPair->AvLen = pValue->Length;
+
+	CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), pValue->Buffer, pValue->Length);
+
+	return pAvPair;
+}
+
 /**
  * Input array of AV_PAIRs.\n
  * AV_PAIR @msdn{cc236646}
@@ -322,74 +394,65 @@ void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
 	ntlm_output_av_pairs(context, &context->TargetInfo);
 }
 
-/**
- * Populate array of AV_PAIRs (server).\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- */
+void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
+{
+	char* name;
+	DWORD nSize = 0;
 
-void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context)
+	GetComputerNameExA(type, NULL, &nSize);
+	name = malloc(nSize);
+	GetComputerNameExA(type, name, &nSize);
+
+	if (type == ComputerNameNetBIOS)
+		CharUpperA(name);
+
+	pName->Length = strlen(name) * 2;
+	pName->Buffer = (PWSTR) malloc(pName->Length);
+	MultiByteToWideChar(CP_ACP, 0, name, strlen(name),
+			(LPWSTR) pName->Buffer, pName->Length / 2);
+
+	pName->MaximumLength = pName->Length;
+
+	free(name);
+}
+
+void ntlm_construct_server_target_info(NTLM_CONTEXT* context)
 {
 	int length;
-	DWORD nSize;
-	AV_PAIRS* av_pairs;
-	char* NbDomainName;
-	char* NbComputerName;
-	char* DnsDomainName;
-	char* DnsComputerName;
+	ULONG AvPairsCount;
+	ULONG AvPairsLength;
+	LONG AvPairListSize;
+	NTLM_AV_PAIR* pAvPairList;
+	UNICODE_STRING NbDomainName;
+	UNICODE_STRING NbComputerName;
+	UNICODE_STRING DnsDomainName;
+	UNICODE_STRING DnsComputerName;
+	UNICODE_STRING Timestamp;
 
-	av_pairs = context->av_pairs;
+	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
+	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
+	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
+	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
 
-	nSize = 0;
-	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-	NbDomainName = malloc(nSize);
-	GetComputerNameExA(ComputerNameNetBIOS, NbDomainName, &nSize);
-	CharUpperA(NbDomainName);
+	Timestamp.Buffer = (PWSTR) context->Timestamp;
+	Timestamp.Length = sizeof(context->Timestamp);
 
-	nSize = 0;
-	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-	NbComputerName = malloc(nSize);
-	GetComputerNameExA(ComputerNameNetBIOS, NbComputerName, &nSize);
-	CharUpperA(NbComputerName);
+	AvPairsCount = 5;
+	AvPairsLength = NbDomainName.Length + NbComputerName.Length +
+			DnsDomainName.Length + DnsComputerName.Length + 8;
 
-	nSize = 0;
-	GetComputerNameExA(ComputerNameDnsDomain, NULL, &nSize);
-	DnsDomainName = malloc(nSize);
-	GetComputerNameExA(ComputerNameDnsDomain, DnsDomainName, &nSize);
-
-	nSize = 0;
-	GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
-	DnsComputerName = malloc(nSize);
-	GetComputerNameExA(ComputerNameDnsHostname, DnsComputerName, &nSize);
-
-	av_pairs->NbDomainName.length = strlen(NbDomainName) * 2;
-	av_pairs->NbDomainName.value = (BYTE*) malloc(av_pairs->NbDomainName.length);
-	MultiByteToWideChar(CP_ACP, 0, NbDomainName, strlen(NbDomainName),
-			(LPWSTR) av_pairs->NbDomainName.value, av_pairs->NbDomainName.length / 2);
-
-	av_pairs->NbComputerName.length = strlen(NbDomainName) * 2;
-	av_pairs->NbComputerName.value = (BYTE*) malloc(av_pairs->NbComputerName.length);
-	MultiByteToWideChar(CP_ACP, 0, NbComputerName, strlen(NbComputerName),
-			(LPWSTR) av_pairs->NbComputerName.value, av_pairs->NbComputerName.length / 2);
-
-	av_pairs->DnsDomainName.length = strlen(DnsDomainName) * 2;
-	av_pairs->DnsDomainName.value = (BYTE*) malloc(av_pairs->DnsDomainName.length);
-	MultiByteToWideChar(CP_ACP, 0, DnsDomainName, strlen(DnsDomainName),
-			(LPWSTR) av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length / 2);
-
-	av_pairs->DnsComputerName.length = strlen(DnsComputerName) * 2;
-	av_pairs->DnsComputerName.value = (BYTE*) malloc(av_pairs->DnsComputerName.length);
-	MultiByteToWideChar(CP_ACP, 0, DnsComputerName, strlen(DnsComputerName),
-			(LPWSTR) av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length / 2);
-
-	length = ntlm_compute_av_pairs_length(context) + 4;
+	length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
 	sspi_SecBufferAlloc(&context->TargetInfo, length);
-	ntlm_output_av_pairs(context, &context->TargetInfo);
 
-	free(NbDomainName);
-	free(NbComputerName);
-	free(DnsDomainName);
-	free(DnsComputerName);
+	pAvPairList = (NTLM_AV_PAIR*) context->TargetInfo.pvBuffer;
+	AvPairListSize = (ULONG) context->TargetInfo.cbBuffer;
+
+	ntlm_av_pair_list_init(pAvPairList);
+	ntlm_av_pair_add(pAvPairList, MsvAvNbDomainName, &NbDomainName, AvPairListSize);
+	ntlm_av_pair_add(pAvPairList, MsvAvNbComputerName, &NbComputerName, AvPairListSize);
+	ntlm_av_pair_add(pAvPairList, MsvAvDnsDomainName, &DnsDomainName, AvPairListSize);
+	ntlm_av_pair_add(pAvPairList, MsvAvDnsComputerName, &DnsComputerName, AvPairListSize);
+	ntlm_av_pair_add(pAvPairList, MsvAvTimestamp, &Timestamp, AvPairListSize);
 }
 
 /**
