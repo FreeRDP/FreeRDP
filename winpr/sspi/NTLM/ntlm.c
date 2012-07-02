@@ -47,10 +47,10 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
 	}
 
-	context->WorkstationLength = strlen(Workstation) * 2;
-	context->Workstation = (UINT16*) malloc(context->WorkstationLength);
+	context->Workstation.Length = strlen(Workstation) * 2;
+	context->Workstation.Buffer = (PWSTR) malloc(context->Workstation.Length);
 	MultiByteToWideChar(CP_ACP, 0, Workstation, strlen(Workstation),
-			(LPWSTR) context->Workstation, context->WorkstationLength / 2);
+			context->Workstation.Buffer, context->Workstation.Length / 2);
 
 	if (nSize > 0)
 		free(Workstation);
@@ -86,14 +86,16 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 	if (context != NULL)
 	{
-		context->ntlm_v2 = FALSE;
+		context->NTLMv2 = TRUE;
+		context->UseMIC = FALSE;
 		context->NegotiateFlags = 0;
 		context->SendVersionInfo = TRUE;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
 		context->SuppressExtendedProtection = TRUE;
-		context->av_pairs = (AV_PAIRS*) malloc(sizeof(AV_PAIRS));
-		ZeroMemory(context->av_pairs, sizeof(AV_PAIRS));
+
+		if (context->NTLMv2)
+			context->UseMIC = TRUE;
 	}
 
 	return context;
@@ -107,7 +109,7 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->NegotiateMessage);
 	sspi_SecBufferFree(&context->ChallengeMessage);
 	sspi_SecBufferFree(&context->AuthenticateMessage);
-	sspi_SecBufferFree(&context->TargetInfo);
+	sspi_SecBufferFree(&context->ChallengeTargetInfo);
 	sspi_SecBufferFree(&context->TargetName);
 	sspi_SecBufferFree(&context->NtChallengeResponse);
 	sspi_SecBufferFree(&context->LmChallengeResponse);
@@ -115,9 +117,7 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	free(context->identity.User);
 	free(context->identity.Password);
 	free(context->identity.Domain);
-	free(context->Workstation);
-	free(context->av_pairs->Timestamp.value);
-	free(context->av_pairs);
+	free(context->Workstation.Buffer);
 	free(context);
 }
 

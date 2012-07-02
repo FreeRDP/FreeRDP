@@ -148,6 +148,8 @@ void ntlm_write_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
 	ntlm_write_ntlm_v2_client_challenge(s, &(response->Challenge));
 }
 
+#if 0
+
 /**
  * Output Restriction_Encoding.\n
  * Restriction_Encoding @msdn{cc236647}
@@ -230,6 +232,8 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
 	PStreamFreeDetach(s);
 }
 
+#endif
+
 /**
  * Get current time, in tenths of microseconds since midnight of January 1, 1601.
  * @param[out] timestamp 64-bit little-endian timestamp
@@ -255,33 +259,14 @@ void ntlm_current_time(BYTE* timestamp)
 
 void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 {
-	ntlm_current_time(context->Timestamp);
+	BYTE ZeroTimestamp[8];
 
-	if (context->ntlm_v2)
-	{
-		if (context->av_pairs->Timestamp.length == 8)
-		{
-			CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
-			return;
-		}
-		else
-		{
-			context->ntlm_v2 = FALSE;
-			context->av_pairs->Timestamp.length = 8;
-			context->av_pairs->Timestamp.value = malloc(context->av_pairs->Timestamp.length);
-			CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
-		}
-	}
+	ZeroMemory(ZeroTimestamp, 8);
+
+	if (memcmp(ZeroTimestamp, context->ChallengeTimestamp, 8) != 0)
+		CopyMemory(context->Timestamp, context->ChallengeTimestamp, 8);
 	else
-	{
-		if (context->av_pairs->Timestamp.length != 8)
-		{
-			context->av_pairs->Timestamp.length = 8;
-			context->av_pairs->Timestamp.value = malloc(context->av_pairs->Timestamp.length);
-		}
-
-		CopyMemory(context->av_pairs->Timestamp.value, context->Timestamp, 8);
-	}
+		ntlm_current_time(context->Timestamp);
 }
 
 void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
@@ -368,7 +353,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
 
-	sspi_SecBufferAlloc(&ntlm_v2_temp, context->TargetInfo.cbBuffer + 28);
+	sspi_SecBufferAlloc(&ntlm_v2_temp, context->ChallengeTargetInfo.cbBuffer + 28);
 
 	ZeroMemory(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	blob = (BYTE*) ntlm_v2_temp.pvBuffer;
@@ -389,8 +374,8 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength * 2);
 	printf("\n");
 
-	printf("Workstation (length = %d)\n", context->WorkstationLength);
-	winpr_HexDump((BYTE*) context->Workstation, context->WorkstationLength);
+	printf("Workstation (length = %d)\n", context->Workstation.Length);
+	winpr_HexDump((BYTE*) context->Workstation.Buffer, context->Workstation.Length);
 	printf("\n");
 
 	printf("NTOWFv2, NTLMv2 Hash\n");
@@ -403,10 +388,10 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	blob[1] = 1; /* HighRespType (1 byte) */
 	/* Reserved1 (2 bytes) */
 	/* Reserved2 (4 bytes) */
-	CopyMemory(&blob[8], context->av_pairs->Timestamp.value, 8); /* Timestamp (8 bytes) */
+	CopyMemory(&blob[8], context->Timestamp, 8); /* Timestamp (8 bytes) */
 	CopyMemory(&blob[16], context->ClientChallenge, 8); /* ClientChallenge (8 bytes) */
 	/* Reserved3 (4 bytes) */
-	CopyMemory(&blob[28], context->TargetInfo.pvBuffer, context->TargetInfo.cbBuffer);
+	CopyMemory(&blob[28], context->ChallengeTargetInfo.pvBuffer, context->ChallengeTargetInfo.cbBuffer);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NTLMv2 Response Temp Blob\n");

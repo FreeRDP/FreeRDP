@@ -81,36 +81,7 @@ enum _NTLM_STATE
 };
 typedef enum _NTLM_STATE NTLM_STATE;
 
-struct _NTLM_AV_PAIR
-{
-	UINT16 AvId;
-	UINT16 AvLen;
-};
-typedef struct _NTLM_AV_PAIR NTLM_AV_PAIR;
-
-struct _AV_PAIR
-{
-	UINT16 length;
-	BYTE* value;
-};
-typedef struct _AV_PAIR AV_PAIR;
-
-struct _AV_PAIRS
-{
-	AV_PAIR NbComputerName;
-	AV_PAIR NbDomainName;
-	AV_PAIR DnsComputerName;
-	AV_PAIR DnsDomainName;
-	AV_PAIR DnsTreeName;
-	AV_PAIR Timestamp;
-	AV_PAIR Restrictions;
-	AV_PAIR TargetName;
-	AV_PAIR ChannelBindings;
-	UINT32 Flags;
-};
-typedef struct _AV_PAIRS AV_PAIRS;
-
-enum _AV_ID
+enum _NTLM_AV_ID
 {
 	MsvAvEOL,
 	MsvAvNbComputerName,
@@ -124,7 +95,14 @@ enum _AV_ID
 	MsvAvTargetName,
 	MsvChannelBindings
 };
-typedef enum _AV_ID AV_ID;
+typedef enum _NTLM_AV_ID NTLM_AV_ID;
+
+struct _NTLM_AV_PAIR
+{
+	UINT16 AvId;
+	UINT16 AvLen;
+};
+typedef struct _NTLM_AV_PAIR NTLM_AV_PAIR;
 
 #define MSV_AV_FLAGS_AUTHENTICATION_CONSTRAINED		0x00000001
 #define MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK		0x00000002
@@ -242,7 +220,8 @@ typedef struct _NTLM_AUTHENTICATE_MESSAGE NTLM_AUTHENTICATE_MESSAGE;
 struct _NTLM_CONTEXT
 {
 	BOOL server;
-	BOOL ntlm_v2;
+	BOOL NTLMv2;
+	BOOL UseMIC;
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
@@ -254,21 +233,21 @@ struct _NTLM_CONTEXT
 	BYTE* RecvSigningKey;
 	BYTE* SendSealingKey;
 	BYTE* RecvSealingKey;
-	AV_PAIRS* av_pairs;
 	UINT32 NegotiateFlags;
-	UINT16* Workstation;
-	UINT32 WorkstationLength;
 	int LmCompatibilityLevel;
 	int SuppressExtendedProtection;
+	UNICODE_STRING Workstation;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;
-	SecBuffer TargetInfo;
+	SecBuffer ChallengeTargetInfo;
+	SecBuffer AuthenticateTargetInfo;
 	SecBuffer TargetName;
 	SecBuffer NtChallengeResponse;
 	SecBuffer LmChallengeResponse;
 	BYTE Timestamp[8];
+	BYTE ChallengeTimestamp[8];
 	BYTE ServerChallenge[8];
 	BYTE ClientChallenge[8];
 	BYTE SessionBaseKey[16];

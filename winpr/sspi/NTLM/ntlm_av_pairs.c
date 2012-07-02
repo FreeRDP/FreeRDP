@@ -113,7 +113,7 @@ NTLM_AV_PAIR* ntlm_av_pair_get_next_pointer(NTLM_AV_PAIR* pAvPair)
 	return (NTLM_AV_PAIR*) ((PBYTE) pAvPair + ntlm_av_pair_get_next_offset(pAvPair));
 }
 
-NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, AV_ID AvId)
+NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId)
 {
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
 
@@ -134,7 +134,7 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, AV_ID AvId)
 	return NULL;
 }
 
-NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, PUNICODE_STRING pValue, LONG AvPairListSize)
+NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE Value, UINT16 AvLen)
 {
 	NTLM_AV_PAIR* pAvPair;
 
@@ -144,290 +144,29 @@ NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, AV_ID AvId, PUNICODE_S
 		return NULL;
 
 	pAvPair->AvId = AvId;
-	pAvPair->AvLen = pValue->Length;
+	pAvPair->AvLen = AvLen;
 
-	CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), pValue->Buffer, pValue->Length);
+	CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), Value, AvLen);
 
 	return pAvPair;
 }
 
-/**
- * Input array of AV_PAIRs.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- * @param s
- */
-
-void ntlm_input_av_pairs(NTLM_CONTEXT* context, PStream s)
+NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAvPair)
 {
-	AV_ID AvId;
-	UINT16 AvLen;
-	BYTE* value;
-	AV_PAIRS* av_pairs = context->av_pairs;
+	NTLM_AV_PAIR* pAvPairCopy;
 
-#ifdef WITH_DEBUG_NTLM
-	printf("AV_PAIRS = {\n");
-#endif
+	pAvPairCopy = ntlm_av_pair_get(pAvPairList, MsvAvEOL);
 
-	do
-	{
-		value = NULL;
-		StreamRead_UINT16(s, AvId);
-		StreamRead_UINT16(s, AvLen);
+	if (!pAvPairCopy)
+		return NULL;
 
-		if (AvLen > 0)
-		{
-			if (AvId != MsvAvFlags)
-			{
-				value = malloc(AvLen);
-				StreamRead(s, value, AvLen);
-			}
-			else
-			{
-				StreamRead_UINT32(s, av_pairs->Flags);
-			}
-		}
+	pAvPairCopy->AvId = pAvPair->AvId;
+	pAvPairCopy->AvLen = pAvPair->AvLen;
 
-		switch (AvId)
-		{
-			case MsvAvNbComputerName:
-				av_pairs->NbComputerName.length = AvLen;
-				av_pairs->NbComputerName.value = value;
-				break;
+	CopyMemory(ntlm_av_pair_get_value_pointer(pAvPairCopy),
+			ntlm_av_pair_get_value_pointer(pAvPair), pAvPair->AvLen);
 
-			case MsvAvNbDomainName:
-				av_pairs->NbDomainName.length = AvLen;
-				av_pairs->NbDomainName.value = value;
-				break;
-
-			case MsvAvDnsComputerName:
-				av_pairs->DnsComputerName.length = AvLen;
-				av_pairs->DnsComputerName.value = value;
-				break;
-
-			case MsvAvDnsDomainName:
-				av_pairs->DnsDomainName.length = AvLen;
-				av_pairs->DnsDomainName.value = value;
-				break;
-
-			case MsvAvDnsTreeName:
-				av_pairs->DnsTreeName.length = AvLen;
-				av_pairs->DnsTreeName.value = value;
-				break;
-
-			case MsvAvTimestamp:
-				av_pairs->Timestamp.length = AvLen;
-				av_pairs->Timestamp.value = value;
-				break;
-
-			case MsvAvRestrictions:
-				av_pairs->Restrictions.length = AvLen;
-				av_pairs->Restrictions.value = value;
-				break;
-
-			case MsvAvTargetName:
-				av_pairs->TargetName.length = AvLen;
-				av_pairs->TargetName.value = value;
-				break;
-
-			case MsvChannelBindings:
-				av_pairs->ChannelBindings.length = AvLen;
-				av_pairs->ChannelBindings.value = value;
-				break;
-
-			default:
-				if (value != NULL)
-					free(value);
-				break;
-		}
-
-#ifdef WITH_DEBUG_NTLM
-		if (AvId < 10)
-			printf("\tAvId: %s, AvLen: %d\n", AV_PAIR_STRINGS[AvId], AvLen);
-		else
-			printf("\tAvId: %s, AvLen: %d\n", "Unknown", AvLen);
-
-		winpr_HexDump(value, AvLen);
-#endif
-	}
-	while (AvId != MsvAvEOL);
-
-#ifdef WITH_DEBUG_NTLM
-	printf("}\n");
-#endif
-}
-
-/**
- * Output array of AV_PAIRs.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- * @param s
- */
-
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer)
-{
-	PStream s;
-	AV_PAIRS* av_pairs = context->av_pairs;
-
-	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
-
-	if (av_pairs->NbDomainName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvNbDomainName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->NbDomainName.length); /* AvLen */
-		StreamWrite(s, av_pairs->NbDomainName.value, av_pairs->NbDomainName.length); /* Value */
-	}
-
-	if (av_pairs->NbComputerName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvNbComputerName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->NbComputerName.length); /* AvLen */
-		StreamWrite(s, av_pairs->NbComputerName.value, av_pairs->NbComputerName.length); /* Value */
-	}
-
-	if (av_pairs->DnsDomainName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvDnsDomainName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->DnsDomainName.length); /* AvLen */
-		StreamWrite(s, av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length); /* Value */
-	}
-
-	if (av_pairs->DnsComputerName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvDnsComputerName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->DnsComputerName.length); /* AvLen */
-		StreamWrite(s, av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length); /* Value */
-	}
-
-	if (av_pairs->DnsTreeName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvDnsTreeName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->DnsTreeName.length); /* AvLen */
-		StreamWrite(s, av_pairs->DnsTreeName.value, av_pairs->DnsTreeName.length); /* Value */
-	}
-
-	if (av_pairs->Timestamp.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvTimestamp); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->Timestamp.length); /* AvLen */
-		StreamWrite(s, av_pairs->Timestamp.value, av_pairs->Timestamp.length); /* Value */
-	}
-
-	if (av_pairs->Flags > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvFlags); /* AvId */
-		StreamWrite_UINT16(s, 4); /* AvLen */
-		StreamWrite_UINT32(s, av_pairs->Flags); /* Value */
-	}
-
-	if (av_pairs->Restrictions.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvRestrictions); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->Restrictions.length); /* AvLen */
-		StreamWrite(s, av_pairs->Restrictions.value, av_pairs->Restrictions.length); /* Value */
-	}
-
-	if (av_pairs->ChannelBindings.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvChannelBindings); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->ChannelBindings.length); /* AvLen */
-		StreamWrite(s, av_pairs->ChannelBindings.value, av_pairs->ChannelBindings.length); /* Value */
-	}
-
-	if (av_pairs->TargetName.length > 0)
-	{
-		StreamWrite_UINT16(s, MsvAvTargetName); /* AvId */
-		StreamWrite_UINT16(s, av_pairs->TargetName.length); /* AvLen */
-		StreamWrite(s, av_pairs->TargetName.value, av_pairs->TargetName.length); /* Value */
-	}
-
-	/* This indicates the end of the AV_PAIR array */
-	StreamWrite_UINT16(s, MsvAvEOL); /* AvId */
-	StreamWrite_UINT16(s, 0); /* AvLen */
-
-	if (context->ntlm_v2)
-	{
-		StreamZero(s, 8);
-	}
-
-	free(s);
-}
-
-/**
- * Compute AV_PAIRs length.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- */
-
-int ntlm_compute_av_pairs_length(NTLM_CONTEXT* context)
-{
-	int length = 0;
-	AV_PAIRS* av_pairs = context->av_pairs;
-
-	if (av_pairs->NbDomainName.length > 0)
-		length += av_pairs->NbDomainName.length + 4;
-
-	if (av_pairs->NbComputerName.length > 0)
-		length += av_pairs->NbComputerName.length + 4;
-
-	if (av_pairs->DnsDomainName.length > 0)
-		length += av_pairs->DnsDomainName.length + 4;
-
-	if (av_pairs->DnsComputerName.length > 0)
-		length += av_pairs->DnsComputerName.length + 4;
-
-	if (av_pairs->DnsTreeName.length > 0)
-		length += av_pairs->DnsTreeName.length + 4;
-
-	if (av_pairs->Timestamp.length > 0)
-		length += av_pairs->Timestamp.length;
-
-	if (av_pairs->Flags > 0)
-		length += 4 + 4;
-
-	if (av_pairs->Restrictions.length > 0)
-		length += av_pairs->Restrictions.length + 4;
-
-	if (av_pairs->ChannelBindings.length > 0)
-		length += av_pairs->ChannelBindings.length + 4;
-
-	if (av_pairs->TargetName.length > 0)
-		length += av_pairs->TargetName.length + 4;
-
-	length += 4;
-
-	if (context->ntlm_v2)
-		length += 8;
-
-	return length;
-}
-
-/**
- * Populate array of AV_PAIRs.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- */
-
-void ntlm_populate_av_pairs(NTLM_CONTEXT* context)
-{
-	int length;
-	AV_PAIRS* av_pairs = context->av_pairs;
-
-	/* MsvAvFlags */
-	av_pairs->Flags = 0x00000002; /* Indicates the present of a Message Integrity Check (MIC) */
-
-	/* Restriction_Encoding */
-	ntlm_output_restriction_encoding(context);
-
-	/* TargetName */
-	ntlm_output_target_name(context);
-
-	/* ChannelBindings */
-	ntlm_output_channel_bindings(context);
-
-	length = ntlm_compute_av_pairs_length(context);
-	sspi_SecBufferAlloc(&context->TargetInfo, length);
-	ntlm_output_av_pairs(context, &context->TargetInfo);
+	return pAvPairCopy;
 }
 
 void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
@@ -452,7 +191,7 @@ void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT t
 	free(name);
 }
 
-void ntlm_construct_server_target_info(NTLM_CONTEXT* context)
+void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
 	ULONG AvPairsCount;
@@ -463,142 +202,132 @@ void ntlm_construct_server_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING NbComputerName;
 	UNICODE_STRING DnsDomainName;
 	UNICODE_STRING DnsComputerName;
-	UNICODE_STRING Timestamp;
 
 	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
 	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
 	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
 	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
 
-	Timestamp.Buffer = (PWSTR) context->Timestamp;
-	Timestamp.Length = sizeof(context->Timestamp);
-
 	AvPairsCount = 5;
 	AvPairsLength = NbDomainName.Length + NbComputerName.Length +
 			DnsDomainName.Length + DnsComputerName.Length + 8;
 
 	length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
-	sspi_SecBufferAlloc(&context->TargetInfo, length);
+	sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length);
 
-	pAvPairList = (NTLM_AV_PAIR*) context->TargetInfo.pvBuffer;
-	AvPairListSize = (ULONG) context->TargetInfo.cbBuffer;
+	pAvPairList = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
+	AvPairListSize = (ULONG) context->ChallengeTargetInfo.cbBuffer;
 
 	ntlm_av_pair_list_init(pAvPairList);
-	ntlm_av_pair_add(pAvPairList, MsvAvNbDomainName, &NbDomainName, AvPairListSize);
-	ntlm_av_pair_add(pAvPairList, MsvAvNbComputerName, &NbComputerName, AvPairListSize);
-	ntlm_av_pair_add(pAvPairList, MsvAvDnsDomainName, &DnsDomainName, AvPairListSize);
-	ntlm_av_pair_add(pAvPairList, MsvAvDnsComputerName, &DnsComputerName, AvPairListSize);
-	ntlm_av_pair_add(pAvPairList, MsvAvTimestamp, &Timestamp, AvPairListSize);
+	ntlm_av_pair_add(pAvPairList, MsvAvNbDomainName, (PBYTE) NbDomainName.Buffer, NbDomainName.Length);
+	ntlm_av_pair_add(pAvPairList, MsvAvNbComputerName, (PBYTE) NbComputerName.Buffer, NbComputerName.Length);
+	ntlm_av_pair_add(pAvPairList, MsvAvDnsDomainName, (PBYTE) DnsDomainName.Buffer, DnsDomainName.Length);
+	ntlm_av_pair_add(pAvPairList, MsvAvDnsComputerName, (PBYTE) DnsComputerName.Buffer, DnsComputerName.Length);
+	ntlm_av_pair_add(pAvPairList, MsvAvTimestamp, context->Timestamp, sizeof(context->Timestamp));
 }
 
-/**
- * Print array of AV_PAIRs.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- */
-
-void ntlm_print_av_pairs(NTLM_CONTEXT* context)
+void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
-	AV_PAIRS* av_pairs = context->av_pairs;
+	ULONG size;
+	ULONG AvPairsCount;
+	ULONG AvPairsValueLength;
+	NTLM_AV_PAIR* AvTimestamp;
+	NTLM_AV_PAIR* AvNbDomainName;
+	NTLM_AV_PAIR* AvNbComputerName;
+	NTLM_AV_PAIR* AvDnsDomainName;
+	NTLM_AV_PAIR* AvDnsComputerName;
+	NTLM_AV_PAIR* AvDnsTreeName;
+	NTLM_AV_PAIR* ChallengeTargetInfo;
+	NTLM_AV_PAIR* AuthenticateTargetInfo;
 
-	printf("AV_PAIRS = {\n");
+	AvPairsCount = AvPairsValueLength = 0;
+	ChallengeTargetInfo = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
 
-	if (av_pairs->NbDomainName.length > 0)
+	AvNbDomainName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvNbDomainName);
+	AvNbComputerName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvNbComputerName);
+	AvDnsDomainName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvDnsDomainName);
+	AvDnsComputerName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvDnsComputerName);
+	AvDnsTreeName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvDnsTreeName);
+	AvTimestamp = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvTimestamp);
+
+	if (AvNbDomainName != NULL)
 	{
-		printf("\tAvId: MsvAvNbDomainName AvLen: %d\n", av_pairs->NbDomainName.length);
-		winpr_HexDump(av_pairs->NbDomainName.value, av_pairs->NbDomainName.length);
+		AvPairsCount++; /* MsvAvNbDomainName */
+		AvPairsValueLength += AvNbDomainName->AvLen;
 	}
 
-	if (av_pairs->NbComputerName.length > 0)
+	if (AvNbComputerName != NULL)
 	{
-		printf("\tAvId: MsvAvNbComputerName AvLen: %d\n", av_pairs->NbComputerName.length);
-		winpr_HexDump(av_pairs->NbComputerName.value, av_pairs->NbComputerName.length);
+		AvPairsCount++; /* MsvAvNbComputerName */
+		AvPairsValueLength += AvNbComputerName->AvLen;
 	}
 
-	if (av_pairs->DnsDomainName.length > 0)
+	if (AvDnsDomainName != NULL)
 	{
-		printf("\tAvId: MsvAvDnsDomainName AvLen: %d\n", av_pairs->DnsDomainName.length);
-		winpr_HexDump(av_pairs->DnsDomainName.value, av_pairs->DnsDomainName.length);
+		AvPairsCount++; /* MsvAvDnsDomainName */
+		AvPairsValueLength += AvDnsDomainName->AvLen;
 	}
 
-	if (av_pairs->DnsComputerName.length > 0)
+	if (AvDnsComputerName != NULL)
 	{
-		printf("\tAvId: MsvAvDnsComputerName AvLen: %d\n", av_pairs->DnsComputerName.length);
-		winpr_HexDump(av_pairs->DnsComputerName.value, av_pairs->DnsComputerName.length);
+		AvPairsCount++; /* MsvAvDnsComputerName */
+		AvPairsValueLength += AvDnsComputerName->AvLen;
 	}
 
-	if (av_pairs->DnsTreeName.length > 0)
+	if (AvDnsTreeName != NULL)
 	{
-		printf("\tAvId: MsvAvDnsTreeName AvLen: %d\n", av_pairs->DnsTreeName.length);
-		winpr_HexDump(av_pairs->DnsTreeName.value, av_pairs->DnsTreeName.length);
+		AvPairsCount++; /* MsvAvDnsTreeName */
+		AvPairsValueLength += AvDnsTreeName->AvLen;
 	}
 
-	if (av_pairs->Timestamp.length > 0)
+	AvPairsCount++; /* MsvAvTimestamp */
+	AvPairsValueLength += 8;
+
+	if (context->UseMIC)
 	{
-		printf("\tAvId: MsvAvTimestamp AvLen: %d\n", av_pairs->Timestamp.length);
-		winpr_HexDump(av_pairs->Timestamp.value, av_pairs->Timestamp.length);
+		AvPairsCount++; /* MsvAvFlags */
+		AvPairsValueLength += 4;
 	}
 
-	if (av_pairs->Flags > 0)
+	size = ntlm_av_pair_list_size(AvPairsCount, AvPairsValueLength);
+
+	if (context->NTLMv2)
+		size += 8; /* unknown 8-byte padding */
+
+	sspi_SecBufferAlloc(&context->AuthenticateTargetInfo, size);
+	AuthenticateTargetInfo = (NTLM_AV_PAIR*) context->AuthenticateTargetInfo.pvBuffer;
+
+	ntlm_av_pair_list_init(AuthenticateTargetInfo);
+
+	if (AvNbDomainName != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvNbDomainName);
+
+	if (AvNbComputerName != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvNbComputerName);
+
+	if (AvDnsDomainName != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsDomainName);
+
+	if (AvDnsComputerName != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsComputerName);
+
+	if (AvDnsTreeName != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsTreeName);
+
+	if (AvTimestamp != NULL)
+		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvTimestamp);
+
+	if (context->UseMIC)
 	{
-		printf("\tAvId: MsvAvFlags AvLen: %d\n", 4);
-		printf("0x%08X\n", av_pairs->Flags);
+		UINT32 flags = MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK;
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
 	}
 
-	if (av_pairs->Restrictions.length > 0)
+	if (context->NTLMv2)
 	{
-		printf("\tAvId: MsvAvRestrictions AvLen: %d\n", av_pairs->Restrictions.length);
-		winpr_HexDump(av_pairs->Restrictions.value, av_pairs->Restrictions.length);
+		NTLM_AV_PAIR* AvEOL;
+
+		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvEOL);
+		ZeroMemory((void*) AvEOL, 12);
 	}
-
-	if (av_pairs->ChannelBindings.length > 0)
-	{
-		printf("\tAvId: MsvChannelBindings AvLen: %d\n", av_pairs->ChannelBindings.length);
-		winpr_HexDump(av_pairs->ChannelBindings.value, av_pairs->ChannelBindings.length);
-	}
-
-	if (av_pairs->TargetName.length > 0)
-	{
-		printf("\tAvId: MsvAvTargetName AvLen: %d\n", av_pairs->TargetName.length);
-		winpr_HexDump(av_pairs->TargetName.value, av_pairs->TargetName.length);
-	}
-
-	printf("}\n");
-}
-
-/**
- * Free array of AV_PAIRs.\n
- * AV_PAIR @msdn{cc236646}
- * @param NTLM context
- */
-
-void ntlm_free_av_pairs(NTLM_CONTEXT* context)
-{
-	AV_PAIRS* av_pairs = context->av_pairs;
-
-	if (av_pairs != NULL)
-	{
-		if (av_pairs->NbComputerName.value != NULL)
-			free(av_pairs->NbComputerName.value);
-		if (av_pairs->NbDomainName.value != NULL)
-			free(av_pairs->NbDomainName.value);
-		if (av_pairs->DnsComputerName.value != NULL)
-			free(av_pairs->DnsComputerName.value);
-		if (av_pairs->DnsDomainName.value != NULL)
-			free(av_pairs->DnsDomainName.value);
-		if (av_pairs->DnsTreeName.value != NULL)
-			free(av_pairs->DnsTreeName.value);
-		if (av_pairs->Timestamp.value != NULL)
-			free(av_pairs->Timestamp.value);
-		if (av_pairs->Restrictions.value != NULL)
-			free(av_pairs->Restrictions.value);
-		if (av_pairs->TargetName.value != NULL)
-			free(av_pairs->TargetName.value);
-		if (av_pairs->ChannelBindings.value != NULL)
-			free(av_pairs->ChannelBindings.value);
-
-		free(av_pairs);
-	}
-
-	context->av_pairs = NULL;
 }
