@@ -56,6 +56,14 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 		free(Workstation);
 }
 
+void ntlm_SetContextServicePrincipalName(NTLM_CONTEXT* context, char* ServicePrincipalName)
+{
+	context->ServicePrincipalName.Length = strlen(ServicePrincipalName) * 2;
+	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length);
+	MultiByteToWideChar(CP_ACP, 0, ServicePrincipalName, strlen(ServicePrincipalName),
+			context->ServicePrincipalName.Buffer, context->ServicePrincipalName.Length / 2);
+}
+
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	DWORD nSize = 0;
@@ -92,7 +100,8 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->SendVersionInfo = TRUE;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
-		context->SuppressExtendedProtection = TRUE;
+		context->SuppressExtendedProtection = FALSE;
+		memset(context->MachineID, 0xAA, sizeof(context->MachineID));
 
 		if (context->NTLMv2)
 			context->UseMIC = TRUE;
@@ -373,8 +382,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
-		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 		ntlm_SetContextWorkstation(context, NULL);
+		ntlm_SetContextServicePrincipalName(context, pszTargetName);
+		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);

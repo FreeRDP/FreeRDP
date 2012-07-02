@@ -289,6 +289,21 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
+	//AvPairsCount++; /* MsvAvRestrictions */
+	//AvPairsValueLength += 48;
+
+	if (!context->SuppressExtendedProtection)
+	{
+		AvPairsCount++; /* MsvChannelBindings */
+		AvPairsValueLength += 16;
+
+		if (context->ServicePrincipalName.Length > 0)
+		{
+			AvPairsCount++; /* MsvAvTargetName */
+			AvPairsValueLength += context->ServicePrincipalName.Length;
+		}
+	}
+
 	size = ntlm_av_pair_list_size(AvPairsCount, AvPairsValueLength);
 
 	if (context->NTLMv2)
@@ -321,6 +336,23 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	{
 		UINT32 flags = MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK;
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
+	}
+
+	if (!context->SuppressExtendedProtection)
+	{
+		BYTE ChannelBindingToken[16];
+
+		ZeroMemory(ChannelBindingToken, 16);
+
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvChannelBindings,
+				ChannelBindingToken, sizeof(ChannelBindingToken));
+
+		if (context->ServicePrincipalName.Length > 0)
+		{
+			ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvTargetName,
+					(PBYTE) context->ServicePrincipalName.Buffer,
+					context->ServicePrincipalName.Length);
+		}
 	}
 
 	if (context->NTLMv2)

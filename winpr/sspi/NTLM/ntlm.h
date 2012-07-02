@@ -131,7 +131,7 @@ struct _NTLM_RESTRICTION_ENCODING
 	UINT32 Z4;
 	UINT32 IntegrityLevel;
 	UINT32 SubjectIntegrityLevel;
-	BYTE MachineId[32];
+	BYTE MachineID[32];
 };
 typedef struct _NTLM_RESTRICTION_ENCODING NTLM_RESTRICTION_ENCODING;
 
@@ -225,6 +225,7 @@ struct _NTLM_CONTEXT
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
+	BYTE MachineID[32];
 	BOOL SendVersionInfo;
 	BOOL confidentiality;
 	RC4_KEY SendRc4Seal;
@@ -237,6 +238,7 @@ struct _NTLM_CONTEXT
 	int LmCompatibilityLevel;
 	int SuppressExtendedProtection;
 	UNICODE_STRING Workstation;
+	UNICODE_STRING ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
