@@ -65,7 +65,7 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 #define stream_read_uint8(_s, _v) do { _v = *_s->p++; } while (0)
 #define stream_read_uint16(_s, _v) do { _v = \
 	(uint16)(*_s->p) + \
-	(((uint16)(*(_s->p + 1))) << 8); \
+	(uint16)(((uint16)(*(_s->p + 1))) << 8); \
 	_s->p += 2; } while (0)
 #define stream_read_uint32(_s, _v) do { _v = \
 	(uint32)(*_s->p) + \
