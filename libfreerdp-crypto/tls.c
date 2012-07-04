@@ -76,8 +76,10 @@ boolean tls_connect(rdpTls* tls)
 	 * and the FreeRDP client, and caused major performance issues,
 	 * which is why we're disabling it.
 	 */
+#ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
-
+#endif
+	 
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
@@ -179,8 +181,10 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	 * and the FreeRDP client, and caused major performance issues,
 	 * which is why we're disabling it.
 	 */
+#ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
-
+#endif
+	 
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
