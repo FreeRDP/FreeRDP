@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
+add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
