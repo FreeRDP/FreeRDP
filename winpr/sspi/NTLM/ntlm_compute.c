@@ -183,55 +183,6 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 	PStreamFreeDetach(s);
 }
 
-/**
- * Output TargetName.\n
- * @param NTLM context
- */
-
-void ntlm_output_target_name(NTLM_CONTEXT* context)
-{
-	PStream s;
-	AV_PAIR* TargetName = &context->av_pairs->TargetName;
-
-	/*
-	 * TODO: No idea what should be set here (observed MsvAvTargetName = MsvAvDnsComputerName or
-	 * MsvAvTargetName should be the name of the service be accessed after authentication)
-	 * here used: "TERMSRV/192.168.0.123" in unicode (Dmitrij Jasnov)
-	 */
-	BYTE name[42] =
-			"\x54\x00\x45\x00\x52\x00\x4d\x00\x53\x00\x52\x00\x56\x00\x2f\x00\x31\x00\x39\x00\x32"
-			"\x00\x2e\x00\x31\x00\x36\x00\x38\x00\x2e\x00\x30\x00\x2e\x00\x31\x00\x32\x00\x33\x00";
-
-	TargetName->length = 42;
-	TargetName->value = (BYTE*) malloc(TargetName->length);
-
-	s = PStreamAllocAttach(TargetName->value, TargetName->length);
-
-	StreamWrite(s, name, TargetName->length);
-
-	PStreamFreeDetach(s);
-}
-
-/**
- * Output ChannelBindings.\n
- * @param NTLM context
- */
-
-void ntlm_output_channel_bindings(NTLM_CONTEXT* context)
-{
-	PStream s;
-	AV_PAIR* ChannelBindings = &context->av_pairs->ChannelBindings;
-
-	ChannelBindings->value = (BYTE*) malloc(48);
-	ChannelBindings->length = 16;
-
-	s = PStreamAllocAttach(ChannelBindings->value, ChannelBindings->length);
-
-	StreamZero(s, 16); /* an all-zero value of the hash is used to indicate absence of channel bindings */
-
-	PStreamFreeDetach(s);
-}
-
 #endif
 
 /**

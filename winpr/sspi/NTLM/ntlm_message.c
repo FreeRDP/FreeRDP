@@ -143,7 +143,7 @@ void ntlm_read_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
 	if (fields->Len > 0)
 	{
 		fields->Buffer = malloc(fields->Len);
-		StreamSetOffset(s, fields->BufferOffset);
+		StreamSetPosition(s, fields->BufferOffset);
 		StreamRead(s, fields->Buffer, fields->Len);
 	}
 }
@@ -152,7 +152,7 @@ void ntlm_write_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
-		StreamSetOffset(s, fields->BufferOffset);
+		StreamSetPosition(s, fields->BufferOffset);
 		StreamWrite(s, fields->Buffer, fields->Len);
 	}
 }
@@ -211,7 +211,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_read_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
-	length = StreamSize(s);
+	length = StreamGetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
@@ -293,7 +293,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_write_version_info(s, &(message.Version));
 
-	length = StreamSize(s);
+	length = StreamGetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
@@ -302,7 +302,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NEGOTIATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->data, length);
+	winpr_HexDump(s->buffer, length);
 	printf("\n");
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -330,7 +330,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ZeroMemory(&message, sizeof(message));
 	s = PStreamAllocAttach(buffer->pvBuffer, buffer->cbBuffer);
 
-	StartOffset = StreamGetPointer(s);
+	StartOffset = StreamPointer(s);
 
 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
@@ -358,7 +358,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		ntlm_read_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
 	/* Payload (variable) */
-	PayloadOffset = StreamGetPointer(s);
+	PayloadOffset = StreamPointer(s);
 
 	if (message.TargetName.Len > 0)
 		ntlm_read_message_fields_buffer(s, &(message.TargetName));
@@ -569,11 +569,11 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 		ntlm_write_message_fields_buffer(s, &(message.TargetInfo));
 
-	length = StreamSize(s);
+	length = StreamGetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
-	CopyMemory(context->ChallengeMessage.pvBuffer, s->data, length);
+	CopyMemory(context->ChallengeMessage.pvBuffer, s->buffer, length);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("CHALLENGE_MESSAGE (length = %d)\n", length);
@@ -649,7 +649,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_read_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
-	PayloadBufferOffset = StreamGetOffset(s);
+	PayloadBufferOffset = StreamGetPosition(s);
 
 	/* DomainName */
 	ntlm_read_message_fields_buffer(s, &(message.DomainName));
@@ -690,16 +690,16 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_read_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
 	CopyMemory(context->EncryptedRandomSessionKey, message.EncryptedRandomSessionKey.Buffer, 16);
 
-	length = StreamSize(s);
+	length = StreamGetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
 	buffer->cbBuffer = length;
 
-	StreamSetOffset(s, PayloadBufferOffset);
+	StreamSetPosition(s, PayloadBufferOffset);
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		MicOffset = StreamGetOffset(s);
+		MicOffset = StreamGetPosition(s);
 		StreamRead(s, message.MessageIntegrityCheck, 16);
 		PayloadBufferOffset += 16;
 	}
@@ -959,7 +959,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->UseMIC)
 	{
 		/* Message Integrity Check */
-		MicOffset = StreamGetOffset(s);
+		MicOffset = StreamGetPosition(s);
 		StreamZero(s, 16);
 	}
 
@@ -981,9 +981,9 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	/* EncryptedRandomSessionKey */
 	ntlm_write_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
 
-	length = StreamSize(s);
+	length = StreamGetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	CopyMemory(context->AuthenticateMessage.pvBuffer, s->data, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
 	buffer->cbBuffer = length;
 
 	if (context->UseMIC)
@@ -991,14 +991,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		/* Message Integrity Check */
 		ntlm_compute_message_integrity_check(context);
 
-		StreamSetOffset(s, MicOffset);
+		StreamSetPosition(s, MicOffset);
 		StreamWrite(s, context->MessageIntegrityCheck, 16);
-		StreamSetOffset(s, length);
+		StreamSetPosition(s, length);
 	}
 
 #ifdef WITH_DEBUG_NTLM
 	printf("AUTHENTICATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->data, length);
+	winpr_HexDump(s->buffer, length);
 	printf("\n");
 
 	ntlm_print_negotiate_flags(message.NegotiateFlags);
