@@ -145,6 +145,8 @@ WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
 #define GetVersionEx	GetVersionExA
 #endif
 
+WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
+
 #endif
 
 #endif /* WINPR_SYSINFO_H */

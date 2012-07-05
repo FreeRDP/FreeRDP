@@ -24,11 +24,18 @@
 
 #include <winpr/stream.h>
 
-void ntlm_input_av_pairs(NTLM_CONTEXT* context, PStream s);
-void ntlm_output_av_pairs(NTLM_CONTEXT* context, PSecBuffer buffer);
-void ntlm_populate_av_pairs(NTLM_CONTEXT* context);
-void ntlm_populate_server_av_pairs(NTLM_CONTEXT* context);
-void ntlm_print_av_pairs(NTLM_CONTEXT* context);
-void ntlm_free_av_pairs(NTLM_CONTEXT* context);
+void ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList);
+ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList);
+void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList);
+ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength);
+PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair);
+int ntlm_av_pair_get_next_offset(NTLM_AV_PAIR* pAvPair);
+NTLM_AV_PAIR* ntlm_av_pair_get_next_pointer(NTLM_AV_PAIR* pAvPair);
+NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId);
+NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE Value, UINT16 AvLen);
+NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAvPair);
+
+void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
+void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */

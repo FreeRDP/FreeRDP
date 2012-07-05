@@ -138,6 +138,10 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		memcpy(entry->Domain, p[1], entry->DomainLength);
 		entry->Domain[entry->DomainLength] = '\0';
 	}
+	else
+	{
+		entry->Domain = NULL;
+	}
 
 	if (LmHashLength == 32)
 	{
@@ -211,9 +215,13 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength)
 {
 	int length;
-	BOOL found = 0;
+	BOOL Found = 0;
+	BOOL UserMatch;
+	BOOL DomainMatch;
 	LPWSTR EntryUser;
 	UINT32 EntryUserLength;
+	LPWSTR EntryDomain;
+	UINT32 EntryDomainLength;
 	WINPR_SAM_ENTRY* entry;
 
 	entry = (WINPR_SAM_ENTRY*) malloc(sizeof(WINPR_SAM_ENTRY));
@@ -228,18 +236,56 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 		{
 			if (sam->line[0] != '#')
 			{
+				DomainMatch = 0;
+				UserMatch = 0;
+
 				entry = SamReadEntry(sam, entry);
 
-				EntryUserLength = strlen(entry->User) * 2;
-				EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
-				MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
-						(LPWSTR) EntryUser, EntryUserLength / 2);
-
-				if (UserLength == EntryUserLength)
+				if (DomainLength > 0)
 				{
-					if (memcmp(User, EntryUser, UserLength) == 0)
+					if (entry->DomainLength > 0)
 					{
-						found = 1;
+						EntryDomainLength = strlen(entry->Domain) * 2;
+						EntryDomain = (LPWSTR) malloc(EntryDomainLength + 2);
+						MultiByteToWideChar(CP_ACP, 0, entry->Domain, EntryDomainLength / 2,
+								(LPWSTR) EntryDomain, EntryDomainLength / 2);
+
+						if (DomainLength == EntryDomainLength)
+						{
+							if (memcmp(Domain, EntryDomain, DomainLength) == 0)
+							{
+								DomainMatch = 1;
+							}
+						}
+					}
+					else
+					{
+						DomainMatch = 0;
+					}
+				}
+				else
+				{
+					DomainMatch = 1;
+				}
+
+				if (DomainMatch)
+				{
+					EntryUserLength = strlen(entry->User) * 2;
+					EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
+					MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
+							(LPWSTR) EntryUser, EntryUserLength / 2);
+
+					if (UserLength == EntryUserLength)
+					{
+						if (memcmp(User, EntryUser, UserLength) == 0)
+						{
+							UserMatch = 1;
+						}
+					}
+
+					if (UserMatch && DomainMatch)
+					{
+						Found = 1;
 						break;
 					}
 				}
@@ -251,7 +297,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 	SamLookupFinish(sam);
 
-	if (!found)
+	if (!Found)
 	{
 		free(entry);
 		return NULL;
