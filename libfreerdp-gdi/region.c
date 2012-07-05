@@ -422,3 +422,5 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 
 	return 0;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -94,3 +94,5 @@ void test_ber_write_application_tag(void)
 
 	stream_free(s);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

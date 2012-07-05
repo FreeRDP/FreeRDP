@@ -147,3 +147,5 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	xfree(standardName);
 	xfree(daylightName);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

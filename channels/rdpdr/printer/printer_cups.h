@@ -26,3 +26,5 @@ rdpPrinterDriver* printer_cups_get_driver(void);
 
 #endif
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

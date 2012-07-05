@@ -105,3 +105,5 @@ HGDI_PALETTE gdi_GetSystemPalette()
 
 	return hSystemPalette;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

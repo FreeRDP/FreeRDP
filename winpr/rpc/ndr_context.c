@@ -64,3 +64,5 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		NdrpIncrementLength(&(pStubMsg->BufferLength), 20);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -123,3 +123,5 @@ static void skel_process_terminate(rdpSvcPlugin* plugin)
 
 DEFINE_SVC_PLUGIN(skel, "skel",
 	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP)
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

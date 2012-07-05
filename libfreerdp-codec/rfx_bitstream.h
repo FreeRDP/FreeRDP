@@ -84,3 +84,5 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 #define rfx_bitstream_get_processed_bytes(_bs) ((_bs)->bits_left < 8 ? (_bs)->byte_pos + 1 : (_bs)->byte_pos)
 
 #endif /* __RFX_BITSTREAM_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

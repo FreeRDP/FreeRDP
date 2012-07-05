@@ -24,3 +24,5 @@ int clean_stream_suite(void);
 int add_stream_suite(void);
 
 void test_stream(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

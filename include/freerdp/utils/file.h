@@ -37,3 +37,5 @@ FREERDP_API boolean freerdp_detect_development_mode(rdpSettings* settings);
 FREERDP_API void freerdp_detect_paths(rdpSettings* settings);
 
 #endif /* __FILE_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -62,3 +62,5 @@ struct _reg_key
 };
 
 Reg* reg_open(BOOL read_only);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

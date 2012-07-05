@@ -28,3 +28,5 @@ uint32 detect_keyboard_layout_from_xkbfile(void* display);
 int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keycode_to_rdp_scancode[256]);
 
 #endif /* __LOCALE_KEYBOARD_XKB_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

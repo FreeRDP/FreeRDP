@@ -28,3 +28,5 @@
 WINPR_API void winpr_HexDump(BYTE* data, int length);
 
 #endif /* WINPR_UTILS_PRINT_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

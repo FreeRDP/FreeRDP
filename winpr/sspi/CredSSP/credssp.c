@@ -270,3 +270,5 @@ const SecPkgInfoW CREDSSP_SecPkgInfoW =
 	CREDSSP_SecPkgInfoW_Name, /* Name */
 	CREDSSP_SecPkgInfoW_Comment /* Comment */
 };
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

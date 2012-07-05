@@ -47,3 +47,5 @@ FREERDP_API boolean per_read_numeric_string(STREAM* s, int min);
 FREERDP_API void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
 
 #endif /* FREERDP_CRYPTO_PER_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

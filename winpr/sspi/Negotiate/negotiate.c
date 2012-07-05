@@ -286,3 +286,5 @@ const SecPkgInfoW NEGOTIATE_SecPkgInfoW =
 	NEGOTIATE_SecPkgInfoW_Name, /* Name */
 	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
 };
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

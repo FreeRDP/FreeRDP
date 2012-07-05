@@ -486,3 +486,5 @@ void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min)
 		stream_write_uint8(s, num); /* string */
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -31,3 +31,5 @@ void MIDL_user_free(void* p)
 {
 	free(p);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -184,3 +184,5 @@ typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 #define RDP_SCANCODE_RSHIFT_EXTENDED   mk_rdp_scancode(0x36, true)  /* should be RDP_SCANCODE_RSHIFT */
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

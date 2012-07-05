@@ -41,3 +41,5 @@ FREERDP_API int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, 
 typedef int (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
 #endif /* __GDI_BITMAP_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

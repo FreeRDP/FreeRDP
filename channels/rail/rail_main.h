@@ -67,3 +67,5 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length);
 #endif
 
 #endif /* __RAIL_MAIN_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

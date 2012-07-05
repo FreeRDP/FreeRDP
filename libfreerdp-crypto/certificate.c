@@ -257,3 +257,5 @@ void certificate_store_free(rdpCertificateStore* certstore)
 		xfree(certstore);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

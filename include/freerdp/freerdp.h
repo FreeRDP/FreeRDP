@@ -203,3 +203,5 @@ FREERDP_API void freerdp_free(freerdp* instance);
 #endif
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

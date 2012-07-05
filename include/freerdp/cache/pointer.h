@@ -51,3 +51,5 @@ FREERDP_API rdpPointerCache* pointer_cache_new(rdpSettings* settings);
 FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
 
 #endif /* __POINTER_CACHE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -344,3 +344,5 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 DEFINE_SVC_PLUGIN(drdynvc, "drdynvc",
 	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	CHANNEL_OPTION_COMPRESS_RDP)
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

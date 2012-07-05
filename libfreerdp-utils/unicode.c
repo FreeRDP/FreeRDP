@@ -242,3 +242,5 @@ void freerdp_uniconv_free(UNICONV *uniconv)
 		xfree(uniconv);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -200,3 +200,5 @@ WINPR_API void StreamDetach(PStream s);
 #define StreamRemainingLength(_s)	(_s->length - (_s->pointer - _s->buffer))
 
 #endif /* WINPR_UTILS_STREAM_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

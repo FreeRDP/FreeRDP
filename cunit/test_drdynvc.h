@@ -24,3 +24,5 @@ int clean_drdynvc_suite(void);
 int add_drdynvc_suite(void);
 
 void test_drdynvc(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -383,3 +383,5 @@ void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 		xfree(window);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

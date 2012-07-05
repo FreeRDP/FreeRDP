@@ -33,3 +33,5 @@ char NdrGetSimpleTypeMemorySize(unsigned char FormatChar);
 int NdrGetTypeFlags(unsigned char FormatChar);
 
 #endif /* WINPR_RPC_NDR_SIMPLE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

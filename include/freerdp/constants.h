@@ -127,3 +127,5 @@ typedef enum RDP_PIXEL_FORMAT RDP_PIXEL_FORMAT;
 #define OSMINORTYPE_PSEUDO_XSERVER		0x0008
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

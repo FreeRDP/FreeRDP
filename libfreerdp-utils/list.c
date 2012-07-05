@@ -236,3 +236,5 @@ int list_size(LIST* list)
 {
 	return list->count;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

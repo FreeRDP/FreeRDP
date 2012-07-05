@@ -78,3 +78,5 @@ FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 #endif
 
 #endif /* __NSC_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

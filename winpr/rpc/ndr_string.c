@@ -33,3 +33,5 @@ void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char
 {
 	printf("warning: NdrNonConformantStringBufferSize unimplemented\n");
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

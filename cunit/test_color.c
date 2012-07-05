@@ -150,3 +150,5 @@ void test_color_GetBGR16(void)
 	CU_ASSERT(b == 0xEF);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

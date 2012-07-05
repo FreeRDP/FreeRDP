@@ -27,3 +27,5 @@
 FREERDP_API void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone);
 
 #endif /* __LOCALE_TIMEZONE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

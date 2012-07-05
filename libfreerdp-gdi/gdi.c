@@ -980,3 +980,5 @@ void gdi_free(freerdp* instance)
 	instance->context->gdi = (rdpGdi*) NULL;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -52,3 +52,5 @@ FREERDP_API char* freerdp_uniconv_out(UNICONV *uniconv, const char *str, size_t 
 FREERDP_API void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length);
 
 #endif /* __UNICODE_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

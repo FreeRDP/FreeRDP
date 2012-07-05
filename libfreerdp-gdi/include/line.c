@@ -108,3 +108,5 @@ int LINE_TO(HGDI_DC hdc, int nXEnd, int nYEnd)
 #undef GDI_GET_POINTER
 #undef GDI_GET_PEN_COLOR
 */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

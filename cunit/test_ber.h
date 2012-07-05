@@ -26,3 +26,5 @@ int add_ber_suite(void);
 void test_ber_write_length(void);
 void test_ber_write_universal_tag(void);
 void test_ber_write_application_tag(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

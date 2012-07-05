@@ -79,3 +79,5 @@ FREERDP_API boolean pcap_get_next_record_content(rdpPcap* pcap, pcap_record* rec
 FREERDP_API void pcap_flush(rdpPcap* pcap);
 
 #endif /* __UTILS_PCAP_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -136,3 +136,5 @@ void df_register_graphics(rdpGraphics* graphics)
 	xfree(pointer);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

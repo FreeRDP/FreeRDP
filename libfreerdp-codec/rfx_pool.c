@@ -110,3 +110,5 @@ RFX_TILE** rfx_pool_get_tiles(RFX_POOL* pool, int count)
 
 	return tiles;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

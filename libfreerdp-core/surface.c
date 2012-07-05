@@ -140,3 +140,5 @@ void update_write_surfcmd_frame_marker(STREAM* s, uint16 frameAction, uint32 fra
 	stream_write_uint32(s, frameId);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -663,3 +663,5 @@ void test_mppc(void)
     //printf("test_mppc: decompressed data in %ld micro seconds\n", dur);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -95,3 +95,5 @@ FREERDP_API rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelMa
 FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -781,3 +781,5 @@ const SecPkgInfoW NTLM_SecPkgInfoW =
 	NTLM_SecPkgInfoW_Name, /* Name */
 	NTLM_SecPkgInfoW_Comment /* Comment */
 };
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

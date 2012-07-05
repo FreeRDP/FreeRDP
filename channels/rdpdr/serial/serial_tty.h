@@ -70,3 +70,5 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result);
 
 #endif /* __SERIAL_TTY_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

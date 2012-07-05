@@ -29,3 +29,5 @@ FREERDP_API uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen);
 FREERDP_API uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen);
 
 #endif /* __GDI_PEN_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

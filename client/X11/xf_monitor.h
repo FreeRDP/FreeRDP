@@ -45,3 +45,5 @@ typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
 
 #endif /* __XF_MONITOR_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

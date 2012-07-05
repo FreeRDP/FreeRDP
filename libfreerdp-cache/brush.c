@@ -211,3 +211,5 @@ void brush_cache_free(rdpBrushCache* brush)
 		xfree(brush);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -33,3 +33,5 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, ui
 int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint8* data, uint32 data_size);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

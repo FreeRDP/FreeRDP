@@ -497,3 +497,5 @@ struct rdp_primary_update
 typedef struct rdp_primary_update rdpPrimaryUpdate;
 
 #endif /* __UPDATE_PRIMARY_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

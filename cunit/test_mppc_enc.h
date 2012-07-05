@@ -23,4 +23,5 @@ int init_mppc_enc_suite(void);
 int clean_mppc_enc_suite(void);
 int add_mppc_enc_suite(void);
 
-void test_mppc_enc(void);
+void test_mppc_enc(void);/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

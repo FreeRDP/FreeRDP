@@ -60,3 +60,5 @@ FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings*
 FREERDP_API void credssp_free(rdpCredssp* credssp);
 
 #endif /* FREERDP_SSPI_CREDSSP_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -748,3 +748,5 @@ void fastpath_free(rdpFastPath* fastpath)
 	stream_free(fastpath->updateData);
 	xfree(fastpath);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

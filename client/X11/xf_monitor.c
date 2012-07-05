@@ -125,3 +125,5 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 
 	return true;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

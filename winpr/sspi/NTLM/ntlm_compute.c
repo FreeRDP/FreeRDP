@@ -622,3 +622,5 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 	HMAC_Final(&hmac_ctx, context->MessageIntegrityCheck, NULL);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -24,3 +24,5 @@ int clean_channels_suite(void);
 int add_channels_suite(void);
 
 void test_channels(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

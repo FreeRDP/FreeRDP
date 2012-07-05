@@ -150,3 +150,5 @@ int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint)
 
 	return 1;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

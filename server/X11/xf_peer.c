@@ -725,3 +725,5 @@ void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	pthread_create(&th, 0, xf_peer_main_loop, client);
 	pthread_detach(th);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

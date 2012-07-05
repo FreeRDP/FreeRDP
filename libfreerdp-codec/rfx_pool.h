@@ -38,3 +38,5 @@ void rfx_pool_put_tiles(RFX_POOL* pool, RFX_TILE** tiles, int count);
 RFX_TILE** rfx_pool_get_tiles(RFX_POOL* pool, int count);
 
 #endif /* __RFX_POOL_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

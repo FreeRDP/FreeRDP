@@ -464,3 +464,5 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 		xfree(rdpsnd->context.client_formats);
 	xfree(rdpsnd);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

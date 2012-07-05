@@ -64,3 +64,5 @@ FREERDP_API void profiler_print_footer();
 #endif
 
 #endif /* __UTILS_PROFILER_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

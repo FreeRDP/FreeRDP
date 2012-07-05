@@ -110,3 +110,5 @@ void icon_cache_free(rdpIconCache* cache)
 	}
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

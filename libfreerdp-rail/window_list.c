@@ -198,3 +198,5 @@ void window_list_free(rdpWindowList* list)
 		xfree(list);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

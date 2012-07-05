@@ -57,3 +57,5 @@ WINPR_API DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR Insta
 #endif
 
 #endif /* WINPR_DSPARSE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

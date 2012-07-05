@@ -111,3 +111,5 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window);
 void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_WINDOW_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -542,3 +542,5 @@ const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID)
 
 	return "unknown";
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

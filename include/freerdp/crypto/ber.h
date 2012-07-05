@@ -82,3 +82,5 @@ FREERDP_API boolean ber_read_integer_length(STREAM* s, int* length);
 FREERDP_API int ber_skip_integer(uint32 value);
 
 #endif /* FREERDP_CRYPTO_BER_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

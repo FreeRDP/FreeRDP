@@ -37,3 +37,5 @@ void freerdp_string_free(rdpString* string)
 	if (string->ascii != NULL)
 		xfree(string->ascii);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

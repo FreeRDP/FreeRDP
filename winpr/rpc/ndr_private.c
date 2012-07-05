@@ -550,3 +550,5 @@ const NDR_TYPE_FREE_ROUTINE pfnFreeRoutines[] =
 	NULL, /* FC_END */
 	NULL, /* FC_PAD */
 };
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -50,3 +50,5 @@ FREERDP_API void* list_remove(LIST* list, void* data);
 FREERDP_API int list_size(LIST* list);
 
 #endif /* __LIST_UTILS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

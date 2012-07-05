@@ -75,3 +75,5 @@ time_t freerdp_get_unix_time_from_generalized_time(const char* generalized_time)
 
 	return unix_time;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -219,3 +219,5 @@ void extension_free(rdpExtension* extension)
 		xfree(extension);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -408,3 +408,5 @@ void test_message(void)
 	rfx_context_free(context);
 	free(rgb_data);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

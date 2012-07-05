@@ -62,3 +62,5 @@ FREERDP_API rdpTls* tls_new(rdpSettings* settings);
 FREERDP_API void tls_free(rdpTls* tls);
 
 #endif /* FREERDP_CRYPTO_TLS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

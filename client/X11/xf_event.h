@@ -28,3 +28,5 @@ boolean xf_event_process(freerdp* instance, XEvent* event);
 void xf_event_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_EVENT_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

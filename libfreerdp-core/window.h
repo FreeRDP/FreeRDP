@@ -34,3 +34,5 @@ void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
 #endif
 
 #endif /* __WINDOW_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

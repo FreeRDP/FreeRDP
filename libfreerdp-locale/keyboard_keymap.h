@@ -26,3 +26,5 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name);
 void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names);
 
 #endif /* __KEYBOARD_KEYMAP_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

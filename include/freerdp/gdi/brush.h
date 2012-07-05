@@ -30,3 +30,5 @@ FREERDP_API int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int 
 typedef int (*p_PatBlt)(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 
 #endif /* __GDI_BRUSH_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

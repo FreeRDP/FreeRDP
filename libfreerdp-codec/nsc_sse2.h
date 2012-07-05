@@ -29,3 +29,5 @@ void nsc_init_sse2(NSC_CONTEXT* context);
 #endif
 
 #endif /* __NSC_SSE2_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

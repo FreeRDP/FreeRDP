@@ -209,3 +209,5 @@ void xf_event_queue_free(xfEventQueue* event_queue)
 
 	pthread_mutex_destroy(&(event_queue->mutex));
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

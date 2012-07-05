@@ -246,3 +246,5 @@ void test_cliprdr(void)
 	freerdp_channels_close(channels, &instance);
 	freerdp_channels_free(channels);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

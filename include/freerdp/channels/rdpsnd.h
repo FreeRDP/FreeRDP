@@ -57,3 +57,5 @@ struct rdpsnd_format
 #define HIGH_QUALITY     0x0002
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

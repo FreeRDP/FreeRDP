@@ -122,3 +122,5 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 	}
 }
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

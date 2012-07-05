@@ -425,3 +425,5 @@ void audin_server_context_free(audin_server_context* context)
 		xfree(audin->context.client_formats);
 	xfree(audin);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

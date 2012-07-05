@@ -945,3 +945,5 @@ void license_free(rdpLicense* license)
 	}
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

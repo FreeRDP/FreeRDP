@@ -1082,3 +1082,5 @@ void tsmf_media_init(void)
 		presentation_list = list_new();
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

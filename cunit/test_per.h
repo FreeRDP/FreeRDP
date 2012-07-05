@@ -25,3 +25,5 @@ int add_per_suite(void);
 
 void test_per_write_length(void);
 void test_per_write_object_identifier(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

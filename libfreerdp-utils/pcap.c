@@ -215,3 +215,5 @@ void pcap_close(rdpPcap* pcap)
 	if (pcap->fp != NULL)
 		fclose(pcap->fp);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -123,3 +123,5 @@ WINPR_API NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG c
 		ULONG cbOutput, ULONG* pcbResult, ULONG dwFlags);
 
 #endif /* WINPR_BCRYPT_MEMORY_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -23,3 +23,5 @@
 uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length);
 
 #endif /* __LOCALE_KEYBOARD_SUN_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

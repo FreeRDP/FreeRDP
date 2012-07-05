@@ -292,3 +292,5 @@ void freerdp_free(freerdp* instance)
 		xfree(instance);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

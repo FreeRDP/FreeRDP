@@ -65,3 +65,5 @@ FREERDP_API rdpRail* rail_new(rdpSettings* settings);
 FREERDP_API void rail_free(rdpRail* rail);
 
 #endif /* __RAIL_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

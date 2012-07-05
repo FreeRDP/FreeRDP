@@ -25,3 +25,5 @@ int add_nsc_suite(void);
 
 void test_nsc_decode(void);
 void test_nsc_encode(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -95,3 +95,5 @@ rdpRailOrder* rail_order_new();
 void rail_order_free(rdpRailOrder* rail_order);
 
 #endif /* __RAIL_ORDERS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

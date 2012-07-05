@@ -134,3 +134,5 @@ typedef struct _ERRINFO ERRINFO;
 void rdp_print_errinfo(uint32 code);
 
 #endif
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

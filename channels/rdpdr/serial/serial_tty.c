@@ -999,3 +999,5 @@ static int tty_get_error_status()
 			return STATUS_NO_SUCH_FILE;
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

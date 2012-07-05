@@ -97,3 +97,5 @@ void test_pcap(void)
 	pcap_close(pcap);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

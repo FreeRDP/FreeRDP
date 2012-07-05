@@ -59,3 +59,5 @@ rdpIconCache* icon_cache_new(rdpRail* rail);
 void icon_cache_free(rdpIconCache* cache);
 
 #endif /* __RAIL_ICON_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

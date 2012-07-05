@@ -24,3 +24,5 @@ int clean_cliprdr_suite(void);
 int add_cliprdr_suite(void);
 
 void test_cliprdr(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

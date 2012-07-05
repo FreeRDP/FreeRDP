@@ -71,3 +71,5 @@ main()
                     printf("Fail :( at %d : 0x%04x got %d\n",i,HuffCodeLOM[i],getvalue(HuffCodeLOM[i]));
         return 0;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

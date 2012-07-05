@@ -30,3 +30,5 @@ void wf_image_free(wfBitmap* image);
 void wf_register_graphics(rdpGraphics* graphics);
 
 #endif /* WF_GRAPHICS */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

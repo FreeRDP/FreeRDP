@@ -27,3 +27,5 @@ void test_license(void);
 void test_license_generate_keys(void);
 void test_license_encrypt_premaster_secret(void);
 void test_license_decrypt_platform_challenge(void);
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

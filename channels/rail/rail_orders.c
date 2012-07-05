@@ -642,3 +642,5 @@ void rail_order_free(rdpRailOrder* rail_order)
 	}
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

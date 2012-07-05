@@ -471,3 +471,5 @@ rdpSettings* settings_new(void* instance);
 void settings_free(rdpSettings* settings);
 
 #endif /* __RDP_SETTINGS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

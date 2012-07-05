@@ -43,3 +43,5 @@ WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
 
 #endif /* WINPR_HANDLE_H */
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

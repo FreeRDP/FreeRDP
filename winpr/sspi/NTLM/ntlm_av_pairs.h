@@ -39,3 +39,5 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
 void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

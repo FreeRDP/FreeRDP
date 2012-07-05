@@ -78,3 +78,5 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 	return audio;
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

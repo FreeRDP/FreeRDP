@@ -33,3 +33,5 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
 void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
 
 #endif /* __TIMEZONE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

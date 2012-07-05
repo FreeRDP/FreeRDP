@@ -2099,3 +2099,5 @@ boolean rdp_send_confirm_active(rdpRdp* rdp)
 	return rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

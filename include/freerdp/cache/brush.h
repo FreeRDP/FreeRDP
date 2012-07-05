@@ -65,3 +65,5 @@ FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
 FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 
 #endif /* __BRUSH_CACHE_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

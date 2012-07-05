@@ -440,3 +440,5 @@ enum FILE_FS_INFORMATION_CLASS
 };
 
 #endif /* __RDPDR_CONSTANTS_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

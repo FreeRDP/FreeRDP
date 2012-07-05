@@ -167,3 +167,5 @@ void offscreen_cache_free(rdpOffscreenCache* offscreen_cache)
 		xfree(offscreen_cache);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

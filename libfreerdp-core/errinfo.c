@@ -453,3 +453,5 @@ void rdp_print_errinfo(uint32 code)
 	printf("ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
 }
 
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

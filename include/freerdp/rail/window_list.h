@@ -53,3 +53,5 @@ FREERDP_API rdpWindowList* window_list_new(rdpRail* rail);
 FREERDP_API void window_list_free(rdpWindowList* list);
 
 #endif /* __RAIL_WINDOW_LIST_H */
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

@@ -363,3 +363,5 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ZeroMemory((void*) AvEOL, 12);
 	}
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

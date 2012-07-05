@@ -54,3 +54,5 @@ void freerdp_rectangle_16_free(RECTANGLE_16* rectangle_16)
 {
 	xfree(rectangle_16);
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */

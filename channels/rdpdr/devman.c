@@ -106,3 +106,5 @@ DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)
 
 	return NULL;
 }
+/* Modeline for vim. Don't delete */
+/* vim: set cindent:noet:sw=8:ts=8 */
