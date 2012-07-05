@@ -54,6 +54,14 @@ typedef float FLOAT;
 typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
+#ifndef FALSE
+#define FALSE			0
+#endif
+
+#ifndef TRUE
+#define TRUE			1
+#endif
+
 typedef void* HANDLE, *LPHANDLE;
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -134,6 +142,23 @@ typedef LPCWSTR LPCTSTR;
 typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
 #endif
+
+typedef union _ULARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	};
+
+	struct
+	{
+		DWORD LowPart;
+		DWORD HighPart;
+	} u;
+
+	ULONGLONG QuadPart;
+} ULARGE_INTEGER, *PULARGE_INTEGER;
 
 typedef struct _FILETIME
 {

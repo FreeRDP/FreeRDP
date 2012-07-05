@@ -63,6 +63,7 @@
 
 #ifndef _WIN32
 
+#include <time.h>
 #include <unistd.h>
 #include <winpr/crt.h>
 
@@ -150,6 +151,19 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 {
 	printf("GetVersionExW unimplemented\n");
 	return 1;
+}
+
+VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
+{
+	ULARGE_INTEGER time64;
+
+	/* time represented in tenths of microseconds since midnight of January 1, 1601 */
+
+	time64.QuadPart = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
+	time64.QuadPart *= 10000000; /* Convert timestamp to tenths of a microsecond */
+
+	lpSystemTimeAsFileTime->dwLowDateTime = time64.LowPart;
+	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
 }
 
 #endif

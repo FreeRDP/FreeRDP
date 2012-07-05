@@ -537,6 +537,12 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 				status = SEC_I_CONTINUE_NEEDED;
 		}
 
+		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
+		{
+			printf("AcceptSecurityContext status: 0x%08X\n", status);
+			return -1;
+		}
+
 		/* send authentication token */
 
 #ifdef WITH_DEBUG_CREDSSP
