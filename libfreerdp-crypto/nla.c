@@ -251,7 +251,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
-		if (input_buffer.pvBuffer != NULL)
+		if have_input_buffer && (input_buffer.pvBuffer != NULL)
 		{
 			free(input_buffer.pvBuffer);
 			input_buffer.pvBuffer = NULL;
