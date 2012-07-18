@@ -253,7 +253,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		if (have_input_buffer && (input_buffer.pvBuffer != NULL))
 		{
-			free(input_buffer.pvBuffer);
+//			free(input_buffer.pvBuffer);
 			input_buffer.pvBuffer = NULL;
 		}
 
