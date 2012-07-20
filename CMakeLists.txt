@@ -161,9 +161,7 @@ add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
-if(NOT WIN32)
-	add_subdirectory(channels)
-endif()
+add_subdirectory(channels)
 
 option(WITH_CLIENT "Build client binaries" ON)
 if(WITH_CLIENT)

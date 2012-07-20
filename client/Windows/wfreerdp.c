@@ -41,6 +41,7 @@
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
+#include "wf_cliprdr.h"
 
 #include "wfreerdp.h"
 
@@ -382,6 +383,8 @@ boolean wf_post_connect(freerdp* instance)
 	wf_register_graphics(instance->context->graphics);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
+
+	wf_cliprdr_init(wfi, instance->context->channels);
 
 	return true;
 }
