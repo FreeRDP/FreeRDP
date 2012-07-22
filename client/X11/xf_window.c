@@ -19,6 +19,8 @@
  */
 
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -276,6 +278,19 @@ void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name)
 	XStoreName(xfi->display, window->handle, name);
 }
 
+static void xf_SetWindowPID(xfInfo* xfi, xfWindow* window, pid_t pid)
+{
+	Atom am_wm_pid;
+
+	if (pid == 0)
+		pid = getpid();
+
+	am_wm_pid = XInternAtom(xfi->display, "_NET_WM_PID", False);
+
+	XChangeProperty(xfi->display, window->handle, am_wm_pid, XA_CARDINAL,
+			32, PropModeReplace, (unsigned char *)&pid, 1);
+}
+
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
 {
 	xfWindow* window;
@@ -331,6 +346,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		xf_ResizeDesktopWindow(xfi, window, width, height);
 		xf_SetWindowDecorations(xfi, window, decorations);
+		xf_SetWindowPID(xfi, window, 0);
 
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
@@ -488,6 +504,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	xf_SetWindowDecorations(xfi, window, window->decorations);
 	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	xf_SetWindowPID(xfi, window, 0);
 	xf_ShowWindow(xfi, window, WINDOW_SHOW);
 
 	XMapWindow(xfi->display, window->handle);
