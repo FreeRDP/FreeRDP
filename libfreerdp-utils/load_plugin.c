@@ -46,6 +46,21 @@
 
 #endif
 
+
+#define MAX_STATIC_PLUGINS 50
+
+struct static_plugin
+{
+  const char* name;
+  const char* entry_name;
+  void* entry_addr;
+};
+typedef struct static_plugin staticPlugin;
+
+static staticPlugin g_static_plugins[MAX_STATIC_PLUGINS];
+static int g_static_plugins_count;
+
+
 /**
  * UNUSED
  * This function opens a handle on the specified library in order to load symbols from it.
@@ -185,6 +200,10 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	void* entry;
 	char* suffixed_name;
 
+	/* first attempt to load a static plugin */
+	entry = freerdp_load_static_plugin(name, entry_name);
+	if (entry != NULL) return entry;
+
 	suffixed_name = freerdp_append_shared_library_suffix((char*) name);
 
 	if (!freerdp_path_contains_separator(suffixed_name))
@@ -276,3 +295,58 @@ void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const
 
 	return entry;
 }
+
+/**
+ * This function is used to register a static plugin so that it can be loaded later on using freerdp_load_plugin.
+ *
+ * @param name [IN]		- name of the library to load
+ * @param entry_name [IN]	- name of the symbol to register for later loading
+ * @param entry [IN]		- function pointer to the entry function
+ *
+ * @return true on success, otherwise false.
+ */
+boolean freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
+{
+	staticPlugin* plugin;
+  
+	if (g_static_plugins_count >= MAX_STATIC_PLUGINS)
+	{
+		printf("freerdp_register_static_plugin: cannot register %s/%s", name, entry_name);
+		return false;
+	}
+  
+	/* add the static plugin to the vector */
+	plugin = &g_static_plugins[g_static_plugins_count++];
+	plugin->name = name;
+	plugin->entry_name = entry_name;
+	plugin->entry_addr = entry_addr;
+  
+	return true;
+}
+
+/**
+ * This is a helper function, used by freerdp_load_plugin to return a function pointer from the static plugin table
+ *
+ * @param name [IN]		- name of the library to load
+ * @param entry_name [IN]	- name of the symbol to register for later loading
+ *
+ * @return Pointer to the entry function, NULL if no matching plugin could be found
+ */
+void* freerdp_load_static_plugin(const char* name, const char* entry_name)
+{
+	staticPlugin* plugin;
+	int i;
+  
+	for (i = 0; i < g_static_plugins_count; i++)
+	{
+		plugin = &g_static_plugins[i];
+		if (!strcmp(plugin->name, name) && !strcmp(plugin->entry_name, entry_name))
+		{
+			return plugin->entry_addr;
+		}
+	}
+  
+	return NULL;
+}
+
+
