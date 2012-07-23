@@ -34,12 +34,19 @@ WINPR_API BYTE* NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
 WINPR_API BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
 		UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
 
+WINPR_API BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength,
+		LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+WINPR_API BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
+		LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+
 #ifdef UNICODE
-#define NTOWFv1 NTOWFv1W
-#define NTOWFv2 NTOWFv2W
+#define NTOWFv1 		NTOWFv1W
+#define NTOWFv2 		NTOWFv2W
+#define NTOWFv2FromHash		NTOWFv2FromHashW
 #else
-#define NTOWFv1 NTOWFv1A
-#define NTOWFv2 NTOWFv2W
+#define NTOWFv1 		NTOWFv1A
+#define NTOWFv2 		NTOWFv2A
+#define NTOWFv2FromHash		NTOWFv2FromHashA
 #endif
 
 #endif /* WINPR_UTILS_NTLM_H */

@@ -61,7 +61,7 @@ BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	PasswordW = (LPWSTR) malloc(PasswordLength * 2);
 	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
 
-	NtHash = NTOWFv1W(PasswordW, PasswordLength, NtHash);
+	NtHash = NTOWFv1W(PasswordW, PasswordLength * 2, NtHash);
 
 	free(PasswordW);
 
@@ -129,3 +129,49 @@ BYTE* NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User,
 	return NtHash;
 }
 
+BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+{
+	BYTE* buffer;
+
+	if (!User)
+		return NULL;
+
+	if (!NtHash)
+		NtHash = (BYTE*) malloc(16);
+
+	buffer = (BYTE*) malloc(UserLength + DomainLength);
+
+	/* Concatenate(UpperCase(User), Domain) */
+
+	CopyMemory(buffer, User, UserLength);
+	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
+	CopyMemory(&buffer[UserLength], Domain, DomainLength);
+
+	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
+	HMAC(EVP_md5(), (void*) NtHashV1, 16, buffer, UserLength + DomainLength, (void*) NtHash, NULL);
+
+	free(buffer);
+
+	return NtHash;
+}
+
+BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength, BYTE* NtHash)
+{
+	LPWSTR UserW = NULL;
+	LPWSTR DomainW = NULL;
+	LPWSTR PasswordW = NULL;
+
+	UserW = (LPWSTR) malloc(UserLength * 2);
+	DomainW = (LPWSTR) malloc(DomainLength * 2);
+
+	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
+	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
+
+	NtHash = NTOWFv2FromHashW(NtHashV1, UserW, UserLength * 2, DomainW, DomainLength * 2, NtHash);
+
+	free(UserW);
+	free(DomainW);
+	free(PasswordW);
+
+	return NtHash;
+}
