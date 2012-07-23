@@ -233,16 +233,36 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	if (entry != NULL)
 	{
-		CopyMemory(hash, entry->NtHash, 16);
+		NTOWFv2FromHashW(entry->NtHash,
+			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2,
+			(BYTE*) hash);
+
+		SamFreeEntry(sam, entry);
+		SamClose(sam);
+
+		return;
+	}
+
+	entry = SamLookupUserW(sam,
+		(LPWSTR) context->identity.User, context->identity.UserLength * 2, NULL, 0);
+
+	if (entry != NULL)
+	{
+		NTOWFv2FromHashW(entry->NtHash,
+			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2,
+			(BYTE*) hash);
+
+		SamFreeEntry(sam, entry);
+		SamClose(sam);
+
+		return;
 	}
 	else
 	{
 		printf("Error: Could not find user in SAM database\n");
 	}
-
-	SamFreeEntry(sam, entry);
-
-	SamClose(sam);
 }
 
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)

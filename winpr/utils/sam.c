@@ -112,7 +112,7 @@ void HexStrToBin(char* str, BYTE* bin, int length)
 
 WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
-	char* p[5];
+	char* p[7];
 	int LmHashLength;
 	int NtHashLength;
 
@@ -120,13 +120,15 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[1] = strchr(p[0], ':') + 1;
 	p[2] = strchr(p[1], ':') + 1;
 	p[3] = strchr(p[2], ':') + 1;
-	p[4] = p[0] + strlen(p[0]);
+	p[4] = strchr(p[3], ':') + 1;
+	p[5] = strchr(p[4], ':') + 1;
+	p[6] = p[0] + strlen(p[0]);
 
 	entry->UserLength = p[1] - p[0] - 1;
 	entry->DomainLength = p[2] - p[1] - 1;
 
 	LmHashLength = p[3] - p[2] - 1;
-	NtHashLength = p[4] - p[3];
+	NtHashLength = p[4] - p[3] - 1;
 
 	entry->User = (LPSTR) malloc(entry->UserLength + 1);
 	memcpy(entry->User, p[0], entry->UserLength);

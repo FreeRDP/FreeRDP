@@ -48,7 +48,6 @@ int main(int argc, char* argv[])
 {
 	int index = 1;
 	BYTE NtHash[16];
-	BOOL sam_entry = 0;
 	char* User = NULL;
 	UINT32 UserLength;
 	char* Domain = NULL;
@@ -100,10 +99,6 @@ int main(int argc, char* argv[])
 			printf("Usage: winpr-hash -u <username> -p <password> [-d <domain>]\n");
 			exit(1);
 		}
-		else if (strcmp("-s", argv[index]) == 0)
-		{
-			sam_entry = 1;
-		}
 
 		index++;
 	}
@@ -118,29 +113,22 @@ int main(int argc, char* argv[])
 	PasswordLength = strlen(Password);
 	DomainLength = (Domain) ? strlen(Domain) : 0;
 
-	NTOWFv2A(Password, PasswordLength, User, UserLength, Domain, DomainLength, NtHash);
+	NTOWFv1A(Password, PasswordLength, NtHash);
 
-	if (sam_entry)
-	{
-		printf("%s:", User);
+	printf("%s:", User);
 
-		if (DomainLength > 0)
-			printf("%s:", Domain);
-		else
-			printf(":");
-
+	if (DomainLength > 0)
+		printf("%s:", Domain);
+	else
 		printf(":");
 
-		for (index = 0; index < 16; index++)
-			printf("%02x", NtHash[index]);
-		printf("\n");
-	}
-	else
-	{
-		for (index = 0; index < 16; index++)
-			printf("%02x", NtHash[index]);
-		printf("\n");
-	}
+	printf(":");
+
+	for (index = 0; index < 16; index++)
+		printf("%02x", NtHash[index]);
+
+	printf(":::");
+	printf("\n");
 
 	return 0;
 }
