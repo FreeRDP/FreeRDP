@@ -42,6 +42,24 @@
 
 #define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
+#ifdef WITH_DEBUG_RDP
+static const char* const FASTPATH_UPDATETYPE_STRINGS[] =
+{
+	"Orders",									/* 0x0 */
+	"Bitmap",									/* 0x1 */
+	"Palette",								/* 0x2 */
+	"Synchronize",						/* 0x3 */
+	"Surface Commands",				/* 0x4 */
+	"System Pointer Hidden",	/* 0x5 */
+	"System Pointer Default",	/* 0x6 */
+	"???",										/* 0x7 */
+	"Pointer Position",				/* 0x8 */
+	"Color Pointer",					/* 0x9 */
+	"Cached Pointer",					/* 0xA */
+	"New Pointer",						/* 0xB */
+};
+#endif
+
 /*
  * The fastpath header may be two or three bytes long.
  * This function assumes that at least two bytes are available in the stream
@@ -169,6 +187,11 @@ static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uin
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = fastpath->rdp->update->context;
 	rdpPointerUpdate* pointer = update->pointer;
+
+#ifdef WITH_DEBUG_RDP
+	DEBUG_RDP("recv Fast-Path %s Update (0x%X), length:%d",
+		updateCode < ARRAY_SIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
+#endif
 
 	switch (updateCode)
 	{
