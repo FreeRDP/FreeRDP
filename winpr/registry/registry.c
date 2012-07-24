@@ -27,19 +27,25 @@
 
 #ifndef _WIN32
 
-#include "registry_xml.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "registry_reg.h"
+
+static Reg* instance = NULL;
+
+static Reg* RegGetInstance()
+{
+	if (!instance)
+	{
+		instance = reg_open(1);
+	}
+
+	return instance;
+}
 
 LONG RegCloseKey(HKEY hKey)
-{
-	return 0;
-}
-
-LONG RegConnectRegistryW(LPCWSTR lpMachineName, HKEY hKey, PHKEY phkResult)
-{
-	return 0;
-}
-
-LONG RegConnectRegistryA(LPCSTR lpMachineName, HKEY hKey, PHKEY phkResult)
 {
 	return 0;
 }
@@ -66,58 +72,12 @@ LONG RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, 
 	return 0;
 }
 
-LONG RegCreateKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
-		DWORD dwOptions, REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		PHKEY phkResult, LPDWORD lpdwDisposition, HANDLE hTransaction, PVOID pExtendedParemeter)
-{
-	return 0;
-}
-
-LONG RegCreateKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
-		DWORD dwOptions, REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		PHKEY phkResult, LPDWORD lpdwDisposition, HANDLE hTransaction, PVOID pExtendedParemeter)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyW(HKEY hKey, LPCWSTR lpSubKey)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyA(HKEY hKey, LPCSTR lpSubKey)
-{
-	return 0;
-}
-
 LONG RegDeleteKeyExW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired, DWORD Reserved)
 {
 	return 0;
 }
 
 LONG RegDeleteKeyExA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DWORD Reserved)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired,
-		DWORD Reserved, HANDLE hTransaction, PVOID pExtendedParameter)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired,
-		DWORD Reserved, HANDLE hTransaction, PVOID pExtendedParameter)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyValueW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpValueName)
-{
-	return 0;
-}
-
-LONG RegDeleteKeyValueA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpValueName)
 {
 	return 0;
 }
@@ -142,22 +102,7 @@ LONG RegDeleteValueA(HKEY hKey, LPCSTR lpValueName)
 	return 0;
 }
 
-LONG RegDisablePredefinedCache(void)
-{
-	return 0;
-}
-
 LONG RegDisablePredefinedCacheEx(void)
-{
-	return 0;
-}
-
-LONG RegDisableReflectionKey(HKEY hBase)
-{
-	return 0;
-}
-
-LONG RegEnableReflectionKey(HKEY hBase)
 {
 	return 0;
 }
@@ -209,6 +154,18 @@ LONG RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue,
 	return 0;
 }
 
+LONG RegLoadAppKeyW(LPCWSTR lpFile, PHKEY phkResult,
+		REGSAM samDesired, DWORD dwOptions, DWORD Reserved)
+{
+	return 0;
+}
+
+LONG RegLoadAppKeyA(LPCSTR lpFile, PHKEY phkResult,
+		REGSAM samDesired, DWORD dwOptions, DWORD Reserved)
+{
+	return 0;
+}
+
 LONG RegLoadKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpFile)
 {
 	return 0;
@@ -248,27 +205,33 @@ LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesir
 
 LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	return 0;
-}
+	Reg* reg;
+	RegKey* pKey;
 
-LONG RegOpenKeyTransactedW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions,
-		REGSAM samDesired, PHKEY phkResult, HANDLE hTransaction, PVOID pExtendedParameter)
-{
-	return 0;
-}
+	reg = RegGetInstance();
 
-LONG RegOpenKeyTransactedA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions,
-		REGSAM samDesired, PHKEY phkResult, HANDLE hTransaction, PVOID pExtendedParameter)
-{
+	if (!reg)
+		return -1;
+
+	pKey = reg->root_key->subkeys;
+
+	while (pKey != NULL)
+	{
+		if (strcmp(pKey->subname, lpSubKey) == 0)
+		{
+			*phkResult = pKey;
+			return ERROR_SUCCESS;
+		}
+
+		pKey = pKey->next;
+	}
+
+	*phkResult = NULL;
+
 	return 0;
 }
 
 LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired, PHKEY phkResult)
-{
-	return 0;
-}
-
-LONG RegOverridePredefKey(HKEY hKey, HKEY hNewHKey)
 {
 	return 0;
 }
@@ -289,16 +252,6 @@ LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpRese
 	return 0;
 }
 
-LONG RegQueryMultipleValues(HKEY hKey, PVALENT val_list, DWORD num_vals, LPTSTR lpValueBuf, LPDWORD ldwTotsize)
-{
-	return 0;
-}
-
-LONG RegQueryReflectionKey(HKEY hBase, BOOL* bIsReflectionDisabled)
-{
-	return 0;
-}
-
 LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
@@ -308,16 +261,52 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
-	return 0;
-}
+	Reg* reg;
+	RegKey* key;
+	RegVal* pValue;
 
-LONG RegReplaceKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpNewFile, LPCWSTR lpOldFile)
-{
-	return 0;
-}
+	key = (RegKey*) hKey;
+	reg = RegGetInstance();
 
-LONG RegReplaceKeyA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpNewFile, LPCSTR lpOldFile)
-{
+	pValue = key->values;
+
+	while (pValue != NULL)
+	{
+		if (strcmp(pValue->name, lpValueName) == 0)
+		{
+			if (pValue->type == REG_DWORD)
+			{
+				DWORD* pData = (DWORD*) lpData;
+
+				if (pData != NULL)
+				{
+					*pData = pValue->data.dword;
+				}
+
+				*lpcbData = sizeof(DWORD);
+
+				return ERROR_SUCCESS;
+			}
+			else if (pValue->type == REG_SZ)
+			{
+				int length;
+				char* pData = (char*) lpData;
+
+				length = strlen(pValue->data.string);
+
+				if (pData != NULL)
+				{
+					memcpy(pData, pValue->data.string, length);
+					pData[length] = '\0';
+				}
+
+				*lpcbData = length;
+			}
+		}
+
+		pValue = pValue->next;
+	}
+
 	return 0;
 }
 
@@ -331,32 +320,12 @@ LONG RegRestoreKeyA(HKEY hKey, LPCSTR lpFile, DWORD dwFlags)
 	return 0;
 }
 
-LONG RegSaveKeyW(HKEY hKey, LPCWSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-	return 0;
-}
-
-LONG RegSaveKeyA(HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-	return 0;
-}
-
 LONG RegSaveKeyExW(HKEY hKey, LPCWSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags)
 {
 	return 0;
 }
 
 LONG RegSaveKeyExA(HKEY hKey, LPCSTR lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags)
-{
-	return 0;
-}
-
-LONG RegSetKeyValueW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpValueName, DWORD dwType, LPCVOID lpData, DWORD cbData)
-{
-	return 0;
-}
-
-LONG RegSetKeyValueA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpValueName, DWORD dwType, LPCVOID lpData, DWORD cbData)
 {
 	return 0;
 }

@@ -69,7 +69,8 @@ void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_d
 
 void crypto_rc4_free(CryptoRc4 rc4)
 {
-	xfree(rc4);
+	if (rc4)
+		xfree(rc4);
 }
 
 CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec)
@@ -315,7 +316,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	for (i = 0; i < (int) (fp_len - 1); i++)
 	{
 		sprintf(p, "%02x:", fp[i]);
-		p = &fp_buffer[i * 3];
+		p = &fp_buffer[(i + 1) * 3];
 	}
 	sprintf(p, "%02x", fp[i]);
 

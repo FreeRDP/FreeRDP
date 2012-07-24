@@ -60,7 +60,7 @@ static const char* const RAIL_ORDER_TYPE_STRINGS[] =
 	"Execute Result"
 };
 
-void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, UNICODE_STRING* unicode_string)
+void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string)
 {
 	char* buffer;
 	size_t length = 0;

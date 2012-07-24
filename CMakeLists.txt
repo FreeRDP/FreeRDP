@@ -4,6 +4,7 @@
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 HP Development Company, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,6 +108,7 @@ if(APPLE)
 	include_directories(/opt/local/include)
 	link_directories(/opt/local/lib)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -framework CoreFoundation")
 endif()
 
 if(NOT WIN32)
@@ -117,6 +119,8 @@ if(NOT WIN32)
 
 	if(NOT APPLE)
 		find_suggested_package(FFmpeg)
+		find_suggested_package(XRandR)
+		find_suggested_package(Gstreamer)
 		find_suggested_package(ALSA)
 	else(NOT APPLE)
 		find_optional_package(FFmpeg)
@@ -129,6 +133,9 @@ set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
 set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp")
+
+# Path to put extensions
+set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp/extensions")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

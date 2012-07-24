@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Windows Registry
+ * ASN.1 Encoding & Decoding Engine
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,16 +17,11 @@
  * limitations under the License.
  */
 
-#include <libxml/parser.h>
-#include <libxml/xmlmemory.h>
+#include <winpr/asn1.h>
 
-struct _registry_xml
-{
-	xmlDocPtr doc;
-	xmlNodePtr node;
-};
-typedef struct _registry_xml RegistryXml;
 
-RegistryXml* registry_xml_new();
-RegistryXml* registry_xml_open();
-void registry_xml_close(RegistryXml* registry);
+#ifndef _WIN32
+
+
+
+#endif

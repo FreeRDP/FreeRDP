@@ -22,19 +22,18 @@
 
 #include "config.h"
 
-//#define NATIVE_SSPI
-
 #include <wchar.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
+#include <winpr/security.h>
 
 #ifdef _WIN32
 
 #include <tchar.h>
 #include <winerror.h>
 
-#ifdef NATIVE_SSPI
+#ifdef WITH_NATIVE_SSPI
 #define SECURITY_WIN32
 #include <sspi.h>
 #include <security.h>
@@ -103,6 +102,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #endif
 
 #define NTLMSP_NAME	_T("NTLM")
+#define NEGOSSP_NAME	_T("Negotiate")
 
 #endif
 

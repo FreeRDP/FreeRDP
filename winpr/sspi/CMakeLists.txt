@@ -50,8 +50,6 @@ if(NOT WITH_NATIVE_SSPI)
 		${WINPR_SSPI_NEGOTIATE_SRCS}
 		${WINPR_SSPI_SCHANNEL_SRCS}
 		${WINPR_SSPI_SRCS})
-else()
-	add_definitions(-DNATIVE_SSPI)
 endif()
 
 add_library(winpr-sspi ${WINPR_SSPI_SRCS})
@@ -63,6 +61,7 @@ set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVE
 
 if (NOT WIN32)
 	target_link_libraries(winpr-sspi winpr-crt)
+	target_link_libraries(winpr-sspi winpr-sysinfo)
 endif()
 
 target_link_libraries(winpr-sspi winpr-utils)

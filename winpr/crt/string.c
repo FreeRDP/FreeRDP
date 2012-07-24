@@ -41,22 +41,22 @@ char* _strdup(const char* strSource)
 	return strDestination;
 }
 
-wchar_t* _wcsdup(const wchar_t* strSource)
+WCHAR* _wcsdup(const WCHAR* strSource)
 {
-	wchar_t* strDestination;
+	WCHAR* strDestination;
 
 	if (strSource == NULL)
 		return NULL;
 
 #if sun
 	strDestination = wsdup(strSource);
-#elif defined(__APPLE__) && defined(__MACH__)
-	strDestination = malloc(wcslen(strSource));
+#elif defined(__APPLE__) && defined(__MACH__) || defined(ANDROID)
+	strDestination = malloc(wcslen((wchar_t*)strSource));
 
 	if (strDestination != NULL)
-		wcscpy(strDestination, strSource);
+		wcscpy((wchar_t*)strDestination, (const wchar_t*)strSource);
 #else
-	strDestination = wcsdup(strSource);
+	strDestination = (WCHAR*) wcsdup((wchar_t*) strSource);
 #endif
 
 	if (strDestination == NULL)
@@ -503,6 +503,42 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	*conv_pout = 0;
 
 	return conv_out_len;
+}
+
+int lstrlenA(LPCSTR lpString)
+{
+	return strlen(lpString);
+}
+
+int lstrlenW(LPCWSTR lpString)
+{
+	LPWSTR p;
+
+	if (!lpString)
+		return 0;
+
+	p = (LPWSTR) lpString;
+
+	while (*p)
+		p++;
+
+	return p - lpString;
+}
+
+int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
+{
+	return strcmp(lpString1, lpString2);
+}
+
+int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
+{
+	while (*lpString1 && (*lpString1 == *lpString2))
+	{
+		lpString1++;
+		lpString2++;
+	}
+
+	return *lpString1 - *lpString2;
 }
 
 #endif

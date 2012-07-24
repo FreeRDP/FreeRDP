@@ -150,18 +150,18 @@ enum SPI_MASK
 #define TF_SFT_NOEXTRAICONSONMINIMIZED			0x00000400
 #define TF_SFT_DESKBAND					0x00000800
 
-struct _UNICODE_STRING
+struct _RAIL_UNICODE_STRING
 {
 	uint16 length;
 	uint8* string;
 };
-typedef struct _UNICODE_STRING UNICODE_STRING;
+typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
 
 struct _HIGH_CONTRAST
 {
 	uint32 flags;
 	uint32 colorSchemeLength;
-	UNICODE_STRING colorScheme;
+	RAIL_UNICODE_STRING colorScheme;
 };
 typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
 
@@ -182,9 +182,9 @@ typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 struct _RAIL_EXEC_ORDER
 {
 	uint16 flags;
-	UNICODE_STRING exeOrFile;
-	UNICODE_STRING workingDir;
-	UNICODE_STRING arguments;
+	RAIL_UNICODE_STRING exeOrFile;
+	RAIL_UNICODE_STRING workingDir;
+	RAIL_UNICODE_STRING arguments;
 };
 typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
 
@@ -193,7 +193,7 @@ struct _RAIL_EXEC_RESULT_ORDER
 	uint16 flags;
 	uint16 execResult;
 	uint32 rawResult;
-	UNICODE_STRING exeOrFile;
+	RAIL_UNICODE_STRING exeOrFile;
 };
 typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 
@@ -287,7 +287,7 @@ typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
 struct _RAIL_GET_APPID_RESP_ORDER
 {
 	uint32 windowId;
-	UNICODE_STRING applicationId;
+	RAIL_UNICODE_STRING applicationId;
 	uint8 applicationIdBuffer[512];
 };
 typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;

@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_definitions(-DEXT_PATH="/usr/lib/freerdp/extensions")
+add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -109,6 +109,10 @@ target_link_libraries(freerdp-core freerdp-locale)
 target_link_libraries(freerdp-core winpr-utils)
 target_link_libraries(freerdp-core winpr-rpc)
 target_link_libraries(freerdp-core winpr-sspi)
+
+if(NOT WIN32)
+	target_link_libraries(freerdp-core winpr-registry)
+endif()
 
 target_link_libraries(freerdp-core freerdp-crypto)
 target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})

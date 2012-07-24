@@ -30,6 +30,7 @@ typedef struct rdp_credssp rdpCredssp;
 
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>
+#include <freerdp/crypto/der.h>
 #include <freerdp/crypto/crypto.h>
 
 struct rdp_credssp
@@ -47,6 +48,7 @@ struct rdp_credssp
 	SecBuffer PublicKey;
 	SecBuffer ts_credentials;
 	CryptoRc4 rc4_seal_state;
+	LPTSTR ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;

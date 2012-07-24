@@ -526,6 +526,7 @@ void transport_free(rdpTransport* transport)
 			tls_free(transport->tls);
 
 		tcp_free(transport->tcp);
+		tcp_free(transport->tcp_in);
 		tsg_free(transport->tsg);
 
 		xfree(transport);

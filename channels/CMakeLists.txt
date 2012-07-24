@@ -23,4 +23,5 @@ add_subdirectory(rdpdbg)
 add_subdirectory(rdpdr)
 add_subdirectory(rail)
 add_subdirectory(rdpsnd)
+add_subdirectory(skel)
 

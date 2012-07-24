@@ -31,10 +31,10 @@ PStream PStreamAlloc(size_t size)
 	{
 		if (size > 0)
 		{
-			s->data = (BYTE*) malloc(size);
-			s->p = s->data;
-			s->end = s->p;
+			s->buffer = (BYTE*) malloc(size);
+			s->pointer = s->buffer;
 			s->size = size;
+			s->length = size;
 		}
 		else
 		{
@@ -51,10 +51,10 @@ void StreamAlloc(PStream s, size_t size)
 	{
 		if (size > 0)
 		{
-			s->data = (BYTE*) malloc(size);
-			s->p = s->data;
-			s->end = s->p;
+			s->buffer = (BYTE*) malloc(size);
+			s->pointer = s->buffer;
 			s->size = size;
+			s->length = size;
 		}
 		else
 		{
@@ -71,37 +71,29 @@ void StreamReAlloc(PStream s, size_t size)
 		{
 			size_t old_size;
 			size_t offset_p;
-			size_t offset_end;
 
 			old_size = s->size;
-			offset_p = s->p - s->data;
-			offset_end = s->end - s->data;
+			offset_p = s->pointer - s->buffer;
 
-			s->data = (BYTE*) realloc(s->data, size);
+			s->buffer = (BYTE*) realloc(s->buffer, size);
 			s->size = size;
 
 			if (old_size <= size)
-			{
-				s->p = s->data + offset_p;
-				s->end = s->data + offset_end;
-			}
+				s->pointer = s->buffer + offset_p;
 			else
-			{
-				s->p = s->data;
-				s->end = s->p;
-			}
+				s->pointer = s->buffer;
 		}
 		else
 		{
 			if (s->size > 0)
-				free(s->data);
+				free(s->buffer);
 
 			ZeroMemory(s, sizeof(Stream));
 		}
 	}
 }
 
-PStream PStreamAllocAttach(BYTE* data, size_t size)
+PStream PStreamAllocAttach(BYTE* buffer, size_t size)
 {
 	PStream s;
 
@@ -109,23 +101,23 @@ PStream PStreamAllocAttach(BYTE* data, size_t size)
 
 	if (s != NULL)
 	{
-		s->data = data;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = buffer;
+		s->pointer = s->buffer;
 		s->size = size;
+		s->length = size;
 	}
 
 	return s;
 }
 
-void StreamAllocAttach(PStream s, BYTE* data, size_t size)
+void StreamAllocAttach(PStream s, BYTE* buffer, size_t size)
 {
 	if (s != NULL)
 	{
-		s->data = data;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = buffer;
+		s->pointer = s->buffer;
 		s->size = size;
+		s->length = size;
 	}
 }
 
@@ -133,8 +125,8 @@ void PStreamFree(PStream s)
 {
 	if (s != NULL)
 	{
-		if (s->data != NULL)
-			free(s->data);
+		if (s->buffer != NULL)
+			free(s->buffer);
 
 		free(s);
 	}
@@ -144,8 +136,8 @@ void StreamFree(PStream s)
 {
 	if (s != NULL)
 	{
-		if (s->data != NULL)
-			free(s->data);
+		if (s->buffer != NULL)
+			free(s->buffer);
 	}
 }
 
@@ -153,10 +145,10 @@ void PStreamFreeDetach(PStream s)
 {
 	if (s != NULL)
 	{
-		s->data = NULL;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = NULL;
+		s->pointer = s->buffer;
 		s->size = 0;
+		s->length = 0;
 		free(s);
 	}
 }
@@ -165,21 +157,21 @@ void StreamFreeDetach(PStream s)
 {
 	if (s != NULL)
 	{
-		s->data = NULL;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = NULL;
+		s->pointer = s->buffer;
 		s->size = 0;
+		s->length = 0;
 	}
 }
 
-void StreamAttach(PStream s, BYTE* data, size_t size)
+void StreamAttach(PStream s, BYTE* buffer, size_t size)
 {
 	if (s != NULL)
 	{
-		s->data = data;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = buffer;
+		s->pointer = s->buffer;
 		s->size = size;
+		s->length = size;
 	}
 }
 
@@ -187,9 +179,9 @@ void StreamDetach(PStream s)
 {
 	if (s != NULL)
 	{
-		s->data = NULL;
-		s->p = s->data;
-		s->end = s->p;
+		s->buffer = NULL;
+		s->pointer = s->buffer;
 		s->size = 0;
+		s->length = 0;
 	}
 }

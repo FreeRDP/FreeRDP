@@ -53,10 +53,10 @@ static void tls_free_certificate(CryptoCert cert)
 	xfree(cert);
 }
 
-
 boolean tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
+	long options = 0;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
@@ -67,15 +67,36 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	/*
-	 * This is necessary, because the Microsoft TLS implementation is not perfect.
-	 * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
-	 * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
-	 * As the size of the encrypted payload may give hints about its contents,
-	 * block padding is normally used, but the Microsoft TLS implementation
-	 * won't recognize it and will disconnect you after sending a TLS alert.
+	/**
+	 * SSL_OP_NO_COMPRESSION:
+	 *
+	 * The Microsoft RDP server does not advertise support
+	 * for TLS compression, but alternative servers may support it.
+	 * This was observed between early versions of the FreeRDP server
+	 * and the FreeRDP client, and caused major performance issues,
+	 * which is why we're disabling it.
 	 */
-	SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
+#ifdef SSL_OP_NO_COMPRESSION
+	options |= SSL_OP_NO_COMPRESSION;
+#endif
+	 
+	/**
+	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
+	 *
+	 * The Microsoft RDP server does *not* support TLS padding.
+	 * It absolutely needs to be disabled otherwise it won't work.
+	 */
+	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
+
+	/**
+	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
+	 *
+	 * Just like TLS padding, the Microsoft RDP server does not
+	 * support empty fragments. This needs to be disabled.
+	 */
+	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	SSL_CTX_set_options(tls->ctx, options);
 
 	tls->ssl = SSL_new(tls->ctx);
 
@@ -116,7 +137,8 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->hostname)) {
+	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
+	{
 		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
 		tls_free_certificate(cert);
@@ -131,6 +153,7 @@ boolean tls_connect(rdpTls* tls)
 boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 {
 	CryptoCert cert;
+	long options = 0;
 	int connection_status;
 
 	tls->ctx = SSL_CTX_new(SSLv23_server_method());
@@ -142,10 +165,43 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	}
 
 	/*
+	 * SSL_OP_NO_SSLv2:
+	 *
 	 * We only want SSLv3 and TLSv1, so disable SSLv2.
 	 * SSLv3 is used by, eg. Microsoft RDC for Mac OS X.
 	 */
-	SSL_CTX_set_options(tls->ctx, SSL_OP_NO_SSLv2);
+	options |= SSL_OP_NO_SSLv2;
+
+	/**
+	 * SSL_OP_NO_COMPRESSION:
+	 *
+	 * The Microsoft RDP server does not advertise support
+	 * for TLS compression, but alternative servers may support it.
+	 * This was observed between early versions of the FreeRDP server
+	 * and the FreeRDP client, and caused major performance issues,
+	 * which is why we're disabling it.
+	 */
+#ifdef SSL_OP_NO_COMPRESSION
+	options |= SSL_OP_NO_COMPRESSION;
+#endif
+	 
+	/**
+	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
+	 *
+	 * The Microsoft RDP server does *not* support TLS padding.
+	 * It absolutely needs to be disabled otherwise it won't work.
+	 */
+	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
+
+	/**
+	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
+	 *
+	 * Just like TLS padding, the Microsoft RDP server does not
+	 * support empty fragments. This needs to be disabled.
+	 */
+	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
+
+	SSL_CTX_set_options(tls->ctx, options);
 
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
@@ -182,18 +238,37 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
+	xfree(cert);
+
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
 		return false;
 	}
 
-	connection_status = SSL_accept(tls->ssl);
-
-	if (connection_status <= 0)
+	while (1)
 	{
-		if (tls_print_error("SSL_accept", tls->ssl, connection_status))
-			return false;
+		connection_status = SSL_accept(tls->ssl);
+
+		if (connection_status <= 0)
+		{
+			switch (SSL_get_error(tls->ssl, connection_status))
+			{
+				case SSL_ERROR_WANT_READ:
+				case SSL_ERROR_WANT_WRITE:
+					break;
+
+				default:
+					if (tls_print_error("SSL_accept", tls->ssl, connection_status))
+						return false;
+					break;
+
+			}
+		}
+		else
+		{
+			break;
+		}
 	}
 
 	printf("TLS connection accepted\n");
@@ -228,6 +303,19 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 			status = -1;
 			break;
 	}
+
+	return status;
+}
+
+int tls_read_all(rdpTls* tls, uint8* data, int length)
+{
+	int status;
+
+	do
+	{
+		status = tls_read(tls, data, length);
+	}
+	while (status == 0);
 
 	return status;
 }
@@ -298,11 +386,11 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 			return true;
 
 		case SSL_ERROR_WANT_READ:
-			printf("SSL_ERROR_WANT_READ\n");
+			printf("%s: SSL_ERROR_WANT_READ\n", func);
 			return false;
 
 		case SSL_ERROR_WANT_WRITE:
-			printf("SSL_ERROR_WANT_WRITE\n");
+			printf("%s: SSL_ERROR_WANT_WRITE\n", func);
 			return false;
 
 		case SSL_ERROR_SYSCALL:
@@ -385,7 +473,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		if (common_name)
 		{
 			xfree(common_name);
-			common_name=NULL ;
+			common_name = NULL;
 		}
 
 		verification_status = true; /* success! */
@@ -402,6 +490,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		char* issuer;
 		char* subject;
 		char* fingerprint;
+		freerdp* instance = (freerdp*) tls->settings->instance;
 		boolean accept_certificate = false;
 
 		issuer = crypto_cert_issuer(cert->px509);
@@ -414,9 +503,6 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		if (match == 1)
 		{
 			/* no entry was found in known_hosts file, prompt user for manual verification */
-
-			freerdp* instance = (freerdp*) tls->settings->instance;
-
 			if (!hostname_match)
 				tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
 
@@ -426,7 +512,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			if (!accept_certificate)
 			{
 				/* user did not accept, abort and do not add entry in known_hosts file */
-				verification_status = false;  /* failure! */
+				verification_status = false; /* failure! */
 			}
 			else
 			{
@@ -437,9 +523,23 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		}
 		else if (match == -1)
 		{
-			/* entry was found in known_hosts file, but fingerprint does not match */
+			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
 			tls_print_certificate_error(hostname, fingerprint);
-			verification_status = false; /* failure! */
+			
+			if (instance->VerifyChangedCertificate)
+				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
+
+			if (!accept_certificate)
+			{
+				/* user did not accept, abort and do not change known_hosts file */
+				verification_status = false;  /* failure! */
+			}
+			else
+			{
+				/* user accepted new certificate, add replace fingerprint for this host in known_hosts file */
+				certificate_data_replace(tls->certificate_store, certificate_data);
+				verification_status = true; /* success! */
+			}
 		}
 		else if (match == 0)
 		{
@@ -450,20 +550,6 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		xfree(subject);
 		xfree(fingerprint);
 	}
-
-#ifndef _WIN32
-	if (common_name)
-		xfree(common_name);
-
-	if (alt_names)
-	{
-		for (index = 0; index < alt_names_count; index++)
-			xfree(alt_names[index]);
-
-		xfree(alt_names);
-		xfree(alt_names_lengths) ;
-	}
-#endif
 
 	if (certificate_data)
 	{
