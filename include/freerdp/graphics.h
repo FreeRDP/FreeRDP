@@ -35,7 +35,7 @@ typedef void (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Free)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Paint)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Decompress)(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed);
+		uint8* data, int width, int height, int bpp, int length, int compressed);
 typedef void (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap, boolean primary);
 
 struct rdp_bitmap

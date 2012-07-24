@@ -25,6 +25,7 @@
 #endif
 
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
@@ -61,7 +62,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		{
 			if (data != bitmap->data)
 				xfree(bitmap->data);
-			
+
 			bitmap->data = data;
 		}
 	}
@@ -106,9 +107,14 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+		uint8* data, int width, int height, int bpp, int length, int compressed)
 {
 	uint16 size;
+	RFX_MESSAGE* msg;
+	uint8* src;
+	uint8* dst;
+	int yindex;
+	int xindex;
 
 	size = width * height * (bpp + 7) / 8;
 
@@ -117,22 +123,52 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed == 2)
+	if (compressed == 4)
+	{
+		printf("xf_Bitmap_Decompress: nsc not done\n");
+	}
+	else if (compressed == 3)
+	{
+		xfInfo* xfi = ((xfContext*)context)->xfi;
+		rfx_context_set_pixel_format(xfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+		msg = rfx_process_message(xfi->rfx_context, data, length);
+		if (msg == NULL)
+		{
+			printf("xf_Bitmap_Decompress: rfx Decompression Failed\n");
+		}
+		else
+		{
+			for (yindex = 0; yindex < height; yindex++)
+			{
+				src = msg->tiles[0]->data + yindex * 64 * 4;
+				dst = bitmap->data + yindex * width * 3;
+				for (xindex = 0; xindex < width; xindex++)
+				{
+					*(dst++) = *(src++);
+					*(dst++) = *(src++);
+					*(dst++) = *(src++);
+					src++;
+				}
+			}
+			rfx_message_free(xfi->rfx_context, msg);
+		}
+	}
+	else if (compressed == 2)
 	{
 		if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 		{
-			printf("jpeg Decompression Failed\n");
+			printf("xf_Bitmap_Decompress: jpeg Decompression Failed\n");
 		}
 	}
-	else if (compressed)
+	else if (compressed == 1)
 	{
 		boolean status;
 
 		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		if (status != true)
+		if (status == false)
 		{
-			printf("Bitmap Decompression Failed\n");
+			printf("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
 		}
 	}
 	else

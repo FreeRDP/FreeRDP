@@ -62,6 +62,9 @@ static const char* const CAPSET_TYPE_STRINGS[] =
 /* CODEC_GUID_NSCODEC  0xCA8D1BB9000F154F589FAE2D1A87E2D6 */
 #define CODEC_GUID_NSCODEC "\xb9\x1b\x8d\xca\x0f\x00\x4f\x15\x58\x9f\xae\x2d\x1a\x87\xe2\xd6"
 
+/* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237*/
+#define CODEC_GUID_JPEG "\xE6\x4C\xAF\x1B\xED\x9E\x0C\x43\x86\x9A\xCB\x8B\x37\xB6\x62\x37"
+
 void rdp_read_capability_set_header(STREAM* s, uint16* length, uint16* type)
 {
 	stream_read_uint16(s, *type); /* capabilitySetType */
@@ -1014,7 +1017,6 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
-	cacheFlags |= 0x80; /* jpeg hack */
 
 	if (settings->persistent_bitmap_cache)
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;
@@ -1529,6 +1531,12 @@ void rdp_write_nsc_client_capability_container(STREAM* s, rdpSettings* settings)
 	stream_write_uint8(s, 3);  /* colorLossLevel */
 }
 
+void rdp_write_jpeg_client_capability_container(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 1); /* codecPropertiesLength */
+	stream_write_uint8(s, settings->jpeg_quality);
+}
+
 /**
  * Write RemoteFX Server Capability Container.\n
  * @param s stream
@@ -1538,6 +1546,12 @@ void rdp_write_rfx_server_capability_container(STREAM* s, rdpSettings* settings)
 {
 	stream_write_uint16(s, 4); /* codecPropertiesLength */
 	stream_write_uint32(s, 0); /* reserved */
+}
+
+void rdp_write_jpeg_server_capability_container(STREAM* s, rdpSettings* settings)
+{
+	stream_write_uint16(s, 1); /* codecPropertiesLength */
+	stream_write_uint8(s, 75);
 }
 
 /**
@@ -1571,6 +1585,8 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 		bitmapCodecCount++;
 	if (settings->ns_codec)
 		bitmapCodecCount++;
+	if (settings->jpeg_codec)
+		bitmapCodecCount++;
 
 	stream_write_uint8(s, bitmapCodecCount);
 
@@ -1601,6 +1617,20 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 		{
 			stream_write_uint8(s, CODEC_ID_NSCODEC); /* codecID */
 			rdp_write_nsc_client_capability_container(s, settings);
+		}
+	}
+	if (settings->jpeg_codec)
+	{
+		stream_write(s, CODEC_GUID_JPEG, 16);
+		if (settings->server_mode)
+		{
+			stream_write_uint8(s, 0); /* codecID is defined by the client */
+			rdp_write_jpeg_server_capability_container(s, settings);
+		}
+		else
+		{
+			stream_write_uint8(s, CODEC_ID_JPEG); /* codecID */
+			rdp_write_jpeg_client_capability_container(s, settings);
 		}
 	}
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CODECS);
@@ -2098,4 +2128,3 @@ boolean rdp_send_confirm_active(rdpRdp* rdp)
 
 	return rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
 }
-

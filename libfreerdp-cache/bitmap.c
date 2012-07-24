@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/freerdp.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
@@ -125,6 +126,54 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	bitmap_cache_put(cache->bitmap, cache_bitmap_v2->cacheId, cache_bitmap_v2->cacheIndex, bitmap);
 }
 
+void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
+{
+	rdpBitmap* bitmap;
+	rdpBitmap* prevBitmap;
+	rdpCache* cache = context->cache;
+	BITMAP_DATA_EX* bitmapData = &cache_bitmap_v3->bitmapData;
+	boolean compression;
+
+	bitmap = Bitmap_Alloc(context);
+
+	Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
+
+	if (cache_bitmap_v3->bitmapData.bpp == 0)
+	{
+		/* Workaround for Windows 8 bug where bitmapBpp is not set */
+		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->color_depth;
+	}
+
+	switch (bitmapData->codecID)
+	{
+		case CODEC_ID_JPEG:
+			compression = 2;
+			break;
+		case CODEC_ID_REMOTEFX:
+			compression = 3;
+			break;
+		case CODEC_ID_NSCODEC:
+			compression = 4;
+			break;
+		default:
+			compression = 1;
+			break;
+	}
+
+	bitmap->Decompress(context, bitmap,
+			bitmapData->data, bitmap->width, bitmap->height,
+			bitmapData->bpp, bitmapData->length, compression);
+
+	bitmap->New(context, bitmap);
+
+	prevBitmap = bitmap_cache_get(cache->bitmap, cache_bitmap_v3->cacheId, cache_bitmap_v3->cacheIndex);
+
+	if (prevBitmap != NULL)
+		Bitmap_Free(context, prevBitmap);
+
+	bitmap_cache_put(cache->bitmap, cache_bitmap_v3->cacheId, cache_bitmap_v3->cacheIndex, bitmap);
+}
+
 void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
@@ -229,6 +278,7 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 
 	update->secondary->CacheBitmap = update_gdi_cache_bitmap;
 	update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
+	update->secondary->CacheBitmapV3 = update_gdi_cache_bitmap_v3;
 
 	update->BitmapUpdate = update_gdi_bitmap_update;
 }

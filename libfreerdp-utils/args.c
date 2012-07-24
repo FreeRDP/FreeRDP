@@ -86,10 +86,13 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
 				"  --no-bmp-cache: disable bitmap cache\n"
+				"  --bcv3: codec for bitmap cache v3 (rfx, nsc, jpeg)\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+				"  --jpeg: enable jpeg codec, uses 75 quality\n"
+				"  --jpegex: enable jpeg and set quality(1..99)\n"
 				"  --disable-wallpaper: disables wallpaper\n"
 				"  --composition: enable desktop composition\n"
 				"  --disable-full-window-drag: disables full window drag\n"
@@ -345,6 +348,47 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("unknown GDI backend\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
+		}
+		else if (strcmp("--bcv3", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+			settings->bitmap_cache_v3 = true;
+			if (strcmp("rfx", argv[index]) == 0)
+			{
+				printf("setting rfx\n");
+				settings->preferred_codec_id = 3; /* CODEC_ID_REMOTEFX */
+			}
+			else if (strcmp("nsc", argv[index]) == 0)
+			{
+				printf("setting codec nsc\n");
+				settings->preferred_codec_id = 1; /* CODEC_ID_NSCODEC */
+			}
+			else if (strcmp("jpeg", argv[index]) == 0)
+			{
+				printf("setting codec jpeg\n");
+				settings->preferred_codec_id = 2;
+			}
+		}
+		else if (strcmp("--jpeg", argv[index]) == 0)
+		{
+			settings->jpeg_codec = true;
+			settings->jpeg_quality = 75;
+		}
+		else if (strcmp("--jpegex", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+			settings->jpeg_codec = true;
+			settings->jpeg_quality = atoi(argv[index]);
 		}
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
