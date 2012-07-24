@@ -673,7 +673,7 @@ boolean WTSVirtualChannelWrite(
 
 			stream_seek_uint8(s);
 			cbChId = wts_write_variable_uint(s, channel->channel_id);
-			if (first && Length > stream_get_left(s))
+			if (first && (Length > (uint32) stream_get_left(s)))
 			{
 				cbLen = wts_write_variable_uint(s, Length);
 				item->buffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;

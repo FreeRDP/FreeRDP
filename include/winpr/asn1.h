@@ -20,13 +20,6 @@
 #ifndef WINPR_ASN1_H
 #define WINPR_ASN1_H
 
-#ifdef _WIN32
-
-#include <msasn1.h>
-#include <msber.h>
-
-#else
-
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -507,8 +500,6 @@ WINPR_API int ASN1DEREncBeginBlk(ASN1encoding_t enc, ASN1blocktype_e eBlkType, v
 WINPR_API int ASN1DEREncNewBlkElement(void* pBlk, ASN1encoding_t* enc2);
 WINPR_API int ASN1DEREncFlushBlkElement(void* pBlk);
 WINPR_API int ASN1DEREncEndBlk(void* pBlk);
-
-#endif
 
 #endif /* WINPR_ASN1_H */
 
