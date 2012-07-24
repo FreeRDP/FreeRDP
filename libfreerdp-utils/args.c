@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/settings.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
@@ -361,17 +362,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (strcmp("rfx", argv[index]) == 0)
 			{
 				printf("setting rfx\n");
-				settings->preferred_codec_id = 3; /* CODEC_ID_REMOTEFX */
+				settings->preferred_codec_id = CODEC_ID_REMOTEFX;
 			}
 			else if (strcmp("nsc", argv[index]) == 0)
 			{
 				printf("setting codec nsc\n");
-				settings->preferred_codec_id = 1; /* CODEC_ID_NSCODEC */
+				settings->preferred_codec_id = CODEC_ID_NSCODEC;
 			}
 			else if (strcmp("jpeg", argv[index]) == 0)
 			{
 				printf("setting codec jpeg\n");
-				settings->preferred_codec_id = 2;
+				settings->preferred_codec_id = CODEC_ID_JPEG;
 			}
 		}
 		else if (strcmp("--jpeg", argv[index]) == 0)

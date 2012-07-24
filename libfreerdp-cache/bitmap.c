@@ -75,7 +75,8 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitm
 
 	bitmap->Decompress(context, bitmap,
 			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
-			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength, cache_bitmap->compressed);
+			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength,
+			cache_bitmap->compressed, CODEC_ID_NONE);
 
 	bitmap->New(context, bitmap);
 
@@ -103,18 +104,10 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
 	}
 
-	if (cache_bitmap_v2->compressed && (cache_bitmap_v2->flags & 0x80))
-	{
-		bitmap->Decompress(context, bitmap,
-				cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
-				cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, 2);
-	}
-	else
-	{
-		bitmap->Decompress(context, bitmap,
-				cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
-				cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength, cache_bitmap_v2->compressed);
-	}
+	bitmap->Decompress(context, bitmap,
+			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
+			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength,
+			cache_bitmap_v2->compressed, CODEC_ID_NONE);
 
 	bitmap->New(context, bitmap);
 
@@ -132,7 +125,6 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
 	BITMAP_DATA_EX* bitmapData = &cache_bitmap_v3->bitmapData;
-	boolean compression;
 
 	bitmap = Bitmap_Alloc(context);
 
@@ -144,25 +136,10 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->color_depth;
 	}
 
-	switch (bitmapData->codecID)
-	{
-		case CODEC_ID_JPEG:
-			compression = 2;
-			break;
-		case CODEC_ID_REMOTEFX:
-			compression = 3;
-			break;
-		case CODEC_ID_NSCODEC:
-			compression = 4;
-			break;
-		default:
-			compression = 1;
-			break;
-	}
-
 	bitmap->Decompress(context, bitmap,
 			bitmapData->data, bitmap->width, bitmap->height,
-			bitmapData->bpp, bitmapData->length, compression);
+			bitmapData->bpp, bitmapData->length, true,
+			bitmapData->codecID);
 
 	bitmap->New(context, bitmap);
 
@@ -207,7 +184,8 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 
 		bitmap->Decompress(context, bitmap,
 				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
-				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength, bitmap_data->compressed);
+				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength,
+				bitmap_data->compressed, CODEC_ID_NONE);
 
 		if (reused)
 			bitmap->Free(context, bitmap);

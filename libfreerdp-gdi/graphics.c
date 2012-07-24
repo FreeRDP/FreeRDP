@@ -89,7 +89,8 @@ void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, int compressed)
+		uint8* data, int width, int height, int bpp, int length,
+		boolean compressed, int codec_id)
 {
 	uint16 size;
 	RFX_MESSAGE* msg;
@@ -97,6 +98,8 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	uint8* dst;
 	int yindex;
 	int xindex;
+	rdpGdi* gdi;
+	boolean status;
 
 	size = width * height * (bpp + 7) / 8;
 
@@ -105,58 +108,57 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed == 4)
+	switch (codec_id)
 	{
-		printf("gdi_Bitmap_Decompress: nsc not done\n");
-	}
-	else if (compressed == 3)
-	{
-		rdpGdi* gdi = context->gdi;
-		rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-		msg = rfx_process_message(gdi->rfx_context, data, length);
-		if (msg == NULL)
-		{
-			printf("gdi_Bitmap_Decompress: rfx Decompression Failed\n");
-		}
-		else
-		{
-			for (yindex = 0; yindex < height; yindex++)
+		case CODEC_ID_NSCODEC:
+			printf("gdi_Bitmap_Decompress: nsc not done\n");
+			break;
+		case CODEC_ID_REMOTEFX:
+			gdi = context->gdi;
+			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+			msg = rfx_process_message(gdi->rfx_context, data, length);
+			if (msg == NULL)
 			{
-				src = msg->tiles[0]->data + yindex * 64 * 4;
-				dst = bitmap->data + yindex * width * 3;
-				for (xindex = 0; xindex < width; xindex++)
+				printf("gdi_Bitmap_Decompress: rfx Decompression Failed\n");
+			}
+			else
+			{
+				for (yindex = 0; yindex < height; yindex++)
 				{
-					*(dst++) = *(src++);
-					*(dst++) = *(src++);
-					*(dst++) = *(src++);
-					src++;
+					src = msg->tiles[0]->data + yindex * 64 * 4;
+					dst = bitmap->data + yindex * width * 3;
+					for (xindex = 0; xindex < width; xindex++)
+					{
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						src++;
+					}
+				}
+				rfx_message_free(gdi->rfx_context, msg);
+			}
+			break;
+		case CODEC_ID_JPEG:
+			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
+			{
+				printf("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
+			}
+			break;
+		default:
+			if (compressed)
+			{
+				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
+
+				if (status == false)
+				{
+					printf("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
 			}
-			rfx_message_free(gdi->rfx_context, msg);
-		}
-	}
-	else if (compressed == 2)
-	{
-		if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
-		{
-			printf("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
-		}
-	}
-	else if (compressed)
-	{
-		boolean status;
-
-		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
-
-		if (status == false)
-		{
-			printf("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
-		}
-	}
-	else
-	{
-		freerdp_image_flip(data, bitmap->data, width, height, bpp);
-
+			else
+			{
+				freerdp_image_flip(data, bitmap->data, width, height, bpp);
+			}
+			break;
 	}
 
 	bitmap->width = width;
