@@ -25,7 +25,11 @@
 #include <winpr/sam.h>
 #include <winpr/print.h>
 
+#ifdef _WIN32
+#define WINPR_SAM_FILE		"C:\\SAM"
+#else
 #define WINPR_SAM_FILE		"/etc/winpr/SAM"
+#endif
 
 WINPR_SAM* SamOpen(BOOL read_only)
 {
@@ -48,13 +52,17 @@ WINPR_SAM* SamOpen(BOOL read_only)
 			if (!sam->fp)
 				sam->fp = fopen(WINPR_SAM_FILE, "w+");
 		}
+
+		if (!(sam->fp))
+			printf("Could not open SAM file!\n");
 	}
 
 	return sam;
 }
 
-void SamLookupStart(WINPR_SAM* sam)
+BOOL SamLookupStart(WINPR_SAM* sam)
 {
+	size_t read_size;
 	long int file_size;
 
 	fseek(sam->fp, 0, SEEK_END);
@@ -62,14 +70,23 @@ void SamLookupStart(WINPR_SAM* sam)
 	fseek(sam->fp, 0, SEEK_SET);
 
 	if (file_size < 1)
-		return;
+		return FALSE;
 
 	sam->buffer = (char*) malloc(file_size + 2);
 
-	if (fread(sam->buffer, file_size, 1, sam->fp) != 1)
+	read_size = fread(sam->buffer, file_size, 1, sam->fp);
+
+	if (!read_size)
+	{
+		if (!ferror(sam->fp))
+			read_size = file_size;
+	}
+
+	if (read_size < 1)
 	{
 		free(sam->buffer);
-		return;
+		sam->buffer = NULL;
+		return FALSE;
 	}
 
 	sam->buffer[file_size] = '\n';

@@ -167,10 +167,6 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
 
-	client->settings->nla_security = true;
-	client->settings->tls_security = false;
-	client->settings->rdp_security = false;
-
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
 

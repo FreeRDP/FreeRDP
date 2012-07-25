@@ -154,7 +154,11 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 		credentials = sspi_CredentialsNew();
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		if (identity)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		else
+			ZeroMemory(&(credentials->identity), sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
