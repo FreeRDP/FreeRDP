@@ -92,8 +92,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+#ifdef WITH_JPEG
 				"  --jpeg: enable jpeg codec, uses 75 quality\n"
 				"  --jpegex: enable jpeg and set quality(1..99)\n"
+#endif
 				"  --disable-wallpaper: disables wallpaper\n"
 				"  --composition: enable desktop composition\n"
 				"  --disable-full-window-drag: disables full window drag\n"
@@ -369,12 +371,20 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("setting codec nsc\n");
 				settings->v3_codec_id = CODEC_ID_NSCODEC;
 			}
+#ifdef WITH_JPEG
 			else if (strcmp("jpeg", argv[index]) == 0)
 			{
 				printf("setting codec jpeg\n");
 				settings->v3_codec_id = CODEC_ID_JPEG;
 			}
+#endif
+			else
+			{
+				printf("bad codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
 		}
+#ifdef WITH_JPEG
 		else if (strcmp("--jpeg", argv[index]) == 0)
 		{
 			settings->jpeg_codec = true;
@@ -391,6 +401,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->jpeg_codec = true;
 			settings->jpeg_quality = atoi(argv[index]);
 		}
+#endif
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->rfx_codec = true;

@@ -3,6 +3,7 @@ option(WITH_NEON "Enable NEON optimization for rfx decoder" OFF)
 option(WITH_PROFILER "Compile profiler." OFF)
 option(WITH_SSE2_TARGET "Allow compiler to generate SSE2 instructions." OFF)
 option(WITH_SSE2 "Use SSE2 optimization." OFF)
+option(WITH_JPEG "Use JPEG decoding." OFF)
 
 option(WITH_DEBUG_CERTIFICATE "Print certificate related debug messages." OFF)
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." OFF)

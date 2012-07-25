@@ -17,9 +17,12 @@
  * limitations under the License.
  */
 
+#include "config.h"
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
+
+#ifdef WITH_JPEG
 
 #define HAVE_BOOLEAN
 #include <jpeglib.h>
@@ -63,7 +66,7 @@ static void my_term_source(j_decompress_ptr cinfo)
 }
 
 /*****************************************************************************/
-int
+static int
 do_decompress(char* comp_data, int comp_data_bytes,
               int* width, int* height, int* bpp,
               char* decomp_data, int* decomp_data_bytes)
@@ -139,3 +142,13 @@ jpeg_decompress(uint8 * input, uint8 * output, int width, int height, int size, 
 	}
 	return 1;
 }
+
+#else
+
+boolean
+jpeg_decompress(uint8 * input, uint8 * output, int width, int height, int size, int bpp)
+{
+	return 0;
+}
+
+#endif
