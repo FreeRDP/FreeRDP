@@ -46,6 +46,8 @@ static const char PROTOCOL_SECURITY_STRINGS[3][4] =
 	"NLA"
 };
 
+boolean nego_security_connect(rdpNego* nego);
+
 /**
  * Negotiate protocol security and connect.
  * @param nego
@@ -117,6 +119,13 @@ boolean nego_connect(rdpNego* nego)
 		nego->transport->settings->encryption = true;
 		nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 		nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	}
+
+	/* finally connect security layer (if not already done) */
+	if(!nego_security_connect(nego))
+	{
+		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
+		return false;
 	}
 
 	return true;

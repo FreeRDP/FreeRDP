@@ -99,7 +99,6 @@ struct rdp_nego
 typedef struct rdp_nego rdpNego;
 
 boolean nego_connect(rdpNego* nego);
-boolean nego_security_connect(rdpNego* nego);
 
 boolean nego_send_preconnection_pdu(rdpNego* nego);
 
