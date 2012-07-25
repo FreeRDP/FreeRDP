@@ -1647,6 +1647,21 @@ void rdp_read_frame_acknowledge_capability_set(STREAM* s, uint16 length, rdpSett
 	stream_seek_uint32(s); /* (4 bytes) */
 }
 
+void rdp_read_bitmap_cache_v3_codec_id_capability_set(STREAM* s, uint16 length, rdpSettings* settings)
+{
+	stream_seek_uint8(s); /* (1 byte) */
+}
+
+void rdp_write_bitmap_cache_v3_codec_id_capability_set(STREAM* s, rdpSettings* settings)
+{
+	uint8* header;
+
+	header = rdp_capability_set_start(s);
+	stream_write_uint8(s, settings->v3_codec_id);
+	rdp_capability_set_finish(s, header, 6);
+}
+
+
 /**
  * Write frame acknowledge capability set.\n
  * @param s stream
@@ -1797,6 +1812,10 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 
 			case CAPSET_TYPE_FRAME_ACKNOWLEDGE:
 				rdp_read_frame_acknowledge_capability_set(s, length, settings);
+				break;
+
+			case 6:
+				rdp_read_bitmap_cache_v3_codec_id_capability_set(s, length, settings);
 				break;
 
 			default:
@@ -2103,6 +2122,15 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		{
 			numberCapabilities++;
 			rdp_write_frame_acknowledge_capability_set(s, settings);
+		}
+	}
+
+	if (settings->received_caps[6])
+	{
+		if (settings->v3_codec_id != 0)
+		{
+			numberCapabilities++;
+			rdp_write_bitmap_cache_v3_codec_id_capability_set(s, settings);
 		}
 	}
 
