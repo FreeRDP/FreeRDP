@@ -139,10 +139,12 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			}
 			break;
 		case CODEC_ID_JPEG:
+#ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
 				printf("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
 			}
+#endif
 			break;
 		default:
 			if (compressed)

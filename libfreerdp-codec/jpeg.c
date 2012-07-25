@@ -143,12 +143,4 @@ jpeg_decompress(uint8 * input, uint8 * output, int width, int height, int size, 
 	return 1;
 }
 
-#else
-
-boolean
-jpeg_decompress(uint8 * input, uint8 * output, int width, int height, int size, int bpp)
-{
-	return 0;
-}
-
 #endif
