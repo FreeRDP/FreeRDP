@@ -18,9 +18,11 @@
 # limitations under the License.
 
 add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rdpdbg)
-add_subdirectory(rdpdr)
 add_subdirectory(rail)
-add_subdirectory(rdpsnd)
+if(NOT WIN32)
+    add_subdirectory(drdynvc)
+    add_subdirectory(rdpdbg)
+    add_subdirectory(rdpdr)
+    add_subdirectory(rdpsnd)
+endif()
 
