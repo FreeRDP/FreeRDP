@@ -21,6 +21,7 @@
 #include "input.h"
 
 #include "connection.h"
+#include "transport.h"
 
 #include <freerdp/errorcodes.h>
 
