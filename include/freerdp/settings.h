@@ -296,7 +296,10 @@ struct rdp_settings
 	ALIGN64 boolean local; /* 68 */
 	ALIGN64 boolean authentication_only; /* 69 */
 	ALIGN64 boolean from_stdin; /* 70 */
-	ALIGN64 uint64 paddingC[80 - 71]; /* 71 */
+	ALIGN64 boolean send_preconnection_pdu; /* 71 */
+	ALIGN64 uint32 preconnection_id; /* 72 */
+	ALIGN64 char* preconnection_blob; /* 73 */
+	ALIGN64 uint64 paddingC[80 - 74]; /* 74 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */

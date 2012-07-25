@@ -81,6 +81,13 @@ boolean nego_connect(rdpNego* nego)
 			else if (nego->state == NEGO_STATE_RDP)
 				nego->enabled_protocols[PROTOCOL_RDP] = 1;
 		}
+
+		if(!nego_send_preconnection_pdu(nego))
+		{
+			DEBUG_NEGO("Failed to send preconnection information");
+			nego->state = NEGO_STATE_FINAL;
+			return false;
+		}
 	}
 
 	do
@@ -143,9 +150,7 @@ boolean nego_security_connect(rdpNego* nego)
 boolean nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
-	{
 		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
-	}
 	return nego->tcp_connected;
 }
 
@@ -160,10 +165,7 @@ boolean nego_transport_connect(rdpNego* nego)
 	nego_tcp_connect(nego);
 
 	if (nego->tcp_connected && !nego->security_layer_negotiation_enabled)
-	{
-		nego_security_connect(nego);
-		return nego->security_connected;
-	}
+		return nego_security_connect(nego);
 
 	return nego->tcp_connected;
 }
@@ -182,6 +184,55 @@ int nego_transport_disconnect(rdpNego* nego)
 	nego->tcp_connected = 0;
 	nego->security_connected = 0;
 	return 1;
+}
+
+/**
+ * Send preconnection information if enabled.
+ * @param nego
+ * @return
+ */
+
+boolean nego_send_preconnection_pdu(rdpNego* nego)
+{
+	STREAM* s;
+	uint32 cbSize;
+	UNICONV* uniconv;
+	uint16 cchPCB_times2 = 0;
+	char* wszPCB = NULL;
+
+	if(!nego->send_preconnection_pdu)
+		return true;
+
+	DEBUG_NEGO("Sending preconnection PDU");
+	if(!nego_tcp_connect(nego))
+		return false;
+
+	/* it's easier to always send the version 2 PDU, and it's just 2 bytes overhead */
+	cbSize = PRECONNECTION_PDU_V2_MIN_SIZE;
+	if(nego->preconnection_blob) {
+		uniconv = freerdp_uniconv_new();
+		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &cchPCB_times2);
+		freerdp_uniconv_free(uniconv);
+		cchPCB_times2 += 2; /* zero-termination */
+		cbSize += cchPCB_times2;
+	}
+
+	s = transport_send_stream_init(nego->transport, cbSize);
+	stream_write_uint32(s, cbSize); /* cbSize */
+	stream_write_uint32(s, 0); /* Flags */
+	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
+	stream_write_uint32(s, nego->preconnection_id); /* Id */
+	stream_write_uint16(s, cchPCB_times2 / 2); /* cchPCB */
+	if(wszPCB)
+	{
+		stream_write(s, wszPCB, cchPCB_times2); /* wszPCB */
+		xfree(wszPCB);
+	}
+
+	if (transport_write(nego->transport, s) < 0)
+		return false;
+
+	return true;
 }
 
 /**
@@ -820,4 +871,37 @@ void nego_set_routing_token(rdpNego* nego, rdpBlob* routing_token)
 void nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	nego->cookie = cookie;
+}
+
+/**
+ * Enable / disable preconnection PDU.
+ * @param nego
+ * @param send_pcpdu
+ */
+
+void nego_set_send_preconnection_pdu(rdpNego* nego, boolean send_pcpdu)
+{
+	nego->send_preconnection_pdu = send_pcpdu;
+}
+
+/**
+ * Set preconnection id.
+ * @param nego
+ * @param id
+ */
+
+void nego_set_preconnection_id(rdpNego* nego, uint32 id)
+{
+	nego->preconnection_id = id;
+}
+
+/**
+ * Set preconnection blob.
+ * @param nego
+ * @param blob
+ */
+
+void nego_set_preconnection_blob(rdpNego* nego, char* blob)
+{
+	nego->preconnection_blob = blob;
 }

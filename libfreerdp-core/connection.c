@@ -55,25 +55,6 @@
  *
  */
 
-// XXX: Send a PCB (preconnection BLOB) as specified in MS-RDPEPS (RDP_PRECONNECTION_PDU_V2)
-boolean rdp_send_pcb(rdpNego* nego) {
-	STREAM* s;
-	// XXX: this is a fixed RDP_PRECONNECTION_PDU_V2, with Id=0 and a Hyper-V instance id as string
-	//      must be customizable in the final version.
-	// 49ECFD99-8A50-43DC-B2EF-39965652C371
-	uint8 buf[] = {0x5c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x25, 0x00, 52, 0, 57, 0, 69, 0, 67, 0, 70, 0, 68, 0, 57, 0, 57, 0, 45, 0, 56, 0, 65, 0, 53, 0, 48, 0, 45, 0, 52, 0, 51, 0, 68, 0, 67, 0, 45, 0, 66, 0, 50, 0, 69, 0, 70, 0, 45, 0, 51, 0, 57, 0, 57, 0, 54, 0, 53, 0, 54, 0, 53, 0, 50, 0, 67, 0, 51, 0, 55, 0, 49, 0, 0x00, 0x00};
-
-	if(!nego_tcp_connect(nego)) return false;
-
-	s = transport_send_stream_init(nego->transport, 93);
-	stream_write(s, buf, 92);
-
-	if (transport_write(nego->transport, s) < 0)
-		return false;
-
-	return true;
-}
-
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' paremeter.
  * @msdn{cc240452}
@@ -88,6 +69,10 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->hostname, settings->port);
 	nego_set_cookie(rdp->nego, settings->username);
+	nego_set_send_preconnection_pdu(rdp->nego, settings->send_preconnection_pdu);
+	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
+	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
+
 	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
 	nego_enable_rdp(rdp->nego, settings->rdp_security);
 
@@ -96,8 +81,6 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		nego_enable_nla(rdp->nego, settings->nla_security);
 		nego_enable_tls(rdp->nego, settings->tls_security);
 	}
-
-	rdp_send_pcb(rdp->nego); // XXX: different name?!
 
 	if (!nego_connect(rdp->nego))
 	{
