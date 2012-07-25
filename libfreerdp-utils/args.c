@@ -362,17 +362,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (strcmp("rfx", argv[index]) == 0)
 			{
 				printf("setting rfx\n");
-				settings->preferred_codec_id = CODEC_ID_REMOTEFX;
+				settings->v3_codec_id = CODEC_ID_REMOTEFX;
 			}
 			else if (strcmp("nsc", argv[index]) == 0)
 			{
 				printf("setting codec nsc\n");
-				settings->preferred_codec_id = CODEC_ID_NSCODEC;
+				settings->v3_codec_id = CODEC_ID_NSCODEC;
 			}
 			else if (strcmp("jpeg", argv[index]) == 0)
 			{
 				printf("setting codec jpeg\n");
-				settings->preferred_codec_id = CODEC_ID_JPEG;
+				settings->v3_codec_id = CODEC_ID_JPEG;
 			}
 		}
 		else if (strcmp("--jpeg", argv[index]) == 0)

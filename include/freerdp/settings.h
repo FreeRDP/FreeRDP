@@ -391,7 +391,7 @@ struct rdp_settings
 	ALIGN64 boolean jpeg_codec; /* 286 */
 	ALIGN64 uint32 jpeg_codec_id; /* 287 */
 	ALIGN64 uint32 jpeg_quality; /* 288 */
-	ALIGN64 uint32 preferred_codec_id; /* 289 */
+	ALIGN64 uint32 v3_codec_id; /* 289 */
 	ALIGN64 uint64 paddingM[296 - 290]; /* 290 */
 
 	/* Recording */
