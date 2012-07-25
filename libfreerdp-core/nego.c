@@ -27,6 +27,8 @@
 
 #include "nego.h"
 
+#include "transport.h"
+
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -61,7 +63,24 @@ boolean nego_connect(rdpNego* nego)
 		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
 			nego->state = NEGO_STATE_RDP;
 		else
+		{
+			DEBUG_NEGO("No security protocol is enabled");
 			nego->state = NEGO_STATE_FAIL;
+		}
+
+		if (!nego->security_layer_negotiation_enabled)
+		{
+			DEBUG_NEGO("Security Layer Negotiation is disabled");
+			nego->enabled_protocols[PROTOCOL_NLA] = 0;
+			nego->enabled_protocols[PROTOCOL_TLS] = 0;
+			nego->enabled_protocols[PROTOCOL_RDP] = 0;
+			if(nego->state == NEGO_STATE_NLA)
+				nego->enabled_protocols[PROTOCOL_NLA] = 1;
+			else if (nego->state == NEGO_STATE_TLS)
+				nego->enabled_protocols[PROTOCOL_TLS] = 1;
+			else if (nego->state == NEGO_STATE_RDP)
+				nego->enabled_protocols[PROTOCOL_RDP] = 1;
+		}
 	}
 
 	do
@@ -96,6 +115,25 @@ boolean nego_connect(rdpNego* nego)
 	return true;
 }
 
+/* connect to selected security layer */
+boolean nego_security_connect(rdpNego* nego)
+{
+	if(!nego->tcp_connected)
+	{
+		nego->security_connected = false;
+	}
+	else if (!nego->security_connected)
+	{
+		if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+			nego->security_connected = transport_connect_nla(nego->transport);
+		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+			nego->security_connected = transport_connect_tls(nego->transport);
+		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+			nego->security_connected = transport_connect_rdp(nego->transport);
+	}
+	return nego->security_connected;
+}
+
 /**
  * Connect TCP layer.
  * @param nego
@@ -104,21 +142,30 @@ boolean nego_connect(rdpNego* nego)
 
 boolean nego_tcp_connect(rdpNego* nego)
 {
-	if (nego->tcp_connected == 0)
+	if (!nego->tcp_connected)
 	{
-		if (transport_connect(nego->transport, nego->hostname, nego->port) == false)
-		{
-			nego->tcp_connected = 0;
-			return false;
-		}
-		else
-		{
-			nego->tcp_connected = 1;
-			return true;
-		}
+		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+	}
+	return nego->tcp_connected;
+}
+
+/**
+ * Connect TCP layer. For direct approach, connect security layer as well.
+ * @param nego
+ * @return
+ */
+
+boolean nego_transport_connect(rdpNego* nego)
+{
+	nego_tcp_connect(nego);
+
+	if (nego->tcp_connected && !nego->security_layer_negotiation_enabled)
+	{
+		nego_security_connect(nego);
+		return nego->security_connected;
 	}
 
-	return true;
+	return nego->tcp_connected;
 }
 
 /**
@@ -127,12 +174,13 @@ boolean nego_tcp_connect(rdpNego* nego)
  * @return
  */
 
-int nego_tcp_disconnect(rdpNego* nego)
+int nego_transport_disconnect(rdpNego* nego)
 {
 	if (nego->tcp_connected)
 		transport_disconnect(nego->transport);
 
 	nego->tcp_connected = 0;
+	nego->security_connected = 0;
 	return 1;
 }
 
@@ -147,7 +195,7 @@ void nego_attempt_nla(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting NLA security");
 
-	if (!nego_tcp_connect(nego))
+	if (!nego_transport_connect(nego))
 	{
 		nego->state = NEGO_STATE_FAIL;
 		return;
@@ -168,7 +216,7 @@ void nego_attempt_nla(rdpNego* nego)
 	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
 	if (nego->state != NEGO_STATE_FINAL)
 	{
-		nego_tcp_disconnect(nego);
+		nego_transport_disconnect(nego);
 
 		if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
 			nego->state = NEGO_STATE_TLS;
@@ -190,7 +238,7 @@ void nego_attempt_tls(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting TLS security");
 
-	if (!nego_tcp_connect(nego))
+	if (!nego_transport_connect(nego))
 	{
 		nego->state = NEGO_STATE_FAIL;
 		return;
@@ -210,7 +258,7 @@ void nego_attempt_tls(rdpNego* nego)
 
 	if (nego->state != NEGO_STATE_FINAL)
 	{
-		nego_tcp_disconnect(nego);
+		nego_transport_disconnect(nego);
 
 		if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
 			nego->state = NEGO_STATE_RDP;
@@ -230,7 +278,7 @@ void nego_attempt_rdp(rdpNego* nego)
 
 	DEBUG_NEGO("Attempting RDP security");
 
-	if (!nego_tcp_connect(nego))
+	if (!nego_transport_connect(nego))
 	{
 		nego->state = NEGO_STATE_FAIL;
 		return;
@@ -702,6 +750,18 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
 {
 	nego->hostname = hostname;
 	nego->port = port;
+}
+
+/**
+ * Enable security layer negotiation.
+ * @param nego pointer to the negotiation structure
+ * @param enable_rdp whether to enable security layer negotiation (true for enabled, false for disabled)
+ */
+
+void nego_set_negotiation_enabled(rdpNego* nego, boolean security_layer_negotiation_enabled)
+{
+	DEBUG_NEGO("Enabling security layer negotiation: %s", security_layer_negotiation_enabled ? "true" : "false");
+	nego->security_layer_negotiation_enabled = security_layer_negotiation_enabled;
 }
 
 /**

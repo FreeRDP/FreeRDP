@@ -83,15 +83,12 @@ boolean rdp_send_pcb(rdpNego* nego) {
 
 boolean rdp_client_connect(rdpRdp* rdp)
 {
-	boolean negotiateSecurityLayer = false; // XXX: should be an option in the final version, with default value=true
-
-	boolean status;
-	uint32 selectedProtocol;
 	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->hostname, settings->port);
 	nego_set_cookie(rdp->nego, settings->username);
+	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
 	nego_enable_rdp(rdp->nego, settings->rdp_security);
 
 	if (!settings->ts_gateway)
@@ -102,62 +99,26 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	rdp_send_pcb(rdp->nego); // XXX: different name?!
 
-	if(negotiateSecurityLayer)
+	if (!nego_connect(rdp->nego))
 	{
-		if (nego_connect(rdp->nego) != true)
-		{
-			printf("Error: protocol security negotiation failure\n");
-			return false;
-		}
-	}
-	else
-	{
-		// set some predefined protocols if negotiateSecurityLayer is false
-		// XXX: should take settings->rdp_security into account. Right now we pretend NLA has been selected.
-		rdp->nego->state = NEGO_STATE_FINAL;
-		rdp->nego->transport->settings->requested_protocols = rdp->nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
-		rdp->nego->transport->settings->selected_protocol = rdp->nego->selected_protocol = PROTOCOL_NLA;
-		rdp->nego->transport->settings->negotiationFlags = rdp->nego->flags;
+		printf("Error: protocol security negotiation failure\n");
+		return false;
 	}
 
-	selectedProtocol = rdp->nego->selected_protocol;
+	if (!nego_security_connect(rdp->nego))
+		return false;
 
-	if ((selectedProtocol & PROTOCOL_TLS) || (selectedProtocol == PROTOCOL_RDP))
+	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie != NULL && settings->password_cookie->length > 0)))
 			settings->autologon = true;
-	}
-
-	status = false;
-	if (selectedProtocol & PROTOCOL_NLA)
-		status = transport_connect_nla(rdp->transport);
-	else if (selectedProtocol & PROTOCOL_TLS)
-		status = transport_connect_tls(rdp->transport);
-	else if (selectedProtocol == PROTOCOL_RDP) /* 0 */
-		status = transport_connect_rdp(rdp->transport);
-
-	if (status != true)
-		return false;
-
-	if(!negotiateSecurityLayer)
-	{
-		// XXX: the whole negotioation thing should be called differently.
-		//      this is more like a hack in order to allow connection requests after establishing a secure connection.
-		rdp->nego->state = NEGO_STATE_INITIAL;
-		rdp->nego->transport = rdp->transport;
-		rdp->nego->transport->settings->requested_protocols = PROTOCOL_RDP; // removes requested_protocols section
-		if (nego_connect(rdp->nego) != true)
-		{
-			printf("Error: X.224 connection request failure\n");
-			return false;
-		}
 	}
 
 	rdp_set_blocking_mode(rdp, false);
 	rdp->state = CONNECTION_STATE_NEGO;
 	rdp->finalize_sc_pdus = 0;
 
-	if (mcs_send_connect_initial(rdp->mcs) != true)
+	if (!mcs_send_connect_initial(rdp->mcs))
 	{
 		if (!connectErrorCode)
 		{

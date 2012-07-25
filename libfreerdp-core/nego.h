@@ -75,17 +75,20 @@ struct rdp_nego
 	char* hostname;
 	char* cookie;
 	NEGO_STATE state;
-	int tcp_connected;
+	boolean tcp_connected;
+	boolean security_connected;
 	rdpBlob* routing_token;
 	uint32 selected_protocol;
 	uint32 requested_protocols;
+	boolean security_layer_negotiation_enabled;
 	uint8 enabled_protocols[3];
 	rdpTransport* transport;
 };
 typedef struct rdp_nego rdpNego;
 
 boolean nego_connect(rdpNego* nego);
-boolean nego_tcp_connect(rdpNego* nego); // XXX: this is here for rdp_send_pcb. maybe there is a way around exporting it...
+boolean nego_tcp_connect(rdpNego* nego);
+boolean nego_security_connect(rdpNego* nego);
 
 void nego_attempt_nla(rdpNego* nego);
 void nego_attempt_tls(rdpNego* nego);
@@ -106,6 +109,7 @@ rdpNego* nego_new(struct rdp_transport * transport);
 void nego_free(rdpNego* nego);
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
+void nego_set_negotiation_enabled(rdpNego* nego, boolean security_layer_negotiation_enabled);
 void nego_enable_rdp(rdpNego* nego, boolean enable_rdp);
 void nego_enable_nla(rdpNego* nego, boolean enable_nla);
 void nego_enable_tls(rdpNego* nego, boolean enable_tls);

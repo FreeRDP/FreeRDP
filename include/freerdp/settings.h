@@ -269,7 +269,8 @@ struct rdp_settings
 	ALIGN64 uint32 encryption_level; /* 28 */
 	ALIGN64 boolean authentication; /* 29 */
 	ALIGN64 uint32 negotiationFlags; /* 30 */
-	ALIGN64 uint64 paddingB[48 - 31]; /* 31 */
+	ALIGN64 boolean security_layer_negotiation; /* 31 */
+	ALIGN64 uint64 paddingB[48 - 32]; /* 32 */
 
 	/* Connection Settings */
 	ALIGN64 uint32 port; /* 48 */

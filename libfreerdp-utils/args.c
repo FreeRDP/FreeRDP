@@ -122,6 +122,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --disable-full-window-drag: disables full window drag\n"
 				"  --disable-menu-animations: disables menu animations\n"
 				"  --disable-theming: disables theming\n"
+				"  --disable-security-layer-negotiation: disable negotiation of security layer and force highest enabled layer\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
@@ -578,6 +579,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("unknown protocol security\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
+		}
+		else if (strcmp("--disable-security-layer-negotiation", argv[index]) == 0)
+		{
+			settings->security_layer_negotiation = false;
 		}
 		else if (strcmp("--tsg", argv[index]) == 0)
 		{
