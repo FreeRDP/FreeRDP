@@ -135,6 +135,7 @@ rdpSettings* settings_new(void* instance)
 		settings->nla_security = true;
 		settings->tls_security = true;
 		settings->rdp_security = true;
+		settings->security_layer_negotiation = true;
 		settings->client_build = 2600;
 		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
 		settings->kbd_subtype = 0;

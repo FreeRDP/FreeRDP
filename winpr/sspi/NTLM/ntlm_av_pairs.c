@@ -360,6 +360,6 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		NTLM_AV_PAIR* AvEOL;
 
 		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvEOL);
-		ZeroMemory((void*) AvEOL, 12);
+		ZeroMemory((void*) AvEOL, 4);
 	}
 }
