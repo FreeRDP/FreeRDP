@@ -371,6 +371,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			{
 				printf("setting codec nsc\n");
 				settings->v3_codec_id = CODEC_ID_NSCODEC;
+				settings->ns_codec = true;
 			}
 #ifdef WITH_JPEG
 			else if (strcmp("jpeg", argv[index]) == 0)
