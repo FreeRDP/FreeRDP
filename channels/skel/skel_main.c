@@ -58,19 +58,25 @@ static void skel_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 	if (skel == NULL)
 	{
+		printf("skel_process_receive: skel is nil\n");
 		return;
 	}
 
 	/* process data in(from server) here */
 	/* here we just send the same data back */
 
-	bytes = stream_get_length(data_in);
+	bytes = stream_get_size(data_in);
+	printf("skel_process_receive: got bytes %d\n", bytes);
 	if (bytes > 0)
 	{
 		data_out = stream_new(bytes);
 		stream_copy(data_out, data_in, bytes);
 		/* svc_plugin_send takes ownership of data_out, that is why
 		   we do not free it */
+
+		bytes = stream_get_length(data_in);
+		printf("skel_process_receive: sending bytes %d\n", bytes);
+
 		svc_plugin_send(plugin, data_out);
 	}
 
