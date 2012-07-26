@@ -35,6 +35,10 @@
 #define ERROR_SUCCESS			0
 #endif
 
+#ifndef ERROR_FILE_NOT_FOUND
+#define ERROR_FILE_NOT_FOUND		2
+#endif
+
 #define DELETE				0x00010000
 #define READ_CONTROL			0x00020000
 #define WRITE_DAC			0x00040000

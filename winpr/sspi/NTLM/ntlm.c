@@ -28,6 +28,7 @@
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
+#include <winpr/registry.h>
 
 #include "ntlm.h"
 #include "../sspi.h"

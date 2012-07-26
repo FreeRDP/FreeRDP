@@ -228,7 +228,7 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 
 	*phkResult = NULL;
 
-	return 0;
+	return ERROR_FILE_NOT_FOUND;
 }
 
 LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired, PHKEY phkResult)
