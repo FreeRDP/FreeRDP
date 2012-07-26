@@ -21,6 +21,7 @@
 #include "input.h"
 
 #include "connection.h"
+#include "transport.h"
 
 #include <freerdp/errorcodes.h>
 
@@ -63,13 +64,16 @@
 
 boolean rdp_client_connect(rdpRdp* rdp)
 {
-	boolean status;
-	uint32 selectedProtocol;
 	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->hostname, settings->port);
 	nego_set_cookie(rdp->nego, settings->username);
+	nego_set_send_preconnection_pdu(rdp->nego, settings->send_preconnection_pdu);
+	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
+	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
+
+	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
 	nego_enable_rdp(rdp->nego, settings->rdp_security);
 
 	if (!settings->ts_gateway)
@@ -78,36 +82,23 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		nego_enable_tls(rdp->nego, settings->tls_security);
 	}
 
-	if (nego_connect(rdp->nego) != true)
+	if (!nego_connect(rdp->nego))
 	{
-		printf("Error: protocol security negotiation failure\n");
+		printf("Error: protocol security negotiation or connection failure\n");
 		return false;
 	}
 
-	selectedProtocol = rdp->nego->selected_protocol;
-
-	if ((selectedProtocol & PROTOCOL_TLS) || (selectedProtocol == PROTOCOL_RDP))
+	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie != NULL && settings->password_cookie->length > 0)))
 			settings->autologon = true;
 	}
 
-	status = false;
-	if (selectedProtocol & PROTOCOL_NLA)
-		status = transport_connect_nla(rdp->transport);
-	else if (selectedProtocol & PROTOCOL_TLS)
-		status = transport_connect_tls(rdp->transport);
-	else if (selectedProtocol == PROTOCOL_RDP) /* 0 */
-		status = transport_connect_rdp(rdp->transport);
-
-	if (status != true)
-		return false;
-
 	rdp_set_blocking_mode(rdp, false);
 	rdp->state = CONNECTION_STATE_NEGO;
 	rdp->finalize_sc_pdus = 0;
 
-	if (mcs_send_connect_initial(rdp->mcs) != true)
+	if (!mcs_send_connect_initial(rdp->mcs))
 	{
 		if (!connectErrorCode)
 		{

@@ -25,7 +25,6 @@
 #include "tpdu.h"
 #include "nego.h"
 #include "mcs.h"
-#include "transport.h"
 #include "activation.h"
 
 #include <freerdp/settings.h>

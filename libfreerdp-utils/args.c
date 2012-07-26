@@ -122,6 +122,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --disable-full-window-drag: disables full window drag\n"
 				"  --disable-menu-animations: disables menu animations\n"
 				"  --disable-theming: disables theming\n"
+				"  --no-nego: disable negotiation of security layer and enforce highest enabled security protocol\n"
 				"  --no-rdp: disable Standard RDP encryption\n"
 				"  --no-tls: disable TLS encryption\n"
 				"  --no-nla: disable network level authentication\n"
@@ -132,6 +133,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --tsg: Terminal Server Gateway (<username> <password> <hostname>)\n"
 				"  --kbd-list: list all keyboard layout ids used by -k\n"
 				"  --no-salted-checksum: disable salted checksums with Standard RDP encryption\n"
+				"  --pcid: preconnection id\n"
+				"  --pcb: preconnection blob\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; /* TODO: What is the correct return? */
@@ -579,6 +582,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 		}
+		else if (strcmp("--no-nego", argv[index]) == 0)
+		{
+			settings->security_layer_negotiation = false;
+		}
 		else if (strcmp("--tsg", argv[index]) == 0)
 		{
 			settings->ts_gateway = true;
@@ -697,6 +704,28 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--no-salted-checksum", argv[index]) == 0)
 		{
 			settings->salted_checksum = false;
+		}
+		else if (strcmp("--pcid", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing preconnection id value\n");
+				return -1;
+			}
+			settings->send_preconnection_pdu = true;
+			settings->preconnection_id = atoi(argv[index]);
+		}
+		else if (strcmp("--pcb", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing preconnection blob value\n");
+				return -1;
+			}
+			settings->send_preconnection_pdu = true;
+			settings->preconnection_blob = xstrdup(argv[index]);
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
