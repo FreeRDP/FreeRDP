@@ -378,7 +378,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("setting codec jpeg\n");
 				settings->v3_codec_id = CODEC_ID_JPEG;
 				settings->jpeg_codec = true;
-				settings->jpeg_quality = 75;
+				if (settings->jpeg_quality == 0)
+					settings->jpeg_quality = 75;
 			}
 #endif
 			else
