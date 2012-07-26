@@ -269,7 +269,8 @@ struct rdp_settings
 	ALIGN64 uint32 encryption_level; /* 28 */
 	ALIGN64 boolean authentication; /* 29 */
 	ALIGN64 uint32 negotiationFlags; /* 30 */
-	ALIGN64 uint64 paddingB[48 - 31]; /* 31 */
+	ALIGN64 boolean security_layer_negotiation; /* 31 */
+	ALIGN64 uint64 paddingB[48 - 32]; /* 32 */
 
 	/* Connection Settings */
 	ALIGN64 uint32 port; /* 48 */
@@ -295,7 +296,10 @@ struct rdp_settings
 	ALIGN64 boolean local; /* 68 */
 	ALIGN64 boolean authentication_only; /* 69 */
 	ALIGN64 boolean from_stdin; /* 70 */
-	ALIGN64 uint64 paddingC[80 - 71]; /* 71 */
+	ALIGN64 boolean send_preconnection_pdu; /* 71 */
+	ALIGN64 uint32 preconnection_id; /* 72 */
+	ALIGN64 char* preconnection_blob; /* 73 */
+	ALIGN64 uint64 paddingC[80 - 74]; /* 74 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */

@@ -35,7 +35,8 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	uint8* data;
 	Pixmap pixmap;
 	XImage* image;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	pixmap = XCreatePixmap(xfi->display, xfi->drawable, bitmap->width, bitmap->height, xfi->depth);
@@ -43,7 +44,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+				bitmap->width, bitmap->height, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 		if (bitmap->ephemeral != true)
 		{
@@ -60,7 +61,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		{
 			if (data != bitmap->data)
 				xfree(bitmap->data);
-			
+
 			bitmap->data = data;
 		}
 	}
@@ -270,15 +271,16 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	bgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	fgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
