@@ -1496,7 +1496,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
-	fp = fopen("/etc/timezone", "r");
+	fp = fopen("TZ -> /etc/timezone", "r");
 
 	if (fp != NULL)
 	{
@@ -1526,7 +1526,7 @@ char* freerdp_get_unix_timezone_identifier()
 	}
 	else
 	{
-		printf("tzid = [%s]\n", tzid);
+		printf("/etc/timezone -> tzid = [%s]\n", tzid);
 	}
 	return tzid;
 }
@@ -1587,7 +1587,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 			}
 		}
 	}
-
+	printf("Unable to find a match for unix timezone: %s\n", tzid);
 	xfree(tzid);
 	return NULL;
 }
