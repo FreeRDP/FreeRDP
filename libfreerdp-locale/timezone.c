@@ -1578,6 +1578,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 
 				if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 				{
+					printf("we have a match: %s\n", tzid);
 					timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
 					memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
 					xfree(tzid);
