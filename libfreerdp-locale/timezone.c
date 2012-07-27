@@ -1481,6 +1481,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 
 char* freerdp_get_unix_timezone_identifier()
 {
+	printf("Called freerdp_get_unix_timezone_identifier\n");
 	FILE* fp;
 	char* tz_env;
 	size_t length;
@@ -1491,6 +1492,7 @@ char* freerdp_get_unix_timezone_identifier()
 	if (tz_env != NULL)
 	{
 		tzid = xstrdup(tz_env);
+		printf("tzid = [%s]\n", tzid);
 		return tzid;
 	}
 
@@ -1518,6 +1520,14 @@ char* freerdp_get_unix_timezone_identifier()
 		fclose(fp) ;
 	}
 
+	if(tzid == NULL)
+	{
+		printf("Unable to detect time zone\n");
+	}
+	else
+	{
+		printf("tzid = [%s]\n", tzid);
+	}
 	return tzid;
 }
 
@@ -1601,6 +1611,7 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 
 void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 {
+	printf("Called time_zone_detect\n");
 	time_t t;
 	struct tm* local_time;
 	TIME_ZONE_ENTRY* tz;
