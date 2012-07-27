@@ -40,7 +40,8 @@ else()
   endif()
 
   # Check if has not commited changes
-  execute_process(COMMAND git update-index -q --refresh)
+  execute_process(COMMAND git update-index -q --refresh
+                  ERROR_QUIET)
   execute_process(COMMAND git diff-index --name-only HEAD --
                   OUTPUT_VARIABLE CHANGED_SOURCE
                   OUTPUT_STRIP_TRAILING_WHITESPACE
