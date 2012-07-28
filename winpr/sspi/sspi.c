@@ -353,7 +353,7 @@ void sspi_GlobalFinish()
 
 #ifndef WITH_NATIVE_SSPI
 
-SecurityFunctionTableA* sspi_GetSecurityFunctionTableByNameA(const SEC_CHAR* Name)
+SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const SEC_CHAR* Name)
 {
 	int index;
 	UINT32 cPackages;
@@ -371,7 +371,12 @@ SecurityFunctionTableA* sspi_GetSecurityFunctionTableByNameA(const SEC_CHAR* Nam
 	return NULL;
 }
 
-SecurityFunctionTableW* sspi_GetSecurityFunctionTableByNameW(const SEC_WCHAR* Name)
+SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameW(const SEC_WCHAR* Name)
+{
+	return NULL;
+}
+
+SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* Name)
 {
 	int index;
 	UINT32 cPackages;
@@ -387,6 +392,23 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableByNameW(const SEC_WCHAR* Na
 	}
 
 	return NULL;
+}
+
+SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
+{
+	int length;
+	SEC_WCHAR* NameW;
+	SecurityFunctionTableW* table;
+
+	length = strlen(Name);
+	NameW = (SEC_WCHAR*) malloc((length + 1) * 2);
+	MultiByteToWideChar(CP_ACP, 0, Name, length, (LPWSTR) NameW, length);
+	NameW[length] = 0;
+
+	table = sspi_GetSecurityFunctionTableWByNameW(NameW);
+	free(NameW);
+
+	return table;
 }
 
 void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
@@ -599,7 +621,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
-	SecurityFunctionTableW* table = sspi_GetSecurityFunctionTableByNameW(pszPackage);
+	SecurityFunctionTableW* table = sspi_GetSecurityFunctionTableWByNameW(pszPackage);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -618,7 +640,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
-	SecurityFunctionTableA* table = sspi_GetSecurityFunctionTableByNameA(pszPackage);
+	SecurityFunctionTableA* table = sspi_GetSecurityFunctionTableAByNameA(pszPackage);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -648,7 +670,7 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -682,7 +704,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, 
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameW(Name);
+	table = sspi_GetSecurityFunctionTableWByNameW(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -706,7 +728,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, 
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -734,7 +756,7 @@ SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtH
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -769,7 +791,7 @@ SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -811,7 +833,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, P
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = (SecurityFunctionTableW*) sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -840,7 +862,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, P
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -866,7 +888,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, ULONG u
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = (SecurityFunctionTableW*) sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -890,7 +912,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG u
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -931,7 +953,7 @@ SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc p
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -955,7 +977,7 @@ SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSec
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -979,7 +1001,7 @@ SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecB
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -1003,7 +1025,7 @@ SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc 
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableByNameA(Name);
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;

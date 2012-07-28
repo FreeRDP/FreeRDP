@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/crt.h>
 
 #include "registry_reg.h"
 
@@ -217,7 +218,7 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 
 	while (pKey != NULL)
 	{
-		if (strcmp(pKey->subname, lpSubKey) == 0)
+		if (_stricmp(pKey->subname, lpSubKey) == 0)
 		{
 			*phkResult = pKey;
 			return ERROR_SUCCESS;
@@ -228,7 +229,7 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 
 	*phkResult = NULL;
 
-	return 0;
+	return ERROR_FILE_NOT_FOUND;
 }
 
 LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired, PHKEY phkResult)

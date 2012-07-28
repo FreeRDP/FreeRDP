@@ -22,6 +22,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <winpr/tchar.h>
 #include <winpr/windows.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
@@ -50,6 +51,7 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	if (context)
 	{
+
 	}
 }
 
@@ -167,10 +169,6 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->settings->cert_file = xstrdup("server.crt");
 	client->settings->privatekey_file = xstrdup("server.key");
 
-	client->settings->nla_security = true;
-	client->settings->tls_security = false;
-	client->settings->rdp_security = false;
-
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
 
@@ -248,6 +246,11 @@ static void wf_server_main_loop(freerdp_listener* instance)
 
 int main(int argc, char* argv[])
 {
+	HKEY hKey;
+	LONG status;
+	DWORD dwType;
+	DWORD dwSize;
+	DWORD dwValue;
 	int port = 3389;
 	WSADATA wsa_data;
 	freerdp_listener* instance;
@@ -260,6 +263,16 @@ int main(int argc, char* argv[])
 		return 1;
 
 	g_done_event = CreateEvent(0, 1, 0, 0);
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		if (RegQueryValueEx(hKey, _T("DefaultPort"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			port = dwValue;
+	}
+
+	RegCloseKey(hKey);
 
 	if (argc == 2)
 		port = atoi(argv[1]);
