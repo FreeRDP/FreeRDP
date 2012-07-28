@@ -1498,7 +1498,7 @@ char* freerdp_get_unix_timezone_identifier()
 	}
 
 	printf("failed\nTrying to get timezone from /etc/timezone...");
-	fp = fopen("TZ -> /etc/timezone", "r");
+	fp = fopen("/etc/timezone", "r");
 
 	if (fp != NULL)
 	{
