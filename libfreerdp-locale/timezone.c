@@ -1602,15 +1602,25 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 	if (tzid == NULL)
 		return NULL;
 
+	/*printf("TimeZoneTable has %lu elements\n", ARRAY_SIZE(TimeZoneTable));
 	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
 	{
-		if (bias == TimeZoneTable[i].Bias)
+		printf("[%s]\n", TimeZoneTable[i].Id);
+	}*/
+
+	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
+	{
+		if (1)//(bias == TimeZoneTable[i].Bias)
 		{
+			printf("i = %d\n", i);
 			for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
 			{
+				if(i == 14)
+				printf("[%s] == [%s]\n", TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows);
 				if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
 					continue;
 
+				printf("[%s] == [%s]\n", tzid, WindowsTimeZoneIdTable[j].tzid);
 				if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 				{
 					printf("we have a match: %s\n", tzid);
