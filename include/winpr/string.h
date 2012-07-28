@@ -47,6 +47,8 @@
 WINPR_API char* _strdup(const char* strSource);
 WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
+WINPR_API int _stricmp(const char* string1, const char* string2);
+
 WINPR_API LPSTR CharUpperA(LPSTR lpsz);
 WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);
 

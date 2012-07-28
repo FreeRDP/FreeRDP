@@ -233,6 +233,11 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	if (entry != NULL)
 	{
+#ifdef WITH_DEBUG_NTLM
+		printf("NTLM Hash:\n");
+		winpr_HexDump(entry->NtHash, 16);
+#endif
+
 		NTOWFv2FromHashW(entry->NtHash,
 			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
 			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2,
@@ -249,6 +254,11 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 
 	if (entry != NULL)
 	{
+#ifdef WITH_DEBUG_NTLM
+		printf("NTLM Hash:\n");
+		winpr_HexDump(entry->NtHash, 16);
+#endif
+
 		NTOWFv2FromHashW(entry->NtHash,
 			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
 			(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2,
