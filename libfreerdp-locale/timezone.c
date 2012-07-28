@@ -1529,34 +1529,36 @@ char* freerdp_get_unix_timezone_identifier()
 	*/
 
 	char buf[1024];
-	char tz[256];
 	ssize_t len;
 	
-
 	if ((len = readlink("/etc/localtime", buf, sizeof(buf)-1)) != -1)
-	    buf[len] = '\0';
+		{
+			buf[len] = '\0';
 
-	printf("%d localtime = [%s]\n", len, buf);
+			printf("%d localtime = [%s]\n", len, buf);
 
-	//find the position of the 2nd to last "/"
-	int num = 0;
-	int pos = len;
-	while(num < 2)
-	{
-		if(pos == 0)
-			break;
+			//find the position of the 2nd to last "/"
+			int num = 0;
+			int pos = len;
+			while(num < 2)
+			{
+				if(pos == 0)
+					break;
 
-		pos -= 1;
+				pos -= 1;
 
-		if(buf[pos] == '/')
-			num++;
-	}
+				if(buf[pos] == '/')
+					num++;
+			}
 
-	printf("looks like we want to cut at position %d\n", pos);
+			printf("looks like we want to cut at position %d\n", pos);
 
-	strncpy(tz, buf+pos+1, len - pos);
+			tzid = (char*) xmalloc(len - pos + 1);
+			strncpy(tzid, buf+pos+1, len - pos);
 
-	printf("timezone: [%s]\n", tz);	
+			printf("timezone: [%s]\n", tzid);
+			return tzid;	
+		}
 
 	printf("Unable to detect time zone\n");
 	return tzid;
