@@ -1518,16 +1518,47 @@ char* freerdp_get_unix_timezone_identifier()
 			tzid[length - 1] = '\0';
 
 		fclose(fp) ;
+
+		printf("/etc/timezone -> tzid = [%s]\n", tzid);
+		return tzid;
 	}
 
-	if(tzid == NULL)
+	/* On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
+	* will point to /usr/share/zoneinfo/region/place where region/place could be
+	* America/Montreal for example.
+	*/
+
+	char buf[1024];
+	char tz[256];
+	ssize_t len;
+	
+
+	if ((len = readlink("/etc/localtime", buf, sizeof(buf)-1)) != -1)
+	    buf[len] = '\0';
+
+	printf("%d localtime = [%s]\n", len, buf);
+
+	//find the position of the 2nd to last "/"
+	int num = 0;
+	int pos = len;
+	while(num < 2)
 	{
-		printf("Unable to detect time zone\n");
+		if(pos == 0)
+			break;
+
+		pos -= 1;
+
+		if(buf[pos] == '/')
+			num++;
 	}
-	else
-	{
-		printf("/etc/timezone -> tzid = [%s]\n", tzid);
-	}
+
+	printf("looks like we want to cut at position %d\n", pos);
+
+	strncpy(tz, buf+pos+1, len - pos);
+
+	printf("timezone: [%s]\n", tz);	
+
+	printf("Unable to detect time zone\n");
 	return tzid;
 }
 
