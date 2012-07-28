@@ -1481,7 +1481,6 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 
 char* freerdp_get_unix_timezone_identifier()
 {
-	printf("Called freerdp_get_unix_timezone_identifier\n");
 	FILE* fp;
 	char* tz_env;
 	size_t length;
@@ -1489,15 +1488,12 @@ char* freerdp_get_unix_timezone_identifier()
 
 	tz_env = getenv("TZ");
 
-	printf("Trying to get timezone from the env variables...");
 	if (tz_env != NULL)
 	{
 		tzid = xstrdup(tz_env);
-		printf("tzid = [%s]\n", tzid);
 		return tzid;
 	}
 
-	printf("failed\nTrying to get timezone from /etc/timezone...");
 	fp = fopen("/etc/timezone", "r");
 
 	if (fp != NULL)
@@ -1521,7 +1517,6 @@ char* freerdp_get_unix_timezone_identifier()
 
 		fclose(fp) ;
 
-		printf("/etc/timezone -> tzid = [%s]\n", tzid);
 		return tzid;
 	}
 
@@ -1530,16 +1525,12 @@ char* freerdp_get_unix_timezone_identifier()
 	* America/Montreal for example.
 	*/
 
-	printf("failed\nTrying to get timezone from /etc/localtime...\n");
-
 	char buf[1024];
 	ssize_t len;
 	
 	if ((len = readlink("/etc/localtime", buf, sizeof(buf)-1)) != -1)
 		{
 			buf[len] = '\0';
-
-			printf("localtime = [%s]\n", buf);
 
 			//find the position of the 2nd to last "/"
 			int num = 0;
@@ -1558,7 +1549,6 @@ char* freerdp_get_unix_timezone_identifier()
 			tzid = (char*) xmalloc(len - pos + 1);
 			strncpy(tzid, buf+pos+1, len - pos);
 
-			printf("timezone: [%s]\n", tzid);
 			return tzid;	
 		}
 
@@ -1602,33 +1592,19 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 	if (tzid == NULL)
 		return NULL;
 
-	/*printf("TimeZoneTable has %lu elements\n", ARRAY_SIZE(TimeZoneTable));
 	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
-	{
-		printf("[%s]\n", TimeZoneTable[i].Id);
-	}*/
-
-	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
-	{
-		if (1)//(bias == TimeZoneTable[i].Bias)
+	{	
+		for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
 		{
-			printf("i = %d\n", i);
-			for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
-			{
-				if(i == 14)
-				printf("[%s] == [%s]\n", TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows);
-				if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
-					continue;
+			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
+				continue;
 
-				printf("[%s] == [%s]\n", tzid, WindowsTimeZoneIdTable[j].tzid);
-				if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
-				{
-					printf("we have a match: %s\n", tzid);
-					timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
-					memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
-					xfree(tzid);
-					return timezone;
-				}
+			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
+			{
+				timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
+				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
+				xfree(tzid);
+				return timezone;
 			}
 		}
 	}
@@ -1657,7 +1633,6 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 
 void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 {
-	printf("Called time_zone_detect\n");
 	time_t t;
 	struct tm* local_time;
 	TIME_ZONE_ENTRY* tz;
