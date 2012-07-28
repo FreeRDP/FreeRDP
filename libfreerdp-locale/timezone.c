@@ -1489,6 +1489,7 @@ char* freerdp_get_unix_timezone_identifier()
 
 	tz_env = getenv("TZ");
 
+	printf("Trying to get timezone from the env variables...");
 	if (tz_env != NULL)
 	{
 		tzid = xstrdup(tz_env);
@@ -1496,6 +1497,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
+	printf("failed\nTrying to get timezone from /etc/timezone...");
 	fp = fopen("TZ -> /etc/timezone", "r");
 
 	if (fp != NULL)
@@ -1528,6 +1530,8 @@ char* freerdp_get_unix_timezone_identifier()
 	* America/Montreal for example.
 	*/
 
+	printf("failed\nTrying to get timezone from /etc/localtime...\n");
+
 	char buf[1024];
 	ssize_t len;
 	
@@ -1535,7 +1539,7 @@ char* freerdp_get_unix_timezone_identifier()
 		{
 			buf[len] = '\0';
 
-			printf("%d localtime = [%s]\n", len, buf);
+			printf("localtime = [%s]\n", buf);
 
 			//find the position of the 2nd to last "/"
 			int num = 0;
@@ -1550,8 +1554,6 @@ char* freerdp_get_unix_timezone_identifier()
 				if(buf[pos] == '/')
 					num++;
 			}
-
-			printf("looks like we want to cut at position %d\n", pos);
 
 			tzid = (char*) xmalloc(len - pos + 1);
 			strncpy(tzid, buf+pos+1, len - pos);
