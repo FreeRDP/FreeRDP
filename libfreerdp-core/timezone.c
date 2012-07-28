@@ -106,6 +106,9 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 
 void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 {
+	uint32 bias;
+	sint32 sbias;
+	uint32 bias2c;
 	size_t length;
 	uint8* standardName;
 	uint8* daylightName;
@@ -128,21 +131,40 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	if (daylightNameLength > 62)
 		daylightNameLength = 62;
 
-	stream_write_uint32(s, clientTimeZone->bias); /* Bias */
+	/* UTC = LocalTime + Bias <-> Bias = UTC - LocalTime */
+
+	bias = 1440 - clientTimeZone->bias;
+	stream_write_uint32(s, bias); /* Bias */
 
 	/* standardName (64 bytes) */
 	stream_write(s, standardName, standardNameLength);
 	stream_write_zero(s, 64 - standardNameLength);
 
 	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
-	stream_write_uint32(s, clientTimeZone->standardBias); /* StandardBias */
+
+	sbias = clientTimeZone->standardBias - clientTimeZone->bias;
+
+	if (sbias < 0)
+		bias2c = (uint32) sbias;
+	else
+		bias2c = ~((uint32) sbias) + 1;
+
+	stream_write_uint32(s, bias2c); /* StandardBias */
 
 	/* daylightName (64 bytes) */
 	stream_write(s, daylightName, daylightNameLength);
 	stream_write_zero(s, 64 - daylightNameLength);
 
 	rdp_write_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
-	stream_write_uint32(s, clientTimeZone->daylightBias); /* DaylightBias */
+
+	sbias = clientTimeZone->daylightBias - clientTimeZone->bias;
+
+	if (sbias < 0)
+		bias2c = (uint32) sbias;
+	else
+		bias2c = ~((uint32) sbias) + 1;
+
+	stream_write_uint32(s, bias2c); /* DaylightBias */
 
 	xfree(standardName);
 	xfree(daylightName);

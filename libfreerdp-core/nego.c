@@ -209,18 +209,23 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	uint16 cchPCB_times2 = 0;
 	char* wszPCB = NULL;
 
-	if(!nego->send_preconnection_pdu)
+	if (!nego->send_preconnection_pdu)
 		return true;
 
 	DEBUG_NEGO("Sending preconnection PDU");
-	if(!nego_tcp_connect(nego))
+
+	if (!nego_tcp_connect(nego))
 		return false;
 
 	/* it's easier to always send the version 2 PDU, and it's just 2 bytes overhead */
 	cbSize = PRECONNECTION_PDU_V2_MIN_SIZE;
-	if(nego->preconnection_blob) {
+
+	if (nego->preconnection_blob)
+	{
+		size_t size;
 		uniconv = freerdp_uniconv_new();
-		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &cchPCB_times2);
+		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &size);
+		cchPCB_times2 = (uint16) size;
 		freerdp_uniconv_free(uniconv);
 		cchPCB_times2 += 2; /* zero-termination */
 		cbSize += cchPCB_times2;
@@ -232,7 +237,8 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
 	stream_write_uint32(s, nego->preconnection_id); /* Id */
 	stream_write_uint16(s, cchPCB_times2 / 2); /* cchPCB */
-	if(wszPCB)
+
+	if (wszPCB)
 	{
 		stream_write(s, wszPCB, cchPCB_times2); /* wszPCB */
 		xfree(wszPCB);
