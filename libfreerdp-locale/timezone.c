@@ -1516,8 +1516,43 @@ char* freerdp_get_unix_timezone_identifier()
 			tzid[length - 1] = '\0';
 
 		fclose(fp) ;
+
+		return tzid;
 	}
 
+	/* On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
+	* will point to /usr/share/zoneinfo/region/place where region/place could be
+	* America/Montreal for example.
+	*/
+
+	char buf[1024];
+	ssize_t len;
+	
+	if ((len = readlink("/etc/localtime", buf, sizeof(buf)-1)) != -1)
+		{
+			buf[len] = '\0';
+
+			//find the position of the 2nd to last "/"
+			int num = 0;
+			int pos = len;
+			while(num < 2)
+			{
+				if(pos == 0)
+					break;
+
+				pos -= 1;
+
+				if(buf[pos] == '/')
+					num++;
+			}
+
+			tzid = (char*) xmalloc(len - pos + 1);
+			strncpy(tzid, buf+pos+1, len - pos);
+
+			return tzid;	
+		}
+
+	printf("Unable to detect time zone\n");
 	return tzid;
 }
 
@@ -1558,25 +1593,22 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 		return NULL;
 
 	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
-	{
-		if (bias == TimeZoneTable[i].Bias)
+	{	
+		for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
 		{
-			for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
-			{
-				if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
-					continue;
+			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
+				continue;
 
-				if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
-				{
-					timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
-					memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
-					xfree(tzid);
-					return timezone;
-				}
+			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
+			{
+				timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
+				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
+				xfree(tzid);
+				return timezone;
 			}
 		}
 	}
-
+	printf("Unable to find a match for unix timezone: %s\n", tzid);
 	xfree(tzid);
 	return NULL;
 }
