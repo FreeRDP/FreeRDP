@@ -1681,6 +1681,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 
 	if (tz!= NULL)
 	{
+		printf("%u, %s, %s\n", tz->Bias,tz->StandardName ,tz->DaylightName);
 		clientTimeZone->bias = tz->Bias;
 		sprintf(clientTimeZone->standardName, "%s", tz->StandardName);
 		sprintf(clientTimeZone->daylightName, "%s", tz->DaylightName);
