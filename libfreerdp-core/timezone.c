@@ -133,7 +133,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 
 	/* UTC = LocalTime + Bias <-> Bias = UTC - LocalTime */
 
-	printf("std=%u\nday=%u\n",clientTimeZone->standardBias, clientTimeZone->daylightBias);
+	printf("std=%u\nday=%u\nclBias=%u",clientTimeZone->standardBias, clientTimeZone->daylightBias, clientTimeZone->bias);
 
 	bias = 1440 - clientTimeZone->bias;
 	printf("send bias %u\n", bias);
@@ -146,7 +146,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
 
 	sbias = clientTimeZone->standardBias - clientTimeZone->bias;
-
+	printf("sbias = %d\n", sbias);
 	if (sbias < 0)
 		bias2c = (uint32) sbias;
 	else

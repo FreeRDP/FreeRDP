@@ -1647,6 +1647,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	local_time = localtime(&t);
 
 #ifdef HAVE_TM_GMTOFF
+	printf("tm_gmtoff = %ld\n", local_time->tm_gmtoff);
 	if (local_time->tm_gmtoff >= 0)
 	{
 		sbias = local_time->tm_gmtoff / 60;
