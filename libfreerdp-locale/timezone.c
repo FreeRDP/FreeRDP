@@ -1666,7 +1666,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 #else
 	clientTimeZone->bias = 0;
 #endif
-
+	printf("tm_isdst = %d\n\tcliBias = %u\n", local_time->tm_isdst, clientTimeZone->bias);
 	if (local_time->tm_isdst > 0)
 	{
 		clientTimeZone->standardBias = clientTimeZone->bias - 60;
@@ -1677,6 +1677,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		clientTimeZone->standardBias = clientTimeZone->bias;
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
+	printf("\tstdBias = %u, dayBias = %u\n", clientTimeZone->standardBias, clientTimeZone->daylightBias);
 
 	tz = freerdp_detect_windows_time_zone(clientTimeZone->bias);
 
