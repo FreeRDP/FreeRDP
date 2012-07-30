@@ -108,7 +108,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		DWORD dwSize;
 		DWORD dwValue;
 
-		context->NTLMv2 = FALSE;
+		context->NTLMv2 = TRUE;
 		context->UseMIC = FALSE;
 		context->SendVersionInfo = TRUE;
 
