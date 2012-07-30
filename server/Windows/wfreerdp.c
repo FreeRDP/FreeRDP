@@ -28,6 +28,7 @@
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
+#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/listener.h>
@@ -112,36 +113,49 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
+	INPUT keyboard_event;
 	freerdp_peer* client = input->context->peer;
 	rdpUpdate* update = client->update;
 	wfPeerContext* context = (wfPeerContext*) input->context;
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
-	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
-	{
-		if (client->settings->width != 800)
-		{
-			client->settings->width = 800;
-			client->settings->height = 600;
-		}
-		else
-		{
-			client->settings->width = 640;
-			client->settings->height = 480;
-		}
-		update->DesktopResize(update->context);
-		context->activated = false;
-	}
-	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
-	{
-		client->Close(client);
-	}
+	keyboard_event.type = INPUT_KEYBOARD;
+	keyboard_event.ki.wVk = 0;
+	keyboard_event.ki.wScan = code;
+	keyboard_event.ki.dwFlags = KEYEVENTF_SCANCODE;
+	keyboard_event.ki.dwExtraInfo = 0;
+	keyboard_event.ki.time = 0;
+
+	if (flags & KBD_FLAGS_RELEASE)
+		keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
+
+	if (flags & KBD_FLAGS_EXTENDED)
+		keyboard_event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+	SendInput(1, &keyboard_event, sizeof(INPUT));
 }
 
 void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
+	INPUT keyboard_event;
+	freerdp_peer* client = input->context->peer;
+	rdpUpdate* update = client->update;
+	wfPeerContext* context = (wfPeerContext*) input->context;
+
 	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+
+	keyboard_event.type = INPUT_KEYBOARD;
+	keyboard_event.ki.wVk = 0;
+	keyboard_event.ki.wScan = code;
+	keyboard_event.ki.dwFlags = KEYEVENTF_UNICODE;
+	keyboard_event.ki.dwExtraInfo = 0;
+	keyboard_event.ki.time = 0;
+
+	if (flags & KBD_FLAGS_RELEASE)
+		keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
+
+	SendInput(1, &keyboard_event, sizeof(INPUT));
 }
 
 void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
