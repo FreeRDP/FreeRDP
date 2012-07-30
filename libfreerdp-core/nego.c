@@ -140,12 +140,24 @@ boolean nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->security_connected)
 	{
-		if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+		if (nego->enabled_protocols[PROTOCOL_NLA] > 0
+			&& nego->selected_protocol == PROTOCOL_NLA)
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA\n");
 			nego->security_connected = transport_connect_nla(nego->transport);
-		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0
+			&& nego->selected_protocol == PROTOCOL_TLS )
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS\n");
 			nego->security_connected = transport_connect_tls(nego->transport);
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0
+			&& nego->selected_protocol == PROTOCOL_RDP)
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_RDP\n");
 			nego->security_connected = transport_connect_rdp(nego->transport);
+		}
 	}
 	return nego->security_connected;
 }
