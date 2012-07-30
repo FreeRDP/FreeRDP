@@ -108,17 +108,14 @@ boolean wf_peer_activate(freerdp_peer* client)
 
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 {
-	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
+	//printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
 void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	INPUT keyboard_event;
-	freerdp_peer* client = input->context->peer;
-	rdpUpdate* update = client->update;
-	wfPeerContext* context = (wfPeerContext*) input->context;
 
-	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	//printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
@@ -139,11 +136,8 @@ void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	INPUT keyboard_event;
-	freerdp_peer* client = input->context->peer;
-	rdpUpdate* update = client->update;
-	wfPeerContext* context = (wfPeerContext*) input->context;
 
-	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	//printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
 	keyboard_event.type = INPUT_KEYBOARD;
 	keyboard_event.ki.wVk = 0;
@@ -160,12 +154,104 @@ void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 
 void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+	INPUT mouse_event;
+
+	//printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+
+	ZeroMemory(&mouse_event, sizeof(INPUT));
+	mouse_event.type = INPUT_MOUSE;
+
+	if (flags & PTR_FLAGS_WHEEL)
+	{
+		mouse_event.mi.dwFlags = MOUSEEVENTF_WHEEL;
+		mouse_event.mi.mouseData = flags & WheelRotationMask;
+
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+			mouse_event.mi.mouseData *= -1;
+
+		SendInput(1, &mouse_event, sizeof(INPUT));
+	}
+	else
+	{
+		if (flags & PTR_FLAGS_MOVE)
+		{
+			mouse_event.mi.dx = x * (0xFFFF / GetSystemMetrics(SM_CXSCREEN));
+			mouse_event.mi.dy = y * (0xFFFF / GetSystemMetrics(SM_CYSCREEN));
+			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+
+			SendInput(1, &mouse_event, sizeof(INPUT));
+		}
+
+		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+
+		if (flags & PTR_FLAGS_BUTTON1)
+		{
+			if (flags & PTR_FLAGS_DOWN)
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+			else
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+
+			SendInput(1, &mouse_event, sizeof(INPUT));
+		}
+		else if (flags & PTR_FLAGS_BUTTON2)
+		{
+			if (flags & PTR_FLAGS_DOWN)
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
+			else
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
+
+			SendInput(1, &mouse_event, sizeof(INPUT));
+		}
+		else if (flags & PTR_FLAGS_BUTTON3)
+		{
+			if (flags & PTR_FLAGS_DOWN)
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
+			else
+				mouse_event.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
+
+			SendInput(1, &mouse_event, sizeof(INPUT));
+		}
+	}
 }
 
 void wf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+	//printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+
+	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
+	{
+		INPUT mouse_event;
+		ZeroMemory(&mouse_event, sizeof(INPUT));
+
+		mouse_event.type = INPUT_MOUSE;
+
+		if (flags & PTR_FLAGS_MOVE)
+		{
+			mouse_event.mi.dx = x * (0xFFFF / GetSystemMetrics(SM_CXSCREEN));
+			mouse_event.mi.dy = y * (0xFFFF / GetSystemMetrics(SM_CYSCREEN));
+			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+
+			SendInput(1, &mouse_event, sizeof(INPUT));
+		}
+
+		mouse_event.mi.dx = mouse_event.mi.dy = mouse_event.mi.dwFlags = 0;
+
+		if (flags & PTR_XFLAGS_DOWN)
+			mouse_event.mi.dwFlags |= MOUSEEVENTF_XDOWN;
+		else
+			mouse_event.mi.dwFlags |= MOUSEEVENTF_XUP;
+
+		if (flags & PTR_XFLAGS_BUTTON1)
+			mouse_event.mi.mouseData = XBUTTON1;
+		else if (flags & PTR_XFLAGS_BUTTON2)
+			mouse_event.mi.mouseData = XBUTTON2;
+
+		SendInput(1, &mouse_event, sizeof(INPUT));
+	}
+	else
+	{
+		wf_peer_mouse_event(input, flags, x, y);
+	}
 }
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
