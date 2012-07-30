@@ -44,6 +44,9 @@ set(FREERDP_VERSION_MINOR "0")
 set(FREERDP_VERSION_REVISION "1")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
+include(GetGitRevisionDescription)
+git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
+message(STATUS "Git Revision ${GIT_REVISION}")
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
