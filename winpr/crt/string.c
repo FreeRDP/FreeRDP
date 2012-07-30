@@ -70,6 +70,11 @@ int _stricmp(const char* string1, const char* string2)
 	return strcasecmp(string1, string2);
 }
 
+char* strtok_s(char* strToken, const char* strDelimit, char** context)
+{
+	return strtok_r(strToken, strDelimit, context);
+}
+
 /* Windows API Sets - api-ms-win-core-string-l2-1-0.dll
  * http://msdn.microsoft.com/en-us/library/hh802935/
  */
