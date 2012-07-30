@@ -416,7 +416,7 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 			}
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((void*)data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((uint8*)data) + data->size);
 	}
 }
 

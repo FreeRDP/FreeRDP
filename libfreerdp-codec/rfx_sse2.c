@@ -40,7 +40,7 @@ static __inline void __attribute__((__gnu_inline__, __always_inline__, __artific
 _mm_prefetch_buffer(char * buffer, int num_bytes)
 {
 	__m128i * buf = (__m128i*) buffer;
-	int i;
+	unsigned int i;
 	for (i = 0; i < (num_bytes / sizeof(__m128i)); i+=(CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
 		_mm_prefetch((char*)(&buf[i]), _MM_HINT_NTA);

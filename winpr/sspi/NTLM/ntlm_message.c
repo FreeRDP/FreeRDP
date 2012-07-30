@@ -264,14 +264,14 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	message.NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 	message.NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 
-	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		ntlm_get_version_info(&(message.Version));
-
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	if (context->SendVersionInfo)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_get_version_info(&(message.Version));
 
 	context->NegotiateFlags = message.NegotiateFlags;
 

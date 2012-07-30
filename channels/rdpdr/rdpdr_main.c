@@ -59,7 +59,7 @@ static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 		{
 			devman_load_device_service(rdpdr->devman, data);
 		}
-		data = (RDP_PLUGIN_DATA*) (((void*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*) (((uint8*) data) + data->size);
 	}
 }
 
@@ -83,7 +83,7 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 	stream_write_uint16(data_out, rdpdr->versionMajor);
 	stream_write_uint16(data_out, rdpdr->versionMinor);
-	stream_write_uint32(data_out, rdpdr->clientID);
+	stream_write_uint32(data_out, (uint32) rdpdr->clientID);
 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }

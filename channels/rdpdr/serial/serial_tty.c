@@ -30,13 +30,16 @@
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/hexdump.h>
 
+#ifndef _WIN32
 #include <unistd.h>
 #include <termios.h>
+#include <dirent.h>
+#include <sys/ioctl.h>
+#endif
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
-#include <sys/ioctl.h>
 #include <errno.h>
 
 #include "rdpdr_constants.h"

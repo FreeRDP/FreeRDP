@@ -22,11 +22,14 @@
 #define __DISK_FILE_H
 
 #include <sys/types.h>
-#include <sys/statvfs.h>
 #include <sys/stat.h>
-#include <dirent.h>
 
-#if defined WIN32
+#ifndef _WIN32
+#include <dirent.h>
+#include <sys/statvfs.h>
+#endif
+
+#ifdef _WIN32
 #define STAT stat
 #define OPEN open
 #define LSEEK lseek
@@ -59,10 +62,6 @@
 	(_f->filename[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0) | \
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
-
-
-
-
 
 typedef struct _DISK_FILE DISK_FILE;
 struct _DISK_FILE
