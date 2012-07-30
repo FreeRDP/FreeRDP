@@ -1484,10 +1484,13 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 
 char* freerdp_get_unix_timezone_identifier()
 {
+#ifndef _WIN32
 	FILE* fp;
+	ssize_t len;
 	char* tz_env;
 	size_t length;
 	char* tzid = NULL;
+	char buf[1024];
 
 	tz_env = getenv("TZ");
 
@@ -1518,45 +1521,48 @@ char* freerdp_get_unix_timezone_identifier()
 		if (tzid[length - 1] == '\n')
 			tzid[length - 1] = '\0';
 
-		fclose(fp) ;
+		fclose(fp);
 
 		return tzid;
 	}
 
-	/* On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
-	* will point to /usr/share/zoneinfo/region/place where region/place could be
-	* America/Montreal for example.
-	*/
-
-	char buf[1024];
-	ssize_t len;
+	/*
+	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
+	 * will point to /usr/share/zoneinfo/region/place where region/place could be
+	 * America/Montreal for example.
+	 */
 	
-	if ((len = readlink("/etc/localtime", buf, sizeof(buf)-1)) != -1)
+	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1)
+	{
+		int num = 0;
+		int pos = len;
+
+		buf[len] = '\0';
+
+		/* find the position of the 2nd to last "/" */
+
+		while (num < 2)
 		{
-			buf[len] = '\0';
+			if (pos == 0)
+				break;
 
-			//find the position of the 2nd to last "/"
-			int num = 0;
-			int pos = len;
-			while(num < 2)
-			{
-				if(pos == 0)
-					break;
+			pos -= 1;
 
-				pos -= 1;
-
-				if(buf[pos] == '/')
-					num++;
-			}
-
-			tzid = (char*) xmalloc(len - pos + 1);
-			strncpy(tzid, buf+pos+1, len - pos);
-
-			return tzid;	
+			if (buf[pos] == '/')
+				num++;
 		}
+
+		tzid = (char*) xmalloc(len - pos + 1);
+		strncpy(tzid, buf + pos + 1, len - pos);
+
+		return tzid;	
+	}
 
 	printf("Unable to detect time zone\n");
 	return tzid;
+#else
+	return 0;
+#endif
 }
 
 boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)

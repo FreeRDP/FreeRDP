@@ -23,7 +23,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifndef _WIN32
 #include <dirent.h>
+#endif
 
 typedef struct _SERIAL_TTY SERIAL_TTY;
 struct _SERIAL_TTY
@@ -58,7 +61,6 @@ struct _SERIAL_TTY
 	int event_rlsd;
 	int event_pending;
 };
-
 
 SERIAL_TTY* serial_tty_new(const char* path, uint32 id);
 void serial_tty_free(SERIAL_TTY* tty);

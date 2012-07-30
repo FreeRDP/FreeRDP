@@ -27,6 +27,9 @@
 
 #define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
 
+void reg_print_key(Reg* reg, RegKey* key);
+void reg_print_value(Reg* reg, RegVal* value);
+
 struct reg_data_type
 {
 	char* tag;
@@ -197,11 +200,12 @@ void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 {
 	char* name;
 	char* path;
+	char* save;
 	int length;
 
 	path = _strdup(subkey->name);
 
-	name = strtok(path, "\\");
+	name = strtok_r(path, "\\", &save);
 
 	while (name != NULL)
 	{
@@ -212,7 +216,7 @@ void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 			subkey->subname = _strdup(name);
 		}
 
-		name = strtok(NULL, "\\");
+		name = strtok_r(NULL, "\\", &save);
 	}
 
 	free(path);

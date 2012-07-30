@@ -140,12 +140,24 @@ boolean nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->security_connected)
 	{
-		if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+		if (nego->enabled_protocols[PROTOCOL_NLA] > 0
+			&& nego->selected_protocol == PROTOCOL_NLA)
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA\n");
 			nego->security_connected = transport_connect_nla(nego->transport);
-		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0
+			&& nego->selected_protocol == PROTOCOL_TLS )
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS\n");
 			nego->security_connected = transport_connect_tls(nego->transport);
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0
+			&& nego->selected_protocol == PROTOCOL_RDP)
+		{
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_RDP\n");
 			nego->security_connected = transport_connect_rdp(nego->transport);
+		}
 	}
 	return nego->security_connected;
 }
@@ -209,18 +221,23 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	uint16 cchPCB_times2 = 0;
 	char* wszPCB = NULL;
 
-	if(!nego->send_preconnection_pdu)
+	if (!nego->send_preconnection_pdu)
 		return true;
 
 	DEBUG_NEGO("Sending preconnection PDU");
-	if(!nego_tcp_connect(nego))
+
+	if (!nego_tcp_connect(nego))
 		return false;
 
 	/* it's easier to always send the version 2 PDU, and it's just 2 bytes overhead */
 	cbSize = PRECONNECTION_PDU_V2_MIN_SIZE;
-	if(nego->preconnection_blob) {
+
+	if (nego->preconnection_blob)
+	{
+		size_t size;
 		uniconv = freerdp_uniconv_new();
-		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &cchPCB_times2);
+		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &size);
+		cchPCB_times2 = (uint16) size;
 		freerdp_uniconv_free(uniconv);
 		cchPCB_times2 += 2; /* zero-termination */
 		cbSize += cchPCB_times2;
@@ -232,7 +249,8 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
 	stream_write_uint32(s, nego->preconnection_id); /* Id */
 	stream_write_uint16(s, cchPCB_times2 / 2); /* cchPCB */
-	if(wszPCB)
+
+	if (wszPCB)
 	{
 		stream_write(s, wszPCB, cchPCB_times2); /* wszPCB */
 		xfree(wszPCB);
