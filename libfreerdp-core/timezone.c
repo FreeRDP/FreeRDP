@@ -143,12 +143,10 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
 
 	sbias = clientTimeZone->standardBias - clientTimeZone->bias;
-
 	if (sbias < 0)
 		bias2c = (uint32) sbias;
 	else
 		bias2c = ~((uint32) sbias) + 1;
-
 	stream_write_uint32(s, bias2c); /* StandardBias */
 
 	/* daylightName (64 bytes) */
@@ -163,7 +161,6 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 		bias2c = (uint32) sbias;
 	else
 		bias2c = ~((uint32) sbias) + 1;
-
 	stream_write_uint32(s, bias2c); /* DaylightBias */
 
 	xfree(standardName);
