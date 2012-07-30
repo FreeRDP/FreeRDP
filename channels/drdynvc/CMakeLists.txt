@@ -32,6 +32,8 @@ target_link_libraries(drdynvc freerdp-utils)
 
 install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
 
-add_subdirectory(tsmf)
-add_subdirectory(audin)
+if(NOT WIN32)
+	add_subdirectory(tsmf)
+endif()
 
+add_subdirectory(audin)

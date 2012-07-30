@@ -37,10 +37,12 @@ target_link_libraries(rdpdr freerdp-utils)
 
 install(TARGETS rdpdr DESTINATION ${FREERDP_PLUGIN_PATH})
 
-add_subdirectory(disk)
-add_subdirectory(printer)
-add_subdirectory(parallel)
-add_subdirectory(serial)
+if(NOT WIN32)
+	add_subdirectory(disk)
+	add_subdirectory(printer)
+	add_subdirectory(parallel)
+	add_subdirectory(serial)
+endif()
 
 if(WITH_PCSC)
 	add_subdirectory(smartcard)

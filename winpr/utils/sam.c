@@ -93,6 +93,8 @@ BOOL SamLookupStart(WINPR_SAM* sam)
 	sam->buffer[file_size + 1] = '\0';
 
 	sam->line = strtok(sam->buffer, "\n");
+
+	return TRUE;
 }
 
 void SamLookupFinish(WINPR_SAM* sam)
