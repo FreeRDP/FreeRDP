@@ -248,7 +248,7 @@ static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, STRE
 	DEBUG_DVC("FramesPerPacket=%d initialFormat=%d",
 		FramesPerPacket, initialFormat);
 
-	if (initialFormat >= callback->formats_count)
+	if (initialFormat >= (uint32) callback->formats_count)
 	{
 		DEBUG_WARN("invalid format index %d (total %d)",
 			initialFormat, callback->formats_count);
@@ -279,7 +279,7 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 
 	DEBUG_DVC("NewFormat=%d", NewFormat);
 
-	if (NewFormat >= callback->formats_count)
+	if (NewFormat >= (uint32) callback->formats_count)
 	{
 		DEBUG_WARN("invalid format index %d (total %d)",
 			NewFormat, callback->formats_count);

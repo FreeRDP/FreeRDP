@@ -289,7 +289,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 #ifdef WITH_DEBUG_CREDSSP
 			printf("Sending Authentication Token\n");
-			//winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+			winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
 			credssp_send(credssp);

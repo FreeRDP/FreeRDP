@@ -264,14 +264,14 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	message.NegotiateFlags |= NTLMSSP_REQUEST_TARGET;
 	message.NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 
-	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		ntlm_get_version_info(&(message.Version));
-
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	if (context->SendVersionInfo)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+		ntlm_get_version_info(&(message.Version));
 
 	context->NegotiateFlags = message.NegotiateFlags;
 
@@ -398,6 +398,12 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	ntlm_print_message_fields(&(message.TargetName), "TargetName");
 	ntlm_print_message_fields(&(message.TargetInfo), "TargetInfo");
+
+	if (context->ChallengeTargetInfo.cbBuffer > 0)
+	{
+		printf("ChallengeTargetInfo (%d):\n", (int) context->ChallengeTargetInfo.cbBuffer);
+		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer);
+	}
 #endif
 	/* AV_PAIRs */
 
@@ -862,10 +868,14 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	{
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
 	}
 
 	if (context->UseMIC)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+
+	if (context->confidentiality)
+		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	message.NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
 	message.NegotiateFlags |= NTLMSSP_NEGOTIATE_128;
@@ -879,14 +889,11 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_get_version_info(&(message.Version));
 
-	message.Workstation.Len = context->Workstation.Length;
-	message.Workstation.Buffer = (BYTE*) context->Workstation.Buffer;
-
-	if (!context->NTLMv2)
-		message.Workstation.Len = 0;
-
-	if (message.Workstation.Len > 0)
-		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
+	{
+		message.Workstation.Len = context->Workstation.Length;
+		message.Workstation.Buffer = (BYTE*) context->Workstation.Buffer;
+	}
 
 	message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
 	message.DomainName.Buffer = (BYTE*) context->identity.Domain;
@@ -905,9 +912,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	message.EncryptedRandomSessionKey.Len = 16;
 	message.EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
-
-	if (context->confidentiality)
-		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
 
 	PayloadBufferOffset = 64;
 
@@ -1005,6 +1009,12 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_print_version_info(&(message.Version));
+
+	if (context->AuthenticateTargetInfo.cbBuffer > 0)
+	{
+		printf("AuthenticateTargetInfo (%d):\n", (int) context->AuthenticateTargetInfo.cbBuffer);
+		ntlm_print_av_pair_list(context->AuthenticateTargetInfo.pvBuffer);
+	}
 
 	ntlm_print_message_fields(&(message.DomainName), "DomainName");
 	ntlm_print_message_fields(&(message.UserName), "UserName");
