@@ -43,24 +43,32 @@ set(FREERDP_CODEC_SRCS
 	nsc_encode.h
 	nsc_types.h
 	mppc_dec.c
-	mppc_enc.c
-)
+	mppc_enc.c)
 
-if(WITH_SSE2)
-	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS}
+set(FREERDP_CODEC_SSE2_SRCS
 	rfx_sse2.c
 	rfx_sse2.h
 	nsc_sse2.c
-	nsc_sse2.h
-)
-	set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
+	nsc_sse2.h)
+
+set(FREERDP_CODEC_NEON_SRCS
+	rfx_neon.c
+	rfx_neon.h)
+
+if(WITH_SSE2)
+	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS} ${FREERDP_CODEC_SSE2_SRCS})
+
+	if(CMAKE_COMPILER_IS_GNUCC)
+		set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
+	endif()
+
+	if(MSVC)
+		set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "/arch:SSE2")
+	endif()
 endif()
 
 if(WITH_NEON)
-	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS}
-	rfx_neon.c
-	rfx_neon.h
-)
+	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS} ${FREERDP_CODEC_NEON_SRCS})
 	set_property(SOURCE rfx_neon.c PROPERTY COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp")
 endif()
 
