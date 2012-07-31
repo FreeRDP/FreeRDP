@@ -526,8 +526,19 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
-		if (app && ! event->xconfigure.send_event)
-			xf_rail_adjust_position(xfi, window);
+		if (app && xfw->decorations)
+		{
+ 			xf_rail_adjust_position(xfi, window);
+			window->windowOffsetX = xfw->left;
+			window->windowOffsetY = xfw->top;
+			window->windowWidth = xfw->right - xfw->left;
+			window->windowHeight = xfw->bottom - xfw->top;
+		}
+		else
+		{
+			if (app && ! event->xconfigure.send_event)
+				xf_rail_adjust_position(xfi, window);
+		}
         }
 
         return True;

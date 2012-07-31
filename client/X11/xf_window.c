@@ -260,6 +260,19 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 
 }
 
+int xf_MapWindow(Display* dis, Window wnd)
+{
+	XEvent xevent;
+
+	XMapWindow(dis, wnd);
+	do
+	{
+		XMaskEvent(dis, VisibilityChangeMask, &xevent);
+	}
+	while (xevent.type != VisibilityNotify);
+	return 0;
+}
+
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
 {
 	xfWindow* window;
@@ -309,7 +322,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 				PropModeReplace, (uint8*) xf_icon_prop, ARRAY_SIZE(xf_icon_prop));
 
 		XSelectInput(xfi->display, window->handle, input_mask);
-		XMapWindow(xfi->display, window->handle);
+		xf_MapWindow(xfi->display, window->handle);
 	}
 
 	XStoreName(xfi->display, window->handle, name);
@@ -391,7 +404,12 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	XClassHint* class_hints;
 	int input_mask;
 
-	window->decorations = false;
+	/* this window need decorations */
+	if (wnd->extendedStyle & WS_EX_APPWINDOW)
+		window->decorations = true;
+	else
+		window->decorations = false;
+
 	window->fullscreen = false;
 	window->window = wnd;
 	window->local_move.state = LMS_NOT_ACTIVE;
@@ -436,7 +454,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
                 ColormapChangeMask | OwnerGrabButtonMask;
 
 	XSelectInput(xfi->display, window->handle, input_mask);
-	XMapWindow(xfi->display, window->handle);
+	xf_MapWindow(xfi->display, window->handle);
 
 	memset(&gcv, 0, sizeof(gcv));
 	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
@@ -659,7 +677,11 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	}
 
 #ifdef WITH_XEXT
-	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	if (window->decorations == false)
+	{
+		XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects,
+				nrects, ShapeSet, 0);
+	}
 #endif
 
 	xfree(xrects);
