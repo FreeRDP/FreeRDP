@@ -73,15 +73,25 @@ boolean nego_connect(rdpNego* nego)
 		if (!nego->security_layer_negotiation_enabled)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
+			/* attempt only the highest enabled protocol (see nego_attempt_*) */
 			nego->enabled_protocols[PROTOCOL_NLA] = 0;
 			nego->enabled_protocols[PROTOCOL_TLS] = 0;
 			nego->enabled_protocols[PROTOCOL_RDP] = 0;
 			if(nego->state == NEGO_STATE_NLA)
+			{
 				nego->enabled_protocols[PROTOCOL_NLA] = 1;
+				nego->selected_protocol = PROTOCOL_NLA;
+			}
 			else if (nego->state == NEGO_STATE_TLS)
+			{
 				nego->enabled_protocols[PROTOCOL_TLS] = 1;
+				nego->selected_protocol = PROTOCOL_TLS;
+			}
 			else if (nego->state == NEGO_STATE_RDP)
+			{
 				nego->enabled_protocols[PROTOCOL_RDP] = 1;
+				nego->selected_protocol = PROTOCOL_RDP;
+			}
 		}
 
 		if(!nego_send_preconnection_pdu(nego))
@@ -140,23 +150,24 @@ boolean nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->security_connected)
 	{
-		if (nego->enabled_protocols[PROTOCOL_NLA] > 0
-			&& nego->selected_protocol == PROTOCOL_NLA)
+		if (nego->selected_protocol == PROTOCOL_NLA)
 		{
-			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA\n");
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA");
 			nego->security_connected = transport_connect_nla(nego->transport);
 		}
-		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0
-			&& nego->selected_protocol == PROTOCOL_TLS )
+		else if (nego->selected_protocol == PROTOCOL_TLS )
 		{
-			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS\n");
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS");
 			nego->security_connected = transport_connect_tls(nego->transport);
 		}
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0
-			&& nego->selected_protocol == PROTOCOL_RDP)
+		else if (nego->selected_protocol == PROTOCOL_RDP)
 		{
-			DEBUG_NEGO("nego_security_connect with PROTOCOL_RDP\n");
+			DEBUG_NEGO("nego_security_connect with PROTOCOL_RDP");
 			nego->security_connected = transport_connect_rdp(nego->transport);
+		}
+		else
+		{
+			DEBUG_NEGO("cannot connect security layer because no protocol has been selected yet.");
 		}
 	}
 	return nego->security_connected;
