@@ -76,31 +76,31 @@ typedef struct _PropMotifWmHints PropMotifWmHints;
  */
 void xf_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...)
 {
-       XEvent xevent;
-       unsigned int i;
-       va_list argp;
+	XEvent xevent;
+	unsigned int i;
+	va_list argp;
 
-       va_start(argp, numArgs);
+	va_start(argp, numArgs);
 
-       xevent.xclient.type = ClientMessage;
-       xevent.xclient.serial = 0;
-       xevent.xclient.send_event = False;
-       xevent.xclient.display = xfi->display;
-       xevent.xclient.window = window->handle;
-       xevent.xclient.message_type = atom;
-       xevent.xclient.format = 32;
+	xevent.xclient.type = ClientMessage;
+	xevent.xclient.serial = 0;
+	xevent.xclient.send_event = False;
+	xevent.xclient.display = xfi->display;
+	xevent.xclient.window = window->handle;
+	xevent.xclient.message_type = atom;
+	xevent.xclient.format = 32;
 
-       for (i=0; i<numArgs; i++)
-       {
-               xevent.xclient.data.l[i] = va_arg(argp, int);
-       }
+	for (i = 0; i < numArgs; i++)
+	{
+		xevent.xclient.data.l[i] = va_arg(argp, int);
+	}
 
-       DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
-       XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, 
+	DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
+	XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False,
 		SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
-       XSync(xfi->display, False);
+	XSync(xfi->display, False);
 
-       va_end(argp);
+	va_end(argp);
 }
 
 void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
@@ -204,7 +204,7 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
 	PropMotifWmHints hints;
 
 	hints.decorations = (show) ? MWM_DECOR_ALL : 0;
-	hints.functions = MWM_FUNC_ALL ; 
+	hints.functions = MWM_FUNC_ALL ;
 	hints.flags = MWM_HINTS_DECORATIONS | MWM_HINTS_FUNCTIONS;
 	hints.inputMode = 0;
 	hints.status = 0;
@@ -235,7 +235,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		 * correctly if the local window manager resizes or moves them.
 		 * Set override redirect to prevent this from occurring.
 		 */
- 
+
 		XSetWindowAttributes attrs;
 		attrs.override_redirect = True;
 		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
@@ -294,7 +294,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
-			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
+			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
 
 		class_hints = XAllocClassHint();
@@ -355,7 +355,7 @@ void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* heigh
 	vscreen_width = xfi->vscreen.area.right - xfi->vscreen.area.left + 1;
 	vscreen_height = xfi->vscreen.area.bottom - xfi->vscreen.area.top + 1;
 
-	if (*width < 1) 
+	if (*width < 1)
 	{
 		*width = 1;
 	}
@@ -418,7 +418,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
-		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
+		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 		CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
 
 	DEBUG_X11_LMS("Create  window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  rdp=0x%X",
@@ -445,13 +445,13 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 
 	input_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask |
-        	ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | 
-		PointerMotionMask | Button1MotionMask | Button2MotionMask | 
+		ButtonReleaseMask | EnterWindowMask | LeaveWindowMask |
+		PointerMotionMask | Button1MotionMask | Button2MotionMask |
 		Button3MotionMask | Button4MotionMask | Button5MotionMask |
-                ButtonMotionMask | KeymapStateMask | ExposureMask | 
-		VisibilityChangeMask | StructureNotifyMask | SubstructureNotifyMask | 
+		ButtonMotionMask | KeymapStateMask | ExposureMask |
+		VisibilityChangeMask | StructureNotifyMask | SubstructureNotifyMask |
 		SubstructureRedirectMask | FocusChangeMask | PropertyChangeMask |
-                ColormapChangeMask | OwnerGrabButtonMask;
+		ColormapChangeMask | OwnerGrabButtonMask;
 
 	XSelectInput(xfi->display, window->handle, input_mask);
 	xf_MapWindow(xfi->display, window->handle);
@@ -499,26 +499,26 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 
 	DEBUG_X11_LMS("direction=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d   "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d  mouse_x=%d mouse_y=%d",
-		direction, (uint32) window->handle, 
+		direction, (uint32) window->handle,
 		window->left, window->top, window->right, window->bottom,
 		window->width, window->height, window->window->windowId,
-		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowOffsetX, window->window->windowOffsetY,
 		window->window->windowWidth, window->window->windowHeight, x, y);
 
-	window->local_move.root_x = x; 
+	window->local_move.root_x = x;
 	window->local_move.root_y = y;
 	window->local_move.state = LMS_STARTING;
 
-	XTranslateCoordinates(xfi->display, RootWindowOfScreen(xfi->screen), window->handle, 
-		window->local_move.root_x, 
+	XTranslateCoordinates(xfi->display, RootWindowOfScreen(xfi->screen), window->handle,
+		window->local_move.root_x,
 		window->local_move.root_y,
-		&window->local_move.window_x, 
-		&window->local_move.window_y, 
+		&window->local_move.window_x,
+		&window->local_move.window_y,
 		&child_window);
 
 	XUngrabPointer(xfi->display, CurrentTime);
 
-	xf_SendClientEvent(xfi, window, 
+	xf_SendClientEvent(xfi, window,
 			xfi->_NET_WM_MOVERESIZE, /* request X window manager to initiate a local move */
 			5, /* 5 arguments to follow */
 			x, /* x relative to root window */
@@ -533,10 +533,10 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window)
 
 	DEBUG_X11_LMS("state=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-		window->local_move.state, 
+		window->local_move.state,
 		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
 		window->width, window->height, window->window->windowId,
-		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowOffsetX, window->window->windowOffsetY,
 		window->window->windowWidth, window->window->windowHeight);
 
 	if (window->local_move.state == LMS_NOT_ACTIVE)
@@ -548,9 +548,9 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window)
 		 * The move never was property started. This can happen due to race
 		 * conditions between the mouse button up and the communications to the
 		 * RDP server for local moves. We must cancel the X window manager move.
-		 * Per ICCM, the X client can ask to cancel an active move. 
+		 * Per ICCM, the X client can ask to cancel an active move.
 		 */
-		xf_SendClientEvent(xfi, window, 
+		xf_SendClientEvent(xfi, window,
 			xfi->_NET_WM_MOVERESIZE, /* request X window manager to abort a local move */
 			5, /* 5 arguments to follow */
 			window->local_move.root_x, /* x relative to root window */
@@ -580,11 +580,11 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u  "
 		"new rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-		(uint32) window->handle, window->left, window->top, 
+		(uint32) window->handle, window->left, window->top,
 		window->right, window->bottom, window->width, window->height,
-		x, y, x + width -1, y + height -1, width, height, 
+		x, y, x + width -1, y + height -1, width, height,
 		window->window->windowId,
-		window->window->windowOffsetX, window->window->windowOffsetY, 
+		window->window->windowOffsetX, window->window->windowOffsetY,
 		window->window->windowWidth, window->window->windowHeight);
 
 	window->left = x;

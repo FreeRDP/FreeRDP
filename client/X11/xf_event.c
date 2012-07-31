@@ -497,30 +497,30 @@ boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
-        rdpWindow* window;
-        rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+	rdpWindow* window;
+	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-        window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
+	window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
-        if (window != NULL)
-        {
-                xfWindow* xfw;
-                Window childWindow;
-                xfw = (xfWindow*) window->extra;
+	if (window != NULL)
+	{
+		xfWindow* xfw;
+		Window childWindow;
+		xfw = (xfWindow*) window->extra;
 
-                /*
-                 * ConfigureNotify coordinates are expressed relative to the window parent.
-                 * Translate these to root window coordinates.
-                 */
+		/*
+		 * ConfigureNotify coordinates are expressed relative to the window parent.
+		 * Translate these to root window coordinates.
+		 */
 
-                XTranslateCoordinates(xfi->display, xfw->handle, 
+                XTranslateCoordinates(xfi->display, xfw->handle,
 			RootWindowOfScreen(xfi->screen),
                         0, 0, &xfw->left, &xfw->top, &childWindow);
 
-                xfw->width = event->xconfigure.width;
-                xfw->height = event->xconfigure.height;
-                xfw->right = xfw->left + xfw->width - 1;
-                xfw->bottom = xfw->top + xfw->height - 1;
+		xfw->width = event->xconfigure.width;
+		xfw->height = event->xconfigure.height;
+		xfw->right = xfw->left + xfw->width - 1;
+		xfw->bottom = xfw->top + xfw->height - 1;
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u send_event=%d",
 			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
@@ -539,9 +539,9 @@ boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			if (app && ! event->xconfigure.send_event)
 				xf_rail_adjust_position(xfi, window);
 		}
-        }
+	}
 
-        return True;
+	return True;
 }
 
 boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
@@ -646,8 +646,8 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 			switch(event->type)
 			{
 				case ConfigureNotify:
-					// Starting to see move events 
-					// from the X server. Local 
+					// Starting to see move events
+					// from the X server. Local
 					// move is now in progress.
 					xfi->window->local_move.state = LMS_ACTIVE;
 
@@ -659,20 +659,20 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 				case KeyPress:
 				case KeyRelease:
 				case UnmapNotify:
-                	        	// A button release event means the X 
+					// A button release event means the X
 					// window server did not grab the
-                        		// mouse before the user released it.  
-					// In this case we must cancel the 
-					// local move. The event will be 
+					// mouse before the user released it.
+					// In this case we must cancel the
+					// local move. The event will be
 					// processed below as normal, below.
-	                        	break;
+					break;
 				case VisibilityNotify:
 				case PropertyNotify:
 				case Expose:
 					// Allow these events to pass
 					break;
 				default:
-					// Eat any other events 
+					// Eat any other events
 					return true;
 			}
 			break;
@@ -698,7 +698,7 @@ boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 			// Already sent RDP end move to sever
 			// Allow events to pass.
 			break;
-	}	
+	}
 
 	return false;
 }
@@ -715,7 +715,7 @@ boolean xf_event_process(freerdp* instance, XEvent* event)
 	{
 		window = window_list_get_by_extra_id(
 			rail->list, (void*) event->xexpose.window);
-		if (window) 
+		if (window)
 		{
 			// Update "current" window for cursor change orders
 			xfi->window = (xfWindow *) window->extra;
