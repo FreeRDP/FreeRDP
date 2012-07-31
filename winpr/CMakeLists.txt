@@ -17,6 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if (APPLE)
+	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
+	# a lot of undefined symbols in use, use this hack until they're filled out.
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")	
+endif()
+
 add_subdirectory(crt)
 add_subdirectory(utils)
 add_subdirectory(heap)
