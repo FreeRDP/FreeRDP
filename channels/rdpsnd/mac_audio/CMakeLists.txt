@@ -1,6 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
+# Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,13 +18,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rail)
-add_subdirectory(rdpdbg)
-add_subdirectory(skel)
+set(RDPSND_MACAUDIO_SRCS
+	rdpsnd_audio_q.c
+)
 
-if(NOT WIN32)
-	add_subdirectory(rdpdr)
-	add_subdirectory(rdpsnd)
-endif()
+include_directories(..)
+include_directories(${MACAUDIO_INCLUDE_DIRS})
+
+add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
+set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
+
+target_link_libraries(rdpsnd_macaudio freerdp-utils)
+target_link_libraries(rdpsnd_macaudio ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
+target_link_libraries(rdpsnd_macaudio ${MAC_COREFOUNDATION_LIBRARY_PATH})
+
+install(TARGETS rdpsnd_macaudio DESTINATION ${FREERDP_PLUGIN_PATH})
+

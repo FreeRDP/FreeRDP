@@ -43,7 +43,8 @@ set(FREERDP_CODEC_SRCS
 	nsc_encode.h
 	nsc_types.h
 	mppc_dec.c
-	mppc_enc.c)
+	mppc_enc.c
+	jpeg.c)
 
 set(FREERDP_CODEC_SSE2_SRCS
 	rfx_sse2.c
@@ -72,10 +73,13 @@ if(WITH_NEON)
 	set_property(SOURCE rfx_neon.c PROPERTY COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp")
 endif()
 
+if(WITH_JPEG)
+	set(FREERDP_JPEG_LIBS jpeg)
+endif()
+
 add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
 
 set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-codec freerdp-utils)
+target_link_libraries(freerdp-codec freerdp-utils ${FREERDP_JPEG_LIBS})
 
 install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

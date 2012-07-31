@@ -114,6 +114,7 @@ endif()
 if(NOT WIN32)
 	find_required_package(ZLIB)
 	find_optional_package(PulseAudio)
+	find_optional_package(MacAudio)
 	find_optional_package(PCSC)
 	find_suggested_package(Cups)
 
