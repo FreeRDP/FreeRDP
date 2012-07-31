@@ -165,6 +165,10 @@ boolean nego_security_connect(rdpNego* nego)
 			DEBUG_NEGO("nego_security_connect with PROTOCOL_RDP");
 			nego->security_connected = transport_connect_rdp(nego->transport);
 		}
+		else
+		{
+			DEBUG_NEGO("cannot connect security layer because no protocol has been selected yet.");
+		}
 	}
 	return nego->security_connected;
 }
