@@ -37,3 +37,7 @@ if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
 endif()
 
+if(WITH_MACAUDIO)
+	add_subdirectory(mac_audio)
+endif()
+

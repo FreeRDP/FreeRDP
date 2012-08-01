@@ -445,7 +445,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	fContextReq |= ASC_REQ_CONNECTION;
 	fContextReq |= ASC_REQ_USE_SESSION_KEY;
-	fContextReq |= ASC_REQ_CONFIDENTIALITY;
 
 	fContextReq |= ASC_REQ_REPLAY_DETECT;
 	fContextReq |= ASC_REQ_SEQUENCE_DETECT;
@@ -511,6 +510,14 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			if (credssp->table->CompleteAuthToken != NULL)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
+			if (status == SEC_I_COMPLETE_NEEDED)
+				status = SEC_E_OK;
+			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+				status = SEC_I_CONTINUE_NEEDED;
+		}
+
+		if (status == SEC_E_OK)
+		{
 			have_pub_key_auth = true;
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
@@ -530,11 +537,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			credssp->negoToken.cbBuffer = 0;
 
 			credssp_encrypt_public_key_echo(credssp);
-
-			if (status == SEC_I_COMPLETE_NEEDED)
-				status = SEC_E_OK;
-			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-				status = SEC_I_CONTINUE_NEEDED;
 		}
 
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))

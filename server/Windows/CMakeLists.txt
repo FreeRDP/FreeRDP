@@ -18,7 +18,12 @@
 # limitations under the License.
 
 add_executable(wfreerdp-server
-	wfreerdp.c)
+	wf_input.c
+	wf_input.h
+	wf_peer.c
+	wf_peer.h
+	wfreerdp.c
+	wfreerdp.h)
 
 target_link_libraries(wfreerdp-server freerdp-core)
 target_link_libraries(wfreerdp-server freerdp-utils)
