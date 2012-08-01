@@ -505,11 +505,23 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		{
 			default_data[0].data[0] = "alsa";
 			default_data[0].data[1] = "default";
-			if(rdpsnd_load_device_plugin(rdpsnd, "alsa", default_data))
+
+			if (!rdpsnd_load_device_plugin(rdpsnd, "alsa", default_data))
+			{
+				default_data[0].data[0] = "macaudio";
+				default_data[0].data[1] = "default";
+				
+				rdpsnd_load_device_plugin(rdpsnd, "macaudio", default_data);
+			}
+			else
+			{
 				printf("rdpsnd: successfully loaded alsa plugin\n");
+			}
 		}
 		else
+		{
 			printf("rdpsnd: successfully loaded pulseaudio plugin\n");
+		}
 	}
 	if (rdpsnd->device == NULL)
 	{

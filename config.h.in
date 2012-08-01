@@ -27,6 +27,7 @@
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
 #cmakedefine WITH_NATIVE_SSPI
+#cmakedefine WITH_JPEG
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE

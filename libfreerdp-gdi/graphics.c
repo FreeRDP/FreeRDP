@@ -22,6 +22,8 @@
 #include <freerdp/gdi/shape.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/codec/jpeg.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/gdi/drawing.h>
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
@@ -87,9 +89,17 @@ void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+		uint8* data, int width, int height, int bpp, int length,
+		boolean compressed, int codec_id)
 {
 	uint16 size;
+	RFX_MESSAGE* msg;
+	uint8* src;
+	uint8* dst;
+	int yindex;
+	int xindex;
+	rdpGdi* gdi;
+	boolean status;
 
 	size = width * height * (bpp + 7) / 8;
 
@@ -98,21 +108,59 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed)
+	switch (codec_id)
 	{
-		boolean status;
+		case CODEC_ID_NSCODEC:
+			printf("gdi_Bitmap_Decompress: nsc not done\n");
+			break;
+		case CODEC_ID_REMOTEFX:
+			gdi = context->gdi;
+			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+			msg = rfx_process_message(gdi->rfx_context, data, length);
+			if (msg == NULL)
+			{
+				printf("gdi_Bitmap_Decompress: rfx Decompression Failed\n");
+			}
+			else
+			{
+				for (yindex = 0; yindex < height; yindex++)
+				{
+					src = msg->tiles[0]->data + yindex * 64 * 4;
+					dst = bitmap->data + yindex * width * 3;
+					for (xindex = 0; xindex < width; xindex++)
+					{
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						src++;
+					}
+				}
+				rfx_message_free(gdi->rfx_context, msg);
+			}
+			break;
+		case CODEC_ID_JPEG:
+#ifdef WITH_JPEG
+			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
+			{
+				printf("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
+			}
+#endif
+			break;
+		default:
+			if (compressed)
+			{
+				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
-
-		if (status != true)
-		{
-			printf("Bitmap Decompression Failed\n");
-		}
-	}
-	else
-	{
-		freerdp_image_flip(data, bitmap->data, width, height, bpp);
-
+				if (status == false)
+				{
+					printf("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+				}
+			}
+			else
+			{
+				freerdp_image_flip(data, bitmap->data, width, height, bpp);
+			}
+			break;
 	}
 
 	bitmap->width = width;
@@ -236,4 +284,3 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	graphics_register_glyph(graphics, glyph);
 	xfree(glyph);
 }
-

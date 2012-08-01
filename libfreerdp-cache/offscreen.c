@@ -137,7 +137,7 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 
 		offscreen_cache->currentSurface = SCREEN_BITMAP_SURFACE;
 		offscreen_cache->maxSize = 7680;
-		offscreen_cache->maxEntries = 100;
+		offscreen_cache->maxEntries = 2000;
 
 		settings->offscreen_bitmap_cache_size = offscreen_cache->maxSize;
 		settings->offscreen_bitmap_cache_entries = offscreen_cache->maxEntries;

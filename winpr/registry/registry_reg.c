@@ -205,7 +205,7 @@ void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 
 	path = _strdup(subkey->name);
 
-	name = strtok_r(path, "\\", &save);
+	name = strtok_s(path, "\\", &save);
 
 	while (name != NULL)
 	{
@@ -216,7 +216,7 @@ void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 			subkey->subname = _strdup(name);
 		}
 
-		name = strtok_r(NULL, "\\", &save);
+		name = strtok_s(NULL, "\\", &save);
 	}
 
 	free(path);

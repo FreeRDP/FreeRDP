@@ -22,137 +22,23 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
-#include <freerdp/constants.h>
+
+#include <freerdp/listener.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/listener.h>
+#include <freerdp/locale/keyboard.h>
+
+#include "wf_input.h"
+#include "wf_peer.h"
+
+#include "wfreerdp.h"
 
 HANDLE g_done_event;
 int g_thread_count = 0;
-
-struct wf_peer_context
-{
-	rdpContext _p;
-	boolean activated;
-};
-typedef struct wf_peer_context wfPeerContext;
-
-void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
-{
-
-}
-
-void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
-{
-	if (context)
-	{
-
-	}
-}
-
-static void wf_peer_init(freerdp_peer* client)
-{
-	client->context_size = sizeof(wfPeerContext);
-	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
-	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
-	freerdp_peer_context_new(client);
-}
-
-boolean wf_peer_post_connect(freerdp_peer* client)
-{
-	wfPeerContext* context = (wfPeerContext*) client->context;
-
-	/**
-	 * This callback is called when the entire connection sequence is done, i.e. we've received the
-	 * Font List PDU from the client and sent out the Font Map PDU.
-	 * The server may start sending graphics output and receiving keyboard/mouse input after this
-	 * callback returns.
-	 */
-
-	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
-		client->settings->os_major_type, client->settings->os_minor_type);
-
-	if (client->settings->autologon)
-	{
-		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
-
-		/* A real server may perform OS login here if NLA is not executed previously. */
-	}
-	printf("\n");
-
-	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
-
-	/* A real server should tag the peer as activated here and start sending updates in main loop. */
-
-	/* Return false here would stop the execution of the peer mainloop. */
-	return true;
-}
-
-boolean wf_peer_activate(freerdp_peer* client)
-{
-	wfPeerContext* context = (wfPeerContext*) client->context;
-
-	context->activated = true;
-
-	return true;
-}
-
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
-{
-	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
-}
-
-void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
-{
-	freerdp_peer* client = input->context->peer;
-	rdpUpdate* update = client->update;
-	wfPeerContext* context = (wfPeerContext*) input->context;
-
-	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
-
-	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
-	{
-		if (client->settings->width != 800)
-		{
-			client->settings->width = 800;
-			client->settings->height = 600;
-		}
-		else
-		{
-			client->settings->width = 640;
-			client->settings->height = 480;
-		}
-		update->DesktopResize(update->context);
-		context->activated = false;
-	}
-	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
-	{
-		client->Close(client);
-	}
-}
-
-void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
-{
-	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
-}
-
-void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
-{
-	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
-}
-
-void wf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
-{
-	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
-}
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
