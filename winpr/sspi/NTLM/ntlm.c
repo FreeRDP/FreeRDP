@@ -128,10 +128,21 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			RegCloseKey(hKey);
 		}
 
+		context->SuppressExtendedProtection = FALSE;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("SuppressExtendedProtection"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				context->SuppressExtendedProtection = dwValue ? 1 : 0;
+
+			RegCloseKey(hKey);
+		}
+
 		context->NegotiateFlags = 0;
 		context->LmCompatibilityLevel = 3;
 		context->state = NTLM_STATE_INITIAL;
-		context->SuppressExtendedProtection = FALSE;
 		memset(context->MachineID, 0xAA, sizeof(context->MachineID));
 
 		if (context->NTLMv2)

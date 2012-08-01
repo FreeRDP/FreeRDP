@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <freerdp/settings.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
@@ -112,11 +113,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
 				"  --no-bmp-cache: disable bitmap cache\n"
+				"  --bcv3: codec for bitmap cache v3 (rfx, nsc, jpeg)\n"
 				"  --plugin: load a virtual channel plugin\n"
 				"  --rfx: enable RemoteFX\n"
 				"  --rfx-mode: RemoteFX operational flags (v[ideo], i[mage]), default is video\n"
 				"  --frame-ack: number of frames pending to be acknowledged, default is 2 (disable with 0)\n"
 				"  --nsc: enable NSCodec (experimental)\n"
+#ifdef WITH_JPEG
+				"  --jpeg: enable jpeg codec, uses 75 quality\n"
+				"  --jpegex: enable jpeg and set quality(1..99)\n"
+#endif
 				"  --disable-wallpaper: disables wallpaper\n"
 				"  --composition: enable desktop composition\n"
 				"  --disable-full-window-drag: disables full window drag\n"
@@ -385,6 +391,61 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 		}
+		else if (strcmp("--bcv3", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+			settings->bitmap_cache_v3 = true;
+			if (strcmp("rfx", argv[index]) == 0)
+			{
+				printf("setting rfx\n");
+				settings->v3_codec_id = CODEC_ID_REMOTEFX;
+				settings->rfx_codec = true;
+			}
+			else if (strcmp("nsc", argv[index]) == 0)
+			{
+				printf("setting codec nsc\n");
+				settings->v3_codec_id = CODEC_ID_NSCODEC;
+				settings->ns_codec = true;
+			}
+#ifdef WITH_JPEG
+			else if (strcmp("jpeg", argv[index]) == 0)
+			{
+				printf("setting codec jpeg\n");
+				settings->v3_codec_id = CODEC_ID_JPEG;
+				settings->jpeg_codec = true;
+				if (settings->jpeg_quality == 0)
+					settings->jpeg_quality = 75;
+			}
+#endif
+			else
+			{
+				printf("bad codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+		}
+#ifdef WITH_JPEG
+		else if (strcmp("--jpeg", argv[index]) == 0)
+		{
+			settings->jpeg_codec = true;
+			settings->jpeg_quality = 75;
+		}
+		else if (strcmp("--jpegex", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing codec name\n");
+				return FREERDP_ARGS_PARSE_FAILURE;
+			}
+			settings->jpeg_codec = true;
+			settings->jpeg_quality = atoi(argv[index]);
+		}
+#endif
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->rfx_codec = true;
