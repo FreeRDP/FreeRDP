@@ -1635,10 +1635,12 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 	{
 		if ((rules[i].TicksStart <= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
+			/*printf("Got rule %d from table at %p with count %u\n", i, rules, count);*/
 			return &rules[i];
 		}
 	}
 
+	printf("Unable to get current timezone rule\n");
 	return NULL;
 }
 
@@ -1671,7 +1673,6 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 #else
 	clientTimeZone->bias = 0;
 #endif
-
 	if (local_time->tm_isdst > 0)
 	{
 		clientTimeZone->standardBias = clientTimeZone->bias - 60;
@@ -1696,6 +1697,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 			TIME_ZONE_RULE_ENTRY* rule;
 			rule = freerdp_get_current_time_zone_rule(tz->RuleTable, tz->RuleTableCount);
 
+			/* issue #574 -- temporarily disabled this block as it seems to be setting the wrong time
 			if (rule != NULL)
 			{
 				clientTimeZone->standardBias = 0;
@@ -1719,6 +1721,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 				clientTimeZone->daylightDate.wSecond = rule->DaylightDate.wSecond;
 				clientTimeZone->daylightDate.wMilliseconds = rule->DaylightDate.wMilliseconds;
 			}
+			*/
 		}
 
 		xfree(tz);

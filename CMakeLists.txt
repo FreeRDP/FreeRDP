@@ -44,6 +44,9 @@ set(FREERDP_VERSION_MINOR "0")
 set(FREERDP_VERSION_REVISION "1")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
+include(GetGitRevisionDescription)
+git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
+message(STATUS "Git Revision ${GIT_REVISION}")
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -105,10 +108,18 @@ endif()
 
 # Mac OS X
 if(APPLE)
-	include_directories(/opt/local/include)
-	link_directories(/opt/local/lib)
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -framework CoreFoundation")
+	if(IS_DIRECTORY /opt/local/include)
+		include_directories(/opt/local/include)
+		link_directories(/opt/local/lib)
+	endif()
+	
+	option(WITH_CLANG "Build using clang" OFF)
+	if(WITH_CLANG)
+		set(CMAKE_C_COMPILER "clang")
+	endif()
+	
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl-framework,CoreFoundation")	
 endif()
 
 if(NOT WIN32)
