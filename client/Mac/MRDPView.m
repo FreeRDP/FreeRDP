@@ -34,8 +34,7 @@
 #import "MRDPView.h"
 #import "MRDPCursor.h"
 
-// Should be defined in Makefile
-// #define RUN_IN_XCODE
+#define RUN_IN_XCODE
 
 // LK_TODO 
 #define GOT_HERE //printf("### got here: %s : %s() : %d\n", __FILE__, __func__, __LINE__)
@@ -1870,6 +1869,7 @@ void cliprdr_send_supported_format_list(freerdp *inst)
     freerdp_channels_send_event(inst->context->channels, (RDP_EVENT*) event);
 }
 
+<<<<<<< HEAD
 /****************************************************************************************
  *                                                                                      *
  *                                                                                      *

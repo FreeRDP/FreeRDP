@@ -87,23 +87,19 @@ if(APPLE)
 endif()
 
 # OS X Interface Builder files
-set (MacFreeRDP_XIBS
-  	MainMenu.xib
-	Credits.rtf
+file (GLOB MacFreeRDP_XIBS
+  	*.xib
 )
 
 # Headers
-set (MacFreeRDP_Headers
-	MRDPCursor.h
-	MRDPView.h 
-	AppDelegate.h)
+file (GLOB MacFreeRDP_Headers
+	*.h
+	)
 
 # Source
-set (MacFreeRDP_Source
-	MRDPCursor.m 
-	MRDPView.m
-	AppDelegate.m
-	main.m)
+file (GLOB MacFreeRDP_Source
+	*.m 
+	)
 
 add_executable(MacFreeRDP 
 	${APP_TYPE} 
@@ -147,3 +143,4 @@ target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-cach
 target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-gdi/Debug/libfreerdp-gdi.dylib)
 target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-utils/Debug/libfreerdp-utils.dylib)
 target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-codec/Debug/libfreerdp-codec.dylib)
+target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-rail/Debug/libfreerdp-rail.dylib)
