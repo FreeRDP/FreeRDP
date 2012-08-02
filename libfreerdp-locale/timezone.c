@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "liblocale.h"
 
 #include <freerdp/utils/time.h>
 #include <freerdp/utils/memory.h>
@@ -809,7 +810,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_43, 2
 	},
 	{
-		"GTB Standard Time", 120, true, "(UTC+02:00) Athens, Bucharest",
+		"GTB Standard Time", 120, true, "(UTC+02:00) Athens, Bucharest, Istanbul",
 		"GTB Standard Time", "GTB Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_44, 1
 	},
@@ -1264,13 +1265,14 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "GTB Standard Time", "Europe/Athens" },
 	{ "GTB Standard Time", "Europe/Bucharest" },
 	{ "GTB Standard Time", "Europe/Chisinau" },
+	{ "GTB Standard Time", "Europe/Istanbul" },
 	{ "Hawaiian Standard Time", "Etc/GMT+10" },
 	{ "Hawaiian Standard Time", "Pacific/Fakaofo" },
 	{ "Hawaiian Standard Time", "Pacific/Honolulu" },
 	{ "Hawaiian Standard Time", "Pacific/Johnston" },
 	{ "Hawaiian Standard Time", "Pacific/Rarotonga" },
 	{ "Hawaiian Standard Time", "Pacific/Tahiti" },
-	{ "India Standard Time", "Asia/Calcutta" },
+	{ "India Standard Time", "Asia/Calcutta Asia/Kolkata" },
 	{ "Iran Standard Time", "Asia/Tehran" },
 	{ "Israel Standard Time", "Asia/Jerusalem" },
 	{ "Jordan Standard Time", "Asia/Amman" },
@@ -1299,7 +1301,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "N. Central Asia Standard Time", "Asia/Novosibirsk Asia/Novokuznetsk Asia/Omsk" },
 	{ "N. Central Asia Standard Time", "Asia/Novosibirsk" },
 	{ "Namibia Standard Time", "Africa/Windhoek" },
-	{ "Nepal Standard Time", "Asia/Katmandu" },
+	{ "Nepal Standard Time", "Asia/Katmandu Asia/Kathmandu" },
 	{ "New Zealand Standard Time", "Antarctica/South_Pole Antarctica/McMurdo" },
 	{ "New Zealand Standard Time", "Pacific/Auckland" },
 	{ "Newfoundland Standard Time", "America/St_Johns" },
@@ -1309,7 +1311,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Pacific SA Standard Time", "Antarctica/Palmer" },
 	{ "Pacific Standard Time (Mexico)", "America/Santa_Isabel" },
 	{ "Pacific Standard Time", "America/Los_Angeles" },
-	{ "Pacific Standard Time", "America/Tijuana" },
+	{ "Pacific Standard Time", "America/Tijuana America/Ensenada" },
 	{ "Pacific Standard Time", "America/Vancouver America/Dawson America/Whitehorse" },
 	{ "Pacific Standard Time", "PST8PDT" },
 	{ "Pakistan Standard Time", "Asia/Karachi" },
@@ -1361,13 +1363,13 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "SA Western Standard Time", "America/St_Vincent" },
 	{ "SA Western Standard Time", "America/Tortola" },
 	{ "SA Western Standard Time", "Etc/GMT+4" },
-	{ "Samoa Standard Time", "Pacific/Apia" },
+	{ "Samoa Standard Time", "Pacific/Apia Pacific/Samoa" },
 	{ "SE Asia Standard Time", "Antarctica/Davis" },
 	{ "SE Asia Standard Time", "Asia/Bangkok" },
 	{ "SE Asia Standard Time", "Asia/Hovd" },
 	{ "SE Asia Standard Time", "Asia/Jakarta Asia/Pontianak" },
 	{ "SE Asia Standard Time", "Asia/Phnom_Penh" },
-	{ "SE Asia Standard Time", "Asia/Saigon" },
+	{ "SE Asia Standard Time", "Asia/Saigon Asia/Ho_Chi_Minh" },
 	{ "SE Asia Standard Time", "Asia/Vientiane" },
 	{ "SE Asia Standard Time", "Etc/GMT-7" },
 	{ "SE Asia Standard Time", "Indian/Christmas" },
@@ -1403,7 +1405,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Tonga Standard Time", "Etc/GMT-13" },
 	{ "Tonga Standard Time", "Pacific/Enderbury" },
 	{ "Tonga Standard Time", "Pacific/Tongatapu" },
-	{ "Turkey Standard Time", "Europe/Istanbul" },
+	/* { "Turkey Standard Time", "Europe/Istanbul" }, */
 	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar Asia/Choibalsan" },
 	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar" },
 	{ "US Eastern Standard Time", "America/Indianapolis "
@@ -1683,11 +1685,18 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		clientTimeZone->standardBias = clientTimeZone->bias;
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
+	DEBUG_TIMEZONE("sbias=%d, bias=%d, stdBias=%d, dlBias=%d",
+		sbias, clientTimeZone->bias, clientTimeZone->standardBias,
+		clientTimeZone->daylightBias);
 
 	tz = freerdp_detect_windows_time_zone(clientTimeZone->bias);
 
 	if (tz!= NULL)
 	{
+		DEBUG_TIMEZONE("tz: Id='%s' Bias=%d DST=%d dn='%s' sn='%s' dln='%s'",
+			tz->Id, tz->Bias, tz->SupportsDST, tz->DisplayName,
+			tz->StandardName, tz->DaylightName);
+		/* Not printed: RuleTable, RuleTableCount */
 		clientTimeZone->bias = tz->Bias;
 		sprintf(clientTimeZone->standardName, "%s", tz->StandardName);
 		sprintf(clientTimeZone->daylightName, "%s", tz->DaylightName);
@@ -1729,6 +1738,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	else
 	{
 		/* could not detect timezone, fallback to using GMT */
+		DEBUG_TIMEZONE("tz not found, using GMT.");
 		sprintf(clientTimeZone->standardName, "%s", "GMT Standard Time");
 		sprintf(clientTimeZone->daylightName, "%s", "GMT Daylight Time");
 	}
