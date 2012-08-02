@@ -29,4 +29,10 @@
 #define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+#ifdef WITH_DEBUG_TIMEZONE
+#define DEBUG_TIMEZONE(fmt, ...) DEBUG_CLASS(TIMEZONE, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_TIMEZONE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
 #endif /* __LIBLOCALE_H */
