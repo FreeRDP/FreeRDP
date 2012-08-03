@@ -99,10 +99,23 @@ static void rail_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 }
 
+//This is used to switch FreeRDP back to showing the full desktop under remote app mode
+//to handle cases where the screen is locked, etc. The rail server informs us that it is
+//no longer monitoring the desktop. Once the desktop becomes monitored again. The full desktop 
+//window will be automatically destroyed and we will switch back into remote app mode.
 static void rail_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
+	rdpWindow* window;
+        rdpRail* rail = context->rail;
 
+        window = window_list_get_by_id(rail->list, orderInfo->windowId);
+
+        IFCALL(rail->rail_DesktopNonMonitored, rail, window);           
+
+        window_list_clear(rail->list);
 }
+
+
 
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {

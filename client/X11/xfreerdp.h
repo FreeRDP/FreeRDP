@@ -160,6 +160,7 @@ struct xf_info
 	Atom _NET_WM_MOVERESIZE;
 	Atom _NET_MOVERESIZE_WINDOW;
 
+	Atom WM_STATE;
 	Atom WM_PROTOCOLS;
 	Atom WM_DELETE_WINDOW;
 };

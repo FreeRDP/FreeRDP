@@ -58,6 +58,7 @@ struct xf_localmove
 	int window_x; // relative to window
 	int window_y;
 	enum xf_localmove_state state;
+	int direction;
 };
 
 struct xf_window
@@ -76,6 +77,8 @@ struct xf_window
 	boolean is_mapped;
 	boolean is_transient;
 	xfLocalMove local_move;
+	uint8 rail_state;
+	boolean rail_ignore_configure;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);

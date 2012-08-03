@@ -40,6 +40,7 @@ typedef void (*railSetWindowText)(rdpRail* rail, rdpWindow* window);
 typedef void (*railSetWindowIcon)(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
 typedef void (*railSetWindowRects)(rdpRail* rail, rdpWindow* window);
 typedef void (*railSetWindowVisibilityRects)(rdpRail* rail, rdpWindow* window);
+typedef void (*railDesktopNonMonitored) (rdpRail* rail, rdpWindow* window);
 
 struct rdp_rail
 {
@@ -57,6 +58,7 @@ struct rdp_rail
 	railSetWindowIcon rail_SetWindowIcon;
 	railSetWindowRects rail_SetWindowRects;
 	railSetWindowVisibilityRects rail_SetWindowVisibilityRects;
+	railDesktopNonMonitored rail_DesktopNonMonitored;
 };
 
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
