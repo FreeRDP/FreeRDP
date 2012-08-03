@@ -48,6 +48,7 @@
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_SVC
+#cmakedefine WITH_DEBUG_TIMEZONE
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
