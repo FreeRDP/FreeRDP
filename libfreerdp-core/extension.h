@@ -48,6 +48,7 @@ FREERDP_API int extension_post_connect(rdpExtension* extension);
 
 FREERDP_API rdpExtension* extension_new(freerdp* instance);
 FREERDP_API void extension_free(rdpExtension* extension);
+FREERDP_API void extension_load_and_init_plugins(rdpExtension* extension);
 
 #endif /* __EXTENSION_H */
 

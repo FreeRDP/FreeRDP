@@ -54,7 +54,7 @@ boolean freerdp_connect(freerdp* instance)
 
 	IFCALLRET(instance->PreConnect, status, instance);
 
-	rdp->extension = extension_new(instance);
+	extension_load_and_init_plugins(rdp->extension);
 	extension_pre_connect(rdp->extension);
 
 	if (status != true)
