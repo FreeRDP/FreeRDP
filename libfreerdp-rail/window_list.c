@@ -97,6 +97,16 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 {
 	rdpWindow* window;
 
+	//See if the window already exists     
+	window = window_list_get_by_id(list, orderInfo->windowId);
+	 
+        //If the window already exists, just update the existing window
+	if (window != NULL)
+	{
+	        window_list_update(list, orderInfo, window_state);
+	        return;
+	}
+
 	window = (rdpWindow*) xzalloc(sizeof(rdpWindow));
 
 	if (window == NULL)
@@ -174,6 +184,22 @@ void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)
 
 	rail_DestroyWindow(list->rail, window);
 }
+
+void window_list_clear(rdpWindowList* list)
+{
+       rdpWindow* current = list->head;
+       rdpWindow* next;        
+
+       while (current != NULL)
+       {
+               list->head = current->next;
+               rail_DestroyWindow(list->rail, current);
+               current = list->head;
+       }       
+       
+       list->tail = NULL;
+}
+
 
 rdpWindowList* window_list_new(rdpRail* rail)
 {

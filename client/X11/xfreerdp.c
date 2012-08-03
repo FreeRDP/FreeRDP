@@ -299,8 +299,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
-	xfi->attribs.bit_gravity = ForgetGravity;
-	xfi->attribs.win_gravity = StaticGravity;
+	xfi->attribs.bit_gravity = NorthWestGravity;
+	xfi->attribs.win_gravity = NorthWestGravity;
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
@@ -583,6 +583,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
 	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
+	xfi->WM_STATE = XInternAtom(xfi->display, "WM_STATE", False);
 
 	xf_kbd_init(xfi);
 
