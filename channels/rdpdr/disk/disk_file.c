@@ -199,10 +199,14 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? true : false);
 		if (file->is_dir)
 		{
-			if (mkdir(file->fullpath, mode) != 0)
+			//Should only create the directory if the disposition allows for it
+			if ((CreateDisposition == FILE_OPEN_IF) || (CreateDisposition == FILE_CREATE))
 			{
+			  if (mkdir(file->fullpath, mode) != 0)
+			  {
 				file->err = errno;
 				return true;
+			  }
 			}
 		}
 		exists = false;
