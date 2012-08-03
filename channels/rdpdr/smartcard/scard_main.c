@@ -28,6 +28,8 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/mutex.h> 
+#include <freerdp/utils/debug.h> 
 
 #include "rdpdr_types.h"
 #include "rdpdr_constants.h"
@@ -40,6 +42,7 @@ scard_free(DEVICE* dev)
 {
 	SCARD_DEVICE* scard = (SCARD_DEVICE*)dev;
 	IRP* irp;
+	COMPLETIONIDINFO* CompletionIdInfo;
 
 	freerdp_thread_stop(scard->thread);
 	freerdp_thread_free(scard->thread);
@@ -47,6 +50,12 @@ scard_free(DEVICE* dev)
 	while ((irp = (IRP*)list_dequeue(scard->irp_list)) != NULL)
 		irp->Discard(irp);
 	list_free(scard->irp_list);
+
+	/* Begin TS Client defect workaround. */
+	while ((CompletionIdInfo = (COMPLETIONIDINFO*)list_dequeue(scard->CompletionIds)) != NULL)
+	        xfree(CompletionIdInfo);
+	list_free(scard->CompletionIds);
+	/* End TS Client defect workaround. */
 
 	xfree(dev);
 	return;
@@ -130,10 +139,137 @@ scard_thread_func(void* arg)
 }
 
 
+/* Begin TS Client defect workaround. */
+static COMPLETIONIDINFO* 
+scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+{
+/* 
+ * Search from the beginning of the LIST for one outstanding "CompletionID" 
+ * that matches the one passed in.  If there is one, mark it as a duplicate
+ * if it is not already marked. 
+ */
+	LIST_ITEM* item;
+	COMPLETIONIDINFO* CompletionIdInfo;
+
+	for (item = scard->CompletionIds->head; item; item = item->next)
+	{
+	        CompletionIdInfo = (COMPLETIONIDINFO*)item->data;
+	        if (CompletionIdInfo->ID == CompletionId)
+	        {
+	                if (false == CompletionIdInfo->duplicate)
+	                {
+	                        CompletionIdInfo->duplicate = true;
+	                        DEBUG_WARN("CompletionID number %u is now marked as a duplicate.", CompletionId);
+	                }
+	                return CompletionIdInfo;
+	        }
+	}
+	return NULL;    /* Either no items in the list or no match. */
+}
+
+static boolean 
+scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+{
+/* 
+ * Search from the end of the LIST for one outstanding "CompletionID" 
+ * that matches the one passed in.  Remove it from the list and free the 
+ * memory associated with it.  Return whether or not it was marked 
+ * as a duplicate.
+ */
+	LIST_ITEM* item;
+	COMPLETIONIDINFO* CompletionIdInfo;
+	boolean duplicate;
+
+	for (item = scard->CompletionIds->tail; item; item = item->prev)
+	{
+	        CompletionIdInfo = (COMPLETIONIDINFO*)item->data;
+	        if (CompletionIdInfo->ID == CompletionId)
+	        {
+	                duplicate = CompletionIdInfo->duplicate;
+	                if (true == duplicate)
+	                {
+	                        DEBUG_WARN("CompletionID number %u was previously marked as a duplicate.  The response to the command is removed.", CompletionId);
+	                }
+	                list_remove(scard->CompletionIds, CompletionIdInfo);
+	                xfree(CompletionIdInfo);
+	                return duplicate;
+	        }
+	}
+	/* This function should only be called when there is
+	 * at least one outstanding CompletionID item in the list.
+	 */
+	DEBUG_WARN("Error!!! No CompletionIDs (or no matching IDs) in the list!");
+	return false;
+}
+
+static void 
+scard_irp_complete(IRP* irp)
+{
+/* This function is (mostly) a copy of the statically-declared "irp_complete()" 
+ * function except that this function adds extra operations for the 
+ * smart card's handling of duplicate "CompletionID"s.  This function needs 
+ * to be in this file so that "scard_irp_request()" can reference it.
+ */
+	int pos;
+	boolean duplicate;
+	SCARD_DEVICE* scard = (SCARD_DEVICE*)irp->device;
+
+	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
+
+	pos = stream_get_pos(irp->output);
+	stream_set_pos(irp->output, 12);
+	stream_write_uint32(irp->output, irp->IoStatus);
+	stream_set_pos(irp->output, pos);
+
+	/* Begin TS Client defect workaround. */
+	freerdp_mutex_lock(scard->CompletionIdsMutex);
+	/* Remove from the list the item identified by the CompletionID.
+	 * The function returns whether or not it was a duplicate CompletionID.
+	 */
+	duplicate = scard_check_for_duplicate_id(scard, irp->CompletionId);
+	freerdp_mutex_unlock(scard->CompletionIdsMutex);
+
+	if (false == duplicate)
+	{
+	        svc_plugin_send(irp->devman->plugin, irp->output);
+		irp->output = NULL;
+	}
+	/* End TS Client defect workaround. */
+
+	/* irp_free(irp); 	The "irp_free()" function is statically-declared
+	 * 			and so is not available to be called
+	 * 			here.  Instead, call it indirectly by calling
+	 * 			the IRP's "Discard()" function,
+	 * 			which has already been assigned 
+	 * 			to point to "irp_free()" in "irp_new()".
+	 */
+	irp->Discard(irp);
+}
+/* End TS Client defect workaround. */
+
+
 static void
 scard_irp_request(DEVICE* device, IRP* irp)
 {
+	COMPLETIONIDINFO* CompletionIdInfo;
+
 	SCARD_DEVICE* scard = (SCARD_DEVICE*)device;
+
+	/* Begin TS Client defect workaround. */
+	CompletionIdInfo= xnew(COMPLETIONIDINFO);
+	CompletionIdInfo->ID = irp->CompletionId;/* "duplicate" member is set 
+	                                          * to false by "xnew()"
+	                                          */
+	freerdp_mutex_lock(scard->CompletionIdsMutex);
+	scard_mark_duplicate_id(scard, irp->CompletionId);
+	list_enqueue(scard->CompletionIds, CompletionIdInfo);
+	freerdp_mutex_unlock(scard->CompletionIdsMutex);
+
+	irp->Complete = scard_irp_complete;	/* Overwrite the previous
+						 * assignment made in 
+						 * "irp_new()".
+						 */
+	/* End TS Client defect workaround. */
 
 	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL &&
 			scard_async_op(irp))
@@ -160,7 +296,6 @@ scard_irp_request(DEVICE* device, IRP* irp)
 
 	freerdp_thread_signal(scard->thread);
 }
-
 
 int
 DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
@@ -194,6 +329,9 @@ DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		scard->irp_list = list_new();
 		scard->thread = freerdp_thread_new();
+
+		scard->CompletionIds = list_new();
+		scard->CompletionIdsMutex = freerdp_mutex_new();
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE *)scard);
 

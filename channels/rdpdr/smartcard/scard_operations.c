@@ -114,7 +114,12 @@ static uint32 sc_output_string(IRP* irp, char *src, boolean wide)
 
 static void sc_output_alignment(IRP *irp, uint32 seed)
 {
-	uint32 size = stream_get_length(irp->output) - 20;
+	const uint32 field_lengths = 20;/* Remove the lengths of the fields
+					 * RDPDR_HEADER, DeviceID,
+					 * CompletionID, and IoStatus
+					 * of Section 2.2.1.5.5 of MS-RDPEFS.
+					 */
+	uint32 size = stream_get_length(irp->output) - field_lengths;
 	uint32 add = (seed - (size % seed)) % seed;
 
 	if (add > 0)
@@ -270,14 +275,15 @@ static uint32 handle_EstablishContext(IRP* irp)
 
 	rv = SCardEstablishContext(scope, NULL, NULL, &hContext);
 
-	stream_write_uint32(irp->output, 4);	// ?
-	stream_write_uint32(irp->output, -1);	// ?
+	stream_write_uint32(irp->output, 4);	// cbContext
+	stream_write_uint32(irp->output, -1);	// ReferentID
 
 	stream_write_uint32(irp->output, 4);
 	stream_write_uint32(irp->output, hContext);
 
 	/* TODO: store hContext in allowed context list */
 
+	sc_output_alignment(irp, 8);
 	return SCARD_S_SUCCESS;
 }
 
@@ -298,6 +304,7 @@ static uint32 handle_ReleaseContext(IRP* irp)
 	else
 		DEBUG_SCARD("success 0x%08lx", hContext);
 
+	sc_output_alignment(irp, 8);
 	return rv;
 }
 
@@ -316,7 +323,7 @@ static uint32 handle_IsValidContext(IRP* irp)
 	else
 		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
 
-	stream_write_uint32(irp->output, rv);
+	sc_output_alignment(irp, 8);
 
 	return rv;
 }
@@ -454,7 +461,6 @@ static uint32 handle_GetStatusChange(IRP* irp, boolean wide)
 
 			/* reset high bytes? */
 			cur->dwCurrentState &= 0x0000FFFF;
-			cur->dwEventState &= 0x0000FFFF;
 			cur->dwEventState = 0;
 		}
 
@@ -576,7 +582,6 @@ static uint32 handle_Connect(IRP* irp, boolean wide)
 	stream_write_uint32(irp->output, dwActiveProtocol);
 	stream_write_uint32(irp->output, 0x00000004);
 	stream_write_uint32(irp->output, hCard);
-	stream_seek(irp->output, 28);
 
 	sc_output_alignment(irp, 8);
 
@@ -616,8 +621,8 @@ static uint32 handle_Reconnect(IRP* irp)
 	else
 		DEBUG_SCARD("Success (proto: 0x%08x)", (unsigned) dwActiveProtocol);
 
+	stream_write_uint32(irp->output, dwActiveProtocol);
 	sc_output_alignment(irp, 8);
-	stream_write_uint32(irp->output, dwActiveProtocol); /* reversed? */
 
 	return rv;
 }
@@ -1165,7 +1170,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 
 static uint32 handle_AccessStartedEvent(IRP* irp)
 {
-	stream_write_zero(irp->output, 8);
+	sc_output_alignment(irp, 8);
 	return SCARD_S_SUCCESS;
 }
 
@@ -1365,8 +1370,10 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 	uint32 output_len, input_len, ioctl_code;
 	uint32 stream_len, result;
 	uint32 pos, pad_len;
-	uint32 irp_len;
 	uint32 irp_result_pos, output_len_pos, result_pos;
+	const uint32 header_lengths = 16;	/* MS-RPCE, Sections 2.2.6.1
+						 * and 2.2.6.2.
+						 */
 
 	stream_read_uint32(irp->input, output_len);
 	stream_read_uint32(irp->input, input_len);
@@ -1383,8 +1390,12 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 
 	irp_result_pos = stream_get_pos(irp->output);
 
-	stream_write_uint32(irp->output, 0x00081001); /* len 8, LE, v1 */
-
+	stream_write_uint32(irp->output, 0x00000000); 	/* MS-RDPEFS 
+							 * OutputBufferLength
+							 * will be updated 
+							 * later in this 
+							 * function.
+							 */
 	/* [MS-RPCE] 2.2.6.1 */
 	stream_write_uint32(irp->output, 0x00081001); /* len 8, LE, v1 */
 	stream_write_uint32(irp->output, 0xcccccccc); /* filler */
@@ -1510,24 +1521,19 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 
 	/* handle response packet */
 	pos = stream_get_pos(irp->output);
-	stream_len = pos - irp_result_pos - 4;
+	stream_len = pos - irp_result_pos - 4;	/* Value of OutputBufferLength */
+	stream_set_pos(irp->output, irp_result_pos);
+	stream_write_uint32(irp->output, stream_len);
 
 	stream_set_pos(irp->output, output_len_pos);
-	stream_write_uint32(irp->output, stream_len - 24);
+	/* Remove the effect of the MS-RPCE Common Type Header and Private
+	 * Header (Sections 2.2.6.1 and 2.2.6.2).
+	 */
+	stream_write_uint32(irp->output, stream_len - header_lengths);
 
 	stream_set_pos(irp->output, result_pos);
 	stream_write_uint32(irp->output, result);
 
-	stream_set_pos(irp->output, pos);
-
-	/* pad stream to 16 byte align */
-	pad_len = stream_len % 16;
-	stream_write_zero(irp->output, pad_len);
-	pos = stream_get_pos(irp->output);
-	irp_len = stream_len + pad_len;
-
-	stream_set_pos(irp->output, irp_result_pos);
-	stream_write_uint32(irp->output, irp_len);
 	stream_set_pos(irp->output, pos);
 
 #ifdef WITH_DEBUG_SCARD
