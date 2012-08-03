@@ -194,6 +194,12 @@ int extension_post_connect(rdpExtension* ext)
 	return 0;
 }
 
+void extension_load_and_init_plugins(rdpExtension* extension)
+{
+	extension_load_plugins(extension);
+	extension_init_plugins(extension);
+}
+
 rdpExtension* extension_new(freerdp* instance)
 {
 	rdpExtension* extension = NULL;
@@ -203,9 +209,6 @@ rdpExtension* extension_new(freerdp* instance)
 		extension = xnew(rdpExtension);
 
 		extension->instance = instance;
-
-		extension_load_plugins(extension);
-		extension_init_plugins(extension);
 	}
 
 	return extension;
