@@ -735,13 +735,14 @@ static void tsmf_stream_change_volume(TSMF_STREAM* stream, uint32 newVolume, uin
 {
 	if (!stream)
 		return;
-
-	if (!stream->decoder)
-		return;
-
-	if (stream->decoder->ChangeVolume)
+	
+	if (stream->decoder != NULL && stream->decoder->ChangeVolume)
 	{
 		stream->decoder->ChangeVolume(stream->decoder, newVolume, muted);
+	}
+	else if (stream->audio != NULL && stream->audio->ChangeVolume)
+	{
+		stream->audio->ChangeVolume(stream->audio, newVolume, muted);
 	}
 }
 
