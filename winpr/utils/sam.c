@@ -33,29 +33,29 @@
 
 WINPR_SAM* SamOpen(BOOL read_only)
 {
-	WINPR_SAM* sam;
+	FILE* fp = NULL;
+	WINPR_SAM* sam = NULL;
 
-	sam = (WINPR_SAM*) malloc(sizeof(WINPR_SAM));
-
-	if (sam != NULL)
+	if (read_only)
 	{
-		sam->read_only = read_only;
-
-		if (sam->read_only)
-		{
-			sam->fp = fopen(WINPR_SAM_FILE, "r");
-		}
-		else
-		{
-			sam->fp = fopen(WINPR_SAM_FILE, "r+");
-
-			if (!sam->fp)
-				sam->fp = fopen(WINPR_SAM_FILE, "w+");
-		}
-
-		if (!(sam->fp))
-			printf("Could not open SAM file!\n");
+		fp = fopen(WINPR_SAM_FILE, "r");
 	}
+	else
+	{
+		fp = fopen(WINPR_SAM_FILE, "r+");
+
+		if (!fp)
+			fp = fopen(WINPR_SAM_FILE, "w+");
+	}
+
+	if (fp)
+	{
+		sam = (WINPR_SAM*) malloc(sizeof(WINPR_SAM));
+		sam->read_only = read_only;
+		sam->fp = fp;
+	}
+	else
+		printf("Could not open SAM file!\n");
 
 	return sam;
 }
