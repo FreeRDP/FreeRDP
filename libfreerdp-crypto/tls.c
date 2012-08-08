@@ -278,7 +278,8 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 boolean tls_disconnect(rdpTls* tls)
 {
-	SSL_shutdown(tls->ssl);
+	if (tls->ssl)
+		SSL_shutdown(tls->ssl);
 	return true;
 }
 
