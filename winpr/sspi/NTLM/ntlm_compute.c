@@ -226,6 +226,8 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	WINPR_SAM_ENTRY* entry;
 
 	sam = SamOpen(1);
+	if (sam == NULL)
+		return;
 
 	entry = SamLookupUserW(sam,
 			(LPWSTR) context->identity.User, context->identity.UserLength * 2,
