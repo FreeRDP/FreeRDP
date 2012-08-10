@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# libwinpr-library cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
@@ -17,26 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (APPLE)
-	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
-	# a lot of undefined symbols in use, use this hack until they're filled out.
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")	
-endif()
+set(WINPR_LIBRARY_SRCS
+	library.c)
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(sysinfo)
-add_subdirectory(bcrypt)
-add_subdirectory(dsparse)
-add_subdirectory(asn1)
-add_subdirectory(rpc)
-add_subdirectory(sspicli)
-add_subdirectory(sspi)
-add_subdirectory(registry)
-add_subdirectory(library)
+add_library(winpr-library ${WINPR_LIBRARY_SRCS})
 
-add_subdirectory(tools)
+set_target_properties(winpr-library PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+install(TARGETS winpr-library DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

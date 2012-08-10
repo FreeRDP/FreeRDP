@@ -204,6 +204,11 @@ if(NOT MSVC)
 	add_subdirectory(keymaps)
 endif()
 
+option(WITH_EXTENSIONS "Build extensions" ON)
+if(WITH_EXTENSIONS)
+	add_subdirectory(extensions)
+endif()
+
 # Source package
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
 

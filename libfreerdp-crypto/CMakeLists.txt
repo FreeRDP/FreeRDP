@@ -41,7 +41,9 @@ else()
 endif()
 
 target_link_libraries(freerdp-crypto winpr-sspi)
+target_link_libraries(freerdp-crypto winpr-library)
 target_link_libraries(freerdp-crypto freerdp-utils)
 target_link_libraries(freerdp-crypto ${OPENSSL_LIBRARIES})
 
 install(TARGETS freerdp-crypto DESTINATION ${CMAKE_INSTALL_LIBDIR})
+

@@ -65,6 +65,7 @@ if (NOT WIN32)
 endif()
 
 target_link_libraries(winpr-sspi winpr-utils)
+target_link_libraries(winpr-sspi winpr-registry)
 target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})
 target_link_libraries(winpr-sspi ${OPENSSL_LIBRARIES})
 

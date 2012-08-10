@@ -223,4 +223,7 @@ typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
 #endif
 
+typedef void* HMODULE;
+typedef void* FARPROC;
+
 #endif /* WINPR_WTYPES_H */

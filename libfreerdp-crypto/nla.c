@@ -29,6 +29,9 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/tchar.h>
+#include <winpr/library.h>
+#include <winpr/registry.h>
 
 /**
  * TSRequest ::= SEQUENCE {
@@ -390,20 +393,43 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 #ifdef WITH_NATIVE_SSPI
 	{
 		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE InitSecurityInterface;
-		PSecurityFunctionTable pSecurityInterface = NULL;
+		INIT_SECURITY_INTERFACE pInitSecurityInterface;
 
 		hSSPI = LoadLibrary(_T("secur32.dll"));
 
 #ifdef UNICODE
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
+		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
 #else
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
 #endif
-		credssp->table = (*InitSecurityInterface)();
+		credssp->table = (*pInitSecurityInterface)();
 	}
 #else
-	credssp->table = InitSecurityInterface();
+	if (credssp->SspiModule)
+	{
+		HMODULE hSSPI;
+		INIT_SECURITY_INTERFACE pInitSecurityInterface;
+
+		hSSPI = LoadLibrary(credssp->SspiModule);
+
+		if (!hSSPI)
+		{
+			_tprintf(_T("Failed to load SSPI module: %s\n"), credssp->SspiModule);
+			return 0;
+		}
+
+#ifdef UNICODE
+		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
+#else
+		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+#endif
+
+		credssp->table = (*pInitSecurityInterface)();
+	}
+	else
+	{
+		credssp->table = InitSecurityInterface();
+	}
 #endif
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
@@ -1223,6 +1249,11 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 
 	if (credssp != NULL)
 	{
+		HKEY hKey;
+		LONG status;
+		DWORD dwType;
+		DWORD dwSize;
+
 		credssp->instance = instance;
 		credssp->settings = settings;
 		credssp->server = settings->server_mode;
@@ -1232,6 +1263,29 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		ZeroMemory(&credssp->negoToken, sizeof(SecBuffer));
 		ZeroMemory(&credssp->pubKeyAuth, sizeof(SecBuffer));
 		ZeroMemory(&credssp->authInfo, sizeof(SecBuffer));
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
+				0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status == ERROR_SUCCESS)
+		{
+			status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
+
+			if (status == ERROR_SUCCESS)
+			{
+				credssp->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+
+				status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
+						(BYTE*) credssp->SspiModule, &dwSize);
+
+				if (status == ERROR_SUCCESS)
+				{
+					_tprintf(_T("Using SSPI Module: %s\n"), credssp->SspiModule);
+					RegCloseKey(hKey);
+				}
+			}
+		}
+
 	}
 
 	return credssp;

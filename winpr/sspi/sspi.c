@@ -1051,7 +1051,7 @@ SecurityFunctionTableA SSPI_SecurityFunctionTableA =
 	CompleteAuthToken, /* CompleteAuthToken */
 	DeleteSecurityContext, /* DeleteSecurityContext */
 	ApplyControlToken, /* ApplyControlToken */
-	QueryContextAttributes, /* QueryContextAttributes */
+	QueryContextAttributesA, /* QueryContextAttributes */
 	ImpersonateSecurityContext, /* ImpersonateSecurityContext */
 	RevertSecurityContext, /* RevertSecurityContext */
 	MakeSignature, /* MakeSignature */
@@ -1083,7 +1083,7 @@ SecurityFunctionTableW SSPI_SecurityFunctionTableW =
 	CompleteAuthToken, /* CompleteAuthToken */
 	DeleteSecurityContext, /* DeleteSecurityContext */
 	ApplyControlToken, /* ApplyControlToken */
-	QueryContextAttributes, /* QueryContextAttributes */
+	QueryContextAttributesW, /* QueryContextAttributes */
 	ImpersonateSecurityContext, /* ImpersonateSecurityContext */
 	RevertSecurityContext, /* RevertSecurityContext */
 	MakeSignature, /* MakeSignature */

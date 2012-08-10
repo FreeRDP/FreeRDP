@@ -883,14 +883,19 @@ struct _SecurityFunctionTableW
 typedef struct _SecurityFunctionTableW SecurityFunctionTableW;
 typedef SecurityFunctionTableW* PSecurityFunctionTableW;
 
+typedef PSecurityFunctionTableA (SEC_ENTRY * INIT_SECURITY_INTERFACE_A)(void);
+typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_W)(void);
+
 #ifdef UNICODE
 #define InitSecurityInterface InitSecurityInterfaceW
 #define SecurityFunctionTable SecurityFunctionTableW
 #define PSecurityFunctionTable PSecurityFunctionTableW
+#define INIT_SECURITY_INTERFACE INIT_SECURITY_INTERFACE_W
 #else
 #define InitSecurityInterface InitSecurityInterfaceA
 #define SecurityFunctionTable SecurityFunctionTableA
 #define PSecurityFunctionTable PSecurityFunctionTableA
+#define INIT_SECURITY_INTERFACE INIT_SECURITY_INTERFACE_A
 #endif
 
 /* Package Management */
