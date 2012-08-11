@@ -155,6 +155,8 @@ boolean df_pre_connect(freerdp* instance)
 	dfi->clrconv->palette = xnew(rdpPalette);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
+    
+    instance->context->cache = cache_new(instance->settings);
 
 	return true;
 }
