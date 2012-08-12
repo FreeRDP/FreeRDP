@@ -33,8 +33,6 @@
 
 #include "rdpsnd_main.h"
 
-#define GOT_HERE printf(">>>>> got here: %s %s %d\n", __FILE__, __func__, __LINE__)
-
 #define AQ_NUM_BUFFERS  10
 #define AQ_BUF_SIZE     (32 * 1024)
 
@@ -63,8 +61,6 @@ static void rdpsnd_audio_close(rdpsndDevicePlugin* device)
 {
 	rdpsndAudioQPlugin* aq_plugin_p = (rdpsndAudioQPlugin*) device;
     
-	GOT_HERE;
-
 	AudioQueueStop(aq_plugin_p->aq_ref, 0);
 	aq_plugin_p->is_open = 0;
 }
@@ -74,8 +70,6 @@ static void rdpsnd_audio_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	int rv;
 	int i;
     
-	GOT_HERE;
-
 	rdpsndAudioQPlugin* aq_plugin_p = (rdpsndAudioQPlugin *) device;
 	if (aq_plugin_p->is_open) {
 		return;
@@ -123,13 +117,10 @@ static void rdpsnd_audio_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 
 static void rdpsnd_audio_free(rdpsndDevicePlugin* device)
 {
-	GOT_HERE;
 }
 
 static boolean rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
-	GOT_HERE;
-
 	switch (format->wFormatTag)
 	{
 		case 1: /* PCM */
@@ -147,12 +138,10 @@ static boolean rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndF
 
 static void rdpsnd_audio_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
 {
-	GOT_HERE;
 }
 
 static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, uint32 value)
 {
-	GOT_HERE;
 }
 
 static void rdpsnd_audio_play(rdpsndDevicePlugin* device, uint8* data, int size)
@@ -161,8 +150,6 @@ static void rdpsnd_audio_play(rdpsndDevicePlugin* device, uint8* data, int size)
 	AudioQueueBufferRef aq_buf_ref;
 	int                 len;
     
-	GOT_HERE;
-
 	if (!aq_plugin_p->is_open) {
 		return;
 	}
@@ -188,8 +175,6 @@ static void rdpsnd_audio_play(rdpsndDevicePlugin* device, uint8* data, int size)
 
 static void rdpsnd_audio_start(rdpsndDevicePlugin* device)
 {
-	GOT_HERE;
-
 	rdpsndAudioQPlugin* aq_plugin_p = (rdpsndAudioQPlugin *) device;
 
 	AudioQueueStart(aq_plugin_p->aq_ref, NULL);
@@ -206,7 +191,6 @@ static void aq_playback_cb(void *user_data,
 			   AudioQueueBufferRef aq_buf_ref
 			  )
 {
-	GOT_HERE;
 }
 
 int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
@@ -214,8 +198,6 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	rdpsndAudioQPlugin* aqPlugin;
 	RDP_PLUGIN_DATA* data;
     
-	GOT_HERE;
-
 	aqPlugin = xnew(rdpsndAudioQPlugin);
 
 	aqPlugin->device.Open = rdpsnd_audio_open;

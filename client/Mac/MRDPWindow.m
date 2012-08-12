@@ -8,4 +8,3 @@
 @synthesize view;
 
 @end
-

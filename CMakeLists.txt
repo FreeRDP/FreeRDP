@@ -95,6 +95,12 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
+# config.h definition for installable headers
+check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
+check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
+check_include_files(stdbool.h FREERDP_HAVE_STDBOOL_H)
+check_include_files(inttypes.h FREERDP_HAVE_INTTYPES_H)
+
 # Include files
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
@@ -117,7 +123,6 @@ if(APPLE)
 		link_directories(/opt/local/lib)
 	endif()
 	
-	option(WITH_CLANG "Build using clang" OFF)
 	if(WITH_CLANG)
 		set(CMAKE_C_COMPILER "clang")
 	endif()
@@ -159,6 +164,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Configure files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/freerdp/config.h)
 
 # Generate pkg-config
 if(NOT MSVC)
@@ -169,8 +175,8 @@ endif()
 # Build CUnit
 find_optional_package(CUnit)
 if(WITH_CUNIT)
-   enable_testing()
-   add_subdirectory(cunit)
+	enable_testing()
+	add_subdirectory(cunit)
 endif()
 
 # Sub-directories
@@ -188,25 +194,24 @@ add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
-add_subdirectory(channels)
+if(WITH_CHANNELS)
+	add_subdirectory(channels)
+endif()
 
-option(WITH_CLIENT "Build client binaries" ON)
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
 
-option(WITH_SERVER "Build server binaries" OFF)
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-if(NOT MSVC)
-	add_subdirectory(keymaps)
+if(WITH_THIRD_PARTY)
+	add_subdirectory(third-party)
 endif()
 
-option(WITH_EXTENSIONS "Build extensions" ON)
-if(WITH_EXTENSIONS)
-	add_subdirectory(extensions)
+if(NOT MSVC)
+	add_subdirectory(keymaps)
 endif()
 
 # Source package

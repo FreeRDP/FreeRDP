@@ -4,6 +4,8 @@
 
 @implementation MRDPRailView
 
+@synthesize mrdpRailWindow, windowIndex, activateWindow;
+
 MRDPRailView * g_mrdpRailView;
 
 struct kkey
@@ -19,20 +21,20 @@ extern struct kkey g_keys[];
     boolean   moveWindow = NO;
     NSRect    srcRectOuter;
     NSRect    destRectOuter;
-
+    
     rdpGdi *  gdi;
-
+    
     if ((context == 0) || (context->gdi == 0))
         return;
-
+    
     if (context->gdi->primary->hdc->hwnd->invalid->null)
         return;
-
+    
     if (context->gdi->drawing != context->gdi->primary)
         return;
-
+    
     gdi = context->gdi;
-
+    
     srcRectOuter = NSMakeRect(0, 0, self->width, self->height);
     destRectOuter = [[self window] frame];
 
@@ -42,15 +44,15 @@ extern struct kkey g_keys[];
         destRectOuter.size.width = screenSize.size.width;
         moveWindow = YES;
     }
-
+    
     if (destRectOuter.size.height > screenSize.size.height) {
         destRectOuter.size.height = screenSize.size.height;
-        moveWindow = YES;
+        moveWindow = YES;        
     }
-
+    
     if (destRectOuter.origin.x + destRectOuter.size.width > width)
         destRectOuter.size.width = width - destRectOuter.origin.x;
-
+    
     [self setupBmiRep:destRectOuter.size.width :destRectOuter.size.height];
 
     if (moveWindow) {
@@ -61,12 +63,12 @@ extern struct kkey g_keys[];
         //skipMoveWindowOnce = TRUE;
         //mac_send_rail_client_event(g_mrdpRailView->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &newWndLoc);
     }
-
+    
     destRectOuter.origin.y = height - destRectOuter.origin.y - destRectOuter.size.height;
-    rail_convert_color_space(pixelData, (char *) gdi->primary_buffer,
+    rail_convert_color_space(pixelData, (char *) gdi->primary_buffer, 
                         &destRectOuter, self->width, self->height);
-
-    if (moveWindow)
+    
+    if (moveWindow) 
         [self setNeedsDisplayInRect:destRectOuter];
     else
         [self setNeedsDisplayInRect:[self frame]];
@@ -81,7 +83,7 @@ extern struct kkey g_keys[];
 - (void) drawRect:(NSRect)dirtyRect
 {
     [bmiRep drawInRect:dirtyRect fromRect:dirtyRect operation:NSCompositeCopy fraction:1.0 respectFlipped:NO hints:nil];
-
+    
     if (pixelData) {
         free(pixelData);
         pixelData = NULL;
@@ -93,19 +95,24 @@ extern struct kkey g_keys[];
  * become first responder so we can get keyboard and mouse events
  ***********************************************************************/
 
-- (BOOL)acceptsFirstResponder
+- (BOOL)acceptsFirstResponder 
+{ 
+    return YES; 
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
 {
-    return YES;
+    return NO;
 }
 
 /** *********************************************************************
  * called when a mouse move event occurrs
- *
+ * 
  * ideally we want to be called when the mouse moves over NSView client area,
  * but in reality we get called any time the mouse moves anywhere on the screen;
  * we could use NSTrackingArea class to handle this but this class is available
  * on Mac OS X v10.5 and higher; since we want to be compatible with older
- * versions, we do this manually.
+ * versions, we do this manually. 
  *
  * TODO: here is how it can be done using legacy methods
  * http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/MouseTrackingEvents/MouseTrackingEvents.html#//apple_ref/doc/uid/10000060i-CH11-SW1
@@ -114,15 +121,15 @@ extern struct kkey g_keys[];
 - (void) mouseMoved:(NSEvent *)event
 {
     [super mouseMoved:event];
-
+    
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
-
+    
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
-
+    
     y = height - y;
-
+           
     // send mouse motion event to RDP server
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
 }
@@ -134,7 +141,7 @@ extern struct kkey g_keys[];
 - (void)mouseDown:(NSEvent *) event
 {
     [super mouseDown:event];
-
+    
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
     int x = (int) (winFrame.origin.x + loc.x);
@@ -146,12 +153,12 @@ extern struct kkey g_keys[];
 
     if ((yPos >= 4) && (yPos <= 20))
         titleBarClicked = YES;
-    else
+    else 
         titleBarClicked = NO;
-
+    
     savedDragLocation.x = loc.x;
     savedDragLocation.y = loc.y;
-
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
 
@@ -168,7 +175,7 @@ extern struct kkey g_keys[];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON1, x, y);
     titleBarClicked = NO;
 }
@@ -203,7 +210,7 @@ extern struct kkey g_keys[];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
@@ -237,33 +244,33 @@ extern struct kkey g_keys[];
     int x = (int) (winFrame.origin.x + loc.x);
     int y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
 - (void) scrollWheel:(NSEvent *)event
 {
     uint16 flags;
-
+    
     [super scrollWheel:event];
 
-    NSRect winFrame = [[self window] frame];
-    NSPoint loc = [event locationInWindow];
-    int x = (int) (winFrame.origin.x + loc.x);
-    int y = (int) (winFrame.origin.y + loc.y);
-    y = height - y;
-
-    flags = PTR_FLAGS_WHEEL;
+    // we get more two finger trackpad scroll events
+    // than scrollWheel events, so we drop some
+    
+    if (gestureEventInProgress) {
+        scrollWheelCount++;
+        if (scrollWheelCount % 8 != 0)
+            return;
+    }
+    
     if ([event scrollingDeltaY] < 0) {
-        flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
+        flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
     }
     else {
-        flags |= 0x0078;
+        flags = PTR_FLAGS_WHEEL | 0x78;
     }
-    x += (int) [event scrollingDeltaX];
-    y += (int) [event scrollingDeltaY];
-
-    rdp_instance->input->MouseEvent(rdp_instance->input, flags, x, y);
+    
+    rdp_instance->input->MouseEvent(rdp_instance->input, flags, 0, 0);
 }
 
 /** *********************************************************************
@@ -273,7 +280,7 @@ extern struct kkey g_keys[];
 - (void) mouseDragged:(NSEvent *)event
 {
     [super mouseDragged:event];
-
+    
     NSRect winFrame = [[self window] frame];
     NSPoint loc = [event locationInWindow];
     int x = (int) loc.x;
@@ -283,13 +290,13 @@ extern struct kkey g_keys[];
         // window is being dragged to a new location
         int newX = x - savedDragLocation.x;
         int newY = y - savedDragLocation.y;
-
+        
         if ((newX == 0) && (newY == 0))
             return;
-
+        
         winFrame.origin.x += newX;
         winFrame.origin.y += newY;
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
@@ -299,7 +306,7 @@ extern struct kkey g_keys[];
         int diff = (int) (loc.x - savedDragLocation.x);
         if (diff == 0)
             return;
-
+        
         if (diff < 0) {
             diff = abs(diff);
             winFrame.origin.x -= diff;
@@ -309,7 +316,7 @@ extern struct kkey g_keys[];
             winFrame.origin.x += diff;
             winFrame.size.width -= diff;
         }
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
@@ -319,10 +326,10 @@ extern struct kkey g_keys[];
         int diff = (int) (loc.x - savedDragLocation.x);
         if (diff == 0)
             return;
-
+        
         savedDragLocation.x = loc.x;
         savedDragLocation.y = loc.y;
-
+        
         winFrame.size.width += diff;
         [[self window] setFrame:winFrame display:YES];
         return;
@@ -333,21 +340,21 @@ extern struct kkey g_keys[];
         int diff = (int) (loc.y - savedDragLocation.y);
         if (diff == 0)
             return;
-
+        
         savedDragLocation.x = loc.x;
         savedDragLocation.y = loc.y;
-
+        
         winFrame.size.height += diff;
         [[self window] setFrame:winFrame display:YES];
         return;
     }
-
+    
     if (localMoveType == RAIL_WMSZ_BOTTOM) {
         // bottom border resize taking place
         int diff = (int) (loc.y - savedDragLocation.y);
         if (diff == 0)
             return;
-
+        
         if (diff < 0) {
             diff = abs(diff);
             winFrame.origin.y -= diff;
@@ -357,11 +364,11 @@ extern struct kkey g_keys[];
             winFrame.origin.y += diff;
             winFrame.size.height -= diff;
         }
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
-
+    
     if (localMoveType == RAIL_WMSZ_TOPLEFT) {
         // top left border resize taking place
         int diff = (int) (loc.x - savedDragLocation.x);
@@ -382,7 +389,7 @@ extern struct kkey g_keys[];
             savedDragLocation.y = loc.y;
             winFrame.size.height += diff;
         }
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
@@ -393,7 +400,7 @@ extern struct kkey g_keys[];
         if (diff != 0) {
             winFrame.size.width += diff;
         }
-
+        
         diff = (int) (loc.y - savedDragLocation.y);
         if (diff != 0) {
             winFrame.size.height += diff;
@@ -405,7 +412,7 @@ extern struct kkey g_keys[];
         [[self window] setFrame:winFrame display:YES];
         return;
     }
-
+    
     if (localMoveType == RAIL_WMSZ_BOTTOMLEFT) {
         // bottom left border resize taking place
         int diff = (int) (loc.x - savedDragLocation.x);
@@ -420,7 +427,7 @@ extern struct kkey g_keys[];
                 winFrame.size.width -= diff;
             }
         }
-
+        
         diff = (int) (loc.y - savedDragLocation.y);
         if (diff != 0) {
             if (diff < 0) {
@@ -433,11 +440,11 @@ extern struct kkey g_keys[];
                 winFrame.size.height -= diff;
             }
         }
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
-
+    
     if (localMoveType == RAIL_WMSZ_BOTTOMRIGHT) {
         // bottom right border resize taking place
         int diff = (int) (loc.x - savedDragLocation.x);
@@ -446,7 +453,7 @@ extern struct kkey g_keys[];
             //savedDragLocation.y = loc.y;
             winFrame.size.width += diff;
         }
-
+        
         diff = (int) (loc.y - savedDragLocation.y);
         if (diff != 0) {
             if (diff < 0) {
@@ -459,15 +466,15 @@ extern struct kkey g_keys[];
                 winFrame.size.height -= diff;
             }
         }
-
+        
         [[self window] setFrame:winFrame display:YES];
         return;
     }
-
+    
     x = (int) (winFrame.origin.x + loc.x);
     y = (int) (winFrame.origin.y + loc.y);
     y = height - y;
-
+    
     // send mouse motion event to RDP server
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
 }
@@ -479,7 +486,7 @@ extern struct kkey g_keys[];
 - (void) keyDown:(NSEvent *) event
 {
     int key;
-
+    
     key = [event keyCode];
     rdp_instance->input->KeyboardEvent(rdp_instance->input, g_keys[key].flags | KBD_FLAGS_DOWN, g_keys[key].key_code);
 }
@@ -503,7 +510,7 @@ extern struct kkey g_keys[];
 - (void) flagsChanged:(NSEvent *) event
 {
     NSUInteger mf = [event modifierFlags];
-
+    
     // caps lock
     if (mf == 0x10100) {
         printf("TODO: caps lock is on\n");
@@ -524,7 +531,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x2a);
         kdlshift = 0;
     }
-
+    
     // right shift
     if ((kdrshift == 0) && ((mf & 4) != 0)) {
         // right shift went down
@@ -536,7 +543,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x36);
         kdrshift = 0;
     }
-
+    
     // left ctrl
     if ((kdlctrl == 0) && ((mf & 1) != 0)) {
         // left ctrl went down
@@ -548,7 +555,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x1d);
         kdlctrl = 0;
     }
-
+    
     // right ctrl
     if ((kdrctrl == 0) && ((mf & 0x2000) != 0)) {
         // right ctrl went down
@@ -560,7 +567,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
         kdrctrl = 0;
     }
-
+    
     // left alt
     if ((kdlalt == 0) && ((mf & 0x20) != 0)) {
         // left alt went down
@@ -572,7 +579,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x38);
         kdlalt = 0;
     }
-
+    
     // right alt
     if ((kdralt == 0) && ((mf & 0x40) != 0)) {
         // right alt went down
@@ -584,7 +591,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x38);
         kdralt = 0;
     }
-
+    
     // left meta
     if ((kdlmeta == 0) && ((mf & 0x08) != 0)) {
         // left meta went down
@@ -596,7 +603,7 @@ extern struct kkey g_keys[];
         rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
         kdlmeta = 0;
     }
-
+    
     // right meta
     if ((kdrmeta == 0) && ((mf & 0x10) != 0)) {
         // right meta went down
@@ -617,18 +624,28 @@ extern struct kkey g_keys[];
     width = w;
     height = h;
     savedWindowId = windowID;
-
+    
     NSRect tr = NSMakeRect(0, 0,
-                           [[NSScreen mainScreen] frame].size.width,
+                           [[NSScreen mainScreen] frame].size.width, 
                            [[NSScreen mainScreen] frame].size.height);
-
+    
     NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:tr options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveAlways owner:self userInfo:nil];
-
+    
     [self addTrackingArea:trackingArea];
-
+    
     g_mrdpRailView = self;
 
     [self becomeFirstResponder];
+    [self setAcceptsTouchEvents:YES];
+    
+    // we want to be notified when window resizes....
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
+
+    // ...moves
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidMove:) name:NSWindowDidMoveNotification object:nil];
+    
+    // ...and becomes the key window
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidBecomeKey:) name:NSWindowDidBecomeKeyNotification object:nil];
 }
 
 - (void) setupBmiRep:(int) frameWidth :(int) frameHeight
@@ -640,10 +657,10 @@ extern struct kkey g_keys[];
         char blue;
         char alpha;
     };
-
+    
     if (pixelData)
         free(pixelData);
-
+    
     pixelData = (char *) malloc(frameWidth * frameHeight * sizeof(struct rgba_data));
     bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &pixelData
                                                      pixelsWide:frameWidth
@@ -657,6 +674,85 @@ extern struct kkey g_keys[];
                                                     bytesPerRow:frameWidth * sizeof(struct rgba_data)
                                                    bitsPerPixel:0];
 }
+- (void) beginGestureWithEvent:(NSEvent *)event
+{
+    gestureEventInProgress = YES;
+}
+
+- (void) endGestureWithEvent:(NSEvent *)event
+{
+    gestureEventInProgress = NO;
+}
+
+/**
+ * called when a bordered window changes size
+ */
+
+- (void) windowDidResize:(NSNotification *) notification
+{
+    // if we are not the source of this notification, just return
+    if ([notification object] != [self mrdpRailWindow])
+        return;
+    
+    // let RDP server know that window has moved
+    RAIL_WINDOW_MOVE_ORDER windowMove;
+    NSRect r = [[self window] frame];
+    
+    int diffInHeight = [[self window] frame].size.height - [self frame].size.height; 
+    r.size.height -= diffInHeight;
+    
+    apple_to_windowMove(&r, &windowMove);
+    windowMove.windowId = self->savedWindowId;
+    mac_send_rail_client_event(self->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
+}
+
+/**
+ * called when user moves a bordered window
+ */
+
+- (void) windowDidMove:(NSNotification *) notification
+{
+    // if we are not the source of this notification, just return
+    if ([notification object] != [self mrdpRailWindow])
+        return;
+    
+    // let RDP server know that window has moved
+    RAIL_WINDOW_MOVE_ORDER windowMove;
+    NSRect r = [[self window] frame];
+
+    int diffInHeight = [[self window] frame].size.height - [self frame].size.height; 
+    r.size.height -= diffInHeight;
+    
+    apple_to_windowMove(&r, &windowMove);
+    windowMove.windowId = self->savedWindowId;
+    mac_send_rail_client_event(self->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
+}
+
+/**
+ * called when a NSWindow becomes the key window
+ */
+
+- (void) windowDidBecomeKey:(NSNotification *) notification
+{
+    // if we are not the source of this notification, just return
+    if ([notification object] != [self mrdpRailWindow])
+        return;
+    
+    if (![self activateWindow])
+        return;
+    
+    [[self window] setAcceptsMouseMovedEvents: YES];
+    
+    //if ([self activateWindow])
+        mac_rail_send_activate(savedWindowId);
+    
+    set_current_window(windowIndex);
+}
+
+- (void) releaseResources
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
 void rail_cvt_from_rect(char *dest, char *src, NSRect destRect, int destWidth, int destHeight, NSRect srcRect)
 {
@@ -665,7 +761,7 @@ void rail_cvt_from_rect(char *dest, char *src, NSRect destRect, int destWidth, i
 /** *********************************************************************
  * color space conversion used specifically in RAIL
  ***********************************************************************/
-void rail_convert_color_space(char *destBuf, char * srcBuf,
+void rail_convert_color_space(char *destBuf, char * srcBuf, 
                                NSRect * destRect, int width, int height)
 {
     int     i;
@@ -681,10 +777,10 @@ void rail_convert_color_space(char *destBuf, char * srcBuf,
     int     pixel2;
     int *   src32;
     int *   dest32;
-
+    
     int destWidth  = destRect->size.width;
     int destHeight = destRect->size.height;
-
+    
     if ((!destBuf) || (!srcBuf)) {
         return;
     }
@@ -696,12 +792,12 @@ void rail_convert_color_space(char *destBuf, char * srcBuf,
     srcY  = destRect->origin.y;
     destX = 0;
     destY = 0;
-
+    
     for (i = 0; i < numRows; i++)
     {
         src32  = (int *) (srcBuf  + ((srcY  + i) * width  + srcX)  * 4);
         dest32 = (int *) (destBuf + ((destY + i) * destWidth + destX) * 4);
-
+        
         for (j = 0; j < pixelsPerRow; j++)
         {
             pixel = *src32;
@@ -715,7 +811,7 @@ void rail_convert_color_space(char *destBuf, char * srcBuf,
             dest32++;
         }
     }
-
+    
     destRect->origin.y = destHeight - destRect->origin.y - destRect->size.height;
     return;
 }
@@ -729,12 +825,12 @@ void rail_MoveWindow(rdpRail * rail, rdpWindow * window)
     if (g_mrdpRailView->isMoveSizeInProgress) {
         return;
     }
-
+    
     if (g_mrdpRailView->skipMoveWindowOnce) {
         g_mrdpRailView->skipMoveWindowOnce = NO;
         return;
     }
-
+    
     // this rect is based on Windows co-ordinates...
     NSRect r;
     r.origin.x = window->windowOffsetX;
@@ -746,4 +842,16 @@ void rail_MoveWindow(rdpRail * rail, rdpWindow * window)
     [[g_mrdpRailView window] setFrame:r display:YES];
 }
 
+
+void mac_rail_send_activate(int window_id)
+{
+    RAIL_ACTIVATE_ORDER activate;
+    
+    activate.windowId = window_id;
+    activate.enabled = 1;
+    
+    mac_send_rail_client_event(g_mrdpRailView->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
+}
+
 @end
+
