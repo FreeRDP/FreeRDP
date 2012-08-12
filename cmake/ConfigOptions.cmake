@@ -1,9 +1,19 @@
+
 option(WITH_MANPAGES "Generate manpages." ON)
 option(WITH_NEON "Enable NEON optimization for rfx decoder" OFF)
 option(WITH_PROFILER "Compile profiler." OFF)
 option(WITH_SSE2_TARGET "Allow compiler to generate SSE2 instructions." OFF)
 option(WITH_SSE2 "Use SSE2 optimization." OFF)
 option(WITH_JPEG "Use JPEG decoding." OFF)
+
+if(APPLE)
+	option(WITH_CLANG "Build using clang" OFF)
+endif()
+
+option(WITH_CLIENT "Build client binaries" ON)
+option(WITH_SERVER "Build server binaries" OFF)
+option(WITH_CHANNELS "Build virtual channel plugins" ON)
+option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
 option(WITH_DEBUG_CERTIFICATE "Print certificate related debug messages." OFF)
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." OFF)
@@ -29,3 +39,4 @@ option(WITH_DEBUG_X11_CLIPRDR "Print X11 clipboard redirection debug messages" O
 option(WITH_DEBUG_X11_LOCAL_MOVESIZE "Print X11 Client local movesize debug messages" OFF)
 option(WITH_DEBUG_X11 "Print X11 Client debug messages" OFF)
 option(WITH_DEBUG_XV "Print XVideo debug messages" OFF)
+

@@ -19,9 +19,6 @@ CPackSourceConfig.cmake
 docs/api
 client/X11/xfreerdp.1
 
-# Extensions
-extensions/**
-
 # Mac OS X
 .DS_Store
 
