@@ -95,7 +95,7 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
-# config.h definitions for installable headers
+# config.h definition for installable headers
 check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
 check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
 check_include_files(stdbool.h FREERDP_HAVE_STDBOOL_H)
@@ -123,7 +123,6 @@ if(APPLE)
 		link_directories(/opt/local/lib)
 	endif()
 	
-	option(WITH_CLANG "Build using clang" OFF)
 	if(WITH_CLANG)
 		set(CMAKE_C_COMPILER "clang")
 	endif()
@@ -176,8 +175,8 @@ endif()
 # Build CUnit
 find_optional_package(CUnit)
 if(WITH_CUNIT)
-   enable_testing()
-   add_subdirectory(cunit)
+	enable_testing()
+	add_subdirectory(cunit)
 endif()
 
 # Sub-directories
@@ -195,25 +194,24 @@ add_subdirectory(libfreerdp-channels)
 add_subdirectory(libfreerdp-locale)
 add_subdirectory(libfreerdp-core)
 
-add_subdirectory(channels)
+if(WITH_CHANNELS)
+	add_subdirectory(channels)
+endif()
 
-option(WITH_CLIENT "Build client binaries" ON)
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
 
-option(WITH_SERVER "Build server binaries" OFF)
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-if(NOT MSVC)
-	add_subdirectory(keymaps)
-endif()
-
-option(WITH_THIRD_PARTY "Build third-party components" ON)
 if(WITH_THIRD_PARTY)
 	add_subdirectory(third-party)
+endif()
+
+if(NOT MSVC)
+	add_subdirectory(keymaps)
 endif()
 
 # Source package
