@@ -55,7 +55,7 @@ endif()
 
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
+	set(BUILD_SHARED_LIBS ON)
 endif()
 
 # Compiler-specific flags

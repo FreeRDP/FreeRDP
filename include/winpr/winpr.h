@@ -19,8 +19,6 @@
 #ifndef WINPR_H
 #define WINPR_H
 
-#include "config.h"
-
 #if defined _WIN32 || defined __CYGWIN__
 	#ifdef WINPR_EXPORTS
 		#ifdef __GNUC__
