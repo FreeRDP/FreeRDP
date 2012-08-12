@@ -208,6 +208,9 @@ typedef struct _SECURITY_ATTRIBUTES
 	BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
+typedef void* HMODULE;
+typedef void* FARPROC;
+
 #endif
 
 typedef BYTE byte;
@@ -222,8 +225,5 @@ typedef unsigned long error_status_t;
 typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
 #endif
-
-typedef void* HMODULE;
-typedef void* FARPROC;
 
 #endif /* WINPR_WTYPES_H */
