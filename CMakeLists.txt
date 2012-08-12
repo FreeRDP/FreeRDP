@@ -204,9 +204,9 @@ if(NOT MSVC)
 	add_subdirectory(keymaps)
 endif()
 
-option(WITH_EXTENSIONS "Build extensions" ON)
-if(WITH_EXTENSIONS)
-	add_subdirectory(extensions)
+option(WITH_THIRD_PARTY "Build third-party components" ON)
+if(WITH_THIRD_PARTY)
+	add_subdirectory(third-party)
 endif()
 
 # Source package
