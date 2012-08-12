@@ -95,6 +95,12 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
+# config.h definitions for installable headers
+check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
+check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
+check_include_files(stdbool.h FREERDP_HAVE_STDBOOL_H)
+check_include_files(inttypes.h FREERDP_HAVE_INTTYPES_H)
+
 # Include files
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
@@ -159,6 +165,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Configure files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/freerdp/config.h)
 
 # Generate pkg-config
 if(NOT MSVC)
