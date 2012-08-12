@@ -171,13 +171,12 @@ wait_obj_clear(struct wait_obj* obj)
 int
 wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 {
+	int index;
+	int status;
 #ifndef _WIN32
 	int max;
 	int sock;
-	int index;
-#endif
 	fd_set fds;
-	int status;
 	struct timeval time;
 	struct timeval* ptime;
 
@@ -189,7 +188,6 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 		ptime = &time;
 	}
 
-#ifndef _WIN32
 	max = 0;
 	FD_ZERO(&fds);
 	if (listobj)
@@ -205,7 +203,18 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 	}
 	status = select(max + 1, &fds, 0, 0, ptime);
 #else
-	status = select(0, &fds, 0, 0, ptime);
+	HANDLE *hnds;
+
+	hnds = (HANDLE *) xzalloc(sizeof(HANDLE) * (numobj + 1));
+	for (index = 0; index < numobj; index++)
+	{
+		hnds[index] = listobj[index]->event;
+	}
+
+	if (WaitForMultipleObjects(numobj, hnds, FALSE, timeout) == WAIT_FAILED)
+		status = -1;
+	else
+		status = 0;
 #endif
 
 	return status;
