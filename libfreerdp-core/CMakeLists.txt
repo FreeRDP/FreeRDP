@@ -3,7 +3,7 @@
 #
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-set(LIBFREERDP_CORE_SRCS
+set(FREERDP_CORE_SRCS
 	activation.c
 	activation.h
 	extension.c
@@ -89,33 +89,33 @@ set(LIBFREERDP_CORE_SRCS
 	listener.c
 	listener.h
 	peer.c
-	peer.h
-)
+	peer.h)
 
-add_library(freerdp-core ${LIBFREERDP_CORE_SRCS})
+add_library(freerdp-core ${FREERDP_CORE_SRCS})
 
 set_target_properties(freerdp-core PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set(FREERDP_CORE_LIBS
+	freerdp-utils
+	freerdp-codec
+	freerdp-crypto
+	freerdp-locale
+	winpr-utils
+	winpr-rpc
+	winpr-sspi)
+
 if(WIN32)
-	target_link_libraries(freerdp-core ws2_32)
+	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ws2_32)
 else()
-	target_link_libraries(freerdp-core ${ZLIB_LIBRARIES})	
+	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${ZLIB_LIBRARIES})
 endif()
-
-target_link_libraries(freerdp-core freerdp-utils)
-target_link_libraries(freerdp-core freerdp-codec)
-target_link_libraries(freerdp-core freerdp-locale)
-
-target_link_libraries(freerdp-core winpr-utils)
-target_link_libraries(freerdp-core winpr-rpc)
-target_link_libraries(freerdp-core winpr-sspi)
 
 if(NOT WIN32)
-	target_link_libraries(freerdp-core winpr-registry)
+	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} winpr-registry)
 endif()
 
-target_link_libraries(freerdp-core freerdp-crypto)
-target_link_libraries(freerdp-core ${OPENSSL_LIBRARIES})
+set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${OPENSSL_LIBRARIES})
+
+target_link_libraries(freerdp-core ${FREERDP_CORE_LIBS})
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

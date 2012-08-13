@@ -27,11 +27,23 @@ set(FREERDP_CACHE_SRCS
 	glyph.c
 	cache.c)
 
-add_library(freerdp-cache ${FREERDP_CACHE_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-cache OBJECT ${FREERDP_CACHE_SRCS})
+else()
+	add_library(freerdp-cache ${FREERDP_CACHE_SRCS})
+endif()
 
 set_target_properties(freerdp-cache PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-cache freerdp-core)
-target_link_libraries(freerdp-cache freerdp-utils)
+set(FREERDP_CACHE_LIBS)
 
-install(TARGETS freerdp-cache DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
+	
+else()
+	set(FREERDP_CACHE_LIBS ${FREERDP_CACHE_LIBS}
+		freerdp-core
+		freerdp-utils)
+		
+	target_link_libraries(freerdp-cache ${FREERDP_CACHE_LIBS})
+	install(TARGETS freerdp-cache DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
