@@ -26,7 +26,10 @@ set(FREERDP_CHANNELS_SRCS
 add_library(freerdp-channels ${FREERDP_CHANNELS_SRCS})
 
 set_target_properties(freerdp-channels PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-channels freerdp-utils)
+
+set(FREERDP_CHANNELS_LIBS
+	freerdp-utils)
+	
+target_link_libraries(freerdp-channels ${FREERDP_CHANNELS_LIBS})
 
 install(TARGETS freerdp-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
