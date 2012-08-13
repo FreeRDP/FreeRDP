@@ -29,6 +29,7 @@ struct wf_peer_context
 	HDC driverDC;
 	boolean activated;
 	void* changeBuffer;
+	LPTSTR deviceKey;
 	TCHAR deviceName[32];
 };
 typedef struct wf_peer_context wfPeerContext;

@@ -22,6 +22,8 @@
 
 #include "wf_mirage.h"
 
+#define DEVICE_KEY_PREFIX	_T("\\Registry\\Machine\\")
+
 int wf_mirage_step1(wfPeerContext* context)
 {
 	BOOL result;
@@ -39,10 +41,23 @@ int wf_mirage_step1(wfPeerContext* context)
 
 		if (_tcscmp(deviceInfo.DeviceString, _T("Mirage Driver")) == 0)
 		{
+			int deviceKeyLength;
+			int deviceKeyPrefixLength;
+
 			_tprintf(_T("\n\nFound our target of interest!\n"));
-			_tprintf(_T("Key: %s\n"), deviceInfo.DeviceKey);
-			_tprintf(_T("Name: %s\n"), deviceInfo.DeviceName);
-			_tprintf(_T("ID: %s\n"), deviceInfo.DeviceID);
+
+			deviceKeyPrefixLength = _tcslen(DEVICE_KEY_PREFIX);
+
+			if (_tcsncmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
+			{
+				deviceKeyLength = _tcslen(deviceInfo.DeviceKey) - deviceKeyPrefixLength;
+				context->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
+
+				_tcsncpy_s(context->deviceKey, deviceKeyLength + 1,
+					&deviceInfo.DeviceKey[deviceKeyPrefixLength], deviceKeyLength);
+
+				_tprintf(_T("DeviceKey: %s\n"), context->deviceKey);
+			}
 
 			_tcsncpy_s(context->deviceName, 32, deviceInfo.DeviceName, _tcslen(deviceInfo.DeviceName));
 		}
@@ -57,15 +72,14 @@ int wf_mirage_step2(wfPeerContext* context)
 {
 	LONG status;
 	DWORD rtype, rdata, rdata_size;
-	TCHAR reg_full[] = _T("System\\CurrentControlSet\\Control\\Video\\{0752CE80-4CE2-46BB-9EAE-5C2A03BF4CEC}\\0000");
 
-	_tprintf(_T("\nOpening registry key %s\n"), reg_full);
+	_tprintf(_T("\nOpening registry key %s\n"), context->deviceKey);
 
 	rtype = 0;
 	rdata = 0;
 	rdata_size = sizeof(rdata);
 
-	status = RegGetValue(HKEY_LOCAL_MACHINE, reg_full,
+	status = RegGetValue(HKEY_LOCAL_MACHINE, context->deviceKey,
 		_T("Attach.ToDesktop"), RRF_RT_REG_DWORD, &rtype, &rdata, &rdata_size);
 
 	if (status != ERROR_SUCCESS)
@@ -81,7 +95,7 @@ int wf_mirage_step2(wfPeerContext* context)
 	{
 		rdata = 1;
 
-		status = RegSetKeyValue(HKEY_LOCAL_MACHINE, reg_full,
+		status = RegSetKeyValue(HKEY_LOCAL_MACHINE, context->deviceKey,
 			_T("Attach.ToDesktop"), REG_DWORD, &rdata, rdata_size);
 
 		if (status != ERROR_SUCCESS)
