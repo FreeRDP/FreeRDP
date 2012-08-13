@@ -142,8 +142,12 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	 * Though MS-RDPBCGR specifies bias as unsigned, two's complement
 	 * (a negative integer) works fine for zones east of UTC.
 	 */
-	if (clientTimeZone->bias <= 720) bias = -(clientTimeZone->bias);
-	else bias = 1440 - clientTimeZone->bias;
+	
+	if (clientTimeZone->bias <= 720)
+		bias = -1 * clientTimeZone->bias;
+	else
+		bias = 1440 - clientTimeZone->bias;
+
 	stream_write_uint32(s, bias); /* Bias */
 
 	/* standardName (64 bytes) */
@@ -155,10 +159,12 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 		bias, clientTimeZone->standardName, clientTimeZone->daylightName);
 
 	sbias = clientTimeZone->standardBias - clientTimeZone->bias;
+	
 	if (sbias < 0)
 		bias2c = (uint32) sbias;
 	else
 		bias2c = ~((uint32) sbias) + 1;
+
 	/* Note that StandardBias is ignored if no valid standardDate is provided. */
 	stream_write_uint32(s, bias2c); /* StandardBias */
 	DEBUG_TIMEZONE("StandardBias=%d", bias2c);
@@ -170,10 +176,12 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	rdp_write_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
 
 	sbias = clientTimeZone->daylightBias - clientTimeZone->bias;
+
 	if (sbias < 0)
 		bias2c = (uint32) sbias;
 	else
 		bias2c = ~((uint32) sbias) + 1;
+
 	/* Note that DaylightBias is ignored if no valid daylightDate is provided. */
 	stream_write_uint32(s, bias2c); /* DaylightBias */
 	DEBUG_TIMEZONE("DaylightBias=%d", bias2c);

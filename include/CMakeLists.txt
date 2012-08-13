@@ -18,7 +18,7 @@
 # limitations under the License.
 
 file(GLOB HEADERS "freerdp/*.h")
-install_files(/include/freerdp FILES ${HEADERS})
+install(FILES ${HEADERS} DESTINATION include/freerdp)
 
 install(DIRECTORY freerdp/utils DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/channels DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
@@ -33,4 +33,4 @@ install(DIRECTORY freerdp/auth DESTINATION include/freerdp FILES_MATCHING PATTER
 install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 
 file(GLOB HEADERS "winpr/*.h")
-install_files(/include/winpr FILES ${HEADERS})
+install(FILES ${HEADERS} DESTINATION include/winpr)
