@@ -25,7 +25,10 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-
+	wf_mirage_step1(context);
+	wf_mirage_step2(context);
+	wf_mirage_step3(context);
+	wf_mirage_step4(context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)

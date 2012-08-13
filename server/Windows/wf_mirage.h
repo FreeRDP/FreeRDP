@@ -109,6 +109,7 @@ typedef struct
 	CHANGES_RECORD pointrect[MAXCHANGES_BUF];
 } CHANGES_BUF;
 
+#define EXT_DEVMODE_SIZE_MAX			3072
 #define	DMF_PIPE_SEC_SIZE_DEFAULT		ALIGN64K(sizeof(CHANGES_BUF))
 
 typedef struct
@@ -198,5 +199,10 @@ typedef struct
 	char* pColorBmPal;
 	ULONG nColorBmPalEntries;
 } Esc_dmf_pointer_shape_get_OUT;
+
+int wf_mirage_step1(wfPeerContext* context);
+int wf_mirage_step2(wfPeerContext* context);
+int wf_mirage_step3(wfPeerContext* context);
+int wf_mirage_step4(wfPeerContext* context);
 
 #endif /* WF_MIRAGE_H */

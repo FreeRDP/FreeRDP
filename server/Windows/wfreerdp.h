@@ -25,7 +25,11 @@
 struct wf_peer_context
 {
 	rdpContext _p;
+
+	HDC driverDC;
 	boolean activated;
+	void* changeBuffer;
+	TCHAR deviceName[32];
 };
 typedef struct wf_peer_context wfPeerContext;
 
