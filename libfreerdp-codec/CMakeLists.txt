@@ -77,14 +77,23 @@ if(WITH_JPEG)
 	set(FREERDP_JPEG_LIBS jpeg)
 endif()
 
-add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-codec OBJECT ${FREERDP_CODEC_SRCS})
+else()
+	add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
+endif()
 
 set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 set(FREERDP_CODEC_LIBS
-	freerdp-utils
 	${FREERDP_JPEG_LIBS})
 
-target_link_libraries(freerdp-codec ${FREERDP_CODEC_LIBS})
+if(WITH_MONOLITHIC_BUILD)
 
-install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
+else()
+	set(FREERDP_CODEC_LIBS ${FREERDP_CODEC_LIBS}
+		freerdp-utils)
+
+	target_link_libraries(freerdp-codec ${FREERDP_CODEC_LIBS})
+	install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

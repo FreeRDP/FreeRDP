@@ -23,13 +23,22 @@ set(FREERDP_CHANNELS_SRCS
 	wtsvc.c
 	wtsvc.h)
 
-add_library(freerdp-channels ${FREERDP_CHANNELS_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-channels OBJECT ${FREERDP_CHANNELS_SRCS})
+else()
+	add_library(freerdp-channels ${FREERDP_CHANNELS_SRCS})
+endif()
 
 set_target_properties(freerdp-channels PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-set(FREERDP_CHANNELS_LIBS
-	freerdp-utils)
-	
-target_link_libraries(freerdp-channels ${FREERDP_CHANNELS_LIBS})
+set(FREERDP_CHANNELS_LIBS)
 
-install(TARGETS freerdp-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
+
+else()
+	set(FREERDP_CHANNELS_LIBS ${FREERDP_CHANNELS_LIBS}
+		freerdp-utils)
+	
+	target_link_libraries(freerdp-channels ${FREERDP_CHANNELS_LIBS})
+	install(TARGETS freerdp-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

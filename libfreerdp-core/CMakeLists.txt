@@ -119,4 +119,3 @@ set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${OPENSSL_LIBRARIES})
 target_link_libraries(freerdp-core ${FREERDP_CORE_LIBS})
 
 install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
