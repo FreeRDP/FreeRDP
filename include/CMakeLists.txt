@@ -34,3 +34,6 @@ install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATT
 
 file(GLOB HEADERS "winpr/*.h")
 install_files(/include/winpr FILES ${HEADERS})
+
+file(GLOB HEADERS "${CMAKE_CURRENT_BINARY_DIR}/freerdp/*.h")
+install_files(/include/freerdp FILES ${HEADERS})
