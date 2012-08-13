@@ -19,6 +19,8 @@
 
 #include <freerdp/listener.h>
 
+#include "wf_mirage.h"
+
 #include "wf_peer.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)

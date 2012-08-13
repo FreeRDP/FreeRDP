@@ -20,6 +20,8 @@
 add_executable(wfreerdp-server
 	wf_input.c
 	wf_input.h
+	wf_mirage.c
+	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
 	wfreerdp.c
