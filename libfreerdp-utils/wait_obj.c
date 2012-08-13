@@ -215,6 +215,7 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 		status = -1;
 	else
 		status = 0;
+	xfree(hnds);
 #endif
 
 	return status;
