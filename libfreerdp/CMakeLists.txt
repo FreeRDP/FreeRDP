@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if(WITH_MONOLITHIC_BUILD)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 add_subdirectory(utils)
 add_subdirectory(gdi)
 add_subdirectory(rail)
@@ -25,4 +29,15 @@ add_subdirectory(channels)
 add_subdirectory(locale)
 add_subdirectory(core)
 
-
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp
+		$<TARGET_OBJECTS:freerdp-utils>
+		$<TARGET_OBJECTS:freerdp-gdi>
+		$<TARGET_OBJECTS:freerdp-rail>
+		$<TARGET_OBJECTS:freerdp-cache>
+		$<TARGET_OBJECTS:freerdp-codec>
+		$<TARGET_OBJECTS:freerdp-crypto>
+		$<TARGET_OBJECTS:freerdp-channels>
+		$<TARGET_OBJECTS:freerdp-locale>
+		$<TARGET_OBJECTS:freerdp-core>)
+endif()
