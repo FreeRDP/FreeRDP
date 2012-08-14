@@ -23,6 +23,10 @@ if (APPLE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")	
 endif()
 
+if(WITH_MONOLITHIC_BUILD)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 add_subdirectory(crt)
 add_subdirectory(utils)
 add_subdirectory(heap)
@@ -37,5 +41,25 @@ add_subdirectory(sspicli)
 add_subdirectory(sspi)
 add_subdirectory(registry)
 add_subdirectory(library)
+
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr
+		$<TARGET_OBJECTS:winpr-crt>
+		$<TARGET_OBJECTS:winpr-utils>
+		$<TARGET_OBJECTS:winpr-heap>
+		$<TARGET_OBJECTS:winpr-handle>
+		$<TARGET_OBJECTS:winpr-synch>
+		$<TARGET_OBJECTS:winpr-sysinfo>
+		$<TARGET_OBJECTS:winpr-bcrypt>
+		$<TARGET_OBJECTS:winpr-dsparse>
+		$<TARGET_OBJECTS:winpr-asn1>
+		$<TARGET_OBJECTS:winpr-rpc>
+		$<TARGET_OBJECTS:winpr-sspicli>
+		$<TARGET_OBJECTS:winpr-sspi>
+		$<TARGET_OBJECTS:winpr-registry>
+		$<TARGET_OBJECTS:winpr-library>)
+		
+	target_link_libraries(winpr ${WINPR_LIBS})
+endif()
 
 add_subdirectory(tools)

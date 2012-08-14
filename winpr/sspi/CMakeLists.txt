@@ -52,22 +52,37 @@ if(NOT WITH_NATIVE_SSPI)
 		${WINPR_SSPI_SRCS})
 endif()
 
-add_library(winpr-sspi ${WINPR_SSPI_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-sspi OBJECT ${WINPR_SSPI_SRCS})
+else()
+	add_library(winpr-sspi ${WINPR_SSPI_SRCS})
+endif()
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if (NOT WIN32)
-	target_link_libraries(winpr-sspi winpr-crt)
-	target_link_libraries(winpr-sspi winpr-sysinfo)
-	target_link_libraries(winpr-sspi winpr-registry)
+set(WINPR_SSPI_LIBS
+	${ZLIB_LIBRARIES}
+	${OPENSSL_LIBRARIES})
+
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} winpr)
+else()
+	if (NOT WIN32)
+		set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS}
+			winpr-crt
+			winpr-sysinfo
+			winpr-registry)
+	endif()
+	
+	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} winpr-utils)
 endif()
 
-target_link_libraries(winpr-sspi winpr-utils)
-target_link_libraries(winpr-sspi ${ZLIB_LIBRARIES})
-target_link_libraries(winpr-sspi ${OPENSSL_LIBRARIES})
-
-install(TARGETS winpr-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_SSPI_LIBS} PARENT_SCOPE)
+else()
+	target_link_libraries(winpr-sspi ${WINPR_SSPI_LIBS})
+	install(TARGETS winpr-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

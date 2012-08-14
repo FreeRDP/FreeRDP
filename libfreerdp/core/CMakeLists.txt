@@ -99,19 +99,23 @@ endif()
 
 set_target_properties(freerdp-core PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-set(FREERDP_CORE_LIBS
-	winpr-utils
-	winpr-rpc
-	winpr-sspi)
+if(WITH_MONOLITHIC_BUILD)
+	set(FREERDP_CORE_LIBS winpr)
+else()
+	set(FREERDP_CORE_LIBS
+		winpr-utils
+		winpr-rpc
+		winpr-sspi)
+	
+	if(NOT WIN32)
+		set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} winpr-registry)
+	endif()
+endif()
 
 if(WIN32)
 	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ws2_32)
 else()
 	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${ZLIB_LIBRARIES})
-endif()
-
-if(NOT WIN32)
-	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} winpr-registry)
 endif()
 
 set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${OPENSSL_LIBRARIES})

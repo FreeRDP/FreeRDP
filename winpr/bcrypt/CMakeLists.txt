@@ -20,19 +20,29 @@
 set(WINPR_BCRYPT_SRCS
 	bcrypt.c)
 
-add_library(winpr-bcrypt ${WINPR_BCRYPT_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-bcrypt OBJECT ${WINPR_BCRYPT_SRCS})
+else()
+	add_library(winpr-bcrypt ${WINPR_BCRYPT_SRCS})
+endif()
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 set_target_properties(winpr-bcrypt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if (NOT WIN32)
-	target_link_libraries(winpr-bcrypt winpr-crt)
+set(WINPR_BCRYPT_LIBS
+	${ZLIB_LIBRARIES})
+
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_BCRYPT_LIBS} PARENT_SCOPE)
+else()
+	if(NOT WIN32)
+		set(WINPR_BCRYPT_LIBS ${WINPR_BCRYPT_LIBS} winpr-crt)
+	endif()
+	
+	set(WINPR_BCRYPT_LIBS ${WINPR_BCRYPT_LIBS} winpr-utils)
+	
+	target_link_libraries(winpr-bcrypt ${WINPR_BCRYPT_LIBS})
+	install(TARGETS winpr-bcrypt DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-target_link_libraries(winpr-bcrypt winpr-utils)
-target_link_libraries(winpr-bcrypt ${ZLIB_LIBRARIES})	
-
-install(TARGETS winpr-bcrypt DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

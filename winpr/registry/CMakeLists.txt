@@ -22,11 +22,17 @@ set(WINPR_REGISTRY_SRCS
 	registry_reg.h
 	registry.c)
 
-add_library(winpr-registry ${WINPR_REGISTRY_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-registry OBJECT ${WINPR_REGISTRY_SRCS})
+else()
+	add_library(winpr-registry ${WINPR_REGISTRY_SRCS})
+endif()
 
 set_target_properties(winpr-registry PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(winpr-registry winpr-utils)
+if(WITH_MONOLITHIC_BUILD)
 
-install(TARGETS winpr-registry DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+else()
+	target_link_libraries(winpr-registry winpr-utils)
+	install(TARGETS winpr-registry DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

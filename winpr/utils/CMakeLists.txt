@@ -23,19 +23,28 @@ set(WINPR_UTILS_SRCS
 	sam.c
 	stream.c)
 
-add_library(winpr-utils ${WINPR_UTILS_SRCS})
-
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-
-if (NOT WIN32)
-	target_link_libraries(winpr-utils winpr-crt)
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-utils OBJECT ${WINPR_UTILS_SRCS})
+else()
+	add_library(winpr-utils ${WINPR_UTILS_SRCS})
 endif()
 
-target_link_libraries(winpr-utils ${ZLIB_LIBRARIES})
-target_link_libraries(winpr-utils ${OPENSSL_LIBRARIES})
+set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
+set(WINPR_UTILS_LIBS
+	${ZLIB_LIBRARIES}
+	${OPENSSL_LIBRARIES})
 
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_UTILS_LIBS} PARENT_SCOPE)
+else()
+	if (NOT WIN32)
+		set(WINPR_UTILS_LIBS ${WINPR_UTILS_LIBS} winpr-crt)
+	endif()
+	
+	target_link_libraries(winpr-utils ${WINPR_UTILS_LIBS})
+	install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

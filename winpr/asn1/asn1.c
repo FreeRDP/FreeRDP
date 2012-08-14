@@ -299,4 +299,14 @@ ASN1error_e ASN1DecSetError(ASN1decoding_t dec, ASN1error_e err)
 	return status;
 }
 
+void ASN1_FreeEncoded(ASN1encoding_t pEncoderInfo, void* pBuf)
+{
+	return;
+}
+
+void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct, ASN1uint32_t nPduNum)
+{
+	return;
+}
+
 #endif

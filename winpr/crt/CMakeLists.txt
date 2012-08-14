@@ -21,9 +21,16 @@ set(WINPR_CRT_SRCS
 	memory.c
 	string.c)
 
-add_library(winpr-crt ${WINPR_CRT_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-crt OBJECT ${WINPR_CRT_SRCS})
+else()
+	add_library(winpr-crt ${WINPR_CRT_SRCS})
+endif()
 
 set_target_properties(winpr-crt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS winpr-crt DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
 
+else()
+	install(TARGETS winpr-crt DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

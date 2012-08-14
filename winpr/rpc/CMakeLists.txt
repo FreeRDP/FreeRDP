@@ -31,19 +31,29 @@ set(WINPR_RPC_SRCS
 	ndr_union.c ndr_union.h
 	midl.c)
 
-add_library(winpr-rpc ${WINPR_RPC_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-rpc OBJECT ${WINPR_RPC_SRCS})
+else()
+	add_library(winpr-rpc ${WINPR_RPC_SRCS})
+endif()
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 set_target_properties(winpr-rpc PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set(WINPR_RPC_LIBS
+	${OPENSSL_LIBRARIES})
+
 if(WIN32)
-	target_link_libraries(winpr-rpc ws2_32)
+	set(WINPR_RPC_LIBS ${WINPR_RPC_LIBS} ws2_32)
 else()
-	target_link_libraries(winpr-rpc ${ZLIB_LIBRARIES})	
+	set(WINPR_RPC_LIBS ${WINPR_RPC_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
-target_link_libraries(winpr-rpc ${OPENSSL_LIBRARIES})
-
-install(TARGETS winpr-rpc DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_RPC_LIBS} PARENT_SCOPE)
+else()
+	target_link_libraries(winpr-rpc ${WINPR_RPC_LIBS})
+	install(TARGETS winpr-rpc DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

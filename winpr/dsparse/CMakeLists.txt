@@ -20,9 +20,16 @@
 set(WINPR_DSPARSE_SRCS
 	dsparse.c)
 
-add_library(winpr-dsparse ${WINPR_DSPARSE_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-dsparse OBJECT ${WINPR_DSPARSE_SRCS})
+else()
+	add_library(winpr-dsparse ${WINPR_DSPARSE_SRCS})
+endif()
 
 set_target_properties(winpr-dsparse PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS winpr-dsparse DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
 
+else()
+	install(TARGETS winpr-dsparse DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

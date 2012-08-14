@@ -20,9 +20,16 @@
 set(WINPR_SSPICLI_SRCS
 	sspicli.c)
 
-add_library(winpr-sspicli ${WINPR_SSPICLI_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-sspicli OBJECT ${WINPR_SSPICLI_SRCS})
+else()
+	add_library(winpr-sspicli ${WINPR_SSPICLI_SRCS})
+endif()
 
 set_target_properties(winpr-sspicli PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS winpr-sspicli DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
 
+else()
+	install(TARGETS winpr-sspicli DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

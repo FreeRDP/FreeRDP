@@ -62,6 +62,7 @@ endif()
 
 if(WITH_MONOLITHIC_BUILD)
 	target_link_libraries(xfreerdp-server freerdp)
+	target_link_libraries(xfreerdp-server winpr)
 else()
 	target_link_libraries(xfreerdp-server
 		freerdp-core
@@ -70,7 +71,7 @@ else()
 		freerdp-gdi
 		freerdp-crypto
 		freerdp-locale)
+	target_link_libraries(xfreerdp-server winpr-sspi)
 endif()
 
 target_link_libraries(xfreerdp-server ${X11_LIBRARIES})
-target_link_libraries(xfreerdp-server winpr-sspi)

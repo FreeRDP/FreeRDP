@@ -20,9 +20,16 @@
 set(WINPR_LIBRARY_SRCS
 	library.c)
 
-add_library(winpr-library ${WINPR_LIBRARY_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-library OBJECT ${WINPR_LIBRARY_SRCS})
+else()
+	add_library(winpr-library ${WINPR_LIBRARY_SRCS})
+endif()
 
 set_target_properties(winpr-library PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS winpr-library DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
 
+else()
+	install(TARGETS winpr-library DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

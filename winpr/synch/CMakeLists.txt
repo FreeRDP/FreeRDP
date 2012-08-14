@@ -17,6 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(CMAKE_THREAD_PREFER_PTHREAD)
+find_required_package(Threads)
+
 set(WINPR_SYNCH_SRCS
 	critical.c
 	event.c
@@ -24,13 +27,29 @@ set(WINPR_SYNCH_SRCS
 	semaphore.c
 	sleep.c)
 
-add_library(winpr-synch ${WINPR_SYNCH_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(winpr-synch OBJECT ${WINPR_SYNCH_SRCS})
+else()
+	add_library(winpr-synch ${WINPR_SYNCH_SRCS})
+endif()
 
 set_target_properties(winpr-synch PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(NOT WIN32)
-	target_link_libraries(winpr-synch winpr-handle)
+set(WINPR_SYNCH_LIBS
+	${CMAKE_THREAD_LIBS_INIT}
+	${CMAKE_DL_LIBS})
+
+if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
+	set(WINPR_SYNCH_LIBS ${WINPR_SYNCH_LIBS} rt)
 endif()
 
-install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_SYNCH_LIBS} PARENT_SCOPE)
+else()
+	if(NOT WIN32)
+		set(WINPR_SYNCH_LIBS ${WINPR_SYNCH_LIBS} winpr-handle)
+	endif()
 
+	target_link_libraries(winpr-synch ${WINPR_SYNCH_LIBS})
+	install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
