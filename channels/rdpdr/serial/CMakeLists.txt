@@ -21,14 +21,17 @@ set(serial_SRCS
 	serial_tty.c
 	serial_tty.h
 	serial_constants.h
-	serial_main.c
-)
+	serial_main.c)
 
 include_directories(..)
 
 add_library(serial ${serial_SRCS})
 set_target_properties(serial PROPERTIES PREFIX "")
 
-target_link_libraries(serial freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(serial freerdp)
+else()
+	target_link_libraries(serial freerdp-utils)
+endif()
 
 install(TARGETS serial DESTINATION ${FREERDP_PLUGIN_PATH})

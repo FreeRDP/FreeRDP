@@ -19,12 +19,15 @@
 
 set(SKEL_SRCS
 	skel_main.c
-	skel_main.h
-)
+	skel_main.h)
 
 add_library(skel ${SKEL_SRCS})
 set_target_properties(skel PROPERTIES PREFIX "")
 
-target_link_libraries(skel freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(skel freerdp)
+else()
+	target_link_libraries(skel freerdp-utils)
+endif()
 
 install(TARGETS skel DESTINATION ${FREERDP_PLUGIN_PATH})

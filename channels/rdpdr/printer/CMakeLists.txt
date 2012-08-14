@@ -19,15 +19,14 @@
 
 set(PRINTER_SRCS
 	printer_main.c
-	printer_main.h
-)
+	printer_main.h)
 
 if(WITH_CUPS)
 	set(PRINTER_SRCS
 		${PRINTER_SRCS}
 		printer_cups.c
-		printer_cups.h
-	)
+		printer_cups.h)
+		
 	include_directories(${CUPS_INCLUDE_DIR})
 	add_definitions(-DWITH_CUPS)
 endif()
@@ -37,7 +36,11 @@ include_directories(..)
 add_library(printer ${PRINTER_SRCS})
 set_target_properties(printer PROPERTIES PREFIX "")
 
-target_link_libraries(printer freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(printer freerdp)
+else()
+	target_link_libraries(printer freerdp-utils)
+endif()
 
 if(WITH_CUPS)
 	target_link_libraries(printer ${CUPS_LIBRARIES})

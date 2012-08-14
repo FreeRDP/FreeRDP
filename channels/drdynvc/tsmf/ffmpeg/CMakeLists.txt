@@ -34,7 +34,12 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-target_link_libraries(tsmf_ffmpeg freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tsmf_ffmpeg freerdp)
+else()
+	target_link_libraries(tsmf_ffmpeg freerdp-utils)
+endif()
+
 target_link_libraries(tsmf_ffmpeg ${FFMPEG_LIBRARIES})
 
 install(TARGETS tsmf_ffmpeg DESTINATION ${FREERDP_PLUGIN_PATH})
