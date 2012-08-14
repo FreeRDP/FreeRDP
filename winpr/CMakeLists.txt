@@ -19,6 +19,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)
 
+add_subdirectory(include)
+
 add_subdirectory(libwinpr)
 
 add_subdirectory(tools)

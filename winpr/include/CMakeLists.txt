@@ -15,6 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-file(GLOB HEADERS "winpr/*.h")
-install(FILES ${HEADERS} DESTINATION include/winpr)
-
+file(GLOB WINPR_HEADERS "winpr/*.h")
+install(FILES ${WINPR_HEADERS} DESTINATION include/winpr)

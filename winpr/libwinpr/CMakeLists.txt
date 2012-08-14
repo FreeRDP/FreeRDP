@@ -58,7 +58,8 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-library>)
 	
 	set_target_properties(winpr PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-	target_link_libraries(winpr ${WINPR_LIBS})
-endif()
 
+	target_link_libraries(winpr ${WINPR_LIBS})
+	install(TARGETS winpr DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
