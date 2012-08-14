@@ -21,7 +21,10 @@
 #define __TIMEZONE_H
 
 #include "rdp.h"
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>

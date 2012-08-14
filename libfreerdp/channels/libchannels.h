@@ -21,7 +21,10 @@
 #ifndef __LIBCHANNELS_H
 #define __LIBCHANNELS_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_CHANNELS

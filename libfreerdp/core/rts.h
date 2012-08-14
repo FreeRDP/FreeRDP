@@ -22,7 +22,9 @@
 
 #include "rpc.h"
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <freerdp/types.h>
 #include <freerdp/utils/debug.h>

@@ -20,7 +20,10 @@
 #ifndef __LIBLOCALE_H
 #define __LIBLOCALE_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_KBD
