@@ -105,9 +105,11 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 
+boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
+		unsigned long* nitems, unsigned long* bytes, uint8** prop);
+
 void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int maxHeight,
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
-
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window);
