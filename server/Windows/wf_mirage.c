@@ -136,14 +136,35 @@ BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
 	return true;
 }
 
-int wf_mirage_step3(wfPeerContext* context)
+/*
+This function will attempt to apply the currently configured display settings 
+in the registry to the display driver. It will return true if successful 
+otherwise it returns false.
+*/
+BOOL wf_update_mirror_drv(wfPeerContext* context)
 {
+	int currentScreenPixH, currentScreenPixW, currentScreenBPP;
+	HDC dc;
 	LONG status;
 	DWORD* extHdr;
 	WORD drvExtraSaved;
 	DEVMODE* deviceMode;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
-
+	_tchar rMsg[64];
+	BOOL rturn;
+	
+	/*
+	Will have to come back to this for supporting non primary displays and 
+	multimonitor setups
+	*/
+	dc = GetDC(NULL);
+	currentScreenPixH = GetDeviceCaps(dc, HORZRES);
+	currentScreenPixW = GetDeviceCaps(dc, VERTRES);
+	currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
+	ReleaseDC(NULL, dc);
+	
+	_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixH, currentScreenPixW, currentScreenBPP);
+	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
 	deviceMode->dmDriverExtra = 2 * sizeof(DWORD);
 
@@ -156,9 +177,9 @@ int wf_mirage_step3(wfPeerContext* context)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = 640;
-	deviceMode->dmPelsHeight = 480;
-	deviceMode->dmBitsPerPel = 32;
+	deviceMode->dmPelsWidth = currentScreenPixW;
+	deviceMode->dmPelsHeight = currentScreenPixH;
+	deviceMode->dmBitsPerPel = currentScreenBPP;
 	deviceMode->dmPosition.x = 0;
 	deviceMode->dmPosition.y = 0;
 
@@ -168,49 +189,47 @@ int wf_mirage_step3(wfPeerContext* context)
 
 	status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
 
+	rturn = false;
 	switch (status)
 	{
 		case DISP_CHANGE_SUCCESSFUL:
-			printf("ChangeDisplaySettingsEx() was successfull\n");
+			_tprintf(_T("ChangeDisplaySettingsEx() was successfull\n"));
+			rturn = true;
 			break;
 
 		case DISP_CHANGE_BADDUALVIEW:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_BADDUALVIEW, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_BADDUALVIEW");
 			break;
 
 		case DISP_CHANGE_BADFLAGS:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_BADFLAGS, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_BADFLAGS");
 			break;
 
 		case DISP_CHANGE_BADMODE:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_BADMODE, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_BADMODE");
 			break;
 
 		case DISP_CHANGE_BADPARAM:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_BADPARAM, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_BADPARAM");
 			break;
 
 		case DISP_CHANGE_FAILED:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_FAILED, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_FAILED");
 			break;
 
 		case DISP_CHANGE_NOTUPDATED:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_NOTUPDATED, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_NOTUPDATED");
 			break;
 
 		case DISP_CHANGE_RESTART:
-			printf("ChangeDisplaySettingsEx() failed with  DISP_CHANGE_RESTART, code %d\n", status);
-			return -1;
+			rMsg = _T("DISP_CHANGE_RESTART");
 			break;
 	}
 
-	return 0;
+	if(!rturn)
+		_tprintf(_T("ChangeDisplaySettingsEx() failed with %s, code %d\n"), rMsg, status);
+		
+	return rturn;
 }
 
 int wf_mirage_step4(wfPeerContext* context)
