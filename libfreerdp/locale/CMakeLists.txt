@@ -82,7 +82,7 @@ endif()
 set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
-
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_LOCALE_LIBS} PARENT_SCOPE)
 else()
 	set(FREERDP_LOCALE_LIBS ${FREERDP_LOCALE_LIBS} freerdp-utils)
 	target_link_libraries(freerdp-locale ${FREERDP_LOCALE_LIBS})

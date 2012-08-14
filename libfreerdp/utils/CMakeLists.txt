@@ -72,7 +72,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_UTILS_LIBS} PARENT_SCOPE)
 else()
 	target_link_libraries(freerdp-utils ${FREERDP_UTILS_LIBS})
 	install(TARGETS freerdp-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})

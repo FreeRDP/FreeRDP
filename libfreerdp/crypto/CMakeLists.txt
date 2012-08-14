@@ -50,7 +50,7 @@ else()
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_CRYPTO_LIBS} PARENT_SCOPE)
 else()
 	set(FREERDP_CRYPTO_LIBS ${FREERDP_CRYPTO_LIBS} freerdp-utils)
 	target_link_libraries(freerdp-crypto ${FREERDP_CRYPTO_LIBS})

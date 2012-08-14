@@ -40,4 +40,8 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:freerdp-channels>
 		$<TARGET_OBJECTS:freerdp-locale>
 		$<TARGET_OBJECTS:freerdp-core>)
+		
+	target_link_libraries(freerdp ${FREERDP_LIBS})
 endif()
+
+

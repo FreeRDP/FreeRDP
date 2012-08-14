@@ -35,7 +35,7 @@ set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SO
 set(FREERDP_RAIL_LIBS)
 
 if(WITH_MONOLITHIC_BUILD)
-
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_RAIL_LIBS} PARENT_SCOPE)
 else()
 	set(FREERDP_RAIL_LIBS ${FREERDP_RAIL_LIBS} freerdp-utils)
 	target_link_libraries(freerdp-rail ${FREERDP_RAIL_LIBS})
