@@ -27,23 +27,32 @@ set(FREERDP_CRYPTO_SRCS
 	crypto.c
 	tls.c)
 
-add_library(freerdp-crypto ${FREERDP_CRYPTO_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-crypto OBJECT ${FREERDP_CRYPTO_SRCS})
+else()
+	add_library(freerdp-crypto ${FREERDP_CRYPTO_SRCS})
+endif()
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 set_target_properties(freerdp-crypto PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set(FREERDP_CRYPTO_LIBS
+	${OPENSSL_LIBRARIES}
+	winpr-sspi)
+
 if(WIN32)
-	target_link_libraries(freerdp-crypto ws2_32)
+	set(FREERDP_CRYPTO_LIBS ${FREERDP_CRYPTO_LIBS} ws2_32)
 else()
-	target_link_libraries(freerdp-crypto ${ZLIB_LIBRARIES})	
-	target_link_libraries(freerdp-crypto winpr-library)
+	set(FREERDP_CRYPTO_LIBS ${FREERDP_CRYPTO_LIBS} winpr-library)
+	set(FREERDP_CRYPTO_LIBS ${FREERDP_CRYPTO_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
-target_link_libraries(freerdp-crypto winpr-sspi)
-target_link_libraries(freerdp-crypto freerdp-utils)
-target_link_libraries(freerdp-crypto ${OPENSSL_LIBRARIES})
-
-install(TARGETS freerdp-crypto DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+if(WITH_MONOLITHIC_BUILD)
+	
+else()
+	set(FREERDP_CRYPTO_LIBS ${FREERDP_CRYPTO_LIBS} freerdp-utils)
+	target_link_libraries(freerdp-crypto ${FREERDP_CRYPTO_LIBS})
+	install(TARGETS freerdp-crypto DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

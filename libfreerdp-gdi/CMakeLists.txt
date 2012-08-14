@@ -36,12 +36,24 @@ set(FREERDP_GDI_SRCS
 	gdi.c
 	gdi.h)
 
-add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
-
-target_link_libraries(freerdp-gdi freerdp-core)
-target_link_libraries(freerdp-gdi freerdp-cache)
-target_link_libraries(freerdp-gdi freerdp-codec)
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-gdi OBJECT ${FREERDP_GDI_SRCS})
+else()
+	add_library(freerdp-gdi ${FREERDP_GDI_SRCS})
+endif()
 
 set_target_properties(freerdp-gdi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-install(TARGETS freerdp-gdi DESTINATION ${CMAKE_INSTALL_LIBDIR})
+set(FREERDP_GDI_LIBS)
+
+if(WITH_MONOLITHIC_BUILD)
+	
+else()
+	set(FREERDP_GDI_LIBS ${FREERDP_GDI_LIBS}
+		freerdp-core
+		freerdp-cache
+		freerdp-codec)
+	
+	target_link_libraries(freerdp-gdi ${FREERDP_GDI_LIBS})
+	install(TARGETS freerdp-gdi DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

@@ -24,10 +24,20 @@ set(FREERDP_RAIL_SRCS
 	rail.c
 	librail.h)
 
-add_library(freerdp-rail ${FREERDP_RAIL_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-rail OBJECT ${FREERDP_RAIL_SRCS})
+else()
+	add_library(freerdp-rail ${FREERDP_RAIL_SRCS})
+endif()
 
 set_target_properties(freerdp-rail PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(freerdp-rail freerdp-utils)
+set(FREERDP_RAIL_LIBS)
 
-install(TARGETS freerdp-rail DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(WITH_MONOLITHIC_BUILD)
+
+else()
+	set(FREERDP_RAIL_LIBS ${FREERDP_RAIL_LIBS} freerdp-utils)
+	target_link_libraries(freerdp-rail ${FREERDP_RAIL_LIBS})
+	install(TARGETS freerdp-rail DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

@@ -91,15 +91,15 @@ set(FREERDP_CORE_SRCS
 	peer.c
 	peer.h)
 
-add_library(freerdp-core ${FREERDP_CORE_SRCS})
+if(WITH_MONOLITHIC_BUILD)
+	add_library(freerdp-core OBJECT ${FREERDP_CORE_SRCS})
+else()
+	add_library(freerdp-core ${FREERDP_CORE_SRCS})
+endif()
 
 set_target_properties(freerdp-core PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 set(FREERDP_CORE_LIBS
-	freerdp-utils
-	freerdp-codec
-	freerdp-crypto
-	freerdp-locale
 	winpr-utils
 	winpr-rpc
 	winpr-sspi)
@@ -116,6 +116,15 @@ endif()
 
 set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${OPENSSL_LIBRARIES})
 
-target_link_libraries(freerdp-core ${FREERDP_CORE_LIBS})
+if(WITH_MONOLITHIC_BUILD)
 
-install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
+else()
+	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS}
+		freerdp-utils
+		freerdp-codec
+		freerdp-crypto
+		freerdp-locale)
+		
+	target_link_libraries(freerdp-core ${FREERDP_CORE_LIBS})
+	install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
