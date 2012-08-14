@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(wfreerdp WIN32
+set(FREERDP_CLIENT_WINDOWS_SRCS
 	wf_gdi.c
 	wf_gdi.h
 	wf_event.c
@@ -33,10 +33,18 @@ add_executable(wfreerdp WIN32
 	wfreerdp.c
 	wfreerdp.h)
 
-target_link_libraries(wfreerdp freerdp-core)
-target_link_libraries(wfreerdp freerdp-gdi)
-target_link_libraries(wfreerdp freerdp-utils)
-target_link_libraries(wfreerdp freerdp-codec)
-target_link_libraries(wfreerdp freerdp-channels)
+add_executable(wfreerdp WIN32 ${FREERDP_CLIENT_WINDOWS_SRCS})
 
+if(WITH_MONOLITHIC_BUILD)
+	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_X11_LIBS} freerdp)
+else()
+	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_X11_LIBS}
+		freerdp-core
+		freerdp-gdi
+		freerdp-codec
+		freerdp-channels
+		freerdp-utils)
+endif()
+
+target_link_libraries(wfreerdp ${FREERDP_CLIENT_X11_LIBS})
 install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

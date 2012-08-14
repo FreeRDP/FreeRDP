@@ -14,7 +14,7 @@ if(MSVC)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
 endif()
 
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.7)
+if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
 	option(WITH_MONOLITHIC_BUILD "Use monolithic build" OFF)
 endif()
 
