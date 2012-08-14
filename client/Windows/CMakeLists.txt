@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP Windows cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,9 +34,9 @@ set(FREERDP_CLIENT_WINDOWS_SRCS
 add_executable(wfreerdp WIN32 ${FREERDP_CLIENT_WINDOWS_SRCS})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_X11_LIBS} freerdp)
+	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_WINDOWS_LIBS} freerdp)
 else()
-	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_X11_LIBS}
+	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_WINDOWS_LIBS}
 		freerdp-core
 		freerdp-gdi
 		freerdp-codec
@@ -46,5 +44,5 @@ else()
 		freerdp-utils)
 endif()
 
-target_link_libraries(wfreerdp ${FREERDP_CLIENT_X11_LIBS})
+target_link_libraries(wfreerdp ${FREERDP_CLIENT_WINDOWS_LIBS})
 install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})

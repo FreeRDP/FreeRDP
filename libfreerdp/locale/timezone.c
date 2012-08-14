@@ -1652,7 +1652,6 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 {
 	time_t t;
-	sint32 sbias;
 	TIME_ZONE_ENTRY* tz;
 	struct tm* local_time;
 
@@ -1661,15 +1660,9 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 
 #ifdef HAVE_TM_GMTOFF
 	if (local_time->tm_gmtoff >= 0)
-	{
-		sbias = local_time->tm_gmtoff / 60;
-		clientTimeZone->bias = (uint32) sbias;
-	}
+		clientTimeZone->bias = (uint32) (local_time->tm_gmtoff / 60);
 	else
-	{
-		sbias = local_time->tm_gmtoff / 60;
-		clientTimeZone->bias = (uint32) (1440 + sbias);
-	}
+		clientTimeZone->bias = (uint32) (1440 + (sint32) (local_time->tm_gmtoff / 60));
 #elif sun
 	if (local_time->tm_isdst > 0)
 		clientTimeZone->bias = (uint32) (altzone / 3600);

@@ -161,7 +161,7 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+		uint8* data, int width, int height, int bpp, int length, boolean compressed, int codec_id)
 {
 	uint16 size;
 

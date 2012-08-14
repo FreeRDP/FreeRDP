@@ -303,16 +303,20 @@ static void* audin_server_thread_func(void* arg)
 	while (ready)
 	{
 		freerdp_thread_wait(thread);
+		
 		if (freerdp_thread_is_stopped(thread))
 			break;
 
 		stream_set_pos(s, 0);
+
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, stream_get_head(s),
 			stream_get_size(s), &bytes_returned) == false)
 		{
 			if (bytes_returned == 0)
 				break;
-			stream_check_size(s, bytes_returned);
+			
+			stream_check_size(s, (int) bytes_returned);
+
 			if (WTSVirtualChannelRead(audin->audin_channel, 0, stream_get_head(s),
 				stream_get_size(s), &bytes_returned) == false)
 				break;

@@ -1675,10 +1675,12 @@ void rdp_write_bitmap_cache_v3_codec_id_capability_set(STREAM* s, rdpSettings* s
 void rdp_write_frame_acknowledge_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
+	uint32 frame_acknowledge;
 
 	header = rdp_capability_set_start(s);
 
-	stream_write_uint32(s, settings->frame_acknowledge); /* (4 bytes) */
+	frame_acknowledge = settings->frame_acknowledge;
+	stream_write_uint32(s, frame_acknowledge); /* (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }

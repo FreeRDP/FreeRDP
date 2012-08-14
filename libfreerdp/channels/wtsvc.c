@@ -162,7 +162,7 @@ static void wts_read_drdynvc_data_first(rdpPeerChannel* channel, STREAM* s, int 
 		return;
 
 	stream_set_pos(channel->receive_data, 0);
-	stream_check_size(channel->receive_data, channel->dvc_total_length);
+	stream_check_size(channel->receive_data, (int) channel->dvc_total_length);
 	stream_write(channel->receive_data, stream_get_tail(s), length);
 }
 
@@ -177,7 +177,7 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, STREAM* s, uint32 len
 			return;
 		}
 		stream_write(channel->receive_data, stream_get_tail(s), length);
-		if (stream_get_length(channel->receive_data) >= channel->dvc_total_length)
+		if (stream_get_length(channel->receive_data) >= (int) channel->dvc_total_length)
 		{
 			wts_queue_receive_data(channel, stream_get_head(channel->receive_data), channel->dvc_total_length);
 			channel->dvc_total_length = 0;
@@ -303,7 +303,7 @@ static void wts_write_drdynvc_create_request(STREAM *s, uint32 ChannelId, const 
 
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
 	len = strlen(ChannelName) + 1;
-	stream_check_size(s, len);
+	stream_check_size(s, (int) len);
 	stream_write(s, ChannelName, len);
 }
 
