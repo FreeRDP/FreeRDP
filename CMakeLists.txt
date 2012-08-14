@@ -179,10 +179,13 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/free
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+# WinPR
+set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories(${WINPR_INCLUDE_DIR})
+
 # Configure files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/winpr/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/freerdp/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
 
 # Generate pkg-config
 if(NOT MSVC)

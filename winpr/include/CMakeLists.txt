@@ -15,11 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)
-
-add_subdirectory(libwinpr)
-
-add_subdirectory(tools)
+file(GLOB HEADERS "winpr/*.h")
+install(FILES ${HEADERS} DESTINATION include/winpr)
 
