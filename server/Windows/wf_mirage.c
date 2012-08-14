@@ -232,29 +232,58 @@ BOOL wf_update_mirror_drv(wfPeerContext* context)
 	return rturn;
 }
 
-int wf_mirage_step4(wfPeerContext* context)
+
+BOOL wf_map_mirror_mem(wfPeerContext* context)
 {
 	int status;
 
-	printf("\n\nCreating a device context...\n");
+	_tprintf(_T("\n\nCreating a device context...\n"));
 
 	context->driverDC = CreateDC(context->deviceName, NULL, NULL, NULL);
 
 	if (context->driverDC == NULL)
 	{
-		printf("Could not create device driver context!\n");
-		return -1;
+		_tprintf(_T("Could not create device driver context!\n"));
+		return false;
 	}
 
 	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
 
-	printf("\n\nConnecting to driver...\n");
+	_tprintf(_T("\n\nConnecting to driver...\n"));
 	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer);
 
 	if (status <= 0)
 	{
-		printf("Failed to map shared memory from the driver! Code %d\n", status);
+		_tprintf(_T("Failed to map shared memory from the driver! Code %d\n"), status);
 	}
 
-	return 0;
+	return true;
+}
+
+/*
+Unmap the shared memory and release the DC
+*/
+BOOL wf_mirror_cleanup(wfPeerContext* context)
+{
+	int iResult;
+
+	_tprintf(_T("\n\nCleaning up...\nDisconnecting driver...\n"));
+	iResult = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(context->changeBuffer), (LPSTR) context->changeBuffer, 0, 0);
+
+	if(iResult <= 0)
+	{
+		_tprintf(_T("Failed to unmap shared memory from the driver! Code %d\n"), iResult);
+	}
+
+	_tprintf(_T("Releasing DC\n"));
+	if(context->driverDC != NULL)
+	{
+		iResult = DeleteDC(context->driverDC);
+		if(iResult == 0)
+		{
+			_tprintf(_T("Failed to release DC!\n"));
+		}
+	}
+
+	free(context->changeBuffer);
 }

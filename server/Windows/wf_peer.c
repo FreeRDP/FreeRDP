@@ -16,8 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <winpr/tchar.h>
+#include <winpr/windows.h>
 #include <freerdp/listener.h>
+#include <freerdp/utils/sleep.h>
 
 #include "wf_mirage.h"
 
@@ -28,14 +30,31 @@ void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 	wf_check_disp_devices(context);
 	wf_disp_device_set_attatch(context, 1);
 	wf_update_mirror_drv(context);
-	wf_mirage_step4(context);
+	wf_map_mirror_mem(context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	if (context)
 	{
+		wf_mirror_cleanup(context);
+		wf_disp_device_set_attatch(context, 0);
+		wf_update_mirror_drv(context);
+	}
+}
 
+static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
+{
+	wfPeerContext* context;
+	CHANGES_BUF* buf;
+
+	context = (wfPeerContext*) lpParam;
+	buf = (CHANGES_BUF*)context->changeBuffer;
+
+	while(1)
+	{
+		_tprintf(_T("Count = %d\n"), buf->counter);
+		freerdp_usleep(1000000);
 	}
 }
 
@@ -45,6 +64,11 @@ void wf_peer_init(freerdp_peer* client)
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 	freerdp_peer_context_new(client);
+
+	_tprintf(_T("Trying to create a monitor thread...\n"));
+
+	if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client->context, 0, NULL) != 0)
+		_tprintf(_T("Created!\n"));
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
