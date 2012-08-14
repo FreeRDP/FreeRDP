@@ -23,13 +23,19 @@
 #include "wf_mirage.h"
 
 #define DEVICE_KEY_PREFIX	_T("\\Registry\\Machine\\")
-
-int wf_mirage_step1(wfPeerContext* context)
+/*
+This function will iterate over the loaded display devices until it finds
+the mirror device we want to load. If found, it will then copy the registry
+key corresponding to the device to the context and returns true. Otherwise
+the function returns false.
+*/
+BOOL wf_check_disp_devices(wfPeerContext* context)
 {
-	BOOL result;
+	BOOL result, devFound;
 	DWORD deviceNumber;
 	DISPLAY_DEVICE deviceInfo;
 
+	devFound = false;
 	deviceNumber = 0;
 	deviceInfo.cb = sizeof(deviceInfo);
 
@@ -60,12 +66,13 @@ int wf_mirage_step1(wfPeerContext* context)
 			}
 
 			_tcsncpy_s(context->deviceName, 32, deviceInfo.DeviceName, _tcslen(deviceInfo.DeviceName));
+			return true;
 		}
 
 		deviceNumber++;
 	}
 
-	return 0;
+	return false;
 }
 
 int wf_mirage_step2(wfPeerContext* context)
