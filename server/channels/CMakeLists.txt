@@ -19,13 +19,16 @@
 
 set(FREERDP_SERVER_CHANNELS_SRCS
 	audin.c
-	rdpsnd.c
-)
+	rdpsnd.c)
 
 add_library(freerdp-server-channels ${FREERDP_SERVER_CHANNELS_SRCS})
 
 set_target_properties(freerdp-server-channels PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-target_link_libraries(freerdp-server-channels freerdp-channels freerdp-utils)
+
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(freerdp-server-channels freerdp)
+else()
+	target_link_libraries(freerdp-server-channels freerdp-channels freerdp-utils)
+endif()
 
 install(TARGETS freerdp-server-channels DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

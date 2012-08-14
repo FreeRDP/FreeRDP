@@ -60,11 +60,17 @@ if(WITH_XTEST)
         target_link_libraries(xfreerdp-server ${XTEST_LIBRARIES})
 endif()
 
-target_link_libraries(xfreerdp-server freerdp-core)
-target_link_libraries(xfreerdp-server freerdp-codec)
-target_link_libraries(xfreerdp-server freerdp-utils)
-target_link_libraries(xfreerdp-server freerdp-gdi)
-target_link_libraries(xfreerdp-server freerdp-crypto)
-target_link_libraries(xfreerdp-server freerdp-locale)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(xfreerdp-server freerdp)
+else()
+	target_link_libraries(xfreerdp-server
+		freerdp-core
+		freerdp-codec
+		freerdp-utils
+		freerdp-gdi
+		freerdp-crypto
+		freerdp-locale)
+endif()
+
 target_link_libraries(xfreerdp-server ${X11_LIBRARIES})
 target_link_libraries(xfreerdp-server winpr-sspi)
