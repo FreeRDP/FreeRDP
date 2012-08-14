@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "xkb_layout_ids.h"
 
 #include <freerdp/utils/memory.h>

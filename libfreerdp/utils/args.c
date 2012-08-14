@@ -18,39 +18,50 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/settings.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
 
-
-void freerdp_parse_hostname(rdpSettings* settings, char* hostname) {
+void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
+{
 	char* p;
+
 	if (hostname[0] == '[' && (p = strchr(hostname, ']'))
-			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':')))) {
-			/* Either "[...]" or "[...]:..." with at most one : after the brackets */
+			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
+	{
+		/* Either "[...]" or "[...]:..." with at most one : after the brackets */
 		settings->hostname = xstrdup(hostname + 1);
-		if ((p = strchr((char*)settings->hostname, ']'))) {
+
+		if ((p = strchr((char*)settings->hostname, ']')))
+		{
 			*p = 0;
+
 			if (p[1] == ':')
 				settings->port = atoi(p + 2);
 		}
-	} else {
+	}
+	else
+	{
 		/* Port number is cut off and used if exactly one : in the string */
 		settings->hostname = xstrdup(hostname);
-		if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':')) {
+
+		if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
+		{
 			*p = 0;
 			settings->port = atoi(p + 1);
 		}
 	}
 }
-
-
 
 /**
  * Parse command-line arguments and update rdpSettings members accordingly.

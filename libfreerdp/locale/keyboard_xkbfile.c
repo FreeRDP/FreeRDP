@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "keyboard_xkbfile.h"
 
 #include <freerdp/locale/keyboard.h>

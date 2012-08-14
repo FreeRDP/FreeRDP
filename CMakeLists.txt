@@ -125,6 +125,9 @@ check_include_files(limits.h HAVE_LIMITS_H)
 check_include_files(stdint.h HAVE_STDINT_H)
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
 
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
@@ -184,6 +187,7 @@ set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
 include_directories(${WINPR_INCLUDE_DIR})
 
 # Configure files
+add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
 

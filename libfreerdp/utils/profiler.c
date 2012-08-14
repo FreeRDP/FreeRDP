@@ -17,7 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <freerdp/utils/profiler.h>
 
 PROFILER* profiler_create(char* name)

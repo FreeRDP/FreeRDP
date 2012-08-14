@@ -18,9 +18,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "rfx_types.h"
 #include "rfx_rlgr.h"
 #include "rfx_differential.h"

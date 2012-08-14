@@ -17,7 +17,12 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/windows.h>
+
 #include <freerdp/utils/time.h>
 
 uint64 freerdp_windows_gmtime()

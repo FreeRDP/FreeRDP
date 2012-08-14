@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "keyboard_keymap.h"
 
 #include <freerdp/utils/file.h>
@@ -24,7 +28,6 @@
 #include <freerdp/locale/virtual_key_codes.h>
 #include <freerdp/locale/keyboard.h>
 
-#include "config.h"
 #include "liblocale.h"
 
 #include <stdlib.h>

@@ -17,9 +17,13 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include "certificate.h"
 #include "capabilities.h"
+
 #include <freerdp/utils/memory.h>
 
 #ifdef HAVE_UNISTD_H

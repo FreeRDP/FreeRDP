@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/utils/memory.h>
 

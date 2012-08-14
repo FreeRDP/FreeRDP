@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "window.h"
 #include <freerdp/api.h>
 #include <freerdp/graphics.h>

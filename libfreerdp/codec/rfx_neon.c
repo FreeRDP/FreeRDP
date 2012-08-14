@@ -17,6 +17,10 @@
    limitations under the License.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #if defined(__ARM_NEON__)
 
 #include <stdio.h>

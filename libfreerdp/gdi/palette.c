@@ -19,6 +19,10 @@
 
 /* GDI Palette Functions: http://msdn.microsoft.com/en-us/library/dd183454/ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

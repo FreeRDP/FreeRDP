@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
@@ -97,10 +101,10 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 {
 	rdpWindow* window;
 
-	//See if the window already exists     
+	/* See if the window already exists */
 	window = window_list_get_by_id(list, orderInfo->windowId);
 	 
-        //If the window already exists, just update the existing window
+        /* If the window already exists, just update the existing window */
 	if (window != NULL)
 	{
 	        window_list_update(list, orderInfo, window_state);
@@ -188,7 +192,6 @@ void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo)
 void window_list_clear(rdpWindowList* list)
 {
        rdpWindow* current = list->head;
-       rdpWindow* next;        
 
        while (current != NULL)
        {
@@ -199,7 +202,6 @@ void window_list_clear(rdpWindowList* list)
        
        list->tail = NULL;
 }
-
 
 rdpWindowList* window_list_new(rdpRail* rail)
 {

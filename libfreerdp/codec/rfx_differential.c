@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "rfx_differential.h"
 
 void rfx_differential_decode(sint16* buffer, int buffer_size)

@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/crypto/er.h>
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/der.h>

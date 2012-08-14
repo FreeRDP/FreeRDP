@@ -17,10 +17,15 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/constants.h>

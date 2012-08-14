@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "rfx_quantization.h"
 
 static void rfx_quantization_decode_block(sint16* buffer, int buffer_size, uint32 factor)

@@ -57,6 +57,7 @@
 #ifndef _WIN32
 
 #include <dlfcn.h>
+#include <stdio.h>
 #include <unistd.h>
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)

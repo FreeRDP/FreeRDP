@@ -18,9 +18,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>

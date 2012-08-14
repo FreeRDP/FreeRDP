@@ -17,11 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.h"
 #include "liblocale.h"
 
 #include <freerdp/utils/time.h>
