@@ -25,9 +25,9 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-	wf_mirage_step1(context);
-	wf_mirage_step2(context);
-	wf_mirage_step3(context);
+	wf_check_disp_devices(context);
+	wf_disp_device_set_attatch(context, 1);
+	wf_update_mirror_drv(context);
 	wf_mirage_step4(context);
 }
 

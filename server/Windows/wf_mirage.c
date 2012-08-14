@@ -150,7 +150,7 @@ BOOL wf_update_mirror_drv(wfPeerContext* context)
 	WORD drvExtraSaved;
 	DEVMODE* deviceMode;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
-	_tchar rMsg[64];
+	TCHAR rMsg[64];
 	BOOL rturn;
 	
 	/*
@@ -198,31 +198,31 @@ BOOL wf_update_mirror_drv(wfPeerContext* context)
 			break;
 
 		case DISP_CHANGE_BADDUALVIEW:
-			rMsg = _T("DISP_CHANGE_BADDUALVIEW");
+			_tcscpy(rMsg, _T("DISP_CHANGE_BADDUALVIEW"));
 			break;
 
 		case DISP_CHANGE_BADFLAGS:
-			rMsg = _T("DISP_CHANGE_BADFLAGS");
+			_tcscpy(rMsg, _T("DISP_CHANGE_BADFLAGS"));
 			break;
 
 		case DISP_CHANGE_BADMODE:
-			rMsg = _T("DISP_CHANGE_BADMODE");
+			_tcscpy(rMsg, _T("DISP_CHANGE_BADMODE"));
 			break;
 
 		case DISP_CHANGE_BADPARAM:
-			rMsg = _T("DISP_CHANGE_BADPARAM");
+			_tcscpy(rMsg, _T("DISP_CHANGE_BADPARAM"));
 			break;
 
 		case DISP_CHANGE_FAILED:
-			rMsg = _T("DISP_CHANGE_FAILED");
+			_tcscpy(rMsg, _T("DISP_CHANGE_FAILED"));
 			break;
 
 		case DISP_CHANGE_NOTUPDATED:
-			rMsg = _T("DISP_CHANGE_NOTUPDATED");
+			_tcscpy(rMsg, _T("DISP_CHANGE_NOTUPDATED"));
 			break;
 
 		case DISP_CHANGE_RESTART:
-			rMsg = _T("DISP_CHANGE_RESTART");
+			_tcscpy(rMsg, _T("DISP_CHANGE_RESTART"));
 			break;
 	}
 
