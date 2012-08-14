@@ -200,8 +200,8 @@ typedef struct
 	ULONG nColorBmPalEntries;
 } Esc_dmf_pointer_shape_get_OUT;
 
-int wf_check_disp_devices(wfPeerContext* context);
-int wf_mirage_step2(wfPeerContext* context);
+BOOL wf_check_disp_devices(wfPeerContext* context);
+BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val);
 int wf_mirage_step3(wfPeerContext* context);
 int wf_mirage_step4(wfPeerContext* context);
 

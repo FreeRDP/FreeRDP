@@ -75,7 +75,16 @@ BOOL wf_check_disp_devices(wfPeerContext* context)
 	return false;
 }
 
-int wf_mirage_step2(wfPeerContext* context)
+/*
+This function will attempt to access the the windows registry using the device
+ key stored in the current context. It will attempt to read the value of the
+ "Attach.ToDesktop" subkey and will return true if the value is already set to
+ val. If unable to read the subkey, this function will return false. If the 
+ subkey is not set to val it will then attempt to set it to val and return true. If 
+ unsuccessful or an unexpected value is encountered, the function returns 
+ false.
+ */
+BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
 {
 	LONG status;
 	DWORD rtype, rdata, rdata_size;
@@ -93,38 +102,38 @@ int wf_mirage_step2(wfPeerContext* context)
 	{
 		printf("Failed to read registry value.\n");
 		printf("operation returned %d\n", status);
-		return -1;
+		return false;
 	}
 
 	_tprintf(_T("type = %04X, data = %04X\n\nNow let's try attaching it...\n"), rtype, rdata);
 
-	if (rdata == 0)
+	if (rdata == val ^ 1)
 	{
-		rdata = 1;
+		rdata = val;
 
 		status = RegSetKeyValue(HKEY_LOCAL_MACHINE, context->deviceKey,
 			_T("Attach.ToDesktop"), REG_DWORD, &rdata, rdata_size);
 
 		if (status != ERROR_SUCCESS)
 		{
-			_tprintf(_T("Failed to read registry value.\n"));
+			_tprintf(_T("Failed to write registry value.\n"));
 			_tprintf(_T("operation returned %d\n"), status);
-			return -1;
+			return false;
 		}
 
-		_tprintf(_T("Attached to Desktop\n\n"));
+		_tprintf(_T("Wrote subkey \"Attach.ToDesktop\" -> %04X\n\n", rdata));
 	}
-	else if (rdata == 1)
+	else if (rdata == val)
 	{
-		_tprintf(_T("Already attached to desktop!\n"));
+		_tprintf(_T("\"Attach.ToDesktop\" is already set to %04X!\n", rdata));
 	}
 	else
 	{
-		_tprintf(_T("Something went wrong with attaching to desktop...\nrdata=%d\n"), rdata);
-		return -1;
+		_tprintf(_T("An wild value appeared!...\nrdata=%d\n"), rdata);
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
 int wf_mirage_step3(wfPeerContext* context)
