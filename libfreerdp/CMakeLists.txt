@@ -40,7 +40,8 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:freerdp-channels>
 		$<TARGET_OBJECTS:freerdp-locale>
 		$<TARGET_OBJECTS:freerdp-core>)
-		
+	
+	set_target_properties(freerdp PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 	target_link_libraries(freerdp ${FREERDP_LIBS})
 endif()
 
