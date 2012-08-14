@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/rail.h>

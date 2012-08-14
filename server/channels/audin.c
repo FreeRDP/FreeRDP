@@ -17,6 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
@@ -24,10 +32,6 @@
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define MSG_SNDIN_VERSION       0x01
 #define MSG_SNDIN_FORMATS       0x02

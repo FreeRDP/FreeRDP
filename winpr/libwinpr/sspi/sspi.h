@@ -20,8 +20,6 @@
 #ifndef WINPR_SSPI_PRIVATE_H
 #define WINPR_SSPI_PRIVATE_H
 
-#include "config.h"
-
 #include <winpr/sspi.h>
 
 struct _CREDENTIALS

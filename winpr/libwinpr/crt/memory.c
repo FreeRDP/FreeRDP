@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/crt.h>
 
 /* Memory Allocation: http://msdn.microsoft.com/en-us/library/hk1k7x6x.aspx */

@@ -19,8 +19,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
+
 #include <freerdp/freerdp.h>
+
 #include "wfreerdp.h"
 
 #include "wf_event.h"
