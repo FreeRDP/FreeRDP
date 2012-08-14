@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 set(FREERDP_GDI_SRCS
 	8bpp.c
 	16bpp.c
@@ -57,3 +59,4 @@ else()
 	target_link_libraries(freerdp-gdi ${FREERDP_GDI_LIBS})
 	install(TARGETS freerdp-gdi DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+

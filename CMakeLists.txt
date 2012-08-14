@@ -176,7 +176,7 @@ set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp/extensions")
 
 # Include directories
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Configure files
@@ -198,19 +198,12 @@ if(WITH_CUNIT)
 endif()
 
 # Sub-directories
+
 add_subdirectory(include)
-add_subdirectory(libfreerdp-utils)
 
 add_subdirectory(winpr)
 
-add_subdirectory(libfreerdp-gdi)
-add_subdirectory(libfreerdp-rail)
-add_subdirectory(libfreerdp-cache)
-add_subdirectory(libfreerdp-codec)
-add_subdirectory(libfreerdp-crypto)
-add_subdirectory(libfreerdp-channels)
-add_subdirectory(libfreerdp-locale)
-add_subdirectory(libfreerdp-core)
+add_subdirectory(libfreerdp)
 
 if(WITH_CHANNELS)
 	add_subdirectory(channels)
