@@ -18,8 +18,7 @@
 # limitations under the License.
 
 set(AUDIN_ALSA_SRCS
-	audin_alsa.c
-)
+	audin_alsa.c)
 
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
@@ -27,7 +26,12 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_library(audin_alsa ${AUDIN_ALSA_SRCS})
 set_target_properties(audin_alsa PROPERTIES PREFIX "")
 
-target_link_libraries(audin_alsa freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(audin_alsa freerdp)
+else()
+	target_link_libraries(audin_alsa freerdp-utils)
+endif()
+
 target_link_libraries(audin_alsa ${ALSA_LIBRARIES})
 
 install(TARGETS audin_alsa DESTINATION ${FREERDP_PLUGIN_PATH})

@@ -20,5 +20,9 @@
 add_executable(winpr-hash
 	hash.c)
 
-target_link_libraries(winpr-hash winpr-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(winpr-hash winpr)
+else()
+	target_link_libraries(winpr-hash winpr-utils)
+endif()
 

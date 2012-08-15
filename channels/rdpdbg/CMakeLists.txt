@@ -24,6 +24,10 @@ set(RDPDBG_SRCS
 add_library(rdpdbg ${RDPDBG_SRCS})
 set_target_properties(rdpdbg PROPERTIES PREFIX "")
 
-target_link_libraries(rdpdbg freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rdpdbg freerdp)
+else()
+	target_link_libraries(rdpdbg freerdp-utils)
+endif()
 
 install(TARGETS rdpdbg DESTINATION ${FREERDP_PLUGIN_PATH})

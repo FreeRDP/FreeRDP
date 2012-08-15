@@ -32,15 +32,18 @@ set(TSMF_SRCS
 	tsmf_main.h
 	tsmf_media.c
 	tsmf_media.h
-	tsmf_types.h
-)
+	tsmf_types.h)
 
 include_directories(..)
 
 add_library(tsmf ${TSMF_SRCS})
 set_target_properties(tsmf PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tsmf freerdp)
+else()
+	target_link_libraries(tsmf freerdp-utils)
+endif()
 
 install(TARGETS tsmf DESTINATION ${FREERDP_PLUGIN_PATH})
 

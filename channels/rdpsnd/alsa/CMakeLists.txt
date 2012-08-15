@@ -27,7 +27,12 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_library(rdpsnd_alsa ${RDPSND_ALSA_SRCS})
 set_target_properties(rdpsnd_alsa PROPERTIES PREFIX "")
 
-target_link_libraries(rdpsnd_alsa freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rdpsnd_alsa freerdp)
+else()
+	target_link_libraries(rdpsnd_alsa freerdp-utils)
+endif()
+
 target_link_libraries(rdpsnd_alsa ${ALSA_LIBRARIES})
 
 install(TARGETS rdpsnd_alsa DESTINATION ${FREERDP_PLUGIN_PATH})

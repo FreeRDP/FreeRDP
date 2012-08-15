@@ -20,7 +20,7 @@
 include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
 
-add_executable(xfreerdp
+set(FREERDP_CLIENT_X11_SRCS
 	xf_gdi.c
 	xf_gdi.h
 	xf_rail.c
@@ -42,6 +42,12 @@ add_executable(xfreerdp
 	xfreerdp.c
 	xfreerdp.h)
 
+add_executable(xfreerdp ${FREERDP_CLIENT_X11_SRCS})
+
+set(FREERDP_CLIENT_X11_LIBS
+	${X11_LIBRARIES}
+	${CMAKE_DL_LIBS})
+
 if(WITH_MANPAGES)
 	if(XMLTO_FOUND)
 		add_custom_command(OUTPUT xfreerdp.1
@@ -61,38 +67,43 @@ find_suggested_package(Xinerama)
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA -DWITH_XEXT)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${XINERAMA_LIBRARIES})
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XINERAMA_LIBRARIES})
 endif()
 
 find_suggested_package(Xext)
 if(WITH_XEXT)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${XEXT_LIBRARIES})
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XEXT_LIBRARIES})
 endif()
 
 find_suggested_package(Xcursor)
 if(WITH_XCURSOR)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${XCURSOR_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${XCURSOR_LIBRARIES})
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XCURSOR_LIBRARIES})
 endif()
 
 find_suggested_package(Xv)
 if(WITH_XV)
 	add_definitions(-DWITH_XV)
 	include_directories(${XV_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp ${XV_LIBRARIES})
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XV_LIBRARIES})
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-target_link_libraries(xfreerdp freerdp-core)
-target_link_libraries(xfreerdp freerdp-gdi)
-target_link_libraries(xfreerdp freerdp-locale)
-target_link_libraries(xfreerdp freerdp-rail)
-target_link_libraries(xfreerdp freerdp-channels)
-target_link_libraries(xfreerdp freerdp-utils)
-target_link_libraries(xfreerdp ${X11_LIBRARIES} ${CMAKE_DL_LIBS})
+if(WITH_MONOLITHIC_BUILD)
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} freerdp)
+else()
+	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS}
+		freerdp-core
+		freerdp-gdi
+		freerdp-locale
+		freerdp-rail
+		freerdp-channels
+		freerdp-utils)
+endif()
 
+target_link_libraries(xfreerdp ${FREERDP_CLIENT_X11_LIBS})
 install(TARGETS xfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
