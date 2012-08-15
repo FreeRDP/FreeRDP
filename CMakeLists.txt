@@ -180,7 +180,7 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/free
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # WinPR
 set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")

@@ -30,3 +30,5 @@ install(DIRECTORY freerdp/plugins DESTINATION include/freerdp FILES_MATCHING PAT
 install(DIRECTORY freerdp/rail DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/utils DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+
+

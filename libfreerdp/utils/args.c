@@ -31,6 +31,7 @@
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
+#include <freerdp/utils/passphrase.h>
 
 void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 {
@@ -865,10 +866,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		/* password */
 		if (NULL == settings->password) {
-			char input[512];
-			printf("password: ");
-			scanf("%511s", input);
-			settings->password = xstrdup(input);
+			settings->password = xmalloc(512 * sizeof(char));
+			freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
 		}
 		/* domain */
 		if (NULL == settings->domain) {
