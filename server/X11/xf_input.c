@@ -17,7 +17,12 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
+
 #include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"

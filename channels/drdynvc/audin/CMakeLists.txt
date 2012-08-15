@@ -19,15 +19,18 @@
 
 set(AUDIN_SRCS
 	audin_main.c
-	audin_main.h
-)
+	audin_main.h)
 
 include_directories(..)
 
 add_library(audin ${AUDIN_SRCS})
 set_target_properties(audin PROPERTIES PREFIX "")
 
-target_link_libraries(audin freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(audin freerdp)
+else()
+	target_link_libraries(audin freerdp-utils)
+endif()
 
 install(TARGETS audin DESTINATION ${FREERDP_PLUGIN_PATH})
 

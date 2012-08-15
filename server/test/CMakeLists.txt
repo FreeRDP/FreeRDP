@@ -20,8 +20,15 @@
 add_executable(tfreerdp-server
 	tfreerdp.c)
 
-target_link_libraries(tfreerdp-server freerdp-core)
-target_link_libraries(tfreerdp-server freerdp-utils)
-target_link_libraries(tfreerdp-server freerdp-codec)
-target_link_libraries(tfreerdp-server freerdp-channels)
-target_link_libraries(tfreerdp-server freerdp-server-channels)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tfreerdp-server
+		freerdp
+		freerdp-server-channels)
+else()
+	target_link_libraries(tfreerdp-server
+		freerdp-core
+		freerdp-utils
+		freerdp-codec
+		freerdp-channels
+		freerdp-server-channels)
+endif()

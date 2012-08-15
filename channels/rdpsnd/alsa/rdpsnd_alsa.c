@@ -18,10 +18,16 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <alsa/asoundlib.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>

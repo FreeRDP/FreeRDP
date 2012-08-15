@@ -10,6 +10,14 @@ if(APPLE)
 	option(WITH_CLANG "Build using clang" OFF)
 endif()
 
+if(MSVC)
+	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
+endif()
+
+if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
+	option(WITH_MONOLITHIC_BUILD "Use monolithic build" OFF)
+endif()
+
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)

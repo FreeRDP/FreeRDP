@@ -27,7 +27,12 @@ include_directories(${GSTREAMER_INCLUDE_DIRS})
 add_library(tsmf_gstreamer ${TSMF_GSTREAMER_SRCS})
 set_target_properties(tsmf_gstreamer PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf_gstreamer freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tsmf_gstreamer freerdp)
+else()
+	target_link_libraries(tsmf_gstreamer freerdp-utils)
+endif()
+
 target_link_libraries(tsmf_gstreamer ${GSTREAMER_LIBRARIES} gstapp-0.10 gstinterfaces-0.10 Xrandr X11 Xext)
 
 install(TARGETS tsmf_gstreamer DESTINATION ${FREERDP_PLUGIN_PATH})

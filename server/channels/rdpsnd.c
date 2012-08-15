@@ -17,6 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
@@ -24,10 +32,6 @@
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 typedef struct _rdpsnd_server
 {
@@ -121,6 +125,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	if (rdpsnd->context.num_client_formats > 0)
 	{
 		rdpsnd->context.client_formats = xzalloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
+
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
 			if (stream_get_left(s) < 18)
@@ -137,6 +142,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 			stream_read_uint16(s, rdpsnd->context.client_formats[i].nBlockAlign);
 			stream_read_uint16(s, rdpsnd->context.client_formats[i].wBitsPerSample);
 			stream_read_uint16(s, rdpsnd->context.client_formats[i].cbSize);
+
 			if (rdpsnd->context.client_formats[i].cbSize > 0)
 			{
 				stream_seek(s, rdpsnd->context.client_formats[i].cbSize);
@@ -146,8 +152,6 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 
 	return true;
 }
-
-
 
 static void* rdpsnd_server_thread_func(void* arg)
 {
@@ -174,16 +178,20 @@ static void* rdpsnd_server_thread_func(void* arg)
 	while (1)
 	{
 		freerdp_thread_wait(thread);
+		
 		if (freerdp_thread_is_stopped(thread))
 			break;
 
 		stream_set_pos(s, 0);
+
 		if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
 			stream_get_size(s), &bytes_returned) == false)
 		{
 			if (bytes_returned == 0)
 				break;
-			stream_check_size(s, bytes_returned);
+			
+			stream_check_size(s, (int) bytes_returned);
+
 			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
 				stream_get_size(s), &bytes_returned) == false)
 				break;
@@ -192,10 +200,12 @@ static void* rdpsnd_server_thread_func(void* arg)
 		stream_read_uint8(s, msgType);
 		stream_seek_uint8(s); /* bPad */
 		stream_read_uint16(s, BodySize);
-		if (BodySize + 4 > bytes_returned)
+
+		if (BodySize + 4 > (int) bytes_returned)
 			continue;
 
-		switch (msgType) {
+		switch (msgType)
+		{
 			case SNDC_FORMATS:
 				if (rdpsnd_server_recv_formats(rdpsnd, s))
 				{
@@ -218,6 +228,7 @@ static boolean rdpsnd_server_initialize(rdpsnd_server_context* context)
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
 	rdpsnd->rdpsnd_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpsnd", 0);
+
 	if (rdpsnd->rdpsnd_channel != NULL)
 	{
 		rdpsnd->rdpsnd_pdu = stream_new(4096);
@@ -250,6 +261,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 
 	context->selected_client_format = client_format_index;
 	format = &context->client_formats[client_format_index];
+
 	if (format->wFormatTag == 0x11)
 	{
 		bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
@@ -264,6 +276,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	{
 		rdpsnd->out_frames = 0x4000 / rdpsnd->src_bytes_per_frame;
 	}
+
 	if (format->nSamplesPerSec != context->src_format.nSamplesPerSec)
 	{
 		rdpsnd->out_frames = (rdpsnd->out_frames * context->src_format.nSamplesPerSec + format->nSamplesPerSec - 100) / format->nSamplesPerSec;
@@ -271,6 +284,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	rdpsnd->out_pending_frames = 0;
 
 	out_buffer_size = rdpsnd->out_frames * rdpsnd->src_bytes_per_frame;
+	
 	if (rdpsnd->out_buffer_size < out_buffer_size)
 	{
 		rdpsnd->out_buffer = xrealloc(rdpsnd->out_buffer, out_buffer_size);

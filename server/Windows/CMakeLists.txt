@@ -25,7 +25,13 @@ add_executable(wfreerdp-server
 	wfreerdp.c
 	wfreerdp.h)
 
-target_link_libraries(wfreerdp-server freerdp-core)
-target_link_libraries(wfreerdp-server freerdp-utils)
-target_link_libraries(wfreerdp-server freerdp-codec)
-target_link_libraries(wfreerdp-server freerdp-channels)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(wfreerdp-server freerdp)
+else()
+	target_link_libraries(wfreerdp-server
+		freerdp-core
+		freerdp-utils
+		freerdp-codec
+		freerdp-channels)
+endif()
+
