@@ -200,10 +200,10 @@ typedef struct
 	ULONG nColorBmPalEntries;
 } Esc_dmf_pointer_shape_get_OUT;
 
-BOOL wf_check_disp_devices(wfPeerContext* context);
-BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val);
-BOOL wf_update_mirror_drv(wfPeerContext* context);
-BOOL wf_map_mirror_mem(wfPeerContext* context);
-BOOL wf_mirror_cleanup(wfPeerContext* context);
+BOOL wf_check_disp_devices(wfInfo* context);
+BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val);
+BOOL wf_update_mirror_drv(wfInfo* context, int unload);
+BOOL wf_map_mirror_mem(wfInfo* context);
+BOOL wf_mirror_cleanup(wfInfo* context);
 
 #endif /* WF_MIRAGE_H */

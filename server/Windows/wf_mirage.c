@@ -29,7 +29,7 @@ the mirror device we want to load. If found, it will then copy the registry
 key corresponding to the device to the context and returns true. Otherwise
 the function returns false.
 */
-BOOL wf_check_disp_devices(wfPeerContext* context)
+BOOL wf_check_disp_devices(wfInfo* context)
 {
 	BOOL result, devFound;
 	DWORD deviceNumber;
@@ -84,7 +84,7 @@ This function will attempt to access the the windows registry using the device
  unsuccessful or an unexpected value is encountered, the function returns 
  false.
  */
-BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
+BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 {
 	LONG status;
 	DWORD rtype, rdata, rdata_size;
@@ -105,9 +105,9 @@ BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
 		return false;
 	}
 
-	_tprintf(_T("type = %04X, data = %04X\n\nNow let's try attaching it...\n"), rtype, rdata);
+	_tprintf(_T("type = %04X, data = %04X\n"), rtype, rdata);
 
-	if (rdata == val ^ 1)
+	if (rdata == (val ^ 1))
 	{
 		rdata = val;
 
@@ -121,11 +121,11 @@ BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
 			return false;
 		}
 
-		_tprintf(_T("Wrote subkey \"Attach.ToDesktop\" -> %04X\n\n", rdata));
+		_tprintf(_T("Wrote subkey \"Attach.ToDesktop\" -> %04X\n\n"), rdata);
 	}
 	else if (rdata == val)
 	{
-		_tprintf(_T("\"Attach.ToDesktop\" is already set to %04X!\n", rdata));
+		_tprintf(_T("\"Attach.ToDesktop\" is already set to %04X!\n"), rdata);
 	}
 	else
 	{
@@ -140,8 +140,10 @@ BOOL wf_disp_device_set_attatch(wfPeerContext* context, DWORD val)
 This function will attempt to apply the currently configured display settings 
 in the registry to the display driver. It will return true if successful 
 otherwise it returns false.
+
+If unload is nonzero then the the driver will be asked to remove it self.
 */
-BOOL wf_update_mirror_drv(wfPeerContext* context)
+BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
 	int currentScreenPixH, currentScreenPixW, currentScreenBPP;
 	HDC dc;
@@ -153,17 +155,26 @@ BOOL wf_update_mirror_drv(wfPeerContext* context)
 	TCHAR rMsg[64];
 	BOOL rturn;
 	
-	/*
-	Will have to come back to this for supporting non primary displays and 
-	multimonitor setups
-	*/
-	dc = GetDC(NULL);
-	currentScreenPixH = GetDeviceCaps(dc, HORZRES);
-	currentScreenPixW = GetDeviceCaps(dc, VERTRES);
-	currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
-	ReleaseDC(NULL, dc);
-	
-	_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixH, currentScreenPixW, currentScreenBPP);
+	if(!unload)
+	{
+		/*
+		Will have to come back to this for supporting non primary displays and 
+		multimonitor setups
+		*/
+		dc = GetDC(NULL);
+		currentScreenPixH = GetDeviceCaps(dc, HORZRES);
+		currentScreenPixW = GetDeviceCaps(dc, VERTRES);
+		currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
+		ReleaseDC(NULL, dc);
+
+		_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixH, currentScreenPixW, currentScreenBPP);
+	}
+	else
+	{
+		currentScreenPixH = 0;
+		currentScreenPixW = 0;
+		currentScreenBPP = 0;
+	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
 	deviceMode->dmDriverExtra = 2 * sizeof(DWORD);
@@ -233,10 +244,10 @@ BOOL wf_update_mirror_drv(wfPeerContext* context)
 }
 
 
-BOOL wf_map_mirror_mem(wfPeerContext* context)
+BOOL wf_map_mirror_mem(wfInfo* context)
 {
 	int status;
-
+	GETCHANGESBUF* b;
 	_tprintf(_T("\n\nCreating a device context...\n"));
 
 	context->driverDC = CreateDC(context->deviceName, NULL, NULL, NULL);
@@ -248,6 +259,7 @@ BOOL wf_map_mirror_mem(wfPeerContext* context)
 	}
 
 	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
+	memset(context->changeBuffer, 0, sizeof(GETCHANGESBUF));
 
 	_tprintf(_T("\n\nConnecting to driver...\n"));
 	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer);
@@ -257,13 +269,16 @@ BOOL wf_map_mirror_mem(wfPeerContext* context)
 		_tprintf(_T("Failed to map shared memory from the driver! Code %d\n"), status);
 	}
 
+	b = (GETCHANGESBUF*)context->changeBuffer;
+	_tprintf(_T("ExtEscape() returned code %d\n"), status);
+
 	return true;
 }
 
 /*
 Unmap the shared memory and release the DC
 */
-BOOL wf_mirror_cleanup(wfPeerContext* context)
+BOOL wf_mirror_cleanup(wfInfo* context)
 {
 	int iResult;
 
@@ -286,4 +301,6 @@ BOOL wf_mirror_cleanup(wfPeerContext* context)
 	}
 
 	free(context->changeBuffer);
+
+	return true;
 }

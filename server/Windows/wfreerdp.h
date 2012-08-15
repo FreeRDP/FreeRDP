@@ -22,16 +22,26 @@
 
 #include <freerdp/freerdp.h>
 
-struct wf_peer_context
+struct wf_info
 {
-	rdpContext _p;
-
 	HDC driverDC;
 	boolean activated;
 	void* changeBuffer;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
+	int subscribers;
+};
+typedef struct wf_info wfInfo;
+
+struct wf_peer_context
+{
+	rdpContext _p;
+
+	wfInfo* wfInfo;
+	boolean activated;
 };
 typedef struct wf_peer_context wfPeerContext;
+
+static wfInfo * wfInfoSingleton;
 
 #endif /* WFREERDP_H */

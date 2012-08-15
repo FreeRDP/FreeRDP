@@ -27,35 +27,56 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-	wf_check_disp_devices(context);
-	wf_disp_device_set_attatch(context, 1);
-	wf_update_mirror_drv(context);
-	wf_map_mirror_mem(context);
+	if(!wfInfoSingleton)
+	{
+		wfInfoSingleton = (wfInfo*)malloc(sizeof(wfInfo)); //free this on shutdown
+		memset(wfInfoSingleton, 0, sizeof(wfInfo));
+	}
+	
+	if(wfInfoSingleton->subscribers == 0)
+	{
+		//only the first peer needs to call this.
+		context->wfInfo = wfInfoSingleton;
+		wf_check_disp_devices(context->wfInfo);
+		wf_disp_device_set_attatch(context->wfInfo, 1);
+		wf_update_mirror_drv(context->wfInfo, 0);
+		wf_map_mirror_mem(context->wfInfo);
+	}
+	++wfInfoSingleton->subscribers;
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
-	if (context)
+	if (context && (wfInfoSingleton->subscribers == 1))
 	{
-		wf_mirror_cleanup(context);
-		wf_disp_device_set_attatch(context, 0);
-		wf_update_mirror_drv(context);
+		//only the last peer needs to call this
+		wf_mirror_cleanup(context->wfInfo);
+		wf_disp_device_set_attatch(context->wfInfo, 0);
+		wf_update_mirror_drv(context->wfInfo, 1);
 	}
+
+	--wfInfoSingleton->subscribers;
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
-	wfPeerContext* context;
-	CHANGES_BUF* buf;
+	wfInfo* info;
+	GETCHANGESBUF* buf;
+	//int derp;
 
-	context = (wfPeerContext*) lpParam;
-	buf = (CHANGES_BUF*)context->changeBuffer;
+	info = wfInfoSingleton;
+	buf = (GETCHANGESBUF*)info->changeBuffer;
 
-	while(1)
+	//derp = 0;
+	while(info->subscribers > 0)
 	{
-		_tprintf(_T("Count = %d\n"), buf->counter);
-		freerdp_usleep(1000000);
+		_tprintf(_T("Count = %lu\n"), buf->buffer->counter);
+		freerdp_sleep(1);
+		//derp++;
 	}
+
+	_tprintf(_T("monitor thread terminating...\n"));
+	return 0;
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -67,8 +88,9 @@ void wf_peer_init(freerdp_peer* client)
 
 	_tprintf(_T("Trying to create a monitor thread...\n"));
 
-	if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client->context, 0, NULL) != 0)
+	if (CreateThread(NULL, 0, wf_peer_mirror_monitor, NULL, 0, NULL) != 0)
 		_tprintf(_T("Created!\n"));
+		
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
