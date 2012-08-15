@@ -9,5 +9,13 @@ if(GID_PATH STREQUAL "NOTFOUND")
 		set(CMAKE_INSTALL_LIBDIR "lib${LIB_SUFFIX}" CACHE PATH "object code libraries (lib)")
 	endif()
 
+	foreach(dir BINDIR LIBDIR)
+	if(NOT IS_ABSOLUTE ${CMAKE_INSTALL_${dir}})
+		set(CMAKE_INSTALL_FULL_${dir} "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_${dir}}")
+	else()
+		set(CMAKE_INSTALL_FULL_${dir} "${CMAKE_INSTALL_${dir}}")
+	endif()
+	endforeach()
+
 	mark_as_advanced(CMAKE_INSTALL_BINDIR CMAKE_INSTALL_LIBDIR)
 endif()
