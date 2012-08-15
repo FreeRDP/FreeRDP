@@ -29,7 +29,8 @@ struct wf_info
 	void* changeBuffer;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
-	int subscribers;
+	int subscribers, threadCnt;
+	HANDLE mutex;
 };
 typedef struct wf_info wfInfo;
 
@@ -39,6 +40,7 @@ struct wf_peer_context
 
 	wfInfo* wfInfo;
 	boolean activated;
+	RFX_CONTEXT* rfx_context;
 };
 typedef struct wf_peer_context wfPeerContext;
 

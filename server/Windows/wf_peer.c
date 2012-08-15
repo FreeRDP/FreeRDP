@@ -27,22 +27,53 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
+	DWORD dRes;
+
 	if(!wfInfoSingleton)
 	{
 		wfInfoSingleton = (wfInfo*)malloc(sizeof(wfInfo)); //free this on shutdown
 		memset(wfInfoSingleton, 0, sizeof(wfInfo));
+
+		wfInfoSingleton->mutex = CreateMutex( 
+        NULL,              // default security attributes
+        FALSE,             // initially not owned
+        NULL);             // unnamed mutex
+
+		if (wfInfoSingleton->mutex == NULL) 
+		{
+			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
+		}
 	}
 	
-	if(wfInfoSingleton->subscribers == 0)
+	dRes = WaitForSingleObject( 
+            wfInfoSingleton->mutex,    // handle to mutex
+            INFINITE);  // no time-out interval
+
+	switch(dRes)
 	{
-		//only the first peer needs to call this.
-		context->wfInfo = wfInfoSingleton;
-		wf_check_disp_devices(context->wfInfo);
-		wf_disp_device_set_attatch(context->wfInfo, 1);
-		wf_update_mirror_drv(context->wfInfo, 0);
-		wf_map_mirror_mem(context->wfInfo);
+		case WAIT_OBJECT_0:
+			if(wfInfoSingleton->subscribers == 0)
+			{
+				//only the first peer needs to call this.
+				context->wfInfo = wfInfoSingleton;
+				wf_check_disp_devices(context->wfInfo);
+				wf_disp_device_set_attatch(context->wfInfo, 1);
+				wf_update_mirror_drv(context->wfInfo, 0);
+				wf_map_mirror_mem(context->wfInfo);
+			}
+			++wfInfoSingleton->subscribers;
+
+			if (! ReleaseMutex(wfInfoSingleton->mutex)) 
+            { 
+                _tprintf(_T("Error releasing mutex\n"));
+            } 
+
+			break;
+
+		default:
+			_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
 	}
-	++wfInfoSingleton->subscribers;
+
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
@@ -60,17 +91,40 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
-	wfInfo* info;
+	DWORD dRes;
 	GETCHANGESBUF* buf;
 	//int derp;
 
-	info = wfInfoSingleton;
-	buf = (GETCHANGESBUF*)info->changeBuffer;
+
+	buf = (GETCHANGESBUF*)wfInfoSingleton->changeBuffer;
 
 	//derp = 0;
-	while(info->subscribers > 0)
+	while(1)//info->subscribers > 0)
 	{
-		_tprintf(_T("Count = %lu\n"), buf->buffer->counter);
+
+		dRes = WaitForSingleObject(
+			wfInfoSingleton->mutex,    // handle to mutex
+            INFINITE);  // no time-out interval
+		switch(dRes)
+		{
+			case WAIT_OBJECT_0:
+				if(wfInfoSingleton->subscribers > 0)
+				{
+					_tprintf(_T("Count = %lu\n"), buf->buffer->counter);
+				}
+
+				if (! ReleaseMutex(wfInfoSingleton->mutex)) 
+				{ 
+					_tprintf(_T("Error releasing mutex\n"));
+				} 
+
+				break;
+
+			default:
+				_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
+		}
+
+
 		freerdp_sleep(1);
 		//derp++;
 	}
@@ -81,6 +135,8 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 void wf_peer_init(freerdp_peer* client)
 {
+	DWORD dRes;
+
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
@@ -88,8 +144,35 @@ void wf_peer_init(freerdp_peer* client)
 
 	_tprintf(_T("Trying to create a monitor thread...\n"));
 
-	if (CreateThread(NULL, 0, wf_peer_mirror_monitor, NULL, 0, NULL) != 0)
-		_tprintf(_T("Created!\n"));
+	if(wfInfoSingleton)
+	{
+		dRes = WaitForSingleObject(
+			wfInfoSingleton->mutex,    // handle to mutex
+            INFINITE);  // no time-out interval
+		switch(dRes)
+		{
+			case WAIT_OBJECT_0:
+				if(wfInfoSingleton->threadCnt == 0)
+				{
+					if (CreateThread(NULL, 0, wf_peer_mirror_monitor, NULL, 0, NULL) != 0)
+						_tprintf(_T("Created!\n"));
+
+					++wfInfoSingleton->threadCnt;
+				}
+
+				if (! ReleaseMutex(wfInfoSingleton->mutex)) 
+				{ 
+					_tprintf(_T("Error releasing mutex\n"));
+				} 
+
+				break;
+
+			default:
+				_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
+		}
+
+
+	}
 		
 }
 
