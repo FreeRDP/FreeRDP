@@ -27,9 +27,13 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context);
 
 void wf_peer_init(freerdp_peer* client);
 
+void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height);
+
 boolean wf_peer_post_connect(freerdp_peer* client);
 boolean wf_peer_activate(freerdp_peer* client);
 
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
+
+wfInfo * wfInfoSingleton;
 
 #endif /* WF_PEER_H */

@@ -145,7 +145,7 @@ If unload is nonzero then the the driver will be asked to remove it self.
 */
 BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
-	int currentScreenPixH, currentScreenPixW, currentScreenBPP;
+	int currentScreenPixHeight, currentScreenPixWidth, currentScreenBPP;
 	HDC dc;
 	LONG status;
 	DWORD* extHdr;
@@ -162,17 +162,21 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 		multimonitor setups
 		*/
 		dc = GetDC(NULL);
-		currentScreenPixH = GetDeviceCaps(dc, HORZRES);
-		currentScreenPixW = GetDeviceCaps(dc, VERTRES);
+		currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
+		currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
 		currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
 		ReleaseDC(NULL, dc);
 
-		_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixH, currentScreenPixW, currentScreenBPP);
+		context->height = currentScreenPixHeight;
+		context->width = currentScreenPixWidth;
+		context->bitsPerPix = currentScreenBPP;
+
+		_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixHeight, currentScreenPixWidth, currentScreenBPP);
 	}
 	else
 	{
-		currentScreenPixH = 0;
-		currentScreenPixW = 0;
+		currentScreenPixHeight = 0;
+		currentScreenPixWidth = 0;
 		currentScreenBPP = 0;
 	}
 	
@@ -188,8 +192,8 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = currentScreenPixW;
-	deviceMode->dmPelsHeight = currentScreenPixH;
+	deviceMode->dmPelsWidth = currentScreenPixWidth;
+	deviceMode->dmPelsHeight = currentScreenPixHeight;
 	deviceMode->dmBitsPerPel = currentScreenBPP;
 	deviceMode->dmPosition.x = 0;
 	deviceMode->dmPosition.y = 0;

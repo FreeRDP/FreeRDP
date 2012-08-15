@@ -21,6 +21,7 @@
 #define WFREERDP_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/codec/rfx.h>
 
 struct wf_info
 {
@@ -29,7 +30,12 @@ struct wf_info
 	void* changeBuffer;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
-	int subscribers, threadCnt;
+	int subscribers;
+	int threadCnt;
+	int height;
+	int width;
+	int bitsPerPix;
+
 	HANDLE mutex;
 };
 typedef struct wf_info wfInfo;
@@ -41,9 +47,11 @@ struct wf_peer_context
 	wfInfo* wfInfo;
 	boolean activated;
 	RFX_CONTEXT* rfx_context;
+	STREAM* s;
+
 };
 typedef struct wf_peer_context wfPeerContext;
 
-static wfInfo * wfInfoSingleton;
+extern wfInfo * wfInfoSingleton;
 
 #endif /* WFREERDP_H */

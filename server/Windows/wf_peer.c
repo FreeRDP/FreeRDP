@@ -20,10 +20,14 @@
 #include <winpr/windows.h>
 #include <freerdp/listener.h>
 #include <freerdp/utils/sleep.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/utils/stream.h>
 
 #include "wf_mirage.h"
 
 #include "wf_peer.h"
+
+//extern wfInfo * wfInfoSingleton;
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
@@ -60,6 +64,14 @@ void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 				wf_disp_device_set_attatch(context->wfInfo, 1);
 				wf_update_mirror_drv(context->wfInfo, 0);
 				wf_map_mirror_mem(context->wfInfo);
+
+				context->rfx_context = rfx_context_new();
+				context->rfx_context->mode = RLGR3;
+				context->rfx_context->width = context->wfInfo->width;
+				context->rfx_context->height = context->wfInfo->height;
+
+				rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+				context->s = stream_new(65536);
 			}
 			++wfInfoSingleton->subscribers;
 
@@ -84,6 +96,9 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 		wf_mirror_cleanup(context->wfInfo);
 		wf_disp_device_set_attatch(context->wfInfo, 0);
 		wf_update_mirror_drv(context->wfInfo, 1);
+
+		stream_free(context->s);
+		rfx_context_free(context->rfx_context);
 	}
 
 	--wfInfoSingleton->subscribers;
@@ -93,13 +108,12 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
 	DWORD dRes;
 	GETCHANGESBUF* buf;
-	//int derp;
+	freerdp_peer* client;
 
-
+	client = (freerdp_peer*)lpParam;
 	buf = (GETCHANGESBUF*)wfInfoSingleton->changeBuffer;
 
-	//derp = 0;
-	while(1)//info->subscribers > 0)
+	while(1)
 	{
 
 		dRes = WaitForSingleObject(
@@ -111,6 +125,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 				if(wfInfoSingleton->subscribers > 0)
 				{
 					_tprintf(_T("Count = %lu\n"), buf->buffer->counter);
+					//wf_peer_rfx_update(client, 0, 0, wfInfoSingleton->width, wfInfoSingleton->height);
 				}
 
 				if (! ReleaseMutex(wfInfoSingleton->mutex)) 
@@ -126,11 +141,58 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 
 		freerdp_sleep(1);
-		//derp++;
 	}
 
 	_tprintf(_T("monitor thread terminating...\n"));
 	return 0;
+}
+
+void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
+{
+	STREAM* s;
+	wfInfo* wfi;
+	RFX_RECT rect;
+	rdpUpdate* update;
+	wfPeerContext* wfp;
+	SURFACE_BITS_COMMAND* cmd;
+	GETCHANGESBUF* buf;
+
+	printf("encode\n");
+	
+	update = client->update;
+	wfp = (wfPeerContext*) client->context;
+	cmd = &update->surface_bits_command;
+	wfi = wfp->wfInfo;
+	buf = (GETCHANGESBUF*)wfi->changeBuffer;
+
+	if (width * height <= 0)
+		return;
+
+	stream_clear(wfp->s);
+	stream_set_pos(wfp->s, 0);
+	s = wfp->s;
+		
+	rect.x = 0;
+	rect.y = 0;
+	rect.width = width;
+	rect.height = height;
+
+	rfx_compose_message(wfp->rfx_context, s, &rect, 1,
+			(uint8*) buf->Userbuffer, width, height, width * 4);
+
+	cmd->destLeft = x;
+	cmd->destTop = y;
+	cmd->destRight = x + width;
+	cmd->destBottom = y + height;
+
+	cmd->bpp = 32;
+	cmd->codecID = client->settings->rfx_codec_id;
+	cmd->width = width;
+	cmd->height = height;
+	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapData = stream_get_head(s);
+
+	//update->SurfaceBits(update->context, cmd);
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -154,7 +216,7 @@ void wf_peer_init(freerdp_peer* client)
 			case WAIT_OBJECT_0:
 				if(wfInfoSingleton->threadCnt == 0)
 				{
-					if (CreateThread(NULL, 0, wf_peer_mirror_monitor, NULL, 0, NULL) != 0)
+					if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
 						_tprintf(_T("Created!\n"));
 
 					++wfInfoSingleton->threadCnt;
