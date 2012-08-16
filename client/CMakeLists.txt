@@ -38,3 +38,7 @@ else()
 	# Build Windows Client
 	add_subdirectory(Windows)
 endif()
+
+if(APPLE)
+	add_subdirectory(Mac)
+endif()
