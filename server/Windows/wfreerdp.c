@@ -44,6 +44,7 @@ int g_thread_count = 0;
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
+	int dRes;
 	int rcount;
 	void* rfds[32];
 	wfPeerContext* context;
@@ -88,7 +89,45 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		}
 
 		if(wfInfoSingleton)
-			wf_peer_rfx_update(client, 0, 0, wfInfoSingleton->width, wfInfoSingleton->height);
+		{
+			//wf_peer_rfx_update(client, 0, 0, wfInfoSingleton->width, wfInfoSingleton->height);
+			
+			dRes = WaitForSingleObject(
+				wfInfoSingleton->encodeMutex,    // handle to mutex
+				0);  // dont wait
+
+			switch(dRes)
+			{
+				case WAIT_OBJECT_0:
+
+					if( ( ((wfPeerContext*)client->context)->activated == false) || ( (wfInfoSingleton->nextUpdate - wfInfoSingleton->lastUpdate) == 0) )
+					{
+						break;
+					}
+					
+					//printf("send %d\n", stream_get_length(((wfPeerContext*) client->context)->s));
+					client->update->SurfaceBits(client->update->context, &client->update->surface_bits_command);
+
+					wfInfoSingleton->lastUpdate = wfInfoSingleton->nextUpdate;
+					wfInfoSingleton->invalid_x1 = wfInfoSingleton->width;
+					wfInfoSingleton->invalid_x2 = 0;
+					wfInfoSingleton->invalid_y1 = wfInfoSingleton->height;
+					wfInfoSingleton->invalid_y2 = 0;
+
+					if (! ReleaseMutex(wfInfoSingleton->encodeMutex)) 
+					{ 
+						_tprintf(_T("Error releasing mutex\n"));
+					} 
+
+					break;
+
+				case WAIT_TIMEOUT:
+					break;
+
+				default:
+					_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
+			}
+		}
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

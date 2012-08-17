@@ -36,7 +36,18 @@ struct wf_info
 	int width;
 	int bitsPerPix;
 
-	HANDLE mutex;
+	HANDLE mutex, encodeMutex;
+
+	unsigned long lastUpdate;
+	unsigned long nextUpdate;
+
+	long invalid_x1;
+	long invalid_y1;
+
+	long invalid_x2;
+	long invalid_y2;
+
+	
 };
 typedef struct wf_info wfInfo;
 

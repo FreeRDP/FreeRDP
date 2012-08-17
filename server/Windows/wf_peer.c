@@ -47,6 +47,16 @@ void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 		{
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
+
+		wfInfoSingleton->encodeMutex = CreateMutex( 
+        NULL,              // default security attributes
+        FALSE,             // initially not owned
+        NULL);             // unnamed mutex
+
+		if (wfInfoSingleton->encodeMutex == NULL) 
+		{
+			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
+		}
 	}
 	
 	dRes = WaitForSingleObject( 
@@ -90,8 +100,10 @@ void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
+	
 	if (context && (wfInfoSingleton->subscribers == 1))
 	{
+		--wfInfoSingleton->subscribers;
 		//only the last peer needs to call this
 		wf_mirror_cleanup(context->wfInfo);
 		wf_disp_device_set_attatch(context->wfInfo, 0);
@@ -99,16 +111,20 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 		stream_free(context->s);
 		rfx_context_free(context->rfx_context);
+	}	
+	else
+	{
+		--wfInfoSingleton->subscribers;
 	}
-
-	--wfInfoSingleton->subscribers;
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
 	DWORD dRes;
+	DWORD start, end, diff;
 	GETCHANGESBUF* buf;
 	freerdp_peer* client;
+	unsigned long i;
 
 	client = (freerdp_peer*)lpParam;
 	buf = (GETCHANGESBUF*)wfInfoSingleton->changeBuffer;
@@ -116,6 +132,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	while(1)
 	{
 
+		start = GetTickCount();
 		dRes = WaitForSingleObject(
 			wfInfoSingleton->mutex,    // handle to mutex
             INFINITE);  // no time-out interval
@@ -124,8 +141,21 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			case WAIT_OBJECT_0:
 				if(wfInfoSingleton->subscribers > 0)
 				{
-					_tprintf(_T("Count = %lu\n"), buf->buffer->counter);
-					//wf_peer_rfx_update(client, 0, 0, wfInfoSingleton->width, wfInfoSingleton->height);
+					wfInfoSingleton->nextUpdate = buf->buffer->counter;
+					//_tprintf(_T("Count = %lu\n"), wfInfoSingleton->nextUpdate);
+
+
+					//todo: modulus
+					//need to go through the "queue"
+					for(i = wfInfoSingleton->lastUpdate; i <= wfInfoSingleton->nextUpdate; ++i)
+					{
+						wfInfoSingleton->invalid_x1 = min(wfInfoSingleton->invalid_x1, buf->buffer->pointrect[i].rect.left);
+						wfInfoSingleton->invalid_x2 = max(wfInfoSingleton->invalid_x2, buf->buffer->pointrect[i].rect.right);
+						wfInfoSingleton->invalid_y1 = min(wfInfoSingleton->invalid_y1, buf->buffer->pointrect[i].rect.top);
+						wfInfoSingleton->invalid_y2 = max(wfInfoSingleton->invalid_y2, buf->buffer->pointrect[i].rect.bottom);
+					}
+
+					wf_rfx_encode(client);
 				}
 
 				if (! ReleaseMutex(wfInfoSingleton->mutex)) 
@@ -139,14 +169,24 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 				_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
 		}
 
+		end = GetTickCount();
+		diff = end - start;
+		if(diff < 42)
+		{
+			Sleep(42 - diff);
+		}
+		
 
-		freerdp_sleep(1);
+		//Sleep(42);
+		//freerdp_usleep(41667);
+		
 	}
 
 	_tprintf(_T("monitor thread terminating...\n"));
 	return 0;
 }
 
+/*
 void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
 	STREAM* s;
@@ -156,8 +196,6 @@ void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	wfPeerContext* wfp;
 	SURFACE_BITS_COMMAND* cmd;
 	GETCHANGESBUF* buf;
-
-	printf("encode\n");
 	
 	update = client->update;
 	wfp = (wfPeerContext*) client->context;
@@ -165,17 +203,31 @@ void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	wfi = wfp->wfInfo;
 	buf = (GETCHANGESBUF*)wfi->changeBuffer;
 
-	if (width * height <= 0)
+	if( (wfp->activated == false) ||
+		( (wfi->nextUpdate - wfi->lastUpdate) == 0) )
+		return;
+
+	printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
+	printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
+	wfi->lastUpdate = wfi->nextUpdate;
+
+	if ( (wfi->invalid_x1 >= wfi->invalid_x2) ||
+		(wfi->invalid_y1 >= wfi->invalid_y2) )
 		return;
 
 	stream_clear(wfp->s);
 	stream_set_pos(wfp->s, 0);
 	s = wfp->s;
 		
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = width;
-	rect.height = height;
+	rect.x = wfi->invalid_x1;
+	rect.y = wfi->invalid_y1;
+	rect.width = wfi->invalid_x2;
+	rect.height = wfi->invalid_y2;
+
+	wfi->invalid_x1 = wfi->width;
+	wfi->invalid_x2 = 0;
+	wfi->invalid_y1 = wfi->height;
+	wfi->invalid_y2 = 0;
 
 	rfx_compose_message(wfp->rfx_context, s, &rect, 1,
 			(uint8*) buf->Userbuffer, width, height, width * 4);
@@ -192,7 +244,69 @@ void wf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
 
-	//update->SurfaceBits(update->context, cmd);
+	update->SurfaceBits(update->context, cmd);
+}
+*/
+
+void wf_rfx_encode(freerdp_peer* client)
+{
+	STREAM* s;
+	wfInfo* wfi;
+	RFX_RECT rect;
+	rdpUpdate* update;
+	wfPeerContext* wfp;
+	SURFACE_BITS_COMMAND* cmd;
+	GETCHANGESBUF* buf;
+	long height, width;
+	
+	update = client->update;
+	wfp = (wfPeerContext*) client->context;
+	cmd = &update->surface_bits_command;
+	wfi = wfp->wfInfo;
+	buf = (GETCHANGESBUF*)wfi->changeBuffer;
+
+	
+	if( (wfp->activated == false) )//||		( (wfi->nextUpdate - wfi->lastUpdate) == 0) )
+		return;
+
+	/*
+	printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
+	printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
+	wfi->lastUpdate = wfi->nextUpdate;
+	*/
+	if ( (wfi->invalid_x1 >= wfi->invalid_x2) ||
+		(wfi->invalid_y1 >= wfi->invalid_y2) )
+		return;
+
+	width = wfi->invalid_x2 - wfi->invalid_x1;
+	height = wfi->invalid_y2 - wfi->invalid_y1;
+
+	stream_clear(wfp->s);
+	stream_set_pos(wfp->s, 0);
+	s = wfp->s;
+		
+	rect.x = wfi->invalid_x1;
+	rect.y = wfi->invalid_y1;
+	rect.width = width;
+	rect.height = width;
+
+
+	rfx_compose_message(wfp->rfx_context, s, &rect, 1,
+			(uint8*) buf->Userbuffer, width, height, width * 4);
+
+	cmd->destLeft = wfi->invalid_x1;
+	cmd->destTop = wfi->invalid_y1;
+	cmd->destRight = wfi->invalid_x1 + width;
+	cmd->destBottom = wfi->invalid_y1 + height;
+
+
+	cmd->bpp = 32;
+	cmd->codecID = client->settings->rfx_codec_id;
+	cmd->width = width;
+	cmd->height = height;
+	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapData = stream_get_head(s);
+
 }
 
 void wf_peer_init(freerdp_peer* client)
