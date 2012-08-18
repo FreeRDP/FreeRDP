@@ -24,6 +24,8 @@ add_executable(wfreerdp-server
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_info.c
+	wf_info.h
 	wfreerdp.c
 	wfreerdp.h)
 

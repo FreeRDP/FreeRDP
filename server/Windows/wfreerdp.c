@@ -42,6 +42,8 @@ int g_thread_count = 0;
 
 //extern wfInfo * wfInfoSingleton;
 
+BOOL derp = false;
+
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
 	int dRes;
@@ -88,6 +90,7 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 		}
 
+		/*
 		if(wfInfoSingleton)
 		{
 			//wf_peer_rfx_update(client, 0, 0, wfInfoSingleton->width, wfInfoSingleton->height);
@@ -128,6 +131,7 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 					_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
 			}
 		}
+		*/
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

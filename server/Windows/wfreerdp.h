@@ -22,34 +22,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
-
-struct wf_info
-{
-	HDC driverDC;
-	boolean activated;
-	void* changeBuffer;
-	LPTSTR deviceKey;
-	TCHAR deviceName[32];
-	int subscribers;
-	int threadCnt;
-	int height;
-	int width;
-	int bitsPerPix;
-
-	HANDLE mutex, encodeMutex;
-
-	unsigned long lastUpdate;
-	unsigned long nextUpdate;
-
-	long invalid_x1;
-	long invalid_y1;
-
-	long invalid_x2;
-	long invalid_y2;
-
-	
-};
-typedef struct wf_info wfInfo;
+#include "wf_info.h"
 
 struct wf_peer_context
 {

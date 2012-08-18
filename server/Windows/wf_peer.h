@@ -21,6 +21,7 @@
 #define WF_PEER_H
 
 #include "wfreerdp.h"
+#include "wf_info.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context);
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context);
@@ -34,6 +35,8 @@ boolean wf_peer_post_connect(freerdp_peer* client);
 boolean wf_peer_activate(freerdp_peer* client);
 
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
+
+void wf_peer_send_changes();
 
 wfInfo * wfInfoSingleton;
 
