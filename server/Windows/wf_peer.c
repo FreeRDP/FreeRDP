@@ -46,13 +46,13 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	DWORD dRes;
 	DWORD start, end, diff;
 	DWORD rate;
-	GETCHANGESBUF* buf;
+	
 	freerdp_peer* client;
 	unsigned long i;
 
 	rate = 1000;
 	client = (freerdp_peer*)lpParam;
-	buf = (GETCHANGESBUF*)wfInfoSingleton->changeBuffer;
+	
 	//todo: make sure we dont encode after no clients
 	while(1)
 	{
@@ -62,7 +62,12 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 		if(wf_info_has_subscribers(wfInfoSingleton))
 		{
-			printf("Fake Encode!\n");
+			wf_info_update_changes(wfInfoSingleton);
+			if(wf_info_have_updates(wfInfoSingleton))
+			{
+				wf_info_find_invalid_region(wfInfoSingleton);
+				printf("Fake Encode!\n");
+			}			
 		}
 
 
@@ -75,7 +80,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			case WAIT_OBJECT_0:
 				if(wfInfoSingleton->subscribers > 0)
 				{
-					wfInfoSingleton->nextUpdate = buf->buffer->counter;
+					wfInfoSingleton->nextUpdate = buf->buffer->counter; ///////////////////////////// 
 					//_tprintf(_T("Count = %lu\n"), wfInfoSingleton->nextUpdate);
 
 
@@ -87,7 +92,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 						wfInfoSingleton->invalid_x2 = max(wfInfoSingleton->invalid_x2, buf->buffer->pointrect[i].rect.right);
 						wfInfoSingleton->invalid_y1 = min(wfInfoSingleton->invalid_y1, buf->buffer->pointrect[i].rect.top);
 						wfInfoSingleton->invalid_y2 = max(wfInfoSingleton->invalid_y2, buf->buffer->pointrect[i].rect.bottom);
-					}
+					}///////////////////////////////
 
 					wf_rfx_encode(client);
 				}
@@ -340,7 +345,24 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 void wf_peer_send_changes()
 {
-	//get can_send_mutex
+	int dRes;
 
-	printf("sending\n");
+	//are we currently encoding?
+	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
+	switch(dRes)
+	{
+	case WAIT_OBJECT_0:
+		//are there changes to send?
+		if(!wf_info_have_updates(wfInfoSingleton))
+			return;
+
+		wf_info_updated(wfInfoSingleton);
+		printf("\tSend...\n");
+
+		break;
+
+	default: 
+        printf("Something else happened!!! dRes = %d\n", dRes);
+	}
+
 }

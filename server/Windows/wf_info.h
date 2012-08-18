@@ -58,6 +58,10 @@ void wf_info_mirror_init(wfInfo* info, wfPeerContext* context);
 void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context);
 
 BOOL wf_info_has_subscribers(wfInfo* info);
+BOOL wf_info_have_updates(wfInfo* info);
+void wf_info_updated(wfInfo* info);
+void wf_info_update_changes(wfInfo* info);
+void wf_info_find_invalid_region(wfInfo* info);
 
 
 #endif

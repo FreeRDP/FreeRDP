@@ -174,3 +174,55 @@ BOOL wf_info_has_subscribers(wfInfo* info)
 		return true;
 	return false;
 }
+
+
+BOOL wf_info_have_updates(wfInfo* info)
+{
+	BOOL ret;
+	ret = true;
+	WaitForSingleObject(info->mutex, INFINITE); 
+	if(info->nextUpdate == info->lastUpdate)
+		ret = false;
+	ReleaseMutex(info->mutex);
+
+	return ret;
+}
+
+
+void wf_info_updated(wfInfo* info)
+{
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	info->lastUpdate = info->nextUpdate;
+	ReleaseMutex(info->mutex);
+}
+
+
+void wf_info_update_changes(wfInfo* info)
+{
+	GETCHANGESBUF* buf;
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	buf = (GETCHANGESBUF*)info->changeBuffer;
+	info->nextUpdate = buf->buffer->counter;
+	ReleaseMutex(info->mutex);
+}
+
+
+void wf_info_find_invalid_region(wfInfo* info)
+{
+	int i;
+	GETCHANGESBUF* buf;
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	buf = (GETCHANGESBUF*)info->changeBuffer;
+	for(i = info->lastUpdate; i <= info->nextUpdate; ++i)
+	{
+		info->invalid_x1 = min(info->invalid_x1, buf->buffer->pointrect[i].rect.left);
+		info->invalid_x2 = max(info->invalid_x2, buf->buffer->pointrect[i].rect.right);
+		info->invalid_y1 = min(info->invalid_y1, buf->buffer->pointrect[i].rect.top);
+		info->invalid_y2 = max(info->invalid_y2, buf->buffer->pointrect[i].rect.bottom);
+	}
+	ReleaseMutex(info->mutex);
+}
+
