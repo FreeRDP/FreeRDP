@@ -93,6 +93,9 @@ void wf_info_mirror_init(wfInfo * info, wfPeerContext* context)
 
 				rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 				context->s = stream_new(65536);
+
+				printf("Start Encoder\n");
+				ReleaseMutex(info->encodeMutex);
 			}
 			++info->subscribers;
 
@@ -114,6 +117,8 @@ void wf_info_mirror_init(wfInfo * info, wfPeerContext* context)
 //in fact i may not even care about subscribers
 void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context)
 {
+	DWORD dRes;
+
 	WaitForSingleObject(info->mutex, INFINITE); 
 	if (context && (info->subscribers == 1))
 	{
@@ -125,10 +130,47 @@ void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context)
 
 		stream_free(context->s);
 		rfx_context_free(context->rfx_context);
-	}	
+
+		printf("Stop encoder\n");
+		dRes = WaitForSingleObject(info->encodeMutex, INFINITE);
+
+		switch (dRes) 
+        {
+            // The thread got ownership of the mutex
+            case WAIT_OBJECT_0: 
+				printf("Thread %d locked encodeMutex...\n", GetCurrentThreadId());
+                break; 
+
+            // The thread got ownership of an abandoned mutex
+            // The database is in an indeterminate state
+            default: 
+                printf("Something else happened!!! dRes = %d\n", dRes); 
+        }
+    }	
 	else
 	{
 		--info->subscribers;
 	}
+
 	ReleaseMutex(info->mutex);
+
+	/***************
+	Note: if we released the last subscriber,
+	block the encoder until next subscriber
+	***************/
+	
+}
+
+
+BOOL wf_info_has_subscribers(wfInfo* info)
+{
+	int subs;
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	subs = info->subscribers;
+	ReleaseMutex(info->mutex);
+
+	if(info->subscribers > 0)
+		return true;
+	return false;
 }

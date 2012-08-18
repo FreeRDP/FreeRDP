@@ -58,6 +58,14 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	{
 
 		start = GetTickCount();
+
+
+		if(wf_info_has_subscribers(wfInfoSingleton))
+		{
+			printf("Fake Encode!\n");
+		}
+
+
 		/*
 		dRes = WaitForSingleObject(
 			wfInfoSingleton->mutex,    // handle to mutex

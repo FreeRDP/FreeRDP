@@ -57,5 +57,7 @@ wfInfo* wf_info_init(wfInfo* info);
 void wf_info_mirror_init(wfInfo* info, wfPeerContext* context);
 void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context);
 
+BOOL wf_info_has_subscribers(wfInfo* info);
+
 
 #endif
