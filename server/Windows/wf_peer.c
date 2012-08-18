@@ -66,48 +66,10 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			if(wf_info_have_updates(wfInfoSingleton))
 			{
 				wf_info_find_invalid_region(wfInfoSingleton);
-				printf("Fake Encode!\n");
+				//printf("Fake Encode!\n");
+				wf_rfx_encode(client);
 			}			
 		}
-
-
-		/*
-		dRes = WaitForSingleObject(
-			wfInfoSingleton->mutex,    // handle to mutex
-            INFINITE);  // no time-out interval
-		switch(dRes)
-		{
-			case WAIT_OBJECT_0:
-				if(wfInfoSingleton->subscribers > 0)
-				{
-					wfInfoSingleton->nextUpdate = buf->buffer->counter; ///////////////////////////// 
-					//_tprintf(_T("Count = %lu\n"), wfInfoSingleton->nextUpdate);
-
-
-					//todo: modulus
-					//need to go through the "queue"
-					for(i = wfInfoSingleton->lastUpdate; i <= wfInfoSingleton->nextUpdate; ++i)
-					{
-						wfInfoSingleton->invalid_x1 = min(wfInfoSingleton->invalid_x1, buf->buffer->pointrect[i].rect.left);
-						wfInfoSingleton->invalid_x2 = max(wfInfoSingleton->invalid_x2, buf->buffer->pointrect[i].rect.right);
-						wfInfoSingleton->invalid_y1 = min(wfInfoSingleton->invalid_y1, buf->buffer->pointrect[i].rect.top);
-						wfInfoSingleton->invalid_y2 = max(wfInfoSingleton->invalid_y2, buf->buffer->pointrect[i].rect.bottom);
-					}///////////////////////////////
-
-					wf_rfx_encode(client);
-				}
-
-				if (! ReleaseMutex(wfInfoSingleton->mutex)) 
-				{ 
-					_tprintf(_T("Error releasing mutex\n"));
-				} 
-
-				break;
-
-			default:
-				_tprintf(_T("Error waiting for mutex: %d\n"), dRes);
-		}
-		*/
 
 		end = GetTickCount();
 		diff = end - start;
@@ -116,10 +78,6 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			printf("sleeping for %d ms...\n", rate - diff);
 			Sleep(rate - diff);
 		}
-		
-
-		//Sleep(42);
-		//freerdp_usleep(41667);
 		
 	}
 
@@ -199,6 +157,7 @@ void wf_rfx_encode(freerdp_peer* client)
 	SURFACE_BITS_COMMAND* cmd;
 	GETCHANGESBUF* buf;
 	long height, width;
+	int dRes;
 	
 	update = client->update;
 	wfp = (wfPeerContext*) client->context;
@@ -210,45 +169,53 @@ void wf_rfx_encode(freerdp_peer* client)
 	if( (wfp->activated == false) )//||		( (wfi->nextUpdate - wfi->lastUpdate) == 0) )
 		return;
 
-	/*
-	printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
-	printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
+	if ( (wfi->invalid_x1 >= wfi->invalid_x2) || (wfi->invalid_y1 >= wfi->invalid_y2) )
+			return;
+
+	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
+	switch(dRes)
+	{
+	case WAIT_OBJECT_0:
+
+		printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
+		printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
 	
-	*/
 
-	wfi->lastUpdate = wfi->nextUpdate;
-	if ( (wfi->invalid_x1 >= wfi->invalid_x2) ||
-		(wfi->invalid_y1 >= wfi->invalid_y2) )
-		return;
+		wfi->lastUpdate = wfi->nextUpdate;
 
-	width = wfi->invalid_x2 - wfi->invalid_x1;
-	height = wfi->invalid_y2 - wfi->invalid_y1;
+		width = wfi->invalid_x2 - wfi->invalid_x1;
+		height = wfi->invalid_y2 - wfi->invalid_y1;
 
-	stream_clear(wfp->s);
-	stream_set_pos(wfp->s, 0);
-	s = wfp->s;
+		stream_clear(wfp->s);
+		stream_set_pos(wfp->s, 0);
+		s = wfp->s;
 		
-	rect.x = wfi->invalid_x1;
-	rect.y = wfi->invalid_y1;
-	rect.width = width;
-	rect.height = width;
+		rect.x = wfi->invalid_x1;
+		rect.y = wfi->invalid_y1;
+		rect.width = width;
+		rect.height = width;
 
 
-	rfx_compose_message(wfp->rfx_context, s, &rect, 1,
-			(uint8*) buf->Userbuffer, width, height, width * 4);
+		rfx_compose_message(wfp->rfx_context, s, &rect, 1,
+				(uint8*) buf->Userbuffer, width, height, width * 4);
 
-	cmd->destLeft = wfi->invalid_x1;
-	cmd->destTop = wfi->invalid_y1;
-	cmd->destRight = wfi->invalid_x1 + width;
-	cmd->destBottom = wfi->invalid_y1 + height;
+		cmd->destLeft = wfi->invalid_x1;
+		cmd->destTop = wfi->invalid_y1;
+		cmd->destRight = wfi->invalid_x1 + width;
+		cmd->destBottom = wfi->invalid_y1 + height;
 
 
-	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
+		cmd->bpp = 32;
+		cmd->codecID = client->settings->rfx_codec_id;
+		cmd->width = width;
+		cmd->height = height;
+		cmd->bitmapDataLength = stream_get_length(s);
+		cmd->bitmapData = stream_get_head(s);
+		break;
+
+	default: 
+        printf("\n\nSomething else happened!!! dRes = %d\n", dRes);
+	}
 
 }
 
@@ -343,7 +310,7 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 }
 
-void wf_peer_send_changes()
+void wf_peer_send_changes(rdpUpdate* update)
 {
 	int dRes;
 
@@ -358,6 +325,7 @@ void wf_peer_send_changes()
 
 		wf_info_updated(wfInfoSingleton);
 		printf("\tSend...\n");
+		update->SurfaceBits(update->context, &update->surface_bits_command);
 
 		break;
 

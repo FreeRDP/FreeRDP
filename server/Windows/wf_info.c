@@ -226,3 +226,15 @@ void wf_info_find_invalid_region(wfInfo* info)
 	ReleaseMutex(info->mutex);
 }
 
+
+void wf_info_clear_invalid_region(wfInfo* info)
+{
+	
+	WaitForSingleObject(info->mutex, INFINITE); 
+	info->lastUpdate = info->nextUpdate;
+	info->invalid_x1 = info->width;
+	info->invalid_x2 = 0;
+	info->invalid_y1 = info->height;
+	info->invalid_y2 = 0;
+	ReleaseMutex(info->mutex);
+}

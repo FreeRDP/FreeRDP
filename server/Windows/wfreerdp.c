@@ -90,6 +90,9 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 		}
 
+		if(client->activated)
+			wf_peer_send_changes(client->update);
+
 		/*
 		if(wfInfoSingleton)
 		{

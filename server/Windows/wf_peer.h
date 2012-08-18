@@ -36,7 +36,7 @@ boolean wf_peer_activate(freerdp_peer* client);
 
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
 
-void wf_peer_send_changes();
+void wf_peer_send_changes(rdpUpdate* update);
 
 wfInfo * wfInfoSingleton;
 
