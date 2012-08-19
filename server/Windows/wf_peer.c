@@ -211,6 +211,8 @@ void wf_rfx_encode(freerdp_peer* client)
 		cmd->height = height;
 		cmd->bitmapDataLength = stream_get_length(s);
 		cmd->bitmapData = stream_get_head(s);
+
+		ReleaseMutex(wfInfoSingleton->encodeMutex);
 		break;
 
 	default: 
@@ -315,22 +317,32 @@ void wf_peer_send_changes(rdpUpdate* update)
 	int dRes;
 
 	//are we currently encoding?
-	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
+	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, 0);
 	switch(dRes)
 	{
 	case WAIT_OBJECT_0:
 		//are there changes to send?
 		if(!wf_info_have_updates(wfInfoSingleton))
-			return;
+		{
+			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			break;
+		}
+			
 
 		wf_info_updated(wfInfoSingleton);
 		printf("\tSend...\n");
 		update->SurfaceBits(update->context, &update->surface_bits_command);
 
+		ReleaseMutex(wfInfoSingleton->encodeMutex);
 		break;
+
+	case WAIT_TIMEOUT:
+		break;
+
 
 	default: 
         printf("Something else happened!!! dRes = %d\n", dRes);
 	}
 
+	
 }
