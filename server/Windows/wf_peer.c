@@ -166,11 +166,11 @@ void wf_rfx_encode(freerdp_peer* client)
 	buf = (GETCHANGESBUF*)wfi->changeBuffer;
 
 	
-	if( (wfp->activated == false) )//||		( (wfi->nextUpdate - wfi->lastUpdate) == 0) )
+	if( (wfp->activated == false) || (wf_info_has_subscribers(wfi) == false) )
 		return;
 
-	if ( (wfi->invalid_x1 >= wfi->invalid_x2) || (wfi->invalid_y1 >= wfi->invalid_y2) )
-			return;
+	if ( !wf_info_have_invalid_region(wfi) )
+		return;
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
 	switch(dRes)
@@ -322,7 +322,7 @@ void wf_peer_send_changes(rdpUpdate* update)
 	{
 	case WAIT_OBJECT_0:
 		//are there changes to send?
-		if(!wf_info_have_updates(wfInfoSingleton))
+		if( !wf_info_have_updates(wfInfoSingleton) || !wf_info_have_invalid_region(wfInfoSingleton) )
 		{
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
@@ -332,7 +332,7 @@ void wf_peer_send_changes(rdpUpdate* update)
 		wf_info_updated(wfInfoSingleton);
 		printf("\tSend...\n");
 		update->SurfaceBits(update->context, &update->surface_bits_command);
-
+		//wf_info_clear_invalid_region(wfInfoSingleton);
 		ReleaseMutex(wfInfoSingleton->encodeMutex);
 		break;
 

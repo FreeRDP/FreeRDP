@@ -238,3 +238,10 @@ void wf_info_clear_invalid_region(wfInfo* info)
 	info->invalid_y2 = 0;
 	ReleaseMutex(info->mutex);
 }
+
+BOOL wf_info_have_invalid_region(wfInfo* info)
+{
+	if((info->invalid_x1 >= info->invalid_x2) || (info->invalid_y1 >= info->invalid_y2))
+		return false;
+	return true;
+}

@@ -63,6 +63,7 @@ void wf_info_updated(wfInfo* info);
 void wf_info_update_changes(wfInfo* info);
 void wf_info_find_invalid_region(wfInfo* info);
 void wf_info_clear_invalid_region(wfInfo* info);
+BOOL wf_info_have_invalid_region(wfInfo* info);
 
 
 #endif
