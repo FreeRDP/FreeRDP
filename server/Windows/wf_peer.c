@@ -95,6 +95,7 @@ void wf_rfx_encode(freerdp_peer* client)
 	SURFACE_BITS_COMMAND* cmd;
 	GETCHANGESBUF* buf;
 	long height, width;
+	long offset;
 	int dRes;
 	
 	update = client->update;
@@ -145,14 +146,16 @@ void wf_rfx_encode(freerdp_peer* client)
 		rect.width = width;
 		rect.height = height;
 
+		offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
 
+		printf("width = %d, height = %d\n", width, height);
 		rfx_compose_message(wfp->rfx_context, s, &rect, 1,
-				(uint8*) buf->Userbuffer, width, height, width * 4);
+				((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
 
 		cmd->destLeft = wfi->invalid_x1;
 		cmd->destTop = wfi->invalid_y1;
 		cmd->destRight = wfi->invalid_x1 + width;
-		cmd->destBottom = wfi->invalid_y2 + height;
+		cmd->destBottom = wfi->invalid_y1 + height;
 
 
 		cmd->bpp = 32;
@@ -220,10 +223,9 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
-	printf("But we will try resizing to %dx%dx%d\n",
-		wf_info_get_height(wfInfoSingleton),
+	printf("But we will try resizing to %dx%d\n",
 		wf_info_get_width(wfInfoSingleton),
-		32
+		wf_info_get_height(wfInfoSingleton)
 		);
 
 	client->settings->width = wf_info_get_width(wfInfoSingleton);
@@ -267,7 +269,10 @@ void wf_peer_send_changes(rdpUpdate* update)
 
 		wf_info_updated(wfInfoSingleton);
 		printf("\tSend...");
-		printf("\t(%d, %d), (%d, %d)\n", wfInfoSingleton->invalid_x1, wfInfoSingleton->invalid_y1, wfInfoSingleton->invalid_x2, wfInfoSingleton->invalid_y2);
+		printf("\t(%d, %d), (%d, %d) [%dx%d]\n",
+			update->surface_bits_command.destLeft, update->surface_bits_command.destTop,
+			update->surface_bits_command.destRight, update->surface_bits_command.destBottom,
+			update->surface_bits_command.width, update->surface_bits_command.height);
 		update->SurfaceBits(update->context, &update->surface_bits_command);
 		//wf_info_clear_invalid_region(wfInfoSingleton);
 		wfInfoSingleton->enc_data = false;
