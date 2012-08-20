@@ -49,7 +49,7 @@ struct wf_info
 	long invalid_x2;
 	long invalid_y2;
 
-	
+	BOOL enc_data;
 };
 typedef struct wf_info wfInfo;
 

@@ -216,7 +216,7 @@ void wf_info_find_invalid_region(wfInfo* info)
 
 	WaitForSingleObject(info->mutex, INFINITE); 
 	buf = (GETCHANGESBUF*)info->changeBuffer;
-	for(i = info->lastUpdate; i <= info->nextUpdate; ++i)
+	for(i = info->lastUpdate; i != info->nextUpdate; i = (i+1) % MAXCHANGES_BUF )
 	{
 		info->invalid_x1 = min(info->invalid_x1, buf->buffer->pointrect[i].rect.left);
 		info->invalid_x2 = max(info->invalid_x2, buf->buffer->pointrect[i].rect.right);
