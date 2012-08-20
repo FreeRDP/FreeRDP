@@ -65,5 +65,9 @@ void wf_info_find_invalid_region(wfInfo* info);
 void wf_info_clear_invalid_region(wfInfo* info);
 BOOL wf_info_have_invalid_region(wfInfo* info);
 
+int wf_info_get_height(wfInfo* info);
+int wf_info_get_width(wfInfo* info);
+
+
 
 #endif

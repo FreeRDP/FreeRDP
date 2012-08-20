@@ -261,3 +261,25 @@ BOOL wf_info_have_invalid_region(wfInfo* info)
 		return false;
 	return true;
 }
+
+int wf_info_get_height(wfInfo* info)
+{
+	int ret;
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	ret = info->height;
+	ReleaseMutex(info->mutex);
+
+	return ret;
+}
+
+int wf_info_get_width(wfInfo* info)
+{
+	int ret;
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	ret = info->width;
+	ReleaseMutex(info->mutex);
+
+	return ret;
+}

@@ -220,6 +220,17 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
+	printf("But we will try resizing to %dx%dx%d\n",
+		wf_info_get_height(wfInfoSingleton),
+		wf_info_get_width(wfInfoSingleton),
+		32
+		);
+
+	client->settings->width = wf_info_get_width(wfInfoSingleton);
+	client->settings->height = wf_info_get_height(wfInfoSingleton);
+
+	client->update->DesktopResize(client->update->context);
+
 	return true;
 }
 
