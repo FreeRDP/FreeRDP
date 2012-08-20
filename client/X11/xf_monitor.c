@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,6 +120,16 @@ boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		vscreen->area.top = MIN(vscreen->monitors[i].area.top, vscreen->area.top);
 		vscreen->area.bottom = MAX(vscreen->monitors[i].area.bottom, vscreen->area.bottom);
 	}
+
+	//if no monitor information is present then make sure variables are set accordingly
+	if (settings->num_monitors == 0)
+	{
+	        vscreen->area.left = 0;
+	        vscreen->area.right = settings->width -1;
+                vscreen->area.top = 0;
+                vscreen->area.bottom = settings->height - 1;
+	}
+	
 
 	if (settings->num_monitors)
 	{

@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WIN32
 #define __USE_LARGEFILE64
 #define _LARGEFILE_SOURCE
@@ -26,7 +30,6 @@
 #include <sys/time.h>
 #endif
 
-#include "config.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,10 +202,14 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? true : false);
 		if (file->is_dir)
 		{
-			if (mkdir(file->fullpath, mode) != 0)
+			//Should only create the directory if the disposition allows for it
+			if ((CreateDisposition == FILE_OPEN_IF) || (CreateDisposition == FILE_CREATE))
 			{
+			  if (mkdir(file->fullpath, mode) != 0)
+			  {
 				file->err = errno;
 				return true;
+			  }
 			}
 		}
 		exists = false;

@@ -18,12 +18,23 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -238,18 +249,19 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 
 TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
+	TSMF_PRESENTATION* presentation;
 	pthread_t thid = pthread_self();
 	FILE* fout = NULL;
 	fout = fopen("/tmp/tsmf.tid", "wt");
+	
 	if (fout)
 	{
 		fprintf(fout, "%d\n", (int) thid);
 		fclose(fout);
 	}
 
-	TSMF_PRESENTATION* presentation;
-
 	presentation = tsmf_presentation_find_by_id(guid);
+
 	if (presentation)
 	{
 		DEBUG_WARN("duplicated presentation id!");
@@ -319,6 +331,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 	if (sample->data)
 	{
 		t = get_current_time();
+
 		if (stream->next_start_time > t &&
 			(sample->end_time >= presentation->audio_start_time ||
 			sample->end_time < stream->last_end_time))
@@ -726,13 +739,14 @@ static void tsmf_stream_change_volume(TSMF_STREAM* stream, uint32 newVolume, uin
 {
 	if (!stream)
 		return;
-
-	if (!stream->decoder)
-		return;
-
-	if (stream->decoder->ChangeVolume)
+	
+	if (stream->decoder != NULL && stream->decoder->ChangeVolume)
 	{
 		stream->decoder->ChangeVolume(stream->decoder, newVolume, muted);
+	}
+	else if (stream->audio != NULL && stream->audio->ChangeVolume)
+	{
+		stream->audio->ChangeVolume(stream->audio, newVolume, muted);
 	}
 }
 
@@ -1006,14 +1020,17 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
 	uint32 data_size, uint8* data)
 {
+	TSMF_SAMPLE* sample;
+
 	pthread_mutex_lock(&tsmf_mutex);
+	
 	if (TERMINATING)
 	{
 		pthread_mutex_unlock(&tsmf_mutex);
 		return;
 	}
+	
 	pthread_mutex_unlock(&tsmf_mutex);
-	TSMF_SAMPLE* sample;
 
 	sample = xnew(TSMF_SAMPLE);
 
@@ -1032,6 +1049,8 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	list_enqueue(stream->sample_list, sample);
 	freerdp_thread_unlock(stream->thread);
 }
+
+#ifndef _WIN32
 
 static void tsmf_signal_handler(int s)
 {
@@ -1069,14 +1088,18 @@ static void tsmf_signal_handler(int s)
 	}
 }
 
+#endif
+
 void tsmf_media_init(void)
 {
+#ifndef _WIN32
 	struct sigaction sigtrap;
 	sigtrap.sa_handler = tsmf_signal_handler;
 	sigemptyset(&sigtrap.sa_mask);
 	sigtrap.sa_flags = 0;
 	sigaction(SIGINT, &sigtrap, 0);
 	sigaction(SIGUSR1, &sigtrap, 0);
+#endif
 
 	if (presentation_list == NULL)
 		presentation_list = list_new();

@@ -27,20 +27,25 @@ set(RDPDR_SRCS
 	irp.c
 	irp.h
 	rdpdr_main.c
-	rdpdr_main.h
-)
+	rdpdr_main.h)
 
 add_library(rdpdr ${RDPDR_SRCS})
 set_target_properties(rdpdr PROPERTIES PREFIX "")
 
-target_link_libraries(rdpdr freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rdpdr freerdp)
+else()
+	target_link_libraries(rdpdr freerdp-utils)
+endif()
 
 install(TARGETS rdpdr DESTINATION ${FREERDP_PLUGIN_PATH})
 
-add_subdirectory(disk)
-add_subdirectory(printer)
-add_subdirectory(parallel)
-add_subdirectory(serial)
+if(NOT WIN32)
+	add_subdirectory(disk)
+	add_subdirectory(printer)
+	add_subdirectory(parallel)
+	add_subdirectory(serial)
+endif()
 
 if(WITH_PCSC)
 	add_subdirectory(smartcard)

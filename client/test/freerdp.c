@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WIN32
 #include <unistd.h>
 #include <pthread.h>
@@ -231,6 +235,7 @@ int tfreerdp_run(freerdp* instance)
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
+		FD_ZERO(&wfds_set);
 
 		for (i = 0; i < rcount; i++)
 		{

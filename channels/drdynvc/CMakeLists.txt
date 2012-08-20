@@ -28,10 +28,16 @@ set(DRDYNVC_SRCS
 add_library(drdynvc ${DRDYNVC_SRCS})
 set_target_properties(drdynvc PROPERTIES PREFIX "")
 
-target_link_libraries(drdynvc freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(drdynvc freerdp)
+else()
+	target_link_libraries(drdynvc freerdp-utils)
+endif()
 
 install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
 
-add_subdirectory(tsmf)
-add_subdirectory(audin)
+if(NOT WIN32)
+	add_subdirectory(tsmf)
+endif()
 
+add_subdirectory(audin)

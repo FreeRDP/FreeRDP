@@ -19,9 +19,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
@@ -128,7 +133,7 @@ static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* e
 	while (data && data->size > 0)
 	{
 		rail_process_plugin_data(rail_order, data);
-		data = (RDP_PLUGIN_DATA*)(((void*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*)((char *)(data) + data->size);
 	}
 }
 

@@ -18,11 +18,18 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include <sys/types.h>
+
 #include <sys/shm.h>
 #include <sys/ipc.h>
 
@@ -235,7 +242,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 {
 	Atom window_type;
 
-	if ((ex_style & WS_EX_TOPMOST) || (ex_style & WS_EX_TOOLWINDOW))
+	if (/*(ex_style & WS_EX_TOPMOST) ||*/ (ex_style & WS_EX_TOOLWINDOW))
 	{
 		/*
 		 * Tooltips and menu items should be unmanaged windows
@@ -254,6 +261,12 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		xf_SetWindowUnlisted(xfi, window);
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
+	//TOPMOST window that is not a toolwindow is treated like a regular window(ie. task manager).
+	//Want to do this here, since the window may have type WS_POPUP
+	else if (ex_style & WS_EX_TOPMOST)
+        {
+                window_type = xfi->_NET_WM_WINDOW_TYPE_NORMAL;
+        }
 	else if (style & WS_POPUP)
 	{
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
@@ -274,6 +287,19 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name)
 {
 	XStoreName(xfi->display, window->handle, name);
+}
+
+static void xf_SetWindowPID(xfInfo* xfi, xfWindow* window, pid_t pid)
+{
+	Atom am_wm_pid;
+
+	if (pid == 0)
+		pid = getpid();
+
+	am_wm_pid = XInternAtom(xfi->display, "_NET_WM_PID", False);
+
+	XChangeProperty(xfi->display, window->handle, am_wm_pid, XA_CARDINAL,
+			32, PropModeReplace, (unsigned char *)&pid, 1);
 }
 
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
@@ -297,7 +323,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		window->is_transient = false;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
-			xfi->workArea.x, xfi->workArea.y, xfi->width, xfi->height, 0, xfi->depth, InputOutput, xfi->visual,
+			xfi->workArea.x, xfi->workArea.y, xfi->workArea.width, xfi->workArea.height, 0, xfi->depth, InputOutput, xfi->visual,
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
 			CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
 
@@ -331,6 +357,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		xf_ResizeDesktopWindow(xfi, window, width, height);
 		xf_SetWindowDecorations(xfi, window, decorations);
+		xf_SetWindowPID(xfi, window, 0);
 
 		input_mask =
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
@@ -358,6 +385,13 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
         	      XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
         	}
         	while (xevent.type != VisibilityNotify);
+
+		//The XCreateWindow call will start the window in the upper-left corner of our current
+		//monitor instead of the upper-left monitor for remote app mode(which uses all monitors).
+		//This extra call after the window is mapped will position the login window correctly
+		if (xfi->instance->settings->remote_app)
+                        XMoveWindow(xfi->display, window->handle, 0, 0);
+
 	}
 
 	xf_SetWindowText(xfi, window, name);
@@ -446,6 +480,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->local_move.state = LMS_NOT_ACTIVE;
 	window->is_mapped = false;
 	window->is_transient = false;
+	window->rail_state = 0;
+        window->rail_ignore_configure = false;
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -473,6 +509,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 		xfree(class);
 	}
 
+	//Set the input mode hint for the WM
+        XWMHints *InputModeHint = XAllocWMHints();
+        InputModeHint->flags = (1L << 0);
+        InputModeHint->input = True;
+        XSetWMHints(xfi->display, window->handle, InputModeHint);
+        XFree(InputModeHint);
+
+
 	XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 
 	input_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask |
@@ -488,6 +532,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	xf_SetWindowDecorations(xfi, window, window->decorations);
 	xf_SetWindowStyle(xfi, window, wnd->style, wnd->extendedStyle);
+	xf_SetWindowPID(xfi, window, 0);
 	xf_ShowWindow(xfi, window, WINDOW_SHOW);
 
 	XMapWindow(xfi->display, window->handle);
@@ -544,6 +589,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 	window->local_move.root_x = x; 
 	window->local_move.root_y = y;
 	window->local_move.state = LMS_STARTING;
+	window->local_move.direction = direction;
 
 	XUngrabPointer(xfi->display, CurrentTime);
 
@@ -644,11 +690,37 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 			break;
 
 		case WINDOW_SHOW_MAXIMIZED:
-			XRaiseWindow(xfi->display, window->handle);
+			//Set the window as maximized
+			xf_SendClientEvent(xfi, window, xfi->_NET_WM_STATE, 4,
+                                   1,
+                                   XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
+                                   XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False),
+                                   0);
+			
+			//This is a workaround for the case where the window is maximized locally before the rail server is told to maximize
+			//the window, this appears to be a race condition where the local window with incomplete data and once the window is 
+			//actually maximized on the server - an update of the new areas may not happen. So, we simply to do a full update of
+			//the entire window once the rail server notifies us that the window is now maximized.
+			if (window->rail_state == WINDOW_SHOW_MAXIMIZED)
+                               xf_UpdateWindowArea(xfi, window, 0, 0, window->window->windowWidth, window->window->windowHeight);
 			break;
 
 		case WINDOW_SHOW:
-			XMapWindow(xfi->display, window->handle);
+			//Ensure the window is not maximized
+			xf_SendClientEvent(xfi, window, xfi->_NET_WM_STATE, 4,
+                                   0,
+                                   XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
+                                   XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False),
+                                   0);
+			
+			//Ignore configure requests until both the Maximized properties have been processed
+			//to prevent condition where WM overrides size of request due to one or both of these properties
+			//still being set - which causes a position adjustment to be sent back to the server
+			//thus causing the window to not return to its original size
+			if (window->rail_state == WINDOW_SHOW_MAXIMIZED)
+                               window->rail_ignore_configure = true;
+		
+
 			if (window->is_transient)
 			{
 				xf_SetWindowUnlisted(xfi, window);
@@ -656,6 +728,9 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 			break;
 	}
 
+	//Save off the current rail state of this window
+	window->rail_state = state;
+	
 	XFlush(xfi->display);
 }
 
@@ -713,7 +788,8 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	}
 
 #ifdef WITH_XEXT
-	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	//This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
+	//XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	xfree(xrects);
@@ -738,7 +814,8 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	}
 
 #ifdef WITH_XEXT
-	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	//This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
+	//XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	xfree(xrects);
@@ -750,15 +827,30 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	rdpWindow* wnd;
 	wnd = window->window;
 
-	ax = x + wnd->windowOffsetX;
-	ay = y + wnd->windowOffsetY;
+	//Remote app mode uses visibleOffset instead of windowOffset
+	if (!xfi->remote_app)
+	{
+		ax = x + wnd->windowOffsetX;
+	        ay = y + wnd->windowOffsetY;	
 
-	if (ax + width > wnd->windowOffsetX + wnd->windowWidth)
-		width = (wnd->windowOffsetX + wnd->windowWidth - 1) - ax;
+		if (ax + width > wnd->windowOffsetX + wnd->windowWidth)
+			width = (wnd->windowOffsetX + wnd->windowWidth - 1) - ax;
 
-	if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
-		height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
+		if (ay + height > wnd->windowOffsetY + wnd->windowHeight)
+			height = (wnd->windowOffsetY + wnd->windowHeight - 1) - ay;
+	}
+	else
+	{
+		ax = x + wnd->visibleOffsetX;
+                ay = y + wnd->visibleOffsetY;
 
+		if (ax + width > wnd->visibleOffsetX + wnd->windowWidth)
+                        width = (wnd->visibleOffsetX + wnd->windowWidth - 1) - ax;
+		
+		if (ay + height > wnd->visibleOffsetY + wnd->windowHeight)
+                        height = (wnd->visibleOffsetY + wnd->windowHeight - 1) - ay;
+	}
+	
 	if (xfi->sw_gdi)
 	{
 		XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,

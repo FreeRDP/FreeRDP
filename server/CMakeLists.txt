@@ -29,9 +29,9 @@ if(NOT WIN32)
 	if(WITH_X11)
 		add_subdirectory(X11)
 	endif()
-
-	# Build Server Channels library
-	add_subdirectory(channels)
 else()
 	add_subdirectory(Windows)
 endif()
+
+# Build Server Channels library
+add_subdirectory(channels)

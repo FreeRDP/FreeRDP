@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -194,7 +199,7 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 
 	while (data && data->size > 0)
 	{
-		pDVCPluginEntry = freerdp_load_plugin((char*) data->data[0], "DVCPluginEntry");
+		pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_plugin((char*) data->data[0], "DVCPluginEntry");
 
 		if (pDVCPluginEntry != NULL)
 		{
@@ -206,7 +211,7 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 			pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((void*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((uint8*) data) + data->size);
 	}
 
 	return 0;
@@ -414,7 +419,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 C
 	if (channel->dvc_data)
 	{
 		/* Fragmented data */
-		if (stream_get_length(channel->dvc_data) + data_size > stream_get_size(channel->dvc_data))
+		if (stream_get_length(channel->dvc_data) + data_size > (uint32) stream_get_size(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
 			stream_free(channel->dvc_data);

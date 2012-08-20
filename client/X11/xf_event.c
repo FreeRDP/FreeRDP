@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -366,8 +370,18 @@ static boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 		XGrabKeyboard(xfi->display, xfi->window->handle, true, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	if (app)
-		xf_rail_send_activate(xfi, event->xany.window, true);
-
+	{
+	       xf_rail_send_activate(xfi, event->xany.window, true);
+		
+       	       rdpWindow* window;
+               rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+               
+               window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+       
+               //Update the server with any window changes that occured while the window was not focused.
+               if (window != NULL)
+                       xf_rail_adjust_position(xfi, window);
+	}
 	xf_kbd_focus_in(xfi);
 
 	if (app != true)
@@ -506,7 +520,11 @@ static boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
-		if (app && ! event->xconfigure.send_event)
+		//additonal checks for not in a local move and not ignoring configure to send position update to server,   
+		//also should the window not be focused then do not send to server yet(ie. resizing using window decoration). 
+		//The server will be updated when the window gets refocused.
+		if (app && (!event->xconfigure.send_event || xfi->window->local_move.state == LMS_NOT_ACTIVE) 
+		   && !xfw->rail_ignore_configure && xfi->focused)
 			xf_rail_adjust_position(xfi, window);
         }
 
@@ -539,7 +557,10 @@ static boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 		if (window != NULL)
 		{
 			/* local restore event */
-			xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+			//This is now handled as part of the PropertyNotify
+               		//Doing this here would inhibit the ability to restore a maximized window
+               		//that is minimized back to the maximized state
+			//xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
 			xfWindow *xfw = (xfWindow*) window->extra;
 			xfw->is_mapped = true;
 		}
@@ -613,6 +634,92 @@ static boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 
 static boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 {
+	//This section handles sending the appropriate commands to the rail server
+	//when the window has been minimized, maximized, restored locally 
+	//ie. not using the buttons on the rail window itself
+	if (app == true)
+	{
+	        rdpWindow* window;
+	        rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+	
+	        window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);           
+	
+	        if ((((Atom)event->xproperty.atom == xfi->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
+	            (((Atom)event->xproperty.atom == xfi->WM_STATE) && (event->xproperty.state != PropertyDelete)))
+	        {
+	                boolean status;
+	                boolean maxVert = false;
+	                boolean maxHorz = false;
+	                boolean minimized = false;
+	                unsigned long nitems;
+	                unsigned long bytes;
+	                unsigned char* prop;
+	                int i;
+	
+	                status = xf_GetWindowProperty(xfi, event->xproperty.window,
+	                xfi->_NET_WM_STATE, 12, &nitems, &bytes, &prop);
+	
+	                if (status != true) {
+	                               DEBUG_X11_LMS("No return _NET_WM_STATE, window is not maximized");
+	                }               
+	
+	                for (i=0;i<nitems;i++)
+	                {
+	                        if ((Atom) ((uint16 **) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
+	                        {
+	                                maxVert = true;
+	                        }
+
+	                        if ((Atom) ((uint16 **)prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+	                        {
+	                                maxHorz = true;
+	                        }
+	                }
+
+	                XFree(prop);            
+	
+	                status = xf_GetWindowProperty(xfi, event->xproperty.window,
+	                xfi->WM_STATE, 1, &nitems, &bytes, &prop);
+	
+	                if (status != true) {
+	                        DEBUG_X11_LMS("No return WM_STATE, window is not minimized");
+	                }
+	                else
+	                {
+	                        //If the window is in the iconic state
+	                        if (((uint32) *prop == 3))
+	                        {
+	                                minimized = true;
+	                        }
+	                        else
+	                                minimized = false;
+	                       
+	                        XFree(prop);
+	                 }
+	
+
+	                 if (maxVert && maxHorz && !minimized && (xfi->window->rail_state != WINDOW_SHOW_MAXIMIZED))
+                         {
+                                DEBUG_X11_LMS("Send SC_MAXIMIZE command to rail server.");
+                                xfi->window->rail_state = WINDOW_SHOW_MAXIMIZED;        
+                                xf_rail_send_client_system_command(xfi, window->windowId, SC_MAXIMIZE);
+                         }
+                         else if (minimized && (xfi->window->rail_state != WINDOW_SHOW_MINIMIZED))
+                         {
+                                DEBUG_X11_LMS("Send SC_MINIMIZE command to rail server.");
+                                xfi->window->rail_state = WINDOW_SHOW_MINIMIZED;
+                                xf_rail_send_client_system_command(xfi, window->windowId, SC_MINIMIZE);
+                         }
+                         else if (!minimized && !maxVert && !maxHorz && (xfi->window->rail_state != WINDOW_SHOW))
+                         {
+                                DEBUG_X11_LMS("Send SC_RESTORE command to rail server");
+                                xfi->window->rail_state = WINDOW_SHOW;
+                                xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+                         }
+               }       
+        }
+	
+
 	if (app != true)
 	{
 		if (xf_cliprdr_process_property_notify(xfi, event))
@@ -631,6 +738,15 @@ static boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*e
 	{
 		case LMS_NOT_ACTIVE:
 			// No local move in progress, nothing to do
+
+			//Prevent Configure from happening during indeterminant state of Horz or Vert Max only
+		        if ( (event->type == ConfigureNotify) && xfi->window->rail_ignore_configure)
+                        {
+                               DEBUG_X11_LMS("ConfigureNotify Event Ignored");
+                               xfi->window->rail_ignore_configure = false;
+                               return true;
+                        }
+
 			break;
 		case LMS_STARTING:
 			// Local move initiated by RDP server, but we
@@ -677,9 +793,11 @@ static boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*e
 				case VisibilityNotify:
 				case PropertyNotify:
 				case Expose:
+				case GravityNotify:
 					// Keep us up to date on position
 					break;
 				default:
+					DEBUG_X11_LMS("Event Type to break LMS: %s", X11_EVENT_STRINGS[event->type]);
 					// Any other event terminates move
 					xf_rail_end_local_move(xfi, window);
 					break;

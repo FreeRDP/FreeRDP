@@ -19,13 +19,16 @@
 
 set(RDPSND_SRCS
 	rdpsnd_main.c
-	rdpsnd_main.h
-)
+	rdpsnd_main.h)
 
 add_library(rdpsnd ${RDPSND_SRCS})
 set_target_properties(rdpsnd PROPERTIES PREFIX "")
 
-target_link_libraries(rdpsnd freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rdpsnd freerdp)
+else()
+	target_link_libraries(rdpsnd freerdp-utils)
+endif()
 
 install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
 
@@ -35,5 +38,9 @@ endif()
 
 if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
+endif()
+
+if(WITH_MACAUDIO)
+	add_subdirectory(mac_audio)
 endif()
 

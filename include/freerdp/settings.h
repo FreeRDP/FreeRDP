@@ -269,7 +269,8 @@ struct rdp_settings
 	ALIGN64 uint32 encryption_level; /* 28 */
 	ALIGN64 boolean authentication; /* 29 */
 	ALIGN64 uint32 negotiationFlags; /* 30 */
-	ALIGN64 uint64 paddingB[48 - 31]; /* 31 */
+	ALIGN64 boolean security_layer_negotiation; /* 31 */
+	ALIGN64 uint64 paddingB[48 - 32]; /* 32 */
 
 	/* Connection Settings */
 	ALIGN64 uint32 port; /* 48 */
@@ -295,7 +296,10 @@ struct rdp_settings
 	ALIGN64 boolean local; /* 68 */
 	ALIGN64 boolean authentication_only; /* 69 */
 	ALIGN64 boolean from_stdin; /* 70 */
-	ALIGN64 uint64 paddingC[80 - 71]; /* 71 */
+	ALIGN64 boolean send_preconnection_pdu; /* 71 */
+	ALIGN64 uint32 preconnection_id; /* 72 */
+	ALIGN64 char* preconnection_blob; /* 73 */
+	ALIGN64 uint64 paddingC[80 - 74]; /* 74 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */
@@ -394,8 +398,12 @@ struct rdp_settings
 	ALIGN64 uint32 rfx_codec_id; /* 282 */
 	ALIGN64 uint32 ns_codec_id; /* 283 */
 	ALIGN64 uint32 rfx_codec_mode; /* 284 */
-	ALIGN64 uint32 frame_acknowledge; /* 285 */
-	ALIGN64 uint64 paddingM[296 - 286]; /* 286 */
+	ALIGN64 boolean frame_acknowledge; /* 285 */
+	ALIGN64 boolean jpeg_codec; /* 286 */
+	ALIGN64 uint32 jpeg_codec_id; /* 287 */
+	ALIGN64 uint32 jpeg_quality; /* 288 */
+	ALIGN64 uint32 v3_codec_id; /* 289 */
+	ALIGN64 uint64 paddingM[296 - 290]; /* 290 */
 
 	/* Recording */
 	ALIGN64 boolean dump_rfx; /* 296 */

@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
@@ -25,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
@@ -477,7 +482,7 @@ static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, RDP_PLUGIN_DATA* da
 
 static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 {
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)plugin;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 	RDP_PLUGIN_DATA* data;
 	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
@@ -489,10 +494,11 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	rdpsnd->latency = -1;
 
 	data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+
 	while (data && data->size > 0)
 	{
 		rdpsnd_process_plugin_data(rdpsnd, data);
-		data = (RDP_PLUGIN_DATA*) (((void*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*) (((uint8*) data) + data->size);
 	}
 
 	if (rdpsnd->device == NULL)
@@ -504,7 +510,22 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		{
 			default_data[0].data[0] = "alsa";
 			default_data[0].data[1] = "default";
-			rdpsnd_load_device_plugin(rdpsnd, "alsa", default_data);
+
+			if (!rdpsnd_load_device_plugin(rdpsnd, "alsa", default_data))
+			{
+				default_data[0].data[0] = "macaudio";
+				default_data[0].data[1] = "default";
+				
+				rdpsnd_load_device_plugin(rdpsnd, "macaudio", default_data);
+			}
+			else
+			{
+				printf("rdpsnd: successfully loaded alsa plugin\n");
+			}
+		}
+		else
+		{
+			printf("rdpsnd: successfully loaded pulseaudio plugin\n");
 		}
 	}
 	if (rdpsnd->device == NULL)

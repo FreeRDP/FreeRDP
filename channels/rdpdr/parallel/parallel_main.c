@@ -18,16 +18,27 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
 #include <fcntl.h>
-#include <termios.h>
 #include <errno.h>
+
+#ifndef _WIN32
+#include <termios.h>
 #include <strings.h>
 #include <sys/ioctl.h>
+#endif
+
 #ifdef __LINUX__
 #include <linux/ppdev.h>
 #include <linux/parport.h>
@@ -74,6 +85,7 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);
+
 	if (parallel->file < 0)
 	{
 		irp->IoStatus = STATUS_ACCESS_DENIED;
@@ -163,6 +175,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	DEBUG_SVC("Length %u Offset %llu", Length, Offset);
 
 	len = Length;
+
 	while (len > 0)
 	{
 		status = write(parallel->file, stream_get_tail(irp->input), len);

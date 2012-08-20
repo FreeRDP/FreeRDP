@@ -1,9 +1,7 @@
 # WinPR: Windows Portable Runtime
 # winpr cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,18 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(sysinfo)
-add_subdirectory(bcrypt)
-add_subdirectory(dsparse)
-add_subdirectory(rpc)
-add_subdirectory(sspicli)
-add_subdirectory(sspi)
-add_subdirectory(registry)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)
+
+add_subdirectory(include)
+
+add_subdirectory(libwinpr)
 
 add_subdirectory(tools)
 
