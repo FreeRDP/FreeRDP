@@ -65,7 +65,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			wf_info_update_changes(wfInfoSingleton);
 			if(wf_info_have_updates(wfInfoSingleton))
 			{
-				wf_info_find_invalid_region(wfInfoSingleton);
+				//wf_info_find_invalid_region(wfInfoSingleton);
 				//printf("Fake Encode!\n");
 				wf_rfx_encode(client);
 			}			
@@ -117,6 +117,8 @@ void wf_rfx_encode(freerdp_peer* client)
 	{
 	case WAIT_OBJECT_0:
 
+		wf_info_find_invalid_region(wfInfoSingleton);
+
 		if( (wfp->activated == false) ||
 			(wf_info_has_subscribers(wfi) == false) ||
 			!wf_info_have_invalid_region(wfi) )
@@ -138,10 +140,10 @@ void wf_rfx_encode(freerdp_peer* client)
 		stream_set_pos(wfp->s, 0);
 		s = wfp->s;
 		
-		rect.x = wfi->invalid_x1;
-		rect.y = wfi->invalid_y1;
+		rect.x = 0;
+		rect.y = 0;
 		rect.width = width;
-		rect.height = width;
+		rect.height = height;
 
 
 		rfx_compose_message(wfp->rfx_context, s, &rect, 1,
@@ -150,7 +152,7 @@ void wf_rfx_encode(freerdp_peer* client)
 		cmd->destLeft = wfi->invalid_x1;
 		cmd->destTop = wfi->invalid_y1;
 		cmd->destRight = wfi->invalid_x1 + width;
-		cmd->destBottom = wfi->invalid_y1 + height;
+		cmd->destBottom = wfi->invalid_y2 + height;
 
 
 		cmd->bpp = 32;

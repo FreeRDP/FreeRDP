@@ -216,8 +216,24 @@ void wf_info_find_invalid_region(wfInfo* info)
 
 	WaitForSingleObject(info->mutex, INFINITE); 
 	buf = (GETCHANGESBUF*)info->changeBuffer;
+
+	if(info->enc_data == false)
+	{
+		info->invalid_x1 = 1920;//info->width;
+		info->invalid_x2 = 0;
+		info->invalid_y1 = 1200;// info->height;
+		info->invalid_y2 = 0;
+	}
+
+	printf("\tFIND = (%d, %d), (%d, %d)\n", info->invalid_x1, info->invalid_y1, info->invalid_x2, info->invalid_y2);
 	for(i = info->lastUpdate; i != info->nextUpdate; i = (i+1) % MAXCHANGES_BUF )
 	{
+		/*printf("\t(%d, %d), (%d, %d)\n", 
+			buf->buffer->pointrect[i].rect.left,
+			buf->buffer->pointrect[i].rect.top,
+			buf->buffer->pointrect[i].rect.right,
+			buf->buffer->pointrect[i].rect.bottom);
+		*/
 		info->invalid_x1 = min(info->invalid_x1, buf->buffer->pointrect[i].rect.left);
 		info->invalid_x2 = max(info->invalid_x2, buf->buffer->pointrect[i].rect.right);
 		info->invalid_y1 = min(info->invalid_y1, buf->buffer->pointrect[i].rect.top);
