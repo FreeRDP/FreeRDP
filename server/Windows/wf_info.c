@@ -114,7 +114,7 @@ void wf_info_mirror_init(wfInfo * info, wfPeerContext* context)
 
 
 //todo: i think i can replace all the context->info here with info
-//in fact i may not even care about subscribers
+//in fact it may not even care about subscribers
 void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context)
 {
 	DWORD dRes;
@@ -122,29 +122,28 @@ void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context)
 	WaitForSingleObject(info->mutex, INFINITE); 
 	if (context && (info->subscribers == 1))
 	{
-		--info->subscribers;
-		//only the last peer needs to call this
-		wf_mirror_cleanup(context->wfInfo);
-		wf_disp_device_set_attatch(context->wfInfo, 0);
-		wf_update_mirror_drv(context->wfInfo, 1);
-
-		stream_free(context->s);
-		rfx_context_free(context->rfx_context);
-
-		printf("Stop encoder\n");
+		
 		dRes = WaitForSingleObject(info->encodeMutex, INFINITE);
-
 		switch (dRes) 
         {
             // The thread got ownership of the mutex
             case WAIT_OBJECT_0: 
-				printf("Thread %d locked encodeMutex...\n", GetCurrentThreadId());
+				--info->subscribers;
+				//only the last peer needs to call this
+				wf_mirror_cleanup(context->wfInfo);
+				wf_disp_device_set_attatch(context->wfInfo, 0);
+				wf_update_mirror_drv(context->wfInfo, 1);
+
+				stream_free(context->s);
+				rfx_context_free(context->rfx_context);
+
+				printf("Stop encoder\n");
                 break; 
 
             // The thread got ownership of an abandoned mutex
             // The database is in an indeterminate state
             default: 
-                printf("Something else happened!!! dRes = %d\n", dRes); 
+                printf("wf_info_subscriber_release: Something else happened!!! dRes = %d\n", dRes); 
         }
     }	
 	else
@@ -282,4 +281,22 @@ int wf_info_get_width(wfInfo* info)
 	ReleaseMutex(info->mutex);
 
 	return ret;
+}
+
+int wf_info_get_thread_count(wfInfo* info)
+{
+	int ret;
+	WaitForSingleObject(info->mutex, INFINITE); 
+	ret = info->threadCnt;
+	ReleaseMutex(info->mutex);
+	return ret;
+}
+
+
+void wf_info_set_thread_count(wfInfo* info, int count)
+{
+
+	WaitForSingleObject(info->mutex, INFINITE); 
+	info->threadCnt = count;
+	ReleaseMutex(info->mutex);
 }

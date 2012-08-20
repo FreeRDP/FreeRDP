@@ -82,6 +82,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	}
 
 	_tprintf(_T("monitor thread terminating...\n"));
+	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1 );
 	return 0;
 }
 
@@ -98,20 +99,7 @@ void wf_rfx_encode(freerdp_peer* client)
 	long offset;
 	int dRes;
 	
-	update = client->update;
 	wfp = (wfPeerContext*) client->context;
-	cmd = &update->surface_bits_command;
-	wfi = wfp->wfInfo;
-	buf = (GETCHANGESBUF*)wfi->changeBuffer;
-
-	/*
-	if( (wfp->activated == false) || (wf_info_has_subscribers(wfi) == false) )
-		return;
-
-	if ( !wf_info_have_invalid_region(wfi) )
-		return;
-
-	*/
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
 	switch(dRes)
@@ -121,18 +109,20 @@ void wf_rfx_encode(freerdp_peer* client)
 		wf_info_find_invalid_region(wfInfoSingleton);
 
 		if( (wfp->activated == false) ||
-			(wf_info_has_subscribers(wfi) == false) ||
-			!wf_info_have_invalid_region(wfi) )
+			(wf_info_has_subscribers(wfInfoSingleton) == false) ||
+			!wf_info_have_invalid_region(wfInfoSingleton) )
 		{
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
 		}
 
+		update = client->update;
+		cmd = &update->surface_bits_command;
+		wfi = wfp->wfInfo;
+		buf = (GETCHANGESBUF*)wfi->changeBuffer;
+
 		//printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
 		//printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
-	
-
-		//wfi->lastUpdate = wfi->nextUpdate;
 
 		width = wfi->invalid_x2 - wfi->invalid_x1;
 		height = wfi->invalid_y2 - wfi->invalid_y1;
@@ -174,8 +164,13 @@ void wf_rfx_encode(freerdp_peer* client)
 		ReleaseMutex(wfInfoSingleton->encodeMutex);
 		break;
 
+	case WAIT_ABANDONED:
+
+		printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... releasing...\n", dRes);
+		ReleaseMutex(wfInfoSingleton->encodeMutex);
+		break;
 	default: 
-        printf("\n\nSomething else happened!!! dRes = %d\n", dRes);
+        printf("\n\nwf_rfx_encode: Something else happened!!! dRes = %d\n", dRes);
 	}
 
 }
@@ -189,11 +184,15 @@ void wf_peer_init(freerdp_peer* client)
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 	freerdp_peer_context_new(client);
 
-	_tprintf(_T("Trying to create a monitor thread...\n"));
+	if(!wf_info_get_thread_count(wfInfoSingleton))
+	{
+		_tprintf(_T("Trying to create a monitor thread...\n"));
 
-	if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
-		_tprintf(_T("Created!\n"));
-		
+		if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
+			_tprintf(_T("Created!\n"));
+
+		wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) + 1 );
+	}
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
@@ -286,7 +285,7 @@ void wf_peer_send_changes(rdpUpdate* update)
 
 
 	default: 
-        printf("Something else happened!!! dRes = %d\n", dRes);
+        printf("wf_peer_send_changes: Something else happened!!! dRes = %d\n", dRes);
 	}
 
 	
