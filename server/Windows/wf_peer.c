@@ -50,7 +50,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	freerdp_peer* client;
 	unsigned long i;
 
-	rate = 1000;
+	rate = 42;
 	client = (freerdp_peer*)lpParam;
 	
 	//todo: make sure we dont encode after no clients
@@ -75,7 +75,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 		diff = end - start;
 		if(diff < rate)
 		{
-			printf("sleeping for %d ms...\n", rate - diff);
+			//printf("sleeping for %d ms...\n", rate - diff);
 			Sleep(rate - diff);
 		}
 		
@@ -128,11 +128,11 @@ void wf_rfx_encode(freerdp_peer* client)
 			break;
 		}
 
-		printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
-		printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
+		//printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
+		//printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
 	
 
-		wfi->lastUpdate = wfi->nextUpdate;
+		//wfi->lastUpdate = wfi->nextUpdate;
 
 		width = wfi->invalid_x2 - wfi->invalid_x1;
 		height = wfi->invalid_y2 - wfi->invalid_y1;
@@ -148,7 +148,7 @@ void wf_rfx_encode(freerdp_peer* client)
 
 		offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
 
-		printf("width = %d, height = %d\n", width, height);
+		//printf("width = %d, height = %d\n", width, height);
 		rfx_compose_message(wfp->rfx_context, s, &rect, 1,
 				((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
 
@@ -268,11 +268,13 @@ void wf_peer_send_changes(rdpUpdate* update)
 			
 
 		wf_info_updated(wfInfoSingleton);
+		/*
 		printf("\tSend...");
 		printf("\t(%d, %d), (%d, %d) [%dx%d]\n",
 			update->surface_bits_command.destLeft, update->surface_bits_command.destTop,
 			update->surface_bits_command.destRight, update->surface_bits_command.destBottom,
 			update->surface_bits_command.width, update->surface_bits_command.height);
+			*/
 		update->SurfaceBits(update->context, &update->surface_bits_command);
 		//wf_info_clear_invalid_region(wfInfoSingleton);
 		wfInfoSingleton->enc_data = false;

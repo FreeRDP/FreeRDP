@@ -225,7 +225,7 @@ void wf_info_find_invalid_region(wfInfo* info)
 		info->invalid_y2 = 0;
 	}
 
-	printf("\tFIND = (%d, %d), (%d, %d)\n", info->invalid_x1, info->invalid_y1, info->invalid_x2, info->invalid_y2);
+	//printf("\tFIND = (%d, %d), (%d, %d)\n", info->invalid_x1, info->invalid_y1, info->invalid_x2, info->invalid_y2);
 	for(i = info->lastUpdate; i != info->nextUpdate; i = (i+1) % MAXCHANGES_BUF )
 	{
 		/*printf("\t(%d, %d), (%d, %d)\n", 
