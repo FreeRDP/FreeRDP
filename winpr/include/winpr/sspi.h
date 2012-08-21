@@ -54,6 +54,8 @@
 #define SEC_ENTRY
 #endif
 
+#define KSECDDDECLSPEC	__declspec(dllimport)
+
 typedef CHAR SEC_CHAR;
 typedef WCHAR SEC_WCHAR;
 
@@ -669,8 +671,8 @@ typedef SecBufferDesc* PSecBufferDesc;
 
 typedef void (SEC_ENTRY * SEC_GET_KEY_FN)(void* Arg, void* Principal, UINT32 KeyVer, void** Key, SECURITY_STATUS* Status);
 
-typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_A)(UINT32* pcPackages, PSecPkgInfoA* ppPackageInfo);
-typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_W)(UINT32* pcPackages, PSecPkgInfoW* ppPackageInfo);
+typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_A)(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
+typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_W)(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo);
 
 #ifdef UNICODE
 #define EnumerateSecurityPackages EnumerateSecurityPackagesW
@@ -692,10 +694,10 @@ typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHan
 #endif
 
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_A)(LPSTR pszPrincipal, LPSTR pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_W)(LPWSTR pszPrincipal, LPWSTR pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
 #ifdef UNICODE
@@ -767,7 +769,7 @@ typedef SECURITY_STATUS (SEC_ENTRY * QUERY_SECURITY_PACKAGE_INFO_FN_W)(SEC_WCHAR
 #define QUERY_SECURITY_PACKAGE_INFO_FN QUERY_SECURITY_PACKAGE_INFO_FN_A
 #endif
 
-typedef SECURITY_STATUS (SEC_ENTRY * EXPORT_SECURITY_CONTEXT_FN)(PCtxtHandle phContext, UINT32 fFlags, PSecBuffer pPackedContext, void* pToken);
+typedef SECURITY_STATUS (SEC_ENTRY * EXPORT_SECURITY_CONTEXT_FN)(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken);
 
 typedef SECURITY_STATUS (SEC_ENTRY * IMPORT_SECURITY_CONTEXT_FN_A)(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
 typedef SECURITY_STATUS (SEC_ENTRY * IMPORT_SECURITY_CONTEXT_FN_W)(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
@@ -900,27 +902,29 @@ typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_W)(void);
 
 /* Package Management */
 
-WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(UINT32* pcPackages, PSecPkgInfoA* ppPackageInfo);
-WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(UINT32* pcPackages, PSecPkgInfoW* ppPackageInfo);
-WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void);
-WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void);
+WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
+WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo);
+
+PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void);
+KSECDDDECLSPEC PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void);
+
 WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
 WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
 
 /* Credential Management */
 
 WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
-WINPR_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, UINT32 fFlags, PSecBuffer pPackedContext, void* pToken);
+WINPR_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken);
 WINPR_API SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential);
 
-WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
-WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE* pToken, PCtxtHandle phContext);
+WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE* pToken, PCtxtHandle phContext);
 
 WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
 WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
@@ -947,7 +951,7 @@ WINPR_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCre
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry);
 
 WINPR_API SECURITY_STATUS SEC_ENTRY QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer);
-WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, void* phToken);
+WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken);
 WINPR_API SECURITY_STATUS SEC_ENTRY SetContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
 WINPR_API SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext);
 
