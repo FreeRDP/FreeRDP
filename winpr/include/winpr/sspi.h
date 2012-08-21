@@ -28,6 +28,8 @@
 #include <winpr/windows.h>
 #include <winpr/security.h>
 
+#define _NO_KSECDD_IMPORT_	1
+
 #ifdef _WIN32
 
 #include <tchar.h>
