@@ -133,7 +133,7 @@ static void wf_server_main_loop(freerdp_listener* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-
+		Sleep(20);
 	}
 
 	instance->Close(instance);

@@ -110,7 +110,8 @@ void wf_rfx_encode(freerdp_peer* client)
 
 		if( (wfp->activated == false) ||
 			(wf_info_has_subscribers(wfInfoSingleton) == false) ||
-			!wf_info_have_invalid_region(wfInfoSingleton) )
+			!wf_info_have_invalid_region(wfInfoSingleton) ||
+			(wfInfoSingleton->enc_data == true) )
 		{
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
