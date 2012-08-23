@@ -383,7 +383,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	CredHandle credentials;
 	TimeStamp expiration;
 	PSecPkgInfo pPackageInfo;
-	PSecBuffer p_buffer;
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
 	SecBufferDesc input_buffer_desc;
@@ -463,6 +462,8 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	have_pub_key_auth = false;
 	ZeroMemory(&input_buffer, sizeof(SecBuffer));
 	ZeroMemory(&output_buffer, sizeof(SecBuffer));
+	ZeroMemory(&input_buffer_desc, sizeof(SecBufferDesc));
+	ZeroMemory(&output_buffer_desc, sizeof(SecBufferDesc));
 	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	/* 
@@ -506,9 +507,8 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		credssp_buffer_print(credssp);
 #endif
 
-		p_buffer = &input_buffer_desc.pBuffers[0];
-		p_buffer->pvBuffer = credssp->negoToken.pvBuffer;
-		p_buffer->cbBuffer = credssp->negoToken.cbBuffer;
+		input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
+		input_buffer.cbBuffer = credssp->negoToken.cbBuffer;
 
 		if (credssp->negoToken.cbBuffer < 1)
 		{
@@ -528,15 +528,8 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			&input_buffer_desc, fContextReq, SECURITY_NATIVE_DREP, &credssp->context,
 			&output_buffer_desc, &pfContextAttr, &expiration);
 
-		if (input_buffer.pvBuffer != NULL)
-		{
-			free(input_buffer.pvBuffer);
-			input_buffer.pvBuffer = NULL;
-		}
-
-		p_buffer = &output_buffer_desc.pBuffers[0];
-		credssp->negoToken.pvBuffer = p_buffer->pvBuffer;
-		credssp->negoToken.cbBuffer = p_buffer->cbBuffer;
+		credssp->negoToken.pvBuffer = output_buffer.pvBuffer;
+		credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
@@ -565,7 +558,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 				return -1;
 			}
 
-			sspi_SecBufferFree(&credssp->negoToken);
+			//sspi_SecBufferFree(&credssp->negoToken);
 			credssp->negoToken.pvBuffer = NULL;
 			credssp->negoToken.cbBuffer = 0;
 
@@ -586,7 +579,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 #endif
 
 		credssp_send(credssp);
-		credssp_buffer_free(credssp);
+		//credssp_buffer_free(credssp);
 
 		if (status != SEC_I_CONTINUE_NEEDED)
 			break;
@@ -1316,6 +1309,6 @@ void credssp_free(rdpCredssp* credssp)
 		free(credssp->identity.User);
 		free(credssp->identity.Domain);
 		free(credssp->identity.Password);
-		free(credssp);
+		//free(credssp);
 	}
 }
