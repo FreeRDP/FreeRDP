@@ -46,11 +46,13 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
+	DWORD fps;
 	DWORD beg, end;
 	DWORD diff, rate;
 	freerdp_peer* client;
 
-	rate = 42;
+	fps = 30;
+	rate = 1000 / fps;
 	client = (freerdp_peer*) lpParam;
 	
 	/* TODO: do not encode when no clients are connected */
@@ -79,7 +81,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	}
 
 	_tprintf(_T("monitor thread terminating...\n"));
-	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1 );
+	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1);
 
 	return 0;
 }
@@ -101,7 +103,7 @@ void wf_rfx_encode(freerdp_peer* client)
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
 
-	switch(dRes)
+	switch (dRes)
 	{
 		case WAIT_OBJECT_0:
 
@@ -119,10 +121,10 @@ void wf_rfx_encode(freerdp_peer* client)
 			update = client->update;
 			cmd = &update->surface_bits_command;
 			wfi = wfp->wfInfo;
-			buf = (GETCHANGESBUF*)wfi->changeBuffer;
+			buf = (GETCHANGESBUF*) wfi->changeBuffer;
 
-			width = wfi->invalid_x2 - wfi->invalid_x1;
-			height = wfi->invalid_y2 - wfi->invalid_y1;
+			width = (wfi->invalid_x2 - wfi->invalid_x1) + 1;
+			height = (wfi->invalid_y2 - wfi->invalid_y1) + 1;
 
 			stream_clear(wfp->s);
 			stream_set_pos(wfp->s, 0);
@@ -132,6 +134,9 @@ void wf_rfx_encode(freerdp_peer* client)
 			rect.y = 0;
 			rect.width = (uint16) width;
 			rect.height = (uint16) height;
+
+			//printf("Encoding: left:%d top:%d right:%d bottom:%d width:%d height:%d\n",
+			//	wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2, width, height);
 
 			offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
 
