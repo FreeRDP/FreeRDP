@@ -23,12 +23,14 @@
 
 #include <stdlib.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <winpr/windows.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "sspi.h"
 
