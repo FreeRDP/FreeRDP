@@ -26,7 +26,11 @@ set(RAIL_SRCS
 add_library(rail ${RAIL_SRCS})
 set_target_properties(rail PROPERTIES PREFIX "")
 
-target_link_libraries(rail freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rail freerdp)
+else()
+	target_link_libraries(rail freerdp-utils)
+endif()
 
 install(TARGETS rail DESTINATION ${FREERDP_PLUGIN_PATH})
 

@@ -17,15 +17,22 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XShm.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/plugins/tsmf.h>

@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -41,13 +45,12 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
 {
-       if (xfi->remote_app == true)
-        {
-                xfi->remote_app = false;
-               xf_create_window(xfi);
-        }
+	if (xfi->remote_app == true)
+	{
+		xfi->remote_app = false;
+		xf_create_window(xfi);
+	}
 }
-
 
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
 {

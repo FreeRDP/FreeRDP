@@ -20,14 +20,17 @@
 set(DISK_SRCS
 	disk_file.c
 	disk_file.h
-	disk_main.c
-)
+	disk_main.c)
 
 include_directories(..)
 
 add_library(disk ${DISK_SRCS})
 set_target_properties(disk PROPERTIES PREFIX "")
 
-target_link_libraries(disk freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(disk freerdp)
+else()
+	target_link_libraries(disk freerdp-utils)
+endif()
 
 install(TARGETS disk DESTINATION ${FREERDP_PLUGIN_PATH})

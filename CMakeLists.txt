@@ -55,7 +55,7 @@ endif()
 
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
+	set(BUILD_SHARED_LIBS ON)
 endif()
 
 # Compiler-specific flags
@@ -95,6 +95,23 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
+# This forces the MSVC runtime to be statically linked
+
+if(MSVC)
+	foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO) 
+		string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+		string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+	endforeach(flag_var)
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}" CACHE STRING "MSVC C Debug MT flags " FORCE)    
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING "MSVC CXX Debug MT flags " FORCE)
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "MSVC C Release MT flags " FORCE)
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "MSVC CXX Release MT flags " FORCE)
+	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL}" CACHE STRING "MSVC C Debug MT flags " FORCE)    
+	set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}" CACHE STRING "MSVC C Release MT flags " FORCE)
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}" CACHE STRING "MSVC CXX Debug MT flags " FORCE)    
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" CACHE STRING "MSVC CXX Release MT flags " FORCE)
+endif()
+
 # config.h definition for installable headers
 check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
 check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
@@ -108,6 +125,9 @@ check_include_files(limits.h HAVE_LIMITS_H)
 check_include_files(stdint.h HAVE_STDINT_H)
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
 
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
@@ -153,19 +173,23 @@ set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
 set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp")
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp")
 
 # Path to put extensions
-set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp/extensions")
+set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 
 # Include directories
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# WinPR
+set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories(${WINPR_INCLUDE_DIR})
 
 # Configure files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/freerdp/config.h)
+add_definitions("-DHAVE_CONFIG_H")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
 
 # Generate pkg-config
 if(NOT MSVC)
@@ -181,19 +205,12 @@ if(WITH_CUNIT)
 endif()
 
 # Sub-directories
+
 add_subdirectory(include)
-add_subdirectory(libfreerdp-utils)
 
 add_subdirectory(winpr)
 
-add_subdirectory(libfreerdp-gdi)
-add_subdirectory(libfreerdp-rail)
-add_subdirectory(libfreerdp-cache)
-add_subdirectory(libfreerdp-codec)
-add_subdirectory(libfreerdp-crypto)
-add_subdirectory(libfreerdp-channels)
-add_subdirectory(libfreerdp-locale)
-add_subdirectory(libfreerdp-core)
+add_subdirectory(libfreerdp)
 
 if(WITH_CHANNELS)
 	add_subdirectory(channels)
@@ -222,4 +239,3 @@ string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}")
 
 include(CPack)
-

@@ -28,7 +28,12 @@ include_directories(${PCSC_INCLUDE_DIRS})
 add_library(scard ${SCARD_SRCS})
 set_target_properties(scard PROPERTIES PREFIX "")
 
-target_link_libraries(scard freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(scard freerdp)
+else()
+	target_link_libraries(scard freerdp-utils)
+endif()
+
 target_link_libraries(scard ${PCSC_LIBRARIES})
 
 install(TARGETS scard DESTINATION ${FREERDP_PLUGIN_PATH})

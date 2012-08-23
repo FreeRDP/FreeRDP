@@ -18,10 +18,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
@@ -69,7 +73,6 @@
 #if !defined(TIOCOUTQ) && defined(FIONWRITE)
 #define TIOCOUTQ FIONWRITE
 #endif
-
 
 static uint32 tty_write_data(SERIAL_TTY* tty, uint8* data, int len);
 static void tty_set_termios(SERIAL_TTY* tty);

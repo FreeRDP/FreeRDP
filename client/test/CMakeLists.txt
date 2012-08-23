@@ -17,11 +17,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(freerdp-test
+set(FREERDP_CLIENT_TEST_SRCS
 	freerdp.c)
 
-target_link_libraries(freerdp-test freerdp-core)
-target_link_libraries(freerdp-test freerdp-gdi)
-target_link_libraries(freerdp-test freerdp-utils)
-target_link_libraries(freerdp-test freerdp-channels ${CMAKE_DL_LIBS})
+add_executable(freerdp-test ${FREERDP_CLIENT_TEST_SRCS})
 
+set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS} ${CMAKE_DL_LIBS})
+
+if(WITH_MONOLITHIC_BUILD)
+	set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS} freerdp)
+else()
+	set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS}
+		freerdp-core
+		freerdp-gdi
+		freerdp-utils
+		freerdp-channels)
+endif()
+
+target_link_libraries(freerdp-test ${FREERDP_CLIENT_TEST_LIBS})

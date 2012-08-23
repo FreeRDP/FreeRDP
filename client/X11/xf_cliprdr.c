@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>

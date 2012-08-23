@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <pulse/pulseaudio.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>

@@ -18,8 +18,7 @@
 # limitations under the License.
 
 set(TSMF_PULSE_SRCS
-	tsmf_pulse.c
-)
+	tsmf_pulse.c)
 
 include_directories(..)
 include_directories(${PULSEAUDIO_INCLUDE_DIR})
@@ -27,8 +26,11 @@ include_directories(${PULSEAUDIO_INCLUDE_DIR})
 add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
 set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf_pulse freerdp-utils)
-target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY})
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY} freerdp)
+else()
+	target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY} freerdp-utils)
+endif()
 
 install(TARGETS tsmf_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
 

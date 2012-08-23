@@ -20,7 +20,10 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
@@ -165,6 +168,7 @@ struct xf_info
 	Atom WM_DELETE_WINDOW;
 };
 
+void xf_create_window(xfInfo* xfi);
 void xf_toggle_fullscreen(xfInfo* xfi);
 boolean xf_post_connect(freerdp* instance);
 
