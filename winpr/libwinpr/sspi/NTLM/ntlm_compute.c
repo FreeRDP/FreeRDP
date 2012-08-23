@@ -656,5 +656,6 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 	HMAC_Update(&hmac_ctx, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	HMAC_Update(&hmac_ctx, context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
 	HMAC_Final(&hmac_ctx, context->MessageIntegrityCheck, NULL);
+	HMAC_CTX_cleanup(&hmac_ctx);
 }
 

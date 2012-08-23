@@ -23,6 +23,9 @@
 
 #include <stdlib.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
@@ -347,6 +350,9 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 
 void sspi_GlobalInit()
 {
+	SSL_load_error_strings();
+	SSL_library_init();
+
 	sspi_ContextBufferAllocTableNew();
 }
 

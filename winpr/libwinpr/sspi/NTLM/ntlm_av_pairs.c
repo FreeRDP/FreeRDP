@@ -195,6 +195,22 @@ void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT t
 	free(name);
 }
 
+void ntlm_free_unicode_string(PUNICODE_STRING string)
+{
+	if (string != NULL)
+	{
+		if (string->Length > 0)
+		{
+			if (string->Buffer != NULL)
+				free(string->Buffer);
+
+			string->Buffer = NULL;
+			string->Length = 0;
+			string->MaximumLength = 0;
+		}
+	}
+}
+
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
@@ -228,6 +244,11 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	ntlm_av_pair_add(pAvPairList, MsvAvDnsDomainName, (PBYTE) DnsDomainName.Buffer, DnsDomainName.Length);
 	ntlm_av_pair_add(pAvPairList, MsvAvDnsComputerName, (PBYTE) DnsComputerName.Buffer, DnsComputerName.Length);
 	ntlm_av_pair_add(pAvPairList, MsvAvTimestamp, context->Timestamp, sizeof(context->Timestamp));
+
+	ntlm_free_unicode_string(&NbDomainName);
+	ntlm_free_unicode_string(&NbComputerName);
+	ntlm_free_unicode_string(&DnsDomainName);
+	ntlm_free_unicode_string(&DnsComputerName);
 }
 
 void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
