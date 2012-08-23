@@ -46,37 +46,37 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
-	DWORD start, end, diff;
+	DWORD start;
+	DWORD end;
+	DWORD diff;
 	DWORD rate;
-	
 	freerdp_peer* client;
 
 	rate = 42;
 	client = (freerdp_peer*)lpParam;
 	
-	//todo: make sure we dont encode after no clients
+	/* TODO: do not encode when no clients are connected */
+
 	while(1)
 	{
 
 		start = GetTickCount();
 
-
-		if(wf_info_has_subscribers(wfInfoSingleton))
+		if (wf_info_has_subscribers(wfInfoSingleton))
 		{
 			wf_info_update_changes(wfInfoSingleton);
-			if(wf_info_have_updates(wfInfoSingleton))
+
+			if (wf_info_have_updates(wfInfoSingleton))
 			{
-				//wf_info_find_invalid_region(wfInfoSingleton);
-				//printf("Fake Encode!\n");
 				wf_rfx_encode(client);
 			}			
 		}
 
 		end = GetTickCount();
 		diff = end - start;
-		if(diff < rate)
+
+		if (diff < rate)
 		{
-			//printf("sleeping for %d ms...\n", rate - diff);
 			Sleep(rate - diff);
 		}
 		
@@ -84,6 +84,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 	_tprintf(_T("monitor thread terminating...\n"));
 	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1 );
+
 	return 0;
 }
 
@@ -105,74 +106,71 @@ void wf_rfx_encode(freerdp_peer* client)
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
 	switch(dRes)
 	{
-	case WAIT_OBJECT_0:
+		case WAIT_OBJECT_0:
 
-		wf_info_find_invalid_region(wfInfoSingleton);
+			wf_info_find_invalid_region(wfInfoSingleton);
 
-		if( (wfp->activated == false) ||
-			(wf_info_has_subscribers(wfInfoSingleton) == false) ||
-			!wf_info_have_invalid_region(wfInfoSingleton) ||
-			(wfInfoSingleton->enc_data == true) )
-		{
+			if( (wfp->activated == false) ||
+				(wf_info_has_subscribers(wfInfoSingleton) == false) ||
+				!wf_info_have_invalid_region(wfInfoSingleton) ||
+				(wfInfoSingleton->enc_data == true) )
+			{
+				ReleaseMutex(wfInfoSingleton->encodeMutex);
+				break;
+			}
+
+			update = client->update;
+			cmd = &update->surface_bits_command;
+			wfi = wfp->wfInfo;
+			buf = (GETCHANGESBUF*)wfi->changeBuffer;
+
+			width = wfi->invalid_x2 - wfi->invalid_x1;
+			height = wfi->invalid_y2 - wfi->invalid_y1;
+
+			stream_clear(wfp->s);
+			stream_set_pos(wfp->s, 0);
+			s = wfp->s;
+		
+			rect.x = 0;
+			rect.y = 0;
+			rect.width = (uint16) width;
+			rect.height = (uint16) height;
+
+			offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
+
+			rfx_compose_message(wfp->rfx_context, s, &rect, 1,
+					((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
+
+			cmd->destLeft = wfi->invalid_x1;
+			cmd->destTop = wfi->invalid_y1;
+			cmd->destRight = wfi->invalid_x1 + width;
+			cmd->destBottom = wfi->invalid_y1 + height;
+
+			cmd->bpp = 32;
+			cmd->codecID = client->settings->rfx_codec_id;
+			cmd->width = width;
+			cmd->height = height;
+			cmd->bitmapDataLength = stream_get_length(s);
+			cmd->bitmapData = stream_get_head(s);
+
+			wfi->enc_data = true;
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
-		}
 
-		update = client->update;
-		cmd = &update->surface_bits_command;
-		wfi = wfp->wfInfo;
-		buf = (GETCHANGESBUF*)wfi->changeBuffer;
+		case WAIT_TIMEOUT:
 
-		//printf("encode %d\n", wfi->nextUpdate - wfi->lastUpdate);
-		//printf("\tinvlaid region = (%d, %d), (%d, %d)\n", wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2);
+			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			break;
 
-		width = wfi->invalid_x2 - wfi->invalid_x1;
-		height = wfi->invalid_y2 - wfi->invalid_y1;
+		case WAIT_ABANDONED:
 
-		stream_clear(wfp->s);
-		stream_set_pos(wfp->s, 0);
-		s = wfp->s;
-		
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = (uint16) width;
-		rect.height = (uint16) height;
+			printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... releasing...\n", dRes);
+			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			break;
 
-		offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
-
-		//printf("width = %d, height = %d\n", width, height);
-		rfx_compose_message(wfp->rfx_context, s, &rect, 1,
-				((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
-
-		cmd->destLeft = wfi->invalid_x1;
-		cmd->destTop = wfi->invalid_y1;
-		cmd->destRight = wfi->invalid_x1 + width;
-		cmd->destBottom = wfi->invalid_y1 + height;
-
-
-		cmd->bpp = 32;
-		cmd->codecID = client->settings->rfx_codec_id;
-		cmd->width = width;
-		cmd->height = height;
-		cmd->bitmapDataLength = stream_get_length(s);
-		cmd->bitmapData = stream_get_head(s);
-
-		wfi->enc_data = true;
-		ReleaseMutex(wfInfoSingleton->encodeMutex);
-		break;
-
-	case WAIT_TIMEOUT:
-
-		ReleaseMutex(wfInfoSingleton->encodeMutex);
-		break;
-
-	case WAIT_ABANDONED:
-
-		printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... releasing...\n", dRes);
-		ReleaseMutex(wfInfoSingleton->encodeMutex);
-		break;
-	default: 
-        printf("\n\nwf_rfx_encode: Something else happened!!! dRes = %d\n", dRes);
+		default:
+			printf("\n\nwf_rfx_encode: Something else happened!!! dRes = %d\n", dRes);
+			break;
 	}
 
 }
@@ -224,8 +222,7 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 
 	printf("But we will try resizing to %dx%d\n",
 		wf_info_get_width(wfInfoSingleton),
-		wf_info_get_height(wfInfoSingleton)
-		);
+		wf_info_get_height(wfInfoSingleton));
 
 	client->settings->width = wf_info_get_width(wfInfoSingleton);
 	client->settings->height = wf_info_get_height(wfInfoSingleton);
@@ -253,40 +250,35 @@ void wf_peer_send_changes(rdpUpdate* update)
 {
 	int dRes;
 
-	//are we currently encoding?
+	/* are we currently encoding? */
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, 0);
+
 	switch(dRes)
 	{
-	case WAIT_OBJECT_0:
-		//are there changes to send?
-		if( !wf_info_have_updates(wfInfoSingleton) || !wf_info_have_invalid_region(wfInfoSingleton) || (wfInfoSingleton->enc_data == false) )
-		{
+		case WAIT_OBJECT_0:
+
+			/* are there changes to send? */
+			if (!wf_info_have_updates(wfInfoSingleton) ||
+				!wf_info_have_invalid_region(wfInfoSingleton) ||
+				(wfInfoSingleton->enc_data == FALSE))
+			{
+				ReleaseMutex(wfInfoSingleton->encodeMutex);
+				break;
+			}
+
+			wf_info_updated(wfInfoSingleton);
+
+			update->SurfaceBits(update->context, &update->surface_bits_command);
+
+			wfInfoSingleton->enc_data = FALSE;
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
-		}
-			
 
-		wf_info_updated(wfInfoSingleton);
-		/*
-		printf("\tSend...");
-		printf("\t(%d, %d), (%d, %d) [%dx%d]\n",
-			update->surface_bits_command.destLeft, update->surface_bits_command.destTop,
-			update->surface_bits_command.destRight, update->surface_bits_command.destBottom,
-			update->surface_bits_command.width, update->surface_bits_command.height);
-			*/
-		update->SurfaceBits(update->context, &update->surface_bits_command);
-		//wf_info_clear_invalid_region(wfInfoSingleton);
-		wfInfoSingleton->enc_data = false;
-		ReleaseMutex(wfInfoSingleton->encodeMutex);
-		break;
+		case WAIT_TIMEOUT:
+			break;
 
-	case WAIT_TIMEOUT:
-		break;
-
-
-	default: 
-        printf("wf_peer_send_changes: Something else happened!!! dRes = %d\n", dRes);
+		default:
+			printf("wf_peer_send_changes: Something else happened!!! dRes = %d\n", dRes);
+			break;
 	}
-
-	
 }

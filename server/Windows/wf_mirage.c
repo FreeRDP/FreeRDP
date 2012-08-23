@@ -145,22 +145,23 @@ If unload is nonzero then the the driver will be asked to remove it self.
 */
 BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
-	int currentScreenPixHeight, currentScreenPixWidth, currentScreenBPP;
 	HDC dc;
-	LONG status;
+	BOOL status;
 	DWORD* extHdr;
+	TCHAR rMsg[64];
 	WORD drvExtraSaved;
 	DEVMODE* deviceMode;
+	int currentScreenBPP;
+	int currentScreenPixHeight;
+	int currentScreenPixWidth;
+	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
-	TCHAR rMsg[64];
-	BOOL rturn;
 	
-	if(!unload)
+	if (!unload)
 	{
 		/*
-		Will have to come back to this for supporting non primary displays and 
-		multimonitor setups
-		*/
+		 * Will have to come back to this for supporting non primary displays and multimonitor setups
+		 */
 		dc = GetDC(NULL);
 		currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
 		currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
@@ -202,14 +203,15 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 
 	_tcsncpy_s(deviceMode->dmDeviceName, 32, context->deviceName, _tcslen(context->deviceName));
 
-	status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
+	disp_change_status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
 
-	rturn = false;
-	switch (status)
+	status = FALSE;
+
+	switch (disp_change_status)
 	{
 		case DISP_CHANGE_SUCCESSFUL:
 			_tprintf(_T("ChangeDisplaySettingsEx() was successfull\n"));
-			rturn = true;
+			status = true;
 			break;
 
 		case DISP_CHANGE_BADDUALVIEW:
@@ -241,10 +243,10 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 			break;
 	}
 
-	if(!rturn)
-		_tprintf(_T("ChangeDisplaySettingsEx() failed with %s, code %d\n"), rMsg, status);
+	if (!status)
+		_tprintf(_T("ChangeDisplaySettingsEx() failed with %s, code %d\n"), rMsg, disp_change_status);
 		
-	return rturn;
+	return status;
 }
 
 
@@ -259,7 +261,7 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 	if (context->driverDC == NULL)
 	{
 		_tprintf(_T("Could not create device driver context!\n"));
-		return false;
+		return FALSE;
 	}
 
 	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
@@ -276,7 +278,7 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 	b = (GETCHANGESBUF*)context->changeBuffer;
 	_tprintf(_T("ExtEscape() returned code %d\n"), status);
 
-	return true;
+	return TRUE;
 }
 
 /*
@@ -289,13 +291,14 @@ BOOL wf_mirror_cleanup(wfInfo* context)
 	_tprintf(_T("\n\nCleaning up...\nDisconnecting driver...\n"));
 	iResult = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(context->changeBuffer), (LPSTR) context->changeBuffer, 0, 0);
 
-	if(iResult <= 0)
+	if (iResult <= 0)
 	{
 		_tprintf(_T("Failed to unmap shared memory from the driver! Code %d\n"), iResult);
 	}
 
 	_tprintf(_T("Releasing DC\n"));
-	if(context->driverDC != NULL)
+
+	if (context->driverDC != NULL)
 	{
 		iResult = DeleteDC(context->driverDC);
 		if(iResult == 0)
