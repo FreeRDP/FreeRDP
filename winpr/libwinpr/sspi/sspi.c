@@ -621,7 +621,7 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 /* Credential Management */
 
 SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
@@ -640,7 +640,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 }
 
 SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;

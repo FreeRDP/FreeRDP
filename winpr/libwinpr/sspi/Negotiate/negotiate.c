@@ -113,14 +113,14 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributes(PCtxtHandle phContext
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	CREDENTIALS* credentials;

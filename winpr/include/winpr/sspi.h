@@ -694,10 +694,10 @@ typedef SECURITY_STATUS (SEC_ENTRY * QUERY_CREDENTIALS_ATTRIBUTES_FN_W)(PCredHan
 #endif
 
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_A)(LPSTR pszPrincipal, LPSTR pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 typedef SECURITY_STATUS (SEC_ENTRY * ACQUIRE_CREDENTIALS_HANDLE_FN_W)(LPWSTR pszPrincipal, LPWSTR pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
 #ifdef UNICODE
@@ -914,10 +914,10 @@ WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPack
 /* Credential Management */
 
 WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 
 WINPR_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken);
