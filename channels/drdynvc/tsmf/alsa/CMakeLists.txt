@@ -27,7 +27,12 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_library(tsmf_alsa ${TSMF_ALSA_SRCS})
 set_target_properties(tsmf_alsa PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf_alsa freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(tsmf_alsa freerdp)
+else()
+	target_link_libraries(tsmf_alsa freerdp-utils)
+endif()
+
 target_link_libraries(tsmf_alsa ${ALSA_LIBRARIES})
 
 install(TARGETS tsmf_alsa DESTINATION ${FREERDP_PLUGIN_PATH})

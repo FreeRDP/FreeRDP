@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,13 +44,10 @@
 HANDLE g_done_event;
 int g_thread_count = 0;
 
-//extern wfInfo * wfInfoSingleton;
-
 BOOL derp = false;
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
-	int dRes;
 	int rcount;
 	void* rfds[32];
 	wfPeerContext* context;
@@ -193,4 +194,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-

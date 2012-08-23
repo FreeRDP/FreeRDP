@@ -17,12 +17,18 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+
 #include <time.h>
 #include <cups/cups.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 

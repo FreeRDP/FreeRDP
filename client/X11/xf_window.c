@@ -18,13 +18,18 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdarg.h>
 #include <unistd.h>
 #include <sys/types.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include <sys/types.h>
+
 #include <sys/shm.h>
 #include <sys/ipc.h>
 

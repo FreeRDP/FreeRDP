@@ -26,6 +26,10 @@ include_directories(..)
 add_library(parallel ${PARALLEL_SRCS})
 set_target_properties(parallel PROPERTIES PREFIX "")
 
-target_link_libraries(parallel freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(parallel freerdp)
+else()
+	target_link_libraries(parallel freerdp-utils)
+endif()
 
 install(TARGETS parallel DESTINATION ${FREERDP_PLUGIN_PATH})

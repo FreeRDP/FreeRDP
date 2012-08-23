@@ -16,8 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
+
 #include <freerdp/listener.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/codec/rfx.h>
@@ -27,11 +33,8 @@
 
 #include "wf_peer.h"
 
-//extern wfInfo * wfInfoSingleton;
-
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-	DWORD dRes;
 	wfInfoSingleton = wf_info_init(wfInfoSingleton);
 	wf_info_mirror_init(wfInfoSingleton, context);
 }
@@ -43,12 +46,10 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
-	DWORD dRes;
 	DWORD start, end, diff;
 	DWORD rate;
 	
 	freerdp_peer* client;
-	unsigned long i;
 
 	rate = 42;
 	client = (freerdp_peer*)lpParam;
@@ -134,8 +135,8 @@ void wf_rfx_encode(freerdp_peer* client)
 		
 		rect.x = 0;
 		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
+		rect.width = (uint16) width;
+		rect.height = (uint16) height;
 
 		offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
 
@@ -178,14 +179,12 @@ void wf_rfx_encode(freerdp_peer* client)
 
 void wf_peer_init(freerdp_peer* client)
 {
-	DWORD dRes;
-
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 	freerdp_peer_context_new(client);
 
-	if(!wf_info_get_thread_count(wfInfoSingleton))
+	if (!wf_info_get_thread_count(wfInfoSingleton))
 	{
 		_tprintf(_T("Trying to create a monitor thread...\n"));
 

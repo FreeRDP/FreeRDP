@@ -22,12 +22,15 @@ set(CLIPRDR_SRCS
 	cliprdr_format.c
 	cliprdr_format.h
 	cliprdr_main.c
-	cliprdr_main.h
-)
+	cliprdr_main.h)
 
 add_library(cliprdr ${CLIPRDR_SRCS})
 set_target_properties(cliprdr PROPERTIES PREFIX "")
 
-target_link_libraries(cliprdr freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(cliprdr freerdp)
+else()
+	target_link_libraries(cliprdr freerdp-utils)
+endif()
 
 install(TARGETS cliprdr DESTINATION ${FREERDP_PLUGIN_PATH})

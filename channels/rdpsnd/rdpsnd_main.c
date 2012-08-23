@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
@@ -25,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>

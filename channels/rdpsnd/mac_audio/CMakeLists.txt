@@ -19,8 +19,7 @@
 # limitations under the License.
 
 set(RDPSND_MACAUDIO_SRCS
-	rdpsnd_audio_q.c
-)
+	rdpsnd_audio_q.c)
 
 include_directories(..)
 include_directories(${MACAUDIO_INCLUDE_DIRS})
@@ -28,7 +27,12 @@ include_directories(${MACAUDIO_INCLUDE_DIRS})
 add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
 set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
 
-target_link_libraries(rdpsnd_macaudio freerdp-utils)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rdpsnd_macaudio freerdp)
+else()
+	target_link_libraries(rdpsnd_macaudio freerdp-utils)
+endif()
+
 target_link_libraries(rdpsnd_macaudio ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
 target_link_libraries(rdpsnd_macaudio ${MAC_COREFOUNDATION_LIBRARY_PATH})
 

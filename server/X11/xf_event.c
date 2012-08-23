@@ -17,12 +17,17 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
+
 #include <freerdp/utils/memory.h>
 
 #include "xf_event.h"

@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WIN32
 #define __USE_LARGEFILE64
 #define _LARGEFILE_SOURCE
@@ -26,12 +30,11 @@
 #include <sys/time.h>
 #endif
 
-
-#include "config.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>

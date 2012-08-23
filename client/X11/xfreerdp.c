@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -40,6 +44,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/select.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>

@@ -20,8 +20,12 @@
 add_executable(winpr-reg
 	reg.c)
 
-target_link_libraries(winpr-reg winpr-utils)
-
-if(NOT WIN32)
-	target_link_libraries(winpr-reg winpr-registry)
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(winpr-reg winpr)
+else()
+	target_link_libraries(winpr-reg winpr-utils)
+	
+	if(NOT WIN32)
+		target_link_libraries(winpr-reg winpr-registry)
+	endif()
 endif()
