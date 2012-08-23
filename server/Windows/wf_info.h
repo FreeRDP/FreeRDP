@@ -20,8 +20,6 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
-//#include "wfreerdp.h"
-
 struct wf_peer_context;
 typedef struct wf_peer_context wfPeerContext;
 
@@ -53,24 +51,22 @@ struct wf_info
 };
 typedef struct wf_info wfInfo;
 
-wfInfo* wf_info_init(wfInfo* info);
-void wf_info_mirror_init(wfInfo* info, wfPeerContext* context);
-void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context);
+wfInfo* wf_info_init(wfInfo* wfi);
+void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
+void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);
 
-int wf_info_get_thread_count(wfInfo* info);
-void wf_info_set_thread_count(wfInfo* info, int count);
+int wf_info_get_thread_count(wfInfo* wfi);
+void wf_info_set_thread_count(wfInfo* wfi, int count);
 
-BOOL wf_info_has_subscribers(wfInfo* info);
-BOOL wf_info_have_updates(wfInfo* info);
-void wf_info_updated(wfInfo* info);
-void wf_info_update_changes(wfInfo* info);
-void wf_info_find_invalid_region(wfInfo* info);
-void wf_info_clear_invalid_region(wfInfo* info);
-BOOL wf_info_have_invalid_region(wfInfo* info);
+BOOL wf_info_has_subscribers(wfInfo* wfi);
+BOOL wf_info_have_updates(wfInfo* wfi);
+void wf_info_updated(wfInfo* wfi);
+void wf_info_update_changes(wfInfo* wfi);
+void wf_info_find_invalid_region(wfInfo* wfi);
+void wf_info_clear_invalid_region(wfInfo* wfi);
+BOOL wf_info_have_invalid_region(wfInfo* wfi);
 
-int wf_info_get_height(wfInfo* info);
-int wf_info_get_width(wfInfo* info);
-
-
+int wf_info_get_height(wfInfo* wfi);
+int wf_info_get_width(wfInfo* wfi);
 
 #endif

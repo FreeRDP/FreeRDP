@@ -46,21 +46,18 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
-	DWORD start;
-	DWORD end;
-	DWORD diff;
-	DWORD rate;
+	DWORD beg, end;
+	DWORD diff, rate;
 	freerdp_peer* client;
 
 	rate = 42;
-	client = (freerdp_peer*)lpParam;
+	client = (freerdp_peer*) lpParam;
 	
 	/* TODO: do not encode when no clients are connected */
 
-	while(1)
+	while (1)
 	{
-
-		start = GetTickCount();
+		beg = GetTickCount();
 
 		if (wf_info_has_subscribers(wfInfoSingleton))
 		{
@@ -69,17 +66,16 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			if (wf_info_have_updates(wfInfoSingleton))
 			{
 				wf_rfx_encode(client);
-			}			
+			}
 		}
 
 		end = GetTickCount();
-		diff = end - start;
+		diff = end - beg;
 
 		if (diff < rate)
 		{
 			Sleep(rate - diff);
 		}
-		
 	}
 
 	_tprintf(_T("monitor thread terminating...\n"));
@@ -90,20 +86,21 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 void wf_rfx_encode(freerdp_peer* client)
 {
+	int dRes;
 	STREAM* s;
 	wfInfo* wfi;
+	long offset;
 	RFX_RECT rect;
+	long height, width;
 	rdpUpdate* update;
 	wfPeerContext* wfp;
-	SURFACE_BITS_COMMAND* cmd;
 	GETCHANGESBUF* buf;
-	long height, width;
-	long offset;
-	int dRes;
+	SURFACE_BITS_COMMAND* cmd;
 	
 	wfp = (wfPeerContext*) client->context;
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
+
 	switch(dRes)
 	{
 		case WAIT_OBJECT_0:

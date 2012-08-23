@@ -75,15 +75,16 @@ BOOL wf_check_disp_devices(wfInfo* context)
 	return false;
 }
 
-/*
-This function will attempt to access the the windows registry using the device
- key stored in the current context. It will attempt to read the value of the
- "Attach.ToDesktop" subkey and will return true if the value is already set to
- val. If unable to read the subkey, this function will return false. If the 
- subkey is not set to val it will then attempt to set it to val and return true. If 
- unsuccessful or an unexpected value is encountered, the function returns 
- false.
+/**
+ * This function will attempt to access the the windows registry using the device
+ * key stored in the current context. It will attempt to read the value of the
+ * "Attach.ToDesktop" subkey and will return true if the value is already set to
+ * val. If unable to read the subkey, this function will return false. If the 
+ * subkey is not set to val it will then attempt to set it to val and return true. If 
+ * unsuccessful or an unexpected value is encountered, the function returns 
+ * false.
  */
+
 BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 {
 	LONG status;
@@ -136,13 +137,13 @@ BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 	return true;
 }
 
-/*
-This function will attempt to apply the currently configured display settings 
-in the registry to the display driver. It will return true if successful 
-otherwise it returns false.
+/**
+ * This function will attempt to apply the currently configured display settings 
+ * in the registry to the display driver. It will return true if successful 
+ * otherwise it returns false.
+ * If unload is nonzero then the the driver will be asked to remove itself.
+ */
 
-If unload is nonzero then the the driver will be asked to remove it self.
-*/
 BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
 	HDC dc;
@@ -249,7 +250,6 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	return status;
 }
 
-
 BOOL wf_map_mirror_mem(wfInfo* context)
 {
 	int status;
@@ -265,7 +265,7 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 	}
 
 	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
-	memset(context->changeBuffer, 0, sizeof(GETCHANGESBUF));
+	ZeroMemory(context->changeBuffer, sizeof(GETCHANGESBUF));
 
 	_tprintf(_T("\n\nConnecting to driver...\n"));
 	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer);
@@ -275,22 +275,21 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 		_tprintf(_T("Failed to map shared memory from the driver! Code %d\n"), status);
 	}
 
-	b = (GETCHANGESBUF*)context->changeBuffer;
+	b = (GETCHANGESBUF*) context->changeBuffer;
 	_tprintf(_T("ExtEscape() returned code %d\n"), status);
 
 	return TRUE;
 }
 
-/*
-Unmap the shared memory and release the DC
-*/
+/* Unmap the shared memory and release the DC */
+
 BOOL wf_mirror_cleanup(wfInfo* context)
 {
 	int iResult;
 
 	_tprintf(_T("\n\nCleaning up...\nDisconnecting driver...\n"));
-	iResult = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(context->changeBuffer), (LPSTR) context->changeBuffer, 0, 0);
-
+	iResult = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer, 0, 0);
+	
 	if (iResult <= 0)
 	{
 		_tprintf(_T("Failed to unmap shared memory from the driver! Code %d\n"), iResult);
@@ -301,7 +300,8 @@ BOOL wf_mirror_cleanup(wfInfo* context)
 	if (context->driverDC != NULL)
 	{
 		iResult = DeleteDC(context->driverDC);
-		if(iResult == 0)
+
+		if (iResult == 0)
 		{
 			_tprintf(_T("Failed to release DC!\n"));
 		}
