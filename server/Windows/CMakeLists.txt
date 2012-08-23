@@ -20,18 +20,28 @@
 add_executable(wfreerdp-server
 	wf_input.c
 	wf_input.h
+	wf_mirage.c
+	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_info.c
+	wf_info.h
 	wfreerdp.c
 	wfreerdp.h)
 
 if(WITH_MONOLITHIC_BUILD)
 	target_link_libraries(wfreerdp-server freerdp)
-else()
-	target_link_libraries(wfreerdp-server
-		freerdp-core
-		freerdp-utils
-		freerdp-codec
-		freerdp-channels)
-endif()
 
+else()
+
+	target_link_libraries(wfreerdp-server
+
+		freerdp-core
+
+		freerdp-utils
+
+		freerdp-codec
+
+		freerdp-channels)
+
+endif()

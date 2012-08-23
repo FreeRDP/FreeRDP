@@ -21,12 +21,21 @@
 #define WFREERDP_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/codec/rfx.h>
+#include "wf_info.h"
 
 struct wf_peer_context
 {
 	rdpContext _p;
+
+	wfInfo* wfInfo;
 	boolean activated;
+	RFX_CONTEXT* rfx_context;
+	STREAM* s;
+
 };
 typedef struct wf_peer_context wfPeerContext;
+
+extern wfInfo * wfInfoSingleton;
 
 #endif /* WFREERDP_H */

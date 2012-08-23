@@ -44,6 +44,8 @@
 HANDLE g_done_event;
 int g_thread_count = 0;
 
+BOOL derp = false;
+
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
 	int rcount;
@@ -88,6 +90,9 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+
+		if(client->activated)
+			wf_peer_send_changes(client->update);
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
@@ -129,6 +134,7 @@ static void wf_server_main_loop(freerdp_listener* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+		Sleep(20);
 	}
 
 	instance->Close(instance);
@@ -188,4 +194,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
