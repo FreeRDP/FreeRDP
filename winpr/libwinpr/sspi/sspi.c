@@ -451,7 +451,7 @@ void sspi_ContextBufferFree(void* contextBuffer)
 
 /* Package Management */
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(UINT32* pcPackages, PSecPkgInfoW* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo)
 {
 	int index;
 	size_t size;
@@ -479,7 +479,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(UINT32* pcPackages, PSecPkg
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(UINT32* pcPackages, PSecPkgInfoA* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo)
 {
 	int index;
 	size_t size;
@@ -621,7 +621,7 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 /* Credential Management */
 
 SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
@@ -640,7 +640,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 }
 
 SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, void* pGetKeyFn,
+		ULONG fCredentialUse, PLUID pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
@@ -658,7 +658,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, UINT32 fFlags, PSecBuffer pPackedContext, void* pToken)
+SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
 {
 	return SEC_E_OK;
 }
@@ -687,12 +687,12 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, void* pToken, PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
 	return SEC_E_OK;
 }
@@ -929,7 +929,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG u
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, void* phToken)
+SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
 	return SEC_E_OK;
 }
