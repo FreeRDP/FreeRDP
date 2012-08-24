@@ -56,6 +56,9 @@ boolean freerdp_connect(freerdp* instance)
 
 	rdp = instance->context->rdp;
 
+	/* Advanced settings for keyboard layout */
+	freerdp_keyboard_set_layout_code(rdp->mcs->transport->settings);
+
 	IFCALLRET(instance->PreConnect, status, instance);
 
 	extension_load_and_init_plugins(rdp->extension);
