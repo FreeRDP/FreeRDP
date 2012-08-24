@@ -1,6 +1,6 @@
 
 cmake_minimum_required (VERSION 2.8) 
-project (MacFreeRDP) 
+project (MacFreeRDP)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 include(CheckIncludeFiles)
@@ -8,9 +8,6 @@ include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(FindPkgConfig)
 include(TestBigEndian)
-
-# Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../../cmake/)
 
 include(AutoVersioning)
 include(ConfigOptions)
@@ -114,7 +111,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist ${CMAKE_CURRENT_BINARY_DIR
 set_target_properties(MacFreeRDP PROPERTIES RESOURCE "${MacFreeRDP_XIBS}")
 
 # Automatic ref counting
-set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
+# temporary turn off for x86_64 build issue
+# set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
 
 # Support for automatic reference counting requires non-fragile abi.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
@@ -135,12 +133,13 @@ if(NOT WIN32)
 	find_optional_package(MacAudio)
 endif()
 
-# Add all libraries
-target_link_libraries(MacFreeRDP ${EXTRA_LIBS})
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-core/Debug/libfreerdp-core.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-channels/Debug/libfreerdp-channels.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-cache/Debug/libfreerdp-cache.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-gdi/Debug/libfreerdp-gdi.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-utils/Debug/libfreerdp-utils.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-codec/Debug/libfreerdp-codec.dylib)
-target_link_libraries(MacFreeRDP ${CMAKE_SOURCE_DIR}/../../xcode/libfreerdp-rail/Debug/libfreerdp-rail.dylib)
+target_link_libraries(MacFreeRDP
+			${EXTRA_LIBS}
+			freerdp-core
+			freerdp-channels
+			freerdp-cache
+			freerdp-gdi
+			freerdp-utils
+			freerdp-codec
+			freerdp-rail
+)

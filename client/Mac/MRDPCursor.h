@@ -8,8 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#define boolean int
-
 #include "freerdp/graphics.h"
 
 @interface MRDPCursor : NSObject
