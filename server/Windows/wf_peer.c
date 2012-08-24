@@ -56,8 +56,8 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	client = (freerdp_peer*) lpParam;
 	
 	/* TODO: do not encode when no clients are connected */
-
-	while (1)
+	/* TODO: refactor this */
+	while (wf_info_has_subscribers(wfInfoSingleton))
 	{
 		beg = GetTickCount();
 
@@ -79,6 +79,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 			Sleep(rate - diff);
 		}
 	}
+	
 
 	_tprintf(_T("monitor thread terminating...\n"));
 	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1);
@@ -98,13 +99,19 @@ void wf_rfx_encode(freerdp_peer* client)
 	wfPeerContext* wfp;
 	GETCHANGESBUF* buf;
 	SURFACE_BITS_COMMAND* cmd;
-	
+
 	wfp = (wfPeerContext*) client->context;
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
 
 	switch (dRes)
 	{
+
+		case WAIT_ABANDONED:
+
+			printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... resuming...\n");			
+			//no break
+
 		case WAIT_OBJECT_0:
 
 			wf_info_find_invalid_region(wfInfoSingleton);
@@ -161,12 +168,6 @@ void wf_rfx_encode(freerdp_peer* client)
 
 		case WAIT_TIMEOUT:
 
-			ReleaseMutex(wfInfoSingleton->encodeMutex);
-			break;
-
-		case WAIT_ABANDONED:
-
-			printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... releasing...\n", dRes);
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
 
@@ -257,6 +258,11 @@ void wf_peer_send_changes(rdpUpdate* update)
 
 	switch(dRes)
 	{
+		case WAIT_ABANDONED:
+
+			printf("\n\nwf_peer_send_changes: Got ownership of abandoned mutex... resuming...\n");
+			//no break;
+
 		case WAIT_OBJECT_0:
 
 			/* are there changes to send? */
