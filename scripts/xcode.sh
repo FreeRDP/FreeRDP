@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# may now be legacy; 2 stage cmake no longer needed
+
 # Xcode generated files directory
 XCODE_PROJ_DIR=xcode
 # MacFreeRDP client directory

@@ -1,7 +1,5 @@
 #import <Cocoa/Cocoa.h>
 
-#define boolean int
-
 #import "freerdp/gdi/gdi.h"
 #import "freerdp/rail/rail.h"
 #import "MRDPRailWindow.h"

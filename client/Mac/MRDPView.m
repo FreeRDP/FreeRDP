@@ -1869,7 +1869,6 @@ void cliprdr_send_supported_format_list(freerdp *inst)
     freerdp_channels_send_event(inst->context->channels, (RDP_EVENT*) event);
 }
 
-<<<<<<< HEAD
 /****************************************************************************************
  *                                                                                      *
  *                                                                                      *
