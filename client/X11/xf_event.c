@@ -400,6 +400,8 @@ static boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfi->display, CurrentTime);
 
+	xf_kbd_clear(xfi);
+
 	if (app)
 		xf_rail_send_activate(xfi, event->xany.window, false);
 
