@@ -8,8 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef int boolean;
-
 #import "MRDPWindow.h"
 #import "freerdp/freerdp.h"
 #import "freerdp/types.h"

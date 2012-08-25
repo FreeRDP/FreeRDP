@@ -746,7 +746,7 @@ extern struct kkey g_keys[];
     //if ([self activateWindow])
         mac_rail_send_activate(savedWindowId);
     
-    set_current_window(windowIndex);
+    // set_current_window(windowIndex); // ? code mis-merge?
 }
 
 - (void) releaseResources
