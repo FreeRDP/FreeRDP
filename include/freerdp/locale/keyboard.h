@@ -195,5 +195,6 @@ FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboard
 FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode);
 FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended);
 FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode);
+FREERDP_API void freerdp_keyboard_set_layout_code(rdpSettings* settings);
 
 #endif /* __FREERDP_LOCALE_KEYBOARD_H */
