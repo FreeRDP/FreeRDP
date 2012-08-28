@@ -50,30 +50,39 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 	if (status != ERROR_SUCCESS)
 		return;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("DesktopWidth"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->width = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("DesktopHeight"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->height = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("KeyboardType"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->kbd_type = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("KeyboardSubType"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->kbd_subtype = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("KeyboardFunctionKeys"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->kbd_fn_keys = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("KeyboardLayout"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->kbd_layout = dwValue;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("NlaSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->nla_security = dwValue ? 1 : 0;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("TlsSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->tls_security = dwValue ? 1 : 0;
 
+	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, _T("RdpSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 		settings->rdp_security = dwValue ? 1 : 0;
 

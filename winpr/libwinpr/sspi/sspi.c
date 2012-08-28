@@ -289,8 +289,9 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	if (user)
 	{
 		identity->UserLength = MultiByteToWideChar(CP_UTF8, 0, user, strlen(user), NULL, 0);
-		identity->User = (UINT16*) malloc(identity->UserLength * sizeof(WCHAR));
+		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
 		MultiByteToWideChar(CP_UTF8, 0, user, identity->UserLength, (LPWSTR) identity->User, identity->UserLength * sizeof(WCHAR));
+		identity->User[identity->UserLength] = 0;
 	}
 	else
 	{
@@ -301,8 +302,9 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	if (domain)
 	{
 		identity->DomainLength = MultiByteToWideChar(CP_UTF8, 0, domain, strlen(domain), NULL, 0);
-		identity->Domain = (UINT16*) malloc(identity->DomainLength * sizeof(WCHAR));
+		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
 		MultiByteToWideChar(CP_UTF8, 0, domain, identity->DomainLength, (LPWSTR) identity->Domain, identity->DomainLength * sizeof(WCHAR));
+		identity->Domain[identity->DomainLength] = 0;
 	}
 	else
 	{
@@ -313,8 +315,9 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 	if (password != NULL)
 	{
 		identity->PasswordLength = MultiByteToWideChar(CP_UTF8, 0, password, strlen(password), NULL, 0);
-		identity->Password = (UINT16*) malloc(identity->PasswordLength * sizeof(WCHAR));
+		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
 		MultiByteToWideChar(CP_UTF8, 0, password, identity->PasswordLength, (LPWSTR) identity->Password, identity->PasswordLength * sizeof(WCHAR));
+		identity->Password[identity->PasswordLength] = 0;
 	}
 	else
 	{
@@ -337,17 +340,31 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
+	identity->User = identity->Domain = identity->Password = NULL;
+
 	identity->UserLength = srcIdentity->UserLength;
-	identity->User = (UINT16*) malloc(identity->UserLength * sizeof(WCHAR));
-	CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
+
+	if (identity->UserLength > 0)
+	{
+		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
+		CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
+	}
 
 	identity->DomainLength = srcIdentity->DomainLength;
-	identity->Domain = (UINT16*) malloc(identity->DomainLength * sizeof(WCHAR));
-	CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
+
+	if (identity->DomainLength > 0)
+	{
+		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
+		CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
+	}
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
-	identity->Password = (UINT16*) malloc(identity->PasswordLength * sizeof(WCHAR));
-	CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
+
+	if (identity->PasswordLength > 0)
+	{
+		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
+		CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
+	}
 }
 
 void sspi_GlobalInit()

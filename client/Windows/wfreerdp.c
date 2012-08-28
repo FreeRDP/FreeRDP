@@ -324,7 +324,7 @@ boolean wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->window_title != NULL)
-		_snwprintf(win_title, sizeof(win_title), L"%S", settings->window_title);
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->window_title);
 	else if (settings->port == 3389)
 		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->hostname);
 	else
