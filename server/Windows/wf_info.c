@@ -29,6 +29,45 @@
 #include "wf_info.h"
 #include "wf_mirage.h"
 
+extern wfInfo * wfInfoSingleton;
+
+int wf_info_lock()
+{
+	DWORD dRes;
+
+	dRes = WaitForSingleObject(wfInfoSingleton->mutex, INFINITE);
+
+	switch(dRes)
+	{
+	case WAIT_ABANDONED:
+		//complain and proceed as normal
+		printf("Got ownership of abandoned mutex... resuming...\n");
+
+	case WAIT_OBJECT_0:
+		break;
+
+	case WAIT_TIMEOUT:
+		return 1;
+		break;
+	case WAIT_FAILED:
+		printf("WAIT FAILED code %#X\n", GetLastError());
+		return -1;
+		break;
+	}
+		
+	return 0;
+}
+
+
+
+int wf_info_unlock()
+{
+	if(ReleaseMutex(wfInfoSingleton->mutex) == 0)
+		return 0;
+	return 1;
+}
+
+
 wfInfo* wf_info_init(wfInfo * wfi)
 {
 	if (!wfi)
@@ -89,6 +128,8 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 				rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 				context->s = stream_new(65536);
 
+				context->wfInfo->roflbuffer = (BYTE*)malloc( (context->wfInfo->width) * (context->wfInfo->height) * 4);
+
 				printf("Start Encoder\n");
 				ReleaseMutex(wfi->encodeMutex);
 			}
@@ -136,6 +177,8 @@ void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
 
 				stream_free(context->s);
 				rfx_context_free(context->rfx_context);
+
+				free(context->wfInfo->roflbuffer);
 
 				printf("Stop encoder\n");
 				break; 

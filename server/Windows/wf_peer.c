@@ -51,7 +51,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	DWORD diff, rate;
 	freerdp_peer* client;
 
-	fps = 30;
+	fps = 24;
 	rate = 1000 / fps;
 	client = (freerdp_peer*) lpParam;
 	
@@ -100,6 +100,13 @@ void wf_rfx_encode(freerdp_peer* client)
 	GETCHANGESBUF* buf;
 	SURFACE_BITS_COMMAND* cmd;
 
+#ifdef ROFLBUFFER
+	uint16 i;
+	int delta;
+	int scanline;
+	BYTE* srcp;
+	BYTE* dstp;
+#endif
 	wfp = (wfPeerContext*) client->context;
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
@@ -145,10 +152,43 @@ void wf_rfx_encode(freerdp_peer* client)
 			//printf("Encoding: left:%d top:%d right:%d bottom:%d width:%d height:%d\n",
 			//	wfi->invalid_x1, wfi->invalid_y1, wfi->invalid_x2, wfi->invalid_y2, width, height);
 
+			
+#ifndef ROFLBUFFER
 			offset = (4 * wfi->invalid_x1) + (wfi->invalid_y1 * wfi->width * 4);
 
+			
 			rfx_compose_message(wfp->rfx_context, s, &rect, 1,
 					((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
+#else			
+			
+			//memcpy(wfi->roflbuffer, ((uint8*) (buf->Userbuffer)) + offset, 4 * width * height);
+
+			//to copy the region we must copy HxWxB bytes per line and skip 4*(screen_w - x2)
+
+
+			/*delta = 0;
+			for(i = 0; i < height; ++i)
+			{
+				memcpy(wfi->roflbuffer + offset + delta, ((uint8*) (buf->Userbuffer)) + offset + delta, 4 * width);
+				delta += (4 * width) + (4 * (wfi->width - wfi->invalid_x2) + (4 * wfi->invalid_x1));
+			}*/
+			
+			scanline = (wfi->width * 4);
+			offset = (wfi->invalid_y1 * scanline) + (wfi->invalid_x1 * 4);
+			srcp = (BYTE*) buf->Userbuffer + offset;
+			dstp = (BYTE*) wfi->roflbuffer + offset;
+			Sleep(100);
+			for (i = 0; i < height; i++)
+			{
+				memcpy(dstp, srcp, width * 4);
+				dstp += scanline;
+				srcp += scanline;
+			}
+			
+			rfx_compose_message(wfp->rfx_context, s, &rect, 1,
+				wfi->roflbuffer + offset, width, height, wfi->width * 4);
+
+#endif
 
 			cmd->destLeft = wfi->invalid_x1;
 			cmd->destTop = wfi->invalid_y1;

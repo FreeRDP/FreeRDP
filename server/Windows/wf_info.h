@@ -48,8 +48,13 @@ struct wf_info
 	long invalid_y2;
 
 	BOOL enc_data;
+
+	BYTE* roflbuffer;
 };
 typedef struct wf_info wfInfo;
+
+int wf_info_lock();
+int wf_info_unlock();
 
 wfInfo* wf_info_init(wfInfo* wfi);
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
