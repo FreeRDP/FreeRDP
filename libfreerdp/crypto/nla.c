@@ -128,7 +128,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 
 	sspi_SetAuthIdentity(&(credssp->identity), settings->username, settings->domain, settings->password);
 
-#if 0
+#ifdef WITH_DEBUG_NLA
 	_tprintf(_T("User: %s Domain: %s Password: %s\n"),
 		credssp->identity.User, credssp->identity.Domain, credssp->identity.Password);
 #endif
@@ -262,13 +262,11 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
-#ifndef _WIN32
 		if (have_input_buffer && (input_buffer.pvBuffer != NULL))
 		{
 			free(input_buffer.pvBuffer);
 			input_buffer.pvBuffer = NULL;
 		}
-#endif
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 		{
@@ -304,10 +302,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 #endif
 
 			credssp_send(credssp);
-
-#ifndef _WIN32
 			credssp_buffer_free(credssp);
-#endif
 		}
 
 		if (status != SEC_I_CONTINUE_NEEDED)
@@ -342,10 +337,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	/* Verify Server Public Key Echo */
 
 	status = credssp_decrypt_public_key_echo(credssp);
-
-#ifndef _WIN32
 	credssp_buffer_free(credssp);
-#endif
 
 	if (status != SEC_E_OK)
 	{
@@ -364,10 +356,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	}
 
 	credssp_send(credssp);
-
-#ifndef _WIN32
 	credssp_buffer_free(credssp);
-#endif
 
 	/* Free resources */
 
@@ -1325,9 +1314,6 @@ void credssp_free(rdpCredssp* credssp)
 		free(credssp->identity.User);
 		free(credssp->identity.Domain);
 		free(credssp->identity.Password);
-
-#ifndef _WIN32
 		free(credssp);
-#endif
 	}
 }
