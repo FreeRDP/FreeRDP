@@ -85,21 +85,6 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	return image;
 }
 
-wfBitmap* wf_bitmap_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
-{
-	HDC hdc;
-	wfBitmap* bitmap;
-
-	hdc = GetDC(NULL);
-	bitmap = (wfBitmap*) xmalloc(sizeof(wfBitmap));
-	bitmap->hdc = CreateCompatibleDC(hdc);
-	bitmap->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(bitmap->pdata));
-	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
-	ReleaseDC(NULL, hdc);
-	
-	return bitmap;
-}
-
 void wf_image_free(wfBitmap* image)
 {
 	if (image != 0)
