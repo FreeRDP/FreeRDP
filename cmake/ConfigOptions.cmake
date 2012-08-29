@@ -12,6 +12,7 @@ endif()
 
 if(MSVC)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
+	option(WITH_MSVC_STATIC "Use static MSVC runtime" OFF)
 endif()
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
