@@ -31,11 +31,11 @@
 
 extern wfInfo * wfInfoSingleton;
 
-int wf_info_lock()
+int wf_info_lock(DWORD ms)
 {
 	DWORD dRes;
 
-	dRes = WaitForSingleObject(wfInfoSingleton->mutex, INFINITE);
+	dRes = WaitForSingleObject(wfInfoSingleton->mutex, ms);
 
 	switch(dRes)
 	{
@@ -207,13 +207,6 @@ void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
 
 BOOL wf_info_has_subscribers(wfInfo* wfi)
 {
-	int subs;
-
-	WaitForSingleObject(wfi->mutex, INFINITE);
-
-	subs = wfi->subscribers;
-	ReleaseMutex(wfi->mutex);
-
 	if (wfi->subscribers > 0)
 		return TRUE;
 
@@ -223,37 +216,26 @@ BOOL wf_info_has_subscribers(wfInfo* wfi)
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
-	BOOL status = TRUE;
-
-	WaitForSingleObject(wfi->mutex, INFINITE); 
-	
 	if (wfi->nextUpdate == wfi->lastUpdate)
-		status = FALSE;
-	
-	ReleaseMutex(wfi->mutex);
+		return FALSE;
 
-	return status;
+	return TRUE;
 }
 
 void wf_info_updated(wfInfo* wfi)
 {
-	WaitForSingleObject(wfi->mutex, INFINITE);
 
 	wfi->lastUpdate = wfi->nextUpdate;
 	
-	ReleaseMutex(wfi->mutex);
 }
 
 void wf_info_update_changes(wfInfo* wfi)
 {
 	GETCHANGESBUF* buf;
 
-	WaitForSingleObject(wfi->mutex, INFINITE);
-
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 	wfi->nextUpdate = buf->buffer->counter;
 	
-	ReleaseMutex(wfi->mutex);
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
@@ -261,7 +243,6 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	int i;
 	GETCHANGESBUF* buf;
 
-	WaitForSingleObject(wfi->mutex, INFINITE); 
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 
 	if (wfi->enc_data == FALSE)
@@ -292,7 +273,6 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	if (wfi->invalid_y2 >= wfi->height)
 		wfi->invalid_y2 = wfi->height - 1;
 
-	ReleaseMutex(wfi->mutex);
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)

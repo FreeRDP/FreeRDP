@@ -35,6 +35,7 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
+
 	wfInfoSingleton = wf_info_init(wfInfoSingleton);
 	wf_info_mirror_init(wfInfoSingleton, context);
 }
@@ -55,21 +56,27 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	rate = 1000 / fps;
 	client = (freerdp_peer*) lpParam;
 	
-	/* TODO: do not encode when no clients are connected */
-	/* TODO: refactor this */
-	while (wf_info_has_subscribers(wfInfoSingleton))
+	while (1)
 	{
 		beg = GetTickCount();
 
+		wf_info_lock(INFINITE);
+
 		if (wf_info_has_subscribers(wfInfoSingleton))
 		{
-			wf_info_update_changes(wfInfoSingleton);
 
+			wf_info_update_changes(wfInfoSingleton);
 			if (wf_info_have_updates(wfInfoSingleton))
 			{
 				wf_rfx_encode(client);
 			}
 		}
+		else
+		{
+			wf_info_unlock();
+		}
+
+		wf_info_unlock();
 
 		end = GetTickCount();
 		diff = end - beg;
@@ -107,6 +114,9 @@ void wf_rfx_encode(freerdp_peer* client)
 	BYTE* srcp;
 	BYTE* dstp;
 #endif
+
+	if(client->activated == FALSE)
+		return;
 	wfp = (wfPeerContext*) client->context;
 
 	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
@@ -306,10 +316,14 @@ void wf_peer_send_changes(rdpUpdate* update)
 		case WAIT_OBJECT_0:
 
 			/* are there changes to send? */
-			if (!wf_info_have_updates(wfInfoSingleton) ||
+
+			if (	((wf_info_lock(0) != 0)) ||
+				!wf_info_have_updates(wfInfoSingleton) ||
 				!wf_info_have_invalid_region(wfInfoSingleton) ||
 				(wfInfoSingleton->enc_data == FALSE))
 			{
+				//we dont send
+				wf_info_unlock();
 				ReleaseMutex(wfInfoSingleton->encodeMutex);
 				break;
 			}
@@ -319,6 +333,7 @@ void wf_peer_send_changes(rdpUpdate* update)
 			update->SurfaceBits(update->context, &update->surface_bits_command);
 
 			wfInfoSingleton->enc_data = FALSE;
+			wf_info_unlock();
 			ReleaseMutex(wfInfoSingleton->encodeMutex);
 			break;
 

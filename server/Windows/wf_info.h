@@ -53,7 +53,7 @@ struct wf_info
 };
 typedef struct wf_info wfInfo;
 
-int wf_info_lock();
+int wf_info_lock(DWORD ms);
 int wf_info_unlock();
 
 wfInfo* wf_info_init(wfInfo* wfi);
