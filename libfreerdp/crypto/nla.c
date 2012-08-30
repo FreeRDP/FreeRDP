@@ -396,20 +396,10 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		return 0;
 
 #ifdef WITH_NATIVE_SSPI
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE pInitSecurityInterface;
-
-		hSSPI = LoadLibrary(_T("secur32.dll"));
-
-#ifdef UNICODE
-		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+	if (!credssp->SspiModule)
+		credssp->SspiModule = _tcsdup(_T("secur32.dll"));
 #endif
-		credssp->table = (*pInitSecurityInterface)();
-	}
-#else
+
 	if (credssp->SspiModule)
 	{
 		HMODULE hSSPI;
@@ -431,6 +421,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		credssp->table = (*pInitSecurityInterface)();
 	}
+#ifndef WITH_NATIVE_SSPI
 	else
 	{
 		credssp->table = InitSecurityInterface();
@@ -1269,28 +1260,30 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 		ZeroMemory(&credssp->pubKeyAuth, sizeof(SecBuffer));
 		ZeroMemory(&credssp->authInfo, sizeof(SecBuffer));
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
-				0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-
-		if (status == ERROR_SUCCESS)
+		if (credssp->server)
 		{
-			status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
+			status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
+					0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 			if (status == ERROR_SUCCESS)
 			{
-				credssp->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
-
-				status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
-						(BYTE*) credssp->SspiModule, &dwSize);
+				status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
 
 				if (status == ERROR_SUCCESS)
 				{
-					_tprintf(_T("Using SSPI Module: %s\n"), credssp->SspiModule);
-					RegCloseKey(hKey);
+					credssp->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+
+					status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
+							(BYTE*) credssp->SspiModule, &dwSize);
+
+					if (status == ERROR_SUCCESS)
+					{
+						_tprintf(_T("Using SSPI Module: %s\n"), credssp->SspiModule);
+						RegCloseKey(hKey);
+					}
 				}
 			}
 		}
-
 	}
 
 	return credssp;

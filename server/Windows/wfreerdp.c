@@ -91,8 +91,10 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 		}
 
+#ifndef WITH_WIN8
 		if(client->activated)
 			wf_peer_send_changes(client->update);
+#endif
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
