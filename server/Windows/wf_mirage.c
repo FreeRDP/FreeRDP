@@ -84,56 +84,41 @@ This function will attempt to access the the windows registry using the device
  unsuccessful or an unexpected value is encountered, the function returns 
  false.
  */
+
 BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 {
+	HKEY hKey;
 	LONG status;
-	DWORD rtype, rdata, rdata_size;
+	DWORD dwType;
+	DWORD dwSize;
+	DWORD dwValue;
 
-	_tprintf(_T("\nOpening registry key %s\n"), context->deviceKey);
-
-	rtype = 0;
-	rdata = 0;
-	rdata_size = sizeof(rdata);
-
-	status = RegGetValue(HKEY_LOCAL_MACHINE, context->deviceKey,
-		_T("Attach.ToDesktop"), RRF_RT_REG_DWORD, &rtype, &rdata, &rdata_size);
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, context->deviceKey,
+		0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
+		return FALSE;
+
+	dwSize = sizeof(DWORD);
+	status = RegQueryValueEx(hKey, _T("Attach.ToDesktop"),
+		NULL, &dwType, (BYTE*) &dwValue, &dwSize);
+
+	if (status != ERROR_SUCCESS)
+		return FALSE;
+
+	if (dwValue == 1)
 	{
-		printf("Failed to read registry value.\n");
-		printf("operation returned %d\n", status);
-		return false;
-	}
+		dwValue = val;
+		dwSize = sizeof(DWORD);
 
-	_tprintf(_T("type = %04X, data = %04X\n"), rtype, rdata);
-
-	if (rdata == (val ^ 1))
-	{
-		rdata = val;
-
-		status = RegSetKeyValue(HKEY_LOCAL_MACHINE, context->deviceKey,
-			_T("Attach.ToDesktop"), REG_DWORD, &rdata, rdata_size);
+		status = RegSetValueEx(HKEY_LOCAL_MACHINE, _T("Attach.ToDesktop"),
+			0, REG_DWORD, (BYTE*) &dwValue, dwSize);
 
 		if (status != ERROR_SUCCESS)
-		{
-			_tprintf(_T("Failed to write registry value.\n"));
-			_tprintf(_T("operation returned %d\n"), status);
-			return false;
-		}
-
-		_tprintf(_T("Wrote subkey \"Attach.ToDesktop\" -> %04X\n\n"), rdata);
-	}
-	else if (rdata == val)
-	{
-		_tprintf(_T("\"Attach.ToDesktop\" is already set to %04X!\n"), rdata);
-	}
-	else
-	{
-		_tprintf(_T("An wild value appeared!...\nrdata=%d\n"), rdata);
-		return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 /*

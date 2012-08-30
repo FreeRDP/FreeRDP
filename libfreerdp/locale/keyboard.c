@@ -119,7 +119,8 @@ RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkco
 void freerdp_keyboard_set_layout_code(rdpSettings* settings)
 {
 	/* for jp */
-	if (settings->kbd_layout == 0xE0010411) {
+	if (settings->kbd_layout == 0xE0010411)
+	{
 		settings->kbd_type = 7;
 		settings->kbd_subtype = 2;
 		settings->kbd_fn_keys = 12;

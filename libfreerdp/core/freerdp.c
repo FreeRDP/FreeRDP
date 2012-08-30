@@ -32,6 +32,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/errorcodes.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
 
@@ -123,7 +124,7 @@ boolean freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->data = xrealloc(s->data, record.length);
+				s->data = (uint8*) xrealloc(s->data, record.length);
 				record.data = s->data;
 				s->size = record.length;
 
