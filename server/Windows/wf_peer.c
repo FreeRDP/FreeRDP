@@ -35,13 +35,17 @@
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
+#ifndef WITH_WIN8
 	wfInfoSingleton = wf_info_init(wfInfoSingleton);
 	wf_info_mirror_init(wfInfoSingleton, context);
+#endif
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
+#ifndef WITH_WIN8
 	wf_info_subscriber_release(wfInfoSingleton, context);
+#endif
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
@@ -184,6 +188,7 @@ void wf_peer_init(freerdp_peer* client)
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 	freerdp_peer_context_new(client);
 
+#ifndef WITH_WIN8
 	if (!wf_info_get_thread_count(wfInfoSingleton))
 	{
 		_tprintf(_T("Trying to create a monitor thread...\n"));
@@ -193,6 +198,7 @@ void wf_peer_init(freerdp_peer* client)
 
 		wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) + 1 );
 	}
+#endif
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
