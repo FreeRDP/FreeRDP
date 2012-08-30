@@ -308,6 +308,8 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 						}
 					}
 
+					free(EntryUser);
+
 					if (UserMatch && DomainMatch)
 					{
 						Found = 1;

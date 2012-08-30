@@ -20,6 +20,7 @@
 #ifndef WINPR_TCHAR_H
 #define WINPR_TCHAR_H
 
+#include <winpr/crt.h>
 #include <winpr/wtypes.h>
 
 #ifdef _WIN32
@@ -31,9 +32,13 @@
 #ifdef UNICODE
 typedef WCHAR		TCHAR;
 #define _tprintf	wprintf
+#define _tcsdup		_wcsdup
+#define _tcscmp		wcscmp
 #else
 typedef CHAR		TCHAR;
 #define _tprintf	printf
+#define _tcsdup		_strdup
+#define _tcscmp		strcmp
 #endif
 
 #endif
