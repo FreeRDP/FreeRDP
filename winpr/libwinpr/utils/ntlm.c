@@ -27,6 +27,8 @@
 #include <winpr/windows.h>
 
 #include <time.h>
+
+#include <openssl/ssl.h>
 #include <openssl/des.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
@@ -149,7 +151,11 @@ BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Do
 
 	CopyMemory(buffer, User, UserLength);
 	CharUpperBuffW((LPWSTR) buffer, UserLength / 2);
-	CopyMemory(&buffer[UserLength], Domain, DomainLength);
+
+	if (DomainLength > 0)
+	{
+		CopyMemory(&buffer[UserLength], Domain, DomainLength);
+	}
 
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
 	HMAC(EVP_md5(), (void*) NtHashV1, 16, buffer, UserLength + DomainLength, (void*) NtHash, NULL);

@@ -161,6 +161,22 @@ void ntlm_write_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
+void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
+{
+	if (fields != NULL)
+	{
+		if (fields->Buffer != NULL)
+		{
+			free(fields->Buffer);
+
+			fields->Len = 0;
+			fields->MaxLen = 0;
+			fields->Buffer = NULL;
+			fields->BufferOffset = 0;
+		}
+	}
+}
+
 void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
 	printf("%s (Len: %d MaxLen: %d BufferOffset: %d)\n",
@@ -846,6 +862,13 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	context->state = NTLM_STATE_FINAL;
 
 	PStreamFreeDetach(s);
+
+	ntlm_free_message_fields_buffer(&(message.DomainName));
+	ntlm_free_message_fields_buffer(&(message.UserName));
+	ntlm_free_message_fields_buffer(&(message.Workstation));
+	ntlm_free_message_fields_buffer(&(message.LmChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message.NtChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message.EncryptedRandomSessionKey));
 
 	return SEC_I_COMPLETE_NEEDED;
 }

@@ -97,7 +97,7 @@ endif()
 
 # This forces the MSVC runtime to be statically linked
 
-if(MSVC)
+if(WITH_MSVC_STATIC)
 	foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO) 
 		string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
 		string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
