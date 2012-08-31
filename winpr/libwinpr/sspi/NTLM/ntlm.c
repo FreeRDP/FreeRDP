@@ -383,6 +383,17 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 
 		status = ntlm_read_AuthenticateMessage(context, input_buffer);
 
+		if (pOutput)
+		{
+			int i;
+
+			for (i = 0; i < pOutput->cBuffers; i++)
+			{
+				pOutput->pBuffers[i].cbBuffer = 0;
+				pOutput->pBuffers[i].BufferType = SECBUFFER_TOKEN;
+			}
+		}
+
 		return status;
 	}
 
