@@ -36,50 +36,52 @@
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 #ifndef WITH_WIN8
-	wfInfoSingleton = wf_info_init(wfInfoSingleton);
-	wf_info_mirror_init(wfInfoSingleton, context);
+	context->info = wf_info_get_instance();
+	wf_info_mirror_init(context->info, context);
 #endif
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 #ifndef WITH_WIN8
-	wf_info_subscriber_release(wfInfoSingleton, context);
+	wf_info_subscriber_release(context->info, context);
 #endif
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 {
 	DWORD fps;
+	wfInfo* wfi;
 	DWORD beg, end;
 	DWORD diff, rate;
 	freerdp_peer* client;
+	wfPeerContext* context;
 
 	fps = 24;
 	rate = 1000 / fps;
 	client = (freerdp_peer*) lpParam;
+	context = (wfPeerContext*) client->context;
+	wfi = context->info;
 	
 	while (1)
 	{
 		beg = GetTickCount();
 
-		wf_info_lock(INFINITE);
+		wf_info_lock(wfi, INFINITE);
 
-		if (wf_info_has_subscribers(wfInfoSingleton))
+		if (wf_info_has_subscribers(wfi))
 		{
+			wf_info_update_changes(wfi);
 
-			wf_info_update_changes(wfInfoSingleton);
-			if (wf_info_have_updates(wfInfoSingleton))
-			{
+			if (wf_info_have_updates(wfi))
 				wf_rfx_encode(client);
-			}
 		}
 		else
 		{
-			wf_info_unlock();
+			wf_info_unlock(wfi);
 		}
 
-		wf_info_unlock();
+		wf_info_unlock(wfi);
 
 		end = GetTickCount();
 		diff = end - beg;
@@ -92,7 +94,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	
 
 	_tprintf(_T("monitor thread terminating...\n"));
-	wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) - 1);
+	wf_info_set_thread_count(wfi, wf_info_get_thread_count(wfi) - 1);
 
 	return 0;
 }
@@ -118,36 +120,34 @@ void wf_rfx_encode(freerdp_peer* client)
 	BYTE* dstp;
 #endif
 
-	if(client->activated == FALSE)
+	if (client->activated == FALSE)
 		return;
+	
 	wfp = (wfPeerContext*) client->context;
+	wfi = wfp->info;
 
-	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, INFINITE);
+	dRes = WaitForSingleObject(wfi->encodeMutex, INFINITE);
 
 	switch (dRes)
 	{
-
 		case WAIT_ABANDONED:
-
-			printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... resuming...\n");			
-			//no break
+			printf("\n\nwf_rfx_encode: Got ownership of abandoned mutex... resuming...\n");
 
 		case WAIT_OBJECT_0:
 
-			wf_info_find_invalid_region(wfInfoSingleton);
+			wf_info_find_invalid_region(wfi);
 
 			if( (wfp->activated == false) ||
-				(wf_info_has_subscribers(wfInfoSingleton) == false) ||
-				!wf_info_have_invalid_region(wfInfoSingleton) ||
-				(wfInfoSingleton->enc_data == true) )
+				(wf_info_has_subscribers(wfi) == false) ||
+				!wf_info_have_invalid_region(wfi) ||
+				(wfi->enc_data == true) )
 			{
-				ReleaseMutex(wfInfoSingleton->encodeMutex);
+				ReleaseMutex(wfi->encodeMutex);
 				break;
 			}
 
 			update = client->update;
 			cmd = &update->surface_bits_command;
-			wfi = wfp->wfInfo;
 			buf = (GETCHANGESBUF*) wfi->changeBuffer;
 
 			width = (wfi->invalid_x2 - wfi->invalid_x1) + 1;
@@ -216,12 +216,12 @@ void wf_rfx_encode(freerdp_peer* client)
 			cmd->bitmapData = stream_get_head(s);
 
 			wfi->enc_data = true;
-			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			ReleaseMutex(wfi->encodeMutex);
 			break;
 
 		case WAIT_TIMEOUT:
 
-			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			ReleaseMutex(wfi->encodeMutex);
 			break;
 
 		default:
@@ -233,17 +233,22 @@ void wf_rfx_encode(freerdp_peer* client)
 
 void wf_peer_init(freerdp_peer* client)
 {
+	wfInfo* wfi;
+
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
+	
 	freerdp_peer_context_new(client);
 
+	wfi = ((wfPeerContext*) client->context)->info;
+
 #ifndef WITH_WIN8
-	if (!wf_info_get_thread_count(wfInfoSingleton))
+	if (!wf_info_get_thread_count(wfi))
 	{
 		if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
 		{
-			wf_info_set_thread_count(wfInfoSingleton, wf_info_get_thread_count(wfInfoSingleton) + 1);
+			wf_info_set_thread_count(wfi, wf_info_get_thread_count(wfi) + 1);
 		}
 		else
 		{
@@ -255,7 +260,10 @@ void wf_peer_init(freerdp_peer* client)
 
 boolean wf_peer_post_connect(freerdp_peer* client)
 {
+	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
+
+	wfi = context->info;
 
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
@@ -280,10 +288,10 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->width, client->settings->height, client->settings->color_depth);
 
-	printf("But we will try resizing to %dx%d\n", wfInfoSingleton->width, wfInfoSingleton->height);
+	printf("But we will try resizing to %dx%d\n", wfi->width, wfi->height);
 
-	client->settings->width = wfInfoSingleton->width;
-	client->settings->height = wfInfoSingleton->height;
+	client->settings->width = wfi->width;
+	client->settings->height = wfi->height;
 
 	client->update->DesktopResize(client->update->context);
 
@@ -304,42 +312,46 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 
 }
 
-void wf_peer_send_changes(rdpUpdate* update)
+void wf_peer_send_changes(freerdp_peer* client)
 {
 	int dRes;
+	wfInfo* wfi;
+	wfPeerContext* context = (wfPeerContext*) client->context;
+
+	wfi = context->info;
 
 	/* are we currently encoding? */
-	dRes = WaitForSingleObject(wfInfoSingleton->encodeMutex, 0);
+	dRes = WaitForSingleObject(wfi->encodeMutex, 0);
 
 	switch(dRes)
 	{
 		case WAIT_ABANDONED:
 
 			printf("\n\nwf_peer_send_changes: Got ownership of abandoned mutex... resuming...\n");
-			//no break;
+			/* no break; */
 
 		case WAIT_OBJECT_0:
 
 			/* are there changes to send? */
 
-			if (	((wf_info_lock(0) != 0)) ||
-				!wf_info_have_updates(wfInfoSingleton) ||
-				!wf_info_have_invalid_region(wfInfoSingleton) ||
-				(wfInfoSingleton->enc_data == FALSE))
+			if (	((wf_info_lock(wfi, 0) != 0)) ||
+				!wf_info_have_updates(wfi) ||
+				!wf_info_have_invalid_region(wfi) ||
+				(wfi->enc_data == FALSE))
 			{
-				//we dont send
-				wf_info_unlock();
-				ReleaseMutex(wfInfoSingleton->encodeMutex);
+				/* we do not send */
+				wf_info_unlock(wfi);
+				ReleaseMutex(wfi->encodeMutex);
 				break;
 			}
 
-			wf_info_updated(wfInfoSingleton);
+			wf_info_updated(wfi);
 
-			update->SurfaceBits(update->context, &update->surface_bits_command);
+			client->update->SurfaceBits(client->update->context, &client->update->surface_bits_command);
 
-			wfInfoSingleton->enc_data = FALSE;
-			wf_info_unlock();
-			ReleaseMutex(wfInfoSingleton->encodeMutex);
+			wfi->enc_data = FALSE;
+			wf_info_unlock(wfi);
+			ReleaseMutex(wfi->encodeMutex);
 			break;
 
 		case WAIT_TIMEOUT:

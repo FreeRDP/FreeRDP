@@ -53,9 +53,10 @@ struct wf_info
 };
 typedef struct wf_info wfInfo;
 
-int wf_info_lock(DWORD ms);
-int wf_info_unlock();
+int wf_info_lock(wfInfo* wfi, DWORD ms);
+int wf_info_unlock(wfInfo* wfi);
 
+wfInfo* wf_info_get_instance();
 wfInfo* wf_info_init(wfInfo* wfi);
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
 void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);

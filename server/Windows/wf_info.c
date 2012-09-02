@@ -31,44 +31,45 @@
 
 extern wfInfo * wfInfoSingleton;
 
-int wf_info_lock(DWORD ms)
+static wfInfo* wfInfoInstance = NULL;
+
+int wf_info_lock(wfInfo* wfi, DWORD ms)
 {
 	DWORD dRes;
 
-	dRes = WaitForSingleObject(wfInfoSingleton->mutex, ms);
+	dRes = WaitForSingleObject(wfi->mutex, ms);
 
-	switch(dRes)
+	switch (dRes)
 	{
-	case WAIT_ABANDONED:
-		//complain and proceed as normal
-		printf("Got ownership of abandoned mutex... resuming...\n");
+		case WAIT_ABANDONED:
+			printf("Got ownership of abandoned mutex... resuming...\n");
+			break;
 
-	case WAIT_OBJECT_0:
-		break;
+		case WAIT_OBJECT_0:
+			break;
 
-	case WAIT_TIMEOUT:
-		return 1;
-		break;
-	case WAIT_FAILED:
-		printf("WAIT FAILED code %#X\n", GetLastError());
-		return -1;
-		break;
+		case WAIT_TIMEOUT:
+			return 1;
+			break;
+
+		case WAIT_FAILED:
+			printf("WAIT FAILED code %#X\n", GetLastError());
+			return -1;
+			break;
 	}
-		
+
 	return 0;
 }
 
-
-
-int wf_info_unlock()
+int wf_info_unlock(wfInfo* wfi)
 {
-	if(ReleaseMutex(wfInfoSingleton->mutex) == 0)
+	if (ReleaseMutex(wfi->mutex) == 0)
 		return 0;
+
 	return 1;
 }
 
-
-wfInfo* wf_info_init(wfInfo * wfi)
+wfInfo* wf_info_init(wfInfo* wfi)
 {
 	if (!wfi)
 	{
@@ -100,13 +101,21 @@ wfInfo* wf_info_init(wfInfo * wfi)
 	return wfi;
 }
 
+wfInfo* wf_info_get_instance()
+{
+	if (wfInfoInstance == NULL)
+		wfInfoInstance = wf_info_init(NULL);
+
+	return wfInfoInstance;
+}
+
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 {
 	DWORD dRes;
 
 	dRes = WaitForSingleObject(wfi->mutex, INFINITE);
 
-	switch(dRes)
+	switch (dRes)
 	{
 		case WAIT_OBJECT_0:
 
@@ -114,21 +123,21 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 			{
 				/* only the first peer needs to call this. */
 
-				context->wfInfo = wfi;
-				wf_check_disp_devices(context->wfInfo);
-				wf_disp_device_set_attatch(context->wfInfo, 1);
-				wf_update_mirror_drv(context->wfInfo, 0);
-				wf_map_mirror_mem(context->wfInfo);
+				context->info = wfi;
+				wf_check_disp_devices(context->info);
+				wf_disp_device_set_attatch(context->info, 1);
+				wf_update_mirror_drv(context->info, 0);
+				wf_map_mirror_mem(context->info);
 
 				context->rfx_context = rfx_context_new();
 				context->rfx_context->mode = RLGR3;
-				context->rfx_context->width = context->wfInfo->width;
-				context->rfx_context->height = context->wfInfo->height;
+				context->rfx_context->width = context->info->width;
+				context->rfx_context->height = context->info->height;
 
 				rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 				context->s = stream_new(65536);
 
-				context->wfInfo->roflbuffer = (BYTE*)malloc( (context->wfInfo->width) * (context->wfInfo->height) * 4);
+				context->info->roflbuffer = (BYTE*)malloc( (context->info->width) * (context->info->height) * 4);
 
 				printf("Start Encoder\n");
 				ReleaseMutex(wfi->encodeMutex);
@@ -171,14 +180,14 @@ void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
 			case WAIT_OBJECT_0: 
 				--wfi->subscribers;
 				/* only the last peer needs to call this */
-				wf_mirror_cleanup(context->wfInfo);
-				wf_disp_device_set_attatch(context->wfInfo, 0);
-				wf_update_mirror_drv(context->wfInfo, 1);
+				wf_mirror_cleanup(context->info);
+				wf_disp_device_set_attatch(context->info, 0);
+				wf_update_mirror_drv(context->info, 1);
 
 				stream_free(context->s);
 				rfx_context_free(context->rfx_context);
 
-				free(context->wfInfo->roflbuffer);
+				free(context->info->roflbuffer);
 				break; 
 
 			/**
@@ -222,9 +231,7 @@ BOOL wf_info_have_updates(wfInfo* wfi)
 
 void wf_info_updated(wfInfo* wfi)
 {
-
-	wfi->lastUpdate = wfi->nextUpdate;
-	
+	wfi->lastUpdate = wfi->nextUpdate;	
 }
 
 void wf_info_update_changes(wfInfo* wfi)
@@ -233,7 +240,6 @@ void wf_info_update_changes(wfInfo* wfi)
 
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 	wfi->nextUpdate = buf->buffer->counter;
-	
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
@@ -270,7 +276,6 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	if (wfi->invalid_y2 >= wfi->height)
 		wfi->invalid_y2 = wfi->height - 1;
-
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)

@@ -93,7 +93,7 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 #ifndef WITH_WIN8
 		if(client->activated)
-			wf_peer_send_changes(client->update);
+			wf_peer_send_changes(client);
 #endif
 	}
 

@@ -243,7 +243,6 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 {
 	int status;
 	GETCHANGESBUF* b;
-	_tprintf(_T("\n\nCreating a device context...\n"));
 
 	context->driverDC = CreateDC(context->deviceName, NULL, NULL, NULL);
 

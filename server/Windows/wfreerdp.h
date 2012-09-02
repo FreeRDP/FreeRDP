@@ -30,14 +30,11 @@ struct wf_peer_context
 {
 	rdpContext _p;
 
-	wfInfo* wfInfo;
+	STREAM* s;
+	wfInfo* info;
 	boolean activated;
 	RFX_CONTEXT* rfx_context;
-	STREAM* s;
-
 };
 typedef struct wf_peer_context wfPeerContext;
-
-extern wfInfo * wfInfoSingleton;
 
 #endif /* WFREERDP_H */
