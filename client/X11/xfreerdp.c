@@ -436,6 +436,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 }
 
 static int (*_def_error_handler)(Display*, XErrorEvent*);
+
 int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256];
@@ -537,18 +538,21 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
-  if (settings->authentication_only) {
+	if (settings->authentication_only)
+	{
 		/* Check --authonly has a username and password. */
-		if (settings->username == NULL ) {
+		if (settings->username == NULL )
+		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
 			exit(1);
 		}
-		if (settings->password == NULL ) {
+		if (settings->password == NULL )
+		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
 		}
 		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
-		// Avoid XWindows initialization and configuration below.
+		/* Avoid XWindows initialization and configuration below. */
 		return true;
 	}
 
@@ -744,8 +748,11 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->drawable, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
 
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
+	XFlush(xfi->display);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
