@@ -20,11 +20,14 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
+#include <freerdp/codec/rfx.h>
+
 struct wf_peer_context;
 typedef struct wf_peer_context wfPeerContext;
 
 struct wf_info
 {
+	STREAM* s;
 	HDC driverDC;
 	BOOL activated;
 	void* changeBuffer;
@@ -36,22 +39,12 @@ struct wf_info
 	int width;
 	int bitsPerPix;
 
+	RECT invalid;
 	HANDLE mutex;
-	HANDLE encodeMutex;
-	HANDLE can_send_mutex;
-
+	BOOL updatePending;
+	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
-
-	long invalid_x1;
-	long invalid_y1;
-
-	long invalid_x2;
-	long invalid_y2;
-
-	BOOL enc_data;
-
-	BYTE* primary_buffer;
 };
 typedef struct wf_info wfInfo;
 
@@ -65,7 +58,6 @@ void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);
 
 BOOL wf_info_has_subscribers(wfInfo* wfi);
 BOOL wf_info_have_updates(wfInfo* wfi);
-void wf_info_updated(wfInfo* wfi);
 void wf_info_update_changes(wfInfo* wfi);
 void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);

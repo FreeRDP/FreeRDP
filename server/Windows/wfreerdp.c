@@ -92,7 +92,7 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		}
 
 #ifndef WITH_WIN8
-		if(client->activated)
+		if (client->activated)
 			wf_peer_send_changes(client);
 #endif
 	}
@@ -136,6 +136,7 @@ static void wf_server_main_loop(freerdp_listener* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+
 		Sleep(20);
 	}
 

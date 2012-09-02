@@ -21,20 +21,17 @@
 #define WFREERDP_H
 
 //#define WITH_WIN8	1
-//#define WITH_DOUBLE_BUFFERING	1
 
 #include <freerdp/freerdp.h>
-#include <freerdp/codec/rfx.h>
+
 #include "wf_info.h"
 
 struct wf_peer_context
 {
 	rdpContext _p;
 
-	STREAM* s;
 	wfInfo* info;
 	boolean activated;
-	RFX_CONTEXT* rfx_context;
 };
 typedef struct wf_peer_context wfPeerContext;
 
