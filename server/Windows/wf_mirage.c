@@ -31,26 +31,21 @@ the function returns false.
 */
 BOOL wf_check_disp_devices(wfInfo* context)
 {
-	BOOL result, devFound;
+	BOOL result;
+	BOOL devFound;
 	DWORD deviceNumber;
 	DISPLAY_DEVICE deviceInfo;
 
-	devFound = false;
+	devFound = FALSE;
 	deviceNumber = 0;
 	deviceInfo.cb = sizeof(deviceInfo);
 
-	printf("Detecting display devices:\n");
-
 	while (result = EnumDisplayDevices(NULL, deviceNumber, &deviceInfo, 0))
 	{
-		_tprintf(_T("\t%s\n"), deviceInfo.DeviceString);
-
 		if (_tcscmp(deviceInfo.DeviceString, _T("Mirage Driver")) == 0)
 		{
 			int deviceKeyLength;
 			int deviceKeyPrefixLength;
-
-			_tprintf(_T("\n\nFound our target of interest!\n"));
 
 			deviceKeyPrefixLength = _tcslen(DEVICE_KEY_PREFIX);
 
@@ -61,28 +56,26 @@ BOOL wf_check_disp_devices(wfInfo* context)
 
 				_tcsncpy_s(context->deviceKey, deviceKeyLength + 1,
 					&deviceInfo.DeviceKey[deviceKeyPrefixLength], deviceKeyLength);
-
-				_tprintf(_T("DeviceKey: %s\n"), context->deviceKey);
 			}
 
 			_tcsncpy_s(context->deviceName, 32, deviceInfo.DeviceName, _tcslen(deviceInfo.DeviceName));
-			return true;
+			return TRUE;
 		}
 
 		deviceNumber++;
 	}
 
-	return false;
+	return FALSE;
 }
 
-/*
-This function will attempt to access the the windows registry using the device
- key stored in the current context. It will attempt to read the value of the
- "Attach.ToDesktop" subkey and will return true if the value is already set to
- val. If unable to read the subkey, this function will return false. If the 
- subkey is not set to val it will then attempt to set it to val and return true. If 
- unsuccessful or an unexpected value is encountered, the function returns 
- false.
+/**
+ * This function will attempt to access the the windows registry using the device
+ * key stored in the current context. It will attempt to read the value of the
+ * "Attach.ToDesktop" subkey and will return true if the value is already set to
+ * val. If unable to read the subkey, this function will return false. If the 
+ * subkey is not set to val it will then attempt to set it to val and return true. If 
+ * unsuccessful or an unexpected value is encountered, the function returns 
+ * false.
  */
 
 BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
@@ -121,31 +114,80 @@ BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 	return TRUE;
 }
 
-/*
-This function will attempt to apply the currently configured display settings 
-in the registry to the display driver. It will return true if successful 
-otherwise it returns false.
+void wf_disp_change_print_status(LONG status)
+{
+	TCHAR disp_change[64];
 
-If unload is nonzero then the the driver will be asked to remove it self.
-*/
+	switch (status)
+	{
+		case DISP_CHANGE_SUCCESSFUL:
+			_tcscpy(disp_change, _T("DISP_CHANGE_SUCCESSFUL"));
+			break;
+
+		case DISP_CHANGE_BADDUALVIEW:
+			_tcscpy(disp_change, _T("DISP_CHANGE_BADDUALVIEW"));
+			break;
+
+		case DISP_CHANGE_BADFLAGS:
+			_tcscpy(disp_change, _T("DISP_CHANGE_BADFLAGS"));
+			break;
+
+		case DISP_CHANGE_BADMODE:
+			_tcscpy(disp_change, _T("DISP_CHANGE_BADMODE"));
+			break;
+
+		case DISP_CHANGE_BADPARAM:
+			_tcscpy(disp_change, _T("DISP_CHANGE_BADPARAM"));
+			break;
+
+		case DISP_CHANGE_FAILED:
+			_tcscpy(disp_change, _T("DISP_CHANGE_FAILED"));
+			break;
+
+		case DISP_CHANGE_NOTUPDATED:
+			_tcscpy(disp_change, _T("DISP_CHANGE_NOTUPDATED"));
+			break;
+
+		case DISP_CHANGE_RESTART:
+			_tcscpy(disp_change, _T("DISP_CHANGE_RESTART"));
+			break;
+
+		default:
+			_tcscpy(disp_change, _T("DISP_CHANGE_UNKNOWN"));
+			break;
+	}
+
+	if (status != DISP_CHANGE_SUCCESSFUL)
+		_tprintf(_T("ChangeDisplaySettingsEx() failed with %s (%d)\n"), disp_change, status);
+	else
+		_tprintf(_T("ChangeDisplaySettingsEx() succeeded with %s (%d)\n"), disp_change, status);
+}
+
+/**
+ * This function will attempt to apply the currently configured display settings 
+ * in the registry to the display driver. It will return true if successful 
+ * otherwise it returns false.
+ * If unload is nonzero then the the driver will be asked to remove itself.
+ */
+
 BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
-	int currentScreenPixHeight, currentScreenPixWidth, currentScreenBPP;
 	HDC dc;
-	LONG status;
+	BOOL status;
 	DWORD* extHdr;
 	WORD drvExtraSaved;
 	DEVMODE* deviceMode;
+	int currentScreenBPP;
+	int currentScreenPixHeight;
+	int currentScreenPixWidth;
+	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
-	TCHAR rMsg[64];
-	BOOL rturn;
 	
-	if(!unload)
+	if (!unload)
 	{
 		/*
-		Will have to come back to this for supporting non primary displays and 
-		multimonitor setups
-		*/
+		 * Will have to come back to this for supporting non primary displays and multimonitor setups
+		 */
 		dc = GetDC(NULL);
 		currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
 		currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
@@ -187,51 +229,15 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 
 	_tcsncpy_s(deviceMode->dmDeviceName, 32, context->deviceName, _tcslen(context->deviceName));
 
-	status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
+	disp_change_status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
 
-	rturn = false;
-	switch (status)
-	{
-		case DISP_CHANGE_SUCCESSFUL:
-			_tprintf(_T("ChangeDisplaySettingsEx() was successfull\n"));
-			rturn = true;
-			break;
+	status = (disp_change_status == DISP_CHANGE_SUCCESSFUL) ? TRUE : FALSE;
 
-		case DISP_CHANGE_BADDUALVIEW:
-			_tcscpy(rMsg, _T("DISP_CHANGE_BADDUALVIEW"));
-			break;
-
-		case DISP_CHANGE_BADFLAGS:
-			_tcscpy(rMsg, _T("DISP_CHANGE_BADFLAGS"));
-			break;
-
-		case DISP_CHANGE_BADMODE:
-			_tcscpy(rMsg, _T("DISP_CHANGE_BADMODE"));
-			break;
-
-		case DISP_CHANGE_BADPARAM:
-			_tcscpy(rMsg, _T("DISP_CHANGE_BADPARAM"));
-			break;
-
-		case DISP_CHANGE_FAILED:
-			_tcscpy(rMsg, _T("DISP_CHANGE_FAILED"));
-			break;
-
-		case DISP_CHANGE_NOTUPDATED:
-			_tcscpy(rMsg, _T("DISP_CHANGE_NOTUPDATED"));
-			break;
-
-		case DISP_CHANGE_RESTART:
-			_tcscpy(rMsg, _T("DISP_CHANGE_RESTART"));
-			break;
-	}
-
-	if(!rturn)
-		_tprintf(_T("ChangeDisplaySettingsEx() failed with %s, code %d\n"), rMsg, status);
+	if (!status)
+		wf_disp_change_print_status(disp_change_status);
 		
-	return rturn;
+	return status;
 }
-
 
 BOOL wf_map_mirror_mem(wfInfo* context)
 {
@@ -244,46 +250,42 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 	if (context->driverDC == NULL)
 	{
 		_tprintf(_T("Could not create device driver context!\n"));
-		return false;
+		return FALSE;
 	}
 
 	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
-	memset(context->changeBuffer, 0, sizeof(GETCHANGESBUF));
+	ZeroMemory(context->changeBuffer, sizeof(GETCHANGESBUF));
 
-	_tprintf(_T("\n\nConnecting to driver...\n"));
 	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer);
 
 	if (status <= 0)
 	{
-		_tprintf(_T("Failed to map shared memory from the driver! Code %d\n"), status);
+		_tprintf(_T("Failed to map shared memory from the driver! code %d\n"), status);
 	}
 
-	b = (GETCHANGESBUF*)context->changeBuffer;
-	_tprintf(_T("ExtEscape() returned code %d\n"), status);
+	b = (GETCHANGESBUF*) context->changeBuffer;
 
-	return true;
+	return TRUE;
 }
 
-/*
-Unmap the shared memory and release the DC
-*/
+/* Unmap the shared memory and release the DC */
+
 BOOL wf_mirror_cleanup(wfInfo* context)
 {
-	int iResult;
+	int status;
 
-	_tprintf(_T("\n\nCleaning up...\nDisconnecting driver...\n"));
-	iResult = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(context->changeBuffer), (LPSTR) context->changeBuffer, 0, 0);
-
-	if(iResult <= 0)
+	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer, 0, 0);
+	
+	if (status <= 0)
 	{
-		_tprintf(_T("Failed to unmap shared memory from the driver! Code %d\n"), iResult);
+		_tprintf(_T("Failed to unmap shared memory from the driver! code %d\n"), status);
 	}
 
-	_tprintf(_T("Releasing DC\n"));
-	if(context->driverDC != NULL)
+	if (context->driverDC != NULL)
 	{
-		iResult = DeleteDC(context->driverDC);
-		if(iResult == 0)
+		status = DeleteDC(context->driverDC);
+
+		if (status == 0)
 		{
 			_tprintf(_T("Failed to release DC!\n"));
 		}
@@ -291,5 +293,5 @@ BOOL wf_mirror_cleanup(wfInfo* context)
 
 	free(context->changeBuffer);
 
-	return true;
+	return TRUE;
 }
