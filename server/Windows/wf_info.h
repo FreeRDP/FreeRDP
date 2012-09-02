@@ -31,12 +31,14 @@ struct wf_info
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
 	int subscribers;
-	int threadCnt;
+	int threadCount;
 	int height;
 	int width;
 	int bitsPerPix;
 
-	HANDLE mutex, encodeMutex, can_send_mutex;
+	HANDLE mutex;
+	HANDLE encodeMutex;
+	HANDLE can_send_mutex;
 
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
@@ -49,20 +51,17 @@ struct wf_info
 
 	BOOL enc_data;
 
-	BYTE* roflbuffer;
+	BYTE* primary_buffer;
 };
 typedef struct wf_info wfInfo;
 
-int wf_info_lock(wfInfo* wfi, DWORD ms);
+int wf_info_lock(wfInfo* wfi);
+int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
 int wf_info_unlock(wfInfo* wfi);
 
 wfInfo* wf_info_get_instance();
-wfInfo* wf_info_init(wfInfo* wfi);
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
 void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);
-
-int wf_info_get_thread_count(wfInfo* wfi);
-void wf_info_set_thread_count(wfInfo* wfi, int count);
 
 BOOL wf_info_has_subscribers(wfInfo* wfi);
 BOOL wf_info_have_updates(wfInfo* wfi);

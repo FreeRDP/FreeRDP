@@ -78,7 +78,7 @@ BOOL wf_check_disp_devices(wfInfo* context)
  * false.
  */
 
-BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
+BOOL wf_disp_device_set_attach_mode(wfInfo* context, DWORD mode)
 {
 	HKEY hKey;
 	LONG status;
@@ -101,7 +101,7 @@ BOOL wf_disp_device_set_attatch(wfInfo* context, DWORD val)
 
 	if (dwValue == 1)
 	{
-		dwValue = val;
+		dwValue = mode;
 		dwSize = sizeof(DWORD);
 
 		status = RegSetValueEx(HKEY_LOCAL_MACHINE, _T("Attach.ToDesktop"),

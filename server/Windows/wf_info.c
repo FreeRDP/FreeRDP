@@ -29,53 +29,80 @@
 #include "wf_info.h"
 #include "wf_mirage.h"
 
-extern wfInfo * wfInfoSingleton;
-
 static wfInfo* wfInfoInstance = NULL;
 
-int wf_info_lock(wfInfo* wfi, DWORD ms)
+int wf_info_lock(wfInfo* wfi)
 {
 	DWORD dRes;
 
-	dRes = WaitForSingleObject(wfi->mutex, ms);
+	dRes = WaitForSingleObject(wfi->mutex, INFINITE);
 
 	switch (dRes)
 	{
 		case WAIT_ABANDONED:
-			printf("Got ownership of abandoned mutex... resuming...\n");
-			break;
-
 		case WAIT_OBJECT_0:
+			return TRUE;
 			break;
 
 		case WAIT_TIMEOUT:
-			return 1;
+			return FALSE;
 			break;
 
 		case WAIT_FAILED:
-			printf("WAIT FAILED code %#X\n", GetLastError());
+			printf("wf_info_lock failed with 0x%08X\n", GetLastError());
 			return -1;
 			break;
 	}
 
-	return 0;
+	return -1;
+}
+
+int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
+{
+	DWORD dRes;
+
+	dRes = WaitForSingleObject(wfi->mutex, dwMilliseconds);
+
+	switch (dRes)
+	{
+		case WAIT_ABANDONED:
+		case WAIT_OBJECT_0:
+			return TRUE;
+			break;
+
+		case WAIT_TIMEOUT:
+			return FALSE;
+			break;
+
+		case WAIT_FAILED:
+			printf("wf_info_try_lock failed with 0x%08X\n", GetLastError());
+			return -1;
+			break;
+	}
+
+	return -1;
 }
 
 int wf_info_unlock(wfInfo* wfi)
 {
 	if (ReleaseMutex(wfi->mutex) == 0)
-		return 0;
+	{
+		printf("wf_info_unlock failed with 0x%08X\n", GetLastError());
+		return -1;
+	}
 
-	return 1;
+	return TRUE;
 }
 
-wfInfo* wf_info_init(wfInfo* wfi)
+wfInfo* wf_info_init()
 {
-	if (!wfi)
-	{
-		wfi = (wfInfo*) malloc(sizeof(wfInfo));
-		ZeroMemory(wfi, sizeof(wfInfo));
+	wfInfo* wfi;
 
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
+	if (wfi != NULL)
+	{
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
 		if (wfi->mutex == NULL) 
@@ -104,7 +131,7 @@ wfInfo* wf_info_init(wfInfo* wfi)
 wfInfo* wf_info_get_instance()
 {
 	if (wfInfoInstance == NULL)
-		wfInfoInstance = wf_info_init(NULL);
+		wfInfoInstance = wf_info_init();
 
 	return wfInfoInstance;
 }
@@ -117,15 +144,16 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 
 	switch (dRes)
 	{
+		case WAIT_ABANDONED:
 		case WAIT_OBJECT_0:
 
-			if (wfi->subscribers == 0)
+			if (wfi->subscribers < 1)
 			{
 				/* only the first peer needs to call this. */
 
 				context->info = wfi;
 				wf_check_disp_devices(context->info);
-				wf_disp_device_set_attatch(context->info, 1);
+				wf_disp_device_set_attach_mode(context->info, 1);
 				wf_update_mirror_drv(context->info, 0);
 				wf_map_mirror_mem(context->info);
 
@@ -137,9 +165,8 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 				rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 				context->s = stream_new(65536);
 
-				context->info->roflbuffer = (BYTE*)malloc( (context->info->width) * (context->info->height) * 4);
+				context->info->primary_buffer = (BYTE*) malloc((context->info->width) * (context->info->height) * 4);
 
-				printf("Start Encoder\n");
 				ReleaseMutex(wfi->encodeMutex);
 			}
 			++wfi->subscribers;
@@ -181,13 +208,13 @@ void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
 				--wfi->subscribers;
 				/* only the last peer needs to call this */
 				wf_mirror_cleanup(context->info);
-				wf_disp_device_set_attatch(context->info, 0);
+				wf_disp_device_set_attach_mode(context->info, FALSE);
 				wf_update_mirror_drv(context->info, 1);
 
 				stream_free(context->s);
 				rfx_context_free(context->rfx_context);
 
-				free(context->info->roflbuffer);
+				free(context->info->primary_buffer);
 				break; 
 
 			/**
@@ -219,7 +246,6 @@ BOOL wf_info_has_subscribers(wfInfo* wfi)
 
 	return FALSE;
 }
-
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
@@ -298,22 +324,4 @@ BOOL wf_info_have_invalid_region(wfInfo* wfi)
 		return FALSE;
 
 	return TRUE;
-}
-
-int wf_info_get_thread_count(wfInfo* wfi)
-{
-	int count;
-	
-	WaitForSingleObject(wfi->mutex, INFINITE);
-	count = wfi->threadCnt;
-	ReleaseMutex(wfi->mutex);
-	
-	return count;
-}
-
-void wf_info_set_thread_count(wfInfo* wfi, int count)
-{
-	WaitForSingleObject(wfi->mutex, INFINITE);
-	wfi->threadCnt = count;
-	ReleaseMutex(wfi->mutex);
 }
