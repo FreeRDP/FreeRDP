@@ -131,7 +131,11 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 		if (wfi->subscribers < 1)
 		{
 			context->info = wfi;
-			wf_check_disp_devices(wfi);
+			if(!wf_check_disp_devices(wfi))
+			{
+				_tprintf(_T("Failed to load Mirror driver\n"));
+				exit(1);
+			}
 			wf_disp_device_set_attach_mode(wfi, 1);
 			wf_update_mirror_drv(wfi, 0);
 			wf_map_mirror_mem(wfi);

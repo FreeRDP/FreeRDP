@@ -219,6 +219,8 @@ int main(int argc, char* argv[])
 	WSADATA wsa_data;
 	freerdp_listener* instance;
 
+	wf_detect_win_ver();
+
 	instance = freerdp_listener_new();
 
 	instance->PeerAccepted = wf_peer_accepted;

@@ -34,19 +34,30 @@
 
 #include "wf_peer.h"
 
+BOOL win8;
+
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-#ifndef WITH_WIN8
 	context->info = wf_info_get_instance();
-	wf_info_mirror_init(context->info, context);
-#endif
+
+	if(win8)
+	{
+	}
+	else
+	{
+		wf_info_mirror_init(context->info, context);
+	}
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
-#ifndef WITH_WIN8
-	wf_info_subscriber_release(context->info, context);
-#endif
+	if(win8)
+	{
+	}
+	else
+	{
+		wf_info_subscriber_release(context->info, context);
+	}
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
@@ -171,24 +182,28 @@ void wf_peer_init(freerdp_peer* client)
 
 	wfi = ((wfPeerContext*) client->context)->info;
 
-#ifndef WITH_WIN8
-	wf_info_lock(wfi);
-
-	if (wfi->threadCount < 1)
+	if(win8)
 	{
-		if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
-		{
-			wfi->threadCount++;
-			printf("started monitor thread\n");
-		}
-		else
-		{
-			_tprintf(_T("failed to create monitor thread\n"));
-		}
 	}
+	else
+	{
+		wf_info_lock(wfi);
 
-	wf_info_unlock(wfi);
-#endif
+		if (wfi->threadCount < 1)
+		{
+			if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
+			{
+				wfi->threadCount++;
+				printf("started monitor thread\n");
+			}
+			else
+			{
+				_tprintf(_T("failed to create monitor thread\n"));
+			}
+		}
+
+		wf_info_unlock(wfi);
+	}
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
@@ -266,3 +281,33 @@ void wf_peer_send_changes(freerdp_peer* client)
 		wf_info_unlock(wfi);
 	}
 }
+
+void wf_detect_win_ver()
+{
+	OSVERSIONINFOEX osvi;
+	SYSTEM_INFO si;
+	BOOL bOsVersionInfoEx;
+
+	ZeroMemory(&si, sizeof(SYSTEM_INFO));
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
+
+	if(bOsVersionInfoEx == 0 ) return;
+
+	if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
+        osvi.dwMajorVersion > 4 )
+	{
+		if ( osvi.dwMajorVersion == 6 && 
+			osvi.dwMinorVersion == 2)
+			win8 = TRUE;
+		printf("Detected Windows 8\n");
+		return;
+	}
+
+	printf("platform = %d\n Version = %d.%d\n", osvi.dwPlatformId, osvi.dwMajorVersion, osvi.dwMinorVersion);
+	win8 = FALSE;
+}
+
+	

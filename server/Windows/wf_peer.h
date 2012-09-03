@@ -37,4 +37,6 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
 
 void wf_peer_send_changes(freerdp_peer* client);
 
+void wf_detect_win_ver();
+
 #endif /* WF_PEER_H */
