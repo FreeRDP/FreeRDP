@@ -44,40 +44,19 @@
 HANDLE g_done_event;
 int g_thread_count = 0;
 
-static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 {
+	wfInfo* wfi;
 	int i, fds;
 	int rcount;
 	int max_fds;
 	void* rfds[32];
 	fd_set rfds_set;
-	int select_status;
-	struct timeval timeout;
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	memset(rfds, 0, sizeof(rfds));
-	memset(&timeout, 0, sizeof(struct timeval));
-
-	wf_peer_init(client);
-
-	/* Initialize the real server settings here */
-	client->settings->cert_file = xstrdup("server.crt");
-	client->settings->privatekey_file = xstrdup("server.key");
-
-	client->PostConnect = wf_peer_post_connect;
-	client->Activate = wf_peer_activate;
-
-	client->input->SynchronizeEvent = wf_peer_synchronize_event;
-	client->input->KeyboardEvent = wf_peer_keyboard_event;
-	client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
-	client->input->MouseEvent = wf_peer_mouse_event;
-	client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
-
-	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
-
-	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	while (1)
 	{
@@ -106,22 +85,62 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		if (max_fds == 0)
 			break;
 		
-		timeout.tv_usec = 100 * 1000;
-		select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
+		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
-		if (select_status != 0)
+		SetEvent(context->socketEvent);
+	}
+
+	return 0;
+}
+
+static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+{
+	DWORD nCount;
+	HANDLE handles[32];
+	wfPeerContext* context;
+	freerdp_peer* client = (freerdp_peer*) lpParam;
+
+	wf_peer_init(client);
+
+	/* Initialize the real server settings here */
+	client->settings->cert_file = xstrdup("server.crt");
+	client->settings->privatekey_file = xstrdup("server.key");
+
+	client->PostConnect = wf_peer_post_connect;
+	client->Activate = wf_peer_activate;
+
+	client->input->SynchronizeEvent = wf_peer_synchronize_event;
+	client->input->KeyboardEvent = wf_peer_keyboard_event;
+	client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
+	client->input->MouseEvent = wf_peer_mouse_event;
+	client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
+
+	client->Initialize(client);
+	context = (wfPeerContext*) client->context;
+
+	context->socketEvent = CreateEvent(0, 1, 0, 0);
+	CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
+
+	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+
+	nCount = 0;
+	handles[nCount++] = context->socketEvent;
+	handles[nCount++] = context->info->updateEvent;
+
+	while (1)
+	{
+		DWORD status;
+
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if (client->CheckFileDescriptor(client) != true)
 		{
-			if (client->CheckFileDescriptor(client) != true)
-			{
-				printf("Failed to check FreeRDP file descriptor\n");
-				break;
-			}
+			printf("Failed to check FreeRDP file descriptor\n");
+			break;
 		}
 
-#ifndef WITH_WIN8
 		if (client->activated)
 			wf_peer_send_changes(client);
-#endif
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

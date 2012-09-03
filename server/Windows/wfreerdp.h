@@ -32,6 +32,7 @@ struct wf_peer_context
 
 	wfInfo* info;
 	boolean activated;
+	HANDLE socketEvent;
 };
 typedef struct wf_peer_context wfPeerContext;
 

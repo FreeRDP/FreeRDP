@@ -109,6 +109,8 @@ wfInfo* wf_info_init()
 		{
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
+
+		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
 	}
 
 	return wfi;

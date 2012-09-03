@@ -77,6 +77,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 				if (wf_info_have_updates(wfi))
 				{
 					wf_rfx_encode(client);
+					SetEvent(wfi->updateEvent);
 				}
 			}
 

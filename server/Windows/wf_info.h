@@ -42,6 +42,7 @@ struct wf_info
 	RECT invalid;
 	HANDLE mutex;
 	BOOL updatePending;
+	HANDLE updateEvent;
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
