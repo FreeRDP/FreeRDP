@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>

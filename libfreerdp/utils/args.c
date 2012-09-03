@@ -512,6 +512,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			settings->dump_rfx_file = xstrdup(argv[index]);
 			settings->dump_rfx = true;
+			settings->rfx_codec_only = true;
 		}
 		else if (strcmp("--play-rfx", argv[index]) == 0)
 		{

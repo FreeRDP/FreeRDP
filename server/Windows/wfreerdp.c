@@ -46,7 +46,6 @@ int g_thread_count = 0;
 
 static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 {
-	wfInfo* wfi;
 	int i, fds;
 	int rcount;
 	int max_fds;
