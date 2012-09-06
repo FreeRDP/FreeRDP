@@ -31,22 +31,19 @@
 
 #include "wf_input.h"
 #include "wf_mirage.h"
+#include "wf_update.h"
 
 #include "wf_peer.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
-#ifndef WITH_WIN8
 	context->info = wf_info_get_instance();
-	wf_info_mirror_init(context->info, context);
-#endif
+	wf_info_peer_register(context->info, context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
-#ifndef WITH_WIN8
-	wf_info_subscriber_release(context->info, context);
-#endif
+	wf_info_peer_unregister(context->info, context);
 }
 
 static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
@@ -70,13 +67,13 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 
 		if (wf_info_lock(wfi) > 0)
 		{
-			if (wf_info_has_subscribers(wfi))
+			if (wfi->peerCount > 0)
 			{
 				wf_info_update_changes(wfi);
 
 				if (wf_info_have_updates(wfi))
 				{
-					wf_rfx_encode(client);
+					wf_update_encode(wfi);
 					SetEvent(wfi->updateEvent);
 				}
 			}
@@ -100,65 +97,6 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	return 0;
 }
 
-void wf_rfx_encode(freerdp_peer* client)
-{
-	STREAM* s;
-	wfInfo* wfi;
-	long offset;
-	RFX_RECT rect;
-	long height, width;
-	rdpUpdate* update;
-	wfPeerContext* wfp;
-	GETCHANGESBUF* buf;
-	SURFACE_BITS_COMMAND* cmd;
-
-	wfp = (wfPeerContext*) client->context;
-	wfi = wfp->info;
-
-	if (client->activated == FALSE)
-		return;
-	
-	if (wfp->activated == FALSE)
-		return;
-
-	wf_info_find_invalid_region(wfi);
-
-	update = client->update;
-	cmd = &update->surface_bits_command;
-	buf = (GETCHANGESBUF*) wfi->changeBuffer;
-
-	width = (wfi->invalid.right - wfi->invalid.left) + 1;
-	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
-
-	stream_clear(wfi->s);
-	stream_set_pos(wfi->s, 0);
-	s = wfi->s;
-
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = (uint16) width;
-	rect.height = (uint16) height;
-
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-
-	rfx_compose_message(wfi->rfx_context, s, &rect, 1,
-			((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
-
-	cmd->destLeft = wfi->invalid.left;
-	cmd->destTop = wfi->invalid.top;
-	cmd->destRight = wfi->invalid.left + width;
-	cmd->destBottom = wfi->invalid.top + height;
-
-	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
-
-	wfi->updatePending = TRUE;
-}
-
 void wf_peer_init(freerdp_peer* client)
 {
 	wfInfo* wfi;
@@ -171,7 +109,6 @@ void wf_peer_init(freerdp_peer* client)
 
 	wfi = ((wfPeerContext*) client->context)->info;
 
-#ifndef WITH_WIN8
 	wf_info_lock(wfi);
 
 	if (wfi->threadCount < 1)
@@ -188,7 +125,6 @@ void wf_peer_init(freerdp_peer* client)
 	}
 
 	wf_info_unlock(wfi);
-#endif
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
@@ -243,26 +179,4 @@ boolean wf_peer_activate(freerdp_peer* client)
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 {
 
-}
-
-void wf_peer_send_changes(freerdp_peer* client)
-{
-	wfInfo* wfi;
-	wfPeerContext* context = (wfPeerContext*) client->context;
-
-	wfi = context->info;
-
-	if (wf_info_lock(wfi) > 0)
-	{
-		if (wfi->updatePending)
-		{
-			wfi->lastUpdate = wfi->nextUpdate;
-
-			client->update->SurfaceBits(client->update->context, &client->update->surface_bits_command);
-
-			wfi->updatePending = FALSE;
-		}
-
-		wf_info_unlock(wfi);
-	}
 }

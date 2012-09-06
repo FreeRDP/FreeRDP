@@ -36,6 +36,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/locale/keyboard.h>
 
+#include "wf_update.h"
 #include "wf_input.h"
 #include "wf_peer.h"
 
@@ -139,7 +140,7 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		}
 
 		if (client->activated)
-			wf_peer_send_changes(client);
+			wf_update_send(context->info);
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

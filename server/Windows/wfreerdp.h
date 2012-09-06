@@ -20,8 +20,6 @@
 #ifndef WFREERDP_H
 #define WFREERDP_H
 
-//#define WITH_WIN8	1
-
 #include <freerdp/freerdp.h>
 
 #include "wf_info.h"

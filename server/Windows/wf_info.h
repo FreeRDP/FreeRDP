@@ -20,6 +20,7 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
+#include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
 
 struct wf_peer_context;
@@ -28,16 +29,17 @@ typedef struct wf_peer_context wfPeerContext;
 struct wf_info
 {
 	STREAM* s;
+	int width;
+	int height;
+	int bitsPerPix;
 	HDC driverDC;
+	int peerCount;
+	int threadCount;
 	BOOL activated;
 	void* changeBuffer;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
-	int subscribers;
-	int threadCount;
-	int height;
-	int width;
-	int bitsPerPix;
+	wfPeerContext** peers;
 
 	RECT invalid;
 	HANDLE mutex;
@@ -46,6 +48,7 @@ struct wf_info
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
+	SURFACE_BITS_COMMAND cmd;
 };
 typedef struct wf_info wfInfo;
 
@@ -54,10 +57,9 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
 int wf_info_unlock(wfInfo* wfi);
 
 wfInfo* wf_info_get_instance();
-void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
-void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);
+void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
+void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
 
-BOOL wf_info_has_subscribers(wfInfo* wfi);
 BOOL wf_info_have_updates(wfInfo* wfi);
 void wf_info_update_changes(wfInfo* wfi);
 void wf_info_find_invalid_region(wfInfo* wfi);

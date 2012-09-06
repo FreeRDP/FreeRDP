@@ -111,6 +111,8 @@ wfInfo* wf_info_init()
 		}
 
 		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
+
+		wfi->peers = (wfPeerContext**) malloc(sizeof(wfPeerContext*) * 32);
 	}
 
 	return wfi;
@@ -124,15 +126,16 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
+void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->subscribers < 1)
+		context->info = wfi;
+
+		if (wfi->peerCount < 1)
 		{
-			context->info = wfi;
 			wf_check_disp_devices(wfi);
-			wf_disp_device_set_attach_mode(wfi, 1);
+			wf_disp_device_set_attach_mode(wfi, TRUE);
 			wf_update_mirror_drv(wfi, 0);
 			wf_map_mirror_mem(wfi);
 
@@ -145,52 +148,34 @@ void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 			wfi->s = stream_new(65536);
 		}
 
-		wfi->subscribers++;
+		wfi->peers[wfi->peerCount++] = context;
 
 		wf_info_unlock(wfi);
 	}
 }
 
-/**
- * TODO: i think i can replace all the context->info here with info
- * in fact it may not even care about subscribers
- */
-
-void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
+void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (context && (wfi->subscribers == 1))
+		if (wfi->peerCount <= 1)
 		{
-			wfi->subscribers--;
-			/* only the last peer needs to call this */
-			wf_mirror_cleanup(context->info);
+			wfi->peers[--(wfi->peerCount)] = NULL;
+
+			wf_mirror_cleanup(wfi);
 			wf_disp_device_set_attach_mode(context->info, FALSE);
-			wf_update_mirror_drv(context->info, 1);
+			wf_update_mirror_drv(wfi, 1);
 
 			stream_free(wfi->s);
 			rfx_context_free(wfi->rfx_context);
 		}	
 		else
 		{
-			wfi->subscribers--;
+			wfi->peers[--(wfi->peerCount)] = NULL;
 		}
 
 		wf_info_unlock(wfi);
 	}
-
-	/**
-	 * Note: if we released the last subscriber,
-	 * block the encoder until next subscriber
-	 */	
-}
-
-BOOL wf_info_has_subscribers(wfInfo* wfi)
-{
-	if (wfi->subscribers > 0)
-		return TRUE;
-
-	return FALSE;
 }
 
 BOOL wf_info_have_updates(wfInfo* wfi)
