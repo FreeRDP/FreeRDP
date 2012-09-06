@@ -31,6 +31,7 @@
 #define isatty _isatty
 #ifndef STDIN_FILENO
 #define STDIN_FILENO 0
+#endif
 #else
 #include <unistd.h>
 #endif
