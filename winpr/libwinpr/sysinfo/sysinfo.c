@@ -161,6 +161,8 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 {
 	ULARGE_INTEGER time64;
 
+	time64.u.HighPart = 0;
+
 	/* time represented in tenths of microseconds since midnight of January 1, 1601 */
 
 	time64.QuadPart = time(NULL) + 11644473600LL; /* Seconds since January 1, 1601 */
