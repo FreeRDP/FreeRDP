@@ -66,6 +66,11 @@ int LINE_TO(HGDI_DC hdc, int nXEnd, int nYEnd)
 		by2 = by1 + hdc->clip->h - 1;
 	}
 
+	bx1 = MAX(bx1, 0);
+	by1 = MAX(by1, 0);
+	bx2 = MIN(bx2, bmp->width - 1);
+	by2 = MIN(by2, bmp->height - 1);
+
 	pen = GDI_GET_PEN_COLOR(hdc->pen);
 
 	while (1)
