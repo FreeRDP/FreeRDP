@@ -136,7 +136,6 @@ boolean pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
-	record->data = xmalloc(record->length);
 
 	return true;
 }

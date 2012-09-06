@@ -26,6 +26,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <io.h>
+#define isatty _isatty
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#else
+#include <unistd.h>
+#endif
+
 #include <freerdp/settings.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
@@ -868,7 +877,13 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		/* password */
 		if (NULL == settings->password) {
 			settings->password = xmalloc(512 * sizeof(char));
-			freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+			if (isatty(STDIN_FILENO))
+				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+			else
+			{
+				printf("password: ");
+				scanf("%511s", settings->password);
+			}
 		}
 		/* domain */
 		if (NULL == settings->domain) {
