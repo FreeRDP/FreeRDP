@@ -50,12 +50,14 @@
 boolean freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
+	rdpSettings* settings;
 	boolean status = false;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 
 	rdp = instance->context->rdp;
+	settings = instance->settings;
 
 	IFCALLRET(instance->PreConnect, status, instance);
 
@@ -67,7 +69,8 @@ boolean freerdp_connect(freerdp* instance)
 
 	if (status != true)
 	{
-		if(!connectErrorCode){
+		if(!connectErrorCode)
+		{
 			connectErrorCode = PREECONNECTERROR;
 		}
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
@@ -75,8 +78,9 @@ boolean freerdp_connect(freerdp* instance)
 	}
 
 	status = rdp_client_connect(rdp);
-	// --authonly tests the connection without a UI
-	if (instance->settings->authentication_only) {
+	/* --authonly tests the connection without a UI */
+	if (instance->settings->authentication_only)
+	{
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		return status;
 	}
@@ -191,7 +195,6 @@ boolean freerdp_disconnect(freerdp* instance)
 
 boolean freerdp_shall_disconnect(freerdp* instance)
 {
-
 	return instance->context->rdp->disconnect;
 }
 
@@ -278,7 +281,7 @@ freerdp* freerdp_new()
 {
 	freerdp* instance;
 
-	instance = xzalloc(sizeof(freerdp));
+	instance = (freerdp*) xzalloc(sizeof(freerdp));
 
 	if (instance != NULL)
 	{
