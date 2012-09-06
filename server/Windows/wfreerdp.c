@@ -36,6 +36,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/locale/keyboard.h>
 
+#include "wf_update.h"
 #include "wf_input.h"
 #include "wf_peer.h"
 
@@ -44,16 +45,60 @@
 HANDLE g_done_event;
 int g_thread_count = 0;
 
-BOOL derp = false;
-
-static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 {
+	int i, fds;
 	int rcount;
+	int max_fds;
 	void* rfds[32];
+	fd_set rfds_set;
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	memset(rfds, 0, sizeof(rfds));
+	context = (wfPeerContext*) client->context;
+
+	while (1)
+	{
+		rcount = 0;
+
+		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
+		{
+			printf("Failed to get FreeRDP file descriptor\n");
+			break;
+		}
+
+		max_fds = 0;
+		FD_ZERO(&rfds_set);
+
+		for (i = 0; i < rcount; i++)
+		{
+			fds = (int)(long)(rfds[i]);
+
+			if (fds > max_fds)
+				max_fds = fds;
+
+			FD_SET(fds, &rfds_set);
+		}
+		
+
+		if (max_fds == 0)
+			break;
+		
+		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
+
+		SetEvent(context->socketEvent);
+	}
+
+	return 0;
+}
+
+static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+{
+	DWORD nCount;
+	HANDLE handles[32];
+	wfPeerContext* context;
+	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	wf_peer_init(client);
 
@@ -73,17 +118,20 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
 
+	context->socketEvent = CreateEvent(0, 1, 0, 0);
+	CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
+
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+
+	nCount = 0;
+	handles[nCount++] = context->socketEvent;
+	handles[nCount++] = context->info->updateEvent;
 
 	while (1)
 	{
-		rcount = 0;
+		DWORD status;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
-		{
-			printf("Failed to get FreeRDP file descriptor\n");
-			break;
-		}
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (client->CheckFileDescriptor(client) != true)
 		{
@@ -91,10 +139,8 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 		}
 
-#ifndef WITH_WIN8
-		if(client->activated)
-			wf_peer_send_changes(client->update);
-#endif
+		if (client->activated)
+			wf_update_send(context->info);
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
@@ -116,8 +162,11 @@ static void wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 
 static void wf_server_main_loop(freerdp_listener* instance)
 {
+	int i, fds;
 	int rcount;
+	int max_fds;
 	void* rfds[32];
+	fd_set rfds_set;
 
 	memset(rfds, 0, sizeof(rfds));
 
@@ -131,12 +180,29 @@ static void wf_server_main_loop(freerdp_listener* instance)
 			break;
 		}
 
+		max_fds = 0;
+		FD_ZERO(&rfds_set);
+
+		for (i = 0; i < rcount; i++)
+		{
+			fds = (int)(long)(rfds[i]);
+
+			if (fds > max_fds)
+				max_fds = fds;
+
+			FD_SET(fds, &rfds_set);
+		}
+
+		if (max_fds == 0)
+			break;
+
+		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
+
 		if (instance->CheckFileDescriptor(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		Sleep(20);
 	}
 
 	instance->Close(instance);

@@ -17,10 +17,20 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_API_H
-#define __FREERDP_API_H
+#ifndef FREERDP_API_H
+#define FREERDP_API_H
 
-#define FREERDP_INTERFACE_VERSION 4
+#ifdef _WIN32
+#define FREERDP_CC __cdecl
+#else
+#define FREERDP_CC
+#endif
+
+#ifdef _WIN32
+#define INLINE	__inline
+#else
+#define INLINE	inline
+#endif
 
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef FREERDP_EXPORTS
@@ -38,25 +48,13 @@
   #endif
 #else
   #if __GNUC__ >= 4
-    #define FREERDP_API   __attribute__ ((visibility("default")))
+    #define FREERDP_API __attribute__ ((visibility("default")))
   #else
-    #define FREERDP_API
+    #define FREERDP_API 
   #endif
-#endif
-
-#ifdef _WIN32
-#define FREERDP_CC __cdecl
-#else
-#define FREERDP_CC
-#endif
-
-#ifdef _WIN32
-#define INLINE	__inline
-#else
-#define INLINE	inline
 #endif
 
 #define IFCALL(_cb, ...) do { if (_cb != NULL) { _cb( __VA_ARGS__ ); } } while (0)
 #define IFCALLRET(_cb, _ret, ...) do { if (_cb != NULL) { _ret = _cb( __VA_ARGS__ ); } } while (0)
 
-#endif
+#endif /* FREERDP_API */

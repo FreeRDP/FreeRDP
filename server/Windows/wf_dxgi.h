@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * TCP Utils
+ * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,20 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_TCP_UTILS_H
-#define FREERDP_TCP_UTILS_H
+#ifndef WF_DXGI_H
+#define WF_DXGI_H
 
-#include <freerdp/api.h>
-#include <freerdp/types.h>
+#include "wfreerdp.h"
 
-FREERDP_API int freerdp_tcp_connect(const char* hostname, int port);
-FREERDP_API int freerdp_tcp_read(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_write(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_disconnect(int sockfd);
 
-FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay);
 
-FREERDP_API int freerdp_wsa_startup();
-FREERDP_API int freerdp_wsa_cleanup();
-
-#endif /* FREERDP_TCP_UTILS_H */
+#endif /* WF_DXGI_H */

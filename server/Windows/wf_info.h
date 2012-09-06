@@ -20,57 +20,50 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
-//#include "wfreerdp.h"
+#include <freerdp/freerdp.h>
+#include <freerdp/codec/rfx.h>
 
 struct wf_peer_context;
 typedef struct wf_peer_context wfPeerContext;
 
 struct wf_info
 {
+	STREAM* s;
+	int width;
+	int height;
+	int bitsPerPix;
 	HDC driverDC;
+	int peerCount;
+	int threadCount;
 	BOOL activated;
 	void* changeBuffer;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
-	int subscribers;
-	int threadCnt;
-	int height;
-	int width;
-	int bitsPerPix;
+	wfPeerContext** peers;
 
-	HANDLE mutex, encodeMutex, can_send_mutex;
-
+	RECT invalid;
+	HANDLE mutex;
+	BOOL updatePending;
+	HANDLE updateEvent;
+	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
-
-	long invalid_x1;
-	long invalid_y1;
-
-	long invalid_x2;
-	long invalid_y2;
-
-	BOOL enc_data;
+	SURFACE_BITS_COMMAND cmd;
 };
 typedef struct wf_info wfInfo;
 
-wfInfo* wf_info_init(wfInfo* info);
-void wf_info_mirror_init(wfInfo* info, wfPeerContext* context);
-void wf_info_subscriber_release(wfInfo* info, wfPeerContext* context);
+int wf_info_lock(wfInfo* wfi);
+int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
+int wf_info_unlock(wfInfo* wfi);
 
-int wf_info_get_thread_count(wfInfo* info);
-void wf_info_set_thread_count(wfInfo* info, int count);
+wfInfo* wf_info_get_instance();
+void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
+void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
 
-BOOL wf_info_has_subscribers(wfInfo* info);
-BOOL wf_info_have_updates(wfInfo* info);
-void wf_info_updated(wfInfo* info);
-void wf_info_update_changes(wfInfo* info);
-void wf_info_find_invalid_region(wfInfo* info);
-void wf_info_clear_invalid_region(wfInfo* info);
-BOOL wf_info_have_invalid_region(wfInfo* info);
-
-int wf_info_get_height(wfInfo* info);
-int wf_info_get_width(wfInfo* info);
-
-
+BOOL wf_info_have_updates(wfInfo* wfi);
+void wf_info_update_changes(wfInfo* wfi);
+void wf_info_find_invalid_region(wfInfo* wfi);
+void wf_info_clear_invalid_region(wfInfo* wfi);
+BOOL wf_info_have_invalid_region(wfInfo* wfi);
 
 #endif

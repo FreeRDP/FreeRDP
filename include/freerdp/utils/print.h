@@ -23,8 +23,8 @@
 #include <stdio.h>
 
 #ifdef _WIN32
-#define	snprintf	sprintf_s
-#define strcasecmp	_stricmp
+#define	 snprintf	sprintf_s
+#define	 strcasecmp	_stricmp
 #endif
 
 #endif /* FREERDP_PRINT_UTILS_H */

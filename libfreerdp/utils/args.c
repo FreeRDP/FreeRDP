@@ -31,6 +31,7 @@
 #define isatty _isatty
 #ifndef STDIN_FILENO
 #define STDIN_FILENO 0
+#endif
 #else
 #include <unistd.h>
 #endif
@@ -521,6 +522,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			settings->dump_rfx_file = xstrdup(argv[index]);
 			settings->dump_rfx = true;
+			settings->rfx_codec_only = true;
 		}
 		else if (strcmp("--play-rfx", argv[index]) == 0)
 		{

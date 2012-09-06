@@ -147,6 +147,8 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 #define lstrcmp		lstrcmpA
 #endif
 
+#define	 sprintf_s	snprintf
+
 #endif
 
 #endif /* WINPR_CRT_STRING_H */

@@ -74,10 +74,7 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
-	if (data == NULL)
-		image->bitmap = CreateCompatibleBitmap(hdc, width, height);
-	else
-		image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
+	image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);

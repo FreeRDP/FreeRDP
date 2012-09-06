@@ -18,6 +18,10 @@
 # limitations under the License.
 
 add_executable(wfreerdp-server
+	wf_update.c
+	wf_update.h
+	wf_dxgi.c
+	wf_dxgi.h
 	wf_input.c
 	wf_input.h
 	wf_mirage.c

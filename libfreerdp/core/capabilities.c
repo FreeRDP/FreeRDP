@@ -1473,7 +1473,7 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 	uint32 captureFlags;
 	uint8 codecMode;
 
-	captureFlags = settings->dump_rfx ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
+	captureFlags = settings->rfx_codec_only ? CARDP_CAPS_CAPTURE_NON_CAC : 0;
 	codecMode = settings->rfx_codec_mode;
 
 	stream_write_uint16(s, 49); /* codecPropertiesLength */
