@@ -730,11 +730,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		/* password */
 		if (NULL == settings->password) {
-			char input[512];
-			input[0] = '\0';
-			printf("password: ");
-			if (scanf("%511s", input) > 0) {
-				settings->password = xstrdup(input);
+			settings->password = xmalloc(512 * sizeof(char));
+			if (isatty(STDIN_FILENO))
+				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+			else {
+				printf("password: ");
+				if (scanf("%511s", settings->password) <= 0) {
+					free(settings->password);
+					settings->password = NULL;
+				}
 			}
 		}
 		/* domain */
