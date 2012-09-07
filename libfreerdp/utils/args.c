@@ -898,7 +898,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (scanf("%511s", input) > 0) {
 				/* Try to catch the cases where the string is NULL-ish right
 				   at the get go */
-				if (input[0] != '\0' || (input[0] == ' ' && input[1] == '\0')) {
+				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0')) {
 					settings->domain = xstrdup(input);
 				}
 			}
