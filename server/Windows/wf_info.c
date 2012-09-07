@@ -126,6 +126,32 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
+void wf_update_encoder_init(wfInfo* wfi)
+{
+	wfi->rfx_context = rfx_context_new();
+	wfi->rfx_context->mode = RLGR3;
+	wfi->rfx_context->width = wfi->width;
+	wfi->rfx_context->height = wfi->height;
+	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+	wfi->s = stream_new(0xFFFF);
+}
+
+void wf_update_encoder_uninit(wfInfo* wfi)
+{
+	if (wfi->rfx_context != NULL)
+	{
+		rfx_context_free(wfi->rfx_context);
+		wfi->rfx_context = NULL;
+		stream_free(wfi->s);
+	}
+}
+
+void wf_update_encoder_reinit(wfInfo* wfi)
+{
+	wf_update_encoder_uninit(wfi);
+	wf_update_encoder_init(wfi);
+}
+
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
@@ -134,20 +160,15 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 
 		if (wfi->peerCount < 1)
 		{
-			wf_check_disp_devices(wfi);
-			wf_disp_device_set_attach_mode(wfi, TRUE);
-			wf_update_mirror_drv(wfi, 0);
-			wf_map_mirror_mem(wfi);
+			wf_mirror_driver_find_display_device(wfi);
+			wf_mirror_driver_display_device_attach(wfi, 1);
+			wf_mirror_driver_update(wfi, FALSE);
+			wf_mirror_driver_map_memory(wfi);
 
-			wfi->rfx_context = rfx_context_new();
-			wfi->rfx_context->mode = RLGR3;
-			wfi->rfx_context->width = wfi->width;
-			wfi->rfx_context->height = wfi->height;
-
-			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			wfi->s = stream_new(65536);
+			//wf_update_encoder_init(wfi);
 		}
 
+		wf_update_encoder_reinit(wfi);
 		wfi->peers[wfi->peerCount++] = context;
 
 		wf_info_unlock(wfi);
@@ -162,12 +183,11 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 		{
 			wfi->peers[--(wfi->peerCount)] = NULL;
 
-			wf_mirror_cleanup(wfi);
-			wf_disp_device_set_attach_mode(context->info, FALSE);
-			wf_update_mirror_drv(wfi, 1);
+			wf_mirror_driver_cleanup(wfi);
+			wf_mirror_driver_display_device_attach(wfi, 0);
+			wf_mirror_driver_update(wfi, 1);
 
-			stream_free(wfi->s);
-			rfx_context_free(wfi->rfx_context);
+			//wf_update_encoder_uninit(wfi);
 		}	
 		else
 		{

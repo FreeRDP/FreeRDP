@@ -31,10 +31,9 @@ struct wf_info
 	STREAM* s;
 	int width;
 	int height;
-	int bitsPerPix;
+	int bitsPerPixel;
 	HDC driverDC;
 	int peerCount;
-	int threadCount;
 	BOOL activated;
 	void* changeBuffer;
 	LPTSTR deviceKey;
@@ -45,6 +44,7 @@ struct wf_info
 	HANDLE mutex;
 	BOOL updatePending;
 	HANDLE updateEvent;
+	HANDLE updateThread;
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;

@@ -81,7 +81,6 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			FD_SET(fds, &rfds_set);
 		}
 		
-
 		if (max_fds == 0)
 			break;
 		

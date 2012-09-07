@@ -25,4 +25,6 @@
 void wf_update_encode(wfInfo* wfi);
 void wf_update_send(wfInfo* wfi);
 
+DWORD WINAPI wf_update_thread(LPVOID lpParam);
+
 #endif /* WF_UPDATE_H */

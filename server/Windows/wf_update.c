@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/windows.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 
@@ -28,6 +30,49 @@
 #include "wf_mirage.h"
 
 #include "wf_update.h"
+
+DWORD WINAPI wf_update_thread(LPVOID lpParam)
+{
+	DWORD fps;
+	wfInfo* wfi;
+	DWORD beg, end;
+	DWORD diff, rate;
+
+	fps = 24;
+	rate = 1000 / fps;
+	wfi = (wfInfo*) lpParam;
+	
+	while (1)
+	{
+		beg = GetTickCount();
+
+		if (wf_info_lock(wfi) > 0)
+		{
+			if (wfi->peerCount > 0)
+			{
+				wf_info_update_changes(wfi);
+
+				if (wf_info_have_updates(wfi))
+				{
+					wf_update_encode(wfi);
+					SetEvent(wfi->updateEvent);
+				}
+			}
+
+			wf_info_unlock(wfi);
+		}
+
+		end = GetTickCount();
+		diff = end - beg;
+
+		if (diff < rate)
+		{
+			Sleep(rate - diff);
+		}
+	}
+
+	return 0;
+}
 
 void wf_update_encode(wfInfo* wfi)
 {
