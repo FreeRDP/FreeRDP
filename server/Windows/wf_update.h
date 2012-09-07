@@ -27,4 +27,8 @@ void wf_update_send(wfInfo* wfi);
 
 DWORD WINAPI wf_update_thread(LPVOID lpParam);
 
+void wf_update_begin(wfInfo* wfi);
+void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context);
+void wf_update_end(wfInfo* wfi);
+
 #endif /* WF_UPDATE_H */

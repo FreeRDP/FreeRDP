@@ -58,13 +58,16 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	memset(rfds, 0, sizeof(rfds));
 	context = (wfPeerContext*) client->context;
 
+	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
+
 	while (1)
 	{
 		rcount = 0;
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			printf("Failed to get peer file descriptor\n");
 			break;
 		}
 
@@ -87,6 +90,10 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		SetEvent(context->socketEvent);
+		WaitForSingleObject(context->socketSemaphore, INFINITE);
+
+		if (context->socketClose)
+			break;
 	}
 
 	return 0;
@@ -168,14 +175,14 @@ static void wf_peer_read_settings(freerdp_peer* client)
 
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
+	wfInfo* wfi;
 	DWORD nCount;
+	DWORD status;
 	HANDLE handles[32];
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	wf_peer_init(client);
-
-	/* Initialize the real server settings here */
 
 	wf_peer_read_settings(client);
 
@@ -191,29 +198,42 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
 
-	context->socketEvent = CreateEvent(0, 1, 0, 0);
-	CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
+	wfi = context->info;
+	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	nCount = 0;
+	handles[nCount++] = context->updateEvent;
 	handles[nCount++] = context->socketEvent;
-	handles[nCount++] = context->info->updateEvent;
 
 	while (1)
 	{
-		DWORD status;
-
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
-		if (client->CheckFileDescriptor(client) != true)
+		if (WaitForSingleObject(context->updateEvent, 0) == 0)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
-			break;
+			if (client->activated)
+				wf_update_peer_send(wfi, context);
+
+			ResetEvent(context->updateEvent);
+			ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 		}
 
-		if (client->activated)
-			wf_update_send(context->info);
+		if (WaitForSingleObject(context->socketEvent, 0) == 0)
+		{
+			if (client->CheckFileDescriptor(client) != true)
+			{
+				printf("Failed to check peer file descriptor\n");
+				context->socketClose = TRUE;
+			}
+
+			ResetEvent(context->socketEvent);
+			ReleaseSemaphore(context->socketSemaphore, 1, NULL);
+
+			if (context->socketClose)
+				break;
+		}
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

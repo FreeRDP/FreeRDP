@@ -46,6 +46,7 @@ struct wf_info
 	BOOL updatePending;
 	HANDLE updateEvent;
 	HANDLE updateThread;
+	HANDLE updateSemaphore;
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;

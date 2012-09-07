@@ -33,6 +33,7 @@
 
 DWORD WINAPI wf_update_thread(LPVOID lpParam)
 {
+	int index;
 	DWORD fps;
 	wfInfo* wfi;
 	DWORD beg, end;
@@ -56,7 +57,14 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 				if (wf_info_have_updates(wfi))
 				{
 					wf_update_encode(wfi);
-					SetEvent(wfi->updateEvent);
+					
+					for (index = 0; index < wfi->peerCount; index++)
+						SetEvent(wfi->peers[index]->updateEvent);
+
+					for (index = 0; index < wfi->peerCount; index++)
+						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+
+					wfi->lastUpdate = wfi->nextUpdate;
 				}
 			}
 
@@ -115,30 +123,11 @@ void wf_update_encode(wfInfo* wfi)
 	cmd->height = height;
 	cmd->bitmapDataLength = stream_get_length(wfi->s);
 	cmd->bitmapData = stream_get_head(wfi->s);
-
-	wfi->updatePending = TRUE;
 }
 
-void wf_update_send(wfInfo* wfi)
+void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 {
-	if (wf_info_lock(wfi) > 0)
-	{
-		if (wfi->updatePending)
-		{
-			int index;
-			freerdp_peer* client;
-
-			for (index = 0; index < wfi->peerCount; index++)
-			{
-				client = ((rdpContext*) wfi->peers[index])->peer;
-				wfi->cmd.codecID = client->settings->rfx_codec_id;
-				client->update->SurfaceBits(client->update->context, &wfi->cmd);
-			}
-
-			wfi->lastUpdate = wfi->nextUpdate;
-			wfi->updatePending = FALSE;
-		}
-
-		wf_info_unlock(wfi);
-	}
+	freerdp_peer* client = ((rdpContext*) context)->peer;
+	wfi->cmd.codecID = client->settings->rfx_codec_id;
+	client->update->SurfaceBits(client->update->context, &wfi->cmd);
 }

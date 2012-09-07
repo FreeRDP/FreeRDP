@@ -117,7 +117,9 @@ wfInfo* wf_info_init()
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
 
-		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
+		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 
 		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
 
@@ -179,21 +181,30 @@ void wf_update_encoder_reinit(wfInfo* wfi)
 	wf_update_encoder_init(wfi);
 }
 
+void wf_mirror_driver_init(wfInfo* wfi)
+{
+	wf_mirror_driver_find_display_device(wfi);
+	wf_mirror_driver_display_device_attach(wfi, 1);
+	wf_mirror_driver_update(wfi, FALSE);
+	wf_mirror_driver_map_memory(wfi);
+}
+
+void wf_mirror_driver_uninit(wfInfo* wfi)
+{
+	wf_mirror_driver_cleanup(wfi);
+	wf_mirror_driver_display_device_attach(wfi, 0);
+	wf_mirror_driver_update(wfi, 1);
+}
+
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
 		context->info = wfi;
+		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (wfi->peerCount < 1)
-		{
-			wf_mirror_driver_find_display_device(wfi);
-			wf_mirror_driver_display_device_attach(wfi, 1);
-			wf_mirror_driver_update(wfi, FALSE);
-			wf_mirror_driver_map_memory(wfi);
-
-			//wf_update_encoder_init(wfi);
-		}
+			wf_mirror_driver_init(wfi);
 
 		wf_update_encoder_reinit(wfi);
 		wfi->peers[wfi->peerCount++] = context;
@@ -206,20 +217,10 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->peerCount <= 1)
-		{
-			wfi->peers[--(wfi->peerCount)] = NULL;
+		if (wfi->peerCount == 1)
+			wf_mirror_driver_uninit(wfi);	
 
-			wf_mirror_driver_cleanup(wfi);
-			wf_mirror_driver_display_device_attach(wfi, 0);
-			wf_mirror_driver_update(wfi, 1);
-
-			//wf_update_encoder_uninit(wfi);
-		}	
-		else
-		{
-			wfi->peers[--(wfi->peerCount)] = NULL;
-		}
+		wfi->peers[--(wfi->peerCount)] = NULL;
 
 		wf_info_unlock(wfi);
 	}
