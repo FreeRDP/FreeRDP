@@ -36,6 +36,7 @@ struct wf_info
 	int peerCount;
 	BOOL activated;
 	void* changeBuffer;
+	int framesPerSecond;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
 	wfPeerContext** peers;
@@ -66,4 +67,4 @@ void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
 
-#endif
+#endif /* WF_INFO_H */

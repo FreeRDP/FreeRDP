@@ -38,10 +38,11 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 	DWORD beg, end;
 	DWORD diff, rate;
 
-	fps = 24;
-	rate = 1000 / fps;
 	wfi = (wfInfo*) lpParam;
-	
+
+	fps = wfi->framesPerSecond;
+	rate = 1000 / fps;
+
 	while (1)
 	{
 		beg = GetTickCount();

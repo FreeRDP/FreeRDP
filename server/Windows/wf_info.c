@@ -27,6 +27,7 @@
 #include <winpr/windows.h>
 
 #include "wf_info.h"
+#include "wf_update.h"
 #include "wf_mirage.h"
 
 static wfInfo* wfInfoInstance = NULL;
@@ -103,6 +104,12 @@ wfInfo* wf_info_init()
 
 	if (wfi != NULL)
 	{
+		HKEY hKey;
+		LONG status;
+		DWORD dwType;
+		DWORD dwSize;
+		DWORD dwValue;
+
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
 		if (wfi->mutex == NULL) 
@@ -112,7 +119,27 @@ wfInfo* wf_info_init()
 
 		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
 
+		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
+
+		if (!wfi->updateThread)
+		{
+			_tprintf(_T("Failed to create update thread\n"));
+		}
+
 		wfi->peers = (wfPeerContext**) malloc(sizeof(wfPeerContext*) * 32);
+
+		wfi->framesPerSecond = 24;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				wfi->framesPerSecond = dwValue;
+				
+		}
+
+		RegCloseKey(hKey);
 	}
 
 	return wfi;

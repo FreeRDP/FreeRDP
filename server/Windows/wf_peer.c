@@ -46,24 +46,6 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 	wf_info_peer_unregister(context->info, context);
 }
 
-void wf_peer_start_encoder_thread(freerdp_peer* client)
-{
-	wfInfo* wfi;
-	
-	wfi = ((wfPeerContext*) client->context)->info;
-
-	wf_info_lock(wfi);
-
-	wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, 0, NULL);
-
-	if (!wfi->updateThread)
-	{
-		_tprintf(_T("Failed to create update thread\n"));
-	}
-
-	wf_info_unlock(wfi);
-}
-
 void wf_peer_init(freerdp_peer* client)
 {
 	client->context_size = sizeof(wfPeerContext);
@@ -99,9 +81,10 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 		settings->color_depth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
+		client->activated = false;
 	}
 
-	wf_peer_start_encoder_thread(client);
+	ResumeThread(wfi->updateThread);
 
 	return true;
 }
