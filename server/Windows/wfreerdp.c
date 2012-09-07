@@ -93,6 +93,80 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	return 0;
 }
 
+static void wf_peer_read_settings(freerdp_peer* client)
+{
+	HKEY hKey;
+	int length;
+	LONG status;
+	DWORD dwType;
+	DWORD dwSize;
+	TCHAR* PrivateKeyFile;
+	TCHAR* CertificateFile;
+	char* PrivateKeyFileA;
+	char* CertificateFileA;
+
+	PrivateKeyFile = CertificateFile = NULL;
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status != ERROR_SUCCESS)
+		return;
+
+	status = RegQueryValueEx(hKey, _T("CertificateFile"), NULL, &dwType, NULL, &dwSize);
+
+	if (status == ERROR_SUCCESS)
+	{
+		CertificateFile = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		status = RegQueryValueEx(hKey, _T("CertificateFile"), NULL, &dwType, (BYTE*) CertificateFile, &dwSize);
+	}
+
+	status = RegQueryValueEx(hKey, _T("PrivateKeyFile"), NULL, &dwType, NULL, &dwSize);
+
+	if (status == ERROR_SUCCESS)
+	{
+		PrivateKeyFile = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		status = RegQueryValueEx(hKey, _T("PrivateKeyFile"), NULL, &dwType, (BYTE*) PrivateKeyFile, &dwSize);
+	}
+
+	if (CertificateFile)
+	{
+#ifdef UNICODE
+		length = WideCharToMultiByte(CP_UTF8, 0, CertificateFile, lstrlenW(CertificateFile), NULL, 0, NULL, NULL);
+		CertificateFileA = (char*) malloc(length + 1);
+		WideCharToMultiByte(CP_UTF8, 0, CertificateFile, lstrlenW(CertificateFile), CertificateFileA, length, NULL, NULL);
+		CertificateFileA[length] = '\0';
+		free(CertificateFile);
+#else
+		CertificateFileA = (char*) CertificateFile;
+#endif
+		client->settings->cert_file = CertificateFileA;
+	}
+	else
+	{
+		client->settings->cert_file = _strdup("server.crt");
+	}
+
+	if (PrivateKeyFile)
+	{
+#ifdef UNICODE
+		length = WideCharToMultiByte(CP_UTF8, 0, PrivateKeyFile, lstrlenW(PrivateKeyFile), NULL, 0, NULL, NULL);
+		PrivateKeyFileA = (char*) malloc(length + 1);
+		WideCharToMultiByte(CP_UTF8, 0, PrivateKeyFile, lstrlenW(PrivateKeyFile), PrivateKeyFileA, length, NULL, NULL);
+		PrivateKeyFileA[length] = '\0';
+		free(PrivateKeyFile);
+#else
+		PrivateKeyFileA = (char*) PrivateKeyFile;
+#endif
+		client->settings->privatekey_file = PrivateKeyFileA;
+	}
+	else
+	{
+		client->settings->privatekey_file = _strdup("server.key");
+	}
+
+	RegCloseKey(hKey);
+}
+
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
 	DWORD nCount;
@@ -103,8 +177,8 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_peer_init(client);
 
 	/* Initialize the real server settings here */
-	client->settings->cert_file = xstrdup("server.crt");
-	client->settings->privatekey_file = xstrdup("server.key");
+
+	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
