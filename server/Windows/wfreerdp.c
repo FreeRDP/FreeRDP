@@ -58,9 +58,6 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	memset(rfds, 0, sizeof(rfds));
 	context = (wfPeerContext*) client->context;
 
-	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
-
 	while (1)
 	{
 		rcount = 0;
@@ -199,6 +196,8 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	context = (wfPeerContext*) client->context;
 
 	wfi = context->info;
+	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
 	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
