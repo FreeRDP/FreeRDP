@@ -87,7 +87,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	stream_write_uint64(s, duration); /* DataDuration */
 	stream_write_uint64(s, data_size); /* cbData */
 	
-	DEBUG_DVC("response size %d", stream_get_length(s));
+	DEBUG_DVC("response size %d", (int) stream_get_length(s));
 	error = callback->channel->Write(callback->channel, stream_get_length(s), stream_get_head(s), NULL);
 	if (error)
 	{

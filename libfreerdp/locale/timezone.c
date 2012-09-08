@@ -1681,8 +1681,8 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		clientTimeZone->standardBias = clientTimeZone->bias;
 		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
 	}
-	DEBUG_TIMEZONE("sbias=%d, bias=%d, stdBias=%d, dlBias=%d",
-		sbias, clientTimeZone->bias, clientTimeZone->standardBias,
+	DEBUG_TIMEZONE("Bias: %d, StandardBias: %d, DaylightBias: %d",
+		clientTimeZone->bias, clientTimeZone->standardBias,
 		clientTimeZone->daylightBias);
 
 	tz = freerdp_detect_windows_time_zone(clientTimeZone->bias);

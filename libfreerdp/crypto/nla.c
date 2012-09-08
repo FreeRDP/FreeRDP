@@ -130,7 +130,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 
 #ifdef WITH_DEBUG_NLA
 	_tprintf(_T("User: %s Domain: %s Password: %s\n"),
-		credssp->identity.User, credssp->identity.Domain, credssp->identity.Password);
+		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->public_key.length);
