@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
 #include <openssl/rand.h>
 
 #include "http.h"
@@ -34,7 +35,6 @@
 
 boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
 {
-	size_t size;
 	SECURITY_STATUS status;
 
 	sspi_GlobalInit();
@@ -60,24 +60,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	ntlm->table = InitSecurityInterface();
 #endif
 
-	ntlm->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-
-	ntlm->identity.User = (uint16*) freerdp_uniconv_out(ntlm->uniconv, user, &size);
-	ntlm->identity.UserLength = (uint32) size;
-
-	if (domain)
-	{
-		ntlm->identity.Domain = (uint16*) freerdp_uniconv_out(ntlm->uniconv, domain, &size);
-		ntlm->identity.DomainLength = (uint32) size;
-	}
-	else
-	{
-		ntlm->identity.Domain = (uint16*) NULL;
-		ntlm->identity.DomainLength = 0;
-	}
-
-	ntlm->identity.Password = (uint16*) freerdp_uniconv_out(ntlm->uniconv, (char*) password, &size);
-	ntlm->identity.PasswordLength = (uint32) size;
+	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
 	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
 
@@ -100,9 +83,9 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	ntlm->haveContext = false;
 	ntlm->haveInputBuffer = false;
-	memset(&ntlm->inputBuffer, 0, sizeof(SecBuffer));
-	memset(&ntlm->outputBuffer, 0, sizeof(SecBuffer));
-	memset(&ntlm->ContextSizes, 0, sizeof(SecPkgContext_Sizes));
+	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
+	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
+	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_DELEGATE;
 
@@ -512,8 +495,10 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	int pdu_length = 0x8FFF;
 
 	pdu = xmalloc(pdu_length);
+
 	if (pdu == NULL)
-		return -1 ;
+		return -1;
+
 	status = rpc_out_read(rpc, pdu, pdu_length);
 
 	if (status > 0)
@@ -525,11 +510,13 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		stream_free(s);
 
 		auth_data = xmalloc(header.auth_length);
+
 		if (auth_data == NULL)
 		{
-			xfree(pdu) ;
-			return -1 ;
+			xfree(pdu);
+			return -1;
 		}
+
 		p = (pdu + (header.frag_length - header.auth_length));
 		memcpy(auth_data, p, header.auth_length);
 
@@ -610,10 +597,11 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 		rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	pdu = xmalloc(0xFFFF);
+
 	if (pdu == NULL)
 	{
 		printf("rpc_out_read error: memory allocation failed") ;
-		return -1 ;
+		return -1;
 	}
 
 	status = tls_read(rpc->tls_out, pdu, 16); /* read first 16 bytes to get RPC PDU Header */
@@ -808,7 +796,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		if (rpc->read_buffer_len > (uint32) length)
 		{
 			printf("rpc_read error: receiving buffer is not large enough\n");
-			xfree(rpc_data) ;
+			xfree(rpc_data);
 			return -1;
 		}
 
