@@ -362,7 +362,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	STREAM* pdu;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
-	STREAM* ntlm_stream = stream_new(0xFFFF);
+	STREAM* ntlm_stream = stream_new(0);
 
 	rpc->ntlm = ntlm_new();
 
