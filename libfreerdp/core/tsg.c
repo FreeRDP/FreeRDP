@@ -583,7 +583,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	stream_write(s_p4, tsg_packet4, 48);
 	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
 	stream_write_uint32(s_p4, 0x00000000); /* Offset */
-	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1);/* ActualCount */
+	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
 	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
 	stream_write_uint16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
 
@@ -606,8 +606,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=4 failed!\n");
-		stream_free(s_p4) ;
-		xfree(data) ;
+		stream_free(s_p4);
+		xfree(data);
 		return false;
 	}
 
@@ -616,8 +616,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status < 0)
 	{
 		printf("rpc_recv failed!\n");
-		stream_free(s_p4) ;
-		xfree(data) ;
+		stream_free(s_p4);
+		xfree(data);
 		return false;
 	}
 
@@ -645,13 +645,14 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=8 failed!\n");
-		stream_free(s_p4) ;
-		xfree(data) ;
+		stream_free(s_p4);
+		xfree(data);
 		return false;
 	}
 
-	stream_free(s_p4) ;
-	xfree(data) ;
+	stream_free(s_p4);
+	xfree(data);
+
 	return true;
 }
 
