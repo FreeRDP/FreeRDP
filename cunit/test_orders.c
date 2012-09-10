@@ -22,8 +22,8 @@
 #include <freerdp/utils/stream.h>
 
 #include "test_orders.h"
-#include "libfreerdp-core/orders.h"
-#include "libfreerdp-core/update.h"
+#include "libfreerdp/core/orders.h"
+#include "libfreerdp/core/update.h"
 
 ORDER_INFO* orderInfo;
 
