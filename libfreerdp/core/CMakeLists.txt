@@ -104,7 +104,6 @@ if(WITH_MONOLITHIC_BUILD)
 else()
 	set(FREERDP_CORE_LIBS
 		winpr-utils
-		winpr-rpc
 		winpr-sspi)
 	
 	if(NOT WIN32)

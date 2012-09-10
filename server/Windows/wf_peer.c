@@ -46,93 +46,23 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 	wf_info_peer_unregister(context->info, context);
 }
 
-static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
-{
-	DWORD fps;
-	wfInfo* wfi;
-	DWORD beg, end;
-	DWORD diff, rate;
-	freerdp_peer* client;
-	wfPeerContext* context;
-
-	fps = 24;
-	rate = 1000 / fps;
-	client = (freerdp_peer*) lpParam;
-	context = (wfPeerContext*) client->context;
-	wfi = context->info;
-	
-	while (1)
-	{
-		beg = GetTickCount();
-
-		if (wf_info_lock(wfi) > 0)
-		{
-			if (wfi->peerCount > 0)
-			{
-				wf_info_update_changes(wfi);
-
-				if (wf_info_have_updates(wfi))
-				{
-					wf_update_encode(wfi);
-					SetEvent(wfi->updateEvent);
-				}
-			}
-
-			wf_info_unlock(wfi);
-		}
-
-		end = GetTickCount();
-		diff = end - beg;
-
-		if (diff < rate)
-		{
-			Sleep(rate - diff);
-		}
-	}
-	
-	wf_info_lock(wfi);
-	wfi->threadCount--;
-	wf_info_unlock(wfi);
-
-	return 0;
-}
-
 void wf_peer_init(freerdp_peer* client)
 {
-	wfInfo* wfi;
-
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 	
 	freerdp_peer_context_new(client);
-
-	wfi = ((wfPeerContext*) client->context)->info;
-
-	wf_info_lock(wfi);
-
-	if (wfi->threadCount < 1)
-	{
-		if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
-		{
-			wfi->threadCount++;
-			printf("started monitor thread\n");
-		}
-		else
-		{
-			_tprintf(_T("failed to create monitor thread\n"));
-		}
-	}
-
-	wf_info_unlock(wfi);
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
 {
 	wfInfo* wfi;
+	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
 
 	wfi = context->info;
+	settings = client->settings;
 
 	/**
 	 * This callback is called when the entire connection sequence is done, i.e. we've received the
@@ -141,28 +71,20 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 
-	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
-		client->settings->os_major_type, client->settings->os_minor_type);
-
-	if (client->settings->autologon)
+	if ((settings->width != wfi->width) || (settings->height != wfi->height))
 	{
-		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
+		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
+			settings->width, settings->height, wfi->width, wfi->height);
 
-		/* A real server may perform OS login here if NLA is not executed previously. */
+		settings->width = wfi->width;
+		settings->height = wfi->height;
+		settings->color_depth = wfi->bitsPerPixel;
+
+		client->update->DesktopResize(client->update->context);
+		client->activated = false;
 	}
-	printf("\n");
 
-	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
-
-	printf("But we will try resizing to %dx%d\n", wfi->width, wfi->height);
-
-	client->settings->width = wfi->width;
-	client->settings->height = wfi->height;
-
-	client->update->DesktopResize(client->update->context);
+	ResumeThread(wfi->updateThread);
 
 	return true;
 }

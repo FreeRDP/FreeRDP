@@ -78,13 +78,10 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
 
 	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
-	nego_enable_rdp(rdp->nego, settings->rdp_security);
 
-	if (!settings->ts_gateway)
-	{
-		nego_enable_nla(rdp->nego, settings->nla_security);
-		nego_enable_tls(rdp->nego, settings->tls_security);
-	}
+	nego_enable_rdp(rdp->nego, settings->rdp_security);
+	nego_enable_tls(rdp->nego, settings->tls_security);
+	nego_enable_nla(rdp->nego, settings->nla_security);
 
 	if (!nego_connect(rdp->nego))
 	{

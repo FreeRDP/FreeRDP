@@ -243,13 +243,13 @@ void rdp_read_bitmap_capability_set(STREAM* s, uint16 length, rdpSettings* setti
 void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
-	uint8 drawingFlags;
+	uint8 drawingFlags = 0;
 	uint16 desktopResizeFlag;
 	uint16 preferredBitsPerPixel;
 
 	header = rdp_capability_set_start(s);
 
-	drawingFlags = 0;
+	drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
 
 	if (settings->rdp_version > 5)
 		preferredBitsPerPixel = settings->color_depth;

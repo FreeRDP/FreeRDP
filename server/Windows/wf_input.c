@@ -65,6 +65,7 @@ void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
 	INPUT mouse_event;
+	float width, height;
 
 	ZeroMemory(&mouse_event, sizeof(INPUT));
 	mouse_event.type = INPUT_MOUSE;
@@ -81,12 +82,16 @@ void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 	}
 	else
 	{
+		width = (float) GetSystemMetrics(SM_CXSCREEN);
+		height = (float) GetSystemMetrics(SM_CYSCREEN);
+
+		mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
+		mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
+		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			mouse_event.mi.dx = x * (0xFFFF / GetSystemMetrics(SM_CXSCREEN));
-			mouse_event.mi.dy = y * (0xFFFF / GetSystemMetrics(SM_CYSCREEN));
-			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-
+			mouse_event.mi.dwFlags |= MOUSEEVENTF_MOVE;
 			SendInput(1, &mouse_event, sizeof(INPUT));
 		}
 

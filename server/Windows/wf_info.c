@@ -27,6 +27,7 @@
 #include <winpr/windows.h>
 
 #include "wf_info.h"
+#include "wf_update.h"
 #include "wf_mirage.h"
 
 static wfInfo* wfInfoInstance = NULL;
@@ -103,6 +104,12 @@ wfInfo* wf_info_init()
 
 	if (wfi != NULL)
 	{
+		HKEY hKey;
+		LONG status;
+		DWORD dwType;
+		DWORD dwSize;
+		DWORD dwValue;
+
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
 		if (wfi->mutex == NULL) 
@@ -110,9 +117,31 @@ wfInfo* wf_info_init()
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
 
-		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
+		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
+
+		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
+
+		if (!wfi->updateThread)
+		{
+			_tprintf(_T("Failed to create update thread\n"));
+		}
 
 		wfi->peers = (wfPeerContext**) malloc(sizeof(wfPeerContext*) * 32);
+
+		wfi->framesPerSecond = 24;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				wfi->framesPerSecond = dwValue;
+				
+		}
+
+		RegCloseKey(hKey);
 	}
 
 	return wfi;
@@ -126,28 +155,58 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
+void wf_update_encoder_init(wfInfo* wfi)
+{
+	wfi->rfx_context = rfx_context_new();
+	wfi->rfx_context->mode = RLGR3;
+	wfi->rfx_context->width = wfi->width;
+	wfi->rfx_context->height = wfi->height;
+	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+	wfi->s = stream_new(0xFFFF);
+}
+
+void wf_update_encoder_uninit(wfInfo* wfi)
+{
+	if (wfi->rfx_context != NULL)
+	{
+		rfx_context_free(wfi->rfx_context);
+		wfi->rfx_context = NULL;
+		stream_free(wfi->s);
+	}
+}
+
+void wf_update_encoder_reinit(wfInfo* wfi)
+{
+	wf_update_encoder_uninit(wfi);
+	wf_update_encoder_init(wfi);
+}
+
+void wf_mirror_driver_init(wfInfo* wfi)
+{
+	wf_mirror_driver_find_display_device(wfi);
+	wf_mirror_driver_display_device_attach(wfi, 1);
+	wf_mirror_driver_update(wfi, FALSE);
+	wf_mirror_driver_map_memory(wfi);
+}
+
+void wf_mirror_driver_uninit(wfInfo* wfi)
+{
+	wf_mirror_driver_cleanup(wfi);
+	wf_mirror_driver_display_device_attach(wfi, 0);
+	wf_mirror_driver_update(wfi, 1);
+}
+
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
 		context->info = wfi;
+		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (wfi->peerCount < 1)
-		{
-			wf_check_disp_devices(wfi);
-			wf_disp_device_set_attach_mode(wfi, TRUE);
-			wf_update_mirror_drv(wfi, 0);
-			wf_map_mirror_mem(wfi);
+			wf_mirror_driver_init(wfi);
 
-			wfi->rfx_context = rfx_context_new();
-			wfi->rfx_context->mode = RLGR3;
-			wfi->rfx_context->width = wfi->width;
-			wfi->rfx_context->height = wfi->height;
-
-			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			wfi->s = stream_new(65536);
-		}
-
+		wf_update_encoder_reinit(wfi);
 		wfi->peers[wfi->peerCount++] = context;
 
 		wf_info_unlock(wfi);
@@ -158,21 +217,10 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->peerCount <= 1)
-		{
-			wfi->peers[--(wfi->peerCount)] = NULL;
+		if (wfi->peerCount == 1)
+			wf_mirror_driver_uninit(wfi);	
 
-			wf_mirror_cleanup(wfi);
-			wf_disp_device_set_attach_mode(context->info, FALSE);
-			wf_update_mirror_drv(wfi, 1);
-
-			stream_free(wfi->s);
-			rfx_context_free(wfi->rfx_context);
-		}	
-		else
-		{
-			wfi->peers[--(wfi->peerCount)] = NULL;
-		}
+		wfi->peers[--(wfi->peerCount)] = NULL;
 
 		wf_info_unlock(wfi);
 	}
