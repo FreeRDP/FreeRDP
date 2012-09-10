@@ -30,7 +30,11 @@ struct wf_peer_context
 
 	wfInfo* info;
 	boolean activated;
+	HANDLE updateEvent;
+	BOOL socketClose;
 	HANDLE socketEvent;
+	HANDLE socketThread;
+	HANDLE socketSemaphore;
 };
 typedef struct wf_peer_context wfPeerContext;
 

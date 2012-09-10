@@ -28,6 +28,7 @@ typedef struct rdp_tsg rdpTsg;
 
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #include <time.h>
 #include <freerdp/types.h>
@@ -237,28 +238,6 @@ typedef struct _TSG_PACKET
 	unsigned long packetId;
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
-
-void Opnum0NotUsedOnWire(handle_t IDL_handle);
-
-HRESULT TsProxyCreateTunnel(PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
-		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, unsigned long* tunnelId);
-
-HRESULT TsProxyAuthorizeTunnel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse);
-
-HRESULT TsProxyMakeTunnelCall(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		unsigned long procId, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse);
-
-HRESULT TsProxyCreateChannel(PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-		PTSENDPOINTINFO tsEndPointInfo, PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, unsigned long* channelId);
-
-void Opnum5NotUsedOnWire(handle_t IDL_handle);
-
-HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context);
-
-HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context);
-
-DWORD TsProxySetupReceivePipe(handle_t IDL_handle, byte pRpcMessage[]);
 
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths);
 

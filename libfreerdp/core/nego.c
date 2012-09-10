@@ -187,6 +187,7 @@ boolean nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
 		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+
 	return nego->tcp_connected;
 }
 
@@ -219,6 +220,7 @@ int nego_transport_disconnect(rdpNego* nego)
 
 	nego->tcp_connected = 0;
 	nego->security_connected = 0;
+
 	return 1;
 }
 
@@ -503,9 +505,12 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 		while (stream_get_left(s) > 0)
 		{
 			stream_read_uint8(s, c);
+
 			if (c != '\x0D')
 				continue;
+
 			stream_peek_uint8(s, c);
+
 			if (c != '\x0A')
 				continue;
 
@@ -583,6 +588,7 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	}
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
+
 	if (nego->requested_protocols > PROTOCOL_RDP)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */

@@ -64,7 +64,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			printf("Failed to get peer file descriptor\n");
 			break;
 		}
 
@@ -81,30 +81,107 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			FD_SET(fds, &rfds_set);
 		}
 		
-
 		if (max_fds == 0)
 			break;
 		
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		SetEvent(context->socketEvent);
+		WaitForSingleObject(context->socketSemaphore, INFINITE);
+
+		if (context->socketClose)
+			break;
 	}
 
 	return 0;
 }
 
+static void wf_peer_read_settings(freerdp_peer* client)
+{
+	HKEY hKey;
+	int length;
+	LONG status;
+	DWORD dwType;
+	DWORD dwSize;
+	TCHAR* PrivateKeyFile;
+	TCHAR* CertificateFile;
+	char* PrivateKeyFileA;
+	char* CertificateFileA;
+
+	PrivateKeyFile = CertificateFile = NULL;
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status != ERROR_SUCCESS)
+		return;
+
+	status = RegQueryValueEx(hKey, _T("CertificateFile"), NULL, &dwType, NULL, &dwSize);
+
+	if (status == ERROR_SUCCESS)
+	{
+		CertificateFile = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		status = RegQueryValueEx(hKey, _T("CertificateFile"), NULL, &dwType, (BYTE*) CertificateFile, &dwSize);
+	}
+
+	status = RegQueryValueEx(hKey, _T("PrivateKeyFile"), NULL, &dwType, NULL, &dwSize);
+
+	if (status == ERROR_SUCCESS)
+	{
+		PrivateKeyFile = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		status = RegQueryValueEx(hKey, _T("PrivateKeyFile"), NULL, &dwType, (BYTE*) PrivateKeyFile, &dwSize);
+	}
+
+	if (CertificateFile)
+	{
+#ifdef UNICODE
+		length = WideCharToMultiByte(CP_UTF8, 0, CertificateFile, lstrlenW(CertificateFile), NULL, 0, NULL, NULL);
+		CertificateFileA = (char*) malloc(length + 1);
+		WideCharToMultiByte(CP_UTF8, 0, CertificateFile, lstrlenW(CertificateFile), CertificateFileA, length, NULL, NULL);
+		CertificateFileA[length] = '\0';
+		free(CertificateFile);
+#else
+		CertificateFileA = (char*) CertificateFile;
+#endif
+		client->settings->cert_file = CertificateFileA;
+	}
+	else
+	{
+		client->settings->cert_file = _strdup("server.crt");
+	}
+
+	if (PrivateKeyFile)
+	{
+#ifdef UNICODE
+		length = WideCharToMultiByte(CP_UTF8, 0, PrivateKeyFile, lstrlenW(PrivateKeyFile), NULL, 0, NULL, NULL);
+		PrivateKeyFileA = (char*) malloc(length + 1);
+		WideCharToMultiByte(CP_UTF8, 0, PrivateKeyFile, lstrlenW(PrivateKeyFile), PrivateKeyFileA, length, NULL, NULL);
+		PrivateKeyFileA[length] = '\0';
+		free(PrivateKeyFile);
+#else
+		PrivateKeyFileA = (char*) PrivateKeyFile;
+#endif
+		client->settings->privatekey_file = PrivateKeyFileA;
+	}
+	else
+	{
+		client->settings->privatekey_file = _strdup("server.key");
+	}
+
+	RegCloseKey(hKey);
+}
+
 static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 {
+	wfInfo* wfi;
 	DWORD nCount;
+	DWORD status;
 	HANDLE handles[32];
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	wf_peer_init(client);
 
-	/* Initialize the real server settings here */
-	client->settings->cert_file = xstrdup("server.crt");
-	client->settings->privatekey_file = xstrdup("server.key");
+	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
@@ -118,29 +195,44 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
 
-	context->socketEvent = CreateEvent(0, 1, 0, 0);
-	CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
+	wfi = context->info;
+	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
+	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	nCount = 0;
+	handles[nCount++] = context->updateEvent;
 	handles[nCount++] = context->socketEvent;
-	handles[nCount++] = context->info->updateEvent;
 
 	while (1)
 	{
-		DWORD status;
-
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
-		if (client->CheckFileDescriptor(client) != true)
+		if (WaitForSingleObject(context->updateEvent, 0) == 0)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
-			break;
+			if (client->activated)
+				wf_update_peer_send(wfi, context);
+
+			ResetEvent(context->updateEvent);
+			ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 		}
 
-		if (client->activated)
-			wf_update_send(context->info);
+		if (WaitForSingleObject(context->socketEvent, 0) == 0)
+		{
+			if (client->CheckFileDescriptor(client) != true)
+			{
+				printf("Failed to check peer file descriptor\n");
+				context->socketClose = TRUE;
+			}
+
+			ResetEvent(context->socketEvent);
+			ReleaseSemaphore(context->socketSemaphore, 1, NULL);
+
+			if (context->socketClose)
+				break;
+		}
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

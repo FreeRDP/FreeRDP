@@ -31,12 +31,12 @@ struct wf_info
 	STREAM* s;
 	int width;
 	int height;
-	int bitsPerPix;
+	int bitsPerPixel;
 	HDC driverDC;
 	int peerCount;
-	int threadCount;
 	BOOL activated;
 	void* changeBuffer;
+	int framesPerSecond;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
 	wfPeerContext** peers;
@@ -45,6 +45,8 @@ struct wf_info
 	HANDLE mutex;
 	BOOL updatePending;
 	HANDLE updateEvent;
+	HANDLE updateThread;
+	HANDLE updateSemaphore;
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
@@ -66,4 +68,4 @@ void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
 
-#endif
+#endif /* WF_INFO_H */
