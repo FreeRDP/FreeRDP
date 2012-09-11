@@ -200,6 +200,9 @@ if(NOT MSVC)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
+# Intel Performance Primitives
+#find_optional_package(IPP)
+
 # Build CUnit
 find_optional_package(CUnit)
 if(WITH_CUNIT)
