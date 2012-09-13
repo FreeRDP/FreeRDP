@@ -1104,7 +1104,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 	if (ctype & PACKET_AT_FRONT)
 	{
 		/* slid history_buf and reset history_buf to middle */
-		memcpy(history_buf, (history_buf + (history_ptr - history_buf - 32768)), 32768);
+		memmove(history_buf, (history_buf + (history_ptr - history_buf - 32768)), 32768);
 		history_ptr = history_buf + 32768;
 		dec->history_ptr = history_ptr;
 		*roff = 32768;
