@@ -200,7 +200,7 @@
         <term>-x <replaceable class="parameter">flag</replaceable></term>
         <listitem>
           <para>
-            Set the experiance performance flags.
+            Set the experience performance flags.
             <replaceable class="parameter">flag</replaceable> can be one of:
             <itemizedlist>
               <listitem>
