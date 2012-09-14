@@ -54,7 +54,7 @@ int add_sspi_suite(void)
 
 void test_EnumerateSecurityPackages(void)
 {
-	uint32 cPackages;
+	ULONG cPackages;
 	SECURITY_STATUS status;
 	SecPkgInfo* pPackageInfo;
 
@@ -64,7 +64,7 @@ void test_EnumerateSecurityPackages(void)
 	{
 		int index;
 
-		printf("\nEnumerateSecurityPackages (%d):\n", cPackages);
+		printf("\nEnumerateSecurityPackages (%d):\n", (unsigned int)cPackages);
 
 		for (index = 0; index < cPackages; index++)
 		{
