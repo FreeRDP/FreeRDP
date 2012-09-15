@@ -176,11 +176,16 @@ static DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	DWORD nCount;
 	DWORD status;
 	HANDLE handles[32];
+	rdpSettings* settings;
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
 
 	wf_peer_init(client);
 
+	settings = client->settings;
+	settings->rfx_codec = true;
+	settings->ns_codec = false;
+	settings->jpeg_codec = false;
 	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;

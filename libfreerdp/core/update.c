@@ -530,17 +530,29 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 
 boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 {
+	int index;
 	uint8 numberOfAreas;
+	RECTANGLE_16* areas;
 
 	if (stream_get_left(s) < 4)
 		return false;
 
 	stream_read_uint8(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
-	if (stream_get_left(s) < numberOfAreas * 8)
-		return false;
 
-	IFCALL(update->RefreshRect, update->context, numberOfAreas, (RECTANGLE_16*) stream_get_tail(s));
+	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
+
+	for (index = 0; index < numberOfAreas; index++)
+	{
+		stream_read_uint16(s, areas[index].left);
+		stream_read_uint16(s, areas[index].top);
+		stream_read_uint16(s, areas[index].right);
+		stream_read_uint16(s, areas[index].bottom);
+	}
+
+	IFCALL(update->RefreshRect, update->context, numberOfAreas, areas);
+
+	free(areas);
 
 	return true;
 }
