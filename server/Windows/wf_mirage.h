@@ -20,7 +20,7 @@
 #ifndef WF_MIRAGE_H
 #define WF_MIRAGE_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 enum
 {

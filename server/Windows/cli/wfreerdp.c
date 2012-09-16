@@ -17,11 +17,36 @@
  * limitations under the License.
  */
 
-#ifndef WF_DXGI_H
-#define WF_DXGI_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <winpr/tchar.h>
+#include <winpr/windows.h>
 
 #include "wf_interface.h"
 
+#include "wfreerdp.h"
 
+int main(int argc, char* argv[])
+{
+	wfServer* server;
 
-#endif /* WF_DXGI_H */
+	server = wfreerdp_server_new();
+
+	if (argc == 2)
+		server->port = (DWORD) atoi(argv[1]);
+
+	wfreerdp_server_start(server);
+
+	WaitForSingleObject(server->thread, INFINITE);
+
+	wfreerdp_server_stop(server);
+	wfreerdp_server_free(server);
+
+	return 0;
+}

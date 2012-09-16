@@ -29,6 +29,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 
+#include "wf_info.h"
 #include "wf_input.h"
 #include "wf_mirage.h"
 #include "wf_update.h"

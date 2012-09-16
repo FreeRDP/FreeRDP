@@ -20,7 +20,7 @@
 #ifndef WF_SETTINGS_H
 #define WF_SETTINGS_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 BOOL wf_settings_read_dword(HKEY key, LPTSTR subkey, LPTSTR name, DWORD* value);
 BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** value);

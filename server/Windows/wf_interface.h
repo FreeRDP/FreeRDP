@@ -20,11 +20,57 @@
 #ifndef WF_INTERFACE_H
 #define WF_INTERFACE_H
 
-#include "wfreerdp.h"
-
 #include <winpr/windows.h>
+
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
+
+#include <freerdp/freerdp.h>
+#include <freerdp/codec/rfx.h>
+
+typedef struct wf_info wfInfo;
+typedef struct wf_peer_context wfPeerContext;
+
+struct wf_info
+{
+	STREAM* s;
+	int width;
+	int height;
+	int bitsPerPixel;
+	HDC driverDC;
+	int peerCount;
+	BOOL activated;
+	void* changeBuffer;
+	int framesPerSecond;
+	LPTSTR deviceKey;
+	TCHAR deviceName[32];
+	wfPeerContext** peers;
+
+	RECT invalid;
+	HANDLE mutex;
+	BOOL updatePending;
+	HANDLE updateEvent;
+	HANDLE updateThread;
+	HANDLE updateSemaphore;
+	RFX_CONTEXT* rfx_context;
+	unsigned long lastUpdate;
+	unsigned long nextUpdate;
+	SURFACE_BITS_COMMAND cmd;
+};
+
+struct wf_peer_context
+{
+	rdpContext _p;
+
+	wfInfo* info;
+	boolean activated;
+	HANDLE updateEvent;
+	BOOL socketClose;
+	HANDLE socketEvent;
+	HANDLE socketThread;
+	HANDLE socketSemaphore;
+};
 
 struct wf_server
 {
@@ -34,10 +80,10 @@ struct wf_server
 };
 typedef struct wf_server wfServer;
 
-BOOL wfreerdp_server_start(wfServer* server);
-BOOL wfreerdp_server_stop(wfServer* server);
+FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
+FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
 
-wfServer* wfreerdp_server_new();
-void wfreerdp_server_free(wfServer* server);
+FREERDP_API wfServer* wfreerdp_server_new();
+FREERDP_API void wfreerdp_server_free(wfServer* server);
 
 #endif /* WF_INTERFACE_H */

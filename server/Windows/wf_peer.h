@@ -20,11 +20,9 @@
 #ifndef WF_PEER_H
 #define WF_PEER_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 #include <freerdp/listener.h>
-
-#include "wf_info.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context);
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context);

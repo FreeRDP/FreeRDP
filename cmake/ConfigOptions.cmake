@@ -24,6 +24,8 @@ option(WITH_SERVER "Build server binaries" OFF)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
+option(WITH_SERVER_INTERFACE "Build server as a library with an interface" OFF)
+
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)
 
 if(WITH_DEBUG_ALL)

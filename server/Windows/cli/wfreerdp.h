@@ -17,11 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef WF_DXGI_H
-#define WF_DXGI_H
+#ifndef WFREERDP_H
+#define WFREERDP_H
 
-#include "wf_interface.h"
+#include <freerdp/freerdp.h>
 
-
-
-#endif /* WF_DXGI_H */
+#endif /* WFREERDP_H */

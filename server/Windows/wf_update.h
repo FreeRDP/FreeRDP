@@ -20,7 +20,7 @@
 #ifndef WF_UPDATE_H
 #define WF_UPDATE_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_update_encode(wfInfo* wfi);
 void wf_update_send(wfInfo* wfi);
