@@ -47,6 +47,21 @@ void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 	{
 		wf_info_get_screen_info(context->info);
 		wf_dxgi_init(context->info);
+
+		if (wf_info_lock(context->info) > 0)
+		{
+			context->info->rfx_context = rfx_context_new();
+			context->info->rfx_context->mode = RLGR3;
+			context->info->rfx_context->width = context->info->width;
+			context->info->rfx_context->height = context->info->height;
+
+			rfx_context_set_pixel_format(context->info->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+			context->info->s = stream_new(65536);
+
+			context->info->subscribers++;
+			wf_info_unlock(context->info);
+		}
+		
 	}
 	else
 	{
@@ -59,6 +74,13 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 	if(win8)
 	{
 		wf_dxgi_cleanup(context->info);
+		if (wf_info_lock(context->info) > 0)
+		{
+			stream_free(context->info->s);
+			rfx_context_free(context->info->rfx_context);
+			context->info->subscribers--;
+			wf_info_unlock(context->info);
+		}
 	}
 	else
 	{
@@ -90,14 +112,15 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 		{
 			if (wf_info_has_subscribers(wfi))
 			{
-				wf_info_update_changes(wfi);
+				//wf_info_update_changes(wfi);
 
-				if (wf_info_have_updates(wfi))
+				if (1)//wf_info_have_updates(wfi))
 				{
 					//todo: changeme
 					if(win8)
 						wf_dxgi_encode(client);
-					wf_rfx_encode(client);
+					else
+						wf_rfx_encode(client);
 					SetEvent(wfi->updateEvent);
 				}
 			}
@@ -132,21 +155,12 @@ void wf_dxgi_encode(freerdp_peer* client)
 	wfPeerContext* wfp;
 	GETCHANGESBUF* buf;
 	SURFACE_BITS_COMMAND* cmd;
+	BYTE* dxgiData = NULL;
 
 	///
 	
-	BYTE* MetaDataBuffer = NULL;
-	UINT MeinMetaDataSize = 0;
-	UINT BufSize;
-	UINT i;
-	HRESULT hr;
-	IDXGIResource* DesktopResource = NULL;
-    DXGI_OUTDUPL_FRAME_INFO FrameInfo;
+	
 
-	BYTE* DirtyRects;
-
-	UINT dirty;
-	RECT* pRect;
 	///
 
 	wfp = (wfPeerContext*) client->context;
@@ -160,119 +174,18 @@ void wf_dxgi_encode(freerdp_peer* client)
 
 	//wf_info_find_invalid_region(wfi);
 
-	_tprintf(_T("\nTrying to acquire a frame...\n"));
-	hr = wfi->dxgi.DeskDupl->lpVtbl->AcquireNextFrame(wfi->dxgi.DeskDupl, 800, &FrameInfo, &DesktopResource);
-	_tprintf(_T("hr = %#0X\n"), hr);
-	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
-	{
-		_tprintf(_T("Timeout\n"));
-		return;
-	}
-
-	if (FAILED(hr))
-	{
-		_tprintf(_T("Failed to acquire next frame\n"));
-		return;
-	}
-	_tprintf(_T("Gut!\n"));
-
-	///////////////////////////////////////////////
-
-		
-	_tprintf(_T("Trying to QI for ID3D11Texture2D...\n"));
-	hr = DesktopResource->lpVtbl->QueryInterface(DesktopResource, &IID_ID3D11Texture2D, (void**) &wfi->dxgi.AcquiredDesktopImage);
-	DesktopResource->lpVtbl->Release(DesktopResource);
-	DesktopResource = NULL;
-	if (FAILED(hr))
-	{
-		_tprintf(_T("Failed to QI for ID3D11Texture2D from acquired IDXGIResource\n"));
-			return;
-	}
-	_tprintf(_T("Gut!\n"));
-
-	_tprintf(_T("FrameInfo\n"));
-	_tprintf(_T("\tAccumulated Frames: %d\n"), FrameInfo.AccumulatedFrames);
-	_tprintf(_T("\tCoalesced Rectangles: %d\n"), FrameInfo.RectsCoalesced);
-	_tprintf(_T("\tMetadata buffer size: %d\n"), FrameInfo.TotalMetadataBufferSize);
-
-
-	if(FrameInfo.TotalMetadataBufferSize)
-	{
-
-		if (FrameInfo.TotalMetadataBufferSize > MeinMetaDataSize)
-		{
-			if (MetaDataBuffer)
-			{
-				free(MetaDataBuffer);
-				MetaDataBuffer = NULL;
-			}
-			MetaDataBuffer = (BYTE*) malloc(FrameInfo.TotalMetadataBufferSize);
-			if (!MetaDataBuffer)
-			{
-				MeinMetaDataSize = 0;
-				_tprintf(_T("Failed to allocate memory for metadata\n"));
-				return;
-			}
-			MeinMetaDataSize = FrameInfo.TotalMetadataBufferSize;
-		}
-
-		BufSize = FrameInfo.TotalMetadataBufferSize;
-
-		// Get move rectangles
-		hr = wfi->dxgi.DeskDupl->lpVtbl->GetFrameMoveRects(wfi->dxgi.DeskDupl, BufSize, (DXGI_OUTDUPL_MOVE_RECT*) MetaDataBuffer, &BufSize);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to get frame move rects\n"));
-			return;
-		}
-		_tprintf(_T("Move rects: %d\n"), BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT));
-
-		DirtyRects = MetaDataBuffer + BufSize;
-		BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
-
-			// Get dirty rectangles
-		hr = wfi->dxgi.DeskDupl->lpVtbl->GetFrameDirtyRects(wfi->dxgi.DeskDupl, BufSize, (RECT*) DirtyRects, &BufSize);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to get frame dirty rects\n"));
-			return;
-		}
-		dirty = BufSize / sizeof(RECT);
-		_tprintf(_T("Dirty rects: %d\n"), dirty);
-
-		pRect = (RECT*) DirtyRects;
-		for(i = 0; i<dirty; ++i)
-		{
-			_tprintf(_T("\tRect: (%d, %d), (%d, %d)\n"),
-				pRect->left,
-				pRect->top,
-				pRect->right,
-				pRect->bottom);
-
-			++pRect;
-		}
-			
-
-	}
-
-
-	hr = wfi->dxgi.DeskDupl->lpVtbl->ReleaseFrame(wfi->dxgi.DeskDupl);
-	if (FAILED(hr))
-	{
-		_tprintf(_T("Failed to release frame\n"));
-		return;
-	}
-
-
-	////////////////////////
-	////////////////////////
 
 	update = client->update;
 	cmd = &update->surface_bits_command;
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 
-	width = (wfi->invalid.right - wfi->invalid.left) + 1;
-	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
+	//width = (wfi->invalid.right - wfi->invalid.left) + 1;
+	//height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
+
+	wf_dxgi_nextFrame(wfi);
+	wf_dxgi_getPixelData(wfi, &dxgiData);
+	width = 1366;
+	height = 768;
 
 	stream_clear(wfi->s);
 	stream_set_pos(wfi->s, 0);
@@ -283,15 +196,27 @@ void wf_dxgi_encode(freerdp_peer* client)
 	rect.width = (uint16) width;
 	rect.height = (uint16) height;
 
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+	//offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
 
-	rfx_compose_message(wfi->rfx_context, s, &rect, 1,
-			((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
+	//rfx_compose_message(wfi->rfx_context, s, &rect, 1,
+	//		((uint8*) (buf->Userbuffer)) + offset, width, height, wfi->width * 4);
 
-	cmd->destLeft = wfi->invalid.left;
-	cmd->destTop = wfi->invalid.top;
-	cmd->destRight = wfi->invalid.left + width;
-	cmd->destBottom = wfi->invalid.top + height;
+	rfx_compose_message(
+		wfi->rfx_context,
+		s,
+		&rect,
+		1,
+		(uint8*)dxgiData,
+		width,
+		height,
+		width*4);
+	
+	wf_dxgi_releasePixelData(wfi);
+
+	cmd->destLeft = 0;
+	cmd->destTop = 0;
+	cmd->destRight =  width;
+	cmd->destBottom =  height;
 
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
@@ -375,28 +300,24 @@ void wf_peer_init(freerdp_peer* client)
 
 	wfi = ((wfPeerContext*) client->context)->info;
 
-	if(win8)
-	{
-	}
-	else
-	{
-		wf_info_lock(wfi);
 
-		if (wfi->threadCount < 1)
+	wf_info_lock(wfi);
+
+	if (wfi->threadCount < 1)
+	{
+		if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
 		{
-			if (CreateThread(NULL, 0, wf_peer_mirror_monitor, client, 0, NULL) != 0)
-			{
-				wfi->threadCount++;
-				printf("started monitor thread\n");
-			}
-			else
-			{
-				_tprintf(_T("failed to create monitor thread\n"));
-			}
+			wfi->threadCount++;
+			printf("started monitor thread\n");
 		}
-
-		wf_info_unlock(wfi);
+		else
+		{
+			_tprintf(_T("failed to create monitor thread\n"));
+		}
 	}
+
+	wf_info_unlock(wfi);
+	
 }
 
 boolean wf_peer_post_connect(freerdp_peer* client)
