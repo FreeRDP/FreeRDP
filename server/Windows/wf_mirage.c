@@ -172,39 +172,22 @@ void wf_disp_change_print_status(LONG status)
 
 BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 {
-	HDC dc;
 	BOOL status;
 	DWORD* extHdr;
 	WORD drvExtraSaved;
 	DEVMODE* deviceMode;
-	int currentScreenBPP;
-	int currentScreenPixHeight;
-	int currentScreenPixWidth;
 	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
 	
 	if (!unload)
 	{
-		/*
-		 * Will have to come back to this for supporting non primary displays and multimonitor setups
-		 */
-		dc = GetDC(NULL);
-		currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
-		currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
-		currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
-		ReleaseDC(NULL, dc);
-
-		context->height = currentScreenPixHeight;
-		context->width = currentScreenPixWidth;
-		context->bitsPerPix = currentScreenBPP;
-
-		_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), currentScreenPixHeight, currentScreenPixWidth, currentScreenBPP);
+		wf_info_get_screen_info(context);
 	}
 	else
 	{
-		currentScreenPixHeight = 0;
-		currentScreenPixWidth = 0;
-		currentScreenBPP = 0;
+		context->height = 0;
+		context->width = 0;
+		context->bitsPerPix = 0;
 	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
@@ -219,9 +202,9 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = currentScreenPixWidth;
-	deviceMode->dmPelsHeight = currentScreenPixHeight;
-	deviceMode->dmBitsPerPel = currentScreenBPP;
+	deviceMode->dmPelsWidth = context->height;
+	deviceMode->dmPelsHeight = context->width;
+	deviceMode->dmBitsPerPel = context->bitsPerPix;
 	deviceMode->dmPosition.x = 0;
 	deviceMode->dmPosition.y = 0;
 

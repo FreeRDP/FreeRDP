@@ -20,10 +20,23 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
+#define CINTERFACE
+#include <D3D11.h>
+#include <dxgi1_2.h>
+
 #include <freerdp/codec/rfx.h>
 
 struct wf_peer_context;
 typedef struct wf_peer_context wfPeerContext;
+
+struct wf_dxgi_info
+{
+	ID3D11Device* Device;
+	ID3D11DeviceContext* DeviceContext;
+	IDXGIOutputDuplication* DeskDupl;
+	ID3D11Texture2D* AcquiredDesktopImage;
+};
+typedef struct wf_dxgi_info wfDxgiInfo;
 
 struct wf_info
 {
@@ -46,12 +59,16 @@ struct wf_info
 	RFX_CONTEXT* rfx_context;
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
+
+	wfDxgiInfo dxgi;
 };
 typedef struct wf_info wfInfo;
 
 int wf_info_lock(wfInfo* wfi);
 int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
 int wf_info_unlock(wfInfo* wfi);
+
+void wf_info_get_screen_info(wfInfo* wfi);
 
 wfInfo* wf_info_get_instance();
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);

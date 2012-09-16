@@ -124,6 +124,28 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
+void wf_info_get_screen_info(wfInfo* wfi)
+{
+	HDC dc;
+	int currentScreenBPP;
+	int currentScreenPixHeight;
+	int currentScreenPixWidth;
+	/*
+	* Will have to come back to this for supporting non primary displays and multimonitor setups
+	*/
+	dc = GetDC(NULL);
+	currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
+	currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
+	currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
+	ReleaseDC(NULL, dc);
+
+	wfi->height = currentScreenPixHeight;
+	wfi->width = currentScreenPixWidth;
+	wfi->bitsPerPix = currentScreenBPP;
+
+	_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), wfi->height, wfi->width, wfi->bitsPerPix);
+}
+
 void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)

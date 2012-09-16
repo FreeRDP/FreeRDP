@@ -26,6 +26,8 @@ add_executable(wfreerdp-server
 	wf_peer.h
 	wf_info.c
 	wf_info.h
+	wf_dxgi.c
+	wf_dxgi.h
 	wfreerdp.c
 	wfreerdp.h)
 
@@ -42,6 +44,12 @@ else()
 
 		freerdp-codec
 
-		freerdp-channels)
+		freerdp-channels
+		
+		d3d11.lib
+		
+		dxgi.lib
+		
+		dxguid.lib)
 
 endif()
