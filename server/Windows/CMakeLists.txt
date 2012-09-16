@@ -24,10 +24,14 @@ add_executable(wfreerdp-server
 	wf_dxgi.h
 	wf_input.c
 	wf_input.h
+	wf_interface.c
+	wf_interface.h
 	wf_mirage.c
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_settings.c
+	wf_settings.h
 	wf_info.c
 	wf_info.h
 	wfreerdp.c
