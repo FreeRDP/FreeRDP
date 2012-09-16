@@ -93,9 +93,16 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 
 boolean wf_peer_activate(freerdp_peer* client)
 {
-	wfPeerContext* context = (wfPeerContext*) client->context;
+	return true;
+}
 
-	context->activated = true;
+boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
+{
+	if (automatic)
+	{
+		_tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
+			identity->User, identity->Domain, identity->Password);
+	}
 
 	return true;
 }
@@ -190,6 +197,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;
+	client->Logon = wf_peer_logon;
 
 	client->input->SynchronizeEvent = wf_peer_synchronize_event;
 	client->input->KeyboardEvent = wf_peer_keyboard_event;

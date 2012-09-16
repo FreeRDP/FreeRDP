@@ -95,9 +95,10 @@ BOOL wfreerdp_server_start(wfServer* server)
 	if (instance->Open(instance, NULL, (uint16) server->port))
 	{
 		server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL);
+		return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 BOOL wfreerdp_server_stop(wfServer* server)

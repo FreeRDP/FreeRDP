@@ -102,25 +102,25 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
 				return false;
 
-			if (client->PostConnect)
+			if (!client->connected)
 			{
-				if (!client->PostConnect(client))
-					return false;
 				/**
 				 * PostConnect should only be called once and should not be called
 				 * after a reactivation sequence.
 				 */
-				client->PostConnect = NULL;
-			}
 
-			if (client->Activate)
-			{
-				/* Activate will be called everytime after the client is activated/reactivated. */
-				if (!client->Activate(client))
+				IFCALLRET(client->PostConnect, client->connected, client);
+
+				if (!client->connected)
 					return false;
 			}
 
-			client->activated = true;
+			/* Activate will be called everytime after the client is activated/reactivated. */
+
+			IFCALLRET(client->Activate, client->activated, client);
+
+			if (!client->activated)
+				return false;
 
 			break;
 
@@ -244,55 +244,69 @@ static boolean peer_recv_pdu(freerdp_peer* client, STREAM* s)
 static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
+	rdpRdp* rdp = client->context->rdp;
 
-	switch (client->context->rdp->state)
+	switch (rdp->state)
 	{
 		case CONNECTION_STATE_INITIAL:
-			if (!rdp_server_accept_nego(client->context->rdp, s))
+			if (!rdp_server_accept_nego(rdp, s))
 				return false;
+
+			if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+			{
+				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->credssp->identity));
+				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, true);
+				credssp_free(rdp->nego->transport->credssp);
+			}
+			else
+			{
+				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, false);
+			}
+
 			break;
 
 		case CONNECTION_STATE_NEGO:
-			if (!rdp_server_accept_mcs_connect_initial(client->context->rdp, s))
+			if (!rdp_server_accept_mcs_connect_initial(rdp, s))
 				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
-			if (!rdp_server_accept_mcs_erect_domain_request(client->context->rdp, s))
+			if (!rdp_server_accept_mcs_erect_domain_request(rdp, s))
 				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
-			if (!rdp_server_accept_mcs_attach_user_request(client->context->rdp, s))
+			if (!rdp_server_accept_mcs_attach_user_request(rdp, s))
 				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
-			if (!rdp_server_accept_mcs_channel_join_request(client->context->rdp, s))
+			if (!rdp_server_accept_mcs_channel_join_request(rdp, s))
 				return false;
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
-			if (client->context->rdp->settings->encryption) {
-				if (!rdp_server_accept_client_keys(client->context->rdp, s))
+			if (rdp->settings->encryption)
+			{
+				if (!rdp_server_accept_client_keys(rdp, s))
 					return false;
 				break;
 			}
-			client->context->rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
+			rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
 			/* FALLTHROUGH */
 
 		case CONNECTION_STATE_ESTABLISH_KEYS:
-			if (!rdp_server_accept_client_info(client->context->rdp, s))
+			if (!rdp_server_accept_client_info(rdp, s))
 				return false;
 
 			IFCALL(client->Capabilities, client);
 
-			if (!rdp_send_demand_active(client->context->rdp))
+			if (!rdp_send_demand_active(rdp))
 				return false;
 			break;
 
 		case CONNECTION_STATE_LICENSE:
-			if (!rdp_server_accept_confirm_active(client->context->rdp, s))
+			if (!rdp_server_accept_confirm_active(rdp, s))
 			{
 				/**
 				 * During reactivation sequence the client might sent some input or channel data
@@ -309,7 +323,7 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 			break;
 
 		default:
-			printf("Invalid state %d\n", client->context->rdp->state);
+			printf("Invalid state %d\n", rdp->state);
 			return false;
 	}
 

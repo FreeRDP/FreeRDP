@@ -263,7 +263,7 @@ boolean transport_accept_nla(rdpTransport* transport)
 		return false;
 	}
 
-	credssp_free(transport->credssp);
+	/* don't free credssp module yet, we need to copy the credentials from it first */
 
 	return true;
 }

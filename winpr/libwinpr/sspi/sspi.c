@@ -348,6 +348,7 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	{
 		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
 		CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
+		identity->User[identity->UserLength] = 0;
 	}
 
 	identity->DomainLength = srcIdentity->DomainLength;
@@ -356,6 +357,7 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	{
 		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
 		CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
+		identity->Domain[identity->DomainLength] = 0;
 	}
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
@@ -364,6 +366,7 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	{
 		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
 		CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
+		identity->Password[identity->PasswordLength] = 0;
 	}
 }
 

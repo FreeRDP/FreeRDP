@@ -41,9 +41,13 @@ int main(int argc, char* argv[])
 	if (argc == 2)
 		server->port = (DWORD) atoi(argv[1]);
 
+	printf("Starting server\n");
+
 	wfreerdp_server_start(server);
 
 	WaitForSingleObject(server->thread, INFINITE);
+
+	printf("Stopping server\n");
 
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);

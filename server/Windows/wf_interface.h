@@ -40,7 +40,6 @@ struct wf_info
 	int bitsPerPixel;
 	HDC driverDC;
 	int peerCount;
-	BOOL activated;
 	void* changeBuffer;
 	int framesPerSecond;
 	LPTSTR deviceKey;
