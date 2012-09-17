@@ -51,19 +51,24 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 
 		if (wf_info_lock(wfi) > 0)
 		{
-			if (wfi->peerCount > 0)
+			if (wfi->activePeerCount > 0)
 			{
 				wf_info_update_changes(wfi);
 
 				if (wf_info_have_updates(wfi))
 				{
 					wf_update_encode(wfi);
-					
-					for (index = 0; index < wfi->peerCount; index++)
-						SetEvent(wfi->peers[index]->updateEvent);
 
 					for (index = 0; index < wfi->peerCount; index++)
+					{
+						if (wfi->peers[index]->activated)
+							SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
+					}
+
+					for (index = 0; index < wfi->activePeerCount; index++)
+					{
 						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+					}
 
 					wfi->lastUpdate = wfi->nextUpdate;
 				}
@@ -80,6 +85,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 			Sleep(rate - diff);
 		}
 	}
+
+	printf("Exiting Update Thread\n");
 
 	return 0;
 }
@@ -131,4 +138,82 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 	freerdp_peer* client = ((rdpContext*) context)->peer;
 	wfi->cmd.codecID = client->settings->rfx_codec_id;
 	client->update->SurfaceBits(client->update->context, &wfi->cmd);
+}
+
+void wf_update_encoder_init(wfInfo* wfi)
+{
+	wfi->rfx_context = rfx_context_new();
+	wfi->rfx_context->mode = RLGR3;
+	wfi->rfx_context->width = wfi->width;
+	wfi->rfx_context->height = wfi->height;
+	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+	wfi->s = stream_new(0xFFFF);
+}
+
+void wf_update_encoder_uninit(wfInfo* wfi)
+{
+	if (wfi->rfx_context != NULL)
+	{
+		rfx_context_free(wfi->rfx_context);
+		wfi->rfx_context = NULL;
+		stream_free(wfi->s);
+	}
+}
+
+void wf_update_encoder_reinit(wfInfo* wfi)
+{
+	if (wf_info_lock(wfi) > 0)
+	{
+		if (wfi->rfx_context != NULL)
+			rfx_context_free(wfi->rfx_context);
+
+		wfi->rfx_context = rfx_context_new();
+		wfi->rfx_context->mode = RLGR3;
+		wfi->rfx_context->width = wfi->width;
+		wfi->rfx_context->height = wfi->height;
+
+		rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+
+		if (!wfi->s)
+			wfi->s = stream_new(0xFFFF);
+
+		wf_info_unlock(wfi);
+	}
+}
+
+void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
+{
+	if (wf_info_lock(wfi) > 0)
+	{
+		if (wfi->activePeerCount < 1)
+		{
+			//wf_mirror_driver_activate(wfi);
+			ResumeThread(wfi->updateThread);
+		}
+
+		wf_update_encoder_reinit(wfi);
+		wfi->activePeerCount++;
+
+		printf("Activating Peer Updates: %d\n", wfi->activePeerCount);
+
+		wf_info_unlock(wfi);
+	}
+}
+
+void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
+{
+	if (wf_info_lock(wfi) > 0)
+	{
+		if (((rdpContext*) context)->peer->activated)
+		{
+			//if (wfi->activePeerCount <= 1)
+				//wf_mirror_driver_deactivate(wfi);
+
+			wfi->activePeerCount--;
+
+			printf("Deactivating Peer Updates: %d\n", wfi->activePeerCount);
+		}
+
+		wf_info_unlock(wfi);
+	}
 }

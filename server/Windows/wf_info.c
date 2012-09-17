@@ -128,7 +128,7 @@ wfInfo* wf_info_init()
 			_tprintf(_T("Failed to create update thread\n"));
 		}
 
-		wfi->peers = (wfPeerContext**) malloc(sizeof(wfPeerContext*) * 32);
+		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
 
 		wfi->framesPerSecond = 24;
 
@@ -155,47 +155,6 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-void wf_update_encoder_init(wfInfo* wfi)
-{
-	wfi->rfx_context = rfx_context_new();
-	wfi->rfx_context->mode = RLGR3;
-	wfi->rfx_context->width = wfi->width;
-	wfi->rfx_context->height = wfi->height;
-	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-	wfi->s = stream_new(0xFFFF);
-}
-
-void wf_update_encoder_uninit(wfInfo* wfi)
-{
-	if (wfi->rfx_context != NULL)
-	{
-		rfx_context_free(wfi->rfx_context);
-		wfi->rfx_context = NULL;
-		stream_free(wfi->s);
-	}
-}
-
-void wf_update_encoder_reinit(wfInfo* wfi)
-{
-	wf_update_encoder_uninit(wfi);
-	wf_update_encoder_init(wfi);
-}
-
-void wf_mirror_driver_init(wfInfo* wfi)
-{
-	wf_mirror_driver_find_display_device(wfi);
-	wf_mirror_driver_display_device_attach(wfi, 1);
-	wf_mirror_driver_update(wfi, FALSE);
-	wf_mirror_driver_map_memory(wfi);
-}
-
-void wf_mirror_driver_uninit(wfInfo* wfi)
-{
-	wf_mirror_driver_cleanup(wfi);
-	wf_mirror_driver_display_device_attach(wfi, 0);
-	wf_mirror_driver_update(wfi, 1);
-}
-
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
@@ -203,11 +162,11 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		if (wfi->peerCount < 1)
-			wf_mirror_driver_init(wfi);
+		wf_mirror_driver_activate(wfi);
 
-		wf_update_encoder_reinit(wfi);
-		wfi->peers[wfi->peerCount++] = context;
+		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
+
+		printf("Registering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
 	}
@@ -217,10 +176,10 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->peerCount == 1)
-			wf_mirror_driver_uninit(wfi);	
-
 		wfi->peers[--(wfi->peerCount)] = NULL;
+		CloseHandle(context->updateEvent);
+
+		printf("Unregistering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
 	}

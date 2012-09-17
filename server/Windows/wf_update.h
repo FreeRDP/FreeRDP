@@ -31,4 +31,7 @@ void wf_update_begin(wfInfo* wfi);
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context);
 void wf_update_end(wfInfo* wfi);
 
+void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context);
+void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context);
+
 #endif /* WF_UPDATE_H */

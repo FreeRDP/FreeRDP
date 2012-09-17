@@ -115,12 +115,15 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 					return false;
 			}
 
-			/* Activate will be called everytime after the client is activated/reactivated. */
-
-			IFCALLRET(client->Activate, client->activated, client);
-
 			if (!client->activated)
-				return false;
+			{
+				/* Activate will be called everytime after the client is activated/reactivated. */
+			
+				IFCALLRET(client->Activate, client->activated, client);
+
+				if (!client->activated)
+					return false;
+			}
 
 			break;
 

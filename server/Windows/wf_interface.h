@@ -40,11 +40,13 @@ struct wf_info
 	int bitsPerPixel;
 	HDC driverDC;
 	int peerCount;
+	int activePeerCount;
 	void* changeBuffer;
 	int framesPerSecond;
 	LPTSTR deviceKey;
 	TCHAR deviceName[32];
-	wfPeerContext** peers;
+	freerdp_peer** peers;
+	BOOL mirrorDriverActive;
 
 	RECT invalid;
 	HANDLE mutex;
@@ -63,7 +65,6 @@ struct wf_peer_context
 	rdpContext _p;
 
 	wfInfo* info;
-	boolean activated;
 	HANDLE updateEvent;
 	BOOL socketClose;
 	HANDLE socketEvent;

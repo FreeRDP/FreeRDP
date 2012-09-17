@@ -59,6 +59,7 @@ void wf_peer_init(freerdp_peer* client)
 
 boolean wf_peer_post_connect(freerdp_peer* client)
 {
+	HDC hdc;
 	wfInfo* wfi;
 	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -66,12 +67,11 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	/**
-	 * This callback is called when the entire connection sequence is done, i.e. we've received the
-	 * Font List PDU from the client and sent out the Font Map PDU.
-	 * The server may start sending graphics output and receiving keyboard/mouse input after this
-	 * callback returns.
-	 */
+	hdc = GetDC(NULL);
+	wfi->width = GetDeviceCaps(hdc, HORZRES);
+	wfi->height = GetDeviceCaps(hdc, VERTRES);
+	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
+	ReleaseDC(NULL, hdc);
 
 	if ((settings->width != wfi->width) || (settings->height != wfi->height))
 	{
@@ -83,21 +83,29 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 		settings->color_depth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
-		client->activated = false;
 	}
-
-	ResumeThread(wfi->updateThread);
 
 	return true;
 }
 
 boolean wf_peer_activate(freerdp_peer* client)
 {
+	wfInfo* wfi;
+	wfPeerContext* context = (wfPeerContext*) client->context;
+	
+	printf("PeerActivate\n");
+
+	wfi = context->info;
+	client->activated = true;
+	wf_update_peer_activate(wfi, context);
+
 	return true;
 }
 
 boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
 {
+	printf("PeerLogon\n");
+
 	if (automatic)
 	{
 		_tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
@@ -164,6 +172,8 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 		if (context->socketClose)
 			break;
 	}
+
+	printf("Exiting Peer Socket Listener Thread\n");
 
 	return 0;
 }
@@ -251,8 +261,19 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
 	client->Disconnect(client);
+
+	client->activated = false;
+
+	if (WaitForSingleObject(context->updateEvent, 0) == 0)
+	{
+		ResetEvent(context->updateEvent);
+		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
+	}
+
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
+
+	printf("Exiting Peer Main Loop Thread\n");
 
 	return 0;
 }
