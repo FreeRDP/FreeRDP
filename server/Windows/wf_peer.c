@@ -98,7 +98,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	freerdp_peer* client;
 	wfPeerContext* context;
 
-	fps = 1;
+	fps = 10;
 	rate = 1000 / fps;
 	client = (freerdp_peer*) lpParam;
 	context = (wfPeerContext*) client->context;
@@ -118,7 +118,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 				{
 					//todo: changeme
 					if(win8)
-						wf_dxgi_encode(client);
+						wf_dxgi_encode(client, rate);
 					else
 						wf_rfx_encode(client);
 					SetEvent(wfi->updateEvent);
@@ -144,7 +144,7 @@ static DWORD WINAPI wf_peer_mirror_monitor(LPVOID lpParam)
 	return 0;
 }
 
-void wf_dxgi_encode(freerdp_peer* client)
+void wf_dxgi_encode(freerdp_peer* client, UINT timeout)
 {
 	STREAM* s;
 	wfInfo* wfi;
@@ -156,12 +156,8 @@ void wf_dxgi_encode(freerdp_peer* client)
 	GETCHANGESBUF* buf;
 	SURFACE_BITS_COMMAND* cmd;
 	BYTE* dxgiData = NULL;
+	int pitch;
 
-	///
-	
-	
-
-	///
 
 	wfp = (wfPeerContext*) client->context;
 	wfi = wfp->info;
@@ -179,13 +175,27 @@ void wf_dxgi_encode(freerdp_peer* client)
 	cmd = &update->surface_bits_command;
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 
-	//width = (wfi->invalid.right - wfi->invalid.left) + 1;
-	//height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
 
-	wf_dxgi_nextFrame(wfi);
-	wf_dxgi_getPixelData(wfi, &dxgiData);
-	width = 1366;
-	height = 768;
+	if(wf_dxgi_nextFrame(wfi, timeout))
+	{
+		return;
+	}
+	wf_dxgi_getPixelData(wfi, &dxgiData, &pitch, &wfi->invalid);
+
+	if (wfi->invalid.left < 0)
+		wfi->invalid.left = 0;
+
+	if (wfi->invalid.top < 0)
+		wfi->invalid.top = 0;
+
+	if (wfi->invalid.right >= wfi->width)
+		wfi->invalid.right = wfi->width - 1;
+
+	if (wfi->invalid.bottom >= wfi->height)
+		wfi->invalid.bottom = wfi->height - 1;
+
+	width = (wfi->invalid.right - wfi->invalid.left) + 1;
+	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
 
 	stream_clear(wfi->s);
 	stream_set_pos(wfi->s, 0);
@@ -209,14 +219,14 @@ void wf_dxgi_encode(freerdp_peer* client)
 		(uint8*)dxgiData,
 		width,
 		height,
-		width*4);
+		pitch);
 	
 	wf_dxgi_releasePixelData(wfi);
 
-	cmd->destLeft = 0;
-	cmd->destTop = 0;
-	cmd->destRight =  width;
-	cmd->destBottom =  height;
+	cmd->destLeft = wfi->invalid.left;
+	cmd->destTop = wfi->invalid.top;
+	cmd->destRight = wfi->invalid.left + width;
+	cmd->destBottom = wfi->invalid.top + height;
 
 	cmd->bpp = 32;
 	cmd->codecID = client->settings->rfx_codec_id;
@@ -388,6 +398,8 @@ void wf_peer_send_changes(freerdp_peer* client)
 			wfi->lastUpdate = wfi->nextUpdate;
 
 			client->update->SurfaceBits(client->update->context, &client->update->surface_bits_command);
+
+			wf_info_clear_invalid_region(wfi);
 
 			wfi->updatePending = FALSE;
 		}
