@@ -260,15 +260,15 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
-	client->Disconnect(client);
-
-	client->activated = false;
+	wf_update_peer_deactivate(wfi, context);
 
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{
 		ResetEvent(context->updateEvent);
 		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 	}
+
+	client->Disconnect(client);
 
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);

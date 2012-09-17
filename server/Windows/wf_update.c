@@ -70,7 +70,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
 					}
 
-					wfi->lastUpdate = wfi->nextUpdate;
+					wf_info_clear_invalid_region(wfi);
 				}
 			}
 
@@ -114,6 +114,8 @@ void wf_update_encode(wfInfo* wfi)
 	rect.y = 0;
 	rect.width = (uint16) width;
 	rect.height = (uint16) height;
+
+	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
 	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
 
@@ -177,6 +179,8 @@ void wf_update_encoder_reinit(wfInfo* wfi)
 		if (!wfi->s)
 			wfi->s = stream_new(0xFFFF);
 
+		wf_info_invalidate_full_screen(wfi);
+
 		wf_info_unlock(wfi);
 	}
 }
@@ -204,11 +208,14 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (((rdpContext*) context)->peer->activated)
+		freerdp_peer* client = ((rdpContext*) context)->peer;
+
+		if (client->activated)
 		{
 			//if (wfi->activePeerCount <= 1)
 				//wf_mirror_driver_deactivate(wfi);
 
+			client->activated = false;
 			wfi->activePeerCount--;
 
 			printf("Deactivating Peer Updates: %d\n", wfi->activePeerCount);

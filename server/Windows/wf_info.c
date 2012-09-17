@@ -232,6 +232,11 @@ void wf_info_clear_invalid_region(wfInfo* wfi)
 	SetRectEmpty(&wfi->invalid);
 }
 
+void wf_info_invalidate_full_screen(wfInfo* wfi)
+{
+	SetRect(&wfi->invalid, 0, 0, wfi->width, wfi->height);
+}
+
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
 {
 	return IsRectEmpty(&wfi->invalid);
