@@ -373,7 +373,11 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
+#ifdef _WIN32
+	rfds[*rcount] = transport->tcp->wsa_event;
+#else
 	rfds[*rcount] = (void*)(long)(transport->tcp->sockfd);
+#endif
 	(*rcount)++;
 	wait_obj_get_fds(transport->recv_event, rfds, rcount);
 }
