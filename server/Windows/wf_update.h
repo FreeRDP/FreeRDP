@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * TCP Utils
+ * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,20 +17,21 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_TCP_UTILS_H
-#define FREERDP_TCP_UTILS_H
+#ifndef WF_UPDATE_H
+#define WF_UPDATE_H
 
-#include <freerdp/api.h>
-#include <freerdp/types.h>
+#include "wf_interface.h"
 
-FREERDP_API int freerdp_tcp_connect(const char* hostname, int port);
-FREERDP_API int freerdp_tcp_read(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_write(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_disconnect(int sockfd);
+void wf_update_encode(wfInfo* wfi);
+void wf_update_send(wfInfo* wfi);
 
-FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay);
+DWORD WINAPI wf_update_thread(LPVOID lpParam);
 
-FREERDP_API int freerdp_wsa_startup();
-FREERDP_API int freerdp_wsa_cleanup();
+void wf_update_begin(wfInfo* wfi);
+void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context);
+void wf_update_end(wfInfo* wfi);
 
-#endif /* FREERDP_TCP_UTILS_H */
+void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context);
+void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context);
+
+#endif /* WF_UPDATE_H */

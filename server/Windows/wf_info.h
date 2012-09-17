@@ -20,10 +20,12 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
+
 #define CINTERFACE
 #include <D3D11.h>
 #include <dxgi1_2.h>
 
+#include "wf_interface.h"
 #include <freerdp/codec/rfx.h>
 
 struct wf_peer_context;
@@ -71,14 +73,14 @@ int wf_info_unlock(wfInfo* wfi);
 void wf_info_get_screen_info(wfInfo* wfi);
 
 wfInfo* wf_info_get_instance();
-void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context);
-void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context);
+void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
+void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
 
-BOOL wf_info_has_subscribers(wfInfo* wfi);
 BOOL wf_info_have_updates(wfInfo* wfi);
 void wf_info_update_changes(wfInfo* wfi);
 void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
+void wf_info_invalidate_full_screen(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
 
-#endif
+#endif /* WF_INFO_H */

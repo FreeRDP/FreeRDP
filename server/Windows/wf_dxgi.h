@@ -20,9 +20,7 @@
 #ifndef WF_DXGI_H
 #define WF_DXGI_H
 
-
-
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 int wf_dxgi_init(wfInfo* context);
 

@@ -195,3 +195,22 @@ int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay)
 
 	return 0;
 }
+
+int freerdp_wsa_startup()
+{
+#ifdef _WIN32
+	WSADATA wsaData;
+	return WSAStartup(0x101, &wsaData);
+#else
+	return 0;
+#endif
+}
+
+int freerdp_wsa_cleanup()
+{
+#ifdef _WIN32
+	return WSACleanup();
+#else
+	return 0;
+#endif
+}

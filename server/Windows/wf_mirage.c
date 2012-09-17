@@ -29,7 +29,7 @@ the mirror device we want to load. If found, it will then copy the registry
 key corresponding to the device to the context and returns true. Otherwise
 the function returns false.
 */
-BOOL wf_check_disp_devices(wfInfo* context)
+BOOL wf_mirror_driver_find_display_device(wfInfo* context)
 {
 	BOOL result;
 	BOOL devFound;
@@ -78,7 +78,7 @@ BOOL wf_check_disp_devices(wfInfo* context)
  * false.
  */
 
-BOOL wf_disp_device_set_attach_mode(wfInfo* context, DWORD mode)
+BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode)
 {
 	HKEY hKey;
 	LONG status;
@@ -114,7 +114,7 @@ BOOL wf_disp_device_set_attach_mode(wfInfo* context, DWORD mode)
 	return TRUE;
 }
 
-void wf_disp_change_print_status(LONG status)
+void wf_mirror_driver_print_display_change_status(LONG status)
 {
 	TCHAR disp_change[64];
 
@@ -170,7 +170,7 @@ void wf_disp_change_print_status(LONG status)
  * If unload is nonzero then the the driver will be asked to remove itself.
  */
 
-BOOL wf_update_mirror_drv(wfInfo* context, int unload)
+BOOL wf_mirror_driver_update(wfInfo* context, int unload)
 {
 	BOOL status;
 	DWORD* extHdr;
@@ -181,13 +181,20 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	
 	if (!unload)
 	{
-		wf_info_get_screen_info(context);
+		/*
+		 * Will have to come back to this for supporting non primary displays and multimonitor setups
+		 */
+		dc = GetDC(NULL);
+		context->width = GetDeviceCaps(dc, HORZRES);
+		context->height = GetDeviceCaps(dc, VERTRES);
+		context->bitsPerPixel = GetDeviceCaps(dc, BITSPIXEL);
+		ReleaseDC(NULL, dc);
 	}
 	else
 	{
-		context->height = 0;
 		context->width = 0;
-		context->bitsPerPix = 0;
+		context->height = 0;
+		context->bitsPerPixel = 0;
 	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
@@ -202,9 +209,10 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = context->height;
-	deviceMode->dmPelsHeight = context->width;
-	deviceMode->dmBitsPerPel = context->bitsPerPix;
+
+	deviceMode->dmPelsWidth = context->width;
+	deviceMode->dmPelsHeight = context->height;
+	deviceMode->dmBitsPerPel = context->bitsPerPixel;
 	deviceMode->dmPosition.x = 0;
 	deviceMode->dmPosition.y = 0;
 
@@ -217,12 +225,12 @@ BOOL wf_update_mirror_drv(wfInfo* context, int unload)
 	status = (disp_change_status == DISP_CHANGE_SUCCESSFUL) ? TRUE : FALSE;
 
 	if (!status)
-		wf_disp_change_print_status(disp_change_status);
+		wf_mirror_driver_print_display_change_status(disp_change_status);
 		
 	return status;
 }
 
-BOOL wf_map_mirror_mem(wfInfo* context)
+BOOL wf_mirror_driver_map_memory(wfInfo* context)
 {
 	int status;
 	GETCHANGESBUF* b;
@@ -252,7 +260,7 @@ BOOL wf_map_mirror_mem(wfInfo* context)
 
 /* Unmap the shared memory and release the DC */
 
-BOOL wf_mirror_cleanup(wfInfo* context)
+BOOL wf_mirror_driver_cleanup(wfInfo* context)
 {
 	int status;
 
@@ -276,4 +284,31 @@ BOOL wf_mirror_cleanup(wfInfo* context)
 	free(context->changeBuffer);
 
 	return TRUE;
+}
+
+void wf_mirror_driver_activate(wfInfo* wfi)
+{
+	if (!wfi->mirrorDriverActive)
+	{
+		printf("Activating Mirror Driver\n");
+
+		wf_mirror_driver_find_display_device(wfi);
+		wf_mirror_driver_display_device_attach(wfi, 1);
+		wf_mirror_driver_update(wfi, FALSE);
+		wf_mirror_driver_map_memory(wfi);
+		wfi->mirrorDriverActive = TRUE;
+	}
+}
+
+void wf_mirror_driver_deactivate(wfInfo* wfi)
+{
+	if (wfi->mirrorDriverActive)
+	{
+		printf("Deactivating Mirror Driver\n");
+
+		wf_mirror_driver_cleanup(wfi);
+		wf_mirror_driver_display_device_attach(wfi, 0);
+		wf_mirror_driver_update(wfi, 1);
+		wfi->mirrorDriverActive = FALSE;
+	}
 }

@@ -78,13 +78,10 @@ boolean rdp_client_connect(rdpRdp* rdp)
 	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
 
 	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
-	nego_enable_rdp(rdp->nego, settings->rdp_security);
 
-	if (!settings->ts_gateway)
-	{
-		nego_enable_nla(rdp->nego, settings->nla_security);
-		nego_enable_tls(rdp->nego, settings->tls_security);
-	}
+	nego_enable_rdp(rdp->nego, settings->rdp_security);
+	nego_enable_tls(rdp->nego, settings->tls_security);
+	nego_enable_nla(rdp->nego, settings->nla_security);
 
 	if (!nego_connect(rdp->nego))
 	{
@@ -588,6 +585,7 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 
 	printf("Accepted client: %s\n", rdp->settings->client_hostname);
 	printf("Accepted channels:");
+
 	for (i = 0; i < rdp->settings->num_channels; i++)
 	{
 		printf(" %s", rdp->settings->channels[i].name);

@@ -20,8 +20,9 @@
 #ifndef WF_PEER_H
 #define WF_PEER_H
 
-#include "wfreerdp.h"
-#include "wf_info.h"
+#include "wf_interface.h"
+
+#include <freerdp/listener.h>
 
 
 
@@ -41,5 +42,10 @@ void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
 void wf_peer_send_changes(freerdp_peer* client);
 
 void wf_detect_win_ver();
+
+void wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
+
+DWORD WINAPI wf_peer_main_loop(LPVOID lpParam);
+
 
 #endif /* WF_PEER_H */

@@ -243,13 +243,13 @@ void rdp_read_bitmap_capability_set(STREAM* s, uint16 length, rdpSettings* setti
 void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 {
 	uint8* header;
-	uint8 drawingFlags;
+	uint8 drawingFlags = 0;
 	uint16 desktopResizeFlag;
 	uint16 preferredBitsPerPixel;
 
 	header = rdp_capability_set_start(s);
 
-	drawingFlags = 0;
+	drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
 
 	if (settings->rdp_version > 5)
 		preferredBitsPerPixel = settings->color_depth;
@@ -1434,6 +1434,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, uint16 length, rdpSettings
 	{
 		settings->rfx_codec = false;
 		settings->ns_codec = false;
+		settings->jpeg_codec = false;
 	}
 
 	while (bitmapCodecCount > 0)
@@ -1444,7 +1445,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, uint16 length, rdpSettings
 			stream_read_uint8(s, settings->rfx_codec_id);
 			settings->rfx_codec = true;
 		}
-		else if (settings->server_mode && strncmp((char*)stream_get_tail(s),CODEC_GUID_NSCODEC, 16) == 0)
+		else if (settings->server_mode && strncmp((char*)stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
 		{
 			stream_seek(s, 16); /*codec GUID (16 bytes) */
 			stream_read_uint8(s, settings->ns_codec_id);
@@ -1473,7 +1474,7 @@ void rdp_write_rfx_client_capability_container(STREAM* s, rdpSettings* settings)
 	uint32 captureFlags;
 	uint8 codecMode;
 
-	captureFlags = settings->dump_rfx ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
+	captureFlags = settings->rfx_codec_only ? CARDP_CAPS_CAPTURE_NON_CAC : 0;
 	codecMode = settings->rfx_codec_mode;
 
 	stream_write_uint16(s, 49); /* codecPropertiesLength */
@@ -1562,7 +1563,6 @@ void rdp_write_nsc_server_capability_container(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, 0); /* reserved */
 }
 
-
 /**
  * Write bitmap codecs capability set.\n
  * @msdn{dd891377}
@@ -1578,6 +1578,7 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	bitmapCodecCount = 0;
+
 	if (settings->rfx_codec)
 		bitmapCodecCount++;
 	if (settings->ns_codec)

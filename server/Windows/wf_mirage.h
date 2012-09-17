@@ -20,7 +20,7 @@
 #ifndef WF_MIRAGE_H
 #define WF_MIRAGE_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 enum
 {
@@ -200,10 +200,13 @@ typedef struct
 	ULONG nColorBmPalEntries;
 } Esc_dmf_pointer_shape_get_OUT;
 
-BOOL wf_check_disp_devices(wfInfo* context);
-BOOL wf_disp_device_set_attach_mode(wfInfo* context, DWORD mode);
-BOOL wf_update_mirror_drv(wfInfo* context, int unload);
-BOOL wf_map_mirror_mem(wfInfo* context);
-BOOL wf_mirror_cleanup(wfInfo* context);
+BOOL wf_mirror_driver_find_display_device(wfInfo* context);
+BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode);
+BOOL wf_mirror_driver_update(wfInfo* context, int unload);
+BOOL wf_mirror_driver_map_memory(wfInfo* context);
+BOOL wf_mirror_driver_cleanup(wfInfo* context);
+
+void wf_mirror_driver_activate(wfInfo* wfi);
+void wf_mirror_driver_deactivate(wfInfo* wfi);
 
 #endif /* WF_MIRAGE_H */

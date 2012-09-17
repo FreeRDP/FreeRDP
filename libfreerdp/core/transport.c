@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
@@ -262,7 +263,7 @@ boolean transport_accept_nla(rdpTransport* transport)
 		return false;
 	}
 
-	credssp_free(transport->credssp);
+	/* don't free credssp module yet, we need to copy the credentials from it first */
 
 	return true;
 }

@@ -17,27 +17,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(wfreerdp-server
+include_directories(.)
+
+set(WFREERDP_SERVER_SRCS
+	wf_update.c
+	wf_update.h
+	wf_dxgi.c
+	wf_dxgi.h
 	wf_input.c
 	wf_input.h
+	wf_interface.c
+	wf_interface.h
 	wf_mirage.c
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_settings.c
+	wf_settings.h
 	wf_info.c
-	wf_info.h
-	wf_dxgi.c
-	wf_dxgi.h
-	wfreerdp.c
-	wfreerdp.h)
+	wf_info.h)
+
+if(WITH_SERVER_INTERFACE)
+	add_library(wfreerdp-server ${WFREERDP_SERVER_SRCS})
+	set_target_properties(wfreerdp-server PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+else()
+	set(WFREERDP_SERVER_SRCS ${WFREERDP_SERVER_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
+	add_executable(wfreerdp-server ${WFREERDP_SERVER_SRCS})
+endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(wfreerdp-server freerdp)
-
+	set(WFREERDP_SERVER_LIBS freerdp)
 else()
 
-	target_link_libraries(wfreerdp-server
-
+	set(WFREERDP_SERVER_LIBS
 		freerdp-core
 
 		freerdp-utils
@@ -52,4 +64,17 @@ else()
 		
 		dxguid.lib)
 
+endif()
+
+target_link_libraries(wfreerdp-server ${WFREERDP_SERVER_LIBS})
+
+
+if(WITH_SERVER_INTERFACE)
+	install(TARGETS wfreerdp-server DESTINATION ${CMAKE_INSTALL_LIBDIR})
+else()
+	install(TARGETS wfreerdp-server DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+if(WITH_SERVER_INTERFACE)
+	add_subdirectory(cli)
 endif()

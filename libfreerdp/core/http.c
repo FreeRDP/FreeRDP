@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 
 #include "http.h"
@@ -147,15 +149,77 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 	http_request->AuthParam = xstrdup(auth_param);
 }
 
-#ifdef _WIN32
-#define http_encode_line(_str, _fmt, ...) \
-	_str = xmalloc(sprintf_s(NULL, 0, _fmt, ## __VA_ARGS__) + 1); \
-	sprintf_s(_str, sprintf_s(NULL, 0, _fmt, ## __VA_ARGS__) + 1, _fmt, ## __VA_ARGS__);
-#else
-#define http_encode_line(_str, _fmt, ...) \
-	_str = xmalloc(snprintf(NULL, 0, _fmt, ## __VA_ARGS__) + 1); \
-	snprintf(_str, snprintf(NULL, 0, _fmt, ## __VA_ARGS__) + 1, _fmt, ## __VA_ARGS__);
+#ifndef _WIN32
+
+#ifndef errno_t
+typedef int errno_t;
 #endif
+
+errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
+{
+	int length;
+
+	length = snprintf(NULL, 0, "%d", value);
+
+	if (sizeInCharacters < length)
+		return -1;
+
+	snprintf(buffer, length + 1, "%d", value);
+
+	return 0;
+}
+
+#endif
+
+char* http_encode_body_line(char* param, char* value)
+{
+	char* line;
+	int length;
+
+	length = strlen(param) + strlen(value) + 2;
+	line = (char*) malloc(length + 1);
+	sprintf_s(line, length + 1, "%s: %s", param, value);
+
+	return line;
+}
+
+char* http_encode_content_length_line(int ContentLength)
+{
+	char* line;
+	int length;
+	char str[32];
+
+	_itoa_s(ContentLength, str, sizeof(str), 10);
+	length = strlen("Content-Length") + strlen(str) + 2;
+	line = (char*) malloc(length + 1);
+	sprintf_s(line, length + 1, "Content-Length: %s", str);
+
+	return line;
+}
+
+char* http_encode_header_line(char* Method, char* URI)
+{
+	char* line;
+	int length;
+
+	length = strlen("HTTP/1.1") + strlen(Method) + strlen(URI) + 2;
+	line = (char*) malloc(length + 1);
+	sprintf_s(line, length + 1, "%s %s HTTP/1.1", Method, URI);
+
+	return line;
+}
+
+char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
+{
+	char* line;
+	int length;
+
+	length = strlen("Authorization") + strlen(AuthScheme) + strlen(AuthParam) + 3;
+	line = (char*) malloc(length + 1);
+	sprintf_s(line, length + 1, "Authorization: %s %s", AuthScheme, AuthParam);
+
+	return line;
+}
 
 STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 {
@@ -164,25 +228,24 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	int length = 0;
 
 	http_request->count = 9;
-	http_request->lines = (char**) xmalloc(sizeof(char*) * http_request->count);
+	http_request->lines = (char**) malloc(sizeof(char*) * http_request->count);
 
-	http_encode_line(http_request->lines[0], "%s %s HTTP/1.1", http_request->Method, http_request->URI);
-	http_encode_line(http_request->lines[1], "Cache-Control: %s", http_context->CacheControl);
-	http_encode_line(http_request->lines[2], "Connection: %s", http_context->Connection);
-	http_encode_line(http_request->lines[3], "Pragma: %s", http_context->Pragma);
-	http_encode_line(http_request->lines[4], "Accept: %s", http_context->Accept);
-	http_encode_line(http_request->lines[5], "User-Agent: %s", http_context->UserAgent);
-	http_encode_line(http_request->lines[6], "Content-Length: %d", http_request->ContentLength);
-	http_encode_line(http_request->lines[7], "Host: %s", http_context->Host);
+	http_request->lines[0] = http_encode_header_line(http_request->Method, http_request->URI);
+	http_request->lines[1] = http_encode_body_line("Cache-Control", http_context->CacheControl);
+	http_request->lines[2] = http_encode_body_line("Connection", http_context->Connection);
+	http_request->lines[3] = http_encode_body_line("Pragma", http_context->Pragma);
+	http_request->lines[4] = http_encode_body_line("Accept", http_context->Accept);
+	http_request->lines[5] = http_encode_body_line("User-Agent", http_context->UserAgent);
+	http_request->lines[6] = http_encode_content_length_line(http_request->ContentLength);
+	http_request->lines[7] = http_encode_body_line("Host", http_context->Host);
 
 	if (http_request->Authorization != NULL)
 	{
-		http_encode_line(http_request->lines[8], "Authorization: %s", http_request->Authorization);
+		http_request->lines[8] = http_encode_body_line("Authorization", http_request->Authorization);
 	}
 	else if ((http_request->AuthScheme != NULL) && (http_request->AuthParam != NULL))
 	{
-		http_encode_line(http_request->lines[8], "Authorization: %s %s",
-				http_request->AuthScheme, http_request->AuthParam);
+		http_request->lines[8] = http_encode_authorization_line(http_request->AuthScheme, http_request->AuthParam);
 	}
 
 	for (i = 0; i < http_request->count; i++)

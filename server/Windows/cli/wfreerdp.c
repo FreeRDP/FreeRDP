@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * TCP Utils
+ * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,20 +17,40 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_TCP_UTILS_H
-#define FREERDP_TCP_UTILS_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <freerdp/api.h>
-#include <freerdp/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-FREERDP_API int freerdp_tcp_connect(const char* hostname, int port);
-FREERDP_API int freerdp_tcp_read(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_write(int sockfd, uint8* data, int length);
-FREERDP_API int freerdp_tcp_disconnect(int sockfd);
+#include <winpr/tchar.h>
+#include <winpr/windows.h>
 
-FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, boolean no_delay);
+#include "wf_interface.h"
 
-FREERDP_API int freerdp_wsa_startup();
-FREERDP_API int freerdp_wsa_cleanup();
+#include "wfreerdp.h"
 
-#endif /* FREERDP_TCP_UTILS_H */
+int main(int argc, char* argv[])
+{
+	wfServer* server;
+
+	server = wfreerdp_server_new();
+
+	if (argc == 2)
+		server->port = (DWORD) atoi(argv[1]);
+
+	printf("Starting server\n");
+
+	wfreerdp_server_start(server);
+
+	WaitForSingleObject(server->thread, INFINITE);
+
+	printf("Stopping server\n");
+
+	wfreerdp_server_stop(server);
+	wfreerdp_server_free(server);
+
+	return 0;
+}

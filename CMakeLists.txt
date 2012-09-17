@@ -34,6 +34,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
 include(AutoVersioning)
 include(ConfigOptions)
+include(BuildFeatureCheck)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
@@ -199,6 +200,9 @@ if(NOT MSVC)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
+
+# Intel Performance Primitives
+#find_optional_package(IPP)
 
 # Build CUnit
 find_optional_package(CUnit)

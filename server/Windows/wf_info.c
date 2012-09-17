@@ -27,6 +27,7 @@
 #include <winpr/windows.h>
 
 #include "wf_info.h"
+#include "wf_update.h"
 #include "wf_mirage.h"
 
 static wfInfo* wfInfoInstance = NULL;
@@ -103,6 +104,12 @@ wfInfo* wf_info_init()
 
 	if (wfi != NULL)
 	{
+		HKEY hKey;
+		LONG status;
+		DWORD dwType;
+		DWORD dwSize;
+		DWORD dwValue;
+
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
 		if (wfi->mutex == NULL) 
@@ -110,7 +117,31 @@ wfInfo* wf_info_init()
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
 
-		wfi->updateEvent = CreateEvent(0, 1, 0, 0);
+		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
+
+		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
+
+		if (!wfi->updateThread)
+		{
+			_tprintf(_T("Failed to create update thread\n"));
+		}
+
+		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
+
+		wfi->framesPerSecond = 24;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				wfi->framesPerSecond = dwValue;
+				
+		}
+
+		RegCloseKey(hKey);
 	}
 
 	return wfi;
@@ -124,99 +155,35 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-void wf_info_get_screen_info(wfInfo* wfi)
-{
-	HDC dc;
-	int currentScreenBPP;
-	int currentScreenPixHeight;
-	int currentScreenPixWidth;
-	/*
-	* Will have to come back to this for supporting non primary displays and multimonitor setups
-	*/
-	dc = GetDC(NULL);
-	currentScreenPixHeight = GetDeviceCaps(dc, VERTRES);
-	currentScreenPixWidth = GetDeviceCaps(dc, HORZRES);
-	currentScreenBPP = GetDeviceCaps(dc, BITSPIXEL);
-	ReleaseDC(NULL, dc);
 
-	wfi->height = currentScreenPixHeight;
-	wfi->width = currentScreenPixWidth;
-	wfi->bitsPerPix = currentScreenBPP;
-
-	_tprintf(_T("Detected current screen settings: %dx%dx%d\n"), wfi->height, wfi->width, wfi->bitsPerPix);
-}
-
-void wf_info_mirror_init(wfInfo* wfi, wfPeerContext* context)
+void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->subscribers < 1)
-		{
-			context->info = wfi;
-			if(!wf_check_disp_devices(wfi))
-			{
-				_tprintf(_T("Failed to load Mirror driver\n"));
-				exit(1);
-			}
-			wf_disp_device_set_attach_mode(wfi, 1);
-			wf_update_mirror_drv(wfi, 0);
-			wf_map_mirror_mem(wfi);
+		context->info = wfi;
+		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-			wfi->rfx_context = rfx_context_new();
-			wfi->rfx_context->mode = RLGR3;
-			wfi->rfx_context->width = wfi->width;
-			wfi->rfx_context->height = wfi->height;
+		wf_mirror_driver_activate(wfi);
 
-			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			wfi->s = stream_new(65536);
-		}
+		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
 
-		wfi->subscribers++;
+		printf("Registering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
 	}
 }
 
-/**
- * TODO: i think i can replace all the context->info here with info
- * in fact it may not even care about subscribers
- */
-
-void wf_info_subscriber_release(wfInfo* wfi, wfPeerContext* context)
+void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (context && (wfi->subscribers == 1))
-		{
-			wfi->subscribers--;
-			/* only the last peer needs to call this */
-			wf_mirror_cleanup(context->info);
-			wf_disp_device_set_attach_mode(context->info, FALSE);
-			wf_update_mirror_drv(context->info, 1);
+		wfi->peers[--(wfi->peerCount)] = NULL;
+		CloseHandle(context->updateEvent);
 
-			stream_free(wfi->s);
-			rfx_context_free(wfi->rfx_context);
-		}	
-		else
-		{
-			wfi->subscribers--;
-		}
+		printf("Unregistering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
 	}
-
-	/**
-	 * Note: if we released the last subscriber,
-	 * block the encoder until next subscriber
-	 */	
-}
-
-BOOL wf_info_has_subscribers(wfInfo* wfi)
-{
-	if (wfi->subscribers > 0)
-		return TRUE;
-
-	return FALSE;
 }
 
 BOOL wf_info_have_updates(wfInfo* wfi)
@@ -264,6 +231,11 @@ void wf_info_clear_invalid_region(wfInfo* wfi)
 {
 	wfi->lastUpdate = wfi->nextUpdate;
 	SetRectEmpty(&wfi->invalid);
+}
+
+void wf_info_invalidate_full_screen(wfInfo* wfi)
+{
+	SetRect(&wfi->invalid, 0, 0, wfi->width, wfi->height);
 }
 
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
