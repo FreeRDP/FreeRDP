@@ -59,16 +59,24 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 				{
 					wf_update_encode(wfi);
 
+					printf("Start of parallel sending\n");
+
 					for (index = 0; index < wfi->peerCount; index++)
 					{
 						if (wfi->peers[index]->activated)
+						{
+							printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
 							SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
+						}
 					}
 
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
+						printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
 						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
 					}
+
+					printf("End of parallel sending\n");
 
 					wf_info_clear_invalid_region(wfi);
 				}
@@ -107,7 +115,6 @@ void wf_update_encode(wfInfo* wfi)
 	width = (wfi->invalid.right - wfi->invalid.left) + 1;
 	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
 
-	stream_clear(wfi->s);
 	stream_set_pos(wfi->s, 0);
 
 	rect.x = 0;
@@ -121,6 +128,8 @@ void wf_update_encode(wfInfo* wfi)
 
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 			((uint8*) (changes->Userbuffer)) + offset, width, height, wfi->width * 4);
+
+	wfi->frame_idx = wfi->rfx_context->frame_idx;
 
 	cmd->destLeft = wfi->invalid.left;
 	cmd->destTop = wfi->invalid.top;
@@ -138,46 +147,55 @@ void wf_update_encode(wfInfo* wfi)
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 {
 	freerdp_peer* client = ((rdpContext*) context)->peer;
+
+	/* This happens when the RemoteFX encoder state is reset */
+
+	if (wfi->frame_idx == 1)
+		context->frame_idx = 0;
+
+	/*
+	 * When a new client connects, it is possible that old frames from
+	 * from a previous encoding state remain. Those frames should be discarded
+	 * as they will cause an error condition in mstsc.
+	 */
+
+	if ((context->frame_idx + 1) != wfi->frame_idx)
+	{
+		/* This frame is meant to be discarded */
+
+		if (context->frame_idx == 0)
+			return;
+
+		/* This is an unexpected error condition */
+
+		printf("Unexpected Frame Index: Actual: %d Expected: %d\n",
+			wfi->frame_idx, context->frame_idx + 1);
+	}
+
 	wfi->cmd.codecID = client->settings->rfx_codec_id;
 	client->update->SurfaceBits(client->update->context, &wfi->cmd);
+	context->frame_idx++;
 }
 
-void wf_update_encoder_init(wfInfo* wfi)
-{
-	wfi->rfx_context = rfx_context_new();
-	wfi->rfx_context->mode = RLGR3;
-	wfi->rfx_context->width = wfi->width;
-	wfi->rfx_context->height = wfi->height;
-	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-	wfi->s = stream_new(0xFFFF);
-}
-
-void wf_update_encoder_uninit(wfInfo* wfi)
-{
-	if (wfi->rfx_context != NULL)
-	{
-		rfx_context_free(wfi->rfx_context);
-		wfi->rfx_context = NULL;
-		stream_free(wfi->s);
-	}
-}
-
-void wf_update_encoder_reinit(wfInfo* wfi)
+void wf_update_encoder_reset(wfInfo* wfi)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->rfx_context != NULL)
-			rfx_context_free(wfi->rfx_context);
+		printf("Resetting encoder\n");
 
-		wfi->rfx_context = rfx_context_new();
-		wfi->rfx_context->mode = RLGR3;
-		wfi->rfx_context->width = wfi->width;
-		wfi->rfx_context->height = wfi->height;
-
-		rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-
-		if (!wfi->s)
+		if (wfi->rfx_context)
+		{
+			rfx_context_reset(wfi->rfx_context);
+		}
+		else
+		{
+			wfi->rfx_context = rfx_context_new();
+			wfi->rfx_context->mode = RLGR3;
+			wfi->rfx_context->width = wfi->width;
+			wfi->rfx_context->height = wfi->height;
+			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			wfi->s = stream_new(0xFFFF);
+		}
 
 		wf_info_invalidate_full_screen(wfi);
 
@@ -195,7 +213,7 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
 			ResumeThread(wfi->updateThread);
 		}
 
-		wf_update_encoder_reinit(wfi);
+		wf_update_encoder_reset(wfi);
 		wfi->activePeerCount++;
 
 		printf("Activating Peer Updates: %d\n", wfi->activePeerCount);

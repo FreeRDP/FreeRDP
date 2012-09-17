@@ -48,6 +48,9 @@ xcode
 
 # Other
 *~
+*.dir
+Release
+Win32
 
 default.log
 *Amplifier XE*

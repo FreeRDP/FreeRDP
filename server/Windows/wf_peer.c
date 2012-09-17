@@ -260,13 +260,13 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
-	wf_update_peer_deactivate(wfi, context);
-
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{
 		ResetEvent(context->updateEvent);
 		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 	}
+
+	wf_update_peer_deactivate(wfi, context);
 
 	client->Disconnect(client);
 

@@ -37,6 +37,7 @@ struct wf_info
 	STREAM* s;
 	int width;
 	int height;
+	int frame_idx;
 	int bitsPerPixel;
 	HDC driverDC;
 	int peerCount;
@@ -65,6 +66,7 @@ struct wf_peer_context
 	rdpContext _p;
 
 	wfInfo* info;
+	int frame_idx;
 	HANDLE updateEvent;
 	BOOL socketClose;
 	HANDLE socketEvent;
