@@ -257,6 +257,12 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>-X <replaceable class="parameter">xid</replaceable></term>
+	<listitem>
+	  <para>embed xfreerdp into window with <replaceable class="parameter">xid</replaceable>.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-z</term>
         <listitem>
           <para>
