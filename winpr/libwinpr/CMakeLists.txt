@@ -30,6 +30,7 @@ add_subdirectory(utils)
 add_subdirectory(heap)
 add_subdirectory(handle)
 add_subdirectory(synch)
+add_subdirectory(thread)
 add_subdirectory(sysinfo)
 add_subdirectory(bcrypt)
 add_subdirectory(dsparse)
@@ -47,6 +48,7 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-heap>
 		$<TARGET_OBJECTS:winpr-handle>
 		$<TARGET_OBJECTS:winpr-synch>
+		$<TARGET_OBJECTS:winpr-thread>
 		$<TARGET_OBJECTS:winpr-sysinfo>
 		$<TARGET_OBJECTS:winpr-bcrypt>
 		$<TARGET_OBJECTS:winpr-dsparse>
