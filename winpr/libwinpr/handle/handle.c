@@ -27,6 +27,10 @@
 
 #include "../synch/synch.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 BOOL CloseHandle(HANDLE hObject)
 {
 	ULONG Type;
@@ -38,7 +42,31 @@ BOOL CloseHandle(HANDLE hObject)
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
 		pthread_mutex_destroy((pthread_mutex_t*) Object);
+		winpr_Handle_Remove(Object);
 		free(Object);
+
+		return TRUE;
+	}
+	else if (Type == HANDLE_TYPE_EVENT)
+	{
+		WINPR_EVENT* event;
+
+		event = (WINPR_EVENT*) Object;
+
+		if (event->pipe_fd[0] != -1)
+		{
+			close(event->pipe_fd[0]);
+			event->pipe_fd[0] = -1;
+		}
+		if (event->pipe_fd[1] != -1)
+		{
+			close(event->pipe_fd[1]);
+			event->pipe_fd[1] = -1;
+		}
+
+		winpr_Handle_Remove(Object);
+		free(event);
+
 		return TRUE;
 	}
 

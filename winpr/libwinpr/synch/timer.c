@@ -31,6 +31,8 @@
  * CancelWaitableTimer
  */
 
+#ifndef _WIN32
+
 HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess)
 {
 	return NULL;
@@ -67,3 +69,5 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 {
 	return TRUE;
 }
+
+#endif

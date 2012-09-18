@@ -21,6 +21,11 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "synch.h"
@@ -45,6 +50,33 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
 		pthread_mutex_lock((pthread_mutex_t*) Object);
+	}
+	else if (Type == HANDLE_TYPE_EVENT)
+	{
+		int status;
+		fd_set rfds;
+		WINPR_EVENT* event;
+		struct timeval timeout;
+
+		event = (WINPR_EVENT*) Object;
+
+		FD_ZERO(&rfds);
+		FD_SET(event->pipe_fd[0], &rfds);
+		ZeroMemory(&timeout, sizeof(timeout));
+
+		if (dwMilliseconds != INFINITE)
+		{
+			timeout.tv_usec = dwMilliseconds * 1000;
+		}
+
+		status = select(event->pipe_fd[0] + 1, &rfds, 0, 0,
+				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+		if (status < 0)
+			return WAIT_FAILED;
+
+		if (status != 1)
+			return WAIT_TIMEOUT;
 	}
 
 	return WAIT_OBJECT_0;

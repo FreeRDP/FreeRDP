@@ -37,6 +37,13 @@
 #define winpr_sem_t sem_t
 #endif
 
+struct winpr_event
+{
+	int pipe_fd[2];
+	BOOL bManualReset;
+};
+typedef struct winpr_event WINPR_EVENT;
+
 #endif
 
 #endif /* WINPR_SYNCH_PRIVATE_H */

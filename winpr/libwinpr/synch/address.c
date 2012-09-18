@@ -29,6 +29,8 @@
  * WaitOnAddress
  */
 
+#ifndef _WIN32
+
 VOID WakeByAddressAll(PVOID Address)
 {
 
@@ -43,3 +45,5 @@ BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_T AddressS
 {
 	return TRUE;
 }
+
+#endif

@@ -34,6 +34,8 @@
  * DeleteCriticalSection
  */
 
+#ifndef _WIN32
+
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 
@@ -73,3 +75,5 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 
 }
+
+#endif

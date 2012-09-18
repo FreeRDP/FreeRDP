@@ -33,6 +33,8 @@
  * ReleaseSRWLockShared
  */
 
+#ifndef _WIN32
+
 VOID InitializeSRWLock(PSRWLOCK SRWLock)
 {
 
@@ -67,3 +69,5 @@ VOID ReleaseSRWLockShared(PSRWLOCK SRWLock)
 {
 
 }
+
+#endif

@@ -30,6 +30,8 @@
  * InitOnceInitialize
  */
 
+#ifndef _WIN32
+
 BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)
 {
 	return TRUE;
@@ -49,3 +51,5 @@ VOID InitOnceInitialize(PINIT_ONCE InitOnce)
 {
 
 }
+
+#endif

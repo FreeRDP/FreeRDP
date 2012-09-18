@@ -29,6 +29,8 @@
  * DeleteSynchronizationBarrier
  */
 
+#ifndef _WIN32
+
 BOOL InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
 {
 	return TRUE;
@@ -43,3 +45,5 @@ BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 {
 	return TRUE;
 }
+
+#endif

@@ -33,6 +33,8 @@
  * WakeConditionVariable
  */
 
+#ifndef _WIN32
+
 VOID InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 {
 
@@ -57,3 +59,5 @@ VOID WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 {
 
 }
+
+#endif

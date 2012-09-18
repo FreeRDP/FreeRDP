@@ -28,6 +28,8 @@
  * SleepEx
  */
 
+#ifndef _WIN32
+
 VOID Sleep(DWORD dwMilliseconds)
 {
 
@@ -37,3 +39,5 @@ DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 {
 	return TRUE;
 }
+
+#endif
