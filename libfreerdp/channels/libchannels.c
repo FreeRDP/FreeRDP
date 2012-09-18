@@ -46,7 +46,6 @@
 #include <freerdp/svc.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/event.h>
@@ -125,7 +124,7 @@ struct rdp_channels
 	LIST* sync_data_list;
 
 	/* used for sync event */
-	freerdp_sem event_sem;
+	HANDLE event_sem;
 	RDP_EVENT* event;
 };
 
@@ -566,11 +565,12 @@ static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, RDP_EVENT*
 		return CHANNEL_RC_NOT_OPEN;
 	}
 
-	freerdp_sem_wait(channels->event_sem); /* lock channels->event */
+	 /* lock channels->event */
+	WaitForSingleObject(channels->event_sem, INFINITE);
 
 	if (!channels->is_connected)
 	{
-		freerdp_sem_signal(channels->event_sem);
+		ReleaseSemaphore(channels->event_sem, 1, NULL);
 		DEBUG_CHANNELS("error not connected");
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
@@ -619,7 +619,7 @@ rdpChannels* freerdp_channels_new(void)
 	channels->sync_data_mutex = CreateMutex(NULL, FALSE, NULL);
 	channels->sync_data_list = list_new();
 
-	channels->event_sem = freerdp_sem_new(1);
+	channels->event_sem = CreateSemaphore(NULL, 0, 1, NULL);
 	channels->signal = wait_obj_new();
 
 	/* Add it to the global list */
@@ -642,7 +642,7 @@ void freerdp_channels_free(rdpChannels* channels)
 	CloseHandle(channels->sync_data_mutex);
 	list_free(channels->sync_data_list);
 
-	freerdp_sem_free(channels->event_sem);
+	CloseHandle(channels->event_sem);
 	wait_obj_free(channels->signal);
 
 	/* Remove from global list */
@@ -971,7 +971,8 @@ RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels)
 	event = channels->event;
 	channels->event = NULL;
 
-	freerdp_sem_signal(channels->event_sem); /* release channels->event */
+	/* release channels->event */
+	ReleaseSemaphore(channels->event_sem, 1, NULL);
 
 	return event;
 }
