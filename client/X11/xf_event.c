@@ -129,6 +129,11 @@ static boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 
 	if (app)
 	{
+		/* make sure window exists */
+		if (xf_rdpWindowFromWindow(xfi, event->xmotion.window) == 0)
+		{
+			return true;
+		}
 		// Translate to desktop coordinates
 		XTranslateCoordinates(xfi->display, event->xmotion.window,
 			RootWindowOfScreen(xfi->screen),
@@ -227,8 +232,13 @@ static boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			if (app)
 			{
+				/* make sure window exists */
+				if (xf_rdpWindowFromWindow(xfi, event->xbutton.window) == 0)
+				{
+					return true;
+				}
 				// Translate to desktop coordinates
-				XTranslateCoordinates(xfi->display, event->xmotion.window,
+				XTranslateCoordinates(xfi->display, event->xbutton.window,
 					RootWindowOfScreen(xfi->screen),
 					x, y, &x, &y, &childWindow);
 			}
@@ -305,8 +315,13 @@ static boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	{
 		if (app)
 		{
+			/* make sure window exists */
+			if (xf_rdpWindowFromWindow(xfi, event->xbutton.window) == NULL)
+			{
+				return true;
+			}
 			// Translate to desktop coordinates
-			XTranslateCoordinates(xfi->display, event->xmotion.window,
+			XTranslateCoordinates(xfi->display, event->xbutton.window,
 				RootWindowOfScreen(xfi->screen),
 				x, y, &x, &y, &childWindow);
 		}
@@ -522,12 +537,28 @@ static boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
 			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
-		//additonal checks for not in a local move and not ignoring configure to send position update to server,   
-		//also should the window not be focused then do not send to server yet(ie. resizing using window decoration). 
-		//The server will be updated when the window gets refocused.
-		if (app && (!event->xconfigure.send_event || xfi->window->local_move.state == LMS_NOT_ACTIVE) 
-		   && !xfw->rail_ignore_configure && xfi->focused)
+		/* additonal checks for not in a local move and not ignoring configure to send
+		 * position update to server, also should the window not be focused then do not
+		 * send to server yet(ie. resizing using window decoration).
+		 * The server will be updated when the window gets refocused. */
+		if (app && xfw->decorations)
+		{
+			/* moving resizing using window decoration */
 			xf_rail_adjust_position(xfi, window);
+			window->windowOffsetX = xfw->left;
+			window->visibleOffsetX = window->windowOffsetX;
+			window->windowOffsetY = xfw->top;
+			window->visibleOffsetY = window->windowOffsetY;
+			window->windowWidth = xfw->width;
+			window->windowHeight = xfw->height;
+		}
+		else
+		{
+			if (app && (!event->xconfigure.send_event || xfi->window->local_move.state == LMS_NOT_ACTIVE) 
+				&& !xfw->rail_ignore_configure && xfi->focused)
+				xf_rail_adjust_position(xfi, window);
+		}
+
         }
 
         return True;
@@ -642,9 +673,12 @@ static boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 	if (app == true)
 	{
 	        rdpWindow* window;
-	        rdpRail* rail = ((rdpContext*) xfi->context)->rail;
-	
-	        window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);           
+		
+		window = xf_rdpWindowFromWindow(xfi, event->xproperty.window);
+		if (window == NULL)
+		{
+			return true;
+		}
 	
 	        if ((((Atom)event->xproperty.atom == xfi->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
 	            (((Atom)event->xproperty.atom == xfi->WM_STATE) && (event->xproperty.state != PropertyDelete)))
