@@ -24,16 +24,20 @@
 #include <winpr/synch.h>
 
 /**
- * Sleep
- * SleepEx
+ * api-ms-win-core-synch-l1-2-0.dll:
+ * 
+ * CancelWaitableTimer
+ * CreateWaitableTimerExW
+ * InitOnceBeginInitialize
+ * InitOnceComplete
+ * InitOnceExecuteOnce
+ * InitOnceInitialize
+ * OpenWaitableTimerW
+ * SetWaitableTimer
+ * SetWaitableTimerEx
+ * SignalObjectAndWait
+ * WaitOnAddress
+ * WakeByAddressAll
+ * WakeByAddressSingle
  */
 
-VOID Sleep(DWORD dwMilliseconds)
-{
-
-}
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return TRUE;
-}

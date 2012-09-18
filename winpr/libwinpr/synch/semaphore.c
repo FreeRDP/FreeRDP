@@ -23,20 +23,17 @@
 
 #include <winpr/synch.h>
 
-#ifndef _WIN32
+#include "synch.h"
 
-#if defined __APPLE__
-#include <pthread.h>
-#include <semaphore.h>
-#include <mach/mach.h>
-#include <mach/semaphore.h>
-#include <mach/task.h>
-#define winpr_sem_t semaphore_t
-#else
-#include <pthread.h>
-#include <semaphore.h>
-#define winpr_sem_t sem_t
-#endif
+/**
+ * CreateSemaphoreExA
+ * CreateSemaphoreExW
+ * OpenSemaphoreA
+ * OpenSemaphoreW
+ * ReleaseSemaphore
+ */
+
+#ifndef _WIN32
 
 HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName)
 {
@@ -87,22 +84,6 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 #endif
 
 	return 1;
-}
-
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
-{
-#if defined __APPLE__
-	semaphore_wait(*((winpr_sem_t*) hHandle));
-#else
-	sem_wait((winpr_sem_t*) hHandle);
-#endif
-
-	return WAIT_OBJECT_0;
-}
-
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
-{
-	return 0;
 }
 
 #endif

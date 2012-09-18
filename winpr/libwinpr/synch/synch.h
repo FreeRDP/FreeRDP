@@ -17,23 +17,22 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef WINPR_SYNCH_PRIVATE_H
+#define WINPR_SYNCH_PRIVATE_H
 
 #include <winpr/synch.h>
 
-/**
- * Sleep
- * SleepEx
- */
+#if defined __APPLE__
+#include <pthread.h>
+#include <semaphore.h>
+#include <mach/mach.h>
+#include <mach/semaphore.h>
+#include <mach/task.h>
+#define winpr_sem_t semaphore_t
+#else
+#include <pthread.h>
+#include <semaphore.h>
+#define winpr_sem_t sem_t
+#endif
 
-VOID Sleep(DWORD dwMilliseconds)
-{
-
-}
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return TRUE;
-}
+#endif /* WINPR_SYNCH_PRIVATE_H */

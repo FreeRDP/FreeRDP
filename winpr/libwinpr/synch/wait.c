@@ -23,17 +23,31 @@
 
 #include <winpr/synch.h>
 
+#include "synch.h"
+
 /**
- * Sleep
- * SleepEx
+ * WaitForSingleObject
+ * WaitForSingleObjectEx
+ * WaitForMultipleObjectsEx
  */
 
-VOID Sleep(DWORD dwMilliseconds)
+DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
+#if defined __APPLE__
+	semaphore_wait(*((winpr_sem_t*) hHandle));
+#else
+	sem_wait((winpr_sem_t*) hHandle);
+#endif
 
+	return WAIT_OBJECT_0;
 }
 
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
-	return TRUE;
+	return 0;
+}
+
+DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+{
+	return 0;
 }

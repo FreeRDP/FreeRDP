@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/handle.h>
+
 #include <winpr/thread.h>
 
 /**
@@ -135,10 +137,11 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	pthread_t thread;
+
 	pthread_create(&thread, 0, (pthread_start_routine) lpStartAddress, lpParameter);
 	pthread_detach(thread);
 
-	return NULL;
+	return winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
 }
 
 VOID ExitProcess(UINT uExitCode)

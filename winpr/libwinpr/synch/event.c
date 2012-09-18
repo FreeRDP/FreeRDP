@@ -23,5 +23,53 @@
 
 #include <winpr/synch.h>
 
+/**
+ * CreateEventA
+ * CreateEventW
+ * CreateEventExA
+ * CreateEventExW
+ * OpenEventA
+ * OpenEventW
+ * SetEvent
+ * ResetEvent
+ */
 
+HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName)
+{
+	return NULL;
+}
 
+HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
+{
+	return NULL;
+}
+
+HANDLE CreateEventExA(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+{
+	return NULL;
+}
+
+HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+{
+	return NULL;
+}
+
+HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+{
+	return NULL;
+}
+
+HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+{
+	return NULL;
+}
+
+BOOL SetEvent(HANDLE hEvent)
+{
+	return TRUE;
+}
+
+BOOL ResetEvent(HANDLE hEvent)
+{
+	return TRUE;
+}

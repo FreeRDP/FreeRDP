@@ -23,5 +23,47 @@
 
 #include <winpr/synch.h>
 
+/**
+ * CreateMutexA
+ * CreateMutexW
+ * CreateMutexExA
+ * CreateMutexExW
+ * OpenMutexA
+ * OpenMutexW
+ * ReleaseMutex
+ */
 
+HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
+{
+	return NULL;
+}
 
+HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
+{
+	return NULL;
+}
+
+HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCTSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+{
+	return NULL;
+}
+
+HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
+{
+	return NULL;
+}
+
+HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCSTR lpName)
+{
+	return NULL;
+}
+
+HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCWSTR lpName)
+{
+	return NULL;
+}
+
+BOOL ReleaseMutex(HANDLE hMutex)
+{
+	return TRUE;
+}
