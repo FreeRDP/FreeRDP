@@ -25,6 +25,19 @@
 
 #ifndef _WIN32
 
+typedef struct _HANDLE_TABLE_ENTRY
+{
+	PVOID Object;
+	ULONG ObAttributes;
+	ULONG Value;
+} HANDLE_TABLE_ENTRY, *PHANDLE_TABLE_ENTRY;
+
+typedef struct _HANDLE_TABLE
+{
+	LONG Count;
+	PHANDLE_TABLE_ENTRY* Handles;
+} HANDLE_TABLE, *PHANDLE_TABLE;
+
 #if defined __APPLE__
 #include <pthread.h>
 #include <semaphore.h>

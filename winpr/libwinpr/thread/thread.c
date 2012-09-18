@@ -125,6 +125,12 @@ BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCom
 	return TRUE;
 }
 
+HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+		LPTHREAD_START_ROUTINE lpStartAddress,LPVOID lpParameter,DWORD dwCreationFlags,LPDWORD lpThreadId)
+{
+	return NULL;
+}
+
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
@@ -166,6 +172,11 @@ HANDLE GetCurrentThread(VOID)
 }
 
 DWORD GetCurrentThreadId(VOID)
+{
+	return 0;
+}
+
+DWORD GetProcessId(HANDLE Process)
 {
 	return 0;
 }
