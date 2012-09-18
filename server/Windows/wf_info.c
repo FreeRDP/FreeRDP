@@ -137,7 +137,7 @@ wfInfo* wf_info_init()
 
 		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
 
-		wfi->framesPerSecond = 10;
+		wfi->framesPerSecond = 24;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -308,8 +308,11 @@ BOOL wf_info_have_invalid_region(wfInfo* wfi)
 	return IsRectEmpty(&wfi->invalid);
 }
 
-void wf_info_getScreenData(wfInfo* wfi, uint8** pBits, int* pitch)
+void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits, int* pitch)
 {
+	*width = (wfi->invalid.right - wfi->invalid.left);
+	*height = (wfi->invalid.bottom - wfi->invalid.top);
+
 	if(wfi->win8)
 	{
 		wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
@@ -319,6 +322,9 @@ void wf_info_getScreenData(wfInfo* wfi, uint8** pBits, int* pitch)
 		long offset;
 		GETCHANGESBUF* changes;
 		changes = (GETCHANGESBUF*) wfi->changeBuffer;
+
+		*width += 1;
+		*height += 1;
 
 		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
 		*pBits = ((uint8*) (changes->Userbuffer)) + offset;

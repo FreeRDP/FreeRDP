@@ -81,10 +81,6 @@ int wf_dxgi_init(wfInfo* context)
 	//guessing this must be null
 	MeinAcquiredDesktopImage = NULL;
 
-
-	_tprintf(_T("Hallo, welt!\n"));
-
-	_tprintf(_T("Trying to create a DX11 Device...\n"));
 	// Create device
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
@@ -101,24 +97,18 @@ int wf_dxgi_init(wfInfo* context)
 		_tprintf(_T("Failed to create device in InitializeDx\n"));
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 
 	///////////////////////////////////////////////////////
 
-	
-	_tprintf(_T("Trying to get QI for DXGI Device...\n"));
-	
+		
 	hr = MeinDevice->lpVtbl->QueryInterface(MeinDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
 	if (FAILED(hr))
     {
 		_tprintf(_T("Failed to get QI for DXGI Device\n"));
         return 1;
     }
-	_tprintf(_T("Gut!\n"));
 
 	//////////////////////////////////////////////////////////
-
-	_tprintf(_T("Trying to get adapter for DXGI Device...\n"));
 	
 	hr = DxgiDevice->lpVtbl->GetParent(DxgiDevice, &IID_IDXGIAdapter, (void**) &DxgiAdapter);
 	DxgiDevice->lpVtbl->Release(DxgiDevice);
@@ -128,14 +118,12 @@ int wf_dxgi_init(wfInfo* context)
         _tprintf(_T("Failed to get parent DXGI Adapter\n"));
 		return 1;
     }
-	_tprintf(_T("Gut!\n"));
 	
 	////////////////////////////////////////////////////////////
 
 	
 	memset(&desc, 0, sizeof(desc));
 	pOutput = NULL;
-	_tprintf(_T("\nLooping through ouputs on DXGI adapter...\n"));
 	while(DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{
 		DXGI_OUTPUT_DESC* pDesc = &desc;
@@ -156,11 +144,10 @@ int wf_dxgi_init(wfInfo* context)
 		++i;
 	}
 
-	//for now stick to the first one
+	//for now stick to the first one -- need to change this for multimon
 	dTop = 0;
 
 
-	_tprintf(_T("\nTrying to get output...\n"));
     hr = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
     DxgiAdapter->lpVtbl->Release(DxgiAdapter);
     DxgiAdapter = NULL;
@@ -169,11 +156,9 @@ int wf_dxgi_init(wfInfo* context)
         _tprintf(_T("Failed to get output\n"));
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 	
 	//////////////////////////////////////////////
 
-	_tprintf(_T("Trying to get IDXGIOutput1...\n"));
 	hr = DxgiOutput->lpVtbl->QueryInterface(DxgiOutput, &IID_IDXGIOutput1, (void**) &DxgiOutput1);
 	DxgiOutput->lpVtbl->Release(DxgiOutput);
     DxgiOutput = NULL;
@@ -182,12 +167,9 @@ int wf_dxgi_init(wfInfo* context)
          _tprintf(_T("Failed to get IDXGIOutput1\n"));
 		return 1;
     }
-	_tprintf(_T("Gut!\n"));
 	
 	//////////////////////////////////////////////
 
-
-	_tprintf(_T("Trying to duplicate the output...\n"));
 	hr = DxgiOutput1->lpVtbl->DuplicateOutput(DxgiOutput1, (IUnknown*)MeinDevice, &MeinDeskDupl);
 	DxgiOutput1->lpVtbl->Release(DxgiOutput1);
     DxgiOutput1 = NULL;
@@ -201,7 +183,6 @@ int wf_dxgi_init(wfInfo* context)
 		_tprintf(_T("Failed to get duplicate output\n"));
 		return 1;
     }
-	_tprintf(_T("Gut! Init Complete!\n"));
 
 	return 0;
 }
@@ -254,12 +235,9 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 		MeinAcquiredDesktopImage = NULL;
 	}
 
-	_tprintf(_T("\nTrying to acquire a frame...\n"));
 	hr = MeinDeskDupl->lpVtbl->AcquireNextFrame(MeinDeskDupl, timeout, &FrameInfo, &DesktopResource);
-	_tprintf(_T("hr = %#0X\n"), hr);
 	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
 	{
-		_tprintf(_T("Timeout\n"));
 		return 1;
 	}
 	if (FAILED(hr))
@@ -273,27 +251,21 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 		}
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 
 	///////////////////////////////////////////////
 
 		
-	_tprintf(_T("Trying to QI for ID3D11Texture2D...\n"));
 	hr = DesktopResource->lpVtbl->QueryInterface(DesktopResource, &IID_ID3D11Texture2D, (void**) &MeinAcquiredDesktopImage);
 	DesktopResource->lpVtbl->Release(DesktopResource);
 	DesktopResource = NULL;
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to QI for ID3D11Texture2D from acquired IDXGIResource\n"));
 			return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 
 	wfi->framesWaiting = FrameInfo.AccumulatedFrames;
 
-
 	return 0;
-
 }
 
 int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid)
@@ -303,8 +275,8 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	D3D11_TEXTURE2D_DESC tDesc;
 	D3D11_BOX Box;
 
-	tDesc.Width = (invalid->right - invalid->left) + 1;
-	tDesc.Height = (invalid->bottom - invalid->top) + 1;
+	tDesc.Width = (invalid->right - invalid->left);
+	tDesc.Height = (invalid->bottom - invalid->top);
 	tDesc.MipLevels = 1;
 	tDesc.ArraySize = 1;
 	tDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -322,7 +294,6 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	Box.front = 0;
 	Box.back = 1;
 
-	_tprintf(_T("Trying to create staging surface\n"));
 	hr = MeinDevice->lpVtbl->CreateTexture2D(MeinDevice, &tDesc, NULL, &sStage);
 	if (FAILED(hr))
 	{
@@ -330,11 +301,9 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 		exit(1);
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 
 	MeinContext->lpVtbl->CopySubresourceRegion(MeinContext, (ID3D11Resource*)sStage, 0,0,0,0, (ID3D11Resource*)MeinAcquiredDesktopImage, 0, &Box);	 
 		
-	_tprintf(_T("Trying to QI staging surface\n"));
 	hr = sStage->lpVtbl->QueryInterface(sStage, &IID_IDXGISurface, (void**)&surf);
 	if (FAILED(hr))
 	{
@@ -342,9 +311,7 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 		exit(1);
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 
-	_tprintf(_T("Trying to map staging surface\n"));
 	surf->lpVtbl->Map(surf, &MeinData, DXGI_MAP_READ);
 	if (FAILED(hr))
 	{
@@ -352,10 +319,7 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 		exit(1);
 		return 1;
 	}
-	_tprintf(_T("Gut!\n"));
 		
-	//access pixel data 
-
 	*data = MeinData.pBits;
 	*pitch = MeinData.Pitch;
 
@@ -380,7 +344,6 @@ int wf_dxgi_releasePixelData(wfInfo* wfi)
 	}
 
 	wfi->framesWaiting = 0;
-	_tprintf(_T("PixelData Release\n"));
 	return 0;
 }
 
@@ -402,11 +365,6 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 		//we dont care
 		return 1;
 	}
-
-	_tprintf(_T("FrameInfo\n"));
-	_tprintf(_T("\tAccumulated Frames: %d\n"), FrameInfo.AccumulatedFrames);
-	_tprintf(_T("\tCoalesced Rectangles: %d\n"), FrameInfo.RectsCoalesced);
-	_tprintf(_T("\tMetadata buffer size: %d\n"), FrameInfo.TotalMetadataBufferSize);
 
 
 	if(FrameInfo.TotalMetadataBufferSize)
@@ -438,7 +396,6 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 			_tprintf(_T("Failed to get frame move rects\n"));
 			return 1;
 		}
-		_tprintf(_T("Move rects: %d\n"), BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT));
 
 		DirtyRects = MeinMetaDataBuffer + BufSize;
 		BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
@@ -451,19 +408,11 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 			return 1;
 		}
 		dirty = BufSize / sizeof(RECT);
-		_tprintf(_T("Dirty rects: %d\n"), dirty);
 
 		pRect = (RECT*) DirtyRects;
 		for(i = 0; i<dirty; ++i)
 		{
-			_tprintf(_T("\tRect: (%d, %d), (%d, %d)\n"),
-				pRect->left,
-				pRect->top,
-				pRect->right,
-				pRect->bottom);
-
 			UnionRect(invalid, invalid, pRect);
-
 			++pRect;
 		}
 	}

@@ -59,24 +59,24 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 				{
 					wf_update_encode(wfi);
 
-					printf("Start of parallel sending\n");
+					//printf("Start of parallel sending\n");
 
 					for (index = 0; index < wfi->peerCount; index++)
 					{
 						if (wfi->peers[index]->activated)
 						{
-							printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
+							//printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
 							SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
 						}
 					}
 
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
-						printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
+						//printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
 						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
 					}
 
-					printf("End of parallel sending\n");
+					//printf("End of parallel sending\n");
 
 					wf_info_clear_invalid_region(wfi);
 				}
@@ -94,7 +94,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 		}
 	}
 
-	printf("Exiting Update Thread\n");
+	//printf("Exiting Update Thread\n");
 
 	return 0;
 }
@@ -113,12 +113,10 @@ void wf_update_encode(wfInfo* wfi)
 	wf_info_find_invalid_region(wfi);
 
 	cmd = &wfi->cmd;
-	
-
-	width = (wfi->invalid.right - wfi->invalid.left) + 1;
-	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
 
 	stream_set_pos(wfi->s, 0);
+
+	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
 
 	rect.x = 0;
 	rect.y = 0;
@@ -126,8 +124,6 @@ void wf_update_encode(wfInfo* wfi)
 	rect.height = (uint16) height;
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
-
-	wf_info_getScreenData(wfi, &pDataBits, &stride);
 
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 			pDataBits, width, height, stride);
