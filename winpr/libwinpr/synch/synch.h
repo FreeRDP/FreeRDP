@@ -22,6 +22,8 @@
 
 #include <winpr/synch.h>
 
+#ifndef _WIN32
+
 #if defined __APPLE__
 #include <pthread.h>
 #include <semaphore.h>
@@ -33,6 +35,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #define winpr_sem_t sem_t
+#endif
+
 #endif
 
 #endif /* WINPR_SYNCH_PRIVATE_H */

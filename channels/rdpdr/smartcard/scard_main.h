@@ -25,9 +25,11 @@
 
 #include "devman.h"
 #include "rdpdr_types.h"
-#include <freerdp/utils/mutex.h>        /* For CompletionIdsMutex */
+
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
+
+#include <winpr/synch.h>
 
 /* 
  * When using Windows Server 2008 R2 as the Terminal Services (TS)
@@ -105,7 +107,7 @@ struct _SCARD_DEVICE
 	freerdp_thread* thread;
 
         LIST* CompletionIds;
-        freerdp_mutex CompletionIdsMutex;       /* Protect the LIST from
+        HANDLE CompletionIdsMutex;       /* Protect the LIST from
                                                  * multiple thread writers.
                                                  */
 };

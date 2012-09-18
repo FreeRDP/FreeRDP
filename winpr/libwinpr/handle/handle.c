@@ -25,46 +25,40 @@
 
 #ifndef _WIN32
 
-#if defined __APPLE__
-#include <pthread.h>
-#include <semaphore.h>
-#include <mach/mach.h>
-#include <mach/semaphore.h>
-#include <mach/task.h>
-#define winpr_sem_t semaphore_t
-#else
-#include <pthread.h>
-#include <semaphore.h>
-#define winpr_sem_t sem_t
-#endif
+#include "../synch/synch.h"
 
 BOOL CloseHandle(HANDLE hObject)
 {
-#if defined __APPLE__
-	semaphore_destroy(mach_task_self(), *((winpr_sem_t*) hObject));
-#else
-	sem_destroy((winpr_sem_t*) hObject);
-#endif
+	ULONG Type;
+	PVOID Object;
 
-	free(hObject);
+	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
+		return FALSE;
 
-	return 1;
+	if (Type == HANDLE_TYPE_MUTEX)
+	{
+		pthread_mutex_destroy((pthread_mutex_t*) Object);
+		free(Object);
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
 	LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
 {
-	return 1;
+	return TRUE;
 }
 
 BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
 {
-	return 1;
+	return TRUE;
 }
 
 BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
 {
-	return 1;
+	return TRUE;
 }
 
 #endif

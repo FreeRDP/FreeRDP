@@ -36,7 +36,7 @@ typedef struct _HANDLE_TABLE
 {
 	LONG Count;
 	LONG MaxCount;
-	PHANDLE_TABLE_ENTRY* Entries;
+	PHANDLE_TABLE_ENTRY Entries;
 } HANDLE_TABLE, *PHANDLE_TABLE;
 
 static HANDLE_TABLE HandleTable = { 0, 0, NULL };
@@ -54,7 +54,7 @@ void winpr_HandleTable_New()
 
 	size = sizeof(HANDLE_TABLE_ENTRY) * HandleTable.MaxCount;
 
-	HandleTable.Entries = (PHANDLE_TABLE_ENTRY*) malloc(size);
+	HandleTable.Entries = (PHANDLE_TABLE_ENTRY) malloc(size);
 	ZeroMemory(HandleTable.Entries, size);
 }
 
@@ -65,7 +65,7 @@ void winpr_HandleTable_Grow()
 
 	size = sizeof(HANDLE_TABLE_ENTRY) * HandleTable.MaxCount;
 
-	HandleTable.Entries = (PHANDLE_TABLE_ENTRY*) realloc(HandleTable.Entries, size);
+	HandleTable.Entries = (PHANDLE_TABLE_ENTRY) realloc(HandleTable.Entries, size);
 	ZeroMemory((void*) &HandleTable.Entries[HandleTable.MaxCount / 2], size / 2);
 }
 
@@ -86,12 +86,12 @@ HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object)
 
 	for (index = 0; index < (int) HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index]->Object == NULL)
+		if (HandleTable.Entries[index].Object == NULL)
 		{
 			HandleTable.Count++;
 
-			HandleTable.Entries[index]->Type = Type;
-			HandleTable.Entries[index]->Object = Object;
+			HandleTable.Entries[index].Type = Type;
+			HandleTable.Entries[index].Object = Object;
 
 			return Object;
 		}
@@ -114,10 +114,10 @@ BOOL winpr_Handle_Remove(HANDLE handle)
 
 	for (index = 0; index < (int) HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index]->Object == handle)
+		if (HandleTable.Entries[index].Object == handle)
 		{
-			HandleTable.Entries[index]->Type = HANDLE_TYPE_NONE;
-			HandleTable.Entries[index]->Object = NULL;
+			HandleTable.Entries[index].Type = HANDLE_TYPE_NONE;
+			HandleTable.Entries[index].Object = NULL;
 			HandleTable.Count--;
 
 			return TRUE;
@@ -135,8 +135,8 @@ ULONG winpr_Handle_GetType(HANDLE handle)
 
 	for (index = 0; index < (int) HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index]->Object == handle)
-			return HandleTable.Entries[index]->Type;
+		if (HandleTable.Entries[index].Object == handle)
+			return HandleTable.Entries[index].Type;
 	}
 
 	return HANDLE_TYPE_NONE;
@@ -147,6 +147,25 @@ PVOID winpr_Handle_GetObject(HANDLE handle)
 	HandleTable_GetInstance();
 
 	return handle;
+}
+
+BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
+{
+	int index;
+
+	HandleTable_GetInstance();
+
+	for (index = 0; index < (int) HandleTable.MaxCount; index++)
+	{
+		if (HandleTable.Entries[index].Object == handle)
+		{
+			*pType = HandleTable.Entries[index].Type;
+			*pObject = HandleTable.Entries[index].Object;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 #endif

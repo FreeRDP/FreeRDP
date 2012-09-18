@@ -71,11 +71,6 @@ WINPR_API HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCW
 
 WINPR_API BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount);
 
-#define WAIT_OBJECT_0		0x00000000L
-#define WAIT_ABANDONED		0x00000080L
-#define WAIT_TIMEOUT		0x00000102L
-#define WAIT_FAILED		((DWORD) 0xFFFFFFFF)
-
 /* Event */
 
 WINPR_API HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
@@ -180,7 +175,15 @@ WINPR_API BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_
 
 /* Wait */
 
+#define INFINITE		0xFFFFFFFF
+
+#define WAIT_OBJECT_0		0x00000000L
+#define WAIT_ABANDONED		0x00000080L
+#define WAIT_TIMEOUT		0x00000102L
+#define WAIT_FAILED		((DWORD) 0xFFFFFFFF)
+
 WINPR_API DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+WINPR_API DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable);
 WINPR_API DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 WINPR_API DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable);
 

@@ -29,7 +29,6 @@
 #include <termios.h>
 #include <unistd.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/wait_obj.h>
@@ -54,7 +53,6 @@ int add_utils_suite(void)
 {
 	add_test_suite(utils);
 
-	add_test_function(mutex);
 	add_test_function(semaphore);
 	add_test_function(load_plugin);
 	add_test_function(wait_obj);
@@ -63,16 +61,6 @@ int add_utils_suite(void)
 	add_test_function(handle_signals);
 
 	return 0;
-}
-
-void test_mutex(void)
-{
-	freerdp_mutex mutex;
-
-	mutex = freerdp_mutex_new();
-	freerdp_mutex_lock(mutex);
-	freerdp_mutex_unlock(mutex);
-	freerdp_mutex_free(mutex);
 }
 
 void test_semaphore(void)

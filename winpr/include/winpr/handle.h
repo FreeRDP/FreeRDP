@@ -39,6 +39,7 @@ WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);
 
 WINPR_API ULONG winpr_Handle_GetType(HANDLE handle);
 WINPR_API PVOID winpr_Handle_GetObject(HANDLE handle);
+WINPR_API BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject);
 
 #ifndef _WIN32
 

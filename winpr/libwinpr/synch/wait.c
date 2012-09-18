@@ -32,14 +32,26 @@
  * SignalObjectAndWait
  */
 
+#ifndef _WIN32
+
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
-#if defined __APPLE__
-	semaphore_wait(*((winpr_sem_t*) hHandle));
-#else
-	sem_wait((winpr_sem_t*) hHandle);
-#endif
+	ULONG Type;
+	PVOID Object;
 
+	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
+		return WAIT_FAILED;
+
+	if (Type == HANDLE_TYPE_MUTEX)
+	{
+		pthread_mutex_lock((pthread_mutex_t*) Object);
+	}
+
+	return WAIT_OBJECT_0;
+}
+
+DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
+{
 	return WAIT_OBJECT_0;
 }
 
@@ -57,3 +69,5 @@ DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD 
 {
 	return 0;
 }
+
+#endif

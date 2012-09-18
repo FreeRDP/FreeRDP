@@ -30,8 +30,7 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/mutex.h> 
-#include <freerdp/utils/debug.h> 
+#include <freerdp/utils/debug.h>
 
 #include "rdpdr_types.h"
 #include "rdpdr_constants.h"
@@ -223,12 +222,12 @@ scard_irp_complete(IRP* irp)
 	stream_set_pos(irp->output, pos);
 
 	/* Begin TS Client defect workaround. */
-	freerdp_mutex_lock(scard->CompletionIdsMutex);
+	WaitForSingleObject(scard->CompletionIdsMutex, INFINITE);
 	/* Remove from the list the item identified by the CompletionID.
 	 * The function returns whether or not it was a duplicate CompletionID.
 	 */
 	duplicate = scard_check_for_duplicate_id(scard, irp->CompletionId);
-	freerdp_mutex_unlock(scard->CompletionIdsMutex);
+	ReleaseMutex(scard->CompletionIdsMutex);
 
 	if (false == duplicate)
 	{
@@ -261,10 +260,10 @@ scard_irp_request(DEVICE* device, IRP* irp)
 	CompletionIdInfo->ID = irp->CompletionId;/* "duplicate" member is set 
 	                                          * to false by "xnew()"
 	                                          */
-	freerdp_mutex_lock(scard->CompletionIdsMutex);
+	WaitForSingleObject(scard->CompletionIdsMutex, INFINITE);
 	scard_mark_duplicate_id(scard, irp->CompletionId);
 	list_enqueue(scard->CompletionIds, CompletionIdInfo);
-	freerdp_mutex_unlock(scard->CompletionIdsMutex);
+	ReleaseMutex(scard->CompletionIdsMutex);
 
 	irp->Complete = scard_irp_complete;	/* Overwrite the previous
 						 * assignment made in 
@@ -298,16 +297,15 @@ scard_irp_request(DEVICE* device, IRP* irp)
 	freerdp_thread_signal(scard->thread);
 }
 
-int
-DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	SCARD_DEVICE* scard;
 	char* name;
 	char* path;
 	int i, length;
+	SCARD_DEVICE* scard;
 
-	name = (char *)pEntryPoints->plugin_data->data[1];
-	path = (char *)pEntryPoints->plugin_data->data[2];
+	name = (char*) pEntryPoints->plugin_data->data[1];
+	path = (char*) pEntryPoints->plugin_data->data[2];
 
 	if (name)
 	{
@@ -332,7 +330,7 @@ DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		scard->thread = freerdp_thread_new();
 
 		scard->CompletionIds = list_new();
-		scard->CompletionIdsMutex = freerdp_mutex_new();
+		scard->CompletionIdsMutex = CreateMutex(NULL, FALSE, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE *)scard);
 

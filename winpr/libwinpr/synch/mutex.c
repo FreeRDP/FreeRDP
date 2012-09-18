@@ -23,6 +23,8 @@
 
 #include <winpr/synch.h>
 
+#include "synch.h"
+
 /**
  * CreateMutexA
  * CreateMutexW
@@ -33,24 +35,36 @@
  * ReleaseMutex
  */
 
-HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
-{
-	return NULL;
-}
+#ifndef _WIN32
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
-	return NULL;
+	HANDLE handle;
+	pthread_mutex_t* pMutex;
+
+	pMutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
+
+	if (pMutex)
+		pthread_mutex_init(pMutex, 0);
+
+	handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, pMutex);
+
+	return handle;
+}
+
+HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
+{
+	return CreateMutexW(lpMutexAttributes, bInitialOwner, NULL);
 }
 
 HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCTSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
 {
-	return NULL;
+	return CreateMutexW(lpMutexAttributes, FALSE, NULL);
 }
 
 HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess)
 {
-	return NULL;
+	return CreateMutexW(lpMutexAttributes, FALSE, NULL);
 }
 
 HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCSTR lpName)
@@ -65,5 +79,19 @@ HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCWSTR lpName)
 
 BOOL ReleaseMutex(HANDLE hMutex)
 {
-	return TRUE;
+	ULONG Type;
+	PVOID Object;
+
+	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))
+		return FALSE;
+
+	if (Type == HANDLE_TYPE_MUTEX)
+	{
+		pthread_mutex_unlock((pthread_mutex_t*) Object);
+		return TRUE;
+	}
+
+	return FALSE;
 }
+
+#endif

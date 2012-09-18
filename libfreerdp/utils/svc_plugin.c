@@ -28,7 +28,6 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -47,7 +46,7 @@ struct rdp_svc_plugin_list
 static rdpSvcPluginList* g_svc_plugin_list = NULL;
 
 /* For locking the global resources */
-static freerdp_mutex g_mutex = NULL;
+static HANDLE g_mutex = NULL;
 
 /* Queue for receiving packets */
 struct _svc_data_in_item
@@ -84,20 +83,24 @@ struct rdp_svc_plugin_private
 
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
 {
-	rdpSvcPluginList * list;
-	rdpSvcPlugin * plugin;
+	rdpSvcPluginList* list;
+	rdpSvcPlugin* plugin;
 
-	freerdp_mutex_lock(g_mutex);
+	WaitForSingleObject(g_mutex, INFINITE);
+
 	for (list = g_svc_plugin_list; list; list = list->next)
 	{
 		plugin = list->plugin;
+
 		if (plugin->priv->init_handle == init_handle)
 		{
-			freerdp_mutex_unlock(g_mutex);
+			ReleaseMutex(g_mutex);
 			return plugin;
 		}
 	}
-	freerdp_mutex_unlock(g_mutex);
+
+	ReleaseMutex(g_mutex);
+
 	return NULL;
 }
 
@@ -106,17 +109,17 @@ static rdpSvcPlugin* svc_plugin_find_by_open_handle(uint32 open_handle)
 	rdpSvcPluginList * list;
 	rdpSvcPlugin * plugin;
 
-	freerdp_mutex_lock(g_mutex);
+	WaitForSingleObject(g_mutex, INFINITE);
 	for (list = g_svc_plugin_list; list; list = list->next)
 	{
 		plugin = list->plugin;
 		if (plugin->priv->open_handle == open_handle)
 		{
-			freerdp_mutex_unlock(g_mutex);
+			ReleaseMutex(g_mutex);
 			return plugin;
 		}
 	}
-	freerdp_mutex_unlock(g_mutex);
+	ReleaseMutex(g_mutex);
 	return NULL;
 }
 
@@ -126,7 +129,7 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 	rdpSvcPluginList* prev;
 
 	/* Remove from global list */
-	freerdp_mutex_lock(g_mutex);
+	WaitForSingleObject(g_mutex, INFINITE);
 	for (prev = NULL, list = g_svc_plugin_list; list; prev = list, list = list->next)
 	{
 		if (list->plugin == plugin)
@@ -140,7 +143,7 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 			g_svc_plugin_list = list->next;
 		xfree(list);
 	}
-	freerdp_mutex_unlock(g_mutex);
+	ReleaseMutex(g_mutex);
 }
 
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint32 dataLength,
@@ -372,7 +375,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	 * VirtualChannelInit at a time. So this should be safe.
 	 */
 	if (g_mutex == NULL)
-		g_mutex = freerdp_mutex_new();
+		g_mutex = CreateMutex(NULL, FALSE, NULL);
 
 	memcpy(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
 
@@ -382,10 +385,10 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	list = xnew(rdpSvcPluginList);
 	list->plugin = plugin;
 
-	freerdp_mutex_lock(g_mutex);
+	WaitForSingleObject(g_mutex, INFINITE);
 	list->next = g_svc_plugin_list;
 	g_svc_plugin_list = list;
-	freerdp_mutex_unlock(g_mutex);
+	ReleaseMutex(g_mutex);
 
 	plugin->channel_entry_points.pVirtualChannelInit(&plugin->priv->init_handle,
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
