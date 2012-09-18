@@ -47,8 +47,18 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
 		return WAIT_FAILED;
 
+	if (Type == HANDLE_TYPE_THREAD)
+	{
+		if (dwMilliseconds != INFINITE)
+			printf("WaitForSingleObject: timeout not implemented for thread wait\n");
+
+		pthread_join((pthread_t) Object, NULL);
+	}
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
+		if (dwMilliseconds != INFINITE)
+			printf("WaitForSingleObject: timeout not implemented for mutex wait\n");
+
 		pthread_mutex_lock((pthread_mutex_t*) Object);
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
@@ -77,6 +87,14 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (status != 1)
 			return WAIT_TIMEOUT;
+	}
+	else if (Type == HANDLE_TYPE_SEMAPHORE)
+	{
+#if defined __APPLE__
+		semaphore_wait(*((winpr_sem_t*) Object));
+#else
+		sem_wait((winpr_sem_t*) Object);
+#endif
 	}
 
 	return WAIT_OBJECT_0;

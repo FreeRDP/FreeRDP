@@ -39,7 +39,11 @@ BOOL CloseHandle(HANDLE hObject)
 	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
 		return FALSE;
 
-	if (Type == HANDLE_TYPE_MUTEX)
+	if (Type == HANDLE_TYPE_THREAD)
+	{
+		return TRUE;
+	}
+	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		pthread_mutex_destroy((pthread_mutex_t*) Object);
 		winpr_Handle_Remove(Object);
@@ -66,6 +70,18 @@ BOOL CloseHandle(HANDLE hObject)
 
 		winpr_Handle_Remove(Object);
 		free(event);
+
+		return TRUE;
+	}
+	else if (Type == HANDLE_TYPE_SEMAPHORE)
+	{
+#if defined __APPLE__
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) Object));
+#else
+		sem_destroy((winpr_sem_t*) Object);
+#endif
+		winpr_Handle_Remove(Object);
+		free(Object);
 
 		return TRUE;
 	}

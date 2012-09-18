@@ -53,6 +53,11 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	{
 		event->bManualReset = bManualReset;
 
+		if (!event->bManualReset)
+		{
+			printf("CreateEventW: auto-reset events not yet implemented\n");
+		}
+
 		event->pipe_fd[0] = -1;
 		event->pipe_fd[1] = -1;
 

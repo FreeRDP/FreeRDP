@@ -35,39 +35,30 @@
 
 #ifndef _WIN32
 
-HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName)
-{
-	winpr_sem_t* hSemaphore;
-
-	hSemaphore = malloc(sizeof(winpr_sem_t));
-
-#if defined __APPLE__
-	semaphore_create(mach_task_self(), hSemaphore, SYNC_POLICY_FIFO, lMaximumCount);
-#else
-	sem_init(hSemaphore, 0, lMaximumCount);
-#endif
-
-	return (HANDLE) hSemaphore;
-}
-
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
-	winpr_sem_t* hSemaphore;
+	HANDLE handle;
+	winpr_sem_t* semaphore;
 
-	hSemaphore = malloc(sizeof(winpr_sem_t));
+	semaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
 
+	if (semaphore)
+	{
 #if defined __APPLE__
-	semaphore_create(mach_task_self(), hSemaphore, SYNC_POLICY_FIFO, lMaximumCount);
+		semaphore_create(mach_task_self(), semaphore, SYNC_POLICY_FIFO, lMaximumCount);
 #else
-	sem_init(hSemaphore, 0, lMaximumCount);
+		sem_init(semaphore, 0, lMaximumCount);
 #endif
+	}
 
-	return (HANDLE) hSemaphore;
+	handle = winpr_Handle_Insert(HANDLE_TYPE_SEMAPHORE, (PVOID) semaphore);
+
+	return handle;
 }
 
-HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName)
 {
-	return NULL;
+	return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, NULL);
 }
 
 HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
@@ -75,15 +66,30 @@ HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName
 	return NULL;
 }
 
+HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+{
+	return NULL;
+}
+
 BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
-#if defined __APPLE__
-	semaphore_signal(*((winpr_sem_t*) hSemaphore));
-#else
-	sem_post((winpr_sem_t*) hSemaphore);
-#endif
+	ULONG Type;
+	PVOID Object;
 
-	return 1;
+	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))
+		return FALSE;
+
+	if (Type == HANDLE_TYPE_SEMAPHORE)
+	{
+#if defined __APPLE__
+		semaphore_signal(*((winpr_sem_t*) Object));
+#else
+		sem_post((winpr_sem_t*) Object);
+#endif
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 #endif

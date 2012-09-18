@@ -80,12 +80,15 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
+	HANDLE handle;
 	pthread_t thread;
 
 	pthread_create(&thread, 0, (pthread_start_routine) lpStartAddress, lpParameter);
 	pthread_detach(thread);
 
-	return winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
+	handle = winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
+
+	return handle;
 }
 
 VOID ExitThread(DWORD dwExitCode)
