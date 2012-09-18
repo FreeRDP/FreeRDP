@@ -59,6 +59,7 @@ ID3D11Texture2D * sStage;
 
 DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
+
 int wf_dxgi_init(wfInfo* context)
 {
 	HRESULT hr;
@@ -201,6 +202,8 @@ int wf_dxgi_init(wfInfo* context)
 		return 1;
     }
 	_tprintf(_T("Gut! Init Complete!\n"));
+
+	return 0;
 }
 
 int wf_dxgi_cleanup(wfInfo* context)
@@ -232,16 +235,18 @@ int wf_dxgi_cleanup(wfInfo* context)
 	return 0;
 }
 
-int wf_dxgi_nextFrame(wfInfo* context, UINT timeout)
+int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 {
 	HRESULT hr;
 	IDXGIResource* DesktopResource = NULL;
-	BYTE* DirtyRects;
-	UINT dirty;
-	RECT* pRect;
 	BYTE* MeinMetaDataBuffer = NULL;
 	UINT MeinMetaDataSize = 0;
-	UINT i = 0, BufSize;
+	UINT i = 0;
+
+	if(wfi->framesWaiting > 0)
+	{
+		wf_dxgi_releasePixelData(wfi);
+	}
 
 	if(MeinAcquiredDesktopImage)
 	{
@@ -284,76 +289,8 @@ int wf_dxgi_nextFrame(wfInfo* context, UINT timeout)
 	}
 	_tprintf(_T("Gut!\n"));
 
-	if(FrameInfo.AccumulatedFrames == 0)
-	{
-		//we dont care
-		return 1;
-	}
+	wfi->framesWaiting = FrameInfo.AccumulatedFrames;
 
-	_tprintf(_T("FrameInfo\n"));
-	_tprintf(_T("\tAccumulated Frames: %d\n"), FrameInfo.AccumulatedFrames);
-	_tprintf(_T("\tCoalesced Rectangles: %d\n"), FrameInfo.RectsCoalesced);
-	_tprintf(_T("\tMetadata buffer size: %d\n"), FrameInfo.TotalMetadataBufferSize);
-
-
-	if(FrameInfo.TotalMetadataBufferSize)
-	{
-
-		if (FrameInfo.TotalMetadataBufferSize > MeinMetaDataSize)
-		{
-			if (MeinMetaDataBuffer)
-			{
-				free(MeinMetaDataBuffer);
-				MeinMetaDataBuffer = NULL;
-			}
-			MeinMetaDataBuffer = (BYTE*) malloc(FrameInfo.TotalMetadataBufferSize);
-			if (!MeinMetaDataBuffer)
-			{
-				MeinMetaDataSize = 0;
-				_tprintf(_T("Failed to allocate memory for metadata\n"));
-				return 1;
-			}
-			MeinMetaDataSize = FrameInfo.TotalMetadataBufferSize;
-		}
-
-		BufSize = FrameInfo.TotalMetadataBufferSize;
-
-		// Get move rectangles
-		hr = MeinDeskDupl->lpVtbl->GetFrameMoveRects(MeinDeskDupl, BufSize, (DXGI_OUTDUPL_MOVE_RECT*) MeinMetaDataBuffer, &BufSize);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to get frame move rects\n"));
-			return 1;
-		}
-		_tprintf(_T("Move rects: %d\n"), BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT));
-
-		DirtyRects = MeinMetaDataBuffer + BufSize;
-		BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
-
-			// Get dirty rectangles
-		hr = MeinDeskDupl->lpVtbl->GetFrameDirtyRects(MeinDeskDupl, BufSize, (RECT*) DirtyRects, &BufSize);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to get frame dirty rects\n"));
-			return 1;
-		}
-		dirty = BufSize / sizeof(RECT);
-		_tprintf(_T("Dirty rects: %d\n"), dirty);
-
-		pRect = (RECT*) DirtyRects;
-		for(i = 0; i<dirty; ++i)
-		{
-			_tprintf(_T("\tRect: (%d, %d), (%d, %d)\n"),
-				pRect->left,
-				pRect->top,
-				pRect->right,
-				pRect->bottom);
-
-			++pRect;
-		}
-			
-
-	}
 
 	return 0;
 
@@ -365,12 +302,6 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	DXGI_MAPPED_RECT MeinData;
 	D3D11_TEXTURE2D_DESC tDesc;
 	D3D11_BOX Box;
-
-	if(wf_dxgi_getInvalidRegion(invalid))
-	{
-		_tprintf(_T("dxgi_getInvalidRegion failed\n"));
-		exit(1);
-	}
 
 	tDesc.Width = (invalid->right - invalid->left) + 1;
 	tDesc.Height = (invalid->bottom - invalid->top) + 1;
@@ -397,6 +328,7 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	{
 		_tprintf(_T("Failed to create staging surface\n"));
 		exit(1);
+		return 1;
 	}
 	_tprintf(_T("Gut!\n"));
 
@@ -408,6 +340,7 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	{
 		_tprintf(_T("Failed to QI staging surface\n"));
 		exit(1);
+		return 1;
 	}
 	_tprintf(_T("Gut!\n"));
 
@@ -417,6 +350,7 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	{
 		_tprintf(_T("Failed to map staging surface\n"));
 		exit(1);
+		return 1;
 	}
 	_tprintf(_T("Gut!\n"));
 		
@@ -425,10 +359,10 @@ int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid
 	*data = MeinData.pBits;
 	*pitch = MeinData.Pitch;
 
-	
+	return 0;
 }
 
-int wf_dxgi_releasePixelData(wfInfo* context)
+int wf_dxgi_releasePixelData(wfInfo* wfi)
 {
 	HRESULT hr;
 
@@ -444,6 +378,10 @@ int wf_dxgi_releasePixelData(wfInfo* context)
 		_tprintf(_T("Failed to release frame\n"));
 		return 1;
 	}
+
+	wfi->framesWaiting = 0;
+	_tprintf(_T("PixelData Release\n"));
+	return 0;
 }
 
 int wf_dxgi_getInvalidRegion(RECT* invalid)
@@ -459,7 +397,11 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 	//optimization note: make this buffer global and allocate only once (or grow only when needed)
 	BYTE* MeinMetaDataBuffer = NULL;
 
-
+	if(FrameInfo.AccumulatedFrames == 0)
+	{
+		//we dont care
+		return 1;
+	}
 
 	_tprintf(_T("FrameInfo\n"));
 	_tprintf(_T("\tAccumulated Frames: %d\n"), FrameInfo.AccumulatedFrames);

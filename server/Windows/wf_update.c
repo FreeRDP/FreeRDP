@@ -99,18 +99,21 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 	return 0;
 }
 
+
 void wf_update_encode(wfInfo* wfi)
 {
-	long offset;
+	
 	RFX_RECT rect;
 	long height, width;
-	GETCHANGESBUF* changes;
+	uint8* pDataBits = NULL;
+	int stride;
+	
 	SURFACE_BITS_COMMAND* cmd;
 
 	wf_info_find_invalid_region(wfi);
 
 	cmd = &wfi->cmd;
-	changes = (GETCHANGESBUF*) wfi->changeBuffer;
+	
 
 	width = (wfi->invalid.right - wfi->invalid.left) + 1;
 	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
@@ -124,10 +127,10 @@ void wf_update_encode(wfInfo* wfi)
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+	wf_info_getScreenData(wfi, &pDataBits, &stride);
 
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
-			((uint8*) (changes->Userbuffer)) + offset, width, height, wfi->width * 4);
+			pDataBits, width, height, stride);
 
 	wfi->frame_idx = wfi->rfx_context->frame_idx;
 

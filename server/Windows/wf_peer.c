@@ -37,6 +37,8 @@
 
 #include "wf_peer.h"
 
+BOOL win8;
+
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();

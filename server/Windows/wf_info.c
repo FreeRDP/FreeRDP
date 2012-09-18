@@ -29,6 +29,7 @@
 #include "wf_info.h"
 #include "wf_update.h"
 #include "wf_mirage.h"
+#include "wf_dxgi.h"
 
 static wfInfo* wfInfoInstance = NULL;
 
@@ -99,6 +100,12 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
+	OSVERSIONINFOEX osvi;
+	SYSTEM_INFO si;
+	BOOL bOsVersionInfoEx;
+
+
+
 	wfi = (wfInfo*) malloc(sizeof(wfInfo));
 	ZeroMemory(wfi, sizeof(wfInfo));
 
@@ -130,7 +137,7 @@ wfInfo* wf_info_init()
 
 		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
 
-		wfi->framesPerSecond = 24;
+		wfi->framesPerSecond = 10;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -142,6 +149,27 @@ wfInfo* wf_info_init()
 		}
 
 		RegCloseKey(hKey);
+
+		//detect windows version
+		ZeroMemory(&si, sizeof(SYSTEM_INFO));
+		ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+		bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
+
+		wfi->win8 = FALSE;
+		if(bOsVersionInfoEx != 0 )
+		{
+			if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
+			osvi.dwMajorVersion > 4 )
+			{
+				if ( osvi.dwMajorVersion == 6 && 
+					osvi.dwMinorVersion == 2)
+				{
+					wfi->win8 = TRUE;
+				}
+			}
+		}
 	}
 
 	return wfi;
@@ -163,7 +191,15 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		wf_mirror_driver_activate(wfi);
+		if(wfi->win8 && 
+			(wfi->peerCount == 0))
+		{
+			wf_dxgi_init(wfi);
+		}
+		else
+		{
+			wf_mirror_driver_activate(wfi);
+		}
 
 		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
 
@@ -182,40 +218,68 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 		printf("Unregistering Peer: %d\n", wfi->peerCount);
 
+		if(wfi->win8 && 
+			(wfi->peerCount == 0))
+		{
+			wf_dxgi_cleanup(wfi);
+		}
+
 		wf_info_unlock(wfi);
 	}
 }
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
-	if (wfi->nextUpdate == wfi->lastUpdate)
-		return FALSE;
+	if(wfi->win8)
+	{
+		if(wfi->framesWaiting == 0)
+			return FALSE;
+	}
+	else
+	{
+		if (wfi->nextUpdate == wfi->lastUpdate)
+			return FALSE;
+	}
 
 	return TRUE;
 }
 
 void wf_info_update_changes(wfInfo* wfi)
 {
-	GETCHANGESBUF* buf;
+	if(wfi->win8)
+	{
+		wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
+	}
+	else
+	{
+		GETCHANGESBUF* buf;
 
-	buf = (GETCHANGESBUF*) wfi->changeBuffer;
-	wfi->nextUpdate = buf->buffer->counter;
+		buf = (GETCHANGESBUF*) wfi->changeBuffer;
+		wfi->nextUpdate = buf->buffer->counter;
+	}
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
-	int i;
-	GETCHANGESBUF* buf;
-
-	buf = (GETCHANGESBUF*) wfi->changeBuffer;
-
-	for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
+	if(wfi->win8)
 	{
-		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
+		wf_dxgi_getInvalidRegion(&wfi->invalid);
+	}
+	else
+	{
+		int i;
+		GETCHANGESBUF* buf;
+
+		buf = (GETCHANGESBUF*) wfi->changeBuffer;
+
+		for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
+		{
+			UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
+		}
 	}
 
 	if (wfi->invalid.left < 0)
-		wfi->invalid.left = 0;
+	wfi->invalid.left = 0;
 
 	if (wfi->invalid.top < 0)
 		wfi->invalid.top = 0;
@@ -225,6 +289,7 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	if (wfi->invalid.bottom >= wfi->height)
 		wfi->invalid.bottom = wfi->height - 1;
+	
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)
@@ -241,4 +306,22 @@ void wf_info_invalidate_full_screen(wfInfo* wfi)
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
 {
 	return IsRectEmpty(&wfi->invalid);
+}
+
+void wf_info_getScreenData(wfInfo* wfi, uint8** pBits, int* pitch)
+{
+	if(wfi->win8)
+	{
+		wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
+	}
+	else
+	{
+		long offset;
+		GETCHANGESBUF* changes;
+		changes = (GETCHANGESBUF*) wfi->changeBuffer;
+
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+		*pitch = wfi->width * 4;
+	}
 }
