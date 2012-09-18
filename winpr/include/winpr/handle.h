@@ -29,9 +29,10 @@
 
 #define HANDLE_TYPE_NONE			0
 #define HANDLE_TYPE_THREAD			1
-#define HANDLE_TYPE_MUTEX			2
-#define HANDLE_TYPE_SEMAPHORE			3
-#define HANDLE_TYPE_EVENT			4
+#define HANDLE_TYPE_EVENT			2
+#define HANDLE_TYPE_MUTEX			3
+#define HANDLE_TYPE_SEMAPHORE			4
+#define HANDLE_TYPE_TIMER			5
 
 WINPR_API HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object);
 WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);

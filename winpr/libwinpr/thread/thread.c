@@ -28,33 +28,18 @@
 /**
  * api-ms-win-core-processthreads-l1-1-1.dll
  * 
- * CreateProcessA
- * CreateProcessAsUserW
- * CreateProcessW
  * CreateRemoteThread
  * CreateRemoteThreadEx
  * CreateThread
  * DeleteProcThreadAttributeList
- * ExitProcess
  * ExitThread
  * FlushInstructionCache
  * FlushProcessWriteBuffers
- * GetCurrentProcess
- * GetCurrentProcessId
- * GetCurrentProcessorNumber
- * GetCurrentProcessorNumberEx
  * GetCurrentThread
  * GetCurrentThreadId
  * GetCurrentThreadStackLimits
- * GetExitCodeProcess
  * GetExitCodeThread
  * GetPriorityClass
- * GetProcessHandleCount
- * GetProcessId
- * GetProcessIdOfThread
- * GetProcessMitigationPolicy
- * GetProcessTimes
- * GetProcessVersion
  * GetStartupInfoW
  * GetThreadContext
  * GetThreadId
@@ -63,33 +48,20 @@
  * GetThreadPriorityBoost
  * GetThreadTimes
  * InitializeProcThreadAttributeList
- * IsProcessorFeaturePresent
- * OpenProcess
- * OpenProcessToken
  * OpenThread
  * OpenThreadToken
- * ProcessIdToSessionId
  * QueryProcessAffinityUpdateMode
  * QueueUserAPC
  * ResumeThread
  * SetPriorityClass
- * SetProcessAffinityUpdateMode
- * SetProcessMitigationPolicy
- * SetProcessShutdownParameters
  * SetThreadContext
- * SetThreadIdealProcessorEx
  * SetThreadPriority
  * SetThreadPriorityBoost
  * SetThreadStackGuarantee
  * SetThreadToken
  * SuspendThread
  * SwitchToThread
- * TerminateProcess
  * TerminateThread
- * TlsAlloc
- * TlsFree
- * TlsGetValue
- * TlsSetValue
  * UpdateProcThreadAttribute
  */
 
@@ -98,34 +70,6 @@
 #include <pthread.h>
 
 typedef void *(*pthread_start_routine)(void*);
-
-BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return TRUE;
-}
-
-BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return TRUE;
-}
-
-BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return TRUE;
-}
-
-BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return TRUE;
-}
 
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 		LPTHREAD_START_ROUTINE lpStartAddress,LPVOID lpParameter,DWORD dwCreationFlags,LPDWORD lpThreadId)
@@ -144,29 +88,9 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
 }
 
-VOID ExitProcess(UINT uExitCode)
-{
-
-}
-
 VOID ExitThread(DWORD dwExitCode)
 {
 
-}
-
-HANDLE GetCurrentProcess(VOID)
-{
-	return NULL;
-}
-
-DWORD GetCurrentProcessId(VOID)
-{
-	return 0;
-}
-
-DWORD GetCurrentProcessorNumber(VOID)
-{
-	return 0;
 }
 
 HANDLE GetCurrentThread(VOID)
@@ -175,11 +99,6 @@ HANDLE GetCurrentThread(VOID)
 }
 
 DWORD GetCurrentThreadId(VOID)
-{
-	return 0;
-}
-
-DWORD GetProcessId(HANDLE Process)
 {
 	return 0;
 }
@@ -199,32 +118,7 @@ BOOL SwitchToThread(VOID)
 	return TRUE;
 }
 
-BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
-{
-	return TRUE;
-}
-
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
-{
-	return TRUE;
-}
-
-DWORD TlsAlloc(VOID)
-{
-	return 0;
-}
-
-LPVOID TlsGetValue(DWORD dwTlsIndex)
-{
-	return NULL;
-}
-
-BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
-{
-	return TRUE;
-}
-
-BOOL TlsFree(DWORD dwTlsIndex)
 {
 	return TRUE;
 }

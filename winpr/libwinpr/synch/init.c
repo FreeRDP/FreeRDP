@@ -23,37 +23,29 @@
 
 #include <winpr/synch.h>
 
-#include "synch.h"
-
 /**
- * WaitForSingleObject
- * WaitForSingleObjectEx
- * WaitForMultipleObjectsEx
- * SignalObjectAndWait
+ * InitOnceBeginInitialize
+ * InitOnceComplete
+ * InitOnceExecuteOnce
+ * InitOnceInitialize
  */
 
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
+BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)
 {
-#if defined __APPLE__
-	semaphore_wait(*((winpr_sem_t*) hHandle));
-#else
-	sem_wait((winpr_sem_t*) hHandle);
-#endif
-
-	return WAIT_OBJECT_0;
+	return TRUE;
 }
 
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext)
 {
-	return 0;
+	return TRUE;
 }
 
-DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context)
 {
-	return 0;
+	return TRUE;
 }
 
-DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
+VOID InitOnceInitialize(PINIT_ONCE InitOnce)
 {
-	return 0;
+
 }

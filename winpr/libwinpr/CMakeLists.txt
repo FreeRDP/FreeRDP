@@ -28,6 +28,7 @@ endif()
 add_subdirectory(crt)
 add_subdirectory(utils)
 add_subdirectory(heap)
+add_subdirectory(interlocked)
 add_subdirectory(handle)
 add_subdirectory(synch)
 add_subdirectory(thread)
@@ -46,6 +47,7 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-crt>
 		$<TARGET_OBJECTS:winpr-utils>
 		$<TARGET_OBJECTS:winpr-heap>
+		$<TARGET_OBJECTS:winpr-interlocked>
 		$<TARGET_OBJECTS:winpr-handle>
 		$<TARGET_OBJECTS:winpr-synch>
 		$<TARGET_OBJECTS:winpr-thread>

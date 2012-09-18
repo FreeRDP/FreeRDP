@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Synchronization Functions
+ * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -21,5 +21,24 @@
 #include "config.h"
 #endif
 
-#include <winpr/synch.h>
+#include <winpr/handle.h>
+
+#include <winpr/thread.h>
+
+/**
+ * GetCurrentProcessorNumber
+ * GetCurrentProcessorNumberEx
+ * GetThreadIdealProcessorEx
+ * SetThreadIdealProcessorEx
+ * IsProcessorFeaturePresent
+ */
+
+#ifndef _WIN32
+
+DWORD GetCurrentProcessorNumber(VOID)
+{
+	return 0;
+}
+
+#endif
 

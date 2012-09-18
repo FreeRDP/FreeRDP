@@ -39,6 +39,11 @@ VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 }
 
+BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
+{
+	return TRUE;
+}
+
 BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
 {
 	return TRUE;

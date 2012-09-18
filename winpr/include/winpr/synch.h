@@ -58,19 +58,15 @@ WINPR_API BOOL ReleaseMutex(HANDLE hMutex);
 WINPR_API HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName);
 WINPR_API HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName);
 
-#ifdef UNICODE
-#define CreateSemaphore CreateSemaphoreW
-#else
-#define CreateSemaphore CreateSemaphoreA
-#endif
-
 WINPR_API HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName);
 WINPR_API HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
 
 #ifdef UNICODE
-#define OpenSemaphore OpenSemaphoreW
+#define CreateSemaphore		CreateSemaphoreW
+#define OpenSemaphore		OpenSemaphoreW
 #else
-#define OpenSemaphore OpenSemaphoreA
+#define CreateSemaphore		CreateSemaphoreA
+#define OpenSemaphore		OpenSemaphoreA
 #endif
 
 WINPR_API BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount);
@@ -93,6 +89,24 @@ WINPR_API HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR 
 
 WINPR_API BOOL SetEvent(HANDLE hEvent);
 WINPR_API BOOL ResetEvent(HANDLE hEvent);
+
+/* One-Time Initialization */
+
+#define CALLBACK
+
+typedef union _RTL_RUN_ONCE
+{
+	PVOID Ptr;
+} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
+
+typedef PRTL_RUN_ONCE PINIT_ONCE;
+typedef PRTL_RUN_ONCE LPINIT_ONCE;
+typedef BOOL CALLBACK (*PINIT_ONCE_FN) (PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
+
+WINPR_API BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
+WINPR_API BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
+WINPR_API BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
+WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
 
 /* Slim Reader/Writer (SRW) Lock */
 
@@ -131,6 +145,7 @@ typedef PRTL_CRITICAL_SECTION PCRITICAL_SECTION;
 typedef PRTL_CRITICAL_SECTION LPCRITICAL_SECTION;
 
 WINPR_API VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 WINPR_API BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount);
 
 WINPR_API DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount);
@@ -156,11 +171,65 @@ WINPR_API BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 WINPR_API VOID Sleep(DWORD dwMilliseconds);
 WINPR_API DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 
+/* Address */
+
+WINPR_API VOID WakeByAddressAll(PVOID Address);
+WINPR_API VOID WakeByAddressSingle(PVOID Address);
+
+WINPR_API BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_T AddressSize, DWORD dwMilliseconds);
+
 /* Wait */
 
 WINPR_API DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 WINPR_API DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 WINPR_API DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable);
+
+WINPR_API DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable);
+
+/* Waitable Timer */
+
+typedef struct _REASON_CONTEXT
+{
+	ULONG Version;
+	DWORD Flags;
+
+	union
+	{
+		struct
+		{
+			HMODULE LocalizedReasonModule;
+			ULONG LocalizedReasonId;
+			ULONG ReasonStringCount;
+			LPWSTR* ReasonStrings;
+		} Detailed;
+
+		LPWSTR SimpleReasonString;
+	} Reason;
+} REASON_CONTEXT, *PREASON_CONTEXT;
+
+typedef VOID (*PTIMERAPCROUTINE)(LPVOID lpArgToCompletionRoutine, DWORD dwTimerLowValue, DWORD dwTimerHighValue);
+
+WINPR_API HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess);
+WINPR_API HANDLE CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess);
+
+WINPR_API BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
+		PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume);
+
+WINPR_API BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
+		PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, PREASON_CONTEXT WakeContext, ULONG TolerableDelay);
+
+WINPR_API HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpTimerName);
+WINPR_API HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpTimerName);
+
+WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
+
+#ifdef UNICODE
+#define CreateWaitableTimerEx		CreateWaitableTimerExW
+#define OpenWaitableTimer		OpenWaitableTimerW
+#else
+#define CreateWaitableTimerEx		CreateWaitableTimerExA
+#define OpenWaitableTimer		OpenWaitableTimerA
+#endif
 
 #endif
 

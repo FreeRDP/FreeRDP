@@ -19,7 +19,10 @@ set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
 set(WINPR_THREAD_SRCS
-	thread.c)
+	process.c
+	processor.c
+	thread.c
+	tls.c)
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(winpr-thread OBJECT ${WINPR_THREAD_SRCS})

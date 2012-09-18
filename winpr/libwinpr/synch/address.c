@@ -23,37 +23,23 @@
 
 #include <winpr/synch.h>
 
-#include "synch.h"
-
 /**
- * WaitForSingleObject
- * WaitForSingleObjectEx
- * WaitForMultipleObjectsEx
- * SignalObjectAndWait
+ * WakeByAddressAll
+ * WakeByAddressSingle
+ * WaitOnAddress
  */
 
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
+VOID WakeByAddressAll(PVOID Address)
 {
-#if defined __APPLE__
-	semaphore_wait(*((winpr_sem_t*) hHandle));
-#else
-	sem_wait((winpr_sem_t*) hHandle);
-#endif
 
-	return WAIT_OBJECT_0;
 }
 
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+VOID WakeByAddressSingle(PVOID Address)
 {
-	return 0;
+
 }
 
-DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_T AddressSize, DWORD dwMilliseconds)
 {
-	return 0;
-}
-
-DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return 0;
+	return TRUE;
 }

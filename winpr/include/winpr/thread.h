@@ -79,6 +79,8 @@ typedef STARTUPINFOA	STARTUPINFO;
 typedef LPSTARTUPINFOA	LPSTARTUPINFO;
 #endif
 
+/* Process */
+
 WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
@@ -86,12 +88,6 @@ WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPS
 WINPR_API BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-
-#ifdef UNICODE
-#define CreateProcess	CreateProcessW
-#else
-#define CreateProcess	CreateProcessA
-#endif
 
 WINPR_API BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -102,10 +98,21 @@ WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LP
 		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 #ifdef UNICODE
+#define CreateProcess		CreateProcessW
 #define CreateProcessAsUser	CreateProcessAsUserW
 #else
+#define CreateProcess		CreateProcessA
 #define CreateProcessAsUser	CreateProcessAsUserA
 #endif
+
+WINPR_API VOID ExitProcess(UINT uExitCode);
+
+WINPR_API HANDLE GetCurrentProcess(VOID);
+WINPR_API DWORD GetCurrentProcessId(VOID);
+
+WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
+
+/* Thread */
 
 WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 		LPTHREAD_START_ROUTINE lpStartAddress,LPVOID lpParameter,DWORD dwCreationFlags,LPDWORD lpThreadId);
@@ -113,12 +120,7 @@ WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThr
 WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 
-WINPR_API VOID ExitProcess(UINT uExitCode);
 WINPR_API VOID ExitThread(DWORD dwExitCode);
-
-WINPR_API HANDLE GetCurrentProcess(VOID);
-WINPR_API DWORD GetCurrentProcessId(VOID);
-WINPR_API DWORD GetCurrentProcessorNumber(VOID);
 
 WINPR_API HANDLE GetCurrentThread(VOID);
 WINPR_API DWORD GetCurrentThreadId(VOID);
@@ -127,8 +129,13 @@ WINPR_API DWORD ResumeThread(HANDLE hThread);
 WINPR_API DWORD SuspendThread(HANDLE hThread);
 WINPR_API BOOL SwitchToThread(VOID);
 
-WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 WINPR_API BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode);
+
+/* Processor */
+
+WINPR_API DWORD GetCurrentProcessorNumber(VOID);
+
+/* Thread-Local Storage */
 
 WINPR_API DWORD TlsAlloc(VOID);
 WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);

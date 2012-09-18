@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Synchronization Functions
+ * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -21,5 +21,38 @@
 #include "config.h"
 #endif
 
-#include <winpr/synch.h>
+#include <winpr/handle.h>
+
+#include <winpr/thread.h>
+
+/**
+ * TlsAlloc
+ * TlsFree
+ * TlsGetValue
+ * TlsSetValue
+ */
+
+#ifndef _WIN32
+
+DWORD TlsAlloc(VOID)
+{
+	return 0;
+}
+
+LPVOID TlsGetValue(DWORD dwTlsIndex)
+{
+	return NULL;
+}
+
+BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
+{
+	return TRUE;
+}
+
+BOOL TlsFree(DWORD dwTlsIndex)
+{
+	return TRUE;
+}
+
+#endif
 

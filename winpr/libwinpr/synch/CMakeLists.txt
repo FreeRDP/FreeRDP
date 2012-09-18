@@ -19,16 +19,19 @@ set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
 set(WINPR_SYNCH_SRCS
+	address.c
 	barrier.c
 	condition.c
 	critical.c
 	event.c
+	init.c
 	mutex.c
 	semaphore.c
 	sleep.c
 	srw.c
 	synch.c
 	synch.h
+	timer.c
 	wait.c)
 
 if(WITH_MONOLITHIC_BUILD)
@@ -57,3 +60,4 @@ else()
 	target_link_libraries(winpr-synch ${WINPR_SYNCH_LIBS})
 	install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
