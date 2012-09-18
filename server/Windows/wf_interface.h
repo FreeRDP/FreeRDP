@@ -20,6 +20,8 @@
 #ifndef WF_INTERFACE_H
 #define WF_INTERFACE_H
 
+#define WITH_WIN8
+
 #include <winpr/windows.h>
 
 #include <freerdp/api.h>
@@ -48,7 +50,6 @@ struct wf_info
 	TCHAR deviceName[32];
 	freerdp_peer** peers;
 	BOOL mirrorDriverActive;
-	BOOL win8;
 	UINT framesWaiting;
 
 	RECT invalid;

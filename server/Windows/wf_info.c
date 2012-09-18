@@ -100,9 +100,11 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
+/*
 	OSVERSIONINFOEX osvi;
 	SYSTEM_INFO si;
 	BOOL bOsVersionInfoEx;
+	*/
 
 
 
@@ -151,6 +153,7 @@ wfInfo* wf_info_init()
 		RegCloseKey(hKey);
 
 		//detect windows version
+		/*
 		ZeroMemory(&si, sizeof(SYSTEM_INFO));
 		ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
 
@@ -170,6 +173,7 @@ wfInfo* wf_info_init()
 				}
 			}
 		}
+		*/
 	}
 
 	return wfi;
@@ -191,10 +195,11 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		if(wfi->win8 && 
-			(wfi->peerCount == 0))
+		if(wfi->peerCount == 0)
 		{
+#ifdef WITH_WIN8
 			wf_dxgi_init(wfi);
+#endif
 		}
 		else
 		{
@@ -218,10 +223,11 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 		printf("Unregistering Peer: %d\n", wfi->peerCount);
 
-		if(wfi->win8 && 
-			(wfi->peerCount == 0))
+		if(wfi->peerCount == 0)
 		{
+#ifdef WITH_WIN8
 			wf_dxgi_cleanup(wfi);
+#endif
 		}
 
 		wf_info_unlock(wfi);
@@ -230,53 +236,57 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
-	if(wfi->win8)
-	{
-		if(wfi->framesWaiting == 0)
-			return FALSE;
-	}
-	else
-	{
-		if (wfi->nextUpdate == wfi->lastUpdate)
-			return FALSE;
-	}
+#ifdef WITH_WIN8
+
+	if(wfi->framesWaiting == 0)
+		return FALSE;
+
+#else
+
+	if (wfi->nextUpdate == wfi->lastUpdate)
+		return FALSE;
+
+#endif
+	
+		
+
 
 	return TRUE;
 }
 
 void wf_info_update_changes(wfInfo* wfi)
 {
-	if(wfi->win8)
-	{
-		wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
-	}
-	else
-	{
-		GETCHANGESBUF* buf;
+#ifdef WITH_WIN8
+	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
+#else
+	
+	GETCHANGESBUF* buf;
 
-		buf = (GETCHANGESBUF*) wfi->changeBuffer;
-		wfi->nextUpdate = buf->buffer->counter;
-	}
+	buf = (GETCHANGESBUF*) wfi->changeBuffer;
+	wfi->nextUpdate = buf->buffer->counter;
+	
+#endif
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
-	if(wfi->win8)
-	{
-		wf_dxgi_getInvalidRegion(&wfi->invalid);
-	}
-	else
-	{
-		int i;
-		GETCHANGESBUF* buf;
+#ifdef WITH_WIN8
 
-		buf = (GETCHANGESBUF*) wfi->changeBuffer;
+	wf_dxgi_getInvalidRegion(&wfi->invalid);
+	
+#else
+	
+	int i;
+	GETCHANGESBUF* buf;
 
-		for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
-		{
-			UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
-		}
+	buf = (GETCHANGESBUF*) wfi->changeBuffer;
+
+	for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
+	{
+		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
 	}
+	
+#endif
 
 	if (wfi->invalid.left < 0)
 	wfi->invalid.left = 0;
@@ -313,21 +323,23 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits
 	*width = (wfi->invalid.right - wfi->invalid.left);
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
 
-	if(wfi->win8)
+#ifdef WITH_WIN8
+	
+	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
+	
+#else
 	{
-		wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
-	}
-	else
-	{
-		long offset;
-		GETCHANGESBUF* changes;
-		changes = (GETCHANGESBUF*) wfi->changeBuffer;
+	long offset;
+	GETCHANGESBUF* changes;
+	changes = (GETCHANGESBUF*) wfi->changeBuffer;
 
-		*width += 1;
-		*height += 1;
+	*width += 1;
+	*height += 1;
 
-		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
-		*pitch = wfi->width * 4;
+	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+	*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+	*pitch = wfi->width * 4;
 	}
+	
+#endif
 }

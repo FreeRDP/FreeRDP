@@ -20,6 +20,10 @@
 #include "config.h"
 #endif
 
+#include "wf_interface.h"
+
+#ifdef WITH_WIN8
+
 #define CINTERFACE
 
 #include <D3D11.h>
@@ -420,3 +424,4 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 	return 0;
 }
 
+#endif
