@@ -104,6 +104,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
+rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd);
 
 boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
 		unsigned long* nitems, unsigned long* bytes, uint8** prop);

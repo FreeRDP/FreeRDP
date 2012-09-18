@@ -482,7 +482,10 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->width = width;
 	window->height = height;
 
-	window->decorations = false;
+	/* this window need decorations
+	   the WS_EX_APPWINDOW is used to tell the client to use local decorations
+	   only sent from xrdp */
+	window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? true : false;
 	window->fullscreen = false;
 	window->window = wnd;
 	window->local_move.state = LMS_NOT_ACTIVE;
@@ -915,4 +918,25 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 	}
 
 	xfree(window);
+}
+
+rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd)
+{
+	rdpRail* rail;
+
+	if (xfi != NULL)
+	{
+		if (wnd != 0)
+		{
+			if (xfi->_context != NULL)
+			{
+				rail = xfi->_context->rail;
+				if (rail != NULL)
+				{
+					return window_list_get_by_extra_id(rail->list, (void*)(long)wnd);
+				}
+			}
+		}
+	}
+	return NULL;
 }
