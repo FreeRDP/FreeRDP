@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Client
  * FreeRDP Windows Server
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,17 @@
 
 #include "wf_interface.h"
 
+int wf_dxgi_init(wfInfo* context);
+
+int wf_dxgi_cleanup(wfInfo* context);
+
+int wf_dxgi_nextFrame(wfInfo* context, UINT timeout);
+
+int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid);
+
+int wf_dxgi_releasePixelData(wfInfo* context);
+
+int wf_dxgi_getInvalidRegion(RECT* invalid);
 
 
-#endif /* WF_DXGI_H */
+#endif

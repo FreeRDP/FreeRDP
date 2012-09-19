@@ -48,6 +48,7 @@ struct wf_info
 	TCHAR deviceName[32];
 	freerdp_peer** peers;
 	BOOL mirrorDriverActive;
+	UINT framesWaiting;
 
 	RECT invalid;
 	HANDLE mutex;
