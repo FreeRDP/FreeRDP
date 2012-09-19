@@ -49,21 +49,32 @@ if(WITH_MONOLITHIC_BUILD)
 	set(WFREERDP_SERVER_LIBS freerdp)
 else()
 
-	set(WFREERDP_SERVER_LIBS
-		freerdp-core
+	if(WITH_WIN8)	
+	
+		set(WFREERDP_SERVER_LIBS
+			freerdp-core
 
-		freerdp-utils
+			freerdp-utils
 
-		freerdp-codec
+			freerdp-codec
 
-		freerdp-channels
-		
-		d3d11.lib
-		
-		dxgi.lib
-		
-		dxguid.lib)
+			freerdp-channels
+			
+			d3d11.lib
+			
+			dxgi.lib
+			
+			dxguid.lib)
+	else()
+		set(WFREERDP_SERVER_LIBS
+			freerdp-core
 
+			freerdp-utils
+
+			freerdp-codec
+
+			freerdp-channels)
+	endif()
 endif()
 
 target_link_libraries(wfreerdp-server ${WFREERDP_SERVER_LIBS})

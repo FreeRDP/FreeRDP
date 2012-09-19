@@ -20,8 +20,6 @@
 #ifndef WF_INTERFACE_H
 #define WF_INTERFACE_H
 
-#define WITH_WIN8
-
 #include <winpr/windows.h>
 
 #include <freerdp/api.h>
