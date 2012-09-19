@@ -59,24 +59,24 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 				{
 					wf_update_encode(wfi);
 
-					printf("Start of parallel sending\n");
+					//printf("Start of parallel sending\n");
 
 					for (index = 0; index < wfi->peerCount; index++)
 					{
 						if (wfi->peers[index]->activated)
 						{
-							printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
+							//printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
 							SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
 						}
 					}
 
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
-						printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
+						//printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
 						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
 					}
 
-					printf("End of parallel sending\n");
+					//printf("End of parallel sending\n");
 
 					wf_info_clear_invalid_region(wfi);
 				}
@@ -94,28 +94,29 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 		}
 	}
 
-	printf("Exiting Update Thread\n");
+	//printf("Exiting Update Thread\n");
 
 	return 0;
 }
 
+
 void wf_update_encode(wfInfo* wfi)
 {
-	long offset;
+	
 	RFX_RECT rect;
 	long height, width;
-	GETCHANGESBUF* changes;
+	uint8* pDataBits = NULL;
+	int stride;
+	
 	SURFACE_BITS_COMMAND* cmd;
 
 	wf_info_find_invalid_region(wfi);
 
 	cmd = &wfi->cmd;
-	changes = (GETCHANGESBUF*) wfi->changeBuffer;
-
-	width = (wfi->invalid.right - wfi->invalid.left) + 1;
-	height = (wfi->invalid.bottom - wfi->invalid.top) + 1;
 
 	stream_set_pos(wfi->s, 0);
+
+	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
 
 	rect.x = 0;
 	rect.y = 0;
@@ -124,10 +125,8 @@ void wf_update_encode(wfInfo* wfi)
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
-			((uint8*) (changes->Userbuffer)) + offset, width, height, wfi->width * 4);
+			pDataBits, width, height, stride);
 
 	wfi->frame_idx = wfi->rfx_context->frame_idx;
 
@@ -209,7 +208,9 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
 	{
 		if (wfi->activePeerCount < 1)
 		{
-			//wf_mirror_driver_activate(wfi);
+#ifndef WITH_WIN8
+			wf_mirror_driver_activate(wfi);
+#endif
 			ResumeThread(wfi->updateThread);
 		}
 
@@ -230,8 +231,10 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 
 		if (client->activated)
 		{
-			//if (wfi->activePeerCount <= 1)
-				//wf_mirror_driver_deactivate(wfi);
+			if (wfi->activePeerCount <= 1)
+			{
+				wf_mirror_driver_deactivate(wfi);
+			}
 
 			client->activated = false;
 			wfi->activePeerCount--;

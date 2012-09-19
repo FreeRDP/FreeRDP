@@ -61,7 +61,7 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 	DWORD dwType;
 	DWORD dwSize;
 	char* strA;
-	TCHAR* strX;
+	TCHAR* strX = NULL;
 
 	status = RegOpenKeyEx(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
