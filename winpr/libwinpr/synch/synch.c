@@ -23,21 +23,7 @@
 
 #include <winpr/synch.h>
 
-/**
- * Sleep
- * SleepEx
- */
-
-#ifndef _WIN32
-
-VOID Sleep(DWORD dwMilliseconds)
+void winpr_synch_dummy()
 {
 
 }
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return TRUE;
-}
-
-#endif

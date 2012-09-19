@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Mutex Utils
+ * WinPR: Windows Portable Runtime
+ * Synchronization Functions
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,33 @@
  * limitations under the License.
  */
 
-#ifndef __MUTEX_UTILS_H
-#define __MUTEX_UTILS_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <freerdp/api.h>
+#include <winpr/synch.h>
 
-typedef void* freerdp_mutex;
+/**
+ * WakeByAddressAll
+ * WakeByAddressSingle
+ * WaitOnAddress
+ */
 
-FREERDP_API freerdp_mutex freerdp_mutex_new(void);
-FREERDP_API void freerdp_mutex_free(freerdp_mutex mutex);
-FREERDP_API void freerdp_mutex_lock(freerdp_mutex mutex);
-FREERDP_API void freerdp_mutex_unlock(freerdp_mutex mutex);
+#ifndef _WIN32
 
-#endif /* __MUTEX_UTILS_H */
+VOID WakeByAddressAll(PVOID Address)
+{
+
+}
+
+VOID WakeByAddressSingle(PVOID Address)
+{
+
+}
+
+BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_T AddressSize, DWORD dwMilliseconds)
+{
+	return TRUE;
+}
+
+#endif

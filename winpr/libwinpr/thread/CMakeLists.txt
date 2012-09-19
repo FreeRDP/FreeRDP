@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# libwinpr-synch cmake build script
+# libwinpr-thread cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -18,29 +18,19 @@
 set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
-set(WINPR_SYNCH_SRCS
-	address.c
-	barrier.c
-	condition.c
-	critical.c
-	event.c
-	init.c
-	mutex.c
-	semaphore.c
-	sleep.c
-	srw.c
-	synch.c
-	synch.h
-	timer.c
-	wait.c)
+set(WINPR_THREAD_SRCS
+	process.c
+	processor.c
+	thread.c
+	tls.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-synch OBJECT ${WINPR_SYNCH_SRCS})
+	add_library(winpr-thread OBJECT ${WINPR_THREAD_SRCS})
 else()
-	add_library(winpr-synch ${WINPR_SYNCH_SRCS})
+	add_library(winpr-thread ${WINPR_THREAD_SRCS})
 endif()
 
-set_target_properties(winpr-synch PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-thread PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 set(WINPR_SYNCH_LIBS
 	${CMAKE_THREAD_LIBS_INIT}
@@ -57,7 +47,7 @@ else()
 		set(WINPR_SYNCH_LIBS ${WINPR_SYNCH_LIBS} winpr-handle)
 	endif()
 
-	target_link_libraries(winpr-synch ${WINPR_SYNCH_LIBS})
-	install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(winpr-thread ${WINPR_SYNCH_LIBS})
+	install(TARGETS winpr-thread DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

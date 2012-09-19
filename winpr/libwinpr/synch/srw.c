@@ -24,20 +24,50 @@
 #include <winpr/synch.h>
 
 /**
- * Sleep
- * SleepEx
+ * InitializeSRWLock
+ * AcquireSRWLockExclusive
+ * AcquireSRWLockShared
+ * TryAcquireSRWLockExclusive
+ * TryAcquireSRWLockShared
+ * ReleaseSRWLockExclusive
+ * ReleaseSRWLockShared
  */
 
 #ifndef _WIN32
 
-VOID Sleep(DWORD dwMilliseconds)
+VOID InitializeSRWLock(PSRWLOCK SRWLock)
 {
 
 }
 
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+VOID AcquireSRWLockExclusive(PSRWLOCK SRWLock)
+{
+
+}
+
+VOID AcquireSRWLockShared(PSRWLOCK SRWLock)
+{
+
+}
+
+BOOL TryAcquireSRWLockExclusive(PSRWLOCK SRWLock)
 {
 	return TRUE;
+}
+
+BOOL TryAcquireSRWLockShared(PSRWLOCK SRWLock)
+{
+	return TRUE;
+}
+
+VOID ReleaseSRWLockExclusive(PSRWLOCK SRWLock)
+{
+
+}
+
+VOID ReleaseSRWLockShared(PSRWLOCK SRWLock)
+{
+
 }
 
 #endif

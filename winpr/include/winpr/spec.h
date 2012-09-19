@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Synchronization Functions
+ * Compiler Specification Strings
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,27 +17,25 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef WINPR_SPEC_H
+#define WINPR_SPEC_H
+
+#if defined(__x86_64) && \
+		!(defined(_X86_) || defined(__i386__) || defined(_IA64_))
+#if !defined(_AMD64_)
+#define _AMD64_
 #endif
+#endif /* _AMD64_ */
 
-#include <winpr/synch.h>
-
-/**
- * Sleep
- * SleepEx
- */
-
-#ifndef _WIN32
-
-VOID Sleep(DWORD dwMilliseconds)
-{
-
-}
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return TRUE;
-}
-
+#ifndef DECLSPEC_ALIGN
+#if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#define DECLSPEC_ALIGN(x) __declspec(align(x))
+#elif defined(__GNUC__)
+#define DECLSPEC_ALIGN(x) __attribute__ ((__aligned__ (x)))
+#else
+#define DECLSPEC_ALIGN(x)
 #endif
+#endif /* DECLSPEC_ALIGN */
+
+#endif /* WINPR_SPEC_H */
+

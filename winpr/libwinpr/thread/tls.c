@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * WinPR: Windows Portable Runtime
+ * Process Thread Functions
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,42 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <freerdp/api.h>
+#include <winpr/handle.h>
 
-typedef void* freerdp_sem;
+#include <winpr/thread.h>
 
-FREERDP_API freerdp_sem freerdp_sem_new(int iv);
-FREERDP_API void freerdp_sem_free(freerdp_sem sem);
-FREERDP_API void freerdp_sem_signal(freerdp_sem sem);
-FREERDP_API void freerdp_sem_wait(freerdp_sem sem);
+/**
+ * TlsAlloc
+ * TlsFree
+ * TlsGetValue
+ * TlsSetValue
+ */
 
-#endif /* __SEMAPHORE_UTILS_H */
+#ifndef _WIN32
+
+DWORD TlsAlloc(VOID)
+{
+	return 0;
+}
+
+LPVOID TlsGetValue(DWORD dwTlsIndex)
+{
+	return NULL;
+}
+
+BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
+{
+	return TRUE;
+}
+
+BOOL TlsFree(DWORD dwTlsIndex)
+{
+	return TRUE;
+}
+
+#endif
+

@@ -160,6 +160,23 @@ typedef union _ULARGE_INTEGER
 	ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 
+typedef union _LARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	};
+
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	} u;
+
+	LONGLONG QuadPart;
+} LARGE_INTEGER, *PLARGE_INTEGER;
+
 typedef struct _FILETIME
 {
 	DWORD dwLowDateTime;
@@ -207,6 +224,17 @@ typedef struct _SECURITY_ATTRIBUTES
 	LPVOID lpSecurityDescriptor;
 	BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+
+typedef struct _PROCESS_INFORMATION
+{
+	HANDLE hProcess;
+	HANDLE hThread;
+	DWORD dwProcessId;
+	DWORD dwThreadId;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
+
+typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
 typedef void* HMODULE;
 typedef void* FARPROC;

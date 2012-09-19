@@ -29,19 +29,12 @@
 #else
 #include <time.h>
 #include <sys/timeb.h>
-
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
-struct timeval
-{
-	long tv_sec;
-	long tv_usec;
-};
-#endif
+#include <winpr/windows.h>
 
 int gettimeofday(struct timeval* tp, void* tz)
 {
 	struct _timeb timebuffer;
-	_ftime (&timebuffer);
+	_ftime(&timebuffer);
 	tp->tv_sec = (long) timebuffer.time;
 	tp->tv_usec = timebuffer.millitm * 1000;
 	return 0;

@@ -24,18 +24,24 @@
 #include <winpr/synch.h>
 
 /**
- * Sleep
- * SleepEx
+ * InitializeSynchronizationBarrier
+ * EnterSynchronizationBarrier
+ * DeleteSynchronizationBarrier
  */
 
 #ifndef _WIN32
 
-VOID Sleep(DWORD dwMilliseconds)
+BOOL InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
 {
-
+	return TRUE;
 }
 
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+BOOL EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
+{
+	return TRUE;
+}
+
+BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 {
 	return TRUE;
 }

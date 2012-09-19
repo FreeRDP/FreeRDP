@@ -24,20 +24,32 @@
 #include <winpr/synch.h>
 
 /**
- * Sleep
- * SleepEx
+ * InitOnceBeginInitialize
+ * InitOnceComplete
+ * InitOnceExecuteOnce
+ * InitOnceInitialize
  */
 
 #ifndef _WIN32
 
-VOID Sleep(DWORD dwMilliseconds)
-{
-
-}
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)
 {
 	return TRUE;
+}
+
+BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext)
+{
+	return TRUE;
+}
+
+BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context)
+{
+	return TRUE;
+}
+
+VOID InitOnceInitialize(PINIT_ONCE InitOnce)
+{
+
 }
 
 #endif

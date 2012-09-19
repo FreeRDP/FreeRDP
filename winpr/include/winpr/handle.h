@@ -25,6 +25,21 @@
 #include <string.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/security.h>
+
+#define HANDLE_TYPE_NONE			0
+#define HANDLE_TYPE_THREAD			1
+#define HANDLE_TYPE_EVENT			2
+#define HANDLE_TYPE_MUTEX			3
+#define HANDLE_TYPE_SEMAPHORE			4
+#define HANDLE_TYPE_TIMER			5
+
+WINPR_API HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object);
+WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);
+
+WINPR_API ULONG winpr_Handle_GetType(HANDLE handle);
+WINPR_API PVOID winpr_Handle_GetObject(HANDLE handle);
+WINPR_API BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject);
 
 #ifndef _WIN32
 

@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Synchronization Functions
+ * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -21,23 +21,24 @@
 #include "config.h"
 #endif
 
-#include <winpr/synch.h>
+#include <winpr/handle.h>
+
+#include <winpr/thread.h>
 
 /**
- * Sleep
- * SleepEx
+ * GetCurrentProcessorNumber
+ * GetCurrentProcessorNumberEx
+ * GetThreadIdealProcessorEx
+ * SetThreadIdealProcessorEx
+ * IsProcessorFeaturePresent
  */
 
 #ifndef _WIN32
 
-VOID Sleep(DWORD dwMilliseconds)
+DWORD GetCurrentProcessorNumber(VOID)
 {
-
-}
-
-DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
-{
-	return TRUE;
+	return 0;
 }
 
 #endif
+
