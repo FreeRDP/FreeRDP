@@ -45,40 +45,24 @@ else()
 	add_executable(wfreerdp-server ${WFREERDP_SERVER_SRCS})
 endif()
 
+if(WITH_WIN8)
+	set(WFREERDP_SERVER_LIBS
+		d3d11.lib
+		dxgi.lib
+		dxguid.lib)
+endif()
+
 if(WITH_MONOLITHIC_BUILD)
-	set(WFREERDP_SERVER_LIBS freerdp)
+	set(WFREERDP_SERVER_LIBS ${WFREERDP_SERVER_LIBS} freerdp)
 else()
-
-	if(WITH_WIN8)	
-	
-		set(WFREERDP_SERVER_LIBS
-			freerdp-core
-
-			freerdp-utils
-
-			freerdp-codec
-
-			freerdp-channels
-			
-			d3d11.lib
-			
-			dxgi.lib
-			
-			dxguid.lib)
-	else()
-		set(WFREERDP_SERVER_LIBS
-			freerdp-core
-
-			freerdp-utils
-
-			freerdp-codec
-
-			freerdp-channels)
-	endif()
+	set(WFREERDP_SERVER_LIBS ${WFREERDP_SERVER_LIBS}
+		freerdp-core
+		freerdp-utils
+		freerdp-codec
+		freerdp-channels)
 endif()
 
 target_link_libraries(wfreerdp-server ${WFREERDP_SERVER_LIBS})
-
 
 if(WITH_SERVER_INTERFACE)
 	install(TARGETS wfreerdp-server DESTINATION ${CMAKE_INSTALL_LIBDIR})
