@@ -208,7 +208,9 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
 	{
 		if (wfi->activePeerCount < 1)
 		{
-			//wf_mirror_driver_activate(wfi);
+#ifndef WITH_WIN8
+			wf_mirror_driver_activate(wfi);
+#endif
 			ResumeThread(wfi->updateThread);
 		}
 
