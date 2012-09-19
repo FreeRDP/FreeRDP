@@ -309,9 +309,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
 
 #ifdef WITH_WIN8
-	
 	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
-	
 #else
 	{
 		long offset;
