@@ -56,7 +56,7 @@ freerdp_sem freerdp_sem_new(int iv)
 #if defined __APPLE__
 	semaphore_create(mach_task_self(), sem, SYNC_POLICY_FIFO, iv);
 #elif defined _WIN32
-	*sem = CreateSemaphore(NULL, 0, iv, NULL);
+	*sem = CreateSemaphore(NULL, iv, 16, NULL);
 #else
 	sem_init(sem, 0, iv);
 #endif
