@@ -191,8 +191,13 @@ int wf_dxgi_init(wfInfo* context)
 	return 0;
 }
 
-int wf_dxgi_cleanup(wfInfo* context)
+int wf_dxgi_cleanup(wfInfo* wfi)
 {
+	if(wfi->framesWaiting > 0)
+	{
+		wf_dxgi_releasePixelData(wfi);
+	}
+
 	if(MeinAcquiredDesktopImage)
 	{
 		MeinAcquiredDesktopImage->lpVtbl->Release(MeinAcquiredDesktopImage);

@@ -231,8 +231,10 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 
 		if (client->activated)
 		{
-			//if (wfi->activePeerCount <= 1)
-				//wf_mirror_driver_deactivate(wfi);
+			if (wfi->activePeerCount <= 1)
+			{
+				wf_mirror_driver_deactivate(wfi);
+			}
 
 			client->activated = false;
 			wfi->activePeerCount--;
