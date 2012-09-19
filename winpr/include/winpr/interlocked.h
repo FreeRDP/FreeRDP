@@ -26,6 +26,37 @@
 
 #ifndef _WIN32
 
+typedef struct _LIST_ENTRY LIST_ENTRY;
+typedef struct _LIST_ENTRY* PLIST_ENTRY;
+
+struct _LIST_ENTRY
+{
+	PLIST_ENTRY Flink;
+	PLIST_ENTRY Blink;
+};
+
+typedef struct _SINGLE_LIST_ENTRY SINGLE_LIST_ENTRY;
+typedef struct _SINGLE_LIST_ENTRY* PSINGLE_LIST_ENTRY;
+
+struct _SINGLE_LIST_ENTRY
+{
+	PSINGLE_LIST_ENTRY Next;
+};
+
+typedef struct LIST_ENTRY32
+{
+	DWORD Flink;
+	DWORD Blink;
+} LIST_ENTRY32;
+typedef LIST_ENTRY32 *PLIST_ENTRY32;
+
+typedef struct LIST_ENTRY64
+{
+	ULONGLONG Flink;
+	ULONGLONG Blink;
+} LIST_ENTRY64;
+typedef LIST_ENTRY64 *PLIST_ENTRY64;
+
 #ifdef _AMD64_
 
 typedef struct _SLIST_ENTRY *PSLIST_ENTRY;
