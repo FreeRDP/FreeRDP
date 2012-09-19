@@ -106,8 +106,6 @@ wfInfo* wf_info_init()
 	BOOL bOsVersionInfoEx;
 	*/
 
-
-
 	wfi = (wfInfo*) malloc(sizeof(wfInfo));
 	ZeroMemory(wfi, sizeof(wfInfo));
 
@@ -187,7 +185,6 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
@@ -195,7 +192,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		if(wfi->peerCount == 0)
+		if (wfi->peerCount == 0)
 		{
 #ifdef WITH_WIN8
 			wf_dxgi_init(wfi);
@@ -237,20 +234,12 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-
 	if(wfi->framesWaiting == 0)
 		return FALSE;
-
 #else
-
 	if (wfi->nextUpdate == wfi->lastUpdate)
 		return FALSE;
-
 #endif
-	
-		
-
-
 	return TRUE;
 }
 
@@ -271,11 +260,8 @@ void wf_info_update_changes(wfInfo* wfi)
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-
 	wf_dxgi_getInvalidRegion(&wfi->invalid);
-	
 #else
-	
 	int i;
 	GETCHANGESBUF* buf;
 
@@ -285,7 +271,6 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	{
 		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
 	}
-	
 #endif
 
 	if (wfi->invalid.left < 0)
@@ -329,16 +314,16 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits
 	
 #else
 	{
-	long offset;
-	GETCHANGESBUF* changes;
-	changes = (GETCHANGESBUF*) wfi->changeBuffer;
+		long offset;
+		GETCHANGESBUF* changes;
+		changes = (GETCHANGESBUF*) wfi->changeBuffer;
 
-	*width += 1;
-	*height += 1;
+		*width += 1;
+		*height += 1;
 
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-	*pBits = ((uint8*) (changes->Userbuffer)) + offset;
-	*pitch = wfi->width * 4;
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+		*pitch = wfi->width * 4;
 	}
 	
 #endif

@@ -619,7 +619,7 @@ rdpChannels* freerdp_channels_new(void)
 	channels->sync_data_mutex = CreateMutex(NULL, FALSE, NULL);
 	channels->sync_data_list = list_new();
 
-	channels->event_sem = CreateSemaphore(NULL, 0, 1, NULL);
+	channels->event_sem = CreateSemaphore(NULL, 1, 16, NULL);
 	channels->signal = wait_obj_new();
 
 	/* Add it to the global list */
