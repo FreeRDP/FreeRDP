@@ -97,7 +97,7 @@ void freerdp_bitmap_write(char* filename, void* data, int width, int height, int
 	info_header.vres = height;
 	info_header.ncolors = 0;
 	info_header.nimpcolors = 0;
-	info_header.header_sz = sizeof(BITMAPINFOHEADER);
+	info_header.header_sz = sizeof(BITMAP_INFO_HEADER);
 
 	fwrite((void*) &magic, sizeof(BITMAP_MAGIC), 1, fp);
 	fwrite((void*) &header, sizeof(BITMAP_CORE_HEADER), 1, fp);
