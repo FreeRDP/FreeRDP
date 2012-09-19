@@ -236,5 +236,7 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 
 #endif
 
+WINPR_API void winpr_synch_dummy();
+
 #endif /* WINPR_SYNCH_H */
 

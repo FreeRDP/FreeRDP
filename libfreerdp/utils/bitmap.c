@@ -31,7 +31,7 @@
 typedef struct
 {
 	uint8 magic[2];
-} bmpfile_magic;
+} BITMAP_MAGIC;
 
 typedef struct
 {
@@ -39,7 +39,7 @@ typedef struct
 	uint16 creator1;
 	uint16 creator2;
 	uint32 bmp_offset;
-} bmpfile_header;
+} BITMAP_CORE_HEADER;
 
 typedef struct
 {
@@ -54,14 +54,14 @@ typedef struct
 	sint32 vres;
 	uint32 ncolors;
 	uint32 nimpcolors;
-} BITMAPINFOHEADER;
+} BITMAP_INFO_HEADER;
 
 void freerdp_bitmap_write(char* filename, void* data, int width, int height, int bpp)
 {
 	FILE* fp;
-	bmpfile_magic magic;
-	bmpfile_header header;
-	BITMAPINFOHEADER info_header;
+	BITMAP_MAGIC magic;
+	BITMAP_CORE_HEADER header;
+	BITMAP_INFO_HEADER info_header;
 
 	fp = fopen(filename, "w+b");
 
@@ -78,9 +78,9 @@ void freerdp_bitmap_write(char* filename, void* data, int width, int height, int
 	header.creator2 = 0;
 
 	header.bmp_offset =
-			sizeof(bmpfile_magic) +
-			sizeof(bmpfile_header) +
-			sizeof(BITMAPINFOHEADER);
+			sizeof(BITMAP_MAGIC) +
+			sizeof(BITMAP_CORE_HEADER) +
+			sizeof(BITMAP_INFO_HEADER);
 
 	info_header.bmp_bytesz = width * height * (bpp / 8);
 
@@ -99,9 +99,9 @@ void freerdp_bitmap_write(char* filename, void* data, int width, int height, int
 	info_header.nimpcolors = 0;
 	info_header.header_sz = sizeof(BITMAPINFOHEADER);
 
-	fwrite((void*) &magic, sizeof(bmpfile_magic), 1, fp);
-	fwrite((void*) &header, sizeof(bmpfile_header), 1, fp);
-	fwrite((void*) &info_header, sizeof(BITMAPINFOHEADER), 1, fp);
+	fwrite((void*) &magic, sizeof(BITMAP_MAGIC), 1, fp);
+	fwrite((void*) &header, sizeof(BITMAP_CORE_HEADER), 1, fp);
+	fwrite((void*) &info_header, sizeof(BITMAP_INFO_HEADER), 1, fp);
 	fwrite((void*) data, info_header.bmp_bytesz, 1, fp);
 
 	fclose(fp);

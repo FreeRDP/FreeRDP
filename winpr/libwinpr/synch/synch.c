@@ -23,3 +23,7 @@
 
 #include <winpr/synch.h>
 
+void winpr_synch_dummy()
+{
+
+}
