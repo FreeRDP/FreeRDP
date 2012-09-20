@@ -62,6 +62,9 @@ typedef short SHORT;
 #define TRUE			1
 #endif
 
+#define CONST const
+#define CALLBACK
+
 typedef void* HANDLE, *LPHANDLE;
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -82,10 +85,9 @@ typedef signed int LONG32;
 typedef signed __int64 LONG64;
 typedef const char* LPCSTR;
 
-typedef const WCHAR* LPCWSTR;
-typedef char* PSTR, *LPSTR;
-
 typedef WCHAR* LPWSTR, *PWSTR;
+typedef const WCHAR *LPCWSTR,*PCWSTR;
+typedef char* PSTR, *LPSTR;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
@@ -182,6 +184,18 @@ typedef struct _FILETIME
 	DWORD dwLowDateTime;
 	DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct _SYSTEMTIME
+{
+	WORD wYear;
+	WORD wMonth;
+	WORD wDayOfWeek;
+	WORD wDay;
+	WORD wHour;
+	WORD wMinute;
+	WORD wSecond;
+	WORD wMilliseconds;
+} SYSTEMTIME,*PSYSTEMTIME,*LPSYSTEMTIME;
 
 typedef struct _RPC_SID_IDENTIFIER_AUTHORITY
 {

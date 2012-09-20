@@ -25,7 +25,9 @@
 
 #ifndef _WIN32
 
+#include <sys/socket.h>
 
+typedef struct sockaddr_storage SOCKADDR_STORAGE;
 
 #endif
 
