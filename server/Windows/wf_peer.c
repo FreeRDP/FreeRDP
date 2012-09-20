@@ -138,6 +138,8 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	ZeroMemory(rfds, sizeof(rfds));
 	context = (wfPeerContext*) client->context;
 
+	printf("PeerSocketListener\n");
+
 	while (1)
 	{
 		rcount = 0;
@@ -220,10 +222,14 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	wfi = context->info;
 	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	printf("socketEvent created\n");
+
 	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
 	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+
+	printf("Setting Handles\n");
 
 	nCount = 0;
 	handles[nCount++] = context->updateEvent;
@@ -232,6 +238,12 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if ((status == WAIT_FAILED) || (status == WAIT_TIMEOUT))
+		{
+			printf("WaitForMultipleObjects failed\n");
+			break;
+		}
 
 		if (WaitForSingleObject(context->updateEvent, 0) == 0)
 		{
