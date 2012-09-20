@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Compiler Specification Strings
+ * Time Zone
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,31 +17,30 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_SPEC_H
-#define WINPR_SPEC_H
-
-#if defined(__x86_64) && \
-		!(defined(_X86_) || defined(__i386__) || defined(_IA64_))
-#if !defined(_AMD64_)
-#define _AMD64_
-#endif
-#endif /* _AMD64_ */
-
-#ifndef DECLSPEC_ALIGN
-#if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#define DECLSPEC_ALIGN(x) __declspec(align(x))
-#elif defined(__GNUC__)
-#define DECLSPEC_ALIGN(x) __attribute__ ((__aligned__ (x)))
-#else
-#define DECLSPEC_ALIGN(x)
-#endif
-#endif /* DECLSPEC_ALIGN */
-
-#ifdef _AMD64_
-#define MEMORY_ALLOCATION_ALIGNMENT 16
-#else
-#define MEMORY_ALLOCATION_ALIGNMENT 8
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
-#endif /* WINPR_SPEC_H */
+#include <winpr/timezone.h>
 
+/**
+ * api-ms-win-core-timezone-l1-1-0.dll:
+ * 
+ * EnumDynamicTimeZoneInformation
+ * FileTimeToSystemTime
+ * GetDynamicTimeZoneInformation
+ * GetDynamicTimeZoneInformationEffectiveYears
+ * GetTimeZoneInformation
+ * GetTimeZoneInformationForYear
+ * SetDynamicTimeZoneInformation
+ * SetTimeZoneInformation
+ * SystemTimeToFileTime
+ * SystemTimeToTzSpecificLocalTime
+ * TzSpecificLocalTimeToSystemTime
+ */
+
+#ifndef _WIN32
+
+
+
+#endif

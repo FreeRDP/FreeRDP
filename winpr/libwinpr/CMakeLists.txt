@@ -41,6 +41,9 @@ add_subdirectory(sspicli)
 add_subdirectory(sspi)
 add_subdirectory(registry)
 add_subdirectory(library)
+add_subdirectory(timezone)
+add_subdirectory(winsock)
+add_subdirectory(winhttp)
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(winpr
@@ -59,7 +62,10 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-sspicli>
 		$<TARGET_OBJECTS:winpr-sspi>
 		$<TARGET_OBJECTS:winpr-registry>
-		$<TARGET_OBJECTS:winpr-library>)
+		$<TARGET_OBJECTS:winpr-library>
+		$<TARGET_OBJECTS:winpr-timezone>
+		$<TARGET_OBJECTS:winpr-winsock>
+		$<TARGET_OBJECTS:winpr-winhttp>)
 	
 	set_target_properties(winpr PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 

@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Compiler Specification Strings
+ * Windows Sockets (Winsock)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,31 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_SPEC_H
-#define WINPR_SPEC_H
+#ifndef WINPR_WINSOCK_H
+#define WINPR_WINSOCK_H
 
-#if defined(__x86_64) && \
-		!(defined(_X86_) || defined(__i386__) || defined(_IA64_))
-#if !defined(_AMD64_)
-#define _AMD64_
-#endif
-#endif /* _AMD64_ */
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
-#ifndef DECLSPEC_ALIGN
-#if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#define DECLSPEC_ALIGN(x) __declspec(align(x))
-#elif defined(__GNUC__)
-#define DECLSPEC_ALIGN(x) __attribute__ ((__aligned__ (x)))
-#else
-#define DECLSPEC_ALIGN(x)
-#endif
-#endif /* DECLSPEC_ALIGN */
+#ifndef _WIN32
 
-#ifdef _AMD64_
-#define MEMORY_ALLOCATION_ALIGNMENT 16
-#else
-#define MEMORY_ALLOCATION_ALIGNMENT 8
+
+
 #endif
 
-#endif /* WINPR_SPEC_H */
+#endif /* WINPR_WINSOCK_H */
 
