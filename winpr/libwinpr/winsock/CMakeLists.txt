@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# libwinpr-crt cmake build script
+# libwinpr-winsock cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,21 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_CRT_SRCS
-	alignment.c
-	memory.c
-	string.c)
+set(WINPR_WINSOCK_SRCS
+	winsock.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-crt OBJECT ${WINPR_CRT_SRCS})
+	add_library(winpr-winsock OBJECT ${WINPR_WINSOCK_SRCS})
 else()
-	add_library(winpr-crt ${WINPR_CRT_SRCS})
+	add_library(winpr-winsock ${WINPR_WINSOCK_SRCS})
 endif()
 
-set_target_properties(winpr-crt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-winsock PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+if(WIN32)
+	set(WINPR_WINSOCK_LIBS ${WINPR_WINSOCK_LIBS} ws2_32)
+endif()
 
 if(WITH_MONOLITHIC_BUILD)
-
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_WINSOCK_LIBS} PARENT_SCOPE)
 else()
-	install(TARGETS winpr-crt DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(winpr-winsock ${WINPR_WINSOCK_LIBS})
+	install(TARGETS winpr-winsock DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()

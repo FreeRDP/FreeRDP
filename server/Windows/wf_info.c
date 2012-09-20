@@ -106,8 +106,6 @@ wfInfo* wf_info_init()
 	BOOL bOsVersionInfoEx;
 	*/
 
-
-
 	wfi = (wfInfo*) malloc(sizeof(wfInfo));
 	ZeroMemory(wfi, sizeof(wfInfo));
 
@@ -127,6 +125,7 @@ wfInfo* wf_info_init()
 		}
 
 		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		printf("updateEvent created\n");
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 
@@ -187,7 +186,6 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
@@ -195,16 +193,12 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		if(wfi->peerCount == 0)
-		{
 #ifdef WITH_WIN8
+		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
+#else
+		wf_mirror_driver_activate(wfi);
 #endif
-		}
-		else
-		{
-			wf_mirror_driver_activate(wfi);
-		}
 
 		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
 
@@ -223,12 +217,10 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 		printf("Unregistering Peer: %d\n", wfi->peerCount);
 
-		if(wfi->peerCount == 0)
-		{
 #ifdef WITH_WIN8
+		if (wfi->peerCount == 0)
 			wf_dxgi_cleanup(wfi);
 #endif
-		}
 
 		wf_info_unlock(wfi);
 	}
@@ -237,20 +229,12 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-
 	if(wfi->framesWaiting == 0)
 		return FALSE;
-
 #else
-
 	if (wfi->nextUpdate == wfi->lastUpdate)
 		return FALSE;
-
 #endif
-	
-		
-
-
 	return TRUE;
 }
 
@@ -259,23 +243,18 @@ void wf_info_update_changes(wfInfo* wfi)
 #ifdef WITH_WIN8
 	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
 #else
-	
 	GETCHANGESBUF* buf;
 
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 	wfi->nextUpdate = buf->buffer->counter;
-	
 #endif
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-
 	wf_dxgi_getInvalidRegion(&wfi->invalid);
-	
 #else
-	
 	int i;
 	GETCHANGESBUF* buf;
 
@@ -285,11 +264,10 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	{
 		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
 	}
-	
 #endif
 
 	if (wfi->invalid.left < 0)
-	wfi->invalid.left = 0;
+		wfi->invalid.left = 0;
 
 	if (wfi->invalid.top < 0)
 		wfi->invalid.top = 0;
@@ -299,7 +277,6 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	if (wfi->invalid.bottom >= wfi->height)
 		wfi->invalid.bottom = wfi->height - 1;
-	
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)
@@ -324,22 +301,19 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
 
 #ifdef WITH_WIN8
-	
 	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
-	
 #else
 	{
-	long offset;
-	GETCHANGESBUF* changes;
-	changes = (GETCHANGESBUF*) wfi->changeBuffer;
+		long offset;
+		GETCHANGESBUF* changes;
+		changes = (GETCHANGESBUF*) wfi->changeBuffer;
 
-	*width += 1;
-	*height += 1;
+		*width += 1;
+		*height += 1;
 
-	offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-	*pBits = ((uint8*) (changes->Userbuffer)) + offset;
-	*pitch = wfi->width * 4;
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+		*pitch = wfi->width * 4;
 	}
-	
 #endif
 }

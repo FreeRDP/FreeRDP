@@ -74,32 +74,56 @@ USHORT QueryDepthSList(PSLIST_HEADER ListHead)
 
 LONG InterlockedIncrement(LONG volatile *Addend)
 {
+#ifdef __GNUC__
+	return __sync_add_and_fetch(Addend, 1);
+#else
 	return 0;
+#endif
 }
 
 LONG InterlockedDecrement(LONG volatile *Addend)
 {
+#ifdef __GNUC__
+	return __sync_sub_and_fetch(Addend, 1);
+#else
 	return 0;
+#endif
 }
 
 LONG InterlockedExchange(LONG volatile *Target, LONG Value)
 {
+#ifdef __GNUC__
+	return __sync_val_compare_and_swap(Target, *Target, Value);
+#else
 	return 0;
+#endif
 }
 
 LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value)
 {
+#ifdef __GNUC__
+	return __sync_add_and_fetch(Addend, Value);
+#else
 	return 0;
+#endif
 }
 
-LONG InterlockedCompareExchange(LONG volatile *Destination,LONG ExChange, LONG Comperand)
+LONG InterlockedCompareExchange(LONG volatile *Destination, LONG ExChange, LONG Comperand)
 {
+#ifdef __GNUC__
+	return __sync_val_compare_and_swap(Destination, Comperand, ExChange);
+#else
 	return 0;
+#endif
 }
 
 LONG64 InterlockedCompareExchange64(LONG64 volatile *Destination, LONG64 ExChange, LONG64 Comperand)
 {
+#ifdef __GNUC__
+	return __sync_val_compare_and_swap(Destination, Comperand, ExChange);
+#else
 	return 0;
+#endif
 }
 
 #endif

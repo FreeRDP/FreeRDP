@@ -137,6 +137,8 @@ WINPR_API DWORD GetCurrentProcessorNumber(VOID);
 
 /* Thread-Local Storage */
 
+#define TLS_OUT_OF_INDEXES	((DWORD) 0xFFFFFFFF)
+
 WINPR_API DWORD TlsAlloc(VOID);
 WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);
 WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue);

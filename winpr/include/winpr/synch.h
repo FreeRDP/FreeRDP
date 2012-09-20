@@ -87,8 +87,6 @@ WINPR_API BOOL ResetEvent(HANDLE hEvent);
 
 /* One-Time Initialization */
 
-#define CALLBACK
-
 typedef union _RTL_RUN_ONCE
 {
 	PVOID Ptr;
