@@ -22,14 +22,23 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/windows.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#if (_WIN32_WINNT < 0x0600)
+
+PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
+
+#endif /* (_WIN32_WINNT < 0x0600) */
+
+#else /* _WIN32 */
 
 #include <sys/socket.h>
 
 typedef struct sockaddr_storage SOCKADDR_STORAGE;
 
-#endif
+#endif /* _WIN32 */
 
 #endif /* WINPR_WINSOCK_H */
 

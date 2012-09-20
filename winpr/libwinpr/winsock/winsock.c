@@ -208,8 +208,42 @@
  * WSCWriteProviderOrderEx
  */
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#if (_WIN32_WINNT < 0x0600)
+
+PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
+{
+	if (Family == AF_INET)
+	{
+		struct sockaddr_in in;
+
+		memset(&in, 0, sizeof(in));
+		in.sin_family = AF_INET;
+		memcpy(&in.sin_addr, pAddr, sizeof(struct in_addr));
+		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in), pStringBuf, StringBufSize, NULL, 0, NI_NUMERICHOST);
+
+		return pStringBuf;
+	}
+	else if (Family == AF_INET6)
+	{
+		struct sockaddr_in6 in;
+
+		memset(&in, 0, sizeof(in));
+		in.sin6_family = AF_INET6;
+		memcpy(&in.sin6_addr, pAddr, sizeof(struct in_addr6));
+		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in6), pStringBuf, StringBufSize, NULL, 0, NI_NUMERICHOST);
+
+		return pStringBuf;
+	}
+
+	return NULL;
+}
+
+#endif /* (_WIN32_WINNT < 0x0600) */
+
+#else /* _WIN32 */
 
 
 
-#endif
+#endif  /* _WIN32 */
