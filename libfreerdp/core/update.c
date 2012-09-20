@@ -473,16 +473,19 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+
 	if (pointer_system->type == SYSPTR_NULL)
 		updateCode = FASTPATH_UPDATETYPE_PTR_NULL;
 	else
 		updateCode = FASTPATH_UPDATETYPE_PTR_DEFAULT;
+	
 	fastpath_send_update_pdu(rdp->fastpath, updateCode, s);
 }
 
 static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 {
 	stream_check_size(s, 15 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
+
 	stream_write_uint16(s, pointer_color->cacheIndex);
 	stream_write_uint16(s, pointer_color->xPos);
 	stream_write_uint16(s, pointer_color->yPos);
@@ -490,10 +493,13 @@ static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_
 	stream_write_uint16(s, pointer_color->height);
 	stream_write_uint16(s, pointer_color->lengthAndMask);
 	stream_write_uint16(s, pointer_color->lengthXorMask);
+
 	if (pointer_color->lengthXorMask > 0)
 		stream_write(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
+	
 	if (pointer_color->lengthAndMask > 0)
 		stream_write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
+	
 	stream_write_uint8(s, 0); /* pad (1 byte) */
 }
 
@@ -530,17 +536,29 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 
 boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 {
+	int index;
 	uint8 numberOfAreas;
+	RECTANGLE_16* areas;
 
 	if (stream_get_left(s) < 4)
 		return false;
 
 	stream_read_uint8(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
-	if (stream_get_left(s) < numberOfAreas * 8)
-		return false;
 
-	IFCALL(update->RefreshRect, update->context, numberOfAreas, (RECTANGLE_16*) stream_get_tail(s));
+	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
+
+	for (index = 0; index < numberOfAreas; index++)
+	{
+		stream_read_uint16(s, areas[index].left);
+		stream_read_uint16(s, areas[index].top);
+		stream_read_uint16(s, areas[index].right);
+		stream_read_uint16(s, areas[index].bottom);
+	}
+
+	IFCALL(update->RefreshRect, update->context, numberOfAreas, areas);
+
+	free(areas);
 
 	return true;
 }
@@ -554,6 +572,7 @@ boolean update_read_suppress_output(rdpUpdate* update, STREAM* s)
 
 	stream_read_uint8(s, allowDisplayUpdates);
 	stream_seek(s, 3); /* pad3Octects */
+
 	if (allowDisplayUpdates > 0 && stream_get_left(s) < 8)
 		return false;
 

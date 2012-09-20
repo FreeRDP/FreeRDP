@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Semaphore Utils
+ * WinPR: Windows Portable Runtime
+ * Synchronization Functions
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,33 @@
  * limitations under the License.
  */
 
-#ifndef __SEMAPHORE_UTILS_H
-#define __SEMAPHORE_UTILS_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <freerdp/api.h>
+#include <winpr/synch.h>
 
-typedef void* freerdp_sem;
+/**
+ * WakeByAddressAll
+ * WakeByAddressSingle
+ * WaitOnAddress
+ */
 
-FREERDP_API freerdp_sem freerdp_sem_new(int iv);
-FREERDP_API void freerdp_sem_free(freerdp_sem sem);
-FREERDP_API void freerdp_sem_signal(freerdp_sem sem);
-FREERDP_API void freerdp_sem_wait(freerdp_sem sem);
+#ifndef _WIN32
 
-#endif /* __SEMAPHORE_UTILS_H */
+VOID WakeByAddressAll(PVOID Address)
+{
+
+}
+
+VOID WakeByAddressSingle(PVOID Address)
+{
+
+}
+
+BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_T AddressSize, DWORD dwMilliseconds)
+{
+	return TRUE;
+}
+
+#endif

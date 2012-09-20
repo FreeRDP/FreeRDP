@@ -52,13 +52,13 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/semaphore.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
+
+#include <winpr/synch.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -71,7 +71,7 @@
 
 #include "xfreerdp.h"
 
-static freerdp_sem g_sem;
+static HANDLE g_sem;
 static int g_thread_count = 0;
 static uint8 g_disconnect_reason = 0;
 
@@ -1256,7 +1256,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
 	if (g_thread_count < 1)
-		freerdp_sem_signal(g_sem);
+		ReleaseSemaphore(g_sem, 1, NULL);
 
 	pthread_exit(NULL);
 }
@@ -1294,7 +1294,7 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_init();
 
-	g_sem = freerdp_sem_new(1);
+	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
@@ -1320,7 +1320,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-		freerdp_sem_wait(g_sem);
+		WaitForSingleObject(g_sem, INFINITE);
 	}
 
 	pthread_join(thread, NULL);

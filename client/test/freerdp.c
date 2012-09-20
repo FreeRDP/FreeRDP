@@ -36,12 +36,13 @@
 #include <string.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/utils/memory.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/plugins/cliprdr.h>
+
+#include <winpr/synch.h>
 
 struct tf_info
 {
@@ -57,7 +58,7 @@ struct tf_context
 };
 typedef struct tf_context tfContext;
 
-freerdp_sem g_sem;
+HANDLE g_sem;
 static int g_thread_count = 0;
 
 struct thread_data
@@ -297,7 +298,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
         if (g_thread_count < 1)
-                freerdp_sem_signal(&g_sem);
+        	ReleaseSemaphore(g_sem, 1, NULL);
 
 	return NULL;
 }
@@ -311,7 +312,7 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_init();
 
-	g_sem = freerdp_sem_new(1);
+	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = tf_pre_connect;
@@ -334,7 +335,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-                freerdp_sem_wait(g_sem);
+		WaitForSingleObject(g_sem, INFINITE);
 	}
 
 	freerdp_channels_global_uninit();

@@ -20,39 +20,7 @@
 #ifndef WF_INFO_H
 #define WF_INFO_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/rfx.h>
-
-struct wf_peer_context;
-typedef struct wf_peer_context wfPeerContext;
-
-struct wf_info
-{
-	STREAM* s;
-	int width;
-	int height;
-	int bitsPerPixel;
-	HDC driverDC;
-	int peerCount;
-	BOOL activated;
-	void* changeBuffer;
-	int framesPerSecond;
-	LPTSTR deviceKey;
-	TCHAR deviceName[32];
-	wfPeerContext** peers;
-
-	RECT invalid;
-	HANDLE mutex;
-	BOOL updatePending;
-	HANDLE updateEvent;
-	HANDLE updateThread;
-	HANDLE updateSemaphore;
-	RFX_CONTEXT* rfx_context;
-	unsigned long lastUpdate;
-	unsigned long nextUpdate;
-	SURFACE_BITS_COMMAND cmd;
-};
-typedef struct wf_info wfInfo;
+#include "wf_interface.h"
 
 int wf_info_lock(wfInfo* wfi);
 int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
@@ -66,6 +34,8 @@ BOOL wf_info_have_updates(wfInfo* wfi);
 void wf_info_update_changes(wfInfo* wfi);
 void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
+void wf_info_invalidate_full_screen(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
+void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits, int* pitch);
 
 #endif /* WF_INFO_H */

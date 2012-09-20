@@ -23,5 +23,57 @@
 
 #include <winpr/synch.h>
 
+/**
+ * InitializeCriticalSection
+ * InitializeCriticalSectionAndSpinCount
+ * InitializeCriticalSectionEx
+ * SetCriticalSectionSpinCount
+ * EnterCriticalSection
+ * TryEnterCriticalSection
+ * LeaveCriticalSection
+ * DeleteCriticalSection
+ */
 
+#ifndef _WIN32
 
+VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+
+}
+
+BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
+{
+	return TRUE;
+}
+
+BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
+{
+	return TRUE;
+}
+
+DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
+{
+	return 0;
+}
+
+VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+
+}
+
+BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+	return TRUE;
+}
+
+VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+
+}
+
+VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+
+}
+
+#endif

@@ -18,7 +18,8 @@
 # limitations under the License.
 
 set(WINPR_HANDLE_SRCS
-	handle.c)
+	handle.c
+	table.c)
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(winpr-handle OBJECT ${WINPR_HANDLE_SRCS})
