@@ -29,9 +29,11 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 
+#include "wf_info.h"
 #include "wf_input.h"
 #include "wf_mirage.h"
 #include "wf_update.h"
+#include "wf_settings.h"
 
 #include "wf_peer.h"
 
@@ -57,6 +59,7 @@ void wf_peer_init(freerdp_peer* client)
 
 boolean wf_peer_post_connect(freerdp_peer* client)
 {
+	HDC hdc;
 	wfInfo* wfi;
 	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -64,12 +67,11 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	/**
-	 * This callback is called when the entire connection sequence is done, i.e. we've received the
-	 * Font List PDU from the client and sent out the Font Map PDU.
-	 * The server may start sending graphics output and receiving keyboard/mouse input after this
-	 * callback returns.
-	 */
+	hdc = GetDC(NULL);
+	wfi->width = GetDeviceCaps(hdc, HORZRES);
+	wfi->height = GetDeviceCaps(hdc, VERTRES);
+	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
+	ReleaseDC(NULL, hdc);
 
 	if ((settings->width != wfi->width) || (settings->height != wfi->height))
 	{
@@ -81,19 +83,34 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 		settings->color_depth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
-		client->activated = false;
 	}
-
-	ResumeThread(wfi->updateThread);
 
 	return true;
 }
 
 boolean wf_peer_activate(freerdp_peer* client)
 {
+	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
+	
+	printf("PeerActivate\n");
 
-	context->activated = true;
+	wfi = context->info;
+	client->activated = true;
+	wf_update_peer_activate(wfi, context);
+
+	return true;
+}
+
+boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
+{
+	printf("PeerLogon\n");
+
+	if (automatic)
+	{
+		_tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
+			identity->User, identity->Domain, identity->Password);
+	}
 
 	return true;
 }
@@ -101,4 +118,174 @@ boolean wf_peer_activate(freerdp_peer* client)
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
 {
 
+}
+
+void wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
+{
+	CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL);
+}
+
+DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
+{
+	int i, fds;
+	int rcount;
+	int max_fds;
+	void* rfds[32];
+	fd_set rfds_set;
+	wfPeerContext* context;
+	freerdp_peer* client = (freerdp_peer*) lpParam;
+
+	ZeroMemory(rfds, sizeof(rfds));
+	context = (wfPeerContext*) client->context;
+
+	printf("PeerSocketListener\n");
+
+	while (1)
+	{
+		rcount = 0;
+
+		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
+		{
+			printf("Failed to get peer file descriptor\n");
+			break;
+		}
+
+		max_fds = 0;
+		FD_ZERO(&rfds_set);
+
+		for (i = 0; i < rcount; i++)
+		{
+			fds = (int)(long)(rfds[i]);
+
+			if (fds > max_fds)
+				max_fds = fds;
+
+			FD_SET(fds, &rfds_set);
+		}
+		
+		if (max_fds == 0)
+			break;
+		
+		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
+
+		SetEvent(context->socketEvent);
+		WaitForSingleObject(context->socketSemaphore, INFINITE);
+
+		if (context->socketClose)
+			break;
+	}
+
+	printf("Exiting Peer Socket Listener Thread\n");
+
+	return 0;
+}
+
+void wf_peer_read_settings(freerdp_peer* client)
+{
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->cert_file)))
+		client->settings->cert_file = _strdup("server.crt");
+
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->privatekey_file)))
+		client->settings->privatekey_file = _strdup("server.key");
+}
+
+DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
+{
+	wfInfo* wfi;
+	DWORD nCount;
+	DWORD status;
+	HANDLE handles[32];
+	rdpSettings* settings;
+	wfPeerContext* context;
+	freerdp_peer* client = (freerdp_peer*) lpParam;
+
+	wf_peer_init(client);
+
+	settings = client->settings;
+	settings->rfx_codec = true;
+	settings->ns_codec = false;
+	settings->jpeg_codec = false;
+	wf_peer_read_settings(client);
+
+	client->PostConnect = wf_peer_post_connect;
+	client->Activate = wf_peer_activate;
+	client->Logon = wf_peer_logon;
+
+	client->input->SynchronizeEvent = wf_peer_synchronize_event;
+	client->input->KeyboardEvent = wf_peer_keyboard_event;
+	client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event;
+	client->input->MouseEvent = wf_peer_mouse_event;
+	client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event;
+
+	client->Initialize(client);
+	context = (wfPeerContext*) client->context;
+
+	wfi = context->info;
+	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	printf("socketEvent created\n");
+
+	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
+	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
+
+	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+
+	printf("Setting Handles\n");
+
+	nCount = 0;
+	handles[nCount++] = context->updateEvent;
+	handles[nCount++] = context->socketEvent;
+
+	while (1)
+	{
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if ((status == WAIT_FAILED) || (status == WAIT_TIMEOUT))
+		{
+			printf("WaitForMultipleObjects failed\n");
+			break;
+		}
+
+		if (WaitForSingleObject(context->updateEvent, 0) == 0)
+		{
+			if (client->activated)
+				wf_update_peer_send(wfi, context);
+
+			ResetEvent(context->updateEvent);
+			ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
+		}
+
+		if (WaitForSingleObject(context->socketEvent, 0) == 0)
+		{
+			if (client->CheckFileDescriptor(client) != true)
+			{
+				printf("Failed to check peer file descriptor\n");
+				context->socketClose = TRUE;
+			}
+
+			ResetEvent(context->socketEvent);
+			ReleaseSemaphore(context->socketSemaphore, 1, NULL);
+
+			if (context->socketClose)
+				break;
+		}
+	}
+
+	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
+
+	if (WaitForSingleObject(context->updateEvent, 0) == 0)
+	{
+		ResetEvent(context->updateEvent);
+		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
+	}
+
+	wf_update_peer_deactivate(wfi, context);
+
+	client->Disconnect(client);
+
+	freerdp_peer_context_free(client);
+	freerdp_peer_free(client);
+
+	printf("Exiting Peer Main Loop Thread\n");
+
+	return 0;
 }

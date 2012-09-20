@@ -62,6 +62,9 @@ typedef short SHORT;
 #define TRUE			1
 #endif
 
+#define CONST const
+#define CALLBACK
+
 typedef void* HANDLE, *LPHANDLE;
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -80,12 +83,12 @@ typedef unsigned __int3264 ULONG_PTR;
 
 typedef signed int LONG32;
 typedef signed __int64 LONG64;
-typedef const char* LPCSTR;
 
-typedef const WCHAR* LPCWSTR;
-typedef char* PSTR, *LPSTR;
+typedef CHAR* PSTR, *LPSTR;
+typedef const CHAR *LPCSTR,*PCSTR;
 
 typedef WCHAR* LPWSTR, *PWSTR;
+typedef const WCHAR *LPCWSTR,*PCWSTR;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
@@ -160,11 +163,40 @@ typedef union _ULARGE_INTEGER
 	ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 
+typedef union _LARGE_INTEGER
+{
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	};
+
+	struct
+	{
+		DWORD LowPart;
+		LONG  HighPart;
+	} u;
+
+	LONGLONG QuadPart;
+} LARGE_INTEGER, *PLARGE_INTEGER;
+
 typedef struct _FILETIME
 {
 	DWORD dwLowDateTime;
 	DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct _SYSTEMTIME
+{
+	WORD wYear;
+	WORD wMonth;
+	WORD wDayOfWeek;
+	WORD wDay;
+	WORD wHour;
+	WORD wMinute;
+	WORD wSecond;
+	WORD wMilliseconds;
+} SYSTEMTIME,*PSYSTEMTIME,*LPSYSTEMTIME;
 
 typedef struct _RPC_SID_IDENTIFIER_AUTHORITY
 {
@@ -207,6 +239,17 @@ typedef struct _SECURITY_ATTRIBUTES
 	LPVOID lpSecurityDescriptor;
 	BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+
+typedef struct _PROCESS_INFORMATION
+{
+	HANDLE hProcess;
+	HANDLE hThread;
+	DWORD dwProcessId;
+	DWORD dwThreadId;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
+
+typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
 typedef void* HMODULE;
 typedef void* FARPROC;

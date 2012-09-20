@@ -31,13 +31,11 @@ set(FREERDP_UTILS_SRCS
 	file.c
 	load_plugin.c
 	memory.c
-	mutex.c
 	passphrase.c
 	pcap.c
 	profiler.c
 	rail.c
 	rect.c
-	semaphore.c
 	signal.c
 	sleep.c
 	stopwatch.c
@@ -72,8 +70,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
+	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_UTILS_LIBS} PARENT_SCOPE)
 else()
+	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr-synch)
 	target_link_libraries(freerdp-utils ${FREERDP_UTILS_LIBS})
 	install(TARGETS freerdp-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()

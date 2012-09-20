@@ -20,7 +20,7 @@
 #ifndef WF_INPUT_H
 #define WF_INPUT_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
 void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);

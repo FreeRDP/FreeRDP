@@ -40,7 +40,6 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/thread.h>
 
 #include "rdpdr_types.h"

@@ -29,6 +29,7 @@
 #include "wf_info.h"
 #include "wf_update.h"
 #include "wf_mirage.h"
+#include "wf_dxgi.h"
 
 static wfInfo* wfInfoInstance = NULL;
 
@@ -99,6 +100,12 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
+/*
+	OSVERSIONINFOEX osvi;
+	SYSTEM_INFO si;
+	BOOL bOsVersionInfoEx;
+	*/
+
 	wfi = (wfInfo*) malloc(sizeof(wfInfo));
 	ZeroMemory(wfi, sizeof(wfInfo));
 
@@ -118,6 +125,7 @@ wfInfo* wf_info_init()
 		}
 
 		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		printf("updateEvent created\n");
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 
@@ -128,7 +136,7 @@ wfInfo* wf_info_init()
 			_tprintf(_T("Failed to create update thread\n"));
 		}
 
-		wfi->peers = (wfPeerContext**) malloc(sizeof(wfPeerContext*) * 32);
+		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
 
 		wfi->framesPerSecond = 24;
 
@@ -142,6 +150,29 @@ wfInfo* wf_info_init()
 		}
 
 		RegCloseKey(hKey);
+
+		//detect windows version
+		/*
+		ZeroMemory(&si, sizeof(SYSTEM_INFO));
+		ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+		bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
+
+		wfi->win8 = FALSE;
+		if(bOsVersionInfoEx != 0 )
+		{
+			if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
+			osvi.dwMajorVersion > 4 )
+			{
+				if ( osvi.dwMajorVersion == 6 && 
+					osvi.dwMinorVersion == 2)
+				{
+					wfi->win8 = TRUE;
+				}
+			}
+		}
+		*/
 	}
 
 	return wfi;
@@ -155,47 +186,6 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-void wf_update_encoder_init(wfInfo* wfi)
-{
-	wfi->rfx_context = rfx_context_new();
-	wfi->rfx_context->mode = RLGR3;
-	wfi->rfx_context->width = wfi->width;
-	wfi->rfx_context->height = wfi->height;
-	rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-	wfi->s = stream_new(0xFFFF);
-}
-
-void wf_update_encoder_uninit(wfInfo* wfi)
-{
-	if (wfi->rfx_context != NULL)
-	{
-		rfx_context_free(wfi->rfx_context);
-		wfi->rfx_context = NULL;
-		stream_free(wfi->s);
-	}
-}
-
-void wf_update_encoder_reinit(wfInfo* wfi)
-{
-	wf_update_encoder_uninit(wfi);
-	wf_update_encoder_init(wfi);
-}
-
-void wf_mirror_driver_init(wfInfo* wfi)
-{
-	wf_mirror_driver_find_display_device(wfi);
-	wf_mirror_driver_display_device_attach(wfi, 1);
-	wf_mirror_driver_update(wfi, FALSE);
-	wf_mirror_driver_map_memory(wfi);
-}
-
-void wf_mirror_driver_uninit(wfInfo* wfi)
-{
-	wf_mirror_driver_cleanup(wfi);
-	wf_mirror_driver_display_device_attach(wfi, 0);
-	wf_mirror_driver_update(wfi, 1);
-}
-
 void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
@@ -203,11 +193,16 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		if (wfi->peerCount < 1)
-			wf_mirror_driver_init(wfi);
+#ifdef WITH_WIN8
+		if (wfi->peerCount == 0)
+			wf_dxgi_init(wfi);
+#else
+		wf_mirror_driver_activate(wfi);
+#endif
 
-		wf_update_encoder_reinit(wfi);
-		wfi->peers[wfi->peerCount++] = context;
+		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
+
+		printf("Registering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
 	}
@@ -217,10 +212,15 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		if (wfi->peerCount == 1)
-			wf_mirror_driver_uninit(wfi);	
-
 		wfi->peers[--(wfi->peerCount)] = NULL;
+		CloseHandle(context->updateEvent);
+
+		printf("Unregistering Peer: %d\n", wfi->peerCount);
+
+#ifdef WITH_WIN8
+		if (wfi->peerCount == 0)
+			wf_dxgi_cleanup(wfi);
+#endif
 
 		wf_info_unlock(wfi);
 	}
@@ -228,22 +228,33 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
+#ifdef WITH_WIN8
+	if(wfi->framesWaiting == 0)
+		return FALSE;
+#else
 	if (wfi->nextUpdate == wfi->lastUpdate)
 		return FALSE;
-
+#endif
 	return TRUE;
 }
 
 void wf_info_update_changes(wfInfo* wfi)
 {
+#ifdef WITH_WIN8
+	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
+#else
 	GETCHANGESBUF* buf;
 
 	buf = (GETCHANGESBUF*) wfi->changeBuffer;
 	wfi->nextUpdate = buf->buffer->counter;
+#endif
 }
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
+#ifdef WITH_WIN8
+	wf_dxgi_getInvalidRegion(&wfi->invalid);
+#else
 	int i;
 	GETCHANGESBUF* buf;
 
@@ -253,6 +264,7 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	{
 		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
 	}
+#endif
 
 	if (wfi->invalid.left < 0)
 		wfi->invalid.left = 0;
@@ -273,7 +285,35 @@ void wf_info_clear_invalid_region(wfInfo* wfi)
 	SetRectEmpty(&wfi->invalid);
 }
 
+void wf_info_invalidate_full_screen(wfInfo* wfi)
+{
+	SetRect(&wfi->invalid, 0, 0, wfi->width, wfi->height);
+}
+
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
 {
 	return IsRectEmpty(&wfi->invalid);
+}
+
+void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits, int* pitch)
+{
+	*width = (wfi->invalid.right - wfi->invalid.left);
+	*height = (wfi->invalid.bottom - wfi->invalid.top);
+
+#ifdef WITH_WIN8
+	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
+#else
+	{
+		long offset;
+		GETCHANGESBUF* changes;
+		changes = (GETCHANGESBUF*) wfi->changeBuffer;
+
+		*width += 1;
+		*height += 1;
+
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+		*pitch = wfi->width * 4;
+	}
+#endif
 }

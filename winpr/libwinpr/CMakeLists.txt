@@ -28,8 +28,10 @@ endif()
 add_subdirectory(crt)
 add_subdirectory(utils)
 add_subdirectory(heap)
+add_subdirectory(interlocked)
 add_subdirectory(handle)
 add_subdirectory(synch)
+add_subdirectory(thread)
 add_subdirectory(sysinfo)
 add_subdirectory(bcrypt)
 add_subdirectory(dsparse)
@@ -39,14 +41,19 @@ add_subdirectory(sspicli)
 add_subdirectory(sspi)
 add_subdirectory(registry)
 add_subdirectory(library)
+add_subdirectory(timezone)
+add_subdirectory(winsock)
+add_subdirectory(winhttp)
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(winpr
 		$<TARGET_OBJECTS:winpr-crt>
 		$<TARGET_OBJECTS:winpr-utils>
 		$<TARGET_OBJECTS:winpr-heap>
+		$<TARGET_OBJECTS:winpr-interlocked>
 		$<TARGET_OBJECTS:winpr-handle>
 		$<TARGET_OBJECTS:winpr-synch>
+		$<TARGET_OBJECTS:winpr-thread>
 		$<TARGET_OBJECTS:winpr-sysinfo>
 		$<TARGET_OBJECTS:winpr-bcrypt>
 		$<TARGET_OBJECTS:winpr-dsparse>
@@ -55,7 +62,10 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-sspicli>
 		$<TARGET_OBJECTS:winpr-sspi>
 		$<TARGET_OBJECTS:winpr-registry>
-		$<TARGET_OBJECTS:winpr-library>)
+		$<TARGET_OBJECTS:winpr-library>
+		$<TARGET_OBJECTS:winpr-timezone>
+		$<TARGET_OBJECTS:winpr-winsock>
+		$<TARGET_OBJECTS:winpr-winhttp>)
 	
 	set_target_properties(winpr PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 

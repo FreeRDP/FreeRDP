@@ -39,10 +39,11 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/plugins/tsmf.h>
+
+#include <winpr/synch.h>
 
 #include "drdynvc_types.h"
 #include "tsmf_constants.h"
@@ -82,8 +83,8 @@ struct _TSMF_PRESENTATION
 	uint64 audio_start_time;
 	uint64 audio_end_time;
 
-	/* The stream list could be accessed by differnt threads and need to be protected. */
-	freerdp_mutex mutex;
+	/* The stream list could be accessed by different threads and need to be protected. */
+	HANDLE mutex;
 
 	LIST* stream_list;
 };
@@ -138,7 +139,7 @@ struct _TSMF_SAMPLE
 
 static LIST* presentation_list = NULL;
 static uint64 last_played_audio_time = 0;
-static pthread_mutex_t tsmf_mutex = PTHREAD_MUTEX_INITIALIZER;
+static HANDLE tsmf_mutex = NULL;
 static int TERMINATING = 0;
 
 static uint64 get_current_time(void)
@@ -171,10 +172,12 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 					/* Check if some other stream has earlier sample that needs to be played first */
 					if (stream->last_end_time > AUDIO_TOLERANCE)
 					{
-						freerdp_mutex_lock(presentation->mutex);
+						WaitForSingleObject(presentation->mutex, INFINITE);
+
 						for (item = presentation->stream_list->head; item; item = item->next)
 						{
 							s = (TSMF_STREAM*) item->data;
+
 							if (s != stream && !s->eos && s->last_end_time &&
 								s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
 							{
@@ -182,7 +185,8 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 									break;
 							}
 						}
-						freerdp_mutex_unlock(presentation->mutex);
+
+						ReleaseMutex(presentation->mutex);
 					}
 				}
 				else
@@ -273,7 +277,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCa
 	memcpy(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
 
-	presentation->mutex = freerdp_mutex_new();
+	presentation->mutex = CreateMutex(NULL, FALSE, NULL);
 	presentation->stream_list = list_new();
 
 	list_enqueue(presentation_list, presentation);
@@ -891,9 +895,9 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	TSMF_STREAM* stream;
 
 	tsmf_presentation_stop(presentation);
-	freerdp_mutex_lock(presentation->mutex);
+	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_remove(presentation_list, presentation);
-	freerdp_mutex_unlock(presentation->mutex);
+	ReleaseMutex(presentation->mutex);
 
 	while (list_size(presentation->stream_list) > 0)
 	{
@@ -902,7 +906,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	}
 	list_free(presentation->stream_list);
 
-	freerdp_mutex_free(presentation->mutex);
+	CloseHandle(presentation->mutex);
 
 	xfree(presentation);
 }
@@ -926,9 +930,9 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, uint32 stream_id)
 	stream->sample_list = list_new();
 	stream->sample_ack_list = list_new();
 
-	freerdp_mutex_lock(presentation->mutex);
+	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_enqueue(presentation->stream_list, stream);
-	freerdp_mutex_unlock(presentation->mutex);
+	ReleaseMutex(presentation->mutex);
 
 	return stream;
 }
@@ -997,9 +1001,9 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 	tsmf_stream_stop(stream);
 	tsmf_stream_flush(stream);
 
-	freerdp_mutex_lock(presentation->mutex);
+	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_remove(presentation->stream_list, stream);
-	freerdp_mutex_unlock(presentation->mutex);
+	ReleaseMutex(presentation->mutex);
 
 	list_free(stream->sample_list);
 	list_free(stream->sample_ack_list);
@@ -1022,15 +1026,15 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 {
 	TSMF_SAMPLE* sample;
 
-	pthread_mutex_lock(&tsmf_mutex);
+	WaitForSingleObject(tsmf_mutex, INFINITE);
 	
 	if (TERMINATING)
 	{
-		pthread_mutex_unlock(&tsmf_mutex);
+		ReleaseMutex(tsmf_mutex);
 		return;
 	}
 	
-	pthread_mutex_unlock(&tsmf_mutex);
+	ReleaseMutex(tsmf_mutex);
 
 	sample = xnew(TSMF_SAMPLE);
 
@@ -1054,13 +1058,15 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 
 static void tsmf_signal_handler(int s)
 {
-	pthread_mutex_lock(&tsmf_mutex);
-	TERMINATING = 1;
-	pthread_mutex_unlock(&tsmf_mutex);
 	LIST_ITEM* p_item;
 	TSMF_PRESENTATION* presentation;
 	LIST_ITEM* s_item;
 	TSMF_STREAM* _stream;
+
+	WaitForSingleObject(tsmf_mutex, INFINITE);
+	TERMINATING = 1;
+	ReleaseMutex(tsmf_mutex);
+
 	if (presentation_list)
 	{
 		for (p_item = presentation_list->head; p_item; p_item = p_item->next)
@@ -1100,6 +1106,8 @@ void tsmf_media_init(void)
 	sigaction(SIGINT, &sigtrap, 0);
 	sigaction(SIGUSR1, &sigtrap, 0);
 #endif
+
+	tsmf_mutex = CreateMutex(NULL, FALSE, NULL);
 
 	if (presentation_list == NULL)
 		presentation_list = list_new();

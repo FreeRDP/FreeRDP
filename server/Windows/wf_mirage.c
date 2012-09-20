@@ -285,3 +285,30 @@ BOOL wf_mirror_driver_cleanup(wfInfo* context)
 
 	return TRUE;
 }
+
+void wf_mirror_driver_activate(wfInfo* wfi)
+{
+	if (!wfi->mirrorDriverActive)
+	{
+		printf("Activating Mirror Driver\n");
+
+		wf_mirror_driver_find_display_device(wfi);
+		wf_mirror_driver_display_device_attach(wfi, 1);
+		wf_mirror_driver_update(wfi, FALSE);
+		wf_mirror_driver_map_memory(wfi);
+		wfi->mirrorDriverActive = TRUE;
+	}
+}
+
+void wf_mirror_driver_deactivate(wfInfo* wfi)
+{
+	if (wfi->mirrorDriverActive)
+	{
+		printf("Deactivating Mirror Driver\n");
+
+		wf_mirror_driver_cleanup(wfi);
+		wf_mirror_driver_display_device_attach(wfi, 0);
+		wf_mirror_driver_update(wfi, 1);
+		wfi->mirrorDriverActive = FALSE;
+	}
+}

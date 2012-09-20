@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * Mutex Utils
+ * WinPR: Windows Portable Runtime
+ * Windows Sockets (Winsock)
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,28 @@
  * limitations under the License.
  */
 
-#ifndef __MUTEX_UTILS_H
-#define __MUTEX_UTILS_H
+#ifndef WINPR_WINSOCK_H
+#define WINPR_WINSOCK_H
 
-#include <freerdp/api.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
+#include <winpr/windows.h>
 
-typedef void* freerdp_mutex;
+#ifdef _WIN32
 
-FREERDP_API freerdp_mutex freerdp_mutex_new(void);
-FREERDP_API void freerdp_mutex_free(freerdp_mutex mutex);
-FREERDP_API void freerdp_mutex_lock(freerdp_mutex mutex);
-FREERDP_API void freerdp_mutex_unlock(freerdp_mutex mutex);
+#if (_WIN32_WINNT < 0x0600)
 
-#endif /* __MUTEX_UTILS_H */
+PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
+
+#endif /* (_WIN32_WINNT < 0x0600) */
+
+#else /* _WIN32 */
+
+#include <sys/socket.h>
+
+typedef struct sockaddr_storage SOCKADDR_STORAGE;
+
+#endif /* _WIN32 */
+
+#endif /* WINPR_WINSOCK_H */
+

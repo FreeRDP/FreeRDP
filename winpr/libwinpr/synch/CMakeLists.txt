@@ -1,9 +1,7 @@
 # WinPR: Windows Portable Runtime
 # libwinpr-synch cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +19,20 @@ set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
 set(WINPR_SYNCH_SRCS
+	address.c
+	barrier.c
+	condition.c
 	critical.c
 	event.c
+	init.c
 	mutex.c
 	semaphore.c
-	sleep.c)
+	sleep.c
+	srw.c
+	synch.c
+	synch.h
+	timer.c
+	wait.c)
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(winpr-synch OBJECT ${WINPR_SYNCH_SRCS})
@@ -53,3 +60,4 @@ else()
 	target_link_libraries(winpr-synch ${WINPR_SYNCH_LIBS})
 	install(TARGETS winpr-synch DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+

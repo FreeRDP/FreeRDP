@@ -669,7 +669,7 @@ struct _SecBufferDesc
 typedef struct _SecBufferDesc SecBufferDesc;
 typedef SecBufferDesc* PSecBufferDesc;
 
-typedef void (SEC_ENTRY * SEC_GET_KEY_FN)(void* Arg, void* Principal, UINT32 KeyVer, void** Key, SECURITY_STATUS* Status);
+typedef void (SEC_ENTRY * SEC_GET_KEY_FN)(void* Arg, void* Principal, UINT32 KeyVer, void** Key, SECURITY_STATUS* pStatus);
 
 typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_A)(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
 typedef SECURITY_STATUS (SEC_ENTRY * ENUMERATE_SECURITY_PACKAGES_FN_W)(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo);

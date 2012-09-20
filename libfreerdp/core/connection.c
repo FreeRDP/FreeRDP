@@ -585,6 +585,7 @@ boolean rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 
 	printf("Accepted client: %s\n", rdp->settings->client_hostname);
 	printf("Accepted channels:");
+
 	for (i = 0; i < rdp->settings->num_channels; i++)
 	{
 		printf(" %s", rdp->settings->channels[i].name);

@@ -547,7 +547,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 				return -1;
 			}
 
-			//sspi_SecBufferFree(&credssp->negoToken);
+			sspi_SecBufferFree(&credssp->negoToken);
 			credssp->negoToken.pvBuffer = NULL;
 			credssp->negoToken.cbBuffer = 0;
 
@@ -568,7 +568,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 #endif
 
 		credssp_send(credssp);
-		//credssp_buffer_free(credssp);
+		credssp_buffer_free(credssp);
 
 		if (status != SEC_I_CONTINUE_NEEDED)
 			break;
@@ -581,7 +581,11 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	if (credssp_recv(credssp) < 0)
 		return -1;
 
-	credssp_decrypt_ts_credentials(credssp);
+	if (credssp_decrypt_ts_credentials(credssp) != SEC_E_OK)
+	{
+		printf("Could not decrypt TSCredentials status: 0x%08X\n", status);
+		return 0;
+	}
 
 	if (status != SEC_E_OK)
 	{
@@ -833,6 +837,8 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
 	stream_seek(s, credssp->identity.PasswordLength);
 	credssp->identity.PasswordLength /= 2;
+
+	credssp->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 }
 
 void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
@@ -1300,6 +1306,6 @@ void credssp_free(rdpCredssp* credssp)
 		free(credssp->identity.User);
 		free(credssp->identity.Domain);
 		free(credssp->identity.Password);
-		//free(credssp);
+		free(credssp);
 	}
 }

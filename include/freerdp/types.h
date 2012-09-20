@@ -21,6 +21,8 @@
 #ifndef FREERDP_TYPES_H
 #define FREERDP_TYPES_H
 
+#include <winpr/wtypes.h>
+
 #include <freerdp/config.h>
 
 #ifdef _WIN32

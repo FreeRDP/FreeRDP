@@ -20,7 +20,7 @@
 #ifndef WF_UPDATE_H
 #define WF_UPDATE_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_update_encode(wfInfo* wfi);
 void wf_update_send(wfInfo* wfi);
@@ -30,5 +30,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam);
 void wf_update_begin(wfInfo* wfi);
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context);
 void wf_update_end(wfInfo* wfi);
+
+void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context);
+void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context);
 
 #endif /* WF_UPDATE_H */

@@ -23,10 +23,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
+
+#include <winpr/synch.h>
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
@@ -67,7 +68,7 @@ struct rdp_peer_channel
 	STREAM* receive_data;
 	struct wait_obj* receive_event;
 	LIST* receive_queue;
-	freerdp_mutex mutex;
+	HANDLE mutex;
 
 	uint8 dvc_open_state;
 	uint32 dvc_total_length;
@@ -78,7 +79,7 @@ struct WTSVirtualChannelManager
 	freerdp_peer* client;
 	struct wait_obj* send_event;
 	LIST* send_queue;
-	freerdp_mutex mutex;
+	HANDLE mutex;
 
 	rdpPeerChannel* drdynvc_channel;
 	uint8 drdynvc_state;
