@@ -69,6 +69,11 @@
 
 #include <pthread.h>
 
+/**
+ * TODO: implement thread suspend/resume using pthreads
+ * http://stackoverflow.com/questions/3140867/suspend-pthreads-without-using-condition
+ */
+
 typedef void *(*pthread_start_routine)(void*);
 
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
@@ -82,11 +87,19 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 {
 	HANDLE handle;
 	pthread_t thread;
+	pthread_attr_t attr;
 
-	pthread_create(&thread, 0, (pthread_start_routine) lpStartAddress, lpParameter);
-	pthread_detach(thread);
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (dwStackSize > 0)
+		pthread_attr_setstacksize(&attr, (size_t) dwStackSize);
+
+	pthread_create(&thread, &attr, (pthread_start_routine) lpStartAddress, lpParameter);
 
 	handle = winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
+
+	pthread_attr_destroy(&attr);
 
 	return handle;
 }

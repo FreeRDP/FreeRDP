@@ -34,23 +34,49 @@
 
 #ifndef _WIN32
 
+#include <pthread.h>
+
 DWORD TlsAlloc(VOID)
 {
-	return 0;
+	DWORD dwTlsIndex;
+	pthread_key_t key;
+
+	if (pthread_key_create(&key, NULL) != 0)
+		return TLS_OUT_OF_INDEXES;
+
+	dwTlsIndex = (DWORD) key;
+
+	return key;
 }
 
 LPVOID TlsGetValue(DWORD dwTlsIndex)
 {
-	return NULL;
+	LPVOID value;
+	pthread_key_t key;
+
+	key = (pthread_key_t) dwTlsIndex;
+	value = (LPVOID) pthread_getspecific(key);
+
+	return value;
 }
 
 BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue)
 {
+	pthread_key_t key;
+
+	key = (pthread_key_t) dwTlsIndex;
+	pthread_setspecific(key, lpTlsValue);
+
 	return TRUE;
 }
 
 BOOL TlsFree(DWORD dwTlsIndex)
 {
+	pthread_key_t key;
+
+	key = (pthread_key_t) dwTlsIndex;
+	pthread_key_delete(key);
+
 	return TRUE;
 }
 

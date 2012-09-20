@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# libwinpr-crt cmake build script
+# libwinpr-timezone cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,21 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_CRT_SRCS
-	alignment.c
-	memory.c
-	string.c)
+set(WINPR_TIMEZONE_SRCS
+	timezone.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-crt OBJECT ${WINPR_CRT_SRCS})
+	add_library(winpr-timezone OBJECT ${WINPR_TIMEZONE_SRCS})
 else()
-	add_library(winpr-crt ${WINPR_CRT_SRCS})
+	add_library(winpr-timezone ${WINPR_TIMEZONE_SRCS})
 endif()
 
-set_target_properties(winpr-crt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-timezone PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
 
 else()
-	install(TARGETS winpr-crt DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	install(TARGETS winpr-timezone DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
