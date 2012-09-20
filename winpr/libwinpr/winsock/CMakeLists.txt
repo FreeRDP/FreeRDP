@@ -26,8 +26,13 @@ endif()
 
 set_target_properties(winpr-winsock PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+if(WIN32)
+	set(WINPR_WINSOCK_LIBS ${WINPR_WINSOCK_LIBS} ws2_32)
+endif()
 
+if(WITH_MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_WINSOCK_LIBS} PARENT_SCOPE)
 else()
+	target_link_libraries(winpr-winsock ${WINPR_WINSOCK_LIBS})
 	install(TARGETS winpr-winsock DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()

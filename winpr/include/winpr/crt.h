@@ -43,8 +43,8 @@ WINPR_API void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size
 
 WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset);
 
-#endif
-
 WINPR_API void _aligned_free(void* memblock);
+
+#endif
 
 #endif /* WINPR_CRT_H */
