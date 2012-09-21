@@ -24,7 +24,7 @@ else()
 	add_library(winpr-winsock ${WINPR_WINSOCK_SRCS})
 endif()
 
-set_target_properties(winpr-winsock PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-winsock PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WIN32)
 	set(WINPR_WINSOCK_LIBS ${WINPR_WINSOCK_LIBS} ws2_32)

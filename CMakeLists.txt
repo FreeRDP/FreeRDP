@@ -41,8 +41,8 @@ include(GNUInstallDirsWrapper)
 
 # Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
-set(FREERDP_VERSION_MINOR "0")
-set(FREERDP_VERSION_REVISION "1")
+set(FREERDP_VERSION_MINOR "1")
+set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
 include(GetGitRevisionDescription)
@@ -186,14 +186,16 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# WinPR
-set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories(${WINPR_INCLUDE_DIR})
-
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
+
+# WinPR
+set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories(${WINPR_INCLUDE_DIR})
+
+add_subdirectory(winpr)
 
 # Generate pkg-config
 if(NOT MSVC)
@@ -214,8 +216,6 @@ endif()
 # Sub-directories
 
 add_subdirectory(include)
-
-add_subdirectory(winpr)
 
 add_subdirectory(libfreerdp)
 
@@ -246,3 +246,4 @@ string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}")
 
 include(CPack)
+

@@ -1,9 +1,7 @@
 # WinPR: Windows Portable Runtime
 # libwinpr-utils cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +30,7 @@ else()
 	add_library(winpr-utils ${WINPR_UTILS_SRCS})
 endif()
 
-set_target_properties(winpr-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-utils PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 set(WINPR_UTILS_LIBS
 	${ZLIB_LIBRARIES}

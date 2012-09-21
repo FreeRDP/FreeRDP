@@ -1,8 +1,6 @@
 # WinPR: Windows Portable Runtime
 # libwinpr-sspi cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +59,7 @@ endif()
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-set_target_properties(winpr-sspi PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-sspi PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 set(WINPR_SSPI_LIBS
 	${ZLIB_LIBRARIES}

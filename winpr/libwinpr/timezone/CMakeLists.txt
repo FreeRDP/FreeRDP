@@ -24,7 +24,7 @@ else()
 	add_library(winpr-timezone ${WINPR_TIMEZONE_SRCS})
 endif()
 
-set_target_properties(winpr-timezone PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-timezone PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
 

@@ -15,6 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(WINPR_VERSION_MAJOR "0")
+set(WINPR_VERSION_MINOR "1")
+set(WINPR_VERSION_REVISION "0")
+set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
+set(WINPR_VERSION_FULL "${WINPR_VERSION}.${WINPR_VERSION_REVISION}")
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)

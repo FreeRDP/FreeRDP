@@ -30,7 +30,7 @@ else()
 	add_library(winpr-thread ${WINPR_THREAD_SRCS})
 endif()
 
-set_target_properties(winpr-thread PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-thread PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 set(WINPR_SYNCH_LIBS
 	${CMAKE_THREAD_LIBS_INIT}

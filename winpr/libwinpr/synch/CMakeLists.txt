@@ -40,7 +40,7 @@ else()
 	add_library(winpr-synch ${WINPR_SYNCH_SRCS})
 endif()
 
-set_target_properties(winpr-synch PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-synch PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 set(WINPR_SYNCH_LIBS
 	${CMAKE_THREAD_LIBS_INIT}

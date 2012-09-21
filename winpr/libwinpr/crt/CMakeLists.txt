@@ -26,7 +26,7 @@ else()
 	add_library(winpr-crt ${WINPR_CRT_SRCS})
 endif()
 
-set_target_properties(winpr-crt PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(winpr-crt PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
 
