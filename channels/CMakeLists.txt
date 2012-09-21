@@ -17,13 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(cliprdr)
-add_subdirectory(drdynvc)
-add_subdirectory(rail)
-add_subdirectory(rdpdbg)
-add_subdirectory(skel)
+set(FILENAME "ChannelOptions.cmake")
+file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
-if(NOT WIN32)
-	add_subdirectory(rdpdr)
-	add_subdirectory(rdpsnd)
-endif()
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" DIR ${FILEPATH})
+		set(CHANNEL_OPTION)
+		include(${FILEPATH})
+		if(${CHANNEL_OPTION})
+			message(STATUS "Adding ${CHANNEL_TYPE} channel \"${CHANNEL_SHORT_NAME}\": ${CHANNEL_LONG_NAME} (${CHANNEL_SPECIFICATIONS})")
+			add_subdirectory(${DIR})
+		endif()
+	endif()
+endforeach(FILEPATH)
+
