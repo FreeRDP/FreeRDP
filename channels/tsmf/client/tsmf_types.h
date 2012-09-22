@@ -20,7 +20,19 @@
 #ifndef __TSMF_TYPES_H
 #define __TSMF_TYPES_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <freerdp/dvc.h>
 #include <freerdp/types.h>
+#include <freerdp/utils/debug.h>
+
+#ifdef WITH_DEBUG_DVC
+#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 typedef struct _TS_AM_MEDIA_TYPE
 {

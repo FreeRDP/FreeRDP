@@ -28,7 +28,6 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
 
-#include "drdynvc_types.h"
 #include "tsmf_types.h"
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"

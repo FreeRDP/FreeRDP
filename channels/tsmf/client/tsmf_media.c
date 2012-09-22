@@ -45,7 +45,6 @@
 
 #include <winpr/synch.h>
 
-#include "drdynvc_types.h"
 #include "tsmf_constants.h"
 #include "tsmf_types.h"
 #include "tsmf_decoder.h"

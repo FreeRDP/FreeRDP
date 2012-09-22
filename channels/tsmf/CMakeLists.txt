@@ -15,20 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FILENAME "ChannelOptions.cmake")
-file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
-
-foreach(FILEPATH ${FILEPATHS})
-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" DIR ${FILEPATH})
-		set(CHANNEL_OPTION)
-		include(${FILEPATH})
-		if(${CHANNEL_OPTION})
-			message(STATUS "Adding ${CHANNEL_TYPE} channel \"${CHANNEL_SHORT_NAME}\": ${CHANNEL_LONG_NAME}")
-			add_subdirectory(${DIR})
-		endif()
-	endif()
-endforeach(FILEPATH)
-
-add_subdirectory(server)
+add_subdirectory(client)
 

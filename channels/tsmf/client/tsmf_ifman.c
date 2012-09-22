@@ -29,7 +29,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
-#include "drdynvc_types.h"
+#include "tsmf_types.h"
 #include "tsmf_constants.h"
 #include "tsmf_media.h"
 #include "tsmf_codec.h"

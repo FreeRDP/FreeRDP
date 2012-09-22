@@ -15,20 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FILENAME "ChannelOptions.cmake")
-file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+set(MODULE_PREFIX "CHANNEL_AUDIN_SERVER")
 
-foreach(FILEPATH ${FILEPATHS})
-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" DIR ${FILEPATH})
-		set(CHANNEL_OPTION)
-		include(${FILEPATH})
-		if(${CHANNEL_OPTION})
-			message(STATUS "Adding ${CHANNEL_TYPE} channel \"${CHANNEL_SHORT_NAME}\": ${CHANNEL_LONG_NAME}")
-			add_subdirectory(${DIR})
-		endif()
-	endif()
-endforeach(FILEPATH)
+set(${MODULE_PREFIX}_SRCS
+	audin.c
+	PARENT_SCOPE)
 
-add_subdirectory(server)
+if(WITH_MONOLITHIC_BUILD)
+	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
+else()
+	set(${MODULE_PREFIX}_LIBS freerdp-utils PARENT_SCOPE)
+endif()
 

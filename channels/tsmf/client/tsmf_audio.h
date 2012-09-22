@@ -20,7 +20,7 @@
 #ifndef __TSMF_AUDIO_H
 #define __TSMF_AUDIO_H
 
-#include "drdynvc_types.h"
+#include "tsmf_types.h"
 
 typedef struct _ITSMFAudioDevice ITSMFAudioDevice;
 

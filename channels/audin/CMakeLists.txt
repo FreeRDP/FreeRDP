@@ -15,5 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "audin")
+set(MODULE_PREFIX "CHANNEL_AUDIN")
+
 add_subdirectory(client)
+
+add_subdirectory(server)
+
+set(${MODULE_PREFIX}_SERVER_SRCS ${${MODULE_PREFIX}_SERVER_SRCS} PARENT_SCOPE)
+set(${MODULE_PREFIX}_SERVER_LIBS ${${MODULE_PREFIX}_SERVER_LIBS} PARENT_SCOPE)
+set(CHANNEL_BUILTIN_SERVER_MODULES ${CHANNEL_BUILTIN_SERVER_MODULES} ${MODULE_NAME} PARENT_SCOPE)
+
 

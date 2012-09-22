@@ -21,7 +21,6 @@
 #ifndef __TSMF_DECODER_H
 #define __TSMF_DECODER_H
 
-#include "drdynvc_types.h"
 #include "tsmf_types.h"
 
 typedef enum _ITSMFControlMsg
