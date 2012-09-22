@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,30 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_SRCS
-	rdpsnd_main.c
-	rdpsnd_main.h)
-
-add_library(rdpsnd ${RDPSND_SRCS})
-set_target_properties(rdpsnd PROPERTIES PREFIX "")
-
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(rdpsnd freerdp)
-else()
-	target_link_libraries(rdpsnd freerdp-utils)
-endif()
-
-install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
-
-if(WITH_ALSA)
-	add_subdirectory(alsa)
-endif()
-
-if(WITH_PULSEAUDIO)
-	add_subdirectory(pulse)
-endif()
-
-if(WITH_MACAUDIO)
-	add_subdirectory(mac_audio)
-endif()
+add_subdirectory(client)
 

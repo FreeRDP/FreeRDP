@@ -1,7 +1,9 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2011 O.S. Systems Software Ltda.
+# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
+# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,5 +17,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(client)
+set(RAIL_SRCS
+	rail_main.c
+	rail_main.h
+	rail_orders.c
+	rail_orders.h)
+
+add_library(rail ${RAIL_SRCS})
+set_target_properties(rail PROPERTIES PREFIX "")
+
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(rail freerdp)
+else()
+	target_link_libraries(rail freerdp-utils)
+endif()
+
+install(TARGETS rail DESTINATION ${FREERDP_PLUGIN_PATH})
 
