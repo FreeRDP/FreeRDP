@@ -28,7 +28,7 @@
 #include "liblocale.h"
 
 #include <freerdp/types.h>
-#include <freerdp/keyboard_scancode.h>
+#include <freerdp/scancode.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 

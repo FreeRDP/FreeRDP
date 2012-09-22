@@ -52,7 +52,6 @@ static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
 
 static void tls_free_certificate(CryptoCert cert)
 {
-
 	X509_free(cert->px509);
 	xfree(cert);
 }

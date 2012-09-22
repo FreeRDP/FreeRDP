@@ -202,7 +202,7 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(vkcode);
 
-	freerdp_input_send_keyboard_event_2(input, down, rdp_scancode);
+	freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 }
 
 boolean df_event_process(freerdp* instance, DFBEvent* event)
