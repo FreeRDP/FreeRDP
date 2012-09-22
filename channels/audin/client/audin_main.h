@@ -20,7 +20,19 @@
 #ifndef __AUDIN_MAIN_H
 #define __AUDIN_MAIN_H
 
-#include "drdynvc_types.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
+#include <freerdp/utils/debug.h>
+
+#ifdef WITH_DEBUG_DVC
+#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
 typedef boolean (*AudinReceive) (uint8* data, int size, void* user_data);
 
