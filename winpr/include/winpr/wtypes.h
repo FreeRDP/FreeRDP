@@ -90,6 +90,9 @@ typedef const CHAR *LPCSTR,*PCSTR;
 typedef WCHAR* LPWSTR, *PWSTR;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
 
+typedef CHAR *LPSTR, *LPCH;
+typedef WCHAR *LPWSTR, *LPWCH;
+
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
 
