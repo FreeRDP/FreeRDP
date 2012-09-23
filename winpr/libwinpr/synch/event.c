@@ -49,7 +49,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	event = (WINPR_EVENT*) malloc(sizeof(WINPR_EVENT));
 
-	if (!event)
+	if (event)
 	{
 		event->bManualReset = bManualReset;
 
@@ -63,6 +63,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		if (pipe(event->pipe_fd) < 0)
 		{
+			printf("CreateEventW: failed to create event\n");
 			return NULL;
 		}
 

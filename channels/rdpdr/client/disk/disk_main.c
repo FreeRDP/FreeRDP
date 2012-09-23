@@ -39,14 +39,17 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
+
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include "rdpdr_constants.h"
 #include "rdpdr_types.h"
 #include "disk_file.h"
 
 typedef struct _DISK_DEVICE DISK_DEVICE;
+
 struct _DISK_DEVICE
 {
 	DEVICE device;
@@ -54,15 +57,17 @@ struct _DISK_DEVICE
 	char* path;
 	LIST* files;
 
+	HANDLE mutex;
+	HANDLE thread;
 	LIST* irp_list;
-	freerdp_thread* thread;
+	HANDLE irpEvent;
+	HANDLE stopEvent;
 
 	DEVMAN* devman;
 	pcRegisterDevice UnregisterDevice;
 };
 
-static uint32
-disk_map_posix_err(int fs_errno)
+static uint32 disk_map_posix_err(int fs_errno)
 {
 	uint32 rc;
 
@@ -90,7 +95,9 @@ disk_map_posix_err(int fs_errno)
 			rc = STATUS_UNSUCCESSFUL;
 			break;
 	}
+
 	DEBUG_SVC("errno 0x%x mapped to 0x%x", fs_errno, rc);
+
 	return rc;
 }
 
@@ -101,7 +108,8 @@ static DISK_FILE* disk_get_file_by_id(DISK_DEVICE* disk, uint32 id)
 
 	for (item = disk->files->head; item; item = item->next)
 	{
-		file = (DISK_FILE*)item->data;
+		file = (DISK_FILE*) item->data;
+
 		if (file->id == id)
 			return file;
 	}
@@ -238,7 +246,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*)xmalloc(Length);
+		buffer = (uint8*) xmalloc(Length);
 		if (!disk_file_read(file, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -255,11 +263,13 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, Length);
+
 	if (Length > 0)
 	{
 		stream_check_size(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
+
 	xfree(buffer);
 
 	irp->Complete(irp);
@@ -379,8 +389,8 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	struct STATVFS svfst;
 	struct STAT st;
 	UNICONV* uniconv;
-	char *volumeLabel = {"FREERDP"};  /* TODO:: Add sub routine to correctly pick up Volume Label name for each O/S supported*/
-	char *diskType = {"FAT32"};
+	char* volumeLabel = {"FREERDP"};  /* TODO: Add sub routine to correctly pick up Volume Label name for each O/S supported */
+	char* diskType = {"FAT32"};
 	char* outStr;
 	size_t len;
 
@@ -581,12 +591,14 @@ static void disk_process_irp_list(DISK_DEVICE* disk)
 
 	while (1)
 	{
-		if (freerdp_thread_is_stopped(disk->thread))
+		if (WaitForSingleObject(disk->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		freerdp_thread_lock(disk->thread);
-		irp = (IRP*)list_dequeue(disk->irp_list);
-		freerdp_thread_unlock(disk->thread);
+		WaitForSingleObject(disk->mutex, INFINITE);
+
+		irp = (IRP*) list_dequeue(disk->irp_list);
+
+		ReleaseMutex(disk->mutex);
 
 		if (irp == NULL)
 			break;
@@ -597,63 +609,65 @@ static void disk_process_irp_list(DISK_DEVICE* disk)
 
 static void* disk_thread_func(void* arg)
 {
-	DISK_DEVICE* disk = (DISK_DEVICE*)arg;
+	DISK_DEVICE* disk = (DISK_DEVICE*) arg;
 
 	while (1)
 	{
-		freerdp_thread_wait(disk->thread);
+		WaitForSingleObject(disk->irpEvent, INFINITE);
 
-		if (freerdp_thread_is_stopped(disk->thread))
+		if (WaitForSingleObject(disk->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		freerdp_thread_reset(disk->thread);
+		ResetEvent(disk->irpEvent);
 		disk_process_irp_list(disk);
 	}
-
-	freerdp_thread_quit(disk->thread);
 
 	return NULL;
 }
 
 static void disk_irp_request(DEVICE* device, IRP* irp)
 {
-	DISK_DEVICE* disk = (DISK_DEVICE*)device;
+	DISK_DEVICE* disk = (DISK_DEVICE*) device;
 
-	freerdp_thread_lock(disk->thread);
+	WaitForSingleObject(disk->mutex, INFINITE);
 	list_enqueue(disk->irp_list, irp);
-	freerdp_thread_unlock(disk->thread);
+	ReleaseMutex(disk->mutex);
 
-	freerdp_thread_signal(disk->thread);
+	SetEvent(disk->irpEvent);
 }
 
 static void disk_free(DEVICE* device)
 {
-	DISK_DEVICE* disk = (DISK_DEVICE*)device;
 	IRP* irp;
 	DISK_FILE* file;
+	DISK_DEVICE* disk = (DISK_DEVICE*) device;
 
-	freerdp_thread_stop(disk->thread);
-	freerdp_thread_free(disk->thread);
+	SetEvent(disk->stopEvent);
+	CloseHandle(disk->thread);
+	CloseHandle(disk->irpEvent);
+	CloseHandle(disk->mutex);
 
-	while ((irp = (IRP*)list_dequeue(disk->irp_list)) != NULL)
+	while ((irp = (IRP*) list_dequeue(disk->irp_list)) != NULL)
 		irp->Discard(irp);
+
 	list_free(disk->irp_list);
 
-	while ((file = (DISK_FILE*)list_dequeue(disk->files)) != NULL)
+	while ((file = (DISK_FILE*) list_dequeue(disk->files)) != NULL)
 		disk_file_free(file);
+
 	list_free(disk->files);
 	xfree(disk);
 }
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	DISK_DEVICE* disk;
 	char* name;
 	char* path;
 	int i, len;
+	DISK_DEVICE* disk;
 
-	name = (char*)pEntryPoints->plugin_data->data[1];
-	path = (char*)pEntryPoints->plugin_data->data[2];
+	name = (char*) pEntryPoints->plugin_data->data[1];
+	path = (char*) pEntryPoints->plugin_data->data[2];
 
 	if (name[0] && path[0])
 	{
@@ -666,6 +680,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		len = strlen(name);
 		disk->device.data = stream_new(len + 1);
+
 		for (i = 0; i <= len; i++)
 			stream_write_uint8(disk->device.data, name[i] < 0 ? '_' : name[i]);
 
@@ -673,11 +688,14 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		disk->files = list_new();
 
 		disk->irp_list = list_new();
-		disk->thread = freerdp_thread_new();
+		disk->mutex = CreateMutex(NULL, FALSE, NULL);
+		disk->irpEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		disk->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		disk->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) disk_thread_func, disk, CREATE_SUSPENDED, NULL);
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)disk);
+		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) disk);
 
-		freerdp_thread_start(disk->thread, disk_thread_func, disk);
+		ResumeThread(disk->thread);
 	}
 
 	return 0;

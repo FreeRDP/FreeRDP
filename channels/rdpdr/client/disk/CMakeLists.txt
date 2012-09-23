@@ -17,20 +17,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(DISK_SRCS
+set(MODULE_NAME "disk")
+set(MODULE_PREFIX "CHANNEL_DEVICE_DISK")
+
+set(${MODULE_PREFIX}_SRCS
 	disk_file.c
 	disk_file.h
 	disk_main.c)
 
 include_directories(..)
 
-add_library(disk ${DISK_SRCS})
-set_target_properties(disk PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(disk freerdp)
+	set(${MODULE_PREFIX}_LIBS freerdp winpr)
 else()
-	target_link_libraries(disk freerdp-utils)
+	set(${MODULE_PREFIX}_LIBS freerdp-utils winpr-synch winpr-thread)
 endif()
 
-install(TARGETS disk DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})

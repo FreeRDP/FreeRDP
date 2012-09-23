@@ -37,33 +37,34 @@
 
 #include "scard_main.h"
 
-static void
-scard_free(DEVICE* dev)
+static void scard_free(DEVICE* dev)
 {
-	SCARD_DEVICE* scard = (SCARD_DEVICE*)dev;
 	IRP* irp;
 	COMPLETIONIDINFO* CompletionIdInfo;
+	SCARD_DEVICE* scard = (SCARD_DEVICE*) dev;
 
 	freerdp_thread_stop(scard->thread);
 	freerdp_thread_free(scard->thread);
 	
-	while ((irp = (IRP*)list_dequeue(scard->irp_list)) != NULL)
+	while ((irp = (IRP*) list_dequeue(scard->irp_list)) != NULL)
 		irp->Discard(irp);
+
 	list_free(scard->irp_list);
 
 	/* Begin TS Client defect workaround. */
-	while ((CompletionIdInfo = (COMPLETIONIDINFO*)list_dequeue(scard->CompletionIds)) != NULL)
+
+	while ((CompletionIdInfo = (COMPLETIONIDINFO*) list_dequeue(scard->CompletionIds)) != NULL)
 	        xfree(CompletionIdInfo);
+
 	list_free(scard->CompletionIds);
+
 	/* End TS Client defect workaround. */
 
 	xfree(dev);
 	return;
 }
 
-
-static void
-scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
+static void scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
 {
 	switch (irp->MajorFunction)
 	{
@@ -80,16 +81,14 @@ scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
 	}
 }
 
-
-static void
-scard_process_irp_list(SCARD_DEVICE* scard)
+static void scard_process_irp_list(SCARD_DEVICE* scard)
 {
-	IRP *irp;
+	IRP* irp;
 
 	while (!freerdp_thread_is_stopped(scard->thread))
 	{
 		freerdp_thread_lock(scard->thread);
-		irp = (IRP *) list_dequeue(scard->irp_list);
+		irp = (IRP*) list_dequeue(scard->irp_list);
 		freerdp_thread_unlock(scard->thread);
 
 		if (irp == NULL)
@@ -99,16 +98,14 @@ scard_process_irp_list(SCARD_DEVICE* scard)
 	}
 }
 
-
-struct scard_irp_thread_args {
+struct scard_irp_thread_args
+{
 	SCARD_DEVICE* scard;
 	IRP* irp;
 	freerdp_thread* thread;
 };
  
-
-static void
-scard_process_irp_thread_func(struct scard_irp_thread_args* args)
+static void scard_process_irp_thread_func(struct scard_irp_thread_args* args)
 {
 	scard_process_irp(args->scard, args->irp);
 
@@ -116,9 +113,7 @@ scard_process_irp_thread_func(struct scard_irp_thread_args* args)
 	xfree(args);
 }
 
-
-static void *
-scard_thread_func(void* arg)
+static void* scard_thread_func(void* arg)
 {
 	SCARD_DEVICE* scard = (SCARD_DEVICE*) arg;
 
@@ -138,16 +133,14 @@ scard_thread_func(void* arg)
 	return NULL;
 }
 
-
 /* Begin TS Client defect workaround. */
-static COMPLETIONIDINFO* 
-scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
 {
-/* 
- * Search from the beginning of the LIST for one outstanding "CompletionID" 
- * that matches the one passed in.  If there is one, mark it as a duplicate
- * if it is not already marked. 
- */
+	/*
+	 * Search from the beginning of the LIST for one outstanding "CompletionID"
+	 * that matches the one passed in.  If there is one, mark it as a duplicate
+	 * if it is not already marked.
+	 */
 	LIST_ITEM* item;
 	COMPLETIONIDINFO* CompletionIdInfo;
 
@@ -164,18 +157,18 @@ scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
 	                return CompletionIdInfo;
 	        }
 	}
+
 	return NULL;    /* Either no items in the list or no match. */
 }
 
-static boolean 
-scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
 {
-/* 
- * Search from the end of the LIST for one outstanding "CompletionID" 
- * that matches the one passed in.  Remove it from the list and free the 
- * memory associated with it.  Return whether or not it was marked 
- * as a duplicate.
- */
+	/*
+	 * Search from the end of the LIST for one outstanding "CompletionID"
+	 * that matches the one passed in.  Remove it from the list and free the
+	 * memory associated with it.  Return whether or not it was marked
+	 * as a duplicate.
+	 */
 	LIST_ITEM* item;
 	COMPLETIONIDINFO* CompletionIdInfo;
 	boolean duplicate;
@@ -195,21 +188,22 @@ scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
 	                return duplicate;
 	        }
 	}
+
 	/* This function should only be called when there is
 	 * at least one outstanding CompletionID item in the list.
 	 */
 	DEBUG_WARN("Error!!! No CompletionIDs (or no matching IDs) in the list!");
+
 	return false;
 }
 
-static void 
-scard_irp_complete(IRP* irp)
+static void  scard_irp_complete(IRP* irp)
 {
-/* This function is (mostly) a copy of the statically-declared "irp_complete()" 
- * function except that this function adds extra operations for the 
- * smart card's handling of duplicate "CompletionID"s.  This function needs 
- * to be in this file so that "scard_irp_request()" can reference it.
- */
+	/* This function is (mostly) a copy of the statically-declared "irp_complete()"
+	 * function except that this function adds extra operations for the
+	 * smart card's handling of duplicate "CompletionID"s.  This function needs
+	 * to be in this file so that "scard_irp_request()" can reference it.
+	 */
 	int pos;
 	boolean duplicate;
 	SCARD_DEVICE* scard = (SCARD_DEVICE*)irp->device;
@@ -247,13 +241,10 @@ scard_irp_complete(IRP* irp)
 }
 /* End TS Client defect workaround. */
 
-
-static void
-scard_irp_request(DEVICE* device, IRP* irp)
+static void scard_irp_request(DEVICE* device, IRP* irp)
 {
 	COMPLETIONIDINFO* CompletionIdInfo;
-
-	SCARD_DEVICE* scard = (SCARD_DEVICE*)device;
+	SCARD_DEVICE* scard = (SCARD_DEVICE*) device;
 
 	/* Begin TS Client defect workaround. */
 	CompletionIdInfo= xnew(COMPLETIONIDINFO);

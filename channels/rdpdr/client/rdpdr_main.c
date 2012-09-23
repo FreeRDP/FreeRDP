@@ -235,11 +235,11 @@ static boolean rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
 
 static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 	uint16 component;
 	uint16 packetID;
 	uint32 deviceID;
 	uint32 status;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
 	stream_read_uint16(data_in, component);
 	stream_read_uint16(data_in, packetID);
