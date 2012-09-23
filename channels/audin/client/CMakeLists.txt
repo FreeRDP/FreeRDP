@@ -41,4 +41,3 @@ endif()
 if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
 endif()
-

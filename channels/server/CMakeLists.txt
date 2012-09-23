@@ -32,4 +32,3 @@ set_target_properties(freerdp-server PROPERTIES VERSION ${FREERDP_VERSION_FULL} 
 
 target_link_libraries(freerdp-server ${CHANNEL_SERVER_LIBS})
 install(TARGETS freerdp-server DESTINATION ${CMAKE_INSTALL_LIBDIR})
-

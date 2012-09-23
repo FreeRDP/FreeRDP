@@ -30,5 +30,7 @@ foreach(FILEPATH ${FILEPATHS})
 	endif()
 endforeach(FILEPATH)
 
-add_subdirectory(server)
+if(WITH_SERVER_CHANNELS)
+	add_subdirectory(server)
+endif()
 
