@@ -52,7 +52,7 @@ FREERDP_API char* freerdp_uniconv_out(UNICONV *uniconv, const char *str, size_t 
 
 #include <freerdp/types.h>
 
-FREERDP_API WCHAR* freerdp_AsciiToUnicode(const char* str, int* length);
-FREERDP_API CHAR* freerdp_UnicodeToAscii(const WCHAR* wstr, int* length);
+FREERDP_API int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length);
+FREERDP_API int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length);
 
 #endif /* __UNICODE_UTILS_H */

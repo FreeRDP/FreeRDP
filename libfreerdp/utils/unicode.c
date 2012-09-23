@@ -23,83 +23,13 @@
 
 #include <errno.h>
 #include <wctype.h>
+#include <freerdp/types.h>
+#include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/unicode.h>
 
 #include <winpr/crt.h>
-
-/* Convert pin/in_len from WINDOWS_CODEPAGE - return like xstrdup, 0-terminated */
-
-char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
-{
-	unsigned char *conv_pin = pin;
-	size_t conv_in_len = in_len;
-	char *pout = xmalloc(in_len * 2 + 1), *conv_pout = pout;
-	size_t conv_out_len = in_len * 2;
-
-#ifdef HAVE_ICONV
-	if (iconv(uniconv->in_iconv_h, (ICONV_CONST char **) &conv_pin, &conv_in_len, &conv_pout, &conv_out_len) == (size_t) - 1)
-	{
-		/* TODO: xrealloc if conv_out_len == 0 - it shouldn't be needed, but would allow a smaller initial alloc ... */
-		printf("freerdp_uniconv_in: iconv failure\n");
-		return 0;
-	}
-#else
-	while (conv_in_len >= 2)
-	{
-		unsigned int wc;
-
-		wc = (unsigned int)(unsigned char)(*conv_pin++);
-		wc += ((unsigned int)(unsigned char)(*conv_pin++)) << 8;
-		conv_in_len -= 2;
-
-		if (wc >= 0xD800 && wc <= 0xDFFF && conv_in_len >= 2)
-		{
-			/* Code points U+10000 to U+10FFFF using surrogate pair */
-			wc = ((wc - 0xD800) << 10) + 0x10000;
-			wc += (unsigned int)(unsigned char)(*conv_pin++);
-			wc += ((unsigned int)(unsigned char)(*conv_pin++) - 0xDC) << 8;
-			conv_in_len -= 2;
-		}
-
-		if (wc <= 0x7F)
-		{
-			*conv_pout++ = (char)wc;
-			conv_out_len--;
-		}
-		else if (wc <= 0x07FF)
-		{
-			*conv_pout++ = (char)(0xC0 + (wc >> 6));
-			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
-			conv_out_len -= 2;
-		}
-		else if (wc <= 0xFFFF)
-		{
-			*conv_pout++ = (char)(0xE0 + (wc >> 12));
-			*conv_pout++ = (char)(0x80 + ((wc >> 6) & 0x3F));
-			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
-			conv_out_len -= 3;
-		}
-		else
-		{
-			*conv_pout++ = (char)(0xF0 + (wc >> 18));
-			*conv_pout++ = (char)(0x80 + ((wc >> 12) & 0x3F));
-			*conv_pout++ = (char)(0x80 + ((wc >> 6) & 0x3F));
-			*conv_pout++ = (char)(0x80 + (wc & 0x3F));
-			conv_out_len -= 4;
-		}
-	}
-#endif
-
-	if (conv_in_len > 0)
-	{
-		printf("freerdp_uniconv_in: conversion failure - %d chars left\n", (int) conv_in_len);
-	}
-
-	*conv_pout = 0;
-	return pout;
-}
 
 UNICONV* freerdp_uniconv_new()
 {
@@ -139,42 +69,49 @@ char* freerdp_uniconv_out(UNICONV* uniconv, const char *str, size_t* pout_len)
 	WCHAR* wstr;
 	int length;
 
-	wstr = freerdp_AsciiToUnicode(str, &length);
+	length = freerdp_AsciiToUnicodeAlloc(str, &wstr, 0);
 	*pout_len = (size_t) length;
 
 	return (char*) wstr;
 }
 
-WCHAR* freerdp_AsciiToUnicode(const char* str, int* length)
+int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 {
-	WCHAR* wstr;
-
 	if (!str)
 	{
-		*length = 0;
-		return NULL;
+		*wstr = NULL;
+		return 0;
 	}
 
-	*length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	wstr = (WCHAR*) malloc((*length + 1) * sizeof(WCHAR));
+	if (length < 1)
+		length = strlen(str);
 
-	MultiByteToWideChar(CP_UTF8, 0, str, *length, (LPWSTR) wstr, *length * sizeof(WCHAR));
-	wstr[*length] = 0;
+	length = MultiByteToWideChar(CP_UTF8, 0, str, length, NULL, 0);
+	*wstr = (WCHAR*) malloc((length + 1) * sizeof(WCHAR));
 
-	*length *= 2;
+	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) (*wstr), length * sizeof(WCHAR));
+	(*wstr)[length] = 0;
 
-	return wstr;
+	length *= 2;
+
+	return length;
 }
 
-CHAR* freerdp_UnicodeToAscii(const WCHAR* wstr, int* length)
+char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
 {
 	CHAR* str;
+	int length;
 
-	*length = WideCharToMultiByte(CP_UTF8, 0, wstr, lstrlenW(wstr), NULL, 0, NULL, NULL);
-	str = (char*) malloc(*length + 1);
+	length = freerdp_UnicodeToAsciiAlloc((WCHAR*) pin, &str, (int) (in_len / 2));
 
-	WideCharToMultiByte(CP_UTF8, 0, wstr, *length, str, *length, NULL, NULL);
-	str[*length] = '\0';
+	return (char*) str;
+}
 
-	return str;
+int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length)
+{
+	*str = malloc((length * 2) + 1);
+
+	WideCharToMultiByte(CP_UTF8, 0, wstr, length, *str, length, NULL, NULL);
+
+	return length;
 }
