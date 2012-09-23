@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/unicode.h>
+
 #include "timezone.h"
 
 #include "info.h"
@@ -119,7 +121,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? true : false);
 	if (stream_get_left(s) < cbClientAddress)
 		return false;
-	settings->ip_address = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbClientAddress);
+	settings->ip_address = freerdp_uniconv_in(stream_get_tail(s), cbClientAddress);
 	stream_seek(s, cbClientAddress);
 
 	stream_read_uint16(s, cbClientDir); /* cbClientDir */
@@ -127,7 +129,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (settings->client_dir)
 		xfree(settings->client_dir);
-	settings->client_dir = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbClientDir);
+	settings->client_dir = freerdp_uniconv_in(stream_get_tail(s), cbClientDir);
 	stream_seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
@@ -166,10 +168,10 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	clientAddressFamily = settings->ipv6 ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
-	clientAddress = (uint8*) freerdp_uniconv_out(settings->uniconv, settings->ip_address, &length);
+	clientAddress = (uint8*) freerdp_uniconv_out(settings->ip_address, &length);
 	cbClientAddress = length;
 
-	clientDir = (uint8*) freerdp_uniconv_out(settings->uniconv, settings->client_dir, &length);
+	clientDir = (uint8*) freerdp_uniconv_out(settings->client_dir, &length);
 	cbClientDir = length;
 
 	cbAutoReconnectLen = settings->client_auto_reconnect_cookie->cbLen;
@@ -239,7 +241,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (cbDomain > 0)
 	{
-		settings->domain = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbDomain);
+		settings->domain = freerdp_uniconv_in(stream_get_tail(s), cbDomain);
 		stream_seek(s, cbDomain);
 	}
 	stream_seek(s, 2);
@@ -248,7 +250,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (cbUserName > 0)
 	{
-		settings->username = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbUserName);
+		settings->username = freerdp_uniconv_in(stream_get_tail(s), cbUserName);
 		stream_seek(s, cbUserName);
 	}
 	stream_seek(s, 2);
@@ -257,7 +259,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (cbPassword > 0)
 	{
-		settings->password = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbPassword);
+		settings->password = freerdp_uniconv_in(stream_get_tail(s), cbPassword);
 		stream_seek(s, cbPassword);
 	}
 	stream_seek(s, 2);
@@ -266,7 +268,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (cbAlternateShell > 0)
 	{
-		settings->shell = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbAlternateShell);
+		settings->shell = freerdp_uniconv_in(stream_get_tail(s), cbAlternateShell);
 		stream_seek(s, cbAlternateShell);
 	}
 	stream_seek(s, 2);
@@ -275,7 +277,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 	if (cbWorkingDir > 0)
 	{
-		settings->directory = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), cbWorkingDir);
+		settings->directory = freerdp_uniconv_in(stream_get_tail(s), cbWorkingDir);
 		stream_seek(s, cbWorkingDir);
 	}
 	stream_seek(s, 2);
@@ -335,10 +337,10 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->compression)
 		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_RDP6;
 
-	domain = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->domain, &length);
+	domain = (uint8*) freerdp_uniconv_out(settings->domain, &length);
 	cbDomain = length;
 
-	userName = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->username, &length);
+	userName = (uint8*) freerdp_uniconv_out(settings->username, &length);
 	cbUserName = length;
 
 	if (settings->password_cookie && settings->password_cookie->length > 0)
@@ -349,14 +351,14 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	}
 	else
 	{
-		password = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->password, &length);
+		password = (uint8*) freerdp_uniconv_out(settings->password, &length);
 		cbPassword = length;
 	}
 
-	alternateShell = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->shell, &length);
+	alternateShell = (uint8*) freerdp_uniconv_out(settings->shell, &length);
 	cbAlternateShell = length;
 
-	workingDir = (uint8*)freerdp_uniconv_out(settings->uniconv, settings->directory, &length);
+	workingDir = (uint8*) freerdp_uniconv_out(settings->directory, &length);
 	cbWorkingDir = length;
 
 	stream_write_uint32(s, 0); /* CodePage */

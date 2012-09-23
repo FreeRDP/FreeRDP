@@ -36,8 +36,10 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
@@ -425,7 +427,6 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 	uint64 size;
 	char* fullpath;
 	struct STAT st;
-	UNICONV* uniconv;
 	struct timeval tv[2];
 	uint64 LastWriteTime;
 	uint32 FileAttributes;
@@ -485,9 +486,8 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_seek_uint8(input); /* ReplaceIfExists */
 			stream_seek_uint8(input); /* RootDirectory */
 			stream_read_uint32(input, FileNameLength);
-			uniconv = freerdp_uniconv_new();
-			s = freerdp_uniconv_in(uniconv, stream_get_tail(input), FileNameLength);
-			freerdp_uniconv_free(uniconv);
+
+			s = freerdp_uniconv_in(stream_get_tail(input), FileNameLength);
 
 			fullpath = disk_file_combine_fullpath(file->basepath, s);
 			xfree(s);
@@ -520,7 +520,6 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	struct dirent* ent;
 	char* ent_path;
 	struct STAT st;
-	UNICONV* uniconv;
 	size_t len;
 	boolean ret;
 
@@ -549,6 +548,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		do
 		{
 			ent = readdir(file->dir);
+
 			if (ent == NULL)
 				continue;
 
@@ -572,6 +572,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	memset(&st, 0, sizeof(struct STAT));
 	ent_path = xmalloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
 	sprintf(ent_path, "%s/%s", file->fullpath, ent->d_name);
+
 	if (STAT(ent_path, &st) != 0)
 	{
 		DEBUG_WARN("stat %s failed. errno = %d", ent_path, errno);
@@ -580,9 +581,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 	xfree(ent_path);
 
-	uniconv = freerdp_uniconv_new();
-	ent_path = freerdp_uniconv_out(uniconv, ent->d_name, &len);
-	freerdp_uniconv_free(uniconv);
+	ent_path = freerdp_uniconv_out(ent->d_name, &len);
 
 	ret = true;
 	switch (FsInformationClass)

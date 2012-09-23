@@ -22,15 +22,16 @@
 #endif
 
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 
 #include <freerdp/utils/string.h>
 
-void freerdp_string_read_length32(STREAM* s, rdpString* string, UNICONV* uniconv)
+void freerdp_string_read_length32(STREAM* s, rdpString* string)
 {
 	stream_read_uint32(s, string->length);
 	string->unicode = (char*) xmalloc(string->length);
 	stream_read(s, string->unicode, string->length);
-	string->ascii = freerdp_uniconv_in(uniconv, (uint8*) string->unicode, string->length);
+	string->ascii = freerdp_uniconv_in((uint8*) string->unicode, string->length);
 }
 
 void freerdp_string_free(rdpString* string)

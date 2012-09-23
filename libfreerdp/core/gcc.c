@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/utils/print.h>
+#include <freerdp/utils/unicode.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -490,7 +491,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	stream_read_uint32(s, settings->client_build); /* clientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 32);
+	str = freerdp_uniconv_in(stream_get_tail(s), 32);
 	stream_seek(s, 32);
 	snprintf(settings->client_hostname, 31, "%s", str);
 	settings->client_hostname[31] = 0;
@@ -545,7 +546,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 
 		if (blockLength < 64)
 			break;
-		str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+		str = freerdp_uniconv_in(stream_get_tail(s), 64);
 		stream_seek(s, 64);
 		snprintf(settings->client_product_id, 32, "%s", str);
 		xfree(str);
@@ -642,8 +643,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
 	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
-	clientName = freerdp_uniconv_out(settings->uniconv, settings->client_hostname, &clientNameLength);
-	clientDigProductId = freerdp_uniconv_out(settings->uniconv, settings->client_product_id, &clientDigProductIdLength);
+	clientName = freerdp_uniconv_out(settings->client_hostname, &clientNameLength);
+	clientDigProductId = freerdp_uniconv_out(settings->client_product_id, &clientDigProductIdLength);
 
 	stream_write_uint32(s, version); /* version */
 	stream_write_uint16(s, settings->width); /* desktopWidth */

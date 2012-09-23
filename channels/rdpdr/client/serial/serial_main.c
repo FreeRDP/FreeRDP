@@ -79,23 +79,21 @@ static boolean serial_check_fds(SERIAL_DEVICE* serial);
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
+	char* path;
 	SERIAL_TTY* tty;
 	uint32 PathLength;
 	uint32 FileId;
-	char* path;
-	UNICONV* uniconv;
 
 	stream_seek(irp->input, 28); /* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 								 /* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_uint32(irp->input, PathLength);
 
-	uniconv = freerdp_uniconv_new();
-	path = freerdp_uniconv_in(uniconv, stream_get_tail(irp->input), PathLength);
-	freerdp_uniconv_free(uniconv);
+	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
 
 	FileId = irp->devman->id_sequence++;
 
 	tty = serial_tty_new(serial->path, FileId);
+
 	if (tty == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -122,6 +120,7 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	SERIAL_TTY* tty;
 
 	tty = serial->tty;
+
 	if (tty == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -153,6 +152,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	DEBUG_SVC("length %u offset %llu", Length, Offset);
 
 	tty = serial->tty;
+
 	if (tty == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -179,11 +179,13 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, Length);
+
 	if (Length > 0)
 	{
 		stream_check_size(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
+
 	xfree(buffer);
 
 	irp->Complete(irp);
@@ -202,6 +204,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	DEBUG_SVC("length %u offset %llu", Length, Offset);
 
 	tty = serial->tty;
+
 	if (tty == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -243,6 +246,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	stream_seek(irp->input, 20); /* Padding */
 
 	tty = serial->tty;
+
 	if (tty == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;

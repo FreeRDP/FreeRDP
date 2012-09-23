@@ -26,6 +26,7 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 
 #include "tpkt.h"
 
@@ -234,7 +235,6 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 {
 	STREAM* s;
 	uint32 cbSize;
-	UNICONV* uniconv;
 	uint16 cchPCB_times2 = 0;
 	char* wszPCB = NULL;
 
@@ -252,10 +252,8 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	if (nego->preconnection_blob)
 	{
 		size_t size;
-		uniconv = freerdp_uniconv_new();
-		wszPCB = freerdp_uniconv_out(uniconv, nego->preconnection_blob, &size);
+		wszPCB = freerdp_uniconv_out(nego->preconnection_blob, &size);
 		cchPCB_times2 = (uint16) size;
-		freerdp_uniconv_free(uniconv);
 		cchPCB_times2 += 2; /* zero-termination */
 		cbSize += cchPCB_times2;
 	}

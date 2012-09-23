@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/unicode.h>
+
 #include "timezone.h"
 
 /**
@@ -85,7 +87,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_read_uint32(s, clientTimeZone->bias); /* Bias */
 
 	/* standardName (64 bytes) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	str = freerdp_uniconv_in(stream_get_tail(s), 64);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
 	xfree(str);
@@ -94,7 +96,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_read_uint32(s, clientTimeZone->standardBias); /* StandardBias */
 
 	/* daylightName (64 bytes) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	str = freerdp_uniconv_in(stream_get_tail(s), 64);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
 	xfree(str);
@@ -127,10 +129,10 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	clientTimeZone = settings->client_time_zone;
 	freerdp_time_zone_detect(clientTimeZone);
 
-	standardName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
+	standardName = (uint8*) freerdp_uniconv_out(clientTimeZone->standardName, &length);
 	standardNameLength = length;
 
-	daylightName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
+	daylightName = (uint8*) freerdp_uniconv_out(clientTimeZone->daylightName, &length);
 	daylightNameLength = length;
 
 	if (standardNameLength > 62)

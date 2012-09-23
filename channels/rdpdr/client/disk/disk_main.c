@@ -123,7 +123,6 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	uint32 CreateDisposition;
 	uint32 CreateOptions;
 	uint32 PathLength;
-	UNICONV* uniconv;
 	char* path;
 	uint32 FileId;
 	uint8 Information;
@@ -134,9 +133,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	stream_read_uint32(irp->input, CreateOptions);
 	stream_read_uint32(irp->input, PathLength);
 
-	uniconv = freerdp_uniconv_new();
-	path = freerdp_uniconv_in(uniconv, stream_get_tail(irp->input), PathLength);
-	freerdp_uniconv_free(uniconv);
+	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
 
 	FileId = irp->devman->id_sequence++;
 
@@ -388,7 +385,6 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	STREAM* output = irp->output;
 	struct STATVFS svfst;
 	struct STAT st;
-	UNICONV* uniconv;
 	char* volumeLabel = {"FREERDP"};  /* TODO: Add sub routine to correctly pick up Volume Label name for each O/S supported */
 	char* diskType = {"FAT32"};
 	char* outStr;
@@ -403,9 +399,7 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			uniconv = freerdp_uniconv_new();
-			outStr = freerdp_uniconv_out(uniconv, volumeLabel, &len);
-			freerdp_uniconv_free(uniconv);
+			outStr = freerdp_uniconv_out(volumeLabel, &len);
 			stream_write_uint32(output, 17 + len); /* Length */
 			stream_check_size(output, 17 + len);
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
@@ -429,9 +423,7 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			uniconv = freerdp_uniconv_new();
-			outStr = freerdp_uniconv_out(uniconv, diskType, &len);
-			freerdp_uniconv_free(uniconv);
+			outStr = freerdp_uniconv_out(diskType, &len);
 
 			stream_write_uint32(output, 12 + len); /* Length */
 			stream_check_size(output, 12 + len);
@@ -480,7 +472,6 @@ static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 	uint32 FsInformationClass;
 	uint8 InitialQuery;
 	uint32 PathLength;
-	UNICONV* uniconv;
 	char* path;
 
 	stream_read_uint32(irp->input, FsInformationClass);
@@ -488,9 +479,7 @@ static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 	stream_read_uint32(irp->input, PathLength);
 	stream_seek(irp->input, 23); /* Padding */
 
-	uniconv = freerdp_uniconv_new();
-	path = freerdp_uniconv_in(uniconv, stream_get_tail(irp->input), PathLength);
-	freerdp_uniconv_free(uniconv);
+	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
 
 	file = disk_get_file_by_id(disk, irp->FileId);
 

@@ -272,7 +272,6 @@ rdpSettings* settings_new(void* instance)
 
 		settings->frame_acknowledge = 2;
 
-		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, 31);
 		settings->client_hostname[31] = 0;
 		settings->mouse_motion = true;
@@ -296,7 +295,6 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
-		freerdp_uniconv_free(settings->uniconv);
 		xfree(settings->hostname);
 		xfree(settings->username);
 		xfree(settings->password);

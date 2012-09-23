@@ -24,6 +24,7 @@
 
 #include <freerdp/utils/rail.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/unicode.h>
 
 #include "rail_orders.h"
 
@@ -78,7 +79,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 	if (string == NULL || strlen(string) < 1)
 		return;
 
-	buffer = freerdp_uniconv_out(rail_order->uniconv, string, &length);
+	buffer = freerdp_uniconv_out(string, &length);
 
 	unicode_string->string = (uint8*) buffer;
 	unicode_string->length = (uint16) length;
@@ -631,7 +632,7 @@ rdpRailOrder* rail_order_new()
 
 	if (rail_order != NULL)
 	{
-		rail_order->uniconv = freerdp_uniconv_new();
+
 	}
 
 	return rail_order;
@@ -641,7 +642,7 @@ void rail_order_free(rdpRailOrder* rail_order)
 {
 	if (rail_order != NULL)
 	{
-		freerdp_uniconv_free(rail_order->uniconv);
+
 		xfree(rail_order);
 	}
 }

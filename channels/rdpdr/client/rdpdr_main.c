@@ -96,15 +96,12 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	char* s;
 	STREAM* data_out;
-	UNICONV* uniconv;
 	size_t computerNameLenW;
-
-	uniconv = freerdp_uniconv_new();
 
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
 
-	s = freerdp_uniconv_out(uniconv, rdpdr->computerName, &computerNameLenW);
+	s = freerdp_uniconv_out(rdpdr->computerName, &computerNameLenW);
 	data_out = stream_new(16 + computerNameLenW + 2);
 
 	stream_write_uint16(data_out, RDPDR_CTYP_CORE);
@@ -117,7 +114,6 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	stream_write_uint16(data_out, 0); /* null terminator */
 
 	xfree(s);
-	freerdp_uniconv_free(uniconv);
 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }

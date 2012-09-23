@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+
 #include "errinfo.h"
 
 int connectErrorCode;

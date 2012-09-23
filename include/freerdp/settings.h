@@ -22,7 +22,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/utils/blob.h>
-#include <freerdp/utils/unicode.h>
 
 /* Performance Flags */
 #define PERF_FLAG_NONE                  	0x00000000
@@ -317,7 +316,7 @@ struct rdp_settings
 	ALIGN64 char* home_path; /* 112 */
 	ALIGN64 uint32 share_id; /* 113 */
 	ALIGN64 uint32 pdu_source; /* 114 */
-	ALIGN64 UNICONV* uniconv; /* 115 */
+	ALIGN64 void* unused115; /* 115 */
 	ALIGN64 boolean server_mode; /* 116 */
 	ALIGN64 char* config_path; /* 117 */
 	ALIGN64 char* current_path; /* 118 */

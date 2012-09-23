@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+
 #include <freerdp/utils/profiler.h>
 
 PROFILER* profiler_create(char* name)

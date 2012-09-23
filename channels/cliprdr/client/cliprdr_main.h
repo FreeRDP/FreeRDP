@@ -35,7 +35,6 @@ typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;
-	UNICONV* uniconv;
 	boolean received_caps;
 	boolean use_long_format_names;
 	boolean stream_fileclip_enabled;

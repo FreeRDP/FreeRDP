@@ -156,7 +156,7 @@ rdpNtlm* ntlm_new()
 
 	if (ntlm != NULL)
 	{
-		ntlm->uniconv = freerdp_uniconv_new();
+
 	}
 
 	return ntlm;
@@ -166,7 +166,7 @@ void ntlm_free(rdpNtlm* ntlm)
 {
 	if (ntlm != NULL)
 	{
-		freerdp_uniconv_free(ntlm->uniconv);
+
 	}
 }
 

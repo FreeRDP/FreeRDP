@@ -50,6 +50,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_constants.h"
@@ -70,18 +71,15 @@ typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
 static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	uint32 PathLength;
 	char* path;
-	UNICONV* uniconv;
+	uint32 PathLength;
 
 	stream_seek(irp->input, 28);
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_uint32(irp->input, PathLength);
 
-	uniconv = freerdp_uniconv_new();
-	path = freerdp_uniconv_in(uniconv, stream_get_tail(irp->input), PathLength);
-	freerdp_uniconv_free(uniconv);
+	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);

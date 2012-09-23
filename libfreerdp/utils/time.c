@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
 #include <winpr/windows.h>
 
 #include <freerdp/utils/time.h>

@@ -31,40 +31,7 @@
 
 #include <winpr/crt.h>
 
-UNICONV* freerdp_uniconv_new()
-{
-	UNICONV *uniconv = xnew(UNICONV);
-
-#ifdef HAVE_ICONV
-	uniconv->iconv = 1;
-	uniconv->in_iconv_h = iconv_open(DEFAULT_CODEPAGE, WINDOWS_CODEPAGE);
-	if (errno == EINVAL)
-	{
-		printf("Error opening iconv converter to %s from %s\n", DEFAULT_CODEPAGE, WINDOWS_CODEPAGE);
-	}
-	uniconv->out_iconv_h = iconv_open(WINDOWS_CODEPAGE, DEFAULT_CODEPAGE);
-	if (errno == EINVAL)
-	{
-		printf("Error opening iconv converter to %s from %s\n", WINDOWS_CODEPAGE, DEFAULT_CODEPAGE);
-	}
-#endif
-
-	return uniconv;
-}
-
-void freerdp_uniconv_free(UNICONV *uniconv)
-{
-	if (uniconv != NULL)
-	{
-#ifdef HAVE_ICONV
-		iconv_close(uniconv->in_iconv_h);
-		iconv_close(uniconv->out_iconv_h);
-#endif
-		xfree(uniconv);
-	}
-}
-
-char* freerdp_uniconv_out(UNICONV* uniconv, const char *str, size_t* pout_len)
+char* freerdp_uniconv_out(const char *str, size_t* pout_len)
 {
 	WCHAR* wstr;
 	int length;
@@ -97,7 +64,7 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 	return length;
 }
 
-char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
+char* freerdp_uniconv_in(unsigned char* pin, size_t in_len)
 {
 	CHAR* str;
 	int length;

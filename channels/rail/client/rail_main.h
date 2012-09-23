@@ -29,7 +29,6 @@
 
 struct rdp_rail_order
 {
-	UNICONV* uniconv;
 	RDP_PLUGIN_DATA* plugin_data;
 	void* plugin;
 	RAIL_HANDSHAKE_ORDER handshake;

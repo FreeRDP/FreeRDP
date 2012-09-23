@@ -230,9 +230,7 @@ static void printer_free(DEVICE* device)
 
 void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
 {
-	PRINTER_DEVICE* printer_dev;
 	char* port;
-	UNICONV* uniconv;
 	uint32 Flags;
 	size_t DriverNameLen;
 	char* DriverName;
@@ -240,6 +238,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	char* PrintName;
 	uint32 CachedFieldsLen;
 	uint8* CachedPrinterConfigData;
+	PRINTER_DEVICE* printer_dev;
 
 	port = xmalloc(10);
 	snprintf(port, 10, "PRN%d", printer->id);
@@ -262,10 +261,8 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	if (printer->is_default)
 		Flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
 
-	uniconv = freerdp_uniconv_new();
-	DriverName = freerdp_uniconv_out(uniconv, printer->driver, &DriverNameLen);
-	PrintName = freerdp_uniconv_out(uniconv, printer->name, &PrintNameLen);
-	freerdp_uniconv_free(uniconv);
+	DriverName = freerdp_uniconv_out(printer->driver, &DriverNameLen);
+	PrintName = freerdp_uniconv_out(printer->name, &PrintNameLen);
 
 	printer_dev->device.data = stream_new(28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
 

@@ -24,31 +24,8 @@
 #include <string.h>
 #include <freerdp/api.h>
 
-#define DEFAULT_CODEPAGE	"UTF-8"
-#define WINDOWS_CODEPAGE	"UTF-16LE"
-
-#ifdef HAVE_ICONV
-#include <iconv.h>
-#endif
-
-#ifndef ICONV_CONST
-#define ICONV_CONST ""
-#endif
-
-struct _UNICONV
-{
-	int iconv;
-#ifdef HAVE_ICONV
-	iconv_t* in_iconv_h;
-	iconv_t* out_iconv_h;
-#endif
-};
-typedef struct _UNICONV UNICONV;
-
-FREERDP_API UNICONV* freerdp_uniconv_new();
-FREERDP_API void freerdp_uniconv_free(UNICONV *uniconv);
-FREERDP_API char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len);
-FREERDP_API char* freerdp_uniconv_out(UNICONV *uniconv, const char *str, size_t *pout_len);
+FREERDP_API char* freerdp_uniconv_in(unsigned char* pin, size_t in_len);
+FREERDP_API char* freerdp_uniconv_out(const char *str, size_t *pout_len);
 
 #include <freerdp/types.h>
 

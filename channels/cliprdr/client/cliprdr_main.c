@@ -82,8 +82,6 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* s)
 static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 {
 	DEBUG_CLIPRDR("connecting");
-
-	((cliprdrPlugin*) plugin)->uniconv = freerdp_uniconv_new();
 }
 
 void cliprdr_print_general_capability_flags(uint32 flags)
@@ -267,11 +265,6 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 {
-	cliprdrPlugin* cliprdr_plugin = (cliprdrPlugin*) plugin;
-
-	if (cliprdr_plugin->uniconv != NULL)
-		freerdp_uniconv_free(cliprdr_plugin->uniconv);
-
 	xfree(plugin);
 }
 
