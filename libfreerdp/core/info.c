@@ -158,23 +158,20 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 {
-	size_t length;
-	uint16 clientAddressFamily;
-	uint8* clientAddress;
-	uint16 cbClientAddress;
-	uint8* clientDir;
-	uint16 cbClientDir;
-	uint16 cbAutoReconnectLen;
+	int clientAddressFamily;
+	WCHAR* clientAddress;
+	int cbClientAddress;
+	WCHAR* clientDir;
+	int cbClientDir;
+	int cbAutoReconnectLen;
 
 	clientAddressFamily = settings->ipv6 ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
-	clientAddress = (uint8*) freerdp_uniconv_out(settings->ip_address, &length);
-	cbClientAddress = length;
+	cbClientAddress = freerdp_AsciiToUnicodeAlloc(settings->ip_address, &clientAddress, 0) * 2;
 
-	clientDir = (uint8*) freerdp_uniconv_out(settings->client_dir, &length);
-	cbClientDir = length;
+	cbClientDir = freerdp_AsciiToUnicodeAlloc(settings->client_dir, &clientDir, 0) * 2;
 
-	cbAutoReconnectLen = settings->client_auto_reconnect_cookie->cbLen;
+	cbAutoReconnectLen = (int) settings->client_auto_reconnect_cookie->cbLen;
 
 	stream_write_uint16(s, clientAddressFamily); /* clientAddressFamily */
 
@@ -297,18 +294,17 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 {
-	size_t length;
 	uint32 flags;
-	uint8* domain;
-	uint16 cbDomain;
-	uint8* userName;
-	uint16 cbUserName;
-	uint8* password;
-	uint16 cbPassword;
-	uint8* alternateShell;
-	uint16 cbAlternateShell;
-	uint8* workingDir;
-	uint16 cbWorkingDir;
+	WCHAR* domain;
+	int cbDomain;
+	WCHAR* userName;
+	int cbUserName;
+	WCHAR* password;
+	int cbPassword;
+	WCHAR* alternateShell;
+	int cbAlternateShell;
+	WCHAR* workingDir;
+	int cbWorkingDir;
 	boolean usedPasswordCookie = false;
 
 	flags = INFO_MOUSE |
@@ -337,29 +333,32 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->compression)
 		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_RDP6;
 
-	domain = (uint8*) freerdp_uniconv_out(settings->domain, &length);
-	cbDomain = length;
+	if (settings->domain)
+	{
+		cbDomain = freerdp_AsciiToUnicodeAlloc(settings->domain, &domain, 0) * 2;
+	}
+	else
+	{
+		domain = NULL;
+		cbDomain = 0;
+	}
 
-	userName = (uint8*) freerdp_uniconv_out(settings->username, &length);
-	cbUserName = length;
+	cbUserName = freerdp_AsciiToUnicodeAlloc(settings->username, &userName, 0) * 2;
 
 	if (settings->password_cookie && settings->password_cookie->length > 0)
 	{
 		usedPasswordCookie = true;
-		password = (uint8*)settings->password_cookie->data;
+		password = (WCHAR*) settings->password_cookie->data;
 		cbPassword = settings->password_cookie->length - 2;	/* Strip double zero termination */
 	}
 	else
 	{
-		password = (uint8*) freerdp_uniconv_out(settings->password, &length);
-		cbPassword = length;
+		cbPassword = freerdp_AsciiToUnicodeAlloc(settings->password, &password, 0) * 2;
 	}
 
-	alternateShell = (uint8*) freerdp_uniconv_out(settings->shell, &length);
-	cbAlternateShell = length;
+	cbAlternateShell = freerdp_AsciiToUnicodeAlloc(settings->shell, &alternateShell, 0) * 2;
 
-	workingDir = (uint8*) freerdp_uniconv_out(settings->directory, &length);
-	cbWorkingDir = length;
+	cbWorkingDir = freerdp_AsciiToUnicodeAlloc(settings->directory, &workingDir, 0) * 2;
 
 	stream_write_uint32(s, 0); /* CodePage */
 	stream_write_uint32(s, flags); /* flags */

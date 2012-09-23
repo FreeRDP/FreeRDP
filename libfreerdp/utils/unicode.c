@@ -31,17 +31,6 @@
 
 #include <winpr/crt.h>
 
-char* freerdp_uniconv_out(const char *str, size_t* pout_len)
-{
-	WCHAR* wstr;
-	int length;
-
-	length = freerdp_AsciiToUnicodeAlloc(str, &wstr, 0);
-	*pout_len = (size_t) length;
-
-	return (char*) wstr;
-}
-
 int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 {
 	if (!str)
@@ -58,8 +47,6 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 
 	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) (*wstr), length * sizeof(WCHAR));
 	(*wstr)[length] = 0;
-
-	length *= 2;
 
 	return length;
 }

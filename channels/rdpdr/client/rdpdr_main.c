@@ -94,14 +94,15 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
-	char* s;
 	STREAM* data_out;
+	WCHAR* computerNameW;
 	size_t computerNameLenW;
 
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
 
-	s = freerdp_uniconv_out(rdpdr->computerName, &computerNameLenW);
+	computerNameLenW = freerdp_AsciiToUnicodeAlloc(rdpdr->computerName, &computerNameW, 0) * 2;
+
 	data_out = stream_new(16 + computerNameLenW + 2);
 
 	stream_write_uint16(data_out, RDPDR_CTYP_CORE);
@@ -110,10 +111,10 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	stream_write_uint32(data_out, 1); /* unicodeFlag, 0 for ASCII and 1 for Unicode */
 	stream_write_uint32(data_out, 0); /* codePage, must be set to zero */
 	stream_write_uint32(data_out, computerNameLenW + 2); /* computerNameLen, including null terminator */
-	stream_write(data_out, s, computerNameLenW);
+	stream_write(data_out, computerNameW, computerNameLenW);
 	stream_write_uint16(data_out, 0); /* null terminator */
 
-	xfree(s);
+	xfree(computerNameW);
 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }

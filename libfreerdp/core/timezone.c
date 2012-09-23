@@ -119,21 +119,17 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	uint32 bias;
 	sint32 sbias;
 	uint32 bias2c;
-	size_t length;
-	uint8* standardName;
-	uint8* daylightName;
-	size_t standardNameLength;
-	size_t daylightNameLength;
+	WCHAR* standardName;
+	WCHAR* daylightName;
+	int standardNameLength;
+	int daylightNameLength;
 	TIME_ZONE_INFO* clientTimeZone;
 
 	clientTimeZone = settings->client_time_zone;
 	freerdp_time_zone_detect(clientTimeZone);
 
-	standardName = (uint8*) freerdp_uniconv_out(clientTimeZone->standardName, &length);
-	standardNameLength = length;
-
-	daylightName = (uint8*) freerdp_uniconv_out(clientTimeZone->daylightName, &length);
-	daylightNameLength = length;
+	standardNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->standardName, &standardName, 0) * 2;
+	daylightNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->daylightName, &daylightName, 0) * 2;
 
 	if (standardNameLength > 62)
 		standardNameLength = 62;
@@ -161,6 +157,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_write_zero(s, 64 - standardNameLength);
 
 	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
+
 	DEBUG_TIMEZONE("bias=%d stdName='%s' dlName='%s'",
 		bias, clientTimeZone->standardName, clientTimeZone->daylightName);
 

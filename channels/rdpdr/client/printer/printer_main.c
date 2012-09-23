@@ -232,10 +232,10 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 {
 	char* port;
 	uint32 Flags;
-	size_t DriverNameLen;
-	char* DriverName;
-	size_t PrintNameLen;
-	char* PrintName;
+	int DriverNameLen;
+	WCHAR* DriverName;
+	int PrintNameLen;
+	WCHAR* PrintName;
 	uint32 CachedFieldsLen;
 	uint8* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;
@@ -258,11 +258,12 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	DEBUG_SVC("Printer %s registered", printer->name);
 
 	Flags = 0;
+
 	if (printer->is_default)
 		Flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
 
-	DriverName = freerdp_uniconv_out(printer->driver, &DriverNameLen);
-	PrintName = freerdp_uniconv_out(printer->name, &PrintNameLen);
+	DriverNameLen = freerdp_AsciiToUnicodeAlloc(printer->driver, &DriverName, 0) * 2;
+	PrintNameLen = freerdp_AsciiToUnicodeAlloc(printer->name, &PrintName, 0) * 2;
 
 	printer_dev->device.data = stream_new(28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
 
@@ -276,6 +277,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	stream_write_uint16(printer_dev->device.data, 0);
 	stream_write(printer_dev->device.data, PrintName, PrintNameLen);
 	stream_write_uint16(printer_dev->device.data, 0);
+
 	if (CachedFieldsLen > 0)
 	{
 		stream_write(printer_dev->device.data, CachedPrinterConfigData, CachedFieldsLen);

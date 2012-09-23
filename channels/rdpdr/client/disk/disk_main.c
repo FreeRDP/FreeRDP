@@ -385,10 +385,10 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	STREAM* output = irp->output;
 	struct STATVFS svfst;
 	struct STAT st;
-	char* volumeLabel = {"FREERDP"};  /* TODO: Add sub routine to correctly pick up Volume Label name for each O/S supported */
+	char* volumeLabel = {"FREERDP"};
 	char* diskType = {"FAT32"};
-	char* outStr;
-	size_t len;
+	WCHAR* outStr;
+	int length;
 
 	stream_read_uint32(irp->input, FsInformationClass);
 
@@ -399,15 +399,15 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			outStr = freerdp_uniconv_out(volumeLabel, &len);
-			stream_write_uint32(output, 17 + len); /* Length */
-			stream_check_size(output, 17 + len);
+			length = freerdp_AsciiToUnicodeAlloc(volumeLabel, &outStr, 0) * 2;
+			stream_write_uint32(output, 17 + length); /* Length */
+			stream_check_size(output, 17 + length);
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
 			stream_write_uint32(output, svfst.f_fsid); /* VolumeSerialNumber */
-			stream_write_uint32(output, len); /* VolumeLabelLength */
+			stream_write_uint32(output, length); /* VolumeLabelLength */
 			stream_write_uint8(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
-			stream_write(output, outStr, len); /* VolumeLabel (Unicode) */
+			stream_write(output, outStr, length); /* VolumeLabel (Unicode) */
 			xfree(outStr);
 			break;
 
@@ -423,17 +423,16 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			outStr = freerdp_uniconv_out(diskType, &len);
-
-			stream_write_uint32(output, 12 + len); /* Length */
-			stream_check_size(output, 12 + len);
+			length = freerdp_AsciiToUnicodeAlloc(diskType, &outStr, 0) * 2;
+			stream_write_uint32(output, 12 + length); /* Length */
+			stream_check_size(output, 12 + length);
 			stream_write_uint32(output,
 				FILE_CASE_SENSITIVE_SEARCH |
 				FILE_CASE_PRESERVED_NAMES |
 				FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
 			stream_write_uint32(output, svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
-			stream_write_uint32(output, len); /* FileSystemNameLength */
-			stream_write(output, outStr, len); /* FileSystemName (Unicode) */
+			stream_write_uint32(output, length); /* FileSystemNameLength */
+			stream_write(output, outStr, length); /* FileSystemName (Unicode) */
 			xfree(outStr);
 			break;
 
@@ -652,7 +651,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i, len;
+	int i, length;
 	DISK_DEVICE* disk;
 
 	name = (char*) pEntryPoints->plugin_data->data[1];
@@ -667,10 +666,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		disk->device.IRPRequest = disk_irp_request;
 		disk->device.Free = disk_free;
 
-		len = strlen(name);
-		disk->device.data = stream_new(len + 1);
+		length = strlen(name);
+		disk->device.data = stream_new(length + 1);
 
-		for (i = 0; i <= len; i++)
+		for (i = 0; i <= length; i++)
 			stream_write_uint8(disk->device.data, name[i] < 0 ? '_' : name[i]);
 
 		disk->path = path;

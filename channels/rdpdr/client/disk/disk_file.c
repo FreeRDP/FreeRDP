@@ -517,11 +517,11 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
 	const char* path, STREAM* output)
 {
-	struct dirent* ent;
-	char* ent_path;
-	struct STAT st;
-	size_t len;
+	int length;
 	boolean ret;
+	WCHAR* ent_path;
+	struct STAT st;
+	struct dirent* ent;
 
 	DEBUG_SVC("path %s FsInformationClass %d InitialQuery %d", path, FsInformationClass, InitialQuery);
 
@@ -570,26 +570,27 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	}
 
 	memset(&st, 0, sizeof(struct STAT));
-	ent_path = xmalloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
-	sprintf(ent_path, "%s/%s", file->fullpath, ent->d_name);
+	ent_path = (WCHAR*) malloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
+	sprintf((char*) ent_path, "%s/%s", file->fullpath, ent->d_name);
 
-	if (STAT(ent_path, &st) != 0)
+	if (STAT((char*) ent_path, &st) != 0)
 	{
-		DEBUG_WARN("stat %s failed. errno = %d", ent_path, errno);
+		DEBUG_WARN("stat %s failed. errno = %d", (char*) ent_path, errno);
 	}
 
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 	xfree(ent_path);
 
-	ent_path = freerdp_uniconv_out(ent->d_name, &len);
+	length = freerdp_AsciiToUnicodeAlloc(ent->d_name, &ent_path, 0) * 2;
 
 	ret = true;
+
 	switch (FsInformationClass)
 	{
 		case FileDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232097.aspx */
-			stream_write_uint32(output, 64 + len); /* Length */
-			stream_check_size(output, 64 + len);
+			stream_write_uint32(output, 64 + length); /* Length */
+			stream_check_size(output, 64 + length);
 			stream_write_uint32(output, 0); /* NextEntryOffset */
 			stream_write_uint32(output, 0); /* FileIndex */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -599,14 +600,14 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_write_uint64(output, st.st_size); /* EndOfFile */
 			stream_write_uint64(output, st.st_size); /* AllocationSize */
 			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
-			stream_write_uint32(output, len); /* FileNameLength */
-			stream_write(output, ent_path, len);
+			stream_write_uint32(output, length); /* FileNameLength */
+			stream_write(output, ent_path, length);
 			break;
 
 		case FileFullDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232068.aspx */
-			stream_write_uint32(output, 68 + len); /* Length */
-			stream_check_size(output, 68 + len);
+			stream_write_uint32(output, 68 + length); /* Length */
+			stream_check_size(output, 68 + length);
 			stream_write_uint32(output, 0); /* NextEntryOffset */
 			stream_write_uint32(output, 0); /* FileIndex */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -616,15 +617,15 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_write_uint64(output, st.st_size); /* EndOfFile */
 			stream_write_uint64(output, st.st_size); /* AllocationSize */
 			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
-			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write_uint32(output, length); /* FileNameLength */
 			stream_write_uint32(output, 0); /* EaSize */
-			stream_write(output, ent_path, len);
+			stream_write(output, ent_path, length);
 			break;
 
 		case FileBothDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232095.aspx */
-			stream_write_uint32(output, 93 + len); /* Length */
-			stream_check_size(output, 93 + len);
+			stream_write_uint32(output, 93 + length); /* Length */
+			stream_check_size(output, 93 + length);
 			stream_write_uint32(output, 0); /* NextEntryOffset */
 			stream_write_uint32(output, 0); /* FileIndex */
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -634,22 +635,22 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_write_uint64(output, st.st_size); /* EndOfFile */
 			stream_write_uint64(output, st.st_size); /* AllocationSize */
 			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
-			stream_write_uint32(output, len); /* FileNameLength */
+			stream_write_uint32(output, length); /* FileNameLength */
 			stream_write_uint32(output, 0); /* EaSize */
 			stream_write_uint8(output, 0); /* ShortNameLength */
 			/* Reserved(1), MUST NOT be added! */
 			stream_write_zero(output, 24); /* ShortName */
-			stream_write(output, ent_path, len);
+			stream_write(output, ent_path, length);
 			break;
 
 		case FileNamesInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232077.aspx */
-			stream_write_uint32(output, 12 + len); /* Length */
-			stream_check_size(output, 12 + len);
+			stream_write_uint32(output, 12 + length); /* Length */
+			stream_check_size(output, 12 + length);
 			stream_write_uint32(output, 0); /* NextEntryOffset */
 			stream_write_uint32(output, 0); /* FileIndex */
-			stream_write_uint32(output, len); /* FileNameLength */
-			stream_write(output, ent_path, len);
+			stream_write_uint32(output, length); /* FileNameLength */
+			stream_write(output, ent_path, length);
 			break;
 
 		default:

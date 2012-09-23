@@ -527,19 +527,17 @@ static uint8* xf_cliprdr_process_requested_raw(uint8* data, int* size)
 
 static uint8* xf_cliprdr_process_requested_unicodetext(uint8* data, int* size)
 {
-	uint8* inbuf;
-	uint8* outbuf;
-	size_t out_size;
+	char* inbuf;
+	WCHAR* outbuf;
+	int out_size;
 
-	inbuf = lf2crlf(data, size);
-
-	outbuf = (uint8*) freerdp_uniconv_out((char*) inbuf, &out_size);
-
+	inbuf = (char*) lf2crlf(data, size);
+	out_size = freerdp_AsciiToUnicodeAlloc(inbuf, &outbuf, 0);
 	xfree(inbuf);
 
-	*size = (int) out_size + 2;
+	*size = (int) ((out_size + 1) * 2);
 
-	return outbuf;
+	return (uint8*) outbuf;
 }
 
 static uint8* xf_cliprdr_process_requested_text(uint8* data, int* size)

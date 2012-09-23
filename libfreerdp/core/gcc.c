@@ -612,7 +612,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	}
 
 	/*
-	 * If we are in server mode, accepth client's color depth only if
+	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
 	if (color_depth < settings->color_depth || !settings->server_mode)
@@ -631,20 +631,21 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 {
 	uint32 version;
-	char* clientName;
-	size_t clientNameLength;
+	WCHAR* clientName;
+	int clientNameLength;
 	uint8 connectionType;
 	uint16 highColorDepth;
 	uint16 supportedColorDepths;
 	uint16 earlyCapabilityFlags;
-	char* clientDigProductId;
-	size_t clientDigProductIdLength;
+	WCHAR* clientDigProductId;
+	int clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
 	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
-	clientName = freerdp_uniconv_out(settings->client_hostname, &clientNameLength);
-	clientDigProductId = freerdp_uniconv_out(settings->client_product_id, &clientDigProductIdLength);
+
+	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->client_hostname, &clientName, 0);
+	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->client_product_id, &clientDigProductId, 0);
 
 	stream_write_uint32(s, version); /* version */
 	stream_write_uint16(s, settings->width); /* desktopWidth */
@@ -655,14 +656,15 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, settings->client_build); /* clientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	if (clientNameLength > 30)
+
+	if (clientNameLength > 15)
 	{
-		clientNameLength = 30;
+		clientNameLength = 15;
 		clientName[clientNameLength] = 0;
-		clientName[clientNameLength + 1] = 0;
 	}
-	stream_write(s, clientName, clientNameLength + 2);
-	stream_write_zero(s, 32 - clientNameLength - 2);
+
+	stream_write(s, clientName, ((clientNameLength + 1) * 2));
+	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
 	xfree(clientName);
 
 	stream_write_uint32(s, settings->kbd_type); /* keyboardType */

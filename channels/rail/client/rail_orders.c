@@ -67,8 +67,8 @@ static const char* const RAIL_ORDER_TYPE_STRINGS[] =
 
 void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string)
 {
-	char* buffer;
-	size_t length = 0;
+	WCHAR* buffer;
+	int length = 0;
 
 	if (unicode_string->string != NULL)
 		xfree(unicode_string->string);
@@ -79,7 +79,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 	if (string == NULL || strlen(string) < 1)
 		return;
 
-	buffer = freerdp_uniconv_out(string, &length);
+	length = freerdp_AsciiToUnicodeAlloc(string, &buffer, 0) * 2;
 
 	unicode_string->string = (uint8*) buffer;
 	unicode_string->length = (uint16) length;

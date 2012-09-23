@@ -235,8 +235,8 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 {
 	STREAM* s;
 	uint32 cbSize;
-	uint16 cchPCB_times2 = 0;
-	char* wszPCB = NULL;
+	uint16 cchPCB = 0;
+	WCHAR* wszPCB = NULL;
 
 	if (!nego->send_preconnection_pdu)
 		return true;
@@ -251,11 +251,9 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (nego->preconnection_blob)
 	{
-		size_t size;
-		wszPCB = freerdp_uniconv_out(nego->preconnection_blob, &size);
-		cchPCB_times2 = (uint16) size;
-		cchPCB_times2 += 2; /* zero-termination */
-		cbSize += cchPCB_times2;
+		cchPCB = (uint16) freerdp_AsciiToUnicodeAlloc(nego->preconnection_blob, &wszPCB, 0);
+		cchPCB += 1; /* zero-termination */
+		cbSize += cchPCB * 2;
 	}
 
 	s = transport_send_stream_init(nego->transport, cbSize);
@@ -263,11 +261,11 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	stream_write_uint32(s, 0); /* Flags */
 	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
 	stream_write_uint32(s, nego->preconnection_id); /* Id */
-	stream_write_uint16(s, cchPCB_times2 / 2); /* cchPCB */
+	stream_write_uint16(s, cchPCB); /* cchPCB */
 
 	if (wszPCB)
 	{
-		stream_write(s, wszPCB, cchPCB_times2); /* wszPCB */
+		stream_write(s, wszPCB, cchPCB * 2); /* wszPCB */
 		xfree(wszPCB);
 	}
 

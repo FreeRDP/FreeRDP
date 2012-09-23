@@ -25,7 +25,6 @@
 #include <freerdp/api.h>
 
 FREERDP_API char* freerdp_uniconv_in(unsigned char* pin, size_t in_len);
-FREERDP_API char* freerdp_uniconv_out(const char *str, size_t *pout_len);
 
 #include <freerdp/types.h>
 
