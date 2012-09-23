@@ -27,6 +27,8 @@
 
 #include <freerdp/utils/unicode.h>
 
+#include <winpr/crt.h>
+
 /* Convert pin/in_len from WINDOWS_CODEPAGE - return like xstrdup, 0-terminated */
 
 char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
@@ -99,121 +101,6 @@ char* freerdp_uniconv_in(UNICONV* uniconv, unsigned char* pin, size_t in_len)
 	return pout;
 }
 
-/* Convert str from DEFAULT_CODEPAGE to WINDOWS_CODEPAGE and return buffer like xstrdup.
- * Buffer is 0-terminated but that is not included in the returned length. */
-
-char* freerdp_uniconv_out(UNICONV* uniconv, const char *str, size_t* pout_len)
-{
-	size_t ibl;
-	size_t obl;
-	char* pin;
-	char* pout;
-	char* pout0;
-
-	if (str == NULL)
-	{
-		*pout_len = 0;
-		return NULL;
-	}
-
-	ibl = strlen(str);
-	obl = 2 * ibl;
-	pin = (char*) str;
-	pout0 = xmalloc(obl + 2);
-	pout = pout0;
-
-#ifdef HAVE_ICONV
-	if (iconv(uniconv->out_iconv_h, (ICONV_CONST char **) &pin, &ibl, &pout, &obl) == (size_t) - 1)
-	{
-		printf("freerdp_uniconv_out: iconv() error\n");
-		return NULL;
-	}
-#else
-	while ((ibl > 0) && (obl > 0))
-	{
-		unsigned int wc;
-
-		wc = (unsigned int)(unsigned char)(*pin++);
-		ibl--;
-		if (wc >= 0xF0)
-		{
-			wc = (wc - 0xF0) << 18;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 12;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 6;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
-			ibl -= 3;
-		}
-		else if (wc >= 0xE0)
-		{
-			wc = (wc - 0xE0) << 12;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80) << 6;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
-			ibl -= 2;
-		}
-		else if (wc >= 0xC0)
-		{
-			wc = (wc - 0xC0) << 6;
-			wc += ((unsigned int)(unsigned char)(*pin++) - 0x80);
-			ibl -= 1;
-		}
-
-		if (wc <= 0xFFFF)
-		{
-			*pout++ = (char)(wc & 0xFF);
-			*pout++ = (char)(wc >> 8);
-			obl -= 2;
-		}
-		else
-		{
-			wc -= 0x10000;
-			*pout++ = (char)((wc >> 10) & 0xFF);
-			*pout++ = (char)((wc >> 18) + 0xD8);
-			*pout++ = (char)(wc & 0xFF);
-			*pout++ = (char)(((wc >> 8) & 0x03) + 0xDC);
-			obl -= 4;
-		}
-	}
-#endif
-
-	if (ibl > 0)
-	{
-		printf("freerdp_uniconv_out: string not fully converted - %d chars left\n", (int) ibl);
-	}
-
-	*pout_len = pout - pout0;
-	*pout++ = 0; /* Add extra double zero termination */
-	*pout = 0;
-
-	return pout0;
-}
-
-/* Uppercase a unicode string */
-
-void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length)
-{
-	int i;
-	unsigned char* p;
-	unsigned int wc, uwc;
-
-	p = (unsigned char*) wstr;
-
-	for (i = 0; i < length; i++)
-	{
-		wc = (unsigned int)(*p);
-		wc += (unsigned int)(*(p + 1)) << 8;
-
-		uwc = towupper(wc);
-
-		if (uwc != wc)
-		{
-			*p = uwc & 0xFF;
-			*(p + 1) = (uwc >> 8) & 0xFF;
-		}
-
-		p += 2;
-	}
-}
-
 UNICONV* freerdp_uniconv_new()
 {
 	UNICONV *uniconv = xnew(UNICONV);
@@ -245,4 +132,49 @@ void freerdp_uniconv_free(UNICONV *uniconv)
 #endif
 		xfree(uniconv);
 	}
+}
+
+char* freerdp_uniconv_out(UNICONV* uniconv, const char *str, size_t* pout_len)
+{
+	WCHAR* wstr;
+	int length;
+
+	wstr = freerdp_AsciiToUnicode(str, &length);
+	*pout_len = (size_t) length;
+
+	return (char*) wstr;
+}
+
+WCHAR* freerdp_AsciiToUnicode(const char* str, int* length)
+{
+	WCHAR* wstr;
+
+	if (!str)
+	{
+		*length = 0;
+		return NULL;
+	}
+
+	*length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
+	wstr = (WCHAR*) malloc((*length + 1) * sizeof(WCHAR));
+
+	MultiByteToWideChar(CP_UTF8, 0, str, *length, (LPWSTR) wstr, *length * sizeof(WCHAR));
+	wstr[*length] = 0;
+
+	*length *= 2;
+
+	return wstr;
+}
+
+CHAR* freerdp_UnicodeToAscii(const WCHAR* wstr, int* length)
+{
+	CHAR* str;
+
+	*length = WideCharToMultiByte(CP_UTF8, 0, wstr, lstrlenW(wstr), NULL, 0, NULL, NULL);
+	str = (char*) malloc(*length + 1);
+
+	WideCharToMultiByte(CP_UTF8, 0, wstr, *length, str, *length, NULL, NULL);
+	str[*length] = '\0';
+
+	return str;
 }

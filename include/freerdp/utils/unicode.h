@@ -49,6 +49,10 @@ FREERDP_API UNICONV* freerdp_uniconv_new();
 FREERDP_API void freerdp_uniconv_free(UNICONV *uniconv);
 FREERDP_API char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len);
 FREERDP_API char* freerdp_uniconv_out(UNICONV *uniconv, const char *str, size_t *pout_len);
-FREERDP_API void freerdp_uniconv_uppercase(UNICONV *uniconv, char *wstr, int length);
+
+#include <freerdp/types.h>
+
+FREERDP_API WCHAR* freerdp_AsciiToUnicode(const char* str, int* length);
+FREERDP_API CHAR* freerdp_UnicodeToAscii(const WCHAR* wstr, int* length);
 
 #endif /* __UNICODE_UTILS_H */
