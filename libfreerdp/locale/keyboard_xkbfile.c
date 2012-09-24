@@ -23,6 +23,8 @@
 
 #include "keyboard_xkbfile.h"
 
+#include <string.h>
+
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/memory.h>
 

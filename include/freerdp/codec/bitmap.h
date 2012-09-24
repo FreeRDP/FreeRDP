@@ -20,6 +20,7 @@
 #ifndef __BITMAP_H
 #define __BITMAP_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 FREERDP_API boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp);

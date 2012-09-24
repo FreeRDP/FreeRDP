@@ -355,7 +355,7 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 	rdpSettings* settings;
 
 	settings = rdp->settings;
-	server_random = settings->server_random->data;
+	server_random = settings->server_random;
 
 	if (settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
@@ -398,12 +398,15 @@ boolean security_establish_keys(uint8* client_random, rdpRdp* rdp)
 
 	memcpy(rdp->sign_key, session_key_blob, 16);
 
-	if (rdp->settings->server_mode) {
+	if (rdp->settings->server_mode)
+	{
 		security_md5_16_32_32(&session_key_blob[16], client_random,
 		    server_random, rdp->encrypt_key);
 		security_md5_16_32_32(&session_key_blob[32], client_random,
 		    server_random, rdp->decrypt_key);
-	} else {
+	}
+	else
+	{
 		security_md5_16_32_32(&session_key_blob[16], client_random,
 		    server_random, rdp->decrypt_key);
 		security_md5_16_32_32(&session_key_blob[32], client_random,

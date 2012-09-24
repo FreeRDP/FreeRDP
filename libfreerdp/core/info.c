@@ -355,11 +355,11 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 	cbUserName = freerdp_AsciiToUnicodeAlloc(settings->username, &userName, 0) * 2;
 
-	if (settings->password_cookie && settings->password_cookie->length > 0)
+	if (settings->password_cookie && settings->password_cookie_length > 0)
 	{
 		usedPasswordCookie = true;
-		password = (WCHAR*) settings->password_cookie->data;
-		cbPassword = settings->password_cookie->length - 2;	/* Strip double zero termination */
+		password = (WCHAR*) settings->password_cookie;
+		cbPassword = settings->password_cookie_length - 2;	/* Strip double zero termination */
 	}
 	else
 	{

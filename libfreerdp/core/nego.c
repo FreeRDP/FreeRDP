@@ -568,10 +568,10 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
 
-	if (nego->routing_token != NULL)
+	if (nego->RoutingToken != NULL)
 	{
-		stream_write(s, nego->routing_token->data, nego->routing_token->length);
-		length += nego->routing_token->length;
+		stream_write(s, nego->RoutingToken, nego->RoutingTokenLength);
+		length += nego->RoutingTokenLength;
 	}
 	else if (nego->cookie != NULL)
 	{
@@ -898,12 +898,14 @@ void nego_enable_nla(rdpNego* nego, boolean enable_nla)
 /**
  * Set routing token.
  * @param nego
- * @param routing_token
+ * @param RoutingToken
+ * @param RoutingTokenLength
  */
 
-void nego_set_routing_token(rdpNego* nego, rdpBlob* routing_token)
+void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
-	nego->routing_token = routing_token;
+	nego->RoutingToken = RoutingToken;
+	nego->RoutingTokenLength = RoutingTokenLength;
 }
 
 /**

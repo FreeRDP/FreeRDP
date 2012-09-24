@@ -23,7 +23,6 @@
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/blob.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/string.h>
@@ -50,9 +49,11 @@ struct rdp_redirection
 	rdpString tsvUrl;
 	rdpString username;
 	rdpString domain;
-	rdpBlob password_cookie;
+	BYTE* PasswordCookie;
+	DWORD PasswordCookieLength;
 	rdpString targetFQDN;
-	rdpBlob loadBalanceInfo;
+	BYTE* LoadBalanceInfo;
+	DWORD LoadBalanceInfoLength;
 	rdpString targetNetBiosName;
 	rdpString targetNetAddress;
 	uint32 targetNetAddressesCount;

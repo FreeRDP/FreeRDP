@@ -21,7 +21,6 @@
 #define __RDP_SETTINGS_H
 
 #include <freerdp/types.h>
-#include <freerdp/utils/blob.h>
 
 /* Performance Flags */
 #define PERF_FLAG_NONE                  	0x00000000
@@ -159,7 +158,8 @@ typedef struct rdp_X509CertChain rdpX509CertChain;
 
 struct rdp_CertInfo
 {
-	rdpBlob modulus;
+	BYTE* Modulus;
+	DWORD ModulusLength;
 	uint8 exponent[4];
 };
 typedef struct rdp_CertInfo rdpCertInfo;
@@ -173,8 +173,10 @@ typedef struct rdp_certificate rdpCertificate;
 
 struct rdp_key
 {
-	rdpBlob modulus;
-	rdpBlob private_exponent;
+	BYTE* Modulus;
+	DWORD ModulusLength;
+	BYTE* PrivateExponent;
+	DWORD PrivateExponentLength;
 	uint8 exponent[4];
 };
 typedef struct rdp_key rdpKey;
@@ -285,20 +287,21 @@ struct rdp_settings
 	ALIGN64 boolean autologon; /* 58 */
 	ALIGN64 boolean compression; /* 59 */
 	ALIGN64 uint32 performance_flags; /* 60 */
-	ALIGN64 rdpBlob* password_cookie; /* 61 */
-	ALIGN64 char* kerberos_kdc; /* 62 */
-	ALIGN64 char* kerberos_realm; /* 63 */
-	ALIGN64 boolean ts_gateway; /* 64 */
-	ALIGN64 char* tsg_hostname; /* 65 */
-	ALIGN64 char* tsg_username; /* 66 */
-	ALIGN64 char* tsg_password; /* 67 */
-	ALIGN64 boolean local; /* 68 */
-	ALIGN64 boolean authentication_only; /* 69 */
-	ALIGN64 boolean from_stdin; /* 70 */
-	ALIGN64 boolean send_preconnection_pdu; /* 71 */
-	ALIGN64 uint32 preconnection_id; /* 72 */
-	ALIGN64 char* preconnection_blob; /* 73 */
-	uint64 paddingC[80 - 74]; /* 74 */
+	ALIGN64 BYTE* password_cookie; /* 61 */
+	ALIGN64 DWORD password_cookie_length; /* 62 */
+	ALIGN64 char* kerberos_kdc; /* 63 */
+	ALIGN64 char* kerberos_realm; /* 64 */
+	ALIGN64 boolean ts_gateway; /* 65 */
+	ALIGN64 char* tsg_hostname; /* 66 */
+	ALIGN64 char* tsg_username; /* 67 */
+	ALIGN64 char* tsg_password; /* 68 */
+	ALIGN64 boolean local; /* 69 */
+	ALIGN64 boolean authentication_only; /* 70 */
+	ALIGN64 boolean from_stdin; /* 71 */
+	ALIGN64 boolean send_preconnection_pdu; /* 72 */
+	ALIGN64 uint32 preconnection_id; /* 73 */
+	ALIGN64 char* preconnection_blob; /* 74 */
+	uint64 paddingC[80 - 75]; /* 75 */
 
 	/* User Interface Parameters */
 	ALIGN64 boolean sw_gdi; /* 80 */
@@ -382,14 +385,16 @@ struct rdp_settings
 	ALIGN64 char* privatekey_file; /* 249 */
 	ALIGN64 char* client_hostname; /* 250 */
 	ALIGN64 char* client_product_id; /* 251 */
-	ALIGN64 rdpBlob* server_random; /* 252 */
-	ALIGN64 rdpBlob* server_certificate; /* 253 */
-	ALIGN64 boolean ignore_certificate; /* 254 */
-	ALIGN64 rdpCertificate* server_cert; /* 255 */
-	ALIGN64 char* rdp_key_file; /* 256 */
-	ALIGN64 rdpKey* server_key; /* 257 */
-	ALIGN64 char* certificate_name; /* 258 */
-	uint64 paddingL[280 - 259]; /* 259 */
+	ALIGN64 BYTE* server_random; /* 252 */
+	ALIGN64 DWORD server_random_length; /* 253 */
+	ALIGN64 BYTE* server_certificate; /* 254 */
+	ALIGN64 DWORD server_certificate_length; /* 255 */
+	ALIGN64 boolean ignore_certificate; /* 256 */
+	ALIGN64 rdpCertificate* server_cert; /* 257 */
+	ALIGN64 char* rdp_key_file; /* 258 */
+	ALIGN64 rdpKey* server_key; /* 259 */
+	ALIGN64 char* certificate_name; /* 260 */
+	uint64 paddingL[280 - 261]; /* 261 */
 
 	/* Codecs */
 	ALIGN64 boolean rfx_codec; /* 280 */

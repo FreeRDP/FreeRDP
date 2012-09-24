@@ -22,7 +22,6 @@ find_required_package(Threads)
 
 set(FREERDP_UTILS_SRCS
 	args.c
-	blob.c
 	dsp.c
 	event.c
 	bitmap.c
