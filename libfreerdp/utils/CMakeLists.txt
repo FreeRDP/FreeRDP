@@ -34,7 +34,6 @@ set(FREERDP_UTILS_SRCS
 	pcap.c
 	profiler.c
 	rail.c
-	rect.c
 	signal.c
 	sleep.c
 	stopwatch.c

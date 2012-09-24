@@ -254,15 +254,24 @@ void rail_write_client_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 			break;
 
 		case SPI_SET_WORK_AREA:
-			freerdp_write_rectangle_16(s, &sysparam->workArea);
+			stream_write_uint16(s, sysparam->workArea.left); /* left (2 bytes) */
+			stream_write_uint16(s, sysparam->workArea.top); /* top (2 bytes) */
+			stream_write_uint16(s, sysparam->workArea.right); /* right (2 bytes) */
+			stream_write_uint16(s, sysparam->workArea.bottom); /* bottom (2 bytes) */
 			break;
 
 		case SPI_DISPLAY_CHANGE:
-			freerdp_write_rectangle_16(s, &sysparam->displayChange);
+			stream_write_uint16(s, sysparam->displayChange.left); /* left (2 bytes) */
+			stream_write_uint16(s, sysparam->displayChange.top); /* top (2 bytes) */
+			stream_write_uint16(s, sysparam->displayChange.right); /* right (2 bytes) */
+			stream_write_uint16(s, sysparam->displayChange.bottom); /* bottom (2 bytes) */
 			break;
 
 		case SPI_TASKBAR_POS:
-			freerdp_write_rectangle_16(s, &sysparam->taskbarPos);
+			stream_write_uint16(s, sysparam->taskbarPos.left); /* left (2 bytes) */
+			stream_write_uint16(s, sysparam->taskbarPos.top); /* top (2 bytes) */
+			stream_write_uint16(s, sysparam->taskbarPos.right); /* right (2 bytes) */
+			stream_write_uint16(s, sysparam->taskbarPos.bottom); /* bottom (2 bytes) */
 			break;
 
 		case SPI_SET_HIGH_CONTRAST:

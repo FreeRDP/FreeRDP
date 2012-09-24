@@ -146,7 +146,10 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* windowRects */
 		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
-			freerdp_read_rectangle_16(s, &window_state->windowRects[i]);
+			stream_read_uint16(s, window_state->windowRects[i].left); /* left (2 bytes) */
+			stream_read_uint16(s, window_state->windowRects[i].top); /* top (2 bytes) */
+			stream_read_uint16(s, window_state->windowRects[i].right); /* right (2 bytes) */
+			stream_read_uint16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 
@@ -166,7 +169,10 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		/* visibilityRects */
 		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
-			freerdp_read_rectangle_16(s, &window_state->visibilityRects[i]);
+			stream_read_uint16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
+			stream_read_uint16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
+			stream_read_uint16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
+			stream_read_uint16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 }
