@@ -78,8 +78,8 @@ typedef long LONG, *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
 typedef LONG HRESULT;
 
-typedef __int3264 LONG_PTR;
-typedef unsigned __int3264 ULONG_PTR;
+typedef __int3264 LONG_PTR, *PLONG_PTR;
+typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
 
 typedef signed int LONG32;
 typedef signed __int64 LONG64;
