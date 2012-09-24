@@ -79,7 +79,7 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_uint32(irp->input, PathLength);
 
-	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);

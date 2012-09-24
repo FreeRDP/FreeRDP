@@ -119,17 +119,22 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_read_uint16(s, cbClientAddress); /* cbClientAddress */
 
 	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? true : false);
+
 	if (stream_get_left(s) < cbClientAddress)
 		return false;
-	settings->ip_address = freerdp_uniconv_in(stream_get_tail(s), cbClientAddress);
+
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ip_address, cbClientAddress / 2);
 	stream_seek(s, cbClientAddress);
 
 	stream_read_uint16(s, cbClientDir); /* cbClientDir */
+
 	if (stream_get_left(s) < cbClientDir)
 		return false;
+
 	if (settings->client_dir)
 		xfree(settings->client_dir);
-	settings->client_dir = freerdp_uniconv_in(stream_get_tail(s), cbClientDir);
+
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->client_dir, cbClientDir / 2);
 	stream_seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
@@ -236,45 +241,50 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (stream_get_left(s) < cbDomain + 2)
 		return false;
+
 	if (cbDomain > 0)
 	{
-		settings->domain = freerdp_uniconv_in(stream_get_tail(s), cbDomain);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->domain, cbDomain / 2);
 		stream_seek(s, cbDomain);
 	}
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbUserName + 2)
 		return false;
+
 	if (cbUserName > 0)
 	{
-		settings->username = freerdp_uniconv_in(stream_get_tail(s), cbUserName);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->username, cbUserName / 2);
 		stream_seek(s, cbUserName);
 	}
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbPassword + 2)
 		return false;
+
 	if (cbPassword > 0)
 	{
-		settings->password = freerdp_uniconv_in(stream_get_tail(s), cbPassword);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->password, cbPassword / 2);
 		stream_seek(s, cbPassword);
 	}
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbAlternateShell + 2)
 		return false;
+
 	if (cbAlternateShell > 0)
 	{
-		settings->shell = freerdp_uniconv_in(stream_get_tail(s), cbAlternateShell);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->shell, cbAlternateShell / 2);
 		stream_seek(s, cbAlternateShell);
 	}
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbWorkingDir + 2)
 		return false;
+
 	if (cbWorkingDir > 0)
 	{
-		settings->directory = freerdp_uniconv_in(stream_get_tail(s), cbWorkingDir);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->directory, cbWorkingDir / 2);
 		stream_seek(s, cbWorkingDir);
 	}
 	stream_seek(s, 2);

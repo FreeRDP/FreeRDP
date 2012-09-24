@@ -487,7 +487,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_seek_uint8(input); /* RootDirectory */
 			stream_read_uint32(input, FileNameLength);
 
-			s = freerdp_uniconv_in(stream_get_tail(input), FileNameLength);
+			freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(input), &s, FileNameLength / 2);
 
 			fullpath = disk_file_combine_fullpath(file->basepath, s);
 			xfree(s);

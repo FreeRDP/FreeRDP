@@ -51,16 +51,6 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 	return length;
 }
 
-char* freerdp_uniconv_in(unsigned char* pin, size_t in_len)
-{
-	CHAR* str;
-	int length;
-
-	length = freerdp_UnicodeToAsciiAlloc((WCHAR*) pin, &str, (int) (in_len / 2));
-
-	return (char*) str;
-}
-
 int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length)
 {
 	*str = malloc((length * 2) + 1);

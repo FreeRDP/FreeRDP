@@ -133,7 +133,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	stream_read_uint32(irp->input, CreateOptions);
 	stream_read_uint32(irp->input, PathLength);
 
-	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
 
 	FileId = irp->devman->id_sequence++;
 
@@ -478,7 +478,7 @@ static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 	stream_read_uint32(irp->input, PathLength);
 	stream_seek(irp->input, 23); /* Padding */
 
-	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
 
 	file = disk_get_file_by_id(disk, irp->FileId);
 

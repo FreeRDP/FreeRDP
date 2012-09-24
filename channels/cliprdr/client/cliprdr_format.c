@@ -143,8 +143,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 		}
 		else
 		{
-			format_name->name = freerdp_uniconv_in(s->p, 32);
-			format_name->length = strlen(format_name->name);
+			format_name->length = freerdp_UnicodeToAsciiAlloc((WCHAR*) s->p, &format_name->name, 32 / 2);
 		}
 
 		stream_seek(s, 32);
@@ -187,8 +186,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 				break;
 		}
 		
-		format_name->name = freerdp_uniconv_in(stream_get_tail(s), name_len);
-		format_name->length = strlen(format_name->name);
+		format_name->length = freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &format_name->name, name_len / 2);
 		stream_seek(s, name_len + 2);
 	}
 }

@@ -491,7 +491,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	stream_read_uint32(s, settings->client_build); /* clientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	str = freerdp_uniconv_in(stream_get_tail(s), 32);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
 	stream_seek(s, 32);
 	snprintf(settings->client_hostname, 31, "%s", str);
 	settings->client_hostname[31] = 0;
@@ -546,7 +546,8 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 
 		if (blockLength < 64)
 			break;
-		str = freerdp_uniconv_in(stream_get_tail(s), 64);
+
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 		stream_seek(s, 64);
 		snprintf(settings->client_product_id, 32, "%s", str);
 		xfree(str);

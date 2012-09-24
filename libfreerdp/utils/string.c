@@ -31,7 +31,7 @@ void freerdp_string_read_length32(STREAM* s, rdpString* string)
 	stream_read_uint32(s, string->length);
 	string->unicode = (char*) xmalloc(string->length);
 	stream_read(s, string->unicode, string->length);
-	string->ascii = freerdp_uniconv_in((uint8*) string->unicode, string->length);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) string->unicode, &string->ascii, string->length / 2);
 }
 
 void freerdp_string_free(rdpString* string)

@@ -569,7 +569,7 @@ static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
 
 static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 {
-	uint8* inbuf;
+	char* inbuf;
 	uint8* in;
 	uint8* outbuf;
 	char num[11];
@@ -585,7 +585,7 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 
 		if ((uint8) data[0] == 0xFF && (uint8) data[1] == 0xFE)
 		{
-			inbuf = (uint8*) freerdp_uniconv_in(data + 2, *size - 2);
+			freerdp_UnicodeToAsciiAlloc((WCHAR*) (data + 2), &inbuf, (*size - 2) / 2);
 		}
 	}
 
@@ -878,8 +878,7 @@ static void xf_cliprdr_process_text(clipboardContext* cb, uint8* data, int size)
 
 static void xf_cliprdr_process_unicodetext(clipboardContext* cb, uint8* data, int size)
 {
-	cb->data = (uint8*) freerdp_uniconv_in(data, size);
-	cb->data_length = strlen((char*) cb->data);
+	cb->data_length = freerdp_UnicodeToAsciiAlloc((WCHAR*) data, (CHAR**) &(cb->data), size / 2);
 	crlf2lf(cb->data, &cb->data_length);
 }
 

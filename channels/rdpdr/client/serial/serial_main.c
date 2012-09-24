@@ -88,7 +88,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 								 /* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_uint32(irp->input, PathLength);
 
-	path = freerdp_uniconv_in(stream_get_tail(irp->input), PathLength);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
 
 	FileId = irp->devman->id_sequence++;
 

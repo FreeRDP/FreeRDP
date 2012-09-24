@@ -24,8 +24,6 @@
 #include <string.h>
 #include <freerdp/api.h>
 
-FREERDP_API char* freerdp_uniconv_in(unsigned char* pin, size_t in_len);
-
 #include <freerdp/types.h>
 
 FREERDP_API int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length);
