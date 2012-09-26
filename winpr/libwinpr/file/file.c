@@ -26,17 +26,20 @@
 /**
  * api-ms-win-core-file-l1-2-0.dll:
  * 
- * CompareFileTime
- * CreateDirectoryA
- * CreateDirectoryW
- * CreateFile2
  * CreateFileA
  * CreateFileW
- * DefineDosDeviceW
+ * CreateFile2
  * DeleteFileA
  * DeleteFileW
+ * CreateDirectoryA
+ * CreateDirectoryW
+ * RemoveDirectoryA
+ * RemoveDirectoryW
+ * CompareFileTime
+ * DefineDosDeviceW
  * DeleteVolumeMountPointW
  * FileTimeToLocalFileTime
+ * LocalFileTimeToFileTime
  * FindClose
  * FindCloseChangeNotification
  * FindFirstChangeNotificationA
@@ -82,10 +85,7 @@
  * GetVolumeNameForVolumeMountPointW
  * GetVolumePathNamesForVolumeNameW
  * GetVolumePathNameW
- * LocalFileTimeToFileTime
  * QueryDosDeviceW
- * RemoveDirectoryA
- * RemoveDirectoryW
  * SetFileAttributesA
  * SetFileAttributesW
  * SetFileTime
@@ -108,6 +108,28 @@
  */
 
 #ifndef _WIN32
+
+HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	return NULL;
+}
+
+HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	return NULL;
+}
+
+BOOL DeleteFileA(LPCSTR lpFileName)
+{
+	return TRUE;
+}
+
+BOOL DeleteFileW(LPCWSTR lpFileName)
+{
+	return TRUE;
+}
 
 BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
