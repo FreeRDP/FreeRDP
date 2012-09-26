@@ -39,7 +39,12 @@
 #define __int3264 __int32
 #endif
 
+#ifdef OBJC_BOOL_DEFINED
+typedef OBJC_BOOL BOOL, *PBOOL, *LPBOOL;
+#else
 typedef int BOOL, *PBOOL, *LPBOOL;
+#endif
+
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
@@ -78,8 +83,8 @@ typedef long LONG, *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
 typedef LONG HRESULT;
 
-typedef __int3264 LONG_PTR;
-typedef unsigned __int3264 ULONG_PTR;
+typedef __int3264 LONG_PTR, *PLONG_PTR;
+typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
 
 typedef signed int LONG32;
 typedef signed __int64 LONG64;
@@ -89,6 +94,9 @@ typedef const CHAR *LPCSTR,*PCSTR;
 
 typedef WCHAR* LPWSTR, *PWSTR;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
+
+typedef CHAR *LPSTR, *LPCH;
+typedef WCHAR *LPWSTR, *LPWCH;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
@@ -107,6 +115,7 @@ typedef unsigned __int64 ULONG64;
 typedef wchar_t UNICODE;
 typedef unsigned short USHORT;
 typedef void VOID, *PVOID, *LPVOID;
+typedef void *PVOID64, *LPVOID64;
 typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 

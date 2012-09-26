@@ -41,6 +41,8 @@ typedef CHAR		TCHAR;
 #define _tcscmp		strcmp
 #endif
 
+typedef TCHAR *LPTSTR, *LPTCH;
+
 #endif
 
 #endif /* WINPR_TCHAR_H */

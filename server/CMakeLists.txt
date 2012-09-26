@@ -33,5 +33,3 @@ else()
 	add_subdirectory(Windows)
 endif()
 
-# Build Server Channels library
-add_subdirectory(channels)

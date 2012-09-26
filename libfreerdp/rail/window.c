@@ -285,7 +285,7 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	if (window->titleInfo.length > 0)
 	{
-		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) window->titleInfo.string, &window->title, window->titleInfo.length / 2);
 	}
 	else
 	{
@@ -327,7 +327,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 		if (window->title != NULL)
 			xfree(window->title);
 
-		window->title = freerdp_uniconv_in(rail->uniconv, window->titleInfo.string, window->titleInfo.length);
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) window->titleInfo.string, &window->title, window->titleInfo.length / 2);
 
 		IFCALL(rail->rail_SetWindowText, rail, window);
 	}

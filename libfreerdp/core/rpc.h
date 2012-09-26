@@ -530,7 +530,6 @@ typedef struct {
 
 struct rdp_ntlm
 {
-	UNICONV* uniconv;
 	CtxtHandle context;
 	ULONG cbMaxToken;
 	ULONG fContextReq;
@@ -647,7 +646,6 @@ struct rdp_rpc
 	rdpNtlmHttp* ntlm_http_in;
 	rdpNtlmHttp* ntlm_http_out;
 
-	UNICONV* uniconv;
 	rdpSettings* settings;
 	rdpTransport* transport;
 

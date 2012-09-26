@@ -23,6 +23,8 @@
 
 #include "xkb_layout_ids.h"
 
+#include <string.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 

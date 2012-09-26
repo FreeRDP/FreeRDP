@@ -148,7 +148,6 @@ rdpRail* rail_new(rdpSettings* settings)
 		rail->settings = settings;
 		rail->cache = icon_cache_new(rail);
 		rail->list = window_list_new(rail);
-		rail->uniconv = freerdp_uniconv_new();
 		rail->clrconv = (CLRCONV*) xzalloc(sizeof(CLRCONV));
 	}
 
@@ -161,7 +160,6 @@ void rail_free(rdpRail* rail)
 	{
 		icon_cache_free(rail->cache);
 		window_list_free(rail->list);
-		freerdp_uniconv_free(rail->uniconv);
 		xfree(rail->clrconv);
 		xfree(rail);
 	}

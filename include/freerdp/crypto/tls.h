@@ -37,7 +37,8 @@ struct rdp_tls
 	SSL* ssl;
 	int sockfd;
 	SSL_CTX* ctx;
-	rdpBlob public_key;
+	BYTE* PublicKey;
+	DWORD PublicKeyLength;
 	rdpSettings* settings;
 	rdpCertificateStore* certificate_store;
 };

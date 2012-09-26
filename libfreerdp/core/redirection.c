@@ -78,16 +78,15 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
-		freerdp_string_read_length32(s, &redirection->targetNetAddress, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->targetNetAddress);
 		DEBUG_REDIR("targetNetAddress: %s", redirection->targetNetAddress.ascii);
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		uint32 loadBalanceInfoLength;
-		stream_read_uint32(s, loadBalanceInfoLength);
-		freerdp_blob_alloc(&redirection->loadBalanceInfo, loadBalanceInfoLength);
-		stream_read(s, redirection->loadBalanceInfo.data, loadBalanceInfoLength);
+		stream_read_uint32(s, redirection->LoadBalanceInfoLength);
+		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
+		stream_read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("loadBalanceInfo:");
 		freerdp_hexdump(redirection->loadBalanceInfo.data, redirection->loadBalanceInfo.length);
@@ -96,44 +95,44 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		freerdp_string_read_length32(s, &redirection->username, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->username);
 		DEBUG_REDIR("username: %s", redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		freerdp_string_read_length32(s, &redirection->domain, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->domain);
 		DEBUG_REDIR("domain: %s", redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		uint32 passwordLength;
-		stream_read_uint32(s, passwordLength);	/* Note: length (hopefully) includes double zero termination */
-		freerdp_blob_alloc(&redirection->password_cookie, passwordLength);
-		stream_read(s, redirection->password_cookie.data, passwordLength);
+		/* Note: length (hopefully) includes double zero termination */
+		stream_read_uint32(s, redirection->PasswordCookieLength);
+		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
+		stream_read(s, redirection->PasswordCookie, redirection->PasswordCookieLength);
 
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("password_cookie:");
-		freerdp_hexdump(redirection->password_cookie.data, redirection->password_cookie.length);
+		freerdp_hexdump(redirection->PasswordCookie, redirection->PasswordCookieLength);
 #endif
 	}
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		freerdp_string_read_length32(s, &redirection->targetFQDN, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->targetFQDN);
 		DEBUG_REDIR("targetFQDN: %s", redirection->targetFQDN.ascii);
 	}
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
-		freerdp_string_read_length32(s, &redirection->targetNetBiosName, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->targetNetBiosName);
 		DEBUG_REDIR("targetNetBiosName: %s", redirection->targetNetBiosName.ascii);
 	}
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
-		freerdp_string_read_length32(s, &redirection->tsvUrl, rdp->settings->uniconv);
+		freerdp_string_read_length32(s, &redirection->tsvUrl);
 		DEBUG_REDIR("tsvUrl: %s", redirection->tsvUrl.ascii);
 	}
 
@@ -152,7 +151,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 		for (i = 0; i < (int) count; i++)
 		{
-			freerdp_string_read_length32(s, &redirection->targetNetAddresses[i], rdp->settings->uniconv);
+			freerdp_string_read_length32(s, &redirection->targetNetAddresses[i]);
 			DEBUG_REDIR("targetNetAddresses: %s", (&redirection->targetNetAddresses[i])->ascii);
 		}
 	}
@@ -200,11 +199,15 @@ void redirection_free(rdpRedirection* redirection)
 		freerdp_string_free(&redirection->tsvUrl);
 		freerdp_string_free(&redirection->username);
 		freerdp_string_free(&redirection->domain);
-		freerdp_blob_free(&redirection->password_cookie);
 		freerdp_string_free(&redirection->targetFQDN);
 		freerdp_string_free(&redirection->targetNetBiosName);
 		freerdp_string_free(&redirection->targetNetAddress);
-		freerdp_blob_free(&redirection->loadBalanceInfo);
+
+		if (redirection->LoadBalanceInfo)
+			free(redirection->LoadBalanceInfo);
+
+		if (redirection->PasswordCookie)
+			free(redirection->PasswordCookie);
 
 		if (redirection->targetNetAddresses != NULL)
 		{

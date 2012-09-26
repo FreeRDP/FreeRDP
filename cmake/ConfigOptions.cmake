@@ -22,6 +22,15 @@ endif()
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
+
+if(WITH_CLIENT AND WITH_CHANNELS)
+	option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON)
+endif()
+
+if(WITH_SERVER AND WITH_CHANNELS)
+	option(WITH_SERVER_CHANNELS "Build virtual channel plugins" ON)
+endif()
+
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
 option(WITH_SERVER_INTERFACE "Build server as a library with an interface" OFF)

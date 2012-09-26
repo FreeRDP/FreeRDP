@@ -133,10 +133,10 @@ boolean tls_connect(rdpTls* tls)
 		return false;
 	}
 
-	if (!crypto_cert_get_public_key(cert, &tls->public_key))
+	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
-		tls_free_certificate(cert) ;
+		tls_free_certificate(cert);
 		return false;
 	}
 
@@ -234,7 +234,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
-	if (!crypto_cert_get_public_key(cert, &tls->public_key))
+	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		tls_free_certificate(cert);
@@ -639,7 +639,8 @@ void tls_free(rdpTls* tls)
 		if (tls->ctx)
 			SSL_CTX_free(tls->ctx);
 
-		freerdp_blob_free(&tls->public_key);
+		if (tls->PublicKey)
+			free(tls->PublicKey);
 
 		certificate_store_free(tls->certificate_store);
 
