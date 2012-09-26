@@ -40,7 +40,7 @@
 
 #ifndef _WIN32
 
-BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
+BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
 {
 	return TRUE;
 }

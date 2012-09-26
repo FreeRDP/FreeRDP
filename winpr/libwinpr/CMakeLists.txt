@@ -31,6 +31,7 @@ add_subdirectory(heap)
 add_subdirectory(path)
 add_subdirectory(io)
 add_subdirectory(file)
+add_subdirectory(error)
 add_subdirectory(environment)
 add_subdirectory(interlocked)
 add_subdirectory(handle)
@@ -57,6 +58,7 @@ if(WITH_MONOLITHIC_BUILD)
 		$<TARGET_OBJECTS:winpr-path>
 		$<TARGET_OBJECTS:winpr-io>
 		$<TARGET_OBJECTS:winpr-file>
+		$<TARGET_OBJECTS:winpr-error>
 		$<TARGET_OBJECTS:winpr-environment>
 		$<TARGET_OBJECTS:winpr-interlocked>
 		$<TARGET_OBJECTS:winpr-handle>

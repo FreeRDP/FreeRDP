@@ -110,6 +110,7 @@ typedef unsigned __int64 ULONG64;
 typedef wchar_t UNICODE;
 typedef unsigned short USHORT;
 typedef void VOID, *PVOID, *LPVOID;
+typedef void *PVOID64, *LPVOID64;
 typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 

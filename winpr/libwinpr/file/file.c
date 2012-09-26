@@ -51,7 +51,6 @@
  * FindNextFileW
  * FindNextVolumeW
  * FindVolumeClose
- * FlushFileBuffers
  * GetDiskFreeSpaceA
  * GetDiskFreeSpaceExA
  * GetDiskFreeSpaceExW
@@ -84,32 +83,113 @@
  * GetVolumePathNamesForVolumeNameW
  * GetVolumePathNameW
  * LocalFileTimeToFileTime
- * LockFile
- * LockFileEx
  * QueryDosDeviceW
+ * RemoveDirectoryA
+ * RemoveDirectoryW
+ * SetFileAttributesA
+ * SetFileAttributesW
+ * SetFileTime
+ * SetFileValidData
+ * SetFileInformationByHandle
  * ReadFile
  * ReadFileEx
  * ReadFileScatter
- * RemoveDirectoryA
- * RemoveDirectoryW
- * SetEndOfFile
- * SetFileAttributesA
- * SetFileAttributesW
- * SetFileInformationByHandle
- * SetFilePointer
- * SetFilePointerEx
- * SetFileTime
- * SetFileValidData
- * UnlockFile
- * UnlockFileEx
  * WriteFile
  * WriteFileEx
  * WriteFileGather
+ * FlushFileBuffers
+ * SetEndOfFile
+ * SetFilePointer
+ * SetFilePointerEx
+ * LockFile
+ * LockFileEx
+ * UnlockFile
+ * UnlockFileEx
  */
 
 #ifndef _WIN32
 
+BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
 
+BOOL ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+	return TRUE;
+}
+
+BOOL ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
+		DWORD nNumberOfBytesToRead, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+	return TRUE;
+}
+
+BOOL WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
+		DWORD nNumberOfBytesToWrite, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL FlushFileBuffers(HANDLE hFile)
+{
+	return TRUE;
+}
+
+BOOL SetEndOfFile(HANDLE hFile)
+{
+	return TRUE;
+}
+
+DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove,
+		PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
+{
+	return TRUE;
+}
+
+BOOL SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
+		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
+{
+	return TRUE;
+}
+
+BOOL LockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh)
+{
+	return TRUE;
+}
+
+BOOL LockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
+		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL UnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+		DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh)
+{
+	return TRUE;
+}
+
+BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
+		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
 
 #endif
 
