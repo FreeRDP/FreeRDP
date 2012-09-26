@@ -22,7 +22,6 @@ find_required_package(Threads)
 
 set(FREERDP_UTILS_SRCS
 	args.c
-	blob.c
 	dsp.c
 	event.c
 	bitmap.c
@@ -35,7 +34,6 @@ set(FREERDP_UTILS_SRCS
 	pcap.c
 	profiler.c
 	rail.c
-	rect.c
 	signal.c
 	sleep.c
 	stopwatch.c
@@ -73,6 +71,9 @@ if(WITH_MONOLITHIC_BUILD)
 	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_UTILS_LIBS} PARENT_SCOPE)
 else()
+	if(NOT WIN32)
+		set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr-crt)
+	endif()
 	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr-synch)
 	target_link_libraries(freerdp-utils ${FREERDP_UTILS_LIBS})
 	install(TARGETS freerdp-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})

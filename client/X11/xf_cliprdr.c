@@ -527,22 +527,17 @@ static uint8* xf_cliprdr_process_requested_raw(uint8* data, int* size)
 
 static uint8* xf_cliprdr_process_requested_unicodetext(uint8* data, int* size)
 {
-	uint8* inbuf;
-	uint8* outbuf;
-	size_t out_size;
-	UNICONV* uniconv;
+	char* inbuf;
+	WCHAR* outbuf;
+	int out_size;
 
-	inbuf = lf2crlf(data, size);
-
-	uniconv = freerdp_uniconv_new();
-	outbuf = (uint8*) freerdp_uniconv_out(uniconv, (char*) inbuf, &out_size);
-	freerdp_uniconv_free(uniconv);
-
+	inbuf = (char*) lf2crlf(data, size);
+	out_size = freerdp_AsciiToUnicodeAlloc(inbuf, &outbuf, 0);
 	xfree(inbuf);
 
-	*size = (int) out_size + 2;
+	*size = (int) ((out_size + 1) * 2);
 
-	return outbuf;
+	return (uint8*) outbuf;
 }
 
 static uint8* xf_cliprdr_process_requested_text(uint8* data, int* size)
@@ -574,13 +569,13 @@ static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
 
 static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 {
-	uint8* inbuf;
+	char* inbuf;
 	uint8* in;
 	uint8* outbuf;
 	char num[11];
-	UNICONV* uniconv;
 
 	inbuf = NULL;
+
 	if (*size > 2)
 	{
 		if ((uint8) data[0] == 0xFE && (uint8) data[1] == 0xFF)
@@ -590,11 +585,10 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 
 		if ((uint8) data[0] == 0xFF && (uint8) data[1] == 0xFE)
 		{
-			uniconv = freerdp_uniconv_new();
-			inbuf = (uint8*) freerdp_uniconv_in(uniconv, data + 2, *size - 2);
-			freerdp_uniconv_free(uniconv);
+			freerdp_UnicodeToAsciiAlloc((WCHAR*) (data + 2), &inbuf, (*size - 2) / 2);
 		}
 	}
+
 	if (inbuf == NULL)
 	{
 		inbuf = xzalloc(*size + 1);
@@ -884,12 +878,7 @@ static void xf_cliprdr_process_text(clipboardContext* cb, uint8* data, int size)
 
 static void xf_cliprdr_process_unicodetext(clipboardContext* cb, uint8* data, int size)
 {
-	UNICONV* uniconv;
-
-	uniconv = freerdp_uniconv_new();
-	cb->data = (uint8*) freerdp_uniconv_in(uniconv, data, size);
-	freerdp_uniconv_free(uniconv);
-	cb->data_length = strlen((char*) cb->data);
+	cb->data_length = freerdp_UnicodeToAsciiAlloc((WCHAR*) data, (CHAR**) &(cb->data), size / 2);
 	crlf2lf(cb->data, &cb->data_length);
 }
 

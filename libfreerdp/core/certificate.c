@@ -195,12 +195,13 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	}
 	while (padding == 0);
 
-	freerdp_blob_alloc(&info->modulus, modulus_length);
-	stream_read(s, info->modulus.data, modulus_length);
+	info->ModulusLength = modulus_length;
+	info->Modulus = (BYTE*) malloc(info->ModulusLength);
+	stream_read(s, info->Modulus, info->ModulusLength);
 
 	ber_read_integer_length(s, &exponent_length); /* publicExponent (INTEGER) */
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
-	crypto_reverse(info->modulus.data, modulus_length);
+	crypto_reverse(info->Modulus, info->ModulusLength);
 	crypto_reverse(info->exponent, 4);
 
 	stream_detach(s);
@@ -256,6 +257,7 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	uint32 modlen;
 
 	stream_read(s, magic, 4);
+
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
 		printf("gcc_process_server_public_key: magic error\n");
@@ -267,8 +269,10 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	stream_read_uint32(s, datalen);
 	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
-	freerdp_blob_alloc(&(certificate->cert_info.modulus), modlen);
-	stream_read(s, certificate->cert_info.modulus.data, modlen);
+
+	certificate->cert_info.ModulusLength = modlen;
+	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
+	stream_read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 	/* 8 bytes of zero padding */
 	stream_seek(s, 8);
 
@@ -277,11 +281,11 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 
 static boolean certificate_process_server_public_signature(rdpCertificate* certificate, uint8* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
 {
-	uint8 md5hash[CRYPTO_MD5_DIGEST_LENGTH];
-	uint8 encsig[TSSK_KEY_LENGTH + 8];
-	uint8 sig[TSSK_KEY_LENGTH];
-	CryptoMd5 md5ctx;
 	int i, sum;
+	CryptoMd5 md5ctx;
+	uint8 sig[TSSK_KEY_LENGTH];
+	uint8 encsig[TSSK_KEY_LENGTH + 8];
+	uint8 md5hash[CRYPTO_MD5_DIGEST_LENGTH];
 
 	md5ctx = crypto_md5_init();
 	crypto_md5_update(md5ctx, sigdata, sigdatalen);
@@ -351,36 +355,46 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 	sigdata = stream_get_tail(s) - 4;
 	stream_read_uint32(s, dwSigAlgId);
 	stream_read_uint32(s, dwKeyAlgId);
+
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 1\n");
 		return false;
 	}
+
 	stream_read_uint16(s, wPublicKeyBlobType);
+
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 2\n");
 		return false;
 	}
+
 	stream_read_uint16(s, wPublicKeyBlobLen);
+
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
 		return false;
 	}
+
 	sigdatalen = stream_get_tail(s) - sigdata;
 	stream_read_uint16(s, wSignatureBlobType);
+
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 4\n");
 		return false;
 	}
+
 	stream_read_uint16(s, wSignatureBlobLen);
+
 	if (wSignatureBlobLen != 72)
 	{
 		printf("certificate_process_server_public_signature: invalid signature length (got %d, expected %d)\n", wSignatureBlobLen, 64);
 		return false;
 	}
+
 	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s, wSignatureBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 5\n");
@@ -423,8 +437,8 @@ boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certifica
 			rdpCertInfo cert_info;
 			DEBUG_CERTIFICATE("License Server Certificate");
 			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
-			DEBUG_LICENSE("modulus length:%d", cert_info.modulus.length);
-			freerdp_blob_free(&cert_info.modulus);
+			DEBUG_LICENSE("modulus length:%d", cert_info.ModulusLength);
+			free(cert_info.Modulus);
 		}
 		else if (numCertBlobs - i == 1)
 		{
@@ -481,9 +495,9 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 
 rdpKey* key_new(const char* keyfile)
 {
+	FILE* fp;
+	RSA* rsa;
 	rdpKey* key;
-	RSA *rsa;
-	FILE *fp;
 
 	key = (rdpKey*) xzalloc(sizeof(rdpKey));
 
@@ -538,12 +552,16 @@ rdpKey* key_new(const char* keyfile)
 		return NULL;
 	}
 
-	freerdp_blob_alloc(&key->modulus, BN_num_bytes(rsa->n));
-	BN_bn2bin(rsa->n, key->modulus.data);
-	crypto_reverse(key->modulus.data, key->modulus.length);
-	freerdp_blob_alloc(&key->private_exponent, BN_num_bytes(rsa->d));
-	BN_bn2bin(rsa->d, key->private_exponent.data);
-	crypto_reverse(key->private_exponent.data, key->private_exponent.length);
+	key->ModulusLength = BN_num_bytes(rsa->n);
+	key->Modulus = (BYTE*) malloc(key->ModulusLength);
+	BN_bn2bin(rsa->n, key->Modulus);
+	crypto_reverse(key->Modulus, key->ModulusLength);
+
+	key->PrivateExponentLength = BN_num_bytes(rsa->d);
+	key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
+	BN_bn2bin(rsa->d, key->PrivateExponent);
+	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
+
 	memset(key->exponent, 0, sizeof(key->exponent));
 	BN_bn2bin(rsa->e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa->e));
 	crypto_reverse(key->exponent, sizeof(key->exponent));
@@ -557,8 +575,8 @@ void key_free(rdpKey* key)
 {
 	if (key != NULL)
 	{
-		freerdp_blob_free(&key->modulus);
-		freerdp_blob_free(&key->private_exponent);
+		free(key->Modulus);
+		free(key->PrivateExponent);
 		xfree(key);
 	}
 }
@@ -594,8 +612,8 @@ void certificate_free(rdpCertificate* certificate)
 	{
 		certificate_free_x509_certificate_chain(certificate->x509_cert_chain);
 
-		if (certificate->cert_info.modulus.data != NULL)
-			freerdp_blob_free(&(certificate->cert_info.modulus));
+		if (certificate->cert_info.Modulus != NULL)
+			free(certificate->cert_info.Modulus);
 
 		xfree(certificate);
 	}

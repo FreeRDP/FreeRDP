@@ -160,13 +160,15 @@ void crypto_cert_free(CryptoCert cert)
 {
 	if (cert == NULL)
 		return;
+
 	X509_free(cert->px509);
+
 	xfree(cert);
 }
 
-boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
+boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
 {
-	uint8* p;
+	BYTE* ptr;
 	int length;
 	boolean status = true;
 	EVP_PKEY* pkey = NULL;
@@ -189,9 +191,11 @@ boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key)
 		goto exit;
 	}
 
-	freerdp_blob_alloc(public_key, length);
-	p = (uint8*) public_key->data;
-	i2d_PublicKey(pkey, &p);
+	*PublicKeyLength = (DWORD) length;
+	*PublicKey = (BYTE*) malloc(length);
+	ptr = (BYTE*) (*PublicKey);
+
+	i2d_PublicKey(pkey, &ptr);
 
 exit:
 	if (pkey)

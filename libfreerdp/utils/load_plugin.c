@@ -336,12 +336,13 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
  */
 void* freerdp_load_static_plugin(const char* name, const char* entry_name)
 {
-	staticPlugin* plugin;
 	int i;
+	staticPlugin* plugin;
   
 	for (i = 0; i < g_static_plugins_count; i++)
 	{
 		plugin = &g_static_plugins[i];
+
 		if (!strcmp(plugin->name, name) && !strcmp(plugin->entry_name, entry_name))
 		{
 			return plugin->entry_addr;
@@ -350,5 +351,3 @@ void* freerdp_load_static_plugin(const char* name, const char* entry_name)
   
 	return NULL;
 }
-
-

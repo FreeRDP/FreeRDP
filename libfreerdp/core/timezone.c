@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/unicode.h>
+
 #include "timezone.h"
 
 /**
@@ -85,7 +87,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_read_uint32(s, clientTimeZone->bias); /* Bias */
 
 	/* standardName (64 bytes) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
 	xfree(str);
@@ -94,7 +96,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_read_uint32(s, clientTimeZone->standardBias); /* StandardBias */
 
 	/* daylightName (64 bytes) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
 	xfree(str);
@@ -117,21 +119,17 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	uint32 bias;
 	sint32 sbias;
 	uint32 bias2c;
-	size_t length;
-	uint8* standardName;
-	uint8* daylightName;
-	size_t standardNameLength;
-	size_t daylightNameLength;
+	WCHAR* standardName;
+	WCHAR* daylightName;
+	int standardNameLength;
+	int daylightNameLength;
 	TIME_ZONE_INFO* clientTimeZone;
 
 	clientTimeZone = settings->client_time_zone;
 	freerdp_time_zone_detect(clientTimeZone);
 
-	standardName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->standardName, &length);
-	standardNameLength = length;
-
-	daylightName = (uint8*) freerdp_uniconv_out(settings->uniconv, clientTimeZone->daylightName, &length);
-	daylightNameLength = length;
+	standardNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->standardName, &standardName, 0) * 2;
+	daylightNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->daylightName, &daylightName, 0) * 2;
 
 	if (standardNameLength > 62)
 		standardNameLength = 62;
@@ -159,6 +157,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_write_zero(s, 64 - standardNameLength);
 
 	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
+
 	DEBUG_TIMEZONE("bias=%d stdName='%s' dlName='%s'",
 		bias, clientTimeZone->standardName, clientTimeZone->daylightName);
 

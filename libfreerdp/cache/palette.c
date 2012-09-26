@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 

@@ -27,6 +27,8 @@
  * api-ms-win-core-libraryloader-l1-1-1.dll:
  *
  * AddDllDirectory
+ * RemoveDllDirectory
+ * SetDefaultDllDirectories
  * DisableThreadLibraryCalls
  * EnumResourceLanguagesExA
  * EnumResourceLanguagesExW
@@ -53,10 +55,23 @@
  * LoadStringW
  * LockResource
  * QueryOptionalDelayLoadedAPI
- * RemoveDllDirectory
- * SetDefaultDllDirectories
  * SizeofResource
  */
+
+DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
+{
+	return NULL;
+}
+
+BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
+{
+	return TRUE;
+}
+
+BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
+{
+	return TRUE;
+}
 
 #ifndef _WIN32
 

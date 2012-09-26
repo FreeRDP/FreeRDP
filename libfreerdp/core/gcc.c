@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/utils/print.h>
+#include <freerdp/utils/unicode.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -490,7 +491,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	stream_read_uint32(s, settings->client_build); /* clientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 32);
+	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
 	stream_seek(s, 32);
 	snprintf(settings->client_hostname, 31, "%s", str);
 	settings->client_hostname[31] = 0;
@@ -545,7 +546,8 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 
 		if (blockLength < 64)
 			break;
-		str = freerdp_uniconv_in(settings->uniconv, stream_get_tail(s), 64);
+
+		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 		stream_seek(s, 64);
 		snprintf(settings->client_product_id, 32, "%s", str);
 		xfree(str);
@@ -611,7 +613,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	}
 
 	/*
-	 * If we are in server mode, accepth client's color depth only if
+	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
 	if (color_depth < settings->color_depth || !settings->server_mode)
@@ -630,20 +632,21 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 {
 	uint32 version;
-	char* clientName;
-	size_t clientNameLength;
+	WCHAR* clientName;
+	int clientNameLength;
 	uint8 connectionType;
 	uint16 highColorDepth;
 	uint16 supportedColorDepths;
 	uint16 earlyCapabilityFlags;
-	char* clientDigProductId;
-	size_t clientDigProductIdLength;
+	WCHAR* clientDigProductId;
+	int clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
 	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
-	clientName = freerdp_uniconv_out(settings->uniconv, settings->client_hostname, &clientNameLength);
-	clientDigProductId = freerdp_uniconv_out(settings->uniconv, settings->client_product_id, &clientDigProductIdLength);
+
+	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->client_hostname, &clientName, 0);
+	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->client_product_id, &clientDigProductId, 0);
 
 	stream_write_uint32(s, version); /* version */
 	stream_write_uint16(s, settings->width); /* desktopWidth */
@@ -654,14 +657,15 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, settings->client_build); /* clientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	if (clientNameLength > 30)
+
+	if (clientNameLength > 15)
 	{
-		clientNameLength = 30;
+		clientNameLength = 15;
 		clientName[clientNameLength] = 0;
-		clientName[clientNameLength + 1] = 0;
 	}
-	stream_write(s, clientName, clientNameLength + 2);
-	stream_write_zero(s, 32 - clientNameLength - 2);
+
+	stream_write(s, clientName, ((clientNameLength + 1) * 2));
+	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
 	xfree(clientName);
 
 	stream_write_uint32(s, settings->kbd_type); /* keyboardType */
@@ -795,8 +799,6 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 {
 	uint8* data;
 	uint32 length;
-	uint32 serverRandomLen;
-	uint32 serverCertLen;
 
 	stream_read_uint32(s, settings->encryption_method); /* encryptionMethod */
 	stream_read_uint32(s, settings->encryption_level); /* encryptionLevel */
@@ -810,29 +812,30 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 		return true;
 	}
 
-	stream_read_uint32(s, serverRandomLen); /* serverRandomLen */
-	stream_read_uint32(s, serverCertLen); /* serverCertLen */
+	stream_read_uint32(s, settings->server_random_length); /* serverRandomLen */
+	stream_read_uint32(s, settings->server_certificate_length); /* serverCertLen */
 
-	if (serverRandomLen > 0)
+	if (settings->server_random_length > 0)
 	{
 		/* serverRandom */
-		freerdp_blob_alloc(settings->server_random, serverRandomLen);
-		stream_read(s, settings->server_random->data, serverRandomLen);
+		settings->server_random = (BYTE*) malloc(settings->server_random_length);
+		stream_read(s, settings->server_random, settings->server_random_length);
 	}
 	else
 	{
 		return false;
 	}
 
-	if (serverCertLen > 0)
+	if (settings->server_certificate_length > 0)
 	{
 		/* serverCertificate */
-		freerdp_blob_alloc(settings->server_certificate, serverCertLen);
-		stream_read(s, settings->server_certificate->data, serverCertLen);
+		settings->server_certificate = (BYTE*) malloc(settings->server_certificate_length);
+		stream_read(s, settings->server_certificate, settings->server_certificate_length);
+
 		certificate_free(settings->server_cert);
 		settings->server_cert = certificate_new();
-		data = settings->server_certificate->data;
-		length = settings->server_certificate->length;
+		data = settings->server_certificate;
+		length = settings->server_certificate_length;
 
 		if (!certificate_read_server_certificate(settings->server_cert, data, length))
 			return false;
@@ -932,7 +935,7 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	{
 		serverRandomLen = 32;
 
-		keyLen = settings->server_key->modulus.length;
+		keyLen = settings->server_key->ModulusLength;
 		expLen = sizeof(settings->server_key->exponent);
 		wPublicKeyBlobLen = 4; /* magic (RSA1) */
 		wPublicKeyBlobLen += 4; /* keylen */
@@ -973,9 +976,10 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, serverRandomLen); /* serverRandomLen */
 	stream_write_uint32(s, serverCertLen); /* serverCertLen */
 
-	freerdp_blob_alloc(settings->server_random, serverRandomLen);
-	crypto_nonce(settings->server_random->data, serverRandomLen);
-	stream_write(s, settings->server_random->data, serverRandomLen);
+	settings->server_random_length = serverRandomLen;
+	settings->server_random = (BYTE*) malloc(serverRandomLen);
+	crypto_nonce(settings->server_random, serverRandomLen);
+	stream_write(s, settings->server_random, serverRandomLen);
 
 	sigData = stream_get_tail(s);
 
@@ -991,7 +995,7 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, keyLen - 1); /* datalen */
 
 	stream_write(s, settings->server_key->exponent, expLen);
-	stream_write(s, settings->server_key->modulus.data, keyLen);
+	stream_write(s, settings->server_key->Modulus, keyLen);
 	stream_write_zero(s, 8);
 
 	sigDataLen = stream_get_tail(s) - sigData;

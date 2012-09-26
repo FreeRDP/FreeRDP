@@ -430,16 +430,29 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	size_t conv_out_len;
 	unsigned char* conv_pin;
 
-	if (cchWideChar < 1)
+	/*
+	 * if cbMultiByte is set to 0, the function returns the required buffer size
+	 * for lpMultiByteStr and makes no use of the output parameter itself.
+	 */
+
+	if (cbMultiByte == 0)
+		return lstrlenW(lpWideCharStr);
+
+	/* If cchWideChar is set to 0, the function fails */
 
 	if (cchWideChar == 0)
 		return 0;
 
+	/* cchWideChar is set to -1 if the string is null-terminated */
+
+	if (cchWideChar == -1)
+		cchWideChar = lstrlenW(lpWideCharStr);
+
 	conv_pin = (unsigned char*) lpWideCharStr;
-	conv_in_len = cchWideChar;
+	conv_in_len = cchWideChar * 2;
 	pout = lpMultiByteStr;
 	conv_pout = pout;
-	conv_out_len = cbMultiByte;
+	conv_out_len = cchWideChar * 2;
 
 #ifdef HAVE_ICONV
 	{

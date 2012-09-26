@@ -74,7 +74,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		FD_SET(event->pipe_fd[0], &rfds);
 		ZeroMemory(&timeout, sizeof(timeout));
 
-		if (dwMilliseconds != INFINITE)
+		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 		{
 			timeout.tv_usec = dwMilliseconds * 1000;
 		}

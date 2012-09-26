@@ -21,20 +21,21 @@
 #ifndef __MPPC_H
 #define __MPPC_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 /* Compression Types */
-#define PACKET_COMPRESSED       0x20
-#define PACKET_AT_FRONT         0x40
-#define PACKET_FLUSHED          0x80
-#define PACKET_COMPR_TYPE_8K    0x00
-#define PACKET_COMPR_TYPE_64K   0x01
-#define PACKET_COMPR_TYPE_RDP6  0x02
-#define PACKET_COMPR_TYPE_RDP61 0x03
-#define CompressionTypeMask     0x0F
+#define PACKET_COMPRESSED		0x20
+#define PACKET_AT_FRONT			0x40
+#define PACKET_FLUSHED			0x80
+#define PACKET_COMPR_TYPE_8K		0x00
+#define PACKET_COMPR_TYPE_64K		0x01
+#define PACKET_COMPR_TYPE_RDP6		0x02
+#define PACKET_COMPR_TYPE_RDP61		0x03
+#define CompressionTypeMask		0x0F
 
-#define RDP6_HISTORY_BUF_SIZE   65536
-#define RDP6_OFFSET_CACHE_SIZE  8
+#define RDP6_HISTORY_BUF_SIZE		65536
+#define RDP6_OFFSET_CACHE_SIZE		8
 
 struct rdp_mppc_dec
 {

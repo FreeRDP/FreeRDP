@@ -67,6 +67,8 @@
 
 #ifndef _WIN32
 
+#include <winpr/crt.h>
+
 #include <pthread.h>
 
 /**
@@ -76,37 +78,68 @@
 
 typedef void *(*pthread_start_routine)(void*);
 
-HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-		LPTHREAD_START_ROUTINE lpStartAddress,LPVOID lpParameter,DWORD dwCreationFlags,LPDWORD lpThreadId)
+struct winpr_thread
 {
-	return NULL;
+	BOOL started;
+	pthread_t thread;
+	SIZE_T dwStackSize;
+	LPVOID lpParameter;
+	pthread_mutex_t mutex;
+	LPTHREAD_START_ROUTINE lpStartAddress;
+	LPSECURITY_ATTRIBUTES lpThreadAttributes;
+};
+typedef struct winpr_thread WINPR_THREAD;
+
+void winpr_StartThread(WINPR_THREAD* thread)
+{
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (thread->dwStackSize > 0)
+		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
+
+	thread->started = TRUE;
+	pthread_create(&thread->thread, &attr, (pthread_start_routine) thread->lpStartAddress, thread->lpParameter);
+
+	pthread_attr_destroy(&attr);
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	HANDLE handle;
-	pthread_t thread;
-	pthread_attr_t attr;
+	WINPR_THREAD* thread;
 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
+	ZeroMemory(thread, sizeof(WINPR_THREAD));
 
-	if (dwStackSize > 0)
-		pthread_attr_setstacksize(&attr, (size_t) dwStackSize);
+	thread->started = FALSE;
+	thread->dwStackSize = dwStackSize;
+	thread->lpParameter = lpParameter;
+	thread->lpStartAddress = lpStartAddress;
+	thread->lpThreadAttributes = lpThreadAttributes;
 
-	pthread_create(&thread, &attr, (pthread_start_routine) lpStartAddress, lpParameter);
+	pthread_mutex_init(&thread->mutex, 0);
 
 	handle = winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
 
-	pthread_attr_destroy(&attr);
+	if (!(dwCreationFlags & CREATE_SUSPENDED))
+		winpr_StartThread(thread);
 
 	return handle;
 }
 
+HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+{
+	return NULL;
+}
+
 VOID ExitThread(DWORD dwExitCode)
 {
-
+	pthread_exit((void*) dwExitCode);
 }
 
 HANDLE GetCurrentThread(VOID)
@@ -121,6 +154,22 @@ DWORD GetCurrentThreadId(VOID)
 
 DWORD ResumeThread(HANDLE hThread)
 {
+	ULONG Type;
+	PVOID Object;
+	WINPR_THREAD* thread;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+		return 0;
+
+	thread = (WINPR_THREAD*) Object;
+
+	pthread_mutex_lock(&thread->mutex);
+
+	if (!thread->started)
+		winpr_StartThread(thread);
+
+	pthread_mutex_unlock(&thread->mutex);
+
 	return 0;
 }
 
@@ -136,6 +185,21 @@ BOOL SwitchToThread(VOID)
 
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
+	ULONG Type;
+	PVOID Object;
+	WINPR_THREAD* thread;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+		return 0;
+
+	thread = (WINPR_THREAD*) Object;
+
+	pthread_mutex_lock(&thread->mutex);
+
+	pthread_cancel(thread->thread);
+
+	pthread_mutex_unlock(&thread->mutex);
+
 	return TRUE;
 }
 

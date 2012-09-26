@@ -22,9 +22,13 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <freerdp/utils/memory.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
-#include <freerdp/utils/memory.h>
 
 #define MPPC_ENC_DEBUG 0
 
