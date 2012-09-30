@@ -19,21 +19,15 @@
 
 #include <CUnit/Basic.h>
 
-#include "test_per.h"
-#include "test_ber.h"
 #include "test_gcc.h"
 #include "test_mcs.h"
 #include "test_color.h"
 #include "test_bitmap.h"
 #include "test_gdi.h"
-#include "test_list.h"
 #include "test_sspi.h"
-#include "test_stream.h"
-#include "test_utils.h"
 #include "test_orders.h"
 #include "test_ntlm.h"
 #include "test_license.h"
-#include "test_channels.h"
 #include "test_cliprdr.h"
 #include "test_drdynvc.h"
 #include "test_rfx.h"
@@ -122,29 +116,23 @@ typedef struct _test_suite test_suite;
 
 const static test_suite suites[] =
 {
-	{ "ber", add_ber_suite },
 	{ "bitmap", add_bitmap_suite },
-	{ "channels", add_channels_suite },
-	{ "cliprdr", add_cliprdr_suite },
+	//{ "cliprdr", add_cliprdr_suite },
 	{ "color", add_color_suite },
-	{ "drdynvc", add_drdynvc_suite },
+	//{ "drdynvc", add_drdynvc_suite },
 	{ "gcc", add_gcc_suite },
 	{ "gdi", add_gdi_suite },
 	{ "license", add_license_suite },
-	{ "list", add_list_suite },
 	{ "mcs", add_mcs_suite },
 	{ "mppc", add_mppc_suite },
 	{ "mppc_enc", add_mppc_enc_suite },
 	{ "ntlm", add_ntlm_suite },
 	{ "orders", add_orders_suite },
 	{ "pcap", add_pcap_suite },
-	{ "per", add_per_suite },
-	{ "rail", add_rail_suite },
+	//{ "rail", add_rail_suite },
 	{ "rfx", add_rfx_suite },
 	{ "nsc", add_nsc_suite },
-	{ "sspi", add_sspi_suite },
-	{ "stream", add_stream_suite },
-	{ "utils", add_utils_suite }
+	{ "sspi", add_sspi_suite }
 };
 #define N_SUITES (sizeof suites / sizeof suites[0])
 

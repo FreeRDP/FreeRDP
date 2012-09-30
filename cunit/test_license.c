@@ -426,8 +426,8 @@ void test_license_generate_keys(void)
 	memcpy(license->server_random, test_server_random, sizeof(test_server_random));
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
 	memcpy(license->certificate->cert_info.exponent, test_exponent, sizeof(test_exponent));
-	memcpy(license->certificate->cert_info.modulus.data, test_modulus, sizeof(test_modulus));
-	license->certificate->cert_info.modulus.length = sizeof(test_modulus);
+	memcpy(license->certificate->cert_info.Modulus, test_modulus, sizeof(test_modulus));
+	license->certificate->cert_info.ModulusLength = sizeof(test_modulus);
 
 	license_generate_keys(license);
 	license_encrypt_premaster_secret(license);
@@ -460,8 +460,8 @@ void test_license_encrypt_premaster_secret(void)
 	s = &_s;
 	memcpy(license->premaster_secret, premaster_secret, sizeof(premaster_secret));
 	memcpy(license->certificate->cert_info.exponent, test_exponent, sizeof(test_exponent));
-	memcpy(license->certificate->cert_info.modulus.data, test_modulus, sizeof(test_modulus));
-	license->certificate->cert_info.modulus.length = sizeof(test_modulus);
+	memcpy(license->certificate->cert_info.Modulus, test_modulus, sizeof(test_modulus));
+	license->certificate->cert_info.ModulusLength = sizeof(test_modulus);
 
 	s->data = license->encrypted_premaster_secret->data;
 	s->p = s->data + sizeof(test_encrypted_premaster_secret);
