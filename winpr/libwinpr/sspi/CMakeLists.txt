@@ -90,3 +90,8 @@ else()
 	target_link_libraries(winpr-sspi ${WINPR_SSPI_LIBS})
 	install(TARGETS winpr-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+

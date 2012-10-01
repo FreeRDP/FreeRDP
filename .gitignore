@@ -6,9 +6,11 @@ install_manifest.txt
 CTestTestfile.cmake
 freerdp.pc
 Makefile
+Testing
 cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
+DartConfiguration.tcl
 
 # Eclipse
 *.project

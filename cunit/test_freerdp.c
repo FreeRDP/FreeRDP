@@ -24,7 +24,6 @@
 #include "test_color.h"
 #include "test_bitmap.h"
 #include "test_gdi.h"
-#include "test_sspi.h"
 #include "test_orders.h"
 #include "test_ntlm.h"
 #include "test_license.h"
@@ -120,19 +119,18 @@ const static test_suite suites[] =
 	//{ "cliprdr", add_cliprdr_suite },
 	{ "color", add_color_suite },
 	//{ "drdynvc", add_drdynvc_suite },
-	{ "gcc", add_gcc_suite },
+	//{ "gcc", add_gcc_suite },
 	{ "gdi", add_gdi_suite },
 	{ "license", add_license_suite },
-	{ "mcs", add_mcs_suite },
+	//{ "mcs", add_mcs_suite },
 	{ "mppc", add_mppc_suite },
 	{ "mppc_enc", add_mppc_enc_suite },
 	{ "ntlm", add_ntlm_suite },
-	{ "orders", add_orders_suite },
+	//{ "orders", add_orders_suite },
 	{ "pcap", add_pcap_suite },
 	//{ "rail", add_rail_suite },
 	{ "rfx", add_rfx_suite },
-	{ "nsc", add_nsc_suite },
-	{ "sspi", add_sspi_suite }
+	{ "nsc", add_nsc_suite }
 };
 #define N_SUITES (sizeof suites / sizeof suites[0])
 

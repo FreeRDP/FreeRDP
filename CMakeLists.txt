@@ -185,6 +185,14 @@ add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
 
+# Unit Tests
+
+INCLUDE(CTest)
+
+if(BUILD_TESTING)
+	enable_testing()
+endif()
+
 # WinPR
 set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
 include_directories(${WINPR_INCLUDE_DIR})
@@ -201,9 +209,9 @@ endif()
 #find_optional_package(IPP)
 
 # Build CUnit
+
 find_optional_package(CUnit)
 if(WITH_CUNIT)
-	enable_testing()
 	add_subdirectory(cunit)
 endif()
 
