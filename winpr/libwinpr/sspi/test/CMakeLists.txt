@@ -27,4 +27,4 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 	add_test(${TestName} ${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME} ${TestName})
 endforeach()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR\\Test")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")

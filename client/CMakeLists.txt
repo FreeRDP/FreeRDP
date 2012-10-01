@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP Client User Interfaces
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +18,8 @@
 # User Interfaces
 
 if(NOT WIN32)
-	# Build Test Client
-	add_subdirectory(test)
+	# Build Sample Client
+	add_subdirectory(Sample)
 
 	# Build X11 Client
 	find_suggested_package(X11)

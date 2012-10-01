@@ -1,5 +1,5 @@
-# WinPR: Windows Portable Runtime
-# winpr-reg cmake build script
+# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP Sample Server cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,15 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(winpr-reg
-	reg.c)
+set(MODULE_NAME "sfreerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER_SAMPLE")
+
+set(${MODULE_PREFIX}_SRCS
+	tfreerdp.c)
+
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(winpr-reg winpr)
+	target_link_libraries(${MODULE_NAME}
+		freerdp
+		freerdp-server)
 else()
-	target_link_libraries(winpr-reg winpr-utils)
-	
-	if(NOT WIN32)
-		target_link_libraries(winpr-reg winpr-registry)
-	endif()
+	target_link_libraries(${MODULE_NAME}
+		freerdp-core
+		freerdp-utils
+		freerdp-codec
+		freerdp-channels
+		freerdp-server-channels)
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")

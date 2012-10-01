@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
-# FreeRDP Test UI cmake build script
+# FreeRDP Sample UI cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_CLIENT_TEST_SRCS
+set(MODULE_NAME "sfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_SAMPLE")
+
+set(${MODULE_PREFIX}_SRCS
 	freerdp.c)
 
-add_executable(freerdp-test ${FREERDP_CLIENT_TEST_SRCS})
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS} ${CMAKE_DL_LIBS})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CMAKE_DL_LIBS})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS} freerdp)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
-	set(FREERDP_CLIENT_TEST_LIBS ${FREERDP_CLIENT_TEST_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
 		freerdp-gdi
 		freerdp-utils
 		freerdp-channels)
 endif()
 
-target_link_libraries(freerdp-test ${FREERDP_CLIENT_TEST_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Sample")

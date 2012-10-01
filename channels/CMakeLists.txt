@@ -33,4 +33,3 @@ endforeach(FILEPATH)
 if(WITH_SERVER_CHANNELS)
 	add_subdirectory(server)
 endif()
-
