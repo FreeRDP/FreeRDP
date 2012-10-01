@@ -390,6 +390,9 @@ int transport_check_fds(rdpTransport** ptransport)
 	STREAM* received;
 	rdpTransport* transport = *ptransport;
 
+#ifdef _WIN32
+	WSAResetEvent(transport->tcp->wsa_event);
+#endif
 	wait_obj_clear(transport->recv_event);
 
 	status = transport_read_nonblocking(transport);
