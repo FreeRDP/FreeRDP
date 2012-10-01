@@ -49,6 +49,9 @@ include(GetGitRevisionDescription)
 git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
 message(STATUS "Git Revision ${GIT_REVISION}")
 
+# Turn on solution folders (2.8.4+)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")

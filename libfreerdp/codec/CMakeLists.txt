@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # libfreerdp-codec cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_CODEC_SRCS
+set(MODULE_NAME "freerdp-codec")
+set(MODULE_PREFIX "FREERDP_CODEC")
+
+set(${MODULE_PREFIX}_SRCS
 	bitmap.c
 	color.c
 	rfx_bitstream.h
@@ -46,18 +47,18 @@ set(FREERDP_CODEC_SRCS
 	mppc_enc.c
 	jpeg.c)
 
-set(FREERDP_CODEC_SSE2_SRCS
+set(${MODULE_PREFIX}_SSE2_SRCS
 	rfx_sse2.c
 	rfx_sse2.h
 	nsc_sse2.c
 	nsc_sse2.h)
 
-set(FREERDP_CODEC_NEON_SRCS
+set(${MODULE_PREFIX}_NEON_SRCS
 	rfx_neon.c
 	rfx_neon.h)
 
 if(WITH_SSE2)
-	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS} ${FREERDP_CODEC_SSE2_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SSE2_SRCS})
 
 	if(CMAKE_COMPILER_IS_GNUCC)
 		set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
@@ -69,7 +70,7 @@ if(WITH_SSE2)
 endif()
 
 if(WITH_NEON)
-	set(FREERDP_CODEC_SRCS ${FREERDP_CODEC_SRCS} ${FREERDP_CODEC_NEON_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_NEON_SRCS})
 	set_property(SOURCE rfx_neon.c PROPERTY COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp")
 endif()
 
@@ -78,22 +79,24 @@ if(WITH_JPEG)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp-codec OBJECT ${FREERDP_CODEC_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(freerdp-codec ${FREERDP_CODEC_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(freerdp-codec PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-set(FREERDP_CODEC_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${FREERDP_JPEG_LIBS})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_CODEC_LIBS} PARENT_SCOPE)
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(FREERDP_CODEC_LIBS ${FREERDP_CODEC_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-utils)
 
-	target_link_libraries(freerdp-codec ${FREERDP_CODEC_LIBS})
-	install(TARGETS freerdp-codec DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")
