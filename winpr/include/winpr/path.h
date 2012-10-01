@@ -22,6 +22,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/tchar.h>
+#include <winpr/error.h>
 #include <winpr/wtypes.h>
 
 //#define HAVE_PATHCCH_H	1

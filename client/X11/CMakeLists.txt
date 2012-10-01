@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "wfreerdp")
+set(MODULE_NAME "xfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
 
 include(FindXmlto)
