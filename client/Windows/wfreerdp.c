@@ -526,7 +526,7 @@ int wfreerdp_run(freerdp* instance)
 		}
 
 		/* do the wait */
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
