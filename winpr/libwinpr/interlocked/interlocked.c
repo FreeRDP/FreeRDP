@@ -42,6 +42,9 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+#include <stdlib.h>
+
 VOID InitializeSListHead(PSLIST_HEADER ListHead)
 {
 #ifdef _WIN64
@@ -61,14 +64,21 @@ PSLIST_ENTRY InterlockedPushEntrySList(PSLIST_HEADER ListHead, PSLIST_ENTRY List
 #ifdef _WIN64
 	new.HeaderX64.NextEntry = (((ULONG_PTR) ListEntry) >> 4);
 
-	do
+	while (1)
 	{
 		old = *ListHead;
+
 		ListEntry->Next = (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
+
 		new.HeaderX64.Depth = old.HeaderX64.Depth + 1;
 		new.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
+
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		{
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			break;
+		}
 	}
-	while (!InterlockedCompareExchange64((LONG64*) ListHead, new.s.Alignment, old.s.Alignment));
 
 	return (PSLIST_ENTRY) ((ULONG_PTR) old.HeaderX64.NextEntry << 4);
 #else
@@ -104,7 +114,7 @@ PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead)
 	PSLIST_ENTRY entry;
 
 #ifdef _WIN64
-	do
+	while (1)
 	{
 		old = *ListHead;
 
@@ -116,8 +126,13 @@ PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead)
 		new.HeaderX64.NextEntry = ((ULONG_PTR) entry->Next) >> 4;
 		new.HeaderX64.Depth = old.HeaderX64.Depth - 1;
 		new.HeaderX64.Sequence = old.HeaderX64.Sequence - 1;
+
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		{
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			break;
+		}
 	}
-	while (!InterlockedCompareExchange64((LONG64*) ListHead, new.s.Alignment, old.s.Alignment));
 #else
 	do
 	{
@@ -149,7 +164,11 @@ PSLIST_ENTRY InterlockedFlushSList(PSLIST_HEADER ListHead)
 
 USHORT QueryDepthSList(PSLIST_HEADER ListHead)
 {
-	return 0;
+#ifdef _WIN64
+	return ListHead->HeaderX64.Depth;
+#else
+	return ListHead->s.Depth;
+#endif
 }
 
 LONG InterlockedIncrement(LONG volatile *Addend)
@@ -197,7 +216,7 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
-LONG64 InterlockedCompareExchange64(LONG64 volatile *Destination, LONG64 Exchange, LONG64 Comperand)
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
 #ifdef __GNUC__
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
