@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,4 +33,9 @@ install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})
 add_subdirectory(tsmf)
 add_subdirectory(audin)
 add_subdirectory(urbdrc)
+
+if(WITH_CLIENT_CHANNELS)
+	add_subdirectory(client)
+endif()
+
 

@@ -22,21 +22,56 @@
 
 #include <freerdp/api.h>
 
-struct _ADPCM
+union _ADPCM
 {
-	sint16 last_sample[2];
-	sint16 last_step[2];
+	struct
+	{
+		sint16 last_sample[2];
+		sint16 last_step[2];
+	} ima;
+	struct
+	{
+		uint8 predictor[2];
+		sint32 delta[2];
+		sint32 sample1[2];
+		sint32 sample2[2];
+	} ms;
 };
-typedef struct _ADPCM ADPCM;
+typedef union _ADPCM ADPCM;
 
-FREERDP_API uint8* dsp_resample(uint8* src, int bytes_per_sample,
-	uint32 schan, uint32 srate, int sframes,
-	uint32 rchan, uint32 rrate, int * prframes);
+typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
+struct _FREERDP_DSP_CONTEXT
+{
+	uint8* resampled_buffer;
+	uint32 resampled_size;
+	uint32 resampled_frames;
+	uint32 resampled_maxlength;
 
-FREERDP_API uint8* dsp_decode_ima_adpcm(ADPCM* adpcm,
-	uint8* src, int size, int channels, int block_size, int* out_size);
-FREERDP_API uint8* dsp_encode_ima_adpcm(ADPCM* adpcm,
-	uint8* src, int size, int channels, int block_size, int* out_size);
+	uint8* adpcm_buffer;
+	uint32 adpcm_size;
+	uint32 adpcm_maxlength;
+
+	ADPCM adpcm;
+
+	void (*resample)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int bytes_per_sample,
+		uint32 schan, uint32 srate, int sframes,
+		uint32 rchan, uint32 rrate);
+
+	void (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+	void (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+
+	void (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+	void (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
+		const uint8* src, int size, int channels, int block_size);
+};
+
+FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void);
+FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
+#define freerdp_dsp_context_reset_adpcm(_c) memset(&_c->adpcm, 0, sizeof(ADPCM))
 
 #endif /* __DSP_UTILS_H */
 

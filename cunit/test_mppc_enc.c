@@ -24,12 +24,13 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
+
 #include <freerdp/freerdp.h>
+#include <freerdp/utils/time.h>
 
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
 #include "test_mppc_enc.h"
-
 
 #define BUF_SIZE (1024 * 1)
 

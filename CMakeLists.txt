@@ -4,6 +4,7 @@
 # Copyright 2011 O.S. Systems Software Ltda.
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 HP Development Company, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,16 +34,23 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
 include(AutoVersioning)
 include(ConfigOptions)
+include(BuildFeatureCheck)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
 # Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
-set(FREERDP_VERSION_MINOR "0")
-set(FREERDP_VERSION_REVISION "1")
+set(FREERDP_VERSION_MINOR "1")
+set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
+include(GetGitRevisionDescription)
+git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
+message(STATUS "Git Revision ${GIT_REVISION}")
+
+# Turn on solution folders (2.8.4+)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -51,7 +59,25 @@ endif()
 
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
+	set(BUILD_SHARED_LIBS ON)
+endif()
+
+if(NOT BUILD_SHARED_LIBS AND WITH_MONOLITHIC_BUILD)
+	set(WITH_STATIC_PLUGINS ON)
+endif()
+
+# Configure MSVC Runtime
+if(MSVC)
+	include(MSVCRuntime)
+	if(NOT DEFINED MSVC_RUNTIME)
+		set(MSVC_RUNTIME "dynamic")
+	endif()
+	if(${MSVC_RUNTIME} STREQUAL "static")
+		message(STATUS "Use the MSVC static runtime option carefully!")
+		message(STATUS "OpenSSL uses /MD by default, and is very picky")
+		message(STATUS "Random freeing errors are a common sign of runtime issues")
+	endif()
+	configure_msvc_runtime()
 endif()
 
 # Compiler-specific flags
@@ -75,16 +101,30 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 if(MSVC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd /MT")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /Ob2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_X86_")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_AMD64_")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_X86_")
+	endif()
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_UNICODE")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_EXPORTS")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=0x0501")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
 	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
+
+# config.h definition for installable headers
+check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
+check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
+check_include_files(stdbool.h FREERDP_HAVE_STDBOOL_H)
+check_include_files(inttypes.h FREERDP_HAVE_INTTYPES_H)
 
 # Include files
 check_include_files(fcntl.h HAVE_FCNTL_H)
@@ -93,29 +133,38 @@ check_include_files(limits.h HAVE_LIMITS_H)
 check_include_files(stdint.h HAVE_STDINT_H)
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
 
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
-# Libraries that we have a hard dependency on
-if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
-find_required_package(OpenSSL)
-endif()
-
 # Mac OS X
 if(APPLE)
-	include_directories(/opt/local/include)
-	link_directories(/opt/local/lib)
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
+	if(IS_DIRECTORY /opt/local/include)
+		include_directories(/opt/local/include)
+		link_directories(/opt/local/lib)
+	endif()
+	
+	if(WITH_CLANG)
+		set(CMAKE_C_COMPILER "clang")
+	endif()
+	
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl-framework,CoreFoundation")	
 endif()
 
 if(NOT WIN32)
 	find_required_package(ZLIB)
 	find_optional_package(PulseAudio)
+	find_optional_package(MacAudio)
 	find_optional_package(PCSC)
 	find_suggested_package(Cups)
 
 	if(NOT APPLE)
 		find_suggested_package(FFmpeg)
+		find_suggested_package(XRandR)
+		find_suggested_package(Gstreamer)
 		find_suggested_package(ALSA)
 	else(NOT APPLE)
 		find_optional_package(FFmpeg)
@@ -127,54 +176,77 @@ set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
 set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/freerdp")
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp")
+set(FREERDP_CLIENT_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/client")
+set(FREERDP_SERVER_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/server")
+
+# Path to put extensions
+set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 
 # Include directories
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Configure files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+add_definitions("-DHAVE_CONFIG_H")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
+
+# Unit Tests
+
+INCLUDE(CTest)
+
+if(BUILD_TESTING)
+	enable_testing()
+endif()
+
+# WinPR
+set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories(${WINPR_INCLUDE_DIR})
+
+add_subdirectory(winpr)
 
 # Generate pkg-config
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+if(NOT MSVC)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()
+
+# Intel Performance Primitives
+#find_optional_package(IPP)
 
 # Build CUnit
+
 find_optional_package(CUnit)
 if(WITH_CUNIT)
-   enable_testing()
-   add_subdirectory(cunit)
+	add_subdirectory(cunit)
 endif()
 
 # Sub-directories
-add_subdirectory(include)
-add_subdirectory(libfreerdp-utils)
-add_subdirectory(libfreerdp-gdi)
-add_subdirectory(libfreerdp-rail)
-add_subdirectory(libfreerdp-cache)
-add_subdirectory(libfreerdp-codec)
-add_subdirectory(libfreerdp-crypto)
-add_subdirectory(libfreerdp-sspi)
-add_subdirectory(libfreerdp-channels)
-add_subdirectory(libfreerdp-locale)
-add_subdirectory(libfreerdp-core)
 
-if(NOT WIN32)
+add_subdirectory(include)
+
+add_subdirectory(libfreerdp)
+
+if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()
 
-option(WITH_CLIENT "Build client binaries" ON)
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
 
-option(WITH_SERVER "Build server binaries" OFF)
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
 
-add_subdirectory(keymaps)
+if(WITH_THIRD_PARTY)
+	add_subdirectory(third-party)
+endif()
+
+if(NOT MSVC)
+	add_subdirectory(keymaps)
+endif()
 
 # Source package
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")

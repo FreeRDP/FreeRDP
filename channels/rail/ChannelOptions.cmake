@@ -1,0 +1,9 @@
+
+set(CHANNEL_TYPE "static")
+set(CHANNEL_SHORT_NAME "rail")
+set(CHANNEL_LONG_NAME "Remote Programs Virtual Channel Extension")
+set(CHANNEL_SPECIFICATIONS "[MS-RDPERP]")
+
+string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
+option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+

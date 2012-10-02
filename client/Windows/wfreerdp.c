@@ -19,7 +19,11 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/windows.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/windows.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -37,10 +41,13 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/channels.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
+#include "wf_cliprdr.h"
 
 #include "wfreerdp.h"
 
@@ -148,30 +155,30 @@ boolean wf_pre_connect(freerdp* instance)
 
 	settings->os_major_type = OSMAJORTYPE_WINDOWS;
 	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
-	settings->order_support[NEG_MEMBLT_INDEX] = true;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_LINETO_INDEX] = TRUE;
+	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
+	settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
+	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	settings->glyph_cache = false;
+	settings->glyph_cache = FALSE;
 
 	wfi->cursor = g_default_cursor;
 
@@ -181,7 +188,7 @@ boolean wf_pre_connect(freerdp* instance)
 
 	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
 	wfi->clrconv->palette = NULL;
-	wfi->clrconv->alpha = false;
+	wfi->clrconv->alpha = FALSE;
 
 	instance->context->cache = cache_new(settings);
 
@@ -214,7 +221,7 @@ boolean wf_pre_connect(freerdp* instance)
 	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
 void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
@@ -296,20 +303,20 @@ boolean wf_post_connect(freerdp* instance)
 		wfi->hdc->alpha = wfi->clrconv->alpha;
 		wfi->hdc->invert = wfi->clrconv->invert;
 
-		wfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+		wfi->hdc->hwnd = (HGDI_WND) xmalloc(sizeof(GDI_WND));
 		wfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 		wfi->hdc->hwnd->invalid->null = 1;
 
 		wfi->hdc->hwnd->count = 32;
-		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
+		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) xmalloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
 		wfi->hdc->hwnd->ninvalid = 0;
 
-		wfi->image = wf_bitmap_new(wfi, 64, 64, 32, NULL);
+		wfi->image = wf_image_new(wfi, 64, 64, 32, NULL);
 		wfi->image->_bitmap.data = NULL;
 
 		if (settings->rfx_codec)
 		{
-			wfi->tile = wf_bitmap_new(wfi, 64, 64, 32, NULL);
+			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);
 			wfi->rfx_context = rfx_context_new();
 			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
 		}
@@ -319,7 +326,7 @@ boolean wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->window_title != NULL)
-		_snwprintf(win_title, sizeof(win_title), L"%S", settings->window_title);
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->window_title);
 	else if (settings->port == 3389)
 		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->hostname);
 	else
@@ -372,7 +379,7 @@ boolean wf_post_connect(freerdp* instance)
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (wfi->sw_gdi != true)
+	if (wfi->sw_gdi != TRUE)
 	{
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
@@ -383,7 +390,9 @@ boolean wf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return true;
+	wf_cliprdr_init(wfi, instance->context->channels);
+
+	return TRUE;
 }
 
 boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
@@ -414,7 +423,7 @@ boolean wf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	SetConsoleMode(input_handle, mode);
 #endif
 
-	return true;
+	return TRUE;
 }
 
 int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
@@ -434,12 +443,12 @@ void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 boolean wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	return true;
+	return TRUE;
 }
 
 boolean wf_check_fds(freerdp* instance)
 {
-	return true;
+	return TRUE;
 }
 
 int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
@@ -474,7 +483,7 @@ int wfreerdp_run(freerdp* instance)
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	if (freerdp_connect(instance) != true)
+	if (freerdp_connect(instance) != TRUE)
 		return 0;
 
 	channels = instance->context->channels;
@@ -484,17 +493,17 @@ int wfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -519,23 +528,27 @@ int wfreerdp_run(freerdp* instance)
 		}
 
 		/* do the wait */
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (wf_check_fds(instance) != true)
+		if (freerdp_shall_disconnect(instance))	
+		{
+			break;
+		}
+		if (wf_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check wfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
@@ -562,8 +575,10 @@ int wfreerdp_run(freerdp* instance)
 	}
 
 	/* cleanup */
+
+	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
-	freerdp_free(instance);
+	freerdp_disconnect(instance);
 	
 	return 0;
 }
@@ -622,6 +637,13 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 	return (DWORD) NULL;
 }
 
+#ifdef WITH_RDPDR
+DEFINE_SVC_PLUGIN_ENTRY(rdpdr) ;
+DEFINE_DEV_PLUGIN_ENTRY(disk) ;
+DEFINE_DEV_PLUGIN_ENTRY(printer) ;
+#endif
+
+
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	freerdp* instance;
@@ -679,7 +701,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->context->argc = __argc;
 	instance->context->argv = __argv;
 
-	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
+#ifdef WITH_RDPDR
+        REGISTER_SVC_PLUGIN_ENTRY(rdpdr) ;
+        REGISTER_DEV_PLUGIN_ENTRY(disk) ;
+        REGISTER_DEV_PLUGIN_ENTRY(printer) ;
+#endif
+
+        if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
 
 	//while (1)
@@ -713,6 +741,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MessageBox(GetConsoleWindow(),
 			L"Failed to start wfreerdp.\n\nPlease check the debug output.",
 			L"FreeRDP Error", MB_ICONSTOP);
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
 
 	WSACleanup();
 

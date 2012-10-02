@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP X11 Server cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "xfreerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER_X11")
+
 include_directories(${X11_INCLUDE_DIRS})
 
-add_executable(xfreerdp-server
+set(${MODULE_PREFIX}_SRCS
 	xf_peer.c
 	xf_event.c
 	xf_input.c
 	xf_encode.c
 	xfreerdp.c)
+
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 find_suggested_package(XShm)
 if(WITH_XSHM)
@@ -36,35 +39,45 @@ find_suggested_package(Xext)
 if(WITH_XEXT)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
-	target_link_libraries(xfreerdp-server ${XEXT_LIBRARIES})
+	target_link_libraries(${MODULE_NAME} ${XEXT_LIBRARIES})
 endif()
 
 find_suggested_package(Xdamage)
 if(WITH_XDAMAGE)
         add_definitions(-DWITH_XDAMAGE)
         include_directories(${XDAMAGE_INCLUDE_DIRS})
-        target_link_libraries(xfreerdp-server ${XDAMAGE_LIBRARIES})
+        target_link_libraries(${MODULE_NAME} ${XDAMAGE_LIBRARIES})
 endif()
 
 find_suggested_package(Xfixes)
 if(WITH_XFIXES)
         add_definitions(-DWITH_XFIXES)
         include_directories(${XFIXES_INCLUDE_DIRS})
-        target_link_libraries(xfreerdp-server ${XFIXES_LIBRARIES})
+        target_link_libraries(${MODULE_NAME} ${XFIXES_LIBRARIES})
 endif()
 
 find_suggested_package(XTest)
 if(WITH_XTEST)
         add_definitions(-DWITH_XTEST)
         include_directories(${XTEST_INCLUDE_DIRS})
-        target_link_libraries(xfreerdp-server ${XTEST_LIBRARIES})
+        target_link_libraries(${MODULE_NAME} ${XTEST_LIBRARIES})
 endif()
 
-target_link_libraries(xfreerdp-server freerdp-core)
-target_link_libraries(xfreerdp-server freerdp-codec)
-target_link_libraries(xfreerdp-server freerdp-utils)
-target_link_libraries(xfreerdp-server freerdp-gdi)
-target_link_libraries(xfreerdp-server freerdp-crypto)
-target_link_libraries(xfreerdp-server freerdp-sspi)
-target_link_libraries(xfreerdp-server freerdp-locale)
-target_link_libraries(xfreerdp-server ${X11_LIBRARIES})
+if(WITH_MONOLITHIC_BUILD)
+	target_link_libraries(${MODULE_NAME} freerdp)
+	target_link_libraries(${MODULE_NAME} winpr)
+else()
+	target_link_libraries(${MODULE_NAME}
+		freerdp-core
+		freerdp-codec
+		freerdp-utils
+		freerdp-gdi
+		freerdp-crypto
+		freerdp-locale)
+
+	target_link_libraries(${MODULE_NAME} winpr-sspi)
+endif()
+
+target_link_libraries(${MODULE_NAME} ${X11_LIBRARIES})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/X11")

@@ -18,24 +18,26 @@
  * limitations under the License.
  */
 
-#ifndef __RDP_TYPES_H
-#define __RDP_TYPES_H
+#ifndef FREERDP_TYPES_H
+#define FREERDP_TYPES_H
+
+#include <winpr/wtypes.h>
+
+#include <freerdp/config.h>
 
 #ifdef _WIN32
 #include <windef.h>
 #endif
 
-/* Base Types */
-
-#ifdef HAVE_LIMITS_H
+#ifdef FREERDP_HAVE_LIMITS_H
 #include <limits.h>
 #endif
 
-#ifdef HAVE_STDINT_H
+#ifdef FREERDP_HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
-#ifdef HAVE_INTTYPES_H
+#ifdef FREERDP_HAVE_INTTYPES_H
 
 #include <inttypes.h>
 typedef uint8_t uint8;
@@ -65,7 +67,7 @@ typedef signed long long sint64;
 
 #endif /* HAVE_INTTYPES_H */
 
-#ifdef HAVE_STDBOOL_H
+#ifdef FREERDP_HAVE_STDBOOL_H
 
 #include <stdbool.h>
 
@@ -107,7 +109,7 @@ typedef int boolean;
 
 #endif /* __cplusplus */
 
-#endif /* HAVE_STDBOOL_H */
+#endif /* FREERDP_HAVE_STDBOOL_H */
 
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
@@ -118,6 +120,16 @@ typedef int boolean;
 #endif
 
 #include <freerdp/settings.h>
+
+typedef struct
+{
+	uint32 time_low;
+	uint16 time_mid;
+	uint16 time_hi_and_version;
+	uint8 clock_seq_hi_and_reserved;
+	uint8 clock_seq_low;
+	uint8 node[6];
+} uuid;
 
 struct _RDP_PLUGIN_DATA
 {

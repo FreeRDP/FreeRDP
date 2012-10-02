@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP Windows cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,20 +15,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(wfreerdp WIN32
+set(MODULE_NAME "wfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
+
+set(${MODULE_PREFIX}_SRCS
 	wf_gdi.c
 	wf_gdi.h
 	wf_event.c
 	wf_event.h
 	wf_graphics.c
 	wf_graphics.h
+	wf_cliprdr.c
+	wf_cliprdr.h
+	wf_window.c
+	wf_window.h
+	wf_rail.c
+	wf_rail.h
 	wfreerdp.c
 	wfreerdp.h)
 
-target_link_libraries(wfreerdp freerdp-core)
-target_link_libraries(wfreerdp freerdp-gdi)
-target_link_libraries(wfreerdp freerdp-utils)
-target_link_libraries(wfreerdp freerdp-codec)
-target_link_libraries(wfreerdp freerdp-channels)
+add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
-install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(WITH_MONOLITHIC_BUILD)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+
+	if(WITH_RDPDR)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpdr disk printer)
+	endif()
+else()
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
+		freerdp-core
+		freerdp-gdi
+		freerdp-codec
+		freerdp-channels
+		freerdp-utils)
+endif()
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")
+

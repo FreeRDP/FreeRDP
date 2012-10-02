@@ -19,12 +19,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/sspi/sspi.h>
 
-#include "libfreerdp-sspi/NTLM/ntlm.h"
-#include "libfreerdp-sspi/NTLM/ntlm_compute.h"
-#include "libfreerdp-sspi/NTLM/ntlm_message.h"
+#include <winpr/sspi.h>
+#include <freerdp/freerdp.h>
+
+#include "winpr/libwinpr/sspi/NTLM/ntlm.h"
+#include "winpr/libwinpr/sspi/NTLM/ntlm_compute.h"
+#include "winpr/libwinpr/sspi/NTLM/ntlm_message.h"
 
 #include "test_ntlm.h"
 

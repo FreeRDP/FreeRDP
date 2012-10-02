@@ -43,11 +43,10 @@ struct rdp_window
 	rdpWindow* next;
 	uint32 windowId;
 	uint32 ownerWindowId;
-	rdpWindow* ownerWindow;
 	uint32 style;
 	uint32 extendedStyle;
 	uint8 showState;
-	UNICODE_STRING titleInfo;
+	RAIL_UNICODE_STRING titleInfo;
 	uint32 clientOffsetX;
 	uint32 clientOffsetY;
 	uint32 clientAreaWidth;

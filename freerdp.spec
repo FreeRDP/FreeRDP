@@ -70,7 +70,7 @@ Requires:       %{name}-libs = %{version}-%{release}
 Requires:       pkgconfig
 %description    devel
 Header files and unversioned libraries for libfreerdp-core, libfreerdp-channels,
-libfreerdp-kbd, libfreerdp-cache, libfreerdp-codec, libfreerdp-rail,
+libfreerdp-locale, libfreerdp-cache, libfreerdp-codec, libfreerdp-rail,
 libfreerdp-gdi and libfreerdp-utils.
 
 %prep
@@ -97,6 +97,7 @@ cmake \
         -DWITH_CUPS:BOOL=ON \
         -DWITH_PCSC:BOOL=ON \
         -DWITH_PULSEAUDIO:BOOL=ON \
+	-DWITH_MACAUDIO:BOOL=ON \
         -DWITH_X11:BOOL=ON \
         -DWITH_XCURSOR:BOOL=ON \
         -DWITH_XEXT:BOOL=ON \

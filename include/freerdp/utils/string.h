@@ -23,7 +23,6 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 
 struct rdp_string
 {
@@ -33,7 +32,7 @@ struct rdp_string
 };
 typedef struct rdp_string rdpString;
 
-FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string, UNICONV* uniconv);
+FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string);
 FREERDP_API void freerdp_string_free(rdpString* string);
 
 #endif /* __STRING_UTILS_H */

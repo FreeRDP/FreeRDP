@@ -22,8 +22,8 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/locale/virtual_key_codes.h>
-#include <freerdp/keyboard_scancode.h>
+#include <freerdp/scancode.h>
+#include <freerdp/locale/vkcodes.h>
 
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
@@ -188,6 +188,15 @@ typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
 #define KBD_CHINESE_TRADITIONAL_NEW_CHANGJIE			0xE0090404
 #define KBD_CHINESE_TRADITIONAL_MICROSOFT_PINYIN_IME_3		0xE00E0804
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC			0xE00F0404
+
+/* Keyboard Types */
+#define KBD_TYPE_IBM_PC_XT					0x00000001 /* IBM PC/XT or compatible (83-key) keyboard */
+#define KBD_TYPE_OLIVETTI_ICO					0x00000002 /* Olivetti "ICO" (102-key) keyboard */
+#define KBD_TYPE_IBM_PC_AT					0x00000003 /* IBM PC/AT (84-key) and similar keyboards */
+#define KBD_TYPE_IBM_ENHANCED					0x00000004 /* IBM enhanced (101-key or 102-key) keyboard */
+#define KBD_TYPE_NOKIA_1050					0x00000005 /* Nokia 1050 and similar keyboards */
+#define KBD_TYPE_NOKIA_9140					0x00000006 /* Nokia 9140 and similar keyboards */
+#define KBD_TYPE_JAPANESE					0x00000007 /* Japanese keyboard */
 
 FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboardLayoutId);
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);

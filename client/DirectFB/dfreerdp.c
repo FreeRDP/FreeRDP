@@ -20,19 +20,22 @@
 #include <errno.h>
 #include <pthread.h>
 #include <locale.h>
+
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/plugins/cliprdr.h>
+
+#include <winpr/synch.h>
 
 #include "df_event.h"
 #include "df_graphics.h"
 
 #include "dfreerdp.h"
 
-static freerdp_sem g_sem;
+static HANDLE g_sem;
 static int g_thread_count = 0;
 
 struct thread_data
@@ -155,6 +158,8 @@ boolean df_pre_connect(freerdp* instance)
 	dfi->clrconv->palette = xnew(rdpPalette);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
+    
+    instance->context->cache = cache_new(instance->settings);
 
 	return true;
 }
@@ -423,7 +428,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
         if (g_thread_count < 1)
-                freerdp_sem_signal(g_sem);
+        	ReleaseSemaphore(g_sem, 1, NULL);
 
 	return NULL;
 }
@@ -440,7 +445,7 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_init();
 
-	g_sem = freerdp_sem_new(1);
+	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;
@@ -467,7 +472,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-                freerdp_sem_wait(g_sem);
+		WaitForSingleObject(g_sem, INFINITE);
 	}
 
 	freerdp_channels_global_uninit();

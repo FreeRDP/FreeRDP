@@ -3,6 +3,7 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -39,6 +44,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/select.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
@@ -46,13 +52,13 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/semaphore.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
+
+#include <winpr/synch.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -65,7 +71,7 @@
 
 #include "xfreerdp.h"
 
-static freerdp_sem g_sem;
+static HANDLE g_sem;
 static int g_thread_count = 0;
 static uint8 g_disconnect_reason = 0;
 
@@ -245,6 +251,14 @@ void xf_hw_desktop_resize(rdpContext* context)
 				xfi->drawing = xfi->primary;
 		}
 	}
+	else
+	{
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
+		XSetForeground(xfi->display, xfi->gc, 0);
+		XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
+			0, 0, xfi->width, xfi->height);
+	}
 }
 
 boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -280,6 +294,8 @@ void xf_create_window(xfInfo* xfi)
 	char* win_title;
 	int width, height;
 
+	memset(&xevent, 0x00, sizeof(xevent));
+
 	width = xfi->width;
 	height = xfi->height;
 
@@ -288,8 +304,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
-	xfi->attribs.bit_gravity = ForgetGravity;
-	xfi->attribs.win_gravity = StaticGravity;
+	xfi->attribs.bit_gravity = NorthWestGravity;
+	xfi->attribs.win_gravity = NorthWestGravity;
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
@@ -309,18 +325,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
 	xfree(win_title);
 
-	if (xfi->parent_window)
-		XReparentWindow(xfi->display, xfi->window->handle, xfi->parent_window, 0, 0);
-
 	if (xfi->fullscreen)
 		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
-
-	/* wait for VisibilityNotify */
-	do
-	{
-		XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
-	}
-	while (xevent.type != VisibilityNotify);
 
 	xfi->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
@@ -430,6 +436,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 }
 
 static int (*_def_error_handler)(Display*, XErrorEvent*);
+
 int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256];
@@ -489,7 +496,7 @@ boolean xf_pre_connect(freerdp* instance)
 	if (arg_parse_result < 0)
 	{
 		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			printf("failed to parse arguments.\n");
+			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 		
 		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
@@ -531,6 +538,24 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
+	if (settings->authentication_only)
+	{
+		/* Check --authonly has a username and password. */
+		if (settings->username == NULL )
+		{
+			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
+			exit(1);
+		}
+		if (settings->password == NULL )
+		{
+			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
+			exit(1);
+		}
+		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		/* Avoid XWindows initialization and configuration below. */
+		return true;
+	}
+
 	xfi->display = XOpenDisplay(NULL);
 
 	if (xfi->display == NULL)
@@ -567,6 +592,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
 	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
+	xfi->WM_STATE = XInternAtom(xfi->display, "WM_STATE", False);
 
 	xf_kbd_init(xfi);
 
@@ -722,8 +748,11 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->drawable, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
 
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
+	XFlush(xfi->display);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
@@ -785,7 +814,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	// But it doesn't do anything to fix it...
 	*password = xmalloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size) == NULL)
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
 		return false;
 
 	return true;
@@ -1077,7 +1106,15 @@ int xfreerdp_run(freerdp* instance)
 	memset(wfds, 0, sizeof(wfds));
 	memset(&timeout, 0, sizeof(struct timeval));
 
-	if (!freerdp_connect(instance))
+	boolean status = freerdp_connect(instance);
+	/* Connection succeeded. --authonly ? */
+	if (instance->settings->authentication_only) {
+		freerdp_disconnect(instance);
+		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		exit(!status);
+	}
+
+	if (!status)
 	{
 		xf_free(((xfContext*) instance->context)->xfi);
 		return XF_EXIT_CONN_FAILED;
@@ -1166,6 +1203,31 @@ int xfreerdp_run(freerdp* instance)
 		xf_process_channel_event(channels, instance);
 	}
 
+	FILE *fin = fopen("/tmp/tsmf.tid", "rt");
+	if(fin)
+	{
+		int thid = 0;
+		fscanf(fin, "%d", &thid);
+		fclose(fin);
+		pthread_kill((pthread_t) thid, SIGUSR1);
+
+		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
+		int timeout = 5;
+		while (fin1)
+		{
+			fclose(fin1);
+			sleep(1);
+			timeout--;
+			if (timeout <= 0)
+			{
+				unlink("/tmp/tsmf.tid");
+				pthread_kill((pthread_t) thid, SIGKILL);
+				break;
+			}
+			fin1 = fopen("/tmp/tsmf.tid", "rt");
+		}
+	}
+
 	if (!ret)
 		ret = freerdp_error_info(instance);
 
@@ -1180,7 +1242,7 @@ int xfreerdp_run(freerdp* instance)
 
 /** Entry point for the thread that will deal with the session.
  *  It just calls xfreerdp_run() using the given instance as parameter.
- *  @param - pointer to a thread_data structure that contains the initialized connection.
+ *  @param param - pointer to a thread_data structure that contains the initialized connection.
  */
 void* thread_func(void* param)
 {
@@ -1194,7 +1256,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
 	if (g_thread_count < 1)
-		freerdp_sem_signal(g_sem);
+		ReleaseSemaphore(g_sem, 1, NULL);
 
 	pthread_exit(NULL);
 }
@@ -1232,7 +1294,7 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_init();
 
-	g_sem = freerdp_sem_new(1);
+	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
@@ -1258,7 +1320,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-		freerdp_sem_wait(g_sem);
+		WaitForSingleObject(g_sem, INFINITE);
 	}
 
 	pthread_join(thread, NULL);

@@ -48,6 +48,7 @@ FREERDP_API rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* ex
 FREERDP_API void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 FREERDP_API void window_list_update(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 FREERDP_API void window_list_delete(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo);
+FREERDP_API void window_list_clear(rdpWindowList* list);
 
 FREERDP_API rdpWindowList* window_list_new(rdpRail* rail);
 FREERDP_API void window_list_free(rdpWindowList* list);

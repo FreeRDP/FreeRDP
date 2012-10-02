@@ -39,6 +39,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
+#include <freerdp/errorcodes.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,6 +52,7 @@ typedef boolean (*pPreConnect)(freerdp* instance);
 typedef boolean (*pPostConnect)(freerdp* instance);
 typedef boolean (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
 typedef boolean (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
+typedef boolean (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
 
 typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
 typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
@@ -162,7 +164,11 @@ struct rdp_freerdp
 	pVerifyCertificate VerifyCertificate; /**< (offset 51)
 											   Callback for certificate validation.
 											   Used to verify that an unknown certificate is trusted. */
-	uint32 paddingD[64 - 52]; /* 52 */
+	pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
+															 Callback for changed certificate validation. 
+															 Used when a certificate differs from stored fingerprint.
+															 If returns true, the new fingerprint will be trusted and old thrown out. */
+	uint32 paddingD[64 - 51]; /* 51 */
 
 	pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.
