@@ -119,10 +119,12 @@ static boolean disk_file_remove_dir(const char* path)
 	boolean ret = true;
 
 	dir = opendir(path);
+
 	if (dir == NULL)
 		return false;
 
 	pdirent = readdir(dir);
+
 	while (pdirent)
 	{
 		if (strcmp(pdirent->d_name, ".") == 0 || strcmp(pdirent->d_name, "..") == 0)
@@ -175,6 +177,7 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 	xfree(file->fullpath);
 	file->fullpath = fullpath;
 	file->filename = strrchr(file->fullpath, '/');
+
 	if (file->filename == NULL)
 		file->filename = file->fullpath;
 	else

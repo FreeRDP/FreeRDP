@@ -204,46 +204,7 @@ boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 
 	}
 	else
 	{
-		if(transport->settings->proxy_host)
-		{
-			status = tcp_connect(transport->tcp, transport->settings->proxy_host, transport->settings->proxy_port);
-			if(status)
-			{
-	                        char buf[8192];
-	                        int bytes_read;
-				int n = snprintf(buf,sizeof(buf), "CONNECT %s:%d HTTP/1.0\r\n\r\n", hostname, port);
-				tcp_write(transport->tcp, buf, n);
-
-                                bytes_read = tcp_read(transport->tcp, buf, sizeof(buf));
-				if(bytes_read > 12)
-				{
-					if(  (strncmp(buf,"HTTP/1.0 200", 12) == 0) ||
-						 (strncmp(buf,"HTTP/1.1 200", 12) == 0) )
-					{
-					    printf("Connected via proxy\n");
-                                            while (bytes_read > 0)
-                                                {
-                                                if (bytes_read > 4 && strncmp(buf + bytes_read - 4, "\r\n\r\n", 4) == 0) 
-                                                    break ;
-                                                bytes_read = tcp_read(transport->tcp, buf, sizeof(buf) - 1) ;
-                                                }
-					} 
-                                        else
-					{
-                                            printf("Proxy connection failed: %s\n", buf);	
-                                            return false;
-					}
-				} 
-                                else
-				{
-					return false;
-				}
-			}
-		}
-		else
-		{
-			status = tcp_connect(transport->tcp, hostname, port);
-		}
+		status = tcp_connect(transport->tcp, hostname, port);
 	}
 
 	return status;

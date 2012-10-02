@@ -91,7 +91,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 {
 	int t;
 	char* p;
-	char* cp;
 	int i, j;
 	int index = 1;
 	int num_extensions = 0;
@@ -164,7 +163,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-salted-checksum: disable salted checksums with Standard RDP encryption\n"
 				"  --pcid: preconnection id\n"
 				"  --pcb: preconnection blob\n"
-                                "  --proxy: <host>:<port> connect via http proxy\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; /* TODO: What is the correct return? */
@@ -818,25 +816,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
 			return FREERDP_ARGS_PARSE_VERSION;
 		}
-		else if (strcmp("--proxy", argv[index]) == 0)
-		{
-			index++;
-			if (index == argc)
-			{
-				printf("missing proxy\n");
-				return FREERDP_ARGS_PARSE_FAILURE;
-			}
-			// split in proxy and port
-			settings->proxy_host = xstrdup(argv[index]);
-			cp = strrchr(settings->proxy_host, ':');
-			if( ! cp ) 
-                        {  
-				printf("illegal proxy spec\n");
-				return FREERDP_ARGS_PARSE_FAILURE;
-			}
-			*cp = 0;
-			settings->proxy_port = atoi(cp+1);
-			}
 		else if (argv[index][0] != '-')
 		{
 			freerdp_parse_hostname(settings, argv[index]);

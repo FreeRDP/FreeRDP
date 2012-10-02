@@ -477,11 +477,6 @@ struct rdp_settings
 	/* Extensions */
 	ALIGN64 int num_extensions;
 	ALIGN64 struct rdp_ext_set extensions[16];
-
-        /* Proxy */
-	ALIGN64 char * proxy_host;
-	ALIGN64 int proxy_port;
-
 };
 typedef struct rdp_settings rdpSettings;
 
