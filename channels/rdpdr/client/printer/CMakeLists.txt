@@ -31,6 +31,13 @@ if(WITH_CUPS)
 	add_definitions(-DWITH_CUPS)
 endif()
 
+if(WIN32)
+	set(PRINTER_SRCS
+		${PRINTER_SRCS}
+		printer_win.c
+		printer_win.h)
+endif()
+
 include_directories(..)
 
 add_library(printer ${PRINTER_SRCS})

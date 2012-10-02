@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP X11 Client
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "xfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
+
 include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
 
-set(FREERDP_CLIENT_X11_SRCS
+set(${MODULE_PREFIX}_SRCS
 	xf_gdi.c
 	xf_gdi.h
 	xf_rail.c
@@ -42,9 +43,9 @@ set(FREERDP_CLIENT_X11_SRCS
 	xfreerdp.c
 	xfreerdp.h)
 
-add_executable(xfreerdp ${FREERDP_CLIENT_X11_SRCS})
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(FREERDP_CLIENT_X11_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${X11_LIBRARIES}
 	${CMAKE_DL_LIBS})
 
@@ -67,7 +68,7 @@ find_suggested_package(Xinerama)
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA -DWITH_XEXT)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
-	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XINERAMA_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XINERAMA_LIBRARIES})
 endif()
 
 find_suggested_package(Xext)
@@ -81,22 +82,22 @@ find_suggested_package(Xcursor)
 if(WITH_XCURSOR)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${XCURSOR_INCLUDE_DIRS})
-	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XCURSOR_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XCURSOR_LIBRARIES})
 endif()
 
 find_suggested_package(Xv)
 if(WITH_XV)
 	add_definitions(-DWITH_XV)
 	include_directories(${XV_INCLUDE_DIRS})
-	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} ${XV_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XV_LIBRARIES})
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS} freerdp)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
-	set(FREERDP_CLIENT_X11_LIBS ${FREERDP_CLIENT_X11_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
 		freerdp-gdi
 		freerdp-locale
@@ -105,5 +106,7 @@ else()
 		freerdp-utils)
 endif()
 
-target_link_libraries(xfreerdp ${FREERDP_CLIENT_X11_LIBS})
-install(TARGETS xfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")

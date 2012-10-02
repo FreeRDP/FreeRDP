@@ -27,6 +27,7 @@
 
 #cmakedefine HAVE_TM_GMTOFF
 
+
 /* Options */
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_SSE2
@@ -34,6 +35,11 @@
 #cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
+
+/* Plugins */
+#cmakedefine WITH_STATIC_PLUGINS
+#cmakedefine WITH_RDPDR
+
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE

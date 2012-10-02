@@ -56,6 +56,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_SYSKEYUP:
 				wfi = (wfInfo*) GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
 				p = (PKBDLLHOOKSTRUCT) lParam;
+				if (!wfi || !p)
+					return 1;
 				input = wfi->instance->input;
 				rdp_scancode = MAKE_RDP_SCANCODE((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
 

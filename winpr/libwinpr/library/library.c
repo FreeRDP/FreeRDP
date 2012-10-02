@@ -58,6 +58,12 @@
  * SizeofResource
  */
 
+#ifndef _WIN32
+
+#include <dlfcn.h>
+#include <stdio.h>
+#include <unistd.h>
+
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 {
 	return NULL;
@@ -72,12 +78,6 @@ BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
 {
 	return TRUE;
 }
-
-#ifndef _WIN32
-
-#include <dlfcn.h>
-#include <stdio.h>
-#include <unistd.h>
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {

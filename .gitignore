@@ -6,9 +6,11 @@ install_manifest.txt
 CTestTestfile.cmake
 freerdp.pc
 Makefile
+Testing
 cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
+DartConfiguration.tcl
 
 # Eclipse
 *.project
@@ -25,9 +27,12 @@ client/X11/xfreerdp.1
 # Windows
 *.vcxproj
 *.vcxproj.*
+*.vcproj
+*.vcproj.*
 *.sdf
 *.sln
 *.suo
+*.ncb
 *.opensdf
 ipch
 Debug
@@ -41,9 +46,9 @@ RelWithDebInfo
 cunit/test_freerdp
 client/X11/xfreerdp
 client/Mac/xcode
-client/test/freerdp-test
+client/Sample/sfreerdp
 client/DirectFB/dfreerdp
-server/test/tfreerdp-server
+server/Sample/sfreerdp-server
 server/X11/xfreerdp-server
 xcode
 

@@ -15,12 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(winpr-hash
+set(MODULE_NAME "winpr-hash")
+set(MODULE_PREFIX "WINPR_TOOLS_HASH")
+
+set(${MODULE_PREFIX}_SRCS
 	hash.c)
 
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(winpr-hash winpr)
+	target_link_libraries(${MODULE_NAME} winpr)
 else()
-	target_link_libraries(winpr-hash winpr-utils)
+	target_link_libraries(${MODULE_NAME} winpr-utils)
 endif()
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")

@@ -23,6 +23,8 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#ifndef _WIN32
+
 typedef HANDLE DLL_DIRECTORY_COOKIE;
 
 #define LOAD_LIBRARY_SEARCH_APPLICATION_DIR			0x00000200
@@ -33,8 +35,6 @@ typedef HANDLE DLL_DIRECTORY_COOKIE;
 WINPR_API DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory);
 WINPR_API BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie);
 WINPR_API BOOL SetDefaultDllDirectories(DWORD DirectoryFlags);
-
-#ifndef _WIN32
 
 WINPR_API HMODULE LoadLibraryA(LPCSTR lpLibFileName);
 WINPR_API HMODULE LoadLibraryW(LPCWSTR lpLibFileName);

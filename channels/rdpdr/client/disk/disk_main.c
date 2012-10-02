@@ -263,7 +263,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, Length);
+		stream_check_size(irp->output, (int)Length);
 		stream_write(irp->output, buffer, Length);
 	}
 
@@ -647,15 +647,25 @@ static void disk_free(DEVICE* device)
 	xfree(disk);
 }
 
-int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
-{
-	char* name;
-	char* path;
-	int i, length;
-	DISK_DEVICE* disk;
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
+void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *name, char *path)
+{
+	DISK_DEVICE* disk;
+	int i, length ;
+
+#ifdef WIN32
+	/*
+	 * We cannot enter paths like c:\ because : is an arg separator
+	 * thus, paths are entered as c+\ and the + is substituted here
+	 */
+	if ( path[1] == '+' )
+	{
+		if ( (path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z') )
+		{
+			path[1] = ':';
+		}
+	}
+#endif
 
 	if (name[0] && path[0])
 	{
@@ -683,8 +693,65 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) disk);
 
-		ResumeThread(disk->thread);
+                ResumeThread(disk->thread);
 	}
 
-	return 0;
 }
+
+#ifdef WITH_STATIC_PLUGINS
+int disk_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#else
+int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#endif
+{
+	char* name;
+	char* path;
+#ifdef WIN32
+	char devlist[512], buf[512];
+	char *dev;
+	int len ;
+#endif
+
+	name = (char*) pEntryPoints->plugin_data->data[1];
+	path = (char*) pEntryPoints->plugin_data->data[2];
+
+#ifndef WIN32
+        disk_register_disk_path(pEntryPoints, name, path);
+#else
+        /* Special case: path[0] == '*' -> export all drives */
+	/* Special case: path[0] == '%' -> user home dir */
+	if( path[0] == '%' )
+	{
+		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
+		disk_register_disk_path(pEntryPoints, name, xstrdup(buf));
+	}
+	else if( path[0] == '*' )
+	{
+		int i;
+
+		/* Enumerate all devices: */
+		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
+
+		for (dev = devlist, i = 0; *dev; dev += 4, i++)
+		{
+			if (*dev > 'B')
+                        {
+				/* Suppress disk drives A and B to avoid pesty messages */
+				_snprintf(buf, sizeof(buf) - 4, "%s", name);
+				len = strlen(buf);
+				buf[len] = '_';
+				buf[len + 1] = dev[0];
+				buf[len + 2] = 0;
+				buf[len + 3] = 0;
+				disk_register_disk_path(pEntryPoints, xstrdup(buf), xstrdup(dev));
+			}
+		}
+	}
+        else
+        {
+		disk_register_disk_path(pEntryPoints, name, path);
+	}
+#endif
+	
+        return 0;
+ }

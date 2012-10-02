@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_CLIENT_WINDOWS_SRCS
+set(MODULE_NAME "wfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
+
+set(${MODULE_PREFIX}_SRCS
 	wf_gdi.c
 	wf_gdi.h
 	wf_event.c
@@ -31,12 +34,16 @@ set(FREERDP_CLIENT_WINDOWS_SRCS
 	wfreerdp.c
 	wfreerdp.h)
 
-add_executable(wfreerdp WIN32 ${FREERDP_CLIENT_WINDOWS_SRCS})
+add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_WINDOWS_LIBS} freerdp)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+
+	if(WITH_RDPDR)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpdr disk printer)
+	endif()
 else()
-	set(FREERDP_CLIENT_WINDOWS_LIBS ${FREERDP_CLIENT_WINDOWS_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
 		freerdp-gdi
 		freerdp-codec
@@ -44,5 +51,8 @@ else()
 		freerdp-utils)
 endif()
 
-target_link_libraries(wfreerdp ${FREERDP_CLIENT_WINDOWS_LIBS})
-install(TARGETS wfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")
+

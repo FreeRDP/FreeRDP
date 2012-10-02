@@ -32,6 +32,12 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 if(WITH_MONOLITHIC_BUILD)
 
 else()
+	target_link_libraries(${MODULE_NAME} winpr-heap)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

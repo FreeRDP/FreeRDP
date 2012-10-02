@@ -24,7 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/memory.h>

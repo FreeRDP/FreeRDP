@@ -57,7 +57,7 @@ typedef struct LIST_ENTRY64
 } LIST_ENTRY64;
 typedef LIST_ENTRY64 *PLIST_ENTRY64;
 
-#ifdef _AMD64_
+#ifdef _WIN64
 
 typedef struct _SLIST_ENTRY *PSLIST_ENTRY;
 typedef struct DECLSPEC_ALIGN(16) _SLIST_ENTRY
@@ -65,24 +65,46 @@ typedef struct DECLSPEC_ALIGN(16) _SLIST_ENTRY
 	PSLIST_ENTRY Next;
 } SLIST_ENTRY;
 
-#else  /* _AMD64_ */
+#else  /* _WIN64 */
 
 #define SLIST_ENTRY SINGLE_LIST_ENTRY
 #define _SLIST_ENTRY _SINGLE_LIST_ENTRY
 #define PSLIST_ENTRY PSINGLE_LIST_ENTRY
 
-#endif /* _AMD64_ */
+#endif /* _WIN64 */
 
-#if defined(_AMD64_)
+#ifdef _WIN64
 
-typedef struct DECLSPEC_ALIGN(16) _SLIST_HEADER
+typedef union DECLSPEC_ALIGN(16) _SLIST_HEADER
 {
-	ULONGLONG Alignment;
-	ULONGLONG Region;
-} SLIST_HEADER;
-typedef struct _SLIST_HEADER *PSLIST_HEADER;
+	struct
+	{
+		ULONGLONG Alignment;
+		ULONGLONG Region;
+	} DUMMYSTRUCTNAME;
 
-#else  /* _AMD64_ */
+	struct
+	{
+		ULONGLONG Depth:16;
+		ULONGLONG Sequence:9;
+		ULONGLONG NextEntry:39;
+		ULONGLONG HeaderType:1;
+		ULONGLONG Init:1;
+		ULONGLONG Reserved:59;
+		ULONGLONG Region:3;
+	} Header8;
+
+	struct
+	{
+		ULONGLONG Depth:16;
+		ULONGLONG Sequence:48;
+		ULONGLONG HeaderType:1;
+		ULONGLONG Reserved:3;
+		ULONGLONG NextEntry:60;
+	} HeaderX64;
+} SLIST_HEADER, *PSLIST_HEADER;
+
+#else  /* _WIN64 */
 
 typedef union _SLIST_HEADER
 {
@@ -96,13 +118,13 @@ typedef union _SLIST_HEADER
 	} DUMMYSTRUCTNAME;
 } SLIST_HEADER, *PSLIST_HEADER;
 
-#endif /* _AMD64_ */
+#endif /* _WIN64 */
 
 WINPR_API VOID InitializeSListHead(PSLIST_HEADER ListHead);
 
-WINPR_API PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead);
 WINPR_API PSLIST_ENTRY InterlockedPushEntrySList(PSLIST_HEADER ListHead, PSLIST_ENTRY ListEntry);
 WINPR_API PSLIST_ENTRY InterlockedPushListSListEx(PSLIST_HEADER ListHead, PSLIST_ENTRY List, PSLIST_ENTRY ListEnd, ULONG Count);
+WINPR_API PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead);
 WINPR_API PSLIST_ENTRY InterlockedFlushSList(PSLIST_HEADER ListHead);
 
 WINPR_API USHORT QueryDepthSList(PSLIST_HEADER ListHead);
@@ -113,8 +135,8 @@ WINPR_API LONG InterlockedDecrement(LONG volatile *Addend);
 WINPR_API LONG InterlockedExchange(LONG volatile *Target, LONG Value);
 WINPR_API LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value);
 
-WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination,LONG ExChange, LONG Comperand);
-WINPR_API LONG64 InterlockedCompareExchange64(LONG64 volatile *Destination, LONG64 ExChange, LONG64 Comperand);
+WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination,LONG Exchange, LONG Comperand);
+WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand);
 
 #endif /* _WIN32 */
 

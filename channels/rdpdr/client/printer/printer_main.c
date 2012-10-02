@@ -40,6 +40,10 @@
 
 #include "printer_main.h"
 
+#ifdef WIN32
+#include "printer_win.h"
+#endif
+
 typedef struct _PRINTER_DEVICE PRINTER_DEVICE;
 struct _PRINTER_DEVICE
 {
@@ -294,7 +298,11 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	freerdp_thread_start(printer_dev->thread, printer_thread_func, printer_dev);
 }
 
+#ifdef WITH_STATIC_PLUGINS
+int printer_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#else
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#endif
 {
 	rdpPrinterDriver* driver = NULL;
 	rdpPrinter** printers;
@@ -305,6 +313,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 #ifdef WITH_CUPS
 	driver = printer_cups_get_driver();
+#endif
+#ifdef WIN32
+	driver = printer_win_get_driver();
 #endif
 	if (driver == NULL)
 	{
