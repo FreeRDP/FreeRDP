@@ -83,6 +83,8 @@ struct _DVCMAN_CHANNEL
 	IWTSVirtualChannelCallback* channel_callback;
 
 	STREAM* dvc_data;
+
+	pthread_mutex_t dvc_chan_mutex;
 };
 
 static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
@@ -179,6 +181,28 @@ RDP_PLUGIN_DATA* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->plugin_data;
 }
 
+uint32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
+{
+	return ((DVCMAN_CHANNEL*)channel)->channel_id;
+}
+
+IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId)
+{
+	LIST_ITEM* curr;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	for (curr = dvcman->channels->head; curr; curr = curr->next)
+	{
+		if (((DVCMAN_CHANNEL*) curr->data)->channel_id == ChannelId)
+		{
+			return (IWTSVirtualChannel*)curr->data;
+		}
+	}
+
+	return NULL;
+}
+
+
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	DVCMAN* dvcman;
@@ -186,6 +210,8 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman = xnew(DVCMAN);
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.PushEvent = dvcman_push_event;
+	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
+	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = list_new();
 
@@ -276,8 +302,13 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 static int dvcman_write_channel(IWTSVirtualChannel* pChannel, uint32 cbSize, uint8* pBuffer, void* pReserved)
 {
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
+	int error;
 
-	return drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
+	pthread_mutex_lock(&channel->dvc_chan_mutex);
+	error = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
+	pthread_mutex_unlock(&channel->dvc_chan_mutex);
+
+	return error;
 }
 
 static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
@@ -315,6 +346,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 Channel
 			channel->iface.Close = dvcman_close_channel_iface;
 			channel->dvcman = dvcman;
 			channel->channel_id = ChannelId;
+			pthread_mutex_init(&channel->dvc_chan_mutex, NULL);
 
 			bAccept = 1;
 			pCallback = NULL;
@@ -341,28 +373,13 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 Channel
 	return 1;
 }
 
-static DVCMAN_CHANNEL* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId)
-{
-	LIST_ITEM* curr;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
-
-	for (curr = dvcman->channels->head; curr; curr = curr->next)
-	{
-		if (((DVCMAN_CHANNEL*) curr->data)->channel_id == ChannelId)
-		{
-			return (DVCMAN_CHANNEL*)curr->data;
-		}
-	}
-
-	return NULL;
-}
 
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannel* ichannel;
 
-	channel = dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
@@ -387,7 +404,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, ui
 {
 	DVCMAN_CHANNEL* channel;
 
-	channel = dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
@@ -408,7 +425,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 C
 	int error = 0;
 	DVCMAN_CHANNEL* channel;
 
-	channel = dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
