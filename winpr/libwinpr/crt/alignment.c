@@ -39,11 +39,6 @@ void* _aligned_malloc(size_t size, size_t alignment)
 	if (alignment % 2 == 1)
 		return NULL;
 
-	/* offset must be less than size */
-
-	if (offset >= size)
-		return NULL;
-
 	if (posix_memalign(&memptr, alignment, size) != 0)
 		return NULL;
 
