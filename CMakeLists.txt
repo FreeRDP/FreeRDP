@@ -80,7 +80,6 @@ if(MSVC)
 	configure_msvc_runtime()
 endif()
 
-
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
