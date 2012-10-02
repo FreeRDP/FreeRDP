@@ -654,8 +654,10 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *na
 	int i, length ;
 
 #ifdef WIN32
-	// We cannot enter pathes like c:\ because : is an arg separator
-	// thus, pathes are entered as c+\ and the + is substitutet here
+	/*
+	 * We cannot enter paths like c:\ because : is an arg separator
+	 * thus, paths are entered as c+\ and the + is substituted here
+	 */
 	if ( path[1] == '+' )
 	{
 		if ( (path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z') )
@@ -695,8 +697,6 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *na
 	}
 
 }
-
-
 
 #ifdef WITH_STATIC_PLUGINS
 int disk_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
@@ -755,4 +755,3 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	
         return 0;
  }
-
