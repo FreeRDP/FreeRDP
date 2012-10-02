@@ -4,6 +4,7 @@
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012      Gerald Richter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +25,32 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef _WIN32
-#include <dirent.h>
+#include "dirent.h"
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#include "statvfs.h"
+#else
 #include <sys/statvfs.h>
 #endif
 
 #ifdef _WIN32
 #define STAT stat
-#define OPEN open
-#define LSEEK lseek
+#define OPEN _open
+#define close _close
+#define read  _read
+#define write _write
+#define LSEEK _lseek
 #define FSTAT fstat
 #define STATVFS statvfs
+#define mkdir(a,b) _mkdir(a)
+#define rmdir _rmdir
+#define unlink(a) _unlink(a)
+#define ftruncate(a,b) _chsize(a,b)
+
+typedef uint32 ssize_t ;
+typedef uint32 mode_t ;
+
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 #define STAT stat
 #define OPEN open

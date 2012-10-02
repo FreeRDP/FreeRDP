@@ -41,6 +41,8 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/channels.h>
 
 #include "wf_gdi.h"
@@ -631,6 +633,12 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 	return (DWORD) NULL;
 }
 
+#ifdef WITH_RDPDR
+DEFINE_SVC_PLUGIN_ENTRY(rdpdr) ;
+DEFINE_DEV_PLUGIN_ENTRY(disk) ;
+#endif
+
+
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	freerdp* instance;
@@ -688,7 +696,12 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->context->argc = __argc;
 	instance->context->argv = __argv;
 
-	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
+#ifdef WITH_RDPDR
+        REGISTER_SVC_PLUGIN_ENTRY(rdpdr) ;
+        REGISTER_DEV_PLUGIN_ENTRY(disk) ;
+#endif
+
+        if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
 
 	//while (1)

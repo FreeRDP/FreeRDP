@@ -59,6 +59,10 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
+if(NOT BUILD_SHARED_LIBS AND WITH_MONOLITHIC_BUILD)
+	set(WITH_STATIC_PLUGINS ON)
+endif()
+
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)
@@ -72,6 +76,7 @@ if(MSVC)
 	endif()
 	configure_msvc_runtime()
 endif()
+
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)

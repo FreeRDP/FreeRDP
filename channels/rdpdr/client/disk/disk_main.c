@@ -647,7 +647,11 @@ static void disk_free(DEVICE* device)
 	xfree(disk);
 }
 
+#ifdef WITH_STATIC_PLUGINS
+int disk_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#else
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#endif
 {
 	char* name;
 	char* path;
