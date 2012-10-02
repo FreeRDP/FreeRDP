@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * Dynamic Virtual Channel
+ * RemoteFX USB Redirection
  *
- * Copyright 2010-2011 Vic Lee
+ * Copyright 2012 Atrust corp.
+ * Copyright 2012 Alfred Liu <alfred.liu@atruscorp.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +18,24 @@
  * limitations under the License.
  */
 
-#ifndef __DRDYNVC_TYPES_H
-#define __DRDYNVC_TYPES_H
+#ifndef __DATA_TRANSFER_H
+#define __DATA_TRANSFER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
-#include <freerdp/utils/debug.h>
-#include <pthread.h>
+#include "urbdrc_main.h"
 
-#ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+
+#define DEVICE_CTX(dev) ((dev)->ctx)
+#define HANDLE_CTX(handle) (DEVICE_CTX((handle)->dev))
+#define TRANSFER_CTX(transfer) (HANDLE_CTX((transfer)->dev_handle))
+#define ITRANSFER_CTX(transfer) \
+	(TRANSFER_CTX(__USBI_TRANSFER_TO_LIBUSB_TRANSFER(transfer)))
+
+
+
+void*
+urbdrc_process_udev_data_transfer(void* arg);
+
 
 #endif
 

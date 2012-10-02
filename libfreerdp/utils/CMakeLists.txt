@@ -29,6 +29,7 @@ set(${MODULE_PREFIX}_SRCS
 	hexdump.c
 	list.c
 	file.c
+	msusb.c
 	load_plugin.c
 	memory.c
 	passphrase.c
