@@ -24,15 +24,12 @@
 #include <unistd.h>
 #include "isoch_queue.h"
 
-
-static void
-isoch_queue_rewind(ISOCH_CALLBACK_QUEUE * queue)
+static void isoch_queue_rewind(ISOCH_CALLBACK_QUEUE* queue)
 {
 	queue->curr = queue->head;
 }
 
-static int
-isoch_queue_has_next(ISOCH_CALLBACK_QUEUE * queue)
+static int isoch_queue_has_next(ISOCH_CALLBACK_QUEUE* queue)
 {
 	if (queue->curr == NULL)
 		return 0;
@@ -40,8 +37,7 @@ isoch_queue_has_next(ISOCH_CALLBACK_QUEUE * queue)
 		return 1;
 }
 
-static ISOCH_CALLBACK_DATA*
-isoch_queue_get_next(ISOCH_CALLBACK_QUEUE * queue)
+static ISOCH_CALLBACK_DATA* isoch_queue_get_next(ISOCH_CALLBACK_QUEUE* queue)
 {
 	ISOCH_CALLBACK_DATA* isoch;
 
@@ -51,16 +47,11 @@ isoch_queue_get_next(ISOCH_CALLBACK_QUEUE * queue)
 	return isoch;
 }
 
-
-
-
-static ISOCH_CALLBACK_DATA*
-isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void * callback, 
-	void * dev)
+static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void* callback, void* dev)
 {
-	ISOCH_CALLBACK_DATA*   isoch;
+	ISOCH_CALLBACK_DATA* isoch;
 	
-	isoch = (ISOCH_CALLBACK_DATA*)malloc(sizeof(ISOCH_CALLBACK_DATA));
+	isoch = (ISOCH_CALLBACK_DATA*) malloc(sizeof(ISOCH_CALLBACK_DATA));
 	
 	isoch->prev = NULL;
 	isoch->next = NULL;
@@ -71,6 +62,7 @@ isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void * callback,
 	isoch->callback = callback;
 	
 	pthread_mutex_lock(&queue->isoch_loading);
+
 	if (queue->head == NULL)
 	{
 		/* linked queue is empty */
@@ -85,18 +77,18 @@ isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void * callback,
 		queue->tail = isoch;
 	}
 	queue->isoch_num += 1;
+
 	pthread_mutex_unlock(&queue->isoch_loading);
+
 	return isoch;
 }
 
-
-
-static int
-isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* isoch)
+static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* isoch)
 {
 	ISOCH_CALLBACK_DATA* p;
 		
 	queue->rewind(queue);
+
 	while (queue->has_next(queue) != 0)
 	{
 		p = queue->get_next(queue);
@@ -145,15 +137,15 @@ isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* is
 	return 0;
 }
 
-
-void
-isoch_queue_free(ISOCH_CALLBACK_QUEUE * queue)
+void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 {
-	ISOCH_CALLBACK_DATA * isoch;
+	ISOCH_CALLBACK_DATA* isoch;
 
 	pthread_mutex_lock(&queue->isoch_loading);
+
 	/** unregister all isochronous data*/
 	queue->rewind(queue);
+
 	while (queue->has_next(queue))
 	{
 		isoch = queue->get_next(queue);
@@ -169,13 +161,11 @@ isoch_queue_free(ISOCH_CALLBACK_QUEUE * queue)
 		zfree(queue);
 }
 
-
-ISOCH_CALLBACK_QUEUE*
-isoch_queue_new()
+ISOCH_CALLBACK_QUEUE* isoch_queue_new()
 {
-	ISOCH_CALLBACK_QUEUE * queue;
+	ISOCH_CALLBACK_QUEUE* queue;
 	
-	queue = (ISOCH_CALLBACK_QUEUE *)malloc(sizeof(ISOCH_CALLBACK_QUEUE));
+	queue = (ISOCH_CALLBACK_QUEUE*) malloc(sizeof(ISOCH_CALLBACK_QUEUE));
 	queue->isoch_num = 0;
 	queue->curr = NULL;
 	queue->head = NULL;

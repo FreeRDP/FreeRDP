@@ -30,47 +30,52 @@
 #include "urbdrc_types.h"
 #include "data_transfer.h"
 
-
-static void
-usb_process_get_port_status(IUDEVICE * pdev, uint8 * OutputBuffer)
+static void usb_process_get_port_status(IUDEVICE* pdev, uint8* OutputBuffer)
 {
 	int bcdUSB = pdev->query_device_descriptor(pdev, BCD_USB);
-	switch (bcdUSB){
+
+	switch (bcdUSB)
+	{
 		case USB_v1_0:
 			data_write_uint32(OutputBuffer, 0x303);
 			break;
+
 		case USB_v1_1:
 			data_write_uint32(OutputBuffer, 0x103);
 			break;
+
 		case USB_v2_0:
 			data_write_uint32(OutputBuffer, 0x503);
 			break;
+
 		default:
 			data_write_uint32(OutputBuffer, 0x503);
 			break;
 	}
 }
 
-
 #if ISOCH_FIFO
-static int
-func_check_isochronous_fds(IUDEVICE * pdev)
-{
-	ISOCH_CALLBACK_QUEUE * isoch_queue = NULL;
-	ISOCH_CALLBACK_DATA * isoch = NULL;
-	URBDRC_CHANNEL_CALLBACK * callback;
-	uint32  size_temp, process_times = 2;
-	uint8 * data_temp;
-	int ret = 0;
 
-	isoch_queue = (ISOCH_CALLBACK_QUEUE *)pdev->get_isoch_queue(pdev);
+static int func_check_isochronous_fds(IUDEVICE* pdev)
+{
+	int ret = 0;
+	uint8* data_temp;
+	uint32 size_temp, process_times = 2;
+	ISOCH_CALLBACK_QUEUE* isoch_queue = NULL;
+	ISOCH_CALLBACK_DATA* isoch = NULL;
+	URBDRC_CHANNEL_CALLBACK* callback;
+
+	isoch_queue = (ISOCH_CALLBACK_QUEUE*) pdev->get_isoch_queue(pdev);
 
 	while (process_times)
 	{
 		process_times--;
+
 		if (isoch_queue == NULL || !pdev)
 			return -1;
+
 		pthread_mutex_lock(&isoch_queue->isoch_loading);
+
 		if (isoch_queue->head == NULL)
 		{
 			pthread_mutex_unlock(&isoch_queue->isoch_loading);
@@ -80,6 +85,7 @@ func_check_isochronous_fds(IUDEVICE * pdev)
 		{
 			isoch = isoch_queue->head;
 		}
+
 		if (!isoch || !isoch->out_data)
 		{
 			pthread_mutex_unlock(&isoch_queue->isoch_loading);
@@ -87,43 +93,41 @@ func_check_isochronous_fds(IUDEVICE * pdev)
 		}
 		else
 		{
-			callback = (URBDRC_CHANNEL_CALLBACK *)isoch->callback;
+			callback = (URBDRC_CHANNEL_CALLBACK*) isoch->callback;
 			size_temp = isoch->out_size;
 			data_temp = isoch->out_data;
 
 			ret = isoch_queue->unregister_data(isoch_queue, isoch);
+
 			if (!ret)
 				LLOGLN(0, ("isoch_queue_unregister_data: Not found isoch data!!\n"));
+
 			pthread_mutex_unlock(&isoch_queue->isoch_loading);
 
 			if (pdev && !pdev->isSigToEnd(pdev))
 			{
-				callback->channel->Write(callback->channel, size_temp,
-										 data_temp, NULL);
+				callback->channel->Write(callback->channel, size_temp, data_temp, NULL);
 				zfree(data_temp);
 			}
-
 		}
-
 	}
+
 	return 0;
 }
+
 #endif
 
-static int
-urbdrc_process_register_request_callback(URBDRC_CHANNEL_CALLBACK * callback,
-	uint8 * data, 
-	uint32 data_sizem, 
-	IUDEVMAN * udevman, 
-	uint32 UsbDevice)
+static int urbdrc_process_register_request_callback(URBDRC_CHANNEL_CALLBACK* callback,
+		uint8* data, uint32 data_sizem, IUDEVMAN* udevman, uint32 UsbDevice)
 {
-	IUDEVICE * pdev;
-	uint32	NumRequestCompletion	= 0;
-	uint32	RequestCompletion		= 0;
+	IUDEVICE* pdev;
+	uint32 NumRequestCompletion = 0;
+	uint32 RequestCompletion = 0;
 
 	LLOGLN(urbdrc_debug, ("urbdrc_process_register_request_callback"));
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
@@ -138,6 +142,7 @@ urbdrc_process_register_request_callback(URBDRC_CHANNEL_CALLBACK * callback,
 	else /** Unregister the device */
 	{
 		data_read_uint32(data + 0, RequestCompletion);
+
 		if (1)//(pdev->get_ReqCompletion(pdev) == RequestCompletion)
 		{
 			/** The wrong driver may also receive this message, So we
@@ -152,20 +157,18 @@ urbdrc_process_register_request_callback(URBDRC_CHANNEL_CALLBACK * callback,
 	return 0;
 }
 
-static int
-urbdrc_process_cancel_request(uint8 * data, uint32 data_sizem,
-	IUDEVMAN * udevman, 
-	uint32 UsbDevice)
+static int urbdrc_process_cancel_request(uint8* data, uint32 data_sizem, IUDEVMAN* udevman, uint32 UsbDevice)
 {
 	IUDEVICE* pdev;
-	uint32	CancelId;
-	int	error = 0;
+	uint32 CancelId;
+	int error = 0;
 
 	data_read_uint32(data + 0, CancelId); /** RequestId */
 
 	LLOGLN(urbdrc_debug, ("urbdrc_process_cancel_request: id 0x%x", CancelId));
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
@@ -174,10 +177,7 @@ urbdrc_process_cancel_request(uint8 * data, uint32 data_sizem,
 	return error;
 }
 
-static int
-urbdrc_process_retract_device_request(uint8 * data, uint32 data_sizem,
-	IUDEVMAN * udevman, 
-	uint32 UsbDevice)
+static int urbdrc_process_retract_device_request(uint8* data, uint32 data_sizem, IUDEVMAN* udevman, uint32 UsbDevice)
 {
 	uint32 Reason;
 	LLOGLN(urbdrc_debug, ("urbdrc_process_retract_device_request"));
@@ -190,6 +190,7 @@ urbdrc_process_retract_device_request(uint8 * data, uint32 data_sizem,
 			LLOGLN(urbdrc_debug, ("UsbRetractReason_BlockedByPolicy: now it is not support"));
 			return -1;
 			break;
+
 		default:
 			LLOGLN(urbdrc_debug, ("urbdrc_process_retract_device_request: Unknown Reason %d", Reason));
 			return -1;
@@ -199,24 +200,20 @@ urbdrc_process_retract_device_request(uint8 * data, uint32 data_sizem,
 	return 0;
 }
 
-static int
-urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice)
+static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+		uint32 data_sizem, uint32 MessageId, IUDEVMAN * udevman, uint32 UsbDevice)
 {
-	IUDEVICE * pdev;
-	uint32	out_size;
-	uint32	InterfaceId;
-	uint32	IoControlCode;
-	uint32	InputBufferSize;
-	uint32	OutputBufferSize;
-	uint32	RequestId;
-	uint32	usbd_status = USBD_STATUS_SUCCESS;
-	uint8 *	OutputBuffer;
-	uint8 *	out_data;
-	int	i, offset, success = 0;
+	IUDEVICE* pdev;
+	uint32 out_size;
+	uint32 InterfaceId;
+	uint32 IoControlCode;
+	uint32 InputBufferSize;
+	uint32 OutputBufferSize;
+	uint32 RequestId;
+	uint32 usbd_status = USBD_STATUS_SUCCESS;
+	uint8* OutputBuffer;
+	uint8* out_data;
+	int i, offset, success = 0;
 
 	LLOGLN(urbdrc_debug, ("urbdrc_process__io_control"));
 
@@ -226,30 +223,31 @@ urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	data_read_uint32(data + 12 + InputBufferSize, RequestId);
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
 	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
 
-
 	/**  process */
 	OutputBuffer = (uint8 *)malloc(OutputBufferSize);
 	memset(OutputBuffer, 0, OutputBufferSize);
 
-	switch (IoControlCode){
+	switch (IoControlCode)
+	{
 		case IOCTL_INTERNAL_USB_SUBMIT_URB:  /** 0x00220003 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_SUBMIT_URB"));
 			printf(" Function IOCTL_INTERNAL_USB_SUBMIT_URB: Unchecked\n");
 			break;
+
 		case IOCTL_INTERNAL_USB_RESET_PORT:  /** 0x00220007 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_RESET_PORT"));
 			break;
+
 		case IOCTL_INTERNAL_USB_GET_PORT_STATUS: /** 0x00220013 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_GET_PORT_STATUS"));
 
-			success = pdev->query_device_port_status(pdev, &usbd_status,
-				&OutputBufferSize,
-				OutputBuffer);
+			success = pdev->query_device_port_status(pdev, &usbd_status, &OutputBufferSize, OutputBuffer);
 
 			if (success)
 			{
@@ -262,42 +260,47 @@ urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 					usb_process_get_port_status(pdev, OutputBuffer);
 					OutputBufferSize = 4;
 				}
+
 				LLOGLN(urbdrc_debug, ("PORT STATUS(fake!):0x%02x%02x%02x%02x",
 					OutputBuffer[3], OutputBuffer[2], OutputBuffer[1], OutputBuffer[0]));
 			}
 
 			break;
+
 		case IOCTL_INTERNAL_USB_CYCLE_PORT:  /** 0x0022001F */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_CYCLE_PORT"));
 			printf(" Function IOCTL_INTERNAL_USB_CYCLE_PORT: Unchecked\n");
 			break;
+
 		case IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION: /** 0x00220027 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION"));
 			printf(" Function IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION: Unchecked\n");
 			break;
+
 		default:
 			LLOGLN(urbdrc_debug, ("urbdrc_process_io_control: unknown IoControlCode 0x%X", IoControlCode));
 			return -1;
 			break;
 	}
 
-
 	offset = 28;
 	out_size = offset + OutputBufferSize;
 	out_data = (uint8 *) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId);	/** interface */
-	data_write_uint32(out_data + 4, MessageId);	/** message id */
-	data_write_uint32(out_data + 8, IOCONTROL_COMPLETION);	/** function id */
-	data_write_uint32(out_data + 12, RequestId);	/** RequestId */
-	data_write_uint32(out_data + 16, USBD_STATUS_SUCCESS);	/** HResult */
-	data_write_uint32(out_data + 20, OutputBufferSize);	/** Information */
-	data_write_uint32(out_data + 24, OutputBufferSize);	/** OutputBufferSize */
+	data_write_uint32(out_data + 0, InterfaceId); /** interface */
+	data_write_uint32(out_data + 4, MessageId); /** message id */
+	data_write_uint32(out_data + 8, IOCONTROL_COMPLETION); /** function id */
+	data_write_uint32(out_data + 12, RequestId); /** RequestId */
+	data_write_uint32(out_data + 16, USBD_STATUS_SUCCESS); /** HResult */
+	data_write_uint32(out_data + 20, OutputBufferSize); /** Information */
+	data_write_uint32(out_data + 24, OutputBufferSize); /** OutputBufferSize */
 
-	for (i=0;i<OutputBufferSize;i++){
+	for (i=0;i<OutputBufferSize;i++)
+	{
 		data_write_uint8(out_data + offset, OutputBuffer[i]); /** OutputBuffer */
 		offset += 1;
 	}
+
 	if (!pdev->isSigToEnd(pdev))
 		callback->channel->Write(callback->channel, out_size, out_data, NULL);
 
@@ -307,17 +310,13 @@ urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	return 0;
 }
 
-static int
-urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice)
+static int urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+		uint32 data_sizem, uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice)
 {
 	IUDEVICE* pdev;
+	uint8* out_data;
 	uint32 out_size, IoControlCode, InterfaceId, InputBufferSize;
 	uint32 OutputBufferSize, RequestId, frames;
-	uint8 * out_data;
 
 	data_read_uint32(data + 0, IoControlCode);
 
@@ -328,8 +327,10 @@ urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * d
 	data_read_uint32(data + 12, RequestId);
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
+
 	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
 
 	/** Fixme: Currently this is a false bustime... */
@@ -338,15 +339,14 @@ urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * d
 	out_size = 32;
 	out_data = (uint8 *) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId);	/** interface */
-	data_write_uint32(out_data + 4, MessageId);		/** message id */
-	data_write_uint32(out_data + 8, IOCONTROL_COMPLETION);	/** function id */
-	data_write_uint32(out_data + 12, RequestId);	/** RequestId */
-	data_write_uint32(out_data + 16, 0);			/** HResult */
-	data_write_uint32(out_data + 20, 4);			/** Information */
-	data_write_uint32(out_data + 24, 4);			/** OutputBufferSize */
-	data_write_uint32(out_data + 28, frames);		/** OutputBuffer */
-
+	data_write_uint32(out_data + 0, InterfaceId); /** interface */
+	data_write_uint32(out_data + 4, MessageId); /** message id */
+	data_write_uint32(out_data + 8, IOCONTROL_COMPLETION); /** function id */
+	data_write_uint32(out_data + 12, RequestId); /** RequestId */
+	data_write_uint32(out_data + 16, 0); /** HResult */
+	data_write_uint32(out_data + 20, 4); /** Information */
+	data_write_uint32(out_data + 24, 4); /** OutputBufferSize */
+	data_write_uint32(out_data + 28, frames); /** OutputBuffer */
 
 	if (!pdev->isSigToEnd(pdev))
 		callback->channel->Write(callback->channel, out_size, out_data, NULL);
@@ -356,23 +356,18 @@ urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK * callback, uint8 * d
 	return 0;
 }
 
-static int
-urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK * callback,
-	uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice)
+static int urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+		uint32 data_sizem, uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice)
 {
-	IUDEVICE *	pdev;
-	uint32		out_size;
-	uint32		InterfaceId;
-	uint32		TextType;
-	uint32		LocaleId;
-	uint32		bufferSize = 1024;
-	uint8 *		out_data;
-	uint8		DeviceDescription[bufferSize];
-	int			out_offset;
+	IUDEVICE* pdev;
+	uint32 out_size;
+	uint32 InterfaceId;
+	uint32 TextType;
+	uint32 LocaleId;
+	uint32 bufferSize = 1024;
+	uint8* out_data;
+	uint8 DeviceDescription[bufferSize];
+	int out_offset;
 
 	LLOGLN(urbdrc_debug, ("urbdrc_process_query_device_text"));
 
@@ -380,29 +375,29 @@ urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK * callback,
 	data_read_uint32(data + 4, LocaleId);
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
-	pdev->control_query_device_text(
-		pdev,
-		TextType,
-		LocaleId,
-		&bufferSize,
-		DeviceDescription);
+	pdev->control_query_device_text(pdev, TextType, LocaleId, &bufferSize, DeviceDescription);
 
-
-	InterfaceId = ((STREAM_ID_STUB<<30) | UsbDevice);
+	InterfaceId = ((STREAM_ID_STUB << 30) | UsbDevice);
 
 	out_offset = 16;
 	out_size = out_offset + bufferSize;
-	if(bufferSize != 0)
+
+	if (bufferSize != 0)
 		out_size += 2;
-	out_data = (uint8 *) malloc(out_size);
+
+	out_data = (uint8*) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId);   /** interface */
-	data_write_uint32(out_data + 4, MessageId);   /** message id */
-	if (bufferSize != 0) {
-		data_write_uint32(out_data + 8, (bufferSize/2)+1);   /** cchDeviceDescription */
+
+	data_write_uint32(out_data + 0, InterfaceId); /** interface */
+	data_write_uint32(out_data + 4, MessageId); /** message id */
+
+	if (bufferSize != 0)
+	{
+		data_write_uint32(out_data + 8, (bufferSize/2)+1); /** cchDeviceDescription */
 		out_offset = 12;
 		memcpy(out_data + out_offset, DeviceDescription, bufferSize);
 		out_offset += bufferSize;
@@ -411,7 +406,7 @@ urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK * callback,
 	}
 	else
 	{
-		data_write_uint32(out_data + 8, 0);   /** cchDeviceDescription */
+		data_write_uint32(out_data + 8, 0); /** cchDeviceDescription */
 		out_offset = 12;
 	}
 
@@ -425,15 +420,12 @@ urbdrc_process_query_device_text(URBDRC_CHANNEL_CALLBACK * callback,
 	return 0;
 }
 
-
-
-static void
-func_select_all_interface_for_msconfig(IUDEVICE * pdev, MSUSB_CONFIG_DESCRIPTOR * MsConfig)
+static void func_select_all_interface_for_msconfig(IUDEVICE* pdev, MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
-	MSUSB_INTERFACE_DESCRIPTOR ** MsInterfaces = MsConfig->MsInterfaces;
+	int inum;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 	uint8  InterfaceNumber, AlternateSetting;
 	uint32 NumInterfaces = MsConfig->NumInterfaces;
-	int inum;
 
 	for (inum = 0; inum < NumInterfaces; inum++)
 	{
@@ -443,29 +435,24 @@ func_select_all_interface_for_msconfig(IUDEVICE * pdev, MSUSB_CONFIG_DESCRIPTOR 
 	}
 }
 
-
-
-static int
-urb_select_configuration(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice,
-	int transferDir)
+static int urb_select_configuration(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+	uint32 data_sizem, uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice, int transferDir)
 {
 	MSUSB_CONFIG_DESCRIPTOR * MsConfig = NULL;
-	IUDEVICE * pdev = NULL;
-	uint32		out_size, InterfaceId, RequestId, NumInterfaces, usbd_status = 0;
-	uint8		ConfigurationDescriptorIsValid;
-	uint8 *		out_data;
-	int			MsOutSize = 0, offset = 0;
+	IUDEVICE* pdev = NULL;
+	uint32 out_size, InterfaceId, RequestId, NumInterfaces, usbd_status = 0;
+	uint8 ConfigurationDescriptorIsValid;
+	uint8* out_data;
+	int MsOutSize = 0, offset = 0;
 
-	if (transferDir == 0){
+	if (transferDir == 0)
+	{
 		printf("urb_select_configuration: not support transfer out\n");
 		return -1;
 	}
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
@@ -538,38 +525,34 @@ urb_select_configuration(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	return 0;
 }
 
-
-static int
-urb_select_interface(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice,
-	int transferDir)
+static int urb_select_interface(URBDRC_CHANNEL_CALLBACK* callback, uint8* data, uint32 data_sizem,
+	uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice, int transferDir)
 {
-	MSUSB_CONFIG_DESCRIPTOR * MsConfig;
-	MSUSB_INTERFACE_DESCRIPTOR * MsInterface;
-	IUDEVICE *	pdev;
-	uint32		out_size, InterfaceId, RequestId, ConfigurationHandle;
-	uint32		OutputBufferSize;
-	uint8		InterfaceNumber;
-	uint8 *		out_data;
-	int			out_offset, interface_size;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
+	IUDEVICE* pdev;
+	uint32 out_size, InterfaceId, RequestId, ConfigurationHandle;
+	uint32 OutputBufferSize;
+	uint8 InterfaceNumber;
+	uint8* out_data;
+	int out_offset, interface_size;
 
-	if (transferDir == 0){
+	if (transferDir == 0)
+	{
 		printf("urb_select_interface: not support transfer out\n");
 		return -1;
 	}
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
-	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
+	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
 
 	data_read_uint32(data + 0, RequestId);
 	data_read_uint32(data + 4, ConfigurationHandle);
-	out_offset  = 8;
+	out_offset = 8;
 
 	MsInterface = msusb_msinterface_read(data + out_offset, data_sizem - out_offset, &out_offset);
 
@@ -588,8 +571,9 @@ urb_select_interface(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	interface_size = 16 + (MsInterface->NumberOfPipes * 20);
 
 	out_size = 36 + interface_size ;
-	out_data = (uint8 *) malloc(out_size);
+	out_data = (uint8*) malloc(out_size);
 	memset(out_data, 0, out_size);
+
 	data_write_uint32(out_data + 0, InterfaceId);	/** interface */
 	data_write_uint32(out_data + 4, MessageId);		/** message id */
 	data_write_uint32(out_data + 8, URB_COMPLETION_NO_DATA);	/** function id */
@@ -612,34 +596,28 @@ urb_select_interface(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 		callback->channel->Write(callback->channel, out_size, out_data, NULL);
 
 	zfree(out_data);
+
 	return 0;
 }
 
-
-
-static int
-urb_control_transfer(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice,
-	int transferDir,
-	int External)
+static int urb_control_transfer(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+	uint32 data_sizem, uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice, int transferDir, int External)
 {
-	IUDEVICE * pdev;
-	uint32		out_size, RequestId, InterfaceId, EndpointAddress, PipeHandle;
-	uint32		TransferFlags, OutputBufferSize, usbd_status, Timeout;
-	uint8		bmRequestType, Request;
-	uint16		Value, Index, length;
-	uint8 *		buffer;
-	uint8 *		out_data;
-	int			offset, ret;
+	IUDEVICE* pdev;
+	uint32 out_size, RequestId, InterfaceId, EndpointAddress, PipeHandle;
+	uint32 TransferFlags, OutputBufferSize, usbd_status, Timeout;
+	uint8 bmRequestType, Request;
+	uint16 Value, Index, length;
+	uint8* buffer;
+	uint8* out_data;
+	int offset, ret;
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
-	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
+	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
 	data_read_uint32(data + 0, RequestId);
 	data_read_uint32(data + 4, PipeHandle);
 	data_read_uint32(data + 8, TransferFlags); /** TransferFlags */
@@ -647,6 +625,7 @@ urb_control_transfer(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	EndpointAddress = (PipeHandle & 0x000000ff);
 	offset  = 12;
 	Timeout = 2000;
+
 	switch (External)
 	{
 		case URB_CONTROL_TRANSFER_EXTERNAL:
@@ -656,6 +635,7 @@ urb_control_transfer(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 		case URB_CONTROL_TRANSFER_NONEXTERNAL:
 			break;
 	}
+
 	/** SetupPacket 8 bytes */
 	data_read_uint8(data + offset, bmRequestType);
 	data_read_uint8(data + offset + 1, Request);
@@ -665,7 +645,8 @@ urb_control_transfer(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 	data_read_uint32(data + offset + 8, OutputBufferSize);
 	offset +=  12;
 
-	if (length != OutputBufferSize){
+	if (length != OutputBufferSize)
+	{
 		LLOGLN(urbdrc_debug, ("urb_control_transfer ERROR: buf != length"));
 		return -1;
 	}
@@ -727,18 +708,12 @@ urb_control_transfer(URBDRC_CHANNEL_CALLBACK * callback, uint8 * data,
 		callback->channel->Write(callback->channel, out_size, out_data, NULL);
 
 	zfree(out_data);
+
 	return 0;
 }
 
-
-static int
-urb_bulk_or_interrupt_transfer(URBDRC_CHANNEL_CALLBACK * callback,
-	uint8 * data,
-	uint32 data_sizem,
-	uint32 MessageId,
-	IUDEVMAN * udevman,
-	uint32 UsbDevice,
-	int transferDir)
+static int urb_bulk_or_interrupt_transfer(URBDRC_CHANNEL_CALLBACK* callback, uint8* data,
+	uint32 data_sizem, uint32 MessageId, IUDEVMAN* udevman, uint32 UsbDevice, int transferDir)
 {
 	IUDEVICE *	pdev;
 	uint32		out_size, RequestId, InterfaceId, EndpointAddress, PipeHandle;

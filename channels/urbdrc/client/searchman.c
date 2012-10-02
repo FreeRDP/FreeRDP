@@ -25,14 +25,12 @@
 #include <unistd.h>
 #include "searchman.h"
 
-static void
-searchman_rewind(USB_SEARCHMAN* searchman)
+static void searchman_rewind(USB_SEARCHMAN* searchman)
 {
 	searchman->idev = searchman->head;
 }
 
-static int
-searchman_has_next(USB_SEARCHMAN* searchman)
+static int searchman_has_next(USB_SEARCHMAN* searchman)
 {
 	if (searchman->idev == NULL)
 		return 0;
@@ -40,25 +38,21 @@ searchman_has_next(USB_SEARCHMAN* searchman)
 		return 1;
 }
 
-static USB_SEARCHDEV*
-searchman_get_next(USB_SEARCHMAN* searchman)
+static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 {
 	USB_SEARCHDEV* search;
 
 	search = searchman->idev;
-	searchman->idev = (USB_SEARCHDEV*)searchman->idev->next;
+	searchman->idev = (USB_SEARCHDEV*) searchman->idev->next;
 
 	return search;
 }
 
-
-
-static int
-searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
 {
 	USB_SEARCHDEV*	search;
 	
-	search = (USB_SEARCHDEV*)malloc(sizeof(USB_SEARCHDEV));
+	search = (USB_SEARCHDEV*) malloc(sizeof(USB_SEARCHDEV));
 	
 	search->prev = NULL;
 	search->next = NULL;
@@ -83,15 +77,13 @@ searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
 	return 1;
 }
 
-
-static int
-searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor, 
-	uint16 idProduct)
+static int searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
 {
 	USB_SEARCHDEV* search;
 	USB_SEARCHDEV* point;
 
 	searchman_rewind(searchman);
+
 	while (searchman_has_next(searchman) != 0)
 	{
 		point = searchman_get_next(searchman);
@@ -139,10 +131,7 @@ searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor,
 	return 0;
 }
 
-
-
-static void
-searchman_start(USB_SEARCHMAN* self, void * func)
+static void searchman_start(USB_SEARCHMAN* self, void* func)
 {
 	pthread_t thread;
 	
@@ -153,18 +142,15 @@ searchman_start(USB_SEARCHMAN* self, void * func)
 }
 
 /* close thread */
-static void
-searchman_close(USB_SEARCHMAN* self)
+static void searchman_close(USB_SEARCHMAN* self)
 {
 	wait_obj_set(self->term_event);
 }
 
-
-static void
-searchman_list_show(USB_SEARCHMAN* self)
+static void searchman_list_show(USB_SEARCHMAN* self)
 {
-	USB_SEARCHDEV* usb;
 	int num = 0;
+	USB_SEARCHDEV* usb;
 	
 	printf("=========== Usb Search List ========= \n");
 	self->rewind(self);
@@ -178,9 +164,7 @@ searchman_list_show(USB_SEARCHMAN* self)
 	printf("================= END =============== \n");
 }
 
-
-void
-searchman_free(USB_SEARCHMAN* self)
+void searchman_free(USB_SEARCHMAN* self)
 {
 	USB_SEARCHDEV * dev;
 
@@ -196,14 +180,13 @@ searchman_free(USB_SEARCHMAN* self)
 	free(self);
 }
 
-
-USB_SEARCHMAN*
-searchman_new(void * urbdrc, uint32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void * urbdrc, uint32 UsbDevice)
 {
-	USB_SEARCHMAN* searchman;
 	int ret;
-	searchman = (USB_SEARCHMAN*)malloc(sizeof(USB_SEARCHMAN));
+	USB_SEARCHMAN* searchman;
 	
+	searchman = (USB_SEARCHMAN*) malloc(sizeof(USB_SEARCHMAN));
+
 	searchman->idev = NULL;
 	searchman->head = NULL;
 	searchman->tail = NULL;   
@@ -212,6 +195,7 @@ searchman_new(void * urbdrc, uint32 UsbDevice)
 	searchman->UsbDevice = UsbDevice;
 
 	ret = pthread_mutex_init(&searchman->mutex, NULL);
+
 	if (ret != 0)
 	{
 		printf("searchman mutex initialization: searchman->mutex failed");
