@@ -38,6 +38,10 @@ add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
 if(WITH_MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+
+	if(WITH_RDPDR)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpdr disk printer)
+	endif()
 else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
@@ -51,3 +55,4 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")
+

@@ -62,7 +62,13 @@ FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
 
 #ifdef WITH_STATIC_PLUGINS
 #define DEFINE_SVC_PLUGIN_ENTRY(_prefix) int _prefix##_entry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+#define DEFINE_DEV_PLUGIN_ENTRY(_prefix) int _prefix##_entry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+#define REGISTER_SVC_PLUGIN_ENTRY(_prefix)  freerdp_register_static_plugin(#_prefix, "VirtualChannelEntry", _prefix##_entry) 
+#define REGISTER_DEV_PLUGIN_ENTRY(_prefix)  freerdp_register_static_plugin(#_prefix, "DeviceServiceEntry", _prefix##_entry) 
 #else
+#define REGISTER_DEV_PLUGIN_ENTRY(_prefix)
+#define REGISTER_SVC_PLUGIN_ENTRY(_prefix)
+#define DEFINE_DEV_PLUGIN_ENTRY(_prefix)
 #define DEFINE_SVC_PLUGIN_ENTRY(_prefix) int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 #endif
 

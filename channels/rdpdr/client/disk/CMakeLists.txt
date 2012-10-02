@@ -24,6 +24,13 @@ set(${MODULE_PREFIX}_SRCS
 	disk_file.c
 	disk_file.h
 	disk_main.c)
+	
+if(WIN32)
+	set(${MODULE_PREFIX}_SRCS
+		statvfs.c
+		statvfs.h
+		dirent.h)
+endif()
 
 include_directories(..)
 
