@@ -25,10 +25,10 @@
 #include <time.h>
 #include <libudev.h>
 
+#include <freerdp/dvc.h>
 #include <freerdp/utils/load_plugin.h>
 
 #include "urbdrc_types.h"
-#include "dvcman.h"
 #include "urbdrc_main.h"
 #include "data_transfer.h"
 #include "searchman.h"
@@ -479,7 +479,7 @@ urbdrc_search_usb_device(void * arg)
 	udev_monitor_enable_receiving(mon);
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	mon_fd = wait_obj_new_with_fd((void *)udev_monitor_get_fd(mon));
+	mon_fd = wait_obj_new_with_fd((void*) (size_t) udev_monitor_get_fd(mon));
 
 	while (1)
 	{

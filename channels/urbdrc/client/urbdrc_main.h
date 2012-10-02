@@ -27,10 +27,9 @@
 #include "isoch_queue.h"
 
 #define DEVICE_HARDWARE_ID_SIZE				32
-#define DEVICE_COMPATIBILITY_ID_SIZE		36
+#define DEVICE_COMPATIBILITY_ID_SIZE			36
 #define DEVICE_INSTANCE_STR_SIZE			37
 #define DEVICE_CONTAINER_STR_SIZE			39
-
 
 typedef struct _IUDEVICE IUDEVICE;
 typedef struct _IUDEVMAN IUDEVMAN;
@@ -42,39 +41,40 @@ typedef struct _IUDEVMAN IUDEVMAN;
 	_type (*get_##_arg) (IUDEVMAN *udevman); \
 	void (*set_##_arg) (IUDEVMAN *udevman, _type _arg)
 
-
 typedef struct _URBDRC_LISTENER_CALLBACK URBDRC_LISTENER_CALLBACK;
+
 struct _URBDRC_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
 
-	IWTSPlugin * plugin;
-	IWTSVirtualChannelManager * channel_mgr;
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
 };
 
 typedef struct _URBDRC_CHANNEL_CALLBACK URBDRC_CHANNEL_CALLBACK;
+
 struct _URBDRC_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
 
-	IWTSPlugin * plugin;
-	IWTSVirtualChannelManager * channel_mgr;
-	IWTSVirtualChannel * channel;
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	IWTSVirtualChannel* channel;
 };
 
 typedef struct _URBDRC_PLUGIN URBDRC_PLUGIN;
+
 struct _URBDRC_PLUGIN
 {
 	IWTSPlugin iface;
 
-	URBDRC_LISTENER_CALLBACK * listener_callback;
+	URBDRC_LISTENER_CALLBACK* listener_callback;
 
-	IUDEVMAN * udevman;
-	USB_SEARCHMAN * searchman;
+	IUDEVMAN* udevman;
+	USB_SEARCHMAN* searchman;
 	uint32 first_channel_id;
 	uint32 vchannel_status;
 };
-
 
 #define URBDRC_UDEVMAN_EXPORT_FUNC_NAME "FreeRDPUDEVMANEntry"
 
@@ -91,20 +91,17 @@ typedef FREERDP_URBDRC_SERVICE_ENTRY_POINTS* PFREERDP_URBDRC_SERVICE_ENTRY_POINT
 
 typedef int (*PFREERDP_URBDRC_DEVICE_ENTRY)(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints);
 
-
-
-
 typedef struct _TRANSFER_DATA TRANSFER_DATA;
+
 struct _TRANSFER_DATA
 {
-	URBDRC_CHANNEL_CALLBACK * callback;
-	URBDRC_PLUGIN *	urbdrc;
-	IUDEVMAN *	udevman;
-	uint8 *		pBuffer;
-	uint32		cbSize;
-	uint32		UsbDevice;
+	URBDRC_CHANNEL_CALLBACK* callback;
+	URBDRC_PLUGIN* urbdrc;
+	IUDEVMAN* udevman;
+	uint8* pBuffer;
+	uint32 cbSize;
+	uint32 UsbDevice;
 };
-
 
 struct _IUDEVICE
 {
@@ -228,8 +225,6 @@ struct _IUDEVICE
 
 };
 
-
-
 struct _IUDEVMAN
 {
 	/* Standard */
@@ -264,6 +259,5 @@ struct _IUDEVMAN
 	void (*push_urb) (IUDEVMAN * idevman);
 	void (*wait_urb) (IUDEVMAN * idevman);
 };
-
 
 #endif /* __URBDRC_MAIN_H */

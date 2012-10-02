@@ -16,23 +16,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(LIBUSB_UDEVMAN_SRCS
-	libusb_udevman.c
-	libusb_udevice.c
-	libusb_udevice.h
-	request_queue.c
-	request_queue.h
-)
+set(URBDRC_SRCS
+	searchman.c 
+	searchman.h 
+	isoch_queue.c
+	isoch_queue.h
+	data_transfer.c 
+	data_transfer.h 
+	urbdrc_main.c 
+	urbdrc_main.h 
+	urbdrc_types.h)
 
 include_directories(..)
 
-add_library(libusb_udevman ${LIBUSB_UDEVMAN_SRCS})
-set_target_properties(libusb_udevman PROPERTIES PREFIX "")
+add_library(urbdrc ${URBDRC_SRCS})
+set_target_properties(urbdrc PROPERTIES PREFIX "")
 
-target_link_libraries(libusb_udevman udev)  
-target_link_libraries(libusb_udevman dbus-glib-1)  
-target_link_libraries(libusb_udevman pthread) 
-target_link_libraries(libusb_udevman usb-1.0)  
-target_link_libraries(libusb_udevman freerdp-utils)
+target_link_libraries(urbdrc udev)  
+target_link_libraries(urbdrc dbus-glib-1)  
+target_link_libraries(urbdrc pthread)   
+target_link_libraries(urbdrc uuid)  
+target_link_libraries(urbdrc freerdp-utils)
 
-install(TARGETS libusb_udevman DESTINATION ${FREERDP_PLUGIN_PATH})
+install(TARGETS urbdrc DESTINATION ${FREERDP_PLUGIN_PATH})
+
