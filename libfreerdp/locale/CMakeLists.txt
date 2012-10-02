@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # libfreerdp-locale cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(FREERDP_LOCALE_SRCS
+set(MODULE_NAME "freerdp-locale")
+set(MODULE_PREFIX "FREERDP_LOCALE")
+
+set(${MODULE_PREFIX}_SRCS
 	virtual_key_codes.c
 	keyboard_layout.c
 	keyboard.c
@@ -25,21 +26,21 @@ set(FREERDP_LOCALE_SRCS
 	timezone.c
 	liblocale.h)
 
-set(FREERDP_LOCALE_X11_SRCS
+set(${MODULE_PREFIX}_X11_SRCS
 	xkb_layout_ids.c
 	xkb_layout_ids.h)
 
-set(FREERDP_LOCALE_X11_KEYMAP_SRCS
+set(${MODULE_PREFIX}_X11_KEYMAP_SRCS
 	keyboard_keymap.c
 	keyboard_keymap.h
 	keyboard_x11.c
 	keyboard_x11.h)
 
-set(FREERDP_LOCALE_XKBFILE_SRCS
+set(${MODULE_PREFIX}_XKBFILE_SRCS
 	keyboard_xkbfile.c
 	keyboard_xkbfile.h)
 
-set(FREERDP_LOCALE_SUN_SRCS
+set(${MODULE_PREFIX}_SUN_SRCS
 	keyboard_sun.c
 	keyboard_sun.h)
 
@@ -47,44 +48,45 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 	set(WITH_SUN true)
 endif()
 
-set(FREERDP_LOCALE_LIBS)
-
 if(NOT WIN32)
 	find_suggested_package(X11)
 	if(WITH_X11)
 		add_definitions(-DWITH_X11)
 		include_directories(${X11_INCLUDE_DIRS})
-		set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_SRCS})
-		set(FREERDP_LOCALE_LIBS ${FREERDP_LOCALE_LIBS} ${X11_LIBRARIES})
+		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${X11_LIBRARIES})
 		if(WITH_SUN)
 			add_definitions(-DWITH_SUN)
-			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_SUN_SRCS})
+			set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SUN_SRCS})
 		elseif(NOT APPLE)
 			find_suggested_package(XKBFile)
 		endif()
 		if(WITH_XKBFILE)
 			add_definitions(-DWITH_XKBFILE)
 			include_directories(${XKBFILE_INCLUDE_DIRS})
-			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_XKBFILE_SRCS})
-			set(FREERDP_LOCALE_LIBS ${FREERDP_LOCALE_LIBS} ${XKBFILE_LIBRARIES})
+			set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_XKBFILE_SRCS})
+			set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XKBFILE_LIBRARIES})
 		else()
-			set(FREERDP_LOCALE_SRCS ${FREERDP_LOCALE_SRCS} ${FREERDP_LOCALE_X11_KEYMAP_SRCS})
+			set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_KEYMAP_SRCS})
 		endif()
 	endif()
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp-locale OBJECT ${FREERDP_LOCALE_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(freerdp-locale ${FREERDP_LOCALE_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(freerdp-locale PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_LOCALE_LIBS} PARENT_SCOPE)
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(FREERDP_LOCALE_LIBS ${FREERDP_LOCALE_LIBS} freerdp-utils)
-	target_link_libraries(freerdp-locale ${FREERDP_LOCALE_LIBS})
-	install(TARGETS freerdp-locale DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-utils)
+
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")

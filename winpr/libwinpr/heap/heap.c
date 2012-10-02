@@ -23,6 +23,8 @@
 
 #include <winpr/crt.h>
 
+#include <winpr/heap.h>
+
 /* Memory Allocation: http://msdn.microsoft.com/en-us/library/hk1k7x6x.aspx */
 /* Memory Management Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa366781/ */
 

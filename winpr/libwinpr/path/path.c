@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/heap.h>
+
 #include <winpr/path.h>
 
 HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath)

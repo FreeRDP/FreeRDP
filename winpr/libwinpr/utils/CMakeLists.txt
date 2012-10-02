@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_UTILS_SRCS
+set(MODULE_NAME "winpr-utils")
+set(MODULE_PREFIX "WINPR_UTILS")
+
+set(${MODULE_PREFIX}_SRCS
 	ntlm.c
 	print.c
 	sam.c
@@ -25,24 +28,26 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-utils OBJECT ${WINPR_UTILS_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(winpr-utils ${WINPR_UTILS_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(winpr-utils PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-set(WINPR_UTILS_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${ZLIB_LIBRARIES}
 	${OPENSSL_LIBRARIES})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_UTILS_LIBS} PARENT_SCOPE)
+	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
 	if (NOT WIN32)
-		set(WINPR_UTILS_LIBS ${WINPR_UTILS_LIBS} winpr-crt)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-crt)
 	endif()
 	
-	target_link_libraries(winpr-utils ${WINPR_UTILS_LIBS})
-	install(TARGETS winpr-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

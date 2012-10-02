@@ -25,6 +25,9 @@
 
 #ifndef _WIN32
 
+#define S_OK										((HRESULT) 0L)
+#define S_FALSE										((HRESULT) 1L)
+
 /* System Error Codes (0-499) */
 
 #define ERROR_SUCCESS									0x00000000

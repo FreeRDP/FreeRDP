@@ -4,6 +4,7 @@
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2012      Gerald Richter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,10 +119,12 @@ static boolean disk_file_remove_dir(const char* path)
 	boolean ret = true;
 
 	dir = opendir(path);
+
 	if (dir == NULL)
 		return false;
 
 	pdirent = readdir(dir);
+
 	while (pdirent)
 	{
 		if (strcmp(pdirent->d_name, ".") == 0 || strcmp(pdirent->d_name, "..") == 0)
@@ -174,6 +177,7 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 	xfree(file->fullpath);
 	file->fullpath = fullpath;
 	file->filename = strrchr(file->fullpath, '/');
+
 	if (file->filename == NULL)
 		file->filename = file->fullpath;
 	else
@@ -182,10 +186,12 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 
 static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions)
 {
-	const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 	struct STAT st;
 	boolean exists;
-#ifndef WIN32
+#ifdef WIN32
+        const static int mode = _S_IREAD | _S_IWRITE ;
+#else
+        const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 	boolean largeFile = false;
 #endif
 	int oflag = 0;
@@ -423,7 +429,8 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input)
 {
 	char* s;
-	mode_t m;
+
+        mode_t m;
 	uint64 size;
 	char* fullpath;
 	struct STAT st;
@@ -449,7 +456,9 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			tv[0].tv_usec = 0;
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
 			tv[1].tv_usec = 0;
-			futimes(file->fd, tv);
+#ifndef WIN32
+/* TODO on win32 */                        
+                        futimes(file->fd, tv);
 
 			if (FileAttributes > 0)
 			{
@@ -461,7 +470,8 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 				if (m != st.st_mode)
 					fchmod(file->fd, st.st_mode);
 			}
-			break;
+#endif
+                        break;
 
 		case FileEndOfFileInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
@@ -492,14 +502,15 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			fullpath = disk_file_combine_fullpath(file->basepath, s);
 			xfree(s);
 
-			if (rename(file->fullpath, fullpath) == 0)
+			/* TODO rename does not work on win32 */
+                        if (rename(file->fullpath, fullpath) == 0)
 			{
 				DEBUG_SVC("renamed %s to %s", file->fullpath, fullpath);
 				disk_file_set_fullpath(file, fullpath);
 			}
 			else
 			{
-				DEBUG_WARN("rename %s to %s failed", file->fullpath, fullpath);
+				DEBUG_WARN("rename %s to %s failed, errno = %d", file->fullpath, fullpath, errno);
 				free(fullpath);
 				return false;
 			}

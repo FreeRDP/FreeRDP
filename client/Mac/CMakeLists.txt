@@ -143,3 +143,5 @@ target_link_libraries(MacFreeRDP
 			freerdp-codec
 			freerdp-rail
 )
+
+set_property(TARGET MacFreeRDP PROPERTY FOLDER "Client/Mac")
