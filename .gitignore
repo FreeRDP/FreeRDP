@@ -25,9 +25,12 @@ client/X11/xfreerdp.1
 # Windows
 *.vcxproj
 *.vcxproj.*
+*.vcproj
+*.vcproj.*
 *.sdf
 *.sln
 *.suo
+*.ncb
 *.opensdf
 ipch
 Debug
