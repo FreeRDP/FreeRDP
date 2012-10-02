@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_INTERLOCKED")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestInterlockedAccess.c
 	TestInterlockedSList.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

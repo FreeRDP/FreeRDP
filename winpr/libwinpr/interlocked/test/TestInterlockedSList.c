@@ -22,11 +22,12 @@ int TestInterlockedSList(int argc, char* argv[])
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
 	pListHead = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 
-	if( NULL == pListHead )
+	if (!pListHead)
 	{
 		printf("Memory allocation failed.\n");
 		return -1;
 	}
+
 	InitializeSListHead(pListHead);
 
 	/* Insert 10 items into the list. */
@@ -41,7 +42,7 @@ int TestInterlockedSList(int argc, char* argv[])
 		}
 
 		pProgramItem->Signature = Count;
-		pFirstEntry = InterlockedPushEntrySList(pListHead, &(pProgramItem->ItemEntry)); 
+		pFirstEntry = InterlockedPushEntrySList(pListHead, &(pProgramItem->ItemEntry));
 	}
 
 	/* Remove 10 items from the list and display the signature. */
@@ -56,7 +57,7 @@ int TestInterlockedSList(int argc, char* argv[])
 		}
   
 		pProgramItem = (PPROGRAM_ITEM) pListEntry;
-		printf("Signature is %d\n", pProgramItem->Signature);
+		printf("Signature is %d\n", (int) pProgramItem->Signature);
 
 		/* 
 		 * This example assumes that the SLIST_ENTRY structure is the 
