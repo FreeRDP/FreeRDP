@@ -154,12 +154,42 @@ PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead)
 
 PSLIST_ENTRY InterlockedFlushSList(PSLIST_HEADER ListHead)
 {
+	SLIST_HEADER old;
+	SLIST_HEADER new;
+
+	if (!QueryDepthSList(ListHead))
+		return NULL;
+
 #ifdef _WIN64
+	new.s.Alignment = 0;
+	new.s.Region = 0;
+	new.HeaderX64.HeaderType = 1;
 
+	while (1)
+	{
+		old = *ListHead;
+		new.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
+
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		{
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			break;
+		}
+	}
+
+	return (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 #else
+	new.Alignment = 0;
 
+	do
+	{
+		old = *ListHead;
+		new.s.Sequence = old.s.Sequence + 1;
+	}
+	while(InterlockedCompareExchange64(&ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+
+	return old.s.Next.Next;
 #endif
-	return NULL;
 }
 
 USHORT QueryDepthSList(PSLIST_HEADER ListHead)

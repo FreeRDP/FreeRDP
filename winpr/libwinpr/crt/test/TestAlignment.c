@@ -25,19 +25,21 @@ int TestAlignment(int argc, char* argv[])
 		return -1;
 	}
 
-	if (((size_t) ptr % alignment) == 0)
-		printf("This pointer, %d, is aligned on %d\n", ptr, alignment);
-	else
+	if (((size_t) ptr % alignment) != 0)
+	{
 		printf("This pointer, %d, is not aligned on %d\n", ptr, alignment);
+		return -1;
+	}
 
 	/* _aligned_realloc */
 	
 	ptr = _aligned_realloc(ptr, 200, alignment);
 	
-	if (((size_t) ptr % alignment) == 0)
-		printf("This pointer, %d, is aligned on %d\n", ptr, alignment);
-	else
+	if (((size_t) ptr % alignment) != 0)
+	{
 		printf("This pointer, %d, is not aligned on %d\n", ptr, alignment);
+		return -1;
+	}
 	
 	_aligned_free(ptr);
 
@@ -51,10 +53,11 @@ int TestAlignment(int argc, char* argv[])
 		return -1;
 	}
 
-	if (((((size_t) ptr) + offset) % alignment) == 0)
-		printf("This pointer, %d, is offset by %d on alignment of %d\n", ptr, offset, alignment);
-	else
+	if (((((size_t) ptr) + offset) % alignment) != 0)
+	{
 		printf("This pointer, %d, does not satisfy offset %d and alignment %d\n", ptr, offset, alignment);
+		return -1;
+	}
 
 	/* _aligned_offset_realloc */
 
@@ -66,10 +69,11 @@ int TestAlignment(int argc, char* argv[])
 		return -1;
 	}
 
-	if (((((size_t) ptr) + offset) % alignment) == 0)
-		printf("This pointer, %d, is offset by %d on alignment of %d\n", ptr, offset, alignment);
-	else
+	if (((((size_t) ptr) + offset) % alignment) != 0)
+	{
 		printf("This pointer, %d, does not satisfy offset %d and alignment %d\n", ptr, offset, alignment);
+		return -1;
+	}
 
 	/* _aligned_free works for both _aligned_malloc and _aligned_offset_malloc. free() should not be used. */
 	_aligned_free(ptr);

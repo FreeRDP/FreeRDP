@@ -34,6 +34,16 @@ void* _aligned_malloc(size_t size, size_t alignment)
 {
 	void* memptr;
 
+	/* alignment must be a power of 2 */
+
+	if (alignment % 2 == 1)
+		return NULL;
+
+	/* offset must be less than size */
+
+	if (offset >= size)
+		return NULL;
+
 	if (posix_memalign(&memptr, alignment, size) != 0)
 		return NULL;
 
@@ -57,6 +67,21 @@ void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignmen
 void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 {
 	void* memptr;
+
+	/* alignment must be a power of 2 */
+
+	if (alignment % 2 == 1)
+		return NULL;
+
+	/* offset must be less than size */
+
+	if (offset >= size)
+		return NULL;
+
+	/* minimum alignment is pointer size */
+
+	if (alignment < sizeof(void*))
+		alignment = sizeof(void*);
 
 	if (posix_memalign(&memptr, alignment, size) != 0)
 		return NULL;
