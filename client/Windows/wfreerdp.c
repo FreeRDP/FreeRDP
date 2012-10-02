@@ -636,6 +636,7 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 #ifdef WITH_RDPDR
 DEFINE_SVC_PLUGIN_ENTRY(rdpdr) ;
 DEFINE_DEV_PLUGIN_ENTRY(disk) ;
+DEFINE_DEV_PLUGIN_ENTRY(printer) ;
 #endif
 
 
@@ -699,6 +700,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #ifdef WITH_RDPDR
         REGISTER_SVC_PLUGIN_ENTRY(rdpdr) ;
         REGISTER_DEV_PLUGIN_ENTRY(disk) ;
+        REGISTER_DEV_PLUGIN_ENTRY(printer) ;
 #endif
 
         if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
