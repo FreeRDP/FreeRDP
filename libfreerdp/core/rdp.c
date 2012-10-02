@@ -27,6 +27,7 @@
 #include "redirection.h"
 
 #include <freerdp/crypto/per.h>
+#include <freerdp/utils/error.h>
 
 #ifdef WITH_DEBUG_RDP
 static const char* const DATA_PDU_TYPE_STRINGS[] =
@@ -495,7 +496,7 @@ boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 		}
 		else
 		{
-			printf("decompress_rdp() failed\n");
+			error_report("decompress_rdp() failed\n");
 			return false;
 		}
 		stream_seek(s, compressed_len - 18);
@@ -654,13 +655,13 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags)
 
 		if (!security_fips_decrypt(s->p, length, rdp))
 		{
-			printf("FATAL: cannot decrypt\n");
+			error_report("FATAL: cannot decrypt\n");
 			return false; /* TODO */
 		}
 
 		if (!security_fips_check_signature(s->p, length - pad, sig, rdp))
 		{
-			printf("FATAL: invalid packet signature\n");
+			error_report("FATAL: invalid packet signature\n");
 			return false; /* TODO */
 		}
 
@@ -709,7 +710,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		error_report("Incorrect RDP header.\n");
 		return false;
 	}
 
@@ -720,7 +721,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				error_report("rdp_decrypt failed\n");
 				return false;
 			}
 		}
@@ -755,7 +756,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 				case PDU_TYPE_DATA:
 					if (!rdp_recv_data_pdu(rdp, s))
 					{
-						printf("rdp_recv_data_pdu failed\n");
+						error_report("rdp_recv_data_pdu failed\n");
 						return false;
 					}
 					break;
@@ -770,7 +771,7 @@ static boolean rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 					break;
 
 				default:
-					printf("incorrect PDU type: 0x%04X\n", pduType);
+					error_report("incorrect PDU type: 0x%04X\n", pduType);
 					break;
 			}
 			stream_set_mark(s, nextp);
@@ -790,7 +791,7 @@ static boolean rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (length == 0 || length > stream_get_left(s))
 	{
-		printf("incorrect FastPath PDU header length %d\n", length);
+		error_report("incorrect FastPath PDU header length %d\n", length);
 		return false;
 	}
 
@@ -854,7 +855,7 @@ static boolean rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra
 		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_client_connect_demand_active(rdp, s))
 			{
-				printf("rdp_client_connect_demand_active failed\n");
+				error_report("rdp_client_connect_demand_active failed\n");
 				return false;
 			}
 			break;
@@ -872,7 +873,7 @@ static boolean rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra
 			break;
 
 		default:
-			printf("Invalid state %d\n", rdp->state);
+			error_report("Invalid state %d\n", rdp->state);
 			return false;
 	}
 

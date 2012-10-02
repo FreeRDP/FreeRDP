@@ -59,7 +59,7 @@ boolean xf_set_rop2(xfInfo* xfi, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
-		printf("Unsupported ROP2: %d\n", rop2);
+		error_report("Unsupported ROP2: %d\n", rop2);
 		return false;
 	}
 
@@ -195,7 +195,7 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 
 	if (function < 0)
 	{
-		printf("Unsupported ROP3: 0x%08X\n", rop3);
+		error_report("Unsupported ROP3: 0x%08X\n", rop3);
 		XSetFunction(xfi->display, xfi->gc, GXclear);
 		return false;
 	}
@@ -385,7 +385,7 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		printf("unimplemented brush style:%d\n", brush->style);
+		error_report("unimplemented brush style:%d\n", brush->style);
 	}
 
 	if (xfi->drawing == xfi->primary)
@@ -504,7 +504,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 void xf_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
-	printf("DrawNineGrid\n");
+	error_report("DrawNineGrid\n");
 }
 
 void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
@@ -685,7 +685,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		printf("Mem3Blt unimplemented brush style:%d\n", brush->style);
+		error_report("Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
 
 	XCopyArea(xfi->display, bitmap->pixmap, xfi->drawing, xfi->gc,
@@ -746,7 +746,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 			break;
 
 		default:
-			printf("PolygonSC unknown fillMode: %d\n", polygon_sc->fillMode);
+			error_report("PolygonSC unknown fillMode: %d\n", polygon_sc->fillMode);
 			break;
 	}
 
@@ -804,7 +804,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 			break;
 
 		default:
-			printf("PolygonCB unknown fillMode: %d\n", polygon_cb->fillMode);
+			error_report("PolygonCB unknown fillMode: %d\n", polygon_cb->fillMode);
 			break;
 	}
 
@@ -862,7 +862,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	}
 	else
 	{
-		printf("PolygonCB unimplemented brush style:%d\n", brush->style);
+		error_report("PolygonCB unimplemented brush style:%d\n", brush->style);
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
@@ -1046,12 +1046,12 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 			XSetClipMask(xfi->display, xfi->gc, None);
 		} else {
-			printf("Invalid bitmap size - data is %d bytes for %dx%d\n update", surface_bits_command->bitmapDataLength, surface_bits_command->width, surface_bits_command->height);
+			error_report("Invalid bitmap size - data is %d bytes for %dx%d\n update", surface_bits_command->bitmapDataLength, surface_bits_command->width, surface_bits_command->height);
 		}
 	}
 	else
 	{
-		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+		error_report("Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 }
 

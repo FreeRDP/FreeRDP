@@ -23,6 +23,7 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/print.h>
+#include <freerdp/utils/error.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,7 +106,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (sockfd == -1)
 	{
-		printf("unable to connect to %s:%s\n", hostname, servname);
+		error_report("unable to connect to %s:%s\n", hostname, servname);
 		return -1;
 	}
 
@@ -131,7 +132,7 @@ int freerdp_tcp_read(int sockfd, uint8* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			return 0;
 
-		printf("recv() error: %d\n", wsa_error);
+		error_report("recv() error: %d\n", wsa_error);
 #else
 		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)

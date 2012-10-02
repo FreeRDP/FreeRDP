@@ -477,7 +477,7 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{
-		printf("RAIL exec error: execResult=%s NtError=0x%X\n",
+		error_report("RAIL exec error: execResult=%s NtError=0x%X\n",
 			error_code_names[exec_result->execResult], exec_result->rawResult);
 		xfi->disconnect = True;
 	}

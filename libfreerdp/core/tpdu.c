@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#include <freerdp/utils/error.h>
 #include "tpdu.h"
 
 /**
@@ -130,7 +131,7 @@ uint8 tpdu_read_connection_request(STREAM* s)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		error_report("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
 		return 0;
 	}
 
@@ -165,7 +166,7 @@ tpdu_read_connection_confirm(STREAM* s)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		error_report("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
 		return 0;
 	}
 

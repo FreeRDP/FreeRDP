@@ -24,6 +24,7 @@ set(FREERDP_UTILS_SRCS
 	args.c
 	dsp.c
 	event.c
+	error.c
 	bitmap.c
 	hexdump.c
 	list.c

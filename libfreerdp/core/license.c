@@ -24,6 +24,7 @@
 #include "redirection.h"
 #include "certificate.h"
 
+#include <freerdp/utils/error.h>
 #include "license.h"
 
 #ifdef WITH_DEBUG_LICENSE
@@ -181,7 +182,7 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		error_report("Incorrect RDP header.\n");
 		return false;
 	}
 
@@ -191,7 +192,7 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
 		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != true)
 		{
-			printf("Unexpected license packet.\n");
+			error_report("Unexpected license packet.\n");
 			return false;
 		}
 		return true;
@@ -226,7 +227,7 @@ boolean license_recv(rdpLicense* license, STREAM* s)
 			break;
 
 		default:
-			printf("invalid bMsgType:%d\n", bMsgType);
+			error_report("invalid bMsgType:%d\n", bMsgType);
 			return false;
 	}
 
@@ -460,7 +461,7 @@ void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 
 	if (blob->type != wBlobType && blob->type != BB_ANY_BLOB)
 	{
-		printf("license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
+		error_report("license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
 	}
 
 	blob->type = wBlobType;

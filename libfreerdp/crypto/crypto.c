@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/utils/error.h>
 
 CryptoSha1 crypto_sha1_init(void)
 {
@@ -177,7 +178,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Pub
 
 	if (!pkey)
 	{
-		printf("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
+		error_report("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
 		status = false;
 		goto exit;
 	}
@@ -186,7 +187,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Pub
 
 	if (length < 1)
 	{
-		printf("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
+		error_report("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
 		status = false;
 		goto exit;
 	}

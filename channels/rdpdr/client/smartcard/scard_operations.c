@@ -1178,7 +1178,7 @@ static uint32 handle_AccessStartedEvent(IRP* irp)
 void scard_error(SCARD_DEVICE* scard, IRP* irp, uint32 ntstatus)
 {
 	/* [MS-RDPESC] 3.1.4.4 */
-	printf("scard processing error %x\n", ntstatus);
+	error_report("scard processing error %x\n", ntstatus);
 
 	stream_set_pos(irp->output, 0);	/* CHECKME */
 	irp->IoStatus = ntstatus;
@@ -1507,7 +1507,7 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 
 		default:
 			result = 0xc0000001;
-			printf("scard unknown ioctl 0x%x\n", ioctl_code);
+			error_report("scard unknown ioctl 0x%x\n", ioctl_code);
 			break;
 	}
 

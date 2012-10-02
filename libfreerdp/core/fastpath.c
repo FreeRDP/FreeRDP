@@ -28,6 +28,7 @@
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/error.h>
 
 #include "orders.h"
 #include "update.h"
@@ -576,7 +577,7 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	length = stream_get_length(s);
 	if (length >= (2 << 14))
 	{
-		printf("Maximum FastPath PDU length is 32767\n");
+		error_report("Maximum FastPath PDU length is 32767\n");
 		return false;
 	}
 
@@ -692,7 +693,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 				}
 			}
 			else
-				printf("fastpath_send_update_pdu: mppc_encode failed\n");
+				error_report("fastpath_send_update_pdu: mppc_encode failed\n");
 		}
 
 		totalLength -= dlen;

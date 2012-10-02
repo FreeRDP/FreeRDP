@@ -63,7 +63,7 @@ wait_obj_new(void)
 	obj->pipe_fd[1] = -1;
 	if (pipe(obj->pipe_fd) < 0)
 	{
-		printf("wait_obj_new: pipe failed\n");
+		error_report("wait_obj_new: pipe failed\n");
 		xfree(obj);
 		return NULL;
 	}
@@ -151,7 +151,7 @@ wait_obj_set(struct wait_obj* obj)
 		return;
 	len = write(obj->pipe_fd[1], "sig", 4);
 	if (len != 4)
-		printf("wait_obj_set: error\n");
+		error_report("wait_obj_set: error\n");
 #endif
 }
 
@@ -167,7 +167,7 @@ wait_obj_clear(struct wait_obj* obj)
 	{
 		len = read(obj->pipe_fd[0], &len, 4);
 		if (len != 4)
-			printf("wait_obj_clear: error\n");
+			error_report("wait_obj_clear: error\n");
 	}
 #endif
 }

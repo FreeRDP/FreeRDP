@@ -29,6 +29,7 @@
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/error.h>
 
 #ifdef _WIN32
 
@@ -85,7 +86,7 @@ void* freerdp_open_library(const char* file)
 
 	if (library == NULL)
 	{
-		printf("freerdp_load_library: failed to open %s: %s\n", file, DLERROR());
+		error_report("freerdp_load_library: failed to open %s: %s\n", file, DLERROR());
 		return NULL;
 	}
 
@@ -114,7 +115,7 @@ void* freerdp_get_library_symbol(void* library, const char* name)
 
 	if (symbol == NULL)
 	{
-		printf("freerdp_get_library_symbol: failed to load %s: %s\n", name, DLERROR());
+		error_report("freerdp_get_library_symbol: failed to load %s: %s\n", name, DLERROR());
 		return NULL;
 	}
 
@@ -143,7 +144,7 @@ boolean freerdp_close_library(void* library)
 	if (status == 0)
 #endif
 	{
-		printf("freerdp_free_library: failed to close: %s\n", DLERROR());
+		error_report("freerdp_free_library: failed to close: %s\n", DLERROR());
 		return false;
 	}
 
@@ -170,7 +171,7 @@ void* freerdp_load_library_symbol(const char* file, const char* name)
 
 	if (library == NULL)
 	{
-		printf("freerdp_load_library_symbol: failed to open %s: %s\n", file, DLERROR());
+		error_report("freerdp_load_library_symbol: failed to open %s: %s\n", file, DLERROR());
 		return NULL;
 	}
 
@@ -178,7 +179,7 @@ void* freerdp_load_library_symbol(const char* file, const char* name)
 
 	if (symbol == NULL)
 	{
-		printf("freerdp_load_library_symbol: failed to load %s: %s\n", file, DLERROR());
+		error_report("freerdp_load_library_symbol: failed to load %s: %s\n", file, DLERROR());
 		return NULL;
 	}
 
@@ -226,7 +227,7 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 
 	if (entry == NULL)
 	{
-		printf("freerdp_load_plugin: failed to load %s/%s\n", name, entry_name);
+		error_report("freerdp_load_plugin: failed to load %s/%s\n", name, entry_name);
 		return NULL;
 	}
 
@@ -291,7 +292,7 @@ void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const
 
 	if (entry == NULL)
 	{
-		printf("freerdp_load_channel_plugin: failed to load %s/%s\n", name, entry_name);
+		error_report("freerdp_load_channel_plugin: failed to load %s/%s\n", name, entry_name);
 		return NULL;
 	}
 
@@ -313,7 +314,7 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
   
 	if (g_static_plugins_count >= MAX_STATIC_PLUGINS)
 	{
-		printf("freerdp_register_static_plugin: cannot register %s/%s", name, entry_name);
+		error_report("freerdp_register_static_plugin: cannot register %s/%s", name, entry_name);
 		return false;
 	}
   

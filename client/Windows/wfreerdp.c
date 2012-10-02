@@ -41,6 +41,7 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/channels.h>
@@ -214,7 +215,7 @@ boolean wf_pre_connect(freerdp* instance)
 	if ((settings->width < 64) || (settings->height < 64) ||
 		(settings->width > 4096) || (settings->height > 4096))
 	{
-		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->width, settings->height);
+		error_report("wf_pre_connect: invalid dimensions %d %d\n", settings->width, settings->height);
 		return 1;
 	}
 
@@ -495,17 +496,17 @@ int wfreerdp_run(freerdp* instance)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			error_report("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get wfreerdp file descriptor\n");
+			error_report("Failed to get wfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			error_report("Failed to get channel manager file descriptor\n");
 			break;
 		}
 
@@ -523,30 +524,30 @@ int wfreerdp_run(freerdp* instance)
 		/* exit if nothing to do */
 		if (fds_count == 0)
 		{
-			printf("wfreerdp_run: fds_count is zero\n");
+			error_report("wfreerdp_run: fds_count is zero\n");
 			break;
 		}
 
 		/* do the wait */
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
+			error_report("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			error_report("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 		if (wf_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check wfreerdp file descriptor\n");
+			error_report("Failed to check wfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			error_report("Failed to check channel manager file descriptor\n");
 			break;
 		}
 		wf_process_channel_event(channels, instance);
@@ -616,7 +617,7 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 		{
 			if (status == -1)
 			{
-				printf("keyboard thread error getting message\n");
+				error_report("keyboard thread error getting message\n");
 				break;
 			}
 			else
@@ -628,7 +629,7 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 		UnhookWindowsHookEx(hook_handle);
 	}
 	else
-		printf("failed to install keyboard hook\n");
+		error_report("failed to install keyboard hook\n");
 
 	return (DWORD) NULL;
 }
@@ -703,8 +704,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         REGISTER_DEV_PLUGIN_ENTRY(printer) ;
 #endif
 
+        error_init() ;
+
         if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
-		printf("error creating keyboard handler thread");
+		error_report("error creating keyboard handler thread");
 
 	//while (1)
 	{
@@ -719,8 +722,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (arg_parse_result < 0)
 		{
 			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-				printf("failed to parse arguments.\n");
+				error_report("failed to parse arguments.\n");
 
+                        error_show () ;
+                        error_free () ;
 #ifdef _DEBUG
 			system("pause");
 #endif
@@ -737,6 +742,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MessageBox(GetConsoleWindow(),
 			L"Failed to start wfreerdp.\n\nPlease check the debug output.",
 			L"FreeRDP Error", MB_ICONSTOP);
+
+        error_show () ;
+        error_free () ;
 
 	freerdp_context_free(instance);
 	freerdp_free(instance);

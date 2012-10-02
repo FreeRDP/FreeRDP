@@ -365,7 +365,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if (pfs == NULL)
 	{
-		printf("xf_get_pixmap_info: XListPixmapFormats failed\n");
+		error_report("xf_get_pixmap_info: XListPixmapFormats failed\n");
 		return 1;
 	}
 
@@ -388,7 +388,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if (XGetWindowAttributes(xfi->display, RootWindowOfScreen(xfi->screen), &window_attributes) == 0)
 	{
-		printf("xf_get_pixmap_info: XGetWindowAttributes failed\n");
+		error_report("xf_get_pixmap_info: XGetWindowAttributes failed\n");
 		return false;
 	}
 
@@ -396,7 +396,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if (vis == NULL)
 	{
-		printf("xf_get_pixmap_info: XGetVisualInfo failed\n");
+		error_report("xf_get_pixmap_info: XGetVisualInfo failed\n");
 		return false;
 	}
 
@@ -496,7 +496,7 @@ boolean xf_pre_connect(freerdp* instance)
 	if (arg_parse_result < 0)
 	{
 		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
+			error_report("%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 		
 		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
@@ -560,8 +560,8 @@ boolean xf_pre_connect(freerdp* instance)
 
 	if (xfi->display == NULL)
 	{
-		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
-		printf("Please check that the $DISPLAY environment variable is properly set.\n");
+		error_report("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		error_report("Please check that the $DISPLAY environment variable is properly set.\n");
 		return false;
 	}
 
@@ -1130,19 +1130,19 @@ int xfreerdp_run(freerdp* instance)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			error_report("Failed to get FreeRDP file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			error_report("Failed to get channel manager file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
 		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
-			printf("Failed to get xfreerdp file descriptor\n");
+			error_report("Failed to get xfreerdp file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
@@ -1180,24 +1180,24 @@ int xfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("xfreerdp_run: select failed\n");
+				error_report("xfreerdp_run: select failed\n");
 				break;
 			}
 		}
 
 		if (freerdp_check_fds(instance) != true)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			error_report("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 		if (xf_process_x_events(instance) != true)
 		{
-			printf("Closed from X\n");
+			error_report("Closed from X\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			error_report("Failed to check channel manager file descriptor\n");
 			break;
 		}
 		xf_process_channel_event(channels, instance);

@@ -27,6 +27,7 @@
 #include <fcntl.h>
 
 #include <freerdp/utils/print.h>
+#include <freerdp/utils/error.h>
 
 #ifndef _WIN32
 #include <netdb.h>

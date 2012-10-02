@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/codec/mppc_dec.h>
 
@@ -151,7 +152,7 @@ int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, ui
 			break;
 
 		default:
-			printf("mppc.c: invalid RDP compression code 0x%2.2x\n", type);
+			error_report("mppc.c: invalid RDP compression code 0x%2.2x\n", type);
 			return false;
 	}
 }
@@ -1417,7 +1418,7 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 	ptr = (struct rdp_mppc_dec*) xmalloc(sizeof(struct rdp_mppc_dec));
 	if (!ptr)
 	{
-		printf("mppc_new(): system out of memory\n");
+		error_report("mppc_new(): system out of memory\n");
 		return NULL;
 	}
 
@@ -1425,7 +1426,7 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 	ptr->offset_cache = (uint16 *) xzalloc(RDP6_OFFSET_CACHE_SIZE);
 	if (!ptr->history_buf)
 	{
-		printf("mppc_new(): system out of memory\n");
+		error_report("mppc_new(): system out of memory\n");
 		xfree(ptr);
 		return NULL;
 	}

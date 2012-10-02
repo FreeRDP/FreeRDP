@@ -104,7 +104,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 
 	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
 	{
-		printf("failed to obtain MAC address\n");
+		error_report("failed to obtain MAC address\n");
 		return;
 	}
 
@@ -184,7 +184,7 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 
 	if (flags == -1)
 	{
-		printf("tcp_set_blocking_mode: fcntl failed.\n");
+		error_report("tcp_set_blocking_mode: fcntl failed.\n");
 		return false;
 	}
 

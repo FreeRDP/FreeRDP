@@ -25,6 +25,7 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/palette.h>
 
@@ -40,7 +41,7 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
 
 	if (index >= palette_cache->maxEntries)
 	{
-		printf("invalid color table index: 0x%04X\n", index);
+		error_report("invalid color table index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -48,7 +49,7 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
 
 	if (entry == NULL)
 	{
-		printf("invalid color table at index: 0x%04X\n", index);
+		error_report("invalid color table at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -59,7 +60,7 @@ void palette_cache_put(rdpPaletteCache* palette_cache, uint32 index, void* entry
 {
 	if (index >= palette_cache->maxEntries)
 	{
-		printf("invalid color table index: 0x%04X\n", index);
+		error_report("invalid color table index: 0x%04X\n", index);
 		return;
 	}
 

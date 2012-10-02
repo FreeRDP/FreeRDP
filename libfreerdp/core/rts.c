@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/error.h>
 #include "rts.h"
 
 /**
@@ -53,25 +54,25 @@ boolean rts_connect(rdpRpc* rpc)
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
-		printf("rpc_out_connect_http error!\n");
+		error_report("rpc_out_connect_http error!\n");
 		return false;
 	}
 
 	if (!rts_send_CONN_A1_pdu(rpc))
 	{
-		printf("rpc_send_CONN_A1_pdu error!\n");
+		error_report("rpc_send_CONN_A1_pdu error!\n");
 		return false;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
-		printf("rpc_in_connect_http error!\n");
+		error_report("rpc_in_connect_http error!\n");
 		return false;
 	}
 
 	if (!rts_send_CONN_B1_pdu(rpc))
 	{
-		printf("rpc_send_CONN_B1_pdu error!\n");
+		error_report("rpc_send_CONN_B1_pdu error!\n");
 		return false;
 	}
 
@@ -80,7 +81,7 @@ boolean rts_connect(rdpRpc* rpc)
 
 	if (http_response->StatusCode != 200)
 	{
-		printf("rts_connect error!\n");
+		error_report("rts_connect error!\n");
 		http_response_print(http_response);
 		http_response_free(http_response) ;
 		return false;
@@ -648,7 +649,7 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 				break;
 
 			default:
-				printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+				error_report("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
 				stream_detach(s) ;
 				stream_free(s) ;
 				return -1;
@@ -675,7 +676,7 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 
 	if (status <= 0)
 	{
-		printf("rts_recv error\n");
+		error_report("rts_recv error\n");
 		return status;
 	}
 
@@ -694,13 +695,13 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 
 	if (status < 0)
 	{
-		printf("rts_recv error\n");
+		error_report("rts_recv error\n");
 		return status;
 	}
 
 	if (rts_pdu->header.ptype != PTYPE_RTS)
 	{
-		printf("rts_recv error: unexpected ptype:%d\n", rts_pdu->header.ptype);
+		error_report("rts_recv error: unexpected ptype:%d\n", rts_pdu->header.ptype);
 		return -1;
 	}
 
