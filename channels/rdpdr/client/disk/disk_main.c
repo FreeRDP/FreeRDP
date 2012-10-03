@@ -648,10 +648,10 @@ static void disk_free(DEVICE* device)
 }
 
 
-void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *name, char *path)
+void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
 {
+	int i, length;
 	DISK_DEVICE* disk;
-	int i, length ;
 
 #ifdef WIN32
 	/*
@@ -695,7 +695,6 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *na
 
                 ResumeThread(disk->thread);
 	}
-
 }
 
 #ifdef WITH_STATIC_PLUGINS
@@ -707,9 +706,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* name;
 	char* path;
 #ifdef WIN32
+	char* dev;
+	int len;
 	char devlist[512], buf[512];
-	char *dev;
-	int len ;
 #endif
 
 	name = (char*) pEntryPoints->plugin_data->data[1];
