@@ -25,30 +25,15 @@ if(WITH_MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-set(WINPR_MODULES
-	crt
-	utils
-	heap
-	path
-	io
-	file
-	error
-	environment
-	interlocked
-	handle
-	synch
-	thread
-	sysinfo
-	bcrypt
-	dsparse
-	asn1
-	rpc
-	sspicli
-	sspi
-	registry
-	library
-	timezone
-	winsock)
+set(FILENAME "ModuleOptions.cmake")
+file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" WINPR_MODULE ${FILEPATH})
+		set(WINPR_MODULES ${WINPR_MODULES} ${WINPR_MODULE})
+	endif()
+endforeach(FILEPATH)
 
 foreach(WINPR_MODULE ${WINPR_MODULES})
 	add_subdirectory(${WINPR_MODULE})
