@@ -25,6 +25,10 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
+#ifdef WIN32
+#define __attribute__(a)
+#endif
+
 /* a safer free helper */
 #define zfree(p) do { if (p != NULL) {free(p); p = NULL;} } while (0)
 
