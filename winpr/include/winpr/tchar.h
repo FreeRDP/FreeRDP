@@ -34,12 +34,16 @@ typedef WCHAR		TCHAR;
 #define _tprintf	wprintf
 #define _tcsdup		_wcsdup
 #define _tcscmp		wcscmp
+#define _tcscpy		wcscpy
 #else
 typedef CHAR		TCHAR;
 #define _tprintf	printf
 #define _tcsdup		_strdup
 #define _tcscmp		strcmp
+#define _tcscpy		strcpy
 #endif
+
+typedef TCHAR *LPTSTR, *LPTCH;
 
 #endif
 

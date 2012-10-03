@@ -27,6 +27,8 @@
  * api-ms-win-core-libraryloader-l1-1-1.dll:
  *
  * AddDllDirectory
+ * RemoveDllDirectory
+ * SetDefaultDllDirectories
  * DisableThreadLibraryCalls
  * EnumResourceLanguagesExA
  * EnumResourceLanguagesExW
@@ -53,8 +55,6 @@
  * LoadStringW
  * LockResource
  * QueryOptionalDelayLoadedAPI
- * RemoveDllDirectory
- * SetDefaultDllDirectories
  * SizeofResource
  */
 
@@ -63,6 +63,21 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <unistd.h>
+
+DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
+{
+	return NULL;
+}
+
+BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
+{
+	return TRUE;
+}
+
+BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
+{
+	return TRUE;
+}
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {

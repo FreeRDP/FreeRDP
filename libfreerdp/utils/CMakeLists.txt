@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # libfreerdp-utils cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,25 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "freerdp-utils")
+set(MODULE_PREFIX "FREERDP_UTILS")
+
 set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
-set(FREERDP_UTILS_SRCS
+set(${MODULE_PREFIX}_SRCS
 	args.c
-	blob.c
 	dsp.c
 	event.c
 	bitmap.c
 	hexdump.c
 	list.c
 	file.c
+	msusb.c
 	load_plugin.c
 	memory.c
 	passphrase.c
 	pcap.c
 	profiler.c
 	rail.c
-	rect.c
 	signal.c
 	sleep.c
 	stopwatch.c
@@ -50,30 +50,37 @@ set(FREERDP_UTILS_SRCS
 	wait_obj.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp-utils OBJECT ${FREERDP_UTILS_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(freerdp-utils ${FREERDP_UTILS_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(freerdp-utils PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-set(FREERDP_UTILS_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS})
 
 if(WIN32)
-	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} ws2_32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} rt)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_UTILS_LIBS} PARENT_SCOPE)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(FREERDP_UTILS_LIBS ${FREERDP_UTILS_LIBS} winpr-synch)
-	target_link_libraries(freerdp-utils ${FREERDP_UTILS_LIBS})
-	install(TARGETS freerdp-utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	if(NOT WIN32)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-crt)
+	endif()
+
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-synch)
+
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")

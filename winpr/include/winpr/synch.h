@@ -85,6 +85,16 @@ WINPR_API HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR 
 WINPR_API BOOL SetEvent(HANDLE hEvent);
 WINPR_API BOOL ResetEvent(HANDLE hEvent);
 
+#ifdef UNICODE
+#define CreateEvent		CreateEventW
+#define CreateEventEx		CreateEventExW
+#define OpenEvent		OpenEventW
+#else
+#define CreateEvent		CreateEventA
+#define CreateEventEx		CreateEventExA
+#define OpenEvent		OpenEventA
+#endif
+
 /* One-Time Initialization */
 
 typedef union _RTL_RUN_ONCE

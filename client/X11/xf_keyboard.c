@@ -69,7 +69,7 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 		if (xfi->pressed_keys[keycode] != NoSymbol)
 		{
 			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
-			freerdp_input_send_keyboard_event_2(xfi->instance->input, false, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(xfi->instance->input, false, rdp_scancode);
 			xfi->pressed_keys[keycode] = NoSymbol;
 		}
 	}
@@ -99,15 +99,15 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 		/* Pause without Ctrl has to be sent as Ctrl + NumLock. */
 		if (down)
 		{
-			freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_NUMLOCK);
-			freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
 		}
 	}
 	else
 	{
-		freerdp_input_send_keyboard_event_2(input, down, rdp_scancode);
+		freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 
 		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == false))
 		{

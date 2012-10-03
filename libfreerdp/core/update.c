@@ -23,7 +23,7 @@
 
 #include "update.h"
 #include "surface.h"
-#include <freerdp/utils/rect.h>
+
 #include <freerdp/codec/bitmap.h>
 
 /*
@@ -355,7 +355,12 @@ static void update_write_refresh_rect(STREAM* s, uint8 count, RECTANGLE_16* area
 	stream_seek(s, 3); /* pad3Octets (3 bytes) */
 
 	for (i = 0; i < count; i++)
-		freerdp_write_rectangle_16(s, &areas[i]);
+	{
+		stream_write_uint16(s, areas[i].left); /* left (2 bytes) */
+		stream_write_uint16(s, areas[i].top); /* top (2 bytes) */
+		stream_write_uint16(s, areas[i].right); /* right (2 bytes) */
+		stream_write_uint16(s, areas[i].bottom); /* bottom (2 bytes) */
+	}
 }
 
 static void update_send_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
@@ -378,7 +383,12 @@ static void update_write_suppress_output(STREAM* s, uint8 allow, RECTANGLE_16* a
 	stream_seek(s, 3); /* pad3Octets (3 bytes) */
 
 	if (allow > 0)
-		freerdp_write_rectangle_16(s, area);
+	{
+		stream_write_uint16(s, area->left); /* left (2 bytes) */
+		stream_write_uint16(s, area->top); /* top (2 bytes) */
+		stream_write_uint16(s, area->right); /* right (2 bytes) */
+		stream_write_uint16(s, area->bottom); /* bottom (2 bytes) */
+	}
 }
 
 static void update_send_suppress_output(rdpContext* context, uint8 allow, RECTANGLE_16* area)

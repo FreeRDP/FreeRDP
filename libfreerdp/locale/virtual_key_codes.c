@@ -21,7 +21,11 @@
 #include "config.h"
 #endif
 
-#include <freerdp/locale/virtual_key_codes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <freerdp/locale/vkcodes.h>
 
 #include <freerdp/utils/memory.h>
 

@@ -41,13 +41,16 @@ include(GNUInstallDirsWrapper)
 
 # Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
-set(FREERDP_VERSION_MINOR "0")
-set(FREERDP_VERSION_REVISION "1")
+set(FREERDP_VERSION_MINOR "1")
+set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
 include(GetGitRevisionDescription)
 git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
 message(STATUS "Git Revision ${GIT_REVISION}")
+
+# Turn on solution folders (2.8.4+)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -57,6 +60,24 @@ endif()
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
+endif()
+
+if(NOT BUILD_SHARED_LIBS AND WITH_MONOLITHIC_BUILD)
+	set(WITH_STATIC_PLUGINS ON)
+endif()
+
+# Configure MSVC Runtime
+if(MSVC)
+	include(MSVCRuntime)
+	if(NOT DEFINED MSVC_RUNTIME)
+		set(MSVC_RUNTIME "dynamic")
+	endif()
+	if(${MSVC_RUNTIME} STREQUAL "static")
+		message(STATUS "Use the MSVC static runtime option carefully!")
+		message(STATUS "OpenSSL uses /MD by default, and is very picky")
+		message(STATUS "Random freeing errors are a common sign of runtime issues")
+	endif()
+	configure_msvc_runtime()
 endif()
 
 # Compiler-specific flags
@@ -99,23 +120,6 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
-# This forces the MSVC runtime to be statically linked
-
-if(WITH_MSVC_STATIC)
-	foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO) 
-		string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-		string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
-	endforeach(flag_var)
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}" CACHE STRING "MSVC C Debug MT flags " FORCE)    
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING "MSVC CXX Debug MT flags " FORCE)
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "MSVC C Release MT flags " FORCE)
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "MSVC CXX Release MT flags " FORCE)
-	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL}" CACHE STRING "MSVC C Debug MT flags " FORCE)    
-	set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}" CACHE STRING "MSVC C Release MT flags " FORCE)
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}" CACHE STRING "MSVC CXX Debug MT flags " FORCE)    
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" CACHE STRING "MSVC CXX Release MT flags " FORCE)
-endif()
-
 # config.h definition for installable headers
 check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
 check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
@@ -134,11 +138,6 @@ check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
 check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
 
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
-
-# Libraries that we have a hard dependency on
-if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
-find_required_package(OpenSSL)
-endif()
 
 # Mac OS X
 if(APPLE)
@@ -178,6 +177,8 @@ set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
 set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp")
+set(FREERDP_CLIENT_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/client")
+set(FREERDP_SERVER_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/server")
 
 # Path to put extensions
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
@@ -186,14 +187,24 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# WinPR
-set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories(${WINPR_INCLUDE_DIR})
-
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
+
+# Unit Tests
+
+INCLUDE(CTest)
+
+if(BUILD_TESTING)
+	enable_testing()
+endif()
+
+# WinPR
+set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories(${WINPR_INCLUDE_DIR})
+
+add_subdirectory(winpr)
 
 # Generate pkg-config
 if(NOT MSVC)
@@ -205,17 +216,15 @@ endif()
 #find_optional_package(IPP)
 
 # Build CUnit
+
 find_optional_package(CUnit)
 if(WITH_CUNIT)
-	enable_testing()
 	add_subdirectory(cunit)
 endif()
 
 # Sub-directories
 
 add_subdirectory(include)
-
-add_subdirectory(winpr)
 
 add_subdirectory(libfreerdp)
 
@@ -246,3 +255,4 @@ string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}")
 
 include(CPack)
+

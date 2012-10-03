@@ -15,39 +15,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "winpr-thread")
+set(MODULE_PREFIX "WINPR_THREAD")
+
 set(CMAKE_THREAD_PREFER_PTHREAD)
 find_required_package(Threads)
 
-set(WINPR_THREAD_SRCS
+set(${MODULE_PREFIX}_SRCS
 	process.c
 	processor.c
 	thread.c
 	tls.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-thread OBJECT ${WINPR_THREAD_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(winpr-thread ${WINPR_THREAD_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(winpr-thread PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-set(WINPR_SYNCH_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(WINPR_SYNCH_LIBS ${WINPR_SYNCH_LIBS} rt)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_SYNCH_LIBS} PARENT_SCOPE)
+	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
 	if(NOT WIN32)
-		set(WINPR_SYNCH_LIBS ${WINPR_SYNCH_LIBS} winpr-handle)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-handle)
 	endif()
 
-	target_link_libraries(winpr-thread ${WINPR_SYNCH_LIBS})
-	install(TARGETS winpr-thread DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

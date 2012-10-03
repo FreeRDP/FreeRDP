@@ -272,7 +272,6 @@ rdpSettings* settings_new(void* instance)
 
 		settings->frame_acknowledge = 2;
 
-		settings->uniconv = freerdp_uniconv_new();
 		gethostname(settings->client_hostname, 31);
 		settings->client_hostname[31] = 0;
 		settings->mouse_motion = true;
@@ -281,8 +280,6 @@ rdpSettings* settings_new(void* instance)
 		settings->server_auto_reconnect_cookie = xnew(ARC_SC_PRIVATE_PACKET);
 
 		settings->client_time_zone = xnew(TIME_ZONE_INFO);
-		settings->server_random = xnew(rdpBlob);
-		settings->server_certificate = xnew(rdpBlob);
 
 		freerdp_detect_paths(settings);
 
@@ -296,7 +293,6 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
-		freerdp_uniconv_free(settings->uniconv);
 		xfree(settings->hostname);
 		xfree(settings->username);
 		xfree(settings->password);
@@ -311,8 +307,6 @@ void settings_free(rdpSettings* settings)
 		xfree(settings->order_support);
 		xfree(settings->client_hostname);
 		xfree(settings->client_product_id);
-		freerdp_blob_free(settings->server_random);
-		freerdp_blob_free(settings->server_certificate);
 		xfree(settings->server_random);
 		xfree(settings->server_certificate);
 		xfree(settings->rdp_key_file);

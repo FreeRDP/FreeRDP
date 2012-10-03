@@ -41,6 +41,8 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/channels.h>
 
 #include "wf_gdi.h"
@@ -526,7 +528,7 @@ int wfreerdp_run(freerdp* instance)
 		}
 
 		/* do the wait */
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1, QS_ALLINPUT) == WAIT_FAILED)
+		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
 			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
@@ -535,6 +537,10 @@ int wfreerdp_run(freerdp* instance)
 		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
+			break;
+		}
+		if (freerdp_shall_disconnect(instance))	
+		{
 			break;
 		}
 		if (wf_check_fds(instance) != TRUE)
@@ -631,6 +637,13 @@ static DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 	return (DWORD) NULL;
 }
 
+#ifdef WITH_RDPDR
+DEFINE_SVC_PLUGIN_ENTRY(rdpdr) ;
+DEFINE_DEV_PLUGIN_ENTRY(disk) ;
+DEFINE_DEV_PLUGIN_ENTRY(printer) ;
+#endif
+
+
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	freerdp* instance;
@@ -688,7 +701,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->context->argc = __argc;
 	instance->context->argv = __argv;
 
-	if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
+#ifdef WITH_RDPDR
+        REGISTER_SVC_PLUGIN_ENTRY(rdpdr) ;
+        REGISTER_DEV_PLUGIN_ENTRY(disk) ;
+        REGISTER_DEV_PLUGIN_ENTRY(printer) ;
+#endif
+
+        if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))
 		printf("error creating keyboard handler thread");
 
 	//while (1)

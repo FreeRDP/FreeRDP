@@ -24,7 +24,7 @@ typedef struct rdp_input rdpInput;
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/keyboard_scancode.h>
+#include <freerdp/scancode.h>
 
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED		0x0100
@@ -76,14 +76,9 @@ struct rdp_input
 
 FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags);
 FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, boolean down, uint32 rdp_scancode);
 FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
 FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-
-#define freerdp_input_send_keyboard_event_2(input, down, rdp_scancode) \
-		freerdp_input_send_keyboard_event(input, \
-			(rdp_scancode_extended(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0) | \
-			((down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE), \
-			rdp_scancode_code(rdp_scancode))
 
 #endif /* __INPUT_API_H */

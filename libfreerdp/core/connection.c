@@ -91,7 +91,8 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
-		if ((settings->username != NULL) && ((settings->password != NULL) || (settings->password_cookie != NULL && settings->password_cookie->length > 0)))
+		if ((settings->username != NULL) && ((settings->password != NULL) ||
+				(settings->password_cookie != NULL && settings->password_cookie_length > 0)))
 			settings->autologon = true;
 	}
 
@@ -143,9 +144,8 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 
-	/* FIXME: this is a subset of settings_free */
-	freerdp_blob_free(settings->server_random);
-	freerdp_blob_free(settings->server_certificate);
+	free(settings->server_random);
+	free(settings->server_certificate);
 	xfree(settings->ip_address);
 
 	rdp->transport = transport_new(settings);
@@ -158,7 +158,7 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		nego_set_routing_token(rdp->nego, &redirection->loadBalanceInfo);
+		nego_set_routing_token(rdp->nego, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 	}
 	else
 	{
@@ -193,7 +193,8 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		settings->password_cookie = &redirection->password_cookie;
+		settings->password_cookie = redirection->PasswordCookie;
+		settings->password_cookie_length = redirection->PasswordCookieLength;
 	}
 
 	return rdp_client_connect(rdp);
@@ -218,8 +219,8 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
-	key_len = rdp->settings->server_cert->cert_info.modulus.length;
-	mod = rdp->settings->server_cert->cert_info.modulus.data;
+	key_len = rdp->settings->server_cert->cert_info.ModulusLength;
+	mod = rdp->settings->server_cert->cert_info.Modulus;
 	exp = rdp->settings->server_cert->cert_info.exponent;
 	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
@@ -264,7 +265,7 @@ static boolean rdp_client_establish_keys(rdpRdp* rdp)
 
 static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 {
-	uint8 client_random[64]; /* Should be only 32 after successfull decryption, but on failure might take up to 64 bytes. */
+	uint8 client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
 	uint8 crypt_client_random[256 + 8];
 	uint32 rand_len, key_len;
 	uint16 channel_id, length, sec_flags;
@@ -282,25 +283,30 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 		printf("rdp_server_establish_keys: invalid RDP header\n");
 		return false;
 	}
+
 	rdp_read_security_header(s, &sec_flags);
+
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
 		printf("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
 		return false;
 	}
+
 	stream_read_uint32(s, rand_len);
-	key_len = rdp->settings->server_key->modulus.length;
+	key_len = rdp->settings->server_key->ModulusLength;
+
 	if (rand_len != key_len + 8)
 	{
 		printf("rdp_server_establish_keys: invalid encrypted client random length\n");
 		return false;
 	}
+
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	stream_read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
 	stream_seek(s, 8);
-	mod = rdp->settings->server_key->modulus.data;
-	priv_exp = rdp->settings->server_key->private_exponent.data;
+	mod = rdp->settings->server_key->Modulus;
+	priv_exp = rdp->settings->server_key->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
 
 	/* now calculate encrypt / decrypt and update keys */
@@ -336,8 +342,10 @@ boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 		printf("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
 		return false;
 	}
+
 	if (!mcs_send_erect_domain_request(rdp->mcs))
 		return false;
+
 	if (!mcs_send_attach_user_request(rdp->mcs))
 		return false;
 

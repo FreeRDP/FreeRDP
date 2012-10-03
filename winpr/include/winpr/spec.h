@@ -27,6 +27,10 @@
 #endif
 #endif /* _AMD64_ */
 
+#ifdef _AMD64_
+#define _WIN64
+#endif
+
 #ifndef DECLSPEC_ALIGN
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #define DECLSPEC_ALIGN(x) __declspec(align(x))
@@ -37,11 +41,13 @@
 #endif
 #endif /* DECLSPEC_ALIGN */
 
-#ifdef _AMD64_
+#ifdef _WIN64
 #define MEMORY_ALLOCATION_ALIGNMENT 16
 #else
 #define MEMORY_ALLOCATION_ALIGNMENT 8
 #endif
+
+#define DUMMYSTRUCTNAME		s
 
 #endif /* WINPR_SPEC_H */
 

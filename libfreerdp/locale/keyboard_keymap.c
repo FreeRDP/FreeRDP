@@ -25,7 +25,7 @@
 
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/locale/virtual_key_codes.h>
+#include <freerdp/locale/vkcodes.h>
 #include <freerdp/locale/keyboard.h>
 
 #include "liblocale.h"

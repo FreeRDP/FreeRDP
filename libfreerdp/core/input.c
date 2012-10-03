@@ -396,6 +396,14 @@ void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 cod
 	IFCALL(input->KeyboardEvent, input, flags, code);
 }
 
+void freerdp_input_send_keyboard_event_ex(rdpInput* input, boolean down, uint32 rdp_scancode)
+{
+	freerdp_input_send_keyboard_event(input,
+			(RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0) |
+			((down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE),
+			RDP_SCANCODE_CODE(rdp_scancode));
+}
+
 void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 	IFCALL(input->UnicodeKeyboardEvent, input, flags, code);

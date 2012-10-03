@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP DirectFB Client
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "dfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_DIRECTFB")
+
 include_directories(${DIRECTFB_INCLUDE_DIRS})
 
-set(FREERDP_CLIENT_DIRECTFB_SRCS
+set(${MODULE_PREFIX}_SRCS
 	df_event.c
 	df_event.h
 	df_graphics.c
@@ -27,14 +28,14 @@ set(FREERDP_CLIENT_DIRECTFB_SRCS
 	dfreerdp.c
 	dfreerdp.h)
 
-add_executable(dfreerdp ${FREERDP_CLIENT_DIRECTFB_SRCS})
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(FREERDP_CLIENT_DIRECTFB_LIBS ${DIRECTFB_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS ${DIRECTFB_LIBRARIES})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CLIENT_DIRECTFB_LIBS ${FREERDP_CLIENT_DIRECTFB_LIBS} freerdp)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
-	set(FREERDP_CLIENT_DIRECTFB_LIBS ${FREERDP_CLIENT_DIRECTFB_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
 		freerdp-gdi
 		freerdp-locale
@@ -42,5 +43,7 @@ else()
 		freerdp-utils)
 endif()
 
-target_link_libraries(dfreerdp ${FREERDP_CLIENT_DIRECTFB_LIBS})
-install(TARGETS dfreerdp DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/DirectFB")

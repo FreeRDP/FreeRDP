@@ -45,7 +45,6 @@ typedef void (*railDesktopNonMonitored) (rdpRail* rail, rdpWindow* window);
 struct rdp_rail
 {
 	void* extra;
-	UNICONV* uniconv;
 	CLRCONV* clrconv;
 	rdpIconCache* cache;
 	rdpWindowList* list;

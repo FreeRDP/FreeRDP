@@ -459,10 +459,9 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	uint32 length;
 	STREAM* s_p4;
 	int status = -1;
-	UNICONV* tsg_uniconv;
 	rdpRpc* rpc = tsg->rpc;
-	uint8* dest_addr_unic;
-	uint32 dest_addr_unic_len;
+	WCHAR* dest_addr_unic;
+	int dest_addr_unic_len;
 
 	if (!rpc_connect(rpc))
 	{
@@ -572,9 +571,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	}
 	status = -1;
 
-	tsg_uniconv = freerdp_uniconv_new();
-	dest_addr_unic = (uint8*) freerdp_uniconv_out(tsg_uniconv, hostname, (size_t*) &dest_addr_unic_len);
-	freerdp_uniconv_free(tsg_uniconv);
+	dest_addr_unic_len = freerdp_AsciiToUnicodeAlloc(hostname, &dest_addr_unic, 0) * 2;
 
 	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
 	memcpy(tsg_packet4 + 38, &port, 2);

@@ -56,8 +56,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_SYSKEYUP:
 				wfi = (wfInfo*) GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
 				p = (PKBDLLHOOKSTRUCT) lParam;
+				if (!wfi || !p)
+					return 1;
 				input = wfi->instance->input;
-				rdp_scancode = mk_rdp_scancode((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
+				rdp_scancode = MAKE_RDP_SCANCODE((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
 
 				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
 					(wParam == WM_KEYDOWN), (uint8) p->scanCode, p->flags, p->vkCode);
@@ -85,10 +87,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (wParam == WM_KEYDOWN)
 					{
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-						freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_2(input, true, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_2(input, false, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
@@ -103,7 +105,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					rdp_scancode = RDP_SCANCODE_RSHIFT;
 				}
 
-				freerdp_input_send_keyboard_event_2(input, !(p->flags & LLKHF_UP), rdp_scancode);
+				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
 				if (p->vkCode == VK_CAPITAL)
 					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");

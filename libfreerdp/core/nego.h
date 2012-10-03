@@ -23,7 +23,6 @@
 #include "transport.h"
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/blob.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 
@@ -80,7 +79,8 @@ struct rdp_nego
 	uint32 flags;
 	char* hostname;
 	char* cookie;
-	rdpBlob* routing_token;
+	BYTE* RoutingToken;
+	DWORD RoutingTokenLength;
 	boolean send_preconnection_pdu;
 	uint32 preconnection_id;
 	char* preconnection_blob;
@@ -119,13 +119,14 @@ boolean nego_send_negotiation_response(rdpNego* nego);
 
 rdpNego* nego_new(struct rdp_transport * transport);
 void nego_free(rdpNego* nego);
+
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
 void nego_set_negotiation_enabled(rdpNego* nego, boolean security_layer_negotiation_enabled);
 void nego_enable_rdp(rdpNego* nego, boolean enable_rdp);
 void nego_enable_nla(rdpNego* nego, boolean enable_nla);
 void nego_enable_tls(rdpNego* nego, boolean enable_tls);
-void nego_set_routing_token(rdpNego* nego, rdpBlob* routing_token);
+void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
 void nego_set_cookie(rdpNego* nego, char* cookie);
 void nego_set_send_preconnection_pdu(rdpNego* nego, boolean send_pcpdu);
 void nego_set_preconnection_id(rdpNego* nego, uint32 id);

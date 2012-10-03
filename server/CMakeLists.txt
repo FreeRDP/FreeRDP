@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP Servers
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +20,7 @@
 if(NOT WIN32)
 
 	# Build Test Server
-	add_subdirectory(test)
+	add_subdirectory(Sample)
 
 	# Build X11 Server
 	find_suggested_package(X11)
@@ -33,5 +31,3 @@ else()
 	add_subdirectory(Windows)
 endif()
 
-# Build Server Channels library
-add_subdirectory(channels)
