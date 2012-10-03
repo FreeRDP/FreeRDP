@@ -15,19 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_ASN1_SRCS
+set(MODULE_NAME "winpr-asn1")
+set(MODULE_PREFIX "WINPR_ASN1")
+
+set(${MODULE_PREFIX}_SRCS
 	asn1.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-asn1 OBJECT ${WINPR_ASN1_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(winpr-asn1 ${WINPR_ASN1_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(winpr-asn1 PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
 	
 else()
-	install(TARGETS winpr-asn1 DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

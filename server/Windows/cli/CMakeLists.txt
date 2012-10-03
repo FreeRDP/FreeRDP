@@ -15,20 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "wfreerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
+
 include_directories(..)
 
-set(WFREERDP_SERVER_CLI_SRCS
+set(${MODULE_PREFIX}_SRCS
 	wfreerdp.c
 	wfreerdp.h)
 
-add_executable(wfreerdp-server-cli ${WFREERDP_SERVER_CLI_SRCS})
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(wfreerdp-server-cli PROPERTIES OUTPUT_NAME "wfreerdp-server")
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp-server")
 
-set(WFREERDP_SERVER_CLI_LIBS wfreerdp-server)
+set(${MODULE_PREFIX}_LIBS wfreerdp-server)
 
-target_link_libraries(wfreerdp-server-cli ${WFREERDP_SERVER_CLI_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(TARGETS wfreerdp-server-cli DESTINATION ${CMAKE_INSTALL_BINDIR})
-
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Windows")

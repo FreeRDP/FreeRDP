@@ -26,10 +26,6 @@ include_directories(../libfreerdp/cache)
 include_directories(../libfreerdp/codec)
 
 add_executable(test_freerdp
-	test_per.c
-	test_per.h
-	test_ber.c
-	test_ber.h
 	test_gcc.c
 	test_gcc.h
 	test_mcs.c
@@ -40,8 +36,6 @@ add_executable(test_freerdp
 	test_bitmap.h
 	test_gdi.c
 	test_gdi.h
-	test_list.c
-	test_list.h
 	test_orders.c
 	test_orders.h
 	test_pcap.c
@@ -50,12 +44,6 @@ add_executable(test_freerdp
 	test_ntlm.h
 	test_license.c
 	test_license.h
-	test_stream.c
-	test_stream.h
-	test_utils.c
-	test_utils.h
-	test_channels.c
-	test_channels.h
 	test_cliprdr.c
 	test_cliprdr.h
 	test_drdynvc.c
@@ -86,4 +74,5 @@ target_link_libraries(test_freerdp freerdp-crypto)
 
 target_link_libraries(test_freerdp winpr-sspi)
 
-add_test(CUnitTests ${EXECUTABLE_OUTPUT_PATH}/test_freerdp)
+add_test(CUnitTests ${CMAKE_SOURCE_DIR}/cunit/test_freerdp)
+

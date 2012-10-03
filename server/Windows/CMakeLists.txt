@@ -15,9 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "wfreerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS")
+
 include_directories(.)
 
-set(WFREERDP_SERVER_SRCS
+set(${MODULE_PREFIX}_SRCS
 	wf_update.c
 	wf_update.h
 	wf_dxgi.c
@@ -37,37 +40,39 @@ set(WFREERDP_SERVER_SRCS
 	wf_info.h)
 
 if(WITH_SERVER_INTERFACE)
-	add_library(wfreerdp-server ${WFREERDP_SERVER_SRCS})
-	set_target_properties(wfreerdp-server PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 else()
-	set(WFREERDP_SERVER_SRCS ${WFREERDP_SERVER_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
-	add_executable(wfreerdp-server ${WFREERDP_SERVER_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
+	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
 if(WITH_WIN8)		
-	set(WFREERDP_SERVER_LIBS d3d11 dxgi dxguid)
+	set(${MODULE_PREFIX}_LIBS d3d11 dxgi dxguid)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	set(WFREERDP_SERVER_LIBS ${WFREERDP_SERVER_LIBS} freerdp)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
 
-	set(WFREERDP_SERVER_LIBS ${WFREERDP_SERVER_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
 		freerdp-utils
 		freerdp-codec
 		freerdp-channels)
 endif()
 
-target_link_libraries(wfreerdp-server ${WFREERDP_SERVER_LIBS})
+target_link_libraries(wfreerdp-server ${${MODULE_PREFIX}_LIBS})
 
 
 if(WITH_SERVER_INTERFACE)
-	install(TARGETS wfreerdp-server DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 else()
-	install(TARGETS wfreerdp-server DESTINATION ${CMAKE_INSTALL_BINDIR})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 if(WITH_SERVER_INTERFACE)
 	add_subdirectory(cli)
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Windows")

@@ -1,8 +1,6 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # libfreerdp-core cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "freerdp-core")
+set(MODULE_PREFIX "FREERDP_CORE")
+
 add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-set(FREERDP_CORE_SRCS
+set(${MODULE_PREFIX}_SRCS
 	activation.c
 	activation.h
 	extension.c
@@ -92,42 +93,44 @@ set(FREERDP_CORE_SRCS
 	peer.h)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp-core OBJECT ${FREERDP_CORE_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(freerdp-core ${FREERDP_CORE_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(freerdp-core PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_CORE_LIBS winpr)
+	set(${MODULE_PREFIX}_LIBS winpr)
 else()
-	set(FREERDP_CORE_LIBS
+	set(${MODULE_PREFIX}_LIBS
 		winpr-utils
 		winpr-sspi)
 	
 	if(NOT WIN32)
-		set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} winpr-registry)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-registry)
 	endif()
 endif()
 
 if(WIN32)
-	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ws2_32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
 else()
-	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${ZLIB_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
-set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS} ${OPENSSL_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_LIBRARIES})
 
 if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_CORE_LIBS} PARENT_SCOPE)
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(FREERDP_CORE_LIBS ${FREERDP_CORE_LIBS}
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-utils
 		freerdp-codec
 		freerdp-crypto
 		freerdp-locale)
 		
-	target_link_libraries(freerdp-core ${FREERDP_CORE_LIBS})
-	install(TARGETS freerdp-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")

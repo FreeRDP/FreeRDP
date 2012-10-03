@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol client.
- * statvfs emulation für windows
+ * statvfs emulation for windows
  *
  * Copyright 2012 Gerald Richter
  *
@@ -17,10 +17,13 @@
  * limitations under the License.
  */
 
+#ifndef RDPDR_DISK_STATVFS_H
+#define RDPDR_DISK_STATVFS_H
+
 #ifdef __cplusplus
 extern "C" { 
 #endif 
- 
+
 typedef unsigned long long fsblkcnt_t;
 typedef unsigned long long fsfilcnt_t;
 
@@ -38,9 +41,10 @@ struct statvfs {
     unsigned long  f_namemax;  /* maximum filename length */
 };
 
-
 int statvfs(const char *path, struct statvfs *buf);
+
 #ifdef __cplusplus
 }
 #endif 
- 
+
+#endif /* RDPDR_DISK_STATVFS_H */

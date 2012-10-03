@@ -654,8 +654,10 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *na
 	int i, length ;
 
 #ifdef WIN32
-	// We cannot enter pathes like c:\ because : is an arg separator
-	// thus, pathes are entered as c+\ and the + is substitutet here
+	/*
+	 * We cannot enter paths like c:\ because : is an arg separator
+	 * thus, paths are entered as c+\ and the + is substituted here
+	 */
 	if ( path[1] == '+' )
 	{
 		if ( (path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z') )
@@ -696,8 +698,6 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char *na
 
 }
 
-
-
 #ifdef WITH_STATIC_PLUGINS
 int disk_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #else
@@ -706,7 +706,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i ;
 #ifdef WIN32
 	char devlist[512], buf[512];
 	char *dev;
@@ -719,8 +718,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #ifndef WIN32
         disk_register_disk_path(pEntryPoints, name, path);
 #else
-        // Special case: path[0] == '*' -> export all drives
-	// Special case: path[0] == '%' -> user home dir
+        /* Special case: path[0] == '*' -> export all drives */
+	/* Special case: path[0] == '%' -> user home dir */
 	if( path[0] == '%' )
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
@@ -728,19 +727,23 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 	else if( path[0] == '*' )
 	{
-		// Enumerate all devices:
-		GetLogicalDriveStringsA(sizeof(devlist)-1, devlist);
-		for(dev=devlist, i=0; *dev; dev += 4, i++ )
+		int i;
+
+		/* Enumerate all devices: */
+		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
+
+		for (dev = devlist, i = 0; *dev; dev += 4, i++)
 		{
-			if( *dev > 'B')
-                        {  // Supress disk drives A and B to avoid pesty messages
-			    _snprintf(buf, sizeof(buf)-4, "%s", name);
-			    len=strlen(buf);
-			    buf[len] = '_';
-			    buf[len+1] = dev[0];
-			    buf[len+2] = 0;
-			    buf[len+3] = 0;
-			    disk_register_disk_path(pEntryPoints, xstrdup(buf), xstrdup(dev));
+			if (*dev > 'B')
+                        {
+				/* Suppress disk drives A and B to avoid pesty messages */
+				_snprintf(buf, sizeof(buf) - 4, "%s", name);
+				len = strlen(buf);
+				buf[len] = '_';
+				buf[len + 1] = dev[0];
+				buf[len + 2] = 0;
+				buf[len + 3] = 0;
+				disk_register_disk_path(pEntryPoints, xstrdup(buf), xstrdup(dev));
 			}
 		}
 	}
@@ -748,9 +751,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
         {
 		disk_register_disk_path(pEntryPoints, name, path);
 	}
-
 #endif
 	
         return 0;
  }
-

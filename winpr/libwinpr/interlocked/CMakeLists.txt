@@ -15,20 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_INTERLOCKED_SRCS
+set(MODULE_NAME "winpr-interlocked")
+set(MODULE_PREFIX "WINPR_INTERLOCKED")
+
+set(${MODULE_PREFIX}_SRCS
 	interlocked.c)
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-interlocked OBJECT ${WINPR_INTERLOCKED_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
-	add_library(winpr-interlocked ${WINPR_INTERLOCKED_SRCS})
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
-set_target_properties(winpr-interlocked PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
 
 else()
-	install(TARGETS winpr-interlocked DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} winpr-crt)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

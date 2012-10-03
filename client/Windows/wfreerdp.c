@@ -540,7 +540,7 @@ int wfreerdp_run(freerdp* instance)
 			error_report("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_shall_disconnect(instance))
+		if (freerdp_shall_disconnect(instance))	
 		{
 			break;
 		}

@@ -21,10 +21,16 @@ set(MODULE_NAME "disk")
 set(MODULE_PREFIX "CHANNEL_DEVICE_DISK")
 
 set(${MODULE_PREFIX}_SRCS
-	statvfs.c
 	disk_file.c
 	disk_file.h
 	disk_main.c)
+	
+if(WIN32)
+	set(${MODULE_PREFIX}_SRCS
+		statvfs.c
+		statvfs.h
+		dirent.h)
+endif()
 
 include_directories(..)
 

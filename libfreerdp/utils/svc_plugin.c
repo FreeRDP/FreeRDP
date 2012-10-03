@@ -412,8 +412,11 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 
 	DEBUG_SVC("length %d", (int) stream_get_length(data_out));
 
-	error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->priv->open_handle,
-		stream_get_data(data_out), stream_get_length(data_out), data_out);
+	if (!plugin || !plugin->priv)
+		error = CHANNEL_RC_BAD_INIT_HANDLE;
+	else
+		error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->priv->open_handle,
+			stream_get_data(data_out), stream_get_length(data_out), data_out);
 
 	if (error != CHANNEL_RC_OK)
 	{
@@ -437,3 +440,4 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 	return error;
 }
+

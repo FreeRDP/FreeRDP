@@ -28,12 +28,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <strings.h>
-#include <semaphore.h>
 #include <pthread.h>
+#include <semaphore.h>
 
+#define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
 #include <PCSC/reader.h>
 #include <PCSC/winscard.h>
+#undef BOOL
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>
@@ -1368,10 +1370,15 @@ boolean scard_async_op(IRP* irp)
 
 void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 {
-	uint32 output_len, input_len, ioctl_code;
-	uint32 stream_len, result;
-	uint32 pos, pad_len;
-	uint32 irp_result_pos, output_len_pos, result_pos;
+	uint32 pos;
+	uint32 result;
+	uint32 result_pos;
+	uint32 output_len;
+	uint32 input_len;
+	uint32 ioctl_code;
+	uint32 stream_len;
+	uint32 irp_result_pos;
+	uint32 output_len_pos;
 	const uint32 header_lengths = 16;	/* MS-RPCE, Sections 2.2.6.1
 						 * and 2.2.6.2.
 						 */

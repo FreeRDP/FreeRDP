@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(WINPR_SSPI_NTLM_SRCS
+set(MODULE_NAME "winpr-sspi")
+set(MODULE_PREFIX "WINPR_SSPI")
+
+set(${MODULE_PREFIX}_NTLM_SRCS
 	NTLM/ntlm_av_pairs.c
 	NTLM/ntlm_av_pairs.h
 	NTLM/ntlm_compute.c
@@ -25,68 +28,74 @@ set(WINPR_SSPI_NTLM_SRCS
 	NTLM/ntlm.c
 	NTLM/ntlm.h)
 
-set(WINPR_SSPI_NEGOTIATE_SRCS
+set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
 
-set(WINPR_SSPI_SCHANNEL_SRCS
+set(${MODULE_PREFIX}_SCHANNEL_SRCS
 	Schannel/schannel.c
 	Schannel/schannel.h)
 
-set(WINPR_SSPI_CREDSSP_SRCS
+set(${MODULE_PREFIX}_CREDSSP_SRCS
 	CredSSP/credssp.c)
 
-set(WINPR_SSPI_SRCS
-	${WINPR_SSPI_CREDSSP_SRCS}
+set(${MODULE_PREFIX}_SRCS
+	${${MODULE_PREFIX}_CREDSSP_SRCS}
 	sspi.c
 	sspi.h)
 
 if(NOT WITH_NATIVE_SSPI)
-	set(WINPR_SSPI_SRCS
-		${WINPR_SSPI_NTLM_SRCS}
-		${WINPR_SSPI_KERBEROS_SRCS}
-		${WINPR_SSPI_NEGOTIATE_SRCS}
-		${WINPR_SSPI_SCHANNEL_SRCS}
-		${WINPR_SSPI_SRCS})
+	set(${MODULE_PREFIX}_SRCS
+		${${MODULE_PREFIX}_NTLM_SRCS}
+		${${MODULE_PREFIX}_KERBEROS_SRCS}
+		${${MODULE_PREFIX}_NEGOTIATE_SRCS}
+		${${MODULE_PREFIX}_SCHANNEL_SRCS}
+		${${MODULE_PREFIX}_SRCS})
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr-sspi OBJECT ${WINPR_SSPI_SRCS})
+	add_library(${MODULE_NAME} OBJECT ${WINPR_SSPI_SRCS})
 else()
-	add_library(winpr-sspi ${WINPR_SSPI_SRCS})
+	add_library(${MODULE_NAME} ${WINPR_SSPI_SRCS})
 endif()
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-set_target_properties(winpr-sspi PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-set(WINPR_SSPI_LIBS
+set(${MODULE_PREFIX}_LIBS
 	${ZLIB_LIBRARIES}
 	${OPENSSL_LIBRARIES})
 
 if(WIN32)
-	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} ws2_32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
 else()
-	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} ${ZLIB_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} winpr)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 else()
 	if (NOT WIN32)
-		set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS}
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 			winpr-crt
 			winpr-sysinfo
 			winpr-registry)
 	endif()
 	
-	set(WINPR_SSPI_LIBS ${WINPR_SSPI_LIBS} winpr-utils)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-utils)
 endif()
 
 if(WITH_MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${WINPR_SSPI_LIBS} PARENT_SCOPE)
+	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	target_link_libraries(winpr-sspi ${WINPR_SSPI_LIBS})
-	install(TARGETS winpr-sspi DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
 endif()

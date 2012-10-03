@@ -21,7 +21,29 @@
 #define WINPR_PATH_H
 
 #include <winpr/winpr.h>
+#include <winpr/tchar.h>
+#include <winpr/error.h>
 #include <winpr/wtypes.h>
+
+//#define HAVE_PATHCCH_H	1
+
+#ifdef HAVE_PATHCCH_H
+
+#include <Pathcch.h>
+
+#else
+
+#define PATHCCH_ALLOW_LONG_PATHS	0x00000001 /* Allow building of \\?\ paths if longer than MAX_PATH */
+
+#define VOLUME_PREFIX			_T("\\\\?\\Volume")
+#define VOLUME_PREFIX_LEN		((sizeof(VOLUME_PREFIX) / sizeof(TCHAR)) - 1)
+
+/*
+ * Maximum number of characters we support using the "\\?\" syntax
+ * (0x7FFF + 1 for NULL terminator)
+ */
+
+#define PATHCCH_MAX_CCH			0x8000
 
 WINPR_API HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath);
@@ -135,6 +157,8 @@ WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 #define PathCchStripToRoot		PathCchStripToRootA
 #define PathCchStripPrefix		PathCchStripPrefixA
 #define PathCchRemoveFileSpec		PathCchRemoveFileSpecA
+#endif
+
 #endif
 
 #endif /* WINPR_PATH_H */

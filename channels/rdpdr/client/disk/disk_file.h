@@ -25,12 +25,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "dirent.h"
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
+#include "dirent.h"
 #include "statvfs.h"
 #else
+#include <dirent.h>
 #include <sys/statvfs.h>
 #endif
 

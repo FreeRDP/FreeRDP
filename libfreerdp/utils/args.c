@@ -92,7 +92,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 {
 	int t;
 	char* p;
-	char* cp;
 	int i, j;
 	int index = 1;
 	int num_extensions = 0;
@@ -165,7 +164,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --no-salted-checksum: disable salted checksums with Standard RDP encryption\n"
 				"  --pcid: preconnection id\n"
 				"  --pcb: preconnection blob\n"
-                                "  --proxy: <host>:<port> connect via http proxy\n"
 				"  --version: print version information\n"
 				"\n", argv[0]);
 			return FREERDP_ARGS_PARSE_HELP; /* TODO: What is the correct return? */
@@ -821,7 +819,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--proxy", argv[index]) == 0)
 		{
-			index++;
+			char * cp ;
+                
+                        index++;
 			if (index == argc)
 			{
 				error_report("missing proxy\n");
