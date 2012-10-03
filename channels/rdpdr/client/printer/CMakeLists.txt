@@ -44,9 +44,9 @@ add_library(printer ${PRINTER_SRCS})
 set_target_properties(printer PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(printer freerdp)
+	target_link_libraries(printer freerdp winpr)
 else()
-	target_link_libraries(printer freerdp-utils)
+	target_link_libraries(printer freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
 
 if(WITH_CUPS)

@@ -41,8 +41,10 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/interlocked.h>
 
 #include "rdpdr_constants.h"
 #include "rdpdr_types.h"
@@ -57,14 +59,12 @@ struct _DISK_DEVICE
 	char* path;
 	LIST* files;
 
-	HANDLE mutex;
 	HANDLE thread;
-	LIST* irp_list;
 	HANDLE irpEvent;
 	HANDLE stopEvent;
+	PSLIST_HEADER pIrpList;
 
 	DEVMAN* devman;
-	pcRegisterDevice UnregisterDevice;
 };
 
 static uint32 disk_map_posix_err(int fs_errno)
@@ -72,6 +72,7 @@ static uint32 disk_map_posix_err(int fs_errno)
 	uint32 rc;
 
 	/* try to return NTSTATUS version of error code */
+
 	switch (fs_errno)
 	{
 		case EPERM:
@@ -113,6 +114,7 @@ static DISK_FILE* disk_get_file_by_id(DISK_DEVICE* disk, uint32 id)
 		if (file->id == id)
 			return file;
 	}
+
 	return NULL;
 }
 
@@ -263,7 +265,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, (int)Length);
+		stream_check_size(irp->output, (int) Length);
 		stream_write(irp->output, buffer, Length);
 	}
 
@@ -467,11 +469,11 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 
 static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 {
+	char* path;
 	DISK_FILE* file;
-	uint32 FsInformationClass;
 	uint8 InitialQuery;
 	uint32 PathLength;
-	char* path;
+	uint32 FsInformationClass;
 
 	stream_read_uint32(irp->input, FsInformationClass);
 	stream_read_uint8(irp->input, InitialQuery);
@@ -582,11 +584,7 @@ static void disk_process_irp_list(DISK_DEVICE* disk)
 		if (WaitForSingleObject(disk->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		WaitForSingleObject(disk->mutex, INFINITE);
-
-		irp = (IRP*) list_dequeue(disk->irp_list);
-
-		ReleaseMutex(disk->mutex);
+		irp = (IRP*) InterlockedPopEntrySList(disk->pIrpList);
 
 		if (irp == NULL)
 			break;
@@ -617,9 +615,7 @@ static void disk_irp_request(DEVICE* device, IRP* irp)
 {
 	DISK_DEVICE* disk = (DISK_DEVICE*) device;
 
-	WaitForSingleObject(disk->mutex, INFINITE);
-	list_enqueue(disk->irp_list, irp);
-	ReleaseMutex(disk->mutex);
+	InterlockedPushEntrySList(disk->pIrpList, &(irp->ItemEntry));
 
 	SetEvent(disk->irpEvent);
 }
@@ -633,12 +629,11 @@ static void disk_free(DEVICE* device)
 	SetEvent(disk->stopEvent);
 	CloseHandle(disk->thread);
 	CloseHandle(disk->irpEvent);
-	CloseHandle(disk->mutex);
 
-	while ((irp = (IRP*) list_dequeue(disk->irp_list)) != NULL)
+	while ((irp = (IRP*) InterlockedPopEntrySList(disk->pIrpList)) != NULL)
 		irp->Discard(irp);
 
-	list_free(disk->irp_list);
+	_aligned_free(disk->pIrpList);
 
 	while ((file = (DISK_FILE*) list_dequeue(disk->files)) != NULL)
 		disk_file_free(file);
@@ -646,7 +641,6 @@ static void disk_free(DEVICE* device)
 	list_free(disk->files);
 	xfree(disk);
 }
-
 
 void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
 {
@@ -685,8 +679,9 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* na
 		disk->path = path;
 		disk->files = list_new();
 
-		disk->irp_list = list_new();
-		disk->mutex = CreateMutex(NULL, FALSE, NULL);
+		disk->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(disk->pIrpList);
+
 		disk->irpEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		disk->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		disk->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) disk_thread_func, disk, CREATE_SUSPENDED, NULL);

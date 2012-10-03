@@ -175,8 +175,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 		 * 3. other devices are sent only after user_loggedon
 		 */
 		if (rdpdr->versionMinor == 0x0005 ||
-			device->type == RDPDR_DTYP_SMARTCARD ||
-			user_loggedon)
+			device->type == RDPDR_DTYP_SMARTCARD || user_loggedon)
 		{
 			data_len = (device->data == NULL ? 0 : stream_get_length(device->data));
 			stream_check_size(data_out, 20 + data_len);

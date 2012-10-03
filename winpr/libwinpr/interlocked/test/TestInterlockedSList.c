@@ -8,7 +8,7 @@
 typedef struct _PROGRAM_ITEM
 {
 	SLIST_ENTRY ItemEntry;
-	ULONG Signature; 
+	ULONG Signature;
 } PROGRAM_ITEM, *PPROGRAM_ITEM;
 
 int TestInterlockedSList(int argc, char* argv[])
