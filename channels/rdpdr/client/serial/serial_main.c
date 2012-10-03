@@ -85,7 +85,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	uint32 FileId;
 
 	stream_seek(irp->input, 28); /* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
-								 /* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
+					/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_uint32(irp->input, PathLength);
 
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
@@ -162,7 +162,8 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*)xmalloc(Length);
+		buffer = (uint8*) xmalloc(Length);
+
 		if (!serial_tty_read(tty, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -318,7 +319,7 @@ static void serial_process_irp_list(SERIAL_DEVICE* serial)
 			break;
 
 		freerdp_thread_lock(serial->thread);
-		irp = (IRP*)list_dequeue(serial->irp_list);
+		irp = (IRP*) list_dequeue(serial->irp_list);
 		freerdp_thread_unlock(serial->thread);
 
 		if (irp == NULL)
@@ -375,20 +376,22 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 
 static void serial_free(DEVICE* device)
 {
-	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)device;
 	IRP* irp;
+	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	DEBUG_SVC("freeing device");
 
 	freerdp_thread_stop(serial->thread);
 	freerdp_thread_free(serial->thread);
 
-	while ((irp = (IRP*)list_dequeue(serial->irp_list)) != NULL)
+	while ((irp = (IRP*) list_dequeue(serial->irp_list)) != NULL)
 		irp->Discard(irp);
+
 	list_free(serial->irp_list);
 
-	while ((irp = (IRP*)list_dequeue(serial->pending_irps)) != NULL)
+	while ((irp = (IRP*) list_dequeue(serial->pending_irps)) != NULL)
 		irp->Discard(irp);
+
 	list_free(serial->pending_irps);
 
 	xfree(serial);
@@ -396,13 +399,13 @@ static void serial_free(DEVICE* device)
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	SERIAL_DEVICE* serial;
+	int i, len;
 	char* name;
 	char* path;
-	int i, len;
+	SERIAL_DEVICE* serial;
 
-	name = (char*)pEntryPoints->plugin_data->data[1];
-	path = (char*)pEntryPoints->plugin_data->data[2];
+	name = (char*) pEntryPoints->plugin_data->data[1];
+	path = (char*) pEntryPoints->plugin_data->data[2];
 
 	if (name[0] && path[0])
 	{
@@ -415,6 +418,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		len = strlen(name);
 		serial->device.data = stream_new(len + 1);
+
 		for (i = 0; i <= len; i++)
 			stream_write_uint8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
@@ -461,12 +465,13 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, uint32 file_id, uint32
 			return;
 	}
 
-	irp = (IRP*)list_peek(serial->pending_irps);
+	irp = (IRP*) list_peek(serial->pending_irps);
+
 	while (irp)
 	{
 		if (irp->FileId != file_id || irp->MajorFunction != major)
 		{
-			irp = (IRP*)list_next(serial->pending_irps, irp);
+			irp = (IRP*) list_next(serial->pending_irps, irp);
 			continue;
 		}
 
@@ -494,7 +499,8 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
-	irp = (IRP*)list_peek(serial->pending_irps);
+	irp = (IRP*) list_peek(serial->pending_irps);
+
 	while (irp)
 	{
 		prev = NULL;
@@ -510,7 +516,7 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 				irp->Complete(irp);
 
 				prev = irp;
-				irp = (IRP*)list_next(serial->pending_irps, irp);
+				irp = (IRP*) list_next(serial->pending_irps, irp);
 				list_remove(serial->pending_irps, prev);
 
 				wait_obj_set(serial->in_event);
@@ -518,7 +524,7 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 		}
 
 		if (!prev)
-			irp = (IRP*)list_next(serial->pending_irps, irp);
+			irp = (IRP*) list_next(serial->pending_irps, irp);
 	}
 
 	DEBUG_SVC("[out] pending size %d", list_size(serial->pending_irps));
@@ -537,8 +543,8 @@ void serial_get_timeouts(SERIAL_DEVICE* serial, IRP* irp, uint32* timeout, uint3
 	DEBUG_SVC("length read %u", Length);
 
 	tty = serial->tty;
-	*timeout = (tty->read_total_timeout_multiplier * Length) +
-		tty->read_total_timeout_constant;
+
+	*timeout = (tty->read_total_timeout_multiplier * Length) + tty->read_total_timeout_constant;
 	*interval_timeout = tty->read_interval_timeout;
 
 	DEBUG_SVC("timeouts %u %u", *timeout, *interval_timeout);
@@ -554,37 +560,37 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 	switch (irp->MajorFunction)
 	{
-	case IRP_MJ_WRITE:
-		DEBUG_SVC("handling IRP_MJ_WRITE");
-		break;
+		case IRP_MJ_WRITE:
+			DEBUG_SVC("handling IRP_MJ_WRITE");
+			break;
 
-	case IRP_MJ_READ:
-		DEBUG_SVC("handling IRP_MJ_READ");
+		case IRP_MJ_READ:
+			DEBUG_SVC("handling IRP_MJ_READ");
 
-		serial_get_timeouts(serial, irp, &timeout, &itv_timeout);
+			serial_get_timeouts(serial, irp, &timeout, &itv_timeout);
 
-		/* Check if io request timeout is smaller than current (but not 0). */
-		if (timeout && (serial->select_timeout == 0 || timeout < serial->select_timeout))
-		{
-			serial->select_timeout = timeout;
-			serial->tv.tv_sec = serial->select_timeout / 1000;
-			serial->tv.tv_usec = (serial->select_timeout % 1000) * 1000;
-			serial->timeout_id = tty->id;
-		}
-		if (itv_timeout && (serial->select_timeout == 0 || itv_timeout < serial->select_timeout))
-		{
-			serial->select_timeout = itv_timeout;
-			serial->tv.tv_sec = serial->select_timeout / 1000;
-			serial->tv.tv_usec = (serial->select_timeout % 1000) * 1000;
-			serial->timeout_id = tty->id;
-		}
-		DEBUG_SVC("select_timeout %u, tv_sec %lu tv_usec %lu, timeout_id %u",
-			serial->select_timeout, serial->tv.tv_sec, serial->tv.tv_usec, serial->timeout_id);
-		break;
+			/* Check if io request timeout is smaller than current (but not 0). */
+			if (timeout && (serial->select_timeout == 0 || timeout < serial->select_timeout))
+			{
+				serial->select_timeout = timeout;
+				serial->tv.tv_sec = serial->select_timeout / 1000;
+				serial->tv.tv_usec = (serial->select_timeout % 1000) * 1000;
+				serial->timeout_id = tty->id;
+			}
+			if (itv_timeout && (serial->select_timeout == 0 || itv_timeout < serial->select_timeout))
+			{
+				serial->select_timeout = itv_timeout;
+				serial->tv.tv_sec = serial->select_timeout / 1000;
+				serial->tv.tv_usec = (serial->select_timeout % 1000) * 1000;
+				serial->timeout_id = tty->id;
+			}
+			DEBUG_SVC("select_timeout %u, tv_sec %lu tv_usec %lu, timeout_id %u",
+				serial->select_timeout, serial->tv.tv_sec, serial->tv.tv_usec, serial->timeout_id);
+			break;
 
-	default:
-		DEBUG_SVC("no need to handle %d", irp->MajorFunction);
-		return;
+		default:
+			DEBUG_SVC("no need to handle %d", irp->MajorFunction);
+			return;
 	}
 
 	irp->IoStatus = STATUS_PENDING;
@@ -604,6 +610,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 
 	/* scan every pending */
 	irp = list_peek(serial->pending_irps);
+
 	while (irp)
 	{
 		DEBUG_SVC("MajorFunction %u", irp->MajorFunction);
@@ -643,7 +650,8 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		}
 
 		prev = irp;
-		irp = (IRP*)list_next(serial->pending_irps, irp);
+		irp = (IRP*) list_next(serial->pending_irps, irp);
+
 		if (prev->IoStatus == STATUS_SUCCESS)
 		{
 			list_remove(serial->pending_irps, prev);
@@ -654,14 +662,15 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 
 static void serial_set_fds(SERIAL_DEVICE* serial)
 {
-	fd_set* fds;
 	IRP* irp;
+	fd_set* fds;
 	SERIAL_TTY* tty;
 
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
 	tty = serial->tty;
-	irp = (IRP*)list_peek(serial->pending_irps);
+	irp = (IRP*) list_peek(serial->pending_irps);
+
 	while (irp)
 	{
 		fds = NULL;
@@ -682,7 +691,8 @@ static void serial_set_fds(SERIAL_DEVICE* serial)
 			FD_SET(tty->fd, fds);
 			serial->nfds = MAX(serial->nfds, tty->fd);
 		}
-		irp = (IRP*)list_next(serial->pending_irps, irp);
+
+		irp = (IRP*) list_next(serial->pending_irps, irp);
 	}
 }
 
