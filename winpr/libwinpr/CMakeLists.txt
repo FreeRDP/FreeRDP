@@ -25,59 +25,43 @@ if(WITH_MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(path)
-add_subdirectory(io)
-add_subdirectory(file)
-add_subdirectory(error)
-add_subdirectory(environment)
-add_subdirectory(interlocked)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(thread)
-add_subdirectory(sysinfo)
-add_subdirectory(bcrypt)
-add_subdirectory(dsparse)
-add_subdirectory(asn1)
-add_subdirectory(rpc)
-add_subdirectory(sspicli)
-add_subdirectory(sspi)
-add_subdirectory(registry)
-add_subdirectory(library)
-add_subdirectory(timezone)
-add_subdirectory(winsock)
-add_subdirectory(winhttp)
+set(WINPR_MODULES
+	crt
+	utils
+	heap
+	path
+	io
+	file
+	error
+	environment
+	interlocked
+	handle
+	synch
+	thread
+	sysinfo
+	bcrypt
+	dsparse
+	asn1
+	rpc
+	sspicli
+	sspi
+	registry
+	library
+	timezone
+	winsock)
+
+foreach(WINPR_MODULE ${WINPR_MODULES})
+	add_subdirectory(${WINPR_MODULE})
+endforeach()
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr
-		$<TARGET_OBJECTS:winpr-crt>
-		$<TARGET_OBJECTS:winpr-utils>
-		$<TARGET_OBJECTS:winpr-heap>
-		$<TARGET_OBJECTS:winpr-path>
-		$<TARGET_OBJECTS:winpr-io>
-		$<TARGET_OBJECTS:winpr-file>
-		$<TARGET_OBJECTS:winpr-error>
-		$<TARGET_OBJECTS:winpr-environment>
-		$<TARGET_OBJECTS:winpr-interlocked>
-		$<TARGET_OBJECTS:winpr-handle>
-		$<TARGET_OBJECTS:winpr-synch>
-		$<TARGET_OBJECTS:winpr-thread>
-		$<TARGET_OBJECTS:winpr-sysinfo>
-		$<TARGET_OBJECTS:winpr-bcrypt>
-		$<TARGET_OBJECTS:winpr-dsparse>
-		$<TARGET_OBJECTS:winpr-asn1>
-		$<TARGET_OBJECTS:winpr-rpc>
-		$<TARGET_OBJECTS:winpr-sspicli>
-		$<TARGET_OBJECTS:winpr-sspi>
-		$<TARGET_OBJECTS:winpr-registry>
-		$<TARGET_OBJECTS:winpr-library>
-		$<TARGET_OBJECTS:winpr-timezone>
-		$<TARGET_OBJECTS:winpr-winsock>
-		$<TARGET_OBJECTS:winpr-winhttp>)
-	
-	set_target_properties(winpr PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+	foreach(WINPR_MODULE ${WINPR_MODULES})
+		set(WINPR_OBJECTS ${WINPR_OBJECTS} "$<TARGET_OBJECTS:winpr-${WINPR_MODULE}>")
+	endforeach()
+
+	add_library(winpr ${WINPR_OBJECTS})
+	set_target_properties(winpr PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 	target_link_libraries(winpr ${WINPR_LIBS})
 	install(TARGETS winpr DESTINATION ${CMAKE_INSTALL_LIBDIR})

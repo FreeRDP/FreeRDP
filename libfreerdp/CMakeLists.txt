@@ -19,28 +19,28 @@ if(WITH_MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-add_subdirectory(utils)
-add_subdirectory(gdi)
-add_subdirectory(rail)
-add_subdirectory(cache)
-add_subdirectory(codec)
-add_subdirectory(crypto)
-add_subdirectory(channels)
-add_subdirectory(locale)
-add_subdirectory(core)
+set(FREERDP_MODULES
+	utils
+	gdi
+	rail
+	cache
+	codec
+	crypto
+	channels
+	locale
+	core)
+
+foreach(FREERDP_MODULE ${FREERDP_MODULES})
+	add_subdirectory(${FREERDP_MODULE})
+endforeach()
 
 if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp
-		$<TARGET_OBJECTS:freerdp-utils>
-		$<TARGET_OBJECTS:freerdp-gdi>
-		$<TARGET_OBJECTS:freerdp-rail>
-		$<TARGET_OBJECTS:freerdp-cache>
-		$<TARGET_OBJECTS:freerdp-codec>
-		$<TARGET_OBJECTS:freerdp-crypto>
-		$<TARGET_OBJECTS:freerdp-channels>
-		$<TARGET_OBJECTS:freerdp-locale>
-		$<TARGET_OBJECTS:freerdp-core>)
 	
+	foreach(FREERDP_MODULE ${FREERDP_MODULES})
+		set(FREERDP_OBJECTS ${FREERDP_OBJECTS} "$<TARGET_OBJECTS:freerdp-${FREERDP_MODULE}>")
+	endforeach()
+
+	add_library(freerdp ${FREERDP_OBJECTS})
 	set_target_properties(freerdp PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 	target_link_libraries(freerdp ${FREERDP_LIBS})
