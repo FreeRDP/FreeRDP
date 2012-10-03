@@ -29,7 +29,6 @@ set(${MODULE_PREFIX}_SRCS
 	hexdump.c
 	list.c
 	file.c
-	msusb.c
 	load_plugin.c
 	memory.c
 	passphrase.c
@@ -48,6 +47,10 @@ set(${MODULE_PREFIX}_SRCS
 	uds.c
 	unicode.c
 	wait_obj.c)
+
+if(NOT WIN32)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)
+endif()
 
 if(WITH_MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
