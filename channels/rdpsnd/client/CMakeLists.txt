@@ -17,20 +17,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_SRCS
+set(MODULE_NAME "rdpsnd")
+set(MODULE_PREFIX "CHANNEL_RDPSND_CLIENT")
+
+set(${MODULE_PREFIX}_SRCS
 	rdpsnd_main.c
 	rdpsnd_main.h)
 
-add_library(rdpsnd ${RDPSND_SRCS})
-set_target_properties(rdpsnd PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${RDPSND_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(rdpsnd freerdp)
+	target_link_libraries(${MODULE_NAME} freerdp)
 else()
-	target_link_libraries(rdpsnd freerdp-utils)
+	target_link_libraries(${MODULE_NAME} freerdp-utils)
 endif()
 
-install(TARGETS rdpsnd DESTINATION ${FREERDP_PLUGIN_PATH})
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 if(WITH_ALSA)
 	add_subdirectory(alsa)
@@ -41,6 +44,5 @@ if(WITH_PULSEAUDIO)
 endif()
 
 if(WITH_MACAUDIO)
-	add_subdirectory(mac_audio)
+	add_subdirectory(MacAudio)
 endif()
-

@@ -16,27 +16,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(URBDRC_SRCS
-	searchman.c 
-	searchman.h 
+set(MODULE_NAME "urbdrc")
+set(MODULE_PREFIX "CHANNEL_URBDRC_CLIENT")
+
+set(${MODULE_PREFIX}_SRCS
+	searchman.c
+	searchman.h
 	isoch_queue.c
 	isoch_queue.h
-	data_transfer.c 
-	data_transfer.h 
-	urbdrc_main.c 
-	urbdrc_main.h 
+	data_transfer.c
+	data_transfer.h
+	urbdrc_main.c
+	urbdrc_main.h
 	urbdrc_types.h)
 
 include_directories(..)
 
-add_library(urbdrc ${URBDRC_SRCS})
-set_target_properties(urbdrc PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${URBDRC_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-target_link_libraries(urbdrc udev)  
-target_link_libraries(urbdrc dbus-glib-1)  
-target_link_libraries(urbdrc pthread)   
-target_link_libraries(urbdrc uuid)  
-target_link_libraries(urbdrc freerdp-utils)
+set(${MODULE_PREFIX}_LIBS
+	dbus-glib-1
+	udev
+	uuid)
 
-install(TARGETS urbdrc DESTINATION ${FREERDP_PLUGIN_PATH})
+if(WITH_MONOLITHIC_BUILD)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+	target_link_libraries(${MODULE_NAME} ${MODULE_PREFIX}_LIBS)
+else()
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-utils)
+	target_link_libraries(${MODULE_NAME} ${MODULE_PREFIX}_LIBS)
+endif()
 
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

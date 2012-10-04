@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "rdpsnd")
 set(MODULE_PREFIX "CHANNEL_RDPSND_SERVER")
 
 set(${MODULE_PREFIX}_SRCS
@@ -27,3 +28,4 @@ else()
 	set(${MODULE_PREFIX}_LIBS freerdp-utils PARENT_SCOPE)
 endif()
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Server")

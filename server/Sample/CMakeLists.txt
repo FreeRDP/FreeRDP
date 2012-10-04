@@ -26,14 +26,14 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 if(WITH_MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME}
 		freerdp
-		freerdp-server)
+		freerdp-channels-server)
 else()
 	target_link_libraries(${MODULE_NAME}
 		freerdp-core
 		freerdp-utils
 		freerdp-codec
 		freerdp-channels
-		freerdp-server-channels)
+		freerdp-channels-server)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")

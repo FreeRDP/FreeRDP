@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "winpr")
+set(MODULE_PREFIX "WINPR")
+
 if (APPLE)
 	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
 	# a lot of undefined symbols in use, use this hack until they're filled out.
@@ -30,25 +33,28 @@ file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
 foreach(FILEPATH ${FILEPATHS})
 	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" WINPR_MODULE ${FILEPATH})
-		set(WINPR_MODULES ${WINPR_MODULES} ${WINPR_MODULE})
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" ${MODULE_PREFIX}_SUBMODULE ${FILEPATH})
+		set(${MODULE_PREFIX}_SUBMODULES ${${MODULE_PREFIX}_SUBMODULES} ${${MODULE_PREFIX}_SUBMODULE})
 	endif()
 endforeach(FILEPATH)
 
-foreach(WINPR_MODULE ${WINPR_MODULES})
-	add_subdirectory(${WINPR_MODULE})
+foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
+	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
 if(WITH_MONOLITHIC_BUILD)
 
-	foreach(WINPR_MODULE ${WINPR_MODULES})
-		set(WINPR_OBJECTS ${WINPR_OBJECTS} "$<TARGET_OBJECTS:winpr-${WINPR_MODULE}>")
+	foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
+		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_NAME}-${${MODULE_PREFIX}_SUBMODULE}>")
 	endforeach()
 
-	add_library(winpr ${WINPR_OBJECTS})
-	set_target_properties(winpr PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_OBJECTS})
 
-	target_link_libraries(winpr ${WINPR_LIBS})
-	install(TARGETS winpr DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+
+	target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")
 endif()
-

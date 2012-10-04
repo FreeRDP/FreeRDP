@@ -15,11 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "freerdp")
+set(MODULE_PREFIX "FREERDP")
+
 if(WITH_MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-set(FREERDP_MODULES
+set(${MODULE_PREFIX}_SUBMODULES
 	utils
 	gdi
 	rail
@@ -30,21 +33,23 @@ set(FREERDP_MODULES
 	locale
 	core)
 
-foreach(FREERDP_MODULE ${FREERDP_MODULES})
-	add_subdirectory(${FREERDP_MODULE})
+foreach(${MODULE_PREFIX}_SUBMODULE ${FREERDP_SUBMODULES})
+	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
 if(WITH_MONOLITHIC_BUILD)
 	
-	foreach(FREERDP_MODULE ${FREERDP_MODULES})
-		set(FREERDP_OBJECTS ${FREERDP_OBJECTS} "$<TARGET_OBJECTS:freerdp-${FREERDP_MODULE}>")
+	foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_MODULES})
+		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_PREFIX}-${${MODULE_PREFIX}_SUBMODULE}>")
 	endforeach()
 
-	add_library(freerdp ${FREERDP_OBJECTS})
-	set_target_properties(freerdp PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_OBJECTS})
 
-	target_link_libraries(freerdp ${FREERDP_LIBS})
-	install(TARGETS freerdp DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	
+	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
