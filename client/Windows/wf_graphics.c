@@ -27,6 +27,8 @@
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
+extern HINSTANCE g_hInstance; /* in wfreerdp.c */
+
 HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata)
 {
 	HDC hdc;
@@ -185,21 +187,133 @@ void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primar
 		wfi->drawing = (wfBitmap*) bitmap;
 }
 
+int bs_is_pixel_on(unsigned char * data, int x, int y, int width, int bpp)
+{
+	int start;
+	int shift;
+
+	if (bpp == 1)
+	{
+		width = (width + 7) / 8;
+		start = (y * width) + x / 8;
+		shift = x % 8;
+		return (data[start] & (0x80 >> shift)) != 0;
+	}
+	else if (bpp == 8)
+	{
+		return data[y * width + x] != 0;
+	}
+	else if (bpp == 16)
+	{
+		return ((uint16 *)data)[y * width + x] != 0;
+	}
+	else if (bpp == 24)
+	{
+		return data[(y * 3) * width + (x * 3)] != 0 &&
+				data[(y * 3) * width + (x * 3) + 1] != 0 &&
+				data[(y * 3) * width + (x * 3) + 2] != 0;
+	}
+	else if (bpp == 32)
+	{
+		return ((uint32 *)data)[y * width + x] != 0;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void bs_set_pixel_on(unsigned char * data, int x, int y, int width, int bpp, int pixel)
+{
+	int start;
+	int shift;
+
+	if (bpp == 1)
+	{
+		width = (width + 7) / 8;
+		start = (y * width) + x / 8;
+		shift = x % 8;
+		if (pixel != 0)
+		{
+			data[start] = data[start] | (0x80 >> shift);
+		}
+		else
+		{
+			data[start] = data[start] & ~(0x80 >> shift);
+		}
+	}
+	else if (bpp == 8)
+	{
+		data[y * width + x] = pixel;
+	}
+	else if (bpp == 15 || bpp == 16)
+	{
+		((uint16 *) data)[y * width + x] = pixel;
+	}
+}
+
 /* Pointer Class */
 
 void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
+	unsigned char am[32 * 4];
+	unsigned char xm[32 * 4];
+	int i, j, ii;
+        uint32 width, height, bpp ;
 
+        width  = pointer->width ;
+        height = pointer->height ;
+        bpp    = pointer->xorBpp ;
+
+        if ((bpp != 1 && bpp != 8 && bpp != 16 && bpp != 24 && bpp != 32) ||
+            width > 32 || height > 32)
+	{
+		printf("wf_Pointer_New: Unsupported Cursor width = %u, height = %u, xorBpp = %u\n", width, height, bpp);
+		return;
+	}
+	memset(am, 0, 32 * 4);
+	memset(xm, 0, 32 * 4);
+	for (i = 0; i < 32; i++)
+	{
+		    ii = (bpp == 1) ? i : (height - 1) - i;	
+		for (j = 0; j < 32; j++)
+		{
+                    if (bs_is_pixel_on(pointer->andMaskData, j, i, width, 1))
+			{
+				bs_set_pixel_on(am, j, ii, width, 1, 1);
+			}
+			if (bs_is_pixel_on(pointer->xorMaskData, j, i, width, bpp))
+			{
+				bs_set_pixel_on(xm, j, ii, width, 1, 1);
+			}
+		}
+	}
+	hCur = CreateCursor(g_hInstance, pointer->xPos, pointer->yPos, pointer->width, pointer->height, am, xm);
+	((wfPointer*) pointer)->cursor = hCur;
 }
 
 void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
 
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != 0)
+		DestroyCursor(hCur);
 }
 
 void wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
+	wfInfo* wfi;
+	HCURSOR hCur;
 
+	wfi = ((wfContext*) context)->wfi;
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != NULL)
+	{
+		SetCursor(hCur);
+		wfi->cursor = hCur;
+	}
 }
 
 void wf_Pointer_SetNull(rdpContext* context)
