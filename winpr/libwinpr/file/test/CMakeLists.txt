@@ -1,12 +1,14 @@
 
-set(MODULE_NAME "TestInterlocked")
-set(MODULE_PREFIX "TEST_INTERLOCKED")
+set(MODULE_NAME "TestFile")
+set(MODULE_PREFIX "TEST_FILE")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestInterlockedAccess.c
-	TestInterlockedSList.c)
+	TestFileCreateFile.c
+	TestFileDeleteFile.c
+	TestFileReadFile.c
+	TestFileWriteFile.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -14,7 +16,9 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} winpr-interlocked)
+if(NOT WIN32)
+	target_link_libraries(${MODULE_NAME} winpr-file)
+endif()
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
