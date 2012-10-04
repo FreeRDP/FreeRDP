@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "wfreerdp-server")
+set(MODULE_NAME "wfreerdp-server-cli")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
 
 include_directories(..)
