@@ -89,4 +89,6 @@ FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
 FREERDP_API wfServer* wfreerdp_server_new();
 FREERDP_API void wfreerdp_server_free(wfServer* server);
 
+FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server);
+
 #endif /* WF_INTERFACE_H */

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 #include <freerdp/utils/tcp.h>
@@ -30,6 +31,16 @@
 
 #include "wf_interface.h"
 
+//
+struct rdp_listener
+{
+	freerdp_listener* instance;
+
+ 	int sockfds[5];
+	int num_sockfds;
+};
+//
+
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
 	int i, fds;
@@ -38,11 +49,13 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	void* rfds[32];
 	fd_set rfds_set;
 	freerdp_listener* instance;
+	struct rdp_listener* listener;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	instance = (freerdp_listener*) lpParam;
+	listener = (struct rdp_listener*) instance->listener;
 
-	while (1)
+	while (listener->num_sockfds > 0)
 	{
 		rcount = 0;
 
@@ -68,14 +81,17 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 		if (max_fds == 0)
 			break;
 
+		
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
-
+		
 		if (instance->CheckFileDescriptor(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}
+
+	printf("wf_server_main_loop terminating\n");
 
 	instance->Close(instance);
 
@@ -103,6 +119,7 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 BOOL wfreerdp_server_stop(wfServer* server)
 {
+	server->instance->Close(server->instance);
 	return TRUE;
 }
 
@@ -131,4 +148,22 @@ void wfreerdp_server_free(wfServer* server)
 	}
 
 	freerdp_wsa_cleanup();
+}
+
+
+FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
+{
+	DWORD tStatus;
+	BOOL bRet;
+
+	bRet = GetExitCodeThread(server->thread, &tStatus);
+	if (bRet == 0)
+	{
+		printf("Error in call to GetExitCodeThread\n");
+		return FALSE;
+	}
+
+	if (tStatus == STILL_ACTIVE)
+		return TRUE;
+	return FALSE;
 }
