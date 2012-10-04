@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 	memory.c
 	string.c)
 
-if(MSVC)
+if(MSVC AND (NOT WITH_MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 

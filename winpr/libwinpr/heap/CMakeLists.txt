@@ -21,7 +21,7 @@ set(MODULE_PREFIX "WINPR_HEAP")
 set(${MODULE_PREFIX}_SRCS
 	heap.c)
 
-if(MSVC)
+if(MSVC AND (NOT WITH_MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 

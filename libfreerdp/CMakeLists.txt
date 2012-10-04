@@ -47,4 +47,4 @@ if(WITH_MONOLITHIC_BUILD)
 	install(TARGETS freerdp DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
