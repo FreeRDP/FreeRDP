@@ -58,51 +58,55 @@ struct rdpsnd_alsa_plugin
 
 static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 {
+	int status;
 	snd_pcm_hw_params_t* hw_params;
 	snd_pcm_sw_params_t* sw_params;
-	int error;
 	snd_pcm_uframes_t frames;
 	snd_pcm_uframes_t start_threshold;
 
 	snd_pcm_drop(alsa->out_handle);
 
-	error = snd_pcm_hw_params_malloc(&hw_params);
-	if (error < 0)
+	status = snd_pcm_hw_params_malloc(&hw_params);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_pcm_hw_params_malloc failed");
 		return;
 	}
+
 	snd_pcm_hw_params_any(alsa->out_handle, hw_params);
-	snd_pcm_hw_params_set_access(alsa->out_handle, hw_params,
-		SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(alsa->out_handle, hw_params,
-		alsa->format);
-	snd_pcm_hw_params_set_rate_near(alsa->out_handle, hw_params,
-		&alsa->actual_rate, NULL);
-	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params,
-		&alsa->actual_channels);
+	snd_pcm_hw_params_set_access(alsa->out_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+	snd_pcm_hw_params_set_format(alsa->out_handle, hw_params, alsa->format);
+	snd_pcm_hw_params_set_rate_near(alsa->out_handle, hw_params, &alsa->actual_rate, NULL);
+	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params, &alsa->actual_channels);
+
 	if (alsa->latency < 0)
 		frames = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
 	else
 		frames = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
+
 	if (frames < alsa->actual_rate / 2)
 		frames = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
-	snd_pcm_hw_params_set_buffer_size_near(alsa->out_handle, hw_params,
-		&frames);
+
+	snd_pcm_hw_params_set_buffer_size_near(alsa->out_handle, hw_params, &frames);
 	snd_pcm_hw_params(alsa->out_handle, hw_params);
 	snd_pcm_hw_params_free(hw_params);
 
-	error = snd_pcm_sw_params_malloc(&sw_params);
-	if (error < 0)
+	status = snd_pcm_sw_params_malloc(&sw_params);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_pcm_sw_params_malloc failed");
 		return;
 	}
+
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);
+
 	if (alsa->latency == 0)
 		start_threshold = 0;
 	else
 		start_threshold = frames / 2;
+
 	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params, start_threshold);
 	snd_pcm_sw_params(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_free(sw_params);
@@ -110,9 +114,9 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_prepare(alsa->out_handle);
 
 	DEBUG_SVC("hardware buffer %d frames, playback buffer %.2g seconds",
-		(int)frames, (double)frames / 2.0 / (double)alsa->actual_rate);
-	if ((alsa->actual_rate != alsa->source_rate) ||
-		(alsa->actual_channels != alsa->source_channels))
+		(int) frames, (double) frames / 2.0 / (double) alsa->actual_rate);
+
+	if ((alsa->actual_rate != alsa->source_rate) || (alsa->actual_channels != alsa->source_channels))
 	{
 		DEBUG_SVC("actual rate %d / channel %d is different from source rate %d / channel %d, resampling required.",
 			alsa->actual_rate, alsa->actual_channels, alsa->source_rate, alsa->source_channels);
@@ -129,6 +133,7 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 		alsa->actual_rate = format->nSamplesPerSec;
 		alsa->source_channels = format->nChannels;
 		alsa->actual_channels = format->nChannels;
+
 		switch (format->wFormatTag)
 		{
 			case 1: /* PCM */
@@ -151,6 +156,7 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 				alsa->bytes_per_channel = 2;
 				break;
 		}
+
 		alsa->wformat = format->wFormatTag;
 		alsa->block_size = format->nBlockAlign;
 	}
@@ -162,31 +168,38 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 
 static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 {
-	int error;
+	int status;
 	snd_mixer_t* handle;
 
-	error = snd_mixer_open(&handle, 0);
-	if (error < 0)
+	status = snd_mixer_open(&handle, 0);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_open failed");
 		return;
 	}
-	error = snd_mixer_attach(handle, alsa->device_name);
-	if (error < 0)
+
+	status = snd_mixer_attach(handle, alsa->device_name);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_attach failed");
 		snd_mixer_close(handle);
 		return;
 	}
-	error = snd_mixer_selem_register(handle, NULL, NULL);
-	if (error < 0)
+
+	status = snd_mixer_selem_register(handle, NULL, NULL);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_selem_register failed");
 		snd_mixer_close(handle);
 		return;
 	}
-	error = snd_mixer_load(handle);
-	if (error < 0)
+
+	status = snd_mixer_load(handle);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_load failed");
 		snd_mixer_close(handle);
@@ -198,17 +211,17 @@ static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 
 static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	int error;
+	int status;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->out_handle != 0)
 		return;
 
 	DEBUG_SVC("opening");
 
-	error = snd_pcm_open(&alsa->out_handle, alsa->device_name,
-		SND_PCM_STREAM_PLAYBACK, 0);
-	if (error < 0)
+	status = snd_pcm_open(&alsa->out_handle, alsa->device_name, SND_PCM_STREAM_PLAYBACK, 0);
+
+	if (status < 0)
 	{
 		DEBUG_WARN("snd_pcm_open failed");
 	}
@@ -231,6 +244,7 @@ static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 		snd_pcm_close(alsa->out_handle);
 		alsa->out_handle = 0;
 	}
+
 	if (alsa->mixer_handle)
 	{
 		snd_mixer_close(alsa->mixer_handle);
@@ -277,7 +291,6 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 
 static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	long left;
 	long right;
 	long volume_min;
@@ -285,6 +298,7 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	long volume_left;
 	long volume_right;
 	snd_mixer_elem_t* elem;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (!alsa->mixer_handle)
 		return;
@@ -307,15 +321,15 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 
 static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	uint8* src;
 	int len;
-	int error;
+	int status;
 	int frames;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
 	uint8* pindex;
 	uint8* end;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->out_handle == 0)
 		return;
@@ -341,14 +355,14 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 
 	sbytes_per_frame = alsa->source_channels * alsa->bytes_per_channel;
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
+
 	if ((size % sbytes_per_frame) != 0)
 	{
 		DEBUG_WARN("error len mod");
 		return;
 	}
 
-	if ((alsa->source_rate == alsa->actual_rate) &&
-		(alsa->source_channels == alsa->actual_channels))
+	if ((alsa->source_rate == alsa->actual_rate) && (alsa->source_channels == alsa->actual_channels))
 	{
 	}
 	else
@@ -365,31 +379,34 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
 
 	pindex = src;
 	end = pindex + size;
+
 	while (pindex < end)
 	{
 		len = end - pindex;
 		frames = len / rbytes_per_frame;
-		error = snd_pcm_writei(alsa->out_handle, pindex, frames);
-		if (error == -EPIPE)
+		status = snd_pcm_writei(alsa->out_handle, pindex, frames);
+
+		if (status == -EPIPE)
 		{
-			snd_pcm_recover(alsa->out_handle, error, 0);
-			error = 0;
+			snd_pcm_recover(alsa->out_handle, status, 0);
+			status = 0;
 		}
-		else if (error < 0)
+		else if (status < 0)
 		{
-			DEBUG_WARN("error %d", error);
+			DEBUG_WARN("status %d", status);
 			snd_pcm_close(alsa->out_handle);
 			alsa->out_handle = 0;
 			rdpsnd_alsa_open(device, NULL, alsa->latency);
 			break;
 		}
-		pindex += error * rbytes_per_frame;
+
+		pindex += status * rbytes_per_frame;
 	}
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->out_handle == 0)
 		return;
@@ -414,14 +431,17 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	alsa->device.Free = rdpsnd_alsa_free;
 
 	data = pEntryPoints->plugin_data;
-	if (data && strcmp((char*)data->data[0], "alsa") == 0)
+
+	if (data && strcmp((char*) data->data[0], "alsa") == 0)
 	{
-		alsa->device_name = xstrdup((char*)data->data[1]);
+		alsa->device_name = xstrdup((char*) data->data[1]);
 	}
+
 	if (alsa->device_name == NULL)
 	{
 		alsa->device_name = xstrdup("default");
 	}
+
 	alsa->out_handle = 0;
 	alsa->source_rate = 22050;
 	alsa->actual_rate = 22050;
@@ -432,7 +452,7 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	alsa->dsp_context = freerdp_dsp_context_new();
 
-	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)alsa);
+	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) alsa);
 
 	return 0;
 }

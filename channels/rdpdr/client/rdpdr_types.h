@@ -21,6 +21,11 @@
 #ifndef __RDPDR_TYPES_H
 #define __RDPDR_TYPES_H
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/interlocked.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -28,7 +33,6 @@
 typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
-
 
 typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
 typedef void (*pcFreeDevice)(DEVICE* device);
@@ -49,6 +53,8 @@ typedef void (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
+	SLIST_ENTRY ItemEntry;
+
 	DEVICE* device;
 	DEVMAN* devman;
 	uint32 FileId;
@@ -78,7 +84,6 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 	DEVMAN* devman;
 
 	pcRegisterDevice RegisterDevice;
-	pcRegisterDevice UnregisterDevice;
 	RDP_PLUGIN_DATA* plugin_data;
 };
 typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;

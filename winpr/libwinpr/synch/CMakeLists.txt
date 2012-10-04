@@ -37,6 +37,10 @@ set(${MODULE_PREFIX}_SRCS
 	timer.c
 	wait.c)
 
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 if(WITH_MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()

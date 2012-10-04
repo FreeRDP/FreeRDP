@@ -29,9 +29,9 @@ add_library(drdynvc ${DRDYNVC_SRCS})
 set_target_properties(drdynvc PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(drdynvc freerdp)
+	target_link_libraries(drdynvc freerdp winpr)
 else()
-	target_link_libraries(drdynvc freerdp-utils)
+	target_link_libraries(drdynvc freerdp-utils winpr-synch)
 endif()
 
 install(TARGETS drdynvc DESTINATION ${FREERDP_PLUGIN_PATH})

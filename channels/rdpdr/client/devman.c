@@ -68,13 +68,6 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
-static void devman_unregister_device(DEVMAN* devman, DEVICE* device)
-{
-	list_remove(devman->devices, device);
-
-	DEBUG_SVC("device %d.%s unregistered", device->id, device->name);
-}
-
 boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 {
 	DEVICE_SERVICE_ENTRY_POINTS ep;
@@ -87,7 +80,6 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
-	ep.UnregisterDevice = devman_unregister_device;
 	ep.plugin_data = plugin_data;
 
 	entry(&ep);

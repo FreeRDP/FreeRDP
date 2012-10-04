@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/synch.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -84,7 +86,7 @@ struct _DVCMAN_CHANNEL
 
 	STREAM* dvc_data;
 
-	pthread_mutex_t dvc_chan_mutex;
+	HANDLE dvc_chan_mutex;
 };
 
 static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
@@ -112,7 +114,9 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 
 		if (ppListener)
 			*ppListener = (IWTSListener*)listener;
+
 		dvcman->listeners[dvcman->num_listeners++] = (IWTSListener*)listener;
+		
 		return 0;
 	}
 	else
@@ -124,12 +128,12 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 
 static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* pEvent)
 {
-	int error;
+	int status;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
-	error = drdynvc_push_event(dvcman->drdynvc, pEvent);
+	status = drdynvc_push_event(dvcman->drdynvc, pEvent);
 
-	if (error == 0)
+	if (status == 0)
 	{
 		DEBUG_DVC("event_type %d pushed.", pEvent->event_type);
 	}
@@ -138,7 +142,7 @@ static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* 
 		DEBUG_WARN("event_type %d push failed.", pEvent->event_type);
 	}
 
-	return error;
+	return status;
 }
 
 static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin)
@@ -201,7 +205,6 @@ IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChanne
 
 	return NULL;
 }
-
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
@@ -301,14 +304,14 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 
 static int dvcman_write_channel(IWTSVirtualChannel* pChannel, uint32 cbSize, uint8* pBuffer, void* pReserved)
 {
+	int status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
-	int error;
 
-	pthread_mutex_lock(&channel->dvc_chan_mutex);
-	error = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
-	pthread_mutex_unlock(&channel->dvc_chan_mutex);
+	WaitForSingleObject(channel->dvc_chan_mutex, INFINITE);
+	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
+	ReleaseMutex(channel->dvc_chan_mutex);
 
-	return error;
+	return status;
 }
 
 static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
@@ -346,7 +349,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 Channel
 			channel->iface.Close = dvcman_close_channel_iface;
 			channel->dvcman = dvcman;
 			channel->channel_id = ChannelId;
-			pthread_mutex_init(&channel->dvc_chan_mutex, NULL);
+			channel->dvc_chan_mutex = CreateMutex(NULL, FALSE, NULL);
 
 			bAccept = 1;
 			pCallback = NULL;
@@ -379,7 +382,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelI
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannel* ichannel;
 
-	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
@@ -394,7 +397,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelI
 	}
 
 	DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
-	ichannel = (IWTSVirtualChannel*)channel;
+	ichannel = (IWTSVirtualChannel*) channel;
 	ichannel->Close(ichannel);
 
 	return 0;
@@ -404,7 +407,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, ui
 {
 	DVCMAN_CHANNEL* channel;
 
-	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
@@ -425,7 +428,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 C
 	int error = 0;
 	DVCMAN_CHANNEL* channel;
 
-	channel = (DVCMAN_CHANNEL*)dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
 	if (channel == NULL)
 	{
