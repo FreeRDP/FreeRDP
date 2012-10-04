@@ -89,14 +89,11 @@ typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
 typedef signed int LONG32;
 typedef signed __int64 LONG64;
 
-typedef CHAR* PSTR, *LPSTR;
+typedef CHAR* PSTR, *LPSTR, *LPCH;
 typedef const CHAR *LPCSTR,*PCSTR;
 
-typedef WCHAR* LPWSTR, *PWSTR;
+typedef WCHAR* LPWSTR, *PWSTR, *LPWCH;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
-
-typedef CHAR *LPSTR, *LPCH;
-typedef WCHAR *LPWSTR, *LPWCH;
 
 typedef unsigned __int64 QWORD;
 typedef UCHAR* STRING;
