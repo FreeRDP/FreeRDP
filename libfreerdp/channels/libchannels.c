@@ -45,12 +45,13 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/svc.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/event.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/interlocked.h>
 
 #include "libchannels.h"
 
@@ -72,15 +73,18 @@ struct channel_data
 	PCHANNEL_OPEN_EVENT_FN open_event_proc;
 };
 
-struct sync_data
+struct _SYNC_DATA
 {
-	void* data;
-	uint32 data_length;
-	void* user_data;
-	int index;
+	SLIST_ENTRY ItemEntry;
+	void* Data;
+	UINT32 DataLength;
+	void* UserData;
+	int Index;
 };
+typedef struct _SYNC_DATA SYNC_DATA;
 
 typedef struct rdp_init_handle rdpInitHandle;
+
 struct rdp_init_handle
 {
 	rdpChannels* channels;
@@ -120,8 +124,7 @@ struct rdp_channels
 	struct wait_obj* signal;
 
 	/* used for sync write */
-	HANDLE sync_data_mutex;
-	LIST* sync_data_list;
+	PSLIST_HEADER pSyncDataList;
 
 	/* used for sync event */
 	HANDLE event_sem;
@@ -318,7 +321,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 	if (pChannel == 0)
 	{
-		DEBUG_CHANNELS("error bad pchan");
+		DEBUG_CHANNELS("error bad channel");
 		return CHANNEL_RC_BAD_CHANNEL;
 	}
 
@@ -336,6 +339,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	for (index = 0; index < channelCount; index++)
 	{
 		lchannel_def = pChannel + index;
+
 		if (freerdp_channels_find_channel_data_by_name(channels, lchannel_def->name, 0) != 0)
 		{
 			DEBUG_CHANNELS("error channel already used");
@@ -396,7 +400,7 @@ static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHa
 
 	if (pOpenHandle == 0)
 	{
-		DEBUG_CHANNELS("error bad chanhan");
+		DEBUG_CHANNELS("error bad channel handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
@@ -416,13 +420,13 @@ static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHa
 
 	if (lchannel_data == 0)
 	{
-		DEBUG_CHANNELS("error chan name");
+		DEBUG_CHANNELS("error channel name");
 		return CHANNEL_RC_UNKNOWN_CHANNEL_NAME;
 	}
 
 	if (lchannel_data->flags == 2)
 	{
-		DEBUG_CHANNELS("error chan already open");
+		DEBUG_CHANNELS("error channel already open");
 		return CHANNEL_RC_ALREADY_OPEN;
 	}
 
@@ -470,15 +474,15 @@ static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
 static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, uint32 dataLength, void* pUserData)
 {
 	int index;
+	SYNC_DATA* item;
 	rdpChannels* channels;
-	struct sync_data* item;
 	struct channel_data* lchannel_data;
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
 	if ((channels == NULL) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
 	{
-		DEBUG_CHANNELS("error bad chanhan");
+		DEBUG_CHANNELS("error bad channel handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
@@ -508,22 +512,19 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 		return CHANNEL_RC_NOT_OPEN;
 	}
 
-	WaitForSingleObject(channels->sync_data_mutex, INFINITE); /* lock channels->sync* vars */
-
 	if (!channels->is_connected)
 	{
-		ReleaseMutex(channels->sync_data_mutex);
 		DEBUG_CHANNELS("error not connected");
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	item = xnew(struct sync_data);
-	item->data = pData;
-	item->data_length = dataLength;
-	item->user_data = pUserData;
-	item->index = index;
-	list_enqueue(channels->sync_data_list, item);
-	ReleaseMutex(channels->sync_data_mutex);
+	item = (SYNC_DATA*) _aligned_malloc(sizeof(SYNC_DATA), MEMORY_ALLOCATION_ALIGNMENT);
+	item->Data = pData;
+	item->DataLength = dataLength;
+	item->UserData = pUserData;
+	item->Index = index;
+
+	InterlockedPushEntrySList(channels->pSyncDataList, &(item->ItemEntry));
 
 	/* set the event */
 	wait_obj_set(channels->signal);
@@ -541,7 +542,7 @@ static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, RDP_EVENT*
 
 	if ((channels == NULL) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
 	{
-		DEBUG_CHANNELS("error bad chanhan");
+		DEBUG_CHANNELS("error bad channels handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
@@ -616,8 +617,8 @@ rdpChannels* freerdp_channels_new(void)
 
 	channels = xnew(rdpChannels);
 
-	channels->sync_data_mutex = CreateMutex(NULL, FALSE, NULL);
-	channels->sync_data_list = list_new();
+	channels->pSyncDataList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+	InitializeSListHead(channels->pSyncDataList);
 
 	channels->event_sem = CreateSemaphore(NULL, 1, 16, NULL);
 	channels->signal = wait_obj_new();
@@ -639,8 +640,8 @@ void freerdp_channels_free(rdpChannels* channels)
 	rdpChannelsList* list;
 	rdpChannelsList* prev;
 
-	CloseHandle(channels->sync_data_mutex);
-	list_free(channels->sync_data_list);
+	InterlockedFlushSList(channels->pSyncDataList);
+	_aligned_free(channels->pSyncDataList);
 
 	CloseHandle(channels->event_sem);
 	wait_obj_free(channels->signal);
@@ -907,31 +908,29 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
  */
 static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
-	struct sync_data* item;
+	SYNC_DATA* item;
 	rdpChannel* lrdp_channel;
 	struct channel_data* lchannel_data;
 
-	while (list_size(channels->sync_data_list) > 0)
+	while (QueryDepthSList(channels->pSyncDataList) > 0)
 	{
-		WaitForSingleObject(channels->sync_data_mutex, INFINITE);
-		item = (struct sync_data*)list_dequeue(channels->sync_data_list);
-		ReleaseMutex(channels->sync_data_mutex);
+		item = (SYNC_DATA*) InterlockedPopEntrySList(channels->pSyncDataList);
 
 		if (!item)
-			break ;
+			break;
 
-		lchannel_data = channels->channels_data + item->index;
+		lchannel_data = channels->channels_data + item->Index;
+
 		lrdp_channel = freerdp_channels_find_channel_by_name(channels, instance->settings,
-			lchannel_data->name, &item->index);
+			lchannel_data->name, &item->Index);
 
 		if (lrdp_channel != NULL)
-			instance->SendChannelData(instance, lrdp_channel->channel_id, item->data, item->data_length);
+			instance->SendChannelData(instance, lrdp_channel->channel_id, item->Data, item->DataLength);
 
 		if (lchannel_data->open_event_proc != 0)
 		{
 			lchannel_data->open_event_proc(lchannel_data->open_handle,
-				CHANNEL_EVENT_WRITE_COMPLETE,
-				item->user_data, sizeof(void *), sizeof(void *), 0);
+				CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, sizeof(void*), sizeof(void*), 0);
 		}
 		xfree(item);
 	}

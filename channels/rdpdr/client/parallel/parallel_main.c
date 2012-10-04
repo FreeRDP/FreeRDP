@@ -44,6 +44,11 @@
 #include <linux/parport.h>
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/interlocked.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/list.h>
@@ -64,7 +69,7 @@ struct _PARALLEL_DEVICE
 	char* path;
 	uint32 id;
 
-	LIST* irp_list;
+	PSLIST_HEADER pIrpList;
 	freerdp_thread* thread;
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
@@ -247,9 +252,7 @@ static void parallel_process_irp_list(PARALLEL_DEVICE* parallel)
 		if (freerdp_thread_is_stopped(parallel->thread))
 			break;
 
-		freerdp_thread_lock(parallel->thread);
-		irp = (IRP*) list_dequeue(parallel->irp_list);
-		freerdp_thread_unlock(parallel->thread);
+		irp = (IRP*) InterlockedPopEntrySList(parallel->pIrpList);
 
 		if (irp == NULL)
 			break;
@@ -270,6 +273,7 @@ static void* parallel_thread_func(void* arg)
 			break;
 
 		freerdp_thread_reset(parallel->thread);
+
 		parallel_process_irp_list(parallel);
 	}
 
@@ -282,9 +286,7 @@ static void parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
-	freerdp_thread_lock(parallel->thread);
-	list_enqueue(parallel->irp_list, irp);
-	freerdp_thread_unlock(parallel->thread);
+	InterlockedPushEntrySList(parallel->pIrpList, &(irp->ItemEntry));
 
 	freerdp_thread_signal(parallel->thread);
 }
@@ -299,10 +301,10 @@ static void parallel_free(DEVICE* device)
 	freerdp_thread_stop(parallel->thread);
 	freerdp_thread_free(parallel->thread);
 
-	while ((irp = (IRP*) list_dequeue(parallel->irp_list)) != NULL)
+	while ((irp = (IRP*) InterlockedPopEntrySList(parallel->pIrpList)) != NULL)
 		irp->Discard(irp);
 
-	list_free(parallel->irp_list);
+	_aligned_free(parallel->pIrpList);
 
 	xfree(parallel);
 }
@@ -334,7 +336,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		parallel->path = path;
 
-		parallel->irp_list = list_new();
+		parallel->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(parallel->pIrpList);
+
 		parallel->thread = freerdp_thread_new();
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel);

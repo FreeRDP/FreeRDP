@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -40,7 +43,8 @@ static void irp_free(IRP* irp)
 
 	stream_free(irp->input);
 	stream_free(irp->output);
-	xfree(irp);
+
+	_aligned_free(irp);
 }
 
 static void irp_complete(IRP* irp)
@@ -68,13 +72,15 @@ IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 
 	stream_read_uint32(data_in, DeviceId);
 	device = devman_get_device_by_id(devman, DeviceId);
+
 	if (device == NULL)
 	{
 		DEBUG_WARN("unknown DeviceId %d", DeviceId);
 		return NULL;
 	}
 
-	irp = xnew(IRP);
+	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
+
 	irp->device = device;
 	irp->devman = devman;
 	stream_read_uint32(data_in, irp->FileId);

@@ -97,7 +97,6 @@ struct _MSUSB_PIPE_DESCRIPTOR
 	int InitCompleted;
 } __attribute__((packed));
 
-
 struct _MSUSB_INTERFACE_DESCRIPTOR
 {
 	uint16 Length;
@@ -124,29 +123,19 @@ struct _MSUSB_CONFIG_DESCRIPTOR
 	int MsOutSize;
 } __attribute__((packed));
 
-
 /* MSUSB_PIPE exported functions */
-void
-msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, MSUSB_PIPE_DESCRIPTOR ** NewMsPipes, uint32 NewNumberOfPipes);
+void msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, MSUSB_PIPE_DESCRIPTOR** NewMsPipes, uint32 NewNumberOfPipes);
 
 /* MSUSB_INTERFACE exported functions */
-void
-msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR * MsConfig, uint8 InterfaceNumber, MSUSB_INTERFACE_DESCRIPTOR * NewMsInterface);
-MSUSB_INTERFACE_DESCRIPTOR *
-msusb_msinterface_read(uint8 * data, uint32 data_size, int * offset);
-int 
-msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, uint8 * data, int * offset);
+void msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, uint8 InterfaceNumber, MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
+MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(uint8* data, uint32 data_size, int* offset);
+int msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, uint8* data, int* offset);
 
 /* MSUSB_CONFIG exported functions */
-MSUSB_CONFIG_DESCRIPTOR *
-msusb_msconfig_new();
-void
-msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR * MsConfig);
-MSUSB_CONFIG_DESCRIPTOR *
-msusb_msconfig_read(uint8 * data, uint32 data_size, uint32 NumInterfaces);
-int
-msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR * MsConfg, uint8 * data, int * offset);
-void
-msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR * MsConfg);
+MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new();
+void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig);
+MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(uint8* data, uint32 data_size, uint32 NumInterfaces);
+int msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, uint8* data, int * offset);
+void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfg);
 
 #endif

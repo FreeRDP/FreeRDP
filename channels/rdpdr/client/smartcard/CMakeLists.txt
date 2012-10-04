@@ -29,9 +29,9 @@ add_library(scard ${SCARD_SRCS})
 set_target_properties(scard PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(scard freerdp)
+	target_link_libraries(scard freerdp winpr)
 else()
-	target_link_libraries(scard freerdp-utils)
+	target_link_libraries(scard freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
 
 target_link_libraries(scard ${PCSC_LIBRARIES})

@@ -20,6 +20,12 @@
 #ifndef WINPR_SPEC_H
 #define WINPR_SPEC_H
 
+#ifdef _WIN32
+
+#include <specstrings.h>
+
+#else
+
 #if defined(__x86_64) && \
 		!(defined(_X86_) || defined(__i386__) || defined(_IA64_))
 #if !defined(_AMD64_)
@@ -48,6 +54,8 @@
 #endif
 
 #define DUMMYSTRUCTNAME		s
+
+#endif
 
 #endif /* WINPR_SPEC_H */
 

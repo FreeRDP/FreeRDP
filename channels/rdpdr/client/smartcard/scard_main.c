@@ -45,11 +45,11 @@ static void scard_free(DEVICE* dev)
 
 	freerdp_thread_stop(scard->thread);
 	freerdp_thread_free(scard->thread);
-	
-	while ((irp = (IRP*) list_dequeue(scard->irp_list)) != NULL)
+
+	while ((irp = (IRP*) InterlockedPopEntrySList(scard->pIrpList)) != NULL)
 		irp->Discard(irp);
 
-	list_free(scard->irp_list);
+	_aligned_free(scard->pIrpList);
 
 	/* Begin TS Client defect workaround. */
 
@@ -87,9 +87,7 @@ static void scard_process_irp_list(SCARD_DEVICE* scard)
 
 	while (!freerdp_thread_is_stopped(scard->thread))
 	{
-		freerdp_thread_lock(scard->thread);
-		irp = (IRP*) list_dequeue(scard->irp_list);
-		freerdp_thread_unlock(scard->thread);
+		irp = (IRP*) InterlockedPopEntrySList(scard->pIrpList);
 
 		if (irp == NULL)
 			break;
@@ -281,9 +279,7 @@ static void scard_irp_request(DEVICE* device, IRP* irp)
 		return;
 	}
 
-	freerdp_thread_lock(scard->thread);
-	list_enqueue(scard->irp_list, irp);
-	freerdp_thread_unlock(scard->thread);
+	InterlockedPushEntrySList(scard->pIrpList, &(irp->ItemEntry));
 
 	freerdp_thread_signal(scard->thread);
 }
@@ -317,7 +313,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		scard->path = path;
 
-		scard->irp_list = list_new();
+		scard->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(scard->pIrpList);
+
 		scard->thread = freerdp_thread_new();
 
 		scard->CompletionIds = list_new();

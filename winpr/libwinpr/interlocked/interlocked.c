@@ -82,7 +82,7 @@ PSLIST_ENTRY InterlockedPushEntrySList(PSLIST_HEADER ListHead, PSLIST_ENTRY List
 
 	return (PSLIST_ENTRY) ((ULONG_PTR) old.HeaderX64.NextEntry << 4);
 #else
-	new.s.Next.Next = entry;
+	new.s.Next.Next = ListEntry;
 
 	do
 	{
@@ -91,7 +91,7 @@ PSLIST_ENTRY InterlockedPushEntrySList(PSLIST_HEADER ListHead, PSLIST_ENTRY List
 		new.s.Depth = old.s.Depth + 1;
 		new.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64(&ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif
@@ -147,7 +147,7 @@ PSLIST_ENTRY InterlockedPopEntrySList(PSLIST_HEADER ListHead)
 		new.s.Depth = old.s.Depth - 1;
 		new.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64(&ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
 #endif
 	return entry;
 }
@@ -186,7 +186,7 @@ PSLIST_ENTRY InterlockedFlushSList(PSLIST_HEADER ListHead)
 		old = *ListHead;
 		new.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64(&ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif

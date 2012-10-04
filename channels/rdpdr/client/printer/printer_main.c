@@ -25,6 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/interlocked.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/memory.h>
@@ -51,7 +56,7 @@ struct _PRINTER_DEVICE
 
 	rdpPrinter* printer;
 
-	LIST* irp_list;
+	PSLIST_HEADER pIrpList;
 	freerdp_thread* thread;
 };
 
@@ -106,9 +111,9 @@ static void printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
-	rdpPrintJob* printjob = NULL;
 	uint32 Length;
 	uint64 Offset;
+	rdpPrintJob* printjob = NULL;
 
 	stream_read_uint32(irp->input, Length);
 	stream_read_uint64(irp->input, Offset);
@@ -170,9 +175,7 @@ static void printer_process_irp_list(PRINTER_DEVICE* printer_dev)
 		if (freerdp_thread_is_stopped(printer_dev->thread))
 			break;
 
-		freerdp_thread_lock(printer_dev->thread);
-		irp = (IRP*)list_dequeue(printer_dev->irp_list);
-		freerdp_thread_unlock(printer_dev->thread);
+		irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList);
 
 		if (irp == NULL)
 			break;
@@ -203,26 +206,25 @@ static void* printer_thread_func(void* arg)
 
 static void printer_irp_request(DEVICE* device, IRP* irp)
 {
-	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
+	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) device;
 
-	freerdp_thread_lock(printer_dev->thread);
-	list_enqueue(printer_dev->irp_list, irp);
-	freerdp_thread_unlock(printer_dev->thread);
+	InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
 
 	freerdp_thread_signal(printer_dev->thread);
 }
 
 static void printer_free(DEVICE* device)
 {
-	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
 	IRP* irp;
+	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) device;
 
 	freerdp_thread_stop(printer_dev->thread);
 	freerdp_thread_free(printer_dev->thread);
-	
-	while ((irp = (IRP*)list_dequeue(printer_dev->irp_list)) != NULL)
+
+	while ((irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
 		irp->Discard(irp);
-	list_free(printer_dev->irp_list);
+
+	_aligned_free(printer_dev->pIrpList);
 
 	if (printer_dev->printer)
 		printer_dev->printer->Free(printer_dev->printer);
@@ -290,10 +292,12 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	xfree(DriverName);
 	xfree(PrintName);
 
-	printer_dev->irp_list = list_new();
+	printer_dev->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+	InitializeSListHead(printer_dev->pIrpList);
+
 	printer_dev->thread = freerdp_thread_new();
 
-	pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)printer_dev);
+	pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) printer_dev);
 
 	freerdp_thread_start(printer_dev->thread, printer_thread_func, printer_dev);
 }
@@ -304,12 +308,12 @@ int printer_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #endif
 {
-	rdpPrinterDriver* driver = NULL;
-	rdpPrinter** printers;
-	rdpPrinter* printer;
 	int i;
 	char* name;
 	char* driver_name;
+	rdpPrinter* printer;
+	rdpPrinter** printers;
+	rdpPrinterDriver* driver = NULL;
 
 #ifdef WITH_CUPS
 	driver = printer_cups_get_driver();
@@ -317,23 +321,26 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #ifdef WIN32
 	driver = printer_win_get_driver();
 #endif
+
 	if (driver == NULL)
 	{
-		DEBUG_WARN("no driver.");
+		DEBUG_WARN("no driver");
 		return 1;
 	}
 
-	name = (char*)pEntryPoints->plugin_data->data[1];
-	driver_name = (char*)pEntryPoints->plugin_data->data[2];
+	name = (char*) pEntryPoints->plugin_data->data[1];
+	driver_name = (char*) pEntryPoints->plugin_data->data[2];
 
 	if (name && name[0])
 	{
 		printer = driver->GetPrinter(driver, name);
+
 		if (printer == NULL)
 		{
 			DEBUG_WARN("printer %s not found.", name);
 			return 1;
 		}
+
 		if (driver_name && driver_name[0])
 			printer->driver = driver_name;
 
@@ -342,11 +349,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	else
 	{
 		printers = driver->EnumPrinters(driver);
+
 		for (i = 0; printers[i]; i++)
 		{
 			printer = printers[i];
 			printer_register(pEntryPoints, printer);
 		}
+
 		xfree(printers);
 	}
 

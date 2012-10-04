@@ -33,11 +33,11 @@
 
 #include "wtsvc.h"
 
-#define CREATE_REQUEST_PDU     0x01
-#define DATA_FIRST_PDU         0x02
-#define DATA_PDU               0x03
-#define CLOSE_REQUEST_PDU      0x04
-#define CAPABILITY_REQUEST_PDU 0x05
+#define CREATE_REQUEST_PDU			0x01
+#define DATA_FIRST_PDU				0x02
+#define DATA_PDU				0x03
+#define CLOSE_REQUEST_PDU			0x04
+#define CAPABILITY_REQUEST_PDU			0x05
 
 typedef struct wts_data_item
 {
@@ -142,8 +142,10 @@ static void wts_read_drdynvc_create_response(rdpPeerChannel* channel, STREAM* s,
 
 	if (length < 4)
 		return;
+
 	stream_read_uint32(s, CreationStatus);
-	if ((sint32)CreationStatus < 0)
+
+	if ((sint32) CreationStatus < 0)
 	{
 		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->channel_id, (sint32)CreationStatus);
 		channel->dvc_open_state = DVC_OPEN_STATE_FAILED;
@@ -161,9 +163,12 @@ static void wts_read_drdynvc_data_first(rdpPeerChannel* channel, STREAM* s, int 
 	int value;
 
 	value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
+
 	if (value == 0)
 		return;
+
 	length -= value;
+
 	if (length > channel->dvc_total_length)
 		return;
 
@@ -182,7 +187,9 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, STREAM* s, uint32 len
 			error_report("wts_read_drdynvc_data: incorrect fragment data, discarded.\n");
 			return;
 		}
+
 		stream_write(channel->receive_data, stream_get_tail(s), length);
+
 		if (stream_get_length(channel->receive_data) >= (int) channel->dvc_total_length)
 		{
 			wts_queue_receive_data(channel, stream_get_head(channel->receive_data), channel->dvc_total_length);
@@ -212,10 +219,13 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	rdpPeerChannel* dvc;
 
 	length = stream_get_pos(channel->receive_data);
+
 	if (length < 1)
 		return;
+
 	stream_set_pos(channel->receive_data, 0);
 	stream_read_uint8(channel->receive_data, value);
+
 	length--;
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
@@ -228,12 +238,15 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	else if (channel->vcm->drdynvc_state == DRDYNVC_STATE_READY)
 	{
 		value = wts_read_variable_uint(channel->receive_data, cbChId, &ChannelId);
+
 		if (value == 0)
 			return;
+
 		length -= value;
 
 		DEBUG_DVC("Cmd %d ChannelId %d length %d", Cmd, ChannelId, length);
 		dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
+
 		if (dvc)
 		{
 			switch (Cmd)
@@ -289,6 +302,7 @@ static int wts_write_variable_uint(STREAM* stream, uint32 val)
 		cb = 3;
 		stream_write_uint32(stream, val);
 	}
+
 	return cb;
 }
 
@@ -355,6 +369,7 @@ static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* dat
 	if (i < client->settings->num_channels)
 	{
 		channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+
 		if (channel != NULL)
 		{
 			WTSProcessChannelData(channel, channelId, data, size, flags, total_size);
@@ -397,7 +412,9 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 		{
 			WTSVirtualChannelClose(channel);
 		}
+
 		list_free(vcm->dvc_channel_list);
+
 		if (vcm->drdynvc_channel != NULL)
 		{
 			WTSVirtualChannelClose(vcm->drdynvc_channel);
@@ -405,10 +422,12 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 		}
 
 		wait_obj_free(vcm->send_event);
+
 		while ((item = (wts_data_item*) list_dequeue(vcm->send_queue)) != NULL)
 		{
 			wts_data_item_free(item);
 		}
+
 		list_free(vcm->send_queue);
 		CloseHandle(vcm->mutex);
 		xfree(vcm);
@@ -419,6 +438,7 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 	void** fds, int* fds_count)
 {
 	wait_obj_get_fds(vcm->send_event, fds, fds_count);
+
 	if (vcm->drdynvc_channel)
 	{
 		wait_obj_get_fds(vcm->drdynvc_channel->receive_event, fds, fds_count);
@@ -438,6 +458,7 @@ boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vc
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
 
 		channel = WTSVirtualChannelOpenEx(vcm, "drdynvc", 0);
+
 		if (channel)
 		{
 			vcm->drdynvc_channel = channel;
@@ -475,9 +496,9 @@ void* WTSVirtualChannelOpenEx(
 {
 	int i;
 	int len;
+	STREAM* s;
 	rdpPeerChannel* channel;
 	freerdp_peer* client = vcm->client;
-	STREAM* s;
 
 	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
 	{
@@ -695,6 +716,7 @@ boolean WTSVirtualChannelWrite(
 
 			stream_seek_uint8(s);
 			cbChId = wts_write_variable_uint(s, channel->channel_id);
+
 			if (first && (Length > (uint32) stream_get_left(s)))
 			{
 				cbLen = wts_write_variable_uint(s, Length);
@@ -704,10 +726,13 @@ boolean WTSVirtualChannelWrite(
 			{
 				item->buffer[0] = (DATA_PDU << 4) | cbChId;
 			}
+
 			first = false;
 			written = stream_get_left(s);
+
 			if (written > Length)
 				written = Length;
+
 			stream_write(s, Buffer, written);
 			item->length = stream_get_length(s);
 			stream_detach(s);
@@ -756,21 +781,28 @@ boolean WTSVirtualChannelClose(
 				stream_free(s);
 			}
 		}
+
 		if (channel->receive_data)
 			stream_free(channel->receive_data);
+
 		if (channel->receive_event)
 			wait_obj_free(channel->receive_event);
+
 		if (channel->receive_queue)
 		{
 			while ((item = (wts_data_item*) list_dequeue(channel->receive_queue)) != NULL)
 			{
 				wts_data_item_free(item);
 			}
+
 			list_free(channel->receive_queue);
 		}
+
 		if (channel->mutex)
 			CloseHandle(channel->mutex);
+
 		xfree(channel);
 	}
+
 	return true;
 }

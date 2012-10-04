@@ -148,9 +148,11 @@ typedef struct _LUID
 #endif
 
 #ifdef UNICODE
+typedef LPWSTR LPTCH;
 typedef LPWSTR LPTSTR;
 typedef LPCWSTR LPCTSTR;
 #else
+typedef LPSTR LPTCH;
 typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
 #endif

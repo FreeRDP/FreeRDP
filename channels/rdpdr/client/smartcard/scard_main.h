@@ -99,17 +99,15 @@ struct _SCARD_DEVICE
 {
 	DEVICE device;
 
-	char * name;
-	char * path;
+	char* name;
+	char* path;
 
-	LIST* irp_list;
+	PSLIST_HEADER pIrpList;
 
 	freerdp_thread* thread;
 
         LIST* CompletionIds;
-        HANDLE CompletionIdsMutex;       /* Protect the LIST from
-                                                 * multiple thread writers.
-                                                 */
+        HANDLE CompletionIdsMutex;
 };
 typedef struct _SCARD_DEVICE SCARD_DEVICE;
 

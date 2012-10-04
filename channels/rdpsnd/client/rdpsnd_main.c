@@ -93,12 +93,14 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 
 	while (list_size(rdpsnd->data_out_list) > 0)
 	{
-		item = (struct data_out_item*)list_peek(rdpsnd->data_out_list) ;
+		item = (struct data_out_item*) list_peek(rdpsnd->data_out_list);
+
 		cur_time = get_mstime();
+
 		if (!item || cur_time <= item->out_timestamp)
 			break;
 
-		item = (struct data_out_item*)list_dequeue(rdpsnd->data_out_list);
+		item = (struct data_out_item*) list_dequeue(rdpsnd->data_out_list);
 		svc_plugin_send(plugin, item->data_out);
 		xfree(item);
 
@@ -108,6 +110,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 	if (rdpsnd->is_open && rdpsnd->close_timestamp > 0)
 	{
 		cur_time = get_mstime();
+
 		if (cur_time > rdpsnd->close_timestamp)
 		{
 			if (rdpsnd->device)
@@ -493,7 +496,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	rdpsnd->data_out_list = list_new();
 	rdpsnd->latency = -1;
 
-	data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	data = (RDP_PLUGIN_DATA*) plugin->channel_entry_points.pExtendedData;
 
 	while (data && data->size > 0)
 	{
@@ -506,6 +509,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		default_data[0].size = sizeof(RDP_PLUGIN_DATA);
 		default_data[0].data[0] = "pulse";
 		default_data[0].data[1] = "";
+
 		if (!rdpsnd_load_device_plugin(rdpsnd, "pulse", default_data))
 		{
 			default_data[0].data[0] = "alsa";
@@ -541,8 +545,8 @@ static void rdpsnd_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 {
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)plugin;
 	struct data_out_item* item;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
