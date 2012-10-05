@@ -60,6 +60,9 @@ struct wf_info
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
 	SURFACE_BITS_COMMAND cmd;
+
+	BOOL input_disabled;
+	BOOL force_all_disconnect;
 };
 
 struct wf_peer_context

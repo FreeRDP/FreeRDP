@@ -221,6 +221,16 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	context = (wfPeerContext*) client->context;
 
 	wfi = context->info;
+
+	if (wfi->input_disabled == TRUE)
+	{
+		printf("client input is disabled\n");
+		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
+		client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
+		client->input->MouseEvent = wf_peer_mouse_event_dummy;
+		client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event_dummy;
+	}
+
 	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	printf("socketEvent created\n");
 
@@ -267,6 +277,13 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 			if (context->socketClose)
 				break;
+		}
+
+		//force disconnect
+		if(wfi->force_all_disconnect == TRUE)
+		{
+			printf("Forcing Disconnect -> ");
+			break;
 		}
 	}
 

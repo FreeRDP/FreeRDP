@@ -138,17 +138,29 @@ wfInfo* wf_info_init()
 
 		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
 
+		//Set FPS
 		wfi->framesPerSecond = 24;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-				wfi->framesPerSecond = dwValue;
-				
+				wfi->framesPerSecond = dwValue;		
 		}
+		RegCloseKey(hKey);
 
+		//Set input toggle
+		wfi->input_disabled = FALSE;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("DisableInput"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			{
+				if (dwValue != 0)
+					wfi->input_disabled = TRUE;
+			}
+		}
 		RegCloseKey(hKey);
 
 		//detect windows version

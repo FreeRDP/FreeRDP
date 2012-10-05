@@ -28,10 +28,11 @@
 
 #include "wf_peer.h"
 #include "wf_settings.h"
+#include "wf_info.h"
 
 #include "wf_interface.h"
 
-//
+//todo: remove this
 struct rdp_listener
 {
 	freerdp_listener* instance;
@@ -50,6 +51,10 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	fd_set rfds_set;
 	freerdp_listener* instance;
 	struct rdp_listener* listener;
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+	wfi->force_all_disconnect = FALSE;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	instance = (freerdp_listener*) lpParam;
@@ -119,6 +124,12 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 BOOL wfreerdp_server_stop(wfServer* server)
 {
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+
+	printf("Stopping server\n");
+	wfi->force_all_disconnect = TRUE;
 	server->instance->Close(server->instance);
 	return TRUE;
 }
