@@ -15,22 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "parallel")
-set(MODULE_PREFIX "CHANNEL_PARALLEL_CLIENT")
+set(MODULE_NAME "freerdp-channels-client")
+set(MODULE_PREFIX "FREERDP_CHANNELS_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	parallel_main.c)
-
-include_directories(..)
+	loader.c)
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-interlocked)
-endif()
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(TARGETS parallel DESTINATION ${FREERDP_PLUGIN_PATH})
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/Client")
+

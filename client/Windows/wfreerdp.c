@@ -702,9 +702,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance->context->argv = __argv;
 
 #ifdef WITH_RDPDR
-        REGISTER_SVC_PLUGIN_ENTRY(rdpdr) ;
-        REGISTER_DEV_PLUGIN_ENTRY(disk) ;
-        REGISTER_DEV_PLUGIN_ENTRY(printer) ;
+        REGISTER_SVC_PLUGIN_ENTRY(rdpdr);
+        REGISTER_DEV_PLUGIN_ENTRY(disk);
+        REGISTER_DEV_PLUGIN_ENTRY(printer);
 #endif
 
         if (!CreateThread(NULL, 0, kbd_thread_func, NULL, 0, NULL))

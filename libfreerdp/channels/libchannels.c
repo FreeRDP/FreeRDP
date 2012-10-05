@@ -139,6 +139,7 @@ static rdpChannels* g_init_channels;
 
 /* The list of all channel managers. */
 typedef struct rdp_channels_list rdpChannelsList;
+
 struct rdp_channels_list
 {
 	rdpChannels* channels;
@@ -296,7 +297,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 	if (ppInitHandle == NULL)
 	{
-		DEBUG_CHANNELS("error bad pphan");
+		DEBUG_CHANNELS("error bad init handle");
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
@@ -690,7 +691,6 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 
 	lib = channels->libs_data + channels->num_libs_data;
 	lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
-	//lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_channel_plugin(settings, name, CHANNEL_EXPORT_FUNC_NAME);
 
 	if (lib->entry == NULL)
 	{
