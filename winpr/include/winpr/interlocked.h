@@ -135,10 +135,11 @@ WINPR_API LONG InterlockedDecrement(LONG volatile *Addend);
 WINPR_API LONG InterlockedExchange(LONG volatile *Target, LONG Value);
 WINPR_API LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value);
 
-WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination,LONG Exchange, LONG Comperand);
-WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand);
+WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG Comperand);
 
 #endif /* _WIN32 */
+
+WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand);
 
 #endif /* WINPR_INTERLOCKED_H */
 

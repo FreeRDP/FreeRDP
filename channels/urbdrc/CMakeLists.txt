@@ -20,5 +20,3 @@ add_subdirectory(libusb)
 if(WITH_CLIENT_CHANNELS)
 	add_subdirectory(client)
 endif()
-
-

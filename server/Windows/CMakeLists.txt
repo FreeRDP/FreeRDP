@@ -62,7 +62,7 @@ else()
 		freerdp-channels)
 endif()
 
-target_link_libraries(wfreerdp-server ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 
 if(WITH_SERVER_INTERFACE)

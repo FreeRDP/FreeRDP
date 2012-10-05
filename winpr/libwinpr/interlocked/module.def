@@ -1,2 +1,3 @@
 LIBRARY		"libwinpr-interlocked"
 EXPORTS
+	InterlockedCompareExchange64		@1

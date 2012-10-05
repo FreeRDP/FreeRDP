@@ -37,7 +37,7 @@ set(${MODULE_PREFIX}_SRCS
 	timer.c
 	wait.c)
 
-if(MSVC)
+if(MSVC AND (NOT WITH_MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 

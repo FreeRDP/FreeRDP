@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPDR_SRCS
+set(MODULE_NAME "rdpdr")
+set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
+
+set(${MODULE_PREFIX}_SRCS
 	rdpdr_constants.h
 	rdpdr_types.h
 	rdpdr_capabilities.c
@@ -29,19 +30,22 @@ set(RDPDR_SRCS
 	rdpdr_main.c
 	rdpdr_main.h)
 
-add_library(rdpdr ${RDPDR_SRCS})
-set_target_properties(rdpdr PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(rdpdr freerdp)
+	target_link_libraries(${MODULE_NAME} freerdp)
 else()
-	target_link_libraries(rdpdr freerdp-utils)
+	target_link_libraries(${MODULE_NAME} freerdp-utils)
 endif()
 
-install(TARGETS rdpdr DESTINATION ${FREERDP_PLUGIN_PATH})
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 
 add_subdirectory(disk)
 add_subdirectory(printer)
+
 if(NOT WIN32)
 	add_subdirectory(parallel)
 	add_subdirectory(serial)

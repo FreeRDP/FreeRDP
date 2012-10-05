@@ -48,4 +48,4 @@ else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

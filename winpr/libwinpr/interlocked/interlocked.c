@@ -246,6 +246,45 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
+#endif /* _WIN32 */
+
+#if (_WIN32_WINNT < 0x0502)
+
+static volatile HANDLE mutex = NULL;
+
+int static_mutex_lock(volatile HANDLE* static_mutex)
+{
+	if (*static_mutex == NULL)
+	{
+		HANDLE handle = CreateMutex(NULL, FALSE, NULL);
+		
+		if (InterlockedCompareExchangePointer((PVOID*) static_mutex, (PVOID) handle, NULL) != NULL)
+			CloseHandle(handle);
+	}
+
+	return WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED;
+}
+
+/* Not available in XP */
+
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+{
+	LONGLONG previousValue = 0;
+
+	static_mutex_lock(&mutex);
+
+	previousValue = *Destination;
+
+	if (*Destination == Comperand)
+		*Destination = Exchange;
+
+	ReleaseMutex(mutex);
+
+	return previousValue;
+}
+
+#else /* (_WIN32_WINNT < 0x0600) */
+
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
 #ifdef __GNUC__
@@ -255,4 +294,5 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 #endif
 }
 
-#endif
+#endif /* (_WIN32_WINNT < 0x0600) */
+

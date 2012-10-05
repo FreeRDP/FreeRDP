@@ -34,11 +34,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(WIN32)
-	target_link_libraries(${MODULE_NAME} Pathcch)
-else()
-	target_link_libraries(${MODULE_NAME} winpr-path)
-endif()
+target_link_libraries(${MODULE_NAME} winpr-path)
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
