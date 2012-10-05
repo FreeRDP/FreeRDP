@@ -29,12 +29,48 @@
 
 HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	pszPathLength = lstrlenA(pszPath);
+
+	if (pszPath[pszPathLength - 1] == '\\')
+		return S_FALSE;
+
+	if (cchPath > (pszPathLength + 1))
+	{
+		pszPath[pszPathLength] = '\\';
+		pszPath[pszPathLength + 1] = '\0';
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath)
 {
-	return 0;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	pszPathLength = lstrlenW(pszPath);
+
+	if (pszPath[pszPathLength - 1] == '\\')
+		return S_FALSE;
+
+	if (cchPath > (pszPathLength + 1))
+	{
+		pszPath[pszPathLength] = '\\';
+		pszPath[pszPathLength + 1] = '\0';
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath)
@@ -49,12 +85,48 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
 {
-	return 0;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	pszPathLength = lstrlenA(pszPath);
+
+	if (pszPath[pszPathLength - 1] == '\\')
+		return S_FALSE;
+
+	if (cchPath > (pszPathLength + 1))
+	{
+		pszPath[pszPathLength] = '\\';
+		pszPath[pszPathLength + 1] = '\0';
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining)
 {
-	return 0;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	pszPathLength = lstrlenW(pszPath);
+
+	if (pszPath[pszPathLength - 1] == '\\')
+		return S_FALSE;
+
+	if (cchPath > (pszPathLength + 1))
+	{
+		pszPath[pszPathLength] = '\\';
+		pszPath[pszPathLength + 1] = '\0';
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
@@ -69,12 +141,82 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 
 HRESULT PathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 {
-	return 0;
+	CHAR* pDot;
+	BOOL bExtDot;
+	CHAR* pBackslash;
+	size_t pszExtLength;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	if (!pszExt)
+		return S_FALSE;
+
+	pszExtLength = lstrlenA(pszExt);
+	pszPathLength = lstrlenA(pszPath);
+	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
+
+	pDot = strrchr(pszPath, '.');
+	pBackslash = strrchr(pszPath, '\\');
+
+	if (pDot && pBackslash)
+	{
+		if (pDot > pBackslash)
+			return S_FALSE;
+	}
+
+	if (cchPath > pszPathLength + pszExtLength + ((bExtDot) ? 0 : 1))
+	{
+		if (bExtDot)
+			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", pszExt);
+		else
+			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, ".%s", pszExt);
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 {
-	return 0;
+	LPTCH pDot;
+	BOOL bExtDot;
+	LPTCH pBackslash;
+	size_t pszExtLength;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	if (!pszExt)
+		return S_FALSE;
+
+	pszExtLength = lstrlenW(pszExt);
+	pszPathLength = lstrlenW(pszPath);
+	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
+
+	pDot = _tcsrchr(pszPath, '.');
+	pBackslash = _tcsrchr(pszPath, '\\');
+
+	if (pDot && pBackslash)
+	{
+		if (pDot > pBackslash)
+			return S_FALSE;
+	}
+
+	if (cchPath > pszPathLength + pszExtLength + ((bExtDot) ? 0 : 1))
+	{
+		if (bExtDot)
+			_stprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _T("%s"), pszExt);
+		else
+			_stprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _T(".%s"), pszExt);
+
+		return S_OK;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore)
@@ -84,7 +226,41 @@ HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 
 HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 {
-	return 0;
+	BOOL pathBackslash;
+	BOOL moreBackslash;
+	size_t pszMoreLength;
+	size_t pszPathLength;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	if (!pszMore)
+		return S_FALSE;
+
+	pszMoreLength = lstrlenW(pszMore);
+	pszPathLength = lstrlenW(pszPath);
+
+	pathBackslash = (pszPath[pszPathLength - 1] == '\\') ? TRUE : FALSE;
+	moreBackslash = (pszMore[0] == '\\') ? TRUE : FALSE;
+
+	if (pathBackslash && moreBackslash)
+	{
+		if ((pszPathLength + pszMoreLength - 1) < cchPath)
+		{
+			_stprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _T("%s"), &pszMore[1]);
+			return S_OK;
+		}
+	}
+	else if (pathBackslash && !moreBackslash)
+	{
+		if ((pszPathLength + pszMoreLength) < cchPath)
+		{
+			_stprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _T("%s"), pszMore);
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore, unsigned long dwFlags)
