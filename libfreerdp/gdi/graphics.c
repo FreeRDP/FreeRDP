@@ -33,6 +33,7 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/cache/glyph.h>
 
@@ -115,7 +116,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	switch (codec_id)
 	{
 		case CODEC_ID_NSCODEC:
-			printf("gdi_Bitmap_Decompress: nsc not done\n");
+			error_report("gdi_Bitmap_Decompress: nsc not done\n");
 			break;
 		case CODEC_ID_REMOTEFX:
 			gdi = context->gdi;
@@ -123,7 +124,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			msg = rfx_process_message(gdi->rfx_context, data, length);
 			if (msg == NULL)
 			{
-				printf("gdi_Bitmap_Decompress: rfx Decompression Failed\n");
+				error_report("gdi_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
 			else
 			{
@@ -146,7 +147,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 #ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
-				printf("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
+				error_report("gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
 			}
 #endif
 			break;
@@ -157,7 +158,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 				if (status == false)
 				{
-					printf("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					error_report("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
 			}
 			else

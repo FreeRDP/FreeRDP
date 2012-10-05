@@ -25,6 +25,7 @@
 #include <freerdp/api.h>
 #include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/utils/error.h>
 
 #include "orders.h"
 
@@ -1468,7 +1469,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 		{
 			if (cache_brush_order->length != 8)
 			{
-				printf("incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
+				error_report("incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
 				return;
 			}
 
@@ -1715,7 +1716,7 @@ boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
-		printf("Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+		error_report("Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
 		return false;
 	}
 

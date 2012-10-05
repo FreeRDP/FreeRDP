@@ -30,6 +30,7 @@
 #include <openssl/rsa.h>
 
 #include <freerdp/utils/file.h>
+#include <freerdp/utils/error.h>
 
 #include "certificate.h"
 
@@ -260,7 +261,7 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
-		printf("gcc_process_server_public_key: magic error\n");
+		error_report("gcc_process_server_public_key: magic error\n");
 		return false;
 	}
 
@@ -300,7 +301,7 @@ static boolean certificate_process_server_public_signature(rdpCertificate* certi
 
 	if (sum != 0)
 	{
-		printf("certificate_process_server_public_signature: invalid signature\n");
+		error_report("certificate_process_server_public_signature: invalid signature\n");
 		//return false;
 	}
 
@@ -311,7 +312,7 @@ static boolean certificate_process_server_public_signature(rdpCertificate* certi
 	/* Verify signature. */
 	if (memcmp(md5hash, sig, sizeof(md5hash)) != 0)
 	{
-		printf("certificate_process_server_public_signature: invalid signature\n");
+		error_report("certificate_process_server_public_signature: invalid signature\n");
 		//return false;
 	}
 
@@ -327,7 +328,7 @@ static boolean certificate_process_server_public_signature(rdpCertificate* certi
 
 	if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01)
 	{
-		printf("certificate_process_server_public_signature: invalid signature\n");
+		error_report("certificate_process_server_public_signature: invalid signature\n");
 		//return false;
 	}
 
@@ -358,7 +359,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
-		printf("certificate_read_server_proprietary_certificate: parse error 1\n");
+		error_report("certificate_read_server_proprietary_certificate: parse error 1\n");
 		return false;
 	}
 
@@ -366,7 +367,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
-		printf("certificate_read_server_proprietary_certificate: parse error 2\n");
+		error_report("certificate_read_server_proprietary_certificate: parse error 2\n");
 		return false;
 	}
 
@@ -374,7 +375,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
-		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
+		error_report("certificate_read_server_proprietary_certificate: parse error 3\n");
 		return false;
 	}
 
@@ -383,7 +384,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
-		printf("certificate_read_server_proprietary_certificate: parse error 4\n");
+		error_report("certificate_read_server_proprietary_certificate: parse error 4\n");
 		return false;
 	}
 
@@ -391,13 +392,13 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 
 	if (wSignatureBlobLen != 72)
 	{
-		printf("certificate_process_server_public_signature: invalid signature length (got %d, expected %d)\n", wSignatureBlobLen, 64);
+		error_report("certificate_process_server_public_signature: invalid signature length (got %d, expected %d)\n", wSignatureBlobLen, 64);
 		return false;
 	}
 
 	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s, wSignatureBlobLen))
 	{
-		printf("certificate_read_server_proprietary_certificate: parse error 5\n");
+		error_report("certificate_read_server_proprietary_certificate: parse error 5\n");
 		return false;
 	}
 
@@ -485,7 +486,7 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 			break;
 
 		default:
-			printf("invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
+			error_report("invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
 			break;
 	}
 
@@ -508,7 +509,7 @@ rdpKey* key_new(const char* keyfile)
 
 	if (fp == NULL)
 	{
-		printf("unable to load RSA key from %s: %s.", keyfile, strerror(errno));
+		error_report("unable to load RSA key from %s: %s.", keyfile, strerror(errno));
 		xfree(key) ;
 		return NULL;
 	}
@@ -529,7 +530,7 @@ rdpKey* key_new(const char* keyfile)
 	{
 		case 0:
 			RSA_free(rsa);
-			printf("invalid RSA key in %s", keyfile);
+			error_report("invalid RSA key in %s", keyfile);
 			xfree(key) ;
 			return NULL;
 
@@ -547,7 +548,7 @@ rdpKey* key_new(const char* keyfile)
 	if (BN_num_bytes(rsa->e) > 4)
 	{
 		RSA_free(rsa);
-		printf("RSA public exponent too large in %s", keyfile);
+		error_report("RSA public exponent too large in %s", keyfile);
 		xfree(key) ;
 		return NULL;
 	}

@@ -30,6 +30,7 @@
 
 #include <freerdp/utils/time.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/locale/timezone.h>
 
@@ -1564,7 +1565,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;	
 	}
 
-	printf("Unable to detect time zone\n");
+	error_report("Unable to detect time zone\n");
 	return tzid;
 #else
 	return 0;
@@ -1625,7 +1626,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 		}
 	}
 
-	printf("Unable to find a match for unix timezone: %s\n", tzid);
+	error_report("Unable to find a match for unix timezone: %s\n", tzid);
 	xfree(tzid);
 	return NULL;
 }
@@ -1646,7 +1647,7 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 		}
 	}
 
-	printf("Unable to get current timezone rule\n");
+	error_report("Unable to get current timezone rule\n");
 	return NULL;
 }
 

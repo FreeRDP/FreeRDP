@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/error.h>
 #include "gcc.h"
 
 #include "mcs.h"
@@ -507,7 +508,7 @@ boolean mcs_recv_connect_response(rdpMcs* mcs, STREAM* s)
 
 	if (!gcc_read_conference_create_response(s, mcs->transport->settings))
 	{
-		printf("mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
+		error_report("mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
 		return false;
 	}
 

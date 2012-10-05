@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/error.h>
 #include <freerdp/input.h>
 
 #include "input.h"
@@ -332,7 +333,7 @@ static boolean input_recv_event(rdpInput* input, STREAM* s)
 			break;
 
 		default:
-			printf("Unknown messageType %u\n", messageType);
+			error_report("Unknown messageType %u\n", messageType);
 			/* Each input event uses 6 bytes. */
 			stream_seek(s, 6);
 			break;

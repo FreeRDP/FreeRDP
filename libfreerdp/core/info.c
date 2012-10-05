@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include "timezone.h"
 
@@ -435,14 +436,14 @@ boolean rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
-			printf("Error: SEC_REDIRECTION_PKT unsupported\n");
+			error_report("Error: SEC_REDIRECTION_PKT unsupported\n");
 			return false;
 		}
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				error_report("rdp_decrypt failed\n");
 				return false;
 			}
 		}

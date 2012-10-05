@@ -204,5 +204,5 @@ void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names)
 	DEBUG_KBD("loaded %d keymaps", keymap_loaded);
 
 	if (keymap_loaded <= 0)
-		printf("error: no keyboard mapping available!\n");
+		error_report("error: no keyboard mapping available!\n");
 }

@@ -30,6 +30,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
+#include <freerdp/utils/error.h>
 #include <freerdp/errorcodes.h>
 
 #include <time.h>
@@ -143,7 +144,7 @@ boolean transport_connect_nla(rdpTransport* transport)
 		if (!connectErrorCode)                    
 			connectErrorCode = AUTHENTICATIONERROR;                      
 
-		printf("Authentication failure, check credentials.\n"
+		error_report("Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
@@ -204,7 +205,46 @@ boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 
 	}
 	else
 	{
-		status = tcp_connect(transport->tcp, hostname, port);
+		if(transport->settings->proxy_host)
+		{
+			status = tcp_connect(transport->tcp, transport->settings->proxy_host, transport->settings->proxy_port);
+			if(status)
+			{
+	                        char buf[8192];
+	                        int bytes_read;
+				int n = snprintf(buf,sizeof(buf), "CONNECT %s:%d HTTP/1.0\r\n\r\n", hostname, port);
+				tcp_write(transport->tcp, buf, n);
+
+                                bytes_read = tcp_read(transport->tcp, buf, sizeof(buf));
+				if(bytes_read > 12)
+				{
+					if(  (strncmp(buf,"HTTP/1.0 200", 12) == 0) ||
+						 (strncmp(buf,"HTTP/1.1 200", 12) == 0) )
+					{
+					    printf("Connected via proxy\n");
+                                            while (bytes_read > 0)
+                                                {
+                                                if (bytes_read > 4 && strncmp(buf + bytes_read - 4, "\r\n\r\n", 4) == 0) 
+                                                    break ;
+                                                bytes_read = tcp_read(transport->tcp, buf, sizeof(buf) - 1) ;
+                                                }
+					} 
+                                        else
+					{
+                                            error_report("Proxy connection failed: %s\n", buf);	
+                                            return false;
+					}
+				} 
+                                else
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			status = tcp_connect(transport->tcp, hostname, port);
+		}
 	}
 
 	return status;
@@ -258,7 +298,7 @@ boolean transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		printf("client authentication failure\n");
+		error_report("client authentication failure\n");
 		credssp_free(transport->credssp);
 		return false;
 	}
@@ -433,7 +473,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		if (length == 0)
 		{
-			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
+			error_report("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
 			freerdp_hexdump(stream_get_head(transport->recv_buffer), pos);
 			return -1;
 		}

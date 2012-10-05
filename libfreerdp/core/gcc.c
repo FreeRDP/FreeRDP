@@ -23,6 +23,7 @@
 
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -265,7 +266,7 @@ boolean gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	per_read_length(s, &length);
 	if (!gcc_read_server_data_blocks(s, settings, length))
 	{
-		printf("gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
+		error_report("gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
 		return false;
 	}
 
@@ -381,7 +382,7 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
-			printf("gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
+			error_report("gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
 			return false;
 		}
 
@@ -390,7 +391,7 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length
 			case SC_CORE:
 				if (!gcc_read_server_core_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
+					error_report("gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
 					return false;
 				}
 				break;
@@ -398,7 +399,7 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
+					error_report("gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
 					return false;
 				}
 				break;
@@ -406,13 +407,13 @@ boolean gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length
 			case SC_NET:
 				if (!gcc_read_server_network_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
+					error_report("gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
 					return false;
 				}
 				break;
 
 			default:
-				printf("gcc_read_server_data_blocks: ignoring type=%hu\n", type);
+				error_report("gcc_read_server_data_blocks: ignoring type=%hu\n", type);
 				break;
 		}
 		offset += blockLength;

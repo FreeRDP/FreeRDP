@@ -27,6 +27,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/bitmap.h>
 
@@ -210,7 +211,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 
 	if (id > bitmap_cache->maxCells)
 	{
-		printf("get invalid bitmap cell id: %d\n", id);
+		error_report("get invalid bitmap cell id: %d\n", id);
 		return NULL;
 	}
 
@@ -220,7 +221,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 	}
 	else if (index > bitmap_cache->cells[id].number)
 	{
-		printf("get invalid bitmap index %d in cell id: %d\n", index, id);
+		error_report("get invalid bitmap index %d in cell id: %d\n", index, id);
 		return NULL;
 	}
 
@@ -233,7 +234,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdp
 {
 	if (id > bitmap_cache->maxCells)
 	{
-		printf("put invalid bitmap cell id: %d\n", id);
+		error_report("put invalid bitmap cell id: %d\n", id);
 		return;
 	}
 
@@ -243,7 +244,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdp
 	}
 	else if (index > bitmap_cache->cells[id].number)
 	{
-		printf("put invalid bitmap index %d in cell id: %d\n", index, id);
+		error_report("put invalid bitmap index %d in cell id: %d\n", index, id);
 		return;
 	}
 

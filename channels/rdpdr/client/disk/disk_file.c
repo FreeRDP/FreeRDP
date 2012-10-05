@@ -94,7 +94,15 @@ static void disk_file_fix_path(char* path)
 		if (path[i] == '\\')
 			path[i] = '/';
 	}
-	if (len > 0 && path[len - 1] == '/')
+#ifdef WIN32
+        if (len == 3 && path[1] == ':' && path[2] == '/')
+            return ;
+#else
+        if (len == 1 && path[0] == '/')
+            return ;
+#endif        
+        
+        if (len > 0 && path[len - 1] == '/')
 		path[len - 1] = '\0';
 }
 

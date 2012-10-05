@@ -30,6 +30,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include <winpr/ndr.h>
 
@@ -446,7 +447,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 
 	if (status <= 0)
 	{
-		printf("rpc_tsg_write failed!\n");
+		error_report("rpc_tsg_write failed!\n");
 		return -1;
 	}
 
@@ -465,7 +466,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (!rpc_connect(rpc))
 	{
-		printf("rpc_connect failed!\n");
+		error_report("rpc_connect failed!\n");
 		return false;
 	}
 
@@ -487,7 +488,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=1 failed!\n");
+		error_report("rpc_write opnum=1 failed!\n");
 		return false;
 	}
 
@@ -495,14 +496,14 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	data = xmalloc(length);
 	if (data == NULL)
 	{
-		printf("rpc_recv - memory allocation error\n") ;
+		error_report("rpc_recv - memory allocation error\n") ;
 		return false ;
 	}
 	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
-		printf("rpc_recv failed!\n");
+		error_report("rpc_recv failed!\n");
 		xfree(data) ;
 		return false;
 	}
@@ -533,7 +534,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=2 failed!\n");
+		error_report("rpc_write opnum=2 failed!\n");
 		xfree(data) ;
 		return false;
 	}
@@ -542,7 +543,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_recv failed!\n");
+		error_report("rpc_recv failed!\n");
 		xfree(data) ;
 		return false;
 	}
@@ -565,7 +566,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=3 failed!\n");
+		error_report("rpc_write opnum=3 failed!\n");
 		xfree(data) ;
 		return false;
 	}
@@ -602,7 +603,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=4 failed!\n");
+		error_report("rpc_write opnum=4 failed!\n");
 		stream_free(s_p4);
 		xfree(data);
 		return false;
@@ -612,7 +613,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status < 0)
 	{
-		printf("rpc_recv failed!\n");
+		error_report("rpc_recv failed!\n");
 		stream_free(s_p4);
 		xfree(data);
 		return false;
@@ -641,7 +642,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=8 failed!\n");
+		error_report("rpc_write opnum=8 failed!\n");
 		stream_free(s_p4);
 		xfree(data);
 		return false;

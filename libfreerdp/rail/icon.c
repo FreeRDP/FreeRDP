@@ -25,6 +25,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/rail/icon.h>
 
@@ -34,13 +35,13 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** ex
 
 	if (id >= cache->numCaches)
 	{
-		printf("invalid window icon cache id:%d\n", id);
+		error_report("invalid window icon cache id:%d\n", id);
 		return (ICON_INFO*) NULL;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		printf("invalid window icon cache index:%d in cache id:%d\n", index, id);
+		error_report("invalid window icon cache index:%d in cache id:%d\n", index, id);
 		return (ICON_INFO*) NULL;
 	}
 
@@ -56,13 +57,13 @@ void icon_cache_put(rdpIconCache* cache, uint8 id, uint16 index, ICON_INFO* entr
 {
 	if (id >= cache->numCaches)
 	{
-		printf("invalid window icon cache id:%d\n", id);
+		error_report("invalid window icon cache id:%d\n", id);
 		return;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		printf("invalid window icon cache index:%d in cache id:%d\n", index, id);
+		error_report("invalid window icon cache index:%d in cache id:%d\n", index, id);
 		return;
 	}
 

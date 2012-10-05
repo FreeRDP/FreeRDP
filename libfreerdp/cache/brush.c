@@ -27,6 +27,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/brush.h>
 
@@ -86,7 +87,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 	{
 		if (index >= brush->maxMonoEntries)
 		{
-			printf("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			error_report("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
@@ -97,7 +98,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 	{
 		if (index >= brush->maxEntries)
 		{
-			printf("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			error_report("invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
@@ -107,7 +108,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 
 	if (entry == NULL)
 	{
-		printf("invalid brush (%d bpp) at index: 0x%04X\n", *bpp, index);
+		error_report("invalid brush (%d bpp) at index: 0x%04X\n", *bpp, index);
 		return NULL;
 	}
 
@@ -122,7 +123,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 	{
 		if (index >= brush->maxMonoEntries)
 		{
-			printf("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			error_report("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
 			return;
 		}
 
@@ -138,7 +139,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 	{
 		if (index >= brush->maxEntries)
 		{
-			printf("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			error_report("invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
 			return;
 		}
 

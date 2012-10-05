@@ -30,6 +30,7 @@
 #include <openssl/rsa.h>
 
 #include <freerdp/utils/file.h>
+#include <freerdp/utils/error.h>
 
 static const char certificate_store_dir[] = "certs";
 static const char certificate_known_hosts_file[] = "known_hosts";
@@ -60,7 +61,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 		if (certificate_store->fp == NULL)
 		{
-			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			error_report("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
 			return;
 		}
 

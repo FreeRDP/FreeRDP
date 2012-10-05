@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/error.h>
 #include "capabilities.h"
 
 /*
@@ -1703,7 +1704,7 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 
 		if (stream_get_left(s) < length - 4)
 		{
-			printf("error processing stream\n");
+			error_report("error processing stream\n");
 			return false;
 		}
 
@@ -1826,13 +1827,13 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 				break;
 
 			default:
-				printf("unknown capability type %d\n", type);
+				error_report("unknown capability type %d\n", type);
 				break;
 		}
 
 		if (s->p != em)
 		{
-			printf("incorrect offset, type:0x%02X actual:%d expected:%d\n",
+			error_report("incorrect offset, type:0x%02X actual:%d expected:%d\n",
 				type, (int) (s->p - bm), (int) (em - bm));
 		}
 
@@ -1868,7 +1869,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				error_report("rdp_decrypt failed\n");
 				return false;
 			}
 		}
@@ -1876,13 +1877,13 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		printf("expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, channelId);
+		error_report("expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, channelId);
 		return false;
 	}
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 	{
-		printf("rdp_read_share_control_header failed\n");
+		error_report("rdp_read_share_control_header failed\n");
 		return false;
 	}
 
@@ -1890,7 +1891,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
-		printf("expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
+		error_report("expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
 		return false;
 	}
 
@@ -1904,7 +1905,7 @@ boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
 	{
-		printf("rdp_read_capability_sets failed\n");
+		error_report("rdp_read_capability_sets failed\n");
 		return false;
 	}
 
@@ -2003,7 +2004,7 @@ boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				error_report("rdp_decrypt failed\n");
 				return false;
 			}
 		}

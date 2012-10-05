@@ -73,7 +73,7 @@ static void scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
 			break;
 
 		default:
-			printf("MajorFunction 0x%X unexpected for smartcards.", irp->MajorFunction);
+			error_report("MajorFunction 0x%X unexpected for smartcards.", irp->MajorFunction);
 			DEBUG_WARN("Smartcard MajorFunction 0x%X not supported.", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);

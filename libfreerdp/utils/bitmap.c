@@ -27,6 +27,7 @@
 #include <freerdp/types.h>
 
 #include <freerdp/utils/bitmap.h>
+#include <freerdp/utils/error.h>
 
 typedef struct
 {
@@ -67,7 +68,7 @@ void freerdp_bitmap_write(char* filename, void* data, int width, int height, int
 
 	if (fp == NULL)
 	{
-		printf("failed to open file %s\n", filename);
+		error_report("failed to open file %s\n", filename);
 		return;
 	}
 

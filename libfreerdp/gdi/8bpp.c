@@ -29,6 +29,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/bitmap.h>
@@ -749,7 +750,7 @@ int BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight
 			break;
 	}
 	
-	printf("BitBlt: unknown rop: 0x%08X\n", rop);
+	error_report("BitBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 
@@ -794,7 +795,7 @@ int PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, in
 			break;
 	}
 	
-	printf("PatBlt: unknown rop: 0x%08X\n", rop);
+	error_report("PatBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 

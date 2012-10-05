@@ -27,6 +27,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/nine_grid.h>
 
@@ -59,7 +60,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		printf("invalid NineGrid index: 0x%04X\n", index);
+		error_report("invalid NineGrid index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -67,7 +68,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index)
 
 	if (entry == NULL)
 	{
-		printf("invalid NineGrid at index: 0x%04X\n", index);
+		error_report("invalid NineGrid at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -80,7 +81,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		printf("invalid NineGrid index: 0x%04X\n", index);
+		error_report("invalid NineGrid index: 0x%04X\n", index);
 		return;
 	}
 

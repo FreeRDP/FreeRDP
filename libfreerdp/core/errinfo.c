@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#include <freerdp/utils/error.h>
 #include "errinfo.h"
 
 int connectErrorCode;
@@ -449,13 +450,13 @@ void rdp_print_errinfo(uint32 code)
 	{
 		if (code == errInfo->code)
 		{
-			printf("%s (0x%08X):\n%s\n", errInfo->name, code, errInfo->info);
+			error_report("%s (0x%08X):\n%s\n", errInfo->name, code, errInfo->info);
 			return;
 		}
 
 		errInfo++;
 	}
 
-	printf("ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
+	error_report("ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
 }
 

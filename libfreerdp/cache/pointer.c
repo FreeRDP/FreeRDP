@@ -25,6 +25,7 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/pointer.h>
 
@@ -46,7 +47,7 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 			break;
 
 		default:
-			printf("Unknown system pointer type (0x%08X)\n", pointer_system->type);
+			error_report("Unknown system pointer type (0x%08X)\n", pointer_system->type);
 	}
 }
 
@@ -117,7 +118,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		printf("invalid pointer index:%d\n", index);
+		error_report("invalid pointer index:%d\n", index);
 		return NULL;
 	}
 
@@ -132,7 +133,7 @@ void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer*
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		printf("invalid pointer index:%d\n", index);
+		error_report("invalid pointer index:%d\n", index);
 		return;
 	}
 

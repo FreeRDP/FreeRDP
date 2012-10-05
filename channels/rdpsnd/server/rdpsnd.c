@@ -252,7 +252,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
-		printf("rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
+		error_report("rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
 		return;
 	}
 
