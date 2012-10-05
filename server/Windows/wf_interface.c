@@ -211,3 +211,78 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 
 }
+
+FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
+{
+	wfInfo* wfi;
+	freerdp_peer* peer;
+
+	wfi = wf_info_get_instance();
+	peer = wfi->peers[pId];
+
+	
+	if (peer)
+	{
+		return peer->local;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId)
+{
+	wfInfo* wfi;
+	freerdp_peer* peer;
+
+	wfi = wf_info_get_instance();
+	peer = wfi->peers[pId];
+
+	
+	if (peer)
+	{
+		return peer->connected;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId)
+{
+	wfInfo* wfi;
+	freerdp_peer* peer;
+
+	wfi = wf_info_get_instance();
+	peer = wfi->peers[pId];
+
+	
+	if (peer)
+	{
+		return peer->activated;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
+{
+	wfInfo* wfi;
+	freerdp_peer* peer;
+
+	wfi = wf_info_get_instance();
+	peer = wfi->peers[pId];
+
+	
+	if (peer)
+	{
+		return peer->authenticated;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
