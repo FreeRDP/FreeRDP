@@ -21,7 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
 #include <winpr/heap.h>
+#include <winpr/tchar.h>
 
 #include <winpr/path.h>
 
@@ -152,7 +154,58 @@ HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
 
 HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut)
 {
-	return 0;
+	PWSTR pszPathOut;
+	BOOL backslashIn;
+	BOOL backslashMore;
+	int pszMoreLength;
+	int pszPathInLength;
+	int pszPathOutLength;
+
+	if (!pszPathIn)
+		return S_FALSE;
+
+	if (!pszMore)
+		return S_FALSE;
+
+	pszPathInLength = lstrlenW(pszPathIn);
+	pszMoreLength = lstrlenW(pszMore);
+
+	backslashIn = (pszPathIn[pszPathInLength - 1] == '\\') ? TRUE : FALSE;
+	backslashMore = (pszMore[0] == '\\') ? TRUE : FALSE;
+
+	if (backslashMore)
+	{
+		if ((pszPathIn[1] == ':') && (pszPathIn[2] == '\\'))
+		{
+			size_t sizeOfBuffer;
+
+			pszPathOutLength = 2 + pszMoreLength;
+			sizeOfBuffer = (pszPathOutLength + 1) * 2;
+
+			pszPathOut = (PWSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+			_stprintf_s(pszPathOut, sizeOfBuffer, _T("%c:%s"), pszPathIn[0], pszMore);
+
+			*ppszPathOut = pszPathOut;
+
+			return S_OK;
+		}
+	}
+	else if (backslashIn && !backslashMore)
+	{
+		size_t sizeOfBuffer;
+
+		pszPathOutLength = pszPathInLength + pszMoreLength;
+		sizeOfBuffer = (pszPathOutLength + 1) * 2;
+
+		pszPathOut = (PWSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
+		_stprintf_s(pszPathOut, sizeOfBuffer, _T("%s%s"), pszPathIn, pszMore);
+
+		*ppszPathOut = pszPathOut;
+
+		return S_OK;
+	}
+
+	return S_OK;
 }
 
 HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)

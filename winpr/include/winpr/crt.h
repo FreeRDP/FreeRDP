@@ -33,6 +33,11 @@
 
 #ifndef _WIN32
 
+#ifndef _ERRNO_T_DEFINED
+#define _ERRNO_T_DEFINED
+typedef int errno_t;
+#endif
+
 WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
 WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
 WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);

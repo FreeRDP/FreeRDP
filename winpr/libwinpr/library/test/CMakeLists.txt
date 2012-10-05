@@ -18,13 +18,14 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(NOT WIN32)
-	target_link_libraries(${MODULE_NAME} winpr-library)
-endif()
+target_link_libraries(${MODULE_NAME} winpr-library winpr-path)
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
-	add_test(${TestName} ${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME} ${TestName})
+	add_test(${TestName} ${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME} ${TestName} ${EXECUTABLE_OUTPUT_PATH})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+
+add_subdirectory(TestLibraryA)
+add_subdirectory(TestLibraryB)

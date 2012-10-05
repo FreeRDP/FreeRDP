@@ -40,11 +40,13 @@ typedef CHAR TCHAR;
 #define _tcsdup		_wcsdup
 #define _tcscmp		wcscmp
 #define _tcscpy		wcscpy
+#define _stprintf_s	swprintf_s
 #else
 #define _tprintf	printf
 #define _tcsdup		_strdup
 #define _tcscmp		strcmp
 #define _tcscpy		strcpy
+#define _stprintf_s	sprintf_s
 #endif
 
 #endif
