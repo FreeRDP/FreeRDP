@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/synch.h>
+#include <winpr/handle.h>
+
 #include <winpr/interlocked.h>
 
 /**
@@ -248,7 +251,7 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 
 #endif /* _WIN32 */
 
-#if (_WIN32_WINNT < 0x0502)
+#if (_WIN32 && (_WIN32_WINNT < 0x0502))
 
 static volatile HANDLE mutex = NULL;
 
@@ -262,7 +265,7 @@ int static_mutex_lock(volatile HANDLE* static_mutex)
 			CloseHandle(handle);
 	}
 
-	return WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED;
+	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED);
 }
 
 /* Not available in XP */

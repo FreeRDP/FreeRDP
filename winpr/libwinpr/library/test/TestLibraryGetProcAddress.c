@@ -1,10 +1,10 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
+#include <winpr/library.h>
 
 int TestLibraryGetProcAddress(int argc, char* argv[])
 {
@@ -22,9 +22,8 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) BasePath, length * sizeof(WCHAR));
 	BasePath[length] = 0;
 #else
-	BasePath = _strdup(path);
+	BasePath = _strdup(str);
 #endif
-	
 	
 	_tprintf(_T("Base Path: %s\n"), BasePath);
 

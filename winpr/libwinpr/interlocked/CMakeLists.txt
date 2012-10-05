@@ -36,7 +36,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 if(WITH_MONOLITHIC_BUILD)
 
 else()
-	target_link_libraries(${MODULE_NAME} winpr-crt)
+	target_link_libraries(${MODULE_NAME} winpr-crt winpr-handle winpr-synch)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

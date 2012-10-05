@@ -20,6 +20,7 @@ set(MODULE_PREFIX "WINPR_CRT")
 
 set(${MODULE_PREFIX}_SRCS
 	alignment.c
+	buffer.c
 	memory.c
 	string.c)
 

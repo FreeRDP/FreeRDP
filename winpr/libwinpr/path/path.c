@@ -181,6 +181,7 @@ HRESULT PathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 
 HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 {
+#ifdef _WIN32
 	LPTCH pDot;
 	BOOL bExtDot;
 	LPTCH pBackslash;
@@ -215,7 +216,7 @@ HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 
 		return S_OK;
 	}
-
+#endif
 	return S_FALSE;
 }
 
@@ -268,6 +269,7 @@ HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 
 HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 {
+#ifdef _WIN32
 	BOOL pathBackslash;
 	BOOL moreBackslash;
 	size_t pszMoreLength;
@@ -309,6 +311,7 @@ HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 			return S_OK;
 		}
 	}
+#endif
 
 	return S_FALSE;
 }
@@ -435,6 +438,7 @@ HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
 
 HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut)
 {
+#ifdef _WIN32
 	PWSTR pszPathOut;
 	BOOL backslashIn;
 	BOOL backslashMore;
@@ -489,6 +493,7 @@ HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlag
 
 		return S_OK;
 	}
+#endif
 
 	return S_OK;
 }
@@ -583,7 +588,33 @@ HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	BOOL hasPrefix;
+	BOOL deviceNamespace;
+
+	if (!pszPath)
+		return S_FALSE;
+
+	if (cchPath < 4)
+		return S_FALSE;
+
+	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') &&
+		(pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
+
+	if (hasPrefix)
+	{
+		if (cchPath < 7)
+			return S_FALSE;
+
+		deviceNamespace = ((pszPath[5] == ':') && (pszPath[6] == '\\')) ? TRUE : FALSE;
+
+		if (deviceNamespace)
+		{
+			memmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
+			return S_OK;
+		}
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)

@@ -71,6 +71,9 @@ typedef short SHORT;
 #define CALLBACK
 
 typedef void* HANDLE, *LPHANDLE;
+typedef HANDLE HINSTANCE;
+typedef HANDLE HMODULE;
+
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
 typedef signed char INT8;

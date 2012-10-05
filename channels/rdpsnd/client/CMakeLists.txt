@@ -24,7 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	rdpsnd_main.c
 	rdpsnd_main.h)
 
-add_library(${MODULE_NAME} ${RDPSND_SRCS})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
@@ -46,3 +46,4 @@ endif()
 if(WITH_MACAUDIO)
 	add_subdirectory(MacAudio)
 endif()
+

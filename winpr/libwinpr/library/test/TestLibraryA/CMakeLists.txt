@@ -19,4 +19,6 @@ set(MODULE_NAME "TestLibraryA")
 
 add_library(${MODULE_NAME} TestLibraryA.c)
 
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test/Extra")
