@@ -178,3 +178,36 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 		return TRUE;
 	return FALSE;
 }
+
+FREERDP_API UINT32 wfreerdp_server_num_peers()
+{
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+	return wfi->peerCount;
+}
+
+FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
+{
+	wfInfo* wfi;
+	freerdp_peer* peer;
+
+	wfi = wf_info_get_instance();
+	peer = wfi->peers[pId];
+
+	
+	if (peer)
+	{
+		UINT32 sLen;
+
+		sLen = strnlen_s(peer->hostname, 50);
+		swprintf(dstStr, 50, L"%hs", peer->hostname);
+		return sLen;
+	}
+	else
+	{
+		printf("nonexistent peer\n");
+		return 0;
+	}
+
+}
