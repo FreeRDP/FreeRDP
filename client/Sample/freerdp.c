@@ -135,7 +135,7 @@ void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 				tf_process_cb_monitor_ready_event(channels, instance);
 				break;
 			default:
-				printf("tf_process_channel_event: unknown event type %d\n", event->event_type);
+				error_report("tf_process_channel_event: unknown event type %d\n", event->event_type);
 				break;
 		}
 
@@ -225,12 +225,12 @@ int tfreerdp_run(freerdp* instance)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			error_report("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			error_report("Failed to get channel manager file descriptor\n");
 			break;
 		}
 
@@ -259,19 +259,19 @@ int tfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("tfreerdp_run: select failed\n");
+				error_report("tfreerdp_run: select failed\n");
 				break;
 			}
 		}
 
 		if (freerdp_check_fds(instance) != true)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			error_report("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			error_report("Failed to check channel manager file descriptor\n");
 			break;
 		}
 		tf_process_channel_event(channels, instance);

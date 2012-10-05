@@ -23,6 +23,7 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/crypto/tls.h>
 
@@ -38,7 +39,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
 
 	if (!server_cert)
 	{
-		printf("tls_get_certificate: failed to get the server TLS certificate\n");
+		error_report("tls_get_certificate: failed to get the server TLS certificate\n");
 		cert = NULL;
 	}
 	else
@@ -66,7 +67,7 @@ boolean tls_connect(rdpTls* tls)
 
 	if (tls->ctx == NULL)
 	{
-		printf("SSL_CTX_new failed\n");
+		error_report("SSL_CTX_new failed\n");
 		return false;
 	}
 
@@ -105,13 +106,13 @@ boolean tls_connect(rdpTls* tls)
 
 	if (tls->ssl == NULL)
 	{
-		printf("SSL_new failed\n");
+		error_report("SSL_new failed\n");
 		return false;
 	}
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
-		printf("SSL_set_fd failed\n");
+		error_report("SSL_set_fd failed\n");
 		return false;
 	}
 
@@ -129,20 +130,20 @@ boolean tls_connect(rdpTls* tls)
 
 	if (cert == NULL)
 	{
-		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		error_report("tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return false;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
-		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
+		error_report("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		tls_free_certificate(cert);
 		return false;
 	}
 
 	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
 	{
-		printf("tls_connect: certificate not trusted, aborting.\n");
+		error_report("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
 		tls_free_certificate(cert);
 		return false;
@@ -163,7 +164,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	if (tls->ctx == NULL)
 	{
-		printf("SSL_CTX_new failed\n");
+		error_report("SSL_CTX_new failed\n");
 		return false;
 	}
 
@@ -208,7 +209,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
+		error_report("SSL_CTX_use_RSAPrivateKey_file failed\n");
 		return false;
 	}
 
@@ -216,13 +217,13 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	if (tls->ssl == NULL)
 	{
-		printf("SSL_new failed\n");
+		error_report("SSL_new failed\n");
 		return false;
 	}
 
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_use_certificate_file failed\n");
+		error_report("SSL_use_certificate_file failed\n");
 		return false;
 	}
 
@@ -230,13 +231,13 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	if (cert == NULL)
 	{
-		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		error_report("tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return false;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
-		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
+		error_report("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		tls_free_certificate(cert);
 		return false;
 	}
@@ -245,7 +246,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
-		printf("SSL_set_fd failed\n");
+		error_report("SSL_set_fd failed\n");
 		return false;
 	}
 
@@ -378,7 +379,7 @@ static void tls_errors(const char *prefix)
 	unsigned long error;
 
 	while ((error = ERR_get_error()) != 0)
-		printf("%s: %s\n", prefix, ERR_error_string(error, NULL));
+		error_report("%s: %s\n", prefix, ERR_error_string(error, NULL));
 }
 
 boolean tls_print_error(char* func, SSL* connection, int value)
@@ -386,29 +387,29 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 	switch (SSL_get_error(connection, value))
 	{
 		case SSL_ERROR_ZERO_RETURN:
-			printf("%s: Server closed TLS connection\n", func);
+			error_report("%s: Server closed TLS connection\n", func);
 			return true;
 
 		case SSL_ERROR_WANT_READ:
-			printf("%s: SSL_ERROR_WANT_READ\n", func);
+			error_report("%s: SSL_ERROR_WANT_READ\n", func);
 			return false;
 
 		case SSL_ERROR_WANT_WRITE:
-			printf("%s: SSL_ERROR_WANT_WRITE\n", func);
+			error_report("%s: SSL_ERROR_WANT_WRITE\n", func);
 			return false;
 
 		case SSL_ERROR_SYSCALL:
-			printf("%s: I/O error\n", func);
+			error_report("%s: I/O error\n", func);
 			tls_errors(func);
 			return true;
 
 		case SSL_ERROR_SSL:
-			printf("%s: Failure in SSL library (protocol error?)\n", func);
+			error_report("%s: Failure in SSL library (protocol error?)\n", func);
 			tls_errors(func);
 			return true;
 
 		default:
-			printf("%s: Unknown error\n", func);
+			error_report("%s: Unknown error\n", func);
 			tls_errors(func);
 			return true;
 	}

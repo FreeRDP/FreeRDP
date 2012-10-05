@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/utils/error.h>
 #include <winpr/crt.h>
 #include <openssl/rand.h>
 
@@ -66,7 +67,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		error_report("QuerySecurityPackageInfo status: 0x%08X\n", status);
 		return false;
 	}
 
@@ -77,7 +78,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		error_report("AcquireCredentialsHandle status: 0x%08X\n", status);
 		return false;
 	}
 
@@ -128,7 +129,7 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
-			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+			error_report("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
 			return false ;
 		}
 
@@ -600,7 +601,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (pdu == NULL)
 	{
-		printf("rpc_out_read error: memory allocation failed") ;
+		error_report("rpc_out_read error: memory allocation failed") ;
 		return -1;
 	}
 
@@ -631,7 +632,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (header.ptype == PTYPE_RTS) /* RTS PDU */
 	{
-		printf("rpc_out_read error: Unexpected RTS PDU\n");
+		error_report("rpc_out_read error: Unexpected RTS PDU\n");
 		xfree(pdu);
 		return -1;
 	}
@@ -644,7 +645,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (length < header.frag_length)
 	{
-		printf("rpc_out_read error! receive buffer is not large enough\n");
+		error_report("rpc_out_read error! receive buffer is not large enough\n");
 		xfree(pdu);
 		return -1;
 	}
@@ -731,7 +732,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
-		printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		error_report("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
 		stream_free(pdu) ;
 		return 0;
 	}
@@ -753,7 +754,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (encrypt_status != SEC_E_OK)
 	{
-		printf("EncryptMessage status: 0x%08X\n", encrypt_status);
+		error_report("EncryptMessage status: 0x%08X\n", encrypt_status);
 		stream_free(pdu) ;
 		return 0;
 	}
@@ -766,7 +767,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	if (status < 0)
 	{
-		printf("rpc_write(): Error! rpc_tsg_write returned negative value.\n");
+		error_report("rpc_write(): Error! rpc_tsg_write returned negative value.\n");
 		return -1;
 	}
 
@@ -787,7 +788,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (rpc_data == NULL)
 	{
-		printf("rpc_read error: memory allocation failed\n") ;
+		error_report("rpc_read error: memory allocation failed\n") ;
 		return -1 ;
 	}
 
@@ -795,7 +796,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	{
 		if (rpc->read_buffer_len > (uint32) length)
 		{
-			printf("rpc_read error: receiving buffer is not large enough\n");
+			error_report("rpc_read error: receiving buffer is not large enough\n");
 			xfree(rpc_data);
 			return -1;
 		}
@@ -817,7 +818,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		}
 		else if (status < 0)
 		{
-			printf("Error! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
+			error_report("Error! rpc_out_read() returned negative value. BytesSent: %d, BytesReceived: %d\n",
 					rpc->VirtualConnection->DefaultInChannel->BytesSent,
 					rpc->VirtualConnection->DefaultOutChannel->BytesReceived);
 
@@ -868,25 +869,25 @@ boolean rpc_connect(rdpRpc* rpc)
 
 	if (!rts_connect(rpc))
 	{
-		printf("rts_connect error!\n");
+		error_report("rts_connect error!\n");
 		return false;
 	}
 
 	if (!rpc_send_bind_pdu(rpc))
 	{
-		printf("rpc_send_bind_pdu error!\n");
+		error_report("rpc_send_bind_pdu error!\n");
 		return false;
 	}
 
 	if (rpc_recv_bind_ack_pdu(rpc) <= 0)
 	{
-		printf("rpc_recv_bind_ack_pdu error!\n");
+		error_report("rpc_recv_bind_ack_pdu error!\n");
 		return false;
 	}
 
 	if (!rpc_send_rpc_auth_3_pdu(rpc))
 	{
-		printf("rpc_send_rpc_auth_3 error!\n");
+		error_report("rpc_send_rpc_auth_3 error!\n");
 		return false;
 	}
 

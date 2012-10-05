@@ -25,6 +25,7 @@
 #include <freerdp/utils/rail.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include "rail_orders.h"
 
@@ -453,7 +454,7 @@ void rail_order_recv(rdpRailOrder* rail_order, STREAM* s)
 			break;
 
 		default:
-			printf("Unknown RAIL PDU order reveived.");
+			error_report("Unknown RAIL PDU order reveived.");
 			break;
 	}
 }

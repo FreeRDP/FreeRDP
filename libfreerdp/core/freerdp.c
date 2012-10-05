@@ -32,6 +32,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/errorcodes.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
@@ -77,7 +78,7 @@ boolean freerdp_connect(freerdp* instance)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
-		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
+		error_report("%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
 		return false;
 	}
 
@@ -85,7 +86,7 @@ boolean freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->authentication_only)
 	{
-		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		error_report("%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		return status;
 	}
 
@@ -104,7 +105,7 @@ boolean freerdp_connect(freerdp* instance)
 
 		if (status != true)
 		{
-			printf("freerdp_post_connect failed\n");
+			error_report("freerdp_post_connect failed\n");
 			
 			if (!connectErrorCode)
 			{

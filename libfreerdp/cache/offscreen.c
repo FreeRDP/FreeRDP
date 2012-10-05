@@ -25,6 +25,7 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include <freerdp/cache/offscreen.h>
 
@@ -79,7 +80,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index)
 
 	if (index >= offscreen_cache->maxEntries)
 	{
-		printf("invalid offscreen bitmap index: 0x%04X\n", index);
+		error_report("invalid offscreen bitmap index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -87,7 +88,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index)
 
 	if (bitmap == NULL)
 	{
-		printf("invalid offscreen bitmap at index: 0x%04X\n", index);
+		error_report("invalid offscreen bitmap at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -98,7 +99,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreen, uint32 index, rdpBitmap* 
 {
 	if (index >= offscreen->maxEntries)
 	{
-		printf("invalid offscreen bitmap index: 0x%04X\n", index);
+		error_report("invalid offscreen bitmap index: 0x%04X\n", index);
 		return;
 	}
 
@@ -112,7 +113,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint32 index)
 
 	if (index >= offscreen->maxEntries)
 	{
-		printf("invalid offscreen bitmap index (delete): 0x%04X\n", index);
+		error_report("invalid offscreen bitmap index (delete): 0x%04X\n", index);
 		return;
 	}
 

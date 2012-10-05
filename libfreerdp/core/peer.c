@@ -23,6 +23,7 @@
 
 #include "certificate.h"
 #include <freerdp/utils/tcp.h>
+#include <freerdp/utils/error.h>
 
 #include "peer.h"
 
@@ -167,7 +168,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		error_report("Incorrect RDP header.\n");
 		return false;
 	}
 
@@ -179,7 +180,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				error_report("rdp_decrypt failed\n");
 				return false;
 			}
 		}
@@ -224,7 +225,7 @@ static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if (length == 0 || length > stream_get_left(s))
 	{
-		printf("incorrect FastPath PDU header length %d\n", length);
+		error_report("incorrect FastPath PDU header length %d\n", length);
 		return false;
 	}
 
@@ -326,7 +327,7 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 			break;
 
 		default:
-			printf("Invalid state %d\n", rdp->state);
+			error_report("Invalid state %d\n", rdp->state);
 			return false;
 	}
 

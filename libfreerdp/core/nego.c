@@ -27,6 +27,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/utils/error.h>
 
 #include "tpkt.h"
 
@@ -491,7 +492,7 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 
 	if (li != stream_get_left(s) + 6)
 	{
-		printf("Incorrect TPDU length indicator.\n");
+		error_report("Incorrect TPDU length indicator.\n");
 		return false;
 	}
 
@@ -523,7 +524,7 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			printf("Incorrect negotiation request type %d\n", type);
+			error_report("Incorrect negotiation request type %d\n", type);
 			return false;
 		}
 
@@ -731,7 +732,7 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		printf("nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		error_report("nego_send_negotiation_response: client supports only Standard RDP Security\n");
 		stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = false;

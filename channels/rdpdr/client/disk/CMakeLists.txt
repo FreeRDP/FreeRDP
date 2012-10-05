@@ -27,6 +27,7 @@ set(${MODULE_PREFIX}_SRCS
 	
 if(WIN32)
 	set(${MODULE_PREFIX}_SRCS
+		${${MODULE_PREFIX}_SRCS}
 		statvfs.c
 		statvfs.h
 		dirent.h)

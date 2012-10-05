@@ -43,6 +43,12 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>
 
+#ifdef _WIN32
+#ifndef snprintf
+#define snprintf _snprintf
+#endif
+#endif
+
 typedef boolean (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport

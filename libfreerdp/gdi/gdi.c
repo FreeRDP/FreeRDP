@@ -30,6 +30,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/bitmap.h>
+#include <freerdp/utils/error.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
@@ -330,7 +331,7 @@ INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 	else
 	{
-		printf("gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		error_report("gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -515,7 +516,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		printf("unimplemented brush style:%d\n", brush->style);
+		error_report("unimplemented brush style:%d\n", brush->style);
 	}
 }
 
@@ -660,7 +661,7 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		printf("Mem3Blt unimplemented brush style:%d\n", brush->style);
+		error_report("Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
 }
 
@@ -789,7 +790,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	}
 	else
 	{
-		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+		error_report("Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

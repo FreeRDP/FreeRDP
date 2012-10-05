@@ -27,6 +27,7 @@
 #include "connection.h"
 #include "transport.h"
 
+#include <freerdp/utils/error.h>
 #include <freerdp/errorcodes.h>
 
 /**
@@ -85,7 +86,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 
 	if (!nego_connect(rdp->nego))
 	{
-		printf("Error: protocol security negotiation or connection failure\n");
+		error_report("Error: protocol security negotiation or connection failure\n");
 		return false;
 	}
 
@@ -106,7 +107,7 @@ boolean rdp_client_connect(rdpRdp* rdp)
 		{
 			connectErrorCode = MCSCONNECTINITIALERROR;                      
 		}
-		printf("Error: unable to send MCS Connect Initial\n");
+		error_report("Error: unable to send MCS Connect Initial\n");
 		return false;
 	}
 
@@ -280,7 +281,7 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 	{
-		printf("rdp_server_establish_keys: invalid RDP header\n");
+		error_report("rdp_server_establish_keys: invalid RDP header\n");
 		return false;
 	}
 
@@ -288,7 +289,7 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		printf("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		error_report("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
 		return false;
 	}
 
@@ -297,7 +298,7 @@ static boolean rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if (rand_len != key_len + 8)
 	{
-		printf("rdp_server_establish_keys: invalid encrypted client random length\n");
+		error_report("rdp_server_establish_keys: invalid encrypted client random length\n");
 		return false;
 	}
 
@@ -339,7 +340,7 @@ boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
 	{
-		printf("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
+		error_report("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
 		return false;
 	}
 
@@ -440,7 +441,7 @@ boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
 	{
-		printf("license connection sequence aborted.\n");
+		error_report("license connection sequence aborted.\n");
 		return false;
 	}
 
@@ -555,7 +556,7 @@ boolean rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		printf("Protocol security negotiation failure\n");
+		error_report("Protocol security negotiation failure\n");
 	}
 
 	printf("Negotiated Security: NLA:%d TLS:%d RDP:%d\n",

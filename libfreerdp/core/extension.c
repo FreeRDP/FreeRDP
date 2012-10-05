@@ -29,6 +29,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 #include "extension.h"
 
@@ -59,7 +60,7 @@ static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 
 	if (ext->num_plugins >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_extension: maximum number of plugins reached.\n");
+		error_report("extension_register_extension: maximum number of plugins reached.\n");
 		return 1;
 	}
 
@@ -73,7 +74,7 @@ static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugi
 
 	if (ext->num_pre_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_pre_connect_hook: maximum plugin reached.\n");
+		error_report("extension_register_pre_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -89,7 +90,7 @@ static uint32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plug
 
 	if (ext->num_post_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_post_connect_hook: maximum plugin reached.\n");
+		error_report("extension_register_post_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -127,7 +128,7 @@ static int extension_load_plugins(rdpExtension* extension)
 		printf("extension_load_plugins: %s\n", path);
 		if (han == NULL)
 		{
-			printf("extension_load_plugins: failed to load %s\n", path);
+			error_report("extension_load_plugins: failed to load %s\n", path);
 			continue;
 		}
 
@@ -135,7 +136,7 @@ static int extension_load_plugins(rdpExtension* extension)
 		if (entry == NULL)
 		{
 			DLCLOSE(han);
-			printf("extension_load_plugins: failed to find export function in %s\n", path);
+			error_report("extension_load_plugins: failed to find export function in %s\n", path);
 			continue;
 		}
 
@@ -143,7 +144,7 @@ static int extension_load_plugins(rdpExtension* extension)
 		if (entry(&entryPoints) != 0)
 		{
 			DLCLOSE(han);
-			printf("extension_load_plugins: %s entry returns error.\n", path);
+			error_report("extension_load_plugins: %s entry returns error.\n", path);
 			continue;
 		}
 	}

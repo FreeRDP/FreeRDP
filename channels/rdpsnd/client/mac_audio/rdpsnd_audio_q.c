@@ -108,7 +108,7 @@ static void rdpsnd_audio_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 				 &aq_plugin_p->aq_ref
 				);
 	if (rv != 0) {
-		printf("rdpsnd_audio_open: AudioQueueNewOutput() failed with error %d\n", rv);
+		error_report("rdpsnd_audio_open: AudioQueueNewOutput() failed with error %d\n", rv);
 		aq_plugin_p->is_open = 1;
 		return;
 	}

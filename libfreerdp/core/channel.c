@@ -30,6 +30,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/error.h>
 
 #include "rdp.h"
 #include "channel.h"
@@ -53,7 +54,7 @@ boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int si
 
 	if (channel == NULL)
 	{
-		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
+		error_report("freerdp_channel_send: unknown channel_id %d\n", channel_id);
 		return false;
 	}
 

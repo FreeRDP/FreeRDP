@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <freerdp/utils/memory.h>
+#include <freerdp/utils/error.h>
 
 /**
  * Allocate memory.
@@ -49,7 +50,7 @@ void* xmalloc(size_t size)
 	if (mem == NULL)
 	{
 		perror("xmalloc");
-		printf("xmalloc: failed to allocate memory of size: %d\n", (int) size);
+		error_report("xmalloc: failed to allocate memory of size: %d\n", (int) size);
 	}
 
 	return mem;
@@ -76,7 +77,7 @@ void* xzalloc(size_t size)
 	if (mem == NULL)
 	{
 		perror("xzalloc");
-		printf("xzalloc: failed to allocate memory of size: %d\n", (int) size);
+		error_report("xzalloc: failed to allocate memory of size: %d\n", (int) size);
 	}
 
 	return mem;

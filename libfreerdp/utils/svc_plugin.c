@@ -34,6 +34,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/error.h>
 
 /* The list of all plugin instances. */
 typedef struct rdp_svc_plugin_list rdpSvcPluginList;
@@ -179,7 +180,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 	{
 		if (stream_get_size(data_in) != stream_get_length(data_in))
 		{
-			printf("svc_plugin_process_received: read error\n");
+			error_report("svc_plugin_process_received: read error\n");
 		}
 
 		plugin->priv->data_in = NULL;
@@ -222,7 +223,7 @@ static void svc_plugin_open_event(uint32 openHandle, uint32 event, void* pData, 
 
 	if (plugin == NULL)
 	{
-		printf("svc_plugin_open_event: error no match\n");
+		error_report("svc_plugin_open_event: error no match\n");
 		return;
 	}
 
@@ -311,7 +312,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, uint
 
 	if (error != CHANNEL_RC_OK)
 	{
-		printf("svc_plugin_process_connected: open failed\n");
+		error_report("svc_plugin_process_connected: open failed\n");
 		return;
 	}
 
@@ -358,7 +359,7 @@ static void svc_plugin_init_event(void* pInitHandle, uint32 event, void* pData, 
 
 	if (!plugin)
 	{
-		printf("svc_plugin_init_event: error no match\n");
+		error_report("svc_plugin_init_event: error no match\n");
 		return;
 	}
 
@@ -420,7 +421,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	if (error != CHANNEL_RC_OK)
 	{
 		stream_free(data_out);
-		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", error);
+		error_report("svc_plugin_send: VirtualChannelWrite failed %d\n", error);
 	}
 
 	return error;
@@ -435,7 +436,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	error = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->priv->open_handle, event);
 
 	if (error != CHANNEL_RC_OK)
-		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", error);
+		error_report("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", error);
 
 	return error;
 }
