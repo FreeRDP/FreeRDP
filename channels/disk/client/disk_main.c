@@ -120,14 +120,14 @@ static DISK_FILE* disk_get_file_by_id(DISK_DEVICE* disk, uint32 id)
 
 static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 {
+	char* path;
+	uint32 FileId;
 	DISK_FILE* file;
+	uint8 Information;
 	uint32 DesiredAccess;
 	uint32 CreateDisposition;
 	uint32 CreateOptions;
 	uint32 PathLength;
-	char* path;
-	uint32 FileId;
-	uint8 Information;
 
 	stream_read_uint32(irp->input, DesiredAccess);
 	stream_seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
@@ -155,7 +155,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 		FileId = 0;
 		Information = 0;
 
-		/* map errno to windows result*/
+		/* map errno to windows result */
 		irp->IoStatus = disk_map_posix_err(file->err);
 		disk_file_free(file);
 	}

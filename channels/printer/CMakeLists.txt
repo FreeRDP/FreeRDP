@@ -15,31 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "rdpdr")
-set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
-
-set(${MODULE_PREFIX}_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
-	irp.c
-	irp.h
-	rdpdr_main.c
-	rdpdr_main.h)
-
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
-
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp winpr)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
+if(WITH_CLIENT_CHANNELS)
+	add_subdirectory(client)
 endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 

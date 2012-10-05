@@ -15,31 +15,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "rdpdr")
-set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
+set(MODULE_NAME "disk")
+set(MODULE_PREFIX "CHANNEL_RDPDR_DISK_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
-	irp.c
-	irp.h
-	rdpdr_main.c
-	rdpdr_main.h)
+	disk_file.c
+	disk_file.h
+	disk_main.c)
+	
+if(WIN32)
+	set(${MODULE_PREFIX}_SRCS
+		statvfs.c
+		statvfs.h
+		dirent.h)
+endif()
+
+include_directories(../../rdpdr/client)
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp winpr)
+	set(${MODULE_PREFIX}_LIBS freerdp winpr)
 else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
+	set(${MODULE_PREFIX}_LIBS freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 

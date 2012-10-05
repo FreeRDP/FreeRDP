@@ -457,3 +457,4 @@ enum FILE_FS_INFORMATION_CLASS
 };
 
 #endif /* __RDPDR_CONSTANTS_H */
+

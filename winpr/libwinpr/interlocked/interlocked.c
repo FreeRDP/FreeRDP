@@ -286,7 +286,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 	return previousValue;
 }
 
-#else /* (_WIN32_WINNT < 0x0600) */
+#else /* (_WIN32 && (_WIN32_WINNT < 0x0502)) */
 
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
@@ -297,5 +297,5 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 #endif
 }
 
-#endif /* (_WIN32_WINNT < 0x0600) */
+#endif /* (_WIN32 && (_WIN32_WINNT < 0x0502)) */
 

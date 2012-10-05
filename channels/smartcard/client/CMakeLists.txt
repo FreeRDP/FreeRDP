@@ -15,22 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "parallel")
-set(MODULE_PREFIX "CHANNEL_PARALLEL_CLIENT")
+set(MODULE_NAME "smartcard")
+set(MODULE_PREFIX "CHANNEL_RDPDR_SMARTCARD_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	parallel_main.c)
+	scard_main.c
+	scard_operations.c)
 
-include_directories(..)
+include_directories(../../rdpdr/client)
+include_directories(${PCSC_INCLUDE_DIRS})
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
+	target_link_libraries(${MODULE_NAME} freerdp winpr)
 else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-interlocked)
+	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
 
-install(TARGETS parallel DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${PCSC_LIBRARIES})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
