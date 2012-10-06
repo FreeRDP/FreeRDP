@@ -37,6 +37,7 @@
 DWORD WINAPI wf_update_thread(LPVOID lpParam)
 {
 	int index;
+	int peerindex;
 	DWORD fps;
 	wfInfo* wfi;
 	DWORD beg, end;
@@ -63,13 +64,17 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 
 					//printf("Start of parallel sending\n");
 
-					for (index = 0; index < wfi->peerCount; index++)
+					for (peerindex = 0; peerindex < wfi->peerCount; peerindex++)
 					{
-						if (wfi->peers[index]->activated)
+						for (index = 0; index < WF_INFO_MAXPEERS; index++)
 						{
-							//printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
-							SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
+							if (wfi->peers[index] && wfi->peers[index]->activated)
+							{
+								//printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
+								SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
+							}
 						}
+						
 					}
 
 					for (index = 0; index < wfi->activePeerCount; index++)

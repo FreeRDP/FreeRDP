@@ -250,7 +250,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
 
-		printf("Unregistering Peer: %d\n", wfi->peerCount);
+		printf("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
 
 #ifdef WITH_WIN8
 		if (wfi->peerCount == 0)
