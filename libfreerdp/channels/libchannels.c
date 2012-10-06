@@ -932,7 +932,8 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 			lchannel_data->open_event_proc(lchannel_data->open_handle,
 				CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, sizeof(void*), sizeof(void*), 0);
 		}
-		xfree(item);
+
+		_aligned_free(item);
 	}
 }
 

@@ -529,6 +529,8 @@ static void disk_process_irp_device_control(DISK_DEVICE* disk, IRP* irp)
 
 static void disk_process_irp(DISK_DEVICE* disk, IRP* irp)
 {
+	irp->IoStatus = STATUS_SUCCESS;
+
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:

@@ -85,17 +85,27 @@ static boolean disk_file_wildcard_match(const char* pattern, const char* filenam
 
 static void disk_file_fix_path(char* path)
 {
-	int len;
 	int i;
+	int length;
 
-	len = strlen(path);
-	for (i = 0; i < len; i++)
+	length = strlen(path);
+
+	for (i = 0; i < length; i++)
 	{
 		if (path[i] == '\\')
 			path[i] = '/';
 	}
-	if (len > 0 && path[len - 1] == '/')
-		path[len - 1] = '\0';
+
+#ifdef WIN32
+	if ((length == 3) && (path[1] == ':') && (path[2] == '/'))
+		return;
+#else
+	if ((length == 1) && (path[0] == '/'))
+		return;
+#endif
+
+	if ((length > 0) && (path[length - 1] == '/'))
+		path[length - 1] = '\0';
 }
 
 static char* disk_file_combine_fullpath(const char* base_path, const char* path)

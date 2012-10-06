@@ -24,7 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	disk_main.c)
 	
 if(WIN32)
-	set(${MODULE_PREFIX}_SRCS
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 		statvfs.c
 		statvfs.h
 		dirent.h)
