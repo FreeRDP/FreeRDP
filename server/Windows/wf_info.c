@@ -137,6 +137,7 @@ wfInfo* wf_info_init()
 		}
 
 		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		memset(wfi->peers, 0, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
 
 		//Set FPS
 		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
@@ -202,6 +203,11 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
+		int i;
+		int peerId;
+		//todo: reject peer if we have WF_INFO_MAXPEERS connected
+		
+
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -211,14 +217,25 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 #else
 		wf_mirror_driver_activate(wfi);
 #endif
+		//look trhough the array of peers until an empty slot
+		for(i=0; i<WF_INFO_MAXPEERS; ++i)
+		{
+			//empty index will be our peer id
+			if (wfi->peers[i] == NULL)
+			{
+				peerId = i;
+				break;
+			}
+		}
 
-		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
-
-		printf("Registering Peer: %d\n", wfi->peerCount);
+		wfi->peers[peerId] = ((rdpContext*) context)->peer;
+		wfi->peers[peerId]->pId = peerId;
+		wfi->peerCount++;
+		printf("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
 
 		wf_info_unlock(wfi);
 
-		wfreerdp_server_peer_connect_event(wfi->peerCount);
+		wfreerdp_server_peer_connect_event(peerId);
 	}
 }
 
@@ -226,7 +243,11 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		wfi->peers[--(wfi->peerCount)] = NULL;
+		int peerId;
+
+		peerId = ((rdpContext*) context)->peer->pId;
+		wfi->peers[peerId] = NULL;
+		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
 
 		printf("Unregistering Peer: %d\n", wfi->peerCount);
@@ -238,7 +259,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 		wf_info_unlock(wfi);
 
-		wfreerdp_server_peer_disconnect_event(wfi->peerCount);
+		wfreerdp_server_peer_disconnect_event(peerId);
 	}
 }
 

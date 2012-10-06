@@ -72,6 +72,7 @@ struct rdp_freerdp_peer
 	psPeerSendChannelData SendChannelData;
 	psPeerReceiveChannelData ReceiveChannelData;
 
+	int pId;
 	uint32 ack_frame_id;
 	boolean local;
 	boolean connected;
