@@ -136,10 +136,10 @@ wfInfo* wf_info_init()
 			_tprintf(_T("Failed to create update thread\n"));
 		}
 
-		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
+		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
 
 		//Set FPS
-		wfi->framesPerSecond = 24;
+		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 		if (status == ERROR_SUCCESS)
