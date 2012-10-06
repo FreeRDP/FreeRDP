@@ -217,6 +217,8 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		printf("Registering Peer: %d\n", wfi->peerCount);
 
 		wf_info_unlock(wfi);
+
+		wfreerdp_server_peer_connect_event(wfi->peerCount);
 	}
 }
 
@@ -235,6 +237,8 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 #endif
 
 		wf_info_unlock(wfi);
+
+		wfreerdp_server_peer_disconnect_event(wfi->peerCount);
 	}
 }
 

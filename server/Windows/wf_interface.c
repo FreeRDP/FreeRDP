@@ -42,6 +42,9 @@ struct rdp_listener
 };
 //
 
+cbConEvent cbConnect;
+cbConEvent cbDisconnect;
+
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
 	int i, fds;
@@ -147,6 +150,9 @@ wfServer* wfreerdp_server_new()
 	{
 		server->port = 3389;
 	}
+
+	cbConnect = NULL;
+	cbDisconnect = NULL;
 
 	return server;
 }
@@ -286,3 +292,26 @@ FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
 		return FALSE;
 	}
 }
+
+FREERDP_API void wfreerdp_server_register_connect_event(cbConEvent cb)
+{
+	cbConnect = cb;
+}
+
+FREERDP_API void wfreerdp_server_register_disconnect_event(cbConEvent cb)
+{
+	cbDisconnect = cb;
+}
+
+
+void wfreerdp_server_peer_connect_event(int pId)
+{
+	if (cbConnect)
+		cbConnect(pId);
+}
+void wfreerdp_server_peer_disconnect_event(int pId)
+{
+	if (cbDisconnect)
+		cbDisconnect(pId);
+}
+

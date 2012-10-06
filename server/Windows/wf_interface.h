@@ -86,6 +86,8 @@ struct wf_server
 };
 typedef struct wf_server wfServer;
 
+typedef void (__stdcall* cbConEvent) (int);
+
 FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
 
@@ -100,5 +102,11 @@ FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId);
+
+FREERDP_API void wfreerdp_server_register_connect_event(cbConEvent cb);
+FREERDP_API void wfreerdp_server_register_disconnect_event(cbConEvent cb);
+
+void wfreerdp_server_peer_connect_event(int pId);
+void wfreerdp_server_peer_disconnect_event(int pId);
 
 #endif /* WF_INTERFACE_H */
