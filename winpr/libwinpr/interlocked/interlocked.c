@@ -294,8 +294,6 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff563802/
  */
 
-#ifndef _WIN32
-
 VOID InitializeListHead(PLIST_ENTRY ListHead)
 {
 	ListHead->Flink = ListHead->Blink = ListHead;
@@ -395,4 +393,3 @@ PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead)
 	return FirstEntry;
 }
 
-#endif

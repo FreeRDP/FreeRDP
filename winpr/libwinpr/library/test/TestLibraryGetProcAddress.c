@@ -11,7 +11,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	char* str;
 	int length;
 	LPTSTR BasePath;
-	HINSTANCE library;
+	//HINSTANCE library;
 	LPTSTR LibraryPath;
 
 	str = argv[1];

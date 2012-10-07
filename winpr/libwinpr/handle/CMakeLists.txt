@@ -22,6 +22,10 @@ set(${MODULE_PREFIX}_SRCS
 	handle.c
 	table.c)
 
+if(MSVC AND (NOT WITH_MONOLITHIC_BUILD))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 if(WITH_MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()

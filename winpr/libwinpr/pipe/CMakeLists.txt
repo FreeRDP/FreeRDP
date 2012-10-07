@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# libwinpr-asn1 cmake build script
+# libwinpr-pipe cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-asn1")
-set(MODULE_PREFIX "WINPR_ASN1")
+set(MODULE_NAME "winpr-pipe")
+set(MODULE_PREFIX "WINPR_PIPE")
 
 set(${MODULE_PREFIX}_SRCS
-	asn1.c)
+	pipe.c)
 
 if(MSVC AND (NOT WITH_MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
@@ -34,8 +34,9 @@ endif()
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 if(WITH_MONOLITHIC_BUILD)
-	
+
 else()
+	target_link_libraries(${MODULE_NAME} winpr-crt)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

@@ -150,8 +150,6 @@ WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, 
 
 /* Doubly-Linked List */
 
-#ifndef _WIN32
-
 VOID InitializeListHead(PLIST_ENTRY ListHead);
 
 BOOL IsListEmpty(const LIST_ENTRY* ListHead);
@@ -167,8 +165,6 @@ VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend);
 
 VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry);
 PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead);
-
-#endif
 
 #endif /* WINPR_INTERLOCKED_H */
 
