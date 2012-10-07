@@ -26,22 +26,7 @@
 
 #include <winpr/interlocked.h>
 
-/**
- * api-ms-win-core-interlocked-l1-2-0.dll:
- *
- * InitializeSListHead
- * InterlockedPopEntrySList
- * InterlockedPushEntrySList
- * InterlockedPushListSListEx
- * InterlockedFlushSList
- * QueryDepthSList
- * InterlockedIncrement
- * InterlockedDecrement
- * InterlockedExchange
- * InterlockedExchangeAdd
- * InterlockedCompareExchange
- * InterlockedCompareExchange64
- */
+/* Singly-Linked List */
 
 #ifndef _WIN32
 
@@ -299,3 +284,115 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 
 #endif /* (_WIN32 && (_WIN32_WINNT < 0x0502)) */
 
+/* Doubly-Linked List */
+
+/**
+ * Kernel-Mode Basics: Windows Linked Lists:
+ * http://www.osronline.com/article.cfm?article=499
+ *
+ * Singly and Doubly Linked Lists:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff563802/
+ */
+
+#ifndef _WIN32
+
+VOID InitializeListHead(PLIST_ENTRY ListHead)
+{
+	ListHead->Flink = ListHead->Blink = ListHead;
+}
+
+BOOL IsListEmpty(const LIST_ENTRY* ListHead)
+{
+	return (BOOL) (ListHead->Flink == ListHead);
+}
+
+BOOL RemoveEntryList(PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldFlink;
+	PLIST_ENTRY OldBlink;
+
+	OldFlink = Entry->Flink;
+	OldBlink = Entry->Blink;
+	OldFlink->Blink = OldBlink;
+	OldBlink->Flink = OldFlink;
+
+	return (BOOL) (OldFlink == OldBlink);
+}
+
+VOID InsertHeadList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldFlink;
+
+	OldFlink = ListHead->Flink;
+	Entry->Flink = OldFlink;
+	Entry->Blink = ListHead;
+	OldFlink->Blink = Entry;
+	ListHead->Flink = Entry;
+}
+
+PLIST_ENTRY RemoveHeadList(PLIST_ENTRY ListHead)
+{
+	PLIST_ENTRY Flink;
+	PLIST_ENTRY Entry;
+
+	Entry = ListHead->Flink;
+	Flink = Entry->Flink;
+	ListHead->Flink = Flink;
+	Flink->Blink = ListHead;
+
+	return Entry;
+}
+
+VOID InsertTailList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldBlink;
+
+	OldBlink = ListHead->Blink;
+	Entry->Flink = ListHead;
+	Entry->Blink = OldBlink;
+	OldBlink->Flink = Entry;
+	ListHead->Blink = Entry;
+}
+
+PLIST_ENTRY RemoveTailList(PLIST_ENTRY ListHead)
+{
+	PLIST_ENTRY Blink;
+	PLIST_ENTRY Entry;
+
+	Entry = ListHead->Blink;
+	Blink = Entry->Blink;
+	ListHead->Blink = Blink;
+	Blink->Flink = ListHead;
+
+	return Entry;
+}
+
+VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend)
+{
+	PLIST_ENTRY ListEnd = ListHead->Blink;
+
+	ListHead->Blink->Flink = ListToAppend;
+	ListHead->Blink = ListToAppend->Blink;
+	ListToAppend->Blink->Flink = ListHead;
+	ListToAppend->Blink = ListEnd;
+}
+
+VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry)
+{
+	Entry->Next = ListHead->Next;
+	ListHead->Next = Entry;
+}
+
+PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead)
+{
+	PSINGLE_LIST_ENTRY FirstEntry;
+
+	FirstEntry = ListHead->Next;
+
+	if (FirstEntry != NULL)
+		ListHead->Next = FirstEntry->Next;
+
+	return FirstEntry;
+}
+
+#endif
