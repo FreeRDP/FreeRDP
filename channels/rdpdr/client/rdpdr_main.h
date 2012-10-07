@@ -26,6 +26,7 @@
 #include "rdpdr_types.h"
 
 typedef struct rdpdr_plugin rdpdrPlugin;
+
 struct rdpdr_plugin
 {
 	rdpSvcPlugin plugin;

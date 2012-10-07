@@ -38,6 +38,8 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
@@ -112,7 +114,7 @@ static char* disk_file_combine_fullpath(const char* base_path, const char* path)
 {
 	char* fullpath;
 
-	fullpath = xmalloc(strlen(base_path) + strlen(path) + 1);
+	fullpath = (char*) malloc(strlen(base_path) + strlen(path) + 1);
 	strcpy(fullpath, base_path);
 	strcat(fullpath, path);
 	disk_file_fix_path(fullpath);
@@ -123,9 +125,9 @@ static char* disk_file_combine_fullpath(const char* base_path, const char* path)
 static boolean disk_file_remove_dir(const char* path)
 {
 	DIR* dir;
-	struct dirent* pdirent;
-	struct STAT st;
 	char* p;
+	struct STAT st;
+	struct dirent* pdirent;
 	boolean ret = true;
 
 	dir = opendir(path);
@@ -143,8 +145,9 @@ static boolean disk_file_remove_dir(const char* path)
 			continue;
 		}
 
-		p = xmalloc(strlen(path) + strlen(pdirent->d_name) + 2);
+		p = (char*) malloc(strlen(path) + strlen(pdirent->d_name) + 2);
 		sprintf(p, "%s/%s", path, pdirent->d_name);
+
 		if (STAT(p, &st) != 0)
 		{
 			DEBUG_WARN("stat %s failed.", p);
@@ -160,8 +163,11 @@ static boolean disk_file_remove_dir(const char* path)
 			ret = false;
 		}
 		else
+		{
 			ret = true;
-		xfree(p);
+		}
+		
+		free(p);
 
 		if (!ret)
 			break;
@@ -170,6 +176,7 @@ static boolean disk_file_remove_dir(const char* path)
 	}
 
 	closedir(dir);
+
 	if (ret)
 	{
 		if (rmdir(path) < 0)
@@ -559,7 +566,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		xfree(file->pattern);
 
 		if (path[0])
-			file->pattern = strdup(strrchr(path, '\\') + 1);
+			file->pattern = _strdup(strrchr(path, '\\') + 1);
 		else
 			file->pattern = NULL;
 	}

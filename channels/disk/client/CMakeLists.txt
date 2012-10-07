@@ -30,6 +30,10 @@ if(WIN32)
 		dirent.h)
 endif()
 
+if(MSVC AND (NOT WITH_STATIC_PLUGINS))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 include_directories(../../rdpdr/client)
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -44,4 +48,7 @@ endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+
 

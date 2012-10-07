@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/constants.h>
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
@@ -63,6 +63,7 @@ static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 		{
 			devman_load_device_service(rdpdr->devman, data);
 		}
+
 		data = (RDP_PLUGIN_DATA*) (((uint8*) data) + data->size);
 	}
 }

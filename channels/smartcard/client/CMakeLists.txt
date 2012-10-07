@@ -38,3 +38,4 @@ target_link_libraries(${MODULE_NAME} ${PCSC_LIBRARIES})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

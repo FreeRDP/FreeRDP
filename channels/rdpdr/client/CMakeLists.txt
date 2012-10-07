@@ -30,6 +30,10 @@ set(${MODULE_PREFIX}_SRCS
 	rdpdr_main.c
 	rdpdr_main.h)
 
+if(MSVC AND (NOT WITH_STATIC_PLUGINS))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
