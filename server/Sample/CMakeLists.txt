@@ -19,7 +19,12 @@ set(MODULE_NAME "sfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_SAMPLE")
 
 set(${MODULE_PREFIX}_SRCS
-	tfreerdp.c)
+	sfreerdp.c
+	sfreerdp.h
+	sf_audin.c
+	sf_audin.h
+	sf_rdpsnd.c
+	sf_rdpsnd.h)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
@@ -37,3 +42,4 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")
+

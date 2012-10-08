@@ -33,12 +33,12 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/thread.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/listener.h>
-#include <freerdp/channels/wtsvc.h>
-#include <freerdp/server/audin.h>
+#include <freerdp/server/rdpsnd.h>
+
+#include "sf_audin.h"
+#include "sf_rdpsnd.h"
+
+#include "sfreerdp.h"
 
 static char* test_pcap_file = NULL;
 static boolean test_dump_rfx_realtime = true;
@@ -48,43 +48,6 @@ static const unsigned int test_quantization_values[] =
 {
 	6, 6, 6, 6, 7, 7, 8, 8, 8, 9
 };
-
-static const rdpsndFormat test_audio_formats[] =
-{
-	{ 0x11, 2, 22050, 1024, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 2 channels */
-	{ 0x11, 1, 22050, 512, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 1 channels */
-	{ 0x01, 2, 22050, 4, 16, 0, NULL }, /* PCM, 22050 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 22050, 2, 16, 0, NULL }, /* PCM, 22050 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 44100, 4, 16, 0, NULL }, /* PCM, 44100 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 44100, 2, 16, 0, NULL }, /* PCM, 44100 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 11025, 4, 16, 0, NULL }, /* PCM, 11025 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 11025, 2, 16, 0, NULL }, /* PCM, 11025 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 8000, 4, 16, 0, NULL }, /* PCM, 8000 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 8000, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
-};
-
-struct test_peer_context
-{
-	rdpContext _p;
-
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
-	STREAM* s;
-	uint8* icon_data;
-	uint8* bg_data;
-	int icon_width;
-	int icon_height;
-	int icon_x;
-	int icon_y;
-	boolean activated;
-	WTSVirtualChannelManager* vcm;
-	void* debug_channel;
-	freerdp_thread* debug_channel_thread;
-	audin_server_context* audin;
-	boolean audin_open;
-	uint32 frame_id;
-};
-typedef struct test_peer_context testPeerContext;
 
 void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
@@ -114,19 +77,23 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 			freerdp_thread_stop(context->debug_channel_thread);
 			freerdp_thread_free(context->debug_channel_thread);
 		}
+
 		stream_free(context->s);
 		xfree(context->icon_data);
 		xfree(context->bg_data);
+
 		rfx_context_free(context->rfx_context);
 		nsc_context_free(context->nsc_context);
+
 		if (context->debug_channel)
-		{
 			WTSVirtualChannelClose(context->debug_channel);
-		}
+
 		if (context->audin)
-		{
 			audin_server_context_free(context->audin);
-		}
+
+		if (context->rdpsnd)
+			rdpsnd_server_context_free(context->rdpsnd);
+
 		WTSDestroyVirtualChannelManager(context->vcm);
 	}
 }
@@ -172,13 +139,13 @@ static void test_peer_end_frame(freerdp_peer* client)
 
 static void test_peer_draw_background(freerdp_peer* client)
 {
-	testPeerContext* context = (testPeerContext*) client->context;
-	rdpUpdate* update = client->update;
-	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
+	int size;
 	STREAM* s;
 	RFX_RECT rect;
 	uint8* rgb_data;
-	int size;
+	rdpUpdate* update = client->update;
+	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
+	testPeerContext* context = (testPeerContext*) client->context;
 
 	if (!client->settings->rfx_codec && !client->settings->ns_codec)
 		return;
@@ -270,16 +237,18 @@ static void test_peer_load_icon(freerdp_peer* client)
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 {
-	testPeerContext* context = (testPeerContext*) client->context;
+	STREAM* s;
+	RFX_RECT rect;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
-	RFX_RECT rect;
-	STREAM* s;
+	testPeerContext* context = (testPeerContext*) client->context;
 
 	if (client->update->dump_rfx)
 		return;
+
 	if (!context)
 		return;
+
 	if (context->icon_width < 1 || !context->activated)
 		return;
 
@@ -319,6 +288,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	}
 
 	s = test_peer_stream_init(context);
+
 	if (client->settings->rfx_codec)
 	{
 		rfx_compose_message(context->rfx_context, s,
@@ -447,16 +417,20 @@ static void* tf_debug_channel_thread_func(void* arg)
 	while (1)
 	{
 		freerdp_thread_wait(thread);
+
 		if (freerdp_thread_is_stopped(thread))
 			break;
 
 		stream_set_pos(s, 0);
+
 		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
 			stream_get_size(s), &bytes_returned) == false)
 		{
 			if (bytes_returned == 0)
 				break;
+
 			stream_check_size(s, bytes_returned);
+
 			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
 				stream_get_size(s), &bytes_returned) == false)
 			{
@@ -464,6 +438,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 				break;
 			}
 		}
+
 		stream_set_pos(s, bytes_returned);
 
 		printf("got %d bytes\n", bytes_returned);
@@ -473,23 +448,6 @@ static void* tf_debug_channel_thread_func(void* arg)
 	freerdp_thread_quit(thread);
 
 	return 0;
-}
-
-static void tf_peer_audin_opening(audin_server_context* context)
-{
-	printf("AUDIN opening.\n");
-	/* Simply choose the first format supported by the client. */
-	context->SelectFormat(context, 0);
-}
-
-static void tf_peer_audin_open_result(audin_server_context* context, uint32 result)
-{
-	printf("AUDIN open result %d.\n", result);
-}
-
-static void tf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
-{
-	printf("AUDIN recieve %d frames.\n", nframes);
 }
 
 boolean tf_peer_post_connect(freerdp_peer* client)
@@ -503,8 +461,10 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
+
 	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
-		client->settings->os_major_type, client->settings->os_minor_type);
+			client->settings->os_major_type, client->settings->os_minor_type);
+
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
@@ -529,6 +489,7 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
 			{
 				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
+
 				if (context->debug_channel != NULL)
 				{
 					printf("Open channel rdpdbg.\n");
@@ -540,21 +501,11 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 		}
 	}
 
-	context->audin = audin_server_context_new(context->vcm);
-	context->audin->data = context;
-	context->audin->server_formats = test_audio_formats;
-	context->audin->num_server_formats = ARRAY_SIZE(test_audio_formats);
-
-	context->audin->dst_format.wFormatTag = 1; /* Final output format, PCM only */
-	context->audin->dst_format.nChannels = 2;
-	context->audin->dst_format.nSamplesPerSec = 44100;
-	context->audin->dst_format.wBitsPerSample = 16;
-
-	context->audin->Opening = tf_peer_audin_opening;
-	context->audin->OpenResult = tf_peer_audin_open_result;
-	context->audin->ReceiveSamples = tf_peer_audin_receive_samples;
+	sf_peer_audin_init(context); /* Audio Input */
+	sf_peer_rdpsnd_init(context); /* Audio Output */
 
 	/* Return false here would stop the execution of the peer mainloop. */
+
 	return true;
 }
 
@@ -591,7 +542,7 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 
 	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
-	if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
 		if (client->settings->width != 800)
 		{
@@ -630,6 +581,10 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 			context->audin_open = false;
 		}
 	}
+	else if ((flags & 0x4000) && code == 0x1F) /* 's' key */
+	{
+
+	}
 }
 
 void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
@@ -639,14 +594,14 @@ void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 
 void tf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+	//printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 
 	test_peer_draw_icon(input->context->peer, x + 10, y);
 }
 
 void tf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 {
-	printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+	//printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
 static void tf_peer_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
