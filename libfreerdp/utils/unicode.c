@@ -54,6 +54,7 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length)
 {
 	*str = malloc((length * 2) + 1);
+	memset(*str, 0, (length * 2) + 1);
 
 	WideCharToMultiByte(CP_UTF8, 0, wstr, length, *str, length, NULL, NULL);
 
