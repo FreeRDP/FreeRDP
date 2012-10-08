@@ -44,7 +44,7 @@ static void sf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	printf("RDPSND Activated\n");
 }
 
-void sf_peer_rdpsnd_init(testPeerContext* context)
+boolean sf_peer_rdpsnd_init(testPeerContext* context)
 {
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
@@ -59,4 +59,8 @@ void sf_peer_rdpsnd_init(testPeerContext* context)
 	context->rdpsnd->src_format.wBitsPerSample = 16;
 
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
+
+	context->rdpsnd->Initialize(context->rdpsnd);
+
+	return true;
 }

@@ -373,6 +373,7 @@ static boolean audin_server_open(audin_server_context* context)
 	if (audin->audin_channel_thread == NULL)
 	{
 		audin->audin_channel = WTSVirtualChannelOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
+
 		if (audin->audin_channel == NULL)
 			return false;
 

@@ -482,6 +482,7 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 	test_peer_load_icon(client);
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
+
 	for (i = 0; i < client->settings->num_channels; i++)
 	{
 		if (client->settings->channels[i].joined)
@@ -498,11 +499,16 @@ boolean tf_peer_post_connect(freerdp_peer* client)
 						tf_debug_channel_thread_func, context);
 				}
 			}
+			else if (strncmp(client->settings->channels[i].name, "rdpsnd", 6) == 0)
+			{
+				sf_peer_rdpsnd_init(context); /* Audio Output */
+			}
 		}
 	}
 
+	/* Dynamic Virtual Channels */
+
 	sf_peer_audin_init(context); /* Audio Input */
-	sf_peer_rdpsnd_init(context); /* Audio Output */
 
 	/* Return false here would stop the execution of the peer mainloop. */
 

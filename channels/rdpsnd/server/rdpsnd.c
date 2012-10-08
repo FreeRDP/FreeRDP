@@ -91,12 +91,15 @@ static boolean rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		stream_write_uint16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
 		stream_write_uint16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
 		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
+
 		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec *
 			rdpsnd->context.server_formats[i].nChannels *
 			rdpsnd->context.server_formats[i].wBitsPerSample / 8); /* nAvgBytesPerSec */
+
 		stream_write_uint16(s, rdpsnd->context.server_formats[i].nBlockAlign); /* nBlockAlign */
 		stream_write_uint16(s, rdpsnd->context.server_formats[i].wBitsPerSample); /* wBitsPerSample */
 		stream_write_uint16(s, rdpsnd->context.server_formats[i].cbSize); /* cbSize */
+
 		if (rdpsnd->context.server_formats[i].cbSize > 0)
 		{
 			stream_write(s, rdpsnd->context.server_formats[i].data, rdpsnd->context.server_formats[i].cbSize);
@@ -296,19 +299,20 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 
 static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 {
-	STREAM* s = rdpsnd->rdpsnd_pdu;
-	rdpsndFormat* format;
-	int tbytes_per_frame;
-	uint8* src;
 	int size;
+	boolean r;
+	uint8* src;
 	int frames;
 	int fill_size;
-	boolean r;
+	rdpsndFormat* format;
+	int tbytes_per_frame;
+	STREAM* s = rdpsnd->rdpsnd_pdu;
 
 	format = &rdpsnd->context.client_formats[rdpsnd->context.selected_client_format];
 	tbytes_per_frame = format->nChannels * rdpsnd->src_bytes_per_sample;
 
-	if (format->nSamplesPerSec == rdpsnd->context.src_format.nSamplesPerSec && format->nChannels == rdpsnd->context.src_format.nChannels)
+	if ((format->nSamplesPerSec == rdpsnd->context.src_format.nSamplesPerSec) &&
+			(format->nChannels == rdpsnd->context.src_format.nChannels))
 	{
 		src = rdpsnd->out_buffer;
 		frames = rdpsnd->out_pending_frames;
@@ -366,6 +370,7 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	stream_check_size(s, size + fill_size);
 	stream_write_uint32(s, 0); /* bPad */
 	stream_write(s, src + 4, size - 4);
+
 	if (fill_size > 0)
 		stream_write_zero(s, fill_size);
 
@@ -390,9 +395,9 @@ static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const 
 	{
 		cframes = MIN(nframes, rdpsnd->out_frames - rdpsnd->out_pending_frames);
 		cframesize = cframes * rdpsnd->src_bytes_per_frame;
-		memcpy(rdpsnd->out_buffer + (rdpsnd->out_pending_frames * rdpsnd->src_bytes_per_frame),
-			buf, cframesize);
-		buf = (uint8*)buf + cframesize;
+
+		memcpy(rdpsnd->out_buffer + (rdpsnd->out_pending_frames * rdpsnd->src_bytes_per_frame), buf, cframesize);
+		buf = (uint8*) buf + cframesize;
 		nframes -= cframes;
 		rdpsnd->out_pending_frames += cframes;
 
@@ -466,15 +471,21 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 		freerdp_thread_stop(rdpsnd->rdpsnd_channel_thread);
 		freerdp_thread_free(rdpsnd->rdpsnd_channel_thread);
 	}
+
 	if (rdpsnd->rdpsnd_channel)
 		WTSVirtualChannelClose(rdpsnd->rdpsnd_channel);
+
 	if (rdpsnd->rdpsnd_pdu)
 		stream_free(rdpsnd->rdpsnd_pdu);
+
 	if (rdpsnd->out_buffer)
 		xfree(rdpsnd->out_buffer);
+
 	if (rdpsnd->dsp_context)
 		freerdp_dsp_context_free(rdpsnd->dsp_context);
+
 	if (rdpsnd->context.client_formats)
 		xfree(rdpsnd->context.client_formats);
+
 	xfree(rdpsnd);
 }
