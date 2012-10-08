@@ -24,6 +24,7 @@
 #include "update.h"
 #include "surface.h"
 
+#include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
 
 /*
@@ -450,6 +451,8 @@ static void update_send_synchronize(rdpContext* context)
 
 static void update_send_desktop_resize(rdpContext* context)
 {
+	if (context->peer)
+		context->peer->activated = false;
 	rdp_server_reactivate(context->rdp);
 }
 
