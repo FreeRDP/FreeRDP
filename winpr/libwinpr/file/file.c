@@ -21,7 +21,13 @@
 #include "config.h"
 #endif
 
+#include <winpr/handle.h>
+
 #include <winpr/file.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /**
  * api-ms-win-core-file-l1-2-0.dll:
@@ -134,7 +140,27 @@ BOOL DeleteFileW(LPCWSTR lpFileName)
 BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	return TRUE;
+	ULONG Type;
+	PVOID Object;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
+		return FALSE;
+
+	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		int status;
+		int read_fd;
+
+		read_fd = (int) ((ULONG_PTR) Object);
+
+		status = read(read_fd, lpBuffer, nNumberOfBytesToRead);
+
+		*lpNumberOfBytesRead = status;
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 BOOL ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
@@ -152,7 +178,27 @@ BOOL ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
 BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	return TRUE;
+	ULONG Type;
+	PVOID Object;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
+		return FALSE;
+
+	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		int status;
+		int write_fd;
+
+		write_fd = (int) ((ULONG_PTR) Object);
+
+		status = write(write_fd, lpBuffer, nNumberOfBytesToWrite);
+
+		*lpNumberOfBytesWritten = status;
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 BOOL WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,

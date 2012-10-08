@@ -70,7 +70,7 @@ typedef short SHORT;
 #define CONST const
 #define CALLBACK
 
-typedef void* HANDLE, *LPHANDLE;
+typedef void* HANDLE, *PHANDLE, *LPHANDLE;
 typedef HANDLE HINSTANCE;
 typedef HANDLE HMODULE;
 

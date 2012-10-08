@@ -22,13 +22,39 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/handle.h>
 
 #include <winpr/pipe.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifndef _WIN32
 
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
 {
+	void* ptr;
+	HANDLE handle;
+	int pipe_fd[2];
+
+	pipe_fd[0] = -1;
+	pipe_fd[1] = -1;
+
+	if (pipe(pipe_fd) < 0)
+	{
+		printf("CreatePipe: failed to create pipe\n");
+		return FALSE;
+	}
+
+	ptr = (void*) ((ULONG_PTR) pipe_fd[0]);
+	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, ptr);
+	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) handle;
+
+	ptr = (void*) ((ULONG_PTR) pipe_fd[1]);
+	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, ptr);
+	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) handle;
+
 	return TRUE;
 }
 

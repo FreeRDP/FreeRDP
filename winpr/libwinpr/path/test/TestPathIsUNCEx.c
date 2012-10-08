@@ -19,7 +19,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	_tcscpy(Path, testPathUNC);
 
-	status = PathIsUNCEx(Path, (LPTSTR*) &Server);
+	status = PathIsUNCEx(Path, &Server);
 
 	if (!status)
 	{
