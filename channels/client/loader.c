@@ -17,4 +17,49 @@
  * limitations under the License.
  */
 
+#include "tables.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern const VIRTUAL_CHANNEL_ENTRY VIRTUAL_CHANNEL_TABLE[];
+extern const DEVICE_SERVICE_ENTRY DEVICE_SERVICE_TABLE[];
+
+void* freerdp_channels_find_static_entry(const char* name, const char* entry)
+{
+	if (strcmp(entry, "VirtualChannelEntry") == 0)
+	{
+		VIRTUAL_CHANNEL_ENTRY* pEntry;
+
+		pEntry = (VIRTUAL_CHANNEL_ENTRY*) &VIRTUAL_CHANNEL_TABLE[0];
+
+		while (pEntry != NULL)
+		{
+			if (strcmp(pEntry->name, name) == 0)
+			{
+				return (void*) pEntry->entry;
+			}
+
+			return NULL;
+		}
+	}
+	else if (strcmp(entry, "DeviceServiceEntry") == 0)
+	{
+		DEVICE_SERVICE_ENTRY* pEntry;
+
+		pEntry = (DEVICE_SERVICE_ENTRY*) &DEVICE_SERVICE_TABLE[0];
+
+		while (pEntry != NULL)
+		{
+			if (strcmp(pEntry->name, name) == 0)
+			{
+				return (void*) pEntry->entry;
+			}
+
+			return NULL;
+		}
+	}
+
+	return NULL;
+}

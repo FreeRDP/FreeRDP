@@ -19,22 +19,31 @@ set(MODULE_NAME "rdpdr")
 set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
 	irp.c
 	irp.h
+	devman.c
+	devman.h
 	rdpdr_main.c
-	rdpdr_main.h)
+	rdpdr_main.h
+	rdpdr_types.h
+	rdpdr_constants.h
+	rdpdr_capabilities.c
+	rdpdr_capabilities.h)
 
 if(MSVC AND (NOT WITH_STATIC_PLUGINS))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(NOT WITH_STATIC_PLUGINS)
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+else()
+	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+	set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)

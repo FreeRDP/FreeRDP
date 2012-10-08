@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if(WITH_STATIC_PLUGINS)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 set(FILENAME "ChannelOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
@@ -30,6 +34,11 @@ foreach(FILEPATH ${FILEPATHS})
 	endif()
 endforeach(FILEPATH)
 
+if(WITH_CLIENT_CHANNELS)
+	add_subdirectory(client)
+endif()
+
 if(WITH_SERVER_CHANNELS)
 	add_subdirectory(server)
 endif()
+

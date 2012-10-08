@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
@@ -313,6 +315,30 @@ static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-DEFINE_SVC_PLUGIN(rdpdr, "rdpdr",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP)
+#ifdef WITH_STATIC_PLUGINS
+#define VirtualChannelEntry	rdpdr_VirtualChannelEntry
+#endif
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	rdpdrPlugin* _p;
+
+	_p = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
+	ZeroMemory(_p, sizeof(rdpdrPlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP |
+			CHANNEL_OPTION_COMPRESS_RDP;
+
+	strcpy(_p->plugin.channel_def.name, "rdpdr");
+
+	_p->plugin.connect_callback = rdpdr_process_connect;
+	_p->plugin.receive_callback = rdpdr_process_receive;
+	_p->plugin.event_callback = rdpdr_process_event;
+	_p->plugin.terminate_callback = rdpdr_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
