@@ -346,7 +346,7 @@ INLINE uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 
 	if (hdcBrush->brush != NULL)
 	{
-		if (hdcBrush->brush->style == GDI_BS_PATTERN)
+		if ((hdcBrush->brush->style == GDI_BS_PATTERN) || (hdcBrush->brush->style == GDI_BS_HATCHED))
 		{
 			HGDI_BITMAP hBmpBrush = hdcBrush->brush->pattern;
 	
@@ -503,7 +503,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 
 		originalBrush = gdi->drawing->hdc->brush;
-		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
+		gdi->drawing->hdc->brush = gdi_CreateHatchedBrush(hBmp);
 
 		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
 			patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));

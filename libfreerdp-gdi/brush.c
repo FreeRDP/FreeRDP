@@ -74,6 +74,15 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 	return hBrush;
 }
 
+HGDI_BRUSH gdi_CreateHatchedBrush(HGDI_BITMAP hbmp)
+{
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) xmalloc(sizeof(GDI_BRUSH));
+	hBrush->objectType = GDIOBJECT_BRUSH;
+	hBrush->style = GDI_BS_HATCHED;
+	hBrush->pattern = hbmp;
+	return hBrush;
+}
+
 /**
  * Perform a pattern blit operation on the given pixel buffer.\n
  * @msdn{dd162778}
