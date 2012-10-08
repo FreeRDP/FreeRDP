@@ -206,7 +206,12 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		int i;
 		int peerId;
 		//todo: reject peer if we have WF_INFO_MAXPEERS connected
-		
+		if (wfi->peerCount == WF_INFO_MAXPEERS)
+		{
+			context->socketClose = TRUE;
+			wf_info_unlock(wfi);
+			return;
+		}
 
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);

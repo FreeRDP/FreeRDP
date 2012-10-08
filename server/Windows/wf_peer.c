@@ -220,6 +220,9 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
 
+	if (context->socketClose)
+		return 0;
+
 	wfi = context->info;
 
 	if (wfi->input_disabled == TRUE)

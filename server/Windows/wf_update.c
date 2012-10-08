@@ -63,10 +63,10 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 					wf_update_encode(wfi);
 
 					//printf("Start of parallel sending\n");
-
+					index = 0;
 					for (peerindex = 0; peerindex < wfi->peerCount; peerindex++)
 					{
-						for (index = 0; index < WF_INFO_MAXPEERS; index++)
+						for (; index < WF_INFO_MAXPEERS; index++)
 						{
 							if (wfi->peers[index] && wfi->peers[index]->activated)
 							{
