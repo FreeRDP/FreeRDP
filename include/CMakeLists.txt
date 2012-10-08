@@ -21,14 +21,15 @@ file(GLOB FREERDP_HEADERS "freerdp/*.h")
 install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp)
 
 install(DIRECTORY freerdp/cache DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/channels DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/codec DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/crypto DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/gdi DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/locale DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/plugins DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/rail DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/utils DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/client DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/channels DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
 
 

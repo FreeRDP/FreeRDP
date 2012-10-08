@@ -21,7 +21,7 @@ set(MODULE_PREFIX "FREERDP_CHANNELS_CLIENT")
 set(${MODULE_PREFIX}_SRCS
 	tables.c
 	tables.h
-	loader.c)
+	channels.c)
 
 foreach(STATIC_MODULE ${CHANNEL_STATIC_CLIENT_MODULES})
 

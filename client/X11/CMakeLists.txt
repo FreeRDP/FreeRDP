@@ -94,6 +94,10 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
+if(WITH_STATIC_PLUGINS)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-client)
+endif()
+
 if(WITH_MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()

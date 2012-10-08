@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Client
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +22,16 @@ set(${MODULE_PREFIX}_SRCS
 	rdpsnd_main.c
 	rdpsnd_main.h)
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(NOT WITH_STATIC_PLUGINS)
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+else()
+	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+	set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(WITH_MONOLITHIC_BUILD)
@@ -34,6 +41,8 @@ else()
 endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 
 if(WITH_ALSA)
 	add_subdirectory(alsa)

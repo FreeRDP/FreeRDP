@@ -671,17 +671,11 @@ void freerdp_channels_free(rdpChannels* channels)
 	xfree(channels);
 }
 
-/**
- * this is called when processing the command line parameters
- * called only from main thread
- */
-int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, const char* name, void* data)
+int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
-	int ok;
+	int status;
 	struct lib_data* lib;
 	CHANNEL_ENTRY_POINTS_EX ep;
-
-	DEBUG_CHANNELS("%s", name);
 
 	if (channels->num_libs_data + 1 >= CHANNEL_MAX_COUNT)
 	{
@@ -690,13 +684,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	}
 
 	lib = channels->libs_data + channels->num_libs_data;
-	lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
-
-	if (lib->entry == NULL)
-	{
-		DEBUG_CHANNELS("failed to find export function");
-		return 1;
-	}
+	lib->entry = (PVIRTUALCHANNELENTRY) entry;
 
 	ep.cbSize = sizeof(ep);
 	ep.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
@@ -714,7 +702,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	WaitForSingleObject(g_mutex_init, INFINITE);
 
 	g_init_channels = channels;
-	ok = lib->entry((PCHANNEL_ENTRY_POINTS) &ep);
+	status = lib->entry((PCHANNEL_ENTRY_POINTS) &ep);
 	g_init_channels = NULL;
 
 	ReleaseMutex(g_mutex_init);
@@ -723,13 +711,34 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	channels->settings = 0;
 	channels->can_call_init = 0;
 
-	if (!ok)
+	if (!status)
 	{
 		DEBUG_CHANNELS("export function call failed");
 		return 1;
 	}
 
 	return 0;
+}
+
+/**
+ * this is called when processing the command line parameters
+ * called only from main thread
+ */
+int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, const char* name, void* data)
+{
+	void* entry;
+
+	DEBUG_CHANNELS("%s", name);
+
+	entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
+
+	if (entry == NULL)
+	{
+		DEBUG_CHANNELS("failed to find export function");
+		return 1;
+	}
+
+	return freerdp_channels_client_load(channels, settings, entry, data);
 }
 
 /**

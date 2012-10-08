@@ -58,6 +58,10 @@
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
 
+#ifdef WITH_STATIC_PLUGINS
+#include <freerdp/client/channels.h>
+#endif
+
 #include <winpr/synch.h>
 
 #include "xf_gdi.h"
@@ -944,14 +948,27 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
  */
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
+	void* entry;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	printf("loading plugin %s\n", name);
+	entry = NULL;
+
+#ifdef WITH_STATIC_PLUGINS
+	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+
+	if (entry)
+	{
+		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
+		{
+			printf("loading channel %s (static)\n", name);
+			return 1;
+		}
+	}
+#endif
+
+	printf("loading channel %s (plugin)\n", name);
 	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-	// FIXME we should check the return code for freerdp_channels_load_plugin()
-	// and report any error to the caller. freerdp_parse_args() actually expect to get
-	// an error code when there is a loading error.
-	// Is it as easy as "return freerdp_channels_load_plugin()" ?
+
 	return 1;
 }
 
