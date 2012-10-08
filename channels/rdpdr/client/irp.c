@@ -80,6 +80,7 @@ IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 	}
 
 	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
+	ZeroMemory(irp, sizeof(IRP));
 
 	irp->device = device;
 	irp->devman = devman;
