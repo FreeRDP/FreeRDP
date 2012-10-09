@@ -127,6 +127,7 @@ void wf_update_encode(wfInfo* wfi)
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
+	stream_clear(wfi->s);
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 			pDataBits, width, height, stride);
 
