@@ -300,7 +300,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	freerdp_thread_start(printer_dev->thread, printer_thread_func, printer_dev);
 }
 
-#ifdef WITH_STATIC_PLUGINS
+#ifdef STATIC_CHANNELS
 int printer_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #else
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)

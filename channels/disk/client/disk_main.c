@@ -693,7 +693,7 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* na
 	}
 }
 
-#ifdef WITH_STATIC_PLUGINS
+#ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	disk_DeviceServiceEntry
 #endif
 

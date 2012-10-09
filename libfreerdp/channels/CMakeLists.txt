@@ -32,7 +32,7 @@ endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(WITH_STATIC_PLUGINS)
+if(STATIC_CHANNELS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-client)
 endif()
 
