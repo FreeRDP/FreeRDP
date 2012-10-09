@@ -222,7 +222,7 @@ static INLINE void update_read_2byte_signed(STREAM* s, sint32* value)
 
 	stream_read_uint8(s, byte);
 
-	negative = (byte & 0x40) ? true : false;
+	negative = (byte & 0x40) ? TRUE : FALSE;
 
 	*value = (byte & 0x3F);
 
@@ -1446,7 +1446,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	int i;
 	int size;
 	uint8 iBitmapFormat;
-	boolean compressed = false;
+	boolean compressed = FALSE;
 
 	stream_read_uint8(s, cache_brush_order->index); /* cacheEntry (1 byte) */
 
@@ -1482,13 +1482,13 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 		else
 		{
 			if ((iBitmapFormat == BMF_8BPP) && (cache_brush_order->length == 20))
-				compressed = true;
+				compressed = TRUE;
 			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush_order->length == 24))
-				compressed = true;
+				compressed = TRUE;
 			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush_order->length == 32))
-				compressed = true;
+				compressed = TRUE;
 
-			if (compressed != false)
+			if (compressed != FALSE)
 			{
 				/* compressed brush */
 				update_decompress_brush(s, cache_brush_order->data, cache_brush_order->bpp);
@@ -1517,7 +1517,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 
 	stream_read_uint16(s, flags); /* flags (2 bytes) */
 	create_offscreen_bitmap->id = flags & 0x7FFF;
-	deleteListPresent = (flags & 0x8000) ? true : false;
+	deleteListPresent = (flags & 0x8000) ? TRUE : FALSE;
 
 	stream_read_uint16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
 	stream_read_uint16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
@@ -1682,24 +1682,24 @@ void update_read_bounds(STREAM* s, rdpBounds* bounds)
 	stream_read_uint8(s, flags); /* field flags */
 
 	if (flags & BOUND_LEFT)
-		update_read_coord(s, &bounds->left, false);
+		update_read_coord(s, &bounds->left, FALSE);
 	else if (flags & BOUND_DELTA_LEFT)
-		update_read_coord(s, &bounds->left, true);
+		update_read_coord(s, &bounds->left, TRUE);
 
 	if (flags & BOUND_TOP)
-		update_read_coord(s, &bounds->top, false);
+		update_read_coord(s, &bounds->top, FALSE);
 	else if (flags & BOUND_DELTA_TOP)
-		update_read_coord(s, &bounds->top, true);
+		update_read_coord(s, &bounds->top, TRUE);
 
 	if (flags & BOUND_RIGHT)
-		update_read_coord(s, &bounds->right, false);
+		update_read_coord(s, &bounds->right, FALSE);
 	else if (flags & BOUND_DELTA_RIGHT)
-		update_read_coord(s, &bounds->right, true);
+		update_read_coord(s, &bounds->right, TRUE);
 
 	if (flags & BOUND_BOTTOM)
-		update_read_coord(s, &bounds->bottom, false);
+		update_read_coord(s, &bounds->bottom, FALSE);
 	else if (flags & BOUND_DELTA_BOTTOM)
-		update_read_coord(s, &bounds->bottom, true);
+		update_read_coord(s, &bounds->bottom, TRUE);
 }
 
 boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
@@ -1716,7 +1716,7 @@ boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
 		printf("Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
-		return false;
+		return FALSE;
 	}
 
 	update_read_field_flags(s, &(orderInfo->fieldFlags), flags,
@@ -1730,7 +1730,7 @@ boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		IFCALL(update->SetBounds, context, &orderInfo->bounds);
 	}
 
-	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? true : false;
+	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? TRUE : FALSE;
 
 #ifdef WITH_DEBUG_ORDERS
 	printf("%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
@@ -1857,7 +1857,7 @@ boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 		IFCALL(update->SetBounds, context, NULL);
 	}
 
-	return true;
+	return TRUE;
 }
 
 void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
@@ -1885,27 +1885,27 @@ void update_recv_secondary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	switch (orderType)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
-			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), false, extraFlags);
+			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), FALSE, extraFlags);
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
-			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), true, extraFlags);
+			update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), TRUE, extraFlags);
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), false, extraFlags);
+			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), FALSE, extraFlags);
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
-			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), true, extraFlags);
+			update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), TRUE, extraFlags);
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), true, extraFlags);
+			update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), TRUE, extraFlags);
 			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
 			break;
 
@@ -2041,8 +2041,8 @@ boolean update_recv_order(rdpUpdate* update, STREAM* s)
 	else
 	{
 		if (!update_recv_primary_order(update, s, controlFlags))
-			return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }

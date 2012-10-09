@@ -762,7 +762,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->data = (uint8*) realloc(gdi->image->bitmap->data,
 				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 
-		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == true))
+		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == TRUE))
 		{
 			uint8* temp_image;
 

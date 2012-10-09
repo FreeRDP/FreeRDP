@@ -105,7 +105,7 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 #else
 		perror("getaddrinfo");
 #endif
-		return false;
+		return FALSE;
 	}
 
 	for (ai = res; ai && listener->num_sockfds < 5; ai = ai->ai_next)
@@ -168,7 +168,7 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 
 	freeaddrinfo(res);
 
-	return (listener->num_sockfds > 0 ? true : false);
+	return (listener->num_sockfds > 0 ? TRUE : FALSE);
 }
 
 static boolean freerdp_listener_open_local(freerdp_listener* instance, const char* path)
@@ -184,7 +184,7 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 	if (sockfd == -1)
 	{
 		perror("socket");
-		return false;
+		return FALSE;
 	}
 
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
@@ -199,7 +199,7 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 	{
 		perror("bind");
 		close(sockfd);
-		return false;
+		return FALSE;
 	}
 
 	status = listen(sockfd, 10);
@@ -208,16 +208,16 @@ static boolean freerdp_listener_open_local(freerdp_listener* instance, const cha
 	{
 		perror("listen");
 		close(sockfd);
-		return false;
+		return FALSE;
 	}
 
 	listener->sockfds[listener->num_sockfds++] = sockfd;
 
 	printf("Listening on socket %s.\n", addr.sun_path);
 
-	return true;
+	return TRUE;
 #else
-	return true;
+	return TRUE;
 #endif
 }
 
@@ -241,7 +241,7 @@ static boolean freerdp_listener_get_fds(freerdp_listener* instance, void** rfds,
 	rdpListener* listener = (rdpListener*) instance->listener;
 
 	if (listener->num_sockfds < 1)
-		return false;
+		return FALSE;
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
@@ -249,7 +249,7 @@ static boolean freerdp_listener_get_fds(freerdp_listener* instance, void** rfds,
 		(*rcount)++;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static boolean freerdp_listener_check_fds(freerdp_listener* instance)
@@ -263,7 +263,7 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 	rdpListener* listener = (rdpListener*) instance->listener;
 
 	if (listener->num_sockfds < 1)
-		return false;
+		return FALSE;
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
@@ -283,7 +283,7 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 				continue;
 #endif
 			perror("accept");
-			return false;
+			return FALSE;
 		}
 
 		client = freerdp_peer_new(peer_sockfd);
@@ -295,7 +295,7 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 			sin_addr = &(((struct sockaddr_in6*) &peer_addr)->sin6_addr);
 #ifndef _WIN32
 		else if (peer_addr.ss_family == AF_UNIX)
-			client->local = true;
+			client->local = TRUE;
 #endif
 
 		if (sin_addr)
@@ -304,7 +304,7 @@ static boolean freerdp_listener_check_fds(freerdp_listener* instance)
 		IFCALL(instance->PeerAccepted, instance, client);
 	}
 
-	return true;
+	return TRUE;
 }
 
 freerdp_listener* freerdp_listener_new(void)

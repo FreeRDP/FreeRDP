@@ -87,7 +87,7 @@ int der_skip_octet_string(int length)
 
 void der_write_octet_string(STREAM* s, uint8* oct_str, int length)
 {
-	der_write_universal_tag(s, ER_TAG_OCTET_STRING, false);
+	der_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	der_write_length(s, length);
 	stream_write(s, oct_str, length);
 }

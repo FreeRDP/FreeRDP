@@ -62,5 +62,5 @@ boolean sf_peer_rdpsnd_init(testPeerContext* context)
 
 	context->rdpsnd->Initialize(context->rdpsnd);
 
-	return true;
+	return TRUE;
 }

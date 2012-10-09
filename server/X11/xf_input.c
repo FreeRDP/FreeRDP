@@ -36,12 +36,12 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 #ifdef WITH_XTEST
 	unsigned int keycode;
-	boolean extended = false;
+	boolean extended = FALSE;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
 	if (flags & KBD_FLAGS_EXTENDED)
-		extended = true;
+		extended = TRUE;
 
 	keycode = freerdp_keyboard_get_x11_keycode_from_rdp_scancode(code, extended);
 
@@ -73,7 +73,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
-	boolean down = false;
+	boolean down = FALSE;
 	xfInfo* xfi = xfp->info;
 
 	pthread_mutex_lock(&(xfp->mutex));
@@ -81,10 +81,10 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 
 	if (flags & PTR_FLAGS_WHEEL)
 	{
-		boolean negative = false;
+		boolean negative = FALSE;
 
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-			negative = true;
+			negative = TRUE;
 
 		button = (negative) ? 5 : 4;
 
@@ -104,7 +104,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 			button = 2;
 
 		if (flags & PTR_FLAGS_DOWN)
-			down = true;
+			down = TRUE;
 
 		if (button != 0)
 			XTestFakeButtonEvent(xfi->display, button, down, 0);

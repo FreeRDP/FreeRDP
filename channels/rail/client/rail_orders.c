@@ -157,11 +157,11 @@ void rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 	switch (sysparam->param)
 	{
 		case SPI_SET_SCREEN_SAVE_ACTIVE:
-			sysparam->setScreenSaveActive = (body != 0) ? true : false;
+			sysparam->setScreenSaveActive = (body != 0) ? TRUE : FALSE;
 			break;
 
 		case SPI_SET_SCREEN_SAVE_SECURE:
-			sysparam->setScreenSaveSecure = (body != 0) ? true : false;
+			sysparam->setScreenSaveSecure = (body != 0) ? TRUE : FALSE;
 			break;
 
 		default:
@@ -188,7 +188,7 @@ void rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* l
 	stream_read_uint32(s, localmovesize->windowId); /* windowId (4 bytes) */
 
 	stream_read_uint16(s, isMoveSizeStart); /* isMoveSizeStart (2 bytes) */
-	localmovesize->isMoveSizeStart = (isMoveSizeStart != 0) ? true : false;
+	localmovesize->isMoveSizeStart = (isMoveSizeStart != 0) ? TRUE : FALSE;
 
 	stream_read_uint16(s, localmovesize->moveSizeType); /* moveSizeType (2 bytes) */
 	stream_read_uint16(s, localmovesize->posX); /* posX (2 bytes) */
@@ -353,16 +353,16 @@ void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)
 	rail_order->sysparam.highContrast.flags = 0x7E;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
-	rail_order->sysparam.mouseButtonSwap = false;
+	rail_order->sysparam.mouseButtonSwap = FALSE;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
-	rail_order->sysparam.keyboardPref = false;
+	rail_order->sysparam.keyboardPref = FALSE;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	rail_order->sysparam.dragFullWindows = false;
+	rail_order->sysparam.dragFullWindows = FALSE;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
-	rail_order->sysparam.keyboardCues = false;
+	rail_order->sysparam.keyboardCues = FALSE;
 
 	rail_order->sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	rail_order->sysparam.workArea.left = 0;

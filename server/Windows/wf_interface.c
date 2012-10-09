@@ -46,7 +46,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != true)
+		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -70,7 +70,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
-		if (instance->CheckFileDescriptor(instance) != true)
+		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;

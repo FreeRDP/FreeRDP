@@ -67,7 +67,7 @@ static boolean audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_h
 	{
 		DEBUG_WARN("snd_pcm_hw_params_malloc (%s)",
 			 snd_strerror(error));
-		return false;
+		return FALSE;
 	}
 	snd_pcm_hw_params_any(capture_handle, hw_params);
 	snd_pcm_hw_params_set_access(capture_handle, hw_params,
@@ -90,7 +90,7 @@ static boolean audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_h
 			alsa->actual_rate, alsa->actual_channels,
 			alsa->target_rate, alsa->target_channels);
 	}
-	return true;
+	return TRUE;
 }
 
 static boolean audin_alsa_thread_receive(AudinALSADevice* alsa, uint8* src, int size)
@@ -249,7 +249,7 @@ static boolean audin_alsa_format_supported(IAudinDevice* device, audinFormat* fo
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -258,11 +258,11 @@ static boolean audin_alsa_format_supported(IAudinDevice* device, audinFormat* fo
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 	}
-	return false;
+	return FALSE;
 }
 
 static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, uint32 FramesPerPacket)

@@ -52,7 +52,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		data = freerdp_image_convert(bitmap->data, NULL,
 				bitmap->width, bitmap->height, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
-		if (bitmap->ephemeral != true)
+		if (bitmap->ephemeral != TRUE)
 		{
 			image = XCreateImage(xfi->display, xfi->visual, xfi->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfi->scanline_pad, 0);
@@ -102,7 +102,7 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XFree(image);
 
-	if (xfi->remote_app != true)
+	if (xfi->remote_app != TRUE)
 	{
 		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
 				bitmap->left, bitmap->top, width, height, bitmap->left, bitmap->top);
@@ -172,7 +172,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			{
 				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-				if (status == false)
+				if (status == FALSE)
 				{
 					printf("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
@@ -184,7 +184,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			break;
 	}
 
-	bitmap->compressed = false;
+	bitmap->compressed = FALSE;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }
@@ -349,7 +349,7 @@ void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, 
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, width, height, x, y);
 		}

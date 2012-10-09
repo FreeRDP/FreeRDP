@@ -425,7 +425,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	p = buffer;
 
-	while (true)
+	while (TRUE)
 	{
 		status = tls_read(tls, p, length - nbytes);
 

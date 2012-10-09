@@ -153,11 +153,11 @@ static boolean fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 	while (numberOrders > 0)
 	{
 		if (!update_recv_order(update, s))
-			return false;
+			return FALSE;
 		numberOrders--;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
@@ -202,7 +202,7 @@ static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uin
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
 			if (!fastpath_recv_orders(fastpath, s))
-				return false;
+				return FALSE;
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
@@ -254,7 +254,7 @@ static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uin
 			break;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
@@ -327,7 +327,7 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	if (update_stream)
 	{
 		if (!fastpath_recv_update(fastpath, updateCode, totalSize, update_stream))
-			return false;
+			return FALSE;
 	}
 
 	stream_set_pos(s, next_pos);
@@ -335,7 +335,7 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	if (comp_stream != s)
 		free(comp_stream);
 
-	return true;
+	return TRUE;
 }
 
 boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
@@ -349,13 +349,13 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 		if (!fastpath_recv_update_data(fastpath, s))
 		{
 			/* XXX: Do we need to call EndPaint? */
-			return false;
+			return FALSE;
 		}
 	}
 
 	IFCALL(update->EndPaint, update->context);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, uint8* eventCode)
@@ -363,14 +363,14 @@ static boolean fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, ui
 	uint8 eventHeader;
 
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, eventHeader); /* eventHeader (1 byte) */
 
 	*eventFlags = (eventHeader & 0x1F);
 	*eventCode = (eventHeader >> 5);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
@@ -379,7 +379,7 @@ static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM*
 	uint16 code;
 
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, code); /* keyCode (1 byte) */
 
@@ -394,7 +394,7 @@ static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM*
 
 	IFCALL(fastpath->rdp->input->KeyboardEvent, fastpath->rdp->input, flags, code);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
@@ -404,7 +404,7 @@ static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s,
 	uint16 yPos;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
@@ -412,7 +412,7 @@ static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s,
 
 	IFCALL(fastpath->rdp->input->MouseEvent, fastpath->rdp->input, pointerFlags, xPos, yPos);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
@@ -422,7 +422,7 @@ static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s
 	uint16 yPos;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
@@ -430,14 +430,14 @@ static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s
 
 	IFCALL(fastpath->rdp->input->ExtendedMouseEvent, fastpath->rdp->input, pointerFlags, xPos, yPos);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	IFCALL(fastpath->rdp->input->SynchronizeEvent, fastpath->rdp->input, eventFlags);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
@@ -446,7 +446,7 @@ static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* 
 	uint16 flags;
 
 	if (stream_get_left(s) < 2)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, unicodeCode); /* unicodeCode (2 bytes) */
 
@@ -458,7 +458,7 @@ static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* 
 
 	IFCALL(fastpath->rdp->input->UnicodeKeyboardEvent, fastpath->rdp->input, flags, unicodeCode);
 
-	return true;
+	return TRUE;
 }
 
 static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
@@ -467,33 +467,33 @@ static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 	uint8 eventCode;
 
 	if (!fastpath_read_input_event_header(s, &eventFlags, &eventCode))
-		return false;
+		return FALSE;
 
 	switch (eventCode)
 	{
 		case FASTPATH_INPUT_EVENT_SCANCODE:
 			if (!fastpath_recv_input_event_scancode(fastpath, s, eventFlags))
-				return false;
+				return FALSE;
 			break;
 
 		case FASTPATH_INPUT_EVENT_MOUSE:
 			if (!fastpath_recv_input_event_mouse(fastpath, s, eventFlags))
-				return false;
+				return FALSE;
 			break;
 
 		case FASTPATH_INPUT_EVENT_MOUSEX:
 			if (!fastpath_recv_input_event_mousex(fastpath, s, eventFlags))
-				return false;
+				return FALSE;
 			break;
 
 		case FASTPATH_INPUT_EVENT_SYNC:
 			if (!fastpath_recv_input_event_sync(fastpath, s, eventFlags))
-				return false;
+				return FALSE;
 			break;
 
 		case FASTPATH_INPUT_EVENT_UNICODE:
 			if (!fastpath_recv_input_event_unicode(fastpath, s, eventFlags))
-				return false;
+				return FALSE;
 			break;
 
 		default:
@@ -501,7 +501,7 @@ static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 			break;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
@@ -516,7 +516,7 @@ boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 		 */
 
 		if (stream_get_left(s) < 1)
-			return false;
+			return FALSE;
 
 		stream_read_uint8(s, fastpath->numberEvents); /* eventHeader (1 byte) */
 	}
@@ -524,10 +524,10 @@ boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	for (i = 0; i < fastpath->numberEvents; i++)
 	{
 		if (!fastpath_recv_input_event(fastpath, s))
-			return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static uint32 fastpath_get_sec_bytes(rdpRdp* rdp)
@@ -577,7 +577,7 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	if (length >= (2 << 14))
 	{
 		printf("Maximum FastPath PDU length is 32767\n");
-		return false;
+		return FALSE;
 	}
 
 	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
@@ -606,7 +606,7 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 		fpInputEvents = stream_get_tail(s) + sec_bytes;
 		fpInputEvents_length = length - 3 - sec_bytes;
 		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-			security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, true, stream_get_tail(s));
+			security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, stream_get_tail(s));
 		else
 			security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, stream_get_tail(s));
 		security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
@@ -616,9 +616,9 @@ boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 
 	stream_set_pos(s, length);
 	if (transport_write(fastpath->rdp->transport, s) < 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
@@ -657,7 +657,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	STREAM* comp_update;
 	STREAM* ls;
 
-	result = true;
+	result = TRUE;
 	rdp = fastpath->rdp;
 	sec_bytes = fastpath_get_sec_bytes(rdp);
 	maxLength = FASTPATH_MAX_PACKET_SIZE - (6 + sec_bytes);
@@ -736,7 +736,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 			ptr_to_crypt = bm + 3 + sec_bytes;
 			ptr_sig = bm + 3;
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-				security_salted_mac_signature(rdp, ptr_to_crypt, bytes_to_crypt, true, ptr_sig);
+				security_salted_mac_signature(rdp, ptr_to_crypt, bytes_to_crypt, TRUE, ptr_sig);
 			else
 				security_mac_signature(rdp, ptr_to_crypt, bytes_to_crypt, ptr_sig);
 			security_encrypt(ptr_to_crypt, bytes_to_crypt, rdp);
@@ -744,7 +744,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 
 		if (transport_write(fastpath->rdp->transport, update) < 0)
 		{
-			result = false;
+			result = FALSE;
 			break;
 		}
 

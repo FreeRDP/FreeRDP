@@ -44,14 +44,14 @@
  *  @param instance - pointer to a rdp_freerdp structure that contains base information to establish the connection.
  *  				  On return, this function will be initialized with the new connection's settings.
  *
- *  @return true if successful. false otherwise.
+ *  @return TRUE if successful. FALSE otherwise.
  *
  */
 boolean freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
 	rdpSettings* settings;
-	boolean status = false;
+	boolean status = FALSE;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
@@ -71,14 +71,14 @@ boolean freerdp_connect(freerdp* instance)
 	extension_load_and_init_plugins(rdp->extension);
 	extension_pre_connect(rdp->extension);
 
-	if (status != true)
+	if (status != TRUE)
 	{
 		if(!connectErrorCode)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
-		return false;
+		return FALSE;
 	}
 
 	status = rdp_client_connect(rdp);
@@ -93,16 +93,16 @@ boolean freerdp_connect(freerdp* instance)
 	{
 		if (instance->settings->dump_rfx)
 		{
-			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, true);
+			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, TRUE);
 			if (instance->update->pcap_rfx)
-				instance->update->dump_rfx = true;
+				instance->update->dump_rfx = TRUE;
 		}
 
 		extension_post_connect(rdp->extension);
 
 		IFCALLRET(instance->PostConnect, status, instance);
 
-		if (status != true)
+		if (status != TRUE)
 		{
 			printf("freerdp_post_connect failed\n");
 			
@@ -111,7 +111,7 @@ boolean freerdp_connect(freerdp* instance)
 				connectErrorCode = POSTCONNECTERROR;
 			}
 			
-			return false;
+			return FALSE;
 		}
 
 		if (instance->settings->play_rfx)
@@ -121,10 +121,10 @@ boolean freerdp_connect(freerdp* instance)
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, false);
+			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, FALSE);
 
 			if (instance->update->pcap_rfx)
-				instance->update->play_rfx = true;
+				instance->update->play_rfx = TRUE;
 			
 			update = instance->update;
 
@@ -145,7 +145,7 @@ boolean freerdp_connect(freerdp* instance)
 			}
 
 			free(s->data);
-			return true;
+			return TRUE;
 		}
 	}
 
@@ -164,7 +164,7 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 	rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
 
-	return true;
+	return TRUE;
 }
 
 boolean freerdp_check_fds(freerdp* instance)
@@ -177,9 +177,9 @@ boolean freerdp_check_fds(freerdp* instance)
 	status = rdp_check_fds(rdp);
 
 	if (status < 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
@@ -194,7 +194,7 @@ boolean freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
 
-	return true;
+	return TRUE;
 }
 
 boolean freerdp_shall_disconnect(freerdp* instance)

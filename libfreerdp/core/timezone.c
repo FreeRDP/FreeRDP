@@ -80,7 +80,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	TIME_ZONE_INFO* clientTimeZone;
 
 	if (stream_get_left(s) < 172)
-		return false;
+		return FALSE;
 
 	clientTimeZone = settings->client_time_zone;
 
@@ -104,7 +104,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	rdp_read_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
 	stream_read_uint32(s, clientTimeZone->daylightBias); /* DaylightBias */
 
-	return true;
+	return TRUE;
 }
 
 /**

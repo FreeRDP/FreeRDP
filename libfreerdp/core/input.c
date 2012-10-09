@@ -207,14 +207,14 @@ static boolean input_recv_sync_event(rdpInput* input, STREAM* s)
 	uint32 toggleFlags;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_seek(s, 2); /* pad2Octets (2 bytes) */
 	stream_read_uint32(s, toggleFlags); /* toggleFlags (4 bytes) */
 
 	IFCALL(input->SynchronizeEvent, input, toggleFlags);
 
-	return true;
+	return TRUE;
 }
 
 static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
@@ -222,7 +222,7 @@ static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
 	uint16 keyboardFlags, keyCode;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	stream_read_uint16(s, keyCode); /* keyCode (2 bytes) */
@@ -230,7 +230,7 @@ static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
 
 	IFCALL(input->KeyboardEvent, input, keyboardFlags, keyCode);
 
-	return true;
+	return TRUE;
 }
 
 static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
@@ -238,7 +238,7 @@ static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
 	uint16 keyboardFlags, unicodeCode;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	stream_read_uint16(s, unicodeCode); /* unicodeCode (2 bytes) */
@@ -259,7 +259,7 @@ static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
 
 	IFCALL(input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
 
-	return true;
+	return TRUE;
 }
 
 static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
@@ -267,7 +267,7 @@ static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
 	uint16 pointerFlags, xPos, yPos;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
@@ -275,7 +275,7 @@ static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
 
 	IFCALL(input->MouseEvent, input, pointerFlags, xPos, yPos);
 
-	return true;
+	return TRUE;
 }
 
 static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
@@ -283,7 +283,7 @@ static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
 	uint16 pointerFlags, xPos, yPos;
 
 	if (stream_get_left(s) < 6)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	stream_read_uint16(s, xPos); /* xPos (2 bytes) */
@@ -291,7 +291,7 @@ static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
 
 	IFCALL(input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
 
-	return true;
+	return TRUE;
 }
 
 static boolean input_recv_event(rdpInput* input, STREAM* s)
@@ -299,7 +299,7 @@ static boolean input_recv_event(rdpInput* input, STREAM* s)
 	uint16 messageType;
 
 	if (stream_get_left(s) < 4)
-		return false;
+		return FALSE;
 
 	stream_seek(s, 4); /* eventTime (4 bytes), ignored by the server */
 	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
@@ -308,27 +308,27 @@ static boolean input_recv_event(rdpInput* input, STREAM* s)
 	{
 		case INPUT_EVENT_SYNC:
 			if (!input_recv_sync_event(input, s))
-				return false;
+				return FALSE;
 			break;
 
 		case INPUT_EVENT_SCANCODE:
 			if (!input_recv_keyboard_event(input, s))
-				return false;
+				return FALSE;
 			break;
 
 		case INPUT_EVENT_UNICODE:
 			if (!input_recv_unicode_keyboard_event(input, s))
-				return false;
+				return FALSE;
 			break;
 
 		case INPUT_EVENT_MOUSE:
 			if (!input_recv_mouse_event(input, s))
-				return false;
+				return FALSE;
 			break;
 
 		case INPUT_EVENT_MOUSEX:
 			if (!input_recv_extended_mouse_event(input, s))
-				return false;
+				return FALSE;
 			break;
 
 		default:
@@ -338,7 +338,7 @@ static boolean input_recv_event(rdpInput* input, STREAM* s)
 			break;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean input_recv(rdpInput* input, STREAM* s)
@@ -346,22 +346,22 @@ boolean input_recv(rdpInput* input, STREAM* s)
 	uint16 i, numberEvents;
 
 	if (stream_get_left(s) < 4)
-		return false;
+		return FALSE;
 
 	stream_read_uint16(s, numberEvents); /* numberEvents (2 bytes) */
 	stream_seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
 	if (stream_get_left(s) < 6 * numberEvents)
-		return false;
+		return FALSE;
 
 	for (i = 0; i < numberEvents; i++)
 	{
 		if (!input_recv_event(input, s))
-			return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 void input_register_client_callbacks(rdpInput* input)

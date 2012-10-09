@@ -333,7 +333,7 @@ static int urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK* callback,
 
 	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
 
-	/** Fixme: Currently this is a false bustime... */
+	/** Fixme: Currently this is a FALSE bustime... */
 	urbdrc_get_mstime(frames);
 
 	out_size = 32;

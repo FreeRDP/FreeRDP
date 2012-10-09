@@ -69,7 +69,7 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 		if (xfi->pressed_keys[keycode] != NoSymbol)
 		{
 			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
-			freerdp_input_send_keyboard_event_ex(xfi->instance->input, false, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(xfi->instance->input, FALSE, rdp_scancode);
 			xfi->pressed_keys[keycode] = NoSymbol;
 		}
 	}
@@ -99,17 +99,17 @@ void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
 		/* Pause without Ctrl has to be sent as Ctrl + NumLock. */
 		if (down)
 		{
-			freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
-			freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
+			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
 		}
 	}
 	else
 	{
 		freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 
-		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == false))
+		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == FALSE))
 		{
 			uint32 syncFlags;
 			syncFlags = xf_kbd_get_toggle_keys_state(xfi);
@@ -124,7 +124,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 	Window wdummy;
 	uint32 state = 0;
 
-	if (xfi->remote_app != true)
+	if (xfi->remote_app != TRUE)
 	{
 		XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
@@ -144,7 +144,7 @@ boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 	KeyCode keycode = XKeysymToKeycode(xfi->display, keysym);
 
 	if (keycode == NoSymbol)
-		return false;
+		return FALSE;
 
 	for (modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
@@ -158,7 +158,7 @@ boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 		}
 	}
 
-	return (state & keysymMask) ? true : false;
+	return (state & keysymMask) ? TRUE : FALSE;
 }
 
 int xf_kbd_get_toggle_keys_state(xfInfo* xfi)
@@ -203,10 +203,10 @@ boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		{
 			/* Ctrl-Alt-Enter: toggle full screen */
 			xf_toggle_fullscreen(xfi);
-			return true;
+			return TRUE;
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 

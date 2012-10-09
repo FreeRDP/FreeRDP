@@ -432,7 +432,7 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 		total_processed += bytes_processed + 1;
 	}
 
-	return (size == total_processed) ? true : false;
+	return (size == total_processed) ? TRUE : FALSE;
 }
 
 
@@ -453,7 +453,7 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
 		if (!bitmap_decompress4(srcData, dstData, width, height, size))
-			return false;
+			return FALSE;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
@@ -478,8 +478,8 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }

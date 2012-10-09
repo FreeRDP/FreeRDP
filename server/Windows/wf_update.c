@@ -238,7 +238,7 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 				wf_mirror_driver_deactivate(wfi);
 			}
 
-			client->activated = false;
+			client->activated = FALSE;
 			wfi->activePeerCount--;
 
 			printf("Deactivating Peer Updates: %d\n", wfi->activePeerCount);

@@ -159,7 +159,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	stream_seek(s, 8); /* pad (8 bytes) */
 
 	if (redirection->flags & LB_NOREDIRECT)
-		return true;
+		return TRUE;
 	else
 		return rdp_client_redirect(rdp);
 }
@@ -167,7 +167,7 @@ boolean rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
 	rdp_recv_server_redirection_pdu(rdp, s);
-	return true;
+	return TRUE;
 }
 
 boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
@@ -175,7 +175,7 @@ boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
 	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
 	rdp_recv_server_redirection_pdu(rdp, s);
 	stream_seek_uint8(s); /* pad2Octets (1 byte) */
-	return true;
+	return TRUE;
 }
 
 rdpRedirection* redirection_new()

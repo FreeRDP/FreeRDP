@@ -167,7 +167,7 @@ struct rdp_freerdp
 	pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
 															 Callback for changed certificate validation. 
 															 Used when a certificate differs from stored fingerprint.
-															 If returns true, the new fingerprint will be trusted and old thrown out. */
+															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 	uint32 paddingD[64 - 51]; /* 51 */
 
 	pSendChannelData SendChannelData; /* (offset 64)

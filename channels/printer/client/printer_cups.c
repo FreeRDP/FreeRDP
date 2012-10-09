@@ -261,7 +261,7 @@ static rdpPrinter* printer_cups_get_printer(rdpPrinterDriver* driver, const char
 {
 	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*)driver;
 
-	return printer_cups_new_printer(cups_driver, name, cups_driver->id_sequence == 1 ? true : false);
+	return printer_cups_new_printer(cups_driver, name, cups_driver->id_sequence == 1 ? TRUE : FALSE);
 }
 
 static rdpCupsPrinterDriver* cups_driver = NULL;

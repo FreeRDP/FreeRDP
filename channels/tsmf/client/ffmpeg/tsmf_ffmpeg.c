@@ -63,10 +63,10 @@ static boolean tsmf_ffmpeg_init_context(ITSMFDecoder* decoder)
 	if (!mdecoder->codec_context)
 	{
 		DEBUG_WARN("avcodec_alloc_context failed.");
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
@@ -81,7 +81,7 @@ static boolean tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_
 
 	mdecoder->frame = avcodec_alloc_frame();
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
@@ -103,7 +103,7 @@ static boolean tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_
 #endif
 #endif
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
@@ -117,7 +117,7 @@ static boolean tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_
 	if (!mdecoder->codec)
 	{
 		DEBUG_WARN("avcodec_find_decoder failed.");
-		return false;
+		return FALSE;
 	}
 
 	mdecoder->codec_context->codec_id = mdecoder->codec_id;
@@ -126,12 +126,12 @@ static boolean tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_
 	if (mdecoder->media_type == AVMEDIA_TYPE_VIDEO)
 	{
 		if (!tsmf_ffmpeg_init_video_stream(decoder, media_type))
-			return false;
+			return FALSE;
 	}
 	else if (mdecoder->media_type == AVMEDIA_TYPE_AUDIO)
 	{
 		if (!tsmf_ffmpeg_init_audio_stream(decoder, media_type))
-			return false;
+			return FALSE;
 	}
 
 	if (media_type->ExtraData)
@@ -172,7 +172,7 @@ static boolean tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_
 	if (mdecoder->codec->capabilities & CODEC_CAP_TRUNCATED)
 		mdecoder->codec_context->flags |= CODEC_FLAG_TRUNCATED;
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_prepare(ITSMFDecoder* decoder)
@@ -182,12 +182,12 @@ static boolean tsmf_ffmpeg_prepare(ITSMFDecoder* decoder)
 	if (avcodec_open2(mdecoder->codec_context, mdecoder->codec, NULL) < 0)
 	{
 		DEBUG_WARN("avcodec_open2 failed.");
-		return false;
+		return FALSE;
 	}
 
 	mdecoder->prepared = 1;
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type)
@@ -203,7 +203,7 @@ static boolean tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 			mdecoder->media_type = AVMEDIA_TYPE_AUDIO;
 			break;
 		default:
-			return false;
+			return FALSE;
 	}
 	switch (media_type->SubType)
 	{
@@ -247,17 +247,17 @@ static boolean tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 			mdecoder->codec_id = CODEC_ID_AC3;
 			break;
 		default:
-			return false;
+			return FALSE;
 	}
 
 	if (!tsmf_ffmpeg_init_context(decoder))
-		return false;
+		return FALSE;
 	if (!tsmf_ffmpeg_init_stream(decoder, media_type))
-		return false;
+		return FALSE;
 	if (!tsmf_ffmpeg_prepare(decoder))
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions)
@@ -266,7 +266,7 @@ static boolean tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const uint8* data
 	int decoded;
 	int len;
 	AVFrame* frame;
-	boolean ret = true;
+	boolean ret = TRUE;
 
 #if LIBAVCODEC_VERSION_MAJOR < 52 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR <= 20)
 	len = avcodec_decode_video(mdecoder->codec_context, mdecoder->frame, &decoded, data, data_size);
@@ -285,12 +285,12 @@ static boolean tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const uint8* data
 	if (len < 0)
 	{
 		DEBUG_WARN("data_size %d, avcodec_decode_video failed (%d)", data_size, len);
-		ret = false;
+		ret = FALSE;
 	}
 	else if (!decoded)
 	{
 		DEBUG_WARN("data_size %d, no frame is decoded.", data_size);
-		ret = false;
+		ret = FALSE;
 	}
 	else
 	{
@@ -416,7 +416,7 @@ static boolean tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const uint8* data
 	DEBUG_DVC("data_size %d decoded_size %d",
 		data_size, mdecoder->decoded_size);
 
-	return true;
+	return TRUE;
 }
 
 static boolean tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions)
@@ -438,7 +438,7 @@ static boolean tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const uint8* data, uint
 			return tsmf_ffmpeg_decode_audio(decoder, data, data_size, extensions);
 		default:
 			DEBUG_WARN("unknown media type.");
-			return false;
+			return FALSE;
 	}
 }
 
@@ -478,11 +478,11 @@ static boolean tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, uint32* 
 	{
 		*width = mdecoder->codec_context->width;
 		*height = mdecoder->codec_context->height;
-		return true;
+		return TRUE;
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 }
 
@@ -505,7 +505,7 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 	free(decoder);
 }
 
-static boolean initialized = false;
+static boolean initialized = FALSE;
 
 ITSMFDecoder*
 TSMFDecoderEntry(void)
@@ -515,7 +515,7 @@ TSMFDecoderEntry(void)
 	if (!initialized)
 	{
 		avcodec_register_all();
-		initialized = true;
+		initialized = TRUE;
 	}
 
 	decoder = xnew(TSMFFFmpegDecoder);

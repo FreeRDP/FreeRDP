@@ -273,7 +273,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 	int i, j;
 	boolean found;
 	XkbDescPtr xkb;
-	boolean status = false;
+	boolean status = FALSE;
 
 	if (display && (xkb = XkbGetMap(display, 0, XkbUseCoreKbd)))
 	{
@@ -283,7 +283,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 
 			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
 			{
-				found = false;
+				found = FALSE;
 				memcpy(xkb_keyname, xkb->names->keys[i].name, 4);
 
 				if (strlen(xkb_keyname) < 1)
@@ -303,7 +303,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 						}
 
 						x11_keycode_to_rdp_scancode[i] = XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode;
-						found = true;
+						found = TRUE;
 					}
 				}
 
@@ -313,7 +313,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 				}
 			}
 
-			status = true;
+			status = TRUE;
 		}
 
 		XkbFreeKeyboard(xkb, 0, 1);

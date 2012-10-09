@@ -156,7 +156,7 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
  * @param entry_name [IN]	- name of the symbol to register for later loading
  * @param entry [IN]		- function pointer to the entry function
  *
- * @return true on success, otherwise false.
+ * @return TRUE on success, otherwise FALSE.
  */
 boolean freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
 {
@@ -165,7 +165,7 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
 	if (g_static_plugins_count >= MAX_STATIC_PLUGINS)
 	{
 		printf("freerdp_register_static_plugin: cannot register %s/%s", name, entry_name);
-		return false;
+		return FALSE;
 	}
   
 	/* add the static plugin to the vector */
@@ -174,7 +174,7 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
 	plugin->entry_name = entry_name;
 	plugin->entry_addr = entry_addr;
   
-	return true;
+	return TRUE;
 }
 
 /**

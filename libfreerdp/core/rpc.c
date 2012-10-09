@@ -67,7 +67,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
-		return false;
+		return FALSE;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
@@ -78,11 +78,11 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	if (status != SEC_E_OK)
 	{
 		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
-		return false;
+		return FALSE;
 	}
 
-	ntlm->haveContext = false;
-	ntlm->haveInputBuffer = false;
+	ntlm->haveContext = FALSE;
+	ntlm->haveInputBuffer = FALSE;
 	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
@@ -92,7 +92,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	if (ntlm->confidentiality)
 		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
 
-	return true;
+	return TRUE;
 }
 
 boolean ntlm_authenticate(rdpNtlm* ntlm)
@@ -129,7 +129,7 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
 			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
-			return false ;
+			return FALSE ;
 		}
 
 		if (status == SEC_I_COMPLETE_NEEDED)
@@ -138,10 +138,10 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 			status = SEC_I_CONTINUE_NEEDED;
 	}
 
-	ntlm->haveInputBuffer = true;
-	ntlm->haveContext = true;
+	ntlm->haveInputBuffer = TRUE;
+	ntlm->haveContext = TRUE;
 
-	return true;
+	return TRUE;
 }
 
 void ntlm_client_uninit(rdpNtlm* ntlm)
@@ -217,7 +217,7 @@ boolean rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
 
-	ntlm_client_init(ntlm, true, rpc->settings->username,
+	ntlm_client_init(ntlm, TRUE, rpc->settings->username,
 			rpc->settings->domain, rpc->settings->password);
 
 	ntlm_authenticate(ntlm);
@@ -256,7 +256,7 @@ boolean rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	ntlm_client_uninit(ntlm);
 	ntlm_free(ntlm);
 
-	return true;
+	return TRUE;
 }
 
 boolean rpc_ntlm_http_in_connect(rdpRpc* rpc)
@@ -267,7 +267,7 @@ boolean rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_in->ntlm;
 
-	ntlm_client_init(ntlm, true, rpc->settings->username,
+	ntlm_client_init(ntlm, TRUE, rpc->settings->username,
 			rpc->settings->domain, rpc->settings->password);
 
 	ntlm_authenticate(ntlm);
@@ -306,7 +306,7 @@ boolean rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	ntlm_client_uninit(ntlm);
 	ntlm_free(ntlm);
 
-	return true;
+	return TRUE;
 }
 
 void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
@@ -368,7 +368,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending bind PDU");
 
-	ntlm_client_init(rpc->ntlm, false, settings->username, settings->domain, settings->password);
+	ntlm_client_init(rpc->ntlm, FALSE, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(rpc->ntlm);
 	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
@@ -481,7 +481,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	stream_free(pdu) ;
 	free(bind_pdu);
 
-	return true;
+	return TRUE;
 }
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
@@ -582,7 +582,7 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	stream_free(pdu) ;
 	free(rpc_auth_3_pdu);
 
-	return true;
+	return TRUE;
 }
 
 int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
@@ -806,7 +806,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		rpc->read_buffer_len = 0;
 	}
 
-	while (true)
+	while (TRUE)
 	{
 		status = rpc_out_read(rpc, rpc_data, rpc_length);
 
@@ -869,28 +869,28 @@ boolean rpc_connect(rdpRpc* rpc)
 	if (!rts_connect(rpc))
 	{
 		printf("rts_connect error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rpc_send_bind_pdu(rpc))
 	{
 		printf("rpc_send_bind_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (rpc_recv_bind_ack_pdu(rpc) <= 0)
 	{
 		printf("rpc_recv_bind_ack_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rpc_send_rpc_auth_3_pdu(rpc))
 	{
 		printf("rpc_send_rpc_auth_3 error!\n");
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtual_connection)

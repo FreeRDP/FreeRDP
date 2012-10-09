@@ -115,9 +115,9 @@ void xf_sw_end_paint(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	gdi = context->gdi;
 
-	if (xfi->remote_app != true)
+	if (xfi->remote_app != TRUE)
 	{
-		if (xfi->complex_regions != true)
+		if (xfi->complex_regions != TRUE)
 		{
 			if (gdi->primary->hdc->hwnd->invalid->null)
 				return;
@@ -178,7 +178,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	if (xfi->fullscreen != true)
+	if (xfi->fullscreen != TRUE)
 	{
 		rdpGdi* gdi = context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
@@ -232,7 +232,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	if (xfi->fullscreen != true)
+	if (xfi->fullscreen != TRUE)
 	{
 		xfi->width = settings->width;
 		xfi->height = settings->height;
@@ -242,7 +242,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 		if (xfi->primary)
 		{
-			same = (xfi->primary == xfi->drawing) ? true : false;
+			same = (xfi->primary == xfi->drawing) ? TRUE : FALSE;
 
 			XFreePixmap(xfi->display, xfi->primary);
 
@@ -270,7 +270,7 @@ boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	rfds[*rcount] = (void*)(long)(xfi->xfds);
 	(*rcount)++;
 
-	return true;
+	return TRUE;
 }
 
 boolean xf_process_x_events(freerdp* instance)
@@ -283,11 +283,11 @@ boolean xf_process_x_events(freerdp* instance)
 		memset(&xevent, 0, sizeof(xevent));
 		XNextEvent(xfi->display, &xevent);
 
-		if (xf_event_process(instance, &xevent) != true)
-			return false;
+		if (xf_event_process(instance, &xevent) != TRUE)
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 void xf_create_window(xfInfo* xfi)
@@ -344,7 +344,7 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
 	XDestroyWindow(xfi->display, xfi->window->handle);
-	xfi->fullscreen = (xfi->fullscreen) ? false : true;
+	xfi->fullscreen = (xfi->fullscreen) ? FALSE : TRUE;
 	xf_create_window(xfi);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
@@ -391,7 +391,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	if (XGetWindowAttributes(xfi->display, RootWindowOfScreen(xfi->screen), &window_attributes) == 0)
 	{
 		printf("xf_get_pixmap_info: XGetWindowAttributes failed\n");
-		return false;
+		return FALSE;
 	}
 
 	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
@@ -399,7 +399,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	if (vis == NULL)
 	{
 		printf("xf_get_pixmap_info: XGetVisualInfo failed\n");
-		return false;
+		return FALSE;
 	}
 
 	vi = NULL;
@@ -423,7 +423,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 		if (vi->red_mask & 0xFF) 
 		{
-			xfi->clrconv->invert = true;
+			xfi->clrconv->invert = TRUE;
 		}
 	}
 
@@ -431,10 +431,10 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if ((xfi->visual == NULL) || (xfi->scanline_pad == 0))
 	{
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static int (*_def_error_handler)(Display*, XErrorEvent*);
@@ -442,7 +442,7 @@ static int (*_def_error_handler)(Display*, XErrorEvent*);
 int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256];
-	int do_abort = true;
+	int do_abort = TRUE;
 
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
 	printf("%s", buf);
@@ -452,7 +452,7 @@ int xf_error_handler(Display* d, XErrorEvent* ev)
 
 	_def_error_handler(d, ev);
 
-	return false;
+	return FALSE;
 }
 
 int _xf_error_handler(Display* d, XErrorEvent* ev)
@@ -474,7 +474,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
  * @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
  * be filled with the appropriate informations.
  *
- * @return true if successful. false otherwise.
+ * @return TRUE if successful. FALSE otherwise.
  * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
  */
 boolean xf_pre_connect(freerdp* instance)
@@ -509,34 +509,34 @@ boolean xf_pre_connect(freerdp* instance)
 	settings->os_major_type = OSMAJORTYPE_UNIX;
 	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
+	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_LINETO_INDEX] = TRUE;
+	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
 
-	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? true : false;
+	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? TRUE : FALSE;
 
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
+	settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = TRUE;
 
-	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? false : true;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? false : true;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
 
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
@@ -555,7 +555,7 @@ boolean xf_pre_connect(freerdp* instance)
 		}
 		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
 		/* Avoid XWindows initialization and configuration below. */
-		return true;
+		return TRUE;
 	}
 
 	xfi->display = XOpenDisplay(NULL);
@@ -564,13 +564,13 @@ boolean xf_pre_connect(freerdp* instance)
 	{
 		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
 		printf("Please check that the $DISPLAY environment variable is properly set.\n");
-		return false;
+		return FALSE;
 	}
 
 	if (xfi->debug)
 	{
 		printf("Enabling X11 debug mode.\n");
-		XSynchronize(xfi->display, true);
+		XSynchronize(xfi->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
@@ -609,17 +609,17 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
 	xfi->mouse_motion = settings->mouse_motion;
-	xfi->complex_regions = true;
+	xfi->complex_regions = TRUE;
 	xfi->decorations = settings->decorations;
 	xfi->fullscreen = settings->fullscreen;
 	xfi->grab_keyboard = settings->grab_keyboard;
-	xfi->fullscreen_toggle = true;
+	xfi->fullscreen_toggle = TRUE;
 	xfi->sw_gdi = settings->sw_gdi;
 	xfi->parent_window = (Window) settings->parent_window_xid;
 
 	xf_detect_monitors(xfi, settings);
 
-	return true;
+	return TRUE;
 }
 
 void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
@@ -683,8 +683,8 @@ boolean xf_post_connect(freerdp* instance)
 	cache = instance->context->cache;
 	channels = xfi->_context->channels;
 
-	if (xf_get_pixmap_info(xfi) != true)
-		return false;
+	if (xf_get_pixmap_info(xfi) != TRUE)
+		return FALSE;
 
 	xf_register_graphics(instance->context->graphics);
 
@@ -776,7 +776,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (xfi->sw_gdi != true)
+	if (xfi->sw_gdi != TRUE)
 	{
 		glyph_cache_register_callbacks(instance->update);
 		brush_cache_register_callbacks(instance->update);
@@ -795,7 +795,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xf_cliprdr_init(xfi, channels);
 
-	return true;
+	return TRUE;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
@@ -808,7 +808,7 @@ boolean xf_post_connect(freerdp* instance)
  *  				  Note that this character string will be allocated inside the function, and needs to be deallocated by the caller
  *  				  using free(), even in case this function fails.
  *  @param domain - unused
- *  @return true if a password was successfully entered. See freerdp_passphrase_read() for more details.
+ *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more details.
  */
 boolean xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
@@ -817,9 +817,9 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 	*password = malloc(password_size * sizeof(char));
 
 	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -830,7 +830,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
  *  @param subject
  *  @param issuer
  *  @param fingerprint
- *  @return true if the certificate is trusted. false otherwise.
+ *  @return TRUE if the certificate is trusted. FALSE otherwise.
  */
 boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
@@ -851,7 +851,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 		if (answer == 'y' || answer == 'Y')
 		{
-			return true;
+			return TRUE;
 		}
 		else if (answer == 'n' || answer == 'N')
 		{
@@ -860,7 +860,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		printf("\n");
 	}
 
-	return false;
+	return FALSE;
 }
 
 /** Used to parse xfreerdp-specific commandline parameters.
@@ -925,7 +925,7 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 	}
 	else if (strcmp("--dbg-x11", opt) == 0)
 	{
-		xfi->debug = true;
+		xfi->debug = TRUE;
 		argc = 1;
 	}
 
@@ -1139,19 +1139,19 @@ int xfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
-		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get xfreerdp file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
@@ -1196,17 +1196,17 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (xf_process_x_events(instance) != true)
+		if (xf_process_x_events(instance) != TRUE)
 		{
 			printf("Closed from X\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
@@ -1321,7 +1321,7 @@ int main(int argc, char* argv[])
 
 	instance->context->argc = argc;
 	instance->context->argv = argv;
-	instance->settings->sw_gdi = false;
+	instance->settings->sw_gdi = FALSE;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

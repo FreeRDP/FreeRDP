@@ -226,11 +226,11 @@ static boolean rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
 	irp = irp_new(rdpdr->devman, data_in);
 
 	if (irp == NULL)
-		return false;
+		return FALSE;
 
 	IFCALL(irp->device->IRPRequest, irp->device, irp);
 
-	return true;
+	return TRUE;
 }
 
 static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
@@ -264,12 +264,12 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 			case PAKID_CORE_CLIENTID_CONFIRM:
 				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_CLIENTID_CONFIRM");
 				rdpdr_process_server_clientid_confirm(rdpdr, data_in);
-				rdpdr_send_device_list_announce_request(rdpdr, false);
+				rdpdr_send_device_list_announce_request(rdpdr, FALSE);
 				break;
 
 			case PAKID_CORE_USER_LOGGEDON:
 				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_USER_LOGGEDON");
-				rdpdr_send_device_list_announce_request(rdpdr, true);
+				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:

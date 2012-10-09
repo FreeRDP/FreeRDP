@@ -71,17 +71,17 @@ static boolean disk_file_wildcard_match(const char* pattern, const char* filenam
 		{
 			c = *p++;
 			if (!c)	/* shortcut */
-				return true;
+				return TRUE;
 			/* TODO: skip to tail comparison */
 		}
 		if (c != *f++)
-			return false;
+			return FALSE;
 	}
 
 	if (!*f)
-		return true;
+		return TRUE;
 
-	return false;
+	return FALSE;
 }
 
 static void disk_file_fix_path(char* path)
@@ -127,12 +127,12 @@ static boolean disk_file_remove_dir(const char* path)
 	char* p;
 	struct STAT st;
 	struct dirent* pdirent;
-	boolean ret = true;
+	boolean ret = TRUE;
 
 	dir = opendir(path);
 
 	if (dir == NULL)
-		return false;
+		return FALSE;
 
 	pdirent = readdir(dir);
 
@@ -150,7 +150,7 @@ static boolean disk_file_remove_dir(const char* path)
 		if (STAT(p, &st) != 0)
 		{
 			DEBUG_WARN("stat %s failed.", p);
-			ret = false;
+			ret = FALSE;
 		}
 		else if (S_ISDIR(st.st_mode))
 		{
@@ -159,11 +159,11 @@ static boolean disk_file_remove_dir(const char* path)
 		else if (unlink(p) < 0)
 		{
 			DEBUG_WARN("unlink %s failed.", p);
-			ret = false;
+			ret = FALSE;
 		}
 		else
 		{
-			ret = true;
+			ret = TRUE;
 		}
 		
 		free(p);
@@ -181,7 +181,7 @@ static boolean disk_file_remove_dir(const char* path)
 		if (rmdir(path) < 0)
 		{
 			DEBUG_WARN("rmdir %s failed.", path);
-			ret = false;
+			ret = FALSE;
 		}
 	}
 
@@ -208,22 +208,22 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
         const static int mode = _S_IREAD | _S_IWRITE ;
 #else
         const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
-	boolean largeFile = false;
+	boolean largeFile = FALSE;
 #endif
 	int oflag = 0;
 
 	if (STAT(file->fullpath, &st) == 0)
 	{
-		file->is_dir = (S_ISDIR(st.st_mode) ? true : false);
+		file->is_dir = (S_ISDIR(st.st_mode) ? TRUE : FALSE);
 #ifndef WIN32
 		if (st.st_size > (unsigned long)0x07fffffff)
-		    largeFile = true;
+		    largeFile = TRUE;
 #endif
-		exists = true;
+		exists = TRUE;
 	}
 	else
 	{
-		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? true : false);
+		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? TRUE : FALSE);
 		if (file->is_dir)
 		{
 			//Should only create the directory if the disposition allows for it
@@ -232,11 +232,11 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 			  if (mkdir(file->fullpath, mode) != 0)
 			  {
 				file->err = errno;
-				return true;
+				return TRUE;
 			  }
 			}
 		}
-		exists = false;
+		exists = FALSE;
 	}
 
 	if (file->is_dir)
@@ -245,7 +245,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		if (file->dir == NULL)
 		{
 			file->err = errno;
-			return true;
+			return TRUE;
 		}
 	}
 	else
@@ -275,7 +275,7 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 
 		if (CreateOptions & FILE_DELETE_ON_CLOSE && DesiredAccess & DELETE)
 		{
-			file->delete_pending = true;
+			file->delete_pending = TRUE;
 		}
 
 		if ((DesiredAccess & GENERIC_ALL)
@@ -299,11 +299,11 @@ static boolean disk_file_init(DISK_FILE* file, uint32 DesiredAccess, uint32 Crea
 		if (file->fd == -1)
 		{
 			file->err = errno;
-			return true;
+			return TRUE;
 		}
 	}
 
-	return true;
+	return TRUE;
 }
 
 DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
@@ -349,12 +349,12 @@ void disk_file_free(DISK_FILE* file)
 boolean disk_file_seek(DISK_FILE* file, uint64 Offset)
 {
 	if (file->is_dir || file->fd == -1)
-		return false;
+		return FALSE;
 
 	if (LSEEK(file->fd, Offset, SEEK_SET) == (off_t)-1)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
@@ -362,14 +362,14 @@ boolean disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
 	ssize_t r;
 
 	if (file->is_dir || file->fd == -1)
-		return false;
+		return FALSE;
 
 	r = read(file->fd, buffer, *Length);
 	if (r < 0)
-		return false;
+		return FALSE;
 	*Length = (uint32)r;
 
-	return true;
+	return TRUE;
 }
 
 boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
@@ -377,18 +377,18 @@ boolean disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
 	ssize_t r;
 
 	if (file->is_dir || file->fd == -1)
-		return false;
+		return FALSE;
 
 	while (Length > 0)
 	{
 		r = write(file->fd, buffer, Length);
 		if (r == -1)
-			return false;
+			return FALSE;
 		Length -= r;
 		buffer += r;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output)
@@ -398,7 +398,7 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 	if (STAT(file->fullpath, &st) != 0)
 	{
 		stream_write_uint32(output, 0); /* Length */
-		return false;
+		return FALSE;
 	}
 	switch (FsInformationClass)
 	{
@@ -437,9 +437,9 @@ boolean disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, 
 		default:
 			stream_write_uint32(output, 0); /* Length */
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			return false;
+			return FALSE;
 	}
-	return true;
+	return TRUE;
 }
 
 boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input)
@@ -466,7 +466,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_read_uint32(input, FileAttributes);
 
 			if (FSTAT(file->fd, &st) != 0)
-				return false;
+				return FALSE;
 
 			tv[0].tv_sec = st.st_atime;
 			tv[0].tv_usec = 0;
@@ -495,7 +495,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
 			stream_read_uint64(input, size);
 			if (ftruncate(file->fd, size) != 0)
-				return false;
+				return FALSE;
 			break;
 
 		case FileDispositionInformation:
@@ -528,17 +528,17 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			{
 				DEBUG_WARN("rename %s to %s failed, errno = %d", file->fullpath, fullpath, errno);
 				free(fullpath);
-				return false;
+				return FALSE;
 			}
 
 			break;
 
 		default:
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
@@ -556,7 +556,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	{
 		stream_write_uint32(output, 0); /* Length */
 		stream_write_uint8(output, 0); /* Padding */
-		return false;
+		return FALSE;
 	}
 
 	if (InitialQuery != 0)
@@ -593,7 +593,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 		DEBUG_SVC("  pattern %s not found.", file->pattern);
 		stream_write_uint32(output, 0); /* Length */
 		stream_write_uint8(output, 0); /* Padding */
-		return false;
+		return FALSE;
 	}
 
 	memset(&st, 0, sizeof(struct STAT));
@@ -610,7 +610,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 
 	length = freerdp_AsciiToUnicodeAlloc(ent->d_name, &ent_path, 0) * 2;
 
-	ret = true;
+	ret = TRUE;
 
 	switch (FsInformationClass)
 	{
@@ -684,7 +684,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			stream_write_uint32(output, 0); /* Length */
 			stream_write_uint8(output, 0); /* Padding */
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			ret = false;
+			ret = FALSE;
 			break;
 	}
 

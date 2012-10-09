@@ -410,12 +410,12 @@ boolean serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length)
 	memset(buffer, 0, *Length);
 	r = read(tty->fd, buffer, *Length);
 	if (r < 0)
-		return false;
+		return FALSE;
 
 	tty->event_txempty = r;
 	*Length = r;
 
-	return true;
+	return TRUE;
 }
 
 boolean serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length)
@@ -429,14 +429,14 @@ boolean serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length)
 	{
 		r = write(tty->fd, buffer, Length);
 		if (r < 0)
-			return false;
+			return FALSE;
 
 		Length -= r;
 		buffer += r;
 	}
 	tty->event_txempty = event_txempty;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -534,7 +534,7 @@ SERIAL_TTY* serial_tty_new(const char* path, uint32 id)
 boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 {
 	int bytes;
-	boolean ret = false;
+	boolean ret = FALSE;
 
 	DEBUG_SVC("in");
 
@@ -546,7 +546,7 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 	if (tty->wait_mask == 0)
 	{
 		tty->event_pending = 0;
-		return true;
+		return TRUE;
 	}
 
 	ioctl(tty->fd, TIOCINQ, &bytes);
@@ -562,7 +562,7 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 			{
 				DEBUG_SVC("SERIAL_EV_RLSD");
 				*result |= SERIAL_EV_RLSD;
-				ret = true;
+				ret = TRUE;
 			}
 
 		}
@@ -571,13 +571,13 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_RXFLAG bytes %d", bytes);
 			*result |= SERIAL_EV_RXFLAG;
-			ret = true;
+			ret = TRUE;
 		}
 		if ((tty->wait_mask & SERIAL_EV_RXCHAR))
 		{
 			DEBUG_SVC("SERIAL_EV_RXCHAR bytes %d", bytes);
 			*result |= SERIAL_EV_RXCHAR;
-			ret = true;
+			ret = TRUE;
 		}
 
 	}
@@ -594,7 +594,7 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 	{
 		DEBUG_SVC("SERIAL_EV_TXEMPTY");
 		*result |= SERIAL_EV_TXEMPTY;
-		ret = true;
+		ret = TRUE;
 	}
 	tty->event_txempty = bytes;
 #endif
@@ -607,7 +607,7 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_DSR %s", (bytes & TIOCM_DSR) ? "ON" : "OFF");
 			*result |= SERIAL_EV_DSR;
-			ret = true;
+			ret = TRUE;
 		}
 	}
 
@@ -618,7 +618,7 @@ boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_CTS %s", (bytes & TIOCM_CTS) ? "ON" : "OFF");
 			*result |= SERIAL_EV_CTS;
-			ret = true;
+			ret = TRUE;
 		}
 	}
 
@@ -636,7 +636,7 @@ static boolean tty_get_termios(SERIAL_TTY* tty)
 
 	DEBUG_SVC("tcgetattr? %d", tcgetattr(tty->fd, ptermios) >= 0);
 	if (tcgetattr(tty->fd, ptermios) < 0)
-		return false;
+		return FALSE;
 
 	speed = cfgetispeed(ptermios);
 	switch (speed)
@@ -776,7 +776,7 @@ static boolean tty_get_termios(SERIAL_TTY* tty)
 	tty->chars[SERIAL_CHAR_BREAK] = ptermios->c_cc[VINTR];
 	tty->chars[SERIAL_CHAR_ERROR] = ptermios->c_cc[VKILL];
 
-	return true;
+	return TRUE;
 }
 
 static void tty_set_termios(SERIAL_TTY* tty)

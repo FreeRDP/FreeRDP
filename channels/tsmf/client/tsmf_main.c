@@ -106,9 +106,9 @@ boolean tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
 	if (error)
 	{
 		DEBUG_WARN("response error %d", error);
-		return false;
+		return FALSE;
 	}
-	return true;
+	return TRUE;
 }
 
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
@@ -153,7 +153,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	ifman.input = input;
 	ifman.input_size = cbSize - 12;
 	ifman.output = output;
-	ifman.output_pending = false;
+	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
 
 	switch (InterfaceId)
@@ -180,7 +180,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 					stream_seek(input, 16);
 					stream_read_uint32(input, callback->stream_id);
 					DEBUG_DVC("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
-					ifman.output_pending = true;
+					ifman.output_pending = TRUE;
 					error = 0;
 					break;
 

@@ -94,7 +94,7 @@ boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	rfds[*rcount] = (void*)(long)(dfi->read_fds);
 	(*rcount)++;
 
-	return true;
+	return TRUE;
 }
 
 boolean df_check_fds(freerdp* instance, fd_set* set)
@@ -104,12 +104,12 @@ boolean df_check_fds(freerdp* instance, fd_set* set)
 	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
-		return true;
+		return TRUE;
 
 	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
 		df_event_process(instance, &(dfi->event));
 
-	return true;
+	return TRUE;
 }
 
 boolean df_pre_connect(freerdp* instance)
@@ -126,30 +126,30 @@ boolean df_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
+	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_LINETO_INDEX] = TRUE;
+	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	dfi->clrconv = xnew(CLRCONV);
 	dfi->clrconv->alpha = 1;
@@ -161,7 +161,7 @@ boolean df_pre_connect(freerdp* instance)
     
     instance->context->cache = cache_new(instance->settings);
 
-	return true;
+	return TRUE;
 }
 
 boolean df_post_connect(freerdp* instance)
@@ -217,7 +217,7 @@ boolean df_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
 static int df_process_plugin_args(rdpSettings* settings, const char* name,
@@ -249,7 +249,7 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 		if (answer == 'y' || answer == 'Y')
 		{
-			return true;
+			return TRUE;
 		}
 		else if (answer == 'n' || answer == 'N')
 		{
@@ -257,7 +257,7 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
 static int
@@ -340,17 +340,17 @@ int dfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
-		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get dfreerdp file descriptor\n");
 			break;
@@ -386,17 +386,17 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (df_check_fds(instance, &rfds_set) != true)
+		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;

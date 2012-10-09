@@ -137,7 +137,7 @@
 /*
  * File type macros.  Note that block devices, sockets and links cannot be
  * distinguished on Windows and the macros S_ISBLK, S_ISSOCK and S_ISLNK are
- * only defined for compatibility.  These macros should always return false
+ * only defined for compatibility.  These macros should always return FALSE
  * on Windows.
  */
 #define	S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFFIFO)

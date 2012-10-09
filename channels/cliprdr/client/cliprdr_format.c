@@ -128,7 +128,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 	if (num_formats * 36 != length)
 		DEBUG_WARN("dataLen %d not divided by 36!", length);
 
-	ascii = (flags & CB_ASCII_NAMES) ? true : false;
+	ascii = (flags & CB_ASCII_NAMES) ? TRUE : FALSE;
 
 	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) malloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
 	cliprdr->num_format_names = num_formats;
@@ -224,7 +224,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 
 	for (i = 0; i < cliprdr->num_format_names; i++)
 	{
-		supported = true;
+		supported = TRUE;
 		format_name = &cliprdr->format_names[i];
 		format = format_name->id;
 
@@ -264,7 +264,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 				}
 				else
 				{
-					supported = false;
+					supported = FALSE;
 				}
 				
 				break;

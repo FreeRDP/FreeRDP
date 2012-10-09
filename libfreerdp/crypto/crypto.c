@@ -170,7 +170,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Pub
 {
 	BYTE* ptr;
 	int length;
-	boolean status = true;
+	boolean status = TRUE;
 	EVP_PKEY* pkey = NULL;
 
 	pkey = X509_get_pubkey(cert->px509);
@@ -178,7 +178,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Pub
 	if (!pkey)
 	{
 		printf("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
-		status = false;
+		status = FALSE;
 		goto exit;
 	}
 
@@ -187,7 +187,7 @@ boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Pub
 	if (length < 1)
 	{
 		printf("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
-		status = false;
+		status = FALSE;
 		goto exit;
 	}
 
@@ -442,7 +442,7 @@ char* crypto_cert_issuer(X509* xcert)
 boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 {
 	X509_STORE_CTX* csc;
-	boolean status = false;
+	boolean status = FALSE;
 	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
 	X509* xcert = cert->px509;
@@ -481,7 +481,7 @@ boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 		goto end;
 
 	if (X509_verify_cert(csc) == 1)
-		status = true;
+		status = TRUE;
 
 	X509_STORE_CTX_free(csc);
 	X509_STORE_free(cert_ctx);

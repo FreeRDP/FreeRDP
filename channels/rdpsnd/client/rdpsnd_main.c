@@ -117,7 +117,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		{
 			if (rdpsnd->device)
 				IFCALL(rdpsnd->device->Close, rdpsnd->device);
-			rdpsnd->is_open = false;
+			rdpsnd->is_open = FALSE;
 			rdpsnd->close_timestamp = 0;
 
 			DEBUG_SVC("processed close");
@@ -295,7 +295,7 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 	stream_read(data_in, rdpsnd->waveData, 4);
 	rdpsnd->waveDataSize = BodySize - 8;
 	rdpsnd->wave_timestamp = get_mstime();
-	rdpsnd->expectingWave = true;
+	rdpsnd->expectingWave = TRUE;
 
 	DEBUG_SVC("waveDataSize %d wFormatNo %d", rdpsnd->waveDataSize, wFormatNo);
 
@@ -303,7 +303,7 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 	if (!rdpsnd->is_open)
 	{
 		rdpsnd->current_format = wFormatNo;
-		rdpsnd->is_open = true;
+		rdpsnd->is_open = TRUE;
 		if (rdpsnd->device)
 			IFCALL(rdpsnd->device->Open, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
 				rdpsnd->latency);
@@ -447,7 +447,7 @@ static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	}
 	if (entry == NULL)
 	{
-		return false;
+		return FALSE;
 	}
 
 	entryPoints.rdpsnd = rdpsnd;
@@ -456,9 +456,9 @@ static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	if (entry(&entryPoints) != 0)
 	{
 		DEBUG_WARN("%s entry returns error.", name);
-		return false;
+		return FALSE;
 	}
-	return true;
+	return TRUE;
 }
 
 static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, RDP_PLUGIN_DATA* data)

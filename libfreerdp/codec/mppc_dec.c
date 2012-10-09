@@ -152,7 +152,7 @@ int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, ui
 
 		default:
 			printf("mppc.c: invalid RDP compression code 0x%2.2x\n", type);
-			return false;
+			return FALSE;
 	}
 }
 
@@ -189,7 +189,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_4: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -232,7 +232,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -583,7 +583,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -617,7 +617,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_5: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -660,7 +660,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -1047,7 +1047,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -1083,7 +1083,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_6: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -1131,7 +1131,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -1382,7 +1382,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -1400,7 +1400,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 int decompress_rdp_61(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
-	return false;
+	return FALSE;
 }
 
 /**

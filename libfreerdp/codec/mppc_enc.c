@@ -496,13 +496,13 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
 boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
-		return false;
+		return FALSE;
 	switch (enc->protocol_type)
 	{
 		case PROTO_RDP_40:
@@ -512,7 +512,7 @@ boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 			return compress_rdp_5(enc, srcData, len);
 			break;
 	}
-	return false;
+	return FALSE;
 }
 
 /**
@@ -522,13 +522,13 @@ boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
 boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 {
 	/* RDP 4.0 encoding not yet implemented */
-	return false;
+	return FALSE;
 }
 
 /**
@@ -538,7 +538,7 @@ boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
 boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
@@ -980,7 +980,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 	else if (opb_index + 1 > len)
 	{
@@ -990,7 +990,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 
 	/* if bits_left != 8, increment opb_index, which is zero indexed */
@@ -1006,7 +1006,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 	enc->flags |= PACKET_COMPRESSED;
 	enc->bytes_in_opb = opb_index;
@@ -1015,5 +1015,5 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	enc->flagsHold = 0;
 	DLOG(("\n"));
 
-	return true;
+	return TRUE;
 }

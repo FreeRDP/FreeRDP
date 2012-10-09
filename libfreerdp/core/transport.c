@@ -82,7 +82,7 @@ boolean transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_connect_tls(rdpTransport* transport)
@@ -93,17 +93,17 @@ boolean transport_connect_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != TRUE)
 	{
 		if (!connectErrorCode)                    
 			connectErrorCode = TLSCONNECTERROR;                      
 
 		tls_free(transport->tls);
 		transport->tls = NULL;
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_connect_nla(rdpTransport* transport)
@@ -117,20 +117,20 @@ boolean transport_connect_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_connect(transport->tls) != true)
+	if (tls_connect(transport->tls) != TRUE)
 	{
 		if (!connectErrorCode)                    
 			connectErrorCode = TLSCONNECTERROR;                      
 
 		tls_free(transport->tls);
 		transport->tls = NULL;
-		return false;
+		return FALSE;
 	}
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != true)
-		return true;
+	if (transport->settings->authentication != TRUE)
+		return TRUE;
 
 	settings = transport->settings;
 	instance = (freerdp*) settings->instance;
@@ -147,12 +147,12 @@ boolean transport_connect_nla(rdpTransport* transport)
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
-		return false;
+		return FALSE;
 	}
 
 	credssp_free(transport->credssp);
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16 port)
@@ -172,21 +172,21 @@ boolean transport_tsg_connect(rdpTransport* transport, const char* hostname, uin
 
 	transport->tls_out->sockfd = transport->tcp_out->sockfd;
 
-	if (tls_connect(transport->tls_in) != true)
-		return false;
+	if (tls_connect(transport->tls_in) != TRUE)
+		return FALSE;
 
-	if (tls_connect(transport->tls_out) != true)
-		return false;
+	if (tls_connect(transport->tls_out) != TRUE)
+		return FALSE;
 
 	if (!tsg_connect(tsg, hostname, port))
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
-	boolean status = false;
+	boolean status = FALSE;
 	rdpSettings* settings = transport->settings;
 
 	if (transport->settings->ts_gateway)
@@ -214,7 +214,7 @@ boolean transport_accept_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_accept_tls(rdpTransport* transport)
@@ -225,10 +225,10 @@ boolean transport_accept_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != true)
-		return false;
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != TRUE)
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 boolean transport_accept_nla(rdpTransport* transport)
@@ -242,13 +242,13 @@ boolean transport_accept_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != true)
-		return false;
+	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != TRUE)
+		return FALSE;
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != true)
-		return true;
+	if (transport->settings->authentication != TRUE)
+		return TRUE;
 
 	settings = transport->settings;
 	instance = (freerdp*) settings->instance;
@@ -260,19 +260,19 @@ boolean transport_accept_nla(rdpTransport* transport)
 	{
 		printf("client authentication failure\n");
 		credssp_free(transport->credssp);
-		return false;
+		return FALSE;
 	}
 
 	/* don't free credssp module yet, we need to copy the credentials from it first */
 
-	return true;
+	return TRUE;
 }
 
 int transport_read(rdpTransport* transport, STREAM* s)
 {
 	int status = -1;
 
-	while (true)
+	while (TRUE)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
 			status = tls_read(transport->tls, stream_get_tail(s), stream_get_left(s));
@@ -462,7 +462,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		stream_seal(received);
 		stream_set_pos(received, 0);
 
-		if (transport->recv_callback(transport, received, transport->recv_extra) == false)
+		if (transport->recv_callback(transport, received, transport->recv_extra) == FALSE)
 			status = -1;
 
 		stream_free(received);
@@ -517,7 +517,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->recv_stream = stream_new(BUFFER_SIZE);
 		transport->send_stream = stream_new(BUFFER_SIZE);
 
-		transport->blocking = true;
+		transport->blocking = TRUE;
 
 		transport->layer = TRANSPORT_LAYER_TCP;
 	}

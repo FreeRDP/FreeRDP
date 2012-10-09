@@ -639,13 +639,13 @@ boolean freerdp_get_system_language_and_country_codes(char* language, char* coun
 	env_lang = getenv("LANG"); /* Get locale from environment variable LANG */
 
 	if (env_lang == NULL)
-		return false; /* LANG environment variable was not set */
+		return FALSE; /* LANG environment variable was not set */
 
 	underscore = strcspn(env_lang, "_");
 
 	if (underscore > 3)
 	{
-		return false; /* The language name should not be more than 3 letters long */
+		return FALSE; /* The language name should not be more than 3 letters long */
 	}
 	else
 	{
@@ -664,10 +664,10 @@ boolean freerdp_get_system_language_and_country_codes(char* language, char* coun
 	}
 	else
 	{
-		return false; /* Invalid locale */
+		return FALSE; /* Invalid locale */
 	}
 
-	return true;
+	return TRUE;
 }
 
 SYSTEM_LOCALE* freerdp_detect_system_locale()

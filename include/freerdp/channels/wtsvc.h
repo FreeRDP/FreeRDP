@@ -95,11 +95,11 @@ FREERDP_API void WTSFreeMemory(
  *
  * This function will always return a complete channel data packet, i.e. chunks
  * are already assembled. If BufferSize argument is smaller than the packet
- * size, it will set the desired size in pBytesRead and return false. The
+ * size, it will set the desired size in pBytesRead and return FALSE. The
  * caller should allocate a large enough buffer and call this function again.
- * Returning false with pBytesRead set to zero indicates an error has occurred.
+ * Returning FALSE with pBytesRead set to zero indicates an error has occurred.
  * If no pending packet to be read, it will set pBytesRead to zero and return
- * true.
+ * TRUE.
  *
  * TimeOut is not supported, and this function will always return immediately.
  * The caller should use the file handle returned by WTSVirtualChannelQuery to

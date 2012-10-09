@@ -1014,7 +1014,7 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 	}
 
 	if (entry == NULL)
-		return false;
+		return FALSE;
 
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_plugin;
@@ -1023,10 +1023,10 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 	if (entry(&entryPoints) != 0)
 	{
 		DEBUG_WARN("%s entry returns error.", name);
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
@@ -1039,7 +1039,7 @@ static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data
 		return ret;
 	}
 
-	return true;
+	return TRUE;
 }
 
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)

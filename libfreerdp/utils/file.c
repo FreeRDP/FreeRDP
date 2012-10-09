@@ -79,9 +79,9 @@ boolean freerdp_check_file_exists(char* file)
 	struct stat stat_info;
 
 	if (stat(file, &stat_info) != 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 char* freerdp_get_home_path(rdpSettings* settings)
@@ -208,12 +208,12 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 boolean freerdp_path_contains_separator(char* path)
 {
 	if (path == NULL)
-		return false;
+		return FALSE;
 
 	if (strchr(path, PATH_SEPARATOR_CHR) == NULL)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /* detects if we are running from the source tree */
@@ -223,22 +223,22 @@ boolean freerdp_detect_development_mode(rdpSettings* settings)
 	int depth = 0;
 	char* current_path;
 	char* development_path = NULL;
-	boolean development_mode = false;
+	boolean development_mode = FALSE;
 
 	if (freerdp_check_file_exists(".git"))
 	{
 		depth = 0;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 	else if (freerdp_check_file_exists(PARENT_PATH ".git"))
 	{
 		depth = 1;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 	else if (freerdp_check_file_exists(PARENT_PATH PARENT_PATH ".git"))
 	{
 		depth = 2;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 
 	current_path = freerdp_get_current_path(settings);

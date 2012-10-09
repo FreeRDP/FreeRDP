@@ -73,14 +73,14 @@ boolean rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 	autoReconnectCookie = settings->client_auto_reconnect_cookie;
 
 	if (stream_get_left(s) < 28)
-		return false;
+		return FALSE;
 
 	stream_read_uint32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	stream_read_uint32(s, autoReconnectCookie->version); /* version (4 bytes) */
 	stream_read_uint32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
 	stream_read(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier */
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -118,10 +118,10 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_read_uint16(s, clientAddressFamily); /* clientAddressFamily */
 	stream_read_uint16(s, cbClientAddress); /* cbClientAddress */
 
-	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? true : false);
+	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
 	if (stream_get_left(s) < cbClientAddress)
-		return false;
+		return FALSE;
 
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ip_address, cbClientAddress / 2);
 	stream_seek(s, cbClientAddress);
@@ -129,7 +129,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_read_uint16(s, cbClientDir); /* cbClientDir */
 
 	if (stream_get_left(s) < cbClientDir)
-		return false;
+		return FALSE;
 
 	if (settings->client_dir)
 		free(settings->client_dir);
@@ -138,7 +138,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
-		return false;
+		return FALSE;
 
 	stream_seek_uint32(s); /* clientSessionId, should be set to 0 */
 	stream_read_uint32(s, settings->performance_flags); /* performanceFlags */
@@ -151,7 +151,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -228,10 +228,10 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek_uint32(s); /* CodePage */
 	stream_read_uint32(s, flags); /* flags */
 
-	settings->autologon = ((flags & INFO_AUTOLOGON) ? true : false);
-	settings->remote_app = ((flags & INFO_RAIL) ? true : false);
-	settings->console_audio = ((flags & INFO_REMOTECONSOLEAUDIO) ? true : false);
-	settings->compression = ((flags & INFO_COMPRESSION) ? true : false);
+	settings->autologon = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
+	settings->remote_app = ((flags & INFO_RAIL) ? TRUE : FALSE);
+	settings->console_audio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
+	settings->compression = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
 
 	stream_read_uint16(s, cbDomain); /* cbDomain */
 	stream_read_uint16(s, cbUserName); /* cbUserName */
@@ -240,7 +240,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_read_uint16(s, cbWorkingDir); /* cbWorkingDir */
 
 	if (stream_get_left(s) < cbDomain + 2)
-		return false;
+		return FALSE;
 
 	if (cbDomain > 0)
 	{
@@ -250,7 +250,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbUserName + 2)
-		return false;
+		return FALSE;
 
 	if (cbUserName > 0)
 	{
@@ -260,7 +260,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbPassword + 2)
-		return false;
+		return FALSE;
 
 	if (cbPassword > 0)
 	{
@@ -270,7 +270,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbAlternateShell + 2)
-		return false;
+		return FALSE;
 
 	if (cbAlternateShell > 0)
 	{
@@ -280,7 +280,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 2);
 
 	if (stream_get_left(s) < cbWorkingDir + 2)
-		return false;
+		return FALSE;
 
 	if (cbWorkingDir > 0)
 	{
@@ -292,7 +292,7 @@ boolean rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->rdp_version >= 5)
 		return rdp_read_extended_info_packet(s, settings); /* extraInfo */
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -315,7 +315,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	int cbAlternateShell;
 	WCHAR* workingDir;
 	int cbWorkingDir;
-	boolean usedPasswordCookie = false;
+	boolean usedPasswordCookie = FALSE;
 
 	flags = INFO_MOUSE |
 		INFO_UNICODE |
@@ -357,7 +357,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (settings->password_cookie && settings->password_cookie_length > 0)
 	{
-		usedPasswordCookie = true;
+		usedPasswordCookie = TRUE;
 		password = (WCHAR*) settings->password_cookie;
 		cbPassword = settings->password_cookie_length - 2;	/* Strip double zero termination */
 	}
@@ -425,25 +425,25 @@ boolean rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 	uint16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
-		return false;
+		return FALSE;
 
 	rdp_read_security_header(s, &securityFlags);
 	if ((securityFlags & SEC_INFO_PKT) == 0)
-		return false;
+		return FALSE;
 
 	if (rdp->settings->encryption)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
 			printf("Error: SEC_REDIRECTION_PKT unsupported\n");
-			return false;
+			return FALSE;
 		}
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
 				printf("rdp_decrypt failed\n");
-				return false;
+				return FALSE;
 			}
 		}
 	}
@@ -565,6 +565,6 @@ boolean rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 			break;
 	}
 
-	return true;
+	return TRUE;
 }
 

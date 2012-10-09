@@ -357,7 +357,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8*
 static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size)
 {
 	int i;
-	boolean result = false;
+	boolean result = FALSE;
 	rdpPeerChannel* channel;
 
 	for (i = 0; i < client->settings->num_channels; i++)
@@ -372,7 +372,7 @@ static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* dat
 		if (channel != NULL)
 		{
 			WTSProcessChannelData(channel, channelId, data, size, flags, total_size);
-			result = true;
+			result = TRUE;
 		}
 	}
 
@@ -446,7 +446,7 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 
 boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 {
-	boolean result = true;
+	boolean result = TRUE;
 	wts_data_item* item;
 	rdpPeerChannel* channel;
 	uint32 dynvc_caps;
@@ -472,14 +472,14 @@ boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vc
 
 	while ((item = (wts_data_item*) list_dequeue(vcm->send_queue)) != NULL)
 	{
-		if (vcm->client->SendChannelData(vcm->client, item->channel_id, item->buffer, item->length) == false)
+		if (vcm->client->SendChannelData(vcm->client, item->channel_id, item->buffer, item->length) == FALSE)
 		{
-			result = false;
+			result = FALSE;
 		}
 
 		wts_data_item_free(item);
 
-		if (result == false)
+		if (result == FALSE)
 			break;
 	}
 
@@ -578,7 +578,7 @@ boolean WTSVirtualChannelQuery(
 	boolean bval;
 	void* fds[10];
 	int fds_count = 0;
-	boolean result = false;
+	boolean result = FALSE;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
 	switch (WtsVirtualClass)
@@ -588,30 +588,30 @@ boolean WTSVirtualChannelQuery(
 			*ppBuffer = malloc(sizeof(void*));
 			memcpy(*ppBuffer, &fds[0], sizeof(void*));
 			*pBytesReturned = sizeof(void*);
-			result = true;
+			result = TRUE;
 			break;
 
 		case WTSVirtualChannelReady:
 			if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 			{
-				bval = true;
-				result = true;
+				bval = TRUE;
+				result = TRUE;
 			}
 			else
 			{
 				switch (channel->dvc_open_state)
 				{
 					case DVC_OPEN_STATE_NONE:
-						bval = false;
-						result = true;
+						bval = FALSE;
+						result = TRUE;
 						break;
 					case DVC_OPEN_STATE_SUCCEEDED:
-						bval = true;
-						result = true;
+						bval = TRUE;
+						result = TRUE;
 						break;
 					default:
-						bval = false;
-						result = false;
+						bval = FALSE;
+						result = FALSE;
 						break;
 				}
 			}
@@ -648,13 +648,13 @@ boolean WTSVirtualChannelRead(
 	{
 		wait_obj_clear(channel->receive_event);
 		*pBytesRead = 0;
-		return true;
+		return TRUE;
 	}
 
 	*pBytesRead = item->length;
 
 	if (item->length > BufferSize)
-		return false;
+		return FALSE;
 
 	/* remove the first element (same as what we just peek) */
 	WaitForSingleObject(channel->mutex, INFINITE);
@@ -668,7 +668,7 @@ boolean WTSVirtualChannelRead(
 	memcpy(Buffer, item->buffer, item->length);
 	wts_data_item_free(item) ;
 
-	return true;
+	return TRUE;
 }
 
 boolean WTSVirtualChannelWrite(
@@ -686,7 +686,7 @@ boolean WTSVirtualChannelWrite(
 	uint32 written;
 
 	if (channel == NULL)
-		return false;
+		return FALSE;
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
@@ -700,12 +700,12 @@ boolean WTSVirtualChannelWrite(
 	else if (channel->vcm->drdynvc_channel == NULL || channel->vcm->drdynvc_state != DRDYNVC_STATE_READY)
 	{
 		DEBUG_DVC("drdynvc not ready");
-		return false;
+		return FALSE;
 	}
 	else
 	{
 		s = stream_new(0);
-		first = true;
+		first = TRUE;
 
 		while (Length > 0)
 		{
@@ -726,7 +726,7 @@ boolean WTSVirtualChannelWrite(
 				item->buffer[0] = (DATA_PDU << 4) | cbChId;
 			}
 
-			first = false;
+			first = FALSE;
 			written = stream_get_left(s);
 
 			if (written > Length)
@@ -746,7 +746,7 @@ boolean WTSVirtualChannelWrite(
 
 	if (pBytesWritten != NULL)
 		*pBytesWritten = Length;
-	return true;
+	return TRUE;
 }
 
 boolean WTSVirtualChannelClose(
@@ -803,5 +803,5 @@ boolean WTSVirtualChannelClose(
 		free(channel);
 	}
 
-	return true;
+	return TRUE;
 }

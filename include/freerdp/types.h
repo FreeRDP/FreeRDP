@@ -81,11 +81,11 @@ typedef int boolean;
 
 #ifndef __cplusplus
 
-#ifndef __bool_true_false_are_defined
-#define __bool_true_false_are_defined	1
+#ifndef __bool_TRUE_FALSE_are_defined
+#define __bool_TRUE_FALSE_are_defined	1
 
-#define true	1
-#define false	0
+#define TRUE	1
+#define FALSE	0
 
 #ifdef _WIN32
 #define boolean BOOLEAN
@@ -93,16 +93,16 @@ typedef int boolean;
 typedef int boolean;
 #endif
 
-#endif /* __bool_true_false_are_defined */
+#endif /* __bool_TRUE_FALSE_are_defined */
 
 #else /* ifdef __cplusplus */
 
-#ifndef true
-#define true	1
+#ifndef TRUE
+#define TRUE	1
 #endif
 
-#ifndef false
-#define false 	0
+#ifndef FALSE
+#define FALSE 	0
 #endif
 
 typedef int boolean;

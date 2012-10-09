@@ -114,7 +114,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	int i;
 
 	if (stream_get_left(s) < 20)
-		return false;
+		return FALSE;
 
 	stream_seek_uint32(s); /* dwFlags */
 	stream_seek_uint32(s); /* dwVolume */
@@ -135,7 +135,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 			{
 				free(rdpsnd->context.client_formats);
 				rdpsnd->context.client_formats = NULL;
-				return false;
+				return FALSE;
 			}
 
 			stream_read_uint16(s, rdpsnd->context.client_formats[i].wFormatTag);
@@ -153,7 +153,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		}
 	}
 
-	return true;
+	return TRUE;
 }
 
 static void* rdpsnd_server_thread_func(void* arg)
@@ -167,7 +167,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) arg;
 	freerdp_thread* thread = rdpsnd->rdpsnd_channel_thread;
 
-	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == true)
+	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
 		fd = *((void**)buffer);
 		WTSFreeMemory(buffer);
@@ -188,7 +188,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		stream_set_pos(s, 0);
 
 		if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
-			stream_get_size(s), &bytes_returned) == false)
+			stream_get_size(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
 				break;
@@ -196,7 +196,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 			stream_check_size(s, (int) bytes_returned);
 
 			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
-				stream_get_size(s), &bytes_returned) == false)
+				stream_get_size(s), &bytes_returned) == FALSE)
 				break;
 		}
 
@@ -238,11 +238,11 @@ static boolean rdpsnd_server_initialize(rdpsnd_server_context* context)
 		rdpsnd->rdpsnd_channel_thread = freerdp_thread_new();
 		freerdp_thread_start(rdpsnd->rdpsnd_channel_thread, rdpsnd_server_thread_func, rdpsnd);
 
-		return true;
+		return TRUE;
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 }
 
@@ -389,7 +389,7 @@ static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const 
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
 	if (rdpsnd->context.selected_client_format < 0)
-		return false;
+		return FALSE;
 
 	while (nframes > 0)
 	{
@@ -404,11 +404,11 @@ static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const 
 		if (rdpsnd->out_pending_frames >= rdpsnd->out_frames)
 		{
 			if (!rdpsnd_server_send_audio_pdu(rdpsnd))
-				return false;
+				return FALSE;
 		}
 	}
 
-	return true;
+	return TRUE;
 }
 
 static boolean rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
@@ -430,12 +430,12 @@ static boolean rdpsnd_server_close(rdpsnd_server_context* context)
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 
 	if (rdpsnd->context.selected_client_format < 0)
-		return false;
+		return FALSE;
 
 	if (rdpsnd->out_pending_frames > 0)
 	{
 		if (!rdpsnd_server_send_audio_pdu(rdpsnd))
-			return false;
+			return FALSE;
 	}
 
 	rdpsnd->context.selected_client_format = -1;

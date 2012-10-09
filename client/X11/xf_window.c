@@ -121,12 +121,12 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen)
 {
 	if (fullscreen)
 	{
-		xf_SetWindowDecorations(xfi, window, false);
+		xf_SetWindowDecorations(xfi, window, FALSE);
 
                 XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
 
-		window->fullscreen = true;
+		window->fullscreen = TRUE;
 	}
 }
 
@@ -140,22 +140,22 @@ boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int leng
 	int actual_format;
 
 	if (property == None)
-		return false;
+		return FALSE;
 
 	status = XGetWindowProperty(xfi->display, window,
-			property, 0, length, false, AnyPropertyType,
+			property, 0, length, FALSE, AnyPropertyType,
 			&actual_type, &actual_format, nitems, bytes, prop);
 
 	if (status != Success)
-		return false;
+		return FALSE;
 
 	if (actual_type == None)
 	{
 		DEBUG_WARN("Property %lu does not exist", property);
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean xf_GetCurrentDesktop(xfInfo* xfi)
@@ -168,14 +168,14 @@ boolean xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != true) {
-		return false;
+	if (status != TRUE) {
+		return FALSE;
 	}
 
 	xfi->current_desktop = (int) *prop;
 	free(prop);
 
-	return true;
+	return TRUE;
 }
 
 boolean xf_GetWorkArea(xfInfo* xfi)
@@ -188,18 +188,18 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 
 	status = xf_GetCurrentDesktop(xfi);
 
-	if (status != true)
-		return false;
+	if (status != TRUE)
+		return FALSE;
 
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_WORKAREA, 32 * 4, &nitems, &bytes, &prop);
 
-	if (status != true)
-		return false;
+	if (status != TRUE)
+		return FALSE;
 
 	if ((xfi->current_desktop * 4 + 3) >= nitems) {
 		free(prop);
-		return false;
+		return FALSE;
 	}
 
 	plong = (long*) prop;
@@ -210,7 +210,7 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	xfi->workArea.height = plong[xfi->current_desktop * 4 + 3];
 	free(prop);
 
-	return true;
+	return TRUE;
 }
 
 void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show)
@@ -257,7 +257,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 		attrs.override_redirect = True;
 		XChangeWindowAttributes(xfi->display, window->handle, CWOverrideRedirect, &attrs);
 
-		window->is_transient = true;
+		window->is_transient = TRUE;
 		xf_SetWindowUnlisted(xfi, window);
 		window_type = xfi->_NET_WM_WINDOW_TYPE_POPUP;
 	}
@@ -272,7 +272,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	else if (style & WS_POPUP)
 	{
 		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
-		window->is_transient = true;
+		window->is_transient = TRUE;
 		window_type = xfi->_NET_WM_WINDOW_TYPE_DIALOG;
 		xf_SetWindowUnlisted(xfi, window);
 	}
@@ -319,11 +319,11 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		window->width = width;
 		window->height = height;
-		window->fullscreen = false;
+		window->fullscreen = FALSE;
 		window->decorations = decorations;
 		window->local_move.state = LMS_NOT_ACTIVE;
-		window->is_mapped = false;
-		window->is_transient = false;
+		window->is_mapped = FALSE;
+		window->is_transient = FALSE;
 
 		window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 			xfi->workArea.x, xfi->workArea.y, xfi->workArea.width, xfi->workArea.height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -485,14 +485,14 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	/* this window need decorations
 	   the WS_EX_APPWINDOW is used to tell the client to use local decorations
 	   only sent from xrdp */
-	window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? true : false;
-	window->fullscreen = false;
+	window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? TRUE : FALSE;
+	window->fullscreen = FALSE;
 	window->window = wnd;
 	window->local_move.state = LMS_NOT_ACTIVE;
-	window->is_mapped = false;
-	window->is_transient = false;
+	window->is_mapped = FALSE;
+	window->is_transient = FALSE;
 	window->rail_state = 0;
-        window->rail_ignore_configure = false;
+        window->rail_ignore_configure = FALSE;
 
 	window->handle = XCreateWindow(xfi->display, RootWindowOfScreen(xfi->screen),
 		x, y, window->width, window->height, 0, xfi->depth, InputOutput, xfi->visual,
@@ -651,13 +651,13 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window)
 
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
 {
-	boolean resize = false;
+	boolean resize = FALSE;
 
 	if ((width * height) < 1)
 		return;
 
 	if ((window->width != width) || (window->height != height))
-		resize = true;
+		resize = TRUE;
 
 	if (window->local_move.state == LMS_STARTING ||
 		window->local_move.state == LMS_ACTIVE)
@@ -731,7 +731,7 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
 			 */
 
 			if (window->rail_state == WINDOW_SHOW_MAXIMIZED)
-                               window->rail_ignore_configure = true;
+                               window->rail_ignore_configure = TRUE;
 		
 
 			if (window->is_transient)
@@ -756,7 +756,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	long* dstp;
 	uint32* srcp;
 
-	if (icon->big != true)
+	if (icon->big != TRUE)
 		return;
 
 	pixels = icon->entry->width * icon->entry->height;
@@ -884,18 +884,18 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y)
 {
 	rdpWindow* wnd;
-	boolean clientArea = false;
-	boolean windowArea = false;
+	boolean clientArea = FALSE;
+	boolean windowArea = FALSE;
 
 	wnd = xfw->window;
 
 	if (((x > wnd->clientOffsetX) && (x < wnd->clientOffsetX + wnd->clientAreaWidth)) &&
 		((y > wnd->clientOffsetY) && (y < wnd->clientOffsetY + wnd->clientAreaHeight)))
-		clientArea = true;
+		clientArea = TRUE;
 
 	if (((x > wnd->windowOffsetX) && (x < wnd->windowOffsetX + wnd->windowWidth)) &&
 		((y > wnd->windowOffsetY) && (y < wnd->windowOffsetY + wnd->windowHeight)))
-		windowArea = true;
+		windowArea = TRUE;
 
 	return (windowArea && !(clientArea));
 }

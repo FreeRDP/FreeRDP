@@ -219,7 +219,7 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 
 void rfx_context_reset(RFX_CONTEXT* context)
 {
-	context->header_processed = false;
+	context->header_processed = FALSE;
 	context->frame_idx = 0;
 }
 
@@ -694,7 +694,7 @@ void rfx_compose_message_header(RFX_CONTEXT* context, STREAM* s)
 	rfx_compose_message_codec_versions(context, s);
 	rfx_compose_message_channels(context, s);
 
-	context->header_processed = true;
+	context->header_processed = TRUE;
 }
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, STREAM* s)

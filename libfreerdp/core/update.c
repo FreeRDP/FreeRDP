@@ -47,11 +47,11 @@ boolean update_recv_orders(rdpUpdate* update, STREAM* s)
 	while (numberOrders > 0)
 	{
 		if (!update_recv_order(update, s))
-			return false;
+			return FALSE;
 		numberOrders--;
 	}
 
-	return true;
+	return TRUE;
 }
 
 void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
@@ -77,13 +77,13 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 			bitmap_data->bitmapLength = bitmap_data->cbCompMainBodySize;
 		}
 
-		bitmap_data->compressed = true;
+		bitmap_data->compressed = TRUE;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
 		stream_seek(s, bitmap_data->bitmapLength);
 	}
 	else
 	{
-		bitmap_data->compressed = false;
+		bitmap_data->compressed = FALSE;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
 		stream_seek(s, bitmap_data->bitmapLength);
 	}
@@ -278,7 +278,7 @@ boolean update_recv(rdpUpdate* update, STREAM* s)
 			if (!update_recv_orders(update, s))
 			{
 				/* XXX: Do we have to call EndPaint? */
-				return false;
+				return FALSE;
 			}
 			break;
 
@@ -300,7 +300,7 @@ boolean update_recv(rdpUpdate* update, STREAM* s)
 
 	IFCALL(update->EndPaint, context);
 
-	return true;
+	return TRUE;
 }
 
 void update_reset_state(rdpUpdate* update)
@@ -551,7 +551,7 @@ boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	RECTANGLE_16* areas;
 
 	if (stream_get_left(s) < 4)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
@@ -570,7 +570,7 @@ boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 
 	free(areas);
 
-	return true;
+	return TRUE;
 }
 
 boolean update_read_suppress_output(rdpUpdate* update, STREAM* s)
@@ -578,18 +578,18 @@ boolean update_read_suppress_output(rdpUpdate* update, STREAM* s)
 	uint8 allowDisplayUpdates;
 
 	if (stream_get_left(s) < 4)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, allowDisplayUpdates);
 	stream_seek(s, 3); /* pad3Octects */
 
 	if (allowDisplayUpdates > 0 && stream_get_left(s) < 8)
-		return false;
+		return FALSE;
 
 	IFCALL(update->SuppressOutput, update->context, allowDisplayUpdates,
 		allowDisplayUpdates > 0 ? (RECTANGLE_16*) stream_get_tail(s) : NULL);
 
-	return true;
+	return TRUE;
 }
 
 void update_register_server_callbacks(rdpUpdate* update)

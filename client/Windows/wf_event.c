@@ -87,10 +87,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (wParam == WM_KEYDOWN)
 					{
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
@@ -129,7 +129,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	rdpInput* input;
 	boolean processed;
 
-	processed = true;
+	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
 
@@ -179,13 +179,13 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			default:
-				processed = false;
+				processed = FALSE;
 				break;
 		}
 	}
 	else
 	{
-		processed = false;
+		processed = FALSE;
 	}
 
 	if (processed)

@@ -46,7 +46,7 @@ void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BI
 	offscreen_cache_put(cache->offscreen, create_offscreen_bitmap->id, bitmap);
 
 	if(cache->offscreen->currentSurface == create_offscreen_bitmap->id)
-		Bitmap_SetSurface(context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, FALSE);
 
 	for (i = 0; i < (int) create_offscreen_bitmap->deleteList.cIndices; i++)
 	{
@@ -61,13 +61,13 @@ void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switch
 
 	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
-		Bitmap_SetSurface(context, NULL, true);
+		Bitmap_SetSurface(context, NULL, TRUE);
 	}
 	else
 	{
 		rdpBitmap* bitmap;
 		bitmap = offscreen_cache_get(cache->offscreen, switch_surface->bitmapId);
-		Bitmap_SetSurface(context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, FALSE);
 	}
 
 	cache->offscreen->currentSurface = switch_surface->bitmapId;

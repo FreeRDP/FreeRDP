@@ -1057,9 +1057,9 @@ HCLRCONV freerdp_clrconv_new(uint32 flags)
 {
 	HCLRCONV clrconv = xnew(CLRCONV);
 
-	clrconv->alpha = (flags & CLRCONV_ALPHA) ? true : false;
-	clrconv->invert = (flags & CLRCONV_INVERT) ? true : false;
-	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? true : false;
+	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 	clrconv->palette = xnew(rdpPalette);
 
 	return clrconv;

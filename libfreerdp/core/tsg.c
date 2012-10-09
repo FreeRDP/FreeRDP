@@ -466,7 +466,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (!rpc_connect(rpc))
 	{
 		printf("rpc_connect failed!\n");
-		return false;
+		return FALSE;
 	}
 
 	DEBUG_TSG("rpc_connect success");
@@ -488,7 +488,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=1 failed!\n");
-		return false;
+		return FALSE;
 	}
 
 	length = 0x8FFF;
@@ -496,7 +496,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (data == NULL)
 	{
 		printf("rpc_recv - memory allocation error\n") ;
-		return false ;
+		return FALSE ;
 	}
 	status = rpc_read(rpc, data, length);
 
@@ -504,7 +504,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_recv failed!\n");
 		free(data) ;
-		return false;
+		return FALSE;
 	}
 
 	memcpy(tsg->TunnelContext, data + (status - 24), 16);
@@ -535,7 +535,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_write opnum=2 failed!\n");
 		free(data) ;
-		return false;
+		return FALSE;
 	}
 
 	status = rpc_read(rpc, data, length);
@@ -544,7 +544,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_recv failed!\n");
 		free(data) ;
-		return false;
+		return FALSE;
 	}
 
 	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
@@ -567,7 +567,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_write opnum=3 failed!\n");
 		free(data) ;
-		return false;
+		return FALSE;
 	}
 	status = -1;
 
@@ -605,7 +605,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		printf("rpc_write opnum=4 failed!\n");
 		stream_free(s_p4);
 		free(data);
-		return false;
+		return FALSE;
 	}
 
 	status = rpc_read(rpc, data, length);
@@ -615,7 +615,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		printf("rpc_recv failed!\n");
 		stream_free(s_p4);
 		free(data);
-		return false;
+		return FALSE;
 	}
 
 	memcpy(tsg->ChannelContext, data + 4, 16);
@@ -644,13 +644,13 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 		printf("rpc_write opnum=8 failed!\n");
 		stream_free(s_p4);
 		free(data);
-		return false;
+		return FALSE;
 	}
 
 	stream_free(s_p4);
 	free(data);
 
-	return true;
+	return TRUE;
 }
 
 int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)

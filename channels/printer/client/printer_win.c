@@ -255,7 +255,7 @@ static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char*
 
 	DEBUG_WINPR("printer %s", name);
 	
-	myPrinter = printer_win_new_printer(win_driver, name, L"", win_driver->id_sequence == 1 ? true : false);
+	myPrinter = printer_win_new_printer(win_driver, name, L"", win_driver->id_sequence == 1 ? TRUE : FALSE);
 	
 	return myPrinter;
 }

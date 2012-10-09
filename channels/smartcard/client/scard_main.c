@@ -145,9 +145,9 @@ static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 Com
 	        CompletionIdInfo = (COMPLETIONIDINFO*)item->data;
 	        if (CompletionIdInfo->ID == CompletionId)
 	        {
-	                if (false == CompletionIdInfo->duplicate)
+	                if (FALSE == CompletionIdInfo->duplicate)
 	                {
-	                        CompletionIdInfo->duplicate = true;
+	                        CompletionIdInfo->duplicate = TRUE;
 	                        DEBUG_WARN("CompletionID number %u is now marked as a duplicate.", CompletionId);
 	                }
 	                return CompletionIdInfo;
@@ -175,7 +175,7 @@ static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 Complet
 	        if (CompletionIdInfo->ID == CompletionId)
 	        {
 	                duplicate = CompletionIdInfo->duplicate;
-	                if (true == duplicate)
+	                if (TRUE == duplicate)
 	                {
 	                        DEBUG_WARN("CompletionID number %u was previously marked as a duplicate.  The response to the command is removed.", CompletionId);
 	                }
@@ -190,7 +190,7 @@ static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 Complet
 	 */
 	DEBUG_WARN("Error!!! No CompletionIDs (or no matching IDs) in the list!");
 
-	return false;
+	return FALSE;
 }
 
 static void  scard_irp_complete(IRP* irp)
@@ -219,7 +219,7 @@ static void  scard_irp_complete(IRP* irp)
 	duplicate = scard_check_for_duplicate_id(scard, irp->CompletionId);
 	ReleaseMutex(scard->CompletionIdsMutex);
 
-	if (false == duplicate)
+	if (FALSE == duplicate)
 	{
 	        svc_plugin_send(irp->devman->plugin, irp->output);
 		irp->output = NULL;
@@ -245,7 +245,7 @@ static void scard_irp_request(DEVICE* device, IRP* irp)
 	/* Begin TS Client defect workaround. */
 	CompletionIdInfo= xnew(COMPLETIONIDINFO);
 	CompletionIdInfo->ID = irp->CompletionId;/* "duplicate" member is set 
-	                                          * to false by "xnew()"
+	                                          * to FALSE by "xnew()"
 	                                          */
 	WaitForSingleObject(scard->CompletionIdsMutex, INFINITE);
 	scard_mark_duplicate_id(scard, irp->CompletionId);

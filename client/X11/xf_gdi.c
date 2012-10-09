@@ -60,11 +60,11 @@ boolean xf_set_rop2(xfInfo* xfi, int rop2)
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
 		printf("Unsupported ROP2: %d\n", rop2);
-		return false;
+		return FALSE;
 	}
 
 	XSetFunction(xfi->display, xfi->gc, xf_rop2_table[rop2]);
-	return true;
+	return TRUE;
 }
 
 boolean xf_set_rop3(xfInfo* xfi, int rop3)
@@ -197,12 +197,12 @@ boolean xf_set_rop3(xfInfo* xfi, int rop3)
 	{
 		printf("Unsupported ROP3: 0x%08X\n", rop3);
 		XSetFunction(xfi->display, xfi->gc, GXclear);
-		return false;
+		return FALSE;
 	}
 
 	XSetFunction(xfi->display, xfi->gc, function);
 
-	return true;
+	return TRUE;
 }
 
 Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
@@ -316,7 +316,7 @@ void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
@@ -392,7 +392,7 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	{
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
@@ -415,7 +415,7 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			if (xfi->unobscured)
 			{
@@ -456,7 +456,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 				opaque_rect->nLeftRect, opaque_rect->nTopRect, opaque_rect->nWidth, opaque_rect->nHeight);
@@ -491,7 +491,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 		if (xfi->drawing == xfi->primary)
 		{
-			if (xfi->remote_app != true)
+			if (xfi->remote_app != TRUE)
 			{
 				XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
 					rectangle->left, rectangle->top, rectangle->width, rectangle->height);
@@ -526,7 +526,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	{
 		int width, height;
 
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XDrawLine(xfi->display, xfi->drawable, xfi->gc,
 				line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
@@ -583,7 +583,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, npoints, CoordModePrevious);
 
 		x1 = points[0].x;
@@ -625,7 +625,7 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
 				memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
@@ -694,7 +694,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != true)
+		if (xfi->remote_app != TRUE)
 		{
 			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
 				mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
@@ -886,7 +886,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 	switch (surface_frame_marker->frameAction)
 	{
 		case SURFACECMD_FRAMEACTION_BEGIN:
-			xfi->frame_begin = true;
+			xfi->frame_begin = TRUE;
 			xfi->frame_x1 = 0;
 			xfi->frame_y1 = 0;
 			xfi->frame_x2 = 0;
@@ -894,7 +894,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 			break;
 
 		case SURFACECMD_FRAMEACTION_END:
-			xfi->frame_begin = false;
+			xfi->frame_begin = FALSE;
 			if (xfi->frame_x2 > xfi->frame_x1 && xfi->frame_y2 > xfi->frame_y1)
 			{
 				XSetFunction(xfi->display, xfi->gc, GXcopy);
@@ -913,7 +913,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 
 static void xf_gdi_surface_update_frame(xfInfo* xfi, uint16 tx, uint16 ty, uint16 width, uint16 height)
 {
-	if (xfi->remote_app != true)
+	if (xfi->remote_app != TRUE)
 	{
 		if (xfi->frame_begin)
 		{

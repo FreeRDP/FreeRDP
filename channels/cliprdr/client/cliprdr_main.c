@@ -118,18 +118,18 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s
 #endif
 
 	if (generalFlags & CB_USE_LONG_FORMAT_NAMES)
-		cliprdr->use_long_format_names = true;
+		cliprdr->use_long_format_names = TRUE;
 
 	if (generalFlags & CB_STREAM_FILECLIP_ENABLED)
-		cliprdr->stream_fileclip_enabled = true;
+		cliprdr->stream_fileclip_enabled = TRUE;
 
 	if (generalFlags & CB_FILECLIP_NO_FILE_PATHS)
-		cliprdr->fileclip_no_file_paths = true;
+		cliprdr->fileclip_no_file_paths = TRUE;
 
 	if (generalFlags & CB_CAN_LOCK_CLIPDATA)
-		cliprdr->can_lock_clipdata = true;
+		cliprdr->can_lock_clipdata = TRUE;
 
-	cliprdr->received_caps = true;
+	cliprdr->received_caps = TRUE;
 }
 
 static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, uint16 length, uint16 flags)

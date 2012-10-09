@@ -248,7 +248,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (strncmp("workarea", argv[index], 1) == 0)
 			{
-				settings->workarea = true;
+				settings->workarea = TRUE;
 			}
 			else
 			{
@@ -276,11 +276,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-f", argv[index]) == 0)
 		{
-			settings->fullscreen = true;
+			settings->fullscreen = TRUE;
 		}
 		else if (strcmp("-D", argv[index]) == 0)
 		{
-			settings->decorations = false;
+			settings->decorations = FALSE;
 		}
 		else if (strcmp("-T", argv[index]) == 0)
 		{
@@ -315,7 +315,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-K", argv[index]) == 0)
 		{
-			settings->grab_keyboard = false;
+			settings->grab_keyboard = FALSE;
 		}
 		else if (strcmp("-n", argv[index]) == 0)
 		{
@@ -330,15 +330,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
-			settings->console_audio = true;
+			settings->console_audio = TRUE;
 		}
 		else if (strcmp("-0", argv[index]) == 0)
 		{
-			settings->console_session = true;
+			settings->console_session = TRUE;
 		}
 		else if (strcmp("-z", argv[index]) == 0)
 		{
-			settings->compression = true;
+			settings->compression = TRUE;
 		}
 		else if (strcmp("--ntlm", argv[index]) == 0)
 		{
@@ -351,31 +351,31 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
-			settings->glyph_cache = false;
+			settings->glyph_cache = FALSE;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
-			settings->offscreen_bitmap_cache = false;
+			settings->offscreen_bitmap_cache = FALSE;
 		}
 		else if (strcmp("--no-bmp-cache", argv[index]) == 0)
 		{
-			settings->bitmap_cache = false;
+			settings->bitmap_cache = FALSE;
 		}
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
-			settings->authentication = false;
+			settings->authentication = FALSE;
 		}
 		else if (strcmp("--authonly", argv[index]) == 0)
 		{
-			settings->authentication_only = true;
+			settings->authentication_only = TRUE;
 		}
 		else if (strcmp("--from-stdin", argv[index]) == 0)
 		{
-			settings->from_stdin = true;
+			settings->from_stdin = TRUE;
 		}
 		else if (strcmp("--ignore-certificate", argv[index]) == 0)
 		{
-			settings->ignore_certificate = true;
+			settings->ignore_certificate = TRUE;
 		}
 		else if (strcmp("--certificate-name", argv[index]) == 0)
 		{
@@ -390,8 +390,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
-			settings->fastpath_input = false;
-			settings->fastpath_output = false;
+			settings->fastpath_input = FALSE;
+			settings->fastpath_output = FALSE;
 		}
 		else if (strcmp("--gdi", argv[index]) == 0)
 		{
@@ -403,11 +403,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (strncmp("sw", argv[index], 1) == 0) /* software */
 			{
-				settings->sw_gdi = true;
+				settings->sw_gdi = TRUE;
 			}
 			else if (strncmp("hw", argv[index], 1) == 0) /* hardware */
 			{
-				settings->sw_gdi = false;
+				settings->sw_gdi = FALSE;
 			}
 			else
 			{
@@ -423,25 +423,25 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing codec name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->bitmap_cache_v3 = true;
+			settings->bitmap_cache_v3 = TRUE;
 			if (strcmp("rfx", argv[index]) == 0)
 			{
 				printf("setting rfx\n");
 				settings->v3_codec_id = CODEC_ID_REMOTEFX;
-				settings->rfx_codec = true;
+				settings->rfx_codec = TRUE;
 			}
 			else if (strcmp("nsc", argv[index]) == 0)
 			{
 				printf("setting codec nsc\n");
 				settings->v3_codec_id = CODEC_ID_NSCODEC;
-				settings->ns_codec = true;
+				settings->ns_codec = TRUE;
 			}
 #ifdef WITH_JPEG
 			else if (strcmp("jpeg", argv[index]) == 0)
 			{
 				printf("setting codec jpeg\n");
 				settings->v3_codec_id = CODEC_ID_JPEG;
-				settings->jpeg_codec = true;
+				settings->jpeg_codec = TRUE;
 				if (settings->jpeg_quality == 0)
 					settings->jpeg_quality = 75;
 			}
@@ -455,7 +455,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 #ifdef WITH_JPEG
 		else if (strcmp("--jpeg", argv[index]) == 0)
 		{
-			settings->jpeg_codec = true;
+			settings->jpeg_codec = TRUE;
 			settings->jpeg_quality = 75;
 		}
 		else if (strcmp("--jpegex", argv[index]) == 0)
@@ -466,17 +466,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing codec name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->jpeg_codec = true;
+			settings->jpeg_codec = TRUE;
 			settings->jpeg_quality = atoi(argv[index]);
 		}
 #endif
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
-			settings->rfx_codec = true;
-			settings->fastpath_output = true;
+			settings->rfx_codec = TRUE;
+			settings->fastpath_output = TRUE;
 			settings->color_depth = 32;
 			settings->performance_flags = PERF_FLAG_NONE;
-			settings->large_pointer = true;
+			settings->large_pointer = TRUE;
 		}
 		else if (strcmp("--rfx-mode", argv[index]) == 0)
 		{
@@ -512,7 +512,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--nsc", argv[index]) == 0)
 		{
-			settings->ns_codec = true;
+			settings->ns_codec = TRUE;
 		}
 		else if (strcmp("--dump-rfx", argv[index]) == 0)
 		{
@@ -523,8 +523,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 			settings->dump_rfx_file = _strdup(argv[index]);
-			settings->dump_rfx = true;
-			settings->rfx_codec_only = true;
+			settings->dump_rfx = TRUE;
+			settings->rfx_codec_only = TRUE;
 		}
 		else if (strcmp("--play-rfx", argv[index]) == 0)
 		{
@@ -535,41 +535,41 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 			settings->play_rfx_file = _strdup(argv[index]);
-			settings->play_rfx = true;
+			settings->play_rfx = TRUE;
 		}
 		else if (strcmp("--fonts", argv[index]) == 0)
 		{
-			settings->smooth_fonts = true;
+			settings->smooth_fonts = TRUE;
 		}
 		else if (strcmp("--disable-wallpaper", argv[index]) == 0)
 		{
-			settings->disable_wallpaper = true;
+			settings->disable_wallpaper = TRUE;
 		}
 		else if (strcmp("--disable-full-window-drag", argv[index]) == 0)
 		{
-			settings->disable_full_window_drag = true;
+			settings->disable_full_window_drag = TRUE;
 		}
 		else if (strcmp("--disable-menu-animations", argv[index]) == 0)
 		{
-			settings->disable_menu_animations = true;
+			settings->disable_menu_animations = TRUE;
 		}
 		else if (strcmp("--disable-theming", argv[index]) == 0)
 		{
-			settings->disable_theming = true;
+			settings->disable_theming = TRUE;
 		}
 		else if (strcmp("--composition", argv[index]) == 0)
 		{
-			settings->desktop_composition = true;
+			settings->desktop_composition = TRUE;
 		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
-			settings->mouse_motion = false;
+			settings->mouse_motion = FALSE;
 		}
 		else if (strcmp("--app", argv[index]) == 0)
 		{
-			settings->remote_app = true;
-			settings->rail_langbar_supported = true;
-			settings->workarea = true;
+			settings->remote_app = TRUE;
+			settings->rail_langbar_supported = TRUE;
+			settings->workarea = TRUE;
 			settings->performance_flags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
@@ -623,15 +623,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-rdp", argv[index]) == 0)
 		{
-			settings->rdp_security = false;
+			settings->rdp_security = FALSE;
 		}
 		else if (strcmp("--no-tls", argv[index]) == 0)
 		{
-			settings->tls_security = false;
+			settings->tls_security = FALSE;
 		}
 		else if (strcmp("--no-nla", argv[index]) == 0)
 		{
-			settings->nla_security = false;
+			settings->nla_security = FALSE;
 		}
 		else if (strcmp("--sec", argv[index]) == 0)
 		{
@@ -643,24 +643,24 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (strncmp("rdp", argv[index], 1) == 0) /* Standard RDP */
 			{
-				settings->rdp_security = true;
-				settings->tls_security = false;
-				settings->nla_security = false;
-				settings->encryption = true;
+				settings->rdp_security = TRUE;
+				settings->tls_security = FALSE;
+				settings->nla_security = FALSE;
+				settings->encryption = TRUE;
 				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 			else if (strncmp("tls", argv[index], 1) == 0) /* TLS */
 			{
-				settings->rdp_security = false;
-				settings->tls_security = true;
-				settings->nla_security = false;
+				settings->rdp_security = FALSE;
+				settings->tls_security = TRUE;
+				settings->nla_security = FALSE;
 			}
 			else if (strncmp("nla", argv[index], 1) == 0) /* NLA */
 			{
-				settings->rdp_security = false;
-				settings->tls_security = false;
-				settings->nla_security = true;
+				settings->rdp_security = FALSE;
+				settings->tls_security = FALSE;
+				settings->nla_security = TRUE;
 			}
 			else
 			{
@@ -670,11 +670,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-nego", argv[index]) == 0)
 		{
-			settings->security_layer_negotiation = false;
+			settings->security_layer_negotiation = FALSE;
 		}
 		else if (strcmp("--tsg", argv[index]) == 0)
 		{
-			settings->ts_gateway = true;
+			settings->ts_gateway = TRUE;
 			index++;
 			if (index == argc)
 			{
@@ -708,7 +708,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			plugin_data = NULL;
 			if (strstr(argv[t], "rdpsnd"))
-				settings->audio_playback = true;
+				settings->audio_playback = TRUE;
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
 			{
 				index += 2;
@@ -721,7 +721,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 						plugin_data = (RDP_PLUGIN_DATA*) realloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
 
 					if (strstr(argv[t], "drdynvc") && strstr(argv[index], "audin"))
-						settings->audio_capture = true;
+						settings->audio_capture = TRUE;
 
 					plugin_data[i].size = sizeof(RDP_PLUGIN_DATA);
 					plugin_data[i].data[0] = NULL;
@@ -789,7 +789,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-salted-checksum", argv[index]) == 0)
 		{
-			settings->salted_checksum = false;
+			settings->salted_checksum = FALSE;
 		}
 		else if (strcmp("--pcid", argv[index]) == 0)
 		{
@@ -799,7 +799,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing preconnection id value\n");
 				return -1;
 			}
-			settings->send_preconnection_pdu = true;
+			settings->send_preconnection_pdu = TRUE;
 			settings->preconnection_id = atoi(argv[index]);
 		}
 		else if (strcmp("--pcb", argv[index]) == 0)
@@ -810,7 +810,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing preconnection blob value\n");
 				return -1;
 			}
-			settings->send_preconnection_pdu = true;
+			settings->send_preconnection_pdu = TRUE;
 			settings->preconnection_blob = _strdup(argv[index]);
 		}
 		else if (strcmp("--version", argv[index]) == 0)

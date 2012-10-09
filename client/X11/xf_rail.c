@@ -34,9 +34,9 @@
 
 void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == false)
+	if (xfi->remote_app == FALSE)
 	{
-		xfi->remote_app = true;
+		xfi->remote_app = TRUE;
 		xfi->drawable = DefaultRootWindow(xfi->display);
 		xf_DestroyWindow(xfi, xfi->window);
 		xfi->window = NULL;
@@ -45,9 +45,9 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == true)
+	if (xfi->remote_app == TRUE)
 	{
-		xfi->remote_app = false;
+		xfi->remote_app = FALSE;
 		xf_create_window(xfi);
 	}
 }
@@ -90,7 +90,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 		iwidth = iright - ileft + 1;
 		iheight = ibottom - itop + 1;
 
-		intersect = ((iright > ileft) && (ibottom > itop)) ? true : false;
+		intersect = ((iright > ileft) && (ibottom > itop)) ? TRUE : FALSE;
 
 		if (intersect)
 		{
@@ -453,7 +453,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP
 	sysparam->taskbarPos.right = 0;
 	sysparam->taskbarPos.bottom = 0;
 
-	sysparam->dragFullWindows = false;
+	sysparam->dragFullWindows = FALSE;
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }

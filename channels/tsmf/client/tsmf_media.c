@@ -154,7 +154,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	TSMF_STREAM* s;
 	LIST_ITEM* item;
 	TSMF_SAMPLE* sample;
-	boolean pending = false;
+	boolean pending = FALSE;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
 	if (list_size(stream->sample_list) == 0)
@@ -180,7 +180,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 							if (s != stream && !s->eos && s->last_end_time &&
 								s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
 							{
-									pending = true;
+									pending = TRUE;
 									break;
 							}
 						}
@@ -192,7 +192,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 				{
 					if (stream->last_end_time > presentation->audio_end_time)
 					{
-						pending = true;
+						pending = TRUE;
 					}
 				}
 
@@ -455,7 +455,7 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 
 static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 {
-	boolean ret = false;
+	boolean ret = FALSE;
 	uint32 width;
 	uint32 height;
 	uint32 pixfmt = 0;
@@ -494,7 +494,7 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 			sample->pixfmt = pixfmt;
 		}
 
-		ret = false ;
+		ret = FALSE ;
 		if (stream->decoder->GetDecodedDimension)
 		{
 			ret = stream->decoder->GetDecodedDimension(stream->decoder, &width, &height);

@@ -1345,7 +1345,7 @@ boolean scard_async_op(IRP* irp)
 		case SCARD_IOCTL_RELEASE_CONTEXT:
 		case SCARD_IOCTL_IS_VALID_CONTEXT:
 
-			return false;
+			return FALSE;
 			break;
 
 		/* async events */
@@ -1356,7 +1356,7 @@ boolean scard_async_op(IRP* irp)
 
 		case SCARD_IOCTL_STATUS:
 		case SCARD_IOCTL_STATUS + 4:
-			return true;
+			return TRUE;
 			break;
 
 		default:
@@ -1364,7 +1364,7 @@ boolean scard_async_op(IRP* irp)
 	}	
 
 	/* default to async */
-	return true;
+	return TRUE;
 }
 
 void scard_device_control(SCARD_DEVICE* scard, IRP* irp)

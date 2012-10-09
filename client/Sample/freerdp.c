@@ -156,32 +156,32 @@ boolean tf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = true;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = true;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = true;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = true;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = true;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
-	settings->order_support[NEG_MEMBLT_INDEX] = true;
-	settings->order_support[NEG_MEM3BLT_INDEX] = true;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = true;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = true;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = true;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
+	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = TRUE;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = TRUE;
+	settings->order_support[NEG_LINETO_INDEX] = TRUE;
+	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
+	settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
+	settings->order_support[NEG_MEM3BLT_INDEX] = TRUE;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = TRUE;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = TRUE;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = TRUE;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = TRUE;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
 boolean tf_post_connect(freerdp* instance)
@@ -196,7 +196,7 @@ boolean tf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
 int tfreerdp_run(freerdp* instance)
@@ -224,12 +224,12 @@ int tfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
@@ -265,12 +265,12 @@ int tfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;

@@ -1172,7 +1172,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_16x1x8);
 	decomp_size = sizeof(decompressed_16x1x8);
 	CU_ASSERT(bitmap_decompress(compressed_16x1x8, t->decompressed_16x1x8,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_16x1x8, decompressed_16x1x8,
 		decomp_size) == 0);
 
@@ -1182,7 +1182,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_32x32x8);
 	decomp_size = sizeof(decompressed_32x32x8);
 	CU_ASSERT(bitmap_decompress(compressed_32x32x8, t->decompressed_32x32x8,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_32x32x8, decompressed_32x32x8,
 		decomp_size) == 0);
 
@@ -1192,7 +1192,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_16x1x16);
 	decomp_size = sizeof(decompressed_16x1x16);
 	CU_ASSERT(bitmap_decompress(compressed_16x1x16, t->decompressed_16x1x16,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_16x1x16, decompressed_16x1x16,
 		decomp_size) == 0);
 
@@ -1202,7 +1202,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_32x32x16);
 	decomp_size = sizeof(decompressed_32x32x16);
 	CU_ASSERT(bitmap_decompress(compressed_32x32x16, t->decompressed_32x32x16,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_32x32x16, decompressed_32x32x16,
 		decomp_size) == 0);
 
@@ -1212,7 +1212,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_16x1x24);
 	decomp_size = sizeof(decompressed_16x1x24);
 	CU_ASSERT(bitmap_decompress(compressed_16x1x24, t->decompressed_16x1x24,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_16x1x24, decompressed_16x1x24,
 		decomp_size) == 0);
 
@@ -1222,7 +1222,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_32x32x24);
 	decomp_size = sizeof(decompressed_32x32x24);
 	CU_ASSERT(bitmap_decompress(compressed_32x32x24, t->decompressed_32x32x24,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_32x32x24, decompressed_32x32x24,
 		decomp_size) == 0);
 
@@ -1232,7 +1232,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_16x1x32);
 	decomp_size = sizeof(decompressed_16x1x32);
 	CU_ASSERT(bitmap_decompress(compressed_16x1x32, t->decompressed_16x1x32,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_16x1x32, decompressed_16x1x32,
 		decomp_size) == 0);
 
@@ -1242,7 +1242,7 @@ void test_bitmap(void)
 	comp_size = sizeof(compressed_32x32x32);
 	decomp_size = sizeof(decompressed_32x32x32);
 	CU_ASSERT(bitmap_decompress(compressed_32x32x32, t->decompressed_32x32x32,
-			width, height, comp_size, bpp, bpp) == true);
+			width, height, comp_size, bpp, bpp) == TRUE);
 	CU_ASSERT(memcmp(t->decompressed_32x32x32, decompressed_32x32x32,
 		decomp_size) == 0);
 

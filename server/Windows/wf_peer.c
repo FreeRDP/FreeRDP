@@ -85,7 +85,7 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 		client->update->DesktopResize(client->update->context);
 	}
 
-	return true;
+	return TRUE;
 }
 
 boolean wf_peer_activate(freerdp_peer* client)
@@ -96,10 +96,10 @@ boolean wf_peer_activate(freerdp_peer* client)
 	printf("PeerActivate\n");
 
 	wfi = context->info;
-	client->activated = true;
+	client->activated = TRUE;
 	wf_update_peer_activate(wfi, context);
 
-	return true;
+	return TRUE;
 }
 
 boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
@@ -112,7 +112,7 @@ boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, b
 			identity->User, identity->Domain, identity->Password);
 	}
 
-	return true;
+	return TRUE;
 }
 
 void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
@@ -144,7 +144,7 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	{
 		rcount = 0;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
+		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get peer file descriptor\n");
 			break;
@@ -202,9 +202,9 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_peer_init(client);
 
 	settings = client->settings;
-	settings->rfx_codec = true;
-	settings->ns_codec = false;
-	settings->jpeg_codec = false;
+	settings->rfx_codec = TRUE;
+	settings->ns_codec = FALSE;
+	settings->jpeg_codec = FALSE;
 	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;
@@ -256,7 +256,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 		if (WaitForSingleObject(context->socketEvent, 0) == 0)
 		{
-			if (client->CheckFileDescriptor(client) != true)
+			if (client->CheckFileDescriptor(client) != TRUE)
 			{
 				printf("Failed to check peer file descriptor\n");
 				context->socketClose = TRUE;

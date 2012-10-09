@@ -54,25 +54,25 @@ boolean rts_connect(rdpRpc* rpc)
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
 		printf("rpc_out_connect_http error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rts_send_CONN_A1_pdu(rpc))
 	{
 		printf("rpc_send_CONN_A1_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
 		printf("rpc_in_connect_http error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rts_send_CONN_B1_pdu(rpc))
 	{
 		printf("rpc_send_CONN_B1_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	/* Receive OUT Channel Response */
@@ -83,7 +83,7 @@ boolean rts_connect(rdpRpc* rpc)
 		printf("rts_connect error!\n");
 		http_response_print(http_response);
 		http_response_free(http_response) ;
-		return false;
+		return FALSE;
 	}
 
 	http_response_print(http_response);
@@ -96,7 +96,7 @@ boolean rts_connect(rdpRpc* rpc)
 	/* Receive CONN_C2 RTS PDU */
 	status = rts_recv_pdu(rpc, &rts_pdu);
 
-	return true;
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_RTS
@@ -401,7 +401,7 @@ boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
@@ -450,7 +450,7 @@ boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
@@ -483,7 +483,7 @@ boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
@@ -527,7 +527,7 @@ boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 boolean rts_send_ping_pdu(rdpRpc* rpc)
@@ -559,7 +559,7 @@ boolean rts_send_ping_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)

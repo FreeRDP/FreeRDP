@@ -35,14 +35,14 @@ boolean per_read_length(STREAM* s, uint16* length)
 	uint8 byte;
 
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, byte);
 
 	if (byte & 0x80)
 	{
 		if (stream_get_left(s) < 1)
-			return false;
+			return FALSE;
 
 		byte &= ~(0x80);
 		*length = (byte << 8);
@@ -54,7 +54,7 @@ boolean per_read_length(STREAM* s, uint16* length)
 		*length = byte;
 	}
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -81,10 +81,10 @@ void per_write_length(STREAM* s, int length)
 boolean per_read_choice(STREAM* s, uint8* choice)
 {
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, *choice);
-	return true;
+	return TRUE;
 }
 
 /**
@@ -108,10 +108,10 @@ void per_write_choice(STREAM* s, uint8 choice)
 boolean per_read_selection(STREAM* s, uint8* selection)
 {
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, *selection);
-	return true;
+	return TRUE;
 }
 
 /**
@@ -135,10 +135,10 @@ void per_write_selection(STREAM* s, uint8 selection)
 boolean per_read_number_of_sets(STREAM* s, uint8* number)
 {
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, *number);
-	return true;
+	return TRUE;
 }
 
 /**
@@ -161,10 +161,10 @@ void per_write_number_of_sets(STREAM* s, uint8 number)
 boolean per_read_padding(STREAM* s, int length)
 {
 	if (stream_get_left(s) < length)
-		return false;
+		return FALSE;
 
 	stream_seek(s, length);
-	return true;
+	return TRUE;
 }
 
 /**
@@ -193,19 +193,19 @@ boolean per_read_integer(STREAM* s, uint32* integer)
 	uint16 length;
 
 	if (!per_read_length(s, &length))
-		return false;
+		return FALSE;
 
 	if (stream_get_left(s) < length)
-		return false;
+		return FALSE;
 
 	if (length == 1)
 		stream_read_uint8(s, *integer);
 	else if (length == 2)
 		stream_read_uint16_be(s, *integer);
 	else
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -244,16 +244,16 @@ void per_write_integer(STREAM* s, uint32 integer)
 boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
 {
 	if (stream_get_left(s) < 2)
-		return false;
+		return FALSE;
 
 	stream_read_uint16_be(s, *integer);
 
 	if (*integer + min > 0xFFFF)
-		return false;
+		return FALSE;
 
 	*integer += min;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -279,15 +279,15 @@ void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
 boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
 	if (stream_get_left(s) < 1)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, *enumerated);
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -317,13 +317,13 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 	uint8 a_oid[6];
 
 	if (!per_read_length(s, &length))
-		return false;
+		return FALSE;
 
 	if (length != 5)
-		return false;
+		return FALSE;
 
 	if (stream_get_left(s) < length)
-		return false;
+		return FALSE;
 
 	stream_read_uint8(s, t12); /* first two tuples */
 	a_oid[0] = (t12 >> 4);
@@ -338,11 +338,11 @@ boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
 		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
 		(a_oid[4] == oid[4]) && (a_oid[5] == oid[5]))
 	{
-		return true;
+		return TRUE;
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 }
 
@@ -394,13 +394,13 @@ boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	uint8* a_oct_str;
 
 	if (!per_read_length(s, &mlength))
-		return false;
+		return FALSE;
 
 	if (mlength + min != length)
-		return false;
+		return FALSE;
 
 	if (stream_get_left(s) < length)
-		return false;
+		return FALSE;
 
 	a_oct_str = s->p;
 	stream_seek(s, length);
@@ -408,10 +408,10 @@ boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	for (i = 0; i < length; i++)
 	{
 		if (a_oct_str[i] != oct_str[i])
-			return false;
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -449,15 +449,15 @@ boolean per_read_numeric_string(STREAM* s, int min)
 	uint16 mlength;
 
 	if (!per_read_length(s, &mlength))
-		return false;
+		return FALSE;
 
 	length = (mlength + min + 1) / 2;
 
 	if (stream_get_left(s) < length)
-		return false;
+		return FALSE;
 
 	stream_seek(s, length);
-	return true;
+	return TRUE;
 }
 
 /**

@@ -323,7 +323,7 @@ static boolean tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYP
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
-			return false;
+			return FALSE;
 	GstBuffer *gst_buf_cap_codec_data; /* Buffer to hold extra descriptive codec-specific caps data */
 
 	DEBUG_DVC("tsmf_gstreamer_set_format: ");
@@ -775,7 +775,7 @@ static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder * mdecoder)
 static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 {
 	if (!mdecoder)
-		return false;
+		return FALSE;
 
 	GstPad *out_pad;
 	mdecoder->pipe = gst_pipeline_new (NULL);

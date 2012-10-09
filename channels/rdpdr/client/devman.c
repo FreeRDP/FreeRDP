@@ -89,7 +89,7 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 	}
 
 	if (entry == NULL)
-		return false;
+		return FALSE;
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
@@ -97,7 +97,7 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	entry(&ep);
 
-	return true;
+	return TRUE;
 }
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)

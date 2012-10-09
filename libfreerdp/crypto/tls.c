@@ -67,7 +67,7 @@ boolean tls_connect(rdpTls* tls)
 	if (tls->ctx == NULL)
 	{
 		printf("SSL_CTX_new failed\n");
-		return false;
+		return FALSE;
 	}
 
 	/**
@@ -106,13 +106,13 @@ boolean tls_connect(rdpTls* tls)
 	if (tls->ssl == NULL)
 	{
 		printf("SSL_new failed\n");
-		return false;
+		return FALSE;
 	}
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
-		return false;
+		return FALSE;
 	}
 
 	connection_status = SSL_connect(tls->ssl);
@@ -121,23 +121,23 @@ boolean tls_connect(rdpTls* tls)
 	{
 		if (tls_print_error("SSL_connect", tls->ssl, connection_status))
 		{
-			return false;
+			return FALSE;
 		}
 	}
 
-	cert = tls_get_certificate(tls, true);
+	cert = tls_get_certificate(tls, TRUE);
 
 	if (cert == NULL)
 	{
 		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		tls_free_certificate(cert);
-		return false;
+		return FALSE;
 	}
 
 	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
@@ -145,12 +145,12 @@ boolean tls_connect(rdpTls* tls)
 		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
 		tls_free_certificate(cert);
-		return false;
+		return FALSE;
 	}
 
 	tls_free_certificate(cert);
 
-	return true;
+	return TRUE;
 }
 
 boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
@@ -164,7 +164,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (tls->ctx == NULL)
 	{
 		printf("SSL_CTX_new failed\n");
-		return false;
+		return FALSE;
 	}
 
 	/*
@@ -209,7 +209,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
-		return false;
+		return FALSE;
 	}
 
 	tls->ssl = SSL_new(tls->ctx);
@@ -217,28 +217,28 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (tls->ssl == NULL)
 	{
 		printf("SSL_new failed\n");
-		return false;
+		return FALSE;
 	}
 
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_use_certificate_file failed\n");
-		return false;
+		return FALSE;
 	}
 
-	cert = tls_get_certificate(tls, false);
+	cert = tls_get_certificate(tls, FALSE);
 
 	if (cert == NULL)
 	{
 		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		printf("tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
 		tls_free_certificate(cert);
-		return false;
+		return FALSE;
 	}
 
 	free(cert);
@@ -246,7 +246,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		printf("SSL_set_fd failed\n");
-		return false;
+		return FALSE;
 	}
 
 	while (1)
@@ -263,7 +263,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 				default:
 					if (tls_print_error("SSL_accept", tls->ssl, connection_status))
-						return false;
+						return FALSE;
 					break;
 
 			}
@@ -276,14 +276,14 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 
 	printf("TLS connection accepted\n");
 
-	return true;
+	return TRUE;
 }
 
 boolean tls_disconnect(rdpTls* tls)
 {
 	if (tls->ssl)
 		SSL_shutdown(tls->ssl);
-	return true;
+	return TRUE;
 }
 
 int tls_read(rdpTls* tls, uint8* data, int length)
@@ -387,30 +387,30 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 	{
 		case SSL_ERROR_ZERO_RETURN:
 			printf("%s: Server closed TLS connection\n", func);
-			return true;
+			return TRUE;
 
 		case SSL_ERROR_WANT_READ:
 			printf("%s: SSL_ERROR_WANT_READ\n", func);
-			return false;
+			return FALSE;
 
 		case SSL_ERROR_WANT_WRITE:
 			printf("%s: SSL_ERROR_WANT_WRITE\n", func);
-			return false;
+			return FALSE;
 
 		case SSL_ERROR_SYSCALL:
 			printf("%s: I/O error\n", func);
 			tls_errors(func);
-			return true;
+			return TRUE;
 
 		case SSL_ERROR_SSL:
 			printf("%s: Failure in SSL library (protocol error?)\n", func);
 			tls_errors(func);
-			return true;
+			return TRUE;
 
 		default:
 			printf("%s: Unknown error\n", func);
 			tls_errors(func);
-			return true;
+			return TRUE;
 	}
 }
 
@@ -424,13 +424,13 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	int alt_names_count = 0;
 	int* alt_names_lengths = NULL;
 	boolean certificate_status;
-	boolean hostname_match = false;
-	boolean verification_status = false;
+	boolean hostname_match = FALSE;
+	boolean verification_status = FALSE;
 	rdpCertificateData* certificate_data;
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
 	if (tls->settings->ignore_certificate)
-		return true;  /* success! */
+		return TRUE;  /* success! */
 
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
 	if (tls->settings->certificate_name)
@@ -453,7 +453,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		if (strlen(hostname) == common_name_length)
 		{
 			if (memcmp((void*) hostname, (void*) common_name, common_name_length) == 0)
-				hostname_match = true;
+				hostname_match = TRUE;
 		}
 	}
 
@@ -466,7 +466,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			if (strlen(hostname) == alt_names_lengths[index])
 			{
 				if (memcmp((void*) hostname, (void*) alt_names[index], alt_names_lengths[index]) == 0)
-					hostname_match = true;
+					hostname_match = TRUE;
 			}
 		}
 	}
@@ -480,7 +480,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			common_name = NULL;
 		}
 
-		verification_status = true; /* success! */
+		verification_status = TRUE; /* success! */
 	}
 
 	/* if the certificate is valid but the certificate name does not match, warn user, do not accept */
@@ -495,7 +495,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		char* subject;
 		char* fingerprint;
 		freerdp* instance = (freerdp*) tls->settings->instance;
-		boolean accept_certificate = false;
+		boolean accept_certificate = FALSE;
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);
@@ -516,13 +516,13 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			if (!accept_certificate)
 			{
 				/* user did not accept, abort and do not add entry in known_hosts file */
-				verification_status = false; /* failure! */
+				verification_status = FALSE; /* failure! */
 			}
 			else
 			{
 				/* user accepted certificate, add entry in known_hosts file */
 				certificate_data_print(tls->certificate_store, certificate_data);
-				verification_status = true; /* success! */
+				verification_status = TRUE; /* success! */
 			}
 		}
 		else if (match == -1)
@@ -536,18 +536,18 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			if (!accept_certificate)
 			{
 				/* user did not accept, abort and do not change known_hosts file */
-				verification_status = false;  /* failure! */
+				verification_status = FALSE;  /* failure! */
 			}
 			else
 			{
 				/* user accepted new certificate, add replace fingerprint for this host in known_hosts file */
 				certificate_data_replace(tls->certificate_store, certificate_data);
-				verification_status = true; /* success! */
+				verification_status = TRUE; /* success! */
 			}
 		}
 		else if (match == 0)
 		{
-			verification_status = true; /* success! */
+			verification_status = TRUE; /* success! */
 		}
 
 		free(issuer);
