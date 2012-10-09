@@ -26,8 +26,8 @@
 typedef struct _audin_server_context audin_server_context;
 
 typedef void (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
-typedef boolean (*psAudinServerOpen)(audin_server_context* context);
-typedef boolean (*psAudinServerClose)(audin_server_context* context);
+typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
+typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
 typedef void (*psAudinServerOpening)(audin_server_context* context);
 typedef void (*psAudinServerOpenResult)(audin_server_context* context, uint32 result);

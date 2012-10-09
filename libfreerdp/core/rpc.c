@@ -33,7 +33,7 @@
 
 #include "rpc.h"
 
-boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password)
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password)
 {
 	SECURITY_STATUS status;
 
@@ -95,7 +95,7 @@ boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, cha
 	return TRUE;
 }
 
-boolean ntlm_authenticate(rdpNtlm* ntlm)
+BOOL ntlm_authenticate(rdpNtlm* ntlm)
 {
 	SECURITY_STATUS status;
 
@@ -209,7 +209,7 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 	return s;
 }
 
-boolean rpc_ntlm_http_out_connect(rdpRpc* rpc)
+BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	STREAM* s;
 	int ntlm_token_length;
@@ -259,7 +259,7 @@ boolean rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-boolean rpc_ntlm_http_in_connect(rdpRpc* rpc)
+BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
 	STREAM* s;
 	int ntlm_token_length;
@@ -357,7 +357,7 @@ int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
 	return status;
 }
 
-boolean rpc_send_bind_pdu(rdpRpc* rpc)
+BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 {
 	STREAM* pdu;
 	rpcconn_bind_hdr_t* bind_pdu;
@@ -530,7 +530,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	return status;
 }
 
-boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
+BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
 	STREAM* pdu;
 	STREAM* s = stream_new(0);
@@ -861,7 +861,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	return read;
 }
 
-boolean rpc_connect(rdpRpc* rpc)
+BOOL rpc_connect(rdpRpc* rpc)
 {
 	rpc->tls_in = rpc->transport->tls_in;
 	rpc->tls_out = rpc->transport->tls_out;

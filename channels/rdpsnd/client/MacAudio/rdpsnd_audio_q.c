@@ -125,7 +125,7 @@ static void rdpsnd_audio_free(rdpsndDevicePlugin* device)
 {
 }
 
-static boolean rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	switch (format->wFormatTag)
 	{

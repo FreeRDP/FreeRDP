@@ -27,7 +27,7 @@ struct _MONITOR_INFO
 {
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
-	boolean primary;
+	BOOL primary;
 };
 typedef struct _MONITOR_INFO MONITOR_INFO;
 
@@ -42,6 +42,6 @@ typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
 #include "xfreerdp.h"
 
-boolean xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
+BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
 
 #endif /* __XF_MONITOR_H */

@@ -25,7 +25,7 @@
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom);
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
 void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command);
-void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled);
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled);
 void xf_process_rail_event(xfInfo* xfi, rdpChannels* chanman, RDP_EVENT* event);
 void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window);
 void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window);

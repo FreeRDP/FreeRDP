@@ -156,8 +156,8 @@ struct rdp_license
 	SCOPE_LIST* scope_list;
 };
 
-boolean license_recv(rdpLicense* license, STREAM* s);
-boolean license_send(rdpLicense* license, STREAM* s, uint8 type);
+BOOL license_recv(rdpLicense* license, STREAM* s);
+BOOL license_send(rdpLicense* license, STREAM* s, uint8 type);
 STREAM* license_send_stream_init(rdpLicense* license);
 
 void license_generate_randoms(rdpLicense* license);
@@ -191,7 +191,7 @@ void license_send_new_license_request_packet(rdpLicense* license);
 void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, uint8* mac_data);
 void license_send_platform_challenge_response_packet(rdpLicense* license);
 
-boolean license_send_valid_client_error_packet(rdpLicense* license);
+BOOL license_send_valid_client_error_packet(rdpLicense* license);
 
 rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);

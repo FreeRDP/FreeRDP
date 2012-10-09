@@ -57,7 +57,7 @@ struct xf_info
 	int scanline_pad;
 	int bytesPerPixel;
 	HCLRCONV clrconv;
-	boolean use_xshm;
+	BOOL use_xshm;
 
 	XImage* fb_image;
 	Pixmap fb_pixmap;

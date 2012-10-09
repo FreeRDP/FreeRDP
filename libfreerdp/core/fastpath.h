@@ -105,16 +105,16 @@ struct rdp_fastpath
 uint16 fastpath_header_length(STREAM* s);
 uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
 uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s);
-boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
-boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
+BOOL fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
+BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
 
 STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 eventCode);
-boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
 
 STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath);
-boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s);
+BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s);
 
-boolean fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId);
+BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, uint16 frameAction, uint32 frameId);
 
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);

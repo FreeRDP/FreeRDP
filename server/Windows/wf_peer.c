@@ -57,7 +57,7 @@ void wf_peer_init(freerdp_peer* client)
 	freerdp_peer_context_new(client);
 }
 
-boolean wf_peer_post_connect(freerdp_peer* client)
+BOOL wf_peer_post_connect(freerdp_peer* client)
 {
 	HDC hdc;
 	wfInfo* wfi;
@@ -88,7 +88,7 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-boolean wf_peer_activate(freerdp_peer* client)
+BOOL wf_peer_activate(freerdp_peer* client)
 {
 	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -102,7 +102,7 @@ boolean wf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
+BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
 {
 	printf("PeerLogon\n");
 

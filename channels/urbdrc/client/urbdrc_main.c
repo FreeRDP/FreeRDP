@@ -1031,7 +1031,7 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 
 static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 {
-	boolean ret;
+	BOOL ret;
 
 	if (data->data[0] && (strcmp((char*)data->data[0], "urbdrc") == 0 || strstr((char*) data->data[0], "/urbdrc.") != NULL))
 	{

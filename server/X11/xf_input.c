@@ -36,7 +36,7 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 {
 #ifdef WITH_XTEST
 	unsigned int keycode;
-	boolean extended = FALSE;
+	BOOL extended = FALSE;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
@@ -73,7 +73,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
-	boolean down = FALSE;
+	BOOL down = FALSE;
 	xfInfo* xfi = xfp->info;
 
 	pthread_mutex_lock(&(xfp->mutex));
@@ -81,7 +81,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 
 	if (flags & PTR_FLAGS_WHEEL)
 	{
-		boolean negative = FALSE;
+		BOOL negative = FALSE;
 
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 			negative = TRUE;

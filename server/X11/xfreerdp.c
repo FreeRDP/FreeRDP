@@ -36,7 +36,7 @@
 #include "xfreerdp.h"
 
 char* xf_pcap_file = NULL;
-boolean xf_pcap_dump_realtime = TRUE;
+BOOL xf_pcap_dump_realtime = TRUE;
 
 void xf_server_main_loop(freerdp_listener* instance)
 {

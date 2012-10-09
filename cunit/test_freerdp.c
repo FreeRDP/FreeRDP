@@ -104,7 +104,7 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 	}
 }
 
-typedef boolean (*pInitTestSuite)(void);
+typedef BOOL (*pInitTestSuite)(void);
 
 struct _test_suite
 {

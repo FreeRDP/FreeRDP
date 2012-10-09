@@ -147,7 +147,7 @@ static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, STREAM* da
 	}
 }
 
-static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean user_loggedon)
+static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL user_loggedon)
 {
 	int i;
 	int pos;
@@ -219,7 +219,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, boolean 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }
 
-static boolean rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
+static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
 {
 	IRP* irp;
 

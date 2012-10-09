@@ -44,7 +44,7 @@ static void sf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	printf("RDPSND Activated\n");
 }
 
-boolean sf_peer_rdpsnd_init(testPeerContext* context)
+BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 {
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;

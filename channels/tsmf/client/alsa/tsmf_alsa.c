@@ -48,7 +48,7 @@ typedef struct _TSMFALSAAudioDevice
 	FREERDP_DSP_CONTEXT* dsp_context;
 } TSMFALSAAudioDevice;
 
-static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
+static BOOL tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
 {
 	int error;
 
@@ -63,7 +63,7 @@ static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
 	return TRUE;
 }
 
-static boolean tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
+static BOOL tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 {
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
@@ -80,7 +80,7 @@ static boolean tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 	return tsmf_alsa_open_device(alsa);
 }
 
-static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
+static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	uint32 sample_rate, uint32 channels, uint32 bits_per_sample)
 {
 	int error;
@@ -147,7 +147,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	return TRUE;
 }
 
-static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
+static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
 {
 	int len;
 	int error;

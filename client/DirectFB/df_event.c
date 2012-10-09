@@ -154,7 +154,7 @@ void df_keyboard_init()
 
 }
 
-void df_send_mouse_button_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
+void df_send_mouse_button_event(rdpInput* input, BOOL down, uint32 button, uint16 x, uint16 y)
 {
 	uint16 flags;
 
@@ -188,7 +188,7 @@ void df_send_mouse_wheel_event(rdpInput* input, sint16 axisrel, uint16 x, uint16
 	input->MouseEvent(input, flags, x, y);
 }
 
-void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 function)
+void df_send_keyboard_event(rdpInput* input, BOOL down, uint8 keycode, uint8 function)
 {
 	uint8 vkcode;
 	RDP_SCANCODE rdp_scancode;
@@ -205,7 +205,7 @@ void df_send_keyboard_event(rdpInput* input, boolean down, uint8 keycode, uint8 
 	freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
 }
 
-boolean df_event_process(freerdp* instance, DFBEvent* event)
+BOOL df_event_process(freerdp* instance, DFBEvent* event)
 {
 	int flags;
 	rdpGdi* gdi;

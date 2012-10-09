@@ -42,12 +42,12 @@ struct test_peer_context
 	int icon_height;
 	int icon_x;
 	int icon_y;
-	boolean activated;
+	BOOL activated;
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
 	freerdp_thread* debug_channel_thread;
 	audin_server_context* audin;
-	boolean audin_open;
+	BOOL audin_open;
 	uint32 frame_id;
 	rdpsnd_server_context* rdpsnd;
 };

@@ -180,7 +180,7 @@ void xf_tsmf_uninit(xfInfo* xfi)
 	}
 }
 
-static boolean
+static BOOL
 xf_tsmf_is_format_supported(xfXvContext* xv, uint32 pixfmt)
 {
 	int i;
@@ -204,7 +204,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	uint8* data2;
 	uint32 pixfmt;
 	uint32 xvpixfmt;
-	boolean converti420yv12 = FALSE;
+	BOOL converti420yv12 = FALSE;
 	XvImage * image;
 	int colorkey = 0;
 	XShmSegmentInfo shminfo;

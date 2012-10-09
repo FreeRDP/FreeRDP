@@ -202,7 +202,7 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, uint16 flags, uin
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-static boolean input_recv_sync_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_sync_event(rdpInput* input, STREAM* s)
 {
 	uint32 toggleFlags;
 
@@ -217,7 +217,7 @@ static boolean input_recv_sync_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_keyboard_event(rdpInput* input, STREAM* s)
 {
 	uint16 keyboardFlags, keyCode;
 
@@ -233,7 +233,7 @@ static boolean input_recv_keyboard_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
 {
 	uint16 keyboardFlags, unicodeCode;
 
@@ -262,7 +262,7 @@ static boolean input_recv_unicode_keyboard_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_mouse_event(rdpInput* input, STREAM* s)
 {
 	uint16 pointerFlags, xPos, yPos;
 
@@ -278,7 +278,7 @@ static boolean input_recv_mouse_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
 {
 	uint16 pointerFlags, xPos, yPos;
 
@@ -294,7 +294,7 @@ static boolean input_recv_extended_mouse_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-static boolean input_recv_event(rdpInput* input, STREAM* s)
+static BOOL input_recv_event(rdpInput* input, STREAM* s)
 {
 	uint16 messageType;
 
@@ -341,7 +341,7 @@ static boolean input_recv_event(rdpInput* input, STREAM* s)
 	return TRUE;
 }
 
-boolean input_recv(rdpInput* input, STREAM* s)
+BOOL input_recv(rdpInput* input, STREAM* s)
 {
 	uint16 i, numberEvents;
 
@@ -396,7 +396,7 @@ void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 cod
 	IFCALL(input->KeyboardEvent, input, flags, code);
 }
 
-void freerdp_input_send_keyboard_event_ex(rdpInput* input, boolean down, uint32 rdp_scancode)
+void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, uint32 rdp_scancode)
 {
 	freerdp_input_send_keyboard_event(input,
 			(RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0) |

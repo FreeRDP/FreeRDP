@@ -284,7 +284,7 @@ static void tsmf_print_guid(const uint8* guid)
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd318229.aspx */
-static uint32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STREAM* s, boolean bypass)
+static uint32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STREAM* s, BOOL bypass)
 {
 	uint32 biSize;
 	uint32 biWidth;
@@ -367,11 +367,11 @@ typedef struct tagVIDEOINFOHEADER {
 	return 48;
 }
 
-boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
+BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 {
 	int i;
 	uint32 cbFormat;
-	boolean ret = TRUE;
+	BOOL ret = TRUE;
 
 	memset(mediatype, 0, sizeof(TS_AM_MEDIA_TYPE));
 
@@ -514,10 +514,10 @@ boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	return ret;
 }
 
-boolean tsmf_codec_check_media_type(STREAM* s)
+BOOL tsmf_codec_check_media_type(STREAM* s)
 {
 	uint8* m;
-	boolean ret;
+	BOOL ret;
 	TS_AM_MEDIA_TYPE mediatype;
 
 	stream_get_mark(s, m);

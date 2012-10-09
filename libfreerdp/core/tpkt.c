@@ -60,10 +60,10 @@
 /**
  * Verify if a packet has valid TPKT header.\n
  * @param s
- * @return boolean
+ * @return BOOL
  */
 
-boolean tpkt_verify_header(STREAM* s)
+BOOL tpkt_verify_header(STREAM* s)
 {
 	uint8 version;
 

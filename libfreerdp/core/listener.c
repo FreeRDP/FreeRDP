@@ -73,7 +73,7 @@ static const char *inet_ntop(int af, const void* src, char* dst, socklen_t cnt)
 #endif
 #endif
 
-static boolean freerdp_listener_open(freerdp_listener* instance, const char* bind_address, uint16 port)
+static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, uint16 port)
 {
 	rdpListener* listener = (rdpListener*) instance->listener;
 	int status;
@@ -171,7 +171,7 @@ static boolean freerdp_listener_open(freerdp_listener* instance, const char* bin
 	return (listener->num_sockfds > 0 ? TRUE : FALSE);
 }
 
-static boolean freerdp_listener_open_local(freerdp_listener* instance, const char* path)
+static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* path)
 {
 #ifndef _WIN32
 	int status;
@@ -235,7 +235,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 	listener->num_sockfds = 0;
 }
 
-static boolean freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
+static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
 {
 	int i;
 	rdpListener* listener = (rdpListener*) instance->listener;
@@ -252,7 +252,7 @@ static boolean freerdp_listener_get_fds(freerdp_listener* instance, void** rfds,
 	return TRUE;
 }
 
-static boolean freerdp_listener_check_fds(freerdp_listener* instance)
+static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 {
 	int i;
 	void* sin_addr;

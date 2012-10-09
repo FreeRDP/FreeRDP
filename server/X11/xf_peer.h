@@ -42,7 +42,7 @@ struct xf_peer_context
 	xfInfo* info;
 	int activations;
 	pthread_t thread;
-	boolean activated;
+	BOOL activated;
 	pthread_mutex_t mutex;
 	RFX_CONTEXT* rfx_context;
 	xfEventQueue* event_queue;

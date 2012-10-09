@@ -158,7 +158,7 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
  *
  * @return TRUE on success, otherwise FALSE.
  */
-boolean freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
+BOOL freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
 {
 	staticPlugin* plugin;
   

@@ -113,7 +113,7 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		uint8* data, int width, int height, int bpp, int length,
-		boolean compressed, int codec_id)
+		BOOL compressed, int codec_id)
 {
 	uint16 size;
 	RFX_MESSAGE* msg;
@@ -122,7 +122,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	int yindex;
 	int xindex;
 	xfInfo* xfi;
-	boolean status;
+	BOOL status;
 
 	size = width * height * (bpp + 7) / 8;
 
@@ -189,7 +189,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bitmap->bpp = bpp;
 }
 
-void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 

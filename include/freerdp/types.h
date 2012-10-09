@@ -72,28 +72,23 @@ typedef signed long long sint64;
 #include <stdbool.h>
 
 #ifdef _WIN32
-#define boolean BOOLEAN
+#define BOOL BOOLEAN
 #else
-typedef int boolean;
+typedef int BOOL;
 #endif
 
 #else
 
 #ifndef __cplusplus
 
-#ifndef __bool_TRUE_FALSE_are_defined
-#define __bool_TRUE_FALSE_are_defined	1
-
 #define TRUE	1
 #define FALSE	0
 
 #ifdef _WIN32
-#define boolean BOOLEAN
+#define BOOL BOOLEAN
 #else
-typedef int boolean;
+typedef int BOOL;
 #endif
-
-#endif /* __bool_TRUE_FALSE_are_defined */
 
 #else /* ifdef __cplusplus */
 
@@ -105,7 +100,7 @@ typedef int boolean;
 #define FALSE 	0
 #endif
 
-typedef int boolean;
+typedef int BOOL;
 
 #endif /* __cplusplus */
 

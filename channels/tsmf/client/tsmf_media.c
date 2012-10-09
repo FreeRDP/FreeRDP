@@ -154,7 +154,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	TSMF_STREAM* s;
 	LIST_ITEM* item;
 	TSMF_SAMPLE* sample;
-	boolean pending = FALSE;
+	BOOL pending = FALSE;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
 	if (list_size(stream->sample_list) == 0)
@@ -455,7 +455,7 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 
 static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 {
-	boolean ret = FALSE;
+	BOOL ret = FALSE;
 	uint32 width;
 	uint32 height;
 	uint32 pixfmt = 0;

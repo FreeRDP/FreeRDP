@@ -53,7 +53,7 @@ struct _BITMAP_DATA
 	uint32 cbScanWidth;
 	uint32 cbUncompressedSize;
 	uint8* bitmapDataStream;
-	boolean compressed;
+	BOOL compressed;
 };
 typedef struct _BITMAP_DATA BITMAP_DATA;
 
@@ -181,8 +181,8 @@ struct rdp_update
 
 	/* internal */
 
-	boolean dump_rfx;
-	boolean play_rfx;
+	BOOL dump_rfx;
+	BOOL play_rfx;
 	rdpPcap* pcap_rfx;
 
 	BITMAP_UPDATE bitmap_update;

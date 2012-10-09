@@ -127,7 +127,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
-	boolean processed;
+	BOOL processed;
 
 	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);

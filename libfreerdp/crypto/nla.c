@@ -119,7 +119,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	{
 		if (instance->Authenticate)
 		{
-			boolean proceed = instance->Authenticate(instance,
+			BOOL proceed = instance->Authenticate(instance,
 					&settings->username, &settings->password, &settings->domain);
 			if (!proceed)
 				return 0;
@@ -183,9 +183,9 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	SecBuffer output_buffer;
 	SecBufferDesc input_buffer_desc;
 	SecBufferDesc output_buffer_desc;
-	boolean have_context;
-	boolean have_input_buffer;
-	boolean have_pub_key_auth;
+	BOOL have_context;
+	BOOL have_input_buffer;
+	BOOL have_pub_key_auth;
 
 	sspi_GlobalInit();
 
@@ -385,9 +385,9 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	SecBuffer output_buffer;
 	SecBufferDesc input_buffer_desc;
 	SecBufferDesc output_buffer_desc;
-	boolean have_context;
-	boolean have_input_buffer;
-	boolean have_pub_key_auth;
+	BOOL have_context;
+	BOOL have_input_buffer;
+	BOOL have_pub_key_auth;
 
 	sspi_GlobalInit();
 

@@ -629,7 +629,7 @@ static const LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS_TABLE[] =
 	{ XHOSA,				{ 0x00000409, 0x00000409, 0x0, 0x0, 0x0 } },
 };
 
-boolean freerdp_get_system_language_and_country_codes(char* language, char* country)
+BOOL freerdp_get_system_language_and_country_codes(char* language, char* country)
 {
 	int dot;
 	int underscore;

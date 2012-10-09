@@ -117,7 +117,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 {
 	uint32 option_value;
 	socklen_t option_len;
@@ -170,7 +170,7 @@ int tcp_write(rdpTcp* tcp, uint8* data, int length)
 	return freerdp_tcp_write(tcp->sockfd, data, length);
 }
 
-boolean tcp_disconnect(rdpTcp* tcp)
+BOOL tcp_disconnect(rdpTcp* tcp)
 {
 	freerdp_tcp_disconnect(tcp->sockfd);
 	tcp->sockfd = -1;
@@ -178,7 +178,7 @@ boolean tcp_disconnect(rdpTcp* tcp)
 	return TRUE;
 }
 
-boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
+BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 {
 #ifndef _WIN32
 	int flags;
@@ -210,7 +210,7 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	return TRUE;
 }
 
-boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
+BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 {
 #ifndef _WIN32
 	uint32 option_value;

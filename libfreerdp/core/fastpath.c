@@ -143,7 +143,7 @@ uint16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 	return length - stream_get_length(s);
 }
 
-static boolean fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	uint16 numberOrders;
@@ -187,7 +187,7 @@ static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 	stream_seek_uint16(s); /* size (2 bytes), must be set to zero */
 }
 
-static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
+static BOOL fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uint32 size, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = fastpath->rdp->update->context;
@@ -257,7 +257,7 @@ static boolean fastpath_recv_update(rdpFastPath* fastpath, uint8 updateCode, uin
 	return TRUE;
 }
 
-static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
 	uint16 size;
 	int next_pos;
@@ -338,7 +338,7 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 
@@ -358,7 +358,7 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static boolean fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, uint8* eventCode)
+static BOOL fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, uint8* eventCode)
 {
 	uint8 eventHeader;
 
@@ -373,7 +373,7 @@ static boolean fastpath_read_input_event_header(STREAM* s, uint8* eventFlags, ui
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	uint16 flags;
 	uint16 code;
@@ -397,7 +397,7 @@ static boolean fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM*
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	uint16 pointerFlags;
 	uint16 xPos;
@@ -415,7 +415,7 @@ static boolean fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s,
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	uint16 pointerFlags;
 	uint16 xPos;
@@ -433,14 +433,14 @@ static boolean fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+static BOOL fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	IFCALL(fastpath->rdp->input->SynchronizeEvent, fastpath->rdp->input, eventFlags);
 
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
+static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, uint8 eventFlags)
 {
 	uint16 unicodeCode;
 	uint16 flags;
@@ -461,7 +461,7 @@ static boolean fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* 
 	return TRUE;
 }
 
-static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 eventFlags;
 	uint8 eventCode;
@@ -504,7 +504,7 @@ static boolean fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-boolean fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 {
 	uint8 i;
 
@@ -564,7 +564,7 @@ STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, uint8 eventFlags, uint8 e
 	return s;
 }
 
-boolean fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpRdp *rdp;
 	uint16 length;
@@ -631,7 +631,7 @@ STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
 	return s;
 }
 
-boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s)
+BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM* s)
 {
 	rdpRdp* rdp;
 	uint8* bm;
@@ -647,7 +647,7 @@ boolean fastpath_send_update_pdu(rdpFastPath* fastpath, uint8 updateCode, STREAM
 	int pdu_data_bytes;
 	int dlen;
 	int bytes_to_crypt;
-	boolean result;
+	BOOL result;
 	uint16 pduLength;
 	uint16 maxLength;
 	uint32 totalLength;

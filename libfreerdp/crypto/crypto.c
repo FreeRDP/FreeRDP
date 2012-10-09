@@ -166,11 +166,11 @@ void crypto_cert_free(CryptoCert cert)
 	free(cert);
 }
 
-boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
+BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
 {
 	BYTE* ptr;
 	int length;
-	boolean status = TRUE;
+	BOOL status = TRUE;
 	EVP_PKEY* pkey = NULL;
 
 	pkey = X509_get_pubkey(cert->px509);
@@ -439,10 +439,10 @@ char* crypto_cert_issuer(X509* xcert)
 	return crypto_print_name(X509_get_issuer_name(xcert));
 }
 
-boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
+BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 {
 	X509_STORE_CTX* csc;
-	boolean status = FALSE;
+	BOOL status = FALSE;
 	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
 	X509* xcert = cert->px509;

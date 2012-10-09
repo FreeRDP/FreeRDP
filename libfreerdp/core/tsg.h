@@ -241,7 +241,7 @@ typedef struct _TSG_PACKET
 
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths);
 
-boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port);
 
 int tsg_write(rdpTsg* tsg, uint8* data, uint32 length);
 int tsg_read(rdpTsg* tsg, uint8* data, uint32 length);

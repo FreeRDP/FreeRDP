@@ -69,10 +69,10 @@ struct _SERIAL_TTY
 SERIAL_TTY* serial_tty_new(const char* path, uint32 id);
 void serial_tty_free(SERIAL_TTY* tty);
 
-boolean serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length);
-boolean serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length);
+BOOL serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length);
+BOOL serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length);
 uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, STREAM* output, uint32* abort_io);
 
-boolean serial_tty_get_event(SERIAL_TTY* tty, uint32* result);
+BOOL serial_tty_get_event(SERIAL_TTY* tty, uint32* result);
 
 #endif /* __SERIAL_TTY_H */

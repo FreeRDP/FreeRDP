@@ -75,7 +75,7 @@ struct _SERIAL_DEVICE
 static void serial_abort_single_io(SERIAL_DEVICE* serial, uint32 file_id, uint32 abort_io, uint32 io_status);
 static void serial_check_for_events(SERIAL_DEVICE* serial);
 static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp);
-static boolean serial_check_fds(SERIAL_DEVICE* serial);
+static BOOL serial_check_fds(SERIAL_DEVICE* serial);
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
@@ -696,7 +696,7 @@ static void serial_set_fds(SERIAL_DEVICE* serial)
 	}
 }
 
-static boolean serial_check_fds(SERIAL_DEVICE* serial)
+static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 {
 	if (list_size(serial->pending_irps) == 0)
 		return 1;

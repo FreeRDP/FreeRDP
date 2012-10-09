@@ -25,10 +25,10 @@
 void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman);
 void xf_cliprdr_uninit(xfInfo* xfi);
 void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event);
-boolean xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent);
-boolean xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent);
-boolean xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent);
-boolean xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent);
+BOOL xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent);
+BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent);
+BOOL xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent);
+BOOL xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent);
 void xf_cliprdr_check_owner(xfInfo* xfi);
 
 #ifdef WITH_DEBUG_X11_CLIPRDR

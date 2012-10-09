@@ -264,7 +264,7 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 	free(alsa);
 }
 
-static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	switch (format->wFormatTag)
 	{

@@ -35,11 +35,11 @@ typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;
-	boolean received_caps;
-	boolean use_long_format_names;
-	boolean stream_fileclip_enabled;
-	boolean fileclip_no_file_paths;
-	boolean can_lock_clipdata;
+	BOOL received_caps;
+	BOOL use_long_format_names;
+	BOOL stream_fileclip_enabled;
+	BOOL fileclip_no_file_paths;
+	BOOL can_lock_clipdata;
 	CLIPRDR_FORMAT_NAME* format_names;
 	int num_format_names;
 };

@@ -93,7 +93,7 @@ struct _RFX_CONTEXT
 
 	/* temporary data within a frame */
 	uint32 frame_idx;
-	boolean header_processed;
+	BOOL header_processed;
 	uint8 num_quants;
 	uint32* quants;
 	uint8 quant_idx_y;

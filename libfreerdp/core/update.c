@@ -36,7 +36,7 @@ static const char* const UPDATE_TYPE_STRINGS[] =
 };
 */
 
-boolean update_recv_orders(rdpUpdate* update, STREAM* s)
+BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	uint16 numberOrders;
 
@@ -261,7 +261,7 @@ void update_recv_pointer(rdpUpdate* update, STREAM* s)
 	}
 }
 
-boolean update_recv(rdpUpdate* update, STREAM* s)
+BOOL update_recv(rdpUpdate* update, STREAM* s)
 {
 	uint16 updateType;
 	rdpContext* context = update->context;
@@ -544,7 +544,7 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s);
 }
 
-boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
+BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 {
 	int index;
 	uint8 numberOfAreas;
@@ -573,7 +573,7 @@ boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-boolean update_read_suppress_output(rdpUpdate* update, STREAM* s)
+BOOL update_read_suppress_output(rdpUpdate* update, STREAM* s)
 {
 	uint8 allowDisplayUpdates;
 

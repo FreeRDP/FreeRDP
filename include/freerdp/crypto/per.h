@@ -23,27 +23,27 @@
 #include <freerdp/api.h>
 #include <freerdp/utils/stream.h>
 
-FREERDP_API boolean per_read_length(STREAM* s, uint16* length);
+FREERDP_API BOOL per_read_length(STREAM* s, uint16* length);
 FREERDP_API void per_write_length(STREAM* s, int length);
-FREERDP_API boolean per_read_choice(STREAM* s, uint8* choice);
+FREERDP_API BOOL per_read_choice(STREAM* s, uint8* choice);
 FREERDP_API void per_write_choice(STREAM* s, uint8 choice);
-FREERDP_API boolean per_read_selection(STREAM* s, uint8* selection);
+FREERDP_API BOOL per_read_selection(STREAM* s, uint8* selection);
 FREERDP_API void per_write_selection(STREAM* s, uint8 selection);
-FREERDP_API boolean per_read_number_of_sets(STREAM* s, uint8* number);
+FREERDP_API BOOL per_read_number_of_sets(STREAM* s, uint8* number);
 FREERDP_API void per_write_number_of_sets(STREAM* s, uint8 number);
-FREERDP_API boolean per_read_padding(STREAM* s, int length);
+FREERDP_API BOOL per_read_padding(STREAM* s, int length);
 FREERDP_API void per_write_padding(STREAM* s, int length);
-FREERDP_API boolean per_read_integer(STREAM* s, uint32* integer);
-FREERDP_API boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min);
+FREERDP_API BOOL per_read_integer(STREAM* s, uint32* integer);
+FREERDP_API BOOL per_read_integer16(STREAM* s, uint16* integer, uint16 min);
 FREERDP_API void per_write_integer(STREAM* s, uint32 integer);
 FREERDP_API void per_write_integer16(STREAM* s, uint16 integer, uint16 min);
-FREERDP_API boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
+FREERDP_API BOOL per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count);
 FREERDP_API void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count);
 FREERDP_API void per_write_object_identifier(STREAM* s, uint8 oid[6]);
-FREERDP_API boolean per_read_object_identifier(STREAM* s, uint8 oid[6]);
-FREERDP_API boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min);
+FREERDP_API BOOL per_read_object_identifier(STREAM* s, uint8 oid[6]);
+FREERDP_API BOOL per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min);
 FREERDP_API void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min);
-FREERDP_API boolean per_read_numeric_string(STREAM* s, int min);
+FREERDP_API BOOL per_read_numeric_string(STREAM* s, int min);
 FREERDP_API void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min);
 
 #endif /* FREERDP_CRYPTO_PER_H */

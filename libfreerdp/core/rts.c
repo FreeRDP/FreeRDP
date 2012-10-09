@@ -45,7 +45,7 @@
  *
  */
 
-boolean rts_connect(rdpRpc* rpc)
+BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
 	RTS_PDU rts_pdu;
@@ -357,7 +357,7 @@ void rpc_generate_cookie(uint8* cookie)
 	RAND_pseudo_bytes(cookie, 16);
 }
 
-boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
+BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -404,7 +404,7 @@ boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
+BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -453,7 +453,7 @@ boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
+BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -486,7 +486,7 @@ boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
+BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -530,7 +530,7 @@ boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-boolean rts_send_ping_pdu(rdpRpc* rpc)
+BOOL rts_send_ping_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;

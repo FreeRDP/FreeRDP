@@ -69,7 +69,7 @@ typedef struct _TSMFGstreamerDecoder
 	GstElement *outsink;
 	GstElement *aVolume;
 
-	boolean paused;
+	BOOL paused;
 	uint64 last_sample_end_time;
 
 	Display *disp;
@@ -319,7 +319,7 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 	return 0;
 }
 
-static boolean tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE * media_type)
+static BOOL tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE * media_type)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -680,7 +680,7 @@ static void tsmf_gstreamer_pipeline_send_end_of_stream(TSMFGstreamerDecoder * md
 
 #ifdef __arm__
 /* code from TI to check whether OMX is being lock or not */
-static boolean tsmf_gstreamer_pipeline_omx_available()
+static BOOL tsmf_gstreamer_pipeline_omx_available()
 {
 	bool ret = TRUE;
 	int shm_fd = 0;
@@ -772,7 +772,7 @@ static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder * mdecoder)
 }
 
 
-static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
+static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 {
 	if (!mdecoder)
 		return FALSE;
@@ -1036,7 +1036,7 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 
 	out_pad = gst_element_get_static_pad(mdecoder->outconv, "sink");
 
-	gboolean linkResult = FALSE;
+	gBOOL linkResult = FALSE;
 	gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outconv);
 	gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outsink);
 	if (mdecoder->aVolume)
@@ -1094,7 +1094,7 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	return TRUE;
 }
 
-static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
+static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
         			uint64 start_time, uint64 end_time, uint64 duration)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;

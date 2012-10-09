@@ -43,7 +43,7 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/wait_obj.h>
 
-typedef boolean (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
+typedef BOOL (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
@@ -64,27 +64,27 @@ struct rdp_transport
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
 	struct wait_obj* recv_event;
-	boolean blocking;
-	boolean process_single_pdu; /* process single pdu in transport_check_fds */
+	BOOL blocking;
+	BOOL process_single_pdu; /* process single pdu in transport_check_fds */
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
 STREAM* transport_send_stream_init(rdpTransport* transport, int size);
-boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
+BOOL transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
 void transport_attach(rdpTransport* transport, int sockfd);
-boolean transport_disconnect(rdpTransport* transport);
-boolean transport_connect_rdp(rdpTransport* transport);
-boolean transport_connect_tls(rdpTransport* transport);
-boolean transport_connect_nla(rdpTransport* transport);
-boolean transport_connect_tsg(rdpTransport* transport);
-boolean transport_accept_rdp(rdpTransport* transport);
-boolean transport_accept_tls(rdpTransport* transport);
-boolean transport_accept_nla(rdpTransport* transport);
+BOOL transport_disconnect(rdpTransport* transport);
+BOOL transport_connect_rdp(rdpTransport* transport);
+BOOL transport_connect_tls(rdpTransport* transport);
+BOOL transport_connect_nla(rdpTransport* transport);
+BOOL transport_connect_tsg(rdpTransport* transport);
+BOOL transport_accept_rdp(rdpTransport* transport);
+BOOL transport_accept_tls(rdpTransport* transport);
+BOOL transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
-boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking);
+BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
 

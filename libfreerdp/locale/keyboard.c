@@ -99,7 +99,7 @@ RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode)
 	return X11_KEYCODE_TO_RDP_SCANCODE[keycode];
 }
 
-uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended)
+uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, BOOL extended)
 {
 	if (extended)
 		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][1];

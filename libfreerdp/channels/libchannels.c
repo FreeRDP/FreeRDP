@@ -949,7 +949,7 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 /**
  * called only from main thread
  */
-boolean freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
+BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
 	wait_obj_get_fds(channels->signal, read_fds, read_count);
@@ -959,7 +959,7 @@ boolean freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void*
 /**
  * called only from main thread
  */
-boolean freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
+BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 {
 	if (wait_obj_is_set(channels->signal))
 	{

@@ -27,7 +27,7 @@
 
 #define TPKT_HEADER_LENGTH	4
 
-boolean tpkt_verify_header(STREAM* s);
+BOOL tpkt_verify_header(STREAM* s);
 uint16 tpkt_read_header(STREAM* s);
 void tpkt_write_header(STREAM* s, uint16 length);
 

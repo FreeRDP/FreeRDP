@@ -67,7 +67,7 @@ static void tsmf_pulse_context_state_callback(pa_context* context, void* userdat
 	}
 }
 
-static boolean tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
+static BOOL tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 {
 	pa_context_state_t state;
 
@@ -114,7 +114,7 @@ static boolean tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 	}
 }
 
-static boolean tsmf_pulse_open(ITSMFAudioDevice* audio, const char* device)
+static BOOL tsmf_pulse_open(ITSMFAudioDevice* audio, const char* device)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 
@@ -198,7 +198,7 @@ static void tsmf_pulse_stream_request_callback(pa_stream* stream, size_t length,
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
 }
 
-static boolean tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
+static BOOL tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 {
 	if (!pulse->context || !pulse->stream)
 		return FALSE;
@@ -217,7 +217,7 @@ static boolean tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 	return TRUE;
 }
 
-static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
+static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 {
 	pa_stream_state_t state;
 	pa_buffer_attr buffer_attr = { 0 };
@@ -283,7 +283,7 @@ static boolean tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 	}
 }
 
-static boolean tsmf_pulse_set_format(ITSMFAudioDevice* audio,
+static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio,
 	uint32 sample_rate, uint32 channels, uint32 bits_per_sample)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
@@ -298,7 +298,7 @@ static boolean tsmf_pulse_set_format(ITSMFAudioDevice* audio,
 	return tsmf_pulse_open_stream(pulse);
 }
 
-static boolean tsmf_pulse_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
+static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 	uint8* src;

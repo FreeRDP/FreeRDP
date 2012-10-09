@@ -57,7 +57,7 @@ struct rdp_printer
 	int id;
 	char* name;
 	char* driver;
-	boolean is_default;
+	BOOL is_default;
 
 	pcCreatePrintJob CreatePrintJob;
 	pcFindPrintJob FindPrintJob;

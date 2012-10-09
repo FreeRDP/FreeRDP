@@ -26,7 +26,7 @@
 
 #include <freerdp/crypto/tls.h>
 
-static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
+static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
 	X509* server_cert;
@@ -56,7 +56,7 @@ static void tls_free_certificate(CryptoCert cert)
 	free(cert);
 }
 
-boolean tls_connect(rdpTls* tls)
+BOOL tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
 	long options = 0;
@@ -153,7 +153,7 @@ boolean tls_connect(rdpTls* tls)
 	return TRUE;
 }
 
-boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
+BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 {
 	CryptoCert cert;
 	long options = 0;
@@ -279,7 +279,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 	return TRUE;
 }
 
-boolean tls_disconnect(rdpTls* tls)
+BOOL tls_disconnect(rdpTls* tls)
 {
 	if (tls->ssl)
 		SSL_shutdown(tls->ssl);
@@ -381,7 +381,7 @@ static void tls_errors(const char *prefix)
 		printf("%s: %s\n", prefix, ERR_error_string(error, NULL));
 }
 
-boolean tls_print_error(char* func, SSL* connection, int value)
+BOOL tls_print_error(char* func, SSL* connection, int value)
 {
 	switch (SSL_get_error(connection, value))
 	{
@@ -414,7 +414,7 @@ boolean tls_print_error(char* func, SSL* connection, int value)
 	}
 }
 
-boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
+BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 {
 	int match;
 	int index;
@@ -423,9 +423,9 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	char** alt_names = NULL;
 	int alt_names_count = 0;
 	int* alt_names_lengths = NULL;
-	boolean certificate_status;
-	boolean hostname_match = FALSE;
-	boolean verification_status = FALSE;
+	BOOL certificate_status;
+	BOOL hostname_match = FALSE;
+	BOOL verification_status = FALSE;
 	rdpCertificateData* certificate_data;
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
@@ -495,7 +495,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		char* subject;
 		char* fingerprint;
 		freerdp* instance = (freerdp*) tls->settings->instance;
-		boolean accept_certificate = FALSE;
+		BOOL accept_certificate = FALSE;
 
 		issuer = crypto_cert_issuer(cert->px509);
 		subject = crypto_cert_subject(cert->px509);

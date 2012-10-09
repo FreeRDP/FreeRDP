@@ -41,7 +41,7 @@
 #include <freerdp/utils/thread.h>
 
 extern char* xf_pcap_file;
-extern boolean xf_pcap_dump_realtime;
+extern BOOL xf_pcap_dump_realtime;
 
 #include "xf_event.h"
 #include "xf_input.h"
@@ -320,7 +320,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 		pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
 }
 
-static boolean xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
+static BOOL xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
 {
 	sint32 sec, usec;
 
@@ -470,7 +470,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	update->SurfaceBits(update->context, cmd);
 }
 
-boolean xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
@@ -483,7 +483,7 @@ boolean xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	return TRUE;
 }
 
-boolean xf_peer_check_fds(freerdp_peer* client)
+BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
 	xfEvent* event;
@@ -527,12 +527,12 @@ boolean xf_peer_check_fds(freerdp_peer* client)
 	return TRUE;
 }
 
-boolean xf_peer_capabilities(freerdp_peer* client)
+BOOL xf_peer_capabilities(freerdp_peer* client)
 {
 	return TRUE;
 }
 
-boolean xf_peer_post_connect(freerdp_peer* client)
+BOOL xf_peer_post_connect(freerdp_peer* client)
 {
 	xfInfo* xfi;
 	xfPeerContext* xfp;
@@ -578,7 +578,7 @@ boolean xf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-boolean xf_peer_activate(freerdp_peer* client)
+BOOL xf_peer_activate(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 

@@ -84,7 +84,7 @@
 struct _COMPLETIONIDINFO
 {
         uint32 ID;              /* CompletionID */
-        boolean duplicate;      /* Indicates whether or not this 
+        BOOL duplicate;      /* Indicates whether or not this 
 				 * CompletionID is a duplicate of an 
                                  * earlier, outstanding, CompletionID.
                                  */
@@ -115,7 +115,7 @@ typedef struct _SCARD_DEVICE SCARD_DEVICE;
 #define DEBUG_SCARD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-boolean scard_async_op(IRP*);
+BOOL scard_async_op(IRP*);
 void scard_device_control(SCARD_DEVICE*, IRP*);
 
 #endif

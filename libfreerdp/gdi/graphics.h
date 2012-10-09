@@ -29,7 +29,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
 void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		uint8* data, int width, int height, int bpp, int length,
-                boolean compressed, int codec_id);
+                BOOL compressed, int codec_id);
 void gdi_register_graphics(rdpGraphics* graphics);
 
 #endif /* __GDI_GRAPHICS_H */

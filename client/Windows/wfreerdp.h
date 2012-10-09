@@ -88,7 +88,7 @@ struct wf_info
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
-	boolean sw_gdi;
+	BOOL sw_gdi;
 };
 
 #endif

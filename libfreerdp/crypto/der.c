@@ -69,13 +69,13 @@ int der_skip_contextual_tag(int length)
 	return _der_skip_length(length) + 1;
 }
 
-int der_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc)
+int der_write_contextual_tag(STREAM* s, uint8 tag, int length, BOOL pc)
 {
 	stream_write_uint8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
 	return der_write_length(s, length) + 1;
 }
 
-void der_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
+void der_write_universal_tag(STREAM* s, uint8 tag, BOOL pc)
 {
 	stream_write_uint8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
 }

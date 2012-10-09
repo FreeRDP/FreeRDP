@@ -36,15 +36,15 @@ typedef struct _ITSMFDecoder ITSMFDecoder;
 struct _ITSMFDecoder
 {
 	/* Set the decoder format. Return true if supported. */
-	boolean (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
+	BOOL (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
 	/* Decode a sample. */
-	boolean (*Decode) (ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions);
+	BOOL (*Decode) (ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions);
 	/* Get the decoded data */
 	uint8* (*GetDecodedData) (ITSMFDecoder* decoder, uint32* size);
 	/* Get the pixel format of decoded video frame */
 	uint32 (*GetDecodedFormat) (ITSMFDecoder* decoder);
 	/* Get the width and height of decoded video frame */
-	boolean (*GetDecodedDimension) (ITSMFDecoder* decoder, uint32* width, uint32* height);
+	BOOL (*GetDecodedDimension) (ITSMFDecoder* decoder, uint32* width, uint32* height);
 	/* Free the decoder */
 	void (*Free) (ITSMFDecoder * decoder);
 	/* Optional Contol function */

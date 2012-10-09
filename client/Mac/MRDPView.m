@@ -1014,7 +1014,7 @@ int rdp_connect()
  * @return true if successful. false otherwise.
  ************************************************************************/
 
-boolean mac_pre_connect(freerdp *inst)
+BOOL mac_pre_connect(freerdp *inst)
 {
     char *cptr;
     int  len;
@@ -1174,7 +1174,7 @@ boolean mac_pre_connect(freerdp *inst)
     // in order to achieve this, we need to modify the cmd line args entered by the user;
     
     if (g_mrdpview->isRemoteApp) {
-        boolean gotGeometry = NO;
+        BOOL gotGeometry = NO;
         
         // get dimensions of screen that has keyboard focus;
         // we use these dimensions when connecting to RDP server
@@ -1238,7 +1238,7 @@ boolean mac_pre_connect(freerdp *inst)
  *
  ************************************************************************/
 
-boolean mac_post_connect(freerdp *inst)
+BOOL mac_post_connect(freerdp *inst)
 {
     uint32     flags;
     rdpPointer rdp_pointer;
@@ -1915,9 +1915,9 @@ void mac_process_rail_event(freerdp *inst, RDP_EVENT *event)
 
 void mac_rail_CreateWindow(rdpRail *rail, rdpWindow *window)
 {
-    boolean centerWindow = NO;
-    boolean moveWindow = NO;
-    boolean displayAsModal = NO;
+    BOOL centerWindow = NO;
+    BOOL moveWindow = NO;
+    BOOL displayAsModal = NO;
     NSMutableArray * ma = g_mrdpview->windows;
 
     // make sure window fits resolution

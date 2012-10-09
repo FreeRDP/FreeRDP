@@ -80,7 +80,7 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 	}
 }
 
-static boolean audin_pulse_connect(IAudinDevice* device)
+static BOOL audin_pulse_connect(IAudinDevice* device)
 {
 	pa_context_state_t state;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
@@ -155,7 +155,7 @@ static void audin_pulse_free(IAudinDevice* device)
 	free(pulse);
 }
 
-static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
+static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -279,7 +279,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 {
 	int frames;
 	int cframes;
-	boolean ret;
+	BOOL ret;
 	const void* data;
 	const uint8* src;
 	int encoded_size;

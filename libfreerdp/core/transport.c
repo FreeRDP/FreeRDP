@@ -70,7 +70,7 @@ void transport_attach(rdpTransport* transport, int sockfd)
 	transport->tcp->sockfd = sockfd;
 }
 
-boolean transport_disconnect(rdpTransport* transport)
+BOOL transport_disconnect(rdpTransport* transport)
 {
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		tls_disconnect(transport->tls);
@@ -78,14 +78,14 @@ boolean transport_disconnect(rdpTransport* transport)
 	return tcp_disconnect(transport->tcp);
 }
 
-boolean transport_connect_rdp(rdpTransport* transport)
+BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
 	return TRUE;
 }
 
-boolean transport_connect_tls(rdpTransport* transport)
+BOOL transport_connect_tls(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
 		transport->tls = tls_new(transport->settings);
@@ -106,7 +106,7 @@ boolean transport_connect_tls(rdpTransport* transport)
 	return TRUE;
 }
 
-boolean transport_connect_nla(rdpTransport* transport)
+BOOL transport_connect_nla(rdpTransport* transport)
 {
 	freerdp* instance;
 	rdpSettings* settings;
@@ -155,7 +155,7 @@ boolean transport_connect_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-boolean transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16 port)
+BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
 	rdpTsg* tsg = tsg_new(transport);
 
@@ -184,9 +184,9 @@ boolean transport_tsg_connect(rdpTransport* transport, const char* hostname, uin
 	return TRUE;
 }
 
-boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
+BOOL transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
 {
-	boolean status = FALSE;
+	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 
 	if (transport->settings->ts_gateway)
@@ -210,14 +210,14 @@ boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 
 	return status;
 }
 
-boolean transport_accept_rdp(rdpTransport* transport)
+BOOL transport_accept_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 
 	return TRUE;
 }
 
-boolean transport_accept_tls(rdpTransport* transport)
+BOOL transport_accept_tls(rdpTransport* transport)
 {
 	if (transport->tls == NULL)
 		transport->tls = tls_new(transport->settings);
@@ -231,7 +231,7 @@ boolean transport_accept_tls(rdpTransport* transport)
 	return TRUE;
 }
 
-boolean transport_accept_nla(rdpTransport* transport)
+BOOL transport_accept_nla(rdpTransport* transport)
 {
 	freerdp* instance;
 	rdpSettings* settings;
@@ -487,7 +487,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	return 0;
 }
 
-boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking)
+BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
 	transport->blocking = blocking;
 	return tcp_set_blocking_mode(transport->tcp, blocking);

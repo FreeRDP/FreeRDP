@@ -40,7 +40,7 @@ void xf_kbd_init(xfInfo* xfi)
 
 void xf_kbd_clear(xfInfo* xfi)
 {
-	memset(xfi->pressed_keys, 0, 256 * sizeof(boolean));
+	memset(xfi->pressed_keys, 0, 256 * sizeof(BOOL));
 }
 
 void xf_kbd_set_keypress(xfInfo* xfi, uint8 keycode, KeySym keysym)
@@ -75,13 +75,13 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 	}
 }
 
-boolean xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
+BOOL xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfi->display, keysym);
 	return (xfi->pressed_keys[keycode] == keysym);
 }
 
-void xf_kbd_send_key(xfInfo* xfi, boolean down, uint8 keycode)
+void xf_kbd_send_key(xfInfo* xfi, BOOL down, uint8 keycode)
 {
 	RDP_SCANCODE rdp_scancode;
 	rdpInput* input;
@@ -137,7 +137,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 	return state;
 }
 
-boolean xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
+BOOL xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 {
 	int offset;
 	int modifierpos, key, keysymMask = 0;
@@ -194,7 +194,7 @@ void xf_kbd_focus_in(xfInfo* xfi)
 	input->SynchronizeEvent(input, syncFlags);
 }
 
-boolean xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
+BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 {
 	if (keysym == XK_Return)
 	{

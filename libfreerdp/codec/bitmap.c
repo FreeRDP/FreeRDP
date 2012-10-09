@@ -384,7 +384,7 @@ static int process_raw_plane(uint8* srcData, int width, int height, uint8* dstDa
  * 4 byte bitmap decompress
  * RDP6_BITMAP_STREAM
  */
-static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
+static BOOL bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
 {
 	int RLE;
 	int code;
@@ -439,7 +439,7 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 /**
  * bitmap decompression routine
  */
-boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
+BOOL bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
         uint8 * TmpBfr;
 

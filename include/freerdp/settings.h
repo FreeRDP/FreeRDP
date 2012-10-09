@@ -188,7 +188,7 @@ struct rdp_channel
 	char name[8]; /* ui sets */
 	int options; /* ui sets */
 	int channel_id; /* core sets */
-	boolean joined; /* client has joined the channel */
+	BOOL joined; /* client has joined the channel */
 	void* handle; /* just for ui */
 };
 typedef struct rdp_channel rdpChannel;
@@ -213,7 +213,7 @@ typedef struct _BITMAP_CACHE_CELL_INFO BITMAP_CACHE_CELL_INFO;
 struct _BITMAP_CACHE_V2_CELL_INFO
 {
 	uint32 numEntries;
-	boolean persistent;
+	BOOL persistent;
 };
 typedef struct _BITMAP_CACHE_V2_CELL_INFO BITMAP_CACHE_V2_CELL_INFO;
 
@@ -268,14 +268,14 @@ struct rdp_settings
 	ALIGN64 uint32 selected_protocol; /* 26 */
 	ALIGN64 uint32 encryption_method; /* 27 */
 	ALIGN64 uint32 encryption_level; /* 28 */
-	ALIGN64 boolean authentication; /* 29 */
+	ALIGN64 BOOL authentication; /* 29 */
 	ALIGN64 uint32 negotiationFlags; /* 30 */
-	ALIGN64 boolean security_layer_negotiation; /* 31 */
+	ALIGN64 BOOL security_layer_negotiation; /* 31 */
 	uint64 paddingB[48 - 32]; /* 32 */
 
 	/* Connection Settings */
 	ALIGN64 uint32 port; /* 48 */
-	ALIGN64 boolean ipv6; /* 49 */
+	ALIGN64 BOOL ipv6; /* 49 */
 	ALIGN64 char* hostname; /* 50 */
 	ALIGN64 char* username; /* 51 */
 	ALIGN64 char* password; /* 52 */
@@ -284,33 +284,33 @@ struct rdp_settings
 	ALIGN64 char* directory; /* 55 */
 	ALIGN64 char* ip_address; /* 56 */
 	ALIGN64 char* client_dir; /* 57 */
-	ALIGN64 boolean autologon; /* 58 */
-	ALIGN64 boolean compression; /* 59 */
+	ALIGN64 BOOL autologon; /* 58 */
+	ALIGN64 BOOL compression; /* 59 */
 	ALIGN64 uint32 performance_flags; /* 60 */
 	ALIGN64 BYTE* password_cookie; /* 61 */
 	ALIGN64 DWORD password_cookie_length; /* 62 */
 	ALIGN64 char* kerberos_kdc; /* 63 */
 	ALIGN64 char* kerberos_realm; /* 64 */
-	ALIGN64 boolean ts_gateway; /* 65 */
+	ALIGN64 BOOL ts_gateway; /* 65 */
 	ALIGN64 char* tsg_hostname; /* 66 */
 	ALIGN64 char* tsg_username; /* 67 */
 	ALIGN64 char* tsg_password; /* 68 */
-	ALIGN64 boolean local; /* 69 */
-	ALIGN64 boolean authentication_only; /* 70 */
-	ALIGN64 boolean from_stdin; /* 71 */
-	ALIGN64 boolean send_preconnection_pdu; /* 72 */
+	ALIGN64 BOOL local; /* 69 */
+	ALIGN64 BOOL authentication_only; /* 70 */
+	ALIGN64 BOOL from_stdin; /* 71 */
+	ALIGN64 BOOL send_preconnection_pdu; /* 72 */
 	ALIGN64 uint32 preconnection_id; /* 73 */
 	ALIGN64 char* preconnection_blob; /* 74 */
 	uint64 paddingC[80 - 75]; /* 75 */
 
 	/* User Interface Parameters */
-	ALIGN64 boolean sw_gdi; /* 80 */
-	ALIGN64 boolean workarea; /* 81 */
-	ALIGN64 boolean fullscreen; /* 82 */
-	ALIGN64 boolean grab_keyboard; /* 83 */
-	ALIGN64 boolean decorations; /* 84 */
+	ALIGN64 BOOL sw_gdi; /* 80 */
+	ALIGN64 BOOL workarea; /* 81 */
+	ALIGN64 BOOL fullscreen; /* 82 */
+	ALIGN64 BOOL grab_keyboard; /* 83 */
+	ALIGN64 BOOL decorations; /* 84 */
 	ALIGN64 uint32 percent_screen; /* 85 */
-	ALIGN64 boolean mouse_motion; /* 86 */
+	ALIGN64 BOOL mouse_motion; /* 86 */
 	ALIGN64 char* window_title; /* 87 */
 	ALIGN64 uint64 parent_window_xid; /* 88 */
 	uint64 paddingD[112 - 89]; /* 89 */
@@ -320,38 +320,38 @@ struct rdp_settings
 	ALIGN64 uint32 share_id; /* 113 */
 	ALIGN64 uint32 pdu_source; /* 114 */
 	ALIGN64 void* unused115; /* 115 */
-	ALIGN64 boolean server_mode; /* 116 */
+	ALIGN64 BOOL server_mode; /* 116 */
 	ALIGN64 char* config_path; /* 117 */
 	ALIGN64 char* current_path; /* 118 */
 	ALIGN64 char* development_path; /* 119 */
-	ALIGN64 boolean development_mode; /* 120 */
+	ALIGN64 BOOL development_mode; /* 120 */
 	uint64 paddingE[144 - 121]; /* 121 */
 
 	/* Security */
-	ALIGN64 boolean encryption; /* 144 */
-	ALIGN64 boolean tls_security; /* 145 */
-	ALIGN64 boolean nla_security; /* 146 */
-	ALIGN64 boolean rdp_security; /* 147 */
+	ALIGN64 BOOL encryption; /* 144 */
+	ALIGN64 BOOL tls_security; /* 145 */
+	ALIGN64 BOOL nla_security; /* 146 */
+	ALIGN64 BOOL rdp_security; /* 147 */
 	ALIGN64 uint32 ntlm_version; /* 148 */
-	ALIGN64 boolean salted_checksum; /* 149 */
+	ALIGN64 BOOL salted_checksum; /* 149 */
 	uint64 paddingF[160 - 150]; /* 150 */
 
 	/* Session */
-	ALIGN64 boolean console_audio; /* 160 */
-	ALIGN64 boolean console_session; /* 161 */
+	ALIGN64 BOOL console_audio; /* 160 */
+	ALIGN64 BOOL console_session; /* 161 */
 	ALIGN64 uint32 redirected_session_id; /* 162 */
-	ALIGN64 boolean audio_playback; /* 163 */
-	ALIGN64 boolean audio_capture; /* 164 */
+	ALIGN64 BOOL audio_playback; /* 163 */
+	ALIGN64 BOOL audio_capture; /* 164 */
 	uint64 paddingG[176 - 165]; /* 165 */
 
 	/* Output Control */
-	ALIGN64 boolean refresh_rect; /* 176 */
-	ALIGN64 boolean suppress_output; /* 177 */
-	ALIGN64 boolean desktop_resize; /* 178 */
+	ALIGN64 BOOL refresh_rect; /* 176 */
+	ALIGN64 BOOL suppress_output; /* 177 */
+	ALIGN64 BOOL desktop_resize; /* 178 */
 	uint64 paddingH[192 - 179]; /* 179 */
 
 	/* Reconnection */
-	ALIGN64 boolean auto_reconnection; /* 192 */
+	ALIGN64 BOOL auto_reconnection; /* 192 */
 	ALIGN64 ARC_CS_PRIVATE_PACKET* client_auto_reconnect_cookie; /* 193 */
 	ALIGN64 ARC_SC_PRIVATE_PACKET* server_auto_reconnect_cookie; /* 194 */
 	uint64 paddingI[208 - 195]; /* 195 */
@@ -364,18 +364,18 @@ struct rdp_settings
 	ALIGN64 uint32 os_major_type; /* 216 */
 	ALIGN64 uint32 os_minor_type; /* 217 */
 	ALIGN64 uint32 vc_chunk_size; /* 218 */
-	ALIGN64 boolean sound_beeps; /* 219 */
-	ALIGN64 boolean smooth_fonts; /* 220 */
-	ALIGN64 boolean frame_marker; /* 221 */
-	ALIGN64 boolean fastpath_input; /* 222 */
-	ALIGN64 boolean fastpath_output; /* 223 */
+	ALIGN64 BOOL sound_beeps; /* 219 */
+	ALIGN64 BOOL smooth_fonts; /* 220 */
+	ALIGN64 BOOL frame_marker; /* 221 */
+	ALIGN64 BOOL fastpath_input; /* 222 */
+	ALIGN64 BOOL fastpath_output; /* 223 */
 	ALIGN64 uint8* received_caps; /* 224 */
 	ALIGN64 uint8* order_support; /* 225 */
-	ALIGN64 boolean surface_commands; /* 226 */
-	ALIGN64 boolean disable_wallpaper; /* 227 */
-	ALIGN64 boolean disable_full_window_drag; /* 228 */
-	ALIGN64 boolean disable_menu_animations; /* 229 */
-	ALIGN64 boolean disable_theming; /* 230 */
+	ALIGN64 BOOL surface_commands; /* 226 */
+	ALIGN64 BOOL disable_wallpaper; /* 227 */
+	ALIGN64 BOOL disable_full_window_drag; /* 228 */
+	ALIGN64 BOOL disable_menu_animations; /* 229 */
+	ALIGN64 BOOL disable_theming; /* 230 */
 	ALIGN64 uint32 connection_type; /* 231 */
 	ALIGN64 uint32 multifrag_max_request_size; /* 232 */
 	uint64 paddingK[248 - 233]; /* 233 */
@@ -389,7 +389,7 @@ struct rdp_settings
 	ALIGN64 DWORD server_random_length; /* 253 */
 	ALIGN64 BYTE* server_certificate; /* 254 */
 	ALIGN64 DWORD server_certificate_length; /* 255 */
-	ALIGN64 boolean ignore_certificate; /* 256 */
+	ALIGN64 BOOL ignore_certificate; /* 256 */
 	ALIGN64 rdpCertificate* server_cert; /* 257 */
 	ALIGN64 char* rdp_key_file; /* 258 */
 	ALIGN64 rdpKey* server_key; /* 259 */
@@ -397,73 +397,73 @@ struct rdp_settings
 	uint64 paddingL[280 - 261]; /* 261 */
 
 	/* Codecs */
-	ALIGN64 boolean rfx_codec; /* 280 */
-	ALIGN64 boolean ns_codec; /* 281 */
+	ALIGN64 BOOL rfx_codec; /* 280 */
+	ALIGN64 BOOL ns_codec; /* 281 */
 	ALIGN64 uint32 rfx_codec_id; /* 282 */
 	ALIGN64 uint32 ns_codec_id; /* 283 */
 	ALIGN64 uint32 rfx_codec_mode; /* 284 */
-	ALIGN64 boolean frame_acknowledge; /* 285 */
-	ALIGN64 boolean jpeg_codec; /* 286 */
+	ALIGN64 BOOL frame_acknowledge; /* 285 */
+	ALIGN64 BOOL jpeg_codec; /* 286 */
 	ALIGN64 uint32 jpeg_codec_id; /* 287 */
 	ALIGN64 uint32 jpeg_quality; /* 288 */
 	ALIGN64 uint32 v3_codec_id; /* 289 */
-	ALIGN64 boolean rfx_codec_only; /* 290 */
+	ALIGN64 BOOL rfx_codec_only; /* 290 */
 	uint64 paddingM[296 - 291]; /* 291 */
 
 	/* Recording */
-	ALIGN64 boolean dump_rfx; /* 296 */
-	ALIGN64 boolean play_rfx; /* 297 */
+	ALIGN64 BOOL dump_rfx; /* 296 */
+	ALIGN64 BOOL play_rfx; /* 297 */
 	ALIGN64 char* dump_rfx_file; /* 298 */
 	ALIGN64 char* play_rfx_file; /* 299 */
 	uint64 paddingN[312 - 300]; /* 300 */
 
 	/* RemoteApp */
-	ALIGN64 boolean remote_app; /* 312 */
+	ALIGN64 BOOL remote_app; /* 312 */
 	ALIGN64 uint32 num_icon_caches; /* 313 */
 	ALIGN64 uint32 num_icon_cache_entries; /* 314 */
-	ALIGN64 boolean rail_langbar_supported; /* 315 */
+	ALIGN64 BOOL rail_langbar_supported; /* 315 */
 	uint64 paddingO[320 - 316]; /* 316 */
 
 	/* Pointer */
-	ALIGN64 boolean large_pointer; /* 320 */
-	ALIGN64 boolean color_pointer; /* 321 */
+	ALIGN64 BOOL large_pointer; /* 320 */
+	ALIGN64 BOOL color_pointer; /* 321 */
 	ALIGN64 uint32 pointer_cache_size; /* 322 */
 	uint64 paddingP[328 - 323]; /* 323 */
 
 	/* Bitmap Cache */
-	ALIGN64 boolean bitmap_cache; /* 328 */
-	ALIGN64 boolean bitmap_cache_v3; /* 329 */
-	ALIGN64 boolean persistent_bitmap_cache; /* 330 */
+	ALIGN64 BOOL bitmap_cache; /* 328 */
+	ALIGN64 BOOL bitmap_cache_v3; /* 329 */
+	ALIGN64 BOOL persistent_bitmap_cache; /* 330 */
 	ALIGN64 uint32 bitmapCacheV2NumCells; /* 331 */
 	ALIGN64 BITMAP_CACHE_V2_CELL_INFO* bitmapCacheV2CellInfo; /* 332 */
 	uint64 paddingQ[344 - 333]; /* 333 */
 
 	/* Offscreen Bitmap Cache */
-	ALIGN64 boolean offscreen_bitmap_cache; /* 344 */
+	ALIGN64 BOOL offscreen_bitmap_cache; /* 344 */
 	ALIGN64 uint32 offscreen_bitmap_cache_size; /* 345 */
 	ALIGN64 uint32 offscreen_bitmap_cache_entries; /* 346 */
 	uint64 paddingR[352 - 347]; /* 347 */
 
 	/* Glyph Cache */
-	ALIGN64 boolean glyph_cache; /* 352 */
+	ALIGN64 BOOL glyph_cache; /* 352 */
 	ALIGN64 uint32 glyphSupportLevel; /* 353 */
 	ALIGN64 GLYPH_CACHE_DEFINITION* glyphCache; /* 354 */
 	ALIGN64 GLYPH_CACHE_DEFINITION* fragCache; /* 355 */
 	uint64 paddingS[360 - 356]; /* 356 */
 
 	/* Draw Nine Grid */
-	ALIGN64 boolean draw_nine_grid; /* 360 */
+	ALIGN64 BOOL draw_nine_grid; /* 360 */
 	ALIGN64 uint32 draw_nine_grid_cache_size; /* 361 */
 	ALIGN64 uint32 draw_nine_grid_cache_entries; /* 362 */
 	uint64 paddingT[368 - 363]; /* 363 */
 
 	/* Draw GDI+ */
-	ALIGN64 boolean draw_gdi_plus; /* 368 */
-	ALIGN64 boolean draw_gdi_plus_cache; /* 369 */
+	ALIGN64 BOOL draw_gdi_plus; /* 368 */
+	ALIGN64 BOOL draw_gdi_plus_cache; /* 369 */
 	uint64 paddingU[376 - 370]; /* 370 */
 
 	/* Desktop Composition */
-	ALIGN64 boolean desktop_composition; /* 376 */
+	ALIGN64 BOOL desktop_composition; /* 376 */
 	uint64 paddingV[384 - 377]; /* 377 */
 
 	/* Channels */

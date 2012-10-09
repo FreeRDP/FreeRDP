@@ -141,8 +141,8 @@ struct rdp_rdp
 	struct crypto_des3_struct* fips_decrypt;
 	struct crypto_hmac_struct* fips_hmac;
 	uint32 sec_flags;
-	boolean do_crypt;
-	boolean do_secure_checksum;
+	BOOL do_crypt;
+	BOOL do_secure_checksum;
 	uint8 sign_key[16];
 	uint8 decrypt_key[16];
 	uint8 encrypt_key[16];
@@ -154,40 +154,40 @@ struct rdp_rdp
 	uint8 fips_decrypt_key[24];
 	uint32 errorInfo;
 	uint32 finalize_sc_pdus;
-	boolean disconnect;
+	BOOL disconnect;
 };
 
 void rdp_read_security_header(STREAM* s, uint16* flags);
 void rdp_write_security_header(STREAM* s, uint16 flags);
 
-boolean rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
+BOOL rdp_read_share_control_header(STREAM* s, uint16* length, uint16* type, uint16* channel_id);
 void rdp_write_share_control_header(STREAM* s, uint16 length, uint16 type, uint16 channel_id);
 
-boolean rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
+BOOL rdp_read_share_data_header(STREAM* s, uint16* length, uint8* type, uint32* share_id, 
 			uint8 *compressed_type, uint16 *compressed_len);
 
 void rdp_write_share_data_header(STREAM* s, uint16 length, uint8 type, uint32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
 
-boolean rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_id);
+BOOL rdp_read_header(rdpRdp* rdp, STREAM* s, uint16* length, uint16* channel_id);
 void rdp_write_header(rdpRdp* rdp, STREAM* s, uint16 length, uint16 channel_id);
 
 STREAM* rdp_pdu_init(rdpRdp* rdp);
-boolean rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
+BOOL rdp_send_pdu(rdpRdp* rdp, STREAM* s, uint16 type, uint16 channel_id);
 
 STREAM* rdp_data_pdu_init(rdpRdp* rdp);
-boolean rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id);
-boolean rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s);
+BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, uint8 type, uint16 channel_id);
+BOOL rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s);
 
-boolean rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
+BOOL rdp_send(rdpRdp* rdp, STREAM* s, uint16 channel_id);
 void rdp_recv(rdpRdp* rdp);
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, uint8* data, int size);
 
-boolean rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s);
 
-void rdp_set_blocking_mode(rdpRdp* rdp, boolean blocking);
+void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
 rdpRdp* rdp_new(freerdp* instance);
@@ -199,6 +199,6 @@ void rdp_free(rdpRdp* rdp);
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags);
+BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags);
 
 #endif /* __RDP_H */

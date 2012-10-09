@@ -226,7 +226,7 @@ void xf_hw_end_paint(rdpContext* context)
 void xf_hw_desktop_resize(rdpContext* context)
 {
 	xfInfo* xfi;
-	boolean same;
+	BOOL same;
 	rdpSettings* settings;
 
 	xfi = ((xfContext*) context)->xfi;
@@ -263,7 +263,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 	}
 }
 
-boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
@@ -273,7 +273,7 @@ boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	return TRUE;
 }
 
-boolean xf_process_x_events(freerdp* instance)
+BOOL xf_process_x_events(freerdp* instance)
 {
 	XEvent xevent;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
@@ -351,7 +351,7 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	XFreePixmap(xfi->display, contents);
 }
 
-boolean xf_get_pixmap_info(xfInfo* xfi)
+BOOL xf_get_pixmap_info(xfInfo* xfi)
 {
 	int i;
 	int vi_count;
@@ -477,10 +477,10 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
  * @return TRUE if successful. FALSE otherwise.
  * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
  */
-boolean xf_pre_connect(freerdp* instance)
+BOOL xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
-	boolean bitmap_cache;
+	BOOL bitmap_cache;
 	rdpSettings* settings;
 	int arg_parse_result;
 	
@@ -667,7 +667,7 @@ uint32 xf_detect_cpu()
  * It will be called only if the connection was initialized properly, and will continue the initialization based on the
  * newly created connection.
  */
-boolean xf_post_connect(freerdp* instance)
+BOOL xf_post_connect(freerdp* instance)
 {
 #ifdef WITH_SSE2
 	uint32 cpu;
@@ -810,7 +810,7 @@ boolean xf_post_connect(freerdp* instance)
  *  @param domain - unused
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more details.
  */
-boolean xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
 	// FIXME: seems this callback may be called when 'username' is not known.
 	// But it doesn't do anything to fix it...
@@ -832,7 +832,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
  *  @param fingerprint
  *  @return TRUE if the certificate is trusted. FALSE otherwise.
  */
-boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	char answer;
 
@@ -1117,7 +1117,7 @@ int xfreerdp_run(freerdp* instance)
 	memset(wfds, 0, sizeof(wfds));
 	memset(&timeout, 0, sizeof(struct timeval));
 
-	boolean status = freerdp_connect(instance);
+	BOOL status = freerdp_connect(instance);
 	/* Connection succeeded. --authonly ? */
 	if (instance->settings->authentication_only) {
 		freerdp_disconnect(instance);

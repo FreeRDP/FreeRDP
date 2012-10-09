@@ -357,7 +357,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8*
 static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size)
 {
 	int i;
-	boolean result = FALSE;
+	BOOL result = FALSE;
 	rdpPeerChannel* channel;
 
 	for (i = 0; i < client->settings->num_channels; i++)
@@ -444,9 +444,9 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 	}
 }
 
-boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
+BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 {
-	boolean result = TRUE;
+	BOOL result = TRUE;
 	wts_data_item* item;
 	rdpPeerChannel* channel;
 	uint32 dynvc_caps;
@@ -569,16 +569,16 @@ void* WTSVirtualChannelOpenEx(
 	return channel;
 }
 
-boolean WTSVirtualChannelQuery(
+BOOL WTSVirtualChannelQuery(
 	/* __in */  void* hChannelHandle,
 	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
 	/* __out */ void** ppBuffer,
 	/* __out */ uint32* pBytesReturned)
 {
-	boolean bval;
+	BOOL bval;
 	void* fds[10];
 	int fds_count = 0;
-	boolean result = FALSE;
+	BOOL result = FALSE;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
 	switch (WtsVirtualClass)
@@ -615,9 +615,9 @@ boolean WTSVirtualChannelQuery(
 						break;
 				}
 			}
-			*ppBuffer = malloc(sizeof(boolean));
-			memcpy(*ppBuffer, &bval, sizeof(boolean));
-			*pBytesReturned = sizeof(boolean);
+			*ppBuffer = malloc(sizeof(BOOL));
+			memcpy(*ppBuffer, &bval, sizeof(BOOL));
+			*pBytesReturned = sizeof(BOOL);
 			break;
 
 		default:
@@ -632,7 +632,7 @@ void WTSFreeMemory(
 	free(pMemory);
 }
 
-boolean WTSVirtualChannelRead(
+BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint32 TimeOut,
 	/* __out */ uint8* Buffer,
@@ -671,7 +671,7 @@ boolean WTSVirtualChannelRead(
 	return TRUE;
 }
 
-boolean WTSVirtualChannelWrite(
+BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint8* Buffer,
 	/* __in */  uint32 Length,
@@ -749,7 +749,7 @@ boolean WTSVirtualChannelWrite(
 	return TRUE;
 }
 
-boolean WTSVirtualChannelClose(
+BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle)
 {
 	STREAM* s;

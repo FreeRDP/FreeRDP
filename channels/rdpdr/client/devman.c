@@ -69,7 +69,7 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
-boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
+BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 {
 	char* name;
 	DEVICE_SERVICE_ENTRY_POINTS ep;

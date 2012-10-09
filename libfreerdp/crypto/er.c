@@ -53,7 +53,7 @@ void er_read_length(STREAM* s, int* length)
  * @param length length
  */
 
-int er_write_length(STREAM* s, int length, boolean flag)
+int er_write_length(STREAM* s, int length, BOOL flag)
 {
 	if (flag)
 		return der_write_length(s, length);
@@ -84,7 +84,7 @@ int er_get_content_length(int length)
  * @return
  */
 
-boolean er_read_universal_tag(STREAM* s, uint8 tag, boolean pc)
+BOOL er_read_universal_tag(STREAM* s, uint8 tag, BOOL pc)
 {
 	uint8 byte;
 
@@ -103,7 +103,7 @@ boolean er_read_universal_tag(STREAM* s, uint8 tag, boolean pc)
  * @param pc primitive (FALSE) or constructed (TRUE)
  */
 
-void er_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
+void er_write_universal_tag(STREAM* s, uint8 tag, BOOL pc)
 {
 	stream_write_uint8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
 }
@@ -115,7 +115,7 @@ void er_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
  * @param length length
  */
 
-boolean er_read_application_tag(STREAM* s, uint8 tag, int* length)
+BOOL er_read_application_tag(STREAM* s, uint8 tag, int* length)
 {
 	uint8 byte;
 
@@ -153,7 +153,7 @@ boolean er_read_application_tag(STREAM* s, uint8 tag, int* length)
  * @param length length
  */
 
-void er_write_application_tag(STREAM* s, uint8 tag, int length, boolean flag)
+void er_write_application_tag(STREAM* s, uint8 tag, int length, BOOL flag)
 {
 	if (tag > 30)
 	{
@@ -168,7 +168,7 @@ void er_write_application_tag(STREAM* s, uint8 tag, int length, boolean flag)
 	}
 }
 
-boolean er_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
+BOOL er_read_contextual_tag(STREAM* s, uint8 tag, int* length, BOOL pc)
 {
 	uint8 byte;
 
@@ -185,7 +185,7 @@ boolean er_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
 	return TRUE;
 }
 
-int er_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc, boolean flag)
+int er_write_contextual_tag(STREAM* s, uint8 tag, int length, BOOL pc, BOOL flag)
 {
 	stream_write_uint8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
 	return er_write_length(s, length, flag) + 1;
@@ -196,7 +196,7 @@ int er_skip_contextual_tag(int length)
 	return _er_skip_length(length) + 1;
 }
 
-boolean er_read_sequence_tag(STREAM* s, int* length)
+BOOL er_read_sequence_tag(STREAM* s, int* length)
 {
 	uint8 byte;
 
@@ -216,7 +216,7 @@ boolean er_read_sequence_tag(STREAM* s, int* length)
  * @param length length
  */
 
-int er_write_sequence_tag(STREAM* s, int length, boolean flag)
+int er_write_sequence_tag(STREAM* s, int length, BOOL flag)
 {
 	stream_write_uint8(s, (ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_MASK & ER_TAG_SEQUENCE));
 	return er_write_length(s, length, flag) + 1;
@@ -232,7 +232,7 @@ int er_skip_sequence_tag(int length)
 	return 1 + _er_skip_length(length);
 }
 
-boolean er_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
+BOOL er_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
 	int length;
 
@@ -251,14 +251,14 @@ boolean er_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 	return TRUE;
 }
 
-void er_write_enumerated(STREAM* s, uint8 enumerated, uint8 count, boolean flag)
+void er_write_enumerated(STREAM* s, uint8 enumerated, uint8 count, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_write_length(s, 1, flag);
 	stream_write_uint8(s, enumerated);
 }
 
-boolean er_read_bit_string(STREAM* s, int* length, uint8* padding)
+BOOL er_read_bit_string(STREAM* s, int* length, uint8* padding)
 {
 	er_read_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_read_length(s, length);
@@ -267,7 +267,7 @@ boolean er_read_bit_string(STREAM* s, int* length, uint8* padding)
 	return TRUE;
 }
 
-boolean er_write_bit_string_tag(STREAM* s, uint32 length, uint8 padding, boolean flag)
+BOOL er_write_bit_string_tag(STREAM* s, uint32 length, uint8 padding, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_write_length(s, length, flag);
@@ -275,7 +275,7 @@ boolean er_write_bit_string_tag(STREAM* s, uint32 length, uint8 padding, boolean
 	return TRUE;
 }
 
-boolean er_read_octet_string(STREAM* s, int* length)
+BOOL er_read_octet_string(STREAM* s, int* length)
 {
 	if(!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
 		return FALSE;
@@ -291,14 +291,14 @@ boolean er_read_octet_string(STREAM* s, int* length)
  * @param length string length
  */
 
-void er_write_octet_string(STREAM* s, uint8* oct_str, int length, boolean flag)
+void er_write_octet_string(STREAM* s, uint8* oct_str, int length, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	er_write_length(s, length, flag);
 	stream_write(s, oct_str, length);
 }
 
-int er_write_octet_string_tag(STREAM* s, int length, boolean flag)
+int er_write_octet_string_tag(STREAM* s, int length, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	er_write_length(s, length, flag);
@@ -316,7 +316,7 @@ int er_skip_octet_string(int length)
  * @param value
  */
 
-boolean er_read_boolean(STREAM* s, boolean* value)
+BOOL er_read_BOOL(STREAM* s, BOOL* value)
 {
 	int length;
 	uint8 v;
@@ -337,14 +337,14 @@ boolean er_read_boolean(STREAM* s, boolean* value)
  * @param value
  */
 
-void er_write_boolean(STREAM* s, boolean value)
+void er_write_BOOL(STREAM* s, BOOL value)
 {
 	er_write_universal_tag(s, ER_TAG_BOOLEAN, FALSE);
 	er_write_length(s, 1, FALSE);
 	stream_write_uint8(s, (value == TRUE) ? 0xFF : 0);
 }
 
-boolean er_read_integer(STREAM* s, uint32* value)
+BOOL er_read_integer(STREAM* s, uint32* value)
 {
 	int length;
 
@@ -426,7 +426,7 @@ int er_skip_integer(sint32 value)
 	return 0;
 }
 
-boolean er_read_integer_length(STREAM* s, int* length)
+BOOL er_read_integer_length(STREAM* s, int* length)
 {
 	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, length);

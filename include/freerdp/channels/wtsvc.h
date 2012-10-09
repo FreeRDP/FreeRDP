@@ -53,7 +53,7 @@ FREERDP_API WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_pee
 FREERDP_API void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm);
 FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 	void** fds, int* fds_count);
-FREERDP_API boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
+FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 
 /**
  * Opens a static or dynamic virtual channel and return the handle. If the
@@ -76,7 +76,7 @@ FREERDP_API void* WTSVirtualChannelOpenEx(
  * Servers use this function to gain access to a virtual channel file handle
  * that can be used for asynchronous I/O.
  */
-FREERDP_API boolean WTSVirtualChannelQuery(
+FREERDP_API BOOL WTSVirtualChannelQuery(
 	/* __in */  void* hChannelHandle,
 	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
 	/* __out */ void** ppBuffer,
@@ -105,7 +105,7 @@ FREERDP_API void WTSFreeMemory(
  * The caller should use the file handle returned by WTSVirtualChannelQuery to
  * determine whether a packet has arrived.
  */
-FREERDP_API boolean WTSVirtualChannelRead(
+FREERDP_API BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint32 TimeOut,
 	/* __out */ uint8* Buffer,
@@ -115,7 +115,7 @@ FREERDP_API boolean WTSVirtualChannelRead(
 /**
  * Writes data to the server end of a virtual channel.
  */
-FREERDP_API boolean WTSVirtualChannelWrite(
+FREERDP_API BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint8* Buffer,
 	/* __in */  uint32 Length,
@@ -124,7 +124,7 @@ FREERDP_API boolean WTSVirtualChannelWrite(
 /**
  * Closes an open virtual channel handle.
  */
-FREERDP_API boolean WTSVirtualChannelClose(
+FREERDP_API BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle);
 
 #endif /* __FREERDP_WTSVC_H */

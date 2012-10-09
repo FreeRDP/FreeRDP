@@ -76,7 +76,7 @@ struct rdp_input
 
 FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags);
 FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, boolean down, uint32 rdp_scancode);
+FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, uint32 rdp_scancode);
 FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
 FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
 FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);

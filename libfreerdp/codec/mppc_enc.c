@@ -499,7 +499,7 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
  * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
 		return FALSE;
@@ -525,7 +525,7 @@ boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 {
 	/* RDP 4.0 encoding not yet implemented */
 	return FALSE;
@@ -541,7 +541,7 @@ boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 {
 	char* outputBuffer;     /* points to enc->outputBuffer */
 	char* hptr_end;         /* points to end of history data */

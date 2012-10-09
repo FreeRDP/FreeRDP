@@ -23,7 +23,7 @@
 
 DEVMAN* devman_new(rdpSvcPlugin* plugin);
 void devman_free(DEVMAN* devman);
-boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data);
+BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data);
 DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H */

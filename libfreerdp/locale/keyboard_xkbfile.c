@@ -271,9 +271,9 @@ uint32 detect_keyboard_layout_from_xkbfile(void* display)
 int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
 	int i, j;
-	boolean found;
+	BOOL found;
 	XkbDescPtr xkb;
-	boolean status = FALSE;
+	BOOL status = FALSE;
 
 	if (display && (xkb = XkbGetMap(display, 0, XkbUseCoreKbd)))
 	{

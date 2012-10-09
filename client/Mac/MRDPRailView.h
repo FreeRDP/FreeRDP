@@ -11,9 +11,9 @@
     NSBitmapImageRep *  bmiRep;
     NSPoint             savedDragLocation;
     char *              pixelData;
-    boolean             mouseInClientArea;
-    boolean             titleBarClicked;
-    boolean             gestureEventInProgress;
+    BOOL             mouseInClientArea;
+    BOOL             titleBarClicked;
+    BOOL             gestureEventInProgress;
     int                 width;
     int                 height;
     int                 savedWindowId;
@@ -31,15 +31,15 @@
     int                 kdcapslock;
     
     @public
-    boolean             isMoveSizeInProgress;    
-    boolean             saveInitialDragLoc;
-    boolean             skipMoveWindowOnce;
+    BOOL             isMoveSizeInProgress;    
+    BOOL             saveInitialDragLoc;
+    BOOL             skipMoveWindowOnce;
     int                 localMoveType;
 }
 
 @property (assign) MRDPRailWindow * mrdpRailWindow;
 @property (assign) int windowIndex;
-@property (assign) boolean activateWindow;
+@property (assign) BOOL activateWindow;
 
 - (void) windowDidMove:(NSNotification *) notification;
 - (void) updateDisplay;

@@ -248,7 +248,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 	}
 }
 
-static boolean certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
 {
 	uint8 magic[4];
 	uint32 keylen;
@@ -279,7 +279,7 @@ static boolean certificate_process_server_public_key(rdpCertificate* certificate
 	return TRUE;
 }
 
-static boolean certificate_process_server_public_signature(rdpCertificate* certificate, uint8* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
+static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, uint8* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
@@ -340,7 +340,7 @@ static boolean certificate_process_server_public_signature(rdpCertificate* certi
  * @param s stream
  */
 
-boolean certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
+BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
 {
 	uint32 dwSigAlgId;
 	uint32 dwKeyAlgId;
@@ -410,7 +410,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
  * @param s stream
  */
 
-boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
+BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
 {
 	int i;
 	uint32 certLength;
@@ -458,7 +458,7 @@ boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certifica
  * @param length certificate length
  */
 
-boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
+BOOL certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
 {
 	STREAM* s;
 	uint32 dwVersion;

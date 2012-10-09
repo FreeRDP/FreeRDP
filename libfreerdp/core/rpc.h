@@ -538,12 +538,12 @@ struct rdp_ntlm
 	PSecBuffer pBuffer;
 	SecBuffer inputBuffer;
 	SecBuffer outputBuffer;
-	boolean haveContext;
-	boolean haveInputBuffer;
+	BOOL haveContext;
+	BOOL haveInputBuffer;
 	SecBufferDesc inputBufferDesc;
 	SecBufferDesc outputBufferDesc;
 	CredHandle credentials;
-	boolean confidentiality;
+	BOOL confidentiality;
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
@@ -662,18 +662,18 @@ struct rdp_rpc
 	RpcVirtualConnection* VirtualConnection;
 };
 
-boolean ntlm_authenticate(rdpNtlm* ntlm);
+BOOL ntlm_authenticate(rdpNtlm* ntlm);
 
-boolean ntlm_client_init(rdpNtlm* ntlm, boolean confidentiality, char* user, char* domain, char* password);
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password);
 void ntlm_client_uninit(rdpNtlm* ntlm);
 
 rdpNtlm* ntlm_new();
 void ntlm_free(rdpNtlm* ntlm);
 
-boolean rpc_connect(rdpRpc* rpc);
+BOOL rpc_connect(rdpRpc* rpc);
 
-boolean rpc_ntlm_http_out_connect(rdpRpc* rpc);
-boolean rpc_ntlm_http_in_connect(rdpRpc* rpc);
+BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
+BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header);
 

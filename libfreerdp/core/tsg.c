@@ -453,7 +453,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	return length;
 }
 
-boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 {
 	uint8* data;
 	uint32 length;

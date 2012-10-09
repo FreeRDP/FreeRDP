@@ -56,7 +56,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 {
 	xfWindow* xfw;
 	rdpWindow* window;
-	boolean intersect;
+	BOOL intersect;
 	uint32 iwidth, iheight;
 	sint32 ileft, itop;
 	uint32 iright, ibottom;
@@ -263,7 +263,7 @@ static void xf_send_rail_client_event(rdpChannels* channels, uint16 event_type, 
 	}
 }
 
-void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 {
 	rdpRail* rail;
 	rdpChannels* channels;

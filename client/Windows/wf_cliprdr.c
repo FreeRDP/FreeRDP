@@ -83,22 +83,22 @@ void wf_process_cliprdr_event(wfInfo* wfi, RDP_EVENT* event)
 	}
 }
 
-boolean wf_cliprdr_process_selection_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-boolean wf_cliprdr_process_selection_request(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_request(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-boolean wf_cliprdr_process_selection_clear(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_clear(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-boolean wf_cliprdr_process_property_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_property_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }

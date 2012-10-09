@@ -26,7 +26,7 @@
 
 #include "peer.h"
 
-static boolean freerdp_peer_initialize(freerdp_peer* client)
+static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
 	client->context->rdp->settings->server_mode = TRUE;
 	client->context->rdp->settings->frame_acknowledge = 0;
@@ -42,7 +42,7 @@ static boolean freerdp_peer_initialize(freerdp_peer* client)
 	return TRUE;
 }
 
-static boolean freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->tcp->sockfd);
 	(*rcount)++;
@@ -50,7 +50,7 @@ static boolean freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcou
 	return TRUE;
 }
 
-static boolean freerdp_peer_check_fds(freerdp_peer* client)
+static BOOL freerdp_peer_check_fds(freerdp_peer* client)
 {
 	int status;
 	rdpRdp* rdp;
@@ -65,7 +65,7 @@ static boolean freerdp_peer_check_fds(freerdp_peer* client)
 	return TRUE;
 }
 
-static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
+static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 {
 	uint8 type;
 	uint16 length;
@@ -153,7 +153,7 @@ static boolean peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 	return TRUE;
 }
 
-static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
+static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
 	uint16 length;
@@ -212,7 +212,7 @@ static boolean peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	return TRUE;
 }
 
-static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
+static BOOL peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
 	uint16 length;
@@ -236,7 +236,7 @@ static boolean peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 	return fastpath_recv_inputs(fastpath, s);
 }
 
-static boolean peer_recv_pdu(freerdp_peer* client, STREAM* s)
+static BOOL peer_recv_pdu(freerdp_peer* client, STREAM* s)
 {
 	if (tpkt_verify_header(s))
 		return peer_recv_tpkt_pdu(client, s);
@@ -244,7 +244,7 @@ static boolean peer_recv_pdu(freerdp_peer* client, STREAM* s)
 		return peer_recv_fastpath_pdu(client, s);
 }
 
-static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
+static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
@@ -333,7 +333,7 @@ static boolean peer_recv_callback(rdpTransport* transport, STREAM* s, void* extr
 	return TRUE;
 }
 
-static boolean freerdp_peer_close(freerdp_peer* client)
+static BOOL freerdp_peer_close(freerdp_peer* client)
 {
 	/**
 	 * [MS-RDPBCGR] 1.3.1.4.2 User-Initiated Disconnection Sequence on Server

@@ -30,7 +30,7 @@
  * @return
  */
 
-boolean per_read_length(STREAM* s, uint16* length)
+BOOL per_read_length(STREAM* s, uint16* length)
 {
 	uint8 byte;
 
@@ -78,7 +78,7 @@ void per_write_length(STREAM* s, int length)
  * @return
  */
 
-boolean per_read_choice(STREAM* s, uint8* choice)
+BOOL per_read_choice(STREAM* s, uint8* choice)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
@@ -105,7 +105,7 @@ void per_write_choice(STREAM* s, uint8 choice)
  * @return
  */
 
-boolean per_read_selection(STREAM* s, uint8* selection)
+BOOL per_read_selection(STREAM* s, uint8* selection)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
@@ -132,7 +132,7 @@ void per_write_selection(STREAM* s, uint8 selection)
  * @return
  */
 
-boolean per_read_number_of_sets(STREAM* s, uint8* number)
+BOOL per_read_number_of_sets(STREAM* s, uint8* number)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
@@ -158,7 +158,7 @@ void per_write_number_of_sets(STREAM* s, uint8 number)
  * @param length
  */
 
-boolean per_read_padding(STREAM* s, int length)
+BOOL per_read_padding(STREAM* s, int length)
 {
 	if (stream_get_left(s) < length)
 		return FALSE;
@@ -188,7 +188,7 @@ void per_write_padding(STREAM* s, int length)
  * @return
  */
 
-boolean per_read_integer(STREAM* s, uint32* integer)
+BOOL per_read_integer(STREAM* s, uint32* integer)
 {
 	uint16 length;
 
@@ -241,7 +241,7 @@ void per_write_integer(STREAM* s, uint32 integer)
  * @return
  */
 
-boolean per_read_integer16(STREAM* s, uint16* integer, uint16 min)
+BOOL per_read_integer16(STREAM* s, uint16* integer, uint16 min)
 {
 	if (stream_get_left(s) < 2)
 		return FALSE;
@@ -276,7 +276,7 @@ void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
  * @return
  */
 
-boolean per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
+BOOL per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
@@ -310,7 +310,7 @@ void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count)
  * @return
  */
 
-boolean per_read_object_identifier(STREAM* s, uint8 oid[6])
+BOOL per_read_object_identifier(STREAM* s, uint8 oid[6])
 {
 	uint8 t12;
 	uint16 length;
@@ -387,7 +387,7 @@ void per_write_string(STREAM* s, uint8* str, int length)
  * @return
  */
 
-boolean per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
+BOOL per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 {
 	int i;
 	uint16 mlength;
@@ -443,7 +443,7 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
  * @param min minimum string length
  */
 
-boolean per_read_numeric_string(STREAM* s, int min)
+BOOL per_read_numeric_string(STREAM* s, int min)
 {
 	int length;
 	uint16 mlength;

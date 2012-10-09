@@ -34,7 +34,7 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-typedef boolean (*AudinReceive) (uint8* data, int size, void* user_data);
+typedef BOOL (*AudinReceive) (uint8* data, int size, void* user_data);
 
 typedef struct audin_format audinFormat;
 struct audin_format
@@ -52,7 +52,7 @@ typedef struct _IAudinDevice IAudinDevice;
 struct _IAudinDevice
 {
 	void (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* user_data);
-	boolean (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
+	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
 	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, uint32 FramesPerPacket);
 	void (*Close) (IAudinDevice* devplugin);
 	void (*Free) (IAudinDevice* devplugin);

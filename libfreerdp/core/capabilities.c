@@ -1686,7 +1686,7 @@ void rdp_write_frame_acknowledge_capability_set(STREAM* s, rdpSettings* settings
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }
 
-boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 numberCapabilities)
+BOOL rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 numberCapabilities)
 {
 	uint16 type;
 	uint16 length;
@@ -1843,7 +1843,7 @@ boolean rdp_read_capability_sets(STREAM* s, rdpSettings* settings, uint16 number
 	return TRUE;
 }
 
-boolean rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
@@ -1966,7 +1966,7 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, 0); /* sessionId */
 }
 
-boolean rdp_send_demand_active(rdpRdp* rdp)
+BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
 	STREAM* s;
 
@@ -1981,7 +1981,7 @@ boolean rdp_send_demand_active(rdpRdp* rdp)
 	return TRUE;
 }
 
-boolean rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 {
 	uint16 length;
 	uint16 channelId;
@@ -2154,7 +2154,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	stream_set_mark(s, em);
 }
 
-boolean rdp_send_confirm_active(rdpRdp* rdp)
+BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
 	STREAM* s;
 

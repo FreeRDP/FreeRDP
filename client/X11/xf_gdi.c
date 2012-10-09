@@ -55,7 +55,7 @@ static const uint8 xf_rop2_table[] =
 	GXset           /* 1 */
 };
 
-boolean xf_set_rop2(xfInfo* xfi, int rop2)
+BOOL xf_set_rop2(xfInfo* xfi, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
@@ -67,7 +67,7 @@ boolean xf_set_rop2(xfInfo* xfi, int rop2)
 	return TRUE;
 }
 
-boolean xf_set_rop3(xfInfo* xfi, int rop3)
+BOOL xf_set_rop3(xfInfo* xfi, int rop3)
 {
 	int function = -1;
 

@@ -76,7 +76,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 	return 6;
 }
 
-boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
+BOOL update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
 {
 	uint8* mark;
 	uint16 cmdType;

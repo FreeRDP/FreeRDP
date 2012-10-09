@@ -47,11 +47,11 @@
  *  @return TRUE if successful. FALSE otherwise.
  *
  */
-boolean freerdp_connect(freerdp* instance)
+BOOL freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
 	rdpSettings* settings;
-	boolean status = FALSE;
+	BOOL status = FALSE;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
@@ -157,7 +157,7 @@ boolean freerdp_connect(freerdp* instance)
 	return status;
 }
 
-boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	rdpRdp* rdp;
 
@@ -167,7 +167,7 @@ boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds
 	return TRUE;
 }
 
-boolean freerdp_check_fds(freerdp* instance)
+BOOL freerdp_check_fds(freerdp* instance)
 {
 	int status;
 	rdpRdp* rdp;
@@ -187,7 +187,7 @@ static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* d
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
 }
 
-boolean freerdp_disconnect(freerdp* instance)
+BOOL freerdp_disconnect(freerdp* instance)
 {
 	rdpRdp* rdp;
 
@@ -197,7 +197,7 @@ boolean freerdp_disconnect(freerdp* instance)
 	return TRUE;
 }
 
-boolean freerdp_shall_disconnect(freerdp* instance)
+BOOL freerdp_shall_disconnect(freerdp* instance)
 {
 	return instance->context->rdp->disconnect;
 }

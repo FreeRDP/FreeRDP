@@ -43,13 +43,13 @@
     // RAIL stuff
     MRDPWindow         *currentWindow;
     NSPoint            savedDragLocation;
-    boolean            mouseInClientArea;
-    boolean            isRemoteApp;
-    boolean            firstCreateWindow;
-    boolean            isMoveSizeInProgress;
-    boolean            skipResizeOnce;
-    boolean            saveInitialDragLoc;
-    boolean            skipMoveWindowOnce;
+    BOOL            mouseInClientArea;
+    BOOL            isRemoteApp;
+    BOOL            firstCreateWindow;
+    BOOL            isMoveSizeInProgress;
+    BOOL            skipResizeOnce;
+    BOOL            saveInitialDragLoc;
+    BOOL            skipMoveWindowOnce;
     
     // store state info for some keys
     int                kdlshift;
@@ -99,8 +99,8 @@ void pointer_set(rdpContext* context, rdpPointer* pointer);
 void pointer_setNull(rdpContext* context);
 void pointer_setDefault(rdpContext* context);
 int rdp_connect();
-boolean mac_pre_connect(freerdp *inst);
-boolean mac_post_connect(freerdp *inst);
+BOOL mac_pre_connect(freerdp *inst);
+BOOL mac_post_connect(freerdp *inst);
 void mac_context_new(freerdp *inst, rdpContext *context);
 void mac_context_free(freerdp *inst, rdpContext *context);
 void mac_set_bounds(rdpContext *context, rdpBounds *bounds);

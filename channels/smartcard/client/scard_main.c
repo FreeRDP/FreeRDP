@@ -157,7 +157,7 @@ static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 Com
 	return NULL;    /* Either no items in the list or no match. */
 }
 
-static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+static BOOL  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
 {
 	/*
 	 * Search from the end of the LIST for one outstanding "CompletionID"
@@ -167,7 +167,7 @@ static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 Complet
 	 */
 	LIST_ITEM* item;
 	COMPLETIONIDINFO* CompletionIdInfo;
-	boolean duplicate;
+	BOOL duplicate;
 
 	for (item = scard->CompletionIds->tail; item; item = item->prev)
 	{
@@ -201,7 +201,7 @@ static void  scard_irp_complete(IRP* irp)
 	 * to be in this file so that "scard_irp_request()" can reference it.
 	 */
 	int pos;
-	boolean duplicate;
+	BOOL duplicate;
 	SCARD_DEVICE* scard = (SCARD_DEVICE*)irp->device;
 
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);

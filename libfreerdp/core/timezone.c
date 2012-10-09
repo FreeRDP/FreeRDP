@@ -74,7 +74,7 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
  * @param settings settings
  */
 
-boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 {
 	char* str;
 	TIME_ZONE_INFO* clientTimeZone;

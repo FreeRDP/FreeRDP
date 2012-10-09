@@ -142,7 +142,7 @@ static const uint8 BMF_BPP[] =
 		0, 1, 0, 8, 16, 24, 32
 };
 
-static INLINE void update_read_coord(STREAM* s, sint32* coord, boolean delta)
+static INLINE void update_read_coord(STREAM* s, sint32* coord, BOOL delta)
 {
 	sint8 lsi8;
 	sint16 lsi16;
@@ -218,7 +218,7 @@ static INLINE void update_read_2byte_unsigned(STREAM* s, uint32* value)
 static INLINE void update_read_2byte_signed(STREAM* s, sint32* value)
 {
 	uint8 byte;
-	boolean negative;
+	BOOL negative;
 
 	stream_read_uint8(s, byte);
 
@@ -1201,7 +1201,7 @@ void update_read_ellipse_cb_order(STREAM* s, ORDER_INFO* orderInfo, ELLIPSE_CB_O
 
 /* Secondary Drawing Orders */
 
-void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_order, boolean compressed, uint16 flags)
+void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_order, BOOL compressed, uint16 flags)
 {
 	stream_read_uint8(s, cache_bitmap_order->cacheId); /* cacheId (1 byte) */
 	stream_seek_uint8(s); /* pad1Octet (1 byte) */
@@ -1230,7 +1230,7 @@ void update_read_cache_bitmap_order(STREAM* s, CACHE_BITMAP_ORDER* cache_bitmap_
 	cache_bitmap_order->compressed = compressed;
 }
 
-void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, boolean compressed, uint16 flags)
+void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, uint16 flags)
 {
 	uint8 bitsPerPixelId;
 
@@ -1285,7 +1285,7 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 	cache_bitmap_v2_order->compressed = compressed;
 }
 
-void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, boolean compressed, uint16 flags)
+void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, BOOL compressed, uint16 flags)
 {
 	uint8 bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
@@ -1446,7 +1446,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	int i;
 	int size;
 	uint8 iBitmapFormat;
-	boolean compressed = FALSE;
+	BOOL compressed = FALSE;
 
 	stream_read_uint8(s, cache_brush_order->index); /* cacheEntry (1 byte) */
 
@@ -1512,7 +1512,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	uint16 flags;
-	boolean deleteListPresent;
+	BOOL deleteListPresent;
 	OFFSCREEN_DELETE_LIST* deleteList;
 
 	stream_read_uint16(s, flags); /* flags (2 bytes) */
@@ -1702,7 +1702,7 @@ void update_read_bounds(STREAM* s, rdpBounds* bounds)
 		update_read_coord(s, &bounds->bottom, TRUE);
 }
 
-boolean update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
+BOOL update_recv_primary_order(rdpUpdate* update, STREAM* s, uint8 flags)
 {
 	ORDER_INFO* orderInfo;
 	rdpContext* context = update->context;
@@ -2028,7 +2028,7 @@ void update_recv_altsec_order(rdpUpdate* update, STREAM* s, uint8 flags)
 	}
 }
 
-boolean update_recv_order(rdpUpdate* update, STREAM* s)
+BOOL update_recv_order(rdpUpdate* update, STREAM* s)
 {
 	uint8 controlFlags;
 

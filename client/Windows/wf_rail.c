@@ -41,7 +41,7 @@ void wf_rail_send_client_system_command(wfInfo* wfi, uint32 windowId, uint16 com
 {
 }
 
-void wf_rail_send_activate(wfInfo* wfi, HWND window, boolean enabled)
+void wf_rail_send_activate(wfInfo* wfi, HWND window, BOOL enabled)
 {
 }
 

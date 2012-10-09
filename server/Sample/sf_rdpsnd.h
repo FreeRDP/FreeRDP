@@ -26,7 +26,7 @@
 
 #include "sfreerdp.h"
 
-boolean sf_peer_rdpsnd_init(testPeerContext* context);
+BOOL sf_peer_rdpsnd_init(testPeerContext* context);
 
 #endif /* SF_RDPSND_H */
 

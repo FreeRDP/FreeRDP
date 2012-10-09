@@ -84,7 +84,7 @@
 #define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
 
-static uint32 sc_output_string(IRP* irp, char *src, boolean wide)
+static uint32 sc_output_string(IRP* irp, char *src, BOOL wide)
 {
 	uint8* p;
 	uint32 len;
@@ -179,7 +179,7 @@ static void sc_output_buffer_start(IRP *irp, int length)
 	sc_output_buffer_start_limit(irp, length, 0x7FFFFFFF);
 }
 
-static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, boolean wide)
+static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, BOOL wide)
 {
 	char* buffer;
 	int bufferSize;
@@ -215,7 +215,7 @@ static void sc_input_repos(IRP* irp, uint32 read)
 		stream_seek(irp->input, add);
 }
 
-static void sc_input_reader_name(IRP* irp, char **dest, boolean wide)
+static void sc_input_reader_name(IRP* irp, char **dest, BOOL wide)
 {
 	uint32 dataLength;
 
@@ -330,7 +330,7 @@ static uint32 handle_IsValidContext(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_ListReaders(IRP* irp, boolean wide)
+static uint32 handle_ListReaders(IRP* irp, BOOL wide)
 {
 	uint32 len, rv;
 	SCARDCONTEXT hContext;
@@ -415,7 +415,7 @@ static uint32 handle_ListReaders(IRP* irp, boolean wide)
 	return rv;
 }
 
-static uint32 handle_GetStatusChange(IRP* irp, boolean wide)
+static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -546,7 +546,7 @@ static uint32 handle_Cancel(IRP *irp)
 	return rv;
 }
 
-static uint32 handle_Connect(IRP* irp, boolean wide)
+static uint32 handle_Connect(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -771,7 +771,7 @@ static uint32 handle_State(IRP* irp)
 	return rv;
 }
 
-static DWORD handle_Status(IRP *irp, boolean wide)
+static DWORD handle_Status(IRP *irp, BOOL wide)
 {
 	LONG rv;
 	SCARDHANDLE hCard;
@@ -1195,7 +1195,7 @@ typedef struct _SERVER_SCARD_ATRMASK
 }
 SERVER_SCARD_ATRMASK;
 
-static uint32 handle_LocateCardsByATR(IRP* irp, boolean wide)
+static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	int i, j, k;
@@ -1287,7 +1287,7 @@ static uint32 handle_LocateCardsByATR(IRP* irp, boolean wide)
 	{
 		for (j = 0, rsCur = readerStates; j < readerCount; j++, rsCur++)
 		{
-			boolean equal = 1;
+			BOOL equal = 1;
 			for (k = 0; k < cur->cbAtr; k++)
 			{
 				if ((curAtr->rgbAtr[k] & curAtr->rgbMask[k]) !=
@@ -1327,7 +1327,7 @@ static uint32 handle_LocateCardsByATR(IRP* irp, boolean wide)
 	return rv;
 }
 
-boolean scard_async_op(IRP* irp)
+BOOL scard_async_op(IRP* irp)
 {
 	uint32 ioctl_code;
 

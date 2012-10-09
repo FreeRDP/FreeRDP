@@ -56,7 +56,7 @@ struct _ORDER_INFO
 	sint32 deltaBoundTop;
 	sint32 deltaBoundRight;
 	sint32 deltaBoundBottom;
-	boolean deltaCoordinates;
+	BOOL deltaCoordinates;
 };
 typedef struct _ORDER_INFO ORDER_INFO;
 
@@ -330,7 +330,7 @@ struct _FAST_INDEX_ORDER
 	sint32 opTop;
 	sint32 opRight;
 	sint32 opBottom;
-	boolean opaqueRect;
+	BOOL opaqueRect;
 	sint32 x;
 	sint32 y;
 	uint32 cbData;

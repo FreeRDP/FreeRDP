@@ -22,7 +22,7 @@
 
 #include <freerdp/types.h>
 
-boolean
+BOOL
 jpeg_decompress(uint8* input, uint8* output, int width, int height, int size, int bpp);
 
 #endif /* __BITMAP_H */

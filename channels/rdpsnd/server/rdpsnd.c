@@ -60,7 +60,7 @@ typedef struct _rdpsnd_server
 
 #define RDPSND_PDU_FINISH(_s) \
 { \
-	boolean _r; \
+	BOOL _r; \
 	int _pos; \
 	_pos = stream_get_pos(_s); \
 	stream_set_pos(_s, 2); \
@@ -71,7 +71,7 @@ typedef struct _rdpsnd_server
 	return _r; \
 }
 
-static boolean rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	uint16 i;
 
@@ -109,7 +109,7 @@ static boolean rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	RDPSND_PDU_FINISH(s);
 }
 
-static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	int i;
 
@@ -226,7 +226,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 	return 0;
 }
 
-static boolean rdpsnd_server_initialize(rdpsnd_server_context* context)
+static BOOL rdpsnd_server_initialize(rdpsnd_server_context* context)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
@@ -297,10 +297,10 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	freerdp_dsp_context_reset_adpcm(rdpsnd->dsp_context);
 }
 
-static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
+static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 {
 	int size;
-	boolean r;
+	BOOL r;
 	uint8* src;
 	int frames;
 	int fill_size;
@@ -382,7 +382,7 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	return r;
 }
 
-static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const void* buf, int nframes)
+static BOOL rdpsnd_server_send_samples(rdpsnd_server_context* context, const void* buf, int nframes)
 {
 	int cframes;
 	int cframesize;
@@ -411,7 +411,7 @@ static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const 
 	return TRUE;
 }
 
-static boolean rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
+static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
@@ -424,7 +424,7 @@ static boolean rdpsnd_server_set_volume(rdpsnd_server_context* context, int left
 	RDPSND_PDU_FINISH(s);
 }
 
-static boolean rdpsnd_server_close(rdpsnd_server_context* context)
+static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;

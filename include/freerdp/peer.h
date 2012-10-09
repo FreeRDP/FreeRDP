@@ -31,15 +31,15 @@
 typedef void (*psPeerContextNew)(freerdp_peer* client, rdpContext* context);
 typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
 
-typedef boolean (*psPeerInitialize)(freerdp_peer* client);
-typedef boolean (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
-typedef boolean (*psPeerCheckFileDescriptor)(freerdp_peer* client);
-typedef boolean (*psPeerClose)(freerdp_peer* client);
+typedef BOOL (*psPeerInitialize)(freerdp_peer* client);
+typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
+typedef BOOL (*psPeerCheckFileDescriptor)(freerdp_peer* client);
+typedef BOOL (*psPeerClose)(freerdp_peer* client);
 typedef void (*psPeerDisconnect)(freerdp_peer* client);
-typedef boolean (*psPeerCapabilities)(freerdp_peer* client);
-typedef boolean (*psPeerPostConnect)(freerdp_peer* client);
-typedef boolean (*psPeerActivate)(freerdp_peer* client);
-typedef boolean (*psPeerLogon)(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic);
+typedef BOOL (*psPeerCapabilities)(freerdp_peer* client);
+typedef BOOL (*psPeerPostConnect)(freerdp_peer* client);
+typedef BOOL (*psPeerActivate)(freerdp_peer* client);
+typedef BOOL (*psPeerLogon)(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
 
 typedef int (*psPeerSendChannelData)(freerdp_peer* client, int channelId, uint8* data, int size);
 typedef int (*psPeerReceiveChannelData)(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size);
@@ -73,10 +73,10 @@ struct rdp_freerdp_peer
 	psPeerReceiveChannelData ReceiveChannelData;
 
 	uint32 ack_frame_id;
-	boolean local;
-	boolean connected;
-	boolean activated;
-	boolean authenticated;
+	BOOL local;
+	BOOL connected;
+	BOOL activated;
+	BOOL authenticated;
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
 

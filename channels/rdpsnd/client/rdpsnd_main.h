@@ -26,7 +26,7 @@ typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef boolean (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);

@@ -50,7 +50,7 @@ typedef struct _audin_server
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 
-	boolean opened;
+	BOOL opened;
 } audin_server;
 
 static void audin_server_select_format(audin_server_context* context, int client_format_index)
@@ -73,7 +73,7 @@ static void audin_server_send_version(audin_server* audin, STREAM* s)
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static boolean audin_server_recv_version(audin_server* audin, STREAM* s, uint32 length)
+static BOOL audin_server_recv_version(audin_server* audin, STREAM* s, uint32 length)
 {
 	uint32 Version;
 
@@ -120,7 +120,7 @@ static void audin_server_send_formats(audin_server* audin, STREAM* s)
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static boolean audin_server_recv_formats(audin_server* audin, STREAM* s, uint32 length)
+static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, uint32 length)
 {
 	int i;
 
@@ -189,7 +189,7 @@ static void audin_server_send_open(audin_server* audin, STREAM* s)
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static boolean audin_server_recv_open_reply(audin_server* audin, STREAM* s, uint32 length)
+static BOOL audin_server_recv_open_reply(audin_server* audin, STREAM* s, uint32 length)
 {
 	uint32 Result;
 
@@ -202,7 +202,7 @@ static boolean audin_server_recv_open_reply(audin_server* audin, STREAM* s, uint
 	return TRUE;
 }
 
-static boolean audin_server_recv_data(audin_server* audin, STREAM* s, uint32 length)
+static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, uint32 length)
 {
 	rdpsndFormat* format;
 	int sbytes_per_sample;
@@ -266,7 +266,7 @@ static void* audin_server_thread_func(void* arg)
 	STREAM* s;
 	void* buffer;
 	uint8 MessageId;
-	boolean ready = FALSE;
+	BOOL ready = FALSE;
 	uint32 bytes_returned = 0;
 	audin_server* audin = (audin_server*) arg;
 	freerdp_thread* thread = audin->audin_channel_thread;
@@ -287,7 +287,7 @@ static void* audin_server_thread_func(void* arg)
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &bytes_returned) == FALSE)
 			break;
-		ready = *((boolean*)buffer);
+		ready = *((BOOL*)buffer);
 		WTSFreeMemory(buffer);
 		if (ready)
 			break;
@@ -366,7 +366,7 @@ static void* audin_server_thread_func(void* arg)
 	return NULL;
 }
 
-static boolean audin_server_open(audin_server_context* context)
+static BOOL audin_server_open(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*) context;
 
@@ -386,7 +386,7 @@ static boolean audin_server_open(audin_server_context* context)
 	return FALSE;
 }
 
-static boolean audin_server_close(audin_server_context* context)
+static BOOL audin_server_close(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*) context;
 

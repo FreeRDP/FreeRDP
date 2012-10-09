@@ -73,7 +73,7 @@ static const char* const X11_EVENT_STRINGS[] =
 };
 #endif
 
-static boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
@@ -105,13 +105,13 @@ static boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	xfi->unobscured = event->xvisibility.state == VisibilityUnobscured;
 	return TRUE;
 }
 
-static boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	rdpInput* input;
 	int x, y;
@@ -150,13 +150,13 @@ static boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	int x, y;
 	int flags;
 	Window childWindow;
-	boolean wheel;
-	boolean extended;
+	BOOL wheel;
+	BOOL extended;
 	rdpInput* input;
 
 	input = xfi->instance->input;
@@ -253,12 +253,12 @@ static boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	int x, y;
 	int flags;
 	Window childWindow;
-	boolean extended;
+	BOOL extended;
 	rdpInput* input;
 
 	input = xfi->instance->input;
@@ -335,7 +335,7 @@ static boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_KeyPress(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	KeySym keysym;
 	char str[256];
@@ -352,7 +352,7 @@ static boolean xf_event_KeyPress(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_KeyRelease(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	XEvent next_event;
 
@@ -374,7 +374,7 @@ static boolean xf_event_KeyRelease(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_FocusIn(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (event->xfocus.mode == NotifyGrab)
 		return TRUE;
@@ -405,7 +405,7 @@ static boolean xf_event_FocusIn(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_FocusOut(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (event->xfocus.mode == NotifyUngrab)
 		return TRUE;
@@ -423,7 +423,7 @@ static boolean xf_event_FocusOut(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_MappingNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (event->xmapping.request == MappingModifier)
 	{
@@ -434,7 +434,7 @@ static boolean xf_event_MappingNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_ClientMessage(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if ((event->xclient.message_type == xfi->WM_PROTOCOLS)
 	    && ((Atom) event->xclient.data.l[0] == xfi->WM_DELETE_WINDOW))
@@ -464,7 +464,7 @@ static boolean xf_event_ClientMessage(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_EnterNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (app != TRUE)
 	{
@@ -495,7 +495,7 @@ static boolean xf_event_EnterNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (app != TRUE)
 	{
@@ -506,7 +506,7 @@ static boolean xf_event_LeaveNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
         rdpWindow* window;
         rdpRail* rail = ((rdpContext*) xfi->context)->rail;
@@ -564,7 +564,7 @@ static boolean xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, boolean app)
         return True;
 }
 
-static boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	RECTANGLE_16 rect;
 	rdpWindow* window;
@@ -602,7 +602,7 @@ static boolean xf_event_MapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	rdpWindow* window;
 	rdpUpdate* update = xfi->instance->update;
@@ -632,7 +632,7 @@ static boolean xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (app != TRUE)
 	{
@@ -643,7 +643,7 @@ static boolean xf_event_SelectionNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (app != TRUE)
 	{
@@ -654,7 +654,7 @@ static boolean xf_event_SelectionRequest(xfInfo* xfi, XEvent* event, boolean app
 	return TRUE;
 }
 
-static boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_SelectionClear(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	if (app != TRUE)
 	{
@@ -665,7 +665,7 @@ static boolean xf_event_SelectionClear(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
+static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	//This section handles sending the appropriate commands to the rail server
 	//when the window has been minimized, maximized, restored locally 
@@ -683,10 +683,10 @@ static boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 	        if ((((Atom)event->xproperty.atom == xfi->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
 	            (((Atom)event->xproperty.atom == xfi->WM_STATE) && (event->xproperty.state != PropertyDelete)))
 	        {
-	                boolean status;
-	                boolean maxVert = FALSE;
-	                boolean maxHorz = FALSE;
-	                boolean minimized = FALSE;
+	                BOOL status;
+	                BOOL maxVert = FALSE;
+	                BOOL maxHorz = FALSE;
+	                BOOL minimized = FALSE;
 	                unsigned long nitems;
 	                unsigned long bytes;
 	                unsigned char* prop;
@@ -765,7 +765,7 @@ static boolean xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, boolean app)
 	return TRUE;
 }
 
-static boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
+static BOOL xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*event)
 {
 	if (! xfi->remote_app)
 		return FALSE;
@@ -850,9 +850,9 @@ static boolean xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*e
 }
 
 
-boolean xf_event_process(freerdp* instance, XEvent* event)
+BOOL xf_event_process(freerdp* instance, XEvent* event)
 {
-	boolean status = TRUE;
+	BOOL status = TRUE;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 	rdpWindow* window;
