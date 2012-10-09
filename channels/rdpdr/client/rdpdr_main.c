@@ -44,6 +44,7 @@
 #include "rdpdr_capabilities.h"
 #include "devman.h"
 #include "irp.h"
+
 #include "rdpdr_main.h"
 
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)

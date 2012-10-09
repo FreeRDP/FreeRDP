@@ -27,8 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/constants.h>
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/rail.h>
@@ -250,7 +252,32 @@ static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	freerdp_event_free(event);
 }
 
-DEFINE_SVC_PLUGIN(rail, "rail", 
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)
+#ifdef WITH_STATIC_PLUGINS
+#define VirtualChannelEntry	rail_VirtualChannelEntry
+#endif
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	railPlugin* _p;
+
+	_p = (railPlugin*) malloc(sizeof(railPlugin));
+	ZeroMemory(_p, sizeof(railPlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP |
+			CHANNEL_OPTION_COMPRESS_RDP |
+			CHANNEL_OPTION_SHOW_PROTOCOL;
+
+	strcpy(_p->plugin.channel_def.name, "rail");
+
+	_p->plugin.connect_callback = rail_process_connect;
+	_p->plugin.receive_callback = rail_process_receive;
+	_p->plugin.event_callback = rail_process_event;
+	_p->plugin.terminate_callback = rail_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
 

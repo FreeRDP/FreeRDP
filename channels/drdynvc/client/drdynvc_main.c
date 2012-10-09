@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -359,9 +361,35 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 
 	if (drdynvc->channel_mgr != NULL)
 		dvcman_free(drdynvc->channel_mgr);
+
 	xfree(drdynvc);
 }
 
-DEFINE_SVC_PLUGIN(drdynvc, "drdynvc",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP)
+#ifdef WITH_STATIC_PLUGINS
+#define VirtualChannelEntry	drdynvc_VirtualChannelEntry
+#endif
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	drdynvcPlugin* _p;
+
+	_p = (drdynvcPlugin*) malloc(sizeof(drdynvcPlugin));
+	ZeroMemory(_p, sizeof(drdynvcPlugin));
+
+	_p->plugin.channel_def.options =
+		CHANNEL_OPTION_INITIALIZED |
+		CHANNEL_OPTION_ENCRYPT_RDP |
+		CHANNEL_OPTION_COMPRESS_RDP;
+
+	strcpy(_p->plugin.channel_def.name, "drdynvc");
+
+	_p->plugin.connect_callback = drdynvc_process_connect;
+	_p->plugin.receive_callback = drdynvc_process_receive;
+	_p->plugin.event_callback = drdynvc_process_event;
+	_p->plugin.terminate_callback = drdynvc_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
+

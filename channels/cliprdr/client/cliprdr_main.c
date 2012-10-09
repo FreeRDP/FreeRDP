@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
@@ -268,6 +271,33 @@ static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-DEFINE_SVC_PLUGIN(cliprdr, "cliprdr",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)
+#ifdef WITH_STATIC_PLUGINS
+#define VirtualChannelEntry	cliprdr_VirtualChannelEntry
+#endif
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	cliprdrPlugin* _p;
+
+	_p = (cliprdrPlugin*) malloc(sizeof(cliprdrPlugin));
+	ZeroMemory(_p, sizeof(cliprdrPlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP |
+			CHANNEL_OPTION_COMPRESS_RDP |
+			CHANNEL_OPTION_SHOW_PROTOCOL;
+
+	strcpy(_p->plugin.channel_def.name, "cliprdr");
+
+	_p->plugin.connect_callback = cliprdr_process_connect;
+	_p->plugin.receive_callback = cliprdr_process_receive;
+	_p->plugin.event_callback = cliprdr_process_event;
+	_p->plugin.terminate_callback = cliprdr_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
+
+
