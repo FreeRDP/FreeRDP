@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows RAIL
  *
  * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>

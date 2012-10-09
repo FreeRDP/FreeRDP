@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Bitmap Cache V2
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

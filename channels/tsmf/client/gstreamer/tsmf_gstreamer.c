@@ -1,5 +1,5 @@
 /*
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - GStreamer Decoder
  *
  * (C) Copyright 2012 HP Development Company, LLC 

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RPC over HTTP
  *
  * Copyright 2012 Fujitsu Technology Solutions GmbH

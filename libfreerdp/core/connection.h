@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Connection Sequence
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

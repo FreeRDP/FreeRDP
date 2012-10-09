@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Smartcard Device Service Virtual Channel
  *
  * Copyright 2011 O.S. Systems Software Ltda.

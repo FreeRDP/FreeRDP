@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * T.125 Multipoint Communication Service (MCS) Protocol
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

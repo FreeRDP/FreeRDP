@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * ASN.1 Basic Encoding Rules (DER)
  *
  * Copyright 2011 Samsung, Author Jiten Pathy

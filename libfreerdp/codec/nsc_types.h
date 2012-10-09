@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NSCodec Library
  *
  * Copyright 2011 Samsung, Author Jiten Pathy

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X.224 Transport Protocol Data Units (TPDUs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

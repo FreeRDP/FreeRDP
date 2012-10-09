@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RAIL Window List
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NTLM Security Package Unit Tests
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>

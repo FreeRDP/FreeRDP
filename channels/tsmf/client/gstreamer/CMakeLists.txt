@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script for gstreamer plugin
 #
 # (C) Copyright 2012 Hewlett-Packard Development Company, L.P.

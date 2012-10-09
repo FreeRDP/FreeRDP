@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Color Conversion Unit Tests
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>

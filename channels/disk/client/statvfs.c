@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * statvfs emulation für windows
  *
  * Copyright 2012 Gerald Richter

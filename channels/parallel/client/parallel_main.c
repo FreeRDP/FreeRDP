@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Redirected Parallel Port Device Service
  *
  * Copyright 2010 O.S. Systems Software Ltda.

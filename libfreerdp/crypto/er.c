@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * ASN.1 Encoding Rules (BER/DER common functions)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

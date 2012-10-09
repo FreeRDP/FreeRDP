@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Static Virtual Channel Interface
  *
  * Copyright 2009-2011 Jay Sorg

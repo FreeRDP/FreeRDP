@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL) Orders
  *
  * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>

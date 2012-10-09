@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Compressed Bitmap
  *
  * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>

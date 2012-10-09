@@ -1,5 +1,5 @@
 /*
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Double-linked List Utils
  *
  * Copyright 2011 Vic Lee
