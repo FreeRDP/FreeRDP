@@ -387,10 +387,10 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		audin_pulse_stream_state_callback, pulse);
 	pa_stream_set_read_callback(pulse->stream,
 		audin_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = (UINT32_t) -1;
-	buffer_attr.tlength = (UINT32_t) -1;
-	buffer_attr.prebuf = (UINT32_t) -1;
-	buffer_attr.minreq = (UINT32_t) -1;
+	buffer_attr.maxlength = (UINT32) -1;
+	buffer_attr.tlength = (UINT32) -1;
+	buffer_attr.prebuf = (UINT32) -1;
+	buffer_attr.minreq = (UINT32) -1;
 	/* 500ms latency */
 	buffer_attr.fragsize = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	if (pa_stream_connect_record(pulse->stream,

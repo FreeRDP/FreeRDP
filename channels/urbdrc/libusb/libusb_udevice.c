@@ -334,7 +334,7 @@ func_iso_data_init(ISO_USER_DATA * iso_user_data, UINT32 numPacket, UINT32 buffs
 
 
 static int
-func_config_release_all_interface(LIBUSB_DEVICE_HANDLE *libusb_handle, UINT32_t NumInterfaces)
+func_config_release_all_interface(LIBUSB_DEVICE_HANDLE *libusb_handle, UINT32 NumInterfaces)
 {
 	int i, ret;
 	for (i = 0; i < NumInterfaces; i++)

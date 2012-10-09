@@ -636,8 +636,8 @@ int add_mppc_suite(void)
 void test_mppc(void)
 {
     struct rdp_mppc_dec* rmppc;
-    UINT32_t roff;
-    UINT32_t rlen;
+    UINT32 roff;
+    UINT32 rlen;
     long int dur;
 
     struct timeval start_time;

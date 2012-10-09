@@ -29,18 +29,16 @@
 #include "request_queue.h"
 #include "urbdrc_main.h"
 
-
-
 typedef struct libusb_device				LIBUSB_DEVICE;
 typedef struct libusb_device_handle			LIBUSB_DEVICE_HANDLE;
 typedef struct libusb_device_descriptor		LIBUSB_DEVICE_DESCRIPTOR;
 typedef struct libusb_config_descriptor		LIBUSB_CONFIG_DESCRIPTOR;
-typedef struct libusb_interface				LIBUSB_INTERFACE;
-typedef struct libusb_interface_descriptor	LIBUSB_INTERFACE_DESCRIPTOR;
-typedef struct libusb_endpoint_descriptor	LIBUSB_ENDPOINT_DESCEIPTOR;
-
+typedef struct libusb_interface			LIBUSB_INTERFACE;
+typedef struct libusb_interface_descriptor		LIBUSB_INTERFACE_DESCRIPTOR;
+typedef struct libusb_endpoint_descriptor		LIBUSB_ENDPOINT_DESCEIPTOR;
 
 typedef struct _UDEVICE UDEVICE;
+
 struct _UDEVICE
 {
 	IUDEVICE iface;
@@ -75,11 +73,8 @@ struct _UDEVICE
 };
 typedef UDEVICE * PUDEVICE;
 
-
-int
-udev_new_by_id(UINT16_t idVendor, UINT16_t idProduct, IUDEVICE ***devArray);
-IUDEVICE*
-udev_new_by_addr(int bus_number, int dev_number);
+int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE ***devArray);
+IUDEVICE* udev_new_by_addr(int bus_number, int dev_number);
 
 extern int libusb_debug;
 

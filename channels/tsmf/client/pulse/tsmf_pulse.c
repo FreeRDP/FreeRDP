@@ -243,9 +243,9 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 		tsmf_pulse_stream_request_callback, pulse);
 	buffer_attr.maxlength = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	buffer_attr.tlength = pa_usec_to_bytes(250000, &pulse->sample_spec);
-	buffer_attr.prebuf = (UINT32_t) -1;
-	buffer_attr.minreq = (UINT32_t) -1;
-	buffer_attr.fragsize = (UINT32_t) -1;
+	buffer_attr.prebuf = (UINT32) -1;
+	buffer_attr.minreq = (UINT32) -1;
+	buffer_attr.fragsize = (UINT32) -1;
 	if (pa_stream_connect_playback(pulse->stream,
 		pulse->device[0] ? pulse->device : NULL, &buffer_attr,
 		PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
