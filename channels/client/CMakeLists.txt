@@ -47,7 +47,7 @@ endforeach()
 set(VIRTUAL_CHANNEL_ENTRY_TABLE "${VIRTUAL_CHANNEL_ENTRY_TABLE}\n\t{ \"\", NULL }")
 set(DEVICE_SERVICE_ENTRY_TABLE "${DEVICE_SERVICE_ENTRY_TABLE}\n\t{ \"\", NULL }")
 
-configure_file(tables.c.in tables.c)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tables.c.in ${CMAKE_CURRENT_SOURCE_DIR}/tables.c)
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
