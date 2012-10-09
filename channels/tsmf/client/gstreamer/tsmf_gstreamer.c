@@ -46,8 +46,12 @@
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
 
-#define SHARED_MEM_KEY 7777
-#define TRY_DECODEBIN 0
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#define SHARED_MEM_KEY	7777
+#define TRY_DECODEBIN	0
 
 typedef struct _TSMFGstreamerDecoder
 {
@@ -80,10 +84,10 @@ typedef struct _TSMFGstreamerDecoder
 	Window subwin;
 	int xOffset;
 	int yOffset;
-	bool offsetObtained;
+	BOOL offsetObtained;
 	int linked;
 	double gstVolume;
-	bool gstMuted;
+	BOOL gstMuted;
 
 	int pipeline_start_time_valid; /* We've set the start time and have not reset the pipeline */
 	int shutdown; /* The decoder stream is shutting down */
@@ -685,7 +689,7 @@ static void tsmf_gstreamer_pipeline_send_end_of_stream(TSMFGstreamerDecoder * md
 /* code from TI to check whether OMX is being lock or not */
 static BOOL tsmf_gstreamer_pipeline_omx_available()
 {
-	bool ret = TRUE;
+	BOOL ret = TRUE;
 	int shm_fd = 0;
 	struct shm_info
 	{
@@ -788,7 +792,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 		return FALSE;
 	}
 
-	bool OMXavailable = FALSE;
+	BOOL OMXavailable = FALSE;
 
 #ifdef __arm__
 	OMXavailable = tsmf_gstreamer_pipeline_omx_available();
@@ -800,8 +804,8 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	const char *blank = ""; 
 	printf("%s", blank);
 
-	bool hwaccelflu = FALSE;
-	bool hwaccelomx = FALSE;
+	BOOL hwaccelflu = FALSE;
+	BOOL hwaccelomx = FALSE;
 
 	switch (mdecoder->tsmf_media_type.SubType)
 	{
@@ -1100,14 +1104,16 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
         			UINT64 start_time, UINT64 end_time, UINT64 duration)
 {
-	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
+	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder*) decoder;
+
 	if (!mdecoder)
 	{
 		return FALSE;
 	}
 
 	int mutexret = pthread_mutex_lock(&mdecoder->gst_mutex);
-	if(mutexret != 0)
+
+	if (mutexret != 0)
 		return FALSE;
 
 	if (mdecoder->shutdown)
@@ -1126,9 +1132,15 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
          */
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)", start_time, end_time, duration, mdecoder->last_sample_end_time);
+	{
+		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+				start_time, end_time, duration, mdecoder->last_sample_end_time);
+	}
 	else
-		DEBUG_DVC("tsmf_gstreamer_decodeEX_AUDIO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)", start_time, end_time, duration, mdecoder->last_sample_end_time);
+	{
+		DEBUG_DVC("tsmf_gstreamer_decodeEX_AUDIO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+				start_time, end_time, duration, mdecoder->last_sample_end_time);
+	}
 
 	if (mdecoder->gst_caps == NULL) 
 	{
@@ -1322,7 +1334,7 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, UINT32 newVolum
 	if (!G_IS_OBJECT(mdecoder->aVolume))
 		return;
 
-	mdecoder->gstMuted = (bool) muted;
+	mdecoder->gstMuted = (BOOL) muted;
 	DEBUG_DVC("tsmf_gstreamer_change_volume: mute=[%d]", mdecoder->gstMuted);
 	g_object_set(mdecoder->aVolume, "mute", mdecoder->gstMuted, NULL);
 	mdecoder->gstVolume = (double) newVolume / (double) 10000;

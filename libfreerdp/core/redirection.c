@@ -89,7 +89,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 		stream_read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("loadBalanceInfo:");
-		freerdp_hexdump(redirection->loadBalanceInfo.data, redirection->loadBalanceInfo.length);
+		freerdp_hexdump(redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #endif
 	}
 

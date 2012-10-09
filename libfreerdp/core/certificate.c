@@ -437,14 +437,14 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			rdpCertInfo cert_info;
 			DEBUG_CERTIFICATE("License Server Certificate");
 			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
-			DEBUG_LICENSE("modulus length:%d", cert_info.ModulusLength);
+			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
 			free(cert_info.Modulus);
 		}
 		else if (numCertBlobs - i == 1)
 		{
 			DEBUG_CERTIFICATE("Terminal Server Certificate");
 			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->cert_info);
-			DEBUG_CERTIFICATE("modulus length:%d", certificate->cert_info.modulus.length);
+			DEBUG_CERTIFICATE("modulus length:%d", (int) certificate->cert_info.ModulusLength);
 		}
 	}
 
