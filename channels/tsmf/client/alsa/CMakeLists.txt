@@ -27,7 +27,7 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_library(tsmf_alsa ${TSMF_ALSA_SRCS})
 set_target_properties(tsmf_alsa PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(tsmf_alsa freerdp)
 else()
 	target_link_libraries(tsmf_alsa freerdp-utils)

@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} winpr)
 else()
 	target_link_libraries(${MODULE_NAME} winpr-utils)

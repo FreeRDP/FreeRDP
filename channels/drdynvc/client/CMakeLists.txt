@@ -35,7 +35,7 @@ add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} freerdp winpr)
 else()
 	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-synch)

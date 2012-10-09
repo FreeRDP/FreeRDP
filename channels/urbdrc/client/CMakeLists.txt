@@ -40,7 +40,7 @@ set(${MODULE_PREFIX}_LIBS
 	udev
 	uuid)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 	target_link_libraries(${MODULE_NAME} ${MODULE_PREFIX}_LIBS)
 else()

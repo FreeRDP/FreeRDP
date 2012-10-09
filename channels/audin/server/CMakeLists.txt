@@ -21,7 +21,7 @@ set(${MODULE_PREFIX}_SRCS
 	audin.c
 	PARENT_SCOPE)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
 else()
 	set(${MODULE_PREFIX}_LIBS freerdp-utils freerdp-channels PARENT_SCOPE)

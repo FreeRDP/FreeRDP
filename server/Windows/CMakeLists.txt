@@ -51,7 +51,7 @@ if(WITH_WIN8)
 	set(${MODULE_PREFIX}_LIBS d3d11 dxgi dxguid)
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
 

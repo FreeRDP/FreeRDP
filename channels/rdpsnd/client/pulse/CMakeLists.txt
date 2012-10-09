@@ -26,7 +26,7 @@ include_directories(${PULSEAUDIO_INCLUDE_DIR})
 add_library(rdpsnd_pulse ${RDPSND_PULSE_SRCS})
 set_target_properties(rdpsnd_pulse PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(rdpsnd_pulse freerdp)
 else()
 	target_link_libraries(rdpsnd_pulse freerdp-utils)

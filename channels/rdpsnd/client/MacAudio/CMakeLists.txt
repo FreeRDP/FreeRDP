@@ -25,7 +25,7 @@ include_directories(${MACAUDIO_INCLUDE_DIRS})
 add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
 set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(rdpsnd_macaudio freerdp)
 else()
 	target_link_libraries(rdpsnd_macaudio freerdp-utils)

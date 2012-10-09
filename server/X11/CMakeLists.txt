@@ -63,7 +63,7 @@ if(WITH_XTEST)
         target_link_libraries(${MODULE_NAME} ${XTEST_LIBRARIES})
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} freerdp)
 	target_link_libraries(${MODULE_NAME} winpr)
 else()

@@ -18,7 +18,7 @@ endif()
 option(BUILD_TESTING "Build unit tests" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	option(WITH_MONOLITHIC_BUILD "Use monolithic build" OFF)
+	option(MONOLITHIC_BUILD "Use monolithic build" OFF)
 endif()
 
 option(WITH_CLIENT "Build client binaries" ON)
