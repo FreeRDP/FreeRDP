@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Thread Utils
  *
  * Copyright 2011 Vic Lee
@@ -93,5 +93,5 @@ void freerdp_thread_free(freerdp_thread* thread)
 	CloseHandle(thread->mutex);
 	thread->mutex = NULL;
 
-	xfree(thread);
+	free(thread);
 }

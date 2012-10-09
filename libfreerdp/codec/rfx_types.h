@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library
  *
  * Copyright 2011 Vic Lee
@@ -41,17 +41,17 @@ struct _RFX_CONTEXT_PRIV
 
 	RFX_POOL* pool; /* memory pool */
 
-	sint16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	sint16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	sint16 cr_b_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
+	INT16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
+	INT16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
+	INT16 cr_b_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
  
- 	sint16* y_r_buffer;
-	sint16* cb_g_buffer;
-	sint16* cr_b_buffer;
+ 	INT16* y_r_buffer;
+	INT16* cb_g_buffer;
+	INT16* cr_b_buffer;
  
-	sint16 dwt_mem[32 * 32 * 2 * 2 + 8]; /* maximum sub-band width is 32 */
+	INT16 dwt_mem[32 * 32 * 2 * 2 + 8]; /* maximum sub-band width is 32 */
 
-	sint16* dwt_buffer;
+	INT16* dwt_buffer;
 
 	/* profilers */
 	PROFILER_DEFINE(prof_rfx_decode_rgb);

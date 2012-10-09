@@ -39,11 +39,11 @@
 #define __int3264 __int32
 #endif
 
-#ifdef OBJC_BOOL_DEFINED
-typedef OBJC_BOOL BOOL, *PBOOL, *LPBOOL;
-#else
-typedef int BOOL, *PBOOL, *LPBOOL;
+#ifndef __OBJC__
+typedef int BOOL;
 #endif
+
+typedef BOOL *PBOOL, *LPBOOL;
 
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
@@ -70,7 +70,10 @@ typedef short SHORT;
 #define CONST const
 #define CALLBACK
 
-typedef void* HANDLE, *LPHANDLE;
+typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+typedef HANDLE HINSTANCE;
+typedef HANDLE HMODULE;
+
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
 typedef signed char INT8;
@@ -259,7 +262,6 @@ typedef struct _PROCESS_INFORMATION
 typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
 typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
-typedef void* HMODULE;
 typedef void* FARPROC;
 
 #endif

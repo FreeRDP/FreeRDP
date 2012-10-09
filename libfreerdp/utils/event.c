@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Events
  *
  * Copyright 2011 Vic Lee
@@ -27,11 +27,11 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/plugins/cliprdr.h>
-#include <freerdp/plugins/tsmf.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/tsmf.h>
 #include <freerdp/rail.h>
 
-static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_cliprdr_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 
@@ -54,7 +54,7 @@ static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 	return event;
 }
 
-static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_tsmf_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 
@@ -71,14 +71,14 @@ static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
 	return event;
 }
 
-static RDP_EVENT* freerdp_rail_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_rail_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 	event = xnew(RDP_EVENT);
 	return event;
 }
 
-RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 	RDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
 {
 	RDP_EVENT* event = NULL;
@@ -117,14 +117,14 @@ static void freerdp_cliprdr_event_free(RDP_EVENT* event)
 		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
 			{
 				RDP_CB_FORMAT_LIST_EVENT* cb_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
-				xfree(cb_event->formats);
-				xfree(cb_event->raw_format_data);
+				free(cb_event->formats);
+				free(cb_event->raw_format_data);
 			}
 			break;
 		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
 			{
 				RDP_CB_DATA_RESPONSE_EVENT* cb_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
-				xfree(cb_event->data);
+				free(cb_event->data);
 			}
 			break;
 	}
@@ -137,8 +137,8 @@ static void freerdp_tsmf_event_free(RDP_EVENT* event)
 		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
 			{
 				RDP_VIDEO_FRAME_EVENT* vevent = (RDP_VIDEO_FRAME_EVENT*)event;
-				xfree(vevent->frame_data);
-				xfree(vevent->visible_rects);
+				free(vevent->frame_data);
+				free(vevent->visible_rects);
 			}
 			break;
 	}
@@ -167,6 +167,6 @@ void freerdp_event_free(RDP_EVENT* event)
 				freerdp_rail_event_free(event);
 				break;
 		}
-		xfree(event);
+		free(event);
 	}
 }

@@ -1,0 +1,16 @@
+
+set(CHANNEL_TYPE "device")
+set(CHANNEL_SHORT_NAME "printer")
+set(CHANNEL_LONG_NAME "Print Virtual Channel Extension")
+set(CHANNEL_SPECIFICATIONS "[MS-RDPEPC]")
+
+string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
+
+if(WIN32)
+	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+elseif(WITH_CUPS)
+	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+else()
+	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" OFF)
+endif()
+

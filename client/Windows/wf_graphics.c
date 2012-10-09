@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows Graphical Objects
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,13 +27,13 @@
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata)
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
 	HDC hdc;
 	int negHeight;
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
-	uint8* cdata = NULL;
+	BYTE* cdata = NULL;
 
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
@@ -65,13 +65,13 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, 
 	return bitmap;
 }
 
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data)
 {
 	HDC hdc;
 	wfBitmap* image;
 
 	hdc = GetDC(NULL);
-	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
+	image = (wfBitmap*) malloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
 	image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
@@ -143,24 +143,24 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed, int codec_id)
+		BYTE* data, int width, int height, int bpp, int length, BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 
 	size = width * height * (bpp / 8);
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	if (compressed)
 	{
-		boolean status;
+		BOOL status;
 
 		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		if (status != true)
+		if (status != TRUE)
 		{
 			printf("Bitmap Decompression Failed\n");
 		}
@@ -170,12 +170,12 @@ void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		freerdp_image_flip(data, bitmap->data, width, height, bpp);
 	}
 
-	bitmap->compressed = false;
+	bitmap->compressed = FALSE;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }
 
-void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 

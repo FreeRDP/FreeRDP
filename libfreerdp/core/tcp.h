@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Transmission Control Protocol (TCP)
  *
  * Copyright 2011 Vic Lee
@@ -37,19 +37,19 @@ struct rdp_tcp
 {
 	int sockfd;
 	char ip_address[32];
-	uint8 mac_address[6];
+	BYTE mac_address[6];
 	struct rdp_settings* settings;
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
 };
 
-boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port);
-boolean tcp_disconnect(rdpTcp* tcp);
-int tcp_read(rdpTcp* tcp, uint8* data, int length);
-int tcp_write(rdpTcp* tcp, uint8* data, int length);
-boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking);
-boolean tcp_set_keep_alive_mode(rdpTcp* tcp);
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
+BOOL tcp_disconnect(rdpTcp* tcp);
+int tcp_read(rdpTcp* tcp, BYTE* data, int length);
+int tcp_write(rdpTcp* tcp, BYTE* data, int length);
+BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
+BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
 
 rdpTcp* tcp_new(rdpSettings* settings);
 void tcp_free(rdpTcp* tcp);

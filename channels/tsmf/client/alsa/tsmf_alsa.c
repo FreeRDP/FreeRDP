@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - ALSA Audio Device
  *
  * Copyright 2010-2011 Vic Lee
@@ -39,16 +39,16 @@ typedef struct _TSMFALSAAudioDevice
 
 	char device[32];
 	snd_pcm_t* out_handle;
-	uint32 source_rate;
-	uint32 actual_rate;
-	uint32 source_channels;
-	uint32 actual_channels;
-	uint32 bytes_per_sample;
+	UINT32 source_rate;
+	UINT32 actual_rate;
+	UINT32 source_channels;
+	UINT32 actual_channels;
+	UINT32 bytes_per_sample;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 } TSMFALSAAudioDevice;
 
-static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
+static BOOL tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
 {
 	int error;
 
@@ -56,14 +56,14 @@ static boolean tsmf_alsa_open_device(TSMFALSAAudioDevice* alsa)
 	if (error < 0)
 	{
 		DEBUG_WARN("failed to open device %s", alsa->device);
-		return false;
+		return FALSE;
 	}
 
 	DEBUG_DVC("open device %s", alsa->device);
-	return true;
+	return TRUE;
 }
 
-static boolean tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
+static BOOL tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 {
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
@@ -80,8 +80,8 @@ static boolean tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 	return tsmf_alsa_open_device(alsa);
 }
 
-static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
-	uint32 sample_rate, uint32 channels, uint32 bits_per_sample)
+static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio,
+	UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample)
 {
 	int error;
 	snd_pcm_uframes_t frames;
@@ -90,7 +90,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
 	if (!alsa->out_handle)
-		return false;
+		return FALSE;
 
 	snd_pcm_drop(alsa->out_handle);
 
@@ -102,7 +102,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	if (error < 0)
 	{
 		DEBUG_WARN("snd_pcm_hw_params_malloc failed");
-		return false;
+		return FALSE;
 	}
 	snd_pcm_hw_params_any(alsa->out_handle, hw_params);
 	snd_pcm_hw_params_set_access(alsa->out_handle, hw_params,
@@ -123,7 +123,7 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	if (error < 0)
 	{
 		DEBUG_WARN("snd_pcm_sw_params_malloc");
-		return false;
+		return FALSE;
 	}
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_set_start_threshold(alsa->out_handle, sw_params,
@@ -144,17 +144,17 @@ static boolean tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 			alsa->actual_rate, alsa->actual_channels,
 			alsa->source_rate, alsa->source_channels);
 	}
-	return true;
+	return TRUE;
 }
 
-static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
+static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 {
 	int len;
 	int error;
 	int frames;
-	uint8* end;
-	uint8* src;
-	uint8* pindex;
+	BYTE* end;
+	BYTE* src;
+	BYTE* pindex;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
@@ -209,14 +209,14 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 			pindex += error * rbytes_per_frame;
 		}
 	}
-	xfree(data);
+	free(data);
 
-	return true;
+	return TRUE;
 }
 
-static uint64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
+static UINT64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
 {
-	uint64 latency = 0;
+	UINT64 latency = 0;
 	snd_pcm_sframes_t frames = 0;
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
@@ -224,7 +224,7 @@ static uint64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
 		snd_pcm_delay(alsa->out_handle, &frames) == 0 &&
 		frames > 0)
 	{
-		latency = ((uint64)frames) * 10000000LL / (uint64)alsa->actual_rate;
+		latency = ((UINT64)frames) * 10000000LL / (UINT64)alsa->actual_rate;
 	}
 	return latency;
 }
@@ -245,7 +245,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 		snd_pcm_close(alsa->out_handle);
 	}
 	freerdp_dsp_context_free(alsa->dsp_context);
-	xfree(alsa);
+	free(alsa);
 }
 
 ITSMFAudioDevice* TSMFAudioDeviceEntry(void)

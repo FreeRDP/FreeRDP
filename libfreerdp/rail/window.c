@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RAIL Windows
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -34,70 +34,70 @@
 
 struct _WINDOW_STYLE
 {
-	uint32 style;
+	UINT32 style;
 	const char* name;
-	boolean multi;
+	BOOL multi;
 };
 typedef struct _WINDOW_STYLE WINDOW_STYLE;
 
 static const WINDOW_STYLE WINDOW_STYLES[] =
 {
-	{ WS_BORDER, "WS_BORDER", false },
-	{ WS_CAPTION, "WS_CAPTION", false },
-	{ WS_CHILD, "WS_CHILD", false },
-	{ WS_CLIPCHILDREN, "WS_CLIPCHILDREN", false },
-	{ WS_CLIPSIBLINGS, "WS_CLIPSIBLINGS", false },
-	{ WS_DISABLED, "WS_DISABLED", false },
-	{ WS_DLGFRAME, "WS_DLGFRAME", false },
-	{ WS_GROUP, "WS_GROUP", false },
-	{ WS_HSCROLL, "WS_HSCROLL", false },
-	{ WS_ICONIC, "WS_ICONIC", false },
-	{ WS_MAXIMIZE, "WS_MAXIMIZE", false },
-	{ WS_MAXIMIZEBOX, "WS_MAXIMIZEBOX", false },
-	{ WS_MINIMIZE, "WS_MINIMIZE", false },
-	{ WS_MINIMIZEBOX, "WS_MINIMIZEBOX", false },
-	{ WS_OVERLAPPED, "WS_OVERLAPPED", false },
-	{ WS_OVERLAPPEDWINDOW, "WS_OVERLAPPEDWINDOW", true },
-	{ WS_POPUP, "WS_POPUP", false },
-	{ WS_POPUPWINDOW, "WS_POPUPWINDOW", true },
-	{ WS_SIZEBOX, "WS_SIZEBOX", false },
-	{ WS_SYSMENU, "WS_SYSMENU", false },
-	{ WS_TABSTOP, "WS_TABSTOP", false },
-	{ WS_THICKFRAME, "WS_THICKFRAME", false },
-	{ WS_VISIBLE, "WS_VISIBLE", false }
+	{ WS_BORDER, "WS_BORDER", FALSE },
+	{ WS_CAPTION, "WS_CAPTION", FALSE },
+	{ WS_CHILD, "WS_CHILD", FALSE },
+	{ WS_CLIPCHILDREN, "WS_CLIPCHILDREN", FALSE },
+	{ WS_CLIPSIBLINGS, "WS_CLIPSIBLINGS", FALSE },
+	{ WS_DISABLED, "WS_DISABLED", FALSE },
+	{ WS_DLGFRAME, "WS_DLGFRAME", FALSE },
+	{ WS_GROUP, "WS_GROUP", FALSE },
+	{ WS_HSCROLL, "WS_HSCROLL", FALSE },
+	{ WS_ICONIC, "WS_ICONIC", FALSE },
+	{ WS_MAXIMIZE, "WS_MAXIMIZE", FALSE },
+	{ WS_MAXIMIZEBOX, "WS_MAXIMIZEBOX", FALSE },
+	{ WS_MINIMIZE, "WS_MINIMIZE", FALSE },
+	{ WS_MINIMIZEBOX, "WS_MINIMIZEBOX", FALSE },
+	{ WS_OVERLAPPED, "WS_OVERLAPPED", FALSE },
+	{ WS_OVERLAPPEDWINDOW, "WS_OVERLAPPEDWINDOW", TRUE },
+	{ WS_POPUP, "WS_POPUP", FALSE },
+	{ WS_POPUPWINDOW, "WS_POPUPWINDOW", TRUE },
+	{ WS_SIZEBOX, "WS_SIZEBOX", FALSE },
+	{ WS_SYSMENU, "WS_SYSMENU", FALSE },
+	{ WS_TABSTOP, "WS_TABSTOP", FALSE },
+	{ WS_THICKFRAME, "WS_THICKFRAME", FALSE },
+	{ WS_VISIBLE, "WS_VISIBLE", FALSE }
 };
 
 static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 {
-	{ WS_EX_ACCEPTFILES, "WS_EX_ACCEPTFILES", false },
-	{ WS_EX_APPWINDOW, "WS_EX_APPWINDOW", false },
-	{ WS_EX_CLIENTEDGE, "WS_EX_CLIENTEDGE", false },
-	{ WS_EX_COMPOSITED, "WS_EX_COMPOSITED", false },
-	{ WS_EX_CONTEXTHELP, "WS_EX_CONTEXTHELP", false },
-	{ WS_EX_CONTROLPARENT, "WS_EX_CONTROLPARENT", false },
-	{ WS_EX_DLGMODALFRAME, "WS_EX_DLGMODALFRAME", false },
-	{ WS_EX_LAYERED, "WS_EX_LAYERED", false },
-	{ WS_EX_LAYOUTRTL, "WS_EX_LAYOUTRTL", false },
-	{ WS_EX_LEFT, "WS_EX_LEFT", false },
-	{ WS_EX_LEFTSCROLLBAR, "WS_EX_LEFTSCROLLBAR", false },
-	{ WS_EX_LTRREADING, "WS_EX_LTRREADING", false },
-	{ WS_EX_MDICHILD, "WS_EX_MDICHILD", false },
-	{ WS_EX_NOACTIVATE, "WS_EX_NOACTIVATE", false },
-	{ WS_EX_NOINHERITLAYOUT, "WS_EX_NOINHERITLAYOUT", false },
-	{ WS_EX_NOPARENTNOTIFY, "WS_EX_NOPARENTNOTIFY", false },
-	{ WS_EX_OVERLAPPEDWINDOW, "WS_EX_OVERLAPPEDWINDOW", true },
-	{ WS_EX_PALETTEWINDOW, "WS_EX_PALETTEWINDOW", true },
-	{ WS_EX_RIGHT, "WS_EX_RIGHT", false },
-	{ WS_EX_RIGHTSCROLLBAR, "WS_EX_RIGHTSCROLLBAR", false },
-	{ WS_EX_RTLREADING, "WS_EX_RTLREADING", false },
-	{ WS_EX_STATICEDGE, "WS_EX_STATICEDGE", false },
-	{ WS_EX_TOOLWINDOW, "WS_EX_TOOLWINDOW", false },
-	{ WS_EX_TOPMOST, "WS_EX_TOPMOST", false },
-	{ WS_EX_TRANSPARENT, "WS_EX_TRANSPARENT", false },
-	{ WS_EX_WINDOWEDGE, "WS_EX_WINDOWEDGE", false }
+	{ WS_EX_ACCEPTFILES, "WS_EX_ACCEPTFILES", FALSE },
+	{ WS_EX_APPWINDOW, "WS_EX_APPWINDOW", FALSE },
+	{ WS_EX_CLIENTEDGE, "WS_EX_CLIENTEDGE", FALSE },
+	{ WS_EX_COMPOSITED, "WS_EX_COMPOSITED", FALSE },
+	{ WS_EX_CONTEXTHELP, "WS_EX_CONTEXTHELP", FALSE },
+	{ WS_EX_CONTROLPARENT, "WS_EX_CONTROLPARENT", FALSE },
+	{ WS_EX_DLGMODALFRAME, "WS_EX_DLGMODALFRAME", FALSE },
+	{ WS_EX_LAYERED, "WS_EX_LAYERED", FALSE },
+	{ WS_EX_LAYOUTRTL, "WS_EX_LAYOUTRTL", FALSE },
+	{ WS_EX_LEFT, "WS_EX_LEFT", FALSE },
+	{ WS_EX_LEFTSCROLLBAR, "WS_EX_LEFTSCROLLBAR", FALSE },
+	{ WS_EX_LTRREADING, "WS_EX_LTRREADING", FALSE },
+	{ WS_EX_MDICHILD, "WS_EX_MDICHILD", FALSE },
+	{ WS_EX_NOACTIVATE, "WS_EX_NOACTIVATE", FALSE },
+	{ WS_EX_NOINHERITLAYOUT, "WS_EX_NOINHERITLAYOUT", FALSE },
+	{ WS_EX_NOPARENTNOTIFY, "WS_EX_NOPARENTNOTIFY", FALSE },
+	{ WS_EX_OVERLAPPEDWINDOW, "WS_EX_OVERLAPPEDWINDOW", TRUE },
+	{ WS_EX_PALETTEWINDOW, "WS_EX_PALETTEWINDOW", TRUE },
+	{ WS_EX_RIGHT, "WS_EX_RIGHT", FALSE },
+	{ WS_EX_RIGHTSCROLLBAR, "WS_EX_RIGHTSCROLLBAR", FALSE },
+	{ WS_EX_RTLREADING, "WS_EX_RTLREADING", FALSE },
+	{ WS_EX_STATICEDGE, "WS_EX_STATICEDGE", FALSE },
+	{ WS_EX_TOOLWINDOW, "WS_EX_TOOLWINDOW", FALSE },
+	{ WS_EX_TOPMOST, "WS_EX_TOPMOST", FALSE },
+	{ WS_EX_TRANSPARENT, "WS_EX_TRANSPARENT", FALSE },
+	{ WS_EX_WINDOWEDGE, "WS_EX_WINDOWEDGE", FALSE }
 };
 
-void print_window_styles(uint32 style)
+void print_window_styles(UINT32 style)
 {
 	int i;
 
@@ -118,7 +118,7 @@ void print_window_styles(uint32 style)
 	printf("}\n");
 }
 
-void print_extended_window_styles(uint32 style)
+void print_extended_window_styles(UINT32 style)
 {
 	int i;
 
@@ -172,7 +172,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		window->titleInfo.length = window_state->titleInfo.length;
-		window->titleInfo.string = xmalloc(window_state->titleInfo.length);
+		window->titleInfo.string = malloc(window_state->titleInfo.length);
 		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
 
 #ifdef WITH_DEBUG_RAIL
@@ -240,7 +240,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		int i;
 
 		if (window->windowRects != NULL)
-			xfree(window->windowRects);
+			free(window->windowRects);
 
 		window->windowRects = window_state->windowRects;
 		window->numWindowRects = window_state->numWindowRects;
@@ -267,7 +267,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		int i;
 
 		if (window->visibilityRects != NULL)
-			xfree(window->visibilityRects);
+			free(window->visibilityRects);
 
 		window->visibilityRects = window_state->visibilityRects;
 		window->numVisibilityRects = window_state->numVisibilityRects;
@@ -289,7 +289,7 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	}
 	else
 	{
-		window->title = (char*) xmalloc(sizeof("RAIL"));
+		window->title = (char*) malloc(sizeof("RAIL"));
 		memcpy(window->title, "RAIL", sizeof("RAIL"));
 	}
 
@@ -325,7 +325,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		if (window->title != NULL)
-			xfree(window->title);
+			free(window->title);
 
 		freerdp_UnicodeToAsciiAlloc((WCHAR*) window->titleInfo.string, &window->title, window->titleInfo.length / 2);
 
@@ -385,6 +385,6 @@ void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window != NULL)
 	{
-		xfree(window);
+		free(window);
 	}
 }

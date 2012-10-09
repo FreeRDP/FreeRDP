@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -46,7 +48,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	config_path = freerdp_get_config_path(settings);
 	certificate_store->path = freerdp_construct_path(config_path, (char*) certificate_store_dir);
 
-	if (freerdp_check_file_exists(certificate_store->path) == false)
+	if (freerdp_check_file_exists(certificate_store->path) == FALSE)
 	{
 		freerdp_mkdir(certificate_store->path);
 		printf("creating directory %s\n", certificate_store->path);
@@ -54,7 +56,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 	certificate_store->file = freerdp_construct_path(config_path, (char*) certificate_known_hosts_file);
 
-	if (freerdp_check_file_exists(certificate_store->file) == false)
+	if (freerdp_check_file_exists(certificate_store->file) == FALSE)
 	{
 		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
 
@@ -93,11 +95,11 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	if (size < 1)
 		return match;
 
-	data = (char*) xmalloc(size + 2);
+	data = (char*) malloc(size + 2);
 
 	if (fread(data, size, 1, fp) != 1)
 	{
-		xfree(data);
+		free(data);
 		return match;
 	}
 
@@ -128,7 +130,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 
 		pline = strtok(NULL, "\n");
 	}
-	xfree(data);
+	free(data);
 
 	return match;
 }
@@ -154,11 +156,11 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	if (size < 1)
 		return;
 
-	data = (char*) xmalloc(size + 2);
+	data = (char*) malloc(size + 2);
 
 	if (fread(data, size, 1, fp) != 1)
 	{
-		xfree(data);
+		free(data);
 		return;
 	}
 	
@@ -192,7 +194,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	}
 	
 	fclose(fp);
-	xfree(data);	
+	free(data);	
 }
 
 void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -217,8 +219,8 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 
 	if (certdata != NULL)
 	{
-		certdata->hostname = xstrdup(hostname);
-		certdata->fingerprint = xstrdup(fingerprint);
+		certdata->hostname = _strdup(hostname);
+		certdata->fingerprint = _strdup(fingerprint);
 	}
 
 	return certdata;
@@ -228,9 +230,9 @@ void certificate_data_free(rdpCertificateData* certificate_data)
 {
 	if (certificate_data != NULL)
 	{
-		xfree(certificate_data->hostname);
-		xfree(certificate_data->fingerprint);
-		xfree(certificate_data);
+		free(certificate_data->hostname);
+		free(certificate_data->fingerprint);
+		free(certificate_data);
 	}
 }
 
@@ -256,8 +258,8 @@ void certificate_store_free(rdpCertificateStore* certstore)
 		if (certstore->fp != NULL)
 			fclose(certstore->fp);
 
-		xfree(certstore->path);
-		xfree(certstore->file);
-		xfree(certstore);
+		free(certstore->path);
+		free(certstore->file);
+		free(certstore);
 	}
 }

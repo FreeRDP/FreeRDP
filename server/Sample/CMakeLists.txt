@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Sample Server cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -19,21 +19,29 @@ set(MODULE_NAME "sfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_SAMPLE")
 
 set(${MODULE_PREFIX}_SRCS
-	tfreerdp.c)
+	sfreerdp.c
+	sfreerdp.h
+	sf_audin.c
+	sf_audin.h
+	sf_rdpsnd.c
+	sf_rdpsnd.h)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME}
+		winpr
 		freerdp
-		freerdp-server)
+		freerdp-channels-server)
 else()
 	target_link_libraries(${MODULE_NAME}
+		winpr-crt
 		freerdp-core
 		freerdp-utils
 		freerdp-codec
 		freerdp-channels
-		freerdp-server-channels)
+		freerdp-channels-server)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")
+

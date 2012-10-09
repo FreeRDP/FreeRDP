@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Encode
  *
  * Copyright 2011 Vic Lee
@@ -36,15 +36,15 @@
 
 #define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
-static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, int rowstride,
-	RDP_PIXEL_FORMAT pixel_format, const uint8* palette, sint16* r_buf, sint16* g_buf, sint16* b_buf)
+static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, int rowstride,
+	RDP_PIXEL_FORMAT pixel_format, const BYTE* palette, INT16* r_buf, INT16* g_buf, INT16* b_buf)
 {
 	int x, y;
 	int x_exceed;
 	int y_exceed;
-	const uint8* src;
-	sint16 r, g, b;
-	sint16 *r_last, *g_last, *b_last;
+	const BYTE* src;
+	INT16 r, g, b;
+	INT16 *r_last, *g_last, *b_last;
 
 	x_exceed = 64 - width;
 	y_exceed = 64 - height;
@@ -58,52 +58,52 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 			case RDP_PIXEL_FORMAT_B8G8R8A8:
 				for (x = 0; x < width; x++)
 				{
-					*b_buf++ = (sint16) (*src++);
-					*g_buf++ = (sint16) (*src++);
-					*r_buf++ = (sint16) (*src++);
+					*b_buf++ = (INT16) (*src++);
+					*g_buf++ = (INT16) (*src++);
+					*r_buf++ = (INT16) (*src++);
 					src++;
 				}
 				break;
 			case RDP_PIXEL_FORMAT_R8G8B8A8:
 				for (x = 0; x < width; x++)
 				{
-					*r_buf++ = (sint16) (*src++);
-					*g_buf++ = (sint16) (*src++);
-					*b_buf++ = (sint16) (*src++);
+					*r_buf++ = (INT16) (*src++);
+					*g_buf++ = (INT16) (*src++);
+					*b_buf++ = (INT16) (*src++);
 					src++;
 				}
 				break;
 			case RDP_PIXEL_FORMAT_B8G8R8:
 				for (x = 0; x < width; x++)
 				{
-					*b_buf++ = (sint16) (*src++);
-					*g_buf++ = (sint16) (*src++);
-					*r_buf++ = (sint16) (*src++);
+					*b_buf++ = (INT16) (*src++);
+					*g_buf++ = (INT16) (*src++);
+					*r_buf++ = (INT16) (*src++);
 				}
 				break;
 			case RDP_PIXEL_FORMAT_R8G8B8:
 				for (x = 0; x < width; x++)
 				{
-					*r_buf++ = (sint16) (*src++);
-					*g_buf++ = (sint16) (*src++);
-					*b_buf++ = (sint16) (*src++);
+					*r_buf++ = (INT16) (*src++);
+					*g_buf++ = (INT16) (*src++);
+					*b_buf++ = (INT16) (*src++);
 				}
 				break;
 			case RDP_PIXEL_FORMAT_B5G6R5_LE:
 				for (x = 0; x < width; x++)
 				{
-					*b_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					*g_buf++ = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					*r_buf++ = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					*b_buf++ = (INT16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					*g_buf++ = (INT16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					*r_buf++ = (INT16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					src += 2;
 				}
 				break;
 			case RDP_PIXEL_FORMAT_R5G6B5_LE:
 				for (x = 0; x < width; x++)
 				{
-					*r_buf++ = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					*g_buf++ = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					*b_buf++ = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					*r_buf++ = (INT16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					*g_buf++ = (INT16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					*b_buf++ = (INT16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					src += 2;
 				}
 				break;
@@ -113,7 +113,7 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 				for (x = 0; x < width; x++)
 				{
 					int shift;
-					uint8 idx;
+					BYTE idx;
 
 					shift = (7 - (x % 8));
 					idx = ((*src) >> shift) & 1;
@@ -121,9 +121,9 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 					idx |= (((*(src + 2)) >> shift) & 1) << 2;
 					idx |= (((*(src + 3)) >> shift) & 1) << 3;
 					idx *= 3;
-					*r_buf++ = (sint16) palette[idx];
-					*g_buf++ = (sint16) palette[idx + 1];
-					*b_buf++ = (sint16) palette[idx + 2];
+					*r_buf++ = (INT16) palette[idx];
+					*g_buf++ = (INT16) palette[idx + 1];
+					*b_buf++ = (INT16) palette[idx + 2];
 					if (shift == 0)
 						src += 4;
 				}
@@ -135,9 +135,9 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 				{
 					int idx = (*src) * 3;
 
-					*r_buf++ = (sint16) palette[idx];
-					*g_buf++ = (sint16) palette[idx + 1];
-					*b_buf++ = (sint16) palette[idx + 2];
+					*r_buf++ = (INT16) palette[idx];
+					*g_buf++ = (INT16) palette[idx + 1];
+					*b_buf++ = (INT16) palette[idx + 2];
 					src++;
 				}
 				break;
@@ -169,9 +169,9 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 
 		while (y_exceed > 0)
 		{
-			memcpy(r_buf, r_last, 64 * sizeof(sint16));
-			memcpy(g_buf, g_last, 64 * sizeof(sint16));
-			memcpy(b_buf, b_last, 64 * sizeof(sint16));
+			memcpy(r_buf, r_last, 64 * sizeof(INT16));
+			memcpy(g_buf, g_last, 64 * sizeof(INT16));
+			memcpy(b_buf, b_last, 64 * sizeof(INT16));
 			r_buf += 64;
 			g_buf += 64;
 			b_buf += 64;
@@ -180,12 +180,12 @@ static void rfx_encode_format_rgb(const uint8* rgb_data, int width, int height, 
 	}
 }
 
-void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf)
+void rfx_encode_rgb_to_ycbcr(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 {
-	/* sint32 is used intentionally because we calculate with shifted factors! */
+	/* INT32 is used intentionally because we calculate with shifted factors! */
 	int i;
-	sint32 r, g, b;
-	sint32 y, cb, cr;
+	INT32 r, g, b;
+	INT32 y, cb, cr;
 
 	/**
 	 * The encoded YCbCr coefficients are represented as 11.5 fixed-point numbers:
@@ -193,7 +193,7 @@ void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	 * 1 sign bit + 10 integer bits + 5 fractional bits
 	 *
 	 * However only 7 integer bits will be actually used since the value range is [-128.0, 127.0].
-	 * In other words, the encoded coefficients is scaled by << 5 when interpreted as sint16.
+	 * In other words, the encoded coefficients is scaled by << 5 when interpreted as INT16.
 	 * It will be scaled down to original during the quantization phase.
 	 */
 	for (i = 0; i < 4096; i++)
@@ -222,8 +222,8 @@ void rfx_encode_rgb_to_ycbcr(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	}
 }
 
-static void rfx_encode_component(RFX_CONTEXT* context, const uint32* quantization_values,
-	sint16* data, uint8* buffer, int buffer_size, int* size)
+static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
+	INT16* data, BYTE* buffer, int buffer_size, int* size)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_encode_component);
 
@@ -246,13 +246,13 @@ static void rfx_encode_component(RFX_CONTEXT* context, const uint32* quantizatio
 	PROFILER_EXIT(context->priv->prof_rfx_encode_component);
 }
 
-void rfx_encode_rgb(RFX_CONTEXT* context, const uint8* rgb_data, int width, int height, int rowstride,
-	const uint32* y_quants, const uint32* cb_quants, const uint32* cr_quants,
+void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int height, int rowstride,
+	const UINT32* y_quants, const UINT32* cb_quants, const UINT32* cr_quants,
 	STREAM* data_out, int* y_size, int* cb_size, int* cr_size)
 {
-	sint16* y_r_buffer = context->priv->y_r_buffer;
-	sint16* cb_g_buffer = context->priv->cb_g_buffer;
-	sint16* cr_b_buffer = context->priv->cr_b_buffer;
+	INT16* y_r_buffer = context->priv->y_r_buffer;
+	INT16* cb_g_buffer = context->priv->cb_g_buffer;
+	INT16* cr_b_buffer = context->priv->cr_b_buffer;
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
 

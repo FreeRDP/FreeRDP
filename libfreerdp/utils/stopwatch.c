@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Stopwatch Utils
  *
  * Copyright 2011 Stephen Erisman
@@ -21,13 +21,16 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <freerdp/utils/stopwatch.h>
 
 STOPWATCH* stopwatch_create()
 {
 	STOPWATCH* sw;
 
-	sw = (STOPWATCH*) xmalloc(sizeof(STOPWATCH));
+	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
 	stopwatch_reset(sw);
 
 	return sw;
@@ -35,7 +38,7 @@ STOPWATCH* stopwatch_create()
 
 void stopwatch_free(STOPWATCH* stopwatch)
 {
-	xfree(stopwatch);
+	free(stopwatch);
 }
 
 void stopwatch_start(STOPWATCH* stopwatch)
@@ -63,18 +66,18 @@ double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 	return ((double) stopwatch->elapsed) / CLOCKS_PER_SEC;
 }
 
-void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, uint32* usec)
+void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec)
 {
 	double uelapsed;
 	double clocks_per_usec;
 
-	*sec = ((uint32) stopwatch->elapsed) / CLOCKS_PER_SEC;
+	*sec = ((UINT32) stopwatch->elapsed) / CLOCKS_PER_SEC;
 	uelapsed = stopwatch->elapsed - ((double)(*sec) * CLOCKS_PER_SEC);
 
 	clocks_per_usec = (CLOCKS_PER_SEC / 1000000);
 
 	if (clocks_per_usec > 0.0)
-		*usec = (uint32)(uelapsed / clocks_per_usec);
+		*usec = (UINT32)(uelapsed / clocks_per_usec);
 	else
 		*usec = 0;
 }

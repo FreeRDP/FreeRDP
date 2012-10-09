@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Passphrase Handling Utils
  *
  * Copyright 2011 Shea Levy <shea@shealevy.com>

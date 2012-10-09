@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Compressed Bitmap
  *
  * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>
@@ -23,6 +23,6 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-FREERDP_API boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp);
+FREERDP_API BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp);
 
 #endif /* __BITMAP_H */

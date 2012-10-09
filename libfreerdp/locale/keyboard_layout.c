@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
 #include <freerdp/types.h>
@@ -127,8 +129,8 @@ static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] =
 
 struct _RDP_KEYBOARD_LAYOUT_VARIANT
 {
-	uint32 code; /* Keyboard layout code */
-	uint32 id; /* Keyboard variant ID */
+	UINT32 code; /* Keyboard layout code */
+	UINT32 id; /* Keyboard variant ID */
 	const char* name; /* Keyboard layout variant name */
 };
 typedef struct _RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT;
@@ -184,7 +186,7 @@ static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] =
 
 struct _RDP_KEYBOARD_IME
 {
-	uint32 code; /* Keyboard layout code */
+	UINT32 code; /* Keyboard layout code */
 	const char* file; /* IME file */
 	const char* name; /* Keyboard layout name */
 };
@@ -476,34 +478,34 @@ const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256] =
 	RDP_SCANCODE_UNKNOWN
 };
 
-RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
+RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
 {
 	int num, length, i;
 	RDP_KEYBOARD_LAYOUT* layouts;
 
 	num = 0;
-	layouts = (RDP_KEYBOARD_LAYOUT*) xmalloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+	layouts = (RDP_KEYBOARD_LAYOUT*) malloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
 		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) xrealloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
 		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) xrealloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
@@ -514,7 +516,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_IME_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
 		}
 	}
 
@@ -523,7 +525,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 	return layouts;
 }
 
-const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutID)
+const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutID)
 {
 	int i;
 

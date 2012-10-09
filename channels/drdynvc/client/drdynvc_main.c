@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Dynamic Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
@@ -55,35 +57,35 @@ struct drdynvc_plugin
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
+static int drdynvc_write_variable_uint(STREAM* stream, UINT32 val)
 {
 	int cb;
 
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		stream_write_uint8(stream, val);
+		stream_write_BYTE(stream, val);
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		stream_write_uint16(stream, val);
+		stream_write_UINT16(stream, val);
 	}
 	else
 	{
 		cb = 2;
-		stream_write_uint32(stream, val);
+		stream_write_UINT32(stream, val);
 	}
 	return cb;
 }
 
-int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, uint32 data_size)
+int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UINT32 data_size)
 {
 	STREAM* data_out;
-	uint32 pos = 0;
-	uint32 cbChId;
-	uint32 cbLen;
-	uint32 chunk_len;
+	UINT32 pos = 0;
+	UINT32 cbChId;
+	UINT32 cbLen;
+	UINT32 chunk_len;
 	int error;
 
 	DEBUG_DVC("ChannelId=%d size=%d", ChannelId, data_size);
@@ -99,7 +101,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x40 | cbChId);
+		stream_write_BYTE(data_out, 0x40 | cbChId);
 		stream_set_pos(data_out, pos);
 		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
 	}
@@ -107,7 +109,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x30 | cbChId);
+		stream_write_BYTE(data_out, 0x30 | cbChId);
 		stream_set_pos(data_out, pos);
 		stream_write(data_out, data, data_size);
 		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
@@ -118,7 +120,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 		cbLen = drdynvc_write_variable_uint(data_out, data_size);
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x20 | cbChId | (cbLen << 2));
+		stream_write_BYTE(data_out, 0x20 | cbChId | (cbLen << 2));
 		stream_set_pos(data_out, pos);
 		chunk_len = CHANNEL_CHUNK_LENGTH - pos;
 		stream_write(data_out, data, chunk_len);
@@ -134,7 +136,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 
 			pos = stream_get_pos(data_out);
 			stream_set_pos(data_out, 0);
-			stream_write_uint8(data_out, 0x30 | cbChId);
+			stream_write_BYTE(data_out, 0x30 | cbChId);
 			stream_set_pos(data_out, pos);
 
 			chunk_len = data_size;
@@ -175,17 +177,17 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
 	stream_seek(s, 1); /* pad */
-	stream_read_uint16(s, drdynvc->version);
+	stream_read_UINT16(s, drdynvc->version);
 	if (drdynvc->version == 2)
 	{
-		stream_read_uint16(s, drdynvc->PriorityCharge0);
-		stream_read_uint16(s, drdynvc->PriorityCharge1);
-		stream_read_uint16(s, drdynvc->PriorityCharge2);
-		stream_read_uint16(s, drdynvc->PriorityCharge3);
+		stream_read_UINT16(s, drdynvc->PriorityCharge0);
+		stream_read_UINT16(s, drdynvc->PriorityCharge1);
+		stream_read_UINT16(s, drdynvc->PriorityCharge2);
+		stream_read_UINT16(s, drdynvc->PriorityCharge3);
 	}
 	data_out = stream_new(4);
-	stream_write_uint16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
-	stream_write_uint16(data_out, drdynvc->version);
+	stream_write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
+	stream_write_UINT16(data_out, drdynvc->version);
 	error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
 	if (error != CHANNEL_RC_OK)
 	{
@@ -197,20 +199,20 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 	return 0;
 }
 
-static uint32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
+static UINT32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
 {
-	uint32 val;
+	UINT32 val;
 
 	switch (cbLen)
 	{
 		case 0:
-			stream_read_uint8(stream, val);
+			stream_read_BYTE(stream, val);
 			break;
 		case 1:
-			stream_read_uint16(stream, val);
+			stream_read_UINT16(stream, val);
 			break;
 		default:
-			stream_read_uint32(stream, val);
+			stream_read_UINT32(stream, val);
 			break;
 	}
 	return val;
@@ -221,7 +223,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	STREAM* data_out;
 	int pos;
 	int error;
-	uint32 ChannelId;
+	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = stream_get_pos(s);
@@ -230,19 +232,19 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*)stream_get_tail(s));
 
 	data_out = stream_new(pos + 4);
-	stream_write_uint8(data_out, 0x10 | cbChId);
+	stream_write_BYTE(data_out, 0x10 | cbChId);
 	stream_set_pos(s, 1);
 	stream_copy(data_out, s, pos - 1);
 	
 	if (error == 0)
 	{
 		DEBUG_DVC("channel created");
-		stream_write_uint32(data_out, 0);
+		stream_write_UINT32(data_out, 0);
 	}
 	else
 	{
 		DEBUG_DVC("no listener");
-		stream_write_uint32(data_out, (uint32)(-1));
+		stream_write_UINT32(data_out, (UINT32)(-1));
 	}
 
 	error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
@@ -256,8 +258,8 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
 {
-	uint32 ChannelId;
-	uint32 Length;
+	UINT32 ChannelId;
+	UINT32 Length;
 	int error;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
@@ -274,7 +276,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 
 static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
 {
-	uint32 ChannelId;
+	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	DEBUG_DVC("ChannelId=%d", ChannelId);
@@ -285,7 +287,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, STRE
 
 static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
 {
-	uint32 ChannelId;
+	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	DEBUG_DVC("ChannelId=%d", ChannelId);
@@ -302,7 +304,7 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	int Sp;
 	int cbChId;
 
-	stream_read_uint8(s, value);
+	stream_read_BYTE(s, value);
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
@@ -359,9 +361,34 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 
 	if (drdynvc->channel_mgr != NULL)
 		dvcman_free(drdynvc->channel_mgr);
-	xfree(drdynvc);
+
+	free(drdynvc);
 }
 
-DEFINE_SVC_PLUGIN(drdynvc, "drdynvc",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP)
+/* drdynvc is always built-in */
+#define VirtualChannelEntry	drdynvc_VirtualChannelEntry
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	drdynvcPlugin* _p;
+
+	_p = (drdynvcPlugin*) malloc(sizeof(drdynvcPlugin));
+	ZeroMemory(_p, sizeof(drdynvcPlugin));
+
+	_p->plugin.channel_def.options =
+		CHANNEL_OPTION_INITIALIZED |
+		CHANNEL_OPTION_ENCRYPT_RDP |
+		CHANNEL_OPTION_COMPRESS_RDP;
+
+	strcpy(_p->plugin.channel_def.name, "drdynvc");
+
+	_p->plugin.connect_callback = drdynvc_process_connect;
+	_p->plugin.receive_callback = drdynvc_process_receive;
+	_p->plugin.event_callback = drdynvc_process_event;
+	_p->plugin.terminate_callback = drdynvc_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
+

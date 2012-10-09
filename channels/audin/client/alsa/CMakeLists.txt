@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -26,7 +26,7 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_library(audin_alsa ${AUDIN_ALSA_SRCS})
 set_target_properties(audin_alsa PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(audin_alsa freerdp)
 else()
 	target_link_libraries(audin_alsa freerdp-utils)

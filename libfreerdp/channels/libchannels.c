@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Virtual Channel Manager
  *
  * Copyright 2009-2011 Jay Sorg
@@ -139,6 +139,7 @@ static rdpChannels* g_init_channels;
 
 /* The list of all channel managers. */
 typedef struct rdp_channels_list rdpChannelsList;
+
 struct rdp_channels_list
 {
 	rdpChannels* channels;
@@ -284,8 +285,8 @@ static rdpChannel* freerdp_channels_find_channel_by_name(rdpChannels* channels,
  * according to MS docs
  * only called from main thread
  */
-static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
-	int channelCount, uint32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
+static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
+	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
 	rdpChannels* channels;
@@ -296,7 +297,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 	if (ppInitHandle == NULL)
 	{
-		DEBUG_CHANNELS("error bad pphan");
+		DEBUG_CHANNELS("error bad init handle");
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
@@ -387,7 +388,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
  * can be called from any thread
  * thread safe because no 2 threads can have the same channel name registered
  */
-static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHandle,
+static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 	char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
 {
 	int index;
@@ -441,7 +442,7 @@ static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHa
  * can be called from any thread
  * thread safe because no 2 threads can have the same openHandle
  */
-static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
+static UINT32 FREERDP_CC MyVirtualChannelClose(UINT32 openHandle)
 {
 	int index;
 	rdpChannels* channels;
@@ -471,7 +472,7 @@ static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
 }
 
 /* can be called from any thread */
-static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, uint32 dataLength, void* pUserData)
+static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
 {
 	int index;
 	SYNC_DATA* item;
@@ -532,7 +533,7 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 	return CHANNEL_RC_OK;
 }
 
-static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, RDP_EVENT* event)
+static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT* event)
 {
 	int index;
 	rdpChannels* channels;
@@ -662,25 +663,19 @@ void freerdp_channels_free(rdpChannels* channels)
 			prev->next = list->next;
 		else
 			g_channels_list = list->next;
-		xfree(list);
+		free(list);
 	}
 
 	ReleaseMutex(g_mutex_list);
 
-	xfree(channels);
+	free(channels);
 }
 
-/**
- * this is called when processing the command line parameters
- * called only from main thread
- */
-int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, const char* name, void* data)
+int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
-	int ok;
+	int status;
 	struct lib_data* lib;
 	CHANNEL_ENTRY_POINTS_EX ep;
-
-	DEBUG_CHANNELS("%s", name);
 
 	if (channels->num_libs_data + 1 >= CHANNEL_MAX_COUNT)
 	{
@@ -689,14 +684,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	}
 
 	lib = channels->libs_data + channels->num_libs_data;
-	lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
-	//lib->entry = (PVIRTUALCHANNELENTRY) freerdp_load_channel_plugin(settings, name, CHANNEL_EXPORT_FUNC_NAME);
-
-	if (lib->entry == NULL)
-	{
-		DEBUG_CHANNELS("failed to find export function");
-		return 1;
-	}
+	lib->entry = (PVIRTUALCHANNELENTRY) entry;
 
 	ep.cbSize = sizeof(ep);
 	ep.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
@@ -714,7 +702,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	WaitForSingleObject(g_mutex_init, INFINITE);
 
 	g_init_channels = channels;
-	ok = lib->entry((PCHANNEL_ENTRY_POINTS) &ep);
+	status = lib->entry((PCHANNEL_ENTRY_POINTS) &ep);
 	g_init_channels = NULL;
 
 	ReleaseMutex(g_mutex_init);
@@ -723,13 +711,34 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	channels->settings = 0;
 	channels->can_call_init = 0;
 
-	if (!ok)
+	if (!status)
 	{
 		DEBUG_CHANNELS("export function call failed");
 		return 1;
 	}
 
 	return 0;
+}
+
+/**
+ * this is called when processing the command line parameters
+ * called only from main thread
+ */
+int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, const char* name, void* data)
+{
+	void* entry;
+
+	DEBUG_CHANNELS("%s", name);
+
+	entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
+
+	if (entry == NULL)
+	{
+		DEBUG_CHANNELS("failed to find export function");
+		return 1;
+	}
+
+	return freerdp_channels_client_load(channels, settings, entry, data);
 }
 
 /**
@@ -932,24 +941,25 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 			lchannel_data->open_event_proc(lchannel_data->open_handle,
 				CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, sizeof(void*), sizeof(void*), 0);
 		}
-		xfree(item);
+
+		_aligned_free(item);
 	}
 }
 
 /**
  * called only from main thread
  */
-boolean freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
+BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
 	wait_obj_get_fds(channels->signal, read_fds, read_count);
-	return true;
+	return TRUE;
 }
 
 /**
  * called only from main thread
  */
-boolean freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
+BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 {
 	if (wait_obj_is_set(channels->signal))
 	{
@@ -957,7 +967,7 @@ boolean freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 		freerdp_channels_process_sync(channels, instance);
 	}
 
-	return true;
+	return TRUE;
 }
 
 RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels)

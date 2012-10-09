@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * DirectFB Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -26,7 +26,8 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
 
 #include <winpr/synch.h>
 
@@ -85,7 +86,7 @@ void df_end_paint(rdpContext* context)
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 }
 
-boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	dfInfo* dfi;
 
@@ -94,28 +95,28 @@ boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	rfds[*rcount] = (void*)(long)(dfi->read_fds);
 	(*rcount)++;
 
-	return true;
+	return TRUE;
 }
 
-boolean df_check_fds(freerdp* instance, fd_set* set)
+BOOL df_check_fds(freerdp* instance, fd_set* set)
 {
 	dfInfo* dfi;
 
 	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
-		return true;
+		return TRUE;
 
 	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
 		df_event_process(instance, &(dfi->event));
 
-	return true;
+	return TRUE;
 }
 
-boolean df_pre_connect(freerdp* instance)
+BOOL df_pre_connect(freerdp* instance)
 {
 	dfInfo* dfi;
-	boolean bitmap_cache;
+	BOOL bitmap_cache;
 	dfContext* context;
 	rdpSettings* settings;
 
@@ -126,30 +127,30 @@ boolean df_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	bitmap_cache = settings->bitmap_cache;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
+	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->order_support[NEG_LINETO_INDEX] = TRUE;
+	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
 	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
+	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
 	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	dfi->clrconv = xnew(CLRCONV);
 	dfi->clrconv->alpha = 1;
@@ -158,13 +159,13 @@ boolean df_pre_connect(freerdp* instance)
 	dfi->clrconv->palette = xnew(rdpPalette);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
-    
-    instance->context->cache = cache_new(instance->settings);
 
-	return true;
+	instance->context->cache = cache_new(instance->settings);
+
+	return TRUE;
 }
 
-boolean df_post_connect(freerdp* instance)
+BOOL df_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
@@ -217,21 +218,33 @@ boolean df_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
 static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
+	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	printf("loading plugin %s\n", name);
+	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+
+	if (entry)
+	{
+		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
+		{
+			printf("loading channel %s (static)\n", name);
+			return 1;
+		}
+	}
+
+	printf("loading channel %s (plugin)\n", name);
 	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
 }
 
-boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	printf("Certificate details:\n");
 	printf("\tSubject: %s\n", subject);
@@ -249,7 +262,7 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 		if (answer == 'y' || answer == 'Y')
 		{
-			return true;
+			return TRUE;
 		}
 		else if (answer == 'n' || answer == 'N')
 		{
@@ -257,17 +270,15 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
-static int
-df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-static void
-df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
+static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -280,8 +291,7 @@ df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 	freerdp_channels_send_event(channels, event);
 }
 
-static void
-df_process_channel_event(rdpChannels* channels, freerdp* instance)
+static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
@@ -306,7 +316,7 @@ df_process_channel_event(rdpChannels* channels, freerdp* instance)
 static void df_free(dfInfo* dfi)
 {
 	dfi->dfb->Release(dfi->dfb);
-	xfree(dfi);
+	free(dfi);
 }
 
 int dfreerdp_run(freerdp* instance)
@@ -340,17 +350,17 @@ int dfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
-		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get dfreerdp file descriptor\n");
 			break;
@@ -386,17 +396,17 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (df_check_fds(instance, &rfds_set) != true)
+		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
@@ -421,7 +431,7 @@ void* thread_func(void* param)
 
 	dfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	pthread_detach(pthread_self());
 

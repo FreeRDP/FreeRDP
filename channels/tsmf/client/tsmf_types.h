@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - Types
  *
  * Copyright 2010-2011 Vic Lee
@@ -40,19 +40,19 @@ typedef struct _TS_AM_MEDIA_TYPE
 	int SubType;
 	int FormatType;
 
-	uint32 Width;
-	uint32 Height;	
-	uint32 BitRate;
+	UINT32 Width;
+	UINT32 Height;	
+	UINT32 BitRate;
 	struct
 	{
-		uint32 Numerator;
-		uint32 Denominator;
+		UINT32 Numerator;
+		UINT32 Denominator;
 	} SamplesPerSecond;
-	uint32 Channels;
-	uint32 BitsPerSample;
-	uint32 BlockAlign;
-	const uint8* ExtraData;
-	uint32 ExtraDataSize;
+	UINT32 Channels;
+	UINT32 BitsPerSample;
+	UINT32 BlockAlign;
+	const BYTE* ExtraData;
+	UINT32 ExtraDataSize;
 } TS_AM_MEDIA_TYPE;
 
 #endif

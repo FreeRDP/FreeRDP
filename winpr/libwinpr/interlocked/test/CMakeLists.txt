@@ -6,7 +6,8 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestInterlockedAccess.c
-	TestInterlockedSList.c)
+	TestInterlockedSList.c
+	TestInterlockedDList.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -14,9 +15,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(NOT WIN32)
-	target_link_libraries(${MODULE_NAME} winpr-interlocked)
-endif()
+target_link_libraries(${MODULE_NAME} winpr-interlocked)
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
@@ -24,3 +23,4 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+

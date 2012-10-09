@@ -1,9 +1,7 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 # Copyright 2012 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TSMF_SRCS
+set(MODULE_NAME "tsmf")
+set(MODULE_PREFIX "CHANNEL_TSMF_CLIENT")
+
+set(${MODULE_PREFIX}_SRCS
 	tsmf_audio.c
 	tsmf_audio.h
 	tsmf_codec.c
@@ -36,25 +37,27 @@ set(TSMF_SRCS
 
 include_directories(..)
 
-add_library(tsmf ${TSMF_SRCS})
-set_target_properties(tsmf PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(tsmf freerdp)
+if(MONOLITHIC_BUILD)
+	target_link_libraries(${MODULE_NAME} freerdp)
 else()
-	target_link_libraries(tsmf freerdp-utils)
+	target_link_libraries(${MODULE_NAME} freerdp-utils)
 endif()
 
-install(TARGETS tsmf DESTINATION ${FREERDP_PLUGIN_PATH})
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 
 if(WITH_FFMPEG)
 	add_subdirectory(ffmpeg)
 endif()
 
 if(WITH_XRANDR)
-if(GSTREAMER_FOUND)
-        add_subdirectory(gstreamer)
-endif()
+	if(GSTREAMER_FOUND)
+		add_subdirectory(gstreamer)
+	endif()
 endif()
 
 if(WITH_ALSA)
@@ -64,4 +67,3 @@ endif()
 if(WITH_PULSEAUDIO)
 	add_subdirectory(pulse)
 endif()
-

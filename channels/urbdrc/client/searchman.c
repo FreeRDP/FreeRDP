@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -48,7 +48,7 @@ static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 	return search;
 }
 
-static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV*	search;
 	
@@ -77,7 +77,7 @@ static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 
 	return 1;
 }
 
-static int searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV* search;
 	USB_SEARCHDEV* point;
@@ -180,7 +180,7 @@ void searchman_free(USB_SEARCHMAN* self)
 	free(self);
 }
 
-USB_SEARCHMAN* searchman_new(void * urbdrc, uint32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 {
 	int ret;
 	USB_SEARCHMAN* searchman;

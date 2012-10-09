@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Color Conversion Routines
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -30,12 +30,12 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/memory.h>
 
-int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp)
+int freerdp_get_pixel(BYTE * data, int x, int y, int width, int height, int bpp)
 {
 	int start;
 	int shift;
-	uint16 *src16;
-	uint32 *src32;
+	UINT16 *src16;
+	UINT32 *src32;
 	int red, green, blue;
 
 	switch (bpp)
@@ -49,7 +49,7 @@ int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp
 			return data[y * width + x];
 		case 15:
 		case 16:
-			src16 = (uint16*) data;
+			src16 = (UINT16*) data;
 			return src16[y * width + x];
 		case 24:
 			data += y * width * 3;
@@ -59,7 +59,7 @@ int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp
 			blue = data[2];
 			return RGB24(red, green, blue);
 		case 32:
-			src32 = (uint32*) data;
+			src32 = (UINT32*) data;
 			return src32[y * width + x];
 		default:
 			break;
@@ -68,7 +68,7 @@ int freerdp_get_pixel(uint8 * data, int x, int y, int width, int height, int bpp
 	return 0;
 }
 
-void freerdp_set_pixel(uint8* data, int x, int y, int width, int height, int bpp, int pixel)
+void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel)
 {
 	int start;
 	int shift;
@@ -91,7 +91,7 @@ void freerdp_set_pixel(uint8* data, int x, int y, int width, int height, int bpp
 	}
 }
 
-static INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_split_rgb(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
 	*red = *green = *blue = 0;
 	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
@@ -142,7 +142,7 @@ static INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, u
 	}
 }
 
-static INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_split_bgr(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
 	*red = *green = *blue = 0;
 	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
@@ -193,7 +193,7 @@ static INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, u
 	}
 }
 
-static INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_make_rgb(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
 	switch (bpp)
 	{
@@ -234,7 +234,7 @@ static INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, ui
 	}
 }
 
-static INLINE void freerdp_color_make_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
 	switch (bpp)
 	{
@@ -275,13 +275,13 @@ static INLINE void freerdp_color_make_bgr(uint32* color, int bpp, uint8* red, ui
 	}
 }
 
-uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	uint8 red = 0;
-	uint8 green = 0;
-	uint8 blue = 0;
-	uint8 alpha = 0xFF;
-	uint32 dstColor = 0;
+	BYTE red = 0;
+	BYTE green = 0;
+	BYTE blue = 0;
+	BYTE alpha = 0xFF;
+	UINT32 dstColor = 0;
 
 	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
@@ -289,13 +289,13 @@ uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	return dstColor;
 }
 
-uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	uint8 red = 0;
-	uint8 green = 0;
-	uint8 blue = 0;
-	uint8 alpha = 0xFF;
-	uint32 dstColor = 0;
+	BYTE red = 0;
+	BYTE green = 0;
+	BYTE blue = 0;
+	BYTE alpha = 0xFF;
+	UINT32 dstColor = 0;
 
 	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
@@ -303,13 +303,13 @@ uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	return dstColor;
 }
 
-uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	uint8 red = 0;
-	uint8 green = 0;
-	uint8 blue = 0;
-	uint8 alpha = 0xFF;
-	uint32 dstColor = 0;
+	BYTE red = 0;
+	BYTE green = 0;
+	BYTE blue = 0;
+	BYTE alpha = 0xFF;
+	UINT32 dstColor = 0;
 
 	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
@@ -317,13 +317,13 @@ uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HC
 	return dstColor;
 }
 
-uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
-	uint8 red = 0;
-	uint8 green = 0;
-	uint8 blue = 0;
-	uint8 alpha = 0xFF;
-	uint32 dstColor = 0;
+	BYTE red = 0;
+	BYTE green = 0;
+	BYTE blue = 0;
+	BYTE alpha = 0xFF;
+	UINT32 dstColor = 0;
 
 	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
@@ -331,7 +331,7 @@ uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HC
 	return dstColor;
 }
 
-uint32 freerdp_color_convert_var(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (clrconv->invert)
 		return freerdp_color_convert_var_bgr(srcColor, srcBpp, dstBpp, clrconv);
@@ -339,7 +339,7 @@ uint32 freerdp_color_convert_var(uint32 srcColor, int srcBpp, int dstBpp, HCLRCO
 		return freerdp_color_convert_var_rgb(srcColor, srcBpp, dstBpp, clrconv);
 }
 
-uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr_rgb(srcColor, srcBpp, dstBpp, clrconv);
@@ -347,7 +347,7 @@ uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HC
 		return freerdp_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
 }
 
-uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
+UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
@@ -355,21 +355,21 @@ uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HC
 		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, dstBpp, clrconv);
 }
 
-uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
-	uint8 red;
-	uint8 green;
-	uint8 blue;
-	uint32 pixel;
-	uint8 *src8;
-	uint16 *dst16;
-	uint32 *dst32;
+	BYTE red;
+	BYTE green;
+	BYTE blue;
+	UINT32 pixel;
+	BYTE *src8;
+	UINT16 *dst16;
+	UINT32 *dst32;
 
 	if (dstBpp == 8)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height);
+			dstData = (BYTE*) malloc(width * height);
 
 		memcpy(dstData, srcData, width * height);
 		return dstData;
@@ -377,9 +377,9 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	else if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
-		dst16 = (uint16 *) dstData;
+		dst16 = (UINT16 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *srcData;
@@ -396,9 +396,9 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	else if (dstBpp == 16)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
-		dst16 = (uint16 *) dstData;
+		dst16 = (UINT16 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *srcData;
@@ -415,10 +415,10 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	else if (dstBpp == 32)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 4);
+			dstData = (BYTE*) malloc(width * height * 4);
 
-		src8 = (uint8*) srcData;
-		dst32 = (uint32*) dstData;
+		src8 = (BYTE*) srcData;
+		dst32 = (UINT32*) dstData;
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *src8;
@@ -436,21 +436,21 @@ uint8* freerdp_image_convert_8bpp(uint8* srcData, uint8* dstData, int width, int
 	return srcData;
 }
 
-uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert_15bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
-	uint8 red;
-	uint8 green;
-	uint8 blue;
-	uint32 pixel;
-	uint16 *src16;
-	uint16 *dst16;
-	uint32 *dst32;
+	BYTE red;
+	BYTE green;
+	BYTE blue;
+	UINT32 pixel;
+	UINT16 *src16;
+	UINT16 *dst16;
+	UINT32 *dst32;
 
 	if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
 		memcpy(dstData, srcData, width * height * 2);
 
@@ -459,10 +459,10 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 	else if (dstBpp == 32)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 4);
+			dstData = (BYTE*) malloc(width * height * 4);
 
-		src16 = (uint16 *) srcData;
-		dst32 = (uint32 *) dstData;
+		src16 = (UINT16 *) srcData;
+		dst32 = (UINT32 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *src16;
@@ -477,10 +477,10 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 	else if (dstBpp == 16)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
-		src16 = (uint16 *) srcData;
-		dst16 = (uint16 *) dstData;
+		src16 = (UINT16 *) srcData;
+		dst16 = (UINT16 *) dstData;
 		for (i = width * height; i > 0; i--)
 		{
 			pixel = *src16;
@@ -497,7 +497,7 @@ uint8* freerdp_image_convert_15bpp(uint8* srcData, uint8* dstData, int width, in
 	return srcData;
 }
 
-uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (srcBpp == 15)
 		return freerdp_image_convert_15bpp(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
@@ -505,14 +505,14 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 	if (dstBpp == 16)
 	{
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
 		if (clrconv->rgb555)
 		{
 			int i;
-			uint8 red, green, blue;
-			uint16* src16 = (uint16 *) srcData;
-			uint16* dst16 = (uint16 *) dstData;
+			BYTE red, green, blue;
+			UINT16* src16 = (UINT16 *) srcData;
+			UINT16* dst16 = (UINT16 *) dstData;
 
 			for (i = width * height; i > 0; i--)
 			{
@@ -533,15 +533,15 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 	else if (dstBpp == 24)
 	{
 		int i;
-		uint8 *dst8;
-		uint16 *src16;
-		uint8 red, green, blue;
+		BYTE *dst8;
+		UINT16 *src16;
+		BYTE red, green, blue;
 
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 3);
+			dstData = (BYTE*) malloc(width * height * 3);
 
-		dst8 = (uint8*) dstData;
-		src16 = (uint16*) srcData;
+		dst8 = (BYTE*) dstData;
+		src16 = (UINT16*) srcData;
 
 		for (i = width * height; i > 0; i--)
 		{
@@ -566,16 +566,16 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 	else if (dstBpp == 32)
 	{
 		int i;
-		uint32 pixel;
-		uint16* src16;
-		uint32* dst32;
-		uint8 red, green, blue;
+		UINT32 pixel;
+		UINT16* src16;
+		UINT32* dst32;
+		BYTE red, green, blue;
 
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 4);
+			dstData = (BYTE*) malloc(width * height * 4);
 
-		src16 = (uint16*) srcData;
-		dst32 = (uint32*) dstData;
+		src16 = (UINT16*) srcData;
+		dst32 = (UINT32*) dstData;
 
 		for (i = width * height; i > 0; i--)
 		{
@@ -592,15 +592,15 @@ uint8* freerdp_image_convert_16bpp(uint8* srcData, uint8* dstData, int width, in
 	return srcData;
 }
 
-uint8* freerdp_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert_24bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	int i;
 
 	if (dstBpp == 32)
 	{
-		uint8 *dstp;
+		BYTE *dstp;
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 4);
+			dstData = (BYTE*) malloc(width * height * 4);
 
 		dstp = dstData;
 		for (i = width * height; i > 0; i--)
@@ -616,20 +616,20 @@ uint8* freerdp_image_convert_24bpp(uint8* srcData, uint8* dstData, int width, in
 	return srcData;
 }
 
-uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert_32bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	if (dstBpp == 16)
 	{
 		int index;
-		uint16 *dst16;
-		uint32 *src32;
-		uint8 red, green, blue;
+		UINT16 *dst16;
+		UINT32 *src32;
+		BYTE red, green, blue;
 
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 2);
+			dstData = (BYTE*) malloc(width * height * 2);
 
-		dst16 = (uint16*) dstData;
-		src32 = (uint32*) srcData;
+		dst16 = (UINT16*) dstData;
+		src32 = (UINT32*) srcData;
 
 		for (index = 0; index < width * height; index++)
 		{
@@ -642,12 +642,12 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 	}
 	else if (dstBpp == 24)
 	{
-		uint8 *dstp;
+		BYTE *dstp;
 		int index;
-		uint8 red, green, blue;
+		BYTE red, green, blue;
 
 		if (dstData == NULL)
-			dstData = (uint8*) xmalloc(width * height * 3);
+			dstData = (BYTE*) malloc(width * height * 3);
 
 		dstp = dstData;
 		for (index = 0; index < width * height; index++)
@@ -678,10 +678,10 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 		if (clrconv->alpha)
 		{
 			int x, y;
-			uint8 *dstp;
+			BYTE *dstp;
 
 			if (dstData == NULL)
-				dstData = (uint8*) xmalloc(width * height * 4);
+				dstData = (BYTE*) malloc(width * height * 4);
 
 			memcpy(dstData, srcData, width * height * 4);
 
@@ -699,7 +699,7 @@ uint8* freerdp_image_convert_32bpp(uint8* srcData, uint8* dstData, int width, in
 		else
 		{
 			if (dstData == NULL)
-				dstData = (uint8*) xmalloc(width * height * 4);
+				dstData = (BYTE*) malloc(width * height * 4);
 
 			memcpy(dstData, srcData, width * height * 4);
 		}
@@ -719,7 +719,7 @@ p_freerdp_image_convert freerdp_image_convert_[5] =
 	freerdp_image_convert_32bpp
 };
 
-uint8* freerdp_image_convert(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
+BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
 	p_freerdp_image_convert _p_freerdp_image_convert = freerdp_image_convert_[IBPP(srcBpp)];
 
@@ -729,23 +729,23 @@ uint8* freerdp_image_convert(uint8* srcData, uint8* dstData, int width, int heig
 		return 0;
 }
 
-void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
+void   freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
 {
 	int i;
 
-	uint8 * bottomLine = dst + (scanLineSz * (height - 1));
-	uint8 * topLine = src;
+	BYTE * bottomLine = dst + (scanLineSz * (height - 1));
+	BYTE * topLine = src;
 
 	/* Special processing if called for flip-in-place. */
 	if (src == dst)
 	{
 		/* Allocate a scanline buffer.
-		 * (FIXME: xmalloc / xfree below should be replaced by "get/put
+		 * (FIXME: malloc / xfree below should be replaced by "get/put
 		 * scanline buffer from a pool/Q of fixed buffers" to reuse
 		 * fixed size buffers (of max scanline size (or adaptative?) )
 		 * -- would be much faster).
 		 */
-		uint8 * tmpBfr = xmalloc(scanLineSz);
+		BYTE * tmpBfr = malloc(scanLineSz);
 		int half = height / 2;
 		/* Flip buffer in place by line permutations through the temp
 		 * scan line buffer.
@@ -765,7 +765,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 			bottomLine -= scanLineSz;
 			height--;
 		}
-		xfree(tmpBfr);
+		free(tmpBfr);
 	}
 	/* Flip from source buffer to destination buffer. */
 	else
@@ -781,24 +781,24 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 
 }
 
-uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height, int bpp)
+BYTE* freerdp_image_flip(BYTE* srcData, BYTE* dstData, int width, int height, int bpp)
 {
 	int scanline;
 
 	scanline = width * ((bpp + 7) / 8);
 
 	if (dstData == NULL)
-		dstData = (uint8*) xmalloc(width * height * ((bpp + 7) / 8));
+		dstData = (BYTE*) malloc(width * height * ((bpp + 7) / 8));
 
 	freerdp_bitmap_flip(srcData, dstData, scanline, height);
 	return dstData;
 }
 
-uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv)
+BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, int height, int bpp, HCLRCONV clrconv)
 {
-	uint8* data;
-	uint8 bmask;
-	uint32* icon;
+	BYTE* data;
+	BYTE bmask;
+	UINT32* icon;
 	int x, y, bit;
 	int maskIndex;
 
@@ -816,7 +816,7 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 	if (bpp < 32)
 	{
 		maskIndex = 0;
-		icon = (uint32*) dstData;
+		icon = (UINT32*) dstData;
 		
 		for (y = 0; y < height; y++)
 		{
@@ -847,12 +847,12 @@ uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int wid
 	return dstData;
 }
 
-uint8* freerdp_glyph_convert(int width, int height, uint8* data)
+BYTE* freerdp_glyph_convert(int width, int height, BYTE* data)
 {
 	int x, y;
-	uint8 *srcp;
-	uint8 *dstp;
-	uint8 *dstData;
+	BYTE *srcp;
+	BYTE *dstp;
+	BYTE *dstData;
 	int scanline;
 
 	/*
@@ -862,7 +862,7 @@ uint8* freerdp_glyph_convert(int width, int height, uint8* data)
 	 */
 
 	scanline = (width + 7) / 8;
-	dstData = (uint8*) xmalloc(width * height);
+	dstData = (BYTE*) malloc(width * height);
 	memset(dstData, 0, width * height);
 	dstp = dstData;
 
@@ -884,16 +884,16 @@ uint8* freerdp_glyph_convert(int width, int height, uint8* data)
 	return dstData;
 }
 
-uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv)
+BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBpp, int dstBpp, UINT32 bgcolor, UINT32 fgcolor, HCLRCONV clrconv)
 {
 	int index;
-	uint16* dst16;
-	uint32* dst32;
-	uint8* dstData;
-	uint8 bitMask;
+	UINT16* dst16;
+	UINT32* dst32;
+	BYTE* dstData;
+	BYTE bitMask;
 	int bitIndex;
-	uint8 redBg, greenBg, blueBg;
-	uint8 redFg, greenFg, blueFg;
+	BYTE redBg, greenBg, blueBg;
+	BYTE redFg, greenFg, blueFg;
 
 	switch (srcBpp)
 	{
@@ -946,8 +946,8 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 			}
 		}
 
-		dstData = (uint8*) xmalloc(width * height * 2);
-		dst16 = (uint16*) dstData;
+		dstData = (BYTE*) malloc(width * height * 2);
+		dst16 = (UINT16*) dstData;
 
 		for (index = height; index > 0; index--)
 		{
@@ -971,8 +971,8 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 	}
 	else if (dstBpp == 32)
 	{
-		dstData = (uint8*) xmalloc(width * height * 4);
-		dst32 = (uint32*) dstData;
+		dstData = (BYTE*) malloc(width * height * 4);
+		dst32 = (UINT32*) dstData;
 
 		for (index = height; index > 0; index--)
 		{
@@ -999,7 +999,7 @@ uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int src
 	return srcData;
 }
 
-void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMask, int width, int height, int bpp, HCLRCONV clrconv)
+void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask, int width, int height, int bpp, HCLRCONV clrconv)
 {
 	int xpixel;
 	int apixel;
@@ -1034,13 +1034,13 @@ void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMa
 	}
 }
 
-void freerdp_image_swap_color_order(uint8* data, int width, int height)
+void freerdp_image_swap_color_order(BYTE* data, int width, int height)
 {
 	int x, y;
-	uint32* pixel;
-	uint8 a, r, g, b;
+	UINT32* pixel;
+	BYTE a, r, g, b;
 
-	pixel = (uint32*) data;
+	pixel = (UINT32*) data;
 
 	for (y = 0; y < height; y++)
 	{
@@ -1053,13 +1053,13 @@ void freerdp_image_swap_color_order(uint8* data, int width, int height)
 	}
 }
 
-HCLRCONV freerdp_clrconv_new(uint32 flags)
+HCLRCONV freerdp_clrconv_new(UINT32 flags)
 {
 	HCLRCONV clrconv = xnew(CLRCONV);
 
-	clrconv->alpha = (flags & CLRCONV_ALPHA) ? true : false;
-	clrconv->invert = (flags & CLRCONV_INVERT) ? true : false;
-	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? true : false;
+	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 	clrconv->palette = xnew(rdpPalette);
 
 	return clrconv;
@@ -1070,8 +1070,8 @@ void freerdp_clrconv_free(HCLRCONV clrconv)
 	if (clrconv != NULL)
 	{
 		if (clrconv->palette != NULL)
-			xfree(clrconv->palette);
+			free(clrconv->palette);
 
-		xfree(clrconv);
+		free(clrconv);
 	}
 }

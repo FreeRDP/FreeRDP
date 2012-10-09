@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Compressed Bitmap
  *
  * Copyright 2012 Jay Sorg <jay.sorg@gmail.com>
@@ -22,7 +22,7 @@
 
 #include <freerdp/types.h>
 
-boolean
-jpeg_decompress(uint8* input, uint8* output, int width, int height, int size, int bpp);
+BOOL
+jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size, int bpp);
 
 #endif /* __BITMAP_H */

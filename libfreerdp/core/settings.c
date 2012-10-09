@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Settings
  *
  * Copyright 2009-2011 Jay Sorg
@@ -30,10 +30,11 @@
 #include <unistd.h>
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/registry.h>
+
 #include <freerdp/settings.h>
 #include <freerdp/utils/file.h>
-
-#include <winpr/registry.h>
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
@@ -135,96 +136,96 @@ rdpSettings* settings_new(void* instance)
 		/* Server instances are NULL */
 
 		if (!settings->instance)
-			settings->server_mode = true;
+			settings->server_mode = TRUE;
 
 		settings->width = 1024;
 		settings->height = 768;
-		settings->workarea = false;
-		settings->fullscreen = false;
-		settings->grab_keyboard = true;
-		settings->decorations = true;
+		settings->workarea = FALSE;
+		settings->fullscreen = FALSE;
+		settings->grab_keyboard = TRUE;
+		settings->decorations = TRUE;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;
-		settings->nla_security = true;
-		settings->tls_security = true;
-		settings->rdp_security = true;
-		settings->security_layer_negotiation = true;
+		settings->nla_security = TRUE;
+		settings->tls_security = TRUE;
+		settings->rdp_security = TRUE;
+		settings->security_layer_negotiation = TRUE;
 		settings->client_build = 2600;
 		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
 		settings->kbd_subtype = 0;
 		settings->kbd_fn_keys = 12;
 		settings->kbd_layout = 0;
-		settings->encryption = false;
-		settings->salted_checksum = true;
+		settings->encryption = FALSE;
+		settings->salted_checksum = TRUE;
 		settings->port = 3389;
-		settings->desktop_resize = true;
+		settings->desktop_resize = TRUE;
 
 		settings->performance_flags =
 				PERF_DISABLE_FULLWINDOWDRAG |
 				PERF_DISABLE_MENUANIMATIONS |
 				PERF_DISABLE_WALLPAPER;
 
-		settings->auto_reconnection = true;
+		settings->auto_reconnection = TRUE;
 
 		settings->encryption_method = ENCRYPTION_METHOD_NONE;
 		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
 
-		settings->authentication = true;
-		settings->authentication_only = false;
-		settings->from_stdin = false;
+		settings->authentication = TRUE;
+		settings->authentication_only = FALSE;
+		settings->from_stdin = FALSE;
 
 		settings->received_caps = xzalloc(32);
 		settings->order_support = xzalloc(32);
 
-		settings->order_support[NEG_DSTBLT_INDEX] = true;
-		settings->order_support[NEG_PATBLT_INDEX] = true;
-		settings->order_support[NEG_SCRBLT_INDEX] = true;
-		settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-		settings->order_support[NEG_DRAWNINEGRID_INDEX] = true;
-		settings->order_support[NEG_MULTIDSTBLT_INDEX] = true;
-		settings->order_support[NEG_MULTIPATBLT_INDEX] = true;
-		settings->order_support[NEG_MULTISCRBLT_INDEX] = true;
-		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = true;
-		settings->order_support[NEG_LINETO_INDEX] = true;
-		settings->order_support[NEG_POLYLINE_INDEX] = true;
-		settings->order_support[NEG_MEMBLT_INDEX] = true;
-		settings->order_support[NEG_MEM3BLT_INDEX] = true;
-		settings->order_support[NEG_SAVEBITMAP_INDEX] = true;
-		settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
-		settings->order_support[NEG_FAST_INDEX_INDEX] = true;
-		settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
-		settings->order_support[NEG_POLYGON_SC_INDEX] = true;
-		settings->order_support[NEG_POLYGON_CB_INDEX] = true;
-		settings->order_support[NEG_ELLIPSE_SC_INDEX] = true;
-		settings->order_support[NEG_ELLIPSE_CB_INDEX] = true;
+		settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
+		settings->order_support[NEG_PATBLT_INDEX] = TRUE;
+		settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+		settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
+		settings->order_support[NEG_DRAWNINEGRID_INDEX] = TRUE;
+		settings->order_support[NEG_MULTIDSTBLT_INDEX] = TRUE;
+		settings->order_support[NEG_MULTIPATBLT_INDEX] = TRUE;
+		settings->order_support[NEG_MULTISCRBLT_INDEX] = TRUE;
+		settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+		settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = TRUE;
+		settings->order_support[NEG_LINETO_INDEX] = TRUE;
+		settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
+		settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
+		settings->order_support[NEG_MEM3BLT_INDEX] = TRUE;
+		settings->order_support[NEG_SAVEBITMAP_INDEX] = TRUE;
+		settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
+		settings->order_support[NEG_FAST_INDEX_INDEX] = TRUE;
+		settings->order_support[NEG_FAST_GLYPH_INDEX] = TRUE;
+		settings->order_support[NEG_POLYGON_SC_INDEX] = TRUE;
+		settings->order_support[NEG_POLYGON_CB_INDEX] = TRUE;
+		settings->order_support[NEG_ELLIPSE_SC_INDEX] = TRUE;
+		settings->order_support[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
 		settings->client_hostname = xzalloc(32);
 		settings->client_product_id = xzalloc(32);
 
-		settings->color_pointer = true;
-		settings->large_pointer = true;
+		settings->color_pointer = TRUE;
+		settings->large_pointer = TRUE;
 		settings->pointer_cache_size = 20;
-		settings->sound_beeps = true;
-		settings->disable_wallpaper = false;
-		settings->disable_full_window_drag = false;
-		settings->disable_menu_animations = false;
-		settings->disable_theming = false;
+		settings->sound_beeps = TRUE;
+		settings->disable_wallpaper = FALSE;
+		settings->disable_full_window_drag = FALSE;
+		settings->disable_menu_animations = FALSE;
+		settings->disable_theming = FALSE;
 		settings->connection_type = 0;
 
-		settings->draw_gdi_plus = false;
+		settings->draw_gdi_plus = FALSE;
 
-		settings->frame_marker = false;
-		settings->bitmap_cache_v3 = false;
+		settings->frame_marker = FALSE;
+		settings->bitmap_cache_v3 = FALSE;
 
-		settings->bitmap_cache = true;
-		settings->persistent_bitmap_cache = false;
+		settings->bitmap_cache = TRUE;
+		settings->persistent_bitmap_cache = FALSE;
 		settings->bitmapCacheV2CellInfo = xzalloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 
-		settings->refresh_rect = true;
-		settings->suppress_output = true;
+		settings->refresh_rect = TRUE;
+		settings->suppress_output = TRUE;
 
-		settings->glyph_cache = true;
+		settings->glyph_cache = TRUE;
 		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 		settings->glyphCache = xzalloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
 		settings->fragCache = xnew(GLYPH_CACHE_DEFINITION);
@@ -251,14 +252,14 @@ rdpSettings* settings_new(void* instance)
 		settings->fragCache->cacheEntries = 256;
 		settings->fragCache->cacheMaximumCellSize = 256;
 
-		settings->offscreen_bitmap_cache = true;
+		settings->offscreen_bitmap_cache = TRUE;
 		settings->offscreen_bitmap_cache_size = 7680;
 		settings->offscreen_bitmap_cache_entries = 2000;
 
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
 
-		settings->client_dir = xstrdup(client_dll);
+		settings->client_dir = _strdup(client_dll);
 
 		settings->num_icon_caches = 3;
 		settings->num_icon_cache_entries = 12;
@@ -267,14 +268,14 @@ rdpSettings* settings_new(void* instance)
 
 		settings->multifrag_max_request_size = 0x200000;
 
-		settings->fastpath_input = true;
-		settings->fastpath_output = true;
+		settings->fastpath_input = TRUE;
+		settings->fastpath_output = TRUE;
 
 		settings->frame_acknowledge = 2;
 
 		gethostname(settings->client_hostname, 31);
 		settings->client_hostname[31] = 0;
-		settings->mouse_motion = true;
+		settings->mouse_motion = TRUE;
 
 		settings->client_auto_reconnect_cookie = xnew(ARC_CS_PRIVATE_PACKET);
 		settings->server_auto_reconnect_cookie = xnew(ARC_SC_PRIVATE_PACKET);
@@ -293,34 +294,34 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
-		xfree(settings->hostname);
-		xfree(settings->username);
-		xfree(settings->password);
-		xfree(settings->domain);
-		xfree(settings->shell);
-		xfree(settings->directory);
-		xfree(settings->ip_address);
-		xfree(settings->client_dir);
-		xfree(settings->cert_file);
-		xfree(settings->privatekey_file);
-		xfree(settings->received_caps);
-		xfree(settings->order_support);
-		xfree(settings->client_hostname);
-		xfree(settings->client_product_id);
-		xfree(settings->server_random);
-		xfree(settings->server_certificate);
-		xfree(settings->rdp_key_file);
+		free(settings->hostname);
+		free(settings->username);
+		free(settings->password);
+		free(settings->domain);
+		free(settings->shell);
+		free(settings->directory);
+		free(settings->ip_address);
+		free(settings->client_dir);
+		free(settings->cert_file);
+		free(settings->privatekey_file);
+		free(settings->received_caps);
+		free(settings->order_support);
+		free(settings->client_hostname);
+		free(settings->client_product_id);
+		free(settings->server_random);
+		free(settings->server_certificate);
+		free(settings->rdp_key_file);
 		certificate_free(settings->server_cert);
-		xfree(settings->client_auto_reconnect_cookie);
-		xfree(settings->server_auto_reconnect_cookie);
-		xfree(settings->client_time_zone);
-		xfree(settings->bitmapCacheV2CellInfo);
-		xfree(settings->glyphCache);
-		xfree(settings->fragCache);
+		free(settings->client_auto_reconnect_cookie);
+		free(settings->server_auto_reconnect_cookie);
+		free(settings->client_time_zone);
+		free(settings->bitmapCacheV2CellInfo);
+		free(settings->glyphCache);
+		free(settings->fragCache);
 		key_free(settings->server_key);
-		xfree(settings->config_path);
-		xfree(settings->current_path);
-		xfree(settings->development_path);
-		xfree(settings);
+		free(settings->config_path);
+		free(settings->current_path);
+		free(settings->development_path);
+		free(settings);
 	}
 }

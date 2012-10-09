@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -39,10 +39,10 @@ typedef struct xf_info xfInfo;
 
 struct xf_WorkArea
 {
-	uint32 x;
-	uint32 y;
-	uint32 width;
-	uint32 height;
+	UINT32 x;
+	UINT32 y;
+	UINT32 width;
+	UINT32 height;
 };
 typedef struct xf_WorkArea xfWorkArea;
 
@@ -101,43 +101,43 @@ struct xf_info
 	Colormap colormap;
 	int screen_number;
 	int scanline_pad;
-	boolean big_endian;
-	boolean fullscreen;
-	boolean grab_keyboard;
-	boolean unobscured;
-	boolean decorations;
-	boolean debug;
+	BOOL big_endian;
+	BOOL fullscreen;
+	BOOL grab_keyboard;
+	BOOL unobscured;
+	BOOL decorations;
+	BOOL debug;
 	xfWindow* window;
 	xfWorkArea workArea;
 	int current_desktop;
-	boolean remote_app;
-	boolean disconnect;
+	BOOL remote_app;
+	BOOL disconnect;
 	HCLRCONV clrconv;
 	Window parent_window;
 
 	HGDI_DC hdc;
-	boolean sw_gdi;
-	uint8* primary_buffer;
+	BOOL sw_gdi;
+	BYTE* primary_buffer;
 
-	boolean frame_begin;
-	uint16 frame_x1;
-	uint16 frame_y1;
-	uint16 frame_x2;
-	uint16 frame_y2;
+	BOOL frame_begin;
+	UINT16 frame_x1;
+	UINT16 frame_y1;
+	UINT16 frame_x2;
+	UINT16 frame_y2;
 
-	boolean focused;
-	boolean mouse_active;
-	boolean mouse_motion;
-	boolean suppress_output;
-	boolean fullscreen_toggle;
-	uint32 keyboard_layout_id;
-	boolean pressed_keys[256];
+	BOOL focused;
+	BOOL mouse_active;
+	BOOL mouse_motion;
+	BOOL suppress_output;
+	BOOL fullscreen_toggle;
+	UINT32 keyboard_layout_id;
+	BOOL pressed_keys[256];
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;
-	boolean complex_regions;
+	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
-	uint8* bmp_codec_none;
-	uint8* bmp_codec_nsc;
+	BYTE* bmp_codec_none;
+	BYTE* bmp_codec_nsc;
 	void* rfx_context;
 	void* nsc_context;
 	void* xv_context;
@@ -170,7 +170,7 @@ struct xf_info
 
 void xf_create_window(xfInfo* xfi);
 void xf_toggle_fullscreen(xfInfo* xfi);
-boolean xf_post_connect(freerdp* instance);
+BOOL xf_post_connect(freerdp* instance);
 
 enum XF_EXIT_CODE
 {

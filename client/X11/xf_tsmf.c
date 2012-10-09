@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Video Redirection
  *
  * Copyright 2010-2011 Vic Lee
@@ -35,7 +35,7 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/plugins/tsmf.h>
+#include <freerdp/client/tsmf.h>
 
 #include "xf_tsmf.h"
 
@@ -53,7 +53,7 @@ struct xf_xv_context
 	int xv_image_size;
 	int xv_shmid;
 	char* xv_shmaddr;
-	uint32* xv_pixfmts;
+	UINT32* xv_pixfmts;
 };
 
 #ifdef WITH_DEBUG_XV
@@ -129,7 +129,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	{
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
-			xv->xv_colorkey_atom = XInternAtom(xfi->display, "XV_COLORKEY", false);
+			xv->xv_colorkey_atom = XInternAtom(xfi->display, "XV_COLORKEY", FALSE);
 			XvSetPortAttribute(xfi->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
 			break;
 		}
@@ -142,7 +142,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	fo = XvListImageFormats(xfi->display, xv->xv_port, &ret);
 	if (ret > 0)
 	{
-		xv->xv_pixfmts = (uint32*) xzalloc((ret + 1) * sizeof(uint32));
+		xv->xv_pixfmts = (UINT32*) xzalloc((ret + 1) * sizeof(UINT32));
 		for (i = 0; i < ret; i++)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
@@ -172,39 +172,39 @@ void xf_tsmf_uninit(xfInfo* xfi)
 		}
 		if (xv->xv_pixfmts)
 		{
-			xfree(xv->xv_pixfmts);
+			free(xv->xv_pixfmts);
 			xv->xv_pixfmts = NULL;
 		}
-		xfree(xv);
+		free(xv);
 		xfi->xv_context = NULL;
 	}
 }
 
-static boolean
-xf_tsmf_is_format_supported(xfXvContext* xv, uint32 pixfmt)
+static BOOL
+xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 {
 	int i;
 
 	if (!xv->xv_pixfmts)
-		return false;
+		return FALSE;
 
 	for (i = 0; xv->xv_pixfmts[i]; i++)
 	{
 		if (xv->xv_pixfmts[i] == pixfmt)
-			return true;
+			return TRUE;
 	}
 
-	return false;
+	return FALSE;
 }
 
 static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT* vevent)
 {
 	int i;
-	uint8* data1;
-	uint8* data2;
-	uint32 pixfmt;
-	uint32 xvpixfmt;
-	boolean converti420yv12 = false;
+	BYTE* data1;
+	BYTE* data2;
+	UINT32 pixfmt;
+	UINT32 xvpixfmt;
+	BOOL converti420yv12 = FALSE;
 	XvImage * image;
 	int colorkey = 0;
 	XShmSegmentInfo shminfo;
@@ -247,12 +247,12 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	else if (pixfmt == RDP_PIXFMT_I420 && xf_tsmf_is_format_supported(xv, RDP_PIXFMT_YV12))
 	{
 		xvpixfmt = RDP_PIXFMT_YV12;
-		converti420yv12 = true;
+		converti420yv12 = TRUE;
 	}
 	else if (pixfmt == RDP_PIXFMT_YV12 && xf_tsmf_is_format_supported(xv, RDP_PIXFMT_I420))
 	{
 		xvpixfmt = RDP_PIXFMT_I420;
-		converti420yv12 = true;
+		converti420yv12 = TRUE;
 	}
 	else
 	{
@@ -276,7 +276,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	}
 	shminfo.shmid = xv->xv_shmid;
 	shminfo.shmaddr = image->data = xv->xv_shmaddr;
-	shminfo.readOnly = false;
+	shminfo.readOnly = FALSE;
 
 	if (!XShmAttach(xfi->display, &shminfo))
 	{
@@ -309,7 +309,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 			}
 			/* UV */
 			/* Conversion between I420 and YV12 is to simply swap U and V */
-			if (converti420yv12 == false)
+			if (converti420yv12 == FALSE)
 			{
 				data1 = vevent->frame_data + vevent->frame_width * vevent->frame_height;
 				data2 = vevent->frame_data + vevent->frame_width * vevent->frame_height +
@@ -353,10 +353,10 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 
 	XvShmPutImage(xfi->display, xv->xv_port, xfi->window->handle, xfi->gc, image,
 		0, 0, image->width, image->height,
-		vevent->x, vevent->y, vevent->width, vevent->height, false);
+		vevent->x, vevent->y, vevent->width, vevent->height, FALSE);
 	if (xv->xv_colorkey_atom == None)
 		XSetClipMask(xfi->display, xfi->gc, None);
-	XSync(xfi->display, false);
+	XSync(xfi->display, FALSE);
 
 	XShmDetach(xfi->display, &shminfo);
 	XFree(image);

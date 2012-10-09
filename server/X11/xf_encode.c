@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 RemoteFX Encoder
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -81,7 +81,7 @@ void* xf_frame_rate_thread(void* param)
 	xfEvent* event;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
-	uint32 wait_interval;
+	UINT32 wait_interval;
 
 	client = (freerdp_peer*) param;
 	xfp = (xfPeerContext*) client->context;
@@ -110,7 +110,7 @@ void* xf_monitor_updates(void* param)
 	int pending_events;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
-	uint32 wait_interval;
+	UINT32 wait_interval;
 	struct timeval timeout;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;

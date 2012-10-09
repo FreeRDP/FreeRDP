@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP X11 Server
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -57,7 +57,7 @@ struct xf_info
 	int scanline_pad;
 	int bytesPerPixel;
 	HCLRCONV clrconv;
-	boolean use_xshm;
+	BOOL use_xshm;
 
 	XImage* fb_image;
 	Pixmap fb_pixmap;

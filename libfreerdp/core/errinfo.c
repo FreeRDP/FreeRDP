@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Error Info
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -439,7 +439,7 @@ static const ERRINFO ERRINFO_CODES[] =
 		ERRINFO_DEFINE(NONE)
 };
 
-void rdp_print_errinfo(uint32 code)
+void rdp_print_errinfo(UINT32 code)
 {
 	const ERRINFO* errInfo;
 

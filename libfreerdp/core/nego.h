@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Protocol Security Negotiation
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -76,60 +76,60 @@ enum RDP_NEG_MSG
 struct rdp_nego
 {
 	int port;
-	uint32 flags;
+	UINT32 flags;
 	char* hostname;
 	char* cookie;
 	BYTE* RoutingToken;
 	DWORD RoutingTokenLength;
-	boolean send_preconnection_pdu;
-	uint32 preconnection_id;
+	BOOL send_preconnection_pdu;
+	UINT32 preconnection_id;
 	char* preconnection_blob;
 
 	NEGO_STATE state;
-	boolean tcp_connected;
-	boolean security_connected;
+	BOOL tcp_connected;
+	BOOL security_connected;
 
-	uint32 selected_protocol;
-	uint32 requested_protocols;
-	boolean security_layer_negotiation_enabled;
-	uint8 enabled_protocols[3];
+	UINT32 selected_protocol;
+	UINT32 requested_protocols;
+	BOOL security_layer_negotiation_enabled;
+	BYTE enabled_protocols[3];
 
 	rdpTransport* transport;
 };
 typedef struct rdp_nego rdpNego;
 
-boolean nego_connect(rdpNego* nego);
+BOOL nego_connect(rdpNego* nego);
 
-boolean nego_send_preconnection_pdu(rdpNego* nego);
+BOOL nego_send_preconnection_pdu(rdpNego* nego);
 
 void nego_attempt_nla(rdpNego* nego);
 void nego_attempt_tls(rdpNego* nego);
 void nego_attempt_rdp(rdpNego* nego);
 
 void nego_send(rdpNego* nego);
-boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra);
-boolean nego_recv_response(rdpNego* nego);
-boolean nego_read_request(rdpNego* nego, STREAM* s);
+BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+BOOL nego_recv_response(rdpNego* nego);
+BOOL nego_read_request(rdpNego* nego, STREAM* s);
 
-boolean nego_send_negotiation_request(rdpNego* nego);
+BOOL nego_send_negotiation_request(rdpNego* nego);
 void nego_process_negotiation_request(rdpNego* nego, STREAM* s);
 void nego_process_negotiation_response(rdpNego* nego, STREAM* s);
 void nego_process_negotiation_failure(rdpNego* nego, STREAM* s);
-boolean nego_send_negotiation_response(rdpNego* nego);
+BOOL nego_send_negotiation_response(rdpNego* nego);
 
 rdpNego* nego_new(struct rdp_transport * transport);
 void nego_free(rdpNego* nego);
 
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
-void nego_set_negotiation_enabled(rdpNego* nego, boolean security_layer_negotiation_enabled);
-void nego_enable_rdp(rdpNego* nego, boolean enable_rdp);
-void nego_enable_nla(rdpNego* nego, boolean enable_nla);
-void nego_enable_tls(rdpNego* nego, boolean enable_tls);
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL security_layer_negotiation_enabled);
+void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
+void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
+void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
 void nego_set_cookie(rdpNego* nego, char* cookie);
-void nego_set_send_preconnection_pdu(rdpNego* nego, boolean send_pcpdu);
-void nego_set_preconnection_id(rdpNego* nego, uint32 id);
+void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
+void nego_set_preconnection_id(rdpNego* nego, UINT32 id);
 void nego_set_preconnection_blob(rdpNego* nego, char* blob);
 
 #ifdef WITH_DEBUG_NEGO

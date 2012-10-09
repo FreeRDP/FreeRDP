@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Interface
  *
  * Copyright 2009-2011 Jay Sorg
@@ -48,14 +48,14 @@ extern "C" {
 typedef void (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
-typedef boolean (*pPreConnect)(freerdp* instance);
-typedef boolean (*pPostConnect)(freerdp* instance);
-typedef boolean (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
-typedef boolean (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
-typedef boolean (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
+typedef BOOL (*pPreConnect)(freerdp* instance);
+typedef BOOL (*pPostConnect)(freerdp* instance);
+typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
+typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
+typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
 
-typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
-typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
+typedef int (*pSendChannelData)(freerdp* instance, int channelId, BYTE* data, int size);
+typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
 
 /**
  * Defines the context for a given instance of RDP connection.
@@ -72,7 +72,7 @@ struct rdp_context
 						   Pointer to the client peer.
 						   This is set by a call to freerdp_peer_context_new() during peer initialization.
 						   This field is used only on the server side. */
-	uint32 paddingA[16 - 2]; /* 2 */
+	UINT32 paddingA[16 - 2]; /* 2 */
 
 	int argc;	/**< (offset 16)
 				   Number of arguments given to the program at launch time.
@@ -82,7 +82,7 @@ struct rdp_context
 					List of arguments given to the program at launch time.
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
-	uint32 paddingB[32 - 18]; /* 18 */
+	UINT32 paddingB[32 - 18]; /* 18 */
 
 	rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
@@ -96,7 +96,7 @@ struct rdp_context
 	rdpCache* cache; /* 35 */
 	rdpChannels* channels; /* 36 */
 	rdpGraphics* graphics; /* 37 */
-	uint32 paddingC[64 - 38]; /* 38 */
+	UINT32 paddingC[64 - 38]; /* 38 */
 };
 
 /** Defines the options for a given instance of RDP connection.
@@ -115,7 +115,7 @@ struct rdp_freerdp
 							  rdpContext field first, and any additional content following it.
 							  Can be allocated by a call to freerdp_context_new().
 							  Must be dealocated by a call to freerdp_context_free() before deallocating the current instance. */
-	uint32 paddingA[16 - 1]; /* 1 */
+	UINT32 paddingA[16 - 1]; /* 1 */
 
 	rdpInput* input; /* (offset 16)
 						Input handle for the connection.
@@ -126,7 +126,7 @@ struct rdp_freerdp
 	rdpSettings* settings; /**< (offset 18)
 								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
 								Will be initialized by a call to freerdp_context_new() */
-	uint32 paddingB[32 - 19]; /* 19 */
+	UINT32 paddingB[32 - 19]; /* 19 */
 
 	size_t context_size; /* (offset 32)
 							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
@@ -146,7 +146,7 @@ struct rdp_freerdp
 								   Callback for context deallocation
 								   Can be set before calling freerdp_context_free() to have it executed before deallocation.
 								   Must be set to NULL if not needed. */
-	uint32 paddingC[48 - 35]; /* 35 */
+	UINT32 paddingC[48 - 35]; /* 35 */
 
 	pPreConnect PreConnect; /**< (offset 48)
 								 Callback for pre-connect operations.
@@ -167,8 +167,8 @@ struct rdp_freerdp
 	pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
 															 Callback for changed certificate validation. 
 															 Used when a certificate differs from stored fingerprint.
-															 If returns true, the new fingerprint will be trusted and old thrown out. */
-	uint32 paddingD[64 - 51]; /* 51 */
+															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
+	UINT32 paddingD[64 - 51]; /* 51 */
 
 	pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.
@@ -178,20 +178,20 @@ struct rdp_freerdp
 											   Callback for receiving data from a channel.
 											   This is called by freerdp_channel_process() (if not NULL).
 											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
-	uint32 paddingE[80 - 66]; /* 66 */
+	UINT32 paddingE[80 - 66]; /* 66 */
 };
 
 FREERDP_API void freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
-FREERDP_API boolean freerdp_connect(freerdp* instance);
-FREERDP_API boolean freerdp_shall_disconnect(freerdp* instance);
-FREERDP_API boolean freerdp_disconnect(freerdp* instance);
+FREERDP_API BOOL freerdp_connect(freerdp* instance);
+FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
+FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
-FREERDP_API boolean freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
-FREERDP_API boolean freerdp_check_fds(freerdp* instance);
+FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
+FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
-FREERDP_API uint32 freerdp_error_info(freerdp* instance);
+FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 

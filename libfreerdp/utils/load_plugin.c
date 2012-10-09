@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Plugin Loading Utils
  *
  * Copyright 2011 Vic Lee
@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
 #include <winpr/windows.h>
+
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
@@ -48,107 +51,18 @@
 
 #endif
 
-
 #define MAX_STATIC_PLUGINS 50
 
 struct static_plugin
 {
-  const char* name;
-  const char* entry_name;
-  void* entry_addr;
+	const char* name;
+	const char* entry_name;
+	void* entry_addr;
 };
 typedef struct static_plugin staticPlugin;
 
 static staticPlugin g_static_plugins[MAX_STATIC_PLUGINS];
 static int g_static_plugins_count;
-
-
-/**
- * UNUSED
- * This function opens a handle on the specified library in order to load symbols from it.
- * It is just a wrapper over dlopen(), but provides some logs in case of error.
- *
- * The returned pointer can be used to load a symbol from the library, using the freerdp_get_library_symbol() call.
- * The returned pointer should be closed using the freerdp_close_library() call.
- *
- * @see freerdp_get_library_symbol
- * @see freerdp_close_library
- *
- * @param file [IN]		- library name
- * @return Pointer to the loaded library. NULL if an error occurs.
- */
-void* freerdp_open_library(const char* file)
-{
-	void* library;
-
-	library = DLOPEN(file);
-
-	if (library == NULL)
-	{
-		printf("freerdp_load_library: failed to open %s: %s\n", file, DLERROR());
-		return NULL;
-	}
-
-	return library;
-}
-
-/**
- * UNUSED
- * This function retrieves a pointer to the specified symbol from the given (loaded) library.
- * It is a wrapper over the dlsym() function, but provides some logs in case of error.
- *
- * @see freerdp_open_library
- * @see freerdp_close_library
- *
- * @param library [IN]		- a valid pointer to the opened library.
- * 							  This pointer should come from a successful call to freerdp_open_library()
- * @param name [IN]			- name of the symbol that must be loaded
- *
- * @return A pointer to the loaded symbol. NULL if an error occured.
- */
-void* freerdp_get_library_symbol(void* library, const char* name)
-{
-	void* symbol;
-
-	symbol = DLSYM(library, name);
-
-	if (symbol == NULL)
-	{
-		printf("freerdp_get_library_symbol: failed to load %s: %s\n", name, DLERROR());
-		return NULL;
-	}
-
-	return symbol;
-}
-
-/**
- * UNUSED
- * This function closes a library handle that was previously opened by freerdp_open_library().
- * It is a wrapper over dlclose(), but provides logs in case of error.
- *
- * @see freerdp_open_library
- * @see freerdp_get_library_symbol
- *
- * @return true if the close succeeded. false otherwise.
- */
-boolean freerdp_close_library(void* library)
-{
-	int status;
-
-	status = DLCLOSE(library);
-
-#ifdef _WIN32
-	if (status != 0)
-#else
-	if (status == 0)
-#endif
-	{
-		printf("freerdp_free_library: failed to close: %s\n", DLERROR());
-		return false;
-	}
-
-	return true;
-}
 
 /**
  * This function will load the specified library, retrieve the specified symbol in it, and return a pointer to it.
@@ -204,7 +118,9 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 
 	/* first attempt to load a static plugin */
 	entry = freerdp_load_static_plugin(name, entry_name);
-	if (entry != NULL) return entry;
+
+	if (entry != NULL)
+		return entry;
 
 	suffixed_name = freerdp_append_shared_library_suffix((char*) name);
 
@@ -216,82 +132,17 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	else
 	{
 		/* explicit path given, use it instead of default path */
-		path = xstrdup(suffixed_name);
+		path = _strdup(suffixed_name);
 	}
 
 	entry = freerdp_load_library_symbol(path, entry_name);
 
-	xfree(suffixed_name);
-	xfree(path);
+	free(suffixed_name);
+	free(path);
 
 	if (entry == NULL)
 	{
 		printf("freerdp_load_plugin: failed to load %s/%s\n", name, entry_name);
-		return NULL;
-	}
-
-	return entry;
-}
-
-/**
- * UNUSED
- * This function was meant to be used to load channel plugins.
- * It was initially called from freerdp_channels_load_plugin() but now we use the freerdp_load_plugin() function
- * which is more generic.
- *
- */
-void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const char* entry_name)
-{
-	char* path;
-	void* entry;
-	char* suffixed_name;
-
-	suffixed_name = freerdp_append_shared_library_suffix((char*) name);
-
-	if (!freerdp_path_contains_separator(suffixed_name))
-	{
-		/* no explicit path given, use default path */
-
-		if (!settings->development_mode)
-		{
-			path = freerdp_construct_path(FREERDP_PLUGIN_PATH, suffixed_name);
-		}
-		else
-		{
-			char* dot;
-			char* plugin_name;
-			char* channels_path;
-			char* channel_subpath;
-
-			dot = strrchr(suffixed_name, '.');
-			plugin_name = xmalloc((dot - suffixed_name) + 1);
-			strncpy(plugin_name, suffixed_name, (dot - suffixed_name));
-			plugin_name[(dot - suffixed_name)] = '\0';
-
-			channels_path = freerdp_construct_path(settings->development_path, "channels");
-			channel_subpath = freerdp_construct_path(channels_path, plugin_name);
-
-			path = freerdp_construct_path(channel_subpath, suffixed_name);
-
-			xfree(plugin_name);
-			xfree(channels_path);
-			xfree(channel_subpath);
-		}
-	}
-	else
-	{
-		/* explicit path given, use it instead of default path */
-		path = xstrdup(suffixed_name);
-	}
-
-	entry = freerdp_load_library_symbol(path, entry_name);
-
-	xfree(suffixed_name);
-	xfree(path);
-
-	if (entry == NULL)
-	{
-		printf("freerdp_load_channel_plugin: failed to load %s/%s\n", name, entry_name);
 		return NULL;
 	}
 
@@ -305,16 +156,16 @@ void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const
  * @param entry_name [IN]	- name of the symbol to register for later loading
  * @param entry [IN]		- function pointer to the entry function
  *
- * @return true on success, otherwise false.
+ * @return TRUE on success, otherwise FALSE.
  */
-boolean freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
+BOOL freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr)
 {
 	staticPlugin* plugin;
   
 	if (g_static_plugins_count >= MAX_STATIC_PLUGINS)
 	{
 		printf("freerdp_register_static_plugin: cannot register %s/%s", name, entry_name);
-		return false;
+		return FALSE;
 	}
   
 	/* add the static plugin to the vector */
@@ -323,7 +174,7 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
 	plugin->entry_name = entry_name;
 	plugin->entry_addr = entry_addr;
   
-	return true;
+	return TRUE;
 }
 
 /**
@@ -334,11 +185,12 @@ boolean freerdp_register_static_plugin(const char* name, const char* entry_name,
  *
  * @return Pointer to the entry function, NULL if no matching plugin could be found
  */
+
 void* freerdp_load_static_plugin(const char* name, const char* entry_name)
 {
 	int i;
 	staticPlugin* plugin;
-  
+
 	for (i = 0; i < g_static_plugins_count; i++)
 	{
 		plugin = &g_static_plugins[i];

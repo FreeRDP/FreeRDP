@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI 8bpp Internal Buffer Routines
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,7 +23,7 @@
 
 typedef int (*pLineTo_8bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
-FREERDP_API uint8 gdi_get_color_8bpp(HGDI_DC hdc, GDI_COLOR color);
+FREERDP_API BYTE gdi_get_color_8bpp(HGDI_DC hdc, GDI_COLOR color);
 
 FREERDP_API int FillRect_8bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 FREERDP_API int BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);

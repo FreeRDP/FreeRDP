@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -35,7 +35,7 @@
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railMoveWindow)(rdpRail* rail, rdpWindow* window);
-typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, uint8 state);
+typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, BYTE state);
 typedef void (*railSetWindowText)(rdpRail* rail, rdpWindow* window);
 typedef void (*railSetWindowIcon)(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
 typedef void (*railSetWindowRects)(rdpRail* rail, rdpWindow* window);

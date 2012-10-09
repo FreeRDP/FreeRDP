@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -34,7 +34,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(tsmf_ffmpeg freerdp)
 else()
 	target_link_libraries(tsmf_ffmpeg freerdp-utils)

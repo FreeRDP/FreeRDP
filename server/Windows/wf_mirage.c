@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -26,8 +26,8 @@
 /*
 This function will iterate over the loaded display devices until it finds
 the mirror device we want to load. If found, it will then copy the registry
-key corresponding to the device to the context and returns true. Otherwise
-the function returns false.
+key corresponding to the device to the context and returns TRUE. Otherwise
+the function returns FALSE.
 */
 BOOL wf_mirror_driver_find_display_device(wfInfo* context)
 {
@@ -71,11 +71,11 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* context)
 /**
  * This function will attempt to access the the windows registry using the device
  * key stored in the current context. It will attempt to read the value of the
- * "Attach.ToDesktop" subkey and will return true if the value is already set to
- * val. If unable to read the subkey, this function will return false. If the 
- * subkey is not set to val it will then attempt to set it to val and return true. If 
+ * "Attach.ToDesktop" subkey and will return TRUE if the value is already set to
+ * val. If unable to read the subkey, this function will return FALSE. If the 
+ * subkey is not set to val it will then attempt to set it to val and return TRUE. If 
  * unsuccessful or an unexpected value is encountered, the function returns 
- * false.
+ * FALSE.
  */
 
 BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode)
@@ -165,8 +165,8 @@ void wf_mirror_driver_print_display_change_status(LONG status)
 
 /**
  * This function will attempt to apply the currently configured display settings 
- * in the registry to the display driver. It will return true if successful 
- * otherwise it returns false.
+ * in the registry to the display driver. It will return TRUE if successful 
+ * otherwise it returns FALSE.
  * If unload is nonzero then the the driver will be asked to remove itself.
  */
 

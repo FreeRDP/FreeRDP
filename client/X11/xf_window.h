@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Windows
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -71,43 +71,43 @@ struct xf_window
 	int width;
 	int height;
 	Window handle;
-	boolean fullscreen;
-	boolean decorations;
+	BOOL fullscreen;
+	BOOL decorations;
 	rdpWindow* window;
-	boolean is_mapped;
-	boolean is_transient;
+	BOOL is_mapped;
+	BOOL is_transient;
 	xfLocalMove local_move;
-	uint8 rail_state;
-	boolean rail_ignore_configure;
+	BYTE rail_state;
+	BOOL rail_ignore_configure;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);
 
-boolean xf_GetCurrentDesktop(xfInfo* xfi);
-boolean xf_GetWorkArea(xfInfo* xfi);
+BOOL xf_GetCurrentDesktop(xfInfo* xfi);
+BOOL xf_GetWorkArea(xfInfo* xfi);
 
-void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, boolean fullscreen);
-void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, boolean show);
+void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, BOOL fullscreen);
+void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, BOOL show);
 void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window);
 
-xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations);
+xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, BOOL decorations);
 void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height);
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id);
+xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id);
 void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
-void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state);
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state);
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
 void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style);
+void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, UINT32 style, UINT32 ex_style);
 void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
-boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
+BOOL xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd);
 
-boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
-		unsigned long* nitems, unsigned long* bytes, uint8** prop);
+BOOL xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
+		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 
 void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int maxHeight,
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);

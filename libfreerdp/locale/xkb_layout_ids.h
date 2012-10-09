@@ -22,6 +22,6 @@
 
 #include <freerdp/types.h>
 
-uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
+UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant);
 
 #endif /* __FREERDP_XKB_LAYOUT_IDS_H */

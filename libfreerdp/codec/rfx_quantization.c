@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Quantization
  *
  * Copyright 2011 Vic Lee
@@ -23,9 +23,9 @@
 
 #include "rfx_quantization.h"
 
-static void rfx_quantization_decode_block(sint16* buffer, int buffer_size, uint32 factor)
+static void rfx_quantization_decode_block(INT16* buffer, int buffer_size, UINT32 factor)
 {
-	sint16* dst;
+	INT16* dst;
 
 	if (factor == 0)
 		return;
@@ -36,7 +36,7 @@ static void rfx_quantization_decode_block(sint16* buffer, int buffer_size, uint3
 	}
 }
 
-void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values)
+void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values)
 {
 	/* Scale the values so that they are represented as 11.5 fixed-point number */
 	rfx_quantization_decode_block(buffer, 4096, 5);
@@ -53,10 +53,10 @@ void rfx_quantization_decode(sint16* buffer, const uint32* quantization_values)
 	rfx_quantization_decode_block(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
-static void rfx_quantization_encode_block(sint16* buffer, int buffer_size, uint32 factor)
+static void rfx_quantization_encode_block(INT16* buffer, int buffer_size, UINT32 factor)
 {
-	sint16* dst;
-	sint16 half;
+	INT16* dst;
+	INT16 half;
 
 	if (factor == 0)
 		return;
@@ -68,7 +68,7 @@ static void rfx_quantization_encode_block(sint16* buffer, int buffer_size, uint3
 	}
 }
 
-void rfx_quantization_encode(sint16* buffer, const uint32* quantization_values)
+void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values)
 {
 	rfx_quantization_encode_block(buffer, 1024, quantization_values[8] - 6); /* HL1 */
 	rfx_quantization_encode_block(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */

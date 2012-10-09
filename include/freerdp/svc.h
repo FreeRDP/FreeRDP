@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Static Virtual Channel Interface
  *
  * Copyright 2009-2011 Jay Sorg
@@ -36,19 +36,19 @@
 struct _CHANNEL_DEF
 {
 	char name[CHANNEL_NAME_LEN + 1];
-	uint32 options;
+	UINT32 options;
 };
 typedef struct _CHANNEL_DEF CHANNEL_DEF;
 typedef CHANNEL_DEF* PCHANNEL_DEF;
 typedef CHANNEL_DEF** PPCHANNEL_DEF;
 
 typedef void (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(void* pInitHandle,
-	uint32 event, void* pData, uint32 dataLength);
+	UINT32 event, void* pData, UINT32 dataLength);
 
 
-typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(uint32 openHandle,
-	uint32 event, void* pData, uint32 dataLength,
-	uint32 totalLength, uint32 dataFlags);
+typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(UINT32 openHandle,
+	UINT32 event, void* pData, UINT32 dataLength,
+	UINT32 totalLength, UINT32 dataFlags);
 
 #define CHANNEL_RC_OK                             0
 #define CHANNEL_RC_ALREADY_INITIALIZED            1
@@ -71,24 +71,24 @@ typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(uint32 openHandle,
 
 #define VIRTUAL_CHANNEL_VERSION_WIN2000         1
 
-typedef uint32 (FREERDP_CC * PVIRTUALCHANNELINIT)(void** ppInitHandle,
-	PCHANNEL_DEF pChannel, int channelCount, uint32 versionRequested,
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELINIT)(void** ppInitHandle,
+	PCHANNEL_DEF pChannel, int channelCount, UINT32 versionRequested,
 	PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
-typedef uint32 (FREERDP_CC * PVIRTUALCHANNELOPEN)(void* pInitHandle,
-	uint32* pOpenHandle, char* pChannelName,
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELOPEN)(void* pInitHandle,
+	UINT32* pOpenHandle, char* pChannelName,
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
-typedef uint32 (FREERDP_CC * PVIRTUALCHANNELCLOSE)(uint32 openHandle);
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELCLOSE)(UINT32 openHandle);
 
-typedef uint32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(uint32 openHandle,
-	void* pData, uint32 dataLength, void* pUserData);
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(UINT32 openHandle,
+	void* pData, UINT32 dataLength, void* pUserData);
 
-typedef uint32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(uint32 openHandle,
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(UINT32 openHandle,
 	RDP_EVENT* event);
 
 struct _CHANNEL_ENTRY_POINTS
 {
-	uint32 cbSize;
-	uint32 protocolVersion;
+	UINT32 cbSize;
+	UINT32 protocolVersion;
 	PVIRTUALCHANNELINIT  pVirtualChannelInit;
 	PVIRTUALCHANNELOPEN  pVirtualChannelOpen;
 	PVIRTUALCHANNELCLOSE pVirtualChannelClose;
@@ -101,8 +101,8 @@ typedef int (FREERDP_CC * PVIRTUALCHANNELENTRY)(PCHANNEL_ENTRY_POINTS pEntryPoin
 
 struct _CHANNEL_ENTRY_POINTS_EX
 {
-	uint32 cbSize;
-	uint32 protocolVersion;
+	UINT32 cbSize;
+	UINT32 protocolVersion;
 	PVIRTUALCHANNELINIT  pVirtualChannelInit;
 	PVIRTUALCHANNELOPEN  pVirtualChannelOpen;
 	PVIRTUALCHANNELCLOSE pVirtualChannelClose;

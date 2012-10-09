@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -30,15 +30,15 @@ struct _USB_SEARCHDEV
 	void * inode;
 	void * prev;
 	void * next;
-	uint16 idVendor;
-	uint16 idProduct;
+	UINT16 idVendor;
+	UINT16 idProduct;
 };
 
 typedef struct _USB_SEARCHMAN USB_SEARCHMAN;
 struct _USB_SEARCHMAN
 {
 	int				usb_numbers;
-	uint32			UsbDevice;
+	UINT32			UsbDevice;
 	USB_SEARCHDEV *	idev; /* iterator device */
 	USB_SEARCHDEV *	head; /* head device in linked list */
 	USB_SEARCHDEV *	tail; /* tail device in linked list */
@@ -60,9 +60,9 @@ struct _USB_SEARCHMAN
 	/* close searchman */
 	void (*close) (USB_SEARCHMAN* self);
 	/* add a new usb device for search */
-	int (*add) (USB_SEARCHMAN* seachman, uint16 idVendor, uint16 idProduct);
+	int (*add) (USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
 	/* remove a usb device from list */
-	int (*remove) (USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct);
+	int (*remove) (USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
 	/* check list has next device*/
 	int (*has_next) (USB_SEARCHMAN* seachman);
 	/* get the device from list*/
@@ -71,7 +71,7 @@ struct _USB_SEARCHMAN
 	void (*free) (USB_SEARCHMAN* searchman);
 };
 
-USB_SEARCHMAN * searchman_new(void * urbdrc, uint32 UsbDevice);
+USB_SEARCHMAN * searchman_new(void * urbdrc, UINT32 UsbDevice);
 
 #endif
 
