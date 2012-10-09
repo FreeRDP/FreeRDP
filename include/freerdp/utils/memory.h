@@ -28,9 +28,6 @@
 
 FREERDP_API void* xzalloc(size_t size);
 
-FREERDP_API char* xstrtoup(const char* str);
-FREERDP_API wchar_t* xwcsdup(const wchar_t* wstr);
-
 #define xnew(_type) (_type*)xzalloc(sizeof(_type))
 
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
