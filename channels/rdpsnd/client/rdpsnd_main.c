@@ -565,9 +565,8 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-#ifdef WITH_STATIC_PLUGINS
+/* rdpsnd is always built-in */
 #define VirtualChannelEntry	rdpsnd_VirtualChannelEntry
-#endif
 
 const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
@@ -591,4 +590,3 @@ const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
-

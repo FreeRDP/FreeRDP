@@ -56,11 +56,8 @@
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cliprdr.h>
-#include <freerdp/rail.h>
-
-#ifdef WITH_STATIC_PLUGINS
 #include <freerdp/client/channels.h>
-#endif
+#include <freerdp/rail.h>
 
 #include <winpr/synch.h>
 
@@ -948,12 +945,9 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
  */
 int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
-	void* entry;
+	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	entry = NULL;
-
-#ifdef WITH_STATIC_PLUGINS
 	entry = freerdp_channels_find_static_virtual_channel_entry(name);
 
 	if (entry)
@@ -964,7 +958,6 @@ int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 			return 1;
 		}
 	}
-#endif
 
 	printf("loading channel %s (plugin)\n", name);
 	freerdp_channels_load_plugin(channels, settings, name, plugin_data);

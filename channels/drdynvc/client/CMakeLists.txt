@@ -25,15 +25,13 @@ set(${MODULE_PREFIX}_SRCS
 	dvcman.c
 	dvcman.h)
 
-if(NOT WITH_STATIC_PLUGINS)
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-else()
-	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-	set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+# drdynvc is always built-in
 
-	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
-endif()
+set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -42,8 +40,6 @@ if(WITH_MONOLITHIC_BUILD)
 else()
 	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-synch)
 endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 

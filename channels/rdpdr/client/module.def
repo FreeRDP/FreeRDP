@@ -1,3 +1,0 @@
-LIBRARY		"rdpdr"
-EXPORTS
-	VirtualChannelEntry		@1

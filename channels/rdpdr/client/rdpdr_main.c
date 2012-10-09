@@ -316,9 +316,8 @@ static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-#ifdef WITH_STATIC_PLUGINS
+/* rdpdr is always built-in */
 #define VirtualChannelEntry	rdpdr_VirtualChannelEntry
-#endif
 
 const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {

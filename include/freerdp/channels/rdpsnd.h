@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_RDPSND_H
-#define __FREERDP_RDPSND_H
+#ifndef FREERDP_CHANNEL_RDPSND_H
+#define FREERDP_CHANNEL_RDPSND_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
 typedef struct rdpsnd_format rdpsndFormat;
+
 struct rdpsnd_format
 {
 	uint16 wFormatTag;
@@ -56,4 +57,5 @@ struct rdpsnd_format
 #define MEDIUM_QUALITY   0x0001
 #define HIGH_QUALITY     0x0002
 
-#endif
+#endif /* FREERDP_CHANNEL_RDPSND_H */
+

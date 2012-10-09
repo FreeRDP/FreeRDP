@@ -271,9 +271,8 @@ static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 	xfree(plugin);
 }
 
-#ifdef WITH_STATIC_PLUGINS
+/* cliprdr is always built-in */
 #define VirtualChannelEntry	cliprdr_VirtualChannelEntry
-#endif
 
 const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {

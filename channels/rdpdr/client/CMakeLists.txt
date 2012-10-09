@@ -28,19 +28,13 @@ set(${MODULE_PREFIX}_SRCS
 	rdpdr_capabilities.c
 	rdpdr_capabilities.h)
 
-if(MSVC AND (NOT WITH_STATIC_PLUGINS))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
+# rdpdr is always built-in
 
-if(NOT WITH_STATIC_PLUGINS)
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-else()
-	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-	set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
 
-	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
-endif()
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -49,8 +43,6 @@ if(WITH_MONOLITHIC_BUILD)
 else()
 	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 

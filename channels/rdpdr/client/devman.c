@@ -32,6 +32,7 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"
 #include "devman.h"
@@ -70,10 +71,22 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 
 boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 {
+	char* name;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
-	PDEVICE_SERVICE_ENTRY entry;
+	PDEVICE_SERVICE_ENTRY entry = NULL;
 
-	entry = freerdp_load_plugin((char*) plugin_data->data[0], "DeviceServiceEntry");
+	name = (char*) plugin_data->data[0];
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_find_static_device_service_entry(name);
+
+	if (!entry)
+	{
+		printf("loading device service %s (plugin)\n", name);
+		entry = freerdp_load_plugin(name, "DeviceServiceEntry");
+	}
+	else
+	{
+		printf("loading device service %s (static)\n", name);
+	}
 
 	if (entry == NULL)
 		return false;
