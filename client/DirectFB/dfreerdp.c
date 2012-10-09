@@ -26,6 +26,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
+#include <freerdp/client/channels.h>
 #include <freerdp/client/cliprdr.h>
 
 #include <winpr/synch.h>
@@ -158,8 +159,8 @@ BOOL df_pre_connect(freerdp* instance)
 	dfi->clrconv->palette = xnew(rdpPalette);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
-    
-    instance->context->cache = cache_new(instance->settings);
+
+	instance->context->cache = cache_new(instance->settings);
 
 	return TRUE;
 }
@@ -223,9 +224,21 @@ BOOL df_post_connect(freerdp* instance)
 static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
+	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	printf("loading plugin %s\n", name);
+	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+
+	if (entry)
+	{
+		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
+		{
+			printf("loading channel %s (static)\n", name);
+			return 1;
+		}
+	}
+
+	printf("loading channel %s (plugin)\n", name);
 	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
 
 	return 1;
@@ -260,14 +273,12 @@ BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return FALSE;
 }
 
-static int
-df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-static void
-df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
+static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -280,8 +291,7 @@ df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 	freerdp_channels_send_event(channels, event);
 }
 
-static void
-df_process_channel_event(rdpChannels* channels, freerdp* instance)
+static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
