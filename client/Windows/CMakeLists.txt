@@ -36,12 +36,10 @@ set(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-client)
+
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
-
-	if(WITH_RDPDR AND STATIC_CHANNELS)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpdr disk printer)
-	endif()
 else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
