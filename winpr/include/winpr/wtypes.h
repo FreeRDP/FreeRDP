@@ -262,7 +262,6 @@ typedef struct _PROCESS_INFORMATION
 typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
 typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
-typedef void* HMODULE;
 typedef void* FARPROC;
 
 #endif

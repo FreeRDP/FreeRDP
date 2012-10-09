@@ -23,6 +23,10 @@
 
 #include "keyboard_keymap.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/vkcodes.h>

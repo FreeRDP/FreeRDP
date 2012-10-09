@@ -151,10 +151,6 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 
 #ifndef _WIN32
 
-#ifndef errno_t
-typedef int errno_t;
-#endif
-
 errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 {
 	int length;
