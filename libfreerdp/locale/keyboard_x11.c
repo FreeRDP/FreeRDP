@@ -194,7 +194,7 @@ char* freerdp_detect_keymap_from_xkb()
 				*end = '\0';
 
 				length = (end - beg);
-				keymap = (char*) xmalloc(length + 1);
+				keymap = (char*) malloc(length + 1);
 				strncpy(keymap, beg, length);
 				keymap[length] = '\0';
 
@@ -236,8 +236,8 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (keyboardLayoutId == 0)
 		{
 			keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
-			xfree(xkb_layout);
-			xfree(xkb_variant);
+			free(xkb_layout);
+			free(xkb_variant);
 		}
 
 		keymap = freerdp_detect_keymap_from_xkb();
@@ -245,7 +245,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (keymap != NULL)
 		{
 			freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
-			xfree(keymap);
+			free(keymap);
 		}
 	}
 #endif

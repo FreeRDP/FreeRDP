@@ -457,9 +457,9 @@ void serial_tty_free(SERIAL_TTY* tty)
 		close(tty->fd);
 	}
 
-	xfree(tty->ptermios);
-	xfree(tty->pold_termios);
-	xfree(tty);
+	free(tty->ptermios);
+	free(tty->pold_termios);
+	free(tty);
 }
 
 

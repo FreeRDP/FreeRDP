@@ -21,13 +21,16 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <freerdp/utils/stopwatch.h>
 
 STOPWATCH* stopwatch_create()
 {
 	STOPWATCH* sw;
 
-	sw = (STOPWATCH*) xmalloc(sizeof(STOPWATCH));
+	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
 	stopwatch_reset(sw);
 
 	return sw;
@@ -35,7 +38,7 @@ STOPWATCH* stopwatch_create()
 
 void stopwatch_free(STOPWATCH* stopwatch)
 {
-	xfree(stopwatch);
+	free(stopwatch);
 }
 
 void stopwatch_start(STOPWATCH* stopwatch)

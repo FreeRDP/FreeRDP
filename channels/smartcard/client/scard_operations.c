@@ -185,7 +185,7 @@ static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, boolean 
 	int bufferSize;
 
 	bufferSize = wide ? (2 * dataLength) : dataLength;
-	buffer = xmalloc(bufferSize + 2); /* reserve 2 bytes for the '\0' */
+	buffer = malloc(bufferSize + 2); /* reserve 2 bytes for the '\0' */
 
 	stream_read(irp->input, buffer, bufferSize);
 
@@ -359,7 +359,7 @@ static uint32 handle_ListReaders(IRP* irp, boolean wide)
 #else
 	rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
 
-	readerList = xmalloc(dwReaders);
+	readerList = malloc(dwReaders);
 	rv = SCardListReaders(hContext, NULL, readerList, &dwReaders);
 #endif
 	if (rv != SCARD_S_SUCCESS)
@@ -409,7 +409,7 @@ static uint32 handle_ListReaders(IRP* irp, boolean wide)
 #ifdef SCARD_AUTOALLOCATE
 	SCardFreeMemory(hContext, readerList);
 #else
-	xfree(readerList);
+	free(readerList);
 #endif
 
 	return rv;
@@ -517,12 +517,12 @@ static uint32 handle_GetStatusChange(IRP* irp, boolean wide)
 
 		stream_write_zero(irp->output, 4);
 
-		xfree((void *)cur->szReader);
+		free((void *)cur->szReader);
 	}
 
 	sc_output_alignment(irp, 8);
 
-	xfree(readerStates);
+	free(readerStates);
 	return rv;
 }
 
@@ -587,7 +587,7 @@ static uint32 handle_Connect(IRP* irp, boolean wide)
 
 	sc_output_alignment(irp, 8);
 
-	xfree(readerName);
+	free(readerName);
 	return rv;
 }
 
@@ -729,7 +729,7 @@ static uint32 handle_State(IRP* irp)
 	rv = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #else
 	readerLen = 256;
-	readerName = xmalloc(readerLen);
+	readerName = malloc(readerLen);
 
 	rv = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #endif
@@ -763,9 +763,9 @@ static uint32 handle_State(IRP* irp)
 	sc_output_alignment(irp, 8);
 
 #ifdef SCARD_AUTOALLOCATE
-	xfree(readerName);
+	free(readerName);
 #else
-	xfree(readerName);
+	free(readerName);
 #endif
 
 	return rv;
@@ -802,7 +802,7 @@ static DWORD handle_Status(IRP *irp, boolean wide)
 	rv = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #else
 	readerLen = 256;
-	readerName = xmalloc(readerLen);
+	readerName = malloc(readerLen);
 
 	rv = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #endif
@@ -856,7 +856,7 @@ static DWORD handle_Status(IRP *irp, boolean wide)
 	/* SCardFreeMemory(NULL, readerName); */
 	free(readerName);
 #else
-	xfree(readerName);
+	free(readerName);
 #endif
 
 	return rv;
@@ -909,13 +909,13 @@ static uint32 handle_Transmit(IRP* irp)
 		/* send buffer */
 		stream_read_uint32(irp->input, linkedLen);
 
-		sendBuf = xmalloc(linkedLen);
+		sendBuf = malloc(linkedLen);
 		stream_read(irp->input, sendBuf, linkedLen);
 		sc_input_repos(irp, linkedLen);
 	}
 
 	if (cbRecvLength)
-		recvBuf = xmalloc(cbRecvLength);
+		recvBuf = malloc(cbRecvLength);
 
 	if (map[4] & SCARD_INPUT_LINKED)
 	{
@@ -968,8 +968,8 @@ static uint32 handle_Transmit(IRP* irp)
 
 	sc_output_alignment(irp, 8);
 
-	xfree(sendBuf);
-	xfree(recvBuf);
+	free(sendBuf);
+	free(recvBuf);
 
 	return rv;
 }
@@ -1014,7 +1014,7 @@ static uint32 handle_Control(IRP* irp)
 		/* read real input size */
 		stream_read_uint32(irp->input, recvLength);
 
-		recvBuffer = xmalloc(recvLength);
+		recvBuffer = malloc(recvLength);
 
 		if (!recvBuffer)
 			return sc_output_return(irp, SCARD_E_NO_MEMORY);
@@ -1023,7 +1023,7 @@ static uint32 handle_Control(IRP* irp)
 	}
 
 	nBytesReturned = outBufferSize;
-	sendBuffer = xmalloc(outBufferSize);
+	sendBuffer = malloc(outBufferSize);
 
 	if (!sendBuffer)
 		return sc_output_return(irp, SCARD_E_NO_MEMORY);
@@ -1048,8 +1048,8 @@ static uint32 handle_Control(IRP* irp)
 
 	sc_output_alignment(irp, 8);
 
-	xfree(recvBuffer);
-	xfree(sendBuffer);
+	free(recvBuffer);
+	free(sendBuffer);
 
 	return rv;
 }
@@ -1165,7 +1165,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	}
 	sc_output_alignment(irp, 8);
 
-	xfree(pbAttr);
+	free(pbAttr);
 
 	return rv;
 }
@@ -1212,7 +1212,7 @@ static uint32 handle_LocateCardsByATR(IRP* irp, boolean wide)
 	stream_read_uint32(irp->input, hContext);
 	stream_read_uint32(irp->input, atrMaskCount);
 
-	pAtrMasks = xmalloc(atrMaskCount * sizeof(SERVER_SCARD_ATRMASK));
+	pAtrMasks = malloc(atrMaskCount * sizeof(SERVER_SCARD_ATRMASK));
 
 	if (!pAtrMasks)
 		return sc_output_return(irp, SCARD_E_NO_MEMORY);
@@ -1317,7 +1317,7 @@ static uint32 handle_LocateCardsByATR(IRP* irp, boolean wide)
 
 		stream_write_zero(irp->output, 4);
 
-		xfree((void*) cur->szReader);
+		free((void*) cur->szReader);
 	}
 
 	sc_output_alignment(irp, 8);

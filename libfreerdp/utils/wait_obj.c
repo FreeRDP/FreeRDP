@@ -64,7 +64,7 @@ wait_obj_new(void)
 	if (pipe(obj->pipe_fd) < 0)
 	{
 		printf("wait_obj_new: pipe failed\n");
-		xfree(obj);
+		free(obj);
 		return NULL;
 	}
 #endif
@@ -117,7 +117,7 @@ wait_obj_free(struct wait_obj* obj)
 #endif
 		}
 
-		xfree(obj);
+		free(obj);
 	}
 }
 
@@ -219,7 +219,7 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 		status = -1;
 	else
 		status = 0;
-	xfree(hnds);
+	free(hnds);
 #endif
 
 	return status;

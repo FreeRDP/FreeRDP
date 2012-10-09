@@ -172,7 +172,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		window->titleInfo.length = window_state->titleInfo.length;
-		window->titleInfo.string = xmalloc(window_state->titleInfo.length);
+		window->titleInfo.string = malloc(window_state->titleInfo.length);
 		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
 
 #ifdef WITH_DEBUG_RAIL
@@ -240,7 +240,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		int i;
 
 		if (window->windowRects != NULL)
-			xfree(window->windowRects);
+			free(window->windowRects);
 
 		window->windowRects = window_state->windowRects;
 		window->numWindowRects = window_state->numWindowRects;
@@ -267,7 +267,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		int i;
 
 		if (window->visibilityRects != NULL)
-			xfree(window->visibilityRects);
+			free(window->visibilityRects);
 
 		window->visibilityRects = window_state->visibilityRects;
 		window->numVisibilityRects = window_state->numVisibilityRects;
@@ -289,7 +289,7 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	}
 	else
 	{
-		window->title = (char*) xmalloc(sizeof("RAIL"));
+		window->title = (char*) malloc(sizeof("RAIL"));
 		memcpy(window->title, "RAIL", sizeof("RAIL"));
 	}
 
@@ -325,7 +325,7 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		if (window->title != NULL)
-			xfree(window->title);
+			free(window->title);
 
 		freerdp_UnicodeToAsciiAlloc((WCHAR*) window->titleInfo.string, &window->title, window->titleInfo.length / 2);
 
@@ -385,6 +385,6 @@ void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window != NULL)
 	{
-		xfree(window);
+		free(window);
 	}
 }

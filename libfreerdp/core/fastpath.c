@@ -333,7 +333,7 @@ static boolean fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	stream_set_pos(s, next_pos);
 
 	if (comp_stream != s)
-		xfree(comp_stream);
+		free(comp_stream);
 
 	return true;
 }
@@ -774,5 +774,5 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 void fastpath_free(rdpFastPath* fastpath)
 {
 	stream_free(fastpath->updateData);
-	xfree(fastpath);
+	free(fastpath);
 }

@@ -314,17 +314,17 @@ void xf_create_window(xfInfo* xfi)
 	}
 	else if (xfi->instance->settings->port == 3389)
 	{
-		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
 		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
 	}
 	else
 	{
-		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
 		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
 	}
 
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
-	xfree(win_title);
+	free(win_title);
 
 	if (xfi->fullscreen)
 		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
@@ -758,7 +758,7 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
 
-	xfi->bmp_codec_none = (uint8*) xmalloc(64 * 64 * 4);
+	xfi->bmp_codec_none = (uint8*) malloc(64 * 64 * 4);
 
 	if (xfi->sw_gdi)
 	{
@@ -805,7 +805,7 @@ boolean xf_post_connect(freerdp* instance)
  *  @param username - unused
  *  @param password - on return: pointer to a character string that will be filled by the password entered by the user.
  *  				  Note that this character string will be allocated inside the function, and needs to be deallocated by the caller
- *  				  using xfree(), even in case this function fails.
+ *  				  using free(), even in case this function fails.
  *  @param domain - unused
  *  @return true if a password was successfully entered. See freerdp_passphrase_read() for more details.
  */
@@ -813,7 +813,7 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
 {
 	// FIXME: seems this callback may be called when 'username' is not known.
 	// But it doesn't do anything to fix it...
-	*password = xmalloc(password_size * sizeof(char));
+	*password = malloc(password_size * sizeof(char));
 
 	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
 		return false;
@@ -891,9 +891,9 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 		for (i = 0; layouts[i].code; i++)
 		{
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
+			free(layouts[i].name);
 		}
-		xfree(layouts);
+		free(layouts);
 
 		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 
@@ -901,9 +901,9 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 		for (i = 0; layouts[i].code; i++)
 		{
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
+			free(layouts[i].name);
 		}
-		xfree(layouts);
+		free(layouts);
 
 		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 
@@ -911,9 +911,9 @@ int xf_process_client_args(rdpSettings* settings, const char* opt, const char* v
 		for (i = 0; layouts[i].code; i++)
 		{
 			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
+			free(layouts[i].name);
 		}
-		xfree(layouts);
+		free(layouts);
 
 		exit(0);
 	}
@@ -1081,11 +1081,11 @@ void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
 
-	xfree(xfi->bmp_codec_none);
+	free(xfi->bmp_codec_none);
 
 	XCloseDisplay(xfi->display);
 
-	xfree(xfi);
+	free(xfi);
 }
 
 /** Main loop for the rdp connection.
@@ -1261,7 +1261,7 @@ void* thread_func(void* param)
 
 	g_disconnect_reason = xfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	g_thread_count--;
 

@@ -292,7 +292,7 @@ void* thread_func(void* param)
 
 	tfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	pthread_detach(pthread_self());
 

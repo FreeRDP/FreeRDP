@@ -483,7 +483,7 @@ void test_license_decrypt_platform_challenge(void)
 			sizeof(test_licensing_encryption_key));
 
 	license->encrypted_platform_challenge->data =
-			(uint8*) xmalloc(sizeof(test_encrypted_platform_challenge));
+			(uint8*) malloc(sizeof(test_encrypted_platform_challenge));
 	license->encrypted_platform_challenge->length =
 			sizeof(test_encrypted_platform_challenge);
 

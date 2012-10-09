@@ -251,7 +251,7 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 	if (channel->channel_callback)
 		channel->channel_callback->OnClose(channel->channel_callback);
 
-	xfree(channel);
+	free(channel);
 }
 
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
@@ -270,8 +270,8 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
 		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
-		xfree(listener->channel_name);
-		xfree(listener);
+		free(listener->channel_name);
+		free(listener);
 	}
 
 	for (i = 0; i < dvcman->num_plugins; i++)
@@ -282,7 +282,7 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 			pPlugin->Terminated(pPlugin);
 	}
 
-	xfree(dvcman);
+	free(dvcman);
 }
 
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)

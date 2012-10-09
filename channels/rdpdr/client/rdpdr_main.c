@@ -118,7 +118,7 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	stream_write(data_out, computerNameW, computerNameLenW);
 	stream_write_uint16(data_out, 0); /* null terminator */
 
-	xfree(computerNameW);
+	free(computerNameW);
 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }
@@ -313,7 +313,7 @@ static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
 	devman_free(rdpdr->devman);
-	xfree(plugin);
+	free(plugin);
 }
 
 /* rdpdr is always built-in */

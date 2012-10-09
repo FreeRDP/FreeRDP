@@ -541,6 +541,6 @@ void transport_free(rdpTransport* transport)
 		tcp_free(transport->tcp_in);
 		tsg_free(transport->tsg);
 
-		xfree(transport);
+		free(transport);
 	}
 }

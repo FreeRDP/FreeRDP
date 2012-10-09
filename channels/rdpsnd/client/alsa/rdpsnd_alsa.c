@@ -257,9 +257,9 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 
 	rdpsnd_alsa_close(device);
-	xfree(alsa->device_name);
+	free(alsa->device_name);
 	freerdp_dsp_context_free(alsa->dsp_context);
-	xfree(alsa);
+	free(alsa);
 }
 
 static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)

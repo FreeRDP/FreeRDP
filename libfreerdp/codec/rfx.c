@@ -177,15 +177,15 @@ void rfx_context_set_cpu_opt(RFX_CONTEXT* context, uint32 cpu_opt)
 
 void rfx_context_free(RFX_CONTEXT* context)
 {
-	xfree(context->quants);
+	free(context->quants);
 
 	rfx_pool_free(context->priv->pool);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
 
-	xfree(context->priv);
-	xfree(context);
+	free(context->priv);
+	free(context);
 }
 
 void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
@@ -362,9 +362,9 @@ static void rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	}
 
 	if (message->rects != NULL)
-		message->rects = (RFX_RECT*) xrealloc(message->rects, message->num_rects * sizeof(RFX_RECT));
+		message->rects = (RFX_RECT*) realloc(message->rects, message->num_rects * sizeof(RFX_RECT));
 	else
-		message->rects = (RFX_RECT*) xmalloc(message->num_rects * sizeof(RFX_RECT));
+		message->rects = (RFX_RECT*) malloc(message->num_rects * sizeof(RFX_RECT));
 
 	/* rects */
 	for (i = 0; i < message->num_rects; i++)
@@ -453,9 +453,9 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	stream_read_uint32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
 	if (context->quants != NULL)
-		context->quants = (uint32*) xrealloc((void*) context->quants, context->num_quants * 10 * sizeof(uint32));
+		context->quants = (uint32*) realloc((void*) context->quants, context->num_quants * 10 * sizeof(uint32));
 	else
-		context->quants = (uint32*) xmalloc(context->num_quants * 10 * sizeof(uint32));
+		context->quants = (uint32*) malloc(context->num_quants * 10 * sizeof(uint32));
 	quants = context->quants;
 
 	/* quantVals */
@@ -617,15 +617,15 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 {
 	if (message != NULL)
 	{
-		xfree(message->rects);
+		free(message->rects);
 
 		if (message->tiles != NULL)
 		{
 			rfx_pool_put_tiles(context->priv->pool, message->tiles, message->num_tiles);
-			xfree(message->tiles);
+			free(message->tiles);
 		}
 
-		xfree(message);
+		free(message);
 	}
 }
 

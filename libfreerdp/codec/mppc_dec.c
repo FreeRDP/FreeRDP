@@ -1414,7 +1414,7 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 {
 	struct rdp_mppc_dec* ptr;
 
-	ptr = (struct rdp_mppc_dec*) xmalloc(sizeof(struct rdp_mppc_dec));
+	ptr = (struct rdp_mppc_dec*) malloc(sizeof(struct rdp_mppc_dec));
 	if (!ptr)
 	{
 		printf("mppc_new(): system out of memory\n");
@@ -1426,7 +1426,7 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 	if (!ptr->history_buf)
 	{
 		printf("mppc_new(): system out of memory\n");
-		xfree(ptr);
+		free(ptr);
 		return NULL;
 	}
 
@@ -1450,14 +1450,14 @@ void mppc_dec_free(struct rdp_mppc_dec* dec)
 
 	if (dec->history_buf)
 	{
-		xfree(dec->history_buf);
+		free(dec->history_buf);
 		dec->history_buf = NULL;
 		dec->history_ptr = NULL;
 	}
 	if (dec->offset_cache)
 	{
-		xfree(dec->offset_cache);
+		free(dec->offset_cache);
 		dec->offset_cache = NULL;
 	}
-	xfree(dec);
+	free(dec);
 }

@@ -33,7 +33,7 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	bitmap = (rdpBitmap*) xmalloc(graphics->Bitmap_Prototype->size);
+	bitmap = (rdpBitmap*) malloc(graphics->Bitmap_Prototype->size);
 
 	if (bitmap != NULL)
 	{
@@ -56,9 +56,9 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		bitmap->Free(context, bitmap);
 
 		if (bitmap->data != NULL)
-			xfree(bitmap->data);
+			free(bitmap->data);
 
-		xfree(bitmap);
+		free(bitmap);
 	}
 }
 
@@ -95,7 +95,7 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	pointer = (rdpPointer*) xmalloc(graphics->Pointer_Prototype->size);
+	pointer = (rdpPointer*) malloc(graphics->Pointer_Prototype->size);
 
 	if (pointer != NULL)
 	{
@@ -117,12 +117,12 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 		pointer->Free(context, pointer);
 
 		if (pointer->xorMaskData)
-			xfree(pointer->xorMaskData);
+			free(pointer->xorMaskData);
 
 		if (pointer->andMaskData)
-			xfree(pointer->andMaskData);
+			free(pointer->andMaskData);
 
-		xfree(pointer);
+		free(pointer);
 	}
 }
 
@@ -155,7 +155,7 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	glyph = (rdpGlyph*) xmalloc(graphics->Glyph_Prototype->size);
+	glyph = (rdpGlyph*) malloc(graphics->Glyph_Prototype->size);
 
 	if (glyph != NULL)
 	{
@@ -230,9 +230,9 @@ void graphics_free(rdpGraphics* graphics)
 {
 	if (graphics != NULL)
 	{
-		xfree(graphics->Bitmap_Prototype);
-		xfree(graphics->Pointer_Prototype);
-		xfree(graphics->Glyph_Prototype);
-		xfree(graphics);
+		free(graphics->Bitmap_Prototype);
+		free(graphics->Pointer_Prototype);
+		free(graphics->Glyph_Prototype);
+		free(graphics);
 	}
 }

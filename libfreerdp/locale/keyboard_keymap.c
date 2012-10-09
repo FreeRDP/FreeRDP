@@ -80,10 +80,10 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	if ((fp = fopen(keymap_path, "r")) == NULL)
 	{
 		DEBUG_KBD("%s not found", keymap_path);
-		xfree(keymap_path);
+		free(keymap_path);
 		return 0;
 	}
-	xfree(keymap_path);
+	free(keymap_path);
 
 	while (fgets(buffer, sizeof(buffer), fp) != NULL)
 	{

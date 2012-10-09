@@ -146,7 +146,7 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	free(settings->server_random);
 	free(settings->server_certificate);
-	xfree(settings->ip_address);
+	free(settings->ip_address);
 
 	rdp->transport = transport_new(settings);
 	rdp->license = license_new(rdp);
@@ -164,30 +164,30 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 	{
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
-			xfree(settings->hostname);
+			free(settings->hostname);
 			settings->hostname = xstrdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
-			xfree(settings->hostname);
+			free(settings->hostname);
 			settings->hostname = xstrdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
-			xfree(settings->hostname);
+			free(settings->hostname);
 			settings->hostname = xstrdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		xfree(settings->username);
+		free(settings->username);
 		settings->username = xstrdup(redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		xfree(settings->domain);
+		free(settings->domain);
 		settings->domain = xstrdup(redirection->domain.ascii);
 	}
 

@@ -104,7 +104,7 @@ static void printer_win_close_printjob(rdpPrintJob* printjob)
 		DEBUG_WINPR("ClosePrinter failed");;
 
 	((rdpWinPrinter*)printjob->printer)->printjob = NULL;
-	xfree(win_printjob) ;
+	free(win_printjob) ;
 }
 
 static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, uint32 id)
@@ -163,8 +163,8 @@ static void printer_win_free_printer(rdpPrinter* printer)
 
 	if (win_printer->printjob)
 		win_printer->printjob->printjob.Close((rdpPrintJob*)win_printer->printjob);
-	xfree(printer->name);
-	xfree(printer);
+	free(printer->name);
+	free(printer);
 }
 
 static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, const char* name, const wchar_t* drivername, boolean is_default)
@@ -194,7 +194,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	prninfo = (PRINTER_INFO_2*) GlobalAlloc(GPTR,needed);
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, needed, &needed);
 
-	win_printer->printer.driver = xmalloc(1000);
+	win_printer->printer.driver = malloc(1000);
 	wcstombs_s(&charsConverted, win_printer->printer.driver, 1000, prninfo->pDriverName, _TRUNCATE);
 
 	return (rdpPrinter*)win_printer;

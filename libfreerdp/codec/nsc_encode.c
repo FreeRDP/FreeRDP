@@ -48,7 +48,7 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 5; i++)
-			context->priv->plane_buf[i] = (uint8*) xrealloc(context->priv->plane_buf[i], length);
+			context->priv->plane_buf[i] = (uint8*) realloc(context->priv->plane_buf[i], length);
 		context->priv->plane_buf_length = length;
 	}
 

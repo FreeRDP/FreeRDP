@@ -152,7 +152,7 @@ static void audin_pulse_free(IAudinDevice* device)
 		pulse->mainloop = NULL;
 	}
 	freerdp_dsp_context_free(pulse->dsp_context);
-	xfree(pulse);
+	free(pulse);
 }
 
 static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
@@ -350,7 +350,7 @@ static void audin_pulse_close(IAudinDevice* device)
 	pulse->user_data = NULL;
 	if (pulse->buffer)
 	{
-		xfree(pulse->buffer);
+		free(pulse->buffer);
 		pulse->buffer = NULL;
 		pulse->buffer_frames = 0;
 	}

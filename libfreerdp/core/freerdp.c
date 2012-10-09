@@ -132,7 +132,7 @@ boolean freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->data = (uint8*) xrealloc(s->data, record.length);
+				s->data = (uint8*) realloc(s->data, record.length);
 				record.data = s->data;
 				s->size = record.length;
 
@@ -144,7 +144,7 @@ boolean freerdp_connect(freerdp* instance)
 				update->EndPaint(update->context);
 			}
 
-			xfree(s->data);
+			free(s->data);
 			return true;
 		}
 	}
@@ -269,7 +269,7 @@ void freerdp_context_free(freerdp* instance)
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
 
-	xfree(instance->context);
+	free(instance->context);
 	instance->context = NULL;
 }
 
@@ -304,6 +304,6 @@ void freerdp_free(freerdp* instance)
 {
 	if (instance)
 	{
-		xfree(instance);
+		free(instance);
 	}
 }

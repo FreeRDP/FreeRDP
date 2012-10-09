@@ -190,7 +190,7 @@ static boolean disk_file_remove_dir(const char* path)
 
 static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 {
-	xfree(file->fullpath);
+	free(file->fullpath);
 	file->fullpath = fullpath;
 	file->filename = strrchr(file->fullpath, '/');
 
@@ -341,9 +341,9 @@ void disk_file_free(DISK_FILE* file)
 			unlink(file->fullpath);
 	}
 
-	xfree(file->pattern);
-	xfree(file->fullpath);
-	xfree(file);
+	free(file->pattern);
+	free(file->fullpath);
+	free(file);
 }
 
 boolean disk_file_seek(DISK_FILE* file, uint64 Offset)
@@ -516,7 +516,7 @@ boolean disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, ui
 			freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(input), &s, FileNameLength / 2);
 
 			fullpath = disk_file_combine_fullpath(file->basepath, s);
-			xfree(s);
+			free(s);
 
 			/* TODO rename does not work on win32 */
                         if (rename(file->fullpath, fullpath) == 0)
@@ -562,7 +562,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	if (InitialQuery != 0)
 	{
 		rewinddir(file->dir);
-		xfree(file->pattern);
+		free(file->pattern);
 
 		if (path[0])
 			file->pattern = _strdup(strrchr(path, '\\') + 1);
@@ -606,7 +606,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 	}
 
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
-	xfree(ent_path);
+	free(ent_path);
 
 	length = freerdp_AsciiToUnicodeAlloc(ent->d_name, &ent_path, 0) * 2;
 
@@ -688,7 +688,7 @@ boolean disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, ui
 			break;
 	}
 
-	xfree(ent_path);
+	free(ent_path);
 
 	return ret;
 }

@@ -209,7 +209,7 @@ static boolean tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_
 			pindex += error * rbytes_per_frame;
 		}
 	}
-	xfree(data);
+	free(data);
 
 	return true;
 }
@@ -245,7 +245,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 		snd_pcm_close(alsa->out_handle);
 	}
 	freerdp_dsp_context_free(alsa->dsp_context);
-	xfree(alsa);
+	free(alsa);
 }
 
 ITSMFAudioDevice* TSMFAudioDeviceEntry(void)

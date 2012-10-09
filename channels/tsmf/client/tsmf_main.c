@@ -348,7 +348,7 @@ static int tsmf_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 				tsmf_stream_free(stream);
 		}
 	}
-	xfree(pChannelCallback);
+	free(pChannelCallback);
 
 	return 0;
 }
@@ -396,8 +396,8 @@ static int tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 	DEBUG_DVC("");
 
 	if (tsmf->listener_callback)
-		xfree(tsmf->listener_callback);
-	xfree(tsmf);
+		free(tsmf->listener_callback);
+	free(tsmf);
 
 	return 0;
 }

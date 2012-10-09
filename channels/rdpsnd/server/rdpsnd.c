@@ -133,7 +133,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		{
 			if (stream_get_left(s) < 18)
 			{
-				xfree(rdpsnd->context.client_formats);
+				free(rdpsnd->context.client_formats);
 				rdpsnd->context.client_formats = NULL;
 				return false;
 			}
@@ -290,7 +290,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	
 	if (rdpsnd->out_buffer_size < out_buffer_size)
 	{
-		rdpsnd->out_buffer = xrealloc(rdpsnd->out_buffer, out_buffer_size);
+		rdpsnd->out_buffer = realloc(rdpsnd->out_buffer, out_buffer_size);
 		rdpsnd->out_buffer_size = out_buffer_size;
 	}
 
@@ -479,13 +479,13 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 		stream_free(rdpsnd->rdpsnd_pdu);
 
 	if (rdpsnd->out_buffer)
-		xfree(rdpsnd->out_buffer);
+		free(rdpsnd->out_buffer);
 
 	if (rdpsnd->dsp_context)
 		freerdp_dsp_context_free(rdpsnd->dsp_context);
 
 	if (rdpsnd->context.client_formats)
-		xfree(rdpsnd->context.client_formats);
+		free(rdpsnd->context.client_formats);
 
-	xfree(rdpsnd);
+	free(rdpsnd);
 }

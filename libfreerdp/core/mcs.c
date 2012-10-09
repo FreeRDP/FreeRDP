@@ -836,6 +836,6 @@ void mcs_free(rdpMcs* mcs)
 {
 	if (mcs != NULL)
 	{
-		xfree(mcs);
+		free(mcs);
 	}
 }

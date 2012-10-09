@@ -358,8 +358,8 @@ static int audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	if (audin->device)
 		IFCALL(audin->device->Close, audin->device);
 
-	xfree(callback->formats);
-	xfree(callback);
+	free(callback->formats);
+	free(callback);
 
 	return 0;
 }
@@ -415,8 +415,8 @@ static int audin_plugin_terminated(IWTSPlugin* pPlugin)
 		audin->device = NULL;
 	}
 
-	xfree(audin->listener_callback);
-	xfree(audin);
+	free(audin->listener_callback);
+	free(audin);
 
 	return 0;
 }
@@ -452,7 +452,7 @@ static boolean audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, R
 		strcpy(fullname, "audin_");
 		strcat(fullname, name);
 		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(fullname, AUDIN_DEVICE_EXPORT_FUNC_NAME);
-		xfree(fullname);
+		free(fullname);
 	}
 
 	if (entry == NULL)

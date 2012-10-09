@@ -93,11 +93,11 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	if (size < 1)
 		return match;
 
-	data = (char*) xmalloc(size + 2);
+	data = (char*) malloc(size + 2);
 
 	if (fread(data, size, 1, fp) != 1)
 	{
-		xfree(data);
+		free(data);
 		return match;
 	}
 
@@ -128,7 +128,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 
 		pline = strtok(NULL, "\n");
 	}
-	xfree(data);
+	free(data);
 
 	return match;
 }
@@ -154,11 +154,11 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	if (size < 1)
 		return;
 
-	data = (char*) xmalloc(size + 2);
+	data = (char*) malloc(size + 2);
 
 	if (fread(data, size, 1, fp) != 1)
 	{
-		xfree(data);
+		free(data);
 		return;
 	}
 	
@@ -192,7 +192,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	}
 	
 	fclose(fp);
-	xfree(data);	
+	free(data);	
 }
 
 void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -228,9 +228,9 @@ void certificate_data_free(rdpCertificateData* certificate_data)
 {
 	if (certificate_data != NULL)
 	{
-		xfree(certificate_data->hostname);
-		xfree(certificate_data->fingerprint);
-		xfree(certificate_data);
+		free(certificate_data->hostname);
+		free(certificate_data->fingerprint);
+		free(certificate_data);
 	}
 }
 
@@ -256,8 +256,8 @@ void certificate_store_free(rdpCertificateStore* certstore)
 		if (certstore->fp != NULL)
 			fclose(certstore->fp);
 
-		xfree(certstore->path);
-		xfree(certstore->file);
-		xfree(certstore);
+		free(certstore->path);
+		free(certstore->file);
+		free(certstore);
 	}
 }

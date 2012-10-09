@@ -22,6 +22,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef _WIN32
@@ -72,7 +73,7 @@ void pcap_read_record(rdpPcap* pcap, pcap_record* record)
 {
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
-	record->data = xmalloc(record->length);
+	record->data = malloc(record->length);
 	fread(record->data, record->length, 1, pcap->fp);
 }
 

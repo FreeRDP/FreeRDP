@@ -90,7 +90,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
-	xfree(str);
+	free(str);
 
 	rdp_read_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
 	stream_read_uint32(s, clientTimeZone->standardBias); /* StandardBias */
@@ -99,7 +99,7 @@ boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
-	xfree(str);
+	free(str);
 
 	rdp_read_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
 	stream_read_uint32(s, clientTimeZone->daylightBias); /* DaylightBias */
@@ -189,6 +189,6 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, bias2c); /* DaylightBias */
 	DEBUG_TIMEZONE("DaylightBias=%d", bias2c);
 
-	xfree(standardName);
-	xfree(daylightName);
+	free(standardName);
+	free(daylightName);
 }

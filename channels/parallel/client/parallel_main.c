@@ -106,7 +106,7 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	stream_write_uint32(irp->output, parallel->id);
 	stream_write_uint8(irp->output, 0);
 
-	xfree(path);
+	free(path);
 
 	irp->Complete(irp);
 }
@@ -133,14 +133,14 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	stream_read_uint32(irp->input, Length);
 	stream_read_uint64(irp->input, Offset);
 
-	buffer = (uint8*) xmalloc(Length);
+	buffer = (uint8*) malloc(Length);
 
 	status = read(parallel->file, irp->output->p, Length);
 
 	if (status < 0)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		xfree(buffer);
+		free(buffer);
 		buffer = NULL;
 		Length = 0;
 
@@ -157,7 +157,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 		stream_check_size(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
-	xfree(buffer);
+	free(buffer);
 
 	irp->Complete(irp);
 }
@@ -304,7 +304,7 @@ static void parallel_free(DEVICE* device)
 
 	_aligned_free(parallel->pIrpList);
 
-	xfree(parallel);
+	free(parallel);
 }
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)

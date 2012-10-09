@@ -1520,7 +1520,7 @@ char* freerdp_get_unix_timezone_identifier()
 			return NULL;
 		}
 
-		tzid = (char*) xmalloc(length + 1);
+		tzid = (char*) malloc(length + 1);
 		fread(tzid, length, 1, fp);
 		tzid[length] = '\0';
 
@@ -1558,7 +1558,7 @@ char* freerdp_get_unix_timezone_identifier()
 				num++;
 		}
 
-		tzid = (char*) xmalloc(len - pos + 1);
+		tzid = (char*) malloc(len - pos + 1);
 		strncpy(tzid, buf + pos + 1, len - pos);
 
 		return tzid;	
@@ -1584,14 +1584,14 @@ boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const
 	{
 		if (strcmp(p, tzid) == 0)
 		{
-			xfree(list_copy);
+			free(list_copy);
 			return true;
 		}
 
 		p = strtok(NULL, " ");
 	}
 
-	xfree(list_copy);
+	free(list_copy);
 
 	return false;
 }
@@ -1616,17 +1616,17 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 
 			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 			{
-				timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
+				timezone = (TIME_ZONE_ENTRY*) malloc(sizeof(TIME_ZONE_ENTRY));
 				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
 				timezone->Bias = bias;
-				xfree(tzid);
+				free(tzid);
 				return timezone;
 			}
 		}
 	}
 
 	printf("Unable to find a match for unix timezone: %s\n", tzid);
-	xfree(tzid);
+	free(tzid);
 	return NULL;
 }
 
@@ -1730,7 +1730,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 			*/
 		}
 
-		xfree(tz);
+		free(tz);
 	}
 	else
 	{

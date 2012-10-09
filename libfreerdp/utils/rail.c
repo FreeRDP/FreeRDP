@@ -21,16 +21,21 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/rail.h>
+#include <freerdp/utils/memory.h>
+
 #include <freerdp/rail.h>
 
 void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString)
 {
 	unicode_string->length = cbString;
-	unicode_string->string = xzalloc(cbString);
+	unicode_string->string = malloc(cbString);
+	memset(unicode_string->string, 0, cbString);
 }
 
 void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
@@ -38,7 +43,7 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 	unicode_string->length = 0;
 
 	if (unicode_string->string != NULL)
-		xfree(unicode_string->string);
+		free(unicode_string->string);
 }
 
 void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
@@ -46,9 +51,9 @@ void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 	stream_read_uint16(s, unicode_string->length); /* cbString (2 bytes) */
 
 	if (unicode_string->string == NULL)
-		unicode_string->string = (uint8*) xmalloc(unicode_string->length);
+		unicode_string->string = (uint8*) malloc(unicode_string->length);
 	else
-		unicode_string->string = (uint8*) xrealloc(unicode_string->string, unicode_string->length);
+		unicode_string->string = (uint8*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
 }
@@ -126,7 +131,7 @@ void* rail_clone_order(uint32 event_type, void* order)
 	// Event type not found.
 	if (order_size == 0) return NULL;
 
-	new_order = xmalloc(order_size);
+	new_order = malloc(order_size);
 	memcpy(new_order, order, order_size);
 
 	//printf("rail_clone_order: type=%d order=%p\n", event_type, new_order);
@@ -184,5 +189,5 @@ void rail_free_cloned_order(uint32 event_type, void* order)
 		RAIL_EXEC_RESULT_ORDER* exec_result = (RAIL_EXEC_RESULT_ORDER*)order;
 		rail_unicode_string_free(&exec_result->exeOrFile);
 	}
-	xfree(order);
+	free(order);
 }

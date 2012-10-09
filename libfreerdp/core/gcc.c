@@ -495,7 +495,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 	stream_seek(s, 32);
 	snprintf(settings->client_hostname, 31, "%s", str);
 	settings->client_hostname[31] = 0;
-	xfree(str);
+	free(str);
 
 	stream_read_uint32(s, settings->kbd_type); /* keyboardType */
 	stream_read_uint32(s, settings->kbd_subtype); /* keyboardSubType */
@@ -550,7 +550,7 @@ boolean gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 block
 		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 		stream_seek(s, 64);
 		snprintf(settings->client_product_id, 32, "%s", str);
-		xfree(str);
+		free(str);
 		blockLength -= 64;
 
 		if (blockLength < 1)
@@ -666,7 +666,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	stream_write(s, clientName, ((clientNameLength + 1) * 2));
 	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
-	xfree(clientName);
+	free(clientName);
 
 	stream_write_uint32(s, settings->kbd_type); /* keyboardType */
 	stream_write_uint32(s, settings->kbd_subtype); /* keyboardSubType */
@@ -714,7 +714,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	}
 	stream_write(s, clientDigProductId, clientDigProductIdLength + 2);
 	stream_write_zero(s, 64 - clientDigProductIdLength - 2);
-	xfree(clientDigProductId);
+	free(clientDigProductId);
 
 	stream_write_uint8(s, connectionType); /* connectionType */
 	stream_write_uint8(s, 0); /* pad1octet */

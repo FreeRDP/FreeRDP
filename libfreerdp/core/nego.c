@@ -266,7 +266,7 @@ boolean nego_send_preconnection_pdu(rdpNego* nego)
 	if (wszPCB)
 	{
 		stream_write(s, wszPCB, cchPCB * 2); /* wszPCB */
-		xfree(wszPCB);
+		free(wszPCB);
 	}
 
 	if (transport_write(nego->transport, s) < 0)
@@ -831,7 +831,7 @@ rdpNego* nego_new(struct rdp_transport * transport)
 
 void nego_free(rdpNego* nego)
 {
-	xfree(nego);
+	free(nego);
 }
 
 /**

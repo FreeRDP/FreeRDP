@@ -132,7 +132,7 @@ boolean rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 		return false;
 
 	if (settings->client_dir)
-		xfree(settings->client_dir);
+		free(settings->client_dir);
 
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->client_dir, cbClientDir / 2);
 	stream_seek(s, cbClientDir);
@@ -205,8 +205,8 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
 
-	xfree(clientAddress);
-	xfree(clientDir);
+	free(clientAddress);
+	free(clientDir);
 }
 
 /**
@@ -399,13 +399,13 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 		stream_write(s, workingDir, cbWorkingDir);
 	stream_write_uint16(s, 0);
 
-	xfree(domain);
-	xfree(userName);
-	xfree(alternateShell);
-	xfree(workingDir);
+	free(domain);
+	free(userName);
+	free(alternateShell);
+	free(workingDir);
 
 	if (!usedPasswordCookie)
-		xfree(password);
+		free(password);
 
 	if (settings->rdp_version >= 5)
 		rdp_write_extended_info_packet(s, settings); /* extraInfo */

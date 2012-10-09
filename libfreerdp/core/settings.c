@@ -293,34 +293,34 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
-		xfree(settings->hostname);
-		xfree(settings->username);
-		xfree(settings->password);
-		xfree(settings->domain);
-		xfree(settings->shell);
-		xfree(settings->directory);
-		xfree(settings->ip_address);
-		xfree(settings->client_dir);
-		xfree(settings->cert_file);
-		xfree(settings->privatekey_file);
-		xfree(settings->received_caps);
-		xfree(settings->order_support);
-		xfree(settings->client_hostname);
-		xfree(settings->client_product_id);
-		xfree(settings->server_random);
-		xfree(settings->server_certificate);
-		xfree(settings->rdp_key_file);
+		free(settings->hostname);
+		free(settings->username);
+		free(settings->password);
+		free(settings->domain);
+		free(settings->shell);
+		free(settings->directory);
+		free(settings->ip_address);
+		free(settings->client_dir);
+		free(settings->cert_file);
+		free(settings->privatekey_file);
+		free(settings->received_caps);
+		free(settings->order_support);
+		free(settings->client_hostname);
+		free(settings->client_product_id);
+		free(settings->server_random);
+		free(settings->server_certificate);
+		free(settings->rdp_key_file);
 		certificate_free(settings->server_cert);
-		xfree(settings->client_auto_reconnect_cookie);
-		xfree(settings->server_auto_reconnect_cookie);
-		xfree(settings->client_time_zone);
-		xfree(settings->bitmapCacheV2CellInfo);
-		xfree(settings->glyphCache);
-		xfree(settings->fragCache);
+		free(settings->client_auto_reconnect_cookie);
+		free(settings->server_auto_reconnect_cookie);
+		free(settings->client_time_zone);
+		free(settings->bitmapCacheV2CellInfo);
+		free(settings->glyphCache);
+		free(settings->fragCache);
 		key_free(settings->server_key);
-		xfree(settings->config_path);
-		xfree(settings->current_path);
-		xfree(settings->development_path);
-		xfree(settings);
+		free(settings->config_path);
+		free(settings->current_path);
+		free(settings->development_path);
+		free(settings);
 	}
 }

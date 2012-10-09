@@ -227,9 +227,9 @@ static void printer_free(DEVICE* device)
 	if (printer_dev->printer)
 		printer_dev->printer->Free(printer_dev->printer);
 
-	xfree(printer_dev->device.name);
+	free(printer_dev->device.name);
 
-	xfree(printer_dev);
+	free(printer_dev);
 }
 
 void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
@@ -244,7 +244,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	uint8* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;
 
-	port = xmalloc(10);
+	port = malloc(10);
 	snprintf(port, 10, "PRN%d", printer->id);
 
 	printer_dev = xnew(PRINTER_DEVICE);
@@ -287,8 +287,8 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 		stream_write(printer_dev->device.data, CachedPrinterConfigData, CachedFieldsLen);
 	}
 
-	xfree(DriverName);
-	xfree(PrintName);
+	free(DriverName);
+	free(PrintName);
 
 	printer_dev->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 	InitializeSListHead(printer_dev->pIrpList);
@@ -354,7 +354,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			printer_register(pEntryPoints, printer);
 		}
 
-		xfree(printers);
+		free(printers);
 	}
 
 	return 0;

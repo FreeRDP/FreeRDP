@@ -336,7 +336,7 @@ static boolean tsmf_pulse_play(ITSMFAudioDevice* audio, uint8* data, uint32 data
 
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 	}
-	xfree(data);
+	free(data);
 
 	return true;
 }
@@ -386,7 +386,7 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 		pa_threaded_mainloop_free(pulse->mainloop);
 		pulse->mainloop = NULL;
 	}
-	xfree(pulse);
+	free(pulse);
 }
 
 ITSMFAudioDevice* TSMFAudioDeviceEntry(void)

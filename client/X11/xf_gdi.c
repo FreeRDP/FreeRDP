@@ -227,7 +227,7 @@ Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 		XFree(image);
 
 		if (cdata != data)
-			xfree(cdata);
+			free(cdata);
 
 		XFreeGC(xfi->display, gc);
 	}
@@ -568,7 +568,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	XSetForeground(xfi->display, xfi->gc, color);
 
 	npoints = polyline->numPoints + 1;
-	points = xmalloc(sizeof(XPoint) * npoints);
+	points = malloc(sizeof(XPoint) * npoints);
 
 	points[0].x = polyline->xStart;
 	points[0].y = polyline->yStart;
@@ -608,7 +608,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	xfree(points);
+	free(points);
 }
 
 void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
@@ -724,7 +724,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	brush_color = freerdp_color_convert_var(polygon_sc->brushColor, ((xfContext*)context)->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	npoints = polygon_sc->numPoints + 1;
-	points = xmalloc(sizeof(XPoint) * npoints);
+	points = malloc(sizeof(XPoint) * npoints);
 
 	points[0].x = polygon_sc->xStart;
 	points[0].y = polygon_sc->yStart;
@@ -763,7 +763,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	xfree(points);
+	free(points);
 }
 
 void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
@@ -782,7 +782,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	backColor = freerdp_color_convert_rgb(polygon_cb->backColor, ((xfContext*)context)->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	npoints = polygon_cb->numPoints + 1;
-	points = xmalloc(sizeof(XPoint) * npoints);
+	points = malloc(sizeof(XPoint) * npoints);
 
 	points[0].x = polygon_cb->xStart;
 	points[0].y = polygon_cb->yStart;
@@ -866,7 +866,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	}
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	xfree(points);
+	free(points);
 }
 
 void xf_gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
@@ -998,7 +998,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
-		xfi->bmp_codec_nsc = (uint8*) xrealloc(xfi->bmp_codec_nsc,
+		xfi->bmp_codec_nsc = (uint8*) realloc(xfi->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
 		freerdp_image_flip(nsc_context->bmpdata, xfi->bmp_codec_nsc,
@@ -1026,7 +1026,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		/* Validate that the data received is large enough */
 		if( surface_bits_command->width * surface_bits_command->height * surface_bits_command->bpp / 8 <= surface_bits_command->bitmapDataLength )
 		{
-			xfi->bmp_codec_none = (uint8*) xrealloc(xfi->bmp_codec_none,
+			xfi->bmp_codec_none = (uint8*) realloc(xfi->bmp_codec_none,
 					surface_bits_command->width * surface_bits_command->height * 4);
 
 			freerdp_image_flip(surface_bits_command->bitmapData, xfi->bmp_codec_none,

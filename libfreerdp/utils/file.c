@@ -97,7 +97,7 @@ char* freerdp_get_config_path(rdpSettings* settings)
 	if (settings->config_path != NULL)
 		return settings->config_path;
 
-	settings->config_path = (char*) xmalloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
+	settings->config_path = (char*) malloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
 	sprintf(settings->config_path, "%s" PATH_SEPARATOR_STR "%s", settings->home_path, FREERDP_CONFIG_DIR);
 
 	if (!freerdp_check_file_exists(settings->config_path))
@@ -125,7 +125,7 @@ char* freerdp_construct_path(char* base_path, char* relative_path)
 	relative_path_length = strlen(relative_path);
 	length = base_path_length + relative_path_length + 1;
 
-	path = xmalloc(length + 1);
+	path = malloc(length + 1);
 	sprintf(path, "%s" PATH_SEPARATOR_STR "%s", base_path, relative_path);
 
 	return path;
@@ -150,7 +150,7 @@ char* freerdp_append_shared_library_suffix(char* file_path)
 
 		if (strcmp(p, SHARED_LIB_SUFFIX) != 0)
 		{
-			path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+			path = malloc(file_path_length + shared_lib_suffix_length + 1);
 			sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);
 		}
 		else
@@ -160,7 +160,7 @@ char* freerdp_append_shared_library_suffix(char* file_path)
 	}
 	else
 	{
-		path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+		path = malloc(file_path_length + shared_lib_suffix_length + 1);
 		sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);	
 	}
 
@@ -196,7 +196,7 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 
 	length = (p - base_path);
 
-	path = (char*) xmalloc(length + 1);
+	path = (char*) malloc(length + 1);
 	memcpy(path, base_path, length);
 	path[length] = '\0';
 

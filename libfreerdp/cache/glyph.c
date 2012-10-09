@@ -143,7 +143,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 				id = data[index + 1];
 				size = data[index + 2];
 
-				fragments = (uint8*) xmalloc(size);
+				fragments = (uint8*) malloc(size);
 				memcpy(fragments, data, size);
 				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
 
@@ -286,7 +286,7 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 		glyph->cb = glyph_data->cb;
 		Glyph_New(context, glyph);
 		glyph_cache_put(cache->glyph, fast_glyph->cacheId, fast_glyph->data[0], glyph);
-		xfree(fast_glyph->glyph_data);
+		free(fast_glyph->glyph_data);
 		fast_glyph->glyph_data = NULL;
 	}
 
@@ -326,7 +326,7 @@ void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph_data->cacheIndex, glyph);
 
 		cache_glyph->glyphData[i] = NULL;
-		xfree(glyph_data);
+		free(glyph_data);
 	}
 }
 
@@ -354,7 +354,7 @@ void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_
 		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph_data->cacheIndex, glyph);
 
 		cache_glyph_v2->glyphData[i] = NULL;
-		xfree(glyph_data);
+		free(glyph_data);
 	}
 }
 
@@ -405,8 +405,8 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, uint32 id, uint32 index, rdpGly
 	if (prevGlyph != NULL)
 	{
 		Glyph_Free(glyph_cache->context, prevGlyph);
-		xfree(prevGlyph->aj);
-		xfree(prevGlyph);
+		free(prevGlyph->aj);
+		free(prevGlyph);
 	}
 
 	glyph_cache->glyphCache[id].entries[index] = glyph;
@@ -438,7 +438,7 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, uint32 index, uint32 s
 
 	if (prevFragment != NULL)
 	{
-		xfree(prevFragment);
+		free(prevFragment);
 	}
 }
 
@@ -500,20 +500,20 @@ void glyph_cache_free(rdpGlyphCache* glyph_cache)
 				if (glyph != NULL)
 				{
 					Glyph_Free(glyph_cache->context, glyph);
-					xfree(glyph->aj);
-					xfree(glyph);
+					free(glyph->aj);
+					free(glyph);
 				}
 			}
-			xfree(glyph_cache->glyphCache[i].entries);
+			free(glyph_cache->glyphCache[i].entries);
 		}
 
 		for (i = 0; i < 255; i++)
 		{
 			fragment = glyph_cache->fragCache.entries[i].fragment;
-			xfree(fragment);
+			free(fragment);
 		}
 
-		xfree(glyph_cache->fragCache.entries);
-		xfree(glyph_cache);
+		free(glyph_cache->fragCache.entries);
+		free(glyph_cache);
 	}
 }

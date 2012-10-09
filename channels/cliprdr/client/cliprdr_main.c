@@ -268,7 +268,7 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 {
-	xfree(plugin);
+	free(plugin);
 }
 
 /* cliprdr is always built-in */

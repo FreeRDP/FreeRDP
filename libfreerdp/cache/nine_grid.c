@@ -87,7 +87,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry)
 	prevEntry = nine_grid->entries[index].entry;
 
 	if (prevEntry != NULL)
-		xfree(prevEntry);
+		free(prevEntry);
 
 	nine_grid->entries[index].entry = entry;
 }
@@ -125,12 +125,12 @@ void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 			for (i = 0; i < (int) nine_grid->maxEntries; i++)
 			{
 				if (nine_grid->entries[i].entry != NULL)
-					xfree(nine_grid->entries[i].entry);
+					free(nine_grid->entries[i].entry);
 			}
 
-			xfree(nine_grid->entries);
+			free(nine_grid->entries);
 		}
 
-		xfree(nine_grid);
+		free(nine_grid);
 	}
 }

@@ -110,7 +110,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	stream_write_uint32(irp->output, FileId);
 	stream_write_uint8(irp->output, 0);
 
-	xfree(path);
+	free(path);
 
 	irp->Complete(irp);
 }
@@ -162,12 +162,12 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*) xmalloc(Length);
+		buffer = (uint8*) malloc(Length);
 
 		if (!serial_tty_read(tty, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
-			xfree(buffer);
+			free(buffer);
 			buffer = NULL;
 			Length = 0;
 
@@ -187,7 +187,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 		stream_write(irp->output, buffer, Length);
 	}
 
-	xfree(buffer);
+	free(buffer);
 
 	irp->Complete(irp);
 }
@@ -394,7 +394,7 @@ static void serial_free(DEVICE* device)
 
 	list_free(serial->pending_irps);
 
-	xfree(serial);
+	free(serial);
 }
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)

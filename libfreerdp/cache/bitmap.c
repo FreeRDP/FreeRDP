@@ -327,13 +327,13 @@ void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 				}
 			}
 
-			xfree(bitmap_cache->cells[i].entries);
+			free(bitmap_cache->cells[i].entries);
 		}
 
 		if (bitmap_cache->bitmap != NULL)
 			Bitmap_Free(bitmap_cache->context, bitmap_cache->bitmap);
 
-		xfree(bitmap_cache->cells);
-		xfree(bitmap_cache);
+		free(bitmap_cache->cells);
+		free(bitmap_cache);
 	}
 }

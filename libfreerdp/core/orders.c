@@ -779,9 +779,9 @@ void update_read_polyline_order(STREAM* s, ORDER_INFO* orderInfo, POLYLINE_ORDER
 		stream_read_uint8(s, polyline->cbData);
 
 		if (polyline->points == NULL)
-			polyline->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numPoints);
 		else
-			polyline->points = (DELTA_POINT*) xrealloc(polyline->points, sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numPoints);
 
 		update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
 	}
@@ -1056,7 +1056,7 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
 		{
 			/* parse optional glyph data */
-			glyph = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
+			glyph = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
 			glyph->cacheIndex = fast_glyph->data[0];
 			update_read_2byte_signed(s, &glyph->x);
 			update_read_2byte_signed(s, &glyph->y);
@@ -1064,7 +1064,7 @@ void update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 			update_read_2byte_unsigned(s, &glyph->cy);
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
-			glyph->aj = (uint8*) xmalloc(glyph->cb);
+			glyph->aj = (uint8*) malloc(glyph->cb);
 			stream_read(s, glyph->aj, glyph->cb);
 			fast_glyph->glyph_data = glyph;
 		}
@@ -1097,9 +1097,9 @@ void update_read_polygon_sc_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_SC_O
 		stream_read_uint8(s, polygon_sc->cbData);
 
 		if (polygon_sc->points == NULL)
-			polygon_sc->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polygon_sc->numPoints);
+			polygon_sc->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polygon_sc->numPoints);
 		else
-			polygon_sc->points = (DELTA_POINT*) xrealloc(polygon_sc->points, sizeof(DELTA_POINT) * polygon_sc->numPoints);
+			polygon_sc->points = (DELTA_POINT*) realloc(polygon_sc->points, sizeof(DELTA_POINT) * polygon_sc->numPoints);
 
 		update_read_delta_points(s, polygon_sc->points, polygon_sc->numPoints, polygon_sc->xStart, polygon_sc->yStart);
 	}
@@ -1135,9 +1135,9 @@ void update_read_polygon_cb_order(STREAM* s, ORDER_INFO* orderInfo, POLYGON_CB_O
 		stream_read_uint8(s, polygon_cb->cbData);
 
 		if (polygon_cb->points == NULL)
-			polygon_cb->points = (DELTA_POINT*) xmalloc(sizeof(DELTA_POINT) * polygon_cb->numPoints);
+			polygon_cb->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polygon_cb->numPoints);
 		else
-			polygon_cb->points = (DELTA_POINT*) xrealloc(polygon_cb->points, sizeof(DELTA_POINT) * polygon_cb->numPoints);
+			polygon_cb->points = (DELTA_POINT*) realloc(polygon_cb->points, sizeof(DELTA_POINT) * polygon_cb->numPoints);
 
 		update_read_delta_points(s, polygon_cb->points, polygon_cb->numPoints, polygon_cb->xStart, polygon_cb->yStart);
 	}
@@ -1311,9 +1311,9 @@ void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_b
 	stream_read_uint32(s, bitmapData->length); /* length (4 bytes) */
 
 	if (bitmapData->data == NULL)
-		bitmapData->data = (uint8*) xmalloc(bitmapData->length);
+		bitmapData->data = (uint8*) malloc(bitmapData->length);
 	else
-		bitmapData->data = (uint8*) xrealloc(bitmapData->data, bitmapData->length);
+		bitmapData->data = (uint8*) realloc(bitmapData->data, bitmapData->length);
 
 	stream_read(s, bitmapData->data, bitmapData->length);
 }
@@ -1329,9 +1329,9 @@ void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 	colorTable = cache_color_table_order->colorTable;
 
 	if (colorTable == NULL)
-		colorTable = (uint32*) xmalloc(cache_color_table_order->numberColors * 4);
+		colorTable = (uint32*) malloc(cache_color_table_order->numberColors * 4);
 	else
-		colorTable = (uint32*) xrealloc(colorTable, cache_color_table_order->numberColors * 4);
+		colorTable = (uint32*) realloc(colorTable, cache_color_table_order->numberColors * 4);
 
 	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
 	{
@@ -1354,7 +1354,7 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 	{
 		if (cache_glyph_order->glyphData[i] == NULL)
 		{
-			cache_glyph_order->glyphData[i] = (GLYPH_DATA*) xmalloc(sizeof(GLYPH_DATA));
+			cache_glyph_order->glyphData[i] = (GLYPH_DATA*) malloc(sizeof(GLYPH_DATA));
 		}
 		glyph = cache_glyph_order->glyphData[i];
 
@@ -1369,7 +1369,7 @@ void update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
-		glyph->aj = (uint8*) xmalloc(glyph->cb);
+		glyph->aj = (uint8*) malloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
@@ -1391,7 +1391,7 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 	{
 		if (cache_glyph_v2_order->glyphData[i] == NULL)
 		{
-			cache_glyph_v2_order->glyphData[i] = (GLYPH_DATA_V2*) xmalloc(sizeof(GLYPH_DATA_V2));
+			cache_glyph_v2_order->glyphData[i] = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
 		}
 		glyph = cache_glyph_v2_order->glyphData[i];
 
@@ -1404,7 +1404,7 @@ void update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
-		glyph->aj = (uint8*) xmalloc(glyph->cb);
+		glyph->aj = (uint8*) malloc(glyph->cb);
 
 		stream_read(s, glyph->aj, glyph->cb);
 	}
@@ -1462,7 +1462,7 @@ void update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	{
 		size = (cache_brush_order->bpp == 1) ? 8 : 8 * 8 * cache_brush_order->bpp;
 
-		cache_brush_order->data = (uint8*) xmalloc(size);
+		cache_brush_order->data = (uint8*) malloc(size);
 
 		if (cache_brush_order->bpp == 1)
 		{
@@ -1532,7 +1532,7 @@ void update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 		if (deleteList->cIndices > deleteList->sIndices)
 		{
 			deleteList->sIndices = deleteList->cIndices;
-			deleteList->indices = xrealloc(deleteList->indices, deleteList->sIndices * 2);
+			deleteList->indices = realloc(deleteList->indices, deleteList->sIndices * 2);
 		}
 
 		for (i = 0; i < (int) deleteList->cIndices; i++)

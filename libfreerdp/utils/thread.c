@@ -93,5 +93,5 @@ void freerdp_thread_free(freerdp_thread* thread)
 	CloseHandle(thread->mutex);
 	thread->mutex = NULL;
 
-	xfree(thread);
+	free(thread);
 }

@@ -105,12 +105,12 @@ void icon_cache_free(rdpIconCache* cache)
 
 		for (i = 0; i < cache->numCaches; i++)
 		{
-			xfree(cache->caches[i].entries);
+			free(cache->caches[i].entries);
 		}
 
-		xfree(cache->caches);
+		free(cache->caches);
 
-		xfree(cache);
+		free(cache);
 	}
 }
 

@@ -52,13 +52,13 @@ static void scard_free(DEVICE* dev)
 	/* Begin TS Client defect workaround. */
 
 	while ((CompletionIdInfo = (COMPLETIONIDINFO*) list_dequeue(scard->CompletionIds)) != NULL)
-	        xfree(CompletionIdInfo);
+	        free(CompletionIdInfo);
 
 	list_free(scard->CompletionIds);
 
 	/* End TS Client defect workaround. */
 
-	xfree(dev);
+	free(dev);
 	return;
 }
 
@@ -106,7 +106,7 @@ static void scard_process_irp_thread_func(struct scard_irp_thread_args* args)
 	scard_process_irp(args->scard, args->irp);
 
 	freerdp_thread_free(args->thread);
-	xfree(args);
+	free(args);
 }
 
 static void* scard_thread_func(void* arg)
@@ -180,7 +180,7 @@ static boolean  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 Complet
 	                        DEBUG_WARN("CompletionID number %u was previously marked as a duplicate.  The response to the command is removed.", CompletionId);
 	                }
 	                list_remove(scard->CompletionIds, CompletionIdInfo);
-	                xfree(CompletionIdInfo);
+	                free(CompletionIdInfo);
 	                return duplicate;
 	        }
 	}
@@ -266,7 +266,7 @@ static void scard_irp_request(DEVICE* device, IRP* irp)
 		 * get their own thread
 		 * TODO: revise this mechanism.. maybe worker pool
 		 */
-		struct scard_irp_thread_args *args = xmalloc(sizeof(struct scard_irp_thread_args));
+		struct scard_irp_thread_args *args = malloc(sizeof(struct scard_irp_thread_args));
 
 
 		args->thread = freerdp_thread_new();

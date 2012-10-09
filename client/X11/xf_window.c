@@ -173,7 +173,7 @@ boolean xf_GetCurrentDesktop(xfInfo* xfi)
 	}
 
 	xfi->current_desktop = (int) *prop;
-	xfree(prop);
+	free(prop);
 
 	return true;
 }
@@ -198,7 +198,7 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 		return false;
 
 	if ((xfi->current_desktop * 4 + 3) >= nitems) {
-		xfree(prop);
+		free(prop);
 		return false;
 	}
 
@@ -208,7 +208,7 @@ boolean xf_GetWorkArea(xfInfo* xfi)
 	xfi->workArea.y = plong[xfi->current_desktop * 4 + 1];
 	xfi->workArea.width = plong[xfi->current_desktop * 4 + 2];
 	xfi->workArea.height = plong[xfi->current_desktop * 4 + 3];
-	xfree(prop);
+	free(prop);
 
 	return true;
 }
@@ -511,13 +511,13 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	if (class_hints != NULL)
 	{
 		char* class;
-		class = xmalloc(sizeof(rail_window_class));
+		class = malloc(sizeof(rail_window_class));
 		snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
 		class_hints->res_name = "RAIL";
 		class_hints->res_class = class;
 		XSetClassHint(xfi->display, window->handle, class_hints);
 		XFree(class_hints);
-		xfree(class);
+		free(class);
 	}
 
 	/* Set the input mode hint for the WM */
@@ -761,7 +761,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 
 	pixels = icon->entry->width * icon->entry->height;
 	propsize = 2 + pixels;
-	propdata = xmalloc(propsize * sizeof(long));
+	propdata = malloc(propsize * sizeof(long));
 
 	propdata[0] = icon->entry->width;
 	propdata[1] = icon->entry->height;
@@ -790,7 +790,7 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	if (nrects == 0) 
 		return;
 
-	xrects = xmalloc(sizeof(XRectangle) * nrects);
+	xrects = malloc(sizeof(XRectangle) * nrects);
 
 	for (i = 0; i < nrects; i++)
 	{
@@ -807,7 +807,7 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 	 */
 #endif
 
-	xfree(xrects);
+	free(xrects);
 }
 
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects)
@@ -818,7 +818,7 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	if (nrects == 0) 
 		return;
 
-	xrects = xmalloc(sizeof(XRectangle) * nrects);
+	xrects = malloc(sizeof(XRectangle) * nrects);
 
 	for (i = 0; i < nrects; i++)
 	{
@@ -835,7 +835,7 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 	 */
 #endif
 
-	xfree(xrects);
+	free(xrects);
 }
 
 void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height)
@@ -917,7 +917,7 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window)
 		XDestroyWindow(xfi->display, window->handle);
 	}
 
-	xfree(window);
+	free(window);
 }
 
 rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd)

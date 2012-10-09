@@ -688,7 +688,7 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	stream_free(s);
 
 	length = rts_pdu->header.frag_length - 20;
-	rts_pdu->content = (uint8*) xmalloc(length);
+	rts_pdu->content = (uint8*) malloc(length);
 
 	status = tls_read(tls_out, rts_pdu->content, length);
 

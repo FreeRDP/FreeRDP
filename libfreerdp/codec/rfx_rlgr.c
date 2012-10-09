@@ -234,7 +234,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 		}
 	}
 
-	xfree(bs);
+	free(bs);
 
 	return (dst - buffer);
 }
@@ -431,7 +431,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 	}
 
 	processed_size = rfx_bitstream_get_processed_bytes(bs);
-	xfree(bs);
+	free(bs);
 
 	return processed_size;
 }

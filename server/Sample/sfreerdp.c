@@ -79,8 +79,8 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		}
 
 		stream_free(context->s);
-		xfree(context->icon_data);
-		xfree(context->bg_data);
+		free(context->icon_data);
+		free(context->bg_data);
 
 		rfx_context_free(context->rfx_context);
 		nsc_context_free(context->nsc_context);
@@ -160,7 +160,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rect.height = client->settings->height;
 
 	size = rect.width * rect.height * 3;
-	rgb_data = xmalloc(size);
+	rgb_data = malloc(size);
 	memset(rgb_data, 0xA0, size);
 
 	if (client->settings->rfx_codec)
@@ -187,7 +187,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update->context, cmd);
 
-	xfree(rgb_data);
+	free(rgb_data);
 
 	test_peer_end_frame(client);
 }
@@ -217,7 +217,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 	/* Max */
 	fgets(line, sizeof(line), fp);
 
-	rgb_data = xmalloc(context->icon_width * context->icon_height * 3);
+	rgb_data = malloc(context->icon_width * context->icon_height * 3);
 
 	for (i = 0; i < context->icon_width * context->icon_height * 3; i++)
 	{
@@ -231,7 +231,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 	context->icon_data = rgb_data;
 
 	/* background with same size, which will be used to erase the icon from old position */
-	context->bg_data = xmalloc(context->icon_width * context->icon_height * 3);
+	context->bg_data = malloc(context->icon_width * context->icon_height * 3);
 	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);
 }
 
@@ -380,7 +380,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	{
 		pcap_get_next_record_header(pcap_rfx, &record);
 
-		s->data = xrealloc(s->data, record.length);
+		s->data = realloc(s->data, record.length);
 		record.data = s->data;
 		s->size = record.length;
 

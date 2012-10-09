@@ -332,8 +332,8 @@ void freerdp_listener_free(freerdp_listener* instance)
 	rdpListener* listener;
 
 	listener = (rdpListener*) instance->listener;
-	xfree(listener);
+	free(listener);
 
-	xfree(instance);
+	free(instance);
 }
 

@@ -108,9 +108,9 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (uint8*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (uint8*) realloc(bitmap->data, size);
 
 	switch (codec_id)
 	{
@@ -274,7 +274,7 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	bitmap->SetSurface = gdi_Bitmap_SetSurface;
 
 	graphics_register_bitmap(graphics, bitmap);
-	xfree(bitmap);
+	free(bitmap);
 
 	glyph = xnew(rdpGlyph);
 	glyph->size = sizeof(gdiGlyph);
@@ -286,5 +286,5 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	glyph->EndDraw = gdi_Glyph_EndDraw;
 
 	graphics_register_glyph(graphics, glyph);
-	xfree(glyph);
+	free(glyph);
 }

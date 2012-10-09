@@ -444,30 +444,30 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 			enc->buf_len = RDP_50_HIST_BUF_LEN;
 			break;
 		default:
-			xfree(enc);
+			free(enc);
 			return NULL;
 	}
 	enc->first_pkt = 1;
 	enc->historyBuffer = (char*) xzalloc(enc->buf_len);
 	if (enc->historyBuffer == NULL)
 	{
-		xfree(enc);
+		free(enc);
 		return NULL;
 	}
 	enc->outputBufferPlus = (char*) xzalloc(enc->buf_len + 64);
 	if (enc->outputBufferPlus == NULL)
 	{
-		xfree(enc->historyBuffer);
-		xfree(enc);
+		free(enc->historyBuffer);
+		free(enc);
 		return NULL;
 	}
 	enc->outputBuffer = enc->outputBufferPlus + 64;
 	enc->hash_table = (uint16*) xzalloc(enc->buf_len * 2);
 	if (enc->hash_table == NULL)
 	{
-		xfree(enc->historyBuffer);
-		xfree(enc->outputBufferPlus);
-		xfree(enc);
+		free(enc->historyBuffer);
+		free(enc->outputBufferPlus);
+		free(enc);
 		return NULL;
 	}
 	return enc;
@@ -483,10 +483,10 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
 {
 	if (enc == NULL)
 		return;
-	xfree(enc->historyBuffer);
-	xfree(enc->outputBufferPlus);
-	xfree(enc->hash_table);
-	xfree(enc);
+	free(enc->historyBuffer);
+	free(enc->outputBufferPlus);
+	free(enc->hash_table);
+	free(enc);
 }
 
 /**

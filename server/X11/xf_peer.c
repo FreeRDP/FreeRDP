@@ -381,7 +381,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 	{
 		pcap_get_next_record_header(pcap_rfx, &record);
 
-		s->data = xrealloc(s->data, record.length);
+		s->data = realloc(s->data, record.length);
 		record.data = s->data;
 		s->size = record.length;
 

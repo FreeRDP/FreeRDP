@@ -96,7 +96,7 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 	if (event_queue->count >= event_queue->size)
 	{
 		event_queue->size *= 2;
-		event_queue->events = (xfEvent**) xrealloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
+		event_queue->events = (xfEvent**) realloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
 	}
 
 	event_queue->events[(event_queue->count)++] = event;
@@ -161,7 +161,7 @@ xfEventRegion* xf_event_region_new(int x, int y, int width, int height)
 
 void xf_event_region_free(xfEventRegion* event_region)
 {
-	xfree(event_region);
+	free(event_region);
 }
 
 xfEvent* xf_event_new(int type)
@@ -173,7 +173,7 @@ xfEvent* xf_event_new(int type)
 
 void xf_event_free(xfEvent* event)
 {
-	xfree(event);
+	free(event);
 }
 
 xfEventQueue* xf_event_queue_new()

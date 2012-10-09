@@ -186,7 +186,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	stream_write_uint32(irp->output, FileId);
 	stream_write_uint8(irp->output, Information);
 
-	xfree(path);
+	free(path);
 
 	irp->Complete(irp);
 }
@@ -244,11 +244,11 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*) xmalloc(Length);
+		buffer = (uint8*) malloc(Length);
 		if (!disk_file_read(file, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
-			xfree(buffer);
+			free(buffer);
 			buffer = NULL;
 			Length = 0;
 
@@ -268,7 +268,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 		stream_write(irp->output, buffer, Length);
 	}
 
-	xfree(buffer);
+	free(buffer);
 
 	irp->Complete(irp);
 }
@@ -409,7 +409,7 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 			stream_write_uint8(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
 			stream_write(output, outStr, length); /* VolumeLabel (Unicode) */
-			xfree(outStr);
+			free(outStr);
 			break;
 
 		case FileFsSizeInformation:
@@ -434,7 +434,7 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 			stream_write_uint32(output, svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
 			stream_write_uint32(output, length); /* FileSystemNameLength */
 			stream_write(output, outStr, length); /* FileSystemName (Unicode) */
-			xfree(outStr);
+			free(outStr);
 			break;
 
 		case FileFsFullSizeInformation:
@@ -494,7 +494,7 @@ static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 		irp->IoStatus = STATUS_NO_MORE_FILES;
 	}
 
-	xfree(path);
+	free(path);
 
 	irp->Complete(irp);
 }
@@ -640,7 +640,7 @@ static void disk_free(DEVICE* device)
 		disk_file_free(file);
 
 	list_free(disk->files);
-	xfree(disk);
+	free(disk);
 }
 
 void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)

@@ -50,7 +50,7 @@ static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	if (rsize > (int) context->resampled_maxlength)
 	{
 		context->resampled_maxlength = rsize + 1024;
-		context->resampled_buffer = (uint8*) xrealloc(context->resampled_buffer, context->resampled_maxlength);
+		context->resampled_buffer = (uint8*) realloc(context->resampled_buffer, context->resampled_maxlength);
 	}
 	dst = context->resampled_buffer;
 
@@ -148,7 +148,7 @@ static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (out_size > context->adpcm_maxlength)
 	{
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
 	}
 	dst = context->adpcm_buffer;
 	while (size > 0)
@@ -307,7 +307,7 @@ static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (out_size > context->adpcm_maxlength)
 	{
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
 	}
 	dst = context->adpcm_buffer;
 	while (size > 0)
@@ -410,7 +410,7 @@ static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (out_size > context->adpcm_maxlength)
 	{
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
 	}
 	dst = context->adpcm_buffer;
 	while (size > 0)
@@ -530,7 +530,7 @@ static void freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	if (out_size > context->adpcm_maxlength)
 	{
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = xrealloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
 	}
 	dst = context->adpcm_buffer;
 
@@ -611,9 +611,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 	if (context)
 	{
 		if (context->resampled_buffer)
-			xfree(context->resampled_buffer);
+			free(context->resampled_buffer);
 		if (context->adpcm_buffer)
-			xfree(context->adpcm_buffer);
-		xfree(context);
+			free(context->adpcm_buffer);
+		free(context);
 	}
 }

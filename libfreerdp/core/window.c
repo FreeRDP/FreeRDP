@@ -46,23 +46,23 @@ void update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
 
 	/* bitsMask */
 	if (icon_info->bitsMask == NULL)
-		icon_info->bitsMask = (uint8*) xmalloc(icon_info->cbBitsMask);
+		icon_info->bitsMask = (uint8*) malloc(icon_info->cbBitsMask);
 	else
-		icon_info->bitsMask = (uint8*) xrealloc(icon_info->bitsMask, icon_info->cbBitsMask);
+		icon_info->bitsMask = (uint8*) realloc(icon_info->bitsMask, icon_info->cbBitsMask);
 	stream_read(s, icon_info->bitsMask, icon_info->cbBitsMask);
 
 	/* colorTable */
 	if (icon_info->colorTable == NULL)
-		icon_info->colorTable = (uint8*) xmalloc(icon_info->cbColorTable);
+		icon_info->colorTable = (uint8*) malloc(icon_info->cbColorTable);
 	else
-		icon_info->colorTable = (uint8*) xrealloc(icon_info->colorTable, icon_info->cbColorTable);
+		icon_info->colorTable = (uint8*) realloc(icon_info->colorTable, icon_info->cbColorTable);
 	stream_read(s, icon_info->colorTable, icon_info->cbColorTable);
 
 	/* bitsColor */
 	if (icon_info->bitsColor == NULL)
-		icon_info->bitsColor = (uint8*) xmalloc(icon_info->cbBitsColor);
+		icon_info->bitsColor = (uint8*) malloc(icon_info->cbBitsColor);
 	else
-		icon_info->bitsColor = (uint8*) xrealloc(icon_info->bitsColor, icon_info->cbBitsColor);
+		icon_info->bitsColor = (uint8*) realloc(icon_info->bitsColor, icon_info->cbBitsColor);
 	stream_read(s, icon_info->bitsColor, icon_info->cbBitsColor);
 }
 
@@ -141,7 +141,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		stream_read_uint16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numWindowRects;
-		window_state->windowRects = (RECTANGLE_16*) xmalloc(size);
+		window_state->windowRects = (RECTANGLE_16*) malloc(size);
 
 		/* windowRects */
 		for (i = 0; i < (int) window_state->numWindowRects; i++)
@@ -164,7 +164,7 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 		stream_read_uint16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numVisibilityRects;
-		window_state->visibilityRects = (RECTANGLE_16*) xmalloc(size);
+		window_state->visibilityRects = (RECTANGLE_16*) malloc(size);
 
 		/* visibilityRects */
 		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
@@ -297,9 +297,9 @@ void update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* 
 		size = sizeof(uint32) * monitored_desktop->numWindowIds;
 
 		if (monitored_desktop->windowIds == NULL)
-			monitored_desktop->windowIds = (uint32*) xmalloc(size);
+			monitored_desktop->windowIds = (uint32*) malloc(size);
 		else
-			monitored_desktop->windowIds = (uint32*) xrealloc(monitored_desktop->windowIds, size);
+			monitored_desktop->windowIds = (uint32*) realloc(monitored_desktop->windowIds, size);
 
 		/* windowIds */
 		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)

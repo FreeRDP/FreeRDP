@@ -133,6 +133,6 @@ void df_register_graphics(rdpGraphics* graphics)
 	pointer->SetDefault = df_Pointer_SetDefault;
 
 	graphics_register_pointer(graphics, pointer);
-	xfree(pointer);
+	free(pointer);
 }
 

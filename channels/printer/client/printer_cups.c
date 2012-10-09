@@ -119,7 +119,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 			DEBUG_WARN("cupsPrintFile: %s", cupsLastErrorString());
 		}
 		unlink(cups_printjob->printjob_object);
-		xfree(cups_printjob->printjob_object);
+		free(cups_printjob->printjob_object);
 	}
 
 #else
@@ -131,7 +131,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 #endif
 
 	((rdpCupsPrinter*)printjob->printer)->printjob = NULL;
-	xfree(cups_printjob) ;
+	free(cups_printjob) ;
 }
 
 static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
@@ -162,7 +162,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
 		if (cups_printjob->printjob_object == NULL)
 		{
 			DEBUG_WARN("httpConnectEncrypt: %s", cupsLastErrorString());
-			xfree(cups_printjob);
+			free(cups_printjob);
 			return NULL;
 		}
 
@@ -174,7 +174,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
 		{
 			DEBUG_WARN("cupsCreateJob: %s", cupsLastErrorString());
 			httpClose((http_t*)cups_printjob->printjob_object);
-			xfree(cups_printjob);
+			free(cups_printjob);
 			return NULL;
 		}
 		cupsStartDocument((http_t*)cups_printjob->printjob_object,
@@ -207,8 +207,8 @@ static void printer_cups_free_printer(rdpPrinter* printer)
 
 	if (cups_printer->printjob)
 		cups_printer->printjob->printjob.Close((rdpPrintJob*)cups_printer->printjob);
-	xfree(printer->name);
-	xfree(printer);
+	free(printer->name);
+	free(printer);
 }
 
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, const char* name, boolean is_default)

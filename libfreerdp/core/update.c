@@ -101,7 +101,7 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 
 		count = bitmap_update->number * 2;
 
-		bitmap_update->rectangles = (BITMAP_DATA*) xrealloc(bitmap_update->rectangles,
+		bitmap_update->rectangles = (BITMAP_DATA*) realloc(bitmap_update->rectangles,
 				sizeof(BITMAP_DATA) * count);
 
 		memset(&bitmap_update->rectangles[bitmap_update->count], 0,
@@ -195,13 +195,13 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthXorMask > 0)
 	{
-		pointer_color->xorMaskData = (uint8*) xmalloc(pointer_color->lengthXorMask);
+		pointer_color->xorMaskData = (uint8*) malloc(pointer_color->lengthXorMask);
 		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
 	}
 
 	if (pointer_color->lengthAndMask > 0)
 	{
-		pointer_color->andMaskData = (uint8*) xmalloc(pointer_color->lengthAndMask);
+		pointer_color->andMaskData = (uint8*) malloc(pointer_color->lengthAndMask);
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
@@ -635,7 +635,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		deleteList->sIndices = 64;
-		deleteList->indices = xmalloc(deleteList->sIndices * 2);
+		deleteList->indices = malloc(deleteList->sIndices * 2);
 		deleteList->cIndices = 0;
 
 		update->SuppressOutput = update_send_suppress_output;
@@ -650,17 +650,17 @@ void update_free(rdpUpdate* update)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
-		xfree(deleteList->indices);
+		free(deleteList->indices);
 
-		xfree(update->bitmap_update.rectangles);
-		xfree(update->pointer);
-		xfree(update->primary->polyline.points);
-		xfree(update->primary->polygon_sc.points);
-		xfree(update->primary);
-		xfree(update->secondary);
-		xfree(update->altsec);
-		xfree(update->window);
-		xfree(update);
+		free(update->bitmap_update.rectangles);
+		free(update->pointer);
+		free(update->primary->polyline.points);
+		free(update->primary->polygon_sc.points);
+		free(update->primary);
+		free(update->secondary);
+		free(update->altsec);
+		free(update->window);
+		free(update);
 	}
 }
 

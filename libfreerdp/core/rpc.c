@@ -104,7 +104,7 @@ boolean ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
 	ntlm->outputBuffer.BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer.cbBuffer = ntlm->cbMaxToken;
-	ntlm->outputBuffer.pvBuffer = xmalloc(ntlm->outputBuffer.cbBuffer);
+	ntlm->outputBuffer.pvBuffer = malloc(ntlm->outputBuffer.cbBuffer);
 
 	if (ntlm->haveInputBuffer)
 	{
@@ -204,7 +204,7 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 	s = http_request_write(http_context, http_request);
 	http_request_free(http_request);
 
-	xfree(base64_ntlm_token);
+	free(base64_ntlm_token);
 
 	return s;
 }
@@ -392,7 +392,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.n_context_elem = 2;
 	bind_pdu->p_context_elem.reserved = 0;
 	bind_pdu->p_context_elem.reserved2 = 0;
-	bind_pdu->p_context_elem.p_cont_elem = xmalloc(sizeof(p_cont_elem_t) * bind_pdu->p_context_elem.n_context_elem);
+	bind_pdu->p_context_elem.p_cont_elem = malloc(sizeof(p_cont_elem_t) * bind_pdu->p_context_elem.n_context_elem);
 	bind_pdu->p_context_elem.p_cont_elem[0].p_cont_id = 0;
 	bind_pdu->p_context_elem.p_cont_elem[0].n_transfer_syn = 1;
 	bind_pdu->p_context_elem.p_cont_elem[0].reserved = 0;
@@ -408,7 +408,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[4] = 0x27;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[5] = 0x29;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_version = 0x00030001;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes = xmalloc(sizeof(p_syntax_id_t));
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_low = 0x8a885d04;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_mid = 0x1ceb;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x11c9;
@@ -436,7 +436,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[4] = 0x27;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[5] = 0x29;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_version = 0x00030001;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes = xmalloc(sizeof(p_syntax_id_t));
+	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_low = 0x6cb71c2c;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_mid = 0x9812;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x4540;
@@ -455,7 +455,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->auth_verifier.auth_pad_length = 0x00; /* :01 */
 	bind_pdu->auth_verifier.auth_reserved = 0x00;   /* :01 reserved, m.b.z. */
 	bind_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	bind_pdu->auth_verifier.auth_value = xmalloc(bind_pdu->auth_length); /* credentials; size_is(auth_length) p*/;
+	bind_pdu->auth_verifier.auth_value = malloc(bind_pdu->auth_length); /* credentials; size_is(auth_length) p*/;
 	memcpy(bind_pdu->auth_verifier.auth_value, ntlm_stream->data, bind_pdu->auth_length);
 
 	stream_free(ntlm_stream);
@@ -479,7 +479,7 @@ boolean rpc_send_bind_pdu(rdpRpc* rpc)
 	rpc_in_write(rpc, pdu->data, pdu->size);
 
 	stream_free(pdu) ;
-	xfree(bind_pdu);
+	free(bind_pdu);
 
 	return true;
 }
@@ -494,7 +494,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	RPC_PDU_HEADER header;
 	int pdu_length = 0x8FFF;
 
-	pdu = xmalloc(pdu_length);
+	pdu = malloc(pdu_length);
 
 	if (pdu == NULL)
 		return -1;
@@ -509,11 +509,11 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		stream_detach(s);
 		stream_free(s);
 
-		auth_data = xmalloc(header.auth_length);
+		auth_data = malloc(header.auth_length);
 
 		if (auth_data == NULL)
 		{
-			xfree(pdu);
+			free(pdu);
 			return -1;
 		}
 
@@ -526,7 +526,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		ntlm_authenticate(rpc->ntlm);
 	}
 
-	xfree(pdu);
+	free(pdu);
 	return status;
 }
 
@@ -562,7 +562,7 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	rpc_auth_3_pdu->auth_verifier.auth_pad_length = 0x00; /* :01 */
 	rpc_auth_3_pdu->auth_verifier.auth_reserved = 0x00;   /* :01 reserved, m.b.z. */
 	rpc_auth_3_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	rpc_auth_3_pdu->auth_verifier.auth_value = xmalloc(rpc_auth_3_pdu->auth_length); /* credentials; size_is(auth_length) p */
+	rpc_auth_3_pdu->auth_verifier.auth_value = malloc(rpc_auth_3_pdu->auth_length); /* credentials; size_is(auth_length) p */
 	memcpy(rpc_auth_3_pdu->auth_verifier.auth_value, s->data, rpc_auth_3_pdu->auth_length);
 
 	stream_free(s);
@@ -580,7 +580,7 @@ boolean rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	rpc_in_write(rpc, pdu->data, stream_get_length(pdu));
 
 	stream_free(pdu) ;
-	xfree(rpc_auth_3_pdu);
+	free(rpc_auth_3_pdu);
 
 	return true;
 }
@@ -596,7 +596,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
 		rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
-	pdu = xmalloc(0xFFFF);
+	pdu = malloc(0xFFFF);
 
 	if (pdu == NULL)
 	{
@@ -608,7 +608,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (status <= 0)
 	{
-		xfree(pdu);
+		free(pdu);
 		return status;
 	}
 
@@ -625,14 +625,14 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 
 	if (status < 0)
 	{
-		xfree(pdu);
+		free(pdu);
 		return status;
 	}
 
 	if (header.ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		printf("rpc_out_read error: Unexpected RTS PDU\n");
-		xfree(pdu);
+		free(pdu);
 		return -1;
 	}
 	else
@@ -645,7 +645,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	if (length < header.frag_length)
 	{
 		printf("rpc_out_read error! receive buffer is not large enough\n");
-		xfree(pdu);
+		free(pdu);
 		return -1;
 	}
 
@@ -657,7 +657,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	printf("\n");
 #endif
 
-	xfree(pdu);
+	free(pdu);
 	return header.frag_length;
 }
 
@@ -704,7 +704,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	request_pdu->auth_verifier.auth_type = 0x0A; /* :01  which authentication service */
 	request_pdu->auth_verifier.auth_level = 0x05; /* :01  which level within service */
 	request_pdu->auth_verifier.auth_pad_length = auth_pad_length; /* :01 */
-	request_pdu->auth_verifier.auth_pad = xmalloc(auth_pad_length); /* align(4); size_is(auth_pad_length) p */
+	request_pdu->auth_verifier.auth_pad = malloc(auth_pad_length); /* align(4); size_is(auth_pad_length) p */
 
 	for (i = 0; i < auth_pad_length; i++)
 	{
@@ -713,7 +713,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	request_pdu->auth_verifier.auth_reserved = 0x00; /* :01 reserved, m.b.z. */
 	request_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	request_pdu->auth_verifier.auth_value = xmalloc(request_pdu->auth_length); /* credentials; size_is(auth_length) p */
+	request_pdu->auth_verifier.auth_value = malloc(request_pdu->auth_length); /* credentials; size_is(auth_length) p */
 
 	pdu = stream_new(request_pdu->frag_length);
 
@@ -725,9 +725,9 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 
 	stream_write(pdu, &request_pdu->auth_verifier.auth_type, 8);
 
-	xfree(request_pdu->auth_verifier.auth_value);
-	xfree(request_pdu->auth_verifier.auth_pad);
-	xfree(request_pdu);
+	free(request_pdu->auth_verifier.auth_value);
+	free(request_pdu->auth_verifier.auth_pad);
+	free(request_pdu);
 
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
@@ -783,7 +783,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 	uint8 auth_pad_length;
 	uint32 call_id = -1;
 	int rpc_length = length + 0xFF;
-	uint8* rpc_data = xmalloc(rpc_length);
+	uint8* rpc_data = malloc(rpc_length);
 
 	if (rpc_data == NULL)
 	{
@@ -796,13 +796,13 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		if (rpc->read_buffer_len > (uint32) length)
 		{
 			printf("rpc_read error: receiving buffer is not large enough\n");
-			xfree(rpc_data);
+			free(rpc_data);
 			return -1;
 		}
 
 		memcpy(data, rpc->read_buffer, rpc->read_buffer_len);
 		read += rpc->read_buffer_len;
-		xfree(rpc->read_buffer);
+		free(rpc->read_buffer);
 		rpc->read_buffer_len = 0;
 	}
 
@@ -812,7 +812,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 
 		if (status == 0)
 		{
-			xfree(rpc_data);
+			free(rpc_data);
 			return read;
 		}
 		else if (status < 0)
@@ -821,7 +821,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 					rpc->VirtualConnection->DefaultInChannel->BytesSent,
 					rpc->VirtualConnection->DefaultOutChannel->BytesReceived);
 
-			xfree(rpc_data);
+			free(rpc_data);
 			return status;
 		}
 
@@ -840,7 +840,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		if (read + data_length > length) /* if read data is greater then given buffer */
 		{
 			rpc->read_buffer_len = read + data_length - length;
-			rpc->read_buffer = xmalloc(rpc->read_buffer_len);
+			rpc->read_buffer = malloc(rpc->read_buffer_len);
 
 			data_length -= rpc->read_buffer_len;
 
@@ -857,7 +857,7 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 		break;
 	}
 
-	xfree(rpc_data);
+	free(rpc_data);
 	return read;
 }
 
@@ -924,7 +924,7 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 {
 	if (virtual_connection != NULL)
 	{
-		xfree(virtual_connection);
+		free(virtual_connection);
 	}
 }
 
@@ -1018,6 +1018,6 @@ void rpc_free(rdpRpc* rpc)
 		ntlm_http_free(rpc->ntlm_http_in);
 		ntlm_http_free(rpc->ntlm_http_out);
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
-		xfree(rpc);
+		free(rpc);
 	}
 }

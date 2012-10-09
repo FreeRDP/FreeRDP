@@ -58,6 +58,6 @@ void cache_free(rdpCache* cache)
 		offscreen_cache_free(cache->offscreen);
 		palette_cache_free(cache->palette);
 		nine_grid_cache_free(cache->nine_grid);
-		xfree(cache);
+		free(cache);
 	}
 }

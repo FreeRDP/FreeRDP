@@ -23,6 +23,8 @@
 
 #include "keyboard_xkbfile.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <freerdp/locale/keyboard.h>
@@ -257,10 +259,10 @@ uint32 detect_keyboard_layout_from_xkbfile(void* display)
 
 		keyboard_layout = find_keyboard_layout_in_xorg_rules(layout, variant);
 
-		xfree(rules_names.model);
-		xfree(rules_names.layout);
-		xfree(rules_names.variant);
-		xfree(rules_names.options);
+		free(rules_names.model);
+		free(rules_names.layout);
+		free(rules_names.variant);
+		free(rules_names.options);
 	}
 
 	return keyboard_layout;

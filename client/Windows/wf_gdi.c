@@ -96,7 +96,7 @@ uint8* wf_glyph_convert(wfInfo* wfi, int width, int height, uint8* data)
 
 	src_bytes_per_row = (width + 7) / 8;
 	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
-	cdata = (uint8 *) xmalloc(dst_bytes_per_row * height);
+	cdata = (uint8 *) malloc(dst_bytes_per_row * height);
 
 	src = data;
 	for (indexy = 0; indexy < height; indexy++)
@@ -376,7 +376,7 @@ void wf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (polyline->numPoints > 0)
 	{
-		pts = (POINT*) xmalloc(sizeof(POINT) * polyline->numPoints);
+		pts = (POINT*) malloc(sizeof(POINT) * polyline->numPoints);
 
 		for (i = 0; i < (int) polyline->numPoints; i++)
 		{
@@ -388,7 +388,7 @@ void wf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 		}
 
 		Polyline(wfi->drawing->hdc, pts, polyline->numPoints);
-		xfree(pts);
+		free(pts);
 	}
 
 	SelectObject(wfi->drawing->hdc, org_hpen);
@@ -466,7 +466,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wfi->image->_bitmap.width = surface_bits_command->width;
 		wfi->image->_bitmap.height = surface_bits_command->height;
 		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
-		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+		wfi->image->_bitmap.data = (uint8*) realloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 		freerdp_image_flip(nsc_context->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
 		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
@@ -476,7 +476,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wfi->image->_bitmap.height = surface_bits_command->height;
 		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
 
-		wfi->image->_bitmap.data = (uint8*) xrealloc(wfi->image->_bitmap.data,
+		wfi->image->_bitmap.data = (uint8*) realloc(wfi->image->_bitmap.data,
 				wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 
 		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == true))
@@ -490,9 +490,9 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = wfi->image->_bitmap.data;
 
-			temp_image = (uint8*) xmalloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+			temp_image = (uint8*) malloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 			freerdp_image_flip(wfi->image->_bitmap.data, temp_image, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
-			xfree(wfi->image->_bitmap.data);
+			free(wfi->image->_bitmap.data);
 			wfi->image->_bitmap.data = temp_image;
 		}
 		else
@@ -510,7 +510,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	}
 
 	if (tile_bitmap != NULL)
-		xfree(tile_bitmap);
+		free(tile_bitmap);
 }
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)

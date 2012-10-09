@@ -91,8 +91,8 @@ void palette_cache_free(rdpPaletteCache* palette_cache)
 {
 	if (palette_cache != NULL)
 	{
-		xfree(palette_cache->entries);
-		xfree(palette_cache);
+		free(palette_cache->entries);
+		free(palette_cache);
 	}
 }
 

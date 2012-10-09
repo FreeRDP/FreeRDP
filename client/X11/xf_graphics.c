@@ -61,12 +61,12 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			XFree(image);
 
 			if (data != bitmap->data)
-				xfree(data);
+				free(data);
 		}
 		else
 		{
 			if (data != bitmap->data)
-				xfree(bitmap->data);
+				free(bitmap->data);
 
 			bitmap->data = data;
 		}
@@ -127,9 +127,9 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (uint8*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (uint8*) realloc(bitmap->data, size);
 
 	switch (codec_id)
 	{
@@ -222,7 +222,7 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	}
 
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfi->display, &ci);
-	xfree(ci.pixels);
+	free(ci.pixels);
 }
 
 void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
@@ -376,7 +376,7 @@ void xf_register_graphics(rdpGraphics* graphics)
 	bitmap->SetSurface = xf_Bitmap_SetSurface;
 
 	graphics_register_bitmap(graphics, bitmap);
-	xfree(bitmap);
+	free(bitmap);
 
 	pointer = xnew(rdpPointer);
 	pointer->size = sizeof(xfPointer);
@@ -388,7 +388,7 @@ void xf_register_graphics(rdpGraphics* graphics)
 	pointer->SetDefault = xf_Pointer_SetDefault;
 
 	graphics_register_pointer(graphics, pointer);
-	xfree(pointer);
+	free(pointer);
 
 	glyph = xnew(rdpGlyph);
 	glyph->size = sizeof(xfGlyph);
@@ -400,5 +400,5 @@ void xf_register_graphics(rdpGraphics* graphics)
 	glyph->EndDraw = xf_Glyph_EndDraw;
 
 	graphics_register_glyph(graphics, glyph);
-	xfree(glyph);
+	free(glyph);
 }

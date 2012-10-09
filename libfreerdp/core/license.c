@@ -331,7 +331,7 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	freerdp_hexdump(exponent, 4);
 #endif
 
-	encrypted_premaster_secret = (uint8*) xmalloc(MODULUS_MAX_SIZE);
+	encrypted_premaster_secret = (uint8*) malloc(MODULUS_MAX_SIZE);
 	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
 
 	crypto_rsa_public_encrypt(license->premaster_secret, PREMASTER_SECRET_LENGTH,
@@ -341,7 +341,7 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	license->encrypted_premaster_secret->length = PREMASTER_SECRET_LENGTH;
 	license->encrypted_premaster_secret->data = encrypted_premaster_secret;
 #else
-	encrypted_premaster_secret = (uint8*) xmalloc(MODULUS_MAX_SIZE);
+	encrypted_premaster_secret = (uint8*) malloc(MODULUS_MAX_SIZE);
 	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
 
 	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
@@ -355,7 +355,7 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 	CryptoRc4 rc4;
 
 	license->platform_challenge->data =
-			(uint8*) xmalloc(license->encrypted_platform_challenge->length);
+			(uint8*) malloc(license->encrypted_platform_challenge->length);
 	license->platform_challenge->length =
 			license->encrypted_platform_challenge->length;
 
@@ -390,12 +390,12 @@ void license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo)
 
 	stream_read_uint32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
 
-	productInfo->pbCompanyName = (uint8*) xmalloc(productInfo->cbCompanyName);
+	productInfo->pbCompanyName = (uint8*) malloc(productInfo->cbCompanyName);
 	stream_read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
 	stream_read_uint32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
-	productInfo->pbProductId = (uint8*) xmalloc(productInfo->cbProductId);
+	productInfo->pbProductId = (uint8*) malloc(productInfo->cbProductId);
 	stream_read(s, productInfo->pbProductId, productInfo->cbProductId);
 }
 
@@ -409,7 +409,7 @@ PRODUCT_INFO* license_new_product_info()
 {
 	PRODUCT_INFO* productInfo;
 
-	productInfo = (PRODUCT_INFO*) xmalloc(sizeof(PRODUCT_INFO));
+	productInfo = (PRODUCT_INFO*) malloc(sizeof(PRODUCT_INFO));
 
 	productInfo->dwVersion = 0;
 	productInfo->cbCompanyName = 0;
@@ -429,12 +429,12 @@ PRODUCT_INFO* license_new_product_info()
 void license_free_product_info(PRODUCT_INFO* productInfo)
 {
 	if (productInfo->pbCompanyName != NULL)
-		xfree(productInfo->pbCompanyName);
+		free(productInfo->pbCompanyName);
 
 	if (productInfo->pbProductId != NULL)
-		xfree(productInfo->pbProductId);
+		free(productInfo->pbProductId);
 
-	xfree(productInfo);
+	free(productInfo);
 }
 
 /**
@@ -464,7 +464,7 @@ void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 	}
 
 	blob->type = wBlobType;
-	blob->data = (uint8*) xmalloc(blob->length);
+	blob->data = (uint8*) malloc(blob->length);
 
 	stream_read(s, blob->data, blob->length); /* blobData */
 }
@@ -509,7 +509,7 @@ LICENSE_BLOB* license_new_binary_blob(uint16 type)
 {
 	LICENSE_BLOB* blob;
 
-	blob = (LICENSE_BLOB*) xmalloc(sizeof(LICENSE_BLOB));
+	blob = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB));
 	blob->type = type;
 	blob->length = 0;
 	blob->data = NULL;
@@ -526,9 +526,9 @@ LICENSE_BLOB* license_new_binary_blob(uint16 type)
 void license_free_binary_blob(LICENSE_BLOB* blob)
 {
 	if (blob->data != NULL)
-		xfree(blob->data);
+		free(blob->data);
 
-	xfree(blob);
+	free(blob);
 }
 
 /**
@@ -546,7 +546,7 @@ void license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
 	stream_read_uint32(s, scopeCount); /* ScopeCount (4 bytes) */
 
 	scopeList->count = scopeCount;
-	scopeList->array = (LICENSE_BLOB*) xmalloc(sizeof(LICENSE_BLOB) * scopeCount);
+	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
 
 	/* ScopeArray */
 	for (i = 0; i < scopeCount; i++)
@@ -566,7 +566,7 @@ SCOPE_LIST* license_new_scope_list()
 {
 	SCOPE_LIST* scopeList;
 
-	scopeList = (SCOPE_LIST*) xmalloc(sizeof(SCOPE_LIST));
+	scopeList = (SCOPE_LIST*) malloc(sizeof(SCOPE_LIST));
 	scopeList->count = 0;
 	scopeList->array = NULL;
 
@@ -585,18 +585,18 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 
 	/*
 	 * We must NOT call license_free_binary_blob() on each scopelist->array[i] element,
-	 * because scopelist->array was allocated at once, by a single call to xmalloc. The elements
+	 * because scopelist->array was allocated at once, by a single call to malloc. The elements
 	 * it contains cannot be deallocated separately then.
 	 * To make things clean, we must deallocate each scopelist->array[].data,
-	 * and finish by deallocating scopelist->array with a single call to xfree().
+	 * and finish by deallocating scopelist->array with a single call to free().
 	 */
 	for (i = 0; i < scopeList->count; i++)
 	{
-		xfree(scopeList->array[i].data);
+		free(scopeList->array[i].data);
 	}
 
-	xfree(scopeList->array) ;
-	xfree(scopeList);
+	free(scopeList->array) ;
+	free(scopeList);
 }
 
 /**
@@ -836,13 +836,13 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	license->encrypted_platform_challenge->type = BB_DATA_BLOB;
 	length = license->platform_challenge->length + HWID_LENGTH;
-	buffer = (uint8*) xmalloc(length);
+	buffer = (uint8*) malloc(length);
 	memcpy(buffer, license->platform_challenge->data, license->platform_challenge->length);
 	memcpy(&buffer[license->platform_challenge->length], license->hwid, HWID_LENGTH);
 	security_mac_data(license->mac_salt_key, buffer, length, mac_data);
-	xfree(buffer);
+	free(buffer);
 
-	buffer = (uint8*) xmalloc(HWID_LENGTH);
+	buffer = (uint8*) malloc(HWID_LENGTH);
 	rc4 = crypto_rc4_init(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
 	crypto_rc4(rc4, HWID_LENGTH, license->hwid, buffer);
 	crypto_rc4_free(rc4);
@@ -945,7 +945,7 @@ void license_free(rdpLicense* license)
 		license_free_binary_blob(license->encrypted_premaster_secret);
 		license_free_binary_blob(license->encrypted_hwid);
 		license_free_scope_list(license->scope_list);
-		xfree(license);
+		free(license);
 	}
 }
 

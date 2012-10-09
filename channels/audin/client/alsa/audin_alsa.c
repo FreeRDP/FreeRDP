@@ -217,8 +217,8 @@ static void* audin_alsa_thread_func(void* arg)
 		}
 	} while (0);
 
-	xfree(buffer);
-	xfree(alsa->buffer);
+	free(buffer);
+	free(alsa->buffer);
 	alsa->buffer = NULL;
 	if (capture_handle)
 		snd_pcm_close(capture_handle);
@@ -236,7 +236,7 @@ static void audin_alsa_free(IAudinDevice* device)
 
 	freerdp_thread_free(alsa->thread);
 	freerdp_dsp_context_free(alsa->dsp_context);
-	xfree(alsa);
+	free(alsa);
 }
 
 static boolean audin_alsa_format_supported(IAudinDevice* device, audinFormat* format)

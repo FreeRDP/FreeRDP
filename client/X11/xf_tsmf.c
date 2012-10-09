@@ -172,10 +172,10 @@ void xf_tsmf_uninit(xfInfo* xfi)
 		}
 		if (xv->xv_pixfmts)
 		{
-			xfree(xv->xv_pixfmts);
+			free(xv->xv_pixfmts);
 			xv->xv_pixfmts = NULL;
 		}
-		xfree(xv);
+		free(xv);
 		xfi->xv_context = NULL;
 	}
 }

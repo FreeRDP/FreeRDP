@@ -714,9 +714,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				while (index < argc && strcmp("--", argv[index]) != 0)
 				{
 					if (plugin_data == NULL)
-						plugin_data = (RDP_PLUGIN_DATA*) xmalloc(sizeof(RDP_PLUGIN_DATA) * (i + 2));
+						plugin_data = (RDP_PLUGIN_DATA*) malloc(sizeof(RDP_PLUGIN_DATA) * (i + 2));
 					else
-						plugin_data = (RDP_PLUGIN_DATA*) xrealloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
+						plugin_data = (RDP_PLUGIN_DATA*) realloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
 
 					if (strstr(argv[t], "drdynvc") && strstr(argv[index], "audin"))
 						settings->audio_capture = true;
@@ -879,7 +879,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		/* password */
 		if (NULL == settings->password) {
-			settings->password = xmalloc(512 * sizeof(char));
+			settings->password = malloc(512 * sizeof(char));
 			if (isatty(STDIN_FILENO))
 				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
 			else {

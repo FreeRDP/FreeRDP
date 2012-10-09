@@ -28,34 +28,6 @@
 #include <freerdp/utils/memory.h>
 
 /**
- * Allocate memory.
- * This function is used to secure a malloc call.
- * It verifies its return value, and logs an error if the allocation failed.
- *
- * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
- *
- * @return a pointer to the allocated buffer. NULL if the allocation failed.
- */
-
-void* xmalloc(size_t size)
-{
-	void* mem;
-
-	if (size < 1)
-		size = 1;
-
-	mem = malloc(size);
-
-	if (mem == NULL)
-	{
-		perror("xmalloc");
-		printf("xmalloc: failed to allocate memory of size: %d\n", (int) size);
-	}
-
-	return mem;
-}
-
-/**
  * Allocate memory initialized to zero.
  * This function is used to secure a calloc call.
  * It verifies its return value, and logs an error if the allocation failed.
@@ -80,46 +52,6 @@ void* xzalloc(size_t size)
 	}
 
 	return mem;
-}
-
-/**
- * Reallocate memory.
- * This function is used to secure a realloc call.
- * It verifies its return value, and logs an error if the allocation failed.
- *
- * @param ptr - pointer to the buffer that needs reallocation. This can be NULL, in which case a new buffer is allocated.
- * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
- *
- * @return a pointer to the reallocated buffer. NULL if the allocation failed (in which case the 'ptr' argument is untouched).
- */
-
-void* xrealloc(void* ptr, size_t size)
-{
-	void* mem;
-
-	if (size < 1)
-		size = 1;
-
-	mem = realloc(ptr, size);
-
-	if (mem == NULL)
-		perror("xrealloc");
-
-	return mem;
-}
-
-/**
- * Free memory.
- * This function is used to secure a free call.
- * It verifies that the pointer is valid (non-NULL) before trying to deallocate it's buffer.
- *
- * @param ptr - pointer to a buffer that needs deallocation. If ptr is NULL, nothing will be done (no segfault).
- */
-
-void xfree(void* ptr)
-{
-	if (ptr != NULL)
-		free(ptr);
 }
 
 /**
@@ -176,7 +108,7 @@ wchar_t* xwcsdup(const wchar_t* wstr)
 #elif sun
 	mem = wsdup(wstr);
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(ANDROID)
-	mem = xmalloc(wcslen(wstr) * sizeof(wchar_t));
+	mem = malloc(wcslen(wstr) * sizeof(wchar_t));
 	if (mem != NULL)
 		wcscpy(mem, wstr);
 #else

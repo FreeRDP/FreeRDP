@@ -127,7 +127,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 
 	ascii = (flags & CB_ASCII_NAMES) ? true : false;
 
-	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
+	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) malloc(sizeof(CLIPRDR_FORMAT_NAME) * num_formats);
 	cliprdr->num_format_names = num_formats;
 
 	for (i = 0; i < num_formats; i++)
@@ -159,7 +159,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 	stream_get_mark(s, end_mark);
 	end_mark += length;
 		
-	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xmalloc(sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
+	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) malloc(sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
 	cliprdr->num_format_names = 0;
 
 	while (stream_get_left(s) >= 6)
@@ -170,7 +170,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 		if (cliprdr->num_format_names >= allocated_formats)
 		{
 			allocated_formats *= 2;
-			cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) xrealloc(cliprdr->format_names,
+			cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) realloc(cliprdr->format_names,
 					sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);
 		}
 		
@@ -204,7 +204,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 
 	if (dataLen > 0)
 	{
-		cb_event->raw_format_data = (uint8*) xmalloc(dataLen);
+		cb_event->raw_format_data = (uint8*) malloc(dataLen);
 		memcpy(cb_event->raw_format_data, stream_get_tail(s), dataLen);
 		cb_event->raw_format_data_size = dataLen;
 	}
@@ -215,7 +215,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 		cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
 
 	if (cliprdr->num_format_names > 0)
-		cb_event->formats = (uint32*) xmalloc(sizeof(uint32) * cliprdr->num_format_names);
+		cb_event->formats = (uint32*) malloc(sizeof(uint32) * cliprdr->num_format_names);
 
 	cb_event->num_formats = 0;
 
@@ -271,10 +271,10 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 			cb_event->formats[cb_event->num_formats++] = format;
 
 		if (format_name->length > 0)
-			xfree(format_name->name);
+			free(format_name->name);
 	}
 
-	xfree(cliprdr->format_names);
+	free(cliprdr->format_names);
 	cliprdr->format_names = NULL;
 
 	cliprdr->num_format_names = 0;
@@ -348,7 +348,7 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 	if (dataLen > 0)
 	{
 		cb_event->size = dataLen;
-		cb_event->data = (uint8*) xmalloc(dataLen);
+		cb_event->data = (uint8*) malloc(dataLen);
 		memcpy(cb_event->data, stream_get_tail(s), dataLen);
 	}
 

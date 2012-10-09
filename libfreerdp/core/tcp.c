@@ -257,6 +257,6 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (tcp != NULL)
 	{
-		xfree(tcp);
+		free(tcp);
 	}
 }

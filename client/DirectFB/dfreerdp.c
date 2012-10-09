@@ -306,7 +306,7 @@ df_process_channel_event(rdpChannels* channels, freerdp* instance)
 static void df_free(dfInfo* dfi)
 {
 	dfi->dfb->Release(dfi->dfb);
-	xfree(dfi);
+	free(dfi);
 }
 
 int dfreerdp_run(freerdp* instance)
@@ -421,7 +421,7 @@ void* thread_func(void* param)
 
 	dfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	pthread_detach(pthread_self());
 

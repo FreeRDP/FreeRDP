@@ -69,7 +69,7 @@ static void svc_data_in_item_free(svc_data_in_item* item)
 		freerdp_event_free(item->event_in);
 		item->event_in = NULL;
 	}
-	xfree(item);
+	free(item);
 }
 
 struct rdp_svc_plugin_private
@@ -145,7 +145,7 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 			prev->next = list->next;
 		else
 			g_svc_plugin_list = list->next;
-		xfree(list);
+		free(list);
 	}
 	ReleaseMutex(g_mutex);
 }
@@ -264,7 +264,7 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 				IFCALL(plugin->receive_callback, plugin, item->data_in);
 			if (item->event_in)
 				IFCALL(plugin->event_callback, plugin, item->event_in);
-			xfree(item);
+			free(item);
 		}
 		else
 			break;
@@ -330,7 +330,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	freerdp_thread_free(plugin->priv->thread);
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
-	xfree(plugin->channel_entry_points.pExtendedData);
+	free(plugin->channel_entry_points.pExtendedData);
 
 	svc_plugin_remove(plugin);
 
@@ -343,7 +343,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 		stream_free(plugin->priv->data_in);
 		plugin->priv->data_in = NULL;
 	}
-	xfree(plugin->priv);
+	free(plugin->priv);
 	plugin->priv = NULL;
 
 	IFCALL(plugin->terminate_callback, plugin);

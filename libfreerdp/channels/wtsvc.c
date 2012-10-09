@@ -47,8 +47,8 @@ typedef struct wts_data_item
 
 static void wts_data_item_free(wts_data_item* item)
 {
-	xfree(item->buffer);
-	xfree(item);
+	free(item->buffer);
+	free(item);
 }
 
 static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, uint32 ChannelId)
@@ -73,7 +73,7 @@ static void wts_queue_receive_data(rdpPeerChannel* channel, const uint8* buffer,
 
 	item = xnew(wts_data_item);
 	item->length = length;
-	item->buffer = xmalloc(length);
+	item->buffer = malloc(length);
 	memcpy(item->buffer, buffer, length);
 
 	WaitForSingleObject(channel->mutex, INFINITE);
@@ -429,7 +429,7 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 
 		list_free(vcm->send_queue);
 		CloseHandle(vcm->mutex);
-		xfree(vcm);
+		free(vcm);
 	}
 }
 
@@ -585,7 +585,7 @@ boolean WTSVirtualChannelQuery(
 	{
 		case WTSVirtualFileHandle:
 			wait_obj_get_fds(channel->receive_event, fds, &fds_count);
-			*ppBuffer = xmalloc(sizeof(void*));
+			*ppBuffer = malloc(sizeof(void*));
 			memcpy(*ppBuffer, &fds[0], sizeof(void*));
 			*pBytesReturned = sizeof(void*);
 			result = true;
@@ -615,7 +615,7 @@ boolean WTSVirtualChannelQuery(
 						break;
 				}
 			}
-			*ppBuffer = xmalloc(sizeof(boolean));
+			*ppBuffer = malloc(sizeof(boolean));
 			memcpy(*ppBuffer, &bval, sizeof(boolean));
 			*pBytesReturned = sizeof(boolean);
 			break;
@@ -629,7 +629,7 @@ boolean WTSVirtualChannelQuery(
 void WTSFreeMemory(
 	/* __in */ void* pMemory)
 {
-	xfree(pMemory);
+	free(pMemory);
 }
 
 boolean WTSVirtualChannelRead(
@@ -691,7 +691,7 @@ boolean WTSVirtualChannelWrite(
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
 		item = xnew(wts_data_item);
-		item->buffer = xmalloc(Length);
+		item->buffer = malloc(Length);
 		item->length = Length;
 		memcpy(item->buffer, Buffer, Length);
 
@@ -710,7 +710,7 @@ boolean WTSVirtualChannelWrite(
 		while (Length > 0)
 		{
 			item = xnew(wts_data_item);
-			item->buffer = xmalloc(channel->client->settings->vc_chunk_size);
+			item->buffer = malloc(channel->client->settings->vc_chunk_size);
 			stream_attach(s, item->buffer, channel->client->settings->vc_chunk_size);
 
 			stream_seek_uint8(s);
@@ -800,7 +800,7 @@ boolean WTSVirtualChannelClose(
 		if (channel->mutex)
 			CloseHandle(channel->mutex);
 
-		xfree(channel);
+		free(channel);
 	}
 
 	return true;

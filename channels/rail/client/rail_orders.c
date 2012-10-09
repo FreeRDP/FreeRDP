@@ -22,8 +22,12 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 
 #include "rail_orders.h"
@@ -71,7 +75,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 	int length = 0;
 
 	if (unicode_string->string != NULL)
-		xfree(unicode_string->string);
+		free(unicode_string->string);
 
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
@@ -630,14 +634,15 @@ void rail_send_client_langbar_info_order(rdpRailOrder* rail_order)
 	s = rail_pdu_init(RAIL_LANGBAR_INFO_ORDER_LENGTH);
 	rail_write_langbar_info_order(s, &rail_order->langbar_info);
 	rail_send_pdu(rail_order, s, RAIL_ORDER_TYPE_LANGBAR_INFO);
-	stream_free(s) ;
+	stream_free(s);
 }
 
 rdpRailOrder* rail_order_new()
 {
 	rdpRailOrder* rail_order;
 
-	rail_order = xnew(rdpRailOrder);
+	rail_order = (rdpRailOrder*) malloc(sizeof(rdpRailOrder));
+	ZeroMemory(rail_order, sizeof(rdpRailOrder));
 
 	if (rail_order != NULL)
 	{
@@ -652,7 +657,7 @@ void rail_order_free(rdpRailOrder* rail_order)
 	if (rail_order != NULL)
 	{
 
-		xfree(rail_order);
+		free(rail_order);
 	}
 }
 

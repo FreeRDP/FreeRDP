@@ -43,7 +43,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
 	}
 	else
 	{
-		cert = xmalloc(sizeof(*cert));
+		cert = malloc(sizeof(*cert));
 		cert->px509 = server_cert;
 	}
 
@@ -53,7 +53,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, boolean peer)
 static void tls_free_certificate(CryptoCert cert)
 {
 	X509_free(cert->px509);
-	xfree(cert);
+	free(cert);
 }
 
 boolean tls_connect(rdpTls* tls)
@@ -241,7 +241,7 @@ boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_fi
 		return false;
 	}
 
-	xfree(cert);
+	free(cert);
 
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
@@ -476,7 +476,7 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	{
 		if (common_name)
 		{
-			xfree(common_name);
+			free(common_name);
 			common_name = NULL;
 		}
 
@@ -550,16 +550,16 @@ boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			verification_status = true; /* success! */
 		}
 
-		xfree(issuer);
-		xfree(subject);
-		xfree(fingerprint);
+		free(issuer);
+		free(subject);
+		free(fingerprint);
 	}
 
 	if (certificate_data)
 	{
-		xfree(certificate_data->fingerprint);
-		xfree(certificate_data->hostname);
-		xfree(certificate_data);
+		free(certificate_data->fingerprint);
+		free(certificate_data->hostname);
+		free(certificate_data);
 	}
 
 	return verification_status;
@@ -644,6 +644,6 @@ void tls_free(rdpTls* tls)
 
 		certificate_store_free(tls->certificate_store);
 
-		xfree(tls);
+		free(tls);
 	}
 }

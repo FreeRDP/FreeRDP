@@ -216,8 +216,8 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 static void tsmf_sample_free(TSMF_SAMPLE* sample)
 {
 	if (sample->data)
-		xfree(sample->data);
-	xfree(sample);
+		free(sample->data);
+	free(sample);
 }
 
 static void tsmf_sample_ack(TSMF_SAMPLE* sample)
@@ -361,7 +361,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 			if (presentation->last_rects)
 			{
-				xfree(presentation->last_rects);
+				free(presentation->last_rects);
 				presentation->last_rects = NULL;
 			}
 			presentation->last_num_rects = presentation->output_num_rects;
@@ -477,7 +477,7 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 		return;
 	}
 
-	xfree(sample->data);
+	free(sample->data);
 	sample->data = NULL;
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
@@ -564,7 +564,7 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 				{
 					if (presentation->last_rects)
 					{
-						xfree(presentation->last_rects);
+						free(presentation->last_rects);
 						presentation->last_rects = NULL;
 					}
 					presentation->last_num_rects = presentation->output_num_rects;
@@ -818,13 +818,13 @@ void tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 	tsmf_presentation_restore_last_video_frame(presentation);
 	if (presentation->last_rects)
 	{
-		xfree(presentation->last_rects);
+		free(presentation->last_rects);
 		presentation->last_rects = NULL;
 	}
 	presentation->last_num_rects = 0;
 	if (presentation->output_rects)
 	{
-		xfree(presentation->output_rects);
+		free(presentation->output_rects);
 		presentation->output_rects = NULL;
 	}
 	presentation->output_num_rects = 0;
@@ -839,7 +839,7 @@ void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	presentation->output_width = width;
 	presentation->output_height = height;
 	if (presentation->output_rects)
-		xfree(presentation->output_rects);
+		free(presentation->output_rects);
 	presentation->output_rects = rects;
 	presentation->output_num_rects = num_rects;
 }
@@ -907,7 +907,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 
 	CloseHandle(presentation->mutex);
 
-	xfree(presentation);
+	free(presentation);
 }
 
 TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, uint32 stream_id)
@@ -1015,7 +1015,7 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 
 	freerdp_thread_free(stream->thread);
 
-	xfree(stream);
+	free(stream);
 	stream = 0;
 }
 

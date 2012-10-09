@@ -216,10 +216,10 @@ void redirection_free(rdpRedirection* redirection)
 			for (i = 0; i < (int) redirection->targetNetAddressesCount; i++)
 				freerdp_string_free(&redirection->targetNetAddresses[i]);
 
-			xfree(redirection->targetNetAddresses);
+			free(redirection->targetNetAddresses);
 		}
 
-		xfree(redirection);
+		free(redirection);
 	}
 }
 

@@ -42,7 +42,7 @@ HttpContext* http_context_new()
 void http_context_set_method(HttpContext* http_context, char* method)
 {
 	if (http_context->Method)
-		xfree(http_context->Method);
+		free(http_context->Method);
 
 	http_context->Method = xstrdup(method);
 }
@@ -50,7 +50,7 @@ void http_context_set_method(HttpContext* http_context, char* method)
 void http_context_set_uri(HttpContext* http_context, char* uri)
 {
 	if (http_context->URI)
-		xfree(http_context->URI);
+		free(http_context->URI);
 
 	http_context->URI = xstrdup(uri);
 }
@@ -58,7 +58,7 @@ void http_context_set_uri(HttpContext* http_context, char* uri)
 void http_context_set_user_agent(HttpContext* http_context, char* user_agent)
 {
 	if (http_context->UserAgent)
-		xfree(http_context->UserAgent);
+		free(http_context->UserAgent);
 
 	http_context->UserAgent = xstrdup(user_agent);
 }
@@ -66,7 +66,7 @@ void http_context_set_user_agent(HttpContext* http_context, char* user_agent)
 void http_context_set_host(HttpContext* http_context, char* host)
 {
 	if (http_context->Host)
-		xfree(http_context->Host);
+		free(http_context->Host);
 
 	http_context->Host = xstrdup(host);
 }
@@ -74,7 +74,7 @@ void http_context_set_host(HttpContext* http_context, char* host)
 void http_context_set_accept(HttpContext* http_context, char* accept)
 {
 	if (http_context->Accept)
-		xfree(http_context->Accept);
+		free(http_context->Accept);
 
 	http_context->Accept = xstrdup(accept);
 }
@@ -82,7 +82,7 @@ void http_context_set_accept(HttpContext* http_context, char* accept)
 void http_context_set_cache_control(HttpContext* http_context, char* cache_control)
 {
 	if (http_context->CacheControl)
-		xfree(http_context->CacheControl);
+		free(http_context->CacheControl);
 
 	http_context->CacheControl = xstrdup(cache_control);
 }
@@ -90,7 +90,7 @@ void http_context_set_cache_control(HttpContext* http_context, char* cache_contr
 void http_context_set_connection(HttpContext* http_context, char* connection)
 {
 	if (http_context->Connection)
-		xfree(http_context->Connection);
+		free(http_context->Connection);
 
 	http_context->Connection = xstrdup(connection);
 }
@@ -98,7 +98,7 @@ void http_context_set_connection(HttpContext* http_context, char* connection)
 void http_context_set_pragma(HttpContext* http_context, char* pragma)
 {
 	if (http_context->Pragma)
-		xfree(http_context->Pragma);
+		free(http_context->Pragma);
 
 	http_context->Pragma = xstrdup(pragma);
 }
@@ -107,20 +107,20 @@ void http_context_free(HttpContext* http_context)
 {
 	if (http_context != NULL)
 	{
-		xfree(http_context->UserAgent);
-		xfree(http_context->Host);
-		xfree(http_context->Accept);
-		xfree(http_context->CacheControl);
-		xfree(http_context->Connection);
-		xfree(http_context->Pragma);
-		xfree(http_context);
+		free(http_context->UserAgent);
+		free(http_context->Host);
+		free(http_context->Accept);
+		free(http_context->CacheControl);
+		free(http_context->Connection);
+		free(http_context->Pragma);
+		free(http_context);
 	}
 }
 
 void http_request_set_method(HttpRequest* http_request, char* method)
 {
 	if (http_request->Method)
-		xfree(http_request->Method);
+		free(http_request->Method);
 
 	http_request->Method = xstrdup(method);
 }
@@ -128,7 +128,7 @@ void http_request_set_method(HttpRequest* http_request, char* method)
 void http_request_set_uri(HttpRequest* http_request, char* uri)
 {
 	if (http_request->URI)
-		xfree(http_request->URI);
+		free(http_request->URI);
 
 	http_request->URI = xstrdup(uri);
 }
@@ -136,7 +136,7 @@ void http_request_set_uri(HttpRequest* http_request, char* uri)
 void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme)
 {
 	if (http_request->AuthScheme)
-		xfree(http_request->AuthScheme);
+		free(http_request->AuthScheme);
 
 	http_request->AuthScheme = xstrdup(auth_scheme);
 }
@@ -144,7 +144,7 @@ void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme)
 void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 {
 	if (http_request->AuthParam)
-		xfree(http_request->AuthParam);
+		free(http_request->AuthParam);
 
 	http_request->AuthParam = xstrdup(auth_param);
 }
@@ -261,11 +261,11 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	{
 		stream_write(s, http_request->lines[i], strlen(http_request->lines[i]));
 		stream_write(s, "\n", 1);
-		xfree(http_request->lines[i]);
+		free(http_request->lines[i]);
 	}
 	stream_write(s, "\n", 1);
 
-	xfree(http_request->lines);
+	free(http_request->lines);
 
 	stream_write(s, "\0", 1); /* append null terminator */
 	stream_rewind(s, 1); /* don't include null terminator in length */
@@ -290,9 +290,9 @@ void http_request_free(HttpRequest* http_request)
 {
 	if (http_request != NULL)
 	{
-		xfree(http_request->Method);
-		xfree(http_request->URI);
-		xfree(http_request);
+		free(http_request->Method);
+		free(http_request->URI);
+		free(http_request);
 	}
 }
 
@@ -420,7 +420,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	nbytes = 0;
 	length = 10000;
-	buffer = xmalloc(length);
+	buffer = malloc(length);
 	http_response = http_response_new();
 
 	p = buffer;
@@ -466,7 +466,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 			http_response->count = count;
-			http_response->lines = (char**) xmalloc(sizeof(char*) * http_response->count);
+			http_response->lines = (char**) malloc(sizeof(char*) * http_response->count);
 
 			count = 0;
 			line = strtok((char*) buffer, "\r\n");
@@ -491,12 +491,12 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		if ((length - nbytes) <= 0)
 		{
 			length *= 2;
-			buffer = xrealloc(buffer, length);
+			buffer = realloc(buffer, length);
 			p = (uint8*) &buffer[nbytes];
 		}
 	}
 
-	xfree(buffer);
+	free(buffer);
 
 	return http_response;
 }
@@ -520,19 +520,19 @@ void http_response_free(HttpResponse* http_response)
 	if (http_response != NULL)
 	{
 		for (i = 0; i < http_response->count; i++)
-			xfree(http_response->lines[i]);
+			free(http_response->lines[i]);
 
-		xfree(http_response->lines);
+		free(http_response->lines);
 
-		xfree(http_response->ReasonPhrase);
+		free(http_response->ReasonPhrase);
 
-		xfree(http_response->AuthParam);
-		xfree(http_response->AuthScheme);
-		xfree(http_response->Authorization);
+		free(http_response->AuthParam);
+		free(http_response->AuthScheme);
+		free(http_response->Authorization);
 
 		if (http_response->ContentLength > 0)
-			xfree(http_response->Content);
+			free(http_response->Content);
 
-		xfree(http_response);
+		free(http_response);
 	}
 }

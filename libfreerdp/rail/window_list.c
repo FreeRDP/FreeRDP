@@ -223,6 +223,6 @@ void window_list_free(rdpWindowList* list)
 {
 	if (list != NULL)
 	{
-		xfree(list);
+		free(list);
 	}
 }

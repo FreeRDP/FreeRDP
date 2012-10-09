@@ -25,7 +25,7 @@
 
 CryptoSha1 crypto_sha1_init(void)
 {
-	CryptoSha1 sha1 = xmalloc(sizeof(*sha1));
+	CryptoSha1 sha1 = malloc(sizeof(*sha1));
 	SHA1_Init(&sha1->sha_ctx);
 	return sha1;
 }
@@ -38,12 +38,12 @@ void crypto_sha1_update(CryptoSha1 sha1, const uint8* data, uint32 length)
 void crypto_sha1_final(CryptoSha1 sha1, uint8* out_data)
 {
 	SHA1_Final(out_data, &sha1->sha_ctx);
-	xfree(sha1);
+	free(sha1);
 }
 
 CryptoMd5 crypto_md5_init(void)
 {
-	CryptoMd5 md5 = xmalloc(sizeof(*md5));
+	CryptoMd5 md5 = malloc(sizeof(*md5));
 	MD5_Init(&md5->md5_ctx);
 	return md5;
 }
@@ -56,12 +56,12 @@ void crypto_md5_update(CryptoMd5 md5, const uint8* data, uint32 length)
 void crypto_md5_final(CryptoMd5 md5, uint8* out_data)
 {
 	MD5_Final(out_data, &md5->md5_ctx);
-	xfree(md5);
+	free(md5);
 }
 
 CryptoRc4 crypto_rc4_init(const uint8* key, uint32 length)
 {
-	CryptoRc4 rc4 = xmalloc(sizeof(*rc4));
+	CryptoRc4 rc4 = malloc(sizeof(*rc4));
 	RC4_set_key(&rc4->rc4_key, length, key);
 	return rc4;
 }
@@ -74,12 +74,12 @@ void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_d
 void crypto_rc4_free(CryptoRc4 rc4)
 {
 	if (rc4)
-		xfree(rc4);
+		free(rc4);
 }
 
 CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec)
 {
-	CryptoDes3 des3 = xmalloc(sizeof(*des3));
+	CryptoDes3 des3 = malloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
 	EVP_EncryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
 	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
@@ -88,7 +88,7 @@ CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec)
 
 CryptoDes3 crypto_des3_decrypt_init(const uint8* key, const uint8* ivec)
 {
-	CryptoDes3 des3 = xmalloc(sizeof(*des3));
+	CryptoDes3 des3 = malloc(sizeof(*des3));
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
 	EVP_DecryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
 	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
@@ -115,12 +115,12 @@ void crypto_des3_free(CryptoDes3 des3)
 	if (des3 == NULL)
 		return;
 	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
-	xfree(des3);
+	free(des3);
 }
 
 CryptoHmac crypto_hmac_new(void)
 {
-	CryptoHmac hmac = xmalloc(sizeof(*hmac));
+	CryptoHmac hmac = malloc(sizeof(*hmac));
 	HMAC_CTX_init(&hmac->hmac_ctx);
 	return hmac;
 }
@@ -145,12 +145,12 @@ void crypto_hmac_free(CryptoHmac hmac)
 	if (hmac == NULL)
 		return;
 	HMAC_CTX_cleanup(&hmac->hmac_ctx);
-	xfree(hmac);
+	free(hmac);
 }
 
 CryptoCert crypto_cert_read(uint8* data, uint32 length)
 {
-	CryptoCert cert = xmalloc(sizeof(*cert));
+	CryptoCert cert = malloc(sizeof(*cert));
 	/* this will move the data pointer but we don't care, we don't use it again */
 	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST uint8 **) &data, length);
 	return cert;
@@ -163,7 +163,7 @@ void crypto_cert_free(CryptoCert cert)
 
 	X509_free(cert->px509);
 
-	xfree(cert);
+	free(cert);
 }
 
 boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength)
@@ -213,7 +213,7 @@ static void crypto_rsa_common(const uint8* input, int length, uint32 key_length,
 	uint8* exponent_reverse;
 	BIGNUM mod, exp, x, y;
 
-	input_reverse = (uint8*) xmalloc(2 * key_length + exponent_size);
+	input_reverse = (uint8*) malloc(2 * key_length + exponent_size);
 	modulus_reverse = input_reverse + key_length;
 	exponent_reverse = modulus_reverse + key_length;
 
@@ -246,7 +246,7 @@ static void crypto_rsa_common(const uint8* input, int length, uint32 key_length,
 	BN_free(&exp);
 	BN_free(&mod);
 	BN_CTX_free(ctx);
-	xfree(input_reverse);
+	free(input_reverse);
 }
 
 static void crypto_rsa_public(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output)
@@ -407,8 +407,8 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		return NULL;
 
 	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
-	strings = (char**) xmalloc(sizeof(char*) * num_subject_alt_names);
-	*lengths = (int*) xmalloc(sizeof(int*) * num_subject_alt_names);
+	strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+	*lengths = (int*) malloc(sizeof(int*) * num_subject_alt_names);
 
 	for (index = 0; index < num_subject_alt_names; ++index)
 	{
@@ -425,8 +425,8 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 
 	if (*count < 1)
 	{
-		xfree(strings) ;
-		xfree(*lengths) ;
+		free(strings) ;
+		free(*lengths) ;
 		*lengths = NULL ;
 		return NULL;
 	}
@@ -497,7 +497,7 @@ rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
 
 	fp = crypto_cert_fingerprint(xcert);
 	certdata = certificate_data_new(hostname, fp);
-	xfree(fp);
+	free(fp);
 
 	return certdata;
 }
@@ -520,9 +520,9 @@ void crypto_cert_print_info(X509* xcert)
 			"the CA certificate in your certificate store, or the certificate has expired. "
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	xfree(subject);
-	xfree(issuer);
-	xfree(fp);
+	free(subject);
+	free(issuer);
+	free(fp);
 }
 
 char* crypto_base64_encode(uint8* data, int length)
@@ -543,7 +543,7 @@ char* crypto_base64_encode(uint8* data, int length)
 
 	BIO_get_mem_ptr(b64, &bptr);
 
-	base64_string = xmalloc(bptr->length);
+	base64_string = malloc(bptr->length);
 	memcpy(base64_string, bptr->data, bptr->length - 1);
 	base64_string[bptr->length - 1] = '\0';
 
@@ -556,7 +556,7 @@ void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* re
 {
       BIO *b64, *bmem;
 
-      *dec_data = xmalloc(length);
+      *dec_data = malloc(length);
       memset(*dec_data, 0, length);
 
       b64 = BIO_new(BIO_f_base64());

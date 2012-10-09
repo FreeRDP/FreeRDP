@@ -482,12 +482,12 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 	RDP_KEYBOARD_LAYOUT* layouts;
 
 	num = 0;
-	layouts = (RDP_KEYBOARD_LAYOUT*) xmalloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+	layouts = (RDP_KEYBOARD_LAYOUT*) malloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
 		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) xrealloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
 		{
@@ -498,7 +498,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
 		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) xrealloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
 		{

@@ -44,7 +44,7 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 		strcpy(fullname, "tsmf_");
 		strcat(fullname, name);
 		entry = (TSMF_AUDIO_DEVICE_ENTRY) freerdp_load_plugin(fullname, TSMF_AUDIO_DEVICE_EXPORT_FUNC_NAME);
-		xfree(fullname);
+		free(fullname);
 	}
 	if (entry == NULL)
 	{

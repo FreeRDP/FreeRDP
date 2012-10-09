@@ -98,7 +98,7 @@ void list_free(LIST* list)
 {
 	while (list->head)
 		list_dequeue(list);
-	xfree(list);
+	free(list);
 }
 
 /**
@@ -149,7 +149,7 @@ void* list_dequeue(LIST* list)
 			list->head->prev = NULL;
 
 		data = item->data;
-		xfree(item);
+		free(item);
 		list->count--;
 	}
 	return data;
@@ -221,7 +221,7 @@ void* list_remove(LIST* list, void* data)
 			list->head = item->next;
 		if (list->tail == item)
 			list->tail = item->prev;
-		xfree(item);
+		free(item);
 		list->count--;
 	}
 	else

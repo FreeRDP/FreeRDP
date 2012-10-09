@@ -129,7 +129,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 		prevEntry = brush->monoEntries[index].entry;
 
 		if (prevEntry != NULL)
-			xfree(prevEntry);
+			free(prevEntry);
 
 		brush->monoEntries[index].bpp = bpp;
 		brush->monoEntries[index].entry = entry;
@@ -145,7 +145,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 		prevEntry = brush->entries[index].entry;
 
 		if (prevEntry != NULL)
-			xfree(prevEntry);
+			free(prevEntry);
 
 		brush->entries[index].bpp = bpp;
 		brush->entries[index].entry = entry;
@@ -197,10 +197,10 @@ void brush_cache_free(rdpBrushCache* brush)
 			for (i = 0; i < (int) brush->maxEntries; i++)
 			{
 				if (brush->entries[i].entry != NULL)
-					xfree(brush->entries[i].entry);
+					free(brush->entries[i].entry);
 			}
 
-			xfree(brush->entries);
+			free(brush->entries);
 		}
 
 		if (brush->monoEntries != NULL)
@@ -208,12 +208,12 @@ void brush_cache_free(rdpBrushCache* brush)
 			for (i = 0; i < (int) brush->maxMonoEntries; i++)
 			{
 				if (brush->monoEntries[i].entry != NULL)
-					xfree(brush->monoEntries[i].entry);
+					free(brush->monoEntries[i].entry);
 			}
 
-			xfree(brush->monoEntries);
+			free(brush->monoEntries);
 		}
 
-		xfree(brush);
+		free(brush);
 	}
 }

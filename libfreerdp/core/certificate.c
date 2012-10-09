@@ -218,7 +218,7 @@ rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count)
 {
 	rdpX509CertChain* x509_cert_chain;
 
-	x509_cert_chain = (rdpX509CertChain*) xmalloc(sizeof(rdpX509CertChain));
+	x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
 
 	x509_cert_chain->count = count;
 	x509_cert_chain->array = (rdpCertBlob*) xzalloc(sizeof(rdpCertBlob) * count);
@@ -240,11 +240,11 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 		for (i = 0; i < (int) x509_cert_chain->count; i++)
 		{
 			if (x509_cert_chain->array[i].data != NULL)
-				xfree(x509_cert_chain->array[i].data);
+				free(x509_cert_chain->array[i].data);
 		}
 
-		xfree(x509_cert_chain->array);
-		xfree(x509_cert_chain);
+		free(x509_cert_chain->array);
+		free(x509_cert_chain);
 	}
 }
 
@@ -428,7 +428,7 @@ boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certifica
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
 
-		certificate->x509_cert_chain->array[i].data = (uint8*) xmalloc(certLength);
+		certificate->x509_cert_chain->array[i].data = (uint8*) malloc(certLength);
 		stream_read(s, certificate->x509_cert_chain->array[i].data, certLength);
 		certificate->x509_cert_chain->array[i].length = certLength;
 
@@ -489,7 +489,7 @@ boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* 
 			break;
 	}
 
-	xfree(s);
+	free(s);
 	return true;
 }
 
@@ -509,7 +509,7 @@ rdpKey* key_new(const char* keyfile)
 	if (fp == NULL)
 	{
 		printf("unable to load RSA key from %s: %s.", keyfile, strerror(errno));
-		xfree(key) ;
+		free(key) ;
 		return NULL;
 	}
 
@@ -519,7 +519,7 @@ rdpKey* key_new(const char* keyfile)
 	{
 		ERR_print_errors_fp(stdout);
 		fclose(fp);
-		xfree(key) ;
+		free(key) ;
 		return NULL;
 	}
 
@@ -530,7 +530,7 @@ rdpKey* key_new(const char* keyfile)
 		case 0:
 			RSA_free(rsa);
 			printf("invalid RSA key in %s", keyfile);
-			xfree(key) ;
+			free(key) ;
 			return NULL;
 
 		case 1:
@@ -540,7 +540,7 @@ rdpKey* key_new(const char* keyfile)
 		default:
 			ERR_print_errors_fp(stdout);
 			RSA_free(rsa);
-			xfree(key) ;
+			free(key) ;
 			return NULL;
 	}
 
@@ -548,7 +548,7 @@ rdpKey* key_new(const char* keyfile)
 	{
 		RSA_free(rsa);
 		printf("RSA public exponent too large in %s", keyfile);
-		xfree(key) ;
+		free(key) ;
 		return NULL;
 	}
 
@@ -577,7 +577,7 @@ void key_free(rdpKey* key)
 	{
 		free(key->Modulus);
 		free(key->PrivateExponent);
-		xfree(key);
+		free(key);
 	}
 }
 
@@ -615,6 +615,6 @@ void certificate_free(rdpCertificate* certificate)
 		if (certificate->cert_info.Modulus != NULL)
 			free(certificate->cert_info.Modulus);
 
-		xfree(certificate);
+		free(certificate);
 	}
 }

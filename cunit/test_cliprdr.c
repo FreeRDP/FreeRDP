@@ -143,7 +143,7 @@ void test_cliprdr(void)
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 2;
-	format_list_event->formats = (uint32*) xmalloc(sizeof(uint32) * 2);
+	format_list_event->formats = (uint32*) malloc(sizeof(uint32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;
@@ -199,7 +199,7 @@ void test_cliprdr(void)
 	/* UI sends data response event to cliprdr */
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
 	data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
-	data_response_event->data = (uint8*)xmalloc(6);
+	data_response_event->data = (uint8*)malloc(6);
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;

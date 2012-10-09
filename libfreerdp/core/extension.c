@@ -224,6 +224,6 @@ void extension_free(rdpExtension* extension)
 	if (extension != NULL)
 	{
 		extension_uninit_plugins(extension);
-		xfree(extension);
+		free(extension);
 	}
 }

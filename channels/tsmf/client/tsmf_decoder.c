@@ -46,7 +46,7 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name, TS_AM_MEDIA_TYP
 		strcpy(fullname, "tsmf_");
 		strcat(fullname, name);
 		entry = (TSMF_DECODER_ENTRY) freerdp_load_plugin(fullname, TSMF_DECODER_EXPORT_FUNC_NAME);
-		xfree(fullname);
+		free(fullname);
 	}
 	if (entry == NULL)
 	{

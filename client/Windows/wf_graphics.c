@@ -71,7 +71,7 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	wfBitmap* image;
 
 	hdc = GetDC(NULL);
-	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
+	image = (wfBitmap*) malloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
 	image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
@@ -150,9 +150,9 @@ void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * (bpp / 8);
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (uint8*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (uint8*) realloc(bitmap->data, size);
 
 	if (compressed)
 	{

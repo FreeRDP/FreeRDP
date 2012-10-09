@@ -104,7 +104,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 
 		item = (struct data_out_item*) list_dequeue(rdpsnd->data_out_list);
 		svc_plugin_send(plugin, item->data_out);
-		xfree(item);
+		free(item);
 
 		DEBUG_SVC("processed data_out");
 	}
@@ -135,8 +135,8 @@ static void rdpsnd_free_supported_formats(rdpsndPlugin* rdpsnd)
 	uint16 i;
 
 	for (i = 0; i < rdpsnd->n_supported_formats; i++)
-		xfree(rdpsnd->supported_formats[i].data);
-	xfree(rdpsnd->supported_formats);
+		free(rdpsnd->supported_formats[i].data);
+	free(rdpsnd->supported_formats);
 
 	rdpsnd->supported_formats = NULL;
 	rdpsnd->n_supported_formats = 0;
@@ -224,7 +224,7 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 			stream_write(data_out, format_mark, 18 + format->cbSize);
 			if (format->cbSize > 0)
 			{
-				format->data = xmalloc(format->cbSize);
+				format->data = malloc(format->cbSize);
 				memcpy(format->data, data_mark, format->cbSize);
 			}
 			n_out_formats++;
@@ -238,7 +238,7 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 	}
 	else
 	{
-		xfree(out_formats);
+		free(out_formats);
 		DEBUG_WARN("no formats supported");
 	}
 
@@ -443,7 +443,7 @@ static boolean rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 		strcpy(fullname, "rdpsnd_");
 		strcat(fullname, name);
 		entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
-		xfree(fullname);
+		free(fullname);
 	}
 	if (entry == NULL)
 	{
@@ -556,13 +556,13 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	while ((item = list_dequeue(rdpsnd->data_out_list)) != NULL)
 	{
 		stream_free(item->data_out);
-		xfree(item);
+		free(item);
 	}
 	list_free(rdpsnd->data_out_list);
 
 	rdpsnd_free_supported_formats(rdpsnd);
 
-	xfree(plugin);
+	free(plugin);
 }
 
 /* rdpsnd is always built-in */

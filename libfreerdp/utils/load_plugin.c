@@ -134,8 +134,8 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 
 	entry = freerdp_load_library_symbol(path, entry_name);
 
-	xfree(suffixed_name);
-	xfree(path);
+	free(suffixed_name);
+	free(path);
 
 	if (entry == NULL)
 	{

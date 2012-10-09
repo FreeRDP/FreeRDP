@@ -199,7 +199,7 @@ void test_bitstream(void)
 		(void) b;
 		//printf("%u ", b);
 	}
-	xfree(bs);
+	free(bs);
 
 	//printf("\n");
 }
@@ -221,7 +221,7 @@ void test_bitstream_enc(void)
 	{
 		printf("%X ", buffer[i]);
 	}*/
-	xfree(bs);
+	free(bs);
 
 	//printf("\n");
 }

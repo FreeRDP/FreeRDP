@@ -199,7 +199,7 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	}
 	else if (length > context->bmpdata_length)
 	{
-		context->bmpdata = xrealloc(context->bmpdata, length + 16);
+		context->bmpdata = realloc(context->bmpdata, length + 16);
 		context->bmpdata_length = length;
 	}
 
@@ -210,7 +210,7 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 4; i++)
-			context->priv->plane_buf[i] = (uint8*) xrealloc(context->priv->plane_buf[i], length);
+			context->priv->plane_buf[i] = (uint8*) realloc(context->priv->plane_buf[i], length);
 		context->priv->plane_buf_length = length;
 	}
 
@@ -244,10 +244,10 @@ void nsc_context_free(NSC_CONTEXT* context)
 	for (i = 0; i < 4; i++)
 	{
 		if (context->priv->plane_buf[i])
-			xfree(context->priv->plane_buf[i]);
+			free(context->priv->plane_buf[i]);
 	}
 	if (context->bmpdata)
-		xfree(context->bmpdata);
+		free(context->bmpdata);
 
 	nsc_profiler_print(context);
 	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data);
@@ -255,8 +255,8 @@ void nsc_context_free(NSC_CONTEXT* context)
 	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data);
 	PROFILER_FREE(context->priv->prof_nsc_encode);
 
-	xfree(context->priv);
-	xfree(context);
+	free(context->priv);
+	free(context);
 }
 
 NSC_CONTEXT* nsc_context_new(void)

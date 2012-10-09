@@ -437,6 +437,6 @@ void input_free(rdpInput* input)
 {
 	if (input != NULL)
 	{
-		xfree(input);
+		free(input);
 	}
 }

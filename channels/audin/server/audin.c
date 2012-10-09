@@ -139,7 +139,7 @@ static boolean audin_server_recv_formats(audin_server* audin, STREAM* s, uint32 
 	{
 		if (length < 18)
 		{
-			xfree(audin->context.client_formats);
+			free(audin->context.client_formats);
 			audin->context.client_formats = NULL;
 			return false;
 		}
@@ -431,6 +431,6 @@ void audin_server_context_free(audin_server_context* context)
 	if (audin->dsp_context)
 		freerdp_dsp_context_free(audin->dsp_context);
 	if (audin->context.client_formats)
-		xfree(audin->context.client_formats);
-	xfree(audin);
+		free(audin->context.client_formats);
+	free(audin);
 }

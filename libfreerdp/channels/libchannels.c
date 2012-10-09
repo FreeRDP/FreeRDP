@@ -663,12 +663,12 @@ void freerdp_channels_free(rdpChannels* channels)
 			prev->next = list->next;
 		else
 			g_channels_list = list->next;
-		xfree(list);
+		free(list);
 	}
 
 	ReleaseMutex(g_mutex_list);
 
-	xfree(channels);
+	free(channels);
 }
 
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)

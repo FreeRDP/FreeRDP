@@ -357,9 +357,9 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 		pulse->mainloop = NULL;
 	}
 
-	xfree(pulse->device_name);
+	free(pulse->device_name);
 	freerdp_dsp_context_free(pulse->dsp_context);
-	xfree(pulse);
+	free(pulse);
 }
 
 static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)

@@ -79,9 +79,9 @@ void stream_free(STREAM* stream)
 	if (stream != NULL)
 	{
 		if (stream->data != NULL)
-			xfree(stream->data);
+			free(stream->data);
 
-		xfree(stream);
+		free(stream);
 	}
 }
 
@@ -107,9 +107,9 @@ void stream_extend(STREAM* stream, int request_size)
 	stream->size += increased_size;
 
 	if (original_size == 0)
-		stream->data = (uint8*) xmalloc(stream->size);
+		stream->data = (uint8*) malloc(stream->size);
 	else
-		stream->data = (uint8*) xrealloc(stream->data, stream->size);
+		stream->data = (uint8*) realloc(stream->data, stream->size);
 
 	memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);

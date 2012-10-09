@@ -169,7 +169,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreen_cache)
 				Bitmap_Free(offscreen_cache->update->context, bitmap);
 		}
 
-		xfree(offscreen_cache->entries);
-		xfree(offscreen_cache);
+		free(offscreen_cache->entries);
+		free(offscreen_cache);
 	}
 }

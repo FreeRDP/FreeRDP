@@ -1010,7 +1010,7 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 		strcpy(fullname, name);
 		strcat(fullname, "_udevman");
 		entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_plugin(fullname, URBDRC_UDEVMAN_EXPORT_FUNC_NAME);
-		xfree(fullname);
+		free(fullname);
 	}
 
 	if (entry == NULL)

@@ -58,7 +58,7 @@ void devman_free(DEVMAN* devman)
 
 	list_free(devman->devices);
 
-	xfree(devman);
+	free(devman);
 }
 
 static void devman_register_device(DEVMAN* devman, DEVICE* device)
