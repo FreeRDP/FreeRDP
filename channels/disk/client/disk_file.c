@@ -1,10 +1,10 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * File System Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
- * Copyright 2012      Gerald Richter
+ * Copyright 2012 Gerald Richter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
+#include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
@@ -52,8 +53,6 @@
 #include <fcntl.h>
 #endif
 
-#include "rdpdr_constants.h"
-#include "rdpdr_types.h"
 #include "disk_file.h"
 
 static boolean disk_file_wildcard_match(const char* pattern, const char* filename)

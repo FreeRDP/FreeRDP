@@ -33,6 +33,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/hexdump.h>
+#include <freerdp/channels/rdpdr.h>
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -46,8 +47,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "rdpdr_constants.h"
-#include "rdpdr_types.h"
 #include "serial_tty.h"
 #include "serial_constants.h"
 

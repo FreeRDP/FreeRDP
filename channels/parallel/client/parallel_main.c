@@ -57,9 +57,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
-
-#include "rdpdr_constants.h"
-#include "rdpdr_types.h"
+#include <freerdp/channels/rdpdr.h>
 
 struct _PARALLEL_DEVICE
 {

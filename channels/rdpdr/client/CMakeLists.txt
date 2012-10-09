@@ -25,8 +25,6 @@ set(${MODULE_PREFIX}_SRCS
 	devman.h
 	rdpdr_main.c
 	rdpdr_main.h
-	rdpdr_types.h
-	rdpdr_constants.h
 	rdpdr_capabilities.c
 	rdpdr_capabilities.h)
 

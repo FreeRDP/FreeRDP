@@ -22,7 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 	scard_main.c
 	scard_operations.c)
 
-include_directories(../../rdpdr/client)
 include_directories(${PCSC_INCLUDE_DIRS})
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

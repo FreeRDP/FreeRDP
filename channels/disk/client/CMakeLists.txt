@@ -34,8 +34,6 @@ if(MSVC AND (NOT WITH_STATIC_PLUGINS))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-include_directories(../../rdpdr/client)
-
 if(NOT WITH_STATIC_PLUGINS)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 else()

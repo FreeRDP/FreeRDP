@@ -37,8 +37,6 @@ if(WIN32)
 		printer_win.h)
 endif()
 
-include_directories(../../rdpdr/client)
-
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")

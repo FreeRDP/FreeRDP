@@ -21,8 +21,6 @@ set(MODULE_PREFIX "CHANNEL_RDPDR_PARALLEL_CLIENT")
 set(${MODULE_PREFIX}_SRCS
 	parallel_main.c)
 
-include_directories(../../rdpdr/client)
-
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")

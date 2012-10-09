@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Print Virtual Channel - win driver
  *
  * Copyright 2012 Gerald Richter
@@ -19,7 +19,6 @@
 
 #ifndef __PRINTER_WIN_H
 #define __PRINTER_WIN_H
-
 
 rdpPrinterDriver* printer_win_get_driver(void);
 

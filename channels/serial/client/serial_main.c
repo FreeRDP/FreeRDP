@@ -40,18 +40,18 @@
 #include <unistd.h>
 #endif
 
-#include "rdpdr_types.h"
-#include "rdpdr_constants.h"
-#include "devman.h"
 #include "serial_tty.h"
 #include "serial_constants.h"
 
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
+
 struct _SERIAL_DEVICE
 {
 	DEVICE device;

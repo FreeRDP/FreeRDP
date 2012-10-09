@@ -31,9 +31,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/debug.h>
-
-#include "rdpdr_types.h"
-#include "rdpdr_constants.h"
+#include <freerdp/channels/rdpdr.h>
 
 #include "scard_main.h"
 

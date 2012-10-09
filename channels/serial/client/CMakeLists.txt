@@ -24,8 +24,6 @@ set(${MODULE_PREFIX}_SRCS
 	serial_constants.h
 	serial_main.c)
 
-include_directories(../../rdpdr/client)
-
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(serial PROPERTIES PREFIX "")
 

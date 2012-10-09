@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Print Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -20,7 +20,7 @@
 #ifndef __PRINTER_MAIN_H
 #define __PRINTER_MAIN_H
 
-#include "rdpdr_types.h"
+#include <freerdp/channels/rdpdr.h>
 
 /* SERVER_PRINTER_CACHE_EVENT.cachedata */
 #define RDPDR_ADD_PRINTER_EVENT             0x00000001

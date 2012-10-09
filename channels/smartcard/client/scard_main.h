@@ -23,11 +23,9 @@
 
 #include <inttypes.h>
 
-#include "devman.h"
-#include "rdpdr_types.h"
-
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
+#include <freerdp/channels/rdpdr.h>
 
 #include <winpr/synch.h>
 

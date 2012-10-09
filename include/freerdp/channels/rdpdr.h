@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * File System Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Device Redirection Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,17 @@
  * limitations under the License.
  */
 
-#ifndef __RDPDR_CONSTANTS_H
-#define __RDPDR_CONSTANTS_H
+#ifndef FREERDP_CHANNEL_RDPDR_H
+#define FREERDP_CHANNEL_RDPDR_H
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/interlocked.h>
+
+#include <freerdp/utils/list.h>
+#include <freerdp/utils/stream.h>
+#include <freerdp/utils/svc_plugin.h>
 
 /* RDPDR_HEADER.Component */
 enum RDPDR_CTYP
@@ -456,5 +465,66 @@ enum FILE_FS_INFORMATION_CLASS
 	FileFsMaximumInformation
 };
 
-#endif /* __RDPDR_CONSTANTS_H */
+typedef struct _DEVICE DEVICE;
+typedef struct _IRP IRP;
+typedef struct _DEVMAN DEVMAN;
+
+typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef void (*pcFreeDevice)(DEVICE* device);
+
+struct _DEVICE
+{
+	uint32 id;
+
+	uint32 type;
+	char* name;
+	STREAM* data;
+
+	pcIRPRequest IRPRequest;
+	pcFreeDevice Free;
+};
+
+typedef void (*pcIRPResponse)(IRP* irp);
+
+struct _IRP
+{
+	SLIST_ENTRY ItemEntry;
+
+	DEVICE* device;
+	DEVMAN* devman;
+	uint32 FileId;
+	uint32 CompletionId;
+	uint32 MajorFunction;
+	uint32 MinorFunction;
+	STREAM* input;
+
+	uint32 IoStatus;
+	STREAM* output;
+
+	pcIRPResponse Complete;
+	pcIRPResponse Discard;
+};
+
+struct _DEVMAN
+{
+	rdpSvcPlugin* plugin;
+	uint32 id_sequence;
+	LIST* devices;
+};
+
+typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
+
+struct _DEVICE_SERVICE_ENTRY_POINTS
+{
+	DEVMAN* devman;
+
+	pcRegisterDevice RegisterDevice;
+	RDP_PLUGIN_DATA* plugin_data;
+};
+typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
+typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
+
+typedef int (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
+
+#endif /* FREERDP_CHANNEL_RDPDR_H */
 

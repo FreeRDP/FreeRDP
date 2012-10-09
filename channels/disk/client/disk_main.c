@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * File System Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/list.h>
+#include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include <winpr/crt.h>
@@ -46,8 +47,6 @@
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
 
-#include "rdpdr_constants.h"
-#include "rdpdr_types.h"
 #include "disk_file.h"
 
 typedef struct _DISK_DEVICE DISK_DEVICE;

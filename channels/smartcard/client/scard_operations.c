@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Smartcard Device Service Virtual Channel
  *
  * Copyright (C) Alexi Volkov <alexi@myrealbox.com> 2006
@@ -43,47 +43,45 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/thread.h>
-
-#include "rdpdr_types.h"
-#include "rdpdr_constants.h"
+#include <freerdp/channels/rdpdr.h>
 
 #include "scard_main.h"
 
 /* [MS-RDPESC] 3.1.4 */
-#define SCARD_IOCTL_ESTABLISH_CONTEXT        0x00090014	/* EstablishContext */
-#define SCARD_IOCTL_RELEASE_CONTEXT          0x00090018	/* ReleaseContext */
-#define SCARD_IOCTL_IS_VALID_CONTEXT         0x0009001C	/* IsValidContext */
-#define SCARD_IOCTL_LIST_READER_GROUPS       0x00090020	/* ListReaderGroups */
-#define SCARD_IOCTL_LIST_READERS             0x00090028	/* ListReadersA */
-#define SCARD_IOCTL_INTRODUCE_READER_GROUP   0x00090050	/* IntroduceReaderGroup */
-#define SCARD_IOCTL_FORGET_READER_GROUP      0x00090058	/* ForgetReader */
-#define SCARD_IOCTL_INTRODUCE_READER         0x00090060	/* IntroduceReader */
-#define SCARD_IOCTL_FORGET_READER            0x00090068	/* IntroduceReader */
-#define SCARD_IOCTL_ADD_READER_TO_GROUP      0x00090070	/* AddReaderToGroup */
-#define SCARD_IOCTL_REMOVE_READER_FROM_GROUP 0x00090078	/* RemoveReaderFromGroup */
-#define SCARD_IOCTL_GET_STATUS_CHANGE        0x000900A0	/* GetStatusChangeA */
-#define SCARD_IOCTL_CANCEL                   0x000900A8	/* Cancel */
-#define SCARD_IOCTL_CONNECT                  0x000900AC	/* ConnectA */
-#define SCARD_IOCTL_RECONNECT                0x000900B4	/* Reconnect */
-#define SCARD_IOCTL_DISCONNECT               0x000900B8	/* Disconnect */
-#define SCARD_IOCTL_BEGIN_TRANSACTION        0x000900BC	/* BeginTransaction */
-#define SCARD_IOCTL_END_TRANSACTION          0x000900C0	/* EndTransaction */
-#define SCARD_IOCTL_STATE                    0x000900C4	/* State */
-#define SCARD_IOCTL_STATUS                   0x000900C8	/* StatusA */
-#define SCARD_IOCTL_TRANSMIT                 0x000900D0	/* Transmit */
-#define SCARD_IOCTL_CONTROL                  0x000900D4	/* Control */
-#define SCARD_IOCTL_GETATTRIB                0x000900D8	/* GetAttrib */
-#define SCARD_IOCTL_SETATTRIB                0x000900DC	/* SetAttrib */
-#define SCARD_IOCTL_ACCESS_STARTED_EVENT     0x000900E0	/* SCardAccessStartedEvent */
-#define SCARD_IOCTL_LOCATE_CARDS_BY_ATR      0x000900E8	/* LocateCardsByATR */
+#define SCARD_IOCTL_ESTABLISH_CONTEXT		0x00090014	/* EstablishContext */
+#define SCARD_IOCTL_RELEASE_CONTEXT		0x00090018	/* ReleaseContext */
+#define SCARD_IOCTL_IS_VALID_CONTEXT		0x0009001C	/* IsValidContext */
+#define SCARD_IOCTL_LIST_READER_GROUPS		0x00090020	/* ListReaderGroups */
+#define SCARD_IOCTL_LIST_READERS		0x00090028	/* ListReadersA */
+#define SCARD_IOCTL_INTRODUCE_READER_GROUP	0x00090050	/* IntroduceReaderGroup */
+#define SCARD_IOCTL_FORGET_READER_GROUP		0x00090058	/* ForgetReader */
+#define SCARD_IOCTL_INTRODUCE_READER		0x00090060	/* IntroduceReader */
+#define SCARD_IOCTL_FORGET_READER		0x00090068	/* IntroduceReader */
+#define SCARD_IOCTL_ADD_READER_TO_GROUP		0x00090070	/* AddReaderToGroup */
+#define SCARD_IOCTL_REMOVE_READER_FROM_GROUP	0x00090078	/* RemoveReaderFromGroup */
+#define SCARD_IOCTL_GET_STATUS_CHANGE		0x000900A0	/* GetStatusChangeA */
+#define SCARD_IOCTL_CANCEL			0x000900A8	/* Cancel */
+#define SCARD_IOCTL_CONNECT			0x000900AC	/* ConnectA */
+#define SCARD_IOCTL_RECONNECT			0x000900B4	/* Reconnect */
+#define SCARD_IOCTL_DISCONNECT			0x000900B8	/* Disconnect */
+#define SCARD_IOCTL_BEGIN_TRANSACTION		0x000900BC	/* BeginTransaction */
+#define SCARD_IOCTL_END_TRANSACTION		0x000900C0	/* EndTransaction */
+#define SCARD_IOCTL_STATE			0x000900C4	/* State */
+#define SCARD_IOCTL_STATUS			0x000900C8	/* StatusA */
+#define SCARD_IOCTL_TRANSMIT			0x000900D0	/* Transmit */
+#define SCARD_IOCTL_CONTROL			0x000900D4	/* Control */
+#define SCARD_IOCTL_GETATTRIB			0x000900D8	/* GetAttrib */
+#define SCARD_IOCTL_SETATTRIB			0x000900DC	/* SetAttrib */
+#define SCARD_IOCTL_ACCESS_STARTED_EVENT	0x000900E0	/* SCardAccessStartedEvent */
+#define SCARD_IOCTL_LOCATE_CARDS_BY_ATR		0x000900E8	/* LocateCardsByATR */
 
-#define SCARD_INPUT_LINKED                   0xFFFFFFFF
+#define SCARD_INPUT_LINKED			0xFFFFFFFF
 
 /* Decode Win CTL_CODE values */
-#define WIN_CTL_FUNCTION(ctl_code)	((ctl_code & 0x3FFC) >> 2)
-#define WIN_CTL_DEVICE_TYPE(ctl_code)	(ctl_code >> 16)
+#define WIN_CTL_FUNCTION(ctl_code)		((ctl_code & 0x3FFC) >> 2)
+#define WIN_CTL_DEVICE_TYPE(ctl_code)		(ctl_code >> 16)
 
-#define WIN_FILE_DEVICE_SMARTCARD	0x00000031
+#define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
 
 static uint32 sc_output_string(IRP* irp, char *src, boolean wide)
@@ -183,13 +181,14 @@ static void sc_output_buffer_start(IRP *irp, int length)
 
 static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, boolean wide)
 {
-	char *buffer;
+	char* buffer;
 	int bufferSize;
 
 	bufferSize = wide ? (2 * dataLength) : dataLength;
 	buffer = xmalloc(bufferSize + 2); /* reserve 2 bytes for the '\0' */
 
 	stream_read(irp->input, buffer, bufferSize);
+
 	if (wide)
 	{
 		int i;

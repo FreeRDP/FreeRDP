@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Print Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -35,9 +35,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
-
-#include "rdpdr_constants.h"
-#include "rdpdr_types.h"
+#include <freerdp/channels/rdpdr.h>
 
 #ifdef WITH_CUPS
 #include "printer_cups.h"

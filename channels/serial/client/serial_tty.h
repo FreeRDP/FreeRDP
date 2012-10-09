@@ -28,7 +28,11 @@
 #include <dirent.h>
 #endif
 
+#include <freerdp/types.h>
+#include <freerdp/utils/stream.h>
+
 typedef struct _SERIAL_TTY SERIAL_TTY;
+
 struct _SERIAL_TTY
 {
 	uint32 id;
