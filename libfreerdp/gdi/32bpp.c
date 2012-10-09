@@ -694,7 +694,7 @@ static int BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 		if  (hdcDest->brush->style == GDI_BS_HATCHED)
 		{
 			xOffset = nXDest % 8;
-			yOffset = nYDest % 8;
+			yOffset = nYDest % 8 + 2;
 		}
 		else
 		{
