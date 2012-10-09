@@ -58,6 +58,7 @@ struct xf_localmove
 	int window_x; // relative to window
 	int window_y;
 	enum xf_localmove_state state;
+	int direction;
 };
 
 struct xf_window
@@ -76,6 +77,8 @@ struct xf_window
 	boolean is_mapped;
 	boolean is_transient;
 	xfLocalMove local_move;
+	uint8 rail_state;
+	boolean rail_ignore_configure;
 };
 
 void xf_ewmhints_init(xfInfo* xfi);
@@ -101,10 +104,13 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 boolean xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
+rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd);
+
+boolean xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
+		unsigned long* nitems, unsigned long* bytes, uint8** prop);
 
 void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int maxHeight,
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
-
 
 void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window);

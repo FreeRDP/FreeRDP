@@ -41,6 +41,7 @@ struct rdp_credssp
 	int recv_seq_num;
 	freerdp* instance;
 	CtxtHandle context;
+	LPTSTR SspiModule;
 	rdpSettings* settings;
 	SecBuffer negoToken;
 	SecBuffer pubKeyAuth;

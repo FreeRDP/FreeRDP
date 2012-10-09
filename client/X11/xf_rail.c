@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -36,6 +40,15 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 		xfi->drawable = DefaultRootWindow(xfi->display);
 		xf_DestroyWindow(xfi, xfi->window);
 		xfi->window = NULL;
+	}
+}
+
+void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
+{
+	if (xfi->remote_app == true)
+	{
+		xfi->remote_app = false;
+		xf_create_window(xfi);
 	}
 }
 
@@ -64,10 +77,10 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
                         continue;
                 }
 
-		wleft = window->windowOffsetX;
-		wtop = window->windowOffsetY;
-		wright = window->windowOffsetX + window->windowWidth - 1;
-		wbottom = window->windowOffsetY + window->windowHeight - 1;
+		wleft = window->visibleOffsetX;
+		wtop = window->visibleOffsetY;
+		wright = window->visibleOffsetX + window->windowWidth - 1;
+		wbottom = window->visibleOffsetY + window->windowHeight - 1;
 
 		ileft = MAX(uleft, wleft);
 		itop = MAX(utop, wtop);
@@ -85,6 +98,14 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 		}
 	}
 }
+
+void xf_rail_DesktopNonMonitored(rdpRail *rail, rdpWindow* window)
+{
+       xfInfo* xfi;
+       xfi = (xfInfo*) rail->extra;
+       xf_rail_disable_remoteapp_mode(xfi);
+}
+
 
 static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
@@ -116,8 +137,28 @@ static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 	xfi = (xfInfo*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
+	//The rail server like to set the window to a small size when it is minimized even though it is hidden
+	//in some cases this can cause the window not to restore back to its original size. Therefore we dont update
+	//our local window when that rail window state is minimized
+	if (xfw->rail_state == WINDOW_SHOW_MINIMIZED)
+               return;
+
+	// Do nothing if window is already in the correct position	
+        if ( xfw->left == window->visibleOffsetX && 
+             xfw->top == window->visibleOffsetY &&  
+             xfw->width == window->windowWidth &&
+             xfw->height == window->windowHeight)
+        {
+	     //Just ensure entire window area is updated to
+	     //handle cases where we have drawn locally before getting new bitmap
+	     //from the server
+             xf_UpdateWindowArea(xfi, xfw, 0, 0, window->windowWidth, window->windowHeight);
+             return;
+        }
+
+
 	xf_MoveWindow(xfi, xfw,
-		window->windowOffsetX, window->windowOffsetY,
+		window->visibleOffsetX, window->visibleOffsetY,
 		window->windowWidth, window->windowHeight);
 }
 
@@ -197,6 +238,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->rail_SetWindowRects = xf_rail_SetWindowRects;
 	rail->rail_SetWindowVisibilityRects = xf_rail_SetWindowVisibilityRects;
 	rail->rail_DestroyWindow = xf_rail_DestroyWindow;
+	rail->rail_DesktopNonMonitored = xf_rail_DesktopNonMonitored;
 }
 
 static void xf_on_free_rail_client_event(RDP_EVENT* event)
@@ -275,21 +317,39 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 
 	// If current window position disagrees with RDP window position, send
 	// update to RDP server
-	if ( xfw->left != window->windowOffsetX ||
-        	xfw->top != window->windowOffsetY ||
+	if ( xfw->left != window->visibleOffsetX ||
+        	xfw->top != window->visibleOffsetY ||
                 xfw->width != window->windowWidth ||
                 xfw->height != window->windowHeight)
         {
+	       //Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
+	       //we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
+	       //attempting to adjust the rail window.
+	       uint32 offsetX = 0;
+               uint32 offsetY = 0;
+
+               if (window->windowOffsetX < 0)
+                       offsetX = offsetX - window->windowOffsetX;
+
+               if (window->windowOffsetY < 0)
+                       offsetY = offsetY - window->windowOffsetY;
+		//windowOffset corresponds to the window location on the rail server
+		//but our local window is based on the visibleOffset since using the windowOffset
+		//can result in blank areas for a maximized window
 		window_move.windowId = window->windowId;
-		window_move.left = xfw->left;
-		window_move.top = xfw->top;
-		window_move.right = xfw->right;
-		window_move.bottom = xfw->bottom;
+
+		//Calculate new offsets for the rail server window
+		//Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
+		window_move.left = offsetX + window->windowOffsetX +  (xfw->left - window->visibleOffsetX);
+                window_move.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
+               
+                window_move.right = window_move.left + xfw->width;
+                window_move.bottom = window_move.top + xfw->height;
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 			"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-			(uint32) xfw->handle, xfw->left, xfw->top, 
-			xfw->right, xfw->bottom, xfw->width, xfw->height,
+			(uint32) xfw->handle, window_move.left, window_move.top, 
+			window_move.right, window_move.bottom, xfw->width, xfw->height,
 			window->windowId,
 			window->windowOffsetX, window->windowOffsetY, 
 			window->windowWidth, window->windowHeight);
@@ -319,14 +379,31 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 		xfw->left, xfw->top, xfw->right, xfw->bottom,
 		xfw->width, xfw->height);
 
+	//Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
+	//we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
+	//attempting to adjust the rail window.
+	uint32 offsetX = 0;
+        uint32 offsetY = 0;
+
+        if (window->windowOffsetX < 0)
+                offsetX = offsetX - window->windowOffsetX;
+
+        if (window->windowOffsetY < 0)
+                offsetY = offsetY - window->windowOffsetY;
+
 	/* 
 	 * For keyboard moves send and explicit update to RDP server 
 	 */ 
 	window_move.windowId = window->windowId;
-	window_move.left = xfw->left;
-	window_move.top = xfw->top;
-	window_move.right = xfw->right + 1;   // The update to RDP the position is one past the window
-	window_move.bottom = xfw->bottom + 1;
+
+	//Calculate new offsets for the rail server window
+	//Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
+	window_move.left = offsetX + window->windowOffsetX +  (xfw->left - window->visibleOffsetX);
+        window_move.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
+       
+        window_move.right = window_move.left + xfw->width;   // In the update to RDP the position is one past the window
+        window_move.bottom = window_move.top + xfw->height;
+
 
 	xf_send_rail_client_event(channels, 
 		RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
@@ -339,13 +416,21 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 		&root_window, &child_window, 
 		&x, &y, &child_x, &child_y, &mask);
         input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
+
+	//only send the mouse coordinates if not a keyboard move or size
+	if ((xfw->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+            (xfw->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+        {       
+                input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
+                DEBUG_X11_LMS("Mouse coordinates.  x= %i, y= %i", x, y);
+        }
 	
 	// Proactively update the RAIL window dimensions.  There is a race condition where
 	// we can start to receive GDI orders for the new window dimensions before we 
 	// receive the RAIL ORDER for the new window size.  This avoids that race condition.
 
-	window->windowOffsetX = xfw->left;
-	window->windowOffsetY = xfw->top;
+	window->windowOffsetX = offsetX + window->windowOffsetX +  (xfw->left - window->visibleOffsetX);
+        window->windowOffsetY = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
 	window->windowWidth = xfw->width;
 	window->windowHeight = xfw->height;
 

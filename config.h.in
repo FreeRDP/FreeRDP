@@ -6,10 +6,13 @@
 #define FREERDP_VERSION_MAJOR ${FREERDP_VERSION_MAJOR}
 #define FREERDP_VERSION_MINOR ${FREERDP_VERSION_MINOR}
 #define FREERDP_VERSION_REVISION ${FREERDP_VERSION_REVISION}
+#define GIT_REVISION "${GIT_REVISION}"
 
 #define FREERDP_DATA_PATH "${FREERDP_DATA_PATH}"
-#define FREERDP_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}"
 #define FREERDP_KEYMAP_PATH "${FREERDP_KEYMAP_PATH}"
+#define FREERDP_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}"
+#define FREERDP_CLIENT_PLUGIN_PATH "${FREERDP_CLIENT_PLUGIN_PATH}"
+#define FREERDP_SERVER_PLUGIN_PATH "${FREERDP_SERVER_PLUGIN_PATH}"
 
 /* Include files */
 #cmakedefine HAVE_FCNTL_H
@@ -18,14 +21,25 @@
 #cmakedefine HAVE_STDINT_H
 #cmakedefine HAVE_STDBOOL_H
 #cmakedefine HAVE_INTTYPES_H
+#cmakedefine HAVE_SYS_MODEM_H
+#cmakedefine HAVE_SYS_FILIO_H
+#cmakedefine HAVE_SYS_STRTIO_H
 
 #cmakedefine HAVE_TM_GMTOFF
+
 
 /* Options */
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
 #cmakedefine WITH_NATIVE_SSPI
+#cmakedefine WITH_JPEG
+#cmakedefine WITH_WIN8
+
+/* Plugins */
+#cmakedefine WITH_STATIC_PLUGINS
+#cmakedefine WITH_RDPDR
+
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE
@@ -46,6 +60,7 @@
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_SVC
+#cmakedefine WITH_DEBUG_TIMEZONE
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11

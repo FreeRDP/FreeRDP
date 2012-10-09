@@ -44,7 +44,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/blob.h>
 #include <freerdp/utils/memory.h>
 
 struct crypto_sha1_struct
@@ -128,7 +127,7 @@ FREERDP_API void crypto_cert_free(CryptoCert cert);
 
 FREERDP_API boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
 FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname);
-FREERDP_API boolean crypto_cert_get_public_key(CryptoCert cert, rdpBlob* public_key);
+FREERDP_API boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength);
 
 #define	TSSK_KEY_LENGTH	64
 extern const uint8 tssk_modulus[];

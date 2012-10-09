@@ -27,21 +27,40 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(CUNIT_INCLUDE_DIR NAMES CUnit.h
-          PATH_SUFFIXES CUnit
-          DOC "The CUnit include directory"
+if(WIN32)
+set(_CUNIT_ROOT_HINTS
+	$ENV{CUNIT_ROOT_DIR}
+	${CUNIT_ROOT_DIR})
+
+set(_CUNIT_ROOT_PATHS
+	"$ENV{PROGRAMFILES}/CUnit"
+	"$ENV{SYSTEMDRIVE}/CUnit")
+
+set(_CUNIT_ROOT_HINTS_AND_PATHS
+	HINTS ${_CUNIT_ROOT_HINTS}
+	PATHS ${_CUNIT_ROOT_PATHS})
+endif(WIN32)
+
+find_path(CUNIT_INCLUDE_DIR
+	NAMES CUnit.h
+	HINTS ${_CUNIT_ROOT_HINTS_AND_PATHS}
+	PATH_SUFFIXES CUnit include
+	DOC "The CUnit include directory"
 )
 
-find_library(CUNIT_LIBRARY NAMES cunit
-          DOC "The CUnit library"
+find_library(CUNIT_LIBRARY
+	NAMES cunit
+	HINTS ${_CUNIT_ROOT_HINTS_AND_PATHS}
+	PATH_SUFFIXES lib
+	DOC "The CUnit library"
 )
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(CUnit DEFAULT_MSG CUNIT_LIBRARY CUNIT_INCLUDE_DIR)
 
 if(CUNIT_FOUND)
-  set( CUNIT_LIBRARIES ${CUNIT_LIBRARY} )
-  set( CUNIT_INCLUDE_DIRS ${CUNIT_INCLUDE_DIR} )
+		set(CUNIT_LIBRARIES ${CUNIT_LIBRARY})
+		set(CUNIT_INCLUDE_DIRS ${CUNIT_INCLUDE_DIR})
 endif()
 
 mark_as_advanced(CUNIT_INCLUDE_DIR CUNIT_LIBRARY)

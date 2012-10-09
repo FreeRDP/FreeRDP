@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -40,6 +44,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/select.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
@@ -47,13 +52,13 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/utils/semaphore.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/rail.h>
+
+#include <winpr/synch.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -66,7 +71,7 @@
 
 #include "xfreerdp.h"
 
-static freerdp_sem g_sem;
+static HANDLE g_sem;
 static int g_thread_count = 0;
 static uint8 g_disconnect_reason = 0;
 
@@ -299,8 +304,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
-	xfi->attribs.bit_gravity = ForgetGravity;
-	xfi->attribs.win_gravity = StaticGravity;
+	xfi->attribs.bit_gravity = NorthWestGravity;
+	xfi->attribs.win_gravity = NorthWestGravity;
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
@@ -431,6 +436,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 }
 
 static int (*_def_error_handler)(Display*, XErrorEvent*);
+
 int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256];
@@ -532,18 +538,21 @@ boolean xf_pre_connect(freerdp* instance)
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
-  if (settings->authentication_only) {
+	if (settings->authentication_only)
+	{
 		/* Check --authonly has a username and password. */
-		if (settings->username == NULL ) {
+		if (settings->username == NULL )
+		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
 			exit(1);
 		}
-		if (settings->password == NULL ) {
+		if (settings->password == NULL )
+		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
 		}
 		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
-		// Avoid XWindows initialization and configuration below.
+		/* Avoid XWindows initialization and configuration below. */
 		return true;
 	}
 
@@ -583,6 +592,7 @@ boolean xf_pre_connect(freerdp* instance)
 
 	xfi->WM_PROTOCOLS = XInternAtom(xfi->display, "WM_PROTOCOLS", False);
 	xfi->WM_DELETE_WINDOW = XInternAtom(xfi->display, "WM_DELETE_WINDOW", False);
+	xfi->WM_STATE = XInternAtom(xfi->display, "WM_STATE", False);
 
 	xf_kbd_init(xfi);
 
@@ -738,8 +748,11 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->bitmap_mono = XCreatePixmap(xfi->display, xfi->drawable, 8, 8, 1);
 	xfi->gc_mono = XCreateGC(xfi->display, xfi->bitmap_mono, GCGraphicsExposures, &gcv);
 
+	XSetFunction(xfi->display, xfi->gc, GXcopy);
+	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, BlackPixelOfScreen(xfi->screen));
 	XFillRectangle(xfi->display, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height);
+	XFlush(xfi->display);
 
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
@@ -1243,7 +1256,7 @@ void* thread_func(void* param)
 	g_thread_count--;
 
 	if (g_thread_count < 1)
-		freerdp_sem_signal(g_sem);
+		ReleaseSemaphore(g_sem, 1, NULL);
 
 	pthread_exit(NULL);
 }
@@ -1281,7 +1294,7 @@ int main(int argc, char* argv[])
 
 	freerdp_channels_global_init();
 
-	g_sem = freerdp_sem_new(1);
+	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
@@ -1307,7 +1320,7 @@ int main(int argc, char* argv[])
 
 	while (g_thread_count > 0)
 	{
-		freerdp_sem_wait(g_sem);
+		WaitForSingleObject(g_sem, INFINITE);
 	}
 
 	pthread_join(thread, NULL);

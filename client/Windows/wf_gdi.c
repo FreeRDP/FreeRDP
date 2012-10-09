@@ -19,6 +19,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -237,8 +241,8 @@ void wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	COLORREF org_textcolor;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	fgcolor = freerdp_color_convert_bgr(patblt->foreColor, wfi->srcBpp, 32, wfi->clrconv);
-	bgcolor = freerdp_color_convert_bgr(patblt->backColor, wfi->srcBpp, 32, wfi->clrconv);
+	fgcolor = freerdp_color_convert_bgr(patblt->foreColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
+	bgcolor = freerdp_color_convert_bgr(patblt->backColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
 	brush = wf_create_brush(wfi, &patblt->brush, fgcolor, wfi->srcBpp);
 	org_bkmode = SetBkMode(wfi->drawing->hdc, OPAQUE);
@@ -279,7 +283,7 @@ void wf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	uint32 brush_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
-	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, wfi->srcBpp, 24, wfi->clrconv);
+	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
 	rect.left = opaque_rect->nLeftRect;
 	rect.top = opaque_rect->nTopRect;
@@ -306,7 +310,7 @@ void wf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
 
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, wfi->srcBpp, 32, wfi->clrconv);
+		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
 
 		rect.left = rectangle->left;
 		rect.top = rectangle->top;

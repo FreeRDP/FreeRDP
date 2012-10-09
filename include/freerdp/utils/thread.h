@@ -22,17 +22,18 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/mutex.h>
 #include <freerdp/utils/wait_obj.h>
 #ifndef _WIN32
 #include <pthread.h>
 #endif
 
+#include <winpr/synch.h>
+
 typedef struct _freerdp_thread freerdp_thread;
 
 struct _freerdp_thread
 {
-	freerdp_mutex* mutex;
+	HANDLE mutex;
 
 	struct wait_obj* signals[5];
 	int num_signals;
@@ -54,7 +55,7 @@ FREERDP_API void freerdp_thread_free(freerdp_thread* thread);
 	wait_obj_clear(_t->signals[0]); } while (0)
 #define freerdp_thread_signal(_t) wait_obj_set(_t->signals[1])
 #define freerdp_thread_reset(_t) wait_obj_clear(_t->signals[1])
-#define freerdp_thread_lock(_t) freerdp_mutex_lock(_t->mutex)
-#define freerdp_thread_unlock(_t) freerdp_mutex_unlock(_t->mutex)
+#define freerdp_thread_lock(_t) WaitForSingleObject(_t->mutex, INFINITE)
+#define freerdp_thread_unlock(_t) ReleaseMutex(_t->mutex)
 
 #endif /* __THREAD_UTILS_H */

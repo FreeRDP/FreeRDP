@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/bitmap.h>
 
@@ -45,12 +49,12 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, 
 	bmi.bmiHeader.biWidth = width;
 	bmi.bmiHeader.biHeight = negHeight;
 	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = bpp;
+	bmi.bmiHeader.biBitCount = wfi->dstBpp;
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**) &cdata, NULL, 0);
 
 	if (data != NULL)
-		freerdp_image_convert(data, cdata, width, height, bpp, bpp, wfi->clrconv);
+		freerdp_image_convert(data, cdata, width, height, bpp, wfi->dstBpp, wfi->clrconv);
 
 	if (pdata != NULL)
 		*pdata = cdata;
@@ -70,30 +74,12 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
 	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
-	if (data == NULL)
-		image->bitmap = CreateCompatibleBitmap(hdc, width, height);
-	else
-		image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
+	image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
 	
 	return image;
-}
-
-wfBitmap* wf_bitmap_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
-{
-	HDC hdc;
-	wfBitmap* bitmap;
-
-	hdc = GetDC(NULL);
-	bitmap = (wfBitmap*) xmalloc(sizeof(wfBitmap));
-	bitmap->hdc = CreateCompatibleDC(hdc);
-	bitmap->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(bitmap->pdata));
-	bitmap->org_bitmap = (HBITMAP) SelectObject(bitmap->hdc, bitmap->bitmap);
-	ReleaseDC(NULL, hdc);
-	
-	return bitmap;
 }
 
 void wf_image_free(wfBitmap* image)
@@ -157,7 +143,7 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+		uint8* data, int width, int height, int bpp, int length, boolean compressed, int codec_id)
 {
 	uint16 size;
 

@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -339,13 +343,14 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	rdpBrush* brush;
 	uint32 foreColor;
 	uint32 backColor;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
 
-	foreColor = freerdp_color_convert_rgb(patblt->foreColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
-	backColor = freerdp_color_convert_rgb(patblt->backColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	foreColor = freerdp_color_convert_rgb(patblt->foreColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(patblt->backColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -461,9 +466,10 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	uint32 color;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
-	color = freerdp_color_convert_var(opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert_var(opaque_rect->color, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -491,9 +497,10 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	int i;
 	uint32 color;
 	DELTA_RECT* rectangle;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
-	color = freerdp_color_convert_var(multi_opaque_rect->color, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert_var(multi_opaque_rect->color, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
@@ -528,10 +535,11 @@ void xf_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_
 void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
 	uint32 color;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	xf_set_rop2(xfi, line_to->bRop2);
-	color = freerdp_color_convert_rgb(line_to->penColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert_rgb(line_to->penColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);
@@ -575,10 +583,11 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	uint32 color;
 	XPoint* points;
 	int width, height;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	xf_set_rop2(xfi, polyline->bRop2);
-	color = freerdp_color_convert_var(polyline->penColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	color = freerdp_color_convert_var(polyline->penColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 	XSetForeground(xfi->display, xfi->gc, color);
@@ -661,13 +670,14 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	uint32 foreColor;
 	uint32 backColor;
 	Pixmap pattern = 0;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	brush = &mem3blt->brush;
 	bitmap = (xfBitmap*) mem3blt->bitmap;
 	xf_set_rop3(xfi, gdi_rop3_code(mem3blt->bRop));
-	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
-	backColor = freerdp_color_convert_rgb(mem3blt->backColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(mem3blt->backColor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	if (brush->style == GDI_BS_PATTERN)
 	{
@@ -736,7 +746,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	xf_set_rop2(xfi, polygon_sc->bRop2);
-	brush_color = freerdp_color_convert_var(polygon_sc->brushColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	brush_color = freerdp_color_convert_var(polygon_sc->brushColor, ((xfContext*)context)->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	npoints = polygon_sc->numPoints + 1;
 	points = xmalloc(sizeof(XPoint) * npoints);
@@ -793,8 +803,8 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfi, polygon_cb->bRop2);
-	foreColor = freerdp_color_convert_rgb(polygon_cb->foreColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
-	backColor = freerdp_color_convert_rgb(polygon_cb->backColor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+	foreColor = freerdp_color_convert_rgb(polygon_cb->foreColor, ((xfContext*)context)->settings->color_depth, xfi->bpp, xfi->clrconv);
+	backColor = freerdp_color_convert_rgb(polygon_cb->backColor, ((xfContext*)context)->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	npoints = polygon_cb->numPoints + 1;
 	points = xmalloc(sizeof(XPoint) * npoints);

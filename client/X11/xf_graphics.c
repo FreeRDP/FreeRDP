@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -25,6 +29,8 @@
 #endif
 
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
 
@@ -35,7 +41,8 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	uint8* data;
 	Pixmap pixmap;
 	XImage* image;
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	pixmap = XCreatePixmap(xfi->display, xfi->drawable, bitmap->width, bitmap->height, xfi->depth);
@@ -43,7 +50,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+				bitmap->width, bitmap->height, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 		if (bitmap->ephemeral != true)
 		{
@@ -60,7 +67,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		{
 			if (data != bitmap->data)
 				xfree(bitmap->data);
-			
+
 			bitmap->data = data;
 		}
 	}
@@ -105,9 +112,17 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed)
+		uint8* data, int width, int height, int bpp, int length,
+		boolean compressed, int codec_id)
 {
 	uint16 size;
+	RFX_MESSAGE* msg;
+	uint8* src;
+	uint8* dst;
+	int yindex;
+	int xindex;
+	xfInfo* xfi;
+	boolean status;
 
 	size = width * height * (bpp + 7) / 8;
 
@@ -116,20 +131,57 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
-	if (compressed)
+	switch (codec_id)
 	{
-		boolean status;
+		case CODEC_ID_NSCODEC:
+			printf("xf_Bitmap_Decompress: nsc not done\n");
+			break;
+		case CODEC_ID_REMOTEFX:
+			xfi = ((xfContext*)context)->xfi;
+			rfx_context_set_pixel_format(xfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+			msg = rfx_process_message(xfi->rfx_context, data, length);
+			if (msg == NULL)
+			{
+				printf("xf_Bitmap_Decompress: rfx Decompression Failed\n");
+			}
+			else
+			{
+				for (yindex = 0; yindex < height; yindex++)
+				{
+					src = msg->tiles[0]->data + yindex * 64 * 4;
+					dst = bitmap->data + yindex * width * 3;
+					for (xindex = 0; xindex < width; xindex++)
+					{
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						*(dst++) = *(src++);
+						src++;
+					}
+				}
+				rfx_message_free(xfi->rfx_context, msg);
+			}
+			break;
+		case CODEC_ID_JPEG:
+			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
+			{
+				printf("xf_Bitmap_Decompress: jpeg Decompression Failed\n");
+			}
+			break;
+		default:
+			if (compressed)
+			{
+				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
-
-		if (status != true)
-		{
-			printf("Bitmap Decompression Failed\n");
-		}
-	}
-	else
-	{
-		freerdp_image_flip(data, bitmap->data, width, height, bpp);
+				if (status == false)
+				{
+					printf("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+				}
+			}
+			else
+			{
+				freerdp_image_flip(data, bitmap->data, width, height, bpp);
+			}
+			break;
 	}
 
 	bitmap->compressed = false;
@@ -270,15 +322,16 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
 {
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfContext* context_ = (xfContext*) context;
+	xfInfo* xfi = context_->xfi;
 
 	bgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	fgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, xfi->srcBpp, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);

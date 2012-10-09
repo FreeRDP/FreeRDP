@@ -25,6 +25,7 @@
 #include "xfreerdp.h"
 
 void xf_kbd_init(xfInfo* xfi);
+void xf_kbd_clear(xfInfo* xfi);
 void xf_kbd_set_keypress(xfInfo* xfi, uint8 keycode, KeySym keysym);
 void xf_kbd_unset_keypress(xfInfo* xfi, uint8 keycode);
 void xf_kbd_release_all_keypress(xfInfo* xfi);

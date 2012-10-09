@@ -6,7 +6,7 @@
  */
 
 #ifndef ERRORCODES_H
-#define	ERRORCODES_H
+#define ERRORCODES_H
 
 #ifdef	__cplusplus
 extern "C" {

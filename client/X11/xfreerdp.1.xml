@@ -130,6 +130,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>-h</term>
+        <listitem>
+          <para>
+            Print help.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-k <replaceable class="parameter">id</replaceable></term>
         <listitem>
           <para>
@@ -200,7 +208,7 @@
         <term>-x <replaceable class="parameter">flag</replaceable></term>
         <listitem>
           <para>
-            Set the experiance performance flags.
+            Set the experience performance flags.
             <replaceable class="parameter">flag</replaceable> can be one of:
             <itemizedlist>
               <listitem>
@@ -257,6 +265,12 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>-X <replaceable class="parameter">xid</replaceable></term>
+	<listitem>
+	  <para>embed xfreerdp into window with <replaceable class="parameter">xid</replaceable>.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-z</term>
         <listitem>
           <para>
@@ -269,14 +283,6 @@
         <listitem>
           <para>
             initialize a RemoteApp connection. This implies -g workarea.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--ext</term>
-        <listitem>
-          <para>
-            load an extension
           </para>
         </listitem>
       </varlistentry>
@@ -299,12 +305,41 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--from-stdin</term>
+        <term>--bcv3 <replaceable class="parameter">codec</replaceable></term>
+        <listitem>
+          <para>Use <replaceable class="parameter">codec</replaceable> for bitmap cache v3
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-bmp-cache</term>
         <listitem>
           <para>
-						Prompts for unspecified arguments -u username, -p password, -d domain and connection host.
-						This is useful to hide arguments from ps. Also useful for scripts that will feed these arguments
-						to the client via (what else?) stdin.
+            Disable bitmap cache.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--certificate-name <replaceable class="parameter">name</replaceable></term>
+        <listitem>
+          <para>
+            use <replaceable class="parameter">name</replaceable> for the logon certificate, instead of the server name
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--composition</term>
+        <listitem>
+          <para>
+            Enable composition (RDVH only, not to be confused with remote composition).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--ext <replaceable class="parameter">extname</replaceable></term>
+        <listitem>
+          <para>
+            load extension <replaceable class="parameter">extname</replaceable>
           </para>
         </listitem>
       </varlistentry>
@@ -319,10 +354,20 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--no-motion</term>
+        <term>--from-stdin</term>
+        <listitem>
+          <para>Prompts for unspecified arguments -u username, -p
+          password, -d domain and connection host.  This is useful to
+          hide arguments from ps. Also useful for scripts that will
+          feed these arguments to the client via (what else?) stdin.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-full-window-drag</term>
         <listitem>
           <para>
-            Don't send mouse motion events.
+            Disable full window drag.
           </para>
         </listitem>
       </varlistentry>
@@ -335,6 +380,61 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--ignore-certificate</term>
+        <listitem>
+          <para>
+            ignore verification of logon certificate.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--kbd-list</term>
+        <listitem>
+          <para>
+            list all keyboard layout ids used by -k
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--disable-menu-animations</term>
+        <listitem>
+          <para>
+            Disable menu animations.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-motion</term>
+        <listitem>
+          <para>
+            Don't send mouse motion events.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-nego</term>
+        <listitem>
+          <para>disable negotiation of security layer and enforce highest enabled security protocol.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-nla</term>
+        <listitem>
+          <para>
+            Disable network level authentication.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--nsc</term>
+        <listitem>
+          <para>
+            Enable NSCodec.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--no-osb</term>
         <listitem>
           <para>
@@ -343,10 +443,18 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--no-bmp-cache</term>
+        <term>--pcb <replaceable class="parameter">blob</replaceable></term>
         <listitem>
           <para>
-            Disable bitmap cache.
+            Use preconnection <replaceable class="parameter">blob</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--pcid <replaceable class="parameter">id</replaceable></term>
+        <listitem>
+          <para>
+            Use preconnection <replaceable class="parameter">id</replaceable>.
           </para>
         </listitem>
       </varlistentry>
@@ -355,6 +463,14 @@
         <listitem>
           <para>
             load a plugin
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--no-rdp</term>
+        <listitem>
+          <para>
+            Disable Standard RDP encryption.
           </para>
         </listitem>
       </varlistentry>
@@ -375,82 +491,10 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--nsc</term>
+        <term>--no-salted-checksum</term>
         <listitem>
           <para>
-            Enable NSCodec.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--disable-wallpaper</term>
-        <listitem>
-          <para>
-            Disable wallpaper.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--composition</term>
-        <listitem>
-          <para>
-            Enable composition (RDVH only, not to be confused with remote composition).
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--disable-full-window-drag</term>
-        <listitem>
-          <para>
-            Disable full window drag.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--disable-menu-animations</term>
-        <listitem>
-          <para>
-            Disable menu animations.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--disable-theming</term>
-        <listitem>
-          <para>
-            Disable theming.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--no-rdp</term>
-        <listitem>
-          <para>
-            Disable Standard RDP encryption.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--no-tls</term>
-        <listitem>
-          <para>
-            Disable TLS encryption.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--no-nla</term>
-        <listitem>
-          <para>
-            Disable network level authentication.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--sec <replaceable class="parameter">proto</replaceable></term>
-        <listitem>
-          <para>
-            force protocol security. <replaceable class="parameter">proto</replaceable> can be one of rdp, tls or nla.
+            disable salted checksums with Standard RDP encryption.
           </para>
         </listitem>
       </varlistentry>
@@ -463,34 +507,56 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--ignore-certificate</term>
+        <term>--sec <replaceable class="parameter">proto</replaceable></term>
         <listitem>
           <para>
-            ignore verification of logon certificate.
+            force protocol security. <replaceable class="parameter">proto</replaceable> can be one of rdp, tls or nla.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--certificate-name</term>
+        <term>--disable-theming</term>
         <listitem>
           <para>
-            use this name for the logon certificate, instead of the server name
+            Disable theming.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--kbd-list</term>
+        <term>--no-tls</term>
         <listitem>
           <para>
-            list all keyboard layout ids used by -k
+            Disable TLS encryption.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--version</term>
+        <term>--tsg
+<replaceable class="parameter">username</replaceable>
+<replaceable class="parameter">password</replaceable>
+<replaceable class="parameter">hostname</replaceable> </term>
         <listitem>
           <para>
+            Use Terminal Server Gateway with
+<replaceable class="parameter">username</replaceable>
+<replaceable class="parameter">password</replaceable>
+<replaceable class="parameter">hostname</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>--version</term>
+      <listitem>
+	<para>
             Print version information.
+          </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>--disable-wallpaper</term>
+        <listitem>
+          <para>
+            Disable wallpaper.
           </para>
         </listitem>
       </varlistentry>
