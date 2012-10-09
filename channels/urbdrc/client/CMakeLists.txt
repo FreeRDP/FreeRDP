@@ -32,7 +32,7 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(..)
 
-add_library(${MODULE_NAME} ${URBDRC_SRCS})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set(${MODULE_PREFIX}_LIBS
@@ -42,10 +42,10 @@ set(${MODULE_PREFIX}_LIBS
 
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
-	target_link_libraries(${MODULE_NAME} ${MODULE_PREFIX}_LIBS)
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-utils)
-	target_link_libraries(${MODULE_NAME} ${MODULE_PREFIX}_LIBS)
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})

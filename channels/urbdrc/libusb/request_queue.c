@@ -24,11 +24,7 @@
 #include <unistd.h>
 #include "request_queue.h"
 
-
-
-
-TRANSFER_REQUEST*
-request_queue_get_next(REQUEST_QUEUE* queue)
+TRANSFER_REQUEST* request_queue_get_next(REQUEST_QUEUE* queue)
 {
 	TRANSFER_REQUEST* request;
 
@@ -38,8 +34,7 @@ request_queue_get_next(REQUEST_QUEUE* queue)
 	return request;
 }
 
-int
-request_queue_has_next(REQUEST_QUEUE* queue)
+int request_queue_has_next(REQUEST_QUEUE* queue)
 {
 	if (queue->ireq == NULL)
 		return 0;
@@ -47,8 +42,7 @@ request_queue_has_next(REQUEST_QUEUE* queue)
 		return 1;
 }
 
-TRANSFER_REQUEST*
-request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId, 
+TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId,
 	struct libusb_transfer * transfer, 
 	BYTE endpoint)
 {
@@ -82,15 +76,13 @@ request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId,
 	return request;
 }
 
-void
-request_queue_rewind(REQUEST_QUEUE *queue)
+void request_queue_rewind(REQUEST_QUEUE *queue)
 {
 	queue->ireq = queue->head;
 }
 
 /* Get first*/
-TRANSFER_REQUEST*
-request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, BYTE ep)
+TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, BYTE ep)
 {
 	TRANSFER_REQUEST * request;
 	pthread_mutex_lock(&queue->request_loading);
@@ -109,8 +101,7 @@ request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, BYTE ep)
 	return NULL;
 }
 
-int
-request_queue_unregister_request(REQUEST_QUEUE *queue, UINT32 RequestId)
+int request_queue_unregister_request(REQUEST_QUEUE *queue, UINT32 RequestId)
 {
 	TRANSFER_REQUEST *request, *request_temp;
 	pthread_mutex_lock(&queue->request_loading);
@@ -161,9 +152,7 @@ request_queue_unregister_request(REQUEST_QUEUE *queue, UINT32 RequestId)
 	return 1;
 }
 
-
-REQUEST_QUEUE*
-request_queue_new()
+REQUEST_QUEUE* request_queue_new()
 {
 	REQUEST_QUEUE* queue;
 
@@ -185,4 +174,3 @@ request_queue_new()
 
 	return queue;
 }
-

@@ -16,7 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(LIBUSB_UDEVMAN_SRCS
+set(MODULE_NAME "libusb-devman")
+set(MODULE_PREFIX "CHANNEL_URBDRC_LIBUSB_DEVMAN")
+
+set(${MODULE_PREFIX}_SRCS
 	libusb_udevman.c
 	libusb_udevice.c
 	libusb_udevice.h
@@ -25,14 +28,15 @@ set(LIBUSB_UDEVMAN_SRCS
 
 include_directories(../client)
 
-add_library(libusb_udevman ${LIBUSB_UDEVMAN_SRCS})
-set_target_properties(libusb_udevman PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-target_link_libraries(libusb_udevman udev)  
-target_link_libraries(libusb_udevman dbus-glib-1)  
-target_link_libraries(libusb_udevman pthread) 
-target_link_libraries(libusb_udevman usb-1.0)  
-target_link_libraries(libusb_udevman freerdp-utils)
+set(${MODULE_PREFIX}_LIBS
+	dbus-glib-1
+	usb-1.0
+	pthread
+	udev)
 
-install(TARGETS libusb_udevman DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
