@@ -59,8 +59,10 @@ else()
 endif()
 
 if(MONOLITHIC_BUILD)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-crt)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-utils)
 
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})

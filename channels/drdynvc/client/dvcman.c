@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include <freerdp/utils/memory.h>
@@ -108,7 +109,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		listener = xnew(DVCMAN_LISTENER);
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->dvcman = dvcman;
-		listener->channel_name = xstrdup(pszChannelName);
+		listener->channel_name = _strdup(pszChannelName);
 		listener->flags = ulFlags;
 		listener->listener_callback = pListenerCallback;
 

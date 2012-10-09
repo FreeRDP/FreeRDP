@@ -18,8 +18,7 @@
 # limitations under the License.
 
 set(RDPSND_ALSA_SRCS
-	rdpsnd_alsa.c
-)
+	rdpsnd_alsa.c)
 
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
@@ -28,9 +27,9 @@ add_library(rdpsnd_alsa ${RDPSND_ALSA_SRCS})
 set_target_properties(rdpsnd_alsa PROPERTIES PREFIX "")
 
 if(MONOLITHIC_BUILD)
-	target_link_libraries(rdpsnd_alsa freerdp)
+	target_link_libraries(rdpsnd_alsa freerdp winpr)
 else()
-	target_link_libraries(rdpsnd_alsa freerdp-utils)
+	target_link_libraries(rdpsnd_alsa freerdp-utils winpr-crt)
 endif()
 
 target_link_libraries(rdpsnd_alsa ${ALSA_LIBRARIES})

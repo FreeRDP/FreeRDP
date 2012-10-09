@@ -30,6 +30,8 @@
 #include <signal.h>
 #include <sys/time.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
@@ -650,8 +652,8 @@ static void* test_peer_mainloop(void* arg)
 	test_peer_init(client);
 
 	/* Initialize the real server settings here */
-	client->settings->cert_file = xstrdup("server.crt");
-	client->settings->privatekey_file = xstrdup("server.key");
+	client->settings->cert_file = _strdup("server.crt");
+	client->settings->privatekey_file = _strdup("server.key");
 	client->settings->nla_security = false;
 	client->settings->rfx_codec = true;
 	client->settings->suppress_output = true;

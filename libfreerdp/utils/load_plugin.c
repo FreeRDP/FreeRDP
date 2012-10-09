@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
 #include <winpr/windows.h>
+
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
@@ -129,7 +132,7 @@ void* freerdp_load_plugin(const char* name, const char* entry_name)
 	else
 	{
 		/* explicit path given, use it instead of default path */
-		path = xstrdup(suffixed_name);
+		path = _strdup(suffixed_name);
 	}
 
 	entry = freerdp_load_library_symbol(path, entry_name);

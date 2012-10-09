@@ -718,7 +718,7 @@ const int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if( path[0] == '%' )
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
-		disk_register_disk_path(pEntryPoints, name, xstrdup(buf));
+		disk_register_disk_path(pEntryPoints, name, _strdup(buf));
 	}
 	else if( path[0] == '*' )
 	{
@@ -738,7 +738,7 @@ const int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;
 				buf[len + 3] = 0;
-				disk_register_disk_path(pEntryPoints, xstrdup(buf), xstrdup(dev));
+				disk_register_disk_path(pEntryPoints, _strdup(buf), _strdup(dev));
 			}
 		}
 	}

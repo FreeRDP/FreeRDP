@@ -27,6 +27,8 @@
 #include "connection.h"
 #include "transport.h"
 
+#include <winpr/crt.h>
+
 #include <freerdp/errorcodes.h>
 
 /**
@@ -165,30 +167,30 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->hostname);
-			settings->hostname = xstrdup(redirection->targetNetAddress.ascii);
+			settings->hostname = _strdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
 			free(settings->hostname);
-			settings->hostname = xstrdup(redirection->targetFQDN.ascii);
+			settings->hostname = _strdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->hostname);
-			settings->hostname = xstrdup(redirection->targetNetBiosName.ascii);
+			settings->hostname = _strdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
 		free(settings->username);
-		settings->username = xstrdup(redirection->username.ascii);
+		settings->username = _strdup(redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
 		free(settings->domain);
-		settings->domain = xstrdup(redirection->domain.ascii);
+		settings->domain = _strdup(redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)

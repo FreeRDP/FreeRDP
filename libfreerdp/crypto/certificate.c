@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -217,8 +219,8 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 
 	if (certdata != NULL)
 	{
-		certdata->hostname = xstrdup(hostname);
-		certdata->fingerprint = xstrdup(fingerprint);
+		certdata->hostname = _strdup(hostname);
+		certdata->fingerprint = _strdup(fingerprint);
 	}
 
 	return certdata;

@@ -36,9 +36,9 @@ add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
+	target_link_libraries(${MODULE_NAME} freerdp winpr)
 else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils)
+	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt)
 endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})

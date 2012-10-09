@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/hexdump.h>
@@ -138,7 +141,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 
 		if (ascii)
 		{
-			format_name->name = xstrdup((char*) s->p);
+			format_name->name = _strdup((char*) s->p);
 			format_name->length = strlen(format_name->name);
 		}
 		else

@@ -25,7 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <pulse/pulseaudio.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
@@ -541,7 +544,7 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	if (data && strcmp((char*)data->data[0], "pulse") == 0)
 	{
 		if(data->data[1] && strlen((char*)data->data[1]) > 0) 
-			pulse->device_name = xstrdup((char*)data->data[1]);
+			pulse->device_name = _strdup((char*)data->data[1]);
 		else
 			pulse->device_name = NULL;
 	}

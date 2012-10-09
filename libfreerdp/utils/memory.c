@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 
 /**
@@ -50,37 +52,6 @@ void* xzalloc(size_t size)
 		perror("xzalloc");
 		printf("xzalloc: failed to allocate memory of size: %d\n", (int) size);
 	}
-
-	return mem;
-}
-
-/**
- * Duplicate a string in memory.
- * This function is used to secure the strdup function.
- * It will allocate a new memory buffer and copy the string content in it.
- * If allocation fails, it will log an error.
- *
- * @param str - pointer to the character string to copy. If str is NULL, nothing is done.
- *
- * @return a pointer to a newly allocated character string containing the same bytes as str.
- * NULL if an allocation error occurred, or if the str parameter was NULL.
- */
-
-char* xstrdup(const char* str)
-{
-	char* mem;
-
-	if (str == NULL)
-		return NULL;
-
-#ifdef _WIN32
-	mem = _strdup(str);
-#else
-	mem = strdup(str);
-#endif
-
-	if (mem == NULL)
-		perror("strdup");
 
 	return mem;
 }
@@ -136,15 +107,19 @@ char* xstrtoup(const char* str)
 	char* out;
 	char* p;
 	int c;
-	out = xstrdup(str);
-	if(out != NULL)
+
+	out = _strdup(str);
+
+	if (out != NULL)
 	{
 		p = out;
-		while(*p != '\0')
+
+		while (*p != '\0')
 		{
 			c = toupper((unsigned char)*p);
-			*p++ = (char)c;
+			*p++ = (char) c;
 		}
 	}
+
 	return out;
 }

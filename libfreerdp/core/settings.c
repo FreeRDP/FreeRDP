@@ -30,10 +30,11 @@
 #include <unistd.h>
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/registry.h>
+
 #include <freerdp/settings.h>
 #include <freerdp/utils/file.h>
-
-#include <winpr/registry.h>
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
@@ -258,7 +259,7 @@ rdpSettings* settings_new(void* instance)
 		settings->draw_nine_grid_cache_size = 2560;
 		settings->draw_nine_grid_cache_entries = 256;
 
-		settings->client_dir = xstrdup(client_dll);
+		settings->client_dir = _strdup(client_dll);
 
 		settings->num_icon_caches = 3;
 		settings->num_icon_cache_entries = 12;

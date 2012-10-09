@@ -59,6 +59,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/rail.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "xf_gdi.h"
@@ -310,7 +311,7 @@ void xf_create_window(xfInfo* xfi)
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
-		win_title = xstrdup(xfi->instance->settings->window_title);
+		win_title = _strdup(xfi->instance->settings->window_title);
 	}
 	else if (xfi->instance->settings->port == 3389)
 	{

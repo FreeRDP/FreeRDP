@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
 #include <freerdp/types.h>
@@ -492,7 +494,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
@@ -503,7 +505,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
@@ -514,7 +516,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types)
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
-			layouts[num].name = xstrdup(RDP_KEYBOARD_IME_TABLE[i].name);
+			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
 		}
 	}
 

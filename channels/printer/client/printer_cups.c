@@ -29,6 +29,8 @@
 #include <time.h>
 #include <cups/cups.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
@@ -152,7 +154,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
 
 #ifndef _CUPS_API_1_4
 
-	cups_printjob->printjob_object = xstrdup(tmpnam(NULL));
+	cups_printjob->printjob_object = _strdup(tmpnam(NULL));
 
 #else
 	{
@@ -218,7 +220,7 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	cups_printer = xnew(rdpCupsPrinter);
 
 	cups_printer->printer.id = cups_driver->id_sequence++;
-	cups_printer->printer.name = xstrdup(name);
+	cups_printer->printer.name = _strdup(name);
 	/* This is a generic PostScript printer driver developed by MS, so it should be good in most cases */
 	cups_printer->printer.driver = "MS Publisher Imagesetter";
 	cups_printer->printer.is_default = is_default;

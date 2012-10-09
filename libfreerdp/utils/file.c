@@ -26,6 +26,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/memory.h>
@@ -87,7 +89,7 @@ char* freerdp_get_home_path(rdpSettings* settings)
 	if (settings->home_path == NULL)
 		settings->home_path = getenv(HOME_ENV_VARIABLE);
 	if (settings->home_path == NULL)
-		settings->home_path = xstrdup("/");
+		settings->home_path = _strdup("/");
 
 	return settings->home_path;
 }
@@ -155,7 +157,7 @@ char* freerdp_append_shared_library_suffix(char* file_path)
 		}
 		else
 		{
-			path = xstrdup(file_path);
+			path = _strdup(file_path);
 		}
 	}
 	else
@@ -179,7 +181,7 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 		return NULL;
 
 	if (depth <= 0)
-		return xstrdup(base_path);
+		return _strdup(base_path);
 
 	base_length = strlen(base_path);
 

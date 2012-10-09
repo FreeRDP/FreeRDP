@@ -44,7 +44,7 @@ void http_context_set_method(HttpContext* http_context, char* method)
 	if (http_context->Method)
 		free(http_context->Method);
 
-	http_context->Method = xstrdup(method);
+	http_context->Method = _strdup(method);
 }
 
 void http_context_set_uri(HttpContext* http_context, char* uri)
@@ -52,7 +52,7 @@ void http_context_set_uri(HttpContext* http_context, char* uri)
 	if (http_context->URI)
 		free(http_context->URI);
 
-	http_context->URI = xstrdup(uri);
+	http_context->URI = _strdup(uri);
 }
 
 void http_context_set_user_agent(HttpContext* http_context, char* user_agent)
@@ -60,7 +60,7 @@ void http_context_set_user_agent(HttpContext* http_context, char* user_agent)
 	if (http_context->UserAgent)
 		free(http_context->UserAgent);
 
-	http_context->UserAgent = xstrdup(user_agent);
+	http_context->UserAgent = _strdup(user_agent);
 }
 
 void http_context_set_host(HttpContext* http_context, char* host)
@@ -68,7 +68,7 @@ void http_context_set_host(HttpContext* http_context, char* host)
 	if (http_context->Host)
 		free(http_context->Host);
 
-	http_context->Host = xstrdup(host);
+	http_context->Host = _strdup(host);
 }
 
 void http_context_set_accept(HttpContext* http_context, char* accept)
@@ -76,7 +76,7 @@ void http_context_set_accept(HttpContext* http_context, char* accept)
 	if (http_context->Accept)
 		free(http_context->Accept);
 
-	http_context->Accept = xstrdup(accept);
+	http_context->Accept = _strdup(accept);
 }
 
 void http_context_set_cache_control(HttpContext* http_context, char* cache_control)
@@ -84,7 +84,7 @@ void http_context_set_cache_control(HttpContext* http_context, char* cache_contr
 	if (http_context->CacheControl)
 		free(http_context->CacheControl);
 
-	http_context->CacheControl = xstrdup(cache_control);
+	http_context->CacheControl = _strdup(cache_control);
 }
 
 void http_context_set_connection(HttpContext* http_context, char* connection)
@@ -92,7 +92,7 @@ void http_context_set_connection(HttpContext* http_context, char* connection)
 	if (http_context->Connection)
 		free(http_context->Connection);
 
-	http_context->Connection = xstrdup(connection);
+	http_context->Connection = _strdup(connection);
 }
 
 void http_context_set_pragma(HttpContext* http_context, char* pragma)
@@ -100,7 +100,7 @@ void http_context_set_pragma(HttpContext* http_context, char* pragma)
 	if (http_context->Pragma)
 		free(http_context->Pragma);
 
-	http_context->Pragma = xstrdup(pragma);
+	http_context->Pragma = _strdup(pragma);
 }
 
 void http_context_free(HttpContext* http_context)
@@ -122,7 +122,7 @@ void http_request_set_method(HttpRequest* http_request, char* method)
 	if (http_request->Method)
 		free(http_request->Method);
 
-	http_request->Method = xstrdup(method);
+	http_request->Method = _strdup(method);
 }
 
 void http_request_set_uri(HttpRequest* http_request, char* uri)
@@ -130,7 +130,7 @@ void http_request_set_uri(HttpRequest* http_request, char* uri)
 	if (http_request->URI)
 		free(http_request->URI);
 
-	http_request->URI = xstrdup(uri);
+	http_request->URI = _strdup(uri);
 }
 
 void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme)
@@ -138,7 +138,7 @@ void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme)
 	if (http_request->AuthScheme)
 		free(http_request->AuthScheme);
 
-	http_request->AuthScheme = xstrdup(auth_scheme);
+	http_request->AuthScheme = _strdup(auth_scheme);
 }
 
 void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
@@ -146,7 +146,7 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 	if (http_request->AuthParam)
 		free(http_request->AuthParam);
 
-	http_request->AuthParam = xstrdup(auth_param);
+	http_request->AuthParam = _strdup(auth_param);
 }
 
 #ifndef _WIN32
@@ -310,7 +310,7 @@ void http_response_parse_header_status_line(HttpResponse* http_response, char* s
 
 	*separator = '\0';
 	http_response->StatusCode = atoi(status_code);
-	http_response->ReasonPhrase = xstrdup(reason_phrase);
+	http_response->ReasonPhrase = _strdup(reason_phrase);
 	*separator = ' ';
 }
 
@@ -324,15 +324,15 @@ void http_response_parse_header_field(HttpResponse* http_response, char* name, c
 	{
 		char* separator;
 
-		http_response->Authorization = xstrdup(value);
+		http_response->Authorization = _strdup(value);
 
 		separator = strchr(value, ' ');
 
 		if (separator != NULL)
 		{
 			*separator = '\0';
-			http_response->AuthScheme = xstrdup(value);
-			http_response->AuthParam = xstrdup(separator + 1);
+			http_response->AuthScheme = _strdup(value);
+			http_response->AuthParam = _strdup(separator + 1);
 			*separator = ' ';
 		}
 	}
@@ -355,8 +355,8 @@ void http_response_parse_header_field(HttpResponse* http_response, char* name, c
 			/* WWW-Authenticate: NTLM base64token */
 
 			*separator = '\0';
-			http_response->AuthScheme = xstrdup(value);
-			http_response->AuthParam = xstrdup(separator + 1);
+			http_response->AuthScheme = _strdup(value);
+			http_response->AuthParam = _strdup(separator + 1);
 			*separator = ' ';
 
 			return;
@@ -473,7 +473,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			while (line != NULL)
 			{
-				http_response->lines[count] = xstrdup(line);
+				http_response->lines[count] = _strdup(line);
 				line = strtok(NULL, "\r\n");
 				count++;
 			}
@@ -482,7 +482,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (http_response->ContentLength > 0)
 			{
-				http_response->Content = xstrdup(content);
+				http_response->Content = _strdup(content);
 			}
 
 			break;

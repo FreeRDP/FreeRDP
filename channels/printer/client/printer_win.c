@@ -17,18 +17,22 @@
  * limitations under the License.
  */
 
-#include <windows.h>
-#include <winspool.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/crt.h>
+#include <winpr/windows.h>
+
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <winspool.h>
 
-#include "config.h"
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 
-#include "rdpdr_types.h"
 #include "printer_main.h"
 
 #include "printer_win.h"
@@ -179,7 +183,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer = xnew(rdpWinPrinter);
 
 	win_printer->printer.id = win_driver->id_sequence++;
-	win_printer->printer.name = xstrdup(name);
+	win_printer->printer.name = _strdup(name);
 	win_printer->printer.is_default = is_default;
 
 	win_printer->printer.CreatePrintJob = printer_win_create_printjob;

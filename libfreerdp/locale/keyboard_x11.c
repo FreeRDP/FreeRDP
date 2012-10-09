@@ -25,7 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
@@ -103,8 +106,8 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	if (keyboardLayoutId > 0)
 	{
-		*xkb_layout = xstrdup(layout);
-		*xkb_variant = xstrdup(variant);
+		*xkb_layout = _strdup(layout);
+		*xkb_variant = _strdup(variant);
 		return keyboardLayoutId;
 	}
 
@@ -149,8 +152,8 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	if (keyboardLayoutId > 0)
 	{
-		*xkb_layout = xstrdup(layout);
-		*xkb_variant = xstrdup(variant);
+		*xkb_layout = _strdup(layout);
+		*xkb_variant = _strdup(variant);
 		return keyboardLayoutId;
 	}
 

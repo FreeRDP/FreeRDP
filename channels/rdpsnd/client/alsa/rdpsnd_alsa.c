@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <alsa/asoundlib.h>
 
 #include <freerdp/types.h>
@@ -434,12 +436,12 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	if (data && strcmp((char*) data->data[0], "alsa") == 0)
 	{
-		alsa->device_name = xstrdup((char*) data->data[1]);
+		alsa->device_name = _strdup((char*) data->data[1]);
 	}
 
 	if (alsa->device_name == NULL)
 	{
-		alsa->device_name = xstrdup("default");
+		alsa->device_name = _strdup("default");
 	}
 
 	alsa->out_handle = 0;

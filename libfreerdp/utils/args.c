@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #ifdef _WIN32
 #include <io.h>
 #define isatty _isatty
@@ -51,7 +53,7 @@ void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
 	{
 		/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-		settings->hostname = xstrdup(hostname + 1);
+		settings->hostname = _strdup(hostname + 1);
 
 		if ((p = strchr((char*)settings->hostname, ']')))
 		{
@@ -64,7 +66,7 @@ void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 	else
 	{
 		/* Port number is cut off and used if exactly one : in the string */
-		settings->hostname = xstrdup(hostname);
+		settings->hostname = _strdup(hostname);
 
 		if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
 		{
@@ -185,7 +187,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing username\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->username = xstrdup(argv[index]);
+			settings->username = _strdup(argv[index]);
 		}
 		else if (strcmp("-p", argv[index]) == 0)
 		{
@@ -195,7 +197,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing password\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->password = xstrdup(argv[index]);
+			settings->password = _strdup(argv[index]);
 			settings->autologon = 1;
 
 			/*
@@ -213,7 +215,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing domain\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->domain = xstrdup(argv[index]);
+			settings->domain = _strdup(argv[index]);
 		}
 		else if (strcmp("-s", argv[index]) == 0)
 		{
@@ -223,7 +225,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing shell\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->shell = xstrdup(argv[index]);
+			settings->shell = _strdup(argv[index]);
 		}
 		else if (strcmp("-c", argv[index]) == 0)
 		{
@@ -233,7 +235,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing directory\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->directory = xstrdup(argv[index]);
+			settings->directory = _strdup(argv[index]);
 		}
 		else if (strcmp("-g", argv[index]) == 0)
 		{
@@ -289,7 +291,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->window_title = xstrdup(argv[index]);
+			settings->window_title = _strdup(argv[index]);
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{
@@ -384,7 +386,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->certificate_name = xstrdup(argv[index]);
+			settings->certificate_name = _strdup(argv[index]);
 		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
@@ -520,7 +522,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing file name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->dump_rfx_file = xstrdup(argv[index]);
+			settings->dump_rfx_file = _strdup(argv[index]);
 			settings->dump_rfx = true;
 			settings->rfx_codec_only = true;
 		}
@@ -532,7 +534,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing file name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->play_rfx_file = xstrdup(argv[index]);
+			settings->play_rfx_file = _strdup(argv[index]);
 			settings->play_rfx = true;
 		}
 		else if (strcmp("--fonts", argv[index]) == 0)
@@ -679,21 +681,21 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing TSG username\n");
 				return -1;
 			}
-			settings->tsg_username = xstrdup(argv[index]);
+			settings->tsg_username = _strdup(argv[index]);
 			index++;
 			if (index == argc)
 			{
 				printf("missing TSG password\n");
 				return -1;
 			}
-			settings->tsg_password = xstrdup(argv[index]);
+			settings->tsg_password = _strdup(argv[index]);
 			index++;
 			if (index == argc)
 			{
 				printf("missing TSG server\n");
 				return -1;
 			}
-			settings->tsg_hostname = xstrdup(argv[index]);
+			settings->tsg_hostname = _strdup(argv[index]);
 		}
 		else if (strcmp("--plugin", argv[index]) == 0)
 		{
@@ -809,7 +811,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return -1;
 			}
 			settings->send_preconnection_pdu = true;
-			settings->preconnection_blob = xstrdup(argv[index]);
+			settings->preconnection_blob = _strdup(argv[index]);
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
@@ -874,7 +876,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			input[0] = '\0';
 			printf("username: ");
 			if (scanf("%511s", input) > 0) {
-				settings->username = xstrdup(input);
+				settings->username = _strdup(input);
 			}
 		}
 		/* password */
@@ -899,7 +901,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				/* Try to catch the cases where the string is NULL-ish right
 				   at the get go */
 				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0')) {
-					settings->domain = xstrdup(input);
+					settings->domain = _strdup(input);
 				}
 			}
 		}

@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
 #include <freerdp/utils/time.h>
@@ -1502,7 +1504,7 @@ char* freerdp_get_unix_timezone_identifier()
 
 	if (tz_env != NULL)
 	{
-		tzid = xstrdup(tz_env);
+		tzid = _strdup(tz_env);
 		return tzid;
 	}
 
@@ -1576,7 +1578,7 @@ boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const
 	char* p;
 	char* list_copy;
 
-	list_copy = xstrdup(list);
+	list_copy = _strdup(list);
 
 	p = strtok(list_copy, " ");
 

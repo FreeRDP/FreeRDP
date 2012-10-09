@@ -30,10 +30,12 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME}
+		winpr
 		freerdp
 		freerdp-channels-server)
 else()
 	target_link_libraries(${MODULE_NAME}
+		winpr-crt
 		freerdp-core
 		freerdp-utils
 		freerdp-codec
