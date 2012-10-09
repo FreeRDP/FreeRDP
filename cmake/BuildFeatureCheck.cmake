@@ -16,12 +16,12 @@
 # limitations under the License.
 #=============================================================================
 
-# If WITH_MONOLITHIC_BUILD is used with cmake < 2.8.8 build fails
-if (WITH_MONOLITHIC_BUILD)
+# If MONOLITHIC_BUILD is used with cmake < 2.8.8 build fails
+if (MONOLITHIC_BUILD)
 	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)
-		message(FATAL_ERROR "CMAKE version >= 2.8.8 required for WITH_MONOLITHIC_BUILD")
+		message(FATAL_ERROR "CMAKE version >= 2.8.8 required for MONOLITHIC_BUILD")
 	endif()
-endif(WITH_MONOLITHIC_BUILD)
+endif(MONOLITHIC_BUILD)
 
 # GetGitRevisionDescription requires FindGit which was added in version 2.8.2
 # build won't fail but GIT_REVISION is set to n/a

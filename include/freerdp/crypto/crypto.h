@@ -80,43 +80,43 @@ struct crypto_cert_struct
 typedef struct crypto_sha1_struct* CryptoSha1;
 
 FREERDP_API CryptoSha1 crypto_sha1_init(void);
-FREERDP_API void crypto_sha1_update(CryptoSha1 sha1, const uint8* data, uint32 length);
-FREERDP_API void crypto_sha1_final(CryptoSha1 sha1, uint8* out_data);
+FREERDP_API void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length);
+FREERDP_API void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data);
 
 #define	CRYPTO_MD5_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 typedef struct crypto_md5_struct* CryptoMd5;
 
 FREERDP_API CryptoMd5 crypto_md5_init(void);
-FREERDP_API void crypto_md5_update(CryptoMd5 md5, const uint8* data, uint32 length);
-FREERDP_API void crypto_md5_final(CryptoMd5 md5, uint8* out_data);
+FREERDP_API void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length);
+FREERDP_API void crypto_md5_final(CryptoMd5 md5, BYTE* out_data);
 
 typedef struct crypto_rc4_struct* CryptoRc4;
 
-FREERDP_API CryptoRc4 crypto_rc4_init(const uint8* key, uint32 length);
-FREERDP_API void crypto_rc4(CryptoRc4 rc4, uint32 length, const uint8* in_data, uint8* out_data);
+FREERDP_API CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length);
+FREERDP_API void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data);
 FREERDP_API void crypto_rc4_free(CryptoRc4 rc4);
 
 typedef struct crypto_des3_struct* CryptoDes3;
 
-FREERDP_API CryptoDes3 crypto_des3_encrypt_init(const uint8* key, const uint8* ivec);
-FREERDP_API CryptoDes3 crypto_des3_decrypt_init(const uint8* key, const uint8* ivec);
-FREERDP_API void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, const uint8 *in_data, uint8 *out_data);
-FREERDP_API void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const uint8 *in_data, uint8* out_data);
+FREERDP_API CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec);
+FREERDP_API CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec);
+FREERDP_API void crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE *out_data);
+FREERDP_API void crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE* out_data);
 FREERDP_API void crypto_des3_free(CryptoDes3 des3);
 
 typedef struct crypto_hmac_struct* CryptoHmac;
 
 FREERDP_API CryptoHmac crypto_hmac_new(void);
-FREERDP_API void crypto_hmac_sha1_init(CryptoHmac hmac, const uint8 *data, uint32 length);
-FREERDP_API void crypto_hmac_update(CryptoHmac hmac, const uint8 *data, uint32 length);
-FREERDP_API void crypto_hmac_final(CryptoHmac hmac, uint8 *out_data, uint32 length);
+FREERDP_API void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE *data, UINT32 length);
+FREERDP_API void crypto_hmac_update(CryptoHmac hmac, const BYTE *data, UINT32 length);
+FREERDP_API void crypto_hmac_final(CryptoHmac hmac, BYTE *out_data, UINT32 length);
 FREERDP_API void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
 
 #include <freerdp/crypto/certificate.h>
 
-FREERDP_API CryptoCert crypto_cert_read(uint8* data, uint32 length);
+FREERDP_API CryptoCert crypto_cert_read(BYTE* data, UINT32 length);
 FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
 FREERDP_API char* crypto_cert_subject(X509* xcert);
 FREERDP_API char* crypto_cert_subject_common_name(X509* xcert, int* length);
@@ -125,23 +125,23 @@ FREERDP_API char* crypto_cert_issuer(X509* xcert);
 FREERDP_API void crypto_cert_print_info(X509* xcert);
 FREERDP_API void crypto_cert_free(CryptoCert cert);
 
-FREERDP_API boolean x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
+FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
 FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname);
-FREERDP_API boolean crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength);
+FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength);
 
 #define	TSSK_KEY_LENGTH	64
-extern const uint8 tssk_modulus[];
-extern const uint8 tssk_privateExponent[];
-extern const uint8 tssk_exponent[];
+extern const BYTE tssk_modulus[];
+extern const BYTE tssk_privateExponent[];
+extern const BYTE tssk_exponent[];
 
-FREERDP_API void crypto_rsa_public_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output);
-FREERDP_API void crypto_rsa_public_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* exponent, uint8* output);
-FREERDP_API void crypto_rsa_private_encrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output);
-FREERDP_API void crypto_rsa_private_decrypt(const uint8* input, int length, uint32 key_length, const uint8* modulus, const uint8* private_exponent, uint8* output);
-FREERDP_API void crypto_reverse(uint8* data, int length);
-FREERDP_API void crypto_nonce(uint8* nonce, int size);
+FREERDP_API void crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output);
+FREERDP_API void crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output);
+FREERDP_API void crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
+FREERDP_API void crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
+FREERDP_API void crypto_reverse(BYTE* data, int length);
+FREERDP_API void crypto_nonce(BYTE* nonce, int size);
 
-FREERDP_API char* crypto_base64_encode(uint8* data, int length);
-FREERDP_API void crypto_base64_decode(uint8* enc_data, int length, uint8** dec_data, int* res_length);
+FREERDP_API char* crypto_base64_encode(BYTE* data, int length);
+FREERDP_API void crypto_base64_decode(BYTE* enc_data, int length, BYTE** dec_data, int* res_length);
 
 #endif /* FREERDP_CRYPTO_H */

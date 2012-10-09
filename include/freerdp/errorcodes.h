@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 /**
-* This static variable holds an error code if the return value from connect is false.
+* This static variable holds an error code if the return value from connect is FALSE.
 * This variable is always set to 0 in the beginning of the connect sequence.
 * The returned code can be used to inform the user of the detailed connect error.
 * The value can hold one of the defined error codes below OR an error according to errno

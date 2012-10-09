@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Caches
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -58,6 +58,6 @@ void cache_free(rdpCache* cache)
 		offscreen_cache_free(cache->offscreen);
 		palette_cache_free(cache->palette);
 		nine_grid_cache_free(cache->nine_grid);
-		xfree(cache);
+		free(cache);
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Pen Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -45,7 +45,7 @@
 
 HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 {
-	HGDI_PEN hPen = (HGDI_PEN) xmalloc(sizeof(GDI_PEN));
+	HGDI_PEN hPen = (HGDI_PEN) malloc(sizeof(GDI_PEN));
 	hPen->objectType = GDIOBJECT_PEN;
 	hPen->style = fnPenStyle;
 	hPen->color = crColor;
@@ -53,15 +53,15 @@ HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 	return hPen;
 }
 
-INLINE uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
+INLINE BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen)
 {
 	/* TODO: implement conversion using palette */
 	return 0xFF;
 }
 
-INLINE uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
+INLINE UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 {
-	uint16 p;
+	UINT16 p;
 	int r, g, b;
 	GetRGB32(r, g, b, pen->color);
  	RGB_888_565(r, g, b);
@@ -69,7 +69,7 @@ INLINE uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 	return p;
 }
 
-INLINE uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
+INLINE UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
 {
 	return pen->color;
 }

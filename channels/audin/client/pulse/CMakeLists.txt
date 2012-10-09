@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -27,7 +27,7 @@ include_directories(${PULSEAUDIO_INCLUDE_DIR})
 add_library(audin_pulse ${AUDIN_PULSE_SRCS})
 set_target_properties(audin_pulse PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(audin_pulse freerdp)
 else()
 	target_link_libraries(audin_pulse freerdp-utils)

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X.224 Transport Protocol Data Units (TPDUs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -41,14 +41,14 @@ enum X224_TPDU_TYPE
 #define TPDU_CONNECTION_CONFIRM_LENGTH		(TPKT_HEADER_LENGTH + TPDU_CONNECTION_CONFIRM_HEADER_LENGTH)
 #define TPDU_DISCONNECT_REQUEST_LENGTH		(TPKT_HEADER_LENGTH + TPDU_DISCONNECT_REQUEST_HEADER_LENGTH)
 
-uint8 tpdu_read_header(STREAM* s, uint8* code);
-void tpdu_write_header(STREAM* s, uint16 length, uint8 code);
-uint8 tpdu_read_connection_request(STREAM* s);
-void tpdu_write_connection_request(STREAM* s, uint16 length);
-uint8 tpdu_read_connection_confirm(STREAM* s);
-void tpdu_write_connection_confirm(STREAM* s, uint16 length);
-void tpdu_write_disconnect_request(STREAM* s, uint16 length);
-uint16 tpdu_read_data(STREAM* s);
+BYTE tpdu_read_header(STREAM* s, BYTE* code);
+void tpdu_write_header(STREAM* s, UINT16 length, BYTE code);
+BYTE tpdu_read_connection_request(STREAM* s);
+void tpdu_write_connection_request(STREAM* s, UINT16 length);
+BYTE tpdu_read_connection_confirm(STREAM* s);
+void tpdu_write_connection_confirm(STREAM* s, UINT16 length);
+void tpdu_write_disconnect_request(STREAM* s, UINT16 length);
+UINT16 tpdu_read_data(STREAM* s);
 void tpdu_write_data(STREAM* s);
 
 #endif /* __TPDU_H */

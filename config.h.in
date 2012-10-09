@@ -37,7 +37,7 @@
 #cmakedefine WITH_WIN8
 
 /* Plugins */
-#cmakedefine WITH_STATIC_PLUGINS
+#cmakedefine STATIC_CHANNELS
 #cmakedefine WITH_RDPDR
 
 

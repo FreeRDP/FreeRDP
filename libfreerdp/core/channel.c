@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Virtual Channels
  *
  * Copyright 2011 Vic Lee
@@ -34,10 +34,10 @@
 #include "rdp.h"
 #include "channel.h"
 
-boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int size)
+BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 {
 	STREAM* s;
-	uint32 flags;
+	UINT32 flags;
 	int i, left;
 	int chunk_size;
 	rdpChannel* channel = NULL;
@@ -54,7 +54,7 @@ boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int si
 	if (channel == NULL)
 	{
 		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
-		return false;
+		return FALSE;
 	}
 
 	flags = CHANNEL_FLAG_FIRST;
@@ -77,8 +77,8 @@ boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int si
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}
 
-		stream_write_uint32(s, size);
-		stream_write_uint32(s, flags);
+		stream_write_UINT32(s, size);
+		stream_write_UINT32(s, flags);
 		stream_check_size(s, chunk_size);
 		stream_write(s, data, chunk_size);
 
@@ -89,31 +89,31 @@ boolean freerdp_channel_send(rdpRdp* rdp, uint16 channel_id, uint8* data, int si
 		flags = 0;
 	}
 
-	return true;
+	return TRUE;
 }
 
-void freerdp_channel_process(freerdp* instance, STREAM* s, uint16 channel_id)
+void freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 {
-	uint32 length;
-	uint32 flags;
+	UINT32 length;
+	UINT32 flags;
 	int chunk_length;
 
-	stream_read_uint32(s, length);
-	stream_read_uint32(s, flags);
+	stream_read_UINT32(s, length);
+	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(instance->ReceiveChannelData, instance,
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
 }
 
-void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, uint16 channel_id)
+void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, UINT16 channel_id)
 {
-	uint32 length;
-	uint32 flags;
+	UINT32 length;
+	UINT32 flags;
 	int chunk_length;
 
-	stream_read_uint32(s, length);
-	stream_read_uint32(s, flags);
+	stream_read_UINT32(s, length);
+	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(client->ReceiveChannelData, client,

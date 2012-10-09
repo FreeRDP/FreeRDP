@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -34,8 +34,8 @@ struct _ISOCH_CALLBACK_DATA
 	void * prev;
 	void * next;
 	void * device;
-	uint8 * out_data;
-	uint32 out_size;
+	BYTE * out_data;
+	UINT32 out_size;
 	void * callback;
 };
 

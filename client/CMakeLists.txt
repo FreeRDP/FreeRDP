@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Client User Interfaces
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>

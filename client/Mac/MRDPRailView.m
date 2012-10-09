@@ -18,7 +18,7 @@ extern struct kkey g_keys[];
 
 - (void) updateDisplay
 {
-    boolean   moveWindow = NO;
+    BOOL   moveWindow = NO;
     NSRect    srcRectOuter;
     NSRect    destRectOuter;
     

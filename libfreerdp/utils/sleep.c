@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Sleep Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -32,7 +32,7 @@
 #include <unistd.h>
 #endif
 
-void freerdp_sleep(uint32 seconds)
+void freerdp_sleep(UINT32 seconds)
 {
 #ifndef _WIN32
 	sleep(seconds);
@@ -41,14 +41,14 @@ void freerdp_sleep(uint32 seconds)
 #endif
 }
 
-void freerdp_usleep(uint32 useconds)
+void freerdp_usleep(UINT32 useconds)
 {
 #ifndef _WIN32
 	usleep(useconds);
 #else
-	uint64 t1;
-	uint64 t2;
-	uint64 freq;
+	UINT64 t1;
+	UINT64 t2;
+	UINT64 freq;
 
 	QueryPerformanceCounter((LARGE_INTEGER*) &t1);
 	QueryPerformanceCounter((LARGE_INTEGER*) &freq);

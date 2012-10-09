@@ -29,7 +29,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (_tcscmp(PathOut, testPathOut) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), PathOut, testPathOut);
+		_tprintf(_T("Path Mismatch 1: Actual: %s, Expected: %s\n"), PathOut, testPathOut);
 		return -1;
 	}
 
@@ -47,7 +47,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (_tcscmp(PathOut, testPathOutMorePathBackslash) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), PathOut, testPathOutMorePathBackslash);
+		_tprintf(_T("Path Mismatch 2: Actual: %s, Expected: %s\n"), PathOut, testPathOutMorePathBackslash);
 		return -1;
 	}
 
@@ -65,7 +65,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (_tcscmp(PathOut, testPathOutMorePathBackslash) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), PathOut, testPathOutMorePathBackslash);
+		_tprintf(_T("Path Mismatch 3: Actual: %s, Expected: %s\n"), PathOut, testPathOutMorePathBackslash);
 		return -1;
 	}
 
@@ -83,7 +83,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (_tcscmp(PathOut, testPathOut) != 0)
 	{
-		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), PathOut, testPathOut);
+		_tprintf(_T("Path Mismatch 4: Actual: %s, Expected: %s\n"), PathOut, testPathOut);
 		return -1;
 	}
 

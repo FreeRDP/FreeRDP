@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Terminal Server Gateway (TSG)
  *
  * Copyright 2012 Fujitsu Technology Solutions GmbH
@@ -41,7 +41,7 @@
  * RPC NDR Interface Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802752/
  */
 
-uint8 tsg_packet1[108] =
+BYTE tsg_packet1[108] =
 {
 	0x43, 0x56, 0x00, 0x00, 0x43, 0x56, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x52, 0x54, 0x43, 0x56,
 	0x04, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -284,7 +284,7 @@ uint8 tsg_packet1[108] =
 	HRESULT ReturnValue:	00 00 00 00
  */
 
-uint8 tsg_packet2[112] =
+BYTE tsg_packet2[112] =
 {
 	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
 	0x53, 0x6C, 0x04, 0x33, 0x52, 0x51, 0x00, 0x00, 0x52, 0x51, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
@@ -330,7 +330,7 @@ uint8 tsg_packet2[112] =
 						0x00, 0x00
  */
 
-uint8 tsg_packet3[40] =
+BYTE tsg_packet3[40] =
 {
 	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
 	0x53, 0x6C, 0x04, 0x33, 0x01, 0x00, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00,
@@ -349,7 +349,7 @@ uint8 tsg_packet3[40] =
 	0x01, 0x00, 0x00, 0x00
  */
 
-uint8 tsg_packet4[48] =
+BYTE tsg_packet4[48] =
 {
 	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
 	0x53, 0x6C, 0x04, 0x33, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -366,13 +366,13 @@ uint8 tsg_packet4[48] =
 	0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00
  */
 
-uint8 tsg_packet5[20] =
+BYTE tsg_packet5[20] =
 {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00
 };
 
-DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths)
+DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
 {
 	STREAM* s;
 	int status;
@@ -381,11 +381,11 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	byte* buffer1 = NULL ;
 	byte* buffer2 = NULL ;
 	byte* buffer3 = NULL ;
-	uint32 buffer1Length;
-	uint32 buffer2Length;
-	uint32 buffer3Length;
-	uint32 numBuffers = 0;
-	uint32 totalDataBytes = 0;
+	UINT32 buffer1Length;
+	UINT32 buffer2Length;
+	UINT32 buffer3Length;
+	UINT32 numBuffers = 0;
+	UINT32 totalDataBytes = 0;
 
 	tsg = (rdpTsg*) IDL_handle;
 	buffer1Length = buffer2Length = buffer3Length = 0;
@@ -417,18 +417,18 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	s = stream_new(28 + totalDataBytes);
 
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
-	stream_write_uint32(s, 0); /* ContextType (4 bytes) */
+	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
 	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (4 bytes) */
 
-	stream_write_uint32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
-	stream_write_uint32_be(s, numBuffers); /* numBuffers (4 bytes) */
+	stream_write_UINT32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
+	stream_write_UINT32_be(s, numBuffers); /* numBuffers (4 bytes) */
 
 	if (buffer1Length > 0)
-		stream_write_uint32_be(s, buffer1Length); /* buffer1Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer1Length); /* buffer1Length (4 bytes) */
 	if (buffer2Length > 0)
-		stream_write_uint32_be(s, buffer2Length); /* buffer2Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer2Length); /* buffer2Length (4 bytes) */
 	if (buffer3Length > 0)
-		stream_write_uint32_be(s, buffer3Length); /* buffer3Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer3Length); /* buffer3Length (4 bytes) */
 
 	if (buffer1Length > 0)
 		stream_write(s, buffer1, buffer1Length); /* buffer1 (variable) */
@@ -453,10 +453,10 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	return length;
 }
 
-boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
-	uint8* data;
-	uint32 length;
+	BYTE* data;
+	UINT32 length;
 	STREAM* s_p4;
 	int status = -1;
 	rdpRpc* rpc = tsg->rpc;
@@ -466,7 +466,7 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (!rpc_connect(rpc))
 	{
 		printf("rpc_connect failed!\n");
-		return false;
+		return FALSE;
 	}
 
 	DEBUG_TSG("rpc_connect success");
@@ -488,23 +488,23 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=1 failed!\n");
-		return false;
+		return FALSE;
 	}
 
 	length = 0x8FFF;
-	data = xmalloc(length);
+	data = malloc(length);
 	if (data == NULL)
 	{
 		printf("rpc_recv - memory allocation error\n") ;
-		return false ;
+		return FALSE ;
 	}
 	status = rpc_read(rpc, data, length);
 
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
-		xfree(data) ;
-		return false;
+		free(data) ;
+		return FALSE;
 	}
 
 	memcpy(tsg->TunnelContext, data + (status - 24), 16);
@@ -534,8 +534,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=2 failed!\n");
-		xfree(data) ;
-		return false;
+		free(data) ;
+		return FALSE;
 	}
 
 	status = rpc_read(rpc, data, length);
@@ -543,8 +543,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_recv failed!\n");
-		xfree(data) ;
-		return false;
+		free(data) ;
+		return FALSE;
 	}
 
 	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
@@ -566,8 +566,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	if (status <= 0)
 	{
 		printf("rpc_write opnum=3 failed!\n");
-		xfree(data) ;
-		return false;
+		free(data) ;
+		return FALSE;
 	}
 	status = -1;
 
@@ -578,13 +578,13 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 
 	s_p4 = stream_new(60 + dest_addr_unic_len + 2);
 	stream_write(s_p4, tsg_packet4, 48);
-	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
-	stream_write_uint32(s_p4, 0x00000000); /* Offset */
-	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
+	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
+	stream_write_UINT32(s_p4, 0x00000000); /* Offset */
+	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
 	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
-	stream_write_uint16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
+	stream_write_UINT16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
 
-	xfree(dest_addr_unic);
+	free(dest_addr_unic);
 
 	/**
 	 * OpNum = 4
@@ -604,8 +604,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_write opnum=4 failed!\n");
 		stream_free(s_p4);
-		xfree(data);
-		return false;
+		free(data);
+		return FALSE;
 	}
 
 	status = rpc_read(rpc, data, length);
@@ -614,8 +614,8 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_recv failed!\n");
 		stream_free(s_p4);
-		xfree(data);
-		return false;
+		free(data);
+		return FALSE;
 	}
 
 	memcpy(tsg->ChannelContext, data + 4, 16);
@@ -643,17 +643,17 @@ boolean tsg_connect(rdpTsg* tsg, const char* hostname, uint16 port)
 	{
 		printf("rpc_write opnum=8 failed!\n");
 		stream_free(s_p4);
-		xfree(data);
-		return false;
+		free(data);
+		return FALSE;
 	}
 
 	stream_free(s_p4);
-	xfree(data);
+	free(data);
 
-	return true;
+	return TRUE;
 }
 
-int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
+int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
 
@@ -662,7 +662,7 @@ int tsg_read(rdpTsg* tsg, uint8* data, uint32 length)
 	return status;
 }
 
-int tsg_write(rdpTsg* tsg, uint8* data, uint32 length)
+int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
 }
@@ -688,6 +688,6 @@ void tsg_free(rdpTsg* tsg)
 	if (tsg != NULL)
 	{
 		rpc_free(tsg->rpc);
-		xfree(tsg);
+		free(tsg);
 	}
 }

@@ -85,6 +85,21 @@ BOOL CloseHandle(HANDLE hObject)
 
 		return TRUE;
 	}
+	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		int pipe_fd;
+
+		pipe_fd = (int) ((ULONG_PTR) Object);
+
+		if (pipe_fd != -1)
+		{
+			close(pipe_fd);
+		}
+
+		winpr_Handle_Remove(Object);
+
+		return TRUE;
+	}
 
 	return FALSE;
 }

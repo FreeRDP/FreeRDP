@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Offscreen Bitmap Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -32,10 +32,10 @@ typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
 struct rdp_offscreen_cache
 {
-	uint32 maxSize; /* 0 */
-	uint32 maxEntries; /* 1 */
+	UINT32 maxSize; /* 0 */
+	UINT32 maxEntries; /* 1 */
 	rdpBitmap** entries; /* 2 */
-	uint32 currentSurface; /* 3 */
+	UINT32 currentSurface; /* 3 */
 
 	/* internal */
 
@@ -43,9 +43,9 @@ struct rdp_offscreen_cache
 	rdpSettings* settings;
 };
 
-FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index);
-FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, uint32 index, rdpBitmap* bitmap);
-FREERDP_API void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint32 index);
+FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
+FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index, rdpBitmap* bitmap);
+FREERDP_API void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index);
 
 FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 

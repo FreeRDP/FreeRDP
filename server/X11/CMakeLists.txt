@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP X11 Server cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -63,7 +63,7 @@ if(WITH_XTEST)
         target_link_libraries(${MODULE_NAME} ${XTEST_LIBRARIES})
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} freerdp)
 	target_link_libraries(${MODULE_NAME} winpr)
 else()

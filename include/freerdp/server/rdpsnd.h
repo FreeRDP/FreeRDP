@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Server Audio Virtual Channel
  *
  * Copyright 2012 Vic Lee
@@ -25,11 +25,11 @@
 
 typedef struct _rdpsnd_server_context rdpsnd_server_context;
 
-typedef boolean (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
+typedef BOOL (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
 typedef void (*psRdpsndServerSelectFormat)(rdpsnd_server_context* context, int client_format_index);
-typedef boolean (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
-typedef boolean (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
-typedef boolean (*psRdpsndServerClose)(rdpsnd_server_context* context);
+typedef BOOL (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
+typedef BOOL (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
+typedef BOOL (*psRdpsndServerClose)(rdpsnd_server_context* context);
 
 typedef void (*psRdpsndServerActivated)(rdpsnd_server_context* context);
 

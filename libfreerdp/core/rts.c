@@ -45,7 +45,7 @@
  *
  */
 
-boolean rts_connect(rdpRpc* rpc)
+BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
 	RTS_PDU rts_pdu;
@@ -54,25 +54,25 @@ boolean rts_connect(rdpRpc* rpc)
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
 		printf("rpc_out_connect_http error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rts_send_CONN_A1_pdu(rpc))
 	{
 		printf("rpc_send_CONN_A1_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
 		printf("rpc_in_connect_http error!\n");
-		return false;
+		return FALSE;
 	}
 
 	if (!rts_send_CONN_B1_pdu(rpc))
 	{
 		printf("rpc_send_CONN_B1_pdu error!\n");
-		return false;
+		return FALSE;
 	}
 
 	/* Receive OUT Channel Response */
@@ -83,7 +83,7 @@ boolean rts_connect(rdpRpc* rpc)
 		printf("rts_connect error!\n");
 		http_response_print(http_response);
 		http_response_free(http_response) ;
-		return false;
+		return FALSE;
 	}
 
 	http_response_print(http_response);
@@ -96,7 +96,7 @@ boolean rts_connect(rdpRpc* rpc)
 	/* Receive CONN_C2 RTS PDU */
 	status = rts_recv_pdu(rpc, &rts_pdu);
 
-	return true;
+	return TRUE;
 }
 
 #ifdef WITH_DEBUG_RTS
@@ -124,76 +124,76 @@ static const char* const RTS_CMD_STRINGS[] =
 
 void rts_pdu_header_read(STREAM* s, RTS_PDU_HEADER* header)
 {
-	stream_read_uint8(s, header->rpc_vers); /* rpc_vers (1 byte) */
-	stream_read_uint8(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
-	stream_read_uint8(s, header->ptype); /* PTYPE (1 byte) */
-	stream_read_uint8(s, header->pfc_flags); /* pfc_flags (1 byte) */
-	stream_read_uint8(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
-	stream_read_uint16(s, header->frag_length); /* frag_length (2 bytes) */
-	stream_read_uint16(s, header->auth_length); /* auth_length (2 bytes) */
-	stream_read_uint32(s, header->call_id); /* call_id (4 bytes) */
-	stream_read_uint16(s, header->flags); /* flags (2 bytes) */
-	stream_read_uint16(s, header->numberOfCommands); /* numberOfCommands (2 bytes) */
+	stream_read_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
+	stream_read_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
+	stream_read_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_read_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
+	stream_read_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
+	stream_read_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
+	stream_read_UINT32(s, header->call_id); /* call_id (4 bytes) */
+	stream_read_UINT16(s, header->flags); /* flags (2 bytes) */
+	stream_read_UINT16(s, header->numberOfCommands); /* numberOfCommands (2 bytes) */
 }
 
 void rts_pdu_header_write(STREAM* s, RTS_PDU_HEADER* header)
 {
-	stream_write_uint8(s, header->rpc_vers); /* rpc_vers (1 byte) */
-	stream_write_uint8(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
-	stream_write_uint8(s, header->ptype); /* PTYPE (1 byte) */
-	stream_write_uint8(s, header->pfc_flags); /* pfc_flags (1 byte) */
-	stream_write_uint8(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
-	stream_write_uint8(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
-	stream_write_uint8(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
-	stream_write_uint8(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
-	stream_write_uint16(s, header->frag_length); /* frag_length (2 bytes) */
-	stream_write_uint16(s, header->auth_length); /* auth_length (2 bytes) */
-	stream_write_uint32(s, header->call_id); /* call_id (4 bytes) */
-	stream_write_uint16(s, header->flags); /* flags (2 bytes) */
-	stream_write_uint16(s, header->numberOfCommands); /* numberOfCommands (2 bytes) */
+	stream_write_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
+	stream_write_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
+	stream_write_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_write_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
+	stream_write_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
+	stream_write_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
+	stream_write_UINT32(s, header->call_id); /* call_id (4 bytes) */
+	stream_write_UINT16(s, header->flags); /* flags (2 bytes) */
+	stream_write_UINT16(s, header->numberOfCommands); /* numberOfCommands (2 bytes) */
 }
 
 void rts_receive_window_size_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* ReceiveWindowSize (4 bytes) */
+	stream_seek_UINT32(s); /* ReceiveWindowSize (4 bytes) */
 }
 
-void rts_receive_window_size_command_write(STREAM* s, uint32 ReceiveWindowSize)
+void rts_receive_window_size_command_write(STREAM* s, UINT32 ReceiveWindowSize)
 {
-	stream_write_uint32(s, RTS_CMD_RECEIVE_WINDOW_SIZE); /* CommandType (4 bytes) */
-	stream_write_uint32(s, ReceiveWindowSize); /* ReceiveWindowSize (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_RECEIVE_WINDOW_SIZE); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, ReceiveWindowSize); /* ReceiveWindowSize (4 bytes) */
 }
 
 void rts_flow_control_ack_command_read(rdpRpc* rpc, STREAM* s)
 {
 	/* Ack (24 bytes) */
-	stream_seek_uint32(s); /* BytesReceived (4 bytes) */
-	stream_seek_uint32(s); /* AvailableWindow (4 bytes) */
+	stream_seek_UINT32(s); /* BytesReceived (4 bytes) */
+	stream_seek_UINT32(s); /* AvailableWindow (4 bytes) */
 	stream_seek(s, 16); /* ChannelCookie (16 bytes) */
 }
 
-void rts_flow_control_ack_command_write(STREAM* s, uint32 BytesReceived, uint32 AvailableWindow, uint8* ChannelCookie)
+void rts_flow_control_ack_command_write(STREAM* s, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie)
 {
-	stream_write_uint32(s, RTS_CMD_FLOW_CONTROL_ACK); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_FLOW_CONTROL_ACK); /* CommandType (4 bytes) */
 
 	/* Ack (24 bytes) */
-	stream_write_uint32(s, BytesReceived); /* BytesReceived (4 bytes) */
-	stream_write_uint32(s, AvailableWindow); /* AvailableWindow (4 bytes) */
+	stream_write_UINT32(s, BytesReceived); /* BytesReceived (4 bytes) */
+	stream_write_UINT32(s, AvailableWindow); /* AvailableWindow (4 bytes) */
 	stream_write(s, ChannelCookie, 16); /* ChannelCookie (16 bytes) */
 }
 
 void rts_connection_timeout_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* ConnectionTimeout (4 bytes) */
+	stream_seek_UINT32(s); /* ConnectionTimeout (4 bytes) */
 }
 
-void rts_connection_timeout_command_write(STREAM* s, uint32 ConnectionTimeout)
+void rts_connection_timeout_command_write(STREAM* s, UINT32 ConnectionTimeout)
 {
-	stream_write_uint32(s, RTS_CMD_CONNECTION_TIMEOUT); /* CommandType (4 bytes) */
-	stream_write_uint32(s, ConnectionTimeout); /* ConnectionTimeout (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_CONNECTION_TIMEOUT); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, ConnectionTimeout); /* ConnectionTimeout (4 bytes) */
 }
 
 void rts_cookie_command_read(rdpRpc* rpc, STREAM* s)
@@ -201,43 +201,43 @@ void rts_cookie_command_read(rdpRpc* rpc, STREAM* s)
 	stream_seek(s, 16); /* Cookie (16 bytes) */
 }
 
-void rts_cookie_command_write(STREAM* s, uint8* Cookie)
+void rts_cookie_command_write(STREAM* s, BYTE* Cookie)
 {
-	stream_write_uint32(s, RTS_CMD_COOKIE); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_COOKIE); /* CommandType (4 bytes) */
 	stream_write(s, Cookie, 16); /* Cookie (16 bytes) */
 }
 
 void rts_channel_lifetime_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* ChannelLifetime (4 bytes) */
+	stream_seek_UINT32(s); /* ChannelLifetime (4 bytes) */
 }
 
-void rts_channel_lifetime_command_write(STREAM* s, uint32 ChannelLifetime)
+void rts_channel_lifetime_command_write(STREAM* s, UINT32 ChannelLifetime)
 {
-	stream_write_uint32(s, RTS_CMD_CHANNEL_LIFETIME); /* CommandType (4 bytes) */
-	stream_write_uint32(s, ChannelLifetime); /* ChannelLifetime (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_CHANNEL_LIFETIME); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, ChannelLifetime); /* ChannelLifetime (4 bytes) */
 }
 
 void rts_client_keepalive_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* ClientKeepalive (4 bytes) */
+	stream_seek_UINT32(s); /* ClientKeepalive (4 bytes) */
 }
 
-void rts_client_keepalive_command_write(STREAM* s, uint32 ClientKeepalive)
+void rts_client_keepalive_command_write(STREAM* s, UINT32 ClientKeepalive)
 {
-	stream_write_uint32(s, RTS_CMD_CLIENT_KEEPALIVE); /* CommandType (4 bytes) */
-	stream_write_uint32(s, ClientKeepalive); /* ClientKeepalive (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_CLIENT_KEEPALIVE); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, ClientKeepalive); /* ClientKeepalive (4 bytes) */
 }
 
 void rts_version_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* Version (4 bytes) */
+	stream_seek_UINT32(s); /* Version (4 bytes) */
 }
 
 void rts_version_command_write(STREAM* s)
 {
-	stream_write_uint32(s, RTS_CMD_VERSION); /* CommandType (4 bytes) */
-	stream_write_uint32(s, 1); /* Version (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_VERSION); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, 1); /* Version (4 bytes) */
 }
 
 void rts_empty_command_read(rdpRpc* rpc, STREAM* s)
@@ -247,20 +247,20 @@ void rts_empty_command_read(rdpRpc* rpc, STREAM* s)
 
 void rts_empty_command_write(STREAM* s)
 {
-	stream_write_uint32(s, RTS_CMD_EMPTY); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_EMPTY); /* CommandType (4 bytes) */
 }
 
 void rts_padding_command_read(rdpRpc* rpc, STREAM* s)
 {
-	uint32 ConformanceCount;
+	UINT32 ConformanceCount;
 
-	stream_read_uint32(s, ConformanceCount); /* ConformanceCount (4 bytes) */
+	stream_read_UINT32(s, ConformanceCount); /* ConformanceCount (4 bytes) */
 	stream_seek(s, ConformanceCount); /* Padding (variable) */
 }
 
-void rts_padding_command_write(STREAM* s, uint32 ConformanceCount)
+void rts_padding_command_write(STREAM* s, UINT32 ConformanceCount)
 {
-	stream_write_uint32(s, ConformanceCount); /* ConformanceCount (4 bytes) */
+	stream_write_UINT32(s, ConformanceCount); /* ConformanceCount (4 bytes) */
 	stream_write_zero(s, ConformanceCount); /* Padding (variable) */
 }
 
@@ -271,7 +271,7 @@ void rts_negative_ance_command_read(rdpRpc* rpc, STREAM* s)
 
 void rts_negative_ance_command_write(STREAM* s)
 {
-	stream_write_uint32(s, RTS_CMD_NEGATIVE_ANCE); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_NEGATIVE_ANCE); /* CommandType (4 bytes) */
 }
 
 void rts_ance_command_read(rdpRpc* rpc, STREAM* s)
@@ -281,14 +281,14 @@ void rts_ance_command_read(rdpRpc* rpc, STREAM* s)
 
 void rts_ance_command_write(STREAM* s)
 {
-	stream_write_uint32(s, RTS_CMD_ANCE); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_ANCE); /* CommandType (4 bytes) */
 }
 
 void rts_client_address_command_read(rdpRpc* rpc, STREAM* s)
 {
-	uint32 AddressType;
+	UINT32 AddressType;
 
-	stream_read_uint32(s, AddressType); /* AddressType (4 bytes) */
+	stream_read_UINT32(s, AddressType); /* AddressType (4 bytes) */
 
 	if (AddressType == 0)
 	{
@@ -302,10 +302,10 @@ void rts_client_address_command_read(rdpRpc* rpc, STREAM* s)
 	stream_seek(s, 12); /* padding (12 bytes) */
 }
 
-void rts_client_address_command_write(STREAM* s, uint32 AddressType, uint8* ClientAddress)
+void rts_client_address_command_write(STREAM* s, UINT32 AddressType, BYTE* ClientAddress)
 {
-	stream_write_uint32(s, RTS_CMD_CLIENT_ADDRESS); /* CommandType (4 bytes) */
-	stream_write_uint32(s, AddressType); /* AddressType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_CLIENT_ADDRESS); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, AddressType); /* AddressType (4 bytes) */
 
 	if (AddressType == 0)
 	{
@@ -324,46 +324,46 @@ void rts_association_group_id_command_read(rdpRpc* rpc, STREAM* s)
 	stream_seek(s, 16); /* AssociationGroupId (16 bytes) */
 }
 
-void rts_association_group_id_command_write(STREAM* s, uint8* associationGroupId)
+void rts_association_group_id_command_write(STREAM* s, BYTE* associationGroupId)
 {
-	stream_write_uint32(s, RTS_CMD_ASSOCIATION_GROUP_ID); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_ASSOCIATION_GROUP_ID); /* CommandType (4 bytes) */
 	stream_write(s, associationGroupId, 16); /* AssociationGroupId (16 bytes) */
 }
 
 void rts_destination_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* Destination (4 bytes) */
+	stream_seek_UINT32(s); /* Destination (4 bytes) */
 }
 
-void rts_destination_command_write(STREAM* s, uint32 Destination)
+void rts_destination_command_write(STREAM* s, UINT32 Destination)
 {
-	stream_write_uint32(s, RTS_CMD_DESTINATION); /* CommandType (4 bytes) */
-	stream_write_uint32(s, Destination); /* Destination (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_DESTINATION); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, Destination); /* Destination (4 bytes) */
 }
 
 void rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, STREAM* s)
 {
-	stream_seek_uint32(s); /* PingTrafficSent (4 bytes) */
+	stream_seek_UINT32(s); /* PingTrafficSent (4 bytes) */
 }
 
-void rts_ping_traffic_sent_notify_command_write(STREAM* s, uint32 PingTrafficSent)
+void rts_ping_traffic_sent_notify_command_write(STREAM* s, UINT32 PingTrafficSent)
 {
-	stream_write_uint32(s, RTS_CMD_PING_TRAFFIC_SENT_NOTIFY); /* CommandType (4 bytes) */
-	stream_write_uint32(s, PingTrafficSent); /* PingTrafficSent (4 bytes) */
+	stream_write_UINT32(s, RTS_CMD_PING_TRAFFIC_SENT_NOTIFY); /* CommandType (4 bytes) */
+	stream_write_UINT32(s, PingTrafficSent); /* PingTrafficSent (4 bytes) */
 }
 
-void rpc_generate_cookie(uint8* cookie)
+void rpc_generate_cookie(BYTE* cookie)
 {
 	RAND_pseudo_bytes(cookie, 16);
 }
 
-boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
+BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
-	uint32 ReceiveWindowSize;
-	uint8* OUTChannelCookie;
-	uint8* VirtualConnectionCookie;
+	UINT32 ReceiveWindowSize;
+	BYTE* OUTChannelCookie;
+	BYTE* VirtualConnectionCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -383,11 +383,11 @@ boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	s = stream_new(header.frag_length);
 
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->Cookie));
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
+	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
+	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
 
-	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
-	OUTChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
+	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
@@ -401,16 +401,16 @@ boolean rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
-boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
+BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
-	uint8* INChannelCookie;
-	uint8* AssociationGroupId;
-	uint8* VirtualConnectionCookie;
+	BYTE* INChannelCookie;
+	BYTE* AssociationGroupId;
+	BYTE* VirtualConnectionCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -430,12 +430,12 @@ boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	s = stream_new(header.frag_length);
 
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie));
-	rpc_generate_cookie((uint8*) &(rpc->VirtualConnection->AssociationGroupId));
+	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
+	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
 
-	VirtualConnectionCookie = (uint8*) &(rpc->VirtualConnection->Cookie);
-	INChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultInChannelCookie);
-	AssociationGroupId = (uint8*) &(rpc->VirtualConnection->AssociationGroupId);
+	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
+	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
+	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
 
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
 	rts_version_command_write(s); /* Version (8 bytes) */
@@ -450,10 +450,10 @@ boolean rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
-boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
+BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -483,16 +483,16 @@ boolean rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
-boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
+BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
-	uint32 BytesReceived;
-	uint32 AvailableWindow;
-	uint8* ChannelCookie;
+	UINT32 BytesReceived;
+	UINT32 AvailableWindow;
+	BYTE* ChannelCookie;
 
 	header.rpc_vers = 5;
 	header.rpc_vers_minor = 0;
@@ -512,7 +512,7 @@ boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
-	ChannelCookie = (uint8*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 
 	s = stream_new(header.frag_length);
 	rts_pdu_header_write(s, &header); /* RTS Header (20 bytes) */
@@ -527,10 +527,10 @@ boolean rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
-boolean rts_send_ping_pdu(rdpRpc* rpc)
+BOOL rts_send_ping_pdu(rdpRpc* rpc)
 {
 	STREAM* s;
 	RTS_PDU_HEADER header;
@@ -559,14 +559,14 @@ boolean rts_send_ping_pdu(rdpRpc* rpc)
 
 	stream_free(s);
 
-	return true;
+	return TRUE;
 }
 
 int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 {
 	int i;
 	STREAM* s;
-	uint32 CommandType;
+	UINT32 CommandType;
 
 	DEBUG_RTS("numberOfCommands:%d", rts_pdu->header.numberOfCommands);
 
@@ -581,7 +581,7 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 
 	for (i = 0; i < rts_pdu->header.numberOfCommands; i++)
 	{
-		stream_read_uint32(s, CommandType); /* CommandType (4 bytes) */
+		stream_read_UINT32(s, CommandType); /* CommandType (4 bytes) */
 
 		DEBUG_RTS("CommandType: %s (0x%08X)", RTS_CMD_STRINGS[CommandType % 14], CommandType);
 
@@ -667,11 +667,11 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	STREAM* s;
 	int status;
 	int length;
-	uint8 header_buffer[20];
+	BYTE header_buffer[20];
 	rdpTls* tls_out = rpc->tls_out;
 
 	/* read first 20 bytes to get RTS PDU Header */
-	status = tls_read(tls_out, (uint8*) &header_buffer, 20);
+	status = tls_read(tls_out, (BYTE*) &header_buffer, 20);
 
 	if (status <= 0)
 	{
@@ -688,7 +688,7 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	stream_free(s);
 
 	length = rts_pdu->header.frag_length - 20;
-	rts_pdu->content = (uint8*) xmalloc(length);
+	rts_pdu->content = (BYTE*) malloc(length);
 
 	status = tls_read(tls_out, rts_pdu->content, length);
 

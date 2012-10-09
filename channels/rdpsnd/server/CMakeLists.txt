@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -15,15 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "rdpsnd")
 set(MODULE_PREFIX "CHANNEL_RDPSND_SERVER")
 
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd.c
 	PARENT_SCOPE)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
 else()
 	set(${MODULE_PREFIX}_LIBS freerdp-utils PARENT_SCOPE)
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Server")
 

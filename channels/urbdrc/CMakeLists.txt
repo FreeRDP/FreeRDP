@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -20,5 +20,3 @@ add_subdirectory(libusb)
 if(WITH_CLIENT_CHANNELS)
 	add_subdirectory(client)
 endif()
-
-

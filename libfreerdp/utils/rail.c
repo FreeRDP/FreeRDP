@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL) Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,16 +21,21 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/rail.h>
+#include <freerdp/utils/memory.h>
+
 #include <freerdp/rail.h>
 
-void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString)
+void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString)
 {
 	unicode_string->length = cbString;
-	unicode_string->string = xzalloc(cbString);
+	unicode_string->string = malloc(cbString);
+	memset(unicode_string->string, 0, cbString);
 }
 
 void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
@@ -38,17 +43,17 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 	unicode_string->length = 0;
 
 	if (unicode_string->string != NULL)
-		xfree(unicode_string->string);
+		free(unicode_string->string);
 }
 
 void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	stream_read_uint16(s, unicode_string->length); /* cbString (2 bytes) */
+	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 
 	if (unicode_string->string == NULL)
-		unicode_string->string = (uint8*) xmalloc(unicode_string->length);
+		unicode_string->string = (BYTE*) malloc(unicode_string->length);
 	else
-		unicode_string->string = (uint8*) xrealloc(unicode_string->string, unicode_string->length);
+		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
 }
@@ -56,7 +61,7 @@ void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	stream_check_size(s, 2 + unicode_string->length);
-	stream_write_uint16(s, unicode_string->length); /* cbString (2 bytes) */
+	stream_write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
@@ -71,26 +76,26 @@ void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_str
 
 void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 {
-	stream_read_uint16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_read_uint16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_read_uint16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_read_uint16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
 void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 {
-	stream_write_uint16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_write_uint16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_write_uint16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_write_uint16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
-void* rail_clone_order(uint32 event_type, void* order)
+void* rail_clone_order(UINT32 event_type, void* order)
 {
 	struct
 	{
-		uint32 type;
-		uint32 size;
+		UINT32 type;
+		UINT32 size;
 	} ordersize_table[] =
 	{
 		{RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, sizeof(RAIL_SYSPARAM_ORDER)},
@@ -126,7 +131,7 @@ void* rail_clone_order(uint32 event_type, void* order)
 	// Event type not found.
 	if (order_size == 0) return NULL;
 
-	new_order = xmalloc(order_size);
+	new_order = malloc(order_size);
 	memcpy(new_order, order, order_size);
 
 	//printf("rail_clone_order: type=%d order=%p\n", event_type, new_order);
@@ -169,7 +174,7 @@ void* rail_clone_order(uint32 event_type, void* order)
 	return new_order;
 }
 
-void rail_free_cloned_order(uint32 event_type, void* order)
+void rail_free_cloned_order(UINT32 event_type, void* order)
 {
 	//printf("rail_free_cloned_order: type=%d order=%p\n", event_type, order);
 	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||
@@ -184,5 +189,5 @@ void rail_free_cloned_order(uint32 event_type, void* order)
 		RAIL_EXEC_RESULT_ORDER* exec_result = (RAIL_EXEC_RESULT_ORDER*)order;
 		rail_unicode_string_free(&exec_result->exeOrFile);
 	}
-	xfree(order);
+	free(order);
 }

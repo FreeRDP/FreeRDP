@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Time Zone Redirection
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -33,7 +33,7 @@
 void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
 void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings);
-boolean rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
+BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
 void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
 
 #ifdef WITH_DEBUG_TIMEZONE

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP X11 Server
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -36,7 +36,7 @@
 #include "xfreerdp.h"
 
 char* xf_pcap_file = NULL;
-boolean xf_pcap_dump_realtime = true;
+BOOL xf_pcap_dump_realtime = TRUE;
 
 void xf_server_main_loop(freerdp_listener* instance)
 {
@@ -53,7 +53,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != true)
+		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -88,7 +88,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != true)
+		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 		xf_pcap_file = argv[1];
 
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		xf_pcap_dump_realtime = false;
+		xf_pcap_dump_realtime = FALSE;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))

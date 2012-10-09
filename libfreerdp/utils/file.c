@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * File Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#include <winpr/crt.h>
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -72,14 +74,14 @@ void freerdp_mkdir(char* path)
 #endif
 }
 
-boolean freerdp_check_file_exists(char* file)
+BOOL freerdp_check_file_exists(char* file)
 {
 	struct stat stat_info;
 
 	if (stat(file, &stat_info) != 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 char* freerdp_get_home_path(rdpSettings* settings)
@@ -87,7 +89,7 @@ char* freerdp_get_home_path(rdpSettings* settings)
 	if (settings->home_path == NULL)
 		settings->home_path = getenv(HOME_ENV_VARIABLE);
 	if (settings->home_path == NULL)
-		settings->home_path = xstrdup("/");
+		settings->home_path = _strdup("/");
 
 	return settings->home_path;
 }
@@ -97,7 +99,7 @@ char* freerdp_get_config_path(rdpSettings* settings)
 	if (settings->config_path != NULL)
 		return settings->config_path;
 
-	settings->config_path = (char*) xmalloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
+	settings->config_path = (char*) malloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
 	sprintf(settings->config_path, "%s" PATH_SEPARATOR_STR "%s", settings->home_path, FREERDP_CONFIG_DIR);
 
 	if (!freerdp_check_file_exists(settings->config_path))
@@ -125,7 +127,7 @@ char* freerdp_construct_path(char* base_path, char* relative_path)
 	relative_path_length = strlen(relative_path);
 	length = base_path_length + relative_path_length + 1;
 
-	path = xmalloc(length + 1);
+	path = malloc(length + 1);
 	sprintf(path, "%s" PATH_SEPARATOR_STR "%s", base_path, relative_path);
 
 	return path;
@@ -150,17 +152,17 @@ char* freerdp_append_shared_library_suffix(char* file_path)
 
 		if (strcmp(p, SHARED_LIB_SUFFIX) != 0)
 		{
-			path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+			path = malloc(file_path_length + shared_lib_suffix_length + 1);
 			sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);
 		}
 		else
 		{
-			path = xstrdup(file_path);
+			path = _strdup(file_path);
 		}
 	}
 	else
 	{
-		path = xmalloc(file_path_length + shared_lib_suffix_length + 1);
+		path = malloc(file_path_length + shared_lib_suffix_length + 1);
 		sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);	
 	}
 
@@ -179,7 +181,7 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 		return NULL;
 
 	if (depth <= 0)
-		return xstrdup(base_path);
+		return _strdup(base_path);
 
 	base_length = strlen(base_path);
 
@@ -196,47 +198,47 @@ char* freerdp_get_parent_path(char* base_path, int depth)
 
 	length = (p - base_path);
 
-	path = (char*) xmalloc(length + 1);
+	path = (char*) malloc(length + 1);
 	memcpy(path, base_path, length);
 	path[length] = '\0';
 
 	return path;
 }
 
-boolean freerdp_path_contains_separator(char* path)
+BOOL freerdp_path_contains_separator(char* path)
 {
 	if (path == NULL)
-		return false;
+		return FALSE;
 
 	if (strchr(path, PATH_SEPARATOR_CHR) == NULL)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /* detects if we are running from the source tree */
 
-boolean freerdp_detect_development_mode(rdpSettings* settings)
+BOOL freerdp_detect_development_mode(rdpSettings* settings)
 {
 	int depth = 0;
 	char* current_path;
 	char* development_path = NULL;
-	boolean development_mode = false;
+	BOOL development_mode = FALSE;
 
 	if (freerdp_check_file_exists(".git"))
 	{
 		depth = 0;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 	else if (freerdp_check_file_exists(PARENT_PATH ".git"))
 	{
 		depth = 1;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 	else if (freerdp_check_file_exists(PARENT_PATH PARENT_PATH ".git"))
 	{
 		depth = 2;
-		development_mode = true;
+		development_mode = TRUE;
 	}
 
 	current_path = freerdp_get_current_path(settings);

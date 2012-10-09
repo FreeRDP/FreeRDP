@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RAIL Window List
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -39,10 +39,10 @@ struct rdp_window_list
 };
 
 FREERDP_API void window_list_rewind(rdpWindowList* list);
-FREERDP_API boolean window_list_has_next(rdpWindowList* list);
+FREERDP_API BOOL window_list_has_next(rdpWindowList* list);
 FREERDP_API rdpWindow* window_list_get_next(rdpWindowList* list);
 
-FREERDP_API rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId);
+FREERDP_API rdpWindow* window_list_get_by_id(rdpWindowList* list, UINT32 windowId);
 FREERDP_API rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId);
 
 FREERDP_API void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Transport Packets (TPKTs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -60,18 +60,18 @@
 /**
  * Verify if a packet has valid TPKT header.\n
  * @param s
- * @return boolean
+ * @return BOOL
  */
 
-boolean tpkt_verify_header(STREAM* s)
+BOOL tpkt_verify_header(STREAM* s)
 {
-	uint8 version;
+	BYTE version;
 
-	stream_peek_uint8(s, version);
+	stream_peek_BYTE(s, version);
 	if (version == 3)
-		return true;
+		return TRUE;
 	else
-		return false;
+		return FALSE;
 }
 
 /**
@@ -80,17 +80,17 @@ boolean tpkt_verify_header(STREAM* s)
  * @return length
  */
 
-uint16 tpkt_read_header(STREAM* s)
+UINT16 tpkt_read_header(STREAM* s)
 {
-	uint8 version;
-	uint16 length;
+	BYTE version;
+	UINT16 length;
 
-	stream_peek_uint8(s, version);
+	stream_peek_BYTE(s, version);
 
 	if (version == 3)
 	{
 		stream_seek(s, 2);
-		stream_read_uint16_be(s, length);
+		stream_read_UINT16_be(s, length);
 	}
 	else
 	{
@@ -107,9 +107,9 @@ uint16 tpkt_read_header(STREAM* s)
  * @param length
  */
 
-void tpkt_write_header(STREAM* s, uint16 length)
+void tpkt_write_header(STREAM* s, UINT16 length)
 {
-	stream_write_uint8(s, 3); /* version */
-	stream_write_uint8(s, 0); /* reserved */
-	stream_write_uint16_be(s, length); /* length */
+	stream_write_BYTE(s, 3); /* version */
+	stream_write_BYTE(s, 0); /* reserved */
+	stream_write_UINT16_be(s, length); /* length */
 }

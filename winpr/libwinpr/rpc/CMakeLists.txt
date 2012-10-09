@@ -41,7 +41,7 @@ set(${MODULE_PREFIX}_SRCS
 	ndr_union.h
 	midl.c)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -61,7 +61,7 @@ else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})

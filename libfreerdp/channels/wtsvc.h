@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Server Virtual Channel Interface
  *
  * Copyright 2011-2012 Vic Lee
@@ -61,17 +61,17 @@ struct rdp_peer_channel
 {
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
-	uint32 channel_id;
-	uint16 channel_type;
-	uint16 index;
+	UINT32 channel_id;
+	UINT16 channel_type;
+	UINT16 index;
 
 	STREAM* receive_data;
 	struct wait_obj* receive_event;
 	LIST* receive_queue;
 	HANDLE mutex;
 
-	uint8 dvc_open_state;
-	uint32 dvc_total_length;
+	BYTE dvc_open_state;
+	UINT32 dvc_total_length;
 };
 
 struct WTSVirtualChannelManager
@@ -82,8 +82,8 @@ struct WTSVirtualChannelManager
 	HANDLE mutex;
 
 	rdpPeerChannel* drdynvc_channel;
-	uint8 drdynvc_state;
-	uint32 dvc_channel_id_seq;
+	BYTE drdynvc_state;
+	UINT32 dvc_channel_id_seq;
 	LIST* dvc_channel_list;
 };
 

@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "freerdp-server-channels")
-set(MODULE_PREFIX "FREERDP_SERVER_CHANNELS")
+set(MODULE_NAME "freerdp-channels-server")
+set(MODULE_PREFIX "FREERDP_CHANNELS_SERVER")
 
 foreach(_MODULE_NAME ${CHANNEL_BUILTIN_SERVER_MODULES})
 	string(TOUPPER "CHANNEL_${_MODULE_NAME}" _MODULE_PREFIX)
@@ -35,3 +35,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} 
 
 target_link_libraries(${MODULE_NAME} ${CHANNEL_SERVER_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/Server")
+

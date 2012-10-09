@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - Interface Manipulation
  *
  * Copyright 2010-2011 Vic Lee
@@ -27,15 +27,15 @@ struct _TSMF_IFMAN
 	const char* decoder_name;
 	const char* audio_name;
 	const char* audio_device;
-	uint8 presentation_id[16];
-	uint32 stream_id;
-	uint32 message_id;
+	BYTE presentation_id[16];
+	UINT32 stream_id;
+	UINT32 message_id;
 
 	STREAM* input;
-	uint32 input_size;
+	UINT32 input_size;
 	STREAM* output;
-	boolean output_pending;
-	uint32 output_interface_id;
+	BOOL output_pending;
+	UINT32 output_interface_id;
 };
 
 int tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman);

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Decode
  *
  * Copyright 2011 Vic Lee
@@ -36,13 +36,13 @@
 
 #include "rfx_decode.h"
 
-static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
-	RDP_PIXEL_FORMAT pixel_format, uint8* dst_buf)
+static void rfx_decode_format_rgb(INT16* r_buf, INT16* g_buf, INT16* b_buf,
+	RDP_PIXEL_FORMAT pixel_format, BYTE* dst_buf)
 {
-	sint16* r = r_buf;
-	sint16* g = g_buf;
-	sint16* b = b_buf;
-	uint8* dst = dst_buf;
+	INT16* r = r_buf;
+	INT16* g = g_buf;
+	INT16* b = b_buf;
+	BYTE* dst = dst_buf;
 	int i;
 	
 	switch (pixel_format)
@@ -50,35 +50,35 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 		case RDP_PIXEL_FORMAT_B8G8R8A8:
 			for (i = 0; i < 4096; i++)
 			{
-				*dst++ = (uint8) (*b++);
-				*dst++ = (uint8) (*g++);
-				*dst++ = (uint8) (*r++);
+				*dst++ = (BYTE) (*b++);
+				*dst++ = (BYTE) (*g++);
+				*dst++ = (BYTE) (*r++);
 				*dst++ = 0xFF;
 			}
 			break;
 		case RDP_PIXEL_FORMAT_R8G8B8A8:
 			for (i = 0; i < 4096; i++)
 			{
-				*dst++ = (uint8) (*r++);
-				*dst++ = (uint8) (*g++);
-				*dst++ = (uint8) (*b++);
+				*dst++ = (BYTE) (*r++);
+				*dst++ = (BYTE) (*g++);
+				*dst++ = (BYTE) (*b++);
 				*dst++ = 0xFF;
 			}
 			break;
 		case RDP_PIXEL_FORMAT_B8G8R8:
 			for (i = 0; i < 4096; i++)
 			{
-				*dst++ = (uint8) (*b++);
-				*dst++ = (uint8) (*g++);
-				*dst++ = (uint8) (*r++);
+				*dst++ = (BYTE) (*b++);
+				*dst++ = (BYTE) (*g++);
+				*dst++ = (BYTE) (*r++);
 			}
 			break;
 		case RDP_PIXEL_FORMAT_R8G8B8:
 			for (i = 0; i < 4096; i++)
 			{
-				*dst++ = (uint8) (*r++);
-				*dst++ = (uint8) (*g++);
-				*dst++ = (uint8) (*b++);
+				*dst++ = (BYTE) (*r++);
+				*dst++ = (BYTE) (*g++);
+				*dst++ = (BYTE) (*b++);
 			}
 			break;
 		default:
@@ -88,11 +88,11 @@ static void rfx_decode_format_rgb(sint16* r_buf, sint16* g_buf, sint16* b_buf,
 
 #define MINMAX(_v,_l,_h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
-void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf)
+void rfx_decode_ycbcr_to_rgb(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 {
-	/* sint32 is used intentionally because we calculate with shifted factors! */
-	sint32 y, cb, cr;
-	sint32 r, g, b;
+	/* INT32 is used intentionally because we calculate with shifted factors! */
+	INT32 y, cb, cr;
+	INT32 r, g, b;
 	int i;
 
 	/**
@@ -101,7 +101,7 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	 * 1 sign bit + 10 integer bits + 5 fractional bits
 	 *
 	 * However only 7 integer bits will be actually used since the value range is [-128.0, 127.0].
-	 * In other words, the decoded coeffectients is scaled by << 5 when intepreted as sint16.
+	 * In other words, the decoded coeffectients is scaled by << 5 when intepreted as INT16.
 	 * It was scaled in the quantization phase, so we must scale it back here.
 	 */
 	for (i = 0; i < 4096; i++)
@@ -149,8 +149,8 @@ void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf
 	}
 }
 
-static void rfx_decode_component(RFX_CONTEXT* context, const uint32* quantization_values,
-	const uint8* data, int size, sint16* buffer)
+static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
+	const BYTE* data, int size, INT16* buffer)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 
@@ -174,9 +174,9 @@ static void rfx_decode_component(RFX_CONTEXT* context, const uint32* quantizatio
 }
 
 void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
-	int y_size, const uint32 * y_quants,
-	int cb_size, const uint32 * cb_quants,
-	int cr_size, const uint32 * cr_quants, uint8* rgb_buffer)
+	int y_size, const UINT32 * y_quants,
+	int cb_size, const UINT32 * cb_quants,
+	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb);
 

@@ -28,7 +28,12 @@
 #ifndef _WIN32
 
 #include <stdlib.h>
+
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 
 void* _aligned_malloc(size_t size, size_t alignment)
 {

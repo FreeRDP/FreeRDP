@@ -1014,43 +1014,43 @@ int rdp_connect()
  * @return true if successful. false otherwise.
  ************************************************************************/
 
-boolean mac_pre_connect(freerdp *inst)
+BOOL mac_pre_connect(freerdp *inst)
 {
     char *cptr;
     int  len;
     int  i;
     
-    inst->settings->offscreen_bitmap_cache = false;
-    inst->settings->glyph_cache = true;
+    inst->settings->offscreen_bitmap_cache = FALSE;
+    inst->settings->glyph_cache = TRUE;
     inst->settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
-    inst->settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
-    inst->settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
-    inst->settings->order_support[NEG_FAST_INDEX_INDEX] = false;
-    inst->settings->order_support[NEG_SCRBLT_INDEX] = true;
-    inst->settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
+    inst->settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
+    inst->settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
+    inst->settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
+    inst->settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
+    inst->settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
     
-    inst->settings->bitmap_cache = true;
-    inst->settings->order_support[NEG_MEMBLT_INDEX] = true;
-    inst->settings->order_support[NEG_MEMBLT_V2_INDEX] = true;
-    inst->settings->order_support[NEG_MEM3BLT_INDEX] = false;
-    inst->settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
+    inst->settings->bitmap_cache = TRUE;
+    inst->settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
+    inst->settings->order_support[NEG_MEMBLT_V2_INDEX] = TRUE;
+    inst->settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
+    inst->settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
     inst->settings->bitmapCacheV2NumCells = 3; // 5;
     inst->settings->bitmapCacheV2CellInfo[0].numEntries = 0x78; // 600;
-    inst->settings->bitmapCacheV2CellInfo[0].persistent = false;
+    inst->settings->bitmapCacheV2CellInfo[0].persistent = FALSE;
     inst->settings->bitmapCacheV2CellInfo[1].numEntries = 0x78; // 600;
-    inst->settings->bitmapCacheV2CellInfo[1].persistent = false;
+    inst->settings->bitmapCacheV2CellInfo[1].persistent = FALSE;
     inst->settings->bitmapCacheV2CellInfo[2].numEntries = 0x150; // 2048;
-    inst->settings->bitmapCacheV2CellInfo[2].persistent = false;
+    inst->settings->bitmapCacheV2CellInfo[2].persistent = FALSE;
     inst->settings->bitmapCacheV2CellInfo[3].numEntries = 0; // 4096;
-    inst->settings->bitmapCacheV2CellInfo[3].persistent = false;
+    inst->settings->bitmapCacheV2CellInfo[3].persistent = FALSE;
     inst->settings->bitmapCacheV2CellInfo[4].numEntries = 0; // 2048;
-    inst->settings->bitmapCacheV2CellInfo[4].persistent = false;
+    inst->settings->bitmapCacheV2CellInfo[4].persistent = FALSE;
     
-    inst->settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-    inst->settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-    inst->settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-    inst->settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = false;
-    inst->settings->order_support[NEG_POLYLINE_INDEX] = false;
+    inst->settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
+    inst->settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
+    inst->settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
+    inst->settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = FALSE;
+    inst->settings->order_support[NEG_POLYLINE_INDEX] = FALSE;
     inst->settings->color_depth = 24;
     inst->settings->sw_gdi = 1;
     
@@ -1070,7 +1070,7 @@ boolean mac_pre_connect(freerdp *inst)
 
     g_mrdpview->argv = malloc(sizeof(char *) * g_mrdpview->argc);
     if (g_mrdpview->argv == NULL) {
-        return false;
+        return FALSE;
     }
     
 #ifdef RUN_IN_XCODE
@@ -1174,7 +1174,7 @@ boolean mac_pre_connect(freerdp *inst)
     // in order to achieve this, we need to modify the cmd line args entered by the user;
     
     if (g_mrdpview->isRemoteApp) {
-        boolean gotGeometry = NO;
+        BOOL gotGeometry = NO;
         
         // get dimensions of screen that has keyboard focus;
         // we use these dimensions when connecting to RDP server
@@ -1218,13 +1218,13 @@ boolean mac_pre_connect(freerdp *inst)
     freerdp_parse_args(inst->settings, g_mrdpview->argc, g_mrdpview->argv, process_plugin_args, inst->context->channels, NULL, NULL);
     if ((strcmp(g_mrdpview->argv[1], "-h") == 0) || (strcmp(g_mrdpview->argv[1], "--help") == 0)) {
         [NSApp terminate:nil];
-        return true;
+        return TRUE;
     }
 
     [g_mrdpview setViewSize:inst->settings->width :inst->settings->height];
 
     freerdp_channels_pre_connect(inst->context->channels, inst);
-    return true;
+    return TRUE;
 }
 
 /** *********************************************************************
@@ -1238,7 +1238,7 @@ boolean mac_pre_connect(freerdp *inst)
  *
  ************************************************************************/
 
-boolean mac_post_connect(freerdp *inst)
+BOOL mac_post_connect(freerdp *inst)
 {
     uint32     flags;
     rdpPointer rdp_pointer;
@@ -1304,7 +1304,7 @@ boolean mac_post_connect(freerdp *inst)
     // we want to be notified when window resizes
     [[NSNotificationCenter defaultCenter] addObserver:g_mrdpview selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
     
-    return true;
+    return TRUE;
 }
 
 /** *********************************************************************
@@ -1915,9 +1915,9 @@ void mac_process_rail_event(freerdp *inst, RDP_EVENT *event)
 
 void mac_rail_CreateWindow(rdpRail *rail, rdpWindow *window)
 {
-    boolean centerWindow = NO;
-    boolean moveWindow = NO;
-    boolean displayAsModal = NO;
+    BOOL centerWindow = NO;
+    BOOL moveWindow = NO;
+    BOOL displayAsModal = NO;
     NSMutableArray * ma = g_mrdpview->windows;
 
     // make sure window fits resolution
@@ -2100,7 +2100,7 @@ void mac_process_rail_get_sysparams_event(rdpChannels *channels, RDP_EVENT *even
     sysparam->taskbarPos.right = 0;
     sysparam->taskbarPos.bottom = 0;
     
-    sysparam->dragFullWindows =  false;
+    sysparam->dragFullWindows =  FALSE;
     
     mac_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }

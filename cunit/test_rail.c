@@ -1,5 +1,5 @@
 /*
-   FreeRDP: A Remote Desktop Protocol client.
+   FreeRDP: A Remote Desktop Protocol Implementation
    RAIL(TS RemoteApp) Virtual Channel Unit Tests
 
    Copyright 2011 Vic Lee
@@ -67,12 +67,12 @@ int add_rail_suite(void)
 }
 
 
-static uint8 client_handshake[] =
+static BYTE client_handshake[] =
 {
 0x05, 0x00, 0x08, 0x00, 0xb0, 0x1d, 0x00, 0x00
 };
 
-static uint8 client_info_pdu[] =
+static BYTE client_info_pdu[] =
 {
 0x0b, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00
 };
@@ -82,7 +82,7 @@ static uint8 client_info_pdu[] =
 // WorkingDir: f:\windows\system32
 // Arguments: www.bing.com
 
-static uint8 client_execute_pdu[] =
+static BYTE client_execute_pdu[] =
 {
 0x01,0x00,0x5e,0x00,0x08,0x00,0x14,0x00,0x26,0x00,0x18,0x00,0x7c,0x00,
 0x7c,0x00,0x69,0x00,0x65,0x00,0x78,0x00,0x70,0x00,0x6c,0x00,0x6f,0x00,
@@ -93,7 +93,7 @@ static uint8 client_execute_pdu[] =
 0x67,0x00,0x2e,0x00,0x63,0x00,0x6f,0x00,0x6d,0x00
 };
 
-static uint8 client_activate_pdu[] =
+static BYTE client_activate_pdu[] =
 {
 0x02,0x00,
 0x09,0x00,
@@ -103,7 +103,7 @@ static uint8 client_activate_pdu[] =
 
 
 
-static uint8 client_sysparam_highcontrast_pdu[] =
+static BYTE client_sysparam_highcontrast_pdu[] =
 {
 0x03,0x00,
 0x12,0x00,
@@ -115,7 +115,7 @@ static uint8 client_sysparam_highcontrast_pdu[] =
 };
 
 
-static uint8 client_sysparam_taskbarpos_pdu[] =
+static BYTE client_sysparam_taskbarpos_pdu[] =
 {
 0x03,0x00,
 0x10,0x00,
@@ -126,42 +126,42 @@ static uint8 client_sysparam_taskbarpos_pdu[] =
 0xc2,0x03  // 0x03c2
 };
 
-static uint8 client_sysparam_mousebuttonswap_pdu[] =
+static BYTE client_sysparam_mousebuttonswap_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
 0x21,0x00,0x00,0x00, // SPI_SETMOUSEBUTTONSWAP
-0x00 // false
+0x00 // FALSE
 };
 
 
-static uint8 client_sysparam_keyboardpref_pdu[] =
+static BYTE client_sysparam_keyboardpref_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
 0x45,0x00,0x00,0x00, // SPI_SETKEYBOARDPREF
-0x00 // false
+0x00 // FALSE
 };
 
 
-static uint8 client_sysparam_dragfullwindow_pdu[] =
+static BYTE client_sysparam_dragfullwindow_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
 0x25,0x00,0x00,0x00, // SPI_SETDRAGFULLWINDOWS
-0x01 // true
+0x01 // TRUE
 };
 
 
-static uint8 client_sysparam_keyboardcues_pdu[] =
+static BYTE client_sysparam_keyboardcues_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
 0x0b,0x10,0x00,0x00, //SPI_SETKEYBOARDCUES
-0x00 // false
+0x00 // FALSE
 };
 
-static uint8 client_sysparam_setworkarea_pdu[] =
+static BYTE client_sysparam_setworkarea_pdu[] =
 {
 0x03,0x00,
 0x10,0x00,
@@ -172,7 +172,7 @@ static uint8 client_sysparam_setworkarea_pdu[] =
 0x9a,0x03  // 0x039a
 };
 
-static uint8 client_syscommand_pdu[] =
+static BYTE client_syscommand_pdu[] =
 {
 0x04,0x00,
 0x0a,0x00,
@@ -180,7 +180,7 @@ static uint8 client_syscommand_pdu[] =
 0x20,0xf0
 };
 
-static uint8 client_notify_pdu[] =
+static BYTE client_notify_pdu[] =
 {
 0x06,0x00,
 0x10,0x00,
@@ -189,7 +189,7 @@ static uint8 client_notify_pdu[] =
 0x04,0x02,0x00,0x00
 };
 
-static uint8 client_windowmove_pdu[] =
+static BYTE client_windowmove_pdu[] =
 {
 0x08,0x00,
 0x10,0x00,
@@ -200,7 +200,7 @@ static uint8 client_windowmove_pdu[] =
 0x88,0x01
 };
 
-static uint8 client_system_menu_pdu[] =
+static BYTE client_system_menu_pdu[] =
 {
 0x0c,0x00,
 0x0c,0x00,
@@ -209,35 +209,35 @@ static uint8 client_system_menu_pdu[] =
 0x4a,0x02
 };
 
-static uint8 client_langbar_pdu[] =
+static BYTE client_langbar_pdu[] =
 {
 0x0D,0x00,0x08,0x00,0x01,0x00,0x00,0x00
 };
 
-static uint8 client_get_app_id_req_pdu[] =
+static BYTE client_get_app_id_req_pdu[] =
 {
 0x0E,0x00,0x08,0x00,0x52,0x00,0x02,0x00
 };
 
-static uint8 server_handshake[] =
+static BYTE server_handshake[] =
 {
 	0x05, 0x00, 0x08, 0x00, 0xb0, 0x1d, 0x00, 0x00
 };
 
-static uint8 server_exec_result_pdu[] =
+static BYTE server_exec_result_pdu[] =
 {
 0x80,0x00,0x24,0x00,0x08,0x00,0x03,0x00,0x15,0x00,0x00,0x00,0x00,0x00,
 0x14,0x00,0x7c,0x00,0x7c,0x00,0x57,0x00,0x72,0x00,0x6f,0x00,0x6e,0x00,
 0x67,0x00,0x41,0x00,0x70,0x00,0x70,0x00
 };
 
-static uint8 server_exec_result_exe_or_file[] =
+static BYTE server_exec_result_exe_or_file[] =
 {
 0x7c,0x00,0x7c,0x00,0x57,0x00,0x72,0x00,0x6f,0x00,0x6e,0x00,
 0x67,0x00,0x41,0x00,0x70,0x00,0x70,0x00
 };
 
-static uint8 server_sysparam1_pdu[] =
+static BYTE server_sysparam1_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
@@ -245,7 +245,7 @@ static uint8 server_sysparam1_pdu[] =
 0x00
 };
 
-static uint8 server_sysparam2_pdu[] =
+static BYTE server_sysparam2_pdu[] =
 {
 0x03,0x00,
 0x09,0x00,
@@ -253,31 +253,31 @@ static uint8 server_sysparam2_pdu[] =
 0x00
 };
 
-static uint8 server_localmovesize_start_pdu[] =
+static BYTE server_localmovesize_start_pdu[] =
 {
 0x09,0x00,0x10,0x00,0x8e,0x00,0x07,0x00,0x01,0x00,0x09,0x00,0x7e,0x01,
 0x0a,0x00
 };
 
-static uint8 server_localmovesize_stop_pdu[] =
+static BYTE server_localmovesize_stop_pdu[] =
 {
 0x09,0x00,0x10,0x00,0x8e,0x00,0x07,0x00,0x00,0x00,0x09,0x00,0xa6,0x00,
 0x44,0x00
 };
 
-static uint8 server_minmaxinfo_pdu[] =
+static BYTE server_minmaxinfo_pdu[] =
 {
 0x0a,0x00,0x18,0x00,0x8e,0x00,0x07,0x00,0x08,0x04,0xd6,0x02,0x00,0x00,
 0x00,0x00,0x70,0x00,0x1b,0x00,0x0c,0x04,0x0c,0x03
 };
 
-static uint8 server_langbar_pdu[] =
+static BYTE server_langbar_pdu[] =
 {
 0x0D,0x00,0x08,0x00,0x01,0x00,0x00,0x00
 };
 
 
-static uint8 server_app_get_resp_pdu[] =
+static BYTE server_app_get_resp_pdu[] =
 {
 0x0F,0x00,0x08,0x02,0x52,0x00,0x02,0x00,0x6d,0x00,0x69,0x00,0x63,0x00,
 0x72,0x00,0x6f,0x00,0x73,0x00,0x6f,0x00,0x66,0x00,0x74,0x00,0x2e,0x00,
@@ -328,7 +328,7 @@ static uint8 server_app_get_resp_pdu[] =
 0x00,0x00,0x00,0x00,0x00,0x00
 };
 
-static uint8 server_app_get_resp_app_id[] =
+static BYTE server_app_get_resp_app_id[] =
 {
 0x6d,0x00,0x69,0x00,0x63,0x00,0x72,0x00,0x6f,0x00,0x73,0x00,0x6f,0x00,
 0x66,0x00,0x74,0x00,0x2e,0x00,0x77,0x00,0x69,0x00,0x6e,0x6f,0x00,0x77,
@@ -411,7 +411,7 @@ typedef struct
 typedef struct
 {
 	RAIL_ORDERS order_info;
-	uint32 event_type;
+	UINT32 event_type;
 }
 RAIL_EVENT;
 
@@ -459,7 +459,7 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 
 	for (i=0; i < size; i++)
 	{
-		if (((uint8*)dataS)[i] != ((uint8*)data)[i])
+		if (((BYTE*)dataS)[i] != ((BYTE*)data)[i])
 		{
 			printf("----------------- stream_equal_dump -----------------\n");
 			printf("Stream and dump have different content from %d offset.\n", (int) i);
@@ -486,7 +486,7 @@ static void test_on_free_rail_client_event(RDP_EVENT* event)
 //-----------------------------------------------------------------------------
 static void send_ui_event2plugin(
 	rdpChannels* chan_man,
-	uint16 event_type,
+	UINT16 event_type,
 	void * data
 	)
 {
@@ -533,7 +533,7 @@ static void save_dump(void* data, size_t size)
 }
 //-----------------------------------------------------------------------------
 static int emulate_client_send_channel_data(
-	freerdp* freerdp, int channelId, uint8* data, int size
+	freerdp* freerdp, int channelId, BYTE* data, int size
 	)
 {
 	static int counter = 0;
@@ -717,16 +717,16 @@ void test_rail_plugin(void)
 	param.out_rail_orders.sysparam.taskbarPos.bottom = 0x03c2;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
-	param.out_rail_orders.sysparam.mouseButtonSwap = false;
+	param.out_rail_orders.sysparam.mouseButtonSwap = FALSE;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
-	param.out_rail_orders.sysparam.keyboardPref = false;
+	param.out_rail_orders.sysparam.keyboardPref = FALSE;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	param.out_rail_orders.sysparam.dragFullWindows = true;
+	param.out_rail_orders.sysparam.dragFullWindows = TRUE;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
-	param.out_rail_orders.sysparam.keyboardCues = false;
+	param.out_rail_orders.sysparam.keyboardCues = FALSE;
 
 	param.out_rail_orders.sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	param.out_rail_orders.sysparam.workArea.left = 0;
@@ -744,7 +744,7 @@ void test_rail_plugin(void)
 	send_ui_event2plugin(chan_man, RDP_EVENT_TYPE_RAIL_CLIENT_EXEC_REMOTE_APP,
 		&param.plugin_data);
 
-	param.out_rail_orders.activate.enabled = true;
+	param.out_rail_orders.activate.enabled = TRUE;
 	param.out_rail_orders.activate.windowId = 0x0007008e;
 	send_ui_event2plugin(chan_man, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE,
 		&param.out_rail_orders.activate);
@@ -829,18 +829,18 @@ void test_rail_plugin(void)
 		);
 	CU_ASSERT(en >  2 &&
 		ee[ 2].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM &&
-		ee[ 2].order_info.sysparam.setScreenSaveSecure == false
+		ee[ 2].order_info.sysparam.setScreenSaveSecure == FALSE
 		);
 
 	CU_ASSERT(en >  3 &&
 		ee[ 3].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM &&
-		ee[ 3].order_info.sysparam.setScreenSaveActive == false
+		ee[ 3].order_info.sysparam.setScreenSaveActive == FALSE
 		);
 
 	CU_ASSERT(en >  4 &&
 		ee[ 4].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE &&
 		ee[ 4].order_info.localmovesize.windowId == 0x0007008e &&
-		ee[ 4].order_info.localmovesize.isMoveSizeStart == true &&
+		ee[ 4].order_info.localmovesize.isMoveSizeStart == TRUE &&
 		ee[ 4].order_info.localmovesize.moveSizeType == RAIL_WMSZ_MOVE &&
 		ee[ 4].order_info.localmovesize.posX == 0x017e &&
 		ee[ 4].order_info.localmovesize.posY == 0x000a
@@ -849,7 +849,7 @@ void test_rail_plugin(void)
 	CU_ASSERT(en >  5 &&
 		ee[ 5].event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE &&
 		ee[ 5].order_info.localmovesize.windowId == 0x0007008e &&
-		ee[ 5].order_info.localmovesize.isMoveSizeStart == false &&
+		ee[ 5].order_info.localmovesize.isMoveSizeStart == FALSE &&
 		ee[ 5].order_info.localmovesize.moveSizeType == RAIL_WMSZ_MOVE &&
 		ee[ 5].order_info.localmovesize.posX == 0x00a6 &&
 		ee[ 5].order_info.localmovesize.posY == 0x0044

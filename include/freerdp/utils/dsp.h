@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Digital Sound Processing
  *
  * Copyright 2010-2011 Vic Lee
@@ -26,15 +26,15 @@ union _ADPCM
 {
 	struct
 	{
-		sint16 last_sample[2];
-		sint16 last_step[2];
+		INT16 last_sample[2];
+		INT16 last_step[2];
 	} ima;
 	struct
 	{
-		uint8 predictor[2];
-		sint32 delta[2];
-		sint32 sample1[2];
-		sint32 sample2[2];
+		BYTE predictor[2];
+		INT32 delta[2];
+		INT32 sample1[2];
+		INT32 sample2[2];
 	} ms;
 };
 typedef union _ADPCM ADPCM;
@@ -42,31 +42,31 @@ typedef union _ADPCM ADPCM;
 typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 struct _FREERDP_DSP_CONTEXT
 {
-	uint8* resampled_buffer;
-	uint32 resampled_size;
-	uint32 resampled_frames;
-	uint32 resampled_maxlength;
+	BYTE* resampled_buffer;
+	UINT32 resampled_size;
+	UINT32 resampled_frames;
+	UINT32 resampled_maxlength;
 
-	uint8* adpcm_buffer;
-	uint32 adpcm_size;
-	uint32 adpcm_maxlength;
+	BYTE* adpcm_buffer;
+	UINT32 adpcm_size;
+	UINT32 adpcm_maxlength;
 
 	ADPCM adpcm;
 
 	void (*resample)(FREERDP_DSP_CONTEXT* context,
-		const uint8* src, int bytes_per_sample,
-		uint32 schan, uint32 srate, int sframes,
-		uint32 rchan, uint32 rrate);
+		const BYTE* src, int bytes_per_sample,
+		UINT32 schan, UINT32 srate, int sframes,
+		UINT32 rchan, UINT32 rrate);
 
 	void (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const uint8* src, int size, int channels, int block_size);
+		const BYTE* src, int size, int channels, int block_size);
 	void (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const uint8* src, int size, int channels, int block_size);
+		const BYTE* src, int size, int channels, int block_size);
 
 	void (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const uint8* src, int size, int channels, int block_size);
+		const BYTE* src, int size, int channels, int block_size);
 	void (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
-		const uint8* src, int size, int channels, int block_size);
+		const BYTE* src, int size, int channels, int block_size);
 };
 
 FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void);

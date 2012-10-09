@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * T.125 Multipoint Communication Service (MCS) Protocol Unit Tests
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -44,7 +44,7 @@ int add_mcs_suite(void)
 	return 0;
 }
 
-uint8 gcc_CCrq[307] =
+BYTE gcc_CCrq[307] =
 	"\x00\x05\x00\x14\x7C\x00\x01\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
 	"\x00\x44\x75\x63\x61\x81\x1c\x01\xc0\xd8\x00\x04\x00\x08\x00\x00"
 	"\x05\x00\x04\x01\xCA\x03\xAA\x09\x04\x00\x00\xCE\x0E\x00\x00\x45"
@@ -66,7 +66,7 @@ uint8 gcc_CCrq[307] =
 	"\x64\x72\x00\x00\x00\xA0\xC0\x72\x64\x70\x73\x6e\x64\x00\x00\x00"
 	"\x00\x00\xc0";
 
-uint8 mcs_connect_initial_expected[409] =
+BYTE mcs_connect_initial_expected[409] =
 	"\x7F\x65\x82\x01\x94\x04\x01\x01\x04\x01\x01\x01\x01\xFF\x30\x19"
 	"\x02\x01\x22\x02\x01\x02\x02\x01\x00\x02\x01\x01\x02\x01\x00\x02"
 	"\x01\x01\x02\x02\xFF\xFF\x02\x01\x02\x30\x19\x02\x01\x01\x02\x01"
@@ -109,7 +109,7 @@ void test_mcs_write_connect_initial(void)
 	s = stream_new(512);
 	mcs_write_connect_initial(s, mcs, user_data);
 
-	ASSERT_STREAM(s, (uint8*) mcs_connect_initial_expected, sizeof(mcs_connect_initial_expected));
+	ASSERT_STREAM(s, (BYTE*) mcs_connect_initial_expected, sizeof(mcs_connect_initial_expected));
 
 	stream_free(s);
 }

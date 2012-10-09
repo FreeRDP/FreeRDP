@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Implements Microsoft Point to Point Compression (MPPC) protocol
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -30,72 +30,72 @@
 
 #include <freerdp/codec/mppc_dec.h>
 
-static uint8 HuffLenLEC[] = {
+static BYTE HuffLenLEC[] = {
 0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x8, 0x9, 0x9, 0xa, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0x9, 0xa, 0x9, 0xa, 0x9, 0x9, 0x9, 0xa, 0xa, 0x9, 0xa, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x8, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x7, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xd, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xb, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0x8, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0x8, 0x7, 0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5, 0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x8, 0x5, 0x6, 0x7, 0x7 }; 
 
-static uint16 HuffIndexLEC[512] = { 
+static UINT16 HuffIndexLEC[512] = { 
 0x007b, 0xff1f, 0xff0d, 0xfe27, 0xfe00, 0xff05, 0xff17, 0xfe68, 0x00c5, 0xfe07, 0xff13, 0xfec0, 0xff08, 0xfe18, 0xff1b, 0xfeb3, 0xfe03, 0x00a2, 0xfe42, 0xff10, 0xfe0b, 0xfe02, 0xfe91, 0xff19, 0xfe80, 0x00e9, 0xfe3a, 0xff15, 0xfe12, 0x0057, 0xfed7, 0xff1d, 0xff0e, 0xfe35, 0xfe69, 0xff22, 0xff18, 0xfe7a, 0xfe01, 0xff23, 0xff14, 0xfef4, 0xfeb4, 0xfe09, 0xff1c, 0xfec4, 0xff09, 0xfe60, 0xfe70, 0xff12, 0xfe05, 0xfe92, 0xfea1, 0xff1a, 0xfe0f, 0xff07, 0xfe56, 0xff16, 0xff02, 0xfed8, 0xfee8, 0xff1e, 0xfe1d, 0x003b, 0xffff, 0xff06, 0xffff, 0xfe71, 0xfe89, 0xffff, 0xffff, 0xfe2c, 0xfe2b, 0xfe20, 0xffff, 0xfebb, 0xfecf, 0xfe08, 0xffff, 0xfee0, 0xfe0d, 0xffff, 0xfe99, 0xffff, 0xfe04, 0xfeaa, 0xfe49, 0xffff, 0xfe17, 0xfe61, 0xfedf, 0xffff, 0xfeff, 0xfef6, 0xfe4c, 0xffff, 0xffff, 0xfe87, 0xffff, 0xff24, 0xffff, 0xfe3c, 0xfe72, 0xffff, 0xffff, 0xfece, 0xffff, 0xfefe, 0xffff, 0xfe23, 0xfebc, 0xfe0a, 0xfea9, 0xffff, 0xfe11, 0xffff, 0xfe82, 0xffff, 0xfe06, 0xfe9a, 0xfef5, 0xffff, 0xfe22, 0xfe4d, 0xfe5f, 0xffff, 0xff03, 0xfee1, 0xffff, 0xfeca, 0xfecc, 0xffff, 0xfe19, 0xffff, 0xfeb7, 0xffff, 0xffff, 0xfe83, 0xfe29, 0xffff, 0xffff, 0xffff, 0xfe6c, 0xffff, 0xfeed, 0xffff, 0xffff, 0xfe46, 0xfe5c, 0xfe15, 0xffff, 0xfedb, 0xfea6, 0xffff, 0xffff, 0xfe44, 0xffff, 0xfe0c, 0xffff, 0xfe95, 0xfefc, 0xffff, 0xffff, 0xfeb8, 0x16c9, 0xffff, 0xfef0, 0xffff, 0xfe38, 0xffff, 0xffff, 0xfe6d, 0xfe7e, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe5b, 0xfedc, 0xffff, 0xffff, 0xfeec, 0xfe47, 0xfe1f, 0xffff, 0xfe7f, 0xfe96, 0xffff, 0xffff, 0xfea5, 0xffff, 0xfe10, 0xfe40, 0xfe32, 0xfebf, 0xffff, 0xffff, 0xfed4, 0xfef1, 0xffff, 0xffff, 0xffff, 0xfe75, 0xffff, 0xffff, 0xfe8d, 0xfe31, 0xffff, 0xfe65, 0xfe1b, 0xffff, 0xfee4, 0xfefb, 0xffff, 0xffff, 0xfe52, 0xffff, 0xfe0e, 0xffff, 0xfe9d, 0xfeaf, 0xffff, 0xffff, 0xfe51, 0xfed3, 0xffff, 0xff20, 0xffff, 0xfe2f, 0xffff, 0xffff, 0xfec1, 0xfe8c, 0xffff, 0xffff, 0xffff, 0xfe3f, 0xffff, 0xffff, 0xfe76, 0xffff, 0xfefa, 0xfe53, 0xfe25, 0xffff, 0xfe64, 0xfee5, 0xffff, 0xffff, 0xfeae, 0xffff, 0xfe13, 0xffff, 0xfe88, 0xfe9e, 0xffff, 0xfe43, 0xffff, 0xffff, 0xfea4, 0xfe93, 0xffff, 0xffff, 0xffff, 0xfe3d, 0xffff, 0xffff, 0xfeeb, 0xfed9, 0xffff, 0xfe14, 0xfe5a, 0xffff, 0xfe28, 0xfe7d, 0xffff, 0xffff, 0xfe6a, 0xffff, 0xffff, 0xff01, 0xfec6, 0xfec8, 0xffff, 0xffff, 0xfeb5, 0xffff, 0xffff, 0xffff, 0xfe94, 0xfe78, 0xffff, 0xffff, 0xffff, 0xfea3, 0xffff, 0xffff, 0xfeda, 0xfe58, 0xffff, 0xfe1e, 0xfe45, 0xfeea, 0xffff, 0xfe6b, 0xffff, 0xffff, 0xfe37, 0xffff, 0xffff, 0xffff, 0xfe7c, 0xfeb6, 0xffff, 0xffff, 0xfef8, 0xffff, 0xffff, 0xffff, 0xfec7, 0xfe9b, 0xffff, 0xffff, 0xffff, 0xfe50, 0xffff, 0xffff, 0xfead, 0xfee2, 0xffff, 0xfe1a, 0xfe63, 0xfe4e, 0xffff, 0xffff, 0xfef9, 0xffff, 0xfe73, 0xffff, 0xffff, 0xffff, 0xfe30, 0xfe8b, 0xffff, 0xffff, 0xfebd, 0xfe2e, 0x0100, 0xffff, 0xfeee, 0xfed2, 0xffff, 0xffff, 0xffff, 0xfeac, 0xffff, 0xffff, 0xfe9c, 0xfe84, 0xffff, 0xfe24, 0xfe4f, 0xfef7, 0xffff, 0xffff, 0xfee3, 0xfe62, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe8a, 0xfe74, 0xffff, 0xffff, 0xfe3e, 0xffff, 0xffff, 0xffff, 0xfed1, 0xfebe, 0xffff, 0xffff, 0xfe2d, 0xffff, 0xfe4a, 0xfef3, 0xffff, 0xffff, 0xfedd, 0xfe5e, 0xfe16, 0xffff, 0xfe48, 0xfea8, 0xffff, 0xfeab, 0xfe97, 0xffff, 0xffff, 0xfed0, 0xffff, 0xffff, 0xfecd, 0xfeb9, 0xffff, 0xffff, 0xffff, 0xfe2a, 0xffff, 0xffff, 0xfe86, 0xfe6e, 0xffff, 0xffff, 0xffff, 0xfede, 0xffff, 0xffff, 0xfe5d, 0xfe4b, 0xfe21, 0xffff, 0xfeef, 0xfe98, 0xffff, 0xffff, 0xfe81, 0xffff, 0xffff, 0xffff, 0xfea7, 0xffff, 0xfeba, 0xfefd, 0xffff, 0xffff, 0xffff, 0xfecb, 0xffff, 0xffff, 0xfe6f, 0xfe39, 0xffff, 0xffff, 0xffff, 0xfe85, 0xffff, 0x010c, 0xfee6, 0xfe67, 0xfe1c, 0xffff, 0xfe54, 0xfeb2, 0xffff, 0xffff, 0xfe9f, 0xffff, 0xffff, 0xffff, 0xfe59, 0xfeb1, 0xffff, 0xfec2, 0xffff, 0xffff, 0xfe36, 0xfef2, 0xffff, 0xffff, 0xfed6, 0xfe77, 0xffff, 0xffff, 0xffff, 0xfe33, 0xffff, 0xffff, 0xfe8f, 0xfe55, 0xfe26, 0x010a, 0xff04, 0xfee7, 0xffff, 0x0121, 0xfe66, 0xffff, 0xffff, 0xffff, 0xfeb0, 0xfea0, 0xffff, 0x010f, 0xfe90, 0xffff, 0xffff, 0xfed5, 0xffff, 0xffff, 0xfec3, 0xfe34, 0xffff, 0xffff, 0xffff, 0xfe8e, 0xffff, 0x0111, 0xfe79, 0xfe41, 0x010b };
 
-static uint16 LECHTab[] = {511, 0, 508, 448, 494, 347, 486, 482};
+static UINT16 LECHTab[] = {511, 0, 508, 448, 494, 347, 486, 482};
 
-static uint8 HuffLenLOM[] = {
+static BYTE HuffLenLOM[] = {
 0x4, 0x2, 0x3, 0x4, 0x3, 0x4, 0x4, 0x5, 0x4, 0x5, 0x5, 0x6, 0x6, 0x7, 0x7, 0x8, 0x7, 0x8, 0x8, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9 };
 
-static uint16 HuffIndexLOM[] = {
+static UINT16 HuffIndexLOM[] = {
 0xfe1, 0xfe0, 0xfe2, 0xfe8, 0xe, 0xfe5, 0xfe4, 0xfea, 0xff1, 0xfe3, 0x15, 0xfe7, 0xfef, 0x46, 0xff0, 0xfed, 0xfff, 0xff7, 0xffb, 0x19, 0xffd, 0xff4, 0x12c, 0xfeb, 0xffe, 0xff6, 0xffa, 0x89, 0xffc, 0xff3, 0xff8, 0xff2 };
 
-static uint8 LOMHTab[] = {0, 4, 10, 19};
+static BYTE LOMHTab[] = {0, 4, 10, 19};
 
-static uint8 CopyOffsetBitsLUT[] = {
+static BYTE CopyOffsetBitsLUT[] = {
 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15 };
 
-static uint32 CopyOffsetBaseLUT[] = {
+static UINT32 CopyOffsetBaseLUT[] = {
 1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577, 32769, 49153, 65537 };
 
-static uint8 LOMBitsLUT[] = {
+static BYTE LOMBitsLUT[] = {
 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 6, 6, 8, 8, 14, 14 };
 
-static uint16 LOMBaseLUT[] = {
+static UINT16 LOMBaseLUT[] = {
 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 22, 26, 30, 34, 42, 50, 58, 66, 82, 98, 114, 130, 194, 258, 514, 2, 2 };
 
-uint16 LEChash(uint16 key)
+UINT16 LEChash(UINT16 key)
 {
 	return ((key & 0x1ff) ^ (key  >> 9) ^ (key >> 4) ^ (key >> 7));
 }
 
-uint16 LOMhash(uint16 key)
+UINT16 LOMhash(UINT16 key)
 {
 	return ((key & 0x1f) ^ (key  >> 5) ^ (key >> 9));
 }
 			
-uint16 miniLEChash(uint16 key)
+UINT16 miniLEChash(UINT16 key)
 {
-	uint16 h;
+	UINT16 h;
 	h = ((((key >> 8) ^ (key & 0xff)) >> 2) & 0xf);
 	if(key >> 9)
 		h = ~h;
 	return (h % 12);
 }
 
-uint8 miniLOMhash(uint16 key)
+BYTE miniLOMhash(UINT16 key)
 {
-	uint8 h;
+	BYTE h;
 	h = (key >> 4) & 0xf;
 	return ((h ^ (h >> 2) ^ (h >> 3)) & 0x3);
 }
 
-uint16 getLECindex(uint16 huff)
+UINT16 getLECindex(UINT16 huff)
 {
-	uint16 h = HuffIndexLEC[LEChash(huff)];
+	UINT16 h = HuffIndexLEC[LEChash(huff)];
 	if((h ^ huff) >> 9)
 		return h & 0x1ff;
 	else
 		return HuffIndexLEC[LECHTab[miniLEChash(huff)]];
 }
 
-uint16 getLOMindex(uint16 huff)
+UINT16 getLOMindex(UINT16 huff)
 {
-	uint16 h = HuffIndexLOM[LOMhash(huff)];
+	UINT16 h = HuffIndexLOM[LOMhash(huff)];
 	if((h ^ huff) >> 5)
 	{	
 		return h & 0x1f;
@@ -104,7 +104,7 @@ uint16 getLOMindex(uint16 huff)
 		return HuffIndexLOM[LOMHTab[miniLOMhash(huff)]];
 }
 
-uint32 transposebits(uint32 x)
+UINT32 transposebits(UINT32 x)
 {
 	x = ((x & 0x55555555) << 1) | ((x >> 1) & 0x55555555);
 	x = ((x & 0x33333333) << 2) | ((x >> 2) & 0x33333333);
@@ -119,16 +119,16 @@ uint32 transposebits(uint32 x)
 }
 
 #define cache_add(_s, _x) do { \
-		*((uint32*)((_s)+2)) <<= 16; \
-		*((uint32*)((_s)+2)) |= (*((uint32*)(_s)) >> 16); \
-		*((uint32*)(_s)) = (*((uint32*)(_s)) << 16) | (_x); } while(0)
+		*((UINT32*)((_s)+2)) <<= 16; \
+		*((UINT32*)((_s)+2)) |= (*((UINT32*)(_s)) >> 16); \
+		*((UINT32*)(_s)) = (*((UINT32*)(_s)) << 16) | (_x); } while(0)
 
 #define cache_swap(_s, _i) do { \
-		uint16 t = *(_s); \
+		UINT16 t = *(_s); \
 		*(_s) = *((_s) + (_i)); \
 		*((_s) + (_i)) = t; } while(0)
 
-int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	int type = ctype & 0x0f;
 
@@ -152,7 +152,7 @@ int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, ui
 
 		default:
 			printf("mppc.c: invalid RDP compression code 0x%2.2x\n", type);
-			return false;
+			return FALSE;
 	}
 }
 
@@ -169,27 +169,27 @@ int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, ui
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	uint8*    history_buf;    /* uncompressed data goes here */
-	uint8*    history_ptr;    /* points to next free slot in history_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
-	uint16    copy_offset;    /* location to copy data from */
-	uint16    lom;            /* length of match */
-	uint8*    src_ptr;        /* used while copying compressed data */
-	uint8*    cptr;           /* points to next byte in cbuf */
-	uint8     cur_byte;       /* last byte fetched from cbuf */
+	BYTE*    history_buf;    /* uncompressed data goes here */
+	BYTE*    history_ptr;    /* points to next free slot in history_buf */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
+	UINT16    copy_offset;    /* location to copy data from */
+	UINT16    lom;            /* length of match */
+	BYTE*    src_ptr;        /* used while copying compressed data */
+	BYTE*    cptr;           /* points to next byte in cbuf */
+	BYTE     cur_byte;       /* last byte fetched from cbuf */
 	int       bits_left;      /* bits left in d34 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp;
-	uint32    i32;
+	UINT32    i32;
 
 	printf("decompress_rdp_4:\n");
 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_4: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -232,7 +232,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -583,7 +583,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -599,25 +599,25 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	uint8*    history_buf;    /* uncompressed data goes here */
-	uint8*    history_ptr;    /* points to next free slot in bistory_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
-	uint16    copy_offset;    /* location to copy data from */
-	uint16    lom;            /* length of match */
-	uint8*    src_ptr;        /* used while copying compressed data */
-	uint8*    cptr;           /* points to next byte in cbuf */
-	uint8     cur_byte;       /* last byte fetched from cbuf */
+	BYTE*    history_buf;    /* uncompressed data goes here */
+	BYTE*    history_ptr;    /* points to next free slot in bistory_buf */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
+	UINT16    copy_offset;    /* location to copy data from */
+	UINT16    lom;            /* length of match */
+	BYTE*    src_ptr;        /* used while copying compressed data */
+	BYTE*    cptr;           /* points to next byte in cbuf */
+	BYTE     cur_byte;       /* last byte fetched from cbuf */
 	int       bits_left;      /* bits left in d32 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp;
-	uint32    i32;
+	UINT32    i32;
 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_5: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -660,7 +660,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -1047,7 +1047,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -1063,27 +1063,27 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	uint8*    history_buf;    /* uncompressed data goes here */
-	uint16*   offset_cache;	  /* Copy Offset cache */
-	uint8*    history_ptr;    /* points to next free slot in bistory_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
-	uint16    copy_offset;    /* location to copy data from */
-	uint16    lom;            /* length of match */
-	uint16    LUTIndex;       /* LookUp table Index */
-	uint8*    src_ptr;        /* used while copying compressed data */
-	uint8*    cptr;           /* points to next byte in cbuf */
-	uint8     cur_byte;       /* last byte fetched from cbuf */
+	BYTE*    history_buf;    /* uncompressed data goes here */
+	UINT16*   offset_cache;	  /* Copy Offset cache */
+	BYTE*    history_ptr;    /* points to next free slot in bistory_buf */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
+	UINT16    copy_offset;    /* location to copy data from */
+	UINT16    lom;            /* length of match */
+	UINT16    LUTIndex;       /* LookUp table Index */
+	BYTE*    src_ptr;        /* used while copying compressed data */
+	BYTE*    cptr;           /* points to next byte in cbuf */
+	BYTE     cur_byte;       /* last byte fetched from cbuf */
 	int       bits_left;      /* bits left in d32 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp, i;
-	uint32    i32;
+	UINT32    i32;
 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
 		printf("decompress_rdp_6: null\n");
-		return false;
+		return FALSE;
 	}
 
 	src_ptr = 0;
@@ -1131,7 +1131,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		history_ptr += len;
 		*rlen = history_ptr - dec->history_ptr;
 		dec->history_ptr = history_ptr;
-		return true;
+		return TRUE;
 	}
 
 	/* load initial data */
@@ -1180,7 +1180,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 		d32 <<= i;
 		bits_left -= i;
 		if(i32 < 256)
-			*history_ptr++ = (uint8)i32;
+			*history_ptr++ = (BYTE)i32;
 		else if(i32 > 256 && i32 < 289)
 		{
 			LUTIndex = i32 - 257;
@@ -1382,7 +1382,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
 
 	dec->history_ptr = history_ptr;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -1398,9 +1398,9 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, 
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_61(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	return false;
+	return FALSE;
 }
 
 /**
@@ -1414,19 +1414,19 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 {
 	struct rdp_mppc_dec* ptr;
 
-	ptr = (struct rdp_mppc_dec*) xmalloc(sizeof(struct rdp_mppc_dec));
+	ptr = (struct rdp_mppc_dec*) malloc(sizeof(struct rdp_mppc_dec));
 	if (!ptr)
 	{
 		printf("mppc_new(): system out of memory\n");
 		return NULL;
 	}
 
-	ptr->history_buf = (uint8 *) xzalloc(RDP6_HISTORY_BUF_SIZE);
-	ptr->offset_cache = (uint16 *) xzalloc(RDP6_OFFSET_CACHE_SIZE);
+	ptr->history_buf = (BYTE *) xzalloc(RDP6_HISTORY_BUF_SIZE);
+	ptr->offset_cache = (UINT16 *) xzalloc(RDP6_OFFSET_CACHE_SIZE);
 	if (!ptr->history_buf)
 	{
 		printf("mppc_new(): system out of memory\n");
-		xfree(ptr);
+		free(ptr);
 		return NULL;
 	}
 
@@ -1450,14 +1450,14 @@ void mppc_dec_free(struct rdp_mppc_dec* dec)
 
 	if (dec->history_buf)
 	{
-		xfree(dec->history_buf);
+		free(dec->history_buf);
 		dec->history_buf = NULL;
 		dec->history_ptr = NULL;
 	}
 	if (dec->offset_cache)
 	{
-		xfree(dec->offset_cache);
+		free(dec->offset_cache);
 		dec->offset_cache = NULL;
 	}
-	xfree(dec);
+	free(dec);
 }

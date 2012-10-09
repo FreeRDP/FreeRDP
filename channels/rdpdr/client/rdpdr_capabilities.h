@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * File System Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Device Redirection Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-#ifndef __RDPDR_CAPABILITIES_H
-#define __RDPDR_CAPABILITIES_H
+#ifndef FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H
+#define FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H
 
 #include "rdpdr_main.h"
 
 void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, STREAM* data_in);
 void rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
 
-#endif /* __RDPDR_CAPABILITIES_H */
+#endif /* FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H */

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Surface Commands
  *
  * Copyright 2011 Vic Lee
@@ -33,10 +33,10 @@ enum SURFCMD_CMDTYPE
 	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
 };
 
-boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s);
+BOOL update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s);
 
 void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd);
-void update_write_surfcmd_frame_marker(STREAM* s, uint16 frameAction, uint32 frameId);
+void update_write_surfcmd_frame_marker(STREAM* s, UINT16 frameAction, UINT32 frameId);
 
 #endif /* __SURFACE */
 

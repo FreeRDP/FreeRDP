@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Microsoft Point to Point Compression (MPPC)  Unit Tests
  *
  * Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -494,8 +494,8 @@ void test_mppc_enc(void)
 
 	/* needed by decoder */
 	struct rdp_mppc_dec* rmppc;
-	uint32 roff;
-	uint32 rlen;
+	UINT32 roff;
+	UINT32 rlen;
 
 	/* required for timing the test */
 	struct timeval start_time;
@@ -525,13 +525,13 @@ void test_mppc_enc(void)
 			block_num++;
 			total += bytes_read;
 			DLOG(("block_num=%d\n", block_num));
-			CU_ASSERT(compress_rdp(enc, (uint8*) buf, bytes_read) != false);
+			CU_ASSERT(compress_rdp(enc, (BYTE*) buf, bytes_read) != FALSE);
 			if (enc->flags & PACKET_COMPRESSED)
 			{
 				DLOG(("%d bytes compressed to %d\n", bytes_read, enc->bytes_in_opb));
 				clen += enc->bytes_in_opb;
-				CU_ASSERT(decompress_rdp_5(rmppc, (uint8 *) enc->outputBuffer,
-						enc->bytes_in_opb, enc->flags, &roff, &rlen) != false);
+				CU_ASSERT(decompress_rdp_5(rmppc, (BYTE *) enc->outputBuffer,
+						enc->bytes_in_opb, enc->flags, &roff, &rlen) != FALSE);
 				CU_ASSERT(bytes_read == rlen);
 				CU_ASSERT(memcmp(buf, &rmppc->history_buf[roff], rlen) == 0);
 			}
@@ -561,11 +561,11 @@ void test_mppc_enc(void)
 		/* save starting time */
 		gettimeofday(&start_time, NULL);
 
-		CU_ASSERT(compress_rdp(enc, (uint8*) decompressed_rd5_data, data_len) != false);
+		CU_ASSERT(compress_rdp(enc, (BYTE*) decompressed_rd5_data, data_len) != FALSE);
 		if (enc->flags & PACKET_COMPRESSED)
 		{
-			CU_ASSERT(decompress_rdp_5(rmppc, (uint8 *) enc->outputBuffer,
-					enc->bytes_in_opb, enc->flags, &roff, &rlen) != false);
+			CU_ASSERT(decompress_rdp_5(rmppc, (BYTE *) enc->outputBuffer,
+					enc->bytes_in_opb, enc->flags, &roff, &rlen) != FALSE);
 			CU_ASSERT(data_len == rlen);
 			CU_ASSERT(memcmp(decompressed_rd5_data, &rmppc->history_buf[roff], rlen) == 0);
 		}

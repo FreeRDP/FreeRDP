@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Microsoft Point to Point Compression (MPPC)  Unit Tests
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -24,7 +24,7 @@
 #include "rdp.h"
 #include "test_mppc.h"
 
-uint8_t compressed_rd5[] =
+BYTE_t compressed_rd5[] =
 {
     0x24, 0x02, 0x03, 0x09, 0x00, 0x20, 0x0c, 0x05, 0x10, 0x01, 0x40, 0x0a, 0xbf, 0xdf, 0xc3, 0x20,
     0x80, 0x00, 0x1f, 0x0a, 0x00, 0x00, 0x07, 0x43, 0x4e, 0x00, 0x68, 0x02, 0x00, 0x22, 0x00, 0x34,
@@ -206,7 +206,7 @@ uint8_t compressed_rd5[] =
     0x7f, 0x52, 0x00                                         
 };
 
-uint8_t decompressed_rd5[] = 
+BYTE_t decompressed_rd5[] = 
 {
     0x24, 0x02, 0x03, 0x09, 0x00, 0x20, 0x0c, 0x05, 0x10, 0x01, 0x40, 0x0a, 0xff, 0xff, 0x0c, 0x84, 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1d, 0x0d, 0x38, 0x01, 0xc0, 0x10, 0x01, 0x10, 
@@ -636,8 +636,8 @@ int add_mppc_suite(void)
 void test_mppc(void)
 {
     struct rdp_mppc_dec* rmppc;
-    uint32_t roff;
-    uint32_t rlen;
+    UINT32_t roff;
+    UINT32_t rlen;
     long int dur;
 
     struct timeval start_time;
@@ -650,7 +650,7 @@ void test_mppc(void)
 
     /* uncompress data */
     CU_ASSERT(decompress_rdp_5(rmppc, compressed_rd5, sizeof(compressed_rd5),
-        PACKET_COMPRESSED, &roff, &rlen) == true);
+        PACKET_COMPRESSED, &roff, &rlen) == TRUE);
 
     /* get end time */
     gettimeofday(&end_time, NULL);

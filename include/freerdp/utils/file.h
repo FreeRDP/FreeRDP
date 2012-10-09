@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * File Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -25,15 +25,15 @@
 #include <freerdp/settings.h>
 
 FREERDP_API void freerdp_mkdir(char* path);
-FREERDP_API boolean freerdp_check_file_exists(char* file);
+FREERDP_API BOOL freerdp_check_file_exists(char* file);
 FREERDP_API char* freerdp_get_home_path(rdpSettings* settings);
 FREERDP_API char* freerdp_get_config_path(rdpSettings* settings);
 FREERDP_API char* freerdp_get_current_path(rdpSettings* settings);
 FREERDP_API char* freerdp_construct_path(char* base_path, char* relative_path);
 FREERDP_API char* freerdp_append_shared_library_suffix(char* file_path);
 FREERDP_API char* freerdp_get_parent_path(char* base_path, int depth);
-FREERDP_API boolean freerdp_path_contains_separator(char* path);
-FREERDP_API boolean freerdp_detect_development_mode(rdpSettings* settings);
+FREERDP_API BOOL freerdp_path_contains_separator(char* path);
+FREERDP_API BOOL freerdp_detect_development_mode(rdpSettings* settings);
 FREERDP_API void freerdp_detect_paths(rdpSettings* settings);
 
 #endif /* __FILE_UTILS_H */

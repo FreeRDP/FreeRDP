@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windowing Alternate Secondary Orders
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -29,53 +29,53 @@
 
 void update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
 {
-	stream_read_uint16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	stream_read_uint8(s, icon_info->cacheId); /* cacheId (1 byte) */
-	stream_read_uint8(s, icon_info->bpp); /* bpp (1 byte) */
-	stream_read_uint16(s, icon_info->width); /* width (2 bytes) */
-	stream_read_uint16(s, icon_info->height); /* height (2 bytes) */
+	stream_read_UINT16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
+	stream_read_BYTE(s, icon_info->cacheId); /* cacheId (1 byte) */
+	stream_read_BYTE(s, icon_info->bpp); /* bpp (1 byte) */
+	stream_read_UINT16(s, icon_info->width); /* width (2 bytes) */
+	stream_read_UINT16(s, icon_info->height); /* height (2 bytes) */
 
 	/* cbColorTable is only present when bpp is 1, 2 or 4 */
 	if (icon_info->bpp == 1 || icon_info->bpp == 2 || icon_info->bpp == 4)
-		stream_read_uint16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
+		stream_read_UINT16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
 	else
 		icon_info->cbColorTable = 0;
 
-	stream_read_uint16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
-	stream_read_uint16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
+	stream_read_UINT16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
+	stream_read_UINT16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
 
 	/* bitsMask */
 	if (icon_info->bitsMask == NULL)
-		icon_info->bitsMask = (uint8*) xmalloc(icon_info->cbBitsMask);
+		icon_info->bitsMask = (BYTE*) malloc(icon_info->cbBitsMask);
 	else
-		icon_info->bitsMask = (uint8*) xrealloc(icon_info->bitsMask, icon_info->cbBitsMask);
+		icon_info->bitsMask = (BYTE*) realloc(icon_info->bitsMask, icon_info->cbBitsMask);
 	stream_read(s, icon_info->bitsMask, icon_info->cbBitsMask);
 
 	/* colorTable */
 	if (icon_info->colorTable == NULL)
-		icon_info->colorTable = (uint8*) xmalloc(icon_info->cbColorTable);
+		icon_info->colorTable = (BYTE*) malloc(icon_info->cbColorTable);
 	else
-		icon_info->colorTable = (uint8*) xrealloc(icon_info->colorTable, icon_info->cbColorTable);
+		icon_info->colorTable = (BYTE*) realloc(icon_info->colorTable, icon_info->cbColorTable);
 	stream_read(s, icon_info->colorTable, icon_info->cbColorTable);
 
 	/* bitsColor */
 	if (icon_info->bitsColor == NULL)
-		icon_info->bitsColor = (uint8*) xmalloc(icon_info->cbBitsColor);
+		icon_info->bitsColor = (BYTE*) malloc(icon_info->cbBitsColor);
 	else
-		icon_info->bitsColor = (uint8*) xrealloc(icon_info->bitsColor, icon_info->cbBitsColor);
+		icon_info->bitsColor = (BYTE*) realloc(icon_info->bitsColor, icon_info->cbBitsColor);
 	stream_read(s, icon_info->bitsColor, icon_info->cbBitsColor);
 }
 
 void update_read_cached_icon_info(STREAM* s, CACHED_ICON_INFO* cached_icon_info)
 {
-	stream_read_uint16(s, cached_icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	stream_read_uint8(s, cached_icon_info->cacheId); /* cacheId (1 byte) */
+	stream_read_UINT16(s, cached_icon_info->cacheEntry); /* cacheEntry (2 bytes) */
+	stream_read_BYTE(s, cached_icon_info->cacheId); /* cacheId (1 byte) */
 }
 
 void update_read_notify_icon_infotip(STREAM* s, NOTIFY_ICON_INFOTIP* notify_icon_infotip)
 {
-	stream_read_uint32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
-	stream_read_uint32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
+	stream_read_UINT32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
+	stream_read_UINT32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
 	rail_read_unicode_string(s, &notify_icon_infotip->text); /* infoTipText */
 	rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
 }
@@ -86,93 +86,93 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 	int size;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
-		stream_read_uint32(s, window_state->ownerWindowId); /* ownerWindowId (4 bytes) */
+		stream_read_UINT32(s, window_state->ownerWindowId); /* ownerWindowId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		stream_read_uint32(s, window_state->style); /* style (4 bytes) */
-		stream_read_uint32(s, window_state->extendedStyle); /* extendedStyle (4 bytes) */
+		stream_read_UINT32(s, window_state->style); /* style (4 bytes) */
+		stream_read_UINT32(s, window_state->extendedStyle); /* extendedStyle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
-		stream_read_uint8(s, window_state->showState); /* showState (1 byte) */
+		stream_read_BYTE(s, window_state->showState); /* showState (1 byte) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		rail_read_unicode_string(s, &window_state->titleInfo); /* titleInfo */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
-		stream_read_uint32(s, window_state->clientOffsetX); /* clientOffsetX (4 bytes) */
-		stream_read_uint32(s, window_state->clientOffsetY); /* clientOffsetY (4 bytes) */
+		stream_read_UINT32(s, window_state->clientOffsetX); /* clientOffsetX (4 bytes) */
+		stream_read_UINT32(s, window_state->clientOffsetY); /* clientOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
-		stream_read_uint32(s, window_state->clientAreaWidth); /* clientAreaWidth (4 bytes) */
-		stream_read_uint32(s, window_state->clientAreaHeight); /* clientAreaHeight (4 bytes) */
+		stream_read_UINT32(s, window_state->clientAreaWidth); /* clientAreaWidth (4 bytes) */
+		stream_read_UINT32(s, window_state->clientAreaHeight); /* clientAreaHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
-		stream_read_uint8(s, window_state->RPContent); /* RPContent (1 byte) */
+		stream_read_BYTE(s, window_state->RPContent); /* RPContent (1 byte) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
-		stream_read_uint32(s, window_state->rootParentHandle);/* rootParentHandle (4 bytes) */
+		stream_read_UINT32(s, window_state->rootParentHandle);/* rootParentHandle (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
-		stream_read_uint32(s, window_state->windowOffsetX); /* windowOffsetX (4 bytes) */
-		stream_read_uint32(s, window_state->windowOffsetY); /* windowOffsetY (4 bytes) */
+		stream_read_UINT32(s, window_state->windowOffsetX); /* windowOffsetX (4 bytes) */
+		stream_read_UINT32(s, window_state->windowOffsetY); /* windowOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
-		stream_read_uint32(s, window_state->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
-		stream_read_uint32(s, window_state->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
+		stream_read_UINT32(s, window_state->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
+		stream_read_UINT32(s, window_state->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		stream_read_uint32(s, window_state->windowWidth); /* windowWidth (4 bytes) */
-		stream_read_uint32(s, window_state->windowHeight); /* windowHeight (4 bytes) */
+		stream_read_UINT32(s, window_state->windowWidth); /* windowWidth (4 bytes) */
+		stream_read_UINT32(s, window_state->windowHeight); /* windowHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
-		stream_read_uint16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
+		stream_read_UINT16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numWindowRects;
-		window_state->windowRects = (RECTANGLE_16*) xmalloc(size);
+		window_state->windowRects = (RECTANGLE_16*) malloc(size);
 
 		/* windowRects */
 		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
-			stream_read_uint16(s, window_state->windowRects[i].left); /* left (2 bytes) */
-			stream_read_uint16(s, window_state->windowRects[i].top); /* top (2 bytes) */
-			stream_read_uint16(s, window_state->windowRects[i].right); /* right (2 bytes) */
-			stream_read_uint16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
+			stream_read_UINT16(s, window_state->windowRects[i].left); /* left (2 bytes) */
+			stream_read_UINT16(s, window_state->windowRects[i].top); /* top (2 bytes) */
+			stream_read_UINT16(s, window_state->windowRects[i].right); /* right (2 bytes) */
+			stream_read_UINT16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
-		stream_read_uint32(s, window_state->visibleOffsetX); /* visibleOffsetX (4 bytes) */
-		stream_read_uint32(s, window_state->visibleOffsetY); /* visibleOffsetY (4 bytes) */
+		stream_read_UINT32(s, window_state->visibleOffsetX); /* visibleOffsetX (4 bytes) */
+		stream_read_UINT32(s, window_state->visibleOffsetY); /* visibleOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-		stream_read_uint16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
+		stream_read_UINT16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numVisibilityRects;
-		window_state->visibilityRects = (RECTANGLE_16*) xmalloc(size);
+		window_state->visibilityRects = (RECTANGLE_16*) malloc(size);
 
 		/* visibilityRects */
 		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
-			stream_read_uint16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
-			stream_read_uint16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
-			stream_read_uint16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
-			stream_read_uint16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
+			stream_read_UINT16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
+			stream_read_UINT16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
+			stream_read_UINT16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
+			stream_read_UINT16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 }
@@ -198,7 +198,7 @@ void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
 
-	stream_read_uint32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	stream_read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
@@ -233,7 +233,7 @@ void update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 void update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
-		stream_read_uint32(s, notify_icon_state->version); /* version (4 bytes) */
+		stream_read_UINT32(s, notify_icon_state->version); /* version (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP)
 		rail_read_unicode_string(s, &notify_icon_state->toolTip); /* toolTip (UNICODE_STRING) */
@@ -242,7 +242,7 @@ void update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* ord
 		update_read_notify_icon_infotip(s, &notify_icon_state->infoTip); /* infoTip (NOTIFY_ICON_INFOTIP) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_STATE)
-		stream_read_uint32(s, notify_icon_state->state); /* state (4 bytes) */
+		stream_read_UINT32(s, notify_icon_state->state); /* state (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 		update_read_icon_info(s, &notify_icon_state->icon); /* icon (ICON_INFO) */
@@ -261,8 +261,8 @@ void update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WIND
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
 
-	stream_read_uint32(s, orderInfo->windowId); /* windowId (4 bytes) */
-	stream_read_uint32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
+	stream_read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	stream_read_UINT32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
@@ -288,23 +288,23 @@ void update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* 
 	int size;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
-		stream_read_uint32(s, monitored_desktop->activeWindowId); /* activeWindowId (4 bytes) */
+		stream_read_UINT32(s, monitored_desktop->activeWindowId); /* activeWindowId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
-		stream_read_uint8(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
+		stream_read_BYTE(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
 
-		size = sizeof(uint32) * monitored_desktop->numWindowIds;
+		size = sizeof(UINT32) * monitored_desktop->numWindowIds;
 
 		if (monitored_desktop->windowIds == NULL)
-			monitored_desktop->windowIds = (uint32*) xmalloc(size);
+			monitored_desktop->windowIds = (UINT32*) malloc(size);
 		else
-			monitored_desktop->windowIds = (uint32*) xrealloc(monitored_desktop->windowIds, size);
+			monitored_desktop->windowIds = (UINT32*) realloc(monitored_desktop->windowIds, size);
 
 		/* windowIds */
 		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
 		{
-			stream_read_uint32(s, monitored_desktop->windowIds[i]);
+			stream_read_UINT32(s, monitored_desktop->windowIds[i]);
 		}
 	}
 }
@@ -335,11 +335,11 @@ void update_recv_desktop_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_I
 
 void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s)
 {
-	uint16 orderSize;
+	UINT16 orderSize;
 	rdpWindowUpdate* window = update->window;
 
-	stream_read_uint16(s, orderSize); /* orderSize (2 bytes) */
-	stream_read_uint32(s, window->orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
+	stream_read_UINT16(s, orderSize); /* orderSize (2 bytes) */
+	stream_read_UINT32(s, window->orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
 
 	if (window->orderInfo.fieldFlags & WINDOW_ORDER_TYPE_WINDOW)
 		update_recv_window_info_order(update, s, &window->orderInfo);

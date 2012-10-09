@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NSCodec Library Unit Tests
  *
  * Copyright 2012 Vic Lee

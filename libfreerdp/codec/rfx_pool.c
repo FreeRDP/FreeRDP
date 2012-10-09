@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Memory Pool
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -53,14 +53,14 @@ void rfx_pool_free(RFX_POOL* pool)
 		if (tile != NULL)
 		{
 			if (tile->data != NULL)
-				xfree(tile->data);
+				free(tile->data);
 
-			xfree(tile);
+			free(tile);
 		}
 	}
 
-	xfree(pool->tiles);
-	xfree(pool);
+	free(pool->tiles);
+	free(pool);
 }
 
 void rfx_pool_put_tile(RFX_POOL* pool, RFX_TILE* tile)
@@ -68,7 +68,7 @@ void rfx_pool_put_tile(RFX_POOL* pool, RFX_TILE* tile)
 	if (pool->count >= pool->size)
 	{
 		pool->size *= 2;
-		pool->tiles = (RFX_TILE**) xrealloc((void*) pool->tiles, sizeof(RFX_TILE*) * pool->size);
+		pool->tiles = (RFX_TILE**) realloc((void*) pool->tiles, sizeof(RFX_TILE*) * pool->size);
 	}
 
 	pool->tiles[(pool->count)++] = tile;
@@ -81,7 +81,7 @@ RFX_TILE* rfx_pool_get_tile(RFX_POOL* pool)
 	if (pool->count < 1)
 	{
 		tile = xnew(RFX_TILE);
-		tile->data = (uint8*) xmalloc(4096 * 4); /* 64x64 * 4 */
+		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
 	}
 	else
 	{
@@ -106,7 +106,7 @@ RFX_TILE** rfx_pool_get_tiles(RFX_POOL* pool, int count)
 	int i;
 	RFX_TILE** tiles;
 
-	tiles = (RFX_TILE**) xmalloc(sizeof(RFX_TILE*) * count);
+	tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * count);
 
 	for (i = 0; i < count; i++)
 	{

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Microsoft Point to Point compression (MPPC) Unit Tests
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>

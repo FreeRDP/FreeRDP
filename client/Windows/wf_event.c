@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Event Handling
  *
  * Copyright 2009-2011 Jay Sorg
@@ -59,10 +59,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfi || !p)
 					return 1;
 				input = wfi->instance->input;
-				rdp_scancode = MAKE_RDP_SCANCODE((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
+				rdp_scancode = MAKE_RDP_SCANCODE((BYTE) p->scanCode, p->flags & LLKHF_EXTENDED);
 
 				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
-					(wParam == WM_KEYDOWN), (uint8) p->scanCode, p->flags, p->vkCode);
+					(wParam == WM_KEYDOWN), (BYTE) p->scanCode, p->flags, p->vkCode);
 
 				if (wfi->fs_toggle &&
 					((p->vkCode == VK_RETURN) || (p->vkCode == VK_CANCEL)) &&
@@ -87,10 +87,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (wParam == WM_KEYDOWN)
 					{
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
@@ -127,9 +127,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
-	boolean processed;
+	BOOL processed;
 
-	processed = true;
+	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
 
@@ -179,13 +179,13 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			default:
-				processed = false;
+				processed = FALSE;
 				break;
 		}
 	}
 	else
 	{
-		processed = false;
+		processed = FALSE;
 	}
 
 	if (processed)

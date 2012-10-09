@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Palette (Color Table) Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -38,7 +38,7 @@ struct _PALETTE_TABLE_ENTRY
 
 struct rdp_palette_cache
 {
-	uint32 maxEntries; /* 0 */
+	UINT32 maxEntries; /* 0 */
 	PALETTE_TABLE_ENTRY* entries; /* 1 */
 
 	/* internal */
@@ -46,8 +46,8 @@ struct rdp_palette_cache
 	rdpSettings* settings;
 };
 
-FREERDP_API void* palette_cache_get(rdpPaletteCache* palette, uint32 index);
-FREERDP_API void palette_cache_put(rdpPaletteCache* palette, uint32 index, void* entry);
+FREERDP_API void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
+FREERDP_API void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
 
 FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -57,8 +57,8 @@ struct _TSMF_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 
-	uint8 presentation_id[16];
-	uint32 stream_id;
+	BYTE presentation_id[16];
+	UINT32 stream_id;
 };
 
 struct _TSMF_PLUGIN
@@ -73,19 +73,19 @@ struct _TSMF_PLUGIN
 };
 
 void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 message_id, uint64 duration, uint32 data_size)
+	UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
 	STREAM* s;
 	int error;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
 	s = stream_new(32);
-	stream_write_uint32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
-	stream_write_uint32(s, message_id);
-	stream_write_uint32(s, PLAYBACK_ACK); /* FunctionId */
-	stream_write_uint32(s, callback->stream_id); /* StreamId */
-	stream_write_uint64(s, duration); /* DataDuration */
-	stream_write_uint64(s, data_size); /* cbData */
+	stream_write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
+	stream_write_UINT32(s, message_id);
+	stream_write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
+	stream_write_UINT32(s, callback->stream_id); /* StreamId */
+	stream_write_UINT64(s, duration); /* DataDuration */
+	stream_write_UINT64(s, data_size); /* cbData */
 	
 	DEBUG_DVC("response size %d", (int) stream_get_length(s));
 	error = callback->channel->Write(callback->channel, stream_get_length(s), stream_get_head(s), NULL);
@@ -96,7 +96,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	stream_free(s);
 }
 
-boolean tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
+BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
 	RDP_EVENT* event)
 {
 	int error;
@@ -106,23 +106,23 @@ boolean tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
 	if (error)
 	{
 		DEBUG_WARN("response error %d", error);
-		return false;
+		return FALSE;
 	}
-	return true;
+	return TRUE;
 }
 
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 cbSize,
-	uint8* pBuffer)
+	UINT32 cbSize,
+	BYTE* pBuffer)
 {
 	int length;
 	STREAM* input;
 	STREAM* output;
 	int error = -1;
 	TSMF_IFMAN ifman;
-	uint32 MessageId;
-	uint32 FunctionId;
-	uint32 InterfaceId;
+	UINT32 MessageId;
+	UINT32 FunctionId;
+	UINT32 InterfaceId;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
@@ -132,13 +132,13 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		return 1;
 	}
 	input = stream_new(0);
-	stream_attach(input, (uint8*) pBuffer, cbSize);
+	stream_attach(input, (BYTE*) pBuffer, cbSize);
 	output = stream_new(256);
 	stream_seek(output, 8);
 
-	stream_read_uint32(input, InterfaceId);
-	stream_read_uint32(input, MessageId);
-	stream_read_uint32(input, FunctionId);
+	stream_read_UINT32(input, InterfaceId);
+	stream_read_UINT32(input, MessageId);
+	stream_read_UINT32(input, FunctionId);
 	DEBUG_DVC("cbSize=%d InterfaceId=0x%X MessageId=0x%X FunctionId=0x%X",
 		cbSize, InterfaceId, MessageId, FunctionId);
 
@@ -153,7 +153,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	ifman.input = input;
 	ifman.input_size = cbSize - 12;
 	ifman.output = output;
-	ifman.output_pending = false;
+	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
 
 	switch (InterfaceId)
@@ -178,9 +178,9 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 				case SET_CHANNEL_PARAMS:
 					memcpy(callback->presentation_id, stream_get_tail(input), 16);
 					stream_seek(input, 16);
-					stream_read_uint32(input, callback->stream_id);
+					stream_read_UINT32(input, callback->stream_id);
 					DEBUG_DVC("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
-					ifman.output_pending = true;
+					ifman.output_pending = TRUE;
 					error = 0;
 					break;
 
@@ -314,8 +314,8 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		/* Response packet does not have FunctionId */
 		length = stream_get_length(output);
 		stream_set_pos(output, 0);
-		stream_write_uint32(output, ifman.output_interface_id);
-		stream_write_uint32(output, MessageId);
+		stream_write_UINT32(output, ifman.output_interface_id);
+		stream_write_UINT32(output, MessageId);
 
 		DEBUG_DVC("response size %d", length);
 		error = callback->channel->Write(callback->channel, length, stream_get_head(output), NULL);
@@ -348,14 +348,14 @@ static int tsmf_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 				tsmf_stream_free(stream);
 		}
 	}
-	xfree(pChannelCallback);
+	free(pChannelCallback);
 
 	return 0;
 }
 
 static int tsmf_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel* pChannel,
-	uint8* Data,
+	BYTE* Data,
 	int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
@@ -396,8 +396,8 @@ static int tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 	DEBUG_DVC("");
 
 	if (tsmf->listener_callback)
-		xfree(tsmf->listener_callback);
-	xfree(tsmf);
+		free(tsmf->listener_callback);
+	free(tsmf);
 
 	return 0;
 }
@@ -421,7 +421,7 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 			}
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((uint8*)data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((BYTE*)data) + data->size);
 	}
 }
 

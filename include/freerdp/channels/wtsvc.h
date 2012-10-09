@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Server Virtual Channel Interface
  *
  * Copyright 2011-2012 Vic Lee
@@ -53,7 +53,7 @@ FREERDP_API WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_pee
 FREERDP_API void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm);
 FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 	void** fds, int* fds_count);
-FREERDP_API boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
+FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 
 /**
  * Opens a static or dynamic virtual channel and return the handle. If the
@@ -68,7 +68,7 @@ FREERDP_API boolean WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChanne
 FREERDP_API void* WTSVirtualChannelOpenEx(
 	/* __in */ WTSVirtualChannelManager* vcm,
 	/* __in */ const char* pVirtualName,
-	/* __in */ uint32 flags);
+	/* __in */ UINT32 flags);
 
 /**
  * Returns information about a specified virtual channel.
@@ -76,11 +76,11 @@ FREERDP_API void* WTSVirtualChannelOpenEx(
  * Servers use this function to gain access to a virtual channel file handle
  * that can be used for asynchronous I/O.
  */
-FREERDP_API boolean WTSVirtualChannelQuery(
+FREERDP_API BOOL WTSVirtualChannelQuery(
 	/* __in */  void* hChannelHandle,
 	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
 	/* __out */ void** ppBuffer,
-	/* __out */ uint32* pBytesReturned);
+	/* __out */ UINT32* pBytesReturned);
 
 /**
  * Frees memory allocated by WTSVirtualChannelQuery
@@ -95,36 +95,36 @@ FREERDP_API void WTSFreeMemory(
  *
  * This function will always return a complete channel data packet, i.e. chunks
  * are already assembled. If BufferSize argument is smaller than the packet
- * size, it will set the desired size in pBytesRead and return false. The
+ * size, it will set the desired size in pBytesRead and return FALSE. The
  * caller should allocate a large enough buffer and call this function again.
- * Returning false with pBytesRead set to zero indicates an error has occurred.
+ * Returning FALSE with pBytesRead set to zero indicates an error has occurred.
  * If no pending packet to be read, it will set pBytesRead to zero and return
- * true.
+ * TRUE.
  *
  * TimeOut is not supported, and this function will always return immediately.
  * The caller should use the file handle returned by WTSVirtualChannelQuery to
  * determine whether a packet has arrived.
  */
-FREERDP_API boolean WTSVirtualChannelRead(
+FREERDP_API BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
-	/* __in */  uint32 TimeOut,
-	/* __out */ uint8* Buffer,
-	/* __in */  uint32 BufferSize,
-	/* __out */ uint32* pBytesRead);
+	/* __in */  UINT32 TimeOut,
+	/* __out */ BYTE* Buffer,
+	/* __in */  UINT32 BufferSize,
+	/* __out */ UINT32* pBytesRead);
 
 /**
  * Writes data to the server end of a virtual channel.
  */
-FREERDP_API boolean WTSVirtualChannelWrite(
+FREERDP_API BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
-	/* __in */  uint8* Buffer,
-	/* __in */  uint32 Length,
-	/* __out */ uint32* pBytesWritten);
+	/* __in */  BYTE* Buffer,
+	/* __in */  UINT32 Length,
+	/* __out */ UINT32* pBytesWritten);
 
 /**
  * Closes an open virtual channel handle.
  */
-FREERDP_API boolean WTSVirtualChannelClose(
+FREERDP_API BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle);
 
 #endif /* __FREERDP_WTSVC_H */
